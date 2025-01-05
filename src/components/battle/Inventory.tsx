@@ -15,7 +15,39 @@ interface InventoryProps {
   onUseItem: (item: Item) => void;
 }
 
+interface GroupedItem {
+  name: string;
+  type: Item["type"];
+  value: number;
+  count: number;
+  items: Item[];
+}
+
 export const Inventory = ({ items, onUseItem }: InventoryProps) => {
+  const groupedItems = items.reduce<GroupedItem[]>((acc, item) => {
+    const existingGroup = acc.find(
+      group => 
+        group.name === item.name && 
+        group.type === item.type && 
+        group.value === item.value
+    );
+
+    if (existingGroup) {
+      existingGroup.count += 1;
+      existingGroup.items.push(item);
+    } else {
+      acc.push({
+        name: item.name,
+        type: item.type,
+        value: item.value,
+        count: 1,
+        items: [item]
+      });
+    }
+
+    return acc;
+  }, []);
+
   const getItemIcon = (type: Item["type"]) => {
     switch (type) {
       case "weapon":
@@ -28,7 +60,7 @@ export const Inventory = ({ items, onUseItem }: InventoryProps) => {
     }
   };
 
-  const getItemDescription = (item: Item) => {
+  const getItemDescription = (item: GroupedItem) => {
     switch (item.type) {
       case "weapon":
         return `+${item.value} к силе атаки`;
@@ -41,20 +73,31 @@ export const Inventory = ({ items, onUseItem }: InventoryProps) => {
     }
   };
 
+  const handleUseItem = (groupedItem: GroupedItem) => {
+    // Используем первый предмет из группы
+    const itemToUse = groupedItem.items[0];
+    onUseItem(itemToUse);
+  };
+
   return (
     <div className="mt-4">
       <h3 className="text-xl font-bold text-game-accent mb-4">Инвентарь</h3>
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        {items.map((item) => (
-          <Card key={item.id} className="p-4 bg-game-surface border-game-accent">
+        {groupedItems.map((item) => (
+          <Card 
+            key={`${item.name}-${item.type}-${item.value}`} 
+            className="p-4 bg-game-surface border-game-accent"
+          >
             <div className="flex flex-col gap-2">
               <div className="flex items-center gap-2">
                 {getItemIcon(item.type)}
-                <h4 className="font-bold text-game-accent">{item.name}</h4>
+                <h4 className="font-bold text-game-accent">
+                  {item.name} {item.count > 1 && `(${item.count})`}
+                </h4>
               </div>
               <p className="text-sm text-gray-400">{getItemDescription(item)}</p>
               <Button 
-                onClick={() => onUseItem(item)} 
+                onClick={() => handleUseItem(item)} 
                 variant="outline" 
                 className="mt-2"
               >
