@@ -6,22 +6,21 @@ import { Button } from "@/components/ui/button";
 import { OpponentCard } from "@/components/battle/OpponentCard";
 import { PlayerCard } from "@/components/battle/PlayerCard";
 import { PlayerCards } from "@/components/battle/PlayerCards";
-import { Inventory, Item } from "@/components/battle/Inventory";
+import { Inventory } from "@/components/battle/Inventory";
 import { useBattleState } from "@/hooks/useBattleState";
-import { useToast } from "@/hooks/use-toast";
 
 const Battle = () => {
   const navigate = useNavigate();
-  const { toast } = useToast();
   const {
     level,
     coins,
     isPlayerTurn,
     playerStats,
     opponents,
+    inventory,
     attackEnemy,
     handleOpponentAttack,
-    updatePlayerStats
+    useItem
   } = useBattleState();
 
   useEffect(() => {
@@ -35,51 +34,6 @@ const Battle = () => {
     { id: 2, name: "Щит стража", power: 2, defense: 8 },
     { id: 3, name: "Амулет силы", power: 3, defense: 3 },
   ]);
-
-  // Добавляем начальные предметы инвентаря
-  const [inventoryItems] = React.useState<Item[]>([
-    { id: 1, name: "Зелье здоровья", type: "healthPotion", value: 30 },
-    { id: 2, name: "Зелье здоровья", type: "healthPotion", value: 30 },
-    { id: 3, name: "Зелье защиты", type: "defensePotion", value: 20 },
-    { id: 4, name: "Меч воина", type: "weapon", value: 15 },
-  ]);
-
-  const handleUseItem = (item: Item) => {
-    const newStats = { ...playerStats };
-
-    switch (item.type) {
-      case "healthPotion":
-        newStats.health = Math.min(newStats.health + item.value, newStats.maxHealth);
-        toast({
-          title: "Использовано зелье здоровья",
-          description: `Восстановлено ${item.value} здоровья`,
-        });
-        break;
-      case "defensePotion":
-        newStats.defense += item.value;
-        toast({
-          title: "Использовано зелье защиты",
-          description: `Увеличена защита на ${item.value}`,
-        });
-        break;
-      case "weapon":
-        newStats.power += item.value;
-        toast({
-          title: "Использовано оружие",
-          description: `Увеличена сила атаки на ${item.value}`,
-        });
-        break;
-      case "armor":
-        newStats.defense += item.value;
-        toast({
-          title: "Использована броня",
-          description: `Увеличена защита на ${item.value}`,
-        });
-        break;
-    }
-
-    updatePlayerStats(newStats);
-  };
 
   return (
     <div className="min-h-screen bg-game-background p-6 relative">
@@ -127,7 +81,7 @@ const Battle = () => {
 
         <PlayerCard playerStats={playerStats} level={level} />
         <PlayerCards cards={playerCards} />
-        <Inventory items={inventoryItems} onUseItem={handleUseItem} />
+        <Inventory items={inventory} onUseItem={useItem} />
 
         <div className="fixed bottom-6 right-6 bg-game-surface p-4 rounded-lg border border-game-accent shadow-lg">
           <div className="flex items-center gap-2">
