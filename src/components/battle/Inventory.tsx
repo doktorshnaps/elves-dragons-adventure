@@ -1,7 +1,7 @@
 import React from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Shield, Sword, Flask } from "lucide-react";
+import { Shield, Sword, Potion } from "lucide-react";
 
 export interface Item {
   id: number;
@@ -24,7 +24,7 @@ export const Inventory = ({ items, onUseItem }: InventoryProps) => {
         return <Shield className="w-4 h-4" />;
       case "healthPotion":
       case "defensePotion":
-        return <Flask className="w-4 h-4" />;
+        return <Potion className="w-4 h-4" />;
     }
   };
 
