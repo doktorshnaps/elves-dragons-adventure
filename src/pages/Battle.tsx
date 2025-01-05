@@ -37,19 +37,36 @@ const Battle = () => {
 
   useEffect(() => {
     if (!isPlayerTurn && opponents.length > 0) {
-      // Враги атакуют после небольшой задержки
       const timer = setTimeout(() => {
         const randomOpponent = opponents[Math.floor(Math.random() * opponents.length)];
-        const damage = Math.max(0, randomOpponent.power - playerStats.defense / 2);
         
-        setPlayerStats(prev => ({
-          ...prev,
-          health: Math.max(0, prev.health - damage)
-        }));
-
-        toast({
-          title: "Враг атакует!",
-          description: `${randomOpponent.name} наносит ${damage} урона!`,
+        // Расчет урона с учетом защиты
+        const initialDamage = randomOpponent.power;
+        const remainingDefense = Math.max(0, playerStats.defense - initialDamage);
+        const damageToHealth = Math.max(0, initialDamage - playerStats.defense);
+        
+        setPlayerStats(prev => {
+          const newDefense = Math.max(0, prev.defense);
+          const newHealth = Math.max(0, prev.health - damageToHealth);
+          
+          let message = `${randomOpponent.name} атакует!`;
+          if (initialDamage <= prev.defense) {
+            message += ` Защита поглотила весь урон!`;
+          } else {
+            message += ` Защита поглотила ${Math.min(initialDamage, prev.defense)} урона.`;
+            message += ` Нанесено ${damageToHealth} урона здоровью!`;
+          }
+          
+          toast({
+            title: "Враг атакует!",
+            description: message,
+          });
+          
+          return {
+            ...prev,
+            defense: newDefense,
+            health: newHealth,
+          };
         });
 
         setIsPlayerTurn(true);
