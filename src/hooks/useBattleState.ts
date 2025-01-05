@@ -16,6 +16,7 @@ export interface Opponent {
   power: number;
   health: number;
   maxHealth: number;
+  isBoss?: boolean;
 }
 
 export const useBattleState = (initialLevel: number = 1) => {
@@ -25,8 +26,51 @@ export const useBattleState = (initialLevel: number = 1) => {
   const [coins, setCoins] = useState(0);
   const [isPlayerTurn, setIsPlayerTurn] = useState(true);
 
-  const getScaledStats = (baseValue: number) => {
-    return Math.round(baseValue * Math.pow(1.2, level - 1));
+  const getScaledStats = (baseValue: number, isBoss: boolean = false) => {
+    const levelScale = Math.pow(1.2, level - 1);
+    const bossMultiplier = isBoss ? 3 : 1;
+    return Math.round(baseValue * levelScale * bossMultiplier);
+  };
+
+  const generateOpponents = (currentLevel: number): Opponent[] => {
+    const isBossWave = currentLevel % 5 === 0;
+    
+    if (isBossWave) {
+      // Генерируем одного босса
+      return [{
+        id: 1,
+        name: "🔥 Босс Древний Дракон",
+        power: getScaledStats(10, true),
+        health: getScaledStats(200, true),
+        maxHealth: getScaledStats(200, true),
+        isBoss: true
+      }];
+    }
+
+    // Обычная волна с тремя противниками
+    return [
+      { 
+        id: 1, 
+        name: "Дракон", 
+        power: getScaledStats(5), 
+        health: getScaledStats(100),
+        maxHealth: getScaledStats(100)
+      },
+      { 
+        id: 2, 
+        name: "Тролль", 
+        power: getScaledStats(3),
+        health: getScaledStats(70),
+        maxHealth: getScaledStats(70)
+      },
+      { 
+        id: 3, 
+        name: "Гоблин", 
+        power: getScaledStats(2),
+        health: getScaledStats(50),
+        maxHealth: getScaledStats(50)
+      },
+    ];
   };
 
   const [playerStats, setPlayerStats] = useState<PlayerStats>({
@@ -36,16 +80,7 @@ export const useBattleState = (initialLevel: number = 1) => {
     defense: 10,
   });
 
-  const [opponents, setOpponents] = useState<Opponent[]>([
-    { id: 1, name: "Дракон", power: 5, health: 100, maxHealth: 100 },
-    { id: 2, name: "Тролль", power: 3, health: 70, maxHealth: 70 },
-    { id: 3, name: "Гоблин", power: 2, health: 50, maxHealth: 50 },
-  ].map(opponent => ({
-    ...opponent,
-    power: getScaledStats(opponent.power),
-    health: getScaledStats(opponent.health),
-    maxHealth: getScaledStats(opponent.health)
-  })));
+  const [opponents, setOpponents] = useState<Opponent[]>(generateOpponents(initialLevel));
 
   const handleOpponentAttack = () => {
     if (opponents.length > 0 && !isPlayerTurn) {
@@ -68,8 +103,9 @@ export const useBattleState = (initialLevel: number = 1) => {
         message += ` Защита уменьшилась на ${prev.defense - newDefense} (${prev.defense} → ${newDefense}).`;
         
         toast({
-          title: "Враг атакует!",
+          title: randomOpponent.isBoss ? "⚠️ Атака босса!" : "Враг атакует!",
           description: message,
+          variant: randomOpponent.isBoss ? "destructive" : "default"
         });
         
         if (newHealth <= 0) {
@@ -102,17 +138,20 @@ export const useBattleState = (initialLevel: number = 1) => {
           const newHealth = opponent.health - damage;
           
           toast({
-            title: isCritical ? "Критическая атака!" : "Атака!",
+            title: opponent.isBoss ? 
+              (isCritical ? "🎯 Критический удар по боссу!" : "⚔️ Атака босса!") :
+              (isCritical ? "Критическая атака!" : "Атака!"),
             description: `Вы нанесли ${isCritical ? "критические " : ""}${damage.toFixed(0)} урона ${opponent.name}!`,
             variant: isCritical ? "destructive" : "default",
           });
           
           if (newHealth <= 0) {
-            const earnedCoins = Math.floor(Math.random() * 20) + 10;
+            const baseCoins = Math.floor(Math.random() * 20) + 10;
+            const earnedCoins = opponent.isBoss ? baseCoins * 5 : baseCoins;
             setCoins(prev => prev + earnedCoins);
             
             toast({
-              title: "Враг побежден!",
+              title: opponent.isBoss ? "🏆 Босс побежден!" : "Враг побежден!",
               description: `Вы получили ${earnedCoins} монет!`,
             });
             return null;
@@ -126,21 +165,14 @@ export const useBattleState = (initialLevel: number = 1) => {
       if (newOpponents.length === 0) {
         const nextLevel = level + 1;
         setLevel(nextLevel);
+        
+        const isBossDefeated = prevOpponents.some(op => op.isBoss);
         toast({
-          title: "Уровень пройден!",
-          description: `Вы перешли на уровень ${nextLevel}! Враги стали сильнее!`,
+          title: isBossDefeated ? "🎊 Босс побежден! Новый уровень!" : "Уровень пройден!",
+          description: `Вы перешли на уровень ${nextLevel}! ${nextLevel % 5 === 0 ? "Приготовьтесь к битве с боссом!" : ""}`,
         });
 
-        return [
-          { id: 1, name: "Дракон", power: 5, health: 100, maxHealth: 100 },
-          { id: 2, name: "Тролль", power: 3, health: 70, maxHealth: 70 },
-          { id: 3, name: "Гоблин", power: 2, health: 50, maxHealth: 50 },
-        ].map(opponent => ({
-          ...opponent,
-          power: getScaledStats(opponent.power),
-          health: getScaledStats(opponent.health),
-          maxHealth: getScaledStats(opponent.health)
-        }));
+        return generateOpponents(nextLevel);
       }
 
       setIsPlayerTurn(false);
