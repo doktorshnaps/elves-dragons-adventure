@@ -2,23 +2,10 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
 import { calculatePlayerDamage, calculateDamage } from '@/utils/battleCalculations';
+import { generateOpponents } from '@/utils/opponentGenerator';
+import { rollLoot, generateLootTable } from '@/utils/lootUtils';
+import { PlayerStats, Opponent } from '@/types/battle';
 import { Item } from '@/components/battle/Inventory';
-
-export interface PlayerStats {
-  health: number;
-  maxHealth: number;
-  power: number;
-  defense: number;
-}
-
-export interface Opponent {
-  id: number;
-  name: string;
-  power: number;
-  health: number;
-  maxHealth: number;
-  isBoss?: boolean;
-}
 
 const INVENTORY_STORAGE_KEY = 'gameInventory';
 
@@ -37,55 +24,9 @@ export const useBattleState = (initialLevel: number = 1) => {
     ];
   });
 
-  // Сохраняем инвентарь при изменении
   useEffect(() => {
     localStorage.setItem(INVENTORY_STORAGE_KEY, JSON.stringify(inventory));
   }, [inventory]);
-
-  const getScaledStats = (baseValue: number, isBoss: boolean = false) => {
-    const levelScale = Math.pow(1.2, level - 1);
-    const bossMultiplier = isBoss ? 3 : 1;
-    return Math.round(baseValue * levelScale * bossMultiplier);
-  };
-
-  const generateOpponents = (currentLevel: number): Opponent[] => {
-    const isBossWave = currentLevel % 5 === 0;
-    
-    if (isBossWave) {
-      return [{
-        id: 1,
-        name: "🔥 Босс Древний Дракон",
-        power: getScaledStats(10, true),
-        health: getScaledStats(200, true),
-        maxHealth: getScaledStats(200, true),
-        isBoss: true
-      }];
-    }
-
-    return [
-      { 
-        id: 1, 
-        name: "Дракон", 
-        power: getScaledStats(5), 
-        health: getScaledStats(100),
-        maxHealth: getScaledStats(100)
-      },
-      { 
-        id: 2, 
-        name: "Тролль", 
-        power: getScaledStats(3),
-        health: getScaledStats(70),
-        maxHealth: getScaledStats(70)
-      },
-      { 
-        id: 3, 
-        name: "Гоблин", 
-        power: getScaledStats(2),
-        health: getScaledStats(50),
-        maxHealth: getScaledStats(50)
-      },
-    ];
-  };
 
   const [playerStats, setPlayerStats] = useState<PlayerStats>({
     health: 100,
@@ -95,10 +36,6 @@ export const useBattleState = (initialLevel: number = 1) => {
   });
 
   const [opponents, setOpponents] = useState<Opponent[]>(generateOpponents(initialLevel));
-
-  const updatePlayerStats = (newStats: PlayerStats) => {
-    setPlayerStats(newStats);
-  };
 
   const useItem = (item: Item) => {
     const newStats = { ...playerStats };
@@ -134,10 +71,7 @@ export const useBattleState = (initialLevel: number = 1) => {
         break;
     }
 
-    // Обновляем статы игрока
     setPlayerStats(newStats);
-    
-    // Удаляем использованный предмет из инвентаря
     setInventory(prev => prev.filter(i => i.id !== item.id));
   };
 
@@ -205,14 +139,27 @@ export const useBattleState = (initialLevel: number = 1) => {
           });
           
           if (newHealth <= 0) {
-            const baseCoins = Math.floor(Math.random() * 20) + 10;
-            const earnedCoins = opponent.isBoss ? baseCoins * 5 : baseCoins;
-            setCoins(prev => prev + earnedCoins);
+            // Генерируем лут при смерти противника
+            const { items: droppedItems, coins: droppedCoins } = rollLoot(generateLootTable(opponent.isBoss ?? false));
             
-            toast({
-              title: opponent.isBoss ? "🏆 Босс побежден!" : "Враг побежден!",
-              description: `Вы получили ${earnedCoins} монет!`,
-            });
+            if (droppedItems.length > 0 || droppedCoins > 0) {
+              let message = "";
+              if (droppedItems.length > 0) {
+                message += `Получены предметы: ${droppedItems.map(item => item.name).join(", ")}. `;
+              }
+              if (droppedCoins > 0) {
+                message += `Получено ${droppedCoins} монет!`;
+              }
+              
+              toast({
+                title: "Получена награда!",
+                description: message,
+              });
+              
+              setInventory(prev => [...prev, ...droppedItems]);
+              setCoins(prev => prev + droppedCoins);
+            }
+            
             return null;
           }
           
@@ -248,7 +195,6 @@ export const useBattleState = (initialLevel: number = 1) => {
     inventory,
     attackEnemy,
     handleOpponentAttack,
-    updatePlayerStats,
     useItem
   };
 };
