@@ -40,13 +40,13 @@ const Battle = () => {
       const timer = setTimeout(() => {
         const randomOpponent = opponents[Math.floor(Math.random() * opponents.length)];
         
-        // Новая логика расчета урона
         const damage = randomOpponent.power;
         const blockedDamage = Math.min(damage, playerStats.defense);
         const damageToHealth = Math.max(0, damage - blockedDamage);
         
         setPlayerStats(prev => {
           const newHealth = Math.max(0, prev.health - damageToHealth);
+          const newDefense = Math.max(0, prev.defense - 1); // Уменьшаем защиту на 1 после каждой атаки
           
           let message = `${randomOpponent.name} атакует с силой ${damage}!`;
           if (blockedDamage > 0) {
@@ -55,6 +55,7 @@ const Battle = () => {
           if (damageToHealth > 0) {
             message += ` Нанесено ${damageToHealth} урона здоровью!`;
           }
+          message += ` Защита уменьшилась на 1 (${prev.defense} → ${newDefense}).`;
           
           toast({
             title: "Враг атакует!",
@@ -64,6 +65,7 @@ const Battle = () => {
           return {
             ...prev,
             health: newHealth,
+            defense: newDefense,
           };
         });
 
