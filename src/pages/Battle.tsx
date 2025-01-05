@@ -20,7 +20,8 @@ const Battle = () => {
     playerStats,
     opponents,
     attackEnemy,
-    handleOpponentAttack
+    handleOpponentAttack,
+    updatePlayerStats
   } = useBattleState();
 
   useEffect(() => {
@@ -44,32 +45,40 @@ const Battle = () => {
   ]);
 
   const handleUseItem = (item: Item) => {
+    const newStats = { ...playerStats };
+
     switch (item.type) {
       case "healthPotion":
+        newStats.health = Math.min(newStats.health + item.value, newStats.maxHealth);
         toast({
           title: "Использовано зелье здоровья",
           description: `Восстановлено ${item.value} здоровья`,
         });
         break;
       case "defensePotion":
+        newStats.defense += item.value;
         toast({
           title: "Использовано зелье защиты",
-          description: `Восстановлено ${item.value} защиты`,
+          description: `Увеличена защита на ${item.value}`,
         });
         break;
       case "weapon":
+        newStats.power += item.value;
         toast({
           title: "Использовано оружие",
           description: `Увеличена сила атаки на ${item.value}`,
         });
         break;
       case "armor":
+        newStats.defense += item.value;
         toast({
           title: "Использована броня",
           description: `Увеличена защита на ${item.value}`,
         });
         break;
     }
+
+    updatePlayerStats(newStats);
   };
 
   return (

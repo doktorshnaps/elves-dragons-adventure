@@ -36,7 +36,6 @@ export const useBattleState = (initialLevel: number = 1) => {
     const isBossWave = currentLevel % 5 === 0;
     
     if (isBossWave) {
-      // Генерируем одного босса
       return [{
         id: 1,
         name: "🔥 Босс Древний Дракон",
@@ -47,7 +46,6 @@ export const useBattleState = (initialLevel: number = 1) => {
       }];
     }
 
-    // Обычная волна с тремя противниками
     return [
       { 
         id: 1, 
@@ -81,6 +79,10 @@ export const useBattleState = (initialLevel: number = 1) => {
   });
 
   const [opponents, setOpponents] = useState<Opponent[]>(generateOpponents(initialLevel));
+
+  const updatePlayerStats = (newStats: PlayerStats) => {
+    setPlayerStats(newStats);
+  };
 
   const handleOpponentAttack = () => {
     if (opponents.length > 0 && !isPlayerTurn) {
@@ -187,6 +189,7 @@ export const useBattleState = (initialLevel: number = 1) => {
     playerStats,
     opponents,
     attackEnemy,
-    handleOpponentAttack
+    handleOpponentAttack,
+    updatePlayerStats
   };
 };
