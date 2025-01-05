@@ -11,7 +11,7 @@ const Index = () => {
         <div className="relative flex flex-col md:flex-row items-center gap-8 py-12">
           <div className="w-full md:w-1/2">
             <img 
-              src="/lovable-uploads/elf-hero.png" 
+              src="https://images.unsplash.com/photo-1488590528505-98d2b5aba04b"
               alt="Эльфийский герой" 
               className="rounded-lg shadow-2xl w-full max-w-xl mx-auto animate-float"
             />
