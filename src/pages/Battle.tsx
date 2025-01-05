@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
-import { ArrowLeft, Home, Sword } from "lucide-react";
+import { ArrowLeft, Home, Sword, Shield, Heart } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 
 const Battle = () => {
@@ -11,6 +11,12 @@ const Battle = () => {
   const { toast } = useToast();
   const [level, setLevel] = useState(1);
   const [coins, setCoins] = useState(0);
+  const [playerStats, setPlayerStats] = useState({
+    health: 100,
+    maxHealth: 100,
+    power: 20,
+    defense: 10,
+  });
 
   const getScaledStats = (baseValue: number) => {
     return Math.round(baseValue * Math.pow(1.2, level - 1));
@@ -75,7 +81,7 @@ const Battle = () => {
   };
 
   return (
-    <div className="min-h-screen bg-game-background p-6">
+    <div className="min-h-screen bg-game-background p-6 relative">
       <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
@@ -107,7 +113,7 @@ const Battle = () => {
           </div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
           <AnimatePresence>
             {opponents.map((opponent) => (
               <motion.div
@@ -146,7 +152,62 @@ const Battle = () => {
             ))}
           </AnimatePresence>
         </div>
+
+        {/* Карточка игрока */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="mt-8"
+        >
+          <Card className="p-6 bg-game-surface border-game-primary">
+            <div className="flex flex-col md:flex-row justify-between items-center gap-6">
+              <div className="flex items-center gap-4">
+                <div className="p-3 bg-game-primary rounded-full">
+                  <Shield className="w-6 h-6 text-white" />
+                </div>
+                <div>
+                  <h3 className="text-xl font-bold text-game-accent">Ваш герой</h3>
+                  <p className="text-gray-400">Уровень {level}</p>
+                </div>
+              </div>
+              <div className="flex gap-8">
+                <div className="text-center">
+                  <Sword className="w-6 h-6 mx-auto mb-2 text-game-accent" />
+                  <p className="text-sm text-gray-400">Сила атаки</p>
+                  <p className="font-bold text-game-accent">{playerStats.power}</p>
+                </div>
+                <div className="text-center">
+                  <Shield className="w-6 h-6 mx-auto mb-2 text-game-accent" />
+                  <p className="text-sm text-gray-400">Защита</p>
+                  <p className="font-bold text-game-accent">{playerStats.defense}</p>
+                </div>
+              </div>
+              <div className="flex items-center gap-2">
+                <Heart className="w-6 h-6 text-red-500" />
+                <div className="w-32 bg-gray-700 rounded-full h-2.5">
+                  <div
+                    className="bg-red-600 h-2.5 rounded-full transition-all duration-300"
+                    style={{ width: `${(playerStats.health / playerStats.maxHealth) * 100}%` }}
+                  ></div>
+                </div>
+                <span className="text-gray-400">
+                  {playerStats.health}/{playerStats.maxHealth}
+                </span>
+              </div>
+            </div>
+          </Card>
+        </motion.div>
       </motion.div>
+
+      {/* Индикатор здоровья в правом нижнем углу */}
+      <div className="fixed bottom-6 right-6 bg-game-surface p-4 rounded-lg border border-game-accent shadow-lg">
+        <div className="flex items-center gap-2">
+          <Heart className="w-6 h-6 text-red-500" />
+          <span className="font-bold text-xl text-game-accent">
+            {playerStats.health}/{playerStats.maxHealth}
+          </span>
+        </div>
+      </div>
     </div>
   );
 };
