@@ -4,13 +4,26 @@ import { Dice6, ArrowLeft } from "lucide-react";
 import { Button } from "./ui/button";
 import { Card } from "./ui/card";
 import { useNavigate } from "react-router-dom";
+import { useToast } from "@/hooks/use-toast";
 
 export const DungeonSearch = ({ onClose }: { onClose: () => void }) => {
   const [rolling, setRolling] = useState(false);
   const [result, setResult] = useState<number | null>(null);
   const navigate = useNavigate();
+  const { toast } = useToast();
 
   const rollDice = () => {
+    // Проверяем, есть ли активное подземелье
+    const savedState = localStorage.getItem('battleState');
+    if (savedState) {
+      toast({
+        title: "Подземелье уже активно",
+        description: "Вы должны завершить текущее подземелье или погибнуть, чтобы начать новое",
+        variant: "destructive",
+      });
+      return;
+    }
+
     setRolling(true);
     setTimeout(() => {
       const roll = Math.floor(Math.random() * 6) + 1;

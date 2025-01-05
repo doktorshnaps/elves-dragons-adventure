@@ -8,12 +8,35 @@ import { PlayerStats, Opponent } from '@/types/battle';
 import { Item } from '@/components/battle/Inventory';
 
 const INVENTORY_STORAGE_KEY = 'gameInventory';
+const BATTLE_STATE_KEY = 'battleState';
 
 export const useBattleState = (initialLevel: number = 1) => {
   const navigate = useNavigate();
   const { toast } = useToast();
-  const [level, setLevel] = useState(initialLevel);
-  const [coins, setCoins] = useState(0);
+  
+  // Загружаем сохраненное состояние или используем начальные значения
+  const loadSavedState = () => {
+    const savedState = localStorage.getItem(BATTLE_STATE_KEY);
+    if (savedState) {
+      const parsed = JSON.parse(savedState);
+      return {
+        level: parsed.level || initialLevel,
+        coins: parsed.coins || 0,
+        playerStats: parsed.playerStats || {
+          health: 100,
+          maxHealth: 100,
+          power: 20,
+          defense: 10,
+        },
+        opponents: parsed.opponents || generateOpponents(initialLevel),
+      };
+    }
+    return null;
+  };
+
+  const savedState = loadSavedState();
+  const [level, setLevel] = useState(savedState?.level || initialLevel);
+  const [coins, setCoins] = useState(savedState?.coins || 0);
   const [isPlayerTurn, setIsPlayerTurn] = useState(true);
   const [inventory, setInventory] = useState<Item[]>(() => {
     const savedInventory = localStorage.getItem(INVENTORY_STORAGE_KEY);
@@ -24,18 +47,33 @@ export const useBattleState = (initialLevel: number = 1) => {
     ];
   });
 
+  const [playerStats, setPlayerStats] = useState<PlayerStats>(
+    savedState?.playerStats || {
+      health: 100,
+      maxHealth: 100,
+      power: 20,
+      defense: 10,
+    }
+  );
+
+  const [opponents, setOpponents] = useState<Opponent[]>(
+    savedState?.opponents || generateOpponents(initialLevel)
+  );
+
+  // Сохраняем состояние при изменениях
+  useEffect(() => {
+    const stateToSave = {
+      level,
+      coins,
+      playerStats,
+      opponents,
+    };
+    localStorage.setItem(BATTLE_STATE_KEY, JSON.stringify(stateToSave));
+  }, [level, coins, playerStats, opponents]);
+
   useEffect(() => {
     localStorage.setItem(INVENTORY_STORAGE_KEY, JSON.stringify(inventory));
   }, [inventory]);
-
-  const [playerStats, setPlayerStats] = useState<PlayerStats>({
-    health: 100,
-    maxHealth: 100,
-    power: 20,
-    defense: 10,
-  });
-
-  const [opponents, setOpponents] = useState<Opponent[]>(generateOpponents(initialLevel));
 
   const useItem = (item: Item) => {
     const newStats = { ...playerStats };
@@ -107,6 +145,8 @@ export const useBattleState = (initialLevel: number = 1) => {
             description: "Ваш герой пал в бою!",
             variant: "destructive",
           });
+          // Очищаем сохранение при смерти
+          localStorage.removeItem(BATTLE_STATE_KEY);
           navigate("/game");
         }
         
