@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { motion } from "framer-motion";
-import { Dice6 } from "lucide-react";
+import { Dice6, ArrowLeft } from "lucide-react";
 import { Button } from "./ui/button";
 import { Card } from "./ui/card";
 import { useNavigate } from "react-router-dom";
@@ -29,7 +29,16 @@ export const DungeonSearch = ({ onClose }: { onClose: () => void }) => {
       exit={{ opacity: 0 }}
       className="fixed inset-0 bg-black/80 flex items-center justify-center p-4"
     >
-      <Card className="bg-game-surface border-game-accent p-8 max-w-md w-full">
+      <Card className="bg-game-surface border-game-accent p-8 max-w-md w-full relative">
+        <Button
+          variant="ghost"
+          size="icon"
+          className="absolute left-4 top-4 text-game-accent hover:text-game-accent/80"
+          onClick={onClose}
+        >
+          <ArrowLeft className="h-5 w-5" />
+        </Button>
+
         <div className="text-center">
           <h2 className="text-2xl font-bold text-game-accent mb-6">Поиск подземелья</h2>
           
