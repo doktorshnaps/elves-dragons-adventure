@@ -3,10 +3,12 @@ import { motion } from "framer-motion";
 import { Wallet2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { DungeonSearch } from "./DungeonSearch";
 
 export const GameInterface = () => {
   const [isConnected, setIsConnected] = useState(false);
   const [balance, setBalance] = useState("0");
+  const [showDungeonSearch, setShowDungeonSearch] = useState(false);
 
   return (
     <motion.div
@@ -32,7 +34,7 @@ export const GameInterface = () => {
 
         <Button
           className="bg-game-primary hover:bg-game-primary/80 text-white"
-          onClick={() => console.log("Searching dungeon...")}
+          onClick={() => setShowDungeonSearch(true)}
         >
           Search Dungeon
         </Button>
@@ -53,6 +55,10 @@ export const GameInterface = () => {
           ))}
         </div>
       </Card>
+
+      {showDungeonSearch && (
+        <DungeonSearch onClose={() => setShowDungeonSearch(false)} />
+      )}
     </motion.div>
   );
 };
