@@ -13,15 +13,22 @@ export const DungeonSearch = ({ onClose }: { onClose: () => void }) => {
   const { toast } = useToast();
 
   const rollDice = () => {
-    // Проверяем, есть ли активное подземелье
+    // Проверяем, есть ли активное подземелье и жив ли персонаж
     const savedState = localStorage.getItem('battleState');
     if (savedState) {
-      toast({
-        title: "Подземелье уже активно",
-        description: "Вы должны завершить текущее подземелье или погибнуть, чтобы начать новое",
-        variant: "destructive",
-      });
-      return;
+      const parsedState = JSON.parse(savedState);
+      // Если персонаж жив (health > 0), запрещаем поиск нового подземелья
+      if (parsedState.playerStats.health > 0) {
+        toast({
+          title: "Подземелье уже активно",
+          description: "Вы должны завершить текущее подземелье или погибнуть, чтобы начать новое",
+          variant: "destructive",
+        });
+        return;
+      } else {
+        // Если персонаж мертв, очищаем старое состояние
+        localStorage.removeItem('battleState');
+      }
     }
 
     setRolling(true);
