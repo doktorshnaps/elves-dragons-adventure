@@ -3,7 +3,7 @@ import { motion } from "framer-motion";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Home } from "lucide-react";
 
 const Battle = () => {
   const navigate = useNavigate();
@@ -32,6 +32,14 @@ const Battle = () => {
             </Button>
             <h1 className="text-3xl font-bold text-game-accent">Битва</h1>
           </div>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="text-game-accent hover:text-game-accent/80"
+            onClick={() => navigate("/")}
+          >
+            <Home className="h-5 w-5" />
+          </Button>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
