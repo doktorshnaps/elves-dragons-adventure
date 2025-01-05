@@ -6,6 +6,7 @@ import { useToast } from "@/components/ui/use-toast";
 import { Button } from "@/components/ui/button";
 import { OpponentCard } from "@/components/battle/OpponentCard";
 import { PlayerCard } from "@/components/battle/PlayerCard";
+import { PlayerCards } from "@/components/battle/PlayerCards";
 
 const Battle = () => {
   const navigate = useNavigate();
@@ -13,11 +14,26 @@ const Battle = () => {
   const [level, setLevel] = useState(1);
   const [coins, setCoins] = useState(0);
   const [isPlayerTurn, setIsPlayerTurn] = useState(true);
-  const [playerStats, setPlayerStats] = useState({
+  
+  // Добавляем начальные карты игрока
+  const [playerCards] = useState([
+    { id: 1, name: "Меч героя", power: 5, defense: 2 },
+    { id: 2, name: "Щит стража", power: 2, defense: 8 },
+    { id: 3, name: "Амулет силы", power: 3, defense: 3 },
+  ]);
+
+  // Обновляем статы игрока с учетом карт
+  const baseStats = {
     health: 100,
     maxHealth: 100,
     power: 20,
     defense: 10,
+  };
+
+  const [playerStats, setPlayerStats] = useState({
+    ...baseStats,
+    power: baseStats.power + playerCards.reduce((sum, card) => sum + card.power, 0),
+    defense: baseStats.defense + playerCards.reduce((sum, card) => sum + card.defense, 0),
   });
 
   const getScaledStats = (baseValue: number) => {
@@ -46,7 +62,7 @@ const Battle = () => {
         
         setPlayerStats(prev => {
           const newHealth = Math.max(0, prev.health - damageToHealth);
-          const newDefense = Math.max(0, prev.defense - 1); // Уменьшаем защиту на 1 после каждой атаки
+          const newDefense = Math.max(0, prev.defense - 1);
           
           let message = `${randomOpponent.name} атакует с силой ${damage}!`;
           if (blockedDamage > 0) {
@@ -188,6 +204,7 @@ const Battle = () => {
         </div>
 
         <PlayerCard playerStats={playerStats} level={level} />
+        <PlayerCards cards={playerCards} />
       </motion.div>
 
       <div className="fixed bottom-6 right-6 bg-game-surface p-4 rounded-lg border border-game-accent shadow-lg">
