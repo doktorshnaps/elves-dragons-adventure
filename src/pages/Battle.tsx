@@ -1,16 +1,18 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Card } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
-import { ArrowLeft, Home, Sword, Shield, Heart } from "lucide-react";
+import { ArrowLeft, Home, Heart } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
+import { Button } from "@/components/ui/button";
+import { OpponentCard } from "@/components/battle/OpponentCard";
+import { PlayerCard } from "@/components/battle/PlayerCard";
 
 const Battle = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const [level, setLevel] = useState(1);
   const [coins, setCoins] = useState(0);
+  const [isPlayerTurn, setIsPlayerTurn] = useState(true);
   const [playerStats, setPlayerStats] = useState({
     health: 100,
     maxHealth: 100,
@@ -33,11 +35,54 @@ const Battle = () => {
     maxHealth: getScaledStats(opponent.health)
   })));
 
+  useEffect(() => {
+    if (!isPlayerTurn && opponents.length > 0) {
+      // Враги атакуют после небольшой задержки
+      const timer = setTimeout(() => {
+        const randomOpponent = opponents[Math.floor(Math.random() * opponents.length)];
+        const damage = Math.max(0, randomOpponent.power - playerStats.defense / 2);
+        
+        setPlayerStats(prev => ({
+          ...prev,
+          health: Math.max(0, prev.health - damage)
+        }));
+
+        toast({
+          title: "Враг атакует!",
+          description: `${randomOpponent.name} наносит ${damage} урона!`,
+        });
+
+        setIsPlayerTurn(true);
+      }, 1000);
+
+      return () => clearTimeout(timer);
+    }
+  }, [isPlayerTurn, opponents, playerStats.defense]);
+
+  useEffect(() => {
+    if (playerStats.health <= 0) {
+      toast({
+        title: "Игра окончена!",
+        description: "Ваш герой пал в бою!",
+        variant: "destructive",
+      });
+      navigate("/game");
+    }
+  }, [playerStats.health, navigate]);
+
   const attackEnemy = (enemyId: number) => {
+    if (!isPlayerTurn) return;
+
     setOpponents(prevOpponents => {
       const newOpponents = prevOpponents.map(opponent => {
         if (opponent.id === enemyId) {
-          const newHealth = opponent.health - 20;
+          const damage = Math.max(0, playerStats.power - opponent.power / 4);
+          const newHealth = opponent.health - damage;
+          
+          toast({
+            title: "Атака!",
+            description: `Вы нанесли ${damage} урона ${opponent.name}!`,
+          });
           
           if (newHealth <= 0) {
             const earnedCoins = Math.floor(Math.random() * 20) + 10;
@@ -54,7 +99,6 @@ const Battle = () => {
         return opponent;
       }).filter(Boolean);
 
-      // Если все враги побеждены, переходим на следующий уровень
       if (newOpponents.length === 0) {
         const nextLevel = level + 1;
         setLevel(nextLevel);
@@ -63,7 +107,6 @@ const Battle = () => {
           description: `Вы перешли на уровень ${nextLevel}! Враги стали сильнее!`,
         });
 
-        // Создаем новых врагов с увеличенными характеристиками
         return [
           { id: 1, name: "Дракон", power: 5, health: 100 },
           { id: 2, name: "Тролль", power: 3, health: 70 },
@@ -76,6 +119,7 @@ const Battle = () => {
         }));
       }
 
+      setIsPlayerTurn(false);
       return newOpponents;
     });
   };
@@ -116,90 +160,19 @@ const Battle = () => {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
           <AnimatePresence>
             {opponents.map((opponent) => (
-              <motion.div
-                key={`${opponent.id}-${level}`}
-                initial={{ scale: 0.9, opacity: 0 }}
-                animate={{ scale: 1, opacity: 1 }}
-                exit={{ scale: 0.9, opacity: 0 }}
-                transition={{ delay: opponent.id * 0.2 }}
-              >
-                <Card className="p-6 bg-game-surface border-game-accent hover:border-game-primary transition-colors">
-                  <div className="flex flex-col gap-4">
-                    <h3 className="text-xl font-bold text-game-accent">
-                      {opponent.name}
-                    </h3>
-                    <div className="space-y-2">
-                      <p className="text-gray-400">Сила: {opponent.power}</p>
-                      <div className="w-full bg-gray-700 rounded-full h-2.5">
-                        <div
-                          className="bg-red-600 h-2.5 rounded-full transition-all duration-300"
-                          style={{ width: `${(opponent.health / opponent.maxHealth) * 100}%` }}
-                        ></div>
-                      </div>
-                      <p className="text-gray-400">Здоровье: {opponent.health}/{opponent.maxHealth}</p>
-                    </div>
-                    <Button
-                      onClick={() => attackEnemy(opponent.id)}
-                      variant="destructive"
-                      className="w-full"
-                    >
-                      <Sword className="w-4 h-4 mr-2" />
-                      Атаковать
-                    </Button>
-                  </div>
-                </Card>
-              </motion.div>
+              <OpponentCard
+                key={opponent.id}
+                opponent={opponent}
+                onAttack={attackEnemy}
+                isPlayerTurn={isPlayerTurn}
+              />
             ))}
           </AnimatePresence>
         </div>
 
-        {/* Карточка игрока */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="mt-8"
-        >
-          <Card className="p-6 bg-game-surface border-game-primary">
-            <div className="flex flex-col md:flex-row justify-between items-center gap-6">
-              <div className="flex items-center gap-4">
-                <div className="p-3 bg-game-primary rounded-full">
-                  <Shield className="w-6 h-6 text-white" />
-                </div>
-                <div>
-                  <h3 className="text-xl font-bold text-game-accent">Ваш герой</h3>
-                  <p className="text-gray-400">Уровень {level}</p>
-                </div>
-              </div>
-              <div className="flex gap-8">
-                <div className="text-center">
-                  <Sword className="w-6 h-6 mx-auto mb-2 text-game-accent" />
-                  <p className="text-sm text-gray-400">Сила атаки</p>
-                  <p className="font-bold text-game-accent">{playerStats.power}</p>
-                </div>
-                <div className="text-center">
-                  <Shield className="w-6 h-6 mx-auto mb-2 text-game-accent" />
-                  <p className="text-sm text-gray-400">Защита</p>
-                  <p className="font-bold text-game-accent">{playerStats.defense}</p>
-                </div>
-              </div>
-              <div className="flex items-center gap-2">
-                <Heart className="w-6 h-6 text-red-500" />
-                <div className="w-32 bg-gray-700 rounded-full h-2.5">
-                  <div
-                    className="bg-red-600 h-2.5 rounded-full transition-all duration-300"
-                    style={{ width: `${(playerStats.health / playerStats.maxHealth) * 100}%` }}
-                  ></div>
-                </div>
-                <span className="text-gray-400">
-                  {playerStats.health}/{playerStats.maxHealth}
-                </span>
-              </div>
-            </div>
-          </Card>
-        </motion.div>
+        <PlayerCard playerStats={playerStats} level={level} />
       </motion.div>
 
-      {/* Индикатор здоровья в правом нижнем углу */}
       <div className="fixed bottom-6 right-6 bg-game-surface p-4 rounded-lg border border-game-accent shadow-lg">
         <div className="flex items-center gap-2">
           <Heart className="w-6 h-6 text-red-500" />
