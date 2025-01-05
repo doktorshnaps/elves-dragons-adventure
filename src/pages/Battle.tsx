@@ -9,22 +9,32 @@ import { useToast } from "@/components/ui/use-toast";
 const Battle = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
+  const [level, setLevel] = useState(1);
+  const [coins, setCoins] = useState(0);
+
+  const getScaledStats = (baseValue: number) => {
+    return Math.round(baseValue * Math.pow(1.2, level - 1));
+  };
+
   const [opponents, setOpponents] = useState([
     { id: 1, name: "Дракон", power: 5, health: 100 },
     { id: 2, name: "Тролль", power: 3, health: 70 },
     { id: 3, name: "Гоблин", power: 2, health: 50 },
-  ]);
-  const [coins, setCoins] = useState(0);
+  ].map(opponent => ({
+    ...opponent,
+    power: getScaledStats(opponent.power),
+    health: getScaledStats(opponent.health),
+    maxHealth: getScaledStats(opponent.health)
+  })));
 
   const attackEnemy = (enemyId: number) => {
     setOpponents(prevOpponents => {
-      return prevOpponents.map(opponent => {
+      const newOpponents = prevOpponents.map(opponent => {
         if (opponent.id === enemyId) {
-          const newHealth = opponent.health - 20; // Базовый урон от атаки
+          const newHealth = opponent.health - 20;
           
           if (newHealth <= 0) {
-            // Враг побежден
-            const earnedCoins = Math.floor(Math.random() * 20) + 10; // 10-30 монет
+            const earnedCoins = Math.floor(Math.random() * 20) + 10;
             setCoins(prev => prev + earnedCoins);
             toast({
               title: "Враг побежден!",
@@ -37,6 +47,30 @@ const Battle = () => {
         }
         return opponent;
       }).filter(Boolean);
+
+      // Если все враги побеждены, переходим на следующий уровень
+      if (newOpponents.length === 0) {
+        const nextLevel = level + 1;
+        setLevel(nextLevel);
+        toast({
+          title: "Уровень пройден!",
+          description: `Вы перешли на уровень ${nextLevel}! Враги стали сильнее!`,
+        });
+
+        // Создаем новых врагов с увеличенными характеристиками
+        return [
+          { id: 1, name: "Дракон", power: 5, health: 100 },
+          { id: 2, name: "Тролль", power: 3, health: 70 },
+          { id: 3, name: "Гоблин", power: 2, health: 50 },
+        ].map(opponent => ({
+          ...opponent,
+          power: getScaledStats(opponent.power),
+          health: getScaledStats(opponent.health),
+          maxHealth: getScaledStats(opponent.health)
+        }));
+      }
+
+      return newOpponents;
     });
   };
 
@@ -61,6 +95,7 @@ const Battle = () => {
           </div>
           <div className="flex items-center gap-4">
             <span className="text-xl font-bold text-yellow-500">🪙 {coins}</span>
+            <span className="text-xl font-bold text-purple-500">👑 Уровень {level}</span>
             <Button
               variant="ghost"
               size="icon"
@@ -76,7 +111,7 @@ const Battle = () => {
           <AnimatePresence>
             {opponents.map((opponent) => (
               <motion.div
-                key={opponent.id}
+                key={`${opponent.id}-${level}`}
                 initial={{ scale: 0.9, opacity: 0 }}
                 animate={{ scale: 1, opacity: 1 }}
                 exit={{ scale: 0.9, opacity: 0 }}
@@ -92,10 +127,10 @@ const Battle = () => {
                       <div className="w-full bg-gray-700 rounded-full h-2.5">
                         <div
                           className="bg-red-600 h-2.5 rounded-full transition-all duration-300"
-                          style={{ width: `${(opponent.health / 100) * 100}%` }}
+                          style={{ width: `${(opponent.health / opponent.maxHealth) * 100}%` }}
                         ></div>
                       </div>
-                      <p className="text-gray-400">Здоровье: {opponent.health}</p>
+                      <p className="text-gray-400">Здоровье: {opponent.health}/{opponent.maxHealth}</p>
                     </div>
                     <Button
                       onClick={() => attackEnemy(opponent.id)}
