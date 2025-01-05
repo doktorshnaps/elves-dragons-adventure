@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { Wallet2, ArrowLeft } from "lucide-react";
+import { Wallet2, ArrowLeft, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { DungeonSearch } from "./DungeonSearch";
@@ -14,8 +14,21 @@ export const GameInterface = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    const savedState = localStorage.getItem('battleState');
-    setHasActiveDungeon(!!savedState);
+    const checkDungeonState = () => {
+      const savedState = localStorage.getItem('battleState');
+      if (savedState) {
+        const parsedState = JSON.parse(savedState);
+        // Проверяем, есть ли активное подземелье и жив ли персонаж
+        setHasActiveDungeon(parsedState.playerStats.health > 0);
+      } else {
+        setHasActiveDungeon(false);
+      }
+    };
+
+    checkDungeonState();
+    // Добавляем слушатель для storage, чтобы обновлять состояние при изменении localStorage
+    window.addEventListener('storage', checkDungeonState);
+    return () => window.removeEventListener('storage', checkDungeonState);
   }, []);
 
   return (
@@ -53,7 +66,8 @@ export const GameInterface = () => {
             className="bg-game-primary hover:bg-game-primary/80 text-white"
             onClick={() => setShowDungeonSearch(true)}
           >
-            Search Dungeon
+            <Search className="mr-2 h-4 w-4" />
+            Поиск подземелья
           </Button>
         )}
       </div>
