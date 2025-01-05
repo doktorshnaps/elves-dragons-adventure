@@ -2,11 +2,12 @@ import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import { ArrowLeft, Home, Heart } from "lucide-react";
-import { useToast } from "@/components/ui/use-toast";
+import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { OpponentCard } from "@/components/battle/OpponentCard";
 import { PlayerCard } from "@/components/battle/PlayerCard";
 import { PlayerCards } from "@/components/battle/PlayerCards";
+import { Inventory, Item } from "@/components/battle/Inventory";
 
 const Battle = () => {
   const navigate = useNavigate();
@@ -14,15 +15,14 @@ const Battle = () => {
   const [level, setLevel] = useState(1);
   const [coins, setCoins] = useState(0);
   const [isPlayerTurn, setIsPlayerTurn] = useState(true);
+  const [inventory, setInventory] = useState<Item[]>([]);
   
-  // Добавляем начальные карты игрока
   const [playerCards] = useState([
     { id: 1, name: "Меч героя", power: 5, defense: 2 },
     { id: 2, name: "Щит стража", power: 2, defense: 8 },
     { id: 3, name: "Амулет силы", power: 3, defense: 3 },
   ]);
 
-  // Обновляем статы игрока с учетом карт
   const baseStats = {
     health: 100,
     maxHealth: 100,
@@ -50,6 +50,76 @@ const Battle = () => {
     health: getScaledStats(opponent.health),
     maxHealth: getScaledStats(opponent.health)
   })));
+
+  const generateRandomItem = (): Item => {
+    const types: Item["type"][] = ["weapon", "armor", "healthPotion", "defensePotion"];
+    const type = types[Math.floor(Math.random() * types.length)];
+    const value = Math.floor(Math.random() * 10) + 5;
+    
+    const names = {
+      weapon: ["Острый меч", "Боевой топор", "Копье судьбы"],
+      armor: ["Кольчуга", "Латный доспех", "Щит рыцаря"],
+      healthPotion: ["Зелье исцеления", "Эликсир жизни", "Бальзам"],
+      defensePotion: ["Зелье защиты", "Эликсир стойкости", "Настой брони"],
+    };
+    
+    const name = names[type][Math.floor(Math.random() * names[type].length)];
+    
+    return {
+      id: Date.now(),
+      name,
+      type,
+      value,
+    };
+  };
+
+  const handleUseItem = (item: Item) => {
+    switch (item.type) {
+      case "weapon":
+        setPlayerStats(prev => ({
+          ...prev,
+          power: prev.power + item.value
+        }));
+        toast({
+          title: "Предмет использован",
+          description: `${item.name} увеличивает силу атаки на ${item.value}`,
+        });
+        break;
+      case "armor":
+        setPlayerStats(prev => ({
+          ...prev,
+          defense: prev.defense + item.value
+        }));
+        toast({
+          title: "Предмет использован",
+          description: `${item.name} увеличивает защиту на ${item.value}`,
+        });
+        break;
+      case "healthPotion":
+        setPlayerStats(prev => ({
+          ...prev,
+          health: Math.min(prev.maxHealth, prev.health + item.value)
+        }));
+        toast({
+          title: "Зелье использовано",
+          description: `Восстановлено ${item.value} здоровья`,
+        });
+        break;
+      case "defensePotion":
+        setPlayerStats(prev => ({
+          ...prev,
+          defense: prev.defense + item.value
+        }));
+        toast({
+          title: "Зелье использовано",
+          description: `Восстановлено ${item.value} защиты`,
+        });
+        break;
+    }
+    
+    setInventory(prev => prev.filter(i => i.id !== item.id));
+    setIsPlayerTurn(false);
+  };
 
   useEffect(() => {
     if (!isPlayerTurn && opponents.length > 0) {
@@ -120,6 +190,16 @@ const Battle = () => {
           if (newHealth <= 0) {
             const earnedCoins = Math.floor(Math.random() * 20) + 10;
             setCoins(prev => prev + earnedCoins);
+            
+            if (Math.random() > 0.5) {
+              const droppedItem = generateRandomItem();
+              setInventory(prev => [...prev, droppedItem]);
+              toast({
+                title: "Предмет найден!",
+                description: `${opponent.name} сбросил ${droppedItem.name}!`,
+              });
+            }
+            
             toast({
               title: "Враг побежден!",
               description: `Вы получили ${earnedCoins} монет!`,
@@ -205,6 +285,7 @@ const Battle = () => {
 
         <PlayerCard playerStats={playerStats} level={level} />
         <PlayerCards cards={playerCards} />
+        <Inventory items={inventory} onUseItem={handleUseItem} />
       </motion.div>
 
       <div className="fixed bottom-6 right-6 bg-game-surface p-4 rounded-lg border border-game-accent shadow-lg">
