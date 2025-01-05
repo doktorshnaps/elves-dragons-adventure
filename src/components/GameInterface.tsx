@@ -1,14 +1,22 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { Wallet2 } from "lucide-react";
+import { Wallet2, ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { DungeonSearch } from "./DungeonSearch";
+import { useNavigate } from "react-router-dom";
 
 export const GameInterface = () => {
   const [isConnected, setIsConnected] = useState(false);
   const [balance, setBalance] = useState("0");
   const [showDungeonSearch, setShowDungeonSearch] = useState(false);
+  const [hasActiveDungeon, setHasActiveDungeon] = useState(false);
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    const savedState = localStorage.getItem('battleState');
+    setHasActiveDungeon(!!savedState);
+  }, []);
 
   return (
     <motion.div
@@ -32,12 +40,22 @@ export const GameInterface = () => {
           </Card>
         </div>
 
-        <Button
-          className="bg-game-primary hover:bg-game-primary/80 text-white"
-          onClick={() => setShowDungeonSearch(true)}
-        >
-          Search Dungeon
-        </Button>
+        {hasActiveDungeon ? (
+          <Button
+            className="bg-game-primary hover:bg-game-primary/80 text-white"
+            onClick={() => navigate("/battle")}
+          >
+            <ArrowLeft className="mr-2 h-4 w-4" />
+            Вернуться в подземелье
+          </Button>
+        ) : (
+          <Button
+            className="bg-game-primary hover:bg-game-primary/80 text-white"
+            onClick={() => setShowDungeonSearch(true)}
+          >
+            Search Dungeon
+          </Button>
+        )}
       </div>
 
       <Card className="bg-game-surface border-game-accent p-6">
