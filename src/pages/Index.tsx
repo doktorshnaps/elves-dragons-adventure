@@ -1,11 +1,13 @@
-// Update this page (the content is just a fallback if you fail to update the page)
+import { GameTitle } from "@/components/GameTitle";
 
 const Index = () => {
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-100">
-      <div className="text-center">
-        <h1 className="text-4xl font-bold mb-4">Welcome to Your Blank App</h1>
-        <p className="text-xl text-gray-600">Start building your amazing project here!</p>
+    <div className="min-h-screen bg-game-background flex items-center justify-center">
+      <div className="relative w-full">
+        <div className="absolute inset-0 flex items-center justify-center">
+          <div className="w-64 h-64 bg-game-primary/20 rounded-full filter blur-3xl animate-pulse" />
+        </div>
+        <GameTitle />
       </div>
     </div>
   );
