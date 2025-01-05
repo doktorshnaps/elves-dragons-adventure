@@ -40,20 +40,19 @@ const Battle = () => {
       const timer = setTimeout(() => {
         const randomOpponent = opponents[Math.floor(Math.random() * opponents.length)];
         
-        // Расчет урона с учетом защиты
-        const initialDamage = randomOpponent.power;
-        const remainingDefense = Math.max(0, playerStats.defense - initialDamage);
-        const damageToHealth = Math.max(0, initialDamage - playerStats.defense);
+        // Новая логика расчета урона
+        const damage = randomOpponent.power;
+        const blockedDamage = Math.min(damage, playerStats.defense);
+        const damageToHealth = Math.max(0, damage - blockedDamage);
         
         setPlayerStats(prev => {
-          const newDefense = Math.max(0, prev.defense);
           const newHealth = Math.max(0, prev.health - damageToHealth);
           
-          let message = `${randomOpponent.name} атакует!`;
-          if (initialDamage <= prev.defense) {
-            message += ` Защита поглотила весь урон!`;
-          } else {
-            message += ` Защита поглотила ${Math.min(initialDamage, prev.defense)} урона.`;
+          let message = `${randomOpponent.name} атакует с силой ${damage}!`;
+          if (blockedDamage > 0) {
+            message += ` Защита блокирует ${blockedDamage} урона.`;
+          }
+          if (damageToHealth > 0) {
             message += ` Нанесено ${damageToHealth} урона здоровью!`;
           }
           
@@ -64,7 +63,6 @@ const Battle = () => {
           
           return {
             ...prev,
-            defense: newDefense,
             health: newHealth,
           };
         });
