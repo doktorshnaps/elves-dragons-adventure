@@ -173,18 +173,25 @@ const Battle = () => {
     }
   }, [playerStats.health, navigate]);
 
+  const calculateDamage = (baseDamage: number) => {
+    const isCritical = Math.random() < 0.1; // 10% шанс крита
+    const damage = isCritical ? baseDamage * 1.5 : baseDamage;
+    return { damage, isCritical };
+  };
+
   const attackEnemy = (enemyId: number) => {
     if (!isPlayerTurn) return;
 
     setOpponents(prevOpponents => {
       const newOpponents = prevOpponents.map(opponent => {
         if (opponent.id === enemyId) {
-          const damage = Math.max(0, playerStats.power - opponent.power / 4);
+          const { damage, isCritical } = calculateDamage(playerStats.power);
           const newHealth = opponent.health - damage;
           
           toast({
-            title: "Атака!",
-            description: `Вы нанесли ${damage} урона ${opponent.name}!`,
+            title: isCritical ? "Критическая атака!" : "Атака!",
+            description: `Вы нанесли ${isCritical ? "критические " : ""}${damage.toFixed(0)} урона ${opponent.name}!`,
+            variant: isCritical ? "destructive" : "default",
           });
           
           if (newHealth <= 0) {
