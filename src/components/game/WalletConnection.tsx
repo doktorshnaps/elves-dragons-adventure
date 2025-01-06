@@ -24,11 +24,11 @@ const initWallet = async () => {
       network: "testnet",
     });
 
-    if (!modal) {
-      modal = setupModal(selector, {
-        contractId: "game.testnet",
-      });
-    }
+    modal = setupModal(selector, {
+      contractId: "game.testnet",
+    });
+
+    return { selector, modal };
   }
   return { selector, modal };
 };
@@ -40,13 +40,14 @@ export const WalletConnection = ({
   setWalletAddress,
 }: WalletConnectionProps) => {
   const { toast } = useToast();
+  const [isInitialized, setIsInitialized] = useState(false);
 
   useEffect(() => {
     const setupWallet = async () => {
       try {
         const { selector } = await initWallet();
-        const wallet = await selector.wallet();
-        const accounts = await wallet.getAccounts();
+        const accounts = await selector.getAccounts();
+        console.log("Available accounts:", accounts);
 
         if (accounts.length > 0) {
           setWalletAddress(accounts[0].accountId);
@@ -58,6 +59,7 @@ export const WalletConnection = ({
         }
 
         selector.on("signedIn", async (event) => {
+          console.log("Signed in event:", event);
           setWalletAddress(event.accounts[0].accountId);
           setIsConnected(true);
           toast({
@@ -67,6 +69,7 @@ export const WalletConnection = ({
         });
 
         selector.on("signedOut", async () => {
+          console.log("Signed out event triggered");
           setWalletAddress(null);
           setIsConnected(false);
           toast({
@@ -74,6 +77,8 @@ export const WalletConnection = ({
             description: "Ваш кошелек был отключен",
           });
         });
+
+        setIsInitialized(true);
       } catch (error) {
         console.error("Error initializing wallet:", error);
         toast({
@@ -84,17 +89,22 @@ export const WalletConnection = ({
       }
     };
 
-    setupWallet();
-  }, [setIsConnected, setWalletAddress, toast]);
+    if (!isInitialized) {
+      setupWallet();
+    }
+  }, [setIsConnected, setWalletAddress, toast, isInitialized]);
 
   const handleConnect = async () => {
     try {
+      console.log("Handle connect triggered, current connection status:", isConnected);
       const { selector, modal } = await initWallet();
       
       if (isConnected) {
+        console.log("Attempting to sign out");
         const wallet = await selector.wallet();
         await wallet.signOut();
       } else {
+        console.log("Showing modal for connection");
         modal.show();
       }
     } catch (error) {
