@@ -2,13 +2,11 @@ import { useState, useEffect } from "react";
 import { setupWalletSelector } from "@near-wallet-selector/core";
 import { setupModal } from "@near-wallet-selector/modal-ui";
 import { setupMyNearWallet } from "@near-wallet-selector/my-near-wallet";
-import { useToast } from "@/hooks/use-toast";
 
 export const useWalletInit = (
   setIsConnected: (value: boolean) => void,
   setWalletAddress: (value: string | null) => void
 ) => {
-  const { toast } = useToast();
   const [selector, setSelector] = useState<any>(null);
   const [modal, setModal] = useState<any>(null);
 
@@ -33,24 +31,15 @@ export const useWalletInit = (
           if (accounts.length > 0) {
             setIsConnected(true);
             setWalletAddress(accounts[0].accountId);
-            toast({
-              title: "Wallet Connected",
-              description: `Connected to ${accounts[0].accountId}`,
-            });
           }
         }
       } catch (error) {
         console.error("Error initializing wallet:", error);
-        toast({
-          title: "Initialization Error",
-          description: "Failed to initialize wallet connection",
-          variant: "destructive",
-        });
       }
     };
 
     initWallet();
-  }, [toast, setIsConnected, setWalletAddress]);
+  }, [setIsConnected, setWalletAddress]);
 
   return { selector, modal };
 };
