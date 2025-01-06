@@ -1,12 +1,12 @@
 import { useState, useEffect } from "react";
 import { Wallet2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import "@/utils/near-polyfills";
 import { setupWalletSelector } from "@near-wallet-selector/core";
 import { setupModal } from "@near-wallet-selector/modal-ui";
 import { setupMyNearWallet } from "@near-wallet-selector/my-near-wallet";
 import { useToast } from "@/hooks/use-toast";
 import "@near-wallet-selector/modal-ui/styles.css";
-import "@/utils/near-polyfills";
 
 interface WalletConnectionProps {
   isConnected: boolean;
