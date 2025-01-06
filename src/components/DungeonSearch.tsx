@@ -24,8 +24,8 @@ export const DungeonSearch = ({ onClose, balance, onBalanceChange }: DungeonSear
       const parsedState = JSON.parse(savedState);
       if (parsedState.playerStats.health > 0) {
         toast({
-          title: "Подземелье уже активно",
-          description: "Вы должны завершить текущее подземелье или погибнуть, чтобы начать новое",
+          title: "У вас уже есть активное подземелье",
+          description: "Завершите текущее подземелье или погибните, чтобы начать новое",
           variant: "destructive",
         });
         return;
@@ -66,7 +66,7 @@ export const DungeonSearch = ({ onClose, balance, onBalanceChange }: DungeonSear
           <h2 className="text-2xl font-bold text-game-accent mb-6">Поиск подземелья</h2>
           
           <div className="mb-4">
-            <p className="text-game-accent">Баланс: {balance} токенов</p>
+            <p className="text-game-accent">Баланс: {balance} монет</p>
           </div>
           
           <motion.div
@@ -79,7 +79,7 @@ export const DungeonSearch = ({ onClose, balance, onBalanceChange }: DungeonSear
 
           {result && (
             <p className="text-xl text-game-accent mb-6">
-              Выпало число: {result}
+              Выпало значение: {result}
             </p>
           )}
 
@@ -89,7 +89,7 @@ export const DungeonSearch = ({ onClose, balance, onBalanceChange }: DungeonSear
               disabled={rolling}
               className="bg-game-primary hover:bg-game-primary/80"
             >
-              {rolling ? "Бросаем кубик..." : "Бросить кубик"}
+              {rolling ? "Бросаем кость..." : "Бросить кость"}
             </Button>
             <Button
               onClick={onClose}

@@ -90,7 +90,7 @@ export const GameInterface = () => {
           </Button>
           
           <Card className="bg-game-surface border-game-accent p-4">
-            <p className="text-game-accent">Баланс: {balance} токенов</p>
+            <p className="text-game-accent">Баланс: {balance} монет</p>
           </Card>
 
           <Button
@@ -99,7 +99,7 @@ export const GameInterface = () => {
             onClick={() => setShowShop(true)}
           >
             <ShoppingBag className="mr-2 h-4 w-4" />
-            Магазин
+            Магазин предметов
           </Button>
         </div>
 
@@ -117,7 +117,7 @@ export const GameInterface = () => {
             onClick={() => setShowDungeonSearch(true)}
           >
             <Search className="mr-2 h-4 w-4" />
-            Поиск подземелья
+            Найти подземелье
           </Button>
         )}
       </div>
