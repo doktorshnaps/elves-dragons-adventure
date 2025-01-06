@@ -8,6 +8,7 @@ import { Shop } from "./Shop";
 import { useNavigate } from "react-router-dom";
 import { Item } from "./battle/Inventory";
 import { InventoryDisplay } from "./game/InventoryDisplay";
+import { DungeonsList } from "./game/DungeonsList";
 
 export const GameInterface = () => {
   const [isConnected, setIsConnected] = useState(false);
@@ -123,6 +124,8 @@ export const GameInterface = () => {
       </div>
 
       <InventoryDisplay inventory={inventory} onUseItem={handleUseItem} />
+      
+      <DungeonsList />
 
       {showDungeonSearch && (
         <DungeonSearch 
