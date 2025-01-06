@@ -2,25 +2,7 @@ import "@/utils/near-polyfills";
 import { useToast } from "@/hooks/use-toast";
 import { useWalletInit } from "@/hooks/useWalletInit";
 import { ConnectButton } from "./ConnectButton";
-import { HOT } from "@hot-wallet/sdk";
 import "@near-wallet-selector/modal-ui/styles.css";
-
-// Initialize Hot Wallet provider
-HOT.setupEthProvider((request, chain, address) => {
-  // For demo purposes, we'll use a public Ethereum RPC
-  const publicRpcProvider: Record<string, string> = {
-    "1": "https://eth-mainnet.public.blastapi.io",
-    "5": "https://eth-goerli.public.blastapi.io"
-  };
-  
-  return fetch(publicRpcProvider[chain], {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify(request),
-  }).then(res => res.json());
-});
 
 interface WalletConnectionProps {
   isConnected: boolean;
@@ -49,23 +31,9 @@ export const WalletConnection = ({
       return;
     }
 
+    if (!modal) return;
+
     try {
-      // First try Hot Wallet
-      const hotWalletAddress = await (HOT as any).requestAccounts().catch(() => null);
-      
-      if (hotWalletAddress && hotWalletAddress[0]) {
-        setIsConnected(true);
-        setWalletAddress(hotWalletAddress[0]);
-        toast({
-          title: "Кошелек подключен",
-          description: `Подключен к аккаунту ${hotWalletAddress[0]}`,
-        });
-        return;
-      }
-
-      // If Hot Wallet fails, try NEAR wallet
-      if (!modal) return;
-
       modal.show();
       const wallet = await selector?.wallet();
       
@@ -82,7 +50,7 @@ export const WalletConnection = ({
         });
       }
     } catch (error) {
-      console.error('Wallet connection error:', error);
+      console.error('Error connecting wallet:', error);
     }
   };
 
