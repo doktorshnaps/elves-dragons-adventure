@@ -9,8 +9,8 @@ import { useNavigate } from "react-router-dom";
 import { Item } from "./battle/Inventory";
 import { InventoryDisplay } from "./game/InventoryDisplay";
 import { NFTGallery } from "./NFTGallery";
-import { useAccount, useConnect, useDisconnect } from 'wagmi';
-import { useWeb3Modal } from '@web3modal/react';
+import { useAccount } from 'wagmi'
+import { useWeb3Modal } from '@web3modal/wagmi/react'
 
 export const GameInterface = () => {
   const { isConnected } = useAccount();

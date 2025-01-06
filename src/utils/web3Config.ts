@@ -1,22 +1,26 @@
-import { configureChains, createConfig } from 'wagmi';
-import { mainnet } from 'wagmi/chains';
-import { publicProvider } from 'wagmi/providers/public';
-import { createWeb3Modal } from '@web3modal/react';
+import { createConfig, http } from 'wagmi'
+import { mainnet } from 'wagmi/chains'
+import { createWeb3Modal, defaultWagmiConfig } from '@web3modal/wagmi/react'
 
-const projectId = 'YOUR_WALLETCONNECT_PROJECT_ID';
+const projectId = 'YOUR_WALLETCONNECT_PROJECT_ID'
 
-const { chains, publicClient } = configureChains(
-  [mainnet],
-  [publicProvider()]
-);
+const metadata = {
+  name: 'Web3Modal Game',
+  description: 'Web3Modal Example',
+  url: 'https://web3modal.com', 
+  icons: ['https://avatars.githubusercontent.com/u/37784886']
+}
 
-export const config = createConfig({
-  autoConnect: true,
-  publicClient,
-});
+export const config = defaultWagmiConfig({
+  chains: [mainnet], 
+  projectId,
+  metadata,
+  ssr: false
+})
 
 export const web3modal = createWeb3Modal({
   wagmiConfig: config,
   projectId,
-  chains,
-});
+  chains: [mainnet],
+  themeMode: 'dark'
+})
