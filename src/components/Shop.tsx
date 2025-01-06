@@ -71,6 +71,16 @@ export const Shop = ({ onClose, balance, onBalanceChange }: ShopProps) => {
     return savedInventory ? JSON.parse(savedInventory) : [];
   });
 
+  const updateInventory = (newInventory: any[]) => {
+    localStorage.setItem('gameInventory', JSON.stringify(newInventory));
+    setInventory(newInventory);
+    // Создаем новое событие для синхронизации
+    const event = new CustomEvent('inventoryUpdate', { 
+      detail: { inventory: newInventory }
+    });
+    window.dispatchEvent(event);
+  };
+
   const buyItem = (item: ShopItem) => {
     if (balance < item.price) {
       toast({
@@ -88,19 +98,15 @@ export const Shop = ({ onClose, balance, onBalanceChange }: ShopProps) => {
 
     const currentInventory = localStorage.getItem('gameInventory');
     const parsedInventory = currentInventory ? JSON.parse(currentInventory) : [];
-    
     const newInventory = [...parsedInventory, newItem];
     
-    localStorage.setItem('gameInventory', JSON.stringify(newInventory));
-    setInventory(newInventory);
+    updateInventory(newInventory);
     onBalanceChange(balance - item.price);
 
     toast({
       title: "Покупка успешна!",
       description: `Вы приобрели ${item.name}`,
     });
-
-    window.dispatchEvent(new Event('storage'));
   };
 
   return (

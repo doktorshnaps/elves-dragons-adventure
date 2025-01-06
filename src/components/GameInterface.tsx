@@ -51,12 +51,18 @@ export const GameInterface = () => {
         setInventory(newInventory);
       }
     };
+
+    const handleInventoryUpdate = (e: CustomEvent<{ inventory: Item[] }>) => {
+      setInventory(e.detail.inventory);
+    };
     
     window.addEventListener('storage', handleStorageChange);
+    window.addEventListener('inventoryUpdate', handleInventoryUpdate as EventListener);
     
     return () => {
       clearInterval(interval);
       window.removeEventListener('storage', handleStorageChange);
+      window.removeEventListener('inventoryUpdate', handleInventoryUpdate as EventListener);
     };
   }, []);
 
