@@ -1,11 +1,12 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect } from "react";
 import { Wallet2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { setupWalletSelector } from "@near-wallet-selector/core";
-import { setupModal } from "@near-wallet-selector/modal-ui";
-import { setupMyNearWallet } from "@near-wallet-selector/my-near-wallet";
+import { setupWalletSelector, Wallet } from "@near-wallet-selector/core";
+import { setupModal } from "@near-wallet-selector/modal-ui-js";
+import { setupHotWallet } from "@hot-wallet/sdk/adapter/near";
+import { HOT, verifySignature } from "@hot-wallet/sdk";
 import { useToast } from "@/hooks/use-toast";
-import "@near-wallet-selector/modal-ui/styles.css";
+import "@near-wallet-selector/modal-ui-js/styles.css";
 
 interface WalletConnectionProps {
   isConnected: boolean;
@@ -14,6 +15,15 @@ interface WalletConnectionProps {
   setWalletAddress: (value: string | null) => void;
 }
 
+const initSelector = (async () => {
+  const selector = await setupWalletSelector({ 
+    modules: [setupHotWallet()], 
+    network: "testnet" 
+  });
+  const modal = setupModal(selector, { contractId: "game.testnet" });
+  return { selector, modal };
+})();
+
 export const WalletConnection = ({
   isConnected,
   setIsConnected,
@@ -21,90 +31,68 @@ export const WalletConnection = ({
   setWalletAddress,
 }: WalletConnectionProps) => {
   const { toast } = useToast();
-  const [walletModal, setWalletModal] = useState<any>(null);
-  const [selector, setSelector] = useState<any>(null);
+  const [wallet, setWallet] = useState<Wallet>();
 
-  const initWallet = useCallback(async () => {
-    try {
-      const selector = await setupWalletSelector({
-        network: "testnet",
-        modules: [setupMyNearWallet()],
+  useEffect(() => {
+    initSelector.then(({ selector }) => {
+      selector.wallet().then((wallet) => {
+        wallet.getAccounts().then((accounts) => {
+          if (accounts.length > 0) {
+            setWalletAddress(accounts[0].accountId);
+            setIsConnected(true);
+            setWallet(wallet);
+            toast({
+              title: "Кошелек подключен",
+              description: `Подключен к ${accounts[0].accountId}`,
+            });
+          }
+        });
       });
 
-      const modal = setupModal(selector, {
-        contractId: "game.testnet",
-      });
-
-      setSelector(selector);
-      setWalletModal(modal);
-
-      const wallet = await selector.wallet();
-      const accounts = await wallet.getAccounts();
-
-      if (accounts.length > 0) {
+      selector.on("signedIn", async (event) => {
+        setWallet(await selector.wallet());
+        setWalletAddress(event.accounts[0].accountId);
         setIsConnected(true);
-        setWalletAddress(accounts[0].accountId);
         toast({
           title: "Кошелек подключен",
-          description: `Подключен к ${accounts[0].accountId}`,
+          description: `Подключен к ${event.accounts[0].accountId}`,
         });
-      }
-    } catch (error) {
+      });
+
+      selector.on("signedOut", async () => {
+        setWallet(undefined);
+        setWalletAddress(null);
+        setIsConnected(false);
+        toast({
+          title: "Кошелек отключен",
+          description: "Ваш кошелек был отключен",
+        });
+      });
+    }).catch((error) => {
       console.error("Error initializing wallet:", error);
       toast({
         title: "Ошибка инициализации",
         description: "Не удалось инициализировать кошелек",
         variant: "destructive",
       });
-    }
+    });
   }, [setIsConnected, setWalletAddress, toast]);
 
-  useEffect(() => {
-    initWallet();
-  }, [initWallet]);
-
   const handleConnect = async () => {
-    if (isConnected) {
-      setIsConnected(false);
-      setWalletAddress(null);
-      toast({
-        title: "Кошелек отключен",
-        description: "Ваш кошелек был отключен",
-      });
-    } else {
-      try {
-        if (!walletModal) {
-          toast({
-            title: "Ошибка подключения",
-            description: "Кошелек не инициализирован. Попробуйте перезагрузить страницу.",
-            variant: "destructive",
-          });
-          return;
-        }
-
-        await walletModal.show();
-        
-        if (selector) {
-          const wallet = await selector.wallet();
-          const accounts = await wallet.getAccounts();
-          
-          if (accounts.length > 0) {
-            setIsConnected(true);
-            setWalletAddress(accounts[0].accountId);
-            toast({
-              title: "Кошелек подключен",
-              description: `Подключен к ${accounts[0].accountId}`,
-            });
-          }
-        }
-      } catch (error) {
-        console.error('Error connecting wallet:', error);
-        toast({
-          title: "Ошибка подключения",
-          description: "Не удалось подключить кошелек",
-          variant: "destructive",
-        });
+    try {
+      const { modal } = await initSelector;
+      if (wallet) {
+        await wallet.signOut();
+      } else {
+        modal.show();
       }
+    } catch (error) {
+      console.error('Error connecting wallet:', error);
+      toast({
+        title: "Ошибка подключения",
+        description: "Не удалось подключить кошелек",
+        variant: "destructive",
+      });
     }
   };
 
