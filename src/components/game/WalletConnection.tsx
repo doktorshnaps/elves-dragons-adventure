@@ -2,11 +2,10 @@ import { useState, useEffect } from "react";
 import { Wallet2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { setupWalletSelector, Wallet } from "@near-wallet-selector/core";
-import { setupModal } from "@near-wallet-selector/modal-ui-js";
+import { setupModal } from "@near-wallet-selector/modal-ui";
 import { setupHotWallet } from "@hot-wallet/sdk/adapter/near";
-import { HOT, verifySignature } from "@hot-wallet/sdk";
 import { useToast } from "@/hooks/use-toast";
-import "@near-wallet-selector/modal-ui-js/styles.css";
+import "@near-wallet-selector/modal-ui/styles.css";
 
 interface WalletConnectionProps {
   isConnected: boolean;
