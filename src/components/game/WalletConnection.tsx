@@ -8,12 +8,12 @@ import "@near-wallet-selector/modal-ui/styles.css";
 // Initialize Hot Wallet provider
 HOT.setupEthProvider((request, chain, address) => {
   // For demo purposes, we'll use a public Ethereum RPC
-  const publicRpcProvider = {
+  const publicRpcProvider: Record<string, string> = {
     "1": "https://eth-mainnet.public.blastapi.io",
     "5": "https://eth-goerli.public.blastapi.io"
   };
   
-  return fetch(publicRpcProvider[chain as "1" | "5"], {
+  return fetch(publicRpcProvider[chain], {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -51,7 +51,7 @@ export const WalletConnection = ({
 
     try {
       // First try Hot Wallet
-      const hotWalletAddress = await HOT.requestAccounts().catch(() => null);
+      const hotWalletAddress = await (HOT as any).requestAccounts().catch(() => null);
       
       if (hotWalletAddress && hotWalletAddress[0]) {
         setIsConnected(true);
