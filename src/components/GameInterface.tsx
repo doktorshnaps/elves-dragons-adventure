@@ -9,9 +9,14 @@ import { useNavigate } from "react-router-dom";
 import { Item } from "./battle/Inventory";
 import { InventoryDisplay } from "./game/InventoryDisplay";
 import { DungeonsList } from "./game/DungeonsList";
+import { setupWalletSelector } from "@near-wallet-selector/core";
+import { setupModal } from "@near-wallet-selector/modal-ui";
+import { setupMyNearWallet } from "@near-wallet-selector/my-near-wallet";
+import { useToast } from "@/hooks/use-toast";
 
 export const GameInterface = () => {
   const [isConnected, setIsConnected] = useState(false);
+  const [walletAddress, setWalletAddress] = useState<string | null>(null);
   const [balance, setBalance] = useState(() => {
     const savedBalance = localStorage.getItem('gameBalance');
     return savedBalance ? parseInt(savedBalance, 10) : 0;
@@ -24,6 +29,76 @@ export const GameInterface = () => {
     return savedInventory ? JSON.parse(savedInventory) : [];
   });
   const navigate = useNavigate();
+  const { toast } = useToast();
+
+  useEffect(() => {
+    const initWallet = async () => {
+      const selector = await setupWalletSelector({
+        network: "testnet",
+        modules: [setupMyNearWallet()],
+      });
+
+      const modal = setupModal(selector, {
+        contractId: "game.testnet",
+      });
+
+      const wallet = await selector.wallet();
+      const accounts = await wallet.getAccounts();
+
+      if (accounts.length > 0) {
+        setIsConnected(true);
+        setWalletAddress(accounts[0].accountId);
+        toast({
+          title: "Wallet Connected",
+          description: `Connected to ${accounts[0].accountId}`,
+        });
+      }
+
+      // Add wallet to window for easy access
+      (window as any).walletSelector = selector;
+      (window as any).walletModal = modal;
+    };
+
+    initWallet().catch(console.error);
+  }, [toast]);
+
+  const handleConnect = async () => {
+    if (isConnected) {
+      // Disconnect wallet
+      setIsConnected(false);
+      setWalletAddress(null);
+      toast({
+        title: "Wallet Disconnected",
+        description: "Your wallet has been disconnected",
+      });
+    } else {
+      // Connect wallet
+      try {
+        const modal = (window as any).walletModal;
+        await modal.show();
+        
+        const selector = (window as any).walletSelector;
+        const wallet = await selector.wallet();
+        const accounts = await wallet.getAccounts();
+        
+        if (accounts.length > 0) {
+          setIsConnected(true);
+          setWalletAddress(accounts[0].accountId);
+          toast({
+            title: "Wallet Connected",
+            description: `Connected to ${accounts[0].accountId}`,
+          });
+        }
+      } catch (error) {
+        console.error('Error connecting wallet:', error);
+        toast({
+          title: "Connection Error",
+          description: "Failed to connect wallet",
+          variant: "destructive",
+        });
+      }
+    }
+  };
 
   const checkDungeonState = () => {
     const savedState = localStorage.getItem('battleState');
@@ -47,7 +122,7 @@ export const GameInterface = () => {
     
     const handleStorageChange = (e: StorageEvent) => {
       if (e.key === 'gameBalance') {
-        const newBalance = e.newValue ? parseInt(e.newValue, 10) : 1000;
+        const newBalance = e.newValue ? parseInt(e.newValue, 10) : 0;
         setBalance(newBalance);
       } else if (e.key === 'gameInventory') {
         const newInventory = e.newValue ? JSON.parse(e.newValue) : [];
@@ -79,10 +154,10 @@ export const GameInterface = () => {
           <Button
             variant="outline"
             className="bg-game-surface border-game-accent text-game-accent hover:bg-game-accent hover:text-white transition-all duration-300"
-            onClick={() => setIsConnected(!isConnected)}
+            onClick={handleConnect}
           >
             <Wallet2 className="mr-2 h-4 w-4" />
-            {isConnected ? "Connected" : "Connect Wallet"}
+            {isConnected ? `Connected: ${walletAddress?.slice(0, 6)}...` : "Connect Wallet"}
           </Button>
           
           <Card className="bg-game-surface border-game-accent p-4">
