@@ -40,6 +40,29 @@ export const generateLootTable = (isBoss: boolean): LootTable => {
   };
 };
 
+const lootItems = {
+  healthPotion: {
+    name: "Малое зелье здоровья",
+    type: "healthPotion" as const,
+    value: 30
+  },
+  defensePotion: {
+    name: "Зелье защиты",
+    type: "defensePotion" as const,
+    value: 20
+  },
+  weapon: {
+    name: "Железный меч",
+    type: "weapon" as const,
+    value: 15
+  },
+  armor: {
+    name: "Кожаная броня",
+    type: "armor" as const,
+    value: 10
+  }
+};
+
 export const rollLoot = (lootTable: LootTable): { items: Item[], coins: number } => {
   const items: Item[] = [];
   let nextId = Date.now();
@@ -47,36 +70,28 @@ export const rollLoot = (lootTable: LootTable): { items: Item[], coins: number }
   if (Math.random() < lootTable.healthPotion) {
     items.push({
       id: nextId++,
-      name: "Зелье здоровья",
-      type: "healthPotion",
-      value: 30
+      ...lootItems.healthPotion
     });
   }
 
   if (Math.random() < lootTable.defensePotion) {
     items.push({
       id: nextId++,
-      name: "Зелье защиты",
-      type: "defensePotion",
-      value: 20
+      ...lootItems.defensePotion
     });
   }
 
   if (Math.random() < lootTable.weapon) {
     items.push({
       id: nextId++,
-      name: "Меч воина",
-      type: "weapon",
-      value: 15
+      ...lootItems.weapon
     });
   }
 
   if (Math.random() < lootTable.armor) {
     items.push({
       id: nextId++,
-      name: "Броня воина",
-      type: "armor",
-      value: 10
+      ...lootItems.armor
     });
   }
 

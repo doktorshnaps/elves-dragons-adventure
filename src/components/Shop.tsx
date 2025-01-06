@@ -80,15 +80,36 @@ export const Shop = ({ onClose, balance, onBalanceChange }: ShopProps) => {
       return;
     }
 
-    const newInventory = [...inventory, { ...item, id: Date.now() }];
-    setInventory(newInventory);
+    // Создаем новый предмет с уникальным id
+    const newItem = {
+      ...item,
+      id: Date.now()
+    };
+
+    // Получаем текущий инвентарь из localStorage
+    const currentInventory = localStorage.getItem('gameInventory');
+    const parsedInventory = currentInventory ? JSON.parse(currentInventory) : [];
+    
+    // Добавляем новый предмет
+    const newInventory = [...parsedInventory, newItem];
+    
+    // Сохраняем обновленный инвентарь
     localStorage.setItem('gameInventory', JSON.stringify(newInventory));
+    
+    // Обновляем локальное состояние
+    setInventory(newInventory);
+    
+    // Обновляем баланс
     onBalanceChange(balance - item.price);
 
+    // Показываем уведомление об успешной покупке
     toast({
       title: "Покупка успешна!",
       description: `Вы приобрели ${item.name}`,
     });
+
+    // Вызываем событие storage для синхронизации с другими компонентами
+    window.dispatchEvent(new Event('storage'));
   };
 
   return (
