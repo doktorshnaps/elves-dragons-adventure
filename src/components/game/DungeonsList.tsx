@@ -5,7 +5,7 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
-import { Sword, Shield, Potion } from "lucide-react";
+import { Sword, Shield, FlaskConical } from "lucide-react";
 
 const dungeonInfo = [
   {
