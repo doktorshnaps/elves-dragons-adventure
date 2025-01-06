@@ -1,11 +1,12 @@
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { Wallet2, ArrowLeft, Search, ShoppingBag } from "lucide-react";
+import { Wallet2, ArrowLeft, Search, ShoppingBag, Sword, Shield, Beaker } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { DungeonSearch } from "./DungeonSearch";
 import { Shop } from "./Shop";
 import { useNavigate } from "react-router-dom";
+import { Item } from "./battle/Inventory";
 
 export const GameInterface = () => {
   const [isConnected, setIsConnected] = useState(false);
@@ -16,6 +17,10 @@ export const GameInterface = () => {
   const [showDungeonSearch, setShowDungeonSearch] = useState(false);
   const [showShop, setShowShop] = useState(false);
   const [hasActiveDungeon, setHasActiveDungeon] = useState(false);
+  const [inventory, setInventory] = useState<Item[]>(() => {
+    const savedInventory = localStorage.getItem('gameInventory');
+    return savedInventory ? JSON.parse(savedInventory) : [];
+  });
   const navigate = useNavigate();
 
   const checkDungeonState = () => {
@@ -38,11 +43,13 @@ export const GameInterface = () => {
     
     const interval = setInterval(checkDungeonState, 1000);
     
-    // Добавляем слушатель изменений в localStorage
     const handleStorageChange = (e: StorageEvent) => {
       if (e.key === 'gameBalance') {
         const newBalance = e.newValue ? parseInt(e.newValue, 10) : 1000;
         setBalance(newBalance);
+      } else if (e.key === 'gameInventory') {
+        const newInventory = e.newValue ? JSON.parse(e.newValue) : [];
+        setInventory(newInventory);
       }
     };
     
@@ -57,6 +64,31 @@ export const GameInterface = () => {
   const handleBalanceChange = (newBalance: number) => {
     setBalance(newBalance);
     localStorage.setItem('gameBalance', newBalance.toString());
+  };
+
+  const getItemIcon = (type: Item["type"]) => {
+    switch (type) {
+      case "weapon":
+        return <Sword className="w-4 h-4" />;
+      case "armor":
+        return <Shield className="w-4 h-4" />;
+      case "healthPotion":
+      case "defensePotion":
+        return <Beaker className="w-4 h-4" />;
+    }
+  };
+
+  const getItemDescription = (item: Item) => {
+    switch (item.type) {
+      case "weapon":
+        return `+${item.value} к силе атаки`;
+      case "armor":
+        return `+${item.value} к защите`;
+      case "healthPotion":
+        return `Восстанавливает ${item.value} здоровья`;
+      case "defensePotion":
+        return `Восстанавливает ${item.value} защиты`;
+    }
   };
 
   return (
@@ -112,16 +144,22 @@ export const GameInterface = () => {
       <Card className="bg-game-surface border-game-accent p-6">
         <h2 className="text-2xl font-bold text-game-accent mb-4">Инвентарь</h2>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          {[1, 2, 3].map((i) => (
-            <Card
-              key={i}
-              className="p-4 bg-game-background border-game-accent hover:border-game-primary transition-all duration-300 cursor-pointer"
-            >
-              <div className="aspect-[3/4] flex items-center justify-center">
-                <p className="text-gray-400">Card Slot {i}</p>
-              </div>
-            </Card>
-          ))}
+          {inventory.length > 0 ? (
+            inventory.map((item) => (
+              <Card
+                key={item.id}
+                className="p-4 bg-game-background border-game-accent hover:border-game-primary transition-all duration-300"
+              >
+                <div className="flex items-center gap-2 mb-2">
+                  {getItemIcon(item.type)}
+                  <h3 className="font-semibold text-game-accent">{item.name}</h3>
+                </div>
+                <p className="text-sm text-gray-400">{getItemDescription(item)}</p>
+              </Card>
+            ))
+          ) : (
+            <p className="text-gray-400 col-span-3 text-center py-8">Инвентарь пуст</p>
+          )}
         </div>
       </Card>
 
