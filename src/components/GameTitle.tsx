@@ -13,12 +13,11 @@ export const GameTitle = () => {
       onClick={() => navigate("/game")}
     >
       <motion.h1 
-        className="text-6xl md:text-8xl font-bold text-game-accent tracking-wider relative inline-block"
+        className="text-6xl md:text-8xl font-bold text-game-accent tracking-wider"
         whileHover={{ scale: 1.05 }}
         transition={{ type: "spring", stiffness: 300 }}
       >
         Эльфы и драконы
-        <span className="absolute bottom-0 left-0 w-full h-0.5 bg-game-accent transform scale-x-0 group-hover:scale-x-100 transition-transform duration-300"></span>
       </motion.h1>
       <motion.p 
         className="mt-4 text-xl text-gray-300 opacity-80 group-hover:opacity-100 transition-opacity"
