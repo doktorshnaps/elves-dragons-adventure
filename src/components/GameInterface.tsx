@@ -1,15 +1,20 @@
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { Wallet2, ArrowLeft, Search } from "lucide-react";
+import { Wallet2, ArrowLeft, Search, ShoppingBag } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { DungeonSearch } from "./DungeonSearch";
+import { Shop } from "./Shop";
 import { useNavigate } from "react-router-dom";
 
 export const GameInterface = () => {
   const [isConnected, setIsConnected] = useState(false);
-  const [balance, setBalance] = useState("0");
+  const [balance, setBalance] = useState(() => {
+    const savedBalance = localStorage.getItem('gameBalance');
+    return savedBalance ? parseInt(savedBalance, 10) : 1000;
+  });
   const [showDungeonSearch, setShowDungeonSearch] = useState(false);
+  const [showShop, setShowShop] = useState(false);
   const [hasActiveDungeon, setHasActiveDungeon] = useState(false);
   const navigate = useNavigate();
 
@@ -31,10 +36,8 @@ export const GameInterface = () => {
   useEffect(() => {
     checkDungeonState();
     
-    // Создаем интервал для периодической проверки состояния
     const interval = setInterval(checkDungeonState, 1000);
     
-    // Добавляем слушатель для storage
     window.addEventListener('storage', checkDungeonState);
     
     return () => {
@@ -42,6 +45,11 @@ export const GameInterface = () => {
       window.removeEventListener('storage', checkDungeonState);
     };
   }, []);
+
+  const handleBalanceChange = (newBalance: number) => {
+    setBalance(newBalance);
+    localStorage.setItem('gameBalance', newBalance.toString());
+  };
 
   return (
     <motion.div
@@ -61,8 +69,17 @@ export const GameInterface = () => {
           </Button>
           
           <Card className="bg-game-surface border-game-accent p-4">
-            <p className="text-game-accent">Balance: {balance} TOKENS</p>
+            <p className="text-game-accent">Баланс: {balance} токенов</p>
           </Card>
+
+          <Button
+            variant="outline"
+            className="bg-game-surface border-game-accent text-game-accent hover:bg-game-accent hover:text-white transition-all duration-300"
+            onClick={() => setShowShop(true)}
+          >
+            <ShoppingBag className="mr-2 h-4 w-4" />
+            Магазин
+          </Button>
         </div>
 
         {hasActiveDungeon ? (
@@ -85,7 +102,7 @@ export const GameInterface = () => {
       </div>
 
       <Card className="bg-game-surface border-game-accent p-6">
-        <h2 className="text-2xl font-bold text-game-accent mb-4">Inventory</h2>
+        <h2 className="text-2xl font-bold text-game-accent mb-4">Инвентарь</h2>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           {[1, 2, 3].map((i) => (
             <Card
@@ -102,6 +119,14 @@ export const GameInterface = () => {
 
       {showDungeonSearch && (
         <DungeonSearch onClose={() => setShowDungeonSearch(false)} />
+      )}
+
+      {showShop && (
+        <Shop 
+          onClose={() => setShowShop(false)} 
+          balance={balance}
+          onBalanceChange={handleBalanceChange}
+        />
       )}
     </motion.div>
   );
