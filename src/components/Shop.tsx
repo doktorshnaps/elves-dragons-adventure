@@ -4,6 +4,7 @@ import { X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
+import { lootItems } from "@/utils/lootUtils";
 
 interface ShopItem {
   id: number;
@@ -17,7 +18,7 @@ interface ShopItem {
 const shopItems: ShopItem[] = [
   {
     id: 1,
-    name: "Малое зелье здоровья",
+    name: lootItems.healthPotion.name,
     description: "Восстанавливает 30 очков здоровья",
     price: 50,
     type: "healthPotion",
@@ -25,7 +26,7 @@ const shopItems: ShopItem[] = [
   },
   {
     id: 2,
-    name: "Большое зелье здоровья",
+    name: lootItems.largeHealthPotion.name,
     description: "Восстанавливает 70 очков здоровья",
     price: 100,
     type: "healthPotion",
@@ -33,7 +34,7 @@ const shopItems: ShopItem[] = [
   },
   {
     id: 3,
-    name: "Зелье защиты",
+    name: lootItems.defensePotion.name,
     description: "Увеличивает защиту на 20",
     price: 75,
     type: "defensePotion",
@@ -41,7 +42,7 @@ const shopItems: ShopItem[] = [
   },
   {
     id: 4,
-    name: "Железный меч",
+    name: lootItems.weapon.name,
     description: "Увеличивает силу атаки на 15",
     price: 150,
     type: "weapon",
@@ -49,7 +50,7 @@ const shopItems: ShopItem[] = [
   },
   {
     id: 5,
-    name: "Кожаная броня",
+    name: lootItems.armor.name,
     description: "Увеличивает защиту на 10",
     price: 120,
     type: "armor",
@@ -80,35 +81,25 @@ export const Shop = ({ onClose, balance, onBalanceChange }: ShopProps) => {
       return;
     }
 
-    // Создаем новый предмет с уникальным id
     const newItem = {
       ...item,
       id: Date.now()
     };
 
-    // Получаем текущий инвентарь из localStorage
     const currentInventory = localStorage.getItem('gameInventory');
     const parsedInventory = currentInventory ? JSON.parse(currentInventory) : [];
     
-    // Добавляем новый предмет
     const newInventory = [...parsedInventory, newItem];
     
-    // Сохраняем обновленный инвентарь
     localStorage.setItem('gameInventory', JSON.stringify(newInventory));
-    
-    // Обновляем локальное состояние
     setInventory(newInventory);
-    
-    // Обновляем баланс
     onBalanceChange(balance - item.price);
 
-    // Показываем уведомление об успешной покупке
     toast({
       title: "Покупка успешна!",
       description: `Вы приобрели ${item.name}`,
     });
 
-    // Вызываем событие storage для синхронизации с другими компонентами
     window.dispatchEvent(new Event('storage'));
   };
 

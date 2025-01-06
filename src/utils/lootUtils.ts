@@ -2,49 +2,42 @@ import { Item } from "@/components/battle/Inventory";
 
 export interface LootTable {
   healthPotion: number;
+  largeHealthPotion: number;
   defensePotion: number;
   weapon: number;
   armor: number;
-  coins: {
-    chance: number;
-    min: number;
-    max: number;
-  };
 }
 
 export const generateLootTable = (isBoss: boolean): LootTable => {
   if (isBoss) {
     return {
-      healthPotion: 0.8, // 80% шанс
-      defensePotion: 0.7, // 70% шанс
-      weapon: 0.6, // 60% шанс
-      armor: 0.6, // 60% шанс
-      coins: {
-        chance: 1, // 100% шанс
-        min: 50,
-        max: 100
-      }
+      healthPotion: 0.8,
+      largeHealthPotion: 0.6,
+      defensePotion: 0.7,
+      weapon: 0.5,
+      armor: 0.5
     };
   }
 
   return {
-    healthPotion: 0.3, // 30% шанс
-    defensePotion: 0.2, // 20% шанс
-    weapon: 0.15, // 15% шанс
-    armor: 0.15, // 15% шанс
-    coins: {
-      chance: 0.7, // 70% шанс
-      min: 10,
-      max: 30
-    }
+    healthPotion: 0.3,
+    largeHealthPotion: 0.15,
+    defensePotion: 0.2,
+    weapon: 0.1,
+    armor: 0.1
   };
 };
 
-const lootItems = {
+export const lootItems = {
   healthPotion: {
     name: "Малое зелье здоровья",
     type: "healthPotion" as const,
     value: 30
+  },
+  largeHealthPotion: {
+    name: "Большое зелье здоровья",
+    type: "healthPotion" as const,
+    value: 70
   },
   defensePotion: {
     name: "Зелье защиты",
@@ -74,6 +67,13 @@ export const rollLoot = (lootTable: LootTable): { items: Item[], coins: number }
     });
   }
 
+  if (Math.random() < lootTable.largeHealthPotion) {
+    items.push({
+      id: nextId++,
+      ...lootItems.largeHealthPotion
+    });
+  }
+
   if (Math.random() < lootTable.defensePotion) {
     items.push({
       id: nextId++,
@@ -95,13 +95,7 @@ export const rollLoot = (lootTable: LootTable): { items: Item[], coins: number }
     });
   }
 
-  const coins = Math.random() < lootTable.coins.chance
-    ? Math.floor(Math.random() * (lootTable.coins.max - lootTable.coins.min + 1)) + lootTable.coins.min
-    : 0;
-
+  const coins = Math.floor(Math.random() * 50) + 10;
+  
   return { items, coins };
-};
-
-export const formatDropChance = (chance: number): string => {
-  return `${(chance * 100).toFixed(0)}%`;
 };
