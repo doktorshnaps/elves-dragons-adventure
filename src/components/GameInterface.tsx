@@ -14,7 +14,7 @@ export const GameInterface = () => {
   const [isConnected, setIsConnected] = useState(false);
   const [balance, setBalance] = useState(() => {
     const savedBalance = localStorage.getItem('gameBalance');
-    return savedBalance ? parseInt(savedBalance, 10) : 1000;
+    return savedBalance ? parseInt(savedBalance, 10) : 0;
   });
   const [showDungeonSearch, setShowDungeonSearch] = useState(false);
   const [showShop, setShowShop] = useState(false);
