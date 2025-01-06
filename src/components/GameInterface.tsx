@@ -38,11 +38,19 @@ export const GameInterface = () => {
     
     const interval = setInterval(checkDungeonState, 1000);
     
-    window.addEventListener('storage', checkDungeonState);
+    // Добавляем слушатель изменений в localStorage
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key === 'gameBalance') {
+        const newBalance = e.newValue ? parseInt(e.newValue, 10) : 1000;
+        setBalance(newBalance);
+      }
+    };
+    
+    window.addEventListener('storage', handleStorageChange);
     
     return () => {
       clearInterval(interval);
-      window.removeEventListener('storage', checkDungeonState);
+      window.removeEventListener('storage', handleStorageChange);
     };
   }, []);
 
@@ -118,7 +126,11 @@ export const GameInterface = () => {
       </Card>
 
       {showDungeonSearch && (
-        <DungeonSearch onClose={() => setShowDungeonSearch(false)} />
+        <DungeonSearch 
+          onClose={() => setShowDungeonSearch(false)} 
+          balance={balance}
+          onBalanceChange={handleBalanceChange}
+        />
       )}
 
       {showShop && (

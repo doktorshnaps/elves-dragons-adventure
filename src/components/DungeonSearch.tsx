@@ -6,18 +6,22 @@ import { Card } from "./ui/card";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 
-export const DungeonSearch = ({ onClose }: { onClose: () => void }) => {
+interface DungeonSearchProps {
+  onClose: () => void;
+  balance: number;
+  onBalanceChange: (newBalance: number) => void;
+}
+
+export const DungeonSearch = ({ onClose, balance, onBalanceChange }: DungeonSearchProps) => {
   const [rolling, setRolling] = useState(false);
   const [result, setResult] = useState<number | null>(null);
   const navigate = useNavigate();
   const { toast } = useToast();
 
   const rollDice = () => {
-    // Проверяем, есть ли активное подземелье и жив ли персонаж
     const savedState = localStorage.getItem('battleState');
     if (savedState) {
       const parsedState = JSON.parse(savedState);
-      // Если персонаж жив (health > 0), запрещаем поиск нового подземелья
       if (parsedState.playerStats.health > 0) {
         toast({
           title: "Подземелье уже активно",
@@ -26,7 +30,6 @@ export const DungeonSearch = ({ onClose }: { onClose: () => void }) => {
         });
         return;
       } else {
-        // Если персонаж мертв, очищаем старое состояние
         localStorage.removeItem('battleState');
       }
     }
@@ -61,6 +64,10 @@ export const DungeonSearch = ({ onClose }: { onClose: () => void }) => {
 
         <div className="text-center">
           <h2 className="text-2xl font-bold text-game-accent mb-6">Поиск подземелья</h2>
+          
+          <div className="mb-4">
+            <p className="text-game-accent">Баланс: {balance} токенов</p>
+          </div>
           
           <motion.div
             animate={{ rotate: rolling ? 360 : 0 }}
