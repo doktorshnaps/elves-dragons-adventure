@@ -8,9 +8,9 @@ export const useWalletInit = (
   setIsConnected: (value: boolean) => void,
   setWalletAddress: (value: string | null) => void
 ) => {
-  const { toast } = useToast();
   const [selector, setSelector] = useState<any>(null);
   const [modal, setModal] = useState<any>(null);
+  const { toast } = useToast();
 
   useEffect(() => {
     const initWallet = async () => {
@@ -50,7 +50,7 @@ export const useWalletInit = (
     };
 
     initWallet();
-  }, [toast, setIsConnected, setWalletAddress]);
+  }, [setIsConnected, setWalletAddress, toast]);
 
   return { selector, modal };
 };
