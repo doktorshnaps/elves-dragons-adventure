@@ -37,13 +37,13 @@ export const WalletConnection = ({
       setSelector(walletSelector);
       setModal(walletModal);
 
-      // Check if there's an existing connection
-      const wallet = await walletSelector.wallet();
-      const accounts = await wallet.getAccounts();
-
-      if (accounts.length > 0) {
+      // Check if there's an existing wallet account
+      const accounts = await walletSelector.getAccounts();
+      
+      if (accounts && accounts.length > 0) {
         setIsConnected(true);
         setWalletAddress(accounts[0].accountId);
+        console.log("Found existing connection:", accounts[0].accountId);
         toast({
           title: "Wallet Connected",
           description: `Connected to ${accounts[0].accountId}`,
@@ -64,7 +64,10 @@ export const WalletConnection = ({
   }, [initWallet]);
 
   const handleConnect = async () => {
+    console.log("Handle connect called, current state:", { isConnected, selector, modal });
+    
     if (!selector || !modal) {
+      console.error("Wallet selector or modal not initialized");
       toast({
         title: "Error",
         description: "Wallet connection not initialized properly",
@@ -82,18 +85,20 @@ export const WalletConnection = ({
       });
     } else {
       try {
-        await modal.show();
-        const wallet = await selector.wallet();
-        const accounts = await wallet.getAccounts();
+        modal.show();
         
-        if (accounts.length > 0) {
-          setIsConnected(true);
-          setWalletAddress(accounts[0].accountId);
-          toast({
-            title: "Wallet Connected",
-            description: `Connected to ${accounts[0].accountId}`,
-          });
-        }
+        // Subscribe to changes
+        selector.on("accountsChanged", (accounts: any) => {
+          if (accounts.length > 0) {
+            console.log("Account selected:", accounts[0].accountId);
+            setIsConnected(true);
+            setWalletAddress(accounts[0].accountId);
+            toast({
+              title: "Wallet Connected",
+              description: `Connected to ${accounts[0].accountId}`,
+            });
+          }
+        });
       } catch (error) {
         console.error('Error connecting wallet:', error);
         toast({
