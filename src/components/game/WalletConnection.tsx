@@ -14,14 +14,21 @@ interface WalletConnectionProps {
   setWalletAddress: (value: string | null) => void;
 }
 
-const initSelector = (async () => {
-  const selector = await setupWalletSelector({ 
-    modules: [setupHotWallet()], 
-    network: "testnet" 
-  });
-  const modal = setupModal(selector, { contractId: "game.testnet" });
+let selector: Awaited<ReturnType<typeof setupWalletSelector>>;
+let modal: ReturnType<typeof setupModal>;
+
+const initWallet = async () => {
+  if (!selector) {
+    selector = await setupWalletSelector({
+      modules: [setupHotWallet()],
+      network: "testnet",
+    });
+    modal = setupModal(selector, {
+      contractId: "game.testnet",
+    });
+  }
   return { selector, modal };
-})();
+};
 
 export const WalletConnection = ({
   isConnected,
@@ -33,53 +40,58 @@ export const WalletConnection = ({
   const [wallet, setWallet] = useState<Wallet>();
 
   useEffect(() => {
-    initSelector.then(({ selector }) => {
-      selector.wallet().then((wallet) => {
-        wallet.getAccounts().then((accounts) => {
-          if (accounts.length > 0) {
-            setWalletAddress(accounts[0].accountId);
-            setIsConnected(true);
-            setWallet(wallet);
-            toast({
-              title: "Кошелек подключен",
-              description: `Подключен к ${accounts[0].accountId}`,
-            });
-          }
-        });
-      });
+    const setupWallet = async () => {
+      try {
+        const { selector } = await initWallet();
+        const currentWallet = await selector.wallet();
+        const accounts = await currentWallet.getAccounts();
 
-      selector.on("signedIn", async (event) => {
-        setWallet(await selector.wallet());
-        setWalletAddress(event.accounts[0].accountId);
-        setIsConnected(true);
-        toast({
-          title: "Кошелек подключен",
-          description: `Подключен к ${event.accounts[0].accountId}`,
-        });
-      });
+        if (accounts.length > 0) {
+          setWalletAddress(accounts[0].accountId);
+          setIsConnected(true);
+          setWallet(currentWallet);
+          toast({
+            title: "Кошелек подключен",
+            description: `Подключен к ${accounts[0].accountId}`,
+          });
+        }
 
-      selector.on("signedOut", async () => {
-        setWallet(undefined);
-        setWalletAddress(null);
-        setIsConnected(false);
-        toast({
-          title: "Кошелек отключен",
-          description: "Ваш кошелек был отключен",
+        selector.on("signedIn", async (event) => {
+          const newWallet = await selector.wallet();
+          setWallet(newWallet);
+          setWalletAddress(event.accounts[0].accountId);
+          setIsConnected(true);
+          toast({
+            title: "Кошелек подключен",
+            description: `Подключен к ${event.accounts[0].accountId}`,
+          });
         });
-      });
-    }).catch((error) => {
-      console.error("Error initializing wallet:", error);
-      toast({
-        title: "Ошибка инициализации",
-        description: "Не удалось инициализировать кошелек",
-        variant: "destructive",
-      });
-    });
+
+        selector.on("signedOut", async () => {
+          setWallet(undefined);
+          setWalletAddress(null);
+          setIsConnected(false);
+          toast({
+            title: "Кошелек отключен",
+            description: "Ваш кошелек был отключен",
+          });
+        });
+      } catch (error) {
+        console.error("Error initializing wallet:", error);
+        toast({
+          title: "Ошибка инициализации",
+          description: "Не удалось инициализировать кошелек",
+          variant: "destructive",
+        });
+      }
+    };
+
+    setupWallet();
   }, [setIsConnected, setWalletAddress, toast]);
 
   const handleConnect = async () => {
     try {
-      const { modal } = await initSelector;
+      const { modal } = await initWallet();
       if (wallet) {
         await wallet.signOut();
       } else {
