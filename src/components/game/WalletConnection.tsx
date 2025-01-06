@@ -38,7 +38,8 @@ export const WalletConnection = ({
       setModal(walletModal);
 
       // Check if there's an existing wallet account
-      const accounts = await walletSelector.getAccounts();
+      const wallet = await walletSelector.wallet();
+      const accounts = await wallet.getAccounts();
       
       if (accounts && accounts.length > 0) {
         setIsConnected(true);
