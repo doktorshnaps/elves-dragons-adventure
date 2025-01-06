@@ -6,7 +6,7 @@ import { setupModal } from "@near-wallet-selector/modal-ui";
 import { setupMyNearWallet } from "@near-wallet-selector/my-near-wallet";
 import { useToast } from "@/hooks/use-toast";
 import "@near-wallet-selector/modal-ui/styles.css";
-import "../../../src/utils/near-polyfills";
+import "@/utils/near-polyfills";
 
 interface WalletConnectionProps {
   isConnected: boolean;
