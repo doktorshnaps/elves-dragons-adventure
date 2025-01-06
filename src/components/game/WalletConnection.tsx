@@ -5,6 +5,8 @@ import { setupWalletSelector } from "@near-wallet-selector/core";
 import { setupModal } from "@near-wallet-selector/modal-ui";
 import { setupMyNearWallet } from "@near-wallet-selector/my-near-wallet";
 import { useToast } from "@/hooks/use-toast";
+import "@near-wallet-selector/modal-ui/styles.css";
+import "../../../src/utils/near-polyfills";
 
 interface WalletConnectionProps {
   isConnected: boolean;
@@ -20,35 +22,48 @@ export const WalletConnection = ({
   setWalletAddress,
 }: WalletConnectionProps) => {
   const { toast } = useToast();
+  const [selector, setSelector] = useState<any>(null);
+  const [modal, setModal] = useState<any>(null);
 
   useEffect(() => {
     const initWallet = async () => {
-      const selector = await setupWalletSelector({
-        network: "testnet",
-        modules: [setupMyNearWallet()],
-      });
+      try {
+        const walletSelector = await setupWalletSelector({
+          network: "testnet",
+          modules: [setupMyNearWallet()],
+        });
 
-      const modal = setupModal(selector, {
-        contractId: "game.testnet",
-      });
+        const walletModal = setupModal(walletSelector, {
+          contractId: "game.testnet",
+        });
 
-      const wallet = await selector.wallet();
-      const accounts = await wallet.getAccounts();
+        setSelector(walletSelector);
+        setModal(walletModal);
 
-      if (accounts.length > 0) {
-        setIsConnected(true);
-        setWalletAddress(accounts[0].accountId);
+        // Check if there's an existing wallet connection
+        const wallet = await walletSelector.wallet();
+        if (wallet) {
+          const accounts = await wallet.getAccounts();
+          if (accounts.length > 0) {
+            setIsConnected(true);
+            setWalletAddress(accounts[0].accountId);
+            toast({
+              title: "Wallet Connected",
+              description: `Connected to ${accounts[0].accountId}`,
+            });
+          }
+        }
+      } catch (error) {
+        console.error("Error initializing wallet:", error);
         toast({
-          title: "Wallet Connected",
-          description: `Connected to ${accounts[0].accountId}`,
+          title: "Initialization Error",
+          description: "Failed to initialize wallet connection",
+          variant: "destructive",
         });
       }
-
-      (window as any).walletSelector = selector;
-      (window as any).walletModal = modal;
     };
 
-    initWallet().catch(console.error);
+    initWallet();
   }, [toast, setIsConnected, setWalletAddress]);
 
   const handleConnect = async () => {
@@ -61,10 +76,11 @@ export const WalletConnection = ({
       });
     } else {
       try {
-        const modal = (window as any).walletModal;
+        if (!modal) {
+          throw new Error("Wallet modal not initialized");
+        }
+
         await modal.show();
-        
-        const selector = (window as any).walletSelector;
         const wallet = await selector.wallet();
         const accounts = await wallet.getAccounts();
         
