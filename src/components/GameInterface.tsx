@@ -68,11 +68,6 @@ export const GameInterface = () => {
     localStorage.setItem('gameBalance', newBalance.toString());
   };
 
-  const handleUseItem = (item: Item) => {
-    setInventory(prev => prev.filter(i => i.id !== item.id));
-    localStorage.setItem('gameInventory', JSON.stringify(inventory.filter(i => i.id !== item.id)));
-  };
-
   return (
     <motion.div
       initial={{ opacity: 0 }}
@@ -123,7 +118,7 @@ export const GameInterface = () => {
         )}
       </div>
 
-      <InventoryDisplay inventory={inventory} onUseItem={handleUseItem} />
+      <InventoryDisplay inventory={inventory} readonly />
       
       <DungeonsList />
 

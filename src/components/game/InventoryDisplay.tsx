@@ -1,4 +1,4 @@
-import { Sword, Shield, Beaker } from "lucide-react";
+import { Sword, Shield, FlaskConical } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Item } from "@/components/battle/Inventory";
 
@@ -12,10 +12,11 @@ interface GroupedItem {
 
 interface InventoryDisplayProps {
   inventory: Item[];
-  onUseItem: (item: Item) => void;
+  onUseItem?: (item: Item) => void;
+  readonly?: boolean;
 }
 
-export const InventoryDisplay = ({ inventory, onUseItem }: InventoryDisplayProps) => {
+export const InventoryDisplay = ({ inventory, onUseItem, readonly = false }: InventoryDisplayProps) => {
   const getItemIcon = (type: Item["type"]) => {
     switch (type) {
       case "weapon":
@@ -24,7 +25,7 @@ export const InventoryDisplay = ({ inventory, onUseItem }: InventoryDisplayProps
         return <Shield className="w-4 h-4" />;
       case "healthPotion":
       case "defensePotion":
-        return <Beaker className="w-4 h-4" />;
+        return <FlaskConical className="w-4 h-4" />;
     }
   };
 
@@ -68,7 +69,7 @@ export const InventoryDisplay = ({ inventory, onUseItem }: InventoryDisplayProps
   };
 
   const handleUseGroupedItem = (groupedItem: GroupedItem) => {
-    if (groupedItem.items.length > 0) {
+    if (!readonly && onUseItem && groupedItem.items.length > 0) {
       onUseItem(groupedItem.items[0]);
     }
   };
@@ -81,7 +82,7 @@ export const InventoryDisplay = ({ inventory, onUseItem }: InventoryDisplayProps
           groupItems(inventory).map((item) => (
             <Card
               key={`${item.name}-${item.type}-${item.value}`}
-              className="p-4 bg-game-background border-game-accent hover:border-game-primary transition-all duration-300"
+              className={`p-4 bg-game-background border-game-accent ${!readonly ? 'hover:border-game-primary cursor-pointer' : ''} transition-all duration-300`}
               onClick={() => handleUseGroupedItem(item)}
             >
               <div className="flex items-center gap-2 mb-2">
