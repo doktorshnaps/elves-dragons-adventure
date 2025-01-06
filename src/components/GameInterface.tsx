@@ -13,22 +13,34 @@ export const GameInterface = () => {
   const [hasActiveDungeon, setHasActiveDungeon] = useState(false);
   const navigate = useNavigate();
 
-  useEffect(() => {
-    const checkDungeonState = () => {
-      const savedState = localStorage.getItem('battleState');
-      if (savedState) {
+  const checkDungeonState = () => {
+    const savedState = localStorage.getItem('battleState');
+    if (savedState) {
+      try {
         const parsedState = JSON.parse(savedState);
-        // Проверяем, есть ли активное подземелье и жив ли персонаж
         setHasActiveDungeon(parsedState.playerStats.health > 0);
-      } else {
+      } catch (error) {
+        console.error('Error parsing battle state:', error);
         setHasActiveDungeon(false);
       }
-    };
+    } else {
+      setHasActiveDungeon(false);
+    }
+  };
 
+  useEffect(() => {
     checkDungeonState();
-    // Добавляем слушатель для storage, чтобы обновлять состояние при изменении localStorage
+    
+    // Создаем интервал для периодической проверки состояния
+    const interval = setInterval(checkDungeonState, 1000);
+    
+    // Добавляем слушатель для storage
     window.addEventListener('storage', checkDungeonState);
-    return () => window.removeEventListener('storage', checkDungeonState);
+    
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener('storage', checkDungeonState);
+    };
   }, []);
 
   return (
