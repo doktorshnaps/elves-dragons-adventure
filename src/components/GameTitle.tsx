@@ -19,14 +19,6 @@ export const GameTitle = () => {
       >
         Эльфы и драконы
       </motion.h1>
-      <motion.p 
-        className="mt-4 text-xl text-gray-300 opacity-80 group-hover:opacity-100 transition-opacity"
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ delay: 0.5 }}
-      >
-        Нажмите, чтобы начать приключение
-      </motion.p>
     </motion.div>
   );
 };
