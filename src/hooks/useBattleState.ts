@@ -189,6 +189,14 @@ export const useBattleState = (initialLevel: number = 1) => {
               }
               if (droppedCoins > 0) {
                 message += `Получено ${droppedCoins} монет!`;
+                
+                // Обновляем общий баланс в localStorage
+                const currentBalance = localStorage.getItem('gameBalance');
+                const newBalance = (currentBalance ? parseInt(currentBalance, 10) : 1000) + droppedCoins;
+                localStorage.setItem('gameBalance', newBalance.toString());
+                
+                // Обновляем состояние монет в текущей битве
+                setCoins(prevCoins => prevCoins + droppedCoins);
               }
               
               toast({
@@ -197,7 +205,6 @@ export const useBattleState = (initialLevel: number = 1) => {
               });
               
               setInventory(prev => [...prev, ...droppedItems]);
-              setCoins(prev => prev + droppedCoins);
             }
             
             return null;
