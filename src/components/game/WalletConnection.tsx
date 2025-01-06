@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { Wallet2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { setupWalletSelector, Wallet } from "@near-wallet-selector/core";
+import { setupWalletSelector } from "@near-wallet-selector/core";
 import { setupModal } from "@near-wallet-selector/modal-ui";
 import { setupHotWallet } from "@hot-wallet/sdk/adapter/near";
 import { useToast } from "@/hooks/use-toast";
@@ -40,19 +40,17 @@ export const WalletConnection = ({
   setWalletAddress,
 }: WalletConnectionProps) => {
   const { toast } = useToast();
-  const [wallet, setWallet] = useState<Wallet>();
 
   useEffect(() => {
     const setupWallet = async () => {
       try {
         const { selector } = await initWallet();
-        const accounts = await selector.getAccounts();
+        const wallet = await selector.wallet();
+        const accounts = await wallet.getAccounts();
 
         if (accounts.length > 0) {
-          const currentWallet = await selector.wallet();
           setWalletAddress(accounts[0].accountId);
           setIsConnected(true);
-          setWallet(currentWallet);
           toast({
             title: "Кошелек подключен",
             description: `Подключен к ${accounts[0].accountId}`,
@@ -60,8 +58,6 @@ export const WalletConnection = ({
         }
 
         selector.on("signedIn", async (event) => {
-          const newWallet = await selector.wallet();
-          setWallet(newWallet);
           setWalletAddress(event.accounts[0].accountId);
           setIsConnected(true);
           toast({
@@ -71,7 +67,6 @@ export const WalletConnection = ({
         });
 
         selector.on("signedOut", async () => {
-          setWallet(undefined);
           setWalletAddress(null);
           setIsConnected(false);
           toast({
@@ -94,9 +89,10 @@ export const WalletConnection = ({
 
   const handleConnect = async () => {
     try {
-      const { modal } = await initWallet();
+      const { selector, modal } = await initWallet();
       
-      if (isConnected && wallet) {
+      if (isConnected) {
+        const wallet = await selector.wallet();
         await wallet.signOut();
       } else {
         modal.show();
