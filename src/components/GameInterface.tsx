@@ -10,7 +10,7 @@ import { Item } from "./battle/Inventory";
 import { InventoryDisplay } from "./game/InventoryDisplay";
 import { NFTGallery } from "./NFTGallery";
 import { useAccount } from 'wagmi'
-import { useWeb3Modal } from '@web3modal/wagmi/react'
+import { useWeb3Modal } from '@web3modal/wagmi'
 
 export const GameInterface = () => {
   const { isConnected } = useAccount();
