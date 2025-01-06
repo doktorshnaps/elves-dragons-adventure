@@ -125,6 +125,13 @@ export const GameInterface = () => {
     }, []);
   };
 
+  const handleUseItem = (groupedItem: GroupedItem) => {
+    if (groupedItem.items.length > 0) {
+      const itemToUse = groupedItem.items[0]; // Use the first item from the group
+      onUseItem(itemToUse);
+    }
+  };
+
   return (
     <motion.div
       initial={{ opacity: 0 }}

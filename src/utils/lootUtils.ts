@@ -6,6 +6,11 @@ export interface LootTable {
   defensePotion: number;
   weapon: number;
   armor: number;
+  coins: {
+    chance: number;
+    min: number;
+    max: number;
+  };
 }
 
 export const generateLootTable = (isBoss: boolean): LootTable => {
@@ -15,7 +20,12 @@ export const generateLootTable = (isBoss: boolean): LootTable => {
       largeHealthPotion: 0.6,
       defensePotion: 0.7,
       weapon: 0.5,
-      armor: 0.5
+      armor: 0.5,
+      coins: {
+        chance: 1,
+        min: 50,
+        max: 100
+      }
     };
   }
 
@@ -24,7 +34,12 @@ export const generateLootTable = (isBoss: boolean): LootTable => {
     largeHealthPotion: 0.15,
     defensePotion: 0.2,
     weapon: 0.1,
-    armor: 0.1
+    armor: 0.1,
+    coins: {
+      chance: 0.7,
+      min: 10,
+      max: 30
+    }
   };
 };
 
@@ -54,6 +69,10 @@ export const lootItems = {
     type: "armor" as const,
     value: 10
   }
+};
+
+export const formatDropChance = (chance: number): string => {
+  return `${(chance * 100).toFixed(0)}%`;
 };
 
 export const rollLoot = (lootTable: LootTable): { items: Item[], coins: number } => {
@@ -95,7 +114,9 @@ export const rollLoot = (lootTable: LootTable): { items: Item[], coins: number }
     });
   }
 
-  const coins = Math.floor(Math.random() * 50) + 10;
+  const coins = Math.random() < lootTable.coins.chance
+    ? Math.floor(Math.random() * (lootTable.coins.max - lootTable.coins.min + 1)) + lootTable.coins.min
+    : 0;
   
   return { items, coins };
 };
