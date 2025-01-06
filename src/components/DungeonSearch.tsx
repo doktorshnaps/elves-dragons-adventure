@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { Dice6, ArrowLeft } from "lucide-react";
 import { Button } from "./ui/button";
 import { Card } from "./ui/card";
@@ -12,9 +12,19 @@ interface DungeonSearchProps {
   onBalanceChange: (newBalance: number) => void;
 }
 
+const dungeons = [
+  "Логово Черного Дракона",
+  "Пещеры Забытых Душ",
+  "Трон Ледяного Короля",
+  "Лабиринт Темного Мага",
+  "Гнездо Гигантских Пауков",
+  "Темница Костяных Демонов",
+  "Логово Морского Змея"
+];
+
 export const DungeonSearch = ({ onClose, balance, onBalanceChange }: DungeonSearchProps) => {
   const [rolling, setRolling] = useState(false);
-  const [result, setResult] = useState<number | null>(null);
+  const [selectedDungeon, setSelectedDungeon] = useState<string | null>(null);
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -35,14 +45,29 @@ export const DungeonSearch = ({ onClose, balance, onBalanceChange }: DungeonSear
     }
 
     setRolling(true);
+    
+    // Анимированный выбор подземелья
+    let currentIndex = 0;
+    const interval = setInterval(() => {
+      setSelectedDungeon(dungeons[currentIndex]);
+      currentIndex = (currentIndex + 1) % dungeons.length;
+    }, 100);
+
     setTimeout(() => {
-      const roll = Math.floor(Math.random() * 6) + 1;
-      setResult(roll);
+      clearInterval(interval);
+      const finalDungeon = dungeons[Math.floor(Math.random() * dungeons.length)];
+      setSelectedDungeon(finalDungeon);
       setRolling(false);
+      
+      toast({
+        title: "Подземелье найдено!",
+        description: `Вы входите в ${finalDungeon}`,
+      });
+
       setTimeout(() => {
         navigate("/battle");
       }, 2000);
-    }, 1000);
+    }, 2000);
   };
 
   return (
@@ -77,11 +102,21 @@ export const DungeonSearch = ({ onClose, balance, onBalanceChange }: DungeonSear
             <Dice6 className="w-20 h-20 mx-auto text-game-accent" />
           </motion.div>
 
-          {result && (
-            <p className="text-xl text-game-accent mb-6">
-              Выпало значение: {result}
-            </p>
-          )}
+          <AnimatePresence mode="wait">
+            {selectedDungeon && (
+              <motion.div
+                key={selectedDungeon}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -20 }}
+                className="mb-6"
+              >
+                <p className="text-xl text-game-accent">
+                  {selectedDungeon}
+                </p>
+              </motion.div>
+            )}
+          </AnimatePresence>
 
           <div className="space-x-4">
             <Button
@@ -89,7 +124,7 @@ export const DungeonSearch = ({ onClose, balance, onBalanceChange }: DungeonSear
               disabled={rolling}
               className="bg-game-primary hover:bg-game-primary/80"
             >
-              {rolling ? "Бросаем кость..." : "Бросить кость"}
+              {rolling ? "Поиск подземелья..." : "Искать подземелье"}
             </Button>
             <Button
               onClick={onClose}
