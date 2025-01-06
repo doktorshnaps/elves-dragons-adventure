@@ -1,20 +1,13 @@
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { Wallet2, ArrowLeft, Search, ShoppingBag, Sword, Shield, Beaker } from "lucide-react";
+import { Wallet2, ArrowLeft, Search, ShoppingBag } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { DungeonSearch } from "./DungeonSearch";
 import { Shop } from "./Shop";
 import { useNavigate } from "react-router-dom";
 import { Item } from "./battle/Inventory";
-
-interface GroupedItem {
-  name: string;
-  type: Item["type"];
-  value: number;
-  count: number;
-  items: Item[];
-}
+import { InventoryDisplay } from "./game/InventoryDisplay";
 
 export const GameInterface = () => {
   const [isConnected, setIsConnected] = useState(false);
@@ -74,62 +67,9 @@ export const GameInterface = () => {
     localStorage.setItem('gameBalance', newBalance.toString());
   };
 
-  const getItemIcon = (type: Item["type"]) => {
-    switch (type) {
-      case "weapon":
-        return <Sword className="w-4 h-4" />;
-      case "armor":
-        return <Shield className="w-4 h-4" />;
-      case "healthPotion":
-      case "defensePotion":
-        return <Beaker className="w-4 h-4" />;
-    }
-  };
-
-  const getItemDescription = (item: Item) => {
-    switch (item.type) {
-      case "weapon":
-        return `+${item.value} к силе атаки`;
-      case "armor":
-        return `+${item.value} к защите`;
-      case "healthPotion":
-        return `Восстанавливает ${item.value} здоровья`;
-      case "defensePotion":
-        return `Восстанавливает ${item.value} защиты`;
-    }
-  };
-
-  const groupItems = (items: Item[]): GroupedItem[] => {
-    return items.reduce<GroupedItem[]>((acc, item) => {
-      const existingGroup = acc.find(
-        group => 
-          group.name === item.name && 
-          group.type === item.type && 
-          group.value === item.value
-      );
-
-      if (existingGroup) {
-        existingGroup.count += 1;
-        existingGroup.items.push(item);
-      } else {
-        acc.push({
-          name: item.name,
-          type: item.type,
-          value: item.value,
-          count: 1,
-          items: [item]
-        });
-      }
-
-      return acc;
-    }, []);
-  };
-
-  const handleUseItem = (groupedItem: GroupedItem) => {
-    if (groupedItem.items.length > 0) {
-      const itemToUse = groupedItem.items[0]; // Use the first item from the group
-      onUseItem(itemToUse);
-    }
+  const handleUseItem = (item: Item) => {
+    setInventory(prev => prev.filter(i => i.id !== item.id));
+    localStorage.setItem('gameInventory', JSON.stringify(inventory.filter(i => i.id !== item.id)));
   };
 
   return (
@@ -182,29 +122,7 @@ export const GameInterface = () => {
         )}
       </div>
 
-      <Card className="bg-game-surface border-game-accent p-6">
-        <h2 className="text-2xl font-bold text-game-accent mb-4">Инвентарь</h2>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          {inventory.length > 0 ? (
-            groupItems(inventory).map((item) => (
-              <Card
-                key={`${item.name}-${item.type}-${item.value}`}
-                className="p-4 bg-game-background border-game-accent hover:border-game-primary transition-all duration-300"
-              >
-                <div className="flex items-center gap-2 mb-2">
-                  {getItemIcon(item.type)}
-                  <h3 className="font-semibold text-game-accent">
-                    {item.name} {item.count > 1 && `(${item.count})`}
-                  </h3>
-                </div>
-                <p className="text-sm text-gray-400">{getItemDescription(item)}</p>
-              </Card>
-            ))
-          ) : (
-            <p className="text-gray-400 col-span-3 text-center py-8">Инвентарь пуст</p>
-          )}
-        </div>
-      </Card>
+      <InventoryDisplay inventory={inventory} onUseItem={handleUseItem} />
 
       {showDungeonSearch && (
         <DungeonSearch 
