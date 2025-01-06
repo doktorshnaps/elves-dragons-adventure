@@ -1,11 +1,7 @@
-import { useState, useEffect } from "react";
-import { Wallet2 } from "lucide-react";
-import { Button } from "@/components/ui/button";
 import "@/utils/near-polyfills";
-import { setupWalletSelector } from "@near-wallet-selector/core";
-import { setupModal } from "@near-wallet-selector/modal-ui";
-import { setupMyNearWallet } from "@near-wallet-selector/my-near-wallet";
 import { useToast } from "@/hooks/use-toast";
+import { useWalletInit } from "@/hooks/useWalletInit";
+import { ConnectButton } from "./ConnectButton";
 import "@near-wallet-selector/modal-ui/styles.css";
 
 interface WalletConnectionProps {
@@ -22,49 +18,7 @@ export const WalletConnection = ({
   setWalletAddress,
 }: WalletConnectionProps) => {
   const { toast } = useToast();
-  const [selector, setSelector] = useState<any>(null);
-  const [modal, setModal] = useState<any>(null);
-
-  useEffect(() => {
-    const initWallet = async () => {
-      try {
-        const walletSelector = await setupWalletSelector({
-          network: "testnet",
-          modules: [setupMyNearWallet()],
-        });
-
-        const walletModal = setupModal(walletSelector, {
-          contractId: "game.testnet",
-        });
-
-        setSelector(walletSelector);
-        setModal(walletModal);
-
-        // Check if there's an existing wallet connection
-        const wallet = await walletSelector.wallet();
-        if (wallet) {
-          const accounts = await wallet.getAccounts();
-          if (accounts.length > 0) {
-            setIsConnected(true);
-            setWalletAddress(accounts[0].accountId);
-            toast({
-              title: "Wallet Connected",
-              description: `Connected to ${accounts[0].accountId}`,
-            });
-          }
-        }
-      } catch (error) {
-        console.error("Error initializing wallet:", error);
-        toast({
-          title: "Initialization Error",
-          description: "Failed to initialize wallet connection",
-          variant: "destructive",
-        });
-      }
-    };
-
-    initWallet();
-  }, [toast, setIsConnected, setWalletAddress]);
+  const { selector, modal } = useWalletInit(setIsConnected, setWalletAddress);
 
   const handleConnect = async () => {
     if (isConnected) {
@@ -74,43 +28,41 @@ export const WalletConnection = ({
         title: "Wallet Disconnected",
         description: "Your wallet has been disconnected",
       });
-    } else {
-      try {
-        if (!modal) {
-          throw new Error("Wallet modal not initialized");
-        }
+      return;
+    }
 
-        await modal.show();
-        const wallet = await selector.wallet();
-        const accounts = await wallet.getAccounts();
-        
-        if (accounts.length > 0) {
-          setIsConnected(true);
-          setWalletAddress(accounts[0].accountId);
-          toast({
-            title: "Wallet Connected",
-            description: `Connected to ${accounts[0].accountId}`,
-          });
-        }
-      } catch (error) {
-        console.error('Error connecting wallet:', error);
+    try {
+      if (!modal) {
+        throw new Error("Wallet modal not initialized");
+      }
+
+      await modal.show();
+      const wallet = await selector.wallet();
+      const accounts = await wallet.getAccounts();
+      
+      if (accounts.length > 0) {
+        setIsConnected(true);
+        setWalletAddress(accounts[0].accountId);
         toast({
-          title: "Connection Error",
-          description: "Failed to connect wallet",
-          variant: "destructive",
+          title: "Wallet Connected",
+          description: `Connected to ${accounts[0].accountId}`,
         });
       }
+    } catch (error) {
+      console.error('Error connecting wallet:', error);
+      toast({
+        title: "Connection Error",
+        description: "Failed to connect wallet",
+        variant: "destructive",
+      });
     }
   };
 
   return (
-    <Button
-      variant="outline"
-      className="bg-game-surface border-game-accent text-game-accent hover:bg-game-accent hover:text-white transition-all duration-300"
+    <ConnectButton
+      isConnected={isConnected}
+      walletAddress={walletAddress}
       onClick={handleConnect}
-    >
-      <Wallet2 className="mr-2 h-4 w-4" />
-      {isConnected ? `Connected: ${walletAddress?.slice(0, 6)}...` : "Connect Wallet"}
-    </Button>
+    />
   );
 };
