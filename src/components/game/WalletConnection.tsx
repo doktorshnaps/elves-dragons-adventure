@@ -25,34 +25,63 @@ export const WalletConnection = ({
       setIsConnected(false);
       setWalletAddress(null);
       toast({
-        title: "Wallet Disconnected",
-        description: "Your wallet has been disconnected",
+        title: "Кошелек отключен",
+        description: "Ваш кошелек был успешно отключен",
+      });
+      return;
+    }
+
+    if (!modal) {
+      toast({
+        title: "Ошибка инициализации",
+        description: "Не удалось инициализировать кошелек. Пожалуйста, обновите страницу",
+        variant: "destructive",
       });
       return;
     }
 
     try {
-      if (!modal) {
-        throw new Error("Wallet modal not initialized");
+      modal.show();
+      const wallet = await selector?.wallet();
+      
+      if (!wallet) {
+        toast({
+          title: "Ошибка подключения",
+          description: "Пожалуйста, выберите кошелек в модальном окне",
+          variant: "destructive",
+        });
+        return;
       }
 
-      await modal.show();
-      const wallet = await selector.wallet();
       const accounts = await wallet.getAccounts();
       
       if (accounts.length > 0) {
         setIsConnected(true);
         setWalletAddress(accounts[0].accountId);
         toast({
-          title: "Wallet Connected",
-          description: `Connected to ${accounts[0].accountId}`,
+          title: "Кошелек подключен",
+          description: `Подключен к аккаунту ${accounts[0].accountId}`,
+        });
+      } else {
+        toast({
+          title: "Ошибка подключения",
+          description: "Не найдены аккаунты в кошельке",
+          variant: "destructive",
         });
       }
     } catch (error) {
       console.error('Error connecting wallet:', error);
+      
+      let errorMessage = "Не удалось подключить кошелек";
+      if (error instanceof Error) {
+        if (error.message.includes("No wallet selected")) {
+          errorMessage = "Пожалуйста, выберите кошелек в модальном окне";
+        }
+      }
+      
       toast({
-        title: "Connection Error",
-        description: "Failed to connect wallet",
+        title: "Ошибка подключения",
+        description: errorMessage,
         variant: "destructive",
       });
     }
