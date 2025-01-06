@@ -34,18 +34,14 @@ export const useWalletInit = (
             setIsConnected(true);
             setWalletAddress(accounts[0].accountId);
             toast({
-              title: "Wallet Connected",
-              description: `Connected to ${accounts[0].accountId}`,
+              title: "Кошелек подключен",
+              description: `Подключен к аккаунту ${accounts[0].accountId}`,
             });
           }
         }
       } catch (error) {
-        console.error("Error initializing wallet:", error);
-        toast({
-          title: "Initialization Error",
-          description: "Failed to initialize wallet connection",
-          variant: "destructive",
-        });
+        console.error('Error initializing wallet:', error);
+        // Убрали вызов toast при ошибке инициализации
       }
     };
 
