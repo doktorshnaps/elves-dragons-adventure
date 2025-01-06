@@ -8,13 +8,9 @@ import { Shop } from "./Shop";
 import { useNavigate } from "react-router-dom";
 import { Item } from "./battle/Inventory";
 import { InventoryDisplay } from "./game/InventoryDisplay";
-import { NFTGallery } from "./NFTGallery";
-import { useAccount } from 'wagmi'
-import { useWeb3Modal } from '@web3modal/wagmi'
 
 export const GameInterface = () => {
-  const { isConnected } = useAccount();
-  const { open } = useWeb3Modal();
+  const [isConnected, setIsConnected] = useState(false);
   const [balance, setBalance] = useState(() => {
     const savedBalance = localStorage.getItem('gameBalance');
     return savedBalance ? parseInt(savedBalance, 10) : 1000;
@@ -87,10 +83,10 @@ export const GameInterface = () => {
           <Button
             variant="outline"
             className="bg-game-surface border-game-accent text-game-accent hover:bg-game-accent hover:text-white transition-all duration-300"
-            onClick={() => open()}
+            onClick={() => setIsConnected(!isConnected)}
           >
             <Wallet2 className="mr-2 h-4 w-4" />
-            {isConnected ? "Кошелёк подключен" : "Подключить кошелёк"}
+            {isConnected ? "Connected" : "Connect Wallet"}
           </Button>
           
           <Card className="bg-game-surface border-game-accent p-4">
@@ -126,8 +122,6 @@ export const GameInterface = () => {
         )}
       </div>
 
-      {isConnected && <NFTGallery />}
-      
       <InventoryDisplay inventory={inventory} onUseItem={handleUseItem} />
 
       {showDungeonSearch && (
