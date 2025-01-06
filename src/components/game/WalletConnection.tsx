@@ -46,7 +46,8 @@ export const WalletConnection = ({
     const setupWallet = async () => {
       try {
         const { selector } = await initWallet();
-        const accounts = await selector.getAccounts();
+        const wallet = await selector.wallet();
+        const accounts = await wallet.getAccounts();
         console.log("Available accounts:", accounts);
 
         if (accounts.length > 0) {
