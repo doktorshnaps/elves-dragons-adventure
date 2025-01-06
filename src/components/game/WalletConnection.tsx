@@ -23,9 +23,12 @@ const initWallet = async () => {
       modules: [setupHotWallet()],
       network: "testnet",
     });
-    modal = setupModal(selector, {
-      contractId: "game.testnet",
-    });
+
+    if (!modal) {
+      modal = setupModal(selector, {
+        contractId: "game.testnet",
+      });
+    }
   }
   return { selector, modal };
 };
@@ -43,10 +46,10 @@ export const WalletConnection = ({
     const setupWallet = async () => {
       try {
         const { selector } = await initWallet();
-        const currentWallet = await selector.wallet();
-        const accounts = await currentWallet.getAccounts();
+        const accounts = await selector.getAccounts();
 
         if (accounts.length > 0) {
+          const currentWallet = await selector.wallet();
           setWalletAddress(accounts[0].accountId);
           setIsConnected(true);
           setWallet(currentWallet);
@@ -92,7 +95,8 @@ export const WalletConnection = ({
   const handleConnect = async () => {
     try {
       const { modal } = await initWallet();
-      if (wallet) {
+      
+      if (isConnected && wallet) {
         await wallet.signOut();
       } else {
         modal.show();
