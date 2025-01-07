@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { Item } from "@/components/battle/Inventory";
 import { Equipment } from "@/types/equipment";
-import { shopItems } from "@/components/Shop";
+import { shopItems } from "@/constants/shopItems";
 
 interface SellItemDialogProps {
   item: Item | Equipment;

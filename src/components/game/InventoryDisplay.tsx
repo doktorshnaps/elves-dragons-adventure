@@ -12,7 +12,7 @@ import { UpgradeItemDialog } from "./UpgradeItemDialog";
 interface GroupedItem {
   name: string;
   type: Item["type"] | Equipment["type"];
-  value: number;
+  value?: number;
   count: number;
   items: (Item | Equipment)[];
 }
@@ -51,24 +51,21 @@ export const InventoryDisplay = ({
     }
   };
 
-  const getItemDescription = (item: GroupedItem) => {
-    switch (item.type) {
-      case "weapon":
-        return `+${item.value} к силе атаки`;
-      case "armor":
-      case "shield":
-        return `+${item.value} к защите`;
-      case "ring":
-        return `+${item.value} к характеристикам`;
-      case "necklace":
-        return `+${item.value} к здоровью`;
-      case "healthPotion":
-        return `Восстанавливает ${item.value} здоровья`;
-      case "defensePotion":
-        return `Восстанавливает ${item.value} защиты`;
-      default:
-        return "";
+  const getItemDescription = (item: Item | Equipment) => {
+    if ('power' in item) return `+${item.power} к силе атаки`;
+    if ('defense' in item) return `+${item.defense} к защите`;
+    if ('health' in item) return `+${item.health} к здоровью`;
+    if ('value' in item) {
+      switch (item.type) {
+        case "healthPotion":
+          return `Восстанавливает ${item.value} здоровья`;
+        case "defensePotion":
+          return `Восстанавливает ${item.value} защиты`;
+        default:
+          return "";
+      }
     }
+    return "";
   };
 
   const groupItems = (items: (Item | Equipment)[]) => {

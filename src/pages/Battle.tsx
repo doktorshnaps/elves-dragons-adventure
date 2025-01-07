@@ -34,7 +34,7 @@ const Battle = () => {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
           <div>
             <PlayerCards
-              playerStats={playerStats}
+              stats={playerStats}
               isPlayerTurn={isPlayerTurn}
               onAttack={attackEnemy}
             />
@@ -42,19 +42,21 @@ const Battle = () => {
           </div>
           
           <div className="space-y-4">
-            {opponents.map((opponent, index) => (
+            {opponents.map((opponent) => (
               <OpponentCard
-                key={index}
+                key={opponent.id}
                 opponent={opponent}
-                isActive={isPlayerTurn}
-                onAttack={() => handleOpponentAttack(index)}
+                onAttack={handleOpponentAttack}
               />
             ))}
           </div>
         </div>
 
         {showLevelUp && (
-          <LevelUpDialog onUpgrade={handleUpgrade} />
+          <LevelUpDialog 
+            isOpen={showLevelUp} 
+            onUpgradeSelect={handleUpgrade} 
+          />
         )}
       </div>
     </div>
