@@ -61,9 +61,14 @@ export const PlayerCard = ({ playerStats }: PlayerCardProps) => {
                   style={{ width: `${experiencePercentage}%` }}
                 ></div>
               </div>
-              <span className="text-gray-400">
-                {playerStats.experience}/{playerStats.requiredExperience}
-              </span>
+              <div className="flex flex-col items-start ml-2">
+                <span className="text-gray-400 text-sm">
+                  Опыт: {playerStats.experience}/{playerStats.requiredExperience}
+                </span>
+                <span className="text-gray-500 text-xs">
+                  Нужно еще: {playerStats.requiredExperience - playerStats.experience}
+                </span>
+              </div>
             </div>
           </div>
         </div>
