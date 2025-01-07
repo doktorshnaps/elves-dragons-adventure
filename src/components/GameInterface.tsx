@@ -7,8 +7,10 @@ import { InventoryDisplay } from "./game/InventoryDisplay";
 import { DungeonsList } from "./game/DungeonsList";
 import { GameHeader } from "./game/GameHeader";
 import { PlayerStatsCard } from "./game/PlayerStats";
+import { useToast } from "@/hooks/use-toast";
 
 export const GameInterface = () => {
+  const { toast } = useToast();
   const [isConnected, setIsConnected] = useState(false);
   const [walletAddress, setWalletAddress] = useState<string | null>(null);
   const [balance, setBalance] = useState(() => {
@@ -72,6 +74,31 @@ export const GameInterface = () => {
     localStorage.setItem('gameBalance', newBalance.toString());
   };
 
+  const handleUseItem = (item: Item) => {
+    const savedState = localStorage.getItem('battleState');
+    if (savedState) {
+      const state = JSON.parse(savedState);
+      if (item.type === 'healthPotion') {
+        const newHealth = Math.min(
+          state.playerStats.health + item.value,
+          state.playerStats.maxHealth
+        );
+        state.playerStats.health = newHealth;
+        localStorage.setItem('battleState', JSON.stringify(state));
+        
+        // Удаляем использованный предмет из инвентаря
+        const newInventory = inventory.filter(i => i.id !== item.id);
+        setInventory(newInventory);
+        localStorage.setItem('gameInventory', JSON.stringify(newInventory));
+        
+        toast({
+          title: "Зелье использовано",
+          description: `Восстановлено ${item.value} здоровья`,
+        });
+      }
+    }
+  };
+
   return (
     <motion.div
       initial={{ opacity: 0 }}
@@ -91,7 +118,11 @@ export const GameInterface = () => {
 
       <PlayerStatsCard />
       
-      <InventoryDisplay inventory={inventory} readonly />
+      <InventoryDisplay 
+        inventory={inventory} 
+        onUseItem={handleUseItem}
+        readonly={false}
+      />
       
       <DungeonsList />
 

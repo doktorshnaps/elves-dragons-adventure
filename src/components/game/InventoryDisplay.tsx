@@ -1,6 +1,7 @@
 import { Sword, Shield, FlaskConical } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Item } from "@/components/battle/Inventory";
+import { useToast } from "@/hooks/use-toast";
 
 interface GroupedItem {
   name: string;
@@ -17,6 +18,8 @@ interface InventoryDisplayProps {
 }
 
 export const InventoryDisplay = ({ inventory, onUseItem, readonly = false }: InventoryDisplayProps) => {
+  const { toast } = useToast();
+
   const getItemIcon = (type: Item["type"]) => {
     switch (type) {
       case "weapon":
@@ -70,7 +73,13 @@ export const InventoryDisplay = ({ inventory, onUseItem, readonly = false }: Inv
 
   const handleUseGroupedItem = (groupedItem: GroupedItem) => {
     if (!readonly && onUseItem && groupedItem.items.length > 0) {
-      onUseItem(groupedItem.items[0]);
+      const item = groupedItem.items[0];
+      onUseItem(item);
+      
+      toast({
+        title: "Предмет использован",
+        description: `${item.name} был использован. ${getItemDescription({ ...groupedItem, items: [item] })}`,
+      });
     }
   };
 
