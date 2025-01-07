@@ -66,11 +66,18 @@ export const useBattleState = (initialLevel: number = 1) => {
     savedState?.opponents || generateOpponents(initialLevel)
   );
 
+  // Проверяем повышение уровня при изменении опыта
   useEffect(() => {
     if (playerStats && checkLevelUp(playerStats)) {
       setShowLevelUp(true);
+      
+      // Показываем уведомление о новом уровне
+      toast({
+        title: "🎉 Новый уровень!",
+        description: "Выберите улучшение характеристик",
+      });
     }
-  }, [playerStats.experience]);
+  }, [playerStats.experience, toast]);
 
   // Добавляем эффект для проверки здоровья
   useEffect(() => {
@@ -84,12 +91,12 @@ export const useBattleState = (initialLevel: number = 1) => {
       // Очищаем состояние битвы
       localStorage.removeItem(BATTLE_STATE_KEY);
       
-      // Небольшая задержка перед перенаправлением, чтобы пользователь успел увидеть сообщение
+      // Небольшая задержка перед перенаправлением
       setTimeout(() => {
         navigate('/game');
       }, 2000);
     }
-  }, [playerStats.health, navigate]);
+  }, [playerStats.health, navigate, toast]);
 
   const { isPlayerTurn, attackEnemy, handleOpponentAttack } = useCombat(
     playerStats,
