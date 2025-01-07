@@ -11,7 +11,7 @@ interface ShopItem {
   name: string;
   description: string;
   price: number;
-  type: "healthPotion" | "defensePotion" | "weapon" | "armor";
+  type: "healthPotion" | "defensePotion" | "weapon" | "armor" | "shield" | "ring" | "necklace";
   value: number;
 }
 
@@ -42,19 +42,51 @@ const shopItems: ShopItem[] = [
   },
   {
     id: 4,
-    name: lootItems.weapon.name,
-    description: "Увеличивает силу атаки на 15",
-    price: 150,
+    name: "Стальной меч",
+    description: "Увеличивает силу атаки на 25",
+    price: 200,
     type: "weapon",
-    value: 15
+    value: 25
   },
   {
     id: 5,
-    name: lootItems.armor.name,
-    description: "Увеличивает защиту на 10",
-    price: 120,
+    name: "Железный щит",
+    description: "Увеличивает защиту на 15",
+    price: 150,
+    type: "shield",
+    value: 15
+  },
+  {
+    id: 6,
+    name: "Кольчужная броня",
+    description: "Увеличивает защиту на 20",
+    price: 180,
     type: "armor",
+    value: 20
+  },
+  {
+    id: 7,
+    name: "Кольцо силы",
+    description: "Увеличивает силу атаки на 10",
+    price: 120,
+    type: "ring",
     value: 10
+  },
+  {
+    id: 8,
+    name: "Кольцо защиты",
+    description: "Увеличивает защиту на 8",
+    price: 100,
+    type: "ring",
+    value: 8
+  },
+  {
+    id: 9,
+    name: "Амулет жизни",
+    description: "Увеличивает максимальное здоровье на 50",
+    price: 250,
+    type: "necklace",
+    value: 50
   }
 ];
 

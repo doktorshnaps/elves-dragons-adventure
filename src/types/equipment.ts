@@ -6,6 +6,7 @@ export interface Equipment {
   slot: EquipmentSlot;
   power?: number;
   defense?: number;
+  health?: number;
   equipped: boolean;
 }
 
