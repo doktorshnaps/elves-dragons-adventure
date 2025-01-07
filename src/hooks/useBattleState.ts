@@ -9,6 +9,7 @@ import { calculateRequiredExperience, upgradeStats, checkLevelUp } from '@/utils
 
 const INVENTORY_STORAGE_KEY = 'gameInventory';
 const BATTLE_STATE_KEY = 'battleState';
+const BALANCE_KEY = 'gameBalance';
 
 export const useBattleState = (initialLevel: number = 1) => {
   const navigate = useNavigate();
@@ -20,7 +21,7 @@ export const useBattleState = (initialLevel: number = 1) => {
       const parsed = JSON.parse(savedState);
       return {
         level: parsed.level || initialLevel,
-        coins: parsed.coins || 0,
+        coins: Number(localStorage.getItem(BALANCE_KEY)) || 0,
         playerStats: parsed.playerStats || {
           health: 100,
           maxHealth: 100,
@@ -66,7 +67,14 @@ export const useBattleState = (initialLevel: number = 1) => {
     savedState?.opponents || generateOpponents(initialLevel)
   );
 
-  // Проверяем повышение уровня при изменении опыта
+  // Обновляем баланс в localStorage при изменении
+  useEffect(() => {
+    localStorage.setItem(BALANCE_KEY, coins.toString());
+    
+    // Отправляем событие для синхронизации баланса между вкладками
+    window.dispatchEvent(new CustomEvent('balanceUpdate', { detail: { balance: coins } }));
+  }, [coins]);
+
   useEffect(() => {
     if (playerStats && checkLevelUp(playerStats)) {
       const newStats = {
