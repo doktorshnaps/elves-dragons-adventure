@@ -29,6 +29,17 @@ export const DungeonSearch = ({ onClose, balance, onBalanceChange }: DungeonSear
   const [selectedDungeon, setSelectedDungeon] = useState<string | null>(null);
   const [energyState, setEnergyState] = useState<EnergyState>(getInitialEnergyState());
   const [timeUntilNext, setTimeUntilNext] = useState(getTimeUntilNextEnergy());
+  const [playerHealth, setPlayerHealth] = useState<{ current: number; max: number }>(() => {
+    const savedState = localStorage.getItem('battleState');
+    if (savedState) {
+      const state = JSON.parse(savedState);
+      return {
+        current: state.playerStats.health,
+        max: state.playerStats.maxHealth
+      };
+    }
+    return { current: 100, max: 100 };
+  });
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -37,6 +48,16 @@ export const DungeonSearch = ({ onClose, balance, onBalanceChange }: DungeonSear
       const newEnergyState = getInitialEnergyState();
       setEnergyState(newEnergyState);
       setTimeUntilNext(getTimeUntilNextEnergy());
+
+      // Обновляем здоровье
+      const savedState = localStorage.getItem('battleState');
+      if (savedState) {
+        const state = JSON.parse(savedState);
+        setPlayerHealth({
+          current: state.playerStats.health,
+          max: state.playerStats.maxHealth
+        });
+      }
     }, 1000);
 
     return () => clearInterval(interval);
@@ -62,6 +83,15 @@ export const DungeonSearch = ({ onClose, balance, onBalanceChange }: DungeonSear
       toast({
         title: "Недостаточно энергии",
         description: "Подождите пока энергия восстановится",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (playerHealth.current < playerHealth.max * 0.2) {
+      toast({
+        title: "Низкое здоровье",
+        description: "Подождите пока здоровье восстановится до 20% от максимума",
         variant: "destructive",
       });
       return;
@@ -97,6 +127,8 @@ export const DungeonSearch = ({ onClose, balance, onBalanceChange }: DungeonSear
     const seconds = Math.floor((ms % (60 * 1000)) / 1000);
     return `${minutes}:${seconds.toString().padStart(2, '0')}`;
   };
+
+  const isHealthTooLow = playerHealth.current < playerHealth.max * 0.2;
 
   return (
     <motion.div
@@ -164,7 +196,7 @@ export const DungeonSearch = ({ onClose, balance, onBalanceChange }: DungeonSear
           <div className="space-x-4">
             <Button
               onClick={rollDice}
-              disabled={rolling || energyState.current <= 0}
+              disabled={rolling || energyState.current <= 0 || isHealthTooLow}
               className="bg-game-primary hover:bg-game-primary/80"
             >
               {rolling ? "Поиск подземелья..." : "Искать подземелье"}
@@ -177,6 +209,12 @@ export const DungeonSearch = ({ onClose, balance, onBalanceChange }: DungeonSear
               Закрыть
             </Button>
           </div>
+          
+          {isHealthTooLow && (
+            <p className="text-red-500 mt-4">
+              Здоровье слишком низкое для входа в подземелье
+            </p>
+          )}
         </div>
       </Card>
     </motion.div>

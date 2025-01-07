@@ -6,6 +6,7 @@ import { Item } from "./battle/Inventory";
 import { InventoryDisplay } from "./game/InventoryDisplay";
 import { DungeonsList } from "./game/DungeonsList";
 import { GameHeader } from "./game/GameHeader";
+import { PlayerStatsCard } from "./game/PlayerStats";
 
 export const GameInterface = () => {
   const [isConnected, setIsConnected] = useState(false);
@@ -88,6 +89,8 @@ export const GameInterface = () => {
         setShowShop={setShowShop}
       />
 
+      <PlayerStatsCard />
+      
       <InventoryDisplay inventory={inventory} readonly />
       
       <DungeonsList />
