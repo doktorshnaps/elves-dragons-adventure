@@ -3,12 +3,12 @@ import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { Item } from "@/components/battle/Inventory";
-import { Equipment, EquipmentSlot } from "@/types/equipment";
+import { Equipment, EquipmentSlot, EquipmentType } from "@/types/equipment";
 
 interface ShopItem {
   id: number;
   name: string;
-  type: "healthPotion" | "defensePotion" | "weapon" | "armor" | "shield" | "ring" | "necklace";
+  type: "healthPotion" | "defensePotion" | EquipmentType;
   value: number;
   price: number;
 }
@@ -55,7 +55,7 @@ export const Shop = ({ onClose, balance, onBalanceChange }: ShopProps) => {
         const newItem: Equipment = {
           id: Date.now(),
           name: item.name,
-          type: item.type,
+          type: item.type as EquipmentType,
           slot: item.type === 'ring' ? 'ring1' : item.type as EquipmentSlot,
           equipped: false,
           ...(item.type === 'weapon' ? { power: item.value } : {}),
