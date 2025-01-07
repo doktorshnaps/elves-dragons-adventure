@@ -7,6 +7,7 @@ import { OpponentCard } from "@/components/battle/OpponentCard";
 import { PlayerCard } from "@/components/battle/PlayerCard";
 import { PlayerCards } from "@/components/battle/PlayerCards";
 import { Inventory } from "@/components/battle/Inventory";
+import { LevelUpDialog } from "@/components/battle/LevelUpDialog";
 import { useBattleState } from "@/hooks/useBattleState";
 
 const Battle = () => {
@@ -18,9 +19,11 @@ const Battle = () => {
     playerStats,
     opponents,
     inventory,
+    showLevelUp,
     attackEnemy,
     handleOpponentAttack,
-    useItem
+    useItem,
+    handleUpgrade
   } = useBattleState();
 
   useEffect(() => {
@@ -79,9 +82,14 @@ const Battle = () => {
           ))}
         </div>
 
-        <PlayerCard playerStats={playerStats} level={level} />
+        <PlayerCard playerStats={playerStats} />
         <PlayerCards cards={playerCards} />
         <Inventory items={inventory} onUseItem={useItem} />
+
+        <LevelUpDialog
+          isOpen={showLevelUp}
+          onUpgradeSelect={handleUpgrade}
+        />
 
         <div className="fixed bottom-6 right-6 bg-game-surface p-4 rounded-lg border border-game-accent shadow-lg">
           <div className="flex items-center gap-2">

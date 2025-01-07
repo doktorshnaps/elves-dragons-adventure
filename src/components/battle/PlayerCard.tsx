@@ -1,19 +1,16 @@
 import React from "react";
 import { Card } from "@/components/ui/card";
-import { Shield, Sword, Heart } from "lucide-react";
+import { Shield, Sword, Heart, Star } from "lucide-react";
 import { motion } from "framer-motion";
+import { PlayerStats } from "@/types/battle";
 
 interface PlayerCardProps {
-  playerStats: {
-    health: number;
-    maxHealth: number;
-    power: number;
-    defense: number;
-  };
-  level: number;
+  playerStats: PlayerStats;
 }
 
-export const PlayerCard = ({ playerStats, level }: PlayerCardProps) => {
+export const PlayerCard = ({ playerStats }: PlayerCardProps) => {
+  const experiencePercentage = (playerStats.experience / playerStats.requiredExperience) * 100;
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -28,7 +25,7 @@ export const PlayerCard = ({ playerStats, level }: PlayerCardProps) => {
             </div>
             <div>
               <h3 className="text-xl font-bold text-game-accent">Ваш герой</h3>
-              <p className="text-gray-400">Уровень {level}</p>
+              <p className="text-gray-400">Уровень {playerStats.level}</p>
             </div>
           </div>
           <div className="flex gap-8">
@@ -43,17 +40,31 @@ export const PlayerCard = ({ playerStats, level }: PlayerCardProps) => {
               <p className="font-bold text-game-accent">{playerStats.defense}</p>
             </div>
           </div>
-          <div className="flex items-center gap-2">
-            <Heart className="w-6 h-6 text-red-500" />
-            <div className="w-32 bg-gray-700 rounded-full h-2.5">
-              <div
-                className="bg-red-600 h-2.5 rounded-full transition-all duration-300"
-                style={{ width: `${(playerStats.health / playerStats.maxHealth) * 100}%` }}
-              ></div>
+          <div className="flex flex-col gap-2 w-full md:w-auto">
+            <div className="flex items-center gap-2">
+              <Heart className="w-6 h-6 text-red-500" />
+              <div className="w-32 bg-gray-700 rounded-full h-2.5">
+                <div
+                  className="bg-red-600 h-2.5 rounded-full transition-all duration-300"
+                  style={{ width: `${(playerStats.health / playerStats.maxHealth) * 100}%` }}
+                ></div>
+              </div>
+              <span className="text-gray-400">
+                {playerStats.health}/{playerStats.maxHealth}
+              </span>
             </div>
-            <span className="text-gray-400">
-              {playerStats.health}/{playerStats.maxHealth}
-            </span>
+            <div className="flex items-center gap-2">
+              <Star className="w-6 h-6 text-yellow-500" />
+              <div className="w-32 bg-gray-700 rounded-full h-2.5">
+                <div
+                  className="bg-yellow-600 h-2.5 rounded-full transition-all duration-300"
+                  style={{ width: `${experiencePercentage}%` }}
+                ></div>
+              </div>
+              <span className="text-gray-400">
+                {playerStats.experience}/{playerStats.requiredExperience}
+              </span>
+            </div>
           </div>
         </div>
       </Card>

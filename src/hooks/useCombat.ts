@@ -1,0 +1,148 @@
+import { useState } from 'react';
+import { useToast } from '@/hooks/use-toast';
+import { calculateDamage, calculatePlayerDamage } from '@/utils/battleCalculations';
+import { rollLoot, generateLootTable } from '@/utils/lootUtils';
+import { generateOpponents } from '@/utils/opponentGenerator';
+import { PlayerStats, Opponent } from '@/types/battle';
+import { getExperienceReward, checkLevelUp } from '@/utils/experienceManager';
+
+export const useCombat = (
+  playerStats: PlayerStats,
+  setPlayerStats: (stats: PlayerStats) => void,
+  opponents: Opponent[],
+  setOpponents: (opponents: Opponent[]) => void,
+  level: number,
+  setLevel: (level: number) => void,
+  coins: number,
+  setCoins: (coins: number) => void,
+  setInventory: (items: any[]) => void,
+) => {
+  const [isPlayerTurn, setIsPlayerTurn] = useState(true);
+  const { toast } = useToast();
+
+  const handleOpponentAttack = () => {
+    if (opponents.length > 0 && !isPlayerTurn) {
+      const randomOpponent = opponents[Math.floor(Math.random() * opponents.length)];
+      const { blockedDamage, damageToHealth, newDefense } = calculatePlayerDamage(
+        randomOpponent.power,
+        playerStats.defense
+      );
+
+      setPlayerStats(prev => {
+        const newHealth = Math.max(0, prev.health - damageToHealth);
+        
+        let message = `${randomOpponent.name} атакует с силой ${randomOpponent.power}!`;
+        if (blockedDamage > 0) {
+          message += ` Защита блокирует ${blockedDamage} урона.`;
+        }
+        if (damageToHealth > 0) {
+          message += ` Нанесено ${damageToHealth} урона здоровью!`;
+        }
+        message += ` Защита уменьилась на ${prev.defense - newDefense}.`;
+        
+        toast({
+          title: randomOpponent.isBoss ? "⚠️ Атака босса!" : "Враг атакует!",
+          description: message,
+          variant: randomOpponent.isBoss ? "destructive" : "default"
+        });
+        
+        return {
+          ...prev,
+          health: newHealth,
+          defense: newDefense,
+        };
+      });
+
+      setIsPlayerTurn(true);
+    }
+  };
+
+  const attackEnemy = (enemyId: number) => {
+    if (!isPlayerTurn) return;
+
+    setOpponents(prevOpponents => {
+      const newOpponents = prevOpponents.map(opponent => {
+        if (opponent.id === enemyId) {
+          const { damage, isCritical } = calculateDamage(playerStats.power);
+          const newHealth = opponent.health - damage;
+          
+          toast({
+            title: opponent.isBoss ? 
+              (isCritical ? "🎯 Критический удар по боссу!" : "⚔️ Атака босса!") :
+              (isCritical ? "Критическая атака!" : "Атака!"),
+            description: `Вы нанесли ${isCritical ? "критические " : ""}${damage.toFixed(0)} урона ${opponent.name}!`,
+            variant: isCritical ? "destructive" : "default",
+          });
+          
+          if (newHealth <= 0) {
+            // Начисляем опыт
+            const experienceReward = getExperienceReward(level, opponent.isBoss ?? false);
+            setPlayerStats(prev => ({
+              ...prev,
+              experience: prev.experience + experienceReward
+            }));
+
+            // Генерируем лут
+            const { items: droppedItems, coins: droppedCoins } = rollLoot(generateLootTable(opponent.isBoss ?? false));
+            
+            if (droppedItems.length > 0 || droppedCoins > 0) {
+              let message = "";
+              if (droppedItems.length > 0) {
+                message += `Получены предметы: ${droppedItems.map(item => item.name).join(", ")}. `;
+              }
+              if (droppedCoins > 0) {
+                message += `Получено ${droppedCoins} монет!`;
+                const currentBalance = localStorage.getItem('gameBalance');
+                const newBalance = (currentBalance ? parseInt(currentBalance, 10) : 1000) + droppedCoins;
+                localStorage.setItem('gameBalance', newBalance.toString());
+                setCoins(prevCoins => prevCoins + droppedCoins);
+              }
+              
+              toast({
+                title: "Получена награда!",
+                description: message,
+              });
+              
+              setInventory(prev => [...prev, ...droppedItems]);
+            }
+            
+            // Проверяем, достиг ли игрок нового уровня
+            if (checkLevelUp(playerStats)) {
+              toast({
+                title: "🎉 Новый уровень!",
+                description: "Выберите улучшение характеристик",
+              });
+            }
+            
+            return null;
+          }
+          
+          return { ...opponent, health: newHealth };
+        }
+        return opponent;
+      }).filter(Boolean);
+
+      if (newOpponents.length === 0) {
+        const nextLevel = level + 1;
+        setLevel(nextLevel);
+        
+        const isBossDefeated = prevOpponents.some(op => op.isBoss);
+        toast({
+          title: isBossDefeated ? "🎊 Босс побежден! Новый уровень!" : "Уровень пройден!",
+          description: `Вы перешли на уровень ${nextLevel}! ${nextLevel % 5 === 0 ? "Приготовьтесь к битве с боссом!" : ""}`,
+        });
+
+        return generateOpponents(nextLevel);
+      }
+
+      setIsPlayerTurn(false);
+      return newOpponents;
+    });
+  };
+
+  return {
+    isPlayerTurn,
+    attackEnemy,
+    handleOpponentAttack,
+  };
+};
