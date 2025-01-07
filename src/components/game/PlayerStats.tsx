@@ -163,7 +163,6 @@ export const PlayerStatsCard = () => {
 
       <TabsContent value="equipment">
         <EquipmentTab 
-          equipment={equipment}
           onEquip={handleEquip}
           onUnequip={handleUnequip}
         />

@@ -3,12 +3,12 @@ import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { Item } from "@/components/battle/Inventory";
-import { Equipment } from "@/types/equipment";
+import { Equipment, EquipmentSlot } from "@/types/equipment";
 
 interface ShopItem {
   id: number;
   name: string;
-  type: string;
+  type: "healthPotion" | "defensePotion" | "weapon" | "armor" | "shield" | "ring" | "necklace";
   value: number;
   price: number;
 }
@@ -31,7 +31,7 @@ const shopItems: ShopItem[] = [
 
 export const Shop = ({ onClose, balance, onBalanceChange }: ShopProps) => {
   const { toast } = useToast();
-  const [inventory, setInventory] = useState<Item[]>(() => {
+  const [inventory, setInventory] = useState<(Item | Equipment)[]>(() => {
     const savedInventory = localStorage.getItem('gameInventory');
     return savedInventory ? JSON.parse(savedInventory) : [];
   });
@@ -41,26 +41,31 @@ export const Shop = ({ onClose, balance, onBalanceChange }: ShopProps) => {
       const newBalance = balance - item.price;
       onBalanceChange(newBalance);
 
-      const newItem: Equipment | Item = {
-        id: Date.now(),
-        name: item.name,
-        type: item.type,
-        value: item.value,
-        ...(item.type === 'weapon' || item.type === 'armor' || item.type === 'shield' || item.type === 'ring' || item.type === 'necklace' 
-          ? { 
-              slot: item.type === 'ring' ? 'ring1' : item.type,
-              equipped: false,
-              ...(item.type === 'weapon' ? { power: item.value } : {}),
-              ...(item.type === 'armor' || item.type === 'shield' ? { defense: item.value } : {}),
-              ...(item.type === 'necklace' ? { health: item.value } : {}),
-            } 
-          : {}
-        ),
-      };
-
-      const newInventory = [...inventory, newItem];
-      setInventory(newInventory);
-      localStorage.setItem('gameInventory', JSON.stringify(newInventory));
+      if (item.type === 'healthPotion' || item.type === 'defensePotion') {
+        const newItem: Item = {
+          id: Date.now(),
+          name: item.name,
+          type: item.type,
+          value: item.value,
+        };
+        const newInventory = [...inventory, newItem];
+        setInventory(newInventory);
+        localStorage.setItem('gameInventory', JSON.stringify(newInventory));
+      } else {
+        const newItem: Equipment = {
+          id: Date.now(),
+          name: item.name,
+          type: item.type,
+          slot: item.type === 'ring' ? 'ring1' : item.type as EquipmentSlot,
+          equipped: false,
+          ...(item.type === 'weapon' ? { power: item.value } : {}),
+          ...(item.type === 'armor' || item.type === 'shield' ? { defense: item.value } : {}),
+          ...(item.type === 'necklace' ? { health: item.value } : {}),
+        };
+        const newInventory = [...inventory, newItem];
+        setInventory(newInventory);
+        localStorage.setItem('gameInventory', JSON.stringify(newInventory));
+      }
 
       toast({
         title: "Покупка совершена",

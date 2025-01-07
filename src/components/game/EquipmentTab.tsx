@@ -1,11 +1,15 @@
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Sword, Shield, CircleIcon, CircuitBoard, GemIcon } from "lucide-react";
 import { Equipment, EquippedItems } from "@/types/equipment";
 import { useEquipment } from "@/hooks/useEquipment";
 
-export const EquipmentTab = () => {
+interface EquipmentTabProps {
+  onEquip?: (item: Equipment) => void;
+  onUnequip?: (slot: string) => void;
+}
+
+export const EquipmentTab = ({ onEquip, onUnequip }: EquipmentTabProps) => {
   const { equippedItems, handleEquip, handleUnequip } = useEquipment();
 
   const renderEquipmentSlot = (
