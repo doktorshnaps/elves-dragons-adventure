@@ -69,9 +69,26 @@ export const useBattleState = (initialLevel: number = 1) => {
   // Проверяем повышение уровня при изменении опыта
   useEffect(() => {
     if (playerStats && checkLevelUp(playerStats)) {
-      setShowLevelUp(true);
+      const newStats = {
+        ...playerStats,
+        level: playerStats.level + 1,
+        experience: playerStats.experience - playerStats.requiredExperience,
+        requiredExperience: calculateRequiredExperience(playerStats.level + 1)
+      };
       
-      // Показываем уведомление о новом уровне
+      setPlayerStats(newStats);
+      setShowLevelUp(true);
+      setLevel(newStats.level);
+      
+      // Сохраняем обновленное состояние в localStorage
+      const stateToSave = {
+        level: newStats.level,
+        coins,
+        playerStats: newStats,
+        opponents,
+      };
+      localStorage.setItem(BATTLE_STATE_KEY, JSON.stringify(stateToSave));
+      
       toast({
         title: "🎉 Новый уровень!",
         description: "Выберите улучшение характеристик",
@@ -128,6 +145,15 @@ export const useBattleState = (initialLevel: number = 1) => {
     const updatedStats = upgradeStats(playerStats, upgrade);
     setPlayerStats(updatedStats);
     setShowLevelUp(false);
+    
+    // Сохраняем обновленное состояние в localStorage
+    const stateToSave = {
+      level,
+      coins,
+      playerStats: updatedStats,
+      opponents,
+    };
+    localStorage.setItem(BATTLE_STATE_KEY, JSON.stringify(stateToSave));
     
     toast({
       title: "Характеристики улучшены!",
