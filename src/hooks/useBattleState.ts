@@ -72,6 +72,25 @@ export const useBattleState = (initialLevel: number = 1) => {
     }
   }, [playerStats.experience]);
 
+  // Добавляем эффект для проверки здоровья
+  useEffect(() => {
+    if (playerStats.health <= 0) {
+      toast({
+        title: "Поражение!",
+        description: "Ваш герой пал в бою. Вы будете возвращены на главную страницу.",
+        variant: "destructive"
+      });
+      
+      // Очищаем состояние битвы
+      localStorage.removeItem(BATTLE_STATE_KEY);
+      
+      // Небольшая задержка перед перенаправлением, чтобы пользователь успел увидеть сообщение
+      setTimeout(() => {
+        navigate('/game');
+      }, 2000);
+    }
+  }, [playerStats.health, navigate]);
+
   const { isPlayerTurn, attackEnemy, handleOpponentAttack } = useCombat(
     playerStats,
     setPlayerStats,
