@@ -1,3 +1,5 @@
+import { Item } from '@/components/battle/Inventory';
+
 export interface PlayerStats {
   health: number;
   maxHealth: number;

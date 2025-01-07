@@ -5,7 +5,7 @@ import { generateOpponents } from '@/utils/opponentGenerator';
 import { PlayerStats, Opponent, StatUpgrade } from '@/types/battle';
 import { Item } from '@/components/battle/Inventory';
 import { useCombat } from './useCombat';
-import { calculateRequiredExperience, upgradeStats } from '@/utils/experienceManager';
+import { calculateRequiredExperience, upgradeStats, checkLevelUp } from '@/utils/experienceManager';
 
 const INVENTORY_STORAGE_KEY = 'gameInventory';
 const BATTLE_STATE_KEY = 'battleState';
@@ -93,10 +93,10 @@ export const useBattleState = (initialLevel: number = 1) => {
   }, [inventory]);
 
   useEffect(() => {
-    if (checkLevelUp(playerStats)) {
+    if (playerStats && checkLevelUp(playerStats)) {
       setShowLevelUp(true);
     }
-  }, [playerStats.experience]);
+  }, [playerStats?.experience]);
 
   const handleUpgrade = (upgrade: StatUpgrade) => {
     setPlayerStats(prev => upgradeStats(prev, upgrade));

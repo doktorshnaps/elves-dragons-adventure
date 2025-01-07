@@ -16,7 +16,8 @@ export const generateOpponents = (currentLevel: number): Opponent[] => {
       power: getScaledStats(10, currentLevel, true),
       health: getScaledStats(200, currentLevel, true),
       maxHealth: getScaledStats(200, currentLevel, true),
-      isBoss: true
+      isBoss: true,
+      experienceReward: getScaledStats(100, currentLevel, true)
     }];
   }
 
@@ -26,21 +27,24 @@ export const generateOpponents = (currentLevel: number): Opponent[] => {
       name: "Дракон", 
       power: getScaledStats(5, currentLevel), 
       health: getScaledStats(100, currentLevel),
-      maxHealth: getScaledStats(100, currentLevel)
+      maxHealth: getScaledStats(100, currentLevel),
+      experienceReward: getScaledStats(30, currentLevel)
     },
     { 
       id: 2, 
       name: "Тролль", 
       power: getScaledStats(3, currentLevel),
       health: getScaledStats(70, currentLevel),
-      maxHealth: getScaledStats(70, currentLevel)
+      maxHealth: getScaledStats(70, currentLevel),
+      experienceReward: getScaledStats(20, currentLevel)
     },
     { 
       id: 3, 
       name: "Гоблин", 
       power: getScaledStats(2, currentLevel),
       health: getScaledStats(50, currentLevel),
-      maxHealth: getScaledStats(50, currentLevel)
+      maxHealth: getScaledStats(50, currentLevel),
+      experienceReward: getScaledStats(15, currentLevel)
     },
   ];
 };
