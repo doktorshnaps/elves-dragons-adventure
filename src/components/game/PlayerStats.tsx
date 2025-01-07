@@ -24,6 +24,8 @@ export const PlayerStatsCard = () => {
     };
   });
 
+  const [timeUntilRegen, setTimeUntilRegen] = useState<number>(HEALTH_REGEN_INTERVAL);
+
   useEffect(() => {
     const interval = setInterval(() => {
       setStats(currentStats => {
@@ -45,7 +47,20 @@ export const PlayerStatsCard = () => {
       });
     }, HEALTH_REGEN_INTERVAL);
 
-    return () => clearInterval(interval);
+    // Обновляем таймер каждую секунду
+    const timerInterval = setInterval(() => {
+      setTimeUntilRegen(prev => {
+        if (prev <= 0) {
+          return HEALTH_REGEN_INTERVAL;
+        }
+        return prev - 1000;
+      });
+    }, 1000);
+
+    return () => {
+      clearInterval(interval);
+      clearInterval(timerInterval);
+    };
   }, []);
 
   // Обновляем статистику при изменении в localStorage
@@ -58,10 +73,8 @@ export const PlayerStatsCard = () => {
       }
     };
 
-    // Добавляем слушатель для событий storage
     window.addEventListener('storage', handleStorageChange);
     
-    // Добавляем интервал для регулярной проверки localStorage
     const checkInterval = setInterval(handleStorageChange, 1000);
 
     return () => {
@@ -73,9 +86,19 @@ export const PlayerStatsCard = () => {
   const healthPercentage = (stats.health / stats.maxHealth) * 100;
   const experiencePercentage = (stats.experience / stats.requiredExperience) * 100;
 
+  // Форматируем время для отображения
+  const formatTime = (ms: number) => {
+    const minutes = Math.floor(ms / 60000);
+    const seconds = Math.floor((ms % 60000) / 1000);
+    return `${minutes}:${seconds.toString().padStart(2, '0')}`;
+  };
+
   return (
     <Card className="p-6 bg-game-surface border-game-accent mb-6">
-      <h2 className="text-xl font-bold text-game-accent mb-4">Статистика персонажа</h2>
+      <div className="flex justify-between items-center mb-4">
+        <h2 className="text-xl font-bold text-game-accent">Статистика персонажа</h2>
+        <span className="text-lg font-semibold text-game-accent">Уровень {stats.level}</span>
+      </div>
       
       <div className="space-y-4">
         <div className="flex items-center gap-2">
@@ -86,6 +109,11 @@ export const PlayerStatsCard = () => {
               <span className="text-sm text-game-accent">{stats.health}/{stats.maxHealth}</span>
             </div>
             <Progress value={healthPercentage} className="h-2" />
+            {stats.health === 0 && (
+              <div className="text-xs text-game-accent mt-1">
+                Восстановление через: {formatTime(timeUntilRegen)}
+              </div>
+            )}
           </div>
         </div>
 
