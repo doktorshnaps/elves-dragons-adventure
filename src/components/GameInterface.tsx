@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { DungeonSearch } from "./DungeonSearch";
 import { Shop } from "./Shop";
 import { Item } from "./battle/Inventory";
@@ -86,7 +87,6 @@ export const GameInterface = () => {
         state.playerStats.health = newHealth;
         localStorage.setItem('battleState', JSON.stringify(state));
         
-        // Удаляем использованный предмет из инвентаря
         const newInventory = inventory.filter(i => i.id !== item.id);
         setInventory(newInventory);
         localStorage.setItem('gameInventory', JSON.stringify(newInventory));
@@ -116,15 +116,25 @@ export const GameInterface = () => {
         setShowShop={setShowShop}
       />
 
-      <PlayerStatsCard />
-      
-      <InventoryDisplay 
-        inventory={inventory} 
-        onUseItem={handleUseItem}
-        readonly={false}
-      />
-      
-      <DungeonsList />
+      <Tabs defaultValue="character" className="mt-8">
+        <TabsList className="grid w-full grid-cols-2 bg-game-surface">
+          <TabsTrigger value="character" className="text-game-accent">Персонаж</TabsTrigger>
+          <TabsTrigger value="dungeons" className="text-game-accent">Подземелья</TabsTrigger>
+        </TabsList>
+        
+        <TabsContent value="character">
+          <PlayerStatsCard />
+          <InventoryDisplay 
+            inventory={inventory} 
+            onUseItem={handleUseItem}
+            readonly={false}
+          />
+        </TabsContent>
+        
+        <TabsContent value="dungeons">
+          <DungeonsList />
+        </TabsContent>
+      </Tabs>
 
       {showDungeonSearch && (
         <DungeonSearch 
