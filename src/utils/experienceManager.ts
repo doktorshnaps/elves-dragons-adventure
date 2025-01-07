@@ -1,12 +1,15 @@
 import { PlayerStats, StatUpgrade } from '@/types/battle';
 
 export const calculateRequiredExperience = (level: number): number => {
-  return Math.floor(100 * Math.pow(1.5, level - 1));
+  return 100 * Math.pow(2, level - 1);
 };
 
 export const getExperienceReward = (opponentLevel: number, isBoss: boolean): number => {
-  const baseExperience = 20 * opponentLevel;
-  return isBoss ? baseExperience * 3 : baseExperience;
+  if (isBoss) {
+    return 200;
+  }
+  // Base experience (10) multiplied by 2^(level-1)
+  return 10 * Math.pow(2, opponentLevel - 1);
 };
 
 export const checkLevelUp = (stats: PlayerStats): boolean => {

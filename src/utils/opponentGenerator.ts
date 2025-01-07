@@ -1,4 +1,5 @@
 import { Opponent } from "@/types/battle";
+import { getExperienceReward } from "./experienceManager";
 
 export const getScaledStats = (baseValue: number, level: number, isBoss: boolean = false) => {
   const levelScale = Math.pow(1.2, level - 1);
@@ -17,7 +18,7 @@ export const generateOpponents = (currentLevel: number): Opponent[] => {
       health: getScaledStats(200, currentLevel, true),
       maxHealth: getScaledStats(200, currentLevel, true),
       isBoss: true,
-      experienceReward: getScaledStats(100, currentLevel, true)
+      experienceReward: getExperienceReward(currentLevel, true)
     }];
   }
 
@@ -28,7 +29,7 @@ export const generateOpponents = (currentLevel: number): Opponent[] => {
       power: getScaledStats(5, currentLevel), 
       health: getScaledStats(100, currentLevel),
       maxHealth: getScaledStats(100, currentLevel),
-      experienceReward: getScaledStats(30, currentLevel)
+      experienceReward: getExperienceReward(currentLevel, false)
     },
     { 
       id: 2, 
@@ -36,7 +37,7 @@ export const generateOpponents = (currentLevel: number): Opponent[] => {
       power: getScaledStats(3, currentLevel),
       health: getScaledStats(70, currentLevel),
       maxHealth: getScaledStats(70, currentLevel),
-      experienceReward: getScaledStats(20, currentLevel)
+      experienceReward: getExperienceReward(currentLevel, false)
     },
     { 
       id: 3, 
@@ -44,7 +45,7 @@ export const generateOpponents = (currentLevel: number): Opponent[] => {
       power: getScaledStats(2, currentLevel),
       health: getScaledStats(50, currentLevel),
       maxHealth: getScaledStats(50, currentLevel),
-      experienceReward: getScaledStats(15, currentLevel)
+      experienceReward: getExperienceReward(currentLevel, false)
     },
   ];
 };
