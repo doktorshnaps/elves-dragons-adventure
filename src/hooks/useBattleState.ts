@@ -66,6 +66,12 @@ export const useBattleState = (initialLevel: number = 1) => {
     savedState?.opponents || generateOpponents(initialLevel)
   );
 
+  useEffect(() => {
+    if (playerStats && checkLevelUp(playerStats)) {
+      setShowLevelUp(true);
+    }
+  }, [playerStats.experience]);
+
   const { isPlayerTurn, attackEnemy, handleOpponentAttack } = useCombat(
     playerStats,
     setPlayerStats,
@@ -92,14 +98,9 @@ export const useBattleState = (initialLevel: number = 1) => {
     localStorage.setItem(INVENTORY_STORAGE_KEY, JSON.stringify(inventory));
   }, [inventory]);
 
-  useEffect(() => {
-    if (playerStats && checkLevelUp(playerStats)) {
-      setShowLevelUp(true);
-    }
-  }, [playerStats?.experience]);
-
   const handleUpgrade = (upgrade: StatUpgrade) => {
-    setPlayerStats(prev => upgradeStats(prev, upgrade));
+    const updatedStats = upgradeStats(playerStats, upgrade);
+    setPlayerStats(updatedStats);
     setShowLevelUp(false);
     
     toast({

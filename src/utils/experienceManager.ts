@@ -8,7 +8,6 @@ export const getExperienceReward = (opponentLevel: number, isBoss: boolean): num
   if (isBoss) {
     return 200;
   }
-  // Base experience (10) multiplied by 2^(level-1)
   return 10 * Math.pow(2, opponentLevel - 1);
 };
 
