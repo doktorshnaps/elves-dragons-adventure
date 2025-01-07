@@ -58,8 +58,16 @@ export const PlayerStatsCard = () => {
       }
     };
 
+    // Добавляем слушатель для событий storage
     window.addEventListener('storage', handleStorageChange);
-    return () => window.removeEventListener('storage', handleStorageChange);
+    
+    // Добавляем интервал для регулярной проверки localStorage
+    const checkInterval = setInterval(handleStorageChange, 1000);
+
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+      clearInterval(checkInterval);
+    };
   }, []);
 
   const healthPercentage = (stats.health / stats.maxHealth) * 100;
