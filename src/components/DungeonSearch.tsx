@@ -1,10 +1,12 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Dice6, ArrowLeft } from "lucide-react";
+import { Dice6, ArrowLeft, Battery } from "lucide-react";
 import { Button } from "./ui/button";
 import { Card } from "./ui/card";
+import { Progress } from "./ui/progress";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
+import { getInitialEnergyState, useEnergy, getTimeUntilNextEnergy, EnergyState } from "@/utils/energyManager";
 
 interface DungeonSearchProps {
   onClose: () => void;
@@ -25,8 +27,20 @@ const dungeons = [
 export const DungeonSearch = ({ onClose, balance, onBalanceChange }: DungeonSearchProps) => {
   const [rolling, setRolling] = useState(false);
   const [selectedDungeon, setSelectedDungeon] = useState<string | null>(null);
+  const [energyState, setEnergyState] = useState<EnergyState>(getInitialEnergyState());
+  const [timeUntilNext, setTimeUntilNext] = useState(getTimeUntilNextEnergy());
   const navigate = useNavigate();
   const { toast } = useToast();
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      const newEnergyState = getInitialEnergyState();
+      setEnergyState(newEnergyState);
+      setTimeUntilNext(getTimeUntilNextEnergy());
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, []);
 
   const rollDice = () => {
     const savedState = localStorage.getItem('battleState');
@@ -44,9 +58,17 @@ export const DungeonSearch = ({ onClose, balance, onBalanceChange }: DungeonSear
       }
     }
 
+    if (!useEnergy()) {
+      toast({
+        title: "Недостаточно энергии",
+        description: "Подождите пока энергия восстановится",
+        variant: "destructive",
+      });
+      return;
+    }
+
     setRolling(true);
     
-    // Анимированный выбор подземелья
     let currentIndex = 0;
     const interval = setInterval(() => {
       setSelectedDungeon(dungeons[currentIndex]);
@@ -70,6 +92,12 @@ export const DungeonSearch = ({ onClose, balance, onBalanceChange }: DungeonSear
     }, 2000);
   };
 
+  const formatTime = (ms: number): string => {
+    const minutes = Math.floor(ms / (60 * 1000));
+    const seconds = Math.floor((ms % (60 * 1000)) / 1000);
+    return `${minutes}:${seconds.toString().padStart(2, '0')}`;
+  };
+
   return (
     <motion.div
       initial={{ opacity: 0 }}
@@ -89,6 +117,21 @@ export const DungeonSearch = ({ onClose, balance, onBalanceChange }: DungeonSear
 
         <div className="text-center">
           <h2 className="text-2xl font-bold text-game-accent mb-6">Поиск подземелья</h2>
+          
+          <div className="mb-6">
+            <div className="flex items-center justify-center gap-2 mb-2">
+              <Battery className="w-5 h-5 text-game-accent" />
+              <span className="text-game-accent">
+                Энергия: {energyState.current}/{energyState.max}
+              </span>
+            </div>
+            <Progress value={(energyState.current / energyState.max) * 100} className="w-full" />
+            {energyState.current < energyState.max && (
+              <p className="text-sm text-gray-400 mt-1">
+                Следующая энергия через: {formatTime(timeUntilNext)}
+              </p>
+            )}
+          </div>
           
           <div className="mb-4">
             <p className="text-game-accent">Баланс: {balance} монет</p>
@@ -121,7 +164,7 @@ export const DungeonSearch = ({ onClose, balance, onBalanceChange }: DungeonSear
           <div className="space-x-4">
             <Button
               onClick={rollDice}
-              disabled={rolling}
+              disabled={rolling || energyState.current <= 0}
               className="bg-game-primary hover:bg-game-primary/80"
             >
               {rolling ? "Поиск подземелья..." : "Искать подземелье"}
