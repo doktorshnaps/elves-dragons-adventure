@@ -33,11 +33,7 @@ const Battle = () => {
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
           <div>
-            <PlayerCards
-              stats={playerStats}
-              isPlayerTurn={isPlayerTurn}
-              onAttack={attackEnemy}
-            />
+            <PlayerCards stats={playerStats} isPlayerTurn={isPlayerTurn} onAttack={attackEnemy} />
             <Inventory items={inventory} onUseItem={useItem} />
           </div>
           
@@ -46,18 +42,17 @@ const Battle = () => {
               <OpponentCard
                 key={opponent.id}
                 opponent={opponent}
-                onAttack={handleOpponentAttack}
+                onAttack={() => attackEnemy(opponent.id)}
+                isPlayerTurn={isPlayerTurn}
               />
             ))}
           </div>
         </div>
 
-        {showLevelUp && (
-          <LevelUpDialog 
-            isOpen={showLevelUp} 
-            onUpgradeSelect={handleUpgrade} 
-          />
-        )}
+        <LevelUpDialog 
+          isOpen={showLevelUp} 
+          onUpgradeSelect={handleUpgrade} 
+        />
       </div>
     </div>
   );

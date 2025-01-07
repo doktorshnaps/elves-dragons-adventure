@@ -1,52 +1,54 @@
 import React from "react";
 import { Card } from "@/components/ui/card";
 import { Shield, Sword } from "lucide-react";
-
-interface PlayerCard {
-  id: number;
-  name: string;
-  power: number;
-  defense: number;
-}
+import { PlayerStats } from "@/types/battle";
 
 interface PlayerCardsProps {
-  cards: PlayerCard[];
+  stats: PlayerStats;
+  isPlayerTurn: boolean;
+  onAttack: (enemyId: number) => void;
 }
 
-export const PlayerCards = ({ cards }: PlayerCardsProps) => {
-  const totalPower = cards.reduce((sum, card) => sum + card.power, 0);
-  const totalDefense = cards.reduce((sum, card) => sum + card.defense, 0);
-
+export const PlayerCards = ({ stats }: PlayerCardsProps) => {
   return (
     <div className="mt-4">
-      <h3 className="text-xl font-bold text-game-accent mb-4">Ваши карты</h3>
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        {cards.map((card) => (
-          <Card key={card.id} className="p-4 bg-game-surface border-game-accent">
-            <h4 className="font-bold text-game-accent mb-2">{card.name}</h4>
-            <div className="flex justify-between text-gray-400">
-              <div className="flex items-center gap-2">
-                <Sword className="w-4 h-4" />
-                <span>+{card.power}</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <Shield className="w-4 h-4" />
-                <span>+{card.defense}</span>
-              </div>
+      <h3 className="text-xl font-bold text-game-accent mb-4">Ваш герой</h3>
+      <Card className="p-4 bg-game-surface border-game-accent">
+        <div className="space-y-4">
+          <div className="flex justify-between items-center">
+            <div className="flex items-center gap-2">
+              <Sword className="w-4 h-4" />
+              <span className="text-gray-400">Сила: {stats.power}</span>
             </div>
-          </Card>
-        ))}
-      </div>
-      <div className="mt-4 flex justify-center gap-8">
-        <div className="text-center">
-          <p className="text-sm text-gray-400">Общая сила</p>
-          <p className="font-bold text-game-accent">+{totalPower}</p>
+            <div className="flex items-center gap-2">
+              <Shield className="w-4 h-4" />
+              <span className="text-gray-400">Защита: {stats.defense}</span>
+            </div>
+          </div>
+          <div className="space-y-2">
+            <div className="flex justify-between text-gray-400">
+              <span>Здоровье: {stats.health}/{stats.maxHealth}</span>
+            </div>
+            <div className="w-full bg-gray-700 rounded-full h-2.5">
+              <div
+                className="bg-red-600 h-2.5 rounded-full transition-all duration-300"
+                style={{ width: `${(stats.health / stats.maxHealth) * 100}%` }}
+              ></div>
+            </div>
+          </div>
+          <div className="space-y-2">
+            <div className="flex justify-between text-gray-400">
+              <span>Опыт: {stats.experience}/{stats.requiredExperience}</span>
+            </div>
+            <div className="w-full bg-gray-700 rounded-full h-2.5">
+              <div
+                className="bg-blue-600 h-2.5 rounded-full transition-all duration-300"
+                style={{ width: `${(stats.experience / stats.requiredExperience) * 100}%` }}
+              ></div>
+            </div>
+          </div>
         </div>
-        <div className="text-center">
-          <p className="text-sm text-gray-400">Общая защита</p>
-          <p className="font-bold text-game-accent">+{totalDefense}</p>
-        </div>
-      </div>
+      </Card>
     </div>
   );
 };

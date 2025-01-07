@@ -150,22 +150,14 @@ export const InventoryDisplay = ({
         {inventory.length > 0 ? (
           inventory.map((item) => (
             <Card
-              key={item.id}
+              key={'id' in item ? item.id : Math.random()}
               className={`p-4 bg-game-background border-game-accent ${!readonly ? 'hover:border-game-primary cursor-pointer' : ''} transition-all duration-300`}
             >
               <div className="flex items-center gap-2 mb-2">
                 {getItemIcon(item.type)}
                 <h3 className="font-semibold text-game-accent">{item.name}</h3>
               </div>
-              <p className="text-sm text-gray-400">
-                {getItemDescription({ 
-                  name: item.name, 
-                  type: item.type, 
-                  value: 'value' in item ? item.value : 0,
-                  count: 1,
-                  items: [item]
-                })}
-              </p>
+              <p className="text-sm text-gray-400">{getItemDescription(item)}</p>
               {!readonly && (
                 <div className="flex gap-2 mt-2">
                   <Button
