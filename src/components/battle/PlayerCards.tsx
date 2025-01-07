@@ -9,15 +9,15 @@ interface PlayerCardsProps {
   onAttack: (enemyId: number) => void;
 }
 
-export const PlayerCards = ({ stats }: PlayerCardsProps) => {
+export const PlayerCards = ({ stats, isPlayerTurn }: PlayerCardsProps) => {
   return (
     <div className="mt-4">
       <h3 className="text-xl font-bold text-game-accent mb-4">Ваш герой</h3>
-      <Card className="p-4 bg-game-surface border-game-accent">
+      <Card className={`p-4 bg-game-surface ${isPlayerTurn ? 'border-game-accent' : 'border-gray-700'}`}>
         <div className="space-y-4">
           <div className="flex justify-between items-center">
             <div className="flex items-center gap-2">
-              <Sword className="w-4 h-4" />
+              <Sword className={`w-4 h-4 ${isPlayerTurn ? 'text-game-accent' : 'text-gray-500'}`} />
               <span className="text-gray-400">Сила: {stats.power}</span>
             </div>
             <div className="flex items-center gap-2">
