@@ -5,7 +5,7 @@ export interface Equipment {
   id: number;
   name: string;
   type: EquipmentType;
-  slot: EquipmentSlot;
+  slot?: EquipmentSlot;
   equipped: boolean;
   power?: number;
   defense?: number;

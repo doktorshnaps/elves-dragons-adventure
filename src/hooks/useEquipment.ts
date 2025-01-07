@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Equipment, EquippedItems } from '@/types/equipment';
+import { Equipment, EquippedItems, EquipmentType } from '@/types/equipment';
 import { useToast } from '@/hooks/use-toast';
 
 export const useEquipment = () => {
@@ -24,21 +24,23 @@ export const useEquipment = () => {
     setEquippedItems(prev => {
       const newEquipped = { ...prev };
       
-      // Для колец используем специальную логику
       if (item.type === 'ring') {
         if (!prev.ring1) {
           newEquipped.ring1 = { ...item, equipped: true, slot: 'ring1' };
         } else if (!prev.ring2) {
           newEquipped.ring2 = { ...item, equipped: true, slot: 'ring2' };
         } else {
-          // Если оба слота заняты, заменяем первое кольцо
           newEquipped.ring1 = { ...item, equipped: true, slot: 'ring1' };
         }
       } else {
-        // Для остальных предметов просто заменяем в соответствующем слоте
-        const slot = item.type === 'ring' ? 'ring1' : item.type;
+        const slot = item.type;
         newEquipped[slot] = { ...item, equipped: true };
       }
+
+      toast({
+        title: "Предмет экипирован",
+        description: `${item.name} успешно экипирован`,
+      });
 
       return newEquipped;
     });

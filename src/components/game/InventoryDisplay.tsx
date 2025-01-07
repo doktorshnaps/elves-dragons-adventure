@@ -1,4 +1,4 @@
-import { Sword, Shield, FlaskConical, ArmorIcon } from "lucide-react";
+import { Sword, Shield, FlaskConical, ShieldHalf } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Item } from "@/components/battle/Inventory";
@@ -29,7 +29,7 @@ export const InventoryDisplay = ({ inventory, onUseItem, readonly = false }: Inv
       case "weapon":
         return <Sword className="w-4 h-4" />;
       case "armor":
-        return <ArmorIcon className="w-4 h-4" />;
+        return <ShieldHalf className="w-4 h-4" />;
       case "shield":
         return <Shield className="w-4 h-4" />;
       case "healthPotion":
