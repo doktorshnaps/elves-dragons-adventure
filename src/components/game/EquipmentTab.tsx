@@ -1,7 +1,7 @@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Sword, Shield, Ring, CircuitBoard, GemIcon } from "lucide-react";
+import { Sword, Shield, CircuitBoard, GemIcon, CircleIcon } from "lucide-react";
 import { Equipment, EquippedItems } from "@/types/equipment";
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
@@ -68,8 +68,8 @@ export const EquipmentTab = ({ equipment, onEquip, onUnequip }: EquipmentTabProp
         {renderEquipmentSlot('Оружие', <Sword className="w-6 h-6 text-game-accent" />, equippedItems.weapon)}
         {renderEquipmentSlot('Щит', <Shield className="w-6 h-6 text-game-accent" />, equippedItems.shield)}
         {renderEquipmentSlot('Броня', <CircuitBoard className="w-6 h-6 text-game-accent" />, equippedItems.armor)}
-        {renderEquipmentSlot('Кольцо 1', <Ring className="w-6 h-6 text-game-accent" />, equippedItems.ring1)}
-        {renderEquipmentSlot('Кольцо 2', <Ring className="w-6 h-6 text-game-accent" />, equippedItems.ring2)}
+        {renderEquipmentSlot('Кольцо 1', <CircleIcon className="w-6 h-6 text-game-accent" />, equippedItems.ring1)}
+        {renderEquipmentSlot('Кольцо 2', <CircleIcon className="w-6 h-6 text-game-accent" />, equippedItems.ring2)}
         {renderEquipmentSlot('Ожерелье', <GemIcon className="w-6 h-6 text-game-accent" />, equippedItems.necklace)}
       </div>
 
