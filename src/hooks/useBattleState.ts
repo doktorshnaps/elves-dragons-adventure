@@ -30,27 +30,29 @@ export const useBattleState = (initialLevel: number = 1) => {
     handleOpponentDefeat
   );
 
-  // Check for level completion when all opponents are defeated
+  // Проверяем завершение уровня когда все противники побеждены
   useEffect(() => {
     if (opponents.length === 0) {
       const nextLevel = initialLevel + 1;
+      
+      // Сохраняем состояние для следующего уровня
       const battleState = {
         playerStats,
-        opponents: [],
+        opponents: [], // Очищаем список противников
         level: nextLevel
       };
       localStorage.setItem('battleState', JSON.stringify(battleState));
       
-      // Generate new opponents for the next level
-      setOpponents(prevOpponents => {
-        if (prevOpponents.length === 0) {
-          navigate(`/battle?level=${nextLevel}`);
-          return prevOpponents;
-        }
-        return prevOpponents;
+      // Показываем сообщение о завершении уровня
+      toast({
+        title: "Уровень пройден!",
+        description: `Вы переходите на уровень ${nextLevel}`,
       });
+
+      // Переходим на следующий уровень
+      navigate(`/battle?level=${nextLevel}`, { replace: true });
     }
-  }, [opponents, initialLevel, navigate, playerStats]);
+  }, [opponents, initialLevel, navigate, playerStats, toast]);
 
   const useItem = (item: Item) => {
     const newStats = { ...playerStats };
