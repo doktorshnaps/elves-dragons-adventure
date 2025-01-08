@@ -1,7 +1,7 @@
 import React, { useEffect } from "react";
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
-import { ArrowLeft, Home, Heart } from "lucide-react";
+import { ArrowLeft, Home, Heart, DoorOpen } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { OpponentCard } from "@/components/battle/OpponentCard";
 import { PlayerCard } from "@/components/battle/PlayerCard";
@@ -9,9 +9,11 @@ import { PlayerCards } from "@/components/battle/PlayerCards";
 import { Inventory } from "@/components/battle/Inventory";
 import { LevelUpDialog } from "@/components/battle/LevelUpDialog";
 import { useBattleState } from "@/hooks/useBattleState";
+import { useToast } from "@/hooks/use-toast";
 
 const Battle = () => {
   const navigate = useNavigate();
+  const { toast } = useToast();
   const {
     level,
     coins,
@@ -32,11 +34,14 @@ const Battle = () => {
     }
   }, [isPlayerTurn]);
 
-  const [playerCards] = React.useState([
-    { id: 1, name: "Меч героя", power: 5, defense: 2 },
-    { id: 2, name: "Щит стража", power: 2, defense: 8 },
-    { id: 3, name: "Амулет силы", power: 3, defense: 3 },
-  ]);
+  const handleExitDungeon = () => {
+    localStorage.removeItem('battleState');
+    toast({
+      title: "Подземелье покинуто",
+      description: "Вы покинули подземелье. Весь прогресс сброшен.",
+    });
+    navigate("/game");
+  };
 
   return (
     <div className="min-h-screen bg-game-background p-6 relative">
@@ -60,6 +65,14 @@ const Battle = () => {
           <div className="flex items-center gap-4">
             <span className="text-xl font-bold text-yellow-500">🪙 {coins}</span>
             <span className="text-xl font-bold text-purple-500">👑 Уровень {level}</span>
+            <Button
+              variant="destructive"
+              className="bg-red-600 hover:bg-red-700"
+              onClick={handleExitDungeon}
+            >
+              <DoorOpen className="h-5 w-5 mr-2" />
+              Покинуть подземелье
+            </Button>
             <Button
               variant="ghost"
               size="icon"
