@@ -5,19 +5,28 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { lootItems } from "@/utils/lootUtils";
+import { generatePack } from "@/utils/cardUtils";
 
 interface ShopItem {
   id: number;
   name: string;
   description: string;
   price: number;
-  type: "healthPotion" | "defensePotion" | "weapon" | "armor";
+  type: "healthPotion" | "defensePotion" | "weapon" | "armor" | "cardPack";
   value: number;
 }
 
 const shopItems: ShopItem[] = [
   {
     id: 1,
+    name: "Колода карт",
+    description: "Содержит 3 случайные карты героев или питомцев",
+    price: 200,
+    type: "cardPack",
+    value: 3
+  },
+  {
+    id: 2,
     name: lootItems.healthPotion.name,
     description: "Восстанавливает 30 очков здоровья",
     price: 50,
@@ -25,7 +34,7 @@ const shopItems: ShopItem[] = [
     value: 30
   },
   {
-    id: 2,
+    id: 3,
     name: lootItems.largeHealthPotion.name,
     description: "Восстанавливает 70 очков здоровья",
     price: 100,
@@ -33,7 +42,7 @@ const shopItems: ShopItem[] = [
     value: 70
   },
   {
-    id: 3,
+    id: 4,
     name: lootItems.defensePotion.name,
     description: "Увеличивает защиту на 20",
     price: 75,
@@ -41,7 +50,7 @@ const shopItems: ShopItem[] = [
     value: 20
   },
   {
-    id: 4,
+    id: 5,
     name: lootItems.weapon.name,
     description: "Увеличивает силу атаки на 15",
     price: 150,
@@ -49,7 +58,7 @@ const shopItems: ShopItem[] = [
     value: 15
   },
   {
-    id: 5,
+    id: 6,
     name: lootItems.armor.name,
     description: "Увеличивает защиту на 10",
     price: 120,
@@ -74,7 +83,6 @@ export const Shop = ({ onClose, balance, onBalanceChange }: ShopProps) => {
   const updateInventory = (newInventory: any[]) => {
     localStorage.setItem('gameInventory', JSON.stringify(newInventory));
     setInventory(newInventory);
-    // Создаем новое событие для синхронизации
     const event = new CustomEvent('inventoryUpdate', { 
       detail: { inventory: newInventory }
     });
@@ -91,22 +99,34 @@ export const Shop = ({ onClose, balance, onBalanceChange }: ShopProps) => {
       return;
     }
 
-    const newItem = {
-      ...item,
-      id: Date.now()
-    };
+    if (item.type === "cardPack") {
+      const cards = generatePack();
+      const savedCards = localStorage.getItem('gameCards') || '[]';
+      const currentCards = JSON.parse(savedCards);
+      const newCards = [...currentCards, ...cards];
+      localStorage.setItem('gameCards', JSON.stringify(newCards));
+      
+      const event = new CustomEvent('cardsUpdate', { 
+        detail: { cards: newCards }
+      });
+      window.dispatchEvent(event);
 
-    const currentInventory = localStorage.getItem('gameInventory');
-    const parsedInventory = currentInventory ? JSON.parse(currentInventory) : [];
-    const newInventory = [...parsedInventory, newItem];
-    
-    updateInventory(newInventory);
+      toast({
+        title: "Колода открыта!",
+        description: `Вы получили ${cards.length} новые карты`,
+      });
+    } else {
+      const newItem = {
+        ...item,
+        id: Date.now()
+      };
+      const currentInventory = localStorage.getItem('gameInventory');
+      const parsedInventory = currentInventory ? JSON.parse(currentInventory) : [];
+      const newInventory = [...parsedInventory, newItem];
+      updateInventory(newInventory);
+    }
+
     onBalanceChange(balance - item.price);
-
-    toast({
-      title: "Покупка успешна!",
-      description: `Вы приобрели ${item.name}`,
-    });
   };
 
   return (

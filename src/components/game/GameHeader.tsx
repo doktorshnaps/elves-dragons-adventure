@@ -1,4 +1,4 @@
-import { ShoppingBag, Search, ArrowLeft } from "lucide-react";
+import { ShoppingBag, Search, ArrowLeft, Sword, Shield } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { WalletConnection } from "./WalletConnection";
@@ -13,6 +13,7 @@ interface GameHeaderProps {
   hasActiveDungeon: boolean;
   setShowDungeonSearch: (value: boolean) => void;
   setShowShop: (value: boolean) => void;
+  teamStats: { power: number; defense: number };
 }
 
 export const GameHeader = ({
@@ -24,6 +25,7 @@ export const GameHeader = ({
   hasActiveDungeon,
   setShowDungeonSearch,
   setShowShop,
+  teamStats,
 }: GameHeaderProps) => {
   const navigate = useNavigate();
 
@@ -39,6 +41,19 @@ export const GameHeader = ({
         
         <Card className="bg-game-surface border-game-accent p-4">
           <p className="text-game-accent">Баланс: {balance} монет</p>
+        </Card>
+
+        <Card className="bg-game-surface border-game-accent p-4">
+          <div className="flex gap-4">
+            <div className="flex items-center gap-2">
+              <Sword className="w-4 h-4 text-game-accent" />
+              <span className="text-game-accent">{teamStats.power}</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <Shield className="w-4 h-4 text-game-accent" />
+              <span className="text-game-accent">{teamStats.defense}</span>
+            </div>
+          </div>
         </Card>
 
         <Button

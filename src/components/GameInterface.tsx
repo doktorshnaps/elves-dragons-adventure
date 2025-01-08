@@ -7,7 +7,10 @@ import { Item } from "./battle/Inventory";
 import { InventoryDisplay } from "./game/InventoryDisplay";
 import { DungeonsList } from "./game/DungeonsList";
 import { GameHeader } from "./game/GameHeader";
+import { TeamCards } from "./game/TeamCards";
 import { useToast } from "@/hooks/use-toast";
+import { Card } from "@/types/cards";
+import { generatePack, calculateTeamStats } from "@/utils/cardUtils";
 
 export const GameInterface = () => {
   const { toast } = useToast();
@@ -24,6 +27,42 @@ export const GameInterface = () => {
     const savedInventory = localStorage.getItem('gameInventory');
     return savedInventory ? JSON.parse(savedInventory) : [];
   });
+  const [cards, setCards] = useState<Card[]>(() => {
+    const savedCards = localStorage.getItem('gameCards');
+    return savedCards ? JSON.parse(savedCards) : [];
+  });
+
+  useEffect(() => {
+    // Проверяем, был ли первый запуск
+    const isFirstLaunch = !localStorage.getItem('gameInitialized');
+    if (isFirstLaunch) {
+      // Генерируем две начальные колоды
+      const firstPack = generatePack();
+      const secondPack = generatePack();
+      const initialCards = [...firstPack, ...secondPack];
+      
+      localStorage.setItem('gameCards', JSON.stringify(initialCards));
+      localStorage.setItem('gameInitialized', 'true');
+      
+      setCards(initialCards);
+      
+      toast({
+        title: "Добро пожаловать в игру!",
+        description: "Вы получили 2 начальные колоды карт",
+      });
+    }
+  }, []);
+
+  useEffect(() => {
+    const handleCardsUpdate = (e: CustomEvent<{ cards: Card[] }>) => {
+      setCards(e.detail.cards);
+    };
+
+    window.addEventListener('cardsUpdate', handleCardsUpdate as EventListener);
+    return () => {
+      window.removeEventListener('cardsUpdate', handleCardsUpdate as EventListener);
+    };
+  }, []);
 
   const checkDungeonState = () => {
     const savedState = localStorage.getItem('battleState');
@@ -105,6 +144,8 @@ export const GameInterface = () => {
     }
   };
 
+  const teamStats = calculateTeamStats(cards);
+
   return (
     <motion.div
       initial={{ opacity: 0 }}
@@ -120,6 +161,7 @@ export const GameInterface = () => {
         hasActiveDungeon={hasActiveDungeon}
         setShowDungeonSearch={setShowDungeonSearch}
         setShowShop={setShowShop}
+        teamStats={teamStats}
       />
 
       <Tabs defaultValue="character" className="mt-8">
@@ -129,11 +171,14 @@ export const GameInterface = () => {
         </TabsList>
         
         <TabsContent value="character">
-          <InventoryDisplay 
-            inventory={inventory} 
-            onUseItem={handleUseItem}
-            readonly={false}
-          />
+          <div className="space-y-6">
+            <TeamCards cards={cards} />
+            <InventoryDisplay 
+              inventory={inventory} 
+              onUseItem={handleUseItem}
+              readonly={false}
+            />
+          </div>
         </TabsContent>
         
         <TabsContent value="dungeons">
