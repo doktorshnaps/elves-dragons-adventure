@@ -1,51 +1,17 @@
 import { useState } from 'react';
-import { useToast } from '@/hooks/use-toast';
 import { PlayerStats, Opponent } from '@/types/battle';
 import { calculateDamage, calculatePlayerDamage } from '@/utils/battleCalculations';
-import { rollLoot, generateLootTable } from '@/utils/lootUtils';
-import { getExperienceReward } from '@/utils/experienceManager';
-import { Item } from '@/components/battle/Inventory';
+import { useToast } from '@/hooks/use-toast';
 
 export const useCombat = (
   playerStats: PlayerStats,
   setPlayerStats: (stats: PlayerStats) => void,
   opponents: Opponent[],
   setOpponents: (opponents: Opponent[]) => void,
-  level: number,
-  setLevel: (level: number) => void,
-  coins: number,
-  setCoins: (coins: number) => void,
-  setInventory: (items: Item[]) => void
+  handleOpponentDefeat: (opponent: Opponent) => void
 ) => {
   const [isPlayerTurn, setIsPlayerTurn] = useState(true);
   const { toast } = useToast();
-
-  const updateInventory = (newItems: Item[]) => {
-    const existingInventory = localStorage.getItem('gameInventory');
-    const currentInventory: Item[] = existingInventory ? JSON.parse(existingInventory) : [];
-    const updatedInventory = [...currentInventory, ...newItems];
-    
-    localStorage.setItem('gameInventory', JSON.stringify(updatedInventory));
-    setInventory(updatedInventory);
-    
-    const event = new CustomEvent('inventoryUpdate', { 
-      detail: { inventory: updatedInventory }
-    });
-    window.dispatchEvent(event);
-  };
-
-  const updateBalance = (newCoins: number) => {
-    const currentBalance = Number(localStorage.getItem('gameBalance')) || 0;
-    const updatedBalance = currentBalance + newCoins;
-    
-    localStorage.setItem('gameBalance', updatedBalance.toString());
-    setCoins(updatedBalance);
-    
-    const event = new CustomEvent('balanceUpdate', { 
-      detail: { balance: updatedBalance }
-    });
-    window.dispatchEvent(event);
-  };
 
   const attackEnemy = (enemyId: number) => {
     if (!isPlayerTurn) return;
@@ -64,31 +30,7 @@ export const useCombat = (
         });
         
         if (newHealth <= 0) {
-          const newStats: PlayerStats = {
-            ...playerStats,
-            experience: playerStats.experience + opponent.experienceReward
-          };
-          setPlayerStats(newStats);
-
-          const { items: droppedItems, coins: droppedCoins } = rollLoot(generateLootTable(opponent.isBoss ?? false));
-          
-          if (droppedItems.length > 0 || droppedCoins > 0) {
-            let message = "";
-            if (droppedItems.length > 0) {
-              message += `Получены предметы: ${droppedItems.map(item => item.name).join(", ")}. `;
-              updateInventory(droppedItems);
-            }
-            if (droppedCoins > 0) {
-              message += `Получено ${droppedCoins} монет!`;
-              updateBalance(droppedCoins);
-            }
-            
-            toast({
-              title: "Получена награда!",
-              description: message,
-            });
-          }
-          
+          handleOpponentDefeat(opponent);
           return null;
         }
         
@@ -124,7 +66,7 @@ export const useCombat = (
       if (damageToHealth > 0) {
         message += ` Нанесено ${damageToHealth} урона здоровью!`;
       }
-      message += ` Защита уменьилась на ${playerStats.defense - newDefense}.`;
+      message += ` Защита уменьшилась на ${playerStats.defense - newDefense}.`;
       
       toast({
         title: randomOpponent.isBoss ? "⚠️ Атака босса!" : "Враг атакует!",
