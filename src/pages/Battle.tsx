@@ -7,9 +7,8 @@ import { OpponentCard } from "@/components/battle/OpponentCard";
 import { PlayerCard } from "@/components/battle/PlayerCard";
 import { Inventory } from "@/components/battle/Inventory";
 import { LevelUpDialog } from "@/components/battle/LevelUpDialog";
-import { TeamStats } from "@/components/game/TeamStats";
-import { useBattleState } from "@/hooks/useBattleState";
 import { useToast } from "@/hooks/use-toast";
+import { useBattleState } from "@/hooks/useBattleState";
 
 const Battle = () => {
   const navigate = useNavigate();
@@ -96,6 +95,7 @@ const Battle = () => {
               opponent={opponent}
               onAttack={attackEnemy}
               isPlayerTurn={isPlayerTurn}
+              currentLevel={currentLevel}
             />
           ))}
         </div>
@@ -119,7 +119,6 @@ const Battle = () => {
         )}
 
         <PlayerCard playerStats={playerStats} />
-        <TeamStats />
         <Inventory items={inventory} onUseItem={useItem} />
 
         <LevelUpDialog

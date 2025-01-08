@@ -1,7 +1,7 @@
 import React from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Sword, Coins } from "lucide-react";
+import { Sword, Coins, Star } from "lucide-react";
 import { motion } from "framer-motion";
 import {
   HoverCard,
@@ -9,6 +9,7 @@ import {
   HoverCardTrigger,
 } from "@/components/ui/hover-card";
 import { generateLootTable, formatDropChance } from "@/utils/lootUtils";
+import { getExperienceReward } from "@/utils/experienceManager";
 
 interface OpponentCardProps {
   opponent: {
@@ -21,10 +22,12 @@ interface OpponentCardProps {
   };
   onAttack: (id: number) => void;
   isPlayerTurn: boolean;
+  currentLevel: number;
 }
 
-export const OpponentCard = ({ opponent, onAttack, isPlayerTurn }: OpponentCardProps) => {
+export const OpponentCard = ({ opponent, onAttack, isPlayerTurn, currentLevel }: OpponentCardProps) => {
   const lootTable = generateLootTable(opponent.isBoss ?? false);
+  const experienceReward = getExperienceReward(currentLevel, opponent.isBoss ?? false);
 
   return (
     <motion.div
@@ -65,6 +68,10 @@ export const OpponentCard = ({ opponent, onAttack, isPlayerTurn }: OpponentCardP
         </HoverCardTrigger>
         <HoverCardContent className="w-80">
           <div className="space-y-2">
+            <div className="flex items-center gap-2 mb-2">
+              <Star className="w-4 h-4 text-yellow-500" />
+              <span className="font-semibold">Опыт за убийство: {experienceReward}</span>
+            </div>
             <h4 className="font-semibold">Шанс выпадения предметов:</h4>
             <div className="space-y-1">
               <p className="text-sm">🧪 Зелье здоровья: {formatDropChance(lootTable.healthPotion)}</p>
