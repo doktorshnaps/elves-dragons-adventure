@@ -1,6 +1,6 @@
 import { useState } from "react";
-import { motion } from "framer-motion";
-import { X } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
+import { X, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
@@ -79,6 +79,8 @@ export const Shop = ({ onClose, balance, onBalanceChange }: ShopProps) => {
     const savedInventory = localStorage.getItem('gameInventory');
     return savedInventory ? JSON.parse(savedInventory) : [];
   });
+  const [showCardAnimation, setShowCardAnimation] = useState(false);
+  const [lastOpenedCard, setLastOpenedCard] = useState<any>(null);
 
   const updateInventory = (newInventory: any[]) => {
     localStorage.setItem('gameInventory', JSON.stringify(newInventory));
@@ -89,7 +91,7 @@ export const Shop = ({ onClose, balance, onBalanceChange }: ShopProps) => {
     window.dispatchEvent(event);
   };
 
-  const buyItem = (item: ShopItem) => {
+  const buyItem = async (item: ShopItem) => {
     if (balance < item.price) {
       toast({
         title: "Недостаточно токенов",
@@ -101,20 +103,30 @@ export const Shop = ({ onClose, balance, onBalanceChange }: ShopProps) => {
 
     if (item.type === "cardPack") {
       const cards = generatePack();
-      const savedCards = localStorage.getItem('gameCards') || '[]';
-      const currentCards = JSON.parse(savedCards);
-      const newCards = [...currentCards, ...cards];
-      localStorage.setItem('gameCards', JSON.stringify(newCards));
-      
-      const event = new CustomEvent('cardsUpdate', { 
-        detail: { cards: newCards }
-      });
-      window.dispatchEvent(event);
+      setLastOpenedCard(cards[0]);
+      setShowCardAnimation(true);
 
-      toast({
-        title: "Колода открыта!",
-        description: `Вы получили ${cards.length} новые карты`,
-      });
+      setTimeout(() => {
+        const savedCards = localStorage.getItem('gameCards') || '[]';
+        const currentCards = JSON.parse(savedCards);
+        const newCards = [...currentCards, ...cards];
+        localStorage.setItem('gameCards', JSON.stringify(newCards));
+        
+        const event = new CustomEvent('cardsUpdate', { 
+          detail: { cards: newCards }
+        });
+        window.dispatchEvent(event);
+
+        toast({
+          title: "Карта получена!",
+          description: `Вы получили: ${cards[0].name}`,
+        });
+
+        setTimeout(() => {
+          setShowCardAnimation(false);
+          setLastOpenedCard(null);
+        }, 2000);
+      }, 1000);
     } else {
       const newItem = {
         ...item,
@@ -145,26 +157,59 @@ export const Shop = ({ onClose, balance, onBalanceChange }: ShopProps) => {
           <X className="h-4 w-4" />
         </Button>
 
-        <h2 className="text-2xl font-bold text-game-accent mb-4">Магазин</h2>
+        <h2 className="text-2xl font-bold text-game-accent mb-4 flex items-center gap-2">
+          <Sparkles className="w-6 h-6" />
+          Магический магазин
+        </h2>
         <p className="text-game-accent mb-6">Баланс: {balance} токенов</p>
+
+        <AnimatePresence>
+          {showCardAnimation && lastOpenedCard && (
+            <motion.div
+              initial={{ scale: 0, rotateY: 0 }}
+              animate={{ scale: 1, rotateY: 180 }}
+              exit={{ scale: 0, rotateY: 360 }}
+              transition={{ duration: 1 }}
+              className="fixed inset-0 flex items-center justify-center z-50"
+            >
+              <Card className="p-6 bg-game-background border-game-accent animate-card-glow">
+                <h3 className="text-xl font-bold text-game-accent mb-2">{lastOpenedCard.name}</h3>
+                <p className="text-gray-400">Тип: {lastOpenedCard.type === 'character' ? 'Герой' : 'Питомец'}</p>
+                <div className="mt-4 flex gap-4 justify-center">
+                  <div className="text-game-accent">
+                    <span>Атака: {lastOpenedCard.power}</span>
+                  </div>
+                  <div className="text-game-accent">
+                    <span>Защита: {lastOpenedCard.defense}</span>
+                  </div>
+                </div>
+              </Card>
+            </motion.div>
+          )}
+        </AnimatePresence>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {shopItems.map((item) => (
-            <Card
+            <motion.div
               key={item.id}
-              className="p-4 bg-game-background border-game-accent hover:border-game-primary transition-all duration-300"
+              whileHover={{ scale: 1.02 }}
+              transition={{ duration: 0.2 }}
             >
-              <h3 className="text-lg font-semibold text-game-accent mb-2">{item.name}</h3>
-              <p className="text-gray-400 mb-2">{item.description}</p>
-              <p className="text-game-secondary mb-4">Цена: {item.price} токенов</p>
-              <Button
-                className="w-full bg-game-primary hover:bg-game-primary/80"
-                onClick={() => buyItem(item)}
-                disabled={balance < item.price}
+              <Card
+                className="p-4 bg-game-background border-game-accent hover:border-game-primary transition-all duration-300"
               >
-                Купить
-              </Button>
-            </Card>
+                <h3 className="text-lg font-semibold text-game-accent mb-2">{item.name}</h3>
+                <p className="text-gray-400 mb-2">{item.description}</p>
+                <p className="text-game-secondary mb-4">Цена: {item.price} токенов</p>
+                <Button
+                  className="w-full bg-game-primary hover:bg-game-primary/80"
+                  onClick={() => buyItem(item)}
+                  disabled={balance < item.price}
+                >
+                  Купить
+                </Button>
+              </Card>
+            </motion.div>
           ))}
         </div>
       </Card>

@@ -19,13 +19,12 @@ export default {
     },
     extend: {
       colors: {
-        // Custom game theme colors
         'game': {
-          'primary': '#4A1D96',
-          'secondary': '#10B981',
-          'accent': '#F59E0B',
-          'background': '#1A1A2E',
-          'surface': '#2A2A3E',
+          'primary': '#9b87f5',    // Мистический пурпурный
+          'secondary': '#7E69AB',   // Глубокий пурпурный
+          'accent': '#D946EF',      // Яркий магический
+          'background': '#1A1F2C',  // Тёмный фон
+          'surface': '#221F26',     // Поверхность
         },
         border: "hsl(var(--border))",
         input: "hsl(var(--input))",
@@ -82,6 +81,16 @@ export default {
           '0%': { transform: 'translateY(0) rotate(0deg)' },
           '100%': { transform: 'translateY(-100px) rotate(360deg)' },
         },
+        cardFlip: {
+          '0%': { transform: 'rotateY(0deg) scale(1)' },
+          '50%': { transform: 'rotateY(90deg) scale(1.2)' },
+          '100%': { transform: 'rotateY(180deg) scale(1)' },
+        },
+        cardGlow: {
+          '0%': { boxShadow: '0 0 5px #9b87f5' },
+          '50%': { boxShadow: '0 0 20px #D946EF' },
+          '100%': { boxShadow: '0 0 5px #9b87f5' },
+        }
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
@@ -89,6 +98,8 @@ export default {
         "float": "float 3s ease-in-out infinite",
         "glow": "glow 2s ease-in-out infinite",
         "particles": "particles 10s linear infinite",
+        "card-flip": "cardFlip 1s ease-in-out",
+        "card-glow": "cardGlow 2s infinite",
       },
     },
   },
