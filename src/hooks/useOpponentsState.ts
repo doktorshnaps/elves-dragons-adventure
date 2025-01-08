@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Opponent } from '@/types/battle';
 import { generateOpponents } from '@/utils/opponentGenerator';
 import { rollLoot, generateLootTable } from '@/utils/lootUtils';
@@ -12,17 +12,14 @@ export const useOpponentsState = (
 ) => {
   const { toast } = useToast();
   const [opponents, setOpponents] = useState<Opponent[]>(() => {
-    const savedState = localStorage.getItem('battleState');
-    if (savedState) {
-      const parsed = JSON.parse(savedState);
-      // Если в сохраненном состоянии нет противников или их массив пуст, генерируем новых
-      if (!parsed.opponents || parsed.opponents.length === 0) {
-        return generateOpponents(level);
-      }
-      return parsed.opponents;
-    }
+    // Всегда генерируем новых противников при инициализации уровня
     return generateOpponents(level);
   });
+
+  // При изменении уровня генерируем новых противников
+  useEffect(() => {
+    setOpponents(generateOpponents(level));
+  }, [level]);
 
   const handleOpponentDefeat = (opponent: Opponent) => {
     const { items: droppedItems, coins: droppedCoins } = rollLoot(generateLootTable(opponent.isBoss ?? false));

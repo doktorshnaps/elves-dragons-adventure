@@ -26,17 +26,7 @@ export const usePlayerState = (initialLevel: number = 1) => {
     };
   });
 
-  // Save player stats to localStorage whenever they change
-  useEffect(() => {
-    const savedState = localStorage.getItem('battleState');
-    const currentState = savedState ? JSON.parse(savedState) : {};
-    
-    localStorage.setItem('battleState', JSON.stringify({
-      ...currentState,
-      playerStats
-    }));
-  }, [playerStats]);
-
+  // Проверяем повышение уровня при изменении опыта
   useEffect(() => {
     if (playerStats && checkLevelUp(playerStats)) {
       const newStats = {
@@ -49,17 +39,33 @@ export const usePlayerState = (initialLevel: number = 1) => {
       setPlayerStats(newStats);
       setShowLevelUp(true);
       
+      // Сохраняем обновленные статы в localStorage
+      const savedState = localStorage.getItem('battleState');
+      const currentState = savedState ? JSON.parse(savedState) : {};
+      localStorage.setItem('battleState', JSON.stringify({
+        ...currentState,
+        playerStats: newStats
+      }));
+      
       toast({
         title: "🎉 Новый уровень!",
         description: "Выберите улучшение характеристик",
       });
     }
-  }, [playerStats.experience, toast]);
+  }, [playerStats?.experience, toast]);
 
   const handleUpgrade = (upgrade: StatUpgrade) => {
     const updatedStats = upgradeStats(playerStats, upgrade);
     setPlayerStats(updatedStats);
     setShowLevelUp(false);
+    
+    // Сохраняем обновленные статы в localStorage
+    const savedState = localStorage.getItem('battleState');
+    const currentState = savedState ? JSON.parse(savedState) : {};
+    localStorage.setItem('battleState', JSON.stringify({
+      ...currentState,
+      playerStats: updatedStats
+    }));
     
     toast({
       title: "Характеристики улучшены!",
