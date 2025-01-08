@@ -12,13 +12,27 @@ export const useOpponentsState = (
 ) => {
   const { toast } = useToast();
   const [opponents, setOpponents] = useState<Opponent[]>(() => {
-    // Всегда генерируем новых противников при инициализации уровня
+    const savedState = localStorage.getItem('battleState');
+    if (savedState) {
+      const parsed = JSON.parse(savedState);
+      if (parsed.opponents && parsed.opponents.length > 0) {
+        return parsed.opponents;
+      }
+    }
     return generateOpponents(level);
   });
 
-  // При изменении уровня генерируем новых противников
+  // При изменении уровня генерируем новых противников только если их нет
   useEffect(() => {
-    setOpponents(generateOpponents(level));
+    const savedState = localStorage.getItem('battleState');
+    if (savedState) {
+      const parsed = JSON.parse(savedState);
+      if (!parsed.opponents || parsed.opponents.length === 0) {
+        setOpponents(generateOpponents(level));
+      }
+    } else {
+      setOpponents(generateOpponents(level));
+    }
   }, [level]);
 
   const handleOpponentDefeat = (opponent: Opponent) => {

@@ -21,6 +21,25 @@ export const useBattleState = (initialLevel: number = 1) => {
     updateInventory
   );
 
+  // Проверяем состояние здоровья персонажа
+  useEffect(() => {
+    if (playerStats?.health <= 0) {
+      toast({
+        title: "Поражение!",
+        description: "Ваш герой пал в бою. Подземелье закрыто.",
+        variant: "destructive"
+      });
+      
+      // Очищаем состояние подземелья
+      localStorage.removeItem('battleState');
+      
+      // Возвращаемся в меню
+      setTimeout(() => {
+        navigate('/game');
+      }, 2000);
+    }
+  }, [playerStats?.health, navigate, toast]);
+
   const { isPlayerTurn, attackEnemy, handleOpponentAttack } = useCombat(
     playerStats,
     setPlayerStats,
@@ -29,7 +48,6 @@ export const useBattleState = (initialLevel: number = 1) => {
     handleOpponentDefeat
   );
 
-  // Убираем автоматический переход на следующий уровень из useEffect
   useEffect(() => {
     if (opponents && opponents.length === 0 && playerStats?.health > 0) {
       toast({
@@ -59,6 +77,20 @@ export const useBattleState = (initialLevel: number = 1) => {
 
     navigate(`/battle?level=${nextLevel}`, { replace: true });
   };
+
+  // Сохраняем прогресс при каждом изменении состояния
+  useEffect(() => {
+    if (playerStats?.health > 0) {
+      const battleState = {
+        playerStats,
+        opponents,
+        level: initialLevel,
+        inventory,
+        coins: balance
+      };
+      localStorage.setItem('battleState', JSON.stringify(battleState));
+    }
+  }, [playerStats, opponents, initialLevel, inventory, balance]);
 
   const useItem = (item: Item) => {
     if (!playerStats) return;
@@ -117,6 +149,6 @@ export const useBattleState = (initialLevel: number = 1) => {
     handleOpponentDefeat,
     updateBalance,
     updateInventory,
-    handleNextLevel // Добавляем новую функцию в возвращаемый объект
+    handleNextLevel
   };
 };
