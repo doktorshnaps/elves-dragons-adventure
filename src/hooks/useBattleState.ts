@@ -6,7 +6,6 @@ import { useBalanceState } from './useBalanceState';
 import { useOpponentsState } from './useOpponentsState';
 import { useCombat } from './useCombat';
 import { Item } from '@/components/battle/Inventory';
-import { StatUpgrade } from '@/types/battle';
 import { useEffect } from 'react';
 
 export const useBattleState = (initialLevel: number = 1) => {
@@ -30,9 +29,8 @@ export const useBattleState = (initialLevel: number = 1) => {
     handleOpponentDefeat
   );
 
-  // Проверяем завершение уровня когда все противники побеждены
   useEffect(() => {
-    if (opponents.length === 0) {
+    if (opponents.length === 0 && playerStats.health > 0) {
       const nextLevel = initialLevel + 1;
       
       // Сохраняем состояние для следующего уровня
@@ -49,8 +47,10 @@ export const useBattleState = (initialLevel: number = 1) => {
         description: `Вы переходите на уровень ${nextLevel}`,
       });
 
-      // Переходим на следующий уровень
-      navigate(`/battle?level=${nextLevel}`, { replace: true });
+      // Переходим на следующий уровень с небольшой задержкой
+      setTimeout(() => {
+        navigate(`/battle?level=${nextLevel}`, { replace: true });
+      }, 1000);
     }
   }, [opponents, initialLevel, navigate, playerStats, toast]);
 
