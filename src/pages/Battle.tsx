@@ -5,9 +5,9 @@ import { ArrowLeft, Home, Heart, DoorOpen, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { OpponentCard } from "@/components/battle/OpponentCard";
 import { PlayerCard } from "@/components/battle/PlayerCard";
-import { PlayerCards } from "@/components/battle/PlayerCards";
 import { Inventory } from "@/components/battle/Inventory";
 import { LevelUpDialog } from "@/components/battle/LevelUpDialog";
+import { TeamStats } from "@/components/game/TeamStats";
 import { useBattleState } from "@/hooks/useBattleState";
 import { useToast } from "@/hooks/use-toast";
 
@@ -46,7 +46,6 @@ const Battle = () => {
     navigate("/game");
   };
 
-  // Определяем, когда показывать кнопку следующего уровня
   const showNextLevelButton = opponents.length === 0 && playerStats?.health > 0;
 
   return (
@@ -120,11 +119,7 @@ const Battle = () => {
         )}
 
         <PlayerCard playerStats={playerStats} />
-        <PlayerCards cards={[
-          { id: 1, name: "Меч героя", power: 5, defense: 2 },
-          { id: 2, name: "Щит стража", power: 2, defense: 8 },
-          { id: 3, name: "Амулет силы", power: 3, defense: 3 },
-        ]} />
+        <TeamStats />
         <Inventory items={inventory} onUseItem={useItem} />
 
         <LevelUpDialog
