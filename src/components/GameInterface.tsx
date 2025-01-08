@@ -124,7 +124,7 @@ export const GameInterface = () => {
 
       <Tabs defaultValue="character" className="mt-8">
         <TabsList className="grid w-full grid-cols-2 bg-game-surface">
-          <TabsTrigger value="character" className="text-game-accent">Персонаж</TabsTrigger>
+          <TabsTrigger value="character" className="text-game-accent">Команда</TabsTrigger>
           <TabsTrigger value="dungeons" className="text-game-accent">Подземелья</TabsTrigger>
         </TabsList>
         
