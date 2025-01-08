@@ -16,8 +16,9 @@ export const useCombat = (
   coins: number,
   setCoins: (coins: number) => void,
   setInventory: (items: any[]) => void,
+  isPlayerTurn: boolean,
+  setIsPlayerTurn: (turn: boolean) => void
 ) => {
-  const [isPlayerTurn, setIsPlayerTurn] = useState(true);
   const { toast } = useToast();
 
   const handleOpponentAttack = () => {
@@ -72,9 +73,10 @@ export const useCombat = (
         });
         
         if (newHealth <= 0) {
+          const experienceReward = getExperienceReward(opponent.isBoss ?? false);
           const newStats: PlayerStats = {
             ...playerStats,
-            experience: playerStats.experience + opponent.experienceReward
+            experience: playerStats.experience + experienceReward
           };
           setPlayerStats(newStats);
 
@@ -95,14 +97,7 @@ export const useCombat = (
               description: message,
             });
             
-            setInventory([...droppedItems]);
-          }
-          
-          if (checkLevelUp(newStats)) {
-            toast({
-              title: "🎉 Новый уровень!",
-              description: "Выберите улучшение характеристик",
-            });
+            setInventory(prev => [...prev, ...droppedItems]);
           }
           
           return null;
@@ -124,6 +119,7 @@ export const useCombat = (
       });
 
       setOpponents(generateOpponents(nextLevel));
+      setIsPlayerTurn(true);
     } else {
       setOpponents(newOpponents);
       setIsPlayerTurn(false);
@@ -131,7 +127,6 @@ export const useCombat = (
   };
 
   return {
-    isPlayerTurn,
     attackEnemy,
     handleOpponentAttack,
   };
