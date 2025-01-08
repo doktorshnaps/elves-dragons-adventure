@@ -1,6 +1,6 @@
 import React, { useEffect } from "react";
 import { motion } from "framer-motion";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { ArrowLeft, Home, Heart, DoorOpen, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { OpponentCard } from "@/components/battle/OpponentCard";
@@ -14,8 +14,10 @@ import { useToast } from "@/hooks/use-toast";
 const Battle = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
+  const [searchParams] = useSearchParams();
+  const currentLevel = parseInt(searchParams.get("level") || "1", 10);
+
   const {
-    level,
     coins,
     isPlayerTurn,
     playerStats,
@@ -26,7 +28,7 @@ const Battle = () => {
     handleOpponentAttack,
     useItem,
     handleUpgrade
-  } = useBattleState(level);
+  } = useBattleState(currentLevel);
 
   useEffect(() => {
     if (!isPlayerTurn) {
@@ -44,7 +46,7 @@ const Battle = () => {
   };
 
   const handleNextLevel = () => {
-    const nextLevel = level + 1;
+    const nextLevel = currentLevel + 1;
     // Сохраняем состояние для следующего уровня
     const battleState = {
       playerStats,
@@ -96,7 +98,7 @@ const Battle = () => {
           </div>
           <div className="flex items-center gap-4">
             <span className="text-xl font-bold text-yellow-500">🪙 {coins}</span>
-            <span className="text-xl font-bold text-purple-500">👑 Уровень {level}</span>
+            <span className="text-xl font-bold text-purple-500">👑 Уровень {currentLevel}</span>
             <Button
               variant="destructive"
               className="bg-red-600 hover:bg-red-700"
