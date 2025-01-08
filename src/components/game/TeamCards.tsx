@@ -2,6 +2,7 @@ import { Card } from "@/types/cards";
 import { getCardPrice } from "@/utils/cardUtils";
 import { CardDisplay } from "./CardDisplay";
 import { useToast } from "@/hooks/use-toast";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 interface TeamCardsProps {
   cards: Card[];
@@ -9,20 +10,19 @@ interface TeamCardsProps {
 
 export const TeamCards = ({ cards }: TeamCardsProps) => {
   const { toast } = useToast();
+  const isMobile = useIsMobile();
 
   const handleSellCard = (card: Card) => {
     const price = getCardPrice(card.rarity);
     const currentBalance = parseInt(localStorage.getItem('gameBalance') || '0');
     const newBalance = currentBalance + price;
     
-    // Update balance
     localStorage.setItem('gameBalance', newBalance.toString());
     const balanceEvent = new CustomEvent('balanceUpdate', { 
       detail: { balance: newBalance }
     });
     window.dispatchEvent(balanceEvent);
     
-    // Remove card from team
     const currentCards = cards.filter(c => c.id !== card.id);
     localStorage.setItem('gameCards', JSON.stringify(currentCards));
     const cardsEvent = new CustomEvent('cardsUpdate', { 
@@ -37,7 +37,7 @@ export const TeamCards = ({ cards }: TeamCardsProps) => {
   };
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+    <div className={`grid ${isMobile ? 'grid-cols-2 gap-2' : 'grid-cols-3 gap-4'}`}>
       {cards.map((card) => (
         <CardDisplay
           key={card.id}
