@@ -14,7 +14,13 @@ export const PlayerStatsCard = () => {
   const [stats, setStats] = useState<PlayerStats>(() => {
     const savedState = localStorage.getItem('battleState');
     if (savedState) {
-      return JSON.parse(savedState).playerStats;
+      const parsedState = JSON.parse(savedState);
+      // Проверяем, не умер ли персонаж
+      if (parsedState.playerStats.health <= 0) {
+        parsedState.playerStats.health = INITIAL_HEALTH_AFTER_DEATH;
+        localStorage.setItem('battleState', JSON.stringify(parsedState));
+      }
+      return parsedState.playerStats;
     }
     return {
       health: 100,
@@ -33,26 +39,8 @@ export const PlayerStatsCard = () => {
   useEffect(() => {
     const handleHealthRegen = () => {
       setStats(currentStats => {
-        if (currentStats.health === 0) {
-          // Если здоровье 0, устанавливаем начальное значение после смерти
-          const newStats = { ...currentStats, health: INITIAL_HEALTH_AFTER_DEATH };
-          
-          // Обновляем состояние в localStorage
-          const savedState = localStorage.getItem('battleState');
-          if (savedState) {
-            const state = JSON.parse(savedState);
-            state.playerStats = newStats;
-            localStorage.setItem('battleState', JSON.stringify(state));
-          }
-
-          toast({
-            title: "Восстановление",
-            description: `Здоровье восстановлено до ${INITIAL_HEALTH_AFTER_DEATH} HP`,
-          });
-          
-          return newStats;
-        } else if (currentStats.health < currentStats.maxHealth) {
-          // Восстанавливаем здоровье, если оно меньше максимального
+        // Если здоровье меньше максимального, восстанавливаем
+        if (currentStats.health < currentStats.maxHealth) {
           const newHealth = Math.min(currentStats.health + HEALTH_REGEN_AMOUNT, currentStats.maxHealth);
           const newStats = { ...currentStats, health: newHealth };
           
@@ -64,12 +52,10 @@ export const PlayerStatsCard = () => {
             localStorage.setItem('battleState', JSON.stringify(state));
           }
 
-          if (newHealth < currentStats.maxHealth) {
-            toast({
-              title: "Восстановление",
-              description: `Восстановлено ${HEALTH_REGEN_AMOUNT} HP`,
-            });
-          }
+          toast({
+            title: "Восстановление",
+            description: `Восстановлено ${HEALTH_REGEN_AMOUNT} HP`,
+          });
           
           return newStats;
         }
@@ -100,6 +86,15 @@ export const PlayerStatsCard = () => {
       const savedState = localStorage.getItem('battleState');
       if (savedState) {
         const state = JSON.parse(savedState);
+        // Проверяем, не умер ли персонаж
+        if (state.playerStats.health <= 0) {
+          state.playerStats.health = INITIAL_HEALTH_AFTER_DEATH;
+          localStorage.setItem('battleState', JSON.stringify(state));
+          toast({
+            title: "Восстановление после смерти",
+            description: `Здоровье восстановлено до ${INITIAL_HEALTH_AFTER_DEATH} HP`,
+          });
+        }
         setStats(state.playerStats);
       }
     };
@@ -112,7 +107,7 @@ export const PlayerStatsCard = () => {
       window.removeEventListener('storage', handleStorageChange);
       clearInterval(checkInterval);
     };
-  }, []);
+  }, [toast]);
 
   const healthPercentage = (stats.health / stats.maxHealth) * 100;
   const experiencePercentage = (stats.experience / stats.requiredExperience) * 100;
