@@ -59,14 +59,21 @@ export const GameInterface = () => {
     const handleInventoryUpdate = (e: CustomEvent<{ inventory: Item[] }>) => {
       setInventory(e.detail.inventory);
     };
+
+    const handleBalanceUpdate = (e: CustomEvent<{ balance: number }>) => {
+      setBalance(e.detail.balance);
+      localStorage.setItem('gameBalance', e.detail.balance.toString());
+    };
     
     window.addEventListener('storage', handleStorageChange);
     window.addEventListener('inventoryUpdate', handleInventoryUpdate as EventListener);
+    window.addEventListener('balanceUpdate', handleBalanceUpdate as EventListener);
     
     return () => {
       clearInterval(interval);
       window.removeEventListener('storage', handleStorageChange);
       window.removeEventListener('inventoryUpdate', handleInventoryUpdate as EventListener);
+      window.removeEventListener('balanceUpdate', handleBalanceUpdate as EventListener);
     };
   }, []);
 

@@ -90,24 +90,27 @@ export const InventoryDisplay = ({ inventory, onUseItem, readonly = false }: Inv
   const handleSellItem = (item: Item) => {
     const price = getItemPrice(item);
     const currentBalance = parseInt(localStorage.getItem('gameBalance') || '0');
-    const newBalance = currentBalance + price;
+    const newBalance = currentBalance + Math.floor(price * 0.7); // 70% of original price
     
-    // Update balance
-    localStorage.setItem('gameBalance', newBalance.toString());
+    // Dispatch balance update event
+    const balanceEvent = new CustomEvent('balanceUpdate', { 
+      detail: { balance: newBalance }
+    });
+    window.dispatchEvent(balanceEvent);
     
     // Remove item from inventory
     const newInventory = inventory.filter(i => i.id !== item.id);
     localStorage.setItem('gameInventory', JSON.stringify(newInventory));
     
     // Dispatch inventory update event
-    const event = new CustomEvent('inventoryUpdate', { 
+    const inventoryEvent = new CustomEvent('inventoryUpdate', { 
       detail: { inventory: newInventory }
     });
-    window.dispatchEvent(event);
+    window.dispatchEvent(inventoryEvent);
     
     toast({
       title: "Предмет продан",
-      description: `${item.name} продан за ${price} монет`,
+      description: `${item.name} продан за ${Math.floor(price * 0.7)} монет`,
     });
   };
 
