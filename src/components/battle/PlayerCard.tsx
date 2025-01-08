@@ -1,14 +1,52 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { Card } from "@/components/ui/card";
 import { Shield, Sword, Heart } from "lucide-react";
 import { motion } from "framer-motion";
 import { PlayerStats } from "@/types/battle";
+import { calculateTeamStats } from "@/utils/cardUtils";
 
 interface PlayerCardProps {
   playerStats: PlayerStats;
 }
 
 export const PlayerCard = ({ playerStats }: PlayerCardProps) => {
+  useEffect(() => {
+    const updateStatsFromTeam = () => {
+      const savedCards = localStorage.getItem('gameCards');
+      if (savedCards) {
+        const cards = JSON.parse(savedCards);
+        const teamStats = calculateTeamStats(cards);
+        
+        // Обновляем статистику в battleState
+        const savedState = localStorage.getItem('battleState');
+        if (savedState) {
+          const state = JSON.parse(savedState);
+          state.playerStats.power = teamStats.power;
+          state.playerStats.defense = teamStats.defense;
+          localStorage.setItem('battleState', JSON.stringify(state));
+        }
+      }
+    };
+
+    // Обновляем статистику при монтировании компонента
+    updateStatsFromTeam();
+
+    // Подписываемся на изменения карт
+    const handleCardsUpdate = () => {
+      updateStatsFromTeam();
+    };
+
+    window.addEventListener('cardsUpdate', handleCardsUpdate);
+    
+    // Проверяем обновления каждую секунду
+    const interval = setInterval(updateStatsFromTeam, 1000);
+
+    return () => {
+      window.removeEventListener('cardsUpdate', handleCardsUpdate);
+      clearInterval(interval);
+    };
+  }, []);
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
