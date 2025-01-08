@@ -3,11 +3,14 @@ import { Card } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Heart, Shield, Sword, Star } from "lucide-react";
 import { PlayerStats } from "@/types/battle";
+import { useToast } from "@/hooks/use-toast";
 
 const HEALTH_REGEN_INTERVAL = 5 * 60 * 1000; // 5 минут
-const HEALTH_REGEN_AMOUNT = 10;
+const HEALTH_REGEN_AMOUNT = 10; // Количество восстанавливаемого здоровья
+const INITIAL_HEALTH_AFTER_DEATH = 10; // Начальное здоровье после смерти
 
 export const PlayerStatsCard = () => {
+  const { toast } = useToast();
   const [stats, setStats] = useState<PlayerStats>(() => {
     const savedState = localStorage.getItem('battleState');
     if (savedState) {
@@ -25,11 +28,31 @@ export const PlayerStatsCard = () => {
   });
 
   const [timeUntilRegen, setTimeUntilRegen] = useState<number>(HEALTH_REGEN_INTERVAL);
+  const [lastRegenTime, setLastRegenTime] = useState<number>(Date.now());
 
   useEffect(() => {
-    const interval = setInterval(() => {
+    const handleHealthRegen = () => {
       setStats(currentStats => {
         if (currentStats.health === 0) {
+          // Если здоровье 0, устанавливаем начальное значение после смерти
+          const newStats = { ...currentStats, health: INITIAL_HEALTH_AFTER_DEATH };
+          
+          // Обновляем состояние в localStorage
+          const savedState = localStorage.getItem('battleState');
+          if (savedState) {
+            const state = JSON.parse(savedState);
+            state.playerStats = newStats;
+            localStorage.setItem('battleState', JSON.stringify(state));
+          }
+
+          toast({
+            title: "Восстановление",
+            description: `Здоровье восстановлено до ${INITIAL_HEALTH_AFTER_DEATH} HP`,
+          });
+          
+          return newStats;
+        } else if (currentStats.health < currentStats.maxHealth) {
+          // Восстанавливаем здоровье, если оно меньше максимального
           const newHealth = Math.min(currentStats.health + HEALTH_REGEN_AMOUNT, currentStats.maxHealth);
           const newStats = { ...currentStats, health: newHealth };
           
@@ -40,28 +63,36 @@ export const PlayerStatsCard = () => {
             state.playerStats = newStats;
             localStorage.setItem('battleState', JSON.stringify(state));
           }
+
+          if (newHealth < currentStats.maxHealth) {
+            toast({
+              title: "Восстановление",
+              description: `Восстановлено ${HEALTH_REGEN_AMOUNT} HP`,
+            });
+          }
           
           return newStats;
         }
         return currentStats;
       });
-    }, HEALTH_REGEN_INTERVAL);
+      setLastRegenTime(Date.now());
+    };
+
+    const interval = setInterval(handleHealthRegen, HEALTH_REGEN_INTERVAL);
 
     // Обновляем таймер каждую секунду
     const timerInterval = setInterval(() => {
-      setTimeUntilRegen(prev => {
-        if (prev <= 0) {
-          return HEALTH_REGEN_INTERVAL;
-        }
-        return prev - 1000;
-      });
+      const now = Date.now();
+      const timeSinceLastRegen = now - lastRegenTime;
+      const remainingTime = Math.max(0, HEALTH_REGEN_INTERVAL - timeSinceLastRegen);
+      setTimeUntilRegen(remainingTime);
     }, 1000);
 
     return () => {
       clearInterval(interval);
       clearInterval(timerInterval);
     };
-  }, []);
+  }, [lastRegenTime, toast]);
 
   // Обновляем статистику при изменении в localStorage
   useEffect(() => {
@@ -109,9 +140,9 @@ export const PlayerStatsCard = () => {
               <span className="text-sm text-game-accent">{stats.health}/{stats.maxHealth}</span>
             </div>
             <Progress value={healthPercentage} className="h-2" />
-            {stats.health === 0 && (
+            {stats.health < stats.maxHealth && (
               <div className="text-xs text-game-accent mt-1">
-                Восстановление через: {formatTime(timeUntilRegen)}
+                Следующее восстановление через: {formatTime(timeUntilRegen)}
               </div>
             )}
           </div>
