@@ -5,6 +5,7 @@ import { rollLoot, generateLootTable } from '@/utils/lootUtils';
 import { generateOpponents } from '@/utils/opponentGenerator';
 import { PlayerStats, Opponent } from '@/types/battle';
 import { getExperienceReward, checkLevelUp } from '@/utils/experienceManager';
+import { Item } from '@/components/battle/Inventory';
 
 export const useCombat = (
   playerStats: PlayerStats,
@@ -15,7 +16,7 @@ export const useCombat = (
   setLevel: (level: number) => void,
   coins: number,
   setCoins: (coins: number) => void,
-  setInventory: (items: any[]) => void,
+  setInventory: (items: Item[] | ((prev: Item[]) => Item[])) => void,
   isPlayerTurn: boolean,
   setIsPlayerTurn: (turn: boolean) => void
 ) => {
@@ -36,6 +37,12 @@ export const useCombat = (
       };
       
       setPlayerStats(newStats);
+      localStorage.setItem('battleState', JSON.stringify({
+        level,
+        playerStats: newStats,
+        opponents,
+        isPlayerTurn: true
+      }));
       
       let message = `${randomOpponent.name} атакует с силой ${randomOpponent.power}!`;
       if (blockedDamage > 0) {
@@ -44,7 +51,7 @@ export const useCombat = (
       if (damageToHealth > 0) {
         message += ` Нанесено ${damageToHealth} урона здоровью!`;
       }
-      message += ` Защита уменьилась на ${playerStats.defense - newDefense}.`;
+      message += ` Защита уменьшилась на ${playerStats.defense - newDefense}.`;
       
       toast({
         title: randomOpponent.isBoss ? "⚠️ Атака босса!" : "Враг атакует!",
@@ -79,6 +86,12 @@ export const useCombat = (
             experience: playerStats.experience + experienceReward
           };
           setPlayerStats(newStats);
+          localStorage.setItem('battleState', JSON.stringify({
+            level,
+            playerStats: newStats,
+            opponents: opponents.filter(op => op.id !== enemyId),
+            isPlayerTurn: false
+          }));
 
           const { items: droppedItems, coins: droppedCoins } = rollLoot(generateLootTable(opponent.isBoss ?? false));
           
@@ -89,7 +102,10 @@ export const useCombat = (
             }
             if (droppedCoins > 0) {
               message += `Получено ${droppedCoins} монет!`;
-              setCoins(coins + droppedCoins);
+              const newCoins = coins + droppedCoins;
+              setCoins(newCoins);
+              localStorage.setItem('gameBalance', newCoins.toString());
+              window.dispatchEvent(new CustomEvent('balanceUpdate', { detail: { balance: newCoins } }));
             }
             
             toast({
@@ -97,7 +113,12 @@ export const useCombat = (
               description: message,
             });
             
-            setInventory(prev => [...prev, ...droppedItems]);
+            setInventory((prev: Item[]) => {
+              const newInventory = [...prev, ...droppedItems];
+              localStorage.setItem('gameInventory', JSON.stringify(newInventory));
+              window.dispatchEvent(new CustomEvent('inventoryUpdate', { detail: { inventory: newInventory } }));
+              return newInventory;
+            });
           }
           
           return null;
@@ -118,11 +139,26 @@ export const useCombat = (
         description: `Вы перешли на уровень ${nextLevel}! ${nextLevel % 5 === 0 ? "Приготовьтесь к битве с боссом!" : ""}`,
       });
 
-      setOpponents(generateOpponents(nextLevel));
+      const newOpponents = generateOpponents(nextLevel);
+      setOpponents(newOpponents);
       setIsPlayerTurn(true);
+      
+      localStorage.setItem('battleState', JSON.stringify({
+        level: nextLevel,
+        playerStats,
+        opponents: newOpponents,
+        isPlayerTurn: true
+      }));
     } else {
       setOpponents(newOpponents);
       setIsPlayerTurn(false);
+      
+      localStorage.setItem('battleState', JSON.stringify({
+        level,
+        playerStats,
+        opponents: newOpponents,
+        isPlayerTurn: false
+      }));
     }
   };
 
