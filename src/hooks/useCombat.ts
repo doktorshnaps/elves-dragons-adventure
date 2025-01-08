@@ -92,7 +92,8 @@ export const useCombat = (
             isPlayerTurn: false
           }));
 
-          const { items: droppedItems, coins: droppedCoins } = rollLoot(generateLootTable(opponent.isBoss ?? false, level));
+          const lootTable = generateLootTable(opponent.isBoss ?? false);
+          const { items: droppedItems, coins: droppedCoins } = rollLoot(lootTable);
           
           if (droppedItems.length > 0 || droppedCoins > 0) {
             let message = "";
