@@ -39,12 +39,10 @@ export const useOpponentsState = (
     // Получаем награду за убийство
     const { items: droppedItems, coins: droppedCoins } = rollLoot(generateLootTable(opponent.isBoss ?? false));
     const experienceReward = getExperienceReward(level, opponent.isBoss ?? false);
-    const completionReward = getLevelCompletionReward(opponent.isBoss ?? false);
     
-    // Обновляем баланс с учетом всех наград
-    const totalCoins = droppedCoins + completionReward;
+    // Обновляем баланс только с учетом выпавших монет (без награды за уровень)
     const currentBalance = Number(localStorage.getItem('gameBalance')) || 0;
-    updateBalance(currentBalance + totalCoins);
+    updateBalance(currentBalance + droppedCoins);
     
     // Обновляем инвентарь
     if (droppedItems.length > 0) {
@@ -84,11 +82,25 @@ export const useOpponentsState = (
         detail: { state }
       }));
     }
+
+    // Проверяем, был ли это последний противник
+    const remainingOpponents = opponents.filter(o => o.id !== opponent.id);
+    if (remainingOpponents.length === 0) {
+      // Если это был последний противник, начисляем награду за прохождение уровня
+      const completionReward = getLevelCompletionReward(opponent.isBoss ?? false);
+      const newBalance = Number(localStorage.getItem('gameBalance')) || 0;
+      updateBalance(newBalance + completionReward);
+      
+      toast({
+        title: "Уровень пройден!",
+        description: `Получено ${completionReward} монет за прохождение уровня`,
+      });
+    }
     
-    // Показываем уведомление о наградах
+    // Показываем уведомление о наградах за убийство врага
     toast({
       title: opponent.isBoss ? "Босс побежден!" : "Враг побежден!",
-      description: `Получено ${experienceReward} опыта и ${totalCoins} монет`,
+      description: `Получено ${experienceReward} опыта и ${droppedCoins} монет`,
     });
   };
 
