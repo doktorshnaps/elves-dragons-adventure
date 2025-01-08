@@ -56,21 +56,15 @@ export const GameInterface = () => {
       }
     };
 
-    const handleBalanceUpdate = (e: CustomEvent<{ balance: number }>) => {
-      setBalance(e.detail.balance);
-    };
-
     const handleInventoryUpdate = (e: CustomEvent<{ inventory: Item[] }>) => {
       setInventory(e.detail.inventory);
     };
     
-    window.addEventListener('balanceUpdate', handleBalanceUpdate as EventListener);
     window.addEventListener('storage', handleStorageChange);
     window.addEventListener('inventoryUpdate', handleInventoryUpdate as EventListener);
     
     return () => {
       clearInterval(interval);
-      window.removeEventListener('balanceUpdate', handleBalanceUpdate as EventListener);
       window.removeEventListener('storage', handleStorageChange);
       window.removeEventListener('inventoryUpdate', handleInventoryUpdate as EventListener);
     };

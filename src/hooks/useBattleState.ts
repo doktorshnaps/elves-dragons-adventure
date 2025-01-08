@@ -9,7 +9,6 @@ import { calculateRequiredExperience, upgradeStats, checkLevelUp } from '@/utils
 
 const INVENTORY_STORAGE_KEY = 'gameInventory';
 const BATTLE_STATE_KEY = 'battleState';
-const BALANCE_KEY = 'gameBalance';
 
 export const useBattleState = (initialLevel: number = 1) => {
   const navigate = useNavigate();
@@ -21,7 +20,7 @@ export const useBattleState = (initialLevel: number = 1) => {
       const parsed = JSON.parse(savedState);
       return {
         level: parsed.level || initialLevel,
-        coins: Number(localStorage.getItem(BALANCE_KEY)) || 0,
+        coins: parsed.coins || 0,
         playerStats: parsed.playerStats || {
           health: 100,
           maxHealth: 100,
@@ -32,7 +31,6 @@ export const useBattleState = (initialLevel: number = 1) => {
           requiredExperience: calculateRequiredExperience(1)
         },
         opponents: parsed.opponents || generateOpponents(initialLevel),
-        isPlayerTurn: parsed.isPlayerTurn !== undefined ? parsed.isPlayerTurn : true
       };
     }
     return null;
@@ -42,7 +40,6 @@ export const useBattleState = (initialLevel: number = 1) => {
   const [level, setLevel] = useState(savedState?.level || initialLevel);
   const [coins, setCoins] = useState(savedState?.coins || 0);
   const [showLevelUp, setShowLevelUp] = useState(false);
-  const [isPlayerTurn, setIsPlayerTurn] = useState(savedState?.isPlayerTurn ?? true);
   
   const [inventory, setInventory] = useState<Item[]>(() => {
     const savedInventory = localStorage.getItem(INVENTORY_STORAGE_KEY);
@@ -69,21 +66,7 @@ export const useBattleState = (initialLevel: number = 1) => {
     savedState?.opponents || generateOpponents(initialLevel)
   );
 
-  // Сохраняем состояние при каждом изменении
-  useEffect(() => {
-    const stateToSave = {
-      level,
-      coins,
-      playerStats,
-      opponents,
-      isPlayerTurn
-    };
-    localStorage.setItem(BATTLE_STATE_KEY, JSON.stringify(stateToSave));
-    localStorage.setItem(BALANCE_KEY, coins.toString());
-    localStorage.setItem(INVENTORY_STORAGE_KEY, JSON.stringify(inventory));
-  }, [level, coins, playerStats, opponents, inventory, isPlayerTurn]);
-
-  // Обработка уровней
+  // Проверяем повышение уровня при изменении опыта
   useEffect(() => {
     if (playerStats && checkLevelUp(playerStats)) {
       const newStats = {
@@ -97,6 +80,15 @@ export const useBattleState = (initialLevel: number = 1) => {
       setShowLevelUp(true);
       setLevel(newStats.level);
       
+      // Сохраняем обновленное состояние в localStorage
+      const stateToSave = {
+        level: newStats.level,
+        coins,
+        playerStats: newStats,
+        opponents,
+      };
+      localStorage.setItem(BATTLE_STATE_KEY, JSON.stringify(stateToSave));
+      
       toast({
         title: "🎉 Новый уровень!",
         description: "Выберите улучшение характеристик",
@@ -104,7 +96,7 @@ export const useBattleState = (initialLevel: number = 1) => {
     }
   }, [playerStats.experience, toast]);
 
-  // Проверка здоровья
+  // Добавляем эффект для проверки здоровья
   useEffect(() => {
     if (playerStats.health <= 0) {
       toast({
@@ -113,15 +105,17 @@ export const useBattleState = (initialLevel: number = 1) => {
         variant: "destructive"
       });
       
+      // Очищаем состояние битвы
       localStorage.removeItem(BATTLE_STATE_KEY);
       
+      // Небольшая задержка перед перенаправлением
       setTimeout(() => {
         navigate('/game');
       }, 2000);
     }
   }, [playerStats.health, navigate, toast]);
 
-  const { attackEnemy, handleOpponentAttack } = useCombat(
+  const { isPlayerTurn, attackEnemy, handleOpponentAttack } = useCombat(
     playerStats,
     setPlayerStats,
     opponents,
@@ -130,15 +124,36 @@ export const useBattleState = (initialLevel: number = 1) => {
     setLevel,
     coins,
     setCoins,
-    setInventory,
-    isPlayerTurn,
-    setIsPlayerTurn
+    setInventory
   );
+
+  useEffect(() => {
+    const stateToSave = {
+      level,
+      coins,
+      playerStats,
+      opponents,
+    };
+    localStorage.setItem(BATTLE_STATE_KEY, JSON.stringify(stateToSave));
+  }, [level, coins, playerStats, opponents]);
+
+  useEffect(() => {
+    localStorage.setItem(INVENTORY_STORAGE_KEY, JSON.stringify(inventory));
+  }, [inventory]);
 
   const handleUpgrade = (upgrade: StatUpgrade) => {
     const updatedStats = upgradeStats(playerStats, upgrade);
     setPlayerStats(updatedStats);
     setShowLevelUp(false);
+    
+    // Сохраняем обновленное состояние в localStorage
+    const stateToSave = {
+      level,
+      coins,
+      playerStats: updatedStats,
+      opponents,
+    };
+    localStorage.setItem(BATTLE_STATE_KEY, JSON.stringify(stateToSave));
     
     toast({
       title: "Характеристики улучшены!",

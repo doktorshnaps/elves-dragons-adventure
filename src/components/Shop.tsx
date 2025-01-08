@@ -1,18 +1,62 @@
 import { useState } from "react";
-import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { motion } from "framer-motion";
+import { X } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
-import { Item } from "@/components/battle/Inventory";
-import { Equipment, EquipmentSlot, EquipmentType } from "@/types/equipment";
-import { shopItems } from "@/constants/shopItems";
+import { lootItems } from "@/utils/lootUtils";
 
 interface ShopItem {
   id: number;
   name: string;
-  type: "healthPotion" | "defensePotion" | EquipmentType;
-  value: number;
+  description: string;
   price: number;
+  type: "healthPotion" | "defensePotion" | "weapon" | "armor";
+  value: number;
 }
+
+const shopItems: ShopItem[] = [
+  {
+    id: 1,
+    name: lootItems.healthPotion.name,
+    description: "Восстанавливает 30 очков здоровья",
+    price: 50,
+    type: "healthPotion",
+    value: 30
+  },
+  {
+    id: 2,
+    name: lootItems.largeHealthPotion.name,
+    description: "Восстанавливает 70 очков здоровья",
+    price: 100,
+    type: "healthPotion",
+    value: 70
+  },
+  {
+    id: 3,
+    name: lootItems.defensePotion.name,
+    description: "Увеличивает защиту на 20",
+    price: 75,
+    type: "defensePotion",
+    value: 20
+  },
+  {
+    id: 4,
+    name: lootItems.weapon.name,
+    description: "Увеличивает силу атаки на 15",
+    price: 150,
+    type: "weapon",
+    value: 15
+  },
+  {
+    id: 5,
+    name: lootItems.armor.name,
+    description: "Увеличивает защиту на 10",
+    price: 120,
+    type: "armor",
+    value: 10
+  }
+];
 
 interface ShopProps {
   onClose: () => void;
@@ -22,96 +66,88 @@ interface ShopProps {
 
 export const Shop = ({ onClose, balance, onBalanceChange }: ShopProps) => {
   const { toast } = useToast();
-  const [inventory, setInventory] = useState<(Item | Equipment)[]>(() => {
+  const [inventory, setInventory] = useState(() => {
     const savedInventory = localStorage.getItem('gameInventory');
     return savedInventory ? JSON.parse(savedInventory) : [];
   });
 
-  const handlePurchase = (item: ShopItem) => {
-    if (balance >= item.price) {
-      const newBalance = balance - item.price;
-      onBalanceChange(newBalance);
+  const updateInventory = (newInventory: any[]) => {
+    localStorage.setItem('gameInventory', JSON.stringify(newInventory));
+    setInventory(newInventory);
+    // Создаем новое событие для синхронизации
+    const event = new CustomEvent('inventoryUpdate', { 
+      detail: { inventory: newInventory }
+    });
+    window.dispatchEvent(event);
+  };
 
-      if (item.type === 'healthPotion' || item.type === 'defensePotion') {
-        const newItem: Item = {
-          id: Date.now(),
-          name: item.name,
-          type: item.type,
-          value: item.value,
-        };
-        const newInventory = [...inventory, newItem];
-        setInventory(newInventory);
-        localStorage.setItem('gameInventory', JSON.stringify(newInventory));
-      } else {
-        const newItem: Equipment = {
-          id: Date.now(),
-          name: item.name,
-          type: item.type as EquipmentType,
-          slot: item.type === 'ring' ? 'ring1' : item.type as EquipmentSlot,
-          equipped: false,
-          ...(item.type === 'weapon' ? { power: item.value } : {}),
-          ...(item.type === 'armor' || item.type === 'shield' ? { defense: item.value } : {}),
-          ...(item.type === 'necklace' ? { health: item.value } : {}),
-        };
-        const newInventory = [...inventory, newItem];
-        setInventory(newInventory);
-        localStorage.setItem('gameInventory', JSON.stringify(newInventory));
-      }
-
+  const buyItem = (item: ShopItem) => {
+    if (balance < item.price) {
       toast({
-        title: "Покупка совершена",
-        description: `${item.name} добавлен в инвентарь`,
-      });
-    } else {
-      toast({
-        title: "Недостаточно монет",
-        description: "У вас недостаточно монет для покупки этого предмета",
+        title: "Недостаточно токенов",
+        description: `Для покупки ${item.name} требуется ${item.price} токенов`,
         variant: "destructive",
       });
+      return;
     }
+
+    const newItem = {
+      ...item,
+      id: Date.now()
+    };
+
+    const currentInventory = localStorage.getItem('gameInventory');
+    const parsedInventory = currentInventory ? JSON.parse(currentInventory) : [];
+    const newInventory = [...parsedInventory, newItem];
+    
+    updateInventory(newInventory);
+    onBalanceChange(balance - item.price);
+
+    toast({
+      title: "Покупка успешна!",
+      description: `Вы приобрели ${item.name}`,
+    });
   };
 
   return (
-    <Dialog open onOpenChange={() => onClose()}>
-      <DialogContent className="bg-game-surface border-game-accent">
-        <div className="p-6">
-          <h2 className="text-2xl font-bold text-game-accent mb-4">Магазин</h2>
-          <p className="text-gray-400 mb-6">Доступно монет: {balance} 🪙</p>
-          
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {shopItems.map((item) => (
-              <div
-                key={item.id}
-                className="p-4 border border-game-accent rounded-lg flex justify-between items-center"
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+    >
+      <Card className="bg-game-surface border-game-accent p-6 w-full max-w-2xl max-h-[80vh] overflow-y-auto relative">
+        <Button
+          variant="ghost"
+          className="absolute right-4 top-4 text-game-accent hover:text-white"
+          onClick={onClose}
+        >
+          <X className="h-4 w-4" />
+        </Button>
+
+        <h2 className="text-2xl font-bold text-game-accent mb-4">Магазин</h2>
+        <p className="text-game-accent mb-6">Баланс: {balance} токенов</p>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {shopItems.map((item) => (
+            <Card
+              key={item.id}
+              className="p-4 bg-game-background border-game-accent hover:border-game-primary transition-all duration-300"
+            >
+              <h3 className="text-lg font-semibold text-game-accent mb-2">{item.name}</h3>
+              <p className="text-gray-400 mb-2">{item.description}</p>
+              <p className="text-game-secondary mb-4">Цена: {item.price} токенов</p>
+              <Button
+                className="w-full bg-game-primary hover:bg-game-primary/80"
+                onClick={() => buyItem(item)}
+                disabled={balance < item.price}
               >
-                <div>
-                  <h3 className="font-semibold text-game-accent">{item.name}</h3>
-                  <p className="text-sm text-gray-400">
-                    {item.type === "healthPotion" && `Восстанавливает ${item.value} здоровья`}
-                    {item.type === "defensePotion" && `Добавляет ${item.value} защиты`}
-                    {item.type === "weapon" && `+${item.value} к силе атаки`}
-                    {item.type === "armor" && `+${item.value} к защите`}
-                    {item.type === "shield" && `+${item.value} к защите`}
-                    {item.type === "ring" && `+${item.value} к характеристикам`}
-                    {item.type === "necklace" && `+${item.value} к здоровью`}
-                  </p>
-                </div>
-                <div className="flex items-center gap-4">
-                  <span className="text-yellow-500 font-bold">{item.price} 🪙</span>
-                  <Button
-                    variant="outline"
-                    onClick={() => handlePurchase(item)}
-                    disabled={balance < item.price}
-                    className="text-game-accent border-game-accent hover:bg-game-accent hover:text-white"
-                  >
-                    Купить
-                  </Button>
-                </div>
-              </div>
-            ))}
-          </div>
+                Купить
+              </Button>
+            </Card>
+          ))}
         </div>
-      </DialogContent>
-    </Dialog>
+      </Card>
+    </motion.div>
   );
 };

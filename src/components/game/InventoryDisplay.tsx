@@ -1,106 +1,112 @@
-import { useState } from "react";
+import { Sword, Shield, FlaskConical } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Item } from "@/components/battle/Inventory";
-import { Equipment } from "@/types/equipment";
 import { useToast } from "@/hooks/use-toast";
-import { useEquipment } from "@/hooks/useEquipment";
-import { SellItemDialog } from "./SellItemDialog";
-import { UpgradeItemDialog } from "./UpgradeItemDialog";
-import { InventoryHeader } from "./inventory/InventoryHeader";
-import { InventoryList } from "./inventory/InventoryList";
 
-interface InventoryDisplayProps {
-  inventory: (Item | Equipment)[];
-  onUseItem?: (item: Item) => void;
-  readonly?: boolean;
-  onBalanceChange?: (newBalance: number) => void;
+interface GroupedItem {
+  name: string;
+  type: Item["type"];
+  value: number;
+  count: number;
+  items: Item[];
 }
 
-export const InventoryDisplay = ({ 
-  inventory, 
-  onUseItem, 
-  readonly = false,
-  onBalanceChange 
-}: InventoryDisplayProps) => {
+interface InventoryDisplayProps {
+  inventory: Item[];
+  onUseItem?: (item: Item) => void;
+  readonly?: boolean;
+}
+
+export const InventoryDisplay = ({ inventory, onUseItem, readonly = false }: InventoryDisplayProps) => {
   const { toast } = useToast();
-  const { handleEquip } = useEquipment();
-  const [showSellDialog, setShowSellDialog] = useState<Item | Equipment | null>(null);
-  const [showUpgradeDialog, setShowUpgradeDialog] = useState(false);
 
-  const handleUseItem = (item: Item | Equipment) => {
-    if ('equipped' in item) {
-      handleEquip(item as Equipment);
-    } else if (onUseItem) {
-      onUseItem(item as Item);
+  const getItemIcon = (type: Item["type"]) => {
+    switch (type) {
+      case "weapon":
+        return <Sword className="w-4 h-4" />;
+      case "armor":
+        return <Shield className="w-4 h-4" />;
+      case "healthPotion":
+      case "defensePotion":
+        return <FlaskConical className="w-4 h-4" />;
     }
   };
 
-  const handleSellItem = (item: Item | Equipment, price: number) => {
-    const newInventory = inventory.filter(i => i !== item);
-    localStorage.setItem('gameInventory', JSON.stringify(newInventory));
-    
-    const currentBalance = parseInt(localStorage.getItem('gameBalance') || '0', 10);
-    const newBalance = currentBalance + price;
-    localStorage.setItem('gameBalance', newBalance.toString());
-    
-    if (onBalanceChange) {
-      onBalanceChange(newBalance);
+  const getItemDescription = (item: GroupedItem) => {
+    switch (item.type) {
+      case "weapon":
+        return `+${item.value} к силе атаки`;
+      case "armor":
+        return `+${item.value} к защите`;
+      case "healthPotion":
+        return `Восстанавливает ${item.value} здоровья`;
+      case "defensePotion":
+        return `Восстанавливает ${item.value} защиты`;
     }
-
-    window.dispatchEvent(new CustomEvent('inventoryUpdate', { 
-      detail: { inventory: newInventory } 
-    }));
   };
 
-  const handleUpgradeItems = ([item1, item2]: [Item | Equipment, Item | Equipment]) => {
-    const newInventory = inventory.filter(i => i !== item1 && i !== item2);
-    
-    const upgradedItem = {
-      ...item1,
-      id: Date.now(),
-      name: `Улучшенный ${item1.name}`,
-      value: 'value' in item1 ? Math.floor(item1.value * 1.5) : undefined,
-      power: 'power' in item1 ? Math.floor((item1.power || 0) * 1.5) : undefined,
-      defense: 'defense' in item1 ? Math.floor((item1.defense || 0) * 1.5) : undefined,
-    };
-    
-    newInventory.push(upgradedItem);
-    localStorage.setItem('gameInventory', JSON.stringify(newInventory));
-    
-    window.dispatchEvent(new CustomEvent('inventoryUpdate', { 
-      detail: { inventory: newInventory } 
-    }));
+  const groupItems = (items: Item[]): GroupedItem[] => {
+    return items.reduce<GroupedItem[]>((acc, item) => {
+      const existingGroup = acc.find(
+        group => 
+          group.name === item.name && 
+          group.type === item.type && 
+          group.value === item.value
+      );
+
+      if (existingGroup) {
+        existingGroup.count += 1;
+        existingGroup.items.push(item);
+      } else {
+        acc.push({
+          name: item.name,
+          type: item.type,
+          value: item.value,
+          count: 1,
+          items: [item]
+        });
+      }
+
+      return acc;
+    }, []);
+  };
+
+  const handleUseGroupedItem = (groupedItem: GroupedItem) => {
+    if (!readonly && onUseItem && groupedItem.items.length > 0) {
+      const item = groupedItem.items[0];
+      onUseItem(item);
+      
+      toast({
+        title: "Предмет использован",
+        description: `${item.name} был использован. ${getItemDescription({ ...groupedItem, items: [item] })}`,
+      });
+    }
   };
 
   return (
     <Card className="bg-game-surface border-game-accent p-6">
-      <InventoryHeader 
-        onUpgrade={() => setShowUpgradeDialog(true)}
-        readonly={readonly}
-      />
-      
-      <InventoryList
-        items={inventory}
-        readonly={readonly}
-        onUseItem={handleUseItem}
-        onSellItem={(item) => setShowSellDialog(item)}
-      />
-
-      {showSellDialog && (
-        <SellItemDialog
-          item={showSellDialog}
-          onSell={handleSellItem}
-          onClose={() => setShowSellDialog(null)}
-        />
-      )}
-
-      {showUpgradeDialog && (
-        <UpgradeItemDialog
-          items={inventory}
-          onUpgrade={handleUpgradeItems}
-          onClose={() => setShowUpgradeDialog(false)}
-        />
-      )}
+      <h2 className="text-2xl font-bold text-game-accent mb-4">Инвентарь</h2>
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        {inventory.length > 0 ? (
+          groupItems(inventory).map((item) => (
+            <Card
+              key={`${item.name}-${item.type}-${item.value}`}
+              className={`p-4 bg-game-background border-game-accent ${!readonly ? 'hover:border-game-primary cursor-pointer' : ''} transition-all duration-300`}
+              onClick={() => handleUseGroupedItem(item)}
+            >
+              <div className="flex items-center gap-2 mb-2">
+                {getItemIcon(item.type)}
+                <h3 className="font-semibold text-game-accent">
+                  {item.name} {item.count > 1 && `(${item.count})`}
+                </h3>
+              </div>
+              <p className="text-sm text-gray-400">{getItemDescription(item)}</p>
+            </Card>
+          ))
+        ) : (
+          <p className="text-gray-400 col-span-3 text-center py-8">Инвентарь пуст</p>
+        )}
+      </div>
     </Card>
   );
 };
