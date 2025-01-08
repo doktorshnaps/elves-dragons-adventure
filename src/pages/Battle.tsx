@@ -26,7 +26,7 @@ const Battle = () => {
     handleOpponentAttack,
     useItem,
     handleUpgrade
-  } = useBattleState();
+  } = useBattleState(level);
 
   useEffect(() => {
     if (!isPlayerTurn) {
@@ -45,7 +45,25 @@ const Battle = () => {
 
   const handleNextLevel = () => {
     const nextLevel = level + 1;
-    navigate(`/battle?level=${nextLevel}`, { replace: true });
+    // Сохраняем состояние для следующего уровня
+    const battleState = {
+      playerStats,
+      level: nextLevel,
+      inventory,
+      coins
+    };
+    localStorage.setItem('battleState', JSON.stringify(battleState));
+    
+    toast({
+      title: "Переход на следующий уровень",
+      description: `Вы переходите на уровень ${nextLevel}`,
+    });
+
+    // Используем setTimeout, чтобы пользователь успел увидеть сообщение
+    setTimeout(() => {
+      navigate(`/battle?level=${nextLevel}`, { replace: true });
+      window.location.reload(); // Перезагружаем страницу для обновления состояния
+    }, 1000);
   };
 
   // Define default player cards
