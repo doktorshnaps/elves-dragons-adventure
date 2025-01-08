@@ -7,7 +7,6 @@ import { Item } from "./battle/Inventory";
 import { InventoryDisplay } from "./game/InventoryDisplay";
 import { DungeonsList } from "./game/DungeonsList";
 import { GameHeader } from "./game/GameHeader";
-import { PlayerStatsCard } from "./game/PlayerStats";
 import { useToast } from "@/hooks/use-toast";
 
 export const GameInterface = () => {
@@ -130,7 +129,6 @@ export const GameInterface = () => {
         </TabsList>
         
         <TabsContent value="character">
-          <PlayerStatsCard />
           <InventoryDisplay 
             inventory={inventory} 
             onUseItem={handleUseItem}
