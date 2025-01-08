@@ -29,32 +29,36 @@ export const useBattleState = (initialLevel: number = 1) => {
     handleOpponentDefeat
   );
 
+  // Убираем автоматический переход на следующий уровень из useEffect
   useEffect(() => {
     if (opponents && opponents.length === 0 && playerStats?.health > 0) {
-      const nextLevel = initialLevel + 1;
-      
-      // Сохраняем состояние для следующего уровня
-      const battleState = {
-        playerStats,
-        opponents: [], // Очищаем список противников для следующего уровня
-        level: nextLevel,
-        inventory,
-        coins: balance
-      };
-      localStorage.setItem('battleState', JSON.stringify(battleState));
-      
-      // Показываем сообщение о завершении уровня
       toast({
-        title: "Уровень пройден!",
-        description: `Вы переходите на уровень ${nextLevel}`,
+        title: "Уровень завершен!",
+        description: "Нажмите кнопку для перехода на следующий уровень",
       });
-
-      // Переходим на следующий уровень с небольшой задержкой
-      setTimeout(() => {
-        navigate(`/battle?level=${nextLevel}`, { replace: true });
-      }, 1000);
     }
-  }, [opponents, initialLevel, navigate, playerStats, toast, inventory, balance]);
+  }, [opponents, playerStats?.health, toast]);
+
+  const handleNextLevel = () => {
+    const nextLevel = initialLevel + 1;
+    
+    // Сохраняем состояние для следующего уровня
+    const battleState = {
+      playerStats,
+      opponents: [], // Очищаем список противников для следующего уровня
+      level: nextLevel,
+      inventory,
+      coins: balance
+    };
+    localStorage.setItem('battleState', JSON.stringify(battleState));
+    
+    toast({
+      title: "Переход на следующий уровень",
+      description: `Вы переходите на уровень ${nextLevel}`,
+    });
+
+    navigate(`/battle?level=${nextLevel}`, { replace: true });
+  };
 
   const useItem = (item: Item) => {
     if (!playerStats) return;
@@ -112,6 +116,7 @@ export const useBattleState = (initialLevel: number = 1) => {
     setOpponents,
     handleOpponentDefeat,
     updateBalance,
-    updateInventory
+    updateInventory,
+    handleNextLevel // Добавляем новую функцию в возвращаемый объект
   };
 };

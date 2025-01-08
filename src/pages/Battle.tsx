@@ -21,13 +21,14 @@ const Battle = () => {
     coins,
     isPlayerTurn,
     playerStats,
-    opponents = [], // Provide default empty array
+    opponents = [],
     inventory,
     showLevelUp,
     attackEnemy,
     handleOpponentAttack,
     useItem,
-    handleUpgrade
+    handleUpgrade,
+    handleNextLevel
   } = useBattleState(currentLevel);
 
   useEffect(() => {
@@ -45,36 +46,7 @@ const Battle = () => {
     navigate("/game");
   };
 
-  const handleNextLevel = () => {
-    const nextLevel = currentLevel + 1;
-    // Сохраняем состояние для следующего уровня
-    const battleState = {
-      playerStats,
-      level: nextLevel,
-      inventory,
-      coins
-    };
-    localStorage.setItem('battleState', JSON.stringify(battleState));
-    
-    toast({
-      title: "Переход на следующий уровень",
-      description: `Вы переходите на уровень ${nextLevel}`,
-    });
-
-    // Используем setTimeout, чтобы пользователь успел увидеть сообщение
-    setTimeout(() => {
-      navigate(`/battle?level=${nextLevel}`, { replace: true });
-      window.location.reload(); // Перезагружаем страницу для обновления состояния
-    }, 1000);
-  };
-
-  // Define default player cards
-  const defaultPlayerCards = [
-    { id: 1, name: "Меч героя", power: 5, defense: 2 },
-    { id: 2, name: "Щит стража", power: 2, defense: 8 },
-    { id: 3, name: "Амулет силы", power: 3, defense: 3 },
-  ];
-
+  // Определяем, когда показывать кнопку следующего уровня
   const showNextLevelButton = opponents.length === 0 && playerStats?.health > 0;
 
   return (
@@ -148,7 +120,11 @@ const Battle = () => {
         )}
 
         <PlayerCard playerStats={playerStats} />
-        <PlayerCards cards={defaultPlayerCards} />
+        <PlayerCards cards={[
+          { id: 1, name: "Меч героя", power: 5, defense: 2 },
+          { id: 2, name: "Щит стража", power: 2, defense: 8 },
+          { id: 3, name: "Амулет силы", power: 3, defense: 3 },
+        ]} />
         <Inventory items={inventory} onUseItem={useItem} />
 
         <LevelUpDialog
