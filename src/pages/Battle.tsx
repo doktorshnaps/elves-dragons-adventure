@@ -9,12 +9,17 @@ import { Inventory } from "@/components/battle/Inventory";
 import { LevelUpDialog } from "@/components/battle/LevelUpDialog";
 import { useToast } from "@/hooks/use-toast";
 import { useBattleState } from "@/hooks/useBattleState";
+import { fixResizeObserverLoop } from "@/utils/resizeObserverFix";
 
 const Battle = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const [searchParams] = useSearchParams();
   const currentLevel = parseInt(searchParams.get("level") || "1", 10);
+
+  useEffect(() => {
+    fixResizeObserverLoop();
+  }, []);
 
   const {
     coins,
