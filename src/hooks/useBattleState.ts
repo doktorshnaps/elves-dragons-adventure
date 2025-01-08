@@ -9,6 +9,7 @@ import { calculateRequiredExperience, upgradeStats, checkLevelUp } from '@/utils
 
 const INVENTORY_STORAGE_KEY = 'gameInventory';
 const BATTLE_STATE_KEY = 'battleState';
+const BALANCE_KEY = 'gameBalance';
 
 export const useBattleState = (initialLevel: number = 1) => {
   const navigate = useNavigate();
@@ -20,7 +21,7 @@ export const useBattleState = (initialLevel: number = 1) => {
       const parsed = JSON.parse(savedState);
       return {
         level: parsed.level || initialLevel,
-        coins: parsed.coins || 0,
+        coins: Number(localStorage.getItem(BALANCE_KEY)) || 0,
         playerStats: parsed.playerStats || {
           health: 100,
           maxHealth: 100,
@@ -43,11 +44,7 @@ export const useBattleState = (initialLevel: number = 1) => {
   
   const [inventory, setInventory] = useState<Item[]>(() => {
     const savedInventory = localStorage.getItem(INVENTORY_STORAGE_KEY);
-    return savedInventory ? JSON.parse(savedInventory) : [
-      { id: 1, name: "Зелье здоровья", type: "healthPotion", value: 30 },
-      { id: 2, name: "Зелье здоровья", type: "healthPotion", value: 30 },
-      { id: 3, name: "Зелье защиты", type: "defensePotion", value: 20 },
-    ];
+    return savedInventory ? JSON.parse(savedInventory) : [];
   });
 
   const [playerStats, setPlayerStats] = useState<PlayerStats>(
@@ -65,6 +62,52 @@ export const useBattleState = (initialLevel: number = 1) => {
   const [opponents, setOpponents] = useState<Opponent[]>(
     savedState?.opponents || generateOpponents(initialLevel)
   );
+
+  // Синхронизация баланса
+  useEffect(() => {
+    const handleBalanceUpdate = (e: CustomEvent<{ balance: number }>) => {
+      setCoins(e.detail.balance);
+      localStorage.setItem(BALANCE_KEY, e.detail.balance.toString());
+    };
+
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key === BALANCE_KEY) {
+        const newBalance = e.newValue ? parseInt(e.newValue, 10) : 0;
+        setCoins(newBalance);
+      }
+    };
+
+    window.addEventListener('balanceUpdate', handleBalanceUpdate as EventListener);
+    window.addEventListener('storage', handleStorageChange);
+
+    return () => {
+      window.removeEventListener('balanceUpdate', handleBalanceUpdate as EventListener);
+      window.removeEventListener('storage', handleStorageChange);
+    };
+  }, []);
+
+  // Синхронизация инвентаря
+  useEffect(() => {
+    const handleInventoryUpdate = (e: CustomEvent<{ inventory: Item[] }>) => {
+      setInventory(e.detail.inventory);
+      localStorage.setItem(INVENTORY_STORAGE_KEY, JSON.stringify(e.detail.inventory));
+    };
+
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key === INVENTORY_STORAGE_KEY) {
+        const newInventory = e.newValue ? JSON.parse(e.newValue) : [];
+        setInventory(newInventory);
+      }
+    };
+
+    window.addEventListener('inventoryUpdate', handleInventoryUpdate as EventListener);
+    window.addEventListener('storage', handleStorageChange);
+
+    return () => {
+      window.removeEventListener('inventoryUpdate', handleInventoryUpdate as EventListener);
+      window.removeEventListener('storage', handleStorageChange);
+    };
+  }, []);
 
   // Проверяем повышение уровня при изменении опыта
   useEffect(() => {
@@ -196,7 +239,15 @@ export const useBattleState = (initialLevel: number = 1) => {
     }
 
     setPlayerStats(newStats);
-    setInventory(prev => prev.filter(i => i.id !== item.id));
+    const newInventory = inventory.filter(i => i.id !== item.id);
+    setInventory(newInventory);
+    localStorage.setItem(INVENTORY_STORAGE_KEY, JSON.stringify(newInventory));
+    
+    // Отправляем событие обновления инвентаря
+    const event = new CustomEvent('inventoryUpdate', { 
+      detail: { inventory: newInventory }
+    });
+    window.dispatchEvent(event);
   };
 
   return {

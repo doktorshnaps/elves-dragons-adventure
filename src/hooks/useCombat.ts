@@ -21,22 +21,28 @@ export const useCombat = (
   const { toast } = useToast();
 
   const updateInventory = (newItems: Item[]) => {
-    // Get existing inventory
     const existingInventory = localStorage.getItem('gameInventory');
     const currentInventory: Item[] = existingInventory ? JSON.parse(existingInventory) : [];
-    
-    // Combine existing and new items
     const updatedInventory = [...currentInventory, ...newItems];
     
-    // Update localStorage
     localStorage.setItem('gameInventory', JSON.stringify(updatedInventory));
-    
-    // Update state
     setInventory(updatedInventory);
     
-    // Dispatch custom event for inventory update
     const event = new CustomEvent('inventoryUpdate', { 
       detail: { inventory: updatedInventory }
+    });
+    window.dispatchEvent(event);
+  };
+
+  const updateBalance = (newCoins: number) => {
+    const currentBalance = Number(localStorage.getItem('gameBalance')) || 0;
+    const updatedBalance = currentBalance + newCoins;
+    
+    localStorage.setItem('gameBalance', updatedBalance.toString());
+    setCoins(updatedBalance);
+    
+    const event = new CustomEvent('balanceUpdate', { 
+      detail: { balance: updatedBalance }
     });
     window.dispatchEvent(event);
   };
@@ -74,8 +80,7 @@ export const useCombat = (
             }
             if (droppedCoins > 0) {
               message += `Получено ${droppedCoins} монет!`;
-              setCoins(coins + droppedCoins);
-              localStorage.setItem('gameBalance', (coins + droppedCoins).toString());
+              updateBalance(droppedCoins);
             }
             
             toast({
