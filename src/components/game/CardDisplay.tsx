@@ -1,4 +1,5 @@
-import { Card as CardType, getRarityLabel, getCardPrice } from "@/types/cards";
+import { Card as CardType } from "@/types/cards";
+import { getRarityLabel, getCardPrice } from "@/utils/cardUtils";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Sword, Shield, Coins } from "lucide-react";

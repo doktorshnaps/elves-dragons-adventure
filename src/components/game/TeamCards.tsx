@@ -1,4 +1,5 @@
 import { Card } from "@/types/cards";
+import { getCardPrice } from "@/utils/cardUtils";
 import { CardDisplay } from "./CardDisplay";
 import { useToast } from "@/hooks/use-toast";
 
