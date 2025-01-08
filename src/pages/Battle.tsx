@@ -1,7 +1,7 @@
 import React, { useEffect } from "react";
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
-import { ArrowLeft, Home, Heart, DoorOpen } from "lucide-react";
+import { ArrowLeft, Home, Heart, DoorOpen, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { OpponentCard } from "@/components/battle/OpponentCard";
 import { PlayerCard } from "@/components/battle/PlayerCard";
@@ -43,12 +43,19 @@ const Battle = () => {
     navigate("/game");
   };
 
+  const handleNextLevel = () => {
+    const nextLevel = level + 1;
+    navigate(`/battle?level=${nextLevel}`, { replace: true });
+  };
+
   // Define default player cards
   const defaultPlayerCards = [
     { id: 1, name: "Меч героя", power: 5, defense: 2 },
     { id: 2, name: "Щит стража", power: 2, defense: 8 },
     { id: 3, name: "Амулет силы", power: 3, defense: 3 },
   ];
+
+  const showNextLevelButton = opponents.length === 0 && playerStats.health > 0;
 
   return (
     <div className="min-h-screen bg-game-background p-6 relative">
@@ -101,6 +108,24 @@ const Battle = () => {
             />
           ))}
         </div>
+
+        {showNextLevelButton && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="flex justify-center mb-8"
+          >
+            <Button
+              variant="default"
+              size="lg"
+              onClick={handleNextLevel}
+              className="bg-green-600 hover:bg-green-700 text-white font-bold"
+            >
+              <ArrowRight className="h-5 w-5 mr-2" />
+              Перейти на следующий уровень
+            </Button>
+          </motion.div>
+        )}
 
         <PlayerCard playerStats={playerStats} />
         <PlayerCards cards={defaultPlayerCards} />
