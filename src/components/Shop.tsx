@@ -22,7 +22,7 @@ const shopItems: ShopItem[] = [
     id: 1,
     name: "Колода карт",
     description: "Содержит 3 случайные карты героев или питомцев",
-    price: 200,
+    price: 1000,
     type: "cardPack",
     value: 3
   },
