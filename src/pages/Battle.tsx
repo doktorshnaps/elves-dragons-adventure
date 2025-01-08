@@ -21,7 +21,7 @@ const Battle = () => {
     coins,
     isPlayerTurn,
     playerStats,
-    opponents,
+    opponents = [], // Provide default empty array
     inventory,
     showLevelUp,
     attackEnemy,
@@ -75,7 +75,7 @@ const Battle = () => {
     { id: 3, name: "Амулет силы", power: 3, defense: 3 },
   ];
 
-  const showNextLevelButton = opponents.length === 0 && playerStats.health > 0;
+  const showNextLevelButton = opponents.length === 0 && playerStats?.health > 0;
 
   return (
     <div className="min-h-screen bg-game-background p-6 relative">
@@ -160,7 +160,7 @@ const Battle = () => {
           <div className="flex items-center gap-2">
             <Heart className="w-6 h-6 text-red-500" />
             <span className="font-bold text-xl text-game-accent">
-              {playerStats.health}/{playerStats.maxHealth}
+              {playerStats?.health}/{playerStats?.maxHealth}
             </span>
           </div>
         </div>
