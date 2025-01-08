@@ -10,6 +10,14 @@ const petNames = [
   "Орел", "Лев", "Феникс", "Дракончик"
 ];
 
+export const getRarityLabel = (rarity: Rarity): string => {
+  return "⭐".repeat(rarity);
+};
+
+export const getCardPrice = (rarity: Rarity): number => {
+  return Math.floor(50 * Math.pow(2, rarity - 1));
+};
+
 const getRarityChance = (): Rarity => {
   const rand = Math.random() * 100;
   if (rand < 40) return 1;
