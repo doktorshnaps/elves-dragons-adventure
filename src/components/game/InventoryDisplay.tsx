@@ -1,7 +1,10 @@
-import { Sword, Shield, FlaskConical } from "lucide-react";
+import { useState } from "react";
+import { Sword, Shield, FlaskConical, Coins } from "lucide-react";
 import { Card } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import { Item } from "@/components/battle/Inventory";
 import { useToast } from "@/hooks/use-toast";
+import { getItemPrice, canUpgradeItems, upgradeItems } from "@/utils/itemUtils";
 
 interface GroupedItem {
   name: string;
@@ -19,6 +22,7 @@ interface InventoryDisplayProps {
 
 export const InventoryDisplay = ({ inventory, onUseItem, readonly = false }: InventoryDisplayProps) => {
   const { toast } = useToast();
+  const [selectedItems, setSelectedItems] = useState<Item[]>([]);
 
   const getItemIcon = (type: Item["type"]) => {
     switch (type) {
@@ -83,16 +87,85 @@ export const InventoryDisplay = ({ inventory, onUseItem, readonly = false }: Inv
     }
   };
 
+  const handleSellItem = (item: Item) => {
+    const price = getItemPrice(item);
+    const currentBalance = parseInt(localStorage.getItem('gameBalance') || '0');
+    const newBalance = currentBalance + price;
+    
+    // Update balance
+    localStorage.setItem('gameBalance', newBalance.toString());
+    
+    // Remove item from inventory
+    const newInventory = inventory.filter(i => i.id !== item.id);
+    localStorage.setItem('gameInventory', JSON.stringify(newInventory));
+    
+    // Dispatch inventory update event
+    const event = new CustomEvent('inventoryUpdate', { 
+      detail: { inventory: newInventory }
+    });
+    window.dispatchEvent(event);
+    
+    toast({
+      title: "Предмет продан",
+      description: `${item.name} продан за ${price} монет`,
+    });
+  };
+
+  const handleSelectItem = (item: Item) => {
+    if (selectedItems.find(i => i.id === item.id)) {
+      setSelectedItems(selectedItems.filter(i => i.id !== item.id));
+    } else if (selectedItems.length < 2) {
+      setSelectedItems([...selectedItems, item]);
+    }
+  };
+
+  const handleUpgradeItems = () => {
+    if (selectedItems.length !== 2) return;
+    
+    const newInventory = upgradeItems(inventory, selectedItems);
+    localStorage.setItem('gameInventory', JSON.stringify(newInventory));
+    
+    const event = new CustomEvent('inventoryUpdate', { 
+      detail: { inventory: newInventory }
+    });
+    window.dispatchEvent(event);
+    
+    setSelectedItems([]);
+    
+    toast({
+      title: "Предметы улучшены",
+      description: "Два предмета были успешно объединены в улучшенную версию!",
+    });
+  };
+
+  const canUpgrade = selectedItems.length === 2 && 
+    selectedItems[0].name === selectedItems[1].name && 
+    selectedItems[0].type === selectedItems[1].type && 
+    selectedItems[0].value === selectedItems[1].value;
+
   return (
     <Card className="bg-game-surface border-game-accent p-6">
-      <h2 className="text-2xl font-bold text-game-accent mb-4">Инвентарь</h2>
+      <div className="flex justify-between items-center mb-4">
+        <h2 className="text-2xl font-bold text-game-accent">Инвентарь</h2>
+        {canUpgrade && (
+          <Button 
+            onClick={handleUpgradeItems}
+            className="bg-purple-600 hover:bg-purple-700"
+          >
+            Улучшить выбранные предметы
+          </Button>
+        )}
+      </div>
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         {inventory.length > 0 ? (
           groupItems(inventory).map((item) => (
             <Card
               key={`${item.name}-${item.type}-${item.value}`}
-              className={`p-4 bg-game-background border-game-accent ${!readonly ? 'hover:border-game-primary cursor-pointer' : ''} transition-all duration-300`}
-              onClick={() => handleUseGroupedItem(item)}
+              className={`p-4 bg-game-background border-game-accent 
+                ${!readonly ? 'hover:border-game-primary cursor-pointer' : ''} 
+                ${selectedItems.some(i => i.id === item.items[0].id) ? 'border-purple-500' : ''}
+                transition-all duration-300`}
+              onClick={() => !readonly && handleSelectItem(item.items[0])}
             >
               <div className="flex items-center gap-2 mb-2">
                 {getItemIcon(item.type)}
@@ -100,7 +173,35 @@ export const InventoryDisplay = ({ inventory, onUseItem, readonly = false }: Inv
                   {item.name} {item.count > 1 && `(${item.count})`}
                 </h3>
               </div>
-              <p className="text-sm text-gray-400">{getItemDescription(item)}</p>
+              <p className="text-sm text-gray-400 mb-2">{getItemDescription(item)}</p>
+              <div className="flex gap-2 mt-2">
+                {!readonly && (
+                  <>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleUseGroupedItem(item);
+                      }}
+                    >
+                      Использовать
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="text-yellow-500 hover:text-yellow-600"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleSellItem(item.items[0]);
+                      }}
+                    >
+                      <Coins className="w-4 h-4 mr-1" />
+                      Продать ({getItemPrice(item.items[0])})
+                    </Button>
+                  </>
+                )}
+              </div>
             </Card>
           ))
         ) : (

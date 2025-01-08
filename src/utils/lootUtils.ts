@@ -47,27 +47,32 @@ export const lootItems = {
   healthPotion: {
     name: "Малое зелье здоровья",
     type: "healthPotion" as const,
-    value: 30
+    value: 30,
+    price: 50
   },
   largeHealthPotion: {
     name: "Большое зелье здоровья",
     type: "healthPotion" as const,
-    value: 70
+    value: 70,
+    price: 100
   },
   defensePotion: {
     name: "Зелье защиты",
     type: "defensePotion" as const,
-    value: 20
+    value: 20,
+    price: 75
   },
   weapon: {
     name: "Железный меч",
     type: "weapon" as const,
-    value: 15
+    value: 15,
+    price: 150
   },
   armor: {
     name: "Кожаная броня",
     type: "armor" as const,
-    value: 10
+    value: 10,
+    price: 120
   }
 };
 
