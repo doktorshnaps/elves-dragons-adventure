@@ -1,4 +1,3 @@
-import { useState } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { calculateDamage, calculatePlayerDamage } from '@/utils/battleCalculations';
 import { rollLoot, generateLootTable } from '@/utils/lootUtils';
@@ -93,7 +92,7 @@ export const useCombat = (
             isPlayerTurn: false
           }));
 
-          const { items: droppedItems, coins: droppedCoins } = rollLoot(generateLootTable(opponent.isBoss ?? false));
+          const { items: droppedItems, coins: droppedCoins } = rollLoot(generateLootTable(opponent.isBoss ?? false, level));
           
           if (droppedItems.length > 0 || droppedCoins > 0) {
             let message = "";
@@ -133,9 +132,8 @@ export const useCombat = (
       const nextLevel = level + 1;
       setLevel(nextLevel);
       
-      const isBossDefeated = opponents.some(op => op.isBoss);
       toast({
-        title: isBossDefeated ? "🎊 Босс побежден! Новый уровень!" : "Уровень пройден!",
+        title: "Уровень пройден!",
         description: `Вы перешли на уровень ${nextLevel}! ${nextLevel % 5 === 0 ? "Приготовьтесь к битве с боссом!" : ""}`,
       });
 
