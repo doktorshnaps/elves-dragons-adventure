@@ -43,6 +43,13 @@ const Battle = () => {
     navigate("/game");
   };
 
+  // Define default player cards
+  const defaultPlayerCards = [
+    { id: 1, name: "Меч героя", power: 5, defense: 2 },
+    { id: 2, name: "Щит стража", power: 2, defense: 8 },
+    { id: 3, name: "Амулет силы", power: 3, defense: 3 },
+  ];
+
   return (
     <div className="min-h-screen bg-game-background p-6 relative">
       <motion.div
@@ -96,7 +103,7 @@ const Battle = () => {
         </div>
 
         <PlayerCard playerStats={playerStats} />
-        <PlayerCards cards={playerCards} />
+        <PlayerCards cards={defaultPlayerCards} />
         <Inventory items={inventory} onUseItem={useItem} />
 
         <LevelUpDialog
