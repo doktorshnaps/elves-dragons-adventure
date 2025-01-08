@@ -58,6 +58,25 @@ export const useOpponentsState = (
     if (savedState) {
       const state = JSON.parse(savedState);
       state.playerStats.experience += experienceReward;
+      
+      // Проверяем, достаточно ли опыта для повышения уровня
+      while (state.playerStats.experience >= state.playerStats.requiredExperience) {
+        state.playerStats.level += 1;
+        state.playerStats.experience -= state.playerStats.requiredExperience;
+        state.playerStats.requiredExperience = Math.floor(state.playerStats.requiredExperience * 2);
+        
+        // Увеличиваем характеристики при повышении уровня
+        state.playerStats.maxHealth += 20;
+        state.playerStats.health = state.playerStats.maxHealth;
+        state.playerStats.power += 5;
+        state.playerStats.defense += 3;
+        
+        toast({
+          title: "Уровень повышен!",
+          description: `Достигнут ${state.playerStats.level} уровень! Характеристики улучшены.`,
+        });
+      }
+      
       localStorage.setItem('battleState', JSON.stringify(state));
       
       // Отправляем событие обновления состояния
