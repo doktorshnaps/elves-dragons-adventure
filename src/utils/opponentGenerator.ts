@@ -7,45 +7,66 @@ export const getScaledStats = (baseValue: number, level: number, isBoss: boolean
   return Math.round(baseValue * levelScale * bossMultiplier);
 };
 
-export const generateOpponents = (currentLevel: number): Opponent[] => {
-  const isBossWave = currentLevel % 5 === 0;
+const generateRegularOpponent = (id: number, level: number, type: 'strong' | 'medium' | 'weak'): Opponent => {
+  const baseStats = {
+    strong: { power: 8, health: 120, name: "Элитный страж" },
+    medium: { power: 5, health: 80, name: "Воин тьмы" },
+    weak: { power: 3, health: 50, name: "Темный служитель" }
+  }[type];
+
+  const health = getScaledStats(baseStats.health, level);
   
-  if (isBossWave) {
-    return [{
-      id: 1,
-      name: "🔥 Босс Древний Дракон",
-      power: getScaledStats(10, currentLevel, true),
-      health: getScaledStats(200, currentLevel, true),
-      maxHealth: getScaledStats(200, currentLevel, true),
-      isBoss: true,
-      experienceReward: getExperienceReward(currentLevel, true)
-    }];
+  return {
+    id,
+    name: baseStats.name,
+    power: getScaledStats(baseStats.power, level),
+    health,
+    maxHealth: health,
+    experienceReward: getExperienceReward(level, false)
+  };
+};
+
+const generateBoss = (id: number, level: number): Opponent => {
+  const health = getScaledStats(200, level, true);
+  
+  return {
+    id,
+    name: "🔥 Древний Дракон",
+    power: getScaledStats(12, level, true),
+    health,
+    maxHealth: health,
+    isBoss: true,
+    experienceReward: getExperienceReward(level, true)
+  };
+};
+
+export const generateOpponents = (currentLevel: number): Opponent[] => {
+  // Каждый 5-й уровень - босс
+  if (currentLevel % 5 === 0) {
+    return [generateBoss(1, currentLevel)];
   }
 
-  return [
-    { 
-      id: 1, 
-      name: "Дракон", 
-      power: getScaledStats(5, currentLevel), 
-      health: getScaledStats(100, currentLevel),
-      maxHealth: getScaledStats(100, currentLevel),
-      experienceReward: getExperienceReward(currentLevel, false)
-    },
-    { 
-      id: 2, 
-      name: "Тролль", 
-      power: getScaledStats(3, currentLevel),
-      health: getScaledStats(70, currentLevel),
-      maxHealth: getScaledStats(70, currentLevel),
-      experienceReward: getExperienceReward(currentLevel, false)
-    },
-    { 
-      id: 3, 
-      name: "Гоблин", 
-      power: getScaledStats(2, currentLevel),
-      health: getScaledStats(50, currentLevel),
-      maxHealth: getScaledStats(50, currentLevel),
-      experienceReward: getExperienceReward(currentLevel, false)
-    },
-  ];
+  // Количество врагов увеличивается с уровнем, но не более 5
+  const baseEnemyCount = Math.min(Math.floor(currentLevel / 2) + 2, 5);
+  
+  const opponents: Opponent[] = [];
+  
+  // Добавляем сильного врага каждые 3 уровня
+  if (currentLevel % 3 === 0) {
+    opponents.push(generateRegularOpponent(opponents.length + 1, currentLevel, 'strong'));
+  }
+  
+  // Добавляем средних врагов
+  const mediumCount = Math.floor(baseEnemyCount / 2);
+  for (let i = 0; i < mediumCount; i++) {
+    opponents.push(generateRegularOpponent(opponents.length + 1, currentLevel, 'medium'));
+  }
+  
+  // Добавляем слабых врагов
+  const remainingCount = baseEnemyCount - opponents.length;
+  for (let i = 0; i < remainingCount; i++) {
+    opponents.push(generateRegularOpponent(opponents.length + 1, currentLevel, 'weak'));
+  }
+
+  return opponents;
 };
