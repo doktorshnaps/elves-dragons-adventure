@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Opponent } from '@/types/battle';
 import { generateOpponents } from '@/utils/opponentGenerator';
 import { rollLoot, generateLootTable } from '@/utils/lootUtils';
+import { getExperienceReward, getLevelCompletionReward } from '@/utils/experienceManager';
 import { useToast } from '@/hooks/use-toast';
 import { Item } from '@/components/battle/Inventory';
 
@@ -22,7 +23,6 @@ export const useOpponentsState = (
     return generateOpponents(level);
   });
 
-  // При изменении уровня генерируем новых противников только если их нет
   useEffect(() => {
     const savedState = localStorage.getItem('battleState');
     if (savedState) {
@@ -36,27 +36,50 @@ export const useOpponentsState = (
   }, [level]);
 
   const handleOpponentDefeat = (opponent: Opponent) => {
+    // Получаем награду за убийство
     const { items: droppedItems, coins: droppedCoins } = rollLoot(generateLootTable(opponent.isBoss ?? false));
+    const experienceReward = getExperienceReward(level, opponent.isBoss ?? false);
+    const completionReward = getLevelCompletionReward(opponent.isBoss ?? false);
     
-    if (droppedItems.length > 0 || droppedCoins > 0) {
-      let message = "";
-      if (droppedItems.length > 0) {
-        message += `Получены предметы: ${droppedItems.map(item => item.name).join(", ")}. `;
-        const savedInventory = localStorage.getItem('gameInventory');
-        const currentInventory = savedInventory ? JSON.parse(savedInventory) : [];
-        updateInventory([...currentInventory, ...droppedItems]);
-      }
-      if (droppedCoins > 0) {
-        message += `Получено ${droppedCoins} монет!`;
-        const currentBalance = Number(localStorage.getItem('gameBalance')) || 0;
-        updateBalance(currentBalance + droppedCoins);
-      }
-      
-      toast({
-        title: "Получена награда!",
-        description: message,
-      });
+    // Обновляем баланс с учетом всех наград
+    const totalCoins = droppedCoins + completionReward;
+    const currentBalance = Number(localStorage.getItem('gameBalance')) || 0;
+    updateBalance(currentBalance + totalCoins);
+    
+    // Обновляем инвентарь
+    if (droppedItems.length > 0) {
+      const savedInventory = localStorage.getItem('gameInventory');
+      const currentInventory = savedInventory ? JSON.parse(savedInventory) : [];
+      updateInventory([...currentInventory, ...droppedItems]);
     }
+
+    // Обновляем опыт игрока
+    const savedState = localStorage.getItem('battleState');
+    if (savedState) {
+      const state = JSON.parse(savedState);
+      state.playerStats.experience += experienceReward;
+      localStorage.setItem('battleState', JSON.stringify(state));
+      
+      // Отправляем событие обновления состояния
+      const event = new CustomEvent('battleStateUpdate', { 
+        detail: { state }
+      });
+      window.dispatchEvent(event);
+    }
+    
+    // Показываем уведомление о наградах
+    let message = `Получено ${experienceReward} опыта`;
+    if (droppedItems.length > 0) {
+      message += `, предметы: ${droppedItems.map(item => item.name).join(", ")}`;
+    }
+    if (totalCoins > 0) {
+      message += `, ${totalCoins} монет`;
+    }
+    
+    toast({
+      title: opponent.isBoss ? "Босс побежден!" : "Враг побежден!",
+      description: message,
+    });
   };
 
   return { opponents, setOpponents, handleOpponentDefeat };

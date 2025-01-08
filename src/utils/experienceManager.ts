@@ -4,11 +4,18 @@ export const calculateRequiredExperience = (level: number): number => {
   return 100 * Math.pow(2, level - 1);
 };
 
-export const getExperienceReward = (opponentLevel: number, isBoss: boolean): number => {
+export const getExperienceReward = (level: number, isBoss: boolean): number => {
   if (isBoss) {
-    return 200;
+    return 300; // Босс всегда дает 300 опыта
   }
-  return 10 * Math.pow(2, opponentLevel - 1);
+  // Базовая награда 20 опыта на первом уровне
+  // На каждом следующем уровне на 30% больше
+  const baseReward = 20;
+  return Math.floor(baseReward * Math.pow(1.3, level - 1));
+};
+
+export const getLevelCompletionReward = (isBoss: boolean): number => {
+  return isBoss ? 300 : 100; // 300 монет за босса, 100 за обычный уровень
 };
 
 export const checkLevelUp = (stats: PlayerStats): boolean => {
