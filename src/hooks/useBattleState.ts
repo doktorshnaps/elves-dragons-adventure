@@ -15,7 +15,7 @@ export const useBattleState = (initialLevel: number = 1) => {
   const { playerStats, setPlayerStats, showLevelUp, handleUpgrade } = usePlayerState(initialLevel);
   const { inventory, updateInventory } = useInventoryState();
   const { balance, updateBalance } = useBalanceState();
-  const { opponents, setOpponents, handleOpponentDefeat } = useOpponentsState(
+  const { opponents = [], setOpponents, handleOpponentDefeat } = useOpponentsState(
     initialLevel,
     updateBalance,
     updateInventory
@@ -30,14 +30,16 @@ export const useBattleState = (initialLevel: number = 1) => {
   );
 
   useEffect(() => {
-    if (opponents.length === 0 && playerStats.health > 0) {
+    if (opponents && opponents.length === 0 && playerStats?.health > 0) {
       const nextLevel = initialLevel + 1;
       
       // Сохраняем состояние для следующего уровня
       const battleState = {
         playerStats,
         opponents: [], // Очищаем список противников
-        level: nextLevel
+        level: nextLevel,
+        inventory,
+        coins: balance
       };
       localStorage.setItem('battleState', JSON.stringify(battleState));
       
@@ -50,11 +52,14 @@ export const useBattleState = (initialLevel: number = 1) => {
       // Переходим на следующий уровень с небольшой задержкой
       setTimeout(() => {
         navigate(`/battle?level=${nextLevel}`, { replace: true });
+        window.location.reload(); // Перезагружаем страницу для обновления состояния
       }, 1000);
     }
-  }, [opponents, initialLevel, navigate, playerStats, toast]);
+  }, [opponents, initialLevel, navigate, playerStats, toast, inventory, balance]);
 
   const useItem = (item: Item) => {
+    if (!playerStats) return;
+    
     const newStats = { ...playerStats };
     
     switch (item.type) {
