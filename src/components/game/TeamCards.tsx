@@ -1,35 +1,49 @@
-import { Card as CardComponent } from "@/components/ui/card";
-import { Card as CardType } from "@/types/cards";
-import { Shield, Sword } from "lucide-react";
+import { Card } from "@/types/cards";
+import { CardDisplay } from "./CardDisplay";
+import { useToast } from "@/hooks/use-toast";
 
 interface TeamCardsProps {
-  cards: CardType[];
+  cards: Card[];
 }
 
 export const TeamCards = ({ cards }: TeamCardsProps) => {
+  const { toast } = useToast();
+
+  const handleSellCard = (card: Card) => {
+    const price = getCardPrice(card.rarity);
+    const currentBalance = parseInt(localStorage.getItem('gameBalance') || '0');
+    const newBalance = currentBalance + price;
+    
+    // Update balance
+    localStorage.setItem('gameBalance', newBalance.toString());
+    const balanceEvent = new CustomEvent('balanceUpdate', { 
+      detail: { balance: newBalance }
+    });
+    window.dispatchEvent(balanceEvent);
+    
+    // Remove card from team
+    const currentCards = cards.filter(c => c.id !== card.id);
+    localStorage.setItem('gameCards', JSON.stringify(currentCards));
+    const cardsEvent = new CustomEvent('cardsUpdate', { 
+      detail: { cards: currentCards }
+    });
+    window.dispatchEvent(cardsEvent);
+    
+    toast({
+      title: "Карта продана",
+      description: `${card.name} продан(а) за ${price} монет`,
+    });
+  };
+
   return (
     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
       {cards.map((card) => (
-        <CardComponent
+        <CardDisplay
           key={card.id}
-          className="p-4 bg-game-background border-game-accent hover:border-game-primary transition-all duration-300"
-        >
-          <div className="flex items-center gap-2 mb-2">
-            <h3 className="font-semibold text-game-accent">
-              {card.name} ({card.type === 'character' ? 'Герой' : 'Питомец'})
-            </h3>
-          </div>
-          <div className="flex gap-4 text-sm text-gray-400">
-            <div className="flex items-center gap-1">
-              <Sword className="w-4 h-4" />
-              <span>{card.power}</span>
-            </div>
-            <div className="flex items-center gap-1">
-              <Shield className="w-4 h-4" />
-              <span>{card.defense}</span>
-            </div>
-          </div>
-        </CardComponent>
+          card={card}
+          showSellButton={true}
+          onSell={handleSellCard}
+        />
       ))}
     </div>
   );

@@ -5,7 +5,8 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { lootItems } from "@/utils/lootUtils";
-import { generatePack } from "@/utils/cardUtils";
+import { generatePack, getRarityLabel, getCardPrice } from "@/utils/cardUtils";
+import { Card as CardType } from "@/types/cards";
 
 interface ShopItem {
   id: number;
@@ -80,7 +81,7 @@ export const Shop = ({ onClose, balance, onBalanceChange }: ShopProps) => {
     return savedInventory ? JSON.parse(savedInventory) : [];
   });
   const [showCardAnimation, setShowCardAnimation] = useState(false);
-  const [lastOpenedCard, setLastOpenedCard] = useState<any>(null);
+  const [lastOpenedCard, setLastOpenedCard] = useState<CardType | null>(null);
 
   const updateInventory = (newInventory: any[]) => {
     localStorage.setItem('gameInventory', JSON.stringify(newInventory));
@@ -119,7 +120,7 @@ export const Shop = ({ onClose, balance, onBalanceChange }: ShopProps) => {
 
         toast({
           title: "Карта получена!",
-          description: `Вы получили: ${cards[0].name}`,
+          description: `Вы получили: ${cards[0].name} (${getRarityLabel(cards[0].rarity)})`,
         });
 
         setTimeout(() => {
@@ -166,9 +167,9 @@ export const Shop = ({ onClose, balance, onBalanceChange }: ShopProps) => {
         <AnimatePresence>
           {showCardAnimation && lastOpenedCard && (
             <motion.div
-              initial={{ scale: 0, rotateY: 0 }}
-              animate={{ scale: 1, rotateY: 180 }}
-              exit={{ scale: 0, rotateY: 360 }}
+              initial={{ scale: 0, rotateY: 180 }}
+              animate={{ scale: 1, rotateY: 0 }}
+              exit={{ scale: 0, rotateY: 180 }}
               transition={{ duration: 1 }}
               className="fixed inset-0 flex items-center justify-center z-50"
             >
@@ -181,6 +182,9 @@ export const Shop = ({ onClose, balance, onBalanceChange }: ShopProps) => {
                   </div>
                   <div className="text-game-accent">
                     <span>Защита: {lastOpenedCard.defense}</span>
+                  </div>
+                  <div className="text-game-accent">
+                    <span>Редкость: {getRarityLabel(lastOpenedCard.rarity)}</span>
                   </div>
                 </div>
               </Card>
