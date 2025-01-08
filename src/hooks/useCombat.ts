@@ -92,7 +92,7 @@ export const useCombat = (
             isPlayerTurn: false
           }));
 
-          const lootTable = generateLootTable(opponent.isBoss ?? false);
+          const lootTable = generateLootTable(opponent.isBoss ?? false, level);
           const { items: droppedItems, coins: droppedCoins } = rollLoot(lootTable);
           
           if (droppedItems.length > 0 || droppedCoins > 0) {
