@@ -36,7 +36,7 @@ export const useBattleState = (initialLevel: number = 1) => {
       // Сохраняем состояние для следующего уровня
       const battleState = {
         playerStats,
-        opponents: [], // Очищаем список противников
+        opponents: [], // Очищаем список противников для следующего уровня
         level: nextLevel,
         inventory,
         coins: balance
@@ -52,7 +52,6 @@ export const useBattleState = (initialLevel: number = 1) => {
       // Переходим на следующий уровень с небольшой задержкой
       setTimeout(() => {
         navigate(`/battle?level=${nextLevel}`, { replace: true });
-        window.location.reload(); // Перезагружаем страницу для обновления состояния
       }, 1000);
     }
   }, [opponents, initialLevel, navigate, playerStats, toast, inventory, balance]);

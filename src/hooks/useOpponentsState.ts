@@ -15,6 +15,10 @@ export const useOpponentsState = (
     const savedState = localStorage.getItem('battleState');
     if (savedState) {
       const parsed = JSON.parse(savedState);
+      // Если в сохраненном состоянии нет противников или их массив пуст, генерируем новых
+      if (!parsed.opponents || parsed.opponents.length === 0) {
+        return generateOpponents(level);
+      }
       return parsed.opponents;
     }
     return generateOpponents(level);
