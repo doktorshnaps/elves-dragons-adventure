@@ -11,8 +11,10 @@ import { TeamCards } from "./game/TeamCards";
 import { useToast } from "@/hooks/use-toast";
 import { Card } from "@/types/cards";
 import { generatePack, calculateTeamStats } from "@/utils/cardUtils";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 export const GameInterface = () => {
+  const isMobile = useIsMobile();
   const { toast } = useToast();
   const [isConnected, setIsConnected] = useState(false);
   const [walletAddress, setWalletAddress] = useState<string | null>(null);
@@ -150,7 +152,7 @@ export const GameInterface = () => {
     <motion.div
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
-      className="p-6 max-w-7xl mx-auto"
+      className={`${isMobile ? 'p-2' : 'p-6'} max-w-7xl mx-auto`}
     >
       <GameHeader
         isConnected={isConnected}
@@ -164,14 +166,16 @@ export const GameInterface = () => {
         teamStats={teamStats}
       />
 
-      <Tabs defaultValue="character" className="mt-8">
-        <TabsList className="grid w-full grid-cols-2 bg-game-surface">
-          <TabsTrigger value="character" className="text-game-accent">Команда</TabsTrigger>
+      <Tabs defaultValue="character" className="mt-4 md:mt-8">
+        <TabsList className={`grid w-full grid-cols-2 bg-game-surface ${isMobile ? 'text-sm' : ''}`}>
+          <TabsTrigger value="character" className="text-game-accent">
+            {isMobile ? 'Команда' : 'Ваша команда'}
+          </TabsTrigger>
           <TabsTrigger value="dungeons" className="text-game-accent">Подземелья</TabsTrigger>
         </TabsList>
         
         <TabsContent value="character">
-          <div className="space-y-6">
+          <div className={`space-y-4 ${isMobile ? 'space-y-2' : 'space-y-6'}`}>
             <TeamCards cards={cards} />
             <InventoryDisplay 
               inventory={inventory} 
