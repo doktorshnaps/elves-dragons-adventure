@@ -12,11 +12,16 @@ export const useBattleState = (initialLevel: number = 1) => {
   const navigate = useNavigate();
   const { toast } = useToast();
   
-  const { playerStats, setPlayerStats, showLevelUp, handleUpgrade } = usePlayerState(initialLevel);
+  // Восстанавливаем сохраненное состояние при инициализации
+  const savedState = localStorage.getItem('battleState');
+  const parsedState = savedState ? JSON.parse(savedState) : null;
+  const actualLevel = parsedState?.level || initialLevel;
+  
+  const { playerStats, setPlayerStats, showLevelUp, handleUpgrade } = usePlayerState(actualLevel);
   const { inventory, updateInventory } = useInventoryState();
   const { balance, updateBalance } = useBalanceState();
-  const { opponents = [], setOpponents, handleOpponentDefeat } = useOpponentsState(
-    initialLevel,
+  const { opponents, setOpponents, handleOpponentDefeat } = useOpponentsState(
+    actualLevel,
     updateBalance,
     updateInventory
   );
@@ -58,7 +63,7 @@ export const useBattleState = (initialLevel: number = 1) => {
   }, [opponents, playerStats?.health, toast]);
 
   const handleNextLevel = () => {
-    const nextLevel = initialLevel + 1;
+    const nextLevel = actualLevel + 1;
     
     // Сохраняем состояние для следующего уровня
     const battleState = {
@@ -84,13 +89,13 @@ export const useBattleState = (initialLevel: number = 1) => {
       const battleState = {
         playerStats,
         opponents,
-        level: initialLevel,
+        level: actualLevel,
         inventory,
         coins: balance
       };
       localStorage.setItem('battleState', JSON.stringify(battleState));
     }
-  }, [playerStats, opponents, initialLevel, inventory, balance]);
+  }, [playerStats, opponents, actualLevel, inventory, balance]);
 
   const useItem = (item: Item) => {
     if (!playerStats) return;
@@ -134,7 +139,7 @@ export const useBattleState = (initialLevel: number = 1) => {
   };
 
   return {
-    level: initialLevel,
+    level: actualLevel,
     coins: balance,
     playerStats,
     opponents,
