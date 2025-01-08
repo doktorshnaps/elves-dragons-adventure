@@ -24,15 +24,8 @@ export const generateCard = (type: CardType): Card => {
 };
 
 export const generatePack = (): Card[] => {
-  const cards: Card[] = [];
-  const numCards = 3; // Количество карт в колоде
-  
-  for (let i = 0; i < numCards; i++) {
-    const type: CardType = Math.random() > 0.5 ? 'character' : 'pet';
-    cards.push(generateCard(type));
-  }
-  
-  return cards;
+  const type: CardType = Math.random() > 0.5 ? 'character' : 'pet';
+  return [generateCard(type)];
 };
 
 export const calculateTeamStats = (cards: Card[]) => {
