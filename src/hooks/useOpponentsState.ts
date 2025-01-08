@@ -63,7 +63,7 @@ export const useOpponentsState = (
       while (state.playerStats.experience >= state.playerStats.requiredExperience) {
         state.playerStats.level += 1;
         state.playerStats.experience -= state.playerStats.requiredExperience;
-        state.playerStats.requiredExperience = Math.floor(state.playerStats.requiredExperience * 2);
+        state.playerStats.requiredExperience = Math.floor(state.playerStats.requiredExperience * 1.5);
         
         // Увеличиваем характеристики при повышении уровня
         state.playerStats.maxHealth += 20;
@@ -80,24 +80,15 @@ export const useOpponentsState = (
       localStorage.setItem('battleState', JSON.stringify(state));
       
       // Отправляем событие обновления состояния
-      const event = new CustomEvent('battleStateUpdate', { 
+      window.dispatchEvent(new CustomEvent('battleStateUpdate', { 
         detail: { state }
-      });
-      window.dispatchEvent(event);
+      }));
     }
     
     // Показываем уведомление о наградах
-    let message = `Получено ${experienceReward} опыта`;
-    if (droppedItems.length > 0) {
-      message += `, предметы: ${droppedItems.map(item => item.name).join(", ")}`;
-    }
-    if (totalCoins > 0) {
-      message += `, ${totalCoins} монет`;
-    }
-    
     toast({
       title: opponent.isBoss ? "Босс побежден!" : "Враг побежден!",
-      description: message,
+      description: `Получено ${experienceReward} опыта и ${totalCoins} монет`,
     });
   };
 
