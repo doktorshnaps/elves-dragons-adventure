@@ -7,6 +7,7 @@ import { useOpponentsState } from './useOpponentsState';
 import { useCombat } from './useCombat';
 import { Item } from '@/components/battle/Inventory';
 import { StatUpgrade } from '@/types/battle';
+import { useEffect } from 'react';
 
 export const useBattleState = (initialLevel: number = 1) => {
   const navigate = useNavigate();
@@ -28,6 +29,28 @@ export const useBattleState = (initialLevel: number = 1) => {
     setOpponents,
     handleOpponentDefeat
   );
+
+  // Check for level completion when all opponents are defeated
+  useEffect(() => {
+    if (opponents.length === 0) {
+      const nextLevel = initialLevel + 1;
+      const battleState = {
+        playerStats,
+        opponents: [],
+        level: nextLevel
+      };
+      localStorage.setItem('battleState', JSON.stringify(battleState));
+      
+      // Generate new opponents for the next level
+      setOpponents(prevOpponents => {
+        if (prevOpponents.length === 0) {
+          navigate(`/battle?level=${nextLevel}`);
+          return prevOpponents;
+        }
+        return prevOpponents;
+      });
+    }
+  }, [opponents, initialLevel, navigate, playerStats]);
 
   const useItem = (item: Item) => {
     const newStats = { ...playerStats };
@@ -69,7 +92,7 @@ export const useBattleState = (initialLevel: number = 1) => {
   };
 
   return {
-    level: playerStats.level,
+    level: initialLevel,
     coins: balance,
     playerStats,
     opponents,

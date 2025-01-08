@@ -11,7 +11,9 @@ export const usePlayerState = (initialLevel: number = 1) => {
     const savedState = localStorage.getItem('battleState');
     if (savedState) {
       const parsed = JSON.parse(savedState);
-      return parsed.playerStats;
+      if (parsed.playerStats) {
+        return parsed.playerStats;
+      }
     }
     return {
       health: 100,
@@ -23,6 +25,17 @@ export const usePlayerState = (initialLevel: number = 1) => {
       requiredExperience: calculateRequiredExperience(initialLevel)
     };
   });
+
+  // Save player stats to localStorage whenever they change
+  useEffect(() => {
+    const savedState = localStorage.getItem('battleState');
+    const currentState = savedState ? JSON.parse(savedState) : {};
+    
+    localStorage.setItem('battleState', JSON.stringify({
+      ...currentState,
+      playerStats
+    }));
+  }, [playerStats]);
 
   useEffect(() => {
     if (playerStats && checkLevelUp(playerStats)) {
