@@ -4,6 +4,7 @@ import { usePlayerState } from './usePlayerState';
 import { useInventoryState } from './useInventoryState';
 import { useBalanceState } from './useBalanceState';
 import { useOpponentsState } from './useOpponentsState';
+import { useCombat } from './useCombat';
 import { Item } from '@/components/battle/Inventory';
 import { StatUpgrade } from '@/types/battle';
 
@@ -18,6 +19,14 @@ export const useBattleState = (initialLevel: number = 1) => {
     initialLevel,
     updateBalance,
     updateInventory
+  );
+
+  const { isPlayerTurn, attackEnemy, handleOpponentAttack } = useCombat(
+    playerStats,
+    setPlayerStats,
+    opponents,
+    setOpponents,
+    handleOpponentDefeat
   );
 
   const useItem = (item: Item) => {
@@ -66,6 +75,9 @@ export const useBattleState = (initialLevel: number = 1) => {
     opponents,
     inventory,
     showLevelUp,
+    isPlayerTurn,
+    attackEnemy,
+    handleOpponentAttack,
     useItem,
     handleUpgrade,
     setOpponents,

@@ -32,7 +32,7 @@ const Battle = () => {
     if (!isPlayerTurn) {
       handleOpponentAttack();
     }
-  }, [isPlayerTurn]);
+  }, [isPlayerTurn, handleOpponentAttack]);
 
   const handleExitDungeon = () => {
     localStorage.removeItem('battleState');
