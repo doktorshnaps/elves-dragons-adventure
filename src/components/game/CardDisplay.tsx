@@ -42,7 +42,7 @@ export const CardDisplay = ({ card, showSellButton, onSell, className = "" }: Ca
             onClick={() => onSell?.(card)}
           >
             <Coins className="w-4 h-4 mr-1" />
-            Продать ({getCardPrice(card.rarity)})
+            Продать (500)
           </Button>
         )}
       </div>

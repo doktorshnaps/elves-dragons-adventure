@@ -1,36 +1,14 @@
 import { Card, CardType, Rarity } from "@/types/cards";
 
-const characterNames = [
-  "Воин", "Маг", "Лучник", "Жрец", "Паладин",
-  "Друид", "Разбойник", "Шаман", "Монах"
-];
-
-const petNames = [
-  "Волк", "Медведь", "Сова", "Пантера", "Тигр",
-  "Орел", "Лев", "Феникс", "Дракончик"
-];
-
 export const getRarityLabel = (rarity: Rarity): string => {
   return "⭐".repeat(rarity);
 };
 
 export const getCardPrice = (rarity: Rarity): number => {
-  return Math.floor(50 * Math.pow(2, rarity - 1));
+  return 500; // Фиксированная цена продажи
 };
 
-const getRarityChance = (): Rarity => {
-  const rand = Math.random() * 100;
-  if (rand < 40) return 1;
-  if (rand < 65) return 2;
-  if (rand < 80) return 3;
-  if (rand < 90) return 4;
-  if (rand < 95) return 5;
-  if (rand < 98) return 6;
-  if (rand < 99.5) return 7;
-  return 8;
-};
-
-const getStatsForRarity = (rarity: Rarity) => {
+export const getStatsForRarity = (rarity: Rarity) => {
   const baseStats = {
     power: Math.floor(Math.random() * 5) + 5,
     defense: Math.floor(Math.random() * 5) + 5
@@ -45,7 +23,10 @@ const getStatsForRarity = (rarity: Rarity) => {
 };
 
 export const generateCard = (type: CardType): Card => {
-  const names = type === 'character' ? characterNames : petNames;
+  const names = type === 'character' 
+    ? ["Воин", "Маг", "Лучник", "Жрец", "Паладин", "Друид", "Разбойник", "Шаман", "Монах"]
+    : ["Волк", "Медведь", "Сова", "Пантера", "Тигр", "Орел", "Лев", "Феникс", "Дракончик"];
+    
   const name = names[Math.floor(Math.random() * names.length)];
   const rarity = getRarityChance();
   const stats = getStatsForRarity(rarity);
@@ -57,6 +38,18 @@ export const generateCard = (type: CardType): Card => {
     rarity,
     ...stats
   };
+};
+
+export const getRarityChance = (): Rarity => {
+  const rand = Math.random() * 100;
+  if (rand < 40) return 1;
+  if (rand < 65) return 2;
+  if (rand < 80) return 3;
+  if (rand < 90) return 4;
+  if (rand < 95) return 5;
+  if (rand < 98) return 6;
+  if (rand < 99.5) return 7;
+  return 8;
 };
 
 export const generatePack = (): Card[] => {
