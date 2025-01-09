@@ -7,6 +7,7 @@ export interface Card {
   type: CardType;
   power: number;
   defense: number;
+  health: number;
   rarity: Rarity;
   image?: string;
 }

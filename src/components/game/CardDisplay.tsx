@@ -2,7 +2,7 @@ import { Card as CardType } from "@/types/cards";
 import { getRarityLabel, getCardPrice } from "@/utils/cardUtils";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Sword, Shield, Coins } from "lucide-react";
+import { Sword, Shield, Coins, Heart } from "lucide-react";
 import { motion } from "framer-motion";
 import { useIsMobile } from "@/hooks/use-mobile";
 
@@ -29,6 +29,10 @@ export const CardDisplay = ({ card, showSellButton, onSell, className = "" }: Ca
         </div>
         
         <div className={`flex gap-3 ${isMobile ? 'text-xs' : 'text-sm'} text-gray-400`}>
+          <div className="flex items-center gap-1">
+            <Heart className={`${isMobile ? 'w-3 h-3' : 'w-4 h-4'} text-red-500`} />
+            <span>{card.health}</span>
+          </div>
           <div className="flex items-center gap-1">
             <Sword className={`${isMobile ? 'w-3 h-3' : 'w-4 h-4'}`} />
             <span>{card.power}</span>

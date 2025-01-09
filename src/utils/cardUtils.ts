@@ -5,20 +5,22 @@ export const getRarityLabel = (rarity: Rarity): string => {
 };
 
 export const getCardPrice = (rarity: Rarity): number => {
-  return 500; // Фиксированная цена продажи
+  return 500;
 };
 
 export const getStatsForRarity = (rarity: Rarity) => {
   const baseStats = {
     power: Math.floor(Math.random() * 5) + 5,
-    defense: Math.floor(Math.random() * 5) + 5
+    defense: Math.floor(Math.random() * 5) + 5,
+    health: Math.floor(Math.random() * 10) + 10
   };
   
   const multiplier = Math.pow(1.5, rarity - 1);
   
   return {
     power: Math.floor(baseStats.power * multiplier),
-    defense: Math.floor(baseStats.defense * multiplier)
+    defense: Math.floor(baseStats.defense * multiplier),
+    health: Math.floor(baseStats.health * multiplier)
   };
 };
 
@@ -60,6 +62,7 @@ export const generatePack = (): Card[] => {
 export const calculateTeamStats = (cards: Card[]) => {
   return cards.reduce((acc, card) => ({
     power: acc.power + card.power,
-    defense: acc.defense + card.defense
-  }), { power: 0, defense: 0 });
+    defense: acc.defense + card.defense,
+    health: acc.health + card.health
+  }), { power: 0, defense: 0, health: 0 });
 };
