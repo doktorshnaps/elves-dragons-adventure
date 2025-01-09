@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { Card } from "@/components/ui/card";
 import { Shield, Sword, Heart } from "lucide-react";
 import { motion } from "framer-motion";
