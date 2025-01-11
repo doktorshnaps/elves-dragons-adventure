@@ -19,6 +19,16 @@ export const CardDisplay = ({ card, showSellButton, onSell, className = "" }: Ca
   return (
     <Card className={`p-3 bg-game-background border-game-accent hover:border-game-primary transition-all duration-300 ${className}`}>
       <div className="flex flex-col gap-1.5">
+        {card.image && (
+          <div className="w-full aspect-square mb-2 rounded-lg overflow-hidden">
+            <img 
+              src={card.image} 
+              alt={card.name}
+              className="w-full h-full object-cover"
+            />
+          </div>
+        )}
+        
         <div className="flex justify-between items-start">
           <h3 className={`font-semibold text-game-accent ${isMobile ? 'text-sm' : ''}`}>
             {card.name} ({card.type === 'character' ? 'Герой' : 'Питомец'})

@@ -2,6 +2,7 @@ import "@/utils/near-polyfills";
 import { useToast } from "@/hooks/use-toast";
 import { useWalletInit } from "@/hooks/useWalletInit";
 import { ConnectButton } from "./ConnectButton";
+import { getNFTsForAccount, convertNFTToCard } from "@/utils/nftUtils";
 import "@near-wallet-selector/modal-ui/styles.css";
 
 interface WalletConnectionProps {
@@ -24,6 +25,7 @@ export const WalletConnection = ({
     if (isConnected) {
       setIsConnected(false);
       setWalletAddress(null);
+      localStorage.removeItem('gameCards');
       toast({
         title: "Кошелек отключен",
         description: "Ваш кошелек был успешно отключен",
@@ -42,15 +44,44 @@ export const WalletConnection = ({
       const accounts = await wallet.getAccounts();
       
       if (accounts.length > 0) {
+        const accountId = accounts[0].accountId;
         setIsConnected(true);
-        setWalletAddress(accounts[0].accountId);
+        setWalletAddress(accountId);
+
+        // Получаем NFT пользователя
+        const nfts = await getNFTsForAccount(accountId, wallet);
+        
+        if (nfts.length === 0) {
+          toast({
+            title: "NFT не найдены",
+            description: "У вас нет NFT для игры. Приобретите NFT, чтобы начать игру.",
+            variant: "destructive"
+          });
+          return;
+        }
+
+        // Конвертируем NFT в игровые карты
+        const cards = nfts.map(convertNFTToCard);
+        localStorage.setItem('gameCards', JSON.stringify(cards));
+        
+        // Отправляем событие обновления карт
+        const event = new CustomEvent('cardsUpdate', { 
+          detail: { cards }
+        });
+        window.dispatchEvent(event);
+
         toast({
           title: "Кошелек подключен",
-          description: `Подключен к аккаунту ${accounts[0].accountId}`,
+          description: `Подключен к аккаунту ${accountId}. Загружено ${nfts.length} NFT карт.`,
         });
       }
     } catch (error) {
       console.error('Error connecting wallet:', error);
+      toast({
+        title: "Ошибка подключения",
+        description: "Не удалось подключить кошелек или загрузить NFT",
+        variant: "destructive"
+      });
     }
   };
 
