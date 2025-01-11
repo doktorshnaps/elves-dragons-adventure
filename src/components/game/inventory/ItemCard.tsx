@@ -31,6 +31,15 @@ export const ItemCard = ({
       onClick={() => !readonly && onSelect()}
     >
       <div className="flex flex-col gap-2">
+        {item.image && (
+          <div className="w-full aspect-square mb-2 rounded-lg overflow-hidden">
+            <img 
+              src={item.image} 
+              alt={item.name}
+              className="w-full h-full object-cover"
+            />
+          </div>
+        )}
         <h3 className="font-semibold text-game-accent">
           {item.name} {item.count > 1 && `(${item.count})`}
         </h3>

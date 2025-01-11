@@ -8,6 +8,7 @@ export interface Item {
   name: string;
   type: "weapon" | "armor" | "healthPotion" | "defensePotion";
   value: number;
+  image?: string;
 }
 
 interface InventoryProps {
@@ -21,6 +22,7 @@ interface GroupedItem {
   value: number;
   count: number;
   items: Item[];
+  image?: string;
 }
 
 export const Inventory = ({ items, onUseItem }: InventoryProps) => {
@@ -41,7 +43,8 @@ export const Inventory = ({ items, onUseItem }: InventoryProps) => {
         type: item.type,
         value: item.value,
         count: 1,
-        items: [item]
+        items: [item],
+        image: item.image
       });
     }
 
@@ -89,6 +92,15 @@ export const Inventory = ({ items, onUseItem }: InventoryProps) => {
             className="p-4 bg-game-surface border-game-accent"
           >
             <div className="flex flex-col gap-2">
+              {item.image && (
+                <div className="w-full aspect-square mb-2 rounded-lg overflow-hidden">
+                  <img 
+                    src={item.image} 
+                    alt={item.name}
+                    className="w-full h-full object-cover"
+                  />
+                </div>
+              )}
               <div className="flex items-center gap-2">
                 {getItemIcon(item.type)}
                 <h4 className="font-bold text-game-accent">
