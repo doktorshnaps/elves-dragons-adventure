@@ -72,32 +72,34 @@ export const GameContainer = () => {
     <motion.div
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
-      className={`container mx-auto ${isMobile ? 'px-2' : 'px-6'} py-4`}
+      className="min-h-screen w-full overflow-x-hidden"
     >
-      <GameHeader
-        isConnected={isConnected}
-        setIsConnected={setIsConnected}
-        walletAddress={walletAddress}
-        setWalletAddress={setWalletAddress}
-        balance={balance}
-        hasActiveDungeon={hasActiveDungeon}
-        setShowDungeonSearch={setShowDungeonSearch}
-        setShowShop={setShowShop}
-        teamStats={calculateTeamStats(cards)}
-      />
+      <div className={`max-w-7xl mx-auto ${isMobile ? 'px-2' : 'px-6'} py-4`}>
+        <GameHeader
+          isConnected={isConnected}
+          setIsConnected={setIsConnected}
+          walletAddress={walletAddress}
+          setWalletAddress={setWalletAddress}
+          balance={balance}
+          hasActiveDungeon={hasActiveDungeon}
+          setShowDungeonSearch={setShowDungeonSearch}
+          setShowShop={setShowShop}
+          teamStats={calculateTeamStats(cards)}
+        />
 
-      <div className="w-full max-w-7xl mx-auto">
-        <GameTabs />
+        <div className="w-full mt-4">
+          <GameTabs />
+        </div>
+
+        <GameModals
+          showDungeonSearch={showDungeonSearch}
+          showShop={showShop}
+          onCloseDungeon={() => setShowDungeonSearch(false)}
+          onCloseShop={() => setShowShop(false)}
+          balance={balance}
+          onBalanceChange={updateBalance}
+        />
       </div>
-
-      <GameModals
-        showDungeonSearch={showDungeonSearch}
-        showShop={showShop}
-        onCloseDungeon={() => setShowDungeonSearch(false)}
-        onCloseShop={() => setShowShop(false)}
-        balance={balance}
-        onBalanceChange={updateBalance}
-      />
     </motion.div>
   );
 };

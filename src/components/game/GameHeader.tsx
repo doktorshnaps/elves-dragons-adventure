@@ -46,8 +46,8 @@ export const GameHeader = ({
   };
 
   return (
-    <div className={`flex flex-col ${isMobile ? 'gap-2' : 'gap-4'}`}>
-      <div className="flex justify-between items-center">
+    <div className="flex flex-col gap-4">
+      <div className={`flex ${isMobile ? 'flex-col' : 'flex-row'} justify-between items-center gap-4`}>
         <ConnectButton
           isConnected={isConnected}
           walletAddress={walletAddress}
@@ -57,11 +57,11 @@ export const GameHeader = ({
             setWalletAddress(null);
           }}
         />
-        <div className="flex items-center gap-2">
+        <div className={`flex ${isMobile ? 'flex-col w-full' : 'flex-row'} items-center gap-2`}>
           <QuestsWindow />
           <Button
             variant="outline"
-            className="gap-2"
+            className={`gap-2 ${isMobile ? 'w-full' : ''}`}
             onClick={() => setShowShop(true)}
           >
             <Store className="w-4 h-4" />
@@ -69,7 +69,7 @@ export const GameHeader = ({
           </Button>
           <Button
             variant="outline"
-            className="gap-2"
+            className={`gap-2 ${isMobile ? 'w-full' : ''}`}
             onClick={handleDungeonClick}
           >
             <Sword className="w-4 h-4" />
