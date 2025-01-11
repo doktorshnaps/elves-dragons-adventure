@@ -1,7 +1,7 @@
 import React, { useEffect } from "react";
 import { motion } from "framer-motion";
-import { useNavigate, useSearchParams } from "react-router-dom";
-import { ArrowLeft, Home, Heart, DoorOpen, ArrowRight } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import { ArrowLeft, DoorOpen, Heart, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { OpponentCard } from "@/components/battle/OpponentCard";
 import { PlayerCard } from "@/components/battle/PlayerCard";
@@ -85,14 +85,6 @@ const Battle = () => {
             >
               <DoorOpen className="h-4 w-4 md:h-5 md:w-5 mr-1 md:mr-2" />
               {isMobile ? "Выход" : "Покинуть подземелье"}
-            </Button>
-            <Button
-              variant="ghost"
-              size="icon"
-              className="text-game-accent hover:text-game-accent/80"
-              onClick={() => navigate("/")}
-            >
-              <Home className="h-4 w-4 md:h-5 md:w-5" />
             </Button>
           </div>
         </div>
