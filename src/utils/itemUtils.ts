@@ -1,27 +1,44 @@
 import { Item } from "@/components/battle/Inventory";
+import { lootItems } from "@/utils/lootUtils";
 
 export const getItemPrice = (item: Item): number => {
-  switch (item.type) {
-    case "healthPotion":
-      return item.value === 30 ? 50 : 100;
-    case "defensePotion":
-      return 75;
-    case "weapon":
-      return 150;
-    case "armor":
-      return 120;
-    default:
-      return 0;
-  }
+  const basePrice = Object.values(lootItems).find(
+    lootItem => lootItem.name === item.name
+  )?.price || 0;
+  
+  return Math.floor(basePrice * 0.7); // 70% of original price
 };
 
-export const getDefaultItemImage = (item: Item): string | undefined => {
-  if (item.type === "healthPotion") {
-    if (item.value === 30) {
-      return "/lovable-uploads/6693dd2b-2511-4c63-ae03-a1b208a8e7da.png";
-    } else if (item.value === 70) {
-      return "/lovable-uploads/194bfe08-75f6-4415-8fda-5538a83251c3.png";
+export const canUpgradeItems = (items: Item[]): boolean => {
+  const groupedItems = items.reduce<Record<string, Item[]>>((acc, item) => {
+    const key = `${item.name}-${item.type}-${item.value}`;
+    if (!acc[key]) {
+      acc[key] = [];
     }
+    acc[key].push(item);
+    return acc;
+  }, {});
+
+  return Object.values(groupedItems).some(group => group.length >= 2);
+};
+
+export const upgradeItems = (items: Item[], itemsToUpgrade: Item[]): Item[] => {
+  if (itemsToUpgrade.length !== 2) return items;
+  
+  const [item1, item2] = itemsToUpgrade;
+  if (item1.name !== item2.name || item1.type !== item2.type || item1.value !== item2.value) {
+    return items;
   }
-  return undefined;
+
+  const upgradedItem: Item = {
+    id: Date.now(),
+    name: `Улучшенный ${item1.name}`,
+    type: item1.type,
+    value: Math.floor(item1.value * 1.5) // 50% boost to stats
+  };
+
+  return [
+    ...items.filter(item => item.id !== item1.id && item.id !== item2.id),
+    upgradedItem
+  ];
 };

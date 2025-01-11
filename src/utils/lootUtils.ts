@@ -1,7 +1,8 @@
 import { Item } from "@/components/battle/Inventory";
 
-interface LootTable {
+export interface LootTable {
   healthPotion: number;
+  largeHealthPotion: number;
   defensePotion: number;
   weapon: number;
   armor: number;
@@ -12,141 +13,115 @@ interface LootTable {
   };
 }
 
-interface LootResult {
-  items: Item[];
-  coins: number;
-}
-
 export const generateLootTable = (isBoss: boolean): LootTable => {
   if (isBoss) {
     return {
       healthPotion: 0.8,
-      defensePotion: 0.6,
+      largeHealthPotion: 0.6,
+      defensePotion: 0.7,
       weapon: 0.5,
       armor: 0.5,
       coins: {
         chance: 1,
-        min: 100,
-        max: 300
+        min: 50,
+        max: 100
       }
     };
   }
 
   return {
     healthPotion: 0.3,
+    largeHealthPotion: 0.15,
     defensePotion: 0.2,
     weapon: 0.1,
     armor: 0.1,
     coins: {
       chance: 0.7,
       min: 10,
-      max: 50
+      max: 30
     }
   };
 };
 
-export const formatDropChance = (chance: number): string => {
-  return `${Math.round(chance * 100)}%`;
+export const lootItems = {
+  healthPotion: {
+    name: "Малое зелье здоровья",
+    type: "healthPotion" as const,
+    value: 30,
+    price: 50
+  },
+  largeHealthPotion: {
+    name: "Большое зелье здоровья",
+    type: "healthPotion" as const,
+    value: 70,
+    price: 100
+  },
+  defensePotion: {
+    name: "Зелье защиты",
+    type: "defensePotion" as const,
+    value: 20,
+    price: 75
+  },
+  weapon: {
+    name: "Железный меч",
+    type: "weapon" as const,
+    value: 15,
+    price: 150
+  },
+  armor: {
+    name: "Кожаная броня",
+    type: "armor" as const,
+    value: 10,
+    price: 120
+  }
 };
 
-export const rollLoot = (lootTable: LootTable): LootResult => {
-  const items: Item[] = [];
-  let coins = 0;
+export const formatDropChance = (chance: number): string => {
+  return `${(chance * 100).toFixed(0)}%`;
+};
 
-  // Roll for health potion
+export const rollLoot = (lootTable: LootTable): { items: Item[], coins: number } => {
+  const items: Item[] = [];
+  let nextId = Date.now();
+
   if (Math.random() < lootTable.healthPotion) {
-    if (Math.random() < 0.5) {
-      items.push({
-        id: Date.now(),
-        name: "Малое зелье здоровья",
-        type: "healthPotion",
-        value: 30,
-        image: "/lovable-uploads/6693dd2b-2511-4c63-ae03-a1b208a8e7da.png"
-      });
-    } else {
-      items.push({
-        id: Date.now(),
-        name: "Большое зелье здоровья",
-        type: "healthPotion",
-        value: 70
-      });
-    }
+    items.push({
+      id: nextId++,
+      ...lootItems.healthPotion
+    });
   }
 
-  // Roll for defense potion
+  if (Math.random() < lootTable.largeHealthPotion) {
+    items.push({
+      id: nextId++,
+      ...lootItems.largeHealthPotion
+    });
+  }
+
   if (Math.random() < lootTable.defensePotion) {
     items.push({
-      id: Date.now(),
-      name: "Зелье защиты",
-      type: "defensePotion",
-      value: 20,
-      image: "/lovable-uploads/b8a49d16-bf80-4363-90d6-7c244e46ca02.png"
+      id: nextId++,
+      ...lootItems.defensePotion
     });
   }
 
-  // Roll for weapon
   if (Math.random() < lootTable.weapon) {
     items.push({
-      id: Date.now(),
-      name: "Оружие",
-      type: "weapon",
-      value: 10,
-      image: "/lovable-uploads/5b0afe54-887d-46f3-a3d1-2696cb956374.png"
+      id: nextId++,
+      ...lootItems.weapon
     });
   }
 
-  // Roll for armor
   if (Math.random() < lootTable.armor) {
     items.push({
-      id: Date.now(),
-      name: "Броня",
-      type: "armor",
-      value: 5,
-      image: "/lovable-uploads/7b41199f-7eca-42a5-a6cc-42711e736f48.png"
+      id: nextId++,
+      ...lootItems.armor
     });
   }
 
-  // Roll for coins
-  if (Math.random() < lootTable.coins.chance) {
-    coins = Math.floor(
-      Math.random() * (lootTable.coins.max - lootTable.coins.min + 1) + lootTable.coins.min
-    );
-  }
-
+  const coins = Math.random() < lootTable.coins.chance
+    ? Math.floor(Math.random() * (lootTable.coins.max - lootTable.coins.min + 1)) + lootTable.coins.min
+    : 0;
+  
   return { items, coins };
-};
-
-export const generateLoot = (level: number): Item[] => {
-  const loot: Item[] = [];
-  const chance = Math.random();
-
-  if (chance < 0.3) {
-    if (Math.random() < 0.5) {
-      loot.push({
-        id: Date.now(),
-        name: "Малое зелье здоровья",
-        type: "healthPotion",
-        value: 30,
-        image: "/lovable-uploads/6693dd2b-2511-4c63-ae03-a1b208a8e7da.png"
-      });
-    } else {
-      loot.push({
-        id: Date.now(),
-        name: "Большое зелье здоровья",
-        type: "healthPotion",
-        value: 70
-      });
-    }
-  }
-
-  if (level > 2 && Math.random() < 0.2) {
-    loot.push({
-      id: Date.now(),
-      name: "Зелье защиты",
-      type: "defensePotion",
-      value: 20
-    });
-  }
-
-  return loot;
 };

@@ -53,6 +53,7 @@ export const InventoryDisplay = ({
   };
 
   const handleUseGroupedItem = (groupedItem: GroupedItem) => {
+    // Проверяем, находимся ли мы в бою
     if (!readonly && onUseItem && groupedItem.items.length > 0 && isInBattle) {
       const item = groupedItem.items[0];
       onUseItem(item);
@@ -105,12 +106,13 @@ export const InventoryDisplay = ({
     selectedItems[0].value === selectedItems[1].value;
 
   return (
-    <Card className="bg-game-surface border-game-accent">
-      <div className="flex justify-between items-center mb-4 p-6">
+    <Card className="bg-game-surface border-game-accent p-6">
+      <div className="flex justify-between items-center mb-4">
         <h2 className="text-2xl font-bold text-game-accent">Инвентарь</h2>
         {canUpgrade && (
           <Button 
             onClick={() => {
+              // Upgrade functionality will be implemented later
               setSelectedItems([]);
             }}
             className="bg-purple-600 hover:bg-purple-700"
@@ -119,25 +121,23 @@ export const InventoryDisplay = ({
           </Button>
         )}
       </div>
-      <div className="relative grid grid-cols-1 md:grid-cols-3 gap-4 p-6">
-        <div className="relative z-10 col-span-full grid grid-cols-1 md:grid-cols-3 gap-4">
-          {inventory.length > 0 ? (
-            groupItems(inventory).map((item) => (
-              <ItemCard
-                key={`${item.name}-${item.type}-${item.value}`}
-                item={item}
-                readonly={readonly}
-                isSelected={selectedItems.some(i => i.id === item.items[0].id)}
-                onSelect={() => handleSelectItem(item.items[0])}
-                onUse={() => handleUseGroupedItem(item)}
-                onSell={() => handleSellItem(item.items[0])}
-                showUseButton={isInBattle}
-              />
-            ))
-          ) : (
-            <p className="text-gray-400 col-span-3 text-center py-8 relative z-10">Инвентарь пуст</p>
-          )}
-        </div>
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        {inventory.length > 0 ? (
+          groupItems(inventory).map((item) => (
+            <ItemCard
+              key={`${item.name}-${item.type}-${item.value}`}
+              item={item}
+              readonly={readonly}
+              isSelected={selectedItems.some(i => i.id === item.items[0].id)}
+              onSelect={() => handleSelectItem(item.items[0])}
+              onUse={() => handleUseGroupedItem(item)}
+              onSell={() => handleSellItem(item.items[0])}
+              showUseButton={isInBattle}
+            />
+          ))
+        ) : (
+          <p className="text-gray-400 col-span-3 text-center py-8">Инвентарь пуст</p>
+        )}
       </div>
     </Card>
   );

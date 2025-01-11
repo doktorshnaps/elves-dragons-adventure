@@ -5,7 +5,6 @@ export interface ShopItem {
   price: number;
   type: "healthPotion" | "defensePotion" | "weapon" | "armor" | "cardPack";
   value: number;
-  image?: string;
 }
 
 export const shopItems: ShopItem[] = [
@@ -23,8 +22,7 @@ export const shopItems: ShopItem[] = [
     description: "Восстанавливает 30 очков здоровья",
     price: 50,
     type: "healthPotion",
-    value: 30,
-    image: "/lovable-uploads/6693dd2b-2511-4c63-ae03-a1b208a8e7da.png"
+    value: 30
   },
   {
     id: 3,
@@ -32,8 +30,7 @@ export const shopItems: ShopItem[] = [
     description: "Восстанавливает 70 очков здоровья",
     price: 100,
     type: "healthPotion",
-    value: 70,
-    image: "/lovable-uploads/194bfe08-75f6-4415-8fda-5538a83251c3.png"
+    value: 70
   },
   {
     id: 4,
