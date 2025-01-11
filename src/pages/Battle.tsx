@@ -1,125 +1,141 @@
-import { useState, useEffect } from "react";
+import React, { useEffect } from "react";
+import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
+import { ArrowLeft, DoorOpen, Heart, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { useToast } from "@/hooks/use-toast";
-import { useIsMobile } from "@/hooks/use-mobile";
 import { OpponentCard } from "@/components/battle/OpponentCard";
 import { PlayerCard } from "@/components/battle/PlayerCard";
-import { InventoryDisplay } from "@/components/game/InventoryDisplay";
+import { Inventory } from "@/components/battle/Inventory";
 import { LevelUpDialog } from "@/components/battle/LevelUpDialog";
-import { generateOpponents } from "@/utils/opponentGenerator";
-import { updateQuestProgress } from "@/utils/questUtils";
-import { ArrowLeft } from "lucide-react";
-import { useInventoryState } from "@/hooks/useInventoryState";
+import { useToast } from "@/hooks/use-toast";
+import { useBattleState } from "@/hooks/useBattleState";
+import { fixResizeObserverLoop } from "@/utils/resizeObserverFix";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 const Battle = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const isMobile = useIsMobile();
-  const { inventory } = useInventoryState();
   
   const savedState = localStorage.getItem('battleState');
   const savedLevel = savedState ? JSON.parse(savedState).currentDungeonLevel : 1;
   
-  const [currentDungeonLevel, setCurrentDungeonLevel] = useState(savedLevel);
-  const [opponents, setOpponents] = useState(() => generateOpponents(currentDungeonLevel));
-  const [playerStats, setPlayerStats] = useState(() => {
-    if (savedState) {
-      return JSON.parse(savedState).playerStats;
-    }
-    return null;
-  });
-  const [isPlayerTurn, setIsPlayerTurn] = useState(true);
-  const [showLevelUp, setShowLevelUp] = useState(false);
+  const {
+    coins,
+    isPlayerTurn,
+    playerStats,
+    opponents = [],
+    inventory,
+    showLevelUp,
+    attackEnemy,
+    handleOpponentAttack,
+    useItem,
+    handleUpgrade,
+    handleNextLevel
+  } = useBattleState(savedLevel);
 
   useEffect(() => {
-    if (playerStats) {
-      const battleState = {
-        playerStats,
-        currentDungeonLevel,
-      };
-      localStorage.setItem('battleState', JSON.stringify(battleState));
+    fixResizeObserverLoop();
+  }, []);
+
+  useEffect(() => {
+    if (!isPlayerTurn) {
+      handleOpponentAttack();
     }
-  }, [playerStats, currentDungeonLevel]);
+  }, [isPlayerTurn, handleOpponentAttack]);
 
-  const attackEnemy = (opponentId: number) => {
-    if (!isPlayerTurn || !playerStats || playerStats.health <= 0) return;
-
-    const updatedOpponents = opponents.map(opponent => {
-      if (opponent.id === opponentId) {
-        const newHealth = Math.max(0, opponent.health - playerStats.attack);
-        if (newHealth === 0) {
-          // Update quest progress for defeating enemies
-          const defeatedEnemiesQuest = "daily-1";
-          const currentProgress = Number(localStorage.getItem(defeatedEnemiesQuest) || "0");
-          const newProgress = currentProgress + 1;
-          localStorage.setItem(defeatedEnemiesQuest, String(newProgress));
-          updateQuestProgress(defeatedEnemiesQuest, newProgress);
-        }
-        return { ...opponent, health: newHealth };
-      }
-      return opponent;
+  const handleExitDungeon = () => {
+    localStorage.removeItem('battleState');
+    toast({
+      title: "Подземелье покинуто",
+      description: "Вы покинули подземелье. Весь прогресс сброшен.",
     });
-
-    setOpponents(updatedOpponents);
-    setIsPlayerTurn(false);
-
-    // Check if level completed
-    if (updatedOpponents.every(opponent => opponent.health === 0)) {
-      const newLevel = currentDungeonLevel + 1;
-      setCurrentDungeonLevel(newLevel);
-      
-      // Update quest progress for completing levels
-      const completeLevelsQuest = "weekly-1";
-      const currentProgress = Number(localStorage.getItem(completeLevelsQuest) || "0");
-      const newProgress = currentProgress + 1;
-      localStorage.setItem(completeLevelsQuest, String(newProgress));
-      updateQuestProgress(completeLevelsQuest, newProgress);
-
-      setOpponents(generateOpponents(newLevel));
-      setShowLevelUp(true);
-      setIsPlayerTurn(true);
-      return;
-    }
-
-    // Enemy turn
-    setTimeout(() => {
-      if (playerStats) {
-        const newHealth = Math.max(0, playerStats.health - 10);
-        setPlayerStats({ ...playerStats, health: newHealth });
-      }
-      setIsPlayerTurn(true);
-    }, 1000);
+    navigate("/game");
   };
 
+  const showNextLevelButton = opponents.length === 0 && playerStats?.health > 0;
+
   return (
-    <div className={`flex flex-col items-center ${isMobile ? 'p-2' : 'p-6'}`}>
-      <Button onClick={() => navigate(-1)} className="mb-4">
-        <ArrowLeft /> Назад
-      </Button>
-      <div className="flex flex-col w-full max-w-2xl">
-        {opponents.map(opponent => (
-          <OpponentCard 
-            key={opponent.id} 
-            opponent={opponent} 
-            onAttack={() => {}} 
-            isPlayerTurn={isPlayerTurn}
-            currentLevel={currentDungeonLevel}
-            playerHealth={playerStats?.health ?? 0}
-          />
-        ))}
-        {playerStats && <PlayerCard playerStats={playerStats} />}
-        <InventoryDisplay inventory={inventory} />
-        {showLevelUp && (
-          <LevelUpDialog 
-            isOpen={showLevelUp}
-            onUpgradeSelect={(upgrade) => {
-              // Handle upgrade selection
-              setShowLevelUp(false);
-            }}
-          />
+    <div className="min-h-screen bg-game-background p-2 md:p-6 relative">
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        className="max-w-7xl mx-auto"
+      >
+        <div className="flex flex-col md:flex-row justify-between items-center gap-4 mb-4 md:mb-8">
+          <div className="flex items-center gap-2 md:gap-4">
+            <Button
+              variant="ghost"
+              size="icon"
+              className="text-game-accent hover:text-game-accent/80"
+              onClick={() => navigate("/game")}
+            >
+              <ArrowLeft className="h-4 w-4 md:h-5 md:w-5" />
+            </Button>
+            <h1 className="text-xl md:text-3xl font-bold text-game-accent">Битва</h1>
+          </div>
+          <div className="flex flex-wrap items-center gap-2 md:gap-4">
+            <span className="text-base md:text-xl font-bold text-yellow-500">🪙 {coins}</span>
+            <span className="text-base md:text-xl font-bold text-purple-500">👑 Уровень {savedLevel}</span>
+            <Button
+              variant="destructive"
+              className="bg-red-600 hover:bg-red-700 text-xs md:text-base"
+              onClick={handleExitDungeon}
+            >
+              <DoorOpen className="h-4 w-4 md:h-5 md:w-5 mr-1 md:mr-2" />
+              {isMobile ? "Выход" : "Покинуть подземелье"}
+            </Button>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-6 mb-4 md:mb-8">
+          {opponents.map((opponent) => (
+            <OpponentCard
+              key={opponent.id}
+              opponent={opponent}
+              onAttack={attackEnemy}
+              isPlayerTurn={isPlayerTurn}
+              currentLevel={savedLevel}
+              playerHealth={playerStats?.health || 0}
+            />
+          ))}
+        </div>
+
+        {showNextLevelButton && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="flex justify-center mb-4 md:mb-8"
+          >
+            <Button
+              variant="default"
+              size={isMobile ? "default" : "lg"}
+              onClick={handleNextLevel}
+              className="bg-green-600 hover:bg-green-700 text-white font-bold text-sm md:text-base"
+            >
+              <ArrowRight className="h-4 w-4 md:h-5 md:w-5 mr-1 md:mr-2" />
+              {isMobile ? "Следующий уровень" : "Перейти на следующий уровень"}
+            </Button>
+          </motion.div>
         )}
-      </div>
+
+        <PlayerCard playerStats={playerStats} />
+        <Inventory items={inventory} onUseItem={useItem} />
+
+        <LevelUpDialog
+          isOpen={showLevelUp}
+          onUpgradeSelect={handleUpgrade}
+        />
+
+        <div className="fixed bottom-2 md:bottom-6 right-2 md:right-6 bg-game-surface p-2 md:p-4 rounded-lg border border-game-accent shadow-lg">
+          <div className="flex items-center gap-1 md:gap-2">
+            <Heart className="w-4 h-4 md:w-6 md:h-6 text-red-500" />
+            <span className="font-bold text-base md:text-xl text-game-accent">
+              {playerStats?.health}/{playerStats?.maxHealth}
+            </span>
+          </div>
+        </div>
+      </motion.div>
     </div>
   );
 };

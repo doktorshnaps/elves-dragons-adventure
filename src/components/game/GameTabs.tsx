@@ -6,7 +6,6 @@ import { DungeonsList } from "./DungeonsList";
 import { InventoryDisplay } from "./InventoryDisplay";
 import { Item } from "../battle/Inventory";
 import { useToast } from "@/hooks/use-toast";
-import { updateQuestProgress } from "@/utils/questUtils";
 
 export const GameTabs = () => {
   const isMobile = useIsMobile();
@@ -31,13 +30,6 @@ export const GameTabs = () => {
         const newInventory = inventory.filter(i => i.id !== item.id);
         setInventory(newInventory);
         localStorage.setItem('gameInventory', JSON.stringify(newInventory));
-        
-        // Update quest progress for using potions
-        const usePotionsQuest = "daily-2";
-        const currentProgress = Number(localStorage.getItem(usePotionsQuest) || "0");
-        const newProgress = currentProgress + 1;
-        localStorage.setItem(usePotionsQuest, String(newProgress));
-        updateQuestProgress(usePotionsQuest, newProgress);
         
         toast({
           title: "Зелье использовано",

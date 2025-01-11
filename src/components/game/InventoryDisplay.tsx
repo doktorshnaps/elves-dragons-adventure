@@ -10,13 +10,13 @@ import { useInventory } from "./inventory/useInventory";
 import { useBalanceState } from "@/hooks/useBalanceState";
 
 interface InventoryDisplayProps {
-  inventory?: Item[];
+  inventory: Item[];
   onUseItem?: (item: Item) => void;
   readonly?: boolean;
 }
 
 export const InventoryDisplay = ({ 
-  inventory: initialInventory = [], // Provide default empty array
+  inventory: initialInventory, 
   onUseItem, 
   readonly = false 
 }: InventoryDisplayProps) => {
