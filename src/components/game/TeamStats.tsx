@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { Card } from "@/components/ui/card";
 import { HealthBar } from "./stats/HealthBar";
 import { CombatStats } from "./stats/CombatStats";
@@ -40,7 +40,7 @@ export const TeamStats = () => {
     return Number(localStorage.getItem('gameBalance') || '0');
   });
 
-  React.useEffect(() => {
+  useEffect(() => {
     const handleStorageChange = () => {
       const savedCards = localStorage.getItem('gameCards');
       const cards = savedCards ? JSON.parse(savedCards) : [];
@@ -64,13 +64,29 @@ export const TeamStats = () => {
       setBalance(newBalance);
     };
 
-    window.addEventListener('storage', handleStorageChange);
-    window.addEventListener('cardsUpdate', handleStorageChange);
-    const checkInterval = setInterval(handleStorageChange, 1000);
+    // Add event listeners for various update events
+    const events = [
+      'storage',
+      'cardsUpdate',
+      'balanceUpdate',
+      'battleStateUpdate',
+      'inventoryUpdate'
+    ];
+
+    events.forEach(event => {
+      window.addEventListener(event, handleStorageChange);
+    });
+
+    // More frequent updates (every 500ms)
+    const checkInterval = setInterval(handleStorageChange, 500);
+
+    // Immediate check on mount
+    handleStorageChange();
 
     return () => {
-      window.removeEventListener('storage', handleStorageChange);
-      window.removeEventListener('cardsUpdate', handleStorageChange);
+      events.forEach(event => {
+        window.removeEventListener(event, handleStorageChange);
+      });
       clearInterval(checkInterval);
     };
   }, []);
