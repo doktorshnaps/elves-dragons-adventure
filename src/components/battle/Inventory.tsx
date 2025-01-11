@@ -44,7 +44,13 @@ export const Inventory = ({ items, onUseItem }: InventoryProps) => {
         value: item.value,
         count: 1,
         items: [item],
-        image: item.image
+        image: item.image || (
+          item.type === 'healthPotion' && item.value === 70 
+            ? "/lovable-uploads/194bfe08-75f6-4415-8fda-5538a83251c3.png"
+            : item.type === 'healthPotion' && item.value === 30
+              ? "/lovable-uploads/6693dd2b-2511-4c63-ae03-a1b208a8e7da.png"
+              : item.image
+        )
       });
     }
 
