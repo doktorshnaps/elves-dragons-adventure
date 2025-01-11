@@ -26,6 +26,7 @@ export interface NFTStats {
   power: number;
   defense: number;
   health: number;
+  magic: number;  // Added magic property
 }
 
 const NFT_CONTRACT_ID = "darai.mintbase1.near";
