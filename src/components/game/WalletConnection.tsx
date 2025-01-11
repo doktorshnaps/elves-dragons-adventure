@@ -54,7 +54,7 @@ export const WalletConnection = ({
         if (nfts.length === 0) {
           toast({
             title: "NFT не найдены",
-            description: "У вас нет NFT для игры. Приобретите NFT, чтобы начать игру.",
+            description: "У вас нет NFT из коллекции darai.mintbase1.near. Приобретите NFT, чтобы начать игру.",
             variant: "destructive"
           });
           return;
