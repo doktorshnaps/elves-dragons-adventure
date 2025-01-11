@@ -13,39 +13,33 @@ export const useBattleState = (initialLevel: number = 1) => {
   const navigate = useNavigate();
   const { toast } = useToast();
   
-  // Calculate initial stats from cards
-  const savedCards = localStorage.getItem('gameCards');
-  const cards = savedCards ? JSON.parse(savedCards) : [];
-  const teamStats = calculateTeamStats(cards);
-  
-  // Initialize or restore battle state with correct stats and level
+  // Calculate initial stats from cards only if there's no saved battle state
   const savedState = localStorage.getItem('battleState');
-  const initialState = savedState ? JSON.parse(savedState) : {
-    playerStats: {
-      health: teamStats.health,
-      maxHealth: teamStats.health,
-      power: teamStats.power,
-      defense: teamStats.defense,
-      experience: 0,
-      level: initialLevel,
-      requiredExperience: 100
-    },
-    currentDungeonLevel: initialLevel
-  };
-
-  // Ensure stats are synced with cards even if state exists
-  if (savedState) {
-    const parsedState = JSON.parse(savedState);
-    initialState.currentDungeonLevel = parsedState.currentDungeonLevel || initialLevel;
-    initialState.playerStats = {
-      ...parsedState.playerStats,
-      power: teamStats.power,
-      defense: teamStats.defense,
-      maxHealth: teamStats.health,
-    };
-    localStorage.setItem('battleState', JSON.stringify(initialState));
-  }
+  let initialState;
   
+  if (savedState) {
+    // If we have saved state, use it directly without recalculating stats
+    initialState = JSON.parse(savedState);
+  } else {
+    // Only calculate new stats if there's no saved state
+    const savedCards = localStorage.getItem('gameCards');
+    const cards = savedCards ? JSON.parse(savedCards) : [];
+    const teamStats = calculateTeamStats(cards);
+    
+    initialState = {
+      playerStats: {
+        health: teamStats.health,
+        maxHealth: teamStats.health,
+        power: teamStats.power,
+        defense: teamStats.defense,
+        experience: 0,
+        level: initialLevel,
+        requiredExperience: 100
+      },
+      currentDungeonLevel: initialLevel
+    };
+  }
+
   const { playerStats, setPlayerStats, showLevelUp, handleUpgrade } = usePlayerState(initialState.currentDungeonLevel, initialState.playerStats);
   const { inventory, updateInventory } = useInventoryState();
   const { balance, updateBalance } = useBalanceState();
@@ -64,7 +58,7 @@ export const useBattleState = (initialLevel: number = 1) => {
         variant: "destructive"
       });
       
-      // Очищаем состояние подземелья
+      // Очищаем состояние подземелья при смерти
       localStorage.removeItem('battleState');
       
       // Возвращаемся в меню
@@ -94,10 +88,13 @@ export const useBattleState = (initialLevel: number = 1) => {
   const handleNextLevel = () => {
     const nextLevel = initialState.currentDungeonLevel + 1;
     
-    // Сохраняем состояние для следующего уровня
+    // Сохраняем текущие характеристики для следующего уровня
     const battleState = {
-      playerStats,
-      opponents: [], // Очищаем список противников для следующего уровня
+      playerStats: {
+        ...playerStats,
+        level: nextLevel
+      },
+      opponents: [],
       currentDungeonLevel: nextLevel,
       inventory,
       coins: balance
@@ -112,7 +109,7 @@ export const useBattleState = (initialLevel: number = 1) => {
     navigate(`/battle?level=${nextLevel}`, { replace: true });
   };
 
-  // Сохраняем прогресс при каждом изменении состояния
+  // Сохраняем прогресс только при важных изменениях состояния
   useEffect(() => {
     if (playerStats?.health > 0) {
       const battleState = {
@@ -124,7 +121,7 @@ export const useBattleState = (initialLevel: number = 1) => {
       };
       localStorage.setItem('battleState', JSON.stringify(battleState));
     }
-  }, [playerStats, opponents, initialState.currentDungeonLevel, inventory, balance]);
+  }, [playerStats?.health, playerStats?.defense, opponents, initialState.currentDungeonLevel, inventory, balance]);
 
   const useItem = (item: Item) => {
     if (!playerStats) return;
