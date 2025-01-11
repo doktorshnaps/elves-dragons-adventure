@@ -4,6 +4,7 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { ConnectButton } from "./ConnectButton";
 import { PlayerStats } from "./PlayerStats";
 import { TeamStats as TeamStatsType } from "@/types/cards";
+import { useNavigate } from "react-router-dom";
 
 interface GameHeaderProps {
   isConnected: boolean;
@@ -29,6 +30,15 @@ export const GameHeader = ({
   teamStats,
 }: GameHeaderProps) => {
   const isMobile = useIsMobile();
+  const navigate = useNavigate();
+
+  const handleDungeonAction = () => {
+    if (hasActiveDungeon) {
+      navigate('/battle');
+    } else {
+      setShowDungeonSearch(true);
+    }
+  };
 
   return (
     <div className="w-full flex flex-col gap-4">
@@ -46,11 +56,13 @@ export const GameHeader = ({
           <Button
             variant="outline"
             className="gap-2"
-            onClick={() => setShowDungeonSearch(true)}
-            disabled={hasActiveDungeon}
+            onClick={handleDungeonAction}
           >
             <Sword className="w-4 h-4" />
-            {isMobile ? "Подземелье" : "Поиск подземелья"}
+            {hasActiveDungeon 
+              ? (isMobile ? "В подземелье" : "Вернуться в подземелье")
+              : (isMobile ? "Подземелье" : "Поиск подземелья")
+            }
           </Button>
           <Button
             variant="outline"
