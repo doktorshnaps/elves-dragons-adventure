@@ -36,9 +36,12 @@ export const GameHeader = ({
       <div className="flex justify-between items-center">
         <ConnectButton
           isConnected={isConnected}
-          setIsConnected={setIsConnected}
           walletAddress={walletAddress}
-          setWalletAddress={setWalletAddress}
+          onConnect={() => setIsConnected(true)}
+          onDisconnect={() => {
+            setIsConnected(false);
+            setWalletAddress(null);
+          }}
         />
         <div className="flex items-center gap-2">
           <QuestsWindow />

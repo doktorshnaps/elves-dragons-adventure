@@ -16,3 +16,9 @@ export interface CardPack {
   id: string;
   cards: Card[];
 }
+
+export interface TeamStats {
+  power: number;
+  defense: number;
+  health: number;
+}
