@@ -85,11 +85,20 @@ export const Inventory = ({ items, onUseItem }: InventoryProps) => {
   return (
     <div className="mt-4">
       <h3 className="text-xl font-bold text-game-accent mb-4">Инвентарь</h3>
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+      <div 
+        className="grid grid-cols-1 md:grid-cols-4 gap-4 p-6 rounded-lg"
+        style={{
+          backgroundImage: "url('/lovable-uploads/19465417-5ecf-4b7e-ba12-b580171ae51b.png')",
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
+          backgroundColor: 'rgba(0, 0, 0, 0.7)',
+          backgroundBlend: 'overlay'
+        }}
+      >
         {groupedItems.map((item) => (
           <Card 
             key={`${item.name}-${item.type}-${item.value}`} 
-            className="p-4 bg-game-surface border-game-accent"
+            className="p-4 bg-game-surface/90 border-game-accent backdrop-blur-sm"
           >
             <div className="flex flex-col gap-2">
               {item.image && (
@@ -111,7 +120,7 @@ export const Inventory = ({ items, onUseItem }: InventoryProps) => {
               <Button 
                 onClick={() => handleUseItem(item)} 
                 variant="outline" 
-                className="mt-2"
+                className="mt-2 bg-game-surface/50 hover:bg-game-surface/80"
               >
                 Использовать
               </Button>

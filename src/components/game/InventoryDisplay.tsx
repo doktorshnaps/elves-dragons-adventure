@@ -106,13 +106,12 @@ export const InventoryDisplay = ({
     selectedItems[0].value === selectedItems[1].value;
 
   return (
-    <Card className="bg-game-surface border-game-accent p-6">
-      <div className="flex justify-between items-center mb-4">
+    <Card className="bg-game-surface border-game-accent">
+      <div className="flex justify-between items-center mb-4 p-6">
         <h2 className="text-2xl font-bold text-game-accent">Инвентарь</h2>
         {canUpgrade && (
           <Button 
             onClick={() => {
-              // Upgrade functionality will be implemented later
               setSelectedItems([]);
             }}
             className="bg-purple-600 hover:bg-purple-700"
@@ -121,7 +120,16 @@ export const InventoryDisplay = ({
           </Button>
         )}
       </div>
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div 
+        className="grid grid-cols-1 md:grid-cols-3 gap-4 p-6"
+        style={{
+          backgroundImage: "url('/lovable-uploads/19465417-5ecf-4b7e-ba12-b580171ae51b.png')",
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
+          backgroundColor: 'rgba(0, 0, 0, 0.7)',
+          backgroundBlend: 'overlay'
+        }}
+      >
         {inventory.length > 0 ? (
           groupItems(inventory).map((item) => (
             <ItemCard
