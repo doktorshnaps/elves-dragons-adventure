@@ -15,14 +15,12 @@ import { useIsMobile } from "@/hooks/use-mobile";
 const Battle = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
-  const [searchParams] = useSearchParams();
-  const currentLevel = parseInt(searchParams.get("level") || "1", 10);
   const isMobile = useIsMobile();
-
-  useEffect(() => {
-    fixResizeObserverLoop();
-  }, []);
-
+  
+  // Получаем сохраненный уровень из localStorage
+  const savedState = localStorage.getItem('battleState');
+  const savedLevel = savedState ? JSON.parse(savedState).currentDungeonLevel : 1;
+  
   const {
     coins,
     isPlayerTurn,
@@ -35,7 +33,11 @@ const Battle = () => {
     useItem,
     handleUpgrade,
     handleNextLevel
-  } = useBattleState(currentLevel);
+  } = useBattleState(savedLevel);
+
+  useEffect(() => {
+    fixResizeObserverLoop();
+  }, []);
 
   useEffect(() => {
     if (!isPlayerTurn) {
@@ -75,7 +77,7 @@ const Battle = () => {
           </div>
           <div className="flex flex-wrap items-center gap-2 md:gap-4">
             <span className="text-base md:text-xl font-bold text-yellow-500">🪙 {coins}</span>
-            <span className="text-base md:text-xl font-bold text-purple-500">👑 Уровень {currentLevel}</span>
+            <span className="text-base md:text-xl font-bold text-purple-500">👑 Уровень {savedLevel}</span>
             <Button
               variant="destructive"
               className="bg-red-600 hover:bg-red-700 text-xs md:text-base"
@@ -102,7 +104,7 @@ const Battle = () => {
               opponent={opponent}
               onAttack={attackEnemy}
               isPlayerTurn={isPlayerTurn}
-              currentLevel={currentLevel}
+              currentLevel={savedLevel}
             />
           ))}
         </div>
