@@ -155,7 +155,43 @@ export const Shop = ({ onClose, balance, onBalanceChange }: ShopProps) => {
   };
 
   const renderShopItem = (item: ShopItem) => {
-    const itemContent = (
+    if (item.type === "cardPack") {
+      return (
+        <Card
+          className="p-4 bg-game-background border-game-accent hover:border-game-primary transition-all duration-300"
+        >
+          <h3 className="text-lg font-semibold text-game-accent mb-2">{item.name}</h3>
+          <p className="text-gray-400 mb-2">{item.description}</p>
+          <p className="text-game-secondary mb-4">Цена: {item.price} токенов</p>
+          <HoverCard>
+            <HoverCardTrigger asChild>
+              <Button
+                className="w-full bg-game-primary hover:bg-game-primary/80"
+                onClick={() => buyItem(item)}
+                disabled={balance < item.price}
+              >
+                Купить
+              </Button>
+            </HoverCardTrigger>
+            <HoverCardContent className="w-80 bg-game-background border-game-accent">
+              <h4 className="text-game-accent font-semibold mb-2">Шансы выпадения:</h4>
+              <div className="space-y-1">
+                {Object.entries(getRarityDropRates()).map(([rarity, chance]) => (
+                  <div key={rarity} className="flex justify-between text-sm">
+                    <span className="text-gray-400">
+                      {getRarityLabel(Number(rarity) as 1|2|3|4|5|6|7|8)}
+                    </span>
+                    <span className="text-game-accent">{chance}</span>
+                  </div>
+                ))}
+              </div>
+            </HoverCardContent>
+          </HoverCard>
+        </Card>
+      );
+    }
+
+    return (
       <Card
         className="p-4 bg-game-background border-game-accent hover:border-game-primary transition-all duration-300"
       >
@@ -171,32 +207,6 @@ export const Shop = ({ onClose, balance, onBalanceChange }: ShopProps) => {
         </Button>
       </Card>
     );
-
-    if (item.type === "cardPack") {
-      const dropRates = getRarityDropRates();
-      return (
-        <HoverCard>
-          <HoverCardTrigger asChild>
-            <div>{itemContent}</div>
-          </HoverCardTrigger>
-          <HoverCardContent className="w-80 bg-game-background border-game-accent">
-            <h4 className="text-game-accent font-semibold mb-2">Шансы выпадения:</h4>
-            <div className="space-y-1">
-              {Object.entries(dropRates).map(([rarity, chance]) => (
-                <div key={rarity} className="flex justify-between text-sm">
-                  <span className="text-gray-400">
-                    {getRarityLabel(Number(rarity) as 1|2|3|4|5|6|7|8)}
-                  </span>
-                  <span className="text-game-accent">{chance}</span>
-                </div>
-              ))}
-            </div>
-          </HoverCardContent>
-        </HoverCard>
-      );
-    }
-
-    return itemContent;
   };
 
   return (
