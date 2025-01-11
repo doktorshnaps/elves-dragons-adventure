@@ -89,7 +89,7 @@ export const GameContainer = () => {
       />
 
       <div className="w-full max-w-7xl mx-auto">
-        <GameTabs cards={cards} />
+        <GameTabs />
       </div>
 
       <GameModals
