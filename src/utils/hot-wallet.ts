@@ -1,4 +1,4 @@
-import { WalletModuleFactory, WalletBehaviourFactory, BrowserWallet } from "@near-wallet-selector/core";
+import { WalletModuleFactory, WalletBehaviourFactory, BrowserWallet, Network } from "@near-wallet-selector/core";
 import { HotSDK } from "@hot-dao/hot-sdk-js";
 
 export interface HotWalletParams {
@@ -13,25 +13,23 @@ export function setupHotWallet({
     
     return {
       id: "hot-wallet",
-      type: "injected",
+      type: "browser",
       metadata: {
         name: "HOT Wallet",
         description: "HOT Wallet Integration",
         iconUrl,
-        downloadUrl: "https://hot.io",
         deprecated: false,
         available: true,
       },
-      init: (): WalletBehaviourFactory => {
+      init: (): WalletBehaviourFactory<BrowserWallet, Network> => {
         return async () => {
           const wallet: BrowserWallet = {
             id: "hot-wallet",
-            type: "injected",
+            type: "browser",
             metadata: {
               name: "HOT Wallet",
               description: "HOT Wallet Integration",
               iconUrl,
-              downloadUrl: "https://hot.io",
               deprecated: false,
               available: true,
             },
@@ -51,7 +49,6 @@ export function setupHotWallet({
               const accounts = await hotSDK.getAccounts();
               return accounts.map((accountId: string) => ({ accountId }));
             },
-            // Implement other required methods as needed
             signMessage: async () => {
               throw new Error("Method not implemented.");
             },
