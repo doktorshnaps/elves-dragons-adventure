@@ -14,36 +14,32 @@ export const PlayerCard = ({ playerStats }: PlayerCardProps) => {
   const isMobile = useIsMobile();
 
   useEffect(() => {
-    const initializeStats = () => {
-      const savedState = localStorage.getItem('battleState');
-      if (!savedState) {
-        const savedCards = localStorage.getItem('gameCards');
-        if (savedCards) {
-          const cards = JSON.parse(savedCards);
-          const teamStats = calculateTeamStats(cards);
-          
-          const initialState = {
-            playerStats: {
-              power: teamStats.power,
-              defense: teamStats.defense,
-              health: teamStats.health,
-              maxHealth: teamStats.health,
-              experience: 0,
-              level: 1,
-              requiredExperience: 100
-            },
-            currentDungeonLevel: 1
-          };
-          
-          localStorage.setItem('battleState', JSON.stringify(initialState));
-          window.dispatchEvent(new CustomEvent('battleStateUpdate', { 
-            detail: { state: initialState }
-          }));
-        }
+    const savedState = localStorage.getItem('battleState');
+    if (!savedState) {
+      const savedCards = localStorage.getItem('gameCards');
+      if (savedCards) {
+        const cards = JSON.parse(savedCards);
+        const teamStats = calculateTeamStats(cards);
+        
+        const initialState = {
+          playerStats: {
+            power: teamStats.power,
+            defense: teamStats.defense,
+            health: teamStats.health,
+            maxHealth: teamStats.health,
+            experience: 0,
+            level: 1,
+            requiredExperience: 100
+          },
+          currentDungeonLevel: 1
+        };
+        
+        localStorage.setItem('battleState', JSON.stringify(initialState));
+        window.dispatchEvent(new CustomEvent('battleStateUpdate', { 
+          detail: { state: initialState }
+        }));
       }
-    };
-
-    initializeStats();
+    }
   }, []);
 
   return (
