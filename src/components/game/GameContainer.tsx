@@ -7,7 +7,6 @@ import { generatePack, calculateTeamStats } from "@/utils/cardUtils";
 import { GameTabs } from "./GameTabs";
 import { GameModals } from "./GameModals";
 import { GameHeader } from "./GameHeader";
-import { SocialQuests } from "./SocialQuests";
 
 export const GameContainer = () => {
   const isMobile = useIsMobile();
@@ -44,7 +43,6 @@ export const GameContainer = () => {
       }
     };
 
-    // Проверяем состояние при монтировании и при обновлении localStorage
     checkDungeonState();
     window.addEventListener('storage', checkDungeonState);
     
@@ -72,11 +70,6 @@ export const GameContainer = () => {
     }
   }, []);
 
-  const handleBalanceChange = (newBalance: number) => {
-    setBalance(newBalance);
-    localStorage.setItem('gameBalance', newBalance.toString());
-  };
-
   return (
     <motion.div
       initial={{ opacity: 0 }}
@@ -95,13 +88,8 @@ export const GameContainer = () => {
         teamStats={calculateTeamStats(cards)}
       />
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
-        <div className="md:col-span-2">
-          <GameTabs cards={cards} />
-        </div>
-        <div className="md:col-span-1">
-          <SocialQuests />
-        </div>
+      <div className="mb-6">
+        <GameTabs cards={cards} />
       </div>
 
       <GameModals
@@ -110,7 +98,10 @@ export const GameContainer = () => {
         onCloseDungeon={() => setShowDungeonSearch(false)}
         onCloseShop={() => setShowShop(false)}
         balance={balance}
-        onBalanceChange={handleBalanceChange}
+        onBalanceChange={(newBalance: number) => {
+          setBalance(newBalance);
+          localStorage.setItem('gameBalance', newBalance.toString());
+        }}
       />
     </motion.div>
   );
