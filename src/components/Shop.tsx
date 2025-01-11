@@ -86,10 +86,16 @@ export const Shop = ({ onClose, balance, onBalanceChange }: ShopProps) => {
   const updateInventory = (newInventory: any[]) => {
     localStorage.setItem('gameInventory', JSON.stringify(newInventory));
     setInventory(newInventory);
-    const event = new CustomEvent('inventoryUpdate', { 
+    
+    // Dispatch inventory update event
+    const inventoryEvent = new CustomEvent('inventoryUpdate', { 
       detail: { inventory: newInventory }
     });
-    window.dispatchEvent(event);
+    window.dispatchEvent(inventoryEvent);
+    
+    // Dispatch battle state update event to refresh stats
+    const battleEvent = new CustomEvent('battleStateUpdate');
+    window.dispatchEvent(battleEvent);
   };
 
   const buyItem = async (item: ShopItem) => {
@@ -107,27 +113,26 @@ export const Shop = ({ onClose, balance, onBalanceChange }: ShopProps) => {
       setLastOpenedCard(cards[0]);
       setShowCardAnimation(true);
 
+      const savedCards = localStorage.getItem('gameCards') || '[]';
+      const currentCards = JSON.parse(savedCards);
+      const newCards = [...currentCards, ...cards];
+      localStorage.setItem('gameCards', JSON.stringify(newCards));
+      
+      // Немедленно отправляем событие обновления карт
+      const cardsEvent = new CustomEvent('cardsUpdate', { 
+        detail: { cards: newCards }
+      });
+      window.dispatchEvent(cardsEvent);
+
+      toast({
+        title: "Карта получена!",
+        description: `Вы получили: ${cards[0].name} (${getRarityLabel(cards[0].rarity)})`,
+      });
+
       setTimeout(() => {
-        const savedCards = localStorage.getItem('gameCards') || '[]';
-        const currentCards = JSON.parse(savedCards);
-        const newCards = [...currentCards, ...cards];
-        localStorage.setItem('gameCards', JSON.stringify(newCards));
-        
-        const event = new CustomEvent('cardsUpdate', { 
-          detail: { cards: newCards }
-        });
-        window.dispatchEvent(event);
-
-        toast({
-          title: "Карта получена!",
-          description: `Вы получили: ${cards[0].name} (${getRarityLabel(cards[0].rarity)})`,
-        });
-
-        setTimeout(() => {
-          setShowCardAnimation(false);
-          setLastOpenedCard(null);
-        }, 2000);
-      }, 1000);
+        setShowCardAnimation(false);
+        setLastOpenedCard(null);
+      }, 2000);
     } else {
       const newItem = {
         ...item,
@@ -139,7 +144,13 @@ export const Shop = ({ onClose, balance, onBalanceChange }: ShopProps) => {
       updateInventory(newInventory);
     }
 
-    onBalanceChange(balance - item.price);
+    // Обновляем баланс и отправляем событие
+    const newBalance = balance - item.price;
+    onBalanceChange(newBalance);
+    const balanceEvent = new CustomEvent('balanceUpdate', { 
+      detail: { balance: newBalance }
+    });
+    window.dispatchEvent(balanceEvent);
   };
 
   return (

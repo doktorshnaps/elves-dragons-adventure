@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card as CardType } from "@/types/cards";
 import { CardDisplay } from "./CardDisplay";
 import { useToast } from "@/hooks/use-toast";
@@ -11,19 +11,41 @@ export const TeamCards = () => {
     return savedCards ? JSON.parse(savedCards) : [];
   });
 
+  useEffect(() => {
+    const handleCardsUpdate = (e: CustomEvent<{ cards: CardType[] }>) => {
+      setCards(e.detail.cards);
+    };
+
+    const handleStorageChange = () => {
+      const savedCards = localStorage.getItem('gameCards');
+      if (savedCards) {
+        setCards(JSON.parse(savedCards));
+      }
+    };
+
+    window.addEventListener('cardsUpdate', handleCardsUpdate as EventListener);
+    window.addEventListener('storage', handleStorageChange);
+
+    // Проверяем состояние каждые 500мс
+    const interval = setInterval(handleStorageChange, 500);
+
+    return () => {
+      window.removeEventListener('cardsUpdate', handleCardsUpdate as EventListener);
+      window.removeEventListener('storage', handleStorageChange);
+      clearInterval(interval);
+    };
+  }, []);
+
   const handleSellCard = (card: CardType) => {
-    // Удаляем карту из списка
     const newCards = cards.filter(c => c.id !== card.id);
     setCards(newCards);
     localStorage.setItem('gameCards', JSON.stringify(newCards));
 
-    // Обновляем баланс
     const price = getCardPrice(card.rarity);
     const currentBalance = Number(localStorage.getItem('gameBalance') || '0');
     const newBalance = currentBalance + price;
     localStorage.setItem('gameBalance', newBalance.toString());
 
-    // Отправляем события об обновлении
     const cardsEvent = new CustomEvent('cardsUpdate', { 
       detail: { cards: newCards }
     });
@@ -34,7 +56,6 @@ export const TeamCards = () => {
     });
     window.dispatchEvent(balanceEvent);
 
-    // Показываем уведомление
     toast({
       title: "Карта продана",
       description: `Вы получили ${price} токенов`,
