@@ -7,6 +7,7 @@ import { generatePack, calculateTeamStats } from "@/utils/cardUtils";
 import { GameTabs } from "./GameTabs";
 import { GameModals } from "./GameModals";
 import { GameHeader } from "./GameHeader";
+import { SocialQuests } from "./SocialQuests";
 
 export const GameContainer = () => {
   const isMobile = useIsMobile();
@@ -67,7 +68,14 @@ export const GameContainer = () => {
         teamStats={calculateTeamStats(cards)}
       />
 
-      <GameTabs cards={cards} />
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+        <div className="md:col-span-2">
+          <GameTabs cards={cards} />
+        </div>
+        <div className="md:col-span-1">
+          <SocialQuests />
+        </div>
+      </div>
 
       <GameModals
         showDungeonSearch={showDungeonSearch}

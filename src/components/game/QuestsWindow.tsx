@@ -40,29 +40,7 @@ const INITIAL_QUESTS: Quest[] = [
     reward: { coins: 500 },
     completed: false,
     claimed: false,
-  },
-  {
-    id: "social-1",
-    title: "Подписаться на CryptoFun News",
-    description: "Подпишитесь на наш новостной канал t.me/CryptoFun_n",
-    type: "social",
-    progress: 0,
-    target: 1,
-    reward: { coins: 200 },
-    completed: false,
-    claimed: false,
-  },
-  {
-    id: "social-2",
-    title: "Присоединиться к чату CryptoFun",
-    description: "Присоединитесь к нашему чату t.me/CryptoFun_Chat_t",
-    type: "social",
-    progress: 0,
-    target: 1,
-    reward: { coins: 200 },
-    completed: false,
-    claimed: false,
-  },
+  }
 ];
 
 export const QuestsWindow = () => {
@@ -98,10 +76,6 @@ export const QuestsWindow = () => {
     });
   };
 
-  const handleSocialClick = (url: string) => {
-    window.open(`https://${url}`, '_blank');
-  };
-
   return (
     <Sheet>
       <SheetTrigger asChild>
@@ -126,13 +100,6 @@ export const QuestsWindow = () => {
               title="Еженедельные задания"
               quests={quests.filter((quest) => quest.type === "weekly")}
               onClaimReward={handleClaimReward}
-            />
-            
-            <QuestSection
-              title="Поддержка проекта"
-              quests={quests.filter((quest) => quest.type === "social")}
-              onClaimReward={handleClaimReward}
-              onSocialClick={handleSocialClick}
             />
           </div>
         </ScrollArea>
