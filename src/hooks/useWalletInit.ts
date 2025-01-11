@@ -3,8 +3,6 @@ import { setupWalletSelector } from "@near-wallet-selector/core";
 import { setupModal } from "@near-wallet-selector/modal-ui";
 import { setupMyNearWallet } from "@near-wallet-selector/my-near-wallet";
 import { setupMeteorWallet } from "@near-wallet-selector/meteor-wallet";
-import { setupHereWallet } from "@near-wallet-selector/here-wallet";
-import { setupHotWallet } from "@/utils/hot-wallet";
 import { useToast } from "@/hooks/use-toast";
 
 export const useWalletInit = (
@@ -22,9 +20,7 @@ export const useWalletInit = (
           network: "testnet",
           modules: [
             setupMyNearWallet(),
-            setupMeteorWallet(),
-            setupHereWallet(),
-            setupHotWallet()
+            setupMeteorWallet()
           ],
         });
 

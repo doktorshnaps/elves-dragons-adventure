@@ -12,10 +12,7 @@
   },
   "dependencies": {
     "@hookform/resolvers": "^3.9.0",
-    "@hot-dao/hot-sdk-js": "github:hot-dao/hot-sdk-js#main",
-    "@hot-wallet/sdk": "github:hot-dao/hot-sdk-js#main",
     "@near-wallet-selector/core": "^8.9.15",
-    "@near-wallet-selector/here-wallet": "^8.9.15",
     "@near-wallet-selector/meteor-wallet": "^8.9.15",
     "@near-wallet-selector/modal-ui": "^8.9.15",
     "@near-wallet-selector/my-near-wallet": "^8.9.15",
