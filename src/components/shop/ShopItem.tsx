@@ -51,9 +51,29 @@ export const ShopItem = ({ item, balance, onBuy }: ShopItemProps) => {
 
   return (
     <Card className="p-4 bg-game-background border-game-accent hover:border-game-primary transition-all duration-300">
-      <h3 className="text-lg font-semibold text-game-accent mb-2">{item.name}</h3>
-      <p className="text-gray-400 mb-2">{item.description}</p>
-      <p className="text-game-secondary mb-4">Цена: {item.price} токенов</p>
+      {item.image && (
+        <div className="relative w-full aspect-square mb-4 rounded-lg overflow-hidden">
+          <img 
+            src={item.image} 
+            alt={item.name}
+            className="w-full h-full object-cover"
+          />
+          <div className="absolute inset-0 bg-black/50 p-4 flex flex-col justify-between">
+            <div>
+              <h3 className="text-lg font-semibold text-white mb-2">{item.name}</h3>
+              <p className="text-gray-200 text-sm">{item.description}</p>
+            </div>
+            <p className="text-yellow-400">Цена: {item.price} токенов</p>
+          </div>
+        </div>
+      )}
+      {!item.image && (
+        <>
+          <h3 className="text-lg font-semibold text-game-accent mb-2">{item.name}</h3>
+          <p className="text-gray-400 mb-2">{item.description}</p>
+          <p className="text-game-secondary mb-4">Цена: {item.price} токенов</p>
+        </>
+      )}
       <Button
         className="w-full bg-game-primary hover:bg-game-primary/80"
         onClick={() => onBuy(item)}
