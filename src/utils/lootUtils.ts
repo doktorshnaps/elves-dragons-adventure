@@ -68,8 +68,7 @@ export const rollLoot = (lootTable: LootTable): LootResult => {
         id: Date.now(),
         name: "Большое зелье здоровья",
         type: "healthPotion",
-        value: 70,
-        image: "/lovable-uploads/194bfe08-75f6-4415-8fda-5538a83251c3.png"
+        value: 70
       });
     }
   }
@@ -135,8 +134,7 @@ export const generateLoot = (level: number): Item[] => {
         id: Date.now(),
         name: "Большое зелье здоровья",
         type: "healthPotion",
-        value: 70,
-        image: "/lovable-uploads/194bfe08-75f6-4415-8fda-5538a83251c3.png"
+        value: 70
       });
     }
   }
