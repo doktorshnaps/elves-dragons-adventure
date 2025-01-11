@@ -3,75 +3,12 @@ import { motion, AnimatePresence } from "framer-motion";
 import { X, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import {
-  HoverCard,
-  HoverCardContent,
-  HoverCardTrigger,
-} from "@/components/ui/hover-card";
 import { useToast } from "@/hooks/use-toast";
-import { lootItems } from "@/utils/lootUtils";
-import { generatePack, getRarityLabel, getCardPrice, getRarityDropRates } from "@/utils/cardUtils";
+import { generatePack, getRarityLabel } from "@/utils/cardUtils";
 import { Card as CardType } from "@/types/cards";
-
-interface ShopItem {
-  id: number;
-  name: string;
-  description: string;
-  price: number;
-  type: "healthPotion" | "defensePotion" | "weapon" | "armor" | "cardPack";
-  value: number;
-}
-
-const shopItems: ShopItem[] = [
-  {
-    id: 1,
-    name: "Колода карт",
-    description: "Содержит 1 случайную карту героя или питомца",
-    price: 1000,
-    type: "cardPack",
-    value: 1
-  },
-  {
-    id: 2,
-    name: lootItems.healthPotion.name,
-    description: "Восстанавливает 30 очков здоровья",
-    price: 50,
-    type: "healthPotion",
-    value: 30
-  },
-  {
-    id: 3,
-    name: lootItems.largeHealthPotion.name,
-    description: "Восстанавливает 70 очков здоровья",
-    price: 100,
-    type: "healthPotion",
-    value: 70
-  },
-  {
-    id: 4,
-    name: lootItems.defensePotion.name,
-    description: "Увеличивает защиту на 20",
-    price: 75,
-    type: "defensePotion",
-    value: 20
-  },
-  {
-    id: 5,
-    name: lootItems.weapon.name,
-    description: "Увеличивает силу атаки на 15",
-    price: 150,
-    type: "weapon",
-    value: 15
-  },
-  {
-    id: 6,
-    name: lootItems.armor.name,
-    description: "Увеличивает защиту на 10",
-    price: 120,
-    type: "armor",
-    value: 10
-  }
-];
+import { ShopItem as ShopItemComponent } from "./shop/ShopItem";
+import { CardAnimation } from "./shop/CardAnimation";
+import { shopItems, ShopItem } from "./shop/types";
 
 interface ShopProps {
   onClose: () => void;
@@ -81,25 +18,8 @@ interface ShopProps {
 
 export const Shop = ({ onClose, balance, onBalanceChange }: ShopProps) => {
   const { toast } = useToast();
-  const [inventory, setInventory] = useState(() => {
-    const savedInventory = localStorage.getItem('gameInventory');
-    return savedInventory ? JSON.parse(savedInventory) : [];
-  });
   const [showCardAnimation, setShowCardAnimation] = useState(false);
   const [lastOpenedCard, setLastOpenedCard] = useState<CardType | null>(null);
-
-  const updateInventory = (newInventory: any[]) => {
-    localStorage.setItem('gameInventory', JSON.stringify(newInventory));
-    setInventory(newInventory);
-    
-    const inventoryEvent = new CustomEvent('inventoryUpdate', { 
-      detail: { inventory: newInventory }
-    });
-    window.dispatchEvent(inventoryEvent);
-    
-    const battleEvent = new CustomEvent('battleStateUpdate');
-    window.dispatchEvent(battleEvent);
-  };
 
   const buyItem = async (item: ShopItem) => {
     if (balance < item.price) {
@@ -143,7 +63,12 @@ export const Shop = ({ onClose, balance, onBalanceChange }: ShopProps) => {
       const currentInventory = localStorage.getItem('gameInventory');
       const parsedInventory = currentInventory ? JSON.parse(currentInventory) : [];
       const newInventory = [...parsedInventory, newItem];
-      updateInventory(newInventory);
+      
+      localStorage.setItem('gameInventory', JSON.stringify(newInventory));
+      const inventoryEvent = new CustomEvent('inventoryUpdate', { 
+        detail: { inventory: newInventory }
+      });
+      window.dispatchEvent(inventoryEvent);
     }
 
     const newBalance = balance - item.price;
@@ -152,61 +77,6 @@ export const Shop = ({ onClose, balance, onBalanceChange }: ShopProps) => {
       detail: { balance: newBalance }
     });
     window.dispatchEvent(balanceEvent);
-  };
-
-  const renderShopItem = (item: ShopItem) => {
-    if (item.type === "cardPack") {
-      return (
-        <Card
-          className="p-4 bg-game-background border-game-accent hover:border-game-primary transition-all duration-300"
-        >
-          <h3 className="text-lg font-semibold text-game-accent mb-2">{item.name}</h3>
-          <p className="text-gray-400 mb-2">{item.description}</p>
-          <p className="text-game-secondary mb-4">Цена: {item.price} токенов</p>
-          <HoverCard>
-            <HoverCardTrigger asChild>
-              <Button
-                className="w-full bg-game-primary hover:bg-game-primary/80"
-                onClick={() => buyItem(item)}
-                disabled={balance < item.price}
-              >
-                Купить
-              </Button>
-            </HoverCardTrigger>
-            <HoverCardContent className="w-80 bg-game-background border-game-accent">
-              <h4 className="text-game-accent font-semibold mb-2">Шансы выпадения:</h4>
-              <div className="space-y-1">
-                {Object.entries(getRarityDropRates()).map(([rarity, chance]) => (
-                  <div key={rarity} className="flex justify-between text-sm">
-                    <span className="text-gray-400">
-                      {getRarityLabel(Number(rarity) as 1|2|3|4|5|6|7|8)}
-                    </span>
-                    <span className="text-game-accent">{chance}</span>
-                  </div>
-                ))}
-              </div>
-            </HoverCardContent>
-          </HoverCard>
-        </Card>
-      );
-    }
-
-    return (
-      <Card
-        className="p-4 bg-game-background border-game-accent hover:border-game-primary transition-all duration-300"
-      >
-        <h3 className="text-lg font-semibold text-game-accent mb-2">{item.name}</h3>
-        <p className="text-gray-400 mb-2">{item.description}</p>
-        <p className="text-game-secondary mb-4">Цена: {item.price} токенов</p>
-        <Button
-          className="w-full bg-game-primary hover:bg-game-primary/80"
-          onClick={() => buyItem(item)}
-          disabled={balance < item.price}
-        >
-          Купить
-        </Button>
-      </Card>
-    );
   };
 
   return (
@@ -233,29 +103,7 @@ export const Shop = ({ onClose, balance, onBalanceChange }: ShopProps) => {
 
         <AnimatePresence>
           {showCardAnimation && lastOpenedCard && (
-            <motion.div
-              initial={{ scale: 0, rotateY: 180 }}
-              animate={{ scale: 1, rotateY: 0 }}
-              exit={{ scale: 0, rotateY: 180 }}
-              transition={{ duration: 1 }}
-              className="fixed inset-0 flex items-center justify-center z-50"
-            >
-              <Card className="p-6 bg-game-background border-game-accent animate-card-glow">
-                <h3 className="text-xl font-bold text-game-accent mb-2">{lastOpenedCard.name}</h3>
-                <p className="text-gray-400">Тип: {lastOpenedCard.type === 'character' ? 'Герой' : 'Питомец'}</p>
-                <div className="mt-4 flex gap-4 justify-center">
-                  <div className="text-game-accent">
-                    <span>Атака: {lastOpenedCard.power}</span>
-                  </div>
-                  <div className="text-game-accent">
-                    <span>Защита: {lastOpenedCard.defense}</span>
-                  </div>
-                  <div className="text-game-accent">
-                    <span>Редкость: {getRarityLabel(lastOpenedCard.rarity)}</span>
-                  </div>
-                </div>
-              </Card>
-            </motion.div>
+            <CardAnimation card={lastOpenedCard} />
           )}
         </AnimatePresence>
 
@@ -266,7 +114,11 @@ export const Shop = ({ onClose, balance, onBalanceChange }: ShopProps) => {
               whileHover={{ scale: 1.02 }}
               transition={{ duration: 0.2 }}
             >
-              {renderShopItem(item)}
+              <ShopItemComponent
+                item={item}
+                balance={balance}
+                onBuy={buyItem}
+              />
             </motion.div>
           ))}
         </div>
