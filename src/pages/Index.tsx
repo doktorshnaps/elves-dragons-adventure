@@ -5,7 +5,7 @@ const Index = () => {
     <div 
       className="min-h-screen flex items-center justify-center bg-cover bg-center bg-no-repeat relative"
       style={{ 
-        backgroundImage: 'url("/lovable-uploads/b112d985-e245-445e-85ec-5d0a6e883abc.png")'
+        backgroundImage: 'url("/lovable-uploads/b8a49d16-bf80-4363-90d6-7c244e46ca02.png")'
       }}
     >
       <div className="absolute inset-0 bg-black/30" /> {/* Затемнение для лучшей читаемости текста */}
