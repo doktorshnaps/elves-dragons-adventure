@@ -36,6 +36,10 @@ export const TeamStats = () => {
     };
   });
 
+  const [balance, setBalance] = React.useState(() => {
+    return Number(localStorage.getItem('gameBalance') || '0');
+  });
+
   React.useEffect(() => {
     const handleStorageChange = () => {
       const savedCards = localStorage.getItem('gameCards');
@@ -55,6 +59,9 @@ export const TeamStats = () => {
         localStorage.setItem('battleState', JSON.stringify(state));
         setStats(state.playerStats);
       }
+
+      const newBalance = Number(localStorage.getItem('gameBalance') || '0');
+      setBalance(newBalance);
     };
 
     window.addEventListener('storage', handleStorageChange);
@@ -72,6 +79,7 @@ export const TeamStats = () => {
     <Card className="p-6 bg-game-surface border-game-accent mb-6">
       <div className="flex justify-between items-center mb-4">
         <h2 className="text-xl font-bold text-game-accent">Статистика команды</h2>
+        <span className="text-sm text-game-accent">{balance} монет</span>
       </div>
       
       <div className="space-y-4">
