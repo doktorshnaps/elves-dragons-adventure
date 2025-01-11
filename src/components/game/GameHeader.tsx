@@ -3,7 +3,6 @@ import { Sword, ShoppingCart } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { ConnectButton } from "./ConnectButton";
 import { PlayerStats } from "./PlayerStats";
-import { TeamStats } from "./TeamStats";
 import { TeamStats as TeamStatsType } from "@/types/cards";
 
 interface GameHeaderProps {
@@ -51,7 +50,7 @@ export const GameHeader = ({
             disabled={hasActiveDungeon}
           >
             <Sword className="w-4 h-4" />
-            {isMobile ? "Бой" : "Начать бой"}
+            {isMobile ? "Подземелье" : "Поиск подземелья"}
           </Button>
           <Button
             variant="outline"
@@ -65,7 +64,6 @@ export const GameHeader = ({
       </div>
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <PlayerStats balance={balance} teamStats={teamStats} />
-        <TeamStats teamStats={teamStats} />
       </div>
     </div>
   );
