@@ -86,47 +86,48 @@ export const Inventory = ({ items, onUseItem }: InventoryProps) => {
     <div className="mt-4">
       <h3 className="text-xl font-bold text-game-accent mb-4">Инвентарь</h3>
       <div 
-        className="grid grid-cols-1 md:grid-cols-4 gap-4 p-6 rounded-lg"
+        className="relative grid grid-cols-1 md:grid-cols-4 gap-4 p-6 rounded-lg overflow-hidden"
         style={{
           backgroundImage: "url('/lovable-uploads/19465417-5ecf-4b7e-ba12-b580171ae51b.png')",
           backgroundSize: 'cover',
           backgroundPosition: 'center',
-          backgroundColor: 'rgba(0, 0, 0, 0.7)',
-          backgroundBlendMode: 'overlay'
         }}
       >
-        {groupedItems.map((item) => (
-          <Card 
-            key={`${item.name}-${item.type}-${item.value}`} 
-            className="p-4 bg-game-surface/90 border-game-accent backdrop-blur-sm"
-          >
-            <div className="flex flex-col gap-2">
-              {item.image && (
-                <div className="w-full aspect-square mb-2 rounded-lg overflow-hidden">
-                  <img 
-                    src={item.image} 
-                    alt={item.name}
-                    className="w-full h-full object-cover"
-                  />
+        <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" />
+        <div className="relative z-10 col-span-full grid grid-cols-1 md:grid-cols-4 gap-4">
+          {groupedItems.map((item) => (
+            <Card 
+              key={`${item.name}-${item.type}-${item.value}`} 
+              className="p-4 bg-game-surface/90 border-game-accent backdrop-blur-sm"
+            >
+              <div className="flex flex-col gap-2">
+                {item.image && (
+                  <div className="w-full aspect-square mb-2 rounded-lg overflow-hidden">
+                    <img 
+                      src={item.image} 
+                      alt={item.name}
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
+                )}
+                <div className="flex items-center gap-2">
+                  {getItemIcon(item.type)}
+                  <h4 className="font-bold text-game-accent">
+                    {item.name} {item.count > 1 && `(${item.count})`}
+                  </h4>
                 </div>
-              )}
-              <div className="flex items-center gap-2">
-                {getItemIcon(item.type)}
-                <h4 className="font-bold text-game-accent">
-                  {item.name} {item.count > 1 && `(${item.count})`}
-                </h4>
+                <p className="text-sm text-gray-400">{getItemDescription(item)}</p>
+                <Button 
+                  onClick={() => handleUseItem(item)} 
+                  variant="outline" 
+                  className="mt-2 bg-game-surface/50 hover:bg-game-surface/80"
+                >
+                  Использовать
+                </Button>
               </div>
-              <p className="text-sm text-gray-400">{getItemDescription(item)}</p>
-              <Button 
-                onClick={() => handleUseItem(item)} 
-                variant="outline" 
-                className="mt-2 bg-game-surface/50 hover:bg-game-surface/80"
-              >
-                Использовать
-              </Button>
-            </div>
-          </Card>
-        ))}
+            </Card>
+          ))}
+        </div>
       </div>
     </div>
   );

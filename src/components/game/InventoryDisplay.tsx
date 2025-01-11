@@ -121,31 +121,32 @@ export const InventoryDisplay = ({
         )}
       </div>
       <div 
-        className="grid grid-cols-1 md:grid-cols-3 gap-4 p-6"
+        className="relative grid grid-cols-1 md:grid-cols-3 gap-4 p-6 overflow-hidden"
         style={{
           backgroundImage: "url('/lovable-uploads/19465417-5ecf-4b7e-ba12-b580171ae51b.png')",
           backgroundSize: 'cover',
           backgroundPosition: 'center',
-          backgroundColor: 'rgba(0, 0, 0, 0.7)',
-          backgroundBlendMode: 'overlay'
         }}
       >
-        {inventory.length > 0 ? (
-          groupItems(inventory).map((item) => (
-            <ItemCard
-              key={`${item.name}-${item.type}-${item.value}`}
-              item={item}
-              readonly={readonly}
-              isSelected={selectedItems.some(i => i.id === item.items[0].id)}
-              onSelect={() => handleSelectItem(item.items[0])}
-              onUse={() => handleUseGroupedItem(item)}
-              onSell={() => handleSellItem(item.items[0])}
-              showUseButton={isInBattle}
-            />
-          ))
-        ) : (
-          <p className="text-gray-400 col-span-3 text-center py-8">Инвентарь пуст</p>
-        )}
+        <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" />
+        <div className="relative z-10 col-span-full grid grid-cols-1 md:grid-cols-3 gap-4">
+          {inventory.length > 0 ? (
+            groupItems(inventory).map((item) => (
+              <ItemCard
+                key={`${item.name}-${item.type}-${item.value}`}
+                item={item}
+                readonly={readonly}
+                isSelected={selectedItems.some(i => i.id === item.items[0].id)}
+                onSelect={() => handleSelectItem(item.items[0])}
+                onUse={() => handleUseGroupedItem(item)}
+                onSell={() => handleSellItem(item.items[0])}
+                showUseButton={isInBattle}
+              />
+            ))
+          ) : (
+            <p className="text-gray-400 col-span-3 text-center py-8 relative z-10">Инвентарь пуст</p>
+          )}
+        </div>
       </div>
     </Card>
   );
