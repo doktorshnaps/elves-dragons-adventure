@@ -15,7 +15,7 @@ const INITIAL_QUESTS: Quest[] = [
     type: "daily",
     progress: 0,
     target: 3,
-    reward: { coins: 100, experience: 50 },
+    reward: { coins: 100 },
     completed: false,
     claimed: false,
   },
@@ -26,7 +26,7 @@ const INITIAL_QUESTS: Quest[] = [
     type: "daily",
     progress: 0,
     target: 2,
-    reward: { coins: 50, experience: 25 },
+    reward: { coins: 50 },
     completed: false,
     claimed: false,
   },
@@ -37,7 +37,29 @@ const INITIAL_QUESTS: Quest[] = [
     type: "weekly",
     progress: 0,
     target: 5,
-    reward: { coins: 500, experience: 200 },
+    reward: { coins: 500 },
+    completed: false,
+    claimed: false,
+  },
+  {
+    id: "social-1",
+    title: "Подписаться на CryptoFun News",
+    description: "Подпишитесь на наш новостной канал t.me/CryptoFun_n",
+    type: "social",
+    progress: 0,
+    target: 1,
+    reward: { coins: 200 },
+    completed: false,
+    claimed: false,
+  },
+  {
+    id: "social-2",
+    title: "Присоединиться к чату CryptoFun",
+    description: "Присоединитесь к нашему чату t.me/CryptoFun_Chat_t",
+    type: "social",
+    progress: 0,
+    target: 1,
+    reward: { coins: 200 },
     completed: false,
     claimed: false,
   },
@@ -65,7 +87,6 @@ export const QuestsWindow = () => {
     );
     setQuests(updatedQuests);
 
-    // Update player's balance and experience
     if (quest.reward.coins) {
       const currentBalance = Number(localStorage.getItem("gameBalance") || "0");
       localStorage.setItem("gameBalance", String(currentBalance + quest.reward.coins));
@@ -73,8 +94,12 @@ export const QuestsWindow = () => {
 
     toast({
       title: "Награда получена!",
-      description: `Вы получили ${quest.reward.coins} монет и ${quest.reward.experience} опыта`,
+      description: `Вы получили ${quest.reward.coins} монет`,
     });
+  };
+
+  const handleSocialClick = (url: string) => {
+    window.open(`https://${url}`, '_blank');
   };
 
   return (
@@ -87,7 +112,7 @@ export const QuestsWindow = () => {
       </SheetTrigger>
       <SheetContent className="w-[400px] sm:w-[540px] bg-game-surface border-game-primary">
         <SheetHeader>
-          <SheetTitle className="text-game-primary">Ежедневные задания</SheetTitle>
+          <SheetTitle className="text-game-primary">Задания</SheetTitle>
         </SheetHeader>
         <ScrollArea className="h-[80vh] mt-4">
           <div className="space-y-6">
@@ -120,7 +145,7 @@ export const QuestsWindow = () => {
                     </div>
                     <Progress value={(quest.progress / quest.target) * 100} />
                     <div className="text-sm text-gray-400">
-                      Награда: {quest.reward.coins} монет, {quest.reward.experience} опыта
+                      Награда: {quest.reward.coins} монет
                     </div>
                   </div>
                 ))}
@@ -155,7 +180,47 @@ export const QuestsWindow = () => {
                     </div>
                     <Progress value={(quest.progress / quest.target) * 100} />
                     <div className="text-sm text-gray-400">
-                      Награда: {quest.reward.coins} монет, {quest.reward.experience} опыта
+                      Награда: {quest.reward.coins} монет
+                    </div>
+                  </div>
+                ))}
+            </div>
+
+            <div className="space-y-4">
+              <h3 className="text-lg font-semibold text-game-primary">Поддержка проекта</h3>
+              {quests
+                .filter((quest) => quest.type === "social")
+                .map((quest) => (
+                  <div
+                    key={quest.id}
+                    className="bg-game-background rounded-lg p-4 space-y-2"
+                  >
+                    <div className="flex justify-between items-start">
+                      <div>
+                        <h4 className="font-medium text-game-primary">{quest.title}</h4>
+                        <p 
+                          className="text-sm text-blue-400 cursor-pointer hover:underline"
+                          onClick={() => handleSocialClick(quest.description.split(' ').pop() || '')}
+                        >
+                          {quest.description}
+                        </p>
+                      </div>
+                      {quest.completed && !quest.claimed && (
+                        <Button
+                          onClick={() => handleClaimReward(quest)}
+                          size="sm"
+                          className="bg-game-accent hover:bg-game-accent/90"
+                        >
+                          Получить
+                        </Button>
+                      )}
+                      {quest.claimed && (
+                        <span className="text-sm text-gray-400">Получено</span>
+                      )}
+                    </div>
+                    <Progress value={(quest.progress / quest.target) * 100} />
+                    <div className="text-sm text-gray-400">
+                      Награда: {quest.reward.coins} монет
                     </div>
                   </div>
                 ))}

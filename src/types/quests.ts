@@ -1,6 +1,5 @@
 export type QuestReward = {
   coins?: number;
-  experience?: number;
   items?: Array<{
     id: string;
     name: string;
@@ -13,7 +12,7 @@ export type Quest = {
   id: string;
   title: string;
   description: string;
-  type: 'daily' | 'weekly';
+  type: 'daily' | 'weekly' | 'social';
   progress: number;
   target: number;
   reward: QuestReward;
