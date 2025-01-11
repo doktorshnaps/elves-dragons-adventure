@@ -127,7 +127,7 @@ export const InventoryDisplay = ({
           backgroundSize: 'cover',
           backgroundPosition: 'center',
           backgroundColor: 'rgba(0, 0, 0, 0.7)',
-          backgroundBlend: 'overlay'
+          backgroundBlendMode: 'overlay'
         }}
       >
         {inventory.length > 0 ? (

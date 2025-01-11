@@ -92,7 +92,7 @@ export const Inventory = ({ items, onUseItem }: InventoryProps) => {
           backgroundSize: 'cover',
           backgroundPosition: 'center',
           backgroundColor: 'rgba(0, 0, 0, 0.7)',
-          backgroundBlend: 'overlay'
+          backgroundBlendMode: 'overlay'
         }}
       >
         {groupedItems.map((item) => (
