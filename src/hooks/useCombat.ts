@@ -27,6 +27,7 @@ export const useCombat = (
             (isCritical ? "Критическая атака!" : "Атака!"),
           description: `Вы нанесли ${isCritical ? "критические " : ""}${damage.toFixed(0)} урона ${opponent.name}!`,
           variant: isCritical ? "destructive" : "default",
+          duration: 1000
         });
         
         if (newHealth <= 0) {
@@ -71,7 +72,8 @@ export const useCombat = (
       toast({
         title: randomOpponent.isBoss ? "⚠️ Атака босса!" : "Враг атакует!",
         description: message,
-        variant: randomOpponent.isBoss ? "destructive" : "default"
+        variant: randomOpponent.isBoss ? "destructive" : "default",
+        duration: 1000
       });
 
       setIsPlayerTurn(true);
