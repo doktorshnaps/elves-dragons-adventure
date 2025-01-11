@@ -3,8 +3,13 @@ import { Card } from "@/components/ui/card";
 import { HealthBar } from "./stats/HealthBar";
 import { CombatStats } from "./stats/CombatStats";
 import { PlayerStats } from "@/types/battle";
+import { TeamStats as TeamStatsType } from "@/types/cards";
 
-export const TeamStats = () => {
+interface TeamStatsProps {
+  teamStats: TeamStatsType;
+}
+
+export const TeamStats = ({ teamStats }: TeamStatsProps) => {
   const [stats, setStats] = React.useState<PlayerStats>(() => {
     const savedState = localStorage.getItem('battleState');
     if (savedState) {
@@ -70,7 +75,7 @@ export const TeamStats = () => {
       
       <div className="space-y-4">
         <HealthBar health={stats.health} maxHealth={stats.maxHealth} />
-        <CombatStats power={stats.power} defense={stats.defense} />
+        <CombatStats power={teamStats.power} defense={teamStats.defense} />
       </div>
     </Card>
   );

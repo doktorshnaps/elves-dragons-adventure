@@ -30,6 +30,41 @@ export interface NFTStats {
 
 const NFT_CONTRACT_ID = "darai.mintbase1.near";
 
+export function parseNFTStats(metadata: NFTMetadata): NFTStats {
+  try {
+    const extra = metadata.extra ? JSON.parse(metadata.extra) : null;
+    return {
+      power: extra?.power || Math.floor(Math.random() * 20) + 10,
+      defense: extra?.defense || Math.floor(Math.random() * 15) + 5,
+      health: extra?.health || Math.floor(Math.random() * 50) + 50,
+      magic: extra?.magic || Math.floor(Math.random() * 10) + 5
+    };
+  } catch (error) {
+    console.error("Error parsing NFT stats:", error);
+    return {
+      power: Math.floor(Math.random() * 20) + 10,
+      defense: Math.floor(Math.random() * 15) + 5,
+      health: Math.floor(Math.random() * 50) + 50,
+      magic: Math.floor(Math.random() * 10) + 5
+    };
+  }
+}
+
+export function convertNFTToCard(nft: NFTToken): Card {
+  const stats = parseNFTStats(nft.metadata);
+  return {
+    id: nft.token_id,
+    name: nft.metadata.title,
+    type: 'character' as CardType,
+    power: stats.power,
+    defense: stats.defense,
+    health: stats.health,
+    magic: stats.magic,
+    rarity: Math.min(Math.floor(Math.random() * 8) + 1, 8) as Rarity,
+    image: nft.metadata.media,
+  };
+}
+
 export async function getNFTsForAccount(accountId: string, connection: any): Promise<NFTToken[]> {
   try {
     const contract = new Contract(connection.account(), NFT_CONTRACT_ID, {
@@ -49,36 +84,4 @@ export async function getNFTsForAccount(accountId: string, connection: any): Pro
     console.error("Error fetching NFTs:", error);
     return [];
   }
-}
-
-export function parseNFTStats(metadata: NFTMetadata): NFTStats {
-  try {
-    const extra = metadata.extra ? JSON.parse(metadata.extra) : null;
-    return {
-      power: extra?.power || Math.floor(Math.random() * 20) + 10, // 10-30 if not specified
-      defense: extra?.defense || Math.floor(Math.random() * 15) + 5, // 5-20 if not specified
-      health: extra?.health || Math.floor(Math.random() * 50) + 50, // 50-100 if not specified
-    };
-  } catch (error) {
-    console.error("Error parsing NFT stats:", error);
-    return {
-      power: Math.floor(Math.random() * 20) + 10,
-      defense: Math.floor(Math.random() * 15) + 5,
-      health: Math.floor(Math.random() * 50) + 50,
-    };
-  }
-}
-
-export function convertNFTToCard(nft: NFTToken): Card {
-  const stats = parseNFTStats(nft.metadata);
-  return {
-    id: nft.token_id,
-    name: nft.metadata.title,
-    type: 'character' as CardType,
-    power: stats.power,
-    defense: stats.defense,
-    health: stats.health,
-    rarity: Math.min(Math.floor(Math.random() * 8) + 1, 8) as Rarity,
-    image: nft.metadata.media,
-  };
 }

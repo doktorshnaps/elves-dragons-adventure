@@ -12,7 +12,8 @@ export const getStatsForRarity = (rarity: Rarity) => {
   const baseStats = {
     power: Math.floor(Math.random() * 5) + 5,
     defense: Math.floor(Math.random() * 5) + 5,
-    health: Math.floor(Math.random() * 10) + 10
+    health: Math.floor(Math.random() * 10) + 10,
+    magic: Math.floor(Math.random() * 5) + 3
   };
   
   const multiplier = Math.pow(1.5, rarity - 1);
@@ -20,7 +21,8 @@ export const getStatsForRarity = (rarity: Rarity) => {
   return {
     power: Math.floor(baseStats.power * multiplier),
     defense: Math.floor(baseStats.defense * multiplier),
-    health: Math.floor(baseStats.health * multiplier)
+    health: Math.floor(baseStats.health * multiplier),
+    magic: Math.floor(baseStats.magic * multiplier)
   };
 };
 
