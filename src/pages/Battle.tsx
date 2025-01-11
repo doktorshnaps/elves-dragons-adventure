@@ -17,7 +17,6 @@ const Battle = () => {
   const { toast } = useToast();
   const isMobile = useIsMobile();
   
-  // Получаем сохраненный уровень из localStorage
   const savedState = localStorage.getItem('battleState');
   const savedLevel = savedState ? JSON.parse(savedState).currentDungeonLevel : 1;
   
@@ -97,6 +96,7 @@ const Battle = () => {
               onAttack={attackEnemy}
               isPlayerTurn={isPlayerTurn}
               currentLevel={savedLevel}
+              playerHealth={playerStats?.health || 0}
             />
           ))}
         </div>

@@ -24,12 +24,15 @@ interface OpponentCardProps {
   onAttack: (id: number) => void;
   isPlayerTurn: boolean;
   currentLevel: number;
+  playerHealth: number;
 }
 
-export const OpponentCard = ({ opponent, onAttack, isPlayerTurn, currentLevel }: OpponentCardProps) => {
+export const OpponentCard = ({ opponent, onAttack, isPlayerTurn, currentLevel, playerHealth }: OpponentCardProps) => {
   const lootTable = generateLootTable(opponent.isBoss ?? false);
   const experienceReward = getExperienceReward(currentLevel, opponent.isBoss ?? false);
   const isMobile = useIsMobile();
+
+  const isAttackDisabled = !isPlayerTurn || playerHealth <= 0;
 
   return (
     <motion.div
@@ -81,7 +84,7 @@ export const OpponentCard = ({ opponent, onAttack, isPlayerTurn, currentLevel }:
             onClick={() => onAttack(opponent.id)}
             variant={opponent.isBoss ? "destructive" : "default"}
             className="w-full text-xs md:text-sm"
-            disabled={!isPlayerTurn}
+            disabled={isAttackDisabled}
           >
             <Sword className="w-3 h-3 md:w-4 md:h-4 mr-1 md:mr-2" />
             {opponent.isBoss ? (isMobile ? "Босс" : "Атаковать босса") : (isMobile ? "Атака" : "Атаковать")}
