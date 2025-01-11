@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Sword, Shield, FlaskConical, Coins } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -20,9 +20,35 @@ interface InventoryDisplayProps {
   readonly?: boolean;
 }
 
-export const InventoryDisplay = ({ inventory, onUseItem, readonly = false }: InventoryDisplayProps) => {
+export const InventoryDisplay = ({ inventory: initialInventory, onUseItem, readonly = false }: InventoryDisplayProps) => {
   const { toast } = useToast();
   const [selectedItems, setSelectedItems] = useState<Item[]>([]);
+  const [inventory, setInventory] = useState(initialInventory);
+
+  useEffect(() => {
+    const handleInventoryUpdate = (e: CustomEvent<{ inventory: Item[] }>) => {
+      setInventory(e.detail.inventory);
+    };
+
+    const handleStorageChange = () => {
+      const savedInventory = localStorage.getItem('gameInventory');
+      if (savedInventory) {
+        setInventory(JSON.parse(savedInventory));
+      }
+    };
+
+    window.addEventListener('inventoryUpdate', handleInventoryUpdate as EventListener);
+    window.addEventListener('storage', handleStorageChange);
+
+    // Проверяем состояние каждые 500мс
+    const interval = setInterval(handleStorageChange, 500);
+
+    return () => {
+      window.removeEventListener('inventoryUpdate', handleInventoryUpdate as EventListener);
+      window.removeEventListener('storage', handleStorageChange);
+      clearInterval(interval);
+    };
+  }, []);
 
   const getItemIcon = (type: Item["type"]) => {
     switch (type) {
