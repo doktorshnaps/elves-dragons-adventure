@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { setupWalletSelector } from "@near-wallet-selector/core";
 import { setupModal } from "@near-wallet-selector/modal-ui";
 import { setupMyNearWallet } from "@near-wallet-selector/my-near-wallet";
+import { setupMeteorWallet } from "@near-wallet-selector/meteor-wallet";
 import { useToast } from "@/hooks/use-toast";
 
 export const useWalletInit = (
@@ -17,7 +18,10 @@ export const useWalletInit = (
       try {
         const walletSelector = await setupWalletSelector({
           network: "testnet",
-          modules: [setupMyNearWallet()],
+          modules: [
+            setupMyNearWallet(),
+            setupMeteorWallet()
+          ],
         });
 
         const walletModal = setupModal(walletSelector, {
@@ -41,7 +45,6 @@ export const useWalletInit = (
         }
       } catch (error) {
         console.error('Error initializing wallet:', error);
-        // Убрали вызов toast при ошибке инициализации
       }
     };
 
