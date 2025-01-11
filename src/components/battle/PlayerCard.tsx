@@ -15,23 +15,29 @@ export const PlayerCard = ({ playerStats }: PlayerCardProps) => {
 
   useEffect(() => {
     const updateStatsFromTeam = () => {
-      const savedCards = localStorage.getItem('gameCards');
-      if (savedCards) {
-        const cards = JSON.parse(savedCards);
-        const teamStats = calculateTeamStats(cards);
-        
-        const savedState = localStorage.getItem('battleState');
-        if (savedState) {
-          const state = JSON.parse(savedState);
-          state.playerStats.power = teamStats.power;
-          state.playerStats.defense = teamStats.defense;
-          state.playerStats.health = teamStats.health;
-          state.playerStats.maxHealth = teamStats.health;
-          localStorage.setItem('battleState', JSON.stringify(state));
+      const savedState = localStorage.getItem('battleState');
+      if (!savedState) {
+        const savedCards = localStorage.getItem('gameCards');
+        if (savedCards) {
+          const cards = JSON.parse(savedCards);
+          const teamStats = calculateTeamStats(cards);
           
-          // Dispatch event to notify about battle state update
+          const initialState = {
+            playerStats: {
+              power: teamStats.power,
+              defense: teamStats.defense,
+              health: teamStats.health,
+              maxHealth: teamStats.health,
+              experience: 0,
+              level: 1,
+              requiredExperience: 100
+            }
+          };
+          
+          localStorage.setItem('battleState', JSON.stringify(initialState));
+          
           window.dispatchEvent(new CustomEvent('battleStateUpdate', { 
-            detail: { state }
+            detail: { state: initialState }
           }));
         }
       }
@@ -43,11 +49,9 @@ export const PlayerCard = ({ playerStats }: PlayerCardProps) => {
     };
 
     window.addEventListener('cardsUpdate', handleCardsUpdate);
-    const interval = setInterval(updateStatsFromTeam, 1000);
 
     return () => {
       window.removeEventListener('cardsUpdate', handleCardsUpdate);
-      clearInterval(interval);
     };
   }, []);
 
