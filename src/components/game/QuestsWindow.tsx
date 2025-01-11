@@ -54,6 +54,33 @@ export const QuestsWindow = () => {
   });
 
   useEffect(() => {
+    const handleQuestProgress = (event: CustomEvent) => {
+      const { questId, progress } = event.detail;
+      
+      setQuests(currentQuests =>
+        currentQuests.map(quest => {
+          if (quest.id === questId) {
+            const newProgress = Math.min(quest.target, progress);
+            return {
+              ...quest,
+              progress: newProgress,
+              completed: newProgress >= quest.target
+            };
+          }
+          return quest;
+        })
+      );
+    };
+
+    // Add event listener for quest progress updates
+    window.addEventListener('questProgress' as any, handleQuestProgress);
+
+    return () => {
+      window.removeEventListener('questProgress' as any, handleQuestProgress);
+    };
+  }, []);
+
+  useEffect(() => {
     localStorage.setItem("gameQuests", JSON.stringify(quests));
   }, [quests]);
 
@@ -70,7 +97,6 @@ export const QuestsWindow = () => {
       const newBalance = currentBalance + quest.reward.coins;
       localStorage.setItem("gameBalance", String(newBalance));
       
-      // Dispatch event to notify balance change
       window.dispatchEvent(new Event('balanceUpdate'));
     }
 
