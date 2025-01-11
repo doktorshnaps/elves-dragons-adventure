@@ -22,17 +22,6 @@ export const WalletConnection = ({
   const { selector, modal } = useWalletInit(setIsConnected, setWalletAddress);
 
   const handleConnect = async () => {
-    if (isConnected) {
-      setIsConnected(false);
-      setWalletAddress(null);
-      localStorage.removeItem('gameCards');
-      toast({
-        title: "Кошелек отключен",
-        description: "Ваш кошелек был успешно отключен",
-      });
-      return;
-    }
-
     if (!modal) return;
 
     try {
@@ -85,11 +74,22 @@ export const WalletConnection = ({
     }
   };
 
+  const handleDisconnect = () => {
+    setIsConnected(false);
+    setWalletAddress(null);
+    localStorage.removeItem('gameCards');
+    toast({
+      title: "Кошелек отключен",
+      description: "Ваш кошелек был успешно отключен",
+    });
+  };
+
   return (
     <ConnectButton
       isConnected={isConnected}
       walletAddress={walletAddress}
-      onClick={handleConnect}
+      onConnect={handleConnect}
+      onDisconnect={handleDisconnect}
     />
   );
 };
