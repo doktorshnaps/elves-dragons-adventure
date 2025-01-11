@@ -14,7 +14,6 @@ export const PlayerCard = ({ playerStats }: PlayerCardProps) => {
   const isMobile = useIsMobile();
 
   useEffect(() => {
-    // Only initialize stats if there's no battle state
     const initializeStats = () => {
       const savedState = localStorage.getItem('battleState');
       if (!savedState) {

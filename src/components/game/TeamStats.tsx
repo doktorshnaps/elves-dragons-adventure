@@ -18,10 +18,10 @@ export const TeamStats = ({ teamStats }: TeamStatsProps) => {
     }
     
     return {
-      health: 100,
-      maxHealth: 100,
-      power: 10,
-      defense: 5,
+      health: teamStats.health,
+      maxHealth: teamStats.health,
+      power: teamStats.power,
+      defense: teamStats.defense,
       experience: 0,
       level: 1,
       requiredExperience: 100
@@ -44,25 +44,15 @@ export const TeamStats = ({ teamStats }: TeamStatsProps) => {
       setBalance(newBalance);
     };
 
-    const events = [
-      'storage',
-      'battleStateUpdate',
-      'inventoryUpdate'
-    ];
-
+    const events = ['storage', 'battleStateUpdate', 'inventoryUpdate'];
     events.forEach(event => {
       window.addEventListener(event, handleStorageChange);
     });
-
-    const checkInterval = setInterval(handleStorageChange, 500);
-
-    handleStorageChange();
 
     return () => {
       events.forEach(event => {
         window.removeEventListener(event, handleStorageChange);
       });
-      clearInterval(checkInterval);
     };
   }, []);
 
@@ -75,7 +65,7 @@ export const TeamStats = ({ teamStats }: TeamStatsProps) => {
       
       <div className="space-y-4">
         <HealthBar health={stats.health} maxHealth={stats.maxHealth} />
-        <CombatStats power={teamStats.power} defense={teamStats.defense} />
+        <CombatStats power={stats.power} defense={stats.defense} />
       </div>
     </Card>
   );
