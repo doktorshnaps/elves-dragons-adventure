@@ -24,6 +24,7 @@ export const InventoryDisplay = ({
   const [selectedItems, setSelectedItems] = useState<Item[]>([]);
   const inventory = useInventory(initialInventory);
   const { balance, updateBalance } = useBalanceState();
+  const isInBattle = window.location.pathname.includes('/battle');
 
   const groupItems = (items: Item[]): GroupedItem[] => {
     return items.reduce<GroupedItem[]>((acc, item) => {
@@ -52,13 +53,20 @@ export const InventoryDisplay = ({
   };
 
   const handleUseGroupedItem = (groupedItem: GroupedItem) => {
-    if (!readonly && onUseItem && groupedItem.items.length > 0) {
+    // Проверяем, находимся ли мы в бою
+    if (!readonly && onUseItem && groupedItem.items.length > 0 && isInBattle) {
       const item = groupedItem.items[0];
       onUseItem(item);
       
       toast({
         title: "Предмет использован",
         description: `${item.name} был использован.`,
+      });
+    } else if (!isInBattle) {
+      toast({
+        title: "Недоступно",
+        description: "Предметы можно использовать только в подземелье",
+        variant: "destructive"
       });
     }
   };
@@ -124,6 +132,7 @@ export const InventoryDisplay = ({
               onSelect={() => handleSelectItem(item.items[0])}
               onUse={() => handleUseGroupedItem(item)}
               onSell={() => handleSellItem(item.items[0])}
+              showUseButton={isInBattle}
             />
           ))
         ) : (

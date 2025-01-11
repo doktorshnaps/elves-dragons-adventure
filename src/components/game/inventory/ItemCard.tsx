@@ -1,10 +1,7 @@
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Coins } from "lucide-react";
 import { GroupedItem } from "./types";
-import { ItemIcon } from "./ItemIcon";
-import { ItemDescription } from "./ItemDescription";
-import { getItemPrice } from "@/utils/itemUtils";
+import { Coins } from "lucide-react";
 
 interface ItemCardProps {
   item: GroupedItem;
@@ -13,34 +10,38 @@ interface ItemCardProps {
   onSelect: () => void;
   onUse: () => void;
   onSell: () => void;
+  showUseButton?: boolean;
 }
 
-export const ItemCard = ({ 
-  item, 
-  readonly, 
-  isSelected, 
-  onSelect, 
-  onUse, 
-  onSell 
+export const ItemCard = ({
+  item,
+  readonly,
+  isSelected,
+  onSelect,
+  onUse,
+  onSell,
+  showUseButton = true
 }: ItemCardProps) => {
   return (
     <Card
-      className={`p-4 bg-game-background border-game-accent 
-        ${!readonly ? 'hover:border-game-primary cursor-pointer' : ''} 
-        ${isSelected ? 'border-purple-500' : ''}
+      className={`p-4 bg-game-background cursor-pointer
+        ${isSelected ? 'border-purple-500' : 'border-game-accent'}
+        ${!readonly ? 'hover:border-game-primary' : ''}
         transition-all duration-300`}
       onClick={() => !readonly && onSelect()}
     >
-      <div className="flex items-center gap-2 mb-2">
-        <ItemIcon type={item.type} />
+      <div className="flex flex-col gap-2">
         <h3 className="font-semibold text-game-accent">
           {item.name} {item.count > 1 && `(${item.count})`}
         </h3>
-      </div>
-      <ItemDescription item={item} />
-      <div className="flex gap-2 mt-2">
-        {!readonly && (
-          <>
+        <p className="text-gray-400 text-sm">
+          {item.type === 'healthPotion' && `Восстанавливает ${item.value} HP`}
+          {item.type === 'defensePotion' && `Увеличивает защиту на ${item.value}`}
+          {item.type === 'weapon' && `Увеличивает атаку на ${item.value}`}
+          {item.type === 'armor' && `Увеличивает защиту на ${item.value}`}
+        </p>
+        <div className="flex gap-2 mt-2">
+          {!readonly && showUseButton && (
             <Button
               variant="outline"
               size="sm"
@@ -51,6 +52,8 @@ export const ItemCard = ({
             >
               Использовать
             </Button>
+          )}
+          {!readonly && (
             <Button
               variant="outline"
               size="sm"
@@ -61,10 +64,10 @@ export const ItemCard = ({
               }}
             >
               <Coins className="w-4 h-4 mr-1" />
-              Продать ({getItemPrice(item.items[0])})
+              Продать
             </Button>
-          </>
-        )}
+          )}
+        </div>
       </div>
     </Card>
   );
