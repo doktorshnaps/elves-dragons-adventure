@@ -14,7 +14,8 @@ export const PlayerCard = ({ playerStats }: PlayerCardProps) => {
   const isMobile = useIsMobile();
 
   useEffect(() => {
-    const updateStatsFromTeam = () => {
+    // Only initialize stats if there's no battle state
+    const initializeStats = () => {
       const savedState = localStorage.getItem('battleState');
       if (!savedState) {
         const savedCards = localStorage.getItem('gameCards');
@@ -35,7 +36,6 @@ export const PlayerCard = ({ playerStats }: PlayerCardProps) => {
           };
           
           localStorage.setItem('battleState', JSON.stringify(initialState));
-          
           window.dispatchEvent(new CustomEvent('battleStateUpdate', { 
             detail: { state: initialState }
           }));
@@ -43,16 +43,7 @@ export const PlayerCard = ({ playerStats }: PlayerCardProps) => {
       }
     };
 
-    updateStatsFromTeam();
-    const handleCardsUpdate = () => {
-      updateStatsFromTeam();
-    };
-
-    window.addEventListener('cardsUpdate', handleCardsUpdate);
-
-    return () => {
-      window.removeEventListener('cardsUpdate', handleCardsUpdate);
-    };
+    initializeStats();
   }, []);
 
   return (
