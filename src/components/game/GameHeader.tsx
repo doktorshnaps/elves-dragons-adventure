@@ -1,11 +1,9 @@
+import { Button } from "@/components/ui/button";
+import { Sword, ShoppingCart } from "lucide-react";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { ConnectButton } from "./ConnectButton";
 import { PlayerStats } from "./PlayerStats";
-import { Button } from "@/components/ui/button";
-import { QuestsWindow } from "./QuestsWindow";
-import { useIsMobile } from "@/hooks/use-mobile";
-import { TeamStats } from "@/types/cards";
-import { Store, Sword } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { TeamStats } from "./TeamStats";
 
 interface GameHeaderProps {
   isConnected: boolean;
@@ -14,9 +12,13 @@ interface GameHeaderProps {
   setWalletAddress: (address: string | null) => void;
   balance: number;
   hasActiveDungeon: boolean;
-  setShowDungeonSearch: (show: boolean) => void;
-  setShowShop: (show: boolean) => void;
-  teamStats: TeamStats;
+  setShowDungeonSearch: (value: boolean) => void;
+  setShowShop: (value: boolean) => void;
+  teamStats: {
+    attack: number;
+    defense: number;
+    magic: number;
+  };
 }
 
 export const GameHeader = ({
@@ -31,53 +33,41 @@ export const GameHeader = ({
   teamStats,
 }: GameHeaderProps) => {
   const isMobile = useIsMobile();
-  const navigate = useNavigate();
-
-  const handleDungeonClick = () => {
-    const savedState = localStorage.getItem('battleState');
-    if (savedState) {
-      const state = JSON.parse(savedState);
-      if (state.playerStats && state.playerStats.health > 0) {
-        navigate('/battle');
-        return;
-      }
-    }
-    setShowDungeonSearch(true);
-  };
 
   return (
-    <div className="flex flex-col gap-4">
-      <div className={`flex ${isMobile ? 'flex-col' : 'flex-row'} justify-between items-center gap-4`}>
+    <div className="w-full flex flex-col gap-4">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <ConnectButton
           isConnected={isConnected}
+          setIsConnected={setIsConnected}
           walletAddress={walletAddress}
-          onConnect={() => setIsConnected(true)}
-          onDisconnect={() => {
-            setIsConnected(false);
-            setWalletAddress(null);
-          }}
+          setWalletAddress={setWalletAddress}
+          balance={balance}
         />
-        <div className={`flex ${isMobile ? 'flex-col w-full' : 'flex-row'} items-center gap-2`}>
-          <QuestsWindow />
+        <div className="flex items-center gap-2">
           <Button
             variant="outline"
-            className={`gap-2 ${isMobile ? 'w-full' : ''}`}
-            onClick={() => setShowShop(true)}
+            className="gap-2"
+            onClick={() => setShowDungeonSearch(true)}
+            disabled={hasActiveDungeon}
           >
-            <Store className="w-4 h-4" />
-            Магазин
+            <Sword className="w-4 h-4" />
+            {isMobile ? "Бой" : "Начать бой"}
           </Button>
           <Button
             variant="outline"
-            className={`gap-2 ${isMobile ? 'w-full' : ''}`}
-            onClick={handleDungeonClick}
+            className="gap-2"
+            onClick={() => setShowShop(true)}
           >
-            <Sword className="w-4 h-4" />
-            {hasActiveDungeon ? "Вернуться в подземелье" : "Найти подземелье"}
+            <ShoppingCart className="w-4 h-4" />
+            {isMobile ? "Магазин" : "Открыть магазин"}
           </Button>
         </div>
       </div>
-      <PlayerStats balance={balance} teamStats={teamStats} />
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <PlayerStats />
+        <TeamStats stats={teamStats} />
+      </div>
     </div>
   );
 };
