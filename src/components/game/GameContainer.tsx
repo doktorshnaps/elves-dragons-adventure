@@ -11,9 +11,9 @@ import { useBalanceState } from "@/hooks/useBalanceState";
 
 const calculateTeamStats = (cards: Card[]) => {
   return {
-    attack: cards.reduce((sum, card) => sum + card.power, 0),
+    power: cards.reduce((sum, card) => sum + card.power, 0),
     defense: cards.reduce((sum, card) => sum + card.defense, 0),
-    magic: cards.reduce((sum, card) => sum + (card.magic || 0), 0)
+    health: cards.reduce((sum, card) => sum + card.health, 0)
   };
 };
 

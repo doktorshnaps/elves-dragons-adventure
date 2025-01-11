@@ -4,6 +4,7 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { ConnectButton } from "./ConnectButton";
 import { PlayerStats } from "./PlayerStats";
 import { TeamStats } from "./TeamStats";
+import { TeamStats as TeamStatsType } from "@/types/cards";
 
 interface GameHeaderProps {
   isConnected: boolean;
@@ -14,11 +15,7 @@ interface GameHeaderProps {
   hasActiveDungeon: boolean;
   setShowDungeonSearch: (value: boolean) => void;
   setShowShop: (value: boolean) => void;
-  teamStats: {
-    attack: number;
-    defense: number;
-    magic: number;
-  };
+  teamStats: TeamStatsType;
 }
 
 export const GameHeader = ({
@@ -68,7 +65,7 @@ export const GameHeader = ({
       </div>
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <PlayerStats balance={balance} teamStats={teamStats} />
-        <TeamStats stats={teamStats} />
+        <TeamStats teamStats={teamStats} />
       </div>
     </div>
   );

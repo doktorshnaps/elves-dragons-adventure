@@ -8,6 +8,7 @@ export interface Card {
   power: number;
   defense: number;
   health: number;
+  magic: number;
   rarity: Rarity;
   image?: string;
 }
