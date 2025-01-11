@@ -8,7 +8,12 @@ interface ConnectButtonProps {
   onDisconnect: () => void;
 }
 
-export const ConnectButton = ({ isConnected, walletAddress, onConnect, onDisconnect }: ConnectButtonProps) => {
+export const ConnectButton = ({
+  isConnected,
+  walletAddress,
+  onConnect,
+  onDisconnect
+}: ConnectButtonProps) => {
   return (
     <Button
       variant="outline"

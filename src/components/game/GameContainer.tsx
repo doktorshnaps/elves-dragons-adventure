@@ -3,11 +3,19 @@ import { motion } from "framer-motion";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useToast } from "@/hooks/use-toast";
 import { Card } from "@/types/cards";
-import { generatePack, calculateTeamStats } from "@/utils/cardUtils";
+import { generatePack } from "@/utils/cardUtils";
 import { GameTabs } from "./GameTabs";
 import { GameModals } from "./GameModals";
 import { GameHeader } from "./GameHeader";
 import { useBalanceState } from "@/hooks/useBalanceState";
+
+const calculateTeamStats = (cards: Card[]) => {
+  return {
+    attack: cards.reduce((sum, card) => sum + card.power, 0),
+    defense: cards.reduce((sum, card) => sum + card.defense, 0),
+    magic: cards.reduce((sum, card) => sum + (card.magic || 0), 0)
+  };
+};
 
 export const GameContainer = () => {
   const isMobile = useIsMobile();

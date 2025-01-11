@@ -39,10 +39,12 @@ export const GameHeader = ({
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <ConnectButton
           isConnected={isConnected}
-          setIsConnected={setIsConnected}
           walletAddress={walletAddress}
-          setWalletAddress={setWalletAddress}
-          balance={balance}
+          onConnect={() => setIsConnected(true)}
+          onDisconnect={() => {
+            setIsConnected(false);
+            setWalletAddress(null);
+          }}
         />
         <div className="flex items-center gap-2">
           <Button
@@ -65,7 +67,7 @@ export const GameHeader = ({
         </div>
       </div>
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        <PlayerStats />
+        <PlayerStats balance={balance} teamStats={teamStats} />
         <TeamStats stats={teamStats} />
       </div>
     </div>
