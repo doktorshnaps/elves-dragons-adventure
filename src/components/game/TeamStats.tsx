@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React from "react";
 import { Card } from "@/components/ui/card";
 import { HealthBar } from "./stats/HealthBar";
 import { CombatStats } from "./stats/CombatStats";
@@ -32,27 +32,18 @@ export const TeamStats = ({ teamStats }: TeamStatsProps) => {
     return Number(localStorage.getItem('gameBalance') || '0');
   });
 
-  useEffect(() => {
-    const handleStorageChange = () => {
-      const savedState = localStorage.getItem('battleState');
-      if (savedState) {
-        const state = JSON.parse(savedState);
-        setStats(state.playerStats);
-      }
-
+  React.useEffect(() => {
+    const handleBalanceUpdate = () => {
       const newBalance = Number(localStorage.getItem('gameBalance') || '0');
       setBalance(newBalance);
     };
 
-    const events = ['storage', 'battleStateUpdate', 'inventoryUpdate'];
-    events.forEach(event => {
-      window.addEventListener(event, handleStorageChange);
-    });
+    window.addEventListener('balanceUpdate', handleBalanceUpdate);
+    window.addEventListener('storage', handleBalanceUpdate);
 
     return () => {
-      events.forEach(event => {
-        window.removeEventListener(event, handleStorageChange);
-      });
+      window.removeEventListener('balanceUpdate', handleBalanceUpdate);
+      window.removeEventListener('storage', handleBalanceUpdate);
     };
   }, []);
 
