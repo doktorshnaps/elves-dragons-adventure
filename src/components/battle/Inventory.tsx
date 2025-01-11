@@ -91,6 +91,7 @@ export const Inventory = ({ items, onUseItem }: InventoryProps) => {
           backgroundImage: "url('/lovable-uploads/19465417-5ecf-4b7e-ba12-b580171ae51b.png')",
           backgroundSize: 'cover',
           backgroundPosition: 'center',
+          backgroundRepeat: 'no-repeat'
         }}
       >
         <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" />
