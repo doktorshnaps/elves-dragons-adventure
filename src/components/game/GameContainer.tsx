@@ -7,16 +7,14 @@ import { generatePack, calculateTeamStats } from "@/utils/cardUtils";
 import { GameTabs } from "./GameTabs";
 import { GameModals } from "./GameModals";
 import { GameHeader } from "./GameHeader";
+import { useBalanceState } from "@/hooks/useBalanceState";
 
 export const GameContainer = () => {
   const isMobile = useIsMobile();
   const { toast } = useToast();
   const [isConnected, setIsConnected] = useState(false);
   const [walletAddress, setWalletAddress] = useState<string | null>(null);
-  const [balance, setBalance] = useState(() => {
-    const savedBalance = localStorage.getItem('gameBalance');
-    return savedBalance ? parseInt(savedBalance, 10) : 0;
-  });
+  const { balance, updateBalance } = useBalanceState();
   const [showDungeonSearch, setShowDungeonSearch] = useState(false);
   const [showShop, setShowShop] = useState(false);
   const [hasActiveDungeon, setHasActiveDungeon] = useState(() => {
@@ -98,10 +96,7 @@ export const GameContainer = () => {
         onCloseDungeon={() => setShowDungeonSearch(false)}
         onCloseShop={() => setShowShop(false)}
         balance={balance}
-        onBalanceChange={(newBalance: number) => {
-          setBalance(newBalance);
-          localStorage.setItem('gameBalance', newBalance.toString());
-        }}
+        onBalanceChange={updateBalance}
       />
     </motion.div>
   );

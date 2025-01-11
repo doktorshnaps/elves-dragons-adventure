@@ -7,6 +7,7 @@ import { getItemPrice } from "@/utils/itemUtils";
 import { ItemCard } from "./inventory/ItemCard";
 import { GroupedItem } from "./inventory/types";
 import { useInventory } from "./inventory/useInventory";
+import { useBalanceState } from "@/hooks/useBalanceState";
 
 interface InventoryDisplayProps {
   inventory: Item[];
@@ -22,6 +23,7 @@ export const InventoryDisplay = ({
   const { toast } = useToast();
   const [selectedItems, setSelectedItems] = useState<Item[]>([]);
   const inventory = useInventory(initialInventory);
+  const { balance, updateBalance } = useBalanceState();
 
   const groupItems = (items: Item[]): GroupedItem[] => {
     return items.reduce<GroupedItem[]>((acc, item) => {
@@ -63,13 +65,10 @@ export const InventoryDisplay = ({
 
   const handleSellItem = (item: Item) => {
     const price = getItemPrice(item);
-    const currentBalance = parseInt(localStorage.getItem('gameBalance') || '0');
-    const newBalance = currentBalance + Math.floor(price * 0.7);
+    const sellPrice = Math.floor(price * 0.7);
+    const newBalance = balance + sellPrice;
     
-    const balanceEvent = new CustomEvent('balanceUpdate', { 
-      detail: { balance: newBalance }
-    });
-    window.dispatchEvent(balanceEvent);
+    updateBalance(newBalance);
     
     const newInventory = inventory.filter(i => i.id !== item.id);
     localStorage.setItem('gameInventory', JSON.stringify(newInventory));
@@ -81,7 +80,7 @@ export const InventoryDisplay = ({
     
     toast({
       title: "Предмет продан",
-      description: `${item.name} продан за ${Math.floor(price * 0.7)} монет`,
+      description: `${item.name} продан за ${sellPrice} монет`,
     });
   };
 
@@ -91,25 +90,6 @@ export const InventoryDisplay = ({
     } else if (selectedItems.length < 2) {
       setSelectedItems([...selectedItems, item]);
     }
-  };
-
-  const handleUpgradeItems = () => {
-    if (selectedItems.length !== 2) return;
-    
-    const newInventory = upgradeItems(inventory, selectedItems);
-    localStorage.setItem('gameInventory', JSON.stringify(newInventory));
-    
-    const event = new CustomEvent('inventoryUpdate', { 
-      detail: { inventory: newInventory }
-    });
-    window.dispatchEvent(event);
-    
-    setSelectedItems([]);
-    
-    toast({
-      title: "Предметы улучшены",
-      description: "Два предмета были успешно объединены в улучшенную версию!",
-    });
   };
 
   const canUpgrade = selectedItems.length === 2 && 
@@ -123,7 +103,10 @@ export const InventoryDisplay = ({
         <h2 className="text-2xl font-bold text-game-accent">Инвентарь</h2>
         {canUpgrade && (
           <Button 
-            onClick={handleUpgradeItems}
+            onClick={() => {
+              // Upgrade functionality will be implemented later
+              setSelectedItems([]);
+            }}
             className="bg-purple-600 hover:bg-purple-700"
           >
             Улучшить выбранные предметы
