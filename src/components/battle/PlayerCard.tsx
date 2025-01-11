@@ -32,7 +32,8 @@ export const PlayerCard = ({ playerStats }: PlayerCardProps) => {
               experience: 0,
               level: 1,
               requiredExperience: 100
-            }
+            },
+            currentDungeonLevel: 1
           };
           
           localStorage.setItem('battleState', JSON.stringify(initialState));
