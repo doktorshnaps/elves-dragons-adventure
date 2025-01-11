@@ -55,7 +55,8 @@ export const useBattleState = (initialLevel: number = 1) => {
       toast({
         title: "Поражение!",
         description: "Ваш герой пал в бою. Подземелье закрыто.",
-        variant: "destructive"
+        variant: "destructive",
+        duration: 1000
       });
       
       // Очищаем состояние подземелья при смерти
@@ -81,6 +82,7 @@ export const useBattleState = (initialLevel: number = 1) => {
       toast({
         title: "Уровень завершен!",
         description: "Нажмите кнопку для перехода на следующий уровень",
+        duration: 1000
       });
     }
   }, [opponents, playerStats?.health, toast]);
@@ -104,6 +106,7 @@ export const useBattleState = (initialLevel: number = 1) => {
     toast({
       title: "Переход на следующий уровень",
       description: `Вы переходите на уровень ${nextLevel}`,
+      duration: 1000
     });
 
     navigate(`/battle?level=${nextLevel}`, { replace: true });
@@ -134,6 +137,7 @@ export const useBattleState = (initialLevel: number = 1) => {
         toast({
           title: "Использовано зелье здоровья",
           description: `Восстановлено ${item.value} здоровья`,
+          duration: 1000
         });
         break;
       case "defensePotion":
@@ -141,6 +145,7 @@ export const useBattleState = (initialLevel: number = 1) => {
         toast({
           title: "Использовано зелье защиты",
           description: `Увеличена защита на ${item.value}`,
+          duration: 1000
         });
         break;
       case "weapon":
@@ -148,6 +153,7 @@ export const useBattleState = (initialLevel: number = 1) => {
         toast({
           title: "Использовано оружие",
           description: `Увеличена сила атаки на ${item.value}`,
+          duration: 1000
         });
         break;
       case "armor":
@@ -155,6 +161,7 @@ export const useBattleState = (initialLevel: number = 1) => {
         toast({
           title: "Использована броня",
           description: `Увеличена защита на ${item.value}`,
+          duration: 1000
         });
         break;
     }
