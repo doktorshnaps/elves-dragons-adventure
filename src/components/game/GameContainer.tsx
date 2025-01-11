@@ -20,11 +20,38 @@ export const GameContainer = () => {
   });
   const [showDungeonSearch, setShowDungeonSearch] = useState(false);
   const [showShop, setShowShop] = useState(false);
-  const [hasActiveDungeon, setHasActiveDungeon] = useState(false);
+  const [hasActiveDungeon, setHasActiveDungeon] = useState(() => {
+    const savedState = localStorage.getItem('battleState');
+    if (savedState) {
+      const state = JSON.parse(savedState);
+      return state.playerStats && state.playerStats.health > 0;
+    }
+    return false;
+  });
   const [cards, setCards] = useState<Card[]>(() => {
     const savedCards = localStorage.getItem('gameCards');
     return savedCards ? JSON.parse(savedCards) : [];
   });
+
+  useEffect(() => {
+    const checkDungeonState = () => {
+      const savedState = localStorage.getItem('battleState');
+      if (savedState) {
+        const state = JSON.parse(savedState);
+        setHasActiveDungeon(state.playerStats && state.playerStats.health > 0);
+      } else {
+        setHasActiveDungeon(false);
+      }
+    };
+
+    // Проверяем состояние при монтировании и при обновлении localStorage
+    checkDungeonState();
+    window.addEventListener('storage', checkDungeonState);
+    
+    return () => {
+      window.removeEventListener('storage', checkDungeonState);
+    };
+  }, []);
 
   useEffect(() => {
     const isFirstLaunch = !localStorage.getItem('gameInitialized');

@@ -5,6 +5,7 @@ import { QuestsWindow } from "./QuestsWindow";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { TeamStats } from "@/types/cards";
 import { Store, Sword } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
 interface GameHeaderProps {
   isConnected: boolean;
@@ -30,6 +31,19 @@ export const GameHeader = ({
   teamStats,
 }: GameHeaderProps) => {
   const isMobile = useIsMobile();
+  const navigate = useNavigate();
+
+  const handleDungeonClick = () => {
+    const savedState = localStorage.getItem('battleState');
+    if (savedState) {
+      const state = JSON.parse(savedState);
+      if (state.playerStats && state.playerStats.health > 0) {
+        navigate('/battle');
+        return;
+      }
+    }
+    setShowDungeonSearch(true);
+  };
 
   return (
     <div className={`flex flex-col ${isMobile ? 'gap-2' : 'gap-4'}`}>
@@ -56,11 +70,10 @@ export const GameHeader = ({
           <Button
             variant="outline"
             className="gap-2"
-            onClick={() => setShowDungeonSearch(true)}
-            disabled={hasActiveDungeon}
+            onClick={handleDungeonClick}
           >
             <Sword className="w-4 h-4" />
-            {hasActiveDungeon ? "В подземелье" : "Найти подземелье"}
+            {hasActiveDungeon ? "Вернуться в подземелье" : "Найти подземелье"}
           </Button>
         </div>
       </div>
