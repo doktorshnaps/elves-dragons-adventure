@@ -10,11 +10,13 @@ import { LevelUpDialog } from "@/components/battle/LevelUpDialog";
 import { generateOpponents } from "@/utils/opponentGenerator";
 import { updateQuestProgress } from "@/utils/questUtils";
 import { ArrowLeft } from "lucide-react";
+import { useInventoryState } from "@/hooks/useInventoryState";
 
 const Battle = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const isMobile = useIsMobile();
+  const { inventory } = useInventoryState();
   
   const savedState = localStorage.getItem('battleState');
   const savedLevel = savedState ? JSON.parse(savedState).currentDungeonLevel : 1;
@@ -97,11 +99,26 @@ const Battle = () => {
       </Button>
       <div className="flex flex-col w-full max-w-2xl">
         {opponents.map(opponent => (
-          <OpponentCard key={opponent.id} opponent={opponent} onAttack={attackEnemy} />
+          <OpponentCard 
+            key={opponent.id} 
+            opponent={opponent} 
+            onAttack={() => {}} 
+            isPlayerTurn={isPlayerTurn}
+            currentLevel={currentDungeonLevel}
+            playerHealth={playerStats?.health ?? 0}
+          />
         ))}
         {playerStats && <PlayerCard playerStats={playerStats} />}
-        <InventoryDisplay />
-        {showLevelUp && <LevelUpDialog onClose={() => setShowLevelUp(false)} />}
+        <InventoryDisplay inventory={inventory} />
+        {showLevelUp && (
+          <LevelUpDialog 
+            isOpen={showLevelUp}
+            onUpgradeSelect={(upgrade) => {
+              // Handle upgrade selection
+              setShowLevelUp(false);
+            }}
+          />
+        )}
       </div>
     </div>
   );
