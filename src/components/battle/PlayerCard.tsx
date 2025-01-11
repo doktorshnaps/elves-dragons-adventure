@@ -26,6 +26,7 @@ export const PlayerCard = ({ playerStats }: PlayerCardProps) => {
           state.playerStats.power = teamStats.power;
           state.playerStats.defense = teamStats.defense;
           state.playerStats.health = teamStats.health;
+          state.playerStats.maxHealth = teamStats.health;
           localStorage.setItem('battleState', JSON.stringify(state));
         }
       }

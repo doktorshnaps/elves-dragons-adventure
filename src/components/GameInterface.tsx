@@ -55,9 +55,25 @@ export const GameInterface = () => {
     }
   }, []);
 
+  // Синхронизация характеристик команды при изменении карт
   useEffect(() => {
     const handleCardsUpdate = (e: CustomEvent<{ cards: Card[] }>) => {
       setCards(e.detail.cards);
+      
+      // Обновляем состояние боя с новыми характеристиками
+      const teamStats = calculateTeamStats(e.detail.cards);
+      const savedState = localStorage.getItem('battleState');
+      if (savedState) {
+        const state = JSON.parse(savedState);
+        state.playerStats = {
+          ...state.playerStats,
+          power: teamStats.power,
+          defense: teamStats.defense,
+          health: teamStats.health,
+          maxHealth: teamStats.health
+        };
+        localStorage.setItem('battleState', JSON.stringify(state));
+      }
     };
 
     window.addEventListener('cardsUpdate', handleCardsUpdate as EventListener);
