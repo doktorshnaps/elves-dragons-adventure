@@ -10,6 +10,7 @@ import { LevelUpDialog } from "@/components/battle/LevelUpDialog";
 import { generateOpponents } from "@/utils/opponentGenerator";
 import { updateQuestProgress } from "@/utils/questUtils";
 import { ArrowLeft } from "lucide-react";
+import { Item } from "@/components/battle/Inventory";
 
 const Battle = () => {
   const navigate = useNavigate();
@@ -29,6 +30,10 @@ const Battle = () => {
   });
   const [isPlayerTurn, setIsPlayerTurn] = useState(true);
   const [showLevelUp, setShowLevelUp] = useState(false);
+  const [inventory, setInventory] = useState<Item[]>(() => {
+    const savedInventory = localStorage.getItem('gameInventory');
+    return savedInventory ? JSON.parse(savedInventory) : [];
+  });
 
   useEffect(() => {
     if (playerStats) {
@@ -45,7 +50,7 @@ const Battle = () => {
 
     const updatedOpponents = opponents.map(opponent => {
       if (opponent.id === opponentId) {
-        const newHealth = Math.max(0, opponent.health - playerStats.attack);
+        const newHealth = Math.max(0, opponent.health - playerStats.power);
         if (newHealth === 0) {
           // Update quest progress for defeating enemies
           const defeatedEnemiesQuest = "daily-1";
@@ -90,6 +95,11 @@ const Battle = () => {
     }, 1000);
   };
 
+  const handleUpgradeSelect = (upgrade: 'health' | 'power' | 'defense') => {
+    setShowLevelUp(false);
+    // Handle the upgrade logic here
+  };
+
   return (
     <div className={`flex flex-col items-center ${isMobile ? 'p-2' : 'p-6'}`}>
       <Button onClick={() => navigate(-1)} className="mb-4">
@@ -97,11 +107,23 @@ const Battle = () => {
       </Button>
       <div className="flex flex-col w-full max-w-2xl">
         {opponents.map(opponent => (
-          <OpponentCard key={opponent.id} opponent={opponent} onAttack={attackEnemy} />
+          <OpponentCard 
+            key={opponent.id} 
+            opponent={opponent} 
+            onAttack={attackEnemy}
+            isPlayerTurn={isPlayerTurn}
+            currentLevel={currentDungeonLevel}
+            playerHealth={playerStats?.health || 0}
+          />
         ))}
         {playerStats && <PlayerCard playerStats={playerStats} />}
-        <InventoryDisplay />
-        {showLevelUp && <LevelUpDialog onClose={() => setShowLevelUp(false)} />}
+        <InventoryDisplay inventory={inventory} />
+        {showLevelUp && (
+          <LevelUpDialog 
+            isOpen={showLevelUp} 
+            onUpgradeSelect={handleUpgradeSelect}
+          />
+        )}
       </div>
     </div>
   );
