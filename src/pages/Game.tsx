@@ -15,7 +15,7 @@ const Game = () => {
         backgroundAttachment: 'fixed'
       }}
     >
-      <div className="absolute inset-0 bg-black/40 backdrop-blur-[2px]" />
+      <div className="absolute inset-0 bg-black/40" />
       <div className="relative z-10">
         <GameInterface />
       </div>
