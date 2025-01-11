@@ -46,7 +46,7 @@ export const Inventory = ({ items, onUseItem }: InventoryProps) => {
         items: [item],
         image: item.image || (
           item.type === 'healthPotion' && item.value === 70 
-            ? "/lovable-uploads/194bfe08-75f6-4415-8fda-5538a83251c3.png"
+            ? "/lovable-uploads/5b0afe54-887d-46f3-a3d1-2696cb956374.png"
             : item.type === 'healthPotion' && item.value === 30
               ? "/lovable-uploads/6693dd2b-2511-4c63-ae03-a1b208a8e7da.png"
               : item.image
