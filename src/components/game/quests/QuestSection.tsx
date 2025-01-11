@@ -5,10 +5,9 @@ interface QuestSectionProps {
   title: string;
   quests: Quest[];
   onClaimReward: (quest: Quest) => void;
-  onSocialClick?: (url: string) => void;
 }
 
-export const QuestSection = ({ title, quests, onClaimReward, onSocialClick }: QuestSectionProps) => {
+export const QuestSection = ({ title, quests, onClaimReward }: QuestSectionProps) => {
   if (quests.length === 0) return null;
   
   return (
@@ -19,7 +18,6 @@ export const QuestSection = ({ title, quests, onClaimReward, onSocialClick }: Qu
           key={quest.id}
           quest={quest}
           onClaimReward={onClaimReward}
-          onSocialClick={onSocialClick}
         />
       ))}
     </div>
