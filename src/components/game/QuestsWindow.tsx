@@ -67,7 +67,11 @@ export const QuestsWindow = () => {
 
     if (quest.reward.coins) {
       const currentBalance = Number(localStorage.getItem("gameBalance") || "0");
-      localStorage.setItem("gameBalance", String(currentBalance + quest.reward.coins));
+      const newBalance = currentBalance + quest.reward.coins;
+      localStorage.setItem("gameBalance", String(newBalance));
+      
+      // Dispatch event to notify balance change
+      window.dispatchEvent(new Event('balanceUpdate'));
     }
 
     toast({
@@ -84,12 +88,12 @@ export const QuestsWindow = () => {
           Задания
         </Button>
       </SheetTrigger>
-      <SheetContent className="w-[400px] sm:w-[540px] bg-game-surface border-game-primary">
+      <SheetContent className="w-[90vw] sm:w-[540px] bg-game-surface border-game-primary">
         <SheetHeader>
           <SheetTitle className="text-game-primary">Задания</SheetTitle>
         </SheetHeader>
         <ScrollArea className="h-[80vh] mt-4">
-          <div className="space-y-6">
+          <div className="space-y-6 pr-4">
             <QuestSection
               title="Ежедневные задания"
               quests={quests.filter((quest) => quest.type === "daily")}

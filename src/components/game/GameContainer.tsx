@@ -74,7 +74,7 @@ export const GameContainer = () => {
     <motion.div
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
-      className={`${isMobile ? 'p-2' : 'p-6'} max-w-7xl mx-auto`}
+      className={`container mx-auto ${isMobile ? 'px-2' : 'px-6'} py-4`}
     >
       <GameHeader
         isConnected={isConnected}
@@ -88,7 +88,7 @@ export const GameContainer = () => {
         teamStats={calculateTeamStats(cards)}
       />
 
-      <div className="mb-6">
+      <div className="w-full max-w-7xl mx-auto">
         <GameTabs cards={cards} />
       </div>
 
