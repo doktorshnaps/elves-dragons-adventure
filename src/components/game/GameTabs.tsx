@@ -4,15 +4,10 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { TeamCards } from "./TeamCards";
 import { DungeonsList } from "./DungeonsList";
 import { InventoryDisplay } from "./InventoryDisplay";
-import { Card } from "@/types/cards";
 import { Item } from "../battle/Inventory";
 import { useToast } from "@/hooks/use-toast";
 
-interface GameTabsProps {
-  cards: Card[];
-}
-
-export const GameTabs = ({ cards }: GameTabsProps) => {
+export const GameTabs = () => {
   const isMobile = useIsMobile();
   const { toast } = useToast();
   const [inventory, setInventory] = useState<Item[]>(() => {
@@ -55,7 +50,7 @@ export const GameTabs = ({ cards }: GameTabsProps) => {
       
       <TabsContent value="character">
         <div className={`space-y-4 ${isMobile ? 'space-y-2' : 'space-y-6'}`}>
-          <TeamCards cards={cards} />
+          <TeamCards />
           <InventoryDisplay 
             inventory={inventory} 
             onUseItem={handleUseItem}
