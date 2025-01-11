@@ -33,7 +33,7 @@ export const shopItems: ShopItem[] = [
     price: 100,
     type: "healthPotion",
     value: 70,
-    image: "/lovable-uploads/5b0afe54-887d-46f3-a3d1-2696cb956374.png"
+    image: "/lovable-uploads/194bfe08-75f6-4415-8fda-5538a83251c3.png"
   },
   {
     id: 4,
