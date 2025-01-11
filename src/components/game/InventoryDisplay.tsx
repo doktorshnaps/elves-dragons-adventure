@@ -53,7 +53,6 @@ export const InventoryDisplay = ({
   };
 
   const handleUseGroupedItem = (groupedItem: GroupedItem) => {
-    // Проверяем, находимся ли мы в бою
     if (!readonly && onUseItem && groupedItem.items.length > 0 && isInBattle) {
       const item = groupedItem.items[0];
       onUseItem(item);
@@ -120,15 +119,7 @@ export const InventoryDisplay = ({
           </Button>
         )}
       </div>
-      <div 
-        className="relative grid grid-cols-1 md:grid-cols-3 gap-4 p-6 overflow-hidden"
-        style={{
-          backgroundImage: "url('/lovable-uploads/19465417-5ecf-4b7e-ba12-b580171ae51b.png')",
-          backgroundSize: 'cover',
-          backgroundPosition: 'center',
-        }}
-      >
-        <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" />
+      <div className="relative grid grid-cols-1 md:grid-cols-3 gap-4 p-6">
         <div className="relative z-10 col-span-full grid grid-cols-1 md:grid-cols-3 gap-4">
           {inventory.length > 0 ? (
             groupItems(inventory).map((item) => (
