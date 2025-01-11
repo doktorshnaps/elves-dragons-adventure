@@ -32,7 +32,8 @@ export const shopItems: ShopItem[] = [
     description: "Восстанавливает 70 очков здоровья",
     price: 100,
     type: "healthPotion",
-    value: 70
+    value: 70,
+    image: "/lovable-uploads/5b0afe54-887d-46f3-a3d1-2696cb956374.png"
   },
   {
     id: 4,
