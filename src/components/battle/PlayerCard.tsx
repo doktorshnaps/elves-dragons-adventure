@@ -28,6 +28,11 @@ export const PlayerCard = ({ playerStats }: PlayerCardProps) => {
           state.playerStats.health = teamStats.health;
           state.playerStats.maxHealth = teamStats.health;
           localStorage.setItem('battleState', JSON.stringify(state));
+          
+          // Dispatch event to notify about battle state update
+          window.dispatchEvent(new CustomEvent('battleStateUpdate', { 
+            detail: { state }
+          }));
         }
       }
     };
