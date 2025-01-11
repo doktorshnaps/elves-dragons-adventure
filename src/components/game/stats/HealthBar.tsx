@@ -1,10 +1,6 @@
-import React, { useState, useEffect } from "react";
+import React from "react";
 import { Progress } from "@/components/ui/progress";
 import { Heart } from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
-
-const HEALTH_REGEN_INTERVAL = 60 * 1000; // 1 minute
-const HEALTH_REGEN_AMOUNT = 1; // 1 HP per minute
 
 interface HealthBarProps {
   health: number;
@@ -12,89 +8,7 @@ interface HealthBarProps {
 }
 
 export const HealthBar = ({ health, maxHealth }: HealthBarProps) => {
-  const { toast } = useToast();
-  const [timeUntilRegen, setTimeUntilRegen] = useState<number>(HEALTH_REGEN_INTERVAL);
-  const [lastRegenTime, setLastRegenTime] = useState<number>(() => {
-    const savedRegenTime = localStorage.getItem('lastHealthRegenTime');
-    return savedRegenTime ? parseInt(savedRegenTime) : Date.now();
-  });
-
-  useEffect(() => {
-    const handleHealthRegen = () => {
-      const savedState = localStorage.getItem('battleState');
-      if (savedState) {
-        const state = JSON.parse(savedState);
-        if (state.playerStats.health < state.playerStats.maxHealth) {
-          state.playerStats.health = Math.min(
-            state.playerStats.health + HEALTH_REGEN_AMOUNT,
-            state.playerStats.maxHealth
-          );
-          localStorage.setItem('battleState', JSON.stringify(state));
-          localStorage.setItem('lastHealthRegenTime', Date.now().toString());
-          setLastRegenTime(Date.now());
-          
-          toast({
-            title: "Восстановление",
-            description: `Восстановлено ${HEALTH_REGEN_AMOUNT} HP`,
-          });
-        }
-      }
-    };
-
-    // Check for missed regeneration ticks
-    const now = Date.now();
-    const missedTime = now - lastRegenTime;
-    const missedTicks = Math.floor(missedTime / HEALTH_REGEN_INTERVAL);
-    
-    if (missedTicks > 0) {
-      const savedState = localStorage.getItem('battleState');
-      if (savedState) {
-        const state = JSON.parse(savedState);
-        if (state.playerStats.health < state.playerStats.maxHealth) {
-          const potentialHeal = missedTicks * HEALTH_REGEN_AMOUNT;
-          const actualHeal = Math.min(
-            potentialHeal,
-            state.playerStats.maxHealth - state.playerStats.health
-          );
-          
-          state.playerStats.health = Math.min(
-            state.playerStats.health + actualHeal,
-            state.playerStats.maxHealth
-          );
-          localStorage.setItem('battleState', JSON.stringify(state));
-          localStorage.setItem('lastHealthRegenTime', now.toString());
-          setLastRegenTime(now);
-          
-          if (actualHeal > 0) {
-            toast({
-              title: "Восстановление",
-              description: `Восстановлено ${actualHeal} HP за время отсутствия`,
-            });
-          }
-        }
-      }
-    }
-
-    const interval = setInterval(handleHealthRegen, HEALTH_REGEN_INTERVAL);
-    const timerInterval = setInterval(() => {
-      const now = Date.now();
-      const timeSinceLastRegen = now - lastRegenTime;
-      const remainingTime = Math.max(0, HEALTH_REGEN_INTERVAL - timeSinceLastRegen);
-      setTimeUntilRegen(remainingTime);
-    }, 1000);
-
-    return () => {
-      clearInterval(interval);
-      clearInterval(timerInterval);
-    };
-  }, [lastRegenTime, toast]);
-
   const healthPercentage = (health / maxHealth) * 100;
-  const formatTime = (ms: number) => {
-    const minutes = Math.floor(ms / 60000);
-    const seconds = Math.floor((ms % 60000) / 1000);
-    return `${minutes}:${seconds.toString().padStart(2, '0')}`;
-  };
 
   return (
     <div className="flex items-center gap-2">
@@ -105,11 +19,6 @@ export const HealthBar = ({ health, maxHealth }: HealthBarProps) => {
           <span className="text-sm text-game-accent">{health}/{maxHealth}</span>
         </div>
         <Progress value={healthPercentage} className="h-2" />
-        {health < maxHealth && (
-          <div className="text-xs text-game-accent mt-1">
-            Следующее восстановление через: {formatTime(timeUntilRegen)}
-          </div>
-        )}
       </div>
     </div>
   );

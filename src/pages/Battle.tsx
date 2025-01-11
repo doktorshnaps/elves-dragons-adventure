@@ -55,6 +55,29 @@ const Battle = () => {
 
   const showNextLevelButton = opponents.length === 0 && playerStats?.health > 0;
 
+  useEffect(() => {
+    if (playerStats?.health <= 0) {
+      // Restore full health
+      const savedState = localStorage.getItem('battleState');
+      if (savedState) {
+        const state = JSON.parse(savedState);
+        state.playerStats.health = state.playerStats.maxHealth;
+        localStorage.setItem('battleState', JSON.stringify(state));
+      }
+
+      toast({
+        title: "Поражение!",
+        description: "Ваш герой пал в бою. Здоровье восстановлено.",
+        variant: "destructive"
+      });
+      
+      // Возвращаемся в меню
+      setTimeout(() => {
+        navigate("/game");
+      }, 2000);
+    }
+  }, [playerStats?.health, navigate, toast]);
+
   return (
     <div className="min-h-screen bg-game-background p-2 md:p-6 relative">
       <motion.div
