@@ -22,19 +22,33 @@ export const ItemCard = ({
   onSell,
   showUseButton = true
 }: ItemCardProps) => {
+  // Определяем изображение по умолчанию для зелий здоровья
+  const getDefaultImage = () => {
+    if (item.type === 'healthPotion') {
+      if (item.value === 30) {
+        return "/lovable-uploads/6693dd2b-2511-4c63-ae03-a1b208a8e7da.png";
+      } else if (item.value === 70) {
+        return "/lovable-uploads/5b0afe54-887d-46f3-a3d1-2696cb956374.png";
+      }
+    }
+    return null;
+  };
+
+  const itemImage = item.image || getDefaultImage();
+
   return (
     <Card
-      className={`p-4 bg-game-background cursor-pointer
+      className={`p-4 bg-game-background cursor-pointer relative
         ${isSelected ? 'border-purple-500' : 'border-game-accent'}
         ${!readonly ? 'hover:border-game-primary' : ''}
         transition-all duration-300`}
       onClick={() => !readonly && onSelect()}
     >
       <div className="flex flex-col gap-2">
-        {item.image && (
-          <div className="w-full aspect-square mb-2 rounded-lg overflow-hidden">
+        {itemImage && (
+          <div className="w-full aspect-square mb-2 rounded-lg overflow-hidden bg-game-surface">
             <img 
-              src={item.image} 
+              src={itemImage} 
               alt={item.name}
               className="w-full h-full object-cover"
             />
