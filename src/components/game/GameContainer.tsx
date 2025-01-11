@@ -3,7 +3,7 @@ import { motion } from "framer-motion";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useToast } from "@/hooks/use-toast";
 import { Card } from "@/types/cards";
-import { generatePack } from "@/utils/cardUtils";
+import { generatePack, calculateTeamStats } from "@/utils/cardUtils";
 import { GameTabs } from "./GameTabs";
 import { GameModals } from "./GameModals";
 import { GameHeader } from "./GameHeader";
