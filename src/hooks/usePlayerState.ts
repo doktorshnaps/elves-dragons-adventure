@@ -2,24 +2,26 @@ import { useState, useEffect } from 'react';
 import { PlayerStats, StatUpgrade } from '@/types/battle';
 import { calculateRequiredExperience, upgradeStats, checkLevelUp } from '@/utils/experienceManager';
 import { useToast } from '@/hooks/use-toast';
+import { calculateTeamStats } from '@/utils/cardUtils';
 
-export const usePlayerState = (initialLevel: number = 1) => {
+export const usePlayerState = (initialLevel: number = 1, initialStats?: PlayerStats) => {
   const { toast } = useToast();
   const [showLevelUp, setShowLevelUp] = useState(false);
 
   const [playerStats, setPlayerStats] = useState<PlayerStats>(() => {
-    const savedState = localStorage.getItem('battleState');
-    if (savedState) {
-      const parsed = JSON.parse(savedState);
-      if (parsed.playerStats) {
-        return parsed.playerStats;
-      }
+    if (initialStats) {
+      return initialStats;
     }
+
+    const savedCards = localStorage.getItem('gameCards');
+    const cards = savedCards ? JSON.parse(savedCards) : [];
+    const teamStats = calculateTeamStats(cards);
+
     return {
-      health: 100,
-      maxHealth: 100,
-      power: 20,
-      defense: 10,
+      health: teamStats.health,
+      maxHealth: teamStats.health,
+      power: teamStats.power,
+      defense: teamStats.defense,
       experience: 0,
       level: initialLevel,
       requiredExperience: calculateRequiredExperience(initialLevel)

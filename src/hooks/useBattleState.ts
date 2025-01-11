@@ -7,21 +7,46 @@ import { useOpponentsState } from './useOpponentsState';
 import { useCombat } from './useCombat';
 import { Item } from '@/components/battle/Inventory';
 import { useEffect } from 'react';
+import { calculateTeamStats } from '@/utils/cardUtils';
 
 export const useBattleState = (initialLevel: number = 1) => {
   const navigate = useNavigate();
   const { toast } = useToast();
   
-  // Восстанавливаем сохраненное состояние при инициализации
-  const savedState = localStorage.getItem('battleState');
-  const parsedState = savedState ? JSON.parse(savedState) : null;
-  const actualLevel = parsedState?.level || initialLevel;
+  // Calculate initial stats from cards
+  const savedCards = localStorage.getItem('gameCards');
+  const cards = savedCards ? JSON.parse(savedCards) : [];
+  const teamStats = calculateTeamStats(cards);
   
-  const { playerStats, setPlayerStats, showLevelUp, handleUpgrade } = usePlayerState(actualLevel);
+  // Initialize or restore battle state with correct stats
+  const savedState = localStorage.getItem('battleState');
+  const initialState = savedState ? JSON.parse(savedState) : {
+    playerStats: {
+      health: teamStats.health,
+      maxHealth: teamStats.health,
+      power: teamStats.power,
+      defense: teamStats.defense,
+      experience: 0,
+      level: initialLevel,
+      requiredExperience: 100
+    },
+    level: initialLevel
+  };
+
+  // Ensure stats are synced with cards even if state exists
+  if (savedState) {
+    initialState.playerStats.power = teamStats.power;
+    initialState.playerStats.defense = teamStats.defense;
+    initialState.playerStats.health = teamStats.health;
+    initialState.playerStats.maxHealth = teamStats.health;
+    localStorage.setItem('battleState', JSON.stringify(initialState));
+  }
+  
+  const { playerStats, setPlayerStats, showLevelUp, handleUpgrade } = usePlayerState(initialLevel, initialState.playerStats);
   const { inventory, updateInventory } = useInventoryState();
   const { balance, updateBalance } = useBalanceState();
   const { opponents, setOpponents, handleOpponentDefeat } = useOpponentsState(
-    actualLevel,
+    initialLevel,
     updateBalance,
     updateInventory
   );
@@ -63,7 +88,7 @@ export const useBattleState = (initialLevel: number = 1) => {
   }, [opponents, playerStats?.health, toast]);
 
   const handleNextLevel = () => {
-    const nextLevel = actualLevel + 1;
+    const nextLevel = initialLevel + 1;
     
     // Сохраняем состояние для следующего уровня
     const battleState = {
@@ -89,13 +114,13 @@ export const useBattleState = (initialLevel: number = 1) => {
       const battleState = {
         playerStats,
         opponents,
-        level: actualLevel,
+        level: initialLevel,
         inventory,
         coins: balance
       };
       localStorage.setItem('battleState', JSON.stringify(battleState));
     }
-  }, [playerStats, opponents, actualLevel, inventory, balance]);
+  }, [playerStats, opponents, initialLevel, inventory, balance]);
 
   const useItem = (item: Item) => {
     if (!playerStats) return;
@@ -139,7 +164,7 @@ export const useBattleState = (initialLevel: number = 1) => {
   };
 
   return {
-    level: actualLevel,
+    level: initialLevel,
     coins: balance,
     playerStats,
     opponents,
