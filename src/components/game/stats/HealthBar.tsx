@@ -3,8 +3,8 @@ import { Progress } from "@/components/ui/progress";
 import { Heart } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
-const HEALTH_REGEN_INTERVAL = 5 * 60 * 1000; // 5 минут
-const HEALTH_REGEN_AMOUNT = 10;
+const HEALTH_REGEN_INTERVAL = 60 * 1000; // 1 minute
+const HEALTH_REGEN_AMOUNT = 1; // 1 HP per minute
 
 interface HealthBarProps {
   health: number;
@@ -14,7 +14,10 @@ interface HealthBarProps {
 export const HealthBar = ({ health, maxHealth }: HealthBarProps) => {
   const { toast } = useToast();
   const [timeUntilRegen, setTimeUntilRegen] = useState<number>(HEALTH_REGEN_INTERVAL);
-  const [lastRegenTime, setLastRegenTime] = useState<number>(Date.now());
+  const [lastRegenTime, setLastRegenTime] = useState<number>(() => {
+    const savedRegenTime = localStorage.getItem('lastHealthRegenTime');
+    return savedRegenTime ? parseInt(savedRegenTime) : Date.now();
+  });
 
   useEffect(() => {
     const handleHealthRegen = () => {
@@ -27,14 +30,50 @@ export const HealthBar = ({ health, maxHealth }: HealthBarProps) => {
             state.playerStats.maxHealth
           );
           localStorage.setItem('battleState', JSON.stringify(state));
+          localStorage.setItem('lastHealthRegenTime', Date.now().toString());
+          setLastRegenTime(Date.now());
+          
           toast({
             title: "Восстановление",
             description: `Восстановлено ${HEALTH_REGEN_AMOUNT} HP`,
           });
         }
       }
-      setLastRegenTime(Date.now());
     };
+
+    // Check for missed regeneration ticks
+    const now = Date.now();
+    const missedTime = now - lastRegenTime;
+    const missedTicks = Math.floor(missedTime / HEALTH_REGEN_INTERVAL);
+    
+    if (missedTicks > 0) {
+      const savedState = localStorage.getItem('battleState');
+      if (savedState) {
+        const state = JSON.parse(savedState);
+        if (state.playerStats.health < state.playerStats.maxHealth) {
+          const potentialHeal = missedTicks * HEALTH_REGEN_AMOUNT;
+          const actualHeal = Math.min(
+            potentialHeal,
+            state.playerStats.maxHealth - state.playerStats.health
+          );
+          
+          state.playerStats.health = Math.min(
+            state.playerStats.health + actualHeal,
+            state.playerStats.maxHealth
+          );
+          localStorage.setItem('battleState', JSON.stringify(state));
+          localStorage.setItem('lastHealthRegenTime', now.toString());
+          setLastRegenTime(now);
+          
+          if (actualHeal > 0) {
+            toast({
+              title: "Восстановление",
+              description: `Восстановлено ${actualHeal} HP за время отсутствия`,
+            });
+          }
+        }
+      }
+    }
 
     const interval = setInterval(handleHealthRegen, HEALTH_REGEN_INTERVAL);
     const timerInterval = setInterval(() => {
