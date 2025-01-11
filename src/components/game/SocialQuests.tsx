@@ -12,7 +12,7 @@ interface SocialQuest {
   target: number;
   reward: { coins: number };
   completed: boolean;
-  claimed: false;
+  claimed: boolean; // Changed from 'false' to 'boolean'
 }
 
 const SOCIAL_QUESTS: SocialQuest[] = [
