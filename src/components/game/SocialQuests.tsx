@@ -3,6 +3,7 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { useToast } from "@/hooks/use-toast";
+import { useBalanceState } from "@/hooks/useBalanceState";
 
 interface SocialQuest {
   id: string;
@@ -12,7 +13,7 @@ interface SocialQuest {
   target: number;
   reward: { coins: number };
   completed: boolean;
-  claimed: boolean; // Changed from 'false' to 'boolean'
+  claimed: boolean;
 }
 
 const SOCIAL_QUESTS: SocialQuest[] = [
@@ -40,6 +41,7 @@ const SOCIAL_QUESTS: SocialQuest[] = [
 
 export const SocialQuests = () => {
   const { toast } = useToast();
+  const { balance, updateBalance } = useBalanceState();
   const [quests, setQuests] = useState<SocialQuest[]>(() => {
     const savedQuests = localStorage.getItem("socialQuests");
     return savedQuests ? JSON.parse(savedQuests) : SOCIAL_QUESTS;
@@ -58,8 +60,8 @@ export const SocialQuests = () => {
     setQuests(updatedQuests);
 
     if (quest.reward.coins) {
-      const currentBalance = Number(localStorage.getItem("gameBalance") || "0");
-      localStorage.setItem("gameBalance", String(currentBalance + quest.reward.coins));
+      const newBalance = balance + quest.reward.coins;
+      updateBalance(newBalance);
     }
 
     toast({
