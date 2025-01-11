@@ -26,6 +26,31 @@ export const getStatsForRarity = (rarity: Rarity) => {
   };
 };
 
+export const getRarityDropRates = () => {
+  return {
+    1: "40%",
+    2: "25%",
+    3: "15%",
+    4: "10%",
+    5: "5%",
+    6: "3%",
+    7: "1.5%",
+    8: "0.5%"
+  };
+};
+
+export const getRarityChance = (): Rarity => {
+  const rand = Math.random() * 100;
+  if (rand < 40) return 1;
+  if (rand < 65) return 2;
+  if (rand < 80) return 3;
+  if (rand < 90) return 4;
+  if (rand < 95) return 5;
+  if (rand < 98) return 6;
+  if (rand < 99.5) return 7;
+  return 8;
+};
+
 export const generateCard = (type: CardType): Card => {
   const names = type === 'character' 
     ? ["Воин", "Маг", "Лучник", "Жрец", "Паладин", "Друид", "Разбойник", "Шаман", "Монах"]
@@ -42,18 +67,6 @@ export const generateCard = (type: CardType): Card => {
     rarity,
     ...stats
   };
-};
-
-export const getRarityChance = (): Rarity => {
-  const rand = Math.random() * 100;
-  if (rand < 40) return 1;
-  if (rand < 65) return 2;
-  if (rand < 80) return 3;
-  if (rand < 90) return 4;
-  if (rand < 95) return 5;
-  if (rand < 98) return 6;
-  if (rand < 99.5) return 7;
-  return 8;
 };
 
 export const generatePack = (): Card[] => {

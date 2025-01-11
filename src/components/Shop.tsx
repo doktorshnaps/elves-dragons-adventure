@@ -3,9 +3,14 @@ import { motion, AnimatePresence } from "framer-motion";
 import { X, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import {
+  HoverCard,
+  HoverCardContent,
+  HoverCardTrigger,
+} from "@/components/ui/hover-card";
 import { useToast } from "@/hooks/use-toast";
 import { lootItems } from "@/utils/lootUtils";
-import { generatePack, getRarityLabel, getCardPrice } from "@/utils/cardUtils";
+import { generatePack, getRarityLabel, getCardPrice, getRarityDropRates } from "@/utils/cardUtils";
 import { Card as CardType } from "@/types/cards";
 
 interface ShopItem {
@@ -21,10 +26,10 @@ const shopItems: ShopItem[] = [
   {
     id: 1,
     name: "Колода карт",
-    description: "Содержит 3 случайные карты героев или питомцев",
+    description: "Содержит 1 случайную карту героя или питомца",
     price: 1000,
     type: "cardPack",
-    value: 3
+    value: 1
   },
   {
     id: 2,
@@ -87,13 +92,11 @@ export const Shop = ({ onClose, balance, onBalanceChange }: ShopProps) => {
     localStorage.setItem('gameInventory', JSON.stringify(newInventory));
     setInventory(newInventory);
     
-    // Dispatch inventory update event
     const inventoryEvent = new CustomEvent('inventoryUpdate', { 
       detail: { inventory: newInventory }
     });
     window.dispatchEvent(inventoryEvent);
     
-    // Dispatch battle state update event to refresh stats
     const battleEvent = new CustomEvent('battleStateUpdate');
     window.dispatchEvent(battleEvent);
   };
@@ -118,7 +121,6 @@ export const Shop = ({ onClose, balance, onBalanceChange }: ShopProps) => {
       const newCards = [...currentCards, ...cards];
       localStorage.setItem('gameCards', JSON.stringify(newCards));
       
-      // Немедленно отправляем событие обновления карт
       const cardsEvent = new CustomEvent('cardsUpdate', { 
         detail: { cards: newCards }
       });
@@ -144,13 +146,57 @@ export const Shop = ({ onClose, balance, onBalanceChange }: ShopProps) => {
       updateInventory(newInventory);
     }
 
-    // Обновляем баланс и отправляем событие
     const newBalance = balance - item.price;
     onBalanceChange(newBalance);
     const balanceEvent = new CustomEvent('balanceUpdate', { 
       detail: { balance: newBalance }
     });
     window.dispatchEvent(balanceEvent);
+  };
+
+  const renderShopItem = (item: ShopItem) => {
+    const itemContent = (
+      <Card
+        className="p-4 bg-game-background border-game-accent hover:border-game-primary transition-all duration-300"
+      >
+        <h3 className="text-lg font-semibold text-game-accent mb-2">{item.name}</h3>
+        <p className="text-gray-400 mb-2">{item.description}</p>
+        <p className="text-game-secondary mb-4">Цена: {item.price} токенов</p>
+        <Button
+          className="w-full bg-game-primary hover:bg-game-primary/80"
+          onClick={() => buyItem(item)}
+          disabled={balance < item.price}
+        >
+          Купить
+        </Button>
+      </Card>
+    );
+
+    if (item.type === "cardPack") {
+      const dropRates = getRarityDropRates();
+      return (
+        <HoverCard>
+          <HoverCardTrigger asChild>
+            <div>{itemContent}</div>
+          </HoverCardTrigger>
+          <HoverCardContent className="w-80 bg-game-background border-game-accent">
+            <h4 className="text-game-accent font-semibold mb-2">Шансы выпадения:</h4>
+            <div className="space-y-1">
+              {Object.entries(dropRates).map(([rarity, chance]) => (
+                <div key={rarity} className="flex justify-between text-sm">
+                  <span className="text-gray-400">
+                    {getRarityLabel(Number(rarity) as 1|2|3|4|5|6|7|8)}
+                  </span>
+                  <span className="text-game-accent">{chance}</span>
+                </div>
+              ))}
+            </div>
+          </HoverCardContent>
+        </HoverCard>
+      );
+    }
+
+    return itemContent;
   };
 
   return (
@@ -210,20 +256,7 @@ export const Shop = ({ onClose, balance, onBalanceChange }: ShopProps) => {
               whileHover={{ scale: 1.02 }}
               transition={{ duration: 0.2 }}
             >
-              <Card
-                className="p-4 bg-game-background border-game-accent hover:border-game-primary transition-all duration-300"
-              >
-                <h3 className="text-lg font-semibold text-game-accent mb-2">{item.name}</h3>
-                <p className="text-gray-400 mb-2">{item.description}</p>
-                <p className="text-game-secondary mb-4">Цена: {item.price} токенов</p>
-                <Button
-                  className="w-full bg-game-primary hover:bg-game-primary/80"
-                  onClick={() => buyItem(item)}
-                  disabled={balance < item.price}
-                >
-                  Купить
-                </Button>
-              </Card>
+              {renderShopItem(item)}
             </motion.div>
           ))}
         </div>
