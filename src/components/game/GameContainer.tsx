@@ -20,8 +20,6 @@ const calculateTeamStats = (cards: Card[]) => {
 export const GameContainer = () => {
   const isMobile = useIsMobile();
   const { toast } = useToast();
-  const [isConnected, setIsConnected] = useState(false);
-  const [walletAddress, setWalletAddress] = useState<string | null>(null);
   const { balance, updateBalance } = useBalanceState();
   const [showDungeonSearch, setShowDungeonSearch] = useState(false);
   const [showShop, setShowShop] = useState(false);
@@ -84,10 +82,6 @@ export const GameContainer = () => {
     >
       <div className={`max-w-7xl mx-auto ${isMobile ? 'px-2' : 'px-6'} py-4`}>
         <GameHeader
-          isConnected={isConnected}
-          setIsConnected={setIsConnected}
-          walletAddress={walletAddress}
-          setWalletAddress={setWalletAddress}
           balance={balance}
           hasActiveDungeon={hasActiveDungeon}
           setShowDungeonSearch={setShowDungeonSearch}
