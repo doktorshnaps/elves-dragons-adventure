@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 export interface Item {
   id: number;
   name: string;
-  type: "cardPack";
+  type: "cardPack" | "healthPotion";
   value: number;
 }
 
