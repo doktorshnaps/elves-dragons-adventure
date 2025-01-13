@@ -18,6 +18,15 @@ export const ShopItem = ({ item, balance, onBuy }: ShopItemProps) => {
   if (item.type === "cardPack") {
     return (
       <Card className="p-4 bg-game-background border-game-accent hover:border-game-primary transition-all duration-300">
+        {item.image && (
+          <div className="w-full aspect-[4/3] mb-4 rounded-lg overflow-hidden">
+            <img 
+              src={item.image} 
+              alt={item.name}
+              className="w-full h-full object-cover"
+            />
+          </div>
+        )}
         <h3 className="text-lg font-semibold text-game-accent mb-2">{item.name}</h3>
         <p className="text-gray-400 mb-2">{item.description}</p>
         <p className="text-game-secondary mb-4">Цена: {item.price} токенов</p>
