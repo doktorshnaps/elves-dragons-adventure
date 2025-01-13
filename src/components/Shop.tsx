@@ -95,20 +95,20 @@ export const Shop = ({ onClose, balance, onBalanceChange }: ShopProps) => {
           backgroundRepeat: 'no-repeat'
         }}
       />
-      <Card className="relative z-10 bg-game-surface/80 border-game-accent p-6 w-full max-w-xl max-h-[60vh] overflow-y-auto">
+      <Card className="relative z-10 bg-game-surface/80 border-game-accent p-4 w-full max-w-md max-h-[40vh] overflow-y-auto">
         <Button
           variant="ghost"
-          className="absolute right-4 top-4 text-white hover:text-game-accent bg-game-surface/50"
+          className="absolute right-2 top-2 text-white hover:text-game-accent bg-game-surface/50"
           onClick={onClose}
         >
-          <X className="h-4 w-4" />
+          <X className="h-3 w-3" />
         </Button>
 
-        <h2 className="text-2xl font-bold text-white mb-4 flex items-center gap-2 bg-game-surface/50 p-2 rounded-lg">
-          <Sparkles className="w-5 h-5" />
+        <h2 className="text-lg font-bold text-white mb-2 flex items-center gap-1 bg-game-surface/50 p-1 rounded-lg">
+          <Sparkles className="w-4 h-4" />
           Магический магазин
         </h2>
-        <p className="text-white mb-6 bg-game-surface/50 p-2 rounded-lg">Баланс: {balance} токенов</p>
+        <p className="text-sm text-white mb-3 bg-game-surface/50 p-1 rounded-lg">Баланс: {balance} токенов</p>
 
         <AnimatePresence>
           {showCardAnimation && lastOpenedCard && (
@@ -116,7 +116,7 @@ export const Shop = ({ onClose, balance, onBalanceChange }: ShopProps) => {
           )}
         </AnimatePresence>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
           {shopItems.map((item) => (
             <motion.div
               key={item.id}

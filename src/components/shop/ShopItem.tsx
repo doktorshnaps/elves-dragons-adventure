@@ -17,9 +17,9 @@ interface ShopItemProps {
 export const ShopItem = ({ item, balance, onBuy }: ShopItemProps) => {
   if (item.type === "cardPack") {
     return (
-      <Card className="p-4 bg-game-background border-game-accent hover:border-game-primary transition-all duration-300">
+      <Card className="p-2 bg-game-background border-game-accent hover:border-game-primary transition-all duration-300">
         {item.image && (
-          <div className="w-full aspect-[4/3] mb-4 rounded-lg overflow-hidden">
+          <div className="w-full aspect-[4/3] mb-2 rounded-lg overflow-hidden">
             <img 
               src={item.image} 
               alt={item.name}
@@ -27,24 +27,24 @@ export const ShopItem = ({ item, balance, onBuy }: ShopItemProps) => {
             />
           </div>
         )}
-        <h3 className="text-lg font-semibold text-game-accent mb-2">{item.name}</h3>
-        <p className="text-gray-400 mb-2">{item.description}</p>
-        <p className="text-game-secondary mb-4">Цена: {item.price} токенов</p>
+        <h3 className="text-sm font-semibold text-game-accent mb-1">{item.name}</h3>
+        <p className="text-xs text-gray-400 mb-1">{item.description}</p>
+        <p className="text-xs text-game-secondary mb-2">Цена: {item.price} токенов</p>
         <HoverCard openDelay={0} closeDelay={0}>
           <HoverCardTrigger asChild>
             <Button
-              className="w-full bg-game-primary hover:bg-game-primary/80"
+              className="w-full text-xs bg-game-primary hover:bg-game-primary/80"
               onClick={() => onBuy(item)}
               disabled={balance < item.price}
             >
               Купить
             </Button>
           </HoverCardTrigger>
-          <HoverCardContent className="w-80 bg-game-background border-game-accent">
-            <h4 className="text-game-accent font-semibold mb-2">Шансы выпадения:</h4>
-            <div className="space-y-1">
+          <HoverCardContent className="w-48 bg-game-background border-game-accent">
+            <h4 className="text-xs text-game-accent font-semibold mb-1">Шансы выпадения:</h4>
+            <div className="space-y-0.5">
               {Object.entries(getRarityDropRates()).map(([rarity, chance]) => (
-                <div key={rarity} className="flex justify-between text-sm">
+                <div key={rarity} className="flex justify-between text-xs">
                   <span className="text-gray-400">
                     {getRarityLabel(Number(rarity) as 1|2|3|4|5|6|7|8)}
                   </span>
@@ -59,9 +59,9 @@ export const ShopItem = ({ item, balance, onBuy }: ShopItemProps) => {
   }
 
   return (
-    <Card className="p-4 bg-game-background border-game-accent hover:border-game-primary transition-all duration-300">
+    <Card className="p-2 bg-game-background border-game-accent hover:border-game-primary transition-all duration-300">
       {item.image && (
-        <div className="w-full aspect-[4/3] mb-4 rounded-lg overflow-hidden">
+        <div className="w-full aspect-[4/3] mb-2 rounded-lg overflow-hidden">
           <img 
             src={item.image} 
             alt={item.name}
@@ -69,11 +69,11 @@ export const ShopItem = ({ item, balance, onBuy }: ShopItemProps) => {
           />
         </div>
       )}
-      <h3 className="text-lg font-semibold text-game-accent mb-2">{item.name}</h3>
-      <p className="text-gray-400 mb-2">{item.description}</p>
-      <p className="text-game-secondary mb-4">Цена: {item.price} токенов</p>
+      <h3 className="text-sm font-semibold text-game-accent mb-1">{item.name}</h3>
+      <p className="text-xs text-gray-400 mb-1">{item.description}</p>
+      <p className="text-xs text-game-secondary mb-2">Цена: {item.price} токенов</p>
       <Button
-        className="w-full bg-game-primary hover:bg-game-primary/80"
+        className="w-full text-xs bg-game-primary hover:bg-game-primary/80"
         onClick={() => onBuy(item)}
         disabled={balance < item.price}
       >
