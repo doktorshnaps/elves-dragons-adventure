@@ -3,7 +3,7 @@ export interface ShopItem {
   name: string;
   description: string;
   price: number;
-  type: "cardPack";
+  type: "cardPack" | "healthPotion";
   value: number;
   image?: string;
 }
@@ -17,5 +17,14 @@ export const shopItems: ShopItem[] = [
     type: "cardPack",
     value: 1,
     image: "/lovable-uploads/e523dce0-4cda-4d32-b4e2-ecec40b1eb39.png"
+  },
+  {
+    id: 2,
+    name: "Малое зелье здоровья",
+    description: "Восстанавливает 50 единиц здоровья",
+    price: 100,
+    type: "healthPotion",
+    value: 50,
+    image: "/lovable-uploads/54fc94d0-0050-4f98-99b9-58cec6e45173.png"
   }
 ];

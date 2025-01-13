@@ -1,13 +1,20 @@
 import { Item } from "@/components/battle/Inventory";
 
 export const getItemPrice = (item: Item): number => {
-  return 0; // Since we only have card packs now, and they can't be sold
+  switch (item.type) {
+    case "healthPotion":
+      return 100;
+    case "cardPack":
+      return 1000;
+    default:
+      return 0;
+  }
 };
 
 export const canUpgradeItems = (items: Item[]): boolean => {
-  return false; // No upgradeable items anymore
+  return false;
 };
 
 export const upgradeItems = (items: Item[], itemsToUpgrade: Item[]): Item[] => {
-  return items; // No upgrades available
+  return items;
 };
