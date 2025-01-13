@@ -3,7 +3,7 @@ export interface ShopItem {
   name: string;
   description: string;
   price: number;
-  type: "cardPack" | "healthPotion";
+  type: "cardPack" | "healthPotion" | "defensePotion";
   value: number;
   image?: string;
 }
@@ -35,5 +35,14 @@ export const shopItems: ShopItem[] = [
     type: "healthPotion",
     value: 150,
     image: "/lovable-uploads/bc24efd6-6a0c-45fe-a823-e610ee6540eb.png"
+  },
+  {
+    id: 4,
+    name: "Зелье защиты",
+    description: "Увеличивает защиту на 25 единиц",
+    price: 200,
+    type: "defensePotion",
+    value: 25,
+    image: "/lovable-uploads/2e415280-562c-485d-9dd8-067b743c3864.png"
   }
 ];
