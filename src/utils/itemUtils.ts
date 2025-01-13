@@ -1,5 +1,4 @@
 import { Item } from "@/components/battle/Inventory";
-import { lootItems } from "@/utils/lootUtils";
 
 export const getItemPrice = (item: Item): number => {
   return 0; // Since we only have card packs now, and they can't be sold
