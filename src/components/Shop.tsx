@@ -80,54 +80,49 @@ export const Shop = ({ onClose, balance, onBalanceChange }: ShopProps) => {
   };
 
   return (
-    <div
-      className="fixed inset-0 z-50 flex items-center justify-center"
-      style={{
-        backgroundImage: 'url("/lovable-uploads/5ca70a73-7a3f-415d-910b-ad1e310acf05.png")',
-        backgroundSize: 'cover',
-        backgroundPosition: 'center',
-        backgroundRepeat: 'no-repeat',
-      }}
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4"
     >
-      <div className="w-full max-w-2xl p-4">
-        <Card className="bg-game-surface/90 border-game-accent p-6 w-full relative">
-          <Button
-            variant="ghost"
-            className="absolute right-4 top-4 text-game-accent hover:text-white"
-            onClick={onClose}
-          >
-            <X className="h-4 w-4" />
-          </Button>
+      <Card className="bg-game-surface border-game-accent p-6 w-full max-w-2xl max-h-[80vh] overflow-y-auto relative">
+        <Button
+          variant="ghost"
+          className="absolute right-4 top-4 text-game-accent hover:text-white"
+          onClick={onClose}
+        >
+          <X className="h-4 w-4" />
+        </Button>
 
-          <h2 className="text-2xl font-bold text-game-accent mb-4 flex items-center gap-2">
-            <Sparkles className="w-6 h-6" />
-            Магический магазин
-          </h2>
-          <p className="text-game-accent mb-6">Баланс: {balance} токенов</p>
+        <h2 className="text-2xl font-bold text-game-accent mb-4 flex items-center gap-2">
+          <Sparkles className="w-6 h-6" />
+          Магический магазин
+        </h2>
+        <p className="text-game-accent mb-6">Баланс: {balance} токенов</p>
 
-          <AnimatePresence>
-            {showCardAnimation && lastOpenedCard && (
-              <CardAnimation card={lastOpenedCard} />
-            )}
-          </AnimatePresence>
+        <AnimatePresence>
+          {showCardAnimation && lastOpenedCard && (
+            <CardAnimation card={lastOpenedCard} />
+          )}
+        </AnimatePresence>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {shopItems.map((item) => (
-              <motion.div
-                key={item.id}
-                whileHover={{ scale: 1.02 }}
-                transition={{ duration: 0.2 }}
-              >
-                <ShopItemComponent
-                  item={item}
-                  balance={balance}
-                  onBuy={buyItem}
-                />
-              </motion.div>
-            ))}
-          </div>
-        </Card>
-      </div>
-    </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {shopItems.map((item) => (
+            <motion.div
+              key={item.id}
+              whileHover={{ scale: 1.02 }}
+              transition={{ duration: 0.2 }}
+            >
+              <ShopItemComponent
+                item={item}
+                balance={balance}
+                onBuy={buyItem}
+              />
+            </motion.div>
+          ))}
+        </div>
+      </Card>
+    </motion.div>
   );
 };
