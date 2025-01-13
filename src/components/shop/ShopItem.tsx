@@ -35,7 +35,7 @@ export const ShopItem = ({ item, balance, onBuy }: ShopItemProps) => {
 
   if (item.type === "cardPack") {
     return (
-      <Card className="p-2 bg-game-background border-game-accent hover:border-game-primary transition-all duration-300">
+      <Card className="p-4 bg-game-background border-game-accent hover:border-game-primary transition-all duration-300 h-[320px] flex flex-col justify-between">
         {item.image && (
           <div className="w-full aspect-[4/3] mb-2 rounded-lg overflow-hidden">
             <img 
@@ -45,47 +45,57 @@ export const ShopItem = ({ item, balance, onBuy }: ShopItemProps) => {
             />
           </div>
         )}
-        <h3 className={`font-semibold text-game-accent mb-1 ${isMobile ? 'text-xs' : 'text-sm'}`}>{item.name}</h3>
-        <p className={`text-gray-400 mb-1 ${isMobile ? 'text-[10px]' : 'text-xs'}`}>{item.description}</p>
-        <p className={`text-game-secondary mb-2 ${isMobile ? 'text-[10px]' : 'text-xs'}`}>Цена: {item.price} токенов</p>
-        <div 
-          onMouseEnter={() => setShowDropRates(true)}
-          onMouseLeave={() => setShowDropRates(false)}
-          onTouchStart={handleTouchStart}
-          onTouchEnd={handleTouchEnd}
-          onTouchCancel={handleTouchEnd}
-        >
-          <HoverCard open={showDropRates}>
-            <HoverCardTrigger asChild>
-              <Button
-                className={`w-full bg-game-primary hover:bg-game-primary/80 ${isMobile ? 'text-[10px] py-1' : 'text-xs py-2'}`}
-                onClick={() => onBuy(item)}
-                disabled={balance < item.price}
-              >
-                Купить
-              </Button>
-            </HoverCardTrigger>
-            <HoverCardContent className="w-48 bg-game-background border-game-accent p-2">
-              <h4 className={`text-game-accent font-semibold mb-1 ${isMobile ? 'text-[10px]' : 'text-xs'}`}>Шансы выпадения:</h4>
-              <div className="space-y-1">
-                {Object.entries(getRarityDropRates()).map(([rarity, chance]) => (
-                  <div key={rarity} className="flex justify-between text-[10px]">
-                    <span className="text-gray-400">
-                      {getRarityLabel(Number(rarity) as 1|2|3|4|5|6|7|8)}
-                    </span>
-                    <span className="text-game-accent">{chance}</span>
-                  </div>
-                ))}
-              </div>
-            </HoverCardContent>
-          </HoverCard>
+        <div className="flex-1 flex flex-col">
+          <h3 className={`font-semibold text-game-accent mb-1 ${isMobile ? 'text-xs' : 'text-sm'}`}>
+            {item.name}
+          </h3>
+          <p className={`text-gray-400 mb-1 flex-grow ${isMobile ? 'text-[10px]' : 'text-xs'}`}>
+            {item.description}
+          </p>
+          <p className={`text-game-secondary mb-2 ${isMobile ? 'text-[10px]' : 'text-xs'}`}>
+            Цена: {item.price} токенов
+          </p>
+          <div 
+            onMouseEnter={() => setShowDropRates(true)}
+            onMouseLeave={() => setShowDropRates(false)}
+            onTouchStart={handleTouchStart}
+            onTouchEnd={handleTouchEnd}
+            onTouchCancel={handleTouchEnd}
+          >
+            <HoverCard open={showDropRates}>
+              <HoverCardTrigger asChild>
+                <Button
+                  className={`w-full bg-game-primary hover:bg-game-primary/80 ${isMobile ? 'text-[10px] py-1' : 'text-xs py-2'}`}
+                  onClick={() => onBuy(item)}
+                  disabled={balance < item.price}
+                >
+                  Купить
+                </Button>
+              </HoverCardTrigger>
+              <HoverCardContent className="w-48 bg-game-background border-game-accent p-2">
+                <h4 className={`text-game-accent font-semibold mb-1 ${isMobile ? 'text-[10px]' : 'text-xs'}`}>
+                  Шансы выпадения:
+                </h4>
+                <div className="space-y-1">
+                  {Object.entries(getRarityDropRates()).map(([rarity, chance]) => (
+                    <div key={rarity} className="flex justify-between text-[10px]">
+                      <span className="text-gray-400">
+                        {getRarityLabel(Number(rarity) as 1|2|3|4|5|6|7|8)}
+                      </span>
+                      <span className="text-game-accent">{chance}</span>
+                    </div>
+                  ))}
+                </div>
+              </HoverCardContent>
+            </HoverCard>
+          </div>
         </div>
       </Card>
     );
   }
 
   return (
-    <Card className="p-2 bg-game-background border-game-accent hover:border-game-primary transition-all duration-300">
+    <Card className="p-4 bg-game-background border-game-accent hover:border-game-primary transition-all duration-300 h-[320px] flex flex-col justify-between">
       {item.image && (
         <div className="w-full aspect-[4/3] mb-2 rounded-lg overflow-hidden">
           <img 
@@ -95,16 +105,24 @@ export const ShopItem = ({ item, balance, onBuy }: ShopItemProps) => {
           />
         </div>
       )}
-      <h3 className={`font-semibold text-game-accent mb-1 ${isMobile ? 'text-xs' : 'text-sm'}`}>{item.name}</h3>
-      <p className={`text-gray-400 mb-1 ${isMobile ? 'text-[10px]' : 'text-xs'}`}>{item.description}</p>
-      <p className={`text-game-secondary mb-2 ${isMobile ? 'text-[10px]' : 'text-xs'}`}>Цена: {item.price} токенов</p>
-      <Button
-        className={`w-full text-xs bg-game-primary hover:bg-game-primary/80 ${isMobile ? 'text-[10px] py-1' : 'text-xs py-2'}`}
-        onClick={() => onBuy(item)}
-        disabled={balance < item.price}
-      >
-        Купить
-      </Button>
+      <div className="flex-1 flex flex-col">
+        <h3 className={`font-semibold text-game-accent mb-1 ${isMobile ? 'text-xs' : 'text-sm'}`}>
+          {item.name}
+        </h3>
+        <p className={`text-gray-400 mb-1 flex-grow ${isMobile ? 'text-[10px]' : 'text-xs'}`}>
+          {item.description}
+        </p>
+        <p className={`text-game-secondary mb-2 ${isMobile ? 'text-[10px]' : 'text-xs'}`}>
+          Цена: {item.price} токенов
+        </p>
+        <Button
+          className={`w-full bg-game-primary hover:bg-game-primary/80 ${isMobile ? 'text-[10px] py-1' : 'text-xs py-2'}`}
+          onClick={() => onBuy(item)}
+          disabled={balance < item.price}
+        >
+          Купить
+        </Button>
+      </div>
     </Card>
   );
 };
