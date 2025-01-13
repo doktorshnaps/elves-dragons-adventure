@@ -26,5 +26,14 @@ export const shopItems: ShopItem[] = [
     type: "healthPotion",
     value: 50,
     image: "/lovable-uploads/54fc94d0-0050-4f98-99b9-58cec6e45173.png"
+  },
+  {
+    id: 3,
+    name: "Большое зелье здоровья",
+    description: "Восстанавливает 150 единиц здоровья",
+    price: 250,
+    type: "healthPotion",
+    value: 150,
+    image: "/lovable-uploads/bc24efd6-6a0c-45fe-a823-e610ee6540eb.png"
   }
 ];
