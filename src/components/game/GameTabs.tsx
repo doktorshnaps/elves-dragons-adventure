@@ -16,26 +16,12 @@ export const GameTabs = () => {
   });
 
   const handleUseItem = (item: Item) => {
-    const savedState = localStorage.getItem('battleState');
-    if (savedState) {
-      const state = JSON.parse(savedState);
-      if (item.type === 'healthPotion') {
-        const newHealth = Math.min(
-          state.playerStats.health + item.value,
-          state.playerStats.maxHealth
-        );
-        state.playerStats.health = newHealth;
-        localStorage.setItem('battleState', JSON.stringify(state));
-        
-        const newInventory = inventory.filter(i => i.id !== item.id);
-        setInventory(newInventory);
-        localStorage.setItem('gameInventory', JSON.stringify(newInventory));
-        
-        toast({
-          title: "Зелье использовано",
-          description: `Восстановлено ${item.value} здоровья`,
-        });
-      }
+    if (item.type === 'cardPack') {
+      toast({
+        title: "Недоступно",
+        description: "Колоды карт можно использовать только в магазине",
+        variant: "destructive"
+      });
     }
   };
 

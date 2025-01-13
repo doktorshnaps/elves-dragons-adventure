@@ -35,10 +35,7 @@ export const ItemCard = ({
           {item.name} {item.count > 1 && `(${item.count})`}
         </h3>
         <p className="text-gray-400 text-sm">
-          {item.type === 'healthPotion' && `Восстанавливает ${item.value} HP`}
-          {item.type === 'defensePotion' && `Увеличивает защиту на ${item.value}`}
-          {item.type === 'weapon' && `Увеличивает атаку на ${item.value}`}
-          {item.type === 'armor' && `Увеличивает защиту на ${item.value}`}
+          {item.type === 'cardPack' && `Содержит ${item.value} случайных карт`}
         </p>
         <div className="flex gap-2 mt-2">
           {!readonly && showUseButton && (

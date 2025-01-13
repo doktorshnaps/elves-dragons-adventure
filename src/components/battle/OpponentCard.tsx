@@ -58,10 +58,6 @@ export const OpponentCard = ({ opponent, onAttack, isPlayerTurn, currentLevel, p
                 </div>
                 <h4 className="font-semibold text-sm">Возможная добыча:</h4>
                 <div className="space-y-1 text-xs md:text-sm">
-                  <p>🧪 Зелье здоровья: {formatDropChance(lootTable.healthPotion)}</p>
-                  <p>🛡️ Зелье защиты: {formatDropChance(lootTable.defensePotion)}</p>
-                  <p>⚔️ Оружие: {formatDropChance(lootTable.weapon)}</p>
-                  <p>🛡️ Броня: {formatDropChance(lootTable.armor)}</p>
                   <div className="flex items-center gap-1">
                     <Coins className="w-3 h-3 md:w-4 md:h-4" />
                     <span>{formatDropChance(lootTable.coins.chance)} ({lootTable.coins.min}-{lootTable.coins.max})</span>

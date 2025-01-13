@@ -129,44 +129,14 @@ export const useBattleState = (initialLevel: number = 1) => {
   const useItem = (item: Item) => {
     if (!playerStats) return;
     
-    const newStats = { ...playerStats };
-    
-    switch (item.type) {
-      case "healthPotion":
-        newStats.health = Math.min(newStats.health + item.value, newStats.maxHealth);
-        toast({
-          title: "Использовано зелье здоровья",
-          description: `Восстановлено ${item.value} здоровья`,
-          duration: 1000
-        });
-        break;
-      case "defensePotion":
-        newStats.defense += item.value;
-        toast({
-          title: "Использовано зелье защиты",
-          description: `Увеличена защита на ${item.value}`,
-          duration: 1000
-        });
-        break;
-      case "weapon":
-        newStats.power += item.value;
-        toast({
-          title: "Использовано оружие",
-          description: `Увеличена сила атаки на ${item.value}`,
-          duration: 1000
-        });
-        break;
-      case "armor":
-        newStats.defense += item.value;
-        toast({
-          title: "Использована броня",
-          description: `Увеличена защита на ${item.value}`,
-          duration: 1000
-        });
-        break;
+    if (item.type === "cardPack") {
+      toast({
+        title: "Недоступно",
+        description: "Колоды карт можно использовать только в магазине",
+        duration: 1000
+      });
     }
 
-    setPlayerStats(newStats);
     const newInventory = inventory.filter(i => i.id !== item.id);
     updateInventory(newInventory);
   };

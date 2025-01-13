@@ -1,5 +1,3 @@
-import { Item } from "@/components/battle/Inventory";
-
 export interface LootTable {
   coins: {
     chance: number;
@@ -27,8 +25,6 @@ export const generateLootTable = (isBoss: boolean): LootTable => {
     }
   };
 };
-
-export const lootItems = {};
 
 export const formatDropChance = (chance: number): string => {
   return `${(chance * 100).toFixed(0)}%`;
