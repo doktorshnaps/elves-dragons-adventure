@@ -3,7 +3,7 @@ export interface ShopItem {
   name: string;
   description: string;
   price: number;
-  type: "cardPack" | "healthPotion" | "defensePotion" | "weapon";
+  type: "cardPack" | "healthPotion" | "defensePotion" | "weapon" | "armor";
   value: number;
   image?: string;
 }
@@ -53,5 +53,14 @@ export const shopItems: ShopItem[] = [
     type: "weapon",
     value: 15,
     image: "/lovable-uploads/a983c8e3-bb18-4d44-b5bd-19441bf40f8f.png"
+  },
+  {
+    id: 6,
+    name: "Кожаная броня",
+    description: "Увеличивает защиту на 35 единиц",
+    price: 400,
+    type: "armor",
+    value: 35,
+    image: "/lovable-uploads/766f77e4-2e9f-443a-99e6-283aa360efd0.png"
   }
 ];
