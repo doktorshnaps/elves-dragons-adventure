@@ -1,12 +1,11 @@
 import React from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Shield, Sword, Beaker } from "lucide-react";
 
 export interface Item {
   id: number;
   name: string;
-  type: "weapon" | "armor" | "healthPotion" | "defensePotion";
+  type: "cardPack";
   value: number;
 }
 
@@ -48,37 +47,6 @@ export const Inventory = ({ items, onUseItem }: InventoryProps) => {
     return acc;
   }, []);
 
-  const getItemIcon = (type: Item["type"]) => {
-    switch (type) {
-      case "weapon":
-        return <Sword className="w-4 h-4" />;
-      case "armor":
-        return <Shield className="w-4 h-4" />;
-      case "healthPotion":
-      case "defensePotion":
-        return <Beaker className="w-4 h-4" />;
-    }
-  };
-
-  const getItemDescription = (item: GroupedItem) => {
-    switch (item.type) {
-      case "weapon":
-        return `+${item.value} к силе атаки`;
-      case "armor":
-        return `+${item.value} к защите`;
-      case "healthPotion":
-        return `Восстанавливает ${item.value} здоровья`;
-      case "defensePotion":
-        return `Восстанавливает ${item.value} защиты`;
-    }
-  };
-
-  const handleUseItem = (groupedItem: GroupedItem) => {
-    // Используем первый предмет из группы
-    const itemToUse = groupedItem.items[0];
-    onUseItem(itemToUse);
-  };
-
   return (
     <div className="mt-4">
       <h3 className="text-xl font-bold text-game-accent mb-4">Инвентарь</h3>
@@ -90,14 +58,12 @@ export const Inventory = ({ items, onUseItem }: InventoryProps) => {
           >
             <div className="flex flex-col gap-2">
               <div className="flex items-center gap-2">
-                {getItemIcon(item.type)}
                 <h4 className="font-bold text-game-accent">
                   {item.name} {item.count > 1 && `(${item.count})`}
                 </h4>
               </div>
-              <p className="text-sm text-gray-400">{getItemDescription(item)}</p>
               <Button 
-                onClick={() => handleUseItem(item)} 
+                onClick={() => onUseItem(item.items[0])} 
                 variant="outline" 
                 className="mt-2"
               >

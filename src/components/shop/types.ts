@@ -3,7 +3,7 @@ export interface ShopItem {
   name: string;
   description: string;
   price: number;
-  type: "healthPotion" | "defensePotion" | "weapon" | "armor" | "cardPack";
+  type: "cardPack";
   value: number;
   image?: string;
 }
@@ -17,45 +17,5 @@ export const shopItems: ShopItem[] = [
     type: "cardPack",
     value: 1,
     image: "/lovable-uploads/e523dce0-4cda-4d32-b4e2-ecec40b1eb39.png"
-  },
-  {
-    id: 2,
-    name: "Малое зелье здоровья",
-    description: "Восстанавливает 30 очков здоровья",
-    price: 50,
-    type: "healthPotion",
-    value: 30
-  },
-  {
-    id: 3,
-    name: "Большое зелье здоровья",
-    description: "Восстанавливает 70 очков здоровья",
-    price: 100,
-    type: "healthPotion",
-    value: 70
-  },
-  {
-    id: 4,
-    name: "Зелье защиты",
-    description: "Увеличивает защиту на 20",
-    price: 75,
-    type: "defensePotion",
-    value: 20
-  },
-  {
-    id: 5,
-    name: "Железный меч",
-    description: "Увеличивает силу атаки на 15",
-    price: 150,
-    type: "weapon",
-    value: 15
-  },
-  {
-    id: 6,
-    name: "Кожаная броня",
-    description: "Увеличивает защиту на 10",
-    price: 120,
-    type: "armor",
-    value: 10
   }
 ];
