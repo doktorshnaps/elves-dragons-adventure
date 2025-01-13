@@ -9,6 +9,7 @@ import { Card as CardType } from "@/types/cards";
 import { ShopItem as ShopItemComponent } from "./shop/ShopItem";
 import { CardAnimation } from "./shop/CardAnimation";
 import { shopItems, ShopItem } from "./shop/types";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 interface ShopProps {
   onClose: () => void;
@@ -18,6 +19,7 @@ interface ShopProps {
 
 export const Shop = ({ onClose, balance, onBalanceChange }: ShopProps) => {
   const { toast } = useToast();
+  const isMobile = useIsMobile();
   const [showCardAnimation, setShowCardAnimation] = useState(false);
   const [lastOpenedCard, setLastOpenedCard] = useState<CardType | null>(null);
 
@@ -95,20 +97,30 @@ export const Shop = ({ onClose, balance, onBalanceChange }: ShopProps) => {
           backgroundRepeat: 'no-repeat'
         }}
       />
-      <Card className="relative z-10 bg-game-surface/80 border-game-accent p-4 w-full max-w-md max-h-[40vh] overflow-y-auto">
+      <Card className={`relative z-10 bg-game-surface/80 border-game-accent ${
+        isMobile 
+          ? 'w-full h-full max-h-full overflow-y-auto p-2' 
+          : 'w-full max-w-md max-h-[40vh] overflow-y-auto p-4'
+      }`}>
         <Button
           variant="ghost"
-          className="absolute right-2 top-2 text-white hover:text-game-accent bg-game-surface/50"
+          className={`absolute ${isMobile ? 'right-1 top-1' : 'right-2 top-2'} text-white hover:text-game-accent bg-game-surface/50`}
           onClick={onClose}
         >
           <X className="h-3 w-3" />
         </Button>
 
-        <h2 className="text-lg font-bold text-white mb-2 flex items-center gap-1 bg-game-surface/50 p-1 rounded-lg">
-          <Sparkles className="w-4 h-4" />
+        <h2 className={`font-bold text-white mb-2 flex items-center gap-1 bg-game-surface/50 p-1 rounded-lg ${
+          isMobile ? 'text-base mt-2' : 'text-lg'
+        }`}>
+          <Sparkles className={`${isMobile ? 'w-3 h-3' : 'w-4 h-4'}`} />
           Магический магазин
         </h2>
-        <p className="text-sm text-white mb-3 bg-game-surface/50 p-1 rounded-lg">Баланс: {balance} токенов</p>
+        <p className={`text-white mb-3 bg-game-surface/50 p-1 rounded-lg ${
+          isMobile ? 'text-xs' : 'text-sm'
+        }`}>
+          Баланс: {balance} токенов
+        </p>
 
         <AnimatePresence>
           {showCardAnimation && lastOpenedCard && (
@@ -116,7 +128,9 @@ export const Shop = ({ onClose, balance, onBalanceChange }: ShopProps) => {
           )}
         </AnimatePresence>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+        <div className={`grid gap-2 ${
+          isMobile ? 'grid-cols-2' : 'grid-cols-1 md:grid-cols-2'
+        }`}>
           {shopItems.map((item) => (
             <motion.div
               key={item.id}
