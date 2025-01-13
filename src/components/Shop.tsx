@@ -84,22 +84,28 @@ export const Shop = ({ onClose, balance, onBalanceChange }: ShopProps) => {
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+      className="fixed inset-0 z-50 flex items-center justify-center p-4"
+      style={{
+        backgroundImage: 'url("/lovable-uploads/aefc7995-4fc9-459a-8c89-b648a2799937.png")',
+        backgroundSize: 'cover',
+        backgroundPosition: 'center',
+        backgroundRepeat: 'no-repeat'
+      }}
     >
-      <Card className="bg-game-surface border-game-accent p-6 w-full max-w-2xl max-h-[80vh] overflow-y-auto relative">
+      <Card className="bg-transparent border-game-accent p-6 w-full max-w-2xl max-h-[80vh] overflow-y-auto relative backdrop-blur-none">
         <Button
           variant="ghost"
-          className="absolute right-4 top-4 text-game-accent hover:text-white"
+          className="absolute right-4 top-4 text-white hover:text-game-accent bg-game-surface/50"
           onClick={onClose}
         >
           <X className="h-4 w-4" />
         </Button>
 
-        <h2 className="text-2xl font-bold text-game-accent mb-4 flex items-center gap-2">
+        <h2 className="text-3xl font-bold text-white mb-4 flex items-center gap-2 bg-game-surface/50 p-2 rounded-lg">
           <Sparkles className="w-6 h-6" />
           Магический магазин
         </h2>
-        <p className="text-game-accent mb-6">Баланс: {balance} токенов</p>
+        <p className="text-white mb-6 bg-game-surface/50 p-2 rounded-lg">Баланс: {balance} токенов</p>
 
         <AnimatePresence>
           {showCardAnimation && lastOpenedCard && (
