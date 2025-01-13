@@ -3,7 +3,7 @@ export interface ShopItem {
   name: string;
   description: string;
   price: number;
-  type: "cardPack" | "healthPotion" | "defensePotion";
+  type: "cardPack" | "healthPotion" | "defensePotion" | "weapon";
   value: number;
   image?: string;
 }
@@ -44,5 +44,14 @@ export const shopItems: ShopItem[] = [
     type: "defensePotion",
     value: 25,
     image: "/lovable-uploads/2e415280-562c-485d-9dd8-067b743c3864.png"
+  },
+  {
+    id: 5,
+    name: "Старый железный меч",
+    description: "Увеличивает урон на 15 единиц",
+    price: 300,
+    type: "weapon",
+    value: 15,
+    image: "/lovable-uploads/a983c8e3-bb18-4d44-b5bd-19441bf40f8f.png"
   }
 ];
