@@ -85,14 +85,17 @@ export const Shop = ({ onClose, balance, onBalanceChange }: ShopProps) => {
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
       className="fixed inset-0 z-50 flex items-center justify-center p-4"
-      style={{
-        backgroundImage: 'url("/lovable-uploads/aefc7995-4fc9-459a-8c89-b648a2799937.png")',
-        backgroundSize: 'cover',
-        backgroundPosition: 'center',
-        backgroundRepeat: 'no-repeat'
-      }}
     >
-      <Card className="bg-transparent border-game-accent p-6 w-full max-w-2xl max-h-[80vh] overflow-y-auto relative backdrop-blur-none">
+      <div 
+        className="absolute inset-0 z-0"
+        style={{
+          backgroundImage: 'url("/lovable-uploads/aefc7995-4fc9-459a-8c89-b648a2799937.png")',
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
+          backgroundRepeat: 'no-repeat'
+        }}
+      />
+      <Card className="relative z-10 bg-game-surface/80 border-game-accent p-6 w-full max-w-2xl max-h-[80vh] overflow-y-auto">
         <Button
           variant="ghost"
           className="absolute right-4 top-4 text-white hover:text-game-accent bg-game-surface/50"
