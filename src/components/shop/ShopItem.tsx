@@ -24,8 +24,7 @@ export const ShopItem = ({ item, balance, onBuy }: ShopItemProps) => {
     if (item.type === "cardPack") {
       const timer = setTimeout(() => {
         setShowDropRates(true);
-      }, 500); // 500ms задержка для определения длительного нажатия
-      
+      }, 500);
       return () => clearTimeout(timer);
     }
   }, [item.type]);
@@ -49,7 +48,7 @@ export const ShopItem = ({ item, balance, onBuy }: ShopItemProps) => {
         <h3 className={`font-semibold text-game-accent mb-1 ${isMobile ? 'text-xs' : 'text-sm'}`}>{item.name}</h3>
         <p className={`text-gray-400 mb-1 ${isMobile ? 'text-[10px]' : 'text-xs'}`}>{item.description}</p>
         <p className={`text-game-secondary mb-2 ${isMobile ? 'text-[10px]' : 'text-xs'}`}>Цена: {item.price} токенов</p>
-        <HoverCard open={showDropRates} openDelay={0} closeDelay={0}>
+        <HoverCard open={showDropRates}>
           <HoverCardTrigger asChild>
             <Button
               className={`w-full bg-game-primary hover:bg-game-primary/80 ${isMobile ? 'text-[10px] py-1' : 'text-xs py-2'}`}
