@@ -8,6 +8,7 @@ import {
 import { getRarityLabel, getRarityDropRates } from "@/utils/cardUtils";
 import { ShopItem as ShopItemType } from "./types";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { useState, useCallback } from "react";
 
 interface ShopItemProps {
   item: ShopItemType;
@@ -17,6 +18,21 @@ interface ShopItemProps {
 
 export const ShopItem = ({ item, balance, onBuy }: ShopItemProps) => {
   const isMobile = useIsMobile();
+  const [showDropRates, setShowDropRates] = useState(false);
+  
+  const handleTouchStart = useCallback(() => {
+    if (item.type === "cardPack") {
+      const timer = setTimeout(() => {
+        setShowDropRates(true);
+      }, 500); // 500ms задержка для определения длительного нажатия
+      
+      return () => clearTimeout(timer);
+    }
+  }, [item.type]);
+
+  const handleTouchEnd = useCallback(() => {
+    setShowDropRates(false);
+  }, []);
 
   if (item.type === "cardPack") {
     return (
@@ -33,12 +49,15 @@ export const ShopItem = ({ item, balance, onBuy }: ShopItemProps) => {
         <h3 className={`font-semibold text-game-accent mb-1 ${isMobile ? 'text-xs' : 'text-sm'}`}>{item.name}</h3>
         <p className={`text-gray-400 mb-1 ${isMobile ? 'text-[10px]' : 'text-xs'}`}>{item.description}</p>
         <p className={`text-game-secondary mb-2 ${isMobile ? 'text-[10px]' : 'text-xs'}`}>Цена: {item.price} токенов</p>
-        <HoverCard openDelay={0} closeDelay={0}>
+        <HoverCard open={showDropRates} openDelay={0} closeDelay={0}>
           <HoverCardTrigger asChild>
             <Button
               className={`w-full bg-game-primary hover:bg-game-primary/80 ${isMobile ? 'text-[10px] py-1' : 'text-xs py-2'}`}
               onClick={() => onBuy(item)}
               disabled={balance < item.price}
+              onTouchStart={handleTouchStart}
+              onTouchEnd={handleTouchEnd}
+              onTouchCancel={handleTouchEnd}
             >
               Купить
             </Button>
