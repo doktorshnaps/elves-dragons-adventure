@@ -86,7 +86,7 @@ export const Shop = ({ onClose, balance, onBalanceChange }: ShopProps) => {
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      className="fixed inset-0 z-50 flex items-center justify-center p-4"
+      className="fixed inset-0 z-50 flex items-center justify-center"
     >
       <div 
         className="absolute inset-0 z-0"
@@ -97,30 +97,26 @@ export const Shop = ({ onClose, balance, onBalanceChange }: ShopProps) => {
           backgroundRepeat: 'no-repeat'
         }}
       />
-      <Card className={`relative z-10 bg-game-surface/80 border-game-accent ${
-        isMobile 
-          ? 'w-full h-full max-h-full overflow-y-auto p-2' 
-          : 'w-full max-w-md max-h-[40vh] overflow-y-auto p-4'
-      }`}>
-        <Button
-          variant="ghost"
-          className={`absolute ${isMobile ? 'right-1 top-1' : 'right-2 top-2'} text-white hover:text-game-accent bg-game-surface/50`}
-          onClick={onClose}
-        >
-          <X className="h-3 w-3" />
-        </Button>
+      <Card className="relative z-10 w-full h-full bg-game-surface/80 border-game-accent flex flex-col">
+        <div className="p-4 flex items-center justify-between border-b border-game-accent">
+          <h2 className="font-bold text-white flex items-center gap-1 bg-game-surface/50 p-2 rounded-lg">
+            <Sparkles className="w-4 h-4" />
+            Магический магазин
+          </h2>
+          <Button
+            variant="ghost"
+            className="text-white hover:text-game-accent bg-game-surface/50"
+            onClick={onClose}
+          >
+            <X className="h-4 w-4" />
+          </Button>
+        </div>
 
-        <h2 className={`font-bold text-white mb-2 flex items-center gap-1 bg-game-surface/50 p-1 rounded-lg ${
-          isMobile ? 'text-base mt-2' : 'text-lg'
-        }`}>
-          <Sparkles className={`${isMobile ? 'w-3 h-3' : 'w-4 h-4'}`} />
-          Магический магазин
-        </h2>
-        <p className={`text-white mb-3 bg-game-surface/50 p-1 rounded-lg ${
-          isMobile ? 'text-xs' : 'text-sm'
-        }`}>
-          Баланс: {balance} токенов
-        </p>
+        <div className="p-4 bg-game-surface/50">
+          <p className="text-white mb-3 bg-game-surface/50 p-2 rounded-lg">
+            Баланс: {balance} токенов
+          </p>
+        </div>
 
         <AnimatePresence>
           {showCardAnimation && lastOpenedCard && (
@@ -128,22 +124,26 @@ export const Shop = ({ onClose, balance, onBalanceChange }: ShopProps) => {
           )}
         </AnimatePresence>
 
-        <div className={`grid gap-2 ${
-          isMobile ? 'grid-cols-2' : 'grid-cols-1 md:grid-cols-2'
-        }`}>
-          {shopItems.map((item) => (
-            <motion.div
-              key={item.id}
-              whileHover={{ scale: 1.02 }}
-              transition={{ duration: 0.2 }}
-            >
-              <ShopItemComponent
-                item={item}
-                balance={balance}
-                onBuy={buyItem}
-              />
-            </motion.div>
-          ))}
+        <div className="flex-1 overflow-y-auto p-4">
+          <div className={`grid gap-4 ${
+            isMobile 
+              ? 'grid-cols-2' 
+              : 'grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5'
+          }`}>
+            {shopItems.map((item) => (
+              <motion.div
+                key={item.id}
+                whileHover={{ scale: 1.02 }}
+                transition={{ duration: 0.2 }}
+              >
+                <ShopItemComponent
+                  item={item}
+                  balance={balance}
+                  onBuy={buyItem}
+                />
+              </motion.div>
+            ))}
+          </div>
         </div>
       </Card>
     </motion.div>

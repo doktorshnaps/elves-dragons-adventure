@@ -20,9 +20,9 @@ export const ShopItem = ({ item, balance, onBuy }: ShopItemProps) => {
 
   if (item.type === "cardPack") {
     return (
-      <Card className="p-1 bg-game-background border-game-accent hover:border-game-primary transition-all duration-300">
+      <Card className="p-2 bg-game-background border-game-accent hover:border-game-primary transition-all duration-300">
         {item.image && (
-          <div className="w-full aspect-[4/3] mb-1 rounded-lg overflow-hidden">
+          <div className="w-full aspect-[4/3] mb-2 rounded-lg overflow-hidden">
             <img 
               src={item.image} 
               alt={item.name}
@@ -30,22 +30,22 @@ export const ShopItem = ({ item, balance, onBuy }: ShopItemProps) => {
             />
           </div>
         )}
-        <h3 className={`font-semibold text-game-accent mb-0.5 ${isMobile ? 'text-xs' : 'text-sm'}`}>{item.name}</h3>
-        <p className={`text-gray-400 mb-0.5 ${isMobile ? 'text-[10px]' : 'text-xs'}`}>{item.description}</p>
-        <p className={`text-game-secondary mb-1 ${isMobile ? 'text-[10px]' : 'text-xs'}`}>Цена: {item.price} токенов</p>
+        <h3 className={`font-semibold text-game-accent mb-1 ${isMobile ? 'text-xs' : 'text-sm'}`}>{item.name}</h3>
+        <p className={`text-gray-400 mb-1 ${isMobile ? 'text-[10px]' : 'text-xs'}`}>{item.description}</p>
+        <p className={`text-game-secondary mb-2 ${isMobile ? 'text-[10px]' : 'text-xs'}`}>Цена: {item.price} токенов</p>
         <HoverCard openDelay={0} closeDelay={0}>
           <HoverCardTrigger asChild>
             <Button
-              className={`w-full bg-game-primary hover:bg-game-primary/80 ${isMobile ? 'text-[10px] py-1' : 'text-xs'}`}
+              className={`w-full bg-game-primary hover:bg-game-primary/80 ${isMobile ? 'text-[10px] py-1' : 'text-xs py-2'}`}
               onClick={() => onBuy(item)}
               disabled={balance < item.price}
             >
               Купить
             </Button>
           </HoverCardTrigger>
-          <HoverCardContent className={`w-48 bg-game-background border-game-accent ${isMobile ? 'p-2' : ''}`}>
+          <HoverCardContent className="w-48 bg-game-background border-game-accent p-2">
             <h4 className={`text-game-accent font-semibold mb-1 ${isMobile ? 'text-[10px]' : 'text-xs'}`}>Шансы выпадения:</h4>
-            <div className="space-y-0.5">
+            <div className="space-y-1">
               {Object.entries(getRarityDropRates()).map(([rarity, chance]) => (
                 <div key={rarity} className="flex justify-between text-[10px]">
                   <span className="text-gray-400">
@@ -62,9 +62,9 @@ export const ShopItem = ({ item, balance, onBuy }: ShopItemProps) => {
   }
 
   return (
-    <Card className="p-1 bg-game-background border-game-accent hover:border-game-primary transition-all duration-300">
+    <Card className="p-2 bg-game-background border-game-accent hover:border-game-primary transition-all duration-300">
       {item.image && (
-        <div className="w-full aspect-[4/3] mb-1 rounded-lg overflow-hidden">
+        <div className="w-full aspect-[4/3] mb-2 rounded-lg overflow-hidden">
           <img 
             src={item.image} 
             alt={item.name}
@@ -72,11 +72,11 @@ export const ShopItem = ({ item, balance, onBuy }: ShopItemProps) => {
           />
         </div>
       )}
-      <h3 className={`font-semibold text-game-accent mb-0.5 ${isMobile ? 'text-xs' : 'text-sm'}`}>{item.name}</h3>
-      <p className={`text-gray-400 mb-0.5 ${isMobile ? 'text-[10px]' : 'text-xs'}`}>{item.description}</p>
-      <p className={`text-game-secondary mb-1 ${isMobile ? 'text-[10px]' : 'text-xs'}`}>Цена: {item.price} токенов</p>
+      <h3 className={`font-semibold text-game-accent mb-1 ${isMobile ? 'text-xs' : 'text-sm'}`}>{item.name}</h3>
+      <p className={`text-gray-400 mb-1 ${isMobile ? 'text-[10px]' : 'text-xs'}`}>{item.description}</p>
+      <p className={`text-game-secondary mb-2 ${isMobile ? 'text-[10px]' : 'text-xs'}`}>Цена: {item.price} токенов</p>
       <Button
-        className={`w-full text-xs bg-game-primary hover:bg-game-primary/80 ${isMobile ? 'text-[10px] py-1' : 'text-xs'}`}
+        className={`w-full text-xs bg-game-primary hover:bg-game-primary/80 ${isMobile ? 'text-[10px] py-1' : 'text-xs py-2'}`}
         onClick={() => onBuy(item)}
         disabled={balance < item.price}
       >
