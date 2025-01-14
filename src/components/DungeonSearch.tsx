@@ -103,6 +103,16 @@ export const DungeonSearch = ({ onClose, balance }: DungeonSearchProps) => {
       setSelectedDungeon(finalDungeon);
       setRolling(false);
       
+      // Сохраняем выбранное подземелье в localStorage
+      const battleState = {
+        playerStats: {
+          health: playerHealth.current,
+          maxHealth: playerHealth.max,
+        },
+        selectedDungeon: finalDungeon
+      };
+      localStorage.setItem('battleState', JSON.stringify(battleState));
+      
       toast({
         title: "Подземелье найдено!",
         description: `Вы входите в ${finalDungeon}`,
