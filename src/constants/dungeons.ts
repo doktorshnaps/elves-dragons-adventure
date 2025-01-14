@@ -5,7 +5,7 @@ export const dungeonBackgrounds = {
   "Лабиринт Темного Мага": "/lovable-uploads/abf6e9af-a611-414c-b213-fed11ae0a767.png",
   "Гнездо Гигантских Пауков": "/lovable-uploads/ebf85dda-c79b-4350-80c2-65fde21b31ad.png",
   "Темница Костяных Демонов": "/lovable-uploads/aef9e591-e676-4552-a70d-c7457b29b6c5.png",
-  "Логово Морского Змея": "/lovable-uploads/aefc7995-4fc9-459a-8c89-b648a2799937.png"
+  "Логово Морского Змея": "/lovable-uploads/d832d29a-6ce9-4bad-abaa-d15cb73b5382.png"
 } as const;
 
 export const dungeons = [
