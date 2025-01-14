@@ -1,9 +1,10 @@
 import { Button } from "@/components/ui/button";
-import { Sword, ShoppingCart } from "lucide-react";
+import { Sword, ShoppingCart, BarChart2 } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { PlayerStats } from "./PlayerStats";
 import { TeamStats as TeamStatsType } from "@/types/cards";
 import { useNavigate } from "react-router-dom";
+import { useState } from "react";
+import { TeamStatsModal } from "./TeamStatsModal";
 
 interface GameHeaderProps {
   balance: number;
@@ -22,6 +23,7 @@ export const GameHeader = ({
 }: GameHeaderProps) => {
   const isMobile = useIsMobile();
   const navigate = useNavigate();
+  const [showStats, setShowStats] = useState(false);
 
   const handleDungeonAction = () => {
     if (hasActiveDungeon) {
@@ -54,11 +56,23 @@ export const GameHeader = ({
             <ShoppingCart className="w-4 h-4" />
             {isMobile ? "Магазин" : "Открыть магазин"}
           </Button>
+          <Button
+            variant="outline"
+            className="gap-2"
+            onClick={() => setShowStats(true)}
+          >
+            <BarChart2 className="w-4 h-4" />
+            {isMobile ? "Статы" : "Статистика"}
+          </Button>
         </div>
       </div>
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        <PlayerStats balance={balance} teamStats={teamStats} />
-      </div>
+
+      <TeamStatsModal
+        isOpen={showStats}
+        onClose={() => setShowStats(false)}
+        teamStats={teamStats}
+        balance={balance}
+      />
     </div>
   );
 };
