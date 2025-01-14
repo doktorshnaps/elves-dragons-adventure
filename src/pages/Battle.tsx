@@ -21,11 +21,14 @@ const Battle = () => {
   // Получаем сохраненное состояние и выбранное подземелье
   const savedState = localStorage.getItem('battleState');
   const savedData = savedState ? JSON.parse(savedState) : null;
-  const selectedDungeon = savedData?.selectedDungeon;
+  const selectedDungeon = savedData?.selectedDungeon || "Логово Черного Дракона"; // Добавляем значение по умолчанию
   const savedLevel = savedData?.currentDungeonLevel || 1;
   
+  console.log("Selected dungeon:", selectedDungeon); // Для отладки
+  console.log("Background image:", dungeonBackgrounds[selectedDungeon as keyof typeof dungeonBackgrounds]); // Для отладки
+  
   // Получаем фоновое изображение для выбранного подземелья
-  const backgroundImage = dungeonBackgrounds[selectedDungeon as keyof typeof dungeonBackgrounds];
+  const backgroundImage = selectedDungeon ? dungeonBackgrounds[selectedDungeon as keyof typeof dungeonBackgrounds] : dungeonBackgrounds["Логово Черного Дракона"];
   
   const {
     coins,
@@ -55,7 +58,7 @@ const Battle = () => {
     localStorage.removeItem('battleState');
     toast({
       title: "Подземелье покинуто",
-      description: `Вы покинули ${selectedDungeon}. Весь прогресс сброшен.`,
+      description: `Вы покинули ${selectedDungeon || "подземелье"}. Весь прогресс сброшен.`,
     });
     navigate("/game");
   };
@@ -109,7 +112,7 @@ const Battle = () => {
             >
               <ArrowLeft className="h-4 w-4 md:h-5 md:w-5" />
             </Button>
-            <h1 className="text-xl md:text-3xl font-bold text-game-accent">{selectedDungeon}</h1>
+            <h1 className="text-xl md:text-3xl font-bold text-game-accent">{selectedDungeon || "Подземелье"}</h1>
           </div>
           <div className="flex flex-wrap items-center gap-2 md:gap-4">
             <span className="text-base md:text-xl font-bold text-yellow-500">🪙 {coins}</span>
@@ -120,7 +123,7 @@ const Battle = () => {
               onClick={handleExitDungeon}
             >
               <DoorOpen className="h-4 w-4 md:h-5 md:w-5 mr-1 md:mr-2" />
-              {isMobile ? `Выход из ${selectedDungeon}` : `Покинуть ${selectedDungeon}`}
+              {isMobile ? `Выход из ${selectedDungeon || "подземелья"}` : `Покинуть ${selectedDungeon || "подземелье"}`}
             </Button>
           </div>
         </div>
