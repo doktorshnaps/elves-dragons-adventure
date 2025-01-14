@@ -11,6 +11,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useBattleState } from "@/hooks/useBattleState";
 import { fixResizeObserverLoop } from "@/utils/resizeObserverFix";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { dungeonBackgrounds } from "@/constants/dungeons";
 
 const Battle = () => {
   const navigate = useNavigate();
@@ -19,6 +20,8 @@ const Battle = () => {
   
   const savedState = localStorage.getItem('battleState');
   const savedLevel = savedState ? JSON.parse(savedState).currentDungeonLevel : 1;
+  const selectedDungeon = savedState ? JSON.parse(savedState).selectedDungeon : "Логово Черного Дракона";
+  const backgroundImage = dungeonBackgrounds[selectedDungeon];
   
   const {
     coins,
@@ -71,7 +74,6 @@ const Battle = () => {
         variant: "destructive"
       });
       
-      // Возвращаемся в меню
       setTimeout(() => {
         navigate("/game");
       }, 2000);
@@ -79,7 +81,15 @@ const Battle = () => {
   }, [playerStats?.health, navigate, toast]);
 
   return (
-    <div className="min-h-screen bg-game-background p-2 md:p-6 relative">
+    <div 
+      className="min-h-screen bg-game-background p-2 md:p-6 relative"
+      style={{
+        backgroundImage: `linear-gradient(rgba(0, 0, 0, 0.7), rgba(0, 0, 0, 0.7)), url(${backgroundImage})`,
+        backgroundSize: 'cover',
+        backgroundPosition: 'center',
+        backgroundRepeat: 'no-repeat'
+      }}
+    >
       <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
