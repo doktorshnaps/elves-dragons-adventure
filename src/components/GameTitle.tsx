@@ -12,10 +12,14 @@ export const GameTitle = () => {
       className="text-center cursor-pointer group"
     >
       <h1 
-        className="text-7xl md:text-9xl font-bold text-emerald-800 tracking-wider drop-shadow-lg mb-8 font-['Luminari']"
+        className="text-7xl md:text-9xl font-bold tracking-wider drop-shadow-lg mb-8 font-['Luminari']"
         style={{ 
           fontFamily: "'MedievalSharp', cursive",
-          textShadow: "2px 2px 4px rgba(0, 0, 0, 0.3)"
+          background: "linear-gradient(to right, #8B5CF6, #D946EF, #F97316)",
+          WebkitBackgroundClip: "text",
+          WebkitTextFillColor: "transparent",
+          textShadow: "2px 2px 0 #000, -2px -2px 0 #000, 2px -2px 0 #000, -2px 2px 0 #000",
+          filter: "drop-shadow(0 0 8px rgba(217, 70, 239, 0.3))"
         }}
       >
         Elleonor
