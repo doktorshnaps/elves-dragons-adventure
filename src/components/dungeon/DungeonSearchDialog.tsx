@@ -6,13 +6,14 @@ import { Card } from "../ui/card";
 import { EnergyDisplay } from "./EnergyDisplay";
 import { DungeonDisplay } from "./DungeonDisplay";
 import { dungeonBackgrounds } from "@/constants/dungeons";
+import { EnergyState } from "@/utils/energyManager";
 
 interface DungeonSearchDialogProps {
   onClose: () => void;
   balance: number;
   selectedDungeon: string | null;
   rolling: boolean;
-  energyState: { current: number; max: number };
+  energyState: EnergyState;
   timeUntilNext: number;
   isHealthTooLow: boolean;
   onRollDice: () => void;

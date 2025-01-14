@@ -91,6 +91,7 @@ export const useDungeonSearch = (balance: number) => {
       setSelectedDungeon(finalDungeon);
       setRolling(false);
 
+      // Создаем новое состояние битвы с выбранным подземельем
       const battleState = {
         playerStats: {
           health: playerHealth.current,
@@ -101,7 +102,7 @@ export const useDungeonSearch = (balance: number) => {
           level: 1,
           requiredExperience: 100
         },
-        selectedDungeon: finalDungeon,
+        selectedDungeon: finalDungeon, // Сохраняем выбранное подземелье
         currentDungeonLevel: 1,
         opponents: [],
         inventory: [],
