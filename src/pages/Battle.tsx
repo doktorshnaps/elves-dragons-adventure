@@ -21,14 +21,14 @@ const Battle = () => {
   // Получаем сохраненное состояние и выбранное подземелье
   const savedState = localStorage.getItem('battleState');
   const savedData = savedState ? JSON.parse(savedState) : null;
-  const selectedDungeon = savedData?.selectedDungeon || "Логово Черного Дракона"; // Добавляем значение по умолчанию
+  const selectedDungeon = savedData?.selectedDungeon;
   const savedLevel = savedData?.currentDungeonLevel || 1;
   
-  console.log("Selected dungeon:", selectedDungeon); // Для отладки
-  console.log("Background image:", dungeonBackgrounds[selectedDungeon as keyof typeof dungeonBackgrounds]); // Для отладки
+  console.log("Selected dungeon:", selectedDungeon);
+  console.log("Background image:", dungeonBackgrounds[selectedDungeon]);
   
   // Получаем фоновое изображение для выбранного подземелья
-  const backgroundImage = selectedDungeon ? dungeonBackgrounds[selectedDungeon as keyof typeof dungeonBackgrounds] : dungeonBackgrounds["Логово Черного Дракона"];
+  const backgroundImage = selectedDungeon ? dungeonBackgrounds[selectedDungeon] : '';
   
   const {
     coins,
@@ -54,11 +54,23 @@ const Battle = () => {
     }
   }, [isPlayerTurn, handleOpponentAttack]);
 
+  useEffect(() => {
+    // Если подземелье не выбрано, возвращаемся на страницу игры
+    if (!selectedDungeon) {
+      toast({
+        title: "Ошибка",
+        description: "Подземелье не выбрано. Вернитесь на главную страницу и выберите подземелье.",
+        variant: "destructive"
+      });
+      navigate("/game");
+    }
+  }, [selectedDungeon, navigate, toast]);
+
   const handleExitDungeon = () => {
     localStorage.removeItem('battleState');
     toast({
       title: "Подземелье покинуто",
-      description: `Вы покинули ${selectedDungeon || "подземелье"}. Весь прогресс сброшен.`,
+      description: `Вы покинули ${selectedDungeon}. Весь прогресс сброшен.`,
     });
     navigate("/game");
   };
@@ -87,11 +99,15 @@ const Battle = () => {
     }
   }, [playerStats?.health, navigate, toast]);
 
+  if (!selectedDungeon) {
+    return null;
+  }
+
   return (
     <div 
       className="min-h-screen bg-game-background p-2 md:p-6 relative"
       style={{
-        backgroundImage: `linear-gradient(rgba(0, 0, 0, 0.7), rgba(0, 0, 0, 0.7)), url(${backgroundImage})`,
+        backgroundImage: backgroundImage ? `linear-gradient(rgba(0, 0, 0, 0.7), rgba(0, 0, 0, 0.7)), url(${backgroundImage})` : undefined,
         backgroundSize: 'cover',
         backgroundPosition: 'center',
         backgroundRepeat: 'no-repeat'
@@ -112,7 +128,7 @@ const Battle = () => {
             >
               <ArrowLeft className="h-4 w-4 md:h-5 md:w-5" />
             </Button>
-            <h1 className="text-xl md:text-3xl font-bold text-game-accent">{selectedDungeon || "Подземелье"}</h1>
+            <h1 className="text-xl md:text-3xl font-bold text-game-accent">{selectedDungeon}</h1>
           </div>
           <div className="flex flex-wrap items-center gap-2 md:gap-4">
             <span className="text-base md:text-xl font-bold text-yellow-500">🪙 {coins}</span>
@@ -123,7 +139,7 @@ const Battle = () => {
               onClick={handleExitDungeon}
             >
               <DoorOpen className="h-4 w-4 md:h-5 md:w-5 mr-1 md:mr-2" />
-              {isMobile ? `Выход из ${selectedDungeon || "подземелья"}` : `Покинуть ${selectedDungeon || "подземелье"}`}
+              {isMobile ? `Выход из ${selectedDungeon}` : `Покинуть ${selectedDungeon}`}
             </Button>
           </div>
         </div>
