@@ -1,6 +1,7 @@
 import React from "react";
 import { DungeonSearchDialog } from "./dungeon/DungeonSearchDialog";
 import { useDungeonSearch } from "@/hooks/useDungeonSearch";
+import { EnergyState } from "@/utils/energyManager";
 
 interface DungeonSearchProps {
   onClose: () => void;
