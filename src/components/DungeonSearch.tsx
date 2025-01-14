@@ -103,14 +103,25 @@ export const DungeonSearch = ({ onClose, balance }: DungeonSearchProps) => {
       setSelectedDungeon(finalDungeon);
       setRolling(false);
       
-      // Сохраняем выбранное подземелье в localStorage
+      // Создаем новое состояние подземелья
       const battleState = {
         playerStats: {
           health: playerHealth.current,
           maxHealth: playerHealth.max,
+          power: 10,
+          defense: 5,
+          experience: 0,
+          level: 1,
+          requiredExperience: 100
         },
-        selectedDungeon: finalDungeon
+        selectedDungeon: finalDungeon,
+        currentDungeonLevel: 1,
+        opponents: [],
+        inventory: [],
+        coins: balance
       };
+      
+      // Сохраняем состояние в localStorage
       localStorage.setItem('battleState', JSON.stringify(battleState));
       
       toast({
