@@ -8,20 +8,18 @@ import { useCombat } from './useCombat';
 import { Item } from '@/components/battle/Inventory';
 import { useEffect } from 'react';
 import { calculateTeamStats } from '@/utils/cardUtils';
+import { generateDungeonOpponents } from '@/dungeons/dungeonManager';
 
 export const useBattleState = (initialLevel: number = 1) => {
   const navigate = useNavigate();
   const { toast } = useToast();
   
-  // Calculate initial stats from cards only if there's no saved battle state
   const savedState = localStorage.getItem('battleState');
   let initialState;
   
   if (savedState) {
-    // If we have saved state, use it directly without recalculating stats
     initialState = JSON.parse(savedState);
   } else {
-    // Only calculate new stats if there's no saved state
     const savedCards = localStorage.getItem('gameCards');
     const cards = savedCards ? JSON.parse(savedCards) : [];
     const teamStats = calculateTeamStats(cards);
@@ -31,16 +29,14 @@ export const useBattleState = (initialLevel: number = 1) => {
         health: teamStats.health,
         maxHealth: teamStats.health,
         power: teamStats.power,
-        defense: teamStats.defense,
-        experience: 0,
-        level: initialLevel,
-        requiredExperience: 100
+        defense: teamStats.defense
       },
-      currentDungeonLevel: initialLevel
+      currentDungeonLevel: initialLevel,
+      selectedDungeon: null
     };
   }
 
-  const { playerStats, setPlayerStats, showLevelUp, handleUpgrade } = usePlayerState(initialState.currentDungeonLevel, initialState.playerStats);
+  const { playerStats, setPlayerStats } = usePlayerState(initialState.playerStats);
   const { inventory, updateInventory } = useInventoryState();
   const { balance, updateBalance } = useBalanceState();
   const { opponents, setOpponents, handleOpponentDefeat } = useOpponentsState(
@@ -49,7 +45,6 @@ export const useBattleState = (initialLevel: number = 1) => {
     updateInventory
   );
 
-  // Проверяем состояние здоровья персонажа
   useEffect(() => {
     if (playerStats?.health <= 0) {
       toast({
@@ -59,10 +54,8 @@ export const useBattleState = (initialLevel: number = 1) => {
         duration: 1000
       });
       
-      // Очищаем состояние подземелья при смерти
       localStorage.removeItem('battleState');
       
-      // Возвращаемся в меню
       setTimeout(() => {
         navigate('/game');
       }, 2000);
@@ -89,17 +82,29 @@ export const useBattleState = (initialLevel: number = 1) => {
 
   const handleNextLevel = () => {
     const nextLevel = initialState.currentDungeonLevel + 1;
+    const selectedDungeon = initialState.selectedDungeon;
     
-    // Сохраняем текущие характеристики для следующего уровня
+    if (!selectedDungeon) {
+      toast({
+        title: "Ошибка",
+        description: "Подземелье не выбрано",
+        variant: "destructive"
+      });
+      navigate('/game');
+      return;
+    }
+    
+    const newOpponents = generateDungeonOpponents(selectedDungeon, nextLevel);
+    
     const battleState = {
       playerStats: {
-        ...playerStats,
-        level: nextLevel
+        ...playerStats
       },
-      opponents: [],
+      opponents: newOpponents,
       currentDungeonLevel: nextLevel,
       inventory,
-      coins: balance
+      coins: balance,
+      selectedDungeon
     };
     localStorage.setItem('battleState', JSON.stringify(battleState));
     
@@ -112,7 +117,6 @@ export const useBattleState = (initialLevel: number = 1) => {
     navigate(`/battle?level=${nextLevel}`, { replace: true });
   };
 
-  // Сохраняем прогресс только при важных изменениях состояния
   useEffect(() => {
     if (playerStats?.health > 0) {
       const battleState = {
@@ -120,11 +124,12 @@ export const useBattleState = (initialLevel: number = 1) => {
         opponents,
         currentDungeonLevel: initialState.currentDungeonLevel,
         inventory,
-        coins: balance
+        coins: balance,
+        selectedDungeon: initialState.selectedDungeon
       };
       localStorage.setItem('battleState', JSON.stringify(battleState));
     }
-  }, [playerStats?.health, playerStats?.defense, opponents, initialState.currentDungeonLevel, inventory, balance]);
+  }, [playerStats?.health, playerStats?.defense, opponents, initialState.currentDungeonLevel, inventory, balance, initialState.selectedDungeon]);
 
   const useItem = (item: Item) => {
     if (!playerStats) return;
@@ -147,12 +152,10 @@ export const useBattleState = (initialLevel: number = 1) => {
     playerStats,
     opponents,
     inventory,
-    showLevelUp,
     isPlayerTurn,
     attackEnemy,
     handleOpponentAttack,
     useItem,
-    handleUpgrade,
     setOpponents,
     handleOpponentDefeat,
     updateBalance,

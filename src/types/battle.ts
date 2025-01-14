@@ -5,9 +5,6 @@ export interface PlayerStats {
   maxHealth: number;
   power: number;
   defense: number;
-  experience: number;
-  level: number;
-  requiredExperience: number;
 }
 
 export interface Opponent {
@@ -17,7 +14,6 @@ export interface Opponent {
   health: number;
   maxHealth: number;
   isBoss?: boolean;
-  experienceReward: number;
 }
 
 export interface BattleState {
@@ -28,5 +24,3 @@ export interface BattleState {
   opponents: Opponent[];
   inventory: Item[];
 }
-
-export type StatUpgrade = 'health' | 'power' | 'defense';
