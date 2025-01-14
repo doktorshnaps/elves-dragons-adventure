@@ -21,7 +21,7 @@ const Battle = () => {
   // Получаем сохраненное состояние и выбранное подземелье
   const savedState = localStorage.getItem('battleState');
   const savedData = savedState ? JSON.parse(savedState) : null;
-  const selectedDungeon = savedData?.selectedDungeon || "Логово Черного Дракона";
+  const selectedDungeon = savedData?.selectedDungeon;
   const savedLevel = savedData?.currentDungeonLevel || 1;
   
   // Получаем фоновое изображение для выбранного подземелья
