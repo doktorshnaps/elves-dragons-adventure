@@ -1,7 +1,7 @@
 import React from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Sword, Coins, Star } from "lucide-react";
+import { Sword, Coins } from "lucide-react";
 import { motion } from "framer-motion";
 import {
   HoverCard,
@@ -9,7 +9,6 @@ import {
   HoverCardTrigger,
 } from "@/components/ui/hover-card";
 import { generateLootTable, formatDropChance } from "@/utils/lootUtils";
-import { getExperienceReward } from "@/utils/experienceManager";
 import { useIsMobile } from "@/hooks/use-mobile";
 
 interface OpponentCardProps {
@@ -29,7 +28,6 @@ interface OpponentCardProps {
 
 export const OpponentCard = ({ opponent, onAttack, isPlayerTurn, currentLevel, playerHealth }: OpponentCardProps) => {
   const lootTable = generateLootTable(opponent.isBoss ?? false);
-  const experienceReward = getExperienceReward(currentLevel, opponent.isBoss ?? false);
   const isMobile = useIsMobile();
 
   const isAttackDisabled = !isPlayerTurn || playerHealth <= 0;
@@ -52,10 +50,6 @@ export const OpponentCard = ({ opponent, onAttack, isPlayerTurn, currentLevel, p
             </HoverCardTrigger>
             <HoverCardContent className="w-64 md:w-80">
               <div className="space-y-2">
-                <div className="flex items-center gap-2 mb-2">
-                  <Star className="w-4 h-4 text-yellow-500" />
-                  <span className="font-semibold text-sm">Опыт: {experienceReward}</span>
-                </div>
                 <h4 className="font-semibold text-sm">Возможная добыча:</h4>
                 <div className="space-y-1 text-xs md:text-sm">
                   <div className="flex items-center gap-1">
