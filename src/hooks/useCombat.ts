@@ -19,13 +19,13 @@ export const useCombat = (
     const newOpponents = opponents.map(opponent => {
       if (opponent.id === enemyId) {
         const { damage, isCritical } = calculateDamage(playerStats.power);
-        const newHealth = opponent.health - damage;
+        const newHealth = opponent.health - (damage || 0);
         
         toast({
           title: opponent.isBoss ? 
             (isCritical ? "🎯 Критический удар по боссу!" : "⚔️ Атака босса!") :
             (isCritical ? "Критическая атака!" : "Атака!"),
-          description: `Вы нанесли ${isCritical ? "критические " : ""}${damage.toFixed(0)} урона ${opponent.name}!`,
+          description: `Вы нанесли ${isCritical ? "критические " : ""}${damage ? damage.toFixed(0) : "0"} урона ${opponent.name}!`,
           variant: isCritical ? "destructive" : "default",
           duration: 1000
         });
