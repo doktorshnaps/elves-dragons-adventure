@@ -1,6 +1,5 @@
 import { Opponent } from "@/types/battle";
 import { getScaledStats } from "@/utils/opponentGenerator";
-import { getExperienceReward } from "@/utils/experienceManager";
 
 export const generateDarkMageTowerOpponents = (level: number): Opponent[] => {
   const cycleLevel = ((level - 1) % 5) + 1;
@@ -13,15 +12,13 @@ export const generateDarkMageTowerOpponents = (level: number): Opponent[] => {
       power: getScaledStats(16, level, true),
       health,
       maxHealth: health,
-      isBoss: true,
-      experienceReward: getExperienceReward(level, true)
+      isBoss: true
     }];
   }
 
   const opponents: Opponent[] = [];
   const enemyCount = 6 - cycleLevel;
 
-  // Чернокнижник
   if (cycleLevel <= 2) {
     const health = getScaledStats(90, level);
     opponents.push({
@@ -29,12 +26,10 @@ export const generateDarkMageTowerOpponents = (level: number): Opponent[] => {
       name: "Чернокнижник",
       power: getScaledStats(9, level),
       health,
-      maxHealth: health,
-      experienceReward: getExperienceReward(level, false)
+      maxHealth: health
     });
   }
 
-  // Темный ученик
   const mediumCount = Math.floor((enemyCount - opponents.length) / 2);
   for (let i = 0; i < mediumCount; i++) {
     const health = getScaledStats(60, level);
@@ -43,12 +38,10 @@ export const generateDarkMageTowerOpponents = (level: number): Opponent[] => {
       name: "Темный ученик",
       power: getScaledStats(6, level),
       health,
-      maxHealth: health,
-      experienceReward: getExperienceReward(level, false)
+      maxHealth: health
     });
   }
 
-  // Магический голем
   const remainingCount = enemyCount - opponents.length;
   for (let i = 0; i < remainingCount; i++) {
     const health = getScaledStats(40, level);
@@ -57,8 +50,7 @@ export const generateDarkMageTowerOpponents = (level: number): Opponent[] => {
       name: "Магический голем",
       power: getScaledStats(4, level),
       health,
-      maxHealth: health,
-      experienceReward: getExperienceReward(level, false)
+      maxHealth: health
     });
   }
 

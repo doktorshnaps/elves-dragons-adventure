@@ -6,7 +6,6 @@ import { Button } from "@/components/ui/button";
 import { OpponentCard } from "@/components/battle/OpponentCard";
 import { PlayerCard } from "@/components/battle/PlayerCard";
 import { Inventory } from "@/components/battle/Inventory";
-import { LevelUpDialog } from "@/components/battle/LevelUpDialog";
 import { useToast } from "@/hooks/use-toast";
 import { useBattleState } from "@/hooks/useBattleState";
 import { fixResizeObserverLoop } from "@/utils/resizeObserverFix";
@@ -18,16 +17,11 @@ const Battle = () => {
   const { toast } = useToast();
   const isMobile = useIsMobile();
   
-  // Получаем сохраненное состояние и выбранное подземелье
   const savedState = localStorage.getItem('battleState');
   const savedData = savedState ? JSON.parse(savedState) : null;
   const selectedDungeon = savedData?.selectedDungeon;
   const savedLevel = savedData?.currentDungeonLevel || 1;
   
-  console.log("Selected dungeon:", selectedDungeon);
-  console.log("Background image:", dungeonBackgrounds[selectedDungeon]);
-  
-  // Получаем фоновое изображение для выбранного подземелья
   const backgroundImage = selectedDungeon ? dungeonBackgrounds[selectedDungeon] : '';
   
   const {
@@ -36,11 +30,9 @@ const Battle = () => {
     playerStats,
     opponents = [],
     inventory,
-    showLevelUp,
     attackEnemy,
     handleOpponentAttack,
     useItem,
-    handleUpgrade,
     handleNextLevel
   } = useBattleState(savedLevel);
 
@@ -55,7 +47,6 @@ const Battle = () => {
   }, [isPlayerTurn, handleOpponentAttack]);
 
   useEffect(() => {
-    // Если подземелье не выбрано, возвращаемся на страницу игры
     if (!selectedDungeon) {
       toast({
         title: "Ошибка",
@@ -79,7 +70,6 @@ const Battle = () => {
 
   useEffect(() => {
     if (playerStats?.health <= 0) {
-      // Restore full health
       const savedState = localStorage.getItem('battleState');
       if (savedState) {
         const state = JSON.parse(savedState);
@@ -177,11 +167,6 @@ const Battle = () => {
 
         <PlayerCard playerStats={playerStats} />
         <Inventory items={inventory} onUseItem={useItem} />
-
-        <LevelUpDialog
-          isOpen={showLevelUp}
-          onUpgradeSelect={handleUpgrade}
-        />
 
         <div className="fixed bottom-2 md:bottom-6 right-2 md:right-6 bg-game-surface p-2 md:p-4 rounded-lg border border-game-accent shadow-lg">
           <div className="flex items-center gap-1 md:gap-2">

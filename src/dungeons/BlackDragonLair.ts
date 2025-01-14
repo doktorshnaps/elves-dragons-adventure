@@ -1,6 +1,5 @@
 import { Opponent } from "@/types/battle";
 import { getScaledStats } from "@/utils/opponentGenerator";
-import { getExperienceReward } from "@/utils/experienceManager";
 
 export const generateBlackDragonLairOpponents = (level: number): Opponent[] => {
   const cycleLevel = ((level - 1) % 5) + 1;
@@ -13,15 +12,13 @@ export const generateBlackDragonLairOpponents = (level: number): Opponent[] => {
       power: getScaledStats(15, level, true),
       health,
       maxHealth: health,
-      isBoss: true,
-      experienceReward: getExperienceReward(level, true)
+      isBoss: true
     }];
   }
 
   const opponents: Opponent[] = [];
   const enemyCount = 6 - cycleLevel;
 
-  // Драконий страж
   if (cycleLevel <= 2) {
     const health = getScaledStats(120, level);
     opponents.push({
@@ -29,12 +26,10 @@ export const generateBlackDragonLairOpponents = (level: number): Opponent[] => {
       name: "Драконий страж",
       power: getScaledStats(8, level),
       health,
-      maxHealth: health,
-      experienceReward: getExperienceReward(level, false)
+      maxHealth: health
     });
   }
 
-  // Драконид
   const mediumCount = Math.floor((enemyCount - opponents.length) / 2);
   for (let i = 0; i < mediumCount; i++) {
     const health = getScaledStats(80, level);
@@ -43,12 +38,10 @@ export const generateBlackDragonLairOpponents = (level: number): Opponent[] => {
       name: "Драконид",
       power: getScaledStats(5, level),
       health,
-      maxHealth: health,
-      experienceReward: getExperienceReward(level, false)
+      maxHealth: health
     });
   }
 
-  // Драконий прислужник
   const remainingCount = enemyCount - opponents.length;
   for (let i = 0; i < remainingCount; i++) {
     const health = getScaledStats(50, level);
@@ -57,8 +50,7 @@ export const generateBlackDragonLairOpponents = (level: number): Opponent[] => {
       name: "Драконий прислужник",
       power: getScaledStats(3, level),
       health,
-      maxHealth: health,
-      experienceReward: getExperienceReward(level, false)
+      maxHealth: health
     });
   }
 
