@@ -55,7 +55,7 @@ export const Inventory = ({ items, onUseItem }: InventoryProps) => {
 
   return (
     <div 
-      className="mt-4 relative rounded-lg overflow-hidden"
+      className="mt-2 sm:mt-3 md:mt-4 relative rounded-lg overflow-hidden"
       style={{
         backgroundImage: 'url("/lovable-uploads/2eecde4e-bda9-4f8f-8105-3e6dcdff36fc.png")',
         backgroundSize: 'cover',
@@ -63,17 +63,17 @@ export const Inventory = ({ items, onUseItem }: InventoryProps) => {
         backgroundRepeat: 'no-repeat',
       }}
     >
-      <div className="p-6">
-        <h3 className="text-xl font-bold text-white mb-4 drop-shadow-lg">Инвентарь</h3>
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-2">
+      <div className="p-2 sm:p-4 md:p-6">
+        <h3 className="text-base sm:text-lg md:text-xl font-bold text-white mb-2 sm:mb-3 md:mb-4 drop-shadow-lg">Инвентарь</h3>
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-1 sm:gap-2">
           {groupedItems.map((item) => (
             <Card 
               key={`${item.name}-${item.type}-${item.value}`} 
-              className="p-2 bg-game-surface/80 border-game-accent backdrop-blur-sm"
+              className="p-1 sm:p-2 bg-game-surface/80 border-game-accent backdrop-blur-sm"
             >
-              <div className="flex flex-col gap-1">
+              <div className="flex flex-col gap-0.5 sm:gap-1">
                 {getItemImage(item.name) && (
-                  <div className="w-full aspect-square mb-1 rounded-lg overflow-hidden">
+                  <div className="w-full aspect-square mb-0.5 sm:mb-1 rounded-lg overflow-hidden">
                     <img 
                       src={getItemImage(item.name)} 
                       alt={item.name}
@@ -81,16 +81,16 @@ export const Inventory = ({ items, onUseItem }: InventoryProps) => {
                     />
                   </div>
                 )}
-                <div className="flex items-center gap-1">
+                <div className="flex items-center gap-0.5 sm:gap-1">
                   <h4 className="font-bold text-game-accent text-xs">
                     {item.name} {item.count > 1 && `(${item.count})`}
                   </h4>
                 </div>
                 <Button 
                   onClick={() => onUseItem(item.items[0])} 
-                  variant="outline" 
+                  variant="outline"
                   size="sm"
-                  className="mt-1 text-xs bg-game-surface/50 hover:bg-game-surface/70"
+                  className="mt-0.5 sm:mt-1 text-xs bg-game-surface/50 hover:bg-game-surface/70"
                 >
                   Использовать
                 </Button>

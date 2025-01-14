@@ -95,7 +95,7 @@ const Battle = () => {
 
   return (
     <div 
-      className="min-h-screen bg-game-background p-2 md:p-6 relative"
+      className="min-h-screen bg-game-background p-2 sm:p-4 md:p-6 relative"
       style={{
         backgroundImage: backgroundImage ? `linear-gradient(rgba(0, 0, 0, 0.7), rgba(0, 0, 0, 0.7)), url(${backgroundImage})` : undefined,
         backgroundSize: 'cover',
@@ -108,8 +108,8 @@ const Battle = () => {
         animate={{ opacity: 1 }}
         className="max-w-7xl mx-auto"
       >
-        <div className="flex flex-col md:flex-row justify-between items-center gap-4 mb-4 md:mb-8">
-          <div className="flex items-center gap-2 md:gap-4">
+        <div className="flex flex-col sm:flex-row justify-between items-center gap-2 sm:gap-4 mb-2 sm:mb-4 md:mb-8">
+          <div className="flex items-center gap-2 md:gap-4 w-full sm:w-auto">
             <Button
               variant="ghost"
               size="icon"
@@ -118,23 +118,24 @@ const Battle = () => {
             >
               <ArrowLeft className="h-4 w-4 md:h-5 md:w-5" />
             </Button>
-            <h1 className="text-xl md:text-3xl font-bold text-game-accent">{selectedDungeon}</h1>
+            <h1 className="text-lg sm:text-xl md:text-3xl font-bold text-game-accent truncate">{selectedDungeon}</h1>
           </div>
-          <div className="flex flex-wrap items-center gap-2 md:gap-4">
-            <span className="text-base md:text-xl font-bold text-yellow-500">🪙 {coins}</span>
-            <span className="text-base md:text-xl font-bold text-purple-500">👑 Уровень {savedLevel}</span>
+          <div className="flex flex-wrap items-center justify-end gap-2 md:gap-4 w-full sm:w-auto">
+            <span className="text-sm sm:text-base md:text-xl font-bold text-yellow-500">🪙 {coins}</span>
+            <span className="text-sm sm:text-base md:text-xl font-bold text-purple-500">👑 Уровень {savedLevel}</span>
             <Button
               variant="destructive"
-              className="bg-red-600 hover:bg-red-700 text-xs md:text-base"
+              size={isMobile ? "sm" : "default"}
+              className="bg-red-600 hover:bg-red-700 text-xs sm:text-sm md:text-base"
               onClick={handleExitDungeon}
             >
               <DoorOpen className="h-4 w-4 md:h-5 md:w-5 mr-1 md:mr-2" />
-              {isMobile ? `Выход из ${selectedDungeon}` : `Покинуть ${selectedDungeon}`}
+              {isMobile ? "Выход" : `Покинуть ${selectedDungeon}`}
             </Button>
           </div>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-6 mb-4 md:mb-8">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2 sm:gap-3 md:gap-6 mb-4">
           {opponents.map((opponent) => (
             <OpponentCard
               key={opponent.id}
@@ -151,16 +152,16 @@ const Battle = () => {
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            className="flex justify-center mb-4 md:mb-8"
+            className="flex justify-center mb-2 sm:mb-4 md:mb-8"
           >
             <Button
               variant="default"
               size={isMobile ? "default" : "lg"}
               onClick={handleNextLevel}
-              className="bg-green-600 hover:bg-green-700 text-white font-bold text-sm md:text-base"
+              className="bg-green-600 hover:bg-green-700 text-white font-bold text-xs sm:text-sm md:text-base"
             >
               <ArrowRight className="h-4 w-4 md:h-5 md:w-5 mr-1 md:mr-2" />
-              {isMobile ? "Следующий уровень" : "Перейти на следующий уровень"}
+              {isMobile ? "Дальше" : "Перейти на следующий уровень"}
             </Button>
           </motion.div>
         )}
@@ -168,10 +169,10 @@ const Battle = () => {
         <PlayerCard playerStats={playerStats} />
         <Inventory items={inventory} onUseItem={useItem} />
 
-        <div className="fixed bottom-2 md:bottom-6 right-2 md:right-6 bg-game-surface p-2 md:p-4 rounded-lg border border-game-accent shadow-lg">
-          <div className="flex items-center gap-1 md:gap-2">
-            <Heart className="w-4 h-4 md:w-6 md:h-6 text-red-500" />
-            <span className="font-bold text-base md:text-xl text-game-accent">
+        <div className="fixed bottom-2 sm:bottom-4 md:bottom-6 right-2 sm:right-4 md:right-6 bg-game-surface p-2 sm:p-3 md:p-4 rounded-lg border border-game-accent shadow-lg">
+          <div className="flex items-center gap-1 sm:gap-2">
+            <Heart className="w-4 h-4 sm:w-5 sm:h-5 md:w-6 md:h-6 text-red-500" />
+            <span className="font-bold text-sm sm:text-base md:text-xl text-game-accent">
               {playerStats?.health}/{playerStats?.maxHealth}
             </span>
           </div>
