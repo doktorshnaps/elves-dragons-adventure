@@ -18,9 +18,13 @@ const Battle = () => {
   const { toast } = useToast();
   const isMobile = useIsMobile();
   
+  // Получаем сохраненное состояние и выбранное подземелье
   const savedState = localStorage.getItem('battleState');
-  const savedLevel = savedState ? JSON.parse(savedState).currentDungeonLevel : 1;
-  const selectedDungeon = savedState ? JSON.parse(savedState).selectedDungeon : "Логово Черного Дракона";
+  const savedData = savedState ? JSON.parse(savedState) : null;
+  const selectedDungeon = savedData?.selectedDungeon || "Логово Черного Дракона";
+  const savedLevel = savedData?.currentDungeonLevel || 1;
+  
+  // Получаем фоновое изображение для выбранного подземелья
   const backgroundImage = dungeonBackgrounds[selectedDungeon];
   
   const {
