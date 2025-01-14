@@ -13,19 +13,33 @@ interface TeamStatsModalProps {
 export const TeamStatsModal = ({ isOpen, onClose, teamStats, balance }: TeamStatsModalProps) => {
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="bg-game-surface border-game-accent">
-        <DialogHeader>
-          <DialogTitle className="text-xl font-bold text-game-accent">Статистика команды</DialogTitle>
-        </DialogHeader>
+      <DialogContent 
+        className="bg-game-surface border-game-accent relative overflow-hidden"
+        style={{
+          backgroundImage: `url("/lovable-uploads/29ea34c8-ede8-4cab-8ca2-049cdb5108c3.png")`,
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
+          backgroundRepeat: 'no-repeat'
+        }}
+      >
+        {/* Полупрозрачный оверлей для лучшей читаемости */}
+        <div className="absolute inset-0 bg-game-surface/90 backdrop-blur-sm" />
         
-        <div className="mt-4">
-          <div className="flex justify-between items-center mb-4">
-            <span className="text-2xl font-extrabold text-game-accent">{balance} монет</span>
-          </div>
+        {/* Контент поверх оверлея */}
+        <div className="relative z-10">
+          <DialogHeader>
+            <DialogTitle className="text-xl font-bold text-game-accent">Статистика команды</DialogTitle>
+          </DialogHeader>
           
-          <div className="space-y-4">
-            <HealthBar health={teamStats.health} maxHealth={teamStats.health} />
-            <CombatStats power={teamStats.power} defense={teamStats.defense} />
+          <div className="mt-4">
+            <div className="flex justify-between items-center mb-4">
+              <span className="text-2xl font-extrabold text-game-accent">{balance} монет</span>
+            </div>
+            
+            <div className="space-y-4">
+              <HealthBar health={teamStats.health} maxHealth={teamStats.health} />
+              <CombatStats power={teamStats.power} defense={teamStats.defense} />
+            </div>
           </div>
         </div>
       </DialogContent>
