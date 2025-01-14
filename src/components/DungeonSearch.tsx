@@ -1,22 +1,14 @@
 import React, { useState, useEffect } from "react";
-import { motion, AnimatePresence } from "framer-motion";
-import { Dice6, ArrowLeft, Battery } from "lucide-react";
+import { motion } from "framer-motion";
+import { ArrowLeft } from "lucide-react";
 import { Button } from "./ui/button";
 import { Card } from "./ui/card";
-import { Progress } from "./ui/progress";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import { getInitialEnergyState, useEnergy, getTimeUntilNextEnergy, EnergyState } from "@/utils/energyManager";
-
-const dungeonBackgrounds = {
-  "Логово Черного Дракона": "/lovable-uploads/7b2107b3-2cc1-440f-bb39-43a98c2a1e1a.png",
-  "Пещеры Забытых Душ": "/lovable-uploads/3445a1d0-8e5a-4785-bcce-f3b88bbd6f14.png",
-  "Трон Ледяного Короля": "/lovable-uploads/86b5334c-bb41-4222-9077-09521913b631.png",
-  "Лабиринт Темного Мага": "/lovable-uploads/bc24efd6-6a0c-45fe-a823-e610ee6540eb.png",
-  "Гнездо Гигантских Пауков": "/lovable-uploads/2eecde4e-bda9-4f8f-8105-3e6dcdff36fc.png",
-  "Темница Костяных Демонов": "/lovable-uploads/766f77e4-2e9f-443a-99e6-283aa360efd0.png",
-  "Логово Морского Змея": "/lovable-uploads/aefc7995-4fc9-459a-8c89-b648a2799937.png"
-};
+import { dungeonBackgrounds, dungeons } from "@/constants/dungeons";
+import { EnergyDisplay } from "./dungeon/EnergyDisplay";
+import { DungeonDisplay } from "./dungeon/DungeonDisplay";
 
 interface DungeonSearchProps {
   onClose: () => void;
@@ -24,17 +16,7 @@ interface DungeonSearchProps {
   onBalanceChange: (newBalance: number) => void;
 }
 
-const dungeons = [
-  "Логово Черного Дракона",
-  "Пещеры Забытых Душ",
-  "Трон Ледяного Короля",
-  "Лабиринт Темного Мага",
-  "Гнездо Гигантских Пауков",
-  "Темница Костяных Демонов",
-  "Логово Морского Змея"
-];
-
-export const DungeonSearch = ({ onClose, balance, onBalanceChange }: DungeonSearchProps) => {
+export const DungeonSearch = ({ onClose, balance }: DungeonSearchProps) => {
   const [rolling, setRolling] = useState(false);
   const [selectedDungeon, setSelectedDungeon] = useState<string | null>(null);
   const [energyState, setEnergyState] = useState<EnergyState>(getInitialEnergyState());
@@ -50,6 +32,7 @@ export const DungeonSearch = ({ onClose, balance, onBalanceChange }: DungeonSear
     }
     return { current: 100, max: 100 };
   });
+  
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -59,7 +42,6 @@ export const DungeonSearch = ({ onClose, balance, onBalanceChange }: DungeonSear
       setEnergyState(newEnergyState);
       setTimeUntilNext(getTimeUntilNextEnergy());
 
-      // Обновляем здоровье
       const savedState = localStorage.getItem('battleState');
       if (savedState) {
         const state = JSON.parse(savedState);
@@ -132,12 +114,6 @@ export const DungeonSearch = ({ onClose, balance, onBalanceChange }: DungeonSear
     }, 2000);
   };
 
-  const formatTime = (ms: number): string => {
-    const minutes = Math.floor(ms / (60 * 1000));
-    const seconds = Math.floor((ms % (60 * 1000)) / 1000);
-    return `${minutes}:${seconds.toString().padStart(2, '0')}`;
-  };
-
   const isHealthTooLow = playerHealth.current < playerHealth.max * 0.2;
 
   return (
@@ -156,10 +132,8 @@ export const DungeonSearch = ({ onClose, balance, onBalanceChange }: DungeonSear
           backgroundRepeat: 'no-repeat'
         }}
       >
-        {/* Добавляем оверлей для лучшей читаемости текста */}
         <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
         
-        {/* Оборачиваем содержимое в relative контейнер для отображения поверх оверлея */}
         <div className="relative z-10">
           <Button
             variant="ghost"
@@ -173,48 +147,13 @@ export const DungeonSearch = ({ onClose, balance, onBalanceChange }: DungeonSear
           <div className="text-center">
             <h2 className="text-2xl font-bold text-game-accent mb-6">Поиск подземелья</h2>
             
-            <div className="mb-6">
-              <div className="flex items-center justify-center gap-2 mb-2">
-                <Battery className="w-5 h-5 text-game-accent" />
-                <span className="text-game-accent">
-                  Энергия: {energyState.current}/{energyState.max}
-                </span>
-              </div>
-              <Progress value={(energyState.current / energyState.max) * 100} className="w-full" />
-              {energyState.current < energyState.max && (
-                <p className="text-sm text-gray-400 mt-1">
-                  Следующая энергия через: {formatTime(timeUntilNext)}
-                </p>
-              )}
-            </div>
+            <EnergyDisplay energyState={energyState} timeUntilNext={timeUntilNext} />
             
             <div className="mb-4">
               <p className="text-game-accent">Баланс: {balance} монет</p>
             </div>
             
-            <motion.div
-              animate={{ rotate: rolling ? 360 : 0 }}
-              transition={{ duration: 1, repeat: rolling ? Infinity : 0 }}
-              className="mb-6"
-            >
-              <Dice6 className="w-20 h-20 mx-auto text-game-accent" />
-            </motion.div>
-
-            <AnimatePresence mode="wait">
-              {selectedDungeon && (
-                <motion.div
-                  key={selectedDungeon}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -20 }}
-                  className="mb-6"
-                >
-                  <p className="text-xl text-game-accent">
-                    {selectedDungeon}
-                  </p>
-                </motion.div>
-              )}
-            </AnimatePresence>
+            <DungeonDisplay rolling={rolling} selectedDungeon={selectedDungeon} />
 
             <div className="space-x-4">
               <Button
