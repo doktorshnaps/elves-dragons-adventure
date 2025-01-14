@@ -8,6 +8,7 @@ import { ItemCard } from "./inventory/ItemCard";
 import { GroupedItem } from "./inventory/types";
 import { useInventory } from "./inventory/useInventory";
 import { useBalanceState } from "@/hooks/useBalanceState";
+import { shopItems } from "../shop/types";
 
 interface InventoryDisplayProps {
   inventory: Item[];
@@ -24,6 +25,11 @@ export const InventoryDisplay = ({
   const [selectedItems, setSelectedItems] = useState<Item[]>([]);
   const inventory = useInventory(initialInventory);
   const { balance, updateBalance } = useBalanceState();
+
+  const getItemImage = (itemName: string) => {
+    const shopItem = shopItems.find(item => item.name === itemName);
+    return shopItem?.image || '';
+  };
 
   const groupItems = (items: Item[]): GroupedItem[] => {
     return items.reduce<GroupedItem[]>((acc, item) => {
@@ -43,7 +49,8 @@ export const InventoryDisplay = ({
           type: item.type,
           value: item.value,
           count: 1,
-          items: [item]
+          items: [item],
+          image: getItemImage(item.name)
         });
       }
 
@@ -117,6 +124,15 @@ export const InventoryDisplay = ({
                 className="p-4 bg-game-surface/80 border-game-accent backdrop-blur-sm"
               >
                 <div className="flex flex-col gap-2">
+                  {item.image && (
+                    <div className="w-full aspect-square mb-2 rounded-lg overflow-hidden">
+                      <img 
+                        src={item.image} 
+                        alt={item.name}
+                        className="w-full h-full object-cover"
+                      />
+                    </div>
+                  )}
                   <div className="flex items-center gap-2">
                     <h4 className="font-bold text-game-accent">
                       {item.name} {item.count > 1 && `(${item.count})`}

@@ -6,4 +6,5 @@ export interface GroupedItem {
   value: number;
   count: number;
   items: Item[];
+  image?: string;
 }
