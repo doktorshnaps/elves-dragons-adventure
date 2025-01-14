@@ -110,48 +110,62 @@ const dungeonInfo = [
 
 export const DungeonsList = () => {
   return (
-    <Card className="p-6 bg-game-surface border-game-accent mt-8">
-      <h2 className="text-2xl font-bold text-game-accent mb-4">Подземелья</h2>
-      <Accordion type="single" collapsible className="w-full">
-        {dungeonInfo.map((dungeon, index) => (
-          <AccordionItem key={index} value={`item-${index}`}>
-            <AccordionTrigger className="text-game-accent hover:text-game-accent/80">
-              {dungeon.name}
-            </AccordionTrigger>
-            <AccordionContent>
-              <div className="space-y-4 p-4">
-                <p className="text-gray-400">{dungeon.description}</p>
-                
-                <div className="space-y-2">
-                  <h4 className="text-game-accent flex items-center gap-2">
-                    <Sword className="w-4 h-4" />
-                    Враги:
-                  </h4>
-                  <ul className="list-disc list-inside space-y-1 text-gray-400">
-                    {dungeon.enemies.map((enemy, i) => (
-                      <li key={i}>
-                        <span className="font-semibold">{enemy.name}</span> - {enemy.description}
-                      </li>
-                    ))}
-                  </ul>
-                </div>
+    <Card 
+      className="p-6 bg-game-surface border-game-accent mt-8 relative overflow-hidden"
+      style={{
+        backgroundImage: 'url("/lovable-uploads/3f06ddee-c81d-4ca7-acdb-82145cff46ec.png")',
+        backgroundSize: 'cover',
+        backgroundPosition: 'center',
+        backgroundRepeat: 'no-repeat'
+      }}
+    >
+      {/* Добавляем полупрозрачный оверлей для лучшей читаемости текста */}
+      <div className="absolute inset-0 bg-game-surface/90 backdrop-blur-sm" />
+      
+      {/* Контент поверх оверлея */}
+      <div className="relative z-10">
+        <h2 className="text-2xl font-bold text-game-accent mb-4">Подземелья</h2>
+        <Accordion type="single" collapsible className="w-full">
+          {dungeonInfo.map((dungeon, index) => (
+            <AccordionItem key={index} value={`item-${index}`}>
+              <AccordionTrigger className="text-game-accent hover:text-game-accent/80">
+                {dungeon.name}
+              </AccordionTrigger>
+              <AccordionContent>
+                <div className="space-y-4 p-4">
+                  <p className="text-gray-400">{dungeon.description}</p>
+                  
+                  <div className="space-y-2">
+                    <h4 className="text-game-accent flex items-center gap-2">
+                      <Sword className="w-4 h-4" />
+                      Враги:
+                    </h4>
+                    <ul className="list-disc list-inside space-y-1 text-gray-400">
+                      {dungeon.enemies.map((enemy, i) => (
+                        <li key={i}>
+                          <span className="font-semibold">{enemy.name}</span> - {enemy.description}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
 
-                <div className="space-y-2">
-                  <h4 className="text-game-accent flex items-center gap-2">
-                    <Shield className="w-4 h-4" />
-                    Добыча:
-                  </h4>
-                  <ul className="list-disc list-inside space-y-1 text-gray-400">
-                    {dungeon.loot.map((item, i) => (
-                      <li key={i}>{item}</li>
-                    ))}
-                  </ul>
+                  <div className="space-y-2">
+                    <h4 className="text-game-accent flex items-center gap-2">
+                      <Shield className="w-4 h-4" />
+                      Добыча:
+                    </h4>
+                    <ul className="list-disc list-inside space-y-1 text-gray-400">
+                      {dungeon.loot.map((item, i) => (
+                        <li key={i}>{item}</li>
+                      ))}
+                    </ul>
+                  </div>
                 </div>
-              </div>
-            </AccordionContent>
-          </AccordionItem>
-        ))}
-      </Accordion>
+              </AccordionContent>
+            </AccordionItem>
+          ))}
+        </Accordion>
+      </div>
     </Card>
   );
 };
