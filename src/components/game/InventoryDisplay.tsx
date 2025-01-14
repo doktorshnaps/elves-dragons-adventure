@@ -99,11 +99,6 @@ export const InventoryDisplay = ({
     }
   };
 
-  const canUpgrade = selectedItems.length === 2 && 
-    selectedItems[0].name === selectedItems[1].name && 
-    selectedItems[0].type === selectedItems[1].type && 
-    selectedItems[0].value === selectedItems[1].value;
-
   return (
     <div 
       className="mt-4 relative rounded-lg overflow-hidden"
@@ -114,18 +109,18 @@ export const InventoryDisplay = ({
         backgroundRepeat: 'no-repeat',
       }}
     >
-      <div className="p-6">
+      <div className="p-4">
         <h3 className="text-xl font-bold text-white mb-4 drop-shadow-lg">Инвентарь</h3>
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-2">
           {inventory.length > 0 ? (
             groupItems(inventory).map((item) => (
               <Card 
                 key={`${item.name}-${item.type}-${item.value}`}
-                className="p-4 bg-game-surface/80 border-game-accent backdrop-blur-sm"
+                className="p-2 bg-game-surface/80 border-game-accent backdrop-blur-sm"
               >
-                <div className="flex flex-col gap-2">
+                <div className="flex flex-col gap-1">
                   {item.image && (
-                    <div className="w-full aspect-square mb-2 rounded-lg overflow-hidden">
+                    <div className="w-full aspect-square mb-1 rounded-lg overflow-hidden">
                       <img 
                         src={item.image} 
                         alt={item.name}
@@ -133,23 +128,27 @@ export const InventoryDisplay = ({
                       />
                     </div>
                   )}
-                  <div className="flex items-center gap-2">
-                    <h4 className="font-bold text-game-accent">
+                  <div className="flex items-center gap-1">
+                    <h4 className="font-bold text-game-accent text-xs">
                       {item.name} {item.count > 1 && `(${item.count})`}
                     </h4>
                   </div>
-                  <Button 
-                    onClick={() => handleUseGroupedItem(item)} 
-                    variant="outline" 
-                    className="mt-2 bg-game-surface/50 hover:bg-game-surface/70"
-                  >
-                    Использовать
-                  </Button>
+                  {!readonly && window.location.pathname === '/battle' && (
+                    <Button 
+                      onClick={() => handleUseGroupedItem(item)} 
+                      variant="outline" 
+                      size="sm"
+                      className="mt-1 text-xs bg-game-surface/50 hover:bg-game-surface/70"
+                    >
+                      Использовать
+                    </Button>
+                  )}
                   {!readonly && (
                     <Button
                       onClick={() => handleSellItem(item.items[0])}
                       variant="destructive"
-                      className="mt-2"
+                      size="sm"
+                      className="mt-1 text-xs"
                     >
                       Продать
                     </Button>
@@ -158,7 +157,7 @@ export const InventoryDisplay = ({
               </Card>
             ))
           ) : (
-            <p className="text-gray-400 col-span-4 text-center py-8">Инвентарь пуст</p>
+            <p className="text-gray-400 col-span-full text-center py-4">Инвентарь пуст</p>
           )}
         </div>
       </div>
