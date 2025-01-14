@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { useToast } from "./use-toast";
 import { getInitialEnergyState, useEnergy, getTimeUntilNextEnergy, EnergyState } from "@/utils/energyManager";
 import { dungeons } from "@/constants/dungeons";
+import { generateDungeonOpponents } from "@/dungeons/dungeonManager";
 
 export const useDungeonSearch = (balance: number) => {
   const [rolling, setRolling] = useState(false);
@@ -91,6 +92,9 @@ export const useDungeonSearch = (balance: number) => {
       setSelectedDungeon(finalDungeon);
       setRolling(false);
 
+      // Генерируем противников для выбранного подземелья
+      const opponents = generateDungeonOpponents(finalDungeon, 1);
+
       // Создаем новое состояние битвы с выбранным подземельем
       const battleState = {
         playerStats: {
@@ -102,9 +106,9 @@ export const useDungeonSearch = (balance: number) => {
           level: 1,
           requiredExperience: 100
         },
-        selectedDungeon: finalDungeon, // Сохраняем выбранное подземелье
+        selectedDungeon: finalDungeon,
         currentDungeonLevel: 1,
-        opponents: [],
+        opponents,
         inventory: [],
         coins: balance
       };

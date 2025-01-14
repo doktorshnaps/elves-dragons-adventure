@@ -12,6 +12,7 @@ import { useBattleState } from "@/hooks/useBattleState";
 import { fixResizeObserverLoop } from "@/utils/resizeObserverFix";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { dungeonBackgrounds } from "@/constants/dungeons";
+import { generateDungeonOpponents } from "@/dungeons/dungeonManager";
 
 const Battle = () => {
   const navigate = useNavigate();
@@ -83,6 +84,35 @@ const Battle = () => {
       }, 2000);
     }
   }, [playerStats?.health, navigate, toast]);
+
+  const handleNextLevel = () => {
+    const nextLevel = savedLevel + 1;
+    
+    // Генерируем новых противников для текущего подземелья
+    const opponents = generateDungeonOpponents(selectedDungeon, nextLevel);
+    
+    // Сохраняем текущие характеристики для следующего уровня
+    const battleState = {
+      playerStats: {
+        ...playerStats,
+        level: nextLevel
+      },
+      selectedDungeon,
+      opponents,
+      currentDungeonLevel: nextLevel,
+      inventory,
+      coins: coins
+    };
+    localStorage.setItem('battleState', JSON.stringify(battleState));
+    
+    toast({
+      title: "Переход на следующий уровень",
+      description: `Вы переходите на уровень ${nextLevel}`,
+      duration: 1000
+    });
+
+    navigate(`/battle?level=${nextLevel}`, { replace: true });
+  };
 
   return (
     <div 
