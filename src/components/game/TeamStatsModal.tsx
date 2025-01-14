@@ -14,7 +14,7 @@ export const TeamStatsModal = ({ isOpen, onClose, teamStats, balance }: TeamStat
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent 
-        className="bg-game-surface border-game-accent relative overflow-hidden max-h-[90vh] w-[95vw] md:w-[600px]"
+        className="bg-game-surface border-game-accent fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 max-h-[90vh] w-[95vw] md:w-[600px] overflow-hidden"
         style={{
           backgroundImage: `url("/lovable-uploads/29ea34c8-ede8-4cab-8ca2-049cdb5108c3.png")`,
           backgroundSize: 'cover',
