@@ -94,6 +94,8 @@ export const useDungeonSearch = (balance: number) => {
 
       // Генерируем противников для выбранного подземелья
       const opponents = generateDungeonOpponents(finalDungeon, 1);
+      console.log("Selected dungeon:", finalDungeon);
+      console.log("Generated opponents:", opponents);
 
       // Создаем новое состояние битвы с выбранным подземельем
       const battleState = {
@@ -106,14 +108,13 @@ export const useDungeonSearch = (balance: number) => {
           level: 1,
           requiredExperience: 100
         },
-        selectedDungeon: finalDungeon,
+        selectedDungeon: finalDungeon, // Сохраняем выбранное подземелье
         currentDungeonLevel: 1,
         opponents,
         inventory: [],
         coins: balance
       };
       
-      localStorage.removeItem('battleState');
       localStorage.setItem('battleState', JSON.stringify(battleState));
       
       toast({
