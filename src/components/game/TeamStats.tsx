@@ -48,15 +48,29 @@ export const TeamStats = ({ teamStats }: TeamStatsProps) => {
   }, []);
 
   return (
-    <Card className="p-6 bg-game-surface border-game-accent mb-6">
-      <div className="flex justify-between items-center mb-4">
-        <h2 className="text-xl font-bold text-game-accent">Статистика команды</h2>
-        <span className="text-sm text-game-accent">{balance} монет</span>
-      </div>
+    <Card 
+      className="p-6 bg-game-surface border-game-accent mb-6 relative overflow-hidden"
+      style={{
+        backgroundImage: 'url("/lovable-uploads/29ea34c8-ede8-4cab-8ca2-049cdb5108c3.png")',
+        backgroundSize: 'cover',
+        backgroundPosition: 'center',
+        backgroundRepeat: 'no-repeat'
+      }}
+    >
+      {/* Полупрозрачный оверлей для лучшей читаемости */}
+      <div className="absolute inset-0 bg-game-surface/90 backdrop-blur-sm" />
       
-      <div className="space-y-4">
-        <HealthBar health={stats.health} maxHealth={stats.maxHealth} />
-        <CombatStats power={stats.power} defense={stats.defense} />
+      {/* Контент поверх оверлея */}
+      <div className="relative z-10">
+        <div className="flex justify-between items-center mb-4">
+          <h2 className="text-xl font-bold text-game-accent">Статистика команды</h2>
+          <span className="text-sm text-game-accent">{balance} монет</span>
+        </div>
+        
+        <div className="space-y-4">
+          <HealthBar health={stats.health} maxHealth={stats.maxHealth} />
+          <CombatStats power={stats.power} defense={stats.defense} />
+        </div>
       </div>
     </Card>
   );
