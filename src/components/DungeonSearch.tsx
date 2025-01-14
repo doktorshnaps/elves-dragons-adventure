@@ -102,8 +102,8 @@ export const DungeonSearch = ({ onClose, balance }: DungeonSearchProps) => {
       const finalDungeon = dungeons[Math.floor(Math.random() * dungeons.length)];
       setSelectedDungeon(finalDungeon);
       setRolling(false);
-      
-      // Создаем новое состояние подземелья
+
+      // Создаем новое состояние подземелья с выбранным подземельем
       const battleState = {
         playerStats: {
           health: playerHealth.current,
@@ -114,14 +114,16 @@ export const DungeonSearch = ({ onClose, balance }: DungeonSearchProps) => {
           level: 1,
           requiredExperience: 100
         },
-        selectedDungeon: finalDungeon,
+        selectedDungeon: finalDungeon, // Сохраняем выбранное подземелье
         currentDungeonLevel: 1,
         opponents: [],
         inventory: [],
         coins: balance
       };
       
-      // Сохраняем состояние в localStorage
+      // Очищаем предыдущее состояние перед сохранением нового
+      localStorage.removeItem('battleState');
+      // Сохраняем новое состояние
       localStorage.setItem('battleState', JSON.stringify(battleState));
       
       toast({
