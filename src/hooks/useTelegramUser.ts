@@ -12,6 +12,7 @@ declare global {
             username?: string;
           };
         };
+        ready: () => void;
       };
     };
   }
