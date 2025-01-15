@@ -5,6 +5,7 @@ import { TeamStats as TeamStatsType } from "@/types/cards";
 import { useNavigate } from "react-router-dom";
 import { useState } from "react";
 import { TeamStatsModal } from "./TeamStatsModal";
+import { WalletConnect } from "../wallet/WalletConnect";
 
 interface GameHeaderProps {
   balance: number;
@@ -64,6 +65,7 @@ export const GameHeader = ({
             <BarChart2 className="w-4 h-4" />
             {isMobile ? "Статы" : "Статистика"}
           </Button>
+          <WalletConnect />
         </div>
       </div>
 
