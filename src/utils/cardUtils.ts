@@ -53,10 +53,7 @@ export const getRarityChance = (): Rarity => {
 };
 
 export const generateCard = (type: CardType): Card => {
-  // Get all cards of the specified type from the database
   const availableCards = cardDatabase.filter(card => card.type === type);
-  
-  // Randomly select one card from the available cards
   const selectedCard = availableCards[Math.floor(Math.random() * availableCards.length)];
   
   const rarity = getRarityChance();
@@ -82,4 +79,28 @@ export const calculateTeamStats = (cards: Card[]) => {
     defense: acc.defense + card.defense,
     health: acc.health + card.health
   }), { power: 0, defense: 0, health: 0 });
+};
+
+export const upgradeCard = (card1: Card, card2: Card): Card | null => {
+  // Проверяем, что карты одинаковые и имеют одинаковую редкость
+  if (card1.name !== card2.name || card1.rarity !== card2.rarity || card1.type !== card2.type) {
+    return null;
+  }
+
+  // Проверяем, что редкость не максимальная
+  if (card1.rarity >= 8) {
+    return null;
+  }
+
+  // Создаем новую карту с повышенной редкостью
+  const newRarity = (card1.rarity + 1) as Rarity;
+  const stats = getStatsForRarity(newRarity);
+
+  return {
+    id: Date.now().toString() + Math.random().toString(36).substr(2, 9),
+    name: card1.name,
+    type: card1.type,
+    rarity: newRarity,
+    ...stats
+  };
 };

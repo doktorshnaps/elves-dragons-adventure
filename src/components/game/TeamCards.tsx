@@ -2,7 +2,9 @@ import { useState, useEffect } from "react";
 import { Card as CardType } from "@/types/cards";
 import { CardDisplay } from "./CardDisplay";
 import { useToast } from "@/hooks/use-toast";
-import { getCardPrice } from "@/utils/cardUtils";
+import { getCardPrice, upgradeCard } from "@/utils/cardUtils";
+import { Button } from "@/components/ui/button";
+import { ArrowUpCircle } from "lucide-react";
 
 export const TeamCards = () => {
   const { toast } = useToast();
@@ -10,6 +12,8 @@ export const TeamCards = () => {
     const savedCards = localStorage.getItem('gameCards');
     return savedCards ? JSON.parse(savedCards) : [];
   });
+
+  const [selectedCards, setSelectedCards] = useState<CardType[]>([]);
 
   useEffect(() => {
     const handleCardsUpdate = (e: CustomEvent<{ cards: CardType[] }>) => {
@@ -26,7 +30,6 @@ export const TeamCards = () => {
     window.addEventListener('cardsUpdate', handleCardsUpdate as EventListener);
     window.addEventListener('storage', handleStorageChange);
 
-    // Проверяем состояние каждые 500мс
     const interval = setInterval(handleStorageChange, 500);
 
     return () => {
@@ -62,22 +65,93 @@ export const TeamCards = () => {
     });
   };
 
+  const handleCardSelect = (card: CardType) => {
+    if (selectedCards.find(c => c.id === card.id)) {
+      setSelectedCards(selectedCards.filter(c => c.id !== card.id));
+    } else if (selectedCards.length < 2) {
+      setSelectedCards([...selectedCards, card]);
+    }
+  };
+
+  const handleUpgrade = () => {
+    if (selectedCards.length !== 2) return;
+
+    const upgradedCard = upgradeCard(selectedCards[0], selectedCards[1]);
+    
+    if (!upgradedCard) {
+      toast({
+        title: "Ошибка улучшения",
+        description: "Выбранные карты должны быть одинаковыми и иметь одинаковую редкость",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Удаляем старые карты и добавляем новую
+    const newCards = [
+      ...cards.filter(c => !selectedCards.find(sc => sc.id === c.id)),
+      upgradedCard
+    ];
+
+    setCards(newCards);
+    setSelectedCards([]);
+    localStorage.setItem('gameCards', JSON.stringify(newCards));
+
+    const cardsEvent = new CustomEvent('cardsUpdate', { 
+      detail: { cards: newCards }
+    });
+    window.dispatchEvent(cardsEvent);
+
+    toast({
+      title: "Карта улучшена!",
+      description: `${upgradedCard.name} теперь имеет редкость ${upgradedCard.rarity}`,
+    });
+  };
+
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-      {cards.length > 0 ? (
-        cards.map((card) => (
-          <CardDisplay
-            key={card.id}
-            card={card}
-            showSellButton={true}
-            onSell={handleSellCard}
-          />
-        ))
-      ) : (
-        <p className="text-gray-400 col-span-full text-center py-8">
-          У вас пока нет карт
-        </p>
+    <div className="space-y-4">
+      {selectedCards.length > 0 && (
+        <div className="flex items-center justify-between bg-game-surface p-4 rounded-lg">
+          <span className="text-white">
+            Выбрано карт: {selectedCards.length}/2
+          </span>
+          {selectedCards.length === 2 && (
+            <Button
+              onClick={handleUpgrade}
+              className="bg-game-accent hover:bg-game-accent/80"
+            >
+              <ArrowUpCircle className="w-4 h-4 mr-2" />
+              Улучшить
+            </Button>
+          )}
+        </div>
       )}
+      
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+        {cards.length > 0 ? (
+          cards.map((card) => (
+            <div
+              key={card.id}
+              className={`cursor-pointer transition-all duration-300 ${
+                selectedCards.find(c => c.id === card.id)
+                  ? 'ring-2 ring-game-accent rounded-lg'
+                  : ''
+              }`}
+              onClick={() => handleCardSelect(card)}
+            >
+              <CardDisplay
+                card={card}
+                showSellButton={true}
+                onSell={handleSellCard}
+              />
+            </div>
+          ))
+        ) : (
+          <p className="text-gray-400 col-span-full text-center py-8">
+            У вас пока нет карт
+          </p>
+        )}
+      </div>
     </div>
   );
 };
