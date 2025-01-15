@@ -26,6 +26,7 @@ export const GameContainer = () => {
   const [showDungeonSearch, setShowDungeonSearch] = useState(false);
   const [showShop, setShowShop] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const [isInitialized, setIsInitialized] = useState(false);
   
   const prefix = userId ? `user_${userId}_` : '';
 
@@ -44,28 +45,49 @@ export const GameContainer = () => {
   });
 
   useEffect(() => {
+    let attempts = 0;
+    const maxAttempts = 5;
+    const attemptInterval = 1000; // 1 секунда между попытками
+
     const initializeGame = () => {
+      console.log("Attempting to initialize Telegram WebApp...");
       if (window.Telegram?.WebApp) {
-        const { user } = window.Telegram.WebApp.initDataUnsafe;
-        if (user) {
-          setIsLoading(false);
+        console.log("Telegram WebApp found");
+        try {
+          const webApp = window.Telegram.WebApp;
+          webApp.ready();
+          const user = webApp.initDataUnsafe.user;
+          if (user) {
+            console.log("User found:", user);
+            setIsInitialized(true);
+            setIsLoading(false);
+            return true;
+          }
+        } catch (error) {
+          console.error("Error initializing Telegram WebApp:", error);
         }
+      }
+      return false;
+    };
+
+    const tryInitialize = () => {
+      if (attempts >= maxAttempts) {
+        console.log("Max attempts reached, stopping initialization");
+        setIsLoading(false);
+        return;
+      }
+
+      if (!initializeGame()) {
+        attempts++;
+        setTimeout(tryInitialize, attemptInterval);
       }
     };
 
-    // Попытка инициализации сразу
-    initializeGame();
+    tryInitialize();
 
-    // Если не удалось сразу, пробуем через небольшую задержку
-    const timer = setTimeout(() => {
-      initializeGame();
-      // Если всё ещё не удалось, прекращаем загрузку
-      if (!window.Telegram?.WebApp?.initDataUnsafe?.user) {
-        setIsLoading(false);
-      }
-    }, 1500);
-
-    return () => clearTimeout(timer);
+    return () => {
+      attempts = maxAttempts; // Остановить попытки при размонтировании
+    };
   }, []);
 
   useEffect(() => {
@@ -121,11 +143,7 @@ export const GameContainer = () => {
     );
   }
 
-  // Проверяем наличие Telegram WebApp и пользователя
-  const isTelegramWebApp = Boolean(window.Telegram?.WebApp);
-  const hasTelegramUser = Boolean(window.Telegram?.WebApp?.initDataUnsafe?.user);
-
-  if (!isTelegramWebApp || !hasTelegramUser) {
+  if (!isInitialized) {
     return (
       <div className="min-h-screen w-full flex items-center justify-center">
         <div className="text-center p-4">
