@@ -8,6 +8,7 @@ import { GameTabs } from "./GameTabs";
 import { GameModals } from "./GameModals";
 import { GameHeader } from "./GameHeader";
 import { useBalanceState } from "@/hooks/useBalanceState";
+import { useTelegramUser } from "@/hooks/useTelegramUser";
 
 const calculateTeamStats = (cards: Card[]) => {
   return {
@@ -20,25 +21,32 @@ const calculateTeamStats = (cards: Card[]) => {
 export const GameContainer = () => {
   const isMobile = useIsMobile();
   const { toast } = useToast();
+  const { userId } = useTelegramUser();
   const { balance, updateBalance } = useBalanceState();
   const [showDungeonSearch, setShowDungeonSearch] = useState(false);
   const [showShop, setShowShop] = useState(false);
+  
+  const prefix = userId ? `user_${userId}_` : '';
+
   const [hasActiveDungeon, setHasActiveDungeon] = useState(() => {
-    const savedState = localStorage.getItem('battleState');
+    const savedState = localStorage.getItem(prefix + 'battleState');
     if (savedState) {
       const state = JSON.parse(savedState);
       return state.playerStats && state.playerStats.health > 0;
     }
     return false;
   });
+
   const [cards, setCards] = useState<Card[]>(() => {
-    const savedCards = localStorage.getItem('gameCards');
+    const savedCards = localStorage.getItem(prefix + 'gameCards');
     return savedCards ? JSON.parse(savedCards) : [];
   });
 
   useEffect(() => {
+    if (!userId) return;
+
     const checkDungeonState = () => {
-      const savedState = localStorage.getItem('battleState');
+      const savedState = localStorage.getItem(prefix + 'battleState');
       if (savedState) {
         const state = JSON.parse(savedState);
         setHasActiveDungeon(state.playerStats && state.playerStats.health > 0);
@@ -53,17 +61,19 @@ export const GameContainer = () => {
     return () => {
       window.removeEventListener('storage', checkDungeonState);
     };
-  }, []);
+  }, [userId, prefix]);
 
   useEffect(() => {
-    const isFirstLaunch = !localStorage.getItem('gameInitialized');
+    if (!userId) return;
+
+    const isFirstLaunch = !localStorage.getItem(prefix + 'gameInitialized');
     if (isFirstLaunch) {
       const firstPack = generatePack();
       const secondPack = generatePack();
       const initialCards = [...firstPack, ...secondPack];
       
-      localStorage.setItem('gameCards', JSON.stringify(initialCards));
-      localStorage.setItem('gameInitialized', 'true');
+      localStorage.setItem(prefix + 'gameCards', JSON.stringify(initialCards));
+      localStorage.setItem(prefix + 'gameInitialized', 'true');
       
       setCards(initialCards);
       
@@ -72,7 +82,18 @@ export const GameContainer = () => {
         description: "Вы получили 2 начальные колоды карт",
       });
     }
-  }, []);
+  }, [userId, prefix, toast]);
+
+  if (!userId) {
+    return (
+      <div className="min-h-screen w-full flex items-center justify-center">
+        <div className="text-center p-4">
+          <h2 className="text-xl font-bold mb-2">Загрузка...</h2>
+          <p className="text-gray-600">Пожалуйста, откройте игру через Telegram</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <motion.div
