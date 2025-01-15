@@ -2,24 +2,18 @@ import { useState, useEffect } from 'react';
 
 export const useBalanceState = () => {
   const [balance, setBalance] = useState(() => {
-    const userId = localStorage.getItem('telegramUserId');
-    const prefix = userId ? `user_${userId}_` : '';
-    const savedBalance = localStorage.getItem(prefix + 'gameBalance');
+    const savedBalance = localStorage.getItem('gameBalance');
     return savedBalance ? parseInt(savedBalance, 10) : 0;
   });
 
   useEffect(() => {
     const handleBalanceUpdate = (e: CustomEvent<{ balance: number }>) => {
       setBalance(e.detail.balance);
-      const userId = localStorage.getItem('telegramUserId');
-      const prefix = userId ? `user_${userId}_` : '';
-      localStorage.setItem(prefix + 'gameBalance', e.detail.balance.toString());
+      localStorage.setItem('gameBalance', e.detail.balance.toString());
     };
 
     const handleStorageChange = (e: StorageEvent) => {
-      const userId = localStorage.getItem('telegramUserId');
-      const prefix = userId ? `user_${userId}_` : '';
-      if (e.key === prefix + 'gameBalance') {
+      if (e.key === 'gameBalance') {
         const newBalance = e.newValue ? parseInt(e.newValue, 10) : 0;
         setBalance(newBalance);
       }
@@ -36,9 +30,7 @@ export const useBalanceState = () => {
 
   const updateBalance = (newBalance: number) => {
     setBalance(newBalance);
-    const userId = localStorage.getItem('telegramUserId');
-    const prefix = userId ? `user_${userId}_` : '';
-    localStorage.setItem(prefix + 'gameBalance', newBalance.toString());
+    localStorage.setItem('gameBalance', newBalance.toString());
     const event = new CustomEvent('balanceUpdate', { 
       detail: { balance: newBalance }
     });

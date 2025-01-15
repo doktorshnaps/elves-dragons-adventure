@@ -8,7 +8,6 @@ import { GameTabs } from "./GameTabs";
 import { GameModals } from "./GameModals";
 import { GameHeader } from "./GameHeader";
 import { useBalanceState } from "@/hooks/useBalanceState";
-import { useTelegramUser } from "@/hooks/useTelegramUser";
 
 const calculateTeamStats = (cards: Card[]) => {
   return {
@@ -21,80 +20,25 @@ const calculateTeamStats = (cards: Card[]) => {
 export const GameContainer = () => {
   const isMobile = useIsMobile();
   const { toast } = useToast();
-  const { userId } = useTelegramUser();
   const { balance, updateBalance } = useBalanceState();
   const [showDungeonSearch, setShowDungeonSearch] = useState(false);
   const [showShop, setShowShop] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
-  const [isInitialized, setIsInitialized] = useState(false);
-  
-  const prefix = userId ? `user_${userId}_` : '';
-
   const [hasActiveDungeon, setHasActiveDungeon] = useState(() => {
-    const savedState = localStorage.getItem(prefix + 'battleState');
+    const savedState = localStorage.getItem('battleState');
     if (savedState) {
       const state = JSON.parse(savedState);
       return state.playerStats && state.playerStats.health > 0;
     }
     return false;
   });
-
   const [cards, setCards] = useState<Card[]>(() => {
-    const savedCards = localStorage.getItem(prefix + 'gameCards');
+    const savedCards = localStorage.getItem('gameCards');
     return savedCards ? JSON.parse(savedCards) : [];
   });
 
   useEffect(() => {
-    let attempts = 0;
-    const maxAttempts = 5;
-    const attemptInterval = 1000; // 1 секунда между попытками
-
-    const initializeGame = () => {
-      console.log("Attempting to initialize Telegram WebApp...");
-      if (window.Telegram?.WebApp) {
-        console.log("Telegram WebApp found");
-        try {
-          const webApp = window.Telegram.WebApp;
-          webApp.ready();
-          const user = webApp.initDataUnsafe.user;
-          if (user) {
-            console.log("User found:", user);
-            setIsInitialized(true);
-            setIsLoading(false);
-            return true;
-          }
-        } catch (error) {
-          console.error("Error initializing Telegram WebApp:", error);
-        }
-      }
-      return false;
-    };
-
-    const tryInitialize = () => {
-      if (attempts >= maxAttempts) {
-        console.log("Max attempts reached, stopping initialization");
-        setIsLoading(false);
-        return;
-      }
-
-      if (!initializeGame()) {
-        attempts++;
-        setTimeout(tryInitialize, attemptInterval);
-      }
-    };
-
-    tryInitialize();
-
-    return () => {
-      attempts = maxAttempts; // Остановить попытки при размонтировании
-    };
-  }, []);
-
-  useEffect(() => {
-    if (!userId) return;
-
     const checkDungeonState = () => {
-      const savedState = localStorage.getItem(prefix + 'battleState');
+      const savedState = localStorage.getItem('battleState');
       if (savedState) {
         const state = JSON.parse(savedState);
         setHasActiveDungeon(state.playerStats && state.playerStats.health > 0);
@@ -109,19 +53,17 @@ export const GameContainer = () => {
     return () => {
       window.removeEventListener('storage', checkDungeonState);
     };
-  }, [userId, prefix]);
+  }, []);
 
   useEffect(() => {
-    if (!userId) return;
-
-    const isFirstLaunch = !localStorage.getItem(prefix + 'gameInitialized');
+    const isFirstLaunch = !localStorage.getItem('gameInitialized');
     if (isFirstLaunch) {
       const firstPack = generatePack();
       const secondPack = generatePack();
       const initialCards = [...firstPack, ...secondPack];
       
-      localStorage.setItem(prefix + 'gameCards', JSON.stringify(initialCards));
-      localStorage.setItem(prefix + 'gameInitialized', 'true');
+      localStorage.setItem('gameCards', JSON.stringify(initialCards));
+      localStorage.setItem('gameInitialized', 'true');
       
       setCards(initialCards);
       
@@ -130,29 +72,7 @@ export const GameContainer = () => {
         description: "Вы получили 2 начальные колоды карт",
       });
     }
-  }, [userId, prefix, toast]);
-
-  if (isLoading) {
-    return (
-      <div className="min-h-screen w-full flex items-center justify-center">
-        <div className="text-center p-4">
-          <h2 className="text-xl font-bold mb-2">Загрузка...</h2>
-          <p className="text-gray-600">Подождите, игра загружается</p>
-        </div>
-      </div>
-    );
-  }
-
-  if (!isInitialized) {
-    return (
-      <div className="min-h-screen w-full flex items-center justify-center">
-        <div className="text-center p-4">
-          <h2 className="text-xl font-bold mb-2">Ошибка доступа</h2>
-          <p className="text-gray-600">Пожалуйста, откройте игру через Telegram</p>
-        </div>
-      </div>
-    );
-  }
+  }, []);
 
   return (
     <motion.div
