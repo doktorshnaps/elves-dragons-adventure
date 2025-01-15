@@ -6,6 +6,10 @@ import { Button } from "@/components/ui/button";
 import { Wallet } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
+// Polyfill Buffer for browser environment
+import { Buffer } from 'buffer';
+globalThis.Buffer = Buffer;
+
 export const WalletConnect = () => {
   const [accountId, setAccountId] = useState<string | null>(null);
   const { toast } = useToast();
