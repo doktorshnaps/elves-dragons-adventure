@@ -1,4 +1,5 @@
 import { Card, CardType, Rarity } from "@/types/cards";
+import { cardDatabase } from "@/data/cardDatabase";
 
 export const getRarityLabel = (rarity: Rarity): string => {
   return "⭐".repeat(rarity);
@@ -52,17 +53,18 @@ export const getRarityChance = (): Rarity => {
 };
 
 export const generateCard = (type: CardType): Card => {
-  const names = type === 'character' 
-    ? ["Воин", "Маг", "Лучник", "Жрец", "Паладин", "Друид", "Разбойник", "Шаман", "Монах"]
-    : ["Волк", "Медведь", "Сова", "Пантера", "Тигр", "Орел", "Лев", "Феникс", "Дракончик"];
-    
-  const name = names[Math.floor(Math.random() * names.length)];
+  // Get all cards of the specified type from the database
+  const availableCards = cardDatabase.filter(card => card.type === type);
+  
+  // Randomly select one card from the available cards
+  const selectedCard = availableCards[Math.floor(Math.random() * availableCards.length)];
+  
   const rarity = getRarityChance();
   const stats = getStatsForRarity(rarity);
   
   return {
     id: Date.now().toString() + Math.random().toString(36).substr(2, 9),
-    name,
+    name: selectedCard.name,
     type,
     rarity,
     ...stats
