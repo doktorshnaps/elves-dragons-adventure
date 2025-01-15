@@ -41,6 +41,7 @@ export const GameHeader = ({
             variant="outline"
             className="gap-2"
             onClick={handleDungeonAction}
+            disabled={!hasActiveDungeon && localStorage.getItem('battleState')}
           >
             <Sword className="w-4 h-4" />
             {hasActiveDungeon 
