@@ -25,6 +25,7 @@ export const GameContainer = () => {
   const { balance, updateBalance } = useBalanceState();
   const [showDungeonSearch, setShowDungeonSearch] = useState(false);
   const [showShop, setShowShop] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   
   const prefix = userId ? `user_${userId}_` : '';
 
@@ -41,6 +42,15 @@ export const GameContainer = () => {
     const savedCards = localStorage.getItem(prefix + 'gameCards');
     return savedCards ? JSON.parse(savedCards) : [];
   });
+
+  useEffect(() => {
+    // Add a small delay to allow Telegram WebApp to initialize
+    const timer = setTimeout(() => {
+      setIsLoading(false);
+    }, 1000);
+
+    return () => clearTimeout(timer);
+  }, []);
 
   useEffect(() => {
     if (!userId) return;
@@ -84,11 +94,22 @@ export const GameContainer = () => {
     }
   }, [userId, prefix, toast]);
 
-  if (!userId) {
+  if (isLoading) {
     return (
       <div className="min-h-screen w-full flex items-center justify-center">
         <div className="text-center p-4">
           <h2 className="text-xl font-bold mb-2">Загрузка...</h2>
+          <p className="text-gray-600">Подождите, игра загружается</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!userId && !isLoading) {
+    return (
+      <div className="min-h-screen w-full flex items-center justify-center">
+        <div className="text-center p-4">
+          <h2 className="text-xl font-bold mb-2">Ошибка доступа</h2>
           <p className="text-gray-600">Пожалуйста, откройте игру через Telegram</p>
         </div>
       </div>
