@@ -44,10 +44,26 @@ export const GameContainer = () => {
   });
 
   useEffect(() => {
-    // Add a small delay to allow Telegram WebApp to initialize
+    const initializeGame = () => {
+      if (window.Telegram?.WebApp) {
+        const { user } = window.Telegram.WebApp.initDataUnsafe;
+        if (user) {
+          setIsLoading(false);
+        }
+      }
+    };
+
+    // Попытка инициализации сразу
+    initializeGame();
+
+    // Если не удалось сразу, пробуем через небольшую задержку
     const timer = setTimeout(() => {
-      setIsLoading(false);
-    }, 1000);
+      initializeGame();
+      // Если всё ещё не удалось, прекращаем загрузку
+      if (!window.Telegram?.WebApp?.initDataUnsafe?.user) {
+        setIsLoading(false);
+      }
+    }, 1500);
 
     return () => clearTimeout(timer);
   }, []);
@@ -105,7 +121,11 @@ export const GameContainer = () => {
     );
   }
 
-  if (!userId && !isLoading) {
+  // Проверяем наличие Telegram WebApp и пользователя
+  const isTelegramWebApp = Boolean(window.Telegram?.WebApp);
+  const hasTelegramUser = Boolean(window.Telegram?.WebApp?.initDataUnsafe?.user);
+
+  if (!isTelegramWebApp || !hasTelegramUser) {
     return (
       <div className="min-h-screen w-full flex items-center justify-center">
         <div className="text-center p-4">
