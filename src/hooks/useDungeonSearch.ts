@@ -1,40 +1,18 @@
-import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "./use-toast";
-import { getInitialEnergyState, useEnergy, getTimeUntilNextEnergy, EnergyState } from "@/utils/energyManager";
-import { dungeons } from "@/constants/dungeons";
-import { generateDungeonOpponents } from "@/dungeons/dungeonManager";
-import { calculateTeamStats } from "@/utils/cardUtils";
+import { useEnergy } from "@/utils/energyManager";
+import { useEnergyManagement } from "./dungeon/useEnergyManagement";
+import { useDungeonSelection } from "./dungeon/useDungeonSelection";
+import { useHealthCheck } from "./dungeon/useHealthCheck";
+import { useBattleStateInitializer } from "./dungeon/useBattleStateInitializer";
 
 export const useDungeonSearch = (balance: number) => {
-  const [rolling, setRolling] = useState(false);
-  const [selectedDungeon, setSelectedDungeon] = useState<string | null>(null);
-  const [energyState, setEnergyState] = useState<EnergyState>(getInitialEnergyState());
-  const [timeUntilNext, setTimeUntilNext] = useState(getTimeUntilNextEnergy());
-  const [playerHealth, setPlayerHealth] = useState<{ current: number; max: number }>(() => {
-    const savedState = localStorage.getItem('battleState');
-    if (savedState) {
-      const state = JSON.parse(savedState);
-      return {
-        current: state.playerStats.health,
-        max: state.playerStats.maxHealth
-      };
-    }
-    return { current: 100, max: 100 };
-  });
-
   const navigate = useNavigate();
   const { toast } = useToast();
-
-  useEffect(() => {
-    const interval = setInterval(() => {
-      const newEnergyState = getInitialEnergyState();
-      setEnergyState(newEnergyState);
-      setTimeUntilNext(getTimeUntilNextEnergy());
-    }, 1000);
-
-    return () => clearInterval(interval);
-  }, []);
+  const { energyState, timeUntilNext } = useEnergyManagement();
+  const { rolling, selectedDungeon, startRolling, stopRolling, setSelectedDungeon } = useDungeonSelection();
+  const { isHealthTooLow } = useHealthCheck();
+  const { initializeBattleState } = useBattleStateInitializer();
 
   const rollDice = () => {
     const savedState = localStorage.getItem('battleState');
@@ -61,7 +39,7 @@ export const useDungeonSearch = (balance: number) => {
       return;
     }
 
-    if (playerHealth.current < playerHealth.max * 0.2) {
+    if (isHealthTooLow) {
       toast({
         title: "Низкое здоровье",
         description: "Подождите пока здоровье восстановится до 20% от максимума",
@@ -70,49 +48,15 @@ export const useDungeonSearch = (balance: number) => {
       return;
     }
 
-    setRolling(true);
-    
-    let currentIndex = 0;
-    const interval = setInterval(() => {
-      setSelectedDungeon(dungeons[currentIndex]);
-      currentIndex = (currentIndex + 1) % dungeons.length;
-    }, 100);
+    const { interval, selectFinalDungeon } = startRolling();
 
     setTimeout(() => {
       clearInterval(interval);
-      const finalDungeon = dungeons[Math.floor(Math.random() * dungeons.length)];
+      const finalDungeon = selectFinalDungeon();
       setSelectedDungeon(finalDungeon);
-      setRolling(false);
+      stopRolling();
 
-      // Получаем текущие карты команды
-      const savedCards = localStorage.getItem('gameCards');
-      const cards = savedCards ? JSON.parse(savedCards) : [];
-      const teamStats = calculateTeamStats(cards);
-
-      // Генерируем противников для выбранного подземелья
-      const opponents = generateDungeonOpponents(finalDungeon, 1);
-      console.log("Selected dungeon:", finalDungeon);
-      console.log("Generated opponents:", opponents);
-
-      // Создаем новое состояние битвы с выбранным подземельем и актуальными характеристиками команды
-      const battleState = {
-        playerStats: {
-          health: teamStats.health,
-          maxHealth: teamStats.health,
-          power: teamStats.power,
-          defense: teamStats.defense,
-          experience: 0,
-          level: 1,
-          requiredExperience: 100
-        },
-        selectedDungeon: finalDungeon,
-        currentDungeonLevel: 1,
-        opponents,
-        inventory: [],
-        coins: balance
-      };
-      
-      localStorage.setItem('battleState', JSON.stringify(battleState));
+      initializeBattleState(finalDungeon, balance);
       
       toast({
         title: "Подземелье найдено!",
@@ -124,8 +68,6 @@ export const useDungeonSearch = (balance: number) => {
       }, 2000);
     }, 2000);
   };
-
-  const isHealthTooLow = playerHealth.current < playerHealth.max * 0.2;
 
   return {
     rolling,
