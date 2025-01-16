@@ -5,6 +5,7 @@ import { TeamStats as TeamStatsType } from "@/types/cards";
 import { useNavigate } from "react-router-dom";
 import { useState } from "react";
 import { TeamStatsModal } from "./TeamStatsModal";
+import { useToast } from "@/hooks/use-toast";
 
 interface GameHeaderProps {
   balance: number;
@@ -24,10 +25,23 @@ export const GameHeader = ({
   const isMobile = useIsMobile();
   const navigate = useNavigate();
   const [showStats, setShowStats] = useState(false);
+  const { toast } = useToast();
 
   const handleDungeonAction = () => {
-    if (hasActiveDungeon) {
-      navigate('/battle');
+    const savedState = localStorage.getItem('battleState');
+    if (hasActiveDungeon && savedState) {
+      const state = JSON.parse(savedState);
+      if (state.selectedDungeon) {
+        navigate('/battle');
+      } else {
+        // Если подземелье не выбрано, сбрасываем состояние
+        localStorage.removeItem('battleState');
+        setShowDungeonSearch(true);
+        toast({
+          title: "Подземелье не найдено",
+          description: "Выберите новое подземелье для входа",
+        });
+      }
     } else {
       setShowDungeonSearch(true);
     }

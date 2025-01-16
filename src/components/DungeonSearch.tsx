@@ -9,7 +9,12 @@ interface DungeonSearchProps {
   onBalanceChange: (newBalance: number) => void;
 }
 
-export const DungeonSearch = ({ onClose, balance }: DungeonSearchProps) => {
+export const DungeonSearch = ({ onClose, balance, onBalanceChange }: DungeonSearchProps) => {
+  // При открытии компонента поиска подземелья, сбрасываем состояние битвы
+  React.useEffect(() => {
+    localStorage.removeItem('battleState');
+  }, []);
+
   const {
     rolling,
     selectedDungeon,
