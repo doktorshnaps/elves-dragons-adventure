@@ -82,7 +82,10 @@ export const generateCard = (type: CardType): Card => {
   
   const rarity = getRarityChance();
   const stats = getStatsForRarity(rarity);
-  const faction = selectedCard.name === "Рекрут" ? 'Каледор' : FACTIONS[Math.floor(Math.random() * FACTIONS.length)];
+  
+  // Определяем фракцию в зависимости от имени карты
+  const kaledorHeroes = ["Рекрут", "Страж", "Ветеран", "Маг", "Мастер Целитель", "Защитник"];
+  const faction = kaledorHeroes.includes(selectedCard.name) ? 'Каледор' : FACTIONS[Math.floor(Math.random() * FACTIONS.length)];
   const magicResistance = getMagicResistanceByFaction(faction);
   
   return {

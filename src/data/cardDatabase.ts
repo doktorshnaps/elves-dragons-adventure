@@ -33,7 +33,8 @@ export const cardDatabase: CardInfo[] = [
       defense: 8,
       health: 12,
       magic: 0
-    }
+    },
+    image: "/lovable-uploads/d29bf397-b84f-4816-b1d9-6b18edb2aac3.png"
   },
   {
     name: "Ветеран",
@@ -44,7 +45,8 @@ export const cardDatabase: CardInfo[] = [
       defense: 7,
       health: 15,
       magic: 2
-    }
+    },
+    image: "/lovable-uploads/a28d8a2a-1aee-4bbe-a3e1-77a8b37dc8ef.png"
   },
   {
     name: "Маг",
@@ -55,7 +57,8 @@ export const cardDatabase: CardInfo[] = [
       defense: 4,
       health: 10,
       magic: 10
-    }
+    },
+    image: "/lovable-uploads/e920f28f-c878-4ded-b693-8d82bddce69d.png"
   },
   {
     name: "Мастер Целитель",
@@ -66,7 +69,8 @@ export const cardDatabase: CardInfo[] = [
       defense: 5,
       health: 12,
       magic: 9
-    }
+    },
+    image: "/lovable-uploads/6f8d5363-7b2f-4152-b20b-1ac575aab8a5.png"
   },
   {
     name: "Защитник",
@@ -77,7 +81,8 @@ export const cardDatabase: CardInfo[] = [
       defense: 10,
       health: 15,
       magic: 0
-    }
+    },
+    image: "/lovable-uploads/c97ff70c-f816-41ed-95d7-6ae47af5dfed.png"
   },
   {
     name: "Ветеран Защитник",
