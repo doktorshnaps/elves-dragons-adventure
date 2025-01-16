@@ -82,7 +82,7 @@ export const generateCard = (type: CardType): Card => {
   
   const rarity = getRarityChance();
   const stats = getStatsForRarity(rarity);
-  const faction = FACTIONS[Math.floor(Math.random() * FACTIONS.length)];
+  const faction = selectedCard.name === "Рекрут" ? 'Каледор' : FACTIONS[Math.floor(Math.random() * FACTIONS.length)];
   const magicResistance = getMagicResistanceByFaction(faction);
   
   return {
@@ -92,6 +92,7 @@ export const generateCard = (type: CardType): Card => {
     rarity,
     faction,
     magicResistance,
+    image: selectedCard.image,
     ...stats
   };
 };
@@ -129,6 +130,7 @@ export const upgradeCard = (card1: Card, card2: Card): Card | null => {
     rarity: newRarity,
     faction: card1.faction,
     magicResistance: card1.magicResistance,
+    image: card1.image,
     ...stats
   };
 };

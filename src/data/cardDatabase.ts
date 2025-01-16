@@ -8,6 +8,7 @@ interface CardInfo {
     health: number;
     magic: number;
   };
+  image?: string;
 }
 
 export const cardDatabase: CardInfo[] = [
@@ -20,7 +21,8 @@ export const cardDatabase: CardInfo[] = [
       defense: 5,
       health: 10,
       magic: 0
-    }
+    },
+    image: "/lovable-uploads/elf-hero.png"
   },
   {
     name: "Страж",
