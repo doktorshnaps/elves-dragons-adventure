@@ -4,6 +4,7 @@ import { useToast } from "./use-toast";
 import { getInitialEnergyState, useEnergy, getTimeUntilNextEnergy, EnergyState } from "@/utils/energyManager";
 import { dungeons } from "@/constants/dungeons";
 import { generateDungeonOpponents } from "@/dungeons/dungeonManager";
+import { calculateTeamStats } from "@/utils/cardUtils";
 
 export const useDungeonSearch = (balance: number) => {
   const [rolling, setRolling] = useState(false);
@@ -30,15 +31,6 @@ export const useDungeonSearch = (balance: number) => {
       const newEnergyState = getInitialEnergyState();
       setEnergyState(newEnergyState);
       setTimeUntilNext(getTimeUntilNextEnergy());
-
-      const savedState = localStorage.getItem('battleState');
-      if (savedState) {
-        const state = JSON.parse(savedState);
-        setPlayerHealth({
-          current: state.playerStats.health,
-          max: state.playerStats.maxHealth
-        });
-      }
     }, 1000);
 
     return () => clearInterval(interval);
@@ -92,23 +84,28 @@ export const useDungeonSearch = (balance: number) => {
       setSelectedDungeon(finalDungeon);
       setRolling(false);
 
+      // Получаем текущие карты команды
+      const savedCards = localStorage.getItem('gameCards');
+      const cards = savedCards ? JSON.parse(savedCards) : [];
+      const teamStats = calculateTeamStats(cards);
+
       // Генерируем противников для выбранного подземелья
       const opponents = generateDungeonOpponents(finalDungeon, 1);
       console.log("Selected dungeon:", finalDungeon);
       console.log("Generated opponents:", opponents);
 
-      // Создаем новое состояние битвы с выбранным подземельем
+      // Создаем новое состояние битвы с выбранным подземельем и актуальными характеристиками команды
       const battleState = {
         playerStats: {
-          health: playerHealth.current,
-          maxHealth: playerHealth.max,
-          power: 10,
-          defense: 5,
+          health: teamStats.health,
+          maxHealth: teamStats.health,
+          power: teamStats.power,
+          defense: teamStats.defense,
           experience: 0,
           level: 1,
           requiredExperience: 100
         },
-        selectedDungeon: finalDungeon, // Сохраняем выбранное подземелье
+        selectedDungeon: finalDungeon,
         currentDungeonLevel: 1,
         opponents,
         inventory: [],
