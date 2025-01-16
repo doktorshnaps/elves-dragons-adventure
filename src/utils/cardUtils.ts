@@ -1,4 +1,4 @@
-import { Card, CardType, Rarity } from "@/types/cards";
+import { Card, CardType, Rarity, Faction, MagicResistance } from "@/types/cards";
 import { cardDatabase } from "@/data/cardDatabase";
 
 export const getRarityLabel = (rarity: Rarity): string => {
@@ -7,6 +7,30 @@ export const getRarityLabel = (rarity: Rarity): string => {
 
 export const getCardPrice = (rarity: Rarity): number => {
   return 500;
+};
+
+const FACTIONS: Faction[] = [
+  'Каледор',
+  'Сильванести',
+  'Фаэлин',
+  'Элленар',
+  'Тэлэрион',
+  'Аэлантир',
+  'Лиорас'
+];
+
+const getMagicResistanceByFaction = (faction: Faction): MagicResistance => {
+  const resistanceMap: Record<Faction, MagicResistance> = {
+    'Лиорас': { type: 'природа', value: 20 },
+    'Аэлантир': { type: 'земля', value: 20 },
+    'Тэлэрион': { type: 'тьма', value: 20 },
+    'Элленар': { type: 'свет', value: 20 },
+    'Фаэлин': { type: 'вода', value: 20 },
+    'Сильванести': { type: 'песок', value: 20 },
+    'Каледор': { type: 'лед', value: 20 }
+  };
+  
+  return resistanceMap[faction];
 };
 
 export const getStatsForRarity = (rarity: Rarity) => {
@@ -58,12 +82,16 @@ export const generateCard = (type: CardType): Card => {
   
   const rarity = getRarityChance();
   const stats = getStatsForRarity(rarity);
+  const faction = FACTIONS[Math.floor(Math.random() * FACTIONS.length)];
+  const magicResistance = getMagicResistanceByFaction(faction);
   
   return {
     id: Date.now().toString() + Math.random().toString(36).substr(2, 9),
     name: selectedCard.name,
     type,
     rarity,
+    faction,
+    magicResistance,
     ...stats
   };
 };
@@ -82,17 +110,15 @@ export const calculateTeamStats = (cards: Card[]) => {
 };
 
 export const upgradeCard = (card1: Card, card2: Card): Card | null => {
-  // Проверяем, что карты одинаковые и имеют одинаковую редкость
-  if (card1.name !== card2.name || card1.rarity !== card2.rarity || card1.type !== card2.type) {
+  if (card1.name !== card2.name || card1.rarity !== card2.rarity || 
+      card1.type !== card2.type || card1.faction !== card2.faction) {
     return null;
   }
 
-  // Проверяем, что редкость не максимальная
   if (card1.rarity >= 8) {
     return null;
   }
 
-  // Создаем новую карту с повышенной редкостью
   const newRarity = (card1.rarity + 1) as Rarity;
   const stats = getStatsForRarity(newRarity);
 
@@ -101,6 +127,8 @@ export const upgradeCard = (card1: Card, card2: Card): Card | null => {
     name: card1.name,
     type: card1.type,
     rarity: newRarity,
+    faction: card1.faction,
+    magicResistance: card1.magicResistance,
     ...stats
   };
 };

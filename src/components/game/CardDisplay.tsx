@@ -2,7 +2,7 @@ import { Card as CardType } from "@/types/cards";
 import { getRarityLabel, getCardPrice } from "@/utils/cardUtils";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Sword, Shield, Coins, Heart } from "lucide-react";
+import { Sword, Shield, Coins, Heart, Sparkles } from "lucide-react";
 import { motion } from "framer-motion";
 import { useIsMobile } from "@/hooks/use-mobile";
 
@@ -37,6 +37,13 @@ export const CardDisplay = ({ card, showSellButton, onSell, className = "" }: Ca
             {getRarityLabel(card.rarity)}
           </span>
         </div>
+
+        {card.faction && (
+          <div className={`flex items-center gap-1 ${isMobile ? 'text-xs' : 'text-sm'} text-purple-400`}>
+            <Sparkles className={`${isMobile ? 'w-3 h-3' : 'w-4 h-4'}`} />
+            <span>{card.faction}</span>
+          </div>
+        )}
         
         <div className={`flex gap-3 ${isMobile ? 'text-xs' : 'text-sm'} text-gray-400`}>
           <div className="flex items-center gap-1">
@@ -52,6 +59,12 @@ export const CardDisplay = ({ card, showSellButton, onSell, className = "" }: Ca
             <span>{card.defense}</span>
           </div>
         </div>
+
+        {card.magicResistance && (
+          <div className={`text-blue-400 ${isMobile ? 'text-xs' : 'text-sm'}`}>
+            Защита от {card.magicResistance.type} магии: {card.magicResistance.value}%
+          </div>
+        )}
 
         {showSellButton && (
           <Button

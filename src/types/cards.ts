@@ -1,6 +1,20 @@
 export type CardType = 'character' | 'pet';
 export type Rarity = 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8;
 
+export type Faction = 
+  | 'Каледор'
+  | 'Сильванести'
+  | 'Фаэлин'
+  | 'Элленар'
+  | 'Тэлэрион'
+  | 'Аэлантир'
+  | 'Лиорас';
+
+export interface MagicResistance {
+  type: 'природа' | 'земля' | 'тьма' | 'свет' | 'вода' | 'песок' | 'лед';
+  value: number;
+}
+
 export interface Card {
   id: string;
   name: string;
@@ -10,6 +24,8 @@ export interface Card {
   health: number;
   magic: number;
   rarity: Rarity;
+  faction?: Faction;
+  magicResistance?: MagicResistance;
   image?: string;
 }
 
