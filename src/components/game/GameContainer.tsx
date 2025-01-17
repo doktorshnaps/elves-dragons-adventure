@@ -21,7 +21,7 @@ export const GameContainer = () => {
   const isMobile = useIsMobile();
   const { toast } = useToast();
   const { balance, updateBalance } = useBalanceState();
-  const [showDungeonSearch, setShowDungeonSearch] = useState(true); // Set to true by default
+  const [showDungeonSearch, setShowDungeonSearch] = useState(false); // Changed to false by default
   const [showShop, setShowShop] = useState(false);
   const [hasActiveDungeon, setHasActiveDungeon] = useState(false);
   const [cards, setCards] = useState<Card[]>(() => {

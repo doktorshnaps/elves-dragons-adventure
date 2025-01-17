@@ -35,7 +35,6 @@ export const GameHeader = ({
   }, []);
 
   const handleDungeonAction = () => {
-    // Always allow searching for a new dungeon
     setShowDungeonSearch(true);
   };
 
