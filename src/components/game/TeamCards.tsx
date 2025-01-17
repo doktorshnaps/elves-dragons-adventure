@@ -129,7 +129,7 @@ export const TeamCards = () => {
       )}
       
       <div className={`grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-2 sm:gap-4 ${
-        isMobile ? 'scale-[0.5] origin-top-left sm:scale-50 min-h-[400px]' : ''
+        isMobile ? 'scale-150 origin-top-left sm:scale-50 min-h-[400px]' : ''
       }`}>
         {cards.length > 0 ? (
           cards.map((card) => (
