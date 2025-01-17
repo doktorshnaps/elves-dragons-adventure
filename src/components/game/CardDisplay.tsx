@@ -17,10 +17,10 @@ export const CardDisplay = ({ card, showSellButton, onSell, className = "" }: Ca
   const isMobile = useIsMobile();
 
   return (
-    <Card className={`p-2 bg-game-background border-game-accent hover:border-game-primary transition-all duration-300 h-full ${className}`}>
-      <div className="flex flex-col gap-1 h-full">
+    <Card className={`p-3 bg-game-background border-game-accent hover:border-game-primary transition-all duration-300 h-full ${className}`}>
+      <div className="flex flex-col gap-1.5 h-full">
         {card.image && (
-          <div className="w-full aspect-[3/4] mb-1 rounded-lg overflow-hidden">
+          <div className="w-full aspect-[3/4] mb-2 rounded-lg overflow-hidden">
             <img 
               src={card.image} 
               alt={card.name}
@@ -30,8 +30,8 @@ export const CardDisplay = ({ card, showSellButton, onSell, className = "" }: Ca
         )}
         
         <div className="flex justify-between items-start">
-          <h3 className={`font-semibold text-game-accent ${isMobile ? 'text-[10px]' : 'text-sm'} line-clamp-1`}>
-            {card.name}
+          <h3 className={`font-semibold text-game-accent ${isMobile ? 'text-[10px]' : 'text-sm'}`}>
+            {card.name} ({card.type === 'character' ? 'Герой' : 'Питомец'})
           </h3>
           <span className={`text-yellow-500 ${isMobile ? 'text-[10px]' : 'text-xs'}`}>
             {getRarityLabel(card.rarity)}
@@ -39,29 +39,29 @@ export const CardDisplay = ({ card, showSellButton, onSell, className = "" }: Ca
         </div>
 
         {card.faction && (
-          <div className={`flex items-center gap-1 ${isMobile ? 'text-[8px]' : 'text-xs'} text-purple-400`}>
-            <Sparkles className={`${isMobile ? 'w-2 h-2' : 'w-3 h-3'}`} />
-            <span className="line-clamp-1">{card.faction}</span>
+          <div className={`flex items-center gap-1 ${isMobile ? 'text-[10px]' : 'text-xs'} text-purple-400`}>
+            <Sparkles className={`${isMobile ? 'w-3 h-3' : 'w-4 h-4'}`} />
+            <span>{card.faction}</span>
           </div>
         )}
         
-        <div className={`flex gap-2 ${isMobile ? 'text-[8px]' : 'text-xs'} text-gray-400 flex-wrap`}>
+        <div className={`flex gap-3 ${isMobile ? 'text-[10px]' : 'text-xs'} text-gray-400`}>
           <div className="flex items-center gap-1">
-            <Heart className={`${isMobile ? 'w-2 h-2' : 'w-3 h-3'} text-red-500`} />
+            <Heart className={`${isMobile ? 'w-3 h-3' : 'w-4 h-4'} text-red-500`} />
             <span>{card.health}</span>
           </div>
           <div className="flex items-center gap-1">
-            <Sword className={`${isMobile ? 'w-2 h-2' : 'w-3 h-3'}`} />
+            <Sword className={`${isMobile ? 'w-3 h-3' : 'w-4 h-4'}`} />
             <span>{card.power}</span>
           </div>
           <div className="flex items-center gap-1">
-            <Shield className={`${isMobile ? 'w-2 h-2' : 'w-3 h-3'}`} />
+            <Shield className={`${isMobile ? 'w-3 h-3' : 'w-4 h-4'}`} />
             <span>{card.defense}</span>
           </div>
         </div>
 
         {card.magicResistance && (
-          <div className={`text-blue-400 ${isMobile ? 'text-[8px]' : 'text-xs'} line-clamp-1`}>
+          <div className={`text-blue-400 ${isMobile ? 'text-[10px]' : 'text-xs'}`}>
             Защита от {card.magicResistance.type} магии: {card.magicResistance.value}%
           </div>
         )}
@@ -70,13 +70,10 @@ export const CardDisplay = ({ card, showSellButton, onSell, className = "" }: Ca
           <Button
             variant="outline"
             size={isMobile ? "sm" : "default"}
-            className="mt-auto text-yellow-500 hover:text-yellow-600 text-[10px] py-1"
-            onClick={(e) => {
-              e.stopPropagation();
-              onSell?.(card);
-            }}
+            className="mt-auto text-yellow-500 hover:text-yellow-600 text-[10px]"
+            onClick={() => onSell?.(card)}
           >
-            <Coins className={`${isMobile ? 'w-2 h-2' : 'w-3 h-3'} mr-1`} />
+            <Coins className={`${isMobile ? 'w-3 h-3' : 'w-4 h-4'} mr-1`} />
             Продать ({getCardPrice(card.rarity)})
           </Button>
         )}

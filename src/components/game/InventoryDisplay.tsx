@@ -10,7 +10,6 @@ import { useInventory } from "./inventory/useInventory";
 import { useBalanceState } from "@/hooks/useBalanceState";
 import { shopItems } from "../shop/types";
 import { Coins } from "lucide-react";
-import { useIsMobile } from "@/hooks/use-mobile";
 
 interface InventoryDisplayProps {
   inventory: Item[];
@@ -27,7 +26,6 @@ export const InventoryDisplay = ({
   const [selectedItems, setSelectedItems] = useState<Item[]>([]);
   const inventory = useInventory(initialInventory);
   const { balance, updateBalance } = useBalanceState();
-  const isMobile = useIsMobile();
 
   const getItemImage = (itemName: string) => {
     const shopItem = shopItems.find(item => item.name === itemName);
@@ -125,9 +123,7 @@ export const InventoryDisplay = ({
             groupItems(inventory).map((item) => (
               <Card 
                 key={`${item.name}-${item.type}-${item.value}`}
-                className={`p-2 bg-game-surface/80 border-game-accent backdrop-blur-sm transform transition-all duration-300 ${
-                  isMobile ? 'scale-[0.25] origin-top-left sm:scale-50' : ''
-                }`}
+                className="p-2 bg-game-surface/80 border-game-accent backdrop-blur-sm"
               >
                 <div className="flex flex-col gap-1">
                   {item.image && (
@@ -140,7 +136,7 @@ export const InventoryDisplay = ({
                     </div>
                   )}
                   <div className="flex items-center gap-1">
-                    <h4 className={`font-bold text-game-accent ${isMobile ? 'text-xs sm:text-sm' : 'text-base'}`}>
+                    <h4 className="font-bold text-game-accent text-xs">
                       {item.name} {item.count > 1 && `(${item.count})`}
                     </h4>
                   </div>
@@ -148,8 +144,8 @@ export const InventoryDisplay = ({
                     <Button 
                       onClick={() => handleUseGroupedItem(item)} 
                       variant="outline" 
-                      size={isMobile ? "sm" : "default"}
-                      className={`mt-1 ${isMobile ? 'text-[8px] py-0.5' : 'text-xs'} bg-game-surface/50 hover:bg-game-surface/70`}
+                      size="sm"
+                      className="mt-1 text-xs bg-game-surface/50 hover:bg-game-surface/70"
                     >
                       Использовать
                     </Button>
@@ -158,8 +154,8 @@ export const InventoryDisplay = ({
                     <Button
                       onClick={() => handleSellItem(item.items[0])}
                       variant="destructive"
-                      size={isMobile ? "sm" : "default"}
-                      className={`mt-1 ${isMobile ? 'text-[8px] py-0.5' : 'text-xs'}`}
+                      size="sm"
+                      className="mt-1 text-xs"
                     >
                       Продать
                     </Button>

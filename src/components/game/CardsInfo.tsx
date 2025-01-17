@@ -36,47 +36,53 @@ export const CardsInfo = () => {
 
   const renderCardInfo = (type: 'character' | 'pet') => {
     const cards = cardDatabase.filter(card => card.type === type);
-    return (
-      <div className="grid grid-cols-2 xs:grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-1 xs:gap-2">
-        {cards.map((card, index) => (
-          <TooltipProvider key={index}>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Card className="p-1 xs:p-2 bg-game-background border-game-accent hover:border-game-primary transition-all duration-300 h-full">
-                  {card.image && (
-                    <div className="w-full aspect-[3/4] mb-1 rounded-lg overflow-hidden">
-                      <img 
-                        src={card.image} 
-                        alt={card.name}
-                        className="w-full h-full object-cover"
-                      />
-                    </div>
-                  )}
-                  <h3 className="font-semibold text-game-accent text-[10px] xs:text-xs line-clamp-1">
-                    {card.name}
-                  </h3>
-                  <p className="text-gray-400 text-[8px] xs:text-[10px] line-clamp-2">
-                    {card.description}
-                  </p>
-                  {card.faction && (
-                    <div className="flex items-center gap-1 text-[8px] xs:text-[10px] text-purple-400">
-                      <Sparkles className="w-2 h-2 xs:w-3 xs:h-3" />
-                      <span className="line-clamp-1">Фракция: {card.faction}</span>
-                    </div>
-                  )}
-                </Card>
-              </TooltipTrigger>
-              <TooltipContent 
-                side="right" 
-                className="w-48 p-2 bg-game-surface border-game-accent"
-              >
-                {renderRarityStats(card.baseStats)}
-              </TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
-        ))}
-      </div>
-    );
+    const gridCols = cards.length <= 4 ? 'grid-cols-2 sm:grid-cols-4' :
+                    cards.length <= 8 ? 'grid-cols-2 sm:grid-cols-3 lg:grid-cols-4' :
+                    'grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5';
+
+    return cards.map((card, index) => (
+      <TooltipProvider key={index}>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Card className="p-2 bg-game-background border-game-accent hover:border-game-primary transition-all duration-300 h-full">
+              {card.image && (
+                <div className="w-full aspect-[3/4] mb-2 rounded-lg overflow-hidden flex items-center justify-center">
+                  <img 
+                    src={card.image} 
+                    alt={card.name}
+                    className="w-full h-full object-cover"
+                  />
+                </div>
+              )}
+              <h3 className="font-semibold text-game-accent mb-1 text-[10px] sm:text-xs">
+                {card.name}
+              </h3>
+              <p className="text-gray-400 mb-2 text-[10px] sm:text-xs line-clamp-2">
+                {card.description}
+              </p>
+              {card.faction && (
+                <div className="flex items-center gap-1 mb-2 text-[10px] sm:text-xs text-purple-400">
+                  <Sparkles className="w-2 h-2 sm:w-3 sm:h-3" />
+                  <span>Фракция: {card.faction}</span>
+                </div>
+              )}
+              <div className="grid grid-cols-2 gap-1 text-[10px] sm:text-xs">
+                <div className="text-game-secondary">Сила: {card.baseStats.power}</div>
+                <div className="text-game-secondary">Защита: {card.baseStats.defense}</div>
+                <div className="text-game-secondary">Здоровье: {card.baseStats.health}</div>
+                <div className="text-game-secondary">Магия: {card.baseStats.magic}</div>
+              </div>
+            </Card>
+          </TooltipTrigger>
+          <TooltipContent 
+            side="right" 
+            className="w-48 p-2 bg-game-surface border-game-accent"
+          >
+            {renderRarityStats(card.baseStats)}
+          </TooltipContent>
+        </Tooltip>
+      </TooltipProvider>
+    ));
   };
 
   return (
@@ -90,12 +96,16 @@ export const CardsInfo = () => {
         </TabsTrigger>
       </TabsList>
       
-      <TabsContent value="heroes" className="mt-2">
-        {renderCardInfo('character')}
+      <TabsContent value="heroes">
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-2 justify-items-center">
+          {renderCardInfo('character')}
+        </div>
       </TabsContent>
       
-      <TabsContent value="pets" className="mt-2">
-        {renderCardInfo('pet')}
+      <TabsContent value="pets">
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-2 justify-items-center">
+          {renderCardInfo('pet')}
+        </div>
       </TabsContent>
     </Tabs>
   );
