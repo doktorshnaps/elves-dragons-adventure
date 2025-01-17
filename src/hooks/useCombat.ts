@@ -14,7 +14,7 @@ export const useCombat = (
   const { toast } = useToast();
 
   const attackEnemy = (enemyId: number) => {
-    if (!isPlayerTurn) return;
+    if (!isPlayerTurn || !playerStats) return;
 
     const newOpponents = opponents.map(opponent => {
       if (opponent.id === enemyId) {
@@ -42,41 +42,57 @@ export const useCombat = (
 
     setOpponents(newOpponents);
     setIsPlayerTurn(false);
+
+    // Save battle state after player's turn
+    const battleState = localStorage.getItem('battleState');
+    if (battleState) {
+      const state = JSON.parse(battleState);
+      state.opponents = newOpponents;
+      localStorage.setItem('battleState', JSON.stringify(state));
+    }
   };
 
   const handleOpponentAttack = () => {
-    if (opponents.length > 0 && !isPlayerTurn) {
-      const randomOpponent = opponents[Math.floor(Math.random() * opponents.length)];
-      const { blockedDamage, damageToHealth, newDefense } = calculatePlayerDamage(
-        randomOpponent.power,
-        playerStats.defense
-      );
+    if (!playerStats || opponents.length === 0 || isPlayerTurn) return;
 
-      const newStats: PlayerStats = {
-        ...playerStats,
-        health: Math.max(0, playerStats.health - damageToHealth),
-        defense: newDefense
-      };
-      
-      setPlayerStats(newStats);
-      
-      let message = `${randomOpponent.name} атакует с силой ${randomOpponent.power}!`;
-      if (blockedDamage > 0) {
-        message += ` Защита блокирует ${blockedDamage} урона.`;
-      }
-      if (damageToHealth > 0) {
-        message += ` Нанесено ${damageToHealth} урона здоровью!`;
-      }
-      message += ` Защита уменьшилась на ${playerStats.defense - newDefense}.`;
-      
-      toast({
-        title: randomOpponent.isBoss ? "⚠️ Атака босса!" : "Враг атакует!",
-        description: message,
-        variant: randomOpponent.isBoss ? "destructive" : "default",
-        duration: 1000
-      });
+    const randomOpponent = opponents[Math.floor(Math.random() * opponents.length)];
+    const { blockedDamage, damageToHealth, newDefense } = calculatePlayerDamage(
+      randomOpponent.power,
+      playerStats.defense
+    );
 
-      setIsPlayerTurn(true);
+    const newStats: PlayerStats = {
+      ...playerStats,
+      health: Math.max(0, playerStats.health - damageToHealth),
+      defense: newDefense
+    };
+    
+    setPlayerStats(newStats);
+    
+    let message = `${randomOpponent.name} атакует с силой ${randomOpponent.power}!`;
+    if (blockedDamage > 0) {
+      message += ` Защита блокирует ${blockedDamage.toFixed(0)} урона.`;
+    }
+    if (damageToHealth > 0) {
+      message += ` Нанесено ${damageToHealth.toFixed(0)} урона здоровью!`;
+    }
+    message += ` Защита уменьшилась на ${(playerStats.defense - newDefense).toFixed(0)}.`;
+    
+    toast({
+      title: randomOpponent.isBoss ? "⚠️ Атака босса!" : "Враг атакует!",
+      description: message,
+      variant: randomOpponent.isBoss ? "destructive" : "default",
+      duration: 1000
+    });
+
+    setIsPlayerTurn(true);
+
+    // Save battle state after opponent's turn
+    const battleState = localStorage.getItem('battleState');
+    if (battleState) {
+      const state = JSON.parse(battleState);
+      state.playerStats = newStats;
+      localStorage.setItem('battleState', JSON.stringify(state));
     }
   };
 
