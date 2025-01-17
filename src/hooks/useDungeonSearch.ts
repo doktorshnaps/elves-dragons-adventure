@@ -15,6 +15,7 @@ export const useDungeonSearch = (balance: number) => {
   const { initializeBattleState } = useBattleStateInitializer();
 
   const rollDice = () => {
+    // Проверяем наличие активного подземелья
     const savedState = localStorage.getItem('battleState');
     if (savedState) {
       const parsedState = JSON.parse(savedState);
@@ -30,6 +31,7 @@ export const useDungeonSearch = (balance: number) => {
       }
     }
 
+    // Проверяем энергию
     if (!useEnergy()) {
       toast({
         title: "Недостаточно энергии",
@@ -39,6 +41,7 @@ export const useDungeonSearch = (balance: number) => {
       return;
     }
 
+    // Проверяем здоровье
     if (isHealthTooLow) {
       toast({
         title: "Низкое здоровье",
@@ -56,16 +59,26 @@ export const useDungeonSearch = (balance: number) => {
       setSelectedDungeon(finalDungeon);
       stopRolling();
 
-      initializeBattleState(finalDungeon, balance);
-      
-      toast({
-        title: "Подземелье найдено!",
-        description: `Вы входите в ${finalDungeon}`,
-      });
+      try {
+        const battleState = initializeBattleState(finalDungeon, balance);
+        console.log("Initialized battle state:", battleState);
+        
+        toast({
+          title: "Подземелье найдено!",
+          description: `Вы входите в ${finalDungeon}`,
+        });
 
-      setTimeout(() => {
-        navigate("/battle");
-      }, 2000);
+        setTimeout(() => {
+          navigate("/battle");
+        }, 2000);
+      } catch (error) {
+        console.error("Error initializing battle state:", error);
+        toast({
+          title: "Ошибка",
+          description: "Не удалось инициализировать подземелье. Попробуйте еще раз.",
+          variant: "destructive",
+        });
+      }
     }, 2000);
   };
 
