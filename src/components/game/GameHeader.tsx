@@ -27,15 +27,29 @@ export const GameHeader = ({
   const [showStats, setShowStats] = useState(false);
   const { toast } = useToast();
 
-  // Clear dungeon state when component unmounts (game closes)
+  // Check for active dungeon on component mount
   useEffect(() => {
-    return () => {
-      localStorage.removeItem('battleState');
-    };
+    const battleState = localStorage.getItem('battleState');
+    if (battleState) {
+      const state = JSON.parse(battleState);
+      if (state.playerStats.health > 0) {
+        // There is an active dungeon
+      }
+    }
   }, []);
 
   const handleDungeonAction = () => {
-    setShowDungeonSearch(true);
+    const battleState = localStorage.getItem('battleState');
+    if (battleState) {
+      const state = JSON.parse(battleState);
+      if (state.playerStats.health > 0) {
+        // If there's an active dungeon, navigate to battle
+        navigate('/battle');
+      }
+    } else {
+      // If no active dungeon, show dungeon search
+      setShowDungeonSearch(true);
+    }
   };
 
   return (
@@ -48,7 +62,10 @@ export const GameHeader = ({
             onClick={handleDungeonAction}
           >
             <Sword className="w-4 h-4" />
-            {isMobile ? "Подземелье" : "Поиск подземелья"}
+            {isMobile ? 
+              (battleState ? "В подземелье" : "Подземелье") : 
+              (battleState ? "Вернуться в подземелье" : "Поиск подземелья")
+            }
           </Button>
           <Button
             variant="outline"
