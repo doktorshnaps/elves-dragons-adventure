@@ -17,11 +17,11 @@ export const CardsInfo = () => {
         {rarityLevels.map((rarity) => {
           const stats = getStatsForRarity(rarity);
           return (
-            <div key={rarity} className="text-sm">
+            <div key={rarity} className="text-xs">
               <div className="font-semibold text-yellow-500 mb-1">
                 {"⭐".repeat(rarity)}
               </div>
-              <div className="grid grid-cols-2 gap-x-4 text-gray-300">
+              <div className="grid grid-cols-2 gap-x-2 text-gray-300">
                 <div>Сила: {stats.power}</div>
                 <div>Защита: {stats.defense}</div>
                 <div>Здоровье: {stats.health}</div>
@@ -41,29 +41,29 @@ export const CardsInfo = () => {
         <TooltipProvider key={index}>
           <Tooltip>
             <TooltipTrigger asChild>
-              <Card className="p-4 bg-game-background border-game-accent hover:border-game-primary transition-all duration-300">
+              <Card className="p-2 bg-game-background border-game-accent hover:border-game-primary transition-all duration-300 w-full max-w-[250px]">
                 {card.image && (
-                  <div className="w-full aspect-square mb-4 rounded-lg overflow-hidden">
+                  <div className="w-full h-32 mb-2 rounded-lg overflow-hidden flex items-center justify-center">
                     <img 
                       src={card.image} 
                       alt={card.name}
-                      className="w-full h-full object-cover"
+                      className="w-full h-full object-contain"
                     />
                   </div>
                 )}
-                <h3 className={`font-semibold text-game-accent mb-2 ${isMobile ? 'text-sm' : ''}`}>
+                <h3 className="font-semibold text-game-accent mb-1 text-xs">
                   {card.name}
                 </h3>
-                <p className={`text-gray-400 mb-3 ${isMobile ? 'text-xs' : 'text-sm'}`}>
+                <p className="text-gray-400 mb-2 text-xs line-clamp-2">
                   {card.description}
                 </p>
                 {card.faction && (
-                  <div className={`flex items-center gap-1 mb-3 ${isMobile ? 'text-xs' : 'text-sm'} text-purple-400`}>
-                    <Sparkles className={`${isMobile ? 'w-3 h-3' : 'w-4 h-4'}`} />
+                  <div className="flex items-center gap-1 mb-2 text-xs text-purple-400">
+                    <Sparkles className="w-3 h-3" />
                     <span>Фракция: {card.faction}</span>
                   </div>
                 )}
-                <div className={`grid grid-cols-2 gap-2 ${isMobile ? 'text-xs' : 'text-sm'}`}>
+                <div className="grid grid-cols-2 gap-1 text-xs">
                   <div className="text-game-secondary">Сила: {card.baseStats.power}</div>
                   <div className="text-game-secondary">Защита: {card.baseStats.defense}</div>
                   <div className="text-game-secondary">Здоровье: {card.baseStats.health}</div>
@@ -73,7 +73,7 @@ export const CardsInfo = () => {
             </TooltipTrigger>
             <TooltipContent 
               side="right" 
-              className="w-64 p-4 bg-game-surface border-game-accent"
+              className="w-48 p-2 bg-game-surface border-game-accent"
             >
               {renderRarityStats(card.baseStats)}
             </TooltipContent>
@@ -84,7 +84,7 @@ export const CardsInfo = () => {
 
   return (
     <Tabs defaultValue="heroes" className="w-full">
-      <TabsList className={`grid w-full grid-cols-2 bg-game-surface ${isMobile ? 'text-sm' : ''}`}>
+      <TabsList className="grid w-full grid-cols-2 bg-game-surface text-xs">
         <TabsTrigger value="heroes" className="text-game-accent">
           Герои
         </TabsTrigger>
@@ -94,13 +94,13 @@ export const CardsInfo = () => {
       </TabsList>
       
       <TabsContent value="heroes">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-2 justify-items-center">
           {renderCardInfo('character')}
         </div>
       </TabsContent>
       
       <TabsContent value="pets">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-2 justify-items-center">
           {renderCardInfo('pet')}
         </div>
       </TabsContent>
