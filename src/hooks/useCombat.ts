@@ -14,6 +14,9 @@ export const useCombat = (
   const { toast } = useToast();
 
   const attackEnemy = (enemyId: number) => {
+    const battleState = localStorage.getItem('battleState');
+    if (!battleState) return;
+
     if (!isPlayerTurn || !playerStats) return;
 
     const newOpponents = opponents.map(opponent => {
@@ -43,16 +46,16 @@ export const useCombat = (
     setOpponents(newOpponents);
     setIsPlayerTurn(false);
 
-    // Save battle state after player's turn
-    const battleState = localStorage.getItem('battleState');
-    if (battleState) {
-      const state = JSON.parse(battleState);
-      state.opponents = newOpponents;
-      localStorage.setItem('battleState', JSON.stringify(state));
-    }
+    // Сохраняем состояние после хода игрока
+    const state = JSON.parse(battleState);
+    state.opponents = newOpponents;
+    localStorage.setItem('battleState', JSON.stringify(state));
   };
 
   const handleOpponentAttack = () => {
+    const battleState = localStorage.getItem('battleState');
+    if (!battleState) return;
+
     if (!playerStats || opponents.length === 0 || isPlayerTurn) return;
 
     const randomOpponent = opponents[Math.floor(Math.random() * opponents.length)];
@@ -87,13 +90,10 @@ export const useCombat = (
 
     setIsPlayerTurn(true);
 
-    // Save battle state after opponent's turn
-    const battleState = localStorage.getItem('battleState');
-    if (battleState) {
-      const state = JSON.parse(battleState);
-      state.playerStats = newStats;
-      localStorage.setItem('battleState', JSON.stringify(state));
-    }
+    // Сохраняем состояние после хода противника
+    const state = JSON.parse(battleState);
+    state.playerStats = newStats;
+    localStorage.setItem('battleState', JSON.stringify(state));
   };
 
   return {

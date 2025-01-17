@@ -41,51 +41,71 @@ const Battle = () => {
   }, []);
 
   useEffect(() => {
-    if (!isPlayerTurn) {
+    if (!isPlayerTurn && playerStats?.health > 0) {
       handleOpponentAttack();
     }
-  }, [isPlayerTurn, handleOpponentAttack]);
+  }, [isPlayerTurn, handleOpponentAttack, playerStats?.health]);
 
   useEffect(() => {
-    if (!selectedDungeon) {
+    const battleState = localStorage.getItem('battleState');
+    if (!battleState) {
       toast({
         title: "Ошибка",
         description: "Подземелье не выбрано. Вернитесь на главную страницу и выберите подземелье.",
         variant: "destructive"
       });
       navigate("/game");
+      return;
+    }
+
+    const state = JSON.parse(battleState);
+    if (!state.selectedDungeon || state.playerStats.health <= 0) {
+      localStorage.removeItem('battleState');
+      navigate("/game");
     }
   }, [selectedDungeon, navigate, toast]);
 
   const handleExitDungeon = () => {
-    localStorage.removeItem('battleState');
-    toast({
-      title: "Подземелье покинуто",
-      description: `Вы покинули ${selectedDungeon}. Весь прогресс сброшен.`,
-    });
+    const battleState = localStorage.getItem('battleState');
+    if (battleState) {
+      const state = JSON.parse(battleState);
+      if (state.playerStats.health > 0) {
+        toast({
+          title: "Подземелье покинуто",
+          description: `Вы покинули ${selectedDungeon}. Весь прогресс сброшен.`,
+        });
+      }
+      localStorage.removeItem('battleState');
+    }
     navigate("/game");
   };
 
   const handleBackToGame = () => {
-    navigate("/game");
+    const battleState = localStorage.getItem('battleState');
+    if (battleState) {
+      const state = JSON.parse(battleState);
+      if (state.playerStats.health > 0) {
+        navigate("/game");
+      } else {
+        localStorage.removeItem('battleState');
+        navigate("/game");
+      }
+    } else {
+      navigate("/game");
+    }
   };
 
   const showNextLevelButton = opponents.length === 0 && playerStats?.health > 0;
 
   useEffect(() => {
     if (playerStats?.health <= 0) {
-      const savedState = localStorage.getItem('battleState');
-      if (savedState) {
-        const state = JSON.parse(savedState);
-        state.playerStats.health = state.playerStats.maxHealth;
-        localStorage.setItem('battleState', JSON.stringify(state));
-      }
-
       toast({
         title: "Поражение!",
         description: "Ваш герой пал в бою. Здоровье восстановлено.",
         variant: "destructive"
       });
+      
+      localStorage.removeItem('battleState');
       
       setTimeout(() => {
         navigate("/game");
