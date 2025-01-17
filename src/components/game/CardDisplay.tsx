@@ -17,12 +17,10 @@ export const CardDisplay = ({ card, showSellButton, onSell, className = "" }: Ca
   const isMobile = useIsMobile();
 
   return (
-    <Card 
-      className={`w-full aspect-[3/4] bg-game-background border-game-accent hover:border-game-primary transition-all duration-300 ${className}`}
-    >
-      <div className="h-full p-3 flex flex-col">
+    <Card className={`p-3 bg-game-background border-game-accent hover:border-game-primary transition-all duration-300 ${className}`}>
+      <div className="flex flex-col gap-1.5">
         {card.image && (
-          <div className="w-full aspect-square mb-2 rounded-lg overflow-hidden flex-shrink-0">
+          <div className="w-full aspect-square mb-2 rounded-lg overflow-hidden">
             <img 
               src={card.image} 
               alt={card.name}
@@ -31,60 +29,54 @@ export const CardDisplay = ({ card, showSellButton, onSell, className = "" }: Ca
           </div>
         )}
         
-        <div className="flex-grow flex flex-col justify-between">
-          <div>
-            <div className="flex justify-between items-start">
-              <h3 className={`font-semibold text-game-accent ${isMobile ? 'text-sm' : ''}`}>
-                {card.name} ({card.type === 'character' ? 'Герой' : 'Питомец'})
-              </h3>
-              <span className={`text-yellow-500 ${isMobile ? 'text-xs' : 'text-sm'}`}>
-                {getRarityLabel(card.rarity)}
-              </span>
-            </div>
+        <div className="flex justify-between items-start">
+          <h3 className={`font-semibold text-game-accent ${isMobile ? 'text-sm' : ''}`}>
+            {card.name} ({card.type === 'character' ? 'Герой' : 'Питомец'})
+          </h3>
+          <span className={`text-yellow-500 ${isMobile ? 'text-xs' : 'text-sm'}`}>
+            {getRarityLabel(card.rarity)}
+          </span>
+        </div>
 
-            {card.faction && (
-              <div className={`flex items-center gap-1 ${isMobile ? 'text-xs' : 'text-sm'} text-purple-400`}>
-                <Sparkles className={`${isMobile ? 'w-3 h-3' : 'w-4 h-4'}`} />
-                <span>{card.faction}</span>
-              </div>
-            )}
+        {card.faction && (
+          <div className={`flex items-center gap-1 ${isMobile ? 'text-xs' : 'text-sm'} text-purple-400`}>
+            <Sparkles className={`${isMobile ? 'w-3 h-3' : 'w-4 h-4'}`} />
+            <span>{card.faction}</span>
           </div>
-
-          <div className="mt-auto">
-            <div className={`flex gap-3 ${isMobile ? 'text-xs' : 'text-sm'} text-gray-400`}>
-              <div className="flex items-center gap-1">
-                <Heart className={`${isMobile ? 'w-3 h-3' : 'w-4 h-4'} text-red-500`} />
-                <span>{card.health}</span>
-              </div>
-              <div className="flex items-center gap-1">
-                <Sword className={`${isMobile ? 'w-3 h-3' : 'w-4 h-4'}`} />
-                <span>{card.power}</span>
-              </div>
-              <div className="flex items-center gap-1">
-                <Shield className={`${isMobile ? 'w-3 h-3' : 'w-4 h-4'}`} />
-                <span>{card.defense}</span>
-              </div>
-            </div>
-
-            {card.magicResistance && (
-              <div className={`text-blue-400 ${isMobile ? 'text-xs' : 'text-sm'}`}>
-                Защита от {card.magicResistance.type} магии: {card.magicResistance.value}%
-              </div>
-            )}
-
-            {showSellButton && (
-              <Button
-                variant="outline"
-                size={isMobile ? "sm" : "default"}
-                className="mt-2 w-full text-yellow-500 hover:text-yellow-600 text-xs"
-                onClick={() => onSell?.(card)}
-              >
-                <Coins className={`${isMobile ? 'w-3 h-3' : 'w-4 h-4'} mr-1`} />
-                Продать ({getCardPrice(card.rarity)})
-              </Button>
-            )}
+        )}
+        
+        <div className={`flex gap-3 ${isMobile ? 'text-xs' : 'text-sm'} text-gray-400`}>
+          <div className="flex items-center gap-1">
+            <Heart className={`${isMobile ? 'w-3 h-3' : 'w-4 h-4'} text-red-500`} />
+            <span>{card.health}</span>
+          </div>
+          <div className="flex items-center gap-1">
+            <Sword className={`${isMobile ? 'w-3 h-3' : 'w-4 h-4'}`} />
+            <span>{card.power}</span>
+          </div>
+          <div className="flex items-center gap-1">
+            <Shield className={`${isMobile ? 'w-3 h-3' : 'w-4 h-4'}`} />
+            <span>{card.defense}</span>
           </div>
         </div>
+
+        {card.magicResistance && (
+          <div className={`text-blue-400 ${isMobile ? 'text-xs' : 'text-sm'}`}>
+            Защита от {card.magicResistance.type} магии: {card.magicResistance.value}%
+          </div>
+        )}
+
+        {showSellButton && (
+          <Button
+            variant="outline"
+            size={isMobile ? "sm" : "default"}
+            className="mt-1 text-yellow-500 hover:text-yellow-600 text-xs"
+            onClick={() => onSell?.(card)}
+          >
+            <Coins className={`${isMobile ? 'w-3 h-3' : 'w-4 h-4'} mr-1`} />
+            Продать ({getCardPrice(card.rarity)})
+          </Button>
+        )}
       </div>
     </Card>
   );
