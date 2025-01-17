@@ -5,6 +5,7 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { getStatsForRarity } from "@/utils/cardUtils";
 import { Rarity } from "@/types/cards";
+import { Sparkles } from "lucide-react";
 
 export const CardsInfo = () => {
   const isMobile = useIsMobile();
@@ -41,12 +42,27 @@ export const CardsInfo = () => {
           <Tooltip>
             <TooltipTrigger asChild>
               <Card className="p-4 bg-game-background border-game-accent hover:border-game-primary transition-all duration-300">
+                {card.image && (
+                  <div className="w-full aspect-square mb-4 rounded-lg overflow-hidden">
+                    <img 
+                      src={card.image} 
+                      alt={card.name}
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
+                )}
                 <h3 className={`font-semibold text-game-accent mb-2 ${isMobile ? 'text-sm' : ''}`}>
                   {card.name}
                 </h3>
                 <p className={`text-gray-400 mb-3 ${isMobile ? 'text-xs' : 'text-sm'}`}>
                   {card.description}
                 </p>
+                {card.faction && (
+                  <div className={`flex items-center gap-1 mb-3 ${isMobile ? 'text-xs' : 'text-sm'} text-purple-400`}>
+                    <Sparkles className={`${isMobile ? 'w-3 h-3' : 'w-4 h-4'}`} />
+                    <span>Фракция: {card.faction}</span>
+                  </div>
+                )}
                 <div className={`grid grid-cols-2 gap-2 ${isMobile ? 'text-xs' : 'text-sm'}`}>
                   <div className="text-game-secondary">Сила: {card.baseStats.power}</div>
                   <div className="text-game-secondary">Защита: {card.baseStats.defense}</div>
