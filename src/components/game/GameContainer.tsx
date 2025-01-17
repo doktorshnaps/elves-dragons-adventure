@@ -21,37 +21,22 @@ export const GameContainer = () => {
   const isMobile = useIsMobile();
   const { toast } = useToast();
   const { balance, updateBalance } = useBalanceState();
-  const [showDungeonSearch, setShowDungeonSearch] = useState(false);
+  const [showDungeonSearch, setShowDungeonSearch] = useState(true); // Set to true by default
   const [showShop, setShowShop] = useState(false);
-  const [hasActiveDungeon, setHasActiveDungeon] = useState(() => {
-    const savedState = localStorage.getItem('battleState');
-    if (savedState) {
-      const state = JSON.parse(savedState);
-      return state.playerStats && state.playerStats.health > 0;
-    }
-    return false;
-  });
+  const [hasActiveDungeon, setHasActiveDungeon] = useState(false);
   const [cards, setCards] = useState<Card[]>(() => {
     const savedCards = localStorage.getItem('gameCards');
     return savedCards ? JSON.parse(savedCards) : [];
   });
 
+  // Clear dungeon state when component unmounts
   useEffect(() => {
-    const checkDungeonState = () => {
-      const savedState = localStorage.getItem('battleState');
-      if (savedState) {
-        const state = JSON.parse(savedState);
-        setHasActiveDungeon(state.playerStats && state.playerStats.health > 0);
-      } else {
-        setHasActiveDungeon(false);
-      }
-    };
-
-    checkDungeonState();
-    window.addEventListener('storage', checkDungeonState);
-    
     return () => {
-      window.removeEventListener('storage', checkDungeonState);
+      localStorage.removeItem('battleState');
+      toast({
+        title: "Игра закрыта",
+        description: "Подземелье автоматически завершено",
+      });
     };
   }, []);
 

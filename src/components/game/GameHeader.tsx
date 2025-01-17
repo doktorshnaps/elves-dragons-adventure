@@ -3,7 +3,7 @@ import { Sword, ShoppingCart, BarChart2 } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { TeamStats as TeamStatsType } from "@/types/cards";
 import { useNavigate } from "react-router-dom";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { TeamStatsModal } from "./TeamStatsModal";
 import { useToast } from "@/hooks/use-toast";
 
@@ -27,24 +27,16 @@ export const GameHeader = ({
   const [showStats, setShowStats] = useState(false);
   const { toast } = useToast();
 
+  // Clear dungeon state when component unmounts (game closes)
+  useEffect(() => {
+    return () => {
+      localStorage.removeItem('battleState');
+    };
+  }, []);
+
   const handleDungeonAction = () => {
-    const savedState = localStorage.getItem('battleState');
-    if (hasActiveDungeon && savedState) {
-      const state = JSON.parse(savedState);
-      if (state.selectedDungeon) {
-        navigate('/battle');
-      } else {
-        // Если подземелье не выбрано, сбрасываем состояние
-        localStorage.removeItem('battleState');
-        setShowDungeonSearch(true);
-        toast({
-          title: "Подземелье не найдено",
-          description: "Выберите новое подземелье для входа",
-        });
-      }
-    } else {
-      setShowDungeonSearch(true);
-    }
+    // Always allow searching for a new dungeon
+    setShowDungeonSearch(true);
   };
 
   return (
@@ -57,10 +49,7 @@ export const GameHeader = ({
             onClick={handleDungeonAction}
           >
             <Sword className="w-4 h-4" />
-            {hasActiveDungeon 
-              ? (isMobile ? "В подземелье" : "Вернуться в подземелье")
-              : (isMobile ? "Подземелье" : "Поиск подземелья")
-            }
+            {isMobile ? "Подземелье" : "Поиск подземелья"}
           </Button>
           <Button
             variant="outline"
