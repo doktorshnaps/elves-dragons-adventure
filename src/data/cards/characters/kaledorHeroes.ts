@@ -12,7 +12,7 @@ export const kaledorHeroes: CardInfo[] = [
       health: 10,
       magic: 0
     },
-    image: "/lovable-uploads/d29bf397-b84f-4816-b1d9-6b18edb2aac3.png"
+    image: "/lovable-uploads/75a51647-5c73-4d22-b782-6d82d04f5eb9.png"
   },
   {
     name: "Страж",
@@ -25,7 +25,7 @@ export const kaledorHeroes: CardInfo[] = [
       health: 12,
       magic: 0
     },
-    image: "/lovable-uploads/a28d8a2a-1aee-4bbe-a3e1-77a8b37dc8ef.png"
+    image: "/lovable-uploads/27bfb166-cce1-4840-8b37-026b6d812cbd.png"
   },
   {
     name: "Ветеран",
@@ -38,7 +38,7 @@ export const kaledorHeroes: CardInfo[] = [
       health: 15,
       magic: 2
     },
-    image: "/lovable-uploads/e920f28f-c878-4ded-b693-8d82bddce69d.png"
+    image: "/lovable-uploads/26305beb-4c89-452d-8b34-cbde187f2497.png"
   },
   {
     name: "Маг",
@@ -51,7 +51,7 @@ export const kaledorHeroes: CardInfo[] = [
       health: 10,
       magic: 10
     },
-    image: "/lovable-uploads/6f8d5363-7b2f-4152-b20b-1ac575aab8a5.png"
+    image: "/lovable-uploads/3ab41e17-273b-4ecd-bb6b-d6727551564e.png"
   },
   {
     name: "Мастер Целитель",
@@ -64,7 +64,7 @@ export const kaledorHeroes: CardInfo[] = [
       health: 12,
       magic: 9
     },
-    image: "/lovable-uploads/c97ff70c-f816-41ed-95d7-6ae47af5dfed.png"
+    image: "/lovable-uploads/b0a69808-b4fa-4ef2-aa16-12aa8cece3fe.png"
   },
   {
     name: "Защитник",
@@ -77,7 +77,7 @@ export const kaledorHeroes: CardInfo[] = [
       health: 15,
       magic: 0
     },
-    image: "/lovable-uploads/aefc7995-4fc9-459a-8c89-b648a2799937.png"
+    image: "/lovable-uploads/bef40c5e-2e90-4934-ac3c-e16d7a0f2377.png"
   },
   {
     name: "Ветеран Защитник",
@@ -90,7 +90,7 @@ export const kaledorHeroes: CardInfo[] = [
       health: 18,
       magic: 2
     },
-    image: "/lovable-uploads/a983c8e3-bb18-4d44-b5bd-19441bf40f8f.png"
+    image: "/lovable-uploads/848af0c1-079b-4f39-aad4-4ba799447f5a.png"
   },
   {
     name: "Стратег",
@@ -103,7 +103,7 @@ export const kaledorHeroes: CardInfo[] = [
       health: 14,
       magic: 6
     },
-    image: "/lovable-uploads/bc24efd6-6a0c-45fe-a823-e610ee6540eb.png"
+    image: "/lovable-uploads/cacd8d59-f523-4ae1-898e-51cb02997a09.png"
   },
   {
     name: "Верховный Стратег",
@@ -116,6 +116,6 @@ export const kaledorHeroes: CardInfo[] = [
       health: 16,
       magic: 8
     },
-    image: "/lovable-uploads/ebf85dda-c79b-4350-80c2-65fde21b31ad.png"
+    image: "/lovable-uploads/049f720d-e490-4c41-a2ad-d5e962616e62.png"
   }
 ];
