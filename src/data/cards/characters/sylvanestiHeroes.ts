@@ -12,7 +12,7 @@ export const sylvanestiHeroes: CardInfo[] = [
       health: 8,
       magic: 2
     },
-    image: "/lovable-uploads/d29bf397-b84f-4816-b1d9-6b18edb2aac3.png"
+    image: "/lovable-uploads/1f4e533a-06b4-4168-8645-92c4dfcc0f83.png"
   },
   {
     name: "Страж",
@@ -25,7 +25,7 @@ export const sylvanestiHeroes: CardInfo[] = [
       health: 10,
       magic: 2
     },
-    image: "/lovable-uploads/a28d8a2a-1aee-4bbe-a3e1-77a8b37dc8ef.png"
+    image: "/lovable-uploads/204989a1-fd9e-46a4-bb1f-7a37c2003992.png"
   },
   {
     name: "Ветеран",
@@ -38,7 +38,7 @@ export const sylvanestiHeroes: CardInfo[] = [
       health: 12,
       magic: 3
     },
-    image: "/lovable-uploads/e920f28f-c878-4ded-b693-8d82bddce69d.png"
+    image: "/lovable-uploads/8315d200-d3f6-4f47-a192-ae3b8bbe256c.png"
   },
   {
     name: "Маг",
@@ -51,7 +51,7 @@ export const sylvanestiHeroes: CardInfo[] = [
       health: 8,
       magic: 12
     },
-    image: "/lovable-uploads/6f8d5363-7b2f-4152-b20b-1ac575aab8a5.png"
+    image: "/lovable-uploads/352e8041-3c0d-47b6-a1a0-17fdcc215e39.png"
   },
   {
     name: "Мастер Целитель",
@@ -64,7 +64,7 @@ export const sylvanestiHeroes: CardInfo[] = [
       health: 10,
       magic: 10
     },
-    image: "/lovable-uploads/c97ff70c-f816-41ed-95d7-6ae47af5dfed.png"
+    image: "/lovable-uploads/51123039-7d7c-4e6e-af8a-fe4af77daeae.png"
   },
   {
     name: "Защитник",
@@ -77,7 +77,7 @@ export const sylvanestiHeroes: CardInfo[] = [
       health: 13,
       magic: 2
     },
-    image: "/lovable-uploads/aefc7995-4fc9-459a-8c89-b648a2799937.png"
+    image: "/lovable-uploads/f4d36e40-0f18-44c6-be2f-00485663b1f4.png"
   },
   {
     name: "Ветеран Защитник",
@@ -90,7 +90,7 @@ export const sylvanestiHeroes: CardInfo[] = [
       health: 15,
       magic: 3
     },
-    image: "/lovable-uploads/a983c8e3-bb18-4d44-b5bd-19441bf40f8f.png"
+    image: "/lovable-uploads/9d1badd7-dc8d-483f-ab61-cad6de839eda.png"
   },
   {
     name: "Стратег",
@@ -103,7 +103,7 @@ export const sylvanestiHeroes: CardInfo[] = [
       health: 12,
       magic: 8
     },
-    image: "/lovable-uploads/bc24efd6-6a0c-45fe-a823-e610ee6540eb.png"
+    image: "/lovable-uploads/1935aa54-a23e-4c99-84bf-dff3404feb2d.png"
   },
   {
     name: "Верховный Стратег",
@@ -116,6 +116,6 @@ export const sylvanestiHeroes: CardInfo[] = [
       health: 14,
       magic: 10
     },
-    image: "/lovable-uploads/ebf85dda-c79b-4350-80c2-65fde21b31ad.png"
+    image: "/lovable-uploads/981732c0-c6c4-41bf-9eff-e1dc31c3e000.png"
   }
 ];
