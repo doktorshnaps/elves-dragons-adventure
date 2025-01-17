@@ -5,9 +5,11 @@ import { useToast } from "@/hooks/use-toast";
 import { getCardPrice, upgradeCard } from "@/utils/cardUtils";
 import { Button } from "@/components/ui/button";
 import { ArrowUpCircle } from "lucide-react";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 export const TeamCards = () => {
   const { toast } = useToast();
+  const isMobile = useIsMobile();
   const [cards, setCards] = useState<CardType[]>(() => {
     const savedCards = localStorage.getItem('gameCards');
     return savedCards ? JSON.parse(savedCards) : [];
@@ -87,7 +89,6 @@ export const TeamCards = () => {
       return;
     }
 
-    // Удаляем старые карты и добавляем новую
     const newCards = [
       ...cards.filter(c => !selectedCards.find(sc => sc.id === c.id)),
       upgradedCard
@@ -127,7 +128,9 @@ export const TeamCards = () => {
         </div>
       )}
       
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+      <div className={`grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-2 sm:gap-4 ${
+        isMobile ? 'scale-[0.25] origin-top-left sm:scale-50 min-h-[400px]' : ''
+      }`}>
         {cards.length > 0 ? (
           cards.map((card) => (
             <div
