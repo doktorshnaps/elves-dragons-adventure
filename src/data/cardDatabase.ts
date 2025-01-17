@@ -6,7 +6,6 @@ import { ellenarHeroes } from './cards/characters/ellenarHeroes';
 import { telerionHeroes } from './cards/characters/telerionHeroes';
 import { aelantirHeroes } from './cards/characters/aelantirHeroes';
 import { liorasHeroes } from './cards/characters/liorasHeroes';
-import { basePets } from './cards/pets/basePets';
 import { kaledorDragons } from './cards/pets/DragonsKaledor';
 import { sylvanestiDragons } from './cards/pets/DragonsSylvanesti';
 import { faelinDragons } from './cards/pets/DragonsFaelin';
@@ -23,7 +22,6 @@ export const cardDatabase: CardInfo[] = [
   ...telerionHeroes,
   ...aelantirHeroes,
   ...liorasHeroes,
-  ...basePets,
   ...kaledorDragons,
   ...sylvanestiDragons,
   ...faelinDragons,
