@@ -12,7 +12,7 @@ export const telerionDragons: CardInfo[] = [
       health: 16,
       magic: 8
     },
-    image: "/lovable-uploads/5aa39f4e-18e2-4514-b338-2871069ebde3.png"
+    image: "/lovable-uploads/8a7f1faf-6eb6-4516-9a43-88db6cc83016.png"
   },
   {
     name: "Необычный теневой дракон",
@@ -25,7 +25,7 @@ export const telerionDragons: CardInfo[] = [
       health: 20,
       magic: 10
     },
-    image: "/lovable-uploads/5b20f6f0-2fe4-4fd1-8b44-9e2f6d1e9fe2.png"
+    image: "/lovable-uploads/755cdb02-5979-4591-9cf1-d9b72af904df.png"
   },
   {
     name: "Редкий теневой дракон",
@@ -37,7 +37,8 @@ export const telerionDragons: CardInfo[] = [
       defense: 12,
       health: 24,
       magic: 12
-    }
+    },
+    image: "/lovable-uploads/fa290afb-f4ef-445f-b1e1-65ecf8b90bc2.png"
   },
   {
     name: "Эпический теневой дракон",
@@ -49,7 +50,8 @@ export const telerionDragons: CardInfo[] = [
       defense: 15,
       health: 30,
       magic: 15
-    }
+    },
+    image: "/lovable-uploads/c1ade134-8b22-40f8-a928-a1e07f4f0395.png"
   },
   {
     name: "Легендарный теневой дракон",
@@ -61,7 +63,8 @@ export const telerionDragons: CardInfo[] = [
       defense: 18,
       health: 36,
       magic: 18
-    }
+    },
+    image: "/lovable-uploads/14e70f3f-fbe9-4d39-bbe7-707940e520b3.png"
   },
   {
     name: "Мифический теневой дракон",
@@ -73,7 +76,8 @@ export const telerionDragons: CardInfo[] = [
       defense: 22,
       health: 44,
       magic: 22
-    }
+    },
+    image: "/lovable-uploads/937ab950-dfce-4271-aeea-64516080f84f.png"
   },
   {
     name: "Этернал теневой дракон",
@@ -85,7 +89,8 @@ export const telerionDragons: CardInfo[] = [
       defense: 26,
       health: 52,
       magic: 26
-    }
+    },
+    image: "/lovable-uploads/50e7d6a4-063e-4d5d-859b-87a1eedd4e5e.png"
   },
   {
     name: "Империал теневой дракон",
@@ -97,7 +102,8 @@ export const telerionDragons: CardInfo[] = [
       defense: 30,
       health: 60,
       magic: 30
-    }
+    },
+    image: "/lovable-uploads/7cbb0d6f-8c9e-4ec2-9e47-1942e3d6750c.png"
   },
   {
     name: "Титан теневой дракон",
@@ -109,6 +115,7 @@ export const telerionDragons: CardInfo[] = [
       defense: 35,
       health: 70,
       magic: 35
-    }
+    },
+    image: "/lovable-uploads/7358b58a-6645-4d85-ac12-696fdf68e2f7.png"
   }
 ];
