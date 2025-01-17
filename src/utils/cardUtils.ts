@@ -34,7 +34,7 @@ const getMagicResistanceByFaction = (faction: Faction): MagicResistance => {
 };
 
 export const getStatsForRarity = (rarity: Rarity) => {
-  const multiplier = Math.pow(1.5, rarity - 1);
+  const multiplier = Math.pow(2, rarity - 1);
   
   return {
     power: Math.floor(5 * multiplier),
@@ -57,7 +57,20 @@ export const getRarityDropRates = () => {
   };
 };
 
-export const getRarityChance = (): Rarity => {
+const getPetRarityChance = (): Rarity => {
+  const rand = Math.random() * 100;
+  if (rand < 85) return 1;  // Обычный
+  if (rand < 60) return 2;  // Необычный
+  if (rand < 45) return 3;  // Редкий
+  if (rand < 12) return 4;  // Эпический
+  if (rand < 4) return 5;   // Легендарный
+  if (rand < 2) return 6;   // Мифический
+  if (rand < 1) return 7;   // Этернал
+  if (rand < 0.5) return 8; // Империал
+  return 8;                 // Титан (0.1%)
+};
+
+const getHeroRarityChance = (): Rarity => {
   const rand = Math.random() * 100;
   if (rand < 40) return 1;
   if (rand < 65) return 2;
@@ -69,19 +82,17 @@ export const getRarityChance = (): Rarity => {
   return 8;
 };
 
+export const getRarityChance = (type: CardType): Rarity => {
+  return type === 'pet' ? getPetRarityChance() : getHeroRarityChance();
+};
+
 export const generateCard = (type: CardType): Card => {
-  // Фильтруем карты по типу из базы данных
   const availableCards = cardDatabase.filter(card => card.type === type);
-  
-  // Выбираем случайную карту из доступных
   const selectedCard = availableCards[Math.floor(Math.random() * availableCards.length)];
+  const rarity = getRarityChance(type);
   
-  // Определяем редкость карты
-  const rarity = getRarityChance();
-  
-  // Получаем базовые характеристики из карты и умножаем на множитель редкости
   const baseStats = selectedCard.baseStats;
-  const multiplier = Math.pow(1.5, rarity - 1);
+  const multiplier = Math.pow(2, rarity - 1);
   
   const stats = {
     power: Math.floor(baseStats.power * multiplier),
@@ -90,7 +101,6 @@ export const generateCard = (type: CardType): Card => {
     magic: Math.floor(baseStats.magic * multiplier)
   };
   
-  // Используем фракцию из базы данных
   const faction = selectedCard.faction as Faction;
   const magicResistance = faction ? getMagicResistanceByFaction(faction) : undefined;
   
@@ -131,7 +141,6 @@ export const upgradeCard = (card1: Card, card2: Card): Card | null => {
 
   const newRarity = (card1.rarity + 1) as Rarity;
   
-  // Получаем базовую карту из базы данных
   const baseCard = cardDatabase.find(card => 
     card.name === card1.name && 
     card.type === card1.type && 
@@ -140,8 +149,7 @@ export const upgradeCard = (card1: Card, card2: Card): Card | null => {
   
   if (!baseCard) return null;
   
-  // Применяем множитель редкости к базовым характеристикам
-  const multiplier = Math.pow(1.5, newRarity - 1);
+  const multiplier = Math.pow(2, newRarity - 1);
   const stats = {
     power: Math.floor(baseCard.baseStats.power * multiplier),
     defense: Math.floor(baseCard.baseStats.defense * multiplier),
