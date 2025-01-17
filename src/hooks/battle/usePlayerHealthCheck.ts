@@ -16,7 +16,7 @@ export const usePlayerHealthCheck = (playerStats: PlayerStats | null) => {
       if (state.playerStats?.health <= 0) {
         toast({
           title: "Поражение!",
-          description: "Ваш герой пал в бою. Подземелье закрыто.",
+          description: "Ваш герой пал в бою.",
           variant: "destructive",
           duration: 2000
         });
