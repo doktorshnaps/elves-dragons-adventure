@@ -1,17 +1,17 @@
-import { useNavigate } from 'react-router-dom';
-import { useToast } from '@/hooks/use-toast';
 import { usePlayerState } from './usePlayerState';
 import { useInventoryState } from './useInventoryState';
 import { useBalanceState } from './useBalanceState';
 import { useOpponentsState } from './useOpponentsState';
 import { useCombat } from './useCombat';
+import { useToast } from './use-toast';
 import { Item } from '@/components/battle/Inventory';
 import { useEffect } from 'react';
 import { calculateTeamStats } from '@/utils/cardUtils';
-import { generateDungeonOpponents } from '@/dungeons/dungeonManager';
+import { usePlayerHealthCheck } from './battle/usePlayerHealthCheck';
+import { useDungeonLevelManager } from './battle/useDungeonLevelManager';
+import { useBattleStateManager } from './battle/useBattleStateManager';
 
 export const useBattleState = (initialLevel: number = 1) => {
-  const navigate = useNavigate();
   const { toast } = useToast();
   
   const savedState = localStorage.getItem('battleState');
@@ -45,29 +45,7 @@ export const useBattleState = (initialLevel: number = 1) => {
     updateInventory
   );
 
-  useEffect(() => {
-    const checkBattleState = () => {
-      const currentState = localStorage.getItem('battleState');
-      if (!currentState) return;
-
-      const state = JSON.parse(currentState);
-      if (state.playerStats?.health <= 0) {
-        toast({
-          title: "Поражение!",
-          description: "Ваш герой пал в бою. Подземелье закрыто.",
-          variant: "destructive",
-          duration: 2000
-        });
-        
-        localStorage.removeItem('battleState');
-        setTimeout(() => {
-          navigate('/game');
-        }, 2000);
-      }
-    };
-
-    checkBattleState();
-  }, [playerStats?.health, navigate, toast]);
+  usePlayerHealthCheck(playerStats);
 
   const { isPlayerTurn, attackEnemy, handleOpponentAttack } = useCombat(
     playerStats,
@@ -76,6 +54,10 @@ export const useBattleState = (initialLevel: number = 1) => {
     setOpponents,
     handleOpponentDefeat
   );
+
+  const { handleNextLevel } = useDungeonLevelManager(playerStats, initialState);
+
+  useBattleStateManager(playerStats, opponents, initialState, inventory, balance);
 
   useEffect(() => {
     if (opponents && opponents.length === 0 && playerStats?.health > 0) {
@@ -86,68 +68,6 @@ export const useBattleState = (initialLevel: number = 1) => {
       });
     }
   }, [opponents, playerStats?.health, toast]);
-
-  const handleNextLevel = () => {
-    if (!playerStats || playerStats.health <= 0) return;
-
-    const nextLevel = initialState.currentDungeonLevel + 1;
-    const selectedDungeon = initialState.selectedDungeon;
-    
-    if (!selectedDungeon) {
-      toast({
-        title: "Ошибка",
-        description: "Подземелье не выбрано",
-        variant: "destructive"
-      });
-      return;
-    }
-    
-    const newOpponents = generateDungeonOpponents(selectedDungeon, nextLevel);
-    
-    const battleState = {
-      playerStats: {
-        ...playerStats
-      },
-      opponents: newOpponents,
-      currentDungeonLevel: nextLevel,
-      inventory,
-      coins: balance,
-      selectedDungeon
-    };
-    localStorage.setItem('battleState', JSON.stringify(battleState));
-    
-    toast({
-      title: "Переход на следующий уровень",
-      description: `Вы переходите на уровень ${nextLevel}`,
-      duration: 2000
-    });
-
-    navigate(`/battle?level=${nextLevel}`, { replace: true });
-  };
-
-  useEffect(() => {
-    if (!playerStats) return;
-
-    const battleState = {
-      playerStats,
-      opponents,
-      currentDungeonLevel: initialState.currentDungeonLevel,
-      inventory,
-      coins: balance,
-      selectedDungeon: initialState.selectedDungeon
-    };
-
-    if (playerStats.health > 0) {
-      localStorage.setItem('battleState', JSON.stringify(battleState));
-    }
-  }, [
-    playerStats,
-    opponents,
-    initialState.currentDungeonLevel,
-    inventory,
-    balance,
-    initialState.selectedDungeon
-  ]);
 
   const useItem = (item: Item) => {
     if (!playerStats) return;
