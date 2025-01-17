@@ -10,6 +10,7 @@ import { useInventory } from "./inventory/useInventory";
 import { useBalanceState } from "@/hooks/useBalanceState";
 import { shopItems } from "../shop/types";
 import { Coins } from "lucide-react";
+import { motion } from "framer-motion";
 
 interface InventoryDisplayProps {
   inventory: Item[];
@@ -26,6 +27,7 @@ export const InventoryDisplay = ({
   const [selectedItems, setSelectedItems] = useState<Item[]>([]);
   const inventory = useInventory(initialInventory);
   const { balance, updateBalance } = useBalanceState();
+  const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
 
   const getItemImage = (itemName: string) => {
     const shopItem = shopItems.find(item => item.name === itemName);
@@ -92,14 +94,6 @@ export const InventoryDisplay = ({
     });
   };
 
-  const handleSelectItem = (item: Item) => {
-    if (selectedItems.find(i => i.id === item.id)) {
-      setSelectedItems(selectedItems.filter(i => i.id !== item.id));
-    } else if (selectedItems.length < 2) {
-      setSelectedItems([...selectedItems, item]);
-    }
-  };
-
   return (
     <div 
       className="mt-4 relative rounded-lg overflow-hidden"
@@ -118,50 +112,66 @@ export const InventoryDisplay = ({
             <span className="text-white font-medium">{balance}</span>
           </div>
         </div>
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-2">
+        <div className="flex flex-wrap gap-2">
           {inventory.length > 0 ? (
-            groupItems(inventory).map((item) => (
-              <Card 
+            groupItems(inventory).map((item, index) => (
+              <motion.div
                 key={`${item.name}-${item.type}-${item.value}`}
-                className="p-2 bg-game-surface/80 border-game-accent backdrop-blur-sm"
+                className="relative"
+                style={{
+                  marginLeft: index > 0 ? '-70%' : '0',
+                  zIndex: hoveredIndex === index ? 10 : index,
+                }}
+                whileHover={{
+                  scale: 1.05,
+                  translateX: '70%',
+                  zIndex: 20,
+                  transition: { duration: 0.2 }
+                }}
+                onHoverStart={() => setHoveredIndex(index)}
+                onHoverEnd={() => setHoveredIndex(null)}
               >
-                <div className="flex flex-col gap-1">
-                  {item.image && (
-                    <div className="w-full aspect-square mb-1 rounded-lg overflow-hidden">
-                      <img 
-                        src={item.image} 
-                        alt={item.name}
-                        className="w-full h-full object-cover"
-                      />
+                <Card 
+                  className="w-48 p-2 bg-game-surface/80 border-game-accent backdrop-blur-sm"
+                >
+                  <div className="flex flex-col gap-1">
+                    {item.image && (
+                      <div className="w-full aspect-square mb-1 rounded-lg overflow-hidden">
+                        <img 
+                          src={item.image} 
+                          alt={item.name}
+                          className="w-full h-full object-cover"
+                        />
+                      </div>
+                    )}
+                    <div className="flex items-center gap-1">
+                      <h4 className="font-bold text-game-accent text-xs">
+                        {item.name} {item.count > 1 && `(${item.count})`}
+                      </h4>
                     </div>
-                  )}
-                  <div className="flex items-center gap-1">
-                    <h4 className="font-bold text-game-accent text-xs">
-                      {item.name} {item.count > 1 && `(${item.count})`}
-                    </h4>
+                    {!readonly && window.location.pathname === '/battle' && (
+                      <Button 
+                        onClick={() => handleUseGroupedItem(item)} 
+                        variant="outline" 
+                        size="sm"
+                        className="mt-1 text-xs bg-game-surface/50 hover:bg-game-surface/70"
+                      >
+                        Использовать
+                      </Button>
+                    )}
+                    {!readonly && (
+                      <Button
+                        onClick={() => handleSellItem(item.items[0])}
+                        variant="destructive"
+                        size="sm"
+                        className="mt-1 text-xs"
+                      >
+                        Продать
+                      </Button>
+                    )}
                   </div>
-                  {!readonly && window.location.pathname === '/battle' && (
-                    <Button 
-                      onClick={() => handleUseGroupedItem(item)} 
-                      variant="outline" 
-                      size="sm"
-                      className="mt-1 text-xs bg-game-surface/50 hover:bg-game-surface/70"
-                    >
-                      Использовать
-                    </Button>
-                  )}
-                  {!readonly && (
-                    <Button
-                      onClick={() => handleSellItem(item.items[0])}
-                      variant="destructive"
-                      size="sm"
-                      className="mt-1 text-xs"
-                    >
-                      Продать
-                    </Button>
-                  )}
-                </div>
-              </Card>
+                </Card>
+              </motion.div>
             ))
           ) : (
             <p className="text-gray-400 col-span-full text-center py-4">Инвентарь пуст</p>
