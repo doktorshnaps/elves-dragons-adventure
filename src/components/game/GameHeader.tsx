@@ -25,6 +25,7 @@ export const GameHeader = ({
   const isMobile = useIsMobile();
   const navigate = useNavigate();
   const [showStats, setShowStats] = useState(false);
+  const [hasActiveBattle, setHasActiveBattle] = useState(false);
   const { toast } = useToast();
 
   // Check for active dungeon on component mount
@@ -33,8 +34,10 @@ export const GameHeader = ({
     if (battleState) {
       const state = JSON.parse(battleState);
       if (state.playerStats.health > 0) {
-        // There is an active dungeon
+        setHasActiveBattle(true);
       }
+    } else {
+      setHasActiveBattle(false);
     }
   }, []);
 
@@ -63,8 +66,8 @@ export const GameHeader = ({
           >
             <Sword className="w-4 h-4" />
             {isMobile ? 
-              (battleState ? "В подземелье" : "Подземелье") : 
-              (battleState ? "Вернуться в подземелье" : "Поиск подземелья")
+              (hasActiveBattle ? "В подземелье" : "Подземелье") : 
+              (hasActiveBattle ? "Вернуться в подземелье" : "Поиск подземелья")
             }
           </Button>
           <Button
