@@ -46,20 +46,27 @@ export const useBattleState = (initialLevel: number = 1) => {
   );
 
   useEffect(() => {
-    if (playerStats?.health <= 0) {
-      toast({
-        title: "Поражение!",
-        description: "Ваш герой пал в бою. Подземелье закрыто.",
-        variant: "destructive",
-        duration: 1000
-      });
-      
-      localStorage.removeItem('battleState');
-      
-      setTimeout(() => {
-        navigate('/game');
-      }, 2000);
-    }
+    const checkBattleState = () => {
+      const currentState = localStorage.getItem('battleState');
+      if (!currentState) return;
+
+      const state = JSON.parse(currentState);
+      if (state.playerStats?.health <= 0) {
+        toast({
+          title: "Поражение!",
+          description: "Ваш герой пал в бою. Подземелье закрыто.",
+          variant: "destructive",
+          duration: 2000
+        });
+        
+        localStorage.removeItem('battleState');
+        setTimeout(() => {
+          navigate('/game');
+        }, 2000);
+      }
+    };
+
+    checkBattleState();
   }, [playerStats?.health, navigate, toast]);
 
   const { isPlayerTurn, attackEnemy, handleOpponentAttack } = useCombat(
@@ -75,12 +82,14 @@ export const useBattleState = (initialLevel: number = 1) => {
       toast({
         title: "Уровень завершен!",
         description: "Нажмите кнопку для перехода на следующий уровень",
-        duration: 1000
+        duration: 2000
       });
     }
   }, [opponents, playerStats?.health, toast]);
 
   const handleNextLevel = () => {
+    if (!playerStats || playerStats.health <= 0) return;
+
     const nextLevel = initialState.currentDungeonLevel + 1;
     const selectedDungeon = initialState.selectedDungeon;
     
@@ -90,7 +99,6 @@ export const useBattleState = (initialLevel: number = 1) => {
         description: "Подземелье не выбрано",
         variant: "destructive"
       });
-      navigate('/game');
       return;
     }
     
@@ -111,25 +119,35 @@ export const useBattleState = (initialLevel: number = 1) => {
     toast({
       title: "Переход на следующий уровень",
       description: `Вы переходите на уровень ${nextLevel}`,
-      duration: 1000
+      duration: 2000
     });
 
     navigate(`/battle?level=${nextLevel}`, { replace: true });
   };
 
   useEffect(() => {
-    if (playerStats?.health > 0) {
-      const battleState = {
-        playerStats,
-        opponents,
-        currentDungeonLevel: initialState.currentDungeonLevel,
-        inventory,
-        coins: balance,
-        selectedDungeon: initialState.selectedDungeon
-      };
+    if (!playerStats) return;
+
+    const battleState = {
+      playerStats,
+      opponents,
+      currentDungeonLevel: initialState.currentDungeonLevel,
+      inventory,
+      coins: balance,
+      selectedDungeon: initialState.selectedDungeon
+    };
+
+    if (playerStats.health > 0) {
       localStorage.setItem('battleState', JSON.stringify(battleState));
     }
-  }, [playerStats?.health, playerStats?.defense, opponents, initialState.currentDungeonLevel, inventory, balance, initialState.selectedDungeon]);
+  }, [
+    playerStats,
+    opponents,
+    initialState.currentDungeonLevel,
+    inventory,
+    balance,
+    initialState.selectedDungeon
+  ]);
 
   const useItem = (item: Item) => {
     if (!playerStats) return;
@@ -138,7 +156,7 @@ export const useBattleState = (initialLevel: number = 1) => {
       toast({
         title: "Недоступно",
         description: "Колоды карт можно использовать только в магазине",
-        duration: 1000
+        duration: 2000
       });
     }
 

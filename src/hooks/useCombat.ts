@@ -17,7 +17,8 @@ export const useCombat = (
     const battleState = localStorage.getItem('battleState');
     if (!battleState) return;
 
-    if (!isPlayerTurn || !playerStats) return;
+    const state = JSON.parse(battleState);
+    if (!state.selectedDungeon || !isPlayerTurn || !playerStats) return;
 
     const newOpponents = opponents.map(opponent => {
       if (opponent.id === enemyId) {
@@ -46,8 +47,6 @@ export const useCombat = (
     setOpponents(newOpponents);
     setIsPlayerTurn(false);
 
-    // Сохраняем состояние после хода игрока
-    const state = JSON.parse(battleState);
     state.opponents = newOpponents;
     localStorage.setItem('battleState', JSON.stringify(state));
   };
@@ -56,7 +55,8 @@ export const useCombat = (
     const battleState = localStorage.getItem('battleState');
     if (!battleState) return;
 
-    if (!playerStats || opponents.length === 0 || isPlayerTurn) return;
+    const state = JSON.parse(battleState);
+    if (!state.selectedDungeon || !playerStats || opponents.length === 0 || isPlayerTurn) return;
 
     const randomOpponent = opponents[Math.floor(Math.random() * opponents.length)];
     const { blockedDamage, damageToHealth, newDefense } = calculatePlayerDamage(
@@ -90,8 +90,6 @@ export const useCombat = (
 
     setIsPlayerTurn(true);
 
-    // Сохраняем состояние после хода противника
-    const state = JSON.parse(battleState);
     state.playerStats = newStats;
     localStorage.setItem('battleState', JSON.stringify(state));
   };
