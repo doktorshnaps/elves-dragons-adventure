@@ -12,7 +12,7 @@ export const sylvanestiDragons: CardInfo[] = [
       health: 16,
       magic: 8
     },
-    image: "/lovable-uploads/3445a1d0-8e5a-4785-bcce-f3b88bbd6f14.png"
+    image: "/lovable-uploads/d812fbd1-74f7-4cad-83c1-c009ba0f77b5.png"
   },
   {
     name: "Необычный песчаный дракон",
@@ -25,7 +25,7 @@ export const sylvanestiDragons: CardInfo[] = [
       health: 20,
       magic: 10
     },
-    image: "/lovable-uploads/39f90b07-6e7b-47b0-aa55-0e9098ced929.png"
+    image: "/lovable-uploads/a6d08592-67c9-42b0-8625-4713b997376f.png"
   },
   {
     name: "Редкий песчаный дракон",
@@ -37,7 +37,8 @@ export const sylvanestiDragons: CardInfo[] = [
       defense: 12,
       health: 24,
       magic: 12
-    }
+    },
+    image: "/lovable-uploads/0686d153-7d4f-4946-9212-f1ba3ebbca32.png"
   },
   {
     name: "Эпический песчаный дракон",
@@ -49,7 +50,8 @@ export const sylvanestiDragons: CardInfo[] = [
       defense: 15,
       health: 30,
       magic: 15
-    }
+    },
+    image: "/lovable-uploads/bccd3f95-c340-4678-bacf-5a589f379683.png"
   },
   {
     name: "Легендарный песчаный дракон",
@@ -61,7 +63,8 @@ export const sylvanestiDragons: CardInfo[] = [
       defense: 18,
       health: 36,
       magic: 18
-    }
+    },
+    image: "/lovable-uploads/64ceab84-8336-40e0-9219-31f4e51ea217.png"
   },
   {
     name: "Мифический песчаный дракон",
@@ -73,7 +76,8 @@ export const sylvanestiDragons: CardInfo[] = [
       defense: 22,
       health: 44,
       magic: 22
-    }
+    },
+    image: "/lovable-uploads/9876a84c-a134-4d64-b0fa-064fb1dd6f5f.png"
   },
   {
     name: "Этернал песчаный дракон",
@@ -85,7 +89,8 @@ export const sylvanestiDragons: CardInfo[] = [
       defense: 26,
       health: 52,
       magic: 26
-    }
+    },
+    image: "/lovable-uploads/3db3c69b-58d8-467c-a075-a0adc7ac1fa4.png"
   },
   {
     name: "Империал песчаный дракон",
@@ -97,7 +102,8 @@ export const sylvanestiDragons: CardInfo[] = [
       defense: 30,
       health: 60,
       magic: 30
-    }
+    },
+    image: "/lovable-uploads/2c707ae0-ddf1-426e-95ae-509431a7cf65.png"
   },
   {
     name: "Титан песчаный дракон",
@@ -109,6 +115,7 @@ export const sylvanestiDragons: CardInfo[] = [
       defense: 35,
       health: 70,
       magic: 35
-    }
+    },
+    image: "/lovable-uploads/aa7ab873-cb54-4825-a3f9-95d935df9b5d.png"
   }
 ];
