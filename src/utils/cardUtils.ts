@@ -34,20 +34,13 @@ const getMagicResistanceByFaction = (faction: Faction): MagicResistance => {
 };
 
 export const getStatsForRarity = (rarity: Rarity) => {
-  const baseStats = {
-    power: Math.floor(Math.random() * 5) + 5,
-    defense: Math.floor(Math.random() * 5) + 5,
-    health: Math.floor(Math.random() * 10) + 10,
-    magic: Math.floor(Math.random() * 5) + 3
-  };
-  
   const multiplier = Math.pow(1.5, rarity - 1);
   
   return {
-    power: Math.floor(baseStats.power * multiplier),
-    defense: Math.floor(baseStats.defense * multiplier),
-    health: Math.floor(baseStats.health * multiplier),
-    magic: Math.floor(baseStats.magic * multiplier)
+    power: Math.floor(5 * multiplier),
+    defense: Math.floor(5 * multiplier),
+    health: Math.floor(10 * multiplier),
+    magic: Math.floor(3 * multiplier)
   };
 };
 
@@ -77,16 +70,29 @@ export const getRarityChance = (): Rarity => {
 };
 
 export const generateCard = (type: CardType): Card => {
+  // Фильтруем карты по типу из базы данных
   const availableCards = cardDatabase.filter(card => card.type === type);
+  
+  // Выбираем случайную карту из доступных
   const selectedCard = availableCards[Math.floor(Math.random() * availableCards.length)];
   
+  // Определяем редкость карты
   const rarity = getRarityChance();
-  const stats = getStatsForRarity(rarity);
   
-  // Определяем фракцию в зависимости от имени карты
-  const kaledorHeroes = ["Рекрут", "Страж", "Ветеран", "Маг", "Мастер Целитель", "Защитник"];
-  const faction = kaledorHeroes.includes(selectedCard.name) ? 'Каледор' : FACTIONS[Math.floor(Math.random() * FACTIONS.length)];
-  const magicResistance = getMagicResistanceByFaction(faction);
+  // Получаем базовые характеристики из карты и умножаем на множитель редкости
+  const baseStats = selectedCard.baseStats;
+  const multiplier = Math.pow(1.5, rarity - 1);
+  
+  const stats = {
+    power: Math.floor(baseStats.power * multiplier),
+    defense: Math.floor(baseStats.defense * multiplier),
+    health: Math.floor(baseStats.health * multiplier),
+    magic: Math.floor(baseStats.magic * multiplier)
+  };
+  
+  // Используем фракцию из базы данных
+  const faction = selectedCard.faction as Faction;
+  const magicResistance = faction ? getMagicResistanceByFaction(faction) : undefined;
   
   return {
     id: Date.now().toString() + Math.random().toString(36).substr(2, 9),
@@ -124,7 +130,24 @@ export const upgradeCard = (card1: Card, card2: Card): Card | null => {
   }
 
   const newRarity = (card1.rarity + 1) as Rarity;
-  const stats = getStatsForRarity(newRarity);
+  
+  // Получаем базовую карту из базы данных
+  const baseCard = cardDatabase.find(card => 
+    card.name === card1.name && 
+    card.type === card1.type && 
+    card.faction === card1.faction
+  );
+  
+  if (!baseCard) return null;
+  
+  // Применяем множитель редкости к базовым характеристикам
+  const multiplier = Math.pow(1.5, newRarity - 1);
+  const stats = {
+    power: Math.floor(baseCard.baseStats.power * multiplier),
+    defense: Math.floor(baseCard.baseStats.defense * multiplier),
+    health: Math.floor(baseCard.baseStats.health * multiplier),
+    magic: Math.floor(baseCard.baseStats.magic * multiplier)
+  };
 
   return {
     id: Date.now().toString() + Math.random().toString(36).substr(2, 9),
