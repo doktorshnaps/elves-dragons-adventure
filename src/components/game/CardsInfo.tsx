@@ -4,12 +4,13 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { getStatsForRarity } from "@/utils/cardUtils";
+import { Rarity } from "@/types/cards";
 
 export const CardsInfo = () => {
   const isMobile = useIsMobile();
 
   const renderRarityStats = (baseStats: any) => {
-    const rarityLevels = [1, 2, 3, 4, 5, 6, 7, 8];
+    const rarityLevels: Rarity[] = [1, 2, 3, 4, 5, 6, 7, 8];
     return (
       <div className="space-y-2">
         {rarityLevels.map((rarity) => {
