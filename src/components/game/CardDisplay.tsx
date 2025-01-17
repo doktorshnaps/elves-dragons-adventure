@@ -17,10 +17,10 @@ export const CardDisplay = ({ card, showSellButton, onSell, className = "" }: Ca
   const isMobile = useIsMobile();
 
   return (
-    <Card className={`p-3 bg-game-background border-game-accent hover:border-game-primary transition-all duration-300 h-full ${className}`}>
-      <div className="flex flex-col gap-1.5 h-full">
+    <Card className={`p-2 bg-game-background border-game-accent hover:border-game-primary transition-all duration-300 h-full ${className}`}>
+      <div className="flex flex-col gap-1">
         {card.image && (
-          <div className="w-full aspect-[3/4] mb-2 rounded-lg overflow-hidden">
+          <div className="w-full aspect-square mb-1 rounded-lg overflow-hidden">
             <img 
               src={card.image} 
               alt={card.name}
