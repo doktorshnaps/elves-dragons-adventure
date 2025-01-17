@@ -20,11 +20,11 @@ export const CardDisplay = ({ card, showSellButton, onSell, className = "" }: Ca
     <Card className={`p-3 bg-game-background border-game-accent hover:border-game-primary transition-all duration-300 ${className}`}>
       <div className="flex flex-col gap-1.5">
         {card.image && (
-          <div className="w-full aspect-square mb-2 rounded-lg overflow-hidden">
+          <div className="w-full max-w-[150px] mx-auto mb-2 rounded-lg overflow-hidden">
             <img 
               src={card.image} 
               alt={card.name}
-              className="w-full h-full object-cover"
+              className="w-full h-auto object-contain"
             />
           </div>
         )}
