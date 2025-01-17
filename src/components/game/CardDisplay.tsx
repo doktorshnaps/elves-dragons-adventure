@@ -17,8 +17,8 @@ export const CardDisplay = ({ card, showSellButton, onSell, className = "" }: Ca
   const isMobile = useIsMobile();
 
   return (
-    <Card className={`p-2 bg-game-background border-game-accent hover:border-game-primary transition-all duration-300 h-full ${className}`}>
-      <div className="flex flex-col gap-1">
+    <Card className={`p-2 bg-game-background border-game-accent hover:border-game-primary transition-all duration-300 h-full flex flex-col ${className}`}>
+      <div className="flex flex-col gap-1 flex-grow">
         {card.image && (
           <div className="w-full aspect-square mb-1 rounded-lg overflow-hidden">
             <img 
@@ -65,19 +65,19 @@ export const CardDisplay = ({ card, showSellButton, onSell, className = "" }: Ca
             Защита от {card.magicResistance.type} магии: {card.magicResistance.value}%
           </div>
         )}
-
-        {showSellButton && (
-          <Button
-            variant="outline"
-            size={isMobile ? "sm" : "default"}
-            className="mt-auto text-yellow-500 hover:text-yellow-600 text-[10px]"
-            onClick={() => onSell?.(card)}
-          >
-            <Coins className={`${isMobile ? 'w-3 h-3' : 'w-4 h-4'} mr-1`} />
-            Продать ({getCardPrice(card.rarity)})
-          </Button>
-        )}
       </div>
+
+      {showSellButton && (
+        <Button
+          variant="outline"
+          size={isMobile ? "sm" : "default"}
+          className="mt-auto w-full text-yellow-500 hover:text-yellow-600 text-[10px]"
+          onClick={() => onSell?.(card)}
+        >
+          <Coins className={`${isMobile ? 'w-3 h-3' : 'w-4 h-4'} mr-1`} />
+          Продать ({getCardPrice(card.rarity)})
+        </Button>
+      )}
     </Card>
   );
 };
