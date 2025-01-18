@@ -38,6 +38,9 @@ export const useTeamCards = () => {
   }, []);
 
   const handleSellCard = (card: CardType) => {
+    // Удаляем карту из выбранных, если она там есть
+    setSelectedCards(prev => prev.filter(c => c.id !== card.id));
+
     const newCards = cards.filter(c => c.id !== card.id);
     setCards(newCards);
     localStorage.setItem('gameCards', JSON.stringify(newCards));
