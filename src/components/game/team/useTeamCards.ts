@@ -81,28 +81,14 @@ export const useTeamCards = () => {
       c.faction === card.faction
     );
 
-    // Если карта уже выбрана, снимаем выбор со всех карт
-    if (selectedCards.some(c => sameCards.find(sc => sc.id === c.id))) {
+    // Если карты уже выбраны, снимаем выбор
+    if (selectedCards.length === 2) {
       setSelectedCards([]);
       return;
     }
 
-    // Если нет выбранных карт, добавляем первую
-    if (selectedCards.length === 0) {
-      setSelectedCards([sameCards[0]]);
-    } else {
-      // Проверяем, совпадает ли новая карта с уже выбранной
-      const firstSelected = selectedCards[0];
-      if (
-        firstSelected.name === card.name &&
-        firstSelected.rarity === card.rarity &&
-        firstSelected.type === card.type &&
-        firstSelected.faction === card.faction &&
-        selectedCards.length < 2
-      ) {
-        setSelectedCards([firstSelected, sameCards[1]]);
-      }
-    }
+    // Автоматически выбираем первые две карты из стопки
+    setSelectedCards([sameCards[0], sameCards[1]]);
   };
 
   const handleUpgrade = () => {
