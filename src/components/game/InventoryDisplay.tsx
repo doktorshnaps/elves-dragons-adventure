@@ -9,8 +9,9 @@ import { GroupedItem } from "./inventory/types";
 import { useInventory } from "./inventory/useInventory";
 import { useBalanceState } from "@/hooks/useBalanceState";
 import { shopItems } from "../shop/types";
-import { Coins, Egg } from "lucide-react";
+import { Coins } from "lucide-react";
 import { useDragonEggs } from "@/contexts/DragonEggContext";
+import { DragonEggTimer } from "./DragonEggTimer";
 
 interface InventoryDisplayProps {
   inventory: Item[];
@@ -121,24 +122,27 @@ export const InventoryDisplay = ({
           </div>
         </div>
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-2">
-          {eggs.length > 0 && eggs.map((egg) => (
-            <Card 
-              key={egg.id}
-              className="p-2 bg-game-surface/80 border-game-accent backdrop-blur-sm"
-            >
-              <div className="flex flex-col gap-1">
-                <div className="w-full aspect-square mb-1 rounded-lg overflow-hidden bg-game-surface/50 flex items-center justify-center">
-                  <Egg className="w-8 h-8 text-game-accent" />
-                </div>
-                <div className="flex items-center gap-1">
-                  <h4 className="font-bold text-game-accent text-xs">
-                    Яйцо дракона ({egg.petName})
-                  </h4>
-                </div>
-                <p className="text-xs text-gray-300">Редкость: {egg.rarity}</p>
-              </div>
-            </Card>
-          ))}
+          {eggs.length > 0 && (
+            <div className="col-span-full grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-2">
+              {eggs.map((egg) => (
+                <DragonEggTimer
+                  key={egg.id}
+                  rarity={egg.rarity}
+                  petName={egg.petName}
+                  createdAt={egg.createdAt}
+                  onHatch={() => {
+                    const eggToRemove = eggs.find(e => e.id === egg.id);
+                    if (eggToRemove) {
+                      toast({
+                        title: "Питомец получен!",
+                        description: `${eggToRemove.petName} теперь доступен в вашей коллекции`,
+                      });
+                    }
+                  }}
+                />
+              ))}
+            </div>
+          )}
           {inventory.length > 0 ? (
             groupItems(inventory).map((item) => (
               <Card 

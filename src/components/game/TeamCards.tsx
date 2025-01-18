@@ -6,7 +6,6 @@ import { getCardPrice, upgradeCard } from "@/utils/cardUtils";
 import { Button } from "@/components/ui/button";
 import { ArrowUpCircle } from "lucide-react";
 import { useDragonEggs } from "@/contexts/DragonEggContext";
-import { DragonEggTimer } from "./DragonEggTimer";
 
 export const TeamCards = () => {
   const { toast } = useToast();
@@ -90,10 +89,8 @@ export const TeamCards = () => {
       return;
     }
 
-    // Remove the selected cards from the player's collection
     const newCards = cards.filter(c => !selectedCards.find(sc => sc.id === c.id));
 
-    // If it's a pet, create a dragon egg
     if (selectedCards[0].type === 'pet') {
       addEgg(upgradedCard, upgradedCard.rarity);
       toast({
@@ -101,7 +98,6 @@ export const TeamCards = () => {
         description: `Улучшенный питомец появится через некоторое время`,
       });
     } else {
-      // For heroes, add the upgraded card immediately
       newCards.push(upgradedCard);
       toast({
         title: "Карта улучшена!",
@@ -132,21 +128,6 @@ export const TeamCards = () => {
 
   return (
     <div className="space-y-4">
-      {/* Dragon Eggs Display */}
-      {eggs.length > 0 && (
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2">
-          {eggs.map((egg) => (
-            <DragonEggTimer
-              key={egg.id}
-              rarity={egg.rarity}
-              petName={egg.petName}
-              createdAt={egg.createdAt}
-              onHatch={() => removeEgg(egg.id)}
-            />
-          ))}
-        </div>
-      )}
-
       {selectedCards.length > 0 && (
         <div className="flex items-center justify-between bg-game-surface p-4 rounded-lg">
           <span className="text-white">
