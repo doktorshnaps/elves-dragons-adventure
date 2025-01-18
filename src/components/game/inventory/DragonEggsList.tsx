@@ -68,15 +68,23 @@ export const DragonEggsList = ({ eggs }: DragonEggsListProps) => {
 
   return (
     <div className="col-span-full grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-2">
-      {eggs.map((egg) => (
-        <DragonEggTimer
-          key={egg.id}
-          rarity={egg.rarity}
-          petName={egg.petName}
-          createdAt={egg.createdAt}
-          onHatch={() => handleHatch(egg)}
-        />
-      ))}
+      {eggs.map((egg) => {
+        const basePet = cardDatabase.find(card => 
+          card.type === 'pet' && 
+          card.name === egg.petName
+        );
+
+        return (
+          <DragonEggTimer
+            key={egg.id}
+            rarity={egg.rarity}
+            petName={egg.petName}
+            createdAt={egg.createdAt}
+            onHatch={() => handleHatch(egg)}
+            faction={basePet?.faction}
+          />
+        );
+      })}
     </div>
   );
 };

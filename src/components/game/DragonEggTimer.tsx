@@ -3,15 +3,23 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { formatDistanceToNow } from "date-fns";
+import { getRarityLabel } from "@/utils/cardUtils";
 
 interface DragonEggTimerProps {
   rarity: number;
   petName: string;
   createdAt: string;
   onHatch: () => void;
+  faction?: string;
 }
 
-export const DragonEggTimer = ({ rarity, petName, createdAt, onHatch }: DragonEggTimerProps) => {
+export const DragonEggTimer = ({ 
+  rarity, 
+  petName, 
+  createdAt, 
+  onHatch,
+  faction 
+}: DragonEggTimerProps) => {
   const { toast } = useToast();
   const [timeLeft, setTimeLeft] = useState<string>("");
   const [isStarted, setIsStarted] = useState(false);
@@ -87,17 +95,21 @@ export const DragonEggTimer = ({ rarity, petName, createdAt, onHatch }: DragonEg
   return (
     <Card className="p-4 bg-game-surface border-game-accent">
       <h3 className="text-lg font-bold text-game-accent mb-2">Яйцо дракона</h3>
-      <p className="text-sm text-gray-400">Питомец: {petName}</p>
-      {canClaim ? (
-        <Button 
-          onClick={handleClaim}
-          className="w-full mt-2 bg-green-600 hover:bg-green-700"
-        >
-          Получить питомца
-        </Button>
-      ) : (
-        <p className="text-sm text-gray-400 mt-2">До вылупления: {timeLeft}</p>
-      )}
+      <div className="space-y-2 text-sm text-gray-400">
+        <p>Питомец: {petName}</p>
+        {faction && <p>Фракция: {faction}</p>}
+        <p>Редкость: {getRarityLabel(rarity as 1|2|3|4|5|6|7|8)}</p>
+        {canClaim ? (
+          <Button 
+            onClick={handleClaim}
+            className="w-full mt-2 bg-green-600 hover:bg-green-700"
+          >
+            Получить питомца
+          </Button>
+        ) : (
+          <p className="mt-2">До вылупления: {timeLeft}</p>
+        )}
+      </div>
     </Card>
   );
 };
