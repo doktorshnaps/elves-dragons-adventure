@@ -39,7 +39,23 @@ export const TeamStats = ({ teamStats }: TeamStatsProps) => {
       const savedCards = localStorage.getItem('gameCards');
       if (savedCards) {
         const cards = JSON.parse(savedCards);
-        const activeStats = calculateTeamStats(cards);
+        const heroes = cards.filter(card => card.type === 'character');
+        const pets = cards.filter(card => card.type === 'pet');
+        
+        // Проверяем активность питомцев
+        const activePets = pets.filter(pet => {
+          if (!pet.faction) return false;
+          return heroes.some(hero => 
+            hero.type === 'character' && 
+            hero.faction === pet.faction && 
+            hero.rarity >= pet.rarity
+          );
+        });
+
+        // Рассчитываем статистику только для героев и активных питомцев
+        const activeCards = [...heroes, ...activePets];
+        const activeStats = calculateTeamStats(activeCards);
+
         setStats(prev => ({
           ...prev,
           health: activeStats.health,
