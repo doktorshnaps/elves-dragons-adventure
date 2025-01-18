@@ -2,6 +2,7 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Item } from "@/components/battle/Inventory";
 import { GroupedItem } from "./types";
+import { getRarityLabel } from "@/utils/cardUtils";
 
 interface InventoryGridProps {
   groupedItems: GroupedItem[];
@@ -37,10 +38,18 @@ export const InventoryGrid = ({
                 />
               </div>
             )}
-            <div className="flex items-center gap-1">
+            <div className="flex flex-col gap-1">
               <h4 className="font-bold text-game-accent text-xs">
                 {item.name} {item.count > 1 && `(${item.count})`}
               </h4>
+              {item.type === 'dragon_egg' && (
+                <div className="text-xs text-gray-400">
+                  <p>Редкость: {getRarityLabel(item.value as 1|2|3|4|5|6|7|8)}</p>
+                  {item.items[0].petName && (
+                    <p>Питомец: {item.items[0].petName}</p>
+                  )}
+                </div>
+              )}
             </div>
             {!readonly && window.location.pathname === '/battle' && (
               <Button 

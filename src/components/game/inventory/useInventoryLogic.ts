@@ -11,8 +11,9 @@ export const useInventoryLogic = (initialInventory: Item[]) => {
   const [selectedItems, setSelectedItems] = useState<Item[]>([]);
   const { balance, updateBalance } = useBalanceState();
 
-  const getItemImage = (itemName: string) => {
-    const shopItem = shopItems.find(item => item.name === itemName);
+  const getItemImage = (item: Item) => {
+    if (item.image) return item.image;
+    const shopItem = shopItems.find(shopItem => shopItem.name === item.name);
     return shopItem?.image || '';
   };
 
@@ -35,7 +36,7 @@ export const useInventoryLogic = (initialInventory: Item[]) => {
           value: item.value,
           count: 1,
           items: [item],
-          image: getItemImage(item.name)
+          image: getItemImage(item)
         });
       }
 
