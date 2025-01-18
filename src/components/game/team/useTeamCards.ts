@@ -100,13 +100,20 @@ export const useTeamCards = () => {
         firstSelected.faction === card.faction &&
         selectedCards.length < 2
       ) {
-        setSelectedCards([...selectedCards, sameCards[0]]);
+        setSelectedCards([firstSelected, sameCards[1]]);
       }
     }
   };
 
   const handleUpgrade = () => {
-    if (selectedCards.length !== 2) return;
+    if (selectedCards.length !== 2) {
+      toast({
+        title: "Ошибка улучшения",
+        description: "Выберите две одинаковые карты для улучшения",
+        variant: "destructive",
+      });
+      return;
+    }
 
     const upgradedCard = upgradeCard(selectedCards[0], selectedCards[1]);
     
@@ -119,9 +126,11 @@ export const useTeamCards = () => {
       return;
     }
 
-    const newCards = cards.filter(c => !selectedCards.find(sc => sc.id === c.id));
+    // Удаляем выбранные карты из общего списка
+    const newCards = cards.filter(c => !selectedCards.some(sc => sc.id === c.id));
 
     if (selectedCards[0].type === 'pet') {
+      // Для питомцев создаем яйцо
       addEgg({
         id: Date.now().toString(),
         petName: upgradedCard.name,
@@ -135,6 +144,7 @@ export const useTeamCards = () => {
         description: `Улучшенный питомец появится через некоторое время`,
       });
     } else {
+      // Для героев добавляем улучшенную карту
       newCards.push(upgradedCard);
       toast({
         title: "Карта улучшена!",
@@ -142,14 +152,17 @@ export const useTeamCards = () => {
       });
     }
 
+    // Обновляем состояние и localStorage
     setCards(newCards);
     localStorage.setItem('gameCards', JSON.stringify(newCards));
 
+    // Отправляем событие обновления карт
     const cardsEvent = new CustomEvent('cardsUpdate', { 
       detail: { cards: newCards }
     });
     window.dispatchEvent(cardsEvent);
 
+    // Очищаем выбранные карты
     setSelectedCards([]);
   };
 
