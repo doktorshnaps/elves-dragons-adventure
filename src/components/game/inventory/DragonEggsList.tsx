@@ -1,7 +1,7 @@
 import { DragonEggTimer } from "../DragonEggTimer";
 import { useToast } from "@/hooks/use-toast";
 import { DragonEgg } from "@/contexts/DragonEggContext";
-import { Card } from "@/types/cards";
+import { Card, Rarity, Faction } from "@/types/cards";
 import { cardDatabase } from "@/data/cardDatabase";
 
 interface DragonEggsListProps {
@@ -32,8 +32,8 @@ export const DragonEggsList = ({ eggs }: DragonEggsListProps) => {
       defense: basePet.baseStats.defense * Math.pow(2, egg.rarity - 1),
       health: basePet.baseStats.health * Math.pow(2, egg.rarity - 1),
       magic: basePet.baseStats.magic * Math.pow(2, egg.rarity - 1),
-      rarity: egg.rarity,
-      faction: basePet.faction,
+      rarity: egg.rarity as Rarity,
+      faction: basePet.faction as Faction,
       image: basePet.image
     };
 
