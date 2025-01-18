@@ -7,7 +7,7 @@ import { ListingDialog } from "./ListingDialog";
 import { MarketplaceListing } from "./types";
 import { useBalanceState } from "@/hooks/useBalanceState";
 import { Card as CardType } from "@/types/cards";
-import { Item } from "@/components/battle/Inventory";
+import { Item } from "@/types/inventory";
 
 export const MarketplaceTab = () => {
   const { toast } = useToast();

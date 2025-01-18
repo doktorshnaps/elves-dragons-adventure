@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Item } from "@/components/battle/Inventory";
+import { Item } from "@/types/inventory";
 import { useToast } from "@/hooks/use-toast";
 import { getItemPrice } from "@/utils/itemUtils";
 import { GroupedItem } from "./types";

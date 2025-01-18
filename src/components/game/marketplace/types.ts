@@ -1,5 +1,5 @@
 import { Card } from "@/types/cards";
-import { Item } from "@/components/battle/Inventory";
+import { Item } from "@/types/inventory";
 
 export interface MarketplaceListing {
   id: string;

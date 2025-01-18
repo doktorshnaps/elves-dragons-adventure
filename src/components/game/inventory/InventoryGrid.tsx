@@ -1,6 +1,6 @@
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Item } from "@/components/battle/Inventory";
+import { Item } from "@/types/inventory";
 import { GroupedItem } from "./types";
 import { getRarityLabel } from "@/utils/cardUtils";
 

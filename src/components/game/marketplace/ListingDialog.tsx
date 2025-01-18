@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { CardDisplay } from "../CardDisplay";
 import { MarketplaceListing } from "./types";
 import { Card as CardType } from "@/types/cards";
-import { Item } from "@/components/battle/Inventory";
+import { Item } from "@/types/inventory";
 
 interface ListingDialogProps {
   onClose: () => void;

@@ -3,7 +3,7 @@ import { Opponent } from '@/types/battle';
 import { generateOpponents } from '@/utils/opponentGenerator';
 import { rollLoot, generateLootTable } from '@/utils/lootUtils';
 import { useToast } from '@/hooks/use-toast';
-import { Item } from '@/components/battle/Inventory';
+import { Item } from "@/types/inventory";
 
 export const useOpponentsState = (
   level: number,

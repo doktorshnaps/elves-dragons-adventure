@@ -1,5 +1,5 @@
-import { useState, useEffect } from "react";
-import { Item } from "@/components/battle/Inventory";
+import { useState, useEffect } from 'react';
+import { Item } from "@/types/inventory";
 
 export const useInventory = (initialInventory: Item[]) => {
   const [inventory, setInventory] = useState(initialInventory);

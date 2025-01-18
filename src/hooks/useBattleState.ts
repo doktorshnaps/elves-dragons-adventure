@@ -4,7 +4,8 @@ import { useBalanceState } from './useBalanceState';
 import { useOpponentsState } from './useOpponentsState';
 import { useCombat } from './useCombat';
 import { useToast } from './use-toast';
-import { Item } from '@/components/battle/Inventory';
+import { Item } from "@/types/inventory";
+
 import { useEffect } from 'react';
 import { calculateTeamStats } from '@/utils/cardUtils';
 import { usePlayerHealthCheck } from './battle/usePlayerHealthCheck';

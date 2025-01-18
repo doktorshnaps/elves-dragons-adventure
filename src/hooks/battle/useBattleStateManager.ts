@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 import { PlayerStats, Opponent } from '@/types/battle';
-import { Item } from '@/components/battle/Inventory';
+import { Item } from "@/types/inventory";
 
 export const useBattleStateManager = (
   playerStats: PlayerStats | null,

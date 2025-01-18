@@ -1,4 +1,4 @@
-import { Item } from "@/components/battle/Inventory";
+import { Item } from "@/types/inventory";
 import { useDragonEggs } from "@/contexts/DragonEggContext";
 import { useInventoryLogic } from "./inventory/useInventoryLogic";
 import { InventoryHeader } from "./inventory/InventoryHeader";
