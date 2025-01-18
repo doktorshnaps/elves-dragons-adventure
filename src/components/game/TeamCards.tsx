@@ -5,9 +5,12 @@ import { useToast } from "@/hooks/use-toast";
 import { getCardPrice, upgradeCard } from "@/utils/cardUtils";
 import { Button } from "@/components/ui/button";
 import { ArrowUpCircle } from "lucide-react";
+import { useDragonEggs } from "@/contexts/DragonEggContext";
+import { DragonEggTimer } from "./DragonEggTimer";
 
 export const TeamCards = () => {
   const { toast } = useToast();
+  const { eggs, addEgg, removeEgg } = useDragonEggs();
   const [cards, setCards] = useState<CardType[]>(() => {
     const savedCards = localStorage.getItem('gameCards');
     return savedCards ? JSON.parse(savedCards) : [];
@@ -87,29 +90,54 @@ export const TeamCards = () => {
       return;
     }
 
-    // Удаляем старые карты и добавляем новую
-    const newCards = [
-      ...cards.filter(c => !selectedCards.find(sc => sc.id === c.id)),
-      upgradedCard
-    ];
+    // Если это питомец, создаем яйцо дракона
+    if (selectedCards[0].type === 'pet') {
+      addEgg(upgradedCard, upgradedCard.rarity);
+      toast({
+        title: "Создано яйцо дракона!",
+        description: `Улучшенный питомец появится через некоторое время`,
+      });
+    } else {
+      // Для героев сразу добавляем улучшенную карту
+      const newCards = [
+        ...cards.filter(c => !selectedCards.find(sc => sc.id === c.id)),
+        upgradedCard
+      ];
 
-    setCards(newCards);
+      setCards(newCards);
+      localStorage.setItem('gameCards', JSON.stringify(newCards));
+
+      const cardsEvent = new CustomEvent('cardsUpdate', { 
+        detail: { cards: newCards }
+      });
+      window.dispatchEvent(cardsEvent);
+
+      toast({
+        title: "Карта улучшена!",
+        description: `${upgradedCard.name} теперь имеет редкость ${upgradedCard.rarity}`,
+      });
+    }
+
     setSelectedCards([]);
-    localStorage.setItem('gameCards', JSON.stringify(newCards));
-
-    const cardsEvent = new CustomEvent('cardsUpdate', { 
-      detail: { cards: newCards }
-    });
-    window.dispatchEvent(cardsEvent);
-
-    toast({
-      title: "Карта улучшена!",
-      description: `${upgradedCard.name} теперь имеет редкость ${upgradedCard.rarity}`,
-    });
   };
 
   return (
     <div className="space-y-4">
+      {/* Dragon Eggs Display */}
+      {eggs.length > 0 && (
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2">
+          {eggs.map((egg) => (
+            <DragonEggTimer
+              key={egg.id}
+              rarity={egg.rarity}
+              petName={egg.petName}
+              createdAt={egg.createdAt}
+              onHatch={() => removeEgg(egg.id)}
+            />
+          ))}
+        </div>
+      )}
+
       {selectedCards.length > 0 && (
         <div className="flex items-center justify-between bg-game-surface p-4 rounded-lg">
           <span className="text-white">
