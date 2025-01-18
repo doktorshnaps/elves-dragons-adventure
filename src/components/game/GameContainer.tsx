@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useToast } from "@/hooks/use-toast";
 import { Card } from "@/types/cards";
@@ -8,6 +8,8 @@ import { GameTabs } from "./GameTabs";
 import { GameModals } from "./GameModals";
 import { GameHeader } from "./GameHeader";
 import { useBalanceState } from "@/hooks/useBalanceState";
+import { useImagePreloader } from "@/hooks/useImagePreloader";
+import { Skeleton } from "@/components/ui/skeleton";
 
 const calculateTeamStats = (cards: Card[]) => {
   return {
@@ -21,7 +23,7 @@ export const GameContainer = () => {
   const isMobile = useIsMobile();
   const { toast } = useToast();
   const { balance, updateBalance } = useBalanceState();
-  const [showDungeonSearch, setShowDungeonSearch] = useState(false); // Changed to false by default
+  const [showDungeonSearch, setShowDungeonSearch] = useState(false);
   const [showShop, setShowShop] = useState(false);
   const [hasActiveDungeon, setHasActiveDungeon] = useState(false);
   const [cards, setCards] = useState<Card[]>(() => {
@@ -29,7 +31,8 @@ export const GameContainer = () => {
     return savedCards ? JSON.parse(savedCards) : [];
   });
 
-  // Clear dungeon state when component unmounts
+  const imagesLoaded = useImagePreloader();
+
   useEffect(() => {
     return () => {
       localStorage.removeItem('battleState');
@@ -59,34 +62,54 @@ export const GameContainer = () => {
     }
   }, []);
 
-  return (
-    <motion.div
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      className="min-h-screen w-full overflow-x-hidden"
-    >
-      <div className={`max-w-7xl mx-auto ${isMobile ? 'px-2' : 'px-6'} py-4`}>
-        <GameHeader
-          balance={balance}
-          hasActiveDungeon={hasActiveDungeon}
-          setShowDungeonSearch={setShowDungeonSearch}
-          setShowShop={setShowShop}
-          teamStats={calculateTeamStats(cards)}
-        />
-
-        <div className="w-full mt-4">
-          <GameTabs />
+  if (!imagesLoaded) {
+    return (
+      <div className="min-h-screen w-full overflow-x-hidden">
+        <div className={`max-w-7xl mx-auto ${isMobile ? 'px-2' : 'px-6'} py-4`}>
+          <div className="space-y-4">
+            <Skeleton className="h-20 w-full" />
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
+              {Array.from({ length: 6 }).map((_, index) => (
+                <Skeleton key={index} className="h-48 w-full" />
+              ))}
+            </div>
+          </div>
         </div>
-
-        <GameModals
-          showDungeonSearch={showDungeonSearch}
-          showShop={showShop}
-          onCloseDungeon={() => setShowDungeonSearch(false)}
-          onCloseShop={() => setShowShop(false)}
-          balance={balance}
-          onBalanceChange={updateBalance}
-        />
       </div>
-    </motion.div>
+    );
+  }
+
+  return (
+    <AnimatePresence>
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        className="min-h-screen w-full overflow-x-hidden"
+      >
+        <div className={`max-w-7xl mx-auto ${isMobile ? 'px-2' : 'px-6'} py-4`}>
+          <GameHeader
+            balance={balance}
+            hasActiveDungeon={hasActiveDungeon}
+            setShowDungeonSearch={setShowDungeonSearch}
+            setShowShop={setShowShop}
+            teamStats={calculateTeamStats(cards)}
+          />
+
+          <div className="w-full mt-4">
+            <GameTabs />
+          </div>
+
+          <GameModals
+            showDungeonSearch={showDungeonSearch}
+            showShop={showShop}
+            onCloseDungeon={() => setShowDungeonSearch(false)}
+            onCloseShop={() => setShowShop(false)}
+            balance={balance}
+            onBalanceChange={updateBalance}
+          />
+        </div>
+      </motion.div>
+    </AnimatePresence>
   );
 };
