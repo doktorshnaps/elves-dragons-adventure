@@ -10,7 +10,7 @@ import { Badge } from "@/components/ui/badge";
 
 export const TeamCards = () => {
   const { toast } = useToast();
-  const { eggs, addEgg, removeEgg } = useDragonEggs();
+  const { eggs, addEgg } = useDragonEggs();
   const [cards, setCards] = useState<CardType[]>(() => {
     const savedCards = localStorage.getItem('gameCards');
     return savedCards ? JSON.parse(savedCards) : [];
@@ -68,11 +68,49 @@ export const TeamCards = () => {
     });
   };
 
-  const handleCardSelect = (card: CardType) => {
+  const handleCardSelect = (card: CardType, groupCount: number) => {
+    if (groupCount < 2) {
+      toast({
+        title: "Недостаточно карт",
+        description: "Для улучшения нужно минимум 2 одинаковые карты",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const key = `${card.name}-${card.rarity}-${card.type}-${card.faction || ''}`;
+    const sameCards = cards.filter(c => 
+      c.name === card.name && 
+      c.rarity === card.rarity && 
+      c.type === card.type && 
+      c.faction === card.faction
+    );
+
     if (selectedCards.find(c => c.id === card.id)) {
       setSelectedCards(selectedCards.filter(c => c.id !== card.id));
     } else if (selectedCards.length < 2) {
-      setSelectedCards([...selectedCards, card]);
+      // Выбираем первые две карты из группы
+      const cardsToSelect = sameCards.slice(0, 2);
+      if (selectedCards.length === 0) {
+        setSelectedCards(cardsToSelect);
+      } else {
+        // Проверяем, совпадают ли карты по характеристикам
+        const firstSelected = selectedCards[0];
+        if (
+          firstSelected.name === card.name &&
+          firstSelected.rarity === card.rarity &&
+          firstSelected.type === card.type &&
+          firstSelected.faction === card.faction
+        ) {
+          setSelectedCards([...selectedCards, cardsToSelect[0]]);
+        } else {
+          toast({
+            title: "Несовместимые карты",
+            description: "Выберите карты одного типа и редкости",
+            variant: "destructive",
+          });
+        }
+      }
     }
   };
 
@@ -166,7 +204,7 @@ export const TeamCards = () => {
                   ? 'ring-2 ring-game-accent rounded-lg'
                   : ''
               }`}
-              onClick={() => handleCardSelect(cardGroup[0])}
+              onClick={() => handleCardSelect(cardGroup[0], cardGroup.length)}
             >
               <CardDisplay
                 card={cardGroup[0]}
