@@ -25,15 +25,15 @@ export const InventoryGrid = ({
       {groupedItems.map((item) => (
         <Card 
           key={`${item.name}-${item.type}-${item.value}`}
-          className="p-2 bg-game-surface/80 border-game-accent backdrop-blur-sm h-[180px] flex flex-col justify-between"
+          className="p-2 bg-game-surface/80 border-game-accent backdrop-blur-sm h-[180px] flex flex-col"
         >
-          <div className="flex flex-col gap-1">
+          <div className="flex flex-col gap-1 flex-grow">
             {item.image && (
-              <div className="w-full aspect-square mb-1 rounded-lg overflow-hidden h-[80px]">
+              <div className="relative w-full h-20 mb-1 rounded-lg overflow-hidden">
                 <img 
                   src={item.image} 
                   alt={item.name}
-                  className="w-full h-full object-cover"
+                  className="w-full h-full object-contain"
                 />
               </div>
             )}
