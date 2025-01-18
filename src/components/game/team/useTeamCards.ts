@@ -38,10 +38,8 @@ export const useTeamCards = () => {
   }, []);
 
   const handleSellCard = (card: CardType) => {
-    // Предотвращаем всплытие события, чтобы не вызвать handleCardSelect
     event?.stopPropagation();
     
-    // Удаляем карту из списка выбранных
     setSelectedCards(prev => prev.filter(c => c.id !== card.id));
 
     const newCards = cards.filter(c => c.id !== card.id);
@@ -70,7 +68,12 @@ export const useTeamCards = () => {
   };
 
   const handleCardSelect = (card: CardType, groupCount: number) => {
-    // Если карта уже выбрана, снимаем выбор со всех карт
+    // Если в группе меньше 2 карт, игнорируем выбор
+    if (groupCount < 2) {
+      return;
+    }
+
+    // Находим все карты в группе
     const sameCards = cards.filter(c => 
       c.name === card.name && 
       c.rarity === card.rarity && 
@@ -78,6 +81,7 @@ export const useTeamCards = () => {
       c.faction === card.faction
     );
 
+    // Если карта уже выбрана, снимаем выбор со всех карт
     if (selectedCards.some(c => sameCards.find(sc => sc.id === c.id))) {
       setSelectedCards([]);
       return;
@@ -97,12 +101,6 @@ export const useTeamCards = () => {
         selectedCards.length < 2
       ) {
         setSelectedCards([...selectedCards, sameCards[0]]);
-      } else {
-        toast({
-          title: "Несовместимые карты",
-          description: "Выберите карты одного типа и редкости",
-          variant: "destructive",
-        });
       }
     }
   };
