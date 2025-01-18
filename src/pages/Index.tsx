@@ -1,11 +1,16 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { GameTitle } from "@/components/GameTitle";
 import { AuthForm } from "@/components/auth/AuthForm";
 
 const Index = () => {
-  const [isAuthenticated, setIsAuthenticated] = useState(() => {
-    return localStorage.getItem("gameUser") !== null;
-  });
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+
+  useEffect(() => {
+    const user = localStorage.getItem("gameUser");
+    if (user) {
+      setIsAuthenticated(true);
+    }
+  }, []);
 
   return (
     <div 

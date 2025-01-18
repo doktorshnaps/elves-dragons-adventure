@@ -8,9 +8,7 @@ interface AuthFormProps {
 }
 
 export const AuthForm = ({ onSuccess }: AuthFormProps) => {
-  const [isRegistered, setIsRegistered] = useState(() => {
-    return localStorage.getItem("gameUser") !== null;
-  });
+  const [isRegistered, setIsRegistered] = useState(false);
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const { toast } = useToast();
