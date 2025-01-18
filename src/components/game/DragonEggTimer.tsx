@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { Card } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { formatDistanceToNow } from "date-fns";
 
@@ -13,7 +14,9 @@ interface DragonEggTimerProps {
 export const DragonEggTimer = ({ rarity, petName, createdAt, onHatch }: DragonEggTimerProps) => {
   const { toast } = useToast();
   const [timeLeft, setTimeLeft] = useState<string>("");
+  const [isStarted, setIsStarted] = useState(false);
   const [isHatched, setIsHatched] = useState(false);
+  const [canClaim, setCanClaim] = useState(false);
 
   const getHatchTime = (rarity: number): number => {
     const hours = {
@@ -30,35 +33,71 @@ export const DragonEggTimer = ({ rarity, petName, createdAt, onHatch }: DragonEg
   };
 
   useEffect(() => {
+    if (!isStarted) return;
+
     const checkHatchStatus = () => {
       const hatchTime = getHatchTime(rarity);
-      const createdDate = new Date(createdAt);
+      const startDate = new Date(createdAt);
       const now = new Date();
-      const timeDiff = now.getTime() - createdDate.getTime();
+      const timeDiff = now.getTime() - startDate.getTime();
 
       if (timeDiff >= hatchTime) {
         setIsHatched(true);
-        onHatch();
+        setCanClaim(true);
         toast({
           title: "Яйцо дракона вылупилось!",
-          description: `${petName} теперь доступен в вашей коллекции`,
+          description: `${petName} готов к получению`,
         });
       } else {
-        setTimeLeft(formatDistanceToNow(new Date(createdDate.getTime() + hatchTime)));
+        setTimeLeft(formatDistanceToNow(new Date(startDate.getTime() + hatchTime)));
       }
     };
 
     const interval = setInterval(checkHatchStatus, 1000);
     return () => clearInterval(interval);
-  }, [rarity, createdAt, onHatch, petName]);
+  }, [rarity, createdAt, isStarted, petName]);
 
-  if (isHatched) return null;
+  const handleStart = () => {
+    setIsStarted(true);
+    toast({
+      title: "Инкубация началась",
+      description: `${petName} вылупится через некоторое время`,
+    });
+  };
+
+  const handleClaim = () => {
+    if (canClaim) {
+      onHatch();
+      toast({
+        title: "Питомец получен!",
+        description: `${petName} теперь доступен в вашей коллекции`,
+      });
+    }
+  };
+
+  if (isHatched && !canClaim) return null;
 
   return (
     <Card className="p-4 bg-game-surface border-game-accent">
       <h3 className="text-lg font-bold text-game-accent mb-2">Яйцо дракона</h3>
       <p className="text-sm text-gray-400">Питомец: {petName}</p>
-      <p className="text-sm text-gray-400">До вылупления: {timeLeft}</p>
+      {!isStarted ? (
+        <Button 
+          onClick={handleStart}
+          className="w-full mt-2 bg-game-accent hover:bg-game-accent/80"
+        >
+          Начать инкубацию
+        </Button>
+      ) : canClaim ? (
+        <Button 
+          onClick={handleClaim}
+          className="w-full mt-2 bg-green-600 hover:bg-green-700"
+        >
+          Получить питомца
+        </Button>
+      ) : (
+        <p className="text-sm text-gray-400 mt-2">До вылупления: {timeLeft}</p>
+      )}
     </Card>
   );
 };

@@ -90,7 +90,10 @@ export const TeamCards = () => {
       return;
     }
 
-    // Если это питомец, создаем яйцо дракона
+    // Remove the selected cards from the player's collection
+    const newCards = cards.filter(c => !selectedCards.find(sc => sc.id === c.id));
+
+    // If it's a pet, create a dragon egg
     if (selectedCards[0].type === 'pet') {
       addEgg(upgradedCard, upgradedCard.rarity);
       toast({
@@ -98,25 +101,21 @@ export const TeamCards = () => {
         description: `Улучшенный питомец появится через некоторое время`,
       });
     } else {
-      // Для героев сразу добавляем улучшенную карту
-      const newCards = [
-        ...cards.filter(c => !selectedCards.find(sc => sc.id === c.id)),
-        upgradedCard
-      ];
-
-      setCards(newCards);
-      localStorage.setItem('gameCards', JSON.stringify(newCards));
-
-      const cardsEvent = new CustomEvent('cardsUpdate', { 
-        detail: { cards: newCards }
-      });
-      window.dispatchEvent(cardsEvent);
-
+      // For heroes, add the upgraded card immediately
+      newCards.push(upgradedCard);
       toast({
         title: "Карта улучшена!",
         description: `${upgradedCard.name} теперь имеет редкость ${upgradedCard.rarity}`,
       });
     }
+
+    setCards(newCards);
+    localStorage.setItem('gameCards', JSON.stringify(newCards));
+
+    const cardsEvent = new CustomEvent('cardsUpdate', { 
+      detail: { cards: newCards }
+    });
+    window.dispatchEvent(cardsEvent);
 
     setSelectedCards([]);
   };
