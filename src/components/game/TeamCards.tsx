@@ -78,7 +78,6 @@ export const TeamCards = () => {
       return;
     }
 
-    const key = `${card.name}-${card.rarity}-${card.type}-${card.faction || ''}`;
     const sameCards = cards.filter(c => 
       c.name === card.name && 
       c.rarity === card.rarity && 
@@ -86,30 +85,31 @@ export const TeamCards = () => {
       c.faction === card.faction
     );
 
-    if (selectedCards.find(c => c.id === card.id)) {
-      setSelectedCards(selectedCards.filter(c => c.id !== card.id));
-    } else if (selectedCards.length < 2) {
-      // Выбираем первые две карты из группы
-      const cardsToSelect = sameCards.slice(0, 2);
-      if (selectedCards.length === 0) {
-        setSelectedCards(cardsToSelect);
+    // Если карты уже выбраны, снимаем выбор со всех карт этой группы
+    if (selectedCards.some(c => sameCards.find(sc => sc.id === c.id))) {
+      setSelectedCards([]);
+      return;
+    }
+
+    // Если карты не выбраны, выбираем первые две карты из группы
+    if (selectedCards.length === 0) {
+      setSelectedCards(sameCards.slice(0, 2));
+    } else {
+      // Проверяем совместимость с уже выбранной картой
+      const firstSelected = selectedCards[0];
+      if (
+        firstSelected.name === card.name &&
+        firstSelected.rarity === card.rarity &&
+        firstSelected.type === card.type &&
+        firstSelected.faction === card.faction
+      ) {
+        setSelectedCards([...selectedCards, sameCards[0]]);
       } else {
-        // Проверяем, совпадают ли карты по характеристикам
-        const firstSelected = selectedCards[0];
-        if (
-          firstSelected.name === card.name &&
-          firstSelected.rarity === card.rarity &&
-          firstSelected.type === card.type &&
-          firstSelected.faction === card.faction
-        ) {
-          setSelectedCards([...selectedCards, cardsToSelect[0]]);
-        } else {
-          toast({
-            title: "Несовместимые карты",
-            description: "Выберите карты одного типа и редкости",
-            variant: "destructive",
-          });
-        }
+        toast({
+          title: "Несовместимые карты",
+          description: "Выберите карты одного типа и редкости",
+          variant: "destructive",
+        });
       }
     }
   };
