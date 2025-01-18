@@ -120,6 +120,16 @@ export const TeamCards = () => {
     setSelectedCards([]);
   };
 
+  const heroes = cards.filter(card => card.type === 'character');
+  const isPetActive = (pet: CardType): boolean => {
+    if (!pet.faction) return false;
+    return heroes.some(hero => 
+      hero.type === 'character' && 
+      hero.faction === pet.faction && 
+      hero.rarity >= pet.rarity
+    );
+  };
+
   return (
     <div className="space-y-4">
       {/* Dragon Eggs Display */}
@@ -170,6 +180,7 @@ export const TeamCards = () => {
                 card={card}
                 showSellButton={true}
                 onSell={handleSellCard}
+                isActive={card.type === 'character' || isPetActive(card)}
               />
             </div>
           ))

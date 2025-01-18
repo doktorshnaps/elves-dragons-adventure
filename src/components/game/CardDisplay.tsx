@@ -11,13 +11,16 @@ interface CardDisplayProps {
   showSellButton?: boolean;
   onSell?: (card: CardType) => void;
   className?: string;
+  isActive?: boolean;
 }
 
-export const CardDisplay = ({ card, showSellButton, onSell, className = "" }: CardDisplayProps) => {
+export const CardDisplay = ({ card, showSellButton, onSell, className = "", isActive = true }: CardDisplayProps) => {
   const isMobile = useIsMobile();
 
   return (
-    <Card className={`p-2 bg-game-background border-game-accent hover:border-game-primary transition-all duration-300 h-full flex flex-col ${className}`}>
+    <Card className={`p-2 bg-game-background border-game-accent hover:border-game-primary transition-all duration-300 h-full flex flex-col ${
+      !isActive && card.type === 'pet' ? 'opacity-50' : ''
+    } ${className}`}>
       <div className="flex flex-col gap-1 flex-grow">
         {card.image && (
           <div className="w-full aspect-square mb-1 rounded-lg overflow-hidden">
@@ -39,7 +42,9 @@ export const CardDisplay = ({ card, showSellButton, onSell, className = "" }: Ca
         </div>
 
         {card.faction && (
-          <div className={`flex items-center gap-1 ${isMobile ? 'text-[10px]' : 'text-xs'} text-purple-400`}>
+          <div className={`flex items-center gap-1 ${isMobile ? 'text-[10px]' : 'text-xs'} ${
+            !isActive && card.type === 'pet' ? 'text-red-400' : 'text-purple-400'
+          }`}>
             <Sparkles className={`${isMobile ? 'w-3 h-3' : 'w-4 h-4'}`} />
             <span>{card.faction}</span>
           </div>
@@ -63,6 +68,12 @@ export const CardDisplay = ({ card, showSellButton, onSell, className = "" }: Ca
         {card.magicResistance && (
           <div className={`text-blue-400 ${isMobile ? 'text-[10px]' : 'text-xs'}`}>
             Защита от {card.magicResistance.type} магии: {card.magicResistance.value}%
+          </div>
+        )}
+
+        {!isActive && card.type === 'pet' && (
+          <div className="text-red-400 text-xs mt-1">
+            Требуется герой {card.faction} {getRarityLabel(card.rarity)} или выше
           </div>
         )}
       </div>

@@ -121,12 +121,44 @@ export const generatePack = (): Card[] => {
   return [generateCard(type)];
 };
 
+const isPetActive = (pet: Card, heroes: Card[]): boolean => {
+  if (!pet.faction) return false;
+  
+  return heroes.some(hero => 
+    hero.type === 'character' && 
+    hero.faction === pet.faction && 
+    hero.rarity >= pet.rarity
+  );
+};
+
 export const calculateTeamStats = (cards: Card[]) => {
-  return cards.reduce((acc, card) => ({
-    power: acc.power + card.power,
-    defense: acc.defense + card.defense,
-    health: acc.health + card.health
+  const heroes = cards.filter(card => card.type === 'character');
+  const pets = cards.filter(card => card.type === 'pet');
+  
+  // Базовые характеристики от героев
+  const baseStats = heroes.reduce((acc, hero) => ({
+    power: acc.power + hero.power,
+    defense: acc.defense + hero.defense,
+    health: acc.health + hero.health
   }), { power: 0, defense: 0, health: 0 });
+
+  // Добавляем характеристики только от активных питомцев
+  const petsBonus = pets.reduce((acc, pet) => {
+    if (isPetActive(pet, heroes)) {
+      return {
+        power: acc.power + pet.power,
+        defense: acc.defense + pet.defense,
+        health: acc.health + pet.health
+      };
+    }
+    return acc;
+  }, { power: 0, defense: 0, health: 0 });
+
+  return {
+    power: baseStats.power + petsBonus.power,
+    defense: baseStats.defense + petsBonus.defense,
+    health: baseStats.health + petsBonus.health
+  };
 };
 
 export const upgradeCard = (card1: Card, card2: Card): Card | null => {
