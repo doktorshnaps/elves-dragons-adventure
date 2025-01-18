@@ -29,16 +29,16 @@ export const DragonEggTimer = ({
 
   const getHatchTime = (rarity: number): number => {
     const hours = {
-      2: 1,    // 1 hour
-      3: 4,    // 4 hours
-      4: 12,   // 12 hours
-      5: 24,   // 24 hours
-      6: 72,   // 72 hours
-      7: 100,  // 100 hours
-      8: 200   // 200 hours
+      2: 1,    // 1 час
+      3: 4,    // 4 часа
+      4: 12,   // 12 часов
+      5: 24,   // 24 часа
+      6: 72,   // 72 часа
+      7: 100,  // 100 часов
+      8: 200   // 200 часов
     }[rarity] || 0;
 
-    return hours * 60 * 60 * 1000; // Convert to milliseconds
+    return hours * 60 * 60 * 1000; // Конвертируем в миллисекунды
   };
 
   useEffect(() => {

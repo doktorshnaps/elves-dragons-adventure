@@ -52,7 +52,7 @@ export const InventoryGrid = ({
                 Использовать
               </Button>
             )}
-            {!readonly && (
+            {!readonly && item.type !== 'dragon_egg' && (
               <Button
                 onClick={() => onSellItem(item.items[0])}
                 variant="destructive"
