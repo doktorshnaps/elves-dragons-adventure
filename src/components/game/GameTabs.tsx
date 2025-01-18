@@ -6,25 +6,18 @@ import { DungeonsList } from "./DungeonsList";
 import { InventoryDisplay } from "./InventoryDisplay";
 import { CardsInfo } from "./CardsInfo";
 import { MarketplaceTab } from "./marketplace/MarketplaceTab";
-import { Item } from "../battle/Inventory";
 import { useToast } from "@/hooks/use-toast";
 
 export const GameTabs = () => {
   const isMobile = useIsMobile();
   const { toast } = useToast();
-  const [inventory, setInventory] = useState<Item[]>(() => {
-    const savedInventory = localStorage.getItem('gameInventory');
-    return savedInventory ? JSON.parse(savedInventory) : [];
-  });
 
-  const handleUseItem = (item: Item) => {
-    if (item.type === 'cardPack') {
-      toast({
-        title: "Недоступно",
-        description: "Колоды карт можно использовать только в магазине",
-        variant: "destructive"
-      });
-    }
+  const handleUseItem = () => {
+    toast({
+      title: "Недоступно",
+      description: "Предметы можно использовать только в подземелье",
+      variant: "destructive"
+    });
   };
 
   return (
@@ -48,7 +41,6 @@ export const GameTabs = () => {
         <div className={`space-y-4 ${isMobile ? 'space-y-2' : 'space-y-6'}`}>
           <TeamCards />
           <InventoryDisplay 
-            inventory={inventory} 
             onUseItem={handleUseItem}
             readonly={false}
           />
