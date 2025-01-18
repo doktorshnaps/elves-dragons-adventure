@@ -64,15 +64,6 @@ export const useTeamCards = () => {
   };
 
   const handleCardSelect = (card: CardType, groupCount: number) => {
-    if (groupCount < 2) {
-      toast({
-        title: "Недостаточно карт",
-        description: "Для улучшения нужно минимум 2 одинаковые карты",
-        variant: "destructive",
-      });
-      return;
-    }
-
     const sameCards = cards.filter(c => 
       c.name === card.name && 
       c.rarity === card.rarity && 
@@ -123,7 +114,6 @@ export const useTeamCards = () => {
     const newCards = cards.filter(c => !selectedCards.find(sc => sc.id === c.id));
 
     if (selectedCards[0].type === 'pet') {
-      // Создаем яйцо дракона в инвентаре
       const currentInventory = localStorage.getItem('gameInventory');
       const inventory = currentInventory ? JSON.parse(currentInventory) : [];
       
@@ -140,7 +130,6 @@ export const useTeamCards = () => {
       inventory.push(newEggItem);
       localStorage.setItem('gameInventory', JSON.stringify(inventory));
 
-      // Добавляем яйцо в контекст
       addEgg({
         id: newEggItem.id,
         petName: upgradedCard.name,
