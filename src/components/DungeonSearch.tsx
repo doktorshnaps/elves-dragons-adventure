@@ -10,6 +10,34 @@ interface DungeonSearchProps {
 }
 
 export const DungeonSearch = ({ onClose, balance, onBalanceChange }: DungeonSearchProps) => {
+  const [hasActiveCards, setHasActiveCards] = React.useState(false);
+
+  // Проверяем наличие активных карт
+  React.useEffect(() => {
+    const checkActiveCards = () => {
+      const savedCards = localStorage.getItem('gameCards');
+      if (savedCards) {
+        const cards = JSON.parse(savedCards);
+        const heroes = cards.filter(card => card.type === 'character');
+        const pets = cards.filter(card => card.type === 'pet');
+        
+        // Проверяем наличие хотя бы одного героя
+        setHasActiveCards(heroes.length > 0);
+      } else {
+        setHasActiveCards(false);
+      }
+    };
+
+    checkActiveCards();
+    window.addEventListener('cardsUpdate', checkActiveCards);
+    window.addEventListener('storage', checkActiveCards);
+
+    return () => {
+      window.removeEventListener('cardsUpdate', checkActiveCards);
+      window.removeEventListener('storage', checkActiveCards);
+    };
+  }, []);
+
   // При открытии компонента поиска подземелья, сбрасываем состояние битвы
   React.useEffect(() => {
     localStorage.removeItem('battleState');
@@ -35,6 +63,7 @@ export const DungeonSearch = ({ onClose, balance, onBalanceChange }: DungeonSear
         timeUntilNext={timeUntilNext}
         isHealthTooLow={isHealthTooLow}
         onRollDice={rollDice}
+        hasActiveCards={hasActiveCards}
       />
     </div>
   );

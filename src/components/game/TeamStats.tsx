@@ -4,6 +4,7 @@ import { HealthBar } from "./stats/HealthBar";
 import { CombatStats } from "./stats/CombatStats";
 import { PlayerStats } from "@/types/battle";
 import { TeamStats as TeamStatsType } from "@/types/cards";
+import { calculateTeamStats } from "@/utils/cardUtils";
 
 interface TeamStatsProps {
   teamStats: TeamStatsType;
@@ -32,6 +33,35 @@ export const TeamStats = ({ teamStats }: TeamStatsProps) => {
     return Number(localStorage.getItem('gameBalance') || '0');
   });
 
+  // Обновляем статистику при изменении карт
+  React.useEffect(() => {
+    const handleCardsUpdate = () => {
+      const savedCards = localStorage.getItem('gameCards');
+      if (savedCards) {
+        const cards = JSON.parse(savedCards);
+        const activeStats = calculateTeamStats(cards);
+        setStats(prev => ({
+          ...prev,
+          health: activeStats.health,
+          maxHealth: activeStats.health,
+          power: activeStats.power,
+          defense: activeStats.defense
+        }));
+      }
+    };
+
+    window.addEventListener('cardsUpdate', handleCardsUpdate);
+    window.addEventListener('storage', handleCardsUpdate);
+
+    // Инициализируем статистику при монтировании
+    handleCardsUpdate();
+
+    return () => {
+      window.removeEventListener('cardsUpdate', handleCardsUpdate);
+      window.removeEventListener('storage', handleCardsUpdate);
+    };
+  }, []);
+
   React.useEffect(() => {
     const handleBalanceUpdate = () => {
       const newBalance = Number(localStorage.getItem('gameBalance') || '0');
@@ -57,10 +87,8 @@ export const TeamStats = ({ teamStats }: TeamStatsProps) => {
         backgroundRepeat: 'no-repeat'
       }}
     >
-      {/* Полупрозрачный оверлей для лучшей читаемости */}
       <div className="absolute inset-0 bg-game-surface/90 backdrop-blur-sm" />
       
-      {/* Контент поверх оверлея */}
       <div className="relative z-10">
         <div className="flex justify-between items-center mb-4">
           <h2 className="text-xl font-bold text-game-accent">Статистика команды</h2>
