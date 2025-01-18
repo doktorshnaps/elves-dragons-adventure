@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { ShoppingBag, Plus } from "lucide-react";
+import { ShoppingBag, Plus, X } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { ListingDialog } from "./ListingDialog";
 import { MarketplaceListing } from "./types";
@@ -29,7 +29,51 @@ export const MarketplaceTab = () => {
     });
   };
 
+  const handleCancelListing = (listing: MarketplaceListing) => {
+    // Remove listing
+    const newListings = listings.filter(l => l.id !== listing.id);
+    setListings(newListings);
+    localStorage.setItem('marketplaceListings', JSON.stringify(newListings));
+
+    // Return item to inventory/cards
+    if (listing.type === 'item') {
+      const currentInventory = localStorage.getItem('gameInventory');
+      const inventory = currentInventory ? JSON.parse(currentInventory) : [];
+      inventory.push(listing.item);
+      localStorage.setItem('gameInventory', JSON.stringify(inventory));
+      
+      const inventoryEvent = new CustomEvent('inventoryUpdate', { 
+        detail: { inventory }
+      });
+      window.dispatchEvent(inventoryEvent);
+    } else {
+      const currentCards = localStorage.getItem('gameCards');
+      const cards = currentCards ? JSON.parse(currentCards) : [];
+      cards.push(listing.item);
+      localStorage.setItem('gameCards', JSON.stringify(cards));
+      
+      const cardsEvent = new CustomEvent('cardsUpdate', { 
+        detail: { cards }
+      });
+      window.dispatchEvent(cardsEvent);
+    }
+
+    toast({
+      title: "Объявление отменено",
+      description: `${listing.item.name} возвращен в ваш инвентарь`,
+    });
+  };
+
   const handleBuy = (listing: MarketplaceListing) => {
+    if (listing.sellerId === 'current-user') {
+      toast({
+        title: "Ошибка",
+        description: "Вы не можете купить свое собственное объявление",
+        variant: "destructive",
+      });
+      return;
+    }
+
     if (balance < listing.price) {
       toast({
         title: "Недостаточно токенов",
@@ -110,6 +154,8 @@ export const MarketplaceTab = () => {
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
           {listings.map((listing) => {
             const displayInfo = getItemDisplayInfo(listing.item);
+            const isOwnListing = listing.sellerId === 'current-user';
+
             return (
               <Card key={listing.id} className="p-4 bg-game-surface border-game-accent">
                 <div className="flex flex-col gap-2">
@@ -121,13 +167,24 @@ export const MarketplaceTab = () => {
                     {displayInfo.description}
                   </p>
                   <p className="text-yellow-500 font-medium">{listing.price} токенов</p>
-                  <Button
-                    onClick={() => handleBuy(listing)}
-                    disabled={balance < listing.price}
-                    className="w-full mt-2"
-                  >
-                    Купить
-                  </Button>
+                  {isOwnListing ? (
+                    <Button
+                      onClick={() => handleCancelListing(listing)}
+                      variant="destructive"
+                      className="w-full mt-2"
+                    >
+                      <X className="w-4 h-4 mr-2" />
+                      Отменить
+                    </Button>
+                  ) : (
+                    <Button
+                      onClick={() => handleBuy(listing)}
+                      disabled={balance < listing.price}
+                      className="w-full mt-2"
+                    >
+                      Купить
+                    </Button>
+                  )}
                 </div>
               </Card>
             );
