@@ -2,11 +2,9 @@ import { useState, useEffect } from "react";
 import { Card as CardType } from "@/types/cards";
 import { useToast } from "@/hooks/use-toast";
 import { getCardPrice, upgradeCard } from "@/utils/cardUtils";
-import { useDragonEggs } from "@/contexts/DragonEggContext";
 
 export const useTeamCards = () => {
   const { toast } = useToast();
-  const { addEgg } = useDragonEggs();
   const [cards, setCards] = useState<CardType[]>(() => {
     const savedCards = localStorage.getItem('gameCards');
     return savedCards ? JSON.parse(savedCards) : [];
@@ -114,41 +112,16 @@ export const useTeamCards = () => {
     const newCards = cards.filter(c => !selectedCards.find(sc => sc.id === c.id));
 
     if (selectedCards[0].type === 'pet') {
-      // Очищаем старые яйца из инвентаря
-      const currentInventory = localStorage.getItem('gameInventory');
-      let inventory = currentInventory ? JSON.parse(currentInventory) : [];
+      // Создаем новое яйцо только в контексте DragonEggs
+      const { addEgg } = useDragonEggs();
       
-      // Фильтруем только яйца с функцией инкубации
-      inventory = inventory.filter((item: any) => 
-        !(item.type === 'dragon_egg' && !item.hasOwnProperty('createdAt'))
-      );
-      
-      // Создаем новое яйцо с базовым изображением
-      const newEggItem = {
-        id: Date.now().toString(),
-        name: 'Яйцо дракона',
-        type: 'dragon_egg' as const,
-        description: `Фракция: ${upgradedCard.faction}, Редкость: ${upgradedCard.rarity}`,
-        value: upgradedCard.rarity,
-        petName: upgradedCard.name,
-        createdAt: new Date().toISOString()
-      };
-      
-      inventory.push(newEggItem);
-      localStorage.setItem('gameInventory', JSON.stringify(inventory));
-
       addEgg({
-        id: newEggItem.id,
+        id: Date.now().toString(),
         petName: upgradedCard.name,
         rarity: upgradedCard.rarity,
-        createdAt: newEggItem.createdAt,
+        createdAt: new Date().toISOString(),
         faction: upgradedCard.faction || 'Каледор'
       }, upgradedCard.faction || 'Каледор');
-
-      const inventoryEvent = new CustomEvent('inventoryUpdate', {
-        detail: { inventory }
-      });
-      window.dispatchEvent(inventoryEvent);
 
       toast({
         title: "Создано яйцо дракона!",
