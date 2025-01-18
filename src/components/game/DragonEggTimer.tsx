@@ -99,7 +99,14 @@ export const DragonEggTimer = ({
         <p>Питомец: {petName}</p>
         {faction && <p>Фракция: {faction}</p>}
         <p>Редкость: {getRarityLabel(rarity as 1|2|3|4|5|6|7|8)}</p>
-        {canClaim ? (
+        {!isStarted ? (
+          <Button 
+            onClick={handleStart}
+            className="w-full mt-2 bg-blue-600 hover:bg-blue-700"
+          >
+            Начать инкубацию
+          </Button>
+        ) : canClaim ? (
           <Button 
             onClick={handleClaim}
             className="w-full mt-2 bg-green-600 hover:bg-green-700"

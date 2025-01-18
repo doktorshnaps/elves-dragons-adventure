@@ -15,9 +15,10 @@ export const useInventoryState = () => {
       localStorage.setItem('gameInventory', JSON.stringify(e.detail.inventory));
     };
 
-    const handleStorageChange = (e: StorageEvent) => {
-      if (e.key === 'gameInventory') {
-        const newInventory = e.newValue ? JSON.parse(e.newValue) : [];
+    const handleStorageChange = () => {
+      const savedInventory = localStorage.getItem('gameInventory');
+      if (savedInventory) {
+        const newInventory = JSON.parse(savedInventory);
         setInventory(newInventory);
       }
     };
@@ -25,9 +26,13 @@ export const useInventoryState = () => {
     window.addEventListener('inventoryUpdate', handleInventoryUpdate as EventListener);
     window.addEventListener('storage', handleStorageChange);
 
+    // Добавляем интервал для периодической проверки изменений
+    const syncInterval = setInterval(handleStorageChange, 1000);
+
     return () => {
       window.removeEventListener('inventoryUpdate', handleInventoryUpdate as EventListener);
       window.removeEventListener('storage', handleStorageChange);
+      clearInterval(syncInterval);
     };
   }, []);
 
