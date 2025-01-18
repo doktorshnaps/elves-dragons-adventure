@@ -146,7 +146,7 @@ export const useTeamCards = () => {
         petName: upgradedCard.name,
         rarity: upgradedCard.rarity,
         createdAt: new Date().toISOString(),
-        faction: upgradedCard.faction
+        faction: upgradedCard.faction || 'Каледор' // Добавляем значение по умолчанию
       });
 
       const inventoryEvent = new CustomEvent('inventoryUpdate', {

@@ -50,7 +50,7 @@ export const rollLoot = (lootTable: LootTable): { items: Item[], coins: number }
 
   if (lootTable.healthPotion && Math.random() < lootTable.healthPotion.chance) {
     items.push({
-      id: Date.now(),
+      id: Date.now().toString(),
       type: "healthPotion",
       name: "Малое зелье здоровья",
       value: 50
