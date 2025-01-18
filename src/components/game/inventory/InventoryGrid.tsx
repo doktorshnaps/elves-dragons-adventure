@@ -21,15 +21,15 @@ export const InventoryGrid = ({
   }
 
   return (
-    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-2">
+    <>
       {groupedItems.map((item) => (
         <Card 
           key={`${item.name}-${item.type}-${item.value}`}
-          className="p-2 bg-game-surface/80 border-game-accent backdrop-blur-sm"
+          className="p-2 bg-game-surface/80 border-game-accent backdrop-blur-sm h-[180px] flex flex-col justify-between"
         >
           <div className="flex flex-col gap-1">
             {item.image && (
-              <div className="w-full aspect-square mb-1 rounded-lg overflow-hidden">
+              <div className="w-full aspect-square mb-1 rounded-lg overflow-hidden h-[80px]">
                 <img 
                   src={item.image} 
                   alt={item.name}
@@ -65,6 +65,6 @@ export const InventoryGrid = ({
           </div>
         </Card>
       ))}
-    </div>
+    </>
   );
 };
