@@ -1,4 +1,4 @@
-import { Item } from "./types";
+import { Item } from "@/types/inventory";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { Button } from "@/components/ui/button";
 

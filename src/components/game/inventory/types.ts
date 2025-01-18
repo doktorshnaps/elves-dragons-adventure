@@ -1,4 +1,4 @@
-import { Item } from "@/components/battle/Inventory";
+import { Item } from "@/types/inventory";
 
 export interface GroupedItem {
   name: string;
