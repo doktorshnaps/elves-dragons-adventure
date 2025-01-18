@@ -32,6 +32,15 @@ export const TeamStats = ({ teamStats }: TeamStatsProps) => {
     return Number(localStorage.getItem('gameBalance') || '0');
   });
 
+  const [playerName, setPlayerName] = React.useState(() => {
+    const gameUser = localStorage.getItem('gameUser');
+    if (gameUser) {
+      const { username } = JSON.parse(gameUser);
+      return username;
+    }
+    return "Игрок";
+  });
+
   React.useEffect(() => {
     const handleBalanceUpdate = () => {
       const newBalance = Number(localStorage.getItem('gameBalance') || '0');
@@ -57,13 +66,14 @@ export const TeamStats = ({ teamStats }: TeamStatsProps) => {
         backgroundRepeat: 'no-repeat'
       }}
     >
-      {/* Полупрозрачный оверлей для лучшей читаемости */}
       <div className="absolute inset-0 bg-game-surface/90 backdrop-blur-sm" />
       
-      {/* Контент поверх оверлея */}
       <div className="relative z-10">
         <div className="flex justify-between items-center mb-4">
-          <h2 className="text-xl font-bold text-game-accent">Статистика команды</h2>
+          <div>
+            <h2 className="text-xl font-bold text-game-accent">Статистика команды</h2>
+            <p className="text-sm text-game-accent/80">Игрок: {playerName}</p>
+          </div>
           <span className="text-sm text-game-accent">{balance} монет</span>
         </div>
         

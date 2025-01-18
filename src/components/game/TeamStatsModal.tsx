@@ -2,6 +2,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { TeamStats as TeamStatsType } from "@/types/cards";
 import { HealthBar } from "./stats/HealthBar";
 import { CombatStats } from "./stats/CombatStats";
+import { useState, useEffect } from "react";
 
 interface TeamStatsModalProps {
   isOpen: boolean;
@@ -11,6 +12,16 @@ interface TeamStatsModalProps {
 }
 
 export const TeamStatsModal = ({ isOpen, onClose, teamStats, balance }: TeamStatsModalProps) => {
+  const [playerName, setPlayerName] = useState("Игрок");
+
+  useEffect(() => {
+    const gameUser = localStorage.getItem('gameUser');
+    if (gameUser) {
+      const { username } = JSON.parse(gameUser);
+      setPlayerName(username);
+    }
+  }, []);
+
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent 
@@ -22,13 +33,13 @@ export const TeamStatsModal = ({ isOpen, onClose, teamStats, balance }: TeamStat
           backgroundRepeat: 'no-repeat'
         }}
       >
-        {/* Полупрозрачный оверлей для лучшей читаемости */}
         <div className="absolute inset-0 bg-game-surface/90 backdrop-blur-sm" />
         
-        {/* Контент поверх оверлея */}
         <div className="relative z-10 overflow-y-auto">
           <DialogHeader>
-            <DialogTitle className="text-xl font-bold text-game-accent">Статистика команды</DialogTitle>
+            <DialogTitle className="text-xl font-bold text-game-accent">
+              Статистика команды - {playerName}
+            </DialogTitle>
           </DialogHeader>
           
           <div className="mt-4 px-2">
