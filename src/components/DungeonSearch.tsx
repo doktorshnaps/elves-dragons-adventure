@@ -25,15 +25,17 @@ export const DungeonSearch = ({ onClose, balance, onBalanceChange }: DungeonSear
   } = useDungeonSearch(balance);
 
   return (
-    <DungeonSearchDialog
-      onClose={onClose}
-      balance={balance}
-      selectedDungeon={selectedDungeon}
-      rolling={rolling}
-      energyState={energyState}
-      timeUntilNext={timeUntilNext}
-      isHealthTooLow={isHealthTooLow}
-      onRollDice={rollDice}
-    />
+    <div className="fixed inset-0 z-[100]">
+      <DungeonSearchDialog
+        onClose={onClose}
+        balance={balance}
+        selectedDungeon={selectedDungeon}
+        rolling={rolling}
+        energyState={energyState}
+        timeUntilNext={timeUntilNext}
+        isHealthTooLow={isHealthTooLow}
+        onRollDice={rollDice}
+      />
+    </div>
   );
 };
