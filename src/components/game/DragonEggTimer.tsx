@@ -60,7 +60,7 @@ export const DragonEggTimer = ({ rarity, petName, createdAt, onHatch }: DragonEg
 
     const interval = setInterval(checkHatchStatus, 1000);
     return () => clearInterval(interval);
-  }, [rarity, createdAt, isStarted, petName, hasNotified]);
+  }, [rarity, createdAt, isStarted, petName, hasNotified, toast]);
 
   const handleStart = () => {
     setIsStarted(true);
@@ -75,23 +75,20 @@ export const DragonEggTimer = ({ rarity, petName, createdAt, onHatch }: DragonEg
       onHatch();
       setIsHatched(true);
       setCanClaim(false);
+      toast({
+        title: "Питомец получен!",
+        description: `${petName} теперь доступен в вашей коллекции`,
+      });
     }
   };
 
-  if (isHatched && !canClaim) return null;
+  if (!isStarted || (isHatched && !canClaim)) return null;
 
   return (
     <Card className="p-4 bg-game-surface border-game-accent">
       <h3 className="text-lg font-bold text-game-accent mb-2">Яйцо дракона</h3>
       <p className="text-sm text-gray-400">Питомец: {petName}</p>
-      {!isStarted ? (
-        <Button 
-          onClick={handleStart}
-          className="w-full mt-2 bg-game-accent hover:bg-game-accent/80"
-        >
-          Начать инкубацию
-        </Button>
-      ) : canClaim ? (
+      {canClaim ? (
         <Button 
           onClick={handleClaim}
           className="w-full mt-2 bg-green-600 hover:bg-green-700"
