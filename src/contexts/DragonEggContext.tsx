@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { Card } from '@/types/cards';
 
-interface DragonEgg {
+export interface DragonEgg {
   id: string;
   petName: string;
   rarity: number;

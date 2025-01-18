@@ -4,6 +4,7 @@ import { useInventoryLogic } from "./inventory/useInventoryLogic";
 import { InventoryHeader } from "./inventory/InventoryHeader";
 import { DragonEggsList } from "./inventory/DragonEggsList";
 import { InventoryGrid } from "./inventory/InventoryGrid";
+import { GroupedItem } from "./inventory/types";
 
 interface InventoryDisplayProps {
   inventory: Item[];
