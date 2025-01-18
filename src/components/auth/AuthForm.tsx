@@ -14,19 +14,20 @@ export const AuthForm = ({ onSuccess }: AuthFormProps) => {
   const { toast } = useToast();
 
   const handleRegister = () => {
-    if (username.length < 3) {
+    // Validation checks similar to the provided logic
+    if (username.length <= 4) {
       toast({
         title: "Ошибка",
-        description: "Имя пользователя должно содержать минимум 3 символа",
+        description: "Никнейм слишком мал (минимум 5 символов)",
         variant: "destructive",
       });
       return;
     }
 
-    if (password.length < 6) {
+    if (password.length <= 4) {
       toast({
         title: "Ошибка",
-        description: "Пароль должен содержать минимум 6 символов",
+        description: "Пароль слишком мал (минимум 5 символов)",
         variant: "destructive",
       });
       return;
@@ -36,7 +37,7 @@ export const AuthForm = ({ onSuccess }: AuthFormProps) => {
     if (existingUsers.some((user: { username: string }) => user.username === username)) {
       toast({
         title: "Ошибка",
-        description: "Это имя уже занято",
+        description: "Пользователь уже существует",
         variant: "destructive",
       });
       return;
@@ -47,7 +48,7 @@ export const AuthForm = ({ onSuccess }: AuthFormProps) => {
     localStorage.setItem("gameUser", JSON.stringify(userData));
     toast({
       title: "Успешно",
-      description: "Регистрация завершена",
+      description: "Регистрация прошла успешно",
     });
     onSuccess();
   };
@@ -71,7 +72,7 @@ export const AuthForm = ({ onSuccess }: AuthFormProps) => {
     localStorage.setItem("gameUser", JSON.stringify(user));
     toast({
       title: "Успешно",
-      description: "Вход выполнен",
+      description: "Вход выполнен успешно",
     });
     onSuccess();
   };
