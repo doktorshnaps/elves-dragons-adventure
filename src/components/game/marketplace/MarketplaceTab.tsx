@@ -37,23 +37,21 @@ export const MarketplaceTab = () => {
 
     // Return item to inventory/cards
     if (listing.type === 'item') {
-      const currentInventory = localStorage.getItem('gameInventory');
-      const inventory = currentInventory ? JSON.parse(currentInventory) : [];
-      inventory.push(listing.item);
-      localStorage.setItem('gameInventory', JSON.stringify(inventory));
+      const currentInventory = JSON.parse(localStorage.getItem('gameInventory') || '[]');
+      const newInventory = [...currentInventory, listing.item];
+      localStorage.setItem('gameInventory', JSON.stringify(newInventory));
       
       const inventoryEvent = new CustomEvent('inventoryUpdate', { 
-        detail: { inventory }
+        detail: { inventory: newInventory }
       });
       window.dispatchEvent(inventoryEvent);
     } else {
-      const currentCards = localStorage.getItem('gameCards');
-      const cards = currentCards ? JSON.parse(currentCards) : [];
-      cards.push(listing.item);
-      localStorage.setItem('gameCards', JSON.stringify(cards));
+      const currentCards = JSON.parse(localStorage.getItem('gameCards') || '[]');
+      const newCards = [...currentCards, listing.item];
+      localStorage.setItem('gameCards', JSON.stringify(newCards));
       
       const cardsEvent = new CustomEvent('cardsUpdate', { 
-        detail: { cards }
+        detail: { cards: newCards }
       });
       window.dispatchEvent(cardsEvent);
     }
@@ -93,23 +91,29 @@ export const MarketplaceTab = () => {
 
     // Add item to buyer's inventory/cards
     if (listing.type === 'item') {
-      const currentInventory = localStorage.getItem('gameInventory');
-      const inventory = currentInventory ? JSON.parse(currentInventory) : [];
-      inventory.push(listing.item);
-      localStorage.setItem('gameInventory', JSON.stringify(inventory));
+      const currentInventory = JSON.parse(localStorage.getItem('gameInventory') || '[]');
+      const newItem = {
+        ...listing.item,
+        id: Date.now() // Генерируем новый ID для предмета
+      };
+      const newInventory = [...currentInventory, newItem];
+      localStorage.setItem('gameInventory', JSON.stringify(newInventory));
       
       const inventoryEvent = new CustomEvent('inventoryUpdate', { 
-        detail: { inventory }
+        detail: { inventory: newInventory }
       });
       window.dispatchEvent(inventoryEvent);
     } else {
-      const currentCards = localStorage.getItem('gameCards');
-      const cards = currentCards ? JSON.parse(currentCards) : [];
-      cards.push(listing.item);
-      localStorage.setItem('gameCards', JSON.stringify(cards));
+      const currentCards = JSON.parse(localStorage.getItem('gameCards') || '[]');
+      const newCard = {
+        ...listing.item,
+        id: Date.now() // Генерируем новый ID для карты
+      };
+      const newCards = [...currentCards, newCard];
+      localStorage.setItem('gameCards', JSON.stringify(newCards));
       
       const cardsEvent = new CustomEvent('cardsUpdate', { 
-        detail: { cards }
+        detail: { cards: newCards }
       });
       window.dispatchEvent(cardsEvent);
     }
