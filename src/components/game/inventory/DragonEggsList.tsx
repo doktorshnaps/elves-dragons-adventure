@@ -2,6 +2,7 @@ import { DragonEggTimer } from "../DragonEggTimer";
 import { useToast } from "@/hooks/use-toast";
 import { DragonEgg } from "@/contexts/DragonEggContext";
 import { Card } from "@/types/cards";
+import { cardDatabase } from "@/data/cardDatabase";
 
 interface DragonEggsListProps {
   eggs: DragonEgg[];
@@ -11,16 +12,29 @@ export const DragonEggsList = ({ eggs }: DragonEggsListProps) => {
   const { toast } = useToast();
 
   const handleHatch = (egg: DragonEgg) => {
-    // Создаем нового питомца
+    // Находим базовую информацию о питомце из базы данных
+    const basePet = cardDatabase.find(card => 
+      card.type === 'pet' && 
+      card.name === egg.petName
+    );
+
+    if (!basePet) {
+      console.error('Pet not found in database:', egg.petName);
+      return;
+    }
+
+    // Создаем нового питомца с корректными характеристиками
     const newPet: Card = {
       id: Date.now().toString(),
       name: egg.petName,
       type: 'pet',
-      power: 10 * egg.rarity,
-      defense: 8 * egg.rarity,
-      health: 15 * egg.rarity,
-      magic: 5 * egg.rarity,
+      power: basePet.baseStats.power * Math.pow(2, egg.rarity - 1),
+      defense: basePet.baseStats.defense * Math.pow(2, egg.rarity - 1),
+      health: basePet.baseStats.health * Math.pow(2, egg.rarity - 1),
+      magic: basePet.baseStats.magic * Math.pow(2, egg.rarity - 1),
       rarity: egg.rarity,
+      faction: basePet.faction,
+      image: basePet.image
     };
 
     // Получаем текущие карты
@@ -31,7 +45,7 @@ export const DragonEggsList = ({ eggs }: DragonEggsListProps) => {
     const updatedCards = [...currentCards, newPet];
     localStorage.setItem('gameCards', JSON.stringify(updatedCards));
 
-    // Удаляем яйцо из localStorage
+    // Удаляем яйцо из localStorage и контекста
     const savedEggs = localStorage.getItem('dragonEggs');
     if (savedEggs) {
       const currentEggs = JSON.parse(savedEggs);
@@ -44,6 +58,10 @@ export const DragonEggsList = ({ eggs }: DragonEggsListProps) => {
       detail: { cards: updatedCards }
     });
     window.dispatchEvent(cardsEvent);
+
+    // Отправляем событие обновления яиц
+    const eggsEvent = new CustomEvent('eggsUpdate');
+    window.dispatchEvent(eggsEvent);
   };
 
   if (eggs.length === 0) return null;

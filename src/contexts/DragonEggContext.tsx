@@ -23,6 +23,20 @@ export const DragonEggProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   });
 
   useEffect(() => {
+    const handleEggsUpdate = () => {
+      const savedEggs = localStorage.getItem('dragonEggs');
+      if (savedEggs) {
+        setEggs(JSON.parse(savedEggs));
+      }
+    };
+
+    window.addEventListener('eggsUpdate', handleEggsUpdate);
+    return () => {
+      window.removeEventListener('eggsUpdate', handleEggsUpdate);
+    };
+  }, []);
+
+  useEffect(() => {
     localStorage.setItem('dragonEggs', JSON.stringify(eggs));
   }, [eggs]);
 
