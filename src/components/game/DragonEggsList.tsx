@@ -1,4 +1,4 @@
-import { DragonEggTimer } from "../DragonEggTimer";
+import { DragonEggTimer } from "./DragonEggTimer";
 import { useToast } from "@/hooks/use-toast";
 import { DragonEgg } from "@/contexts/DragonEggContext";
 import { Card, Rarity, Faction } from "@/types/cards";
