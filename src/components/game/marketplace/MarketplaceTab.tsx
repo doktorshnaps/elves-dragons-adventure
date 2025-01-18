@@ -6,6 +6,8 @@ import { useToast } from "@/hooks/use-toast";
 import { ListingDialog } from "./ListingDialog";
 import { MarketplaceListing } from "./types";
 import { useBalanceState } from "@/hooks/useBalanceState";
+import { Card as CardType } from "@/types/cards";
+import { Item } from "@/components/battle/Inventory";
 
 export const MarketplaceTab = () => {
   const { toast } = useToast();
@@ -74,6 +76,20 @@ export const MarketplaceTab = () => {
     });
   };
 
+  const getItemDisplayInfo = (item: CardType | Item) => {
+    if ('rarity' in item) {
+      return {
+        rarity: item.rarity,
+        type: 'Карта',
+        description: `${(item as CardType).type === 'character' ? 'Герой' : 'Питомец'}`
+      };
+    }
+    return {
+      type: 'Предмет',
+      description: item.type === 'healthPotion' ? 'Зелье здоровья' : 'Набор карт'
+    };
+  };
+
   return (
     <div className="space-y-4">
       <div className="flex justify-between items-center">
@@ -92,31 +108,30 @@ export const MarketplaceTab = () => {
 
       {listings.length > 0 ? (
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
-          {listings.map((listing) => (
-            <Card key={listing.id} className="p-4 bg-game-surface border-game-accent">
-              <div className="flex flex-col gap-2">
-                <h3 className="font-semibold text-game-accent">{listing.item.name}</h3>
-                <p className="text-sm text-gray-400">
-                  {listing.type === 'card' ? (
-                    <>
-                      {listing.item.type === 'character' ? 'Герой' : 'Питомец'} - 
-                      Редкость: {listing.item.rarity}
-                    </>
-                  ) : (
-                    'Предмет'
-                  )}
-                </p>
-                <p className="text-yellow-500 font-medium">{listing.price} токенов</p>
-                <Button
-                  onClick={() => handleBuy(listing)}
-                  disabled={balance < listing.price}
-                  className="w-full mt-2"
-                >
-                  Купить
-                </Button>
-              </div>
-            </Card>
-          ))}
+          {listings.map((listing) => {
+            const displayInfo = getItemDisplayInfo(listing.item);
+            return (
+              <Card key={listing.id} className="p-4 bg-game-surface border-game-accent">
+                <div className="flex flex-col gap-2">
+                  <h3 className="font-semibold text-game-accent">{listing.item.name}</h3>
+                  <p className="text-sm text-gray-400">
+                    {displayInfo.type}
+                    {displayInfo.rarity && ` - Редкость: ${displayInfo.rarity}`}
+                    <br />
+                    {displayInfo.description}
+                  </p>
+                  <p className="text-yellow-500 font-medium">{listing.price} токенов</p>
+                  <Button
+                    onClick={() => handleBuy(listing)}
+                    disabled={balance < listing.price}
+                    className="w-full mt-2"
+                  >
+                    Купить
+                  </Button>
+                </div>
+              </Card>
+            );
+          })}
         </div>
       ) : (
         <div className="text-center py-8 text-gray-400">

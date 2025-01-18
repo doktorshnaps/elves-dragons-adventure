@@ -9,3 +9,12 @@ export interface MarketplaceListing {
   sellerId: string;
   createdAt: string;
 }
+
+export interface ListingItemDisplay {
+  id: string;
+  name: string;
+  type: 'card' | 'item';
+  image?: string;
+  rarity?: number;
+  description?: string;
+}
