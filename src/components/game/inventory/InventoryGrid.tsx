@@ -51,25 +51,29 @@ export const InventoryGrid = ({
                 </div>
               )}
             </div>
-            {!readonly && window.location.pathname === '/battle' && (
-              <Button 
-                onClick={() => onUseItem(item)} 
-                variant="outline" 
-                size="sm"
-                className="mt-1 text-xs bg-game-surface/50 hover:bg-game-surface/70"
-              >
-                Использовать
-              </Button>
-            )}
-            {!readonly && item.type !== 'dragon_egg' && (
-              <Button
-                onClick={() => onSellItem(item.items[0])}
-                variant="destructive"
-                size="sm"
-                className="mt-1 text-xs"
-              >
-                Продать
-              </Button>
+            {!readonly && (
+              <div className="mt-auto space-y-1">
+                {window.location.pathname === '/battle' && (
+                  <Button 
+                    onClick={() => onUseItem(item)} 
+                    variant="outline" 
+                    size="sm"
+                    className="w-full text-xs bg-game-surface/50 hover:bg-game-surface/70"
+                  >
+                    Использовать
+                  </Button>
+                )}
+                {item.type !== 'dragon_egg' && (
+                  <Button
+                    onClick={() => onSellItem(item.items[0])}
+                    variant="destructive"
+                    size="sm"
+                    className="w-full text-xs"
+                  >
+                    Продать
+                  </Button>
+                )}
+              </div>
             )}
           </div>
         </Card>
