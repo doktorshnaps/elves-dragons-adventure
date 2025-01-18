@@ -38,7 +38,10 @@ export const useTeamCards = () => {
   }, []);
 
   const handleSellCard = (card: CardType) => {
-    // Удаляем карту из списка выбранных, если она там есть
+    // Предотвращаем всплытие события, чтобы не вызвать handleCardSelect
+    event?.stopPropagation();
+    
+    // Удаляем карту из списка выбранных
     setSelectedCards(prev => prev.filter(c => c.id !== card.id));
 
     const newCards = cards.filter(c => c.id !== card.id);
@@ -82,7 +85,7 @@ export const useTeamCards = () => {
 
     // Если нет выбранных карт, добавляем первую
     if (selectedCards.length === 0) {
-      setSelectedCards(sameCards.slice(0, 2));
+      setSelectedCards([sameCards[0]]);
     } else {
       // Проверяем, совпадает ли новая карта с уже выбранной
       const firstSelected = selectedCards[0];
@@ -90,7 +93,8 @@ export const useTeamCards = () => {
         firstSelected.name === card.name &&
         firstSelected.rarity === card.rarity &&
         firstSelected.type === card.type &&
-        firstSelected.faction === card.faction
+        firstSelected.faction === card.faction &&
+        selectedCards.length < 2
       ) {
         setSelectedCards([...selectedCards, sameCards[0]]);
       } else {
