@@ -1,16 +1,16 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { Card } from '@/types/cards';
 
 export interface DragonEgg {
   id: string;
   petName: string;
   rarity: number;
   createdAt: string;
+  faction?: string;
 }
 
 interface DragonEggContextType {
   eggs: DragonEgg[];
-  addEgg: (pet: Card, newRarity: number) => void;
+  addEgg: (egg: DragonEgg, faction: string) => void;
   removeEgg: (id: string) => void;
 }
 
@@ -40,12 +40,10 @@ export const DragonEggProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     localStorage.setItem('dragonEggs', JSON.stringify(eggs));
   }, [eggs]);
 
-  const addEgg = (pet: Card, newRarity: number) => {
+  const addEgg = (egg: DragonEgg, faction: string) => {
     const newEgg: DragonEgg = {
-      id: Date.now().toString(),
-      petName: pet.name,
-      rarity: newRarity,
-      createdAt: new Date().toISOString(),
+      ...egg,
+      faction
     };
     setEggs([...eggs, newEgg]);
   };
