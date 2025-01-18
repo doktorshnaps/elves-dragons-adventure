@@ -114,17 +114,24 @@ export const useTeamCards = () => {
     const newCards = cards.filter(c => !selectedCards.find(sc => sc.id === c.id));
 
     if (selectedCards[0].type === 'pet') {
+      // Очищаем старые яйца из инвентаря
       const currentInventory = localStorage.getItem('gameInventory');
-      const inventory = currentInventory ? JSON.parse(currentInventory) : [];
+      let inventory = currentInventory ? JSON.parse(currentInventory) : [];
       
+      // Фильтруем только яйца с функцией инкубации
+      inventory = inventory.filter((item: any) => 
+        !(item.type === 'dragon_egg' && !item.hasOwnProperty('createdAt'))
+      );
+      
+      // Создаем новое яйцо с базовым изображением
       const newEggItem = {
         id: Date.now().toString(),
-        name: `Яйцо ${upgradedCard.name}`,
+        name: 'Яйцо дракона',
         type: 'dragon_egg' as const,
         description: `Фракция: ${upgradedCard.faction}, Редкость: ${upgradedCard.rarity}`,
         value: upgradedCard.rarity,
         petName: upgradedCard.name,
-        image: upgradedCard.image
+        createdAt: new Date().toISOString()
       };
       
       inventory.push(newEggItem);
@@ -134,7 +141,7 @@ export const useTeamCards = () => {
         id: newEggItem.id,
         petName: upgradedCard.name,
         rarity: upgradedCard.rarity,
-        createdAt: new Date().toISOString(),
+        createdAt: newEggItem.createdAt,
         faction: upgradedCard.faction || 'Каледор'
       }, upgradedCard.faction || 'Каледор');
 
