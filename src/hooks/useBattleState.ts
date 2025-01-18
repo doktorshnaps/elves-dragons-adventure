@@ -55,7 +55,7 @@ export const useBattleState = (initialLevel: number = 1) => {
     handleOpponentDefeat
   );
 
-  const { handleNextLevel } = useDungeonLevelManager(playerStats, initialState);
+  const { handleNextLevel } = useDungeonLevelManager(playerStats, initialState, setOpponents);
 
   useBattleStateManager(playerStats, opponents, initialState, inventory, balance);
 

@@ -1,6 +1,6 @@
 import { useNavigate } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
-import { PlayerStats, Opponent } from '@/types/battle';
+import { PlayerStats } from '@/types/battle';
 import { generateDungeonOpponents } from '@/dungeons/dungeonManager';
 
 export const useDungeonLevelManager = (
@@ -8,7 +8,8 @@ export const useDungeonLevelManager = (
   initialState: {
     currentDungeonLevel: number;
     selectedDungeon: string | null;
-  }
+  },
+  setOpponents: (opponents: any[]) => void
 ) => {
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -29,6 +30,7 @@ export const useDungeonLevelManager = (
     }
     
     const newOpponents = generateDungeonOpponents(selectedDungeon, nextLevel);
+    setOpponents(newOpponents);
     
     const battleState = {
       playerStats: {
