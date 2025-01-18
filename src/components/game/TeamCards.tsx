@@ -6,6 +6,7 @@ import { getCardPrice, upgradeCard } from "@/utils/cardUtils";
 import { Button } from "@/components/ui/button";
 import { ArrowUpCircle } from "lucide-react";
 import { useDragonEggs } from "@/contexts/DragonEggContext";
+import { Badge } from "@/components/ui/badge";
 
 export const TeamCards = () => {
   const { toast } = useToast();
@@ -126,6 +127,16 @@ export const TeamCards = () => {
     );
   };
 
+  // Группировка одинаковых карт
+  const groupedCards = cards.reduce<{ [key: string]: CardType[] }>((acc, card) => {
+    const key = `${card.name}-${card.rarity}-${card.type}-${card.faction || ''}`;
+    if (!acc[key]) {
+      acc[key] = [];
+    }
+    acc[key].push(card);
+    return acc;
+  }, {});
+
   return (
     <div className="space-y-4">
       {selectedCards.length > 0 && (
@@ -146,23 +157,31 @@ export const TeamCards = () => {
       )}
       
       <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-2">
-        {cards.length > 0 ? (
-          cards.map((card) => (
+        {Object.values(groupedCards).length > 0 ? (
+          Object.values(groupedCards).map((cardGroup) => (
             <div
-              key={card.id}
-              className={`cursor-pointer transition-all duration-300 ${
-                selectedCards.find(c => c.id === card.id)
+              key={cardGroup[0].id}
+              className={`cursor-pointer transition-all duration-300 relative ${
+                selectedCards.find(c => c.id === cardGroup[0].id)
                   ? 'ring-2 ring-game-accent rounded-lg'
                   : ''
               }`}
-              onClick={() => handleCardSelect(card)}
+              onClick={() => handleCardSelect(cardGroup[0])}
             >
               <CardDisplay
-                card={card}
+                card={cardGroup[0]}
                 showSellButton={true}
                 onSell={handleSellCard}
-                isActive={card.type === 'character' || isPetActive(card)}
+                isActive={cardGroup[0].type === 'character' || isPetActive(cardGroup[0])}
               />
+              {cardGroup.length > 1 && (
+                <Badge 
+                  className="absolute top-1 right-1 bg-game-accent text-white"
+                  variant="default"
+                >
+                  x{cardGroup.length}
+                </Badge>
+              )}
             </div>
           ))
         ) : (
