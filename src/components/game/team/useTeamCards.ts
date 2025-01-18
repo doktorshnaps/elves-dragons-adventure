@@ -38,7 +38,7 @@ export const useTeamCards = () => {
   }, []);
 
   const handleSellCard = (card: CardType) => {
-    // Удаляем карту из выбранных, если она там есть
+    // Удаляем карту из списка выбранных, если она там есть
     setSelectedCards(prev => prev.filter(c => c.id !== card.id));
 
     const newCards = cards.filter(c => c.id !== card.id);
@@ -67,6 +67,7 @@ export const useTeamCards = () => {
   };
 
   const handleCardSelect = (card: CardType, groupCount: number) => {
+    // Если карта уже выбрана, снимаем выбор со всех карт
     const sameCards = cards.filter(c => 
       c.name === card.name && 
       c.rarity === card.rarity && 
@@ -79,9 +80,11 @@ export const useTeamCards = () => {
       return;
     }
 
+    // Если нет выбранных карт, добавляем первую
     if (selectedCards.length === 0) {
       setSelectedCards(sameCards.slice(0, 2));
     } else {
+      // Проверяем, совпадает ли новая карта с уже выбранной
       const firstSelected = selectedCards[0];
       if (
         firstSelected.name === card.name &&
