@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Card } from "@/types/cards";
+import { Card, Rarity } from "@/types/cards";
 import { useToast } from "@/hooks/use-toast";
 import { useDragonEggs } from "@/contexts/DragonEggContext";
 
@@ -62,10 +62,21 @@ export const useTeamCards = () => {
       return;
     }
 
+    // Ensure the new rarity is of type Rarity (1-8)
+    const newRarity = (selectedCards[0].rarity + 1) as Rarity;
+    if (newRarity > 8) {
+      toast({
+        title: "Максимальная редкость",
+        description: "Карта уже имеет максимальную редкость",
+        variant: "destructive"
+      });
+      return;
+    }
+
     const upgradedCard: Card = {
       ...selectedCards[0],
       id: Date.now().toString(),
-      rarity: selectedCards[0].rarity + 1,
+      rarity: newRarity,
     };
 
     const newCards = cards.filter(c => !selectedCards.find(sc => sc.id === c.id));
@@ -74,7 +85,6 @@ export const useTeamCards = () => {
       const currentInventory = localStorage.getItem('gameInventory');
       const inventory = currentInventory ? JSON.parse(currentInventory) : [];
       
-      // Создаем только один предмет в инвентаре - стандартное яйцо дракона
       const newEggItem = {
         id: Date.now().toString(),
         name: "Яйцо дракона",
@@ -87,7 +97,6 @@ export const useTeamCards = () => {
       inventory.push(newEggItem);
       localStorage.setItem('gameInventory', JSON.stringify(inventory));
 
-      // Добавляем информацию о яйце в контекст
       addEgg({
         id: newEggItem.id,
         petName: upgradedCard.name,
