@@ -131,7 +131,31 @@ export const TeamCards = () => {
     const newCards = cards.filter(c => !selectedCards.find(sc => sc.id === c.id));
 
     if (selectedCards[0].type === 'pet') {
+      // Добавляем яйцо в контекст
       addEgg(upgradedCard, upgradedCard.rarity);
+
+      // Добавляем яйцо в инвентарь
+      const currentInventory = localStorage.getItem('gameInventory');
+      const inventory = currentInventory ? JSON.parse(currentInventory) : [];
+      
+      const newEggItem = {
+        id: Date.now().toString(),
+        name: `Яйцо ${upgradedCard.name}`,
+        type: 'dragon_egg',
+        description: `Фракция: ${upgradedCard.faction}, Редкость: ${upgradedCard.rarity}`,
+        value: upgradedCard.rarity,
+        image: upgradedCard.image
+      };
+      
+      inventory.push(newEggItem);
+      localStorage.setItem('gameInventory', JSON.stringify(inventory));
+
+      // Отправляем событие обновления инвентаря
+      const inventoryEvent = new CustomEvent('inventoryUpdate', {
+        detail: { inventory }
+      });
+      window.dispatchEvent(inventoryEvent);
+
       toast({
         title: "Создано яйцо дракона!",
         description: `Улучшенный питомец появится через некоторое время`,
