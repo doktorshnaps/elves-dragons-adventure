@@ -2,9 +2,11 @@ import { useState, useEffect } from "react";
 import { Card as CardType } from "@/types/cards";
 import { useToast } from "@/hooks/use-toast";
 import { getCardPrice, upgradeCard } from "@/utils/cardUtils";
+import { useDragonEggs } from "@/contexts/DragonEggContext";
 
 export const useTeamCards = () => {
   const { toast } = useToast();
+  const { addEgg } = useDragonEggs();
   const [cards, setCards] = useState<CardType[]>(() => {
     const savedCards = localStorage.getItem('gameCards');
     return savedCards ? JSON.parse(savedCards) : [];
@@ -112,9 +114,6 @@ export const useTeamCards = () => {
     const newCards = cards.filter(c => !selectedCards.find(sc => sc.id === c.id));
 
     if (selectedCards[0].type === 'pet') {
-      // Создаем новое яйцо только в контексте DragonEggs
-      const { addEgg } = useDragonEggs();
-      
       addEgg({
         id: Date.now().toString(),
         petName: upgradedCard.name,
