@@ -17,6 +17,7 @@ export const DragonEggTimer = ({ rarity, petName, createdAt, onHatch }: DragonEg
   const [isStarted, setIsStarted] = useState(false);
   const [isHatched, setIsHatched] = useState(false);
   const [canClaim, setCanClaim] = useState(false);
+  const [hasNotified, setHasNotified] = useState(false);
 
   const getHatchTime = (rarity: number): number => {
     const hours = {
@@ -44,10 +45,14 @@ export const DragonEggTimer = ({ rarity, petName, createdAt, onHatch }: DragonEg
       if (timeDiff >= hatchTime) {
         setIsHatched(true);
         setCanClaim(true);
-        toast({
-          title: "Яйцо дракона вылупилось!",
-          description: `${petName} готов к получению`,
-        });
+        
+        if (!hasNotified) {
+          toast({
+            title: "Яйцо дракона вылупилось!",
+            description: `${petName} готов к получению`,
+          });
+          setHasNotified(true);
+        }
       } else {
         setTimeLeft(formatDistanceToNow(new Date(startDate.getTime() + hatchTime)));
       }
@@ -55,7 +60,7 @@ export const DragonEggTimer = ({ rarity, petName, createdAt, onHatch }: DragonEg
 
     const interval = setInterval(checkHatchStatus, 1000);
     return () => clearInterval(interval);
-  }, [rarity, createdAt, isStarted, petName]);
+  }, [rarity, createdAt, isStarted, petName, hasNotified]);
 
   const handleStart = () => {
     setIsStarted(true);
@@ -68,10 +73,8 @@ export const DragonEggTimer = ({ rarity, petName, createdAt, onHatch }: DragonEg
   const handleClaim = () => {
     if (canClaim) {
       onHatch();
-      toast({
-        title: "Питомец получен!",
-        description: `${petName} теперь доступен в вашей коллекции`,
-      });
+      setIsHatched(true);
+      setCanClaim(false);
     }
   };
 
