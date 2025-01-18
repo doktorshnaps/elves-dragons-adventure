@@ -130,7 +130,7 @@ export const useTeamCards = () => {
       const newEggItem = {
         id: Date.now().toString(),
         name: `Яйцо ${upgradedCard.name}`,
-        type: 'dragon_egg',
+        type: 'dragon_egg' as const,
         description: `Фракция: ${upgradedCard.faction}, Редкость: ${upgradedCard.rarity}`,
         value: upgradedCard.rarity,
         petName: upgradedCard.name,
@@ -145,7 +145,8 @@ export const useTeamCards = () => {
         id: newEggItem.id,
         petName: upgradedCard.name,
         rarity: upgradedCard.rarity,
-        createdAt: new Date().toISOString()
+        createdAt: new Date().toISOString(),
+        faction: upgradedCard.faction
       });
 
       const inventoryEvent = new CustomEvent('inventoryUpdate', {

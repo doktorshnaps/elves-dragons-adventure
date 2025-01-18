@@ -1,104 +1,101 @@
 import React from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { shopItems } from "../shop/types";
+import { Coins } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
+import { getItemPrice } from "@/utils/itemUtils";
 
 export interface Item {
-  id: number;
+  id: string;
   name: string;
-  type: "cardPack" | "healthPotion";
+  type: "cardPack" | "healthPotion" | "dragon_egg";
   value: number;
+  description?: string;
+  image?: string;
+  petName?: string;
 }
 
 interface InventoryProps {
   items: Item[];
-  onUseItem: (item: Item) => void;
+  onUseItem?: (item: Item) => void;
+  onSellItem?: (item: Item) => void;
+  readonly?: boolean;
 }
 
-interface GroupedItem {
-  name: string;
-  type: Item["type"];
-  value: number;
-  count: number;
-  items: Item[];
-}
+export const Inventory = ({ 
+  items, 
+  onUseItem, 
+  onSellItem,
+  readonly = false 
+}: InventoryProps) => {
+  const { toast } = useToast();
 
-export const Inventory = ({ items, onUseItem }: InventoryProps) => {
-  const getItemImage = (itemName: string) => {
-    const shopItem = shopItems.find(item => item.name === itemName);
-    return shopItem?.image || '';
-  };
-
-  const groupedItems = items.reduce<GroupedItem[]>((acc, item) => {
-    const existingGroup = acc.find(
-      group => 
-        group.name === item.name && 
-        group.type === item.type && 
-        group.value === item.value
-    );
-
-    if (existingGroup) {
-      existingGroup.count += 1;
-      existingGroup.items.push(item);
-    } else {
-      acc.push({
-        name: item.name,
-        type: item.type,
-        value: item.value,
-        count: 1,
-        items: [item]
+  const handleSellItem = (item: Item) => {
+    if (onSellItem) {
+      const price = getItemPrice(item);
+      onSellItem(item);
+      toast({
+        title: "Предмет продан",
+        description: `Вы получили ${price} монет`,
       });
     }
+  };
 
-    return acc;
-  }, []);
+  if (items.length === 0) {
+    return (
+      <div className="text-center py-8 text-gray-400">
+        Инвентарь пуст
+      </div>
+    );
+  }
 
   return (
-    <div 
-      className="mt-4 relative rounded-lg overflow-hidden"
-      style={{
-        backgroundImage: 'url("/lovable-uploads/2eecde4e-bda9-4f8f-8105-3e6dcdff36fc.png")',
-        backgroundSize: 'cover',
-        backgroundPosition: 'center',
-        backgroundRepeat: 'no-repeat',
-      }}
-    >
-      <div className="p-6">
-        <h3 className="text-xl font-bold text-white mb-4 drop-shadow-lg">Инвентарь</h3>
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-2">
-          {groupedItems.map((item) => (
-            <Card 
-              key={`${item.name}-${item.type}-${item.value}`} 
-              className="p-2 bg-game-surface/80 border-game-accent backdrop-blur-sm"
-            >
-              <div className="flex flex-col gap-1">
-                {getItemImage(item.name) && (
-                  <div className="w-full aspect-square mb-1 rounded-lg overflow-hidden">
-                    <img 
-                      src={getItemImage(item.name)} 
-                      alt={item.name}
-                      className="w-full h-full object-cover"
-                    />
-                  </div>
-                )}
-                <div className="flex items-center gap-1">
-                  <h4 className="font-bold text-game-accent text-xs">
-                    {item.name} {item.count > 1 && `(${item.count})`}
-                  </h4>
-                </div>
-                <Button 
-                  onClick={() => onUseItem(item.items[0])} 
-                  variant="outline" 
-                  size="sm"
-                  className="mt-1 text-xs bg-game-surface/50 hover:bg-game-surface/70"
-                >
-                  Использовать
-                </Button>
+    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
+      {items.map((item) => (
+        <Card 
+          key={item.id}
+          className="p-4 bg-game-surface border-game-accent"
+        >
+          <div className="space-y-2">
+            {item.image && (
+              <div className="w-full aspect-square mb-2 rounded-lg overflow-hidden">
+                <img 
+                  src={item.image} 
+                  alt={item.name}
+                  className="w-full h-full object-cover"
+                />
               </div>
-            </Card>
-          ))}
-        </div>
-      </div>
+            )}
+            <h3 className="font-semibold text-game-accent">{item.name}</h3>
+            {item.description && (
+              <p className="text-sm text-gray-400">{item.description}</p>
+            )}
+            {!readonly && (
+              <div className="space-y-2">
+                {onUseItem && (
+                  <Button
+                    onClick={() => onUseItem(item)}
+                    className="w-full"
+                    variant="outline"
+                  >
+                    Использовать
+                  </Button>
+                )}
+                {onSellItem && (
+                  <Button
+                    onClick={() => handleSellItem(item)}
+                    className="w-full text-yellow-500 hover:text-yellow-600"
+                    variant="outline"
+                  >
+                    <Coins className="w-4 h-4 mr-2" />
+                    Продать
+                  </Button>
+                )}
+              </div>
+            )}
+          </div>
+        </Card>
+      ))}
     </div>
   );
 };
