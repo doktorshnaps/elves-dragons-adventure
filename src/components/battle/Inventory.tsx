@@ -1,101 +1,46 @@
-import React from "react";
-import { Card } from "@/components/ui/card";
+import { Item } from "./types";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { Button } from "@/components/ui/button";
-import { Coins } from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
-import { getItemPrice } from "@/utils/itemUtils";
-
-export interface Item {
-  id: string;
-  name: string;
-  type: "cardPack" | "healthPotion" | "dragon_egg";
-  value: number;
-  description?: string;
-  image?: string;
-  petName?: string;
-}
 
 interface InventoryProps {
   items: Item[];
-  onUseItem?: (item: Item) => void;
-  onSellItem?: (item: Item) => void;
-  readonly?: boolean;
+  onUseItem: (item: Item) => void;
 }
 
-export const Inventory = ({ 
-  items, 
-  onUseItem, 
-  onSellItem,
-  readonly = false 
-}: InventoryProps) => {
-  const { toast } = useToast();
-
-  const handleSellItem = (item: Item) => {
-    if (onSellItem) {
-      const price = getItemPrice(item);
-      onSellItem(item);
-      toast({
-        title: "Предмет продан",
-        description: `Вы получили ${price} монет`,
-      });
-    }
-  };
-
-  if (items.length === 0) {
-    return (
-      <div className="text-center py-8 text-gray-400">
-        Инвентарь пуст
-      </div>
-    );
-  }
+export const Inventory = ({ items, onUseItem }: InventoryProps) => {
+  const isMobile = useIsMobile();
+  
+  // Фильтруем яйца драконов из инвентаря на странице битвы
+  const battleItems = items.filter(item => item.type !== 'dragon_egg');
 
   return (
-    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
-      {items.map((item) => (
-        <Card 
-          key={item.id}
-          className="p-4 bg-game-surface border-game-accent"
-        >
-          <div className="space-y-2">
+    <div className="mt-4">
+      <h2 className="text-xl font-bold text-game-accent mb-4">Инвентарь</h2>
+      <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-6 gap-2">
+        {battleItems.map((item) => (
+          <div
+            key={item.id}
+            className="bg-game-surface p-2 rounded-lg border border-game-accent flex flex-col items-center gap-2"
+          >
             {item.image && (
-              <div className="w-full aspect-square mb-2 rounded-lg overflow-hidden">
-                <img 
-                  src={item.image} 
-                  alt={item.name}
-                  className="w-full h-full object-cover"
-                />
-              </div>
+              <img
+                src={item.image}
+                alt={item.name}
+                className="w-12 h-12 object-contain"
+              />
             )}
-            <h3 className="font-semibold text-game-accent">{item.name}</h3>
-            {item.description && (
-              <p className="text-sm text-gray-400">{item.description}</p>
-            )}
-            {!readonly && (
-              <div className="space-y-2">
-                {onUseItem && (
-                  <Button
-                    onClick={() => onUseItem(item)}
-                    className="w-full"
-                    variant="outline"
-                  >
-                    Использовать
-                  </Button>
-                )}
-                {onSellItem && (
-                  <Button
-                    onClick={() => handleSellItem(item)}
-                    className="w-full text-yellow-500 hover:text-yellow-600"
-                    variant="outline"
-                  >
-                    <Coins className="w-4 h-4 mr-2" />
-                    Продать
-                  </Button>
-                )}
-              </div>
-            )}
+            <span className="text-xs text-center text-game-accent">{item.name}</span>
+            <Button
+              variant="default"
+              size={isMobile ? "sm" : "default"}
+              onClick={() => onUseItem(item)}
+              className="w-full text-xs"
+            >
+              Использовать
+            </Button>
           </div>
-        </Card>
-      ))}
+        ))}
+      </div>
     </div>
   );
 };

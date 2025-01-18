@@ -90,8 +90,6 @@ export const DragonEggTimer = ({
     }
   };
 
-  if (!isStarted || (isHatched && !canClaim)) return null;
-
   return (
     <Card className="p-4 bg-game-surface border-game-accent">
       <h3 className="text-lg font-bold text-game-accent mb-2">Яйцо дракона</h3>
