@@ -1,83 +1,115 @@
 import { useState, useEffect } from "react";
-import { Card, Rarity } from "@/types/cards";
+import { Card as CardType } from "@/types/cards";
 import { useToast } from "@/hooks/use-toast";
+import { getCardPrice, upgradeCard } from "@/utils/cardUtils";
 import { useDragonEggs } from "@/contexts/DragonEggContext";
 
 export const useTeamCards = () => {
-  const [cards, setCards] = useState<Card[]>(() => {
+  const { toast } = useToast();
+  const { addEgg } = useDragonEggs();
+  const [cards, setCards] = useState<CardType[]>(() => {
     const savedCards = localStorage.getItem('gameCards');
     return savedCards ? JSON.parse(savedCards) : [];
   });
-
-  const [selectedCards, setSelectedCards] = useState<Card[]>([]);
-  const { toast } = useToast();
-  const { addEgg } = useDragonEggs();
+  const [selectedCards, setSelectedCards] = useState<CardType[]>([]);
 
   useEffect(() => {
-    localStorage.setItem('gameCards', JSON.stringify(cards));
-  }, [cards]);
+    const handleCardsUpdate = (e: CustomEvent<{ cards: CardType[] }>) => {
+      setCards(e.detail.cards);
+    };
 
-  const handleSellCard = (cardToSell: Card) => {
-    const currentBalance = Number(localStorage.getItem('gameBalance')) || 0;
-    const sellPrice = cardToSell.rarity * 10;
-    
-    localStorage.setItem('gameBalance', String(currentBalance + sellPrice));
-    setCards(prevCards => prevCards.filter(card => card.id !== cardToSell.id));
-    
-    const balanceEvent = new CustomEvent('balanceUpdate', {
-      detail: { balance: currentBalance + sellPrice }
+    const handleStorageChange = () => {
+      const savedCards = localStorage.getItem('gameCards');
+      if (savedCards) {
+        setCards(JSON.parse(savedCards));
+      }
+    };
+
+    window.addEventListener('cardsUpdate', handleCardsUpdate as EventListener);
+    window.addEventListener('storage', handleStorageChange);
+
+    const interval = setInterval(handleStorageChange, 500);
+
+    return () => {
+      window.removeEventListener('cardsUpdate', handleCardsUpdate as EventListener);
+      window.removeEventListener('storage', handleStorageChange);
+      clearInterval(interval);
+    };
+  }, []);
+
+  const handleSellCard = (card: CardType) => {
+    const newCards = cards.filter(c => c.id !== card.id);
+    setCards(newCards);
+    localStorage.setItem('gameCards', JSON.stringify(newCards));
+
+    const price = getCardPrice(card.rarity);
+    const currentBalance = Number(localStorage.getItem('gameBalance') || '0');
+    const newBalance = currentBalance + price;
+    localStorage.setItem('gameBalance', newBalance.toString());
+
+    const cardsEvent = new CustomEvent('cardsUpdate', { 
+      detail: { cards: newCards }
+    });
+    window.dispatchEvent(cardsEvent);
+
+    const balanceEvent = new CustomEvent('balanceUpdate', { 
+      detail: { balance: newBalance }
     });
     window.dispatchEvent(balanceEvent);
 
     toast({
       title: "Карта продана",
-      description: `Получено ${sellPrice} монет`,
+      description: `Вы получили ${price} токенов`,
     });
   };
 
-  const handleCardSelect = (card: Card, count: number) => {
-    if (selectedCards.find(c => c.id === card.id)) {
-      setSelectedCards(prev => prev.filter(c => c.id !== card.id));
+  const handleCardSelect = (card: CardType, groupCount: number) => {
+    const sameCards = cards.filter(c => 
+      c.name === card.name && 
+      c.rarity === card.rarity && 
+      c.type === card.type && 
+      c.faction === card.faction
+    );
+
+    if (selectedCards.some(c => sameCards.find(sc => sc.id === c.id))) {
+      setSelectedCards([]);
       return;
     }
 
-    if (count >= 3 && selectedCards.length === 0) {
-      setSelectedCards([card]);
+    if (selectedCards.length === 0) {
+      setSelectedCards(sameCards.slice(0, 2));
     } else {
-      toast({
-        title: "Недостаточно карт",
-        description: "Для улучшения нужно 3 одинаковые карты",
-        variant: "destructive"
-      });
+      const firstSelected = selectedCards[0];
+      if (
+        firstSelected.name === card.name &&
+        firstSelected.rarity === card.rarity &&
+        firstSelected.type === card.type &&
+        firstSelected.faction === card.faction
+      ) {
+        setSelectedCards([...selectedCards, sameCards[0]]);
+      } else {
+        toast({
+          title: "Несовместимые карты",
+          description: "Выберите карты одного типа и редкости",
+          variant: "destructive",
+        });
+      }
     }
   };
 
   const handleUpgrade = () => {
-    if (selectedCards.length === 0) {
+    if (selectedCards.length !== 2) return;
+
+    const upgradedCard = upgradeCard(selectedCards[0], selectedCards[1]);
+    
+    if (!upgradedCard) {
       toast({
-        title: "Выберите карты",
-        description: "Сначала выберите карты для улучшения",
-        variant: "destructive"
+        title: "Ошибка улучшения",
+        description: "Выбранные карты должны быть одинаковыми и иметь одинаковую редкость",
+        variant: "destructive",
       });
       return;
     }
-
-    // Ensure the new rarity is of type Rarity (1-8)
-    const newRarity = (selectedCards[0].rarity + 1) as Rarity;
-    if (newRarity > 8) {
-      toast({
-        title: "Максимальная редкость",
-        description: "Карта уже имеет максимальную редкость",
-        variant: "destructive"
-      });
-      return;
-    }
-
-    const upgradedCard: Card = {
-      ...selectedCards[0],
-      id: Date.now().toString(),
-      rarity: newRarity,
-    };
 
     const newCards = cards.filter(c => !selectedCards.find(sc => sc.id === c.id));
 
@@ -87,11 +119,12 @@ export const useTeamCards = () => {
       
       const newEggItem = {
         id: Date.now().toString(),
-        name: "Яйцо дракона",
+        name: `Яйцо ${upgradedCard.name}`,
         type: 'dragon_egg' as const,
-        description: "Требует инкубации",
-        value: 1,
-        image: "/lovable-uploads/d832d29a-6ce9-4bad-abaa-d15cb73b5382.png"
+        description: `Фракция: ${upgradedCard.faction}, Редкость: ${upgradedCard.rarity}`,
+        value: upgradedCard.rarity,
+        petName: upgradedCard.name,
+        image: upgradedCard.image
       };
       
       inventory.push(newEggItem);
@@ -112,17 +145,25 @@ export const useTeamCards = () => {
 
       toast({
         title: "Создано яйцо дракона!",
-        description: "Проверьте инвентарь",
+        description: `Улучшенный питомец появится через некоторое время`,
+      });
+    } else {
+      newCards.push(upgradedCard);
+      toast({
+        title: "Карта улучшена!",
+        description: `${upgradedCard.name} теперь имеет редкость ${upgradedCard.rarity}`,
       });
     }
 
-    setCards([...newCards, upgradedCard]);
-    setSelectedCards([]);
+    setCards(newCards);
+    localStorage.setItem('gameCards', JSON.stringify(newCards));
 
-    toast({
-      title: "Улучшение выполнено!",
-      description: `${upgradedCard.name} улучшен до редкости ${upgradedCard.rarity}`,
+    const cardsEvent = new CustomEvent('cardsUpdate', { 
+      detail: { cards: newCards }
     });
+    window.dispatchEvent(cardsEvent);
+
+    setSelectedCards([]);
   };
 
   return {
