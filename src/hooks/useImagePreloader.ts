@@ -6,7 +6,7 @@ const imageCache: { [key: string]: HTMLImageElement } = {};
 
 // Функция для предварительной загрузки одного изображения
 const preloadSingleImage = (url: string): Promise<void> => {
-  return new Promise((resolve, reject) => {
+  return new Promise((resolve) => {
     // Если изображение уже в кэше, сразу возвращаем его
     if (imageCache[url]) {
       resolve();
@@ -22,9 +22,12 @@ const preloadSingleImage = (url: string): Promise<void> => {
     
     img.onerror = () => {
       console.error(`Failed to load image: ${url}`);
-      resolve(); // Разрешаем промис даже при ошибке, чтобы не блокировать загрузку других изображений
+      resolve(); // Разрешаем промис даже при ошибке
     };
 
+    // Устанавливаем максимальный приоритет загрузки
+    img.fetchPriority = 'high';
+    img.loading = 'eager';
     img.src = url;
   });
 };
@@ -40,34 +43,19 @@ export const useImagePreloader = () => {
     // Удаляем дубликаты URL
     const uniqueUrls = Array.from(new Set(imageUrls));
 
-    // Загружаем изображения пакетами по 5 штук
-    const batchSize = 5;
-    const loadImageBatch = async (startIndex: number) => {
-      const batch = uniqueUrls.slice(startIndex, startIndex + batchSize);
-      await Promise.all(batch.map(preloadSingleImage));
-
-      if (startIndex + batchSize < uniqueUrls.length) {
-        // Загружаем следующий пакет через небольшую задержку
-        setTimeout(() => loadImageBatch(startIndex + batchSize), 100);
-      } else {
+    // Загружаем все изображения сразу
+    Promise.all(uniqueUrls.map(preloadSingleImage))
+      .then(() => {
         setImagesLoaded(true);
-      }
-    };
-
-    // Если все изображения уже в кэше, сразу устанавливаем флаг
-    if (uniqueUrls.every(url => imageCache[url])) {
-      setImagesLoaded(true);
-      return;
-    }
-
-    // Начинаем загрузку первого пакета
-    loadImageBatch(0).catch(error => {
-      console.error('Error in batch loading:', error);
-      setImagesLoaded(true); // Устанавливаем в true anyway чтобы не блокировать приложение
-    });
+        console.log('All images loaded successfully');
+      })
+      .catch(error => {
+        console.error('Error loading images:', error);
+        setImagesLoaded(true);
+      });
 
     return () => {
-      // Очистка не требуется, так как кэш сохраняется
+      // Кэш сохраняется между рендерами
     };
   }, []);
 

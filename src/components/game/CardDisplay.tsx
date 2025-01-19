@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Sword, Shield, Coins, Heart, Sparkles, ArrowUpCircle } from "lucide-react";
 import { motion } from "framer-motion";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { useEffect, useRef } from "react";
 
 interface CardDisplayProps {
   card: CardType;
@@ -26,6 +27,27 @@ export const CardDisplay = ({
   onUpgrade
 }: CardDisplayProps) => {
   const isMobile = useIsMobile();
+  const imgRef = useRef<HTMLImageElement>(null);
+
+  useEffect(() => {
+    if (imgRef.current && card.image) {
+      // Предварительно загружаем изображение
+      const img = new Image();
+      img.src = card.image;
+      
+      // Если изображение уже в кэше браузера, сразу отображаем его
+      if (img.complete) {
+        imgRef.current.src = card.image;
+      } else {
+        // Если изображение не в кэше, ждем загрузки
+        img.onload = () => {
+          if (imgRef.current) {
+            imgRef.current.src = card.image!;
+          }
+        };
+      }
+    }
+  }, [card.image]);
 
   return (
     <Card className={`p-2 bg-game-background border-game-accent hover:border-game-primary transition-all duration-300 h-full flex flex-col ${
@@ -35,12 +57,13 @@ export const CardDisplay = ({
         {card.image && (
           <div className="w-full aspect-square mb-1 rounded-lg overflow-hidden">
             <img 
-              src={card.image} 
+              ref={imgRef}
               alt={card.name}
               className="w-full h-full object-cover"
-              loading="lazy"
+              loading="eager"
               decoding="async"
               fetchPriority="high"
+              style={{ contentVisibility: 'auto' }}
             />
           </div>
         )}
