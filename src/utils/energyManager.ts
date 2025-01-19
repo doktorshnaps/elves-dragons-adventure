@@ -1,3 +1,5 @@
+import React from 'react';
+
 export interface EnergyState {
   current: number;
   max: number;
