@@ -9,7 +9,8 @@ export const generateDungeonOpponents = (dungeonType: string, level: number): Op
     "spider_nest": generateSpiderNestOpponents,
     "bone_demon": generateBoneDemonDungeonOpponents,
     "sea_serpent": generateSeaSerpentLairOpponents,
-    "black_dragon": generateBlackDragonLairOpponents
+    "black_dragon": generateBlackDragonLairOpponents,
+    "Логово черного дракона": generateBlackDragonLairOpponents
   };
 
   const generator = generators[dungeonType];
@@ -26,7 +27,8 @@ export const getDungeonName = (dungeonType: string): string => {
     "spider_nest": "Гнездо гигантских пауков",
     "bone_demon": "Темница костяных демонов",
     "sea_serpent": "Логово морского змея",
-    "black_dragon": "Логово черного дракона"
+    "black_dragon": "Логово черного дракона",
+    "Логово черного дракона": "Логово черного дракона"
   };
 
   return names[dungeonType] || "Неизвестное подземелье";
