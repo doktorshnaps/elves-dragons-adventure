@@ -1,30 +1,33 @@
 import { Opponent } from "@/types/battle";
-import { generateBlackDragonLairOpponents } from "./BlackDragonLair";
-import { generateForgottenSoulsCaveOpponents } from "./ForgottenSoulsCave";
-import { generateIcyThroneOpponents } from "./IcyThroneGenerator";
-import { generateDarkMageTowerOpponents } from "./DarkMageTowerGenerator";
 import { generateSpiderNestOpponents } from "./SpiderNestGenerator";
-import { generateBoneDemonDungeonOpponents } from "./BoneDemonDungeonGenerator";
-import { generateSeaSerpentLairOpponents } from "./SeaSerpentLairGenerator";
+import { generateBoneDemonOpponents } from "./BoneDemonDungeonGenerator";
+import { generateSeaSerpentOpponents } from "./SeaSerpentLairGenerator";
+import { generateBlackDragonLairOpponents } from "./BlackDragonLair";
 
-type DungeonGenerator = (level: number) => Opponent[];
+export const generateDungeonOpponents = (dungeonType: string, level: number): Opponent[] => {
+  const generators: { [key: string]: (level: number) => Opponent[] } = {
+    "spider_nest": generateSpiderNestOpponents,
+    "bone_demon": generateBoneDemonOpponents,
+    "sea_serpent": generateSeaSerpentOpponents,
+    "black_dragon": generateBlackDragonLairOpponents
+  };
 
-const dungeonGenerators: Record<string, DungeonGenerator> = {
-  "Логово Черного Дракона": generateBlackDragonLairOpponents,
-  "Пещеры Забытых Душ": generateForgottenSoulsCaveOpponents,
-  "Трон Ледяного Короля": generateIcyThroneOpponents,
-  "Лабиринт Темного Мага": generateDarkMageTowerOpponents,
-  "Гнездо Гигантских Пауков": generateSpiderNestOpponents,
-  "Темница Костяных Демонов": generateBoneDemonDungeonOpponents,
-  "Логово Морского Змея": generateSeaSerpentLairOpponents
+  const generator = generators[dungeonType];
+  if (!generator) {
+    console.error(`Unknown dungeon type: ${dungeonType}`);
+    return [];
+  }
+
+  return generator(level);
 };
 
-export const generateDungeonOpponents = (dungeonName: string, level: number): Opponent[] => {
-  console.log("Generating opponents for dungeon:", dungeonName);
-  const generator = dungeonGenerators[dungeonName];
-  if (!generator) {
-    console.warn(`Generator not found for dungeon: ${dungeonName}`);
-    return generateBlackDragonLairOpponents(level); // Fallback
-  }
-  return generator(level);
+export const getDungeonName = (dungeonType: string): string => {
+  const names: { [key: string]: string } = {
+    "spider_nest": "Гнездо гигантских пауков",
+    "bone_demon": "Темница костяных демонов",
+    "sea_serpent": "Логово морского змея",
+    "black_dragon": "Логово черного дракона"
+  };
+
+  return names[dungeonType] || "Неизвестное подземелье";
 };

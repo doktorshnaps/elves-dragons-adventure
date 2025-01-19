@@ -1,10 +1,11 @@
-import { Item } from '@/types/inventory';
-
 export interface PlayerStats {
   health: number;
   maxHealth: number;
   power: number;
   defense: number;
+  experience?: number;
+  level?: number;
+  requiredExperience?: number;
 }
 
 export interface Opponent {
@@ -18,10 +19,8 @@ export interface Opponent {
 }
 
 export interface BattleState {
-  level: number;
-  coins: number;
-  isPlayerTurn: boolean;
   playerStats: PlayerStats;
   opponents: Opponent[];
-  inventory: Item[];
+  currentDungeonLevel: number;
+  selectedDungeon: string | null;
 }
