@@ -4,32 +4,34 @@ import { ArrowLeft } from "lucide-react";
 import { Button } from "../ui/button";
 import { Card } from "../ui/card";
 import { EnergyDisplay } from "./EnergyDisplay";
-import { DungeonDisplay } from "./DungeonDisplay";
 import { dungeonBackgrounds } from "@/constants/dungeons";
 import { EnergyState } from "@/utils/energyManager";
+import { ScrollArea } from "../ui/scroll-area";
 
 interface DungeonSearchDialogProps {
   onClose: () => void;
   balance: number;
   selectedDungeon: string | null;
-  rolling: boolean;
+  onDungeonSelect: (dungeon: string) => void;
   energyState: EnergyState;
   timeUntilNext: number;
   isHealthTooLow: boolean;
-  onRollDice: () => void;
+  onEnterDungeon: () => void;
   hasActiveCards: boolean;
+  dungeons: readonly string[];
 }
 
 export const DungeonSearchDialog = ({
   onClose,
   balance,
   selectedDungeon,
-  rolling,
+  onDungeonSelect,
   energyState,
   timeUntilNext,
   isHealthTooLow,
-  onRollDice,
-  hasActiveCards
+  onEnterDungeon,
+  hasActiveCards,
+  dungeons
 }: DungeonSearchDialogProps) => {
   return (
     <motion.div
@@ -60,7 +62,7 @@ export const DungeonSearchDialog = ({
           </Button>
 
           <div className="text-center">
-            <h2 className="text-2xl font-bold text-game-accent mb-6">Поиск подземелья</h2>
+            <h2 className="text-2xl font-bold text-game-accent mb-6">Выбор подземелья</h2>
             
             <EnergyDisplay energyState={energyState} timeUntilNext={timeUntilNext} />
             
@@ -68,15 +70,32 @@ export const DungeonSearchDialog = ({
               <p className="text-game-accent">Баланс: {balance} монет</p>
             </div>
             
-            <DungeonDisplay rolling={rolling} selectedDungeon={selectedDungeon} />
+            <ScrollArea className="h-48 mb-6 rounded-md border border-game-accent p-4">
+              <div className="space-y-2">
+                {dungeons.map((dungeon) => (
+                  <Button
+                    key={dungeon}
+                    onClick={() => onDungeonSelect(dungeon)}
+                    variant={selectedDungeon === dungeon ? "default" : "outline"}
+                    className={`w-full ${
+                      selectedDungeon === dungeon 
+                        ? "bg-game-primary text-white" 
+                        : "border-game-accent text-game-accent hover:bg-game-primary/20"
+                    }`}
+                  >
+                    {dungeon}
+                  </Button>
+                ))}
+              </div>
+            </ScrollArea>
 
             <div className="space-x-4">
               <Button
-                onClick={onRollDice}
-                disabled={rolling || energyState.current <= 0 || isHealthTooLow || !hasActiveCards}
+                onClick={onEnterDungeon}
+                disabled={!selectedDungeon || energyState.current <= 0 || isHealthTooLow || !hasActiveCards}
                 className="bg-game-primary hover:bg-game-primary/80"
               >
-                {rolling ? "Поиск подземелья..." : "Искать подземелье"}
+                Войти в подземелье
               </Button>
               <Button
                 onClick={onClose}

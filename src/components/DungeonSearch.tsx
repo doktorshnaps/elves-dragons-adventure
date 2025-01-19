@@ -1,7 +1,10 @@
 import React from "react";
 import { DungeonSearchDialog } from "./dungeon/DungeonSearchDialog";
-import { useDungeonSearch } from "@/hooks/useDungeonSearch";
-import { EnergyState } from "@/utils/energyManager";
+import { useEnergy } from "@/utils/energyManager";
+import { dungeons } from "@/constants/dungeons";
+import { useNavigate } from "react-router-dom";
+import { useToast } from "@/hooks/use-toast";
+import { calculateTeamStats } from "@/utils/cardUtils";
 
 interface DungeonSearchProps {
   onClose: () => void;
@@ -11,6 +14,9 @@ interface DungeonSearchProps {
 
 export const DungeonSearch = ({ onClose, balance, onBalanceChange }: DungeonSearchProps) => {
   const [hasActiveCards, setHasActiveCards] = React.useState(false);
+  const [selectedDungeon, setSelectedDungeon] = React.useState<string | null>(null);
+  const navigate = useNavigate();
+  const { toast } = useToast();
 
   // Проверяем наличие активных карт
   React.useEffect(() => {
@@ -43,14 +49,77 @@ export const DungeonSearch = ({ onClose, balance, onBalanceChange }: DungeonSear
     localStorage.removeItem('battleState');
   }, []);
 
-  const {
-    rolling,
-    selectedDungeon,
-    energyState,
-    timeUntilNext,
-    isHealthTooLow,
-    rollDice
-  } = useDungeonSearch(balance);
+  const isHealthTooLow = React.useMemo(() => {
+    const savedCards = localStorage.getItem('gameCards');
+    if (savedCards) {
+      const cards = JSON.parse(savedCards);
+      const teamStats = calculateTeamStats(cards);
+      return teamStats.health < teamStats.maxHealth * 0.2;
+    }
+    return false;
+  }, []);
+
+  const { energyState, timeUntilNext } = useEnergy();
+
+  const enterDungeon = () => {
+    if (!selectedDungeon) {
+      toast({
+        title: "Выберите подземелье",
+        description: "Пожалуйста, выберите подземелье для входа",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (energyState.current <= 0) {
+      toast({
+        title: "Недостаточно энергии",
+        description: "Подождите пока энергия восстановится",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (isHealthTooLow) {
+      toast({
+        title: "Низкое здоровье",
+        description: "Подождите пока здоровье восстановится до 20% от максимума",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const savedCards = localStorage.getItem('gameCards');
+    if (savedCards) {
+      const cards = JSON.parse(savedCards);
+      const teamStats = calculateTeamStats(cards);
+
+      const battleState = {
+        playerStats: {
+          health: teamStats.health,
+          maxHealth: teamStats.health,
+          power: teamStats.power,
+          defense: teamStats.defense
+        },
+        opponents: [],
+        currentDungeonLevel: 1,
+        inventory: [],
+        coins: balance,
+        selectedDungeon
+      };
+
+      localStorage.setItem('battleState', JSON.stringify(battleState));
+      
+      toast({
+        title: "Подземелье найдено!",
+        description: `Вы входите в ${selectedDungeon}`,
+      });
+
+      setTimeout(() => {
+        navigate("/battle");
+      }, 2000);
+    }
+  };
 
   return (
     <div className="fixed inset-0 z-[100]">
@@ -58,12 +127,13 @@ export const DungeonSearch = ({ onClose, balance, onBalanceChange }: DungeonSear
         onClose={onClose}
         balance={balance}
         selectedDungeon={selectedDungeon}
-        rolling={rolling}
+        onDungeonSelect={setSelectedDungeon}
         energyState={energyState}
         timeUntilNext={timeUntilNext}
         isHealthTooLow={isHealthTooLow}
-        onRollDice={rollDice}
+        onEnterDungeon={enterDungeon}
         hasActiveCards={hasActiveCards}
+        dungeons={dungeons}
       />
     </div>
   );
