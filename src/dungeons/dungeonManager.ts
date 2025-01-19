@@ -1,14 +1,14 @@
 import { Opponent } from "@/types/battle";
 import { generateSpiderNestOpponents } from "./SpiderNestGenerator";
-import { generateBoneDemonOpponents } from "./BoneDemonDungeonGenerator";
-import { generateSeaSerpentOpponents } from "./SeaSerpentLairGenerator";
+import { generateBoneDemonDungeonOpponents } from "./BoneDemonDungeonGenerator";
+import { generateSeaSerpentLairOpponents } from "./SeaSerpentLairGenerator";
 import { generateBlackDragonLairOpponents } from "./BlackDragonLair";
 
 export const generateDungeonOpponents = (dungeonType: string, level: number): Opponent[] => {
   const generators: { [key: string]: (level: number) => Opponent[] } = {
     "spider_nest": generateSpiderNestOpponents,
-    "bone_demon": generateBoneDemonOpponents,
-    "sea_serpent": generateSeaSerpentOpponents,
+    "bone_demon": generateBoneDemonDungeonOpponents,
+    "sea_serpent": generateSeaSerpentLairOpponents,
     "black_dragon": generateBlackDragonLairOpponents
   };
 
