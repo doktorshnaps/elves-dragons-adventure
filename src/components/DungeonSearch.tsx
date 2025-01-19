@@ -17,6 +17,7 @@ export const DungeonSearch = ({ onClose, balance, onBalanceChange }: DungeonSear
   const [selectedDungeon, setSelectedDungeon] = React.useState<string | null>(null);
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { energyState, timeUntilNext } = useEnergy();
 
   // Проверяем наличие активных карт
   React.useEffect(() => {
@@ -25,9 +26,6 @@ export const DungeonSearch = ({ onClose, balance, onBalanceChange }: DungeonSear
       if (savedCards) {
         const cards = JSON.parse(savedCards);
         const heroes = cards.filter(card => card.type === 'character');
-        const pets = cards.filter(card => card.type === 'pet');
-        
-        // Проверяем наличие хотя бы одного героя
         setHasActiveCards(heroes.length > 0);
       } else {
         setHasActiveCards(false);
@@ -54,12 +52,10 @@ export const DungeonSearch = ({ onClose, balance, onBalanceChange }: DungeonSear
     if (savedCards) {
       const cards = JSON.parse(savedCards);
       const teamStats = calculateTeamStats(cards);
-      return teamStats.health < teamStats.maxHealth * 0.2;
+      return teamStats.health < teamStats.health * 0.2; // Using health instead of maxHealth
     }
     return false;
   }, []);
-
-  const { energyState, timeUntilNext } = useEnergy();
 
   const enterDungeon = () => {
     if (!selectedDungeon) {

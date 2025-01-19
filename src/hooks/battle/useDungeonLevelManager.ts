@@ -1,7 +1,6 @@
 import { useNavigate } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
 import { PlayerStats } from '@/types/battle';
-import { generateDungeonOpponents } from '@/dungeons/dungeonManager';
 
 export const useDungeonLevelManager = (
   playerStats: PlayerStats | null,
@@ -29,14 +28,14 @@ export const useDungeonLevelManager = (
       return;
     }
     
-    const newOpponents = generateDungeonOpponents(selectedDungeon, nextLevel);
-    setOpponents(newOpponents);
+    // Now opponents will be loaded from the specific dungeon file
+    setOpponents([]);
     
     const battleState = {
       playerStats: {
         ...playerStats
       },
-      opponents: newOpponents,
+      opponents: [],
       currentDungeonLevel: nextLevel,
       selectedDungeon
     };
