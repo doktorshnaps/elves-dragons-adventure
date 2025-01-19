@@ -17,9 +17,8 @@ export const DungeonSearch = ({ onClose, balance, onBalanceChange }: DungeonSear
   const [selectedDungeon, setSelectedDungeon] = React.useState<string | null>(null);
   const navigate = useNavigate();
   const { toast } = useToast();
-  const { energyState, timeUntilNext } = useEnergy();
+  const { energyState, timeUntilNext, useEnergyPoint } = useEnergy();
 
-  // Проверяем наличие активных карт
   React.useEffect(() => {
     const checkActiveCards = () => {
       const savedCards = localStorage.getItem('gameCards');
@@ -82,6 +81,10 @@ export const DungeonSearch = ({ onClose, balance, onBalanceChange }: DungeonSear
         description: "Подождите пока здоровье восстановится до 20% от максимума",
         variant: "destructive",
       });
+      return;
+    }
+
+    if (!useEnergyPoint()) {
       return;
     }
 
