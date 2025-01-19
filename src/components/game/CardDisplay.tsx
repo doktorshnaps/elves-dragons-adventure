@@ -40,6 +40,7 @@ export const CardDisplay = ({
               className="w-full h-full object-cover"
               loading="lazy"
               decoding="async"
+              fetchPriority="high"
             />
           </div>
         )}
