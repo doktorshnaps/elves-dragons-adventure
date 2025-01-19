@@ -14,6 +14,7 @@ export interface Opponent {
   health: number;
   maxHealth: number;
   isBoss?: boolean;
+  image?: string;
 }
 
 export interface BattleState {

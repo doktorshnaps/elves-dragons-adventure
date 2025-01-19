@@ -6,7 +6,6 @@ export const generateBoneDemonDungeonOpponents = (level: number): Opponent[] => 
   // Базовые характеристики противников
   const baseStats = {
     power: 18 + level * 6,
-    defense: 12 + level * 4,
     health: 90 + level * 25,
   };
 
@@ -16,7 +15,6 @@ export const generateBoneDemonDungeonOpponents = (level: number): Opponent[] => 
       id: i,
       name: "Скелет-маг",
       power: baseStats.power,
-      defense: baseStats.defense,
       health: baseStats.health,
       maxHealth: baseStats.health,
       image: "/lovable-uploads/aef9e591-e676-4552-a70d-c7457b29b6c5.png",
@@ -29,7 +27,6 @@ export const generateBoneDemonDungeonOpponents = (level: number): Opponent[] => 
     id: 2,
     name: "Демон-страж",
     power: baseStats.power * 1.3,
-    defense: baseStats.defense * 1.4,
     health: baseStats.health * 1.3,
     maxHealth: baseStats.health * 1.3,
     image: "/lovable-uploads/aef9e591-e676-4552-a70d-c7457b29b6c5.png",
@@ -42,7 +39,6 @@ export const generateBoneDemonDungeonOpponents = (level: number): Opponent[] => 
       id: 3,
       name: "Костяной демон",
       power: baseStats.power * 2.2,
-      defense: baseStats.defense * 2,
       health: baseStats.health * 2.8,
       maxHealth: baseStats.health * 2.8,
       image: "/lovable-uploads/aef9e591-e676-4552-a70d-c7457b29b6c5.png",
