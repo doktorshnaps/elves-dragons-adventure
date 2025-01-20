@@ -9,6 +9,7 @@ import { DungeonMinimap } from "@/components/dungeon/DungeonMinimap";
 import { DungeonState } from "@/types/dungeon";
 import { useToast } from "@/hooks/use-toast";
 import { motion, AnimatePresence } from "framer-motion";
+import { ArrowLeft, ArrowRight, ArrowUp, ArrowDown } from "lucide-react";
 
 const Battle = () => {
   const navigate = useNavigate();
@@ -72,9 +73,32 @@ const Battle = () => {
     handleNextLevel();
   };
 
+  const getCurrentRoomConnections = () => {
+    if (!dungeonState) return [];
+    const currentRoom = dungeonState.rooms.find(r => r.id === dungeonState.currentRoomId);
+    return currentRoom?.connections || [];
+  };
+
+  const getDirectionalRooms = () => {
+    if (!dungeonState) return { up: null, right: null, down: null, left: null };
+    const currentRoom = dungeonState.rooms.find(r => r.id === dungeonState.currentRoomId);
+    if (!currentRoom) return { up: null, right: null, down: null, left: null };
+
+    const connections = getCurrentRoomConnections();
+    const rooms = connections.map(id => dungeonState.rooms.find(r => r.id === id));
+
+    return {
+      up: rooms.find(r => r?.position.y < currentRoom.position.y),
+      right: rooms.find(r => r?.position.x > currentRoom.position.x),
+      down: rooms.find(r => r?.position.y > currentRoom.position.y),
+      left: rooms.find(r => r?.position.x < currentRoom.position.x),
+    };
+  };
+
   if (!playerStats || !dungeonState) return null;
 
   const currentRoom = dungeonState.rooms.find(r => r.id === dungeonState.currentRoomId);
+  const directionalRooms = getDirectionalRooms();
 
   return (
     <motion.div
@@ -119,6 +143,45 @@ const Battle = () => {
                 </div>
               )}
             </div>
+          </div>
+
+          <div className="fixed left-1/2 bottom-24 -translate-x-1/2 grid grid-cols-3 gap-2 p-4 bg-black/50 rounded-lg">
+            {directionalRooms.up && (
+              <Button
+                onClick={() => handleRoomChange(directionalRooms.up.id)}
+                className="col-start-2"
+                variant="outline"
+              >
+                <ArrowUp className="w-6 h-6" />
+              </Button>
+            )}
+            {directionalRooms.left && (
+              <Button
+                onClick={() => handleRoomChange(directionalRooms.left.id)}
+                className="col-start-1 row-start-2"
+                variant="outline"
+              >
+                <ArrowLeft className="w-6 h-6" />
+              </Button>
+            )}
+            {directionalRooms.right && (
+              <Button
+                onClick={() => handleRoomChange(directionalRooms.right.id)}
+                className="col-start-3 row-start-2"
+                variant="outline"
+              >
+                <ArrowRight className="w-6 h-6" />
+              </Button>
+            )}
+            {directionalRooms.down && (
+              <Button
+                onClick={() => handleRoomChange(directionalRooms.down.id)}
+                className="col-start-2 row-start-3"
+                variant="outline"
+              >
+                <ArrowDown className="w-6 h-6" />
+              </Button>
+            )}
           </div>
 
           <Inventory items={inventory} onUseItem={useItem} />
