@@ -12,7 +12,6 @@ export const DragonEggsList = ({ eggs }: DragonEggsListProps) => {
   const { toast } = useToast();
 
   const handleHatch = (egg: DragonEgg) => {
-    // Находим базовую информацию о питомце из базы данных
     const basePet = cardDatabase.find(card => 
       card.type === 'pet' && 
       card.name === egg.petName
@@ -23,7 +22,6 @@ export const DragonEggsList = ({ eggs }: DragonEggsListProps) => {
       return;
     }
 
-    // Создаем нового питомца с корректными характеристиками
     const newPet: Card = {
       id: Date.now().toString(),
       name: egg.petName,
@@ -37,15 +35,11 @@ export const DragonEggsList = ({ eggs }: DragonEggsListProps) => {
       image: basePet.image
     };
 
-    // Получаем текущие карты
     const savedCards = localStorage.getItem('gameCards');
     const currentCards = savedCards ? JSON.parse(savedCards) : [];
-
-    // Добавляем нового питомца
     const updatedCards = [...currentCards, newPet];
     localStorage.setItem('gameCards', JSON.stringify(updatedCards));
 
-    // Удаляем яйцо из localStorage и контекста
     const savedEggs = localStorage.getItem('dragonEggs');
     if (savedEggs) {
       const currentEggs = JSON.parse(savedEggs);
@@ -53,22 +47,32 @@ export const DragonEggsList = ({ eggs }: DragonEggsListProps) => {
       localStorage.setItem('dragonEggs', JSON.stringify(updatedEggs));
     }
 
-    // Отправляем событие обновления карт
     const cardsEvent = new CustomEvent('cardsUpdate', { 
       detail: { cards: updatedCards }
     });
     window.dispatchEvent(cardsEvent);
 
-    // Отправляем событие обновления яиц
     const eggsEvent = new CustomEvent('eggsUpdate');
     window.dispatchEvent(eggsEvent);
   };
 
   if (eggs.length === 0) return null;
 
+  // Удаляем дубликаты яиц на основе petName и rarity
+  const uniqueEggs = eggs.reduce((acc: DragonEgg[], current) => {
+    const exists = acc.some(egg => 
+      egg.petName === current.petName && 
+      egg.rarity === current.rarity
+    );
+    if (!exists) {
+      acc.push(current);
+    }
+    return acc;
+  }, []);
+
   return (
     <div className="col-span-full grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-2">
-      {eggs.map((egg) => {
+      {uniqueEggs.map((egg) => {
         const basePet = cardDatabase.find(card => 
           card.type === 'pet' && 
           card.name === egg.petName

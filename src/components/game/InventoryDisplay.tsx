@@ -25,6 +25,9 @@ export const InventoryDisplay = ({
     handleSellItem,
   } = useInventoryLogic(inventory);
 
+  // Фильтруем инвентарь, исключая яйца драконов, так как они отображаются отдельно
+  const filteredInventory = inventory.filter(item => item.type !== 'dragon_egg');
+
   const handleUseItem = (item: Item) => {
     if (!readonly && onUseItem) {
       if (item.type === 'cardPack') {
@@ -54,7 +57,7 @@ export const InventoryDisplay = ({
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-2">
           <DragonEggsList eggs={eggs} />
           <InventoryGrid
-            groupedItems={groupItems(inventory)}
+            groupedItems={groupItems(filteredInventory)}
             readonly={readonly}
             onUseItem={(groupedItem) => {
               if (groupedItem.items.length > 0) {
