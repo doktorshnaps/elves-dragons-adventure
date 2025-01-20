@@ -6,7 +6,7 @@ import { Inventory } from "@/components/battle/Inventory";
 import { useBattleState } from "@/hooks/useBattleState";
 import { Button } from "@/components/ui/button";
 import { DungeonMinimap } from "@/components/dungeon/DungeonMinimap";
-import { DungeonState, DungeonRoom } from "@/types/dungeon";
+import { DungeonState } from "@/types/dungeon";
 import { useToast } from "@/hooks/use-toast";
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -44,7 +44,6 @@ const Battle = () => {
 
     if (!targetRoom || !currentRoom || !targetRoom.isAccessible) return;
 
-    // Check if rooms are connected
     if (!currentRoom.connections.includes(roomId)) {
       toast({
         title: "Недоступная комната",
@@ -54,7 +53,6 @@ const Battle = () => {
       return;
     }
 
-    // Update dungeon state
     const newDungeonState = {
       ...dungeonState,
       currentRoomId: roomId,
@@ -62,7 +60,6 @@ const Battle = () => {
         if (room.id === currentRoom.id) {
           return { ...room, isCompleted: true };
         }
-        // Make connected rooms accessible
         if (room.id === roomId) {
           return { ...room, isAccessible: true };
         }
@@ -72,8 +69,6 @@ const Battle = () => {
 
     setDungeonState(newDungeonState);
     localStorage.setItem('dungeonState', JSON.stringify(newDungeonState));
-
-    // Reset battle state for new room
     handleNextLevel();
   };
 
@@ -92,10 +87,12 @@ const Battle = () => {
         <div className="flex flex-col gap-8">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
             <PlayerCard
-              health={playerStats.health}
-              maxHealth={playerStats.maxHealth}
-              power={playerStats.power}
-              defense={playerStats.defense}
+              playerStats={{
+                health: playerStats.health,
+                maxHealth: playerStats.maxHealth,
+                power: playerStats.power,
+                defense: playerStats.defense
+              }}
             />
             
             <div className="space-y-4">
@@ -105,6 +102,8 @@ const Battle = () => {
                   opponent={opponent}
                   onAttack={() => attackEnemy(opponent.id)}
                   isPlayerTurn={isPlayerTurn}
+                  currentLevel={level}
+                  playerHealth={playerStats.health}
                 />
               ))}
               
