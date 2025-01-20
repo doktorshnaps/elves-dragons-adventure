@@ -43,16 +43,17 @@ export const useCombat = (
     setOpponents(newOpponents);
     setIsPlayerTurn(false);
 
-    const battleState = localStorage.getItem('battleState');
-    if (battleState) {
-      const state = JSON.parse(battleState);
-      state.opponents = newOpponents;
-      localStorage.setItem('battleState', JSON.stringify(state));
-    }
+    // Trigger enemy attack after a short delay
+    setTimeout(() => {
+      handleOpponentAttack();
+    }, 1000);
   };
 
   const handleOpponentAttack = () => {
-    if (!playerStats || opponents.length === 0 || isPlayerTurn) return;
+    if (!playerStats || opponents.length === 0) {
+      setIsPlayerTurn(true);
+      return;
+    }
 
     const randomOpponent = opponents[Math.floor(Math.random() * opponents.length)];
     const { blockedDamage, damageToHealth, newDefense } = calculatePlayerDamage(
@@ -85,13 +86,6 @@ export const useCombat = (
     });
 
     setIsPlayerTurn(true);
-
-    const battleState = localStorage.getItem('battleState');
-    if (battleState) {
-      const state = JSON.parse(battleState);
-      state.playerStats = newStats;
-      localStorage.setItem('battleState', JSON.stringify(state));
-    }
   };
 
   return {
