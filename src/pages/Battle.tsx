@@ -10,6 +10,7 @@ import { DungeonState } from "@/types/dungeon";
 import { useToast } from "@/hooks/use-toast";
 import { motion, AnimatePresence } from "framer-motion";
 import { ArrowLeft, ArrowRight, ArrowUp, ArrowDown } from "lucide-react";
+import { generateDungeon } from "@/dungeons/DarkMageTowerGenerator";
 
 const Battle = () => {
   const navigate = useNavigate();
@@ -26,6 +27,7 @@ const Battle = () => {
     useItem,
     level,
     handleNextLevel,
+    setOpponents,
   } = useBattleState(1);
 
   useEffect(() => {
@@ -33,7 +35,9 @@ const Battle = () => {
     if (savedDungeonState) {
       setDungeonState(JSON.parse(savedDungeonState));
     } else {
-      navigate('/game');
+      const newDungeonState = generateDungeon("Dark Mage Tower");
+      setDungeonState(newDungeonState);
+      localStorage.setItem('dungeonState', JSON.stringify(newDungeonState));
     }
   }, [navigate]);
 
@@ -54,6 +58,7 @@ const Battle = () => {
       return;
     }
 
+    // Update room accessibility and completion status
     const newDungeonState = {
       ...dungeonState,
       currentRoomId: roomId,
@@ -61,7 +66,8 @@ const Battle = () => {
         if (room.id === currentRoom.id) {
           return { ...room, isCompleted: true };
         }
-        if (room.id === roomId) {
+        // Make connected rooms accessible
+        if (targetRoom.connections.includes(room.id)) {
           return { ...room, isAccessible: true };
         }
         return room;
@@ -70,6 +76,9 @@ const Battle = () => {
 
     setDungeonState(newDungeonState);
     localStorage.setItem('dungeonState', JSON.stringify(newDungeonState));
+    
+    // Reset opponents for the new room
+    setOpponents([]);
     handleNextLevel();
   };
 
@@ -148,36 +157,40 @@ const Battle = () => {
           <div className="fixed left-1/2 bottom-24 -translate-x-1/2 grid grid-cols-3 gap-2 p-4 bg-black/50 rounded-lg">
             {directionalRooms.up && (
               <Button
-                onClick={() => handleRoomChange(directionalRooms.up.id)}
+                onClick={() => handleRoomChange(directionalRooms.up!.id)}
                 className="col-start-2"
                 variant="outline"
+                disabled={!directionalRooms.up.isAccessible}
               >
                 <ArrowUp className="w-6 h-6" />
               </Button>
             )}
             {directionalRooms.left && (
               <Button
-                onClick={() => handleRoomChange(directionalRooms.left.id)}
+                onClick={() => handleRoomChange(directionalRooms.left!.id)}
                 className="col-start-1 row-start-2"
                 variant="outline"
+                disabled={!directionalRooms.left.isAccessible}
               >
                 <ArrowLeft className="w-6 h-6" />
               </Button>
             )}
             {directionalRooms.right && (
               <Button
-                onClick={() => handleRoomChange(directionalRooms.right.id)}
+                onClick={() => handleRoomChange(directionalRooms.right!.id)}
                 className="col-start-3 row-start-2"
                 variant="outline"
+                disabled={!directionalRooms.right.isAccessible}
               >
                 <ArrowRight className="w-6 h-6" />
               </Button>
             )}
             {directionalRooms.down && (
               <Button
-                onClick={() => handleRoomChange(directionalRooms.down.id)}
+                onClick={() => handleRoomChange(directionalRooms.down!.id)}
                 className="col-start-2 row-start-3"
                 variant="outline"
+                disabled={!directionalRooms.down.isAccessible}
               >
                 <ArrowDown className="w-6 h-6" />
               </Button>
