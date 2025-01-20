@@ -5,50 +5,12 @@ import { dungeons } from "@/constants/dungeons";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import { calculateTeamStats } from "@/utils/cardUtils";
-import { DungeonRoom, DungeonState } from "@/types/dungeon";
 
 interface DungeonSearchProps {
   onClose: () => void;
   balance: number;
   onBalanceChange: (newBalance: number) => void;
 }
-
-const generateDungeonRooms = (): DungeonRoom[] => {
-  const rooms: DungeonRoom[] = [];
-  const size = 3; // 3x3 grid
-
-  // Generate rooms in a grid
-  for (let y = 0; y < size; y++) {
-    for (let x = 0; x < size; x++) {
-      const id = `room-${x}-${y}`;
-      const isStart = x === 1 && y === 2; // Bottom center is start
-      const isBoss = x === 1 && y === 0; // Top center is boss
-
-      rooms.push({
-        id,
-        type: isBoss ? 'boss' : (Math.random() > 0.3 ? 'combat' : 'treasure'),
-        isCompleted: false,
-        isAccessible: isStart,
-        position: { x: x - 1, y: y - 1 },
-        connections: []
-      });
-    }
-  }
-
-  // Connect rooms
-  rooms.forEach((room) => {
-    const { x, y } = room.position;
-    const possibleConnections = rooms.filter((otherRoom) => {
-      const dx = Math.abs(otherRoom.position.x - x);
-      const dy = Math.abs(otherRoom.position.y - y);
-      return (dx === 1 && dy === 0) || (dx === 0 && dy === 1);
-    });
-
-    room.connections = possibleConnections.map(r => r.id);
-  });
-
-  return rooms;
-};
 
 export const DungeonSearch = ({ onClose, balance, onBalanceChange }: DungeonSearchProps) => {
   const [hasActiveCards, setHasActiveCards] = React.useState(false);
@@ -79,9 +41,9 @@ export const DungeonSearch = ({ onClose, balance, onBalanceChange }: DungeonSear
     };
   }, []);
 
+  // При открытии компонента поиска подземелья, сбрасываем состояние битвы
   React.useEffect(() => {
     localStorage.removeItem('battleState');
-    localStorage.removeItem('dungeonState');
   }, []);
 
   const isHealthTooLow = React.useMemo(() => {
@@ -89,7 +51,7 @@ export const DungeonSearch = ({ onClose, balance, onBalanceChange }: DungeonSear
     if (savedCards) {
       const cards = JSON.parse(savedCards);
       const teamStats = calculateTeamStats(cards);
-      return teamStats.health < teamStats.health * 0.2;
+      return teamStats.health < teamStats.health * 0.2; // Using health instead of maxHealth
     }
     return false;
   }, []);
@@ -131,15 +93,6 @@ export const DungeonSearch = ({ onClose, balance, onBalanceChange }: DungeonSear
       const cards = JSON.parse(savedCards);
       const teamStats = calculateTeamStats(cards);
 
-      // Generate dungeon layout
-      const rooms = generateDungeonRooms();
-      const dungeonState: DungeonState = {
-        dungeonName: selectedDungeon,
-        currentRoomId: rooms.find(r => r.position.x === 0 && r.position.y === 1)?.id || rooms[0].id,
-        rooms,
-        playerPosition: { x: 0, y: 1 }
-      };
-
       const battleState = {
         playerStats: {
           health: teamStats.health,
@@ -155,7 +108,6 @@ export const DungeonSearch = ({ onClose, balance, onBalanceChange }: DungeonSear
       };
 
       localStorage.setItem('battleState', JSON.stringify(battleState));
-      localStorage.setItem('dungeonState', JSON.stringify(dungeonState));
       
       toast({
         title: "Подземелье найдено!",
