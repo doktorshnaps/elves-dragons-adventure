@@ -11,6 +11,8 @@ import { useBattleState } from "@/hooks/useBattleState";
 import { fixResizeObserverLoop } from "@/utils/resizeObserverFix";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { dungeonBackgrounds } from "@/constants/dungeons";
+import { Item } from "@/types/inventory";
+import { applyItemEffect } from "@/utils/itemUtils";
 
 const Battle = () => {
   const navigate = useNavigate();
@@ -28,13 +30,43 @@ const Battle = () => {
     coins,
     isPlayerTurn,
     playerStats,
+    setPlayerStats,
     opponents = [],
     inventory,
     attackEnemy,
     handleOpponentAttack,
-    useItem,
+    useItem: removeItem,
     handleNextLevel
   } = useBattleState(savedLevel);
+
+  const useItem = (item: Item) => {
+    if (!playerStats) return;
+
+    const newStats = applyItemEffect(item, playerStats);
+    setPlayerStats(newStats);
+    removeItem(item);
+
+    let effectDescription = "";
+    switch (item.name) {
+      case "Зелье здоровья":
+        effectDescription = `Восстановлено ${item.value} здоровья`;
+        break;
+      case "Зелье защиты":
+        effectDescription = `Увеличена защита на ${item.value}`;
+        break;
+      case "Старый железный меч":
+        effectDescription = `Увеличена сила на ${item.value}`;
+        break;
+      case "Кожаная броня":
+        effectDescription = `Увеличена защита на ${item.value}`;
+        break;
+    }
+
+    toast({
+      title: "Предмет использован",
+      description: effectDescription,
+    });
+  };
 
   useEffect(() => {
     fixResizeObserverLoop();
@@ -112,10 +144,6 @@ const Battle = () => {
       }, 2000);
     }
   }, [playerStats?.health, navigate, toast]);
-
-  if (!selectedDungeon) {
-    return null;
-  }
 
   return (
     <div 
@@ -196,7 +224,7 @@ const Battle = () => {
           <div className="flex items-center gap-1 md:gap-2">
             <Heart className="w-4 h-4 md:w-6 md:h-6 text-red-500" />
             <span className="font-bold text-base md:text-xl text-game-accent">
-              {playerStats?.health}/{playerStats?.maxHealth}
+              {Math.floor(playerStats?.health || 0)}/{playerStats?.maxHealth}
             </span>
           </div>
         </div>
