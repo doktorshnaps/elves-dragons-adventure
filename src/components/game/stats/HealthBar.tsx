@@ -9,6 +9,8 @@ interface HealthBarProps {
 
 export const HealthBar = ({ health, maxHealth }: HealthBarProps) => {
   const healthPercentage = (health / maxHealth) * 100;
+  const displayHealth = Math.floor(health);
+  const displayMaxHealth = Math.floor(maxHealth);
 
   return (
     <div className="flex items-center gap-2">
@@ -16,7 +18,7 @@ export const HealthBar = ({ health, maxHealth }: HealthBarProps) => {
       <div className="flex-1">
         <div className="flex justify-between mb-1">
           <span className="text-sm text-game-accent">Здоровье</span>
-          <span className="text-sm text-game-accent">{health}/{maxHealth}</span>
+          <span className="text-sm text-game-accent">{displayHealth}/{displayMaxHealth}</span>
         </div>
         <Progress value={healthPercentage} className="h-2" />
       </div>

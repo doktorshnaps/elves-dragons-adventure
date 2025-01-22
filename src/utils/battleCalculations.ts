@@ -18,16 +18,26 @@ export const calculatePlayerDamage = (
   enemyPower: number,
   playerDefense: number
 ) => {
-  const incomingDamage = enemyPower;
-  const defenseReduction = Math.min(playerDefense * 0.5, incomingDamage * 0.7);
-  const damageToHealth = Math.max(0, incomingDamage - defenseReduction);
-  const defenseDecrease = Math.floor(playerDefense * 0.2);
-  const newDefense = Math.max(0, playerDefense - defenseDecrease);
-
+  const incomingDamage = Math.floor(enemyPower);
+  
+  // Если есть защита, сначала снимаем её
+  if (playerDefense > 0) {
+    const damageToDefense = Math.min(playerDefense, incomingDamage);
+    const remainingDamage = Math.max(0, incomingDamage - damageToDefense);
+    const newDefense = Math.max(0, playerDefense - damageToDefense);
+    
+    return {
+      blockedDamage: damageToDefense,
+      damageToHealth: remainingDamage,
+      newDefense: newDefense
+    };
+  }
+  
+  // Если защиты нет, весь урон идёт по здоровью
   return {
-    blockedDamage: defenseReduction,
-    damageToHealth,
-    newDefense
+    blockedDamage: 0,
+    damageToHealth: incomingDamage,
+    newDefense: 0
   };
 };
 
