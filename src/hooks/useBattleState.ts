@@ -111,6 +111,7 @@ export const useBattleState = (initialLevel: number = 1) => {
     level: initialState.currentDungeonLevel,
     coins: balance,
     playerStats,
+    setPlayerStats, // Added this line to expose setPlayerStats
     opponents,
     inventory,
     isPlayerTurn,
