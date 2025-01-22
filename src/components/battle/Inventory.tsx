@@ -2,6 +2,7 @@ import { Item } from "@/types/inventory";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { Coins } from "lucide-react";
 
 interface InventoryProps {
   items: Item[];
@@ -67,29 +68,35 @@ export const Inventory = ({ items, onUseItem }: InventoryProps) => {
           {groupedItems.map((group) => (
             <Card
               key={group.id}
-              className="bg-game-surface/80 p-2 rounded-lg border border-game-accent flex flex-col items-center gap-2 backdrop-blur-sm"
+              className="bg-game-surface/80 p-2 rounded-lg border border-game-accent flex flex-col h-[180px]"
             >
-              {group.image && (
-                <div className="w-12 h-12 relative">
-                  <img
-                    src={group.image}
-                    alt={group.name}
-                    className="w-full h-full object-contain"
-                    loading="eager"
-                  />
+              <div className="flex flex-col gap-1 flex-grow">
+                {group.image && (
+                  <div className="relative w-full h-20 mb-1 rounded-lg overflow-hidden">
+                    <img 
+                      src={group.image} 
+                      alt={group.name}
+                      className="w-full h-full object-contain"
+                      loading="eager"
+                    />
+                  </div>
+                )}
+                <div className="flex flex-col gap-1">
+                  <h4 className="font-bold text-game-accent text-xs">
+                    {group.name} {group.count > 1 && `(${group.count})`}
+                  </h4>
                 </div>
-              )}
-              <span className="text-xs text-center text-game-accent">
-                {group.name} {group.count > 1 && `(${group.count})`}
-              </span>
-              <Button
-                variant="default"
-                size={isMobile ? "sm" : "default"}
-                onClick={() => onUseItem(group.items[0])}
-                className="w-full text-xs"
-              >
-                Использовать
-              </Button>
+                <div className="mt-auto space-y-1">
+                  <Button 
+                    onClick={() => onUseItem(group.items[0])} 
+                    variant="outline" 
+                    size="sm"
+                    className="w-full text-xs bg-game-surface/50 hover:bg-game-surface/70"
+                  >
+                    Использовать
+                  </Button>
+                </div>
+              </div>
             </Card>
           ))}
         </div>
