@@ -27,7 +27,7 @@ interface OpponentCardProps {
   playerHealth: number;
 }
 
-export const OpponentCard = ({ opponent, onAttack, isPlayerTurn, currentLevel, playerHealth }: OpponentCardProps) => {
+export const OpponentCard = React.memo(({ opponent, onAttack, isPlayerTurn, currentLevel, playerHealth }: OpponentCardProps) => {
   const lootTable = generateLootTable(opponent.isBoss ?? false);
   const isMobile = useIsMobile();
 
@@ -89,4 +89,6 @@ export const OpponentCard = ({ opponent, onAttack, isPlayerTurn, currentLevel, p
       </Card>
     </motion.div>
   );
-};
+});
+
+OpponentCard.displayName = 'OpponentCard';
