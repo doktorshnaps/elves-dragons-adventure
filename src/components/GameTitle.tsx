@@ -1,11 +1,7 @@
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 
-interface GameTitleProps {
-  isEnabled: boolean;
-}
-
-export const GameTitle = ({ isEnabled }: GameTitleProps) => {
+export const GameTitle = () => {
   const navigate = useNavigate();
 
   return (
@@ -13,7 +9,7 @@ export const GameTitle = ({ isEnabled }: GameTitleProps) => {
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.8 }}
-      className="text-center cursor-pointer group mb-8"
+      className="text-center cursor-pointer group"
     >
       <h1 
         className="text-7xl md:text-9xl font-bold tracking-wider drop-shadow-lg mb-8 font-['Luminari']"
@@ -29,17 +25,12 @@ export const GameTitle = ({ isEnabled }: GameTitleProps) => {
         Elleonor
       </h1>
       <motion.button
-        className={`px-8 py-3 ${
-          isEnabled 
-            ? "bg-game-primary/80 hover:bg-game-primary text-white" 
-            : "bg-gray-500 cursor-not-allowed"
-        } rounded-lg text-xl font-semibold transition-colors duration-300 shadow-lg`}
-        whileHover={isEnabled ? { scale: 1.05 } : {}}
-        whileTap={isEnabled ? { scale: 0.95 } : {}}
-        onClick={() => isEnabled && navigate("/game")}
-        disabled={!isEnabled}
+        className="px-8 py-3 bg-game-primary/80 hover:bg-game-primary text-white rounded-lg text-xl font-semibold transition-colors duration-300 shadow-lg"
+        whileHover={{ scale: 1.05 }}
+        whileTap={{ scale: 0.95 }}
+        onClick={() => navigate("/game")}
       >
-        {isEnabled ? "Start Game" : "Требуется авторизация"}
+        Start Game
       </motion.button>
     </motion.div>
   );

@@ -2,11 +2,9 @@ import { useState, useEffect } from "react";
 import { Card as CardType } from "@/types/cards";
 import { useToast } from "@/hooks/use-toast";
 import { getCardPrice, upgradeCard } from "@/utils/cardUtils";
-import { useDragonEggs } from "@/contexts/DragonEggContext";
 
 export const useTeamCards = () => {
   const { toast } = useToast();
-  const { addEgg } = useDragonEggs();
   const [cards, setCards] = useState<CardType[]>(() => {
     const savedCards = localStorage.getItem('gameCards');
     return savedCards ? JSON.parse(savedCards) : [];
@@ -114,34 +112,16 @@ export const useTeamCards = () => {
     const newCards = cards.filter(c => !selectedCards.find(sc => sc.id === c.id));
 
     if (selectedCards[0].type === 'pet') {
-      const currentInventory = localStorage.getItem('gameInventory');
-      const inventory = currentInventory ? JSON.parse(currentInventory) : [];
+      // Создаем новое яйцо только в контексте DragonEggs
+      const { addEgg } = useDragonEggs();
       
-      const newEggItem = {
-        id: Date.now().toString(),
-        name: `Яйцо ${upgradedCard.name}`,
-        type: 'dragon_egg' as const,
-        description: `Фракция: ${upgradedCard.faction}, Редкость: ${upgradedCard.rarity}`,
-        value: upgradedCard.rarity,
-        petName: upgradedCard.name,
-        image: upgradedCard.image
-      };
-      
-      inventory.push(newEggItem);
-      localStorage.setItem('gameInventory', JSON.stringify(inventory));
-
       addEgg({
-        id: newEggItem.id,
+        id: Date.now().toString(),
         petName: upgradedCard.name,
         rarity: upgradedCard.rarity,
         createdAt: new Date().toISOString(),
         faction: upgradedCard.faction || 'Каледор'
       }, upgradedCard.faction || 'Каледор');
-
-      const inventoryEvent = new CustomEvent('inventoryUpdate', {
-        detail: { inventory }
-      });
-      window.dispatchEvent(inventoryEvent);
 
       toast({
         title: "Создано яйцо дракона!",

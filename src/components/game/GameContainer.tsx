@@ -34,27 +34,6 @@ export const GameContainer = () => {
   const imagesLoaded = useImagePreloader();
 
   useEffect(() => {
-    const isFirstLaunch = !localStorage.getItem('gameInitialized');
-    const gameUser = localStorage.getItem('gameUser');
-    
-    if (isFirstLaunch && gameUser) {
-      const { username } = JSON.parse(gameUser);
-      const firstPack = generatePack();
-      const secondPack = generatePack();
-      const initialCards = [...firstPack, ...secondPack];
-      
-      localStorage.setItem('gameCards', JSON.stringify(initialCards));
-      localStorage.setItem('gameInitialized', 'true');
-      localStorage.setItem('gameBalance', '0');
-      
-      setCards(initialCards);
-      
-      toast({
-        title: `Добро пожаловать, ${username}!`,
-        description: "Вы получили 2 начальные колоды карт",
-      });
-    }
-
     return () => {
       localStorage.removeItem('battleState');
       toast({
@@ -62,6 +41,25 @@ export const GameContainer = () => {
         description: "Подземелье автоматически завершено",
       });
     };
+  }, []);
+
+  useEffect(() => {
+    const isFirstLaunch = !localStorage.getItem('gameInitialized');
+    if (isFirstLaunch) {
+      const firstPack = generatePack();
+      const secondPack = generatePack();
+      const initialCards = [...firstPack, ...secondPack];
+      
+      localStorage.setItem('gameCards', JSON.stringify(initialCards));
+      localStorage.setItem('gameInitialized', 'true');
+      
+      setCards(initialCards);
+      
+      toast({
+        title: "Добро пожаловать в игру!",
+        description: "Вы получили 2 начальные колоды карт",
+      });
+    }
   }, []);
 
   if (!imagesLoaded) {

@@ -35,10 +35,12 @@ export const TeamCards = () => {
 
   return (
     <div className="space-y-4">
-      <SelectedCardsPanel 
-        selectedCards={selectedCards}
-        onUpgrade={handleUpgrade}
-      />
+      {selectedCards.length > 0 && (
+        <SelectedCardsPanel 
+          selectedCards={selectedCards}
+          onUpgrade={handleUpgrade}
+        />
+      )}
       
       <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-2">
         {Object.values(groupedCards).length > 0 ? (
@@ -51,6 +53,7 @@ export const TeamCards = () => {
               isActive={cardGroup[0].type === 'character' || isPetActive(cardGroup[0])}
               onSelect={() => handleCardSelect(cardGroup[0], cardGroup.length)}
               onSell={handleSellCard}
+              onUpgrade={handleUpgrade}
             />
           ))
         ) : (

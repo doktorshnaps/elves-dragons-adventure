@@ -11,19 +11,6 @@ interface DragonEggsListProps {
 export const DragonEggsList = ({ eggs }: DragonEggsListProps) => {
   const { toast } = useToast();
 
-  // Фильтруем дубликаты яиц, оставляя только уникальные по id
-  const uniqueEggs = eggs.reduce((acc: DragonEgg[], current) => {
-    const isDuplicate = acc.find(egg => 
-      egg.petName === current.petName && 
-      egg.rarity === current.rarity &&
-      egg.createdAt === current.createdAt
-    );
-    if (!isDuplicate) {
-      acc.push(current);
-    }
-    return acc;
-  }, []);
-
   const handleHatch = (egg: DragonEgg) => {
     // Находим базовую информацию о питомце из базы данных
     const basePet = cardDatabase.find(card => 
@@ -77,11 +64,11 @@ export const DragonEggsList = ({ eggs }: DragonEggsListProps) => {
     window.dispatchEvent(eggsEvent);
   };
 
-  if (uniqueEggs.length === 0) return null;
+  if (eggs.length === 0) return null;
 
   return (
     <div className="col-span-full grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-2">
-      {uniqueEggs.map((egg) => {
+      {eggs.map((egg) => {
         const basePet = cardDatabase.find(card => 
           card.type === 'pet' && 
           card.name === egg.petName

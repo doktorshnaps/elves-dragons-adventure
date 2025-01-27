@@ -2,7 +2,7 @@ import { Card as CardType } from "@/types/cards";
 import { getRarityLabel, getCardPrice } from "@/utils/cardUtils";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Sword, Shield, Coins, Heart, Sparkles } from "lucide-react";
+import { Sword, Shield, Coins, Heart, Sparkles, ArrowUpCircle } from "lucide-react";
 import { motion } from "framer-motion";
 import { useIsMobile } from "@/hooks/use-mobile";
 
@@ -12,9 +12,19 @@ interface CardDisplayProps {
   onSell?: (card: CardType) => void;
   className?: string;
   isActive?: boolean;
+  isSelected?: boolean;
+  onUpgrade?: () => void;
 }
 
-export const CardDisplay = ({ card, showSellButton, onSell, className = "", isActive = true }: CardDisplayProps) => {
+export const CardDisplay = ({ 
+  card, 
+  showSellButton, 
+  onSell, 
+  className = "", 
+  isActive = true,
+  isSelected = false,
+  onUpgrade
+}: CardDisplayProps) => {
   const isMobile = useIsMobile();
 
   return (
@@ -81,15 +91,27 @@ export const CardDisplay = ({ card, showSellButton, onSell, className = "", isAc
       </div>
 
       {showSellButton && (
-        <Button
-          variant="outline"
-          size={isMobile ? "sm" : "default"}
-          className="mt-auto w-full text-yellow-500 hover:text-yellow-600 text-[10px]"
-          onClick={() => onSell?.(card)}
-        >
-          <Coins className={`${isMobile ? 'w-3 h-3' : 'w-4 h-4'} mr-1`} />
-          Продать ({getCardPrice(card.rarity)})
-        </Button>
+        isSelected ? (
+          <Button
+            variant="outline"
+            size={isMobile ? "sm" : "default"}
+            className="mt-auto w-full bg-game-accent hover:bg-game-accent/80 text-[10px]"
+            onClick={onUpgrade}
+          >
+            <ArrowUpCircle className={`${isMobile ? 'w-3 h-3' : 'w-4 h-4'} mr-1`} />
+            Улучшить
+          </Button>
+        ) : (
+          <Button
+            variant="outline"
+            size={isMobile ? "sm" : "default"}
+            className="mt-auto w-full text-yellow-500 hover:text-yellow-600 text-[10px]"
+            onClick={() => onSell?.(card)}
+          >
+            <Coins className={`${isMobile ? 'w-3 h-3' : 'w-4 h-4'} mr-1`} />
+            Продать ({getCardPrice(card.rarity)})
+          </Button>
+        )
       )}
     </Card>
   );
