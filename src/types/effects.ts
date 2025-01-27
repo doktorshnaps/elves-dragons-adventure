@@ -1,3 +1,5 @@
+import { LucideIcon } from 'lucide-react';
+
 export type EffectType = 'poison' | 'burn' | 'heal' | 'strength' | 'defense';
 export type EffectTarget = 'player' | 'opponent';
 
@@ -8,5 +10,5 @@ export interface Effect {
   duration: number;
   remaining: number;
   target: EffectTarget;
-  icon: string;
+  icon: LucideIcon;
 }

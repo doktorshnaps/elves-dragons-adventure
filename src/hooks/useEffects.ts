@@ -1,9 +1,9 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { Effect, EffectType, EffectTarget } from '@/types/effects';
 import { useToast } from '@/hooks/use-toast';
-import { Shield, Flame, Heart, Swords, Skull } from 'lucide-react';
+import { Shield, Flame, Heart, Swords, Skull, LucideIcon } from 'lucide-react';
 
-const getEffectIcon = (type: EffectType): string => {
+const getEffectIcon = (type: EffectType): LucideIcon => {
   switch (type) {
     case 'defense':
       return Shield;
