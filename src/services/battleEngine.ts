@@ -90,23 +90,27 @@ export class BattleEngine {
     
     switch (effect.type) {
       case 'poison':
-        newStats.health = Math.max(0, newStats.health - effect.value);
+        if ('health' in newStats) {
+          newStats.health = Math.max(0, newStats.health - effect.value);
+        }
         return { newStats, triggeredEffect: effect };
       
       case 'burn':
-        newStats.health = Math.max(0, newStats.health - effect.value);
+        if ('health' in newStats) {
+          newStats.health = Math.max(0, newStats.health - effect.value);
+        }
         return { newStats, triggeredEffect: effect };
       
       case 'heal':
-        if ('maxHealth' in newStats) {
+        if ('health' in newStats && 'maxHealth' in newStats) {
           newStats.health = Math.min(newStats.maxHealth, newStats.health + effect.value);
-        } else {
-          newStats.health = newStats.health + effect.value;
         }
         return { newStats };
       
       case 'strength':
-        newStats.power += effect.value;
+        if ('power' in newStats) {
+          newStats.power += effect.value;
+        }
         return { newStats };
       
       case 'defense':
