@@ -17,6 +17,7 @@ interface DungeonSearchDialogProps {
   timeUntilNext: number;
   isHealthTooLow: boolean;
   onRollDice: () => void;
+  hasActiveCards: boolean;
 }
 
 export const DungeonSearchDialog = ({
@@ -27,7 +28,8 @@ export const DungeonSearchDialog = ({
   energyState,
   timeUntilNext,
   isHealthTooLow,
-  onRollDice
+  onRollDice,
+  hasActiveCards
 }: DungeonSearchDialogProps) => {
   return (
     <motion.div
@@ -71,7 +73,7 @@ export const DungeonSearchDialog = ({
             <div className="space-x-4">
               <Button
                 onClick={onRollDice}
-                disabled={rolling || energyState.current <= 0 || isHealthTooLow}
+                disabled={rolling || energyState.current <= 0 || isHealthTooLow || !hasActiveCards}
                 className="bg-game-primary hover:bg-game-primary/80"
               >
                 {rolling ? "Поиск подземелья..." : "Искать подземелье"}
@@ -88,6 +90,12 @@ export const DungeonSearchDialog = ({
             {isHealthTooLow && (
               <p className="text-red-500 mt-4">
                 Здоровье слишком низкое для входа в подземелье
+              </p>
+            )}
+
+            {!hasActiveCards && (
+              <p className="text-red-500 mt-4">
+                У вас нет активных карт героев или питомцев
               </p>
             )}
           </div>

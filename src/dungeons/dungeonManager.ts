@@ -3,6 +3,9 @@ import { generateBlackDragonLairOpponents } from "./BlackDragonLair";
 import { generateForgottenSoulsCaveOpponents } from "./ForgottenSoulsCave";
 import { generateIcyThroneOpponents } from "./IcyThroneGenerator";
 import { generateDarkMageTowerOpponents } from "./DarkMageTowerGenerator";
+import { generateSpiderNestOpponents } from "./SpiderNestGenerator";
+import { generateBoneDemonDungeonOpponents } from "./BoneDemonDungeonGenerator";
+import { generateSeaSerpentLairOpponents } from "./SeaSerpentLairGenerator";
 
 type DungeonGenerator = (level: number) => Opponent[];
 
@@ -11,7 +14,9 @@ const dungeonGenerators: Record<string, DungeonGenerator> = {
   "Пещеры Забытых Душ": generateForgottenSoulsCaveOpponents,
   "Трон Ледяного Короля": generateIcyThroneOpponents,
   "Лабиринт Темного Мага": generateDarkMageTowerOpponents,
-  // Остальные подземелья будут добавлены позже
+  "Гнездо Гигантских Пауков": generateSpiderNestOpponents,
+  "Темница Костяных Демонов": generateBoneDemonDungeonOpponents,
+  "Логово Морского Змея": generateSeaSerpentLairOpponents
 };
 
 export const generateDungeonOpponents = (dungeonName: string, level: number): Opponent[] => {
