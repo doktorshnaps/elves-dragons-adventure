@@ -4,7 +4,8 @@
 
 /* Combat Animation Styles */
 .damage-number {
-  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+  @apply absolute text-2xl font-bold text-red-500;
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
   pointer-events: none;
   user-select: none;
 }
@@ -27,6 +28,7 @@
 .effect-poison {
   animation: glow 2s infinite;
   color: theme('colors.emerald.500');
+  @apply bg-emerald-500/30 p-2 rounded-lg flex items-center;
 }
 
 .effect-burn {
@@ -45,6 +47,16 @@
 }
 
 /* Attack Animation Styles */
+@keyframes sword-swing {
+  0% { transform: rotate(-10deg); }
+  50% { transform: rotate(30deg); }
+  100% { transform: rotate(-10deg); }
+}
+
+.attack-animation {
+  animation: sword-swing 0.3s ease-in-out;
+}
+
 .attack-swing::after {
   content: '';
   position: absolute;
