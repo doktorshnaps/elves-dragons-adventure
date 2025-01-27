@@ -91,27 +91,26 @@ export const CardDisplay = ({
       </div>
 
       {showSellButton && (
-        isSelected ? (
-          <Button
-            variant="outline"
-            size={isMobile ? "sm" : "default"}
-            className="mt-auto w-full bg-game-accent hover:bg-game-accent/80 text-[10px]"
-            onClick={onUpgrade}
-          >
-            <ArrowUpCircle className={`${isMobile ? 'w-3 h-3' : 'w-4 h-4'} mr-1`} />
-            Улучшить
-          </Button>
-        ) : (
-          <Button
-            variant="outline"
-            size={isMobile ? "sm" : "default"}
-            className="mt-auto w-full text-yellow-500 hover:text-yellow-600 text-[10px]"
-            onClick={() => onSell?.(card)}
-          >
-            <Coins className={`${isMobile ? 'w-3 h-3' : 'w-4 h-4'} mr-1`} />
-            Продать ({getCardPrice(card.rarity)})
-          </Button>
-        )
+        <Button
+          variant="outline"
+          size={isMobile ? "sm" : "default"}
+          className={`mt-auto w-full text-[10px] ${
+            isSelected ? 'bg-game-accent hover:bg-game-accent/80' : 'text-yellow-500 hover:text-yellow-600'
+          }`}
+          onClick={isSelected ? onUpgrade : () => onSell?.(card)}
+        >
+          {isSelected ? (
+            <>
+              <ArrowUpCircle className={`${isMobile ? 'w-3 h-3' : 'w-4 h-4'} mr-1`} />
+              Улучшить
+            </>
+          ) : (
+            <>
+              <Coins className={`${isMobile ? 'w-3 h-3' : 'w-4 h-4'} mr-1`} />
+              Продать ({getCardPrice(card.rarity)})
+            </>
+          )}
+        </Button>
       )}
     </Card>
   );

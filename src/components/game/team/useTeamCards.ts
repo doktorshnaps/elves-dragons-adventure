@@ -2,9 +2,11 @@ import { useState, useEffect } from "react";
 import { Card as CardType } from "@/types/cards";
 import { useToast } from "@/hooks/use-toast";
 import { getCardPrice, upgradeCard } from "@/utils/cardUtils";
+import { useDragonEggs } from "@/contexts/DragonEggContext";
 
 export const useTeamCards = () => {
   const { toast } = useToast();
+  const { addEgg } = useDragonEggs();
   const [cards, setCards] = useState<CardType[]>(() => {
     const savedCards = localStorage.getItem('gameCards');
     return savedCards ? JSON.parse(savedCards) : [];
@@ -36,6 +38,10 @@ export const useTeamCards = () => {
   }, []);
 
   const handleSellCard = (card: CardType) => {
+    event?.stopPropagation();
+    
+    setSelectedCards(prev => prev.filter(c => c.id !== card.id));
+
     const newCards = cards.filter(c => c.id !== card.id);
     setCards(newCards);
     localStorage.setItem('gameCards', JSON.stringify(newCards));
@@ -62,6 +68,12 @@ export const useTeamCards = () => {
   };
 
   const handleCardSelect = (card: CardType, groupCount: number) => {
+    // Если в группе меньше 2 карт, игнорируем выбор
+    if (groupCount < 2) {
+      return;
+    }
+
+    // Находим все карты в группе
     const sameCards = cards.filter(c => 
       c.name === card.name && 
       c.rarity === card.rarity && 
@@ -69,28 +81,26 @@ export const useTeamCards = () => {
       c.faction === card.faction
     );
 
+    // Если карта уже выбрана, снимаем выбор со всех карт
     if (selectedCards.some(c => sameCards.find(sc => sc.id === c.id))) {
       setSelectedCards([]);
       return;
     }
 
+    // Если нет выбранных карт, добавляем первую
     if (selectedCards.length === 0) {
-      setSelectedCards(sameCards.slice(0, 2));
+      setSelectedCards([sameCards[0]]);
     } else {
+      // Проверяем, совпадает ли новая карта с уже выбранной
       const firstSelected = selectedCards[0];
       if (
         firstSelected.name === card.name &&
         firstSelected.rarity === card.rarity &&
         firstSelected.type === card.type &&
-        firstSelected.faction === card.faction
+        firstSelected.faction === card.faction &&
+        selectedCards.length < 2
       ) {
         setSelectedCards([...selectedCards, sameCards[0]]);
-      } else {
-        toast({
-          title: "Несовместимые карты",
-          description: "Выберите карты одного типа и редкости",
-          variant: "destructive",
-        });
       }
     }
   };
@@ -112,9 +122,6 @@ export const useTeamCards = () => {
     const newCards = cards.filter(c => !selectedCards.find(sc => sc.id === c.id));
 
     if (selectedCards[0].type === 'pet') {
-      // Создаем новое яйцо только в контексте DragonEggs
-      const { addEgg } = useDragonEggs();
-      
       addEgg({
         id: Date.now().toString(),
         petName: upgradedCard.name,
