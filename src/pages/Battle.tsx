@@ -7,12 +7,10 @@ import { OpponentCard } from "@/components/battle/OpponentCard";
 import { PlayerCard } from "@/components/battle/PlayerCard";
 import { Inventory } from "@/components/battle/Inventory";
 import { useToast } from "@/hooks/use-toast";
-import { useBattleState } from "@/hooks/useBattleState";
 import { fixResizeObserverLoop } from "@/utils/resizeObserverFix";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { dungeonBackgrounds } from "@/constants/dungeons";
-import { Item } from "@/types/inventory";
-import { applyItemEffect } from "@/utils/itemUtils";
+import { useBattleLogic } from "@/hooks/battle/useBattleLogic";
 
 const Battle = () => {
   const navigate = useNavigate();
@@ -22,51 +20,21 @@ const Battle = () => {
   const savedState = localStorage.getItem('battleState');
   const savedData = savedState ? JSON.parse(savedState) : null;
   const selectedDungeon = savedData?.selectedDungeon;
-  const savedLevel = savedData?.currentDungeonLevel || 1;
-  
   const backgroundImage = selectedDungeon ? dungeonBackgrounds[selectedDungeon] : '';
   
   const {
+    level,
     coins,
-    isPlayerTurn,
     playerStats,
-    setPlayerStats,
-    opponents = [],
+    opponents,
     inventory,
+    isPlayerTurn,
     attackEnemy,
     handleOpponentAttack,
-    useItem: removeItem,
+    handleUseItem,
+    handleExitDungeon,
     handleNextLevel
-  } = useBattleState(savedLevel);
-
-  const useItem = (item: Item) => {
-    if (!playerStats) return;
-
-    const newStats = applyItemEffect(item, playerStats);
-    setPlayerStats(newStats);
-    removeItem(item);
-
-    let effectDescription = "";
-    switch (item.name) {
-      case "Зелье здоровья":
-        effectDescription = `Восстановлено ${item.value} здоровья`;
-        break;
-      case "Зелье защиты":
-        effectDescription = `Увеличена защита на ${item.value}`;
-        break;
-      case "Старый железный меч":
-        effectDescription = `Увеличена сила на ${item.value}`;
-        break;
-      case "Кожаная броня":
-        effectDescription = `Увеличена защита на ${item.value}`;
-        break;
-    }
-
-    toast({
-      title: "Предмет использован",
-      description: effectDescription,
-    });
-  };
+  } = useBattleLogic();
 
   useEffect(() => {
     fixResizeObserverLoop();
@@ -96,21 +64,6 @@ const Battle = () => {
       navigate("/game");
     }
   }, [selectedDungeon, navigate, toast]);
-
-  const handleExitDungeon = () => {
-    const battleState = localStorage.getItem('battleState');
-    if (battleState) {
-      const state = JSON.parse(battleState);
-      if (state.playerStats.health > 0) {
-        toast({
-          title: "Подземелье покинуто",
-          description: `Вы покинули ${selectedDungeon}. Весь прогресс сброшен.`,
-        });
-      }
-      localStorage.removeItem('battleState');
-    }
-    navigate("/game");
-  };
 
   const handleBackToGame = () => {
     const battleState = localStorage.getItem('battleState');
@@ -174,7 +127,7 @@ const Battle = () => {
           </div>
           <div className="flex flex-wrap items-center gap-2 md:gap-4">
             <span className="text-base md:text-xl font-bold text-yellow-500">🪙 {coins}</span>
-            <span className="text-base md:text-xl font-bold text-purple-500">👑 Уровень {savedLevel}</span>
+            <span className="text-base md:text-xl font-bold text-purple-500">👑 Уровень {level}</span>
             <Button
               variant="destructive"
               className="bg-red-600 hover:bg-red-700 text-xs md:text-base"
@@ -193,7 +146,7 @@ const Battle = () => {
               opponent={opponent}
               onAttack={attackEnemy}
               isPlayerTurn={isPlayerTurn}
-              currentLevel={savedLevel}
+              currentLevel={level}
               playerHealth={playerStats?.health || 0}
             />
           ))}
@@ -218,7 +171,7 @@ const Battle = () => {
         )}
 
         <PlayerCard playerStats={playerStats} />
-        <Inventory items={inventory} onUseItem={useItem} />
+        <Inventory items={inventory} onUseItem={handleUseItem} />
 
         <div className="fixed bottom-2 md:bottom-6 right-2 md:right-6 bg-game-surface p-2 md:p-4 rounded-lg border border-game-accent shadow-lg">
           <div className="flex items-center gap-1 md:gap-2">
