@@ -3,6 +3,7 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Coins } from "lucide-react";
+import { backgrounds } from "@/assets/dungeons";
 
 interface InventoryProps {
   items: Item[];
@@ -22,10 +23,8 @@ interface GroupedItem {
 export const Inventory = ({ items, onUseItem }: InventoryProps) => {
   const isMobile = useIsMobile();
   
-  // Фильтруем яйца драконов из инвентаря на странице битвы
   const battleItems = items.filter(item => item.type !== 'dragon_egg');
 
-  // Группируем одинаковые предметы
   const groupedItems = battleItems.reduce<GroupedItem[]>((acc, item) => {
     const existingGroup = acc.find(
       group => 
@@ -56,7 +55,7 @@ export const Inventory = ({ items, onUseItem }: InventoryProps) => {
     <div 
       className="mt-4 relative rounded-lg overflow-hidden"
       style={{
-        backgroundImage: 'url("/lovable-uploads/2eecde4e-bda9-4f8f-8105-3e6dcdff36fc.png")',
+        backgroundImage: `url(${backgrounds.inventory})`,
         backgroundSize: 'cover',
         backgroundPosition: 'center',
         backgroundRepeat: 'no-repeat',

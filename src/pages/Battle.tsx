@@ -9,7 +9,7 @@ import { Inventory } from "@/components/battle/Inventory";
 import { useToast } from "@/hooks/use-toast";
 import { fixResizeObserverLoop } from "@/utils/resizeObserverFix";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { dungeonBackgrounds } from "@/constants/dungeons";
+import { dungeonBackgrounds } from "@/assets/dungeons";
 import { useBattleLogic } from "@/hooks/battle/useBattleLogic";
 
 const Battle = () => {

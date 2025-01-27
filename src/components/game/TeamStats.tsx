@@ -5,6 +5,7 @@ import { CombatStats } from "./stats/CombatStats";
 import { PlayerStats } from "@/types/battle";
 import { TeamStats as TeamStatsType } from "@/types/cards";
 import { calculateTeamStats } from "@/utils/cardUtils";
+import { backgrounds } from "@/assets/dungeons";
 
 interface TeamStatsProps {
   teamStats: TeamStatsType;
@@ -97,7 +98,7 @@ export const TeamStats = ({ teamStats }: TeamStatsProps) => {
     <Card 
       className="p-6 bg-game-surface border-game-accent mb-6 relative overflow-hidden"
       style={{
-        backgroundImage: `url("/lovable-uploads/29ea34c8-ede8-4cab-8ca2-049cdb5108c3.png")`,
+        backgroundImage: `url(${backgrounds.teamStats})`,
         backgroundSize: 'cover',
         backgroundPosition: 'center',
         backgroundRepeat: 'no-repeat'
