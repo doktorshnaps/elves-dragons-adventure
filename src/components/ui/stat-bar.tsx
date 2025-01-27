@@ -1,39 +1,34 @@
-import * as React from "react";
 import { cn } from "@/lib/utils";
 
-export interface StatBarProps extends React.HTMLAttributes<HTMLDivElement> {
+export interface StatBarProps {
   value: number;
-  max: number;
+  maxValue: number;
   color?: string;
-  height?: string;
-  showText?: boolean;
+  height?: "sm" | "md" | "lg";
+  className?: string;
 }
 
-export const StatBar = React.forwardRef<HTMLDivElement, StatBarProps>(
-  ({ value, max, color = "#ef4444", height = "h-2", showText = false, className, ...props }, ref) => {
-    const percentage = (value / max) * 100;
-    
-    return (
-      <div ref={ref} className={cn("w-full", className)} {...props}>
-        {showText && (
-          <div className="flex justify-between mb-1">
-            <span className="text-sm text-game-accent">
-              {Math.floor(value)}/{Math.floor(max)}
-            </span>
-          </div>
-        )}
-        <div className={cn("w-full bg-gray-700 rounded-full overflow-hidden", height)}>
-          <div
-            className="h-full rounded-full transition-all duration-300"
-            style={{
-              width: `${percentage}%`,
-              backgroundColor: color
-            }}
-          />
-        </div>
-      </div>
-    );
-  }
-);
+export const StatBar = ({
+  value,
+  maxValue,
+  color = "bg-red-600",
+  height = "md",
+  className
+}: StatBarProps) => {
+  const percentage = (value / maxValue) * 100;
+  
+  const heightClass = {
+    sm: "h-1.5",
+    md: "h-2.5",
+    lg: "h-4"
+  }[height];
 
-StatBar.displayName = "StatBar";
+  return (
+    <div className={cn("w-full bg-gray-700 rounded-full", heightClass, className)}>
+      <div
+        className={cn("rounded-full transition-all duration-300", color)}
+        style={{ width: `${percentage}%`, height: "100%" }}
+      />
+    </div>
+  );
+};

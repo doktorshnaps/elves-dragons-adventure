@@ -70,7 +70,7 @@ export const useBattleState = (initialLevel: number = 1) => {
     }
   }, [opponents, playerStats?.health, toast]);
 
-  const handleUseItem = (item: Item) => {
+  const useItem = (item: Item) => {
     if (!playerStats) return;
     
     if (item.type === "healthPotion") {
@@ -111,13 +111,13 @@ export const useBattleState = (initialLevel: number = 1) => {
     level: initialState.currentDungeonLevel,
     coins: balance,
     playerStats,
-    setPlayerStats,
+    setPlayerStats, // Added this line to expose setPlayerStats
     opponents,
     inventory,
     isPlayerTurn,
     attackEnemy,
     handleOpponentAttack,
-    handleUseItem, // Added this line to expose handleUseItem
+    useItem,
     setOpponents,
     handleOpponentDefeat,
     updateBalance,

@@ -44,14 +44,15 @@ export const PlayerCard = ({ playerStats }: PlayerCardProps) => {
           <div className="flex flex-col gap-1 md:gap-2 w-full md:w-auto">
             <div className="flex items-center gap-1 md:gap-2">
               <Heart className="w-4 h-4 md:w-6 md:h-6 text-red-500" />
-              <StatBar
+              <StatBar 
                 value={playerStats.health}
-                max={playerStats.maxHealth}
-                color="#ef4444"
-                height="h-1.5 md:h-2.5"
+                maxValue={playerStats.maxHealth}
+                height={isMobile ? "sm" : "md"}
                 className="w-full md:w-32"
-                showText
               />
+              <span className="text-xs md:text-sm text-gray-400">
+                {playerStats.health}/{playerStats.maxHealth}
+              </span>
             </div>
           </div>
         </div>

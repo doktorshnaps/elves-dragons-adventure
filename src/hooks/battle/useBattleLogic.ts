@@ -18,7 +18,7 @@ export const useBattleLogic = () => {
     isPlayerTurn,
     attackEnemy,
     handleOpponentAttack,
-    handleUseItem: removeItem,
+    useItem: removeItem,
     handleNextLevel
   } = useBattleState();
 

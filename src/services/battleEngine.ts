@@ -1,5 +1,4 @@
 import { PlayerStats, Opponent } from "@/types/battle";
-import { Effect } from "@/types/effects";
 
 interface DamageResult {
   damage: number;
@@ -77,50 +76,5 @@ export class BattleEngine {
       newLevel,
       requiredExperience
     };
-  }
-
-  static applyEffect<T extends PlayerStats | Opponent>(
-    stats: T,
-    effect: Effect
-  ): {
-    newStats: T;
-    triggeredEffect?: Effect;
-  } {
-    const newStats = { ...stats } as T;
-    
-    switch (effect.type) {
-      case 'poison':
-        if ('health' in newStats) {
-          newStats.health = Math.max(0, newStats.health - effect.value);
-        }
-        return { newStats, triggeredEffect: effect };
-      
-      case 'burn':
-        if ('health' in newStats) {
-          newStats.health = Math.max(0, newStats.health - effect.value);
-        }
-        return { newStats, triggeredEffect: effect };
-      
-      case 'heal':
-        if ('health' in newStats && 'maxHealth' in newStats) {
-          newStats.health = Math.min(newStats.maxHealth, newStats.health + effect.value);
-        }
-        return { newStats };
-      
-      case 'strength':
-        if ('power' in newStats) {
-          newStats.power += effect.value;
-        }
-        return { newStats };
-      
-      case 'defense':
-        if ('defense' in newStats) {
-          newStats.defense += effect.value;
-        }
-        return { newStats };
-      
-      default:
-        return { newStats };
-    }
   }
 }

@@ -1,12 +1,6 @@
 import { Item, ItemEffect } from "@/types/inventory";
 import { PlayerStats } from "@/types/battle";
 
-/**
- * Вычисляет базовую стоимость предмета в зависимости от его типа
- * @param item - Предмет, для которого нужно определить стоимость
- * @returns Стоимость предмета в игровой валюте
- * @throws {Error} Если передан некорректный предмет
- */
 export const getItemPrice = (item: Item): number => {
   if (!item) throw new Error('Invalid item: item is undefined');
   
@@ -26,12 +20,6 @@ export const getItemPrice = (item: Item): number => {
   }
 };
 
-/**
- * Проверяет, можно ли улучшить выбранные предметы
- * @param items - Массив предметов для проверки
- * @returns true если предметы можно улучшить, false в противном случае
- * @throws {Error} Если передан некорректный массив предметов
- */
 export const canUpgradeItems = (items: Item[]): boolean => {
   if (!Array.isArray(items)) {
     throw new Error('Invalid input: items must be an array');
@@ -39,13 +27,6 @@ export const canUpgradeItems = (items: Item[]): boolean => {
   return false;
 };
 
-/**
- * Улучшает выбранные предметы, создавая новый предмет более высокого уровня
- * @param items - Полный список предметов в инвентаре
- * @param itemsToUpgrade - Массив предметов для улучшения
- * @returns Обновленный массив предметов с учетом улучшения
- * @throws {Error} Если переданы некорректные массивы предметов
- */
 export const upgradeItems = (items: Item[], itemsToUpgrade: Item[]): Item[] => {
   if (!Array.isArray(items) || !Array.isArray(itemsToUpgrade)) {
     throw new Error('Invalid input: both parameters must be arrays');
@@ -53,23 +34,10 @@ export const upgradeItems = (items: Item[], itemsToUpgrade: Item[]): Item[] => {
   return items;
 };
 
-/**
- * Ограничивает значение в заданном диапазоне
- * @param value - Исходное значение
- * @param min - Минимальное допустимое значение
- * @param max - Максимальное допустимое значение
- * @returns Значение, ограниченное заданным диапазоном
- */
 const clamp = (value: number, min: number, max: number): number => {
   return Math.min(Math.max(value, min), max);
 };
 
-/**
- * Применяет эффект к статистике игрока
- * @param stats - Текущая статистика игрока
- * @param effect - Эффект, который нужно применить
- * @returns Обновленная статистика игрока с примененным эффектом
- */
 const applyEffect = (stats: PlayerStats, effect: ItemEffect): PlayerStats => {
   const newStats = { ...stats };
   
@@ -98,13 +66,6 @@ const applyEffect = (stats: PlayerStats, effect: ItemEffect): PlayerStats => {
   }
 };
 
-/**
- * Применяет эффект предмета к статистике игрока
- * @param item - Используемый предмет
- * @param playerStats - Текущая статистика игрока
- * @returns Обновленная статистика игрока с учетом эффекта предмета
- * @throws {Error} При некорректных входных данных или неизвестном типе предмета
- */
 export const applyItemEffect = (item: Item, playerStats: PlayerStats): PlayerStats => {
   if (!item) throw new Error('Invalid input: item is undefined');
   if (!playerStats) throw new Error('Invalid input: playerStats is undefined');

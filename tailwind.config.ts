@@ -90,11 +90,6 @@ export default {
           '0%': { boxShadow: '0 0 5px #9b87f5' },
           '50%': { boxShadow: '0 0 20px #D946EF' },
           '100%': { boxShadow: '0 0 5px #9b87f5' },
-        },
-        swordSwing: {
-          '0%': { transform: 'rotate(-10deg)' },
-          '50%': { transform: 'rotate(30deg)' },
-          '100%': { transform: 'rotate(-10deg)' },
         }
       },
       animation: {
@@ -105,7 +100,6 @@ export default {
         "particles": "particles 10s linear infinite",
         "card-flip": "cardFlip 1s ease-in-out",
         "card-glow": "cardGlow 2s infinite",
-        "sword-swing": "swordSwing 0.3s ease-in-out",
       },
     },
   },
