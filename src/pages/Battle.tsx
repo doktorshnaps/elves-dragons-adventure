@@ -1,5 +1,5 @@
-import React, { useEffect } from "react";
-import { motion } from "framer-motion";
+import React, { useEffect, useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import { ArrowLeft, DoorOpen, Heart, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -11,11 +11,20 @@ import { fixResizeObserverLoop } from "@/utils/resizeObserverFix";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { dungeonBackgrounds } from "@/assets/dungeons";
 import { useBattleLogic } from "@/hooks/battle/useBattleLogic";
+import { 
+  EffectIndicator,
+  DamageNumber,
+  AttackSwing 
+} from '@/components/battle/CombatAnimations';
+import { useEffects } from "@/hooks/useEffects";
 
 const Battle = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const isMobile = useIsMobile();
+  const { effects, addEffect } = useEffects();
+  const [isAttacking, setIsAttacking] = useState(false);
+  const [damageNumbers, setDamageNumbers] = useState<{ id: string; value: number }[]>([]);
   
   const savedState = localStorage.getItem('battleState');
   const savedData = savedState ? JSON.parse(savedState) : null;
@@ -29,7 +38,7 @@ const Battle = () => {
     opponents,
     inventory,
     isPlayerTurn,
-    attackEnemy,
+    attackEnemy: baseAttackEnemy,
     handleOpponentAttack,
     handleUseItem,
     handleExitDungeon,
@@ -39,6 +48,25 @@ const Battle = () => {
   useEffect(() => {
     fixResizeObserverLoop();
   }, []);
+
+  const handleAttack = (enemyId: number) => {
+    setIsAttacking(true);
+    setTimeout(() => setIsAttacking(false), 300);
+
+    // Show damage number animation
+    const damageValue = Math.floor(Math.random() * 20) + 10; // Example damage calculation
+    setDamageNumbers(prev => [
+      ...prev,
+      { id: Math.random().toString(), value: damageValue }
+    ]);
+
+    // Remove damage number after animation
+    setTimeout(() => {
+      setDamageNumbers(prev => prev.filter(d => d.id !== damageValue.toString()));
+    }, 1000);
+
+    baseAttackEnemy(enemyId);
+  };
 
   useEffect(() => {
     let isMounted = true;
@@ -57,7 +85,6 @@ const Battle = () => {
     }
   }, [isPlayerTurn, handleOpponentAttack, playerStats?.health]);
 
-  // Add health check effect
   useEffect(() => {
     if (playerStats?.health <= 0) {
       toast({
@@ -67,7 +94,6 @@ const Battle = () => {
       });
       
       localStorage.removeItem('battleState');
-      
       navigate("/game", { replace: true });
     }
   }, [playerStats?.health, navigate, toast]);
@@ -91,26 +117,11 @@ const Battle = () => {
     }
   }, [selectedDungeon, navigate, toast]);
 
-  const handleBackToGame = () => {
-    const battleState = localStorage.getItem('battleState');
-    if (battleState) {
-      const state = JSON.parse(battleState);
-      if (state.playerStats.health > 0) {
-        navigate("/game");
-      } else {
-        localStorage.removeItem('battleState');
-        navigate("/game");
-      }
-    } else {
-      navigate("/game");
-    }
-  };
-
   const showNextLevelButton = opponents.length === 0 && playerStats?.health > 0;
 
   return (
     <div 
-      className="min-h-screen bg-game-background p-2 md:p-6 relative"
+      className="min-h-screen bg-game-background p-2 md:p-6 relative overflow-hidden"
       style={{
         backgroundImage: backgroundImage ? `linear-gradient(rgba(0, 0, 0, 0.7), rgba(0, 0, 0, 0.7)), url(${backgroundImage})` : undefined,
         backgroundSize: 'cover',
@@ -129,7 +140,7 @@ const Battle = () => {
               variant="ghost"
               size="icon"
               className="text-game-accent hover:text-game-accent/80"
-              onClick={handleBackToGame}
+              onClick={() => navigate("/game")}
             >
               <ArrowLeft className="h-4 w-4 md:h-5 md:w-5" />
             </Button>
@@ -149,17 +160,33 @@ const Battle = () => {
           </div>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-6 mb-4 md:mb-8">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-6 mb-4 md:mb-8 relative">
+          <AnimatePresence>
+            {damageNumbers.map(num => (
+              <DamageNumber key={num.id} value={num.value} />
+            ))}
+          </AnimatePresence>
+
           {opponents.map((opponent) => (
             <OpponentCard
               key={opponent.id}
               opponent={opponent}
-              onAttack={attackEnemy}
+              onAttack={() => handleAttack(opponent.id)}
               isPlayerTurn={isPlayerTurn}
               currentLevel={level}
               playerHealth={playerStats?.health || 0}
             />
           ))}
+          
+          <AttackSwing active={isAttacking} />
+        </div>
+
+        <div className="effects-bar mb-4">
+          <AnimatePresence>
+            {effects.map(effect => (
+              <EffectIndicator key={effect.id} effect={effect} />
+            ))}
+          </AnimatePresence>
         </div>
 
         {showNextLevelButton && (
