@@ -57,6 +57,21 @@ const Battle = () => {
     }
   }, [isPlayerTurn, handleOpponentAttack, playerStats?.health]);
 
+  // Add health check effect
+  useEffect(() => {
+    if (playerStats?.health <= 0) {
+      toast({
+        title: "Поражение!",
+        description: "Ваш герой пал в бою. Здоровье восстановлено.",
+        variant: "destructive"
+      });
+      
+      localStorage.removeItem('battleState');
+      
+      navigate("/game", { replace: true });
+    }
+  }, [playerStats?.health, navigate, toast]);
+
   useEffect(() => {
     const battleState = localStorage.getItem('battleState');
     if (!battleState) {
@@ -92,22 +107,6 @@ const Battle = () => {
   };
 
   const showNextLevelButton = opponents.length === 0 && playerStats?.health > 0;
-
-  useEffect(() => {
-    if (playerStats?.health <= 0) {
-      toast({
-        title: "Поражение!",
-        description: "Ваш герой пал в бою. Здоровье восстановлено.",
-        variant: "destructive"
-      });
-      
-      localStorage.removeItem('battleState');
-      
-      setTimeout(() => {
-        navigate("/game");
-      }, 2000);
-    }
-  }, [playerStats?.health, navigate, toast]);
 
   return (
     <div 
