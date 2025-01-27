@@ -79,14 +79,14 @@ export class BattleEngine {
     };
   }
 
-  static applyEffect(
-    stats: PlayerStats | Opponent,
+  static applyEffect<T extends PlayerStats | Opponent>(
+    stats: T,
     effect: Effect
   ): {
-    newStats: PlayerStats | Opponent;
+    newStats: T;
     triggeredEffect?: Effect;
   } {
-    const newStats = { ...stats };
+    const newStats = { ...stats } as T;
     
     switch (effect.type) {
       case 'poison':
