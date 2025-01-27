@@ -3,6 +3,7 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Sword, Coins } from "lucide-react";
 import { motion } from "framer-motion";
+import { StatBar } from "@/components/ui/stat-bar";
 import {
   HoverCard,
   HoverCardContent,
@@ -67,13 +68,13 @@ export const OpponentCard = React.memo(({ opponent, onAttack, isPlayerTurn, curr
             </HoverCard>
             <div className="space-y-2">
               <p className="text-sm md:text-base text-gray-400">Сила: {opponent.power}</p>
-              <div className="w-full bg-gray-700 rounded-full h-1.5 md:h-2.5">
-                <div
-                  className={`${opponent.isBoss ? 'bg-red-700' : 'bg-red-600'} h-1.5 md:h-2.5 rounded-full transition-all duration-300`}
-                  style={{ width: `${(opponent.health / opponent.maxHealth) * 100}%` }}
-                ></div>
-              </div>
-              <p className="text-xs md:text-sm text-gray-400">HP: {opponent.health}/{opponent.maxHealth}</p>
+              <StatBar 
+                value={opponent.health}
+                max={opponent.maxHealth}
+                color={opponent.isBoss ? "#dc2626" : "#ef4444"}
+                height="h-1.5 md:h-2.5"
+                showText
+              />
             </div>
             <Button
               onClick={() => onAttack(opponent.id)}
