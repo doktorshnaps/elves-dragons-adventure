@@ -1,6 +1,7 @@
+import { memo } from 'react';
 import { motion } from 'framer-motion';
 
-export const DamageNumber = ({ value, isCritical = false }: { value: number; isCritical?: boolean }) => (
+const BaseDamageNumber = ({ value, isCritical = false }: { value: number; isCritical?: boolean }) => (
   <motion.div
     initial={{ y: 0, opacity: 0, scale: 0.5 }}
     animate={{ 
@@ -22,7 +23,7 @@ export const DamageNumber = ({ value, isCritical = false }: { value: number; isC
   </motion.div>
 );
 
-export const AttackSwing = ({ active, direction = 'right' }: { active: boolean; direction?: 'left' | 'right' }) => (
+const BaseAttackSwing = ({ active, direction = 'right' }: { active: boolean; direction?: 'left' | 'right' }) => (
   <motion.div
     animate={active ? 'attack' : 'idle'}
     variants={{
@@ -54,3 +55,6 @@ export const AttackSwing = ({ active, direction = 'right' }: { active: boolean; 
     />
   </motion.div>
 );
+
+export const DamageNumber = memo(BaseDamageNumber);
+export const AttackSwing = memo(BaseAttackSwing);

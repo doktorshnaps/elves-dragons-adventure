@@ -1,3 +1,4 @@
+import { memo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Effect } from '@/types/effects';
 import { Shield, Flame, Heart, Swords, Skull } from 'lucide-react';
@@ -62,7 +63,7 @@ const getEffectColor = (type: Effect['type']) => {
   }
 };
 
-export const EffectIndicator = ({ effect }: { effect: Effect }) => {
+const BaseEffectIndicator = ({ effect }: { effect: Effect }) => {
   const Icon = getEffectIcon(effect.type);
   const bgColor = getEffectColor(effect.type);
 
@@ -88,3 +89,5 @@ export const EffectIndicator = ({ effect }: { effect: Effect }) => {
     </motion.div>
   );
 };
+
+export const EffectIndicator = memo(BaseEffectIndicator);
