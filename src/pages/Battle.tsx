@@ -41,8 +41,19 @@ const Battle = () => {
   }, []);
 
   useEffect(() => {
+    let isMounted = true;
+    
     if (!isPlayerTurn && playerStats?.health > 0) {
-      handleOpponentAttack();
+      const timer = setInterval(() => {
+        if (isMounted && !isPlayerTurn) {
+          handleOpponentAttack();
+        }
+      }, 1000);
+      
+      return () => {
+        isMounted = false;
+        clearInterval(timer);
+      };
     }
   }, [isPlayerTurn, handleOpponentAttack, playerStats?.health]);
 
