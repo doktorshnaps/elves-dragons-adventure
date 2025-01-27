@@ -11,11 +11,8 @@ import { fixResizeObserverLoop } from "@/utils/resizeObserverFix";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { dungeonBackgrounds } from "@/assets/dungeons";
 import { useBattleLogic } from "@/hooks/battle/useBattleLogic";
-import { 
-  EffectIndicator,
-  DamageNumber,
-  AttackSwing 
-} from '@/components/battle/CombatAnimations';
+import { DamageNumber, AttackSwing } from '@/components/battle/CombatAnimations';
+import { EffectIndicator } from '@/components/effects/EffectAnimation';
 import { useEffects } from "@/hooks/useEffects";
 
 const Battle = () => {
