@@ -1,3 +1,6 @@
+import { Item, ItemEffect } from "@/types/inventory";
+import { PlayerStats } from "@/types/battle";
+
 /**
  * Вычисляет базовую стоимость предмета в зависимости от его типа
  * @param item - Предмет, для которого нужно определить стоимость
