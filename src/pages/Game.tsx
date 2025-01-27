@@ -12,11 +12,12 @@ const Game = () => {
         backgroundImage: `url(${backgrounds.game})`,
         backgroundSize: 'cover',
         backgroundPosition: 'center',
-        backgroundRepeat: 'no-repeat'
+        backgroundRepeat: 'no-repeat',
+        backgroundAttachment: 'fixed'
       }}
     >
-      <div className="absolute inset-0 bg-black/30" />
-      <div className={`relative ${isMobile ? 'px-2' : 'px-6'}`}>
+      <div className="absolute inset-0 bg-black/30 backdrop-blur-[2px]" />
+      <div className={`relative z-10 ${isMobile ? 'px-2' : 'px-6'}`}>
         <GameInterface />
       </div>
     </div>
