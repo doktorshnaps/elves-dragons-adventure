@@ -22,7 +22,7 @@ export const useCombat = ({
   const attackEnemy = (enemyIndex: number) => {
     if (!isPlayerTurn || !opponents[enemyIndex]) return;
 
-    const damage = calculateDamage(playerStats.power, opponents[enemyIndex].defense);
+    const { damage } = calculateDamage(playerStats.power);
     
     if (damage > 0) {
       toast({
@@ -44,7 +44,7 @@ export const useCombat = ({
     }
 
     const attacker = activeOpponents[Math.floor(Math.random() * activeOpponents.length)];
-    const damage = calculateDamage(attacker.power, playerStats.defense);
+    const { damage } = calculateDamage(attacker.power);
 
     if (damage > 0) {
       setPlayerStats({

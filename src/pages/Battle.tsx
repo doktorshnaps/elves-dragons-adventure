@@ -46,7 +46,7 @@ const Battle = () => {
       
       <div className="relative z-10 max-w-7xl mx-auto">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <PlayerCard stats={playerStats} />
+          <PlayerCard playerStats={playerStats} />
           
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             {opponents.map((opponent, index) => (

@@ -7,7 +7,7 @@ import { calculateDamage } from "@/utils/battleCalculations";
 
 export const useBattleState = () => {
   const { toast } = useToast();
-  const { inventory, removeItem } = useInventoryState();
+  const { inventory, updateInventory } = useInventoryState();
   const [playerStats, setPlayerStats] = useState<PlayerStats>(() => {
     const savedState = localStorage.getItem('battleState');
     if (savedState) {
@@ -53,13 +53,17 @@ export const useBattleState = () => {
   });
 
   const handleUseItem = (item: Item) => {
-    if (item.type === 'potion') {
+    if (item.type === 'healthPotion') {
       const newHealth = Math.min(playerStats.maxHealth, playerStats.health + (item.value || 0));
       setPlayerStats(prev => ({
         ...prev,
         health: newHealth
       }));
-      removeItem(item);
+      
+      // Remove the used item from inventory
+      const newInventory = inventory.filter(i => i.id !== item.id);
+      updateInventory(newInventory);
+      
       toast({
         title: "Зелье использовано",
         description: `Восстановлено ${item.value} здоровья`,
