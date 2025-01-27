@@ -1,12 +1,18 @@
+import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 
 export const GameTitle = () => {
   const navigate = useNavigate();
 
   return (
-    <div className="text-center cursor-pointer group fade-enter fade-enter-active">
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.8 }}
+      className="text-center cursor-pointer group"
+    >
       <h1 
-        className="text-7xl md:text-9xl font-bold tracking-wider drop-shadow-lg mb-8"
+        className="text-7xl md:text-9xl font-bold tracking-wider drop-shadow-lg mb-8 font-['Luminari']"
         style={{ 
           fontFamily: "'MedievalSharp', cursive",
           background: "linear-gradient(to right, #8B5CF6, #D946EF, #F97316)",
@@ -18,12 +24,14 @@ export const GameTitle = () => {
       >
         Elleonor
       </h1>
-      <button
-        className="px-8 py-3 bg-game-primary/80 hover:bg-game-primary text-white rounded-lg text-xl font-semibold transition-colors duration-300 shadow-lg button-press"
+      <motion.button
+        className="px-8 py-3 bg-game-primary/80 hover:bg-game-primary text-white rounded-lg text-xl font-semibold transition-colors duration-300 shadow-lg"
+        whileHover={{ scale: 1.05 }}
+        whileTap={{ scale: 0.95 }}
         onClick={() => navigate("/game")}
       >
         Start Game
-      </button>
-    </div>
+      </motion.button>
+    </motion.div>
   );
 };

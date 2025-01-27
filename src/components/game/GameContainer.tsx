@@ -10,7 +10,6 @@ import { GameHeader } from "./GameHeader";
 import { useBalanceState } from "@/hooks/useBalanceState";
 import { useImagePreloader } from "@/hooks/useImagePreloader";
 import { Skeleton } from "@/components/ui/skeleton";
-import { loadFromStorage, saveToStorage } from "@/utils/storageUtils";
 
 const calculateTeamStats = (cards: Card[]) => {
   return {
@@ -28,8 +27,8 @@ export const GameContainer = () => {
   const [showShop, setShowShop] = useState(false);
   const [hasActiveDungeon, setHasActiveDungeon] = useState(false);
   const [cards, setCards] = useState<Card[]>(() => {
-    const savedCards = loadFromStorage<Card[]>('gameCards');
-    return savedCards || [];
+    const savedCards = localStorage.getItem('gameCards');
+    return savedCards ? JSON.parse(savedCards) : [];
   });
 
   const imagesLoaded = useImagePreloader();
@@ -45,14 +44,14 @@ export const GameContainer = () => {
   }, []);
 
   useEffect(() => {
-    const isFirstLaunch = !loadFromStorage('gameInitialized');
+    const isFirstLaunch = !localStorage.getItem('gameInitialized');
     if (isFirstLaunch) {
       const firstPack = generatePack();
       const secondPack = generatePack();
       const initialCards = [...firstPack, ...secondPack];
       
-      saveToStorage('gameCards', initialCards);
-      saveToStorage('gameInitialized', true);
+      localStorage.setItem('gameCards', JSON.stringify(initialCards));
+      localStorage.setItem('gameInitialized', 'true');
       
       setCards(initialCards);
       

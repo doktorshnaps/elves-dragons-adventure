@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { PlayerStats, Opponent } from '@/types/battle';
-import { BattleEngine } from '@/services/battleEngine';
+import { calculateDamage, calculatePlayerDamage } from '@/utils/battleCalculations';
 import { useToast } from '@/hooks/use-toast';
 
 export const useCombat = (
@@ -18,7 +18,7 @@ export const useCombat = (
 
     const newOpponents = opponents.map(opponent => {
       if (opponent.id === enemyId) {
-        const { damage, isCritical } = BattleEngine.calculatePlayerDamage(playerStats, opponent);
+        const { damage, isCritical } = calculateDamage(playerStats.power);
         const newHealth = opponent.health - (damage || 0);
         
         toast({
@@ -55,7 +55,7 @@ export const useCombat = (
     if (!playerStats || opponents.length === 0 || isPlayerTurn) return;
 
     const randomOpponent = opponents[Math.floor(Math.random() * opponents.length)];
-    const { blockedDamage, damageToHealth, newDefense } = BattleEngine.calculateOpponentDamage(
+    const { blockedDamage, damageToHealth, newDefense } = calculatePlayerDamage(
       randomOpponent.power,
       playerStats.defense
     );

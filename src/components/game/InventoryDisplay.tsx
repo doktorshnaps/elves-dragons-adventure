@@ -6,7 +6,6 @@ import { DragonEggsList } from "./inventory/DragonEggsList";
 import { InventoryGrid } from "./inventory/InventoryGrid";
 import { useInventoryState } from "@/hooks/useInventoryState";
 import { useToast } from "@/hooks/use-toast";
-import { loadFromStorage } from "@/utils/storageUtils";
 
 interface InventoryDisplayProps {
   onUseItem?: (item: Item) => void;

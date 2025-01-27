@@ -10,7 +10,6 @@ import {
 } from "@/components/ui/hover-card";
 import { generateLootTable, formatDropChance } from "@/utils/lootUtils";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { StatBar } from "@/components/ui/stat-bar";
 
 interface OpponentCardProps {
   opponent: {
@@ -28,7 +27,7 @@ interface OpponentCardProps {
   playerHealth: number;
 }
 
-export const OpponentCard = React.memo(({ opponent, onAttack, isPlayerTurn, currentLevel, playerHealth }: OpponentCardProps) => {
+export const OpponentCard = ({ opponent, onAttack, isPlayerTurn, currentLevel, playerHealth }: OpponentCardProps) => {
   const lootTable = generateLootTable(opponent.isBoss ?? false);
   const isMobile = useIsMobile();
 
@@ -68,12 +67,12 @@ export const OpponentCard = React.memo(({ opponent, onAttack, isPlayerTurn, curr
             </HoverCard>
             <div className="space-y-2">
               <p className="text-sm md:text-base text-gray-400">Сила: {opponent.power}</p>
-              <StatBar 
-                value={opponent.health}
-                maxValue={opponent.maxHealth}
-                color={opponent.isBoss ? "bg-red-700" : "bg-red-600"}
-                height={isMobile ? "sm" : "md"}
-              />
+              <div className="w-full bg-gray-700 rounded-full h-1.5 md:h-2.5">
+                <div
+                  className={`${opponent.isBoss ? 'bg-red-700' : 'bg-red-600'} h-1.5 md:h-2.5 rounded-full transition-all duration-300`}
+                  style={{ width: `${(opponent.health / opponent.maxHealth) * 100}%` }}
+                ></div>
+              </div>
               <p className="text-xs md:text-sm text-gray-400">HP: {opponent.health}/{opponent.maxHealth}</p>
             </div>
             <Button
@@ -90,6 +89,4 @@ export const OpponentCard = React.memo(({ opponent, onAttack, isPlayerTurn, curr
       </Card>
     </motion.div>
   );
-});
-
-OpponentCard.displayName = 'OpponentCard';
+};
