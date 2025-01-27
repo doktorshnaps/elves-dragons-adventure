@@ -1,4 +1,4 @@
-import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
+import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import { Toaster } from "@/components/ui/toaster";
 import Game from "./pages/Game";
 import Index from "./pages/Index";
@@ -13,7 +13,6 @@ function App() {
           <Route path="/" element={<Index />} />
           <Route path="/game" element={<Game />} />
           <Route path="/battle" element={<Battle />} />
-          <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
         <Toaster />
       </Router>

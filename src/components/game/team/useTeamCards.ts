@@ -38,10 +38,6 @@ export const useTeamCards = () => {
   }, []);
 
   const handleSellCard = (card: CardType) => {
-    event?.stopPropagation();
-    
-    setSelectedCards(prev => prev.filter(c => c.id !== card.id));
-
     const newCards = cards.filter(c => c.id !== card.id);
     setCards(newCards);
     localStorage.setItem('gameCards', JSON.stringify(newCards));
@@ -68,12 +64,6 @@ export const useTeamCards = () => {
   };
 
   const handleCardSelect = (card: CardType, groupCount: number) => {
-    // Если в группе меньше 2 карт, игнорируем выбор
-    if (groupCount < 2) {
-      return;
-    }
-
-    // Находим все карты в группе
     const sameCards = cards.filter(c => 
       c.name === card.name && 
       c.rarity === card.rarity && 
@@ -81,25 +71,34 @@ export const useTeamCards = () => {
       c.faction === card.faction
     );
 
-    // Если карты уже выбраны, снимаем выбор
-    if (selectedCards.length === 2) {
+    if (selectedCards.some(c => sameCards.find(sc => sc.id === c.id))) {
       setSelectedCards([]);
       return;
     }
 
-    // Автоматически выбираем первые две карты из стопки
-    setSelectedCards([sameCards[0], sameCards[1]]);
+    if (selectedCards.length === 0) {
+      setSelectedCards(sameCards.slice(0, 2));
+    } else {
+      const firstSelected = selectedCards[0];
+      if (
+        firstSelected.name === card.name &&
+        firstSelected.rarity === card.rarity &&
+        firstSelected.type === card.type &&
+        firstSelected.faction === card.faction
+      ) {
+        setSelectedCards([...selectedCards, sameCards[0]]);
+      } else {
+        toast({
+          title: "Несовместимые карты",
+          description: "Выберите карты одного типа и редкости",
+          variant: "destructive",
+        });
+      }
+    }
   };
 
   const handleUpgrade = () => {
-    if (selectedCards.length !== 2) {
-      toast({
-        title: "Ошибка улучшения",
-        description: "Выберите две одинаковые карты для улучшения",
-        variant: "destructive",
-      });
-      return;
-    }
+    if (selectedCards.length !== 2) return;
 
     const upgradedCard = upgradeCard(selectedCards[0], selectedCards[1]);
     
@@ -112,25 +111,43 @@ export const useTeamCards = () => {
       return;
     }
 
-    // Удаляем выбранные карты из общего списка
-    const newCards = cards.filter(c => !selectedCards.some(sc => sc.id === c.id));
+    const newCards = cards.filter(c => !selectedCards.find(sc => sc.id === c.id));
 
     if (selectedCards[0].type === 'pet') {
-      // Для питомцев создаем яйцо
-      addEgg({
+      const currentInventory = localStorage.getItem('gameInventory');
+      const inventory = currentInventory ? JSON.parse(currentInventory) : [];
+      
+      const newEggItem = {
         id: Date.now().toString(),
+        name: `Яйцо ${upgradedCard.name}`,
+        type: 'dragon_egg' as const,
+        description: `Фракция: ${upgradedCard.faction}, Редкость: ${upgradedCard.rarity}`,
+        value: upgradedCard.rarity,
+        petName: upgradedCard.name,
+        image: upgradedCard.image
+      };
+      
+      inventory.push(newEggItem);
+      localStorage.setItem('gameInventory', JSON.stringify(inventory));
+
+      addEgg({
+        id: newEggItem.id,
         petName: upgradedCard.name,
         rarity: upgradedCard.rarity,
         createdAt: new Date().toISOString(),
         faction: upgradedCard.faction || 'Каледор'
       }, upgradedCard.faction || 'Каледор');
 
+      const inventoryEvent = new CustomEvent('inventoryUpdate', {
+        detail: { inventory }
+      });
+      window.dispatchEvent(inventoryEvent);
+
       toast({
         title: "Создано яйцо дракона!",
         description: `Улучшенный питомец появится через некоторое время`,
       });
     } else {
-      // Для героев добавляем улучшенную карту
       newCards.push(upgradedCard);
       toast({
         title: "Карта улучшена!",
@@ -138,17 +155,14 @@ export const useTeamCards = () => {
       });
     }
 
-    // Обновляем состояние и localStorage
     setCards(newCards);
     localStorage.setItem('gameCards', JSON.stringify(newCards));
 
-    // Отправляем событие обновления карт
     const cardsEvent = new CustomEvent('cardsUpdate', { 
       detail: { cards: newCards }
     });
     window.dispatchEvent(cardsEvent);
 
-    // Очищаем выбранные карты
     setSelectedCards([]);
   };
 

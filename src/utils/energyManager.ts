@@ -1,5 +1,3 @@
-import React from 'react';
-
 export interface EnergyState {
   current: number;
   max: number;
@@ -43,39 +41,24 @@ export const getInitialEnergyState = (): EnergyState => {
   return initialState;
 };
 
-export const useEnergy = () => {
-  const [energyState, setEnergyState] = React.useState<EnergyState>(getInitialEnergyState());
-  const [timeUntilNext, setTimeUntilNext] = React.useState(0);
-
-  React.useEffect(() => {
-    const interval = setInterval(() => {
-      const newState = getInitialEnergyState();
-      setEnergyState(newState);
-      
-      const now = Date.now();
-      const nextRegenTime = newState.lastRegenerated + REGEN_TIME_MS;
-      setTimeUntilNext(Math.max(0, nextRegenTime - now));
-    }, 1000);
-
-    return () => clearInterval(interval);
-  }, []);
-
-  const useEnergyPoint = (): boolean => {
-    if (energyState.current <= 0) return false;
-    
-    const newState = {
-      ...energyState,
-      current: energyState.current - 1,
-      lastUsed: Date.now()
-    };
-    localStorage.setItem(ENERGY_STORAGE_KEY, JSON.stringify(newState));
-    setEnergyState(newState);
-    return true;
+export const useEnergy = (): boolean => {
+  const energyState = getInitialEnergyState();
+  if (energyState.current <= 0) return false;
+  
+  const newState = {
+    ...energyState,
+    current: energyState.current - 1,
+    lastUsed: Date.now()
   };
+  localStorage.setItem(ENERGY_STORAGE_KEY, JSON.stringify(newState));
+  return true;
+};
 
-  return {
-    energyState,
-    timeUntilNext,
-    useEnergyPoint
-  };
+export const getTimeUntilNextEnergy = (): number => {
+  const energyState = getInitialEnergyState();
+  if (energyState.current >= MAX_ENERGY) return 0;
+  
+  const now = Date.now();
+  const nextRegenTime = energyState.lastRegenerated + REGEN_TIME_MS;
+  return Math.max(0, nextRegenTime - now);
 };

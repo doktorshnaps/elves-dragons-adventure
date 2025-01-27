@@ -1,18 +1,15 @@
 import { useState, useEffect } from "react";
-import { getInitialEnergyState, EnergyState } from "@/utils/energyManager";
+import { getInitialEnergyState, getTimeUntilNextEnergy, EnergyState } from "@/utils/energyManager";
 
 export const useEnergyManagement = () => {
   const [energyState, setEnergyState] = useState<EnergyState>(getInitialEnergyState());
-  const [timeUntilNext, setTimeUntilNext] = useState(0);
+  const [timeUntilNext, setTimeUntilNext] = useState(getTimeUntilNextEnergy());
 
   useEffect(() => {
     const interval = setInterval(() => {
       const newEnergyState = getInitialEnergyState();
       setEnergyState(newEnergyState);
-      
-      const now = Date.now();
-      const nextRegenTime = newEnergyState.lastRegenerated + (6 * 60 * 1000); // 6 minutes in milliseconds
-      setTimeUntilNext(Math.max(0, nextRegenTime - now));
+      setTimeUntilNext(getTimeUntilNextEnergy());
     }, 1000);
 
     return () => clearInterval(interval);

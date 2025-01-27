@@ -9,7 +9,6 @@ interface CardGroupProps {
   isActive: boolean;
   onSelect: () => void;
   onSell: (card: CardType) => void;
-  onUpgrade: () => void;
 }
 
 export const CardGroup = ({ 
@@ -18,8 +17,7 @@ export const CardGroup = ({
   isSelected, 
   isActive, 
   onSelect, 
-  onSell,
-  onUpgrade
+  onSell 
 }: CardGroupProps) => {
   return (
     <div
@@ -33,8 +31,6 @@ export const CardGroup = ({
         showSellButton={true}
         onSell={onSell}
         isActive={isActive}
-        isSelected={isSelected}
-        onUpgrade={onUpgrade}
       />
       {count > 1 && (
         <Badge 

@@ -2,10 +2,9 @@ import { Card as CardType } from "@/types/cards";
 import { getRarityLabel, getCardPrice } from "@/utils/cardUtils";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Sword, Shield, Coins, Heart, Sparkles, ArrowUpCircle } from "lucide-react";
+import { Sword, Shield, Coins, Heart, Sparkles } from "lucide-react";
 import { motion } from "framer-motion";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { useEffect, useRef } from "react";
 
 interface CardDisplayProps {
   card: CardType;
@@ -13,41 +12,10 @@ interface CardDisplayProps {
   onSell?: (card: CardType) => void;
   className?: string;
   isActive?: boolean;
-  isSelected?: boolean;
-  onUpgrade?: () => void;
 }
 
-export const CardDisplay = ({ 
-  card, 
-  showSellButton, 
-  onSell, 
-  className = "", 
-  isActive = true,
-  isSelected = false,
-  onUpgrade
-}: CardDisplayProps) => {
+export const CardDisplay = ({ card, showSellButton, onSell, className = "", isActive = true }: CardDisplayProps) => {
   const isMobile = useIsMobile();
-  const imgRef = useRef<HTMLImageElement>(null);
-
-  useEffect(() => {
-    if (imgRef.current && card.image) {
-      // Предварительно загружаем изображение
-      const img = new Image();
-      img.src = card.image;
-      
-      // Если изображение уже в кэше браузера, сразу отображаем его
-      if (img.complete) {
-        imgRef.current.src = card.image;
-      } else {
-        // Если изображение не в кэше, ждем загрузки
-        img.onload = () => {
-          if (imgRef.current) {
-            imgRef.current.src = card.image!;
-          }
-        };
-      }
-    }
-  }, [card.image]);
 
   return (
     <Card className={`p-2 bg-game-background border-game-accent hover:border-game-primary transition-all duration-300 h-full flex flex-col ${
@@ -57,13 +25,11 @@ export const CardDisplay = ({
         {card.image && (
           <div className="w-full aspect-square mb-1 rounded-lg overflow-hidden">
             <img 
-              ref={imgRef}
+              src={card.image} 
               alt={card.name}
               className="w-full h-full object-cover"
-              loading="eager"
+              loading="lazy"
               decoding="async"
-              fetchPriority="high"
-              style={{ contentVisibility: 'auto' }}
             />
           </div>
         )}
@@ -118,22 +84,11 @@ export const CardDisplay = ({
         <Button
           variant="outline"
           size={isMobile ? "sm" : "default"}
-          className={`mt-auto w-full text-[10px] ${
-            isSelected ? 'bg-game-accent hover:bg-game-accent/80' : 'text-yellow-500 hover:text-yellow-600'
-          }`}
-          onClick={isSelected ? onUpgrade : () => onSell?.(card)}
+          className="mt-auto w-full text-yellow-500 hover:text-yellow-600 text-[10px]"
+          onClick={() => onSell?.(card)}
         >
-          {isSelected ? (
-            <>
-              <ArrowUpCircle className={`${isMobile ? 'w-3 h-3' : 'w-4 h-4'} mr-1`} />
-              Улучшить
-            </>
-          ) : (
-            <>
-              <Coins className={`${isMobile ? 'w-3 h-3' : 'w-4 h-4'} mr-1`} />
-              Продать ({getCardPrice(card.rarity)})
-            </>
-          )}
+          <Coins className={`${isMobile ? 'w-3 h-3' : 'w-4 h-4'} mr-1`} />
+          Продать ({getCardPrice(card.rarity)})
         </Button>
       )}
     </Card>

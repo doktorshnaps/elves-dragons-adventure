@@ -4,7 +4,6 @@ import { HealthBar } from "./stats/HealthBar";
 import { CombatStats } from "./stats/CombatStats";
 import { PlayerStats } from "@/types/battle";
 import { TeamStats as TeamStatsType } from "@/types/cards";
-import { calculateTeamStats } from "@/utils/cardUtils";
 
 interface TeamStatsProps {
   teamStats: TeamStatsType;
@@ -33,50 +32,14 @@ export const TeamStats = ({ teamStats }: TeamStatsProps) => {
     return Number(localStorage.getItem('gameBalance') || '0');
   });
 
-  // Обновляем статистику при изменении карт
-  React.useEffect(() => {
-    const handleCardsUpdate = () => {
-      const savedCards = localStorage.getItem('gameCards');
-      if (savedCards) {
-        const cards = JSON.parse(savedCards);
-        const heroes = cards.filter(card => card.type === 'character');
-        const pets = cards.filter(card => card.type === 'pet');
-        
-        // Проверяем активность питомцев
-        const activePets = pets.filter(pet => {
-          if (!pet.faction) return false;
-          return heroes.some(hero => 
-            hero.type === 'character' && 
-            hero.faction === pet.faction && 
-            hero.rarity >= pet.rarity
-          );
-        });
-
-        // Рассчитываем статистику только для героев и активных питомцев
-        const activeCards = [...heroes, ...activePets];
-        const activeStats = calculateTeamStats(activeCards);
-
-        setStats(prev => ({
-          ...prev,
-          health: activeStats.health,
-          maxHealth: activeStats.health,
-          power: activeStats.power,
-          defense: activeStats.defense
-        }));
-      }
-    };
-
-    window.addEventListener('cardsUpdate', handleCardsUpdate);
-    window.addEventListener('storage', handleCardsUpdate);
-
-    // Инициализируем статистику при монтировании
-    handleCardsUpdate();
-
-    return () => {
-      window.removeEventListener('cardsUpdate', handleCardsUpdate);
-      window.removeEventListener('storage', handleCardsUpdate);
-    };
-  }, []);
+  const [playerName, setPlayerName] = React.useState(() => {
+    const gameUser = localStorage.getItem('gameUser');
+    if (gameUser) {
+      const { username } = JSON.parse(gameUser);
+      return username;
+    }
+    return "Игрок";
+  });
 
   React.useEffect(() => {
     const handleBalanceUpdate = () => {
@@ -107,7 +70,10 @@ export const TeamStats = ({ teamStats }: TeamStatsProps) => {
       
       <div className="relative z-10">
         <div className="flex justify-between items-center mb-4">
-          <h2 className="text-xl font-bold text-game-accent">Статистика команды</h2>
+          <div>
+            <h2 className="text-xl font-bold text-game-accent">Статистика команды</h2>
+            <p className="text-sm text-game-accent/80">Игрок: {playerName}</p>
+          </div>
           <span className="text-sm text-game-accent">{balance} монет</span>
         </div>
         

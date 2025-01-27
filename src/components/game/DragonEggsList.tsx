@@ -11,7 +11,6 @@ interface DragonEggsListProps {
 export const DragonEggsList = ({ eggs }: DragonEggsListProps) => {
   const { toast } = useToast();
 
-  // Фильтруем дубликаты яиц, оставляя только уникальные по id
   const uniqueEggs = eggs.reduce((acc: DragonEgg[], current) => {
     const isDuplicate = acc.find(egg => 
       egg.petName === current.petName && 

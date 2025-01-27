@@ -1,103 +1,126 @@
-import { useState, useEffect } from "react";
-import { PlayerStats, Opponent } from "@/types/battle";
+import { usePlayerState } from './usePlayerState';
+import { useInventoryState } from './useInventoryState';
+import { useBalanceState } from './useBalanceState';
+import { useOpponentsState } from './useOpponentsState';
+import { useCombat } from './useCombat';
+import { useToast } from './use-toast';
 import { Item } from "@/types/inventory";
-import { useToast } from "./use-toast";
-import { useInventoryState } from "./useInventoryState";
-import { calculateDamage } from "@/utils/battleCalculations";
 
-export const useBattleState = () => {
+import { useEffect } from 'react';
+import { calculateTeamStats } from '@/utils/cardUtils';
+import { usePlayerHealthCheck } from './battle/usePlayerHealthCheck';
+import { useDungeonLevelManager } from './battle/useDungeonLevelManager';
+import { useBattleStateManager } from './battle/useBattleStateManager';
+
+export const useBattleState = (initialLevel: number = 1) => {
   const { toast } = useToast();
+  
+  const savedState = localStorage.getItem('battleState');
+  let initialState;
+  
+  if (savedState) {
+    initialState = JSON.parse(savedState);
+  } else {
+    const savedCards = localStorage.getItem('gameCards');
+    const cards = savedCards ? JSON.parse(savedCards) : [];
+    const teamStats = calculateTeamStats(cards);
+    
+    initialState = {
+      playerStats: {
+        health: teamStats.health,
+        maxHealth: teamStats.health,
+        power: teamStats.power,
+        defense: teamStats.defense
+      },
+      currentDungeonLevel: initialLevel,
+      selectedDungeon: null
+    };
+  }
+
+  const { playerStats, setPlayerStats } = usePlayerState(initialState.playerStats);
   const { inventory, updateInventory } = useInventoryState();
-  const [playerStats, setPlayerStats] = useState<PlayerStats>(() => {
-    const savedState = localStorage.getItem('battleState');
-    if (savedState) {
-      const state = JSON.parse(savedState);
-      return state.playerStats;
-    }
-    return {
-      health: 100,
-      maxHealth: 100,
-      power: 10,
-      defense: 5,
-      experience: 0,
-      level: 1,
-      requiredExperience: 100
-    };
-  });
+  const { balance, updateBalance } = useBalanceState();
+  const { opponents, setOpponents, handleOpponentDefeat } = useOpponentsState(
+    initialState.currentDungeonLevel,
+    updateBalance,
+    updateInventory
+  );
 
-  const [opponents, setOpponents] = useState<Opponent[]>(() => {
-    const savedState = localStorage.getItem('battleState');
-    if (savedState) {
-      const state = JSON.parse(savedState);
-      return state.opponents;
-    }
-    return [];
-  });
+  usePlayerHealthCheck(playerStats);
 
-  const [coins, setCoins] = useState(() => {
-    const savedState = localStorage.getItem('battleState');
-    if (savedState) {
-      const state = JSON.parse(savedState);
-      return state.coins || 0;
-    }
-    return 0;
-  });
-
-  const [level, setLevel] = useState(() => {
-    const savedState = localStorage.getItem('battleState');
-    if (savedState) {
-      const state = JSON.parse(savedState);
-      return state.currentDungeonLevel || 1;
-    }
-    return 1;
-  });
-
-  const handleUseItem = (item: Item) => {
-    if (item.type === 'healthPotion') {
-      const newHealth = Math.min(playerStats.maxHealth, playerStats.health + (item.value || 0));
-      setPlayerStats(prev => ({
-        ...prev,
-        health: newHealth
-      }));
-      
-      // Remove the used item from inventory
-      const newInventory = inventory.filter(i => i.id !== item.id);
-      updateInventory(newInventory);
-      
-      toast({
-        title: "Зелье использовано",
-        description: `Восстановлено ${item.value} здоровья`,
-      });
-    }
-  };
-
-  const handleNextLevel = () => {
-    setLevel(prev => prev + 1);
-    toast({
-      title: "Уровень пройден!",
-      description: "Вы переходите на следующий уровень подземелья",
-    });
-  };
-
-  useEffect(() => {
-    const battleState = {
-      playerStats,
-      opponents,
-      coins,
-      currentDungeonLevel: level
-    };
-    localStorage.setItem('battleState', JSON.stringify(battleState));
-  }, [playerStats, opponents, coins, level]);
-
-  return {
-    level,
-    coins,
+  const { isPlayerTurn, attackEnemy, handleOpponentAttack } = useCombat(
     playerStats,
     setPlayerStats,
     opponents,
     setOpponents,
-    setCoins,
-    handleUseItem,
+    handleOpponentDefeat
+  );
+
+  const { handleNextLevel } = useDungeonLevelManager(playerStats, initialState, setOpponents);
+
+  useBattleStateManager(playerStats, opponents, initialState, inventory, balance);
+
+  useEffect(() => {
+    if (opponents && opponents.length === 0 && playerStats?.health > 0) {
+      toast({
+        title: "Уровень завершен!",
+        description: "Нажмите кнопку для перехода на следующий уровень",
+        duration: 2000
+      });
+    }
+  }, [opponents, playerStats?.health, toast]);
+
+  const useItem = (item: Item) => {
+    if (!playerStats) return;
+    
+    if (item.type === "healthPotion") {
+      const newHealth = Math.min(playerStats.maxHealth, playerStats.health + item.value);
+      setPlayerStats({
+        ...playerStats,
+        health: newHealth
+      });
+      
+      toast({
+        title: "Зелье использовано",
+        description: `Восстановлено ${item.value} здоровья`,
+        duration: 2000
+      });
+    } else if (item.type === "cardPack") {
+      toast({
+        title: "Недоступно",
+        description: "Колоды карт можно использовать только в магазине",
+        duration: 2000
+      });
+      return; // Не удаляем предмет, если это колода карт
+    }
+
+    // Удаляем использованный предмет из инвентаря
+    const newInventory = inventory.filter(i => i.id !== item.id);
+    updateInventory(newInventory);
+
+    // Сохраняем обновленное состояние боя
+    const battleState = {
+      playerStats: playerStats,
+      currentDungeonLevel: initialState.currentDungeonLevel,
+      selectedDungeon: initialState.selectedDungeon
+    };
+    localStorage.setItem('battleState', JSON.stringify(battleState));
+  };
+
+  return {
+    level: initialState.currentDungeonLevel,
+    coins: balance,
+    playerStats,
+    opponents,
+    inventory,
+    isPlayerTurn,
+    attackEnemy,
+    handleOpponentAttack,
+    useItem,
+    setOpponents,
+    handleOpponentDefeat,
+    updateBalance,
+    updateInventory,
     handleNextLevel
   };
 };

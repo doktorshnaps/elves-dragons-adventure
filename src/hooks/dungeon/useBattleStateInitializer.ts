@@ -1,4 +1,5 @@
 import { useToast } from '@/hooks/use-toast';
+import { generateDungeonOpponents } from '@/dungeons/dungeonManager';
 import { calculateTeamStats } from '@/utils/cardUtils';
 
 export const useBattleStateInitializer = () => {
@@ -9,6 +10,8 @@ export const useBattleStateInitializer = () => {
     const cards = savedCards ? JSON.parse(savedCards) : [];
     const teamStats = calculateTeamStats(cards);
 
+    const opponents = generateDungeonOpponents(selectedDungeon, 1);
+
     const battleState = {
       playerStats: {
         health: teamStats.health,
@@ -16,7 +19,7 @@ export const useBattleStateInitializer = () => {
         power: teamStats.power,
         defense: teamStats.defense
       },
-      opponents: [],
+      opponents,
       currentDungeonLevel: 1,
       inventory: [],
       coins: balance,
