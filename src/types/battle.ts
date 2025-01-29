@@ -1,3 +1,5 @@
+import { Item } from "@/types/inventory";
+
 export interface PlayerStats {
   health: number;
   maxHealth: number;
