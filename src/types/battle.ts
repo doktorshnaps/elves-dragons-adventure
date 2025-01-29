@@ -1,5 +1,3 @@
-import { Item } from '@/types/inventory';
-
 export interface PlayerStats {
   health: number;
   maxHealth: number;
@@ -14,6 +12,7 @@ export interface Opponent {
   health: number;
   maxHealth: number;
   isBoss?: boolean;
+  image?: string;
 }
 
 export interface BattleState {
