@@ -5,6 +5,9 @@ export interface PlayerStats {
   maxHealth: number;
   power: number;
   defense: number;
+  experience: number;
+  level: number;
+  requiredExperience: number;
 }
 
 export interface Opponent {
@@ -15,6 +18,7 @@ export interface Opponent {
   maxHealth: number;
   isBoss?: boolean;
   image?: string;
+  experienceReward: number;
 }
 
 export interface BattleState {
@@ -24,4 +28,10 @@ export interface BattleState {
   playerStats: PlayerStats;
   opponents: Opponent[];
   inventory: Item[];
+}
+
+export interface Equipment {
+  weapon?: Item;
+  armor?: Item;
+  accessory?: Item;
 }

@@ -1,10 +1,12 @@
 import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Sword, ArrowRight, Coins } from "lucide-react";
+import { Sword, ArrowRight, Coins, Shield, Star } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useToast } from "@/hooks/use-toast";
 import { useBalanceState } from "@/hooks/useBalanceState";
+import { ExperienceBar } from "../stats/ExperienceBar";
+import { Item } from "@/types/inventory";
 
 interface Monster {
   id: number;
@@ -13,19 +15,51 @@ interface Monster {
   health: number;
   maxHealth: number;
   reward: number;
+  experienceReward: number;
+}
+
+interface Equipment {
+  weapon?: Item;
+  armor?: Item;
+  accessory?: Item;
 }
 
 export const AdventuresTab = () => {
   const [level, setLevel] = useState(1);
+  const [experience, setExperience] = useState(0);
+  const [requiredExperience, setRequiredExperience] = useState(100);
   const [currentMonster, setCurrentMonster] = useState<Monster | null>(null);
   const [playerHealth, setPlayerHealth] = useState(100);
+  const [equipment, setEquipment] = useState<Equipment>({});
   const { toast } = useToast();
   const { balance, updateBalance } = useBalanceState();
+
+  const calculatePlayerStats = () => {
+    let totalPower = 10;
+    let totalDefense = 5;
+    let totalHealth = 100;
+
+    if (equipment.weapon?.stats) {
+      totalPower += equipment.weapon.stats.power || 0;
+    }
+    if (equipment.armor?.stats) {
+      totalDefense += equipment.armor.stats.defense || 0;
+      totalHealth += equipment.armor.stats.health || 0;
+    }
+    if (equipment.accessory?.stats) {
+      totalPower += equipment.accessory.stats.power || 0;
+      totalDefense += equipment.accessory.stats.defense || 0;
+      totalHealth += equipment.accessory.stats.health || 0;
+    }
+
+    return { power: totalPower, defense: totalDefense, maxHealth: totalHealth };
+  };
 
   const generateMonster = () => {
     const powerMultiplier = 1 + (level - 1) * 0.5;
     const healthMultiplier = 1 + (level - 1) * 0.3;
     const rewardMultiplier = 1 + (level - 1) * 0.7;
+    const experienceMultiplier = 1 + (level - 1) * 0.5;
 
     const monsters = [
       "Дикий волк",
@@ -43,8 +77,28 @@ export const AdventuresTab = () => {
       power: Math.floor(10 * powerMultiplier),
       health: Math.floor(50 * healthMultiplier),
       maxHealth: Math.floor(50 * healthMultiplier),
-      reward: Math.floor(20 * rewardMultiplier)
+      reward: Math.floor(20 * rewardMultiplier),
+      experienceReward: Math.floor(25 * experienceMultiplier)
     };
+  };
+
+  const gainExperience = (amount: number) => {
+    const newExperience = experience + amount;
+    if (newExperience >= requiredExperience) {
+      // Level up!
+      const nextLevel = level + 1;
+      setLevel(nextLevel);
+      setExperience(newExperience - requiredExperience);
+      setRequiredExperience(Math.floor(requiredExperience * 1.5));
+      
+      toast({
+        title: "Уровень повышен!",
+        description: `Достигнут ${nextLevel} уровень!`,
+        variant: "default"
+      });
+    } else {
+      setExperience(newExperience);
+    }
   };
 
   const startAdventure = () => {
@@ -64,27 +118,32 @@ export const AdventuresTab = () => {
   const attackMonster = () => {
     if (!currentMonster) return;
 
+    const stats = calculatePlayerStats();
+    
     // Игрок наносит урон монстру
-    const playerDamage = Math.floor(Math.random() * 20) + 10;
+    const playerDamage = Math.floor(Math.random() * stats.power) + Math.floor(stats.power * 0.5);
     const newMonsterHealth = currentMonster.health - playerDamage;
 
     // Монстр наносит урон игроку
     const monsterDamage = Math.floor(Math.random() * currentMonster.power);
-    const newPlayerHealth = playerHealth - monsterDamage;
+    const reducedDamage = Math.max(0, monsterDamage - Math.floor(stats.defense * 0.5));
+    const newPlayerHealth = playerHealth - reducedDamage;
 
     toast({
       title: "Битва!",
-      description: `Вы нанесли ${playerDamage} урона! Монстр нанес ${monsterDamage} урона!`
+      description: `Вы нанесли ${playerDamage} урона! Монстр нанес ${reducedDamage} урона!`
     });
 
     if (newMonsterHealth <= 0) {
       // Монстр побежден
       updateBalance(balance + currentMonster.reward);
+      gainExperience(currentMonster.experienceReward);
+      
       toast({
         title: "Победа!",
-        description: `Вы получили ${currentMonster.reward} монет!`
+        description: `Вы получили ${currentMonster.reward} монет и ${currentMonster.experienceReward} опыта!`
       });
-      setLevel(prev => prev + 1);
+      
       setCurrentMonster(null);
       return;
     }
@@ -98,7 +157,6 @@ export const AdventuresTab = () => {
       });
       setPlayerHealth(0);
       setCurrentMonster(null);
-      setLevel(1);
       return;
     }
 
@@ -119,26 +177,32 @@ export const AdventuresTab = () => {
       return;
     }
 
+    const stats = calculatePlayerStats();
     updateBalance(balance - 50);
-    setPlayerHealth(100);
+    setPlayerHealth(stats.maxHealth);
     toast({
       title: "Здоровье восстановлено",
       description: "Ваш герой готов к новым приключениям!"
     });
   };
 
+  const stats = calculatePlayerStats();
+
   return (
     <div className="space-y-4">
       <div className="flex justify-between items-center">
         <div className="space-y-1">
           <h2 className="text-2xl font-bold text-game-accent">Приключения</h2>
-          <p className="text-sm text-gray-400">Уровень: {level}</p>
+          <div className="flex items-center gap-2">
+            <Star className="w-4 h-4 text-yellow-500" />
+            <span className="text-sm text-gray-400">Уровень: {level}</span>
+          </div>
         </div>
         <div className="space-x-2">
           <Button
             variant="outline"
             onClick={restoreHealth}
-            disabled={playerHealth >= 100}
+            disabled={playerHealth >= stats.maxHealth}
           >
             Восстановить здоровье (50 монет)
           </Button>
@@ -148,10 +212,24 @@ export const AdventuresTab = () => {
         </div>
       </div>
 
+      <Card className="p-4 bg-game-surface border-game-accent">
+        <div className="space-y-4">
+          <div className="flex items-center gap-4">
+            <Sword className="w-5 h-5 text-game-accent" />
+            <span className="text-sm">Сила: {stats.power}</span>
+          </div>
+          <div className="flex items-center gap-4">
+            <Shield className="w-5 h-5 text-game-accent" />
+            <span className="text-sm">Защита: {stats.defense}</span>
+          </div>
+          <ExperienceBar experience={experience} requiredExperience={requiredExperience} />
+        </div>
+      </Card>
+
       <div className="w-full bg-gray-700 rounded-full h-2.5 mb-4">
         <div
           className="bg-red-600 h-2.5 rounded-full transition-all duration-300"
-          style={{ width: `${(playerHealth / 100) * 100}%` }}
+          style={{ width: `${(playerHealth / stats.maxHealth) * 100}%` }}
         />
       </div>
 
