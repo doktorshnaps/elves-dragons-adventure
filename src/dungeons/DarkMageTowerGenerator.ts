@@ -12,7 +12,8 @@ export const generateDarkMageTowerOpponents = (level: number): Opponent[] => {
       power: getScaledStats(16, level, true),
       health,
       maxHealth: health,
-      isBoss: true
+      isBoss: true,
+      experienceReward: getScaledStats(150, level, true)
     }];
   }
 
@@ -26,7 +27,8 @@ export const generateDarkMageTowerOpponents = (level: number): Opponent[] => {
       name: "Чернокнижник",
       power: getScaledStats(9, level),
       health,
-      maxHealth: health
+      maxHealth: health,
+      experienceReward: getScaledStats(50, level)
     });
   }
 
@@ -38,7 +40,8 @@ export const generateDarkMageTowerOpponents = (level: number): Opponent[] => {
       name: "Темный ученик",
       power: getScaledStats(6, level),
       health,
-      maxHealth: health
+      maxHealth: health,
+      experienceReward: getScaledStats(30, level)
     });
   }
 
@@ -50,7 +53,8 @@ export const generateDarkMageTowerOpponents = (level: number): Opponent[] => {
       name: "Магический голем",
       power: getScaledStats(4, level),
       health,
-      maxHealth: health
+      maxHealth: health,
+      experienceReward: getScaledStats(20, level)
     });
   }
 

@@ -18,7 +18,8 @@ export const generateSeaSerpentLairOpponents = (level: number): Opponent[] => {
       health: baseStats.health,
       maxHealth: baseStats.health,
       image: "/lovable-uploads/d832d29a-6ce9-4bad-abaa-d15cb73b5382.png",
-      isBoss: false
+      isBoss: false,
+      experienceReward: 30 + level * 10
     });
   }
 
@@ -30,7 +31,8 @@ export const generateSeaSerpentLairOpponents = (level: number): Opponent[] => {
     health: baseStats.health * 1.4,
     maxHealth: baseStats.health * 1.4,
     image: "/lovable-uploads/d832d29a-6ce9-4bad-abaa-d15cb73b5382.png",
-    isBoss: false
+    isBoss: false,
+    experienceReward: 50 + level * 15
   });
 
   // На последнем уровне добавляем босса - Морского змея
@@ -42,7 +44,8 @@ export const generateSeaSerpentLairOpponents = (level: number): Opponent[] => {
       health: baseStats.health * 3,
       maxHealth: baseStats.health * 3,
       image: "/lovable-uploads/d832d29a-6ce9-4bad-abaa-d15cb73b5382.png",
-      isBoss: true
+      isBoss: true,
+      experienceReward: 150 + level * 25
     });
   }
 

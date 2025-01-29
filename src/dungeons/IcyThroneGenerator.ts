@@ -12,7 +12,8 @@ export const generateIcyThroneOpponents = (level: number): Opponent[] => {
       power: getScaledStats(14, level, true),
       health,
       maxHealth: health,
-      isBoss: true
+      isBoss: true,
+      experienceReward: getScaledStats(150, level, true)
     }];
   }
 
@@ -26,7 +27,8 @@ export const generateIcyThroneOpponents = (level: number): Opponent[] => {
       name: "Ледяной голем",
       power: getScaledStats(7, level),
       health,
-      maxHealth: health
+      maxHealth: health,
+      experienceReward: getScaledStats(45, level)
     });
   }
 
@@ -38,7 +40,8 @@ export const generateIcyThroneOpponents = (level: number): Opponent[] => {
       name: "Снежный элементаль",
       power: getScaledStats(5, level),
       health,
-      maxHealth: health
+      maxHealth: health,
+      experienceReward: getScaledStats(30, level)
     });
   }
 
@@ -50,7 +53,8 @@ export const generateIcyThroneOpponents = (level: number): Opponent[] => {
       name: "Ледяной воин",
       power: getScaledStats(3, level),
       health,
-      maxHealth: health
+      maxHealth: health,
+      experienceReward: getScaledStats(20, level)
     });
   }
 

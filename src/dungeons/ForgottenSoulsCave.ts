@@ -12,7 +12,8 @@ export const generateForgottenSoulsCaveOpponents = (level: number): Opponent[] =
       power: getScaledStats(13, level, true),
       health,
       maxHealth: health,
-      isBoss: true
+      isBoss: true,
+      experienceReward: getScaledStats(150, level, true)
     }];
   }
 
@@ -26,7 +27,8 @@ export const generateForgottenSoulsCaveOpponents = (level: number): Opponent[] =
       name: "Потерянная душа",
       power: getScaledStats(7, level),
       health,
-      maxHealth: health
+      maxHealth: health,
+      experienceReward: getScaledStats(45, level)
     });
   }
 
@@ -38,7 +40,8 @@ export const generateForgottenSoulsCaveOpponents = (level: number): Opponent[] =
       name: "Призрачный воин",
       power: getScaledStats(4, level),
       health,
-      maxHealth: health
+      maxHealth: health,
+      experienceReward: getScaledStats(30, level)
     });
   }
 
@@ -50,7 +53,8 @@ export const generateForgottenSoulsCaveOpponents = (level: number): Opponent[] =
       name: "Скелет-воин",
       power: getScaledStats(3, level),
       health,
-      maxHealth: health
+      maxHealth: health,
+      experienceReward: getScaledStats(20, level)
     });
   }
 

@@ -18,7 +18,8 @@ export const generateSpiderNestOpponents = (level: number): Opponent[] => {
       health: baseStats.health,
       maxHealth: baseStats.health,
       image: "/lovable-uploads/ebf85dda-c79b-4350-80c2-65fde21b31ad.png",
-      isBoss: false
+      isBoss: false,
+      experienceReward: 25 + level * 8
     });
   }
 
@@ -30,7 +31,8 @@ export const generateSpiderNestOpponents = (level: number): Opponent[] => {
     health: baseStats.health * 1.2,
     maxHealth: baseStats.health * 1.2,
     image: "/lovable-uploads/ebf85dda-c79b-4350-80c2-65fde21b31ad.png",
-    isBoss: false
+    isBoss: false,
+    experienceReward: 40 + level * 12
   });
 
   // На последнем уровне добавляем босса - Королеву пауков
@@ -42,7 +44,8 @@ export const generateSpiderNestOpponents = (level: number): Opponent[] => {
       health: baseStats.health * 2.5,
       maxHealth: baseStats.health * 2.5,
       image: "/lovable-uploads/ebf85dda-c79b-4350-80c2-65fde21b31ad.png",
-      isBoss: true
+      isBoss: true,
+      experienceReward: 120 + level * 20
     });
   }
 
