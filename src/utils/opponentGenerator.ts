@@ -9,9 +9,9 @@ export const getScaledStats = (baseValue: number, level: number, isBoss: boolean
 
 const generateRegularOpponent = (id: number, level: number, type: 'strong' | 'medium' | 'weak'): Opponent => {
   const baseStats = {
-    strong: { power: 8, health: 120, name: "Элитный страж" },
-    medium: { power: 5, health: 80, name: "Воин тьмы" },
-    weak: { power: 3, health: 50, name: "Темный служитель" }
+    strong: { power: 8, health: 120, name: "Элитный страж", expReward: 50 },
+    medium: { power: 5, health: 80, name: "Воин тьмы", expReward: 30 },
+    weak: { power: 3, health: 50, name: "Темный служитель", expReward: 20 }
   }[type];
 
   const health = getScaledStats(baseStats.health, level);
@@ -21,7 +21,8 @@ const generateRegularOpponent = (id: number, level: number, type: 'strong' | 'me
     name: baseStats.name,
     power: getScaledStats(baseStats.power, level),
     health,
-    maxHealth: health
+    maxHealth: health,
+    experienceReward: getScaledStats(baseStats.expReward, level)
   };
 };
 
@@ -34,7 +35,8 @@ const generateBoss = (id: number, level: number): Opponent => {
     power: getScaledStats(12, level, true),
     health,
     maxHealth: health,
-    isBoss: true
+    isBoss: true,
+    experienceReward: getScaledStats(150, level, true)
   };
 };
 

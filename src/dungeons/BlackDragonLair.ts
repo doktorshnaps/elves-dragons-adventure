@@ -12,35 +12,40 @@ export const generateBlackDragonLairOpponents = (level: number): Opponent[] => {
           name: "Воин Драконид",
           power: getScaledStats(6, level),
           health: getScaledStats(80, level),
-          maxHealth: getScaledStats(80, level)
+          maxHealth: getScaledStats(80, level),
+          experienceReward: getScaledStats(30, level)
         },
         {
           id: 2,
           name: "Маг Драконид",
           power: getScaledStats(8, level),
           health: getScaledStats(60, level),
-          maxHealth: getScaledStats(60, level)
+          maxHealth: getScaledStats(60, level),
+          experienceReward: getScaledStats(35, level)
         },
         {
           id: 3,
           name: "Защитник Драконид",
           power: getScaledStats(5, level),
           health: getScaledStats(100, level),
-          maxHealth: getScaledStats(100, level)
+          maxHealth: getScaledStats(100, level),
+          experienceReward: getScaledStats(40, level)
         },
         {
           id: 4,
           name: "Воин Драконид",
           power: getScaledStats(6, level),
           health: getScaledStats(80, level),
-          maxHealth: getScaledStats(80, level)
+          maxHealth: getScaledStats(80, level),
+          experienceReward: getScaledStats(30, level)
         },
         {
           id: 5,
           name: "Маг Драконид",
           power: getScaledStats(8, level),
           health: getScaledStats(60, level),
-          maxHealth: getScaledStats(60, level)
+          maxHealth: getScaledStats(60, level),
+          experienceReward: getScaledStats(35, level)
         }
       ];
     
@@ -51,28 +56,32 @@ export const generateBlackDragonLairOpponents = (level: number): Opponent[] => {
           name: "Воин Ветеран Драконид",
           power: getScaledStats(10, level),
           health: getScaledStats(120, level),
-          maxHealth: getScaledStats(120, level)
+          maxHealth: getScaledStats(120, level),
+          experienceReward: getScaledStats(45, level)
         },
         {
           id: 2,
           name: "Генерал Драконидов",
           power: getScaledStats(12, level),
           health: getScaledStats(150, level),
-          maxHealth: getScaledStats(150, level)
+          maxHealth: getScaledStats(150, level),
+          experienceReward: getScaledStats(50, level)
         },
         {
           id: 3,
           name: "Ветеран Защитник Драконид",
           power: getScaledStats(8, level),
           health: getScaledStats(180, level),
-          maxHealth: getScaledStats(180, level)
+          maxHealth: getScaledStats(180, level),
+          experienceReward: getScaledStats(55, level)
         },
         {
           id: 4,
           name: "Маг Ветеран Драконид",
           power: getScaledStats(14, level),
           health: getScaledStats(90, level),
-          maxHealth: getScaledStats(90, level)
+          maxHealth: getScaledStats(90, level),
+          experienceReward: getScaledStats(60, level)
         }
       ];
     
@@ -83,21 +92,24 @@ export const generateBlackDragonLairOpponents = (level: number): Opponent[] => {
           name: "Грауграт",
           power: getScaledStats(15, level),
           health: getScaledStats(200, level),
-          maxHealth: getScaledStats(200, level)
+          maxHealth: getScaledStats(200, level),
+          experienceReward: getScaledStats(70, level)
         },
         {
           id: 2,
           name: "Дарксторм",
           power: getScaledStats(18, level),
           health: getScaledStats(180, level),
-          maxHealth: getScaledStats(180, level)
+          maxHealth: getScaledStats(180, level),
+          experienceReward: getScaledStats(75, level)
         },
         {
           id: 3,
           name: "Флиндо",
           power: getScaledStats(16, level),
           health: getScaledStats(190, level),
-          maxHealth: getScaledStats(190, level)
+          maxHealth: getScaledStats(190, level),
+          experienceReward: getScaledStats(80, level)
         }
       ];
     
@@ -108,14 +120,16 @@ export const generateBlackDragonLairOpponents = (level: number): Opponent[] => {
           name: "Кристалспин",
           power: getScaledStats(22, level),
           health: getScaledStats(250, level),
-          maxHealth: getScaledStats(250, level)
+          maxHealth: getScaledStats(250, level),
+          experienceReward: getScaledStats(90, level)
         },
         {
           id: 2,
           name: "Скарлетстрайк",
           power: getScaledStats(25, level),
           health: getScaledStats(230, level),
-          maxHealth: getScaledStats(230, level)
+          maxHealth: getScaledStats(230, level),
+          experienceReward: getScaledStats(100, level)
         }
       ];
     
@@ -127,7 +141,8 @@ export const generateBlackDragonLairOpponents = (level: number): Opponent[] => {
         power: getScaledStats(35, level, true),
         health: bossHealth,
         maxHealth: bossHealth,
-        isBoss: true
+        isBoss: true,
+        experienceReward: getScaledStats(200, level, true)
       }];
     
     default:

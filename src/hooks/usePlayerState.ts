@@ -16,7 +16,10 @@ export const usePlayerState = (initialStats?: PlayerStats) => {
       health: teamStats.health,
       maxHealth: teamStats.health,
       power: teamStats.power,
-      defense: teamStats.defense
+      defense: teamStats.defense,
+      experience: 0,
+      level: 1,
+      requiredExperience: 100
     };
   });
 

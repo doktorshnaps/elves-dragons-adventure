@@ -18,7 +18,8 @@ export const generateBoneDemonDungeonOpponents = (level: number): Opponent[] => 
       health: baseStats.health,
       maxHealth: baseStats.health,
       image: "/lovable-uploads/aef9e591-e676-4552-a70d-c7457b29b6c5.png",
-      isBoss: false
+      isBoss: false,
+      experienceReward: 30 + level * 10
     });
   }
 
@@ -30,7 +31,8 @@ export const generateBoneDemonDungeonOpponents = (level: number): Opponent[] => 
     health: baseStats.health * 1.3,
     maxHealth: baseStats.health * 1.3,
     image: "/lovable-uploads/aef9e591-e676-4552-a70d-c7457b29b6c5.png",
-    isBoss: false
+    isBoss: false,
+    experienceReward: 50 + level * 15
   });
 
   // На последнем уровне добавляем босса - Костяного демона
@@ -42,7 +44,8 @@ export const generateBoneDemonDungeonOpponents = (level: number): Opponent[] => 
       health: baseStats.health * 2.8,
       maxHealth: baseStats.health * 2.8,
       image: "/lovable-uploads/aef9e591-e676-4552-a70d-c7457b29b6c5.png",
-      isBoss: true
+      isBoss: true,
+      experienceReward: 150 + level * 25
     });
   }
 
