@@ -3,9 +3,14 @@ export interface ShopItem {
   name: string;
   description: string;
   price: number;
-  type: "cardPack" | "healthPotion" | "defensePotion" | "weapon" | "armor";
+  type: "cardPack" | "healthPotion" | "defensePotion" | "weapon" | "armor" | "accessory";
   value: number;
   image?: string;
+  stats?: {
+    power?: number;
+    defense?: number;
+    health?: number;
+  };
 }
 
 export const shopItems: ShopItem[] = [
@@ -36,31 +41,68 @@ export const shopItems: ShopItem[] = [
     value: 150,
     image: "/lovable-uploads/bc24efd6-6a0c-45fe-a823-e610ee6540eb.png"
   },
+  // Добавляем новое снаряжение
   {
     id: 4,
-    name: "Зелье защиты",
-    description: "Увеличивает защиту на 25 единиц",
-    price: 200,
-    type: "defensePotion",
-    value: 25,
-    image: "/lovable-uploads/2e415280-562c-485d-9dd8-067b743c3864.png"
+    name: "Железный меч",
+    description: "Базовое оружие для начинающих воинов",
+    price: 300,
+    type: "weapon",
+    value: 1,
+    image: "/lovable-uploads/a983c8e3-bb18-4d44-b5bd-19441bf40f8f.png",
+    stats: {
+      power: 15
+    }
   },
   {
     id: 5,
-    name: "Старый железный меч",
-    description: "Увеличивает урон на 15 единиц",
-    price: 300,
-    type: "weapon",
-    value: 15,
-    image: "/lovable-uploads/a983c8e3-bb18-4d44-b5bd-19441bf40f8f.png"
+    name: "Кожаная броня",
+    description: "Легкая защитная броня",
+    price: 250,
+    type: "armor",
+    value: 1,
+    image: "/lovable-uploads/766f77e4-2e9f-443a-99e6-283aa360efd0.png",
+    stats: {
+      defense: 10,
+      health: 25
+    }
   },
   {
     id: 6,
-    name: "Кожаная броня",
-    description: "Увеличивает защиту на 35 единиц",
-    price: 400,
+    name: "Стальной нагрудник",
+    description: "Прочная металлическая броня",
+    price: 500,
     type: "armor",
-    value: 35,
-    image: "/lovable-uploads/766f77e4-2e9f-443a-99e6-283aa360efd0.png"
+    value: 2,
+    image: "/lovable-uploads/2e415280-562c-485d-9dd8-067b743c3864.png",
+    stats: {
+      defense: 25,
+      health: 50
+    }
+  },
+  {
+    id: 7,
+    name: "Амулет силы",
+    description: "Увеличивает силу атаки",
+    price: 400,
+    type: "accessory",
+    value: 1,
+    image: "/lovable-uploads/54fc94d0-0050-4f98-99b9-58cec6e45173.png",
+    stats: {
+      power: 10,
+      health: 15
+    }
+  },
+  {
+    id: 8,
+    name: "Стальной меч",
+    description: "Улучшенное оружие для опытных воинов",
+    price: 600,
+    type: "weapon",
+    value: 2,
+    image: "/lovable-uploads/a983c8e3-bb18-4d44-b5bd-19441bf40f8f.png",
+    stats: {
+      power: 30
+    }
   }
 ];

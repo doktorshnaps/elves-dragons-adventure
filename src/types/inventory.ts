@@ -11,4 +11,6 @@ export interface Item {
     defense?: number;
     health?: number;
   };
+  equipped?: boolean;
+  slot?: "head" | "chest" | "hands" | "legs" | "feet" | "neck" | "ring1" | "ring2" | "weapon" | "offhand";
 }

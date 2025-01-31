@@ -3,18 +3,44 @@ import { Item } from "@/types/inventory";
 export const getItemPrice = (item: Item): number => {
   switch (item.type) {
     case "healthPotion":
-      return 100;
+      return Math.floor(item.value * 2);
     case "cardPack":
       return 1000;
+    case "weapon":
+    case "armor":
+    case "accessory":
+      return Math.floor(item.value * 300);
     default:
       return 0;
   }
 };
 
-export const canUpgradeItems = (items: Item[]): boolean => {
-  return false;
+export const canEquipItem = (item: Item): boolean => {
+  return ["weapon", "armor", "accessory"].includes(item.type);
 };
 
-export const upgradeItems = (items: Item[], itemsToUpgrade: Item[]): Item[] => {
-  return items;
+export const getEquipmentSlot = (item: Item): string | undefined => {
+  switch (item.type) {
+    case "weapon":
+      return "weapon";
+    case "armor":
+      return "chest";
+    case "accessory":
+      return "neck";
+    default:
+      return undefined;
+  }
+};
+
+export const calculateEquipmentStats = (equippedItems: Item[]) => {
+  return equippedItems.reduce((stats, item) => {
+    if (item.stats) {
+      return {
+        power: (stats.power || 0) + (item.stats.power || 0),
+        defense: (stats.defense || 0) + (item.stats.defense || 0),
+        health: (stats.health || 0) + (item.stats.health || 0),
+      };
+    }
+    return stats;
+  }, { power: 0, defense: 0, health: 0 });
 };
