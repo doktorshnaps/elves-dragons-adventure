@@ -41,6 +41,12 @@ export const TeamStats = ({ teamStats }: TeamStatsProps) => {
     return Number(localStorage.getItem('gameBalance') || '0');
   });
 
+  const [equipmentStats, setEquipmentStats] = React.useState({
+    power: 0,
+    defense: 0,
+    health: 0
+  });
+
   const equipmentSlots: EquipmentSlot[] = [
     { name: "Голова", icon: <Circle className="w-5 h-5" />, type: "head" },
     { name: "Нагрудник", icon: <Shield className="w-5 h-5" />, type: "chest" },
@@ -131,13 +137,24 @@ export const TeamStats = ({ teamStats }: TeamStatsProps) => {
       
       <div className="relative z-10">
         <div className="flex justify-between items-center mb-4">
-          <h2 className="text-xl font-bold text-game-accent">Статистика команды</h2>
+          <h2 className="text-xl font-bold text-game-accent">Статистика</h2>
           <span className="text-sm text-game-accent">{balance} монет</span>
         </div>
         
-        <div className="space-y-4">
-          <HealthBar health={stats.health} maxHealth={stats.maxHealth} />
-          <CombatStats power={stats.power} defense={stats.defense} />
+        <div className="space-y-6">
+          {/* Характеристики команды */}
+          <div className="space-y-4">
+            <h3 className="text-lg font-semibold text-game-accent">Характеристики команды</h3>
+            <HealthBar health={stats.health} maxHealth={stats.maxHealth} />
+            <CombatStats power={stats.power} defense={stats.defense} />
+          </div>
+
+          {/* Характеристики игрока */}
+          <div className="space-y-4">
+            <h3 className="text-lg font-semibold text-game-accent">Характеристики игрока</h3>
+            <HealthBar health={equipmentStats.health} maxHealth={equipmentStats.health} />
+            <CombatStats power={equipmentStats.power} defense={equipmentStats.defense} />
+          </div>
           
           <div className="mt-6">
             <h3 className="text-lg font-semibold text-game-accent mb-4">Снаряжение</h3>
