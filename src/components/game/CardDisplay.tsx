@@ -31,15 +31,12 @@ export const CardDisplay = ({
 
   useEffect(() => {
     if (imgRef.current && card.image) {
-      // Предварительно загружаем изображение
       const img = new Image();
       img.src = card.image;
       
-      // Если изображение уже в кэше браузера, сразу отображаем его
       if (img.complete) {
         imgRef.current.src = card.image;
       } else {
-        // Если изображение не в кэше, ждем загрузки
         img.onload = () => {
           if (imgRef.current) {
             imgRef.current.src = card.image!;
@@ -50,12 +47,12 @@ export const CardDisplay = ({
   }, [card.image]);
 
   return (
-    <Card className={`p-2 bg-game-background border-game-accent hover:border-game-primary transition-all duration-300 h-full flex flex-col ${
+    <Card className={`p-3 bg-game-background border-game-accent hover:border-game-primary transition-all duration-300 h-full flex flex-col min-w-[160px] ${
       !isActive && card.type === 'pet' ? 'opacity-50' : ''
     } ${className}`}>
-      <div className="flex flex-col gap-1 flex-grow">
+      <div className="flex flex-col gap-2 flex-grow">
         {card.image && (
-          <div className="w-full aspect-square mb-1 rounded-lg overflow-hidden">
+          <div className="w-full aspect-square mb-2 rounded-lg overflow-hidden">
             <img 
               ref={imgRef}
               alt={card.name}
@@ -68,47 +65,51 @@ export const CardDisplay = ({
           </div>
         )}
         
-        <div className="flex justify-between items-start">
-          <h3 className={`font-semibold text-game-accent ${isMobile ? 'text-[10px]' : 'text-sm'}`}>
-            {card.name} ({card.type === 'character' ? 'Герой' : 'Питомец'})
+        <div className="flex justify-between items-start gap-2">
+          <h3 className={`font-semibold text-game-accent break-words ${isMobile ? 'text-xs' : 'text-sm'} leading-tight`}>
+            {card.name}
           </h3>
-          <span className={`text-yellow-500 ${isMobile ? 'text-[10px]' : 'text-xs'}`}>
+          <span className={`text-yellow-500 whitespace-nowrap ${isMobile ? 'text-xs' : 'text-sm'}`}>
             {getRarityLabel(card.rarity)}
           </span>
         </div>
 
+        <div className={`text-purple-400 ${isMobile ? 'text-xs' : 'text-sm'}`}>
+          ({card.type === 'character' ? 'Герой' : 'Питомец'})
+        </div>
+
         {card.faction && (
-          <div className={`flex items-center gap-1 ${isMobile ? 'text-[10px]' : 'text-xs'} ${
+          <div className={`flex items-center gap-1 ${isMobile ? 'text-xs' : 'text-sm'} ${
             !isActive && card.type === 'pet' ? 'text-red-400' : 'text-purple-400'
           }`}>
             <Sparkles className={`${isMobile ? 'w-3 h-3' : 'w-4 h-4'}`} />
-            <span>{card.faction}</span>
+            <span className="break-words">{card.faction}</span>
           </div>
         )}
         
-        <div className={`flex gap-3 ${isMobile ? 'text-[10px]' : 'text-xs'} text-gray-400`}>
+        <div className={`grid grid-cols-2 gap-2 ${isMobile ? 'text-xs' : 'text-sm'} text-gray-400 mt-1`}>
           <div className="flex items-center gap-1">
-            <Heart className={`${isMobile ? 'w-3 h-3' : 'w-4 h-4'} text-red-500`} />
+            <Heart className={`${isMobile ? 'w-3 h-3' : 'w-4 h-4'} text-red-500 flex-shrink-0`} />
             <span>{card.health}</span>
           </div>
           <div className="flex items-center gap-1">
-            <Sword className={`${isMobile ? 'w-3 h-3' : 'w-4 h-4'}`} />
+            <Sword className={`${isMobile ? 'w-3 h-3' : 'w-4 h-4'} flex-shrink-0`} />
             <span>{card.power}</span>
           </div>
           <div className="flex items-center gap-1">
-            <Shield className={`${isMobile ? 'w-3 h-3' : 'w-4 h-4'}`} />
+            <Shield className={`${isMobile ? 'w-3 h-3' : 'w-4 h-4'} flex-shrink-0`} />
             <span>{card.defense}</span>
           </div>
         </div>
 
         {card.magicResistance && (
-          <div className={`text-blue-400 ${isMobile ? 'text-[10px]' : 'text-xs'}`}>
+          <div className={`text-blue-400 ${isMobile ? 'text-xs' : 'text-sm'} break-words mt-1`}>
             Защита от {card.magicResistance.type} магии: {card.magicResistance.value}%
           </div>
         )}
 
         {!isActive && card.type === 'pet' && (
-          <div className="text-red-400 text-xs mt-1">
+          <div className="text-red-400 text-xs mt-1 break-words">
             Требуется герой {card.faction} {getRarityLabel(card.rarity)} или выше
           </div>
         )}
@@ -118,7 +119,7 @@ export const CardDisplay = ({
         <Button
           variant="outline"
           size={isMobile ? "sm" : "default"}
-          className={`mt-auto w-full text-[10px] ${
+          className={`mt-2 w-full text-xs ${
             isSelected ? 'bg-game-accent hover:bg-game-accent/80' : 'text-yellow-500 hover:text-yellow-600'
           }`}
           onClick={isSelected ? onUpgrade : () => onSell?.(card)}
