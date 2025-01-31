@@ -61,31 +61,16 @@ export const GameHeader = ({
   return (
     <div className="w-full flex flex-col gap-4">
       <div className="flex justify-between items-center w-full">
-        <div className="flex gap-2">
-          <Button
-            variant="outline"
-            className="flex items-center justify-center gap-2 text-xs sm:text-sm whitespace-nowrap px-2 sm:px-4"
-            onClick={() => setShowShop(true)}
-          >
-            <ShoppingCart className="w-4 h-4 flex-shrink-0" />
-            <span className="truncate">
-              {isMobile ? "Магазин" : "Открыть магазин"}
-            </span>
-          </Button>
-          <Button
-            variant="outline"
-            className="flex items-center justify-center gap-2 text-xs sm:text-sm whitespace-nowrap px-2 sm:px-4"
-            onClick={handleDungeonAction}
-          >
-            <Sword className="w-4 h-4 flex-shrink-0" />
-            <span className="truncate">
-              {isMobile ? 
-                (hasActiveBattle ? "В подземелье" : "Подземелье") : 
-                (hasActiveBattle ? "Вернуться в подземелье" : "Поиск подземелья")
-              }
-            </span>
-          </Button>
-        </div>
+        <Button
+          variant="outline"
+          className="flex items-center justify-center gap-2 text-xs sm:text-sm whitespace-nowrap px-2 sm:px-4"
+          onClick={() => setShowShop(true)}
+        >
+          <ShoppingCart className="w-4 h-4 flex-shrink-0" />
+          <span className="truncate">
+            {isMobile ? "Магазин" : "Открыть магазин"}
+          </span>
+        </Button>
 
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
