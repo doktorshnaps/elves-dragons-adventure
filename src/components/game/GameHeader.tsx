@@ -13,7 +13,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { DungeonsList } from "./DungeonsList";
-import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
 interface GameHeaderProps {
   balance: number;
@@ -92,7 +92,10 @@ export const GameHeader = ({
       />
 
       <Dialog open={showDungeonsList} onOpenChange={setShowDungeonsList}>
-        <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
+        <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto bg-game-surface border-game-accent">
+          <DialogHeader>
+            <DialogTitle className="text-xl font-bold text-game-accent">Подземелья</DialogTitle>
+          </DialogHeader>
           <DungeonsList />
         </DialogContent>
       </Dialog>
