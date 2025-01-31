@@ -154,10 +154,13 @@ export const calculateTeamStats = (cards: Card[]) => {
     return acc;
   }, { power: 0, defense: 0, health: 0 });
 
+  const totalHealth = baseStats.health + petsBonus.health;
+
   return {
     power: baseStats.power + petsBonus.power,
     defense: baseStats.defense + petsBonus.defense,
-    health: baseStats.health + petsBonus.health
+    health: totalHealth,
+    maxHealth: totalHealth
   };
 };
 
