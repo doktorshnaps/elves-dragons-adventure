@@ -3,13 +3,13 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useToast } from "@/hooks/use-toast";
 import { Card } from "@/types/cards";
-import { generatePack } from "@/utils/cardUtils";
 import { GameTabs } from "./GameTabs";
 import { GameModals } from "./GameModals";
 import { GameHeader } from "./GameHeader";
 import { useBalanceState } from "@/hooks/useBalanceState";
 import { useImagePreloader } from "@/hooks/useImagePreloader";
-import { Skeleton } from "@/components/ui/skeleton";
+import { GameSkeleton } from "./loading/GameSkeleton";
+import { useGameInitialization } from "./initialization/useGameInitialization";
 
 const calculateTeamStats = (cards: Card[]) => {
   const stats = {
@@ -38,6 +38,8 @@ export const GameContainer = () => {
 
   const imagesLoaded = useImagePreloader();
 
+  useGameInitialization(setCards);
+
   useEffect(() => {
     return () => {
       localStorage.removeItem('battleState');
@@ -46,42 +48,10 @@ export const GameContainer = () => {
         description: "Подземелье автоматически завершено",
       });
     };
-  }, []);
-
-  useEffect(() => {
-    const isFirstLaunch = !localStorage.getItem('gameInitialized');
-    if (isFirstLaunch) {
-      const firstPack = generatePack();
-      const secondPack = generatePack();
-      const initialCards = [...firstPack, ...secondPack];
-      
-      localStorage.setItem('gameCards', JSON.stringify(initialCards));
-      localStorage.setItem('gameInitialized', 'true');
-      
-      setCards(initialCards);
-      
-      toast({
-        title: "Добро пожаловать в игру!",
-        description: "Вы получили 2 начальные колоды карт",
-      });
-    }
-  }, []);
+  }, [toast]);
 
   if (!imagesLoaded) {
-    return (
-      <div className="min-h-screen w-full overflow-x-hidden">
-        <div className={`max-w-7xl mx-auto ${isMobile ? 'px-2' : 'px-6'} py-4`}>
-          <div className="space-y-4">
-            <Skeleton className="h-20 w-full" />
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
-              {Array.from({ length: 6 }).map((_, index) => (
-                <Skeleton key={index} className="h-48 w-full" />
-              ))}
-            </div>
-          </div>
-        </div>
-      </div>
-    );
+    return <GameSkeleton />;
   }
 
   return (
