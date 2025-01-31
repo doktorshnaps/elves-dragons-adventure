@@ -12,10 +12,15 @@ import { useImagePreloader } from "@/hooks/useImagePreloader";
 import { Skeleton } from "@/components/ui/skeleton";
 
 const calculateTeamStats = (cards: Card[]) => {
-  return {
+  const stats = {
     power: cards.reduce((sum, card) => sum + card.power, 0),
     defense: cards.reduce((sum, card) => sum + card.defense, 0),
     health: cards.reduce((sum, card) => sum + card.health, 0)
+  };
+  
+  return {
+    ...stats,
+    maxHealth: stats.health // Set maxHealth equal to health
   };
 };
 
