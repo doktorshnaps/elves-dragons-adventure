@@ -12,8 +12,6 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { DungeonsList } from "./DungeonsList";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
 interface GameHeaderProps {
   balance: number;
@@ -34,7 +32,6 @@ export const GameHeader = ({
   const navigate = useNavigate();
   const [showStats, setShowStats] = useState(false);
   const [hasActiveBattle, setHasActiveBattle] = useState(false);
-  const [showDungeonsList, setShowDungeonsList] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -71,7 +68,7 @@ export const GameHeader = ({
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-48 bg-game-surface border-game-accent">
-            <DropdownMenuItem onClick={() => setShowDungeonsList(true)}>
+            <DropdownMenuItem onClick={() => navigate('/dungeons')}>
               Подземелья
             </DropdownMenuItem>
             <DropdownMenuItem onClick={() => setShowStats(true)}>
@@ -90,15 +87,6 @@ export const GameHeader = ({
         teamStats={teamStats}
         balance={balance}
       />
-
-      <Dialog open={showDungeonsList} onOpenChange={setShowDungeonsList}>
-        <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto bg-game-surface border-game-accent">
-          <DialogHeader>
-            <DialogTitle className="text-xl font-bold text-game-accent">Подземелья</DialogTitle>
-          </DialogHeader>
-          <DungeonsList />
-        </DialogContent>
-      </Dialog>
     </div>
   );
 };
