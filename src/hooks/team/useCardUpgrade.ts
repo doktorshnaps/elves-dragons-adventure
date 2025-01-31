@@ -1,0 +1,77 @@
+import { Card as CardType } from "@/types/cards";
+import { useToast } from '@/hooks/use-toast';
+import { upgradeCard } from '@/utils/cardUtils';
+import { useDragonEggs } from '@/contexts/DragonEggContext';
+
+export const useCardUpgrade = (
+  cards: CardType[],
+  setCards: (cards: CardType[]) => void,
+  selectedCards: CardType[],
+  setSelectedCards: (cards: CardType[]) => void
+) => {
+  const { toast } = useToast();
+  const { addEgg } = useDragonEggs();
+
+  const handleUpgrade = () => {
+    if (selectedCards.length !== 2) {
+      toast({
+        title: "Ошибка улучшения",
+        description: "Выберите две одинаковые карты для улучшения",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const upgradedCard = upgradeCard(selectedCards[0], selectedCards[1]);
+    
+    if (!upgradedCard) {
+      toast({
+        title: "Ошибка улучшения",
+        description: "Выбранные карты должны быть одинаковыми и иметь одинаковую редкость",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Удаляем выбранные карты из общего списка
+    const newCards = cards.filter(c => !selectedCards.some(sc => sc.id === c.id));
+
+    if (selectedCards[0].type === 'pet') {
+      // Для питомцев создаем яйцо
+      addEgg({
+        id: Date.now().toString(),
+        petName: upgradedCard.name,
+        rarity: upgradedCard.rarity,
+        createdAt: new Date().toISOString(),
+        faction: upgradedCard.faction || 'Каледор'
+      }, upgradedCard.faction || 'Каледор');
+
+      toast({
+        title: "Создано яйцо дракона!",
+        description: `Улучшенный питомец появится через некоторое время`,
+      });
+    } else {
+      // Для героев добавляем улучшенную карту
+      newCards.push(upgradedCard);
+      toast({
+        title: "Карта улучшена!",
+        description: `${upgradedCard.name} теперь имеет редкость ${upgradedCard.rarity}`,
+      });
+    }
+
+    // Обновляем состояние и localStorage
+    setCards(newCards);
+    localStorage.setItem('gameCards', JSON.stringify(newCards));
+
+    // Отправляем событие обновления карт
+    const cardsEvent = new CustomEvent('cardsUpdate', { 
+      detail: { cards: newCards }
+    });
+    window.dispatchEvent(cardsEvent);
+
+    // Очищаем выбранные карты
+    setSelectedCards([]);
+  };
+
+  return { handleUpgrade };
+};
