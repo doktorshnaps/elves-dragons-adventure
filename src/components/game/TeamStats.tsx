@@ -5,6 +5,7 @@ import { PlayerStats } from "@/types/battle";
 import { TeamStatsSection } from "./stats/TeamStatsSection";
 import { PlayerStatsSection } from "./stats/PlayerStatsSection";
 import { EquipmentGrid } from "./stats/EquipmentGrid";
+import { calculateTeamStats } from "@/utils/cardUtils";
 
 interface TeamStatsProps {
   teamStats: TeamStatsType;

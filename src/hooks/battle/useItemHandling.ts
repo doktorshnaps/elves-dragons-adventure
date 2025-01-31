@@ -1,6 +1,7 @@
 import { Item } from "@/types/inventory";
 import { PlayerStats } from "@/types/battle";
 import { useToast } from '@/hooks/use-toast';
+import { useInitialBattleState } from './useInitialBattleState';
 
 export const useItemHandling = (
   playerStats: PlayerStats | null,
@@ -9,6 +10,7 @@ export const useItemHandling = (
   inventory: Item[]
 ) => {
   const { toast } = useToast();
+  const initialState = useInitialBattleState();
 
   const useItem = (item: Item) => {
     if (!playerStats) return;

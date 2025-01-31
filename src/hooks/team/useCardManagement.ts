@@ -1,15 +1,15 @@
-import { Card as CardType } from "@/types/cards";
+import { Card } from "@/types/cards";
 import { useToast } from '@/hooks/use-toast';
 import { getCardPrice } from '@/utils/cardUtils';
 
 export const useCardManagement = (
-  cards: CardType[],
-  setCards: (cards: CardType[]) => void,
-  setSelectedCards: (cards: CardType[]) => void
+  cards: Card[],
+  setCards: (cards: Card[]) => void,
+  setSelectedCards: React.Dispatch<React.SetStateAction<Card[]>>
 ) => {
   const { toast } = useToast();
 
-  const handleSellCard = (card: CardType) => {
+  const handleSellCard = (card: Card) => {
     event?.stopPropagation();
     
     setSelectedCards(prev => prev.filter(c => c.id !== card.id));

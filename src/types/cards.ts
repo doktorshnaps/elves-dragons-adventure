@@ -38,4 +38,5 @@ export interface TeamStats {
   power: number;
   defense: number;
   health: number;
+  maxHealth: number;
 }
