@@ -8,36 +8,37 @@ import { Button } from "@/components/ui/button";
 import { canEquipItem, getEquipmentSlot } from "@/utils/itemUtils";
 import { useToast } from "@/hooks/use-toast";
 
+type EquipmentSlotType = NonNullable<Item['slot']>;
+
 interface EquipmentSlot {
   name: string;
   icon: React.ReactNode;
-  type: string;
+  type: EquipmentSlotType;
 }
 
 export const EquipmentGrid = () => {
-  const [selectedSlot, setSelectedSlot] = useState<string | null>(null);
+  const [selectedSlot, setSelectedSlot] = useState<EquipmentSlotType | null>(null);
   const { inventory, updateInventory } = useInventoryState();
   const { toast } = useToast();
 
   const equipmentSlots: EquipmentSlot[] = [
     { name: "Голова", icon: <Circle className="w-5 h-5" />, type: "head" },
     { name: "Нагрудник", icon: <Shield className="w-5 h-5" />, type: "chest" },
-    { name: "Наплечники", icon: <Shield className="w-5 h-5 rotate-45" />, type: "shoulders" },
-    { name: "Перчатки", icon: <Circle className="w-5 h-5" />, type: "hands" },
+    { name: "Руки", icon: <Circle className="w-5 h-5" />, type: "hands" },
     { name: "Ноги", icon: <Shirt className="w-5 h-5 rotate-180" />, type: "legs" },
     { name: "Ботинки", icon: <Circle className="w-5 h-5" />, type: "feet" },
-    { name: "Левая рука", icon: <Shield className="w-5 h-5" />, type: "leftHand" },
-    { name: "Правая рука", icon: <Sword className="w-5 h-5" />, type: "weapon" },
+    { name: "Оружие", icon: <Sword className="w-5 h-5" />, type: "weapon" },
     { name: "Шея", icon: <Circle className="w-5 h-5" />, type: "neck" },
     { name: "Кольцо 1", icon: <Circle className="w-5 h-5" />, type: "ring1" },
     { name: "Кольцо 2", icon: <Circle className="w-5 h-5" />, type: "ring2" },
+    { name: "Левая рука", icon: <Shield className="w-5 h-5" />, type: "offhand" },
   ];
 
-  const getEquippedItem = (slotType: string) => {
+  const getEquippedItem = (slotType: EquipmentSlotType) => {
     return inventory.find(item => item.equipped && item.slot === slotType);
   };
 
-  const getAvailableItems = (slotType: string) => {
+  const getAvailableItems = (slotType: EquipmentSlotType) => {
     return inventory.filter(item => 
       canEquipItem(item) && 
       !item.equipped && 
@@ -46,7 +47,8 @@ export const EquipmentGrid = () => {
   };
 
   const handleEquipItem = (item: Item) => {
-    // Снимаем текущий предмет, если есть
+    if (!selectedSlot) return;
+
     const updatedInventory = inventory.map(invItem => {
       if (invItem.equipped && invItem.slot === selectedSlot) {
         return { ...invItem, equipped: false, slot: undefined };
@@ -54,13 +56,12 @@ export const EquipmentGrid = () => {
       return invItem;
     });
 
-    // Экипируем новый предмет
     const finalInventory = updatedInventory.map(invItem => {
       if (invItem.id === item.id) {
         return { ...invItem, equipped: true, slot: selectedSlot };
       }
       return invItem;
-    });
+    }) as Item[];
 
     updateInventory(finalInventory);
     setSelectedSlot(null);
@@ -77,7 +78,7 @@ export const EquipmentGrid = () => {
         return { ...invItem, equipped: false, slot: undefined };
       }
       return invItem;
-    });
+    }) as Item[];
 
     updateInventory(updatedInventory);
     

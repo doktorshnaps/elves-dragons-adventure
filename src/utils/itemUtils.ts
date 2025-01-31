@@ -19,13 +19,15 @@ export const canEquipItem = (item: Item): boolean => {
   return ["weapon", "armor", "accessory"].includes(item.type);
 };
 
-export const getEquipmentSlot = (item: Item): string | undefined => {
+export const getEquipmentSlot = (item: Item): Item['slot'] | undefined => {
   switch (item.type) {
     case "weapon":
       return "weapon";
     case "armor":
+      if (item.slot) return item.slot;
       return "chest";
     case "accessory":
+      if (item.slot) return item.slot;
       return "neck";
     default:
       return undefined;
