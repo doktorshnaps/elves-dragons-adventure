@@ -1,11 +1,17 @@
 import { Button } from "@/components/ui/button";
-import { Sword, ShoppingCart, BarChart2 } from "lucide-react";
+import { Sword, ShoppingCart, Menu, ChevronDown } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { TeamStats as TeamStatsType } from "@/types/cards";
 import { useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
 import { TeamStatsModal } from "./TeamStatsModal";
 import { useToast } from "@/hooks/use-toast";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 interface GameHeaderProps {
   balance: number;
@@ -54,40 +60,52 @@ export const GameHeader = ({
 
   return (
     <div className="w-full flex flex-col gap-4">
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 w-full">
-        <Button
-          variant="outline"
-          className="flex items-center justify-center gap-2 text-xs sm:text-sm whitespace-nowrap px-2 sm:px-4"
-          onClick={handleDungeonAction}
-        >
-          <Sword className="w-4 h-4 flex-shrink-0" />
-          <span className="truncate">
-            {isMobile ? 
-              (hasActiveBattle ? "В подземелье" : "Подземелье") : 
-              (hasActiveBattle ? "Вернуться в подземелье" : "Поиск подземелья")
-            }
-          </span>
-        </Button>
-        <Button
-          variant="outline"
-          className="flex items-center justify-center gap-2 text-xs sm:text-sm whitespace-nowrap px-2 sm:px-4"
-          onClick={() => setShowShop(true)}
-        >
-          <ShoppingCart className="w-4 h-4 flex-shrink-0" />
-          <span className="truncate">
-            {isMobile ? "Магазин" : "Открыть магазин"}
-          </span>
-        </Button>
-        <Button
-          variant="outline"
-          className="flex items-center justify-center gap-2 text-xs sm:text-sm whitespace-nowrap px-2 sm:px-4"
-          onClick={() => setShowStats(true)}
-        >
-          <BarChart2 className="w-4 h-4 flex-shrink-0" />
-          <span className="truncate">
-            {isMobile ? "Статы" : "Статистика"}
-          </span>
-        </Button>
+      <div className="flex justify-between items-center w-full">
+        <div className="flex gap-2">
+          <Button
+            variant="outline"
+            className="flex items-center justify-center gap-2 text-xs sm:text-sm whitespace-nowrap px-2 sm:px-4"
+            onClick={() => setShowShop(true)}
+          >
+            <ShoppingCart className="w-4 h-4 flex-shrink-0" />
+            <span className="truncate">
+              {isMobile ? "Магазин" : "Открыть магазин"}
+            </span>
+          </Button>
+          <Button
+            variant="outline"
+            className="flex items-center justify-center gap-2 text-xs sm:text-sm whitespace-nowrap px-2 sm:px-4"
+            onClick={handleDungeonAction}
+          >
+            <Sword className="w-4 h-4 flex-shrink-0" />
+            <span className="truncate">
+              {isMobile ? 
+                (hasActiveBattle ? "В подземелье" : "Подземелье") : 
+                (hasActiveBattle ? "Вернуться в подземелье" : "Поиск подземелья")
+              }
+            </span>
+          </Button>
+        </div>
+
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="outline" className="flex items-center gap-2">
+              <Menu className="h-4 w-4" />
+              <ChevronDown className="h-4 w-4" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="w-48 bg-game-surface border-game-accent">
+            <DropdownMenuItem onClick={() => setShowDungeonSearch(true)}>
+              Подземелья
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => setShowStats(true)}>
+              Статистика
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => navigate('/info')}>
+              Информация
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
 
       <TeamStatsModal
