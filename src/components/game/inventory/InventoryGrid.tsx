@@ -17,13 +17,18 @@ export const InventoryGrid = ({
   onUseItem, 
   onSellItem 
 }: InventoryGridProps) => {
-  if (groupedItems.length === 0) {
+  // Фильтруем предметы, показывая только неэкипированные
+  const unequippedItems = groupedItems.filter(item => 
+    !item.items.some(i => i.equipped)
+  );
+
+  if (unequippedItems.length === 0) {
     return <p className="text-gray-400 col-span-full text-center py-4">Инвентарь пуст</p>;
   }
 
   return (
     <>
-      {groupedItems.map((item) => (
+      {unequippedItems.map((item) => (
         <Card 
           key={`${item.name}-${item.type}-${item.value}`}
           className="p-2 bg-game-surface/80 border-game-accent backdrop-blur-sm h-[180px] flex flex-col"

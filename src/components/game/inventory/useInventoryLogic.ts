@@ -19,11 +19,13 @@ export const useInventoryLogic = (initialInventory: Item[]) => {
 
   const groupItems = (items: Item[]): GroupedItem[] => {
     return items.reduce<GroupedItem[]>((acc, item) => {
+      // Группируем только предметы с одинаковым состоянием экипировки
       const existingGroup = acc.find(
         group => 
           group.name === item.name && 
           group.type === item.type && 
-          group.value === item.value
+          group.value === item.value &&
+          group.items[0]?.equipped === item.equipped // Проверяем состояние экипировки
       );
 
       if (existingGroup) {
