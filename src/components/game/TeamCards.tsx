@@ -42,7 +42,7 @@ export const TeamCards = () => {
         />
       )}
       
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 pb-4">
+      <div className="grid auto-rows-fr grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 pb-4">
         {Object.values(groupedCards).length > 0 ? (
           Object.values(groupedCards).map((cardGroup) => (
             <CardGroup

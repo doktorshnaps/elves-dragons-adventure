@@ -47,7 +47,7 @@ export const CardDisplay = ({
   }, [card.image]);
 
   return (
-    <Card className={`p-3 bg-game-background border-game-accent hover:border-game-primary transition-all duration-300 h-full flex flex-col min-w-[200px] ${
+    <Card className={`p-3 bg-game-background border-game-accent hover:border-game-primary transition-all duration-300 h-full flex flex-col ${
       !isActive && card.type === 'pet' ? 'opacity-50' : ''
     } ${className}`}>
       <div className="flex flex-col gap-2 flex-grow">
