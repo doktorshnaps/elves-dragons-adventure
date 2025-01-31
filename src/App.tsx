@@ -4,7 +4,7 @@ import { Battle } from "./pages/Battle";
 import { Grimoire } from "./pages/Grimoire";
 import "./App.css";
 
-function App() {
+export const App = () => {
   return (
     <Router>
       <Routes>
@@ -14,6 +14,6 @@ function App() {
       </Routes>
     </Router>
   );
-}
+};
 
 export default App;
