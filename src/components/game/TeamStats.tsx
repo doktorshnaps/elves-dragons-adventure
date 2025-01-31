@@ -5,7 +5,7 @@ import { CombatStats } from "./stats/CombatStats";
 import { PlayerStats } from "@/types/battle";
 import { TeamStats as TeamStatsType } from "@/types/cards";
 import { calculateTeamStats } from "@/utils/cardUtils";
-import { Shield, Sword, Pants, Ring, Circle, Belt } from "lucide-react";
+import { Shield, Sword, Circle, Shirt } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 interface TeamStatsProps {
@@ -46,19 +46,18 @@ export const TeamStats = ({ teamStats }: TeamStatsProps) => {
     { name: "Нагрудник", icon: <Shield className="w-5 h-5" />, type: "chest" },
     { name: "Наплечники", icon: <Shield className="w-5 h-5 rotate-45" />, type: "shoulders" },
     { name: "Перчатки", icon: <Circle className="w-5 h-5" />, type: "hands" },
-    { name: "Ноги", icon: <Pants className="w-5 h-5" />, type: "legs" },
+    { name: "Ноги", icon: <Shirt className="w-5 h-5 rotate-180" />, type: "legs" },
     { name: "Ботинки", icon: <Circle className="w-5 h-5" />, type: "feet" },
     { name: "Левая рука", icon: <Shield className="w-5 h-5" />, type: "leftHand" },
     { name: "Правая рука", icon: <Sword className="w-5 h-5" />, type: "rightHand" },
     { name: "Шея", icon: <Circle className="w-5 h-5" />, type: "neck" },
-    { name: "Кольцо 1", icon: <Ring className="w-5 h-5" />, type: "ring1" },
-    { name: "Кольцо 2", icon: <Ring className="w-5 h-5" />, type: "ring2" },
+    { name: "Кольцо 1", icon: <Circle className="w-5 h-5" />, type: "ring1" },
+    { name: "Кольцо 2", icon: <Circle className="w-5 h-5" />, type: "ring2" },
     { name: "Бижутерия 1", icon: <Circle className="w-5 h-5" />, type: "jewelry1" },
     { name: "Бижутерия 2", icon: <Circle className="w-5 h-5" />, type: "jewelry2" },
-    { name: "Пояс", icon: <Belt className="w-5 h-5" />, type: "belt" },
+    { name: "Пояс", icon: <Circle className="w-5 h-5" />, type: "belt" },
   ];
 
-  // Обновляем статистику при изменении карт
   React.useEffect(() => {
     const handleCardsUpdate = () => {
       const savedCards = localStorage.getItem('gameCards');
