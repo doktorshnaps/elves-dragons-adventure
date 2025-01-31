@@ -7,10 +7,6 @@ import { Item } from "@/types/inventory";
 import { Button } from "@/components/ui/button";
 import { canEquipItem, getEquipmentSlot } from "@/utils/itemUtils";
 import { useToast } from "@/hooks/use-toast";
-import { PlayerStats } from "@/types/battle";
-import { usePlayerState } from "@/hooks/usePlayerState";
-import { CombatStats } from "./CombatStats";
-import { HealthBar } from "./HealthBar";
 
 type EquipmentSlotType = NonNullable<Item['slot']>;
 
@@ -24,7 +20,6 @@ export const EquipmentGrid = () => {
   const [selectedSlot, setSelectedSlot] = useState<EquipmentSlotType | null>(null);
   const { inventory, updateInventory } = useInventoryState();
   const { toast } = useToast();
-  const { playerStats } = usePlayerState();
 
   const equipmentSlots: EquipmentSlot[] = [
     { name: "Голова", icon: <Circle className="w-5 h-5" />, type: "head" },
@@ -152,54 +147,42 @@ export const EquipmentGrid = () => {
             </DialogTitle>
           </DialogHeader>
 
-          <div className="space-y-6">
-            {/* Характеристики игрока */}
-            <div className="p-4 border border-game-accent rounded-lg bg-game-surface/50">
-              <h3 className="text-lg font-semibold text-game-accent mb-4">Характеристики персонажа</h3>
-              <div className="space-y-4">
-                <HealthBar health={playerStats.health} maxHealth={playerStats.maxHealth} />
-                <CombatStats power={playerStats.power} defense={playerStats.defense} />
-              </div>
-            </div>
-
-            {/* Список предметов */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              {selectedSlot && getEquippedItem(selectedSlot) && (
-                <Button
-                  variant="destructive"
-                  onClick={() => handleUnequipItem(getEquippedItem(selectedSlot)!)}
-                  className="col-span-full"
-                >
-                  Снять текущий предмет
-                </Button>
-              )}
-              
-              {selectedSlot && getAvailableItems(selectedSlot).map((item) => (
-                <div
-                  key={item.id}
-                  className="p-4 border border-game-accent rounded-lg bg-game-surface/50 hover:bg-game-surface/70 cursor-pointer"
-                  onClick={() => handleEquipItem(item)}
-                >
-                  <div className="flex flex-col gap-2">
-                    <h3 className="font-bold text-game-accent">{item.name}</h3>
-                    <p className="text-sm text-gray-400">{item.description}</p>
-                    {item.stats && (
-                      <div className="text-sm text-game-accent">
-                        {item.stats.power && <p>Сила: +{item.stats.power}</p>}
-                        {item.stats.defense && <p>Защита: +{item.stats.defense}</p>}
-                        {item.stats.health && <p>Здоровье: +{item.stats.health}</p>}
-                      </div>
-                    )}
-                  </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-4">
+            {selectedSlot && getEquippedItem(selectedSlot) && (
+              <Button
+                variant="destructive"
+                onClick={() => handleUnequipItem(getEquippedItem(selectedSlot)!)}
+                className="col-span-full"
+              >
+                Снять текущий предмет
+              </Button>
+            )}
+            
+            {selectedSlot && getAvailableItems(selectedSlot).map((item) => (
+              <div
+                key={item.id}
+                className="p-4 border border-game-accent rounded-lg bg-game-surface/50 hover:bg-game-surface/70 cursor-pointer"
+                onClick={() => handleEquipItem(item)}
+              >
+                <div className="flex flex-col gap-2">
+                  <h3 className="font-bold text-game-accent">{item.name}</h3>
+                  <p className="text-sm text-gray-400">{item.description}</p>
+                  {item.stats && (
+                    <div className="text-sm text-game-accent">
+                      {item.stats.power && <p>Сила: +{item.stats.power}</p>}
+                      {item.stats.defense && <p>Защита: +{item.stats.defense}</p>}
+                      {item.stats.health && <p>Здоровье: +{item.stats.health}</p>}
+                    </div>
+                  )}
                 </div>
-              ))}
-              
-              {selectedSlot && getAvailableItems(selectedSlot).length === 0 && (
-                <p className="text-center col-span-full text-gray-400">
-                  Нет доступных предметов для этого слота
-                </p>
-              )}
-            </div>
+              </div>
+            ))}
+            
+            {selectedSlot && getAvailableItems(selectedSlot).length === 0 && (
+              <p className="text-center col-span-full text-gray-400">
+                Нет доступных предметов для этого слота
+              </p>
+            )}
           </div>
         </DialogContent>
       </Dialog>
