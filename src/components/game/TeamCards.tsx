@@ -34,7 +34,7 @@ export const TeamCards = () => {
   }, {});
 
   return (
-    <div className="space-y-4 max-h-[calc(100vh-16rem)] overflow-y-auto">
+    <div className="space-y-4 max-h-[calc(100vh-16rem)] overflow-y-auto overflow-x-hidden">
       {selectedCards.length > 0 && (
         <SelectedCardsPanel 
           selectedCards={selectedCards}
@@ -42,7 +42,7 @@ export const TeamCards = () => {
         />
       )}
       
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 pb-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 pb-4">
         {Object.values(groupedCards).length > 0 ? (
           Object.values(groupedCards).map((cardGroup) => (
             <CardGroup
