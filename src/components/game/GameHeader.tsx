@@ -1,5 +1,5 @@
 import { Button } from "@/components/ui/button";
-import { Sword, ShoppingCart, Menu, ChevronDown } from "lucide-react";
+import { ShoppingCart, Menu, ChevronDown } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { TeamStats as TeamStatsType } from "@/types/cards";
 import { useNavigate } from "react-router-dom";
@@ -12,6 +12,8 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { DungeonsList } from "./DungeonsList";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
 
 interface GameHeaderProps {
   balance: number;
@@ -32,6 +34,7 @@ export const GameHeader = ({
   const navigate = useNavigate();
   const [showStats, setShowStats] = useState(false);
   const [hasActiveBattle, setHasActiveBattle] = useState(false);
+  const [showDungeonsList, setShowDungeonsList] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -45,18 +48,6 @@ export const GameHeader = ({
       setHasActiveBattle(false);
     }
   }, []);
-
-  const handleDungeonAction = () => {
-    const battleState = localStorage.getItem('battleState');
-    if (battleState) {
-      const state = JSON.parse(battleState);
-      if (state.playerStats.health > 0) {
-        navigate('/battle');
-      }
-    } else {
-      setShowDungeonSearch(true);
-    }
-  };
 
   return (
     <div className="w-full flex flex-col gap-4">
@@ -80,7 +71,7 @@ export const GameHeader = ({
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-48 bg-game-surface border-game-accent">
-            <DropdownMenuItem onClick={() => setShowDungeonSearch(true)}>
+            <DropdownMenuItem onClick={() => setShowDungeonsList(true)}>
               Подземелья
             </DropdownMenuItem>
             <DropdownMenuItem onClick={() => setShowStats(true)}>
@@ -99,6 +90,12 @@ export const GameHeader = ({
         teamStats={teamStats}
         balance={balance}
       />
+
+      <Dialog open={showDungeonsList} onOpenChange={setShowDungeonsList}>
+        <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
+          <DungeonsList />
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
