@@ -1,23 +1,18 @@
-import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
-import { Toaster } from "@/components/ui/toaster";
-import Game from "./pages/Game";
-import Index from "./pages/Index";
-import Battle from "./pages/Battle";
-import { DragonEggProvider } from "./contexts/DragonEggContext";
+import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import { Game } from "./pages/Game";
+import { Battle } from "./pages/Battle";
+import { Grimoire } from "./pages/Grimoire";
+import "./App.css";
 
 function App() {
   return (
-    <DragonEggProvider>
-      <Router>
-        <Routes>
-          <Route path="/" element={<Index />} />
-          <Route path="/game" element={<Game />} />
-          <Route path="/battle" element={<Battle />} />
-          <Route path="*" element={<Navigate to="/" replace />} />
-        </Routes>
-        <Toaster />
-      </Router>
-    </DragonEggProvider>
+    <Router>
+      <Routes>
+        <Route path="/" element={<Game />} />
+        <Route path="/battle" element={<Battle />} />
+        <Route path="/grimoire" element={<Grimoire />} />
+      </Routes>
+    </Router>
   );
 }
 

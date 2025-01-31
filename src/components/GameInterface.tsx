@@ -29,12 +29,11 @@ export const GameInterface = () => {
   const { balance, updateBalance } = useBalanceState();
 
   const handleNavigation = (path: string) => {
-    navigate(path, { replace: true });
+    navigate(path);
   };
 
   return (
     <div className="min-h-screen p-4 relative">
-      {/* Header */}
       <div className="flex justify-between items-center mb-6">
         <div className="flex gap-2">
           <Button
