@@ -28,6 +28,10 @@ export const GameInterface = () => {
   const [showGameModeDialog, setShowGameModeDialog] = useState(false);
   const { balance, updateBalance } = useBalanceState();
 
+  const handleNavigation = (path: string) => {
+    navigate(path, { replace: true });
+  };
+
   return (
     <div className="min-h-screen p-4 relative">
       {/* Header */}
@@ -61,13 +65,13 @@ export const GameInterface = () => {
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-48 bg-game-surface border-game-accent">
-            <DropdownMenuItem onClick={() => navigate('/grimoire')}>
+            <DropdownMenuItem onSelect={() => handleNavigation('/grimoire')}>
               Гримуар
             </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => navigate('/marketplace')}>
+            <DropdownMenuItem onSelect={() => handleNavigation('/marketplace')}>
               Торговая площадка
             </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => navigate('/stats')}>
+            <DropdownMenuItem onSelect={() => handleNavigation('/stats')}>
               Статистика
             </DropdownMenuItem>
           </DropdownMenuContent>
@@ -118,7 +122,7 @@ export const GameInterface = () => {
               className="h-24 bg-game-surface border-game-accent text-game-accent hover:bg-game-surface/80"
               onClick={() => {
                 setShowGameModeDialog(false);
-                navigate('/adventure');
+                handleNavigation('/adventure');
               }}
             >
               Приключение
