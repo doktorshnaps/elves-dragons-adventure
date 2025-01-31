@@ -12,7 +12,7 @@ import { fixResizeObserverLoop } from "@/utils/resizeObserverFix";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { dungeonBackgrounds } from "@/constants/dungeons";
 
-const Battle = () => {
+export const Battle = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const isMobile = useIsMobile();
@@ -204,5 +204,3 @@ const Battle = () => {
     </div>
   );
 };
-
-export default Battle;

@@ -1,7 +1,7 @@
 import { GameInterface } from "@/components/GameInterface";
 import { useIsMobile } from "@/hooks/use-mobile";
 
-const Game = () => {
+export const Game = () => {
   const isMobile = useIsMobile();
 
   return (
@@ -21,5 +21,3 @@ const Game = () => {
     </div>
   );
 };
-
-export default Game;
