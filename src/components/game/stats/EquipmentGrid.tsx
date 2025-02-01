@@ -1,10 +1,12 @@
 import { useEffect, useState } from "react";
 import { Card } from "@/components/ui/card";
 import { ShopItem } from "@/components/shop/types";
+import { useToast } from "@/hooks/use-toast";
 
 export const EquipmentGrid = () => {
   const [equippedItems, setEquippedItems] = useState<ShopItem[]>([]);
   const [totalStats, setTotalStats] = useState({ power: 0, defense: 0, health: 0 });
+  const { toast } = useToast();
 
   useEffect(() => {
     const inventory = localStorage.getItem('gameInventory');
@@ -27,6 +29,46 @@ export const EquipmentGrid = () => {
     }
   }, []);
 
+  const handleUnequipItem = (item: ShopItem) => {
+    const inventory = localStorage.getItem('gameInventory');
+    if (inventory) {
+      const items = JSON.parse(inventory);
+      const updatedItems = items.map((invItem: ShopItem) => {
+        if (invItem.id === item.id) {
+          return { ...invItem, equipped: false };
+        }
+        return invItem;
+      });
+
+      localStorage.setItem('gameInventory', JSON.stringify(updatedItems));
+      const equipped = updatedItems.filter((item: ShopItem) => item.equipped);
+      setEquippedItems(equipped);
+
+      // Recalculate stats
+      const stats = equipped.reduce((acc: any, item: ShopItem) => {
+        if (item.stats) {
+          acc.power += item.stats.power || 0;
+          acc.defense += item.stats.defense || 0;
+          acc.health += item.stats.health || 0;
+        }
+        return acc;
+      }, { power: 0, defense: 0, health: 0 });
+
+      setTotalStats(stats);
+
+      toast({
+        title: "Предмет снят",
+        description: `${item.name} был снят`,
+      });
+
+      // Dispatch event to update inventory
+      const event = new CustomEvent('inventoryUpdate', { 
+        detail: { inventory: updatedItems }
+      });
+      window.dispatchEvent(event);
+    }
+  };
+
   return (
     <div className="space-y-4">
       <h3 className="text-lg font-semibold text-game-accent">Бонусы экипировки</h3>
@@ -43,7 +85,11 @@ export const EquipmentGrid = () => {
       </div>
       <div className="grid grid-cols-3 gap-2">
         {equippedItems.map((item) => (
-          <Card key={item.id} className="p-2 bg-game-surface/50 border-game-accent">
+          <Card 
+            key={item.id} 
+            className="p-2 bg-game-surface/50 border-game-accent cursor-pointer hover:bg-game-surface/70"
+            onClick={() => handleUnequipItem(item)}
+          >
             <img 
               src={item.image} 
               alt={item.name} 
