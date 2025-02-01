@@ -69,37 +69,83 @@ export const EquipmentGrid = () => {
     }
   };
 
+  const getEquippedItemForSlot = (slot: string) => {
+    return equippedItems.find(item => item.slot === slot);
+  };
+
+  const renderEquipmentSlot = (slot: string, title: string) => {
+    const item = getEquippedItemForSlot(slot);
+    return (
+      <Card 
+        key={slot} 
+        className="p-2 bg-game-surface/50 border-game-accent min-h-[80px] flex flex-col items-center justify-center cursor-pointer hover:bg-game-surface/70"
+        onClick={() => item && handleUnequipItem(item)}
+      >
+        {item ? (
+          <>
+            <img 
+              src={item.image} 
+              alt={item.name}
+              className="w-12 h-12 object-contain"
+            />
+            <span className="text-xs text-center mt-1 text-game-accent">{item.name}</span>
+          </>
+        ) : (
+          <span className="text-xs text-center text-game-accent/50">{title}</span>
+        )}
+      </Card>
+    );
+  };
+
   return (
     <div className="space-y-4">
       <h3 className="text-lg font-semibold text-game-accent">Бонусы экипировки</h3>
-      <div className="grid grid-cols-2 gap-4 text-sm text-game-accent">
-        {totalStats.power > 0 && (
-          <div>Сила: +{totalStats.power}</div>
-        )}
-        {totalStats.defense > 0 && (
-          <div>Защита: +{totalStats.defense}</div>
-        )}
-        {totalStats.health > 0 && (
-          <div>Здоровье: +{totalStats.health}</div>
-        )}
+      <div className="flex justify-between text-sm text-game-accent">
+        <div>
+          <p>Сила: +{totalStats.power}</p>
+          <p>Защита: +{totalStats.defense}</p>
+          <p>Здоровье: +{totalStats.health}</p>
+        </div>
       </div>
-      <div className="grid grid-cols-3 gap-2">
-        {equippedItems.map((item) => (
-          <Card 
-            key={item.id} 
-            className="p-2 bg-game-surface/50 border-game-accent cursor-pointer hover:bg-game-surface/70"
-            onClick={() => handleUnequipItem(item)}
-          >
-            <img 
-              src={item.image} 
-              alt={item.name} 
-              className="w-full h-12 object-contain mb-1"
-            />
-            <div className="text-[10px] text-game-accent text-center truncate">
-              {item.name}
-            </div>
-          </Card>
-        ))}
+
+      <div className="grid grid-cols-4 gap-2">
+        {/* Верхний ряд */}
+        <div className="col-span-4 flex justify-center">
+          {renderEquipmentSlot("head", "Голова")}
+        </div>
+
+        {/* Второй ряд */}
+        <div className="col-span-4 flex justify-between">
+          {renderEquipmentSlot("neck", "Шея")}
+          {renderEquipmentSlot("shoulders", "Наплечники")}
+          {renderEquipmentSlot("accessory1", "Бижутерия 1")}
+        </div>
+
+        {/* Третий ряд */}
+        <div className="col-span-4 flex justify-between">
+          {renderEquipmentSlot("weapon", "Правая рука")}
+          {renderEquipmentSlot("chest", "Нагрудник")}
+          {renderEquipmentSlot("offhand", "Левая рука")}
+        </div>
+
+        {/* Четвертый ряд */}
+        <div className="col-span-4 flex justify-between">
+          {renderEquipmentSlot("hands", "Перчатки")}
+          {renderEquipmentSlot("belt", "Пояс")}
+          {renderEquipmentSlot("accessory2", "Бижутерия 2")}
+        </div>
+
+        {/* Пятый ряд */}
+        <div className="col-span-4 flex justify-between">
+          {renderEquipmentSlot("ring1", "Кольцо 1")}
+          {renderEquipmentSlot("legs", "Ноги")}
+          {renderEquipmentSlot("ring2", "Кольцо 2")}
+        </div>
+
+        {/* Нижний ряд */}
+        <div className="col-span-4 flex justify-center">
+          {renderEquipmentSlot("feet", "Ботинки")}
+        </div>
       </div>
     </div>
   );
