@@ -33,6 +33,19 @@ export const Shop = ({ onClose, balance, onBalanceChange }: ShopProps) => {
       return;
     }
 
+    // Проверяем требуемый уровень
+    if (item.requiredLevel) {
+      const playerLevel = parseInt(localStorage.getItem('playerLevel') || '1');
+      if (playerLevel < item.requiredLevel) {
+        toast({
+          title: "Недостаточный уровень",
+          description: `Для покупки ${item.name} требуется ${item.requiredLevel} уровень`,
+          variant: "destructive",
+        });
+        return;
+      }
+    }
+
     if (item.type === "cardPack") {
       const cards = generatePack();
       setLastOpenedCard(cards[0]);
@@ -60,7 +73,7 @@ export const Shop = ({ onClose, balance, onBalanceChange }: ShopProps) => {
     } else {
       const newItem = {
         ...item,
-        id: Date.now()
+        id: Date.now().toString()
       };
       const currentInventory = localStorage.getItem('gameInventory');
       const parsedInventory = currentInventory ? JSON.parse(currentInventory) : [];

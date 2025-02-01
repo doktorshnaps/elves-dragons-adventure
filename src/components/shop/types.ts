@@ -11,6 +11,8 @@ export interface ShopItem {
     defense?: number;
     health?: number;
   };
+  requiredLevel?: number;
+  slot?: "head" | "chest" | "hands" | "legs" | "feet" | "neck" | "ring1" | "ring2" | "weapon" | "offhand";
 }
 
 export const shopItems: ShopItem[] = [
@@ -41,7 +43,6 @@ export const shopItems: ShopItem[] = [
     value: 150,
     image: "/lovable-uploads/bc24efd6-6a0c-45fe-a823-e610ee6540eb.png"
   },
-  // Добавляем новое снаряжение
   {
     id: 4,
     name: "Железный меч",
@@ -65,7 +66,8 @@ export const shopItems: ShopItem[] = [
     stats: {
       defense: 10,
       health: 25
-    }
+    },
+    slot: "chest"
   },
   {
     id: 6,
@@ -78,7 +80,8 @@ export const shopItems: ShopItem[] = [
     stats: {
       defense: 25,
       health: 50
-    }
+    },
+    slot: "chest"
   },
   {
     id: 7,
@@ -91,7 +94,8 @@ export const shopItems: ShopItem[] = [
     stats: {
       power: 10,
       health: 15
-    }
+    },
+    slot: "neck"
   },
   {
     id: 8,
@@ -104,5 +108,62 @@ export const shopItems: ShopItem[] = [
     stats: {
       power: 30
     }
+  },
+  // Добавляем новые предметы стража
+  {
+    id: 9,
+    name: "Капелюх Стража",
+    description: "Защитный головной убор стражи. Требуется 5 уровень",
+    price: 800,
+    type: "armor",
+    value: 3,
+    image: "/lovable-uploads/766f77e4-2e9f-443a-99e6-283aa360efd0.png",
+    stats: {
+      defense: 5
+    },
+    requiredLevel: 5,
+    slot: "head"
+  },
+  {
+    id: 10,
+    name: "Нагрудник Стража",
+    description: "Прочный нагрудник стражи. Требуется 5 уровень",
+    price: 1200,
+    type: "armor",
+    value: 3,
+    image: "/lovable-uploads/2e415280-562c-485d-9dd8-067b743c3864.png",
+    stats: {
+      defense: 15
+    },
+    requiredLevel: 5,
+    slot: "chest"
+  },
+  {
+    id: 11,
+    name: "Ботинки Стража",
+    description: "Укрепленные ботинки стражи. Требуется 5 уровень",
+    price: 800,
+    type: "armor",
+    value: 3,
+    image: "/lovable-uploads/766f77e4-2e9f-443a-99e6-283aa360efd0.png",
+    stats: {
+      defense: 5
+    },
+    requiredLevel: 5,
+    slot: "feet"
+  },
+  {
+    id: 12,
+    name: "Поножи Стража",
+    description: "Защитные поножи стражи. Требуется 5 уровень",
+    price: 1000,
+    type: "armor",
+    value: 3,
+    image: "/lovable-uploads/766f77e4-2e9f-443a-99e6-283aa360efd0.png",
+    stats: {
+      defense: 10
+    },
+    requiredLevel: 5,
+    slot: "legs"
   }
 ];

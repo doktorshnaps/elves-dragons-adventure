@@ -112,6 +112,18 @@ export const ShopItem = ({ item, balance, onBuy }: ShopItemProps) => {
         <p className={`text-gray-400 mb-1 flex-grow ${isMobile ? 'text-[10px]' : 'text-xs'}`}>
           {item.description}
         </p>
+        {item.stats && (
+          <div className={`text-game-accent mb-2 ${isMobile ? 'text-[10px]' : 'text-xs'}`}>
+            {item.stats.power && <p>Сила: +{item.stats.power}</p>}
+            {item.stats.defense && <p>Защита: +{item.stats.defense}</p>}
+            {item.stats.health && <p>Здоровье: +{item.stats.health}</p>}
+          </div>
+        )}
+        {item.requiredLevel && (
+          <p className={`text-yellow-500 mb-2 ${isMobile ? 'text-[10px]' : 'text-xs'}`}>
+            Требуется уровень: {item.requiredLevel}
+          </p>
+        )}
         <p className={`text-game-secondary mb-2 ${isMobile ? 'text-[10px]' : 'text-xs'}`}>
           Цена: {item.price} токенов
         </p>
