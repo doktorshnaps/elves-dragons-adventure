@@ -13,6 +13,7 @@ export interface ShopItem {
   };
   requiredLevel?: number;
   slot?: "head" | "chest" | "hands" | "legs" | "feet" | "neck" | "ring1" | "ring2" | "weapon" | "offhand";
+  equipped?: boolean;
 }
 
 export const shopItems: ShopItem[] = [
