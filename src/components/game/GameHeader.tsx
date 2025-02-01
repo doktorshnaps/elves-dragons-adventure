@@ -46,6 +46,10 @@ export const GameHeader = ({
     }
   }, []);
 
+  const handleCloseStats = () => {
+    setShowStats(false);
+  };
+
   return (
     <div className="w-full flex flex-col gap-4">
       <div className="flex justify-between items-center w-full">
@@ -83,7 +87,7 @@ export const GameHeader = ({
 
       <TeamStatsModal
         isOpen={showStats}
-        onClose={() => setShowStats(false)}
+        onClose={handleCloseStats}
         teamStats={teamStats}
         balance={balance}
       />
