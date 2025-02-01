@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { Swords, ShoppingCart, Menu, ChevronDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -29,13 +29,25 @@ export const GameInterface = () => {
   const [showDungeonSearch, setShowDungeonSearch] = useState(false);
   const [showGameModeDialog, setShowGameModeDialog] = useState(false);
   const [showStatsDialog, setShowStatsDialog] = useState(false);
+  const [hasCards, setHasCards] = useState(false);
   const { balance, updateBalance } = useBalanceState();
+
+  useEffect(() => {
+    const checkCards = () => {
+      const savedCards = localStorage.getItem('gameCards');
+      const cards = savedCards ? JSON.parse(savedCards) : [];
+      setHasCards(cards.length > 0);
+    };
+
+    checkCards();
+    window.addEventListener('cardsUpdate', checkCards);
+    return () => window.removeEventListener('cardsUpdate', checkCards);
+  }, []);
 
   const handleNavigation = (path: string) => {
     navigate(path);
   };
 
-  // Calculate team stats from active cards
   const getTeamStats = () => {
     const savedCards = localStorage.getItem('gameCards');
     const cards = savedCards ? JSON.parse(savedCards) : [];
@@ -89,14 +101,16 @@ export const GameInterface = () => {
 
       {/* Main Content - Two Panels */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="bg-game-surface/80 p-6 rounded-lg border border-game-accent"
-        >
-          <h2 className="text-xl font-bold text-game-accent mb-4">Ваша команда</h2>
-          <TeamCards />
-        </motion.div>
+        {hasCards && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="bg-game-surface/80 p-6 rounded-lg border border-game-accent"
+          >
+            <h2 className="text-xl font-bold text-game-accent mb-4">Ваша команда</h2>
+            <TeamCards />
+          </motion.div>
+        )}
 
         <motion.div
           initial={{ opacity: 0, y: 20 }}

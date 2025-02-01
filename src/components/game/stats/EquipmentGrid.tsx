@@ -75,7 +75,7 @@ export const EquipmentGrid = () => {
     return (
       <Card 
         key={slot} 
-        className="p-1 bg-game-surface/50 border-game-accent min-h-[60px] w-[60px] flex flex-col items-center justify-center cursor-pointer hover:bg-game-surface/70"
+        className="p-1 bg-game-surface/50 border-game-accent min-h-[50px] w-[50px] flex flex-col items-center justify-center cursor-pointer hover:bg-game-surface/70"
         onClick={() => item && handleUnequipItem(item)}
       >
         {item ? (
@@ -83,12 +83,12 @@ export const EquipmentGrid = () => {
             <img 
               src={item.image} 
               alt={item.name}
-              className="w-8 h-8 object-contain"
+              className="w-6 h-6 object-contain"
             />
-            <span className="text-[8px] text-center mt-0.5 text-game-accent leading-tight">{item.name}</span>
+            <span className="text-[6px] text-center mt-0.5 text-game-accent leading-tight">{item.name}</span>
           </>
         ) : (
-          <span className="text-[8px] text-center text-game-accent/50">{title}</span>
+          <span className="text-[6px] text-center text-game-accent/50">{title}</span>
         )}
       </Card>
     );
@@ -96,53 +96,33 @@ export const EquipmentGrid = () => {
 
   return (
     <div className="space-y-2">
-      <h3 className="text-sm font-semibold text-game-accent">Бонусы экипировки</h3>
-      <div className="flex justify-between text-xs text-game-accent mb-2">
-        <div className="grid grid-cols-3 gap-x-4">
-          <p>Сила: +{totalStats.power}</p>
-          <p>Защита: +{totalStats.defense}</p>
-          <p>Здоровье: +{totalStats.health}</p>
+      <h3 className="text-xs font-semibold text-game-accent">Бонусы экипировки</h3>
+      <div className="flex justify-between text-[10px] text-game-accent mb-2">
+        <div className="grid grid-cols-3 gap-x-2">
+          <p>С: +{totalStats.power}</p>
+          <p>З: +{totalStats.defense}</p>
+          <p>Ж: +{totalStats.health}</p>
         </div>
       </div>
 
-      <div className="grid gap-1">
-        {/* Верхний ряд */}
-        <div className="flex justify-center gap-1">
-          {renderEquipmentSlot("head", "Голова")}
-        </div>
+      <div className="grid grid-cols-7 gap-1">
+        {/* Первая строка */}
+        {renderEquipmentSlot("head", "Гол")}
+        {renderEquipmentSlot("neck", "Шея")}
+        {renderEquipmentSlot("shoulders", "Плч")}
+        {renderEquipmentSlot("chest", "Грд")}
+        {renderEquipmentSlot("hands", "Рук")}
+        {renderEquipmentSlot("ring1", "К1")}
+        {renderEquipmentSlot("accessory1", "Б1")}
 
-        {/* Второй ряд */}
-        <div className="flex justify-center gap-1">
-          {renderEquipmentSlot("neck", "Шея")}
-          {renderEquipmentSlot("shoulders", "Наплечники")}
-          {renderEquipmentSlot("accessory1", "Бижу 1")}
-        </div>
-
-        {/* Третий ряд */}
-        <div className="flex justify-center gap-1">
-          {renderEquipmentSlot("weapon", "Пр.рука")}
-          {renderEquipmentSlot("chest", "Грудь")}
-          {renderEquipmentSlot("offhand", "Л.рука")}
-        </div>
-
-        {/* Четвертый ряд */}
-        <div className="flex justify-center gap-1">
-          {renderEquipmentSlot("hands", "Перчатки")}
-          {renderEquipmentSlot("belt", "Пояс")}
-          {renderEquipmentSlot("accessory2", "Бижу 2")}
-        </div>
-
-        {/* Пятый ряд */}
-        <div className="flex justify-center gap-1">
-          {renderEquipmentSlot("ring1", "Кольцо")}
-          {renderEquipmentSlot("legs", "Ноги")}
-          {renderEquipmentSlot("ring2", "Кольцо")}
-        </div>
-
-        {/* Нижний ряд */}
-        <div className="flex justify-center gap-1">
-          {renderEquipmentSlot("feet", "Ботинки")}
-        </div>
+        {/* Вторая строка */}
+        {renderEquipmentSlot("weapon", "Ор")}
+        {renderEquipmentSlot("belt", "Поя")}
+        {renderEquipmentSlot("legs", "Ног")}
+        {renderEquipmentSlot("feet", "Бот")}
+        {renderEquipmentSlot("offhand", "ЛР")}
+        {renderEquipmentSlot("ring2", "К2")}
+        {renderEquipmentSlot("accessory2", "Б2")}
       </div>
     </div>
   );
