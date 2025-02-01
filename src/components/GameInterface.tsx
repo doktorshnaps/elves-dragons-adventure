@@ -20,16 +20,26 @@ import { EquipmentTab } from "./game/equipment/EquipmentTab";
 import { Shop } from "./Shop";
 import { DungeonSearch } from "./DungeonSearch";
 import { useBalanceState } from "@/hooks/useBalanceState";
+import { TeamStats } from "./game/TeamStats";
+import { calculateTeamStats } from "@/utils/cardUtils";
 
 export const GameInterface = () => {
   const navigate = useNavigate();
   const [showShop, setShowShop] = useState(false);
   const [showDungeonSearch, setShowDungeonSearch] = useState(false);
   const [showGameModeDialog, setShowGameModeDialog] = useState(false);
+  const [showStatsDialog, setShowStatsDialog] = useState(false);
   const { balance, updateBalance } = useBalanceState();
 
   const handleNavigation = (path: string) => {
     navigate(path);
+  };
+
+  // Calculate team stats from active cards
+  const getTeamStats = () => {
+    const savedCards = localStorage.getItem('gameCards');
+    const cards = savedCards ? JSON.parse(savedCards) : [];
+    return calculateTeamStats(cards);
   };
 
   return (
@@ -70,7 +80,7 @@ export const GameInterface = () => {
             <DropdownMenuItem onSelect={() => handleNavigation('/marketplace')}>
               Торговая площадка
             </DropdownMenuItem>
-            <DropdownMenuItem onSelect={() => handleNavigation('/stats')}>
+            <DropdownMenuItem onSelect={() => setShowStatsDialog(true)}>
               Статистика
             </DropdownMenuItem>
           </DropdownMenuContent>
@@ -127,6 +137,16 @@ export const GameInterface = () => {
               Приключение
             </Button>
           </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Stats Dialog */}
+      <Dialog open={showStatsDialog} onOpenChange={setShowStatsDialog}>
+        <DialogContent className="bg-game-surface border-game-accent">
+          <DialogHeader>
+            <DialogTitle className="text-xl font-bold text-game-accent">Статистика</DialogTitle>
+          </DialogHeader>
+          <TeamStats teamStats={getTeamStats()} />
         </DialogContent>
       </Dialog>
 
