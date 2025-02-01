@@ -15,7 +15,6 @@ export const EquipmentGrid = () => {
       const equipped = items.filter((item: ShopItem) => item.equipped);
       setEquippedItems(equipped);
 
-      // Calculate total stats from equipped items
       const stats = equipped.reduce((acc: any, item: ShopItem) => {
         if (item.stats) {
           acc.power += item.stats.power || 0;
@@ -44,7 +43,6 @@ export const EquipmentGrid = () => {
       const equipped = updatedItems.filter((item: ShopItem) => item.equipped);
       setEquippedItems(equipped);
 
-      // Recalculate stats
       const stats = equipped.reduce((acc: any, item: ShopItem) => {
         if (item.stats) {
           acc.power += item.stats.power || 0;
@@ -61,7 +59,6 @@ export const EquipmentGrid = () => {
         description: `${item.name} был снят`,
       });
 
-      // Dispatch event to update inventory
       const event = new CustomEvent('inventoryUpdate', { 
         detail: { inventory: updatedItems }
       });
@@ -78,7 +75,7 @@ export const EquipmentGrid = () => {
     return (
       <Card 
         key={slot} 
-        className="p-2 bg-game-surface/50 border-game-accent min-h-[80px] flex flex-col items-center justify-center cursor-pointer hover:bg-game-surface/70"
+        className="p-1 bg-game-surface/50 border-game-accent min-h-[60px] w-[60px] flex flex-col items-center justify-center cursor-pointer hover:bg-game-surface/70"
         onClick={() => item && handleUnequipItem(item)}
       >
         {item ? (
@@ -86,64 +83,64 @@ export const EquipmentGrid = () => {
             <img 
               src={item.image} 
               alt={item.name}
-              className="w-12 h-12 object-contain"
+              className="w-8 h-8 object-contain"
             />
-            <span className="text-xs text-center mt-1 text-game-accent">{item.name}</span>
+            <span className="text-[8px] text-center mt-0.5 text-game-accent leading-tight">{item.name}</span>
           </>
         ) : (
-          <span className="text-xs text-center text-game-accent/50">{title}</span>
+          <span className="text-[8px] text-center text-game-accent/50">{title}</span>
         )}
       </Card>
     );
   };
 
   return (
-    <div className="space-y-4">
-      <h3 className="text-lg font-semibold text-game-accent">Бонусы экипировки</h3>
-      <div className="flex justify-between text-sm text-game-accent">
-        <div>
+    <div className="space-y-2">
+      <h3 className="text-sm font-semibold text-game-accent">Бонусы экипировки</h3>
+      <div className="flex justify-between text-xs text-game-accent mb-2">
+        <div className="grid grid-cols-3 gap-x-4">
           <p>Сила: +{totalStats.power}</p>
           <p>Защита: +{totalStats.defense}</p>
           <p>Здоровье: +{totalStats.health}</p>
         </div>
       </div>
 
-      <div className="grid grid-cols-4 gap-2">
+      <div className="grid gap-1">
         {/* Верхний ряд */}
-        <div className="col-span-4 flex justify-center">
+        <div className="flex justify-center gap-1">
           {renderEquipmentSlot("head", "Голова")}
         </div>
 
         {/* Второй ряд */}
-        <div className="col-span-4 flex justify-between">
+        <div className="flex justify-center gap-1">
           {renderEquipmentSlot("neck", "Шея")}
           {renderEquipmentSlot("shoulders", "Наплечники")}
-          {renderEquipmentSlot("accessory1", "Бижутерия 1")}
+          {renderEquipmentSlot("accessory1", "Бижу 1")}
         </div>
 
         {/* Третий ряд */}
-        <div className="col-span-4 flex justify-between">
-          {renderEquipmentSlot("weapon", "Правая рука")}
-          {renderEquipmentSlot("chest", "Нагрудник")}
-          {renderEquipmentSlot("offhand", "Левая рука")}
+        <div className="flex justify-center gap-1">
+          {renderEquipmentSlot("weapon", "Пр.рука")}
+          {renderEquipmentSlot("chest", "Грудь")}
+          {renderEquipmentSlot("offhand", "Л.рука")}
         </div>
 
         {/* Четвертый ряд */}
-        <div className="col-span-4 flex justify-between">
+        <div className="flex justify-center gap-1">
           {renderEquipmentSlot("hands", "Перчатки")}
           {renderEquipmentSlot("belt", "Пояс")}
-          {renderEquipmentSlot("accessory2", "Бижутерия 2")}
+          {renderEquipmentSlot("accessory2", "Бижу 2")}
         </div>
 
         {/* Пятый ряд */}
-        <div className="col-span-4 flex justify-between">
-          {renderEquipmentSlot("ring1", "Кольцо 1")}
+        <div className="flex justify-center gap-1">
+          {renderEquipmentSlot("ring1", "Кольцо")}
           {renderEquipmentSlot("legs", "Ноги")}
-          {renderEquipmentSlot("ring2", "Кольцо 2")}
+          {renderEquipmentSlot("ring2", "Кольцо")}
         </div>
 
         {/* Нижний ряд */}
-        <div className="col-span-4 flex justify-center">
+        <div className="flex justify-center gap-1">
           {renderEquipmentSlot("feet", "Ботинки")}
         </div>
       </div>

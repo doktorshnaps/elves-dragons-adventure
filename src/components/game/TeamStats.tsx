@@ -4,7 +4,6 @@ import { TeamStats as TeamStatsType } from "@/types/cards";
 import { PlayerStats } from "@/types/battle";
 import { TeamStatsSection } from "./stats/TeamStatsSection";
 import { PlayerStatsSection } from "./stats/PlayerStatsSection";
-import { EquipmentGrid } from "./stats/EquipmentGrid";
 import { calculateTeamStats } from "@/utils/cardUtils";
 
 interface TeamStatsProps {
@@ -32,12 +31,6 @@ export const TeamStats = ({ teamStats }: TeamStatsProps) => {
 
   const [balance, setBalance] = React.useState(() => {
     return Number(localStorage.getItem('gameBalance') || '0');
-  });
-
-  const [equipmentStats, setEquipmentStats] = React.useState({
-    power: 0,
-    defense: 0,
-    health: 0
   });
 
   React.useEffect(() => {
@@ -81,21 +74,6 @@ export const TeamStats = ({ teamStats }: TeamStatsProps) => {
     };
   }, []);
 
-  React.useEffect(() => {
-    const handleBalanceUpdate = () => {
-      const newBalance = Number(localStorage.getItem('gameBalance') || '0');
-      setBalance(newBalance);
-    };
-
-    window.addEventListener('balanceUpdate', handleBalanceUpdate);
-    window.addEventListener('storage', handleBalanceUpdate);
-
-    return () => {
-      window.removeEventListener('balanceUpdate', handleBalanceUpdate);
-      window.removeEventListener('storage', handleBalanceUpdate);
-    };
-  }, []);
-
   return (
     <Card 
       className="p-6 bg-game-surface border-game-accent mb-6 relative overflow-hidden"
@@ -117,7 +95,6 @@ export const TeamStats = ({ teamStats }: TeamStatsProps) => {
         <div className="space-y-6">
           <TeamStatsSection teamStats={teamStats} />
           <PlayerStatsSection playerStats={playerStats} />
-          <EquipmentGrid />
         </div>
       </div>
     </Card>
