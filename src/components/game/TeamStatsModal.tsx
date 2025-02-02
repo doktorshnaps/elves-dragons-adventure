@@ -14,7 +14,7 @@ export const TeamStatsModal = ({ isOpen, onClose, teamStats, balance }: TeamStat
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent 
-        className="bg-game-surface border-game-accent fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 max-h-[90vh] w-[95vw] md:w-[600px] overflow-hidden"
+        className="bg-game-surface border-game-accent"
         style={{
           backgroundImage: `url("/lovable-uploads/29ea34c8-ede8-4cab-8ca2-049cdb5108c3.png")`,
           backgroundSize: 'cover',
@@ -26,7 +26,7 @@ export const TeamStatsModal = ({ isOpen, onClose, teamStats, balance }: TeamStat
         <div className="absolute inset-0 bg-game-surface/90 backdrop-blur-sm" />
         
         {/* Контент поверх оверлея */}
-        <div className="relative z-10 overflow-y-auto">
+        <div className="relative z-10">
           <DialogHeader>
             <DialogTitle className="text-xl font-bold text-game-accent">Статистика команды</DialogTitle>
             <DialogDescription className="text-sm text-gray-400">
