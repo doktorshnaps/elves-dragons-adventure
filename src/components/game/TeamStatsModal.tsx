@@ -2,6 +2,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { TeamStats as TeamStatsType } from "@/types/cards";
 import { HealthBar } from "./stats/HealthBar";
 import { CombatStats } from "./stats/CombatStats";
+import { PlayerStatsSection } from "./stats/PlayerStatsSection";
 
 interface TeamStatsModalProps {
   isOpen: boolean;
@@ -23,7 +24,7 @@ export const TeamStatsModal = ({ isOpen, onClose, teamStats, balance }: TeamStat
       }}
     >
       <DialogContent 
-        className="bg-game-surface border-game-accent max-w-md w-full fixed top-[50%] left-[50%] transform -translate-x-1/2 -translate-y-1/2"
+        className="bg-game-surface border-game-accent max-w-md w-full fixed top-[50%] left-[50%] transform -translate-x-1/2 -translate-y-1/2 max-h-[90vh] overflow-y-auto"
         style={{
           backgroundImage: `url("/lovable-uploads/29ea34c8-ede8-4cab-8ca2-049cdb5108c3.png")`,
           backgroundSize: 'cover',
@@ -47,8 +48,23 @@ export const TeamStatsModal = ({ isOpen, onClose, teamStats, balance }: TeamStat
             </div>
             
             <div className="space-y-4">
-              <HealthBar health={teamStats.health} maxHealth={teamStats.health} />
-              <CombatStats power={teamStats.power} defense={teamStats.defense} />
+              <div className="mb-6">
+                <h3 className="text-lg font-semibold text-game-accent mb-4">Характеристики команды</h3>
+                <HealthBar health={teamStats.health} maxHealth={teamStats.health} />
+                <CombatStats power={teamStats.power} defense={teamStats.defense} />
+              </div>
+
+              <PlayerStatsSection 
+                playerStats={{
+                  health: teamStats.health,
+                  maxHealth: teamStats.health,
+                  power: teamStats.power,
+                  defense: teamStats.defense,
+                  experience: 0,
+                  level: 1,
+                  requiredExperience: 100
+                }} 
+              />
             </div>
           </div>
         </div>
