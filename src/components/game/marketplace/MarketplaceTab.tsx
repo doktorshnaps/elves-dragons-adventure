@@ -139,73 +139,83 @@ export const MarketplaceTab = () => {
   };
 
   return (
-    <div className="space-y-4">
-      <div className="flex justify-between items-center">
-        <h2 className="text-xl font-bold text-white flex items-center gap-2">
-          <ShoppingBag className="w-6 h-6" />
-          Торговая площадка
-        </h2>
-        <Button
-          onClick={() => setShowListingDialog(true)}
-          className="bg-game-accent hover:bg-game-accent/80"
-        >
-          <Plus className="w-4 h-4 mr-2" />
-          Создать объявление
-        </Button>
+    <div 
+      className="min-h-screen p-4"
+      style={{
+        backgroundImage: "url('/lovable-uploads/9ec81c2e-643f-4e30-b019-c3721a2bafc2.png')",
+        backgroundSize: 'cover',
+        backgroundPosition: 'center',
+        backgroundRepeat: 'no-repeat',
+      }}
+    >
+      <div className="max-w-7xl mx-auto space-y-4 bg-black/40 p-6 rounded-lg backdrop-blur-sm">
+        <div className="flex justify-between items-center">
+          <h2 className="text-xl font-bold text-white flex items-center gap-2">
+            <ShoppingBag className="w-6 h-6" />
+            Торговая площадка
+          </h2>
+          <Button
+            onClick={() => setShowListingDialog(true)}
+            className="bg-game-accent hover:bg-game-accent/80"
+          >
+            <Plus className="w-4 h-4 mr-2" />
+            Создать объявление
+          </Button>
+        </div>
+
+        {listings.length > 0 ? (
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+            {listings.map((listing) => {
+              const displayInfo = getItemDisplayInfo(listing.item);
+              const isOwnListing = listing.sellerId === 'current-user';
+
+              return (
+                <Card key={listing.id} className="p-4 bg-game-surface/90 border-game-accent backdrop-blur-sm">
+                  <div className="flex flex-col gap-2">
+                    <h3 className="font-semibold text-game-accent">{listing.item.name}</h3>
+                    <p className="text-sm text-gray-300">
+                      {displayInfo.type}
+                      {displayInfo.rarity && ` - Редкость: ${displayInfo.rarity}`}
+                      <br />
+                      {displayInfo.description}
+                    </p>
+                    <p className="text-yellow-500 font-medium">{listing.price} токенов</p>
+                    {isOwnListing ? (
+                      <Button
+                        onClick={() => handleCancelListing(listing)}
+                        variant="destructive"
+                        className="w-full mt-2"
+                      >
+                        <X className="w-4 h-4 mr-2" />
+                        Отменить
+                      </Button>
+                    ) : (
+                      <Button
+                        onClick={() => handleBuy(listing)}
+                        disabled={balance < listing.price}
+                        className="w-full mt-2 bg-game-accent hover:bg-game-accent/80"
+                      >
+                        Купить
+                      </Button>
+                    )}
+                  </div>
+                </Card>
+              );
+            })}
+          </div>
+        ) : (
+          <div className="text-center py-8 text-gray-300 backdrop-blur-sm bg-black/30 rounded-lg">
+            На торговой площадке пока нет объявлений
+          </div>
+        )}
+
+        {showListingDialog && (
+          <ListingDialog
+            onClose={() => setShowListingDialog(false)}
+            onCreateListing={handleCreateListing}
+          />
+        )}
       </div>
-
-      {listings.length > 0 ? (
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
-          {listings.map((listing) => {
-            const displayInfo = getItemDisplayInfo(listing.item);
-            const isOwnListing = listing.sellerId === 'current-user';
-
-            return (
-              <Card key={listing.id} className="p-4 bg-game-surface border-game-accent">
-                <div className="flex flex-col gap-2">
-                  <h3 className="font-semibold text-game-accent">{listing.item.name}</h3>
-                  <p className="text-sm text-gray-400">
-                    {displayInfo.type}
-                    {displayInfo.rarity && ` - Редкость: ${displayInfo.rarity}`}
-                    <br />
-                    {displayInfo.description}
-                  </p>
-                  <p className="text-yellow-500 font-medium">{listing.price} токенов</p>
-                  {isOwnListing ? (
-                    <Button
-                      onClick={() => handleCancelListing(listing)}
-                      variant="destructive"
-                      className="w-full mt-2"
-                    >
-                      <X className="w-4 h-4 mr-2" />
-                      Отменить
-                    </Button>
-                  ) : (
-                    <Button
-                      onClick={() => handleBuy(listing)}
-                      disabled={balance < listing.price}
-                      className="w-full mt-2"
-                    >
-                      Купить
-                    </Button>
-                  )}
-                </div>
-              </Card>
-            );
-          })}
-        </div>
-      ) : (
-        <div className="text-center py-8 text-gray-400">
-          На торговой площадке пока нет объявлений
-        </div>
-      )}
-
-      {showListingDialog && (
-        <ListingDialog
-          onClose={() => setShowListingDialog(false)}
-          onCreateListing={handleCreateListing}
-        />
-      )}
     </div>
   );
 };
