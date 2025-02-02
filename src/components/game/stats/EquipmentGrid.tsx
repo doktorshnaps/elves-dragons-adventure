@@ -2,10 +2,19 @@ import { useEffect, useState } from "react";
 import { Card } from "@/components/ui/card";
 import { ShopItem } from "@/components/shop/types";
 import { useToast } from "@/hooks/use-toast";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
 
 export const EquipmentGrid = () => {
   const [equippedItems, setEquippedItems] = useState<ShopItem[]>([]);
   const [totalStats, setTotalStats] = useState({ power: 0, defense: 0, health: 0 });
+  const [selectedSlot, setSelectedSlot] = useState<string | null>(null);
+  const [availableItems, setAvailableItems] = useState<ShopItem[]>([]);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -66,6 +75,65 @@ export const EquipmentGrid = () => {
     }
   };
 
+  const handleEquipItem = (item: ShopItem) => {
+    const inventory = localStorage.getItem('gameInventory');
+    if (inventory) {
+      const items = JSON.parse(inventory);
+      // Снимаем текущий предмет из этого слота, если он есть
+      const updatedItems = items.map((invItem: ShopItem) => {
+        if (invItem.equipped && invItem.slot === selectedSlot) {
+          return { ...invItem, equipped: false };
+        }
+        if (invItem.id === item.id) {
+          return { ...invItem, equipped: true };
+        }
+        return invItem;
+      });
+
+      localStorage.setItem('gameInventory', JSON.stringify(updatedItems));
+      const equipped = updatedItems.filter((item: ShopItem) => item.equipped);
+      setEquippedItems(equipped);
+
+      const stats = equipped.reduce((acc: any, item: ShopItem) => {
+        if (item.stats) {
+          acc.power += item.stats.power || 0;
+          acc.defense += item.stats.defense || 0;
+          acc.health += item.stats.health || 0;
+        }
+        return acc;
+      }, { power: 0, defense: 0, health: 0 });
+
+      setTotalStats(stats);
+
+      toast({
+        title: "Предмет экипирован",
+        description: `${item.name} был экипирован`,
+      });
+
+      const event = new CustomEvent('inventoryUpdate', { 
+        detail: { inventory: updatedItems }
+      });
+      window.dispatchEvent(event);
+      setSelectedSlot(null);
+    }
+  };
+
+  const handleSlotClick = (slot: string, equippedItem?: ShopItem) => {
+    if (equippedItem) {
+      handleUnequipItem(equippedItem);
+    } else {
+      const inventory = localStorage.getItem('gameInventory');
+      if (inventory) {
+        const items = JSON.parse(inventory);
+        const availableForSlot = items.filter((item: ShopItem) => 
+          !item.equipped && item.slot === slot
+        );
+        setAvailableItems(availableForSlot);
+        setSelectedSlot(slot);
+      }
+    }
+  };
+
   const getEquippedItemForSlot = (slot: string) => {
     return equippedItems.find(item => item.slot === slot);
   };
@@ -76,7 +144,7 @@ export const EquipmentGrid = () => {
       <Card 
         key={slot} 
         className="p-2 bg-game-surface/50 border-game-accent min-h-[50px] w-[50px] flex flex-col items-center justify-center cursor-pointer hover:bg-game-surface/70"
-        onClick={() => item && handleUnequipItem(item)}
+        onClick={() => handleSlotClick(slot, item)}
       >
         {item ? (
           <>
@@ -124,6 +192,48 @@ export const EquipmentGrid = () => {
         {renderEquipmentSlot("ring2", "Кольцо 2")}
         {renderEquipmentSlot("accessory2", "Брошь 2")}
       </div>
+
+      <Dialog open={selectedSlot !== null} onOpenChange={() => setSelectedSlot(null)}>
+        <DialogContent className="bg-game-surface border-game-accent">
+          <DialogHeader>
+            <DialogTitle className="text-xl font-bold text-game-accent">
+              Доступные предметы
+            </DialogTitle>
+          </DialogHeader>
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 max-h-[400px] overflow-y-auto">
+            {availableItems.map((item) => (
+              <Card 
+                key={item.id}
+                className="p-4 bg-game-surface/50 border-game-accent cursor-pointer hover:bg-game-surface/70"
+                onClick={() => handleEquipItem(item)}
+              >
+                <div className="flex flex-col items-center gap-2">
+                  {item.image && (
+                    <img 
+                      src={item.image} 
+                      alt={item.name}
+                      className="w-12 h-12 object-contain"
+                    />
+                  )}
+                  <span className="text-sm text-center text-game-accent">{item.name}</span>
+                  {item.stats && (
+                    <div className="text-xs text-game-accent/80">
+                      {item.stats.power && <div>Сила: +{item.stats.power}</div>}
+                      {item.stats.defense && <div>Защита: +{item.stats.defense}</div>}
+                      {item.stats.health && <div>Здоровье: +{item.stats.health}</div>}
+                    </div>
+                  )}
+                </div>
+              </Card>
+            ))}
+            {availableItems.length === 0 && (
+              <div className="col-span-full text-center text-game-accent">
+                Нет доступных предметов для этого слота
+              </div>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
