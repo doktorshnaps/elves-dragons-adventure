@@ -87,14 +87,9 @@ export const ListingDialog = ({ onClose, onCreateListing }: ListingDialogProps) 
   };
 
   return (
-    <motion.div
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      exit={{ opacity: 0 }}
-      className="fixed inset-0 z-50 flex items-center justify-center px-4"
-    >
-      <div className="absolute inset-0 bg-black/50" onClick={onClose} />
-      <Card className="relative z-10 w-full max-w-2xl max-h-[90vh] overflow-y-auto bg-game-surface border-game-accent p-6">
+    <div className="fixed inset-0 z-50 flex items-center justify-center px-4 overflow-y-auto">
+      <div className="fixed inset-0 bg-black/50" onClick={onClose} />
+      <Card className="relative z-10 w-full max-w-2xl bg-game-surface border-game-accent p-6 max-h-[90vh] overflow-y-auto">
         <div className="flex justify-between items-center mb-6">
           <h2 className="text-xl font-bold text-white">Создать объявление</h2>
           <Button variant="ghost" onClick={onClose}>
@@ -120,7 +115,7 @@ export const ListingDialog = ({ onClose, onCreateListing }: ListingDialogProps) 
             </Button>
           </div>
 
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4 max-h-[400px] overflow-y-auto">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 max-h-[400px] overflow-y-auto">
             {selectedType === 'card'
               ? cards.map((card: CardType, index: number) => renderItem(card, index))
               : inventory.map((item: Item, index: number) => renderItem(item, index))
@@ -147,6 +142,6 @@ export const ListingDialog = ({ onClose, onCreateListing }: ListingDialogProps) 
           </Button>
         </div>
       </Card>
-    </motion.div>
+    </div>
   );
 };
