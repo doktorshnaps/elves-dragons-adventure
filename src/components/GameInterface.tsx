@@ -55,6 +55,10 @@ export const GameInterface = () => {
     return calculateTeamStats(cards);
   };
 
+  const handleStatsClose = () => {
+    setShowStatsDialog(false);
+  };
+
   return (
     <div className="min-h-screen p-4 relative">
       <div className="flex justify-between items-center mb-6">
@@ -129,6 +133,9 @@ export const GameInterface = () => {
         <DialogContent className="bg-game-surface border-game-accent">
           <DialogHeader>
             <DialogTitle className="text-xl font-bold text-game-accent">Выберите режим игры</DialogTitle>
+            <DialogDescription>
+              Выберите режим игры для продолжения
+            </DialogDescription>
           </DialogHeader>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4">
             <Button
@@ -158,7 +165,7 @@ export const GameInterface = () => {
       {/* Stats Modal */}
       <TeamStatsModal
         isOpen={showStatsDialog}
-        onClose={() => setShowStatsDialog(false)}
+        onClose={handleStatsClose}
         teamStats={getTeamStats()}
         balance={balance}
       />

@@ -1,4 +1,4 @@
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { TeamStats as TeamStatsType } from "@/types/cards";
 import { HealthBar } from "./stats/HealthBar";
 import { CombatStats } from "./stats/CombatStats";
@@ -29,6 +29,9 @@ export const TeamStatsModal = ({ isOpen, onClose, teamStats, balance }: TeamStat
         <div className="relative z-10 overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="text-xl font-bold text-game-accent">Статистика команды</DialogTitle>
+            <DialogDescription className="text-sm text-gray-400">
+              Просмотр характеристик вашей команды
+            </DialogDescription>
           </DialogHeader>
           
           <div className="mt-4 px-2">
