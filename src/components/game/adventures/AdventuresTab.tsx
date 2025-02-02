@@ -1,12 +1,15 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Star } from "lucide-react";
+import { Star, ArrowLeft } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useBalanceState } from "@/hooks/useBalanceState";
 import { Monster } from "./types";
 import { MonsterCard } from "./MonsterCard";
 import { PlayerStatsCard } from "./PlayerStatsCard";
 import { useMonsterGeneration } from "./useMonsterGeneration";
+import { InventoryDisplay } from "../InventoryDisplay";
+import { useNavigate } from "react-router-dom";
+import { Item } from "@/types/inventory";
 
 export const AdventuresTab = () => {
   const [level, setLevel] = useState(1);
@@ -17,18 +20,16 @@ export const AdventuresTab = () => {
   const { toast } = useToast();
   const { balance, updateBalance } = useBalanceState();
   const { generateMonster } = useMonsterGeneration(level);
+  const navigate = useNavigate();
 
   const calculatePlayerStats = () => {
-    // Получаем сохраненные карты из localStorage
     const savedCards = localStorage.getItem('gameCards');
     const cards = savedCards ? JSON.parse(savedCards) : [];
     
-    // Базовые характеристики
     let totalPower = 10;
     let totalDefense = 5;
     let totalHealth = 100;
 
-    // Подсчитываем бонусы от карт
     cards.forEach((card: any) => {
       if (card.power) totalPower += card.power;
       if (card.defense) totalDefense += card.defense;
@@ -36,6 +37,32 @@ export const AdventuresTab = () => {
     });
 
     return { power: totalPower, defense: totalDefense, maxHealth: totalHealth };
+  };
+
+  const handleUseItem = (item: Item) => {
+    if (item.type === 'healthPotion') {
+      const stats = calculatePlayerStats();
+      const healAmount = item.value;
+      const newHealth = Math.min(playerHealth + healAmount, stats.maxHealth);
+      setPlayerHealth(newHealth);
+      
+      // Удаляем использованное зелье из инвентаря
+      const savedInventory = localStorage.getItem('gameInventory');
+      if (savedInventory) {
+        const inventory = JSON.parse(savedInventory);
+        const newInventory = inventory.filter((i: Item) => i.id !== item.id);
+        localStorage.setItem('gameInventory', JSON.stringify(newInventory));
+        const event = new CustomEvent('inventoryUpdate', { 
+          detail: { inventory: newInventory }
+        });
+        window.dispatchEvent(event);
+      }
+
+      toast({
+        title: "Зелье использовано",
+        description: `Восстановлено ${healAmount} здоровья`,
+      });
+    }
   };
 
   const gainExperience = (amount: number) => {
@@ -144,38 +171,72 @@ export const AdventuresTab = () => {
   const stats = calculatePlayerStats();
 
   return (
-    <div className="space-y-4">
-      <div className="flex justify-between items-center">
-        <div className="space-y-1">
-          <h2 className="text-2xl font-bold text-game-accent">Приключения</h2>
-          <div className="flex items-center gap-2">
-            <Star className="w-4 h-4 text-yellow-500" />
-            <span className="text-sm text-gray-400">Уровень: {level}</span>
+    <div 
+      className="min-h-screen p-6 relative"
+      style={{
+        backgroundImage: 'url("/lovable-uploads/59e5d39f-bbd6-4283-be9f-a8710e7cc372.png")',
+        backgroundSize: 'cover',
+        backgroundPosition: 'center',
+        backgroundRepeat: 'no-repeat'
+      }}
+    >
+      <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" />
+      
+      <div className="relative z-10 space-y-6">
+        <div className="flex justify-between items-center">
+          <Button 
+            variant="outline" 
+            onClick={() => navigate('/game')}
+            className="bg-game-surface/80 hover:bg-game-surface"
+          >
+            <ArrowLeft className="w-4 h-4 mr-2" />
+            Вернуться в меню
+          </Button>
+          <div className="flex items-center gap-4">
+            <div className="flex items-center gap-2">
+              <Star className="w-4 h-4 text-yellow-500" />
+              <span className="text-sm text-gray-200">Уровень: {level}</span>
+            </div>
+            <span className="text-xl font-bold text-yellow-400">{balance} монет</span>
           </div>
         </div>
-        <Button onClick={startAdventure} disabled={!!currentMonster || playerHealth <= 0}>
-          {playerHealth <= 0 ? "Герой обессилен" : "Начать приключение"}
-        </Button>
-      </div>
 
-      <PlayerStatsCard
-        level={level}
-        stats={stats}
-        experience={experience}
-        requiredExperience={requiredExperience}
-        playerHealth={playerHealth}
-        maxHealth={stats.maxHealth}
-        balance={balance}
-        onRestoreHealth={restoreHealth}
-      />
-
-      {currentMonster && (
-        <MonsterCard
-          monster={currentMonster}
-          onAttack={attackMonster}
+        <PlayerStatsCard
+          level={level}
+          stats={stats}
+          experience={experience}
+          requiredExperience={requiredExperience}
           playerHealth={playerHealth}
+          maxHealth={stats.maxHealth}
+          balance={balance}
+          onRestoreHealth={restoreHealth}
         />
-      )}
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="space-y-4">
+            <Button 
+              onClick={startAdventure} 
+              disabled={!!currentMonster || playerHealth <= 0}
+              className="w-full bg-game-primary hover:bg-game-secondary"
+            >
+              {playerHealth <= 0 ? "Герой обессилен" : "Начать приключение"}
+            </Button>
+
+            {currentMonster && (
+              <MonsterCard
+                monster={currentMonster}
+                onAttack={attackMonster}
+                playerHealth={playerHealth}
+              />
+            )}
+          </div>
+
+          <div className="space-y-4">
+            <h3 className="text-xl font-bold text-game-accent">Инвентарь</h3>
+            <InventoryDisplay onUseItem={handleUseItem} />
+          </div>
+        </div>
+      </div>
     </div>
   );
 };
