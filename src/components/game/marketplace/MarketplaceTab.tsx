@@ -1,14 +1,16 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { ShoppingBag, Plus } from "lucide-react";
+import { ShoppingBag, Plus, ArrowLeft } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { ListingDialog } from "./ListingDialog";
 import { MarketplaceListing } from "./types";
 import { useBalanceState } from "@/hooks/useBalanceState";
 import { MarketplaceListings } from "./MarketplaceListings";
+import { useNavigate } from "react-router-dom";
 
 export const MarketplaceTab = () => {
   const { toast } = useToast();
+  const navigate = useNavigate();
   const [showListingDialog, setShowListingDialog] = useState(false);
   const { balance, updateBalance } = useBalanceState();
   const [listings, setListings] = useState<MarketplaceListing[]>(() => {
@@ -128,10 +130,20 @@ export const MarketplaceTab = () => {
     >
       <div className="max-w-7xl mx-auto space-y-4 bg-black/40 p-6 rounded-lg backdrop-blur-sm">
         <div className="flex justify-between items-center">
-          <h2 className="text-xl font-bold text-white flex items-center gap-2">
-            <ShoppingBag className="w-6 h-6" />
-            Торговая площадка
-          </h2>
+          <div className="flex items-center gap-4">
+            <Button
+              variant="outline"
+              onClick={() => navigate('/game')}
+              className="bg-purple-600/80 hover:bg-purple-700 text-white"
+            >
+              <ArrowLeft className="w-4 h-4 mr-2" />
+              Вернуться в игру
+            </Button>
+            <h2 className="text-xl font-bold text-white flex items-center gap-2">
+              <ShoppingBag className="w-6 h-6" />
+              Торговая площадка
+            </h2>
+          </div>
           <Button
             onClick={() => setShowListingDialog(true)}
             className="bg-game-accent hover:bg-game-accent/80"
