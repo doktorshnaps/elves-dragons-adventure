@@ -131,8 +131,7 @@ export const ListingDialog = ({ onClose, onCreateListing }: ListingDialogProps) 
                 value={price}
                 onChange={(e) => setPrice(e.target.value)}
                 min="1"
-                className="bg-game-background border-game-accent"
-                size="sm"
+                className="bg-game-background border-game-accent h-8 text-sm"
               />
             </div>
 
