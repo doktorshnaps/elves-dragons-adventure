@@ -12,7 +12,7 @@ export const Grimoire = () => {
       style={{
         backgroundImage: "url('/lovable-uploads/20d88f7a-4f27-4b22-8ebe-e55b87a0c7e3.png')",
         backgroundColor: 'rgba(0, 0, 0, 0.85)',
-        backgroundBlend: 'multiply'
+        backgroundBlendMode: 'multiply'
       }}
     >
       <div className="flex items-center gap-4 mb-6">
