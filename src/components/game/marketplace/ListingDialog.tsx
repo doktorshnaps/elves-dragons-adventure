@@ -91,10 +91,10 @@ export const ListingDialog = ({ onClose, onCreateListing }: ListingDialogProps) 
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      className="fixed inset-0 z-50 flex items-center justify-center"
+      className="fixed inset-0 z-50 flex items-center justify-center px-4"
     >
       <div className="absolute inset-0 bg-black/50" onClick={onClose} />
-      <Card className="relative z-10 w-full max-w-2xl bg-game-surface border-game-accent p-6">
+      <Card className="relative z-10 w-full max-w-2xl max-h-[90vh] overflow-y-auto bg-game-surface border-game-accent p-6">
         <div className="flex justify-between items-center mb-6">
           <h2 className="text-xl font-bold text-white">Создать объявление</h2>
           <Button variant="ghost" onClick={onClose}>

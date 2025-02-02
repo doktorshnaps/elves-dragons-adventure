@@ -1,13 +1,11 @@
 import { useState } from "react";
-import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { ShoppingBag, Plus, X } from "lucide-react";
+import { ShoppingBag, Plus } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { ListingDialog } from "./ListingDialog";
 import { MarketplaceListing } from "./types";
 import { useBalanceState } from "@/hooks/useBalanceState";
-import { Card as CardType } from "@/types/cards";
-import { Item } from "@/types/inventory";
+import { MarketplaceListings } from "./MarketplaceListings";
 
 export const MarketplaceTab = () => {
   const { toast } = useToast();
@@ -30,12 +28,10 @@ export const MarketplaceTab = () => {
   };
 
   const handleCancelListing = (listing: MarketplaceListing) => {
-    // Remove listing
     const newListings = listings.filter(l => l.id !== listing.id);
     setListings(newListings);
     localStorage.setItem('marketplaceListings', JSON.stringify(newListings));
 
-    // Return item to inventory/cards
     if (listing.type === 'item') {
       const currentInventory = JSON.parse(localStorage.getItem('gameInventory') || '[]');
       const newInventory = [...currentInventory, listing.item];
@@ -81,20 +77,16 @@ export const MarketplaceTab = () => {
       return;
     }
 
-    // Remove listing
     const newListings = listings.filter(l => l.id !== listing.id);
     setListings(newListings);
     localStorage.setItem('marketplaceListings', JSON.stringify(newListings));
-
-    // Update balance
     updateBalance(balance - listing.price);
 
-    // Add item to buyer's inventory/cards
     if (listing.type === 'item') {
       const currentInventory = JSON.parse(localStorage.getItem('gameInventory') || '[]');
       const newItem = {
         ...listing.item,
-        id: Date.now() // Генерируем новый ID для предмета
+        id: Date.now()
       };
       const newInventory = [...currentInventory, newItem];
       localStorage.setItem('gameInventory', JSON.stringify(newInventory));
@@ -107,7 +99,7 @@ export const MarketplaceTab = () => {
       const currentCards = JSON.parse(localStorage.getItem('gameCards') || '[]');
       const newCard = {
         ...listing.item,
-        id: Date.now() // Генерируем новый ID для карты
+        id: Date.now()
       };
       const newCards = [...currentCards, newCard];
       localStorage.setItem('gameCards', JSON.stringify(newCards));
@@ -122,20 +114,6 @@ export const MarketplaceTab = () => {
       title: "Покупка совершена",
       description: `${listing.item.name} добавлен в ваш инвентарь`,
     });
-  };
-
-  const getItemDisplayInfo = (item: CardType | Item) => {
-    if ('rarity' in item) {
-      return {
-        rarity: item.rarity,
-        type: 'Карта',
-        description: `${(item as CardType).type === 'character' ? 'Герой' : 'Питомец'}`
-      };
-    }
-    return {
-      type: 'Предмет',
-      description: item.type === 'healthPotion' ? 'Зелье здоровья' : 'Набор карт'
-    };
   };
 
   return (
@@ -163,57 +141,20 @@ export const MarketplaceTab = () => {
           </Button>
         </div>
 
-        {listings.length > 0 ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
-            {listings.map((listing) => {
-              const displayInfo = getItemDisplayInfo(listing.item);
-              const isOwnListing = listing.sellerId === 'current-user';
-
-              return (
-                <Card key={listing.id} className="p-4 bg-game-surface/90 border-game-accent backdrop-blur-sm">
-                  <div className="flex flex-col gap-2">
-                    <h3 className="font-semibold text-game-accent">{listing.item.name}</h3>
-                    <p className="text-sm text-gray-300">
-                      {displayInfo.type}
-                      {displayInfo.rarity && ` - Редкость: ${displayInfo.rarity}`}
-                      <br />
-                      {displayInfo.description}
-                    </p>
-                    <p className="text-yellow-500 font-medium">{listing.price} токенов</p>
-                    {isOwnListing ? (
-                      <Button
-                        onClick={() => handleCancelListing(listing)}
-                        variant="destructive"
-                        className="w-full mt-2"
-                      >
-                        <X className="w-4 h-4 mr-2" />
-                        Отменить
-                      </Button>
-                    ) : (
-                      <Button
-                        onClick={() => handleBuy(listing)}
-                        disabled={balance < listing.price}
-                        className="w-full mt-2 bg-game-accent hover:bg-game-accent/80"
-                      >
-                        Купить
-                      </Button>
-                    )}
-                  </div>
-                </Card>
-              );
-            })}
-          </div>
-        ) : (
-          <div className="text-center py-8 text-gray-300 backdrop-blur-sm bg-black/30 rounded-lg">
-            На торговой площадке пока нет объявлений
-          </div>
-        )}
+        <MarketplaceListings 
+          listings={listings}
+          balance={balance}
+          onBuy={handleBuy}
+          onCancelListing={handleCancelListing}
+        />
 
         {showListingDialog && (
-          <ListingDialog
-            onClose={() => setShowListingDialog(false)}
-            onCreateListing={handleCreateListing}
-          />
+          <div className="fixed inset-0 flex items-center justify-center z-50">
+            <ListingDialog
+              onClose={() => setShowListingDialog(false)}
+              onCreateListing={handleCreateListing}
+            />
+          </div>
         )}
       </div>
     </div>
