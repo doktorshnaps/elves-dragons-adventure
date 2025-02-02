@@ -1,6 +1,6 @@
 import { GameTitle } from "@/components/GameTitle";
 import { Button } from "@/components/ui/button";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { ShoppingCart, BookOpen, BarChart3, RefreshCw } from "lucide-react";
 import { Shop } from "@/components/Shop";
 import { TeamStatsModal } from "@/components/game/TeamStatsModal";
@@ -23,7 +23,6 @@ const Index = () => {
   };
 
   const resetGame = () => {
-    // Clear all game-related localStorage items
     localStorage.removeItem('gameCards');
     localStorage.removeItem('gameInitialized');
     localStorage.removeItem('gameBalance');
@@ -34,13 +33,11 @@ const Index = () => {
     localStorage.removeItem('dungeonEnergy');
     localStorage.removeItem('socialQuests');
 
-    // Show success message
     toast({
       title: "Игра сброшена",
       description: "Все данные очищены. Игра начнется заново при следующем входе.",
     });
 
-    // Reload the page to reinitialize everything
     window.location.reload();
   };
 
