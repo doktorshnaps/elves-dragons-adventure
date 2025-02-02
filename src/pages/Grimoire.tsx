@@ -18,11 +18,11 @@ export const Grimoire = () => {
       <div className="flex items-center gap-4 mb-6">
         <Button 
           variant="outline" 
-          className="bg-game-surface/90 border-game-accent text-game-accent hover:bg-game-surface/80"
-          onClick={() => navigate(-1)}
+          className="bg-game-surface/80 border-game-accent text-game-accent hover:bg-game-surface"
+          onClick={() => navigate('/game')}
         >
           <ArrowLeft className="w-4 h-4 mr-2" />
-          Назад
+          Вернуться в меню
         </Button>
         <h1 className="text-2xl font-bold text-game-accent">Гримуар</h1>
       </div>

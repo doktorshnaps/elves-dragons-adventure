@@ -46,7 +46,6 @@ export const AdventuresTab = () => {
       const newHealth = Math.min(playerHealth + healAmount, stats.maxHealth);
       setPlayerHealth(newHealth);
       
-      // Удаляем использованное зелье из инвентаря
       const savedInventory = localStorage.getItem('gameInventory');
       if (savedInventory) {
         const inventory = JSON.parse(savedInventory);
@@ -102,11 +101,9 @@ export const AdventuresTab = () => {
 
     const stats = calculatePlayerStats();
     
-    // Расчет урона игрока
     const playerDamage = Math.floor(Math.random() * stats.power) + Math.floor(stats.power * 0.5);
     const newMonsterHealth = currentMonster.health - playerDamage;
 
-    // Расчет урона монстра
     const monsterDamage = Math.floor(Math.random() * currentMonster.power);
     const reducedDamage = Math.max(0, monsterDamage - Math.floor(stats.defense * 0.5));
     const newPlayerHealth = playerHealth - reducedDamage;
@@ -117,7 +114,6 @@ export const AdventuresTab = () => {
     });
 
     if (newMonsterHealth <= 0) {
-      // Победа над монстром
       const monsterReward = currentMonster.reward;
       updateBalance(balance + monsterReward);
       gainExperience(currentMonster.experienceReward);
@@ -186,8 +182,8 @@ export const AdventuresTab = () => {
         <div className="flex justify-between items-center">
           <Button 
             variant="outline" 
+            className="bg-game-surface/80 border-game-accent text-game-accent hover:bg-game-surface"
             onClick={() => navigate('/game')}
-            className="bg-game-surface/80 hover:bg-game-surface"
           >
             <ArrowLeft className="w-4 h-4 mr-2" />
             Вернуться в меню

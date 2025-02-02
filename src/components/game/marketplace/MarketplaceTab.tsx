@@ -119,22 +119,14 @@ export const MarketplaceTab = () => {
   };
 
   return (
-    <div 
-      className="min-h-screen p-4"
-      style={{
-        backgroundImage: "url('/lovable-uploads/9ec81c2e-643f-4e30-b019-c3721a2bafc2.png')",
-        backgroundSize: 'cover',
-        backgroundPosition: 'center',
-        backgroundRepeat: 'no-repeat',
-      }}
-    >
-      <div className="max-w-7xl mx-auto space-y-4 bg-black/40 p-6 rounded-lg backdrop-blur-sm">
-        <div className="flex justify-between items-center">
+    <div className="min-h-screen p-6 bg-game-background">
+      <div className="max-w-7xl mx-auto">
+        <div className="flex justify-between items-center mb-6">
           <div className="flex items-center gap-4">
-            <Button
+            <Button 
               variant="outline"
               onClick={() => navigate('/game')}
-              className="bg-purple-600/80 hover:bg-purple-700 text-white"
+              className="bg-game-surface/80 border-game-accent text-game-accent hover:bg-game-surface"
             >
               <ArrowLeft className="w-4 h-4 mr-2" />
               Вернуться в меню
@@ -152,7 +144,6 @@ export const MarketplaceTab = () => {
             Создать объявление
           </Button>
         </div>
-
         <MarketplaceListings 
           listings={listings}
           balance={balance}
