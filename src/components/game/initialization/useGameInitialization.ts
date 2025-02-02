@@ -7,7 +7,9 @@ export const useGameInitialization = (setCards: (cards: Card[]) => void) => {
   const { toast } = useToast();
 
   useEffect(() => {
+    const savedCards = localStorage.getItem('gameCards');
     const isFirstLaunch = !localStorage.getItem('gameInitialized');
+
     if (isFirstLaunch) {
       const firstPack = generatePack();
       const secondPack = generatePack();
@@ -22,6 +24,8 @@ export const useGameInitialization = (setCards: (cards: Card[]) => void) => {
         title: "Добро пожаловать в игру!",
         description: "Вы получили 2 начальные колоды карт",
       });
+    } else if (savedCards) {
+      setCards(JSON.parse(savedCards));
     }
   }, [setCards, toast]);
 };
