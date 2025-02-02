@@ -1,15 +1,14 @@
 import { useState } from "react";
-import { Button } from "@/components/ui/button";
-import { Star, ArrowLeft } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useBalanceState } from "@/hooks/useBalanceState";
 import { Monster } from "./types";
 import { MonsterCard } from "./MonsterCard";
 import { PlayerStatsCard } from "./PlayerStatsCard";
 import { useMonsterGeneration } from "./useMonsterGeneration";
-import { InventoryDisplay } from "../InventoryDisplay";
-import { useNavigate } from "react-router-dom";
 import { Item } from "@/types/inventory";
+import { AdventureHeader } from "./components/AdventureHeader";
+import { AdventureControls } from "./components/AdventureControls";
+import { AdventureInventory } from "./components/AdventureInventory";
 
 export const AdventuresTab = () => {
   const [level, setLevel] = useState(1);
@@ -20,7 +19,6 @@ export const AdventuresTab = () => {
   const { toast } = useToast();
   const { balance, updateBalance } = useBalanceState();
   const { generateMonster } = useMonsterGeneration(level);
-  const navigate = useNavigate();
 
   const calculatePlayerStats = () => {
     const savedCards = localStorage.getItem('gameCards');
@@ -179,23 +177,7 @@ export const AdventuresTab = () => {
       <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" />
       
       <div className="relative z-10 space-y-6">
-        <div className="flex justify-between items-center">
-          <Button 
-            variant="outline" 
-            className="bg-game-surface/80 border-game-accent text-game-accent hover:bg-game-surface"
-            onClick={() => navigate('/game')}
-          >
-            <ArrowLeft className="w-4 h-4 mr-2" />
-            Вернуться в меню
-          </Button>
-          <div className="flex items-center gap-4">
-            <div className="flex items-center gap-2">
-              <Star className="w-4 h-4 text-yellow-500" />
-              <span className="text-sm text-gray-200">Уровень: {level}</span>
-            </div>
-            <span className="text-xl font-bold text-yellow-400">{balance} монет</span>
-          </div>
-        </div>
+        <AdventureHeader level={level} balance={balance} />
 
         <PlayerStatsCard
           level={level}
@@ -210,13 +192,11 @@ export const AdventuresTab = () => {
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div className="space-y-4">
-            <Button 
-              onClick={startAdventure} 
-              disabled={!!currentMonster || playerHealth <= 0}
-              className="w-full bg-game-primary hover:bg-game-secondary"
-            >
-              {playerHealth <= 0 ? "Герой обессилен" : "Начать приключение"}
-            </Button>
+            <AdventureControls
+              onStartAdventure={startAdventure}
+              isDisabled={!!currentMonster}
+              playerHealth={playerHealth}
+            />
 
             {currentMonster && (
               <MonsterCard
@@ -227,10 +207,7 @@ export const AdventuresTab = () => {
             )}
           </div>
 
-          <div className="space-y-4">
-            <h3 className="text-xl font-bold text-game-accent">Инвентарь</h3>
-            <InventoryDisplay onUseItem={handleUseItem} />
-          </div>
+          <AdventureInventory onUseItem={handleUseItem} />
         </div>
       </div>
     </div>
