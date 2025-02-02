@@ -296,5 +296,3 @@ export const AdventuresTab = () => {
     </div>
   );
 };
-
-export const AdventuresTab = AdventuresTab;
