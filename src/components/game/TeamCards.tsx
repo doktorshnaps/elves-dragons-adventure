@@ -34,33 +34,37 @@ export const TeamCards = () => {
   }, {});
 
   return (
-    <div className="space-y-4 max-h-[calc(100vh-16rem)] overflow-y-auto overflow-x-hidden">
+    <div className="h-full flex flex-col">
       {selectedCards.length > 0 && (
-        <SelectedCardsPanel 
-          selectedCards={selectedCards}
-          onUpgrade={handleUpgrade}
-        />
+        <div className="flex-shrink-0">
+          <SelectedCardsPanel 
+            selectedCards={selectedCards}
+            onUpgrade={handleUpgrade}
+          />
+        </div>
       )}
       
-      <div className="grid auto-rows-fr grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 pb-4">
-        {Object.values(groupedCards).length > 0 ? (
-          Object.values(groupedCards).map((cardGroup) => (
-            <CardGroup
-              key={cardGroup[0].id}
-              card={cardGroup[0]}
-              count={cardGroup.length}
-              isSelected={selectedCards.some(c => c.id === cardGroup[0].id)}
-              isActive={cardGroup[0].type === 'character' || isPetActive(cardGroup[0])}
-              onSelect={() => handleCardSelect(cardGroup[0], cardGroup.length)}
-              onSell={handleSellCard}
-              onUpgrade={handleUpgrade}
-            />
-          ))
-        ) : (
-          <p className="text-gray-400 col-span-full text-center py-8">
-            У вас пока нет карт
-          </p>
-        )}
+      <div className="flex-1 overflow-y-auto min-h-0">
+        <div className="grid auto-rows-fr grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 p-4">
+          {Object.values(groupedCards).length > 0 ? (
+            Object.values(groupedCards).map((cardGroup) => (
+              <CardGroup
+                key={cardGroup[0].id}
+                card={cardGroup[0]}
+                count={cardGroup.length}
+                isSelected={selectedCards.some(c => c.id === cardGroup[0].id)}
+                isActive={cardGroup[0].type === 'character' || isPetActive(cardGroup[0])}
+                onSelect={() => handleCardSelect(cardGroup[0], cardGroup.length)}
+                onSell={handleSellCard}
+                onUpgrade={handleUpgrade}
+              />
+            ))
+          ) : (
+            <p className="text-gray-400 col-span-full text-center py-8">
+              У вас пока нет карт
+            </p>
+          )}
+        </div>
       </div>
     </div>
   );
