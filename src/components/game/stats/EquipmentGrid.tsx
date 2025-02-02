@@ -75,7 +75,7 @@ export const EquipmentGrid = () => {
     return (
       <Card 
         key={slot} 
-        className="p-1 bg-game-surface/50 border-game-accent min-h-[50px] w-[50px] flex flex-col items-center justify-center cursor-pointer hover:bg-game-surface/70"
+        className="p-2 bg-game-surface/50 border-game-accent min-h-[100px] w-[100px] flex flex-col items-center justify-center cursor-pointer hover:bg-game-surface/70"
         onClick={() => item && handleUnequipItem(item)}
       >
         {item ? (
@@ -83,46 +83,46 @@ export const EquipmentGrid = () => {
             <img 
               src={item.image} 
               alt={item.name}
-              className="w-6 h-6 object-contain"
+              className="w-12 h-12 object-contain"
             />
-            <span className="text-[6px] text-center mt-0.5 text-game-accent leading-tight">{item.name}</span>
+            <span className="text-xs text-center mt-1 text-game-accent leading-tight">{item.name}</span>
           </>
         ) : (
-          <span className="text-[6px] text-center text-game-accent/50">{title}</span>
+          <span className="text-sm text-center text-game-accent/50">{title}</span>
         )}
       </Card>
     );
   };
 
   return (
-    <div className="space-y-2">
-      <h3 className="text-xs font-semibold text-game-accent">Бонусы экипировки</h3>
-      <div className="flex justify-between text-[10px] text-game-accent mb-2">
-        <div className="grid grid-cols-3 gap-x-2">
-          <p>С: +{totalStats.power}</p>
-          <p>З: +{totalStats.defense}</p>
-          <p>Ж: +{totalStats.health}</p>
+    <div className="space-y-4">
+      <h3 className="text-lg font-semibold text-game-accent">Бонусы экипировки</h3>
+      <div className="flex justify-between text-base text-game-accent mb-4">
+        <div className="grid grid-cols-3 gap-x-4">
+          <p>Сила: +{totalStats.power}</p>
+          <p>Защита: +{totalStats.defense}</p>
+          <p>Жизнь: +{totalStats.health}</p>
         </div>
       </div>
 
-      <div className="grid grid-cols-7 gap-1">
+      <div className="grid grid-cols-7 gap-2">
         {/* Первая строка */}
-        {renderEquipmentSlot("head", "Гол")}
+        {renderEquipmentSlot("head", "Голова")}
         {renderEquipmentSlot("neck", "Шея")}
-        {renderEquipmentSlot("shoulders", "Плч")}
-        {renderEquipmentSlot("chest", "Грд")}
-        {renderEquipmentSlot("hands", "Рук")}
-        {renderEquipmentSlot("ring1", "К1")}
-        {renderEquipmentSlot("accessory1", "Б1")}
+        {renderEquipmentSlot("shoulders", "Плечи")}
+        {renderEquipmentSlot("chest", "Грудь")}
+        {renderEquipmentSlot("hands", "Руки")}
+        {renderEquipmentSlot("ring1", "Кольцо 1")}
+        {renderEquipmentSlot("accessory1", "Брошь 1")}
 
         {/* Вторая строка */}
-        {renderEquipmentSlot("weapon", "Ор")}
-        {renderEquipmentSlot("belt", "Поя")}
-        {renderEquipmentSlot("legs", "Ног")}
-        {renderEquipmentSlot("feet", "Бот")}
-        {renderEquipmentSlot("offhand", "ЛР")}
-        {renderEquipmentSlot("ring2", "К2")}
-        {renderEquipmentSlot("accessory2", "Б2")}
+        {renderEquipmentSlot("weapon", "Оружие")}
+        {renderEquipmentSlot("belt", "Пояс")}
+        {renderEquipmentSlot("legs", "Ноги")}
+        {renderEquipmentSlot("feet", "Ботинки")}
+        {renderEquipmentSlot("offhand", "Левая рука")}
+        {renderEquipmentSlot("ring2", "Кольцо 2")}
+        {renderEquipmentSlot("accessory2", "Брошь 2")}
       </div>
     </div>
   );
