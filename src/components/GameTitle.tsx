@@ -4,12 +4,20 @@ import { useNavigate } from "react-router-dom";
 export const GameTitle = () => {
   const navigate = useNavigate();
 
+  const handleStartGame = () => {
+    const isInitialized = localStorage.getItem('gameInitialized');
+    if (!isInitialized) {
+      localStorage.setItem('gameInitialized', 'false');
+    }
+    navigate("/game");
+  };
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.8 }}
-      className="text-center cursor-pointer group"
+      className="text-center"
     >
       <h1 
         className="text-7xl md:text-9xl font-bold tracking-wider drop-shadow-lg mb-8"
@@ -28,9 +36,9 @@ export const GameTitle = () => {
         className="px-8 py-3 bg-purple-600 hover:bg-purple-700 text-white rounded-lg text-xl font-semibold transition-colors duration-300 shadow-lg"
         whileHover={{ scale: 1.05 }}
         whileTap={{ scale: 0.95 }}
-        onClick={() => navigate("/game")}
+        onClick={handleStartGame}
       >
-        Start Game
+        Начать игру
       </motion.button>
     </motion.div>
   );
