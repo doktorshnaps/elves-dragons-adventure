@@ -1,6 +1,7 @@
 import React from "react";
 import { Progress } from "@/components/ui/progress";
 import { Star } from "lucide-react";
+import { getRequiredExperience } from "@/data/experienceTable";
 
 interface ExperienceBarProps {
   experience: number;
@@ -17,7 +18,7 @@ export const ExperienceBar = ({ experience, requiredExperience }: ExperienceBarP
         <div className="flex justify-between mb-1">
           <span className="text-sm text-game-accent">Опыт</span>
           <span className="text-sm text-game-accent">
-            {experience}/{requiredExperience}
+            {experience.toLocaleString()}/{requiredExperience.toLocaleString()}
           </span>
         </div>
         <Progress value={experiencePercentage} className="h-2" />
