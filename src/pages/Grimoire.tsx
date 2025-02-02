@@ -8,7 +8,7 @@ export const Grimoire = () => {
 
   return (
     <div 
-      className="min-h-screen p-4 bg-cover bg-center bg-no-repeat"
+      className="min-h-screen h-screen p-4 bg-cover bg-center bg-no-repeat flex flex-col"
       style={{
         backgroundImage: "url('/lovable-uploads/20d88f7a-4f27-4b22-8ebe-e55b87a0c7e3.png')",
         backgroundColor: 'rgba(0, 0, 0, 0.85)',
@@ -27,7 +27,7 @@ export const Grimoire = () => {
         <h1 className="text-2xl font-bold text-game-accent">Гримуар</h1>
       </div>
       
-      <div className="bg-game-surface/90 p-4 rounded-lg border border-game-accent backdrop-blur-sm">
+      <div className="flex-1 bg-game-surface/90 p-4 rounded-lg border border-game-accent backdrop-blur-sm overflow-y-auto">
         <CardsInfo />
       </div>
     </div>

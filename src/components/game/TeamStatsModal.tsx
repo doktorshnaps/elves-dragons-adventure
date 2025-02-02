@@ -23,7 +23,7 @@ export const TeamStatsModal = ({ isOpen, onClose, teamStats, balance }: TeamStat
       }}
     >
       <DialogContent 
-        className="bg-game-surface border-game-accent max-w-md w-full"
+        className="bg-game-surface border-game-accent max-w-md w-full fixed top-[50%] left-[50%] transform -translate-x-1/2 -translate-y-1/2"
         style={{
           backgroundImage: `url("/lovable-uploads/29ea34c8-ede8-4cab-8ca2-049cdb5108c3.png")`,
           backgroundSize: 'cover',
