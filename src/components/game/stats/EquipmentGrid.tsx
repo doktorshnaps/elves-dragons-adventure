@@ -75,7 +75,7 @@ export const EquipmentGrid = () => {
     return (
       <Card 
         key={slot} 
-        className="p-2 bg-game-surface/50 border-game-accent min-h-[80px] w-[80px] flex flex-col items-center justify-center cursor-pointer hover:bg-game-surface/70"
+        className="p-2 bg-game-surface/50 border-game-accent min-h-[50px] w-[50px] flex flex-col items-center justify-center cursor-pointer hover:bg-game-surface/70"
         onClick={() => item && handleUnequipItem(item)}
       >
         {item ? (
@@ -83,12 +83,12 @@ export const EquipmentGrid = () => {
             <img 
               src={item.image} 
               alt={item.name}
-              className="w-10 h-10 object-contain"
+              className="w-6 h-6 object-contain"
             />
-            <span className="text-xs text-center mt-1 text-game-accent leading-tight line-clamp-1">{item.name}</span>
+            <span className="text-[10px] text-center mt-1 text-game-accent leading-tight line-clamp-1">{item.name}</span>
           </>
         ) : (
-          <span className="text-xs text-center text-game-accent/50">{title}</span>
+          <span className="text-[10px] text-center text-game-accent/50">{title}</span>
         )}
       </Card>
     );
