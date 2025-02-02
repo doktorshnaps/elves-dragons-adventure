@@ -12,6 +12,7 @@ import {
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
@@ -52,6 +53,10 @@ export const GameInterface = () => {
     const savedCards = localStorage.getItem('gameCards');
     const cards = savedCards ? JSON.parse(savedCards) : [];
     return calculateTeamStats(cards);
+  };
+
+  const handleCloseStatsDialog = () => {
+    setShowStatsDialog(false);
   };
 
   return (
@@ -155,10 +160,13 @@ export const GameInterface = () => {
       </Dialog>
 
       {/* Stats Dialog */}
-      <Dialog open={showStatsDialog} onOpenChange={setShowStatsDialog}>
+      <Dialog open={showStatsDialog} onOpenChange={handleCloseStatsDialog}>
         <DialogContent className="bg-game-surface border-game-accent">
           <DialogHeader>
             <DialogTitle className="text-xl font-bold text-game-accent">Статистика</DialogTitle>
+            <DialogDescription className="text-sm text-gray-500">
+              Просмотр характеристик вашей команды
+            </DialogDescription>
           </DialogHeader>
           <TeamStats teamStats={getTeamStats()} />
         </DialogContent>
