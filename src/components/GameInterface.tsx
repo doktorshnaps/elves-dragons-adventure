@@ -21,7 +21,7 @@ import { EquipmentTab } from "./game/equipment/EquipmentTab";
 import { Shop } from "./Shop";
 import { DungeonSearch } from "./DungeonSearch";
 import { useBalanceState } from "@/hooks/useBalanceState";
-import { TeamStats } from "./game/TeamStats";
+import { TeamStatsModal } from "./game/TeamStatsModal";
 import { calculateTeamStats } from "@/utils/cardUtils";
 
 export const GameInterface = () => {
@@ -53,10 +53,6 @@ export const GameInterface = () => {
     const savedCards = localStorage.getItem('gameCards');
     const cards = savedCards ? JSON.parse(savedCards) : [];
     return calculateTeamStats(cards);
-  };
-
-  const handleCloseStatsDialog = () => {
-    setShowStatsDialog(false);
   };
 
   return (
@@ -159,18 +155,13 @@ export const GameInterface = () => {
         </DialogContent>
       </Dialog>
 
-      {/* Stats Dialog */}
-      <Dialog open={showStatsDialog} onOpenChange={handleCloseStatsDialog}>
-        <DialogContent className="bg-game-surface border-game-accent">
-          <DialogHeader>
-            <DialogTitle className="text-xl font-bold text-game-accent">Статистика</DialogTitle>
-            <DialogDescription className="text-sm text-gray-500">
-              Просмотр характеристик вашей команды
-            </DialogDescription>
-          </DialogHeader>
-          <TeamStats teamStats={getTeamStats()} />
-        </DialogContent>
-      </Dialog>
+      {/* Stats Modal */}
+      <TeamStatsModal
+        isOpen={showStatsDialog}
+        onClose={() => setShowStatsDialog(false)}
+        teamStats={getTeamStats()}
+        balance={balance}
+      />
 
       {/* Shop Modal */}
       {showShop && (
