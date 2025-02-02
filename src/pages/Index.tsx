@@ -1,23 +1,47 @@
 import { GameTitle } from "@/components/GameTitle";
 import { Button } from "@/components/ui/button";
-import { useState } from "react";
-import { ShoppingCart, BookOpen, BarChart3 } from "lucide-react";
+import { useState, useEffect } from "react";
+import { ShoppingCart, BookOpen, BarChart3, RefreshCw } from "lucide-react";
 import { Shop } from "@/components/Shop";
 import { TeamStatsModal } from "@/components/game/TeamStatsModal";
 import { useBalanceState } from "@/hooks/useBalanceState";
 import { calculateTeamStats } from "@/utils/cardUtils";
 import { useNavigate } from "react-router-dom";
+import { useToast } from "@/hooks/use-toast";
 
 const Index = () => {
   const navigate = useNavigate();
   const [showShop, setShowShop] = useState(false);
   const [showStats, setShowStats] = useState(false);
   const { balance, updateBalance } = useBalanceState();
+  const { toast } = useToast();
 
   const getTeamStats = () => {
     const savedCards = localStorage.getItem('gameCards');
     const cards = savedCards ? JSON.parse(savedCards) : [];
     return calculateTeamStats(cards);
+  };
+
+  const resetGame = () => {
+    // Clear all game-related localStorage items
+    localStorage.removeItem('gameCards');
+    localStorage.removeItem('gameInitialized');
+    localStorage.removeItem('gameBalance');
+    localStorage.removeItem('gameInventory');
+    localStorage.removeItem('battleState');
+    localStorage.removeItem('dragonEggs');
+    localStorage.removeItem('marketplaceListings');
+    localStorage.removeItem('dungeonEnergy');
+    localStorage.removeItem('socialQuests');
+
+    // Show success message
+    toast({
+      title: "Игра сброшена",
+      description: "Все данные очищены. Игра начнется заново при следующем входе.",
+    });
+
+    // Reload the page to reinitialize everything
+    window.location.reload();
   };
 
   return (
@@ -33,23 +57,33 @@ const Index = () => {
       <div className="absolute inset-0 bg-black/20" />
       
       {/* Navigation Bar */}
-      <div className="relative z-10 w-full p-4 flex justify-end gap-4">
+      <div className="relative z-10 w-full p-4 flex justify-between items-center">
         <Button
           variant="outline"
           className="bg-game-surface/80 border-game-accent text-game-accent hover:bg-game-surface"
-          onClick={() => navigate('/marketplace')}
+          onClick={resetGame}
         >
-          <ShoppingCart className="w-4 h-4 mr-2" />
-          Торговая площадка
+          <RefreshCw className="w-4 h-4 mr-2" />
+          Сбросить игру
         </Button>
-        <Button
-          variant="outline"
-          className="bg-game-surface/80 border-game-accent text-game-accent hover:bg-game-surface"
-          onClick={() => navigate('/grimoire')}
-        >
-          <BookOpen className="w-4 h-4 mr-2" />
-          Гримуар
-        </Button>
+        <div className="flex gap-4">
+          <Button
+            variant="outline"
+            className="bg-game-surface/80 border-game-accent text-game-accent hover:bg-game-surface"
+            onClick={() => navigate('/marketplace')}
+          >
+            <ShoppingCart className="w-4 h-4 mr-2" />
+            Торговая площадка
+          </Button>
+          <Button
+            variant="outline"
+            className="bg-game-surface/80 border-game-accent text-game-accent hover:bg-game-surface"
+            onClick={() => navigate('/grimoire')}
+          >
+            <BookOpen className="w-4 h-4 mr-2" />
+            Гримуар
+          </Button>
+        </div>
       </div>
 
       {/* Main Content */}
