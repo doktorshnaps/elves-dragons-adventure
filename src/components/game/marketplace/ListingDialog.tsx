@@ -1,5 +1,4 @@
 import { useState } from "react";
-import { motion } from "framer-motion";
 import { X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -87,61 +86,63 @@ export const ListingDialog = ({ onClose, onCreateListing }: ListingDialogProps) 
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center px-4 overflow-y-auto">
+    <div className="fixed inset-0 z-50 flex items-center justify-center">
       <div className="fixed inset-0 bg-black/50" onClick={onClose} />
-      <Card className="relative z-10 w-full max-w-2xl bg-game-surface border-game-accent p-6 max-h-[90vh] overflow-y-auto">
-        <div className="flex justify-between items-center mb-6">
-          <h2 className="text-xl font-bold text-white">Создать объявление</h2>
-          <Button variant="ghost" onClick={onClose}>
-            <X className="w-4 h-4" />
-          </Button>
-        </div>
-
-        <div className="space-y-6">
-          <div className="flex gap-4">
-            <Button
-              variant={selectedType === 'card' ? 'default' : 'outline'}
-              onClick={() => setSelectedType('card')}
-              className="flex-1"
-            >
-              Карты
-            </Button>
-            <Button
-              variant={selectedType === 'item' ? 'default' : 'outline'}
-              onClick={() => setSelectedType('item')}
-              className="flex-1"
-            >
-              Предметы
+      <div className="relative z-50 w-full max-w-2xl mx-4">
+        <Card className="bg-game-surface border-game-accent p-6 max-h-[80vh] overflow-y-auto">
+          <div className="flex justify-between items-center mb-6">
+            <h2 className="text-xl font-bold text-white">Создать объявление</h2>
+            <Button variant="ghost" onClick={onClose}>
+              <X className="w-4 h-4" />
             </Button>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 max-h-[400px] overflow-y-auto">
-            {selectedType === 'card'
-              ? cards.map((card: CardType, index: number) => renderItem(card, index))
-              : inventory.map((item: Item, index: number) => renderItem(item, index))
-            }
-          </div>
+          <div className="space-y-6">
+            <div className="flex gap-4">
+              <Button
+                variant={selectedType === 'card' ? 'default' : 'outline'}
+                onClick={() => setSelectedType('card')}
+                className="flex-1"
+              >
+                Карты
+              </Button>
+              <Button
+                variant={selectedType === 'item' ? 'default' : 'outline'}
+                onClick={() => setSelectedType('item')}
+                className="flex-1"
+              >
+                Предметы
+              </Button>
+            </div>
 
-          <div className="space-y-2">
-            <label className="text-sm text-gray-400">Цена (в токенах)</label>
-            <Input
-              type="number"
-              value={price}
-              onChange={(e) => setPrice(e.target.value)}
-              min="1"
-              className="bg-game-background border-game-accent"
-            />
-          </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 max-h-[40vh] overflow-y-auto">
+              {selectedType === 'card'
+                ? cards.map((card: CardType, index: number) => renderItem(card, index))
+                : inventory.map((item: Item, index: number) => renderItem(item, index))
+              }
+            </div>
 
-          <Button
-            onClick={handleCreate}
-            disabled={!selectedItem || !price}
-            className="w-full bg-game-accent hover:bg-game-accent/80"
-          >
-            Создать объявление
-          </Button>
-        </div>
-      </Card>
+            <div className="space-y-2">
+              <label className="text-sm text-gray-400">Цена (в токенах)</label>
+              <Input
+                type="number"
+                value={price}
+                onChange={(e) => setPrice(e.target.value)}
+                min="1"
+                className="bg-game-background border-game-accent"
+              />
+            </div>
+
+            <Button
+              onClick={handleCreate}
+              disabled={!selectedItem || !price}
+              className="w-full bg-game-accent hover:bg-game-accent/80"
+            >
+              Создать объявление
+            </Button>
+          </div>
+        </Card>
+      </div>
     </div>
   );
 };
