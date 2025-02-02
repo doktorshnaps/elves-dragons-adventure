@@ -86,23 +86,24 @@ export const ListingDialog = ({ onClose, onCreateListing }: ListingDialogProps) 
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center">
+    <div className="fixed inset-0 z-50 flex items-start justify-center pt-20">
       <div className="fixed inset-0 bg-black/50" onClick={onClose} />
-      <div className="relative z-50 w-full max-w-2xl mx-4">
-        <Card className="bg-game-surface border-game-accent p-6 max-h-[80vh] overflow-y-auto">
-          <div className="flex justify-between items-center mb-6">
-            <h2 className="text-xl font-bold text-white">Создать объявление</h2>
-            <Button variant="ghost" onClick={onClose}>
+      <div className="relative z-50 w-full max-w-xl mx-4">
+        <Card className="bg-game-surface border-game-accent p-4 max-h-[70vh] overflow-y-auto">
+          <div className="flex justify-between items-center mb-4">
+            <h2 className="text-lg font-bold text-white">Создать объявление</h2>
+            <Button variant="ghost" size="sm" onClick={onClose}>
               <X className="w-4 h-4" />
             </Button>
           </div>
 
-          <div className="space-y-6">
-            <div className="flex gap-4">
+          <div className="space-y-4">
+            <div className="flex gap-2">
               <Button
                 variant={selectedType === 'card' ? 'default' : 'outline'}
                 onClick={() => setSelectedType('card')}
                 className="flex-1"
+                size="sm"
               >
                 Карты
               </Button>
@@ -110,12 +111,13 @@ export const ListingDialog = ({ onClose, onCreateListing }: ListingDialogProps) 
                 variant={selectedType === 'item' ? 'default' : 'outline'}
                 onClick={() => setSelectedType('item')}
                 className="flex-1"
+                size="sm"
               >
                 Предметы
               </Button>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 max-h-[40vh] overflow-y-auto">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-[35vh] overflow-y-auto">
               {selectedType === 'card'
                 ? cards.map((card: CardType, index: number) => renderItem(card, index))
                 : inventory.map((item: Item, index: number) => renderItem(item, index))
@@ -130,6 +132,7 @@ export const ListingDialog = ({ onClose, onCreateListing }: ListingDialogProps) 
                 onChange={(e) => setPrice(e.target.value)}
                 min="1"
                 className="bg-game-background border-game-accent"
+                size="sm"
               />
             </div>
 
@@ -137,6 +140,7 @@ export const ListingDialog = ({ onClose, onCreateListing }: ListingDialogProps) 
               onClick={handleCreate}
               disabled={!selectedItem || !price}
               className="w-full bg-game-accent hover:bg-game-accent/80"
+              size="sm"
             >
               Создать объявление
             </Button>
