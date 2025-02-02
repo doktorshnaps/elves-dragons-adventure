@@ -1,14 +1,8 @@
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { Swords, ShoppingCart, Menu, ChevronDown } from "lucide-react";
+import { Swords, ShoppingCart } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import {
   Dialog,
   DialogContent,
@@ -21,15 +15,12 @@ import { EquipmentTab } from "./game/equipment/EquipmentTab";
 import { Shop } from "./Shop";
 import { DungeonSearch } from "./DungeonSearch";
 import { useBalanceState } from "@/hooks/useBalanceState";
-import { TeamStatsModal } from "./game/TeamStatsModal";
-import { calculateTeamStats } from "@/utils/cardUtils";
 
 export const GameInterface = () => {
   const navigate = useNavigate();
   const [showShop, setShowShop] = useState(false);
   const [showDungeonSearch, setShowDungeonSearch] = useState(false);
   const [showGameModeDialog, setShowGameModeDialog] = useState(false);
-  const [showStatsDialog, setShowStatsDialog] = useState(false);
   const [hasCards, setHasCards] = useState(false);
   const { balance, updateBalance } = useBalanceState();
 
@@ -44,16 +35,6 @@ export const GameInterface = () => {
     window.addEventListener('cardsUpdate', checkCards);
     return () => window.removeEventListener('cardsUpdate', checkCards);
   }, []);
-
-  const handleNavigation = (path: string) => {
-    navigate(path);
-  };
-
-  const getTeamStats = () => {
-    const savedCards = localStorage.getItem('gameCards');
-    const cards = savedCards ? JSON.parse(savedCards) : [];
-    return calculateTeamStats(cards);
-  };
 
   return (
     <div className="min-h-screen p-4 relative">
@@ -77,27 +58,6 @@ export const GameInterface = () => {
             Открыть магазин
           </Button>
         </div>
-
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="outline" className="bg-game-surface border-game-accent text-game-accent">
-              <Menu className="h-4 w-4 mr-2" />
-              Меню
-              <ChevronDown className="h-4 w-4 ml-2" />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-48 bg-game-surface border-game-accent">
-            <DropdownMenuItem onSelect={() => handleNavigation('/grimoire')}>
-              Гримуар
-            </DropdownMenuItem>
-            <DropdownMenuItem onSelect={() => handleNavigation('/marketplace')}>
-              Торговая площадка
-            </DropdownMenuItem>
-            <DropdownMenuItem onSelect={() => setShowStatsDialog(true)}>
-              Статистика
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
       </div>
 
       {/* Main Content - Two Panels */}
@@ -149,7 +109,7 @@ export const GameInterface = () => {
               className="h-24 bg-game-surface border-game-accent text-game-accent hover:bg-game-surface/80"
               onClick={() => {
                 setShowGameModeDialog(false);
-                handleNavigation('/adventure');
+                navigate('/adventure');
               }}
             >
               Приключение
@@ -157,14 +117,6 @@ export const GameInterface = () => {
           </div>
         </DialogContent>
       </Dialog>
-
-      {/* Stats Modal */}
-      <TeamStatsModal
-        isOpen={showStatsDialog}
-        onClose={() => setShowStatsDialog(false)}
-        teamStats={getTeamStats()}
-        balance={balance}
-      />
 
       {/* Shop Modal */}
       {showShop && (
