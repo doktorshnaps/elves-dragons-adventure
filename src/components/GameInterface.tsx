@@ -55,10 +55,6 @@ export const GameInterface = () => {
     return calculateTeamStats(cards);
   };
 
-  const handleCloseStats = () => {
-    setShowStatsDialog(false);
-  };
-
   return (
     <div className="min-h-screen p-4 relative">
       <div className="flex justify-between items-center mb-6">
@@ -165,7 +161,7 @@ export const GameInterface = () => {
       {/* Stats Modal */}
       <TeamStatsModal
         isOpen={showStatsDialog}
-        onClose={handleCloseStats}
+        onClose={() => setShowStatsDialog(false)}
         teamStats={getTeamStats()}
         balance={balance}
       />

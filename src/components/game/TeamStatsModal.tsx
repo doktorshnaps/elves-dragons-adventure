@@ -11,14 +11,8 @@ interface TeamStatsModalProps {
 }
 
 export const TeamStatsModal = ({ isOpen, onClose, teamStats, balance }: TeamStatsModalProps) => {
-  const handleOpenChange = (open: boolean) => {
-    if (!open) {
-      onClose();
-    }
-  };
-
   return (
-    <Dialog open={isOpen} onOpenChange={handleOpenChange}>
+    <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent 
         className="bg-game-surface border-game-accent max-w-md w-full"
         style={{
