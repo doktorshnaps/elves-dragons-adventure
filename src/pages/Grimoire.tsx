@@ -7,11 +7,18 @@ export const Grimoire = () => {
   const navigate = useNavigate();
 
   return (
-    <div className="min-h-screen p-4">
+    <div 
+      className="min-h-screen p-4 bg-cover bg-center bg-no-repeat"
+      style={{
+        backgroundImage: "url('/lovable-uploads/20d88f7a-4f27-4b22-8ebe-e55b87a0c7e3.png')",
+        backgroundColor: 'rgba(0, 0, 0, 0.85)',
+        backgroundBlend: 'multiply'
+      }}
+    >
       <div className="flex items-center gap-4 mb-6">
         <Button 
           variant="outline" 
-          className="bg-game-surface border-game-accent text-game-accent hover:bg-game-surface/80"
+          className="bg-game-surface/90 border-game-accent text-game-accent hover:bg-game-surface/80"
           onClick={() => navigate(-1)}
         >
           <ArrowLeft className="w-4 h-4 mr-2" />
@@ -20,7 +27,7 @@ export const Grimoire = () => {
         <h1 className="text-2xl font-bold text-game-accent">Гримуар</h1>
       </div>
       
-      <div className="bg-game-surface/80 p-4 rounded-lg border border-game-accent">
+      <div className="bg-game-surface/90 p-4 rounded-lg border border-game-accent backdrop-blur-sm">
         <CardsInfo />
       </div>
     </div>
