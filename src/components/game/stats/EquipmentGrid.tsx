@@ -75,7 +75,7 @@ export const EquipmentGrid = () => {
     return (
       <Card 
         key={slot} 
-        className="p-2 bg-game-surface/50 border-game-accent min-h-[100px] w-[100px] flex flex-col items-center justify-center cursor-pointer hover:bg-game-surface/70"
+        className="p-2 bg-game-surface/50 border-game-accent min-h-[80px] w-[80px] flex flex-col items-center justify-center cursor-pointer hover:bg-game-surface/70"
         onClick={() => item && handleUnequipItem(item)}
       >
         {item ? (
@@ -83,19 +83,19 @@ export const EquipmentGrid = () => {
             <img 
               src={item.image} 
               alt={item.name}
-              className="w-12 h-12 object-contain"
+              className="w-10 h-10 object-contain"
             />
-            <span className="text-xs text-center mt-1 text-game-accent leading-tight">{item.name}</span>
+            <span className="text-xs text-center mt-1 text-game-accent leading-tight line-clamp-1">{item.name}</span>
           </>
         ) : (
-          <span className="text-sm text-center text-game-accent/50">{title}</span>
+          <span className="text-xs text-center text-game-accent/50">{title}</span>
         )}
       </Card>
     );
   };
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4 max-w-[650px] mx-auto">
       <h3 className="text-lg font-semibold text-game-accent">Бонусы экипировки</h3>
       <div className="flex justify-between text-base text-game-accent mb-4">
         <div className="grid grid-cols-3 gap-x-4">
@@ -105,7 +105,7 @@ export const EquipmentGrid = () => {
         </div>
       </div>
 
-      <div className="grid grid-cols-7 gap-2">
+      <div className="grid grid-cols-7 gap-1 px-2">
         {/* Первая строка */}
         {renderEquipmentSlot("head", "Голова")}
         {renderEquipmentSlot("neck", "Шея")}
