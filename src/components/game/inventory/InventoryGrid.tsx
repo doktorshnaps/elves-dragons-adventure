@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Item } from "@/types/inventory";
 import { GroupedItem } from "./types";
 import { getRarityLabel } from "@/utils/cardUtils";
+import { canEquipItem } from "@/utils/itemUtils";
 
 interface InventoryGridProps {
   groupedItems: GroupedItem[];
@@ -17,7 +18,6 @@ export const InventoryGrid = ({
   onUseItem, 
   onSellItem 
 }: InventoryGridProps) => {
-  // Фильтруем предметы, показывая только неэкипированные
   const unequippedItems = groupedItems.filter(item => 
     !item.items.some(i => i.equipped)
   );
@@ -58,14 +58,14 @@ export const InventoryGrid = ({
             </div>
             {!readonly && (
               <div className="mt-auto space-y-1">
-                {window.location.pathname === '/battle' && (
+                {canEquipItem(item.items[0]) && (
                   <Button 
                     onClick={() => onUseItem(item)} 
                     variant="outline" 
                     size="sm"
                     className="w-full text-xs bg-game-surface/50 hover:bg-game-surface/70"
                   >
-                    Использовать
+                    Экипировать
                   </Button>
                 )}
                 {item.type !== 'dragon_egg' && (
