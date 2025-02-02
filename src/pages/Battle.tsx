@@ -108,7 +108,7 @@ export const Battle = () => {
       localStorage.removeItem('battleState');
       
       setTimeout(() => {
-        navigate("/game");
+        navigate("/");  // Changed from "/game" to "/"
       }, 2000);
     }
   }, [playerStats?.health, navigate, toast]);

@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { Swords, ShoppingCart } from "lucide-react";
+import { Swords, ShoppingCart, BookOpen, BarChart3 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 import {
@@ -15,12 +15,15 @@ import { EquipmentTab } from "./game/equipment/EquipmentTab";
 import { Shop } from "./Shop";
 import { DungeonSearch } from "./DungeonSearch";
 import { useBalanceState } from "@/hooks/useBalanceState";
+import { TeamStatsModal } from "./game/TeamStatsModal";
+import { calculateTeamStats } from "@/utils/cardUtils";
 
 export const GameInterface = () => {
   const navigate = useNavigate();
   const [showShop, setShowShop] = useState(false);
   const [showDungeonSearch, setShowDungeonSearch] = useState(false);
   const [showGameModeDialog, setShowGameModeDialog] = useState(false);
+  const [showStats, setShowStats] = useState(false);
   const [hasCards, setHasCards] = useState(false);
   const { balance, updateBalance } = useBalanceState();
 
@@ -35,6 +38,12 @@ export const GameInterface = () => {
     window.addEventListener('cardsUpdate', checkCards);
     return () => window.removeEventListener('cardsUpdate', checkCards);
   }, []);
+
+  const getTeamStats = () => {
+    const savedCards = localStorage.getItem('gameCards');
+    const cards = savedCards ? JSON.parse(savedCards) : [];
+    return calculateTeamStats(cards);
+  };
 
   return (
     <div className="min-h-screen p-4 relative">
@@ -56,6 +65,26 @@ export const GameInterface = () => {
           >
             <ShoppingCart className="w-4 h-4 mr-2" />
             Открыть магазин
+          </Button>
+        </div>
+
+        <div className="flex gap-2">
+          <Button
+            variant="outline"
+            className="bg-game-surface border-game-accent text-game-accent hover:bg-game-surface/80"
+            onClick={() => setShowStats(true)}
+          >
+            <BarChart3 className="w-4 h-4 mr-2" />
+            Статистика
+          </Button>
+
+          <Button
+            variant="outline"
+            className="bg-game-surface border-game-accent text-game-accent hover:bg-game-surface/80"
+            onClick={() => navigate('/grimoire')}
+          >
+            <BookOpen className="w-4 h-4 mr-2" />
+            Гримуар
           </Button>
         </div>
       </div>
@@ -126,6 +155,14 @@ export const GameInterface = () => {
           onBalanceChange={updateBalance}
         />
       )}
+
+      {/* Stats Modal */}
+      <TeamStatsModal
+        isOpen={showStats}
+        onClose={() => setShowStats(false)}
+        teamStats={getTeamStats()}
+        balance={balance}
+      />
 
       {/* Dungeon Search Modal */}
       {showDungeonSearch && (
