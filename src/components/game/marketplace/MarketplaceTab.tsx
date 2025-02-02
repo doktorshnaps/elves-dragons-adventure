@@ -137,7 +137,7 @@ export const MarketplaceTab = () => {
               className="bg-purple-600/80 hover:bg-purple-700 text-white"
             >
               <ArrowLeft className="w-4 h-4 mr-2" />
-              Вернуться в игру
+              Вернуться в меню
             </Button>
             <h2 className="text-xl font-bold text-white flex items-center gap-2">
               <ShoppingBag className="w-6 h-6" />
