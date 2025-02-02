@@ -19,9 +19,21 @@ export const AdventuresTab = () => {
   const { generateMonster } = useMonsterGeneration(level);
 
   const calculatePlayerStats = () => {
+    // Получаем сохраненные карты из localStorage
+    const savedCards = localStorage.getItem('gameCards');
+    const cards = savedCards ? JSON.parse(savedCards) : [];
+    
+    // Базовые характеристики
     let totalPower = 10;
     let totalDefense = 5;
     let totalHealth = 100;
+
+    // Подсчитываем бонусы от карт
+    cards.forEach((card: any) => {
+      if (card.power) totalPower += card.power;
+      if (card.defense) totalDefense += card.defense;
+      if (card.health) totalHealth += card.health;
+    });
 
     return { power: totalPower, defense: totalDefense, maxHealth: totalHealth };
   };
@@ -63,9 +75,11 @@ export const AdventuresTab = () => {
 
     const stats = calculatePlayerStats();
     
+    // Расчет урона игрока
     const playerDamage = Math.floor(Math.random() * stats.power) + Math.floor(stats.power * 0.5);
     const newMonsterHealth = currentMonster.health - playerDamage;
 
+    // Расчет урона монстра
     const monsterDamage = Math.floor(Math.random() * currentMonster.power);
     const reducedDamage = Math.max(0, monsterDamage - Math.floor(stats.defense * 0.5));
     const newPlayerHealth = playerHealth - reducedDamage;
@@ -76,12 +90,14 @@ export const AdventuresTab = () => {
     });
 
     if (newMonsterHealth <= 0) {
-      updateBalance(balance + currentMonster.reward);
+      // Победа над монстром
+      const monsterReward = currentMonster.reward;
+      updateBalance(balance + monsterReward);
       gainExperience(currentMonster.experienceReward);
       
       toast({
         title: "Победа!",
-        description: `Вы получили ${currentMonster.reward} монет и ${currentMonster.experienceReward} опыта!`
+        description: `Вы получили ${monsterReward} монет и ${currentMonster.experienceReward} опыта!`
       });
       
       setCurrentMonster(null);
