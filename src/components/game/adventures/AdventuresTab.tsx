@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Sword, ArrowRight, Coins, Shield, Star } from "lucide-react";
@@ -7,6 +7,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useBalanceState } from "@/hooks/useBalanceState";
 import { ExperienceBar } from "../stats/ExperienceBar";
 import { Item } from "@/types/inventory";
+import { calculateLevel } from "@/data/experienceTable";
 
 interface Monster {
   id: number;
@@ -25,19 +26,27 @@ interface Equipment {
 }
 
 export const AdventuresTab = () => {
-  const [level, setLevel] = useState(1);
-  const [experience, setExperience] = useState(0);
-  const [requiredExperience, setRequiredExperience] = useState(100);
+  const [totalExperience, setTotalExperience] = useState(() => {
+    const savedState = localStorage.getItem('playerExperience');
+    return savedState ? Number(savedState) : 0;
+  });
+
+  const { level, experience, requiredExperience } = calculateLevel(totalExperience);
+  
   const [currentMonster, setCurrentMonster] = useState<Monster | null>(null);
   const [playerHealth, setPlayerHealth] = useState(100);
   const [equipment, setEquipment] = useState<Equipment>({});
   const { toast } = useToast();
   const { balance, updateBalance } = useBalanceState();
 
+  useEffect(() => {
+    localStorage.setItem('playerExperience', totalExperience.toString());
+  }, [totalExperience]);
+
   const calculatePlayerStats = () => {
-    let totalPower = 10;
-    let totalDefense = 5;
-    let totalHealth = 100;
+    let totalPower = 10 + Math.floor(level * 2); // Увеличиваем силу с уровнем
+    let totalDefense = 5 + Math.floor(level * 1.5); // Увеличиваем защиту с уровнем
+    let totalHealth = 100 + (level * 10); // Увеличиваем здоровье с уровнем
 
     if (equipment.weapon?.stats) {
       totalPower += equipment.weapon.stats.power || 0;
@@ -83,21 +92,15 @@ export const AdventuresTab = () => {
   };
 
   const gainExperience = (amount: number) => {
-    const newExperience = experience + amount;
-    if (newExperience >= requiredExperience) {
-      // Level up!
-      const nextLevel = level + 1;
-      setLevel(nextLevel);
-      setExperience(newExperience - requiredExperience);
-      setRequiredExperience(Math.floor(requiredExperience * 1.5));
-      
+    setTotalExperience(prev => prev + amount);
+    
+    const newLevelData = calculateLevel(totalExperience + amount);
+    if (newLevelData.level > level) {
       toast({
         title: "Уровень повышен!",
-        description: `Достигнут ${nextLevel} уровень!`,
+        description: `Достигнут ${newLevelData.level} уровень!`,
         variant: "default"
       });
-    } else {
-      setExperience(newExperience);
     }
   };
 
