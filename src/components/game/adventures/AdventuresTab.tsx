@@ -295,3 +295,6 @@ export const AdventuresTab = () => {
       </AnimatePresence>
     </div>
   );
+};
+
+export const AdventuresTab = AdventuresTab;
