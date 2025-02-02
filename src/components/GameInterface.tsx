@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { Swords, ShoppingCart, BookOpen, BarChart3 } from "lucide-react";
+import { Swords, ShoppingCart, BookOpen, BarChart3, Store } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 import {
@@ -65,6 +65,15 @@ export const GameInterface = () => {
           >
             <ShoppingCart className="w-4 h-4 mr-2" />
             Открыть магазин
+          </Button>
+
+          <Button
+            variant="outline"
+            className="bg-game-surface border-game-accent text-game-accent hover:bg-game-surface/80"
+            onClick={() => navigate('/marketplace')}
+          >
+            <Store className="w-4 h-4 mr-2" />
+            Торговая площадка
           </Button>
         </div>
 
