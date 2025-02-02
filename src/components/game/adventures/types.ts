@@ -1,3 +1,5 @@
+import { Item } from "@/types/inventory";
+
 export interface Monster {
   id: number;
   name: string;
