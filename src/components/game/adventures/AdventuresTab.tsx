@@ -56,12 +56,12 @@ export const AdventuresTab = () => {
     return { power: totalPower, defense: totalDefense, maxHealth: totalHealth };
   };
 
-  const generateMonster = () => {
+  const generateMonster = (): Monster => {
     const powerMultiplier = 1 + (level - 1) * 0.5;
     const healthMultiplier = 1 + (level - 1) * 0.3;
     const rewardMultiplier = 1 + (level - 1) * 0.7;
 
-    const monsterTypes = [
+    const monsterTypes: Array<{ type: 'normal' | 'elite' | 'boss', chance: number, expReward: number }> = [
       { type: 'normal', chance: 0.7, expReward: 30 },
       { type: 'elite', chance: 0.25, expReward: 60 },
       { type: 'boss', chance: 0.05, expReward: 100 }
@@ -295,4 +295,3 @@ export const AdventuresTab = () => {
       </AnimatePresence>
     </div>
   );
-};
