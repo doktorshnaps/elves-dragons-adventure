@@ -10,7 +10,7 @@ import "./App.css";
 
 const AppLayout = ({ children }: { children: React.ReactNode }) => {
   return (
-    <div className="min-h-screen w-full mx-auto overflow-hidden bg-game-background">
+    <div className="min-h-screen w-full mx-auto overflow-x-hidden bg-game-background">
       <div className="w-full h-full">
         {children}
       </div>

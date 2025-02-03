@@ -48,12 +48,12 @@ export const GameInterface = () => {
   };
 
   return (
-    <div className="min-h-screen p-4 relative">
-      <div className="flex justify-between items-center mb-6">
-        <div className="flex gap-2">
+    <div className="min-h-screen p-2 sm:p-4 relative">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 sm:gap-4 mb-4 sm:mb-6">
+        <div className="flex flex-wrap gap-2 w-full sm:w-auto">
           <Button
             variant="outline"
-            className="bg-game-surface border-game-accent text-game-accent hover:bg-game-surface/80"
+            className="bg-game-surface border-game-accent text-game-accent hover:bg-game-surface/80 flex-1 sm:flex-none"
             onClick={() => setShowGameModeDialog(true)}
           >
             <Swords className="w-4 h-4" />
@@ -62,7 +62,7 @@ export const GameInterface = () => {
           
           <Button
             variant="outline"
-            className="bg-game-surface border-game-accent text-game-accent hover:bg-game-surface/80"
+            className="bg-game-surface border-game-accent text-game-accent hover:bg-game-surface/80 flex-1 sm:flex-none"
             onClick={() => setShowShop(true)}
           >
             <ShoppingCart className="w-4 h-4" />
@@ -71,7 +71,7 @@ export const GameInterface = () => {
 
           <Button
             variant="outline"
-            className="bg-game-surface border-game-accent text-game-accent hover:bg-game-surface/80"
+            className="bg-game-surface border-game-accent text-game-accent hover:bg-game-surface/80 flex-1 sm:flex-none"
             onClick={() => navigate('/marketplace')}
           >
             <Store className="w-4 h-4" />
@@ -79,10 +79,10 @@ export const GameInterface = () => {
           </Button>
         </div>
 
-        <div className="flex gap-2">
+        <div className="flex gap-2 w-full sm:w-auto">
           <Button
             variant="outline"
-            className="bg-game-surface border-game-accent text-game-accent hover:bg-game-surface/80"
+            className="bg-game-surface border-game-accent text-game-accent hover:bg-game-surface/80 flex-1 sm:flex-none"
             onClick={() => setShowStats(true)}
           >
             <BarChart3 className="w-4 h-4" />
@@ -91,7 +91,7 @@ export const GameInterface = () => {
 
           <Button
             variant="outline"
-            className="bg-game-surface border-game-accent text-game-accent hover:bg-game-surface/80"
+            className="bg-game-surface border-game-accent text-game-accent hover:bg-game-surface/80 flex-1 sm:flex-none"
             onClick={() => navigate('/grimoire')}
           >
             <BookOpen className="w-4 h-4" />
@@ -101,12 +101,12 @@ export const GameInterface = () => {
       </div>
 
       {/* Main Content - Two Panels */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
         {hasCards && (
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            className="bg-game-surface/80 p-6 rounded-lg border border-game-accent"
+            className="bg-game-surface/80 p-4 sm:p-6 rounded-lg border border-game-accent"
           >
             <h2 className="text-xl font-bold text-game-accent mb-4">Ваша команда</h2>
             <TeamCards />
@@ -117,7 +117,7 @@ export const GameInterface = () => {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.2 }}
-          className="bg-game-surface/80 p-6 rounded-lg border border-game-accent"
+          className="bg-game-surface/80 p-4 sm:p-6 rounded-lg border border-game-accent"
         >
           <h2 className="text-xl font-bold text-game-accent mb-4">Снаряжение</h2>
           <EquipmentTab />
@@ -126,14 +126,14 @@ export const GameInterface = () => {
 
       {/* Game Mode Dialog */}
       <Dialog open={showGameModeDialog} onOpenChange={setShowGameModeDialog}>
-        <DialogContent className="bg-game-surface border-game-accent">
+        <DialogContent className="bg-game-surface border-game-accent max-w-[95vw] sm:max-w-md">
           <DialogHeader>
             <DialogTitle className="text-xl font-bold text-game-accent">Выберите режим игры</DialogTitle>
             <DialogDescription>
               Выберите режим игры для продолжения
             </DialogDescription>
           </DialogHeader>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 p-4">
             <Button
               variant="outline"
               className="h-24 bg-game-surface border-game-accent text-game-accent hover:bg-game-surface/80"
