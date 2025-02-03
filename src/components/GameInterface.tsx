@@ -17,6 +17,7 @@ import { DungeonSearch } from "./DungeonSearch";
 import { useBalanceState } from "@/hooks/useBalanceState";
 import { TeamStatsModal } from "./game/TeamStatsModal";
 import { calculateTeamStats } from "@/utils/cardUtils";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 export const GameInterface = () => {
   const navigate = useNavigate();
@@ -26,6 +27,7 @@ export const GameInterface = () => {
   const [showStats, setShowStats] = useState(false);
   const [hasCards, setHasCards] = useState(false);
   const { balance, updateBalance } = useBalanceState();
+  const isMobile = useIsMobile();
 
   useEffect(() => {
     const checkCards = () => {
@@ -54,8 +56,8 @@ export const GameInterface = () => {
             className="bg-game-surface border-game-accent text-game-accent hover:bg-game-surface/80"
             onClick={() => setShowGameModeDialog(true)}
           >
-            <Swords className="w-4 h-4 mr-2" />
-            БОЙ
+            <Swords className="w-4 h-4" />
+            {!isMobile && <span className="ml-2">БОЙ</span>}
           </Button>
           
           <Button
@@ -63,8 +65,8 @@ export const GameInterface = () => {
             className="bg-game-surface border-game-accent text-game-accent hover:bg-game-surface/80"
             onClick={() => setShowShop(true)}
           >
-            <ShoppingCart className="w-4 h-4 mr-2" />
-            Открыть магазин
+            <ShoppingCart className="w-4 h-4" />
+            {!isMobile && <span className="ml-2">Открыть магазин</span>}
           </Button>
 
           <Button
@@ -72,8 +74,8 @@ export const GameInterface = () => {
             className="bg-game-surface border-game-accent text-game-accent hover:bg-game-surface/80"
             onClick={() => navigate('/marketplace')}
           >
-            <Store className="w-4 h-4 mr-2" />
-            Торговая площадка
+            <Store className="w-4 h-4" />
+            {!isMobile && <span className="ml-2">Торговая площадка</span>}
           </Button>
         </div>
 
@@ -83,8 +85,8 @@ export const GameInterface = () => {
             className="bg-game-surface border-game-accent text-game-accent hover:bg-game-surface/80"
             onClick={() => setShowStats(true)}
           >
-            <BarChart3 className="w-4 h-4 mr-2" />
-            Статистика
+            <BarChart3 className="w-4 h-4" />
+            {!isMobile && <span className="ml-2">Статистика</span>}
           </Button>
 
           <Button
@@ -92,8 +94,8 @@ export const GameInterface = () => {
             className="bg-game-surface border-game-accent text-game-accent hover:bg-game-surface/80"
             onClick={() => navigate('/grimoire')}
           >
-            <BookOpen className="w-4 h-4 mr-2" />
-            Гримуар
+            <BookOpen className="w-4 h-4" />
+            {!isMobile && <span className="ml-2">Гримуар</span>}
           </Button>
         </div>
       </div>
