@@ -9,7 +9,7 @@ import { Equipment } from "./pages/Equipment";
 import { Team } from "./pages/Team";
 import { Statistics } from "./pages/Statistics";
 import { Menu } from "./pages/Menu";
-import { Dungeons } from "./pages/Dungeons";
+import Dungeons from "./pages/Dungeons";
 
 function App() {
   return (
