@@ -11,13 +11,11 @@ import { Statistics } from "./pages/Statistics";
 import { Equipment } from "./pages/Equipment";
 import { Team } from "./pages/Team";
 import { Marketplace } from "./pages/Marketplace";
-import { NavigationBar } from "./components/navigation/NavigationBar";
 import "./App.css";
 
 const AppLayout = ({ children }: { children: React.ReactNode }) => {
   return (
     <div className="min-h-screen w-full mx-auto overflow-x-hidden bg-game-background">
-      <NavigationBar />
       <div className="w-full h-full">
         {children}
       </div>
