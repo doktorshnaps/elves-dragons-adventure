@@ -1,7 +1,6 @@
 import React from "react";
 import { DungeonSearchDialog } from "./dungeon/DungeonSearchDialog";
 import { useDungeonSearch } from "@/hooks/useDungeonSearch";
-import { EnergyState } from "@/utils/energyManager";
 
 interface DungeonSearchProps {
   onClose: () => void;
@@ -12,7 +11,6 @@ interface DungeonSearchProps {
 export const DungeonSearch = ({ onClose, balance, onBalanceChange }: DungeonSearchProps) => {
   const [hasActiveCards, setHasActiveCards] = React.useState(false);
 
-  // Проверяем наличие активных карт
   React.useEffect(() => {
     const checkActiveCards = () => {
       const savedCards = localStorage.getItem('gameCards');
@@ -21,7 +19,6 @@ export const DungeonSearch = ({ onClose, balance, onBalanceChange }: DungeonSear
         const heroes = cards.filter(card => card.type === 'character');
         const pets = cards.filter(card => card.type === 'pet');
         
-        // Проверяем наличие хотя бы одного героя
         setHasActiveCards(heroes.length > 0);
       } else {
         setHasActiveCards(false);
@@ -38,7 +35,6 @@ export const DungeonSearch = ({ onClose, balance, onBalanceChange }: DungeonSear
     };
   }, []);
 
-  // При открытии компонента поиска подземелья, сбрасываем состояние битвы
   React.useEffect(() => {
     localStorage.removeItem('battleState');
   }, []);

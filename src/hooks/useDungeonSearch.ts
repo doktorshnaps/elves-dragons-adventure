@@ -15,7 +15,6 @@ export const useDungeonSearch = (balance: number) => {
   const { initializeBattleState } = useBattleStateInitializer();
 
   const rollDice = () => {
-    // Проверяем наличие активного подземелья
     const savedState = localStorage.getItem('battleState');
     if (savedState) {
       const parsedState = JSON.parse(savedState);
@@ -31,7 +30,6 @@ export const useDungeonSearch = (balance: number) => {
       }
     }
 
-    // Проверяем энергию
     if (!useEnergy()) {
       toast({
         title: "Недостаточно энергии",
@@ -41,7 +39,6 @@ export const useDungeonSearch = (balance: number) => {
       return;
     }
 
-    // Проверяем здоровье
     if (isHealthTooLow) {
       toast({
         title: "Низкое здоровье",

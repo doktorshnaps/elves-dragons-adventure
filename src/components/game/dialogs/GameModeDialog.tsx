@@ -1,5 +1,5 @@
 import { Button } from "@/components/ui/button";
-import { useNavigate } from "react-router-dom";
+import { DungeonsList } from "@/components/game/DungeonsList";
 import {
   Dialog,
   DialogContent,
@@ -16,19 +16,17 @@ interface GameModeDialogProps {
 }
 
 export const GameModeDialog = ({ isOpen, onClose, onDungeonSearch }: GameModeDialogProps) => {
-  const navigate = useNavigate();
-
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="bg-game-surface border-game-accent max-w-[95vw] sm:max-w-md">
+      <DialogContent className="bg-game-surface border-game-accent max-w-[95vw] sm:max-w-4xl max-h-[90vh]">
         <DialogHeader>
           <DialogTitle className="text-xl font-bold text-game-accent">Выберите режим игры</DialogTitle>
           <DialogDescription>
             Выберите режим игры для продолжения
           </DialogDescription>
         </DialogHeader>
-        <ScrollArea className="h-[calc(80vh-4rem)] sm:h-auto">
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 p-4">
+        <ScrollArea className="h-[calc(80vh-8rem)]">
+          <div className="grid grid-cols-1 gap-4 p-4">
             <Button
               variant="outline"
               className="h-16 sm:h-24 bg-game-surface border-game-accent text-game-accent hover:bg-game-surface/80"
@@ -39,16 +37,7 @@ export const GameModeDialog = ({ isOpen, onClose, onDungeonSearch }: GameModeDia
             >
               Поиск подземелья
             </Button>
-            <Button
-              variant="outline"
-              className="h-16 sm:h-24 bg-game-surface border-game-accent text-game-accent hover:bg-game-surface/80"
-              onClick={() => {
-                onClose();
-                navigate('/adventure');
-              }}
-            >
-              Приключение
-            </Button>
+            <DungeonsList />
           </div>
         </ScrollArea>
       </DialogContent>
