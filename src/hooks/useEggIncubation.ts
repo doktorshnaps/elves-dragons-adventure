@@ -45,6 +45,9 @@ export const useEggIncubation = ({
         if (timeDiff >= hatchTime) {
           setIsHatched(true);
           setCanClaim(true);
+          setTimeLeft(0);
+        } else {
+          setTimeLeft(hatchTime - timeDiff);
         }
       }
     }
@@ -54,8 +57,16 @@ export const useEggIncubation = ({
   useEffect(() => {
     if (!isStarted || isHatched) return;
 
+    const savedIncubations = localStorage.getItem('eggIncubations');
+    const incubations = savedIncubations ? JSON.parse(savedIncubations) : [];
+    const eggIncubation = incubations.find((inc: any) => 
+      inc.petName === petName && inc.createdAt === createdAt
+    );
+
+    if (!eggIncubation) return;
+
+    const startTime = new Date(eggIncubation.startedAt).getTime();
     const hatchTime = getHatchTime(rarity);
-    const startTime = new Date().getTime();
     
     const timer = setInterval(() => {
       const now = new Date().getTime();
@@ -72,7 +83,7 @@ export const useEggIncubation = ({
     }, 1000);
 
     return () => clearInterval(timer);
-  }, [isStarted, isHatched, rarity]);
+  }, [isStarted, isHatched, petName, createdAt, rarity]);
 
   const handleStart = () => {
     setIsStarted(true);
