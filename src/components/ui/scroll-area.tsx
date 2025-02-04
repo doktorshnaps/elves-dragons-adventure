@@ -15,10 +15,13 @@ const ScrollArea = React.forwardRef<
     {...props}
   >
     <ScrollAreaPrimitive.Viewport 
-      className="h-full w-full rounded-[inherit] overflow-y-auto"
+      className="h-full w-full rounded-[inherit]"
       style={{ 
         touchAction: 'pan-y',
-        WebkitOverflowScrolling: 'touch'
+        WebkitOverflowScrolling: 'touch',
+        overflowY: 'auto',
+        cursor: 'grab',
+        userSelect: 'none'
       }}
     >
       {children}
