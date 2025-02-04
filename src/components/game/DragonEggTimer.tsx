@@ -41,6 +41,30 @@ export const DragonEggTimer = ({
     return hours * 60 * 60 * 1000; // Конвертируем в миллисекунды
   };
 
+  // Проверяем сохраненное состояние при монтировании
+  useEffect(() => {
+    const savedIncubations = localStorage.getItem('eggIncubations');
+    if (savedIncubations) {
+      const incubations = JSON.parse(savedIncubations);
+      const eggIncubation = incubations.find((inc: any) => 
+        inc.petName === petName && inc.createdAt === createdAt
+      );
+      
+      if (eggIncubation) {
+        setIsStarted(true);
+        const hatchTime = getHatchTime(rarity);
+        const startDate = new Date(createdAt);
+        const now = new Date();
+        const timeDiff = now.getTime() - startDate.getTime();
+
+        if (timeDiff >= hatchTime) {
+          setIsHatched(true);
+          setCanClaim(true);
+        }
+      }
+    }
+  }, [petName, createdAt, rarity]);
+
   useEffect(() => {
     if (!isStarted) return;
 
@@ -72,6 +96,19 @@ export const DragonEggTimer = ({
 
   const handleStart = () => {
     setIsStarted(true);
+    
+    // Сохраняем состояние инкубации
+    const savedIncubations = localStorage.getItem('eggIncubations');
+    const incubations = savedIncubations ? JSON.parse(savedIncubations) : [];
+    
+    incubations.push({
+      petName,
+      createdAt,
+      startedAt: new Date().toISOString()
+    });
+    
+    localStorage.setItem('eggIncubations', JSON.stringify(incubations));
+    
     toast({
       title: "Инкубация началась",
       description: `${petName} вылупится через некоторое время`,
@@ -83,6 +120,17 @@ export const DragonEggTimer = ({
       onHatch();
       setIsHatched(true);
       setCanClaim(false);
+      
+      // Удаляем информацию об инкубации после получения
+      const savedIncubations = localStorage.getItem('eggIncubations');
+      if (savedIncubations) {
+        const incubations = JSON.parse(savedIncubations);
+        const updatedIncubations = incubations.filter((inc: any) => 
+          !(inc.petName === petName && inc.createdAt === createdAt)
+        );
+        localStorage.setItem('eggIncubations', JSON.stringify(updatedIncubations));
+      }
+      
       toast({
         title: "Питомец получен!",
         description: `${petName} теперь доступен в вашей коллекции`,
