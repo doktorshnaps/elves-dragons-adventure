@@ -30,7 +30,7 @@ export const CardImage = ({ image, name }: CardImageProps) => {
   if (!image) return null;
 
   return (
-    <div className={`w-full ${isMobile ? 'aspect-[3/4]' : 'aspect-square'} mb-0.5 rounded-lg overflow-hidden`}>
+    <div className="w-full h-full overflow-hidden rounded-lg">
       <img 
         ref={imgRef}
         alt={name}

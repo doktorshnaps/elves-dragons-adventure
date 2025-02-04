@@ -29,18 +29,18 @@ export const CardDisplay = ({
   const isMobile = useIsMobile();
 
   return (
-    <Card className={`relative w-full max-w-[300px] sm:max-w-[200px] md:max-w-[180px] lg:max-w-[160px] 
-      min-h-[320px] sm:min-h-[280px] md:min-h-[260px] lg:min-h-[240px]
-      p-0.5 bg-game-background border-game-accent hover:border-game-primary transition-all duration-300 
-      ${!isActive && card.type === 'pet' ? 'opacity-50' : ''} ${className}`}
+    <Card 
+      className={`relative w-[160px] h-[320px] sm:w-[160px] sm:h-[320px] md:w-[160px] md:h-[320px] lg:w-[160px] lg:h-[320px]
+        p-0.5 bg-game-background border-game-accent hover:border-game-primary transition-all duration-300 
+        ${!isActive && card.type === 'pet' ? 'opacity-50' : ''} ${className}`}
     >
       <div className="flex flex-col h-full">
-        <div className="flex-shrink-0">
+        <div className="w-full h-[140px] flex-shrink-0">
           <CardImage image={card.image} name={card.name} />
         </div>
         
-        <div className="flex flex-col flex-grow justify-between gap-0.5 p-0.5">
-          <div>
+        <div className="flex flex-col flex-grow justify-between gap-0.5 p-0.5 h-[180px]">
+          <div className="flex flex-col gap-0.5">
             <CardHeader name={card.name} rarity={card.rarity} />
 
             <div className={`text-purple-400 ${isMobile ? 'text-[8px]' : 'text-xs'}`}>
