@@ -105,14 +105,17 @@ export const DungeonSearchDialog = ({
             
             <DungeonDisplay rolling={rolling} selectedDungeon={selectedDungeon} />
 
-            <div className="space-x-4">
-              <Button
-                onClick={onRollDice}
-                disabled={rolling || energyState.current <= 0 || isHealthTooLow || !hasActiveCards}
-                className="bg-game-primary hover:bg-game-primary/80"
-              >
-                {rolling ? "Поиск подземелья..." : "Искать подземелье"}
-              </Button>
+            <div className="space-y-4">
+              {!selectedDungeon && (
+                <Button
+                  onClick={onRollDice}
+                  disabled={rolling || energyState.current <= 0 || isHealthTooLow || !hasActiveCards}
+                  className="bg-game-primary hover:bg-game-primary/80"
+                >
+                  {rolling ? "Поиск подземелья..." : "Искать подземелье"}
+                </Button>
+              )}
+              
               {selectedDungeon && !rolling && (
                 <Button
                   onClick={handleDungeonSelect}
@@ -121,10 +124,11 @@ export const DungeonSearchDialog = ({
                   Войти в подземелье
                 </Button>
               )}
+
               <Button
                 onClick={onClose}
                 variant="outline"
-                className="border-game-accent text-game-accent"
+                className="border-game-accent text-game-accent ml-4"
               >
                 Закрыть
               </Button>
