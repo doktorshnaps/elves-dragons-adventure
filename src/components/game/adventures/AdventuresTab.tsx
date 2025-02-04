@@ -2,13 +2,14 @@ import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { useBalanceState } from "@/hooks/useBalanceState";
 import { Monster } from "./types";
-import { MonsterCard } from "./MonsterCard";
 import { PlayerStatsCard } from "./PlayerStatsCard";
 import { useMonsterGeneration } from "./useMonsterGeneration";
 import { Item } from "@/types/inventory";
 import { AdventureHeader } from "./components/AdventureHeader";
 import { AdventureControls } from "./components/AdventureControls";
 import { AdventureInventory } from "./components/AdventureInventory";
+import { AdventureLayout } from "./components/AdventureLayout";
+import { MonsterSection } from "./components/MonsterSection";
 
 export const AdventuresTab = () => {
   const [level, setLevel] = useState(1);
@@ -143,78 +144,40 @@ export const AdventuresTab = () => {
     });
   };
 
-  const restoreHealth = () => {
-    if (balance < 50) {
-      toast({
-        title: "Недостаточно монет",
-        description: "Нужно 50 монет для восстановления здоровья",
-        variant: "destructive"
-      });
-      return;
-    }
-
-    const stats = calculatePlayerStats();
-    updateBalance(balance - 50);
-    setPlayerHealth(stats.maxHealth);
-    toast({
-      title: "Здоровье восстановлено",
-      description: "Ваш герой готов к новым приключениям!"
-    });
-  };
-
   const stats = calculatePlayerStats();
 
   return (
-    <div 
-      className="min-h-screen p-6 relative"
-      style={{
-        backgroundImage: 'url("/lovable-uploads/59e5d39f-bbd6-4283-be9f-a8710e7cc372.png")',
-        backgroundSize: 'cover',
-        backgroundPosition: 'center',
-        backgroundRepeat: 'no-repeat',
-        touchAction: 'pan-y',
-        WebkitOverflowScrolling: 'touch',
-        overscrollBehavior: 'contain',
-        msOverflowStyle: '-ms-autohiding-scrollbar',
-        scrollBehavior: 'smooth'
-      }}
-    >
-      <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" />
-      
-      <div className="relative z-10 space-y-6">
-        <AdventureHeader level={level} balance={balance} />
+    <AdventureLayout>
+      <AdventureHeader level={level} balance={balance} />
 
-        <PlayerStatsCard
-          level={level}
-          stats={stats}
-          experience={experience}
-          requiredExperience={requiredExperience}
-          playerHealth={playerHealth}
-          maxHealth={stats.maxHealth}
-          balance={balance}
-          onRestoreHealth={restoreHealth}
-        />
+      <PlayerStatsCard
+        level={level}
+        stats={stats}
+        experience={experience}
+        requiredExperience={requiredExperience}
+        playerHealth={playerHealth}
+        maxHealth={stats.maxHealth}
+        balance={balance}
+        onRestoreHealth={() => {}}
+      />
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div className="space-y-4">
-            <AdventureControls
-              onStartAdventure={startAdventure}
-              isDisabled={!!currentMonster}
-              playerHealth={playerHealth}
-            />
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="space-y-4">
+          <AdventureControls
+            onStartAdventure={startAdventure}
+            isDisabled={!!currentMonster}
+            playerHealth={playerHealth}
+          />
 
-            {currentMonster && (
-              <MonsterCard
-                monster={currentMonster}
-                onAttack={attackMonster}
-                playerHealth={playerHealth}
-              />
-            )}
-          </div>
-
-          <AdventureInventory onUseItem={handleUseItem} />
+          <MonsterSection
+            currentMonster={currentMonster}
+            attackMonster={attackMonster}
+            playerHealth={playerHealth}
+          />
         </div>
+
+        <AdventureInventory onUseItem={handleUseItem} />
       </div>
-    </div>
+    </AdventureLayout>
   );
 };

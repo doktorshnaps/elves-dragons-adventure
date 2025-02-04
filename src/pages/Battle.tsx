@@ -1,21 +1,20 @@
 import React, { useEffect } from "react";
-import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
-import { ArrowLeft, DoorOpen, Heart, ArrowRight } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { OpponentCard } from "@/components/battle/OpponentCard";
-import { PlayerCard } from "@/components/battle/PlayerCard";
-import { Inventory } from "@/components/battle/Inventory";
 import { useToast } from "@/hooks/use-toast";
 import { useBattleState } from "@/hooks/useBattleState";
 import { fixResizeObserverLoop } from "@/utils/resizeObserverFix";
-import { useIsMobile } from "@/hooks/use-mobile";
 import { dungeonBackgrounds } from "@/constants/dungeons";
+import { BattleLayout } from "@/components/battle/components/BattleLayout";
+import { BattleHeader } from "@/components/battle/components/BattleHeader";
+import { OpponentsList } from "@/components/battle/components/OpponentsList";
+import { NextLevelButton } from "@/components/battle/components/NextLevelButton";
+import { PlayerCard } from "@/components/battle/PlayerCard";
+import { Inventory } from "@/components/battle/Inventory";
+import { HealthDisplay } from "@/components/battle/components/HealthDisplay";
 
 export const Battle = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
-  const isMobile = useIsMobile();
   
   const savedState = localStorage.getItem('battleState');
   const savedData = savedState ? JSON.parse(savedState) : null;
@@ -95,8 +94,6 @@ export const Battle = () => {
     }
   };
 
-  const showNextLevelButton = opponents.length === 0 && playerStats?.health > 0;
-
   useEffect(() => {
     if (playerStats?.health <= 0) {
       toast({
@@ -108,7 +105,7 @@ export const Battle = () => {
       localStorage.removeItem('battleState');
       
       setTimeout(() => {
-        navigate("/");  // Changed from "/game" to "/"
+        navigate("/");
       }, 2000);
     }
   }, [playerStats?.health, navigate, toast]);
@@ -118,99 +115,35 @@ export const Battle = () => {
   }
 
   return (
-    <div 
-      className="min-h-screen bg-game-background p-2 md:p-6 relative"
-      style={{
-        backgroundImage: backgroundImage ? `linear-gradient(rgba(0, 0, 0, 0.7), rgba(0, 0, 0, 0.7)), url(${backgroundImage})` : undefined,
-        backgroundSize: 'cover',
-        backgroundPosition: 'center',
-        backgroundRepeat: 'no-repeat',
-        touchAction: 'pan-y',
-        WebkitOverflowScrolling: 'touch',
-        overscrollBehavior: 'contain',
-        msOverflowStyle: '-ms-autohiding-scrollbar',
-        scrollBehavior: 'smooth'
-      }}
-    >
-      <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        className="max-w-7xl mx-auto"
-        style={{
-          touchAction: 'pan-y',
-          WebkitOverflowScrolling: 'touch',
-          overscrollBehavior: 'contain'
-        }}
-      >
-        <div className="flex flex-col md:flex-row justify-between items-center gap-4 mb-4 md:mb-8">
-          <div className="flex items-center gap-2 md:gap-4">
-            <Button
-              variant="ghost"
-              size="icon"
-              className="text-game-accent hover:text-game-accent/80"
-              onClick={handleBackToGame}
-            >
-              <ArrowLeft className="h-4 w-4 md:h-5 md:w-5" />
-            </Button>
-            <h1 className="text-xl md:text-3xl font-bold text-game-accent">{selectedDungeon}</h1>
-          </div>
-          <div className="flex flex-wrap items-center gap-2 md:gap-4">
-            <span className="text-base md:text-xl font-bold text-yellow-500">🪙 {coins}</span>
-            <span className="text-base md:text-xl font-bold text-purple-500">👑 Уровень {savedLevel}</span>
-            <Button
-              variant="destructive"
-              className="bg-red-600 hover:bg-red-700 text-xs md:text-base"
-              onClick={handleExitDungeon}
-            >
-              <DoorOpen className="h-4 w-4 md:h-5 md:w-5 mr-1 md:mr-2" />
-              {isMobile ? `Выход из ${selectedDungeon}` : `Покинуть ${selectedDungeon}`}
-            </Button>
-          </div>
-        </div>
+    <BattleLayout backgroundImage={backgroundImage}>
+      <BattleHeader
+        selectedDungeon={selectedDungeon}
+        coins={coins}
+        savedLevel={savedLevel}
+        onBackToGame={handleBackToGame}
+        onExitDungeon={handleExitDungeon}
+      />
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-6 mb-4 md:mb-8">
-          {opponents.map((opponent) => (
-            <OpponentCard
-              key={opponent.id}
-              opponent={opponent}
-              onAttack={attackEnemy}
-              isPlayerTurn={isPlayerTurn}
-              currentLevel={savedLevel}
-              playerHealth={playerStats?.health || 0}
-            />
-          ))}
-        </div>
+      <OpponentsList
+        opponents={opponents}
+        onAttack={attackEnemy}
+        isPlayerTurn={isPlayerTurn}
+        currentLevel={savedLevel}
+        playerHealth={playerStats?.health || 0}
+      />
 
-        {showNextLevelButton && (
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="flex justify-center mb-4 md:mb-8"
-          >
-            <Button
-              variant="default"
-              size={isMobile ? "default" : "lg"}
-              onClick={handleNextLevel}
-              className="bg-green-600 hover:bg-green-700 text-white font-bold text-sm md:text-base"
-            >
-              <ArrowRight className="h-4 w-4 md:h-5 md:w-5 mr-1 md:mr-2" />
-              {isMobile ? "Следующий уровень" : "Перейти на следующий уровень"}
-            </Button>
-          </motion.div>
-        )}
+      <NextLevelButton
+        show={opponents.length === 0 && playerStats?.health > 0}
+        onClick={handleNextLevel}
+      />
 
-        <PlayerCard playerStats={playerStats} />
-        <Inventory items={inventory} onUseItem={useItem} />
+      <PlayerCard playerStats={playerStats} />
+      <Inventory items={inventory} onUseItem={useItem} />
 
-        <div className="fixed bottom-2 md:bottom-6 right-2 md:right-6 bg-game-surface p-2 md:p-4 rounded-lg border border-game-accent shadow-lg">
-          <div className="flex items-center gap-1 md:gap-2">
-            <Heart className="w-4 h-4 md:w-6 md:h-6 text-red-500" />
-            <span className="font-bold text-base md:text-xl text-game-accent">
-              {playerStats?.health}/{playerStats?.maxHealth}
-            </span>
-          </div>
-        </div>
-      </motion.div>
-    </div>
+      <HealthDisplay
+        health={playerStats?.health || 0}
+        maxHealth={playerStats?.maxHealth || 0}
+      />
+    </BattleLayout>
   );
 };

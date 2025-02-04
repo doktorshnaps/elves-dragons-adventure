@@ -1,16 +1,14 @@
 import { useState } from "react";
-import { Button } from "@/components/ui/button";
-import { ShoppingBag, Plus, ArrowLeft } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { ListingDialog } from "./ListingDialog";
-import { MarketplaceListing } from "./types";
 import { useBalanceState } from "@/hooks/useBalanceState";
-import { MarketplaceListings } from "./MarketplaceListings";
-import { useNavigate } from "react-router-dom";
+import { MarketplaceListing } from "./types";
+import { ListingDialog } from "./ListingDialog";
+import { MarketplaceLayout } from "./components/MarketplaceLayout";
+import { MarketplaceHeader } from "./components/MarketplaceHeader";
+import { MarketplaceContent } from "./components/MarketplaceContent";
 
 export const MarketplaceTab = () => {
   const { toast } = useToast();
-  const navigate = useNavigate();
   const [showListingDialog, setShowListingDialog] = useState(false);
   const { balance, updateBalance } = useBalanceState();
   const [listings, setListings] = useState<MarketplaceListing[]>(() => {
@@ -119,71 +117,23 @@ export const MarketplaceTab = () => {
   };
 
   return (
-    <div 
-      className="min-h-screen h-screen p-4 bg-game-background"
-      style={{
-        backgroundImage: "url('/lovable-uploads/20d88f7a-4f27-4b22-8ebe-e55b87a0c7e3.png')",
-        backgroundColor: 'rgba(0, 0, 0, 0.85)',
-        backgroundBlendMode: 'multiply',
-        touchAction: 'pan-y',
-        WebkitOverflowScrolling: 'touch',
-        overscrollBehavior: 'contain',
-        msOverflowStyle: '-ms-autohiding-scrollbar',
-        scrollBehavior: 'smooth'
-      }}
-    >
-      <div className="flex items-center gap-4 mb-6">
-        <Button 
-          variant="outline" 
-          className="bg-game-surface/80 border-game-accent text-game-accent hover:bg-game-surface"
-          onClick={() => navigate('/game')}
-        >
-          <ArrowLeft className="w-4 h-4 mr-2" />
-          Вернуться в меню
-        </Button>
-        <h1 className="text-2xl font-bold text-game-accent">Торговая площадка</h1>
-      </div>
+    <MarketplaceLayout>
+      <MarketplaceHeader />
       
-      <div 
-        className="flex-1 bg-game-surface/90 p-4 rounded-lg border border-game-accent backdrop-blur-sm h-[calc(100vh-120px)] overflow-y-auto"
-        style={{ 
-          touchAction: 'pan-y',
-          WebkitOverflowScrolling: 'touch',
-          overscrollBehavior: 'contain',
-          msOverflowStyle: '-ms-autohiding-scrollbar',
-          scrollBehavior: 'smooth',
-          WebkitUserSelect: 'none',
-          userSelect: 'none'
-        }}
-      >
-        <div className="flex justify-between items-center mb-6">
-          <div className="flex items-center gap-2">
-            <ShoppingBag className="w-6 h-6 text-game-accent" />
-            <span className="text-xl font-bold text-game-accent">Доступные предложения</span>
-          </div>
-          <Button
-            onClick={() => setShowListingDialog(true)}
-            className="bg-game-accent hover:bg-game-accent/80"
-          >
-            <Plus className="w-4 h-4 mr-2" />
-            Создать объявление
-          </Button>
-        </div>
+      <MarketplaceContent
+        listings={listings}
+        balance={balance}
+        onOpenListingDialog={() => setShowListingDialog(true)}
+        onBuy={handleBuy}
+        onCancelListing={handleCancelListing}
+      />
 
-        <MarketplaceListings 
-          listings={listings}
-          balance={balance}
-          onBuy={handleBuy}
-          onCancelListing={handleCancelListing}
+      {showListingDialog && (
+        <ListingDialog
+          onClose={() => setShowListingDialog(false)}
+          onCreateListing={handleCreateListing}
         />
-
-        {showListingDialog && (
-          <ListingDialog
-            onClose={() => setShowListingDialog(false)}
-            onCreateListing={handleCreateListing}
-          />
-        )}
-      </div>
-    </div>
+      )}
+    </MarketplaceLayout>
   );
 };
