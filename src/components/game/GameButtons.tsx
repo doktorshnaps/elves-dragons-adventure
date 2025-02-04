@@ -26,10 +26,10 @@ export const GameButtons = ({
       <Button
         variant="outline"
         className="bg-game-surface border-game-accent text-game-accent hover:bg-game-surface/80 flex-1 sm:flex-none h-8 sm:h-10 px-2 sm:px-4"
-        onClick={onGameModeClick}
+        onClick={() => navigate('/dungeons')}
       >
         <Swords className="w-4 h-4" />
-        {!isMobile && <span className="ml-2">БОЙ</span>}
+        {!isMobile && <span className="ml-2">Подземелье</span>}
       </Button>
       
       <Button
