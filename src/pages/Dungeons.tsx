@@ -1,10 +1,12 @@
-import { DungeonsList } from "@/components/game/DungeonsList";
+import { DungeonSearch } from "@/components/DungeonSearch";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { useBalanceState } from "@/hooks/useBalanceState";
 
 const Dungeons = () => {
   const navigate = useNavigate();
+  const { balance, updateBalance } = useBalanceState();
 
   return (
     <div className="min-h-screen p-4">
@@ -16,7 +18,12 @@ const Dungeons = () => {
         <ArrowLeft className="w-4 h-4 mr-2" />
         Вернуться в меню
       </Button>
-      <DungeonsList />
+      
+      <DungeonSearch 
+        onClose={() => navigate('/menu')} 
+        balance={balance}
+        onBalanceChange={updateBalance}
+      />
     </div>
   );
 };
