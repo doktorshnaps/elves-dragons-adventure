@@ -3,7 +3,6 @@ import { Button } from "@/components/ui/button";
 import { Item } from "@/types/inventory";
 import { GroupedItem } from "./types";
 import { getRarityLabel } from "@/utils/cardUtils";
-import { canEquipItem } from "@/utils/itemUtils";
 
 interface InventoryGridProps {
   groupedItems: GroupedItem[];
@@ -23,7 +22,7 @@ export const InventoryGrid = ({
   );
 
   if (unequippedItems.length === 0) {
-    return <p className="text-gray-400 col-span-full text-center py-4 text-lg">Инвентарь пуст</p>;
+    return <p className="text-gray-400 col-span-full text-center py-4 text-sm">Инвентарь пуст</p>;
   }
 
   return (
@@ -44,7 +43,7 @@ export const InventoryGrid = ({
               </div>
             )}
             <div className="flex flex-col flex-grow">
-              <h4 className="font-bold text-game-accent text-xs truncate">
+              <h4 className="font-bold text-game-accent text-[10px] truncate">
                 {item.name} {item.count > 1 && `(${item.count})`}
               </h4>
               {item.type === 'dragon_egg' && (

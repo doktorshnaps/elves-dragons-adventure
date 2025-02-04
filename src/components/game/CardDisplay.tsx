@@ -47,7 +47,7 @@ export const CardDisplay = ({
   }, [card.image]);
 
   return (
-    <Card className={`p-1.5 bg-game-background border-game-accent hover:border-game-primary transition-all duration-300 h-full flex flex-col ${
+    <Card className={`p-1 bg-game-background border-game-accent hover:border-game-primary transition-all duration-300 h-full flex flex-col ${
       !isActive && card.type === 'pet' ? 'opacity-50' : ''
     } ${className}`}>
       <div className="flex flex-col gap-1 flex-grow">
@@ -59,8 +59,6 @@ export const CardDisplay = ({
               className="w-full h-full object-cover"
               loading="eager"
               decoding="async"
-              fetchPriority="high"
-              style={{ contentVisibility: 'auto' }}
             />
           </div>
         )}
