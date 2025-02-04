@@ -17,11 +17,12 @@ const ScrollArea = React.forwardRef<
     <ScrollAreaPrimitive.Viewport 
       className="h-full w-full rounded-[inherit]"
       style={{ 
-        touchAction: 'pan-y',
+        touchAction: 'manipulation',
         WebkitOverflowScrolling: 'touch',
         overflowY: 'auto',
-        cursor: 'grab',
-        userSelect: 'none'
+        overscrollBehavior: 'contain',
+        msOverflowStyle: '-ms-autohiding-scrollbar',
+        scrollBehavior: 'smooth'
       }}
     >
       {children}
@@ -49,12 +50,7 @@ const ScrollBar = React.forwardRef<
     )}
     {...props}
   >
-    <ScrollAreaPrimitive.ScrollAreaThumb 
-      className={cn(
-        "relative flex-1 rounded-full bg-border",
-        orientation === "vertical" && "w-1.5"
-      )}
-    />
+    <ScrollAreaPrimitive.ScrollAreaThumb className="relative flex-1 rounded-full bg-border" />
   </ScrollAreaPrimitive.ScrollAreaScrollbar>
 ))
 ScrollBar.displayName = ScrollAreaPrimitive.ScrollAreaScrollbar.displayName
