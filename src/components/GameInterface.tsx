@@ -102,6 +102,16 @@ export const GameInterface = () => {
 
       {/* Main Content - Two Panels */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-2 sm:gap-6">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.2 }}
+          className="bg-game-surface/80 p-2 sm:p-6 rounded-lg border border-game-accent"
+        >
+          <h2 className="text-lg sm:text-xl font-bold text-game-accent mb-2 sm:mb-4">Снаряжение</h2>
+          <EquipmentTab />
+        </motion.div>
+
         {hasCards && (
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -112,16 +122,6 @@ export const GameInterface = () => {
             <TeamCards />
           </motion.div>
         )}
-
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.2 }}
-          className="bg-game-surface/80 p-2 sm:p-6 rounded-lg border border-game-accent"
-        >
-          <h2 className="text-lg sm:text-xl font-bold text-game-accent mb-2 sm:mb-4">Снаряжение</h2>
-          <EquipmentTab />
-        </motion.div>
       </div>
 
       {/* Game Mode Dialog */}
