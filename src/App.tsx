@@ -11,11 +11,13 @@ import { Statistics } from "./pages/Statistics";
 import { Equipment } from "./pages/Equipment";
 import { Team } from "./pages/Team";
 import { Marketplace } from "./pages/Marketplace";
+import { NavigationBar } from "./components/navigation/NavigationBar";
 import "./App.css";
 
 const AppLayout = ({ children }: { children: React.ReactNode }) => {
   return (
     <div className="min-h-screen w-full mx-auto overflow-x-hidden bg-game-background">
+      <NavigationBar />
       <div className="w-full h-full">
         {children}
       </div>
@@ -28,16 +30,86 @@ export const App = () => {
     <DragonEggProvider>
       <Router>
         <Routes>
-          <Route path="/" element={<AppLayout><Index /></AppLayout>} />
-          <Route path="/menu" element={<AppLayout><Menu /></AppLayout>} />
-          <Route path="/battle" element={<AppLayout><Battle /></AppLayout>} />
-          <Route path="/grimoire" element={<AppLayout><Grimoire /></AppLayout>} />
-          <Route path="/adventure" element={<AppLayout><AdventuresTab /></AppLayout>} />
-          <Route path="/magicmarketplace" element={<AppLayout><Shop onClose={() => {}} balance={0} onBalanceChange={() => {}} /></AppLayout>} />
-          <Route path="/marketplace" element={<AppLayout><Marketplace /></AppLayout>} />
-          <Route path="/statistics" element={<AppLayout><Statistics /></AppLayout>} />
-          <Route path="/equipment" element={<AppLayout><Equipment /></AppLayout>} />
-          <Route path="/team" element={<AppLayout><Team /></AppLayout>} />
+          <Route 
+            path="/" 
+            element={
+              <AppLayout>
+                <Index />
+              </AppLayout>
+            } 
+          />
+          <Route 
+            path="/menu" 
+            element={
+              <AppLayout>
+                <Menu />
+              </AppLayout>
+            } 
+          />
+          <Route 
+            path="/battle" 
+            element={
+              <AppLayout>
+                <Battle />
+              </AppLayout>
+            } 
+          />
+          <Route 
+            path="/grimoire" 
+            element={
+              <AppLayout>
+                <Grimoire />
+              </AppLayout>
+            } 
+          />
+          <Route 
+            path="/adventure" 
+            element={
+              <AppLayout>
+                <AdventuresTab />
+              </AppLayout>
+            } 
+          />
+          <Route 
+            path="/magicmarketplace" 
+            element={
+              <AppLayout>
+                <Shop onClose={() => {}} balance={0} onBalanceChange={() => {}} />
+              </AppLayout>
+            } 
+          />
+          <Route 
+            path="/marketplace" 
+            element={
+              <AppLayout>
+                <Marketplace />
+              </AppLayout>
+            } 
+          />
+          <Route 
+            path="/statistics" 
+            element={
+              <AppLayout>
+                <Statistics />
+              </AppLayout>
+            } 
+          />
+          <Route 
+            path="/equipment" 
+            element={
+              <AppLayout>
+                <Equipment />
+              </AppLayout>
+            } 
+          />
+          <Route 
+            path="/team" 
+            element={
+              <AppLayout>
+                <Team />
+              </AppLayout>
+            } 
+          />
         </Routes>
       </Router>
     </DragonEggProvider>

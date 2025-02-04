@@ -1,5 +1,4 @@
 import { GameTitle } from "@/components/GameTitle";
-import { NavigationBar } from "@/components/navigation/NavigationBar";
 
 const Index = () => {
   return (
@@ -17,8 +16,6 @@ const Index = () => {
     >
       <div className="absolute inset-0 bg-black/20" />
       
-      <NavigationBar />
-
       <div 
         className="relative z-10 flex-grow flex items-center justify-center"
         style={{
