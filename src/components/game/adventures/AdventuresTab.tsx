@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import { useBalanceState } from "@/hooks/useBalanceState";
@@ -6,6 +6,7 @@ import { PlayerStatsCard } from "./PlayerStatsCard";
 import { MonsterCard } from "./MonsterCard";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft } from "lucide-react";
+import { AdventureLayout } from "./components/AdventureLayout";
 
 export const AdventuresTab = () => {
   const navigate = useNavigate();
@@ -82,7 +83,7 @@ export const AdventuresTab = () => {
   };
 
   return (
-    <div className="min-h-screen p-4 bg-game-background">
+    <AdventureLayout>
       <div className="max-w-4xl mx-auto">
         <div className="flex justify-between items-center mb-6">
           <Button 
@@ -129,6 +130,6 @@ export const AdventuresTab = () => {
           </div>
         </div>
       </div>
-    </div>
+    </AdventureLayout>
   );
 };

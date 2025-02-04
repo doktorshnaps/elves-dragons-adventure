@@ -21,7 +21,7 @@ export const AdventureLayout = ({ children }: AdventureLayoutProps) => {
       }}
     >
       <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" />
-      <div className="relative z-10 space-y-6">
+      <div className="relative z-10">
         {children}
       </div>
     </div>
