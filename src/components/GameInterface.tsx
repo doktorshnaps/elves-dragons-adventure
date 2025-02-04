@@ -64,11 +64,7 @@ export const GameInterface = () => {
       />
 
       {showShop && (
-        <Shop
-          onClose={() => setShowShop(false)}
-          balance={balance}
-          onBalanceChange={updateBalance}
-        />
+        <Shop onClose={() => setShowShop(false)} />
       )}
 
       <TeamStatsModal

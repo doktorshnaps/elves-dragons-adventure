@@ -29,7 +29,7 @@ function App() {
           <Route path="/statistics" element={<Statistics />} />
           <Route path="/menu" element={<Menu />} />
           <Route path="/dungeons" element={<Dungeons />} />
-          <Route path="/shop" element={<Shop onClose={() => {}} balance={0} onBalanceChange={() => {}} />} />
+          <Route path="/shop" element={<Shop onClose={() => {}} />} />
           <Route path="/adventure" element={<AdventuresTab />} />
         </Routes>
         <Toaster />

@@ -29,11 +29,7 @@ export const GameModals = ({
       )}
 
       {showShop && (
-        <Shop 
-          onClose={onCloseShop} 
-          balance={balance}
-          onBalanceChange={onBalanceChange}
-        />
+        <Shop onClose={onCloseShop} />
       )}
     </>
   );
