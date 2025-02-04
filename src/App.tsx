@@ -1,7 +1,6 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { Toaster } from "@/components/ui/toaster";
 import Index from "./pages/Index";
-import { Game } from "./pages/Game";
 import { Battle } from "./pages/Battle";
 import { Marketplace } from "./pages/Marketplace";
 import { Grimoire } from "./pages/Grimoire";
@@ -20,7 +19,6 @@ function App() {
       <DragonEggProvider>
         <Routes>
           <Route path="/" element={<Index />} />
-          <Route path="/magicmarketplace" element={<Game />} />
           <Route path="/battle" element={<Battle />} />
           <Route path="/marketplace" element={<Marketplace />} />
           <Route path="/grimoire" element={<Grimoire />} />
