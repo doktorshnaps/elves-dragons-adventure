@@ -2,6 +2,7 @@ import { Button } from "@/components/ui/button";
 import { ArrowLeft } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { EquipmentGrid } from "@/components/game/stats/EquipmentGrid";
+import { InventoryDisplay } from "@/components/game/InventoryDisplay";
 
 export const Equipment = () => {
   const navigate = useNavigate();
@@ -27,8 +28,14 @@ export const Equipment = () => {
         <h1 className="text-2xl font-bold text-game-accent">Снаряжение</h1>
       </div>
       
-      <div className="flex-1 bg-game-surface/90 p-4 rounded-lg border border-game-accent backdrop-blur-sm">
-        <EquipmentGrid />
+      <div className="space-y-6">
+        <div className="flex-1 bg-game-surface/90 p-4 rounded-lg border border-game-accent backdrop-blur-sm">
+          <EquipmentGrid />
+        </div>
+
+        <div className="flex-1">
+          <InventoryDisplay onUseItem={undefined} readonly={false} />
+        </div>
       </div>
     </div>
   );
