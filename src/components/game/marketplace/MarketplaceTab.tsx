@@ -2,15 +2,17 @@ import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { useBalanceState } from "@/hooks/useBalanceState";
 import { MarketplaceListing } from "./types";
-import { ListingDialog } from "./ListingDialog";
-import { MarketplaceLayout } from "./components/MarketplaceLayout";
-import { MarketplaceHeader } from "./components/MarketplaceHeader";
-import { MarketplaceContent } from "./components/MarketplaceContent";
+import { Card } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { ArrowLeft, X } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import { getItemDisplayInfo } from "./utils";
 
 export const MarketplaceTab = () => {
   const { toast } = useToast();
   const [showListingDialog, setShowListingDialog] = useState(false);
   const { balance, updateBalance } = useBalanceState();
+  const navigate = useNavigate();
   const [listings, setListings] = useState<MarketplaceListing[]>(() => {
     const saved = localStorage.getItem('marketplaceListings');
     return saved ? JSON.parse(saved) : [];
@@ -59,15 +61,6 @@ export const MarketplaceTab = () => {
   };
 
   const handleBuy = (listing: MarketplaceListing) => {
-    if (listing.sellerId === 'current-user') {
-      toast({
-        title: "Ошибка",
-        description: "Вы не можете купить свое собственное объявление",
-        variant: "destructive",
-      });
-      return;
-    }
-
     if (balance < listing.price) {
       toast({
         title: "Недостаточно токенов",
@@ -84,11 +77,7 @@ export const MarketplaceTab = () => {
 
     if (listing.type === 'item') {
       const currentInventory = JSON.parse(localStorage.getItem('gameInventory') || '[]');
-      const newItem = {
-        ...listing.item,
-        id: Date.now()
-      };
-      const newInventory = [...currentInventory, newItem];
+      const newInventory = [...currentInventory, { ...listing.item, id: Date.now() }];
       localStorage.setItem('gameInventory', JSON.stringify(newInventory));
       
       const inventoryEvent = new CustomEvent('inventoryUpdate', { 
@@ -97,11 +86,7 @@ export const MarketplaceTab = () => {
       window.dispatchEvent(inventoryEvent);
     } else {
       const currentCards = JSON.parse(localStorage.getItem('gameCards') || '[]');
-      const newCard = {
-        ...listing.item,
-        id: Date.now()
-      };
-      const newCards = [...currentCards, newCard];
+      const newCards = [...currentCards, { ...listing.item, id: Date.now() }];
       localStorage.setItem('gameCards', JSON.stringify(newCards));
       
       const cardsEvent = new CustomEvent('cardsUpdate', { 
@@ -117,16 +102,63 @@ export const MarketplaceTab = () => {
   };
 
   return (
-    <MarketplaceLayout>
-      <MarketplaceHeader />
-      
-      <MarketplaceContent
-        listings={listings}
-        balance={balance}
-        onOpenListingDialog={() => setShowListingDialog(true)}
-        onBuy={handleBuy}
-        onCancelListing={handleCancelListing}
-      />
+    <div className="space-y-4">
+      <div className="flex justify-between items-center">
+        <Button 
+          variant="outline" 
+          className="bg-game-surface/80 border-game-accent text-game-accent hover:bg-game-surface"
+          onClick={() => navigate('/menu')}
+        >
+          <ArrowLeft className="w-4 h-4 mr-2" />
+          Вернуться в меню
+        </Button>
+        <Button
+          onClick={() => setShowListingDialog(true)}
+          className="bg-game-accent hover:bg-game-accent/80"
+        >
+          Создать объявление
+        </Button>
+      </div>
+
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+        {listings.map((listing) => {
+          const displayInfo = getItemDisplayInfo(listing.item);
+          const isOwnListing = listing.sellerId === 'current-user';
+
+          return (
+            <Card key={listing.id} className="p-4 bg-game-surface/90 border-game-accent backdrop-blur-sm">
+              <div className="flex flex-col gap-2">
+                <h3 className="font-semibold text-game-accent">{listing.item.name}</h3>
+                <p className="text-sm text-gray-300">
+                  {displayInfo.type}
+                  {displayInfo.rarity && ` - Редкость: ${displayInfo.rarity}`}
+                  <br />
+                  {displayInfo.description}
+                </p>
+                <p className="text-yellow-500 font-medium">{listing.price} токенов</p>
+                {isOwnListing ? (
+                  <Button
+                    onClick={() => handleCancelListing(listing)}
+                    variant="destructive"
+                    className="w-full mt-2"
+                  >
+                    <X className="w-4 h-4 mr-2" />
+                    Отменить
+                  </Button>
+                ) : (
+                  <Button
+                    onClick={() => handleBuy(listing)}
+                    disabled={balance < listing.price}
+                    className="w-full mt-2 bg-game-accent hover:bg-game-accent/80"
+                  >
+                    Купить
+                  </Button>
+                )}
+              </div>
+            </Card>
+          );
+        })}
+      </div>
 
       {showListingDialog && (
         <ListingDialog
@@ -134,6 +166,6 @@ export const MarketplaceTab = () => {
           onCreateListing={handleCreateListing}
         />
       )}
-    </MarketplaceLayout>
+    </div>
   );
 };
