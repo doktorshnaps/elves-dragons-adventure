@@ -39,20 +39,20 @@ export const CardDisplay = ({
           <CardImage image={card.image} name={card.name} />
         </div>
         
-        <div className="flex flex-col flex-grow justify-between gap-0.5 p-0.5 h-[140px] sm:h-[150px] md:h-[160px]">
-          <div className="flex flex-col gap-0.5">
+        <div className="flex flex-col flex-grow justify-between gap-0 p-0.5 h-[140px] sm:h-[150px] md:h-[160px]">
+          <div className="flex flex-col gap-0">
             <CardHeader name={card.name} rarity={card.rarity} />
 
-            <div className={`text-purple-400 ${isMobile ? 'text-[8px]' : 'text-xs'}`}>
+            <div className={`text-purple-400 leading-none ${isMobile ? 'text-[7px]' : 'text-[10px]'}`}>
               ({card.type === 'character' ? 'Герой' : 'Питомец'})
             </div>
 
             {card.faction && (
-              <div className={`flex items-center gap-0.5 ${isMobile ? 'text-[8px]' : 'text-xs'} ${
+              <div className={`flex items-center gap-0.5 leading-none ${isMobile ? 'text-[7px]' : 'text-[10px]'} ${
                 !isActive && card.type === 'pet' ? 'text-red-400' : 'text-purple-400'
               }`}>
-                <Sparkles className={`${isMobile ? 'w-2 h-2' : 'w-3 h-3'}`} />
-                <span className="break-words">{card.faction}</span>
+                <Sparkles className={`${isMobile ? 'w-2 h-2' : 'w-2.5 h-2.5'}`} />
+                <span className="break-words tracking-tighter">{card.faction}</span>
               </div>
             )}
             
@@ -63,13 +63,13 @@ export const CardDisplay = ({
             />
 
             {card.magicResistance && (
-              <div className={`text-blue-400 ${isMobile ? 'text-[8px]' : 'text-xs'} break-words mt-0.5`}>
+              <div className={`text-blue-400 leading-none ${isMobile ? 'text-[7px]' : 'text-[10px]'} break-words mt-0.5 tracking-tighter`}>
                 Защита от {card.magicResistance.type} магии: {card.magicResistance.value}%
               </div>
             )}
 
             {!isActive && card.type === 'pet' && (
-              <div className="text-red-400 text-[8px] mt-0.5 break-words">
+              <div className="text-red-400 text-[7px] mt-0.5 break-words leading-none tracking-tighter">
                 Требуется герой {card.faction} {card.rarity} или выше
               </div>
             )}
