@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { Swords, ShoppingCart, BookOpen, BarChart3, Store } from "lucide-react";
+import { Swords, ShoppingCart, BookOpen, BarChart3, Store, Shield, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 import {
@@ -25,6 +25,8 @@ export const GameInterface = () => {
   const [showDungeonSearch, setShowDungeonSearch] = useState(false);
   const [showGameModeDialog, setShowGameModeDialog] = useState(false);
   const [showStats, setShowStats] = useState(false);
+  const [showEquipment, setShowEquipment] = useState(false);
+  const [showTeam, setShowTeam] = useState(false);
   const [hasCards, setHasCards] = useState(false);
   const { balance, updateBalance } = useBalanceState();
   const isMobile = useIsMobile();
@@ -100,28 +102,24 @@ export const GameInterface = () => {
         </div>
       </div>
 
-      {/* Main Content - Two Panels */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-2 sm:gap-6">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.2 }}
-          className="bg-game-surface/80 p-2 sm:p-6 rounded-lg border border-game-accent"
+      <div className="flex justify-center gap-4 mb-6">
+        <Button
+          variant="outline"
+          className="bg-game-surface border-game-accent text-game-accent hover:bg-game-surface/80 h-10 px-4"
+          onClick={() => setShowEquipment(true)}
         >
-          <h2 className="text-lg sm:text-xl font-bold text-game-accent mb-2 sm:mb-4">Снаряжение</h2>
-          <EquipmentTab />
-        </motion.div>
+          <Shield className="w-4 h-4 mr-2" />
+          Снаряжение
+        </Button>
 
-        {hasCards && (
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="bg-game-surface/80 p-2 sm:p-6 rounded-lg border border-game-accent"
-          >
-            <h2 className="text-lg sm:text-xl font-bold text-game-accent mb-2 sm:mb-4">Ваша команда</h2>
-            <TeamCards />
-          </motion.div>
-        )}
+        <Button
+          variant="outline"
+          className="bg-game-surface border-game-accent text-game-accent hover:bg-game-surface/80 h-10 px-4"
+          onClick={() => setShowTeam(true)}
+        >
+          <Users className="w-4 h-4 mr-2" />
+          Ваша команда
+        </Button>
       </div>
 
       {/* Game Mode Dialog */}
@@ -154,6 +152,30 @@ export const GameInterface = () => {
             >
               Приключение
             </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Equipment Dialog */}
+      <Dialog open={showEquipment} onOpenChange={setShowEquipment}>
+        <DialogContent className="bg-game-surface border-game-accent max-w-[95vw] sm:max-w-4xl h-[90vh]">
+          <DialogHeader>
+            <DialogTitle className="text-xl font-bold text-game-accent">Снаряжение</DialogTitle>
+          </DialogHeader>
+          <div className="overflow-y-auto flex-1">
+            <EquipmentTab />
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Team Dialog */}
+      <Dialog open={showTeam} onOpenChange={setShowTeam}>
+        <DialogContent className="bg-game-surface border-game-accent max-w-[95vw] sm:max-w-4xl h-[90vh]">
+          <DialogHeader>
+            <DialogTitle className="text-xl font-bold text-game-accent">Ваша команда</DialogTitle>
+          </DialogHeader>
+          <div className="overflow-y-auto flex-1">
+            <TeamCards />
           </div>
         </DialogContent>
       </Dialog>
