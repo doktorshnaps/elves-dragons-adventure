@@ -21,7 +21,7 @@ export const Menu = () => {
         <Button
           variant="outline"
           className="h-24 bg-game-surface/80 border-game-accent text-game-accent hover:bg-game-surface flex flex-col items-center justify-center gap-2"
-          onClick={() => navigate('/')}
+          onClick={() => navigate('/dungeons')}
         >
           <Swords className="w-8 h-8" />
           <span>Подземелье</span>
@@ -30,7 +30,7 @@ export const Menu = () => {
         <Button
           variant="outline"
           className="h-24 bg-game-surface/80 border-game-accent text-game-accent hover:bg-game-surface flex flex-col items-center justify-center gap-2"
-          onClick={() => navigate('/magicmarketplace')}
+          onClick={() => navigate('/game')}
         >
           <ShoppingCart className="w-8 h-8" />
           <span>Магический магазин</span>
@@ -57,7 +57,7 @@ export const Menu = () => {
         <Button
           variant="outline"
           className="h-24 bg-game-surface/80 border-game-accent text-game-accent hover:bg-game-surface flex flex-col items-center justify-center gap-2"
-          onClick={() => navigate('/adventure')}
+          onClick={() => navigate('/dungeons')}
         >
           <MapPin className="w-8 h-8" />
           <span>Приключения</span>
