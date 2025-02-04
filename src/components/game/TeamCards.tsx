@@ -44,19 +44,20 @@ export const TeamCards = () => {
       )}
       
       <div className="flex-1 overflow-y-auto min-h-0">
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-2 p-2">
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4 p-4">
           {Object.values(groupedCards).length > 0 ? (
             Object.values(groupedCards).map((cardGroup) => (
-              <CardGroup
-                key={cardGroup[0].id}
-                card={cardGroup[0]}
-                count={cardGroup.length}
-                isSelected={selectedCards.some(c => c.id === cardGroup[0].id)}
-                isActive={cardGroup[0].type === 'character' || isPetActive(cardGroup[0])}
-                onSelect={() => handleCardSelect(cardGroup[0], cardGroup.length)}
-                onSell={handleSellCard}
-                onUpgrade={handleUpgrade}
-              />
+              <div key={cardGroup[0].id} className="flex justify-center">
+                <CardGroup
+                  card={cardGroup[0]}
+                  count={cardGroup.length}
+                  isSelected={selectedCards.some(c => c.id === cardGroup[0].id)}
+                  isActive={cardGroup[0].type === 'character' || isPetActive(cardGroup[0])}
+                  onSelect={() => handleCardSelect(cardGroup[0], cardGroup.length)}
+                  onSell={handleSellCard}
+                  onUpgrade={handleUpgrade}
+                />
+              </div>
             ))
           ) : (
             <p className="text-gray-400 col-span-full text-center py-8">
