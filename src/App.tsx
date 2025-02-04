@@ -18,7 +18,7 @@ function App() {
       <DragonEggProvider>
         <Routes>
           <Route path="/" element={<Index />} />
-          <Route path="/game" element={<Game />} />
+          <Route path="/magicmarketplace" element={<Game />} />
           <Route path="/battle" element={<Battle />} />
           <Route path="/marketplace" element={<Marketplace />} />
           <Route path="/grimoire" element={<Grimoire />} />

@@ -30,7 +30,7 @@ export const Menu = () => {
         <Button
           variant="outline"
           className="h-24 bg-game-surface/80 border-game-accent text-game-accent hover:bg-game-surface flex flex-col items-center justify-center gap-2"
-          onClick={() => navigate('/game')}
+          onClick={() => navigate('/magicmarketplace')}
         >
           <ShoppingCart className="w-8 h-8" />
           <span>Магический магазин</span>
