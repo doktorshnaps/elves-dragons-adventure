@@ -1,15 +1,21 @@
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
+import { useToast } from "@/hooks/use-toast";
 
 export const GameTitle = () => {
   const navigate = useNavigate();
+  const { toast } = useToast();
 
   const handleStartGame = () => {
     const isInitialized = localStorage.getItem('gameInitialized');
     if (!isInitialized) {
-      localStorage.setItem('gameInitialized', 'false');
+      localStorage.setItem('gameInitialized', 'true');
+      toast({
+        title: "Добро пожаловать в игру!",
+        description: "Начните свое приключение",
+      });
     }
-    navigate("/game");
+    navigate("/menu");
   };
 
   return (
