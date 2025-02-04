@@ -4,10 +4,10 @@ import { ArrowLeft, DoorOpen } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
+import { useBalanceState } from "@/hooks/useBalanceState";
 
 interface BattleHeaderProps {
   selectedDungeon: string;
-  coins: number;
   savedLevel: number;
   onBackToGame: () => void;
   onExitDungeon: () => void;
@@ -15,7 +15,6 @@ interface BattleHeaderProps {
 
 export const BattleHeader = ({
   selectedDungeon,
-  coins,
   savedLevel,
   onBackToGame,
   onExitDungeon
@@ -23,6 +22,7 @@ export const BattleHeader = ({
   const isMobile = useIsMobile();
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { balance } = useBalanceState();
 
   const handleExitDungeon = () => {
     localStorage.removeItem('battleState');
@@ -47,7 +47,7 @@ export const BattleHeader = ({
         <h1 className="text-xl md:text-3xl font-bold text-game-accent">{selectedDungeon}</h1>
       </div>
       <div className="flex flex-wrap items-center gap-2 md:gap-4">
-        <span className="text-base md:text-xl font-bold text-yellow-500">🪙 {coins}</span>
+        <span className="text-base md:text-xl font-bold text-yellow-500">🪙 {balance}</span>
         <span className="text-base md:text-xl font-bold text-purple-500">👑 Уровень {savedLevel}</span>
         <Button
           variant="destructive"

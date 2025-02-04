@@ -1,179 +1,40 @@
-import { useState } from "react";
-import { motion, AnimatePresence } from "framer-motion";
-import { ArrowLeft, Sparkles } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
-import { useToast } from "@/hooks/use-toast";
-import { generatePack, getRarityLabel } from "@/utils/cardUtils";
-import { Card as CardType } from "@/types/cards";
-import { ShopItem as ShopItemComponent } from "./shop/ShopItem";
-import { CardAnimation } from "./shop/CardAnimation";
-import { shopItems, ShopItem } from "./shop/types";
-import { useIsMobile } from "@/hooks/use-mobile";
-import { useNavigate } from "react-router-dom";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { ShopItem } from "./shop/ShopItem";
+import { shopItems } from "./shop/types";
+import { useBalanceState } from "@/hooks/useBalanceState";
 
 interface ShopProps {
   onClose: () => void;
-  balance: number;
-  onBalanceChange: (newBalance: number) => void;
 }
 
-export const Shop = ({ onClose, balance, onBalanceChange }: ShopProps) => {
-  const { toast } = useToast();
-  const navigate = useNavigate();
-  const isMobile = useIsMobile();
-  const [showCardAnimation, setShowCardAnimation] = useState(false);
-  const [lastOpenedCard, setLastOpenedCard] = useState<CardType | null>(null);
-
-  const buyItem = async (item: ShopItem) => {
-    if (balance < item.price) {
-      toast({
-        title: "Недостаточно токенов",
-        description: `Для покупки ${item.name} требуется ${item.price} токенов`,
-        variant: "destructive",
-      });
-      return;
-    }
-
-    if (item.requiredLevel) {
-      const playerLevel = parseInt(localStorage.getItem('playerLevel') || '1');
-      if (playerLevel < item.requiredLevel) {
-        toast({
-          title: "Недостаточный уровень",
-          description: `Для покупки ${item.name} требуется ${item.requiredLevel} уровень`,
-          variant: "destructive",
-        });
-        return;
-      }
-    }
-
-    if (item.type === "cardPack") {
-      const cards = generatePack();
-      setLastOpenedCard(cards[0]);
-      setShowCardAnimation(true);
-
-      const savedCards = localStorage.getItem('gameCards') || '[]';
-      const currentCards = JSON.parse(savedCards);
-      const newCards = [...currentCards, ...cards];
-      localStorage.setItem('gameCards', JSON.stringify(newCards));
-      
-      const cardsEvent = new CustomEvent('cardsUpdate', { 
-        detail: { cards: newCards }
-      });
-      window.dispatchEvent(cardsEvent);
-
-      toast({
-        title: "Карта получена!",
-        description: `Вы получили: ${cards[0].name} (${getRarityLabel(cards[0].rarity)})`,
-      });
-
-      setTimeout(() => {
-        setShowCardAnimation(false);
-        setLastOpenedCard(null);
-      }, 2000);
-    } else {
-      const newItem = {
-        ...item,
-        id: Date.now().toString()
-      };
-      const currentInventory = localStorage.getItem('gameInventory');
-      const parsedInventory = currentInventory ? JSON.parse(currentInventory) : [];
-      const newInventory = [...parsedInventory, newItem];
-      
-      localStorage.setItem('gameInventory', JSON.stringify(newInventory));
-      const inventoryEvent = new CustomEvent('inventoryUpdate', { 
-        detail: { inventory: newInventory }
-      });
-      window.dispatchEvent(inventoryEvent);
-    }
-
-    const newBalance = balance - item.price;
-    onBalanceChange(newBalance);
-    const balanceEvent = new CustomEvent('balanceUpdate', { 
-      detail: { balance: newBalance }
-    });
-    window.dispatchEvent(balanceEvent);
-  };
+export const Shop = ({ onClose }: ShopProps) => {
+  const { balance, updateBalance } = useBalanceState();
 
   return (
-    <motion.div
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      exit={{ opacity: 0 }}
-      className="fixed inset-0 z-50 flex items-center justify-center p-4"
-    >
-      <div 
-        className="absolute inset-0"
-        style={{
-          backgroundImage: 'url("/lovable-uploads/aefc7995-4fc9-459a-8c89-b648a2799937.png")',
-          backgroundSize: 'cover',
-          backgroundPosition: 'center',
-          backgroundRepeat: 'no-repeat'
-        }}
-      />
-      <Card className="relative z-10 w-full h-full bg-game-surface/80 border-game-accent">
-        <div className="p-4 flex items-center justify-between border-b border-game-accent">
-          <h2 className="font-bold text-white flex items-center gap-1 bg-game-surface/50 p-2 rounded-lg">
-            <Sparkles className="w-4 h-4" />
-            Магический магазин
-          </h2>
-          <Button
-            variant="ghost"
-            className="text-white hover:text-game-accent bg-game-surface/50 flex items-center gap-2"
-            onClick={() => navigate('/menu')}
-          >
-            <ArrowLeft className="h-4 w-4" />
-            Вернуться в меню
-          </Button>
-        </div>
-
-        <div className="p-4 bg-game-surface/50">
-          <p className="text-white mb-3 bg-game-surface/50 p-2 rounded-lg">
-            Баланс: {balance} токенов
-          </p>
-        </div>
-
-        <AnimatePresence>
-          {showCardAnimation && lastOpenedCard && (
-            <CardAnimation card={lastOpenedCard} />
-          )}
-        </AnimatePresence>
-
-        <div 
-          className="flex-1 h-[calc(100vh-200px)] overflow-y-auto"
-          style={{ 
-            touchAction: 'pan-y',
-            WebkitOverflowScrolling: 'touch',
-            overscrollBehavior: 'contain',
-            msOverflowStyle: '-ms-autohiding-scrollbar',
-            scrollBehavior: 'smooth',
-            WebkitUserSelect: 'none',
-            userSelect: 'none'
-          }}
-        >
-          <div className="p-4">
-            <div className={`grid gap-4 ${
-              isMobile 
-                ? 'grid-cols-2' 
-                : 'grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5'
-            }`}>
-              {shopItems.map((item) => (
-                <motion.div
-                  key={item.id}
-                  whileHover={{ scale: 1.02 }}
-                  transition={{ duration: 0.2 }}
-                >
-                  <ShopItemComponent
-                    item={item}
-                    balance={balance}
-                    onBuy={buyItem}
-                  />
-                </motion.div>
-              ))}
-            </div>
+    <Dialog open onOpenChange={() => onClose()}>
+      <DialogContent className="bg-game-surface border-game-accent max-w-4xl max-h-[90vh] overflow-y-auto">
+        <div className="p-4">
+          <div className="flex justify-between items-center mb-6">
+            <h2 className="text-2xl font-bold text-game-accent">Магический магазин</h2>
+            <span className="text-xl font-bold text-yellow-400">{balance} монет</span>
+          </div>
+          
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            {shopItems.map((item) => (
+              <ShopItem 
+                key={item.id} 
+                item={item} 
+                onPurchase={() => {
+                  if (balance >= item.price) {
+                    updateBalance(balance - item.price);
+                  }
+                }}
+                canAfford={balance >= item.price}
+              />
+            ))}
           </div>
         </div>
-      </Card>
-    </motion.div>
+      </DialogContent>
+    </Dialog>
   );
 };

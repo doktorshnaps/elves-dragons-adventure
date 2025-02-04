@@ -1,183 +1,125 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import { useBalanceState } from "@/hooks/useBalanceState";
-import { Monster } from "./types";
 import { PlayerStatsCard } from "./PlayerStatsCard";
-import { useMonsterGeneration } from "./useMonsterGeneration";
-import { Item } from "@/types/inventory";
-import { AdventureHeader } from "./components/AdventureHeader";
-import { AdventureControls } from "./components/AdventureControls";
-import { AdventureInventory } from "./components/AdventureInventory";
-import { AdventureLayout } from "./components/AdventureLayout";
-import { MonsterSection } from "./components/MonsterSection";
+import { MonsterCard } from "./MonsterCard";
+import { Button } from "@/components/ui/button";
+import { ArrowLeft } from "lucide-react";
 
 export const AdventuresTab = () => {
-  const [level, setLevel] = useState(1);
-  const [experience, setExperience] = useState(0);
-  const [requiredExperience, setRequiredExperience] = useState(100);
-  const [currentMonster, setCurrentMonster] = useState<Monster | null>(null);
-  const [playerHealth, setPlayerHealth] = useState(100);
+  const navigate = useNavigate();
   const { toast } = useToast();
   const { balance, updateBalance } = useBalanceState();
-  const { generateMonster } = useMonsterGeneration(level);
-
-  const calculatePlayerStats = () => {
-    const savedCards = localStorage.getItem('gameCards');
-    const cards = savedCards ? JSON.parse(savedCards) : [];
-    
-    let totalPower = 10;
-    let totalDefense = 5;
-    let totalHealth = 100;
-
-    cards.forEach((card: any) => {
-      if (card.power) totalPower += card.power;
-      if (card.defense) totalDefense += card.defense;
-      if (card.health) totalHealth += card.health;
-    });
-
-    return { power: totalPower, defense: totalDefense, maxHealth: totalHealth };
-  };
-
-  const handleUseItem = (item: Item) => {
-    if (item.type === 'healthPotion') {
-      const stats = calculatePlayerStats();
-      const healAmount = item.value;
-      const newHealth = Math.min(playerHealth + healAmount, stats.maxHealth);
-      setPlayerHealth(newHealth);
-      
-      const savedInventory = localStorage.getItem('gameInventory');
-      if (savedInventory) {
-        const inventory = JSON.parse(savedInventory);
-        const newInventory = inventory.filter((i: Item) => i.id !== item.id);
-        localStorage.setItem('gameInventory', JSON.stringify(newInventory));
-        const event = new CustomEvent('inventoryUpdate', { 
-          detail: { inventory: newInventory }
-        });
-        window.dispatchEvent(event);
-      }
-
-      toast({
-        title: "Зелье использовано",
-        description: `Восстановлено ${healAmount} здоровья`,
-      });
-    }
-  };
-
-  const gainExperience = (amount: number) => {
-    const newExperience = experience + amount;
-    if (newExperience >= requiredExperience) {
-      const nextLevel = level + 1;
-      setLevel(nextLevel);
-      setExperience(newExperience - requiredExperience);
-      setRequiredExperience(Math.floor(requiredExperience * 1.5));
-      
-      toast({
-        title: "Уровень повышен!",
-        description: `Достигнут ${nextLevel} уровень!`,
-        variant: "default"
-      });
-    } else {
-      setExperience(newExperience);
-    }
-  };
+  const [playerStats, setPlayerStats] = useState({
+    health: 100,
+    maxHealth: 100,
+    power: 10,
+    defense: 5,
+    level: 1,
+    experience: 0,
+    requiredExperience: 100
+  });
+  const [currentMonster, setCurrentMonster] = useState(null);
 
   const startAdventure = () => {
-    if (playerHealth <= 0) {
-      toast({
-        title: "Невозможно начать приключение",
-        description: "Ваш герой слишком слаб. Восстановите здоровье!",
-        variant: "destructive"
-      });
-      return;
-    }
-    
-    const newMonster = generateMonster();
-    setCurrentMonster(newMonster);
+    // Логика генерации монстра
+    const monster = {
+      name: "Гоблин",
+      health: 50,
+      power: 5,
+      reward: 10
+    };
+    setCurrentMonster(monster);
   };
 
   const attackMonster = () => {
     if (!currentMonster) return;
 
-    const stats = calculatePlayerStats();
-    
-    const playerDamage = Math.floor(Math.random() * stats.power) + Math.floor(stats.power * 0.5);
-    const newMonsterHealth = currentMonster.health - playerDamage;
-
-    const monsterDamage = Math.floor(Math.random() * currentMonster.power);
-    const reducedDamage = Math.max(0, monsterDamage - Math.floor(stats.defense * 0.5));
-    const newPlayerHealth = playerHealth - reducedDamage;
-
-    toast({
-      title: "Битва!",
-      description: `Вы нанесли ${playerDamage} урона! Монстр нанес ${reducedDamage} урона!`
-    });
+    // Логика боя
+    const damage = Math.max(0, playerStats.power - Math.floor(Math.random() * 3));
+    const newMonsterHealth = currentMonster.health - damage;
 
     if (newMonsterHealth <= 0) {
-      const monsterReward = currentMonster.reward;
-      updateBalance(balance + monsterReward);
-      gainExperience(currentMonster.experienceReward);
-      
+      // Монстр побежден
+      updateBalance(balance + currentMonster.reward);
       toast({
         title: "Победа!",
-        description: `Вы получили ${monsterReward} монет и ${currentMonster.experienceReward} опыта!`
+        description: `Вы получили ${currentMonster.reward} монет!`
       });
-      
       setCurrentMonster(null);
       return;
     }
+
+    // Монстр наносит ответный удар
+    const monsterDamage = Math.max(0, currentMonster.power - Math.floor(playerStats.defense / 2));
+    const newPlayerHealth = playerStats.health - monsterDamage;
 
     if (newPlayerHealth <= 0) {
       toast({
         title: "Поражение!",
-        description: "Вы проиграли битву...",
+        description: "Вы проиграли бой...",
         variant: "destructive"
       });
-      setPlayerHealth(0);
+      setPlayerStats({ ...playerStats, health: playerStats.maxHealth });
       setCurrentMonster(null);
       return;
     }
 
-    setPlayerHealth(newPlayerHealth);
-    setCurrentMonster({
-      ...currentMonster,
-      health: newMonsterHealth
-    });
+    setCurrentMonster({ ...currentMonster, health: newMonsterHealth });
+    setPlayerStats({ ...playerStats, health: newPlayerHealth });
   };
 
-  const stats = calculatePlayerStats();
-
   return (
-    <AdventureLayout>
-      <AdventureHeader level={level} balance={balance} />
-
-      <PlayerStatsCard
-        level={level}
-        stats={stats}
-        experience={experience}
-        requiredExperience={requiredExperience}
-        playerHealth={playerHealth}
-        maxHealth={stats.maxHealth}
-        balance={balance}
-        onRestoreHealth={() => {}}
-      />
-
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <div className="space-y-4">
-          <AdventureControls
-            onStartAdventure={startAdventure}
-            isDisabled={!!currentMonster}
-            playerHealth={playerHealth}
-          />
-
-          <MonsterSection
-            currentMonster={currentMonster}
-            attackMonster={attackMonster}
-            playerHealth={playerHealth}
-          />
+    <div className="min-h-screen p-4 bg-game-background">
+      <div className="max-w-4xl mx-auto">
+        <div className="flex justify-between items-center mb-6">
+          <Button 
+            variant="outline" 
+            className="bg-game-surface/80 border-game-accent text-game-accent hover:bg-game-surface"
+            onClick={() => navigate('/menu')}
+          >
+            <ArrowLeft className="w-4 h-4 mr-2" />
+            Вернуться в меню
+          </Button>
+          <span className="text-xl font-bold text-yellow-400">{balance} монет</span>
         </div>
 
-        <AdventureInventory onUseItem={handleUseItem} />
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <PlayerStatsCard
+            stats={playerStats}
+            onHeal={() => {
+              if (balance >= 50 && playerStats.health < playerStats.maxHealth) {
+                updateBalance(balance - 50);
+                setPlayerStats({
+                  ...playerStats,
+                  health: Math.min(playerStats.maxHealth, playerStats.health + 50)
+                });
+                toast({
+                  title: "Лечение",
+                  description: "Восстановлено 50 очков здоровья"
+                });
+              }
+            }}
+          />
+
+          <div className="space-y-4">
+            {!currentMonster ? (
+              <Button 
+                className="w-full bg-game-accent hover:bg-game-accent/90"
+                onClick={startAdventure}
+              >
+                Начать приключение
+              </Button>
+            ) : (
+              <MonsterCard
+                monster={currentMonster}
+                onAttack={attackMonster}
+              />
+            )}
+          </div>
+        </div>
       </div>
-    </AdventureLayout>
+    </div>
   );
 };
