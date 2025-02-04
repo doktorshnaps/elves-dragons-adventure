@@ -81,7 +81,6 @@ export const DragonEggsList = ({ eggs }: DragonEggsListProps) => {
             petName={egg.petName}
             createdAt={egg.createdAt}
             onHatch={() => handleHatch(egg)}
-            faction={basePet?.faction}
           />
         );
       })}
