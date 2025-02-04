@@ -17,7 +17,7 @@ export const Shop = ({ onClose }: ShopProps) => {
   return (
     <Dialog open onOpenChange={() => onClose()}>
       <DialogContent 
-        className="bg-game-surface border-game-accent max-w-4xl max-h-[90vh] overflow-y-auto"
+        className="w-screen h-screen max-w-none m-0 p-6 rounded-none bg-game-surface border-game-accent overflow-y-auto"
         style={{
           backgroundImage: "url('/lovable-uploads/20d88f7a-4f27-4b22-8ebe-e55b87a0c7e3.png')",
           backgroundColor: 'rgba(26, 31, 44, 0.95)',
