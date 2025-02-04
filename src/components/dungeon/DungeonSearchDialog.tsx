@@ -1,6 +1,7 @@
 import React from "react";
 import { motion } from "framer-motion";
 import { ArrowLeft } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import { Button } from "../ui/button";
 import { Card } from "../ui/card";
 import { EnergyDisplay } from "./EnergyDisplay";
@@ -31,7 +32,25 @@ export const DungeonSearchDialog = ({
   onRollDice,
   hasActiveCards
 }: DungeonSearchDialogProps) => {
+  const navigate = useNavigate();
   const backgroundImage = selectedDungeon ? dungeonBackgrounds[selectedDungeon] : '';
+
+  const dungeonRoutes: Record<DungeonType, string> = {
+    dragon_lair: '/dungeons/dragon-lair',
+    forgotten_souls: '/dungeons/forgotten-souls',
+    ice_throne: '/dungeons/icy-throne',
+    dark_mage: '/dungeons/dark-mage',
+    spider_nest: '/dungeons/spider-nest',
+    bone_dungeon: '/dungeons/bone-dungeon',
+    sea_serpent: '/dungeons/sea-serpent'
+  };
+
+  const handleDungeonSelect = () => {
+    if (selectedDungeon) {
+      const route = dungeonRoutes[selectedDungeon];
+      navigate(route);
+    }
+  };
 
   return (
     <motion.div
@@ -94,6 +113,14 @@ export const DungeonSearchDialog = ({
               >
                 {rolling ? "Поиск подземелья..." : "Искать подземелье"}
               </Button>
+              {selectedDungeon && !rolling && (
+                <Button
+                  onClick={handleDungeonSelect}
+                  className="bg-game-accent hover:bg-game-accent/80"
+                >
+                  Войти в подземелье
+                </Button>
+              )}
               <Button
                 onClick={onClose}
                 variant="outline"
