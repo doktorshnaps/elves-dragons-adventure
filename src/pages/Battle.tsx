@@ -118,7 +118,6 @@ export const Battle = () => {
     <BattleLayout backgroundImage={backgroundImage}>
       <BattleHeader
         selectedDungeon={selectedDungeon}
-        coins={coins}
         savedLevel={savedLevel}
         onBackToGame={handleBackToGame}
         onExitDungeon={handleExitDungeon}

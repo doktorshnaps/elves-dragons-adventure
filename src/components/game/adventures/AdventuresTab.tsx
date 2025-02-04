@@ -23,10 +23,10 @@ export const AdventuresTab = () => {
   const [currentMonster, setCurrentMonster] = useState(null);
 
   const startAdventure = () => {
-    // Логика генерации монстра
     const monster = {
       name: "Гоблин",
       health: 50,
+      maxHealth: 50,
       power: 5,
       reward: 10
     };
@@ -36,12 +36,10 @@ export const AdventuresTab = () => {
   const attackMonster = () => {
     if (!currentMonster) return;
 
-    // Логика боя
     const damage = Math.max(0, playerStats.power - Math.floor(Math.random() * 3));
     const newMonsterHealth = currentMonster.health - damage;
 
     if (newMonsterHealth <= 0) {
-      // Монстр побежден
       updateBalance(balance + currentMonster.reward);
       toast({
         title: "Победа!",
@@ -51,7 +49,6 @@ export const AdventuresTab = () => {
       return;
     }
 
-    // Монстр наносит ответный удар
     const monsterDamage = Math.max(0, currentMonster.power - Math.floor(playerStats.defense / 2));
     const newPlayerHealth = playerStats.health - monsterDamage;
 
@@ -68,6 +65,20 @@ export const AdventuresTab = () => {
 
     setCurrentMonster({ ...currentMonster, health: newMonsterHealth });
     setPlayerStats({ ...playerStats, health: newPlayerHealth });
+  };
+
+  const handleRestoreHealth = () => {
+    if (balance >= 50 && playerStats.health < playerStats.maxHealth) {
+      updateBalance(balance - 50);
+      setPlayerStats({
+        ...playerStats,
+        health: Math.min(playerStats.maxHealth, playerStats.health + 50)
+      });
+      toast({
+        title: "Лечение",
+        description: "Восстановлено 50 очков здоровья"
+      });
+    }
   };
 
   return (
@@ -87,20 +98,17 @@ export const AdventuresTab = () => {
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <PlayerStatsCard
-            stats={playerStats}
-            onHeal={() => {
-              if (balance >= 50 && playerStats.health < playerStats.maxHealth) {
-                updateBalance(balance - 50);
-                setPlayerStats({
-                  ...playerStats,
-                  health: Math.min(playerStats.maxHealth, playerStats.health + 50)
-                });
-                toast({
-                  title: "Лечение",
-                  description: "Восстановлено 50 очков здоровья"
-                });
-              }
+            level={playerStats.level}
+            stats={{
+              power: playerStats.power,
+              defense: playerStats.defense
             }}
+            experience={playerStats.experience}
+            requiredExperience={playerStats.requiredExperience}
+            playerHealth={playerStats.health}
+            maxHealth={playerStats.maxHealth}
+            balance={balance}
+            onRestoreHealth={handleRestoreHealth}
           />
 
           <div className="space-y-4">
@@ -115,6 +123,7 @@ export const AdventuresTab = () => {
               <MonsterCard
                 monster={currentMonster}
                 onAttack={attackMonster}
+                playerHealth={playerStats.health}
               />
             )}
           </div>
