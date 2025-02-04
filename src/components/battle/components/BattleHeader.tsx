@@ -2,6 +2,7 @@ import React from 'react';
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, DoorOpen } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { useNavigate } from "react-router-dom";
 
 interface BattleHeaderProps {
   selectedDungeon: string;
@@ -19,6 +20,7 @@ export const BattleHeader = ({
   onExitDungeon
 }: BattleHeaderProps) => {
   const isMobile = useIsMobile();
+  const navigate = useNavigate();
 
   return (
     <div className="flex flex-col md:flex-row justify-between items-center gap-4 mb-4 md:mb-8">
