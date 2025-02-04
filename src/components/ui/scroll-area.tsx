@@ -1,3 +1,5 @@
+"use client"
+
 import * as React from "react"
 import * as ScrollAreaPrimitive from "@radix-ui/react-scroll-area"
 
@@ -13,15 +15,15 @@ const ScrollArea = React.forwardRef<
     {...props}
   >
     <ScrollAreaPrimitive.Viewport 
-      className="h-full w-full rounded-[inherit]"
+      className="h-full w-full rounded-[inherit] overflow-y-auto"
       style={{ 
-        WebkitOverflowScrolling: 'touch',
-        overscrollBehavior: 'none'
+        touchAction: 'pan-y',
+        WebkitOverflowScrolling: 'touch'
       }}
     >
       {children}
     </ScrollAreaPrimitive.Viewport>
-    <ScrollBar orientation="vertical" />
+    <ScrollBar />
     <ScrollAreaPrimitive.Corner />
   </ScrollAreaPrimitive.Root>
 ))
