@@ -23,7 +23,7 @@ export const CardGroup = ({
 }: CardGroupProps) => {
   return (
     <div
-      className={`relative w-full max-w-[160px] cursor-pointer transition-all duration-300 ${
+      className={`relative w-full max-w-[140px] cursor-pointer transition-all duration-300 ${
         isSelected ? 'ring-2 ring-game-accent rounded-lg' : ''
       }`}
       onClick={onSelect}

@@ -30,16 +30,16 @@ export const CardDisplay = ({
 
   return (
     <Card 
-      className={`relative w-[160px] h-[320px] sm:w-[160px] sm:h-[320px] md:w-[160px] md:h-[320px] lg:w-[160px] lg:h-[320px]
+      className={`relative w-[140px] h-[280px] sm:w-[140px] sm:h-[280px] md:w-[140px] md:h-[280px] lg:w-[140px] lg:h-[280px]
         p-0.5 bg-game-background border-game-accent hover:border-game-primary transition-all duration-300 
         ${!isActive && card.type === 'pet' ? 'opacity-50' : ''} ${className}`}
     >
       <div className="flex flex-col h-full">
-        <div className="w-full h-[140px] flex-shrink-0">
+        <div className="w-full h-[120px] flex-shrink-0">
           <CardImage image={card.image} name={card.name} />
         </div>
         
-        <div className="flex flex-col flex-grow justify-between gap-0.5 p-0.5 h-[180px]">
+        <div className="flex flex-col flex-grow justify-between gap-0.5 p-0.5 h-[160px]">
           <div className="flex flex-col gap-0.5">
             <CardHeader name={card.name} rarity={card.rarity} />
 
