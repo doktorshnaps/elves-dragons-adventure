@@ -4,7 +4,6 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import { TeamCards } from "../TeamCards";
 
 interface TeamDialogProps {
@@ -15,15 +14,33 @@ interface TeamDialogProps {
 export const TeamDialog = ({ isOpen, onClose }: TeamDialogProps) => {
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="bg-game-surface border-game-accent max-w-[95vw] sm:max-w-4xl h-[90vh]">
+      <DialogContent 
+        className="bg-game-surface border-game-accent max-w-[95vw] sm:max-w-4xl h-[90vh]"
+        style={{
+          touchAction: 'none',
+          WebkitOverflowScrolling: 'touch',
+          overscrollBehavior: 'contain'
+        }}
+      >
         <DialogHeader>
           <DialogTitle className="text-xl font-bold text-game-accent">Ваша команда</DialogTitle>
         </DialogHeader>
-        <ScrollArea className="h-[calc(90vh-8rem)]">
+        <div 
+          className="h-[calc(90vh-8rem)] overflow-y-auto"
+          style={{ 
+            touchAction: 'pan-y',
+            WebkitOverflowScrolling: 'touch',
+            overscrollBehavior: 'contain',
+            msOverflowStyle: '-ms-autohiding-scrollbar',
+            scrollBehavior: 'smooth',
+            WebkitUserSelect: 'none',
+            userSelect: 'none'
+          }}
+        >
           <div className="p-4">
             <TeamCards />
           </div>
-        </ScrollArea>
+        </div>
       </DialogContent>
     </Dialog>
   );

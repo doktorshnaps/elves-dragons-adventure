@@ -98,7 +98,7 @@ export const Shop = ({ onClose, balance, onBalanceChange }: ShopProps) => {
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      className="fixed inset-0 z-50 flex items-center justify-center overflow-hidden"
+      className="fixed inset-0 z-50 flex items-center justify-center p-4"
       style={{ 
         touchAction: 'none',
         overscrollBehavior: 'none'
@@ -141,13 +141,15 @@ export const Shop = ({ onClose, balance, onBalanceChange }: ShopProps) => {
         </AnimatePresence>
 
         <div 
-          className="flex-1 overflow-y-auto h-[calc(100vh-200px)]"
+          className="flex-1 h-[calc(100vh-200px)] overflow-y-auto"
           style={{ 
             touchAction: 'pan-y',
             WebkitOverflowScrolling: 'touch',
             overscrollBehavior: 'contain',
             msOverflowStyle: '-ms-autohiding-scrollbar',
-            scrollBehavior: 'smooth'
+            scrollBehavior: 'smooth',
+            WebkitUserSelect: 'none',
+            userSelect: 'none'
           }}
         >
           <div className="p-4">
