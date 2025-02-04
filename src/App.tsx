@@ -1,4 +1,4 @@
-import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import { HashRouter as Router, Routes, Route } from "react-router-dom";
 import { Game } from "./pages/Game";
 import { Battle } from "./pages/Battle";
 import { Grimoire } from "./pages/Grimoire";
