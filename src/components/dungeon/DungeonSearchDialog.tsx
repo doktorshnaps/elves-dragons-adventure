@@ -5,13 +5,13 @@ import { Button } from "../ui/button";
 import { Card } from "../ui/card";
 import { EnergyDisplay } from "./EnergyDisplay";
 import { DungeonDisplay } from "./DungeonDisplay";
-import { dungeonBackgrounds } from "@/constants/dungeons";
+import { dungeonBackgrounds, DungeonType } from "@/constants/dungeons";
 import { EnergyState } from "@/utils/energyManager";
 
 interface DungeonSearchDialogProps {
   onClose: () => void;
   balance: number;
-  selectedDungeon: string | null;
+  selectedDungeon: DungeonType | null;
   rolling: boolean;
   energyState: EnergyState;
   timeUntilNext: number;
