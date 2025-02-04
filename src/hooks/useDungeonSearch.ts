@@ -1,4 +1,3 @@
-import { useNavigate } from "react-router-dom";
 import { useToast } from "./use-toast";
 import { useEnergy } from "@/utils/energyManager";
 import { useEnergyManagement } from "./dungeon/useEnergyManagement";
@@ -7,7 +6,6 @@ import { useHealthCheck } from "./dungeon/useHealthCheck";
 import { useBattleStateInitializer } from "./dungeon/useBattleStateInitializer";
 
 export const useDungeonSearch = (balance: number) => {
-  const navigate = useNavigate();
   const { toast } = useToast();
   const { energyState, timeUntilNext } = useEnergyManagement();
   const { rolling, selectedDungeon, startRolling, stopRolling, setSelectedDungeon } = useDungeonSelection();
@@ -62,12 +60,8 @@ export const useDungeonSearch = (balance: number) => {
         
         toast({
           title: "Подземелье найдено!",
-          description: `Вы входите в ${finalDungeon}`,
+          description: `Вы можете войти в ${finalDungeon}`,
         });
-
-        setTimeout(() => {
-          navigate("/battle");
-        }, 2000);
       } catch (error) {
         console.error("Error initializing battle state:", error);
         toast({
