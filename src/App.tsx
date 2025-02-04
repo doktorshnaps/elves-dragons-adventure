@@ -7,7 +7,7 @@ import { Statistics } from './pages/Statistics';
 import { Grimoire } from './pages/Grimoire';
 import { Battle } from './pages/Battle';
 import { Menu } from './pages/Menu';
-import { Index } from './pages/Index';
+import Index from './pages/Index';
 
 function App() {
   return (
