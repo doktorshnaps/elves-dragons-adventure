@@ -44,7 +44,7 @@ export const TeamCards = () => {
       )}
       
       <div className="flex-1 overflow-y-auto min-h-0">
-        <div className="grid grid-cols-4 sm:grid-cols-4 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-2 p-2">
+        <div className="grid grid-cols-4 sm:grid-cols-4 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3 p-2">
           {Object.values(groupedCards).length > 0 ? (
             Object.values(groupedCards).map((cardGroup) => (
               <div key={cardGroup[0].id} className="flex items-center justify-center">
