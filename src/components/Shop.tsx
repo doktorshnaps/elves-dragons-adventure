@@ -19,7 +19,7 @@ export const Shop = ({ onClose }: ShopProps) => {
   const { toast } = useToast();
   const navigate = useNavigate();
 
-  const handleBuyItem = (item: ShopItem) => {
+  const handleBuyItem = (item: typeof shopItems[0]) => {
     if (balance >= item.price) {
       // Создаем новый предмет для инвентаря
       const newItem = {
