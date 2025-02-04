@@ -7,6 +7,7 @@ import { useToast } from "@/hooks/use-toast";
 import { v4 as uuidv4 } from 'uuid';
 import { generateCard } from "@/utils/cardUtils";
 import { Item } from "@/types/inventory";
+import { ArrowLeft } from "lucide-react";
 
 interface ShopProps {
   onClose: () => void;
@@ -78,44 +79,57 @@ export const Shop = ({ onClose }: ShopProps) => {
   };
 
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 p-4">
-      {shopItems.map((item) => (
-        <Card key={item.name} className="p-4 bg-game-background border-game-accent hover:border-game-primary transition-all duration-300">
-          {item.image && (
-            <div className="w-full aspect-[4/3] mb-2 rounded-lg overflow-hidden">
-              <img 
-                src={item.image} 
-                alt={item.name}
-                className="w-full h-full object-cover"
-              />
-            </div>
-          )}
-          <div className="space-y-2">
-            <h3 className="font-semibold text-game-accent">{item.name}</h3>
-            <p className="text-gray-400 text-sm">{item.description}</p>
-            {item.stats && (
-              <div className="text-game-accent text-sm">
-                {item.stats.power && <p>Сила: +{item.stats.power}</p>}
-                {item.stats.defense && <p>Защита: +{item.stats.defense}</p>}
-                {item.stats.health && <p>Здоровье: +{item.stats.health}</p>}
+    <div className="relative">
+      <div className="sticky top-0 z-10 bg-game-background p-4 border-b border-game-accent">
+        <Button
+          variant="outline"
+          onClick={onClose}
+          className="flex items-center gap-2 text-game-accent hover:text-game-primary hover:bg-game-surface"
+        >
+          <ArrowLeft className="w-4 h-4" />
+          Вернуться в меню
+        </Button>
+      </div>
+      
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 p-4">
+        {shopItems.map((item) => (
+          <Card key={item.name} className="p-4 bg-game-background border-game-accent hover:border-game-primary transition-all duration-300">
+            {item.image && (
+              <div className="w-full aspect-[4/3] mb-2 rounded-lg overflow-hidden">
+                <img 
+                  src={item.image} 
+                  alt={item.name}
+                  className="w-full h-full object-cover"
+                />
               </div>
             )}
-            {item.requiredLevel && (
-              <p className="text-yellow-500 text-sm">
-                Требуется уровень: {item.requiredLevel}
-              </p>
-            )}
-            <p className="text-game-secondary">Цена: {item.price} токенов</p>
-            <Button
-              className="w-full bg-game-primary hover:bg-game-primary/80"
-              onClick={() => handleBuyItem(item)}
-              disabled={balance < item.price}
-            >
-              Купить
-            </Button>
-          </div>
-        </Card>
-      ))}
+            <div className="space-y-2">
+              <h3 className="font-semibold text-game-accent">{item.name}</h3>
+              <p className="text-gray-400 text-sm">{item.description}</p>
+              {item.stats && (
+                <div className="text-game-accent text-sm">
+                  {item.stats.power && <p>Сила: +{item.stats.power}</p>}
+                  {item.stats.defense && <p>Защита: +{item.stats.defense}</p>}
+                  {item.stats.health && <p>Здоровье: +{item.stats.health}</p>}
+                </div>
+              )}
+              {item.requiredLevel && (
+                <p className="text-yellow-500 text-sm">
+                  Требуется уровень: {item.requiredLevel}
+                </p>
+              )}
+              <p className="text-game-secondary">Цена: {item.price} токенов</p>
+              <Button
+                className="w-full bg-game-primary hover:bg-game-primary/80"
+                onClick={() => handleBuyItem(item)}
+                disabled={balance < item.price}
+              >
+                Купить
+              </Button>
+            </div>
+          </Card>
+        ))}
+      </div>
     </div>
   );
 };
