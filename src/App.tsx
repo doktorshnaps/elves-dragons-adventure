@@ -10,6 +10,13 @@ import Dungeons from './pages/Dungeons';
 import { AdventuresPage } from './pages/AdventuresPage';
 import { Marketplace } from './pages/Marketplace';
 import { ShopPage } from './pages/ShopPage';
+import { BlackDragonLair } from './pages/dungeons/BlackDragonLair';
+import { ForgottenSoulsCave } from './pages/dungeons/ForgottenSoulsCave';
+import { IcyThrone } from './pages/dungeons/IcyThrone';
+import { DarkMageTower } from './pages/dungeons/DarkMageTower';
+import { SpiderNest } from './pages/dungeons/SpiderNest';
+import { BoneDemonDungeon } from './pages/dungeons/BoneDemonDungeon';
+import { SeaSerpentLair } from './pages/dungeons/SeaSerpentLair';
 
 function App() {
   return (
@@ -25,6 +32,13 @@ function App() {
       <Route path="/adventure" element={<AdventuresPage />} />
       <Route path="/marketplace" element={<Marketplace />} />
       <Route path="/shop" element={<ShopPage />} />
+      <Route path="/dungeons/dragon-lair" element={<BlackDragonLair />} />
+      <Route path="/dungeons/forgotten-souls" element={<ForgottenSoulsCave />} />
+      <Route path="/dungeons/icy-throne" element={<IcyThrone />} />
+      <Route path="/dungeons/dark-mage" element={<DarkMageTower />} />
+      <Route path="/dungeons/spider-nest" element={<SpiderNest />} />
+      <Route path="/dungeons/bone-dungeon" element={<BoneDemonDungeon />} />
+      <Route path="/dungeons/sea-serpent" element={<SeaSerpentLair />} />
     </Routes>
   );
 }
