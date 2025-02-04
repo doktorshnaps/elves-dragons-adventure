@@ -47,12 +47,12 @@ export const CardDisplay = ({
   }, [card.image]);
 
   return (
-    <Card className={`p-1 bg-game-background border-game-accent hover:border-game-primary transition-all duration-300 h-full flex flex-col ${
+    <Card className={`p-0.5 bg-game-background border-game-accent hover:border-game-primary transition-all duration-300 h-full flex flex-col ${
       !isActive && card.type === 'pet' ? 'opacity-50' : ''
     } ${className}`}>
-      <div className="flex flex-col gap-1 flex-grow">
+      <div className="flex flex-col gap-0.5 flex-grow">
         {card.image && (
-          <div className="w-full aspect-square mb-1 rounded-lg overflow-hidden">
+          <div className={`w-full ${isMobile ? 'aspect-[3/4]' : 'aspect-square'} mb-0.5 rounded-lg overflow-hidden`}>
             <img 
               ref={imgRef}
               alt={card.name}
@@ -63,21 +63,21 @@ export const CardDisplay = ({
           </div>
         )}
         
-        <div className="flex justify-between items-start gap-1">
-          <h3 className={`font-semibold text-game-accent break-words ${isMobile ? 'text-[10px]' : 'text-xs'} leading-tight`}>
+        <div className="flex justify-between items-start gap-0.5 px-0.5">
+          <h3 className={`font-semibold text-game-accent break-words ${isMobile ? 'text-[8px]' : 'text-xs'} leading-tight`}>
             {card.name}
           </h3>
-          <span className={`text-yellow-500 whitespace-nowrap ${isMobile ? 'text-[10px]' : 'text-xs'}`}>
+          <span className={`text-yellow-500 whitespace-nowrap ${isMobile ? 'text-[8px]' : 'text-xs'}`}>
             {getRarityLabel(card.rarity)}
           </span>
         </div>
 
-        <div className={`text-purple-400 ${isMobile ? 'text-[10px]' : 'text-xs'}`}>
+        <div className={`text-purple-400 px-0.5 ${isMobile ? 'text-[8px]' : 'text-xs'}`}>
           ({card.type === 'character' ? 'Герой' : 'Питомец'})
         </div>
 
         {card.faction && (
-          <div className={`flex items-center gap-1 ${isMobile ? 'text-[10px]' : 'text-xs'} ${
+          <div className={`flex items-center gap-0.5 px-0.5 ${isMobile ? 'text-[8px]' : 'text-xs'} ${
             !isActive && card.type === 'pet' ? 'text-red-400' : 'text-purple-400'
           }`}>
             <Sparkles className={`${isMobile ? 'w-2 h-2' : 'w-3 h-3'}`} />
@@ -85,29 +85,29 @@ export const CardDisplay = ({
           </div>
         )}
         
-        <div className={`grid grid-cols-2 gap-1 ${isMobile ? 'text-[10px]' : 'text-xs'} text-gray-400 mt-0.5`}>
-          <div className="flex items-center gap-1">
-            <Heart className={`${isMobile ? 'w-2 h-2' : 'w-3 h-3'} text-red-500 flex-shrink-0`} />
+        <div className={`grid grid-cols-2 gap-0.5 px-0.5 ${isMobile ? 'text-[8px]' : 'text-xs'} text-gray-400 mt-0.5`}>
+          <div className="flex items-center gap-0.5">
+            <Heart className={`${isMobile ? 'w-1.5 h-1.5' : 'w-3 h-3'} text-red-500 flex-shrink-0`} />
             <span>{card.health}</span>
           </div>
-          <div className="flex items-center gap-1">
-            <Sword className={`${isMobile ? 'w-2 h-2' : 'w-3 h-3'} flex-shrink-0`} />
+          <div className="flex items-center gap-0.5">
+            <Sword className={`${isMobile ? 'w-1.5 h-1.5' : 'w-3 h-3'} flex-shrink-0`} />
             <span>{card.power}</span>
           </div>
-          <div className="flex items-center gap-1">
-            <Shield className={`${isMobile ? 'w-2 h-2' : 'w-3 h-3'} flex-shrink-0`} />
+          <div className="flex items-center gap-0.5">
+            <Shield className={`${isMobile ? 'w-1.5 h-1.5' : 'w-3 h-3'} flex-shrink-0`} />
             <span>{card.defense}</span>
           </div>
         </div>
 
         {card.magicResistance && (
-          <div className={`text-blue-400 ${isMobile ? 'text-[10px]' : 'text-xs'} break-words mt-0.5`}>
+          <div className={`text-blue-400 px-0.5 ${isMobile ? 'text-[8px]' : 'text-xs'} break-words mt-0.5`}>
             Защита от {card.magicResistance.type} магии: {card.magicResistance.value}%
           </div>
         )}
 
         {!isActive && card.type === 'pet' && (
-          <div className="text-red-400 text-[10px] mt-0.5 break-words">
+          <div className="text-red-400 text-[8px] mt-0.5 break-words px-0.5">
             Требуется герой {card.faction} {getRarityLabel(card.rarity)} или выше
           </div>
         )}
@@ -117,19 +117,19 @@ export const CardDisplay = ({
         <Button
           variant="outline"
           size={isMobile ? "sm" : "default"}
-          className={`mt-1 w-full text-[10px] h-6 ${
+          className={`mt-0.5 w-full text-[8px] h-4 ${
             isSelected ? 'bg-game-accent hover:bg-game-accent/80' : 'text-yellow-500 hover:text-yellow-600'
           }`}
           onClick={isSelected ? onUpgrade : () => onSell?.(card)}
         >
           {isSelected ? (
             <>
-              <ArrowUpCircle className={`${isMobile ? 'w-2 h-2' : 'w-3 h-3'} mr-1`} />
+              <ArrowUpCircle className={`${isMobile ? 'w-1.5 h-1.5' : 'w-3 h-3'} mr-0.5`} />
               Улучшить
             </>
           ) : (
             <>
-              <Coins className={`${isMobile ? 'w-2 h-2' : 'w-3 h-3'} mr-1`} />
+              <Coins className={`${isMobile ? 'w-1.5 h-1.5' : 'w-3 h-3'} mr-0.5`} />
               Продать ({getCardPrice(card.rarity)})
             </>
           )}
