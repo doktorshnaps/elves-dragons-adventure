@@ -8,6 +8,7 @@ import { useNavigate } from "react-router-dom";
 import { useInventoryState } from "@/hooks/useInventoryState";
 import { useToast } from "@/hooks/use-toast";
 import { v4 as uuidv4 } from 'uuid';
+import { Item } from "@/types/inventory";
 
 interface ShopProps {
   onClose: () => void;
@@ -22,7 +23,7 @@ export const Shop = ({ onClose }: ShopProps) => {
   const handleBuyItem = (item: typeof shopItems[0]) => {
     if (balance >= item.price) {
       // Создаем новый предмет для инвентаря
-      const newItem = {
+      const newItem: Item = {
         id: uuidv4(),
         name: item.name,
         type: item.type,
