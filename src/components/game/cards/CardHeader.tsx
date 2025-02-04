@@ -1,9 +1,10 @@
 import { useIsMobile } from "@/hooks/use-mobile";
 import { getRarityLabel } from "@/utils/cardUtils";
+import { Rarity } from "@/types/cards";
 
 interface CardHeaderProps {
   name: string;
-  rarity: number;
+  rarity: Rarity;
 }
 
 export const CardHeader = ({ name, rarity }: CardHeaderProps) => {
