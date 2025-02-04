@@ -3,6 +3,7 @@ import { Opponent } from "@/types/battle";
 export const DarkMageTowerGenerator = (level: number): Opponent[] => {
   const baseHealth = 70 + (level - 1) * 35;
   const basePower = 12 + (level - 1) * 6;
+  const baseExperience = level * 90;
 
   if (level % 5 === 0) {
     return [{
@@ -12,6 +13,7 @@ export const DarkMageTowerGenerator = (level: number): Opponent[] => {
       maxHealth: baseHealth * 2,
       power: basePower * 1.5,
       isBoss: true,
+      experienceReward: baseExperience * 2,
       image: "/lovable-uploads/abf6e9af-a611-414c-b213-fed11ae0a767.png"
     }];
   }
@@ -24,6 +26,7 @@ export const DarkMageTowerGenerator = (level: number): Opponent[] => {
       maxHealth: baseHealth,
       power: basePower,
       isBoss: false,
+      experienceReward: baseExperience,
       image: "/lovable-uploads/abf6e9af-a611-414c-b213-fed11ae0a767.png"
     }
   ];

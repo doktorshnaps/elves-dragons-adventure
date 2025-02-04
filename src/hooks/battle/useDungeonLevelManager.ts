@@ -2,12 +2,13 @@ import { useNavigate } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
 import { PlayerStats } from '@/types/battle';
 import { generateDungeonOpponents } from '@/dungeons/dungeonManager';
+import { DungeonType } from '@/constants/dungeons';
 
 export const useDungeonLevelManager = (
   playerStats: PlayerStats | null,
   initialState: {
     currentDungeonLevel: number;
-    selectedDungeon: string | null;
+    selectedDungeon: DungeonType | null;
   },
   setOpponents: (opponents: any[]) => void
 ) => {

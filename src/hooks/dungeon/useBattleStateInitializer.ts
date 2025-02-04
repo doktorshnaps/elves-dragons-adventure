@@ -1,11 +1,12 @@
 import { useToast } from '@/hooks/use-toast';
 import { generateDungeonOpponents } from '@/dungeons/dungeonManager';
 import { calculateTeamStats } from '@/utils/cardUtils';
+import { DungeonType } from '@/constants/dungeons';
 
 export const useBattleStateInitializer = () => {
   const { toast } = useToast();
 
-  const initializeBattleState = (selectedDungeon: string, balance: number) => {
+  const initializeBattleState = (selectedDungeon: DungeonType, balance: number) => {
     const savedCards = localStorage.getItem('gameCards');
     const cards = savedCards ? JSON.parse(savedCards) : [];
     const teamStats = calculateTeamStats(cards);
