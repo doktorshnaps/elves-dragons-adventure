@@ -44,12 +44,26 @@ export const DungeonSearchDialog = ({
           backgroundImage: selectedDungeon ? `url("${dungeonBackgrounds[selectedDungeon]}")` : 'none',
           backgroundSize: 'cover',
           backgroundPosition: 'center',
-          backgroundRepeat: 'no-repeat'
+          backgroundRepeat: 'no-repeat',
+          touchAction: 'pan-y',
+          WebkitOverflowScrolling: 'touch',
+          overscrollBehavior: 'contain'
         }}
       >
         <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
         
-        <div className="relative z-10">
+        <div 
+          className="relative z-10 max-h-[80vh] overflow-y-auto"
+          style={{ 
+            touchAction: 'pan-y',
+            WebkitOverflowScrolling: 'touch',
+            overscrollBehavior: 'contain',
+            msOverflowStyle: '-ms-autohiding-scrollbar',
+            scrollBehavior: 'smooth',
+            WebkitUserSelect: 'none',
+            userSelect: 'none'
+          }}
+        >
           <Button
             variant="ghost"
             size="icon"

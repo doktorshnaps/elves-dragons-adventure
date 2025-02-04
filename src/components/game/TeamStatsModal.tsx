@@ -43,7 +43,9 @@ export const TeamStatsModal = ({ isOpen, onClose, teamStats, balance }: TeamStat
             WebkitOverflowScrolling: 'touch',
             overscrollBehavior: 'contain',
             msOverflowStyle: '-ms-autohiding-scrollbar',
-            scrollBehavior: 'smooth'
+            scrollBehavior: 'smooth',
+            WebkitUserSelect: 'none',
+            userSelect: 'none'
           }}
         >
           <DialogHeader>

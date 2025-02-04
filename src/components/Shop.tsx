@@ -99,13 +99,9 @@ export const Shop = ({ onClose, balance, onBalanceChange }: ShopProps) => {
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
       className="fixed inset-0 z-50 flex items-center justify-center p-4"
-      style={{ 
-        touchAction: 'none',
-        overscrollBehavior: 'none'
-      }}
     >
       <div 
-        className="absolute inset-0 z-0"
+        className="absolute inset-0"
         style={{
           backgroundImage: 'url("/lovable-uploads/aefc7995-4fc9-459a-8c89-b648a2799937.png")',
           backgroundSize: 'cover',
