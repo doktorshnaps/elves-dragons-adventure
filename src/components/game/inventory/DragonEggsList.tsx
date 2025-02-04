@@ -77,7 +77,7 @@ export const DragonEggsList = ({ eggs }: DragonEggsListProps) => {
         return (
           <DragonEggTimer
             key={egg.id}
-            rarity={egg.rarity}
+            rarity={egg.rarity as Rarity}
             petName={egg.petName}
             createdAt={egg.createdAt}
             onHatch={() => handleHatch(egg)}
