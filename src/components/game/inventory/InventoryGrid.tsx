@@ -30,11 +30,11 @@ export const InventoryGrid = ({
       {unequippedItems.map((item) => (
         <Card 
           key={`${item.name}-${item.type}-${item.value}`}
-          className="p-2 bg-game-surface/80 border-game-accent backdrop-blur-sm aspect-square flex flex-col"
+          className="w-[90px] h-[180px] sm:w-[120px] sm:h-[240px] md:w-[130px] md:h-[260px] lg:w-[140px] lg:h-[280px] p-2 bg-game-surface/80 border-game-accent backdrop-blur-sm flex flex-col"
         >
           <div className="flex flex-col h-full">
             {item.image && (
-              <div className="relative w-full aspect-square mb-1 rounded-lg overflow-hidden">
+              <div className="relative w-full h-[75px] sm:h-[100px] md:h-[110px] lg:h-[120px] mb-1 rounded-lg overflow-hidden">
                 <img 
                   src={item.image} 
                   alt={item.name}
@@ -43,11 +43,11 @@ export const InventoryGrid = ({
               </div>
             )}
             <div className="flex flex-col flex-grow">
-              <h4 className="font-bold text-game-accent text-[10px] truncate">
+              <h4 className="font-bold text-game-accent text-[7px] sm:text-[10px] md:text-[11px] truncate">
                 {item.name} {item.count > 1 && `(${item.count})`}
               </h4>
               {item.type === 'dragon_egg' && (
-                <div className="text-[10px] text-gray-300 truncate">
+                <div className="text-[6px] sm:text-[8px] md:text-[10px] text-gray-300 truncate">
                   <p>Редкость: {getRarityLabel(item.value as 1|2|3|4|5|6|7|8)}</p>
                   {item.items[0].petName && (
                     <p className="truncate">Питомец: {item.items[0].petName}</p>
@@ -62,7 +62,7 @@ export const InventoryGrid = ({
                     onClick={() => onSellItem(item.items[0])}
                     variant="destructive"
                     size="sm"
-                    className="w-full text-[10px] h-6"
+                    className="w-full text-[6px] sm:text-[8px] md:text-[10px] h-6"
                   >
                     Продать
                   </Button>
