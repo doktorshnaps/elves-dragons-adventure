@@ -51,7 +51,7 @@ export const InventoryDisplay = ({
     >
       <div className="p-4">
         <InventoryHeader balance={balance} />
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-1">
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-y-1 gap-x-0.5">
           <DragonEggsList eggs={eggs} />
           <InventoryGrid
             groupedItems={groupItems(inventory)}
