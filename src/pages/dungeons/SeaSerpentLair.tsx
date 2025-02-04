@@ -5,6 +5,7 @@ import { DungeonType } from '@/constants/dungeons';
 import { Button } from '@/components/ui/button';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, DoorOpen } from 'lucide-react';
+import { DungeonLayout } from '@/components/dungeon/DungeonLayout';
 
 export const SeaSerpentLair = () => {
   const navigate = useNavigate();
@@ -19,7 +20,7 @@ export const SeaSerpentLair = () => {
   }, []);
 
   return (
-    <div className="relative">
+    <DungeonLayout backgroundImage="/lovable-uploads/a143d5f9-fa7c-479a-8103-304e3be6dae0.png">
       <div className="fixed top-4 left-4 z-50 flex gap-2">
         <Button 
           variant="outline" 
@@ -39,6 +40,6 @@ export const SeaSerpentLair = () => {
         </Button>
       </div>
       <Battle />
-    </div>
+    </DungeonLayout>
   );
 };

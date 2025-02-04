@@ -5,6 +5,7 @@ import { DungeonType } from '@/constants/dungeons';
 import { Button } from '@/components/ui/button';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, DoorOpen } from 'lucide-react';
+import { DungeonLayout } from '@/components/dungeon/DungeonLayout';
 
 export const BoneDemonDungeon = () => {
   const navigate = useNavigate();
@@ -19,7 +20,7 @@ export const BoneDemonDungeon = () => {
   }, []);
 
   return (
-    <div className="relative">
+    <DungeonLayout backgroundImage="/lovable-uploads/eca4bec7-0f8c-4739-9ddf-9b385800db15.png">
       <div className="fixed top-4 left-4 z-50 flex gap-2">
         <Button 
           variant="outline" 
@@ -39,6 +40,6 @@ export const BoneDemonDungeon = () => {
         </Button>
       </div>
       <Battle />
-    </div>
+    </DungeonLayout>
   );
 };
