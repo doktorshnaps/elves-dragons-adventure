@@ -44,10 +44,10 @@ export const TeamCards = () => {
       )}
       
       <div className="flex-1 overflow-y-auto min-h-0">
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4 p-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 p-4">
           {Object.values(groupedCards).length > 0 ? (
             Object.values(groupedCards).map((cardGroup) => (
-              <div key={cardGroup[0].id} className="flex justify-center">
+              <div key={cardGroup[0].id} className="flex items-center justify-center w-full">
                 <CardGroup
                   card={cardGroup[0]}
                   count={cardGroup.length}
