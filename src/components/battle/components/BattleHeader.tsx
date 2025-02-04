@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { ArrowLeft, DoorOpen } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useNavigate } from "react-router-dom";
+import { useToast } from "@/hooks/use-toast";
 
 interface BattleHeaderProps {
   selectedDungeon: string;
@@ -21,6 +22,16 @@ export const BattleHeader = ({
 }: BattleHeaderProps) => {
   const isMobile = useIsMobile();
   const navigate = useNavigate();
+  const { toast } = useToast();
+
+  const handleExitDungeon = () => {
+    localStorage.removeItem('battleState');
+    toast({
+      title: "Подземелье покинуто",
+      description: `Вы покинули ${selectedDungeon}`,
+    });
+    navigate('/game');
+  };
 
   return (
     <div className="flex flex-col md:flex-row justify-between items-center gap-4 mb-4 md:mb-8">
@@ -41,7 +52,7 @@ export const BattleHeader = ({
         <Button
           variant="destructive"
           className="bg-red-600 hover:bg-red-700 text-xs md:text-base"
-          onClick={onExitDungeon}
+          onClick={handleExitDungeon}
         >
           <DoorOpen className="h-4 w-4 md:h-5 md:w-5 mr-1 md:mr-2" />
           {isMobile ? `Выход из ${selectedDungeon}` : `Покинуть ${selectedDungeon}`}
