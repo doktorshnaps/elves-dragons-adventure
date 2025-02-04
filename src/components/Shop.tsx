@@ -5,6 +5,9 @@ import { useBalanceState } from "@/hooks/useBalanceState";
 import { Button } from "./ui/button";
 import { ArrowLeft } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { useInventoryState } from "@/hooks/useInventoryState";
+import { useToast } from "@/hooks/use-toast";
+import { v4 as uuidv4 } from 'uuid';
 
 interface ShopProps {
   onClose: () => void;
@@ -12,7 +15,43 @@ interface ShopProps {
 
 export const Shop = ({ onClose }: ShopProps) => {
   const { balance, updateBalance } = useBalanceState();
+  const { inventory, updateInventory } = useInventoryState();
+  const { toast } = useToast();
   const navigate = useNavigate();
+
+  const handleBuyItem = (item: ShopItem) => {
+    if (balance >= item.price) {
+      // Создаем новый предмет для инвентаря
+      const newItem = {
+        id: uuidv4(),
+        name: item.name,
+        type: item.type,
+        value: item.value,
+        description: item.description,
+        image: item.image,
+        stats: item.stats,
+        slot: item.slot,
+        equipped: false
+      };
+
+      // Обновляем баланс и инвентарь
+      updateBalance(balance - item.price);
+      updateInventory([...inventory, newItem]);
+
+      // Показываем уведомление об успешной покупке
+      toast({
+        title: "Покупка успешна",
+        description: `Вы приобрели ${item.name}`,
+      });
+    } else {
+      // Показываем уведомление о недостатке средств
+      toast({
+        title: "Недостаточно средств",
+        description: "У вас недостаточно монет для покупки этого предмета",
+        variant: "destructive",
+      });
+    }
+  };
 
   return (
     <Dialog open onOpenChange={() => onClose()}>
@@ -46,11 +85,7 @@ export const Shop = ({ onClose }: ShopProps) => {
                 key={item.id} 
                 item={item} 
                 balance={balance}
-                onBuy={() => {
-                  if (balance >= item.price) {
-                    updateBalance(balance - item.price);
-                  }
-                }}
+                onBuy={() => handleBuyItem(item)}
               />
             ))}
           </div>
