@@ -2,6 +2,7 @@ import { ArrowLeft } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { TeamCards } from "@/components/game/TeamCards";
 import { Button } from "@/components/ui/button";
+import { DragonEggProvider } from "@/contexts/DragonEggContext";
 
 export const Team = () => {
   const navigate = useNavigate();
@@ -28,7 +29,9 @@ export const Team = () => {
       </div>
       
       <div className="flex-1 bg-game-surface/90 p-4 rounded-lg border border-game-accent backdrop-blur-sm">
-        <TeamCards />
+        <DragonEggProvider>
+          <TeamCards />
+        </DragonEggProvider>
       </div>
     </div>
   );
