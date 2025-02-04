@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { X, Sparkles } from "lucide-react";
+import { ArrowLeft, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
@@ -119,10 +119,11 @@ export const Shop = ({ onClose, balance, onBalanceChange }: ShopProps) => {
           </h2>
           <Button
             variant="ghost"
-            className="text-white hover:text-game-accent bg-game-surface/50"
+            className="text-white hover:text-game-accent bg-game-surface/50 flex items-center gap-2"
             onClick={() => navigate('/menu')}
           >
-            <X className="h-4 w-4" />
+            <ArrowLeft className="h-4 w-4" />
+            Вернуться в меню
           </Button>
         </div>
 
