@@ -27,7 +27,7 @@ export const BattleHeader = ({
           variant="ghost"
           size="icon"
           className="text-game-accent hover:text-game-accent/80"
-          onClick={onBackToGame}
+          onClick={() => navigate('/menu')}
         >
           <ArrowLeft className="h-4 w-4 md:h-5 md:w-5" />
         </Button>

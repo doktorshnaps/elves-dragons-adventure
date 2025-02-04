@@ -10,6 +10,7 @@ import { ShopItem as ShopItemComponent } from "./shop/ShopItem";
 import { CardAnimation } from "./shop/CardAnimation";
 import { shopItems, ShopItem } from "./shop/types";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { useNavigate } from "react-router-dom";
 
 interface ShopProps {
   onClose: () => void;
@@ -19,6 +20,7 @@ interface ShopProps {
 
 export const Shop = ({ onClose, balance, onBalanceChange }: ShopProps) => {
   const { toast } = useToast();
+  const navigate = useNavigate();
   const isMobile = useIsMobile();
   const [showCardAnimation, setShowCardAnimation] = useState(false);
   const [lastOpenedCard, setLastOpenedCard] = useState<CardType | null>(null);
@@ -118,7 +120,7 @@ export const Shop = ({ onClose, balance, onBalanceChange }: ShopProps) => {
           <Button
             variant="ghost"
             className="text-white hover:text-game-accent bg-game-surface/50"
-            onClick={onClose}
+            onClick={() => navigate('/menu')}
           >
             <X className="h-4 w-4" />
           </Button>
