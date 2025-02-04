@@ -31,6 +31,8 @@ export const DungeonSearchDialog = ({
   onRollDice,
   hasActiveCards
 }: DungeonSearchDialogProps) => {
+  const backgroundImage = selectedDungeon ? dungeonBackgrounds[selectedDungeon] : '';
+
   return (
     <motion.div
       initial={{ opacity: 0 }}
@@ -41,7 +43,7 @@ export const DungeonSearchDialog = ({
       <Card 
         className="bg-game-surface border-game-accent p-8 max-w-md w-full relative overflow-hidden"
         style={{
-          backgroundImage: selectedDungeon ? `url("${dungeonBackgrounds[selectedDungeon]}")` : 'none',
+          backgroundImage: backgroundImage ? `url(${backgroundImage})` : 'none',
           backgroundSize: 'cover',
           backgroundPosition: 'center',
           backgroundRepeat: 'no-repeat',
