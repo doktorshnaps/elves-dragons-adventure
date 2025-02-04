@@ -9,6 +9,7 @@ import Index from './pages/Index';
 import Dungeons from './pages/Dungeons';
 import { AdventuresPage } from './pages/AdventuresPage';
 import { Marketplace } from './pages/Marketplace';
+import { ShopPage } from './pages/ShopPage';
 
 function App() {
   return (
@@ -23,6 +24,7 @@ function App() {
       <Route path="/dungeons" element={<Dungeons />} />
       <Route path="/adventure" element={<AdventuresPage />} />
       <Route path="/marketplace" element={<Marketplace />} />
+      <Route path="/shop" element={<ShopPage />} />
     </Routes>
   );
 }
