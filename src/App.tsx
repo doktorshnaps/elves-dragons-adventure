@@ -12,6 +12,7 @@ import { Menu } from "./pages/Menu";
 import Dungeons from "./pages/Dungeons";
 import { Shop } from "./components/Shop";
 import { DragonEggProvider } from "./contexts/DragonEggContext";
+import { AdventuresTab } from "./components/game/adventures/AdventuresTab";
 
 function App() {
   return (
@@ -29,6 +30,7 @@ function App() {
           <Route path="/menu" element={<Menu />} />
           <Route path="/dungeons" element={<Dungeons />} />
           <Route path="/shop" element={<Shop onClose={() => {}} balance={0} onBalanceChange={() => {}} />} />
+          <Route path="/adventure" element={<AdventuresTab />} />
         </Routes>
         <Toaster />
       </DragonEggProvider>
