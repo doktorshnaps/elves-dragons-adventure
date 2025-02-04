@@ -23,7 +23,6 @@ export const TeamCards = () => {
     );
   };
 
-  // Группировка одинаковых карт
   const groupedCards = cards.reduce<{ [key: string]: CardType[] }>((acc, card) => {
     const key = `${card.name}-${card.rarity}-${card.type}-${card.faction || ''}`;
     if (!acc[key]) {
@@ -45,7 +44,7 @@ export const TeamCards = () => {
       )}
       
       <div className="flex-1 overflow-y-auto min-h-0">
-        <div className="grid auto-rows-fr grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 p-4">
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-2 p-2">
           {Object.values(groupedCards).length > 0 ? (
             Object.values(groupedCards).map((cardGroup) => (
               <CardGroup

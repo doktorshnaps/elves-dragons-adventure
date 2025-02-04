@@ -29,10 +29,11 @@ export const CardDisplay = ({
   const isMobile = useIsMobile();
 
   return (
-    <Card className={`p-0.5 bg-game-background border-game-accent hover:border-game-primary transition-all duration-300 h-full flex flex-col ${
-      !isActive && card.type === 'pet' ? 'opacity-50' : ''
-    } ${className}`}>
-      <div className="flex flex-col gap-0.5 flex-grow">
+    <Card className={`relative w-full max-w-[300px] sm:max-w-[200px] md:max-w-[180px] lg:max-w-[160px] 
+      p-0.5 bg-game-background border-game-accent hover:border-game-primary transition-all duration-300 
+      ${!isActive && card.type === 'pet' ? 'opacity-50' : ''} ${className}`}
+    >
+      <div className="flex flex-col gap-0.5">
         <CardImage image={card.image} name={card.name} />
         <CardHeader name={card.name} rarity={card.rarity} />
 
@@ -66,15 +67,15 @@ export const CardDisplay = ({
             Требуется герой {card.faction} {card.rarity} или выше
           </div>
         )}
-      </div>
 
-      <CardActions
-        card={card}
-        showSellButton={showSellButton}
-        onSell={onSell}
-        isSelected={isSelected}
-        onUpgrade={onUpgrade}
-      />
+        <CardActions
+          card={card}
+          showSellButton={showSellButton}
+          onSell={onSell}
+          isSelected={isSelected}
+          onUpgrade={onUpgrade}
+        />
+      </div>
     </Card>
   );
 };
