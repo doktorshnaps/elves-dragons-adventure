@@ -17,11 +17,11 @@ export const Team = () => {
     >
       <div className="flex items-center gap-2">
         <button
-          onClick={() => navigate('/game')}
+          onClick={() => navigate('/menu')}
           className="flex items-center gap-2 text-white hover:text-game-accent transition-colors"
         >
           <ArrowLeft className="w-6 h-6" />
-          <span>Назад</span>
+          <span>Вернуться в меню</span>
         </button>
       </div>
       
