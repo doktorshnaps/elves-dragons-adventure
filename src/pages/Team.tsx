@@ -1,6 +1,7 @@
 import { ArrowLeft } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { TeamCards } from "@/components/game/TeamCards";
+import { Button } from "@/components/ui/button";
 
 export const Team = () => {
   const navigate = useNavigate();
@@ -16,13 +17,14 @@ export const Team = () => {
       }}
     >
       <div className="flex items-center gap-2">
-        <button
+        <Button 
+          variant="outline" 
+          className="bg-game-surface/80 border-game-accent text-game-accent hover:bg-game-surface"
           onClick={() => navigate('/menu')}
-          className="flex items-center gap-2 text-white hover:text-game-accent transition-colors"
         >
-          <ArrowLeft className="w-6 h-6" />
-          <span>Вернуться в меню</span>
-        </button>
+          <ArrowLeft className="w-4 h-4 mr-2" />
+          Вернуться в меню
+        </Button>
       </div>
       
       <div className="flex-1 bg-game-surface/90 p-4 rounded-lg border border-game-accent backdrop-blur-sm">

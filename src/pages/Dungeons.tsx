@@ -9,12 +9,12 @@ const Dungeons = () => {
   return (
     <div className="min-h-screen p-4">
       <Button
-        variant="ghost"
-        size="icon"
-        className="mb-4 text-game-accent hover:text-game-accent/80"
-        onClick={() => navigate(-1)}
+        variant="outline"
+        className="mb-4 bg-game-surface/80 border-game-accent text-game-accent hover:bg-game-surface"
+        onClick={() => navigate('/menu')}
       >
-        <ArrowLeft className="h-5 w-5" />
+        <ArrowLeft className="w-4 h-4 mr-2" />
+        Вернуться в меню
       </Button>
       <DungeonsList />
     </div>
