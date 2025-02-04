@@ -80,28 +80,32 @@ export const DragonEggsList = ({ eggs }: DragonEggsListProps) => {
         return (
           <UICard 
             key={egg.id}
-            className="relative overflow-hidden bg-game-surface border-game-accent"
+            className="w-[90px] h-[180px] sm:w-[120px] sm:h-[240px] md:w-[130px] md:h-[260px] lg:w-[140px] lg:h-[280px] p-2 bg-game-surface/80 border-game-accent backdrop-blur-sm"
           >
-            <div className="p-2">
+            <div className="flex flex-col h-full">
               <div 
-                className="w-full aspect-square rounded-lg mb-2 bg-center bg-cover"
-                style={{
-                  backgroundImage: `url(${basePet.image})`,
-                  filter: 'brightness(0.7) saturate(0.5)',
-                }}
-              />
-              <div className="text-sm font-medium text-game-accent mb-1">
-                {egg.petName}
+                className="relative w-full h-[75px] sm:h-[100px] md:h-[110px] lg:h-[120px] mb-1 rounded-lg overflow-hidden"
+              >
+                <img 
+                  src={basePet.image}
+                  alt={egg.petName}
+                  className="w-full h-full object-contain filter brightness-75 saturate-50"
+                />
               </div>
-              <div className="text-xs text-gray-400 mb-2">
-                Редкость: {egg.rarity}
+              <div className="flex flex-col flex-grow">
+                <div className="text-[7px] sm:text-[10px] md:text-[11px] font-medium text-game-accent mb-1">
+                  {egg.petName}
+                </div>
+                <div className="text-[6px] sm:text-[8px] md:text-[10px] text-gray-400">
+                  Редкость: {egg.rarity}
+                </div>
+                <DragonEggTimer
+                  rarity={egg.rarity as Rarity}
+                  petName={egg.petName}
+                  createdAt={egg.createdAt}
+                  onHatch={() => handleHatch(egg)}
+                />
               </div>
-              <DragonEggTimer
-                rarity={egg.rarity as Rarity}
-                petName={egg.petName}
-                createdAt={egg.createdAt}
-                onHatch={() => handleHatch(egg)}
-              />
             </div>
           </UICard>
         );
