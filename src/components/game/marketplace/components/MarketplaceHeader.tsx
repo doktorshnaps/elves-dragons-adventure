@@ -11,7 +11,7 @@ export const MarketplaceHeader = () => {
       <Button 
         variant="outline" 
         className="bg-game-surface/80 border-game-accent text-game-accent hover:bg-game-surface"
-        onClick={() => navigate('/game')}
+        onClick={() => navigate('/menu')}
       >
         <ArrowLeft className="w-4 h-4 mr-2" />
         Вернуться в меню
