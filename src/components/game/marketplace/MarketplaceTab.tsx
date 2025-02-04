@@ -125,8 +125,11 @@ export const MarketplaceTab = () => {
         backgroundImage: "url('/lovable-uploads/20d88f7a-4f27-4b22-8ebe-e55b87a0c7e3.png')",
         backgroundColor: 'rgba(0, 0, 0, 0.85)',
         backgroundBlendMode: 'multiply',
-        touchAction: 'none',
-        overscrollBehavior: 'none'
+        touchAction: 'pan-y',
+        WebkitOverflowScrolling: 'touch',
+        overscrollBehavior: 'contain',
+        msOverflowStyle: '-ms-autohiding-scrollbar',
+        scrollBehavior: 'smooth'
       }}
     >
       <div className="flex items-center gap-4 mb-6">

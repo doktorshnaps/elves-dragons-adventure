@@ -10,10 +10,8 @@ export const Game = () => {
       e.preventDefault();
     };
 
-    // Add touch event listener
     document.addEventListener('touchmove', preventDefaultTouchMove, { passive: false });
 
-    // Cleanup
     return () => {
       document.removeEventListener('touchmove', preventDefaultTouchMove);
     };
@@ -27,12 +25,22 @@ export const Game = () => {
         backgroundSize: 'cover',
         backgroundPosition: 'center',
         backgroundRepeat: 'no-repeat',
-        overscrollBehavior: 'none',
-        touchAction: 'none'
+        touchAction: 'pan-y',
+        WebkitOverflowScrolling: 'touch',
+        overscrollBehavior: 'contain',
+        msOverflowStyle: '-ms-autohiding-scrollbar',
+        scrollBehavior: 'smooth'
       }}
     >
       <div className="absolute inset-0 bg-black/30" />
-      <div className={`relative ${isMobile ? 'px-2' : 'px-6'}`}>
+      <div 
+        className={`relative ${isMobile ? 'px-2' : 'px-6'}`}
+        style={{
+          touchAction: 'pan-y',
+          WebkitOverflowScrolling: 'touch',
+          overscrollBehavior: 'contain'
+        }}
+      >
         <GameInterface />
       </div>
     </div>

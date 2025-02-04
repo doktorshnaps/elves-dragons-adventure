@@ -124,13 +124,23 @@ export const Battle = () => {
         backgroundImage: backgroundImage ? `linear-gradient(rgba(0, 0, 0, 0.7), rgba(0, 0, 0, 0.7)), url(${backgroundImage})` : undefined,
         backgroundSize: 'cover',
         backgroundPosition: 'center',
-        backgroundRepeat: 'no-repeat'
+        backgroundRepeat: 'no-repeat',
+        touchAction: 'pan-y',
+        WebkitOverflowScrolling: 'touch',
+        overscrollBehavior: 'contain',
+        msOverflowStyle: '-ms-autohiding-scrollbar',
+        scrollBehavior: 'smooth'
       }}
     >
       <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         className="max-w-7xl mx-auto"
+        style={{
+          touchAction: 'pan-y',
+          WebkitOverflowScrolling: 'touch',
+          overscrollBehavior: 'contain'
+        }}
       >
         <div className="flex flex-col md:flex-row justify-between items-center gap-4 mb-4 md:mb-8">
           <div className="flex items-center gap-2 md:gap-4">
