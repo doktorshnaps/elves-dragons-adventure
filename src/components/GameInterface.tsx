@@ -18,6 +18,7 @@ import { useBalanceState } from "@/hooks/useBalanceState";
 import { TeamStatsModal } from "./game/TeamStatsModal";
 import { calculateTeamStats } from "@/utils/cardUtils";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { ScrollArea } from "./ui/scroll-area";
 
 export const GameInterface = () => {
   const navigate = useNavigate();
@@ -125,28 +126,30 @@ export const GameInterface = () => {
               Выберите режим игры для продолжения
             </DialogDescription>
           </DialogHeader>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 p-4">
-            <Button
-              variant="outline"
-              className="h-16 sm:h-24 bg-game-surface border-game-accent text-game-accent hover:bg-game-surface/80"
-              onClick={() => {
-                setShowGameModeDialog(false);
-                setShowDungeonSearch(true);
-              }}
-            >
-              Поиск подземелья
-            </Button>
-            <Button
-              variant="outline"
-              className="h-16 sm:h-24 bg-game-surface border-game-accent text-game-accent hover:bg-game-surface/80"
-              onClick={() => {
-                setShowGameModeDialog(false);
-                navigate('/adventure');
-              }}
-            >
-              Приключение
-            </Button>
-          </div>
+          <ScrollArea className="h-[calc(80vh-4rem)] sm:h-auto">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 p-4">
+              <Button
+                variant="outline"
+                className="h-16 sm:h-24 bg-game-surface border-game-accent text-game-accent hover:bg-game-surface/80"
+                onClick={() => {
+                  setShowGameModeDialog(false);
+                  setShowDungeonSearch(true);
+                }}
+              >
+                Поиск подземелья
+              </Button>
+              <Button
+                variant="outline"
+                className="h-16 sm:h-24 bg-game-surface border-game-accent text-game-accent hover:bg-game-surface/80"
+                onClick={() => {
+                  setShowGameModeDialog(false);
+                  navigate('/adventure');
+                }}
+              >
+                Приключение
+              </Button>
+            </div>
+          </ScrollArea>
         </DialogContent>
       </Dialog>
 
@@ -156,9 +159,11 @@ export const GameInterface = () => {
           <DialogHeader>
             <DialogTitle className="text-xl font-bold text-game-accent">Снаряжение</DialogTitle>
           </DialogHeader>
-          <div className="overflow-y-auto flex-1">
-            <EquipmentTab />
-          </div>
+          <ScrollArea className="h-[calc(90vh-8rem)]">
+            <div className="p-4">
+              <EquipmentTab />
+            </div>
+          </ScrollArea>
         </DialogContent>
       </Dialog>
 
@@ -168,9 +173,11 @@ export const GameInterface = () => {
           <DialogHeader>
             <DialogTitle className="text-xl font-bold text-game-accent">Ваша команда</DialogTitle>
           </DialogHeader>
-          <div className="overflow-y-auto flex-1">
-            <TeamCards />
-          </div>
+          <ScrollArea className="h-[calc(90vh-8rem)]">
+            <div className="p-4">
+              <TeamCards />
+            </div>
+          </ScrollArea>
         </DialogContent>
       </Dialog>
 
