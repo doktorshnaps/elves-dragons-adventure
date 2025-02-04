@@ -6,6 +6,11 @@ import Index from "./pages/Index";
 import { DragonEggProvider } from "./contexts/DragonEggContext";
 import { AdventuresTab } from "./components/game/adventures/AdventuresTab";
 import { Shop } from "./components/Shop";
+import { Menu } from "./pages/Menu";
+import { Statistics } from "./pages/Statistics";
+import { Equipment } from "./pages/Equipment";
+import { Team } from "./pages/Team";
+import { Marketplace } from "./pages/Marketplace";
 import "./App.css";
 
 const AppLayout = ({ children }: { children: React.ReactNode }) => {
@@ -24,11 +29,15 @@ export const App = () => {
       <Router>
         <Routes>
           <Route path="/" element={<AppLayout><Index /></AppLayout>} />
-          <Route path="/game" element={<AppLayout><Game /></AppLayout>} />
+          <Route path="/menu" element={<AppLayout><Menu /></AppLayout>} />
           <Route path="/battle" element={<AppLayout><Battle /></AppLayout>} />
           <Route path="/grimoire" element={<AppLayout><Grimoire /></AppLayout>} />
           <Route path="/adventure" element={<AppLayout><AdventuresTab /></AppLayout>} />
-          <Route path="/marketplace" element={<AppLayout><Shop onClose={() => {}} balance={0} onBalanceChange={() => {}} /></AppLayout>} />
+          <Route path="/magicmarketplace" element={<AppLayout><Shop onClose={() => {}} balance={0} onBalanceChange={() => {}} /></AppLayout>} />
+          <Route path="/marketplace" element={<AppLayout><Marketplace /></AppLayout>} />
+          <Route path="/statistics" element={<AppLayout><Statistics /></AppLayout>} />
+          <Route path="/equipment" element={<AppLayout><Equipment /></AppLayout>} />
+          <Route path="/team" element={<AppLayout><Team /></AppLayout>} />
         </Routes>
       </Router>
     </DragonEggProvider>
