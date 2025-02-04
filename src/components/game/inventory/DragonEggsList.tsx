@@ -3,6 +3,7 @@ import { useToast } from "@/hooks/use-toast";
 import { DragonEgg } from "@/contexts/DragonEggContext";
 import { Card, Rarity, Faction } from "@/types/cards";
 import { cardDatabase } from "@/data/cardDatabase";
+import { Card as UICard } from "@/components/ui/card";
 
 interface DragonEggsListProps {
   eggs: DragonEgg[];
@@ -74,14 +75,35 @@ export const DragonEggsList = ({ eggs }: DragonEggsListProps) => {
           card.name === egg.petName
         );
 
+        if (!basePet) return null;
+
         return (
-          <DragonEggTimer
+          <UICard 
             key={egg.id}
-            rarity={egg.rarity as Rarity}
-            petName={egg.petName}
-            createdAt={egg.createdAt}
-            onHatch={() => handleHatch(egg)}
-          />
+            className="relative overflow-hidden bg-game-surface border-game-accent"
+          >
+            <div className="p-2">
+              <div 
+                className="w-full aspect-square rounded-lg mb-2 bg-center bg-cover"
+                style={{
+                  backgroundImage: `url(${basePet.image})`,
+                  filter: 'brightness(0.7) saturate(0.5)',
+                }}
+              />
+              <div className="text-sm font-medium text-game-accent mb-1">
+                {egg.petName}
+              </div>
+              <div className="text-xs text-gray-400 mb-2">
+                Редкость: {egg.rarity}
+              </div>
+              <DragonEggTimer
+                rarity={egg.rarity as Rarity}
+                petName={egg.petName}
+                createdAt={egg.createdAt}
+                onHatch={() => handleHatch(egg)}
+              />
+            </div>
+          </UICard>
         );
       })}
     </div>
