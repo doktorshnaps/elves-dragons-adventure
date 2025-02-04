@@ -5,16 +5,16 @@ import { useBalanceState } from "@/hooks/useBalanceState";
 import { useInventoryState } from "@/hooks/useInventoryState";
 import { useToast } from "@/hooks/use-toast";
 import { v4 as uuidv4 } from 'uuid';
-import { Item } from "@/types/inventory";
 import { generateCard } from "@/utils/cardUtils";
+import { Item } from "@/types/inventory";
 
 interface ShopProps {
   onClose: () => void;
 }
 
 export const Shop = ({ onClose }: ShopProps) => {
-  const { balance, setBalance } = useBalanceState();
-  const { addItem } = useInventoryState();
+  const { balance, updateBalance } = useBalanceState();
+  const { inventory, updateInventory } = useInventoryState();
   const { toast } = useToast();
 
   const handleBuyItem = (item: typeof shopItems[0]) => {
@@ -37,7 +37,7 @@ export const Shop = ({ onClose }: ShopProps) => {
 
         // Обновляем баланс
         const newBalance = balance - item.price;
-        setBalance(newBalance);
+        updateBalance(newBalance);
 
         toast({
           title: "Карта получена!",
@@ -57,9 +57,11 @@ export const Shop = ({ onClose }: ShopProps) => {
           equipped: false
         };
 
-        addItem(newItem);
+        const newInventory = [...inventory, newItem];
+        updateInventory(newInventory);
+        
         const newBalance = balance - item.price;
-        setBalance(newBalance);
+        updateBalance(newBalance);
 
         toast({
           title: "Покупка успешна",
