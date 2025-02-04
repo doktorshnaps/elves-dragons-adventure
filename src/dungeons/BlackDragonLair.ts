@@ -1,151 +1,41 @@
 import { Opponent } from "@/types/battle";
-import { getScaledStats } from "@/utils/opponentGenerator";
 
-export const generateBlackDragonLairOpponents = (level: number): Opponent[] => {
-  const cycleLevel = ((level - 1) % 5) + 1;
-  
-  switch (cycleLevel) {
-    case 1:
-      return [
-        {
-          id: 1,
-          name: "Воин Драконид",
-          power: getScaledStats(6, level),
-          health: getScaledStats(80, level),
-          maxHealth: getScaledStats(80, level),
-          experienceReward: getScaledStats(30, level)
-        },
-        {
-          id: 2,
-          name: "Маг Драконид",
-          power: getScaledStats(8, level),
-          health: getScaledStats(60, level),
-          maxHealth: getScaledStats(60, level),
-          experienceReward: getScaledStats(35, level)
-        },
-        {
-          id: 3,
-          name: "Защитник Драконид",
-          power: getScaledStats(5, level),
-          health: getScaledStats(100, level),
-          maxHealth: getScaledStats(100, level),
-          experienceReward: getScaledStats(40, level)
-        },
-        {
-          id: 4,
-          name: "Воин Драконид",
-          power: getScaledStats(6, level),
-          health: getScaledStats(80, level),
-          maxHealth: getScaledStats(80, level),
-          experienceReward: getScaledStats(30, level)
-        },
-        {
-          id: 5,
-          name: "Маг Драконид",
-          power: getScaledStats(8, level),
-          health: getScaledStats(60, level),
-          maxHealth: getScaledStats(60, level),
-          experienceReward: getScaledStats(35, level)
-        }
-      ];
-    
-    case 2:
-      return [
-        {
-          id: 1,
-          name: "Воин Ветеран Драконид",
-          power: getScaledStats(10, level),
-          health: getScaledStats(120, level),
-          maxHealth: getScaledStats(120, level),
-          experienceReward: getScaledStats(45, level)
-        },
-        {
-          id: 2,
-          name: "Генерал Драконидов",
-          power: getScaledStats(12, level),
-          health: getScaledStats(150, level),
-          maxHealth: getScaledStats(150, level),
-          experienceReward: getScaledStats(50, level)
-        },
-        {
-          id: 3,
-          name: "Ветеран Защитник Драконид",
-          power: getScaledStats(8, level),
-          health: getScaledStats(180, level),
-          maxHealth: getScaledStats(180, level),
-          experienceReward: getScaledStats(55, level)
-        },
-        {
-          id: 4,
-          name: "Маг Ветеран Драконид",
-          power: getScaledStats(14, level),
-          health: getScaledStats(90, level),
-          maxHealth: getScaledStats(90, level),
-          experienceReward: getScaledStats(60, level)
-        }
-      ];
-    
-    case 3:
-      return [
-        {
-          id: 1,
-          name: "Грауграт",
-          power: getScaledStats(15, level),
-          health: getScaledStats(200, level),
-          maxHealth: getScaledStats(200, level),
-          experienceReward: getScaledStats(70, level)
-        },
-        {
-          id: 2,
-          name: "Дарксторм",
-          power: getScaledStats(18, level),
-          health: getScaledStats(180, level),
-          maxHealth: getScaledStats(180, level),
-          experienceReward: getScaledStats(75, level)
-        },
-        {
-          id: 3,
-          name: "Флиндо",
-          power: getScaledStats(16, level),
-          health: getScaledStats(190, level),
-          maxHealth: getScaledStats(190, level),
-          experienceReward: getScaledStats(80, level)
-        }
-      ];
-    
-    case 4:
-      return [
-        {
-          id: 1,
-          name: "Кристалспин",
-          power: getScaledStats(22, level),
-          health: getScaledStats(250, level),
-          maxHealth: getScaledStats(250, level),
-          experienceReward: getScaledStats(90, level)
-        },
-        {
-          id: 2,
-          name: "Скарлетстрайк",
-          power: getScaledStats(25, level),
-          health: getScaledStats(230, level),
-          maxHealth: getScaledStats(230, level),
-          experienceReward: getScaledStats(100, level)
-        }
-      ];
-    
-    case 5:
-      const bossHealth = getScaledStats(400, level, true);
-      return [{
-        id: 1,
-        name: "🔥 Морок",
-        power: getScaledStats(35, level, true),
-        health: bossHealth,
-        maxHealth: bossHealth,
-        isBoss: true,
-        experienceReward: getScaledStats(200, level, true)
-      }];
-    
-    default:
-      return [];
+export const BlackDragonLairGenerator = (level: number): Opponent[] => {
+  const baseHealth = 100 + (level - 1) * 50;
+  const basePower = 10 + (level - 1) * 5;
+
+  if (level % 5 === 0) {
+    // Босс каждые 5 уровней
+    return [{
+      id: 1,
+      name: "Черный Дракон",
+      health: baseHealth * 2,
+      maxHealth: baseHealth * 2,
+      power: basePower * 1.5,
+      isBoss: true,
+      image: "/lovable-uploads/7b2107b3-2cc1-440f-bb39-43a98c2a1e1a.png"
+    }];
   }
+
+  // Обычные противники
+  return [
+    {
+      id: 1,
+      name: "Драконид",
+      health: baseHealth,
+      maxHealth: baseHealth,
+      power: basePower,
+      isBoss: false,
+      image: "/lovable-uploads/7b2107b3-2cc1-440f-bb39-43a98c2a1e1a.png"
+    },
+    {
+      id: 2,
+      name: "Драконий страж",
+      health: baseHealth * 0.8,
+      maxHealth: baseHealth * 0.8,
+      power: basePower * 1.2,
+      isBoss: false,
+      image: "/lovable-uploads/7b2107b3-2cc1-440f-bb39-43a98c2a1e1a.png"
+    }
+  ];
 };

@@ -1,62 +1,30 @@
 import { Opponent } from "@/types/battle";
-import { getScaledStats } from "@/utils/opponentGenerator";
 
-export const generateDarkMageTowerOpponents = (level: number): Opponent[] => {
-  const cycleLevel = ((level - 1) % 5) + 1;
-  
-  if (cycleLevel === 5) {
-    const health = getScaledStats(180, level, true);
+export const DarkMageTowerGenerator = (level: number): Opponent[] => {
+  const baseHealth = 70 + (level - 1) * 35;
+  const basePower = 12 + (level - 1) * 6;
+
+  if (level % 5 === 0) {
     return [{
       id: 1,
-      name: "🔮 Темный маг",
-      power: getScaledStats(16, level, true),
-      health,
-      maxHealth: health,
+      name: "Темный Архимаг",
+      health: baseHealth * 2,
+      maxHealth: baseHealth * 2,
+      power: basePower * 1.5,
       isBoss: true,
-      experienceReward: getScaledStats(150, level, true)
+      image: "/lovable-uploads/abf6e9af-a611-414c-b213-fed11ae0a767.png"
     }];
   }
 
-  const opponents: Opponent[] = [];
-  const enemyCount = 6 - cycleLevel;
-
-  if (cycleLevel <= 2) {
-    const health = getScaledStats(90, level);
-    opponents.push({
-      id: opponents.length + 1,
-      name: "Чернокнижник",
-      power: getScaledStats(9, level),
-      health,
-      maxHealth: health,
-      experienceReward: getScaledStats(50, level)
-    });
-  }
-
-  const mediumCount = Math.floor((enemyCount - opponents.length) / 2);
-  for (let i = 0; i < mediumCount; i++) {
-    const health = getScaledStats(60, level);
-    opponents.push({
-      id: opponents.length + 1,
-      name: "Темный ученик",
-      power: getScaledStats(6, level),
-      health,
-      maxHealth: health,
-      experienceReward: getScaledStats(30, level)
-    });
-  }
-
-  const remainingCount = enemyCount - opponents.length;
-  for (let i = 0; i < remainingCount; i++) {
-    const health = getScaledStats(40, level);
-    opponents.push({
-      id: opponents.length + 1,
-      name: "Магический голем",
-      power: getScaledStats(4, level),
-      health,
-      maxHealth: health,
-      experienceReward: getScaledStats(20, level)
-    });
-  }
-
-  return opponents;
+  return [
+    {
+      id: 1,
+      name: "Темный маг",
+      health: baseHealth,
+      maxHealth: baseHealth,
+      power: basePower,
+      isBoss: false,
+      image: "/lovable-uploads/abf6e9af-a611-414c-b213-fed11ae0a767.png"
+    }
+  ];
 };

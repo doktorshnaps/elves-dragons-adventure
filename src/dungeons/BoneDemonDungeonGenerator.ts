@@ -1,53 +1,30 @@
 import { Opponent } from "@/types/battle";
 
-export const generateBoneDemonDungeonOpponents = (level: number): Opponent[] => {
-  const opponents: Opponent[] = [];
-  
-  // Базовые характеристики противников
-  const baseStats = {
-    power: 18 + level * 6,
-    health: 90 + level * 25,
-  };
+export const BoneDemonDungeonGenerator = (level: number): Opponent[] => {
+  const baseHealth = 85 + (level - 1) * 42.5;
+  const basePower = 8.5 + (level - 1) * 4.25;
 
-  // Добавляем скелетов-магов
-  for (let i = 0; i < 2; i++) {
-    opponents.push({
-      id: i,
-      name: "Скелет-маг",
-      power: baseStats.power,
-      health: baseStats.health,
-      maxHealth: baseStats.health,
-      image: "/lovable-uploads/aef9e591-e676-4552-a70d-c7457b29b6c5.png",
-      isBoss: false,
-      experienceReward: 30 + level * 10
-    });
-  }
-
-  // Добавляем демона-стража
-  opponents.push({
-    id: 2,
-    name: "Демон-страж",
-    power: baseStats.power * 1.3,
-    health: baseStats.health * 1.3,
-    maxHealth: baseStats.health * 1.3,
-    image: "/lovable-uploads/aef9e591-e676-4552-a70d-c7457b29b6c5.png",
-    isBoss: false,
-    experienceReward: 50 + level * 15
-  });
-
-  // На последнем уровне добавляем босса - Костяного демона
   if (level % 5 === 0) {
-    opponents.push({
-      id: 3,
-      name: "Костяной демон",
-      power: baseStats.power * 2.2,
-      health: baseStats.health * 2.8,
-      maxHealth: baseStats.health * 2.8,
-      image: "/lovable-uploads/aef9e591-e676-4552-a70d-c7457b29b6c5.png",
+    return [{
+      id: 1,
+      name: "Костяной Демон",
+      health: baseHealth * 2,
+      maxHealth: baseHealth * 2,
+      power: basePower * 1.5,
       isBoss: true,
-      experienceReward: 150 + level * 25
-    });
+      image: "/lovable-uploads/aef9e591-e676-4552-a70d-c7457b29b6c5.png"
+    }];
   }
 
-  return opponents;
+  return [
+    {
+      id: 1,
+      name: "Скелет-воин",
+      health: baseHealth,
+      maxHealth: baseHealth,
+      power: basePower,
+      isBoss: false,
+      image: "/lovable-uploads/aef9e591-e676-4552-a70d-c7457b29b6c5.png"
+    }
+  ];
 };

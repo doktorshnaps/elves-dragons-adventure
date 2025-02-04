@@ -1,62 +1,30 @@
 import { Opponent } from "@/types/battle";
-import { getScaledStats } from "@/utils/opponentGenerator";
 
-export const generateIcyThroneOpponents = (level: number): Opponent[] => {
-  const cycleLevel = ((level - 1) % 5) + 1;
-  
-  if (cycleLevel === 5) {
-    const health = getScaledStats(220, level, true);
+export const IcyThroneGenerator = (level: number): Opponent[] => {
+  const baseHealth = 90 + (level - 1) * 45;
+  const basePower = 9 + (level - 1) * 4.5;
+
+  if (level % 5 === 0) {
     return [{
       id: 1,
-      name: "❄️ Ледяной Король",
-      power: getScaledStats(14, level, true),
-      health,
-      maxHealth: health,
+      name: "Ледяной Король",
+      health: baseHealth * 2,
+      maxHealth: baseHealth * 2,
+      power: basePower * 1.5,
       isBoss: true,
-      experienceReward: getScaledStats(150, level, true)
+      image: "/lovable-uploads/301f4f03-6a87-48ec-a535-535b2213026f.png"
     }];
   }
 
-  const opponents: Opponent[] = [];
-  const enemyCount = 6 - cycleLevel;
-
-  if (cycleLevel <= 2) {
-    const health = getScaledStats(110, level);
-    opponents.push({
-      id: opponents.length + 1,
-      name: "Ледяной голем",
-      power: getScaledStats(7, level),
-      health,
-      maxHealth: health,
-      experienceReward: getScaledStats(45, level)
-    });
-  }
-
-  const mediumCount = Math.floor((enemyCount - opponents.length) / 2);
-  for (let i = 0; i < mediumCount; i++) {
-    const health = getScaledStats(75, level);
-    opponents.push({
-      id: opponents.length + 1,
-      name: "Снежный элементаль",
-      power: getScaledStats(5, level),
-      health,
-      maxHealth: health,
-      experienceReward: getScaledStats(30, level)
-    });
-  }
-
-  const remainingCount = enemyCount - opponents.length;
-  for (let i = 0; i < remainingCount; i++) {
-    const health = getScaledStats(45, level);
-    opponents.push({
-      id: opponents.length + 1,
+  return [
+    {
+      id: 1,
       name: "Ледяной воин",
-      power: getScaledStats(3, level),
-      health,
-      maxHealth: health,
-      experienceReward: getScaledStats(20, level)
-    });
-  }
-
-  return opponents;
+      health: baseHealth,
+      maxHealth: baseHealth,
+      power: basePower,
+      isBoss: false,
+      image: "/lovable-uploads/301f4f03-6a87-48ec-a535-535b2213026f.png"
+    }
+  ];
 };
