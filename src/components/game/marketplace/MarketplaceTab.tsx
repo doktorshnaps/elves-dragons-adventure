@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { ArrowLeft, X } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { getItemDisplayInfo } from "./utils";
+import { ListingDialog } from "./ListingDialog";
 
 export const MarketplaceTab = () => {
   const { toast } = useToast();
