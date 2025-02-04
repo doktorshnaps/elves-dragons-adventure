@@ -10,6 +10,7 @@ import { Team } from "./pages/Team";
 import { Statistics } from "./pages/Statistics";
 import { Menu } from "./pages/Menu";
 import Dungeons from "./pages/Dungeons";
+import { Shop } from "./components/Shop";
 import { DragonEggProvider } from "./contexts/DragonEggContext";
 
 function App() {
@@ -27,6 +28,7 @@ function App() {
           <Route path="/statistics" element={<Statistics />} />
           <Route path="/menu" element={<Menu />} />
           <Route path="/dungeons" element={<Dungeons />} />
+          <Route path="/shop" element={<Shop onClose={() => {}} balance={0} onBalanceChange={() => {}} />} />
         </Routes>
         <Toaster />
       </DragonEggProvider>
