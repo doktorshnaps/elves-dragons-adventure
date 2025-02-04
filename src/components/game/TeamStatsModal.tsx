@@ -1,5 +1,4 @@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import { TeamStats as TeamStatsType } from "@/types/cards";
 import { HealthBar } from "./stats/HealthBar";
 import { CombatStats } from "./stats/CombatStats";
@@ -25,17 +24,28 @@ export const TeamStatsModal = ({ isOpen, onClose, teamStats, balance }: TeamStat
       }}
     >
       <DialogContent 
-        className="bg-game-surface border-game-accent max-w-md w-full fixed top-[50%] left-[50%] transform -translate-x-1/2 -translate-y-1/2 max-h-[90vh]"
+        className="bg-game-surface border-game-accent max-w-md w-full fixed top-[50%] left-[50%] transform -translate-x-1/2 -translate-y-1/2 max-h-[90vh] overflow-hidden"
         style={{
           backgroundImage: `url("/lovable-uploads/29ea34c8-ede8-4cab-8ca2-049cdb5108c3.png")`,
           backgroundSize: 'cover',
           backgroundPosition: 'center',
-          backgroundRepeat: 'no-repeat'
+          backgroundRepeat: 'no-repeat',
+          touchAction: 'none',
+          overscrollBehavior: 'none'
         }}
       >
         <div className="absolute inset-0 bg-game-surface/90 backdrop-blur-sm rounded-lg" />
         
-        <ScrollArea className="relative z-10 max-h-[80vh]">
+        <div 
+          className="relative z-10 h-full overflow-y-auto"
+          style={{ 
+            touchAction: 'pan-y',
+            WebkitOverflowScrolling: 'touch',
+            overscrollBehavior: 'contain',
+            msOverflowStyle: '-ms-autohiding-scrollbar',
+            scrollBehavior: 'smooth'
+          }}
+        >
           <DialogHeader>
             <DialogTitle className="text-xl font-bold text-game-accent">Статистика команды</DialogTitle>
             <DialogDescription className="text-sm text-gray-400">
@@ -68,7 +78,7 @@ export const TeamStatsModal = ({ isOpen, onClose, teamStats, balance }: TeamStat
               />
             </div>
           </div>
-        </ScrollArea>
+        </div>
       </DialogContent>
     </Dialog>
   );

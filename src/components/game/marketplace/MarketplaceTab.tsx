@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { ShoppingBag, Plus, ArrowLeft } from "lucide-react";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import { useToast } from "@/hooks/use-toast";
 import { ListingDialog } from "./ListingDialog";
 import { MarketplaceListing } from "./types";
@@ -120,22 +119,42 @@ export const MarketplaceTab = () => {
   };
 
   return (
-    <div className="min-h-screen p-6 bg-game-background">
-      <div className="max-w-7xl mx-auto">
+    <div 
+      className="min-h-screen h-screen p-4 bg-game-background overflow-hidden"
+      style={{
+        backgroundImage: "url('/lovable-uploads/20d88f7a-4f27-4b22-8ebe-e55b87a0c7e3.png')",
+        backgroundColor: 'rgba(0, 0, 0, 0.85)',
+        backgroundBlendMode: 'multiply',
+        touchAction: 'none',
+        overscrollBehavior: 'none'
+      }}
+    >
+      <div className="flex items-center gap-4 mb-6">
+        <Button 
+          variant="outline" 
+          className="bg-game-surface/80 border-game-accent text-game-accent hover:bg-game-surface"
+          onClick={() => navigate('/game')}
+        >
+          <ArrowLeft className="w-4 h-4 mr-2" />
+          Вернуться в меню
+        </Button>
+        <h1 className="text-2xl font-bold text-game-accent">Торговая площадка</h1>
+      </div>
+      
+      <div 
+        className="flex-1 bg-game-surface/90 p-4 rounded-lg border border-game-accent backdrop-blur-sm h-[calc(100vh-120px)] overflow-y-auto"
+        style={{ 
+          touchAction: 'pan-y',
+          WebkitOverflowScrolling: 'touch',
+          overscrollBehavior: 'contain',
+          msOverflowStyle: '-ms-autohiding-scrollbar',
+          scrollBehavior: 'smooth'
+        }}
+      >
         <div className="flex justify-between items-center mb-6">
-          <div className="flex items-center gap-4">
-            <Button 
-              variant="outline"
-              onClick={() => navigate('/game')}
-              className="bg-game-surface/80 border-game-accent text-game-accent hover:bg-game-surface"
-            >
-              <ArrowLeft className="w-4 h-4 mr-2" />
-              Вернуться в меню
-            </Button>
-            <h2 className="text-xl font-bold text-white flex items-center gap-2">
-              <ShoppingBag className="w-6 h-6" />
-              Торговая площадка
-            </h2>
+          <div className="flex items-center gap-2">
+            <ShoppingBag className="w-6 h-6 text-game-accent" />
+            <span className="text-xl font-bold text-game-accent">Доступные предложения</span>
           </div>
           <Button
             onClick={() => setShowListingDialog(true)}
@@ -145,22 +164,19 @@ export const MarketplaceTab = () => {
             Создать объявление
           </Button>
         </div>
-        <ScrollArea className="h-[calc(100vh-12rem)]">
-          <MarketplaceListings 
-            listings={listings}
-            balance={balance}
-            onBuy={handleBuy}
-            onCancelListing={handleCancelListing}
-          />
-        </ScrollArea>
+
+        <MarketplaceListings 
+          listings={listings}
+          balance={balance}
+          onBuy={handleBuy}
+          onCancelListing={handleCancelListing}
+        />
 
         {showListingDialog && (
-          <div className="fixed inset-0 flex items-center justify-center z-50">
-            <ListingDialog
-              onClose={() => setShowListingDialog(false)}
-              onCreateListing={handleCreateListing}
-            />
-          </div>
+          <ListingDialog
+            onClose={() => setShowListingDialog(false)}
+            onCreateListing={handleCreateListing}
+          />
         )}
       </div>
     </div>

@@ -3,7 +3,6 @@ import { motion, AnimatePresence } from "framer-motion";
 import { X, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import { useToast } from "@/hooks/use-toast";
 import { generatePack, getRarityLabel } from "@/utils/cardUtils";
 import { Card as CardType } from "@/types/cards";
@@ -34,7 +33,6 @@ export const Shop = ({ onClose, balance, onBalanceChange }: ShopProps) => {
       return;
     }
 
-    // Проверяем требуемый уровень
     if (item.requiredLevel) {
       const playerLevel = parseInt(localStorage.getItem('playerLevel') || '1');
       if (playerLevel < item.requiredLevel) {
@@ -100,7 +98,11 @@ export const Shop = ({ onClose, balance, onBalanceChange }: ShopProps) => {
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      className="fixed inset-0 z-50 flex items-center justify-center"
+      className="fixed inset-0 z-50 flex items-center justify-center overflow-hidden"
+      style={{ 
+        touchAction: 'none',
+        overscrollBehavior: 'none'
+      }}
     >
       <div 
         className="absolute inset-0 z-0"
@@ -111,7 +113,7 @@ export const Shop = ({ onClose, balance, onBalanceChange }: ShopProps) => {
           backgroundRepeat: 'no-repeat'
         }}
       />
-      <Card className="relative z-10 w-full h-full bg-game-surface/80 border-game-accent flex flex-col">
+      <Card className="relative z-10 w-full h-full bg-game-surface/80 border-game-accent">
         <div className="p-4 flex items-center justify-between border-b border-game-accent">
           <h2 className="font-bold text-white flex items-center gap-1 bg-game-surface/50 p-2 rounded-lg">
             <Sparkles className="w-4 h-4" />
@@ -138,7 +140,16 @@ export const Shop = ({ onClose, balance, onBalanceChange }: ShopProps) => {
           )}
         </AnimatePresence>
 
-        <ScrollArea className="flex-1">
+        <div 
+          className="flex-1 overflow-y-auto h-[calc(100vh-200px)]"
+          style={{ 
+            touchAction: 'pan-y',
+            WebkitOverflowScrolling: 'touch',
+            overscrollBehavior: 'contain',
+            msOverflowStyle: '-ms-autohiding-scrollbar',
+            scrollBehavior: 'smooth'
+          }}
+        >
           <div className="p-4">
             <div className={`grid gap-4 ${
               isMobile 
@@ -160,7 +171,7 @@ export const Shop = ({ onClose, balance, onBalanceChange }: ShopProps) => {
               ))}
             </div>
           </div>
-        </ScrollArea>
+        </div>
       </Card>
     </motion.div>
   );
