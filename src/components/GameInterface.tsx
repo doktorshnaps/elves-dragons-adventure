@@ -51,74 +51,68 @@ export const GameInterface = () => {
 
   return (
     <div className="min-h-screen p-1 sm:p-4 relative">
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-1 sm:gap-4 mb-2 sm:mb-6">
-        <div className="flex flex-wrap gap-1 w-full sm:w-auto">
-          <Button
-            variant="outline"
-            className="bg-game-surface border-game-accent text-game-accent hover:bg-game-surface/80 flex-1 sm:flex-none h-8 sm:h-10 px-2 sm:px-4"
-            onClick={() => setShowGameModeDialog(true)}
-          >
-            <Swords className="w-4 h-4" />
-            {!isMobile && <span className="ml-2">БОЙ</span>}
-          </Button>
-          
-          <Button
-            variant="outline"
-            className="bg-game-surface border-game-accent text-game-accent hover:bg-game-surface/80 flex-1 sm:flex-none h-8 sm:h-10 px-2 sm:px-4"
-            onClick={() => setShowShop(true)}
-          >
-            <ShoppingCart className="w-4 h-4" />
-            {!isMobile && <span className="ml-2">Открыть магазин</span>}
-          </Button>
-
-          <Button
-            variant="outline"
-            className="bg-game-surface border-game-accent text-game-accent hover:bg-game-surface/80 flex-1 sm:flex-none h-8 sm:h-10 px-2 sm:px-4"
-            onClick={() => navigate('/marketplace')}
-          >
-            <Store className="w-4 h-4" />
-            {!isMobile && <span className="ml-2">Торговая площадка</span>}
-          </Button>
-        </div>
-
-        <div className="flex gap-1 w-full sm:w-auto">
-          <Button
-            variant="outline"
-            className="bg-game-surface border-game-accent text-game-accent hover:bg-game-surface/80 flex-1 sm:flex-none h-8 sm:h-10 px-2 sm:px-4"
-            onClick={() => setShowStats(true)}
-          >
-            <BarChart3 className="w-4 h-4" />
-            {!isMobile && <span className="ml-2">Статистика</span>}
-          </Button>
-
-          <Button
-            variant="outline"
-            className="bg-game-surface border-game-accent text-game-accent hover:bg-game-surface/80 flex-1 sm:flex-none h-8 sm:h-10 px-2 sm:px-4"
-            onClick={() => navigate('/grimoire')}
-          >
-            <BookOpen className="w-4 h-4" />
-            {!isMobile && <span className="ml-2">Гримуар</span>}
-          </Button>
-        </div>
-      </div>
-
-      <div className="flex justify-center gap-4 mb-6">
+      <div className="flex flex-wrap sm:flex-nowrap gap-1 sm:gap-4 mb-2 sm:mb-6">
         <Button
           variant="outline"
-          className="bg-game-surface border-game-accent text-game-accent hover:bg-game-surface/80 h-10 px-4"
-          onClick={() => setShowEquipment(true)}
+          className="bg-game-surface border-game-accent text-game-accent hover:bg-game-surface/80 flex-1 sm:flex-none h-8 sm:h-10 px-2 sm:px-4"
+          onClick={() => setShowGameModeDialog(true)}
         >
-          <Shield className="w-4 h-4 mr-2" />
-          Снаряжение
+          <Swords className="w-4 h-4" />
+          {!isMobile && <span className="ml-2">БОЙ</span>}
+        </Button>
+        
+        <Button
+          variant="outline"
+          className="bg-game-surface border-game-accent text-game-accent hover:bg-game-surface/80 flex-1 sm:flex-none h-8 sm:h-10 px-2 sm:px-4"
+          onClick={() => setShowShop(true)}
+        >
+          <ShoppingCart className="w-4 h-4" />
+          {!isMobile && <span className="ml-2">Открыть магазин</span>}
         </Button>
 
         <Button
           variant="outline"
-          className="bg-game-surface border-game-accent text-game-accent hover:bg-game-surface/80 h-10 px-4"
+          className="bg-game-surface border-game-accent text-game-accent hover:bg-game-surface/80 flex-1 sm:flex-none h-8 sm:h-10 px-2 sm:px-4"
+          onClick={() => navigate('/marketplace')}
+        >
+          <Store className="w-4 h-4" />
+          {!isMobile && <span className="ml-2">Торговая площадка</span>}
+        </Button>
+
+        <Button
+          variant="outline"
+          className="bg-game-surface border-game-accent text-game-accent hover:bg-game-surface/80 flex-1 sm:flex-none h-8 sm:h-10 px-2 sm:px-4"
+          onClick={() => setShowStats(true)}
+        >
+          <BarChart3 className="w-4 h-4" />
+          {!isMobile && <span className="ml-2">Статистика</span>}
+        </Button>
+
+        <Button
+          variant="outline"
+          className="bg-game-surface border-game-accent text-game-accent hover:bg-game-surface/80 flex-1 sm:flex-none h-8 sm:h-10 px-2 sm:px-4"
+          onClick={() => navigate('/grimoire')}
+        >
+          <BookOpen className="w-4 h-4" />
+          {!isMobile && <span className="ml-2">Гримуар</span>}
+        </Button>
+
+        <Button
+          variant="outline"
+          className="bg-game-surface border-game-accent text-game-accent hover:bg-game-surface/80 flex-1 sm:flex-none h-8 sm:h-10 px-2 sm:px-4"
+          onClick={() => setShowEquipment(true)}
+        >
+          <Shield className="w-4 h-4" />
+          {!isMobile && <span className="ml-2">Снаряжение</span>}
+        </Button>
+
+        <Button
+          variant="outline"
+          className="bg-game-surface border-game-accent text-game-accent hover:bg-game-surface/80 flex-1 sm:flex-none h-8 sm:h-10 px-2 sm:px-4"
           onClick={() => setShowTeam(true)}
         >
-          <Users className="w-4 h-4 mr-2" />
-          Ваша команда
+          <Users className="w-4 h-4" />
+          {!isMobile && <span className="ml-2">Команда</span>}
         </Button>
       </div>
 
