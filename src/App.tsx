@@ -8,6 +8,7 @@ import { Grimoire } from './pages/Grimoire';
 import { Battle } from './pages/Battle';
 import { Menu } from './pages/Menu';
 import Index from './pages/Index';
+import Dungeons from './pages/Dungeons';
 
 function App() {
   return (
@@ -21,6 +22,7 @@ function App() {
       <Route path="/statistics" element={<Statistics />} />
       <Route path="/grimoire" element={<Grimoire />} />
       <Route path="/battle" element={<Battle />} />
+      <Route path="/dungeons" element={<Dungeons />} />
     </Routes>
   );
 }
