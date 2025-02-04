@@ -10,23 +10,26 @@ import { Team } from "./pages/Team";
 import { Statistics } from "./pages/Statistics";
 import { Menu } from "./pages/Menu";
 import Dungeons from "./pages/Dungeons";
+import { DragonEggProvider } from "./contexts/DragonEggContext";
 
 function App() {
   return (
     <BrowserRouter>
-      <Routes>
-        <Route path="/" element={<Index />} />
-        <Route path="/game" element={<Game />} />
-        <Route path="/battle" element={<Battle />} />
-        <Route path="/marketplace" element={<Marketplace />} />
-        <Route path="/grimoire" element={<Grimoire />} />
-        <Route path="/equipment" element={<Equipment />} />
-        <Route path="/team" element={<Team />} />
-        <Route path="/statistics" element={<Statistics />} />
-        <Route path="/menu" element={<Menu />} />
-        <Route path="/dungeons" element={<Dungeons />} />
-      </Routes>
-      <Toaster />
+      <DragonEggProvider>
+        <Routes>
+          <Route path="/" element={<Index />} />
+          <Route path="/game" element={<Game />} />
+          <Route path="/battle" element={<Battle />} />
+          <Route path="/marketplace" element={<Marketplace />} />
+          <Route path="/grimoire" element={<Grimoire />} />
+          <Route path="/equipment" element={<Equipment />} />
+          <Route path="/team" element={<Team />} />
+          <Route path="/statistics" element={<Statistics />} />
+          <Route path="/menu" element={<Menu />} />
+          <Route path="/dungeons" element={<Dungeons />} />
+        </Routes>
+        <Toaster />
+      </DragonEggProvider>
     </BrowserRouter>
   );
 }
