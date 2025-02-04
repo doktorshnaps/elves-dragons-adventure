@@ -1,4 +1,5 @@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { TeamStats as TeamStatsType } from "@/types/cards";
 import { HealthBar } from "./stats/HealthBar";
 import { CombatStats } from "./stats/CombatStats";
@@ -24,7 +25,7 @@ export const TeamStatsModal = ({ isOpen, onClose, teamStats, balance }: TeamStat
       }}
     >
       <DialogContent 
-        className="bg-game-surface border-game-accent max-w-md w-full fixed top-[50%] left-[50%] transform -translate-x-1/2 -translate-y-1/2 max-h-[90vh] overflow-y-auto"
+        className="bg-game-surface border-game-accent max-w-md w-full fixed top-[50%] left-[50%] transform -translate-x-1/2 -translate-y-1/2 max-h-[90vh]"
         style={{
           backgroundImage: `url("/lovable-uploads/29ea34c8-ede8-4cab-8ca2-049cdb5108c3.png")`,
           backgroundSize: 'cover',
@@ -34,7 +35,7 @@ export const TeamStatsModal = ({ isOpen, onClose, teamStats, balance }: TeamStat
       >
         <div className="absolute inset-0 bg-game-surface/90 backdrop-blur-sm rounded-lg" />
         
-        <div className="relative z-10">
+        <ScrollArea className="relative z-10 max-h-[80vh]">
           <DialogHeader>
             <DialogTitle className="text-xl font-bold text-game-accent">Статистика команды</DialogTitle>
             <DialogDescription className="text-sm text-gray-400">
@@ -42,7 +43,7 @@ export const TeamStatsModal = ({ isOpen, onClose, teamStats, balance }: TeamStat
             </DialogDescription>
           </DialogHeader>
           
-          <div className="mt-4 space-y-4">
+          <div className="mt-4 space-y-4 p-4">
             <div className="flex justify-between items-center mb-4">
               <span className="text-2xl font-extrabold text-game-accent">{balance} монет</span>
             </div>
@@ -67,7 +68,7 @@ export const TeamStatsModal = ({ isOpen, onClose, teamStats, balance }: TeamStat
               />
             </div>
           </div>
-        </div>
+        </ScrollArea>
       </DialogContent>
     </Dialog>
   );

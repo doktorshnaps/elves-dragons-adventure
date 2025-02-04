@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { ShoppingBag, Plus, ArrowLeft } from "lucide-react";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { useToast } from "@/hooks/use-toast";
 import { ListingDialog } from "./ListingDialog";
 import { MarketplaceListing } from "./types";
@@ -144,12 +145,14 @@ export const MarketplaceTab = () => {
             Создать объявление
           </Button>
         </div>
-        <MarketplaceListings 
-          listings={listings}
-          balance={balance}
-          onBuy={handleBuy}
-          onCancelListing={handleCancelListing}
-        />
+        <ScrollArea className="h-[calc(100vh-12rem)]">
+          <MarketplaceListings 
+            listings={listings}
+            balance={balance}
+            onBuy={handleBuy}
+            onCancelListing={handleCancelListing}
+          />
+        </ScrollArea>
 
         {showListingDialog && (
           <div className="fixed inset-0 flex items-center justify-center z-50">

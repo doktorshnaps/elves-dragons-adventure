@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { X, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { useToast } from "@/hooks/use-toast";
 import { generatePack, getRarityLabel } from "@/utils/cardUtils";
 import { Card as CardType } from "@/types/cards";
@@ -137,27 +138,29 @@ export const Shop = ({ onClose, balance, onBalanceChange }: ShopProps) => {
           )}
         </AnimatePresence>
 
-        <div className="flex-1 overflow-y-auto p-4">
-          <div className={`grid gap-4 ${
-            isMobile 
-              ? 'grid-cols-2' 
-              : 'grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5'
-          }`}>
-            {shopItems.map((item) => (
-              <motion.div
-                key={item.id}
-                whileHover={{ scale: 1.02 }}
-                transition={{ duration: 0.2 }}
-              >
-                <ShopItemComponent
-                  item={item}
-                  balance={balance}
-                  onBuy={buyItem}
-                />
-              </motion.div>
-            ))}
+        <ScrollArea className="flex-1">
+          <div className="p-4">
+            <div className={`grid gap-4 ${
+              isMobile 
+                ? 'grid-cols-2' 
+                : 'grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5'
+            }`}>
+              {shopItems.map((item) => (
+                <motion.div
+                  key={item.id}
+                  whileHover={{ scale: 1.02 }}
+                  transition={{ duration: 0.2 }}
+                >
+                  <ShopItemComponent
+                    item={item}
+                    balance={balance}
+                    onBuy={buyItem}
+                  />
+                </motion.div>
+              ))}
+            </div>
           </div>
-        </div>
+        </ScrollArea>
       </Card>
     </motion.div>
   );
