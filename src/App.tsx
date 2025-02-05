@@ -10,6 +10,7 @@ import Dungeons from './pages/Dungeons';
 import { AdventuresPage } from './pages/AdventuresPage';
 import { Marketplace } from './pages/Marketplace';
 import { ShopPage } from './pages/ShopPage';
+import { QuestPage } from './pages/QuestPage';
 import { BlackDragonLair } from './pages/dungeons/BlackDragonLair';
 import { ForgottenSoulsCave } from './pages/dungeons/ForgottenSoulsCave';
 import { IcyThrone } from './pages/dungeons/IcyThrone';
@@ -32,6 +33,7 @@ function App() {
       <Route path="/adventure" element={<AdventuresPage />} />
       <Route path="/marketplace" element={<Marketplace />} />
       <Route path="/shop" element={<ShopPage />} />
+      <Route path="/quest" element={<QuestPage />} />
       <Route path="/dungeons/dragon-lair" element={<BlackDragonLair />} />
       <Route path="/dungeons/forgotten-souls" element={<ForgottenSoulsCave />} />
       <Route path="/dungeons/icy-throne" element={<IcyThrone />} />

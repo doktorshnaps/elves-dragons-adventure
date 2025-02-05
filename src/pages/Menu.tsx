@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
-import { Swords, ShoppingCart, BookOpen, Store, Shield, Users, BarChart3, MapPin } from "lucide-react";
+import { Swords, ShoppingCart, BookOpen, Store, Shield, Users, BarChart3, MapPin, DollarSign } from "lucide-react";
 
 export const Menu = () => {
   const navigate = useNavigate();
@@ -88,6 +88,15 @@ export const Menu = () => {
         >
           <Users className="w-8 h-8" />
           <span>Команда</span>
+        </Button>
+
+        <Button
+          variant="outline"
+          className="h-24 bg-game-surface/80 border-game-accent text-game-accent hover:bg-game-surface flex flex-col items-center justify-center gap-2"
+          onClick={() => navigate('/quest')}
+        >
+          <DollarSign className="w-8 h-8" />
+          <span>Бабло</span>
         </Button>
       </div>
     </div>
