@@ -1,4 +1,5 @@
-import { useState } from "react";
+
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import { useBalanceState } from "@/hooks/useBalanceState";
@@ -13,16 +14,31 @@ export const AdventuresTab = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const { balance, updateBalance } = useBalanceState();
-  const [playerStats, setPlayerStats] = useState({
-    health: 100,
-    maxHealth: 100,
-    power: 10,
-    defense: 5,
-    level: 1,
-    experience: 0,
-    requiredExperience: 100
+  const [playerStats, setPlayerStats] = useState(() => {
+    const savedStats = localStorage.getItem('adventurePlayerStats');
+    return savedStats ? JSON.parse(savedStats) : {
+      health: 100,
+      maxHealth: 100,
+      power: 10,
+      defense: 5,
+      level: 1,
+      experience: 0,
+      requiredExperience: 100
+    };
   });
-  const [currentMonster, setCurrentMonster] = useState(null);
+  const [currentMonster, setCurrentMonster] = useState(() => {
+    const savedMonster = localStorage.getItem('adventureCurrentMonster');
+    return savedMonster ? JSON.parse(savedMonster) : null;
+  });
+
+  // Save state to localStorage whenever it changes
+  useEffect(() => {
+    localStorage.setItem('adventurePlayerStats', JSON.stringify(playerStats));
+  }, [playerStats]);
+
+  useEffect(() => {
+    localStorage.setItem('adventureCurrentMonster', JSON.stringify(currentMonster));
+  }, [currentMonster]);
 
   const startAdventure = () => {
     const monster = {
@@ -35,6 +51,37 @@ export const AdventuresTab = () => {
     setCurrentMonster(monster);
   };
 
+  const handleExperienceGain = (amount: number) => {
+    const newExperience = playerStats.experience + amount;
+    const requiredExp = playerStats.requiredExperience;
+
+    if (newExperience >= requiredExp) {
+      // Level up
+      const newLevel = playerStats.level + 1;
+      const newRequiredExp = requiredExp + 100; // Increase required exp for next level
+      
+      setPlayerStats({
+        ...playerStats,
+        level: newLevel,
+        experience: newExperience - requiredExp, // Carry over excess exp
+        requiredExperience: newRequiredExp,
+        maxHealth: playerStats.maxHealth + 10, // Increase max health on level up
+        power: playerStats.power + 2, // Increase power on level up
+        defense: playerStats.defense + 1, // Increase defense on level up
+      });
+
+      toast({
+        title: "Уровень повышен!",
+        description: `Достигнут ${newLevel} уровень!`
+      });
+    } else {
+      setPlayerStats({
+        ...playerStats,
+        experience: newExperience
+      });
+    }
+  };
+
   const attackMonster = () => {
     if (!currentMonster) return;
 
@@ -43,9 +90,10 @@ export const AdventuresTab = () => {
 
     if (newMonsterHealth <= 0) {
       updateBalance(balance + currentMonster.reward);
+      handleExperienceGain(20); // Award 20 experience points for killing a monster
       toast({
         title: "Победа!",
-        description: `Вы получили ${currentMonster.reward} монет!`
+        description: `Вы получили ${currentMonster.reward} монет и 20 опыта!`
       });
       setCurrentMonster(null);
       return;
