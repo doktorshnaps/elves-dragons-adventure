@@ -5,12 +5,12 @@ import { useNavigate } from "react-router-dom";
 import { Button } from "../ui/button";
 import { Card } from "../ui/card";
 import { EnergyDisplay } from "./EnergyDisplay";
-import { DungeonDisplay } from "./DungeonDisplay";
-import { dungeonBackgrounds, dungeonRoutes, DungeonType } from "@/constants/dungeons";
+import { dungeonRoutes, DungeonType } from "@/constants/dungeons";
 import { EnergyState } from "@/utils/energyManager";
 import { ActiveDungeonButton } from "./components/ActiveDungeonButton";
 import { DungeonControls } from "./components/DungeonControls";
 import { DungeonWarnings } from "./components/DungeonWarnings";
+import { usePlayerState } from "@/hooks/usePlayerState";
 
 interface DungeonSearchDialogProps {
   onClose: () => void;
@@ -24,19 +24,38 @@ interface DungeonSearchDialogProps {
   hasActiveCards: boolean;
 }
 
+const dungeonLevelRequirements = {
+  spider_nest: 20,
+  bone_dungeon: 30,
+  dark_mage: 40,
+  forgotten_souls: 50,
+  ice_throne: 60,
+  sea_serpent: 70,
+  dragon_lair: 100
+};
+
+const dungeonNames = {
+  spider_nest: "Гнездо Гигантских Пауков",
+  bone_dungeon: "Темница Костяных Демонов",
+  dark_mage: "Лабиринт Темного Мага",
+  forgotten_souls: "Пещеры Забытых Душ",
+  ice_throne: "Трон Ледяного Короля",
+  sea_serpent: "Логово Морского Змея",
+  dragon_lair: "Логово Черного Дракона"
+};
+
 export const DungeonSearchDialog = ({
   onClose,
   balance,
   selectedDungeon,
-  rolling,
   energyState,
   timeUntilNext,
   isHealthTooLow,
-  onRollDice,
   hasActiveCards
 }: DungeonSearchDialogProps) => {
   const navigate = useNavigate();
   const [activeDungeon, setActiveDungeon] = React.useState<string | null>(null);
+  const { playerStats } = usePlayerState();
 
   React.useEffect(() => {
     const battleState = localStorage.getItem('battleState');
@@ -52,13 +71,13 @@ export const DungeonSearchDialog = ({
     }
   }, []);
 
-  const backgroundImage = selectedDungeon ? dungeonBackgrounds[selectedDungeon] : '';
+  const handleDungeonSelect = (dungeonType: DungeonType) => {
+    const route = dungeonRoutes[dungeonType];
+    navigate(route);
+  };
 
-  const handleDungeonSelect = () => {
-    if (selectedDungeon) {
-      const route = dungeonRoutes[selectedDungeon];
-      navigate(route);
-    }
+  const canEnterDungeon = (requiredLevel: number) => {
+    return playerStats.level >= requiredLevel && !isHealthTooLow && hasActiveCards && energyState.current > 0;
   };
 
   return (
@@ -68,88 +87,67 @@ export const DungeonSearchDialog = ({
       exit={{ opacity: 0 }}
       className="fixed inset-0 bg-black/80 flex items-center justify-center p-4 z-[100]"
     >
-      <Card 
-        className="bg-game-surface border-game-accent p-8 max-w-md w-full relative overflow-hidden"
-        style={{
-          backgroundImage: backgroundImage ? `url(${backgroundImage})` : 'none',
-          backgroundSize: 'cover',
-          backgroundPosition: 'center',
-          backgroundRepeat: 'no-repeat',
-          touchAction: 'pan-y',
-          WebkitOverflowScrolling: 'touch',
-          overscrollBehavior: 'contain'
-        }}
-      >
-        <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
-        
-        <div 
-          className="relative z-10 max-h-[80vh] overflow-y-auto"
-          style={{ 
-            touchAction: 'pan-y',
-            WebkitOverflowScrolling: 'touch',
-            overscrollBehavior: 'contain',
-            msOverflowStyle: '-ms-autohiding-scrollbar',
-            scrollBehavior: 'smooth',
-            WebkitUserSelect: 'none',
-            userSelect: 'none'
-          }}
+      <Card className="bg-game-surface border-game-accent p-8 max-w-md w-full relative">
+        <Button
+          variant="ghost"
+          size="icon"
+          className="absolute left-4 top-4 text-game-accent hover:text-game-accent/80"
+          onClick={onClose}
         >
+          <ArrowLeft className="h-5 w-5" />
+        </Button>
+
+        <div className="text-center">
+          <h2 className="text-2xl font-bold text-game-accent mb-6">
+            {activeDungeon ? 'Активное подземелье' : 'Выбор подземелья'}
+          </h2>
+          
+          {!activeDungeon && (
+            <>
+              <EnergyDisplay energyState={energyState} timeUntilNext={timeUntilNext} />
+              
+              <div className="mb-4">
+                <p className="text-game-accent">Баланс: {balance} монет</p>
+                <p className="text-game-accent">Уровень игрока: {playerStats.level}</p>
+              </div>
+
+              <div className="space-y-2">
+                {Object.entries(dungeonLevelRequirements).map(([dungeon, requiredLevel]) => (
+                  <Button
+                    key={dungeon}
+                    onClick={() => handleDungeonSelect(dungeon as DungeonType)}
+                    disabled={!canEnterDungeon(requiredLevel)}
+                    className="w-full bg-game-surface border-game-accent text-game-accent hover:bg-game-surface/80"
+                  >
+                    {dungeonNames[dungeon as keyof typeof dungeonNames]}
+                    {!canEnterDungeon(requiredLevel) && (
+                      <span className="ml-2 text-red-500">
+                        (Требуется {requiredLevel} уровень)
+                      </span>
+                    )}
+                  </Button>
+                ))}
+              </div>
+            </>
+          )}
+
+          {activeDungeon && (
+            <ActiveDungeonButton activeDungeon={activeDungeon} />
+          )}
+
           <Button
-            variant="ghost"
-            size="icon"
-            className="absolute left-4 top-4 text-game-accent hover:text-game-accent/80"
             onClick={onClose}
+            variant="outline"
+            className="border-game-accent text-game-accent mt-4"
           >
-            <ArrowLeft className="h-5 w-5" />
+            Закрыть
           </Button>
 
-          <div className="text-center">
-            <h2 className="text-2xl font-bold text-game-accent mb-6">
-              {activeDungeon ? 'Активное подземелье' : 'Поиск подземелья'}
-            </h2>
-            
-            {!activeDungeon && (
-              <>
-                <EnergyDisplay energyState={energyState} timeUntilNext={timeUntilNext} />
-                
-                <div className="mb-4">
-                  <p className="text-game-accent">Баланс: {balance} монет</p>
-                </div>
-                
-                <DungeonDisplay rolling={rolling} selectedDungeon={selectedDungeon} />
-              </>
-            )}
-
-            <div className="space-y-4">
-              {activeDungeon ? (
-                <ActiveDungeonButton activeDungeon={activeDungeon} />
-              ) : (
-                <DungeonControls
-                  selectedDungeon={selectedDungeon}
-                  rolling={rolling}
-                  energyState={energyState}
-                  isHealthTooLow={isHealthTooLow}
-                  hasActiveCards={hasActiveCards}
-                  onRollDice={onRollDice}
-                  handleDungeonSelect={handleDungeonSelect}
-                />
-              )}
-
-              <Button
-                onClick={onClose}
-                variant="outline"
-                className="border-game-accent text-game-accent ml-4"
-              >
-                Закрыть
-              </Button>
-            </div>
-            
-            <DungeonWarnings
-              isHealthTooLow={isHealthTooLow}
-              hasActiveCards={hasActiveCards}
-              activeDungeon={activeDungeon}
-            />
-          </div>
+          <DungeonWarnings
+            isHealthTooLow={isHealthTooLow}
+            hasActiveCards={hasActiveCards}
+            activeDungeon={activeDungeon}
+          />
         </div>
       </Card>
     </motion.div>
