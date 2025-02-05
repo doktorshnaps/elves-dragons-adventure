@@ -14,13 +14,17 @@ export const useProjectiles = (
   useEffect(() => {
     if (currentMonster && currentHealth > 0) {
       const shootInterval = setInterval(() => {
-        const newProjectile: Projectile = {
-          id: Date.now(),
-          x: 400,
-          y: 50,
-          direction: playerPosition > 400 ? 1 : -1
-        };
-        setProjectiles(prev => [...prev, newProjectile]);
+        // Проверяем расстояние до игрока перед атакой
+        const distanceToPlayer = Math.abs(400 - playerPosition);
+        if (distanceToPlayer <= 500) { // Стреляем только если игрок в пределах 500 пикселей
+          const newProjectile: Projectile = {
+            id: Date.now(),
+            x: 400,
+            y: 50,
+            direction: playerPosition > 400 ? 1 : -1
+          };
+          setProjectiles(prev => [...prev, newProjectile]);
+        }
       }, 2000);
 
       return () => clearInterval(shootInterval);
@@ -37,20 +41,19 @@ export const useProjectiles = (
           const hitPlayer = Math.abs(projectile.x - playerPosition) < 30 && 
                           Math.abs(projectile.y - playerY) < 50;
           
-          if (hitPlayer) {
-            onHit(10);
+          if (hitPlayer && currentMonster) {
+            onHit(currentMonster.power); // Используем силу монстра для урона
             return false;
           }
           
-          return projectile.x > 0 && projectile.x < 2000;
+          return Math.abs(projectile.x - 400) < 600; // Удаляем снаряды, улетевшие слишком далеко
         })
       );
-      requestAnimationFrame(moveProjectiles);
     };
 
     const animation = requestAnimationFrame(moveProjectiles);
     return () => cancelAnimationFrame(animation);
-  }, [playerPosition, playerY, onHit]);
+  }, [playerPosition, playerY, onHit, currentMonster]);
 
   return { projectiles };
 };
