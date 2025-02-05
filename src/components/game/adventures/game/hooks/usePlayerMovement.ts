@@ -13,7 +13,7 @@ export const usePlayerMovement = (updateCameraOffset: (pos: number) => void) => 
     const updatePosition = () => {
       if (isMovingRight) {
         setPlayerPosition(prev => {
-          const newPosition = Math.min(prev + 5, 2000);
+          const newPosition = prev + 5;
           updateCameraOffset(newPosition);
           return newPosition;
         });
@@ -42,7 +42,7 @@ export const usePlayerMovement = (updateCameraOffset: (pos: number) => void) => 
   useEffect(() => {
     if (isJumping) {
       const gravity = 0.5;
-      let velocity = 20;
+      let velocity = 25; // Увеличенная начальная скорость прыжка
       let jumpAnimationFrame: number;
       
       const jumpAnimation = () => {
@@ -58,7 +58,7 @@ export const usePlayerMovement = (updateCameraOffset: (pos: number) => void) => 
           return newY;
         });
         
-        if (velocity > -20) { // Продолжаем анимацию пока скорость не станет слишком низкой
+        if (velocity > -25) { // Продолжаем анимацию до достижения определенной отрицательной скорости
           jumpAnimationFrame = requestAnimationFrame(jumpAnimation);
         }
       };

@@ -23,7 +23,6 @@ export const AdventureGame = ({
 }: AdventureGameProps) => {
   const [currentHealth, setCurrentHealth] = useState(playerHealth);
   const [isAttacking, setIsAttacking] = useState(false);
-  const [cameraOffset, setCameraOffset] = useState(0);
   const [monsters, setMonsters] = useState<Monster[]>([]);
   const gameRef = useRef<HTMLDivElement>(null);
   const gameContainerRef = useRef<HTMLDivElement>(null);
@@ -64,11 +63,16 @@ export const AdventureGame = ({
     const currentTime = Date.now();
     if (currentTime - lastMonsterSpawn.current > 2000 && (isMovingRight || isMovingLeft)) {
       const spawnDistance = isMovingRight ? playerPosition + 400 : playerPosition - 400;
-      if (spawnDistance >= 0 && spawnDistance <= 2000) {
-        const newMonster = generateMonster(spawnDistance);
-        setMonsters(prev => [...prev, newMonster]);
-        lastMonsterSpawn.current = currentTime;
-      }
+      const monsterLevel = Math.floor(Math.abs(playerPosition) / 1000) + 1; // Увеличиваем уровень каждые 1000 пикселей
+      const newMonster = generateMonster(spawnDistance);
+      
+      // Усиливаем монстра в зависимости от расстояния
+      newMonster.power = Math.floor(newMonster.power * (1 + monsterLevel * 0.2));
+      newMonster.health = Math.floor(newMonster.health * (1 + monsterLevel * 0.2));
+      newMonster.maxHealth = newMonster.health;
+      
+      setMonsters(prev => [...prev, newMonster]);
+      lastMonsterSpawn.current = currentTime;
     }
   }, [playerPosition, isMovingRight, isMovingLeft]);
 
@@ -118,19 +122,23 @@ export const AdventureGame = ({
     ));
   }, [playerPosition]);
 
+  const [cameraOffset, setCameraOffset] = useState(0);
+
   return (
-    <Card className="w-full h-[300px] relative overflow-hidden bg-game-background border-game-accent">
+    <Card className="w-full h-[300px] relative overflow-hidden bg-game-background">
       <div 
         ref={gameContainerRef}
         className="w-full h-full relative overflow-hidden"
       >
         <div 
           ref={gameRef}
-          className="w-[3000px] h-full relative"
+          className="absolute h-full"
           style={{
+            width: '100000px', // Очень большая ширина для "бесконечной" карты
             backgroundImage: 'url("/lovable-uploads/0fb6e9e6-c143-470a-87c8-adf54800851d.png")',
             backgroundSize: 'cover',
             backgroundPosition: 'center',
+            backgroundRepeat: 'repeat-x',
             transform: `translateX(-${cameraOffset}px)`,
             transition: 'transform 0.1s ease-out'
           }}
@@ -164,14 +172,14 @@ export const AdventureGame = ({
 
         <div className="fixed bottom-20 left-4 flex gap-4 md:hidden z-50">
           <button
-            className="w-16 h-16 bg-game-primary/80 rounded-full flex items-center justify-center text-white text-2xl shadow-lg backdrop-blur-sm border-2 border-game-accent"
+            className="w-16 h-16 bg-game-primary/80 rounded-full flex items-center justify-center text-white text-2xl shadow-lg backdrop-blur-sm"
             onTouchStart={() => setIsMovingLeft(true)}
             onTouchEnd={() => setIsMovingLeft(false)}
           >
             ←
           </button>
           <button
-            className="w-16 h-16 bg-game-primary/80 rounded-full flex items-center justify-center text-white text-2xl shadow-lg backdrop-blur-sm border-2 border-game-accent"
+            className="w-16 h-16 bg-game-primary/80 rounded-full flex items-center justify-center text-white text-2xl shadow-lg backdrop-blur-sm"
             onTouchStart={() => setIsMovingRight(true)}
             onTouchEnd={() => setIsMovingRight(false)}
           >
@@ -180,14 +188,14 @@ export const AdventureGame = ({
         </div>
         
         <button
-          className="fixed bottom-20 right-28 w-20 h-20 bg-game-accent/80 rounded-full flex items-center justify-center text-white text-3xl shadow-lg backdrop-blur-sm border-2 border-game-accent md:hidden z-50"
+          className="fixed bottom-20 right-28 w-20 h-20 bg-game-accent/80 rounded-full flex items-center justify-center text-white text-3xl shadow-lg backdrop-blur-sm md:hidden z-50"
           onClick={handleJump}
         >
           ↑
         </button>
 
         <button
-          className="fixed bottom-20 right-8 w-20 h-20 bg-game-accent/80 rounded-full flex items-center justify-center text-white text-3xl shadow-lg backdrop-blur-sm border-2 border-game-accent md:hidden z-50"
+          className="fixed bottom-20 right-8 w-20 h-20 bg-game-accent/80 rounded-full flex items-center justify-center text-white text-3xl shadow-lg backdrop-blur-sm md:hidden z-50"
           onClick={handleAttack}
           disabled={isAttacking}
         >

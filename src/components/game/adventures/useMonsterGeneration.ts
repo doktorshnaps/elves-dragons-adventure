@@ -1,10 +1,10 @@
 import { Monster } from "./types";
 
-export const useMonsterGeneration = (level: number) => {
+export const useMonsterGeneration = (baseLevel: number) => {
   const generateMonster = (position?: number): Monster => {
-    const powerMultiplier = 1 + (level - 1) * 0.5;
-    const healthMultiplier = 1 + (level - 1) * 0.3;
-    const rewardMultiplier = 1 + (level - 1) * 0.7;
+    const powerMultiplier = 1 + (baseLevel - 1) * 0.5;
+    const healthMultiplier = 1 + (baseLevel - 1) * 0.3;
+    const rewardMultiplier = 1 + (baseLevel - 1) * 0.7;
 
     const monsterTypes: Array<{ type: 'normal' | 'elite' | 'boss', chance: number, expReward: number }> = [
       { type: 'normal', chance: 0.7, expReward: 30 },
