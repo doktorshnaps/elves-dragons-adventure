@@ -2,7 +2,6 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import { useBalanceState } from "@/hooks/useBalanceState";
-import { PlayerStatsCard } from "./PlayerStatsCard";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft } from "lucide-react";
 import { AdventureLayout } from "./components/AdventureLayout";
@@ -247,19 +246,7 @@ export const AdventuresTab = () => {
           <span className="text-xl font-bold text-yellow-400">{balance} монет</span>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <PlayerStatsCard
-            level={playerStats.level}
-            stats={{
-              power: playerStats.power,
-              defense: playerStats.defense
-            }}
-            experience={playerStats.experience}
-            requiredExperience={playerStats.requiredExperience}
-            playerHealth={playerStats.health}
-            maxHealth={playerStats.maxHealth}
-          />
-
+        <div className="grid grid-cols-1 gap-6">
           <div className="space-y-4">
             {!currentMonster ? (
               <Button 
