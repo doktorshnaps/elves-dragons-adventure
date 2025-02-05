@@ -23,7 +23,7 @@ export const usePlayerHealthCheck = (playerStats: PlayerStats | null) => {
         
         localStorage.removeItem('battleState');
         setTimeout(() => {
-          navigate('/game');
+          navigate('/menu');
         }, 2000);
       }
     };
