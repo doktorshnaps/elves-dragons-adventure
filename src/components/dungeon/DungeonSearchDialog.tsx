@@ -1,6 +1,6 @@
 import React from "react";
 import { motion } from "framer-motion";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, DoorOpen } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "../ui/button";
 import { Card } from "../ui/card";
@@ -33,6 +33,18 @@ export const DungeonSearchDialog = ({
   hasActiveCards
 }: DungeonSearchDialogProps) => {
   const navigate = useNavigate();
+  const [activeDungeon, setActiveDungeon] = React.useState<string | null>(null);
+
+  React.useEffect(() => {
+    const battleState = localStorage.getItem('battleState');
+    if (battleState) {
+      const state = JSON.parse(battleState);
+      if (state.selectedDungeon && state.playerStats.health > 0) {
+        setActiveDungeon(state.selectedDungeon);
+      }
+    }
+  }, []);
+
   const backgroundImage = selectedDungeon ? dungeonBackgrounds[selectedDungeon] : '';
 
   const dungeonRoutes: Record<DungeonType, string> = {
@@ -48,6 +60,13 @@ export const DungeonSearchDialog = ({
   const handleDungeonSelect = () => {
     if (selectedDungeon) {
       const route = dungeonRoutes[selectedDungeon];
+      navigate(route);
+    }
+  };
+
+  const handleReturnToDungeon = () => {
+    if (activeDungeon) {
+      const route = dungeonRoutes[activeDungeon as DungeonType];
       navigate(route);
     }
   };
@@ -95,34 +114,52 @@ export const DungeonSearchDialog = ({
           </Button>
 
           <div className="text-center">
-            <h2 className="text-2xl font-bold text-game-accent mb-6">Поиск подземелья</h2>
+            <h2 className="text-2xl font-bold text-game-accent mb-6">
+              {activeDungeon ? 'Активное подземелье' : 'Поиск подземелья'}
+            </h2>
             
-            <EnergyDisplay energyState={energyState} timeUntilNext={timeUntilNext} />
-            
-            <div className="mb-4">
-              <p className="text-game-accent">Баланс: {balance} монет</p>
-            </div>
-            
-            <DungeonDisplay rolling={rolling} selectedDungeon={selectedDungeon} />
+            {!activeDungeon && (
+              <>
+                <EnergyDisplay energyState={energyState} timeUntilNext={timeUntilNext} />
+                
+                <div className="mb-4">
+                  <p className="text-game-accent">Баланс: {balance} монет</p>
+                </div>
+                
+                <DungeonDisplay rolling={rolling} selectedDungeon={selectedDungeon} />
+              </>
+            )}
 
             <div className="space-y-4">
-              {!selectedDungeon && (
+              {activeDungeon ? (
                 <Button
-                  onClick={onRollDice}
-                  disabled={rolling || energyState.current <= 0 || isHealthTooLow || !hasActiveCards}
-                  className="bg-game-primary hover:bg-game-primary/80"
-                >
-                  {rolling ? "Поиск подземелья..." : "Искать подземелье"}
-                </Button>
-              )}
-              
-              {selectedDungeon && !rolling && (
-                <Button
-                  onClick={handleDungeonSelect}
+                  onClick={handleReturnToDungeon}
                   className="bg-game-accent hover:bg-game-accent/80"
                 >
-                  Войти в подземелье
+                  <DoorOpen className="mr-2 h-4 w-4" />
+                  Вернуться в подземелье
                 </Button>
+              ) : (
+                <>
+                  {!selectedDungeon && (
+                    <Button
+                      onClick={onRollDice}
+                      disabled={rolling || energyState.current <= 0 || isHealthTooLow || !hasActiveCards}
+                      className="bg-game-primary hover:bg-game-primary/80"
+                    >
+                      {rolling ? "Поиск подземелья..." : "Искать подземелье"}
+                    </Button>
+                  )}
+                  
+                  {selectedDungeon && !rolling && (
+                    <Button
+                      onClick={handleDungeonSelect}
+                      className="bg-game-accent hover:bg-game-accent/80"
+                    >
+                      Войти в подземелье
+                    </Button>
+                  )}
+                </>
               )}
 
               <Button
@@ -134,13 +171,13 @@ export const DungeonSearchDialog = ({
               </Button>
             </div>
             
-            {isHealthTooLow && (
+            {isHealthTooLow && !activeDungeon && (
               <p className="text-red-500 mt-4">
                 Здоровье слишком низкое для входа в подземелье
               </p>
             )}
 
-            {!hasActiveCards && (
+            {!hasActiveCards && !activeDungeon && (
               <p className="text-red-500 mt-4">
                 У вас нет активных карт героев или питомцев
               </p>

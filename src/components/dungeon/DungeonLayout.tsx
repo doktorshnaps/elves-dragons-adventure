@@ -2,6 +2,7 @@ import React from 'react';
 import { Button } from '@/components/ui/button';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, DoorOpen } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
 
 interface DungeonLayoutProps {
   children: React.ReactNode;
@@ -10,6 +11,17 @@ interface DungeonLayoutProps {
 
 export const DungeonLayout = ({ children, backgroundImage }: DungeonLayoutProps) => {
   const navigate = useNavigate();
+  const { toast } = useToast();
+
+  const handleLeaveDungeon = () => {
+    localStorage.removeItem('battleState');
+    navigate('/dungeons');
+    toast({
+      title: "Подземелье покинуто",
+      description: "Весь прогресс сброшен",
+      variant: "destructive",
+    });
+  };
 
   return (
     <div 
@@ -40,7 +52,7 @@ export const DungeonLayout = ({ children, backgroundImage }: DungeonLayoutProps)
       <div className="fixed top-4 right-4 z-50">
         <Button 
           variant="outline" 
-          onClick={() => navigate('/dungeons')}
+          onClick={handleLeaveDungeon}
           className="bg-game-surface/80 hover:bg-game-surface/90 text-game-primary border-game-primary/20"
         >
           <DoorOpen className="mr-2 h-4 w-4" />
