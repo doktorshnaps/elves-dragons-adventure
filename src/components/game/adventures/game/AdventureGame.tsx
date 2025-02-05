@@ -61,18 +61,23 @@ export const AdventureGame = ({
   // Генерация монстров при движении
   useEffect(() => {
     const currentTime = Date.now();
-    if (currentTime - lastMonsterSpawn.current > 2000 && (isMovingRight || isMovingLeft)) {
+    if (currentTime - lastMonsterSpawn.current > 2000) {
       const spawnDistance = isMovingRight ? playerPosition + 400 : playerPosition - 400;
-      const monsterLevel = Math.floor(Math.abs(playerPosition) / 1000) + 1; // Увеличиваем уровень каждые 1000 пикселей
-      const newMonster = generateMonster(spawnDistance);
       
-      // Усиливаем монстра в зависимости от расстояния
-      newMonster.power = Math.floor(newMonster.power * (1 + monsterLevel * 0.2));
-      newMonster.health = Math.floor(newMonster.health * (1 + monsterLevel * 0.2));
-      newMonster.maxHealth = newMonster.health;
-      
-      setMonsters(prev => [...prev, newMonster]);
-      lastMonsterSpawn.current = currentTime;
+      // Генерируем монстров только впереди игрока при движении вправо
+      // или только позади при движении влево
+      if ((isMovingRight && spawnDistance > playerPosition) || 
+          (isMovingLeft && spawnDistance < playerPosition)) {
+        const monsterLevel = Math.floor(Math.abs(playerPosition) / 1000) + 1;
+        const newMonster = generateMonster(spawnDistance);
+        
+        newMonster.power = Math.floor(newMonster.power * (1 + monsterLevel * 0.2));
+        newMonster.health = Math.floor(newMonster.health * (1 + monsterLevel * 0.2));
+        newMonster.maxHealth = newMonster.health;
+        
+        setMonsters(prev => [...prev, newMonster]);
+        lastMonsterSpawn.current = currentTime;
+      }
     }
   }, [playerPosition, isMovingRight, isMovingLeft]);
 

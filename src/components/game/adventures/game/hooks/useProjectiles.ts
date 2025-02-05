@@ -14,9 +14,8 @@ export const useProjectiles = (
   useEffect(() => {
     if (currentMonster && currentHealth > 0) {
       const shootInterval = setInterval(() => {
-        // Проверяем расстояние до игрока перед атакой
         const distanceToPlayer = Math.abs(400 - playerPosition);
-        if (distanceToPlayer <= 500) { // Стреляем только если игрок в пределах 500 пикселей
+        if (distanceToPlayer <= 500) {
           const newProjectile: Projectile = {
             id: Date.now(),
             x: 400,
@@ -38,15 +37,15 @@ export const useProjectiles = (
           ...projectile,
           x: projectile.x + (projectile.direction * 5)
         })).filter(projectile => {
-          const hitPlayer = Math.abs(projectile.x - playerPosition) < 30 && 
-                          Math.abs(projectile.y - playerY) < 50;
+          const hitPlayer = Math.abs(projectile.x - playerPosition) < 50 && // Увеличили хитбокс с 30 до 50
+                          Math.abs(projectile.y - playerY) < 70; // Увеличили хитбокс с 50 до 70
           
           if (hitPlayer && currentMonster) {
-            onHit(currentMonster.power); // Используем силу монстра для урона
+            onHit(currentMonster.power);
             return false;
           }
           
-          return Math.abs(projectile.x - 400) < 600; // Удаляем снаряды, улетевшие слишком далеко
+          return Math.abs(projectile.x - 400) < 600;
         })
       );
     };
