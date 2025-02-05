@@ -7,6 +7,8 @@ import { useAdventureState } from '../hooks/useAdventureState';
 import { GameControls } from '../components/GameControls';
 import { GameWorld } from '../components/GameWorld';
 import { PlayerStatsHeader } from './PlayerStatsHeader';
+import { MagicProjectile } from './MagicProjectile';
+import { v4 as uuidv4 } from 'uuid';
 
 interface AdventureGameProps {
   onMonsterDefeat: (monster: Monster) => void;
@@ -40,6 +42,13 @@ export const AdventureGame = ({
     setCameraOffset,
     generateMonster
   } = useAdventureState(playerHealth);
+
+  const [magicProjectiles, setMagicProjectiles] = React.useState<Array<{
+    id: string;
+    x: number;
+    y: number;
+    direction: number;
+  }>>([]);
 
   const gameRef = useRef<HTMLDivElement>(null);
   const gameContainerRef = useRef<HTMLDivElement>(null);
@@ -103,20 +112,45 @@ export const AdventureGame = ({
   }, [playerPosition, setMonsters]);
 
   const handleAttack = () => {
-    if (isAttacking || !currentMonster) return;
+    if (isAttacking) return;
     
     setIsAttacking(true);
+    
+    // Создаем магический снаряд
+    const direction = isMovingLeft ? -1 : 1;
+    const newProjectile = {
+      id: uuidv4(),
+      x: playerPosition,
+      y: playerY + 50,
+      direction: direction
+    };
+    setMagicProjectiles(prev => [...prev, newProjectile]);
+
+    // Проверяем попадание по монстрам
     setTimeout(() => {
       setIsAttacking(false);
-      if (currentMonster && Math.abs(playerPosition - currentMonster.position) < 100) {
-        const damage = Math.max(1, playerPower + Math.floor(Math.random() * 3));
-        const updatedMonster = {
-          ...currentMonster,
-          health: Math.max(0, currentMonster.health - damage)
-        };
-        onMonsterDefeat(updatedMonster);
-      }
-    }, 500);
+      setMagicProjectiles(prev => prev.filter(p => p.id !== newProjectile.id));
+      
+      monsters.forEach(monster => {
+        const distanceToMonster = Math.abs(playerPosition - monster.position);
+        if (distanceToMonster < 150) { // Радиус поражения магии
+          const damage = Math.max(1, playerPower + Math.floor(Math.random() * 3));
+          const updatedMonster = {
+            ...monster,
+            health: Math.max(0, monster.health - damage)
+          };
+          
+          if (updatedMonster.health <= 0) {
+            setMonsters(prev => prev.filter(m => m.id !== monster.id));
+            onMonsterDefeat(updatedMonster);
+          } else {
+            setMonsters(prev => 
+              prev.map(m => m.id === monster.id ? updatedMonster : m)
+            );
+          }
+        }
+      });
+    }, 300);
   };
 
   return (
@@ -146,6 +180,15 @@ export const AdventureGame = ({
             monsters={monsters}
             projectiles={projectiles}
           />
+
+          {magicProjectiles.map(projectile => (
+            <MagicProjectile
+              key={projectile.id}
+              x={projectile.x}
+              y={projectile.y}
+              direction={projectile.direction}
+            />
+          ))}
         </div>
 
         <GameControls
