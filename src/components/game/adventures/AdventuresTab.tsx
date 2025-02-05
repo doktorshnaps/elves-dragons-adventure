@@ -8,12 +8,14 @@ import { Button } from "@/components/ui/button";
 import { ArrowLeft } from "lucide-react";
 import { AdventureLayout } from "./components/AdventureLayout";
 import { InventoryDisplay } from "@/components/game/InventoryDisplay";
+import { useMonsterGeneration } from "./useMonsterGeneration";
 import { Item } from "@/types/inventory";
 
 export const AdventuresTab = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const { balance, updateBalance } = useBalanceState();
+  const { generateMonster } = useMonsterGeneration(1);
 
   const calculateEquipmentBonuses = () => {
     const inventory = localStorage.getItem('gameInventory');
@@ -102,13 +104,7 @@ export const AdventuresTab = () => {
   }, [playerStats.level]);
 
   const startAdventure = () => {
-    const monster = {
-      name: "Гоблин",
-      health: 50,
-      maxHealth: 50,
-      power: 5,
-      reward: 10
-    };
+    const monster = generateMonster();
     setCurrentMonster(monster);
   };
 
@@ -117,7 +113,6 @@ export const AdventuresTab = () => {
     const requiredExp = playerStats.requiredExperience;
 
     if (newExperience >= requiredExp) {
-      // Level up
       const newLevel = playerStats.level + 1;
       const newRequiredExp = requiredExp + 100;
       const baseStats = calculateBaseStats(newLevel);
@@ -131,7 +126,7 @@ export const AdventuresTab = () => {
         power: baseStats.power + equipmentBonuses.power,
         defense: baseStats.defense + equipmentBonuses.defense,
         maxHealth: baseStats.health + equipmentBonuses.health,
-        health: baseStats.health + equipmentBonuses.health // Восстановление здоровья при повышении уровня
+        health: baseStats.health + equipmentBonuses.health
       });
 
       toast({
@@ -154,10 +149,10 @@ export const AdventuresTab = () => {
 
     if (newMonsterHealth <= 0) {
       updateBalance(balance + currentMonster.reward);
-      handleExperienceGain(20);
+      handleExperienceGain(currentMonster.experienceReward);
       toast({
         title: "Победа!",
-        description: `Вы получили ${currentMonster.reward} монет и 20 опыта!`
+        description: `Вы получили ${currentMonster.reward} монет и ${currentMonster.experienceReward} опыта!`
       });
       setCurrentMonster(null);
       return;
@@ -199,18 +194,14 @@ export const AdventuresTab = () => {
         description: `Восстановлено ${item.value} здоровья`
       });
 
-      // Get current inventory
       const inventory = localStorage.getItem('gameInventory');
       if (!inventory) return;
 
-      // Parse and update inventory
       const items = JSON.parse(inventory);
       const updatedItems = items.filter((i: Item) => i.id !== item.id);
       
-      // Save updated inventory
       localStorage.setItem('gameInventory', JSON.stringify(updatedItems));
       
-      // Dispatch inventory update event
       const event = new CustomEvent('inventoryUpdate', {
         detail: { inventory: updatedItems }
       });
@@ -219,27 +210,21 @@ export const AdventuresTab = () => {
   };
 
   const handleSellItem = (item: Item) => {
-    // Get current inventory
     const inventory = localStorage.getItem('gameInventory');
     if (!inventory) return;
 
-    // Parse and update inventory
     const items = JSON.parse(inventory);
     const updatedItems = items.filter((i: Item) => i.id !== item.id);
     
-    // Update balance (assuming each item sells for 10 coins)
     updateBalance(balance + 10);
     
-    // Save updated inventory
     localStorage.setItem('gameInventory', JSON.stringify(updatedItems));
     
-    // Show toast
     toast({
       title: "Предмет продан",
       description: "Получено 10 монет"
     });
     
-    // Dispatch inventory update event
     const event = new CustomEvent('inventoryUpdate', {
       detail: { inventory: updatedItems }
     });
