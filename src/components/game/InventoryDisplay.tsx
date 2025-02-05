@@ -7,6 +7,7 @@ import { DragonEggsList } from "./inventory/DragonEggsList";
 import { InventoryGrid } from "./inventory/InventoryGrid";
 import { useInventoryState } from "@/hooks/useInventoryState";
 import { useToast } from "@/hooks/use-toast";
+import { GroupedItem } from "./inventory/types";
 
 interface InventoryDisplayProps {
   onUseItem?: (item: Item) => void;
@@ -65,8 +66,8 @@ export const InventoryDisplay = ({
           <InventoryGrid
             groupedItems={groupItems(filteredInventory)}
             readonly={readonly}
-            onUseItem={(item) => handleUseItem(item.items[0])}
-            onSellItem={(item) => onSellItem?.(item.items[0])}
+            onUseItem={(groupedItem: GroupedItem) => handleUseItem(groupedItem.items[0])}
+            onSellItem={(groupedItem: GroupedItem) => onSellItem?.(groupedItem.items[0])}
           />
         </div>
       </div>
