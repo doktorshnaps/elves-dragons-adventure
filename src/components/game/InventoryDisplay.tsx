@@ -45,6 +45,12 @@ export const InventoryDisplay = ({
     }
   };
 
+  const handleGroupedItem = (groupedItem: GroupedItem, handler: (item: Item) => void) => {
+    if (groupedItem.items.length > 0) {
+      handler(groupedItem.items[0]);
+    }
+  };
+
   const filteredInventory = showOnlyPotions 
     ? inventory.filter(item => item.type === 'healthPotion')
     : inventory;
@@ -66,8 +72,8 @@ export const InventoryDisplay = ({
           <InventoryGrid
             groupedItems={groupItems(filteredInventory)}
             readonly={readonly}
-            onUseItem={(groupedItem: GroupedItem) => handleUseItem(groupedItem.items[0])}
-            onSellItem={(groupedItem: GroupedItem) => onSellItem?.(groupedItem.items[0])}
+            onUseItem={(groupedItem) => handleGroupedItem(groupedItem, handleUseItem)}
+            onSellItem={(groupedItem) => handleGroupedItem(groupedItem, onSellItem || (() => {}))}
           />
         </div>
       </div>

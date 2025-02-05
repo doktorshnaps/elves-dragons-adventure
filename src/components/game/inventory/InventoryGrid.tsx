@@ -12,8 +12,8 @@ import { GroupedItem } from "./types";
 interface InventoryGridProps {
   groupedItems: GroupedItem[];
   readonly: boolean;
-  onUseItem: (item: GroupedItem) => void;
-  onSellItem: (item: Item) => void;
+  onUseItem: (groupedItem: GroupedItem) => void;
+  onSellItem: (groupedItem: GroupedItem) => void;
 }
 
 export const InventoryGrid = ({ 
