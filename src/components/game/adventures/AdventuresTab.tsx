@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
@@ -70,20 +69,6 @@ export const AdventuresTab = () => {
     setPlayerStats({ ...playerStats, health: newPlayerHealth });
   };
 
-  const handleRestoreHealth = () => {
-    if (balance >= 50 && playerStats.health < playerStats.maxHealth) {
-      updateBalance(balance - 50);
-      setPlayerStats({
-        ...playerStats,
-        health: Math.min(playerStats.maxHealth, playerStats.health + 50)
-      });
-      toast({
-        title: "Лечение",
-        description: "Восстановлено 50 очков здоровья"
-      });
-    }
-  };
-
   return (
     <AdventureLayout>
       <div className="max-w-4xl mx-auto">
@@ -110,8 +95,6 @@ export const AdventuresTab = () => {
             requiredExperience={playerStats.requiredExperience}
             playerHealth={playerStats.health}
             maxHealth={playerStats.maxHealth}
-            balance={balance}
-            onRestoreHealth={handleRestoreHealth}
           />
 
           <div className="space-y-4">
