@@ -11,6 +11,8 @@ interface MonsterCardProps {
 }
 
 export const MonsterCard = ({ monster, onAttack, playerHealth }: MonsterCardProps) => {
+  const healthPercentage = (monster.health / monster.maxHealth) * 100;
+  
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -30,12 +32,12 @@ export const MonsterCard = ({ monster, onAttack, playerHealth }: MonsterCardProp
           <div className="space-y-2">
             <div className="flex justify-between text-sm">
               <span>Сила: {monster.power}</span>
-              <span>HP: {monster.health}/{monster.maxHealth}</span>
+              <span>HP: {Math.ceil(monster.health)}/{monster.maxHealth}</span>
             </div>
             <div className="w-full bg-gray-700 rounded-full h-2.5">
               <div
                 className="bg-red-600 h-2.5 rounded-full transition-all duration-300"
-                style={{ width: `${(monster.health / monster.maxHealth) * 100}%` }}
+                style={{ width: `${Math.max(0, Math.min(healthPercentage, 100))}%` }}
               />
             </div>
           </div>

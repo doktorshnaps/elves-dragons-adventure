@@ -4,7 +4,6 @@ import { Card } from "@/components/ui/card";
 import { Monster } from '../types';
 import { PlayerCharacter } from './PlayerCharacter';
 import { MonsterSprite } from './MonsterSprite';
-import { Button } from '@/components/ui/button';
 
 interface AdventureGameProps {
   onMonsterDefeat: (monster: Monster) => void;
@@ -76,9 +75,13 @@ export const AdventureGame = ({
     setIsAttacking(true);
     setTimeout(() => {
       setIsAttacking(false);
-      if (currentMonster && 
-          Math.abs(playerPosition - 400) < 100) { // Проверяем, достаточно ли близко игрок к монстру
-        onMonsterDefeat(currentMonster);
+      if (currentMonster && Math.abs(playerPosition - 400) < 100) {
+        const damage = Math.max(1, playerPower + Math.floor(Math.random() * 3));
+        const updatedMonster = {
+          ...currentMonster,
+          health: Math.max(0, currentMonster.health - damage)
+        };
+        onMonsterDefeat(updatedMonster);
       }
     }, 500);
   };
