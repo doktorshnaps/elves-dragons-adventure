@@ -1,13 +1,16 @@
 import React from "react";
 import { motion } from "framer-motion";
-import { ArrowLeft, DoorOpen } from "lucide-react";
+import { ArrowLeft } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "../ui/button";
 import { Card } from "../ui/card";
 import { EnergyDisplay } from "./EnergyDisplay";
 import { DungeonDisplay } from "./DungeonDisplay";
-import { dungeonBackgrounds, DungeonType } from "@/constants/dungeons";
+import { dungeonBackgrounds, dungeonRoutes, DungeonType } from "@/constants/dungeons";
 import { EnergyState } from "@/utils/energyManager";
+import { ActiveDungeonButton } from "./components/ActiveDungeonButton";
+import { DungeonControls } from "./components/DungeonControls";
+import { DungeonWarnings } from "./components/DungeonWarnings";
 
 interface DungeonSearchDialogProps {
   onClose: () => void;
@@ -51,26 +54,9 @@ export const DungeonSearchDialog = ({
 
   const backgroundImage = selectedDungeon ? dungeonBackgrounds[selectedDungeon] : '';
 
-  const dungeonRoutes: Record<DungeonType, string> = {
-    dragon_lair: '/dungeons/dragon-lair',
-    forgotten_souls: '/dungeons/forgotten-souls',
-    ice_throne: '/dungeons/icy-throne',
-    dark_mage: '/dungeons/dark-mage',
-    spider_nest: '/dungeons/spider-nest',
-    bone_dungeon: '/dungeons/bone-dungeon',
-    sea_serpent: '/dungeons/sea-serpent'
-  };
-
   const handleDungeonSelect = () => {
     if (selectedDungeon) {
       const route = dungeonRoutes[selectedDungeon];
-      navigate(route);
-    }
-  };
-
-  const handleReturnToDungeon = () => {
-    if (activeDungeon) {
-      const route = dungeonRoutes[activeDungeon as DungeonType];
       navigate(route);
     }
   };
@@ -136,34 +122,17 @@ export const DungeonSearchDialog = ({
 
             <div className="space-y-4">
               {activeDungeon ? (
-                <Button
-                  onClick={handleReturnToDungeon}
-                  className="bg-game-accent hover:bg-game-accent/80"
-                >
-                  <DoorOpen className="mr-2 h-4 w-4" />
-                  Вернуться в подземелье
-                </Button>
+                <ActiveDungeonButton activeDungeon={activeDungeon} />
               ) : (
-                <>
-                  {!selectedDungeon && (
-                    <Button
-                      onClick={onRollDice}
-                      disabled={rolling || energyState.current <= 0 || isHealthTooLow || !hasActiveCards}
-                      className="bg-game-primary hover:bg-game-primary/80"
-                    >
-                      {rolling ? "Поиск подземелья..." : "Искать подземелье"}
-                    </Button>
-                  )}
-                  
-                  {selectedDungeon && !rolling && (
-                    <Button
-                      onClick={handleDungeonSelect}
-                      className="bg-game-accent hover:bg-game-accent/80"
-                    >
-                      Войти в подземелье
-                    </Button>
-                  )}
-                </>
+                <DungeonControls
+                  selectedDungeon={selectedDungeon}
+                  rolling={rolling}
+                  energyState={energyState}
+                  isHealthTooLow={isHealthTooLow}
+                  hasActiveCards={hasActiveCards}
+                  onRollDice={onRollDice}
+                  handleDungeonSelect={handleDungeonSelect}
+                />
               )}
 
               <Button
@@ -175,17 +144,11 @@ export const DungeonSearchDialog = ({
               </Button>
             </div>
             
-            {isHealthTooLow && !activeDungeon && (
-              <p className="text-red-500 mt-4">
-                Здоровье слишком низкое для входа в подземелье
-              </p>
-            )}
-
-            {!hasActiveCards && !activeDungeon && (
-              <p className="text-red-500 mt-4">
-                У вас нет активных карт героев или питомцев
-              </p>
-            )}
+            <DungeonWarnings
+              isHealthTooLow={isHealthTooLow}
+              hasActiveCards={hasActiveCards}
+              activeDungeon={activeDungeon}
+            />
           </div>
         </div>
       </Card>
