@@ -36,7 +36,7 @@ export const InventoryGrid = ({
         <Dialog key={`${item.name}-${item.type}-${item.value}`}>
           <DialogTrigger asChild>
             <Card 
-              className="w-[80px] h-[130px] p-2 bg-game-surface/80 border-game-accent backdrop-blur-sm flex flex-col mx-1 my-1 cursor-pointer hover:border-game-accent/80"
+              className="w-[80px] h-[90px] p-2 bg-game-surface/80 border-game-accent backdrop-blur-sm flex flex-col mx-1 my-1 cursor-pointer hover:border-game-accent/80"
             >
               <div className="flex flex-col h-full">
                 {item.type === 'dragon_egg' ? (
@@ -127,3 +127,4 @@ export const InventoryGrid = ({
     </>
   );
 };
+
