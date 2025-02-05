@@ -28,4 +28,14 @@ export const dungeonNames = {
   sea_serpent: "Логово Морского Змея"
 } as const;
 
+export const dungeonRoutes = {
+  dragon_lair: "/dungeons/dragon-lair",
+  forgotten_souls: "/dungeons/forgotten-souls",
+  ice_throne: "/dungeons/ice-throne",
+  dark_mage: "/dungeons/dark-mage",
+  spider_nest: "/dungeons/spider-nest",
+  bone_dungeon: "/dungeons/bone-dungeon",
+  sea_serpent: "/dungeons/sea-serpent"
+} as const;
+
 export type DungeonType = keyof typeof dungeonNames;
