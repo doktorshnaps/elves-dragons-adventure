@@ -5,12 +5,15 @@ import { PlayerStats } from "@/types/battle";
 import { TeamStatsSection } from "./stats/TeamStatsSection";
 import { PlayerStatsSection } from "./stats/PlayerStatsSection";
 import { calculateTeamStats } from "@/utils/cardUtils";
+import { Button } from "@/components/ui/button";
+import { TeamStatsModal } from "./TeamStatsModal";
 
 interface TeamStatsProps {
   teamStats: TeamStatsType;
 }
 
 export const TeamStats = ({ teamStats }: TeamStatsProps) => {
+  const [showStats, setShowStats] = React.useState(false);
   const [playerStats, setPlayerStats] = React.useState<PlayerStats>(() => {
     const savedState = localStorage.getItem('battleState');
     if (savedState) {
@@ -75,28 +78,38 @@ export const TeamStats = ({ teamStats }: TeamStatsProps) => {
   }, []);
 
   return (
-    <Card 
-      className="p-6 bg-game-surface border-game-accent mb-6 relative overflow-hidden"
-      style={{
-        backgroundImage: `url("/lovable-uploads/29ea34c8-ede8-4cab-8ca2-049cdb5108c3.png")`,
-        backgroundSize: 'cover',
-        backgroundPosition: 'center',
-        backgroundRepeat: 'no-repeat'
-      }}
-    >
-      <div className="absolute inset-0 bg-game-surface/90 backdrop-blur-sm" />
-      
-      <div className="relative z-10">
-        <div className="flex justify-between items-center mb-4">
-          <h2 className="text-xl font-bold text-game-accent">Статистика</h2>
-          <span className="text-sm text-game-accent">{balance} монет</span>
-        </div>
+    <>
+      <Card 
+        className="p-6 bg-game-surface border-game-accent mb-6 relative overflow-hidden cursor-pointer"
+        onClick={() => setShowStats(true)}
+        style={{
+          backgroundImage: `url("/lovable-uploads/29ea34c8-ede8-4cab-8ca2-049cdb5108c3.png")`,
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
+          backgroundRepeat: 'no-repeat'
+        }}
+      >
+        <div className="absolute inset-0 bg-game-surface/90 backdrop-blur-sm" />
         
-        <div className="space-y-6">
-          <TeamStatsSection teamStats={teamStats} />
-          <PlayerStatsSection playerStats={playerStats} />
+        <div className="relative z-10">
+          <div className="flex justify-between items-center mb-4">
+            <h2 className="text-xl font-bold text-game-accent">Статистика</h2>
+            <span className="text-sm text-game-accent">{balance} монет</span>
+          </div>
+          
+          <div className="space-y-6">
+            <TeamStatsSection teamStats={teamStats} />
+            <PlayerStatsSection playerStats={playerStats} />
+          </div>
         </div>
-      </div>
-    </Card>
+      </Card>
+
+      <TeamStatsModal 
+        isOpen={showStats}
+        onClose={() => setShowStats(false)}
+        teamStats={teamStats}
+        balance={balance}
+      />
+    </>
   );
 };
