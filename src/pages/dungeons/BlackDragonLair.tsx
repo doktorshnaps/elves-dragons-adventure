@@ -4,23 +4,24 @@ import { generateDungeonOpponents } from '@/dungeons/dungeonManager';
 import { DungeonType } from '@/constants/dungeons';
 import { DungeonLayout } from '@/components/dungeon/DungeonLayout';
 import { DungeonHeader } from '@/components/dungeon/DungeonHeader';
+import { useSearchParams } from 'react-router-dom';
 
 export const BlackDragonLair = () => {
+  const [searchParams] = useSearchParams();
+  const level = parseInt(searchParams.get('level') || '1');
+
   useEffect(() => {
-    const opponents = generateDungeonOpponents('dragon_lair' as DungeonType, 1);
+    const opponents = generateDungeonOpponents('dragon_lair' as DungeonType, level);
     localStorage.setItem('battleState', JSON.stringify({
       opponents,
-      currentDungeonLevel: 1,
+      currentDungeonLevel: level,
       selectedDungeon: 'dragon_lair'
     }));
-  }, []);
-
-  const battleState = localStorage.getItem('battleState');
-  const currentLevel = battleState ? JSON.parse(battleState).currentDungeonLevel : 1;
+  }, [level]);
 
   return (
     <DungeonLayout backgroundImage="/lovable-uploads/6fd75ecf-0a85-4a95-8b57-81f649a96e49.png">
-      <DungeonHeader level={currentLevel} />
+      <DungeonHeader level={level} />
       <Battle />
     </DungeonLayout>
   );

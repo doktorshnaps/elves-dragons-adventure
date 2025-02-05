@@ -4,26 +4,24 @@ import { generateDungeonOpponents } from '@/dungeons/dungeonManager';
 import { DungeonType } from '@/constants/dungeons';
 import { DungeonLayout } from '@/components/dungeon/DungeonLayout';
 import { DungeonHeader } from '@/components/dungeon/DungeonHeader';
+import { useSearchParams } from 'react-router-dom';
 
 export const BoneDemonDungeon = () => {
-  useEffect(() => {
-    const battleState = localStorage.getItem('battleState');
-    if (!battleState) {
-      const opponents = generateDungeonOpponents('bone_dungeon' as DungeonType, 1);
-      localStorage.setItem('battleState', JSON.stringify({
-        opponents,
-        currentDungeonLevel: 1,
-        selectedDungeon: 'bone_dungeon'
-      }));
-    }
-  }, []);
+  const [searchParams] = useSearchParams();
+  const level = parseInt(searchParams.get('level') || '1');
 
-  const battleState = localStorage.getItem('battleState');
-  const currentLevel = battleState ? JSON.parse(battleState).currentDungeonLevel : 1;
+  useEffect(() => {
+    const opponents = generateDungeonOpponents('bone_dungeon' as DungeonType, level);
+    localStorage.setItem('battleState', JSON.stringify({
+      opponents,
+      currentDungeonLevel: level,
+      selectedDungeon: 'bone_dungeon'
+    }));
+  }, [level]);
 
   return (
     <DungeonLayout backgroundImage="/lovable-uploads/eca4bec7-0f8c-4739-9ddf-9b385800db15.png">
-      <DungeonHeader level={currentLevel} />
+      <DungeonHeader level={level} />
       <Battle />
     </DungeonLayout>
   );
