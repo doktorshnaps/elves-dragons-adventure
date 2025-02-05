@@ -32,7 +32,7 @@ export const DungeonLayout = ({ children, backgroundImage }: DungeonLayoutProps)
           className="bg-game-surface/80 hover:bg-game-surface/90 text-game-primary border-game-primary/20"
         >
           <ArrowLeft className="mr-2 h-4 w-4" />
-          В меню
+          Вернуться в меню
         </Button>
         <Button 
           variant="outline" 
