@@ -1,3 +1,4 @@
+
 import React from 'react';
 
 interface AdventureLayoutProps {
@@ -20,7 +21,7 @@ export const AdventureLayout = ({ children }: AdventureLayoutProps) => {
         scrollBehavior: 'smooth'
       }}
     >
-      <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" />
+      <div className="absolute inset-0 bg-black/40" />
       <div className="relative z-10">
         {children}
       </div>

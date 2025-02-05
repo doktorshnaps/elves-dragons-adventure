@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
@@ -7,6 +8,7 @@ import { MonsterCard } from "./MonsterCard";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft } from "lucide-react";
 import { AdventureLayout } from "./components/AdventureLayout";
+import { InventoryDisplay } from "@/components/game/InventoryDisplay";
 
 export const AdventuresTab = () => {
   const navigate = useNavigate();
@@ -128,6 +130,10 @@ export const AdventuresTab = () => {
               />
             )}
           </div>
+        </div>
+
+        <div className="mt-6">
+          <InventoryDisplay showOnlyPotions={false} />
         </div>
       </div>
     </AdventureLayout>

@@ -1,6 +1,5 @@
+
 import { useNavigate } from "react-router-dom";
-import { Button } from "@/components/ui/button";
-import { ArrowLeft } from "lucide-react";
 import { AdventuresTab } from "@/components/game/adventures/AdventuresTab";
 
 export const AdventuresPage = () => {
@@ -18,15 +17,6 @@ export const AdventuresPage = () => {
     >
       <div className="absolute inset-0 bg-black/30" />
       <div className="relative z-10">
-        <Button
-          variant="outline"
-          className="mb-4 bg-game-surface/80 border-game-accent text-game-accent hover:bg-game-surface"
-          onClick={() => navigate('/menu')}
-        >
-          <ArrowLeft className="w-4 h-4 mr-2" />
-          Вернуться в меню
-        </Button>
-        
         <AdventuresTab />
       </div>
     </div>
