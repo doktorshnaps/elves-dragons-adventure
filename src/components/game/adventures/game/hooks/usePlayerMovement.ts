@@ -8,6 +8,37 @@ export const usePlayerMovement = (updateCameraOffset: (pos: number) => void) => 
   const [isJumping, setIsJumping] = useState(false);
 
   useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'ArrowRight' || e.key === 'd') {
+        setIsMovingRight(true);
+      }
+      if (e.key === 'ArrowLeft' || e.key === 'a') {
+        setIsMovingLeft(true);
+      }
+      if ((e.key === 'ArrowUp' || e.key === 'w' || e.key === ' ') && !isJumping) {
+        setIsJumping(true);
+      }
+    };
+
+    const handleKeyUp = (e: KeyboardEvent) => {
+      if (e.key === 'ArrowRight' || e.key === 'd') {
+        setIsMovingRight(false);
+      }
+      if (e.key === 'ArrowLeft' || e.key === 'a') {
+        setIsMovingLeft(false);
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    window.addEventListener('keyup', handleKeyUp);
+
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+      window.removeEventListener('keyup', handleKeyUp);
+    };
+  }, [isJumping]);
+
+  useEffect(() => {
     let animationFrame: number;
     
     const updatePosition = () => {
@@ -42,7 +73,7 @@ export const usePlayerMovement = (updateCameraOffset: (pos: number) => void) => 
   useEffect(() => {
     if (isJumping) {
       const gravity = 0.5;
-      let velocity = 15; // Увеличили на 0.2 от предыдущего значения (12.5 * 1.2)
+      let velocity = 15;
       let jumpAnimationFrame: number;
       
       const jumpAnimation = () => {

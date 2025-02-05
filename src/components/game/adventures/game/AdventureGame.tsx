@@ -84,21 +84,23 @@ export const AdventureGame = ({
         const monsterLevel = Math.floor(Math.abs(playerPosition) / 1000) + 1;
         const newMonster = generateMonster(spawnDistance);
         
-        newMonster.power = Math.floor(newMonster.power * (1 + monsterLevel * 0.2));
-        newMonster.health = Math.floor(newMonster.health * (1 + monsterLevel * 0.2));
-        newMonster.maxHealth = newMonster.health;
-        
-        setMonsters(prev => [...prev, newMonster]);
-        lastMonsterSpawn.current = currentTime;
+        if (newMonster) {
+          newMonster.power = Math.floor(newMonster.power * (1 + monsterLevel * 0.2));
+          newMonster.health = Math.floor(newMonster.health * (1 + monsterLevel * 0.2));
+          newMonster.maxHealth = newMonster.health;
+          
+          setMonsters(prev => [...prev, newMonster]);
+          lastMonsterSpawn.current = currentTime;
+        }
       }
     }
   }, [playerPosition, isMovingRight, isMovingLeft, generateMonster]);
 
   useEffect(() => {
     setMonsters(prev => prev.filter(monster => 
-      Math.abs(monster.position! - playerPosition) < 800
+      Math.abs(monster.position - playerPosition) < 800
     ));
-  }, [playerPosition]);
+  }, [playerPosition, setMonsters]);
 
   const handleAttack = () => {
     if (isAttacking || !currentMonster) return;
@@ -106,7 +108,7 @@ export const AdventureGame = ({
     setIsAttacking(true);
     setTimeout(() => {
       setIsAttacking(false);
-      if (currentMonster && Math.abs(playerPosition - 400) < 100) {
+      if (currentMonster && Math.abs(playerPosition - currentMonster.position) < 100) {
         const damage = Math.max(1, playerPower + Math.floor(Math.random() * 3));
         const updatedMonster = {
           ...currentMonster,
@@ -128,7 +130,7 @@ export const AdventureGame = ({
         requiredExperience={requiredExperience}
       />
       
-      <Card className="w-full h-[500px] relative overflow-hidden bg-game-background mt-12">
+      <Card className="w-full h-[500px] relative overflow-hidden bg-game-background mt-4">
         <div 
           ref={gameContainerRef}
           className="w-full h-full relative overflow-hidden"
