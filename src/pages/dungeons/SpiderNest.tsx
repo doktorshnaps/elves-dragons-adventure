@@ -11,27 +11,33 @@ export const SpiderNest = () => {
   const level = parseInt(searchParams.get('level') || '1');
 
   useEffect(() => {
-    // Проверяем, есть ли сохраненное состояние
     const savedState = localStorage.getItem('battleState');
-    if (savedState) {
-      const state = JSON.parse(savedState);
-      // Если это не сохраненное состояние или другое подземелье, генерируем новое
-      if (!state.isSaved || state.selectedDungeon !== 'spider_nest') {
-        const opponents = generateDungeonOpponents('spider_nest' as DungeonType, level);
-        localStorage.setItem('battleState', JSON.stringify({
-          opponents,
-          currentDungeonLevel: level,
-          selectedDungeon: 'spider_nest'
-        }));
-      }
-    } else {
-      // Если нет сохраненного состояния, генерируем новое
+    
+    if (!savedState) {
+      // Если нет сохраненного состояния, создаем новое
       const opponents = generateDungeonOpponents('spider_nest' as DungeonType, level);
-      localStorage.setItem('battleState', JSON.stringify({
+      const newState = {
         opponents,
         currentDungeonLevel: level,
-        selectedDungeon: 'spider_nest'
-      }));
+        selectedDungeon: 'spider_nest',
+        isSaved: true
+      };
+      localStorage.setItem('battleState', JSON.stringify(newState));
+    } else {
+      const state = JSON.parse(savedState);
+      // Проверяем, относится ли сохранение к текущему подземелью
+      if (state.selectedDungeon !== 'spider_nest') {
+        // Если это другое подземелье, создаем новое состояние
+        const opponents = generateDungeonOpponents('spider_nest' as DungeonType, level);
+        const newState = {
+          opponents,
+          currentDungeonLevel: level,
+          selectedDungeon: 'spider_nest',
+          isSaved: true
+        };
+        localStorage.setItem('battleState', JSON.stringify(newState));
+      }
+      // Если это то же подземелье, оставляем существующее состояние
     }
   }, [level]);
 

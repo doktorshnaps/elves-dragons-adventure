@@ -15,7 +15,6 @@ export const Battle = () => {
     opponents,
     isPlayerTurn,
     attackEnemy,
-    handleOpponentAttack,
     handleNextLevel
   } = useBattleState(level);
 
