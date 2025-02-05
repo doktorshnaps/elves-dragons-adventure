@@ -83,7 +83,7 @@ export const InventoryGrid = ({
                     )}
                     {item.type !== 'dragon_egg' && (
                       <Button
-                        onClick={() => onSellItem(item.items[0])}
+                        onClick={() => onSellItem(item)}
                         variant="destructive"
                         size="sm"
                         className="w-full text-[6px] h-4"
@@ -129,3 +129,4 @@ export const InventoryGrid = ({
     </>
   );
 };
+
