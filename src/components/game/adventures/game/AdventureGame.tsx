@@ -10,9 +10,6 @@ import { PlayerStatsHeader } from './PlayerStatsHeader';
 import { MagicProjectile } from './MagicProjectile';
 import { GameOver } from './GameOver';
 import { v4 as uuidv4 } from 'uuid';
-import { DungeonMap } from '@/components/dungeon/DungeonMap';
-import { useDungeonGeneration } from '@/hooks/useDungeonGeneration';
-import { useToast } from '@/hooks/use-toast';
 
 interface AdventureGameProps {
   onMonsterDefeat: (monster: Monster) => void;
@@ -35,7 +32,6 @@ export const AdventureGame = ({
   requiredExperience,
   maxHealth
 }: AdventureGameProps) => {
-  const { toast } = useToast();
   const {
     currentHealth,
     setCurrentHealth,
@@ -47,8 +43,6 @@ export const AdventureGame = ({
     setCameraOffset,
     generateMonster
   } = useAdventureState(playerHealth);
-
-  const { dungeon, currentRoom, moveToRoom } = useDungeonGeneration('dragon_lair', playerLevel);
 
   const [magicProjectiles, setMagicProjectiles] = React.useState<Array<{
     id: string;
@@ -77,27 +71,6 @@ export const AdventureGame = ({
     setIsMovingRight,
     setIsMovingLeft
   } = usePlayerMovement(updateCameraOffset);
-
-  const handleRoomChange = (roomId: string) => {
-    const room = dungeon.rooms.find(r => r.id === roomId);
-    if (!room) return;
-
-    moveToRoom(roomId);
-    
-    if (room.type === 'boss') {
-      toast({
-        title: "Босс обнаружен!",
-        description: "Приготовьтесь к сложному бою",
-      });
-    }
-
-    if (room.treasure) {
-      toast({
-        title: "Сокровище!",
-        description: "В этой комнате есть ценные предметы",
-      });
-    }
-  };
 
   const handleProjectileHit = (damage: number) => {
     setCurrentHealth(prev => Math.max(0, prev - damage));
@@ -219,12 +192,6 @@ export const AdventureGame = ({
             />
           ))}
         </div>
-
-        <DungeonMap
-          dungeon={dungeon}
-          currentRoom={currentRoom}
-          onRoomSelect={handleRoomChange}
-        />
 
         <GameControls
           onMoveLeft={setIsMovingLeft}
