@@ -2,11 +2,8 @@
 import React from "react";
 import { Card } from "@/components/ui/card";
 import { TeamStats as TeamStatsType } from "@/types/cards";
-import { PlayerStats } from "@/types/battle";
 import { TeamStatsSection } from "./stats/TeamStatsSection";
-import { PlayerStatsSection } from "./stats/PlayerStatsSection";
 import { calculateTeamStats } from "@/utils/cardUtils";
-import { Button } from "@/components/ui/button";
 import { TeamStatsModal } from "./TeamStatsModal";
 import { useTeamCards } from "@/hooks/team/useTeamCards";
 
@@ -14,24 +11,7 @@ export const TeamStats = () => {
   const [showStats, setShowStats] = React.useState(false);
   const { cards } = useTeamCards();
   const teamStats = calculateTeamStats(cards);
-  const [playerStats, setPlayerStats] = React.useState<PlayerStats>(() => {
-    const savedState = localStorage.getItem('battleState');
-    if (savedState) {
-      const state = JSON.parse(savedState);
-      return state.playerStats;
-    }
-    
-    return {
-      health: teamStats.health,
-      maxHealth: teamStats.health,
-      power: teamStats.power,
-      defense: teamStats.defense,
-      experience: 0,
-      level: 1,
-      requiredExperience: 100
-    };
-  });
-
+  
   const [balance, setBalance] = React.useState(() => {
     return Number(localStorage.getItem('gameBalance') || '0');
   });
@@ -55,14 +35,6 @@ export const TeamStats = () => {
 
         const activeCards = [...heroes, ...activePets];
         const activeStats = calculateTeamStats(activeCards);
-
-        setPlayerStats(prev => ({
-          ...prev,
-          health: activeStats.health,
-          maxHealth: activeStats.health,
-          power: activeStats.power,
-          defense: activeStats.defense
-        }));
       }
     };
 
@@ -99,7 +71,6 @@ export const TeamStats = () => {
           
           <div className="space-y-6">
             <TeamStatsSection teamStats={teamStats} />
-            <PlayerStatsSection playerStats={playerStats} />
           </div>
         </div>
       </Card>
@@ -113,3 +84,4 @@ export const TeamStats = () => {
     </>
   );
 };
+
