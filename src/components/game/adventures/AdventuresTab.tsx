@@ -3,13 +3,14 @@ import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import { useBalanceState } from "@/hooks/useBalanceState";
 import { PlayerStatsCard } from "./PlayerStatsCard";
-import { MonsterCard } from "./MonsterCard";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft } from "lucide-react";
 import { AdventureLayout } from "./components/AdventureLayout";
 import { InventoryDisplay } from "@/components/game/InventoryDisplay";
 import { useMonsterGeneration } from "./useMonsterGeneration";
 import { Item } from "@/types/inventory";
+import { AdventureGame } from "./game/AdventureGame";
+import { Monster } from "./types";
 
 export const AdventuresTab = () => {
   const navigate = useNavigate();
@@ -141,24 +142,24 @@ export const AdventuresTab = () => {
     }
   };
 
-  const attackMonster = () => {
-    if (!currentMonster || playerStats.health <= 0) return;
+  const handleMonsterDefeat = (monster: Monster) => {
+    if (!monster || playerStats.health <= 0) return;
 
     const damage = Math.max(0, playerStats.power - Math.floor(Math.random() * 3));
-    const newMonsterHealth = currentMonster.health - damage;
+    const newMonsterHealth = monster.health - damage;
 
     if (newMonsterHealth <= 0) {
-      updateBalance(balance + currentMonster.reward);
-      handleExperienceGain(currentMonster.experienceReward);
+      updateBalance(balance + monster.reward);
+      handleExperienceGain(monster.experienceReward);
       toast({
         title: "Победа!",
-        description: `Вы получили ${currentMonster.reward} монет и ${currentMonster.experienceReward} опыта!`
+        description: `Вы получили ${monster.reward} монет и ${monster.experienceReward} опыта!`
       });
       setCurrentMonster(null);
       return;
     }
 
-    const monsterDamage = Math.max(0, currentMonster.power - Math.floor(playerStats.defense / 2));
+    const monsterDamage = Math.max(0, monster.power - Math.floor(playerStats.defense / 2));
     const newPlayerHealth = playerStats.health - monsterDamage;
 
     if (newPlayerHealth <= 0) {
@@ -177,7 +178,7 @@ export const AdventuresTab = () => {
       return;
     }
 
-    setCurrentMonster({ ...currentMonster, health: newMonsterHealth });
+    setCurrentMonster({ ...monster, health: newMonsterHealth });
     setPlayerStats({ ...playerStats, health: newPlayerHealth });
   };
 
@@ -269,10 +270,11 @@ export const AdventuresTab = () => {
                 {playerStats.health <= 0 ? "Герой мертв" : "Начать приключение"}
               </Button>
             ) : (
-              <MonsterCard
-                monster={currentMonster}
-                onAttack={attackMonster}
+              <AdventureGame
+                onMonsterDefeat={handleMonsterDefeat}
                 playerHealth={playerStats.health}
+                playerPower={playerStats.power}
+                currentMonster={currentMonster}
               />
             )}
           </div>
