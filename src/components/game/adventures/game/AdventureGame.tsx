@@ -4,6 +4,7 @@ import { Monster } from '../types';
 import { PlayerCharacter } from './PlayerCharacter';
 import { MonsterSprite } from './MonsterSprite';
 import { ProjectileSprite } from './ProjectileSprite';
+import { PlayerStatsHeader } from './PlayerStatsHeader';
 import { usePlayerMovement } from './hooks/usePlayerMovement';
 import { useProjectiles } from './hooks/useProjectiles';
 import { useMonsterGeneration } from '../useMonsterGeneration';
@@ -58,14 +59,11 @@ export const AdventureGame = ({
     handleProjectileHit
   );
 
-  // Генерация монстров при движении
   useEffect(() => {
     const currentTime = Date.now();
     if (currentTime - lastMonsterSpawn.current > 2000) {
       const spawnDistance = isMovingRight ? playerPosition + 400 : playerPosition - 400;
       
-      // Генерируем монстров только впереди игрока при движении вправо
-      // или только позади при движении влево
       if ((isMovingRight && spawnDistance > playerPosition) || 
           (isMovingLeft && spawnDistance < playerPosition)) {
         const monsterLevel = Math.floor(Math.abs(playerPosition) / 1000) + 1;
@@ -82,26 +80,12 @@ export const AdventureGame = ({
   }, [playerPosition, isMovingRight, isMovingLeft]);
 
   useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'ArrowRight') setIsMovingRight(true);
-      if (e.key === 'ArrowLeft') setIsMovingLeft(true);
-      if (e.key === ' ') handleAttack();
-      if (e.key === 'ArrowUp') handleJump();
-    };
+    setMonsters(prev => prev.filter(monster => 
+      Math.abs(monster.position! - playerPosition) < 800
+    ));
+  }, [playerPosition]);
 
-    const handleKeyUp = (e: KeyboardEvent) => {
-      if (e.key === 'ArrowRight') setIsMovingRight(false);
-      if (e.key === 'ArrowLeft') setIsMovingLeft(false);
-    };
-
-    window.addEventListener('keydown', handleKeyDown);
-    window.addEventListener('keyup', handleKeyUp);
-
-    return () => {
-      window.removeEventListener('keydown', handleKeyDown);
-      window.removeEventListener('keyup', handleKeyUp);
-    };
-  }, []);
+  const [cameraOffset, setCameraOffset] = useState(0);
 
   const handleAttack = () => {
     if (isAttacking || !currentMonster) return;
@@ -120,59 +104,61 @@ export const AdventureGame = ({
     }, 500);
   };
 
-  // Очистка монстров, которые далеко от игрока
-  useEffect(() => {
-    setMonsters(prev => prev.filter(monster => 
-      Math.abs(monster.position! - playerPosition) < 800
-    ));
-  }, [playerPosition]);
-
-  const [cameraOffset, setCameraOffset] = useState(0);
-
   return (
-    <Card className="w-full h-[300px] relative overflow-hidden bg-game-background">
-      <div 
-        ref={gameContainerRef}
-        className="w-full h-full relative overflow-hidden"
-      >
+    <>
+      <PlayerStatsHeader
+        health={currentHealth}
+        maxHealth={100}
+        power={playerPower}
+        level={1}
+        experience={0}
+        requiredExperience={100}
+      />
+      
+      <Card className="w-full h-[500px] relative overflow-hidden bg-game-background mt-12">
         <div 
-          ref={gameRef}
-          className="absolute h-full"
-          style={{
-            width: '100000px', // Очень большая ширина для "бесконечной" карты
-            backgroundImage: 'url("/lovable-uploads/0fb6e9e6-c143-470a-87c8-adf54800851d.png")',
-            backgroundSize: 'cover',
-            backgroundPosition: 'center',
-            backgroundRepeat: 'repeat-x',
-            transform: `translateX(-${cameraOffset}px)`,
-            transition: 'transform 0.1s ease-out'
-          }}
+          ref={gameContainerRef}
+          className="w-full h-full relative overflow-hidden"
         >
-          <div className="absolute bottom-0 w-full h-[50px] bg-game-surface/50" />
+          <div 
+            ref={gameRef}
+            className="absolute h-full"
+            style={{
+              width: '100000px',
+              backgroundImage: 'url("/lovable-uploads/0fb6e9e6-c143-470a-87c8-adf54800851d.png")',
+              backgroundSize: 'cover',
+              backgroundPosition: 'center',
+              backgroundRepeat: 'repeat-x',
+              transform: `translateX(-${cameraOffset}px)`,
+              transition: 'transform 0.1s ease-out'
+            }}
+          >
+            <div className="absolute bottom-0 w-full h-[50px] bg-game-surface/50" />
 
-          <PlayerCharacter
-            position={playerPosition}
-            yPosition={playerY}
-            isAttacking={isAttacking}
-            health={currentHealth}
-            power={playerPower}
-          />
-
-          {monsters.map(monster => (
-            <MonsterSprite
-              key={monster.id}
-              monster={monster}
-              position={monster.position || 400}
+            <PlayerCharacter
+              position={playerPosition}
+              yPosition={playerY}
+              isAttacking={isAttacking}
+              health={currentHealth}
+              power={playerPower}
             />
-          ))}
 
-          {projectiles.map(projectile => (
-            <ProjectileSprite
-              key={projectile.id}
-              x={projectile.x}
-              y={projectile.y}
-            />
-          ))}
+            {monsters.map(monster => (
+              <MonsterSprite
+                key={monster.id}
+                monster={monster}
+                position={monster.position || 400}
+              />
+            ))}
+
+            {projectiles.map(projectile => (
+              <ProjectileSprite
+                key={projectile.id}
+                x={projectile.x}
+                y={projectile.y}
+              />
+            ))}
+          </div>
         </div>
 
         <div className="fixed bottom-20 left-4 flex gap-4 md:hidden z-50">
@@ -207,6 +193,6 @@ export const AdventureGame = ({
           ⚔️
         </button>
       </div>
-    </Card>
+    </>
   );
 };
