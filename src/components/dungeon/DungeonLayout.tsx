@@ -13,7 +13,7 @@ export const DungeonLayout = ({ children, backgroundImage }: DungeonLayoutProps)
 
   return (
     <div 
-      className="min-h-screen p-6 relative"
+      className="min-h-screen relative"
       style={{
         backgroundImage: `url(${backgroundImage})`,
         backgroundSize: 'cover',
@@ -25,7 +25,8 @@ export const DungeonLayout = ({ children, backgroundImage }: DungeonLayoutProps)
       }}
     >
       <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
-      <div className="fixed top-4 left-4 z-50 flex gap-2">
+      
+      <div className="fixed top-4 left-4 z-50 flex flex-col sm:flex-row gap-2">
         <Button 
           variant="outline" 
           onClick={() => navigate('/menu')}
@@ -43,7 +44,8 @@ export const DungeonLayout = ({ children, backgroundImage }: DungeonLayoutProps)
           Покинуть подземелье
         </Button>
       </div>
-      <div className="relative z-10">
+
+      <div className="relative z-10 pt-20">
         {children}
       </div>
     </div>
