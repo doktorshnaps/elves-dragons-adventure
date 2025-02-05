@@ -29,9 +29,9 @@ export const AdventuresTab = () => {
 
   const calculateBaseStats = (level: number) => {
     return {
-      power: 1 + (level - 1),  // Начиная с 1, +1 за каждый уровень
-      defense: 1 + (level - 1), // Начиная с 1, +1 за каждый уровень
-      health: 50 + (level - 1) * 10 // Начиная с 50, +10 за каждый уровень
+      power: 1 + (level - 1),
+      defense: 1 + (level - 1),
+      health: 50 + (level - 1) * 10
     };
   };
 
@@ -51,7 +51,6 @@ export const AdventuresTab = () => {
       };
     }
 
-    // Initial stats for level 1
     const baseStats = calculateBaseStats(1);
     const equipmentBonuses = calculateEquipmentBonuses();
     
@@ -71,7 +70,6 @@ export const AdventuresTab = () => {
     return savedMonster ? JSON.parse(savedMonster) : null;
   });
 
-  // Save state to localStorage whenever it changes
   useEffect(() => {
     localStorage.setItem('adventurePlayerStats', JSON.stringify(playerStats));
   }, [playerStats]);
@@ -80,7 +78,6 @@ export const AdventuresTab = () => {
     localStorage.setItem('adventureCurrentMonster', JSON.stringify(currentMonster));
   }, [currentMonster]);
 
-  // Update stats when equipment changes
   useEffect(() => {
     const handleInventoryUpdate = () => {
       const baseStats = calculateBaseStats(playerStats.level);
@@ -189,6 +186,66 @@ export const AdventuresTab = () => {
     setPlayerStats({ ...playerStats, health: newPlayerHealth });
   };
 
+  const handleUseItem = (item: any) => {
+    if (item.type === "healthPotion") {
+      const newHealth = Math.min(playerStats.maxHealth, playerStats.health + item.value);
+      setPlayerStats(prev => ({
+        ...prev,
+        health: newHealth
+      }));
+      
+      toast({
+        title: "Зелье использовано",
+        description: `Восстановлено ${item.value} здоровья`
+      });
+
+      // Get current inventory
+      const inventory = localStorage.getItem('gameInventory');
+      if (!inventory) return;
+
+      // Parse and update inventory
+      const items = JSON.parse(inventory);
+      const updatedItems = items.filter((i: any) => i.id !== item.items[0].id);
+      
+      // Save updated inventory
+      localStorage.setItem('gameInventory', JSON.stringify(updatedItems));
+      
+      // Dispatch inventory update event
+      const event = new CustomEvent('inventoryUpdate', {
+        detail: { inventory: updatedItems }
+      });
+      window.dispatchEvent(event);
+    }
+  };
+
+  const handleSellItem = (item: any) => {
+    // Get current inventory
+    const inventory = localStorage.getItem('gameInventory');
+    if (!inventory) return;
+
+    // Parse and update inventory
+    const items = JSON.parse(inventory);
+    const updatedItems = items.filter((i: any) => i.id !== item.id);
+    
+    // Update balance (assuming each item sells for 10 coins)
+    updateBalance(balance + 10);
+    
+    // Save updated inventory
+    localStorage.setItem('gameInventory', JSON.stringify(updatedItems));
+    
+    // Show toast
+    toast({
+      title: "Предмет продан",
+      description: "Получено 10 монет"
+    });
+    
+    // Dispatch inventory update event
+    const event = new CustomEvent('inventoryUpdate', {
+      detail: { inventory: updatedItems }
+    });
+    window.dispatchEvent(event);
+  };
+
   return (
     <AdventureLayout>
       <div className="max-w-4xl mx-auto">
@@ -237,7 +294,11 @@ export const AdventuresTab = () => {
         </div>
 
         <div className="mt-6">
-          <InventoryDisplay showOnlyPotions={false} />
+          <InventoryDisplay 
+            showOnlyPotions={false} 
+            onUseItem={handleUseItem}
+            onSellItem={handleSellItem}
+          />
         </div>
       </div>
     </AdventureLayout>
