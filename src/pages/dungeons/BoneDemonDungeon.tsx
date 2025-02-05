@@ -11,13 +11,21 @@ export const BoneDemonDungeon = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    const opponents = generateDungeonOpponents('bone_dungeon' as DungeonType, 1);
-    localStorage.setItem('battleState', JSON.stringify({
-      opponents,
-      currentDungeonLevel: 1,
-      selectedDungeon: 'bone_dungeon'
-    }));
+    const battleState = localStorage.getItem('battleState');
+    if (!battleState) {
+      const opponents = generateDungeonOpponents('bone_dungeon' as DungeonType, 1);
+      localStorage.setItem('battleState', JSON.stringify({
+        opponents,
+        currentDungeonLevel: 1,
+        selectedDungeon: 'bone_dungeon'
+      }));
+    }
   }, []);
+
+  const handleExitDungeon = () => {
+    localStorage.removeItem('battleState');
+    navigate('/dungeons');
+  };
 
   return (
     <DungeonLayout backgroundImage="/lovable-uploads/eca4bec7-0f8c-4739-9ddf-9b385800db15.png">
@@ -32,7 +40,7 @@ export const BoneDemonDungeon = () => {
         </Button>
         <Button 
           variant="outline" 
-          onClick={() => navigate('/dungeons')}
+          onClick={handleExitDungeon}
           className="bg-game-surface/80"
         >
           <DoorOpen className="mr-2 h-4 w-4" />
