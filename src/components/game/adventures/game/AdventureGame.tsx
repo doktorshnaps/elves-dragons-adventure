@@ -1,25 +1,33 @@
 import React, { useEffect, useRef } from 'react';
 import { Card } from "@/components/ui/card";
 import { Monster } from '../types';
-import { PlayerStatsHeader } from './PlayerStatsHeader';
 import { usePlayerMovement } from './hooks/usePlayerMovement';
 import { useProjectiles } from './hooks/useProjectiles';
 import { useAdventureState } from '../hooks/useAdventureState';
 import { GameControls } from '../components/GameControls';
 import { GameWorld } from '../components/GameWorld';
+import { PlayerStatsHeader } from './PlayerStatsHeader';
 
 interface AdventureGameProps {
   onMonsterDefeat: (monster: Monster) => void;
   playerHealth: number;
   playerPower: number;
   currentMonster: Monster | null;
+  playerLevel: number;
+  playerExperience: number;
+  requiredExperience: number;
+  maxHealth: number;
 }
 
 export const AdventureGame = ({ 
   onMonsterDefeat, 
   playerHealth,
   playerPower,
-  currentMonster 
+  currentMonster,
+  playerLevel,
+  playerExperience,
+  requiredExperience,
+  maxHealth
 }: AdventureGameProps) => {
   const {
     currentHealth,
@@ -113,11 +121,11 @@ export const AdventureGame = ({
     <>
       <PlayerStatsHeader
         health={currentHealth}
-        maxHealth={100}
+        maxHealth={maxHealth}
         power={playerPower}
-        level={1}
-        experience={0}
-        requiredExperience={100}
+        level={playerLevel}
+        experience={playerExperience}
+        requiredExperience={requiredExperience}
       />
       
       <Card className="w-full h-[500px] relative overflow-hidden bg-game-background mt-12">

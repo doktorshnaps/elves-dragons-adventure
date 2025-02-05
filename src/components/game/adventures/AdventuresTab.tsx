@@ -2,14 +2,13 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import { useBalanceState } from "@/hooks/useBalanceState";
-import { Button } from "@/components/ui/button";
-import { ArrowLeft } from "lucide-react";
 import { AdventureLayout } from "./components/AdventureLayout";
 import { InventoryDisplay } from "@/components/game/InventoryDisplay";
 import { useMonsterGeneration } from "./useMonsterGeneration";
 import { Item } from "@/types/inventory";
-import { AdventureGame } from "./game/AdventureGame";
 import { Monster } from "./types";
+import { GameHeader } from "./components/GameHeader";
+import { GameContent } from "./components/GameContent";
 
 export const AdventuresTab = () => {
   const navigate = useNavigate();
@@ -234,38 +233,17 @@ export const AdventuresTab = () => {
   return (
     <AdventureLayout>
       <div className="max-w-4xl mx-auto">
-        <div className="flex justify-between items-center mb-6">
-          <Button 
-            variant="outline" 
-            className="bg-game-surface/80 border-game-accent text-game-accent hover:bg-game-surface"
-            onClick={() => navigate('/menu')}
-          >
-            <ArrowLeft className="w-4 h-4 mr-2" />
-            Вернуться в меню
-          </Button>
-          <span className="text-xl font-bold text-yellow-400">{balance} монет</span>
-        </div>
+        <GameHeader 
+          balance={balance} 
+          onBack={() => navigate('/menu')} 
+        />
 
-        <div className="grid grid-cols-1 gap-6">
-          <div className="space-y-4">
-            {!currentMonster ? (
-              <Button 
-                className="w-full bg-game-accent hover:bg-game-accent/90"
-                onClick={startAdventure}
-                disabled={playerStats.health <= 0}
-              >
-                {playerStats.health <= 0 ? "Герой мертв" : "Начать приключение"}
-              </Button>
-            ) : (
-              <AdventureGame
-                onMonsterDefeat={handleMonsterDefeat}
-                playerHealth={playerStats.health}
-                playerPower={playerStats.power}
-                currentMonster={currentMonster}
-              />
-            )}
-          </div>
-        </div>
+        <GameContent
+          currentMonster={currentMonster}
+          onMonsterDefeat={handleMonsterDefeat}
+          playerStats={playerStats}
+          onStartAdventure={startAdventure}
+        />
 
         <div className="mt-6">
           <InventoryDisplay 
