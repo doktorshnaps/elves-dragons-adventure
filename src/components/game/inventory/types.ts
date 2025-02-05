@@ -7,4 +7,5 @@ export interface GroupedItem {
   count: number;
   items: Item[];
   image?: string;
+  petName?: string;
 }

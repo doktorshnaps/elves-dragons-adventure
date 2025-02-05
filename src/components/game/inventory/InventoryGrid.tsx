@@ -33,7 +33,23 @@ export const InventoryGrid = ({
           className="w-[80px] h-[160px] p-2 bg-game-surface/80 border-game-accent backdrop-blur-sm flex flex-col mx-1 my-1"
         >
           <div className="flex flex-col h-full">
-            {item.image && (
+            {item.type === 'dragon_egg' ? (
+              <div className="relative w-full h-[60px] mb-1 rounded-lg overflow-hidden bg-gray-800">
+                {item.items[0].image ? (
+                  <img 
+                    src={item.items[0].image}
+                    alt={item.name}
+                    className="w-full h-full object-contain opacity-50"
+                  />
+                ) : (
+                  <img 
+                    src="/lovable-uploads/8a069dd4-47ad-496c-a248-f796257f9233.png"
+                    alt="Dragon Egg"
+                    className="w-full h-full object-contain opacity-50"
+                  />
+                )}
+              </div>
+            ) : item.image && (
               <div className="relative w-full h-[60px] mb-1 rounded-lg overflow-hidden">
                 <img 
                   src={item.image} 
