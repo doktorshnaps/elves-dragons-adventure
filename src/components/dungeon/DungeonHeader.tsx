@@ -33,7 +33,7 @@ export const DungeonHeader = ({ level }: DungeonHeaderProps) => {
           <SheetContent side="right" className="w-full sm:w-[540px] bg-game-surface border-game-accent">
             <div className="h-full overflow-y-auto py-8">
               <DragonEggProvider>
-                <InventoryDisplay />
+                <InventoryDisplay showOnlyPotions={true} />
               </DragonEggProvider>
             </div>
           </SheetContent>

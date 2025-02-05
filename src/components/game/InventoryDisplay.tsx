@@ -10,11 +10,13 @@ import { useToast } from "@/hooks/use-toast";
 interface InventoryDisplayProps {
   onUseItem?: (item: Item) => void;
   readonly?: boolean;
+  showOnlyPotions?: boolean;
 }
 
 export const InventoryDisplay = ({ 
   onUseItem, 
-  readonly = false 
+  readonly = false,
+  showOnlyPotions = false
 }: InventoryDisplayProps) => {
   const { eggs } = useDragonEggs();
   const { inventory } = useInventoryState();
@@ -39,6 +41,10 @@ export const InventoryDisplay = ({
     }
   };
 
+  const filteredInventory = showOnlyPotions 
+    ? inventory.filter(item => item.type === 'healthPotion')
+    : inventory;
+
   return (
     <div 
       className="mt-4 relative rounded-lg overflow-hidden"
@@ -52,9 +58,9 @@ export const InventoryDisplay = ({
       <div className="p-4">
         <InventoryHeader balance={balance} />
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-y-1 gap-x-0.5">
-          <DragonEggsList eggs={eggs} />
+          {!showOnlyPotions && <DragonEggsList eggs={eggs} />}
           <InventoryGrid
-            groupedItems={groupItems(inventory)}
+            groupedItems={groupItems(filteredInventory)}
             readonly={readonly}
             onUseItem={(groupedItem) => {
               if (groupedItem.items.length > 0) {
