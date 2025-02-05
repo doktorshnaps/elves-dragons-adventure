@@ -8,6 +8,7 @@ import { GameControls } from '../components/GameControls';
 import { GameWorld } from '../components/GameWorld';
 import { PlayerStatsHeader } from './PlayerStatsHeader';
 import { MagicProjectile } from './MagicProjectile';
+import { GameOver } from './GameOver';
 import { v4 as uuidv4 } from 'uuid';
 
 interface AdventureGameProps {
@@ -165,6 +166,7 @@ export const AdventureGame = ({
       />
       
       <Card className="w-full h-[500px] relative overflow-hidden bg-game-background mt-4">
+        {currentHealth <= 0 && <GameOver />}
         <div 
           ref={gameContainerRef}
           className="w-full h-full relative overflow-hidden"
