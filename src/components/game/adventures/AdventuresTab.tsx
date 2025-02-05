@@ -83,14 +83,14 @@ export const AdventuresTab = () => {
   };
 
   const attackMonster = () => {
-    if (!currentMonster) return;
+    if (!currentMonster || playerStats.health <= 0) return;
 
     const damage = Math.max(0, playerStats.power - Math.floor(Math.random() * 3));
     const newMonsterHealth = currentMonster.health - damage;
 
     if (newMonsterHealth <= 0) {
       updateBalance(balance + currentMonster.reward);
-      handleExperienceGain(20); // Award 20 experience points for killing a monster
+      handleExperienceGain(20);
       toast({
         title: "Победа!",
         description: `Вы получили ${currentMonster.reward} монет и 20 опыта!`
@@ -108,8 +108,14 @@ export const AdventuresTab = () => {
         description: "Вы проиграли бой...",
         variant: "destructive"
       });
-      setPlayerStats({ ...playerStats, health: playerStats.maxHealth });
+      setPlayerStats({ ...playerStats, health: 0 });
       setCurrentMonster(null);
+      
+      // Задержка перед переходом в меню
+      setTimeout(() => {
+        navigate('/menu');
+      }, 2000);
+      
       return;
     }
 
@@ -150,8 +156,9 @@ export const AdventuresTab = () => {
               <Button 
                 className="w-full bg-game-accent hover:bg-game-accent/90"
                 onClick={startAdventure}
+                disabled={playerStats.health <= 0}
               >
-                Начать приключение
+                {playerStats.health <= 0 ? "Герой мертв" : "Начать приключение"}
               </Button>
             ) : (
               <MonsterCard
@@ -170,3 +177,4 @@ export const AdventuresTab = () => {
     </AdventureLayout>
   );
 };
+
