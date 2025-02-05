@@ -13,6 +13,23 @@ export const DungeonLayout = ({ children, backgroundImage }: DungeonLayoutProps)
   const navigate = useNavigate();
   const { toast } = useToast();
 
+  const handleReturnToMenu = () => {
+    // Сохраняем текущее состояние битвы перед возвратом в меню
+    const battleState = localStorage.getItem('battleState');
+    if (battleState) {
+      const state = JSON.parse(battleState);
+      // Добавляем флаг, что это сохраненное состояние
+      state.isSaved = true;
+      localStorage.setItem('battleState', JSON.stringify(state));
+      
+      toast({
+        title: "Прогресс сохранен",
+        description: "Вы можете вернуться к битве через меню подземелий",
+      });
+    }
+    navigate('/menu');
+  };
+
   const handleLeaveDungeon = () => {
     localStorage.removeItem('battleState');
     navigate('/dungeons');
@@ -41,7 +58,7 @@ export const DungeonLayout = ({ children, backgroundImage }: DungeonLayoutProps)
       <div className="fixed top-4 left-4 z-50">
         <Button 
           variant="outline" 
-          onClick={() => navigate('/menu')}
+          onClick={handleReturnToMenu}
           className="bg-game-surface/80 hover:bg-game-surface/90 text-game-primary border-game-primary/20"
         >
           <ArrowLeft className="mr-2 h-4 w-4" />
