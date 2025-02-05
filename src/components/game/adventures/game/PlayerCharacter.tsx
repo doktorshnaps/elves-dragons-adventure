@@ -3,6 +3,7 @@ import { motion } from 'framer-motion';
 
 interface PlayerCharacterProps {
   position: number;
+  yPosition: number;
   isAttacking: boolean;
   health: number;
   power: number;
@@ -10,14 +11,18 @@ interface PlayerCharacterProps {
 
 export const PlayerCharacter = ({ 
   position, 
+  yPosition,
   isAttacking,
   health,
   power 
 }: PlayerCharacterProps) => {
   return (
     <motion.div
-      className="absolute bottom-[50px]"
-      style={{ left: position }}
+      className="absolute"
+      style={{ 
+        left: position,
+        bottom: 50 + yPosition // 50px - это высота земли
+      }}
       animate={{
         scale: isAttacking ? 1.2 : 1,
         transition: { duration: 0.2 }
@@ -35,7 +40,13 @@ export const PlayerCharacter = ({
         </div>
 
         {/* Character sprite */}
-        <div className="w-12 h-16 bg-game-primary rounded-lg flex items-center justify-center text-white font-bold">
+        <div 
+          className="w-12 h-16 bg-game-primary rounded-lg flex items-center justify-center text-white font-bold"
+          style={{
+            transform: `translateY(${yPosition > 0 ? -2 : 0}px)`,
+            transition: 'transform 0.1s ease-out'
+          }}
+        >
           {isAttacking ? '⚔️' : '🧙‍♂️'}
         </div>
       </div>
