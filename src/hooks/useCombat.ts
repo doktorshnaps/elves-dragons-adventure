@@ -13,6 +13,46 @@ export const useCombat = (
   const [isPlayerTurn, setIsPlayerTurn] = useState(true);
   const { toast } = useToast();
 
+  const handleOpponentAttack = (opponent: Opponent) => {
+    if (!playerStats) return;
+
+    const { blockedDamage, damageToHealth, newDefense } = calculatePlayerDamage(
+      opponent.power,
+      playerStats.defense
+    );
+
+    const newStats: PlayerStats = {
+      ...playerStats,
+      health: Math.max(0, playerStats.health - damageToHealth),
+      defense: newDefense
+    };
+    
+    setPlayerStats(newStats);
+    
+    let message = `${opponent.name} контратакует с силой ${opponent.power}!`;
+    if (blockedDamage > 0) {
+      message += ` Защита блокирует ${blockedDamage.toFixed(0)} урона.`;
+    }
+    if (damageToHealth > 0) {
+      message += ` Нанесено ${damageToHealth.toFixed(0)} урона здоровью!`;
+    }
+    message += ` Защита уменьшилась на ${(playerStats.defense - newDefense).toFixed(0)}.`;
+    
+    toast({
+      title: opponent.isBoss ? "⚠️ Контратака босса!" : "Враг контратакует!",
+      description: message,
+      variant: opponent.isBoss ? "destructive" : "default",
+      duration: 1000
+    });
+
+    const battleState = localStorage.getItem('battleState');
+    if (battleState) {
+      const state = JSON.parse(battleState);
+      state.playerStats = newStats;
+      localStorage.setItem('battleState', JSON.stringify(state));
+    }
+  };
+
   const attackEnemy = (enemyId: number) => {
     if (!isPlayerTurn || !playerStats) return;
 
@@ -56,48 +96,9 @@ export const useCombat = (
     }
   };
 
-  const handleOpponentAttack = (opponent: Opponent) => {
-    if (!playerStats) return;
-
-    const { blockedDamage, damageToHealth, newDefense } = calculatePlayerDamage(
-      opponent.power,
-      playerStats.defense
-    );
-
-    const newStats: PlayerStats = {
-      ...playerStats,
-      health: Math.max(0, playerStats.health - damageToHealth),
-      defense: newDefense
-    };
-    
-    setPlayerStats(newStats);
-    
-    let message = `${opponent.name} контратакует с силой ${opponent.power}!`;
-    if (blockedDamage > 0) {
-      message += ` Защита блокирует ${blockedDamage.toFixed(0)} урона.`;
-    }
-    if (damageToHealth > 0) {
-      message += ` Нанесено ${damageToHealth.toFixed(0)} урона здоровью!`;
-    }
-    message += ` Защита уменьшилась на ${(playerStats.defense - newDefense).toFixed(0)}.`;
-    
-    toast({
-      title: opponent.isBoss ? "⚠️ Контратака босса!" : "Враг контратакует!",
-      description: message,
-      variant: opponent.isBoss ? "destructive" : "default",
-      duration: 1000
-    });
-
-    const battleState = localStorage.getItem('battleState');
-    if (battleState) {
-      const state = JSON.parse(battleState);
-      state.playerStats = newStats;
-      localStorage.setItem('battleState', JSON.stringify(state));
-    }
-  };
-
   return {
     isPlayerTurn,
     attackEnemy,
+    handleOpponentAttack // Added this to the return object
   };
 };
