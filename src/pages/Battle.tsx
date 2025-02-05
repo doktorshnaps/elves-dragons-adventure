@@ -23,14 +23,6 @@ export const Battle = () => {
     return <div>Загрузка...</div>;
   }
 
-  // Handle opponent's attack by selecting a random opponent
-  const handleOpponentTurn = () => {
-    if (opponents.length > 0) {
-      const randomOpponent = opponents[Math.floor(Math.random() * opponents.length)];
-      handleOpponentAttack(randomOpponent);
-    }
-  };
-
   return (
     <div className="container mx-auto p-4">
       <div className="mb-8">
@@ -76,15 +68,6 @@ export const Battle = () => {
       </div>
 
       <div className="mt-8 flex justify-center space-x-4">
-        {!isPlayerTurn && opponents.length > 0 && (
-          <Button 
-            onClick={handleOpponentTurn}
-            className="bg-game-primary hover:bg-game-primary/80"
-          >
-            Ход противника
-          </Button>
-        )}
-
         {opponents.length === 0 && playerStats.health > 0 && (
           <Button
             onClick={handleNextLevel}
