@@ -2,14 +2,9 @@ import { Battle } from '../Battle';
 import { useEffect } from 'react';
 import { generateDungeonOpponents } from '@/dungeons/dungeonManager';
 import { DungeonType } from '@/constants/dungeons';
-import { Button } from '@/components/ui/button';
-import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, DoorOpen } from 'lucide-react';
 import { DungeonLayout } from '@/components/dungeon/DungeonLayout';
 
 export const IcyThrone = () => {
-  const navigate = useNavigate();
-
   useEffect(() => {
     const opponents = generateDungeonOpponents('ice_throne' as DungeonType, 1);
     localStorage.setItem('battleState', JSON.stringify({
@@ -21,24 +16,6 @@ export const IcyThrone = () => {
 
   return (
     <DungeonLayout backgroundImage="/lovable-uploads/7989b19f-08e4-4851-b2ac-38883ea5331f.png">
-      <div className="fixed top-4 left-4 z-50 flex gap-2">
-        <Button 
-          variant="outline" 
-          onClick={() => navigate('/menu')}
-          className="bg-game-surface/80"
-        >
-          <ArrowLeft className="mr-2 h-4 w-4" />
-          В меню
-        </Button>
-        <Button 
-          variant="outline" 
-          onClick={() => navigate('/dungeons')}
-          className="bg-game-surface/80"
-        >
-          <DoorOpen className="mr-2 h-4 w-4" />
-          Покинуть подземелье
-        </Button>
-      </div>
       <Battle />
     </DungeonLayout>
   );
