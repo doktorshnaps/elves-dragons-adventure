@@ -1,16 +1,14 @@
 import { useInventoryState } from "@/hooks/useInventoryState";
 import { Layers, Package } from "lucide-react";
 import { Button } from "../ui/button";
-import { useState } from "react";
-import { InventoryDisplay } from "../game/InventoryDisplay";
 import { Sheet, SheetContent, SheetTrigger } from "../ui/sheet";
+import { InventoryDisplay } from "../game/InventoryDisplay";
 
 interface DungeonHeaderProps {
   level: number;
 }
 
 export const DungeonHeader = ({ level }: DungeonHeaderProps) => {
-  const [showInventory, setShowInventory] = useState(false);
   const { inventory } = useInventoryState();
 
   return (
@@ -18,7 +16,7 @@ export const DungeonHeader = ({ level }: DungeonHeaderProps) => {
       <div className="max-w-4xl mx-auto flex justify-between items-center">
         <div className="flex items-center gap-2 bg-game-surface/80 px-4 py-2 rounded-lg backdrop-blur-sm border border-game-accent">
           <Layers className="w-5 h-5 text-game-accent" />
-          <span className="text-game-accent font-medium">Уровень: {level}</span>
+          <span className="text-game-accent font-medium">Уровень подземелья: {level}</span>
         </div>
 
         <Sheet>
