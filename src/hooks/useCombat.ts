@@ -41,7 +41,12 @@ export const useCombat = (
     }).filter(Boolean) as Opponent[];
 
     setOpponents(newOpponents);
-    setIsPlayerTurn(false);
+
+    // Автоматическая контратака врага
+    if (newOpponents.length > 0) {
+      const randomOpponent = newOpponents[Math.floor(Math.random() * newOpponents.length)];
+      handleOpponentAttack(randomOpponent);
+    }
 
     const battleState = localStorage.getItem('battleState');
     if (battleState) {
@@ -51,12 +56,11 @@ export const useCombat = (
     }
   };
 
-  const handleOpponentAttack = () => {
-    if (!playerStats || opponents.length === 0 || isPlayerTurn) return;
+  const handleOpponentAttack = (opponent: Opponent) => {
+    if (!playerStats) return;
 
-    const randomOpponent = opponents[Math.floor(Math.random() * opponents.length)];
     const { blockedDamage, damageToHealth, newDefense } = calculatePlayerDamage(
-      randomOpponent.power,
+      opponent.power,
       playerStats.defense
     );
 
@@ -68,7 +72,7 @@ export const useCombat = (
     
     setPlayerStats(newStats);
     
-    let message = `${randomOpponent.name} атакует с силой ${randomOpponent.power}!`;
+    let message = `${opponent.name} контратакует с силой ${opponent.power}!`;
     if (blockedDamage > 0) {
       message += ` Защита блокирует ${blockedDamage.toFixed(0)} урона.`;
     }
@@ -78,13 +82,11 @@ export const useCombat = (
     message += ` Защита уменьшилась на ${(playerStats.defense - newDefense).toFixed(0)}.`;
     
     toast({
-      title: randomOpponent.isBoss ? "⚠️ Атака босса!" : "Враг атакует!",
+      title: opponent.isBoss ? "⚠️ Контратака босса!" : "Враг контратакует!",
       description: message,
-      variant: randomOpponent.isBoss ? "destructive" : "default",
+      variant: opponent.isBoss ? "destructive" : "default",
       duration: 1000
     });
-
-    setIsPlayerTurn(true);
 
     const battleState = localStorage.getItem('battleState');
     if (battleState) {
@@ -97,6 +99,5 @@ export const useCombat = (
   return {
     isPlayerTurn,
     attackEnemy,
-    handleOpponentAttack,
   };
 };
