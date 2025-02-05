@@ -4,6 +4,7 @@ import { Card } from "@/components/ui/card";
 import { Monster } from '../types';
 import { PlayerCharacter } from './PlayerCharacter';
 import { MonsterSprite } from './MonsterSprite';
+import { Button } from '@/components/ui/button';
 
 interface AdventureGameProps {
   onMonsterDefeat: (monster: Monster) => void;
@@ -76,7 +77,7 @@ export const AdventureGame = ({
     setTimeout(() => {
       setIsAttacking(false);
       if (currentMonster && 
-          Math.abs(playerPosition - 400) < 100) { // Check if player is close enough to monster
+          Math.abs(playerPosition - 400) < 100) { // Проверяем, достаточно ли близко игрок к монстру
         onMonsterDefeat(currentMonster);
       }
     }, 500);
@@ -111,30 +112,36 @@ export const AdventureGame = ({
             position={400}
           />
         )}
-      </div>
 
-      {/* Mobile Controls */}
-      <div className="absolute bottom-4 left-4 flex gap-4 md:hidden">
-        <button
-          className="w-12 h-12 bg-game-primary/50 rounded-full"
-          onTouchStart={() => setIsMovingLeft(true)}
-          onTouchEnd={() => setIsMovingLeft(false)}
-        >
-          ←
-        </button>
-        <button
-          className="w-12 h-12 bg-game-primary/50 rounded-full"
-          onTouchStart={() => setIsMovingRight(true)}
-          onTouchEnd={() => setIsMovingRight(false)}
-        >
-          →
-        </button>
-        <button
-          className="w-12 h-12 bg-game-accent/50 rounded-full"
+        {/* Mobile Controls */}
+        <div className="fixed bottom-20 left-4 flex gap-4 md:hidden z-50">
+          <motion.button
+            whileTap={{ scale: 0.9 }}
+            className="w-16 h-16 bg-game-primary/80 rounded-full flex items-center justify-center text-white text-2xl shadow-lg backdrop-blur-sm border-2 border-game-accent"
+            onTouchStart={() => setIsMovingLeft(true)}
+            onTouchEnd={() => setIsMovingLeft(false)}
+          >
+            ←
+          </motion.button>
+          <motion.button
+            whileTap={{ scale: 0.9 }}
+            className="w-16 h-16 bg-game-primary/80 rounded-full flex items-center justify-center text-white text-2xl shadow-lg backdrop-blur-sm border-2 border-game-accent"
+            onTouchStart={() => setIsMovingRight(true)}
+            onTouchEnd={() => setIsMovingRight(false)}
+          >
+            →
+          </motion.button>
+        </div>
+        
+        {/* Attack Button */}
+        <motion.button
+          whileTap={{ scale: 0.9 }}
+          className="fixed bottom-20 right-8 w-20 h-20 bg-game-accent/80 rounded-full flex items-center justify-center text-white text-3xl shadow-lg backdrop-blur-sm border-2 border-game-accent md:hidden z-50"
           onClick={handleAttack}
+          disabled={isAttacking}
         >
           ⚔️
-        </button>
+        </motion.button>
       </div>
     </Card>
   );
