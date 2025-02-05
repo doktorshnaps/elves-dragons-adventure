@@ -1,3 +1,4 @@
+
 import React from "react";
 import { Card } from "@/components/ui/card";
 import { TeamStats as TeamStatsType } from "@/types/cards";
@@ -7,13 +8,12 @@ import { PlayerStatsSection } from "./stats/PlayerStatsSection";
 import { calculateTeamStats } from "@/utils/cardUtils";
 import { Button } from "@/components/ui/button";
 import { TeamStatsModal } from "./TeamStatsModal";
+import { useTeamCards } from "@/hooks/team/useTeamCards";
 
-interface TeamStatsProps {
-  teamStats: TeamStatsType;
-}
-
-export const TeamStats = ({ teamStats }: TeamStatsProps) => {
+export const TeamStats = () => {
   const [showStats, setShowStats] = React.useState(false);
+  const { cards } = useTeamCards();
+  const teamStats = calculateTeamStats(cards);
   const [playerStats, setPlayerStats] = React.useState<PlayerStats>(() => {
     const savedState = localStorage.getItem('battleState');
     if (savedState) {

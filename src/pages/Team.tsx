@@ -5,13 +5,9 @@ import { TeamCards } from "@/components/game/TeamCards";
 import { Button } from "@/components/ui/button";
 import { DragonEggProvider } from "@/contexts/DragonEggContext";
 import { TeamStats } from "@/components/game/TeamStats";
-import { useTeamCards } from "@/hooks/team/useTeamCards";
-import { calculateTeamStats } from "@/utils/cardUtils";
 
 export const Team = () => {
   const navigate = useNavigate();
-  const { cards } = useTeamCards();
-  const teamStats = calculateTeamStats(cards);
 
   return (
     <div 
@@ -34,12 +30,12 @@ export const Team = () => {
         </Button>
       </div>
       
-      <div className="flex-1 bg-game-surface/90 p-4 rounded-lg border border-game-accent backdrop-blur-sm">
-        <DragonEggProvider>
-          <TeamStats teamStats={teamStats} />
+      <DragonEggProvider>
+        <div className="flex-1 bg-game-surface/90 p-4 rounded-lg border border-game-accent backdrop-blur-sm">
+          <TeamStats />
           <TeamCards />
-        </DragonEggProvider>
-      </div>
+        </div>
+      </DragonEggProvider>
     </div>
   );
 };
