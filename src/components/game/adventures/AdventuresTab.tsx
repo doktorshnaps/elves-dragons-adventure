@@ -14,18 +14,58 @@ export const AdventuresTab = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const { balance, updateBalance } = useBalanceState();
+
+  const calculateEquipmentBonuses = () => {
+    const inventory = localStorage.getItem('gameInventory');
+    if (!inventory) return { power: 0, defense: 0, health: 0 };
+
+    const equippedItems = JSON.parse(inventory).filter((item: any) => item.equipped);
+    return equippedItems.reduce((acc: any, item: any) => ({
+      power: acc.power + (item.stats?.power || 0),
+      defense: acc.defense + (item.stats?.defense || 0),
+      health: acc.health + (item.stats?.health || 0)
+    }), { power: 0, defense: 0, health: 0 });
+  };
+
+  const calculateBaseStats = (level: number) => {
+    return {
+      power: 1 + (level - 1),  // Начиная с 1, +1 за каждый уровень
+      defense: 1 + (level - 1), // Начиная с 1, +1 за каждый уровень
+      health: 50 + (level - 1) * 10 // Начиная с 50, +10 за каждый уровень
+    };
+  };
+
   const [playerStats, setPlayerStats] = useState(() => {
     const savedStats = localStorage.getItem('adventurePlayerStats');
-    return savedStats ? JSON.parse(savedStats) : {
-      health: 100,
-      maxHealth: 100,
-      power: 10,
-      defense: 5,
+    if (savedStats) {
+      const parsed = JSON.parse(savedStats);
+      const baseStats = calculateBaseStats(parsed.level);
+      const equipmentBonuses = calculateEquipmentBonuses();
+      
+      return {
+        ...parsed,
+        power: baseStats.power + equipmentBonuses.power,
+        defense: baseStats.defense + equipmentBonuses.defense,
+        maxHealth: baseStats.health + equipmentBonuses.health,
+        health: Math.min(parsed.health, baseStats.health + equipmentBonuses.health)
+      };
+    }
+
+    // Initial stats for level 1
+    const baseStats = calculateBaseStats(1);
+    const equipmentBonuses = calculateEquipmentBonuses();
+    
+    return {
+      health: baseStats.health + equipmentBonuses.health,
+      maxHealth: baseStats.health + equipmentBonuses.health,
+      power: baseStats.power + equipmentBonuses.power,
+      defense: baseStats.defense + equipmentBonuses.defense,
       level: 1,
       experience: 0,
       requiredExperience: 100
     };
   });
+
   const [currentMonster, setCurrentMonster] = useState(() => {
     const savedMonster = localStorage.getItem('adventureCurrentMonster');
     return savedMonster ? JSON.parse(savedMonster) : null;
@@ -39,6 +79,30 @@ export const AdventuresTab = () => {
   useEffect(() => {
     localStorage.setItem('adventureCurrentMonster', JSON.stringify(currentMonster));
   }, [currentMonster]);
+
+  // Update stats when equipment changes
+  useEffect(() => {
+    const handleInventoryUpdate = () => {
+      const baseStats = calculateBaseStats(playerStats.level);
+      const equipmentBonuses = calculateEquipmentBonuses();
+      
+      setPlayerStats(prev => ({
+        ...prev,
+        power: baseStats.power + equipmentBonuses.power,
+        defense: baseStats.defense + equipmentBonuses.defense,
+        maxHealth: baseStats.health + equipmentBonuses.health,
+        health: Math.min(prev.health, baseStats.health + equipmentBonuses.health)
+      }));
+    };
+
+    window.addEventListener('storage', handleInventoryUpdate);
+    window.addEventListener('inventoryUpdate', handleInventoryUpdate);
+
+    return () => {
+      window.removeEventListener('storage', handleInventoryUpdate);
+      window.removeEventListener('inventoryUpdate', handleInventoryUpdate);
+    };
+  }, [playerStats.level]);
 
   const startAdventure = () => {
     const monster = {
@@ -58,16 +122,19 @@ export const AdventuresTab = () => {
     if (newExperience >= requiredExp) {
       // Level up
       const newLevel = playerStats.level + 1;
-      const newRequiredExp = requiredExp + 100; // Increase required exp for next level
+      const newRequiredExp = requiredExp + 100;
+      const baseStats = calculateBaseStats(newLevel);
+      const equipmentBonuses = calculateEquipmentBonuses();
       
       setPlayerStats({
         ...playerStats,
         level: newLevel,
-        experience: newExperience - requiredExp, // Carry over excess exp
+        experience: newExperience - requiredExp,
         requiredExperience: newRequiredExp,
-        maxHealth: playerStats.maxHealth + 10, // Increase max health on level up
-        power: playerStats.power + 2, // Increase power on level up
-        defense: playerStats.defense + 1, // Increase defense on level up
+        power: baseStats.power + equipmentBonuses.power,
+        defense: baseStats.defense + equipmentBonuses.defense,
+        maxHealth: baseStats.health + equipmentBonuses.health,
+        health: baseStats.health + equipmentBonuses.health // Восстановление здоровья при повышении уровня
       });
 
       toast({
@@ -111,7 +178,6 @@ export const AdventuresTab = () => {
       setPlayerStats({ ...playerStats, health: 0 });
       setCurrentMonster(null);
       
-      // Задержка перед переходом в меню
       setTimeout(() => {
         navigate('/menu');
       }, 2000);
@@ -177,4 +243,3 @@ export const AdventuresTab = () => {
     </AdventureLayout>
   );
 };
-
