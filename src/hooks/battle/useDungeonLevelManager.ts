@@ -1,4 +1,4 @@
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
 import { PlayerStats } from '@/types/battle';
 import { generateDungeonOpponents } from '@/dungeons/dungeonManager';
@@ -13,6 +13,7 @@ export const useDungeonLevelManager = (
   setOpponents: (opponents: any[]) => void
 ) => {
   const navigate = useNavigate();
+  const location = useLocation();
   const { toast } = useToast();
 
   const handleNextLevel = () => {
@@ -49,7 +50,10 @@ export const useDungeonLevelManager = (
       duration: 2000
     });
 
-    navigate(`/battle?level=${nextLevel}`, { replace: true });
+    // Добавляем параметр level к текущему URL вместо перехода на /battle
+    const searchParams = new URLSearchParams(location.search);
+    searchParams.set('level', nextLevel.toString());
+    navigate(`${location.pathname}?${searchParams.toString()}`, { replace: true });
   };
 
   return { handleNextLevel };
