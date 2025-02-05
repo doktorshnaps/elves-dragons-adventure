@@ -38,9 +38,13 @@ export const DungeonSearchDialog = ({
   React.useEffect(() => {
     const battleState = localStorage.getItem('battleState');
     if (battleState) {
-      const state = JSON.parse(battleState);
-      if (state.selectedDungeon && state.playerStats.health > 0) {
-        setActiveDungeon(state.selectedDungeon);
+      try {
+        const state = JSON.parse(battleState);
+        if (state?.selectedDungeon && state?.playerStats?.health > 0) {
+          setActiveDungeon(state.selectedDungeon);
+        }
+      } catch (error) {
+        console.error('Error parsing battleState:', error);
       }
     }
   }, []);
