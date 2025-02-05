@@ -192,7 +192,7 @@ export const AdventureGame = ({
         >
           ⚔️
         </button>
-      </div>
+      </Card>
     </>
   );
 };
