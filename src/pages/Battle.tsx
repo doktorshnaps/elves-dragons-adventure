@@ -4,6 +4,7 @@ import { useBattleState } from '@/hooks/useBattleState';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
+import { ChevronRight } from 'lucide-react';
 
 export const Battle = () => {
   const [searchParams] = useSearchParams();
@@ -15,6 +16,7 @@ export const Battle = () => {
     isPlayerTurn,
     attackEnemy,
     handleOpponentAttack,
+    handleNextLevel
   } = useBattleState(level);
 
   if (!playerStats || !opponents) {
@@ -73,16 +75,26 @@ export const Battle = () => {
         ))}
       </div>
 
-      {!isPlayerTurn && opponents.length > 0 && (
-        <div className="mt-4 text-center">
+      <div className="mt-8 flex justify-center space-x-4">
+        {!isPlayerTurn && opponents.length > 0 && (
           <Button 
             onClick={handleOpponentTurn}
             className="bg-game-primary hover:bg-game-primary/80"
           >
             Ход противника
           </Button>
-        </div>
-      )}
+        )}
+
+        {opponents.length === 0 && playerStats.health > 0 && (
+          <Button
+            onClick={handleNextLevel}
+            className="bg-game-accent hover:bg-game-accent/80 flex items-center"
+          >
+            Следующий уровень
+            <ChevronRight className="ml-2 h-4 w-4" />
+          </Button>
+        )}
+      </div>
     </div>
   );
 };
