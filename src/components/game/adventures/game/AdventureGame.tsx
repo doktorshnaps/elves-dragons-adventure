@@ -22,7 +22,9 @@ export const AdventureGame = ({
   const [isMovingRight, setIsMovingRight] = useState(false);
   const [isMovingLeft, setIsMovingLeft] = useState(false);
   const [isAttacking, setIsAttacking] = useState(false);
+  const [cameraOffset, setCameraOffset] = useState(0);
   const gameRef = useRef<HTMLDivElement>(null);
+  const gameContainerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -50,10 +52,18 @@ export const AdventureGame = ({
     
     const updatePosition = () => {
       if (isMovingRight) {
-        setPlayerPosition(prev => Math.min(prev + 5, 700));
+        setPlayerPosition(prev => {
+          const newPosition = Math.min(prev + 5, 2000); // Увеличиваем максимальную позицию
+          updateCameraOffset(newPosition);
+          return newPosition;
+        });
       }
       if (isMovingLeft) {
-        setPlayerPosition(prev => Math.max(prev - 5, 0));
+        setPlayerPosition(prev => {
+          const newPosition = Math.max(prev - 5, 0);
+          updateCameraOffset(newPosition);
+          return newPosition;
+        });
       }
       animationFrame = requestAnimationFrame(updatePosition);
     };
@@ -68,6 +78,16 @@ export const AdventureGame = ({
       }
     };
   }, [isMovingRight, isMovingLeft]);
+
+  const updateCameraOffset = (playerPos: number) => {
+    if (!gameContainerRef.current) return;
+    
+    const containerWidth = gameContainerRef.current.offsetWidth;
+    const centerPoint = containerWidth / 2;
+    
+    // Обновляем смещение камеры, чтобы держать игрока в центре
+    setCameraOffset(Math.max(0, playerPos - centerPoint));
+  };
 
   const handleAttack = () => {
     if (isAttacking || !currentMonster) return;
@@ -89,32 +109,39 @@ export const AdventureGame = ({
   return (
     <Card className="w-full h-[300px] relative overflow-hidden bg-game-background border-game-accent">
       <div 
-        ref={gameRef}
-        className="w-full h-full relative"
-        style={{
-          backgroundImage: 'url("/lovable-uploads/0fb6e9e6-c143-470a-87c8-adf54800851d.png")',
-          backgroundSize: 'cover',
-          backgroundPosition: 'center'
-        }}
+        ref={gameContainerRef}
+        className="w-full h-full relative overflow-hidden"
       >
-        {/* Ground */}
-        <div className="absolute bottom-0 w-full h-[50px] bg-game-surface/50" />
+        <div 
+          ref={gameRef}
+          className="w-[3000px] h-full relative" // Увеличиваем ширину игрового мира
+          style={{
+            backgroundImage: 'url("/lovable-uploads/0fb6e9e6-c143-470a-87c8-adf54800851d.png")',
+            backgroundSize: 'cover',
+            backgroundPosition: 'center',
+            transform: `translateX(-${cameraOffset}px)`,
+            transition: 'transform 0.1s ease-out'
+          }}
+        >
+          {/* Ground */}
+          <div className="absolute bottom-0 w-full h-[50px] bg-game-surface/50" />
 
-        {/* Player */}
-        <PlayerCharacter
-          position={playerPosition}
-          isAttacking={isAttacking}
-          health={playerHealth}
-          power={playerPower}
-        />
-
-        {/* Monster */}
-        {currentMonster && (
-          <MonsterSprite
-            monster={currentMonster}
-            position={400}
+          {/* Player */}
+          <PlayerCharacter
+            position={playerPosition}
+            isAttacking={isAttacking}
+            health={playerHealth}
+            power={playerPower}
           />
-        )}
+
+          {/* Monster */}
+          {currentMonster && (
+            <MonsterSprite
+              monster={currentMonster}
+              position={400}
+            />
+          )}
+        </div>
 
         {/* Mobile Controls */}
         <div className="fixed bottom-20 left-4 flex gap-4 md:hidden z-50">
