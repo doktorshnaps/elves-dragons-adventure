@@ -128,13 +128,12 @@ export const AdventureGame = ({
     setMagicProjectiles(prev => [...prev, newProjectile]);
 
     // Проверяем попадание по монстрам
-    setTimeout(() => {
-      setIsAttacking(false);
-      setMagicProjectiles(prev => prev.filter(p => p.id !== newProjectile.id));
-      
+    const checkHit = () => {
+      let hit = false;
       monsters.forEach(monster => {
-        const distanceToMonster = Math.abs(playerPosition - monster.position);
+        const distanceToMonster = Math.abs(newProjectile.x - monster.position);
         if (distanceToMonster < 150) { // Радиус поражения магии
+          hit = true;
           const damage = Math.max(1, playerPower + Math.floor(Math.random() * 3));
           const updatedMonster = {
             ...monster,
@@ -151,7 +150,17 @@ export const AdventureGame = ({
           }
         }
       });
-    }, 300);
+
+      if (hit) {
+        setIsAttacking(false);
+        setMagicProjectiles(prev => prev.filter(p => p.id !== newProjectile.id));
+      } else {
+        // Если не попали, продолжаем проверять
+        requestAnimationFrame(checkHit);
+      }
+    };
+
+    requestAnimationFrame(checkHit);
   };
 
   return (

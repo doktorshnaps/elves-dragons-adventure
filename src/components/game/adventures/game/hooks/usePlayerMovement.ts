@@ -73,7 +73,7 @@ export const usePlayerMovement = (updateCameraOffset: (pos: number) => void) => 
   useEffect(() => {
     if (isJumping) {
       const gravity = 0.5;
-      let velocity = 15;
+      let velocity = 19.5; // Увеличено на 30% с 15 до 19.5
       let jumpAnimationFrame: number;
       
       const jumpAnimation = () => {
@@ -89,7 +89,7 @@ export const usePlayerMovement = (updateCameraOffset: (pos: number) => void) => 
           return newY;
         });
         
-        if (velocity > -15) {
+        if (velocity > -19.5) { // Также увеличен порог возврата
           jumpAnimationFrame = requestAnimationFrame(jumpAnimation);
         }
       };
