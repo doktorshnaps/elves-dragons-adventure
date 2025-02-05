@@ -3,6 +3,7 @@ import { Layers, Package } from "lucide-react";
 import { Button } from "../ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "../ui/sheet";
 import { InventoryDisplay } from "../game/InventoryDisplay";
+import { DragonEggProvider } from "@/contexts/DragonEggContext";
 
 interface DungeonHeaderProps {
   level: number;
@@ -31,7 +32,9 @@ export const DungeonHeader = ({ level }: DungeonHeaderProps) => {
           </SheetTrigger>
           <SheetContent side="right" className="w-full sm:w-[540px] bg-game-surface border-game-accent">
             <div className="h-full overflow-y-auto py-8">
-              <InventoryDisplay />
+              <DragonEggProvider>
+                <InventoryDisplay />
+              </DragonEggProvider>
             </div>
           </SheetContent>
         </Sheet>
