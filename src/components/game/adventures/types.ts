@@ -9,6 +9,7 @@ export interface Monster {
   reward: number;
   experienceReward: number;
   type: 'normal' | 'elite' | 'boss';
+  position?: number;
 }
 
 export interface Equipment {

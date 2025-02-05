@@ -1,7 +1,7 @@
 import { Monster } from "./types";
 
 export const useMonsterGeneration = (level: number) => {
-  const generateMonster = (): Monster => {
+  const generateMonster = (position?: number): Monster => {
     const powerMultiplier = 1 + (level - 1) * 0.5;
     const healthMultiplier = 1 + (level - 1) * 0.3;
     const rewardMultiplier = 1 + (level - 1) * 0.7;
@@ -29,7 +29,12 @@ export const useMonsterGeneration = (level: number) => {
       "Горный тролль",
       "Лесной разбойник",
       "Древний голем",
-      "Темный маг"
+      "Темный маг",
+      "Ядовитый паук",
+      "Скелет-воин",
+      "Болотная тварь",
+      "Огненный элементаль",
+      "Ледяной великан"
     ];
 
     const monsterName = monsters[Math.floor(Math.random() * monsters.length)];
@@ -37,14 +42,15 @@ export const useMonsterGeneration = (level: number) => {
     const basePower = selectedType.type === 'boss' ? 20 : selectedType.type === 'elite' ? 15 : 10;
     
     return {
-      id: Date.now(),
+      id: Date.now() + Math.random(),
       name: `${selectedType.type === 'boss' ? 'Босс: ' : selectedType.type === 'elite' ? 'Элитный: ' : ''}${monsterName}`,
       power: Math.floor(basePower * powerMultiplier),
       health: Math.floor(baseHealth * healthMultiplier),
       maxHealth: Math.floor(baseHealth * healthMultiplier),
       reward: Math.floor(20 * rewardMultiplier),
       experienceReward: selectedType.expReward,
-      type: selectedType.type
+      type: selectedType.type,
+      position: position || 400
     };
   };
 

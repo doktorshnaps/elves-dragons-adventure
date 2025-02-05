@@ -27,6 +27,13 @@ export const MonsterSprite = ({ monster, position }: MonsterSpriteProps) => {
       transition={{ duration: 2, repeat: Infinity }}
     >
       <div className="relative">
+        {/* Monster name */}
+        <div className="absolute -top-12 left-1/2 -translate-x-1/2 whitespace-nowrap">
+          <span className="px-2 py-1 bg-game-surface/80 rounded text-sm text-white backdrop-blur-sm">
+            {monster.name}
+          </span>
+        </div>
+
         {/* Health bar */}
         <div className="absolute -top-6 left-1/2 -translate-x-1/2 w-20">
           <div className="h-2 bg-red-900 rounded-full">

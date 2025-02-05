@@ -6,6 +6,7 @@ import { MonsterSprite } from './MonsterSprite';
 import { ProjectileSprite } from './ProjectileSprite';
 import { usePlayerMovement } from './hooks/usePlayerMovement';
 import { useProjectiles } from './hooks/useProjectiles';
+import { useMonsterGeneration } from '../useMonsterGeneration';
 
 interface AdventureGameProps {
   onMonsterDefeat: (monster: Monster) => void;
@@ -23,8 +24,11 @@ export const AdventureGame = ({
   const [currentHealth, setCurrentHealth] = useState(playerHealth);
   const [isAttacking, setIsAttacking] = useState(false);
   const [cameraOffset, setCameraOffset] = useState(0);
+  const [monsters, setMonsters] = useState<Monster[]>([]);
   const gameRef = useRef<HTMLDivElement>(null);
   const gameContainerRef = useRef<HTMLDivElement>(null);
+  const lastMonsterSpawn = useRef(0);
+  const { generateMonster } = useMonsterGeneration(1);
 
   const updateCameraOffset = (playerPos: number) => {
     if (!gameContainerRef.current) return;
@@ -45,12 +49,6 @@ export const AdventureGame = ({
 
   const handleProjectileHit = (damage: number) => {
     setCurrentHealth(prev => Math.max(0, prev - damage));
-    if (currentMonster) {
-      onMonsterDefeat({
-        ...currentMonster,
-        health: currentMonster.health
-      });
-    }
   };
 
   const { projectiles } = useProjectiles(
@@ -60,6 +58,19 @@ export const AdventureGame = ({
     currentHealth,
     handleProjectileHit
   );
+
+  // Генерация монстров при движении
+  useEffect(() => {
+    const currentTime = Date.now();
+    if (currentTime - lastMonsterSpawn.current > 2000 && (isMovingRight || isMovingLeft)) {
+      const spawnDistance = isMovingRight ? playerPosition + 400 : playerPosition - 400;
+      if (spawnDistance >= 0 && spawnDistance <= 2000) {
+        const newMonster = generateMonster(spawnDistance);
+        setMonsters(prev => [...prev, newMonster]);
+        lastMonsterSpawn.current = currentTime;
+      }
+    }
+  }, [playerPosition, isMovingRight, isMovingLeft]);
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -100,6 +111,13 @@ export const AdventureGame = ({
     }, 500);
   };
 
+  // Очистка монстров, которые далеко от игрока
+  useEffect(() => {
+    setMonsters(prev => prev.filter(monster => 
+      Math.abs(monster.position! - playerPosition) < 800
+    ));
+  }, [playerPosition]);
+
   return (
     <Card className="w-full h-[300px] relative overflow-hidden bg-game-background border-game-accent">
       <div 
@@ -127,12 +145,13 @@ export const AdventureGame = ({
             power={playerPower}
           />
 
-          {currentMonster && (
+          {monsters.map(monster => (
             <MonsterSprite
-              monster={currentMonster}
-              position={400}
+              key={monster.id}
+              monster={monster}
+              position={monster.position || 400}
             />
-          )}
+          ))}
 
           {projectiles.map(projectile => (
             <ProjectileSprite
