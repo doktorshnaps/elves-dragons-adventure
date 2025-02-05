@@ -1,13 +1,12 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef } from 'react';
 import { Card } from "@/components/ui/card";
 import { Monster } from '../types';
-import { PlayerCharacter } from './PlayerCharacter';
-import { MonsterSprite } from './MonsterSprite';
-import { ProjectileSprite } from './ProjectileSprite';
 import { PlayerStatsHeader } from './PlayerStatsHeader';
 import { usePlayerMovement } from './hooks/usePlayerMovement';
 import { useProjectiles } from './hooks/useProjectiles';
-import { useMonsterGeneration } from '../useMonsterGeneration';
+import { useAdventureState } from '../hooks/useAdventureState';
+import { GameControls } from '../components/GameControls';
+import { GameWorld } from '../components/GameWorld';
 
 interface AdventureGameProps {
   onMonsterDefeat: (monster: Monster) => void;
@@ -22,13 +21,21 @@ export const AdventureGame = ({
   playerPower,
   currentMonster 
 }: AdventureGameProps) => {
-  const [currentHealth, setCurrentHealth] = useState(playerHealth);
-  const [isAttacking, setIsAttacking] = useState(false);
-  const [monsters, setMonsters] = useState<Monster[]>([]);
+  const {
+    currentHealth,
+    setCurrentHealth,
+    isAttacking,
+    setIsAttacking,
+    monsters,
+    setMonsters,
+    cameraOffset,
+    setCameraOffset,
+    generateMonster
+  } = useAdventureState(playerHealth);
+
   const gameRef = useRef<HTMLDivElement>(null);
   const gameContainerRef = useRef<HTMLDivElement>(null);
   const lastMonsterSpawn = useRef(0);
-  const { generateMonster } = useMonsterGeneration(1);
 
   const updateCameraOffset = (playerPos: number) => {
     if (!gameContainerRef.current) return;
@@ -77,15 +84,13 @@ export const AdventureGame = ({
         lastMonsterSpawn.current = currentTime;
       }
     }
-  }, [playerPosition, isMovingRight, isMovingLeft]);
+  }, [playerPosition, isMovingRight, isMovingLeft, generateMonster]);
 
   useEffect(() => {
     setMonsters(prev => prev.filter(monster => 
       Math.abs(monster.position! - playerPosition) < 800
     ));
   }, [playerPosition]);
-
-  const [cameraOffset, setCameraOffset] = useState(0);
 
   const handleAttack = () => {
     if (isAttacking || !currentMonster) return;
@@ -120,78 +125,26 @@ export const AdventureGame = ({
           ref={gameContainerRef}
           className="w-full h-full relative overflow-hidden"
         >
-          <div 
-            ref={gameRef}
-            className="absolute h-full"
-            style={{
-              width: '100000px',
-              backgroundImage: 'url("/lovable-uploads/0fb6e9e6-c143-470a-87c8-adf54800851d.png")',
-              backgroundSize: 'cover',
-              backgroundPosition: 'center',
-              backgroundRepeat: 'repeat-x',
-              transform: `translateX(-${cameraOffset}px)`,
-              transition: 'transform 0.1s ease-out'
-            }}
-          >
-            <div className="absolute bottom-0 w-full h-[50px] bg-game-surface/50" />
-
-            <PlayerCharacter
-              position={playerPosition}
-              yPosition={playerY}
-              isAttacking={isAttacking}
-              health={currentHealth}
-              power={playerPower}
-            />
-
-            {monsters.map(monster => (
-              <MonsterSprite
-                key={monster.id}
-                monster={monster}
-                position={monster.position || 400}
-              />
-            ))}
-
-            {projectiles.map(projectile => (
-              <ProjectileSprite
-                key={projectile.id}
-                x={projectile.x}
-                y={projectile.y}
-              />
-            ))}
-          </div>
+          <GameWorld
+            gameRef={gameRef}
+            cameraOffset={cameraOffset}
+            playerPosition={playerPosition}
+            playerY={playerY}
+            isAttacking={isAttacking}
+            currentHealth={currentHealth}
+            playerPower={playerPower}
+            monsters={monsters}
+            projectiles={projectiles}
+          />
         </div>
 
-        <div className="fixed bottom-20 left-4 flex gap-4 md:hidden z-50">
-          <button
-            className="w-16 h-16 bg-game-primary/80 rounded-full flex items-center justify-center text-white text-2xl shadow-lg backdrop-blur-sm"
-            onTouchStart={() => setIsMovingLeft(true)}
-            onTouchEnd={() => setIsMovingLeft(false)}
-          >
-            ←
-          </button>
-          <button
-            className="w-16 h-16 bg-game-primary/80 rounded-full flex items-center justify-center text-white text-2xl shadow-lg backdrop-blur-sm"
-            onTouchStart={() => setIsMovingRight(true)}
-            onTouchEnd={() => setIsMovingRight(false)}
-          >
-            →
-          </button>
-        </div>
-        
-        <button
-          className="fixed bottom-20 right-28 w-20 h-20 bg-game-accent/80 rounded-full flex items-center justify-center text-white text-3xl shadow-lg backdrop-blur-sm md:hidden z-50"
-          onClick={handleJump}
-        >
-          ↑
-        </button>
-
-        <button
-          className="fixed bottom-20 right-8 w-20 h-20 bg-game-accent/80 rounded-full flex items-center justify-center text-white text-3xl shadow-lg backdrop-blur-sm md:hidden z-50"
-          onClick={handleAttack}
-          disabled={isAttacking}
-        >
-          ⚔️
-        </button>
+        <GameControls
+          onMoveLeft={setIsMovingLeft}
+          onMoveRight={setIsMovingRight}
+          onJump={handleJump}
+          onAttack={handleAttack}
+          isAttacking={isAttacking}
+        />
       </Card>
     </>
   );

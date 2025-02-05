@@ -1,0 +1,71 @@
+import React from 'react';
+import { Monster } from '../types';
+import { PlayerCharacter } from '../game/PlayerCharacter';
+import { MonsterSprite } from '../game/MonsterSprite';
+import { ProjectileSprite } from '../game/ProjectileSprite';
+
+interface GameWorldProps {
+  gameRef: React.RefObject<HTMLDivElement>;
+  cameraOffset: number;
+  playerPosition: number;
+  playerY: number;
+  isAttacking: boolean;
+  currentHealth: number;
+  playerPower: number;
+  monsters: Monster[];
+  projectiles: any[];
+}
+
+export const GameWorld = ({
+  gameRef,
+  cameraOffset,
+  playerPosition,
+  playerY,
+  isAttacking,
+  currentHealth,
+  playerPower,
+  monsters,
+  projectiles
+}: GameWorldProps) => {
+  return (
+    <div 
+      ref={gameRef}
+      className="absolute h-full"
+      style={{
+        width: '100000px',
+        backgroundImage: 'url("/lovable-uploads/0fb6e9e6-c143-470a-87c8-adf54800851d.png")',
+        backgroundSize: 'cover',
+        backgroundPosition: 'center',
+        backgroundRepeat: 'repeat-x',
+        transform: `translateX(-${cameraOffset}px)`,
+        transition: 'transform 0.1s ease-out'
+      }}
+    >
+      <div className="absolute bottom-0 w-full h-[50px] bg-game-surface/50" />
+
+      <PlayerCharacter
+        position={playerPosition}
+        yPosition={playerY}
+        isAttacking={isAttacking}
+        health={currentHealth}
+        power={playerPower}
+      />
+
+      {monsters.map(monster => (
+        <MonsterSprite
+          key={monster.id}
+          monster={monster}
+          position={monster.position || 400}
+        />
+      ))}
+
+      {projectiles.map(projectile => (
+        <ProjectileSprite
+          key={projectile.id}
+          x={projectile.x}
+          y={projectile.y}
+        />
+      ))}
+    </div>
+  );
+};
