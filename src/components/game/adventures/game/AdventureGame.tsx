@@ -1,10 +1,11 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { motion } from 'framer-motion';
 import { Card } from "@/components/ui/card";
 import { Monster } from '../types';
 import { PlayerCharacter } from './PlayerCharacter';
 import { MonsterSprite } from './MonsterSprite';
 import { ProjectileSprite } from './ProjectileSprite';
+import { usePlayerMovement } from './hooks/usePlayerMovement';
+import { useProjectiles } from './hooks/useProjectiles';
 
 interface AdventureGameProps {
   onMonsterDefeat: (monster: Monster) => void;
@@ -13,32 +14,52 @@ interface AdventureGameProps {
   currentMonster: Monster | null;
 }
 
-interface Projectile {
-  id: number;
-  x: number;
-  y: number;
-  direction: number;
-}
-
 export const AdventureGame = ({ 
   onMonsterDefeat, 
   playerHealth,
   playerPower,
   currentMonster 
 }: AdventureGameProps) => {
-  const [playerPosition, setPlayerPosition] = useState(100);
-  const [playerY, setPlayerY] = useState(0);
-  const [isJumping, setIsJumping] = useState(false);
-  const [isMovingRight, setIsMovingRight] = useState(false);
-  const [isMovingLeft, setIsMovingLeft] = useState(false);
+  const [currentHealth, setCurrentHealth] = useState(playerHealth);
   const [isAttacking, setIsAttacking] = useState(false);
   const [cameraOffset, setCameraOffset] = useState(0);
-  const [projectiles, setProjectiles] = useState<Projectile[]>([]);
-  const [currentHealth, setCurrentHealth] = useState(playerHealth);
   const gameRef = useRef<HTMLDivElement>(null);
   const gameContainerRef = useRef<HTMLDivElement>(null);
-  const jumpTimeout = useRef<NodeJS.Timeout | null>(null);
-  const projectileInterval = useRef<NodeJS.Timeout | null>(null);
+
+  const updateCameraOffset = (playerPos: number) => {
+    if (!gameContainerRef.current) return;
+    const containerWidth = gameContainerRef.current.offsetWidth;
+    const centerPoint = containerWidth / 2;
+    setCameraOffset(Math.max(0, playerPos - centerPoint));
+  };
+
+  const {
+    playerPosition,
+    playerY,
+    isMovingRight,
+    isMovingLeft,
+    handleJump,
+    setIsMovingRight,
+    setIsMovingLeft
+  } = usePlayerMovement(updateCameraOffset);
+
+  const handleProjectileHit = (damage: number) => {
+    setCurrentHealth(prev => Math.max(0, prev - damage));
+    if (currentMonster) {
+      onMonsterDefeat({
+        ...currentMonster,
+        health: currentMonster.health
+      });
+    }
+  };
+
+  const { projectiles } = useProjectiles(
+    currentMonster,
+    playerPosition,
+    playerY,
+    currentHealth,
+    handleProjectileHit
+  );
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -61,132 +82,6 @@ export const AdventureGame = ({
       window.removeEventListener('keyup', handleKeyUp);
     };
   }, []);
-
-  useEffect(() => {
-    let animationFrame: number;
-    
-    const updatePosition = () => {
-      if (isMovingRight) {
-        setPlayerPosition(prev => {
-          const newPosition = Math.min(prev + 5, 2000);
-          updateCameraOffset(newPosition);
-          return newPosition;
-        });
-      }
-      if (isMovingLeft) {
-        setPlayerPosition(prev => {
-          const newPosition = Math.max(prev - 5, 0);
-          updateCameraOffset(newPosition);
-          return newPosition;
-        });
-      }
-      animationFrame = requestAnimationFrame(updatePosition);
-    };
-
-    if (isMovingRight || isMovingLeft) {
-      animationFrame = requestAnimationFrame(updatePosition);
-    }
-
-    return () => {
-      if (animationFrame) {
-        cancelAnimationFrame(animationFrame);
-      }
-    };
-  }, [isMovingRight, isMovingLeft]);
-
-  // Эффект для обработки прыжка с увеличенной высотой
-  useEffect(() => {
-    if (isJumping) {
-      const gravity = 0.5;
-      let velocity = 20; // Увеличенная начальная скорость прыжка
-      
-      const jumpAnimation = () => {
-        setPlayerY(prev => {
-          const newY = prev + velocity;
-          velocity -= gravity;
-          
-          if (newY <= 0) {
-            setIsJumping(false);
-            return 0;
-          }
-          
-          return newY;
-        });
-        
-        if (isJumping) {
-          requestAnimationFrame(jumpAnimation);
-        }
-      };
-      
-      requestAnimationFrame(jumpAnimation);
-    }
-  }, [isJumping]);
-
-  // Эффект для стрельбы монстра с периодичностью
-  useEffect(() => {
-    if (currentMonster && currentHealth > 0) {
-      // Стреляем каждые 2 секунды
-      const shootInterval = setInterval(() => {
-        const newProjectile: Projectile = {
-          id: Date.now(),
-          x: 400, // позиция монстра
-          y: 50,
-          direction: playerPosition > 400 ? 1 : -1
-        };
-        setProjectiles(prev => [...prev, newProjectile]);
-      }, 2000);
-
-      return () => clearInterval(shootInterval);
-    }
-  }, [currentMonster, currentHealth, playerPosition]);
-
-  // Эффект для движения снарядов и проверки попаданий
-  useEffect(() => {
-    const moveProjectiles = () => {
-      setProjectiles(prev => 
-        prev.map(projectile => ({
-          ...projectile,
-          x: projectile.x + (projectile.direction * 5)
-        })).filter(projectile => {
-          const hitPlayer = Math.abs(projectile.x - playerPosition) < 30 && 
-                          Math.abs(projectile.y - playerY) < 50;
-          
-          if (hitPlayer) {
-            // При попадании снимаем здоровье
-            setCurrentHealth(prev => Math.max(0, prev - 10));
-            if (currentMonster) {
-              onMonsterDefeat({
-                ...currentMonster,
-                health: currentMonster.health
-              });
-            }
-            return false;
-          }
-          
-          return projectile.x > 0 && projectile.x < 2000;
-        })
-      );
-      requestAnimationFrame(moveProjectiles);
-    };
-
-    const animation = requestAnimationFrame(moveProjectiles);
-    return () => cancelAnimationFrame(animation);
-  }, [playerPosition, playerY, currentMonster, onMonsterDefeat]);
-
-  const updateCameraOffset = (playerPos: number) => {
-    if (!gameContainerRef.current) return;
-    
-    const containerWidth = gameContainerRef.current.offsetWidth;
-    const centerPoint = containerWidth / 2;
-    
-    setCameraOffset(Math.max(0, playerPos - centerPoint));
-  };
-
-  const handleJump = () => {
-    if (!isJumping) {
-      setIsJumping(true);
-    }
-  };
 
   const handleAttack = () => {
     if (isAttacking || !currentMonster) return;
@@ -222,10 +117,8 @@ export const AdventureGame = ({
             transition: 'transform 0.1s ease-out'
           }}
         >
-          {/* Ground */}
           <div className="absolute bottom-0 w-full h-[50px] bg-game-surface/50" />
 
-          {/* Player */}
           <PlayerCharacter
             position={playerPosition}
             yPosition={playerY}
@@ -234,7 +127,6 @@ export const AdventureGame = ({
             power={playerPower}
           />
 
-          {/* Monster */}
           {currentMonster && (
             <MonsterSprite
               monster={currentMonster}
@@ -242,7 +134,6 @@ export const AdventureGame = ({
             />
           )}
 
-          {/* Projectiles */}
           {projectiles.map(projectile => (
             <ProjectileSprite
               key={projectile.id}
@@ -252,44 +143,37 @@ export const AdventureGame = ({
           ))}
         </div>
 
-        {/* Mobile Controls */}
         <div className="fixed bottom-20 left-4 flex gap-4 md:hidden z-50">
-          <motion.button
-            whileTap={{ scale: 0.9 }}
+          <button
             className="w-16 h-16 bg-game-primary/80 rounded-full flex items-center justify-center text-white text-2xl shadow-lg backdrop-blur-sm border-2 border-game-accent"
             onTouchStart={() => setIsMovingLeft(true)}
             onTouchEnd={() => setIsMovingLeft(false)}
           >
             ←
-          </motion.button>
-          <motion.button
-            whileTap={{ scale: 0.9 }}
+          </button>
+          <button
             className="w-16 h-16 bg-game-primary/80 rounded-full flex items-center justify-center text-white text-2xl shadow-lg backdrop-blur-sm border-2 border-game-accent"
             onTouchStart={() => setIsMovingRight(true)}
             onTouchEnd={() => setIsMovingRight(false)}
           >
             →
-          </motion.button>
+          </button>
         </div>
         
-        {/* Jump Button */}
-        <motion.button
-          whileTap={{ scale: 0.9 }}
+        <button
           className="fixed bottom-20 right-28 w-20 h-20 bg-game-accent/80 rounded-full flex items-center justify-center text-white text-3xl shadow-lg backdrop-blur-sm border-2 border-game-accent md:hidden z-50"
           onClick={handleJump}
         >
           ↑
-        </motion.button>
+        </button>
 
-        {/* Attack Button */}
-        <motion.button
-          whileTap={{ scale: 0.9 }}
+        <button
           className="fixed bottom-20 right-8 w-20 h-20 bg-game-accent/80 rounded-full flex items-center justify-center text-white text-3xl shadow-lg backdrop-blur-sm border-2 border-game-accent md:hidden z-50"
           onClick={handleAttack}
           disabled={isAttacking}
         >
           ⚔️
-        </motion.button>
+        </button>
       </div>
     </Card>
   );
