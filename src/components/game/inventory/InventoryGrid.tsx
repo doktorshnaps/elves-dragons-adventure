@@ -2,10 +2,10 @@
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import {
-  HoverCard,
-  HoverCardContent,
-  HoverCardTrigger,
-} from "@/components/ui/hover-card";
+  Dialog,
+  DialogContent,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 import { Item } from "@/types/inventory";
 import { GroupedItem } from "./types";
 
@@ -33,10 +33,10 @@ export const InventoryGrid = ({
   return (
     <>
       {unequippedItems.map((item) => (
-        <HoverCard key={`${item.name}-${item.type}-${item.value}`}>
-          <HoverCardTrigger asChild>
+        <Dialog key={`${item.name}-${item.type}-${item.value}`}>
+          <DialogTrigger asChild>
             <Card 
-              className="w-[80px] h-[130px] p-2 bg-game-surface/80 border-game-accent backdrop-blur-sm flex flex-col mx-1 my-1"
+              className="w-[80px] h-[130px] p-2 bg-game-surface/80 border-game-accent backdrop-blur-sm flex flex-col mx-1 my-1 cursor-pointer hover:border-game-accent/80"
             >
               <div className="flex flex-col h-full">
                 {item.type === 'dragon_egg' ? (
@@ -69,36 +69,12 @@ export const InventoryGrid = ({
                     {item.name} {item.count > 1 && `(${item.count})`}
                   </h4>
                 </div>
-                {!readonly && (
-                  <div className="mt-auto space-y-1">
-                    {item.type === 'healthPotion' && (
-                      <Button
-                        onClick={() => onUseItem(item)}
-                        variant="outline"
-                        size="sm"
-                        className="w-full text-[6px] h-4"
-                      >
-                        Использовать
-                      </Button>
-                    )}
-                    {item.type !== 'dragon_egg' && (
-                      <Button
-                        onClick={() => onSellItem(item)}
-                        variant="destructive"
-                        size="sm"
-                        className="w-full text-[6px] h-4"
-                      >
-                        Продать
-                      </Button>
-                    )}
-                  </div>
-                )}
               </div>
             </Card>
-          </HoverCardTrigger>
-          <HoverCardContent className="w-64 bg-game-surface border-game-accent">
-            <div className="space-y-2">
-              <h4 className="font-semibold text-game-accent">{item.name}</h4>
+          </DialogTrigger>
+          <DialogContent className="bg-game-surface border-game-accent">
+            <div className="space-y-4">
+              <h4 className="font-semibold text-game-accent text-lg">{item.name}</h4>
               {item.type === 'healthPotion' && (
                 <p className="text-sm text-gray-400">Восстанавливает {item.value} единиц здоровья</p>
               )}
@@ -122,11 +98,32 @@ export const InventoryGrid = ({
                   {item.items[0].petName && <p>Питомец: {item.items[0].petName}</p>}
                 </div>
               )}
+              {!readonly && (
+                <div className="flex flex-col gap-2 mt-4">
+                  {item.type === 'healthPotion' && (
+                    <Button
+                      onClick={() => onUseItem(item)}
+                      variant="outline"
+                      className="w-full"
+                    >
+                      Использовать
+                    </Button>
+                  )}
+                  {item.type !== 'dragon_egg' && (
+                    <Button
+                      onClick={() => onSellItem(item)}
+                      variant="destructive"
+                      className="w-full"
+                    >
+                      Продать
+                    </Button>
+                  )}
+                </div>
+              )}
             </div>
-          </HoverCardContent>
-        </HoverCard>
+          </DialogContent>
+        </Dialog>
       ))}
     </>
   );
 };
-

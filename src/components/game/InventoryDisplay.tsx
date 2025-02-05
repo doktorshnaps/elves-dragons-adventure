@@ -23,7 +23,7 @@ export const InventoryDisplay = ({
   showOnlyPotions = false
 }: InventoryDisplayProps) => {
   const { eggs } = useDragonEggs();
-  const { inventory } = useInventoryState();
+  const { inventory, updateInventory } = useInventoryState();
   const { toast } = useToast();
   const {
     balance,
@@ -31,9 +31,9 @@ export const InventoryDisplay = ({
     handleSellItem,
   } = useInventoryLogic(inventory);
 
-  const handleUseItem = (item: Item) => {
-    if (!readonly && onUseItem) {
-      if (item.type === 'cardPack') {
+  const handleUseItem = (groupedItem: GroupedItem) => {
+    if (!readonly && onUseItem && groupedItem.items.length > 0) {
+      if (groupedItem.type === 'cardPack') {
         toast({
           title: "Недоступно",
           description: "Колоды карт можно использовать только в магазине",
@@ -41,13 +41,49 @@ export const InventoryDisplay = ({
         });
         return;
       }
-      onUseItem(item);
+
+      const itemToUse = groupedItem.items[0];
+      onUseItem(itemToUse);
+
+      // Обновляем инвентарь после использования предмета
+      const newInventory = inventory.filter(item => item.id !== itemToUse.id);
+      updateInventory(newInventory);
+
+      // Если это была последняя копия предмета в стопке
+      if (groupedItem.count === 1) {
+        toast({
+          title: "Предмет использован",
+          description: `${groupedItem.name} был использован`
+        });
+      } else {
+        toast({
+          title: "Предмет использован",
+          description: `${groupedItem.name} был использован (осталось ${groupedItem.count - 1})`
+        });
+      }
     }
   };
 
-  const handleGroupedItem = (groupedItem: GroupedItem, handler: (item: Item) => void) => {
-    if (groupedItem.items.length > 0) {
-      handler(groupedItem.items[0]);
+  const handleGroupedSellItem = (groupedItem: GroupedItem) => {
+    if (groupedItem.items.length > 0 && onSellItem) {
+      const itemToSell = groupedItem.items[0];
+      onSellItem(itemToSell);
+
+      // Обновляем инвентарь после продажи предмета
+      const newInventory = inventory.filter(item => item.id !== itemToSell.id);
+      updateInventory(newInventory);
+
+      if (groupedItem.count === 1) {
+        toast({
+          title: "Предмет продан",
+          description: `${groupedItem.name} был продан`
+        });
+      } else {
+        toast({
+          title: "Предмет продан",
+          description: `${groupedItem.name} был продан (осталось ${groupedItem.count - 1})`
+        });
+      }
     }
   };
 
@@ -72,8 +108,8 @@ export const InventoryDisplay = ({
           <InventoryGrid
             groupedItems={groupItems(filteredInventory)}
             readonly={readonly}
-            onUseItem={(groupedItem) => handleGroupedItem(groupedItem, handleUseItem)}
-            onSellItem={(groupedItem) => handleGroupedItem(groupedItem, onSellItem || (() => {}))}
+            onUseItem={handleUseItem}
+            onSellItem={handleGroupedSellItem}
           />
         </div>
       </div>
