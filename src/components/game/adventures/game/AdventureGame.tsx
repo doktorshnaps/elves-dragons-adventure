@@ -34,6 +34,7 @@ export const AdventureGame = ({
   const [isAttacking, setIsAttacking] = useState(false);
   const [cameraOffset, setCameraOffset] = useState(0);
   const [projectiles, setProjectiles] = useState<Projectile[]>([]);
+  const [currentHealth, setCurrentHealth] = useState(playerHealth);
   const gameRef = useRef<HTMLDivElement>(null);
   const gameContainerRef = useRef<HTMLDivElement>(null);
   const jumpTimeout = useRef<NodeJS.Timeout | null>(null);
@@ -93,11 +94,11 @@ export const AdventureGame = ({
     };
   }, [isMovingRight, isMovingLeft]);
 
-  // Эффект для обработки прыжка
+  // Эффект для обработки прыжка с увеличенной высотой
   useEffect(() => {
     if (isJumping) {
       const gravity = 0.5;
-      let velocity = 12;
+      let velocity = 20; // Увеличенная начальная скорость прыжка
       
       const jumpAnimation = () => {
         setPlayerY(prev => {
@@ -121,10 +122,11 @@ export const AdventureGame = ({
     }
   }, [isJumping]);
 
-  // Эффект для стрельбы монстра
+  // Эффект для стрельбы монстра с периодичностью
   useEffect(() => {
-    if (currentMonster && playerHealth > 0) {
-      projectileInterval.current = setInterval(() => {
+    if (currentMonster && currentHealth > 0) {
+      // Стреляем каждые 2 секунды
+      const shootInterval = setInterval(() => {
         const newProjectile: Projectile = {
           id: Date.now(),
           x: 400, // позиция монстра
@@ -133,16 +135,12 @@ export const AdventureGame = ({
         };
         setProjectiles(prev => [...prev, newProjectile]);
       }, 2000);
+
+      return () => clearInterval(shootInterval);
     }
+  }, [currentMonster, currentHealth, playerPosition]);
 
-    return () => {
-      if (projectileInterval.current) {
-        clearInterval(projectileInterval.current);
-      }
-    };
-  }, [currentMonster, playerHealth, playerPosition]);
-
-  // Эффект для движения снарядов
+  // Эффект для движения снарядов и проверки попаданий
   useEffect(() => {
     const moveProjectiles = () => {
       setProjectiles(prev => 
@@ -154,10 +152,18 @@ export const AdventureGame = ({
                           Math.abs(projectile.y - playerY) < 50;
           
           if (hitPlayer) {
-            onMonsterDefeat(currentMonster!);
+            // При попадании снимаем здоровье
+            setCurrentHealth(prev => Math.max(0, prev - 10));
+            if (currentMonster) {
+              onMonsterDefeat({
+                ...currentMonster,
+                health: currentMonster.health
+              });
+            }
+            return false;
           }
           
-          return !hitPlayer && projectile.x > 0 && projectile.x < 2000;
+          return projectile.x > 0 && projectile.x < 2000;
         })
       );
       requestAnimationFrame(moveProjectiles);
@@ -224,7 +230,7 @@ export const AdventureGame = ({
             position={playerPosition}
             yPosition={playerY}
             isAttacking={isAttacking}
-            health={playerHealth}
+            health={currentHealth}
             power={playerPower}
           />
 
