@@ -26,7 +26,7 @@ export const DungeonLayout = ({ children, backgroundImage }: DungeonLayoutProps)
     >
       <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
       
-      <div className="fixed top-4 left-4 z-50 flex flex-col sm:flex-row gap-2">
+      <div className="fixed top-4 left-4 z-50">
         <Button 
           variant="outline" 
           onClick={() => navigate('/menu')}
@@ -35,6 +35,9 @@ export const DungeonLayout = ({ children, backgroundImage }: DungeonLayoutProps)
           <ArrowLeft className="mr-2 h-4 w-4" />
           Вернуться в меню
         </Button>
+      </div>
+
+      <div className="fixed top-4 right-4 z-50">
         <Button 
           variant="outline" 
           onClick={() => navigate('/dungeons')}
