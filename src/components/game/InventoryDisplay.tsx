@@ -1,3 +1,4 @@
+
 import { Item } from "@/types/inventory";
 import { useDragonEggs } from "@/contexts/DragonEggContext";
 import { useInventoryLogic } from "./inventory/useInventoryLogic";
@@ -9,12 +10,14 @@ import { useToast } from "@/hooks/use-toast";
 
 interface InventoryDisplayProps {
   onUseItem?: (item: Item) => void;
+  onSellItem?: (item: Item) => void;
   readonly?: boolean;
   showOnlyPotions?: boolean;
 }
 
 export const InventoryDisplay = ({ 
   onUseItem, 
+  onSellItem,
   readonly = false,
   showOnlyPotions = false
 }: InventoryDisplayProps) => {
@@ -62,12 +65,8 @@ export const InventoryDisplay = ({
           <InventoryGrid
             groupedItems={groupItems(filteredInventory)}
             readonly={readonly}
-            onUseItem={(groupedItem) => {
-              if (groupedItem.items.length > 0) {
-                handleUseItem(groupedItem.items[0]);
-              }
-            }}
-            onSellItem={handleSellItem}
+            onUseItem={(item) => handleUseItem(item.items[0])}
+            onSellItem={(item) => onSellItem?.(item.items[0])}
           />
         </div>
       </div>

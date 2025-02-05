@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
@@ -9,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { ArrowLeft } from "lucide-react";
 import { AdventureLayout } from "./components/AdventureLayout";
 import { InventoryDisplay } from "@/components/game/InventoryDisplay";
+import { Item } from "@/types/inventory";
 
 export const AdventuresTab = () => {
   const navigate = useNavigate();
@@ -186,7 +186,7 @@ export const AdventuresTab = () => {
     setPlayerStats({ ...playerStats, health: newPlayerHealth });
   };
 
-  const handleUseItem = (item: any) => {
+  const handleUseItem = (item: Item) => {
     if (item.type === "healthPotion") {
       const newHealth = Math.min(playerStats.maxHealth, playerStats.health + item.value);
       setPlayerStats(prev => ({
@@ -205,7 +205,7 @@ export const AdventuresTab = () => {
 
       // Parse and update inventory
       const items = JSON.parse(inventory);
-      const updatedItems = items.filter((i: any) => i.id !== item.items[0].id);
+      const updatedItems = items.filter((i: Item) => i.id !== item.id);
       
       // Save updated inventory
       localStorage.setItem('gameInventory', JSON.stringify(updatedItems));
@@ -218,14 +218,14 @@ export const AdventuresTab = () => {
     }
   };
 
-  const handleSellItem = (item: any) => {
+  const handleSellItem = (item: Item) => {
     // Get current inventory
     const inventory = localStorage.getItem('gameInventory');
     if (!inventory) return;
 
     // Parse and update inventory
     const items = JSON.parse(inventory);
-    const updatedItems = items.filter((i: any) => i.id !== item.id);
+    const updatedItems = items.filter((i: Item) => i.id !== item.id);
     
     // Update balance (assuming each item sells for 10 coins)
     updateBalance(balance + 10);
