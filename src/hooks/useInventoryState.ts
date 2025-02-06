@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { Item } from "@/types/inventory";
 import { useToast } from '@/hooks/use-toast';
@@ -10,9 +11,19 @@ export const useInventoryState = () => {
   });
 
   useEffect(() => {
-    const handleInventoryUpdate = (e: CustomEvent<{ inventory: Item[] }>) => {
-      setInventory(e.detail.inventory);
-      localStorage.setItem('gameInventory', JSON.stringify(e.detail.inventory));
+    const handleInventoryUpdate = (e: CustomEvent) => {
+      // Check if event detail exists and has inventory property
+      if (e.detail && e.detail.inventory) {
+        setInventory(e.detail.inventory);
+        localStorage.setItem('gameInventory', JSON.stringify(e.detail.inventory));
+      } else {
+        // If no detail.inventory, try to get latest from localStorage
+        const savedInventory = localStorage.getItem('gameInventory');
+        if (savedInventory) {
+          const newInventory = JSON.parse(savedInventory);
+          setInventory(newInventory);
+        }
+      }
     };
 
     const handleStorageChange = () => {
