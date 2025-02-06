@@ -1,7 +1,6 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import { Monster } from '../types';
-import { TargetedMonster } from './types/combatTypes';
 
 interface MonsterSpriteProps {
   monster: Monster;
