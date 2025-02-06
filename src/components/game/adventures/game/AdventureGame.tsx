@@ -57,14 +57,6 @@ export const AdventureGame = ({
   const gameContainerRef = useRef<HTMLDivElement>(null);
   const lastMonsterSpawn = useRef(0);
 
-  const { projectiles } = useProjectiles(
-    currentMonster,
-    playerPosition,
-    playerY,
-    currentHealth,
-    (damage: number) => setCurrentHealth(prev => Math.max(0, prev - damage))
-  );
-
   const updateCameraOffset = (playerPos: number) => {
     if (!gameContainerRef.current) return;
     const containerWidth = gameContainerRef.current.offsetWidth;
@@ -81,6 +73,14 @@ export const AdventureGame = ({
     setIsMovingRight,
     setIsMovingLeft
   } = usePlayerMovement(updateCameraOffset);
+
+  const { projectiles } = useProjectiles(
+    currentMonster,
+    playerPosition,
+    playerY,
+    currentHealth,
+    (damage: number) => setCurrentHealth(prev => Math.max(0, prev - damage))
+  );
 
   const rollDice = () => {
     return Math.floor(Math.random() * 20) + 1;
