@@ -1,16 +1,24 @@
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Coins, Sword } from "lucide-react";
+import { Coins, Sword, Target } from "lucide-react";
 import { motion } from "framer-motion";
 import { Monster } from "./types";
 
 interface MonsterCardProps {
   monster: Monster;
   onAttack: () => void;
+  onSelect: () => void;
+  isSelected: boolean;
   playerHealth: number;
 }
 
-export const MonsterCard = ({ monster, onAttack, playerHealth }: MonsterCardProps) => {
+export const MonsterCard = ({ 
+  monster, 
+  onAttack, 
+  onSelect,
+  isSelected,
+  playerHealth 
+}: MonsterCardProps) => {
   const healthPercentage = (monster.health / monster.maxHealth) * 100;
   
   return (
@@ -18,8 +26,10 @@ export const MonsterCard = ({ monster, onAttack, playerHealth }: MonsterCardProp
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: -20 }}
+      className={`${isSelected ? 'ring-2 ring-game-accent' : ''}`}
+      onClick={onSelect}
     >
-      <Card className="p-6 bg-game-surface border-game-accent">
+      <Card className="p-6 bg-game-surface border-game-accent cursor-pointer hover:bg-game-surface/80">
         <div className="space-y-4">
           <div className="flex justify-between items-center">
             <h3 className="text-xl font-bold text-game-accent">{monster.name}</h3>
@@ -42,14 +52,12 @@ export const MonsterCard = ({ monster, onAttack, playerHealth }: MonsterCardProp
             </div>
           </div>
 
-          <Button 
-            className="w-full"
-            onClick={onAttack}
-            disabled={playerHealth <= 0}
-          >
-            <Sword className="w-4 h-4 mr-2" />
-            Атаковать
-          </Button>
+          {isSelected && (
+            <div className="flex items-center justify-center text-game-accent">
+              <Target className="w-6 h-6" />
+              <span className="ml-2">Выбран как цель</span>
+            </div>
+          )}
         </div>
       </Card>
     </motion.div>

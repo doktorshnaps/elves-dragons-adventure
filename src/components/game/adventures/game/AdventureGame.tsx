@@ -1,5 +1,6 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { Card } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import { Monster } from '../types';
 import { usePlayerMovement } from './hooks/usePlayerMovement';
 import { useProjectiles } from './hooks/useProjectiles';
@@ -7,9 +8,9 @@ import { useAdventureState } from '../hooks/useAdventureState';
 import { GameControls } from '../components/GameControls';
 import { GameWorld } from '../components/GameWorld';
 import { PlayerStatsHeader } from './PlayerStatsHeader';
-import { MagicProjectile } from './MagicProjectile';
 import { GameOver } from './GameOver';
-import { v4 as uuidv4 } from 'uuid';
+import { calculateAttackResult } from '../combat/combatUtils';
+import { useToast } from '@/hooks/use-toast';
 
 interface AdventureGameProps {
   onMonsterDefeat: (monster: Monster) => void;
@@ -32,24 +33,17 @@ export const AdventureGame = ({
   requiredExperience,
   maxHealth
 }: AdventureGameProps) => {
+  const { toast } = useToast();
+  const [selectedMonster, setSelectedMonster] = useState<Monster | null>(null);
   const {
     currentHealth,
     setCurrentHealth,
-    isAttacking,
-    setIsAttacking,
     monsters,
     setMonsters,
     cameraOffset,
     setCameraOffset,
     generateMonster
   } = useAdventureState(playerHealth);
-
-  const [magicProjectiles, setMagicProjectiles] = React.useState<Array<{
-    id: string;
-    x: number;
-    y: number;
-    direction: number;
-  }>>([]);
 
   const gameRef = useRef<HTMLDivElement>(null);
   const gameContainerRef = useRef<HTMLDivElement>(null);
@@ -71,18 +65,6 @@ export const AdventureGame = ({
     setIsMovingRight,
     setIsMovingLeft
   } = usePlayerMovement(updateCameraOffset);
-
-  const handleProjectileHit = (damage: number) => {
-    setCurrentHealth(prev => Math.max(0, prev - damage));
-  };
-
-  const { projectiles } = useProjectiles(
-    currentMonster,
-    playerPosition,
-    playerY,
-    currentHealth,
-    handleProjectileHit
-  );
 
   useEffect(() => {
     const currentTime = Date.now();
@@ -106,61 +88,59 @@ export const AdventureGame = ({
     }
   }, [playerPosition, isMovingRight, isMovingLeft, generateMonster]);
 
-  useEffect(() => {
-    setMonsters(prev => prev.filter(monster => 
-      Math.abs(monster.position - playerPosition) < 800
-    ));
-  }, [playerPosition, setMonsters]);
+  const handleMonsterSelect = (monster: Monster) => {
+    setSelectedMonster(monster);
+    toast({
+      title: "Цель выбрана",
+      description: `${monster.name} выбран как цель для атаки`,
+    });
+  };
 
   const handleAttack = () => {
-    if (isAttacking) return;
-    
-    setIsAttacking(true);
-    
-    // Создаем магический снаряд
-    const direction = isMovingLeft ? -1 : 1;
-    const newProjectile = {
-      id: uuidv4(),
-      x: playerPosition,
-      y: playerY + 50,
-      direction: direction
-    };
-    setMagicProjectiles(prev => [...prev, newProjectile]);
+    if (!selectedMonster) {
+      toast({
+        title: "Выберите цель",
+        description: "Сначала выберите монстра для атаки",
+        variant: "destructive"
+      });
+      return;
+    }
 
-    // Проверяем попадание по монстрам
-    const checkHit = () => {
-      let hit = false;
-      monsters.forEach(monster => {
-        const distanceToMonster = Math.abs(newProjectile.x - monster.position);
-        if (distanceToMonster < 150) { // Радиус поражения магии
-          hit = true;
-          const damage = Math.max(1, playerPower + Math.floor(Math.random() * 3));
-          const updatedMonster = {
-            ...monster,
-            health: Math.max(0, monster.health - damage)
-          };
-          
-          if (updatedMonster.health <= 0) {
-            setMonsters(prev => prev.filter(m => m.id !== monster.id));
-            onMonsterDefeat(updatedMonster);
-          } else {
-            setMonsters(prev => 
-              prev.map(m => m.id === monster.id ? updatedMonster : m)
-            );
-          }
-        }
+    const result = calculateAttackResult(playerPower);
+    
+    if (result.damage >= 0) {
+      // Атака по монстру
+      const updatedMonster = {
+        ...selectedMonster,
+        health: Math.max(0, selectedMonster.health - result.damage)
+      };
+
+      toast({
+        title: result.message,
+        description: `Нанесено ${result.damage} урона`,
+        variant: result.type === 'fatal' || result.type === 'critical' ? "destructive" : "default"
       });
 
-      if (hit) {
-        setIsAttacking(false);
-        setMagicProjectiles(prev => prev.filter(p => p.id !== newProjectile.id));
+      if (updatedMonster.health <= 0) {
+        setMonsters(prev => prev.filter(m => m.id !== selectedMonster.id));
+        setSelectedMonster(null);
+        onMonsterDefeat(updatedMonster);
       } else {
-        // Если не попали, продолжаем проверять
-        requestAnimationFrame(checkHit);
+        setMonsters(prev => 
+          prev.map(m => m.id === selectedMonster.id ? updatedMonster : m)
+        );
       }
-    };
-
-    requestAnimationFrame(checkHit);
+    } else {
+      // Урон игроку (парирование)
+      const playerDamage = Math.abs(result.damage);
+      setCurrentHealth(prev => Math.max(0, prev - playerDamage));
+      
+      toast({
+        title: result.message,
+        description: `Получено ${playerDamage} урона`,
+        variant: "destructive"
+      });
+    }
   };
 
   return (
@@ -185,21 +165,22 @@ export const AdventureGame = ({
             cameraOffset={cameraOffset}
             playerPosition={playerPosition}
             playerY={playerY}
-            isAttacking={isAttacking}
             currentHealth={currentHealth}
             playerPower={playerPower}
             monsters={monsters}
-            projectiles={projectiles}
+            selectedMonsterId={selectedMonster?.id}
+            onMonsterSelect={handleMonsterSelect}
           />
 
-          {magicProjectiles.map(projectile => (
-            <MagicProjectile
-              key={projectile.id}
-              x={projectile.x}
-              y={projectile.y}
-              direction={projectile.direction}
-            />
-          ))}
+          <div className="fixed bottom-20 right-1/2 transform translate-x-1/2 z-50">
+            <Button
+              onClick={handleAttack}
+              disabled={!selectedMonster || currentHealth <= 0}
+              className="bg-game-accent hover:bg-game-accent/90"
+            >
+              Атаковать выбранную цель
+            </Button>
+          </div>
         </div>
 
         <GameControls
@@ -207,7 +188,7 @@ export const AdventureGame = ({
           onMoveRight={setIsMovingRight}
           onJump={handleJump}
           onAttack={handleAttack}
-          isAttacking={isAttacking}
+          isAttacking={false}
         />
       </Card>
     </>
