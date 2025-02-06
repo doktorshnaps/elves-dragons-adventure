@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { Monster } from '../types';
 import { PlayerCharacter } from '../game/PlayerCharacter';
 import { MonsterSprite } from '../game/MonsterSprite';
@@ -27,13 +27,6 @@ interface GameWorldProps {
   balance: number;
 }
 
-const backgrounds = [
-  "/lovable-uploads/f97dbde4-585c-4a9d-b47a-32fe1cf9392f.png",
-  "/lovable-uploads/d9fed790-128c-40f2-b174-66bff52f9028.png",
-  "/lovable-uploads/cffdaff4-73e2-4415-82e4-e70ec09780de.png",
-  "/lovable-uploads/981732c0-c6c4-41bf-9eff-e1dc31c3e000.png"
-];
-
 export const GameWorld = ({
   gameRef,
   cameraOffset,
@@ -54,52 +47,22 @@ export const GameWorld = ({
   requiredExperience,
   balance
 }: GameWorldProps) => {
-  const [currentBackgroundIndex, setCurrentBackgroundIndex] = useState(0);
-  const segmentWidth = 1000; // Width of each background segment
-
-  useEffect(() => {
-    // Calculate which background should be shown based on camera offset
-    const newIndex = Math.floor((cameraOffset / segmentWidth) % backgrounds.length);
-    setCurrentBackgroundIndex(newIndex);
-  }, [cameraOffset]);
-
-  // Calculate positions for three backgrounds (previous, current, next)
-  const renderBackgrounds = () => {
-    return backgrounds.map((_, index) => {
-      const position = index * segmentWidth;
-      const bgIndex = (currentBackgroundIndex + index) % backgrounds.length;
-      
-      return (
-        <div
-          key={`bg-${index}`}
-          className="absolute inset-0 bg-cover bg-center transition-opacity duration-500"
-          style={{
-            backgroundImage: `url(${backgrounds[bgIndex]})`,
-            left: `${position}px`,
-            width: `${segmentWidth}px`,
-            height: '100%',
-          }}
-        />
-      );
-    });
-  };
-
   return (
     <div 
       ref={gameRef}
       className="absolute inset-0 h-full"
       style={{
         width: '100000px',
+        backgroundImage: 'url("/lovable-uploads/0fb6e9e6-c143-470a-87c8-adf54800851d.png")',
+        backgroundSize: 'cover',
+        backgroundPosition: 'center',
+        backgroundRepeat: 'repeat-x',
         transform: `translateX(-${cameraOffset}px)`,
         transition: 'transform 0.1s ease-out'
       }}
     >
       <div className="fixed top-4 right-4 z-50">
         <span className="text-xl font-bold text-yellow-400">{balance} монет</span>
-      </div>
-
-      <div className="relative w-full h-full overflow-hidden">
-        {renderBackgrounds()}
       </div>
 
       <div className="absolute bottom-0 w-full h-[50px] bg-game-surface/50" />
