@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { Card } from "@/components/ui/card";
 import { Monster } from '../types';
 import { usePlayerMovement } from './hooks/usePlayerMovement';
@@ -10,6 +10,8 @@ import { PlayerStatsHeader } from './PlayerStatsHeader';
 import { MagicProjectile } from './MagicProjectile';
 import { GameOver } from './GameOver';
 import { v4 as uuidv4 } from 'uuid';
+import { TargetedMonster } from './types/combatTypes';
+import { useCombatSystem } from './hooks/useCombatSystem';
 
 interface AdventureGameProps {
   onMonsterDefeat: (monster: Monster) => void;
@@ -44,12 +46,7 @@ export const AdventureGame = ({
     generateMonster
   } = useAdventureState(playerHealth);
 
-  const [magicProjectiles, setMagicProjectiles] = React.useState<Array<{
-    id: string;
-    x: number;
-    y: number;
-    direction: number;
-  }>>([]);
+  const [targetedMonster, setTargetedMonster] = useState<TargetedMonster | null>(null);
 
   const gameRef = useRef<HTMLDivElement>(null);
   const gameContainerRef = useRef<HTMLDivElement>(null);
@@ -73,7 +70,7 @@ export const AdventureGame = ({
   } = usePlayerMovement(updateCameraOffset);
 
   const handleProjectileHit = (damage: number) => {
-    setCurrentHealth(prev => Math.max(0, prev - damage));
+    setCurrentHealth(Math.max(0, currentHealth - damage));
   };
 
   const { projectiles } = useProjectiles(
@@ -83,6 +80,23 @@ export const AdventureGame = ({
     currentHealth,
     handleProjectileHit
   );
+
+  const handleSelectTarget = (monster: Monster) => {
+    setTargetedMonster({
+      id: monster.id,
+      position: monster.position || 0
+    });
+  };
+
+  const handleAttack = () => {
+    if (!targetedMonster) return;
+    
+    const monster = monsters.find(m => m.id === targetedMonster.id);
+    if (!monster) return;
+    
+    onMonsterDefeat(monster);
+    setTargetedMonster(null);
+  };
 
   useEffect(() => {
     const currentTime = Date.now();
@@ -105,63 +119,6 @@ export const AdventureGame = ({
       }
     }
   }, [playerPosition, isMovingRight, isMovingLeft, generateMonster]);
-
-  useEffect(() => {
-    setMonsters(prev => prev.filter(monster => 
-      Math.abs(monster.position - playerPosition) < 800
-    ));
-  }, [playerPosition, setMonsters]);
-
-  const handleAttack = () => {
-    if (isAttacking) return;
-    
-    setIsAttacking(true);
-    
-    // Создаем магический снаряд
-    const direction = isMovingLeft ? -1 : 1;
-    const newProjectile = {
-      id: uuidv4(),
-      x: playerPosition,
-      y: playerY + 50,
-      direction: direction
-    };
-    setMagicProjectiles(prev => [...prev, newProjectile]);
-
-    // Проверяем попадание по монстрам
-    const checkHit = () => {
-      let hit = false;
-      monsters.forEach(monster => {
-        const distanceToMonster = Math.abs(newProjectile.x - monster.position);
-        if (distanceToMonster < 150) { // Радиус поражения магии
-          hit = true;
-          const damage = Math.max(1, playerPower + Math.floor(Math.random() * 3));
-          const updatedMonster = {
-            ...monster,
-            health: Math.max(0, monster.health - damage)
-          };
-          
-          if (updatedMonster.health <= 0) {
-            setMonsters(prev => prev.filter(m => m.id !== monster.id));
-            onMonsterDefeat(updatedMonster);
-          } else {
-            setMonsters(prev => 
-              prev.map(m => m.id === monster.id ? updatedMonster : m)
-            );
-          }
-        }
-      });
-
-      if (hit) {
-        setIsAttacking(false);
-        setMagicProjectiles(prev => prev.filter(p => p.id !== newProjectile.id));
-      } else {
-        // Если не попали, продолжаем проверять
-        requestAnimationFrame(checkHit);
-      }
-    };
-
-    requestAnimationFrame(checkHit);
-  };
 
   return (
     <>
@@ -190,16 +147,9 @@ export const AdventureGame = ({
             playerPower={playerPower}
             monsters={monsters}
             projectiles={projectiles}
+            onSelectTarget={handleSelectTarget}
+            targetedMonster={targetedMonster}
           />
-
-          {magicProjectiles.map(projectile => (
-            <MagicProjectile
-              key={projectile.id}
-              x={projectile.x}
-              y={projectile.y}
-              direction={projectile.direction}
-            />
-          ))}
         </div>
 
         <GameControls
@@ -208,6 +158,7 @@ export const AdventureGame = ({
           onJump={handleJump}
           onAttack={handleAttack}
           isAttacking={isAttacking}
+          hasTarget={!!targetedMonster}
         />
       </Card>
     </>
