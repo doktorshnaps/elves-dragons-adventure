@@ -1,18 +1,19 @@
 import React from 'react';
 import { Monster } from '../types';
-import { MonsterCard } from '../MonsterCard';
 import { PlayerCharacter } from '../game/PlayerCharacter';
+import { MonsterSprite } from '../game/MonsterSprite';
+import { ProjectileSprite } from '../game/ProjectileSprite';
 
 interface GameWorldProps {
   gameRef: React.RefObject<HTMLDivElement>;
   cameraOffset: number;
   playerPosition: number;
   playerY: number;
+  isAttacking: boolean;
   currentHealth: number;
   playerPower: number;
   monsters: Monster[];
-  selectedMonsterId?: number;
-  onMonsterSelect: (monster: Monster) => void;
+  projectiles: any[];
 }
 
 export const GameWorld = ({
@@ -20,45 +21,51 @@ export const GameWorld = ({
   cameraOffset,
   playerPosition,
   playerY,
+  isAttacking,
   currentHealth,
   playerPower,
   monsters,
-  selectedMonsterId,
-  onMonsterSelect
+  projectiles
 }: GameWorldProps) => {
   return (
-    <div
+    <div 
       ref={gameRef}
-      className="w-full h-full relative"
+      className="absolute h-full"
       style={{
+        width: '100000px',
+        backgroundImage: 'url("/lovable-uploads/0fb6e9e6-c143-470a-87c8-adf54800851d.png")',
+        backgroundSize: 'cover',
+        backgroundPosition: 'center',
+        backgroundRepeat: 'repeat-x',
         transform: `translateX(-${cameraOffset}px)`,
         transition: 'transform 0.1s ease-out'
       }}
     >
-      {/* Фон и земля */}
-      <div className="absolute inset-0 bg-gradient-to-b from-blue-900 to-blue-700" />
-      <div className="absolute bottom-0 left-0 right-0 h-12 bg-gray-800" />
+      <div className="absolute bottom-0 w-full h-[50px] bg-game-surface/50" />
 
-      {/* Монстры */}
-      {monsters.map(monster => (
-        <MonsterCard
-          key={monster.id}
-          monster={monster}
-          onAttack={() => {}}
-          onSelect={() => onMonsterSelect(monster)}
-          isSelected={monster.id === selectedMonsterId}
-          playerHealth={currentHealth}
-        />
-      ))}
-
-      {/* Игрок */}
       <PlayerCharacter
         position={playerPosition}
         yPosition={playerY}
-        isAttacking={false}
+        isAttacking={isAttacking}
         health={currentHealth}
         power={playerPower}
       />
+
+      {monsters.map(monster => (
+        <MonsterSprite
+          key={monster.id}
+          monster={monster}
+          position={monster.position || 400}
+        />
+      ))}
+
+      {projectiles.map(projectile => (
+        <ProjectileSprite
+          key={projectile.id}
+          x={projectile.x}
+          y={projectile.y}
+        />
+      ))}
     </div>
   );
 };

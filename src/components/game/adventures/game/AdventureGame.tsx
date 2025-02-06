@@ -1,15 +1,15 @@
-import React, { useRef } from 'react';
+import React, { useEffect, useRef } from 'react';
 import { Card } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import { Monster } from '../types';
 import { usePlayerMovement } from './hooks/usePlayerMovement';
+import { useProjectiles } from './hooks/useProjectiles';
 import { useAdventureState } from '../hooks/useAdventureState';
 import { GameControls } from '../components/GameControls';
 import { GameWorld } from '../components/GameWorld';
 import { PlayerStatsHeader } from './PlayerStatsHeader';
+import { MagicProjectile } from './MagicProjectile';
 import { GameOver } from './GameOver';
-import { useMonsterSpawning } from './hooks/useMonsterSpawning';
-import { useCombatSystem } from './hooks/useCombatSystem';
+import { v4 as uuidv4 } from 'uuid';
 
 interface AdventureGameProps {
   onMonsterDefeat: (monster: Monster) => void;
@@ -26,6 +26,7 @@ export const AdventureGame = ({
   onMonsterDefeat, 
   playerHealth,
   playerPower,
+  currentMonster,
   playerLevel,
   playerExperience,
   requiredExperience,
@@ -34,14 +35,25 @@ export const AdventureGame = ({
   const {
     currentHealth,
     setCurrentHealth,
+    isAttacking,
+    setIsAttacking,
     monsters,
     setMonsters,
     cameraOffset,
-    setCameraOffset
+    setCameraOffset,
+    generateMonster
   } = useAdventureState(playerHealth);
+
+  const [magicProjectiles, setMagicProjectiles] = React.useState<Array<{
+    id: string;
+    x: number;
+    y: number;
+    direction: number;
+  }>>([]);
 
   const gameRef = useRef<HTMLDivElement>(null);
   const gameContainerRef = useRef<HTMLDivElement>(null);
+  const lastMonsterSpawn = useRef(0);
 
   const updateCameraOffset = (playerPos: number) => {
     if (!gameContainerRef.current) return;
@@ -60,27 +72,96 @@ export const AdventureGame = ({
     setIsMovingLeft
   } = usePlayerMovement(updateCameraOffset);
 
-  useMonsterSpawning(
-    isMovingRight,
-    isMovingLeft,
+  const handleProjectileHit = (damage: number) => {
+    setCurrentHealth(prev => Math.max(0, prev - damage));
+  };
+
+  const { projectiles } = useProjectiles(
+    currentMonster,
     playerPosition,
-    setMonsters,
-    monsters
+    playerY,
+    currentHealth,
+    handleProjectileHit
   );
 
-  const {
-    selectedMonster,
-    isPlayerTurn,
-    handleMonsterSelect,
-    handleAttack
-  } = useCombatSystem(
-    playerPower,
-    currentHealth,
-    setCurrentHealth,
-    monsters,
-    setMonsters,
-    onMonsterDefeat
-  );
+  useEffect(() => {
+    const currentTime = Date.now();
+    if (currentTime - lastMonsterSpawn.current > 2000) {
+      const spawnDistance = isMovingRight ? playerPosition + 400 : playerPosition - 400;
+      
+      if ((isMovingRight && spawnDistance > playerPosition) || 
+          (isMovingLeft && spawnDistance < playerPosition)) {
+        const monsterLevel = Math.floor(Math.abs(playerPosition) / 1000) + 1;
+        const newMonster = generateMonster(spawnDistance);
+        
+        if (newMonster) {
+          newMonster.power = Math.floor(newMonster.power * (1 + monsterLevel * 0.2));
+          newMonster.health = Math.floor(newMonster.health * (1 + monsterLevel * 0.2));
+          newMonster.maxHealth = newMonster.health;
+          
+          setMonsters(prev => [...prev, newMonster]);
+          lastMonsterSpawn.current = currentTime;
+        }
+      }
+    }
+  }, [playerPosition, isMovingRight, isMovingLeft, generateMonster]);
+
+  useEffect(() => {
+    setMonsters(prev => prev.filter(monster => 
+      Math.abs(monster.position - playerPosition) < 800
+    ));
+  }, [playerPosition, setMonsters]);
+
+  const handleAttack = () => {
+    if (isAttacking) return;
+    
+    setIsAttacking(true);
+    
+    // Создаем магический снаряд
+    const direction = isMovingLeft ? -1 : 1;
+    const newProjectile = {
+      id: uuidv4(),
+      x: playerPosition,
+      y: playerY + 50,
+      direction: direction
+    };
+    setMagicProjectiles(prev => [...prev, newProjectile]);
+
+    // Проверяем попадание по монстрам
+    const checkHit = () => {
+      let hit = false;
+      monsters.forEach(monster => {
+        const distanceToMonster = Math.abs(newProjectile.x - monster.position);
+        if (distanceToMonster < 150) { // Радиус поражения магии
+          hit = true;
+          const damage = Math.max(1, playerPower + Math.floor(Math.random() * 3));
+          const updatedMonster = {
+            ...monster,
+            health: Math.max(0, monster.health - damage)
+          };
+          
+          if (updatedMonster.health <= 0) {
+            setMonsters(prev => prev.filter(m => m.id !== monster.id));
+            onMonsterDefeat(updatedMonster);
+          } else {
+            setMonsters(prev => 
+              prev.map(m => m.id === monster.id ? updatedMonster : m)
+            );
+          }
+        }
+      });
+
+      if (hit) {
+        setIsAttacking(false);
+        setMagicProjectiles(prev => prev.filter(p => p.id !== newProjectile.id));
+      } else {
+        // Если не попали, продолжаем проверять
+        requestAnimationFrame(checkHit);
+      }
+    };
+
+    requestAnimationFrame(checkHit);
+  };
 
   return (
     <>
@@ -104,22 +185,21 @@ export const AdventureGame = ({
             cameraOffset={cameraOffset}
             playerPosition={playerPosition}
             playerY={playerY}
+            isAttacking={isAttacking}
             currentHealth={currentHealth}
             playerPower={playerPower}
             monsters={monsters}
-            selectedMonsterId={selectedMonster?.id}
-            onMonsterSelect={handleMonsterSelect}
+            projectiles={projectiles}
           />
 
-          <div className="fixed bottom-20 right-1/2 transform translate-x-1/2 z-50">
-            <Button
-              onClick={handleAttack}
-              disabled={!selectedMonster || currentHealth <= 0}
-              className="bg-game-accent hover:bg-game-accent/90"
-            >
-              Атаковать выбранную цель
-            </Button>
-          </div>
+          {magicProjectiles.map(projectile => (
+            <MagicProjectile
+              key={projectile.id}
+              x={projectile.x}
+              y={projectile.y}
+              direction={projectile.direction}
+            />
+          ))}
         </div>
 
         <GameControls
@@ -127,7 +207,7 @@ export const AdventureGame = ({
           onMoveRight={setIsMovingRight}
           onJump={handleJump}
           onAttack={handleAttack}
-          isAttacking={!isPlayerTurn}
+          isAttacking={isAttacking}
         />
       </Card>
     </>

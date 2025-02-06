@@ -1,7 +1,6 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import { Monster } from '../types';
-import { Ghost, Skull, Sword } from 'lucide-react';
 
 interface MonsterSpriteProps {
   monster: Monster;
@@ -9,14 +8,14 @@ interface MonsterSpriteProps {
 }
 
 export const MonsterSprite = ({ monster, position }: MonsterSpriteProps) => {
-  const getMonsterIcon = (type: string) => {
+  const getMonsterEmoji = (type: string) => {
     switch (type) {
       case 'boss':
-        return <Skull className="w-8 h-8 text-red-500" />;
+        return '👿';
       case 'elite':
-        return <Sword className="w-8 h-8 text-purple-500" />;
+        return '👹';
       default:
-        return <Ghost className="w-8 h-8 text-blue-500" />;
+        return '👾';
     }
   };
 
@@ -24,11 +23,10 @@ export const MonsterSprite = ({ monster, position }: MonsterSpriteProps) => {
 
   return (
     <motion.div
-      className="absolute bottom-12"
+      className="absolute bottom-[50px]"
       style={{ left: position }}
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, y: -20 }}
+      animate={{ y: [0, -5, 0] }}
+      transition={{ duration: 2, repeat: Infinity }}
     >
       <div className="relative">
         {/* Monster stats */}
@@ -57,9 +55,9 @@ export const MonsterSprite = ({ monster, position }: MonsterSpriteProps) => {
             monster.type === 'boss' ? 'bg-red-600' : 
             monster.type === 'elite' ? 'bg-purple-600' : 
             'bg-blue-600'
-          } rounded-lg flex items-center justify-center`}
+          } rounded-lg flex items-center justify-center text-2xl`}
         >
-          {getMonsterIcon(monster.type)}
+          {getMonsterEmoji(monster.type)}
         </div>
       </div>
     </motion.div>
