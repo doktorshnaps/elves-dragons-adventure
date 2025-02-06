@@ -15,6 +15,8 @@ export const MonsterSection = ({ currentMonster, attackMonster, playerHealth }: 
     <MonsterCard
       monster={currentMonster}
       onAttack={attackMonster}
+      onSelect={() => {}} // Added missing prop
+      isSelected={true} // Added missing prop - assuming current monster is always selected
       playerHealth={playerHealth}
     />
   );
