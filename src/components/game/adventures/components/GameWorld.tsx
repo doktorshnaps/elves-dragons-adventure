@@ -3,6 +3,7 @@ import { Monster } from '../types';
 import { PlayerCharacter } from '../game/PlayerCharacter';
 import { MonsterSprite } from '../game/MonsterSprite';
 import { ProjectileSprite } from '../game/ProjectileSprite';
+import { TargetedMonster } from '../game/types/combatTypes';
 
 interface GameWorldProps {
   gameRef: React.RefObject<HTMLDivElement>;
@@ -14,6 +15,8 @@ interface GameWorldProps {
   playerPower: number;
   monsters: Monster[];
   projectiles: any[];
+  onSelectTarget: (monster: Monster) => void;
+  targetedMonster: TargetedMonster | null;
 }
 
 export const GameWorld = ({
@@ -25,7 +28,9 @@ export const GameWorld = ({
   currentHealth,
   playerPower,
   monsters,
-  projectiles
+  projectiles,
+  onSelectTarget,
+  targetedMonster
 }: GameWorldProps) => {
   return (
     <div 
@@ -56,6 +61,8 @@ export const GameWorld = ({
           key={monster.id}
           monster={monster}
           position={monster.position || 400}
+          onSelect={onSelectTarget}
+          isTargeted={targetedMonster?.id === monster.id}
         />
       ))}
 

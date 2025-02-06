@@ -1,11 +1,14 @@
 import React from 'react';
+import { Button } from "@/components/ui/button";
+import { ArrowLeft, ArrowRight, Sword } from "lucide-react";
 
 interface GameControlsProps {
-  onMoveLeft: (active: boolean) => void;
-  onMoveRight: (active: boolean) => void;
+  onMoveLeft: (value: boolean) => void;
+  onMoveRight: (value: boolean) => void;
   onJump: () => void;
   onAttack: () => void;
   isAttacking: boolean;
+  hasTarget: boolean;
 }
 
 export const GameControls = ({
@@ -13,41 +16,59 @@ export const GameControls = ({
   onMoveRight,
   onJump,
   onAttack,
-  isAttacking
+  isAttacking,
+  hasTarget
 }: GameControlsProps) => {
   return (
-    <>
-      <div className="fixed bottom-20 left-4 flex gap-4 md:hidden z-50">
-        <button
-          className="w-16 h-16 bg-game-primary/80 rounded-full flex items-center justify-center text-white text-2xl shadow-lg backdrop-blur-sm"
+    <div className="fixed bottom-4 left-0 right-0 flex justify-center gap-4 px-4">
+      <div className="flex gap-4">
+        <Button
+          variant="default"
+          size="lg"
+          className="h-16 w-16 rounded-full bg-game-accent hover:bg-game-accent/90"
+          onMouseDown={() => onMoveLeft(true)}
+          onMouseUp={() => onMoveLeft(false)}
+          onMouseLeave={() => onMoveLeft(false)}
           onTouchStart={() => onMoveLeft(true)}
           onTouchEnd={() => onMoveLeft(false)}
         >
-          ←
-        </button>
-        <button
-          className="w-16 h-16 bg-game-primary/80 rounded-full flex items-center justify-center text-white text-2xl shadow-lg backdrop-blur-sm"
+          <ArrowLeft className="h-8 w-8" />
+        </Button>
+        
+        <Button
+          variant="default"
+          size="lg"
+          className="h-16 w-16 rounded-full bg-game-accent hover:bg-game-accent/90"
+          onClick={onJump}
+        >
+          ⬆️
+        </Button>
+
+        <Button
+          variant="default"
+          size="lg"
+          className={`h-16 w-16 rounded-full ${
+            hasTarget ? 'bg-red-500 hover:bg-red-600' : 'bg-gray-500'
+          }`}
+          onClick={onAttack}
+          disabled={!hasTarget || isAttacking}
+        >
+          <Sword className="h-8 w-8" />
+        </Button>
+        
+        <Button
+          variant="default"
+          size="lg"
+          className="h-16 w-16 rounded-full bg-game-accent hover:bg-game-accent/90"
+          onMouseDown={() => onMoveRight(true)}
+          onMouseUp={() => onMoveRight(false)}
+          onMouseLeave={() => onMoveRight(false)}
           onTouchStart={() => onMoveRight(true)}
           onTouchEnd={() => onMoveRight(false)}
         >
-          →
-        </button>
+          <ArrowRight className="h-8 w-8" />
+        </Button>
       </div>
-      
-      <button
-        className="fixed bottom-20 right-28 w-20 h-20 bg-game-accent/80 rounded-full flex items-center justify-center text-white text-3xl shadow-lg backdrop-blur-sm md:hidden z-50"
-        onClick={onJump}
-      >
-        ↑
-      </button>
-
-      <button
-        className="fixed bottom-20 right-8 w-20 h-20 bg-game-accent/80 rounded-full flex items-center justify-center text-white text-3xl shadow-lg backdrop-blur-sm md:hidden z-50"
-        onClick={onAttack}
-        disabled={isAttacking}
-      >
-        ⚔️
-      </button>
-    </>
+    </div>
   );
 };
