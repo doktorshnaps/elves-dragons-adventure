@@ -11,6 +11,7 @@ import { GameOver } from './GameOver';
 import { TargetedMonster } from './types/combatTypes';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useToast } from '@/hooks/use-toast';
+import { useNavigate } from 'react-router-dom';
 
 interface AdventureGameProps {
   onMonsterDefeat: (monster: Monster) => void;
@@ -34,24 +35,17 @@ export const AdventureGame = ({
   maxHealth
 }: AdventureGameProps) => {
   const { toast } = useToast();
-  const {
-    currentHealth,
-    setCurrentHealth,
-    isAttacking,
-    setIsAttacking,
-    monsters,
-    setMonsters,
-    cameraOffset,
-    setCameraOffset,
-    generateMonster
-  } = useAdventureState(playerHealth);
-
+  const navigate = useNavigate();
+  const [currentHealth, setCurrentHealth] = useState(playerHealth);
+  const [isAttacking, setIsAttacking] = useState(false);
+  const [monsters, setMonsters] = useState<Monster[]>([]);
   const [targetedMonster, setTargetedMonster] = useState<TargetedMonster | null>(null);
   const [diceRoll, setDiceRoll] = useState<number | null>(null);
   const [isRolling, setIsRolling] = useState(false);
   const [isMonsterTurn, setIsMonsterTurn] = useState(false);
   const [monsterDiceRoll, setMonsterDiceRoll] = useState<number | null>(null);
   const [lastGeneratedPosition, setLastGeneratedPosition] = useState(0);
+  const [isGameOver, setIsGameOver] = useState(false);
 
   const gameRef = useRef<HTMLDivElement>(null);
   const gameContainerRef = useRef<HTMLDivElement>(null);
@@ -222,6 +216,22 @@ export const AdventureGame = ({
   };
 
   useEffect(() => {
+    if (currentHealth <= 0 && !isGameOver) {
+      setIsGameOver(true);
+      toast({
+        title: "Игра окончена",
+        description: "Ваш герой пал в бою",
+        variant: "destructive"
+      });
+      
+      // Задержка перед возвратом в меню
+      setTimeout(() => {
+        navigate('/');
+      }, 3000);
+    }
+  }, [currentHealth, isGameOver, navigate, toast]);
+
+  useEffect(() => {
     // Check if we need to generate a new monster based on player position
     const distanceFromLast = Math.abs(playerPosition - lastGeneratedPosition);
     
@@ -307,6 +317,7 @@ export const AdventureGame = ({
           onAttack={handleAttack}
           isAttacking={isAttacking}
           hasTarget={!!targetedMonster}
+          disabled={currentHealth <= 0 || isGameOver}
         />
       </Card>
     </>
