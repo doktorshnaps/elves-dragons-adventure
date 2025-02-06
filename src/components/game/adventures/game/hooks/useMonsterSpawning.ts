@@ -12,9 +12,20 @@ export const useMonsterSpawning = (
   const { generateMonster } = useMonsterGeneration(1);
 
   useEffect(() => {
+    // Generate initial monster
+    if (monsters.length === 0) {
+      const initialMonster = generateMonster(400);
+      if (initialMonster) {
+        setMonsters([initialMonster]);
+        setLastGeneratedPosition(400);
+      }
+    }
+  }, []);
+
+  useEffect(() => {
     const distanceFromLast = Math.abs(playerPosition - lastGeneratedPosition);
     
-    if (distanceFromLast >= 200) {
+    if (distanceFromLast >= 200 && monsters.length < 5) {
       const spawnPosition = isMovingRight ? 
         playerPosition + 400 : 
         playerPosition - 400;
@@ -31,7 +42,7 @@ export const useMonsterSpawning = (
         setLastGeneratedPosition(playerPosition);
       }
     }
-  }, [playerPosition, isMovingRight, isMovingLeft, generateMonster, lastGeneratedPosition]);
+  }, [playerPosition, isMovingRight, isMovingLeft, generateMonster, lastGeneratedPosition, monsters.length]);
 
   return { monsters, setMonsters };
 };

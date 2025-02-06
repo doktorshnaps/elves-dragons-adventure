@@ -113,7 +113,7 @@ export const AdventureGame = ({
   });
 
   const handleAttack = async () => {
-    if (!targetedMonster || isRolling) return;
+    if (!targetedMonster || isRolling || currentHealth <= 0) return;
     setIsAttacking(true);
     const monster = monsters.find(m => m.id === targetedMonster.id);
     if (monster) {
@@ -142,7 +142,7 @@ export const AdventureGame = ({
           monsterName={monsters.find(m => m.id === targetedMonster?.id)?.name}
         />
 
-        <div ref={gameContainerRef}>
+        <div ref={gameContainerRef} className="w-full h-full relative">
           <GameWorldContainer
             gameRef={gameRef}
             cameraOffset={cameraOffset}
