@@ -10,15 +10,17 @@ const Index = () => {
         backgroundSize: 'cover',
         backgroundPosition: 'center',
         backgroundRepeat: 'no-repeat',
-        touchAction: 'pan-y',
+        touchAction: 'none',
         WebkitOverflowScrolling: 'touch',
-        overscrollBehavior: 'contain',
-        height: '100vh',
+        overscrollBehavior: 'none',
+        height: '100dvh',
         width: '100vw',
         position: 'fixed',
         top: 0,
         left: 0,
-        overflow: 'hidden'
+        overflow: 'hidden',
+        userSelect: 'none',
+        WebkitTouchCallout: 'none'
       }}
     >
       <div className="absolute inset-0 bg-black/20" />
@@ -26,9 +28,9 @@ const Index = () => {
       <div 
         className="relative z-10 flex-grow flex items-center justify-center h-full w-full overflow-hidden"
         style={{
-          touchAction: 'pan-y',
-          WebkitOverflowScrolling: 'touch',
-          overscrollBehavior: 'contain'
+          touchAction: 'none',
+          overscrollBehavior: 'none',
+          userSelect: 'none'
         }}
       >
         <div className="w-full max-w-7xl mx-auto px-4 flex items-center justify-center">

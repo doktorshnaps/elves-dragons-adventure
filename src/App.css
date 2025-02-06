@@ -6,6 +6,7 @@
   padding: 0;
   text-align: center;
   overflow: hidden;
+  position: fixed;
 }
 
 body {
@@ -15,6 +16,8 @@ body {
   height: 100%;
   overflow: hidden;
   position: fixed;
+  overscroll-behavior: none;
+  touch-action: none;
 }
 
 .container {
