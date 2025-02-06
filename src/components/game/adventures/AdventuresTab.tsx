@@ -1,5 +1,4 @@
 
-import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import { useBalanceState } from "@/hooks/useBalanceState";
@@ -10,95 +9,19 @@ import { Item } from "@/types/inventory";
 import { Monster } from "./types";
 import { GameHeader } from "./components/GameHeader";
 import { GameContent } from "./components/GameContent";
-import { calculateTeamStats } from '@/utils/cardUtils';
+import { usePlayerStats } from "./game/hooks/usePlayerStats";
 
 export const AdventuresTab = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const { balance, updateBalance } = useBalanceState();
   const { generateMonster } = useMonsterGeneration(1);
-
-  const calculateEquipmentBonuses = () => {
-    const inventory = localStorage.getItem('gameInventory');
-    if (!inventory) return { power: 0, defense: 0, health: 0 };
-
-    const equippedItems = JSON.parse(inventory).filter((item: any) => item.equipped);
-    return equippedItems.reduce((acc: any, item: any) => ({
-      power: acc.power + (item.stats?.power || 0),
-      defense: acc.defense + (item.stats?.defense || 0),
-      health: acc.health + (item.stats?.health || 0)
-    }), { power: 0, defense: 0, health: 0 });
-  };
-
-  const calculateBaseStats = (level: number) => {
-    const savedCards = localStorage.getItem('gameCards');
-    const cards = savedCards ? JSON.parse(savedCards) : [];
-    const teamStats = calculateTeamStats(cards);
-
-    return {
-      power: teamStats.power + (level - 1),
-      defense: teamStats.defense + (level - 1),
-      health: teamStats.health + (level - 1) * 10
-    };
-  };
-
-  const [playerStats, setPlayerStats] = useState(() => {
-    const savedStats = localStorage.getItem('adventurePlayerStats');
-    if (savedStats) {
-      const parsed = JSON.parse(savedStats);
-      const baseStats = calculateBaseStats(parsed.level);
-      const equipmentBonuses = calculateEquipmentBonuses();
-      
-      return {
-        ...parsed,
-        power: baseStats.power + equipmentBonuses.power,
-        defense: baseStats.defense + equipmentBonuses.defense,
-        maxHealth: baseStats.health + equipmentBonuses.health,
-        health: Math.min(parsed.health, baseStats.health + equipmentBonuses.health)
-      };
-    }
-
-    const baseStats = calculateBaseStats(1);
-    const equipmentBonuses = calculateEquipmentBonuses();
-    
-    return {
-      health: baseStats.health + equipmentBonuses.health,
-      maxHealth: baseStats.health + equipmentBonuses.health,
-      power: baseStats.power + equipmentBonuses.power,
-      defense: baseStats.defense + equipmentBonuses.defense,
-      level: 1,
-      experience: 0,
-      requiredExperience: 100
-    };
-  });
-
-  // Слушаем события обновления инвентаря
-  useEffect(() => {
-    const handleInventoryUpdate = () => {
-      const equipmentBonuses = calculateEquipmentBonuses();
-      const baseStats = calculateBaseStats(playerStats.level);
-      
-      setPlayerStats(prev => ({
-        ...prev,
-        power: baseStats.power + equipmentBonuses.power,
-        defense: baseStats.defense + equipmentBonuses.defense,
-        maxHealth: baseStats.health + equipmentBonuses.health,
-        health: Math.min(prev.health, baseStats.health + equipmentBonuses.health)
-      }));
-    };
-
-    window.addEventListener('inventoryUpdate', handleInventoryUpdate);
-    return () => window.removeEventListener('inventoryUpdate', handleInventoryUpdate);
-  }, [playerStats.level]);
+  const { stats: playerStats, updateStats: setPlayerStats, addExperience } = usePlayerStats();
 
   const [currentMonster, setCurrentMonster] = useState<Monster | null>(() => {
     const savedMonster = localStorage.getItem('adventureCurrentMonster');
     return savedMonster ? JSON.parse(savedMonster) : null;
   });
-
-  useEffect(() => {
-    localStorage.setItem('adventurePlayerStats', JSON.stringify(playerStats));
-  }, [playerStats]);
 
   useEffect(() => {
     localStorage.setItem('adventureCurrentMonster', JSON.stringify(currentMonster));
@@ -110,39 +33,6 @@ export const AdventuresTab = () => {
     setCurrentMonster(monster);
   };
 
-  const handleExperienceGain = (amount: number) => {
-    const newExperience = playerStats.experience + amount;
-    const requiredExp = playerStats.requiredExperience;
-
-    if (newExperience >= requiredExp) {
-      const newLevel = playerStats.level + 1;
-      const newRequiredExp = requiredExp + 100;
-      const baseStats = calculateBaseStats(newLevel);
-      const equipmentBonuses = calculateEquipmentBonuses();
-      
-      setPlayerStats({
-        ...playerStats,
-        level: newLevel,
-        experience: newExperience - requiredExp,
-        requiredExperience: newRequiredExp,
-        power: baseStats.power + equipmentBonuses.power,
-        defense: baseStats.defense + equipmentBonuses.defense,
-        maxHealth: baseStats.health + equipmentBonuses.health,
-        health: baseStats.health + equipmentBonuses.health
-      });
-
-      toast({
-        title: "Уровень повышен!",
-        description: `Достигнут ${newLevel} уровень!`
-      });
-    } else {
-      setPlayerStats({
-        ...playerStats,
-        experience: newExperience
-      });
-    }
-  };
-
   const handleMonsterDefeat = (monster: Monster) => {
     if (!monster || playerStats.health <= 0) return;
 
@@ -151,7 +41,7 @@ export const AdventuresTab = () => {
 
     if (newMonsterHealth <= 0) {
       updateBalance(balance + monster.reward);
-      handleExperienceGain(monster.experienceReward);
+      addExperience(monster.experienceReward);
       toast({
         title: "Победа!",
         description: `Вы получили ${monster.reward} монет и ${monster.experienceReward} опыта!`
@@ -175,7 +65,7 @@ export const AdventuresTab = () => {
         description: "Вы проиграли бой...",
         variant: "destructive"
       });
-      setPlayerStats({ ...playerStats, health: 0 });
+      setPlayerStats(prev => ({ ...prev, health: 0 }));
       setCurrentMonster(null);
       
       setTimeout(() => {
@@ -186,7 +76,7 @@ export const AdventuresTab = () => {
     }
 
     setCurrentMonster({ ...monster, health: newMonsterHealth });
-    setPlayerStats({ ...playerStats, health: newPlayerHealth });
+    setPlayerStats(prev => ({ ...prev, health: newPlayerHealth }));
   };
 
   const handleUseItem = (item: Item) => {
@@ -271,4 +161,3 @@ export const AdventuresTab = () => {
     </AdventureLayout>
   );
 };
-
