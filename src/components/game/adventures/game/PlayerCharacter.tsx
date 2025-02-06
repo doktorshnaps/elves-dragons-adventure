@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { motion } from 'framer-motion';
 import { Shield } from 'lucide-react';
@@ -45,7 +46,8 @@ export const PlayerCharacter = ({
             Уровень {level}
           </div>
           
-          <div className="relative w-full">
+          <div className="flex flex-col gap-1">
+            {/* Health Bar */}
             <div className="h-2 bg-red-900 rounded-full">
               <div 
                 className="h-full bg-red-500 rounded-full transition-all duration-300 relative"
@@ -56,9 +58,8 @@ export const PlayerCharacter = ({
                 </div>
               </div>
             </div>
-          </div>
-          
-          <div className="relative w-full">
+
+            {/* Armor Bar */}
             <div className="h-2 bg-blue-900 rounded-full">
               <div 
                 className="h-full bg-blue-500 rounded-full transition-all duration-300 relative"
@@ -69,9 +70,8 @@ export const PlayerCharacter = ({
                 </div>
               </div>
             </div>
-          </div>
 
-          <div className="relative w-full">
+            {/* Experience Bar */}
             <div className="h-2 bg-purple-900 rounded-full">
               <div 
                 className="h-full bg-purple-500 rounded-full transition-all duration-300 relative"
