@@ -75,7 +75,11 @@ export const AdventureGame = ({
     playerPosition,
     playerY,
     currentHealth,
-    (damage: number) => setCurrentHealth(prev => Math.max(0, prev - damage))
+    (damage: number) => {
+      if (currentHealth > 0) {
+        setCurrentHealth(prev => Math.max(0, prev - damage));
+      }
+    }
   );
 
   const handleMonsterDamage = (damage: number) => {
@@ -95,6 +99,7 @@ export const AdventureGame = ({
 
     setMonsters(updatedMonsters);
     setIsAttacking(false);
+    setTargetedMonster(null);
   };
 
   const {

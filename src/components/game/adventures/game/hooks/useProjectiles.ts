@@ -12,23 +12,20 @@ export const useProjectiles = (
   const [projectiles, setProjectiles] = useState<Projectile[]>([]);
 
   useEffect(() => {
-    if (currentMonster && currentHealth > 0) {
+    if (currentHealth > 0) {
       const shootInterval = setInterval(() => {
-        const distanceToPlayer = Math.abs(400 - playerPosition);
-        if (distanceToPlayer <= 500) {
-          const newProjectile: Projectile = {
-            id: Date.now(),
-            x: 400,
-            y: 50,
-            direction: playerPosition > 400 ? 1 : -1
-          };
-          setProjectiles(prev => [...prev, newProjectile]);
-        }
+        const newProjectile: Projectile = {
+          id: Date.now(),
+          x: 400,
+          y: 50,
+          direction: playerPosition > 400 ? 1 : -1
+        };
+        setProjectiles(prev => [...prev, newProjectile]);
       }, 2000);
 
       return () => clearInterval(shootInterval);
     }
-  }, [currentMonster, currentHealth, playerPosition]);
+  }, [currentHealth, playerPosition]);
 
   useEffect(() => {
     const moveProjectiles = () => {
@@ -37,11 +34,13 @@ export const useProjectiles = (
           ...projectile,
           x: projectile.x + (projectile.direction * 5)
         })).filter(projectile => {
-          const hitPlayer = Math.abs(projectile.x - playerPosition) < 50 && // Увеличили хитбокс с 30 до 50
-                          Math.abs(projectile.y - playerY) < 70; // Увеличили хитбокс с 50 до 70
+          const hitPlayer = Math.abs(projectile.x - playerPosition) < 50 &&
+                          Math.abs(projectile.y - playerY) < 70;
           
-          if (hitPlayer && currentMonster) {
-            onHit(currentMonster.power);
+          if (hitPlayer) {
+            // Используем фиксированный урон, если currentMonster не определен
+            const damage = 10;
+            onHit(damage);
             return false;
           }
           
@@ -52,7 +51,7 @@ export const useProjectiles = (
 
     const animation = requestAnimationFrame(moveProjectiles);
     return () => cancelAnimationFrame(animation);
-  }, [playerPosition, playerY, onHit, currentMonster]);
+  }, [playerPosition, playerY, onHit]);
 
   return { projectiles };
 };
