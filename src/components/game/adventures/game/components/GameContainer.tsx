@@ -26,6 +26,7 @@ interface GameContainerProps {
   armor: number;
   maxArmor: number;
   onSelectTarget: (monster: Monster) => void;
+  balance: number; // Added balance prop
 }
 
 export const GameContainer = ({
@@ -45,7 +46,8 @@ export const GameContainer = ({
   requiredExperience,
   armor,
   maxArmor,
-  onSelectTarget
+  onSelectTarget,
+  balance
 }: GameContainerProps) => {
   const gameRef = useRef<HTMLDivElement>(null);
   const gameContainerRef = useRef<HTMLDivElement>(null);
@@ -98,6 +100,7 @@ export const GameContainer = ({
           level={playerLevel}
           experience={playerExperience}
           requiredExperience={requiredExperience}
+          balance={balance}
         />
       </div>
 
@@ -113,3 +116,4 @@ export const GameContainer = ({
     </Card>
   );
 };
+
