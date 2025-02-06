@@ -8,35 +8,34 @@ export const useProjectiles = (
   playerY: number,
   currentHealth: number,
   onHit: (damage: number) => void,
-  monsters: Monster[]  // Добавляем массив всех монстров
+  monsters: Monster[]
 ) => {
   const [projectiles, setProjectiles] = useState<Projectile[]>([]);
 
+  // Создаем интервалы для атак монстров
   useEffect(() => {
-    if (currentHealth <= 0 || monsters.length === 0) return;
+    if (currentHealth <= 0) return;
 
-    // Создаем интервал для каждого монстра
     const intervals = monsters.map(monster => {
       return setInterval(() => {
         if (!monster.position) return;
 
-        const newProjectile: Projectile = {
-          id: Date.now() + Math.random(), // Уникальный ID для каждого снаряда
+        setProjectiles(prev => [...prev, {
+          id: Date.now() + Math.random(),
           x: monster.position,
           y: 50,
           direction: playerPosition > monster.position ? 1 : -1,
-          monsterId: monster.id // Сохраняем ID монстра, который выпустил снаряд
-        };
-        setProjectiles(prev => [...prev, newProjectile]);
+          monsterId: monster.id
+        }]);
       }, 2000);
     });
 
     return () => {
-      // Очищаем все интервалы при размонтировании
       intervals.forEach(interval => clearInterval(interval));
     };
-  }, [currentHealth, playerPosition, monsters]);
+  }, [monsters, currentHealth]); // Убрали playerPosition из зависимостей
 
+  // Обновление позиций снарядов и проверка попаданий
   useEffect(() => {
     const moveProjectiles = () => {
       setProjectiles(prev => 
@@ -47,7 +46,6 @@ export const useProjectiles = (
           const hitPlayer = Math.abs(projectile.x - playerPosition) < 50 &&
                           Math.abs(projectile.y - playerY) < 70;
           
-          // Находим монстра, который выпустил этот снаряд
           const sourceMonster = monsters.find(m => m.id === projectile.monsterId);
           
           if (hitPlayer && sourceMonster) {
@@ -56,7 +54,6 @@ export const useProjectiles = (
             return false;
           }
           
-          // Удаляем снаряд, если он улетел слишком далеко от своего монстра
           const sourceMonsterPosition = sourceMonster?.position || 0;
           return Math.abs(projectile.x - sourceMonsterPosition) < 600;
         })
