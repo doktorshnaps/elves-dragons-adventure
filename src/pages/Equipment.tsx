@@ -12,15 +12,17 @@ export const Equipment = () => {
 
   useEffect(() => {
     const handleEquipmentChange = () => {
-      // Get current inventory from localStorage
-      const currentInventory = localStorage.getItem('gameInventory');
-      // Trigger an event to notify other components about equipment changes
-      const event = new CustomEvent('inventoryUpdate', {
-        detail: { 
-          inventory: currentInventory ? JSON.parse(currentInventory) : [] 
-        }
-      });
-      window.dispatchEvent(event);
+      try {
+        const currentInventory = localStorage.getItem('gameInventory');
+        const parsedInventory = currentInventory ? JSON.parse(currentInventory) : [];
+        
+        const event = new CustomEvent('inventoryUpdate', {
+          detail: { inventory: parsedInventory }
+        });
+        window.dispatchEvent(event);
+      } catch (error) {
+        console.error('Error handling equipment change:', error);
+      }
     };
 
     window.addEventListener('equipmentChange', handleEquipmentChange);
