@@ -17,7 +17,6 @@ export const useGameState = (
   const [cameraOffset, setCameraOffset] = useState(0);
 
   useEffect(() => {
-    // Reset game state when health is initialized
     if (initialHealth > 0) {
       setCurrentHealth(initialHealth);
       setIsGameOver(false);

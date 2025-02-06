@@ -91,6 +91,7 @@ export const AdventureGame = ({
         const newHealth = Math.max(0, m.health - damage);
         if (newHealth <= 0) {
           onMonsterDefeat(m);
+          setTargetedMonster(null);
           return null;
         }
         return { ...m, health: newHealth };
@@ -100,7 +101,6 @@ export const AdventureGame = ({
 
     setMonsters(updatedMonsters);
     setIsAttacking(false);
-    setTargetedMonster(null);
   };
 
   const {
