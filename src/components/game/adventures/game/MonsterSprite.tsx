@@ -1,6 +1,7 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import { Monster } from '../types';
+import { Ghost, Skull, Sword } from 'lucide-react';
 
 interface MonsterSpriteProps {
   monster: Monster;
@@ -8,14 +9,14 @@ interface MonsterSpriteProps {
 }
 
 export const MonsterSprite = ({ monster, position }: MonsterSpriteProps) => {
-  const getMonsterEmoji = (type: string) => {
+  const getMonsterIcon = (type: string) => {
     switch (type) {
       case 'boss':
-        return '👿';
+        return <Skull className="w-8 h-8 text-red-500" />;
       case 'elite':
-        return '👹';
+        return <Sword className="w-8 h-8 text-purple-500" />;
       default:
-        return '👾';
+        return <Ghost className="w-8 h-8 text-blue-500" />;
     }
   };
 
@@ -55,9 +56,9 @@ export const MonsterSprite = ({ monster, position }: MonsterSpriteProps) => {
             monster.type === 'boss' ? 'bg-red-600' : 
             monster.type === 'elite' ? 'bg-purple-600' : 
             'bg-blue-600'
-          } rounded-lg flex items-center justify-center text-2xl`}
+          } rounded-lg flex items-center justify-center`}
         >
-          {getMonsterEmoji(monster.type)}
+          {getMonsterIcon(monster.type)}
         </div>
       </div>
     </motion.div>

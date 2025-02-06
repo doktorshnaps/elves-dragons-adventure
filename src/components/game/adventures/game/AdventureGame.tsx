@@ -35,6 +35,8 @@ export const AdventureGame = ({
 }: AdventureGameProps) => {
   const { toast } = useToast();
   const [selectedMonster, setSelectedMonster] = useState<Monster | null>(null);
+  const [isPlayerTurn, setIsPlayerTurn] = useState(true);
+  
   const {
     currentHealth,
     setCurrentHealth,
@@ -96,11 +98,69 @@ export const AdventureGame = ({
     });
   };
 
+  const calculateAttackResult = (baseDamage: number) => {
+    const roll = Math.floor(Math.random() * 6) + 1;
+    
+    switch (roll) {
+      case 1:
+        return {
+          type: 'block',
+          damage: 0,
+          message: 'Атака заблокирована!'
+        };
+      case 2:
+        return {
+          type: 'normal',
+          damage: baseDamage,
+          message: 'Обычная атака'
+        };
+      case 3:
+        return {
+          type: 'critical',
+          damage: Math.floor(baseDamage * 1.3),
+          message: 'Критический удар!'
+        };
+      case 4:
+        return {
+          type: 'counter',
+          damage: -baseDamage,
+          message: 'Атака парирована!'
+        };
+      case 5:
+        return {
+          type: 'weak',
+          damage: Math.floor(baseDamage * 0.7),
+          message: 'Слабая атака'
+        };
+      case 6:
+        return {
+          type: 'fatal',
+          damage: baseDamage * 2,
+          message: 'Фатальная атака!'
+        };
+      default:
+        return {
+          type: 'normal',
+          damage: baseDamage,
+          message: 'Обычная атака'
+        };
+    }
+  };
+
   const handleAttack = () => {
     if (!selectedMonster) {
       toast({
         title: "Выберите цель",
         description: "Сначала выберите монстра для атаки",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    if (!isPlayerTurn) {
+      toast({
+        title: "Подождите",
+        description: "Сейчас ход противника",
         variant: "destructive"
       });
       return;
@@ -125,10 +185,33 @@ export const AdventureGame = ({
         setMonsters(prev => prev.filter(m => m.id !== selectedMonster.id));
         setSelectedMonster(null);
         onMonsterDefeat(updatedMonster);
+        setIsPlayerTurn(true);
       } else {
         setMonsters(prev => 
           prev.map(m => m.id === selectedMonster.id ? updatedMonster : m)
         );
+        setIsPlayerTurn(false);
+        
+        // Ход монстра
+        setTimeout(() => {
+          const monsterResult = calculateAttackResult(updatedMonster.power);
+          if (monsterResult.damage >= 0) {
+            const newHealth = Math.max(0, currentHealth - monsterResult.damage);
+            setCurrentHealth(newHealth);
+            
+            toast({
+              title: `${updatedMonster.name} атакует!`,
+              description: `${monsterResult.message} Получено ${monsterResult.damage} урона!`,
+              variant: monsterResult.type === 'fatal' || monsterResult.type === 'critical' ? "destructive" : "default"
+            });
+          } else {
+            toast({
+              title: monsterResult.message,
+              description: "Монстр промахнулся!",
+            });
+          }
+          setIsPlayerTurn(true);
+        }, 1000);
       }
     } else {
       // Урон игроку (парирование)
@@ -140,6 +223,9 @@ export const AdventureGame = ({
         description: `Получено ${playerDamage} урона`,
         variant: "destructive"
       });
+      
+      setIsPlayerTurn(false);
+      setTimeout(() => setIsPlayerTurn(true), 1000);
     }
   };
 
