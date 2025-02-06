@@ -1,3 +1,4 @@
+
 import { GameTitle } from "@/components/GameTitle";
 
 const Index = () => {
@@ -11,20 +12,26 @@ const Index = () => {
         backgroundRepeat: 'no-repeat',
         touchAction: 'pan-y',
         WebkitOverflowScrolling: 'touch',
-        overscrollBehavior: 'contain'
+        overscrollBehavior: 'contain',
+        height: '100vh',
+        width: '100vw',
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        overflow: 'hidden'
       }}
     >
       <div className="absolute inset-0 bg-black/20" />
       
       <div 
-        className="relative z-10 flex-grow flex items-center justify-center"
+        className="relative z-10 flex-grow flex items-center justify-center h-full w-full overflow-hidden"
         style={{
           touchAction: 'pan-y',
           WebkitOverflowScrolling: 'touch',
           overscrollBehavior: 'contain'
         }}
       >
-        <div className="w-full max-w-7xl mx-auto px-4">
+        <div className="w-full max-w-7xl mx-auto px-4 flex items-center justify-center">
           <GameTitle />
         </div>
       </div>
