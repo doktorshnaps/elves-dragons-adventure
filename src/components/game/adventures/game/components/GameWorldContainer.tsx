@@ -42,7 +42,7 @@ export const GameWorldContainer = ({
   armor,
   maxArmor,
   maxHealth,
-  level,
+  level = 1,
   experience = 0,
   requiredExperience = 100,
   balance
@@ -101,21 +101,26 @@ export const GameWorldContainer = ({
             </div>
           </div>
 
-          {/* Experience Bar */}
+          {/* Experience Bar with Level */}
           <div className="flex items-center gap-2">
             <Star className="w-5 h-5 text-yellow-500" />
-            <div className="w-full h-4 bg-purple-900 rounded-full overflow-hidden">
-              <motion.div 
-                className="h-full rounded-full transition-all duration-300 relative"
-                style={{ 
-                  width: `${(experience / requiredExperience) * 100}%`,
-                  background: 'linear-gradient(90deg, rgb(168, 85, 247) 0%, rgb(192, 132, 252) 100%)'
-                }}
-              >
-                <div className="absolute inset-0 flex items-center justify-center text-xs text-white font-bold">
-                  EXP {experience}/{requiredExperience}
-                </div>
-              </motion.div>
+            <div className="flex-1">
+              <div className="w-full h-4 bg-purple-900 rounded-full overflow-hidden">
+                <motion.div 
+                  className="h-full rounded-full transition-all duration-300 relative"
+                  style={{ 
+                    width: `${(experience / requiredExperience) * 100}%`,
+                    background: 'linear-gradient(90deg, rgb(168, 85, 247) 0%, rgb(192, 132, 252) 100%)'
+                  }}
+                >
+                  <div className="absolute inset-0 flex items-center justify-center text-xs text-white font-bold">
+                    EXP {experience}/{requiredExperience}
+                  </div>
+                </motion.div>
+              </div>
+            </div>
+            <div className="flex items-center justify-center bg-yellow-500 rounded-full w-8 h-8">
+              <span className="text-sm font-bold text-white">{level}</span>
             </div>
           </div>
         </div>
