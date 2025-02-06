@@ -1,4 +1,4 @@
-import React, { useRef } from 'react';
+import React, { useRef, useState } from 'react';
 import { Card } from "@/components/ui/card";
 import { Monster } from '../types';
 import { usePlayerMovement } from './hooks/usePlayerMovement';
@@ -34,6 +34,10 @@ export const AdventureGame = ({
 }: AdventureGameProps) => {
   const gameRef = useRef<HTMLDivElement>(null);
   const gameContainerRef = useRef<HTMLDivElement>(null);
+
+  // Add armor state
+  const [armor, setArmor] = useState(50); // Base armor value
+  const maxArmor = 50; // Maximum armor value
 
   const {
     currentHealth,
@@ -78,10 +82,22 @@ export const AdventureGame = ({
     currentHealth,
     (damage: number) => {
       if (currentHealth > 0) {
-        setCurrentHealth(prev => Math.max(0, prev - damage));
+        // First reduce armor
+        if (armor > 0) {
+          const remainingDamage = Math.max(0, damage - armor);
+          const armorDamage = Math.min(armor, damage);
+          setArmor(prev => Math.max(0, prev - armorDamage));
+          
+          if (remainingDamage > 0) {
+            setCurrentHealth(prev => Math.max(0, prev - remainingDamage));
+          }
+        } else {
+          // If no armor, damage goes straight to health
+          setCurrentHealth(prev => Math.max(0, prev - damage));
+        }
       }
     },
-    monsters // Передаем массив монстров
+    monsters
   );
 
   const handleMonsterDamage = (damage: number) => {
@@ -137,6 +153,8 @@ export const AdventureGame = ({
         level={playerLevel}
         experience={playerExperience}
         requiredExperience={requiredExperience}
+        armor={armor}
+        maxArmor={maxArmor}
       />
       
       <Card className="w-full h-[500px] relative overflow-hidden bg-game-background mt-4">
@@ -162,6 +180,8 @@ export const AdventureGame = ({
             projectiles={projectiles}
             onSelectTarget={handleSelectTarget}
             targetedMonster={targetedMonster}
+            armor={armor}
+            maxArmor={maxArmor}
           />
         </div>
 
