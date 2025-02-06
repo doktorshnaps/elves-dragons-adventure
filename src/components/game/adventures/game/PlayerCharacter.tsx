@@ -3,6 +3,7 @@ import React, { useEffect } from 'react';
 import { motion, useAnimation } from 'framer-motion';
 import { Shield } from 'lucide-react';
 import { StatusBar } from './components/StatusBar';
+import { HealthBar } from './components/HealthBar';
 
 interface PlayerCharacterProps {
   position: number;
@@ -32,7 +33,6 @@ export const PlayerCharacter = ({
   const characterControls = useAnimation();
   const attackControls = useAnimation();
 
-  // Анимация дыхания
   useEffect(() => {
     if (!isAttacking) {
       characterControls.start({
@@ -48,7 +48,6 @@ export const PlayerCharacter = ({
     }
   }, [isAttacking, characterControls]);
 
-  // Анимация атаки
   useEffect(() => {
     if (isAttacking) {
       attackControls.start({
@@ -83,7 +82,7 @@ export const PlayerCharacter = ({
           </div>
           
           <div className="flex flex-col gap-1">
-            <StatusBar 
+            <HealthBar 
               current={health}
               max={100}
               className="bg-red-900"

@@ -1,7 +1,9 @@
+
 import React from 'react';
 import { motion } from 'framer-motion';
 import { Monster } from '../types';
 import { useToast } from '@/hooks/use-toast';
+import { HealthBar } from './components/HealthBar';
 
 interface MonsterSpriteProps {
   monster: Monster;
@@ -28,8 +30,6 @@ export const MonsterSprite = ({
         return '👾';
     }
   };
-
-  const healthPercentage = (monster.health / monster.maxHealth) * 100;
 
   const handleClick = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -59,18 +59,19 @@ export const MonsterSprite = ({
           <div className="px-2 py-1 bg-game-surface/80 rounded text-sm text-white backdrop-blur-sm space-y-1">
             <div>{monster.name}</div>
             <div className="text-xs">
-              ⚔️ {monster.power} 💖 {Math.ceil(monster.health)}/{monster.maxHealth}
+              ⚔️ {monster.power}
             </div>
           </div>
         </div>
 
         <div className="absolute -top-6 left-1/2 -translate-x-1/2 w-20">
-          <div className="h-2 bg-red-900 rounded-full">
-            <div 
-              className="h-full bg-red-500 rounded-full transition-all duration-300"
-              style={{ width: `${Math.max(0, Math.min(healthPercentage, 100))}%` }}
-            />
-          </div>
+          <HealthBar 
+            current={monster.health}
+            max={monster.maxHealth}
+            className="bg-red-900"
+            indicatorClassName="bg-red-500"
+            showValue={false}
+          />
         </div>
 
         <div 
