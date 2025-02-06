@@ -39,7 +39,7 @@ export const AdventureGame = ({
     setTargetedMonster
   } = useGameState(playerHealth, onMonsterDefeat);
 
-  const { monsters, setMonsters } = useMonsterSpawning(0, false, false);
+  const { monsters, setMonsters } = useMonsterSpawning(currentMonster?.position || 0, !!currentMonster, false);
 
   const { projectiles } = useProjectiles(
     currentMonster,
