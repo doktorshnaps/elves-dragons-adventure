@@ -2,6 +2,7 @@
 import React, { useEffect } from 'react';
 import { motion, useAnimation } from 'framer-motion';
 import { Shield } from 'lucide-react';
+import { StatusBar } from './components/StatusBar';
 
 interface PlayerCharacterProps {
   position: number;
@@ -82,41 +83,29 @@ export const PlayerCharacter = ({
           </div>
           
           <div className="flex flex-col gap-1">
-            {/* Health Bar */}
-            <div className="h-2 bg-red-900 rounded-full">
-              <div 
-                className="h-full bg-red-500 rounded-full transition-all duration-300 relative"
-                style={{ width: `${(health / 100) * 100}%` }}
-              >
-                <div className="absolute inset-0 flex items-center justify-center text-[10px] text-white font-bold whitespace-nowrap">
-                  {Math.floor(health)}/100
-                </div>
-              </div>
-            </div>
+            <StatusBar 
+              current={health}
+              max={100}
+              className="bg-red-900"
+              indicatorClassName="bg-red-500"
+              label="Здоровье"
+            />
 
-            {/* Armor Bar */}
-            <div className="h-2 bg-blue-900 rounded-full">
-              <div 
-                className="h-full bg-blue-500 rounded-full transition-all duration-300 relative"
-                style={{ width: `${(armor / maxArmor) * 100}%` }}
-              >
-                <div className="absolute inset-0 flex items-center justify-center text-[10px] text-white font-bold whitespace-nowrap">
-                  {Math.floor(armor)}/{maxArmor}
-                </div>
-              </div>
-            </div>
+            <StatusBar 
+              current={armor}
+              max={maxArmor}
+              className="bg-blue-900"
+              indicatorClassName="bg-blue-500"
+              label="Броня"
+            />
 
-            {/* Experience Bar */}
-            <div className="h-2 bg-purple-900 rounded-full">
-              <div 
-                className="h-full bg-purple-500 rounded-full transition-all duration-300 relative"
-                style={{ width: `${(experience / requiredExperience) * 100}%` }}
-              >
-                <div className="absolute inset-0 flex items-center justify-center text-[10px] text-white font-bold whitespace-nowrap">
-                  {experience}/{requiredExperience}
-                </div>
-              </div>
-            </div>
+            <StatusBar 
+              current={experience}
+              max={requiredExperience}
+              className="bg-purple-900"
+              indicatorClassName="bg-purple-500"
+              label="Опыт"
+            />
           </div>
         </div>
 
@@ -172,4 +161,3 @@ export const PlayerCharacter = ({
     </motion.div>
   );
 };
-
