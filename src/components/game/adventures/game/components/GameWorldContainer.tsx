@@ -51,29 +51,8 @@ export const GameWorldContainer = ({
 
   return (
     <div className="w-full h-full relative overflow-hidden">
-      <GameWorld
-        gameRef={gameRef}
-        cameraOffset={cameraOffset}
-        playerPosition={playerPosition}
-        playerY={playerY}
-        isAttacking={isAttacking}
-        currentHealth={currentHealth}
-        playerPower={playerPower}
-        monsters={monsters}
-        projectiles={projectiles}
-        onSelectTarget={onSelectTarget}
-        targetedMonster={targetedMonster}
-        armor={armor}
-        maxArmor={maxArmor}
-        maxHealth={maxHealth}
-        level={level}
-        experience={experience}
-        requiredExperience={requiredExperience}
-        balance={balance}
-      />
-
-      {/* Player Interface */}
-      <div className="fixed bottom-0 left-0 w-full z-50 px-4 pb-2">
+      {/* Player Interface - Now at the top */}
+      <div className="fixed top-4 left-0 w-full z-50 px-4">
         <div className="max-w-[400px] mx-auto space-y-2">
           {/* Health Bar */}
           <div className="flex items-center gap-2">
@@ -141,6 +120,27 @@ export const GameWorldContainer = ({
           </div>
         </div>
       </div>
+
+      <GameWorld
+        gameRef={gameRef}
+        cameraOffset={cameraOffset}
+        playerPosition={playerPosition}
+        playerY={playerY}
+        isAttacking={isAttacking}
+        currentHealth={currentHealth}
+        playerPower={playerPower}
+        monsters={monsters}
+        projectiles={projectiles}
+        onSelectTarget={onSelectTarget}
+        targetedMonster={targetedMonster}
+        armor={armor}
+        maxArmor={maxArmor}
+        maxHealth={maxHealth}
+        level={level}
+        experience={experience}
+        requiredExperience={requiredExperience}
+        balance={balance}
+      />
     </div>
   );
 };
