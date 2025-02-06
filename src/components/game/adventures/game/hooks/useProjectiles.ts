@@ -18,13 +18,12 @@ export const useProjectiles = (
 
     const intervals = monsters.map(monster => {
       return setInterval(() => {
-        if (!monster.position) return;
-
+        // Убираем проверку позиции монстра, чтобы все монстры атаковали
         setProjectiles(prev => [...prev, {
           id: Date.now() + Math.random(),
-          x: monster.position,
+          x: monster.position || 0, // Используем 0 как fallback
           y: 50,
-          direction: playerPosition > monster.position ? 1 : -1,
+          direction: playerPosition > (monster.position || 0) ? 1 : -1,
           monsterId: monster.id
         }]);
       }, 2000);
@@ -33,7 +32,7 @@ export const useProjectiles = (
     return () => {
       intervals.forEach(interval => clearInterval(interval));
     };
-  }, [monsters, currentHealth]); // Убрали playerPosition из зависимостей
+  }, [monsters, currentHealth, playerPosition]);
 
   // Обновление позиций снарядов и проверка попаданий
   useEffect(() => {
@@ -54,8 +53,8 @@ export const useProjectiles = (
             return false;
           }
           
-          const sourceMonsterPosition = sourceMonster?.position || 0;
-          return Math.abs(projectile.x - sourceMonsterPosition) < 600;
+          // Увеличиваем дистанцию, на которой снаряды остаются активными
+          return Math.abs(projectile.x - playerPosition) < 1200;
         })
       );
     };
