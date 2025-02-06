@@ -7,9 +7,7 @@ import { useAdventureState } from '../hooks/useAdventureState';
 import { GameControls } from '../components/GameControls';
 import { GameWorld } from '../components/GameWorld';
 import { PlayerStatsHeader } from './PlayerStatsHeader';
-import { MagicProjectile } from './MagicProjectile';
 import { GameOver } from './GameOver';
-import { v4 as uuidv4 } from 'uuid';
 import { TargetedMonster } from './types/combatTypes';
 import { useCombatSystem } from './hooks/useCombatSystem';
 import { useToast } from '@/hooks/use-toast';
@@ -59,6 +57,14 @@ export const AdventureGame = ({
   const gameContainerRef = useRef<HTMLDivElement>(null);
   const lastMonsterSpawn = useRef(0);
 
+  const { projectiles } = useProjectiles(
+    currentMonster,
+    playerPosition,
+    playerY,
+    currentHealth,
+    (damage: number) => setCurrentHealth(prev => Math.max(0, prev - damage))
+  );
+
   const updateCameraOffset = (playerPos: number) => {
     if (!gameContainerRef.current) return;
     const containerWidth = gameContainerRef.current.offsetWidth;
@@ -78,6 +84,15 @@ export const AdventureGame = ({
 
   const rollDice = () => {
     return Math.floor(Math.random() * 20) + 1;
+  };
+
+  const handleSelectTarget = (monster: Monster) => {
+    if (!monster.position) return;
+    
+    setTargetedMonster({
+      id: monster.id,
+      position: monster.position
+    });
   };
 
   const handleMonsterAttack = async (monster: Monster) => {
@@ -243,7 +258,6 @@ export const AdventureGame = ({
       <Card className="w-full h-[500px] relative overflow-hidden bg-game-background mt-4">
         {currentHealth <= 0 && <GameOver />}
         
-        {/* Анимация броска кубика */}
         <AnimatePresence>
           {isRolling && (
             <motion.div
@@ -281,7 +295,7 @@ export const AdventureGame = ({
             playerPower={playerPower}
             monsters={monsters}
             projectiles={projectiles}
-            onSelectTarget={setTargetedMonster}
+            onSelectTarget={handleSelectTarget}
             targetedMonster={targetedMonster}
           />
         </div>

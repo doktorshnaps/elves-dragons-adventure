@@ -9,7 +9,7 @@ export interface Monster {
   reward: number;
   experienceReward: number;
   type: 'normal' | 'elite' | 'boss';
-  position?: number;
+  position: number; // Changed from optional to required
 }
 
 export interface Equipment {
