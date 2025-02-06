@@ -1,17 +1,15 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useRef } from 'react';
 import { Card } from "@/components/ui/card";
 import { Monster } from '../types';
 import { usePlayerMovement } from './hooks/usePlayerMovement';
 import { useProjectiles } from './hooks/useProjectiles';
 import { GameControls } from '../components/GameControls';
-import { GameWorld } from '../components/GameWorld';
 import { PlayerStatsHeader } from './PlayerStatsHeader';
-import { useToast } from '@/hooks/use-toast';
-import { useNavigate } from 'react-router-dom';
 import { useDiceRoll } from './hooks/useDiceRoll';
 import { useMonsterSpawning } from './hooks/useMonsterSpawning';
 import { GameOverlay } from './components/GameOverlay';
-import { TargetedMonster } from './types/combatTypes';
+import { useGameState } from './hooks/useGameState';
+import { GameWorldContainer } from './components/GameWorldContainer';
 
 interface AdventureGameProps {
   onMonsterDefeat: (monster: Monster) => void;
@@ -34,16 +32,20 @@ export const AdventureGame = ({
   requiredExperience,
   maxHealth
 }: AdventureGameProps) => {
-  const navigate = useNavigate();
-  const { toast } = useToast();
-  const [currentHealth, setCurrentHealth] = useState(playerHealth);
-  const [isAttacking, setIsAttacking] = useState(false);
-  const [targetedMonster, setTargetedMonster] = useState<TargetedMonster | null>(null);
-  const [isGameOver, setIsGameOver] = useState(false);
-  const [cameraOffset, setCameraOffset] = useState(0);
-
   const gameRef = useRef<HTMLDivElement>(null);
   const gameContainerRef = useRef<HTMLDivElement>(null);
+
+  const {
+    currentHealth,
+    setCurrentHealth,
+    isAttacking,
+    setIsAttacking,
+    targetedMonster,
+    isGameOver,
+    cameraOffset,
+    setCameraOffset,
+    handleSelectTarget
+  } = useGameState(playerHealth, onMonsterDefeat);
 
   const updateCameraOffset = (playerPos: number) => {
     if (!gameContainerRef.current) return;
@@ -93,11 +95,6 @@ export const AdventureGame = ({
 
     setMonsters(updatedMonsters);
     setIsAttacking(false);
-
-    const monster = monsters.find(m => m.id === targetedMonster.id);
-    if (monster && updatedMonsters.find(m => m.id === monster.id)) {
-      handleMonsterAttack(monster);
-    }
   };
 
   const {
@@ -115,14 +112,6 @@ export const AdventureGame = ({
     }
   });
 
-  const handleSelectTarget = (monster: Monster) => {
-    if (!monster.position) return;
-    setTargetedMonster({
-      id: monster.id,
-      position: monster.position
-    });
-  };
-
   const handleAttack = async () => {
     if (!targetedMonster || isRolling) return;
     setIsAttacking(true);
@@ -131,21 +120,6 @@ export const AdventureGame = ({
       await handlePlayerAttack(monster, playerPower);
     }
   };
-
-  useEffect(() => {
-    if (currentHealth <= 0 && !isGameOver) {
-      setIsGameOver(true);
-      toast({
-        title: "Игра окончена",
-        description: "Ваш герой пал в бою",
-        variant: "destructive"
-      });
-      
-      setTimeout(() => {
-        navigate('/menu');
-      }, 3000);
-    }
-  }, [currentHealth, isGameOver, navigate, toast]);
 
   return (
     <>
@@ -168,8 +142,8 @@ export const AdventureGame = ({
           monsterName={monsters.find(m => m.id === targetedMonster?.id)?.name}
         />
 
-        <div ref={gameContainerRef} className="w-full h-full relative overflow-hidden">
-          <GameWorld
+        <div ref={gameContainerRef}>
+          <GameWorldContainer
             gameRef={gameRef}
             cameraOffset={cameraOffset}
             playerPosition={playerPosition}
