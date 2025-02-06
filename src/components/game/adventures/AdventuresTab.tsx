@@ -1,5 +1,6 @@
 
 import { useNavigate } from "react-router-dom";
+import { useState, useEffect } from 'react'; // Add this import
 import { useToast } from "@/hooks/use-toast";
 import { useBalanceState } from "@/hooks/useBalanceState";
 import { AdventureLayout } from "./components/AdventureLayout";
@@ -161,3 +162,4 @@ export const AdventuresTab = () => {
     </AdventureLayout>
   );
 };
+
