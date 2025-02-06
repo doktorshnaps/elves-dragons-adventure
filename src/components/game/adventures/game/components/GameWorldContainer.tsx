@@ -15,6 +15,8 @@ interface GameWorldContainerProps {
   projectiles: any[];
   onSelectTarget: (monster: Monster) => void;
   targetedMonster: TargetedMonster | null;
+  armor: number;
+  maxArmor: number;
 }
 
 export const GameWorldContainer = ({
@@ -28,7 +30,9 @@ export const GameWorldContainer = ({
   monsters,
   projectiles,
   onSelectTarget,
-  targetedMonster
+  targetedMonster,
+  armor,
+  maxArmor
 }: GameWorldContainerProps) => {
   return (
     <div className="w-full h-full relative overflow-hidden">
@@ -44,6 +48,8 @@ export const GameWorldContainer = ({
         projectiles={projectiles}
         onSelectTarget={onSelectTarget}
         targetedMonster={targetedMonster}
+        armor={armor}
+        maxArmor={maxArmor}
       />
     </div>
   );
