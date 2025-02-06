@@ -28,13 +28,22 @@ export const MonsterSprite = ({
 
   const healthPercentage = (monster.health / monster.maxHealth) * 100;
 
+  const handleClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    console.log("Monster clicked:", monster);
+    onSelect(monster);
+  };
+
   return (
     <motion.div
-      className={`absolute bottom-[50px] cursor-pointer z-20 ${isTargeted ? 'ring-4 ring-game-accent ring-offset-2 rounded-lg' : ''}`}
+      className={`absolute bottom-[50px] cursor-pointer z-20 ${
+        isTargeted ? 'ring-4 ring-game-accent ring-offset-2 rounded-lg' : ''
+      }`}
       style={{ left: position }}
       animate={{ y: [0, -5, 0] }}
       transition={{ duration: 2, repeat: Infinity }}
-      onClick={() => onSelect(monster)}
+      onClick={handleClick}
       whileHover={{ scale: 1.1 }}
       whileTap={{ scale: 0.9 }}
     >
