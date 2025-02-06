@@ -70,6 +70,7 @@ export const useCombatSystem = (
         setTimeout(() => {
           const monsterResult = calculateAttackResult(updatedMonster.power);
           if (monsterResult.damage >= 0) {
+            // Fix: Calculate new health value first, then pass it to setCurrentHealth
             const newHealth = Math.max(0, currentHealth - monsterResult.damage);
             setCurrentHealth(newHealth);
             
@@ -89,7 +90,9 @@ export const useCombatSystem = (
       }
     } else {
       const playerDamage = Math.abs(result.damage);
-      setCurrentHealth(prev => Math.max(0, prev - playerDamage));
+      // Fix: Calculate new health value first, then pass it to setCurrentHealth
+      const newHealth = Math.max(0, currentHealth - playerDamage);
+      setCurrentHealth(newHealth);
       
       toast({
         title: result.message,
