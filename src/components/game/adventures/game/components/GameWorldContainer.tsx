@@ -51,8 +51,8 @@ export const GameWorldContainer = ({
 
   return (
     <div className="w-full h-full relative overflow-hidden">
-      {/* Player Interface - Now at the top */}
-      <div className="fixed top-4 left-0 w-full z-50 px-4">
+      {/* Player Interface - Positioned relative to game container */}
+      <div className="absolute left-1/2 transform -translate-x-1/2 top-4 z-50 w-full px-4">
         <div className="max-w-[400px] mx-auto space-y-2">
           {/* Health Bar */}
           <div className="flex items-center gap-2">
@@ -144,4 +144,3 @@ export const GameWorldContainer = ({
     </div>
   );
 };
-
