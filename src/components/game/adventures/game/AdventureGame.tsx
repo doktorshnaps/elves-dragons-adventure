@@ -41,6 +41,7 @@ export const AdventureGame = ({
     isAttacking,
     setIsAttacking,
     targetedMonster,
+    setTargetedMonster,
     isGameOver,
     cameraOffset,
     setCameraOffset,
