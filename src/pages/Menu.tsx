@@ -1,3 +1,4 @@
+
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 import { Swords, ShoppingCart, BookOpen, Store, Shield, Users, BarChart3, MapPin, DollarSign } from "lucide-react";
@@ -17,7 +18,7 @@ export const Menu = () => {
     >
       <div className="absolute inset-0 bg-black/30" />
       
-      <div className="relative z-10 max-w-4xl mx-auto grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 mt-8">
+      <div className="relative z-10 h-full w-full grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 mt-8">
         <Button
           variant="outline"
           className="h-24 bg-game-surface/80 border-game-accent text-game-accent hover:bg-game-surface flex flex-col items-center justify-center gap-2"
