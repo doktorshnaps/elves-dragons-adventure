@@ -1,6 +1,6 @@
 
-import React from 'react';
-import { motion } from 'framer-motion';
+import React, { useEffect } from 'react';
+import { motion, useAnimation } from 'framer-motion';
 import { Shield } from 'lucide-react';
 
 interface PlayerCharacterProps {
@@ -16,8 +16,8 @@ interface PlayerCharacterProps {
   requiredExperience?: number;
 }
 
-export const PlayerCharacter = ({ 
-  position, 
+export const PlayerCharacter = ({
+  position,
   yPosition,
   isAttacking,
   health,
@@ -28,16 +28,51 @@ export const PlayerCharacter = ({
   experience = 0,
   requiredExperience = 100
 }: PlayerCharacterProps) => {
+  const characterControls = useAnimation();
+  const attackControls = useAnimation();
+
+  // Анимация дыхания
+  useEffect(() => {
+    if (!isAttacking) {
+      characterControls.start({
+        y: [-2, 2, -2],
+        transition: {
+          duration: 2,
+          repeat: Infinity,
+          ease: "easeInOut"
+        }
+      });
+    } else {
+      characterControls.stop();
+    }
+  }, [isAttacking, characterControls]);
+
+  // Анимация атаки
+  useEffect(() => {
+    if (isAttacking) {
+      attackControls.start({
+        x: [0, 20, 0],
+        rotate: [0, -15, 15, 0],
+        scale: [1, 1.3, 1],
+        transition: {
+          duration: 0.4,
+          times: [0, 0.5, 1]
+        }
+      });
+    }
+  }, [isAttacking, attackControls]);
+
   return (
     <motion.div
       className="absolute z-10"
       style={{ 
-        left: position,
-        bottom: 50 + yPosition
+        x: position,
+        y: 50 + yPosition
       }}
-      animate={{
-        scale: isAttacking ? 1.2 : 1,
-        transition: { duration: 0.2 }
+      transition={{ 
+        type: 'spring',
+        stiffness: 300,
+        damping: 20
       }}
     >
       <div className="relative">
@@ -106,18 +141,33 @@ export const PlayerCharacter = ({
           </div>
         )}
 
-        <div 
+        <motion.div
           className="w-12 h-16 bg-game-primary rounded-lg flex items-center justify-center text-2xl relative"
-          style={{
-            transform: `translateY(${yPosition > 0 ? -2 : 0}px)`,
-            transition: 'transform 0.1s ease-out'
-          }}
+          animate={characterControls}
         >
-          {isAttacking ? '⚔️' : '🧙‍♂️'}
+          <motion.div
+            animate={attackControls}
+            className="w-full h-full flex items-center justify-center"
+          >
+            {isAttacking ? '⚔️' : '🧙‍♂️'}
+          </motion.div>
+          
           {armor > 0 && (
-            <Shield className="absolute -top-4 -right-4 w-4 h-4 text-blue-500" />
+            <motion.div
+              className="absolute -top-4 -right-4"
+              animate={{
+                scale: [1, 1.2, 1],
+                opacity: [0.8, 1, 0.8],
+                transition: {
+                  duration: 1,
+                  repeat: Infinity
+                }
+              }}
+            >
+              <Shield className="w-4 h-4 text-blue-500" />
+            </motion.div>
           )}
-        </div>
+        </motion.div>
       </div>
     </motion.div>
   );
