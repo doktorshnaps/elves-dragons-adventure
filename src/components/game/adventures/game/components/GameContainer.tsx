@@ -4,7 +4,7 @@ import { GameOverlay } from './GameOverlay';
 import { GameWorldContainer } from './GameWorldContainer';
 import { GameControls } from '../../components/GameControls';
 import { Monster } from '../../types';
-import { useGameState } from '../hooks/useGameState';
+import { usePlayerMovement } from '../hooks/usePlayerMovement';
 import { PlayerStatsHeader } from '../PlayerStatsHeader';
 
 interface GameContainerProps {
@@ -16,7 +16,7 @@ interface GameContainerProps {
   monsterDiceRoll: number | null;
   isMonsterTurn: boolean;
   monsters: Monster[];
-  targetedMonster: { id: string } | null;
+  targetedMonster: { id: number; position: number } | null;
   onAttack: () => void;
   isAttacking: boolean;
   playerLevel: number;
@@ -48,8 +48,6 @@ export const GameContainer = ({
   const gameContainerRef = useRef<HTMLDivElement>(null);
   
   const {
-    cameraOffset,
-    setCameraOffset,
     playerPosition,
     playerY,
     isMovingRight,
@@ -57,8 +55,17 @@ export const GameContainer = ({
     handleJump,
     setIsMovingRight,
     setIsMovingLeft,
+    cameraOffset,
     handleSelectTarget
-  } = useGameState(currentHealth);
+  } = usePlayerMovement((pos: number) => {
+    // Update camera offset based on player position
+    if (gameContainerRef.current) {
+      const containerWidth = gameContainerRef.current.offsetWidth;
+      const offset = Math.max(0, pos - containerWidth / 3);
+      return offset;
+    }
+    return 0;
+  });
 
   return (
     <>
