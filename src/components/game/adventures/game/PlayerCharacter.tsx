@@ -16,6 +16,7 @@ interface PlayerCharacterProps {
   level?: number;
   experience?: number;
   requiredExperience?: number;
+  maxHealth: number;
 }
 
 export const PlayerCharacter = ({
@@ -23,6 +24,7 @@ export const PlayerCharacter = ({
   yPosition,
   isAttacking,
   health,
+  maxHealth,
   power,
   armor,
   maxArmor,
@@ -84,7 +86,7 @@ export const PlayerCharacter = ({
           <div className="flex flex-col gap-1">
             <HealthBar 
               current={health}
-              max={100}
+              max={maxHealth}
               className="bg-red-900"
               indicatorClassName="bg-red-500"
               label="Здоровье"
