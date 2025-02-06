@@ -28,6 +28,7 @@ export const AdventureGame = ({
   onMonsterDefeat,
   playerHealth,
   playerPower,
+  currentMonster,
   playerLevel,
   playerExperience,
   requiredExperience,
@@ -141,7 +142,7 @@ export const AdventureGame = ({
       });
       
       setTimeout(() => {
-        navigate('/');
+        navigate('/menu');
       }, 3000);
     }
   }, [currentHealth, isGameOver, navigate, toast]);
