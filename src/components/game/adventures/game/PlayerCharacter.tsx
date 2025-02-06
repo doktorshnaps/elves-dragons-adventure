@@ -18,10 +18,10 @@ export const PlayerCharacter = ({
 }: PlayerCharacterProps) => {
   return (
     <motion.div
-      className="absolute"
+      className="absolute z-10"
       style={{ 
         left: position,
-        bottom: 50 + yPosition // 50px - это высота земли
+        bottom: 50 + yPosition
       }}
       animate={{
         scale: isAttacking ? 1.2 : 1,
@@ -29,7 +29,6 @@ export const PlayerCharacter = ({
       }}
     >
       <div className="relative">
-        {/* Health bar */}
         <div className="absolute -top-6 left-1/2 -translate-x-1/2 w-20">
           <div className="h-2 bg-red-900 rounded-full">
             <div 
@@ -39,9 +38,8 @@ export const PlayerCharacter = ({
           </div>
         </div>
 
-        {/* Character sprite */}
         <div 
-          className="w-12 h-16 bg-game-primary rounded-lg flex items-center justify-center text-white font-bold"
+          className="w-12 h-16 bg-game-primary rounded-lg flex items-center justify-center text-2xl"
           style={{
             transform: `translateY(${yPosition > 0 ? -2 : 0}px)`,
             transition: 'transform 0.1s ease-out'
