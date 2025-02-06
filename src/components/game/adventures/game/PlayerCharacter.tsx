@@ -1,7 +1,6 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import { Shield } from 'lucide-react';
-import { Progress } from "@/components/ui/progress";
 
 interface PlayerCharacterProps {
   position: number;
@@ -41,15 +40,12 @@ export const PlayerCharacter = ({
       }}
     >
       <div className="relative">
-        {/* Stats Display */}
         <div className="absolute -top-24 left-1/2 -translate-x-1/2 w-32 space-y-1">
-          {/* Level Display */}
           <div className="text-center text-xs font-bold text-yellow-400 mb-1">
             Уровень {level}
           </div>
           
-          {/* Health Bar */}
-          <div className="relative">
+          <div className="relative w-full">
             <div className="h-2 bg-red-900 rounded-full">
               <div 
                 className="h-full bg-red-500 rounded-full transition-all duration-300 relative"
@@ -62,8 +58,7 @@ export const PlayerCharacter = ({
             </div>
           </div>
           
-          {/* Armor Bar */}
-          <div className="relative mt-1">
+          <div className="relative w-full">
             <div className="h-2 bg-blue-900 rounded-full">
               <div 
                 className="h-full bg-blue-500 rounded-full transition-all duration-300 relative"
@@ -76,8 +71,7 @@ export const PlayerCharacter = ({
             </div>
           </div>
 
-          {/* Experience Bar */}
-          <div className="relative mt-1">
+          <div className="relative w-full">
             <div className="h-2 bg-purple-900 rounded-full">
               <div 
                 className="h-full bg-purple-500 rounded-full transition-all duration-300 relative"
@@ -91,7 +85,6 @@ export const PlayerCharacter = ({
           </div>
         </div>
 
-        {/* Shield Animation */}
         {armor > 0 && (
           <div className="absolute inset-0 -m-2">
             <div className="w-full h-full rounded-full border-2 border-blue-500/50 animate-pulse" />
@@ -113,7 +106,6 @@ export const PlayerCharacter = ({
           </div>
         )}
 
-        {/* Character */}
         <div 
           className="w-12 h-16 bg-game-primary rounded-lg flex items-center justify-center text-2xl relative"
           style={{

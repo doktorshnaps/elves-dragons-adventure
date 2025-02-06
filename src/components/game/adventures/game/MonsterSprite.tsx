@@ -42,18 +42,19 @@ export const MonsterSprite = ({
         <div className="absolute -top-20 left-1/2 -translate-x-1/2 whitespace-nowrap">
           <div className="px-2 py-1 bg-game-surface/80 rounded text-sm text-white backdrop-blur-sm space-y-1">
             <div>{monster.name}</div>
-            <div className="text-xs">
-              ⚔️ {monster.power} 💖 {Math.ceil(monster.health)}/{monster.maxHealth}
-            </div>
           </div>
         </div>
 
         <div className="absolute -top-6 left-1/2 -translate-x-1/2 w-20">
           <div className="h-2 bg-red-900 rounded-full">
             <div 
-              className="h-full bg-red-500 rounded-full transition-all duration-300"
+              className="h-full bg-red-500 rounded-full transition-all duration-300 relative"
               style={{ width: `${Math.max(0, Math.min(healthPercentage, 100))}%` }}
-            />
+            >
+              <div className="absolute inset-0 flex items-center justify-center text-[10px] text-white font-bold whitespace-nowrap">
+                {Math.floor(monster.health)}/{monster.maxHealth}
+              </div>
+            </div>
           </div>
         </div>
 
