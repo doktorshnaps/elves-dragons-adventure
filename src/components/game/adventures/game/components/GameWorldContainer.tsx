@@ -22,6 +22,7 @@ interface GameWorldContainerProps {
   level?: number;
   experience?: number;
   requiredExperience?: number;
+  balance: number;
 }
 
 export const GameWorldContainer = ({
@@ -41,7 +42,8 @@ export const GameWorldContainer = ({
   maxHealth,
   level,
   experience,
-  requiredExperience
+  requiredExperience,
+  balance
 }: GameWorldContainerProps) => {
   return (
     <div className="w-full h-full relative overflow-hidden">
@@ -63,6 +65,7 @@ export const GameWorldContainer = ({
         level={level}
         experience={experience}
         requiredExperience={requiredExperience}
+        balance={balance}
       />
     </div>
   );
