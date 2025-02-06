@@ -5,6 +5,7 @@ import { useDiceRoll } from './hooks/useDiceRoll';
 import { useMonsterSpawning } from './hooks/useMonsterSpawning';
 import { useGameState } from './hooks/useGameState';
 import { GameContainer } from './components/GameContainer';
+import { useToast } from '@/hooks/use-toast';
 
 interface AdventureGameProps {
   onMonsterDefeat: (monster: Monster) => void;
@@ -29,6 +30,7 @@ export const AdventureGame = ({
 }: AdventureGameProps) => {
   const [armor, setArmor] = React.useState(50);
   const maxArmor = 50;
+  const { toast } = useToast();
 
   const {
     currentHealth,
@@ -40,6 +42,19 @@ export const AdventureGame = ({
   } = useGameState(playerHealth, onMonsterDefeat);
 
   const { monsters, setMonsters } = useMonsterSpawning(currentMonster?.position || 0, !!currentMonster, false);
+
+  const handleSelectTarget = (monster: Monster) => {
+    console.log("Selecting target:", monster);
+    setTargetedMonster({
+      id: monster.id,
+      position: monster.position
+    });
+    
+    toast({
+      title: "Цель выбрана",
+      description: `${monster.name} выбран целью для атаки`
+    });
+  };
 
   const { projectiles } = useProjectiles(
     currentMonster,
@@ -125,6 +140,7 @@ export const AdventureGame = ({
       requiredExperience={requiredExperience}
       armor={armor}
       maxArmor={maxArmor}
+      onSelectTarget={handleSelectTarget}
     />
   );
 };

@@ -6,6 +6,7 @@ import { GameControls } from '../../components/GameControls';
 import { Monster } from '../../types';
 import { usePlayerMovement } from '../hooks/usePlayerMovement';
 import { PlayerStatsHeader } from '../PlayerStatsHeader';
+import { TargetedMonster } from '../types/combatTypes';
 
 interface GameContainerProps {
   currentHealth: number;
@@ -16,7 +17,7 @@ interface GameContainerProps {
   monsterDiceRoll: number | null;
   isMonsterTurn: boolean;
   monsters: Monster[];
-  targetedMonster: { id: number; position: number } | null;
+  targetedMonster: TargetedMonster | null;
   onAttack: () => void;
   isAttacking: boolean;
   playerLevel: number;
@@ -24,6 +25,7 @@ interface GameContainerProps {
   requiredExperience: number;
   armor: number;
   maxArmor: number;
+  onSelectTarget: (monster: Monster) => void;
 }
 
 export const GameContainer = ({
@@ -42,7 +44,8 @@ export const GameContainer = ({
   playerExperience,
   requiredExperience,
   armor,
-  maxArmor
+  maxArmor,
+  onSelectTarget
 }: GameContainerProps) => {
   const gameRef = useRef<HTMLDivElement>(null);
   const gameContainerRef = useRef<HTMLDivElement>(null);
@@ -55,10 +58,8 @@ export const GameContainer = ({
     handleJump,
     setIsMovingRight,
     setIsMovingLeft,
-    cameraOffset,
-    handleSelectTarget
+    cameraOffset
   } = usePlayerMovement((pos: number) => {
-    // Update camera offset based on player position
     if (gameContainerRef.current) {
       const containerWidth = gameContainerRef.current.offsetWidth;
       const offset = Math.max(0, pos - containerWidth / 3);
@@ -101,7 +102,7 @@ export const GameContainer = ({
             playerPower={playerPower}
             monsters={monsters}
             projectiles={[]}
-            onSelectTarget={handleSelectTarget}
+            onSelectTarget={onSelectTarget}
             targetedMonster={targetedMonster}
             armor={armor}
             maxArmor={maxArmor}

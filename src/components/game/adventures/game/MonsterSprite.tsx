@@ -1,6 +1,7 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import { Monster } from '../types';
+import { useToast } from '@/hooks/use-toast';
 
 interface MonsterSpriteProps {
   monster: Monster;
@@ -15,6 +16,8 @@ export const MonsterSprite = ({
   onSelect,
   isTargeted 
 }: MonsterSpriteProps) => {
+  const { toast } = useToast();
+  
   const getMonsterEmoji = (type: string) => {
     switch (type) {
       case 'boss':
@@ -33,6 +36,10 @@ export const MonsterSprite = ({
     e.stopPropagation();
     console.log("Monster clicked:", monster);
     onSelect(monster);
+    toast({
+      title: "Цель выбрана",
+      description: `${monster.name} выбран целью для атаки`
+    });
   };
 
   return (
