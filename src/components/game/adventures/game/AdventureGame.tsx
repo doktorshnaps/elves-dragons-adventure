@@ -9,9 +9,8 @@ import { GameWorld } from '../components/GameWorld';
 import { PlayerStatsHeader } from './PlayerStatsHeader';
 import { GameOver } from './GameOver';
 import { TargetedMonster } from './types/combatTypes';
-import { useCombatSystem } from './hooks/useCombatSystem';
-import { useToast } from '@/hooks/use-toast';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useToast } from '@/hooks/use-toast';
 
 interface AdventureGameProps {
   onMonsterDefeat: (monster: Monster) => void;
@@ -52,10 +51,10 @@ export const AdventureGame = ({
   const [isRolling, setIsRolling] = useState(false);
   const [isMonsterTurn, setIsMonsterTurn] = useState(false);
   const [monsterDiceRoll, setMonsterDiceRoll] = useState<number | null>(null);
+  const [lastGeneratedPosition, setLastGeneratedPosition] = useState(0);
 
   const gameRef = useRef<HTMLDivElement>(null);
   const gameContainerRef = useRef<HTMLDivElement>(null);
-  const lastMonsterSpawn = useRef(0);
 
   const updateCameraOffset = (playerPos: number) => {
     if (!gameContainerRef.current) return;
@@ -223,26 +222,27 @@ export const AdventureGame = ({
   };
 
   useEffect(() => {
-    const currentTime = Date.now();
-    if (currentTime - lastMonsterSpawn.current > 2000) {
-      const spawnDistance = isMovingRight ? playerPosition + 400 : playerPosition - 400;
+    // Check if we need to generate a new monster based on player position
+    const distanceFromLast = Math.abs(playerPosition - lastGeneratedPosition);
+    
+    if (distanceFromLast >= 200) { // Generate monster every 200 pixels
+      const spawnPosition = isMovingRight ? 
+        playerPosition + 400 : // Spawn ahead if moving right
+        playerPosition - 400;  // Spawn behind if moving left
       
-      if ((isMovingRight && spawnDistance > playerPosition) || 
-          (isMovingLeft && spawnDistance < playerPosition)) {
-        const monsterLevel = Math.floor(Math.abs(playerPosition) / 1000) + 1;
-        const newMonster = generateMonster(spawnDistance);
+      const monsterLevel = Math.floor(Math.abs(playerPosition) / 1000) + 1;
+      const newMonster = generateMonster(spawnPosition);
+      
+      if (newMonster) {
+        newMonster.power = Math.floor(newMonster.power * (1 + monsterLevel * 0.2));
+        newMonster.health = Math.floor(newMonster.health * (1 + monsterLevel * 0.2));
+        newMonster.maxHealth = newMonster.health;
         
-        if (newMonster) {
-          newMonster.power = Math.floor(newMonster.power * (1 + monsterLevel * 0.2));
-          newMonster.health = Math.floor(newMonster.health * (1 + monsterLevel * 0.2));
-          newMonster.maxHealth = newMonster.health;
-          
-          setMonsters(prev => [...prev, newMonster]);
-          lastMonsterSpawn.current = currentTime;
-        }
+        setMonsters(prev => [...prev, newMonster]);
+        setLastGeneratedPosition(playerPosition);
       }
     }
-  }, [playerPosition, isMovingRight, isMovingLeft, generateMonster]);
+  }, [playerPosition, isMovingRight, isMovingLeft, generateMonster, lastGeneratedPosition]);
 
   return (
     <>
