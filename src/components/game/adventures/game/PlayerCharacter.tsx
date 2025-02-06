@@ -52,38 +52,41 @@ export const PlayerCharacter = ({
           <div className="relative">
             <div className="h-2 bg-red-900 rounded-full">
               <div 
-                className="h-full bg-red-500 rounded-full transition-all duration-300"
+                className="h-full bg-red-500 rounded-full transition-all duration-300 relative"
                 style={{ width: `${(health / 100) * 100}%` }}
-              />
-            </div>
-            <div className="absolute -top-4 left-0 right-0 text-center text-xs text-red-400">
-              {Math.floor(health)}/100
+              >
+                <div className="absolute inset-0 flex items-center justify-center text-[10px] text-white font-bold whitespace-nowrap">
+                  {Math.floor(health)}/100
+                </div>
+              </div>
             </div>
           </div>
           
           {/* Armor Bar */}
-          <div className="relative mt-5">
+          <div className="relative mt-1">
             <div className="h-2 bg-blue-900 rounded-full">
               <div 
-                className="h-full bg-blue-500 rounded-full transition-all duration-300"
+                className="h-full bg-blue-500 rounded-full transition-all duration-300 relative"
                 style={{ width: `${(armor / maxArmor) * 100}%` }}
-              />
-            </div>
-            <div className="absolute -top-4 left-0 right-0 text-center text-xs text-blue-400">
-              {Math.floor(armor)}/{maxArmor}
+              >
+                <div className="absolute inset-0 flex items-center justify-center text-[10px] text-white font-bold whitespace-nowrap">
+                  {Math.floor(armor)}/{maxArmor}
+                </div>
+              </div>
             </div>
           </div>
 
           {/* Experience Bar */}
-          <div className="relative mt-5">
+          <div className="relative mt-1">
             <div className="h-2 bg-purple-900 rounded-full">
               <div 
-                className="h-full bg-purple-500 rounded-full transition-all duration-300"
+                className="h-full bg-purple-500 rounded-full transition-all duration-300 relative"
                 style={{ width: `${(experience / requiredExperience) * 100}%` }}
-              />
-            </div>
-            <div className="absolute -top-4 left-0 right-0 text-center text-xs text-purple-400">
-              {experience}/{requiredExperience}
+              >
+                <div className="absolute inset-0 flex items-center justify-center text-[10px] text-white font-bold whitespace-nowrap">
+                  {experience}/{requiredExperience}
+                </div>
+              </div>
             </div>
           </div>
         </div>
