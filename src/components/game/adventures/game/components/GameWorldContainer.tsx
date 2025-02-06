@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Monster } from '../../types';
 import { GameWorld } from '../../components/GameWorld';
@@ -17,6 +18,7 @@ interface GameWorldContainerProps {
   targetedMonster: TargetedMonster | null;
   armor: number;
   maxArmor: number;
+  maxHealth: number;
 }
 
 export const GameWorldContainer = ({
@@ -32,7 +34,8 @@ export const GameWorldContainer = ({
   onSelectTarget,
   targetedMonster,
   armor,
-  maxArmor
+  maxArmor,
+  maxHealth
 }: GameWorldContainerProps) => {
   return (
     <div className="w-full h-full relative overflow-hidden">
@@ -50,6 +53,7 @@ export const GameWorldContainer = ({
         targetedMonster={targetedMonster}
         armor={armor}
         maxArmor={maxArmor}
+        maxHealth={maxHealth}
       />
     </div>
   );
