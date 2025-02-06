@@ -24,10 +24,11 @@ export const MonsterSprite = ({ monster, position }: MonsterSpriteProps) => {
 
   return (
     <motion.div
-      className="absolute bottom-[50px]"
+      className="absolute bottom-12"
       style={{ left: position }}
-      animate={{ y: [0, -5, 0] }}
-      transition={{ duration: 2, repeat: Infinity }}
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, y: -20 }}
     >
       <div className="relative">
         {/* Monster stats */}

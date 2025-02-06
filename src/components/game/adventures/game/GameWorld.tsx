@@ -44,7 +44,7 @@ export const GameWorld = ({
         <div
           key={monster.id}
           onClick={() => onMonsterSelect(monster)}
-          className="cursor-pointer"
+          className={`cursor-pointer ${selectedMonsterId === monster.id ? 'ring-2 ring-yellow-400' : ''}`}
         >
           <MonsterSprite
             monster={monster}
