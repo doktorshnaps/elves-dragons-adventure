@@ -12,6 +12,8 @@ import { GameOver } from './GameOver';
 import { v4 as uuidv4 } from 'uuid';
 import { TargetedMonster } from './types/combatTypes';
 import { useCombatSystem } from './hooks/useCombatSystem';
+import { useToast } from '@/hooks/use-toast';
+import { motion, AnimatePresence } from 'framer-motion';
 
 interface AdventureGameProps {
   onMonsterDefeat: (monster: Monster) => void;
@@ -34,6 +36,7 @@ export const AdventureGame = ({
   requiredExperience,
   maxHealth
 }: AdventureGameProps) => {
+  const { toast } = useToast();
   const {
     currentHealth,
     setCurrentHealth,
@@ -47,6 +50,8 @@ export const AdventureGame = ({
   } = useAdventureState(playerHealth);
 
   const [targetedMonster, setTargetedMonster] = useState<TargetedMonster | null>(null);
+  const [diceRoll, setDiceRoll] = useState<number | null>(null);
+  const [isRolling, setIsRolling] = useState(false);
 
   const gameRef = useRef<HTMLDivElement>(null);
   const gameContainerRef = useRef<HTMLDivElement>(null);
@@ -88,14 +93,71 @@ export const AdventureGame = ({
     });
   };
 
-  const handleAttack = () => {
-    if (!targetedMonster) return;
+  const rollDice = () => {
+    return Math.floor(Math.random() * 20) + 1;
+  };
+
+  const handleAttack = async () => {
+    if (!targetedMonster || isRolling) return;
     
+    setIsRolling(true);
+    setIsAttacking(true);
+
+    // Анимация броска кубика
+    const roll = rollDice();
+    setDiceRoll(roll);
+
+    // Задержка для анимации
+    await new Promise(resolve => setTimeout(resolve, 1000));
+
     const monster = monsters.find(m => m.id === targetedMonster.id);
-    if (!monster) return;
-    
-    onMonsterDefeat(monster);
-    setTargetedMonster(null);
+    if (!monster) {
+      setIsRolling(false);
+      setIsAttacking(false);
+      return;
+    }
+
+    // Рассчитываем урон на основе броска кубика
+    let damageMultiplier = 1;
+    if (roll === 20) {
+      damageMultiplier = 2; // Критический удар
+      toast({
+        title: "Критический удар!",
+        description: `Выпало ${roll}! Двойной урон!`,
+        variant: "destructive"
+      });
+    } else if (roll === 1) {
+      damageMultiplier = 0; // Промах
+      toast({
+        title: "Промах!",
+        description: "Выпало 1! Атака не попала по цели.",
+      });
+    } else {
+      toast({
+        title: "Атака!",
+        description: `Выпало ${roll}!`,
+      });
+    }
+
+    const damage = Math.floor(playerPower * damageMultiplier);
+    const updatedMonsters = monsters.map(m => {
+      if (m.id === monster.id) {
+        const newHealth = Math.max(0, m.health - damage);
+        if (newHealth <= 0) {
+          onMonsterDefeat(m);
+        }
+        return {
+          ...m,
+          health: newHealth
+        };
+      }
+      return m;
+    });
+
+    setMonsters(updatedMonsters.filter(m => m.health > 0));
+    setIsRolling(false);
+    setIsAttacking(false);
+    setDiceRoll(null);
   };
 
   useEffect(() => {
@@ -133,6 +195,21 @@ export const AdventureGame = ({
       
       <Card className="w-full h-[500px] relative overflow-hidden bg-game-background mt-4">
         {currentHealth <= 0 && <GameOver />}
+        
+        {/* Анимация броска кубика */}
+        <AnimatePresence>
+          {isRolling && diceRoll !== null && (
+            <motion.div
+              initial={{ scale: 0, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0, opacity: 0 }}
+              className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-50 bg-game-accent rounded-lg p-8 text-4xl font-bold"
+            >
+              {diceRoll}
+            </motion.div>
+          )}
+        </AnimatePresence>
+
         <div 
           ref={gameContainerRef}
           className="w-full h-full relative overflow-hidden"
