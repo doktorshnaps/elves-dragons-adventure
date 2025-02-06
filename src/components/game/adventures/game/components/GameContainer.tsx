@@ -1,3 +1,4 @@
+
 import React, { useRef } from 'react';
 import { Card } from "@/components/ui/card";
 import { GameOverlay } from './GameOverlay';
@@ -106,6 +107,7 @@ export const GameContainer = ({
             targetedMonster={targetedMonster}
             armor={armor}
             maxArmor={maxArmor}
+            maxHealth={maxHealth}
           />
         </div>
 
