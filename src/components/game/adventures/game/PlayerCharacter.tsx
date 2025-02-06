@@ -64,10 +64,10 @@ export const PlayerCharacter = ({
 
   return (
     <motion.div
-      className="absolute z-10"
+      className="absolute bottom-[50px] z-10"
       style={{ 
-        x: position,
-        y: 50 + yPosition
+        left: position,
+        transform: `translateY(${-yPosition}px)`
       }}
       transition={{ 
         type: 'spring',
@@ -172,3 +172,4 @@ export const PlayerCharacter = ({
     </motion.div>
   );
 };
+
