@@ -21,6 +21,9 @@ interface GameWorldProps {
   armor: number;
   maxArmor: number;
   maxHealth: number;
+  level?: number;
+  experience?: number;
+  requiredExperience?: number;
 }
 
 export const GameWorld = ({
@@ -37,7 +40,10 @@ export const GameWorld = ({
   targetedMonster,
   armor,
   maxArmor,
-  maxHealth
+  maxHealth,
+  level,
+  experience,
+  requiredExperience
 }: GameWorldProps) => {
   return (
     <div 
@@ -64,6 +70,9 @@ export const GameWorld = ({
         armor={armor}
         maxArmor={maxArmor}
         maxHealth={maxHealth}
+        level={level}
+        experience={experience}
+        requiredExperience={requiredExperience}
       />
 
       {monsters.map(monster => (
@@ -86,3 +95,4 @@ export const GameWorld = ({
     </div>
   );
 };
+
