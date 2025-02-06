@@ -15,9 +15,15 @@ export const ProjectileSprite = ({ x, y }: ProjectileSpriteProps) => {
         bottom: y,
         boxShadow: '0 0 10px rgba(255, 0, 0, 0.5)'
       }}
-      initial={{ scale: 0 }}
-      animate={{ scale: 1 }}
-      exit={{ scale: 0 }}
+      initial={{ scale: 0, opacity: 0 }}
+      animate={{ 
+        scale: [0, 1.2, 1],
+        opacity: [0, 1, 1]
+      }}
+      transition={{
+        duration: 0.3,
+        ease: "easeOut"
+      }}
     />
   );
 };

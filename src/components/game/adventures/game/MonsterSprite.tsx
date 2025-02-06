@@ -35,6 +35,8 @@ export const MonsterSprite = ({
       animate={{ y: [0, -5, 0] }}
       transition={{ duration: 2, repeat: Infinity }}
       onClick={() => onSelect(monster)}
+      whileHover={{ scale: 1.1 }}
+      whileTap={{ scale: 0.9 }}
     >
       <div className="relative">
         <div className="absolute -top-20 left-1/2 -translate-x-1/2 whitespace-nowrap">

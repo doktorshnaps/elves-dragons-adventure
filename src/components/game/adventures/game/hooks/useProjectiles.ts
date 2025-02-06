@@ -12,20 +12,20 @@ export const useProjectiles = (
 ) => {
   const [projectiles, setProjectiles] = useState<Projectile[]>([]);
 
-  // Создаем интервалы для атак монстров
   useEffect(() => {
     if (currentHealth <= 0) return;
 
     const intervals = monsters.map(monster => {
       return setInterval(() => {
-        // Убираем проверку позиции монстра, чтобы все монстры атаковали
-        setProjectiles(prev => [...prev, {
-          id: Date.now() + Math.random(),
-          x: monster.position || 0, // Используем 0 как fallback
-          y: 50,
-          direction: playerPosition > (monster.position || 0) ? 1 : -1,
-          monsterId: monster.id
-        }]);
+        if (monster.health > 0) {
+          setProjectiles(prev => [...prev, {
+            id: Date.now() + Math.random(),
+            x: monster.position || 0,
+            y: 50,
+            direction: playerPosition > (monster.position || 0) ? 1 : -1,
+            monsterId: monster.id
+          }]);
+        }
       }, 2000);
     });
 
@@ -34,7 +34,6 @@ export const useProjectiles = (
     };
   }, [monsters, currentHealth, playerPosition]);
 
-  // Обновление позиций снарядов и проверка попаданий
   useEffect(() => {
     const moveProjectiles = () => {
       setProjectiles(prev => 
@@ -42,8 +41,8 @@ export const useProjectiles = (
           ...projectile,
           x: projectile.x + (projectile.direction * 5)
         })).filter(projectile => {
-          const hitPlayer = Math.abs(projectile.x - playerPosition) < 50 &&
-                          Math.abs(projectile.y - playerY) < 70;
+          const hitPlayer = Math.abs(projectile.x - playerPosition) < 30 &&
+                          Math.abs(projectile.y - playerY) < 50;
           
           const sourceMonster = monsters.find(m => m.id === projectile.monsterId);
           
@@ -53,7 +52,6 @@ export const useProjectiles = (
             return false;
           }
           
-          // Увеличиваем дистанцию, на которой снаряды остаются активными
           return Math.abs(projectile.x - playerPosition) < 1200;
         })
       );
