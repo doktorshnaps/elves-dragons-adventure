@@ -1,3 +1,4 @@
+
 import { Button } from "@/components/ui/button";
 import { ArrowLeft } from "lucide-react";
 
@@ -8,7 +9,7 @@ interface GameHeaderProps {
 
 export const GameHeader = ({ balance, onBack }: GameHeaderProps) => {
   return (
-    <div className="fixed top-0 left-0 right-0 z-50 bg-game-surface/90 backdrop-blur-sm p-4">
+    <div className="fixed top-0 left-0 right-0 z-50 bg-game-surface/90 p-4">
       <div className="flex justify-between items-center max-w-4xl mx-auto">
         <Button 
           variant="outline" 
