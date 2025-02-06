@@ -80,7 +80,8 @@ export const AdventureGame = ({
       if (currentHealth > 0) {
         setCurrentHealth(prev => Math.max(0, prev - damage));
       }
-    }
+    },
+    monsters // Передаем массив монстров
   );
 
   const handleMonsterDamage = (damage: number) => {
