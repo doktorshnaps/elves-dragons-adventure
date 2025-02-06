@@ -34,7 +34,7 @@ export const useGameState = (
       
       setTimeout(() => {
         navigate('/menu');
-      }, 3000);
+      }, 2000);
     }
   }, [currentHealth, isGameOver, navigate, toast]);
 
