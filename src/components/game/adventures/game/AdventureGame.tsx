@@ -12,6 +12,7 @@ import { TargetedMonster } from './types/combatTypes';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useToast } from '@/hooks/use-toast';
 import { useNavigate } from 'react-router-dom';
+import { useMonsterGeneration } from '../useMonsterGeneration';
 
 interface AdventureGameProps {
   onMonsterDefeat: (monster: Monster) => void;
@@ -46,9 +47,11 @@ export const AdventureGame = ({
   const [monsterDiceRoll, setMonsterDiceRoll] = useState<number | null>(null);
   const [lastGeneratedPosition, setLastGeneratedPosition] = useState(0);
   const [isGameOver, setIsGameOver] = useState(false);
+  const [cameraOffset, setCameraOffset] = useState(0);
 
   const gameRef = useRef<HTMLDivElement>(null);
   const gameContainerRef = useRef<HTMLDivElement>(null);
+  const { generateMonster } = useMonsterGeneration(1);
 
   const updateCameraOffset = (playerPos: number) => {
     if (!gameContainerRef.current) return;
@@ -224,7 +227,6 @@ export const AdventureGame = ({
         variant: "destructive"
       });
       
-      // Задержка перед возвратом в меню
       setTimeout(() => {
         navigate('/');
       }, 3000);
@@ -232,13 +234,12 @@ export const AdventureGame = ({
   }, [currentHealth, isGameOver, navigate, toast]);
 
   useEffect(() => {
-    // Check if we need to generate a new monster based on player position
     const distanceFromLast = Math.abs(playerPosition - lastGeneratedPosition);
     
-    if (distanceFromLast >= 200) { // Generate monster every 200 pixels
+    if (distanceFromLast >= 200) {
       const spawnPosition = isMovingRight ? 
-        playerPosition + 400 : // Spawn ahead if moving right
-        playerPosition - 400;  // Spawn behind if moving left
+        playerPosition + 400 : 
+        playerPosition - 400;
       
       const monsterLevel = Math.floor(Math.abs(playerPosition) / 1000) + 1;
       const newMonster = generateMonster(spawnPosition);
