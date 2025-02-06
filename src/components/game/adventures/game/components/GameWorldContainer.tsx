@@ -41,8 +41,8 @@ export const GameWorldContainer = ({
   maxArmor,
   maxHealth,
   level,
-  experience,
-  requiredExperience,
+  experience = 0,
+  requiredExperience = 100,
   balance
 }: GameWorldContainerProps) => {
   return (
@@ -67,6 +67,48 @@ export const GameWorldContainer = ({
         requiredExperience={requiredExperience}
         balance={balance}
       />
+
+      {/* Player Interface */}
+      <div className="fixed bottom-0 left-0 w-full z-50 px-4 pb-2">
+        <div className="max-w-[400px] mx-auto space-y-2">
+          {/* Health Bar */}
+          <div className="w-full h-4 bg-red-900 rounded-full overflow-hidden">
+            <div 
+              className="h-full bg-red-500 rounded-full transition-all duration-300 relative"
+              style={{ width: `${(currentHealth / maxHealth) * 100}%` }}
+            >
+              <div className="absolute inset-0 flex items-center justify-center text-xs text-white font-bold">
+                {Math.floor(currentHealth)}/{maxHealth} HP
+              </div>
+            </div>
+          </div>
+
+          {/* Armor Bar */}
+          <div className="w-full h-4 bg-blue-900 rounded-full overflow-hidden">
+            <div 
+              className="h-full bg-blue-500 rounded-full transition-all duration-300 relative"
+              style={{ width: `${(armor / maxArmor) * 100}%` }}
+            >
+              <div className="absolute inset-0 flex items-center justify-center text-xs text-white font-bold">
+                ARMOR {Math.floor(armor)}/{maxArmor}
+              </div>
+            </div>
+          </div>
+
+          {/* Experience Bar */}
+          <div className="w-full h-4 bg-purple-900 rounded-full overflow-hidden">
+            <div 
+              className="h-full bg-purple-500 rounded-full transition-all duration-300 relative"
+              style={{ width: `${(experience / requiredExperience) * 100}%` }}
+            >
+              <div className="absolute inset-0 flex items-center justify-center text-xs text-white font-bold">
+                EXP {experience}/{requiredExperience}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   );
 };
+
