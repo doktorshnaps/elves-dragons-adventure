@@ -51,27 +51,25 @@ export const GameWorldContainer = ({
 
   return (
     <div className="w-full h-full relative overflow-hidden">
-      {/* Player Interface - Positioned relative to game container */}
       <div className="absolute left-1/2 transform -translate-x-1/2 top-4 z-50 w-full px-4">
         <div className="max-w-[400px] mx-auto space-y-2">
           {/* Health Bar */}
           <div className="flex items-center gap-2">
             <Heart className="w-5 h-5 text-red-500" />
-            <div className="w-full h-4 bg-red-900 rounded-full overflow-hidden">
+            <div className="w-full h-4 bg-red-900 rounded-full overflow-hidden relative">
               <motion.div 
                 initial={{ scaleX: 1 }}
                 animate={{ scaleX: 1 }}
                 whileTap={{ scaleX: 0.98 }}
-                className="h-full rounded-full transition-all duration-300 relative"
+                className="h-full rounded-full transition-all duration-300"
                 style={{ 
                   width: `${(currentHealth / maxHealth) * 100}%`,
                   background: 'linear-gradient(90deg, rgb(239, 68, 68) 0%, rgb(248, 113, 113) 100%)'
                 }}
-              >
-                <div className="absolute inset-0 flex items-center justify-center text-xs text-white font-bold">
-                  {Math.floor(currentHealth)}/{maxHealth} HP
-                </div>
-              </motion.div>
+              />
+              <div className="absolute inset-0 flex items-center justify-center text-xs text-white font-bold">
+                {Math.floor(currentHealth)}/{maxHealth}
+              </div>
             </div>
           </div>
 
@@ -88,16 +86,15 @@ export const GameWorldContainer = ({
                 />
               )}
               <motion.div 
-                className="h-full rounded-full transition-all duration-300 relative"
+                className="h-full rounded-full transition-all duration-300"
                 style={{ 
                   width: `${(armor / maxArmor) * 100}%`,
                   background: 'linear-gradient(90deg, rgb(59, 130, 246) 0%, rgb(96, 165, 250) 100%)'
                 }}
-              >
-                <div className="absolute inset-0 flex items-center justify-center text-xs text-white font-bold">
-                  ARMOR {Math.floor(armor)}/{maxArmor}
-                </div>
-              </motion.div>
+              />
+              <div className="absolute inset-0 flex items-center justify-center text-xs text-white font-bold">
+                {Math.floor(armor)}/{maxArmor}
+              </div>
             </div>
           </div>
 
@@ -105,18 +102,17 @@ export const GameWorldContainer = ({
           <div className="flex items-center gap-2">
             <Star className="w-5 h-5 text-yellow-500" />
             <div className="flex-1">
-              <div className="w-full h-4 bg-purple-900 rounded-full overflow-hidden">
+              <div className="w-full h-4 bg-purple-900 rounded-full overflow-hidden relative">
                 <motion.div 
-                  className="h-full rounded-full transition-all duration-300 relative"
+                  className="h-full rounded-full transition-all duration-300"
                   style={{ 
                     width: `${(experience / requiredExperience) * 100}%`,
                     background: 'linear-gradient(90deg, rgb(168, 85, 247) 0%, rgb(192, 132, 252) 100%)'
                   }}
-                >
-                  <div className="absolute inset-0 flex items-center justify-center text-xs text-white font-bold">
-                    EXP {experience}/{requiredExperience}
-                  </div>
-                </motion.div>
+                />
+                <div className="absolute inset-0 flex items-center justify-center text-xs text-white font-bold">
+                  {experience}/{requiredExperience}
+                </div>
               </div>
             </div>
             <div className="flex items-center justify-center bg-yellow-500 rounded-full w-8 h-8">
