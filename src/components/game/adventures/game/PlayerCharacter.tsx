@@ -85,11 +85,6 @@ export const PlayerCharacter = ({
             <span className="text-xs font-bold text-white">{power}</span>
           </div>
 
-          {/* Level Emblem */}
-          <div className="absolute -top-8 -left-8 bg-yellow-500/80 backdrop-blur-sm p-2 rounded-full">
-            <span className="text-xs font-bold text-white">{level}</span>
-          </div>
-
           {armor > 0 && (
             <div className="absolute inset-0 -m-2">
               <div className="w-full h-full rounded-full border-2 border-blue-500/50 animate-pulse" />
