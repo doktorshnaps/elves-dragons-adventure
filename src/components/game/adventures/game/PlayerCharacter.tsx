@@ -1,6 +1,7 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import { Shield } from 'lucide-react';
+import { Progress } from "@/components/ui/progress";
 
 interface PlayerCharacterProps {
   position: number;
@@ -8,8 +9,11 @@ interface PlayerCharacterProps {
   isAttacking: boolean;
   health: number;
   power: number;
-  armor: number; // Added armor prop
-  maxArmor: number; // Added maxArmor prop
+  armor: number;
+  maxArmor: number;
+  level?: number;
+  experience?: number;
+  requiredExperience?: number;
 }
 
 export const PlayerCharacter = ({ 
@@ -19,7 +23,10 @@ export const PlayerCharacter = ({
   health,
   power,
   armor,
-  maxArmor
+  maxArmor,
+  level = 1,
+  experience = 0,
+  requiredExperience = 100
 }: PlayerCharacterProps) => {
   return (
     <motion.div
@@ -34,14 +41,22 @@ export const PlayerCharacter = ({
       }}
     >
       <div className="relative">
-        {/* Health and Armor Bars */}
-        <div className="absolute -top-12 left-1/2 -translate-x-1/2 w-20 space-y-1">
+        {/* Stats Display */}
+        <div className="absolute -top-24 left-1/2 -translate-x-1/2 w-32 space-y-1">
+          {/* Level Display */}
+          <div className="text-center text-xs font-bold text-yellow-400 mb-1">
+            Уровень {level}
+          </div>
+          
           {/* Health Bar */}
           <div className="h-2 bg-red-900 rounded-full">
             <div 
               className="h-full bg-red-500 rounded-full transition-all duration-300"
               style={{ width: `${(health / 100) * 100}%` }}
             />
+            <div className="text-center text-xs text-white -mt-1">
+              {Math.floor(health)}/100
+            </div>
           </div>
           
           {/* Armor Bar */}
@@ -50,6 +65,20 @@ export const PlayerCharacter = ({
               className="h-full bg-blue-500 rounded-full transition-all duration-300"
               style={{ width: `${(armor / maxArmor) * 100}%` }}
             />
+            <div className="text-center text-xs text-white -mt-1">
+              {Math.floor(armor)}/{maxArmor}
+            </div>
+          </div>
+
+          {/* Experience Bar */}
+          <div className="h-2 bg-purple-900 rounded-full">
+            <div 
+              className="h-full bg-purple-500 rounded-full transition-all duration-300"
+              style={{ width: `${(experience / requiredExperience) * 100}%` }}
+            />
+            <div className="text-center text-xs text-white -mt-1">
+              {experience}/{requiredExperience}
+            </div>
           </div>
         </div>
 
