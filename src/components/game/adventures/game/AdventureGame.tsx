@@ -70,11 +70,16 @@ export const AdventureGame = ({
 
   useEffect(() => {
     const currentTime = Date.now();
-    if (currentTime - lastMonsterSpawn.current > 2000) {
+    if (currentTime - lastMonsterSpawn.current > 2000) { // Спавн каждые 2 секунды
       const spawnDistance = isMovingRight ? playerPosition + 400 : playerPosition - 400;
       
-      if ((isMovingRight && spawnDistance > playerPosition) || 
-          (isMovingLeft && spawnDistance < playerPosition)) {
+      // Проверяем, нет ли уже монстров в этой области
+      const monsterExists = monsters.some(monster => 
+        Math.abs(monster.position! - spawnDistance) < 200
+      );
+      
+      if (!monsterExists && ((isMovingRight && spawnDistance > playerPosition) || 
+          (isMovingLeft && spawnDistance < playerPosition))) {
         const monsterLevel = Math.floor(Math.abs(playerPosition) / 1000) + 1;
         const newMonster = generateMonster(spawnDistance);
         
@@ -88,7 +93,7 @@ export const AdventureGame = ({
         }
       }
     }
-  }, [playerPosition, isMovingRight, isMovingLeft, generateMonster]);
+  }, [playerPosition, isMovingRight, isMovingLeft, generateMonster, monsters]);
 
   const handleMonsterSelect = (monster: Monster) => {
     setSelectedMonster(monster);
