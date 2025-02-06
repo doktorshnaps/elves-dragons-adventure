@@ -79,8 +79,8 @@ export const PlayerCharacter = ({
         }}
       >
         <div className="relative">
-          {/* Attack Power Display */}
-          <div className="absolute -top-8 -right-8 flex items-center bg-red-500/80 backdrop-blur-sm px-2 py-1 rounded-lg">
+          {/* Attack Power Display - Now centered above character */}
+          <div className="absolute -top-8 left-1/2 transform -translate-x-1/2 flex items-center bg-red-500/80 backdrop-blur-sm px-2 py-1 rounded-lg">
             <Sword className="w-4 h-4 text-white mr-1" />
             <span className="text-xs font-bold text-white">{power}</span>
           </div>
@@ -174,4 +174,3 @@ export const PlayerCharacter = ({
     </>
   );
 };
-
