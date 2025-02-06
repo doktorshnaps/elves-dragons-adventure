@@ -1,5 +1,6 @@
 
-import { Routes, Route, useEffect } from 'react-router-dom';
+import { Routes, Route } from 'react-router-dom';
+import { useEffect } from 'react';
 import { Equipment } from './pages/Equipment';
 import { Team } from './pages/Team';
 import { Statistics } from './pages/Statistics';
@@ -30,6 +31,16 @@ function App() {
 
     setViewport();
     window.addEventListener('resize', setViewport);
+    
+    // Initialize Telegram WebApp
+    const initTelegram = () => {
+      if (window.Telegram?.WebApp) {
+        window.Telegram.WebApp.expand();
+        window.Telegram.WebApp.enableClosingConfirmation();
+      }
+    };
+
+    initTelegram();
     
     return () => window.removeEventListener('resize', setViewport);
   }, []);
