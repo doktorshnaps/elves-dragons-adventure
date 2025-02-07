@@ -1,3 +1,4 @@
+
 import React, { useEffect } from 'react';
 import { Monster } from '../../../../../types/battle';
 import { PlayerCharacter } from '../PlayerCharacter';
@@ -54,7 +55,7 @@ export const GameWorld = ({
 }: GameWorldProps) => {
   const { toast } = useToast();
 
-  // Enhanced collision detection with proper hit boxes
+  // Enhanced collision detection with proper hit boxes and trap triggering
   useEffect(() => {
     if (playerY === 0) { // Only check when player is on the ground
       const playerWidth = 48; // Width of player character
@@ -68,8 +69,10 @@ export const GameWorld = ({
       };
 
       const collided = obstacles.find(obstacle => {
+        if (obstacle.triggered) return false;
+
         const obstacleWidth = obstacle.type === 'pit' ? 64 : 32;
-        const obstacleHeight = obstacle.type === 'pit' ? 48 : 48; // Increased height for both types
+        const obstacleHeight = obstacle.type === 'pit' ? 48 : 48;
         const obstacleBounds = {
           left: obstacle.position,
           right: obstacle.position + obstacleWidth,
@@ -78,10 +81,17 @@ export const GameWorld = ({
         };
 
         // Check for rectangle collision
-        return !(playerBounds.right < obstacleBounds.left || 
+        const collision = !(playerBounds.right < obstacleBounds.left || 
                 playerBounds.left > obstacleBounds.right || 
                 playerBounds.bottom < obstacleBounds.top || 
                 playerBounds.top > obstacleBounds.bottom);
+
+        if (collision) {
+          obstacle.triggered = true;
+          return true;
+        }
+
+        return false;
       });
 
       if (collided) {
@@ -153,3 +163,4 @@ export const GameWorld = ({
     </div>
   );
 };
+
