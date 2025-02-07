@@ -1,6 +1,6 @@
 
 import React, { useEffect } from 'react';
-import { Monster } from '../../../../../types/battle';
+import { Monster } from '../../../types';
 import { PlayerCharacter } from '../PlayerCharacter';
 import { MonsterSprite } from '../MonsterSprite';
 import { ProjectileSprite } from '../ProjectileSprite';
