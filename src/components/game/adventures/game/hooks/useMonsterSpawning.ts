@@ -26,51 +26,55 @@ export const useMonsterSpawning = (
 
   // Generate new monsters as player moves
   useEffect(() => {
-    const distanceFromLast = Math.abs(playerPosition - lastGeneratedPosition);
-    const SPAWN_INTERVAL = 100; // Spawn every 100 pixels
-    const MAX_MONSTERS = 8; // Increased maximum number of monsters
-    
-    if (distanceFromLast >= SPAWN_INTERVAL && monsters.length < MAX_MONSTERS) {
-      let spawnPosition: number;
-      
-      if (isMovingRight) {
-        spawnPosition = playerPosition + 400;
-      } else if (isMovingLeft) {
-        spawnPosition = playerPosition - 400;
-      } else {
-        return; // Don't spawn if not moving
-      }
+    // Spawn new monsters
+    const SPAWN_INTERVAL = 400; // Distance between monsters
+    const MAX_MONSTERS = 8;
+    const MIN_DISTANCE = 200; // Minimum distance between monsters
 
-      // Check if there's already a monster at this position
-      const monsterExists = monsters.some(
-        monster => Math.abs(monster.position - spawnPosition) < SPAWN_INTERVAL
+    const shouldSpawnNewMonster = () => {
+      if (monsters.length >= MAX_MONSTERS) return false;
+      if (!isMovingRight && !isMovingLeft) return false;
+
+      const distanceFromLast = Math.abs(playerPosition - lastGeneratedPosition);
+      return distanceFromLast >= SPAWN_INTERVAL;
+    };
+
+    if (shouldSpawnNewMonster()) {
+      const spawnPosition = isMovingRight 
+        ? playerPosition + SPAWN_INTERVAL 
+        : playerPosition - SPAWN_INTERVAL;
+
+      // Check if there's already a monster nearby
+      const hasNearbyMonster = monsters.some(monster => 
+        Math.abs(monster.position - spawnPosition) < MIN_DISTANCE
       );
 
-      if (!monsterExists) {
-        const monsterLevel = Math.floor(Math.abs(playerPosition) / 1000) + 1;
+      if (!hasNearbyMonster) {
+        const monsterLevel = Math.max(1, Math.floor(Math.abs(playerPosition) / 1000) + 1);
         const newMonster = generateMonster(spawnPosition);
-        
+
         if (newMonster) {
           // Scale monster stats based on level
-          newMonster.power = Math.floor(newMonster.power * (1 + monsterLevel * 0.2));
-          newMonster.health = Math.floor(newMonster.health * (1 + monsterLevel * 0.2));
+          const statsMultiplier = 1 + (monsterLevel - 1) * 0.2;
+          newMonster.power = Math.floor(newMonster.power * statsMultiplier);
+          newMonster.health = Math.floor(newMonster.health * statsMultiplier);
           newMonster.maxHealth = newMonster.health;
           
           setMonsters(prev => [...prev, newMonster]);
-          setLastGeneratedPosition(playerPosition);
+          setLastGeneratedPosition(spawnPosition);
           console.log(`New monster spawned at position ${spawnPosition}, Level: ${monsterLevel}`);
         }
       }
     }
 
-    // Clean up monsters that are too far from the player
-    const CLEANUP_DISTANCE = 1000;
+    // Clean up monsters that are too far
+    const CLEANUP_DISTANCE = 1200;
     setMonsters(prev => 
       prev.filter(monster => 
         Math.abs(monster.position - playerPosition) <= CLEANUP_DISTANCE
       )
     );
-  }, [playerPosition, isMovingRight, isMovingLeft]);
+  }, [playerPosition, isMovingRight, isMovingLeft, lastGeneratedPosition, monsters]);
 
   return { monsters, setMonsters };
 };
