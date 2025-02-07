@@ -30,9 +30,15 @@ export const useMonsterSpawning = (
     const SPAWN_INTERVAL = 100; // Spawn every 100 pixels
     
     if (distanceFromLast >= SPAWN_INTERVAL && monsters.length < 5) {
-      const spawnPosition = isMovingRight ? 
-        playerPosition + 400 : 
-        playerPosition - 400;
+      let spawnPosition: number;
+      
+      if (isMovingRight) {
+        spawnPosition = playerPosition + 400;
+      } else if (isMovingLeft) {
+        spawnPosition = playerPosition - 400;
+      } else {
+        return; // Don't spawn if not moving
+      }
       
       const monsterLevel = Math.floor(Math.abs(playerPosition) / 1000) + 1;
       const newMonster = generateMonster(spawnPosition);
@@ -45,10 +51,10 @@ export const useMonsterSpawning = (
         
         setMonsters(prev => [...prev, newMonster]);
         setLastGeneratedPosition(playerPosition);
-        console.log(`New monster spawned at position ${spawnPosition}`);
+        console.log(`New monster spawned at position ${spawnPosition}, Level: ${monsterLevel}`);
       }
     }
-  }, [playerPosition, isMovingRight, isMovingLeft, generateMonster, monsters.length, lastGeneratedPosition]);
+  }, [playerPosition]);
 
   return { monsters, setMonsters };
 };
