@@ -18,10 +18,13 @@ export interface Monster {
   position?: number;
   type: 'normal' | 'elite' | 'boss';
   experienceReward: number;
+  reward?: {
+    gold?: number;
+    experience?: number;
+  };
 }
 
 export interface TargetedMonster {
   id: number;
   position: number;
 }
-

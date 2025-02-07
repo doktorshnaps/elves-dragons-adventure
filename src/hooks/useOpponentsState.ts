@@ -1,7 +1,8 @@
+
 import { useState, useEffect } from 'react';
 import { Opponent } from '@/types/battle';
 import { generateOpponents } from '@/utils/opponentGenerator';
-import { rollLoot, generateLootTable } from '@/utils/lootUtils';
+import { generateLoot, generateLootTable } from '@/utils/lootUtils';
 import { useToast } from '@/hooks/use-toast';
 import { Item } from "@/types/inventory";
 
@@ -36,7 +37,7 @@ export const useOpponentsState = (
 
   const handleOpponentDefeat = (opponent: Opponent) => {
     // Получаем награду за убийство
-    const { items: droppedItems, coins: droppedCoins } = rollLoot(generateLootTable(opponent.isBoss ?? false));
+    const { items: droppedItems, coins: droppedCoins } = generateLoot(generateLootTable(opponent.isBoss ?? false));
     
     // Обновляем баланс только с учетом выпавших монет
     const currentBalance = Number(localStorage.getItem('gameBalance')) || 0;
