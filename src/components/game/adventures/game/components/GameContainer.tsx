@@ -29,6 +29,11 @@ interface GameContainerProps {
   onSelectTarget: (monster: Monster) => void;
   balance: number;
   onTakeDamage?: (damage: number) => void;
+  isMovingRight: boolean;
+  isMovingLeft: boolean;
+  setIsMovingRight: (value: boolean) => void;
+  setIsMovingLeft: (value: boolean) => void;
+  playerPosition: number;
 }
 
 export const GameContainer = ({
@@ -50,7 +55,12 @@ export const GameContainer = ({
   maxArmor,
   onSelectTarget,
   balance,
-  onTakeDamage
+  onTakeDamage,
+  isMovingRight,
+  isMovingLeft,
+  setIsMovingRight,
+  setIsMovingLeft,
+  playerPosition
 }: GameContainerProps) => {
   const gameRef = useRef<HTMLDivElement>(null);
   const gameContainerRef = useRef<HTMLDivElement>(null);
@@ -58,13 +68,8 @@ export const GameContainer = ({
   const [obstacles, setObstacles] = useState<Obstacle[]>([]);
 
   const {
-    playerPosition,
     playerY,
-    isMovingRight,
-    isMovingLeft,
     handleJump,
-    setIsMovingRight,
-    setIsMovingLeft,
     cameraOffset
   } = usePlayerMovement((pos: number) => {
     if (gameContainerRef.current) {
@@ -87,9 +92,9 @@ export const GameContainer = ({
           id: Math.random(),
           position: position,
           type,
-          damage: type === 'spike' ? 20 : 10 // Increased spike damage to 20
+          damage: type === 'spike' ? 20 : 10
         });
-        position += Math.random() * (400 - 200) + 200; // Random distance between 200-400
+        position += Math.random() * (400 - 200) + 200;
       }
 
       setObstacles(newObstacles);
