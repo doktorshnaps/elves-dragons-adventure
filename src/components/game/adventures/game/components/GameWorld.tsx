@@ -1,11 +1,11 @@
 
 import React, { useEffect } from 'react';
-import { Monster } from '../types';
+import { Monster } from '../../../types';
 import { PlayerCharacter } from '../PlayerCharacter';
 import { MonsterSprite } from '../MonsterSprite';
 import { ProjectileSprite } from '../ProjectileSprite';
 import { ObstacleSprite, Obstacle } from '../ObstacleSprite';
-import { TargetedMonster } from '../game/types/combatTypes';
+import { TargetedMonster } from '../types/combatTypes';
 import { useToast } from '@/hooks/use-toast';
 
 interface GameWorldProps {
