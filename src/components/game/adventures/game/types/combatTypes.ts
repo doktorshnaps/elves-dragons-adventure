@@ -15,7 +15,7 @@ export interface Monster {
   health: number;
   maxHealth: number;
   power: number;
-  position?: number;
+  position: number; // Changed from optional to required
   type: 'normal' | 'elite' | 'boss';
   experienceReward: number;
   reward: number;
@@ -25,3 +25,4 @@ export interface TargetedMonster {
   id: number;
   position: number;
 }
+
