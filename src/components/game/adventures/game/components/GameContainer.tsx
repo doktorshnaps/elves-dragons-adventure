@@ -87,7 +87,7 @@ export const GameContainer = ({
           id: Math.random(),
           position: position,
           type,
-          damage: type === 'spike' ? 15 : 10
+          damage: type === 'spike' ? 20 : 10 // Increased spike damage to 20
         });
         position += Math.random() * (400 - 200) + 200; // Random distance between 200-400
       }
