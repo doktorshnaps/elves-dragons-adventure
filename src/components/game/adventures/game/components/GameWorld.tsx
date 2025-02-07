@@ -55,24 +55,34 @@ export const GameWorld = ({
 }: GameWorldProps) => {
   const { toast } = useToast();
 
-  // Check for collisions with obstacles
+  // Enhanced collision detection with proper hit boxes
   useEffect(() => {
     if (playerY === 0) { // Only check when player is on the ground
       const playerWidth = 48; // Width of player character
       const playerLeft = playerPosition;
       const playerRight = playerPosition + playerWidth;
+      const playerBounds = {
+        left: playerLeft,
+        right: playerRight,
+        top: playerY,
+        bottom: playerY + 64 // Player height
+      };
 
       const collided = obstacles.find(obstacle => {
         const obstacleWidth = obstacle.type === 'pit' ? 64 : 32;
-        const obstacleLeft = obstacle.position;
-        const obstacleRight = obstacle.position + obstacleWidth;
+        const obstacleHeight = obstacle.type === 'pit' ? 48 : 48; // Increased height for both types
+        const obstacleBounds = {
+          left: obstacle.position,
+          right: obstacle.position + obstacleWidth,
+          top: 0,
+          bottom: obstacleHeight
+        };
 
-        // Check if player overlaps with obstacle
-        return (
-          (playerLeft < obstacleRight && playerRight > obstacleLeft) ||
-          (playerLeft >= obstacleLeft && playerLeft <= obstacleRight) ||
-          (playerRight >= obstacleLeft && playerRight <= obstacleRight)
-        );
+        // Check for rectangle collision
+        return !(playerBounds.right < obstacleBounds.left || 
+                playerBounds.left > obstacleBounds.right || 
+                playerBounds.bottom < obstacleBounds.top || 
+                playerBounds.top > obstacleBounds.bottom);
       });
 
       if (collided) {
