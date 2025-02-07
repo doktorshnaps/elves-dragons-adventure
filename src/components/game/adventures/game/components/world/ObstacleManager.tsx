@@ -19,22 +19,22 @@ export const ObstacleManager = ({
   const { toast } = useToast();
 
   useEffect(() => {
-    if (playerY === 0) {
+    // Check for collisions on every frame when player is on the ground
+    if (playerY <= 0) {
       const playerWidth = 48;
-      const playerLeft = playerPosition;
-      const playerRight = playerPosition + playerWidth;
+      const playerHeight = 64;
       const playerBounds = {
-        left: playerLeft,
-        right: playerRight,
-        top: playerY,
-        bottom: playerY + 64
+        left: playerPosition,
+        right: playerPosition + playerWidth,
+        top: 0,
+        bottom: playerHeight
       };
 
-      const collided = obstacles.find(obstacle => {
-        if (obstacle.triggered) return false;
+      obstacles.forEach(obstacle => {
+        if (obstacle.triggered) return;
 
         const obstacleWidth = obstacle.type === 'pit' ? 64 : 32;
-        const obstacleHeight = obstacle.type === 'pit' ? 48 : 48;
+        const obstacleHeight = 48;
         const obstacleBounds = {
           left: obstacle.position,
           right: obstacle.position + obstacleWidth,
@@ -42,29 +42,32 @@ export const ObstacleManager = ({
           bottom: obstacleHeight
         };
 
-        const collision = !(playerBounds.right < obstacleBounds.left || 
-                playerBounds.left > obstacleBounds.right || 
-                playerBounds.bottom < obstacleBounds.top || 
-                playerBounds.top > obstacleBounds.bottom);
+        // Check for collision using AABB (Axis-Aligned Bounding Box)
+        const hasCollision = !(
+          playerBounds.right < obstacleBounds.left ||
+          playerBounds.left > obstacleBounds.right ||
+          playerBounds.bottom < obstacleBounds.top ||
+          playerBounds.top > obstacleBounds.bottom
+        );
 
-        if (collision) {
+        if (hasCollision) {
           obstacle.triggered = true;
-          return true;
+          onObstacleCollision(obstacle.damage);
+          
+          toast({
+            title: "Внимание!",
+            description: `Вы получили ${obstacle.damage} урона от ${
+              obstacle.type === 'spike' ? 'шипов' : 'ямы'
+            }`,
+            variant: "destructive",
+            duration: 3000
+          });
+          
+          console.log(`Collision detected with ${obstacle.type}, damage: ${obstacle.damage}`);
         }
-
-        return false;
       });
-
-      if (collided) {
-        onObstacleCollision(collided.damage);
-        toast({
-          title: "Внимание!",
-          description: `Вы получили ${collided.damage} урона от ${collided.type === 'spike' ? 'шипов' : 'ямы'}`,
-          variant: "destructive"
-        });
-      }
     }
-  }, [playerPosition, playerY, obstacles, onObstacleCollision]);
+  }, [playerPosition, playerY, obstacles, onObstacleCollision, toast]);
 
   return null;
 };
