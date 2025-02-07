@@ -54,7 +54,7 @@ export const GameWorld = ({
   obstacles,
   onObstacleCollision
 }: GameWorldProps) => {
-  const [chests] = useState<Chest[]>([
+  const [chests, setChests] = useState<Chest[]>([
     { id: 1, position: 500, collected: false },
     { id: 2, position: 1000, collected: false },
     { id: 3, position: 1500, collected: false }
@@ -136,3 +136,4 @@ export const GameWorld = ({
     </div>
   );
 };
+

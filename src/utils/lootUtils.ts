@@ -60,3 +60,4 @@ export const generateLoot = (lootTable: LootTable): { items: Item[], coins: numb
   
   return { items, coins };
 };
+
