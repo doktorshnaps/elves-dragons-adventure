@@ -1,5 +1,5 @@
 
-import React, { useRef } from 'react';
+import React, { useRef, useState, useEffect } from 'react';
 import { Card } from "@/components/ui/card";
 import { GameOverlay } from './GameOverlay';
 import { GameWorldContainer } from './GameWorldContainer';
@@ -7,6 +7,7 @@ import { GameControls } from '../../components/GameControls';
 import { Monster } from '../../types';
 import { usePlayerMovement } from '../hooks/usePlayerMovement';
 import { TargetedMonster } from '../types/combatTypes';
+import { Obstacle } from '../ObstacleSprite';
 
 interface GameContainerProps {
   currentHealth: number;
@@ -26,7 +27,8 @@ interface GameContainerProps {
   armor: number;
   maxArmor: number;
   onSelectTarget: (monster: Monster) => void;
-  balance: number; // Added balance prop
+  balance: number;
+  onTakeDamage?: (damage: number) => void;
 }
 
 export const GameContainer = ({
@@ -47,11 +49,14 @@ export const GameContainer = ({
   armor,
   maxArmor,
   onSelectTarget,
-  balance
+  balance,
+  onTakeDamage
 }: GameContainerProps) => {
   const gameRef = useRef<HTMLDivElement>(null);
   const gameContainerRef = useRef<HTMLDivElement>(null);
   
+  const [obstacles, setObstacles] = useState<Obstacle[]>([]);
+
   const {
     playerPosition,
     playerY,
@@ -69,6 +74,35 @@ export const GameContainer = ({
     }
     return 0;
   });
+
+  // Generate obstacles
+  useEffect(() => {
+    const generateObstacles = () => {
+      const newObstacles: Obstacle[] = [];
+      let position = 600; // Start after initial position
+
+      for (let i = 0; i < 10; i++) {
+        const type = Math.random() > 0.5 ? 'spike' : 'pit';
+        newObstacles.push({
+          id: Math.random(),
+          position: position,
+          type,
+          damage: type === 'spike' ? 15 : 10
+        });
+        position += Math.random() * (400 - 200) + 200; // Random distance between 200-400
+      }
+
+      setObstacles(newObstacles);
+    };
+
+    generateObstacles();
+  }, []);
+
+  const handleObstacleCollision = (damage: number) => {
+    if (onTakeDamage) {
+      onTakeDamage(damage);
+    }
+  };
 
   return (
     <Card className="w-full h-[500px] relative overflow-hidden bg-game-background mt-4">
@@ -101,6 +135,8 @@ export const GameContainer = ({
           experience={playerExperience}
           requiredExperience={requiredExperience}
           balance={balance}
+          obstacles={obstacles}
+          onObstacleCollision={handleObstacleCollision}
         />
       </div>
 
@@ -116,4 +152,3 @@ export const GameContainer = ({
     </Card>
   );
 };
-

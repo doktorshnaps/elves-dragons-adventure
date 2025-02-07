@@ -5,6 +5,7 @@ import { GameWorld } from '../../components/GameWorld';
 import { TargetedMonster } from '../types/combatTypes';
 import { motion } from 'framer-motion';
 import { Heart, Shield, Star } from 'lucide-react';
+import { Obstacle } from '../ObstacleSprite';
 
 interface GameWorldContainerProps {
   gameRef: React.RefObject<HTMLDivElement>;
@@ -25,6 +26,8 @@ interface GameWorldContainerProps {
   experience?: number;
   requiredExperience?: number;
   balance: number;
+  obstacles: Obstacle[];
+  onObstacleCollision: (damage: number) => void;
 }
 
 export const GameWorldContainer = ({
@@ -45,7 +48,9 @@ export const GameWorldContainer = ({
   level = 1,
   experience = 0,
   requiredExperience = 100,
-  balance
+  balance,
+  obstacles,
+  onObstacleCollision
 }: GameWorldContainerProps) => {
   const isFullArmor = armor === maxArmor;
 
@@ -141,6 +146,8 @@ export const GameWorldContainer = ({
         experience={experience}
         requiredExperience={requiredExperience}
         balance={balance}
+        obstacles={obstacles}
+        onObstacleCollision={onObstacleCollision}
       />
     </div>
   );

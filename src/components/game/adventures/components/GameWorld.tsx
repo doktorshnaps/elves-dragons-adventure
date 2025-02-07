@@ -1,10 +1,12 @@
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Monster } from '../types';
 import { PlayerCharacter } from '../game/PlayerCharacter';
 import { MonsterSprite } from '../game/MonsterSprite';
 import { ProjectileSprite } from '../game/ProjectileSprite';
+import { ObstacleSprite, Obstacle } from '../game/ObstacleSprite';
 import { TargetedMonster } from '../game/types/combatTypes';
+import { useToast } from '@/hooks/use-toast';
 
 interface GameWorldProps {
   gameRef: React.RefObject<HTMLDivElement>;
@@ -25,6 +27,8 @@ interface GameWorldProps {
   experience?: number;
   requiredExperience?: number;
   balance: number;
+  obstacles: Obstacle[];
+  onObstacleCollision: (damage: number) => void;
 }
 
 export const GameWorld = ({
@@ -45,8 +49,32 @@ export const GameWorld = ({
   level,
   experience,
   requiredExperience,
-  balance
+  balance,
+  obstacles,
+  onObstacleCollision
 }: GameWorldProps) => {
+  const { toast } = useToast();
+
+  // Check for collisions with obstacles
+  useEffect(() => {
+    if (playerY === 0) { // Only check when player is on the ground
+      const collided = obstacles.find(obstacle => {
+        const obstacleStart = obstacle.position;
+        const obstacleEnd = obstacle.type === 'pit' ? obstacle.position + 64 : obstacle.position + 32;
+        return playerPosition >= obstacleStart && playerPosition <= obstacleEnd;
+      });
+
+      if (collided) {
+        onObstacleCollision(collided.damage);
+        toast({
+          title: "Внимание!",
+          description: "Вы получили урон от ловушки",
+          variant: "destructive"
+        });
+      }
+    }
+  }, [playerPosition, playerY, obstacles, onObstacleCollision]);
+
   return (
     <div 
       ref={gameRef}
@@ -66,6 +94,10 @@ export const GameWorld = ({
       </div>
 
       <div className="absolute bottom-0 w-full h-[50px] bg-game-surface/50" />
+
+      {obstacles.map(obstacle => (
+        <ObstacleSprite key={obstacle.id} obstacle={obstacle} />
+      ))}
 
       <PlayerCharacter
         position={playerPosition}
