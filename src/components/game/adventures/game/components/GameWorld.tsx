@@ -1,13 +1,11 @@
 
-import React, { useState } from 'react';
+import React from 'react';
 import { Monster, TargetedMonster } from '../types/combatTypes';
 import { PlayerCharacter } from '../PlayerCharacter';
 import { MonsterSprite } from '../MonsterSprite';
 import { ProjectileSprite } from '../ProjectileSprite';
 import { ObstacleSprite, Obstacle } from '../ObstacleSprite';
 import { ChestSprite, Chest } from '../ChestSprite';
-import { ChestManager } from './world/ChestManager';
-import { ObstacleManager } from './world/ObstacleManager';
 
 interface GameWorldProps {
   gameRef: React.RefObject<HTMLDivElement>;
@@ -54,12 +52,6 @@ export const GameWorld = ({
   obstacles,
   onObstacleCollision
 }: GameWorldProps) => {
-  const [chests] = useState<Chest[]>([
-    { id: 1, position: 500, collected: false },
-    { id: 2, position: 1000, collected: false },
-    { id: 3, position: 1500, collected: false }
-  ]);
-
   return (
     <div 
       ref={gameRef}
@@ -74,20 +66,6 @@ export const GameWorld = ({
         transition: 'transform 0.1s ease-out'
       }}
     >
-      <ChestManager
-        chests={chests}
-        setChests={setChests}
-        playerPosition={playerPosition}
-        playerY={playerY}
-      />
-
-      <ObstacleManager
-        obstacles={obstacles}
-        playerPosition={playerPosition}
-        playerY={playerY}
-        onObstacleCollision={onObstacleCollision}
-      />
-
       <div className="fixed top-4 right-4 z-50">
         <span className="text-xl font-bold text-yellow-400">{balance} монет</span>
       </div>
@@ -100,16 +78,6 @@ export const GameWorld = ({
           key={`obs-${obstacle.id}`} 
           obstacle={obstacle} 
         />
-      ))}
-
-      {/* Chests Visualization */}
-      {chests.map((chest) => (
-        !chest.collected && (
-          <ChestSprite
-            key={`chest-${chest.id}`}
-            chest={chest}
-          />
-        )
       ))}
 
       <PlayerCharacter
