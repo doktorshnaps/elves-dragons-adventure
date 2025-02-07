@@ -64,8 +64,7 @@ export const ObstacleManager = ({
         });
       }
     }
-  }, [playerPosition, playerY, obstacles, onObstacleCollision, toast]);
+  }, [playerPosition, playerY, obstacles, onObstacleCollision]);
 
   return null;
 };
-

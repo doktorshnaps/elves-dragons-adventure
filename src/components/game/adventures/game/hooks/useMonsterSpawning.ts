@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { Monster } from '../../types';
 import { useMonsterGeneration } from '../../useMonsterGeneration';
@@ -24,8 +25,9 @@ export const useMonsterSpawning = (
 
   useEffect(() => {
     const distanceFromLast = Math.abs(playerPosition - lastGeneratedPosition);
+    const SPAWN_INTERVAL = 100; // Spawn every 100 pixels
     
-    if (distanceFromLast >= 200 && monsters.length < 5) {
+    if (distanceFromLast >= SPAWN_INTERVAL && monsters.length < 5) {
       const spawnPosition = isMovingRight ? 
         playerPosition + 400 : 
         playerPosition - 400;
@@ -42,7 +44,7 @@ export const useMonsterSpawning = (
         setLastGeneratedPosition(playerPosition);
       }
     }
-  }, [playerPosition, isMovingRight, isMovingLeft, generateMonster, lastGeneratedPosition, monsters.length]);
+  }, [playerPosition, isMovingRight, isMovingLeft]);
 
   return { monsters, setMonsters };
 };
