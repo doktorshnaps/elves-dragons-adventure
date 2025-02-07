@@ -10,7 +10,11 @@ interface DiceRollDisplayProps {
   monsterName?: string;
 }
 
-const attackDescriptions = {
+type AttackDescriptions = {
+  [key: number]: string;
+};
+
+const attackDescriptions: AttackDescriptions = {
   1: "Промах",
   2: "Слабый удар (50%)",
   3: "Обычный удар (100%)",
@@ -34,9 +38,8 @@ export const DiceRollDisplay = ({
       setIsSpinning(true);
       const interval = setInterval(() => {
         setCurrentRoll(prev => (prev % 6) + 1);
-      }, 200); // Замедлили интервал с 100мс до 200мс
+      }, 200);
 
-      // Увеличили время анимации с 1 секунды до 2
       setTimeout(() => {
         clearInterval(interval);
         setIsSpinning(false);
@@ -62,7 +65,7 @@ export const DiceRollDisplay = ({
                 animate={{ 
                   opacity: 1, 
                   y: 0,
-                  scale: isSpinning ? 1 : 1.2 // Увеличиваем размер финального результата
+                  scale: isSpinning ? 1 : 1.2
                 }}
                 transition={{ 
                   duration: isSpinning ? 0.2 : 0.5,
@@ -73,7 +76,7 @@ export const DiceRollDisplay = ({
                 {isSpinning ? (
                   <div className="space-y-1">
                     <div>{currentRoll}</div>
-                    <div className="text-sm">{attackDescriptions[currentRoll as keyof typeof attackDescriptions]}</div>
+                    <div className="text-sm">{attackDescriptions[currentRoll]}</div>
                   </div>
                 ) : (
                   <div className="space-y-1">
@@ -86,10 +89,14 @@ export const DiceRollDisplay = ({
                         repeat: Infinity
                       }}
                     >
-                      <div>{monsterDiceRoll}</div>
-                      <div className="text-sm">
-                        {attackDescriptions[monsterDiceRoll as keyof typeof attackDescriptions]}
-                      </div>
+                      {monsterDiceRoll && (
+                        <>
+                          <div>{monsterDiceRoll}</div>
+                          <div className="text-sm">
+                            {attackDescriptions[monsterDiceRoll]}
+                          </div>
+                        </>
+                      )}
                     </motion.div>
                   </div>
                 )}
@@ -104,7 +111,7 @@ export const DiceRollDisplay = ({
                 animate={{ 
                   opacity: 1, 
                   y: 0,
-                  scale: isSpinning ? 1 : 1.2 // Увеличиваем размер финального результата
+                  scale: isSpinning ? 1 : 1.2
                 }}
                 transition={{ 
                   duration: isSpinning ? 0.2 : 0.5,
@@ -115,7 +122,7 @@ export const DiceRollDisplay = ({
                 {isSpinning ? (
                   <div className="space-y-1">
                     <div>{currentRoll}</div>
-                    <div className="text-sm">{attackDescriptions[currentRoll as keyof typeof attackDescriptions]}</div>
+                    <div className="text-sm">{attackDescriptions[currentRoll]}</div>
                   </div>
                 ) : (
                   <div className="space-y-1">
@@ -128,10 +135,14 @@ export const DiceRollDisplay = ({
                         repeat: Infinity
                       }}
                     >
-                      <div>{diceRoll}</div>
-                      <div className="text-sm">
-                        {attackDescriptions[diceRoll as keyof typeof attackDescriptions]}
-                      </div>
+                      {diceRoll && (
+                        <>
+                          <div>{diceRoll}</div>
+                          <div className="text-sm">
+                            {attackDescriptions[diceRoll]}
+                          </div>
+                        </>
+                      )}
                     </motion.div>
                   </div>
                 )}
