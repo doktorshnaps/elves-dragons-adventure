@@ -17,19 +17,18 @@ interface ObstacleSpriteProps {
 export const ObstacleSprite = ({ obstacle }: ObstacleSpriteProps) => {
   return (
     <motion.div
-      className="absolute bottom-[50px] z-10"
+      className={`absolute bottom-[50px] z-10 ${
+        obstacle.triggered ? 'opacity-50' : ''
+      }`}
       style={{ left: obstacle.position }}
       initial={{ opacity: 0, scale: 0.8 }}
       animate={{ opacity: 1, scale: 1 }}
       transition={{ duration: 0.3 }}
     >
       {obstacle.type === 'spike' ? (
-        // Spike trap with increased damage visual
         <div className="w-8 h-48 flex items-end justify-center relative">
           <div 
-            className={`absolute bottom-0 w-full h-full flex items-end justify-center ${
-              obstacle.triggered ? 'opacity-50' : ''
-            }`}
+            className="absolute bottom-0 w-full h-full flex items-end justify-center"
             style={{
               background: 'linear-gradient(to bottom, transparent, rgba(255,0,0,0.1))'
             }}
@@ -38,11 +37,8 @@ export const ObstacleSprite = ({ obstacle }: ObstacleSpriteProps) => {
           </div>
         </div>
       ) : (
-        // Pit trap with increased height
         <div 
-          className={`w-16 h-48 bg-gradient-to-b from-gray-900 to-black rounded-t-sm ${
-            obstacle.triggered ? 'opacity-50' : ''
-          }`}
+          className="w-16 h-48 bg-gradient-to-b from-gray-900 to-black rounded-t-sm"
           style={{
             boxShadow: '0 -4px 6px -1px rgba(0, 0, 0, 0.4), 0 -2px 4px -2px rgba(0, 0, 0, 0.2)'
           }}
@@ -51,4 +47,3 @@ export const ObstacleSprite = ({ obstacle }: ObstacleSpriteProps) => {
     </motion.div>
   );
 };
-

@@ -54,7 +54,7 @@ export const GameWorld = ({
   obstacles,
   onObstacleCollision
 }: GameWorldProps) => {
-  const [chests, setChests] = useState<Chest[]>([
+  const [chests] = useState<Chest[]>([
     { id: 1, position: 500, collected: false },
     { id: 2, position: 1000, collected: false },
     { id: 3, position: 1500, collected: false }
@@ -94,12 +94,22 @@ export const GameWorld = ({
 
       <div className="absolute bottom-0 w-full h-[50px] bg-game-surface/50" />
 
-      {obstacles.map(obstacle => (
-        <ObstacleSprite key={obstacle.id} obstacle={obstacle} />
+      {/* Obstacles Visualization */}
+      {obstacles.map((obstacle, index) => (
+        <ObstacleSprite 
+          key={`obs-${obstacle.id}`} 
+          obstacle={obstacle} 
+        />
       ))}
 
-      {chests.map(chest => (
-        <ChestSprite key={chest.id} chest={chest} />
+      {/* Chests Visualization */}
+      {chests.map((chest) => (
+        !chest.collected && (
+          <ChestSprite
+            key={`chest-${chest.id}`}
+            chest={chest}
+          />
+        )
       ))}
 
       <PlayerCharacter
@@ -136,4 +146,3 @@ export const GameWorld = ({
     </div>
   );
 };
-
