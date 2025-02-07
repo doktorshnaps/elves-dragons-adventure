@@ -34,18 +34,37 @@ export const DiceRollDisplay = ({
   const [isSpinning, setIsSpinning] = useState(false);
 
   useEffect(() => {
+    let intervalId: NodeJS.Timeout;
+    let timeoutId: NodeJS.Timeout;
+
     if (isRolling) {
       setIsSpinning(true);
-      const interval = setInterval(() => {
+      intervalId = setInterval(() => {
         setCurrentRoll(prev => (prev % 6) + 1);
       }, 200);
 
-      setTimeout(() => {
-        clearInterval(interval);
+      timeoutId = setTimeout(() => {
+        if (intervalId) clearInterval(intervalId);
         setIsSpinning(false);
       }, 2000);
     }
+
+    return () => {
+      if (intervalId) clearInterval(intervalId);
+      if (timeoutId) clearTimeout(timeoutId);
+    };
   }, [isRolling]);
+
+  const renderDiceContent = (roll: number | null, description: string) => {
+    if (!roll) return null;
+    
+    return (
+      <>
+        <div>{roll}</div>
+        <div className="text-sm">{description}</div>
+      </>
+    );
+  };
 
   return (
     <AnimatePresence>
@@ -56,102 +75,51 @@ export const DiceRollDisplay = ({
           exit={{ scale: 0, opacity: 0 }}
           className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-50 bg-game-accent rounded-lg p-8 text-4xl font-bold"
         >
-          {isMonsterTurn ? (
-            <div className="text-center">
-              <div className="text-sm mb-2">Бросок {monsterName || 'монстра'}</div>
-              <motion.div
-                key={isSpinning ? currentRoll : monsterDiceRoll}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ 
-                  opacity: 1, 
-                  y: 0,
-                  scale: isSpinning ? 1 : 1.2
-                }}
-                transition={{ 
-                  duration: isSpinning ? 0.2 : 0.5,
-                  type: "spring",
-                  stiffness: 200
-                }}
-              >
-                {isSpinning ? (
-                  <div className="space-y-1">
-                    <div>{currentRoll}</div>
-                    <div className="text-sm">{attackDescriptions[currentRoll]}</div>
-                  </div>
-                ) : (
-                  <div className="space-y-1">
-                    <motion.div
-                      animate={{
-                        scale: [1, 1.1, 1],
-                      }}
-                      transition={{
-                        duration: 1,
-                        repeat: Infinity
-                      }}
-                    >
-                      {monsterDiceRoll && (
-                        <>
-                          <div>{monsterDiceRoll}</div>
-                          <div className="text-sm">
-                            {attackDescriptions[monsterDiceRoll]}
-                          </div>
-                        </>
-                      )}
-                    </motion.div>
-                  </div>
-                )}
-              </motion.div>
+          <div className="text-center">
+            <div className="text-sm mb-2">
+              {isMonsterTurn ? `Бросок ${monsterName || 'монстра'}` : 'Ваш бросок'}
             </div>
-          ) : (
-            <div className="text-center">
-              <div className="text-sm mb-2">Ваш бросок</div>
-              <motion.div
-                key={isSpinning ? currentRoll : diceRoll}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ 
-                  opacity: 1, 
-                  y: 0,
-                  scale: isSpinning ? 1 : 1.2
-                }}
-                transition={{ 
-                  duration: isSpinning ? 0.2 : 0.5,
-                  type: "spring",
-                  stiffness: 200
-                }}
-              >
-                {isSpinning ? (
-                  <div className="space-y-1">
-                    <div>{currentRoll}</div>
-                    <div className="text-sm">{attackDescriptions[currentRoll]}</div>
-                  </div>
-                ) : (
-                  <div className="space-y-1">
-                    <motion.div
-                      animate={{
-                        scale: [1, 1.1, 1],
-                      }}
-                      transition={{
-                        duration: 1,
-                        repeat: Infinity
-                      }}
-                    >
-                      {diceRoll && (
-                        <>
-                          <div>{diceRoll}</div>
-                          <div className="text-sm">
-                            {attackDescriptions[diceRoll]}
-                          </div>
-                        </>
-                      )}
-                    </motion.div>
-                  </div>
-                )}
-              </motion.div>
-            </div>
-          )}
+            <motion.div
+              key={isSpinning ? currentRoll : (isMonsterTurn ? monsterDiceRoll : diceRoll)}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ 
+                opacity: 1, 
+                y: 0,
+                scale: isSpinning ? 1 : 1.2
+              }}
+              transition={{ 
+                duration: isSpinning ? 0.2 : 0.5,
+                type: "spring",
+                stiffness: 200
+              }}
+            >
+              {isSpinning ? (
+                <div className="space-y-1">
+                  {renderDiceContent(currentRoll, attackDescriptions[currentRoll])}
+                </div>
+              ) : (
+                <div className="space-y-1">
+                  <motion.div
+                    animate={{
+                      scale: [1, 1.1, 1],
+                    }}
+                    transition={{
+                      duration: 1,
+                      repeat: Infinity
+                    }}
+                  >
+                    {renderDiceContent(
+                      isMonsterTurn ? monsterDiceRoll : diceRoll,
+                      isMonsterTurn && monsterDiceRoll ? attackDescriptions[monsterDiceRoll] :
+                      diceRoll ? attackDescriptions[diceRoll] : ''
+                    )}
+                  </motion.div>
+                </div>
+              )}
+            </motion.div>
+          </div>
         </motion.div>
       )}
     </AnimatePresence>
   );
 };
-
