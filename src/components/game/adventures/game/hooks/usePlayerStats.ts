@@ -1,5 +1,5 @@
 
-import { useState, useCallback, useEffect, useMemo } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { calculateTeamStats } from '@/utils/cardUtils';
 import { useToast } from '@/hooks/use-toast';
 
@@ -80,8 +80,46 @@ export const usePlayerStats = (initialLevel = 1) => {
     });
   }, []);
 
+  const addExperience = useCallback((amount: number) => {
+    setStats(prev => {
+      const newExperience = prev.experience + amount;
+      let newLevel = prev.level;
+      let remainingExp = newExperience;
+      let nextRequiredExp = prev.requiredExperience;
+
+      // Проверяем, достаточно ли опыта для повышения уровня
+      while (remainingExp >= nextRequiredExp) {
+        newLevel++;
+        remainingExp -= nextRequiredExp;
+        nextRequiredExp = Math.floor(nextRequiredExp * 1.5); // Увеличиваем требуемый опыт для следующего уровня
+
+        // Увеличиваем характеристики при повышении уровня
+        toast({
+          title: "Уровень повышен!",
+          description: `Достигнут ${newLevel} уровень!`
+        });
+      }
+
+      // Обновляем базовые характеристики с учетом нового уровня
+      const baseStats = calculateBaseStats(newLevel);
+      const equipmentBonuses = calculateEquipmentBonuses();
+
+      return {
+        ...prev,
+        level: newLevel,
+        experience: remainingExp,
+        requiredExperience: nextRequiredExp,
+        health: baseStats.health + equipmentBonuses.health,
+        maxHealth: baseStats.health + equipmentBonuses.health,
+        power: baseStats.power + equipmentBonuses.power,
+        defense: baseStats.defense + equipmentBonuses.defense
+      };
+    });
+  }, [calculateBaseStats, calculateEquipmentBonuses, toast]);
+
   return {
     stats,
-    updateStats
+    updateStats,
+    addExperience
   };
 };
