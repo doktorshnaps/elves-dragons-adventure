@@ -28,6 +28,29 @@ export const AdventuresTab = () => {
     localStorage.setItem('adventureCurrentMonster', JSON.stringify(currentMonster));
   }, [currentMonster]);
 
+  // Добавляем эффект для автоматического возрождения
+  useEffect(() => {
+    if (playerStats.health <= 0) {
+      toast({
+        title: "Герой пал в бою",
+        description: "Возрождение через 3 секунды...",
+        duration: 2000
+      });
+
+      const timer = setTimeout(() => {
+        // Вызываем событие возрождения
+        const event = new CustomEvent('playerRespawn');
+        window.dispatchEvent(event);
+        
+        // Запускаем новое приключение
+        const newMonster = generateMonster();
+        setCurrentMonster(newMonster);
+      }, 3000);
+
+      return () => clearTimeout(timer);
+    }
+  }, [playerStats.health, generateMonster, toast]);
+
   const startAdventure = () => {
     if (playerStats.health <= 0) return;
     const monster = generateMonster();
