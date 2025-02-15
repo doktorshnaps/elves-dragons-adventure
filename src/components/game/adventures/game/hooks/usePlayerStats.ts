@@ -43,21 +43,6 @@ export const usePlayerStats = (initialLevel = 1) => {
   }, []);
 
   const [stats, setStats] = useState<PlayerStats>(() => {
-    const savedStats = localStorage.getItem('adventurePlayerStats');
-    if (savedStats) {
-      const parsed = JSON.parse(savedStats);
-      const baseStats = calculateBaseStats(parsed.level);
-      const equipmentBonuses = calculateEquipmentBonuses();
-      
-      return {
-        ...parsed,
-        power: baseStats.power + equipmentBonuses.power,
-        defense: baseStats.defense + equipmentBonuses.defense,
-        maxHealth: baseStats.health + equipmentBonuses.health,
-        health: Math.min(parsed.health, baseStats.health + equipmentBonuses.health)
-      };
-    }
-
     const baseStats = calculateBaseStats(initialLevel);
     const equipmentBonuses = calculateEquipmentBonuses();
     
@@ -74,69 +59,29 @@ export const usePlayerStats = (initialLevel = 1) => {
     };
   });
 
+  // Обработчик события воскрешения
+  useEffect(() => {
+    const handleRespawn = () => {
+      setStats(prev => ({
+        ...prev,
+        health: prev.maxHealth,
+        armor: prev.maxArmor
+      }));
+    };
+
+    window.addEventListener('playerRespawn', handleRespawn);
+    return () => window.removeEventListener('playerRespawn', handleRespawn);
+  }, []);
+
   const updateStats = useCallback((updater: (prev: PlayerStats) => PlayerStats) => {
     setStats(prev => {
       const newStats = updater(prev);
-      localStorage.setItem('adventurePlayerStats', JSON.stringify(newStats));
       return newStats;
     });
   }, []);
 
-  useEffect(() => {
-    const handleInventoryUpdate = () => {
-      const equipmentBonuses = calculateEquipmentBonuses();
-      const baseStats = calculateBaseStats(stats.level);
-      
-      updateStats(prev => ({
-        ...prev,
-        power: baseStats.power + equipmentBonuses.power,
-        defense: baseStats.defense + equipmentBonuses.defense,
-        maxHealth: baseStats.health + equipmentBonuses.health,
-        health: Math.min(prev.health, baseStats.health + equipmentBonuses.health)
-      }));
-    };
-
-    window.addEventListener('inventoryUpdate', handleInventoryUpdate);
-    return () => window.removeEventListener('inventoryUpdate', handleInventoryUpdate);
-  }, [stats.level, calculateBaseStats, calculateEquipmentBonuses, updateStats]);
-
-  const addExperience = useCallback((amount: number) => {
-    updateStats(prev => {
-      const newExperience = prev.experience + amount;
-      
-      if (newExperience >= prev.requiredExperience) {
-        const newLevel = prev.level + 1;
-        const newRequiredExp = prev.requiredExperience + 100;
-        const baseStats = calculateBaseStats(newLevel);
-        const equipmentBonuses = calculateEquipmentBonuses();
-
-        toast({
-          title: "Уровень повышен!",
-          description: `Достигнут ${newLevel} уровень!`
-        });
-        
-        return {
-          ...prev,
-          level: newLevel,
-          experience: newExperience - prev.requiredExperience,
-          requiredExperience: newRequiredExp,
-          power: baseStats.power + equipmentBonuses.power,
-          defense: baseStats.defense + equipmentBonuses.defense,
-          maxHealth: baseStats.health + equipmentBonuses.health,
-          health: baseStats.health + equipmentBonuses.health
-        };
-      }
-
-      return {
-        ...prev,
-        experience: newExperience
-      };
-    });
-  }, [calculateBaseStats, calculateEquipmentBonuses, toast, updateStats]);
-
   return {
     stats,
-    updateStats,
-    addExperience
+    updateStats
   };
 };
