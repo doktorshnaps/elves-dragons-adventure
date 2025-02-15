@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { Monster } from '../types';
 import { useMonsterGeneration } from '../useMonsterGeneration';
