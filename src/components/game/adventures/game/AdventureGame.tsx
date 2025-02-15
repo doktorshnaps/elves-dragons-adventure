@@ -1,4 +1,5 @@
-import React from 'react';
+
+import React, { useState, useEffect } from 'react';
 import { Monster } from '../types';
 import { useProjectiles } from './hooks/useProjectiles';
 import { useDiceRoll } from './hooks/useDiceRoll';

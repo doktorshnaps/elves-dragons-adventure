@@ -28,6 +28,7 @@ interface GameWorldContainerProps {
   balance: number;
   obstacles: Obstacle[];
   onObstacleCollision: (damage: number) => void;
+  isRespawning?: boolean;
 }
 
 export const GameWorldContainer = ({
@@ -50,7 +51,8 @@ export const GameWorldContainer = ({
   requiredExperience = 100,
   balance,
   obstacles,
-  onObstacleCollision
+  onObstacleCollision,
+  isRespawning = false
 }: GameWorldContainerProps) => {
   const isFullArmor = armor === maxArmor;
 
@@ -103,7 +105,7 @@ export const GameWorldContainer = ({
             </div>
           </div>
 
-          {/* Experience Bar with Level */}
+          {/* Experience Bar */}
           <div className="flex items-center gap-2">
             <Star className="w-5 h-5 text-yellow-500" />
             <div className="flex-1">

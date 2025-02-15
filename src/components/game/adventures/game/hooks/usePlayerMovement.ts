@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { Monster } from '../../types';
 
@@ -14,6 +13,16 @@ export const usePlayerMovement = (updateCameraOffset: (pos: number) => number) =
   const GRAVITY = 0.8;
   const JUMP_FORCE = 15;
   const MOVE_SPEED = 5;
+
+  const resetPosition = () => {
+    setPlayerPosition(100);
+    setPlayerY(0);
+    setIsMovingRight(false);
+    setIsMovingLeft(false);
+    setIsJumping(false);
+    setVelocityY(0);
+    setCameraOffset(0);
+  };
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -46,7 +55,6 @@ export const usePlayerMovement = (updateCameraOffset: (pos: number) => number) =
     };
   }, [isJumping]);
 
-  // Горизонтальное движение
   useEffect(() => {
     let animationFrame: number;
     
@@ -80,7 +88,6 @@ export const usePlayerMovement = (updateCameraOffset: (pos: number) => number) =
     };
   }, [isMovingRight, isMovingLeft, updateCameraOffset]);
 
-  // Вертикальное движение (прыжок и гравитация)
   useEffect(() => {
     let jumpFrame: number;
 
@@ -137,6 +144,7 @@ export const usePlayerMovement = (updateCameraOffset: (pos: number) => number) =
     setIsMovingLeft,
     handleJump,
     cameraOffset,
-    handleSelectTarget
+    handleSelectTarget,
+    resetPosition
   };
 };
