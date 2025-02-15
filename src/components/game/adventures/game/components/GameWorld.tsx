@@ -5,7 +5,6 @@ import { PlayerCharacter } from '../PlayerCharacter';
 import { MonsterSprite } from '../MonsterSprite';
 import { ProjectileSprite } from '../ProjectileSprite';
 import { ObstacleSprite, Obstacle } from '../ObstacleSprite';
-import { ChestSprite, Chest } from '../ChestSprite';
 
 interface GameWorldProps {
   gameRef: React.RefObject<HTMLDivElement>;
@@ -28,6 +27,7 @@ interface GameWorldProps {
   balance: number;
   obstacles: Obstacle[];
   onObstacleCollision: (damage: number) => void;
+  isRespawning?: boolean;
 }
 
 export const GameWorld = ({
@@ -50,7 +50,8 @@ export const GameWorld = ({
   requiredExperience,
   balance,
   obstacles,
-  onObstacleCollision
+  onObstacleCollision,
+  isRespawning
 }: GameWorldProps) => {
   return (
     <div 
@@ -72,7 +73,6 @@ export const GameWorld = ({
 
       <div className="absolute bottom-0 w-full h-[50px] bg-game-surface/50" />
 
-      {/* Obstacles Visualization */}
       {obstacles.map((obstacle, index) => (
         <ObstacleSprite 
           key={`obs-${obstacle.id}`} 
