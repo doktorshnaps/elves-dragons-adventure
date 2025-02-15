@@ -1,4 +1,3 @@
-
 import React, { useRef, useState, useEffect } from 'react';
 import { Card } from "@/components/ui/card";
 import { GameOverlay } from './GameOverlay';
@@ -8,6 +7,7 @@ import { Monster } from '../../types';
 import { usePlayerMovement } from '../hooks/usePlayerMovement';
 import { TargetedMonster } from '../types/combatTypes';
 import { Obstacle } from '../ObstacleSprite';
+import { useToast } from '@/hooks/use-toast';
 
 interface GameContainerProps {
   currentHealth: number;
@@ -64,13 +64,16 @@ export const GameContainer = ({
 }: GameContainerProps) => {
   const gameRef = useRef<HTMLDivElement>(null);
   const gameContainerRef = useRef<HTMLDivElement>(null);
+  const { toast } = useToast();
   
+  const [isRespawning, setIsRespawning] = useState(false);
   const [obstacles, setObstacles] = useState<Obstacle[]>([]);
 
   const {
     playerY,
     handleJump,
-    cameraOffset
+    cameraOffset,
+    resetPosition
   } = usePlayerMovement((pos: number) => {
     if (gameContainerRef.current) {
       const containerWidth = gameContainerRef.current.offsetWidth;
@@ -79,6 +82,29 @@ export const GameContainer = ({
     }
     return 0;
   });
+
+  useEffect(() => {
+    if (currentHealth <= 0 && !isRespawning) {
+      setIsRespawning(true);
+      toast({
+        title: "Герой пал в бою",
+        description: "Возрождение через 3 секунды...",
+        duration: 2000
+      });
+
+      setTimeout(() => {
+        // Возвращаем игрока на стартовую позицию
+        resetPosition();
+        setIsRespawning(false);
+        
+        // Вызываем событие возрождения
+        const event = new CustomEvent('playerRespawn', {
+          detail: { maxHealth }
+        });
+        window.dispatchEvent(event);
+      }, 3000);
+    }
+  }, [currentHealth, maxHealth, isRespawning, toast]);
 
   // Generate obstacles
   useEffect(() => {
@@ -118,6 +144,7 @@ export const GameContainer = ({
         monsterDiceRoll={monsterDiceRoll}
         isMonsterTurn={isMonsterTurn}
         monsterName={monsters.find(m => m.id === targetedMonster?.id)?.name}
+        isRespawning={isRespawning}
       />
 
       <div ref={gameContainerRef} className="w-full h-full relative">
@@ -142,6 +169,7 @@ export const GameContainer = ({
           balance={balance}
           obstacles={obstacles}
           onObstacleCollision={handleObstacleCollision}
+          isRespawning={isRespawning}
         />
       </div>
 
@@ -152,7 +180,7 @@ export const GameContainer = ({
         onAttack={onAttack}
         isAttacking={isAttacking}
         hasTarget={!!targetedMonster}
-        disabled={currentHealth <= 0}
+        disabled={currentHealth <= 0 && !isRespawning}
       />
     </Card>
   );

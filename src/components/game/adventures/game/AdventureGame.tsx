@@ -147,6 +147,23 @@ export const AdventureGame = ({
     }
   };
 
+  useEffect(() => {
+    const handleRespawn = (event: CustomEvent) => {
+      const { maxHealth } = event.detail;
+      setCurrentHealth(maxHealth);
+      setArmor(50); // Восстанавливаем броню
+      toast({
+        title: "Герой возродился!",
+        description: "Продолжайте приключение"
+      });
+    };
+
+    window.addEventListener('playerRespawn', handleRespawn as EventListener);
+    return () => {
+      window.removeEventListener('playerRespawn', handleRespawn as EventListener);
+    };
+  }, [toast]);
+
   return (
     <GameContainer
       currentHealth={currentHealth}
