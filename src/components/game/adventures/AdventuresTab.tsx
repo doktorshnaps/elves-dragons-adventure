@@ -69,24 +69,30 @@ export const AdventuresTab = () => {
   };
 
   const generateMonster = () => {
-    const monsterTypes = [
+    const monsterTypes: Array<{
+      type: 'normal' | 'elite' | 'boss';
+      power: number;
+      health: number;
+      reward: number;
+      expReward: number;
+    }> = [
       { type: 'normal', power: 10, health: 50, reward: 20, expReward: 30 },
       { type: 'elite', power: 15, health: 75, reward: 35, expReward: 60 },
       { type: 'boss', power: 25, health: 100, reward: 50, expReward: 100 }
     ];
 
     const roll = Math.random();
-    const type = roll < 0.7 ? monsterTypes[0] : roll < 0.95 ? monsterTypes[1] : monsterTypes[2];
+    const typeData = roll < 0.7 ? monsterTypes[0] : roll < 0.95 ? monsterTypes[1] : monsterTypes[2];
 
     const monster: Monster = {
       id: Date.now(),
-      name: `${type.type === 'boss' ? 'Босс: ' : type.type === 'elite' ? 'Элитный: ' : ''}Монстр`,
-      power: type.power,
-      health: type.health,
-      maxHealth: type.health,
-      reward: type.reward,
-      experienceReward: type.expReward,
-      type: type.type,
+      name: `${typeData.type === 'boss' ? 'Босс: ' : typeData.type === 'elite' ? 'Элитный: ' : ''}Монстр`,
+      power: typeData.power,
+      health: typeData.health,
+      maxHealth: typeData.health,
+      reward: typeData.reward,
+      experienceReward: typeData.expReward,
+      type: typeData.type,
       position: 400
     };
 
