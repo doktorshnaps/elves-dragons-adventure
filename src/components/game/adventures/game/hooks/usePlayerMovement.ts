@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { Monster } from '../../types';
 
@@ -7,7 +8,12 @@ export const usePlayerMovement = (updateCameraOffset: (pos: number) => number) =
   const [isMovingRight, setIsMovingRight] = useState(false);
   const [isMovingLeft, setIsMovingLeft] = useState(false);
   const [isJumping, setIsJumping] = useState(false);
+  const [velocityY, setVelocityY] = useState(0);
   const [cameraOffset, setCameraOffset] = useState(0);
+
+  const GRAVITY = 0.8;
+  const JUMP_FORCE = 15;
+  const MOVE_SPEED = 5;
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -18,7 +24,7 @@ export const usePlayerMovement = (updateCameraOffset: (pos: number) => number) =
         setIsMovingLeft(true);
       }
       if ((e.key === 'ArrowUp' || e.key === 'w' || e.key === ' ') && !isJumping) {
-        setIsJumping(true);
+        handleJump();
       }
     };
 
@@ -40,26 +46,26 @@ export const usePlayerMovement = (updateCameraOffset: (pos: number) => number) =
     };
   }, [isJumping]);
 
+  // Горизонтальное движение
   useEffect(() => {
     let animationFrame: number;
     
     const updatePosition = () => {
-      if (isMovingRight) {
-        setPlayerPosition(prev => {
-          const newPosition = prev + 5;
-          const newOffset = updateCameraOffset(newPosition);
-          setCameraOffset(newOffset);
-          return newPosition;
-        });
-      }
-      if (isMovingLeft) {
-        setPlayerPosition(prev => {
-          const newPosition = Math.max(prev - 5, 0);
-          const newOffset = updateCameraOffset(newPosition);
-          setCameraOffset(newOffset);
-          return newPosition;
-        });
-      }
+      setPlayerPosition(prev => {
+        let newPosition = prev;
+        
+        if (isMovingRight) {
+          newPosition += MOVE_SPEED;
+        }
+        if (isMovingLeft) {
+          newPosition = Math.max(0, prev - MOVE_SPEED);
+        }
+        
+        const newOffset = updateCameraOffset(newPosition);
+        setCameraOffset(newOffset);
+        return newPosition;
+      });
+
       animationFrame = requestAnimationFrame(updatePosition);
     };
 
@@ -74,43 +80,42 @@ export const usePlayerMovement = (updateCameraOffset: (pos: number) => number) =
     };
   }, [isMovingRight, isMovingLeft, updateCameraOffset]);
 
+  // Вертикальное движение (прыжок и гравитация)
   useEffect(() => {
-    if (isJumping) {
-      const gravity = 0.5;
-      let velocity = 19.5;
-      let jumpAnimationFrame: number;
-      
-      const jumpAnimation = () => {
-        setPlayerY(prev => {
-          const newY = prev + velocity;
-          velocity -= gravity;
-          
-          if (newY <= 0) {
-            setIsJumping(false);
-            return 0;
-          }
-          
-          return newY;
-        });
+    let jumpFrame: number;
+
+    const updateJump = () => {
+      setPlayerY(prev => {
+        const nextY = prev + velocityY;
         
-        if (velocity > -19.5) {
-          jumpAnimationFrame = requestAnimationFrame(jumpAnimation);
+        if (nextY <= 0) {
+          setVelocityY(0);
+          setIsJumping(false);
+          return 0;
         }
-      };
-      
-      jumpAnimationFrame = requestAnimationFrame(jumpAnimation);
-      
-      return () => {
-        if (jumpAnimationFrame) {
-          cancelAnimationFrame(jumpAnimationFrame);
-        }
-      };
+
+        setVelocityY(prev => prev - GRAVITY);
+        return nextY;
+      });
+
+      jumpFrame = requestAnimationFrame(updateJump);
+    };
+
+    if (isJumping || playerY > 0) {
+      jumpFrame = requestAnimationFrame(updateJump);
     }
-  }, [isJumping]);
+
+    return () => {
+      if (jumpFrame) {
+        cancelAnimationFrame(jumpFrame);
+      }
+    };
+  }, [isJumping, playerY, velocityY]);
 
   const handleJump = () => {
-    if (!isJumping) {
+    if (!isJumping && playerY === 0) {
       setIsJumping(true);
+      setVelocityY(JUMP_FORCE);
     }
   };
 
