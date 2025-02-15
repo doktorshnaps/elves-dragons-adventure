@@ -59,7 +59,6 @@ export const usePlayerStats = (initialLevel = 1) => {
     };
   });
 
-  // Обработчик события воскрешения
   useEffect(() => {
     const handleRespawn = () => {
       setStats(prev => ({
@@ -87,20 +86,17 @@ export const usePlayerStats = (initialLevel = 1) => {
       let remainingExp = newExperience;
       let nextRequiredExp = prev.requiredExperience;
 
-      // Проверяем, достаточно ли опыта для повышения уровня
       while (remainingExp >= nextRequiredExp) {
         newLevel++;
         remainingExp -= nextRequiredExp;
-        nextRequiredExp = Math.floor(nextRequiredExp * 1.5); // Увеличиваем требуемый опыт для следующего уровня
+        nextRequiredExp = Math.floor(nextRequiredExp * 1.5);
 
-        // Увеличиваем характеристики при повышении уровня
         toast({
           title: "Уровень повышен!",
           description: `Достигнут ${newLevel} уровень!`
         });
       }
 
-      // Обновляем базовые характеристики с учетом нового уровня
       const baseStats = calculateBaseStats(newLevel);
       const equipmentBonuses = calculateEquipmentBonuses();
 

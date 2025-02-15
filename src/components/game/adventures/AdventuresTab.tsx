@@ -1,107 +1,22 @@
 
 import { useNavigate } from "react-router-dom";
-import { useState, useEffect } from 'react'; // Add this import
 import { useToast } from "@/hooks/use-toast";
 import { useBalanceState } from "@/hooks/useBalanceState";
 import { AdventureLayout } from "./components/AdventureLayout";
 import { InventoryDisplay } from "@/components/game/InventoryDisplay";
-import { useMonsterGeneration } from "./useMonsterGeneration";
 import { Item } from "@/types/inventory";
-import { Monster } from "./types";
 import { GameHeader } from "./components/GameHeader";
-import { GameContent } from "./components/GameContent";
 import { usePlayerStats } from "./game/hooks/usePlayerStats";
+import { MonsterSection } from "./components/MonsterSection";
+import { Monster } from "./types";
+import { useState } from "react";
 
 export const AdventuresTab = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const { balance, updateBalance } = useBalanceState();
-  const { generateMonster } = useMonsterGeneration(1);
   const { stats: playerStats, updateStats: setPlayerStats, addExperience } = usePlayerStats();
-
-  const [currentMonster, setCurrentMonster] = useState<Monster | null>(() => {
-    const savedMonster = localStorage.getItem('adventureCurrentMonster');
-    return savedMonster ? JSON.parse(savedMonster) : null;
-  });
-
-  useEffect(() => {
-    localStorage.setItem('adventureCurrentMonster', JSON.stringify(currentMonster));
-  }, [currentMonster]);
-
-  // Добавляем эффект для автоматического возрождения
-  useEffect(() => {
-    if (playerStats.health <= 0) {
-      toast({
-        title: "Герой пал в бою",
-        description: "Возрождение через 3 секунды...",
-        duration: 2000
-      });
-
-      const timer = setTimeout(() => {
-        // Вызываем событие возрождения
-        const event = new CustomEvent('playerRespawn');
-        window.dispatchEvent(event);
-        
-        // Запускаем новое приключение
-        const newMonster = generateMonster();
-        setCurrentMonster(newMonster);
-      }, 3000);
-
-      return () => clearTimeout(timer);
-    }
-  }, [playerStats.health, generateMonster, toast]);
-
-  const startAdventure = () => {
-    if (playerStats.health <= 0) return;
-    const monster = generateMonster();
-    setCurrentMonster(monster);
-  };
-
-  const handleMonsterDefeat = (monster: Monster) => {
-    if (!monster || playerStats.health <= 0) return;
-
-    const damage = Math.max(0, playerStats.power - Math.floor(Math.random() * 3));
-    const newMonsterHealth = monster.health - damage;
-
-    if (newMonsterHealth <= 0) {
-      updateBalance(balance + monster.reward);
-      addExperience(monster.experienceReward);
-      toast({
-        title: "Победа!",
-        description: `Вы получили ${monster.reward} монет и ${monster.experienceReward} опыта!`
-      });
-      
-      if (playerStats.health > 0) {
-        const newMonster = generateMonster();
-        setCurrentMonster(newMonster);
-      } else {
-        setCurrentMonster(null);
-      }
-      return;
-    }
-
-    const monsterDamage = Math.max(0, monster.power - Math.floor(playerStats.defense / 2));
-    const newPlayerHealth = playerStats.health - monsterDamage;
-
-    if (newPlayerHealth <= 0) {
-      toast({
-        title: "Поражение!",
-        description: "Вы проиграли бой...",
-        variant: "destructive"
-      });
-      setPlayerStats(prev => ({ ...prev, health: 0 }));
-      setCurrentMonster(null);
-      
-      setTimeout(() => {
-        navigate('/menu');
-      }, 2000);
-      
-      return;
-    }
-
-    setCurrentMonster({ ...monster, health: newMonsterHealth });
-    setPlayerStats(prev => ({ ...prev, health: newPlayerHealth }));
-  };
+  const [currentMonster, setCurrentMonster] = useState<Monster | null>(null);
 
   const handleUseItem = (item: Item) => {
     if (item.type === "healthPotion") {
@@ -153,11 +68,83 @@ export const AdventuresTab = () => {
     window.dispatchEvent(event);
   };
 
-  useEffect(() => {
-    if (!currentMonster && playerStats.health > 0) {
-      startAdventure();
+  const generateMonster = () => {
+    const monsterTypes = [
+      { type: 'normal', power: 10, health: 50, reward: 20, expReward: 30 },
+      { type: 'elite', power: 15, health: 75, reward: 35, expReward: 60 },
+      { type: 'boss', power: 25, health: 100, reward: 50, expReward: 100 }
+    ];
+
+    const roll = Math.random();
+    const type = roll < 0.7 ? monsterTypes[0] : roll < 0.95 ? monsterTypes[1] : monsterTypes[2];
+
+    const monster: Monster = {
+      id: Date.now(),
+      name: `${type.type === 'boss' ? 'Босс: ' : type.type === 'elite' ? 'Элитный: ' : ''}Монстр`,
+      power: type.power,
+      health: type.health,
+      maxHealth: type.health,
+      reward: type.reward,
+      experienceReward: type.expReward,
+      type: type.type,
+      position: 400
+    };
+
+    setCurrentMonster(monster);
+  };
+
+  const attackMonster = () => {
+    if (!currentMonster) return;
+
+    const damage = Math.floor(playerStats.power * (0.8 + Math.random() * 0.4));
+    const newMonsterHealth = currentMonster.health - damage;
+
+    toast({
+      title: "Атака!",
+      description: `Вы нанесли ${damage} урона`
+    });
+
+    if (newMonsterHealth <= 0) {
+      updateBalance(balance + currentMonster.reward);
+      addExperience(currentMonster.experienceReward);
+      
+      toast({
+        title: "Победа!",
+        description: `Получено ${currentMonster.reward} монет и ${currentMonster.experienceReward} опыта`
+      });
+      
+      setCurrentMonster(null);
+      return;
     }
-  }, [currentMonster, playerStats.health]);
+
+    setCurrentMonster({
+      ...currentMonster,
+      health: newMonsterHealth
+    });
+
+    // Монстр наносит ответный удар
+    const monsterDamage = Math.floor(currentMonster.power * (0.8 + Math.random() * 0.4));
+    const newPlayerHealth = Math.max(0, playerStats.health - monsterDamage);
+
+    toast({
+      title: "Контратака!",
+      description: `Монстр нанес ${monsterDamage} урона`,
+      variant: "destructive"
+    });
+
+    setPlayerStats(prev => ({
+      ...prev,
+      health: newPlayerHealth
+    }));
+
+    if (newPlayerHealth <= 0) {
+      toast({
+        title: "Поражение!",
+        description: "Вы погибли",
+        variant: "destructive"
+      });
+    }
+  };
 
   return (
     <AdventureLayout>
@@ -167,14 +154,23 @@ export const AdventuresTab = () => {
           onBack={() => navigate('/menu')} 
         />
 
-        <GameContent
-          currentMonster={currentMonster}
-          onMonsterDefeat={handleMonsterDefeat}
-          playerStats={playerStats}
-          onStartAdventure={startAdventure}
-        />
+        <div className="mt-6 space-y-6">
+          {!currentMonster && (
+            <button
+              className="w-full px-4 py-2 bg-game-accent text-white rounded hover:bg-game-accent/90 disabled:opacity-50"
+              onClick={generateMonster}
+              disabled={playerStats.health <= 0}
+            >
+              {playerStats.health <= 0 ? "Вы мертвы" : "Начать битву"}
+            </button>
+          )}
 
-        <div className="mt-6">
+          <MonsterSection
+            currentMonster={currentMonster}
+            attackMonster={attackMonster}
+            playerHealth={playerStats.health}
+          />
+
           <InventoryDisplay 
             showOnlyPotions={false} 
             onUseItem={handleUseItem}
@@ -185,4 +181,3 @@ export const AdventuresTab = () => {
     </AdventureLayout>
   );
 };
-
