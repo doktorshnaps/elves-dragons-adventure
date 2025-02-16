@@ -32,6 +32,44 @@ export const EquipmentGrid = () => {
     }
   }, []);
 
+  const handleUnequipItem = (item: ShopItem) => {
+    const inventory = localStorage.getItem('gameInventory');
+    if (inventory) {
+      const items = JSON.parse(inventory);
+      const updatedItems = items.map((invItem: ShopItem) => {
+        if (invItem.id === item.id) {
+          return { ...invItem, equipped: false };
+        }
+        return invItem;
+      });
+
+      localStorage.setItem('gameInventory', JSON.stringify(updatedItems));
+      const equipped = updatedItems.filter((item: ShopItem) => item.equipped);
+      setEquippedItems(equipped);
+
+      const stats = equipped.reduce((acc: any, item: ShopItem) => {
+        if (item.stats) {
+          acc.power += item.stats.power || 0;
+          acc.defense += item.stats.defense || 0;
+          acc.health += item.stats.health || 0;
+        }
+        return acc;
+      }, { power: 0, defense: 0, health: 0 });
+
+      setTotalStats(stats);
+
+      toast({
+        title: "Предмет снят",
+        description: `${item.name} был снят`,
+      });
+
+      const event = new CustomEvent('inventoryUpdate', { 
+        detail: { inventory: updatedItems }
+      });
+      window.dispatchEvent(event);
+    }
+  };
+
   const handleEquipItem = (item: ShopItem) => {
     const inventory = localStorage.getItem('gameInventory');
     if (inventory) {
@@ -66,58 +104,11 @@ export const EquipmentGrid = () => {
         description: `${item.name} был экипирован`,
       });
 
-      // Отправляем события об изменении экипировки
-      const inventoryEvent = new CustomEvent('inventoryUpdate', { 
+      const event = new CustomEvent('inventoryUpdate', { 
         detail: { inventory: updatedItems }
       });
-      window.dispatchEvent(inventoryEvent);
-
-      const equipmentEvent = new CustomEvent('equipmentChange');
-      window.dispatchEvent(equipmentEvent);
-      
+      window.dispatchEvent(event);
       setSelectedSlot(null);
-    }
-  };
-
-  const handleUnequipItem = (item: ShopItem) => {
-    const inventory = localStorage.getItem('gameInventory');
-    if (inventory) {
-      const items = JSON.parse(inventory);
-      const updatedItems = items.map((invItem: ShopItem) => {
-        if (invItem.id === item.id) {
-          return { ...invItem, equipped: false };
-        }
-        return invItem;
-      });
-
-      localStorage.setItem('gameInventory', JSON.stringify(updatedItems));
-      const equipped = updatedItems.filter((item: ShopItem) => item.equipped);
-      setEquippedItems(equipped);
-
-      const stats = equipped.reduce((acc: any, item: ShopItem) => {
-        if (item.stats) {
-          acc.power += item.stats.power || 0;
-          acc.defense += item.stats.defense || 0;
-          acc.health += item.stats.health || 0;
-        }
-        return acc;
-      }, { power: 0, defense: 0, health: 0 });
-
-      setTotalStats(stats);
-
-      toast({
-        title: "Предмет снят",
-        description: `${item.name} был снят`,
-      });
-
-      // Отправляем события об изменении экипировки
-      const inventoryEvent = new CustomEvent('inventoryUpdate', { 
-        detail: { inventory: updatedItems }
-      });
-      window.dispatchEvent(inventoryEvent);
-
-      const equipmentEvent = new CustomEvent('equipmentChange');
-      window.dispatchEvent(equipmentEvent);
     }
   };
 

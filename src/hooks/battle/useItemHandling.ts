@@ -1,4 +1,3 @@
-
 import { Item } from "@/types/inventory";
 import { PlayerStats } from "@/types/battle";
 import { useToast } from '@/hooks/use-toast';
@@ -23,14 +22,6 @@ export const useItemHandling = (
         health: newHealth
       });
       
-      // Обновляем состояние в localStorage
-      const savedStats = localStorage.getItem('adventurePlayerStats');
-      if (savedStats) {
-        const stats = JSON.parse(savedStats);
-        stats.health = newHealth;
-        localStorage.setItem('adventurePlayerStats', JSON.stringify(stats));
-      }
-      
       toast({
         title: "Зелье использовано",
         description: `Восстановлено ${item.value} здоровья`,
@@ -49,14 +40,13 @@ export const useItemHandling = (
     const newInventory = inventory.filter(i => i.id !== item.id);
     updateInventory(newInventory);
 
-    // Сохраняем обновленное состояние инвентаря
-    localStorage.setItem('gameInventory', JSON.stringify(newInventory));
-
-    // Обновляем UI через событие
-    const event = new CustomEvent('inventoryUpdate', {
-      detail: { inventory: newInventory }
-    });
-    window.dispatchEvent(event);
+    // Сохраняем обновленное состояние боя
+    const battleState = {
+      playerStats: playerStats,
+      currentDungeonLevel: initialState.currentDungeonLevel,
+      selectedDungeon: initialState.selectedDungeon
+    };
+    localStorage.setItem('battleState', JSON.stringify(battleState));
   };
 
   return { useItem };

@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { Item } from "@/types/inventory";
 import { useToast } from '@/hooks/use-toast';
@@ -11,54 +10,39 @@ export const useInventoryState = () => {
   });
 
   useEffect(() => {
-    const handleInventoryUpdate = (e: CustomEvent) => {
-      try {
-        if (e.detail && e.detail.inventory) {
-          setInventory(e.detail.inventory);
-          localStorage.setItem('gameInventory', JSON.stringify(e.detail.inventory));
-        }
-      } catch (error) {
-        console.error('Error handling inventory update:', error);
-      }
+    const handleInventoryUpdate = (e: CustomEvent<{ inventory: Item[] }>) => {
+      setInventory(e.detail.inventory);
+      localStorage.setItem('gameInventory', JSON.stringify(e.detail.inventory));
     };
 
     const handleStorageChange = () => {
-      try {
-        const savedInventory = localStorage.getItem('gameInventory');
-        if (savedInventory) {
-          const newInventory = JSON.parse(savedInventory);
-          setInventory(newInventory);
-        }
-      } catch (error) {
-        console.error('Error handling storage change:', error);
+      const savedInventory = localStorage.getItem('gameInventory');
+      if (savedInventory) {
+        const newInventory = JSON.parse(savedInventory);
+        setInventory(newInventory);
       }
     };
 
     window.addEventListener('inventoryUpdate', handleInventoryUpdate as EventListener);
     window.addEventListener('storage', handleStorageChange);
 
+    // Добавляем интервал для периодической проверки изменений
+    const syncInterval = setInterval(handleStorageChange, 1000);
+
     return () => {
       window.removeEventListener('inventoryUpdate', handleInventoryUpdate as EventListener);
       window.removeEventListener('storage', handleStorageChange);
+      clearInterval(syncInterval);
     };
   }, []);
 
   const updateInventory = (newInventory: Item[]) => {
-    try {
-      setInventory(newInventory);
-      localStorage.setItem('gameInventory', JSON.stringify(newInventory));
-      const event = new CustomEvent('inventoryUpdate', { 
-        detail: { inventory: newInventory }
-      });
-      window.dispatchEvent(event);
-    } catch (error) {
-      console.error('Error updating inventory:', error);
-      toast({
-        title: "Ошибка",
-        description: "Не удалось обновить инвентарь",
-        variant: "destructive"
-      });
-    }
+    setInventory(newInventory);
+    localStorage.setItem('gameInventory', JSON.stringify(newInventory));
+    const event = new CustomEvent('inventoryUpdate', { 
+      detail: { inventory: newInventory }
+    });
+    window.dispatchEvent(event);
   };
 
   return { inventory, updateInventory };

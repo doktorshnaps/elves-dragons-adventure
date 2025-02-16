@@ -1,33 +1,12 @@
-
 import { Button } from "@/components/ui/button";
 import { ArrowLeft } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { EquipmentGrid } from "@/components/game/stats/EquipmentGrid";
 import { InventoryDisplay } from "@/components/game/InventoryDisplay";
 import { DragonEggProvider } from "@/contexts/DragonEggContext";
-import { useEffect } from "react";
 
 export const Equipment = () => {
   const navigate = useNavigate();
-
-  useEffect(() => {
-    const handleEquipmentChange = () => {
-      try {
-        const currentInventory = localStorage.getItem('gameInventory');
-        const parsedInventory = currentInventory ? JSON.parse(currentInventory) : [];
-        
-        const event = new CustomEvent('inventoryUpdate', {
-          detail: { inventory: parsedInventory }
-        });
-        window.dispatchEvent(event);
-      } catch (error) {
-        console.error('Error handling equipment change:', error);
-      }
-    };
-
-    window.addEventListener('equipmentChange', handleEquipmentChange);
-    return () => window.removeEventListener('equipmentChange', handleEquipmentChange);
-  }, []);
 
   return (
     <div 

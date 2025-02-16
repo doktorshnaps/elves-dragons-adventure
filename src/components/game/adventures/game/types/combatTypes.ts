@@ -1,4 +1,3 @@
-
 export type DiceRoll = 1 | 2 | 3 | 4 | 5 | 6;
 
 export interface DiceResult {
@@ -9,27 +8,7 @@ export interface DiceResult {
   isCounterAttack: boolean;
 }
 
-export interface Monster {
-  id: number;
-  name: string;
-  health: number;
-  maxHealth: number;
-  power: number;
-  position: number;
-  type: 'normal' | 'elite' | 'boss';
-  experienceReward: number;
-  reward: number;
-}
-
 export interface TargetedMonster {
   id: number;
   position: number;
-}
-
-export interface ProjectileData {
-  id: number;
-  x: number;
-  y: number;
-  direction: number;
-  monsterId: number;
 }

@@ -1,4 +1,3 @@
-
 import { Monster } from "./types";
 
 export const useMonsterGeneration = (baseLevel: number) => {

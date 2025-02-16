@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { Monster } from '../../types';
 import { Projectile } from '../types';
@@ -8,32 +7,28 @@ export const useProjectiles = (
   playerPosition: number,
   playerY: number,
   currentHealth: number,
-  onHit: (damage: number) => void,
-  monsters: Monster[]
+  onHit: (damage: number) => void
 ) => {
   const [projectiles, setProjectiles] = useState<Projectile[]>([]);
 
   useEffect(() => {
-    if (currentHealth <= 0) return;
-
-    const intervals = monsters.map(monster => {
-      return setInterval(() => {
-        if (monster.health > 0) {
-          setProjectiles(prev => [...prev, {
-            id: Date.now() + Math.random(),
-            x: monster.position || 0,
+    if (currentMonster && currentHealth > 0) {
+      const shootInterval = setInterval(() => {
+        const distanceToPlayer = Math.abs(400 - playerPosition);
+        if (distanceToPlayer <= 500) {
+          const newProjectile: Projectile = {
+            id: Date.now(),
+            x: 400,
             y: 50,
-            direction: playerPosition > (monster.position || 0) ? 1 : -1,
-            monsterId: monster.id
-          }]);
+            direction: playerPosition > 400 ? 1 : -1
+          };
+          setProjectiles(prev => [...prev, newProjectile]);
         }
       }, 2000);
-    });
 
-    return () => {
-      intervals.forEach(interval => clearInterval(interval));
-    };
-  }, [monsters, currentHealth, playerPosition]);
+      return () => clearInterval(shootInterval);
+    }
+  }, [currentMonster, currentHealth, playerPosition]);
 
   useEffect(() => {
     const moveProjectiles = () => {
@@ -42,25 +37,22 @@ export const useProjectiles = (
           ...projectile,
           x: projectile.x + (projectile.direction * 5)
         })).filter(projectile => {
-          const hitPlayer = Math.abs(projectile.x - playerPosition) < 30 &&
-                          Math.abs(projectile.y - playerY) < 50;
+          const hitPlayer = Math.abs(projectile.x - playerPosition) < 50 && // Увеличили хитбокс с 30 до 50
+                          Math.abs(projectile.y - playerY) < 70; // Увеличили хитбокс с 50 до 70
           
-          const sourceMonster = monsters.find(m => m.id === projectile.monsterId);
-          
-          if (hitPlayer && sourceMonster) {
-            const damage = Math.max(5, Math.floor(sourceMonster.power * 0.5));
-            onHit(damage);
+          if (hitPlayer && currentMonster) {
+            onHit(currentMonster.power);
             return false;
           }
           
-          return Math.abs(projectile.x - playerPosition) < 1200;
+          return Math.abs(projectile.x - 400) < 600;
         })
       );
     };
 
     const animation = requestAnimationFrame(moveProjectiles);
     return () => cancelAnimationFrame(animation);
-  }, [playerPosition, playerY, onHit, monsters]);
+  }, [playerPosition, playerY, onHit, currentMonster]);
 
   return { projectiles };
 };

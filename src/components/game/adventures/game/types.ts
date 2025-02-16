@@ -3,5 +3,4 @@ export interface Projectile {
   x: number;
   y: number;
   direction: number;
-  monsterId: number; // Добавляем ID монстра
 }
