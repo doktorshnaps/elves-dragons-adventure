@@ -1,4 +1,3 @@
-
 import { Item } from "@/types/inventory";
 
 export interface LootTable {
@@ -42,7 +41,7 @@ export const formatDropChance = (chance: number): string => {
   return `${(chance * 100).toFixed(0)}%`;
 };
 
-export const generateLoot = (lootTable: LootTable): { items: Item[], coins: number } => {
+export const rollLoot = (lootTable: LootTable): { items: Item[], coins: number } => {
   const items: Item[] = [];
   
   const coins = Math.random() < lootTable.coins.chance
@@ -60,4 +59,3 @@ export const generateLoot = (lootTable: LootTable): { items: Item[], coins: numb
   
   return { items, coins };
 };
-

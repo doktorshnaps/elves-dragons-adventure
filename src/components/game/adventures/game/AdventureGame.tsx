@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { Monster } from '../types';
 import { useProjectiles } from './hooks/useProjectiles';
 import { useDiceRoll } from './hooks/useDiceRoll';
@@ -44,30 +44,7 @@ export const AdventureGame = ({
     setTargetedMonster
   } = useGameState(playerHealth, onMonsterDefeat);
 
-  const [isMovingRight, setIsMovingRight] = React.useState(false);
-  const [isMovingLeft, setIsMovingLeft] = React.useState(false);
-  const [playerPosition, setPlayerPosition] = React.useState(0);
-
-  const { monsters, setMonsters } = useMonsterSpawning(
-    playerPosition,
-    isMovingRight,
-    isMovingLeft
-  );
-
-  React.useEffect(() => {
-    const moveSpeed = 5;
-    const updatePosition = () => {
-      if (isMovingRight) {
-        setPlayerPosition(prev => prev + moveSpeed);
-      }
-      if (isMovingLeft) {
-        setPlayerPosition(prev => prev - moveSpeed);
-      }
-    };
-
-    const interval = setInterval(updatePosition, 16); // ~60fps
-    return () => clearInterval(interval);
-  }, [isMovingRight, isMovingLeft]);
+  const { monsters, setMonsters } = useMonsterSpawning(currentMonster?.position || 0, !!currentMonster, false);
 
   const handleSelectTarget = (monster: Monster) => {
     console.log("Selecting target:", monster);
@@ -148,23 +125,6 @@ export const AdventureGame = ({
     }
   };
 
-  useEffect(() => {
-    const handleRespawn = (event: CustomEvent) => {
-      const { maxHealth } = event.detail;
-      setCurrentHealth(maxHealth);
-      setArmor(50); // Восстанавливаем броню
-      toast({
-        title: "Герой возродился!",
-        description: "Продолжайте приключение"
-      });
-    };
-
-    window.addEventListener('playerRespawn', handleRespawn as EventListener);
-    return () => {
-      window.removeEventListener('playerRespawn', handleRespawn as EventListener);
-    };
-  }, [toast]);
-
   return (
     <GameContainer
       currentHealth={currentHealth}
@@ -185,11 +145,7 @@ export const AdventureGame = ({
       maxArmor={maxArmor}
       onSelectTarget={handleSelectTarget}
       balance={balance}
-      isMovingRight={isMovingRight}
-      isMovingLeft={isMovingLeft}
-      setIsMovingRight={setIsMovingRight}
-      setIsMovingLeft={setIsMovingLeft}
-      playerPosition={playerPosition}
     />
   );
 };
+

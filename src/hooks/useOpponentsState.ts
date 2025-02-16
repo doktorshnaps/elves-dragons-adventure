@@ -1,8 +1,7 @@
-
 import { useState, useEffect } from 'react';
 import { Opponent } from '@/types/battle';
 import { generateOpponents } from '@/utils/opponentGenerator';
-import { generateLoot, generateLootTable } from '@/utils/lootUtils';
+import { rollLoot, generateLootTable } from '@/utils/lootUtils';
 import { useToast } from '@/hooks/use-toast';
 import { Item } from "@/types/inventory";
 
@@ -36,23 +35,24 @@ export const useOpponentsState = (
   }, [level]);
 
   const handleOpponentDefeat = (opponent: Opponent) => {
-    // Generate loot using the existing generateLoot function
-    const { items: droppedItems, coins: droppedCoins } = generateLoot(generateLootTable(opponent.isBoss ?? false));
+    // Получаем награду за убийство
+    const { items: droppedItems, coins: droppedCoins } = rollLoot(generateLootTable(opponent.isBoss ?? false));
     
-    // Update balance with dropped coins
+    // Обновляем баланс только с учетом выпавших монет
     const currentBalance = Number(localStorage.getItem('gameBalance')) || 0;
     updateBalance(currentBalance + droppedCoins);
     
-    // Update inventory with dropped items
+    // Обновляем инвентарь
     if (droppedItems.length > 0) {
       const savedInventory = localStorage.getItem('gameInventory');
       const currentInventory = savedInventory ? JSON.parse(savedInventory) : [];
       updateInventory([...currentInventory, ...droppedItems]);
     }
 
-    // Check if this was the last opponent
+    // Проверяем, был ли это последний противник
     const remainingOpponents = opponents.filter(o => o.id !== opponent.id);
     if (remainingOpponents.length === 0) {
+      // Если это был последний противник, начисляем награду за прохождение уровня
       const completionReward = opponent.isBoss ? 100 : 50;
       const newBalance = Number(localStorage.getItem('gameBalance')) || 0;
       updateBalance(newBalance + completionReward);
@@ -63,7 +63,7 @@ export const useOpponentsState = (
       });
     }
     
-    // Show reward notification
+    // Показываем уведомление о наградах за убийство врага
     toast({
       title: opponent.isBoss ? "Босс побежден!" : "Враг побежден!",
       description: `Получено ${droppedCoins} монет`,
@@ -72,4 +72,3 @@ export const useOpponentsState = (
 
   return { opponents, setOpponents, handleOpponentDefeat };
 };
-

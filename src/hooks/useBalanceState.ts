@@ -1,11 +1,9 @@
-
 import { useState, useEffect } from 'react';
 
 export const useBalanceState = () => {
   const [balance, setBalance] = useState(() => {
     const savedBalance = localStorage.getItem('gameBalance');
-    // Если баланс не найден (первый запуск), возвращаем 100
-    return savedBalance ? parseInt(savedBalance, 10) : 100;
+    return savedBalance ? parseInt(savedBalance, 10) : 0;
   });
 
   useEffect(() => {

@@ -1,4 +1,3 @@
-
 export const calculatePlayerDamage = (attackPower: number, playerDefense: number) => {
   const blockedDamage = Math.min(attackPower, playerDefense);
   const damageToHealth = Math.max(0, attackPower - blockedDamage);

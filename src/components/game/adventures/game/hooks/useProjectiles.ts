@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { Monster } from '../../types';
 import { Projectile } from '../types';

@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { Monster } from '../../types';
 import { TargetedMonster } from '../types/combatTypes';

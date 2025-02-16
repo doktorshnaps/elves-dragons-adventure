@@ -1,4 +1,4 @@
-
+import React from 'react';
 import { motion } from 'framer-motion';
 
 interface ProjectileSpriteProps {
@@ -12,16 +12,17 @@ export const ProjectileSprite = ({ x, y }: ProjectileSpriteProps) => {
       className="absolute w-4 h-4 bg-red-500 rounded-full"
       style={{
         left: x,
-        bottom: y
+        bottom: y,
+        boxShadow: '0 0 10px rgba(255, 0, 0, 0.5)'
       }}
-      initial={{ scale: 0.8, opacity: 0.8 }}
-      animate={{
-        scale: [0.8, 1.2, 0.8],
-        opacity: [0.8, 1, 0.8]
+      initial={{ scale: 0, opacity: 0 }}
+      animate={{ 
+        scale: [0, 1.2, 1],
+        opacity: [0, 1, 1]
       }}
       transition={{
-        duration: 0.5,
-        repeat: Infinity
+        duration: 0.3,
+        ease: "easeOut"
       }}
     />
   );

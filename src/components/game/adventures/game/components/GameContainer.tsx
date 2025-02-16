@@ -1,4 +1,5 @@
-import React, { useRef, useState, useEffect } from 'react';
+
+import React, { useRef } from 'react';
 import { Card } from "@/components/ui/card";
 import { GameOverlay } from './GameOverlay';
 import { GameWorldContainer } from './GameWorldContainer';
@@ -6,8 +7,6 @@ import { GameControls } from '../../components/GameControls';
 import { Monster } from '../../types';
 import { usePlayerMovement } from '../hooks/usePlayerMovement';
 import { TargetedMonster } from '../types/combatTypes';
-import { Obstacle } from '../ObstacleSprite';
-import { useToast } from '@/hooks/use-toast';
 
 interface GameContainerProps {
   currentHealth: number;
@@ -27,13 +26,7 @@ interface GameContainerProps {
   armor: number;
   maxArmor: number;
   onSelectTarget: (monster: Monster) => void;
-  balance: number;
-  onTakeDamage?: (damage: number) => void;
-  isMovingRight: boolean;
-  isMovingLeft: boolean;
-  setIsMovingRight: (value: boolean) => void;
-  setIsMovingLeft: (value: boolean) => void;
-  playerPosition: number;
+  balance: number; // Added balance prop
 }
 
 export const GameContainer = ({
@@ -54,26 +47,20 @@ export const GameContainer = ({
   armor,
   maxArmor,
   onSelectTarget,
-  balance,
-  onTakeDamage,
-  isMovingRight,
-  isMovingLeft,
-  setIsMovingRight,
-  setIsMovingLeft,
-  playerPosition
+  balance
 }: GameContainerProps) => {
   const gameRef = useRef<HTMLDivElement>(null);
   const gameContainerRef = useRef<HTMLDivElement>(null);
-  const { toast } = useToast();
   
-  const [isRespawning, setIsRespawning] = useState(false);
-  const [obstacles, setObstacles] = useState<Obstacle[]>([]);
-
   const {
+    playerPosition,
     playerY,
+    isMovingRight,
+    isMovingLeft,
     handleJump,
-    cameraOffset,
-    resetPosition
+    setIsMovingRight,
+    setIsMovingLeft,
+    cameraOffset
   } = usePlayerMovement((pos: number) => {
     if (gameContainerRef.current) {
       const containerWidth = gameContainerRef.current.offsetWidth;
@@ -82,58 +69,6 @@ export const GameContainer = ({
     }
     return 0;
   });
-
-  useEffect(() => {
-    if (currentHealth <= 0 && !isRespawning) {
-      setIsRespawning(true);
-      toast({
-        title: "Герой пал в бою",
-        description: "Возрождение через 3 секунды...",
-        duration: 2000
-      });
-
-      setTimeout(() => {
-        // Возвращаем игрока на стартовую позицию
-        resetPosition();
-        setIsRespawning(false);
-        
-        // Вызываем событие возрождения
-        const event = new CustomEvent('playerRespawn', {
-          detail: { maxHealth }
-        });
-        window.dispatchEvent(event);
-      }, 3000);
-    }
-  }, [currentHealth, maxHealth, isRespawning, toast]);
-
-  // Generate obstacles
-  useEffect(() => {
-    const generateObstacles = () => {
-      const newObstacles: Obstacle[] = [];
-      let position = 600; // Start after initial position
-
-      for (let i = 0; i < 10; i++) {
-        const type = Math.random() > 0.5 ? 'spike' : 'pit';
-        newObstacles.push({
-          id: Math.random(),
-          position: position,
-          type,
-          damage: type === 'spike' ? 20 : 10
-        });
-        position += Math.random() * (400 - 200) + 200;
-      }
-
-      setObstacles(newObstacles);
-    };
-
-    generateObstacles();
-  }, []);
-
-  const handleObstacleCollision = (damage: number) => {
-    if (onTakeDamage) {
-      onTakeDamage(damage);
-    }
-  };
 
   return (
     <Card className="w-full h-[500px] relative overflow-hidden bg-game-background mt-4">
@@ -144,7 +79,6 @@ export const GameContainer = ({
         monsterDiceRoll={monsterDiceRoll}
         isMonsterTurn={isMonsterTurn}
         monsterName={monsters.find(m => m.id === targetedMonster?.id)?.name}
-        isRespawning={isRespawning}
       />
 
       <div ref={gameContainerRef} className="w-full h-full relative">
@@ -167,9 +101,6 @@ export const GameContainer = ({
           experience={playerExperience}
           requiredExperience={requiredExperience}
           balance={balance}
-          obstacles={obstacles}
-          onObstacleCollision={handleObstacleCollision}
-          isRespawning={isRespawning}
         />
       </div>
 
@@ -180,8 +111,9 @@ export const GameContainer = ({
         onAttack={onAttack}
         isAttacking={isAttacking}
         hasTarget={!!targetedMonster}
-        disabled={currentHealth <= 0 && !isRespawning}
+        disabled={currentHealth <= 0}
       />
     </Card>
   );
 };
+
