@@ -63,7 +63,7 @@ export const GameWorld: React.FC<GameWorldProps> = ({
 
       <div className="absolute bottom-0 w-full h-[50px] bg-game-surface/50" />
 
-      {/* Здесь будет отрисовка персонажа, монстров и снарядов */}
+      {/* Player */}
       <div 
         className="absolute"
         style={{
@@ -72,28 +72,50 @@ export const GameWorld: React.FC<GameWorldProps> = ({
           transition: 'transform 0.1s ease-out'
         }}
       >
-        <div className={`w-16 h-20 bg-blue-500 rounded-lg flex items-center justify-center text-2xl ${
-          isAttacking ? 'animate-pulse' : ''
-        }`}>
+        <div 
+          className={`w-16 h-20 bg-blue-500 rounded-lg flex items-center justify-center text-2xl relative ${
+            isAttacking ? 'animate-pulse' : ''
+          }`}
+        >
           🧙‍♂️
+          <div className="absolute -bottom-6 left-0 w-full">
+            <div className="h-2 bg-red-900 rounded-full">
+              <div 
+                className="h-full bg-red-500 rounded-full"
+                style={{width: `${(currentHealth / maxHealth) * 100}%`}}
+              />
+            </div>
+          </div>
         </div>
       </div>
 
+      {/* Monsters */}
       {monsters.map(monster => (
         <div
           key={monster.id}
-          className={`absolute bottom-[50px] ${
+          className={`absolute bottom-[50px] cursor-pointer ${
             targetedMonster?.id === monster.id ? 'ring-2 ring-red-500' : ''
           }`}
           style={{ left: monster.position }}
           onClick={() => onSelectTarget(monster)}
         >
-          <div className="w-16 h-20 bg-red-500 rounded-lg flex items-center justify-center text-2xl">
-            👾
+          <div className="relative w-16 h-20">
+            <div className="w-full h-full bg-red-500 rounded-lg flex items-center justify-center text-2xl">
+              👾
+            </div>
+            <div className="absolute -bottom-6 left-0 w-full">
+              <div className="h-2 bg-red-900 rounded-full">
+                <div 
+                  className="h-full bg-red-500 rounded-full"
+                  style={{width: `${(monster.health / monster.maxHealth) * 100}%`}}
+                />
+              </div>
+            </div>
           </div>
         </div>
       ))}
 
+      {/* Projectiles */}
       {projectiles.map(projectile => (
         <div
           key={projectile.id}

@@ -1,21 +1,20 @@
-import { Item } from "@/types/inventory";
 
 export interface Monster {
   id: number;
   name: string;
-  power: number;
   health: number;
   maxHealth: number;
-  reward: number;
-  experienceReward: number;
+  power: number;
+  position: number;
   type: 'normal' | 'elite' | 'boss';
-  position: number; // Changed from optional to required
+  experienceReward: number;
+  reward: number;
 }
 
 export interface Equipment {
-  weapon?: Item;
-  armor?: Item;
-  accessory?: Item;
+  weapon?: any;
+  armor?: any;
+  accessory?: any;
 }
 
 export interface PlayerStats {
