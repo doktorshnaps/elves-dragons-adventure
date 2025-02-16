@@ -12,9 +12,17 @@ export const Equipment = () => {
 
   useEffect(() => {
     const handleEquipmentChange = () => {
-      // Trigger an event to notify other components about equipment changes
-      const event = new CustomEvent('inventoryUpdate');
-      window.dispatchEvent(event);
+      try {
+        const currentInventory = localStorage.getItem('gameInventory');
+        const parsedInventory = currentInventory ? JSON.parse(currentInventory) : [];
+        
+        const event = new CustomEvent('inventoryUpdate', {
+          detail: { inventory: parsedInventory }
+        });
+        window.dispatchEvent(event);
+      } catch (error) {
+        console.error('Error handling equipment change:', error);
+      }
     };
 
     window.addEventListener('equipmentChange', handleEquipmentChange);
