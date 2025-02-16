@@ -98,7 +98,7 @@ export const GameWorld = ({
         <MonsterSprite
           key={monster.id}
           monster={monster}
-          position={monster.position || 400}
+          position={monster.position}
           onSelect={onSelectTarget}
           isTargeted={targetedMonster?.id === monster.id}
         />
