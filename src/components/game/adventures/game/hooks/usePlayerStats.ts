@@ -1,5 +1,5 @@
 
-import { useState, useCallback, useEffect, useMemo } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { calculateTeamStats } from '@/utils/cardUtils';
 import { useToast } from '@/hooks/use-toast';
 
@@ -35,29 +35,19 @@ export const usePlayerStats = (initialLevel = 1) => {
     const cards = savedCards ? JSON.parse(savedCards) : [];
     const teamStats = calculateTeamStats(cards);
 
+    // Базовые характеристики даже без карт
+    const baseHealth = 100;
+    const basePower = 10;
+    const baseDefense = 5;
+
     return {
-      power: teamStats.power + (level - 1),
-      defense: teamStats.defense + (level - 1),
-      health: teamStats.health + (level - 1) * 10
+      power: (teamStats.power || basePower) + (level - 1) * 2,
+      defense: (teamStats.defense || baseDefense) + (level - 1),
+      health: (teamStats.health || baseHealth) + (level - 1) * 10
     };
   }, []);
 
   const [stats, setStats] = useState<PlayerStats>(() => {
-    const savedStats = localStorage.getItem('adventurePlayerStats');
-    if (savedStats) {
-      const parsed = JSON.parse(savedStats);
-      const baseStats = calculateBaseStats(parsed.level);
-      const equipmentBonuses = calculateEquipmentBonuses();
-      
-      return {
-        ...parsed,
-        power: baseStats.power + equipmentBonuses.power,
-        defense: baseStats.defense + equipmentBonuses.defense,
-        maxHealth: baseStats.health + equipmentBonuses.health,
-        health: Math.min(parsed.health, baseStats.health + equipmentBonuses.health)
-      };
-    }
-
     const baseStats = calculateBaseStats(initialLevel);
     const equipmentBonuses = calculateEquipmentBonuses();
     
@@ -74,65 +64,64 @@ export const usePlayerStats = (initialLevel = 1) => {
     };
   });
 
+  useEffect(() => {
+    const handleRespawn = () => {
+      setStats(prev => ({
+        ...prev,
+        health: prev.maxHealth,
+        armor: prev.maxArmor
+      }));
+
+      toast({
+        title: "Возрождение",
+        description: "Здоровье восстановлено"
+      });
+    };
+
+    window.addEventListener('playerRespawn', handleRespawn);
+    return () => window.removeEventListener('playerRespawn', handleRespawn);
+  }, [toast]);
+
   const updateStats = useCallback((updater: (prev: PlayerStats) => PlayerStats) => {
     setStats(prev => {
       const newStats = updater(prev);
-      localStorage.setItem('adventurePlayerStats', JSON.stringify(newStats));
       return newStats;
     });
   }, []);
 
-  useEffect(() => {
-    const handleInventoryUpdate = () => {
-      const equipmentBonuses = calculateEquipmentBonuses();
-      const baseStats = calculateBaseStats(stats.level);
-      
-      updateStats(prev => ({
-        ...prev,
-        power: baseStats.power + equipmentBonuses.power,
-        defense: baseStats.defense + equipmentBonuses.defense,
-        maxHealth: baseStats.health + equipmentBonuses.health,
-        health: Math.min(prev.health, baseStats.health + equipmentBonuses.health)
-      }));
-    };
-
-    window.addEventListener('inventoryUpdate', handleInventoryUpdate);
-    return () => window.removeEventListener('inventoryUpdate', handleInventoryUpdate);
-  }, [stats.level, calculateBaseStats, calculateEquipmentBonuses, updateStats]);
-
   const addExperience = useCallback((amount: number) => {
-    updateStats(prev => {
+    setStats(prev => {
       const newExperience = prev.experience + amount;
-      
-      if (newExperience >= prev.requiredExperience) {
-        const newLevel = prev.level + 1;
-        const newRequiredExp = prev.requiredExperience + 100;
-        const baseStats = calculateBaseStats(newLevel);
-        const equipmentBonuses = calculateEquipmentBonuses();
+      let newLevel = prev.level;
+      let remainingExp = newExperience;
+      let nextRequiredExp = prev.requiredExperience;
+
+      while (remainingExp >= nextRequiredExp) {
+        newLevel++;
+        remainingExp -= nextRequiredExp;
+        nextRequiredExp = Math.floor(nextRequiredExp * 1.5);
 
         toast({
           title: "Уровень повышен!",
           description: `Достигнут ${newLevel} уровень!`
         });
-        
-        return {
-          ...prev,
-          level: newLevel,
-          experience: newExperience - prev.requiredExperience,
-          requiredExperience: newRequiredExp,
-          power: baseStats.power + equipmentBonuses.power,
-          defense: baseStats.defense + equipmentBonuses.defense,
-          maxHealth: baseStats.health + equipmentBonuses.health,
-          health: baseStats.health + equipmentBonuses.health
-        };
       }
+
+      const baseStats = calculateBaseStats(newLevel);
+      const equipmentBonuses = calculateEquipmentBonuses();
 
       return {
         ...prev,
-        experience: newExperience
+        level: newLevel,
+        experience: remainingExp,
+        requiredExperience: nextRequiredExp,
+        health: baseStats.health + equipmentBonuses.health,
+        maxHealth: baseStats.health + equipmentBonuses.health,
+        power: baseStats.power + equipmentBonuses.power,
+        defense: baseStats.defense + equipmentBonuses.defense
       };
     });
-  }, [calculateBaseStats, calculateEquipmentBonuses, toast, updateStats]);
+  }, [calculateBaseStats, calculateEquipmentBonuses, toast]);
 
   return {
     stats,

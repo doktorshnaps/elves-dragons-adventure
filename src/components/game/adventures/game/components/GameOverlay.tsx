@@ -1,34 +1,55 @@
 
-import React from 'react';
+import { GameOver } from '../GameOver';
+import { DiceRollDisplay } from './DiceRollDisplay';
 import { motion } from 'framer-motion';
 
 interface GameOverlayProps {
-  isGameOver: boolean;
+  currentHealth: number;
+  isRolling: boolean;
+  diceRoll: number | null;
+  monsterDiceRoll: number | null;
+  isMonsterTurn: boolean;
+  monsterName?: string;
+  isRespawning?: boolean;
 }
 
-export const GameOverlay = ({ isGameOver }: GameOverlayProps) => {
-  if (!isGameOver) return null;
-
+export const GameOverlay = ({
+  currentHealth,
+  isRolling,
+  diceRoll,
+  monsterDiceRoll,
+  isMonsterTurn,
+  monsterName,
+  isRespawning
+}: GameOverlayProps) => {
   return (
-    <motion.div 
-      className="absolute inset-0 bg-black/80 flex items-center justify-center z-50"
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      transition={{ duration: 0.5 }}
-    >
-      <motion.div
-        className="text-center space-y-4"
-        initial={{ scale: 0 }}
-        animate={{ scale: 1 }}
-        transition={{ delay: 0.3, type: "spring" }}
-      >
-        <div className="text-6xl font-bold text-red-500">
-          Вы погибли
-        </div>
-        <div className="text-2xl text-white">
-          Возрождение через 2 секунды...
-        </div>
-      </motion.div>
-    </motion.div>
+    <>
+      {currentHealth <= 0 && !isRespawning && <GameOver />}
+      {isRespawning && (
+        <motion.div 
+          className="absolute inset-0 bg-black/50 flex items-center justify-center z-50"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+        >
+          <motion.div
+            initial={{ scale: 0.8, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            exit={{ scale: 0.8, opacity: 0 }}
+            className="text-center"
+          >
+            <h2 className="text-2xl font-bold text-white mb-2">Возрождение...</h2>
+            <p className="text-white/80">Подготовка к новому приключению</p>
+          </motion.div>
+        </motion.div>
+      )}
+      <DiceRollDisplay
+        isRolling={isRolling}
+        diceRoll={diceRoll}
+        monsterDiceRoll={monsterDiceRoll}
+        isMonsterTurn={isMonsterTurn}
+        monsterName={monsterName}
+      />
+    </>
   );
 };

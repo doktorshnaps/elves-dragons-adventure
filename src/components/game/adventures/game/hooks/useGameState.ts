@@ -15,38 +15,51 @@ export const useGameState = (
   const [isAttacking, setIsAttacking] = useState(false);
   const [targetedMonster, setTargetedMonster] = useState<TargetedMonster | null>(null);
   const [isGameOver, setIsGameOver] = useState(false);
+  const [isRespawning, setIsRespawning] = useState(false);
 
+  // Сбрасываем состояние при инициализации
   useEffect(() => {
-    if (initialHealth > 0) {
-      setCurrentHealth(initialHealth);
-      setIsGameOver(false);
-    }
+    setCurrentHealth(initialHealth);
+    setIsGameOver(false);
+    setIsRespawning(false);
   }, [initialHealth]);
 
+  // Обработка события воскрешения
   useEffect(() => {
-    if (currentHealth <= 0 && !isGameOver) {
-      setIsGameOver(true);
+    const handleRespawn = () => {
+      setCurrentHealth(initialHealth);
+      setIsGameOver(false);
+      setIsRespawning(false);
       toast({
-        title: "Вы погибли",
-        description: "Возрождение через 2 секунды...",
+        title: "Герой возродился",
+        description: "Продолжайте приключение"
+      });
+    };
+
+    window.addEventListener('playerRespawn', handleRespawn);
+    return () => window.removeEventListener('playerRespawn', handleRespawn);
+  }, [initialHealth, toast]);
+
+  // Обработка смерти персонажа
+  useEffect(() => {
+    if (currentHealth <= 0 && !isGameOver && !isRespawning) {
+      setIsGameOver(true);
+      setIsRespawning(true);
+      
+      toast({
+        title: "Герой пал в бою",
+        description: "Возрождение через 3 секунды...",
+        duration: 2000,
         variant: "destructive"
       });
       
-      // Через 2 секунды воскрешаем персонажа
+      // Запускаем процесс возрождения
       setTimeout(() => {
-        setIsGameOver(false);
-        setCurrentHealth(initialHealth);
-        // Создаем событие воскрешения
-        const respawnEvent = new Event('playerRespawn');
-        window.dispatchEvent(respawnEvent);
-        
-        toast({
-          title: "Возрождение",
-          description: "Здоровье восстановлено"
-        });
-      }, 2000);
+        const event = new CustomEvent('playerRespawn');
+        window.dispatchEvent(event);
+      }, 3000);
     }
-  }, [currentHealth, isGameOver, navigate, toast, initialHealth]);
+  }, [currentHealth, isGameOver, isRespawning, navigate, toast]);
 
   const handleSelectTarget = (monster: Monster) => {
     console.log("Selecting target:", monster);
@@ -71,6 +84,7 @@ export const useGameState = (
     targetedMonster,
     setTargetedMonster,
     isGameOver,
+    isRespawning,
     handleSelectTarget
   };
 };

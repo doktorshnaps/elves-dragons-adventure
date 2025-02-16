@@ -1,9 +1,13 @@
 
 import React from 'react';
-import { Monster } from '../../../../../components/game/adventures/types';
+import { Monster, TargetedMonster } from '../types/combatTypes';
+import { PlayerCharacter } from '../PlayerCharacter';
+import { MonsterSprite } from '../MonsterSprite';
+import { ProjectileSprite } from '../ProjectileSprite';
+import { ObstacleSprite, Obstacle } from '../ObstacleSprite';
 
 interface GameWorldProps {
-  gameRef: React.RefObject<HTMLDivElement> | null;
+  gameRef: React.RefObject<HTMLDivElement>;
   cameraOffset: number;
   playerPosition: number;
   playerY: number;
@@ -13,7 +17,7 @@ interface GameWorldProps {
   monsters: Monster[];
   projectiles: any[];
   onSelectTarget: (monster: Monster) => void;
-  targetedMonster: any;
+  targetedMonster: TargetedMonster | null;
   armor: number;
   maxArmor: number;
   maxHealth: number;
@@ -21,9 +25,12 @@ interface GameWorldProps {
   experience?: number;
   requiredExperience?: number;
   balance: number;
+  obstacles: Obstacle[];
+  onObstacleCollision: (damage: number) => void;
+  isRespawning?: boolean;
 }
 
-export const GameWorld: React.FC<GameWorldProps> = ({
+export const GameWorld = ({
   gameRef,
   cameraOffset,
   playerPosition,
@@ -41,8 +48,11 @@ export const GameWorld: React.FC<GameWorldProps> = ({
   level,
   experience,
   requiredExperience,
-  balance
-}) => {
+  balance,
+  obstacles,
+  onObstacleCollision,
+  isRespawning
+}: GameWorldProps) => {
   return (
     <div 
       ref={gameRef}
@@ -63,67 +73,42 @@ export const GameWorld: React.FC<GameWorldProps> = ({
 
       <div className="absolute bottom-0 w-full h-[50px] bg-game-surface/50" />
 
-      {/* Player */}
-      <div 
-        className="absolute"
-        style={{
-          left: playerPosition,
-          bottom: 50 + playerY,
-          transition: 'transform 0.1s ease-out'
-        }}
-      >
-        <div 
-          className={`w-16 h-20 bg-blue-500 rounded-lg flex items-center justify-center text-2xl relative ${
-            isAttacking ? 'animate-pulse' : ''
-          }`}
-        >
-          🧙‍♂️
-          <div className="absolute -bottom-6 left-0 w-full">
-            <div className="h-2 bg-red-900 rounded-full">
-              <div 
-                className="h-full bg-red-500 rounded-full"
-                style={{width: `${(currentHealth / maxHealth) * 100}%`}}
-              />
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Monsters */}
-      {monsters.map(monster => (
-        <div
-          key={monster.id}
-          className={`absolute bottom-[50px] cursor-pointer ${
-            targetedMonster?.id === monster.id ? 'ring-2 ring-red-500' : ''
-          }`}
-          style={{ left: monster.position }}
-          onClick={() => onSelectTarget(monster)}
-        >
-          <div className="relative w-16 h-20">
-            <div className="w-full h-full bg-red-500 rounded-lg flex items-center justify-center text-2xl">
-              👾
-            </div>
-            <div className="absolute -bottom-6 left-0 w-full">
-              <div className="h-2 bg-red-900 rounded-full">
-                <div 
-                  className="h-full bg-red-500 rounded-full"
-                  style={{width: `${(monster.health / monster.maxHealth) * 100}%`}}
-                />
-              </div>
-            </div>
-          </div>
-        </div>
+      {obstacles.map((obstacle, index) => (
+        <ObstacleSprite 
+          key={`obs-${obstacle.id}`} 
+          obstacle={obstacle} 
+        />
       ))}
 
-      {/* Projectiles */}
+      <PlayerCharacter
+        position={playerPosition}
+        yPosition={playerY}
+        isAttacking={isAttacking}
+        health={currentHealth}
+        power={playerPower}
+        armor={armor}
+        maxArmor={maxArmor}
+        maxHealth={maxHealth}
+        level={level}
+        experience={experience}
+        requiredExperience={requiredExperience}
+      />
+
+      {monsters.map(monster => (
+        <MonsterSprite
+          key={monster.id}
+          monster={monster}
+          position={monster.position}
+          onSelect={onSelectTarget}
+          isTargeted={targetedMonster?.id === monster.id}
+        />
+      ))}
+
       {projectiles.map(projectile => (
-        <div
+        <ProjectileSprite
           key={projectile.id}
-          className="absolute w-4 h-4 bg-yellow-500 rounded-full"
-          style={{
-            left: projectile.x,
-            bottom: projectile.y
-          }}
+          x={projectile.x}
+          y={projectile.y}
         />
       ))}
     </div>

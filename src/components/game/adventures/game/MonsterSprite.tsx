@@ -70,7 +70,7 @@ export const MonsterSprite = ({
             max={monster.maxHealth}
             className="bg-red-900"
             indicatorClassName="bg-red-500"
-            showValue={false}
+            showValue={true}
           />
         </div>
 
