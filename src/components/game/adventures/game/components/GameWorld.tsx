@@ -1,7 +1,6 @@
 
 import React from 'react';
-import { Monster } from '../../../types'; // This import is wrong
-import { Monster } from '../../../../../components/game/adventures/types'; // This is the correct path
+import { Monster } from '../../../../../components/game/adventures/types';
 
 interface GameWorldProps {
   gameRef: React.RefObject<HTMLDivElement> | null;
