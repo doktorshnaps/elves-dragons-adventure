@@ -1,17 +1,18 @@
+
 import { motion, AnimatePresence } from 'framer-motion';
 
 interface DiceRollDisplayProps {
-  isRolling: boolean;
-  diceRoll: number | null;
-  monsterDiceRoll: number | null;
-  isMonsterTurn: boolean;
+  isRolling?: boolean;
+  playerRoll?: number | null;
+  monsterRoll?: number | null;
+  isMonsterTurn?: boolean;
   monsterName?: string;
 }
 
 export const DiceRollDisplay = ({
   isRolling,
-  diceRoll,
-  monsterDiceRoll,
+  playerRoll,
+  monsterRoll,
   isMonsterTurn,
   monsterName
 }: DiceRollDisplayProps) => {
@@ -27,12 +28,12 @@ export const DiceRollDisplay = ({
           {isMonsterTurn ? (
             <div className="text-center">
               <div className="text-sm mb-2">Бросок {monsterName || 'монстра'}</div>
-              {monsterDiceRoll}
+              {monsterRoll}
             </div>
           ) : (
             <div className="text-center">
               <div className="text-sm mb-2">Ваш бросок</div>
-              {diceRoll}
+              {playerRoll}
             </div>
           )}
         </motion.div>

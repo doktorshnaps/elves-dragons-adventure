@@ -85,6 +85,7 @@ export const GameContainer = ({
 
       {isRolling && (
         <DiceRollDisplay
+          isRolling={isRolling}
           playerRoll={diceRoll}
           monsterRoll={monsterDiceRoll}
           isMonsterTurn={isMonsterTurn}
