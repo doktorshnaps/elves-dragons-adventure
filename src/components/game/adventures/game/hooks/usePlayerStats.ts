@@ -35,10 +35,15 @@ export const usePlayerStats = (initialLevel = 1) => {
     const cards = savedCards ? JSON.parse(savedCards) : [];
     const teamStats = calculateTeamStats(cards);
 
+    // Базовые характеристики даже без карт
+    const baseHealth = 100;
+    const basePower = 10;
+    const baseDefense = 5;
+
     return {
-      power: teamStats.power + (level - 1),
-      defense: teamStats.defense + (level - 1),
-      health: teamStats.health + (level - 1) * 10
+      power: (teamStats.power || basePower) + (level - 1) * 2,
+      defense: (teamStats.defense || baseDefense) + (level - 1),
+      health: (teamStats.health || baseHealth) + (level - 1) * 10
     };
   }, []);
 
@@ -66,11 +71,16 @@ export const usePlayerStats = (initialLevel = 1) => {
         health: prev.maxHealth,
         armor: prev.maxArmor
       }));
+
+      toast({
+        title: "Возрождение",
+        description: "Здоровье восстановлено"
+      });
     };
 
     window.addEventListener('playerRespawn', handleRespawn);
     return () => window.removeEventListener('playerRespawn', handleRespawn);
-  }, []);
+  }, [toast]);
 
   const updateStats = useCallback((updater: (prev: PlayerStats) => PlayerStats) => {
     setStats(prev => {
