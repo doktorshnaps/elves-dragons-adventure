@@ -1,7 +1,7 @@
 
 import React, { useEffect } from 'react';
 import { motion, useAnimation } from 'framer-motion';
-import { Shield } from 'lucide-react';
+import { Shield, Sword } from 'lucide-react';
 import { StatusBar } from './components/StatusBar';
 import { HealthBar } from './components/HealthBar';
 
@@ -79,6 +79,12 @@ export const PlayerCharacter = ({
         }}
       >
         <div className="relative">
+          {/* Attack Power Display */}
+          <div className="absolute -top-8 -right-8 flex items-center bg-red-500/80 backdrop-blur-sm px-2 py-1 rounded-lg">
+            <Sword className="w-4 h-4 text-white mr-1" />
+            <span className="text-xs font-bold text-white">{power}</span>
+          </div>
+
           {armor > 0 && (
             <div className="absolute inset-0 -m-2">
               <div className="w-full h-full rounded-full border-2 border-blue-500/50 animate-pulse" />
@@ -168,3 +174,4 @@ export const PlayerCharacter = ({
     </>
   );
 };
+
