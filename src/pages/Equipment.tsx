@@ -1,12 +1,25 @@
+
 import { Button } from "@/components/ui/button";
 import { ArrowLeft } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { EquipmentGrid } from "@/components/game/stats/EquipmentGrid";
 import { InventoryDisplay } from "@/components/game/InventoryDisplay";
 import { DragonEggProvider } from "@/contexts/DragonEggContext";
+import { useEffect } from "react";
 
 export const Equipment = () => {
   const navigate = useNavigate();
+
+  useEffect(() => {
+    const handleEquipmentChange = () => {
+      // Trigger an event to notify other components about equipment changes
+      const event = new CustomEvent('inventoryUpdate');
+      window.dispatchEvent(event);
+    };
+
+    window.addEventListener('equipmentChange', handleEquipmentChange);
+    return () => window.removeEventListener('equipmentChange', handleEquipmentChange);
+  }, []);
 
   return (
     <div 

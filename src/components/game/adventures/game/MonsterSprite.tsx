@@ -1,6 +1,7 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import { Monster } from '../types';
+import { useToast } from '@/hooks/use-toast';
 
 interface MonsterSpriteProps {
   monster: Monster;
@@ -15,6 +16,8 @@ export const MonsterSprite = ({
   onSelect,
   isTargeted 
 }: MonsterSpriteProps) => {
+  const { toast } = useToast();
+  
   const getMonsterEmoji = (type: string) => {
     switch (type) {
       case 'boss':
@@ -28,13 +31,28 @@ export const MonsterSprite = ({
 
   const healthPercentage = (monster.health / monster.maxHealth) * 100;
 
+  const handleClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    console.log("Monster clicked:", monster);
+    onSelect(monster);
+    toast({
+      title: "Цель выбрана",
+      description: `${monster.name} выбран целью для атаки`
+    });
+  };
+
   return (
     <motion.div
-      className={`absolute bottom-[50px] cursor-pointer z-20 ${isTargeted ? 'ring-4 ring-game-accent ring-offset-2 rounded-lg' : ''}`}
+      className={`absolute bottom-[50px] cursor-pointer z-20 ${
+        isTargeted ? 'ring-4 ring-game-accent ring-offset-2 rounded-lg' : ''
+      }`}
       style={{ left: position }}
       animate={{ y: [0, -5, 0] }}
       transition={{ duration: 2, repeat: Infinity }}
-      onClick={() => onSelect(monster)}
+      onClick={handleClick}
+      whileHover={{ scale: 1.1 }}
+      whileTap={{ scale: 0.9 }}
     >
       <div className="relative">
         <div className="absolute -top-20 left-1/2 -translate-x-1/2 whitespace-nowrap">

@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
@@ -9,6 +10,7 @@ import { Item } from "@/types/inventory";
 import { Monster } from "./types";
 import { GameHeader } from "./components/GameHeader";
 import { GameContent } from "./components/GameContent";
+import { calculateTeamStats } from '@/utils/cardUtils';
 
 export const AdventuresTab = () => {
   const navigate = useNavigate();
@@ -29,10 +31,14 @@ export const AdventuresTab = () => {
   };
 
   const calculateBaseStats = (level: number) => {
+    const savedCards = localStorage.getItem('gameCards');
+    const cards = savedCards ? JSON.parse(savedCards) : [];
+    const teamStats = calculateTeamStats(cards);
+
     return {
-      power: 1 + (level - 1),
-      defense: 1 + (level - 1),
-      health: 50 + (level - 1) * 10
+      power: teamStats.power + (level - 1),
+      defense: teamStats.defense + (level - 1),
+      health: teamStats.health + (level - 1) * 10
     };
   };
 
@@ -65,6 +71,25 @@ export const AdventuresTab = () => {
       requiredExperience: 100
     };
   });
+
+  // Слушаем события обновления инвентаря
+  useEffect(() => {
+    const handleInventoryUpdate = () => {
+      const equipmentBonuses = calculateEquipmentBonuses();
+      const baseStats = calculateBaseStats(playerStats.level);
+      
+      setPlayerStats(prev => ({
+        ...prev,
+        power: baseStats.power + equipmentBonuses.power,
+        defense: baseStats.defense + equipmentBonuses.defense,
+        maxHealth: baseStats.health + equipmentBonuses.health,
+        health: Math.min(prev.health, baseStats.health + equipmentBonuses.health)
+      }));
+    };
+
+    window.addEventListener('inventoryUpdate', handleInventoryUpdate);
+    return () => window.removeEventListener('inventoryUpdate', handleInventoryUpdate);
+  }, [playerStats.level]);
 
   const [currentMonster, setCurrentMonster] = useState<Monster | null>(() => {
     const savedMonster = localStorage.getItem('adventureCurrentMonster');
@@ -132,7 +157,6 @@ export const AdventuresTab = () => {
         description: `Вы получили ${monster.reward} монет и ${monster.experienceReward} опыта!`
       });
       
-      // Автоматически генерируем нового монстра после победы
       if (playerStats.health > 0) {
         const newMonster = generateMonster();
         setCurrentMonster(newMonster);
@@ -215,7 +239,6 @@ export const AdventuresTab = () => {
     window.dispatchEvent(event);
   };
 
-  // Автоматически начинаем приключение, если нет текущего монстра и игрок жив
   useEffect(() => {
     if (!currentMonster && playerStats.health > 0) {
       startAdventure();
@@ -248,3 +271,4 @@ export const AdventuresTab = () => {
     </AdventureLayout>
   );
 };
+

@@ -14,7 +14,6 @@ export const useGameState = (
   const [isAttacking, setIsAttacking] = useState(false);
   const [targetedMonster, setTargetedMonster] = useState<TargetedMonster | null>(null);
   const [isGameOver, setIsGameOver] = useState(false);
-  const [cameraOffset, setCameraOffset] = useState(0);
 
   useEffect(() => {
     if (initialHealth > 0) {
@@ -34,15 +33,22 @@ export const useGameState = (
       
       setTimeout(() => {
         navigate('/menu');
-      }, 3000);
+      }, 2000);
     }
   }, [currentHealth, isGameOver, navigate, toast]);
 
   const handleSelectTarget = (monster: Monster) => {
-    if (!monster.position) return;
+    console.log("Selecting target:", monster);
+    if (monster.position === undefined) return;
+    
     setTargetedMonster({
       id: monster.id,
       position: monster.position
+    });
+    
+    toast({
+      title: "Цель выбрана",
+      description: `${monster.name} выбран целью для атаки`
     });
   };
 
@@ -54,8 +60,6 @@ export const useGameState = (
     targetedMonster,
     setTargetedMonster,
     isGameOver,
-    cameraOffset,
-    setCameraOffset,
     handleSelectTarget
   };
 };

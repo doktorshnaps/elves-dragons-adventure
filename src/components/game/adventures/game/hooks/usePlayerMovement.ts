@@ -1,11 +1,13 @@
 import { useState, useEffect } from 'react';
+import { Monster } from '../../types';
 
-export const usePlayerMovement = (updateCameraOffset: (pos: number) => void) => {
+export const usePlayerMovement = (updateCameraOffset: (pos: number) => number) => {
   const [playerPosition, setPlayerPosition] = useState(100);
   const [playerY, setPlayerY] = useState(0);
   const [isMovingRight, setIsMovingRight] = useState(false);
   const [isMovingLeft, setIsMovingLeft] = useState(false);
   const [isJumping, setIsJumping] = useState(false);
+  const [cameraOffset, setCameraOffset] = useState(0);
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -45,14 +47,16 @@ export const usePlayerMovement = (updateCameraOffset: (pos: number) => void) => 
       if (isMovingRight) {
         setPlayerPosition(prev => {
           const newPosition = prev + 5;
-          updateCameraOffset(newPosition);
+          const newOffset = updateCameraOffset(newPosition);
+          setCameraOffset(newOffset);
           return newPosition;
         });
       }
       if (isMovingLeft) {
         setPlayerPosition(prev => {
           const newPosition = Math.max(prev - 5, 0);
-          updateCameraOffset(newPosition);
+          const newOffset = updateCameraOffset(newPosition);
+          setCameraOffset(newOffset);
           return newPosition;
         });
       }
@@ -73,7 +77,7 @@ export const usePlayerMovement = (updateCameraOffset: (pos: number) => void) => 
   useEffect(() => {
     if (isJumping) {
       const gravity = 0.5;
-      let velocity = 19.5; // Увеличено на 30% с 15 до 19.5
+      let velocity = 19.5;
       let jumpAnimationFrame: number;
       
       const jumpAnimation = () => {
@@ -89,7 +93,7 @@ export const usePlayerMovement = (updateCameraOffset: (pos: number) => void) => 
           return newY;
         });
         
-        if (velocity > -19.5) { // Также увеличен порог возврата
+        if (velocity > -19.5) {
           jumpAnimationFrame = requestAnimationFrame(jumpAnimation);
         }
       };
@@ -110,6 +114,14 @@ export const usePlayerMovement = (updateCameraOffset: (pos: number) => void) => 
     }
   };
 
+  const handleSelectTarget = (monster: Monster) => {
+    if (!monster.position) return;
+    return {
+      id: monster.id,
+      position: monster.position
+    };
+  };
+
   return {
     playerPosition,
     playerY,
@@ -118,6 +130,8 @@ export const usePlayerMovement = (updateCameraOffset: (pos: number) => void) => 
     isJumping,
     setIsMovingRight,
     setIsMovingLeft,
-    handleJump
+    handleJump,
+    cameraOffset,
+    handleSelectTarget
   };
 };
