@@ -1,79 +1,46 @@
 
-extends Node2D
+extends CharacterBody2D
 
-signal health_changed(new_health: float)
-signal experience_gained(exp_amount: int)
-signal level_up(new_level: int)
+const SPEED = 300.0
+const JUMP_VELOCITY = -400.0
+var gravity = ProjectSettings.get_setting("physics/2d/default_gravity")
+var is_mining = false
+var mining_power = 5.0
 
-var stats = {
-	"health": 100.0,
-	"max_health": 100.0,
-	"power": 10,
-	"defense": 5,
-	"level": 1,
-	"experience": 0,
-	"required_experience": 100
-}
+@onready var animation_player = $AnimationPlayer
+@onready var sprite = $Sprite2D
+@onready var mining_ray = $MiningRay
 
-var balance: int = 100
+func _physics_process(delta):
+	# Гравитация
+	if not is_on_floor():
+		velocity.y += gravity * delta
 
-func _ready():
-	load_player_data()
+	# Прыжок
+	if Input.is_action_just_pressed("jump") and is_on_floor():
+		velocity.y = JUMP_VELOCITY
 
-func take_damage(amount: float) -> void:
-	stats.health = max(0.0, stats.health - amount)
-	emit_signal("health_changed", stats.health)
+	# Движение
+	var direction = Input.get_axis("move_left", "move_right")
+	if direction:
+		velocity.x = direction * SPEED
+		sprite.flip_h = direction < 0
+	else:
+		velocity.x = move_toward(velocity.x, 0, SPEED)
+
+	move_and_slide()
 	
-	if stats.health <= 0:
-		die()
+	# Добыча блоков
+	if Input.is_action_pressed("mine"):
+		mine()
+	else:
+		is_mining = false
 
-func heal(amount: float) -> void:
-	stats.health = min(stats.max_health, stats.health + amount)
-	emit_signal("health_changed", stats.health)
-
-func gain_experience(amount: int) -> void:
-	stats.experience += amount
-	emit_signal("experience_gained", amount)
+func mine():
+	is_mining = true
+	animation_player.play("mine")
 	
-	while stats.experience >= stats.required_experience:
-		level_up()
-
-func level_up() -> void:
-	stats.level += 1
-	stats.experience -= stats.required_experience
-	stats.required_experience = int(stats.required_experience * 1.5)
-	
-	# Увеличение характеристик
-	stats.max_health += 10
-	stats.health = stats.max_health
-	stats.power += 2
-	stats.defense += 1
-	
-	emit_signal("level_up", stats.level)
-
-func die() -> void:
-	# Логика смерти персонажа
-	await get_tree().create_timer(3.0).timeout
-	respawn()
-
-func respawn() -> void:
-	stats.health = stats.max_health
-	emit_signal("health_changed", stats.health)
-
-func save_player_data() -> void:
-	var save_data = {
-		"stats": stats,
-		"balance": balance
-	}
-	var save_game = FileAccess.open("user://player.save", FileAccess.WRITE)
-	save_game.store_line(JSON.stringify(save_data))
-
-func load_player_data() -> void:
-	if FileAccess.file_exists("user://player.save"):
-		var save_game = FileAccess.open("user://player.save", FileAccess.READ)
-		var json_string = save_game.get_line()
-		var data = JSON.parse_string(json_string)
-		
-		if data:
-			stats = data.stats
-			balance = data.balance
+	if mining_ray.is_colliding():
+		var collision_point = mining_ray.get_collision_point()
+		var tile_pos = collision_point.snapped(Vector2(32, 32))
+		get_parent().damage_tile(tile_pos, mining_power * get_physics_process_delta_time())
