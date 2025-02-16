@@ -1,6 +1,4 @@
 
-import { Item } from "@/types/inventory";
-
 export interface Monster {
   id: number;
   name: string;
@@ -9,18 +7,6 @@ export interface Monster {
   maxHealth: number;
   reward: number;
   experienceReward: number;
-  type: 'normal' | 'elite' | 'boss';
+  type: "normal" | "elite" | "boss";
   position: number;
-}
-
-export interface Equipment {
-  weapon?: Item;
-  armor?: Item;
-  accessory?: Item;
-}
-
-export interface PlayerStats {
-  power: number;
-  defense: number;
-  maxHealth: number;
 }

@@ -96,10 +96,10 @@ export const AdventuresTab = () => {
   };
 
   const generateMonster = () => {
-    const monsterTypes = [
-      { type: 'normal', power: 10, health: 50, reward: 20, expReward: 30 },
-      { type: 'elite', power: 15, health: 75, reward: 35, expReward: 60 },
-      { type: 'boss', power: 25, health: 100, reward: 50, expReward: 100 }
+    const monsterTypes: Array<{ type: "normal" | "elite" | "boss", power: number, health: number, reward: number, expReward: number }> = [
+      { type: "normal", power: 10, health: 50, reward: 20, expReward: 30 },
+      { type: "elite", power: 15, health: 75, reward: 35, expReward: 60 },
+      { type: "boss", power: 25, health: 100, reward: 50, expReward: 100 }
     ];
 
     const roll = Math.random();

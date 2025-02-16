@@ -1,5 +1,4 @@
-
-import { LootTable } from "@/types/loot";
+import { LootTable, LootItem } from "@/types/loot";
 
 export const monsterLootTable: { [key: string]: LootTable } = {
   normal: {
@@ -108,7 +107,7 @@ export const monsterLootTable: { [key: string]: LootTable } = {
   }
 };
 
-export const generateLoot = (monsterType: string): LootItem[] => {
+export const generateLoot = (monsterType: "normal" | "elite" | "boss"): LootItem[] => {
   const lootTable = monsterLootTable[monsterType];
   const drops: LootItem[] = [];
 
