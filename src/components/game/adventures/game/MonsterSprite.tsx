@@ -30,7 +30,7 @@ export const MonsterSprite = ({
 
   return (
     <motion.div
-      className={`absolute bottom-[50px] cursor-pointer ${isTargeted ? 'ring-4 ring-game-accent ring-offset-2' : ''}`}
+      className={`absolute bottom-[50px] cursor-pointer z-20 ${isTargeted ? 'ring-4 ring-game-accent ring-offset-2 rounded-lg' : ''}`}
       style={{ left: position }}
       animate={{ y: [0, -5, 0] }}
       transition={{ duration: 2, repeat: Infinity }}

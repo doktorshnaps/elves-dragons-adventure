@@ -66,7 +66,7 @@ export const AdventuresTab = () => {
     };
   });
 
-  const [currentMonster, setCurrentMonster] = useState(() => {
+  const [currentMonster, setCurrentMonster] = useState<Monster | null>(() => {
     const savedMonster = localStorage.getItem('adventureCurrentMonster');
     return savedMonster ? JSON.parse(savedMonster) : null;
   });
@@ -79,30 +79,8 @@ export const AdventuresTab = () => {
     localStorage.setItem('adventureCurrentMonster', JSON.stringify(currentMonster));
   }, [currentMonster]);
 
-  useEffect(() => {
-    const handleInventoryUpdate = () => {
-      const baseStats = calculateBaseStats(playerStats.level);
-      const equipmentBonuses = calculateEquipmentBonuses();
-      
-      setPlayerStats(prev => ({
-        ...prev,
-        power: baseStats.power + equipmentBonuses.power,
-        defense: baseStats.defense + equipmentBonuses.defense,
-        maxHealth: baseStats.health + equipmentBonuses.health,
-        health: Math.min(prev.health, baseStats.health + equipmentBonuses.health)
-      }));
-    };
-
-    window.addEventListener('storage', handleInventoryUpdate);
-    window.addEventListener('inventoryUpdate', handleInventoryUpdate);
-
-    return () => {
-      window.removeEventListener('storage', handleInventoryUpdate);
-      window.removeEventListener('inventoryUpdate', handleInventoryUpdate);
-    };
-  }, [playerStats.level]);
-
   const startAdventure = () => {
+    if (playerStats.health <= 0) return;
     const monster = generateMonster();
     setCurrentMonster(monster);
   };
@@ -153,7 +131,14 @@ export const AdventuresTab = () => {
         title: "Победа!",
         description: `Вы получили ${monster.reward} монет и ${monster.experienceReward} опыта!`
       });
-      setCurrentMonster(null);
+      
+      // Автоматически генерируем нового монстра после победы
+      if (playerStats.health > 0) {
+        const newMonster = generateMonster();
+        setCurrentMonster(newMonster);
+      } else {
+        setCurrentMonster(null);
+      }
       return;
     }
 
@@ -229,6 +214,13 @@ export const AdventuresTab = () => {
     });
     window.dispatchEvent(event);
   };
+
+  // Автоматически начинаем приключение, если нет текущего монстра и игрок жив
+  useEffect(() => {
+    if (!currentMonster && playerStats.health > 0) {
+      startAdventure();
+    }
+  }, [currentMonster, playerStats.health]);
 
   return (
     <AdventureLayout>

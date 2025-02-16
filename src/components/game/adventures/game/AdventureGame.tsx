@@ -1,16 +1,15 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useRef, useState } from 'react';
 import { Card } from "@/components/ui/card";
 import { Monster } from '../types';
 import { usePlayerMovement } from './hooks/usePlayerMovement';
 import { useProjectiles } from './hooks/useProjectiles';
-import { useAdventureState } from '../hooks/useAdventureState';
 import { GameControls } from '../components/GameControls';
-import { GameWorld } from '../components/GameWorld';
 import { PlayerStatsHeader } from './PlayerStatsHeader';
-import { GameOver } from './GameOver';
-import { TargetedMonster } from './types/combatTypes';
-import { motion, AnimatePresence } from 'framer-motion';
-import { useToast } from '@/hooks/use-toast';
+import { useDiceRoll } from './hooks/useDiceRoll';
+import { useMonsterSpawning } from './hooks/useMonsterSpawning';
+import { GameOverlay } from './components/GameOverlay';
+import { useGameState } from './hooks/useGameState';
+import { GameWorldContainer } from './components/GameWorldContainer';
 
 interface AdventureGameProps {
   onMonsterDefeat: (monster: Monster) => void;
@@ -23,8 +22,8 @@ interface AdventureGameProps {
   maxHealth: number;
 }
 
-export const AdventureGame = ({ 
-  onMonsterDefeat, 
+export const AdventureGame = ({
+  onMonsterDefeat,
   playerHealth,
   playerPower,
   currentMonster,
@@ -33,28 +32,25 @@ export const AdventureGame = ({
   requiredExperience,
   maxHealth
 }: AdventureGameProps) => {
-  const { toast } = useToast();
+  const gameRef = useRef<HTMLDivElement>(null);
+  const gameContainerRef = useRef<HTMLDivElement>(null);
+
+  // Add armor state
+  const [armor, setArmor] = useState(50); // Base armor value
+  const maxArmor = 50; // Maximum armor value
+
   const {
     currentHealth,
     setCurrentHealth,
     isAttacking,
     setIsAttacking,
-    monsters,
-    setMonsters,
+    targetedMonster,
+    setTargetedMonster,
+    isGameOver,
     cameraOffset,
     setCameraOffset,
-    generateMonster
-  } = useAdventureState(playerHealth);
-
-  const [targetedMonster, setTargetedMonster] = useState<TargetedMonster | null>(null);
-  const [diceRoll, setDiceRoll] = useState<number | null>(null);
-  const [isRolling, setIsRolling] = useState(false);
-  const [isMonsterTurn, setIsMonsterTurn] = useState(false);
-  const [monsterDiceRoll, setMonsterDiceRoll] = useState<number | null>(null);
-  const [lastGeneratedPosition, setLastGeneratedPosition] = useState(0);
-
-  const gameRef = useRef<HTMLDivElement>(null);
-  const gameContainerRef = useRef<HTMLDivElement>(null);
+    handleSelectTarget
+  } = useGameState(playerHealth, onMonsterDefeat);
 
   const updateCameraOffset = (playerPos: number) => {
     if (!gameContainerRef.current) return;
@@ -73,176 +69,80 @@ export const AdventureGame = ({
     setIsMovingLeft
   } = usePlayerMovement(updateCameraOffset);
 
+  const { monsters, setMonsters } = useMonsterSpawning(
+    playerPosition,
+    isMovingRight,
+    isMovingLeft
+  );
+
   const { projectiles } = useProjectiles(
     currentMonster,
     playerPosition,
     playerY,
     currentHealth,
-    (damage: number) => setCurrentHealth(prev => Math.max(0, prev - damage))
+    (damage: number) => {
+      if (currentHealth > 0) {
+        // First reduce armor
+        if (armor > 0) {
+          const remainingDamage = Math.max(0, damage - armor);
+          const armorDamage = Math.min(armor, damage);
+          setArmor(prev => Math.max(0, prev - armorDamage));
+          
+          if (remainingDamage > 0) {
+            setCurrentHealth(prev => Math.max(0, prev - remainingDamage));
+          }
+        } else {
+          // If no armor, damage goes straight to health
+          setCurrentHealth(prev => Math.max(0, prev - damage));
+        }
+      }
+    },
+    monsters
   );
 
-  const rollDice = () => {
-    return Math.floor(Math.random() * 20) + 1;
-  };
+  const handleMonsterDamage = (damage: number) => {
+    if (!targetedMonster) return;
 
-  const handleSelectTarget = (monster: Monster) => {
-    if (!monster.position) return;
-    
-    setTargetedMonster({
-      id: monster.id,
-      position: monster.position
-    });
-  };
-
-  const handleMonsterAttack = async (monster: Monster) => {
-    setIsMonsterTurn(true);
-    setIsRolling(true);
-
-    // Анимация броска кубика монстра
-    let currentRoll = 1;
-    const finalRoll = rollDice();
-    
-    // Анимация прокрутки чисел
-    const interval = setInterval(() => {
-      setMonsterDiceRoll(Math.floor(Math.random() * 20) + 1);
-    }, 50);
-
-    // Остановка анимации через 1 секунду
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    clearInterval(interval);
-    
-    setMonsterDiceRoll(finalRoll);
-
-    // Задержка для отображения финального результата
-    await new Promise(resolve => setTimeout(resolve, 500));
-
-    let damageMultiplier = 1;
-    if (finalRoll === 20) {
-      damageMultiplier = 2;
-      toast({
-        title: "Критический удар монстра!",
-        description: `${monster.name} выбросил ${finalRoll}! Двойной урон!`,
-        variant: "destructive"
-      });
-    } else if (finalRoll === 1) {
-      damageMultiplier = 0;
-      toast({
-        title: "Монстр промахнулся!",
-        description: `${monster.name} выбросил 1 и промахнулся!`,
-      });
-    } else {
-      toast({
-        title: "Атака монстра!",
-        description: `${monster.name} выбросил ${finalRoll}!`,
-      });
-    }
-
-    const damage = Math.floor(monster.power * damageMultiplier);
-    setCurrentHealth(prev => Math.max(0, prev - damage));
-
-    setIsMonsterTurn(false);
-    setIsRolling(false);
-    setMonsterDiceRoll(null);
-  };
-
-  const handleAttack = async () => {
-    if (!targetedMonster || isRolling) return;
-    
-    setIsRolling(true);
-    setIsAttacking(true);
-
-    // Анимация прокрутки чисел для броска игрока
-    const interval = setInterval(() => {
-      setDiceRoll(Math.floor(Math.random() * 20) + 1);
-    }, 50);
-
-    // Остановка анимации через 1 секунду
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    clearInterval(interval);
-
-    const finalRoll = rollDice();
-    setDiceRoll(finalRoll);
-
-    // Задержка для отображения финального результата
-    await new Promise(resolve => setTimeout(resolve, 500));
-
-    const monster = monsters.find(m => m.id === targetedMonster.id);
-    if (!monster) {
-      setIsRolling(false);
-      setIsAttacking(false);
-      return;
-    }
-
-    let damageMultiplier = 1;
-    if (finalRoll === 20) {
-      damageMultiplier = 2;
-      toast({
-        title: "Критический удар!",
-        description: `Выпало ${finalRoll}! Двойной урон!`,
-        variant: "destructive"
-      });
-    } else if (finalRoll === 1) {
-      damageMultiplier = 0;
-      toast({
-        title: "Промах!",
-        description: "Выпало 1! Атака не попала по цели.",
-      });
-    } else {
-      toast({
-        title: "Атака!",
-        description: `Выпало ${finalRoll}!`,
-      });
-    }
-
-    const damage = Math.floor(playerPower * damageMultiplier);
     const updatedMonsters = monsters.map(m => {
-      if (m.id === monster.id) {
+      if (m.id === targetedMonster.id) {
         const newHealth = Math.max(0, m.health - damage);
         if (newHealth <= 0) {
           onMonsterDefeat(m);
+          setTargetedMonster(null);
           return null;
         }
-        return {
-          ...m,
-          health: newHealth
-        };
+        return { ...m, health: newHealth };
       }
       return m;
     }).filter(Boolean) as Monster[];
 
     setMonsters(updatedMonsters);
-    setIsRolling(false);
     setIsAttacking(false);
-    setDiceRoll(null);
-
-    // Если монстр выжил, он контратакует
-    if (updatedMonsters.find(m => m.id === monster.id)) {
-      await handleMonsterAttack(monster);
-    }
   };
 
-  useEffect(() => {
-    // Check if we need to generate a new monster based on player position
-    const distanceFromLast = Math.abs(playerPosition - lastGeneratedPosition);
-    
-    if (distanceFromLast >= 200) { // Generate monster every 200 pixels
-      const spawnPosition = isMovingRight ? 
-        playerPosition + 400 : // Spawn ahead if moving right
-        playerPosition - 400;  // Spawn behind if moving left
-      
-      const monsterLevel = Math.floor(Math.abs(playerPosition) / 1000) + 1;
-      const newMonster = generateMonster(spawnPosition);
-      
-      if (newMonster) {
-        newMonster.power = Math.floor(newMonster.power * (1 + monsterLevel * 0.2));
-        newMonster.health = Math.floor(newMonster.health * (1 + monsterLevel * 0.2));
-        newMonster.maxHealth = newMonster.health;
-        
-        setMonsters(prev => [...prev, newMonster]);
-        setLastGeneratedPosition(playerPosition);
-      }
+  const {
+    isRolling,
+    diceRoll,
+    monsterDiceRoll,
+    isMonsterTurn,
+    handlePlayerAttack,
+    handleMonsterAttack
+  } = useDiceRoll((damage: number) => {
+    if (isMonsterTurn) {
+      setCurrentHealth(prev => Math.max(0, prev - damage));
+    } else {
+      handleMonsterDamage(damage);
     }
-  }, [playerPosition, isMovingRight, isMovingLeft, generateMonster, lastGeneratedPosition]);
+  });
+
+  const handleAttack = async () => {
+    if (!targetedMonster || isRolling || currentHealth <= 0) return;
+    setIsAttacking(true);
+    const monster = monsters.find(m => m.id === targetedMonster.id);
+    if (monster) {
+      await handlePlayerAttack(monster, playerPower);
+    }
+  };
 
   return (
     <>
@@ -253,39 +153,22 @@ export const AdventureGame = ({
         level={playerLevel}
         experience={playerExperience}
         requiredExperience={requiredExperience}
+        armor={armor}
+        maxArmor={maxArmor}
       />
       
       <Card className="w-full h-[500px] relative overflow-hidden bg-game-background mt-4">
-        {currentHealth <= 0 && <GameOver />}
-        
-        <AnimatePresence>
-          {isRolling && (
-            <motion.div
-              initial={{ scale: 0, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0, opacity: 0 }}
-              className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-50 bg-game-accent rounded-lg p-8 text-4xl font-bold"
-            >
-              {isMonsterTurn ? (
-                <div className="text-center">
-                  <div className="text-sm mb-2">Бросок монстра</div>
-                  {monsterDiceRoll}
-                </div>
-              ) : (
-                <div className="text-center">
-                  <div className="text-sm mb-2">Ваш бросок</div>
-                  {diceRoll}
-                </div>
-              )}
-            </motion.div>
-          )}
-        </AnimatePresence>
+        <GameOverlay
+          currentHealth={currentHealth}
+          isRolling={isRolling}
+          diceRoll={diceRoll}
+          monsterDiceRoll={monsterDiceRoll}
+          isMonsterTurn={isMonsterTurn}
+          monsterName={monsters.find(m => m.id === targetedMonster?.id)?.name}
+        />
 
-        <div 
-          ref={gameContainerRef}
-          className="w-full h-full relative overflow-hidden"
-        >
-          <GameWorld
+        <div ref={gameContainerRef} className="w-full h-full relative">
+          <GameWorldContainer
             gameRef={gameRef}
             cameraOffset={cameraOffset}
             playerPosition={playerPosition}
@@ -297,6 +180,8 @@ export const AdventureGame = ({
             projectiles={projectiles}
             onSelectTarget={handleSelectTarget}
             targetedMonster={targetedMonster}
+            armor={armor}
+            maxArmor={maxArmor}
           />
         </div>
 
@@ -307,6 +192,7 @@ export const AdventureGame = ({
           onAttack={handleAttack}
           isAttacking={isAttacking}
           hasTarget={!!targetedMonster}
+          disabled={currentHealth <= 0 || isGameOver}
         />
       </Card>
     </>

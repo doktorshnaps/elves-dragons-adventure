@@ -17,6 +17,8 @@ interface GameWorldProps {
   projectiles: any[];
   onSelectTarget: (monster: Monster) => void;
   targetedMonster: TargetedMonster | null;
+  armor: number;
+  maxArmor: number;
 }
 
 export const GameWorld = ({
@@ -30,12 +32,14 @@ export const GameWorld = ({
   monsters,
   projectiles,
   onSelectTarget,
-  targetedMonster
+  targetedMonster,
+  armor,
+  maxArmor
 }: GameWorldProps) => {
   return (
     <div 
       ref={gameRef}
-      className="absolute h-full"
+      className="absolute inset-0 h-full"
       style={{
         width: '100000px',
         backgroundImage: 'url("/lovable-uploads/0fb6e9e6-c143-470a-87c8-adf54800851d.png")',
@@ -54,6 +58,8 @@ export const GameWorld = ({
         isAttacking={isAttacking}
         health={currentHealth}
         power={playerPower}
+        armor={armor}
+        maxArmor={maxArmor}
       />
 
       {monsters.map(monster => (
