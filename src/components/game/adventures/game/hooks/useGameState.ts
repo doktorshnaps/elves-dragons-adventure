@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
@@ -26,16 +27,26 @@ export const useGameState = (
     if (currentHealth <= 0 && !isGameOver) {
       setIsGameOver(true);
       toast({
-        title: "Игра окончена",
-        description: "Ваш герой пал в бою",
+        title: "Вы погибли",
+        description: "Возрождение через 2 секунды...",
         variant: "destructive"
       });
       
+      // Через 2 секунды воскрешаем персонажа
       setTimeout(() => {
-        navigate('/menu');
+        setIsGameOver(false);
+        setCurrentHealth(initialHealth);
+        // Создаем событие воскрешения
+        const respawnEvent = new Event('playerRespawn');
+        window.dispatchEvent(respawnEvent);
+        
+        toast({
+          title: "Возрождение",
+          description: "Здоровье восстановлено"
+        });
       }, 2000);
     }
-  }, [currentHealth, isGameOver, navigate, toast]);
+  }, [currentHealth, isGameOver, navigate, toast, initialHealth]);
 
   const handleSelectTarget = (monster: Monster) => {
     console.log("Selecting target:", monster);

@@ -1,23 +1,20 @@
 
-import React, { useRef } from 'react';
-import { Card } from "@/components/ui/card";
-import { GameOverlay } from './GameOverlay';
-import { GameWorldContainer } from './GameWorldContainer';
+import React from 'react';
+import { GameWorld } from './GameWorld';
 import { GameControls } from '../../components/GameControls';
-import { Monster } from '../../types';
-import { usePlayerMovement } from '../hooks/usePlayerMovement';
-import { TargetedMonster } from '../types/combatTypes';
+import { GameOverlay } from './GameOverlay';
+import { DiceRollDisplay } from './DiceRollDisplay';
 
 interface GameContainerProps {
   currentHealth: number;
   maxHealth: number;
   playerPower: number;
-  isRolling: boolean;
-  diceRoll: number | null;
-  monsterDiceRoll: number | null;
-  isMonsterTurn: boolean;
-  monsters: Monster[];
-  targetedMonster: TargetedMonster | null;
+  isRolling?: boolean;
+  diceRoll?: number;
+  monsterDiceRoll?: number;
+  isMonsterTurn?: boolean;
+  monsters: any[];
+  targetedMonster: any;
   onAttack: () => void;
   isAttacking: boolean;
   playerLevel: number;
@@ -25,11 +22,12 @@ interface GameContainerProps {
   requiredExperience: number;
   armor: number;
   maxArmor: number;
-  onSelectTarget: (monster: Monster) => void;
-  balance: number; // Added balance prop
+  onSelectTarget: (monster: any) => void;
+  balance: number;
+  isGameOver?: boolean;
 }
 
-export const GameContainer = ({
+export const GameContainer = ({ 
   currentHealth,
   maxHealth,
   playerPower,
@@ -47,73 +45,53 @@ export const GameContainer = ({
   armor,
   maxArmor,
   onSelectTarget,
-  balance
+  balance,
+  isGameOver = false
 }: GameContainerProps) => {
-  const gameRef = useRef<HTMLDivElement>(null);
-  const gameContainerRef = useRef<HTMLDivElement>(null);
-  
-  const {
-    playerPosition,
-    playerY,
-    isMovingRight,
-    isMovingLeft,
-    handleJump,
-    setIsMovingRight,
-    setIsMovingLeft,
-    cameraOffset
-  } = usePlayerMovement((pos: number) => {
-    if (gameContainerRef.current) {
-      const containerWidth = gameContainerRef.current.offsetWidth;
-      const offset = Math.max(0, pos - containerWidth / 3);
-      return offset;
-    }
-    return 0;
-  });
+  const hasTarget = targetedMonster !== null;
 
   return (
-    <Card className="w-full h-[500px] relative overflow-hidden bg-game-background mt-4">
-      <GameOverlay
+    <div className="relative w-full h-full overflow-hidden bg-game-background">
+      <GameWorld
+        gameRef={null}
+        cameraOffset={0}
+        playerPosition={100}
+        playerY={0}
+        isAttacking={isAttacking}
         currentHealth={currentHealth}
-        isRolling={isRolling}
-        diceRoll={diceRoll}
-        monsterDiceRoll={monsterDiceRoll}
-        isMonsterTurn={isMonsterTurn}
-        monsterName={monsters.find(m => m.id === targetedMonster?.id)?.name}
+        playerPower={playerPower}
+        monsters={monsters}
+        projectiles={[]}
+        onSelectTarget={onSelectTarget}
+        targetedMonster={targetedMonster}
+        armor={armor}
+        maxArmor={maxArmor}
+        maxHealth={maxHealth}
+        level={playerLevel}
+        experience={playerExperience}
+        requiredExperience={requiredExperience}
+        balance={balance}
       />
-
-      <div ref={gameContainerRef} className="w-full h-full relative">
-        <GameWorldContainer
-          gameRef={gameRef}
-          cameraOffset={cameraOffset}
-          playerPosition={playerPosition}
-          playerY={playerY}
-          isAttacking={isAttacking}
-          currentHealth={currentHealth}
-          playerPower={playerPower}
-          monsters={monsters}
-          projectiles={[]}
-          onSelectTarget={onSelectTarget}
-          targetedMonster={targetedMonster}
-          armor={armor}
-          maxArmor={maxArmor}
-          maxHealth={maxHealth}
-          level={playerLevel}
-          experience={playerExperience}
-          requiredExperience={requiredExperience}
-          balance={balance}
-        />
-      </div>
 
       <GameControls
-        onMoveLeft={setIsMovingLeft}
-        onMoveRight={setIsMovingRight}
-        onJump={handleJump}
+        onMoveLeft={() => {}}
+        onMoveRight={() => {}}
+        onJump={() => {}}
         onAttack={onAttack}
         isAttacking={isAttacking}
-        hasTarget={!!targetedMonster}
-        disabled={currentHealth <= 0}
+        hasTarget={hasTarget}
+        disabled={isGameOver}
       />
-    </Card>
+
+      {isRolling && (
+        <DiceRollDisplay
+          playerRoll={diceRoll}
+          monsterRoll={monsterDiceRoll}
+          isMonsterTurn={isMonsterTurn}
+        />
+      )}
+
+      <GameOverlay isGameOver={isGameOver} />
+    </div>
   );
 };
-
