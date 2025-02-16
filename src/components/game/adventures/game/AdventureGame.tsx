@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Monster } from '../types';
 import { useProjectiles } from './hooks/useProjectiles';
@@ -6,6 +7,7 @@ import { useMonsterSpawning } from './hooks/useMonsterSpawning';
 import { useGameState } from './hooks/useGameState';
 import { GameContainer } from './components/GameContainer';
 import { useToast } from '@/hooks/use-toast';
+import { useBalanceState } from '@/hooks/useBalanceState';
 
 interface AdventureGameProps {
   onMonsterDefeat: (monster: Monster) => void;
@@ -31,6 +33,7 @@ export const AdventureGame = ({
   const [armor, setArmor] = React.useState(50);
   const maxArmor = 50;
   const { toast } = useToast();
+  const { balance } = useBalanceState();
 
   const {
     currentHealth,
@@ -141,6 +144,8 @@ export const AdventureGame = ({
       armor={armor}
       maxArmor={maxArmor}
       onSelectTarget={handleSelectTarget}
+      balance={balance}
     />
   );
 };
+

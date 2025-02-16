@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Monster } from '../types';
 import { PlayerCharacter } from '../game/PlayerCharacter';
@@ -19,6 +20,11 @@ interface GameWorldProps {
   targetedMonster: TargetedMonster | null;
   armor: number;
   maxArmor: number;
+  maxHealth: number;
+  level?: number;
+  experience?: number;
+  requiredExperience?: number;
+  balance: number;
 }
 
 export const GameWorld = ({
@@ -34,7 +40,12 @@ export const GameWorld = ({
   onSelectTarget,
   targetedMonster,
   armor,
-  maxArmor
+  maxArmor,
+  maxHealth,
+  level,
+  experience,
+  requiredExperience,
+  balance
 }: GameWorldProps) => {
   return (
     <div 
@@ -50,6 +61,10 @@ export const GameWorld = ({
         transition: 'transform 0.1s ease-out'
       }}
     >
+      <div className="fixed top-4 right-4 z-50">
+        <span className="text-xl font-bold text-yellow-400">{balance} монет</span>
+      </div>
+
       <div className="absolute bottom-0 w-full h-[50px] bg-game-surface/50" />
 
       <PlayerCharacter
@@ -60,6 +75,10 @@ export const GameWorld = ({
         power={playerPower}
         armor={armor}
         maxArmor={maxArmor}
+        maxHealth={maxHealth}
+        level={level}
+        experience={experience}
+        requiredExperience={requiredExperience}
       />
 
       {monsters.map(monster => (
