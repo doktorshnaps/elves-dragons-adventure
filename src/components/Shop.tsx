@@ -2,6 +2,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { shopItems } from "@/data/shopItems";
 import { useGameData } from "@/hooks/useGameData";
+import { useInventoryState } from "@/hooks/useInventoryState";
 import { useToast } from "@/hooks/use-toast";
 import { v4 as uuidv4 } from 'uuid';
 import { generateCard } from "@/utils/cardUtils";
@@ -14,6 +15,7 @@ interface ShopProps {
 
 export const Shop = ({ onClose }: ShopProps) => {
   const { gameData, updateGameData, loading } = useGameData();
+  const { inventory, updateInventory } = useInventoryState();
   const { toast } = useToast();
 
   if (loading) {
@@ -40,7 +42,7 @@ export const Shop = ({ onClose }: ShopProps) => {
           description: `Вы получили ${newCard.name} (${newCard.type === 'character' ? 'Герой' : 'Питомец'})`,
         });
       } else {
-        // Для остальных предметов
+        // Для остальных предметов используем старую систему инвентаря
         const newItem: Item = {
           id: uuidv4(),
           name: item.name,
@@ -53,11 +55,14 @@ export const Shop = ({ onClose }: ShopProps) => {
           equipped: false
         };
 
-        const newInventory = [...(gameData.inventory || []), newItem];
+        const newInventory = [...inventory, newItem];
         const newBalance = gameData.balance - item.price;
         
+        // Обновляем инвентарь в localStorage
+        updateInventory(newInventory);
+        
+        // Обновляем только баланс в Supabase
         await updateGameData({
-          inventory: newInventory,
           balance: newBalance
         });
 

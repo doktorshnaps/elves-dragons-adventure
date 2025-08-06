@@ -1,6 +1,7 @@
 import { Card } from "@/types/cards";
 import { useToast } from '@/hooks/use-toast';
 import { getCardPrice } from '@/utils/cardUtils';
+import { useGameData } from '@/hooks/useGameData';
 
 export const useCardManagement = (
   cards: Card[],
@@ -8,30 +9,25 @@ export const useCardManagement = (
   setSelectedCards: React.Dispatch<React.SetStateAction<Card[]>>
 ) => {
   const { toast } = useToast();
+  const { gameData, updateGameData } = useGameData();
 
-  const handleSellCard = (card: Card) => {
+  const handleSellCard = async (card: Card) => {
     event?.stopPropagation();
     
     setSelectedCards(prev => prev.filter(c => c.id !== card.id));
 
     const newCards = cards.filter(c => c.id !== card.id);
-    setCards(newCards);
-    localStorage.setItem('gameCards', JSON.stringify(newCards));
-
     const price = getCardPrice(card.rarity);
-    const currentBalance = Number(localStorage.getItem('gameBalance') || '0');
-    const newBalance = currentBalance + price;
-    localStorage.setItem('gameBalance', newBalance.toString());
-
-    const cardsEvent = new CustomEvent('cardsUpdate', { 
-      detail: { cards: newCards }
+    const newBalance = gameData.balance + price;
+    
+    // Обновляем в Supabase
+    await updateGameData({
+      cards: newCards,
+      balance: newBalance
     });
-    window.dispatchEvent(cardsEvent);
-
-    const balanceEvent = new CustomEvent('balanceUpdate', { 
-      detail: { balance: newBalance }
-    });
-    window.dispatchEvent(balanceEvent);
+    
+    // Обновляем локальное состояние
+    setCards(newCards);
 
     toast({
       title: "Карта продана",
