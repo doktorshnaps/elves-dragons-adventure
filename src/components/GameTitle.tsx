@@ -7,7 +7,7 @@ export const GameTitle = () => {
   const { toast } = useToast();
 
   const handleStartGame = () => {
-    navigate("/menu");
+    navigate("/auth");
   };
 
   return (

@@ -18,29 +18,32 @@ import { DarkMageTower } from './pages/dungeons/DarkMageTower';
 import { SpiderNest } from './pages/dungeons/SpiderNest';
 import { BoneDemonDungeon } from './pages/dungeons/BoneDemonDungeon';
 import { SeaSerpentLair } from './pages/dungeons/SeaSerpentLair';
+import { Auth } from './pages/Auth';
+import { ProtectedRoute } from './components/ProtectedRoute';
 
 function App() {
   return (
     <Routes>
       <Route path="/" element={<Index />} />
-      <Route path="/menu" element={<Menu />} />
-      <Route path="/team" element={<Team />} />
-      <Route path="/equipment" element={<Equipment />} />
-      <Route path="/statistics" element={<Statistics />} />
-      <Route path="/grimoire" element={<Grimoire />} />
-      <Route path="/battle" element={<Battle />} />
-      <Route path="/dungeons" element={<Dungeons />} />
-      <Route path="/adventure" element={<AdventuresPage />} />
-      <Route path="/marketplace" element={<Marketplace />} />
-      <Route path="/shop" element={<ShopPage />} />
-      <Route path="/quest" element={<QuestPage />} />
-      <Route path="/dungeons/dragon-lair" element={<BlackDragonLair />} />
-      <Route path="/dungeons/forgotten-souls" element={<ForgottenSoulsCave />} />
-      <Route path="/dungeons/icy-throne" element={<IcyThrone />} />
-      <Route path="/dungeons/dark-mage" element={<DarkMageTower />} />
-      <Route path="/dungeons/spider-nest" element={<SpiderNest />} />
-      <Route path="/dungeons/bone-dungeon" element={<BoneDemonDungeon />} />
-      <Route path="/dungeons/sea-serpent" element={<SeaSerpentLair />} />
+      <Route path="/auth" element={<Auth />} />
+      <Route path="/menu" element={<ProtectedRoute><Menu /></ProtectedRoute>} />
+      <Route path="/team" element={<ProtectedRoute><Team /></ProtectedRoute>} />
+      <Route path="/equipment" element={<ProtectedRoute><Equipment /></ProtectedRoute>} />
+      <Route path="/statistics" element={<ProtectedRoute><Statistics /></ProtectedRoute>} />
+      <Route path="/grimoire" element={<ProtectedRoute><Grimoire /></ProtectedRoute>} />
+      <Route path="/battle" element={<ProtectedRoute><Battle /></ProtectedRoute>} />
+      <Route path="/dungeons" element={<ProtectedRoute><Dungeons /></ProtectedRoute>} />
+      <Route path="/adventure" element={<ProtectedRoute><AdventuresPage /></ProtectedRoute>} />
+      <Route path="/marketplace" element={<ProtectedRoute><Marketplace /></ProtectedRoute>} />
+      <Route path="/shop" element={<ProtectedRoute><ShopPage /></ProtectedRoute>} />
+      <Route path="/quest" element={<ProtectedRoute><QuestPage /></ProtectedRoute>} />
+      <Route path="/dungeons/dragon-lair" element={<ProtectedRoute><BlackDragonLair /></ProtectedRoute>} />
+      <Route path="/dungeons/forgotten-souls" element={<ProtectedRoute><ForgottenSoulsCave /></ProtectedRoute>} />
+      <Route path="/dungeons/icy-throne" element={<ProtectedRoute><IcyThrone /></ProtectedRoute>} />
+      <Route path="/dungeons/dark-mage" element={<ProtectedRoute><DarkMageTower /></ProtectedRoute>} />
+      <Route path="/dungeons/spider-nest" element={<ProtectedRoute><SpiderNest /></ProtectedRoute>} />
+      <Route path="/dungeons/bone-dungeon" element={<ProtectedRoute><BoneDemonDungeon /></ProtectedRoute>} />
+      <Route path="/dungeons/sea-serpent" element={<ProtectedRoute><SeaSerpentLair /></ProtectedRoute>} />
     </Routes>
   );
 }
