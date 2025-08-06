@@ -25,7 +25,7 @@ interface DungeonSearchDialogProps {
 }
 
 const dungeonLevelRequirements = {
-  spider_nest: 1,
+  spider_nest: 0,
   bone_dungeon: 10,
   dark_mage: 30,
   forgotten_souls: 50,
