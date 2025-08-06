@@ -1,7 +1,6 @@
 import { Routes, Route } from 'react-router-dom';
 import { Equipment } from './pages/Equipment';
-import { Team } from './pages/Team';
-import { Statistics } from './pages/Statistics';
+import { TeamStats } from './pages/TeamStats';
 import { Grimoire } from './pages/Grimoire';
 import { Battle } from './pages/Battle';
 import { Menu } from './pages/Menu';
@@ -27,9 +26,9 @@ function App() {
       <Route path="/" element={<Index />} />
       <Route path="/auth" element={<Auth />} />
       <Route path="/menu" element={<ProtectedRoute><Menu /></ProtectedRoute>} />
-      <Route path="/team" element={<ProtectedRoute><Team /></ProtectedRoute>} />
+      <Route path="/team" element={<ProtectedRoute><TeamStats /></ProtectedRoute>} />
+      <Route path="/statistics" element={<ProtectedRoute><TeamStats /></ProtectedRoute>} />
       <Route path="/equipment" element={<ProtectedRoute><Equipment /></ProtectedRoute>} />
-      <Route path="/statistics" element={<ProtectedRoute><Statistics /></ProtectedRoute>} />
       <Route path="/grimoire" element={<ProtectedRoute><Grimoire /></ProtectedRoute>} />
       <Route path="/battle" element={<ProtectedRoute><Battle /></ProtectedRoute>} />
       <Route path="/dungeons" element={<ProtectedRoute><Dungeons /></ProtectedRoute>} />
