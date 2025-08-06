@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { Swords, ShoppingCart, BookOpen, Store, Shield, Users, BarChart3, MapPin, DollarSign } from "lucide-react";
 import { useGameInitialization } from "@/components/game/initialization/useGameInitialization";
 import { FirstTimePackDialog } from "@/components/game/initialization/FirstTimePackDialog";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 export const Menu = () => {
   const navigate = useNavigate();
@@ -13,6 +13,19 @@ export const Menu = () => {
   });
 
   const { showFirstTimePack, setShowFirstTimePack } = useGameInitialization(setCards);
+
+  // Слушаем обновления карт
+  useEffect(() => {
+    const handleCardsUpdate = (e: CustomEvent<{ cards: any[] }>) => {
+      setCards(e.detail.cards);
+    };
+
+    window.addEventListener('cardsUpdate', handleCardsUpdate as EventListener);
+
+    return () => {
+      window.removeEventListener('cardsUpdate', handleCardsUpdate as EventListener);
+    };
+  }, []);
 
   return (
     <div 

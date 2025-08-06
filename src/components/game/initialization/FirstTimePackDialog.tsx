@@ -28,13 +28,13 @@ export const FirstTimePackDialog = ({ isOpen, onClose }: FirstTimePackDialogProp
       
       // Сохраняем карту в localStorage
       const savedCards = localStorage.getItem('gameCards');
-      const cards = savedCards ? JSON.parse(savedCards) : [];
-      cards.push(newCard);
-      localStorage.setItem('gameCards', JSON.stringify(cards));
+      const currentCards = savedCards ? JSON.parse(savedCards) : [];
+      const updatedCards = [...currentCards, newCard];
+      localStorage.setItem('gameCards', JSON.stringify(updatedCards));
 
       // Отправляем событие обновления карт
       const cardsEvent = new CustomEvent('cardsUpdate', { 
-        detail: { cards }
+        detail: { cards: updatedCards }
       });
       window.dispatchEvent(cardsEvent);
 
