@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
-import { Swords, ShoppingCart, BookOpen, Store, Shield, Users, BarChart3, MapPin, DollarSign, LogOut } from "lucide-react";
+import { Swords, ShoppingCart, BookOpen, Store, Shield, Users, DollarSign, LogOut } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import { useGameInitialization } from "@/components/game/initialization/useGameInitialization";
@@ -95,24 +95,6 @@ export const Menu = () => {
         >
           <BookOpen className="w-8 h-8" />
           <span>Гримуар</span>
-        </Button>
-
-        <Button
-          variant="outline"
-          className="h-24 bg-game-surface/80 border-game-accent text-game-accent hover:bg-game-surface flex flex-col items-center justify-center gap-2"
-          onClick={() => navigate('/adventure')}
-        >
-          <MapPin className="w-8 h-8" />
-          <span>Приключения</span>
-        </Button>
-
-        <Button
-          variant="outline"
-          className="h-24 bg-game-surface/80 border-game-accent text-game-accent hover:bg-game-surface flex flex-col items-center justify-center gap-2"
-          onClick={() => navigate('/statistics')}
-        >
-          <BarChart3 className="w-8 h-8" />
-          <span>Статистика</span>
         </Button>
 
         <Button
