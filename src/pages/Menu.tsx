@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { Swords, ShoppingCart, BookOpen, Store, Shield, Users, DollarSign, LogOut } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
+import { useGameData } from "@/hooks/useGameData";
 import { useGameInitialization } from "@/components/game/initialization/useGameInitialization";
 import { FirstTimePackDialog } from "@/components/game/initialization/FirstTimePackDialog";
 import { useState, useEffect } from "react";
@@ -11,6 +12,7 @@ export const Menu = () => {
   const navigate = useNavigate();
   const { signOut } = useAuth();
   const { toast } = useToast();
+  const { gameData, updateGameData } = useGameData();
   const [cards, setCards] = useState(() => {
     const savedCards = localStorage.getItem('gameCards');
     return savedCards ? JSON.parse(savedCards) : [];
@@ -59,6 +61,16 @@ export const Menu = () => {
       }}
     >
       <div className="absolute inset-0 bg-black/30" />
+      
+      {/* Balance Display */}
+      <div className="relative z-10 max-w-4xl mx-auto flex justify-center mb-4">
+        <div className="bg-game-surface/90 px-6 py-3 rounded-lg border border-game-accent">
+          <div className="flex items-center gap-2">
+            <DollarSign className="w-5 h-5 text-game-accent" />
+            <span className="text-game-accent font-semibold">Баланс: {gameData.balance} ELL</span>
+          </div>
+        </div>
+      </div>
       
       <div className="relative z-10 max-w-4xl mx-auto grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 mt-8">
         <Button

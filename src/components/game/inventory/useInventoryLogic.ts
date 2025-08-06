@@ -4,12 +4,13 @@ import { useToast } from "@/hooks/use-toast";
 import { getItemPrice } from "@/utils/itemUtils";
 import { GroupedItem } from "./types";
 import { shopItems } from "../../shop/types";
-import { useBalanceState } from "@/hooks/useBalanceState";
+import { useGameData } from "@/hooks/useGameData";
 
 export const useInventoryLogic = (initialInventory: Item[]) => {
   const { toast } = useToast();
   const [selectedItems, setSelectedItems] = useState<Item[]>([]);
-  const { balance, updateBalance } = useBalanceState();
+  const { gameData, updateGameData } = useGameData();
+  const balance = gameData.balance;
 
   const getItemImage = (item: Item) => {
     if (item.image) return item.image;
@@ -46,20 +47,17 @@ export const useInventoryLogic = (initialInventory: Item[]) => {
     }, []);
   };
 
-  const handleSellItem = (item: Item) => {
+  const handleSellItem = async (item: Item) => {
     const price = getItemPrice(item);
     const sellPrice = Math.floor(price * 0.7);
     const newBalance = balance + sellPrice;
     
-    updateBalance(newBalance);
+    const newInventory = (gameData.inventory || []).filter(i => i.id !== item.id);
     
-    const newInventory = initialInventory.filter(i => i.id !== item.id);
-    localStorage.setItem('gameInventory', JSON.stringify(newInventory));
-    
-    const inventoryEvent = new CustomEvent('inventoryUpdate', { 
-      detail: { inventory: newInventory }
+    await updateGameData({
+      balance: newBalance,
+      inventory: newInventory
     });
-    window.dispatchEvent(inventoryEvent);
     
     toast({
       title: "Предмет продан",

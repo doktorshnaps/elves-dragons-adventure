@@ -1,8 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { shopItems } from "@/data/shopItems";
-import { useBalanceState } from "@/hooks/useBalanceState";
-import { useInventoryState } from "@/hooks/useInventoryState";
+import { useGameData } from "@/hooks/useGameData";
 import { useToast } from "@/hooks/use-toast";
 import { v4 as uuidv4 } from 'uuid';
 import { generateCard } from "@/utils/cardUtils";
@@ -14,38 +13,34 @@ interface ShopProps {
 }
 
 export const Shop = ({ onClose }: ShopProps) => {
-  const { balance, updateBalance } = useBalanceState();
-  const { inventory, updateInventory } = useInventoryState();
+  const { gameData, updateGameData, loading } = useGameData();
   const { toast } = useToast();
 
-  const handleBuyItem = (item: typeof shopItems[0]) => {
-    if (balance >= item.price) {
+  if (loading) {
+    return <div className="flex justify-center items-center h-64">Загрузка...</div>;
+  }
+
+  const handleBuyItem = async (item: typeof shopItems[0]) => {
+    if (gameData.balance >= item.price) {
       if (item.type === "cardPack") {
         // Генерируем случайную карту
         const newCard = generateCard(Math.random() > 0.5 ? 'character' : 'pet');
         
-        // Сохраняем карту в localStorage
-        const savedCards = localStorage.getItem('gameCards');
-        const cards = savedCards ? JSON.parse(savedCards) : [];
-        cards.push(newCard);
-        localStorage.setItem('gameCards', JSON.stringify(cards));
-
-        // Отправляем событие обновления карт
-        const cardsEvent = new CustomEvent('cardsUpdate', { 
-          detail: { cards }
+        // Обновляем карты и баланс в Supabase
+        const updatedCards = [...gameData.cards, newCard];
+        const newBalance = gameData.balance - item.price;
+        
+        await updateGameData({
+          cards: updatedCards,
+          balance: newBalance
         });
-        window.dispatchEvent(cardsEvent);
-
-        // Обновляем баланс
-        const newBalance = balance - item.price;
-        updateBalance(newBalance);
 
         toast({
           title: "Карта получена!",
           description: `Вы получили ${newCard.name} (${newCard.type === 'character' ? 'Герой' : 'Питомец'})`,
         });
       } else {
-        // Для остальных предметов оставляем существующую логику
+        // Для остальных предметов
         const newItem: Item = {
           id: uuidv4(),
           name: item.name,
@@ -58,11 +53,13 @@ export const Shop = ({ onClose }: ShopProps) => {
           equipped: false
         };
 
-        const newInventory = [...inventory, newItem];
-        updateInventory(newInventory);
+        const newInventory = [...(gameData.inventory || []), newItem];
+        const newBalance = gameData.balance - item.price;
         
-        const newBalance = balance - item.price;
-        updateBalance(newBalance);
+        await updateGameData({
+          inventory: newInventory,
+          balance: newBalance
+        });
 
         toast({
           title: "Покупка успешна",
@@ -122,7 +119,7 @@ export const Shop = ({ onClose }: ShopProps) => {
               <Button
                 className="w-full bg-game-primary hover:bg-game-primary/80"
                 onClick={() => handleBuyItem(item)}
-                disabled={balance < item.price}
+                disabled={gameData.balance < item.price}
               >
                 Купить
               </Button>

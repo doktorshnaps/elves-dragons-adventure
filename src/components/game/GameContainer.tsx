@@ -6,7 +6,7 @@ import { Card } from "@/types/cards";
 import { GameTabs } from "./GameTabs";
 import { GameModals } from "./GameModals";
 import { GameHeader } from "./GameHeader";
-import { useBalanceState } from "@/hooks/useBalanceState";
+import { useGameData } from "@/hooks/useGameData";
 import { useImagePreloader } from "@/hooks/useImagePreloader";
 import { GameSkeleton } from "./loading/GameSkeleton";
 import { useGameInitialization } from "./initialization/useGameInitialization";
@@ -28,7 +28,9 @@ const calculateTeamStats = (cards: Card[]) => {
 export const GameContainer = () => {
   const isMobile = useIsMobile();
   const { toast } = useToast();
-  const { balance, updateBalance } = useBalanceState();
+  const { gameData, updateGameData } = useGameData();
+  const balance = gameData.balance;
+  const updateBalance = (newBalance: number) => updateGameData({ balance: newBalance });
   const [showDungeonSearch, setShowDungeonSearch] = useState(false);
   const [showShop, setShowShop] = useState(false);
   const [hasActiveDungeon, setHasActiveDungeon] = useState(false);

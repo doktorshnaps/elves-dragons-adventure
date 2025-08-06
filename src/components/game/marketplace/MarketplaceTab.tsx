@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
-import { useBalanceState } from "@/hooks/useBalanceState";
+import { useGameData } from "@/hooks/useGameData";
 import { MarketplaceListing } from "./types";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -12,7 +12,8 @@ import { ListingDialog } from "./ListingDialog";
 export const MarketplaceTab = () => {
   const { toast } = useToast();
   const [showListingDialog, setShowListingDialog] = useState(false);
-  const { balance, updateBalance } = useBalanceState();
+  const { gameData, updateGameData } = useGameData();
+  const balance = gameData.balance;
   const navigate = useNavigate();
   const [listings, setListings] = useState<MarketplaceListing[]>(() => {
     const saved = localStorage.getItem('marketplaceListings');
@@ -61,7 +62,7 @@ export const MarketplaceTab = () => {
     });
   };
 
-  const handleBuy = (listing: MarketplaceListing) => {
+  const handleBuy = async (listing: MarketplaceListing) => {
     if (balance < listing.price) {
       toast({
         title: "Недостаточно ELL",
@@ -74,7 +75,7 @@ export const MarketplaceTab = () => {
     const newListings = listings.filter(l => l.id !== listing.id);
     setListings(newListings);
     localStorage.setItem('marketplaceListings', JSON.stringify(newListings));
-    updateBalance(balance - listing.price);
+    await updateGameData({ balance: balance - listing.price });
 
     if (listing.type === 'item') {
       const currentInventory = JSON.parse(localStorage.getItem('gameInventory') || '[]');

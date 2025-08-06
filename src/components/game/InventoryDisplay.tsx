@@ -5,7 +5,7 @@ import { useInventoryLogic } from "./inventory/useInventoryLogic";
 import { InventoryHeader } from "./inventory/InventoryHeader";
 import { DragonEggsList } from "./inventory/DragonEggsList";
 import { InventoryGrid } from "./inventory/InventoryGrid";
-import { useInventoryState } from "@/hooks/useInventoryState";
+import { useInventorySync } from "@/hooks/useInventorySync";
 import { useToast } from "@/hooks/use-toast";
 import { GroupedItem } from "./inventory/types";
 
@@ -23,7 +23,7 @@ export const InventoryDisplay = ({
   showOnlyPotions = false
 }: InventoryDisplayProps) => {
   const { eggs } = useDragonEggs();
-  const { inventory, updateInventory } = useInventoryState();
+  const { inventory, updateInventory } = useInventorySync();
   const { toast } = useToast();
   const {
     balance,
