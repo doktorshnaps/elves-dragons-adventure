@@ -20,33 +20,57 @@ export const Auth = () => {
     e.preventDefault();
     setLoading(true);
 
+    console.log("Form submitted:", { isSignUp, email });
+
     try {
       if (isSignUp) {
+        console.log("Attempting sign up...");
         const { error } = await signUp(email, password);
+        console.log("Sign up result:", { error });
+        
         if (error) {
+          console.error("Sign up error:", error);
           toast({
             title: "Ошибка регистрации",
             description: error.message,
             variant: "destructive"
           });
         } else {
+          console.log("Sign up successful, showing success message");
           toast({
             title: "Регистрация успешна!",
-            description: "Проверьте email для подтверждения аккаунта"
+            description: "Теперь войдите в аккаунт"
           });
+          // Переключаем на форму входа после успешной регистрации
+          setIsSignUp(false);
+          // Очищаем поля
+          setEmail("");
+          setPassword("");
         }
       } else {
+        console.log("Attempting sign in...");
         const { error } = await signIn(email, password);
+        console.log("Sign in result:", { error });
+        
         if (error) {
+          console.error("Sign in error:", error);
           toast({
             title: "Ошибка входа",
             description: error.message,
             variant: "destructive"
           });
         } else {
+          console.log("Sign in successful, navigating to menu");
           navigate("/menu");
         }
       }
+    } catch (err) {
+      console.error("Unexpected error:", err);
+      toast({
+        title: "Неожиданная ошибка",
+        description: "Попробуйте снова",
+        variant: "destructive"
+      });
     } finally {
       setLoading(false);
     }
