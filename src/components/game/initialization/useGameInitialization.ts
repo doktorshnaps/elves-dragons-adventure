@@ -1,10 +1,11 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { generatePack } from "@/utils/cardUtils";
 import { Card } from "@/types/cards";
 
 export const useGameInitialization = (setCards: (cards: Card[]) => void) => {
   const { toast } = useToast();
+  const [showFirstTimePack, setShowFirstTimePack] = useState(false);
 
   useEffect(() => {
     const savedCards = localStorage.getItem('gameCards');
@@ -27,6 +28,9 @@ export const useGameInitialization = (setCards: (cards: Card[]) => void) => {
       });
       window.dispatchEvent(balanceEvent);
       
+      // Показываем диалог с бесплатной колодой
+      setShowFirstTimePack(true);
+      
       toast({
         title: "Добро пожаловать в игру!",
         description: "Вы получили 2 начальные колоды карт и 100 ELL",
@@ -35,4 +39,6 @@ export const useGameInitialization = (setCards: (cards: Card[]) => void) => {
       setCards(JSON.parse(savedCards));
     }
   }, [setCards, toast]);
+
+  return { showFirstTimePack, setShowFirstTimePack };
 };
