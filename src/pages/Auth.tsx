@@ -39,7 +39,7 @@ export const Auth = () => {
           console.log("Sign up successful, showing success message");
           toast({
             title: "Регистрация успешна!",
-            description: "Теперь войдите в аккаунт"
+            description: "Теперь можете войти в аккаунт"
           });
           // Переключаем на форму входа после успешной регистрации
           setIsSignUp(false);

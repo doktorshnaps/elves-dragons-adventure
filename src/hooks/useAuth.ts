@@ -34,7 +34,10 @@ export const useAuth = () => {
       email,
       password,
       options: {
-        emailRedirectTo: redirectUrl
+        emailRedirectTo: redirectUrl,
+        data: {
+          email_confirm: false
+        }
       }
     });
     return { error };
