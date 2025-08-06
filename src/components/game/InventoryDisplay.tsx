@@ -5,7 +5,7 @@ import { useInventoryLogic } from "./inventory/useInventoryLogic";
 import { InventoryHeader } from "./inventory/InventoryHeader";
 import { DragonEggsList } from "./inventory/DragonEggsList";
 import { InventoryGrid } from "./inventory/InventoryGrid";
-import { useInventoryState } from "@/hooks/useInventoryState";
+import { useGameData } from "@/hooks/useGameData";
 import { useToast } from "@/hooks/use-toast";
 import { GroupedItem } from "./inventory/types";
 
@@ -23,7 +23,8 @@ export const InventoryDisplay = ({
   showOnlyPotions = false
 }: InventoryDisplayProps) => {
   const { eggs } = useDragonEggs();
-  const { inventory, updateInventory } = useInventoryState();
+  const { gameData, updateGameData } = useGameData();
+  const inventory = gameData.inventory || [];
   const { toast } = useToast();
   const {
     balance,
@@ -31,7 +32,7 @@ export const InventoryDisplay = ({
     handleSellItem,
   } = useInventoryLogic(inventory);
 
-  const handleUseItem = (groupedItem: GroupedItem) => {
+  const handleUseItem = async (groupedItem: GroupedItem) => {
     if (!readonly && onUseItem && groupedItem.items.length > 0) {
       if (groupedItem.type === 'cardPack') {
         toast({
@@ -47,7 +48,7 @@ export const InventoryDisplay = ({
 
       // Обновляем инвентарь после использования предмета
       const newInventory = inventory.filter(item => item.id !== itemToUse.id);
-      updateInventory(newInventory);
+      await updateGameData({ inventory: newInventory });
 
       // Если это была последняя копия предмета в стопке
       if (groupedItem.count === 1) {
@@ -64,26 +65,15 @@ export const InventoryDisplay = ({
     }
   };
 
-  const handleGroupedSellItem = (groupedItem: GroupedItem) => {
+  const handleGroupedSellItem = async (groupedItem: GroupedItem) => {
     if (groupedItem.items.length > 0 && onSellItem) {
       const itemToSell = groupedItem.items[0];
       onSellItem(itemToSell);
-
-      // Обновляем инвентарь после продажи предмета
-      const newInventory = inventory.filter(item => item.id !== itemToSell.id);
-      updateInventory(newInventory);
-
-      if (groupedItem.count === 1) {
-        toast({
-          title: "Предмет продан",
-          description: `${groupedItem.name} был продан`
-        });
-      } else {
-        toast({
-          title: "Предмет продан",
-          description: `${groupedItem.name} был продан (осталось ${groupedItem.count - 1})`
-        });
-      }
+    } else if (groupedItem.items.length > 0) {
+      await handleSellItem(groupedItem.items[0]);
+      
+      const newInventory = inventory.filter(item => item.id !== groupedItem.items[0].id);
+      await updateGameData({ inventory: newInventory });
     }
   };
 

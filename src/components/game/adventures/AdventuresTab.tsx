@@ -2,7 +2,7 @@
 import { useNavigate } from "react-router-dom";
 import { useState, useEffect } from 'react'; // Add this import
 import { useToast } from "@/hooks/use-toast";
-import { useBalanceState } from "@/hooks/useBalanceState";
+import { useGameData } from "@/hooks/useGameData";
 import { AdventureLayout } from "./components/AdventureLayout";
 import { InventoryDisplay } from "@/components/game/InventoryDisplay";
 import { useMonsterGeneration } from "./useMonsterGeneration";
@@ -15,7 +15,8 @@ import { usePlayerStats } from "./game/hooks/usePlayerStats";
 export const AdventuresTab = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
-  const { balance, updateBalance } = useBalanceState();
+  const { gameData, updateGameData } = useGameData();
+  const balance = gameData.balance;
   const { generateMonster } = useMonsterGeneration(1);
   const { stats: playerStats, updateStats: setPlayerStats, addExperience } = usePlayerStats();
 
@@ -34,14 +35,14 @@ export const AdventuresTab = () => {
     setCurrentMonster(monster);
   };
 
-  const handleMonsterDefeat = (monster: Monster) => {
+  const handleMonsterDefeat = async (monster: Monster) => {
     if (!monster || playerStats.health <= 0) return;
 
     const damage = Math.max(0, playerStats.power - Math.floor(Math.random() * 3));
     const newMonsterHealth = monster.health - damage;
 
     if (newMonsterHealth <= 0) {
-      updateBalance(balance + monster.reward);
+      await updateGameData({ balance: balance + monster.reward });
       addExperience(monster.experienceReward);
       toast({
         title: "Победа!",
@@ -108,14 +109,14 @@ export const AdventuresTab = () => {
     }
   };
 
-  const handleSellItem = (item: Item) => {
+  const handleSellItem = async (item: Item) => {
     const inventory = localStorage.getItem('gameInventory');
     if (!inventory) return;
 
     const items = JSON.parse(inventory);
     const updatedItems = items.filter((i: Item) => i.id !== item.id);
     
-    updateBalance(balance + 10);
+    await updateGameData({ balance: balance + 10 });
     
     localStorage.setItem('gameInventory', JSON.stringify(updatedItems));
     

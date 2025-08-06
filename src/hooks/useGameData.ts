@@ -8,6 +8,12 @@ interface GameData {
   balance: number;
   cards: Card[];
   initialized: boolean;
+  inventory?: any[];
+  marketplaceListings?: any[];
+  socialQuests?: any[];
+  adventurePlayerStats?: any;
+  adventureCurrentMonster?: any;
+  dragonEggs?: any[];
 }
 
 export const useGameData = () => {
@@ -16,7 +22,13 @@ export const useGameData = () => {
   const [gameData, setGameData] = useState<GameData>({
     balance: 0,
     cards: [],
-    initialized: false
+    initialized: false,
+    inventory: [],
+    marketplaceListings: [],
+    socialQuests: [],
+    adventurePlayerStats: null,
+    adventureCurrentMonster: null,
+    dragonEggs: []
   });
   const [loading, setLoading] = useState(true);
 
@@ -44,7 +56,13 @@ export const useGameData = () => {
         const newGameData: GameData = {
           balance: data.balance || 0,
           cards: (data.cards as unknown as Card[]) || [],
-          initialized: data.initialized || false
+          initialized: data.initialized || false,
+          inventory: ((data as any).inventory as any[]) || [],
+          marketplaceListings: ((data as any).marketplace_listings as any[]) || [],
+          socialQuests: ((data as any).social_quests as any[]) || [],
+          adventurePlayerStats: (data as any).adventure_player_stats || null,
+          adventureCurrentMonster: (data as any).adventure_current_monster || null,
+          dragonEggs: ((data as any).dragon_eggs as any[]) || []
         };
         
         setGameData(newGameData);
@@ -53,6 +71,16 @@ export const useGameData = () => {
         localStorage.setItem('gameCards', JSON.stringify(newGameData.cards));
         localStorage.setItem('gameBalance', newGameData.balance.toString());
         localStorage.setItem('gameInitialized', newGameData.initialized.toString());
+        localStorage.setItem('gameInventory', JSON.stringify(newGameData.inventory));
+        localStorage.setItem('marketplaceListings', JSON.stringify(newGameData.marketplaceListings));
+        localStorage.setItem('socialQuests', JSON.stringify(newGameData.socialQuests));
+        if (newGameData.adventurePlayerStats) {
+          localStorage.setItem('adventurePlayerStats', JSON.stringify(newGameData.adventurePlayerStats));
+        }
+        if (newGameData.adventureCurrentMonster) {
+          localStorage.setItem('adventureCurrentMonster', JSON.stringify(newGameData.adventureCurrentMonster));
+        }
+        localStorage.setItem('dragonEggs', JSON.stringify(newGameData.dragonEggs));
       }
     } catch (error) {
       console.error('Error in loadGameData:', error);
@@ -74,7 +102,13 @@ export const useGameData = () => {
           user_id: user.id,
           balance: updatedData.balance,
           cards: updatedData.cards as any,
-          initialized: updatedData.initialized
+          initialized: updatedData.initialized,
+          inventory: updatedData.inventory as any,
+          marketplace_listings: updatedData.marketplaceListings as any,
+          social_quests: updatedData.socialQuests as any,
+          adventure_player_stats: updatedData.adventurePlayerStats as any,
+          adventure_current_monster: updatedData.adventureCurrentMonster as any,
+          dragon_eggs: updatedData.dragonEggs as any
         });
 
       if (error) {
@@ -93,6 +127,16 @@ export const useGameData = () => {
       localStorage.setItem('gameCards', JSON.stringify(updatedData.cards));
       localStorage.setItem('gameBalance', updatedData.balance.toString());
       localStorage.setItem('gameInitialized', updatedData.initialized.toString());
+      localStorage.setItem('gameInventory', JSON.stringify(updatedData.inventory));
+      localStorage.setItem('marketplaceListings', JSON.stringify(updatedData.marketplaceListings));
+      localStorage.setItem('socialQuests', JSON.stringify(updatedData.socialQuests));
+      if (updatedData.adventurePlayerStats) {
+        localStorage.setItem('adventurePlayerStats', JSON.stringify(updatedData.adventurePlayerStats));
+      }
+      if (updatedData.adventureCurrentMonster) {
+        localStorage.setItem('adventureCurrentMonster', JSON.stringify(updatedData.adventureCurrentMonster));
+      }
+      localStorage.setItem('dragonEggs', JSON.stringify(updatedData.dragonEggs));
 
       // Отправляем события для обновления UI
       if (updates.balance !== undefined) {

@@ -3,7 +3,7 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { useToast } from "@/hooks/use-toast";
-import { useBalanceState } from "@/hooks/useBalanceState";
+import { useGameData } from "@/hooks/useGameData";
 
 interface SocialQuest {
   id: string;
@@ -41,28 +41,29 @@ const SOCIAL_QUESTS: SocialQuest[] = [
 
 export const SocialQuests = () => {
   const { toast } = useToast();
-  const { balance, updateBalance } = useBalanceState();
+  const { gameData, updateGameData } = useGameData();
+  const balance = gameData.balance;
   const [quests, setQuests] = useState<SocialQuest[]>(() => {
-    const savedQuests = localStorage.getItem("socialQuests");
-    return savedQuests ? JSON.parse(savedQuests) : SOCIAL_QUESTS;
+    return gameData.socialQuests || SOCIAL_QUESTS;
   });
 
   useEffect(() => {
-    localStorage.setItem("socialQuests", JSON.stringify(quests));
-  }, [quests]);
+    setQuests(gameData.socialQuests || SOCIAL_QUESTS);
+  }, [gameData.socialQuests]);
 
-  const handleClaimReward = (quest: SocialQuest) => {
+  const handleClaimReward = async (quest: SocialQuest) => {
     if (!quest.completed || quest.claimed) return;
 
     const updatedQuests = quests.map((q) =>
       q.id === quest.id ? { ...q, claimed: true } : q
     );
+    
+    await updateGameData({
+      socialQuests: updatedQuests,
+      balance: balance + quest.reward.coins
+    });
+    
     setQuests(updatedQuests);
-
-    if (quest.reward.coins) {
-      const newBalance = balance + quest.reward.coins;
-      updateBalance(newBalance);
-    }
 
     toast({
       title: "Награда получена!",

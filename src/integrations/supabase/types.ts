@@ -16,29 +16,47 @@ export type Database = {
     Tables: {
       game_data: {
         Row: {
+          adventure_current_monster: Json | null
+          adventure_player_stats: Json | null
           balance: number
           cards: Json
           created_at: string
+          dragon_eggs: Json | null
           id: string
           initialized: boolean
+          inventory: Json | null
+          marketplace_listings: Json | null
+          social_quests: Json | null
           updated_at: string
           user_id: string
         }
         Insert: {
+          adventure_current_monster?: Json | null
+          adventure_player_stats?: Json | null
           balance?: number
           cards?: Json
           created_at?: string
+          dragon_eggs?: Json | null
           id?: string
           initialized?: boolean
+          inventory?: Json | null
+          marketplace_listings?: Json | null
+          social_quests?: Json | null
           updated_at?: string
           user_id: string
         }
         Update: {
+          adventure_current_monster?: Json | null
+          adventure_player_stats?: Json | null
           balance?: number
           cards?: Json
           created_at?: string
+          dragon_eggs?: Json | null
           id?: string
           initialized?: boolean
+          inventory?: Json | null
+          marketplace_listings?: Json | null
+          social_quests?: Json | null
           updated_at?: string
           user_id?: string
         }

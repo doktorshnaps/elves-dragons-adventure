@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
+import { useGameData } from '@/hooks/useGameData';
 
 export interface DragonEgg {
   id: string;
@@ -17,39 +18,29 @@ interface DragonEggContextType {
 const DragonEggContext = createContext<DragonEggContextType | undefined>(undefined);
 
 export const DragonEggProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const { gameData, updateGameData } = useGameData();
   const [eggs, setEggs] = useState<DragonEgg[]>(() => {
-    const savedEggs = localStorage.getItem('dragonEggs');
-    return savedEggs ? JSON.parse(savedEggs) : [];
+    return gameData.dragonEggs || [];
   });
 
   useEffect(() => {
-    const handleEggsUpdate = () => {
-      const savedEggs = localStorage.getItem('dragonEggs');
-      if (savedEggs) {
-        setEggs(JSON.parse(savedEggs));
-      }
-    };
+    setEggs(gameData.dragonEggs || []);
+  }, [gameData.dragonEggs]);
 
-    window.addEventListener('eggsUpdate', handleEggsUpdate);
-    return () => {
-      window.removeEventListener('eggsUpdate', handleEggsUpdate);
-    };
-  }, []);
-
-  useEffect(() => {
-    localStorage.setItem('dragonEggs', JSON.stringify(eggs));
-  }, [eggs]);
-
-  const addEgg = (egg: DragonEgg, faction: string) => {
+  const addEgg = async (egg: DragonEgg, faction: string) => {
     const newEgg: DragonEgg = {
       ...egg,
       faction
     };
-    setEggs([...eggs, newEgg]);
+    const newEggs = [...eggs, newEgg];
+    setEggs(newEggs);
+    await updateGameData({ dragonEggs: newEggs });
   };
 
-  const removeEgg = (id: string) => {
-    setEggs(eggs.filter(egg => egg.id !== id));
+  const removeEgg = async (id: string) => {
+    const newEggs = eggs.filter(egg => egg.id !== id);
+    setEggs(newEggs);
+    await updateGameData({ dragonEggs: newEggs });
   };
 
   return (
