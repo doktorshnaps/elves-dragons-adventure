@@ -13,7 +13,7 @@ export const PlayerStats = ({ balance, teamStats }: PlayerStatsProps) => {
     <Card className="p-6 bg-game-surface border-game-accent">
       <div className="flex justify-between items-center mb-4">
         <h2 className="text-xl font-bold text-game-accent">Статистика команды</h2>
-        <span className="text-2xl font-extrabold text-game-accent">{balance} монет</span>
+        <span className="text-2xl font-extrabold text-game-accent">{balance} ELL</span>
       </div>
       
       <div className="space-y-4">

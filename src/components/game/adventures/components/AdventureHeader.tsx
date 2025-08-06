@@ -26,7 +26,7 @@ export const AdventureHeader = ({ level, balance }: AdventureHeaderProps) => {
           <Star className="w-5 h-5 text-yellow-500" />
           <span className="text-base text-gray-200">Уровень: {level}</span>
         </div>
-        <span className="text-2xl font-bold text-yellow-400">{balance} монет</span>
+        <span className="text-2xl font-bold text-yellow-400">{balance} ELL</span>
       </div>
     </div>
   );

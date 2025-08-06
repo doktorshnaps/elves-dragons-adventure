@@ -35,7 +35,7 @@ export const useCardManagement = (
 
     toast({
       title: "Карта продана",
-      description: `Вы получили ${price} токенов`,
+      description: `Вы получили ${price} ELL`,
     });
   };
 

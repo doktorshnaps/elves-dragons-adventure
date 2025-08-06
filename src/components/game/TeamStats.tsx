@@ -66,7 +66,7 @@ export const TeamStats = () => {
         <div className="relative z-10">
           <div className="flex justify-between items-center mb-4">
             <h2 className="text-xl font-bold text-game-accent">Статистика</h2>
-            <span className="text-sm text-game-accent">{balance} монет</span>
+            <span className="text-sm text-game-accent">{balance} ELL</span>
           </div>
           
           <div className="space-y-6">

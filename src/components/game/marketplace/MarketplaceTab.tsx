@@ -26,7 +26,7 @@ export const MarketplaceTab = () => {
     setShowListingDialog(false);
     toast({
       title: "Предмет выставлен на продажу",
-      description: `${listing.item.name} выставлен за ${listing.price} токенов`,
+      description: `${listing.item.name} выставлен за ${listing.price} ELL`,
     });
   };
 
@@ -64,8 +64,8 @@ export const MarketplaceTab = () => {
   const handleBuy = (listing: MarketplaceListing) => {
     if (balance < listing.price) {
       toast({
-        title: "Недостаточно токенов",
-        description: "У вас недостаточно токенов для покупки",
+        title: "Недостаточно ELL",
+        description: "У вас недостаточно ELL для покупки",
         variant: "destructive",
       });
       return;
@@ -136,7 +136,7 @@ export const MarketplaceTab = () => {
                   <br />
                   {displayInfo.description}
                 </p>
-                <p className="text-yellow-500 font-medium">{listing.price} токенов</p>
+                <p className="text-yellow-500 font-medium">{listing.price} ELL</p>
                 {isOwnListing ? (
                   <Button
                     onClick={() => handleCancelListing(listing)}

@@ -41,7 +41,7 @@ export const MarketplaceListings = ({
                 <br />
                 {displayInfo.description}
               </p>
-              <p className="text-yellow-500 font-medium">{listing.price} токенов</p>
+              <p className="text-yellow-500 font-medium">{listing.price} ELL</p>
               {isOwnListing ? (
                 <Button
                   onClick={() => onCancelListing(listing)}

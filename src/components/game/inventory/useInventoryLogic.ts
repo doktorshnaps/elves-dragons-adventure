@@ -63,7 +63,7 @@ export const useInventoryLogic = (initialInventory: Item[]) => {
     
     toast({
       title: "Предмет продан",
-      description: `${item.name} продан за ${sellPrice} монет`,
+      description: `${item.name} продан за ${sellPrice} ELL`,
     });
   };
 

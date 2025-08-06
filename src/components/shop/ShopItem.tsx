@@ -54,7 +54,7 @@ export const ShopItem = ({ item, balance, onBuy }: ShopItemProps) => {
             {item.description}
           </p>
           <p className={`text-game-secondary mb-2 ${isMobile ? 'text-[10px]' : 'text-xs'}`}>
-            Цена: {item.price} токенов
+            Цена: {item.price} ELL
           </p>
           <div 
             onMouseEnter={() => setShowDropRates(true)}
@@ -126,7 +126,7 @@ export const ShopItem = ({ item, balance, onBuy }: ShopItemProps) => {
           </p>
         )}
         <p className={`text-game-secondary mb-2 ${isMobile ? 'text-[10px]' : 'text-xs'}`}>
-          Цена: {item.price} токенов
+          Цена: {item.price} ELL
         </p>
         <Button
           className={`w-full bg-game-primary hover:bg-game-primary/80 ${isMobile ? 'text-[10px] py-1' : 'text-xs py-2'}`}

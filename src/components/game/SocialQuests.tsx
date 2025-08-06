@@ -66,7 +66,7 @@ export const SocialQuests = () => {
 
     toast({
       title: "Награда получена!",
-      description: `Вы получили ${quest.reward.coins} монет`,
+      description: `Вы получили ${quest.reward.coins} ELL`,
     });
   };
 
@@ -105,7 +105,7 @@ export const SocialQuests = () => {
             </div>
             <Progress value={(quest.progress / quest.target) * 100} />
             <div className="text-sm text-gray-400">
-              Награда: {quest.reward.coins} монет
+              Награда: {quest.reward.coins} ELL
             </div>
           </div>
         ))}

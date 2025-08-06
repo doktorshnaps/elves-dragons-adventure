@@ -21,9 +21,15 @@ export const useGameInitialization = (setCards: (cards: Card[]) => void) => {
       
       setCards(initialCards);
       
+      // Отправляем событие для обновления баланса
+      const balanceEvent = new CustomEvent('balanceUpdate', { 
+        detail: { balance: 100 }
+      });
+      window.dispatchEvent(balanceEvent);
+      
       toast({
         title: "Добро пожаловать в игру!",
-        description: "Вы получили 2 начальные колоды карт и 100 монет",
+        description: "Вы получили 2 начальные колоды карт и 100 ELL",
       });
     } else if (savedCards) {
       setCards(JSON.parse(savedCards));

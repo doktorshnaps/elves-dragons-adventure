@@ -57,7 +57,7 @@ export const TeamStatsModal = ({ isOpen, onClose, teamStats, balance }: TeamStat
           
           <div className="mt-4 space-y-4 p-4">
             <div className="flex justify-between items-center mb-4">
-              <span className="text-2xl font-extrabold text-game-accent">{balance} монет</span>
+              <span className="text-2xl font-extrabold text-game-accent">{balance} ELL</span>
             </div>
             
             <div className="space-y-4">

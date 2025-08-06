@@ -107,7 +107,7 @@ export const DungeonSearchDialog = ({
               <EnergyDisplay energyState={energyState} timeUntilNext={timeUntilNext} />
               
               <div className="mb-4">
-                <p className="text-game-accent">Баланс: {balance} монет</p>
+                <p className="text-game-accent">Баланс: {balance} ELL</p>
                 <p className="text-game-accent">Уровень игрока: {playerStats.level}</p>
               </div>
 

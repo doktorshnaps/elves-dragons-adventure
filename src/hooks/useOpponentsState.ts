@@ -38,7 +38,7 @@ export const useOpponentsState = (
     // Получаем награду за убийство
     const { items: droppedItems, coins: droppedCoins } = rollLoot(generateLootTable(opponent.isBoss ?? false));
     
-    // Обновляем баланс только с учетом выпавших монет
+    // Обновляем баланс только с учетом выпавших ELL
     const currentBalance = Number(localStorage.getItem('gameBalance')) || 0;
     updateBalance(currentBalance + droppedCoins);
     
@@ -59,14 +59,14 @@ export const useOpponentsState = (
       
       toast({
         title: "Уровень пройден!",
-        description: `Получено ${completionReward} монет за прохождение уровня`,
+        description: `Получено ${completionReward} ELL за прохождение уровня`,
       });
     }
     
     // Показываем уведомление о наградах за убийство врага
     toast({
       title: opponent.isBoss ? "Босс побежден!" : "Враг побежден!",
-      description: `Получено ${droppedCoins} монет`,
+      description: `Получено ${droppedCoins} ELL`,
     });
   };
 

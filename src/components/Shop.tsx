@@ -72,7 +72,7 @@ export const Shop = ({ onClose }: ShopProps) => {
     } else {
       toast({
         title: "Недостаточно средств",
-        description: "У вас недостаточно токенов для покупки",
+        description: "У вас недостаточно ELL для покупки",
         variant: "destructive",
       });
     }
@@ -118,7 +118,7 @@ export const Shop = ({ onClose }: ShopProps) => {
                   Требуется уровень: {item.requiredLevel}
                 </p>
               )}
-              <p className="text-game-secondary">Цена: {item.price} токенов</p>
+              <p className="text-game-secondary">Цена: {item.price} ELL</p>
               <Button
                 className="w-full bg-game-primary hover:bg-game-primary/80"
                 onClick={() => handleBuyItem(item)}

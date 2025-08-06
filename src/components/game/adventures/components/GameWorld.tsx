@@ -62,7 +62,7 @@ export const GameWorld = ({
       }}
     >
       <div className="fixed top-4 right-4 z-50">
-        <span className="text-xl font-bold text-yellow-400">{balance} монет</span>
+        <span className="text-xl font-bold text-yellow-400">{balance} ELL</span>
       </div>
 
       <div className="absolute bottom-0 w-full h-[50px] bg-game-surface/50" />

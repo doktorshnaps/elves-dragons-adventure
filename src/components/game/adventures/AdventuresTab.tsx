@@ -45,7 +45,7 @@ export const AdventuresTab = () => {
       addExperience(monster.experienceReward);
       toast({
         title: "Победа!",
-        description: `Вы получили ${monster.reward} монет и ${monster.experienceReward} опыта!`
+        description: `Вы получили ${monster.reward} ELL и ${monster.experienceReward} опыта!`
       });
       
       if (playerStats.health > 0) {
@@ -121,7 +121,7 @@ export const AdventuresTab = () => {
     
     toast({
       title: "Предмет продан",
-      description: "Получено 10 монет"
+      description: "Получено 10 ELL"
     });
     
     const event = new CustomEvent('inventoryUpdate', {

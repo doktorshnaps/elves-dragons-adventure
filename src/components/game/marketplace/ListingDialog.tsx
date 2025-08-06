@@ -125,7 +125,7 @@ export const ListingDialog = ({ onClose, onCreateListing }: ListingDialogProps) 
             </div>
 
             <div className="space-y-2">
-              <label className="text-sm text-gray-400">Цена (в токенах)</label>
+              <label className="text-sm text-gray-400">Цена (в ELL)</label>
               <Input
                 type="number"
                 value={price}

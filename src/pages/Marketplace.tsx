@@ -23,7 +23,7 @@ export const Marketplace = () => {
     setShowListingDialog(false);
     toast({
       title: "Предмет выставлен на продажу",
-      description: `${listing.item.name} выставлен за ${listing.price} токенов`,
+      description: `${listing.item.name} выставлен за ${listing.price} ELL`,
     });
   };
 
@@ -61,8 +61,8 @@ export const Marketplace = () => {
   const handleBuy = (listing: MarketplaceListing) => {
     if (balance < listing.price) {
       toast({
-        title: "Недостаточно токенов",
-        description: "У вас недостаточно токенов для покупки",
+        title: "Недостаточно ELL",
+        description: "У вас недостаточно ELL для покупки",
         variant: "destructive",
       });
       return;
