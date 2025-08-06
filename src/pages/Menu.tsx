@@ -1,18 +1,39 @@
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
-import { Swords, ShoppingCart, BookOpen, Store, Shield, Users, BarChart3, MapPin, DollarSign } from "lucide-react";
+import { Swords, ShoppingCart, BookOpen, Store, Shield, Users, BarChart3, MapPin, DollarSign, LogOut } from "lucide-react";
+import { useAuth } from "@/hooks/useAuth";
+import { useToast } from "@/hooks/use-toast";
 import { useGameInitialization } from "@/components/game/initialization/useGameInitialization";
 import { FirstTimePackDialog } from "@/components/game/initialization/FirstTimePackDialog";
 import { useState, useEffect } from "react";
 
 export const Menu = () => {
   const navigate = useNavigate();
+  const { signOut } = useAuth();
+  const { toast } = useToast();
   const [cards, setCards] = useState(() => {
     const savedCards = localStorage.getItem('gameCards');
     return savedCards ? JSON.parse(savedCards) : [];
   });
 
   const { showFirstTimePack, setShowFirstTimePack } = useGameInitialization(setCards);
+
+  const handleSignOut = async () => {
+    const { error } = await signOut();
+    if (error) {
+      toast({
+        title: "Ошибка выхода",
+        description: error.message,
+        variant: "destructive"
+      });
+    } else {
+      toast({
+        title: "Выход выполнен",
+        description: "Вы успешно вышли из игры"
+      });
+      navigate('/auth');
+    }
+  };
 
   // Слушаем обновления карт
   useEffect(() => {
@@ -119,6 +140,15 @@ export const Menu = () => {
         >
           <DollarSign className="w-8 h-8" />
           <span>Бабло</span>
+        </Button>
+
+        <Button
+          variant="outline"
+          className="h-24 bg-game-surface/80 border-red-500 text-red-500 hover:bg-red-500/20 flex flex-col items-center justify-center gap-2"
+          onClick={handleSignOut}
+        >
+          <LogOut className="w-8 h-8" />
+          <span>Выход</span>
         </Button>
       </div>
 
