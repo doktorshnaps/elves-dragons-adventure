@@ -55,14 +55,14 @@ export const useGameData = () => {
       if (data) {
         const newGameData: GameData = {
           balance: data.balance || 0,
-          cards: (data.cards as Card[]) || [],
+          cards: (data.cards as unknown as Card[]) || [],
           initialized: data.initialized || false,
-          inventory: (data.inventory as any[]) || [],
-          marketplaceListings: (data.marketplace_listings as any[]) || [],
-          socialQuests: (data.social_quests as any[]) || [],
-          adventurePlayerStats: data.adventure_player_stats || null,
-          adventureCurrentMonster: data.adventure_current_monster || null,
-          dragonEggs: (data.dragon_eggs as any[]) || []
+          inventory: ((data as any).inventory as any[]) || [],
+          marketplaceListings: ((data as any).marketplace_listings as any[]) || [],
+          socialQuests: ((data as any).social_quests as any[]) || [],
+          adventurePlayerStats: (data as any).adventure_player_stats || null,
+          adventureCurrentMonster: (data as any).adventure_current_monster || null,
+          dragonEggs: ((data as any).dragon_eggs as any[]) || []
         };
         
         setGameData(newGameData);
