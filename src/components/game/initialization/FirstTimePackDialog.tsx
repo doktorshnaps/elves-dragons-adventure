@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { generateCard } from '@/utils/cardUtils';
@@ -61,6 +61,9 @@ export const FirstTimePackDialog = ({ isOpen, onClose }: FirstTimePackDialogProp
             <Gift className="w-6 h-6 text-yellow-400" />
             Добро пожаловать!
           </DialogTitle>
+          <DialogDescription className="text-center text-sm text-gray-400">
+            Получите бесплатную стартовую карту для начала игры
+          </DialogDescription>
         </DialogHeader>
 
         <div className="text-center space-y-6 p-4">

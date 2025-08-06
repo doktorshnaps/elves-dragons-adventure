@@ -1,9 +1,18 @@
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 import { Swords, ShoppingCart, BookOpen, Store, Shield, Users, BarChart3, MapPin, DollarSign } from "lucide-react";
+import { useGameInitialization } from "@/components/game/initialization/useGameInitialization";
+import { FirstTimePackDialog } from "@/components/game/initialization/FirstTimePackDialog";
+import { useState } from "react";
 
 export const Menu = () => {
   const navigate = useNavigate();
+  const [cards, setCards] = useState(() => {
+    const savedCards = localStorage.getItem('gameCards');
+    return savedCards ? JSON.parse(savedCards) : [];
+  });
+
+  const { showFirstTimePack, setShowFirstTimePack } = useGameInitialization(setCards);
 
   return (
     <div 
@@ -99,6 +108,11 @@ export const Menu = () => {
           <span>Бабло</span>
         </Button>
       </div>
+
+      <FirstTimePackDialog
+        isOpen={showFirstTimePack}
+        onClose={() => setShowFirstTimePack(false)}
+      />
     </div>
   );
 };

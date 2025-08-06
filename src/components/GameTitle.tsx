@@ -7,14 +7,6 @@ export const GameTitle = () => {
   const { toast } = useToast();
 
   const handleStartGame = () => {
-    const isInitialized = localStorage.getItem('gameInitialized');
-    if (!isInitialized) {
-      localStorage.setItem('gameInitialized', 'true');
-      toast({
-        title: "Добро пожаловать в игру!",
-        description: "Начните свое приключение",
-      });
-    }
     navigate("/menu");
   };
 
