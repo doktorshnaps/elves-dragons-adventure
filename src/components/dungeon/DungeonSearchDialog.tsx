@@ -25,12 +25,12 @@ interface DungeonSearchDialogProps {
 }
 
 const dungeonLevelRequirements = {
-  spider_nest: 20,
-  bone_dungeon: 30,
-  dark_mage: 40,
+  spider_nest: 1,
+  bone_dungeon: 10,
+  dark_mage: 30,
   forgotten_souls: 50,
-  ice_throne: 60,
-  sea_serpent: 70,
+  ice_throne: 70,
+  sea_serpent: 90,
   dragon_lair: 100
 };
 

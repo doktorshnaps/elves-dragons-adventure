@@ -16,13 +16,14 @@ export const useGameInitialization = (setCards: (cards: Card[]) => void) => {
       const initialCards = [...firstPack, ...secondPack];
       
       localStorage.setItem('gameCards', JSON.stringify(initialCards));
+      localStorage.setItem('gameBalance', '100');
       localStorage.setItem('gameInitialized', 'true');
       
       setCards(initialCards);
       
       toast({
         title: "Добро пожаловать в игру!",
-        description: "Вы получили 2 начальные колоды карт",
+        description: "Вы получили 2 начальные колоды карт и 100 монет",
       });
     } else if (savedCards) {
       setCards(JSON.parse(savedCards));
