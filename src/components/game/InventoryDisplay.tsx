@@ -39,13 +39,16 @@ export const InventoryDisplay = ({
   } = useInventoryLogic(inventory);
 
   const handleUseItem = async (groupedItem: GroupedItem) => {
-    if (!readonly && onUseItem && groupedItem.items.length > 0) {
-      if (groupedItem.type === 'cardPack') {
-        // Открываем колоду карт
-        await handleOpenCardPack(groupedItem.items[0]);
-        return;
-      }
+    if (readonly || groupedItem.items.length === 0) return;
 
+    // Колоды карт открываются всегда (без внешнего обработчика)
+    if (groupedItem.type === 'cardPack') {
+      await handleOpenCardPack(groupedItem.items[0]);
+      return;
+    }
+
+    // Остальные предметы — через внешний обработчик, если он передан
+    if (onUseItem) {
       const itemToUse = groupedItem.items[0];
       onUseItem(itemToUse);
 
