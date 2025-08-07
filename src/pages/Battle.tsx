@@ -1,6 +1,6 @@
 import React from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { useBattleState } from '@/hooks/useBattleState';
+import { useBattleStateNew } from '@/hooks/useBattleStateNew';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
@@ -16,7 +16,7 @@ export const Battle = () => {
     isPlayerTurn,
     attackEnemy,
     handleNextLevel
-  } = useBattleState(level);
+  } = useBattleStateNew(level);
 
   if (!playerStats || !opponents) {
     return <div>Загрузка...</div>;

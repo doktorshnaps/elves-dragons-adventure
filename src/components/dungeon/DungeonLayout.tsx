@@ -3,6 +3,7 @@ import { Button } from '@/components/ui/button';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, DoorOpen } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { useGameData } from '@/hooks/useGameData';
 
 interface DungeonLayoutProps {
   children: React.ReactNode;
@@ -12,15 +13,13 @@ interface DungeonLayoutProps {
 export const DungeonLayout = ({ children, backgroundImage }: DungeonLayoutProps) => {
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { gameData, updateGameData } = useGameData();
 
   const handleReturnToMenu = () => {
     // Сохраняем текущее состояние битвы перед возвратом в меню
-    const battleState = localStorage.getItem('battleState');
-    if (battleState) {
-      const state = JSON.parse(battleState);
-      // Добавляем флаг, что это сохраненное состояние
-      state.isSaved = true;
-      localStorage.setItem('battleState', JSON.stringify(state));
+    if (gameData.battleState) {
+      const state = { ...gameData.battleState, isSaved: true };
+      updateGameData({ battleState: state });
       
       toast({
         title: "Прогресс сохранен",
@@ -30,10 +29,10 @@ export const DungeonLayout = ({ children, backgroundImage }: DungeonLayoutProps)
     navigate('/menu');
   };
 
-  const handleLeaveDungeon = () => {
-    localStorage.removeItem('battleState');
-    navigate('/dungeons');
-    toast({
+    const handleLeaveDungeon = () => {
+      updateGameData({ battleState: null });
+      navigate('/dungeons');
+      toast({
       title: "Подземелье покинуто",
       description: "Весь прогресс сброшен",
       variant: "destructive",

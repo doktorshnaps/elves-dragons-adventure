@@ -2,6 +2,7 @@
 import { useState, useCallback, useEffect, useMemo } from 'react';
 import { calculateTeamStats } from '@/utils/cardUtils';
 import { useToast } from '@/hooks/use-toast';
+import { useGameData } from '@/hooks/useGameData';
 
 interface PlayerStats {
   health: number;
@@ -17,35 +18,32 @@ interface PlayerStats {
 
 export const usePlayerStats = (initialLevel = 1) => {
   const { toast } = useToast();
+  const { gameData, updateGameData } = useGameData();
   
   const calculateEquipmentBonuses = useCallback(() => {
-    const inventory = localStorage.getItem('gameInventory');
-    if (!inventory) return { power: 0, defense: 0, health: 0 };
+    if (!gameData.inventory) return { power: 0, defense: 0, health: 0 };
 
-    const equippedItems = JSON.parse(inventory).filter((item: any) => item.equipped);
+    const equippedItems = gameData.inventory.filter((item: any) => item.equipped);
     return equippedItems.reduce((acc: any, item: any) => ({
       power: acc.power + (item.stats?.power || 0),
       defense: acc.defense + (item.stats?.defense || 0),
       health: acc.health + (item.stats?.health || 0)
     }), { power: 0, defense: 0, health: 0 });
-  }, []);
+  }, [gameData.inventory]);
 
   const calculateBaseStats = useCallback((level: number) => {
-    const savedCards = localStorage.getItem('gameCards');
-    const cards = savedCards ? JSON.parse(savedCards) : [];
-    const teamStats = calculateTeamStats(cards);
+    const teamStats = calculateTeamStats(gameData.cards);
 
     return {
       power: teamStats.power + (level - 1),
       defense: teamStats.defense + (level - 1),
       health: teamStats.health + (level - 1) * 10
     };
-  }, []);
+  }, [gameData.cards]);
 
   const [stats, setStats] = useState<PlayerStats>(() => {
-    const savedStats = localStorage.getItem('adventurePlayerStats');
-    if (savedStats) {
-      const parsed = JSON.parse(savedStats);
+    if (gameData.adventurePlayerStats) {
+      const parsed = gameData.adventurePlayerStats;
       const baseStats = calculateBaseStats(parsed.level);
       const equipmentBonuses = calculateEquipmentBonuses();
       
@@ -77,10 +75,10 @@ export const usePlayerStats = (initialLevel = 1) => {
   const updateStats = useCallback((updater: (prev: PlayerStats) => PlayerStats) => {
     setStats(prev => {
       const newStats = updater(prev);
-      localStorage.setItem('adventurePlayerStats', JSON.stringify(newStats));
+      updateGameData({ adventurePlayerStats: newStats });
       return newStats;
     });
-  }, []);
+  }, [updateGameData]);
 
   useEffect(() => {
     const handleInventoryUpdate = () => {

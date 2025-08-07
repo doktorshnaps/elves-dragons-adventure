@@ -19,6 +19,7 @@ export type Database = {
           adventure_current_monster: Json | null
           adventure_player_stats: Json | null
           balance: number
+          battle_state: Json | null
           cards: Json
           created_at: string
           dragon_eggs: Json | null
@@ -34,6 +35,7 @@ export type Database = {
           adventure_current_monster?: Json | null
           adventure_player_stats?: Json | null
           balance?: number
+          battle_state?: Json | null
           cards?: Json
           created_at?: string
           dragon_eggs?: Json | null
@@ -49,6 +51,7 @@ export type Database = {
           adventure_current_monster?: Json | null
           adventure_player_stats?: Json | null
           balance?: number
+          battle_state?: Json | null
           cards?: Json
           created_at?: string
           dragon_eggs?: Json | null

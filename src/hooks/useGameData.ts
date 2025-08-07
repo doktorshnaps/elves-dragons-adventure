@@ -14,6 +14,7 @@ interface GameData {
   adventurePlayerStats?: any;
   adventureCurrentMonster?: any;
   dragonEggs?: any[];
+  battleState?: any;
 }
 
 export const useGameData = () => {
@@ -28,7 +29,8 @@ export const useGameData = () => {
     socialQuests: [],
     adventurePlayerStats: null,
     adventureCurrentMonster: null,
-    dragonEggs: []
+    dragonEggs: [],
+    battleState: null
   });
   const [loading, setLoading] = useState(true);
 
@@ -62,7 +64,8 @@ export const useGameData = () => {
           socialQuests: ((data as any).social_quests as any[]) || [],
           adventurePlayerStats: (data as any).adventure_player_stats || null,
           adventureCurrentMonster: (data as any).adventure_current_monster || null,
-          dragonEggs: ((data as any).dragon_eggs as any[]) || []
+          dragonEggs: ((data as any).dragon_eggs as any[]) || [],
+          battleState: (data as any).battle_state || null
         };
         
         setGameData(newGameData);
@@ -81,6 +84,9 @@ export const useGameData = () => {
           localStorage.setItem('adventureCurrentMonster', JSON.stringify(newGameData.adventureCurrentMonster));
         }
         localStorage.setItem('dragonEggs', JSON.stringify(newGameData.dragonEggs));
+        if (newGameData.battleState) {
+          localStorage.setItem('battleState', JSON.stringify(newGameData.battleState));
+        }
       }
     } catch (error) {
       console.error('Error in loadGameData:', error);
@@ -108,7 +114,8 @@ export const useGameData = () => {
           social_quests: updatedData.socialQuests as any,
           adventure_player_stats: updatedData.adventurePlayerStats as any,
           adventure_current_monster: updatedData.adventureCurrentMonster as any,
-          dragon_eggs: updatedData.dragonEggs as any
+          dragon_eggs: updatedData.dragonEggs as any,
+          battle_state: updatedData.battleState as any
         });
 
       if (error) {
@@ -137,6 +144,9 @@ export const useGameData = () => {
         localStorage.setItem('adventureCurrentMonster', JSON.stringify(updatedData.adventureCurrentMonster));
       }
       localStorage.setItem('dragonEggs', JSON.stringify(updatedData.dragonEggs));
+      if (updatedData.battleState) {
+        localStorage.setItem('battleState', JSON.stringify(updatedData.battleState));
+      }
 
       // Отправляем события для обновления UI
       if (updates.balance !== undefined) {
