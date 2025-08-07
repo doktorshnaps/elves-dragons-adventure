@@ -121,6 +121,8 @@ export const useGameData = () => {
           dragon_eggs: updatedData.dragonEggs as any,
           battle_state: updatedData.battleState as any,
           selected_team: updatedData.selectedTeam as any
+        }, {
+          onConflict: 'user_id'
         });
 
       if (error) {
