@@ -7,6 +7,8 @@ import { v4 as uuidv4 } from 'uuid';
 import { generateCard } from "@/utils/cardUtils";
 import { Item } from "@/types/inventory";
 import { ArrowLeft } from "lucide-react";
+import { useState } from "react";
+import { PurchaseEffect } from "./shop/PurchaseEffect";
 
 interface ShopProps {
   onClose: () => void;
@@ -15,6 +17,7 @@ interface ShopProps {
 export const Shop = ({ onClose }: ShopProps) => {
   const { gameData, updateGameData, loading } = useGameData();
   const { toast } = useToast();
+  const [showEffect, setShowEffect] = useState(false);
 
   if (loading) {
     return <div className="flex justify-center items-center h-64">Загрузка...</div>;
@@ -41,6 +44,7 @@ export const Shop = ({ onClose }: ShopProps) => {
           balance: newBalance
         });
 
+        setShowEffect(true);
         toast({
           title: "Колода карт куплена!",
           description: "Колода карт добавлена в инвентарь. Откройте её чтобы получить карту!",
@@ -67,6 +71,7 @@ export const Shop = ({ onClose }: ShopProps) => {
           balance: newBalance
         });
 
+        setShowEffect(true);
         toast({
           title: "Покупка успешна",
           description: `Вы купили ${item.name}`,
@@ -81,8 +86,9 @@ export const Shop = ({ onClose }: ShopProps) => {
     }
   };
 
-  return (
+return (
     <div className="relative">
+      {showEffect && <PurchaseEffect onComplete={() => setShowEffect(false)} />}
       <div className="sticky top-0 z-10 bg-game-background p-4 border-b border-game-accent">
         <Button
           variant="outline"

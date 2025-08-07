@@ -35,10 +35,11 @@ export const DeckSelection = ({
 }: DeckSelectionProps) => {
   const [showHeroDeck, setShowHeroDeck] = useState(false);
   const [showDragonDeck, setShowDragonDeck] = useState(false);
-  const [activePairIndex, setActivePairIndex] = useState<number | null>(null);
+const [activePairIndex, setActivePairIndex] = useState<number | null>(null);
   const { gameData, updateGameData } = useGameData();
 const { toast } = useToast();
   const { addEgg } = useDragonEggs();
+  const [upgradingKeys, setUpgradingKeys] = useState<Record<string, boolean>>({});
 
   const heroes = cards.filter(card => card.type === 'character');
   const dragons = cards.filter(card => card.type === 'pet');
@@ -93,54 +94,65 @@ const { toast } = useToast();
   };
 
 const handleDragonUpgrade = async (dragon: CardType) => {
-    const duplicates = cards.filter(c => c.type === 'pet' && c.name === dragon.name && c.rarity === dragon.rarity);
-    if (duplicates.length < 2) {
-      toast({ title: 'Недостаточно карт', description: 'Нужно 2 одинаковых дракона для улучшения', variant: 'destructive' });
-      return;
+    const key = `${dragon.name}|${dragon.rarity}|${dragon.faction ?? ''}`;
+    if (upgradingKeys[key]) return;
+    setUpgradingKeys(prev => ({ ...prev, [key]: true }));
+    try {
+      // Используем актуальные карты из gameData
+      const currentCards: CardType[] = (gameData.cards as CardType[]) || [];
+      const duplicates = currentCards.filter(c => c.type === 'pet' && c.name === dragon.name && c.rarity === dragon.rarity);
+      if (duplicates.length < 2) {
+        toast({ title: 'Недостаточно карт', description: 'Нужно 2 одинаковых дракона для улучшения', variant: 'destructive' });
+        return;
+      }
+
+      const base1 = duplicates[0];
+      const base2 = duplicates[1];
+      const upgraded = upgradeCard(base1 as any, base2 as any);
+      if (!upgraded) {
+        toast({ title: 'Невозможно улучшить', description: 'Эти карты нельзя улучшить', variant: 'destructive' });
+        return;
+      }
+
+      // Удаляем 2 карты из gameData.cards и синхронизируем с localStorage
+      const newCards = currentCards.filter(c => c.id !== base1.id && c.id !== base2.id);
+      await updateGameData({ cards: newCards });
+      localStorage.setItem('gameCards', JSON.stringify(newCards));
+      const cardsEvent = new CustomEvent('cardsUpdate', { detail: { cards: newCards } });
+      window.dispatchEvent(cardsEvent);
+
+      // Создаём яйцо (улучшение произойдёт после инкубации)
+      const eggId = Date.now().toString();
+      const createdAt = new Date().toISOString();
+      const faction = (upgraded as any).faction || dragon.faction || 'Каледор';
+
+      addEgg({
+        id: eggId,
+        petName: upgraded.name,
+        rarity: upgraded.rarity,
+        createdAt,
+        faction,
+      }, faction);
+
+      const eggItem: Item = {
+        id: eggId,
+        name: 'Яйцо дракона',
+        type: 'dragon_egg',
+        value: upgraded.rarity,
+        description: `${upgraded.name}`,
+        image: '/lovable-uploads/8a069dd4-47ad-496c-a248-f796257f9233.png',
+        petName: upgraded.name,
+      };
+      await updateGameData({ inventory: [ ...(gameData.inventory || []), eggItem ] });
+
+      toast({ title: 'Создано яйцо дракона', description: 'Питомец вылупится после инкубации' });
+    } finally {
+      setUpgradingKeys(prev => {
+        const copy = { ...prev };
+        delete copy[`${dragon.name}|${dragon.rarity}|${dragon.faction ?? ''}`];
+        return copy;
+      });
     }
-
-    // Попытка получить улучшенную карту (и проверка на макс. уровень)
-    const testUpgrade = upgradeCard(duplicates[0] as any, duplicates[1] as any);
-    if (!testUpgrade) {
-      toast({ title: 'Невозможно улучшить', description: 'Эти карты нельзя улучшить', variant: 'destructive' });
-      return;
-    }
-
-    // Удаляем две использованные карты из локального списка карт (localStorage — источник правды)
-    const saved = localStorage.getItem('gameCards');
-    const currentCards: CardType[] = saved ? JSON.parse(saved) : cards;
-    const idsToRemove = new Set([duplicates[0].id, duplicates[1].id]);
-    const updatedCards = currentCards.filter(c => !idsToRemove.has(c.id));
-    localStorage.setItem('gameCards', JSON.stringify(updatedCards));
-    const cardsEvent = new CustomEvent('cardsUpdate', { detail: { cards: updatedCards } });
-    window.dispatchEvent(cardsEvent);
-
-    // Создаем яйцо дракона, которое вылупится в улучшенного питомца
-    const eggId = Date.now().toString();
-    const createdAt = new Date().toISOString();
-    const faction = (testUpgrade as any).faction || duplicates[0].faction || 'Каледор';
-
-    addEgg({
-      id: eggId,
-      petName: testUpgrade.name,
-      rarity: testUpgrade.rarity,
-      createdAt,
-      faction,
-    }, faction);
-
-    const eggItem: Item = {
-      id: eggId,
-      name: 'Яйцо дракона',
-      type: 'dragon_egg',
-      value: testUpgrade.rarity,
-      description: `${testUpgrade.name}`,
-      image: '/lovable-uploads/8a069dd4-47ad-496c-a248-f796257f9233.png',
-      petName: testUpgrade.name,
-    };
-
-    await updateGameData({ inventory: [ ...(gameData.inventory || []), eggItem ] });
-
-    toast({ title: 'Создано яйцо дракона', description: 'Питомец вылупится после инкубации' });
   };
   return (
     <div className="space-y-6">
@@ -281,9 +293,9 @@ const handleDragonUpgrade = async (dragon: CardType) => {
                         : 'Просмотр'}
                   </div>
                   {activePairIndex === null && (
-                    <div className="mt-2 flex justify-center">
-                      <Button size="sm" variant="secondary" onClick={() => handleDragonUpgrade(dragon)} disabled={dupCount < 2}>
-                        Улучшить {dupCount >= 2 ? '(2x)' : ''}
+<div className="mt-2 flex justify-center">
+                      <Button size="sm" variant="secondary" onClick={() => handleDragonUpgrade(dragon)} disabled={dupCount < 2 || upgradingKeys[`${dragon.name}|${dragon.rarity}|${dragon.faction ?? ''}`]}>
+                        {upgradingKeys[`${dragon.name}|${dragon.rarity}|${dragon.faction ?? ''}`] ? 'Улучшается...' : `Улучшить ${dupCount >= 2 ? '(2x)' : ''}`}
                       </Button>
                     </div>
                   )}
