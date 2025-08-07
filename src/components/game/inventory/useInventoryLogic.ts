@@ -26,8 +26,21 @@ export const useInventoryLogic = (initialInventory: Item[]) => {
     return shopItem?.image || '';
   };
 
-  const groupItems = (items: Item[]): GroupedItem[] => {
+const groupItems = (items: Item[]): GroupedItem[] => {
     return items.reduce<GroupedItem[]>((acc, item) => {
+      // Яйца драконов НЕ группируем — у каждого свой таймер инкубации
+      if (item.type === 'dragon_egg') {
+        acc.push({
+          name: item.name,
+          type: item.type,
+          value: item.value,
+          count: 1,
+          items: [item],
+          image: getItemImage(item)
+        });
+        return acc;
+      }
+
       // Группируем только предметы с одинаковым состоянием экипировки
       const existingGroup = acc.find(
         group => 

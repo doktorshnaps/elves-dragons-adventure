@@ -155,8 +155,9 @@ export const useTeamCards = () => {
       });
     }
 
-    // Обновляем состояние и localStorage
+// Обновляем состояние, Supabase и localStorage
     setCards(newCards);
+    await updateGameData({ cards: newCards });
     localStorage.setItem('gameCards', JSON.stringify(newCards));
 
     // Отправляем событие обновления карт
