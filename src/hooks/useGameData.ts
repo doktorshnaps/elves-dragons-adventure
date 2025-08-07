@@ -15,6 +15,7 @@ interface GameData {
   adventureCurrentMonster?: any;
   dragonEggs?: any[];
   battleState?: any;
+  selectedTeam?: any[];
 }
 
 export const useGameData = () => {
@@ -30,7 +31,8 @@ export const useGameData = () => {
     adventurePlayerStats: null,
     adventureCurrentMonster: null,
     dragonEggs: [],
-    battleState: null
+    battleState: null,
+    selectedTeam: []
   });
   const [loading, setLoading] = useState(true);
 
@@ -65,7 +67,8 @@ export const useGameData = () => {
           adventurePlayerStats: (data as any).adventure_player_stats || null,
           adventureCurrentMonster: (data as any).adventure_current_monster || null,
           dragonEggs: ((data as any).dragon_eggs as any[]) || [],
-          battleState: (data as any).battle_state || null
+          battleState: (data as any).battle_state || null,
+          selectedTeam: ((data as any).selected_team as any[]) || []
         };
         
         setGameData(newGameData);
@@ -87,6 +90,7 @@ export const useGameData = () => {
         if (newGameData.battleState) {
           localStorage.setItem('battleState', JSON.stringify(newGameData.battleState));
         }
+        localStorage.setItem('selectedTeam', JSON.stringify(newGameData.selectedTeam));
       }
     } catch (error) {
       console.error('Error in loadGameData:', error);
@@ -115,7 +119,8 @@ export const useGameData = () => {
           adventure_player_stats: updatedData.adventurePlayerStats as any,
           adventure_current_monster: updatedData.adventureCurrentMonster as any,
           dragon_eggs: updatedData.dragonEggs as any,
-          battle_state: updatedData.battleState as any
+          battle_state: updatedData.battleState as any,
+          selected_team: updatedData.selectedTeam as any
         });
 
       if (error) {
@@ -147,6 +152,7 @@ export const useGameData = () => {
       if (updatedData.battleState) {
         localStorage.setItem('battleState', JSON.stringify(updatedData.battleState));
       }
+      localStorage.setItem('selectedTeam', JSON.stringify(updatedData.selectedTeam));
 
       // Отправляем события для обновления UI
       if (updates.balance !== undefined) {
