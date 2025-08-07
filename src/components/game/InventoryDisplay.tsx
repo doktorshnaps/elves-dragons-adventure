@@ -5,6 +5,7 @@ import { useInventoryLogic } from "./inventory/useInventoryLogic";
 import { InventoryHeader } from "./inventory/InventoryHeader";
 import { DragonEggsList } from "./inventory/DragonEggsList";
 import { InventoryGrid } from "./inventory/InventoryGrid";
+import { CardRevealModal } from "./dialogs/CardRevealModal";
 import { useGameData } from "@/hooks/useGameData";
 import { useToast } from "@/hooks/use-toast";
 import { GroupedItem } from "./inventory/types";
@@ -31,7 +32,10 @@ export const InventoryDisplay = ({
     groupItems,
     handleSellItem,
     handleOpenCardPack,
-    isOpening
+    isOpening,
+    revealedCard,
+    showRevealModal,
+    closeRevealModal
   } = useInventoryLogic(inventory);
 
   const handleUseItem = async (groupedItem: GroupedItem) => {
@@ -102,6 +106,12 @@ export const InventoryDisplay = ({
           />
         </div>
       </div>
+      
+      <CardRevealModal
+        isOpen={showRevealModal}
+        onClose={closeRevealModal}
+        revealedCard={revealedCard}
+      />
     </div>
   );
 };

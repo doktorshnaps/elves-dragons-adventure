@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Item } from "@/types/inventory";
+import { Card as CardType } from "@/types/cards";
 import { useGameData } from '@/hooks/useGameData';
 import { useToast } from '@/hooks/use-toast';
 import { generateCard } from '@/utils/cardUtils';
@@ -8,9 +9,11 @@ export const useCardPackOpening = () => {
   const { gameData, updateGameData } = useGameData();
   const { toast } = useToast();
   const [isOpening, setIsOpening] = useState(false);
+  const [revealedCard, setRevealedCard] = useState<CardType | null>(null);
+  const [showRevealModal, setShowRevealModal] = useState(false);
 
-  const openCardPack = async (packItem: Item) => {
-    if (packItem.type !== 'cardPack' || isOpening) return;
+  const openCardPack = async (packItem: Item): Promise<CardType | null> => {
+    if (packItem.type !== 'cardPack' || isOpening) return null;
 
     setIsOpening(true);
 
@@ -27,23 +30,33 @@ export const useCardPackOpening = () => {
         cards: updatedCards
       });
 
-      toast({
-        title: "Карта получена!",
-        description: `Из колоды выпала карта: ${newCard.name} (${newCard.type === 'character' ? 'Герой' : 'Дракон'})`,
-      });
+      // Показываем модальное окно с картой
+      setRevealedCard(newCard);
+      setShowRevealModal(true);
+
+      return newCard;
     } catch (error) {
       toast({
         title: "Ошибка",
         description: "Не удалось открыть колоду карт",
         variant: "destructive",
       });
+      return null;
     } finally {
       setIsOpening(false);
     }
   };
 
+  const closeRevealModal = () => {
+    setShowRevealModal(false);
+    setRevealedCard(null);
+  };
+
   return {
     openCardPack,
-    isOpening
+    isOpening,
+    revealedCard,
+    showRevealModal,
+    closeRevealModal
   };
 };
