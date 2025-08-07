@@ -3,10 +3,13 @@ import { Card as CardType } from "@/types/cards";
 import { useToast } from "@/hooks/use-toast";
 import { getCardPrice, upgradeCard } from "@/utils/cardUtils";
 import { useDragonEggs } from "@/contexts/DragonEggContext";
+import { useGameData } from "@/hooks/useGameData";
+import { Item } from "@/types/inventory";
 
 export const useTeamCards = () => {
   const { toast } = useToast();
   const { addEgg } = useDragonEggs();
+  const { gameData, updateGameData } = useGameData();
   const [cards, setCards] = useState<CardType[]>(() => {
     const savedCards = localStorage.getItem('gameCards');
     return savedCards ? JSON.parse(savedCards) : [];
@@ -91,7 +94,7 @@ export const useTeamCards = () => {
     setSelectedCards([sameCards[0], sameCards[1]]);
   };
 
-  const handleUpgrade = () => {
+  const handleUpgrade = async () => {
     if (selectedCards.length !== 2) {
       toast({
         title: "Ошибка улучшения",
@@ -116,14 +119,28 @@ export const useTeamCards = () => {
     const newCards = cards.filter(c => !selectedCards.some(sc => sc.id === c.id));
 
     if (selectedCards[0].type === 'pet') {
-      // Для питомцев создаем яйцо
+      // Для питомцев создаем яйцо и добавляем его в инвентарь
+      const eggId = Date.now().toString();
+      const createdAt = new Date().toISOString();
+
       addEgg({
-        id: Date.now().toString(),
+        id: eggId,
         petName: upgradedCard.name,
         rarity: upgradedCard.rarity,
-        createdAt: new Date().toISOString(),
+        createdAt,
         faction: upgradedCard.faction || 'Каледор'
       }, upgradedCard.faction || 'Каледор');
+
+      const eggItem: Item = {
+        id: eggId,
+        name: 'Яйцо дракона',
+        type: 'dragon_egg',
+        value: upgradedCard.rarity,
+        description: `${upgradedCard.name}`,
+        image: '/lovable-uploads/8a069dd4-47ad-496c-a248-f796257f9233.png',
+        petName: upgradedCard.name,
+      };
+      await updateGameData({ inventory: [ ...(gameData.inventory || []), eggItem ] });
 
       toast({
         title: "Создано яйцо дракона!",

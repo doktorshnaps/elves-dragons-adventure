@@ -22,8 +22,19 @@ export const useEggIncubation = ({
   const [timeLeft, setTimeLeft] = useState<number | null>(null);
 
   const getHatchTime = (rarity: Rarity): number => {
-    const hours = Math.max(1, 9 - rarity);
-    return hours * 60 * 60 * 1000; // Конвертируем в миллисекунды
+    // Egg rarity represents the TARGET rarity (after upgrade).
+    // We need duration based on the source rarity (target - 1).
+    const fromRarity = (rarity as number) - 1;
+    const durationsMs: Record<number, number> = {
+      1: 10 * 60 * 1000,        // 1 -> 2 : 10 мин
+      2: 30 * 60 * 1000,        // 2 -> 3 : 30 мин
+      3: 10 * 60 * 60 * 1000,   // 3 -> 4 : 10 часов
+      4: 72 * 60 * 60 * 1000,   // 4 -> 5 : 72 часа
+      5: 150 * 60 * 60 * 1000,  // 5 -> 6 : 150 часов
+      6: 200 * 60 * 60 * 1000,  // 6 -> 7 : 200 часов
+      7: 300 * 60 * 60 * 1000,  // 7 -> 8 : 300 часов
+    };
+    return durationsMs[fromRarity] ?? 10 * 60 * 1000;
   };
 
   // Проверяем сохраненное состояние при монтировании

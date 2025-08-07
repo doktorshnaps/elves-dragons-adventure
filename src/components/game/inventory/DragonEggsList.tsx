@@ -1,9 +1,10 @@
 import { DragonEggTimer } from "../DragonEggTimer";
 import { useToast } from "@/hooks/use-toast";
-import { DragonEgg } from "@/contexts/DragonEggContext";
+import { DragonEgg, useDragonEggs } from "@/contexts/DragonEggContext";
 import { Card, Rarity, Faction } from "@/types/cards";
 import { cardDatabase } from "@/data/cardDatabase";
 import { Card as UICard } from "@/components/ui/card";
+import { useGameData } from "@/hooks/useGameData";
 
 interface DragonEggsListProps {
   eggs: DragonEgg[];
@@ -11,8 +12,10 @@ interface DragonEggsListProps {
 
 export const DragonEggsList = ({ eggs }: DragonEggsListProps) => {
   const { toast } = useToast();
+  const { removeEgg } = useDragonEggs();
+  const { gameData, updateGameData } = useGameData();
 
-  const handleHatch = (egg: DragonEgg) => {
+  const handleHatch = async (egg: DragonEgg) => {
     // Находим базовую информацию о питомце из базы данных
     const basePet = cardDatabase.find(card => 
       card.type === 'pet' && 
@@ -46,7 +49,13 @@ export const DragonEggsList = ({ eggs }: DragonEggsListProps) => {
     const updatedCards = [...currentCards, newPet];
     localStorage.setItem('gameCards', JSON.stringify(updatedCards));
 
-    // Удаляем яйцо из localStorage и контекста
+    // Удаляем яйцо из Supabase (контекст) и инвентаря
+    await removeEgg(egg.id);
+    const inv = gameData.inventory || [];
+    const newInv = inv.filter((i) => i.id !== egg.id);
+    await updateGameData({ inventory: newInv });
+
+    // Удаляем яйцо также из localStorage (на всякий случай для синхронизации)
     const savedEggs = localStorage.getItem('dragonEggs');
     if (savedEggs) {
       const currentEggs = JSON.parse(savedEggs);
@@ -63,6 +72,11 @@ export const DragonEggsList = ({ eggs }: DragonEggsListProps) => {
     // Отправляем событие обновления яиц
     const eggsEvent = new CustomEvent('eggsUpdate');
     window.dispatchEvent(eggsEvent);
+
+    toast({
+      title: 'Питомец получен!',
+      description: `${egg.petName} (${egg.rarity}★) добавлен в вашу коллекцию`,
+    });
   };
 
   if (eggs.length === 0) return null;
