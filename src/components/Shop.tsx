@@ -23,24 +23,30 @@ export const Shop = ({ onClose }: ShopProps) => {
   const handleBuyItem = async (item: typeof shopItems[0]) => {
     if (gameData.balance >= item.price) {
       if (item.type === "cardPack") {
-        // Генерируем случайную карту
-        const newCard = generateCard(Math.random() > 0.5 ? 'character' : 'pet');
-        
-        // Обновляем карты и баланс в Supabase
-        const updatedCards = [...gameData.cards, newCard];
+        // Создаем колоду карт как предмет в инвентаре
+        const newItem: Item = {
+          id: uuidv4(),
+          name: item.name,
+          type: item.type,
+          value: item.value,
+          description: item.description,
+          image: item.image
+        };
+
+        const newInventory = [...(gameData.inventory || []), newItem];
         const newBalance = gameData.balance - item.price;
         
         await updateGameData({
-          cards: updatedCards,
+          inventory: newInventory,
           balance: newBalance
         });
 
         toast({
-          title: "Карта получена!",
-          description: `Вы получили ${newCard.name} (${newCard.type === 'character' ? 'Герой' : 'Питомец'})`,
+          title: "Колода карт куплена!",
+          description: "Колода карт добавлена в инвентарь. Откройте её чтобы получить карту!",
         });
       } else {
-        // Для остальных предметов используем старую систему инвентаря
+        // Для остальных предметов используем систему инвентаря
         const newItem: Item = {
           id: uuidv4(),
           name: item.name,

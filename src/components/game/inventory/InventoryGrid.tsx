@@ -75,6 +75,9 @@ export const InventoryGrid = ({
           <DialogContent className="bg-game-surface border-game-accent">
             <div className="space-y-4">
               <h4 className="font-semibold text-game-accent text-lg">{item.name}</h4>
+              {item.type === 'cardPack' && (
+                <p className="text-sm text-gray-400">Содержит 1 случайную карту героя или дракона</p>
+              )}
               {item.type === 'healthPotion' && (
                 <p className="text-sm text-gray-400">Восстанавливает {item.value} единиц здоровья</p>
               )}
@@ -100,6 +103,14 @@ export const InventoryGrid = ({
               )}
               {!readonly && (
                 <div className="flex flex-col gap-2 mt-4">
+                  {item.type === 'cardPack' && (
+                    <Button
+                      onClick={() => onUseItem(item)}
+                      className="w-full bg-game-primary hover:bg-game-primary/80"
+                    >
+                      Открыть колоду
+                    </Button>
+                  )}
                   {item.type === 'healthPotion' && (
                     <Button
                       onClick={() => onUseItem(item)}

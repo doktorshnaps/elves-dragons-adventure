@@ -30,16 +30,15 @@ export const InventoryDisplay = ({
     balance,
     groupItems,
     handleSellItem,
+    handleOpenCardPack,
+    isOpening
   } = useInventoryLogic(inventory);
 
   const handleUseItem = async (groupedItem: GroupedItem) => {
     if (!readonly && onUseItem && groupedItem.items.length > 0) {
       if (groupedItem.type === 'cardPack') {
-        toast({
-          title: "Недоступно",
-          description: "Колоды карт можно использовать только в магазине",
-          variant: "destructive"
-        });
+        // Открываем колоду карт
+        await handleOpenCardPack(groupedItem.items[0]);
         return;
       }
 

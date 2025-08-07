@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Item } from "@/types/inventory";
 import { useToast } from "@/hooks/use-toast";
 import { getItemPrice } from "@/utils/itemUtils";
+import { generateCard } from "@/utils/cardUtils";
 import { GroupedItem } from "./types";
 import { shopItems } from "../../shop/types";
 import { useGameData } from "@/hooks/useGameData";
@@ -9,6 +10,7 @@ import { useGameData } from "@/hooks/useGameData";
 export const useInventoryLogic = (initialInventory: Item[]) => {
   const { toast } = useToast();
   const [selectedItems, setSelectedItems] = useState<Item[]>([]);
+  const [isOpening, setIsOpening] = useState(false);
   const { gameData, updateGameData } = useGameData();
   const balance = gameData.balance;
 
@@ -65,11 +67,46 @@ export const useInventoryLogic = (initialInventory: Item[]) => {
     });
   };
 
+  const handleOpenCardPack = async (item: Item) => {
+    if (item.type !== 'cardPack' || isOpening) return;
+
+    setIsOpening(true);
+
+    try {
+      // Генерируем случайную карту
+      const newCard = generateCard(Math.random() > 0.5 ? 'character' : 'pet');
+      
+      // Удаляем колоду из инвентаря и добавляем карту
+      const updatedInventory = (gameData.inventory || []).filter(invItem => invItem.id !== item.id);
+      const updatedCards = [...gameData.cards, newCard];
+      
+      await updateGameData({
+        inventory: updatedInventory,
+        cards: updatedCards
+      });
+
+      toast({
+        title: "Карта получена!",
+        description: `Из колоды выпала карта: ${newCard.name} (${newCard.type === 'character' ? 'Герой' : 'Дракон'})`,
+      });
+    } catch (error) {
+      toast({
+        title: "Ошибка",
+        description: "Не удалось открыть колоду карт",
+        variant: "destructive",
+      });
+    } finally {
+      setIsOpening(false);
+    }
+  };
+
   return {
     selectedItems,
     setSelectedItems,
     balance,
     groupItems,
     handleSellItem,
+    handleOpenCardPack,
+    isOpening
   };
 };
