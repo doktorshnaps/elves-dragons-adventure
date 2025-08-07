@@ -18,24 +18,36 @@ export const useCardPackOpening = () => {
     setIsOpening(true);
 
     try {
-      // Генерируем случайную карту
-      const newCard = generateCard(Math.random() > 0.5 ? 'character' : 'pet');
-      
-      // Удаляем колоду из инвентаря и добавляем карту
-      const updatedInventory = (() => {
+      // Проверяем наличие колоды в инвентаре и удаляем одну штуку
+      let removed = false;
+      const { inventory: updatedInventory } = (() => {
         const inv = [...(gameData.inventory || [])];
         const idx = inv.findIndex(item => item.id === packItem.id);
         if (idx !== -1) {
           inv.splice(idx, 1);
-          return inv;
+          removed = true;
+          return { inventory: inv };
         }
         // Fallback: remove one matching pack if IDs are not unique
         const sameIndex = inv.findIndex(item => item.type === packItem.type && item.name === packItem.name);
         if (sameIndex !== -1) {
           inv.splice(sameIndex, 1);
+          removed = true;
         }
-        return inv;
+        return { inventory: inv };
       })();
+
+      if (!removed) {
+        toast({
+          title: "Нет колод",
+          description: "В инвентаре нет доступных колод для открытия",
+          variant: "destructive",
+        });
+        return null;
+      }
+
+      // Генерируем случайную карту только если колода действительно списана
+      const newCard = generateCard(Math.random() > 0.5 ? 'character' : 'pet');
       const updatedCards = [...gameData.cards, newCard];
       
       await updateGameData({

@@ -9,6 +9,9 @@ import {
   DialogTitle 
 } from "@/components/ui/dialog";
 import { CardDisplay } from "../CardDisplay";
+import { useToast } from "@/hooks/use-toast";
+import { useGameData } from "@/hooks/useGameData";
+import { upgradeCard } from "@/utils/cardUtils";
 
 interface DeckSelectionProps {
   cards: CardType[];
@@ -31,6 +34,8 @@ export const DeckSelection = ({
   const [showHeroDeck, setShowHeroDeck] = useState(false);
   const [showDragonDeck, setShowDragonDeck] = useState(false);
   const [activePairIndex, setActivePairIndex] = useState<number | null>(null);
+  const { gameData, updateGameData } = useGameData();
+  const { toast } = useToast();
 
   const heroes = cards.filter(card => card.type === 'character');
   const dragons = cards.filter(card => card.type === 'pet');
@@ -80,7 +85,28 @@ export const DeckSelection = ({
     }
     setShowDragonDeck(false);
   };
+  const getDuplicateCount = (dragon: CardType) => {
+    return cards.filter(c => c.type === 'pet' && c.name === dragon.name && c.rarity === dragon.rarity).length;
+  };
 
+  const handleDragonUpgrade = async (dragon: CardType) => {
+    const duplicates = cards.filter(c => c.type === 'pet' && c.name === dragon.name && c.rarity === dragon.rarity);
+    if (duplicates.length < 2) {
+      toast({ title: 'Недостаточно карт', description: 'Нужно 2 одинаковых дракона для улучшения', variant: 'destructive' });
+      return;
+    }
+    const base1 = duplicates[0];
+    const base2 = duplicates[1];
+    const upgraded = upgradeCard(base1 as any, base2 as any);
+    if (!upgraded) {
+      toast({ title: 'Невозможно улучшить', description: 'Эти карты нельзя улучшить', variant: 'destructive' });
+      return;
+    }
+    const newCards = gameData.cards.filter(c => c.id !== base1.id && c.id !== base2.id);
+    newCards.push(upgraded as any);
+    await updateGameData({ cards: newCards });
+    toast({ title: 'Дракон улучшен', description: `${dragon.name} повышен в редкости` });
+  };
   return (
     <div className="space-y-6">
       {/* Selected Pairs Display */}
@@ -193,22 +219,23 @@ export const DeckSelection = ({
               : dragons
             ).map((dragon) => {
               const isSelected = isDragonSelected(dragon);
-              const canSelect = activePairIndex !== null
+              const canAssign = activePairIndex !== null
                 ? !!selectedPairs[activePairIndex] &&
                   !selectedPairs[activePairIndex]?.dragon &&
                   selectedPairs[activePairIndex]?.hero.faction === dragon.faction &&
                   !isSelected
-                : selectedPairs.some(pair => pair.hero.faction === dragon.faction && !pair.dragon) && !isSelected;
+                : false; // при просмотре колоды не назначаем на героя
+              const dupCount = getDuplicateCount(dragon);
               
               return (
                 <div
                   key={dragon.id}
                   className={`cursor-pointer transition-all ${
-                    !canSelect 
-                      ? 'opacity-50 pointer-events-none' 
+                    activePairIndex !== null
+                      ? (!canAssign ? 'opacity-50 pointer-events-none' : 'hover:scale-105')
                       : 'hover:scale-105'
                   }`}
-                  onClick={() => canSelect && handleDragonSelect(dragon)}
+                  onClick={() => canAssign && handleDragonSelect(dragon)}
                 >
                   <CardDisplay card={dragon} showSellButton={false} />
                   <div className="text-center text-xs text-game-accent mt-1">
@@ -216,9 +243,15 @@ export const DeckSelection = ({
                       ? 'Выбран' 
                       : activePairIndex !== null
                         ? selectedPairs[activePairIndex]?.hero.faction
-                        : 'Доступен'
-                    }
+                        : 'Просмотр'}
                   </div>
+                  {activePairIndex === null && (
+                    <div className="mt-2 flex justify-center">
+                      <Button size="sm" variant="secondary" onClick={() => handleDragonUpgrade(dragon)} disabled={dupCount < 2}>
+                        Улучшить {dupCount >= 2 ? '(2x)' : ''}
+                      </Button>
+                    </div>
+                  )}
                 </div>
               );
             })}
