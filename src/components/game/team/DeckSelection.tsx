@@ -12,6 +12,8 @@ import { CardDisplay } from "../CardDisplay";
 import { useToast } from "@/hooks/use-toast";
 import { useGameData } from "@/hooks/useGameData";
 import { upgradeCard } from "@/utils/cardUtils";
+import { useDragonEggs } from "@/contexts/DragonEggContext";
+import { Item } from "@/types/inventory";
 
 interface DeckSelectionProps {
   cards: CardType[];
@@ -35,7 +37,8 @@ export const DeckSelection = ({
   const [showDragonDeck, setShowDragonDeck] = useState(false);
   const [activePairIndex, setActivePairIndex] = useState<number | null>(null);
   const { gameData, updateGameData } = useGameData();
-  const { toast } = useToast();
+const { toast } = useToast();
+  const { addEgg } = useDragonEggs();
 
   const heroes = cards.filter(card => card.type === 'character');
   const dragons = cards.filter(card => card.type === 'pet');
@@ -89,23 +92,55 @@ export const DeckSelection = ({
     return cards.filter(c => c.type === 'pet' && c.name === dragon.name && c.rarity === dragon.rarity).length;
   };
 
-  const handleDragonUpgrade = async (dragon: CardType) => {
+const handleDragonUpgrade = async (dragon: CardType) => {
     const duplicates = cards.filter(c => c.type === 'pet' && c.name === dragon.name && c.rarity === dragon.rarity);
     if (duplicates.length < 2) {
       toast({ title: 'Недостаточно карт', description: 'Нужно 2 одинаковых дракона для улучшения', variant: 'destructive' });
       return;
     }
-    const base1 = duplicates[0];
-    const base2 = duplicates[1];
-    const upgraded = upgradeCard(base1 as any, base2 as any);
-    if (!upgraded) {
+
+    // Попытка получить улучшенную карту (и проверка на макс. уровень)
+    const testUpgrade = upgradeCard(duplicates[0] as any, duplicates[1] as any);
+    if (!testUpgrade) {
       toast({ title: 'Невозможно улучшить', description: 'Эти карты нельзя улучшить', variant: 'destructive' });
       return;
     }
-    const newCards = gameData.cards.filter(c => c.id !== base1.id && c.id !== base2.id);
-    newCards.push(upgraded as any);
-    await updateGameData({ cards: newCards });
-    toast({ title: 'Дракон улучшен', description: `${dragon.name} повышен в редкости` });
+
+    // Удаляем две использованные карты из локального списка карт (localStorage — источник правды)
+    const saved = localStorage.getItem('gameCards');
+    const currentCards: CardType[] = saved ? JSON.parse(saved) : cards;
+    const idsToRemove = new Set([duplicates[0].id, duplicates[1].id]);
+    const updatedCards = currentCards.filter(c => !idsToRemove.has(c.id));
+    localStorage.setItem('gameCards', JSON.stringify(updatedCards));
+    const cardsEvent = new CustomEvent('cardsUpdate', { detail: { cards: updatedCards } });
+    window.dispatchEvent(cardsEvent);
+
+    // Создаем яйцо дракона, которое вылупится в улучшенного питомца
+    const eggId = Date.now().toString();
+    const createdAt = new Date().toISOString();
+    const faction = (testUpgrade as any).faction || duplicates[0].faction || 'Каледор';
+
+    addEgg({
+      id: eggId,
+      petName: testUpgrade.name,
+      rarity: testUpgrade.rarity,
+      createdAt,
+      faction,
+    }, faction);
+
+    const eggItem: Item = {
+      id: eggId,
+      name: 'Яйцо дракона',
+      type: 'dragon_egg',
+      value: testUpgrade.rarity,
+      description: `${testUpgrade.name}`,
+      image: '/lovable-uploads/8a069dd4-47ad-496c-a248-f796257f9233.png',
+      petName: testUpgrade.name,
+    };
+
+    await updateGameData({ inventory: [ ...(gameData.inventory || []), eggItem ] });
+
+    toast({ title: 'Создано яйцо дракона', description: 'Питомец вылупится после инкубации' });
   };
   return (
     <div className="space-y-6">
