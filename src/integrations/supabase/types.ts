@@ -27,6 +27,7 @@ export type Database = {
           initialized: boolean
           inventory: Json | null
           marketplace_listings: Json | null
+          selected_team: Json | null
           social_quests: Json | null
           updated_at: string
           user_id: string
@@ -43,6 +44,7 @@ export type Database = {
           initialized?: boolean
           inventory?: Json | null
           marketplace_listings?: Json | null
+          selected_team?: Json | null
           social_quests?: Json | null
           updated_at?: string
           user_id: string
@@ -59,6 +61,7 @@ export type Database = {
           initialized?: boolean
           inventory?: Json | null
           marketplace_listings?: Json | null
+          selected_team?: Json | null
           social_quests?: Json | null
           updated_at?: string
           user_id?: string
