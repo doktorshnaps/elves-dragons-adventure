@@ -62,7 +62,7 @@ const { toast } = useToast();
     if (selectedPairs.length >= 5) return;
     
     onPairSelect(hero);
-    setShowHeroDeck(false);
+setShowHeroDeck(false);
   };
 
   const handleDragonSelect = (dragon: CardType) => {
@@ -121,7 +121,7 @@ const handleDragonUpgrade = async (dragon: CardType) => {
       const cardsEvent = new CustomEvent('cardsUpdate', { detail: { cards: newCards } });
       window.dispatchEvent(cardsEvent);
 
-      // Создаём яйцо (улучшение произойдёт после инкубации)
+// Создаём яйцо (улучшение произойдёт после инкубации)
       const eggId = Date.now().toString();
       const createdAt = new Date().toISOString();
       const faction = (upgraded as any).faction || dragon.faction || 'Каледор';
@@ -132,11 +132,12 @@ const handleDragonUpgrade = async (dragon: CardType) => {
         rarity: upgraded.rarity,
         createdAt,
         faction,
+        incubationStarted: false,
       }, faction);
 
       const eggItem: Item = {
         id: eggId,
-        name: 'Яйцо дракона',
+        name: `${upgraded.name} — Яйцо дракона`,
         type: 'dragon_egg',
         value: upgraded.rarity,
         description: `${upgraded.name}`,

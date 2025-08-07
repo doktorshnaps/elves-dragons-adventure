@@ -44,12 +44,13 @@ export const useCardUpgrade = (
       const eggId = Date.now().toString();
       const createdAt = new Date().toISOString();
 
-      addEgg({
+addEgg({
         id: eggId,
         petName: upgradedCard.name,
         rarity: upgradedCard.rarity,
         createdAt,
-        faction: upgradedCard.faction || 'Каледор'
+        faction: upgradedCard.faction || 'Каледор',
+        incubationStarted: false,
       }, upgradedCard.faction || 'Каледор');
 
       const eggItem: Item = {

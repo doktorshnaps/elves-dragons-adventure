@@ -12,7 +12,7 @@ interface DragonEggsListProps {
 
 export const DragonEggsList = ({ eggs }: DragonEggsListProps) => {
   const { toast } = useToast();
-  const { removeEgg } = useDragonEggs();
+  const { removeEgg, startIncubation } = useDragonEggs();
   const { gameData, updateGameData } = useGameData();
 
   const handleHatch = async (egg: DragonEgg) => {
@@ -110,15 +110,24 @@ export const DragonEggsList = ({ eggs }: DragonEggsListProps) => {
                 <div className="text-[7px] sm:text-[10px] md:text-[11px] font-medium text-game-accent mb-1">
                   {egg.petName}
                 </div>
-                <div className="text-[6px] sm:text-[8px] md:text-[10px] text-gray-400">
+<div className="text-[6px] sm:text-[8px] md:text-[10px] text-gray-400">
                   Редкость: {egg.rarity}
                 </div>
-                <DragonEggTimer
-                  rarity={egg.rarity as Rarity}
-                  petName={egg.petName}
-                  createdAt={egg.createdAt}
-                  onHatch={() => handleHatch(egg)}
-                />
+                {!egg.incubationStarted ? (
+                  <button
+                    className="mt-1 text-[8px] sm:text-[10px] md:text-[12px] px-2 py-1 rounded bg-game-primary/80 hover:bg-game-primary text-white hover-scale"
+                    onClick={async () => { await startIncubation(egg.id); toast({ title: 'Инкубация начата', description: `${egg.petName} (${egg.rarity}★)` }); }}
+                  >
+                    Начать инкубацию
+                  </button>
+                ) : (
+                  <DragonEggTimer
+                    rarity={egg.rarity as Rarity}
+                    petName={egg.petName}
+                    createdAt={egg.createdAt}
+                    onHatch={() => handleHatch(egg)}
+                  />
+                )}
               </div>
             </div>
           </UICard>
