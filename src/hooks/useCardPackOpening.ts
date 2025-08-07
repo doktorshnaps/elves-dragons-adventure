@@ -22,7 +22,20 @@ export const useCardPackOpening = () => {
       const newCard = generateCard(Math.random() > 0.5 ? 'character' : 'pet');
       
       // Удаляем колоду из инвентаря и добавляем карту
-      const updatedInventory = gameData.inventory?.filter(item => item.id !== packItem.id) || [];
+      const updatedInventory = (() => {
+        const inv = [...(gameData.inventory || [])];
+        const idx = inv.findIndex(item => item.id === packItem.id);
+        if (idx !== -1) {
+          inv.splice(idx, 1);
+          return inv;
+        }
+        // Fallback: remove one matching pack if IDs are not unique
+        const sameIndex = inv.findIndex(item => item.type === packItem.type && item.name === packItem.name);
+        if (sameIndex !== -1) {
+          inv.splice(sameIndex, 1);
+        }
+        return inv;
+      })();
       const updatedCards = [...gameData.cards, newCard];
       
       await updateGameData({

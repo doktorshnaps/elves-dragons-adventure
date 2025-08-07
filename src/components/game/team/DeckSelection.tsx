@@ -30,10 +30,10 @@ export const DeckSelection = ({
 }: DeckSelectionProps) => {
   const [showHeroDeck, setShowHeroDeck] = useState(false);
   const [showDragonDeck, setShowDragonDeck] = useState(false);
+  const [activePairIndex, setActivePairIndex] = useState<number | null>(null);
 
   const heroes = cards.filter(card => card.type === 'character');
   const dragons = cards.filter(card => card.type === 'pet');
-
   const isHeroSelected = (hero: CardType) => {
     return selectedPairs.some(pair => pair.hero.id === hero.id);
   };
@@ -52,13 +52,23 @@ export const DeckSelection = ({
   const handleHeroSelect = (hero: CardType) => {
     if (selectedPairs.length >= 5) return;
     
-    const availableDragons = getAvailableDragons(hero.faction);
-    onPairSelect(hero, availableDragons[0]);
+    onPairSelect(hero);
     setShowHeroDeck(false);
   };
 
   const handleDragonSelect = (dragon: CardType) => {
-    // Dragons can only be selected if there's a hero of the same faction
+    if (activePairIndex !== null) {
+      const pair = selectedPairs[activePairIndex];
+      if (pair && !pair.dragon && pair.hero.faction === dragon.faction) {
+        onPairRemove(activePairIndex);
+        onPairSelect(pair.hero, dragon);
+      }
+      setActivePairIndex(null);
+      setShowDragonDeck(false);
+      return;
+    }
+
+    // Fallback: select for any available hero without a dragon of the same faction
     const heroWithSameFaction = selectedPairs.find(pair => 
       pair.hero.faction === dragon.faction && !pair.dragon
     );
@@ -96,9 +106,13 @@ export const DeckSelection = ({
                         {pair.dragon ? (
                           <CardDisplay card={pair.dragon} showSellButton={false} />
                         ) : (
-                          <div className="w-full h-20 border border-dashed border-game-accent/30 rounded flex items-center justify-center text-xs text-game-accent/50">
-                            Нет дракона
-                          </div>
+                          <button
+                            type="button"
+                            className="w-full h-20 border border-dashed border-game-accent/30 rounded flex items-center justify-center text-xs text-game-accent/70 hover:text-game-accent hover:border-game-accent transition"
+                            onClick={() => { setActivePairIndex(index); setShowDragonDeck(true); }}
+                          >
+                            Выбрать дракона
+                          </button>
                         )}
                       </div>
                     </div>
@@ -174,34 +188,45 @@ export const DeckSelection = ({
             <DialogTitle className="text-game-accent">Выберите дракона</DialogTitle>
           </DialogHeader>
           <div className="grid grid-cols-4 sm:grid-cols-6 gap-3 overflow-y-auto p-4">
-            {dragons.map((dragon) => {
-              const canSelect = selectedPairs.some(pair => 
-                pair.hero.faction === dragon.faction && !pair.dragon
-              );
+            {(activePairIndex !== null
+              ? getAvailableDragons(selectedPairs[activePairIndex]?.hero.faction)
+              : dragons
+            ).map((dragon) => {
               const isSelected = isDragonSelected(dragon);
+              const canSelect = activePairIndex !== null
+                ? !!selectedPairs[activePairIndex] &&
+                  !selectedPairs[activePairIndex]?.dragon &&
+                  selectedPairs[activePairIndex]?.hero.faction === dragon.faction &&
+                  !isSelected
+                : selectedPairs.some(pair => pair.hero.faction === dragon.faction && !pair.dragon) && !isSelected;
               
               return (
                 <div
                   key={dragon.id}
                   className={`cursor-pointer transition-all ${
-                    !canSelect || isSelected 
+                    !canSelect 
                       ? 'opacity-50 pointer-events-none' 
                       : 'hover:scale-105'
                   }`}
-                  onClick={() => canSelect && !isSelected && handleDragonSelect(dragon)}
+                  onClick={() => canSelect && handleDragonSelect(dragon)}
                 >
                   <CardDisplay card={dragon} showSellButton={false} />
                   <div className="text-center text-xs text-game-accent mt-1">
                     {isSelected 
                       ? 'Выбран' 
-                      : canSelect 
-                        ? dragon.faction 
-                        : 'Нет героя'
+                      : activePairIndex !== null
+                        ? selectedPairs[activePairIndex]?.hero.faction
+                        : 'Доступен'
                     }
                   </div>
                 </div>
               );
             })}
+            {activePairIndex !== null && getAvailableDragons(selectedPairs[activePairIndex]?.hero.faction).length === 0 && (
+              <div className="col-span-full text-center text-game-accent/60 text-sm">
+                Нет доступных драконов для выбранного героя
+              </div>
+            )}
           </div>
         </DialogContent>
       </Dialog>
