@@ -78,6 +78,9 @@ export const Marketplace = () => {
         .eq('user_id', uid)
         .maybeSingle();
       if (gd) {
+        // Sync local cache to avoid stale overwrites from listeners polling localStorage
+        localStorage.setItem('gameInventory', JSON.stringify(gd.inventory || []));
+        localStorage.setItem('gameCards', JSON.stringify(gd.cards || []));
         const inventoryEvent = new CustomEvent('inventoryUpdate', { detail: { inventory: gd.inventory || [] } });
         window.dispatchEvent(inventoryEvent);
         const cardsEvent = new CustomEvent('cardsUpdate', { detail: { cards: gd.cards || [] } });
@@ -115,6 +118,9 @@ export const Marketplace = () => {
       .eq('user_id', userId)
       .maybeSingle();
     if (gd) {
+      // Keep localStorage in sync so UI listeners relying on it stay correct
+      localStorage.setItem('gameInventory', JSON.stringify(gd.inventory || []));
+      localStorage.setItem('gameCards', JSON.stringify(gd.cards || []));
       const inventoryEvent = new CustomEvent('inventoryUpdate', { detail: { inventory: gd.inventory || [] } });
       window.dispatchEvent(inventoryEvent);
       const cardsEvent = new CustomEvent('cardsUpdate', { detail: { cards: gd.cards || [] } });
@@ -174,6 +180,9 @@ export const Marketplace = () => {
         .eq('user_id', userId)
         .maybeSingle();
       if (!gdErr && gd) {
+        // Sync local caches for stability with polling listeners
+        localStorage.setItem('gameInventory', JSON.stringify(gd.inventory || []));
+        localStorage.setItem('gameCards', JSON.stringify(gd.cards || []));
         const inventoryEvent = new CustomEvent('inventoryUpdate', { detail: { inventory: gd.inventory || [] } });
         window.dispatchEvent(inventoryEvent);
         const cardsEvent = new CustomEvent('cardsUpdate', { detail: { cards: gd.cards || [] } });
