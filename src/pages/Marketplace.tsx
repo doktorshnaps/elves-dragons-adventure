@@ -36,7 +36,8 @@ export const Marketplace = () => {
 
     const channel = supabase
       .channel('public:marketplace_listings')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'marketplace_listings' }, () => load())
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'marketplace_listings' }, () => load())
+      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'marketplace_listings' }, () => load())
       .subscribe();
 
     return () => {
@@ -66,35 +67,63 @@ export const Marketplace = () => {
       title: "Предмет выставлен на продажу",
       description: `${listing.item.name} выставлен за ${listing.price} ELL`,
     });
+
+    // Обновим локальные состояния из БД
+    const { data: userRes2 } = await supabase.auth.getUser();
+    const uid = userRes2?.user?.id;
+    if (uid) {
+      const { data: gd } = await supabase
+        .from('game_data')
+        .select('inventory,cards')
+        .eq('user_id', uid)
+        .maybeSingle();
+      if (gd) {
+        const inventoryEvent = new CustomEvent('inventoryUpdate', { detail: { inventory: gd.inventory || [] } });
+        window.dispatchEvent(inventoryEvent);
+        const cardsEvent = new CustomEvent('cardsUpdate', { detail: { cards: gd.cards || [] } });
+        window.dispatchEvent(cardsEvent);
+      }
+    }
   };
 
   const handleCancelListing = async (listing: MarketplaceListing) => {
-    await supabase
-      .from('marketplace_listings')
-      .update({ status: 'cancelled' })
-      .eq('id', listing.id);
+    const { data: userRes } = await supabase.auth.getUser();
+    const userId = userRes?.user?.id;
+    if (!userId) {
+      toast({ title: 'Требуется вход', description: 'Войдите, чтобы отменить объявление', variant: 'destructive' });
+      return;
+    }
 
-    // Возвращаем предмет в инвентарь/карты локально, как раньше
+    const { error } = await (supabase as any).rpc('cancel_marketplace_listing', {
+      p_listing_id: listing.id,
+      p_requester_id: userId,
+    });
+
+    if (error) {
+      toast({ title: 'Не удалось отменить объявление', description: error.message, variant: 'destructive' });
+      return;
+    }
+
+    // Уберём объявление из списка (оно уже не активно)
     const newListings = listings.filter(l => l.id !== listing.id);
     setListings(newListings);
 
-    if (listing.type === 'item') {
-      const currentInventory = JSON.parse(localStorage.getItem('gameInventory') || '[]');
-      const newInventory = [...currentInventory, listing.item];
-      localStorage.setItem('gameInventory', JSON.stringify(newInventory));
-      const inventoryEvent = new CustomEvent('inventoryUpdate', { detail: { inventory: newInventory } });
+    // Обновим локальные состояния инвентаря и колоды из БД
+    const { data: gd } = await supabase
+      .from('game_data')
+      .select('inventory,cards')
+      .eq('user_id', userId)
+      .maybeSingle();
+    if (gd) {
+      const inventoryEvent = new CustomEvent('inventoryUpdate', { detail: { inventory: gd.inventory || [] } });
       window.dispatchEvent(inventoryEvent);
-    } else {
-      const currentCards = JSON.parse(localStorage.getItem('gameCards') || '[]');
-      const newCards = [...currentCards, listing.item];
-      localStorage.setItem('gameCards', JSON.stringify(newCards));
-      const cardsEvent = new CustomEvent('cardsUpdate', { detail: { cards: newCards } });
+      const cardsEvent = new CustomEvent('cardsUpdate', { detail: { cards: gd.cards || [] } });
       window.dispatchEvent(cardsEvent);
     }
 
     toast({
-      title: "Объявление отменено",
-      description: `${listing.item.name} возвращен в ваш инвентарь`,
+      title: 'Объявление отменено',
+      description: `${listing.item.name} возвращен(а) в ваш инвентарь/колоду`,
     });
   };
 

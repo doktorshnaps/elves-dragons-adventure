@@ -136,6 +136,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      cancel_marketplace_listing: {
+        Args: { p_listing_id: string; p_requester_id: string }
+        Returns: undefined
+      }
       create_marketplace_listing: {
         Args: {
           p_seller_id: string

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -7,6 +7,7 @@ import { CardDisplay } from "../CardDisplay";
 import { MarketplaceListing } from "./types";
 import { Card as CardType } from "@/types/cards";
 import { Item } from "@/types/inventory";
+import { supabase } from "@/integrations/supabase/client";
 
 interface ListingDialogProps {
   onClose: () => void;
@@ -18,8 +19,41 @@ export const ListingDialog = ({ onClose, onCreateListing }: ListingDialogProps) 
   const [price, setPrice] = useState('');
   const [selectedItem, setSelectedItem] = useState<CardType | Item | null>(null);
 
-  const cards = JSON.parse(localStorage.getItem('gameCards') || '[]');
-  const inventory = JSON.parse(localStorage.getItem('gameInventory') || '[]');
+  useEffect(() => {
+    const load = async () => {
+      try {
+        const { data: userRes } = await supabase.auth.getUser();
+        const userId = userRes?.user?.id;
+        if (!userId) return;
+        const { data, error } = await supabase
+          .from('game_data')
+          .select('cards, inventory, selected_team')
+          .eq('user_id', userId)
+          .maybeSingle();
+        if (!error && data) {
+          const teamIds = new Set<string>();
+          const st = (data.selected_team as any[]) || [];
+          st.forEach((slot: any) => {
+            const heroId = slot?.hero?.id || slot?.hero?.id;
+            const dragonId = slot?.dragon?.id || slot?.dragon?.id;
+            if (heroId) teamIds.add(heroId);
+            if (dragonId) teamIds.add(dragonId);
+          });
+          const allCards: CardType[] = (data.cards as any[]) || [];
+          const filteredCards = allCards.filter((c) => !teamIds.has(c.id));
+          setCards(filteredCards);
+          setInventory(((data.inventory as any[]) || []) as Item[]);
+        }
+      } finally {
+        setLoading(false);
+      }
+    };
+    load();
+  }, []);
+
+  const [cards, setCards] = useState<CardType[]>([]);
+  const [inventory, setInventory] = useState<Item[]>([]);
+  const [loading, setLoading] = useState(true);
 
   const handleCreate = () => {
     if (!selectedItem || !price) return;
@@ -32,22 +66,6 @@ export const ListingDialog = ({ onClose, onCreateListing }: ListingDialogProps) 
       sellerId: 'current-user',
       createdAt: new Date().toISOString(),
     };
-
-    if (selectedType === 'card') {
-      const newCards = cards.filter((c: CardType) => c.id !== selectedItem.id);
-      localStorage.setItem('gameCards', JSON.stringify(newCards));
-      const cardsEvent = new CustomEvent('cardsUpdate', { 
-        detail: { cards: newCards }
-      });
-      window.dispatchEvent(cardsEvent);
-    } else {
-      const newInventory = inventory.filter((i: Item) => i.id !== selectedItem.id);
-      localStorage.setItem('gameInventory', JSON.stringify(newInventory));
-      const inventoryEvent = new CustomEvent('inventoryUpdate', { 
-        detail: { inventory: newInventory }
-      });
-      window.dispatchEvent(inventoryEvent);
-    }
 
     onCreateListing(listing);
   };
@@ -137,7 +155,7 @@ export const ListingDialog = ({ onClose, onCreateListing }: ListingDialogProps) 
 
             <Button
               onClick={handleCreate}
-              disabled={!selectedItem || !price}
+              disabled={!selectedItem || !price || loading}
               className="w-full bg-game-accent hover:bg-game-accent/80"
               size="sm"
             >
