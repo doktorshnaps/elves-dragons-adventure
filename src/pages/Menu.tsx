@@ -7,21 +7,30 @@ import { useGameData } from "@/hooks/useGameData";
 import { useGameInitialization } from "@/components/game/initialization/useGameInitialization";
 import { FirstTimePackDialog } from "@/components/game/initialization/FirstTimePackDialog";
 import { useState, useEffect } from "react";
-
 export const Menu = () => {
   const navigate = useNavigate();
-  const { signOut } = useAuth();
-  const { toast } = useToast();
-  const { gameData, updateGameData } = useGameData();
+  const {
+    signOut
+  } = useAuth();
+  const {
+    toast
+  } = useToast();
+  const {
+    gameData,
+    updateGameData
+  } = useGameData();
   const [cards, setCards] = useState(() => {
     const savedCards = localStorage.getItem('gameCards');
     return savedCards ? JSON.parse(savedCards) : [];
   });
-
-  const { showFirstTimePack, setShowFirstTimePack } = useGameInitialization(setCards);
-
+  const {
+    showFirstTimePack,
+    setShowFirstTimePack
+  } = useGameInitialization(setCards);
   const handleSignOut = async () => {
-    const { error } = await signOut();
+    const {
+      error
+    } = await signOut();
     if (error) {
       toast({
         title: "Ошибка выхода",
@@ -39,28 +48,23 @@ export const Menu = () => {
 
   // Слушаем обновления карт
   useEffect(() => {
-    const handleCardsUpdate = (e: CustomEvent<{ cards: any[] }>) => {
+    const handleCardsUpdate = (e: CustomEvent<{
+      cards: any[];
+    }>) => {
       setCards(e.detail.cards);
     };
-
     window.addEventListener('cardsUpdate', handleCardsUpdate as EventListener);
-
     return () => {
       window.removeEventListener('cardsUpdate', handleCardsUpdate as EventListener);
     };
   }, []);
-
-  return (
-    <div 
-      className="min-h-screen p-4 bg-cover bg-center bg-no-repeat"
-      style={{
-        backgroundImage: 'url("/lovable-uploads/5c84c1ed-e8af-4eb6-8495-c82bc7d6cd65.png")',
-        backgroundSize: 'cover',
-        backgroundPosition: 'center',
-        backgroundRepeat: 'no-repeat'
-      }}
-    >
-      <div className="absolute inset-0 bg-black/30" />
+  return <div className="min-h-screen p-4 bg-cover bg-center bg-no-repeat" style={{
+    backgroundImage: 'url("/lovable-uploads/5c84c1ed-e8af-4eb6-8495-c82bc7d6cd65.png")',
+    backgroundSize: 'cover',
+    backgroundPosition: 'center',
+    backgroundRepeat: 'no-repeat'
+  }}>
+      <div className="absolute inset-0 bg-black/30 mx-0 my-0 py-0 px-0" />
       
       {/* Balance Display */}
       <div className="relative z-10 max-w-4xl mx-auto flex justify-center mb-4">
@@ -72,84 +76,48 @@ export const Menu = () => {
         </div>
       </div>
       
-      <div className="relative z-10 max-w-4xl mx-auto grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 mt-8">
-        <Button
-          variant="outline"
-          className="h-24 bg-game-surface/80 border-game-accent text-game-accent hover:bg-game-surface flex flex-col items-center justify-center gap-2"
-          onClick={() => navigate('/dungeons')}
-        >
+      <div className="relative z-10 max-w-4xl mx-auto grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 mt-8 my-[37px]">
+        <Button variant="outline" className="h-24 bg-game-surface/80 border-game-accent text-game-accent hover:bg-game-surface flex flex-col items-center justify-center gap-2" onClick={() => navigate('/dungeons')}>
           <Swords className="w-8 h-8" />
           <span>Подземелье</span>
         </Button>
 
-        <Button
-          variant="outline"
-          className="h-24 bg-game-surface/80 border-game-accent text-game-accent hover:bg-game-surface flex flex-col items-center justify-center gap-2"
-          onClick={() => navigate('/shop')}
-        >
+        <Button variant="outline" className="h-24 bg-game-surface/80 border-game-accent text-game-accent hover:bg-game-surface flex flex-col items-center justify-center gap-2" onClick={() => navigate('/shop')}>
           <ShoppingCart className="w-8 h-8" />
           <span>Магический магазин</span>
         </Button>
 
-        <Button
-          variant="outline"
-          className="h-24 bg-game-surface/80 border-game-accent text-game-accent hover:bg-game-surface flex flex-col items-center justify-center gap-2"
-          onClick={() => navigate('/marketplace')}
-        >
+        <Button variant="outline" className="h-24 bg-game-surface/80 border-game-accent text-game-accent hover:bg-game-surface flex flex-col items-center justify-center gap-2" onClick={() => navigate('/marketplace')}>
           <Store className="w-8 h-8" />
           <span>Торговая площадка</span>
         </Button>
 
-        <Button
-          variant="outline"
-          className="h-24 bg-game-surface/80 border-game-accent text-game-accent hover:bg-game-surface flex flex-col items-center justify-center gap-2"
-          onClick={() => navigate('/grimoire')}
-        >
+        <Button variant="outline" className="h-24 bg-game-surface/80 border-game-accent text-game-accent hover:bg-game-surface flex flex-col items-center justify-center gap-2" onClick={() => navigate('/grimoire')}>
           <BookOpen className="w-8 h-8" />
           <span>Гримуар</span>
         </Button>
 
-        <Button
-          variant="outline"
-          className="h-24 bg-game-surface/80 border-game-accent text-game-accent hover:bg-game-surface flex flex-col items-center justify-center gap-2"
-          onClick={() => navigate('/equipment')}
-        >
+        <Button variant="outline" className="h-24 bg-game-surface/80 border-game-accent text-game-accent hover:bg-game-surface flex flex-col items-center justify-center gap-2" onClick={() => navigate('/equipment')}>
           <Shield className="w-8 h-8" />
-          <span>Снаряжение</span>
+          <span>Инвентарь</span>
         </Button>
 
-        <Button
-          variant="outline"
-          className="h-24 bg-game-surface/80 border-game-accent text-game-accent hover:bg-game-surface flex flex-col items-center justify-center gap-2"
-          onClick={() => navigate('/team')}
-        >
+        <Button variant="outline" className="h-24 bg-game-surface/80 border-game-accent text-game-accent hover:bg-game-surface flex flex-col items-center justify-center gap-2" onClick={() => navigate('/team')}>
           <Users className="w-8 h-8" />
           <span>Команда</span>
         </Button>
 
-        <Button
-          variant="outline"
-          className="h-24 bg-game-surface/80 border-game-accent text-game-accent hover:bg-game-surface flex flex-col items-center justify-center gap-2"
-          onClick={() => navigate('/quest')}
-        >
+        <Button variant="outline" className="h-24 bg-game-surface/80 border-game-accent text-game-accent hover:bg-game-surface flex flex-col items-center justify-center gap-2" onClick={() => navigate('/quest')}>
           <DollarSign className="w-8 h-8" />
           <span>Бабло</span>
         </Button>
 
-        <Button
-          variant="outline"
-          className="h-24 bg-game-surface/80 border-red-500 text-red-500 hover:bg-red-500/20 flex flex-col items-center justify-center gap-2"
-          onClick={handleSignOut}
-        >
+        <Button variant="outline" className="h-24 bg-game-surface/80 border-red-500 text-red-500 hover:bg-red-500/20 flex flex-col items-center justify-center gap-2" onClick={handleSignOut}>
           <LogOut className="w-8 h-8" />
           <span>Выход</span>
         </Button>
       </div>
 
-      <FirstTimePackDialog
-        isOpen={showFirstTimePack}
-        onClose={() => setShowFirstTimePack(false)}
-      />
-    </div>
-  );
+      <FirstTimePackDialog isOpen={showFirstTimePack} onClose={() => setShowFirstTimePack(false)} />
+    </div>;
 };
