@@ -10,7 +10,7 @@ import { supabase } from "@/integrations/supabase/client";
 
 export const Marketplace = () => {
   const [showListingDialog, setShowListingDialog] = useState(false);
-  const { balance } = useBalanceState();
+  const { balance, updateBalance } = useBalanceState();
   const { toast } = useToast();
   const [listings, setListings] = useState<MarketplaceListing[]>([]);
   useEffect(() => {
@@ -127,6 +127,9 @@ export const Marketplace = () => {
         toast({ title: 'Ошибка покупки', description: error.message, variant: 'destructive' });
         return;
       }
+  
+      // Обновим баланс локально
+      await updateBalance(balance - listing.price);
   
       // Уберём объявление локально, realtime синхронизирует остальное
       setListings(prev => prev.filter(l => l.id !== listing.id));
