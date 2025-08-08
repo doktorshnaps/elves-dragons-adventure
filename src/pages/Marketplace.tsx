@@ -8,13 +8,16 @@ import { useBalanceState } from "@/hooks/useBalanceState";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useGameData } from "@/hooks/useGameData";
+import { Card as CardType } from "@/types/cards";
+import { Item } from "@/types/inventory";
+
 
 export const Marketplace = () => {
   const [showListingDialog, setShowListingDialog] = useState(false);
   const { balance, updateBalance } = useBalanceState();
   const { toast } = useToast();
   const [listings, setListings] = useState<MarketplaceListing[]>([]);
-  const { loadGameData } = useGameData();
+  const { loadGameData, updateGameData } = useGameData();
   useEffect(() => {
     const load = async () => {
       const { data, error } = await supabase
@@ -181,6 +184,55 @@ export const Marketplace = () => {
         .select('inventory,cards')
         .eq('user_id', userId)
         .maybeSingle();
+
+      // Хэлпер: убедиться, что покупка отразилась (повторная проверка + безопасный патч)
+      const ensureApplied = async (snapshot: any | null) => {
+        const purchasedId = (listing.item as any)?.id;
+        if (!purchasedId) return;
+
+        if (listing.type === 'card') {
+          const cards0 = ((snapshot?.cards as any[]) || []);
+          let has = cards0.some((c: any) => c?.id === purchasedId);
+          if (!has) {
+            await new Promise(r => setTimeout(r, 300));
+            const { data: gd2 } = await supabase
+              .from('game_data')
+              .select('inventory,cards')
+              .eq('user_id', userId)
+              .maybeSingle();
+            const cards1 = ((gd2?.cards as any[]) || []);
+            has = cards1.some((c: any) => c?.id === purchasedId);
+            if (!has) {
+              console.warn('[Marketplace] Card missing after purchase, patching locally', { purchasedId, listingId: listing.id });
+              const patched = [...cards1, listing.item as any];
+              await updateGameData({ cards: patched });
+              localStorage.setItem('gameCards', JSON.stringify(patched));
+              window.dispatchEvent(new CustomEvent('cardsUpdate', { detail: { cards: patched } }));
+            }
+          }
+        } else {
+          const inv0 = ((snapshot?.inventory as any[]) || []);
+          let has = inv0.some((it: any) => it?.id === purchasedId);
+          if (!has) {
+            await new Promise(r => setTimeout(r, 300));
+            const { data: gd2 } = await supabase
+              .from('game_data')
+              .select('inventory,cards')
+              .eq('user_id', userId)
+              .maybeSingle();
+            const inv1 = ((gd2?.inventory as any[]) || []);
+            has = inv1.some((it: any) => it?.id === purchasedId);
+            if (!has) {
+              console.warn('[Marketplace] Item missing after purchase, patching locally', { purchasedId, listingId: listing.id });
+              const patched = [...inv1, listing.item as any];
+              await updateGameData({ inventory: patched as any });
+              localStorage.setItem('gameInventory', JSON.stringify(patched));
+              window.dispatchEvent(new CustomEvent('inventoryUpdate', { detail: { inventory: patched } }));
+            }
+          }
+        }
+      };
+
       if (!gdErr && gd) {
         // Sync local caches for stability with polling listeners
         localStorage.setItem('gameInventory', JSON.stringify(gd.inventory || []));
@@ -192,6 +244,7 @@ export const Marketplace = () => {
         window.dispatchEvent(inventoryEvent);
         const cardsEvent = new CustomEvent('cardsUpdate', { detail: { cards: gd.cards || [] } });
         window.dispatchEvent(cardsEvent);
+        await ensureApplied(gd);
         // Force global state reload to eliminate any stale caches
         await loadGameData();
       }
