@@ -7,6 +7,7 @@ export const TeamCards = () => {
     selectedPairs,
     handlePairSelect,
     handlePairRemove,
+    handleAssignDragon,
     getSelectedTeamStats
   } = useTeamSelection();
 
@@ -18,6 +19,7 @@ export const TeamCards = () => {
         selectedPairs={selectedPairs}
         onPairSelect={handlePairSelect}
         onPairRemove={handlePairRemove}
+        onPairAssignDragon={handleAssignDragon}
       />
       
       {/* Selected Team Stats */}

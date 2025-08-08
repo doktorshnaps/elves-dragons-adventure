@@ -20,6 +20,7 @@ interface DeckSelectionProps {
   selectedPairs: TeamPair[];
   onPairSelect: (hero: CardType, dragon?: CardType) => void;
   onPairRemove: (index: number) => void;
+  onPairAssignDragon: (index: number, dragon: CardType) => void;
 }
 
 export interface TeamPair {
@@ -31,7 +32,8 @@ export const DeckSelection = ({
   cards, 
   selectedPairs, 
   onPairSelect, 
-  onPairRemove 
+  onPairRemove,
+  onPairAssignDragon
 }: DeckSelectionProps) => {
   const [showHeroDeck, setShowHeroDeck] = useState(false);
   const [showDragonDeck, setShowDragonDeck] = useState(false);
@@ -68,24 +70,22 @@ setShowHeroDeck(false);
   const handleDragonSelect = (dragon: CardType) => {
     if (activePairIndex !== null) {
       const pair = selectedPairs[activePairIndex];
-      if (pair && !pair.dragon && pair.hero.faction === dragon.faction) {
-        onPairRemove(activePairIndex);
-        onPairSelect(pair.hero, dragon);
+      if (pair && pair.hero.faction === dragon.faction) {
+        onPairAssignDragon(activePairIndex, dragon);
       }
       setActivePairIndex(null);
       setShowDragonDeck(false);
       return;
     }
 
-    // Fallback: select for any available hero without a dragon of the same faction
+    // Fallback: assign to any available hero without a dragon of the same faction
     const heroWithSameFaction = selectedPairs.find(pair => 
       pair.hero.faction === dragon.faction && !pair.dragon
     );
     
     if (heroWithSameFaction) {
       const pairIndex = selectedPairs.findIndex(pair => pair === heroWithSameFaction);
-      onPairRemove(pairIndex);
-      onPairSelect(heroWithSameFaction.hero, dragon);
+      onPairAssignDragon(pairIndex, dragon);
     }
     setShowDragonDeck(false);
   };
@@ -114,14 +114,9 @@ const handleDragonUpgrade = async (dragon: CardType) => {
         return;
       }
 
-      // Удаляем 2 карты из gameData.cards и синхронизируем с localStorage
+      // Готовим новые карты и яйцо (сохраняем атомарно)
       const newCards = currentCards.filter(c => c.id !== base1.id && c.id !== base2.id);
-      await updateGameData({ cards: newCards });
-      localStorage.setItem('gameCards', JSON.stringify(newCards));
-      const cardsEvent = new CustomEvent('cardsUpdate', { detail: { cards: newCards } });
-      window.dispatchEvent(cardsEvent);
 
-// Создаём яйцо (улучшение произойдёт после инкубации)
       const eggId = Date.now().toString();
       const createdAt = new Date().toISOString();
       const faction = (upgraded as any).faction || dragon.faction || 'Каледор';
@@ -144,7 +139,12 @@ const handleDragonUpgrade = async (dragon: CardType) => {
         image: '/lovable-uploads/8a069dd4-47ad-496c-a248-f796257f9233.png',
         petName: upgraded.name,
       };
-      await updateGameData({ inventory: [ ...(gameData.inventory || []), eggItem ] });
+
+      // Сохраняем в Supabase и локально
+      await updateGameData({ cards: newCards, inventory: [ ...(gameData.inventory || []), eggItem ] });
+      localStorage.setItem('gameCards', JSON.stringify(newCards));
+      const cardsEvent = new CustomEvent('cardsUpdate', { detail: { cards: newCards } });
+      window.dispatchEvent(cardsEvent);
 
       toast({ title: 'Создано яйцо дракона', description: 'Питомец вылупится после инкубации' });
     } finally {
