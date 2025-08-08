@@ -6,6 +6,21 @@ import { TeamPair } from '@/components/game/team/DeckSelection';
 export const useTeamSelection = () => {
   const { gameData, updateGameData } = useGameData();
   const [selectedPairs, setSelectedPairs] = useState<TeamPair[]>([]);
+  const [cards, setCards] = useState<CardType[]>(() => {
+    try {
+      const saved = localStorage.getItem('gameCards');
+      return saved ? JSON.parse(saved) : (gameData.cards || []);
+    } catch {
+      return gameData.cards || [];
+    }
+  });
+
+  // Keep local cards in sync with game data
+  useEffect(() => {
+    if (gameData.cards) {
+      setCards(gameData.cards);
+    }
+  }, [gameData.cards]);
 
   // Load selected team from game data
   useEffect(() => {
@@ -13,6 +28,29 @@ export const useTeamSelection = () => {
       setSelectedPairs(gameData.selectedTeam);
     }
   }, [gameData.selectedTeam]);
+
+  // Listen for cross-app card updates and localStorage changes
+  useEffect(() => {
+    const handleCardsUpdate = (e: CustomEvent<{ cards: CardType[] }>) => {
+      if (e.detail?.cards) setCards(e.detail.cards);
+    };
+    const handleStorageChange = () => {
+      try {
+        const saved = localStorage.getItem('gameCards');
+        if (saved) setCards(JSON.parse(saved));
+      } catch {}
+    };
+
+    window.addEventListener('cardsUpdate', handleCardsUpdate as EventListener);
+    window.addEventListener('storage', handleStorageChange);
+    const interval = setInterval(handleStorageChange, 500);
+
+    return () => {
+      window.removeEventListener('cardsUpdate', handleCardsUpdate as EventListener);
+      window.removeEventListener('storage', handleStorageChange);
+      clearInterval(interval);
+    };
+  }, []);
 
   const handlePairSelect = async (hero: CardType, dragon?: CardType) => {
     if (selectedPairs.length >= 5) return;
@@ -76,7 +114,7 @@ export const useTeamSelection = () => {
   };
 
   return {
-    cards: gameData.cards,
+    cards: cards,
     selectedPairs,
     handlePairSelect,
     handlePairRemove,
