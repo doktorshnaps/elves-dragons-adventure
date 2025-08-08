@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
@@ -12,9 +12,28 @@ export const Auth = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
+  const [rememberMe, setRememberMe] = useState(false);
   const { signUp, signIn } = useAuth();
   const { toast } = useToast();
   const navigate = useNavigate();
+
+  // Prefill remembered email on mount
+  useEffect(() => {
+    const savedEmail = localStorage.getItem('rememberedEmail');
+    if (savedEmail) {
+      setEmail(savedEmail);
+      setRememberMe(true);
+    }
+  }, []);
+
+  // Keep storage in sync
+  useEffect(() => {
+    if (rememberMe) {
+      localStorage.setItem('rememberedEmail', email);
+    } else {
+      localStorage.removeItem('rememberedEmail');
+    }
+  }, [rememberMe, email]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -134,6 +153,17 @@ export const Auth = () => {
                   placeholder="Минимум 6 символов"
                   minLength={6}
                 />
+              </div>
+
+              <div className="flex items-center gap-2">
+                <input
+                  id="remember"
+                  type="checkbox"
+                  checked={rememberMe}
+                  onChange={(e) => setRememberMe(e.target.checked)}
+                  className="h-4 w-4 rounded border-purple-500/50 bg-black/50"
+                />
+                <Label htmlFor="remember" className="text-purple-200 text-sm">Запомнить меня</Label>
               </div>
 
               <Button
