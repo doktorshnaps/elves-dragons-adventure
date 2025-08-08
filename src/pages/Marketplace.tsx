@@ -10,7 +10,7 @@ import { supabase } from "@/integrations/supabase/client";
 
 export const Marketplace = () => {
   const [showListingDialog, setShowListingDialog] = useState(false);
-  const { balance, updateBalance } = useBalanceState();
+  const { balance } = useBalanceState();
   const { toast } = useToast();
   const [listings, setListings] = useState<MarketplaceListing[]>([]);
   useEffect(() => {
@@ -115,16 +115,21 @@ export const Marketplace = () => {
       return;
     }
 
-    await supabase
-      .from('marketplace_listings')
-      .update({ status: 'sold', buyer_id: userId, sold_at: new Date().toISOString() })
-      .eq('id', listing.id);
+    // Выполним атомарную покупку на сервере: списать у покупателя, начислить продавцу и пометить объявление как проданное
+    const { error } = await (supabase as any).rpc('process_marketplace_purchase', {
+      listing_id: listing.id,
+      buyer_id: userId,
+    });
 
-    // Локальные изменения как раньше
-    const newListings = listings.filter(l => l.id !== listing.id);
-    setListings(newListings);
-    updateBalance(balance - listing.price);
+    if (error) {
+      toast({ title: 'Ошибка покупки', description: error.message, variant: 'destructive' });
+      return;
+    }
 
+    // Уберём объявление из локального списка мгновенно, realtime сам перезагрузит список
+    setListings(prev => prev.filter(l => l.id !== listing.id));
+
+    // Добавим предмет покупателю локально (инвентарь/карты), чтобы UI обновился сразу
     if (listing.type === 'item') {
       const currentInventory = JSON.parse(localStorage.getItem('gameInventory') || '[]');
       const newInventory = [...currentInventory, { ...listing.item, id: Date.now() }];
@@ -139,8 +144,9 @@ export const Marketplace = () => {
       window.dispatchEvent(cardsEvent);
     }
 
+    // Баланс обновится по realtime из game_data как у покупателя, так и у продавца
     toast({
-      title: "Покупка совершена",
+      title: 'Покупка совершена',
       description: `${listing.item.name} добавлен в ваш инвентарь`,
     });
   };
