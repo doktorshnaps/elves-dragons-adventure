@@ -17,23 +17,25 @@ export const Auth = () => {
   const { toast } = useToast();
   const navigate = useNavigate();
 
-  // Prefill remembered email on mount
+  // Prefill remembered credentials on mount
   useEffect(() => {
     const savedEmail = localStorage.getItem('rememberedEmail');
-    if (savedEmail) {
-      setEmail(savedEmail);
-      setRememberMe(true);
-    }
+    const savedPassword = localStorage.getItem('rememberedPassword');
+    if (savedEmail) setEmail(savedEmail);
+    if (savedPassword) setPassword(savedPassword);
+    if (savedEmail || savedPassword) setRememberMe(true);
   }, []);
 
   // Keep storage in sync
   useEffect(() => {
     if (rememberMe) {
-      localStorage.setItem('rememberedEmail', email);
+      if (email) localStorage.setItem('rememberedEmail', email);
+      if (password) localStorage.setItem('rememberedPassword', password);
     } else {
       localStorage.removeItem('rememberedEmail');
+      localStorage.removeItem('rememberedPassword');
     }
-  }, [rememberMe, email]);
+  }, [rememberMe, email, password]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -135,6 +137,7 @@ export const Auth = () => {
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
+                  autoComplete="email"
                   required
                   className="bg-black/50 border-purple-500/50 text-white focus:border-purple-400"
                   placeholder="your@email.com"
@@ -148,6 +151,7 @@ export const Auth = () => {
                   type="password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
+                  autoComplete="current-password"
                   required
                   className="bg-black/50 border-purple-500/50 text-white focus:border-purple-400"
                   placeholder="Минимум 6 символов"
