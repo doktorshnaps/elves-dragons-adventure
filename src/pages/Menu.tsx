@@ -76,8 +76,8 @@ export const Menu = () => {
         </div>
       </div>
       
-      <div className="relative z-10 max-w-4xl grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 mt-8 my-0 py-0 mx-[200px] px-[209px]">
-        <Button variant="outline" onClick={() => navigate('/dungeons')} className="h-24 bg-game-surface/80 border-game-accent text-game-accent hover:bg-game-surface flex flex-col items-center justify-center gap-2 my-0 py-px px-[4px] mx-0">
+      <div className="relative z-10 max-w-4xl mx-auto grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 mt-8 my-[37px]">
+        <Button variant="outline" className="h-24 bg-game-surface/80 border-game-accent text-game-accent hover:bg-game-surface flex flex-col items-center justify-center gap-2" onClick={() => navigate('/dungeons')}>
           <Swords className="w-8 h-8" />
           <span>Подземелье</span>
         </Button>
