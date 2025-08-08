@@ -7,12 +7,14 @@ import { MarketplaceListing } from "@/components/game/marketplace/types";
 import { useBalanceState } from "@/hooks/useBalanceState";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { useGameData } from "@/hooks/useGameData";
 
 export const Marketplace = () => {
   const [showListingDialog, setShowListingDialog] = useState(false);
   const { balance, updateBalance } = useBalanceState();
   const { toast } = useToast();
   const [listings, setListings] = useState<MarketplaceListing[]>([]);
+  const { loadGameData } = useGameData();
   useEffect(() => {
     const load = async () => {
       const { data, error } = await supabase
@@ -183,10 +185,15 @@ export const Marketplace = () => {
         // Sync local caches for stability with polling listeners
         localStorage.setItem('gameInventory', JSON.stringify(gd.inventory || []));
         localStorage.setItem('gameCards', JSON.stringify(gd.cards || []));
+        const cardsArr = (gd.cards as any[]) || [];
+        const invArr = (gd.inventory as any[]) || [];
+        console.log('[Marketplace] Post-purchase refresh', { cardsCount: cardsArr.length, invCount: invArr.length, listingId: listing.id });
         const inventoryEvent = new CustomEvent('inventoryUpdate', { detail: { inventory: gd.inventory || [] } });
         window.dispatchEvent(inventoryEvent);
         const cardsEvent = new CustomEvent('cardsUpdate', { detail: { cards: gd.cards || [] } });
         window.dispatchEvent(cardsEvent);
+        // Force global state reload to eliminate any stale caches
+        await loadGameData();
       }
   
       toast({
