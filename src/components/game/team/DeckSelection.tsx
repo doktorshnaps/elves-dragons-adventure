@@ -171,17 +171,17 @@ export const DeckSelection = ({
           length: 5
         }, (_, index) => {
           const pair = selectedPairs[index];
-          return <div key={index} className="border border-game-accent/30 rounded-lg p-3 min-h-[200px]">
+          return <div key={index} className="relative overflow-hidden border border-game-accent/30 rounded-lg p-3 min-h-[200px]">
                 {pair ? <div className="space-y-2">
                     <div className="text-sm text-game-accent font-medium">Пара {index + 1}</div>
-                    <div className="grid grid-cols-2 gap-2">
+                    <div className="grid grid-cols-2 gap-2 items-start justify-items-center">
                       <div className="space-y-1">
                         <div className="text-xs text-game-accent/70">Герой</div>
-                        <CardDisplay card={pair.hero} showSellButton={false} />
+                        <CardDisplay card={pair.hero} showSellButton={false} className="w-[80px] h-[160px] sm:w-[100px] sm:h-[200px] md:w-[110px] md:h-[220px] lg:w-[120px] lg:h-[240px]" />
                       </div>
                       <div className="space-y-1">
                         <div className="text-xs text-game-accent/70">Дракон</div>
-                        {pair.dragon ? <CardDisplay card={pair.dragon} showSellButton={false} /> : <button type="button" onClick={() => {
+                        {pair.dragon ? <CardDisplay card={pair.dragon} showSellButton={false} className="w-[80px] h-[160px] sm:w-[100px] sm:h-[200px] md:w-[110px] md:h-[220px] lg:w-[120px] lg:h-[240px]" /> : <button type="button" onClick={() => {
                     setActivePairIndex(index);
                     setShowDragonDeck(true);
                   }} className="w-12 h-14 border border-dashed border-game-accent/30 rounded flex items-center justify-center text-xs text-game-accent/70 hover:text-game-accent hover:border-game-accent transition py-0 px-[1px] text-center mx-[44px] my-[7px]">
