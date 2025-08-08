@@ -110,6 +110,10 @@ export const Marketplace = () => {
       toast({ title: 'Требуется вход', description: 'Войдите, чтобы совершить покупку', variant: 'destructive' });
       return;
     }
+    if (listing.sellerId === userId) {
+      toast({ title: 'Нельзя купить своё объявление', description: 'Вы не можете покупать собственные товары', variant: 'destructive' });
+      return;
+    }
 
     await supabase
       .from('marketplace_listings')
