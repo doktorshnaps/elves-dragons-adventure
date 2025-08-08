@@ -95,60 +95,65 @@ export const Marketplace = () => {
   };
 
   const handleBuy = async (listing: MarketplaceListing) => {
-    if (balance < listing.price) {
-      toast({
-        title: "Недостаточно ELL",
-        description: "У вас недостаточно ELL для покупки",
-        variant: "destructive",
+    try {
+      if (balance < listing.price) {
+        toast({
+          title: "Недостаточно ELL",
+          description: "У вас недостаточно ELL для покупки",
+          variant: "destructive",
+        });
+        return;
+      }
+  
+      const { data: userRes } = await supabase.auth.getUser();
+      const userId = userRes?.user?.id;
+      if (!userId) {
+        toast({ title: 'Требуется вход', description: 'Войдите, чтобы совершить покупку', variant: 'destructive' });
+        return;
+      }
+      if (listing.sellerId === userId) {
+        toast({ title: 'Нельзя купить своё объявление', description: 'Вы не можете покупать собственные товары', variant: 'destructive' });
+        return;
+      }
+  
+      // Атомарная покупка на сервере
+      const { error } = await (supabase as any).rpc('process_marketplace_purchase', {
+        listing_id: listing.id,
+        buyer_id: userId,
       });
-      return;
+  
+      if (error) {
+        console.error('process_marketplace_purchase error:', error);
+        toast({ title: 'Ошибка покупки', description: error.message, variant: 'destructive' });
+        return;
+      }
+  
+      // Уберём объявление локально, realtime синхронизирует остальное
+      setListings(prev => prev.filter(l => l.id !== listing.id));
+  
+      // Добавим предмет покупателю локально, чтобы UI обновился сразу
+      if (listing.type === 'item') {
+        const currentInventory = JSON.parse(localStorage.getItem('gameInventory') || '[]');
+        const newInventory = [...currentInventory, { ...listing.item, id: Date.now() }];
+        localStorage.setItem('gameInventory', JSON.stringify(newInventory));
+        const inventoryEvent = new CustomEvent('inventoryUpdate', { detail: { inventory: newInventory } });
+        window.dispatchEvent(inventoryEvent);
+      } else {
+        const currentCards = JSON.parse(localStorage.getItem('gameCards') || '[]');
+        const newCards = [...currentCards, { ...listing.item, id: Date.now() }];
+        localStorage.setItem('gameCards', JSON.stringify(newCards));
+        const cardsEvent = new CustomEvent('cardsUpdate', { detail: { cards: newCards } });
+        window.dispatchEvent(cardsEvent);
+      }
+  
+      toast({
+        title: 'Покупка совершена',
+        description: `${listing.item.name} добавлен в ваш инвентарь`,
+      });
+    } catch (e: any) {
+      console.error('Buy handler failed:', e);
+      toast({ title: 'Ошибка', description: e?.message || 'Не удалось выполнить покупку', variant: 'destructive' });
     }
-
-    const { data: userRes } = await supabase.auth.getUser();
-    const userId = userRes?.user?.id;
-    if (!userId) {
-      toast({ title: 'Требуется вход', description: 'Войдите, чтобы совершить покупку', variant: 'destructive' });
-      return;
-    }
-    if (listing.sellerId === userId) {
-      toast({ title: 'Нельзя купить своё объявление', description: 'Вы не можете покупать собственные товары', variant: 'destructive' });
-      return;
-    }
-
-    // Выполним атомарную покупку на сервере: списать у покупателя, начислить продавцу и пометить объявление как проданное
-    const { error } = await (supabase as any).rpc('process_marketplace_purchase', {
-      listing_id: listing.id,
-      buyer_id: userId,
-    });
-
-    if (error) {
-      toast({ title: 'Ошибка покупки', description: error.message, variant: 'destructive' });
-      return;
-    }
-
-    // Уберём объявление из локального списка мгновенно, realtime сам перезагрузит список
-    setListings(prev => prev.filter(l => l.id !== listing.id));
-
-    // Добавим предмет покупателю локально (инвентарь/карты), чтобы UI обновился сразу
-    if (listing.type === 'item') {
-      const currentInventory = JSON.parse(localStorage.getItem('gameInventory') || '[]');
-      const newInventory = [...currentInventory, { ...listing.item, id: Date.now() }];
-      localStorage.setItem('gameInventory', JSON.stringify(newInventory));
-      const inventoryEvent = new CustomEvent('inventoryUpdate', { detail: { inventory: newInventory } });
-      window.dispatchEvent(inventoryEvent);
-    } else {
-      const currentCards = JSON.parse(localStorage.getItem('gameCards') || '[]');
-      const newCards = [...currentCards, { ...listing.item, id: Date.now() }];
-      localStorage.setItem('gameCards', JSON.stringify(newCards));
-      const cardsEvent = new CustomEvent('cardsUpdate', { detail: { cards: newCards } });
-      window.dispatchEvent(cardsEvent);
-    }
-
-    // Баланс обновится по realtime из game_data как у покупателя, так и у продавца
-    toast({
-      title: 'Покупка совершена',
-      description: `${listing.item.name} добавлен в ваш инвентарь`,
-    });
   };
 
   return (
