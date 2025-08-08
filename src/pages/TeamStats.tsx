@@ -4,29 +4,19 @@ import { useNavigate } from "react-router-dom";
 import { TeamCards } from "@/components/game/TeamCards";
 import { TeamStats as TeamStatsComponent } from "@/components/game/TeamStats";
 import { DragonEggProvider } from "@/contexts/DragonEggContext";
-
 export const TeamStats = () => {
   const navigate = useNavigate();
-
-  return (
-    <div 
-      className="min-h-screen p-4 bg-cover bg-center bg-no-repeat"
-      style={{
-        backgroundImage: 'url("/lovable-uploads/5c84c1ed-e8af-4eb6-8495-c82bc7d6cd65.png")',
-        backgroundSize: 'cover',
-        backgroundPosition: 'center',
-        backgroundRepeat: 'no-repeat'
-      }}
-    >
+  return <div className="min-h-screen p-4 bg-cover bg-center bg-no-repeat" style={{
+    backgroundImage: 'url("/lovable-uploads/5c84c1ed-e8af-4eb6-8495-c82bc7d6cd65.png")',
+    backgroundSize: 'cover',
+    backgroundPosition: 'center',
+    backgroundRepeat: 'no-repeat'
+  }}>
       <div className="absolute inset-0 bg-black/30" />
       
       <div className="relative z-10">
         <div className="flex items-center gap-4 mb-6">
-          <Button 
-            variant="outline" 
-            className="bg-game-surface/80 border-game-accent text-game-accent hover:bg-game-surface"
-            onClick={() => navigate('/menu')}
-          >
+          <Button variant="outline" className="bg-game-surface/80 border-game-accent text-game-accent hover:bg-game-surface" onClick={() => navigate('/menu')}>
             <ArrowLeft className="w-4 h-4 mr-2" />
             Вернуться в меню
           </Button>
@@ -36,9 +26,7 @@ export const TeamStats = () => {
         <DragonEggProvider>
           <div className="space-y-6">
             {/* Статистика команды */}
-            <div className="bg-game-surface/90 p-4 rounded-lg border border-game-accent backdrop-blur-sm">
-              <TeamStatsComponent />
-            </div>
+            
             
             {/* Карты команды */}
             <div className="bg-game-surface/90 p-4 rounded-lg border border-game-accent backdrop-blur-sm">
@@ -48,6 +36,5 @@ export const TeamStats = () => {
           </div>
         </DragonEggProvider>
       </div>
-    </div>
-  );
+    </div>;
 };
