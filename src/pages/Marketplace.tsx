@@ -172,8 +172,8 @@ export const Marketplace = () => {
         return;
       }
   
-      // Обновим баланс локально
-      await updateBalance(balance - listing.price);
+      // Баланс будем синхронизировать из БД после RPC, чтобы избежать рассинхронизации
+      // await updateBalance(balance - listing.price); // удалено
   
       // Уберём объявление локально, realtime синхронизирует остальное
       setListings(prev => prev.filter(l => l.id !== listing.id));
@@ -181,7 +181,7 @@ export const Marketplace = () => {
       // Обновим локальные кэши из БД после успешной покупки
       const { data: gd, error: gdErr } = await supabase
         .from('game_data')
-        .select('inventory,cards')
+        .select('inventory,cards,balance')
         .eq('user_id', userId)
         .maybeSingle();
 
@@ -244,6 +244,12 @@ export const Marketplace = () => {
         window.dispatchEvent(inventoryEvent);
         const cardsEvent = new CustomEvent('cardsUpdate', { detail: { cards: gd.cards || [] } });
         window.dispatchEvent(cardsEvent);
+        // Обновим баланс покупателя по данным БД
+        const newBalance = (gd as any).balance;
+        if (typeof newBalance === 'number') {
+          localStorage.setItem('gameBalance', String(newBalance));
+          window.dispatchEvent(new CustomEvent('balanceUpdate', { detail: { balance: newBalance } }));
+        }
         await ensureApplied(gd);
         // Force global state reload to eliminate any stale caches
         await loadGameData();
