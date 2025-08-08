@@ -68,6 +68,42 @@ export type Database = {
         }
         Relationships: []
       }
+      marketplace_listings: {
+        Row: {
+          buyer_id: string | null
+          created_at: string
+          id: string
+          item: Json
+          price: number
+          seller_id: string
+          sold_at: string | null
+          status: string
+          type: string
+        }
+        Insert: {
+          buyer_id?: string | null
+          created_at?: string
+          id?: string
+          item: Json
+          price: number
+          seller_id: string
+          sold_at?: string | null
+          status?: string
+          type: string
+        }
+        Update: {
+          buyer_id?: string | null
+          created_at?: string
+          id?: string
+          item?: Json
+          price?: number
+          seller_id?: string
+          sold_at?: string | null
+          status?: string
+          type?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           created_at: string

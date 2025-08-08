@@ -5,6 +5,8 @@ import {
   Dialog,
   DialogContent,
   DialogTrigger,
+  DialogTitle,
+  DialogDescription,
 } from "@/components/ui/dialog";
 import { Item } from "@/types/inventory";
 import { GroupedItem } from "./types";
@@ -73,6 +75,12 @@ export const InventoryGrid = ({
             </Card>
           </DialogTrigger>
           <DialogContent className="bg-game-surface border-game-accent">
+            <DialogTitle className="text-game-accent">{item.name}</DialogTitle>
+            <DialogDescription className="text-gray-400">
+              {item.type === 'cardPack' && 'Содержит 1 случайную карту героя или дракона'}
+              {item.type === 'healthPotion' && `Восстанавливает ${item.value} единиц здоровья`}
+              {item.type === 'dragon_egg' && (item.items[0].petName ? `Питомец: ${item.items[0].petName}` : 'Яйцо дракона')}
+            </DialogDescription>
             <div className="space-y-4">
               <h4 className="font-semibold text-game-accent text-lg">{item.name}</h4>
               {item.type === 'cardPack' && (
@@ -118,6 +126,14 @@ export const InventoryGrid = ({
                       className="w-full"
                     >
                       Использовать
+                    </Button>
+                  )}
+                  {item.type === 'dragon_egg' && (
+                    <Button
+                      onClick={() => onUseItem(item)}
+                      className="w-full bg-game-accent hover:bg-game-accent/80"
+                    >
+                      Начать инкубацию
                     </Button>
                   )}
                   {item.type !== 'dragon_egg' && (

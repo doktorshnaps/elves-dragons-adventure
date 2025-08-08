@@ -9,6 +9,7 @@ import { CardRevealModal } from "./dialogs/CardRevealModal";
 import { useGameData } from "@/hooks/useGameData";
 import { useToast } from "@/hooks/use-toast";
 import { GroupedItem } from "./inventory/types";
+import { cardDatabase } from "@/data/cardDatabase";
 
 interface InventoryDisplayProps {
   onUseItem?: (item: Item) => void;
@@ -23,7 +24,7 @@ export const InventoryDisplay = ({
   readonly = false,
   showOnlyPotions = false
 }: InventoryDisplayProps) => {
-  const { eggs } = useDragonEggs();
+  const { eggs, addEgg } = useDragonEggs();
   const { gameData, updateGameData } = useGameData();
   const inventory = gameData.inventory || [];
   const { toast } = useToast();
@@ -40,6 +41,33 @@ export const InventoryDisplay = ({
 
   const handleUseItem = async (groupedItem: GroupedItem) => {
     if (readonly || groupedItem.items.length === 0) return;
+
+    // Обработка яиц драконов: перенос в инкубатор
+    if (groupedItem.type === 'dragon_egg') {
+      const eggItem: any = groupedItem.items[0];
+      const petName: string | undefined = eggItem.petName || (typeof eggItem.name === 'string' ? eggItem.name.split(' — ')[0] : undefined);
+      const basePet = petName ? cardDatabase.find(c => c.type === 'pet' && c.name === petName) : undefined;
+      const faction = (basePet as any)?.faction || 'Каледор';
+
+      // Добавляем яйцо в контекст яиц и удаляем предмет из инвентаря
+      await addEgg({
+        id: String(eggItem.id),
+        petName: petName || 'Неизвестный питомец',
+        rarity: Number(eggItem.value) as any,
+        createdAt: new Date().toISOString(),
+        faction,
+        incubationStarted: false,
+      }, faction);
+
+      const newInventory = inventory.filter(item => item.id !== eggItem.id);
+      await updateGameData({ inventory: newInventory });
+
+      toast({
+        title: "Яйцо перемещено в инкубатор",
+        description: "Нажмите 'Начать инкубацию' у яйца сверху инвентаря",
+      });
+      return;
+    }
 
     // Колоды карт открываются всегда (без внешнего обработчика)
     if (groupedItem.type === 'cardPack') {
