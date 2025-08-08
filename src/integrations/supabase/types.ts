@@ -136,6 +136,15 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      create_marketplace_listing: {
+        Args: {
+          p_seller_id: string
+          p_listing_type: string
+          p_item: Json
+          p_price: number
+        }
+        Returns: string
+      }
       process_marketplace_purchase: {
         Args: { listing_id: string; buyer_id: string }
         Returns: undefined

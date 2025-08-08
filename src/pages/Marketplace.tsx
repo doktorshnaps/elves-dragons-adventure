@@ -51,12 +51,16 @@ export const Marketplace = () => {
       toast({ title: 'Требуется вход', description: 'Войдите, чтобы создать объявление', variant: 'destructive' });
       return;
     }
-    await supabase.from('marketplace_listings').insert({
-      seller_id: userId,
-      type: listing.type,
-      item: listing.item as any,
-      price: listing.price,
+    const { data: listingRes, error: listingErr } = await (supabase as any).rpc('create_marketplace_listing', {
+      p_seller_id: userId,
+      p_listing_type: listing.type,
+      p_item: listing.item as any,
+      p_price: listing.price,
     });
+    if (listingErr) {
+      toast({ title: 'Не удалось создать объявление', description: listingErr.message, variant: 'destructive' });
+      return;
+    }
     setShowListingDialog(false);
     toast({
       title: "Предмет выставлен на продажу",
@@ -134,18 +138,16 @@ export const Marketplace = () => {
       // Уберём объявление локально, realtime синхронизирует остальное
       setListings(prev => prev.filter(l => l.id !== listing.id));
   
-      // Добавим предмет покупателю локально, чтобы UI обновился сразу
-      if (listing.type === 'item') {
-        const currentInventory = JSON.parse(localStorage.getItem('gameInventory') || '[]');
-        const newInventory = [...currentInventory, { ...listing.item, id: Date.now() }];
-        localStorage.setItem('gameInventory', JSON.stringify(newInventory));
-        const inventoryEvent = new CustomEvent('inventoryUpdate', { detail: { inventory: newInventory } });
+      // Обновим локальные кэши из БД после успешной покупки
+      const { data: gd, error: gdErr } = await supabase
+        .from('game_data')
+        .select('inventory,cards')
+        .eq('user_id', userId)
+        .maybeSingle();
+      if (!gdErr && gd) {
+        const inventoryEvent = new CustomEvent('inventoryUpdate', { detail: { inventory: gd.inventory || [] } });
         window.dispatchEvent(inventoryEvent);
-      } else {
-        const currentCards = JSON.parse(localStorage.getItem('gameCards') || '[]');
-        const newCards = [...currentCards, { ...listing.item, id: Date.now() }];
-        localStorage.setItem('gameCards', JSON.stringify(newCards));
-        const cardsEvent = new CustomEvent('cardsUpdate', { detail: { cards: newCards } });
+        const cardsEvent = new CustomEvent('cardsUpdate', { detail: { cards: gd.cards || [] } });
         window.dispatchEvent(cardsEvent);
       }
   
