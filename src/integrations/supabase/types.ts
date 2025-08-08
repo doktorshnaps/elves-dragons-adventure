@@ -79,6 +79,7 @@ export type Database = {
           sold_at: string | null
           status: string
           type: string
+          updated_at: string
         }
         Insert: {
           buyer_id?: string | null
@@ -90,6 +91,7 @@ export type Database = {
           sold_at?: string | null
           status?: string
           type: string
+          updated_at?: string
         }
         Update: {
           buyer_id?: string | null
@@ -101,6 +103,7 @@ export type Database = {
           sold_at?: string | null
           status?: string
           type?: string
+          updated_at?: string
         }
         Relationships: []
       }
@@ -133,7 +136,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      process_marketplace_purchase: {
+        Args: { listing_id: string; buyer_id: string }
+        Returns: undefined
+      }
     }
     Enums: {
       [_ in never]: never
