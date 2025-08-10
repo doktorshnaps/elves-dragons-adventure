@@ -17,25 +17,27 @@ export const Auth = () => {
   const { toast } = useToast();
   const navigate = useNavigate();
 
-  // Prefill remembered credentials on mount
+  // Prefill remembered email on mount and clean legacy password storage
   useEffect(() => {
     const savedEmail = localStorage.getItem('rememberedEmail');
-    const savedPassword = localStorage.getItem('rememberedPassword');
-    if (savedEmail) setEmail(savedEmail);
-    if (savedPassword) setPassword(savedPassword);
-    if (savedEmail || savedPassword) setRememberMe(true);
+    if (savedEmail) {
+      setEmail(savedEmail);
+      setRememberMe(true);
+    }
+    // Remove any previously stored passwords for security
+    localStorage.removeItem('rememberedPassword');
   }, []);
 
-  // Keep storage in sync
+  // Keep storage in sync (email only)
   useEffect(() => {
     if (rememberMe) {
       if (email) localStorage.setItem('rememberedEmail', email);
-      if (password) localStorage.setItem('rememberedPassword', password);
     } else {
       localStorage.removeItem('rememberedEmail');
-      localStorage.removeItem('rememberedPassword');
     }
-  }, [rememberMe, email, password]);
+    // Always ensure no password is stored
+    localStorage.removeItem('rememberedPassword');
+  }, [rememberMe, email]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

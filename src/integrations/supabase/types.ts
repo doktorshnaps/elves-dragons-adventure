@@ -137,20 +137,15 @@ export type Database = {
     }
     Functions: {
       cancel_marketplace_listing: {
-        Args: { p_listing_id: string; p_requester_id: string }
+        Args: { p_listing_id: string }
         Returns: undefined
       }
       create_marketplace_listing: {
-        Args: {
-          p_seller_id: string
-          p_listing_type: string
-          p_item: Json
-          p_price: number
-        }
+        Args: { p_listing_type: string; p_item_id: string; p_price: number }
         Returns: string
       }
       process_marketplace_purchase: {
-        Args: { listing_id: string; buyer_id: string }
+        Args: { listing_id: string }
         Returns: undefined
       }
     }

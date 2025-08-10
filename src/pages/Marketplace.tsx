@@ -58,9 +58,8 @@ export const Marketplace = () => {
       return;
     }
     const { data: listingRes, error: listingErr } = await (supabase as any).rpc('create_marketplace_listing', {
-      p_seller_id: userId,
       p_listing_type: listing.type,
-      p_item: listing.item as any,
+      p_item_id: (listing.item as any).id,
       p_price: listing.price,
     });
     if (listingErr) {
@@ -104,7 +103,6 @@ export const Marketplace = () => {
 
     const { error } = await (supabase as any).rpc('cancel_marketplace_listing', {
       p_listing_id: listing.id,
-      p_requester_id: userId,
     });
 
     if (error) {
@@ -163,7 +161,6 @@ export const Marketplace = () => {
       // Атомарная покупка на сервере
       const { error } = await (supabase as any).rpc('process_marketplace_purchase', {
         listing_id: listing.id,
-        buyer_id: userId,
       });
   
       if (error) {
