@@ -1,5 +1,17 @@
 # Welcome to your Lovable project
 
+## Elleonor - Fantasy Card RPG Game
+
+Elleonor is a fantasy card-based RPG where players collect heroes and dragons, explore dungeons, and build powerful teams.
+
+### Key Features
+- **Card Collection**: Collect heroes and dragons from 7 different factions
+- **Team Building**: Create teams of up to 5 hero-dragon pairs
+- **Dungeon Exploration**: Battle through various themed dungeons
+- **Equipment System**: Equip weapons, armor, and accessories
+- **Marketplace**: Trade cards and items with other players
+- **Dragon Breeding**: Upgrade pets through egg incubation
+
 ## Project info
 
 **URL**: https://lovable.dev/projects/283d4ff3-6143-4599-ae82-7e2f2dfa1a1c
@@ -54,11 +66,29 @@ npm run dev
 
 This project is built with .
 
-- Vite
+- React 18
 - TypeScript
-- React
+- Vite
 - shadcn-ui
 - Tailwind CSS
+- Supabase (Database & Auth)
+- Framer Motion (Animations)
+- Zustand (State Management)
+
+### Game Architecture
+
+The game uses a hybrid state management approach:
+- **Zustand**: Local state management for real-time game interactions
+- **Supabase**: Persistent storage and real-time synchronization
+- **localStorage**: Backup and offline support
+
+### Key Components
+
+- `src/stores/gameStore.ts` - Centralized game state management
+- `src/hooks/useGameSync.ts` - Synchronization between local and remote state
+- `src/components/game/` - Core game components
+- `src/pages/dungeons/` - Dungeon-specific battle screens
+- `src/data/cardDatabase.ts` - Card definitions and stats
 
 ## How can I deploy this project?
 

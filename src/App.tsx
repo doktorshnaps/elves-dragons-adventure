@@ -1,4 +1,6 @@
 import { Routes, Route } from 'react-router-dom';
+import { ErrorBoundary } from './components/common/ErrorBoundary';
+import { Toaster } from './components/ui/toaster';
 import { Equipment } from './pages/Equipment';
 import { TeamStats } from './pages/TeamStats';
 import { Grimoire } from './pages/Grimoire';
@@ -22,28 +24,31 @@ import { ProtectedRoute } from './components/ProtectedRoute';
 
 function App() {
   return (
-    <Routes>
-      <Route path="/" element={<Index />} />
-      <Route path="/auth" element={<Auth />} />
-      <Route path="/menu" element={<ProtectedRoute><Menu /></ProtectedRoute>} />
-      <Route path="/team" element={<ProtectedRoute><TeamStats /></ProtectedRoute>} />
-      <Route path="/statistics" element={<ProtectedRoute><TeamStats /></ProtectedRoute>} />
-      <Route path="/equipment" element={<ProtectedRoute><Equipment /></ProtectedRoute>} />
-      <Route path="/grimoire" element={<ProtectedRoute><Grimoire /></ProtectedRoute>} />
-      <Route path="/battle" element={<ProtectedRoute><Battle /></ProtectedRoute>} />
-      <Route path="/dungeons" element={<ProtectedRoute><Dungeons /></ProtectedRoute>} />
-      <Route path="/adventure" element={<ProtectedRoute><AdventuresPage /></ProtectedRoute>} />
-      <Route path="/marketplace" element={<ProtectedRoute><Marketplace /></ProtectedRoute>} />
-      <Route path="/shop" element={<ProtectedRoute><ShopPage /></ProtectedRoute>} />
-      <Route path="/quest" element={<ProtectedRoute><QuestPage /></ProtectedRoute>} />
-      <Route path="/dungeons/dragon-lair" element={<ProtectedRoute><BlackDragonLair /></ProtectedRoute>} />
-      <Route path="/dungeons/forgotten-souls" element={<ProtectedRoute><ForgottenSoulsCave /></ProtectedRoute>} />
-      <Route path="/dungeons/icy-throne" element={<ProtectedRoute><IcyThrone /></ProtectedRoute>} />
-      <Route path="/dungeons/dark-mage" element={<ProtectedRoute><DarkMageTower /></ProtectedRoute>} />
-      <Route path="/dungeons/spider-nest" element={<ProtectedRoute><SpiderNest /></ProtectedRoute>} />
-      <Route path="/dungeons/bone-dungeon" element={<ProtectedRoute><BoneDemonDungeon /></ProtectedRoute>} />
-      <Route path="/dungeons/sea-serpent" element={<ProtectedRoute><SeaSerpentLair /></ProtectedRoute>} />
-    </Routes>
+    <ErrorBoundary>
+      <Routes>
+        <Route path="/" element={<Index />} />
+        <Route path="/auth" element={<Auth />} />
+        <Route path="/menu" element={<ProtectedRoute><Menu /></ProtectedRoute>} />
+        <Route path="/team" element={<ProtectedRoute><TeamStats /></ProtectedRoute>} />
+        <Route path="/statistics" element={<ProtectedRoute><TeamStats /></ProtectedRoute>} />
+        <Route path="/equipment" element={<ProtectedRoute><Equipment /></ProtectedRoute>} />
+        <Route path="/grimoire" element={<ProtectedRoute><Grimoire /></ProtectedRoute>} />
+        <Route path="/battle" element={<ProtectedRoute><Battle /></ProtectedRoute>} />
+        <Route path="/dungeons" element={<ProtectedRoute><Dungeons /></ProtectedRoute>} />
+        <Route path="/adventure" element={<ProtectedRoute><AdventuresPage /></ProtectedRoute>} />
+        <Route path="/marketplace" element={<ProtectedRoute><Marketplace /></ProtectedRoute>} />
+        <Route path="/shop" element={<ProtectedRoute><ShopPage /></ProtectedRoute>} />
+        <Route path="/quest" element={<ProtectedRoute><QuestPage /></ProtectedRoute>} />
+        <Route path="/dungeons/dragon-lair" element={<ProtectedRoute><BlackDragonLair /></ProtectedRoute>} />
+        <Route path="/dungeons/forgotten-souls" element={<ProtectedRoute><ForgottenSoulsCave /></ProtectedRoute>} />
+        <Route path="/dungeons/icy-throne" element={<ProtectedRoute><IcyThrone /></ProtectedRoute>} />
+        <Route path="/dungeons/dark-mage" element={<ProtectedRoute><DarkMageTower /></ProtectedRoute>} />
+        <Route path="/dungeons/spider-nest" element={<ProtectedRoute><SpiderNest /></ProtectedRoute>} />
+        <Route path="/dungeons/bone-dungeon" element={<ProtectedRoute><BoneDemonDungeon /></ProtectedRoute>} />
+        <Route path="/dungeons/sea-serpent" element={<ProtectedRoute><SeaSerpentLair /></ProtectedRoute>} />
+      </Routes>
+      <Toaster />
+    </ErrorBoundary>
   );
 }
 
