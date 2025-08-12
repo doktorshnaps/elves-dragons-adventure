@@ -69,7 +69,7 @@ export const useGameInitialization = (setCards: (cards: Card[]) => void) => {
             title: "Добро пожаловать в игру!",
             description: "Вы получили 2 начальные колоды карт и 100 ELL",
           });
-        } else if (!gameData.initialized || (Array.isArray(gameData.cards) && gameData.cards.length === 0)) {
+        } else if (!gameData.initialized) {
           // Если данные есть, но игра не инициализирована
           const firstPack = generatePack();
           const secondPack = generatePack();

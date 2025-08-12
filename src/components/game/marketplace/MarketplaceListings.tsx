@@ -56,6 +56,9 @@ export const MarketplaceListings = ({
                   {isCard && (displayInfo as any).rarity && ` - Редкость: ${(displayInfo as any).rarity}`}
                 </p>
                 {displayInfo.description && <p>{displayInfo.description}</p>}
+                {isCard && (displayInfo as any).faction && (
+                  <p>Фракция: {(displayInfo as any).faction}</p>
+                )}
                 {isCard && (
                   <div className="grid grid-cols-2 gap-x-4 gap-y-1">
                     <span>Сила: {(listing.item as any).power}</span>

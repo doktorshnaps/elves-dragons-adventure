@@ -10,12 +10,13 @@ export const getItemDisplayInfo = (item: CardType | Item) => {
       rarity: card.rarity,
       type: "Карта",
       description: dbCard?.description || (card.type === "character" ? "Герой" : "Питомец"),
-      image: card.image || dbCard?.image,
-    };
+      image: card.image || (dbCard as any)?.image,
+      faction: card.faction,
+    } as any;
   }
   return {
     type: "Предмет",
     description: (item as Item).type === "healthPotion" ? "Зелье здоровья" : "Набор карт",
     image: (item as any).image,
-  };
+  } as any;
 };
