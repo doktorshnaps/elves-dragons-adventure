@@ -69,46 +69,6 @@ export const useGameInitialization = (setCards: (cards: Card[]) => void) => {
             title: "Добро пожаловать в игру!",
             description: "Вы получили 2 начальные колоды карт и 100 ELL",
           });
-        } else if (!gameData.initialized) {
-          // Если данные есть, но игра не инициализирована
-          const firstPack = generatePack();
-          const secondPack = generatePack();
-          const initialCards = [...firstPack, ...secondPack];
-          
-          const { error: updateError } = await supabase
-            .from('game_data')
-            .update({
-              cards: initialCards as any,
-              balance: 100,
-              initialized: true
-            })
-            .eq('user_id', user.id);
-
-          if (updateError) {
-            console.error('Error updating game data:', updateError);
-            return;
-          }
-
-          // Синхронизируем с localStorage
-          localStorage.setItem('gameCards', JSON.stringify(initialCards));
-          localStorage.setItem('gameBalance', '100');
-          localStorage.setItem('gameInitialized', 'true');
-          
-          setCards(initialCards);
-          
-          // Отправляем событие для обновления баланса
-          const balanceEvent = new CustomEvent('balanceUpdate', { 
-            detail: { balance: 100 }
-          });
-          window.dispatchEvent(balanceEvent);
-          
-          // Показываем диалог с приветствием
-          setShowFirstTimePack(true);
-          
-          toast({
-            title: "Добро пожаловать в игру!",
-            description: "Вы получили 2 начальные колоды карт и 100 ELL",
-          });
         } else {
           // Загружаем существующие данные
           const cards = Array.isArray(gameData.cards) ? gameData.cards as unknown as Card[] : [];
