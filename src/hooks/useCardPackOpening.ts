@@ -31,7 +31,6 @@ export const useCardPackOpening = () => {
 
     // If not enough with exact name, try removing any remaining generic card packs
     if (removed < count) {
-      const stillNeeded = count - removed;
       const tmp: Item[] = [];
       for (const it of updated) {
         if (removed < count && it.type === 'cardPack' && it.name !== referencePack.name) {
@@ -49,8 +48,8 @@ export const useCardPackOpening = () => {
   const openCardPacks = async (packItem: Item, count: number): Promise<CardType[]> => {
     if (packItem.type !== 'cardPack' || isOpening) return [];
 
-    const available = (gameData.inventory || []).filter(i => i.type === 'cardPack' && i.name === packItem.name).length
-      + (gameData.inventory || []).filter(i => i.type === 'cardPack' && i.name !== packItem.name).length; // total packs of any type
+    const allPacks = (gameData.inventory || []).filter(i => i.type === 'cardPack');
+    const available = allPacks.length;
 
     if (count < 1) return [];
     if (available < count) {
@@ -88,11 +87,28 @@ export const useCardPackOpening = () => {
         cards: updatedCards,
       });
 
-      // Show last revealed in modal for UX continuity
-      const last = newCards[newCards.length - 1] || null;
-      if (last) {
-        setRevealedCard(last);
-        setShowRevealModal(true);
+      // Keep localStorage and listeners in sync to immediately disable selling
+      try {
+        localStorage.setItem('gameInventory', JSON.stringify(updatedInventory));
+        localStorage.setItem('gameCards', JSON.stringify(updatedCards));
+        window.dispatchEvent(new CustomEvent('inventoryUpdate', { detail: { inventory: updatedInventory } }));
+        window.dispatchEvent(new CustomEvent('cardsUpdate', { detail: { cards: updatedCards } }));
+      } catch {}
+
+      // Packs left of the same type/name
+      const packsLeftSame = updatedInventory.filter(i => i.type === 'cardPack' && i.name === packItem.name).length;
+
+      if (packsLeftSame > 0) {
+        // Show reveal modal only if есть ещё колоды, как при продаже диалог остаётся
+        const last = newCards[newCards.length - 1] || null;
+        if (last) {
+          setRevealedCard(last);
+          setShowRevealModal(true);
+        }
+      } else {
+        // Последняя колода: закрываем модальные окна сразу, чтобы повторно нельзя было продать
+        setShowRevealModal(false);
+        setRevealedCard(null);
       }
 
       toast({
