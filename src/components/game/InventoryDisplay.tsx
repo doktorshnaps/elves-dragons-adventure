@@ -100,17 +100,37 @@ export const InventoryDisplay = ({
   };
 
   const handleGroupedSellItem = async (groupedItem: GroupedItem) => {
-    if (groupedItem.items.length > 0 && onSellItem) {
-      const itemToSell = groupedItem.items[0];
-      onSellItem(itemToSell);
-    } else if (groupedItem.items.length > 0) {
-      await handleSellItem(groupedItem.items[0]);
-      
-      const newInventory = inventory.filter(item => item.id !== groupedItem.items[0].id);
+    // Verify the item(s) still exist in current inventory before selling
+    const currentInv = (gameData.inventory || []);
+    const existingItem = groupedItem.items.find(it => currentInv.some(ci => ci.id === it.id));
+    const packsLeft = currentInv.filter(i => i.type === 'cardPack' && i.name === groupedItem.name).length;
+
+    if (!existingItem) {
+      toast({
+        title: 'Нельзя продать',
+        description: 'Этот предмет уже отсутствует в вашем инвентаре',
+        variant: 'destructive'
+      });
+      return;
+    }
+
+    if (groupedItem.type === 'cardPack' && packsLeft < 1) {
+      toast({
+        title: 'Нет колод',
+        description: 'У вас нет закрытых колод для продажи',
+        variant: 'destructive'
+      });
+      return;
+    }
+
+    if (onSellItem) {
+      onSellItem(existingItem);
+    } else {
+      await handleSellItem(existingItem);
+      const newInventory = currentInv.filter(item => item.id !== existingItem.id);
       await updateGameData({ inventory: newInventory });
     }
   };
-
   const filteredInventory = showOnlyPotions 
     ? inventory.filter(item => item.type === 'healthPotion')
     : inventory;
