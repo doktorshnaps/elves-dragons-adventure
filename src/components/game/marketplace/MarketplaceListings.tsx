@@ -32,18 +32,42 @@ export const MarketplaceListings = ({
       {listings.map((listing) => {
         const displayInfo = getItemDisplayInfo(listing.item);
         const isOwnListing = listing.sellerId === user?.id;
+        const isCard = "rarity" in listing.item;
 
         return (
           <Card key={listing.id} className="p-4 bg-game-surface/90 border-game-accent backdrop-blur-sm">
-            <div className="flex flex-col gap-2">
+            <div className="flex flex-col gap-3">
+              {displayInfo.image && (
+                <div className="w-full aspect-[4/3] overflow-hidden rounded-md border border-game-accent/50">
+                  <img
+                    src={displayInfo.image}
+                    alt={`Изображение ${displayInfo.type === "Карта" ? "карты" : "предмета"} ${listing.item.name}`}
+                    loading="lazy"
+                    className="h-full w-full object-cover"
+                  />
+                </div>
+              )}
+
               <h3 className="font-semibold text-game-accent">{listing.item.name}</h3>
-              <p className="text-sm text-gray-300">
-                {displayInfo.type}
-                {displayInfo.rarity && ` - Редкость: ${displayInfo.rarity}`}
-                <br />
-                {displayInfo.description}
-              </p>
+
+              <div className="text-sm text-gray-300 space-y-1">
+                <p>
+                  {displayInfo.type}
+                  {isCard && (displayInfo as any).rarity && ` - Редкость: ${(displayInfo as any).rarity}`}
+                </p>
+                {displayInfo.description && <p>{displayInfo.description}</p>}
+                {isCard && (
+                  <div className="grid grid-cols-2 gap-x-4 gap-y-1">
+                    <span>Сила: {(listing.item as any).power}</span>
+                    <span>Защита: {(listing.item as any).defense}</span>
+                    <span>Здоровье: {(listing.item as any).health}</span>
+                    <span>Магия: {(listing.item as any).magic}</span>
+                  </div>
+                )}
+              </div>
+
               <p className="text-yellow-500 font-medium">{listing.price} ELL</p>
+
               {isOwnListing ? (
                 <Button
                   onClick={() => onCancelListing(listing)}

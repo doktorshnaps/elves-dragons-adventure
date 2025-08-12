@@ -7,6 +7,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Item } from '@/types/inventory';
 import { Package, Heart, Sparkles } from 'lucide-react';
 import { generateCard } from '@/utils/cardUtils';
+import { Badge } from '@/components/ui/badge';
 
 interface GroupedItem {
   name: string;
