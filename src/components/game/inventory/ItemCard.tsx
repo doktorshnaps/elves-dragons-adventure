@@ -22,6 +22,17 @@ export const ItemCard = ({
   onSell,
   showUseButton = true
 }: ItemCardProps) => {
+  // Disable selling card packs if user has no unopened packs in actual inventory cache
+  let canSell = !readonly;
+  if (item.type === 'cardPack') {
+    try {
+      const saved = localStorage.getItem('gameInventory');
+      const inv: any[] = saved ? JSON.parse(saved) : [];
+      const packs = inv.filter((i: any) => i?.type === 'cardPack');
+      if (packs.length < 1) canSell = false;
+    } catch {}
+  }
+
   return (
     <Card
       className={`p-4 bg-game-background min-h-[200px] w-full cursor-pointer
@@ -64,9 +75,11 @@ export const ItemCard = ({
             <Button
               variant="outline"
               size="sm"
-              className="w-full text-yellow-500 hover:text-yellow-600 text-xs"
+              disabled={!canSell}
+              className="w-full text-yellow-500 hover:text-yellow-600 text-xs disabled:opacity-50"
               onClick={(e) => {
                 e.stopPropagation();
+                if (!canSell) return;
                 onSell();
               }}
             >

@@ -17,6 +17,7 @@ export const Marketplace = () => {
   const { balance, updateBalance } = useBalanceState();
   const { toast } = useToast();
   const [listings, setListings] = useState<MarketplaceListing[]>([]);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const { loadGameData, updateGameData } = useGameData();
   useEffect(() => {
     const load = async () => {
@@ -262,6 +263,95 @@ export const Marketplace = () => {
     }
   };
 
+  const toggleSelect = (id: string) => {
+    setSelectedIds(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id); else next.add(id);
+      return next;
+    });
+  };
+
+  const handleBuySelected = async () => {
+    try {
+      if (selectedIds.size === 0) {
+        toast({ title: 'Не выбрано', description: 'Выберите хотя бы одно объявление', variant: 'destructive' });
+        return;
+      }
+
+      const { data: userRes } = await supabase.auth.getUser();
+      const userId = userRes?.user?.id;
+      if (!userId) {
+        toast({ title: 'Требуется вход', description: 'Войдите, чтобы совершить покупку', variant: 'destructive' });
+        return;
+      }
+
+      const selected = listings.filter(l => selectedIds.has(l.id));
+      // Фильтруем свои объявления
+      const toBuy = selected.filter(l => l.sellerId !== userId);
+      if (toBuy.length === 0) {
+        toast({ title: 'Неверный выбор', description: 'Нельзя покупать собственные объявления', variant: 'destructive' });
+        return;
+      }
+
+      // Проверяем актуальный баланс из БД
+      const { data: gd0 } = await supabase
+        .from('game_data')
+        .select('balance')
+        .eq('user_id', userId)
+        .maybeSingle();
+      const currentBalance: number = (gd0 as any)?.balance ?? balance;
+      const totalCost = toBuy.reduce((sum, l) => sum + l.price, 0);
+      if (currentBalance < totalCost) {
+        toast({ title: 'Недостаточно ELL', description: `Нужно ${totalCost}, доступно ${currentBalance}`, variant: 'destructive' });
+        return;
+      }
+
+      let success = 0;
+      let failed = 0;
+
+      for (const l of toBuy) {
+        const { error } = await (supabase as any).rpc('process_marketplace_purchase', { listing_id: l.id });
+        if (error) {
+          console.warn('Multi-buy error:', l.id, error);
+          failed += 1;
+          continue;
+        }
+        success += 1;
+        // Локально убираем купленное объявление
+        setListings(prev => prev.filter(x => x.id !== l.id));
+      }
+
+      // Обновим локальные кэши из БД
+      const { data: gd } = await supabase
+        .from('game_data')
+        .select('inventory,cards,balance')
+        .eq('user_id', userId)
+        .maybeSingle();
+      if (gd) {
+        localStorage.setItem('gameInventory', JSON.stringify((gd as any).inventory || []));
+        localStorage.setItem('gameCards', JSON.stringify((gd as any).cards || []));
+        const newBalance = (gd as any).balance;
+        if (typeof newBalance === 'number') {
+          localStorage.setItem('gameBalance', String(newBalance));
+          window.dispatchEvent(new CustomEvent('balanceUpdate', { detail: { balance: newBalance } }));
+        }
+        window.dispatchEvent(new CustomEvent('inventoryUpdate', { detail: { inventory: (gd as any).inventory || [] } }));
+        window.dispatchEvent(new CustomEvent('cardsUpdate', { detail: { cards: (gd as any).cards || [] } }));
+        await loadGameData();
+      }
+
+      setSelectedIds(new Set());
+
+      toast({
+        title: 'Пакетная покупка завершена',
+        description: `Куплено: ${success}. Ошибок: ${failed}.`,
+      });
+    } catch (e: any) {
+      console.error('handleBuySelected failed:', e);
+      toast({ title: 'Ошибка', description: e?.message || 'Не удалось выполнить пакетную покупку', variant: 'destructive' });
+    }
+  };
+
   return (
     <MarketplaceLayout>
       <MarketplaceHeader />
@@ -271,6 +361,10 @@ export const Marketplace = () => {
         onOpenListingDialog={() => setShowListingDialog(true)}
         onBuy={handleBuy}
         onCancelListing={handleCancelListing}
+        enableSelection={true}
+        selectedIds={selectedIds}
+        onToggleSelect={toggleSelect}
+        onBuySelected={handleBuySelected}
       />
       {showListingDialog && (
         <ListingDialog
