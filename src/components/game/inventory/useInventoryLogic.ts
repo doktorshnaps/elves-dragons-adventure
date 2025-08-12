@@ -12,11 +12,12 @@ export const useInventoryLogic = (initialInventory: Item[]) => {
   const [selectedItems, setSelectedItems] = useState<Item[]>([]);
   const { gameData, updateGameData } = useGameData();
   const { 
-    openCardPack, 
-    isOpening, 
-    revealedCard, 
-    showRevealModal, 
-    closeRevealModal 
+    openCardPack,
+    openCardPacks,
+    isOpening,
+    revealedCard,
+    showRevealModal,
+    closeRevealModal
   } = useCardPackOpening();
   const balance = gameData.balance;
 
@@ -88,10 +89,17 @@ const groupItems = (items: Item[]): GroupedItem[] => {
 
   const handleOpenCardPack = async (item: Item) => {
     if (item.type === 'cardPack') {
-      await openCardPack(item);
+      // Ask for quantity to open
+      const allPacks = (gameData.inventory || []).filter(i => i.type === 'cardPack');
+      const available = allPacks.length;
+      const raw = window.prompt(`Сколько колод открыть? Доступно: ${available}`, '1');
+      if (!raw) return;
+      const requested = Math.max(1, Math.min(available, Number.parseInt(raw, 10) || 0));
+      if (!requested) return;
+      // Use new multi-open API
+      await openCardPacks(item, requested);
     }
   };
-
   return {
     selectedItems,
     setSelectedItems,

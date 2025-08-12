@@ -10,6 +10,9 @@ interface MarketplaceListingsProps {
   balance: number;
   onBuy: (listing: MarketplaceListing) => void;
   onCancelListing: (listing: MarketplaceListing) => void;
+  enableSelection?: boolean;
+  selectedIds?: Set<string>;
+  onToggleSelect?: (id: string) => void;
 }
 
 export const MarketplaceListings = ({
@@ -17,6 +20,9 @@ export const MarketplaceListings = ({
   balance,
   onBuy,
   onCancelListing,
+  enableSelection,
+  selectedIds,
+  onToggleSelect,
 }: MarketplaceListingsProps) => {
   const { user } = useAuth();
   if (listings.length === 0) {
@@ -36,7 +42,19 @@ export const MarketplaceListings = ({
 
         return (
           <Card key={listing.id} className="p-4 bg-game-surface/90 border-game-accent backdrop-blur-sm">
-            <div className="flex flex-col gap-3">
+            <div className="relative flex flex-col gap-3">
+              {enableSelection && !isOwnListing && typeof onToggleSelect === 'function' && (
+                <label className="absolute top-2 left-2 z-10 flex items-center gap-1 text-xs select-none">
+                  <input
+                    type="checkbox"
+                    checked={!!(selectedIds && selectedIds.has(listing.id))}
+                    onChange={() => onToggleSelect(listing.id)}
+                    className="h-4 w-4 accent-current text-game-accent"
+                  />
+                  <span className="text-game-accent">Выбрать</span>
+                </label>
+              )}
+
               {displayInfo.image && (
                 <div className="w-full aspect-[4/3] overflow-hidden rounded-md border border-game-accent/50">
                   <img

@@ -12,64 +12,110 @@ export const useCardPackOpening = () => {
   const [revealedCard, setRevealedCard] = useState<CardType | null>(null);
   const [showRevealModal, setShowRevealModal] = useState(false);
 
-  const openCardPack = async (packItem: Item): Promise<CardType | null> => {
-    if (packItem.type !== 'cardPack' || isOpening) return null;
+  const removeCardPacksFromInventory = (count: number, referencePack: Item) => {
+    const inv = [...(gameData.inventory || [])];
+    let removed = 0;
+    const updated = [] as Item[];
+    for (const it of inv) {
+      if (
+        removed < count &&
+        it.type === 'cardPack' &&
+        // Prefer same name to keep UX consistent for different pack types
+        (it.name === referencePack.name)
+      ) {
+        removed += 1;
+        continue; // skip adding this one (removed)
+      }
+      updated.push(it);
+    }
+
+    // If not enough with exact name, try removing any remaining generic card packs
+    if (removed < count) {
+      const stillNeeded = count - removed;
+      const tmp: Item[] = [];
+      for (const it of updated) {
+        if (removed < count && it.type === 'cardPack' && it.name !== referencePack.name) {
+          removed += 1;
+          continue;
+        }
+        tmp.push(it);
+      }
+      return { updatedInventory: tmp, removedCount: removed };
+    }
+
+    return { updatedInventory: updated, removedCount: removed };
+  };
+
+  const openCardPacks = async (packItem: Item, count: number): Promise<CardType[]> => {
+    if (packItem.type !== 'cardPack' || isOpening) return [];
+
+    const available = (gameData.inventory || []).filter(i => i.type === 'cardPack' && i.name === packItem.name).length
+      + (gameData.inventory || []).filter(i => i.type === 'cardPack' && i.name !== packItem.name).length; // total packs of any type
+
+    if (count < 1) return [];
+    if (available < count) {
+      toast({
+        title: 'Недостаточно колод',
+        description: `У вас только ${available} колод(ы) для открытия`,
+        variant: 'destructive',
+      });
+      return [];
+    }
 
     setIsOpening(true);
 
     try {
-      // Проверяем наличие колоды в инвентаре и удаляем одну штуку
-      let removed = false;
-      const { inventory: updatedInventory } = (() => {
-        const inv = [...(gameData.inventory || [])];
-        const idx = inv.findIndex(item => item.id === packItem.id);
-        if (idx !== -1) {
-          inv.splice(idx, 1);
-          removed = true;
-          return { inventory: inv };
-        }
-        // Fallback: remove one matching pack if IDs are not unique
-        const sameIndex = inv.findIndex(item => item.type === packItem.type && item.name === packItem.name);
-        if (sameIndex !== -1) {
-          inv.splice(sameIndex, 1);
-          removed = true;
-        }
-        return { inventory: inv };
-      })();
+      const { updatedInventory, removedCount } = removeCardPacksFromInventory(count, packItem);
 
-      if (!removed) {
+      if (removedCount < count) {
         toast({
-          title: "Нет колод",
-          description: "В инвентаре нет доступных колод для открытия",
-          variant: "destructive",
+          title: 'Недостаточно колод',
+          description: `У вас только ${removedCount} колод(ы) для открытия`,
+          variant: 'destructive',
         });
-        return null;
+        return [];
       }
 
-      // Генерируем случайную карту только если колода действительно списана
-      const newCard = generateCard(Math.random() > 0.5 ? 'character' : 'pet');
-      const updatedCards = [...gameData.cards, newCard];
-      
+      // Generate cards
+      const newCards: CardType[] = Array.from({ length: count }, () =>
+        generateCard(Math.random() > 0.5 ? 'character' : 'pet')
+      );
+
+      const updatedCards = [...(gameData.cards || []), ...newCards];
+
       await updateGameData({
         inventory: updatedInventory,
-        cards: updatedCards
+        cards: updatedCards,
       });
 
-      // Показываем модальное окно с картой
-      setRevealedCard(newCard);
-      setShowRevealModal(true);
+      // Show last revealed in modal for UX continuity
+      const last = newCards[newCards.length - 1] || null;
+      if (last) {
+        setRevealedCard(last);
+        setShowRevealModal(true);
+      }
 
-      return newCard;
+      toast({
+        title: 'Колоды открыты',
+        description: `Открыто ${count} колод(ы). Новых карт: ${newCards.length}`,
+      });
+
+      return newCards;
     } catch (error) {
       toast({
-        title: "Ошибка",
-        description: "Не удалось открыть колоду карт",
-        variant: "destructive",
+        title: 'Ошибка',
+        description: 'Не удалось открыть колоды карт',
+        variant: 'destructive',
       });
-      return null;
+      return [];
     } finally {
       setIsOpening(false);
     }
+  };
+
+  const openCardPack = async (packItem: Item): Promise<CardType | null> => {
+    const cards = await openCardPacks(packItem, 1);
+    return cards[0] || null;
   };
 
   const closeRevealModal = () => {
@@ -79,6 +125,7 @@ export const useCardPackOpening = () => {
 
   return {
     openCardPack,
+    openCardPacks,
     isOpening,
     revealedCard,
     showRevealModal,

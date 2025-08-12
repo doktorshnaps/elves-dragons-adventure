@@ -10,6 +10,10 @@ interface MarketplaceContentProps {
   onOpenListingDialog: () => void;
   onBuy: (listing: MarketplaceListing) => void;
   onCancelListing: (listing: MarketplaceListing) => void;
+  enableSelection?: boolean;
+  selectedIds?: Set<string>;
+  onToggleSelect?: (id: string) => void;
+  onBuySelected?: () => void;
 }
 
 export const MarketplaceContent = ({
@@ -17,7 +21,11 @@ export const MarketplaceContent = ({
   balance,
   onOpenListingDialog,
   onBuy,
-  onCancelListing
+  onCancelListing,
+  enableSelection,
+  selectedIds,
+  onToggleSelect,
+  onBuySelected
 }: MarketplaceContentProps) => {
   return (
     <div 
@@ -37,13 +45,22 @@ export const MarketplaceContent = ({
           <ShoppingBag className="w-6 h-6 text-game-accent" />
           <span className="text-xl font-bold text-game-accent">Доступные предложения</span>
         </div>
-        <Button
-          onClick={onOpenListingDialog}
-          className="bg-game-accent hover:bg-game-accent/80"
-        >
-          <Plus className="w-4 h-4 mr-2" />
-          Создать объявление
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button
+            onClick={onBuySelected}
+            className="bg-game-accent hover:bg-game-accent/80"
+          >
+            <ShoppingBag className="w-4 h-4 mr-2" />
+            Купить выбранные
+          </Button>
+          <Button
+            onClick={onOpenListingDialog}
+            className="bg-game-accent hover:bg-game-accent/80"
+          >
+            <Plus className="w-4 h-4 mr-2" />
+            Создать объявление
+          </Button>
+        </div>
       </div>
 
       <MarketplaceListings 
@@ -51,6 +68,9 @@ export const MarketplaceContent = ({
         balance={balance}
         onBuy={onBuy}
         onCancelListing={onCancelListing}
+        enableSelection={enableSelection}
+        selectedIds={selectedIds}
+        onToggleSelect={onToggleSelect}
       />
     </div>
   );
