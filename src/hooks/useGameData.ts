@@ -104,26 +104,24 @@ export const useGameData = () => {
     if (!user) return;
 
     try {
-      const updatedData = { ...gameData, ...updates };
-      
+      // Формируем payload только из переданных полей, чтобы не затирать значения в БД
+      const payload: any = { user_id: user.id };
+      if (updates.balance !== undefined) payload.balance = updates.balance;
+      if (updates.cards !== undefined) payload.cards = updates.cards as any;
+      if (updates.inventory !== undefined) payload.inventory = updates.inventory as any;
+      if (updates.marketplaceListings !== undefined) payload.marketplace_listings = updates.marketplaceListings as any;
+      if (updates.socialQuests !== undefined) payload.social_quests = updates.socialQuests as any;
+      if (updates.adventurePlayerStats !== undefined) payload.adventure_player_stats = updates.adventurePlayerStats as any;
+      if (updates.adventureCurrentMonster !== undefined) payload.adventure_current_monster = updates.adventureCurrentMonster as any;
+      if (updates.dragonEggs !== undefined) payload.dragon_eggs = updates.dragonEggs as any;
+      if (updates.battleState !== undefined) payload.battle_state = updates.battleState as any;
+      if (updates.selectedTeam !== undefined) payload.selected_team = updates.selectedTeam as any;
+      // ВАЖНО: initialized обновляем только если явно передан
+      if (updates.initialized !== undefined) payload.initialized = updates.initialized;
+
       const { error } = await supabase
         .from('game_data')
-        .upsert({
-          user_id: user.id,
-          balance: updatedData.balance,
-          cards: updatedData.cards as any,
-          initialized: updatedData.initialized,
-          inventory: updatedData.inventory as any,
-          marketplace_listings: updatedData.marketplaceListings as any,
-          social_quests: updatedData.socialQuests as any,
-          adventure_player_stats: updatedData.adventurePlayerStats as any,
-          adventure_current_monster: updatedData.adventureCurrentMonster as any,
-          dragon_eggs: updatedData.dragonEggs as any,
-          battle_state: updatedData.battleState as any,
-          selected_team: updatedData.selectedTeam as any
-        }, {
-          onConflict: 'user_id'
-        });
+        .upsert(payload, { onConflict: 'user_id' });
 
       if (error) {
         console.error('Error updating game data:', error);
@@ -135,38 +133,39 @@ export const useGameData = () => {
         return;
       }
 
-      setGameData(updatedData);
-      
-      // Синхронизируем с localStorage
-      localStorage.setItem('gameCards', JSON.stringify(updatedData.cards));
-      localStorage.setItem('gameBalance', updatedData.balance.toString());
-      localStorage.setItem('gameInitialized', updatedData.initialized.toString());
-      localStorage.setItem('gameInventory', JSON.stringify(updatedData.inventory));
-      localStorage.setItem('marketplaceListings', JSON.stringify(updatedData.marketplaceListings));
-      localStorage.setItem('socialQuests', JSON.stringify(updatedData.socialQuests));
-      if (updatedData.adventurePlayerStats) {
-        localStorage.setItem('adventurePlayerStats', JSON.stringify(updatedData.adventurePlayerStats));
+      // Локально также не трогаем initialized, если он не был в updates
+      setGameData((prev) => ({ ...prev, ...updates }));
+
+      // Синхронизируем только изменённые ключи в localStorage
+      if (updates.cards !== undefined) localStorage.setItem('gameCards', JSON.stringify(updates.cards));
+      if (updates.balance !== undefined) localStorage.setItem('gameBalance', String(updates.balance));
+      if (updates.initialized !== undefined) localStorage.setItem('gameInitialized', String(updates.initialized));
+      if (updates.inventory !== undefined) localStorage.setItem('gameInventory', JSON.stringify(updates.inventory));
+      if (updates.marketplaceListings !== undefined) localStorage.setItem('marketplaceListings', JSON.stringify(updates.marketplaceListings));
+      if (updates.socialQuests !== undefined) localStorage.setItem('socialQuests', JSON.stringify(updates.socialQuests));
+      if (updates.adventurePlayerStats !== undefined && updates.adventurePlayerStats) {
+        localStorage.setItem('adventurePlayerStats', JSON.stringify(updates.adventurePlayerStats));
       }
-      if (updatedData.adventureCurrentMonster) {
-        localStorage.setItem('adventureCurrentMonster', JSON.stringify(updatedData.adventureCurrentMonster));
+      if (updates.adventureCurrentMonster !== undefined && updates.adventureCurrentMonster) {
+        localStorage.setItem('adventureCurrentMonster', JSON.stringify(updates.adventureCurrentMonster));
       }
-      localStorage.setItem('dragonEggs', JSON.stringify(updatedData.dragonEggs));
-      if (updatedData.battleState) {
-        localStorage.setItem('battleState', JSON.stringify(updatedData.battleState));
+      if (updates.dragonEggs !== undefined) localStorage.setItem('dragonEggs', JSON.stringify(updates.dragonEggs));
+      if (updates.battleState !== undefined && updates.battleState) {
+        localStorage.setItem('battleState', JSON.stringify(updates.battleState));
       }
-      localStorage.setItem('selectedTeam', JSON.stringify(updatedData.selectedTeam));
+      if (updates.selectedTeam !== undefined) localStorage.setItem('selectedTeam', JSON.stringify(updates.selectedTeam));
 
       // Отправляем события для обновления UI
       if (updates.balance !== undefined) {
         const balanceEvent = new CustomEvent('balanceUpdate', { 
-          detail: { balance: updatedData.balance }
+          detail: { balance: updates.balance }
         });
         window.dispatchEvent(balanceEvent);
       }
 
-      if (updates.cards) {
+      if (updates.cards !== undefined) {
         const cardsEvent = new CustomEvent('cardsUpdate', { 
-          detail: { cards: updatedData.cards }
+          detail: { cards: updates.cards }
         });
         window.dispatchEvent(cardsEvent);
       }
@@ -174,7 +173,7 @@ export const useGameData = () => {
     } catch (error) {
       console.error('Error in updateGameData:', error);
     }
-  }, [user, gameData, toast]);
+  }, [user, toast]);
 
   // Загружаем данные при инициализации
   useEffect(() => {
