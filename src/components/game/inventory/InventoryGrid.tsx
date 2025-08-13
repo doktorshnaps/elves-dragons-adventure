@@ -30,11 +30,14 @@ export const InventoryGrid = ({
     !item.items.some(i => i.equipped)
   );
 
+  // Формируем единый ключ для группы (включая count)
+  const keyFor = (g: GroupedItem) => `${g.name}-${g.type}-${g.value}-${g.count}`;
+
   // Авто-закрытие окна, если текущая группа предметов исчезла (например, после открытия последней колоды)
   useEffect(() => {
     if (!openKey) return;
     const stillExists = unequippedItems.some(
-      (g) => `${g.name}-${g.type}-${g.value}` === openKey
+      (g) => keyFor(g) === openKey
     );
     if (!stillExists) setOpenKey(null);
   }, [unequippedItems, openKey]);
