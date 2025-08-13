@@ -41,19 +41,26 @@ export const DragonEggsList = ({ eggs }: DragonEggsListProps) => {
       image: basePet.image
     };
 
-    // Получаем текущие карты
-    const savedCards = localStorage.getItem('gameCards');
-    const currentCards = savedCards ? JSON.parse(savedCards) : [];
+    // Получаем текущие карты из gameData
+    const currentCards = gameData.cards || [];
 
     // Добавляем нового питомца
     const updatedCards = [...currentCards, newPet];
-    localStorage.setItem('gameCards', JSON.stringify(updatedCards));
-
-    // Удаляем яйцо из Supabase (контекст) и инвентаря
-    await removeEgg(egg.id);
+    
+    // Удаляем яйцо из инвентаря
     const inv = gameData.inventory || [];
     const newInv = inv.filter((i) => i.id !== egg.id);
-    await updateGameData({ inventory: newInv });
+
+    // Сохраняем обновленные данные в Supabase и localStorage одновременно
+    await updateGameData({ 
+      cards: updatedCards,
+      inventory: newInv 
+    });
+    
+    localStorage.setItem('gameCards', JSON.stringify(updatedCards));
+
+    // Удаляем яйцо из контекста
+    await removeEgg(egg.id);
 
     // Удаляем яйцо также из localStorage (на всякий случай для синхронизации)
     const savedEggs = localStorage.getItem('dragonEggs');
