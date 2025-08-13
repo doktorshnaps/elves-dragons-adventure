@@ -118,7 +118,6 @@ export const useEggIncubation = ({
   };
 
   const handleClaim = () => {
-    onHatch();
     setIsHatched(true);
     setCanClaim(false);
     
@@ -132,10 +131,8 @@ export const useEggIncubation = ({
       localStorage.setItem('eggIncubations', JSON.stringify(updatedIncubations));
     }
     
-    toast({
-      title: "Питомец получен!",
-      description: `${petName} теперь доступен в вашей коллекции`,
-    });
+    // Вызываем onHatch для перемещения карты в колоду
+    onHatch();
   };
 
   return {

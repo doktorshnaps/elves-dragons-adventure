@@ -53,9 +53,9 @@ export const DragonEggTimer = ({
       {canClaim && (
         <Button 
           onClick={handleClaim}
-          className="bg-game-primary hover:bg-game-primary/80"
+          className="bg-game-primary hover:bg-game-primary/80 text-xs sm:text-sm px-1 py-1"
         >
-          Получить питомца
+          Получить
         </Button>
       )}
 
