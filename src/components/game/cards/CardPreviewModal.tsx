@@ -16,7 +16,7 @@ export const CardPreviewModal = ({ card, open, onClose, actionLabel, onAction }:
 
   return (
     <Dialog open={open} onOpenChange={(v) => { if (!v) onClose(); }}>
-      <DialogContent className="z-[60] max-w-3xl bg-game-surface border-game-accent">
+      <DialogContent className="z-[60] max-w-3xl max-h-[90vh] overflow-y-auto bg-game-surface border-game-accent">
         <DialogHeader>
           <DialogTitle className="text-game-accent">{card.name}</DialogTitle>
         </DialogHeader>
@@ -26,7 +26,7 @@ export const CardPreviewModal = ({ card, open, onClose, actionLabel, onAction }:
             <img
               src={card.image || "/placeholder.svg"}
               alt={`${card.name} полное изображение`}
-              className="w-[280px] h-[560px] md:w-[320px] md:h-[640px] object-cover rounded-lg border border-game-accent shadow-lg"
+              className="max-h-[60vh] md:max-h-[80vh] w-auto max-w-full object-contain rounded-lg border border-game-accent shadow-lg"
               loading="lazy"
             />
           </div>
