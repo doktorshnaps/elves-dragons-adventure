@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Card as CardType } from "@/types/cards";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -40,8 +40,28 @@ export const DeckSelection = ({
   const [previewCard, setPreviewCard] = useState<CardType | null>(null);
   const [previewAction, setPreviewAction] = useState<{ label: string; action: () => void } | null>(null);
   const [previewDeleteAction, setPreviewDeleteAction] = useState<{ label: string; action: () => void } | null>(null);
-  const heroes = cards.filter(card => card.type === 'character');
-  const dragons = cards.filter(card => card.type === 'pet');
+  const [localCards, setLocalCards] = useState<CardType[]>(cards);
+
+  // Обновляем локальные карты при изменении пропсов
+  useEffect(() => {
+    setLocalCards(cards);
+  }, [cards]);
+
+  // Слушаем события обновления карт для немедленной синхронизации
+  useEffect(() => {
+    const handleCardsUpdate = (e: CustomEvent<{ cards: CardType[] }>) => {
+      if (e.detail?.cards) {
+        setLocalCards(e.detail.cards);
+      }
+    };
+
+    window.addEventListener('cardsUpdate', handleCardsUpdate as EventListener);
+    return () => {
+      window.removeEventListener('cardsUpdate', handleCardsUpdate as EventListener);
+    };
+  }, []);
+  const heroes = localCards.filter(card => card.type === 'character');
+  const dragons = localCards.filter(card => card.type === 'pet');
   const isHeroSelected = (hero: CardType) => {
     return selectedPairs.some(pair => pair.hero.id === hero.id);
   };
@@ -83,7 +103,7 @@ export const DeckSelection = ({
     setShowDragonDeck(false);
   };
   const getDuplicateCount = (dragon: CardType) => {
-    return cards.filter(c => c.type === 'pet' && c.name === dragon.name && c.rarity === dragon.rarity).length;
+    return localCards.filter(c => c.type === 'pet' && c.name === dragon.name && c.rarity === dragon.rarity).length;
   };
   const handleDragonUpgrade = async (dragon: CardType) => {
     const key = `${dragon.name}|${dragon.rarity}|${dragon.faction ?? ''}`;
