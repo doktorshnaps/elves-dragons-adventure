@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import {
@@ -29,6 +29,15 @@ export const InventoryGrid = ({
   const unequippedItems = groupedItems.filter(item => 
     !item.items.some(i => i.equipped)
   );
+
+  // Авто-закрытие окна, если текущая группа предметов исчезла (например, после открытия последней колоды)
+  useEffect(() => {
+    if (!openKey) return;
+    const stillExists = unequippedItems.some(
+      (g) => `${g.name}-${g.type}-${g.value}` === openKey
+    );
+    if (!stillExists) setOpenKey(null);
+  }, [unequippedItems, openKey]);
 
   if (unequippedItems.length === 0) {
     return <p className="text-gray-400 col-span-full text-center py-4 text-sm">Инвентарь пуст</p>;
