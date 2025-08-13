@@ -39,8 +39,8 @@ export const InventoryDisplay = ({
     closeRevealModal
   } = useInventoryLogic(inventory);
 
-  const handleUseItem = async (groupedItem: GroupedItem) => {
-    if (readonly || groupedItem.items.length === 0) return;
+  const handleUseItem = async (groupedItem: GroupedItem): Promise<boolean | void> => {
+    if (readonly || groupedItem.items.length === 0) return false;
 
     // Обработка яиц драконов: перенос в инкубатор
     if (groupedItem.type === 'dragon_egg') {
@@ -66,13 +66,12 @@ export const InventoryDisplay = ({
         title: "Яйцо перемещено в инкубатор",
         description: "Нажмите 'Начать инкубацию' у яйца сверху инвентаря",
       });
-      return;
+      return false;
     }
 
     // Колоды карт открываются всегда (без внешнего обработчика)
     if (groupedItem.type === 'cardPack') {
-      await handleOpenCardPack(groupedItem.items[0]);
-      return;
+      return await handleOpenCardPack(groupedItem.items[0]);
     }
 
     // Остальные предметы — через внешний обработчик, если он передан

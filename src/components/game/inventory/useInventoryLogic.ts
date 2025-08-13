@@ -111,18 +111,21 @@ const groupItems = (items: Item[]): GroupedItem[] => {
       description: `${item.name} продан за ${sellPrice} ELL`,
     });
   };
-  const handleOpenCardPack = async (item: Item) => {
+  const handleOpenCardPack = async (item: Item): Promise<boolean> => {
     if (item.type === 'cardPack') {
       // Ask for quantity to open
-      const allPacks = (gameData.inventory || []).filter(i => i.type === 'cardPack');
+      const allPacks = (gameData.inventory || []).filter(i => i.type === 'cardPack' && i.name === item.name);
       const available = allPacks.length;
       const raw = window.prompt(`Сколько колод открыть? Доступно: ${available}`, '1');
-      if (!raw) return;
+      if (!raw) return false;
       const requested = Math.max(1, Math.min(available, Number.parseInt(raw, 10) || 0));
-      if (!requested) return;
+      if (!requested) return false;
+      const shouldClose = requested >= available;
       // Use new multi-open API
       await openCardPacks(item, requested);
+      return shouldClose;
     }
+    return false;
   };
   return {
     selectedItems,

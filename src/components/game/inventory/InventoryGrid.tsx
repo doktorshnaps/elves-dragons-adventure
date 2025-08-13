@@ -1,4 +1,4 @@
-
+import { useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import {
@@ -15,7 +15,7 @@ import { GroupedItem } from "./types";
 interface InventoryGridProps {
   groupedItems: GroupedItem[];
   readonly: boolean;
-  onUseItem: (groupedItem: GroupedItem) => void;
+  onUseItem: (groupedItem: GroupedItem) => Promise<boolean | void>;
   onSellItem: (groupedItem: GroupedItem) => void;
 }
 
@@ -25,6 +25,7 @@ export const InventoryGrid = ({
   onUseItem, 
   onSellItem 
 }: InventoryGridProps) => {
+  const [openKey, setOpenKey] = useState<string | null>(null);
   const unequippedItems = groupedItems.filter(item => 
     !item.items.some(i => i.equipped)
   );
@@ -35,8 +36,14 @@ export const InventoryGrid = ({
 
   return (
     <>
-      {unequippedItems.map((item) => (
-        <Dialog key={`${item.name}-${item.type}-${item.value}`}>
+      {unequippedItems.map((item) => {
+        const dialogKey = `${item.name}-${item.type}-${item.value}`;
+        return (
+          <Dialog 
+            key={dialogKey}
+            open={openKey === dialogKey}
+            onOpenChange={(open) => setOpenKey(open ? dialogKey : null)}
+          >
           <DialogTrigger asChild>
             <Card 
               className="w-[80px] h-[90px] p-2 bg-game-surface/80 border-game-accent backdrop-blur-sm flex flex-col mx-1 my-1 cursor-pointer hover:border-game-accent/80"
@@ -124,7 +131,10 @@ export const InventoryGrid = ({
                       </DialogClose>
                     ) : (
                       <Button
-                        onClick={() => onUseItem(item)}
+                        onClick={async () => {
+                          const shouldClose = await onUseItem(item);
+                          if (shouldClose) setOpenKey(null);
+                        }}
                         className="w-full bg-game-primary hover:bg-game-primary/80"
                       >
                         Открыть колоду
@@ -162,7 +172,8 @@ export const InventoryGrid = ({
             </div>
           </DialogContent>
         </Dialog>
-      ))}
+      );
+      })}
     </>
   );
 };
