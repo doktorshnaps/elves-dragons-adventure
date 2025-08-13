@@ -7,6 +7,7 @@ import {
   DialogTrigger,
   DialogTitle,
   DialogDescription,
+  DialogClose,
 } from "@/components/ui/dialog";
 import { Item } from "@/types/inventory";
 import { GroupedItem } from "./types";
@@ -112,12 +113,23 @@ export const InventoryGrid = ({
               {!readonly && (
                 <div className="flex flex-col gap-2 mt-4">
                   {item.type === 'cardPack' && (
-                    <Button
-                      onClick={() => onUseItem(item)}
-                      className="w-full bg-game-primary hover:bg-game-primary/80"
-                    >
-                      Открыть колоду
-                    </Button>
+                    item.count === 1 ? (
+                      <DialogClose asChild>
+                        <Button
+                          onClick={() => onUseItem(item)}
+                          className="w-full bg-game-primary hover:bg-game-primary/80"
+                        >
+                          Открыть колоду
+                        </Button>
+                      </DialogClose>
+                    ) : (
+                      <Button
+                        onClick={() => onUseItem(item)}
+                        className="w-full bg-game-primary hover:bg-game-primary/80"
+                      >
+                        Открыть колоду
+                      </Button>
+                    )
                   )}
                   {item.type === 'healthPotion' && (
                     <Button
