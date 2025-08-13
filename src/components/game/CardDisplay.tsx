@@ -15,6 +15,7 @@ interface CardDisplayProps {
   isActive?: boolean;
   isSelected?: boolean;
   onUpgrade?: () => void;
+  onClick?: (e: React.MouseEvent) => void;
 }
 
 export const CardDisplay = ({ 
@@ -24,15 +25,17 @@ export const CardDisplay = ({
   className = "", 
   isActive = true,
   isSelected = false,
-  onUpgrade
+  onUpgrade,
+  onClick
 }: CardDisplayProps) => {
   const isMobile = useIsMobile();
 
   return (
     <Card 
+      onClick={onClick}
       className={`relative w-[90px] h-[180px] sm:w-[120px] sm:h-[240px] md:w-[130px] md:h-[260px] lg:w-[140px] lg:h-[280px]
         p-0.5 bg-game-background border-game-accent hover:border-game-primary transition-all duration-300 
-        ${!isActive && card.type === 'pet' ? 'opacity-50' : ''} ${className}`}
+        ${!isActive && card.type === 'pet' ? 'opacity-50' : ''} ${onClick ? 'cursor-pointer' : ''} ${className}`}
     >
       <div className="flex flex-col h-full">
         <div className="w-full h-[75px] sm:h-[100px] md:h-[110px] lg:h-[120px] flex-shrink-0">

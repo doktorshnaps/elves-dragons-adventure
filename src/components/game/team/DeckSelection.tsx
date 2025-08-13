@@ -9,6 +9,7 @@ import { useGameData } from "@/hooks/useGameData";
 import { upgradeCard } from "@/utils/cardUtils";
 import { useDragonEggs } from "@/contexts/DragonEggContext";
 import { Item } from "@/types/inventory";
+import { CardPreviewModal } from "../cards/CardPreviewModal";
 interface DeckSelectionProps {
   cards: CardType[];
   selectedPairs: TeamPair[];
@@ -30,17 +31,12 @@ export const DeckSelection = ({
   const [showHeroDeck, setShowHeroDeck] = useState(false);
   const [showDragonDeck, setShowDragonDeck] = useState(false);
   const [activePairIndex, setActivePairIndex] = useState<number | null>(null);
-  const {
-    gameData,
-    updateGameData
-  } = useGameData();
-  const {
-    toast
-  } = useToast();
-  const {
-    addEgg
-  } = useDragonEggs();
+  const { gameData, updateGameData } = useGameData();
+  const { toast } = useToast();
+  const { addEgg } = useDragonEggs();
   const [upgradingKeys, setUpgradingKeys] = useState<Record<string, boolean>>({});
+  const [previewCard, setPreviewCard] = useState<CardType | null>(null);
+  const [previewAction, setPreviewAction] = useState<{ label: string; action: () => void } | null>(null);
   const heroes = cards.filter(card => card.type === 'character');
   const dragons = cards.filter(card => card.type === 'pet');
   const isHeroSelected = (hero: CardType) => {
@@ -171,11 +167,11 @@ export const DeckSelection = ({
                     <div className="grid grid-cols-2 gap-2 items-start justify-items-center">
                       <div className="space-y-1">
                         <div className="text-xs text-game-accent/70">Герой</div>
-                        <CardDisplay card={pair.hero} showSellButton={false} className="w-[80px] h-[160px] sm:w-[100px] sm:h-[200px] md:w-[110px] md:h-[220px] lg:w-[120px] lg:h-[240px]" />
+                        <CardDisplay card={pair.hero} showSellButton={false} className="w-[80px] h-[160px] sm:w-[100px] sm:h-[200px] md:w-[110px] md:h-[220px] lg:w-[120px] lg:h-[240px]" onClick={(e) => { e.stopPropagation(); setPreviewCard(pair.hero); setPreviewAction(null); }} />
                       </div>
                       <div className="space-y-1">
                         <div className="text-xs text-game-accent/70">Дракон</div>
-                        {pair.dragon ? <CardDisplay card={pair.dragon} showSellButton={false} className="w-[80px] h-[160px] sm:w-[100px] sm:h-[200px] md:w-[110px] md:h-[220px] lg:w-[120px] lg:h-[240px]" /> : <button type="button" onClick={() => {
+                        {pair.dragon ? <CardDisplay card={pair.dragon} showSellButton={false} className="w-[80px] h-[160px] sm:w-[100px] sm:h-[200px] md:w-[110px] md:h-[220px] lg:w-[120px] lg:h-[240px]" onClick={(e) => { e.stopPropagation(); setPreviewCard(pair.dragon!); setPreviewAction(null); }} /> : <button type="button" onClick={() => {
                     setActivePairIndex(index);
                     setShowDragonDeck(true);
                   }} className="w-12 h-14 border border-dashed border-game-accent/30 rounded flex items-center justify-center text-xs text-game-accent/70 hover:text-game-accent hover:border-game-accent transition py-0 px-[1px] text-center mx-[44px] my-[7px]">
@@ -215,7 +211,7 @@ export const DeckSelection = ({
           </DialogHeader>
           <div className="grid grid-cols-4 sm:grid-cols-6 gap-3 overflow-y-auto p-4">
             {heroes.map(hero => <div key={hero.id} className={`cursor-pointer transition-all ${isHeroSelected(hero) ? 'opacity-50 pointer-events-none' : 'hover:scale-105'}`} onClick={() => !isHeroSelected(hero) && handleHeroSelect(hero)}>
-                <CardDisplay card={hero} showSellButton={false} />
+                <CardDisplay card={hero} showSellButton={false} onClick={(e) => { e.stopPropagation(); setPreviewCard(hero); setPreviewAction(!isHeroSelected(hero) ? { label: 'Выбрать героя', action: () => handleHeroSelect(hero) } : null); }} />
                 {isHeroSelected(hero) && <div className="text-center text-xs text-game-accent mt-1">Выбран</div>}
               </div>)}
           </div>
@@ -234,7 +230,7 @@ export const DeckSelection = ({
             const canAssign = activePairIndex !== null ? !!selectedPairs[activePairIndex] && !selectedPairs[activePairIndex]?.dragon && selectedPairs[activePairIndex]?.hero.faction === dragon.faction && !isSelected : false; // при просмотре колоды не назначаем на героя
             const dupCount = getDuplicateCount(dragon);
             return <div key={dragon.id} className={`cursor-pointer transition-all ${activePairIndex !== null ? !canAssign ? 'opacity-50 pointer-events-none' : 'hover:scale-105' : 'hover:scale-105'}`} onClick={() => canAssign && handleDragonSelect(dragon)}>
-                  <CardDisplay card={dragon} showSellButton={false} />
+                  <CardDisplay card={dragon} showSellButton={false} onClick={(e) => { e.stopPropagation(); setPreviewCard(dragon); const canAssignHere = (activePairIndex !== null) && !!selectedPairs[activePairIndex] && !selectedPairs[activePairIndex]?.dragon && selectedPairs[activePairIndex]?.hero.faction === dragon.faction && !isSelected; setPreviewAction(canAssignHere ? { label: 'Назначить дракона', action: () => handleDragonSelect(dragon) } : null); }} />
                   <div className="text-center text-xs text-game-accent mt-1">
                     {isSelected ? 'Выбран' : activePairIndex !== null ? selectedPairs[activePairIndex]?.hero.faction : 'Просмотр'}
                   </div>
@@ -251,5 +247,14 @@ export const DeckSelection = ({
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Card Preview Modal */}
+      <CardPreviewModal
+        card={previewCard}
+        open={!!previewCard}
+        onClose={() => { setPreviewCard(null); setPreviewAction(null); }}
+        actionLabel={previewAction?.label}
+        onAction={previewAction ? () => { previewAction.action(); setPreviewCard(null); setPreviewAction(null); } : undefined}
+      />
     </div>;
 };
