@@ -48,9 +48,9 @@ export const DeckSelection = ({
   const isDragonSelected = (dragon: CardType) => {
     return selectedPairs.some(pair => pair.dragon?.id === dragon.id);
   };
-  const getAvailableDragons = (heroFaction?: string) => {
+  const getAvailableDragons = (heroFaction?: string, heroRarity?: number) => {
     if (!heroFaction) return [];
-    return dragons.filter(dragon => dragon.faction === heroFaction && !isDragonSelected(dragon));
+    return dragons.filter(dragon => dragon.faction === heroFaction && (!heroRarity || dragon.rarity <= heroRarity) && !isDragonSelected(dragon));
   };
   const handleHeroSelect = (hero: CardType) => {
     if (selectedPairs.length >= 5) return;
@@ -60,8 +60,14 @@ export const DeckSelection = ({
   const handleDragonSelect = (dragon: CardType) => {
     if (activePairIndex !== null) {
       const pair = selectedPairs[activePairIndex];
-      if (pair && pair.hero.faction === dragon.faction) {
-        onPairAssignDragon(activePairIndex, dragon);
+      if (pair) {
+        if (pair.hero.faction !== dragon.faction) {
+          toast({ title: 'Неверная фракция', description: 'Дракон должен быть той же фракции, что и герой', variant: 'destructive' });
+        } else if ((pair.hero.rarity ?? 0) < dragon.rarity) {
+          toast({ title: 'Недостаточный ранг героя', description: 'Герой может управлять драконом своего ранга или ниже', variant: 'destructive' });
+        } else {
+          onPairAssignDragon(activePairIndex, dragon);
+        }
       }
       setActivePairIndex(null);
       setShowDragonDeck(false);
@@ -69,7 +75,7 @@ export const DeckSelection = ({
     }
 
     // Fallback: assign to any available hero without a dragon of the same faction
-    const heroWithSameFaction = selectedPairs.find(pair => pair.hero.faction === dragon.faction && !pair.dragon);
+    const heroWithSameFaction = selectedPairs.find(pair => pair.hero.faction === dragon.faction && !pair.dragon && (pair.hero.rarity ?? 0) >= dragon.rarity);
     if (heroWithSameFaction) {
       const pairIndex = selectedPairs.findIndex(pair => pair === heroWithSameFaction);
       onPairAssignDragon(pairIndex, dragon);
@@ -228,12 +234,12 @@ export const DeckSelection = ({
             <DialogTitle className="text-game-accent">Выберите дракона</DialogTitle>
           </DialogHeader>
           <div className="grid grid-cols-4 sm:grid-cols-6 gap-3 overflow-y-auto p-4">
-            {(activePairIndex !== null ? getAvailableDragons(selectedPairs[activePairIndex]?.hero.faction) : dragons).map(dragon => {
+            {(activePairIndex !== null ? getAvailableDragons(selectedPairs[activePairIndex]?.hero.faction, selectedPairs[activePairIndex]?.hero.rarity) : dragons).map(dragon => {
             const isSelected = isDragonSelected(dragon);
-            const canAssign = activePairIndex !== null ? !!selectedPairs[activePairIndex] && !selectedPairs[activePairIndex]?.dragon && selectedPairs[activePairIndex]?.hero.faction === dragon.faction && !isSelected : false; // при просмотре колоды не назначаем на героя
+            const canAssign = activePairIndex !== null ? !!selectedPairs[activePairIndex] && !selectedPairs[activePairIndex]?.dragon && selectedPairs[activePairIndex]?.hero.faction === dragon.faction && (selectedPairs[activePairIndex]?.hero.rarity ?? 0) >= dragon.rarity && !isSelected : false; // при просмотре колоды не назначаем на героя
             const dupCount = getDuplicateCount(dragon);
             return <div key={dragon.id} className={`cursor-pointer transition-all ${activePairIndex !== null ? !canAssign ? 'opacity-50 pointer-events-none' : 'hover:scale-105' : 'hover:scale-105'}`} onClick={() => canAssign && handleDragonSelect(dragon)}>
-                  <CardDisplay card={dragon} showSellButton={false} onClick={(e) => { e.stopPropagation(); setPreviewCard(dragon); const canAssignHere = (activePairIndex !== null) && !!selectedPairs[activePairIndex] && !selectedPairs[activePairIndex]?.dragon && selectedPairs[activePairIndex]?.hero.faction === dragon.faction && !isSelected; setPreviewAction(canAssignHere ? { label: 'Назначить дракона', action: () => handleDragonSelect(dragon) } : null); setPreviewDeleteAction(null); }} />
+                  <CardDisplay card={dragon} showSellButton={false} onClick={(e) => { e.stopPropagation(); setPreviewCard(dragon); const canAssignHere = (activePairIndex !== null) && !!selectedPairs[activePairIndex] && !selectedPairs[activePairIndex]?.dragon && selectedPairs[activePairIndex]?.hero.faction === dragon.faction && (selectedPairs[activePairIndex]?.hero.rarity ?? 0) >= dragon.rarity && !isSelected; setPreviewAction(canAssignHere ? { label: 'Назначить дракона', action: () => handleDragonSelect(dragon) } : null); setPreviewDeleteAction(null); }} />
                   <div className="text-center text-xs text-game-accent mt-1">
                     {isSelected ? 'Выбран' : activePairIndex !== null ? selectedPairs[activePairIndex]?.hero.faction : 'Просмотр'}
                   </div>
@@ -244,7 +250,7 @@ export const DeckSelection = ({
                     </div>}
                 </div>;
           })}
-            {activePairIndex !== null && getAvailableDragons(selectedPairs[activePairIndex]?.hero.faction).length === 0 && <div className="col-span-full text-center text-game-accent/60 text-sm">
+            {activePairIndex !== null && getAvailableDragons(selectedPairs[activePairIndex]?.hero.faction, selectedPairs[activePairIndex]?.hero.rarity).length === 0 && <div className="col-span-full text-center text-game-accent/60 text-sm">
                 Нет доступных драконов для выбранного героя
               </div>}
           </div>
