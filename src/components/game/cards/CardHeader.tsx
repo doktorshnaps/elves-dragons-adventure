@@ -15,7 +15,7 @@ export const CardHeader = ({ name, rarity }: CardHeaderProps) => {
       <h3 className={`font-semibold text-game-accent break-words tracking-tighter leading-none ${isMobile ? 'text-[7px]' : 'text-[11px]'}`}>
         {name}
       </h3>
-      <span className={`text-yellow-500 whitespace-nowrap leading-none ${isMobile ? 'text-[7px]' : 'text-[11px]'}`}>
+      <span className={`text-yellow-500 leading-none min-w-0 max-w-[48%] truncate ${isMobile ? 'text-[7px]' : 'text-[11px]'}`}>
         {getRarityLabel(rarity)}
       </span>
     </div>
