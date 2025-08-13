@@ -15,31 +15,47 @@ export const useCardPackOpening = () => {
   const removeCardPacksFromInventory = (count: number, referencePack: Item) => {
     const inv = [...(gameData.inventory || [])];
     let removed = 0;
-    const updated = [] as Item[];
+    let updated: Item[] = [];
+
+    const preferredIds = new Set<string>([String(referencePack.id)]);
+
+    // Pass 1: remove the exact referenced pack by id first
     for (const it of inv) {
       if (
         removed < count &&
         it.type === 'cardPack' &&
-        // Prefer same name to keep UX consistent for different pack types
-        (it.name === referencePack.name)
+        preferredIds.has(String(it.id))
       ) {
         removed += 1;
-        continue; // skip adding this one (removed)
+        continue;
       }
       updated.push(it);
     }
 
-    // If not enough with exact name, try removing any remaining generic card packs
+    // Pass 2: remove by same name/type
     if (removed < count) {
       const tmp: Item[] = [];
       for (const it of updated) {
-        if (removed < count && it.type === 'cardPack' && it.name !== referencePack.name) {
+        if (removed < count && it.type === 'cardPack' && it.name === referencePack.name) {
           removed += 1;
           continue;
         }
         tmp.push(it);
       }
-      return { updatedInventory: tmp, removedCount: removed };
+      updated = tmp;
+    }
+
+    // Pass 3: remove any remaining cardPack (fallback)
+    if (removed < count) {
+      const tmp: Item[] = [];
+      for (const it of updated) {
+        if (removed < count && it.type === 'cardPack') {
+          removed += 1;
+          continue;
+        }
+        tmp.push(it);
+      }
+      updated = tmp;
     }
 
     return { updatedInventory: updated, removedCount: removed };
