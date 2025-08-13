@@ -15,47 +15,28 @@ export const useCardPackOpening = () => {
   const removeCardPacksFromInventory = (count: number, referencePack: Item) => {
     const inv = [...(gameData.inventory || [])];
     let removed = 0;
-    let updated: Item[] = [];
+    const updated: Item[] = [];
 
-    const preferredIds = new Set<string>([String(referencePack.id)]);
+    const targetId = referencePack?.id != null ? String(referencePack.id) : "";
+    const targetName = referencePack.name;
 
-    // Pass 1: remove the exact referenced pack by id first
+    // Remove the exact referenced pack by id first (only one), then same-name packs
     for (const it of inv) {
-      if (
-        removed < count &&
-        it.type === 'cardPack' &&
-        preferredIds.has(String(it.id))
-      ) {
-        removed += 1;
-        continue;
+      const isPack = it.type === 'cardPack';
+      const idStr = it?.id != null ? String(it.id) : "";
+
+      if (isPack && removed < count) {
+        if (removed === 0 && idStr === targetId) {
+          removed += 1;
+          continue;
+        }
+        if (it.name === targetName) {
+          removed += 1;
+          continue;
+        }
       }
+
       updated.push(it);
-    }
-
-    // Pass 2: remove by same name/type
-    if (removed < count) {
-      const tmp: Item[] = [];
-      for (const it of updated) {
-        if (removed < count && it.type === 'cardPack' && it.name === referencePack.name) {
-          removed += 1;
-          continue;
-        }
-        tmp.push(it);
-      }
-      updated = tmp;
-    }
-
-    // Pass 3: remove any remaining cardPack (fallback)
-    if (removed < count) {
-      const tmp: Item[] = [];
-      for (const it of updated) {
-        if (removed < count && it.type === 'cardPack') {
-          removed += 1;
-          continue;
-        }
-        tmp.push(it);
-      }
-      updated = tmp;
     }
 
     return { updatedInventory: updated, removedCount: removed };
@@ -64,14 +45,16 @@ export const useCardPackOpening = () => {
   const openCardPacks = async (packItem: Item, count: number): Promise<CardType[]> => {
     if (packItem.type !== 'cardPack' || isOpening) return [];
 
-    const allPacks = (gameData.inventory || []).filter(i => i.type === 'cardPack');
+    const allPacks = (gameData.inventory || []).filter(
+      (i) => i.type === 'cardPack' && i.name === packItem.name
+    );
     const available = allPacks.length;
 
     if (count < 1) return [];
     if (available < count) {
       toast({
         title: 'Недостаточно колод',
-        description: `У вас только ${available} колод(ы) для открытия`,
+        description: `Доступно только ${available} колод(ы) этой серии для открытия`,
         variant: 'destructive',
       });
       return [];
@@ -85,13 +68,12 @@ export const useCardPackOpening = () => {
       if (removedCount < count) {
         toast({
           title: 'Недостаточно колод',
-          description: `У вас только ${removedCount} колод(ы) для открытия`,
+          description: `Доступно только ${available} колод(ы) этой серии для открытия`,
           variant: 'destructive',
         });
         return [];
       }
 
-      // Generate cards
       const newCards: CardType[] = Array.from({ length: count }, () =>
         generateCard(Math.random() > 0.5 ? 'character' : 'pet')
       );
@@ -109,20 +91,28 @@ export const useCardPackOpening = () => {
         localStorage.setItem('gameCards', JSON.stringify(updatedCards));
         window.dispatchEvent(new CustomEvent('inventoryUpdate', { detail: { inventory: updatedInventory } }));
         window.dispatchEvent(new CustomEvent('cardsUpdate', { detail: { cards: updatedCards } }));
-      } catch {}
+      } catch (err) {
+        console.error('Inventory sync error', err);
+        toast({
+          title: 'Ошибка синхронизации',
+          description: 'Не удалось синхронизировать инвентарь',
+          variant: 'destructive',
+        });
+      }
 
       // Packs left of the same type/name
-      const packsLeftSame = updatedInventory.filter(i => i.type === 'cardPack' && i.name === packItem.name).length;
+      const packsLeftSame = updatedInventory.filter(
+        (i) => i.type === 'cardPack' && i.name === packItem.name
+      ).length;
 
       if (packsLeftSame > 0) {
-        // Show reveal modal only if есть ещё колоды, как при продаже диалог остаётся
         const last = newCards[newCards.length - 1] || null;
         if (last) {
           setRevealedCard(last);
           setShowRevealModal(true);
         }
       } else {
-        // Последняя колода: закрываем модальные окна сразу, чтобы повторно нельзя было продать
+        // Last pack: close all related modals just like on sell flow
         setShowRevealModal(false);
         setRevealedCard(null);
       }
@@ -133,7 +123,8 @@ export const useCardPackOpening = () => {
       });
 
       return newCards;
-    } catch (error) {
+    } catch (error: unknown) {
+      console.error('openCardPacks error', error);
       toast({
         title: 'Ошибка',
         description: 'Не удалось открыть колоды карт',
