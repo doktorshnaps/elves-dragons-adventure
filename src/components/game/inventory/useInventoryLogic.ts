@@ -10,7 +10,7 @@ import { useGameData } from "@/hooks/useGameData";
 export const useInventoryLogic = (initialInventory: Item[]) => {
   const { toast } = useToast();
   const [selectedItems, setSelectedItems] = useState<Item[]>([]);
-  const { gameData, updateGameData } = useGameData();
+  const { gameData, updateGameData, loadGameData } = useGameData();
   const { 
     openCardPack,
     openCardPacks,
@@ -123,6 +123,7 @@ const groupItems = (items: Item[]): GroupedItem[] => {
       const shouldClose = requested >= available;
       // Use new multi-open API
       await openCardPacks(item, requested);
+      await loadGameData();
       return shouldClose;
     }
     return false;
