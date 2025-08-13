@@ -46,7 +46,7 @@ export const InventoryGrid = ({
   return (
     <>
       {unequippedItems.map((item) => {
-        const dialogKey = `${item.name}-${item.type}-${item.value}`;
+        const dialogKey = `${item.name}-${item.type}-${item.value}-${item.count}`;
         return (
           <Dialog 
             key={dialogKey}
