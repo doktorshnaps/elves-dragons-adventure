@@ -129,26 +129,14 @@ export const InventoryGrid = ({
               {!readonly && (
                 <div className="flex flex-col gap-2 mt-4">
                   {item.type === 'cardPack' && (
-                    item.count === 1 ? (
-                      <DialogClose asChild>
-                        <Button
-                          onClick={() => onUseItem(item)}
-                          className="w-full bg-game-primary hover:bg-game-primary/80"
-                        >
-                          Открыть колоду
-                        </Button>
-                      </DialogClose>
-                    ) : (
+                    <DialogClose asChild>
                       <Button
-                        onClick={async () => {
-                          const shouldClose = await onUseItem(item);
-                          if (shouldClose) setOpenKey(null);
-                        }}
+                        onClick={() => onUseItem(item)}
                         className="w-full bg-game-primary hover:bg-game-primary/80"
                       >
                         Открыть колоду
                       </Button>
-                    )
+                    </DialogClose>
                   )}
                   {item.type === 'healthPotion' && (
                     <Button
