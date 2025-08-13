@@ -30,6 +30,9 @@ export const DragonEggProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   }, [gameData.dragonEggs]);
 
 const addEgg = async (egg: DragonEgg, faction: string) => {
+    // Защита от дублей: если яйцо с таким id уже есть, ничего не делаем
+    if (eggs.some((e) => e.id === egg.id)) return;
+
     const newEgg: DragonEgg = {
       ...egg,
       faction,

@@ -44,14 +44,8 @@ export const useCardUpgrade = (
       const eggId = Date.now().toString();
       const createdAt = new Date().toISOString();
 
-addEgg({
-        id: eggId,
-        petName: upgradedCard.name,
-        rarity: upgradedCard.rarity,
-        createdAt,
-        faction: upgradedCard.faction || 'Каледор',
-        incubationStarted: false,
-      }, upgradedCard.faction || 'Каледор');
+// Убираем автоматическое добавление в инкубатор — яйцо попадет только в инвентарь
+
 
       const eggItem: Item = {
         id: eggId,

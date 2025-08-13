@@ -116,14 +116,8 @@ export const DeckSelection = ({
       const eggId = Date.now().toString();
       const createdAt = new Date().toISOString();
       const faction = (upgraded as any).faction || dragon.faction || 'Каледор';
-      addEgg({
-        id: eggId,
-        petName: upgraded.name,
-        rarity: upgraded.rarity,
-        createdAt,
-        faction,
-        incubationStarted: false
-      }, faction);
+// Не добавляем сразу в инкубатор — яйцо появится в инвентаре и его можно будет переместить вручную
+
       const eggItem: Item = {
         id: eggId,
         name: `${upgraded.name} — Яйцо дракона`,
