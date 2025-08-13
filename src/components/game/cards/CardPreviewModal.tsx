@@ -9,9 +9,11 @@ interface CardPreviewModalProps {
   onClose: () => void;
   actionLabel?: string;
   onAction?: () => void;
+  deleteLabel?: string;
+  onDelete?: () => void;
 }
 
-export const CardPreviewModal = ({ card, open, onClose, actionLabel, onAction }: CardPreviewModalProps) => {
+export const CardPreviewModal = ({ card, open, onClose, actionLabel, onAction, deleteLabel, onDelete }: CardPreviewModalProps) => {
   if (!card) return null;
 
   return (
@@ -78,6 +80,16 @@ export const CardPreviewModal = ({ card, open, onClose, actionLabel, onAction }:
                 className="w-full mt-2 bg-game-surface border-2 border-game-accent hover:bg-game-surface/80 text-game-accent rounded px-4 py-2 transition"
               >
                 {actionLabel}
+              </button>
+            )}
+
+            {deleteLabel && onDelete && (
+              <button
+                type="button"
+                onClick={onDelete}
+                className="w-full mt-2 bg-red-500/10 border-2 border-red-500/60 hover:bg-red-500/20 text-red-300 rounded px-4 py-2 transition"
+              >
+                {deleteLabel}
               </button>
             )}
           </div>

@@ -86,6 +86,16 @@ export const useTeamSelection = () => {
     });
   };
 
+  const handleRemoveDragon = async (index: number) => {
+    const newPairs = selectedPairs.map((pair, i) =>
+      i === index ? { ...pair, dragon: undefined } : pair
+    );
+    setSelectedPairs(newPairs);
+    await updateGameData({
+      selectedTeam: newPairs
+    });
+  };
+
   const getSelectedTeamStats = () => {
     let totalPower = 0;
     let totalDefense = 0;
@@ -119,6 +129,7 @@ export const useTeamSelection = () => {
     handlePairSelect,
     handlePairRemove,
     handleAssignDragon,
+    handleRemoveDragon,
     getSelectedTeamStats
   };
 };
