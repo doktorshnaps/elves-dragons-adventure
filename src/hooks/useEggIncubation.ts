@@ -37,46 +37,31 @@ export const useEggIncubation = ({
     return durationsMs[fromRarity] ?? 10 * 60 * 1000;
   };
 
-  // Проверяем сохраненное состояние при монтировании
+  // Проверяем состояние инкубации из DragonEgg
   useEffect(() => {
-    const savedIncubations = localStorage.getItem('eggIncubations');
-    if (savedIncubations) {
-      const incubations = JSON.parse(savedIncubations);
-      const eggIncubation = incubations.find((inc: any) => 
-        inc.petName === petName && inc.createdAt === createdAt
-      );
-      
-      if (eggIncubation) {
-        setIsStarted(true);
-        const hatchTime = getHatchTime(rarity);
-        const startDate = new Date(eggIncubation.startedAt);
-        const now = new Date();
-        const timeDiff = now.getTime() - startDate.getTime();
+    // Состояние инкубации теперь хранится в DragonEgg.incubationStarted и createdAt
+    if (createdAt) {
+      setIsStarted(true);
+      const hatchTime = getHatchTime(rarity);
+      const startDate = new Date(createdAt);
+      const now = new Date();
+      const timeDiff = now.getTime() - startDate.getTime();
 
-        if (timeDiff >= hatchTime) {
-          setIsHatched(true);
-          setCanClaim(true);
-          setTimeLeft(0);
-        } else {
-          setTimeLeft(hatchTime - timeDiff);
-        }
+      if (timeDiff >= hatchTime) {
+        setIsHatched(true);
+        setCanClaim(true);
+        setTimeLeft(0);
+      } else {
+        setTimeLeft(hatchTime - timeDiff);
       }
     }
   }, [petName, createdAt, rarity]);
 
   // Обновляем таймер
   useEffect(() => {
-    if (!isStarted || isHatched) return;
+    if (!isStarted || isHatched || !createdAt) return;
 
-    const savedIncubations = localStorage.getItem('eggIncubations');
-    const incubations = savedIncubations ? JSON.parse(savedIncubations) : [];
-    const eggIncubation = incubations.find((inc: any) => 
-      inc.petName === petName && inc.createdAt === createdAt
-    );
-
-    if (!eggIncubation) return;
-
-    const startTime = new Date(eggIncubation.startedAt).getTime();
+    const startTime = new Date(createdAt).getTime();
     const hatchTime = getHatchTime(rarity);
     
     const timer = setInterval(() => {
@@ -94,23 +79,10 @@ export const useEggIncubation = ({
     }, 1000);
 
     return () => clearInterval(timer);
-  }, [isStarted, isHatched, petName, createdAt, rarity]);
+  }, [isStarted, isHatched, createdAt, rarity]);
 
   const handleStart = () => {
-    setIsStarted(true);
-    
-    // Сохраняем состояние инкубации
-    const savedIncubations = localStorage.getItem('eggIncubations');
-    const incubations = savedIncubations ? JSON.parse(savedIncubations) : [];
-    
-    incubations.push({
-      petName,
-      createdAt,
-      startedAt: new Date().toISOString()
-    });
-    
-    localStorage.setItem('eggIncubations', JSON.stringify(incubations));
-    
+    // Этот метод больше не нужен, так как инкубация начинается через DragonEggContext
     toast({
       title: "Инкубация началась",
       description: `${petName} вылупится через некоторое время`,
@@ -120,16 +92,6 @@ export const useEggIncubation = ({
   const handleClaim = () => {
     setIsHatched(true);
     setCanClaim(false);
-    
-    // Удаляем информацию об инкубации после получения
-    const savedIncubations = localStorage.getItem('eggIncubations');
-    if (savedIncubations) {
-      const incubations = JSON.parse(savedIncubations);
-      const updatedIncubations = incubations.filter((inc: any) => 
-        !(inc.petName === petName && inc.createdAt === createdAt)
-      );
-      localStorage.setItem('eggIncubations', JSON.stringify(updatedIncubations));
-    }
     
     // Вызываем onHatch для перемещения карты в колоду
     onHatch();

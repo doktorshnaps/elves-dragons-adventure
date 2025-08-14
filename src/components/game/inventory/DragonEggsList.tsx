@@ -1,3 +1,4 @@
+import React from "react";
 import { DragonEggTimer } from "../DragonEggTimer";
 import { useToast } from "@/hooks/use-toast";
 import { DragonEgg, useDragonEggs } from "@/contexts/DragonEggContext";
@@ -14,6 +15,24 @@ export const DragonEggsList = ({ eggs }: DragonEggsListProps) => {
   const { toast } = useToast();
   const { removeEgg, startIncubation } = useDragonEggs();
   const { gameData, updateGameData } = useGameData();
+
+  // Слушаем событие начала инкубации
+  React.useEffect(() => {
+    const handleStartIncubation = (event: CustomEvent) => {
+      const { petName } = event.detail;
+      const egg = eggs.find(e => e.petName === petName && !e.incubationStarted);
+      if (egg) {
+        startIncubation(egg.id);
+        toast({ 
+          title: 'Инкубация начата', 
+          description: `${egg.petName} (${egg.rarity}★)` 
+        });
+      }
+    };
+
+    window.addEventListener('startIncubation', handleStartIncubation as EventListener);
+    return () => window.removeEventListener('startIncubation', handleStartIncubation as EventListener);
+  }, [eggs, startIncubation, toast]);
 
   const handleHatch = async (egg: DragonEgg) => {
     // Находим базовую информацию о питомце из базы данных
@@ -120,21 +139,12 @@ export const DragonEggsList = ({ eggs }: DragonEggsListProps) => {
 <div className="text-[6px] sm:text-[8px] md:text-[10px] text-gray-400">
                   Редкость: {egg.rarity}
                 </div>
-                {!egg.incubationStarted ? (
-                  <button
-                    className="mt-1 text-[8px] sm:text-[10px] md:text-[12px] px-2 py-1 rounded bg-game-primary/80 hover:bg-game-primary text-white hover-scale"
-                    onClick={async () => { await startIncubation(egg.id); toast({ title: 'Инкубация начата', description: `${egg.petName} (${egg.rarity}★)` }); }}
-                  >
-                    Начать инкубацию
-                  </button>
-                ) : (
-                  <DragonEggTimer
-                    rarity={egg.rarity as Rarity}
-                    petName={egg.petName}
-                    createdAt={egg.createdAt}
-                    onHatch={() => handleHatch(egg)}
-                  />
-                )}
+                <DragonEggTimer
+                  rarity={egg.rarity as Rarity}
+                  petName={egg.petName}
+                  createdAt={egg.incubationStarted ? egg.createdAt : ''}
+                  onHatch={() => handleHatch(egg)}
+                />
               </div>
             </div>
           </UICard>

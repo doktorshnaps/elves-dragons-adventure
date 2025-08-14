@@ -30,21 +30,30 @@ export const DragonEggTimer = ({
     onHatch
   });
 
+  // Если нет createdAt, значит инкубация не началась
+  if (!createdAt) {
+    return (
+      <Button 
+        onClick={() => {
+          // Эмитируем событие для начала инкубации через контекст
+          const event = new CustomEvent('startIncubation', { 
+            detail: { petName, rarity }
+          });
+          window.dispatchEvent(event);
+        }}
+        className="mt-1 text-[8px] sm:text-[10px] md:text-[12px] px-2 py-1 rounded bg-game-primary/80 hover:bg-game-primary text-white hover-scale"
+      >
+        Начать инкубацию
+      </Button>
+    );
+  }
+
   return (
     <div className="flex flex-col gap-2">
-      {!isStarted && (
-        <Button 
-          onClick={handleStart}
-          className="bg-game-accent hover:bg-game-accent/80"
-        >
-          Начать инкубацию
-        </Button>
-      )}
-
       {isStarted && !isHatched && (
         <div className="text-center">
-          <div className="text-sm text-gray-400">До вылупления:</div>
-          <div className="text-xl font-bold text-game-accent">
+          <div className="text-[6px] sm:text-[8px] md:text-[10px] text-gray-400">До вылупления:</div>
+          <div className="text-[8px] sm:text-[10px] md:text-[12px] font-bold text-game-accent">
             {formatTime(timeLeft || 0)}
           </div>
         </div>
@@ -53,14 +62,14 @@ export const DragonEggTimer = ({
       {canClaim && (
         <Button 
           onClick={handleClaim}
-          className="bg-game-primary hover:bg-game-primary/80 text-xs sm:text-sm px-1 py-1"
+          className="bg-game-primary hover:bg-game-primary/80 text-[8px] sm:text-[10px] md:text-[12px] px-2 py-1"
         >
           Получить
         </Button>
       )}
 
       {isHatched && !canClaim && (
-        <div className="text-center text-green-500">
+        <div className="text-center text-green-500 text-[8px] sm:text-[10px] md:text-[12px]">
           Питомец получен!
         </div>
       )}
