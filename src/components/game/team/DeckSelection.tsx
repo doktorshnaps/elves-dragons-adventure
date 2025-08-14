@@ -221,7 +221,7 @@ export const DeckSelection = ({
 
       {/* Deck Buttons */}
       <div className="grid grid-cols-2 gap-4">
-        <Button onClick={() => setShowHeroDeck(true)} className="h-32 flex flex-col items-center justify-center space-y-2 bg-game-surface border-2 border-game-accent hover:bg-game-surface/80" disabled={selectedPairs.length >= 5}>
+        <Button onClick={() => setShowHeroDeck(true)} className="h-32 flex flex-col items-center justify-center space-y-2 bg-game-surface border-2 border-game-accent hover:bg-game-surface/80">
           <div className="text-lg font-bold">Колода героев</div>
           <Badge variant="secondary">{heroes.length} карт</Badge>
         </Button>
@@ -239,10 +239,19 @@ export const DeckSelection = ({
             <DialogTitle className="text-game-accent">Выберите героя</DialogTitle>
           </DialogHeader>
           <div className="grid grid-cols-4 sm:grid-cols-6 gap-3 overflow-y-auto p-4">
-            {heroes.map(hero => <div key={hero.id} className={`cursor-pointer transition-all ${isHeroSelected(hero) ? 'opacity-50 pointer-events-none' : 'hover:scale-105'}`} onClick={() => !isHeroSelected(hero) && handleHeroSelect(hero)}>
-                <CardDisplay card={hero} showSellButton={false} onClick={(e) => { e.stopPropagation(); setPreviewCard(hero); setPreviewAction(!isHeroSelected(hero) ? { label: 'Выбрать героя', action: () => handleHeroSelect(hero) } : null); setPreviewDeleteAction(null); }} />
-                {isHeroSelected(hero) && <div className="text-center text-xs text-game-accent mt-1">Выбран</div>}
-              </div>)}
+            {heroes.map(hero => {
+              const isSelected = isHeroSelected(hero);
+              const teamFull = selectedPairs.length >= 5;
+              const canSelect = !isSelected && !teamFull;
+              return (
+                <div key={hero.id} className={`cursor-pointer transition-all ${isSelected || teamFull ? 'opacity-50' : 'hover:scale-105'} ${!canSelect ? 'pointer-events-none' : ''}`} onClick={() => canSelect && handleHeroSelect(hero)}>
+                  <CardDisplay card={hero} showSellButton={false} onClick={(e) => { e.stopPropagation(); setPreviewCard(hero); setPreviewAction(canSelect ? { label: 'Выбрать героя', action: () => handleHeroSelect(hero) } : null); setPreviewDeleteAction(null); }} />
+                  <div className="text-center text-xs text-game-accent mt-1">
+                    {isSelected ? 'Выбран' : teamFull ? 'Просмотр' : ''}
+                  </div>
+                </div>
+              );
+            })}
           </div>
         </DialogContent>
       </Dialog>
