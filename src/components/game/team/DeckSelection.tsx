@@ -244,7 +244,7 @@ export const DeckSelection = ({
               const teamFull = selectedPairs.length >= 5;
               const canSelect = !isSelected && !teamFull;
               return (
-                <div key={hero.id} className={`cursor-pointer transition-all ${isSelected || teamFull ? 'opacity-50' : 'hover:scale-105'} ${!canSelect ? 'pointer-events-none' : ''}`} onClick={() => canSelect && handleHeroSelect(hero)}>
+                <div key={hero.id} className={`cursor-pointer transition-all ${isSelected ? 'opacity-50' : 'hover:scale-105'}`} onClick={() => canSelect && handleHeroSelect(hero)}>
                   <CardDisplay card={hero} showSellButton={false} onClick={(e) => { e.stopPropagation(); setPreviewCard(hero); setPreviewAction(canSelect ? { label: 'Выбрать героя', action: () => handleHeroSelect(hero) } : null); setPreviewDeleteAction(null); }} />
                   <div className="text-center text-xs text-game-accent mt-1">
                     {isSelected ? 'Выбран' : teamFull ? 'Просмотр' : ''}
