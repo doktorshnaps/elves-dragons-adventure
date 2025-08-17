@@ -1,0 +1,222 @@
+import React from 'react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Progress } from '@/components/ui/progress';
+import { Sword, Shield, Heart } from 'lucide-react';
+import { TeamPair } from '@/types/teamBattle';
+import { Opponent } from '@/types/battle';
+
+interface TeamBattleArenaProps {
+  playerPairs: TeamPair[];
+  opponents: Opponent[];
+  attackOrder: string[];
+  isPlayerTurn: boolean;
+  onAttack: (pairId: string, targetId: number) => void;
+  onEnemyAttack: () => void;
+  level: number;
+}
+
+export const TeamBattleArena: React.FC<TeamBattleArenaProps> = ({
+  playerPairs,
+  opponents,
+  attackOrder,
+  isPlayerTurn,
+  onAttack,
+  onEnemyAttack,
+  level
+}) => {
+  const [selectedPair, setSelectedPair] = React.useState<string | null>(null);
+  const [selectedTarget, setSelectedTarget] = React.useState<number | null>(null);
+
+  const alivePairs = playerPairs.filter(pair => pair.health > 0);
+  const aliveOpponents = opponents.filter(opp => opp.health > 0);
+
+  const handleAttack = () => {
+    if (selectedPair && selectedTarget !== null) {
+      onAttack(selectedPair, selectedTarget);
+      setSelectedPair(null);
+      setSelectedTarget(null);
+    }
+  };
+
+  const getCurrentAttacker = () => {
+    const orderedPairs = [...alivePairs].sort((a, b) => a.attackOrder - b.attackOrder);
+    return orderedPairs[0];
+  };
+
+  const currentAttacker = getCurrentAttacker();
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-background via-background/90 to-background/80 p-4">
+      <div className="max-w-6xl mx-auto space-y-6">
+        {/* Header */}
+        <Card className="bg-card/50 backdrop-blur-sm border-primary/20">
+          <CardHeader>
+            <CardTitle className="text-center text-2xl text-primary">
+              Командный бой - Уровень {level}
+            </CardTitle>
+          </CardHeader>
+        </Card>
+
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {/* Player Team */}
+          <Card className="bg-card/50 backdrop-blur-sm border-primary/20">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-primary">
+                <Shield className="w-5 h-5" />
+                Ваша команда
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {playerPairs.map((pair, index) => (
+                <div
+                  key={pair.id}
+                  className={`p-4 rounded-lg border-2 transition-all cursor-pointer ${
+                    pair.health <= 0
+                      ? 'bg-muted/50 border-muted opacity-50'
+                      : selectedPair === pair.id
+                      ? 'bg-primary/20 border-primary'
+                      : currentAttacker?.id === pair.id && isPlayerTurn
+                      ? 'bg-accent/20 border-accent'
+                      : 'bg-card border-border hover:border-primary/50'
+                  }`}
+                  onClick={() => pair.health > 0 && isPlayerTurn && setSelectedPair(pair.id)}
+                >
+                  <div className="flex items-center justify-between mb-2">
+                    <div className="flex items-center gap-2">
+                      <span className="font-semibold text-sm bg-primary/20 px-2 py-1 rounded">
+                        #{pair.attackOrder}
+                      </span>
+                      <span className="font-medium">{pair.hero.name}</span>
+                      {pair.dragon && (
+                        <span className="text-sm text-muted-foreground">
+                          + {pair.dragon.name}
+                        </span>
+                      )}
+                    </div>
+                    {currentAttacker?.id === pair.id && isPlayerTurn && (
+                      <div className="text-xs bg-accent px-2 py-1 rounded">
+                        Ходит
+                      </div>
+                    )}
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-2 text-sm">
+                      <Heart className="w-4 h-4 text-red-500" />
+                      <Progress 
+                        value={(pair.health / pair.maxHealth) * 100}
+                        className="flex-1 h-2"
+                      />
+                      <span>{pair.health}/{pair.maxHealth}</span>
+                    </div>
+                    
+                    <div className="flex items-center justify-between text-xs text-muted-foreground">
+                      <div className="flex items-center gap-1">
+                        <Sword className="w-3 h-3" />
+                        {pair.power}
+                      </div>
+                      <div className="flex items-center gap-1">
+                        <Shield className="w-3 h-3" />
+                        {pair.defense}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </CardContent>
+          </Card>
+
+          {/* Enemies */}
+          <Card className="bg-card/50 backdrop-blur-sm border-destructive/20">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-destructive">
+                <Sword className="w-5 h-5" />
+                Враги
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {opponents.map((opponent) => (
+                <div
+                  key={opponent.id}
+                  className={`p-4 rounded-lg border-2 transition-all cursor-pointer ${
+                    opponent.health <= 0
+                      ? 'bg-muted/50 border-muted opacity-50'
+                      : selectedTarget === opponent.id
+                      ? 'bg-destructive/20 border-destructive'
+                      : 'bg-card border-border hover:border-destructive/50'
+                  }`}
+                  onClick={() => opponent.health > 0 && setSelectedTarget(opponent.id)}
+                >
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="font-medium">{opponent.name}</span>
+                    {opponent.isBoss && (
+                      <span className="text-xs bg-destructive px-2 py-1 rounded text-white">
+                        БОСС
+                      </span>
+                    )}
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-2 text-sm">
+                      <Heart className="w-4 h-4 text-red-500" />
+                      <Progress 
+                        value={(opponent.health / opponent.maxHealth) * 100}
+                        className="flex-1 h-2"
+                      />
+                      <span>{opponent.health}/{opponent.maxHealth}</span>
+                    </div>
+                    
+                    <div className="flex items-center justify-between text-xs text-muted-foreground">
+                      <div className="flex items-center gap-1">
+                        <Sword className="w-3 h-3" />
+                        {opponent.power}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Combat Controls */}
+        <Card className="bg-card/50 backdrop-blur-sm border-primary/20">
+          <CardContent className="pt-6">
+            <div className="flex items-center justify-center gap-4">
+              {isPlayerTurn ? (
+                <>
+                  <Button
+                    onClick={handleAttack}
+                    disabled={!selectedPair || selectedTarget === null}
+                    className="bg-primary hover:bg-primary/90"
+                  >
+                    Атаковать
+                  </Button>
+                  <div className="text-sm text-muted-foreground">
+                    {!selectedPair ? 'Выберите атакующего' : 
+                     selectedTarget === null ? 'Выберите цель' : 
+                     'Готов к атаке!'}
+                  </div>
+                </>
+              ) : (
+                <>
+                  <Button
+                    onClick={onEnemyAttack}
+                    variant="destructive"
+                    className="bg-destructive hover:bg-destructive/90"
+                  >
+                    Ход противника
+                  </Button>
+                  <div className="text-sm text-muted-foreground">
+                    Противник атакует...
+                  </div>
+                </>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    </div>
+  );
+};
