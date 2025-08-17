@@ -33,29 +33,20 @@ export const AttackOrderSelector: React.FC<AttackOrderSelectorProps> = ({
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-background/90 to-background/80 p-4">
-      <div className="max-w-4xl mx-auto space-y-6">
-        <Card className="bg-card/50 backdrop-blur-sm border-primary/20">
+    <div className="min-h-screen flex flex-col">
+      <div className="flex-1 flex items-center justify-center p-4">
+        <Card className="bg-card/50 backdrop-blur-sm border-primary/20 max-w-2xl w-full">
           <CardHeader>
-            <CardTitle className="text-center text-2xl text-primary">
+            <CardTitle className="text-center text-2xl">
               Настройка порядка атаки
             </CardTitle>
             <p className="text-center text-muted-foreground">
-              Перетащите карты, чтобы изменить порядок атаки ваших пар
+              Перетащите пары, чтобы установить порядок атаки
             </p>
-          </CardHeader>
-        </Card>
-
-        <Card className="bg-card/50 backdrop-blur-sm border-primary/20">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Sword className="w-5 h-5" />
-              Порядок атаки
-            </CardTitle>
           </CardHeader>
           <CardContent>
             <DragDropContext onDragEnd={handleDragEnd}>
-              <Droppable droppableId="attackOrder">
+              <Droppable droppableId="attack-order">
                 {(provided) => (
                   <div
                     {...provided.droppableProps}
@@ -68,49 +59,29 @@ export const AttackOrderSelector: React.FC<AttackOrderSelectorProps> = ({
                           <div
                             ref={provided.innerRef}
                             {...provided.draggableProps}
-                            className={`p-4 rounded-lg border-2 transition-all ${
+                            {...provided.dragHandleProps}
+                            className={`p-3 rounded-lg border transition-all ${
                               snapshot.isDragging
                                 ? 'bg-primary/20 border-primary shadow-lg'
                                 : 'bg-card border-border hover:border-primary/50'
                             }`}
                           >
-                            <div className="flex items-center gap-4">
-                              <div
-                                {...provided.dragHandleProps}
-                                className="flex items-center gap-2 text-muted-foreground hover:text-primary cursor-grab"
-                              >
-                                <GripVertical className="w-5 h-5" />
-                                <span className="font-bold text-lg bg-primary/20 px-3 py-1 rounded">
-                                  #{index + 1}
-                                </span>
+                            <div className="flex items-center gap-3">
+                              <div className="flex items-center justify-center w-6 h-6 rounded-full bg-primary text-primary-foreground font-bold text-sm">
+                                {index + 1}
                               </div>
-                              
                               <div className="flex-1">
-                                <div className="flex items-center gap-3 mb-2">
-                                  <span className="font-semibold text-lg">
-                                    {pair.hero.name}
-                                  </span>
-                                  {pair.dragon && (
-                                    <span className="text-muted-foreground">
-                                      + {pair.dragon.name}
-                                    </span>
-                                  )}
-                                </div>
-                                
-                                <div className="flex items-center gap-6 text-sm">
-                                  <div className="flex items-center gap-1">
-                                    <Sword className="w-4 h-4 text-primary" />
-                                    <span>Сила: {pair.power}</span>
-                                  </div>
-                                  <div className="flex items-center gap-1">
-                                    <Shield className="w-4 h-4 text-accent" />
-                                    <span>Защита: {pair.defense}</span>
-                                  </div>
-                                  <div className="text-muted-foreground">
-                                    Здоровье: {pair.health}
-                                  </div>
+                                <h4 className="font-medium">
+                                  {pair.hero.name}
+                                  {pair.dragon && ` + ${pair.dragon.name}`}
+                                </h4>
+                                <div className="flex gap-3 text-xs text-muted-foreground">
+                                  <span>💪 {pair.power}</span>
+                                  <span>🛡️ {pair.defense}</span>
+                                  <span>❤️ {pair.health}</span>
                                 </div>
                               </div>
+                              <GripVertical className="w-4 h-4 text-muted-foreground" />
                             </div>
                           </div>
                         )}
@@ -121,18 +92,62 @@ export const AttackOrderSelector: React.FC<AttackOrderSelectorProps> = ({
                 )}
               </Droppable>
             </DragDropContext>
+            
+            <div className="flex justify-center mt-6">
+              <Button 
+                onClick={onStartBattle}
+                className="px-6 py-2"
+                disabled={playerPairs.length === 0}
+              >
+                Начать бой
+              </Button>
+            </div>
           </CardContent>
         </Card>
-
-        <div className="flex justify-center">
-          <Button
-            onClick={onStartBattle}
-            size="lg"
-            className="bg-primary hover:bg-primary/90 px-8 py-3 text-lg"
-            disabled={playerPairs.length === 0}
-          >
-            Начать бой!
-          </Button>
+      </div>
+      
+      {/* Team Selection Panel at Bottom */}
+      <div className="bg-game-surface/50 border-t border-game-accent/30 p-4">
+        <div className="max-w-6xl mx-auto">
+          <h3 className="text-lg font-bold text-game-accent mb-3 text-center">
+            Выбранная команда ({playerPairs.length}/5)
+          </h3>
+          <div className="grid grid-cols-5 gap-4">
+            {Array.from({ length: 5 }, (_, index) => {
+              const pair = playerPairs[index];
+              return (
+                <div key={index} className="relative overflow-hidden border border-game-accent/30 rounded-lg p-2 min-h-[140px] bg-card/30">
+                  {pair ? (
+                    <div className="space-y-1">
+                      <div className="text-xs text-game-accent font-medium text-center">Пара {index + 1}</div>
+                      <div className="text-center">
+                        <div className="text-xs text-game-accent/70">Герой</div>
+                        <div className="text-xs font-medium text-primary">{pair.hero.name}</div>
+                        {pair.dragon && (
+                          <>
+                            <div className="text-xs text-game-accent/70 mt-1">Дракон</div>
+                            <div className="text-xs font-medium text-secondary">{pair.dragon.name}</div>
+                          </>
+                        )}
+                        <div className="text-xs text-muted-foreground mt-2 space-y-1">
+                          <div>💪 {pair.power}</div>
+                          <div>🛡️ {pair.defense}</div>
+                          <div>❤️ {pair.health}</div>
+                        </div>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="flex items-center justify-center h-full text-muted-foreground">
+                      <div className="text-center">
+                        <div className="text-xs">Пара {index + 1}</div>
+                        <div className="text-xs mt-1">Не выбрана</div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
         </div>
       </div>
     </div>
