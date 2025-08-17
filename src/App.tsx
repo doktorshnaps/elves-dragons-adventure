@@ -20,6 +20,7 @@ import { SpiderNest } from './pages/dungeons/SpiderNest';
 import { BoneDemonDungeon } from './pages/dungeons/BoneDemonDungeon';
 import { SeaSerpentLair } from './pages/dungeons/SeaSerpentLair';
 import { Auth } from './pages/Auth';
+import { Shelter } from './pages/Shelter';
 import { ProtectedRoute } from './components/ProtectedRoute';
 
 function App() {
@@ -39,6 +40,7 @@ function App() {
         <Route path="/marketplace" element={<ProtectedRoute><Marketplace /></ProtectedRoute>} />
         <Route path="/shop" element={<ProtectedRoute><ShopPage /></ProtectedRoute>} />
         <Route path="/quest" element={<ProtectedRoute><QuestPage /></ProtectedRoute>} />
+        <Route path="/shelter" element={<ProtectedRoute><Shelter /></ProtectedRoute>} />
         <Route path="/dungeons/dragon-lair" element={<ProtectedRoute><BlackDragonLair /></ProtectedRoute>} />
         <Route path="/dungeons/forgotten-souls" element={<ProtectedRoute><ForgottenSoulsCave /></ProtectedRoute>} />
         <Route path="/dungeons/icy-throne" element={<ProtectedRoute><IcyThrone /></ProtectedRoute>} />

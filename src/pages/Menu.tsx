@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
-import { Swords, ShoppingCart, BookOpen, Store, Shield, Users, DollarSign, LogOut } from "lucide-react";
+import { Swords, ShoppingCart, BookOpen, Store, Shield, Users, DollarSign, LogOut, Home } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import { useGameData } from "@/hooks/useGameData";
@@ -110,6 +110,11 @@ export const Menu = () => {
         <Button variant="outline" className="h-24 bg-game-surface/80 border-game-accent text-game-accent hover:bg-game-surface flex flex-col items-center justify-center gap-2" onClick={() => navigate('/quest')}>
           <DollarSign className="w-8 h-8" />
           <span>Бабло</span>
+        </Button>
+
+        <Button variant="outline" className="h-24 bg-game-surface/80 border-game-accent text-game-accent hover:bg-game-surface flex flex-col items-center justify-center gap-2" onClick={() => navigate('/shelter')}>
+          <Home className="w-8 h-8" />
+          <span>Убежище</span>
         </Button>
 
         <Button variant="outline" className="h-24 bg-game-surface/80 border-red-500 text-red-500 hover:bg-red-500/20 flex flex-col items-center justify-center gap-2" onClick={handleSignOut}>
