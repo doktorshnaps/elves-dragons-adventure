@@ -32,6 +32,8 @@ export const TeamBattleArena: React.FC<TeamBattleArenaProps> = ({
   const [attackingPair, setAttackingPair] = React.useState<string | null>(null);
   const [attackedTarget, setAttackedTarget] = React.useState<number | null>(null);
   const [defendingPair, setDefendingPair] = React.useState<string | null>(null);
+  const [counterAttackingPair, setCounterAttackingPair] = React.useState<string | null>(null);
+  const [counterAttackedTarget, setCounterAttackedTarget] = React.useState<number | null>(null);
 
   const alivePairs = playerPairs.filter(pair => pair.health > 0);
   const aliveOpponents = opponents.filter(opp => opp.health > 0);
@@ -118,19 +120,21 @@ export const TeamBattleArena: React.FC<TeamBattleArenaProps> = ({
               {playerPairs.map((pair, index) => (
                 <div
                   key={pair.id}
-                  className={`p-4 rounded-lg border-2 transition-all cursor-pointer ${
-                    pair.health <= 0
-                      ? 'bg-muted/50 border-muted opacity-50'
-                      : attackingPair === pair.id
-                      ? 'bg-red-500/30 border-red-500 animate-pulse scale-105 shadow-lg shadow-red-500/50'
-                      : defendingPair === pair.id
-                      ? 'bg-blue-500/30 border-blue-500 animate-pulse shadow-lg shadow-blue-500/50'
-                      : selectedPair === pair.id
-                      ? 'bg-primary/20 border-primary'
-                      : currentAttacker?.id === pair.id && isPlayerTurn
-                      ? 'bg-accent/20 border-accent'
-                      : 'bg-card border-border hover:border-primary/50'
-                  }`}
+                   className={`p-4 rounded-lg border-2 transition-all cursor-pointer ${
+                     pair.health <= 0
+                       ? 'bg-muted/50 border-muted opacity-50'
+                       : attackingPair === pair.id
+                       ? 'bg-red-500/30 border-red-500 animate-pulse scale-105 shadow-lg shadow-red-500/50'
+                       : counterAttackingPair === pair.id
+                       ? 'bg-yellow-500/40 border-yellow-500 animate-bounce scale-110 shadow-lg shadow-yellow-500/60'
+                       : defendingPair === pair.id
+                       ? 'bg-blue-500/30 border-blue-500 animate-pulse shadow-lg shadow-blue-500/50'
+                       : selectedPair === pair.id
+                       ? 'bg-primary/20 border-primary'
+                       : currentAttacker?.id === pair.id && isPlayerTurn
+                       ? 'bg-accent/20 border-accent'
+                       : 'bg-card border-border hover:border-primary/50'
+                   }`}
                   onClick={() => pair.health > 0 && isPlayerTurn && setSelectedPair(pair.id)}
                  >
                    <div className="flex items-center gap-3 mb-2">
@@ -226,15 +230,17 @@ export const TeamBattleArena: React.FC<TeamBattleArenaProps> = ({
               {opponents.map((opponent) => (
                 <div
                   key={opponent.id}
-                  className={`p-4 rounded-lg border-2 transition-all cursor-pointer ${
-                    opponent.health <= 0
-                      ? 'bg-muted/50 border-muted opacity-50'
-                      : attackedTarget === opponent.id
-                      ? 'bg-red-500/40 border-red-500 animate-bounce shadow-lg shadow-red-500/50 scale-110'
-                      : selectedTarget === opponent.id
-                      ? 'bg-destructive/20 border-destructive'
-                      : 'bg-card border-border hover:border-destructive/50'
-                  }`}
+                   className={`p-4 rounded-lg border-2 transition-all cursor-pointer ${
+                     opponent.health <= 0
+                       ? 'bg-muted/50 border-muted opacity-50'
+                       : attackedTarget === opponent.id
+                       ? 'bg-red-500/40 border-red-500 animate-bounce shadow-lg shadow-red-500/50 scale-110'
+                       : counterAttackedTarget === opponent.id
+                       ? 'bg-yellow-500/40 border-yellow-500 animate-pulse scale-105 shadow-lg shadow-yellow-500/60'
+                       : selectedTarget === opponent.id
+                       ? 'bg-destructive/20 border-destructive'
+                       : 'bg-card border-border hover:border-destructive/50'
+                   }`}
                   onClick={() => opponent.health > 0 && setSelectedTarget(opponent.id)}
                 >
                   <div className="flex items-center justify-between mb-2">

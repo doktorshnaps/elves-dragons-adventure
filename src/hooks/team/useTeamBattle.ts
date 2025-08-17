@@ -174,8 +174,8 @@ export const useTeamBattle = (dungeonType: DungeonType, initialLevel: number = 1
   const executeEnemyAttack = () => {
     if (battleState.opponents.length === 0) return;
 
-    const currentEnemy = battleState.opponents[battleState.currentAttacker % battleState.opponents.length];
     const alivePairs = battleState.playerPairs.filter(pair => pair.health > 0);
+    const aliveOpponents = battleState.opponents.filter(opp => opp.health > 0);
     
     if (alivePairs.length === 0) {
       handleGameOver();
@@ -183,6 +183,7 @@ export const useTeamBattle = (dungeonType: DungeonType, initialLevel: number = 1
     }
 
     // Enemy attacks random alive pair
+    const currentEnemy = aliveOpponents[Math.floor(Math.random() * aliveOpponents.length)];
     const targetPair = alivePairs[Math.floor(Math.random() * alivePairs.length)];
     const damage = Math.max(1, currentEnemy.power - targetPair.defense);
     const newHealth = Math.max(0, targetPair.health - damage);
@@ -209,7 +210,7 @@ export const useTeamBattle = (dungeonType: DungeonType, initialLevel: number = 1
       }, 800);
     }
 
-    if (battleState.playerPairs.filter(p => p.health > 0).length === 1 && newHealth === 0) {
+    if (alivePairs.length === 1 && newHealth === 0) {
       setTimeout(() => {
         handleGameOver();
       }, 1200);
