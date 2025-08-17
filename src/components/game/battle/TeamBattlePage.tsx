@@ -22,6 +22,7 @@ export const TeamBattlePage: React.FC<TeamBattlePageProps> = ({ dungeonType }) =
     updateAttackOrder,
     executePlayerAttack,
     executeEnemyAttack,
+    executeCounterAttack,
     resetBattle,
     isPlayerTurn,
     alivePairs,
@@ -120,6 +121,7 @@ export const TeamBattlePage: React.FC<TeamBattlePageProps> = ({ dungeonType }) =
         isPlayerTurn={isPlayerTurn}
         onAttack={executePlayerAttack}
         onEnemyAttack={executeEnemyAttack}
+        onCounterAttack={executeCounterAttack}
         level={battleState.level}
       />
     </>

@@ -100,12 +100,74 @@ export const useTeamBattle = (dungeonType: DungeonType, initialLevel: number = 1
       description: `${attackingPair.hero.name} наносит ${damage} урона!`,
     });
 
+    // Ответный удар противника, если он жив
+    if (newTargetHealth > 0) {
+      setTimeout(() => {
+        executeCounterAttack(targetId, pairId, true);
+      }, 800);
+    }
+
     // Check if all enemies defeated
     if (battleState.opponents.filter(o => o.health > 0).length === 1 && newTargetHealth === 0) {
-      handleLevelComplete();
+      setTimeout(() => {
+        handleLevelComplete();
+      }, 1200);
     } else {
       // Switch to next attacker or enemy turn
-      switchTurn();
+      setTimeout(() => {
+        switchTurn();
+      }, 1200);
+    }
+  };
+
+  const executeCounterAttack = (attackerId: string | number, targetId: string | number, isEnemyAttacker: boolean) => {
+    if (isEnemyAttacker) {
+      // Противник атакует, пара отвечает
+      const attacker = battleState.opponents.find(o => o.id === attackerId);
+      const defender = battleState.playerPairs.find(p => p.id === targetId);
+      
+      if (!attacker || !defender || defender.health <= 0) return;
+
+      const damage = Math.max(1, defender.power - (attacker.defense || 0));
+      const newAttackerHealth = Math.max(0, attacker.health - damage);
+
+      setBattleState(prev => ({
+        ...prev,
+        opponents: prev.opponents.map(opp => 
+          opp.id === attackerId 
+            ? { ...opp, health: newAttackerHealth }
+            : opp
+        ).filter(opp => opp.health > 0)
+      }));
+
+      toast({
+        title: "Ответный удар!",
+        description: `${defender.hero.name} наносит ${damage} урона в ответ!`,
+      });
+    } else {
+      // Пара атакует, противник отвечает  
+      const attacker = battleState.playerPairs.find(p => p.id === attackerId);
+      const defender = battleState.opponents.find(o => o.id === targetId);
+      
+      if (!attacker || !defender || attacker.health <= 0) return;
+
+      const damage = Math.max(1, defender.power - attacker.defense);
+      const newAttackerHealth = Math.max(0, attacker.health - damage);
+
+      setBattleState(prev => ({
+        ...prev,
+        playerPairs: prev.playerPairs.map(pair =>
+          pair.id === attackerId 
+            ? { ...pair, health: newAttackerHealth }
+            : pair
+        )
+      }));
+
+      toast({
+        title: "Ответный удар врага!",
+        description: `${defender.name} наносит ${damage} урона в ответ!`,
+        variant: "destructive"
+      });
     }
   };
 
@@ -140,10 +202,21 @@ export const useTeamBattle = (dungeonType: DungeonType, initialLevel: number = 1
       variant: "destructive"
     });
 
+    // Ответный удар пары, если она жива
+    if (newHealth > 0) {
+      setTimeout(() => {
+        executeCounterAttack(targetPair.id, currentEnemy.id, false);
+      }, 800);
+    }
+
     if (battleState.playerPairs.filter(p => p.health > 0).length === 1 && newHealth === 0) {
-      handleGameOver();
+      setTimeout(() => {
+        handleGameOver();
+      }, 1200);
     } else {
-      switchTurn();
+      setTimeout(() => {
+        switchTurn();
+      }, 1200);
     }
   };
 
@@ -211,6 +284,7 @@ export const useTeamBattle = (dungeonType: DungeonType, initialLevel: number = 1
     updateAttackOrder,
     executePlayerAttack,
     executeEnemyAttack,
+    executeCounterAttack,
     resetBattle,
     isPlayerTurn: battleState.currentTurn === 'player',
     alivePairs: battleState.playerPairs.filter(pair => pair.health > 0),

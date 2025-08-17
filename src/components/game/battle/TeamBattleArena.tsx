@@ -13,6 +13,7 @@ interface TeamBattleArenaProps {
   isPlayerTurn: boolean;
   onAttack: (pairId: string, targetId: number) => void;
   onEnemyAttack: () => void;
+  onCounterAttack: (attackerId: string | number, targetId: string | number, isEnemyAttacker: boolean) => void;
   level: number;
 }
 
@@ -23,6 +24,7 @@ export const TeamBattleArena: React.FC<TeamBattleArenaProps> = ({
   isPlayerTurn,
   onAttack,
   onEnemyAttack,
+  onCounterAttack,
   level
 }) => {
   const [selectedPair, setSelectedPair] = React.useState<string | null>(null);
