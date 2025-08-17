@@ -296,7 +296,7 @@ export const TeamBattleArena: React.FC<TeamBattleArenaProps> = ({
           </Card>
         </div>
 
-        {/* Combat Controls */}
+        {/* Combat Controls - Positioned between teams for convenience */}
         <Card className="bg-card/50 backdrop-blur-sm border-primary/20">
           <CardContent className="pt-6">
             <div className="flex items-center justify-center gap-4">
@@ -326,6 +326,7 @@ export const TeamBattleArena: React.FC<TeamBattleArenaProps> = ({
             </div>
           </CardContent>
         </Card>
+
       </div>
     </div>
   );
