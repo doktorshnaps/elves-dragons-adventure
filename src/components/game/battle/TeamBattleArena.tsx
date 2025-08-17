@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
@@ -79,6 +79,17 @@ export const TeamBattleArena: React.FC<TeamBattleArenaProps> = ({
   };
 
   const currentAttacker = getCurrentAttacker();
+
+  // Автоматический ход противника
+  useEffect(() => {
+    if (!isPlayerTurn && aliveOpponents.length > 0 && alivePairs.length > 0) {
+      const timer = setTimeout(() => {
+        handleEnemyAttack();
+      }, 1500); // Задержка 1.5 секунды перед ходом противника
+
+      return () => clearTimeout(timer);
+    }
+  }, [isPlayerTurn, aliveOpponents.length, alivePairs.length]);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-background/90 to-background/80 p-4">
@@ -276,18 +287,12 @@ export const TeamBattleArena: React.FC<TeamBattleArenaProps> = ({
                   </div>
                 </>
               ) : (
-                <>
-                  <Button
-                    onClick={handleEnemyAttack}
-                    variant="destructive"
-                    className="bg-destructive hover:bg-destructive/90"
-                  >
-                    Ход противника
-                  </Button>
-                  <div className="text-sm text-muted-foreground">
+                <div className="text-center">
+                  <div className="text-sm text-muted-foreground mb-2">
                     Противник атакует...
                   </div>
-                </>
+                  <div className="animate-spin w-6 h-6 border-2 border-destructive border-t-transparent rounded-full mx-auto"></div>
+                </div>
               )}
             </div>
           </CardContent>
