@@ -1,8 +1,6 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { DragDropContext, Droppable, Draggable } from 'react-beautiful-dnd';
-import { GripVertical, Sword, Shield } from 'lucide-react';
 import { TeamPair } from '@/types/teamBattle';
 
 interface AttackOrderSelectorProps {
@@ -18,18 +16,26 @@ export const AttackOrderSelector: React.FC<AttackOrderSelectorProps> = ({
   onOrderChange,
   onStartBattle
 }) => {
-  const handleDragEnd = (result: any) => {
-    if (!result.destination) return;
+  const [selectedOrder, setSelectedOrder] = useState<string[]>([]);
 
-    const newOrder = Array.from(attackOrder);
-    const [reorderedItem] = newOrder.splice(result.source.index, 1);
-    newOrder.splice(result.destination.index, 0, reorderedItem);
-
+  const handlePairClick = (pairId: string) => {
+    let newOrder = [...selectedOrder];
+    
+    // Если пара уже выбрана, убираем её из порядка
+    if (newOrder.includes(pairId)) {
+      newOrder = newOrder.filter(id => id !== pairId);
+    } else {
+      // Добавляем пару в конец порядка
+      newOrder.push(pairId);
+    }
+    
+    setSelectedOrder(newOrder);
     onOrderChange(newOrder);
   };
 
-  const getOrderedPairs = () => {
-    return attackOrder.map(id => playerPairs.find(pair => pair.id === id)).filter(Boolean);
+  const getPairOrder = (pairId: string): number => {
+    const index = selectedOrder.indexOf(pairId);
+    return index === -1 ? 0 : index + 1;
   };
 
   return (
@@ -41,63 +47,58 @@ export const AttackOrderSelector: React.FC<AttackOrderSelectorProps> = ({
               Настройка порядка атаки
             </CardTitle>
             <p className="text-center text-muted-foreground">
-              Перетащите пары, чтобы установить порядок атаки
+              Нажмите на пары, чтобы установить порядок атаки
             </p>
           </CardHeader>
           <CardContent>
-            <DragDropContext onDragEnd={handleDragEnd}>
-              <Droppable droppableId="attack-order">
-                {(provided) => (
+            <div className="space-y-3">
+              {playerPairs.map((pair) => {
+                const orderNumber = getPairOrder(pair.id);
+                const isSelected = orderNumber > 0;
+                
+                return (
                   <div
-                    {...provided.droppableProps}
-                    ref={provided.innerRef}
-                    className="space-y-3"
+                    key={pair.id}
+                    onClick={() => handlePairClick(pair.id)}
+                    className={`p-3 rounded-lg border transition-all cursor-pointer ${
+                      isSelected
+                        ? 'bg-primary/20 border-primary shadow-lg'
+                        : 'bg-card border-border hover:border-primary/50 hover:bg-card/80'
+                    }`}
                   >
-                    {getOrderedPairs().map((pair, index) => (
-                      <Draggable key={pair.id} draggableId={pair.id} index={index}>
-                        {(provided, snapshot) => (
-                          <div
-                            ref={provided.innerRef}
-                            {...provided.draggableProps}
-                            {...provided.dragHandleProps}
-                            className={`p-3 rounded-lg border transition-all ${
-                              snapshot.isDragging
-                                ? 'bg-primary/20 border-primary shadow-lg'
-                                : 'bg-card border-border hover:border-primary/50'
-                            }`}
-                          >
-                            <div className="flex items-center gap-3">
-                              <div className="flex items-center justify-center w-6 h-6 rounded-full bg-primary text-primary-foreground font-bold text-sm">
-                                {index + 1}
-                              </div>
-                              <div className="flex-1">
-                                <h4 className="font-medium">
-                                  {pair.hero.name}
-                                  {pair.dragon && ` + ${pair.dragon.name}`}
-                                </h4>
-                                <div className="flex gap-3 text-xs text-muted-foreground">
-                                  <span>💪 {pair.power}</span>
-                                  <span>🛡️ {pair.defense}</span>
-                                  <span>❤️ {pair.health}</span>
-                                </div>
-                              </div>
-                              <GripVertical className="w-4 h-4 text-muted-foreground" />
-                            </div>
-                          </div>
-                        )}
-                      </Draggable>
-                    ))}
-                    {provided.placeholder}
+                    <div className="flex items-center gap-3">
+                      <div className={`flex items-center justify-center w-6 h-6 rounded-full font-bold text-sm ${
+                        isSelected 
+                          ? 'bg-primary text-primary-foreground' 
+                          : 'bg-muted text-muted-foreground'
+                      }`}>
+                        {orderNumber || '?'}
+                      </div>
+                      <div className="flex-1">
+                        <h4 className="font-medium">
+                          {pair.hero.name}
+                          {pair.dragon && ` + ${pair.dragon.name}`}
+                        </h4>
+                        <div className="flex gap-3 text-xs text-muted-foreground">
+                          <span>💪 {pair.power}</span>
+                          <span>🛡️ {pair.defense}</span>
+                          <span>❤️ {pair.health}</span>
+                        </div>
+                      </div>
+                      <div className="text-xs text-muted-foreground">
+                        {isSelected ? 'Выбрано' : 'Нажмите для выбора'}
+                      </div>
+                    </div>
                   </div>
-                )}
-              </Droppable>
-            </DragDropContext>
+                );
+              })}
+            </div>
             
             <div className="flex justify-center mt-6">
               <Button 
                 onClick={onStartBattle}
                 className="px-6 py-2"
-                disabled={playerPairs.length === 0}
+                disabled={selectedOrder.length === 0}
               >
                 Начать бой
               </Button>
