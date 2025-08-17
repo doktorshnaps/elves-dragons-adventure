@@ -39,66 +39,23 @@ export const AttackOrderSelector: React.FC<AttackOrderSelectorProps> = ({
   };
 
   return (
-    <div className="min-h-screen flex flex-col">
+    <div className="min-h-screen flex flex-col justify-end">
       <div className="flex-1 flex items-center justify-center p-4">
         <Card className="bg-card/50 backdrop-blur-sm border-primary/20 max-w-2xl w-full">
           <CardHeader>
             <CardTitle className="text-center text-2xl">
-              Настройка порядка атаки
+              Готовность к бою
             </CardTitle>
             <p className="text-center text-muted-foreground">
-              Нажмите на пары, чтобы установить порядок атаки
+              Ваша команда готова к сражению
             </p>
           </CardHeader>
           <CardContent>
-            <div className="space-y-3">
-              {playerPairs.map((pair) => {
-                const orderNumber = getPairOrder(pair.id);
-                const isSelected = orderNumber > 0;
-                
-                return (
-                  <div
-                    key={pair.id}
-                    onClick={() => handlePairClick(pair.id)}
-                    className={`p-3 rounded-lg border transition-all cursor-pointer ${
-                      isSelected
-                        ? 'bg-primary/20 border-primary shadow-lg'
-                        : 'bg-card border-border hover:border-primary/50 hover:bg-card/80'
-                    }`}
-                  >
-                    <div className="flex items-center gap-3">
-                      <div className={`flex items-center justify-center w-6 h-6 rounded-full font-bold text-sm ${
-                        isSelected 
-                          ? 'bg-primary text-primary-foreground' 
-                          : 'bg-muted text-muted-foreground'
-                      }`}>
-                        {orderNumber || '?'}
-                      </div>
-                      <div className="flex-1">
-                        <h4 className="font-medium">
-                          {pair.hero.name}
-                          {pair.dragon && ` + ${pair.dragon.name}`}
-                        </h4>
-                        <div className="flex gap-3 text-xs text-muted-foreground">
-                          <span>💪 {pair.power}</span>
-                          <span>🛡️ {pair.defense}</span>
-                          <span>❤️ {pair.health}</span>
-                        </div>
-                      </div>
-                      <div className="text-xs text-muted-foreground">
-                        {isSelected ? 'Выбрано' : 'Нажмите для выбора'}
-                      </div>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-            
-            <div className="flex justify-center mt-6">
+            <div className="flex justify-center">
               <Button 
                 onClick={onStartBattle}
-                className="px-6 py-2"
-                disabled={selectedOrder.length === 0}
+                className="px-8 py-3 text-lg"
+                disabled={playerPairs.length === 0}
               >
                 Начать бой
               </Button>
@@ -117,19 +74,54 @@ export const AttackOrderSelector: React.FC<AttackOrderSelectorProps> = ({
             {Array.from({ length: 5 }, (_, index) => {
               const pair = playerPairs[index];
               return (
-                <div key={index} className="relative overflow-hidden border border-game-accent/30 rounded-lg p-2 min-h-[140px] bg-card/30">
+                <div key={index} className="relative overflow-hidden border border-game-accent/30 rounded-lg p-3 min-h-[200px] bg-card/30">
                   {pair ? (
-                    <div className="space-y-1">
+                    <div className="space-y-2">
                       <div className="text-xs text-game-accent font-medium text-center">Пара {index + 1}</div>
+                      
+                      {/* Hero Image */}
+                      <div className="flex justify-center">
+                        <div className="w-16 h-16 rounded-lg overflow-hidden border border-primary/30 bg-primary/10">
+                          {pair.hero.image ? (
+                            <img 
+                              src={pair.hero.image} 
+                              alt={pair.hero.name}
+                              className="w-full h-full object-cover"
+                            />
+                          ) : (
+                            <div className="w-full h-full flex items-center justify-center text-primary">
+                              <span className="text-xl">⚔️</span>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                      
                       <div className="text-center">
                         <div className="text-xs text-game-accent/70">Герой</div>
                         <div className="text-xs font-medium text-primary">{pair.hero.name}</div>
+                        
                         {pair.dragon && (
                           <>
+                            <div className="flex justify-center mt-1">
+                              <div className="w-12 h-12 rounded-lg overflow-hidden border border-secondary/30 bg-secondary/10">
+                                {pair.dragon.image ? (
+                                  <img 
+                                    src={pair.dragon.image} 
+                                    alt={pair.dragon.name}
+                                    className="w-full h-full object-cover"
+                                  />
+                                ) : (
+                                  <div className="w-full h-full flex items-center justify-center text-secondary">
+                                    <span className="text-sm">🐲</span>
+                                  </div>
+                                )}
+                              </div>
+                            </div>
                             <div className="text-xs text-game-accent/70 mt-1">Дракон</div>
                             <div className="text-xs font-medium text-secondary">{pair.dragon.name}</div>
                           </>
                         )}
+                        
                         <div className="text-xs text-muted-foreground mt-2 space-y-1">
                           <div>💪 {pair.power}</div>
                           <div>🛡️ {pair.defense}</div>

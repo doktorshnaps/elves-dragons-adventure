@@ -81,19 +81,55 @@ export const TeamBattleArena: React.FC<TeamBattleArenaProps> = ({
                       : 'bg-card border-border hover:border-primary/50'
                   }`}
                   onClick={() => pair.health > 0 && isPlayerTurn && setSelectedPair(pair.id)}
-                >
-                  <div className="flex items-center justify-between mb-2">
-                    <div className="flex items-center gap-2">
-                      <span className="font-semibold text-sm bg-primary/20 px-2 py-1 rounded">
-                        #{pair.attackOrder}
-                      </span>
-                      <span className="font-medium">{pair.hero.name}</span>
-                      {pair.dragon && (
-                        <span className="text-sm text-muted-foreground">
-                          + {pair.dragon.name}
-                        </span>
-                      )}
-                    </div>
+                 >
+                   <div className="flex items-center gap-3 mb-2">
+                     <div className="flex gap-2">
+                       {/* Hero Image */}
+                       <div className="w-12 h-12 rounded-lg overflow-hidden border border-primary/30 bg-primary/10 flex-shrink-0">
+                         {pair.hero.image ? (
+                           <img 
+                             src={pair.hero.image} 
+                             alt={pair.hero.name}
+                             className="w-full h-full object-cover"
+                           />
+                         ) : (
+                           <div className="w-full h-full flex items-center justify-center text-primary">
+                             <span className="text-lg">⚔️</span>
+                           </div>
+                         )}
+                       </div>
+                       
+                       {/* Dragon Image */}
+                       {pair.dragon && (
+                         <div className="w-10 h-10 rounded-lg overflow-hidden border border-secondary/30 bg-secondary/10 flex-shrink-0">
+                           {pair.dragon.image ? (
+                             <img 
+                               src={pair.dragon.image} 
+                               alt={pair.dragon.name}
+                               className="w-full h-full object-cover"
+                             />
+                           ) : (
+                             <div className="w-full h-full flex items-center justify-center text-secondary">
+                               <span className="text-sm">🐲</span>
+                             </div>
+                           )}
+                         </div>
+                       )}
+                     </div>
+                     
+                     <div className="flex-1">
+                       <div className="flex items-center gap-2">
+                         <span className="font-semibold text-sm bg-primary/20 px-2 py-1 rounded">
+                           #{pair.attackOrder}
+                         </span>
+                         <span className="font-medium">{pair.hero.name}</span>
+                         {pair.dragon && (
+                           <span className="text-sm text-muted-foreground">
+                             + {pair.dragon.name}
+                           </span>
+                         )}
+                       </div>
+                     </div>
                     {currentAttacker?.id === pair.id && isPlayerTurn && (
                       <div className="text-xs bg-accent px-2 py-1 rounded">
                         Ходит
