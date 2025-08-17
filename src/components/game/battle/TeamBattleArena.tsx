@@ -40,13 +40,15 @@ export const TeamBattleArena: React.FC<TeamBattleArenaProps> = ({
 
   const handleAttack = () => {
     if (selectedPair && selectedTarget !== null) {
+      const pairId = selectedPair;
+      const targetId = selectedTarget;
       // Запускаем анимацию атаки
-      setAttackingPair(selectedPair);
-      setAttackedTarget(selectedTarget);
+      setAttackingPair(pairId);
+      setAttackedTarget(targetId);
       
       // Выполняем атаку через небольшую задержку для анимации
       setTimeout(() => {
-        onAttack(selectedPair, selectedTarget);
+        onAttack(pairId, targetId);
         setSelectedPair(null);
         setSelectedTarget(null);
         
@@ -55,6 +57,17 @@ export const TeamBattleArena: React.FC<TeamBattleArenaProps> = ({
           setAttackingPair(null);
           setAttackedTarget(null);
         }, 300);
+
+        // Визуальный эффект ответного удара врага по атакующей паре
+        setTimeout(() => {
+          setDefendingPair(pairId);
+          // Подсветим также врага как участвующего в ответном ударе
+          setCounterAttackedTarget(targetId);
+          setTimeout(() => {
+            setDefendingPair(null);
+            setCounterAttackedTarget(null);
+          }, 400);
+        }, 600);
       }, 200);
     }
   };
@@ -67,6 +80,14 @@ export const TeamBattleArena: React.FC<TeamBattleArenaProps> = ({
       
       setTimeout(() => {
         onEnemyAttack();
+        
+        // Визуальный эффект ответной атаки пары после защиты
+        setTimeout(() => {
+          setCounterAttackingPair(randomPair.id);
+          setTimeout(() => {
+            setCounterAttackingPair(null);
+          }, 400);
+        }, 600);
         
         setTimeout(() => {
           setDefendingPair(null);

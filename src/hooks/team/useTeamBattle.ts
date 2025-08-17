@@ -122,51 +122,51 @@ export const useTeamBattle = (dungeonType: DungeonType, initialLevel: number = 1
 
   const executeCounterAttack = (attackerId: string | number, targetId: string | number, isEnemyAttacker: boolean) => {
     if (isEnemyAttacker) {
-      // Противник атакует, пара отвечает
-      const attacker = battleState.opponents.find(o => o.id === attackerId);
-      const defender = battleState.playerPairs.find(p => p.id === targetId);
+      // Враг (в т.ч. босс) отвечает атакующей паре
+      const enemy = battleState.opponents.find(o => o.id === attackerId);
+      const pair = battleState.playerPairs.find(p => p.id === targetId);
       
-      if (!attacker || !defender || defender.health <= 0) return;
+      if (!enemy || !pair || pair.health <= 0) return;
 
-      const damage = Math.max(1, defender.power - (attacker.defense || 0));
-      const newAttackerHealth = Math.max(0, attacker.health - damage);
+      const damage = Math.max(1, enemy.power - pair.defense);
+      const newPairHealth = Math.max(0, pair.health - damage);
+
+      setBattleState(prev => ({
+        ...prev,
+        playerPairs: prev.playerPairs.map(p =>
+          p.id === pair.id 
+            ? { ...p, health: newPairHealth }
+            : p
+        )
+      }));
+
+      toast({
+        title: "Ответный удар врага!",
+        description: `${enemy.name} наносит ${damage} урона в ответ!`,
+        variant: "destructive"
+      });
+    } else {
+      // Пара отвечает врагу
+      const pair = battleState.playerPairs.find(p => p.id === attackerId);
+      const enemy = battleState.opponents.find(o => o.id === targetId);
+      
+      if (!pair || !enemy || enemy.health <= 0) return;
+
+      const damage = Math.max(1, pair.power - (enemy.defense || 0));
+      const newEnemyHealth = Math.max(0, enemy.health - damage);
 
       setBattleState(prev => ({
         ...prev,
         opponents: prev.opponents.map(opp => 
-          opp.id === attackerId 
-            ? { ...opp, health: newAttackerHealth }
+          opp.id === enemy.id 
+            ? { ...opp, health: newEnemyHealth }
             : opp
         ).filter(opp => opp.health > 0)
       }));
 
       toast({
         title: "Ответный удар!",
-        description: `${defender.hero.name} наносит ${damage} урона в ответ!`,
-      });
-    } else {
-      // Пара атакует, противник отвечает  
-      const attacker = battleState.playerPairs.find(p => p.id === attackerId);
-      const defender = battleState.opponents.find(o => o.id === targetId);
-      
-      if (!attacker || !defender || attacker.health <= 0) return;
-
-      const damage = Math.max(1, defender.power - attacker.defense);
-      const newAttackerHealth = Math.max(0, attacker.health - damage);
-
-      setBattleState(prev => ({
-        ...prev,
-        playerPairs: prev.playerPairs.map(pair =>
-          pair.id === attackerId 
-            ? { ...pair, health: newAttackerHealth }
-            : pair
-        )
-      }));
-
-      toast({
-        title: "Ответный удар врага!",
-        description: `${defender.name} наносит ${damage} урона в ответ!`,
-        variant: "destructive"
+        description: `${pair.hero.name} наносит ${damage} урона в ответ!`,
       });
     }
   };
