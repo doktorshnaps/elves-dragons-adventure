@@ -128,7 +128,7 @@ export const TeamBattleArena: React.FC<TeamBattleArenaProps> = ({
           </CardHeader>
         </Card>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
           {/* Player Team */}
           <Card className="bg-card/50 backdrop-blur-sm border-primary/20">
             <CardHeader>
@@ -239,6 +239,36 @@ export const TeamBattleArena: React.FC<TeamBattleArenaProps> = ({
             </CardContent>
           </Card>
 
+          {/* Combat Controls - Between player and enemies */}
+          <Card className="bg-card/50 backdrop-blur-sm border-primary/20 lg:col-span-1">
+            <CardContent className="pt-6">
+              <div className="flex items-center justify-center gap-4">
+                {isPlayerTurn ? (
+                  <>
+                    <Button
+                      onClick={handleAttack}
+                      disabled={!selectedPair || selectedTarget === null}
+                    >
+                      Атаковать
+                    </Button>
+                    <div className="text-sm text-muted-foreground">
+                      {!selectedPair ? 'Выберите атакующего' : 
+                       selectedTarget === null ? 'Выберите цель' : 
+                       'Готов к атаке!'}
+                    </div>
+                  </>
+                ) : (
+                  <div className="text-center">
+                    <div className="text-sm text-muted-foreground mb-2">
+                      Противник атакует...
+                    </div>
+                    <div className="animate-spin w-6 h-6 border-2 border-destructive border-t-transparent rounded-full mx-auto"></div>
+                  </div>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+
           {/* Enemies */}
           <Card className="bg-card/50 backdrop-blur-sm border-destructive/20">
             <CardHeader>
@@ -295,37 +325,6 @@ export const TeamBattleArena: React.FC<TeamBattleArenaProps> = ({
             </CardContent>
           </Card>
         </div>
-
-        {/* Combat Controls - Positioned between teams for convenience */}
-        <Card className="bg-card/50 backdrop-blur-sm border-primary/20">
-          <CardContent className="pt-6">
-            <div className="flex items-center justify-center gap-4">
-              {isPlayerTurn ? (
-                <>
-                  <Button
-                    onClick={handleAttack}
-                    disabled={!selectedPair || selectedTarget === null}
-                    className="bg-primary hover:bg-primary/90"
-                  >
-                    Атаковать
-                  </Button>
-                  <div className="text-sm text-muted-foreground">
-                    {!selectedPair ? 'Выберите атакующего' : 
-                     selectedTarget === null ? 'Выберите цель' : 
-                     'Готов к атаке!'}
-                  </div>
-                </>
-              ) : (
-                <div className="text-center">
-                  <div className="text-sm text-muted-foreground mb-2">
-                    Противник атакует...
-                  </div>
-                  <div className="animate-spin w-6 h-6 border-2 border-destructive border-t-transparent rounded-full mx-auto"></div>
-                </div>
-              )}
-            </div>
-          </CardContent>
-        </Card>
 
       </div>
     </div>
