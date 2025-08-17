@@ -27,15 +27,49 @@ export const TeamBattleArena: React.FC<TeamBattleArenaProps> = ({
 }) => {
   const [selectedPair, setSelectedPair] = React.useState<string | null>(null);
   const [selectedTarget, setSelectedTarget] = React.useState<number | null>(null);
+  const [attackingPair, setAttackingPair] = React.useState<string | null>(null);
+  const [attackedTarget, setAttackedTarget] = React.useState<number | null>(null);
+  const [defendingPair, setDefendingPair] = React.useState<string | null>(null);
 
   const alivePairs = playerPairs.filter(pair => pair.health > 0);
   const aliveOpponents = opponents.filter(opp => opp.health > 0);
 
   const handleAttack = () => {
     if (selectedPair && selectedTarget !== null) {
-      onAttack(selectedPair, selectedTarget);
-      setSelectedPair(null);
-      setSelectedTarget(null);
+      // Запускаем анимацию атаки
+      setAttackingPair(selectedPair);
+      setAttackedTarget(selectedTarget);
+      
+      // Выполняем атаку через небольшую задержку для анимации
+      setTimeout(() => {
+        onAttack(selectedPair, selectedTarget);
+        setSelectedPair(null);
+        setSelectedTarget(null);
+        
+        // Убираем эффекты атаки
+        setTimeout(() => {
+          setAttackingPair(null);
+          setAttackedTarget(null);
+        }, 300);
+      }, 200);
+    }
+  };
+
+  const handleEnemyAttack = () => {
+    // Случайно выбираем живую пару для защиты
+    const randomPair = alivePairs[Math.floor(Math.random() * alivePairs.length)];
+    if (randomPair) {
+      setDefendingPair(randomPair.id);
+      
+      setTimeout(() => {
+        onEnemyAttack();
+        
+        setTimeout(() => {
+          setDefendingPair(null);
+        }, 300);
+      }, 200);
+    } else {
+      onEnemyAttack();
     }
   };
 
@@ -74,6 +108,10 @@ export const TeamBattleArena: React.FC<TeamBattleArenaProps> = ({
                   className={`p-4 rounded-lg border-2 transition-all cursor-pointer ${
                     pair.health <= 0
                       ? 'bg-muted/50 border-muted opacity-50'
+                      : attackingPair === pair.id
+                      ? 'bg-red-500/30 border-red-500 animate-pulse scale-105 shadow-lg shadow-red-500/50'
+                      : defendingPair === pair.id
+                      ? 'bg-blue-500/30 border-blue-500 animate-pulse shadow-lg shadow-blue-500/50'
                       : selectedPair === pair.id
                       ? 'bg-primary/20 border-primary'
                       : currentAttacker?.id === pair.id && isPlayerTurn
@@ -178,6 +216,8 @@ export const TeamBattleArena: React.FC<TeamBattleArenaProps> = ({
                   className={`p-4 rounded-lg border-2 transition-all cursor-pointer ${
                     opponent.health <= 0
                       ? 'bg-muted/50 border-muted opacity-50'
+                      : attackedTarget === opponent.id
+                      ? 'bg-red-500/40 border-red-500 animate-bounce shadow-lg shadow-red-500/50 scale-110'
                       : selectedTarget === opponent.id
                       ? 'bg-destructive/20 border-destructive'
                       : 'bg-card border-border hover:border-destructive/50'
@@ -238,7 +278,7 @@ export const TeamBattleArena: React.FC<TeamBattleArenaProps> = ({
               ) : (
                 <>
                   <Button
-                    onClick={onEnemyAttack}
+                    onClick={handleEnemyAttack}
                     variant="destructive"
                     className="bg-destructive hover:bg-destructive/90"
                   >
