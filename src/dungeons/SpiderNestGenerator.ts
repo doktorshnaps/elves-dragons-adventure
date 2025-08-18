@@ -3,7 +3,6 @@ import { Opponent } from "@/types/battle";
 export const SpiderNestGenerator = (level: number): Opponent[] => {
   const baseHealth = 60 + (level - 1) * 30;
   const basePower = 7 + (level - 1) * 3.5;
-  const baseExperience = level * 75;
 
   if (level % 5 === 0) {
     return [{
@@ -13,7 +12,6 @@ export const SpiderNestGenerator = (level: number): Opponent[] => {
       maxHealth: baseHealth * 2,
       power: basePower * 1.5,
       isBoss: true,
-      experienceReward: baseExperience * 2,
       image: "/lovable-uploads/ebf85dda-c79b-4350-80c2-65fde21b31ad.png"
     }];
   }
@@ -26,7 +24,6 @@ export const SpiderNestGenerator = (level: number): Opponent[] => {
       maxHealth: baseHealth,
       power: basePower,
       isBoss: false,
-      experienceReward: baseExperience,
       image: "/lovable-uploads/ebf85dda-c79b-4350-80c2-65fde21b31ad.png"
     }
   ];

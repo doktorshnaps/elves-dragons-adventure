@@ -72,10 +72,7 @@ export const TeamStatsModal = ({ isOpen, onClose, teamStats, balance }: TeamStat
                   health: teamStats.health,
                   maxHealth: teamStats.health,
                   power: teamStats.power,
-                  defense: teamStats.defense,
-                  experience: 0,
-                  level: 1,
-                  requiredExperience: 100
+                  defense: teamStats.defense
                 }} 
               />
             </div>

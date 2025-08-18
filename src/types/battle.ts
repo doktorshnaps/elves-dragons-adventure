@@ -5,9 +5,6 @@ export interface PlayerStats {
   maxHealth: number;
   power: number;
   defense: number;
-  experience: number;
-  level: number;
-  requiredExperience: number;
 }
 
 export interface Opponent {
@@ -18,7 +15,6 @@ export interface Opponent {
   maxHealth: number;
   isBoss?: boolean;
   image?: string;
-  experienceReward: number;
 }
 
 export interface BattleState {

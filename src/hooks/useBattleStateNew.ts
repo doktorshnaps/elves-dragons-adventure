@@ -71,13 +71,14 @@ export const useBattleStateNew = (level: number) => {
       updatedOpponents = updatedOpponents.filter(o => o.id !== enemyId);
       
       // Награда за убийство
+      const goldReward = 50;
       await updateGameData({ 
-        balance: gameData.balance + (enemy.experienceReward || 50)
+        balance: gameData.balance + goldReward
       });
       
       toast({
         title: "Враг побежден!",
-        description: `Получено ${enemy.experienceReward || 50} золота`
+        description: `Получено ${goldReward} золота`
       });
     }
 

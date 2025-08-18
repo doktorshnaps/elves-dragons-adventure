@@ -77,7 +77,7 @@ export const DungeonSearchDialog = ({
   };
 
   const canEnterDungeon = (requiredLevel: number) => {
-    return playerStats.level >= requiredLevel && !isHealthTooLow && hasActiveCards && energyState.current > 0;
+    return !isHealthTooLow && hasActiveCards && energyState.current > 0;
   };
 
   return (
@@ -108,7 +108,6 @@ export const DungeonSearchDialog = ({
               
               <div className="mb-4">
                 <p className="text-game-accent">Баланс: {balance} ELL</p>
-                <p className="text-game-accent">Уровень игрока: {playerStats.level}</p>
               </div>
 
               <div className="space-y-2">
@@ -120,11 +119,6 @@ export const DungeonSearchDialog = ({
                     className="w-full bg-game-surface border-game-accent text-game-accent hover:bg-game-surface/80"
                   >
                     {dungeonNames[dungeon as keyof typeof dungeonNames]}
-                    {!canEnterDungeon(requiredLevel) && (
-                      <span className="ml-2 text-red-500">
-                        (Требуется {requiredLevel} уровень)
-                      </span>
-                    )}
                   </Button>
                 ))}
               </div>
