@@ -106,7 +106,7 @@ export const TeamBattleArena: React.FC<TeamBattleArenaProps> = ({
       return () => clearTimeout(timer);
     }
   }, [isPlayerTurn, aliveOpponents.length, alivePairs.length]);
-  return <div className="min-h-screen bg-gradient-to-br from-background via-background/90 to-background/80 p-4">
+  return <div className="min-h-screen p-4">
       <div className="max-w-6xl mx-auto space-y-6">
         {/* Header */}
         <Card className="bg-card/50 backdrop-blur-sm border-primary/20">
