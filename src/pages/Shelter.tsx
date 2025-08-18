@@ -46,7 +46,7 @@ export const Shelter = () => {
     {
       id: "main_hall",
       name: "Главный зал",
-      description: "Увеличивает общую вместимость убежища",
+      description: "Увеличивает общую вместимость лагеря",
       level: 1,
       maxLevel: 10,
       cost: { wood: 50, stone: 30, iron: 0, gold: 100 },
@@ -69,6 +69,42 @@ export const Shelter = () => {
       maxLevel: 8,
       cost: { wood: 60, stone: 60, iron: 10, gold: 150 },
       benefit: "+100 к лимиту ресурсов"
+    },
+    {
+      id: "sawmill",
+      name: "Лесопилка",
+      description: "Производит дерево для строительства",
+      level: 0,
+      maxLevel: 8,
+      cost: { wood: 40, stone: 20, iron: 5, gold: 80 },
+      benefit: "+10 дерева в час"
+    },
+    {
+      id: "quarry",
+      name: "Каменоломня",
+      description: "Добывает камень для укреплений",
+      level: 0,
+      maxLevel: 8,
+      cost: { wood: 30, stone: 50, iron: 10, gold: 120 },
+      benefit: "+8 камня в час"
+    },
+    {
+      id: "dragon_lair",
+      name: "Драконье Логово",
+      description: "Таинственное место силы драконов",
+      level: 1,
+      maxLevel: 8,
+      cost: { wood: 100, stone: 80, iron: 30, gold: 500 },
+      benefit: "+50% к опыту в бою"
+    },
+    {
+      id: "medical_post",
+      name: "Медпункт",
+      description: "Лечит раненых и восстанавливает здоровье",
+      level: 0,
+      maxLevel: 8,
+      cost: { wood: 25, stone: 15, iron: 5, gold: 60 },
+      benefit: "Автовосстановление ХП"
     }
   ];
 
@@ -176,7 +212,7 @@ export const Shelter = () => {
           </Button>
           <div className="flex items-center gap-2">
             <Home className="w-6 h-6 text-primary" />
-            <h1 className="text-3xl font-bold">Убежище</h1>
+            <h1 className="text-3xl font-bold">Лагерь</h1>
           </div>
         </div>
 
