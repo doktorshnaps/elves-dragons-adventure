@@ -7,6 +7,19 @@ export interface PlayerStats {
   defense: number;
 }
 
+export interface StatusEffect {
+  type: 'poison' | 'slow' | 'invisible';
+  duration: number;
+  value?: number;
+}
+
+export interface SpecialAbility {
+  type: 'lifesteal' | 'slow_attack' | 'poison_bite' | 'summon' | 'corpse_feed' | 'invisibility' | 'illusion' | 'curse' | 'dark_magic';
+  cooldown?: number;
+  currentCooldown?: number;
+  value?: number;
+}
+
 export interface Opponent {
   id: number;
   name: string;
@@ -15,6 +28,10 @@ export interface Opponent {
   maxHealth: number;
   isBoss?: boolean;
   image?: string;
+  statusEffects?: StatusEffect[];
+  specialAbilities?: SpecialAbility[];
+  isIllusion?: boolean;
+  originalId?: number;
 }
 
 export interface BattleState {
