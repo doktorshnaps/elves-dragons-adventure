@@ -6,6 +6,8 @@ import { useNavigate } from "react-router-dom";
 import { ArrowLeft, Home, Hammer, Wrench, Package, Star } from "lucide-react";
 import { useGameData } from "@/hooks/useGameData";
 import { useToast } from "@/hooks/use-toast";
+import { useGameStore } from "@/stores/gameStore";
+import { AccountLevelDisplay } from "@/components/game/account/AccountLevelDisplay";
 import { useState } from "react";
 
 interface NestUpgrade {
@@ -31,6 +33,7 @@ export const Shelter = () => {
   const navigate = useNavigate();
   const { gameData, updateGameData } = useGameData();
   const { toast } = useToast();
+  const { accountLevel, accountExperience } = useGameStore();
   
   const [activeTab, setActiveTab] = useState<"upgrades" | "crafting">("upgrades");
 
@@ -216,32 +219,40 @@ export const Shelter = () => {
           </div>
         </div>
 
-        {/* Resources Display */}
-        <Card className="mb-6">
-          <CardHeader>
-            <CardTitle>Ресурсы</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              <div className="flex items-center gap-2">
-                <div className="w-8 h-8 bg-amber-600 rounded" />
-                <span>Дерево: {resources.wood}</span>
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
+          {/* Account Level Display */}
+          <AccountLevelDisplay 
+            experience={accountExperience} 
+            level={accountLevel}
+          />
+          
+          {/* Resources Display */}
+          <Card className="lg:col-span-2">
+            <CardHeader>
+              <CardTitle>Ресурсы</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <div className="flex items-center gap-2">
+                  <div className="w-8 h-8 bg-amber-600 rounded" />
+                  <span>Дерево: {resources.wood}</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="w-8 h-8 bg-gray-500 rounded" />
+                  <span>Камень: {resources.stone}</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="w-8 h-8 bg-slate-600 rounded" />
+                  <span>Железо: {resources.iron}</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="w-8 h-8 bg-yellow-500 rounded-full" />
+                  <span>Золото: {resources.gold}</span>
+                </div>
               </div>
-              <div className="flex items-center gap-2">
-                <div className="w-8 h-8 bg-gray-500 rounded" />
-                <span>Камень: {resources.stone}</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <div className="w-8 h-8 bg-slate-600 rounded" />
-                <span>Железо: {resources.iron}</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <div className="w-8 h-8 bg-yellow-500 rounded-full" />
-                <span>Золото: {resources.gold}</span>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
+        </div>
 
         {/* Tabs */}
         <div className="flex gap-2 mb-6">

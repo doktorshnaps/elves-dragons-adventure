@@ -12,9 +12,9 @@ interface GameState {
   dragonEggs: DragonEgg[];
   selectedTeam: any[];
   
-  // Player stats
-  playerLevel: number;
-  playerExperience: number;
+  // Account progression
+  accountLevel: number;
+  accountExperience: number;
   
   // Battle state
   battleState: any | null;
@@ -35,6 +35,11 @@ interface GameState {
   setBattleState: (state: any) => void;
   clearBattleState: () => void;
   
+  // Account progression
+  setAccountLevel: (level: number) => void;
+  setAccountExperience: (experience: number) => void;
+  addAccountExperience: (amount: number) => void;
+  
   // Computed values
   getTeamStats: () => { power: number; defense: number; health: number; maxHealth: number };
 }
@@ -48,8 +53,8 @@ export const useGameStore = create<GameState>()(
       inventory: [],
       dragonEggs: [],
       selectedTeam: [],
-      playerLevel: 1,
-      playerExperience: 0,
+      accountLevel: 1,
+      accountExperience: 0,
       battleState: null,
       
       // Actions
@@ -77,6 +82,13 @@ export const useGameStore = create<GameState>()(
       setSelectedTeam: (selectedTeam) => set({ selectedTeam }),
       setBattleState: (battleState) => set({ battleState }),
       clearBattleState: () => set({ battleState: null }),
+      
+      // Account progression actions
+      setAccountLevel: (accountLevel) => set({ accountLevel }),
+      setAccountExperience: (accountExperience) => set({ accountExperience }),
+      addAccountExperience: (amount) => set((state) => ({ 
+        accountExperience: state.accountExperience + amount 
+      })),
       
       // Computed values
       getTeamStats: () => {
@@ -114,8 +126,8 @@ export const useGameStore = create<GameState>()(
         inventory: state.inventory,
         dragonEggs: state.dragonEggs,
         selectedTeam: state.selectedTeam,
-        playerLevel: state.playerLevel,
-        playerExperience: state.playerExperience,
+        accountLevel: state.accountLevel,
+        accountExperience: state.accountExperience,
       }),
     }
   )
