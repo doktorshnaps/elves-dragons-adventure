@@ -223,6 +223,14 @@ export const useTeamBattle = (dungeonType: DungeonType, initialLevel: number = 1
 
   const switchTurn = () => {
     setBattleState(prev => {
+      const aliveOpponents = prev.opponents.filter(o => o.health > 0).length;
+      const alivePairs = prev.playerPairs.filter(p => p.health > 0).length;
+
+      // If one side has no units alive, do not switch turn (prevents unintended resets)
+      if (aliveOpponents === 0 || alivePairs === 0) {
+        return prev;
+      }
+
       if (prev.currentTurn === 'player') {
         return {
           ...prev,
@@ -230,15 +238,15 @@ export const useTeamBattle = (dungeonType: DungeonType, initialLevel: number = 1
           currentAttacker: 0
         };
       } else {
+        const nextIndex = alivePairs > 0 ? (prev.currentAttacker + 1) % alivePairs : 0;
         return {
           ...prev,
           currentTurn: 'player',
-          currentAttacker: (prev.currentAttacker + 1) % prev.opponents.length
+          currentAttacker: nextIndex
         };
       }
     });
   };
-
   const handleLevelComplete = () => {
     toast({
       title: "Уровень завершен!",
