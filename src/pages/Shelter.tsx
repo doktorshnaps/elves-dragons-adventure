@@ -3,11 +3,12 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { useNavigate } from "react-router-dom";
-import { ArrowLeft, Home, Hammer, Wrench, Package, Star } from "lucide-react";
+import { ArrowLeft, Home, Hammer, Wrench, Package, Star, Shield } from "lucide-react";
 import { useGameData } from "@/hooks/useGameData";
 import { useToast } from "@/hooks/use-toast";
 import { useGameStore } from "@/stores/gameStore";
 import { AccountLevelDisplay } from "@/components/game/account/AccountLevelDisplay";
+import { Barracks } from "@/components/game/shelter/Barracks";
 import { useState } from "react";
 
 interface NestUpgrade {
@@ -35,7 +36,7 @@ export const Shelter = () => {
   const { toast } = useToast();
   const { accountLevel, accountExperience } = useGameStore();
   
-  const [activeTab, setActiveTab] = useState<"upgrades" | "crafting">("upgrades");
+  const [activeTab, setActiveTab] = useState<"upgrades" | "crafting" | "barracks">("upgrades");
 
   // Временные данные ресурсов (в будущем будут из gameData)
   const [resources, setResources] = useState({
@@ -99,6 +100,15 @@ export const Shelter = () => {
       maxLevel: 8,
       cost: { wood: 100, stone: 80, iron: 30, gold: 500 },
       benefit: "+50% к опыту в бою"
+    },
+    {
+      id: "barracks",
+      name: "Казарма",
+      description: "Улучшение и тренировка героев",
+      level: 1,
+      maxLevel: 8,
+      cost: { wood: 120, stone: 60, iron: 40, gold: 300 },
+      benefit: "Позволяет улучшать героев"
     },
     {
       id: "medical_post",
@@ -272,6 +282,14 @@ export const Shelter = () => {
             <Hammer className="w-4 h-4" />
             Крафт предметов
           </Button>
+          <Button 
+            variant={activeTab === "barracks" ? "default" : "outline"}
+            onClick={() => setActiveTab("barracks")}
+            className="flex items-center gap-2"
+          >
+            <Shield className="w-4 h-4" />
+            Казарма
+          </Button>
         </div>
 
         {/* Upgrades Tab */}
@@ -394,6 +412,19 @@ export const Shelter = () => {
               </Card>
             ))}
           </div>
+        )}
+
+        {/* Barracks Tab */}
+        {activeTab === "barracks" && (
+          <Barracks 
+            barracksLevel={nestUpgrades.find(u => u.id === "barracks")?.level || 1}
+            onUpgradeBuilding={() => {
+              const barracks = nestUpgrades.find(u => u.id === "barracks");
+              if (barracks) {
+                handleUpgrade(barracks);
+              }
+            }}
+          />
         )}
       </div>
     </div>
