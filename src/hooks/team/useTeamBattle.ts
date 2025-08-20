@@ -287,6 +287,7 @@ export const useTeamBattle = (dungeonType: DungeonType, initialLevel: number = 1
     executeEnemyAttack,
     executeCounterAttack,
     resetBattle,
+    handleLevelComplete,
     isPlayerTurn: battleState.currentTurn === 'player',
     alivePairs: battleState.playerPairs.filter(pair => pair.health > 0),
     aliveOpponents: battleState.opponents.filter(opp => opp.health > 0)

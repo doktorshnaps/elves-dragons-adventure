@@ -24,6 +24,7 @@ export const TeamBattlePage: React.FC<TeamBattlePageProps> = ({ dungeonType }) =
     executeEnemyAttack,
     executeCounterAttack,
     resetBattle,
+    handleLevelComplete,
     isPlayerTurn,
     alivePairs,
     aliveOpponents
@@ -36,6 +37,11 @@ export const TeamBattlePage: React.FC<TeamBattlePageProps> = ({ dungeonType }) =
   const handleBackToMenu = () => {
     resetBattle();
     navigate('/dungeons');
+  };
+
+  const handleNextLevel = () => {
+    handleLevelComplete();
+    setBattleStarted(false);
   };
 
   // Check if battle is over
@@ -63,7 +69,7 @@ export const TeamBattlePage: React.FC<TeamBattlePageProps> = ({ dungeonType }) =
                   Вернуться к подземельям
                 </Button>
                 {alivePairs.length > 0 && (
-                  <Button onClick={() => window.location.reload()}>
+                  <Button onClick={handleNextLevel}>
                     Следующий уровень
                   </Button>
                 )}
