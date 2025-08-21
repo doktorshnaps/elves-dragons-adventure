@@ -3,12 +3,13 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { useNavigate } from "react-router-dom";
-import { ArrowLeft, Home, Hammer, Wrench, Package, Star, Shield } from "lucide-react";
+import { ArrowLeft, Home, Hammer, Wrench, Package, Star, Shield, Flame } from "lucide-react";
 import { useGameData } from "@/hooks/useGameData";
 import { useToast } from "@/hooks/use-toast";
 import { useGameStore } from "@/stores/gameStore";
 import { AccountLevelDisplay } from "@/components/game/account/AccountLevelDisplay";
 import { Barracks } from "@/components/game/shelter/Barracks";
+import { DragonLair } from "@/components/game/shelter/DragonLair";
 import { useState } from "react";
 
 interface NestUpgrade {
@@ -36,7 +37,7 @@ export const Shelter = () => {
   const { toast } = useToast();
   const { accountLevel, accountExperience } = useGameStore();
   
-  const [activeTab, setActiveTab] = useState<"upgrades" | "crafting" | "barracks">("upgrades");
+  const [activeTab, setActiveTab] = useState<"upgrades" | "crafting" | "barracks" | "dragonlair">("upgrades");
 
   // Временные данные ресурсов (в будущем будут из gameData)
   const [resources, setResources] = useState({
@@ -290,6 +291,14 @@ export const Shelter = () => {
             <Shield className="w-4 h-4" />
             Казарма
           </Button>
+          <Button 
+            variant={activeTab === "dragonlair" ? "default" : "outline"}
+            onClick={() => setActiveTab("dragonlair")}
+            className="flex items-center gap-2"
+          >
+            <Flame className="w-4 h-4" />
+            Драконье Логово
+          </Button>
         </div>
 
         {/* Upgrades Tab */}
@@ -422,6 +431,19 @@ export const Shelter = () => {
               const barracks = nestUpgrades.find(u => u.id === "barracks");
               if (barracks) {
                 handleUpgrade(barracks);
+              }
+            }}
+          />
+        )}
+
+        {/* Dragon Lair Tab */}
+        {activeTab === "dragonlair" && (
+          <DragonLair 
+            lairLevel={nestUpgrades.find(u => u.id === "dragon_lair")?.level || 1}
+            onUpgradeBuilding={() => {
+              const dragonLair = nestUpgrades.find(u => u.id === "dragon_lair");
+              if (dragonLair) {
+                handleUpgrade(dragonLair);
               }
             }}
           />

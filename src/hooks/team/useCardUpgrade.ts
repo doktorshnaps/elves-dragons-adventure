@@ -40,28 +40,16 @@ export const useCardUpgrade = (
     const newCards = cards.filter(c => !selectedCards.some(sc => sc.id === c.id));
 
     if (selectedCards[0].type === 'pet') {
-      // Для питомцев создаем яйцо и добавляем его в инвентарь
-      const eggId = Date.now().toString();
-      const createdAt = new Date().toISOString();
-
-// Убираем автоматическое добавление в инкубатор — яйцо попадет только в инвентарь
-
-
-      const eggItem: Item = {
-        id: eggId,
-        name: 'Яйцо дракона',
-        type: 'dragon_egg',
-        value: upgradedCard.rarity,
-        description: `${upgradedCard.name}`,
-        image: '/lovable-uploads/8a069dd4-47ad-496c-a248-f796257f9233.png',
-        petName: upgradedCard.name,
-      };
-      await updateGameData({ inventory: [ ...(gameData.inventory || []), eggItem ] });
-
+      // Для питомцев теперь не создаем яйцо, а отправляем на улучшение в Драконье Логово
+      // Логика улучшения будет в самом Драконьем Логове
       toast({
-        title: "Создано яйцо дракона!",
-        description: `Улучшенный питомец появится через некоторое время`,
+        title: "Карты драконов выбраны!",
+        description: `Перейдите в Драконье Логово в убежище для улучшения`,
       });
+      
+      // Для драконов просто очищаем выбранные карты, не добавляем улучшенную карту
+      setSelectedCards([]);
+      return;
     } else {
       // Для героев добавляем улучшенную карту
       newCards.push(upgradedCard);
