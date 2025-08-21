@@ -57,14 +57,12 @@ export const Barracks: React.FC<BarracksProps> = ({ barracksLevel, onUpgradeBuil
     localStorage.setItem('barracksUpgrades', JSON.stringify(activeUpgrades));
   }, [activeUpgrades]);
 
-  // Check for completed upgrades
+  // Check for completed upgrades - no auto-completion, player must claim manually
   useEffect(() => {
     const completedUpgrades = activeUpgrades.filter(upgrade => upgrade.endTime <= currentTime);
     
     if (completedUpgrades.length > 0) {
-      completedUpgrades.forEach(upgrade => {
-        completeUpgrade(upgrade);
-      });
+      // Don't auto-complete, just let the UI show the "Claim" button
     }
   }, [currentTime, activeUpgrades]);
 
@@ -279,6 +277,7 @@ export const Barracks: React.FC<BarracksProps> = ({ barracksLevel, onUpgradeBuil
               {activeUpgrades.map(upgrade => {
                 const progress = Math.min(100, ((currentTime - upgrade.startTime) / (upgrade.endTime - upgrade.startTime)) * 100);
                 const remaining = formatTimeRemaining(upgrade.endTime);
+                const isCompleted = upgrade.endTime <= currentTime;
                 
                 return (
                   <div key={upgrade.id} className="p-4 border border-orange-500/20 rounded-lg">
@@ -289,9 +288,21 @@ export const Barracks: React.FC<BarracksProps> = ({ barracksLevel, onUpgradeBuil
                           Улучшение {upgrade.fromRarity} → {upgrade.toRarity} ранг
                         </span>
                       </div>
-                      <span className="text-sm text-muted-foreground">{remaining}</span>
+                      <div className="flex items-center gap-2">
+                        {isCompleted ? (
+                          <Button 
+                            onClick={() => completeUpgrade(upgrade)}
+                            size="sm"
+                            className="bg-green-600 hover:bg-green-700"
+                          >
+                            Забрать
+                          </Button>
+                        ) : (
+                          <span className="text-sm text-muted-foreground">{remaining}</span>
+                        )}
+                      </div>
                     </div>
-                    <Progress value={progress} className="h-2" />
+                    {!isCompleted && <Progress value={progress} className="h-2" />}
                   </div>
                 );
               })}

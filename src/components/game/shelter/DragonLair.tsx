@@ -60,11 +60,7 @@ export const DragonLair: React.FC<DragonLairProps> = ({ lairLevel, onUpgradeBuil
     const completedUpgrades = activeUpgrades.filter(upgrade => upgrade.endTime <= currentTime);
     
     if (completedUpgrades.length > 0) {
-      completedUpgrades.forEach(upgrade => {
-        setActiveUpgrades(prev => prev.map(u => 
-          u.id === upgrade.id ? { ...u, completed: true } : u
-        ));
-      });
+      // Don't modify the upgrades, just keep them as is - they will show the "Claim" button
     }
   }, [currentTime, activeUpgrades]);
 
