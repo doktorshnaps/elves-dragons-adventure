@@ -16,6 +16,8 @@ interface GameData {
   dragonEggs?: any[];
   battleState?: any;
   selectedTeam?: any[];
+  barracksUpgrades?: any[];
+  dragonLairUpgrades?: any[];
 }
 
 export const useGameData = () => {
@@ -32,7 +34,9 @@ export const useGameData = () => {
     adventureCurrentMonster: null,
     dragonEggs: [],
     battleState: null,
-    selectedTeam: []
+    selectedTeam: [],
+    barracksUpgrades: [],
+    dragonLairUpgrades: []
   });
   const [loading, setLoading] = useState(true);
 
@@ -68,7 +72,9 @@ export const useGameData = () => {
           adventureCurrentMonster: (data as any).adventure_current_monster || null,
           dragonEggs: ((data as any).dragon_eggs as any[]) || [],
           battleState: (data as any).battle_state || null,
-          selectedTeam: ((data as any).selected_team as any[]) || []
+          selectedTeam: ((data as any).selected_team as any[]) || [],
+          barracksUpgrades: ((data as any).barracks_upgrades as any[]) || [],
+          dragonLairUpgrades: ((data as any).dragon_lair_upgrades as any[]) || []
         };
         
         setGameData(newGameData);
@@ -116,6 +122,8 @@ export const useGameData = () => {
       if (updates.dragonEggs !== undefined) payload.dragon_eggs = updates.dragonEggs as any;
       if (updates.battleState !== undefined) payload.battle_state = updates.battleState as any;
       if (updates.selectedTeam !== undefined) payload.selected_team = updates.selectedTeam as any;
+      if (updates.barracksUpgrades !== undefined) payload.barracks_upgrades = updates.barracksUpgrades as any;
+      if (updates.dragonLairUpgrades !== undefined) payload.dragon_lair_upgrades = updates.dragonLairUpgrades as any;
       // ВАЖНО: initialized обновляем только если явно передан
       if (updates.initialized !== undefined) payload.initialized = updates.initialized;
 

@@ -27,9 +27,11 @@ interface BarracksProps {
 export const Barracks: React.FC<BarracksProps> = ({ barracksLevel, onUpgradeBuilding }) => {
   const { toast } = useToast();
   const { gameData, updateGameData } = useGameData();
-  const [activeUpgrades, setActiveUpgrades] = useState<BarracksUpgrade[]>([]);
   const [selectedHeroes, setSelectedHeroes] = useState<CardType[]>([]);
   const [currentTime, setCurrentTime] = useState(Date.now());
+
+  // Get active upgrades from Supabase data
+  const activeUpgrades = (gameData.barracksUpgrades || []) as BarracksUpgrade[];
 
   // Update time every second for countdown
   useEffect(() => {
@@ -38,33 +40,6 @@ export const Barracks: React.FC<BarracksProps> = ({ barracksLevel, onUpgradeBuil
     }, 1000);
     return () => clearInterval(interval);
   }, []);
-
-  // Load saved upgrades from localStorage
-  useEffect(() => {
-    const saved = localStorage.getItem('barracksUpgrades');
-    if (saved) {
-      try {
-        const upgrades: BarracksUpgrade[] = JSON.parse(saved);
-        setActiveUpgrades(upgrades);
-      } catch (error) {
-        console.error('Error loading barracks upgrades:', error);
-      }
-    }
-  }, []);
-
-  // Save upgrades to localStorage
-  useEffect(() => {
-    localStorage.setItem('barracksUpgrades', JSON.stringify(activeUpgrades));
-  }, [activeUpgrades]);
-
-  // Check for completed upgrades - no auto-completion, player must claim manually
-  useEffect(() => {
-    const completedUpgrades = activeUpgrades.filter(upgrade => upgrade.endTime <= currentTime);
-    
-    if (completedUpgrades.length > 0) {
-      // Don't auto-complete, just let the UI show the "Claim" button
-    }
-  }, [currentTime, activeUpgrades]);
 
   const completeUpgrade = async (upgrade: BarracksUpgrade) => {
     const currentCards = gameData.cards as CardType[] || [];
@@ -86,10 +61,13 @@ export const Barracks: React.FC<BarracksProps> = ({ barracksLevel, onUpgradeBuil
     // Remove old hero and add upgraded one
     const newCards = currentCards.filter(c => c.id !== upgrade.heroId).concat(upgradedHero);
     
-    await updateGameData({ cards: newCards });
+    // Remove completed upgrade from Supabase
+    const updatedUpgrades = activeUpgrades.filter(u => u.id !== upgrade.id);
     
-    // Remove completed upgrade
-    setActiveUpgrades(prev => prev.filter(u => u.id !== upgrade.id));
+    await updateGameData({ 
+      cards: newCards,
+      barracksUpgrades: updatedUpgrades
+    });
     
     toast({
       title: 'Улучшение завершено!',
@@ -149,7 +127,7 @@ export const Barracks: React.FC<BarracksProps> = ({ barracksLevel, onUpgradeBuil
     return activeUpgrades.length < getMaxConcurrentUpgrades();
   };
 
-  const startUpgrade = (heroes: CardType[]) => {
+  const startUpgrade = async (heroes: CardType[]) => {
     if (!canStartUpgrade()) {
       toast({
         title: 'Недостаточно места',
@@ -197,8 +175,13 @@ export const Barracks: React.FC<BarracksProps> = ({ barracksLevel, onUpgradeBuil
     const currentCards = gameData.cards as CardType[] || [];
     const newCards = currentCards.filter(c => c.id !== hero1.id && c.id !== hero2.id);
     
-    updateGameData({ cards: newCards });
-    setActiveUpgrades(prev => [...prev, newUpgrade]);
+    // Add new upgrade to Supabase
+    const updatedUpgrades = [...activeUpgrades, newUpgrade];
+    
+    await updateGameData({ 
+      cards: newCards,
+      barracksUpgrades: updatedUpgrades
+    });
 
     toast({
       title: 'Улучшение начато!',

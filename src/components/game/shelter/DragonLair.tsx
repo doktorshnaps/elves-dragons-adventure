@@ -26,8 +26,10 @@ interface DragonLairProps {
 export const DragonLair: React.FC<DragonLairProps> = ({ lairLevel, onUpgradeBuilding }) => {
   const { toast } = useToast();
   const { gameData, updateGameData } = useGameData();
-  const [activeUpgrades, setActiveUpgrades] = useState<DragonUpgrade[]>([]);
   const [currentTime, setCurrentTime] = useState(Date.now());
+
+  // Get active upgrades from Supabase data
+  const activeUpgrades = (gameData.dragonLairUpgrades || []) as DragonUpgrade[];
 
   // Update time every second for countdown
   useEffect(() => {
@@ -36,33 +38,6 @@ export const DragonLair: React.FC<DragonLairProps> = ({ lairLevel, onUpgradeBuil
     }, 1000);
     return () => clearInterval(interval);
   }, []);
-
-  // Load saved upgrades from localStorage
-  useEffect(() => {
-    const saved = localStorage.getItem('dragonLairUpgrades');
-    if (saved) {
-      try {
-        const upgrades: DragonUpgrade[] = JSON.parse(saved);
-        setActiveUpgrades(upgrades);
-      } catch (error) {
-        console.error('Error loading dragon lair upgrades:', error);
-      }
-    }
-  }, []);
-
-  // Save upgrades to localStorage
-  useEffect(() => {
-    localStorage.setItem('dragonLairUpgrades', JSON.stringify(activeUpgrades));
-  }, [activeUpgrades]);
-
-  // Check for completed upgrades
-  useEffect(() => {
-    const completedUpgrades = activeUpgrades.filter(upgrade => upgrade.endTime <= currentTime);
-    
-    if (completedUpgrades.length > 0) {
-      // Don't modify the upgrades, just keep them as is - they will show the "Claim" button
-    }
-  }, [currentTime, activeUpgrades]);
 
   const claimUpgrade = async (upgrade: DragonUpgrade) => {
     const currentCards = gameData.cards as CardType[] || [];
@@ -84,10 +59,13 @@ export const DragonLair: React.FC<DragonLairProps> = ({ lairLevel, onUpgradeBuil
     // Add upgraded dragon to cards
     const newCards = [...currentCards, upgradedDragon];
     
-    await updateGameData({ cards: newCards });
+    // Remove completed upgrade from Supabase
+    const updatedUpgrades = activeUpgrades.filter(u => u.id !== upgrade.id);
     
-    // Remove completed upgrade
-    setActiveUpgrades(prev => prev.filter(u => u.id !== upgrade.id));
+    await updateGameData({ 
+      cards: newCards,
+      dragonLairUpgrades: updatedUpgrades
+    });
     
     toast({
       title: 'Улучшение завершено!',
@@ -147,7 +125,7 @@ export const DragonLair: React.FC<DragonLairProps> = ({ lairLevel, onUpgradeBuil
     return activeUpgrades.length < getMaxConcurrentUpgrades();
   };
 
-  const startUpgrade = (dragons: CardType[]) => {
+  const startUpgrade = async (dragons: CardType[]) => {
     if (!canStartUpgrade()) {
       toast({
         title: 'Недостаточно места',
@@ -195,8 +173,13 @@ export const DragonLair: React.FC<DragonLairProps> = ({ lairLevel, onUpgradeBuil
     const currentCards = gameData.cards as CardType[] || [];
     const newCards = currentCards.filter(c => c.id !== dragon1.id && c.id !== dragon2.id);
     
-    updateGameData({ cards: newCards });
-    setActiveUpgrades(prev => [...prev, newUpgrade]);
+    // Add new upgrade to Supabase
+    const updatedUpgrades = [...activeUpgrades, newUpgrade];
+    
+    await updateGameData({ 
+      cards: newCards,
+      dragonLairUpgrades: updatedUpgrades
+    });
 
     toast({
       title: 'Улучшение начато!',

@@ -7,7 +7,7 @@ export type Json =
   | Json[]
 
 export type Database = {
-  // Allows to automatically instanciate createClient with right options
+  // Allows to automatically instantiate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
     PostgrestVersion: "13.0.4"
@@ -19,10 +19,12 @@ export type Database = {
           adventure_current_monster: Json | null
           adventure_player_stats: Json | null
           balance: number
+          barracks_upgrades: Json
           battle_state: Json | null
           cards: Json
           created_at: string
           dragon_eggs: Json | null
+          dragon_lair_upgrades: Json
           id: string
           initialized: boolean
           inventory: Json | null
@@ -36,10 +38,12 @@ export type Database = {
           adventure_current_monster?: Json | null
           adventure_player_stats?: Json | null
           balance?: number
+          barracks_upgrades?: Json
           battle_state?: Json | null
           cards?: Json
           created_at?: string
           dragon_eggs?: Json | null
+          dragon_lair_upgrades?: Json
           id?: string
           initialized?: boolean
           inventory?: Json | null
@@ -53,10 +57,12 @@ export type Database = {
           adventure_current_monster?: Json | null
           adventure_player_stats?: Json | null
           balance?: number
+          barracks_upgrades?: Json
           battle_state?: Json | null
           cards?: Json
           created_at?: string
           dragon_eggs?: Json | null
+          dragon_lair_upgrades?: Json
           id?: string
           initialized?: boolean
           inventory?: Json | null
@@ -141,7 +147,7 @@ export type Database = {
         Returns: undefined
       }
       create_marketplace_listing: {
-        Args: { p_listing_type: string; p_item_id: string; p_price: number }
+        Args: { p_item_id: string; p_listing_type: string; p_price: number }
         Returns: string
       }
       process_marketplace_purchase: {
