@@ -42,8 +42,8 @@ export const DragonLair: React.FC<DragonLairProps> = ({ lairLevel, onUpgradeBuil
     const saved = localStorage.getItem('dragonLairUpgrades');
     if (saved) {
       try {
-        const upgrades = JSON.parse(saved);
-        setActiveUpgrades(upgrades.filter((u: DragonUpgrade) => u.endTime > Date.now()));
+        const upgrades: DragonUpgrade[] = JSON.parse(saved);
+        setActiveUpgrades(upgrades);
       } catch (error) {
         console.error('Error loading dragon lair upgrades:', error);
       }

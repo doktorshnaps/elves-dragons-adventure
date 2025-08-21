@@ -44,8 +44,8 @@ export const Barracks: React.FC<BarracksProps> = ({ barracksLevel, onUpgradeBuil
     const saved = localStorage.getItem('barracksUpgrades');
     if (saved) {
       try {
-        const upgrades = JSON.parse(saved);
-        setActiveUpgrades(upgrades.filter((u: BarracksUpgrade) => u.endTime > Date.now()));
+        const upgrades: BarracksUpgrade[] = JSON.parse(saved);
+        setActiveUpgrades(upgrades);
       } catch (error) {
         console.error('Error loading barracks upgrades:', error);
       }
