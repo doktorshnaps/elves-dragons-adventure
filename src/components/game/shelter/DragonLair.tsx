@@ -42,26 +42,31 @@ export const DragonLair: React.FC<DragonLairProps> = ({ lairLevel, onUpgradeBuil
 
   const claimUpgrade = async (upgrade: DragonUpgrade) => {
     const currentCards = (gameData.cards as CardType[]) || [];
-    const sourceDragon = (upgrade as any).baseCard || currentCards.find(c => c.id === upgrade.dragonId);
+    let sourceDragon = (upgrade as any).baseCard || currentCards.find(c => c.id === upgrade.dragonId);
 
+    // Fallback for legacy upgrades without snapshot
     if (!sourceDragon) {
-      toast({
-        title: 'Ошибка',
-        description: 'Данные улучшения не найдены',
-        variant: 'destructive'
-      });
-      return;
+      sourceDragon = {
+        id: upgrade.dragonId,
+        name: 'Неизвестный дракон',
+        type: 'pet',
+        power: 100,
+        defense: 100,
+        health: 100,
+        magic: 100,
+        rarity: upgrade.fromRarity as any,
+      } as CardType;
     }
 
-    // Create upgraded dragon from the stored base card snapshot
+    // Create upgraded dragon from the source snapshot
     const upgradedDragon: CardType = {
       ...sourceDragon,
       id: Date.now().toString() + Math.random().toString(36).substr(2, 9),
       rarity: upgrade.toRarity as any,
-      power: Math.floor(sourceDragon.power * Math.pow(1.8, upgrade.toRarity - sourceDragon.rarity)),
-      defense: Math.floor(sourceDragon.defense * Math.pow(1.8, upgrade.toRarity - sourceDragon.rarity)),
-      health: Math.floor(sourceDragon.health * Math.pow(1.8, upgrade.toRarity - sourceDragon.rarity)),
-      magic: Math.floor(sourceDragon.magic * Math.pow(1.8, upgrade.toRarity - sourceDragon.rarity))
+      power: Math.floor(sourceDragon.power * Math.pow(1.8, upgrade.toRarity - (sourceDragon.rarity as number))),
+      defense: Math.floor(sourceDragon.defense * Math.pow(1.8, upgrade.toRarity - (sourceDragon.rarity as number))),
+      health: Math.floor(sourceDragon.health * Math.pow(1.8, upgrade.toRarity - (sourceDragon.rarity as number))),
+      magic: Math.floor(sourceDragon.magic * Math.pow(1.8, upgrade.toRarity - (sourceDragon.rarity as number)))
     };
 
     // Remove old dragon (if exists) and add upgraded one

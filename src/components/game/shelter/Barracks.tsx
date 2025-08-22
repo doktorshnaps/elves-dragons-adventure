@@ -44,26 +44,31 @@ export const Barracks: React.FC<BarracksProps> = ({ barracksLevel, onUpgradeBuil
 
   const completeUpgrade = async (upgrade: BarracksUpgrade) => {
     const currentCards = (gameData.cards as CardType[]) || [];
-    const sourceHero = (upgrade as any).baseCard || currentCards.find(c => c.id === upgrade.heroId);
+    let sourceHero = (upgrade as any).baseCard || currentCards.find(c => c.id === upgrade.heroId);
 
+    // Fallback for legacy upgrades without snapshot
     if (!sourceHero) {
-      toast({
-        title: 'Ошибка',
-        description: 'Данные улучшения не найдены',
-        variant: 'destructive'
-      });
-      return;
+      sourceHero = {
+        id: upgrade.heroId,
+        name: 'Неизвестный герой',
+        type: 'character',
+        power: 100,
+        defense: 100,
+        health: 100,
+        magic: 100,
+        rarity: upgrade.fromRarity as any,
+      } as CardType;
     }
 
-    // Create upgraded hero from the stored base card snapshot
+    // Create upgraded hero from the source snapshot
     const upgradedHero: CardType = {
       ...sourceHero,
       id: Date.now().toString() + Math.random().toString(36).substr(2, 9),
       rarity: upgrade.toRarity as any,
-      power: Math.floor(sourceHero.power * Math.pow(1.8, upgrade.toRarity - sourceHero.rarity)),
-      defense: Math.floor(sourceHero.defense * Math.pow(1.8, upgrade.toRarity - sourceHero.rarity)),
-      health: Math.floor(sourceHero.health * Math.pow(1.8, upgrade.toRarity - sourceHero.rarity)),
-      magic: Math.floor(sourceHero.magic * Math.pow(1.8, upgrade.toRarity - sourceHero.rarity))
+      power: Math.floor(sourceHero.power * Math.pow(1.8, upgrade.toRarity - (sourceHero.rarity as number))),
+      defense: Math.floor(sourceHero.defense * Math.pow(1.8, upgrade.toRarity - (sourceHero.rarity as number))),
+      health: Math.floor(sourceHero.health * Math.pow(1.8, upgrade.toRarity - (sourceHero.rarity as number))),
+      magic: Math.floor(sourceHero.magic * Math.pow(1.8, upgrade.toRarity - (sourceHero.rarity as number)))
     };
 
     // Remove old hero (if exists) and add upgraded one
