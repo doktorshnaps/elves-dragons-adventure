@@ -7,7 +7,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useGameData } from '@/hooks/useGameData';
 import { Card as CardType } from '@/types/cards';
 import { CardDisplay } from '../CardDisplay';
-import { Flame, Clock, Star } from 'lucide-react';
+import { Flame, Clock, Star, ArrowRight } from 'lucide-react';
 
 interface DragonUpgrade {
   id: string;
@@ -270,36 +270,78 @@ export const DragonLair: React.FC<DragonLairProps> = ({ lairLevel, onUpgradeBuil
           <CardContent>
             <div className="space-y-4">
               {activeUpgrades.map(upgrade => {
-                const progress = Math.min(100, ((currentTime - upgrade.startTime) / (upgrade.endTime - upgrade.startTime)) * 100);
-                const remaining = formatTimeRemaining(upgrade.endTime);
-                const isCompleted = upgrade.endTime <= currentTime;
-                
-                return (
-                  <div key={upgrade.id} className="p-4 border border-orange-500/20 rounded-lg">
-                    <div className="flex items-center justify-between mb-2">
-                      <div className="flex items-center gap-2">
-                        <Star className="w-4 h-4 text-orange-500" />
-                        <span className="font-medium">
-                          Улучшение {upgrade.fromRarity} → {upgrade.toRarity} ранг
-                        </span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        {isCompleted ? (
-                          <Button 
-                            onClick={() => claimUpgrade(upgrade)}
-                            size="sm"
-                            className="bg-green-600 hover:bg-green-700"
-                          >
-                            Забрать
-                          </Button>
-                        ) : (
-                          <span className="text-sm text-muted-foreground">{remaining}</span>
-                        )}
-                      </div>
-                    </div>
-                    {!isCompleted && <Progress value={progress} className="h-2" />}
-                  </div>
-                );
+                 const progress = Math.min(100, ((currentTime - upgrade.startTime) / (upgrade.endTime - upgrade.startTime)) * 100);
+                 const remaining = formatTimeRemaining(upgrade.endTime);
+                 const isCompleted = upgrade.endTime <= currentTime;
+                 const baseCard = (upgrade as any).baseCard;
+                 
+                 return (
+                   <div key={upgrade.id} className="p-4 border border-orange-500/20 rounded-lg">
+                     <div className="flex items-start gap-4 mb-4">
+                       {/* Current Card Preview */}
+                       {baseCard && (
+                         <div className="flex-shrink-0">
+                           <div className="text-xs text-muted-foreground mb-1">Улучшается:</div>
+                           <CardDisplay 
+                             card={baseCard}
+                             showSellButton={false}
+                             className="w-16 h-24 text-xs"
+                           />
+                         </div>
+                       )}
+                       
+                       {/* Arrow */}
+                       <div className="flex-shrink-0 flex items-center mt-6">
+                         <ArrowRight className="w-4 h-4 text-muted-foreground" />
+                       </div>
+                       
+                       {/* Result Card Preview */}
+                       {baseCard && (
+                         <div className="flex-shrink-0">
+                           <div className="text-xs text-muted-foreground mb-1">Результат:</div>
+                           <CardDisplay 
+                             card={{
+                               ...baseCard,
+                               rarity: upgrade.toRarity as any,
+                               power: Math.floor(baseCard.power * Math.pow(1.8, upgrade.toRarity - (baseCard.rarity as number))),
+                               defense: Math.floor(baseCard.defense * Math.pow(1.8, upgrade.toRarity - (baseCard.rarity as number))),
+                               health: Math.floor(baseCard.health * Math.pow(1.8, upgrade.toRarity - (baseCard.rarity as number))),
+                               magic: Math.floor(baseCard.magic * Math.pow(1.8, upgrade.toRarity - (baseCard.rarity as number)))
+                             }}
+                             showSellButton={false}
+                             className="w-16 h-24 text-xs"
+                           />
+                         </div>
+                       )}
+                       
+                       {/* Upgrade Info */}
+                       <div className="flex-1">
+                         <div className="flex items-center justify-between mb-2">
+                           <div className="flex items-center gap-2">
+                             <Star className="w-4 h-4 text-orange-500" />
+                             <span className="font-medium">
+                               Улучшение {upgrade.fromRarity} → {upgrade.toRarity} ранг
+                             </span>
+                           </div>
+                           <div className="flex items-center gap-2">
+                             {isCompleted ? (
+                               <Button 
+                                 onClick={() => claimUpgrade(upgrade)}
+                                 size="sm"
+                                 className="bg-green-600 hover:bg-green-700"
+                               >
+                                 Забрать
+                               </Button>
+                             ) : (
+                               <span className="text-sm text-muted-foreground">{remaining}</span>
+                             )}
+                           </div>
+                         </div>
+                         {!isCompleted && <Progress value={progress} className="h-2" />}
+                       </div>
+                     </div>
+                   </div>
+                 );
               })}
             </div>
           </CardContent>
@@ -328,46 +370,78 @@ export const DragonLair: React.FC<DragonLairProps> = ({ lairLevel, onUpgradeBuil
           ) : (
             <div className="space-y-6">
               {Object.entries(upgradeableGroups).map(([key, dragons]) => {
-                const dragon = dragons[0];
-                return (
-                  <div key={key} className="p-4 border border-primary/20 rounded-lg">
-                    <div className="flex items-center justify-between mb-4">
-                      <div>
-                        <h4 className="font-medium">{dragon.name}</h4>
-                        <p className="text-sm text-muted-foreground">
-                          {dragon.faction} • Ранг {dragon.rarity} → {dragon.rarity + 1}
-                        </p>
-                        <p className="text-xs text-muted-foreground mt-1">
-                          Доступно: {dragons.length} карт
-                        </p>
-                      </div>
-                      <Button
-                        onClick={() => startUpgrade(dragons)}
-                        disabled={!canStartUpgrade() || dragons.length < 2}
-                        size="sm"
-                      >
-                        Улучшить ({getUpgradeTime(dragon.rarity) / 1000}с)
-                      </Button>
-                    </div>
-                    
-                    <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-6 gap-2">
-                      {dragons.slice(0, 6).map(dragonCard => (
-                        <div key={dragonCard.id} className="relative">
-                          <CardDisplay 
-                            card={dragonCard} 
-                            showSellButton={false} 
-                            className="w-20 h-32 text-xs"
-                          />
-                        </div>
-                      ))}
-                      {dragons.length > 6 && (
-                        <div className="flex items-center justify-center w-20 h-32 border border-primary/20 rounded-lg text-xs text-muted-foreground">
-                          +{dragons.length - 6}
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                );
+                 const dragon = dragons[0];
+                 const previewUpgraded = {
+                   ...dragon,
+                   rarity: (dragon.rarity + 1) as any,
+                   power: Math.floor(dragon.power * 1.8),
+                   defense: Math.floor(dragon.defense * 1.8),
+                   health: Math.floor(dragon.health * 1.8),
+                   magic: Math.floor(dragon.magic * 1.8)
+                 };
+                 
+                 return (
+                   <div key={key} className="p-4 border border-primary/20 rounded-lg">
+                     <div className="flex items-start gap-4 mb-4">
+                       {/* Current Dragons Preview */}
+                       <div className="flex-shrink-0">
+                         <div className="text-xs text-muted-foreground mb-2">
+                           Требуется: 2 карты (доступно: {dragons.length})
+                         </div>
+                         <div className="flex gap-1">
+                           <CardDisplay 
+                             card={dragon}
+                             showSellButton={false}
+                             className="w-16 h-24 text-xs"
+                           />
+                           <div className="w-16 h-24 border border-dashed border-primary/40 rounded flex items-center justify-center text-xs text-muted-foreground">
+                             +1
+                           </div>
+                         </div>
+                       </div>
+                       
+                       {/* Arrow */}
+                       <div className="flex-shrink-0 flex items-center mt-8">
+                         <ArrowRight className="w-5 h-5 text-primary" />
+                       </div>
+                       
+                       {/* Result Preview */}
+                       <div className="flex-shrink-0">
+                         <div className="text-xs text-muted-foreground mb-2">Результат:</div>
+                         <CardDisplay 
+                           card={previewUpgraded}
+                           showSellButton={false}
+                           className="w-16 h-24 text-xs"
+                         />
+                       </div>
+                       
+                       {/* Dragon Info and Action */}
+                       <div className="flex-1">
+                         <div className="flex items-center justify-between">
+                           <div>
+                             <h4 className="font-medium">{dragon.name}</h4>
+                             <p className="text-sm text-muted-foreground">
+                               {dragon.faction} • Ранг {dragon.rarity} → {dragon.rarity + 1}
+                             </p>
+                             <div className="text-xs text-muted-foreground mt-1 space-y-1">
+                               <div>⚔️ {dragon.power} → {previewUpgraded.power}</div>
+                               <div>🛡️ {dragon.defense} → {previewUpgraded.defense}</div>
+                               <div>❤️ {dragon.health} → {previewUpgraded.health}</div>
+                               <div>✨ {dragon.magic} → {previewUpgraded.magic}</div>
+                             </div>
+                           </div>
+                           <Button
+                             onClick={() => startUpgrade(dragons)}
+                             disabled={!canStartUpgrade() || dragons.length < 2}
+                             size="sm"
+                           >
+                             Улучшить ({getUpgradeTime(dragon.rarity) / 1000}с)
+                           </Button>
+                         </div>
+                       </div>
+                     </div>
+                   </div>
+                 );
               })}
             </div>
           )}
