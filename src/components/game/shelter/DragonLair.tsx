@@ -16,6 +16,7 @@ interface DragonUpgrade {
   endTime: number;
   fromRarity: number;
   toRarity: number;
+  baseCard?: CardType;
 }
 
 interface DragonLairProps {
@@ -40,36 +41,43 @@ export const DragonLair: React.FC<DragonLairProps> = ({ lairLevel, onUpgradeBuil
   }, []);
 
   const claimUpgrade = async (upgrade: DragonUpgrade) => {
-    const currentCards = gameData.cards as CardType[] || [];
-    const dragonToUpgrade = currentCards.find(c => c.id === upgrade.dragonId);
-    
-    if (!dragonToUpgrade) return;
+    const currentCards = (gameData.cards as CardType[]) || [];
+    const sourceDragon = (upgrade as any).baseCard || currentCards.find(c => c.id === upgrade.dragonId);
 
-    // Create upgraded dragon
+    if (!sourceDragon) {
+      toast({
+        title: 'Ошибка',
+        description: 'Данные улучшения не найдены',
+        variant: 'destructive'
+      });
+      return;
+    }
+
+    // Create upgraded dragon from the stored base card snapshot
     const upgradedDragon: CardType = {
-      ...dragonToUpgrade,
+      ...sourceDragon,
       id: Date.now().toString() + Math.random().toString(36).substr(2, 9),
       rarity: upgrade.toRarity as any,
-      power: Math.floor(dragonToUpgrade.power * Math.pow(1.8, upgrade.toRarity - dragonToUpgrade.rarity)),
-      defense: Math.floor(dragonToUpgrade.defense * Math.pow(1.8, upgrade.toRarity - dragonToUpgrade.rarity)),
-      health: Math.floor(dragonToUpgrade.health * Math.pow(1.8, upgrade.toRarity - dragonToUpgrade.rarity)),
-      magic: Math.floor(dragonToUpgrade.magic * Math.pow(1.8, upgrade.toRarity - dragonToUpgrade.rarity))
+      power: Math.floor(sourceDragon.power * Math.pow(1.8, upgrade.toRarity - sourceDragon.rarity)),
+      defense: Math.floor(sourceDragon.defense * Math.pow(1.8, upgrade.toRarity - sourceDragon.rarity)),
+      health: Math.floor(sourceDragon.health * Math.pow(1.8, upgrade.toRarity - sourceDragon.rarity)),
+      magic: Math.floor(sourceDragon.magic * Math.pow(1.8, upgrade.toRarity - sourceDragon.rarity))
     };
 
-    // Add upgraded dragon to cards
-    const newCards = [...currentCards, upgradedDragon];
-    
+    // Remove old dragon (if exists) and add upgraded one
+    const newCards = currentCards.filter(c => c.id !== upgrade.dragonId).concat(upgradedDragon);
+
     // Remove completed upgrade from Supabase
     const updatedUpgrades = activeUpgrades.filter(u => u.id !== upgrade.id);
-    
-    await updateGameData({ 
+
+    await updateGameData({
       cards: newCards,
       dragonLairUpgrades: updatedUpgrades
     });
-    
+
     toast({
       title: 'Улучшение завершено!',
-      description: `${dragonToUpgrade.name} улучшен до ${upgrade.toRarity} ранга!`,
+      description: `${sourceDragon.name} улучшен до ${upgrade.toRarity} ранга!`,
     });
 
     // Dispatch event to update cards in other components
@@ -166,7 +174,8 @@ export const DragonLair: React.FC<DragonLairProps> = ({ lairLevel, onUpgradeBuil
       startTime,
       endTime,
       fromRarity: dragon1.rarity,
-      toRarity: dragon1.rarity + 1
+      toRarity: dragon1.rarity + 1,
+      baseCard: dragon1
     };
 
     // Remove the two used dragons from cards

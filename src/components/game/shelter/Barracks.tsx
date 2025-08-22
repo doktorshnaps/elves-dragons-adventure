@@ -17,6 +17,7 @@ interface BarracksUpgrade {
   endTime: number;
   fromRarity: number;
   toRarity: number;
+  baseCard?: CardType;
 }
 
 interface BarracksProps {
@@ -42,36 +43,43 @@ export const Barracks: React.FC<BarracksProps> = ({ barracksLevel, onUpgradeBuil
   }, []);
 
   const completeUpgrade = async (upgrade: BarracksUpgrade) => {
-    const currentCards = gameData.cards as CardType[] || [];
-    const heroToUpgrade = currentCards.find(c => c.id === upgrade.heroId);
-    
-    if (!heroToUpgrade) return;
+    const currentCards = (gameData.cards as CardType[]) || [];
+    const sourceHero = (upgrade as any).baseCard || currentCards.find(c => c.id === upgrade.heroId);
 
-    // Create upgraded hero
+    if (!sourceHero) {
+      toast({
+        title: 'Ошибка',
+        description: 'Данные улучшения не найдены',
+        variant: 'destructive'
+      });
+      return;
+    }
+
+    // Create upgraded hero from the stored base card snapshot
     const upgradedHero: CardType = {
-      ...heroToUpgrade,
+      ...sourceHero,
       id: Date.now().toString() + Math.random().toString(36).substr(2, 9),
       rarity: upgrade.toRarity as any,
-      power: Math.floor(heroToUpgrade.power * Math.pow(1.8, upgrade.toRarity - heroToUpgrade.rarity)),
-      defense: Math.floor(heroToUpgrade.defense * Math.pow(1.8, upgrade.toRarity - heroToUpgrade.rarity)),
-      health: Math.floor(heroToUpgrade.health * Math.pow(1.8, upgrade.toRarity - heroToUpgrade.rarity)),
-      magic: Math.floor(heroToUpgrade.magic * Math.pow(1.8, upgrade.toRarity - heroToUpgrade.rarity))
+      power: Math.floor(sourceHero.power * Math.pow(1.8, upgrade.toRarity - sourceHero.rarity)),
+      defense: Math.floor(sourceHero.defense * Math.pow(1.8, upgrade.toRarity - sourceHero.rarity)),
+      health: Math.floor(sourceHero.health * Math.pow(1.8, upgrade.toRarity - sourceHero.rarity)),
+      magic: Math.floor(sourceHero.magic * Math.pow(1.8, upgrade.toRarity - sourceHero.rarity))
     };
 
-    // Remove old hero and add upgraded one
+    // Remove old hero (if exists) and add upgraded one
     const newCards = currentCards.filter(c => c.id !== upgrade.heroId).concat(upgradedHero);
-    
+
     // Remove completed upgrade from Supabase
     const updatedUpgrades = activeUpgrades.filter(u => u.id !== upgrade.id);
-    
-    await updateGameData({ 
+
+    await updateGameData({
       cards: newCards,
       barracksUpgrades: updatedUpgrades
     });
-    
+
     toast({
       title: 'Улучшение завершено!',
-      description: `${heroToUpgrade.name} улучшен до ${upgrade.toRarity} ранга!`,
+      description: `${sourceHero.name} улучшен до ${upgrade.toRarity} ранга!`,
     });
 
     // Dispatch event to update cards in other components
@@ -168,7 +176,8 @@ export const Barracks: React.FC<BarracksProps> = ({ barracksLevel, onUpgradeBuil
       startTime,
       endTime,
       fromRarity: hero1.rarity,
-      toRarity: hero1.rarity + 1
+      toRarity: hero1.rarity + 1,
+      baseCard: hero1
     };
 
     // Remove the two used heroes from cards
