@@ -4,12 +4,8 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { CardDisplay } from "../CardDisplay";
-import { useToast } from "@/hooks/use-toast";
-import { useGameData } from "@/hooks/useGameData";
-import { upgradeCard } from "@/utils/cardUtils";
-import { useDragonEggs } from "@/contexts/DragonEggContext";
-import { Item } from "@/types/inventory";
 import { CardPreviewModal } from "../cards/CardPreviewModal";
+import { useToast } from "@/hooks/use-toast";
 interface DeckSelectionProps {
   cards: CardType[];
   selectedPairs: TeamPair[];
@@ -33,14 +29,11 @@ export const DeckSelection = ({
   const [showHeroDeck, setShowHeroDeck] = useState(false);
   const [showDragonDeck, setShowDragonDeck] = useState(false);
   const [activePairIndex, setActivePairIndex] = useState<number | null>(null);
-  const { gameData, updateGameData } = useGameData();
-  const { toast } = useToast();
-  const { addEgg } = useDragonEggs();
-  const [upgradingKeys, setUpgradingKeys] = useState<Record<string, boolean>>({});
   const [previewCard, setPreviewCard] = useState<CardType | null>(null);
   const [previewAction, setPreviewAction] = useState<{ label: string; action: () => void } | null>(null);
   const [previewDeleteAction, setPreviewDeleteAction] = useState<{ label: string; action: () => void } | null>(null);
   const [localCards, setLocalCards] = useState<CardType[]>(cards);
+  const { toast } = useToast();
 
   // Обновляем локальные карты при изменении пропсов
   useEffect(() => {
@@ -101,83 +94,6 @@ export const DeckSelection = ({
       onPairAssignDragon(pairIndex, dragon);
     }
     setShowDragonDeck(false);
-  };
-  const getDuplicateCount = (dragon: CardType) => {
-    return localCards.filter(c => c.type === 'pet' && c.name === dragon.name && c.rarity === dragon.rarity).length;
-  };
-  const handleDragonUpgrade = async (dragon: CardType) => {
-    const key = `${dragon.name}|${dragon.rarity}|${dragon.faction ?? ''}`;
-    if (upgradingKeys[key]) return;
-    setUpgradingKeys(prev => ({
-      ...prev,
-      [key]: true
-    }));
-    try {
-      // Используем актуальные карты из gameData
-      const currentCards: CardType[] = gameData.cards as CardType[] || [];
-      const duplicates = currentCards.filter(c => c.type === 'pet' && c.name === dragon.name && c.rarity === dragon.rarity);
-      if (duplicates.length < 2) {
-        toast({
-          title: 'Недостаточно карт',
-          description: 'Нужно 2 одинаковых дракона для улучшения',
-          variant: 'destructive'
-        });
-        return;
-      }
-      const base1 = duplicates[0];
-      const base2 = duplicates[1];
-      const upgraded = upgradeCard(base1 as any, base2 as any);
-      if (!upgraded) {
-        toast({
-          title: 'Невозможно улучшить',
-          description: 'Эти карты нельзя улучшить',
-          variant: 'destructive'
-        });
-        return;
-      }
-
-      // Готовим новые карты и яйцо (сохраняем атомарно)
-      const newCards = currentCards.filter(c => c.id !== base1.id && c.id !== base2.id);
-      const eggId = Date.now().toString();
-      const createdAt = new Date().toISOString();
-      const faction = (upgraded as any).faction || dragon.faction || 'Каледор';
-// Не добавляем сразу в инкубатор — яйцо появится в инвентаре и его можно будет переместить вручную
-
-      const eggItem: Item = {
-        id: eggId,
-        name: `${upgraded.name} — Яйцо дракона`,
-        type: 'dragon_egg',
-        value: upgraded.rarity,
-        description: `${upgraded.name}`,
-        image: '/lovable-uploads/8a069dd4-47ad-496c-a248-f796257f9233.png',
-        petName: upgraded.name
-      };
-
-      // Сохраняем в Supabase и локально
-      await updateGameData({
-        cards: newCards,
-        inventory: [...(gameData.inventory || []), eggItem]
-      });
-      localStorage.setItem('gameCards', JSON.stringify(newCards));
-      const cardsEvent = new CustomEvent('cardsUpdate', {
-        detail: {
-          cards: newCards
-        }
-      });
-      window.dispatchEvent(cardsEvent);
-      toast({
-        title: 'Создано яйцо дракона',
-        description: 'Питомец вылупится после инкубации'
-      });
-    } finally {
-      setUpgradingKeys(prev => {
-        const copy = {
-          ...prev
-        };
-        delete copy[`${dragon.name}|${dragon.rarity}|${dragon.faction ?? ''}`];
-        return copy;
-      });
-    }
   };
   return <div className="space-y-6">
       {/* Selected Pairs Display */}
@@ -265,18 +181,12 @@ export const DeckSelection = ({
           <div className="grid grid-cols-4 sm:grid-cols-6 gap-3 overflow-y-auto p-4">
             {(activePairIndex !== null ? getAvailableDragons(selectedPairs[activePairIndex]?.hero.faction, selectedPairs[activePairIndex]?.hero.rarity) : dragons).map(dragon => {
             const isSelected = isDragonSelected(dragon);
-            const canAssign = activePairIndex !== null ? !!selectedPairs[activePairIndex] && !selectedPairs[activePairIndex]?.dragon && selectedPairs[activePairIndex]?.hero.faction === dragon.faction && (selectedPairs[activePairIndex]?.hero.rarity ?? 0) >= dragon.rarity && !isSelected : false; // при просмотре колоды не назначаем на героя
-            const dupCount = getDuplicateCount(dragon);
+            const canAssign = activePairIndex !== null ? !!selectedPairs[activePairIndex] && !selectedPairs[activePairIndex]?.dragon && selectedPairs[activePairIndex]?.hero.faction === dragon.faction && (selectedPairs[activePairIndex]?.hero.rarity ?? 0) >= dragon.rarity && !isSelected : false;
             return <div key={dragon.id} className={`cursor-pointer transition-all ${activePairIndex !== null ? !canAssign ? 'opacity-50 pointer-events-none' : 'hover:scale-105' : 'hover:scale-105'}`} onClick={() => canAssign && handleDragonSelect(dragon)}>
                   <CardDisplay card={dragon} showSellButton={false} onClick={(e) => { e.stopPropagation(); setPreviewCard(dragon); const canAssignHere = (activePairIndex !== null) && !!selectedPairs[activePairIndex] && !selectedPairs[activePairIndex]?.dragon && selectedPairs[activePairIndex]?.hero.faction === dragon.faction && (selectedPairs[activePairIndex]?.hero.rarity ?? 0) >= dragon.rarity && !isSelected; setPreviewAction(canAssignHere ? { label: 'Назначить дракона', action: () => handleDragonSelect(dragon) } : null); setPreviewDeleteAction(null); }} />
                   <div className="text-center text-xs text-game-accent mt-1">
                     {isSelected ? 'Выбран' : activePairIndex !== null ? selectedPairs[activePairIndex]?.hero.faction : 'Просмотр'}
                   </div>
-                  {activePairIndex === null && <div className="mt-2 flex justify-center">
-                      <Button size="sm" variant="secondary" onClick={() => handleDragonUpgrade(dragon)} disabled={dupCount < 2 || upgradingKeys[`${dragon.name}|${dragon.rarity}|${dragon.faction ?? ''}`]}>
-                        {upgradingKeys[`${dragon.name}|${dragon.rarity}|${dragon.faction ?? ''}`] ? 'Улучшается...' : `Улучшить ${dupCount >= 2 ? '(2x)' : ''}`}
-                      </Button>
-                    </div>}
                 </div>;
           })}
             {activePairIndex !== null && getAvailableDragons(selectedPairs[activePairIndex]?.hero.faction, selectedPairs[activePairIndex]?.hero.rarity).length === 0 && <div className="col-span-full text-center text-game-accent/60 text-sm">
