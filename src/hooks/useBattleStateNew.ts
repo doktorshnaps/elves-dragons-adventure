@@ -5,6 +5,8 @@ import { useNavigate } from 'react-router-dom';
 import { Opponent } from '@/types/battle';
 import { generateDungeonOpponents } from '@/dungeons/dungeonManager';
 import { DungeonType } from '@/constants/dungeons';
+import { addAccountExperience } from '@/utils/accountLeveling';
+import { useGameStore } from '@/stores/gameStore';
 
 interface BattleState {
   playerStats: any;
@@ -18,6 +20,7 @@ export const useBattleStateNew = (level: number) => {
   const { gameData, updateGameData } = useGameData();
   const { toast } = useToast();
   const navigate = useNavigate();
+  const { accountLevel, accountExperience, addAccountExperience: addAccountExp } = useGameStore();
 
   const [battleState, setBattleState] = useState<BattleState>(() => {
     if (gameData.battleState) {
@@ -70,16 +73,28 @@ export const useBattleStateNew = (level: number) => {
     if (newEnemyHealth <= 0) {
       updatedOpponents = updatedOpponents.filter(o => o.id !== enemyId);
       
-      // Награда за убийство
+      // Награда за убийство и опыт аккаунта
       const goldReward = 50;
+      const expReward = (accountLevel * 5) + 45 + (enemy.isBoss ? 150 : 0);
+      const experienceResult = addAccountExperience(accountExperience, expReward);
+      
       await updateGameData({ 
         balance: gameData.balance + goldReward
       });
       
-      toast({
-        title: "Враг побежден!",
-        description: `Получено ${goldReward} золота`
-      });
+      addAccountExp(expReward);
+      
+      if (experienceResult.leveledUp) {
+        toast({
+          title: "Враг побежден! Уровень аккаунта повышен!",
+          description: `Получено ${goldReward} золота и ${expReward} опыта! Достигнут ${experienceResult.newLevel} уровень аккаунта!`
+        });
+      } else {
+        toast({
+          title: "Враг побежден!",
+          description: `Получено ${goldReward} золота и ${expReward} опыта аккаунта`
+        });
+      }
     }
 
     // Атака противников

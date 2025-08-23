@@ -4,10 +4,13 @@ import { useToast } from '@/hooks/use-toast';
 import { generateDungeonOpponents } from '@/dungeons/dungeonManager';
 import { DungeonType } from '@/constants/dungeons';
 import { useTeamSelection } from './useTeamSelection';
+import { addAccountExperience, getLevelFromXP } from '@/utils/accountLeveling';
+import { useGameStore } from '@/stores/gameStore';
 
 export const useTeamBattle = (dungeonType: DungeonType, initialLevel: number = 1) => {
   const { toast } = useToast();
   const { selectedPairs, getSelectedTeamStats } = useTeamSelection();
+  const { accountLevel, accountExperience, addAccountExperience: addAccountExp } = useGameStore();
   
   const [battleState, setBattleState] = useState<TeamBattleState>(() => {
     const savedState = localStorage.getItem('teamBattleState');
@@ -95,6 +98,26 @@ export const useTeamBattle = (dungeonType: DungeonType, initialLevel: number = 1
       ).filter(opp => opp.health > 0)
     }));
 
+    // Добавляем опыт аккаунта за убийство монстра
+    if (newTargetHealth <= 0) {
+      const expReward = (accountLevel * 5) + 45 + (target.isBoss ? 150 : 0);
+      const experienceResult = addAccountExperience(accountExperience, expReward);
+      
+      addAccountExp(expReward);
+      
+      if (experienceResult.leveledUp) {
+        toast({
+          title: "Уровень аккаунта повышен!",
+          description: `Достигнут ${experienceResult.newLevel} уровень аккаунта! Получено ${expReward} опыта`,
+        });
+      } else {
+        toast({
+          title: "Опыт получен!",
+          description: `Получено ${expReward} опыта аккаунта`,
+        });
+      }
+    }
+
     toast({
       title: "Атака!",
       description: `${attackingPair.hero.name} наносит ${damage} урона!`,
@@ -163,6 +186,26 @@ export const useTeamBattle = (dungeonType: DungeonType, initialLevel: number = 1
             : opp
         ).filter(opp => opp.health > 0)
       }));
+
+      // Добавляем опыт аккаунта за убийство монстра в ответном ударе
+      if (newEnemyHealth <= 0) {
+        const expReward = (accountLevel * 5) + 45 + (enemy.isBoss ? 150 : 0);
+        const experienceResult = addAccountExperience(accountExperience, expReward);
+        
+        addAccountExp(expReward);
+        
+        if (experienceResult.leveledUp) {
+          toast({
+            title: "Уровень аккаунта повышен!",
+            description: `Достигнут ${experienceResult.newLevel} уровень аккаунта! Получено ${expReward} опыта`,
+          });
+        } else {
+          toast({
+            title: "Опыт получен!",
+            description: `Получено ${expReward} опыта аккаунта`,
+          });
+        }
+      }
 
       toast({
         title: "Ответный удар!",

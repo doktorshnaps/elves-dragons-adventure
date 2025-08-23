@@ -10,6 +10,7 @@ export interface Monster {
   experienceReward: number;
   type: 'normal' | 'elite' | 'boss';
   position: number; // Changed from optional to required
+  isBoss?: boolean;
 }
 
 export interface Equipment {

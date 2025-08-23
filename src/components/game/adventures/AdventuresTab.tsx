@@ -11,6 +11,8 @@ import { Monster } from "./types";
 import { GameHeader } from "./components/GameHeader";
 import { GameContent } from "./components/GameContent";
 import { usePlayerStats } from "./game/hooks/usePlayerStats";
+import { addAccountExperience } from '@/utils/accountLeveling';
+import { useGameStore } from '@/stores/gameStore';
 
 export const AdventuresTab = () => {
   const navigate = useNavigate();
@@ -19,6 +21,7 @@ export const AdventuresTab = () => {
   const balance = gameData.balance;
   const { generateMonster } = useMonsterGeneration(1);
   const { stats: playerStats, updateStats: setPlayerStats, addExperience } = usePlayerStats();
+  const { accountLevel, accountExperience, addAccountExperience: addAccountExp } = useGameStore();
 
   const [currentMonster, setCurrentMonster] = useState<Monster | null>(() => {
     const savedMonster = localStorage.getItem('adventureCurrentMonster');
@@ -44,10 +47,24 @@ export const AdventuresTab = () => {
     if (newMonsterHealth <= 0) {
       await updateGameData({ balance: balance + monster.reward });
       addExperience(monster.experienceReward);
-      toast({
-        title: "Победа!",
-        description: `Вы получили ${monster.reward} ELL и ${monster.experienceReward} опыта!`
-      });
+      
+      // Добавляем опыт аккаунта за убийство монстра
+      const accountExpReward = (accountLevel * 5) + 45 + (monster.isBoss ? 150 : 0);
+      const experienceResult = addAccountExperience(accountExperience, accountExpReward);
+      
+      addAccountExp(accountExpReward);
+      
+      if (experienceResult.leveledUp) {
+        toast({
+          title: "Победа! Уровень аккаунта повышен!",
+          description: `Получено ${monster.reward} ELL, ${monster.experienceReward} опыта героя и ${accountExpReward} опыта аккаунта! Достигнут ${experienceResult.newLevel} уровень аккаунта!`
+        });
+      } else {
+        toast({
+          title: "Победа!",
+          description: `Получено ${monster.reward} ELL, ${monster.experienceReward} опыта героя и ${accountExpReward} опыта аккаунта!`
+        });
+      }
       
       if (playerStats.health > 0) {
         const newMonster = generateMonster();
