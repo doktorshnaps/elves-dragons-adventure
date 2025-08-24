@@ -2,9 +2,12 @@ import React, { useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
-import { Sword, Shield, Heart } from 'lucide-react';
+import { Sword, Shield, Heart, ArrowLeft } from 'lucide-react';
 import { TeamPair } from '@/types/teamBattle';
 import { Opponent } from '@/types/battle';
+import { useGameStore } from '@/stores/gameStore';
+import { getXPProgress } from '@/utils/accountLeveling';
+import { useNavigate } from 'react-router-dom';
 interface TeamBattleArenaProps {
   playerPairs: TeamPair[];
   opponents: Opponent[];
@@ -25,6 +28,8 @@ export const TeamBattleArena: React.FC<TeamBattleArenaProps> = ({
   onCounterAttack,
   level
 }) => {
+  const navigate = useNavigate();
+  const { accountLevel, accountExperience } = useGameStore();
   const [selectedPair, setSelectedPair] = React.useState<string | null>(null);
   const [selectedTarget, setSelectedTarget] = React.useState<number | null>(null);
   const [attackingPair, setAttackingPair] = React.useState<string | null>(null);
@@ -95,6 +100,9 @@ export const TeamBattleArena: React.FC<TeamBattleArenaProps> = ({
     return orderedPairs[0];
   };
   const currentAttacker = getCurrentAttacker();
+  
+  // Получаем прогресс опыта для отображения
+  const xpProgress = getXPProgress(accountExperience);
 
   // Автоматический ход противника
   useEffect(() => {
@@ -106,14 +114,45 @@ export const TeamBattleArena: React.FC<TeamBattleArenaProps> = ({
       return () => clearTimeout(timer);
     }
   }, [isPlayerTurn, aliveOpponents.length, alivePairs.length]);
+
+  const handleMenuReturn = () => {
+    navigate('/menu');
+  };
   return <div className="min-h-screen p-4">
       <div className="max-w-6xl mx-auto space-y-6">
         {/* Header */}
         <Card className="bg-card/50 backdrop-blur-sm border-primary/20">
-          <CardHeader>
+          <CardHeader className="relative">
+            <Button
+              variant="outline"
+              size="sm"
+              className="absolute left-4 top-4"
+              onClick={handleMenuReturn}
+            >
+              <ArrowLeft className="w-4 h-4 mr-2" />
+              Меню
+            </Button>
+            
             <CardTitle className="text-center text-2xl text-primary">
               Командный бой - Уровень {level}
             </CardTitle>
+            
+            {/* Account Level and XP Progress */}
+            <div className="flex flex-col items-center gap-2 mt-4">
+              <div className="text-sm text-muted-foreground">
+                Уровень аккаунта: {accountLevel}
+              </div>
+              <div className="w-full max-w-md">
+                <Progress 
+                  value={xpProgress.progress * 100} 
+                  className="h-2"
+                />
+                <div className="flex justify-between text-xs text-muted-foreground mt-1">
+                  <span>{xpProgress.currentLevelXP} XP</span>
+                  <span>{xpProgress.nextLevelXP} XP</span>
+                </div>
+              </div>
+            </div>
           </CardHeader>
         </Card>
 
