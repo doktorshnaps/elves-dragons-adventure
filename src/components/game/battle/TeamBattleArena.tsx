@@ -29,7 +29,10 @@ export const TeamBattleArena: React.FC<TeamBattleArenaProps> = ({
   level
 }) => {
   const navigate = useNavigate();
-  const { accountLevel, accountExperience } = useGameStore();
+  const {
+    accountLevel,
+    accountExperience
+  } = useGameStore();
   const [selectedPair, setSelectedPair] = React.useState<string | null>(null);
   const [selectedTarget, setSelectedTarget] = React.useState<number | null>(null);
   const [attackingPair, setAttackingPair] = React.useState<string | null>(null);
@@ -100,7 +103,7 @@ export const TeamBattleArena: React.FC<TeamBattleArenaProps> = ({
     return orderedPairs[0];
   };
   const currentAttacker = getCurrentAttacker();
-  
+
   // Получаем прогресс опыта для отображения
   const xpProgress = getXPProgress(accountExperience);
 
@@ -114,7 +117,6 @@ export const TeamBattleArena: React.FC<TeamBattleArenaProps> = ({
       return () => clearTimeout(timer);
     }
   }, [isPlayerTurn, aliveOpponents.length, alivePairs.length]);
-
   const handleMenuReturn = () => {
     navigate('/menu');
   };
@@ -124,20 +126,12 @@ export const TeamBattleArena: React.FC<TeamBattleArenaProps> = ({
         <Card className="bg-card/50 backdrop-blur-sm border-primary/20">
           <CardHeader className="relative">
             <div className="absolute left-4 top-4 flex flex-col gap-2">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={handleMenuReturn}
-              >
+              <Button variant="outline" size="sm" onClick={handleMenuReturn}>
                 <ArrowLeft className="w-4 h-4 mr-2" />
                 Меню
               </Button>
               
-              <Button
-                variant="destructive"
-                size="sm"
-                onClick={() => navigate('/menu')}
-              >
+              <Button variant="destructive" size="sm" onClick={() => navigate('/menu')}>
                 Сдаться
               </Button>
             </div>
@@ -152,10 +146,7 @@ export const TeamBattleArena: React.FC<TeamBattleArenaProps> = ({
                 Уровень аккаунта: {accountLevel}
               </div>
               <div className="w-full max-w-md">
-                <Progress 
-                  value={xpProgress.progress * 100} 
-                  className="h-2"
-                />
+                <Progress value={xpProgress.progress * 100} className="h-2" />
                 <div className="flex justify-between text-xs text-muted-foreground mt-1">
                   <span>{xpProgress.currentLevelXP} XP</span>
                   <span>{xpProgress.nextLevelXP} XP</span>
@@ -232,14 +223,14 @@ export const TeamBattleArena: React.FC<TeamBattleArenaProps> = ({
           </Card>
 
           {/* Combat Controls - Between player and enemies */}
-          <Card className="bg-card/50 backdrop-blur-sm border-primary/20 lg:col-span-1 py-0 my-[240px] mx-[82px]">
+          <Card className="bg-card/50 backdrop-blur-sm border-primary/20 lg:col-span-1 py-0 my-[240px] mx-[71px]">
             <CardContent className="pt-6 mx-[108px] px-0 my-[25px] py-0">
               <div className="flex items-center justify-center gap-4">
                 {isPlayerTurn ? <>
                     <Button onClick={handleAttack} disabled={!selectedPair || selectedTarget === null}>
                       Атаковать
                     </Button>
-                    <div className="text-sm text-muted-foreground">
+                    <div className="text-sm text-muted-foreground mx-0 px-0 py-0 my-0">
                       {!selectedPair ? 'Выберите атакующего' : selectedTarget === null ? 'Выберите цель' : 'Готов к атаке!'}
                     </div>
                   </> : <div className="text-center">
