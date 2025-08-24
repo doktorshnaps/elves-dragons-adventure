@@ -2,13 +2,20 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { getXPProgress } from '@/utils/accountLeveling';
 import { Crown, Star } from 'lucide-react';
+import { useGameStore } from '@/stores/gameStore';
 
 interface AccountLevelDisplayProps {
-  experience: number;
-  level: number;
+  experience?: number;
+  level?: number;
 }
 
-export const AccountLevelDisplay = ({ experience, level }: AccountLevelDisplayProps) => {
+export const AccountLevelDisplay = ({ experience: propExperience, level: propLevel }: AccountLevelDisplayProps) => {
+  const { accountLevel, accountExperience } = useGameStore();
+  
+  // Используем props если переданы, иначе данные из store
+  const experience = propExperience ?? accountExperience;
+  const level = propLevel ?? accountLevel;
+  
   const xpProgress = getXPProgress(experience);
   const progressPercentage = Math.round(xpProgress.progress * 100);
 

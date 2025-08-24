@@ -16,6 +16,8 @@ export type Database = {
     Tables: {
       game_data: {
         Row: {
+          account_experience: number
+          account_level: number
           adventure_current_monster: Json | null
           adventure_player_stats: Json | null
           balance: number
@@ -35,6 +37,8 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          account_experience?: number
+          account_level?: number
           adventure_current_monster?: Json | null
           adventure_player_stats?: Json | null
           balance?: number
@@ -54,6 +58,8 @@ export type Database = {
           user_id: string
         }
         Update: {
+          account_experience?: number
+          account_level?: number
           adventure_current_monster?: Json | null
           adventure_player_stats?: Json | null
           balance?: number

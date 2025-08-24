@@ -76,25 +76,17 @@ export const useBattleStateNew = (level: number) => {
       // Награда за убийство и опыт аккаунта
       const goldReward = 50;
       const expReward = (accountLevel * 5) + 45 + (enemy.isBoss ? 150 : 0);
-      const experienceResult = addAccountExperience(accountExperience, expReward);
       
       await updateGameData({ 
         balance: gameData.balance + goldReward
       });
       
-      addAccountExp(expReward);
+      await addAccountExp(expReward);
       
-      if (experienceResult.leveledUp) {
-        toast({
-          title: "Враг побежден! Уровень аккаунта повышен!",
-          description: `Получено ${goldReward} золота и ${expReward} опыта! Достигнут ${experienceResult.newLevel} уровень аккаунта!`
-        });
-      } else {
-        toast({
-          title: "Враг побежден!",
-          description: `Получено ${goldReward} золота и ${expReward} опыта аккаунта`
-        });
-      }
+      toast({
+        title: "Враг побежден!",
+        description: `Получено ${goldReward} золота и ${expReward} опыта аккаунта`
+      });
     }
 
     // Атака противников

@@ -3,6 +3,8 @@ import { persist } from 'zustand/middleware';
 import { Card } from '@/types/cards';
 import { Item } from '@/types/inventory';
 import { DragonEgg } from '@/contexts/DragonEggContext';
+import { supabase } from '@/integrations/supabase/client';
+import { getLevelFromXP } from '@/utils/accountLeveling';
 
 interface GameState {
   // Core game data
@@ -38,7 +40,9 @@ interface GameState {
   // Account progression
   setAccountLevel: (level: number) => void;
   setAccountExperience: (experience: number) => void;
-  addAccountExperience: (amount: number) => void;
+  addAccountExperience: (amount: number) => Promise<void>;
+  syncAccountData: () => Promise<void>;
+  setAccountData: (level: number, experience: number) => void;
   
   // Computed values
   getTeamStats: () => { power: number; defense: number; health: number; maxHealth: number };
@@ -86,9 +90,56 @@ export const useGameStore = create<GameState>()(
       // Account progression actions
       setAccountLevel: (accountLevel) => set({ accountLevel }),
       setAccountExperience: (accountExperience) => set({ accountExperience }),
-      addAccountExperience: (amount) => set((state) => ({ 
-        accountExperience: state.accountExperience + amount 
-      })),
+      setAccountData: (level: number, experience: number) => {
+        set({ accountLevel: level, accountExperience: experience });
+      },
+      
+      addAccountExperience: async (amount: number) => {
+        const { accountExperience } = get();
+        const newXP = accountExperience + amount;
+        const newLevel = getLevelFromXP(newXP);
+        
+        // Обновляем локальное состояние
+        set({ accountExperience: newXP, accountLevel: newLevel });
+        
+        // Синхронизируем с Supabase
+        try {
+          const { data: { user } } = await supabase.auth.getUser();
+          if (user) {
+            await supabase
+              .from('game_data')
+              .update({ 
+                account_level: newLevel, 
+                account_experience: newXP 
+              })
+              .eq('user_id', user.id);
+          }
+        } catch (error) {
+          console.error('Failed to sync account data to Supabase:', error);
+        }
+      },
+
+      syncAccountData: async () => {
+        try {
+          const { data: { user } } = await supabase.auth.getUser();
+          if (user) {
+            const { data, error } = await supabase
+              .from('game_data')
+              .select('account_level, account_experience')
+              .eq('user_id', user.id)
+              .single();
+
+            if (data && !error) {
+              set({ 
+                accountLevel: data.account_level || 1, 
+                accountExperience: data.account_experience || 0 
+              });
+            }
+          }
+        } catch (error) {
+          console.error('Failed to sync account data from Supabase:', error);
+        }
+      },
       
       // Computed values
       getTeamStats: () => {

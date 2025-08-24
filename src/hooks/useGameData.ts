@@ -18,6 +18,8 @@ interface GameData {
   selectedTeam?: any[];
   barracksUpgrades?: any[];
   dragonLairUpgrades?: any[];
+  accountLevel?: number;
+  accountExperience?: number;
 }
 
 export const useGameData = () => {
@@ -74,7 +76,9 @@ export const useGameData = () => {
           battleState: (data as any).battle_state || null,
           selectedTeam: ((data as any).selected_team as any[]) || [],
           barracksUpgrades: ((data as any).barracks_upgrades as any[]) || [],
-          dragonLairUpgrades: ((data as any).dragon_lair_upgrades as any[]) || []
+          dragonLairUpgrades: ((data as any).dragon_lair_upgrades as any[]) || [],
+          accountLevel: (data as any).account_level || 1,
+          accountExperience: (data as any).account_experience || 0
         };
         
         setGameData(newGameData);

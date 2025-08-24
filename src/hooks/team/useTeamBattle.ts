@@ -80,7 +80,7 @@ export const useTeamBattle = (dungeonType: DungeonType, initialLevel: number = 1
     }));
   };
 
-  const executePlayerAttack = (pairId: string, targetId: number) => {
+  const executePlayerAttack = async (pairId: string, targetId: number) => {
     const attackingPair = battleState.playerPairs.find(p => p.id === pairId);
     const target = battleState.opponents.find(o => o.id === targetId);
     
@@ -101,21 +101,13 @@ export const useTeamBattle = (dungeonType: DungeonType, initialLevel: number = 1
     // Добавляем опыт аккаунта за убийство монстра
     if (newTargetHealth <= 0) {
       const expReward = (accountLevel * 5) + 45 + (target.isBoss ? 150 : 0);
-      const experienceResult = addAccountExperience(accountExperience, expReward);
       
-      addAccountExp(expReward);
+      await addAccountExp(expReward);
       
-      if (experienceResult.leveledUp) {
-        toast({
-          title: "Уровень аккаунта повышен!",
-          description: `Достигнут ${experienceResult.newLevel} уровень аккаунта! Получено ${expReward} опыта`,
-        });
-      } else {
-        toast({
-          title: "Опыт получен!",
-          description: `Получено ${expReward} опыта аккаунта`,
-        });
-      }
+      toast({
+        title: "Враг побежден!",
+        description: `Получено ${expReward} опыта аккаунта`,
+      });
     }
 
     toast({
@@ -190,21 +182,13 @@ export const useTeamBattle = (dungeonType: DungeonType, initialLevel: number = 1
       // Добавляем опыт аккаунта за убийство монстра в ответном ударе
       if (newEnemyHealth <= 0) {
         const expReward = (accountLevel * 5) + 45 + (enemy.isBoss ? 150 : 0);
-        const experienceResult = addAccountExperience(accountExperience, expReward);
         
         addAccountExp(expReward);
         
-        if (experienceResult.leveledUp) {
-          toast({
-            title: "Уровень аккаунта повышен!",
-            description: `Достигнут ${experienceResult.newLevel} уровень аккаунта! Получено ${expReward} опыта`,
-          });
-        } else {
-          toast({
-            title: "Опыт получен!",
-            description: `Получено ${expReward} опыта аккаунта`,
-          });
-        }
+        toast({
+          title: "Враг побежден!",
+          description: `Получено ${expReward} опыта аккаунта`,
+        });
       }
 
       toast({

@@ -22,8 +22,11 @@ import { SeaSerpentLair } from './pages/dungeons/SeaSerpentLair';
 import { Auth } from './pages/Auth';
 import { Shelter } from './pages/Shelter';
 import { ProtectedRoute } from './components/ProtectedRoute';
+import { useAccountSync } from './hooks/useAccountSync';
 
 function App() {
+  useAccountSync();
+  
   return (
     <ErrorBoundary>
       <Routes>
