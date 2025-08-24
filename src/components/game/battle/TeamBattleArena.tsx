@@ -123,15 +123,24 @@ export const TeamBattleArena: React.FC<TeamBattleArenaProps> = ({
         {/* Header */}
         <Card className="bg-card/50 backdrop-blur-sm border-primary/20">
           <CardHeader className="relative">
-            <Button
-              variant="outline"
-              size="sm"
-              className="absolute left-4 top-4"
-              onClick={handleMenuReturn}
-            >
-              <ArrowLeft className="w-4 h-4 mr-2" />
-              Меню
-            </Button>
+            <div className="absolute left-4 top-4 flex flex-col gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleMenuReturn}
+              >
+                <ArrowLeft className="w-4 h-4 mr-2" />
+                Меню
+              </Button>
+              
+              <Button
+                variant="destructive"
+                size="sm"
+                onClick={() => navigate('/menu')}
+              >
+                Сдаться
+              </Button>
+            </div>
             
             <CardTitle className="text-center text-2xl text-primary">
               Командный бой - Уровень {level}
@@ -225,7 +234,7 @@ export const TeamBattleArena: React.FC<TeamBattleArenaProps> = ({
           {/* Combat Controls - Between player and enemies */}
           <Card className="bg-card/50 backdrop-blur-sm border-primary/20 lg:col-span-1 py-0 my-[240px] mx-[82px]">
             <CardContent className="pt-6 mx-[108px] px-0 my-[25px] py-0">
-              <div className="flex flex-col items-center justify-center gap-4">
+              <div className="flex items-center justify-center gap-4">
                 {isPlayerTurn ? <>
                     <Button onClick={handleAttack} disabled={!selectedPair || selectedTarget === null}>
                       Атаковать
@@ -239,16 +248,6 @@ export const TeamBattleArena: React.FC<TeamBattleArenaProps> = ({
                     </div>
                     <div className="animate-spin w-6 h-6 border-2 border-destructive border-t-transparent rounded-full mx-auto"></div>
                   </div>}
-                
-                {/* Surrender Button */}
-                <Button 
-                  variant="destructive"
-                  size="sm"
-                  onClick={() => navigate('/menu')}
-                  className="mt-2"
-                >
-                  Сдаться
-                </Button>
               </div>
             </CardContent>
           </Card>
