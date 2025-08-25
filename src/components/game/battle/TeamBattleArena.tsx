@@ -41,6 +41,7 @@ export const TeamBattleArena: React.FC<TeamBattleArenaProps> = ({
   const [defendingPair, setDefendingPair] = React.useState<string | null>(null);
   const [counterAttackingPair, setCounterAttackingPair] = React.useState<string | null>(null);
   const [counterAttackedTarget, setCounterAttackedTarget] = React.useState<number | null>(null);
+  const [autoBattle, setAutoBattle] = useState(false);
   const alivePairs = playerPairs.filter(pair => pair.health > 0);
   const aliveOpponents = opponents.filter(opp => opp.health > 0);
   const handleAttack = () => {
@@ -128,6 +129,56 @@ export const TeamBattleArena: React.FC<TeamBattleArenaProps> = ({
     localStorage.removeItem('teamBattleState');
     navigate('/dungeons');
   };
+
+  const handleAutoBattle = () => {
+    if (autoBattle) {
+      // Выключаем автобой
+      setAutoBattle(false);
+      setSelectedPair(null);
+      setSelectedTarget(null);
+    } else {
+      // Включаем автобой
+      setAutoBattle(true);
+    }
+  };
+
+  // Автобой логика
+  useEffect(() => {
+    if (autoBattle && alivePairs.length > 0 && aliveOpponents.length > 0) {
+      const timer = setTimeout(() => {
+        if (isPlayerTurn) {
+          // Ход игрока - выбираем случайную пару и цель
+          const randomPair = alivePairs[Math.floor(Math.random() * alivePairs.length)];
+          const randomTarget = aliveOpponents[Math.floor(Math.random() * aliveOpponents.length)];
+          
+          if (randomPair && randomTarget) {
+            setAttackingPair(randomPair.id);
+            setAttackedTarget(randomTarget.id);
+            
+            setTimeout(() => {
+              onAttack(randomPair.id, randomTarget.id);
+              
+              setTimeout(() => {
+                setAttackingPair(null);
+                setAttackedTarget(null);
+              }, 300);
+              
+              setTimeout(() => {
+                setDefendingPair(randomPair.id);
+                setCounterAttackedTarget(randomTarget.id);
+                setTimeout(() => {
+                  setDefendingPair(null);
+                  setCounterAttackedTarget(null);
+                }, 400);
+              }, 600);
+            }, 200);
+          }
+        }
+      }, 1000); // Задержка 1 секунда для автобоя
+
+      return () => clearTimeout(timer);
+    }
+   }, [autoBattle, isPlayerTurn, alivePairs.length, aliveOpponents.length]);
   return <div className="min-h-screen p-4">
       <div className="max-w-6xl mx-auto space-y-6">
         {/* Header */}
@@ -249,20 +300,33 @@ export const TeamBattleArena: React.FC<TeamBattleArenaProps> = ({
           {/* Combat Controls - Between player and enemies */}
           <Card className="bg-card/50 backdrop-blur-sm border-primary/20 lg:col-span-1 py-0 my-[240px] mx-[71px]">
             <CardContent className="pt-6 mx-[108px] px-0 my-[25px] py-0">
-              <div className="flex items-center justify-center gap-4">
-                {isPlayerTurn ? <>
-                    <Button onClick={handleAttack} disabled={!selectedPair || selectedTarget === null}>
-                      Атаковать
-                    </Button>
-                    <div className="text-sm text-muted-foreground mx-0 px-0 py-0 my-0">
-                      {!selectedPair ? 'Выберите атакующего' : selectedTarget === null ? 'Выберите цель' : 'Готов к атаке!'}
-                    </div>
-                  </> : <div className="text-center">
-                    <div className="text-sm text-muted-foreground mb-2">
-                      Противник атакует...
-                    </div>
-                    <div className="animate-spin w-6 h-6 border-2 border-destructive border-t-transparent rounded-full mx-auto"></div>
-                  </div>}
+              <div className="flex flex-col items-center justify-center gap-4">
+                {/* Auto Battle Button */}
+                <Button 
+                  onClick={handleAutoBattle}
+                  variant={autoBattle ? "default" : "destructive"}
+                  className={`${autoBattle ? 'bg-green-600 hover:bg-green-700 border-green-600' : 'bg-red-600 hover:bg-red-700 border-red-600'} transition-colors`}
+                >
+                  {autoBattle ? 'Авто-бой ВКЛ' : 'Авто-бой ВЫКЛ'}
+                </Button>
+                
+                {!autoBattle && (
+                  <div className="flex items-center justify-center gap-4">
+                    {isPlayerTurn ? <>
+                        <Button onClick={handleAttack} disabled={!selectedPair || selectedTarget === null}>
+                          Атаковать
+                        </Button>
+                        <div className="text-sm text-muted-foreground mx-0 px-0 py-0 my-0">
+                          {!selectedPair ? 'Выберите атакующего' : selectedTarget === null ? 'Выберите цель' : 'Готов к атаке!'}
+                        </div>
+                      </> : <div className="text-center">
+                        <div className="text-sm text-muted-foreground mb-2">
+                          Противник атакует...
+                        </div>
+                        <div className="animate-spin w-6 h-6 border-2 border-destructive border-t-transparent rounded-full mx-auto"></div>
+                      </div>}
+                  </div>
+                )}
               </div>
             </CardContent>
           </Card>
