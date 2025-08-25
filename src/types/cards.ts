@@ -22,6 +22,8 @@ export interface Card {
   power: number;
   defense: number;
   health: number;
+  currentHealth?: number; // Текущее здоровье карты
+  lastHealTime?: number; // Время последнего лечения
   magic: number;
   rarity: Rarity;
   faction?: Faction;

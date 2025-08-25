@@ -5,6 +5,7 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { CardImage } from "./cards/CardImage";
 import { CardHeader } from "./cards/CardHeader";
 import { CardStats } from "./cards/CardStats";
+import { CardHealthBar } from "./cards/CardHealthBar";
 import { CardActions } from "./cards/CardActions";
 
 interface CardDisplayProps {
@@ -64,6 +65,14 @@ export const CardDisplay = ({
               power={card.power}
               defense={card.defense}
             />
+            
+            <div className="mt-1">
+              <CardHealthBar 
+                currentHealth={card.currentHealth ?? card.health}
+                maxHealth={card.health}
+                size="small"
+              />
+            </div>
 
             {card.magicResistance && (
               <div className={`text-blue-400 leading-none ${isMobile ? 'text-[6px]' : 'text-[10px]'} break-words mt-0.5 tracking-tighter`}>

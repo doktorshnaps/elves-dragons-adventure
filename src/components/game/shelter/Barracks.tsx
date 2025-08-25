@@ -8,6 +8,8 @@ import { useGameData } from '@/hooks/useGameData';
 import { Card as CardType } from '@/types/cards';
 import { upgradeCard } from '@/utils/cardUtils';
 import { CardDisplay } from '../CardDisplay';
+import { useCardHealthRegeneration } from '@/hooks/useCardHealthRegeneration';
+import { initializeCardHealth } from '@/utils/cardHealthUtils';
 import { Shield, Swords, Clock, Star, ArrowRight } from 'lucide-react';
 
 interface BarracksUpgrade {
@@ -30,6 +32,16 @@ export const Barracks: React.FC<BarracksProps> = ({ barracksLevel, onUpgradeBuil
   const { gameData, updateGameData } = useGameData();
   const [selectedHeroes, setSelectedHeroes] = useState<CardType[]>([]);
   const [currentTime, setCurrentTime] = useState(Date.now());
+
+  // Initialize cards and set up health regeneration
+  const initializedCards = (gameData.cards as CardType[] || []).map(initializeCardHealth);
+  
+  useCardHealthRegeneration({
+    cards: initializedCards,
+    onCardsUpdate: (updatedCards) => {
+      updateGameData({ cards: updatedCards });
+    }
+  });
 
   // Get active upgrades from Supabase data
   const activeUpgrades = (gameData.barracksUpgrades || []) as BarracksUpgrade[];

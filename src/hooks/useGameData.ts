@@ -3,6 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { Card } from '@/types/cards';
 import { useToast } from '@/hooks/use-toast';
+import { processCardsHealthRegeneration, initializeCardHealth } from '@/utils/cardHealthUtils';
 
 interface GameData {
   balance: number;
@@ -63,9 +64,14 @@ export const useGameData = () => {
       }
 
       if (data) {
+        // Process cards with health initialization and regeneration
+        const rawCards = (data.cards as unknown as Card[]) || [];
+        const initializedCards = rawCards.map(initializeCardHealth);
+        const processedCards = processCardsHealthRegeneration(initializedCards);
+        
         const newGameData: GameData = {
           balance: data.balance || 0,
-          cards: (data.cards as unknown as Card[]) || [],
+          cards: processedCards,
           initialized: data.initialized || false,
           inventory: ((data as any).inventory as any[]) || [],
           marketplaceListings: ((data as any).marketplace_listings as any[]) || [],
