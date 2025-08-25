@@ -1,7 +1,8 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { Sword, Shield, Heart, ArrowLeft } from 'lucide-react';
 import { TeamPair } from '@/types/teamBattle';
 import { Opponent } from '@/types/battle';
@@ -120,6 +121,13 @@ export const TeamBattleArena: React.FC<TeamBattleArenaProps> = ({
   const handleMenuReturn = () => {
     navigate('/menu');
   };
+
+  const handleSurrender = () => {
+    // Сброс состояния подземелья
+    localStorage.removeItem('battleState');
+    localStorage.removeItem('teamBattleState');
+    navigate('/dungeons');
+  };
   return <div className="min-h-screen p-4">
       <div className="max-w-6xl mx-auto space-y-6">
         {/* Header */}
@@ -131,9 +139,25 @@ export const TeamBattleArena: React.FC<TeamBattleArenaProps> = ({
                 Меню
               </Button>
               
-              <Button variant="destructive" size="sm" onClick={() => navigate('/menu')}>
-                Сдаться
-              </Button>
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <Button variant="destructive" size="sm">
+                    Сдаться
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>Покинуть подземелье?</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      Подземелье будет закрыто и весь прогресс будет утерян. При повторном входе вы начнете с первого уровня.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Нет</AlertDialogCancel>
+                    <AlertDialogAction onClick={handleSurrender}>Да</AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
             </div>
             
             <CardTitle className="text-center text-2xl text-primary">
