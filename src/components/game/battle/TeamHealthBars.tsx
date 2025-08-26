@@ -8,10 +8,27 @@ interface TeamHealthBarsProps {
 }
 
 export const TeamHealthBars: React.FC<TeamHealthBarsProps> = ({ pair }) => {
-  const heroCurrentHealth = pair.hero?.currentHealth ?? pair.hero?.health ?? 0;
   const heroMaxHealth = pair.hero?.health ?? 0;
-  const dragonCurrentHealth = pair.dragon?.currentHealth ?? pair.dragon?.health ?? 0;
   const dragonMaxHealth = pair.dragon?.health ?? 0;
+
+  // Base current values from cards if present
+  let heroCurrent = pair.hero?.currentHealth ?? heroMaxHealth;
+  let dragonCurrent = pair.dragon?.currentHealth ?? dragonMaxHealth;
+
+  // If pair aggregate health doesn't match sum of parts or parts are missing, derive using "dragon first" rule
+  const totalCurrentFromPair = typeof pair.health === 'number' ? pair.health : heroCurrent + dragonCurrent;
+  const sumParts = heroCurrent + (pair.dragon ? dragonCurrent : 0);
+  const needDerive = (pair.dragon ? sumParts !== totalCurrentFromPair : heroCurrent !== totalCurrentFromPair);
+
+  if (needDerive) {
+    if (pair.dragon) {
+      const remaining = Math.max(0, Math.min(totalCurrentFromPair, heroMaxHealth + dragonMaxHealth));
+      dragonCurrent = Math.min(dragonMaxHealth, remaining);
+      heroCurrent = Math.min(heroMaxHealth, Math.max(0, remaining - dragonCurrent));
+    } else {
+      heroCurrent = Math.max(0, Math.min(totalCurrentFromPair, heroMaxHealth));
+    }
+  }
 
   return (
     <div className="space-y-2">
@@ -21,10 +38,10 @@ export const TeamHealthBars: React.FC<TeamHealthBarsProps> = ({ pair }) => {
         <div className="flex-1">
           <div className="flex justify-between text-xs mb-1">
             <span>{pair.hero.name}</span>
-            <span>{heroCurrentHealth}/{heroMaxHealth}</span>
+            <span>{heroCurrent}/{heroMaxHealth}</span>
           </div>
           <Progress 
-            value={heroMaxHealth > 0 ? (heroCurrentHealth / heroMaxHealth) * 100 : 0} 
+            value={heroMaxHealth > 0 ? (heroCurrent / heroMaxHealth) * 100 : 0} 
             className="h-2" 
           />
         </div>
@@ -37,10 +54,10 @@ export const TeamHealthBars: React.FC<TeamHealthBarsProps> = ({ pair }) => {
           <div className="flex-1">
             <div className="flex justify-between text-xs mb-1">
               <span>{pair.dragon.name}</span>
-              <span>{dragonCurrentHealth}/{dragonMaxHealth}</span>
+              <span>{dragonCurrent}/{dragonMaxHealth}</span>
             </div>
             <Progress 
-              value={dragonMaxHealth > 0 ? (dragonCurrentHealth / dragonMaxHealth) * 100 : 0} 
+              value={dragonMaxHealth > 0 ? (dragonCurrent / dragonMaxHealth) * 100 : 0} 
               className="h-2" 
             />
           </div>
