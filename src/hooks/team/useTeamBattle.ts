@@ -39,15 +39,18 @@ export const useTeamBattle = (dungeonType: DungeonType, initialLevel: number = 1
       const teamPairs: TeamPair[] = selectedPairs.map((pair, index) => {
         const heroStats = pair.hero;
         const dragonStats = pair.dragon || { power: 0, defense: 0, health: 0 };
+        const heroCurrent = heroStats?.currentHealth ?? heroStats.health ?? 0;
+        const dragonCurrent = pair.dragon ? (pair.dragon.currentHealth ?? pair.dragon.health ?? 0) : 0;
+        const dragonAlive = pair.dragon ? (dragonCurrent > 0) : false;
         
         return {
           id: `pair-${index}`,
           hero: pair.hero,
           dragon: pair.dragon,
-          health: heroStats.health + dragonStats.health,
-          maxHealth: heroStats.health + dragonStats.health,
-          power: heroStats.power + dragonStats.power,
-          defense: heroStats.defense + dragonStats.defense,
+          health: heroCurrent + dragonCurrent,
+          maxHealth: (heroStats.health ?? 0) + (dragonStats.health ?? 0),
+          power: (heroStats.power ?? 0) + (dragonAlive ? (dragonStats.power ?? 0) : 0),
+          defense: (heroStats.defense ?? 0) + (dragonAlive ? (dragonStats.defense ?? 0) : 0),
           attackOrder: index + 1
         };
       });

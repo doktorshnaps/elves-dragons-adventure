@@ -44,8 +44,15 @@ export const applyDamageToPair = async (
     return card;
   });
   
-  // Save to Supabase
+  // Persist updated cards
   await updateGameData({ cards: updatedCards });
+  // Sync localStorage and notify listeners
+  try {
+    localStorage.setItem('gameCards', JSON.stringify(updatedCards));
+    window.dispatchEvent(new CustomEvent('cardsUpdate', { detail: { cards: updatedCards } }));
+  } catch (e) {
+    // no-op if storage not available
+  }
   
   // Recalculate pair health and stats
   const newHeroHealth = updatedHero ? (updatedHero.currentHealth ?? updatedHero.health) : 0;
