@@ -6,11 +6,14 @@ import { DungeonType } from '@/constants/dungeons';
 import { useTeamSelection } from './useTeamSelection';
 import { addAccountExperience, getLevelFromXP } from '@/utils/accountLeveling';
 import { useGameStore } from '@/stores/gameStore';
+import { applyDamageToPair } from '@/utils/battleHealthUtils';
+import { useGameData } from '@/hooks/useGameData';
 
 export const useTeamBattle = (dungeonType: DungeonType, initialLevel: number = 1) => {
   const { toast } = useToast();
   const { selectedPairs, getSelectedTeamStats } = useTeamSelection();
   const { accountLevel, accountExperience, addAccountExperience: addAccountExp } = useGameStore();
+  const { gameData, updateGameData } = useGameData();
   
   const [battleState, setBattleState] = useState<TeamBattleState>(() => {
     const savedState = localStorage.getItem('teamBattleState');
@@ -135,7 +138,7 @@ export const useTeamBattle = (dungeonType: DungeonType, initialLevel: number = 1
     }
   };
 
-  const executeCounterAttack = (attackerId: string | number, targetId: string | number, isEnemyAttacker: boolean) => {
+  const executeCounterAttack = async (attackerId: string | number, targetId: string | number, isEnemyAttacker: boolean) => {
     if (isEnemyAttacker) {
       // Враг (в т.ч. босс) отвечает атакующей паре
       const enemy = battleState.opponents.find(o => o.id === attackerId);
@@ -144,13 +147,15 @@ export const useTeamBattle = (dungeonType: DungeonType, initialLevel: number = 1
       if (!enemy || !pair || pair.health <= 0) return;
 
       const damage = Math.max(1, enemy.power - pair.defense);
-      const newPairHealth = Math.max(0, pair.health - damage);
+      
+      // Apply damage using proper health logic
+      const updatedPair = await applyDamageToPair(pair, damage, updateGameData, gameData);
 
       setBattleState(prev => ({
         ...prev,
         playerPairs: prev.playerPairs.map(p =>
           p.id === pair.id 
-            ? { ...p, health: newPairHealth }
+            ? updatedPair
             : p
         )
       }));
@@ -198,7 +203,7 @@ export const useTeamBattle = (dungeonType: DungeonType, initialLevel: number = 1
     }
   };
 
-  const executeEnemyAttack = () => {
+  const executeEnemyAttack = async () => {
     if (battleState.opponents.length === 0) return;
 
     const alivePairs = battleState.playerPairs.filter(pair => pair.health > 0);
@@ -213,13 +218,15 @@ export const useTeamBattle = (dungeonType: DungeonType, initialLevel: number = 1
     const currentEnemy = aliveOpponents[Math.floor(Math.random() * aliveOpponents.length)];
     const targetPair = alivePairs[Math.floor(Math.random() * alivePairs.length)];
     const damage = Math.max(1, currentEnemy.power - targetPair.defense);
-    const newHealth = Math.max(0, targetPair.health - damage);
+    
+    // Apply damage using proper health logic
+    const updatedPair = await applyDamageToPair(targetPair, damage, updateGameData, gameData);
 
     setBattleState(prev => ({
       ...prev,
       playerPairs: prev.playerPairs.map(pair =>
         pair.id === targetPair.id
-          ? { ...pair, health: newHealth }
+          ? updatedPair
           : pair
       )
     }));
@@ -231,13 +238,13 @@ export const useTeamBattle = (dungeonType: DungeonType, initialLevel: number = 1
     });
 
     // Ответный удар пары, если она жива
-    if (newHealth > 0) {
+    if (updatedPair.health > 0) {
       setTimeout(() => {
         executeCounterAttack(targetPair.id, currentEnemy.id, false);
       }, 800);
     }
 
-    if (alivePairs.length === 1 && newHealth === 0) {
+    if (alivePairs.length === 1 && updatedPair.health === 0) {
       setTimeout(() => {
         handleGameOver();
       }, 1200);
