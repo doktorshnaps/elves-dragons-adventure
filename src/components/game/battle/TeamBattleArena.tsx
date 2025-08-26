@@ -9,6 +9,7 @@ import { Opponent } from '@/types/battle';
 import { useGameStore } from '@/stores/gameStore';
 import { getXPProgress } from '@/utils/accountLeveling';
 import { useNavigate } from 'react-router-dom';
+import { TeamHealthBars } from './TeamHealthBars';
 interface TeamBattleArenaProps {
   playerPairs: TeamPair[];
   opponents: Opponent[];
@@ -274,13 +275,9 @@ export const TeamBattleArena: React.FC<TeamBattleArenaProps> = ({
                         Ходит
                       </div>}
                   </div>
-                  
-                  <div className="space-y-2">
-                    <div className="flex items-center gap-2 text-sm">
-                      <Heart className="w-4 h-4 text-red-500" />
-                      <Progress value={pair.health / pair.maxHealth * 100} className="flex-1 h-2" />
-                      <span>{pair.health}/{pair.maxHealth}</span>
-                    </div>
+                   
+                   <div className="space-y-2">
+                     <TeamHealthBars pair={pair} />
                     
                     <div className="flex items-center justify-between text-xs text-muted-foreground">
                       <div className="flex items-center gap-1">

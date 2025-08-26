@@ -4,6 +4,7 @@ import { applyDamageToCard } from './cardHealthUtils';
 
 /**
  * Apply damage to cards in a team pair and update localStorage
+ * Dragon takes damage first, then hero
  */
 export const applyDamageToPair = async (
   pair: TeamPair, 
@@ -13,24 +14,26 @@ export const applyDamageToPair = async (
 ): Promise<TeamPair> => {
   if (!pair.hero && !pair.dragon) return pair;
 
-  const totalHealth = pair.health;
-  const heroProportion = pair.hero ? (pair.hero.currentHealth ?? pair.hero.health) / totalHealth : 0;
-  const dragonProportion = pair.dragon ? (pair.dragon.currentHealth ?? pair.dragon.health) / totalHealth : 0;
-  
-  // Distribute damage proportionally
-  const heroDamage = pair.hero ? Math.floor(damage * heroProportion) : 0;
-  const dragonDamage = pair.dragon ? Math.floor(damage * dragonProportion) : 0;
-  
+  let remainingDamage = damage;
   let updatedHero = pair.hero;
   let updatedDragon = pair.dragon;
+  let wasDragonAlive = false;
   
-  // Apply damage to cards
-  if (pair.hero && heroDamage > 0) {
-    updatedHero = applyDamageToCard(pair.hero, heroDamage);
+  // Dragon takes damage first
+  if (pair.dragon) {
+    const dragonCurrentHealth = pair.dragon.currentHealth ?? pair.dragon.health;
+    wasDragonAlive = dragonCurrentHealth > 0;
+    
+    if (dragonCurrentHealth > 0) {
+      const dragonDamage = Math.min(remainingDamage, dragonCurrentHealth);
+      updatedDragon = applyDamageToCard(pair.dragon, dragonDamage);
+      remainingDamage -= dragonDamage;
+    }
   }
   
-  if (pair.dragon && dragonDamage > 0) {
-    updatedDragon = applyDamageToCard(pair.dragon, dragonDamage);
+  // If there's remaining damage and hero exists, apply to hero
+  if (remainingDamage > 0 && pair.hero) {
+    updatedHero = applyDamageToCard(pair.hero, remainingDamage);
   }
   
   // Update cards in game data
@@ -44,14 +47,29 @@ export const applyDamageToPair = async (
   // Save to Supabase
   await updateGameData({ cards: updatedCards });
   
-  // Recalculate pair health
+  // Recalculate pair health and stats
   const newHeroHealth = updatedHero ? (updatedHero.currentHealth ?? updatedHero.health) : 0;
   const newDragonHealth = updatedDragon ? (updatedDragon.currentHealth ?? updatedDragon.health) : 0;
+  
+  // Check if dragon died during this damage
+  const isDragonNowDead = updatedDragon ? (updatedDragon.currentHealth ?? updatedDragon.health) <= 0 : false;
+  const dragonJustDied = wasDragonAlive && isDragonNowDead;
+  
+  // Recalculate stats - if dragon died, remove its contribution
+  let newPower = pair.power;
+  let newDefense = pair.defense;
+  
+  if (dragonJustDied && pair.dragon) {
+    newPower -= pair.dragon.power;
+    newDefense -= pair.dragon.defense;
+  }
   
   return {
     ...pair,
     hero: updatedHero,
     dragon: updatedDragon,
-    health: newHeroHealth + newDragonHealth
+    health: newHeroHealth + newDragonHealth,
+    power: newPower,
+    defense: newDefense
   };
 };
