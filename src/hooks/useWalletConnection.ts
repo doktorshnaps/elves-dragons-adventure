@@ -30,16 +30,22 @@ export const useWalletConnection = () => {
           }
         });
 
-        // Initialize TON connector
-        const tonConnect = new TonConnectUI({
-          manifestUrl: `${window.location.origin}/tonconnect-manifest.json`
-        });
+        // Initialize TON connector with error handling
+        let tonConnect;
+        try {
+          tonConnect = new TonConnectUI({
+            manifestUrl: `${window.location.origin}/tonconnect-manifest.json`
+          });
+        } catch (tonError) {
+          console.warn('TON Connect initialization failed:', tonError);
+          // Continue without TON support if it fails
+        }
 
-        // Create simplified HOT connector with basic wallet types
+        // Create simplified HOT connector
         const hotConnector = new HotConnector({
-          chains: [WalletType.NEAR, WalletType.TON],
+          chains: tonConnect ? [WalletType.NEAR, WalletType.TON] : [WalletType.NEAR],
           nearConnector,
-          tonConnect,
+          ...(tonConnect && { tonConnect }),
           onConnect: <T extends WalletType>(wallet: ConnectedWallets[T], type: T) => {
             handleWalletConnect(wallet, type);
           },

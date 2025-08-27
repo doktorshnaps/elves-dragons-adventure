@@ -38,10 +38,11 @@ export const WalletConnectionCard = () => {
     return `${address.slice(0, 6)}...${address.slice(-4)}`;
   };
 
-  const availableWallets = [
+  // Get available wallets based on what's initialized
+  const availableWallets = isInitialized ? [
     WalletType.NEAR,
     WalletType.TON
-  ];
+  ] : [];
 
   const connectedTypes = connections.map(conn => conn.type);
 
