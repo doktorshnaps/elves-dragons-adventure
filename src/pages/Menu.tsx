@@ -1,11 +1,13 @@
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
-import { Swords, ShoppingCart, BookOpen, Store, Shield, Users, DollarSign, LogOut, Home } from "lucide-react";
+import { Swords, ShoppingCart, BookOpen, Store, Shield, Users, DollarSign, LogOut, Home, Wallet } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import { useGameData } from "@/hooks/useGameData";
 import { useGameInitialization } from "@/components/game/initialization/useGameInitialization";
 import { FirstTimePackDialog } from "@/components/game/initialization/FirstTimePackDialog";
+import { WalletConnectionCard } from "@/components/wallet/WalletConnectionCard";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { useState, useEffect } from "react";
 export const Menu = () => {
   const navigate = useNavigate();
@@ -116,6 +118,21 @@ export const Menu = () => {
           <Home className="w-8 h-8" />
           <span>Убежище</span>
         </Button>
+
+        <Dialog>
+          <DialogTrigger asChild>
+            <Button variant="outline" className="h-24 bg-game-surface/80 border-purple-500 text-purple-500 hover:bg-purple-500/20 flex flex-col items-center justify-center gap-2">
+              <Wallet className="w-8 h-8" />
+              <span>Кошелек</span>
+            </Button>
+          </DialogTrigger>
+          <DialogContent className="max-w-md">
+            <DialogHeader>
+              <DialogTitle>Управление кошельком</DialogTitle>
+            </DialogHeader>
+            <WalletConnectionCard />
+          </DialogContent>
+        </Dialog>
 
         <Button variant="outline" className="h-24 bg-game-surface/80 border-red-500 text-red-500 hover:bg-red-500/20 flex flex-col items-center justify-center gap-2" onClick={handleSignOut}>
           <LogOut className="w-8 h-8" />
