@@ -2,9 +2,6 @@ import { useState, useEffect, useCallback } from 'react';
 import { HotConnector } from '@hot-labs/near-connect';
 import { NearConnector } from '@hot-labs/near-connect';
 import { TonConnectUI } from '@tonconnect/ui';
-import { createAppKit } from '@reown/appkit';
-import { EthersAdapter } from '@reown/appkit-adapter-ethers';
-import { SolanaAdapter } from '@reown/appkit-adapter-solana';
 import { WalletType, ConnectedWallets } from '@hot-labs/near-connect';
 
 export interface WalletConnection {
@@ -38,24 +35,11 @@ export const useWalletConnection = () => {
           manifestUrl: `${window.location.origin}/tonconnect-manifest.json`
         });
 
-        // Initialize AppKit for EVM and Solana (optional, can be undefined for now)
-        let appKit;
-        try {
-          const evmAdapter = new EthersAdapter();
-          const solanaAdapter = new SolanaAdapter();
-          
-          // For now, we'll skip AppKit initialization to avoid network configuration issues
-          // You can configure this later with proper network settings
-        } catch (err) {
-          console.warn('AppKit initialization skipped:', err);
-        }
-
-        // Create HOT connector with all wallet types
+        // Create simplified HOT connector with basic wallet types
         const hotConnector = new HotConnector({
-          chains: [WalletType.NEAR, WalletType.EVM, WalletType.SOLANA, WalletType.TON],
+          chains: [WalletType.NEAR, WalletType.TON],
           nearConnector,
           tonConnect,
-          appKit,
           onConnect: <T extends WalletType>(wallet: ConnectedWallets[T], type: T) => {
             handleWalletConnect(wallet, type);
           },

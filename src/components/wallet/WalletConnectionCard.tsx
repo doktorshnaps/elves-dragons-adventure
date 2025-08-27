@@ -40,8 +40,6 @@ export const WalletConnectionCard = () => {
 
   const availableWallets = [
     WalletType.NEAR,
-    WalletType.EVM,
-    WalletType.SOLANA,
     WalletType.TON
   ];
 
