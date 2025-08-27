@@ -29,6 +29,8 @@ function App() {
   
   return (
     <ErrorBoundary>
+      {/* Hidden TON Connect div as required by the library */}
+      <div id="ton-connect" style={{ display: 'none' }}></div>
       <Routes>
         <Route path="/" element={<Index />} />
         <Route path="/auth" element={<Auth />} />

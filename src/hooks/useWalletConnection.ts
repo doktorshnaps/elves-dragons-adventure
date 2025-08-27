@@ -1,8 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
-import { HotConnector } from '@hot-labs/near-connect';
-import { NearConnector } from '@hot-labs/near-connect';
+import { HotConnector, NearConnector, WalletType } from '@hot-labs/near-connect';
 import { TonConnectUI } from '@tonconnect/ui';
-import { WalletType, ConnectedWallets } from '@hot-labs/near-connect';
 
 export interface WalletConnection {
   type: WalletType;
@@ -34,22 +32,27 @@ export const useWalletConnection = () => {
         let tonConnect;
         try {
           tonConnect = new TonConnectUI({
-            manifestUrl: `${window.location.origin}/tonconnect-manifest.json`
+            manifestUrl: `${window.location.origin}/tonconnect-manifest.json`,
+            buttonRootId: 'ton-connect'
           });
         } catch (tonError) {
           console.warn('TON Connect initialization failed:', tonError);
           // Continue without TON support if it fails
         }
 
-        // Create simplified HOT connector
+        // Create HOT connector following documentation pattern
         const hotConnector = new HotConnector({
           chains: tonConnect ? [WalletType.NEAR, WalletType.TON] : [WalletType.NEAR],
           nearConnector,
           ...(tonConnect && { tonConnect }),
-          onConnect: <T extends WalletType>(wallet: ConnectedWallets[T], type: T) => {
-            handleWalletConnect(wallet, type);
+          
+          onConnect: async (wallet: any) => {
+            const address = await wallet.getAddress();
+            const type = wallet.type;
+            handleWalletConnect({ address }, type);
           },
-          onDisconnect: <T extends WalletType>(type: T) => {
+
+          onDisconnect: (type: WalletType) => {
             handleWalletDisconnect(type);
           }
         });
@@ -66,25 +69,15 @@ export const useWalletConnection = () => {
 
   const handleWalletConnect = useCallback(async (wallet: any, type: WalletType) => {
     try {
-      let address = '';
+      let address = wallet.address || '';
       let balance = '';
       let network = '';
 
       switch (type) {
         case WalletType.NEAR:
-          address = wallet.accountId || '';
           network = 'NEAR';
           break;
-        case WalletType.EVM:
-          address = wallet.address || '';
-          network = 'Ethereum';
-          break;
-        case WalletType.SOLANA:
-          address = wallet.publicKey?.toString() || '';
-          network = 'Solana';
-          break;
         case WalletType.TON:
-          address = wallet.account?.address || '';
           network = 'TON';
           break;
       }
