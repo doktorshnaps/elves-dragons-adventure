@@ -12,7 +12,6 @@
   },
   "dependencies": {
     "@hookform/resolvers": "^3.9.0",
-    "@hot-labs/near-connect": "^0.4.2",
     "@radix-ui/react-accordion": "^1.2.0",
     "@radix-ui/react-alert-dialog": "^1.1.1",
     "@radix-ui/react-aspect-ratio": "^1.1.0",
@@ -42,7 +41,6 @@
     "@radix-ui/react-tooltip": "^1.1.4",
     "@supabase/supabase-js": "^2.53.0",
     "@tanstack/react-query": "^5.56.2",
-    "@tonconnect/ui": "^2.2.0",
     "@types/react-beautiful-dnd": "^13.1.8",
     "@types/uuid": "^10.0.0",
     "class-variance-authority": "^0.7.1",
@@ -50,7 +48,6 @@
     "cmdk": "^1.0.0",
     "date-fns": "^2.30.0",
     "embla-carousel-react": "^8.3.0",
-    "ethers": "^6.15.0",
     "framer-motion": "^11.15.0",
     "input-otp": "^1.2.4",
     "lucide-react": "^0.462.0",
