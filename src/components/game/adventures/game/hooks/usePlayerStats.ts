@@ -1,8 +1,8 @@
-
-import { useState, useCallback, useEffect, useMemo } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { calculateTeamStats } from '@/utils/cardUtils';
 import { useToast } from '@/hooks/use-toast';
 import { useGameData } from '@/hooks/useGameData';
+import { Card } from '@/types/cards';
 
 interface PlayerStats {
   health: number;
@@ -41,27 +41,71 @@ export const usePlayerStats = (initialLevel = 1) => {
     };
   }, [gameData.cards]);
 
+  // Calculate current and max team health based on selected team and cards state
+  const getTeamHealthSums = useCallback(() => {
+    const cards = (gameData.cards as Card[]) || [];
+    const selected = (gameData.selectedTeam as any[]) || [];
+    const byId = new Map<string, Card>(cards.map((c) => [c.id, c]));
+
+    let currentSum = 0;
+    let maxSum = 0;
+
+    selected.forEach((pair) => {
+      const heroFromMap = byId.get(pair?.hero?.id) || pair?.hero;
+      if (heroFromMap) {
+        const heroMax = heroFromMap.health || pair.hero?.health || 0;
+        const heroCur = (heroFromMap.currentHealth ?? heroMax);
+        maxSum += heroMax;
+        currentSum += Math.max(0, Math.min(heroCur, heroMax));
+      }
+
+      const dragon = pair?.dragon;
+      if (dragon) {
+        const dragonFromMap = byId.get(dragon.id) || dragon;
+        // Dragon contributes only if same faction and allowed by rarity, like calculateTeamStats
+        const sameFaction = pair?.hero?.faction && dragonFromMap?.faction && pair.hero.faction === dragonFromMap.faction;
+        const rarityOk = (pair?.hero?.rarity ?? 0) >= (dragonFromMap?.rarity ?? 0);
+        if (sameFaction && rarityOk) {
+          const dMax = dragonFromMap.health || dragon.health || 0;
+          const dCur = (dragonFromMap.currentHealth ?? dMax);
+          maxSum += dMax;
+          currentSum += Math.max(0, Math.min(dCur, dMax));
+        }
+      }
+    });
+
+    return { currentSum, maxSum };
+  }, [gameData.cards, gameData.selectedTeam]);
+
   const [stats, setStats] = useState<PlayerStats>(() => {
     if (gameData.adventurePlayerStats) {
       const parsed = gameData.adventurePlayerStats;
       const baseStats = calculateBaseStats(parsed.level);
       const equipmentBonuses = calculateEquipmentBonuses();
+      const { currentSum } = getTeamHealthSums();
+      
+      const newMax = baseStats.health + equipmentBonuses.health;
+      const allowedCurrent = Math.min(currentSum + equipmentBonuses.health, newMax);
       
       return {
         ...parsed,
         power: baseStats.power + equipmentBonuses.power,
         defense: baseStats.defense + equipmentBonuses.defense,
-        maxHealth: baseStats.health + equipmentBonuses.health,
-        health: Math.min(parsed.health, baseStats.health + equipmentBonuses.health)
+        maxHealth: newMax,
+        health: Math.min(parsed.health, allowedCurrent)
       };
     }
 
     const baseStats = calculateBaseStats(initialLevel);
     const equipmentBonuses = calculateEquipmentBonuses();
+    const { currentSum } = getTeamHealthSums();
+    
+    const newMax = baseStats.health + equipmentBonuses.health;
+    const allowedCurrent = Math.min(currentSum + equipmentBonuses.health, newMax);
     
     return {
-      health: baseStats.health + equipmentBonuses.health,
-      maxHealth: baseStats.health + equipmentBonuses.health,
+      health: allowedCurrent,
+      maxHealth: newMax,
       power: baseStats.power + equipmentBonuses.power,
       defense: baseStats.defense + equipmentBonuses.defense,
       armor: 50,
