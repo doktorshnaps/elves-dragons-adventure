@@ -8,6 +8,7 @@ import { useGameState } from './hooks/useGameState';
 import { GameContainer } from './components/GameContainer';
 import { useToast } from '@/hooks/use-toast';
 import { useBalanceState } from '@/hooks/useBalanceState';
+import { useTeamDamageSync } from '@/hooks/adventure/useTeamDamageSync';
 
 interface AdventureGameProps {
   onMonsterDefeat: (monster: Monster) => void;
@@ -34,6 +35,7 @@ export const AdventureGame = ({
   const maxArmor = 50;
   const { toast } = useToast();
   const { balance } = useBalanceState();
+  const { applyDamageToTeam } = useTeamDamageSync();
 
   const {
     currentHealth,
@@ -73,9 +75,13 @@ export const AdventureGame = ({
           
           if (remainingDamage > 0) {
             setCurrentHealth(prev => Math.max(0, prev - remainingDamage));
+            // Sync damage to team cards
+            applyDamageToTeam(remainingDamage);
           }
         } else {
           setCurrentHealth(prev => Math.max(0, prev - damage));
+          // Sync damage to team cards
+          applyDamageToTeam(damage);
         }
       }
     },
@@ -111,6 +117,8 @@ export const AdventureGame = ({
   } = useDiceRoll((damage: number) => {
     if (isMonsterTurn) {
       setCurrentHealth(prev => Math.max(0, prev - damage));
+      // Sync damage to team cards
+      applyDamageToTeam(damage);
     } else {
       handleMonsterDamage(damage);
     }
