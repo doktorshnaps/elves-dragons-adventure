@@ -6,6 +6,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { CardDisplay } from "../CardDisplay";
 import { CardPreviewModal } from "../cards/CardPreviewModal";
 import { useToast } from "@/hooks/use-toast";
+import { useCardHealthSync } from "@/hooks/useCardHealthSync";
 interface DeckSelectionProps {
   cards: CardType[];
   selectedPairs: TeamPair[];
@@ -34,6 +35,12 @@ export const DeckSelection = ({
   const [previewDeleteAction, setPreviewDeleteAction] = useState<{ label: string; action: () => void } | null>(null);
   const [localCards, setLocalCards] = useState<CardType[]>(cards);
   const { toast } = useToast();
+
+  // Use health synchronization for cards
+  useCardHealthSync({
+    cards: localCards,
+    onCardsUpdate: setLocalCards
+  });
 
   // Обновляем локальные карты при изменении пропсов
   useEffect(() => {

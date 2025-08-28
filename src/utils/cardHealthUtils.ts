@@ -51,10 +51,18 @@ export const applyDamageToCard = (card: Card, damage: number): Card => {
   const currentHealth = card.currentHealth ?? card.health;
   const newHealth = Math.max(0, currentHealth - damage);
   
-  return {
+  const updatedCard = {
     ...card,
     currentHealth: newHealth
   };
+
+  // Dispatch event to synchronize health across all components
+  const event = new CustomEvent('cardHealthChanged', { 
+    detail: { card: updatedCard, damage }
+  });
+  window.dispatchEvent(event);
+
+  return updatedCard;
 };
 
 /**

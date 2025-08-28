@@ -9,7 +9,11 @@ interface CardHealthBarProps {
 }
 
 export const CardHealthBar = ({ currentHealth, maxHealth, size = 'medium' }: CardHealthBarProps) => {
-  const healthPercentage = (currentHealth / maxHealth) * 100;
+  // Ensure we have valid health values
+  const validCurrentHealth = Math.max(0, Math.min(currentHealth || 0, maxHealth));
+  const validMaxHealth = Math.max(1, maxHealth); // Prevent division by zero
+  
+  const healthPercentage = (validCurrentHealth / validMaxHealth) * 100;
   const isLowHealth = healthPercentage <= 25;
   const isCritical = healthPercentage <= 10;
   
@@ -44,7 +48,7 @@ export const CardHealthBar = ({ currentHealth, maxHealth, size = 'medium' }: Car
           }`} 
         />
         <span className={`${classes.text} text-game-accent font-medium`}>
-          {Math.floor(currentHealth)}/{maxHealth}
+          {Math.floor(validCurrentHealth)}/{validMaxHealth}
         </span>
       </div>
       <Progress 

@@ -54,6 +54,22 @@ export const applyDamageToPair = async (
     // no-op if storage not available
   }
   
+  // Dispatch health sync events for immediate UI updates
+  if (updatedHero) {
+    const heroEvent = new CustomEvent('cardHealthChanged', { 
+      detail: { card: updatedHero, damage: remainingDamage }
+    });
+    window.dispatchEvent(heroEvent);
+  }
+  
+  if (updatedDragon) {
+    const dragonDamage = Math.min(damage, (pair.dragon?.currentHealth ?? pair.dragon?.health ?? 0));
+    const dragonEvent = new CustomEvent('cardHealthChanged', { 
+      detail: { card: updatedDragon, damage: dragonDamage }
+    });
+    window.dispatchEvent(dragonEvent);
+  }
+
   // Recalculate pair health and stats
   const newHeroHealth = updatedHero ? (updatedHero.currentHealth ?? updatedHero.health) : 0;
   const newDragonHealth = updatedDragon ? (updatedDragon.currentHealth ?? updatedDragon.health) : 0;

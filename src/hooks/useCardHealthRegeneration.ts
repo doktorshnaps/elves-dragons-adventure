@@ -1,6 +1,6 @@
-import { useEffect } from 'react';
+import { useEffect, useCallback } from 'react';
 import { Card } from '@/types/cards';
-import { processCardsHealthRegeneration } from '@/utils/cardHealthUtils';
+import { processCardsHealthRegeneration, initializeCardHealth } from '@/utils/cardHealthUtils';
 
 interface UseCardHealthRegenerationProps {
   cards: Card[];
@@ -8,23 +8,34 @@ interface UseCardHealthRegenerationProps {
 }
 
 export const useCardHealthRegeneration = ({ cards, onCardsUpdate }: UseCardHealthRegenerationProps) => {
-  useEffect(() => {
-    // Process health regeneration immediately when cards change
-    const processRegeneration = () => {
-      const updatedCards = processCardsHealthRegeneration(cards);
+  const processRegeneration = useCallback(() => {
+    if (!cards || cards.length === 0) return;
+    
+    // Initialize health for cards that don't have it
+    const initializedCards = cards.map(initializeCardHealth);
+    
+    // Process health regeneration
+    const updatedCards = processCardsHealthRegeneration(initializedCards);
+    
+    // Check if any cards actually changed
+    const hasChanges = updatedCards.some((card, index) => {
+      const originalCard = cards[index];
+      return card.currentHealth !== originalCard?.currentHealth ||
+             card.lastHealTime !== originalCard?.lastHealTime;
+    });
+    
+    if (hasChanges) {
+      onCardsUpdate(updatedCards);
       
-      // Check if any cards actually changed
-      const hasChanges = updatedCards.some((card, index) => {
-        const originalCard = cards[index];
-        return card.currentHealth !== originalCard?.currentHealth ||
-               card.lastHealTime !== originalCard?.lastHealTime;
+      // Dispatch global event to synchronize across components
+      const event = new CustomEvent('cardsHealthUpdate', { 
+        detail: { cards: updatedCards }
       });
-      
-      if (hasChanges) {
-        onCardsUpdate(updatedCards);
-      }
-    };
+      window.dispatchEvent(event);
+    }
+  }, [cards, onCardsUpdate]);
 
+  useEffect(() => {
     // Process once immediately
     processRegeneration();
 
@@ -32,5 +43,19 @@ export const useCardHealthRegeneration = ({ cards, onCardsUpdate }: UseCardHealt
     const interval = setInterval(processRegeneration, 60 * 1000);
 
     return () => clearInterval(interval);
-  }, [cards, onCardsUpdate]);
+  }, [processRegeneration]);
+
+  // Listen for cross-app health updates
+  useEffect(() => {
+    const handleHealthUpdate = (e: CustomEvent<{ cards: Card[] }>) => {
+      if (e.detail?.cards) {
+        onCardsUpdate(e.detail.cards);
+      }
+    };
+
+    window.addEventListener('cardsHealthUpdate', handleHealthUpdate as EventListener);
+    return () => {
+      window.removeEventListener('cardsHealthUpdate', handleHealthUpdate as EventListener);
+    };
+  }, [onCardsUpdate]);
 };

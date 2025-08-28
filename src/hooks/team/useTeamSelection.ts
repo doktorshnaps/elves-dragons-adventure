@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Card as CardType } from "@/types/cards";
 import { useGameData } from '@/hooks/useGameData';
+import { useCardHealthSync } from '@/hooks/useCardHealthSync';
 import { TeamPair } from '@/components/game/team/DeckSelection';
 
 export const useTeamSelection = () => {
@@ -28,6 +29,16 @@ export const useTeamSelection = () => {
       setSelectedPairs(gameData.selectedTeam);
     }
   }, [gameData.selectedTeam]);
+
+  // Use the health synchronization hook
+  useCardHealthSync({
+    cards,
+    onCardsUpdate: (updatedCards) => {
+      setCards(updatedCards);
+      // Also update game data
+      updateGameData({ cards: updatedCards });
+    }
+  });
 
   // Listen for cross-app card updates and localStorage changes
   useEffect(() => {
@@ -102,16 +113,16 @@ export const useTeamSelection = () => {
     let totalHealth = 0;
 
     selectedPairs.forEach(pair => {
-      // Add hero stats
+      // Add hero stats (use current health)
       totalPower += pair.hero.power;
       totalDefense += pair.hero.defense;
-      totalHealth += pair.hero.health;
+      totalHealth += pair.hero.currentHealth ?? pair.hero.health;
 
-      // Add dragon stats if present and same faction
+      // Add dragon stats if present and same faction (use current health)
       if (pair.dragon && pair.dragon.faction === pair.hero.faction) {
         totalPower += pair.dragon.power;
         totalDefense += pair.dragon.defense;
-        totalHealth += pair.dragon.health;
+        totalHealth += pair.dragon.currentHealth ?? pair.dragon.health;
       }
     });
 

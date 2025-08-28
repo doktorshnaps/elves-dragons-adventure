@@ -3,6 +3,7 @@ import { Card as CardType } from "@/types/cards";
 import { useCardSelection } from "./useCardSelection";
 import { useCardManagement } from "./useCardManagement";
 import { useCardUpgrade } from "./useCardUpgrade";
+import { useCardHealthSync } from "@/hooks/useCardHealthSync";
 
 export const useTeamCards = () => {
   const [cards, setCards] = useState<CardType[]>(() => {
@@ -18,6 +19,12 @@ export const useTeamCards = () => {
 
   const { handleSellCard } = useCardManagement(cards, setCards, setSelectedCards);
   const { handleUpgrade } = useCardUpgrade(cards, setCards, selectedCards, setSelectedCards);
+
+  // Use health synchronization
+  useCardHealthSync({
+    cards,
+    onCardsUpdate: setCards
+  });
 
   useEffect(() => {
     const handleCardsUpdate = (e: CustomEvent<{ cards: CardType[] }>) => {
