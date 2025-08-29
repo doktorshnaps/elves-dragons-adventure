@@ -14,6 +14,45 @@ export type Database = {
   }
   public: {
     Tables: {
+      card_instances: {
+        Row: {
+          card_data: Json
+          card_template_id: string
+          card_type: string
+          created_at: string
+          current_health: number
+          id: string
+          last_heal_time: string | null
+          max_health: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          card_data: Json
+          card_template_id: string
+          card_type: string
+          created_at?: string
+          current_health?: number
+          id?: string
+          last_heal_time?: string | null
+          max_health?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          card_data?: Json
+          card_template_id?: string
+          card_type?: string
+          created_at?: string
+          current_health?: number
+          id?: string
+          last_heal_time?: string | null
+          max_health?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       game_data: {
         Row: {
           account_experience: number

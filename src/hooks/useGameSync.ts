@@ -2,6 +2,7 @@ import { useEffect } from 'react';
 import { useGameStore } from '@/stores/gameStore';
 import { useGameData } from '@/hooks/useGameData';
 import { useAuth } from '@/hooks/useAuth';
+import { useCardInstanceSync } from '@/hooks/useCardInstanceSync';
 
 /**
  * Синхронизирует локальное состояние Zustand с Supabase
@@ -10,6 +11,9 @@ export const useGameSync = () => {
   const { user } = useAuth();
   const { gameData, updateGameData, loading } = useGameData();
   const gameStore = useGameStore();
+  
+  // Инициализация синхронизации экземпляров карт
+  useCardInstanceSync();
 
   // Загружаем данные из Supabase в локальное состояние при инициализации
   useEffect(() => {
