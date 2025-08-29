@@ -51,11 +51,12 @@ export const useCardInstanceSync = () => {
     if (hasChanges) {
       updateGameData({ cards: updatedCards });
       
-      // Dispatch global event for UI sync
-      const event = new CustomEvent('cardsUpdate', { 
-        detail: { cards: updatedCards }
-      });
-      window.dispatchEvent(event);
+      // Persist for legacy components and local sessions
+      localStorage.setItem('gameCards', JSON.stringify(updatedCards));
+      
+      // Dispatch global events for immediate UI sync
+      window.dispatchEvent(new CustomEvent('cardsUpdate', { detail: { cards: updatedCards } }));
+      window.dispatchEvent(new CustomEvent('cardsHealthUpdate', { detail: { cards: updatedCards } }));
     }
   }, [gameData.cards, cardInstances, updateGameData]);
 

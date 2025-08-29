@@ -13,16 +13,15 @@ import { useGameInitialization } from "./initialization/useGameInitialization";
 import { FirstTimePackDialog } from "./initialization/FirstTimePackDialog";
 
 const calculateTeamStats = (cards: Card[]) => {
-  const stats = {
-    power: cards.reduce((sum, card) => sum + card.power, 0),
-    defense: cards.reduce((sum, card) => sum + card.defense, 0),
-    health: cards.reduce((sum, card) => sum + card.health, 0)
-  };
+  const power = cards.reduce((sum, c) => sum + (c.power || 0), 0);
+  const defense = cards.reduce((sum, c) => sum + (c.defense || 0), 0);
+  const maxHealth = cards.reduce((sum, c) => sum + (c.health || 0), 0);
+  const health = cards.reduce((sum, c) => {
+    const curr = typeof (c as any).currentHealth === 'number' ? (c as any).currentHealth : (c.health || 0);
+    return sum + Math.min(curr, c.health || 0);
+  }, 0);
   
-  return {
-    ...stats,
-    maxHealth: stats.health // Set maxHealth equal to health
-  };
+  return { power, defense, health, maxHealth };
 };
 
 export const GameContainer = () => {

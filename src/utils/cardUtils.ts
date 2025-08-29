@@ -135,32 +135,47 @@ export const calculateTeamStats = (cards: Card[]) => {
   const heroes = cards.filter(card => card.type === 'character');
   const pets = cards.filter(card => card.type === 'pet');
   
-  // Базовые характеристики от героев
-  const baseStats = heroes.reduce((acc, hero) => ({
-    power: acc.power + hero.power,
-    defense: acc.defense + hero.defense,
-    health: acc.health + hero.health
-  }), { power: 0, defense: 0, health: 0 });
+  // Базовые характеристики от героев (и текущее здоровье)
+  const baseStats = heroes.reduce((acc, hero) => {
+    const maxH = hero.health || 0;
+    const currH = Math.min(
+      typeof (hero as any).currentHealth === 'number' ? (hero as any).currentHealth : maxH,
+      maxH
+    );
+    return {
+      power: acc.power + (hero.power || 0),
+      defense: acc.defense + (hero.defense || 0),
+      health: acc.health + maxH,
+      current: acc.current + currH
+    };
+  }, { power: 0, defense: 0, health: 0, current: 0 });
 
-  // Добавляем характеристики только от активных питомцев
+  // Добавляем характеристики только от активных питомцев (и их текущее здоровье)
   const petsBonus = pets.reduce((acc, pet) => {
     if (isPetActive(pet, heroes)) {
+      const maxH = pet.health || 0;
+      const currH = Math.min(
+        typeof (pet as any).currentHealth === 'number' ? (pet as any).currentHealth : maxH,
+        maxH
+      );
       return {
-        power: acc.power + pet.power,
-        defense: acc.defense + pet.defense,
-        health: acc.health + pet.health
+        power: acc.power + (pet.power || 0),
+        defense: acc.defense + (pet.defense || 0),
+        health: acc.health + maxH,
+        current: acc.current + currH
       };
     }
     return acc;
-  }, { power: 0, defense: 0, health: 0 });
+  }, { power: 0, defense: 0, health: 0, current: 0 });
 
-  const totalHealth = baseStats.health + petsBonus.health;
+  const maxHealth = baseStats.health + petsBonus.health;
+  const currentHealth = baseStats.current + petsBonus.current;
 
   return {
     power: baseStats.power + petsBonus.power,
     defense: baseStats.defense + petsBonus.defense,
-    health: totalHealth,
-    maxHealth: totalHealth
+    health: currentHealth,
+    maxHealth
   };
 };
 
