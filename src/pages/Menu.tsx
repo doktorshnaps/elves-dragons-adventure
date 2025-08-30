@@ -1,11 +1,12 @@
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
-import { Swords, ShoppingCart, BookOpen, Store, Shield, Users, DollarSign, LogOut, Home } from "lucide-react";
+import { Swords, ShoppingCart, BookOpen, Store, Shield, Users, DollarSign, LogOut, Home, Wallet } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import { useGameData } from "@/hooks/useGameData";
 import { useGameInitialization } from "@/components/game/initialization/useGameInitialization";
 import { FirstTimePackDialog } from "@/components/game/initialization/FirstTimePackDialog";
+import { useWallet } from "@/hooks/useWallet";
 import { useState, useEffect } from "react";
 export const Menu = () => {
   const navigate = useNavigate();
@@ -27,6 +28,8 @@ export const Menu = () => {
     showFirstTimePack,
     setShowFirstTimePack
   } = useGameInitialization(setCards);
+  
+  const { isConnected, accountId, isConnecting, connectWallet, disconnectWallet } = useWallet();
   const handleSignOut = async () => {
     const {
       error
@@ -66,12 +69,44 @@ export const Menu = () => {
   }}>
       <div className="absolute inset-0 bg-black/30 mx-0 my-0 py-0 px-0" />
       
-      {/* Balance Display */}
-      <div className="relative z-10 max-w-4xl mx-auto flex justify-center mb-4">
+      {/* Balance and Wallet Display */}
+      <div className="relative z-10 max-w-4xl mx-auto flex justify-center items-center gap-4 mb-4">
         <div className="bg-game-surface/90 px-6 py-3 rounded-lg border border-game-accent">
           <div className="flex items-center gap-2">
             <DollarSign className="w-5 h-5 text-game-accent" />
             <span className="text-game-accent font-semibold">Баланс: {gameData.balance} ELL</span>
+          </div>
+        </div>
+        
+        <div className="bg-game-surface/90 px-6 py-3 rounded-lg border border-game-accent">
+          <div className="flex items-center gap-2">
+            <Wallet className="w-5 h-5 text-game-accent" />
+            {isConnected ? (
+              <div className="flex items-center gap-2">
+                <span className="text-green-500 text-sm">●</span>
+                <span className="text-game-accent font-medium text-sm">
+                  {accountId ? `${accountId.slice(0, 8)}...${accountId.slice(-4)}` : 'Подключен'}
+                </span>
+                <Button 
+                  size="sm" 
+                  variant="outline" 
+                  onClick={disconnectWallet}
+                  className="text-xs px-2 py-1 h-6 border-red-500 text-red-500 hover:bg-red-500/20"
+                >
+                  Отключить
+                </Button>
+              </div>
+            ) : (
+              <Button 
+                size="sm" 
+                variant="outline" 
+                onClick={connectWallet}
+                disabled={isConnecting}
+                className="text-xs px-3 py-1 h-6 border-game-accent text-game-accent hover:bg-game-accent/20"
+              >
+                {isConnecting ? 'Подключение...' : 'Подключить кошелек'}
+              </Button>
+            )}
           </div>
         </div>
       </div>

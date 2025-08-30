@@ -1,0 +1,151 @@
+import { useState, useEffect, useCallback } from 'react';
+import { NearConnector } from '@hot-labs/near-connect';
+import { useToast } from '@/hooks/use-toast';
+
+interface WalletState {
+  isConnected: boolean;
+  accountId: string | null;
+  isConnecting: boolean;
+}
+
+export const useWallet = () => {
+  const { toast } = useToast();
+  const [walletState, setWalletState] = useState<WalletState>({
+    isConnected: false,
+    accountId: null,
+    isConnecting: false
+  });
+  const [connector, setConnector] = useState<NearConnector | null>(null);
+
+  useEffect(() => {
+    // Initialize connector
+    const nearConnector = new NearConnector({ 
+      network: "mainnet",
+      features: { 
+        signMessage: true, 
+        signTransaction: true,
+        signAndSendTransaction: true 
+      }
+    });
+
+    setConnector(nearConnector);
+
+    // Set up event listeners
+    nearConnector.on("wallet:signIn", async (event) => {
+      const wallet = await nearConnector.wallet();
+      const accountId = event.accounts[0]?.accountId;
+      
+      setWalletState({
+        isConnected: true,
+        accountId,
+        isConnecting: false
+      });
+      
+      // Save to localStorage for persistence
+      localStorage.setItem('walletConnected', 'true');
+      localStorage.setItem('walletAccountId', accountId || '');
+      
+      toast({
+        title: "Кошелек подключен",
+        description: `Подключен аккаунт: ${accountId}`,
+      });
+    });
+
+    nearConnector.on("wallet:signOut", async () => {
+      setWalletState({
+        isConnected: false,
+        accountId: null,
+        isConnecting: false
+      });
+      
+      // Clear localStorage
+      localStorage.removeItem('walletConnected');
+      localStorage.removeItem('walletAccountId');
+      
+      toast({
+        title: "Кошелек отключен",
+        description: "Вы успешно отключили кошелек",
+      });
+    });
+
+    // Check for existing connection
+    const isConnected = localStorage.getItem('walletConnected') === 'true';
+    const accountId = localStorage.getItem('walletAccountId');
+    
+    if (isConnected && accountId) {
+      setWalletState({
+        isConnected: true,
+        accountId,
+        isConnecting: false
+      });
+    }
+
+    return () => {
+      // Cleanup listeners if needed
+    };
+  }, [toast]);
+
+  const connectWallet = useCallback(async () => {
+    if (!connector) return;
+    
+    setWalletState(prev => ({ ...prev, isConnecting: true }));
+    
+    try {
+      // Use the wallets property to get available wallets
+      const wallets = connector.wallets;
+      if (wallets && wallets.length > 0) {
+        // For now, let's try to connect with the first available wallet
+        console.log('Available wallets:', wallets);
+        // Trigger connection with first wallet
+        const firstWallet = wallets[0];
+        await firstWallet.signIn({ 
+          contractId: 'your-app.near', // Replace with your actual contract ID
+          methodNames: [] // Optional: specify method names if needed
+        });
+      } else {
+        throw new Error('No wallets available');
+      }
+    } catch (error) {
+      console.error('Wallet connection error:', error);
+      setWalletState(prev => ({ ...prev, isConnecting: false }));
+      toast({
+        title: "Ошибка подключения",
+        description: "Не удалось подключить кошелек",
+        variant: "destructive"
+      });
+    }
+  }, [connector, toast]);
+
+  const disconnectWallet = useCallback(async () => {
+    if (!connector) return;
+    
+    try {
+      const wallet = await connector.wallet();
+      if (wallet) {
+        await wallet.signOut();
+      }
+    } catch (error) {
+      console.error('Wallet disconnect error:', error);
+      // Force disconnect on error
+      setWalletState({
+        isConnected: false,
+        accountId: null,
+        isConnecting: false
+      });
+      localStorage.removeItem('walletConnected');
+      localStorage.removeItem('walletAccountId');
+    }
+  }, [connector]);
+
+  const getWallet = useCallback(async () => {
+    if (!connector || !walletState.isConnected) return null;
+    return await connector.wallet();
+  }, [connector, walletState.isConnected]);
+
+  return {
+    ...walletState,
+    connectWallet,
+    disconnectWallet,
+    getWallet
+  };
+};
