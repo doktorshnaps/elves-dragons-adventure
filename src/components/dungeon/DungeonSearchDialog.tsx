@@ -58,6 +58,23 @@ export const DungeonSearchDialog = ({
   const { playerStats } = usePlayerState();
 
   React.useEffect(() => {
+    // Check for team battle state first
+    const teamBattleState = localStorage.getItem('teamBattleState');
+    const hasActiveBattle = localStorage.getItem('activeBattleInProgress') === 'true';
+    
+    if (teamBattleState && hasActiveBattle) {
+      try {
+        const state = JSON.parse(teamBattleState);
+        if (state?.selectedDungeon) {
+          setActiveDungeon(state.selectedDungeon);
+          return;
+        }
+      } catch (error) {
+        console.error('Error parsing teamBattleState:', error);
+      }
+    }
+    
+    // Fallback to regular battle state
     const battleState = localStorage.getItem('battleState');
     if (battleState) {
       try {
@@ -72,12 +89,22 @@ export const DungeonSearchDialog = ({
   }, []);
 
   const handleDungeonSelect = (dungeonType: DungeonType) => {
-    const route = dungeonRoutes[dungeonType];
-    navigate(route);
+    // Only allow selection if no active dungeon or if it's the active dungeon
+    if (!activeDungeon || activeDungeon === dungeonType) {
+      const route = dungeonRoutes[dungeonType];
+      navigate(route);
+    }
   };
 
-  const canEnterDungeon = (requiredLevel: number) => {
-    return !isHealthTooLow && hasActiveCards && energyState.current > 0;
+  const canEnterDungeon = (dungeonType: DungeonType, requiredLevel: number) => {
+    const basicRequirements = !isHealthTooLow && hasActiveCards && energyState.current > 0;
+    
+    // If there's an active dungeon, only allow access to that specific dungeon
+    if (activeDungeon) {
+      return activeDungeon === dungeonType;
+    }
+    
+    return basicRequirements;
   };
 
   return (
@@ -102,31 +129,41 @@ export const DungeonSearchDialog = ({
             {activeDungeon ? 'Активное подземелье' : 'Выбор подземелья'}
           </h2>
           
-          {!activeDungeon && (
-            <>
-              <EnergyDisplay energyState={energyState} timeUntilNext={timeUntilNext} />
-              
-              <div className="mb-4">
-                <p className="text-game-accent">Баланс: {balance} ELL</p>
-              </div>
+          <EnergyDisplay energyState={energyState} timeUntilNext={timeUntilNext} />
+          
+          <div className="mb-4">
+            <p className="text-game-accent">Баланс: {balance} ELL</p>
+          </div>
 
-              <div className="space-y-2">
-                {Object.entries(dungeonLevelRequirements).map(([dungeon, requiredLevel]) => (
-                  <Button
-                    key={dungeon}
-                    onClick={() => handleDungeonSelect(dungeon as DungeonType)}
-                    disabled={!canEnterDungeon(requiredLevel)}
-                    className="w-full bg-game-surface border-game-accent text-game-accent hover:bg-game-surface/80"
-                  >
-                    {dungeonNames[dungeon as keyof typeof dungeonNames]}
-                  </Button>
-                ))}
-              </div>
-            </>
-          )}
+          <div className="space-y-2">
+            {Object.entries(dungeonLevelRequirements).map(([dungeon, requiredLevel]) => {
+              const isActiveDungeon = activeDungeon === dungeon;
+              const canEnter = canEnterDungeon(dungeon as DungeonType, requiredLevel);
+              
+              return (
+                <Button
+                  key={dungeon}
+                  onClick={() => handleDungeonSelect(dungeon as DungeonType)}
+                  disabled={!canEnter}
+                  className={`w-full border transition-all ${
+                    isActiveDungeon 
+                      ? 'bg-green-600 hover:bg-green-700 border-green-500 text-white shadow-lg shadow-green-500/50' 
+                      : activeDungeon 
+                        ? 'bg-muted/50 border-muted text-muted-foreground cursor-not-allowed opacity-50'
+                        : 'bg-game-surface border-game-accent text-game-accent hover:bg-game-surface/80'
+                  }`}
+                >
+                  {dungeonNames[dungeon as keyof typeof dungeonNames]}
+                  {isActiveDungeon && <span className="ml-2">⚔️</span>}
+                </Button>
+              );
+            })}
+          </div>
 
           {activeDungeon && (
-            <ActiveDungeonButton activeDungeon={activeDungeon} />
+            <p className="text-sm text-muted-foreground mt-4">
+              У вас есть активный бой в подземелье. Завершите его или сдайтесь, чтобы войти в другое подземелье.
+            </p>
           )}
 
           <Button
