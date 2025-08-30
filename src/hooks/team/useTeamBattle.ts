@@ -310,10 +310,12 @@ export const useTeamBattle = (dungeonType: DungeonType, initialLevel: number = 1
     });
 
     localStorage.removeItem('teamBattleState');
+    localStorage.removeItem('activeBattleInProgress');
   };
 
   const resetBattle = () => {
     localStorage.removeItem('teamBattleState');
+    localStorage.removeItem('activeBattleInProgress');
     setBattleState({
       playerPairs: [],
       opponents: [],

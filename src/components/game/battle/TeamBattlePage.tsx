@@ -14,7 +14,12 @@ export const TeamBattlePage: React.FC<TeamBattlePageProps> = ({
   dungeonType
 }) => {
   const navigate = useNavigate();
-  const [battleStarted, setBattleStarted] = useState(false);
+  const [battleStarted, setBattleStarted] = useState<boolean>(() => {
+    // Check if there's an active battle to resume
+    const hasActiveBattle = localStorage.getItem('activeBattleInProgress') === 'true';
+    const hasSavedState = localStorage.getItem('teamBattleState');
+    return hasActiveBattle && !!hasSavedState;
+  });
   const {
     battleState,
     attackOrder,
@@ -29,14 +34,17 @@ export const TeamBattlePage: React.FC<TeamBattlePageProps> = ({
     aliveOpponents
   } = useTeamBattle(dungeonType);
   const handleStartBattle = () => {
+    localStorage.setItem('activeBattleInProgress', 'true');
     setBattleStarted(true);
   };
   const handleBackToMenu = () => {
+    localStorage.removeItem('activeBattleInProgress');
     resetBattle();
     navigate('/dungeons');
   };
   const handleNextLevel = () => {
     handleLevelComplete();
+    localStorage.setItem('activeBattleInProgress', 'true');
     setBattleStarted(false);
   };
 

@@ -121,6 +121,8 @@ export const TeamBattleArena: React.FC<TeamBattleArenaProps> = ({
     }
   }, [isPlayerTurn, aliveOpponents.length, alivePairs.length]);
   const handleMenuReturn = () => {
+    // Mark that we're in an active battle for auto-resume
+    localStorage.setItem('activeBattleInProgress', 'true');
     navigate('/menu');
   };
 
@@ -128,6 +130,7 @@ export const TeamBattleArena: React.FC<TeamBattleArenaProps> = ({
     // Сброс состояния подземелья
     localStorage.removeItem('battleState');
     localStorage.removeItem('teamBattleState');
+    localStorage.removeItem('activeBattleInProgress');
     navigate('/dungeons');
   };
 
