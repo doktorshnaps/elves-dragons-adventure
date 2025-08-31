@@ -20,12 +20,7 @@ export const useWallet = () => {
   useEffect(() => {
     // Initialize connector
     const nearConnector = new NearConnector({ 
-      network: "mainnet",
-      features: { 
-        signMessage: true, 
-        signTransaction: true,
-        signAndSendTransaction: true 
-      }
+      network: "mainnet"
     });
 
     setConnector(nearConnector);
