@@ -91,20 +91,9 @@ export const useWallet = () => {
     setWalletState(prev => ({ ...prev, isConnecting: true }));
     
     try {
-      // Use the wallets property to get available wallets
-      const wallets = connector.wallets;
-      if (wallets && wallets.length > 0) {
-        // For now, let's try to connect with the first available wallet
-        console.log('Available wallets:', wallets);
-        // Trigger connection with first wallet
-        const firstWallet = wallets[0];
-        await firstWallet.signIn({ 
-          contractId: 'your-app.near', // Replace with your actual contract ID
-          methodNames: [] // Optional: specify method names if needed
-        });
-      } else {
-        throw new Error('No wallets available');
-      }
+      // According to docs, we need to trigger the connector which will show modal
+      // The signIn event will be triggered when user successfully connects
+      await connector.connect();
     } catch (error) {
       console.error('Wallet connection error:', error);
       setWalletState(prev => ({ ...prev, isConnecting: false }));
