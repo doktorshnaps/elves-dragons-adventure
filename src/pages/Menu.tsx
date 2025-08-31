@@ -1,7 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 import { Swords, ShoppingCart, BookOpen, Store, Shield, Users, DollarSign, LogOut, Home, Wallet } from "lucide-react";
-import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import { useGameData } from "@/hooks/useGameData";
 import { useGameInitialization } from "@/components/game/initialization/useGameInitialization";
@@ -10,16 +9,9 @@ import { useWallet } from "@/hooks/useWallet";
 import { useState, useEffect } from "react";
 export const Menu = () => {
   const navigate = useNavigate();
-  const {
-    signOut
-  } = useAuth();
-  const {
-    toast
-  } = useToast();
-  const {
-    gameData,
-    updateGameData
-  } = useGameData();
+  const { toast } = useToast();
+  const { gameData } = useGameData();
+  const { isConnected, accountId, isConnecting, connectWallet, disconnectWallet } = useWallet();
   const [cards, setCards] = useState(() => {
     const savedCards = localStorage.getItem('gameCards');
     return savedCards ? JSON.parse(savedCards) : [];
@@ -29,24 +21,9 @@ export const Menu = () => {
     setShowFirstTimePack
   } = useGameInitialization(setCards);
   
-  const { isConnected, accountId, isConnecting, connectWallet, disconnectWallet } = useWallet();
-  const handleSignOut = async () => {
-    const {
-      error
-    } = await signOut();
-    if (error) {
-      toast({
-        title: "Ошибка выхода",
-        description: error.message,
-        variant: "destructive"
-      });
-    } else {
-      toast({
-        title: "Выход выполнен",
-        description: "Вы успешно вышли из игры"
-      });
-      navigate('/auth');
-    }
+  const handleDisconnectWallet = async () => {
+    await disconnectWallet();
+    navigate('/auth');
   };
 
   // Слушаем обновления карт
@@ -152,9 +129,9 @@ export const Menu = () => {
           <span>Убежище</span>
         </Button>
 
-        <Button variant="outline" className="h-24 bg-game-surface/80 border-red-500 text-red-500 hover:bg-red-500/20 flex flex-col items-center justify-center gap-2" onClick={handleSignOut}>
+        <Button variant="outline" className="h-24 bg-game-surface/80 border-red-500 text-red-500 hover:bg-red-500/20 flex flex-col items-center justify-center gap-2" onClick={handleDisconnectWallet}>
           <LogOut className="w-8 h-8" />
-          <span>Выход</span>
+          <span>Отключить кошелек</span>
         </Button>
       </div>
 

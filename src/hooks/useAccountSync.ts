@@ -1,14 +1,16 @@
 import { useEffect } from 'react';
 import { useGameStore } from '@/stores/gameStore';
-import { useAuth } from '@/hooks/useAuth';
+import { useWallet } from '@/hooks/useWallet';
 
 export const useAccountSync = () => {
-  const { user } = useAuth();
-  const { syncAccountData } = useGameStore();
+  const { isConnected, accountId } = useWallet();
+  const { syncAccountData, initializeAccountData } = useGameStore();
 
   useEffect(() => {
-    if (user) {
-      syncAccountData();
+    if (isConnected && accountId) {
+      initializeAccountData(accountId).then(() => {
+        syncAccountData(accountId);
+      });
     }
-  }, [user, syncAccountData]);
+  }, [isConnected, accountId, syncAccountData, initializeAccountData]);
 };

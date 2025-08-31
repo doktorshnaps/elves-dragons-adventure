@@ -41,7 +41,8 @@ interface GameState {
   setAccountLevel: (level: number) => void;
   setAccountExperience: (experience: number) => void;
   addAccountExperience: (amount: number) => Promise<void>;
-  syncAccountData: () => Promise<void>;
+  syncAccountData: (walletAddress: string) => Promise<void>;
+  initializeAccountData: (walletAddress: string) => Promise<void>;
   setAccountData: (level: number, experience: number) => void;
   
   // Computed values
@@ -104,40 +105,82 @@ export const useGameStore = create<GameState>()(
         
         // Синхронизируем с Supabase
         try {
-          const { data: { user } } = await supabase.auth.getUser();
-          if (user) {
+          const walletAddress = localStorage.getItem('walletAccountId');
+          if (walletAddress) {
             await supabase
               .from('game_data')
               .update({ 
                 account_level: newLevel, 
                 account_experience: newXP 
               })
-              .eq('user_id', user.id);
+              .eq('wallet_address', walletAddress);
           }
         } catch (error) {
           console.error('Failed to sync account data to Supabase:', error);
         }
       },
 
-      syncAccountData: async () => {
+      syncAccountData: async (walletAddress: string) => {
         try {
-          const { data: { user } } = await supabase.auth.getUser();
-          if (user) {
-            const { data, error } = await supabase
-              .from('game_data')
-              .select('account_level, account_experience')
-              .eq('user_id', user.id)
-              .single();
+          const { data, error } = await supabase
+            .from('game_data')
+            .select('account_level, account_experience, balance, cards, inventory, selected_team, dragon_eggs')
+            .eq('wallet_address', walletAddress)
+            .maybeSingle();
 
             if (data && !error) {
               set({ 
                 accountLevel: data.account_level || 1, 
-                accountExperience: data.account_experience || 0 
+                accountExperience: data.account_experience || 0,
+                balance: data.balance || 100,
+                cards: Array.isArray(data.cards) ? (data.cards as unknown as Card[]) : [],
+                inventory: Array.isArray(data.inventory) ? (data.inventory as unknown as Item[]) : [],
+                selectedTeam: Array.isArray(data.selected_team) ? data.selected_team : [],
+                dragonEggs: Array.isArray(data.dragon_eggs) ? (data.dragon_eggs as unknown as DragonEgg[]) : []
               });
             }
-          }
         } catch (error) {
           console.error('Failed to sync account data from Supabase:', error);
+        }
+      },
+
+      initializeAccountData: async (walletAddress: string) => {
+        try {
+          // Check if account already exists
+          const { data: existingData } = await supabase
+            .from('game_data')
+            .select('id')
+            .eq('wallet_address', walletAddress)
+            .maybeSingle();
+            
+           if (!existingData) {
+             // Create new account data for this wallet
+             await supabase
+               .from('game_data')
+               .insert({
+                 user_id: walletAddress,
+                 wallet_address: walletAddress,
+                 balance: 100,
+                 account_level: 1,
+                 account_experience: 0,
+                 cards: [],
+                 inventory: [],
+                 selected_team: [],
+                 dragon_eggs: [],
+                 initialized: true
+               });
+               
+             // Also create profile
+             await supabase
+               .from('profiles')
+               .insert({
+                 user_id: walletAddress,
+                 wallet_address: walletAddress,
+                 display_name: walletAddress.substring(0, 8) + '...'
+               });
+           }
+        } catch (error) {
+          console.error('Failed to initialize account data:', error);
         }
       },
       

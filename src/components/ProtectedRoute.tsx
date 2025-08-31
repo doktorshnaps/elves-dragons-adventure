@@ -1,4 +1,4 @@
-import { useAuth } from "@/hooks/useAuth";
+import { useWallet } from "@/hooks/useWallet";
 import { Navigate } from "react-router-dom";
 
 interface ProtectedRouteProps {
@@ -6,17 +6,17 @@ interface ProtectedRouteProps {
 }
 
 export const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
-  const { user, loading } = useAuth();
+  const { isConnected, isConnecting } = useWallet();
 
-  if (loading) {
+  if (isConnecting) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-purple-900 to-black">
-        <div className="text-white text-xl">Загрузка...</div>
+        <div className="text-white text-xl">Подключение кошелька...</div>
       </div>
     );
   }
 
-  if (!user) {
+  if (!isConnected) {
     return <Navigate to="/auth" replace />;
   }
 

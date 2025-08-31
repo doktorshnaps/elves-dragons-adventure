@@ -26,6 +26,7 @@ export type Database = {
           max_health: number
           updated_at: string
           user_id: string
+          wallet_address: string | null
         }
         Insert: {
           card_data: Json
@@ -38,6 +39,7 @@ export type Database = {
           max_health?: number
           updated_at?: string
           user_id: string
+          wallet_address?: string | null
         }
         Update: {
           card_data?: Json
@@ -50,6 +52,7 @@ export type Database = {
           max_health?: number
           updated_at?: string
           user_id?: string
+          wallet_address?: string | null
         }
         Relationships: []
       }
@@ -74,6 +77,7 @@ export type Database = {
           social_quests: Json | null
           updated_at: string
           user_id: string
+          wallet_address: string | null
         }
         Insert: {
           account_experience?: number
@@ -95,6 +99,7 @@ export type Database = {
           social_quests?: Json | null
           updated_at?: string
           user_id: string
+          wallet_address?: string | null
         }
         Update: {
           account_experience?: number
@@ -116,17 +121,20 @@ export type Database = {
           social_quests?: Json | null
           updated_at?: string
           user_id?: string
+          wallet_address?: string | null
         }
         Relationships: []
       }
       marketplace_listings: {
         Row: {
           buyer_id: string | null
+          buyer_wallet_address: string | null
           created_at: string
           id: string
           item: Json
           price: number
           seller_id: string
+          seller_wallet_address: string | null
           sold_at: string | null
           status: string
           type: string
@@ -134,11 +142,13 @@ export type Database = {
         }
         Insert: {
           buyer_id?: string | null
+          buyer_wallet_address?: string | null
           created_at?: string
           id?: string
           item: Json
           price: number
           seller_id: string
+          seller_wallet_address?: string | null
           sold_at?: string | null
           status?: string
           type: string
@@ -146,11 +156,13 @@ export type Database = {
         }
         Update: {
           buyer_id?: string | null
+          buyer_wallet_address?: string | null
           created_at?: string
           id?: string
           item?: Json
           price?: number
           seller_id?: string
+          seller_wallet_address?: string | null
           sold_at?: string | null
           status?: string
           type?: string
@@ -165,6 +177,7 @@ export type Database = {
           id: string
           updated_at: string
           user_id: string
+          wallet_address: string | null
         }
         Insert: {
           created_at?: string
@@ -172,6 +185,7 @@ export type Database = {
           id?: string
           updated_at?: string
           user_id: string
+          wallet_address?: string | null
         }
         Update: {
           created_at?: string
@@ -179,6 +193,7 @@ export type Database = {
           id?: string
           updated_at?: string
           user_id?: string
+          wallet_address?: string | null
         }
         Relationships: []
       }

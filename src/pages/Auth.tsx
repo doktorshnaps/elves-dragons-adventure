@@ -1,194 +1,81 @@
-import { useState, useEffect } from "react";
+import { useEffect } from "react";
 import { motion } from "framer-motion";
-import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
-import { useNavigate } from "react-router-dom";
+import { useWallet } from "@/hooks/useWallet";
+import { Navigate, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 
 export const Auth = () => {
-  const [isSignUp, setIsSignUp] = useState(false);
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [loading, setLoading] = useState(false);
-  const [rememberMe, setRememberMe] = useState(false);
-  const { signUp, signIn } = useAuth();
   const { toast } = useToast();
+  const { isConnected, isConnecting, connectWallet } = useWallet();
   const navigate = useNavigate();
 
-  // Prefill remembered email on mount and clean legacy password storage
+  // Redirect if already connected
   useEffect(() => {
-    const savedEmail = localStorage.getItem('rememberedEmail');
-    if (savedEmail) {
-      setEmail(savedEmail);
-      setRememberMe(true);
+    if (isConnected) {
+      navigate("/menu");
     }
-    // Remove any previously stored passwords for security
-    localStorage.removeItem('rememberedPassword');
-  }, []);
+  }, [isConnected, navigate]);
 
-  // Keep storage in sync (email only)
-  useEffect(() => {
-    if (rememberMe) {
-      if (email) localStorage.setItem('rememberedEmail', email);
-    } else {
-      localStorage.removeItem('rememberedEmail');
-    }
-    // Always ensure no password is stored
-    localStorage.removeItem('rememberedPassword');
-  }, [rememberMe, email]);
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoading(true);
-
-    console.log("Form submitted:", { isSignUp, email });
-
+  const handleConnectWallet = async () => {
     try {
-      if (isSignUp) {
-        console.log("Attempting sign up...");
-        const { error } = await signUp(email, password);
-        console.log("Sign up result:", { error });
-        
-        if (error) {
-          console.error("Sign up error:", error);
-          toast({
-            title: "Ошибка регистрации",
-            description: error.message,
-            variant: "destructive"
-          });
-        } else {
-          console.log("Sign up successful, showing success message");
-          toast({
-            title: "Регистрация успешна!",
-            description: "Теперь можете войти в аккаунт"
-          });
-          // Переключаем на форму входа после успешной регистрации
-          setIsSignUp(false);
-          // Очищаем поля
-          setEmail("");
-          setPassword("");
-        }
-      } else {
-        console.log("Attempting sign in...");
-        const { error } = await signIn(email, password);
-        console.log("Sign in result:", { error });
-        
-        if (error) {
-          console.error("Sign in error:", error);
-          toast({
-            title: "Ошибка входа",
-            description: error.message,
-            variant: "destructive"
-          });
-        } else {
-          console.log("Sign in successful, navigating to menu");
-          navigate("/menu");
-        }
-      }
-    } catch (err) {
-      console.error("Unexpected error:", err);
+      await connectWallet();
+    } catch (error) {
       toast({
-        title: "Неожиданная ошибка",
-        description: "Попробуйте снова",
-        variant: "destructive"
+        title: "Ошибка",
+        description: "Не удалось подключить кошелек",
+        variant: "destructive",
       });
-    } finally {
-      setLoading(false);
     }
   };
 
   return (
-    <div 
-      className="min-h-screen flex flex-col bg-cover bg-center bg-no-repeat relative"
-      style={{ 
-        backgroundImage: 'url("/lovable-uploads/86b5334c-bb41-4222-9077-09521913b631.png")',
-        backgroundSize: 'cover',
-        backgroundPosition: 'center',
-        backgroundRepeat: 'no-repeat'
-      }}
-    >
-      <div className="absolute inset-0 bg-black/40" />
+    <div className="min-h-screen relative overflow-hidden">
+      {/* Background */}
+      <div 
+        className="absolute inset-0 bg-cover bg-center bg-no-repeat"
+        style={{
+          backgroundImage: "url('https://images.unsplash.com/photo-1578662996442-48f60103fc96?ixlib=rb-4.0.3&auto=format&fit=crop&w=2070&q=80')"
+        }}
+      />
       
-      <div className="relative z-10 flex-grow flex items-center justify-center p-4">
+      {/* Dark overlay */}
+      <div className="absolute inset-0 bg-black/60" />
+      
+      {/* Content */}
+      <div className="relative z-10 min-h-screen flex items-center justify-center p-4">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8 }}
-          className="w-full max-w-md"
+          transition={{ duration: 0.5 }}
+          className="w-full max-w-md space-y-8"
         >
-          <div className="bg-black/60 backdrop-blur-sm rounded-lg p-8 border border-purple-500/30">
-            <h1 
-              className="text-4xl font-bold text-center mb-8"
-              style={{ 
-                fontFamily: "'MedievalSharp', cursive",
-                background: "linear-gradient(to right, #8B5CF6, #D946EF, #F97316)",
-                WebkitBackgroundClip: "text",
-                WebkitTextFillColor: "transparent"
-              }}
-            >
-              {isSignUp ? "Создать аккаунт" : "Вход в игру"}
+          <div className="text-center">
+            <h1 className="text-4xl font-bold text-white mb-2">
+              Dragon & Heroes
             </h1>
+            <p className="text-gray-300 text-lg">
+              Подключите NEAR кошелек для входа в игру
+            </p>
+          </div>
 
-            <form onSubmit={handleSubmit} className="space-y-6">
-              <div className="space-y-2">
-                <Label htmlFor="email" className="text-white">Email</Label>
-                <Input
-                  id="email"
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  autoComplete="email"
-                  required
-                  className="bg-black/50 border-purple-500/50 text-white focus:border-purple-400"
-                  placeholder="your@email.com"
-                />
+          <div className="bg-black/30 backdrop-blur-sm border border-white/20 rounded-lg p-8 space-y-6">
+            <div className="text-center space-y-4">
+              <div className="text-white/80 text-sm">
+                Ваш прогресс в игре будет привязан к адресу кошелька NEAR
               </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="password" className="text-white">Пароль</Label>
-                <Input
-                  id="password"
-                  type="password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  autoComplete="current-password"
-                  required
-                  className="bg-black/50 border-purple-500/50 text-white focus:border-purple-400"
-                  placeholder="Минимум 6 символов"
-                  minLength={6}
-                />
-              </div>
-
-              <div className="flex items-center gap-2">
-                <input
-                  id="remember"
-                  type="checkbox"
-                  checked={rememberMe}
-                  onChange={(e) => setRememberMe(e.target.checked)}
-                  className="h-4 w-4 rounded border-purple-500/50 bg-black/50"
-                />
-                <Label htmlFor="remember" className="text-purple-200 text-sm">Запомнить меня</Label>
-              </div>
-
+              
               <Button
-                type="submit"
-                disabled={loading}
-                className="w-full bg-purple-600 hover:bg-purple-700 text-white text-lg py-3"
+                onClick={handleConnectWallet}
+                disabled={isConnecting}
+                className="w-full bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white font-semibold py-3 rounded-lg transition-all duration-300"
               >
-                {loading ? "Загрузка..." : (isSignUp ? "Зарегистрироваться" : "Войти")}
+                {isConnecting ? "Подключение..." : "Подключить NEAR кошелек"}
               </Button>
-            </form>
-
-            <div className="mt-6 text-center">
-              <button
-                type="button"
-                onClick={() => setIsSignUp(!isSignUp)}
-                className="text-purple-300 hover:text-purple-200 underline"
-              >
-                {isSignUp ? "Уже есть аккаунт? Войти" : "Нет аккаунта? Создать"}
-              </button>
+              
+              <div className="text-xs text-gray-400 mt-4">
+                Для игры вам понадобится установленный NEAR кошелек
+              </div>
             </div>
           </div>
         </motion.div>
