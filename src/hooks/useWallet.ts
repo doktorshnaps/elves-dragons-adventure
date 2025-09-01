@@ -18,17 +18,41 @@ export const useWallet = () => {
   const [connector, setConnector] = useState<NearConnector | null>(null);
 
   useEffect(() => {
-    // Initialize connector
-    const nearConnector = new NearConnector({ 
-      network: "mainnet"
-    });
+    // Initialize connector (singleton on window)
+    const w = window as any;
+    if (!w.__nearConnector) {
+      w.__nearConnector = new NearConnector({ 
+        network: "mainnet"
+      });
+    }
+    const nearConnector = w.__nearConnector as NearConnector;
 
     setConnector(nearConnector);
 
+    // Listen for global wallet state updates to sync all hook instances
+    const onGlobalWalletState = (e: any) => {
+      const detail = e.detail || {};
+      setWalletState({
+        isConnected: !!detail.isConnected,
+        accountId: detail.accountId ?? null,
+        isConnecting: !!detail.isConnecting
+      });
+    };
+    window.addEventListener('near-wallet:state', onGlobalWalletState);
+
+    // Prepare single-attachment flag for connector listeners
+    const shouldAttachListeners = !w.__nearConnectorListenersAttached;
+    if (!w.__nearConnectorListenersAttached) {
+      w.__nearConnectorListenersAttached = true;
+    }
+
     // Set up event listeners
-    nearConnector.on("wallet:signIn", async (event) => {
+    if (shouldAttachListeners) nearConnector.on("wallet:signIn", async (event) => {
       const wallet = await nearConnector.wallet();
       const accountId = event.accounts[0]?.accountId;
+      
+      // Broadcast to all instances
+      window.dispatchEvent(new CustomEvent('near-wallet:state', { detail: { isConnected: true, accountId, isConnecting: false } }));
       
       setWalletState({
         isConnected: true,
@@ -49,7 +73,10 @@ export const useWallet = () => {
       });
     });
 
-    nearConnector.on("wallet:signOut", async () => {
+    if (shouldAttachListeners) nearConnector.on("wallet:signOut", async () => {
+      // Broadcast to all instances
+      window.dispatchEvent(new CustomEvent('near-wallet:state', { detail: { isConnected: false, accountId: null, isConnecting: false } }));
+
       setWalletState({
         isConnected: false,
         accountId: null,
@@ -80,7 +107,8 @@ export const useWallet = () => {
     }
 
     return () => {
-      // Cleanup listeners if needed
+      // Cleanup global listener
+      window.removeEventListener('near-wallet:state', onGlobalWalletState);
     };
   }, [toast]);
 
