@@ -36,6 +36,9 @@ export const useWallet = () => {
         isConnecting: false
       });
       
+      // Clear previous wallet data from localStorage
+      localStorage.removeItem('game-storage');
+      
       // Save to localStorage for persistence
       localStorage.setItem('walletConnected', 'true');
       localStorage.setItem('walletAccountId', accountId || '');
@@ -53,9 +56,10 @@ export const useWallet = () => {
         isConnecting: false
       });
       
-      // Clear localStorage
+      // Clear all localStorage data
       localStorage.removeItem('walletConnected');
       localStorage.removeItem('walletAccountId');
+      localStorage.removeItem('game-storage');
       
       toast({
         title: "Кошелек отключен",

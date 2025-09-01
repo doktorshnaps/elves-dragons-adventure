@@ -122,6 +122,18 @@ export const useGameStore = create<GameState>()(
 
       syncAccountData: async (walletAddress: string) => {
         try {
+          // Сброс состояния перед загрузкой новых данных
+          set({ 
+            accountLevel: 1, 
+            accountExperience: 0,
+            balance: 100,
+            cards: [],
+            inventory: [],
+            selectedTeam: [],
+            dragonEggs: [],
+            battleState: null
+          });
+
           const { data, error } = await supabase
             .from('game_data')
             .select('account_level, account_experience, balance, cards, inventory, selected_team, dragon_eggs')

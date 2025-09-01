@@ -13,7 +13,11 @@ export const Auth = () => {
   // Redirect if already connected
   useEffect(() => {
     if (isConnected) {
-      navigate("/menu");
+      // Небольшая задержка для завершения инициализации данных
+      const timer = setTimeout(() => {
+        navigate("/menu", { replace: true });
+      }, 100);
+      return () => clearTimeout(timer);
     }
   }, [isConnected, navigate]);
 
