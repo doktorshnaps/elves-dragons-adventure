@@ -18,41 +18,23 @@ export const useWallet = () => {
   const [connector, setConnector] = useState<NearConnector | null>(null);
 
   useEffect(() => {
-    // Initialize connector (singleton on window)
-    const w = window as any;
-    if (!w.__nearConnector) {
-      w.__nearConnector = new NearConnector({ 
-        network: "mainnet"
-      });
-    }
-    const nearConnector = w.__nearConnector as NearConnector;
+    console.log('🔵 useWallet: initializing connector');
+    
+    // Initialize connector
+    const nearConnector = new NearConnector({ 
+      network: "mainnet"
+    });
 
     setConnector(nearConnector);
 
-    // Listen for global wallet state updates to sync all hook instances
-    const onGlobalWalletState = (e: any) => {
-      const detail = e.detail || {};
-      setWalletState({
-        isConnected: !!detail.isConnected,
-        accountId: detail.accountId ?? null,
-        isConnecting: !!detail.isConnecting
-      });
-    };
-    window.addEventListener('near-wallet:state', onGlobalWalletState);
-
-    // Prepare single-attachment flag for connector listeners
-    const shouldAttachListeners = !w.__nearConnectorListenersAttached;
-    if (!w.__nearConnectorListenersAttached) {
-      w.__nearConnectorListenersAttached = true;
-    }
-
     // Set up event listeners
-    if (shouldAttachListeners) nearConnector.on("wallet:signIn", async (event) => {
+    nearConnector.on("wallet:signIn", async (event) => {
+      console.log('🟢 wallet:signIn event received', event);
+      
       const wallet = await nearConnector.wallet();
       const accountId = event.accounts[0]?.accountId;
       
-      // Broadcast to all instances
-      window.dispatchEvent(new CustomEvent('near-wallet:state', { detail: { isConnected: true, accountId, isConnecting: false } }));
+      console.log('📄 Setting wallet state:', { accountId, isConnected: true });
       
       setWalletState({
         isConnected: true,
@@ -67,16 +49,22 @@ export const useWallet = () => {
       localStorage.setItem('walletConnected', 'true');
       localStorage.setItem('walletAccountId', accountId || '');
       
+      console.log('✅ Wallet connected, navigating to menu');
+      
       toast({
         title: "Кошелек подключен",
         description: `Подключен аккаунт: ${accountId}`,
       });
+      
+      // Navigate directly after successful connection
+      setTimeout(() => {
+        window.location.href = '/menu';
+      }, 500);
     });
 
-    if (shouldAttachListeners) nearConnector.on("wallet:signOut", async () => {
-      // Broadcast to all instances
-      window.dispatchEvent(new CustomEvent('near-wallet:state', { detail: { isConnected: false, accountId: null, isConnecting: false } }));
-
+    nearConnector.on("wallet:signOut", async () => {
+      console.log('🔴 wallet:signOut event received');
+      
       setWalletState({
         isConnected: false,
         accountId: null,
@@ -98,7 +86,10 @@ export const useWallet = () => {
     const isConnected = localStorage.getItem('walletConnected') === 'true';
     const accountId = localStorage.getItem('walletAccountId');
     
+    console.log('📂 Checking localStorage:', { isConnected, accountId });
+    
     if (isConnected && accountId) {
+      console.log('🔄 Restoring wallet state from localStorage');
       setWalletState({
         isConnected: true,
         accountId,
@@ -107,22 +98,27 @@ export const useWallet = () => {
     }
 
     return () => {
-      // Cleanup global listener
-      window.removeEventListener('near-wallet:state', onGlobalWalletState);
+      console.log('🧹 useWallet cleanup');
     };
   }, [toast]);
 
   const connectWallet = useCallback(async () => {
-    if (!connector) return;
+    console.log('🎯 connectWallet called');
     
+    if (!connector) {
+      console.log('❌ No connector available');
+      return;
+    }
+    
+    console.log('⏳ Setting isConnecting to true');
     setWalletState(prev => ({ ...prev, isConnecting: true }));
     
     try {
-      // According to docs, we need to trigger the connector which will show modal
-      // The signIn event will be triggered when user successfully connects
+      console.log('🚀 Calling connector.connect()');
       await connector.connect();
+      console.log('✅ connector.connect() completed');
     } catch (error) {
-      console.error('Wallet connection error:', error);
+      console.error('❌ Wallet connection error:', error);
       setWalletState(prev => ({ ...prev, isConnecting: false }));
       toast({
         title: "Ошибка подключения",

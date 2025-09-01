@@ -10,14 +10,12 @@ export const Auth = () => {
   const { isConnected, isConnecting, connectWallet } = useWallet();
   const navigate = useNavigate();
 
-  // Redirect if already connected
+  // Redirect if already connected - simplified
   useEffect(() => {
+    console.log('🔍 Auth page: checking connection status:', { isConnected });
     if (isConnected) {
-      // Небольшая задержка для завершения инициализации данных
-      const timer = setTimeout(() => {
-        navigate("/menu", { replace: true });
-      }, 100);
-      return () => clearTimeout(timer);
+      console.log('✅ Already connected, redirecting to menu');
+      navigate("/menu", { replace: true });
     }
   }, [isConnected, navigate]);
 
