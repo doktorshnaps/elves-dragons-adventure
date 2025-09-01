@@ -1,5 +1,6 @@
-import { useWallet } from "@/hooks/useWallet";
-import { Navigate } from "react-router-dom";
+import { useEffect } from 'react';
+import { Navigate, useLocation } from 'react-router-dom';
+import { useWallet } from '@/hooks/useWallet';
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
@@ -7,6 +8,11 @@ interface ProtectedRouteProps {
 
 export const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
   const { isConnected, isConnecting } = useWallet();
+  const location = useLocation();
+
+  useEffect(() => {
+    console.log('🛡️ ProtectedRoute check:', { isConnected, isConnecting, path: location.pathname });
+  }, [isConnected, isConnecting, location.pathname]);
 
   if (isConnecting) {
     return (
@@ -17,6 +23,7 @@ export const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
   }
 
   if (!isConnected) {
+    console.log('❌ Not connected, redirecting to auth');
     return <Navigate to="/auth" replace />;
   }
 

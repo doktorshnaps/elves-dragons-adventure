@@ -44,6 +44,7 @@ interface GameState {
   syncAccountData: (walletAddress: string) => Promise<void>;
   initializeAccountData: (walletAddress: string) => Promise<void>;
   setAccountData: (level: number, experience: number) => void;
+  clearAllData: () => void;
   
   // Computed values
   getTeamStats: () => { power: number; defense: number; health: number; maxHealth: number };
@@ -194,6 +195,20 @@ export const useGameStore = create<GameState>()(
         } catch (error) {
           console.error('Failed to initialize account data:', error);
         }
+      },
+      
+      clearAllData: () => {
+        console.log('🧹 Clearing all game data');
+        set({
+          balance: 100,
+          cards: [],
+          inventory: [],
+          dragonEggs: [],
+          selectedTeam: [],
+          accountLevel: 1,
+          accountExperience: 0,
+          battleState: null
+        });
       },
       
       // Computed values

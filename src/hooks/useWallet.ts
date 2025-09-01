@@ -80,6 +80,11 @@ export const useWallet = () => {
         title: "Кошелек отключен",
         description: "Вы успешно отключили кошелек",
       });
+      
+      // Redirect to auth page
+      setTimeout(() => {
+        window.location.href = '/auth';
+      }, 500);
     });
 
     // Check for existing connection
