@@ -5,6 +5,7 @@ import { Item } from '@/types/inventory';
 import { DragonEgg } from '@/contexts/DragonEggContext';
 import { supabase } from '@/integrations/supabase/client';
 import { getLevelFromXP } from '@/utils/accountLeveling';
+import { v4 as uuidv4 } from 'uuid';
 
 interface GameState {
   // Core game data
@@ -166,32 +167,32 @@ export const useGameStore = create<GameState>()(
             .eq('wallet_address', walletAddress)
             .maybeSingle();
             
-           if (!existingData) {
-             // Create new account data for this wallet
-             await supabase
-               .from('game_data')
-               .insert({
-                 user_id: walletAddress,
-                 wallet_address: walletAddress,
-                 balance: 100,
-                 account_level: 1,
-                 account_experience: 0,
-                 cards: [],
-                 inventory: [],
-                 selected_team: [],
-                 dragon_eggs: [],
-                 initialized: true
-               });
-               
-             // Also create profile
-             await supabase
-               .from('profiles')
-               .insert({
-                 user_id: walletAddress,
-                 wallet_address: walletAddress,
-                 display_name: walletAddress.substring(0, 8) + '...'
-               });
-           }
+             if (!existingData) {
+               // Create new account data for this wallet
+               await supabase
+                 .from('game_data')
+                 .insert({
+                   user_id: uuidv4(),
+                   wallet_address: walletAddress,
+                   balance: 100,
+                   account_level: 1,
+                   account_experience: 0,
+                   cards: [],
+                   inventory: [],
+                   selected_team: [],
+                   dragon_eggs: [],
+                   initialized: true
+                 });
+                 
+               // Also create profile
+               await supabase
+                 .from('profiles')
+                 .insert({
+                   user_id: uuidv4(),
+                   wallet_address: walletAddress,
+                   display_name: walletAddress.substring(0, 8) + '...'
+                 });
+            }
         } catch (error) {
           console.error('Failed to initialize account data:', error);
         }
@@ -199,6 +200,13 @@ export const useGameStore = create<GameState>()(
       
       clearAllData: () => {
         console.log('🧹 Clearing all game data');
+        // Clear localStorage mirrors so a new wallet starts clean
+        const keys = [
+          'gameCards','gameBalance','gameInitialized','gameInventory','marketplaceListings','socialQuests',
+          'adventurePlayerStats','adventureCurrentMonster','dragonEggs','battleState','selectedTeam'
+        ];
+        keys.forEach(k => localStorage.removeItem(k));
+        
         set({
           balance: 100,
           cards: [],
