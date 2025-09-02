@@ -130,23 +130,35 @@ export const useWallet = () => {
   }, [connector, toast]);
 
   const disconnectWallet = useCallback(async () => {
-    if (!connector) return;
-    
     try {
-      const wallet = await connector.wallet();
-      if (wallet) {
-        await wallet.signOut();
-      }
-    } catch (error) {
-      console.error('Wallet disconnect error:', error);
-      // Force disconnect on error
+      // Immediately update state to prevent multiple clicks
       setWalletState({
         isConnected: false,
         accountId: null,
         isConnecting: false
       });
+      
+      // Clear localStorage immediately
       localStorage.removeItem('walletConnected');
       localStorage.removeItem('walletAccountId');
+      
+      // Then try to sign out from wallet
+      if (connector) {
+        const wallet = await connector.wallet();
+        if (wallet) {
+          await wallet.signOut();
+        }
+      }
+      
+      // Force navigation after a short delay
+      setTimeout(() => {
+        window.location.replace('/auth');
+      }, 100);
+      
+    } catch (error) {
+      console.error('Wallet disconnect error:', error);
+      // Force redirect even on error
+      window.location.replace('/auth');
     }
   }, [connector]);
 
