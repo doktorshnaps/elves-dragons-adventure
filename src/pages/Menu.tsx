@@ -9,9 +9,19 @@ import { useWallet } from "@/hooks/useWallet";
 import { useState, useEffect } from "react";
 export const Menu = () => {
   const navigate = useNavigate();
-  const { toast } = useToast();
-  const { gameData } = useGameData();
-  const { isConnected, accountId, isConnecting, connectWallet, disconnectWallet } = useWallet();
+  const {
+    toast
+  } = useToast();
+  const {
+    gameData
+  } = useGameData();
+  const {
+    isConnected,
+    accountId,
+    isConnecting,
+    connectWallet,
+    disconnectWallet
+  } = useWallet();
   const [cards, setCards] = useState(() => {
     const savedCards = localStorage.getItem('gameCards');
     return savedCards ? JSON.parse(savedCards) : [];
@@ -20,7 +30,6 @@ export const Menu = () => {
     showFirstTimePack,
     setShowFirstTimePack
   } = useGameInitialization(setCards);
-  
   const handleDisconnectWallet = async () => {
     await disconnectWallet();
     navigate('/auth');
@@ -58,32 +67,15 @@ export const Menu = () => {
         <div className="bg-game-surface/90 px-6 py-3 rounded-lg border border-game-accent">
           <div className="flex items-center gap-2">
             <Wallet className="w-5 h-5 text-game-accent" />
-            {isConnected ? (
-              <div className="flex items-center gap-2">
+            {isConnected ? <div className="flex items-center gap-2">
                 <span className="text-green-500 text-sm">●</span>
                 <span className="text-game-accent font-medium text-sm">
                   {accountId ? `${accountId.slice(0, 8)}...${accountId.slice(-4)}` : 'Подключен'}
                 </span>
-                <Button 
-                  size="sm" 
-                  variant="outline" 
-                  onClick={disconnectWallet}
-                  className="text-xs px-2 py-1 h-6 border-red-500 text-red-500 hover:bg-red-500/20"
-                >
-                  Отключить
-                </Button>
-              </div>
-            ) : (
-              <Button 
-                size="sm" 
-                variant="outline" 
-                onClick={connectWallet}
-                disabled={isConnecting}
-                className="text-xs px-3 py-1 h-6 border-game-accent text-game-accent hover:bg-game-accent/20"
-              >
+                
+              </div> : <Button size="sm" variant="outline" onClick={connectWallet} disabled={isConnecting} className="text-xs px-3 py-1 h-6 border-game-accent text-game-accent hover:bg-game-accent/20">
                 {isConnecting ? 'Подключение...' : 'Подключить кошелек'}
-              </Button>
-            )}
+              </Button>}
           </div>
         </div>
       </div>
