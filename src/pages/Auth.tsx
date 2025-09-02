@@ -20,7 +20,6 @@ export const Auth = () => {
     if (shouldRedirect) {
       console.log('✅ Already connected, redirecting to menu');
       navigate("/menu", { replace: true });
-      setTimeout(() => window.location.replace('/menu'), 50);
     }
   }, [isConnected]);
 

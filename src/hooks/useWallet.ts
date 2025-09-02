@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { NearConnector } from '@hot-labs/near-connect';
 import { useToast } from '@/hooks/use-toast';
+import { useNavigate } from 'react-router-dom';
 
 // Singleton NearConnector to avoid re-initialization across mounts
 let singletonConnector: NearConnector | null = null;
@@ -21,6 +22,7 @@ interface WalletState {
 
 export const useWallet = () => {
   const { toast } = useToast();
+  const navigate = useNavigate();
   const [walletState, setWalletState] = useState<WalletState>({
     isConnected: false,
     accountId: null,
@@ -59,10 +61,8 @@ export const useWallet = () => {
         console.log('✅ Wallet connected, navigating to menu');
         toast({ title: 'Кошелек подключен', description: `Подключен аккаунт: ${accountId}` });
 
-        // Force full reload and navigate
-        setTimeout(() => {
-          window.location.replace('/menu');
-        }, 300);
+        // Smooth navigation without full reload
+        navigate('/menu', { replace: true });
       });
 
       nearConnector.on('wallet:signOut', async () => {
@@ -77,10 +77,8 @@ export const useWallet = () => {
 
         toast({ title: 'Кошелек отключен', description: 'Вы успешно отключили кошелек' });
 
-        // Force full reload to auth
-        setTimeout(() => {
-          window.location.replace('/auth');
-        }, 300);
+        // Smooth navigation without full reload
+        navigate('/auth', { replace: true });
       });
     }
 
@@ -150,15 +148,13 @@ export const useWallet = () => {
         }
       }
       
-      // Force navigation after a short delay
-      setTimeout(() => {
-        window.location.replace('/auth');
-      }, 100);
+      // Smooth navigation without full reload
+      navigate('/auth', { replace: true });
       
     } catch (error) {
       console.error('Wallet disconnect error:', error);
-      // Force redirect even on error
-      window.location.replace('/auth');
+      // Navigate even on error
+      navigate('/auth', { replace: true });
     }
   }, [connector]);
 
