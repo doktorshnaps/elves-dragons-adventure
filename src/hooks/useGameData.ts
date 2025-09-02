@@ -1,7 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { useWallet } from '@/hooks/useWallet';
-import { v4 as uuidv4 } from 'uuid';
+import { useAuth } from '@/hooks/useAuth';
 import { Card } from '@/types/cards';
 import { useToast } from '@/hooks/use-toast';
 import { processCardsHealthRegeneration, initializeCardHealth } from '@/utils/cardHealthUtils';
@@ -25,7 +24,7 @@ interface GameData {
 }
 
 export const useGameData = () => {
-  const { accountId, isConnected } = useWallet();
+  const { user } = useAuth();
   const { toast } = useToast();
   const [gameData, setGameData] = useState<GameData>({
     balance: 0,
@@ -46,7 +45,7 @@ export const useGameData = () => {
 
   // Загрузка данных из Supabase
   const loadGameData = useCallback(async () => {
-    if (!accountId) {
+    if (!user) {
       setLoading(false);
       return;
     }
@@ -55,8 +54,8 @@ export const useGameData = () => {
       const { data, error } = await supabase
         .from('game_data')
         .select('*')
-        .eq('wallet_address', accountId)
-        .maybeSingle();
+        .eq('user_id', user.id)
+        .single();
 
       if (error && error.code !== 'PGRST116') {
         console.error('Error loading game data:', error);
@@ -64,97 +63,65 @@ export const useGameData = () => {
         return;
       }
 
-      let row = data as any | null;
-
-      if (!row) {
-        const newId = uuidv4();
-        const { data: inserted, error: insertError } = await supabase
-          .from('game_data')
-          .insert({
-            user_id: newId,
-            wallet_address: accountId,
-            balance: 100,
-            initialized: true,
-            cards: [],
-            inventory: [],
-            marketplace_listings: [],
-            social_quests: [],
-            adventure_player_stats: null,
-            adventure_current_monster: null,
-            dragon_eggs: [],
-            battle_state: null,
-            selected_team: [],
-            barracks_upgrades: [],
-            dragon_lair_upgrades: [],
-            account_level: 1,
-            account_experience: 0
-          })
-          .select('*')
-          .maybeSingle();
-
-        if (insertError) {
-          console.error('Error creating game data:', insertError);
-          setLoading(false);
-          return;
+      if (data) {
+        // Process cards with health initialization and regeneration
+        const rawCards = (data.cards as unknown as Card[]) || [];
+        const initializedCards = rawCards.map(initializeCardHealth);
+        const processedCards = processCardsHealthRegeneration(initializedCards);
+        
+        const newGameData: GameData = {
+          balance: data.balance || 0,
+          cards: processedCards,
+          initialized: data.initialized || false,
+          inventory: ((data as any).inventory as any[]) || [],
+          marketplaceListings: ((data as any).marketplace_listings as any[]) || [],
+          socialQuests: ((data as any).social_quests as any[]) || [],
+          adventurePlayerStats: (data as any).adventure_player_stats || null,
+          adventureCurrentMonster: (data as any).adventure_current_monster || null,
+          dragonEggs: ((data as any).dragon_eggs as any[]) || [],
+          battleState: (data as any).battle_state || null,
+          selectedTeam: ((data as any).selected_team as any[]) || [],
+          barracksUpgrades: ((data as any).barracks_upgrades as any[]) || [],
+          dragonLairUpgrades: ((data as any).dragon_lair_upgrades as any[]) || [],
+          accountLevel: (data as any).account_level || 1,
+          accountExperience: (data as any).account_experience || 0
+        };
+        
+        setGameData(newGameData);
+        
+        // Синхронизируем с localStorage для обратной совместимости
+        localStorage.setItem('gameCards', JSON.stringify(newGameData.cards));
+        localStorage.setItem('gameBalance', newGameData.balance.toString());
+        localStorage.setItem('gameInitialized', newGameData.initialized.toString());
+        localStorage.setItem('gameInventory', JSON.stringify(newGameData.inventory));
+        localStorage.setItem('marketplaceListings', JSON.stringify(newGameData.marketplaceListings));
+        localStorage.setItem('socialQuests', JSON.stringify(newGameData.socialQuests));
+        if (newGameData.adventurePlayerStats) {
+          localStorage.setItem('adventurePlayerStats', JSON.stringify(newGameData.adventurePlayerStats));
         }
-        row = inserted as any;
+        if (newGameData.adventureCurrentMonster) {
+          localStorage.setItem('adventureCurrentMonster', JSON.stringify(newGameData.adventureCurrentMonster));
+        }
+        localStorage.setItem('dragonEggs', JSON.stringify(newGameData.dragonEggs));
+        if (newGameData.battleState) {
+          localStorage.setItem('battleState', JSON.stringify(newGameData.battleState));
+        }
+        localStorage.setItem('selectedTeam', JSON.stringify(newGameData.selectedTeam));
       }
-
-      const rawCards = (row.cards as unknown as Card[]) || [];
-      const initializedCards = rawCards.map(initializeCardHealth);
-      const processedCards = processCardsHealthRegeneration(initializedCards);
-      
-      const newGameData: GameData = {
-        balance: row.balance || 0,
-        cards: processedCards,
-        initialized: row.initialized || false,
-        inventory: (row.inventory as any[]) || [],
-        marketplaceListings: (row.marketplace_listings as any[]) || [],
-        socialQuests: (row.social_quests as any[]) || [],
-        adventurePlayerStats: row.adventure_player_stats || null,
-        adventureCurrentMonster: row.adventure_current_monster || null,
-        dragonEggs: (row.dragon_eggs as any[]) || [],
-        battleState: row.battle_state || null,
-        selectedTeam: (row.selected_team as any[]) || [],
-        barracksUpgrades: (row.barracks_upgrades as any[]) || [],
-        dragonLairUpgrades: (row.dragon_lair_upgrades as any[]) || [],
-        accountLevel: row.account_level || 1,
-        accountExperience: row.account_experience || 0
-      };
-      
-      setGameData(newGameData);
-      
-      localStorage.setItem('gameCards', JSON.stringify(newGameData.cards));
-      localStorage.setItem('gameBalance', newGameData.balance.toString());
-      localStorage.setItem('gameInitialized', newGameData.initialized.toString());
-      localStorage.setItem('gameInventory', JSON.stringify(newGameData.inventory));
-      localStorage.setItem('marketplaceListings', JSON.stringify(newGameData.marketplaceListings));
-      localStorage.setItem('socialQuests', JSON.stringify(newGameData.socialQuests));
-      if (newGameData.adventurePlayerStats) {
-        localStorage.setItem('adventurePlayerStats', JSON.stringify(newGameData.adventurePlayerStats));
-      }
-      if (newGameData.adventureCurrentMonster) {
-        localStorage.setItem('adventureCurrentMonster', JSON.stringify(newGameData.adventureCurrentMonster));
-      }
-      localStorage.setItem('dragonEggs', JSON.stringify(newGameData.dragonEggs));
-      if (newGameData.battleState) {
-        localStorage.setItem('battleState', JSON.stringify(newGameData.battleState));
-      }
-      localStorage.setItem('selectedTeam', JSON.stringify(newGameData.selectedTeam));
     } catch (error) {
       console.error('Error in loadGameData:', error);
     } finally {
       setLoading(false);
     }
-  }, [accountId]);
+  }, [user]);
 
   // Обновление данных в Supabase
   const updateGameData = useCallback(async (updates: Partial<GameData>) => {
-    if (!accountId) return;
+    if (!user) return;
 
     try {
-      // Build payload only with provided fields
-      const payload: any = {};
+      // Формируем payload только из переданных полей, чтобы не затирать значения в БД
+      const payload: any = { user_id: user.id };
       if (updates.balance !== undefined) payload.balance = updates.balance;
       if (updates.cards !== undefined) payload.cards = updates.cards as any;
       if (updates.inventory !== undefined) payload.inventory = updates.inventory as any;
@@ -167,46 +134,27 @@ export const useGameData = () => {
       if (updates.selectedTeam !== undefined) payload.selected_team = updates.selectedTeam as any;
       if (updates.barracksUpgrades !== undefined) payload.barracks_upgrades = updates.barracksUpgrades as any;
       if (updates.dragonLairUpgrades !== undefined) payload.dragon_lair_upgrades = updates.dragonLairUpgrades as any;
+      // ВАЖНО: initialized обновляем только если явно передан
       if (updates.initialized !== undefined) payload.initialized = updates.initialized;
 
-      // Check if row exists
-      const { data: existing } = await supabase
+      const { error } = await supabase
         .from('game_data')
-        .select('id')
-        .eq('wallet_address', accountId)
-        .maybeSingle();
+        .upsert(payload, { onConflict: 'user_id' });
 
-      let dbError = null as any;
-      if (existing) {
-        const { error } = await supabase
-          .from('game_data')
-          .update(payload)
-          .eq('wallet_address', accountId);
-        dbError = error;
-      } else {
-        const { error } = await supabase
-          .from('game_data')
-          .insert({
-            user_id: uuidv4(),
-            wallet_address: accountId,
-            ...payload,
-          });
-        dbError = error;
-      }
-
-      if (dbError) {
-        console.error('Error updating game data:', dbError);
+      if (error) {
+        console.error('Error updating game data:', error);
         toast({
-          title: 'Ошибка сохранения',
-          description: 'Не удалось сохранить данные игры',
-          variant: 'destructive'
+          title: "Ошибка сохранения",
+          description: "Не удалось сохранить данные игры",
+          variant: "destructive"
         });
         return;
       }
 
+      // Локально также не трогаем initialized, если он не был в updates
       setGameData((prev) => ({ ...prev, ...updates }));
 
-      // Sync only changed keys to localStorage
+      // Синхронизируем только изменённые ключи в localStorage
       if (updates.cards !== undefined) localStorage.setItem('gameCards', JSON.stringify(updates.cards));
       if (updates.balance !== undefined) localStorage.setItem('gameBalance', String(updates.balance));
       if (updates.initialized !== undefined) localStorage.setItem('gameInitialized', String(updates.initialized));
@@ -225,19 +173,25 @@ export const useGameData = () => {
       }
       if (updates.selectedTeam !== undefined) localStorage.setItem('selectedTeam', JSON.stringify(updates.selectedTeam));
 
-      // Dispatch UI update events
+      // Отправляем события для обновления UI
       if (updates.balance !== undefined) {
-        const balanceEvent = new CustomEvent('balanceUpdate', { detail: { balance: updates.balance } });
+        const balanceEvent = new CustomEvent('balanceUpdate', { 
+          detail: { balance: updates.balance }
+        });
         window.dispatchEvent(balanceEvent);
       }
+
       if (updates.cards !== undefined) {
-        const cardsEvent = new CustomEvent('cardsUpdate', { detail: { cards: updates.cards } });
+        const cardsEvent = new CustomEvent('cardsUpdate', { 
+          detail: { cards: updates.cards }
+        });
         window.dispatchEvent(cardsEvent);
       }
+
     } catch (error) {
       console.error('Error in updateGameData:', error);
     }
-  }, [accountId, toast]);
+  }, [user, toast]);
 
   // Загружаем данные при инициализации
   useEffect(() => {

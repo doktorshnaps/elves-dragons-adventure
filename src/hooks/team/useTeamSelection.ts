@@ -7,7 +7,14 @@ import { TeamPair } from '@/components/game/team/DeckSelection';
 export const useTeamSelection = () => {
   const { gameData, updateGameData } = useGameData();
   const [selectedPairs, setSelectedPairs] = useState<TeamPair[]>([]);
-  const [cards, setCards] = useState<CardType[]>(gameData.cards || []);
+  const [cards, setCards] = useState<CardType[]>(() => {
+    try {
+      const saved = localStorage.getItem('gameCards');
+      return saved ? JSON.parse(saved) : (gameData.cards || []);
+    } catch {
+      return gameData.cards || [];
+    }
+  });
 
   // Keep local cards in sync with game data
   useEffect(() => {
@@ -33,15 +40,26 @@ export const useTeamSelection = () => {
     }
   });
 
-  // Listen for cross-app card updates
+  // Listen for cross-app card updates and localStorage changes
   useEffect(() => {
     const handleCardsUpdate = (e: CustomEvent<{ cards: CardType[] }>) => {
       if (e.detail?.cards) setCards(e.detail.cards);
     };
+    const handleStorageChange = () => {
+      try {
+        const saved = localStorage.getItem('gameCards');
+        if (saved) setCards(JSON.parse(saved));
+      } catch {}
+    };
 
     window.addEventListener('cardsUpdate', handleCardsUpdate as EventListener);
+    window.addEventListener('storage', handleStorageChange);
+    const interval = setInterval(handleStorageChange, 500);
+
     return () => {
       window.removeEventListener('cardsUpdate', handleCardsUpdate as EventListener);
+      window.removeEventListener('storage', handleStorageChange);
+      clearInterval(interval);
     };
   }, []);
 
