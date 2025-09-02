@@ -2,6 +2,17 @@ import { useState, useEffect, useCallback } from 'react';
 import { NearConnector } from '@hot-labs/near-connect';
 import { useToast } from '@/hooks/use-toast';
 
+// Singleton NearConnector to avoid re-initialization across mounts
+let singletonConnector: NearConnector | null = null;
+let listenersRegistered = false;
+
+const getNearConnector = () => {
+  if (!singletonConnector) {
+    singletonConnector = new NearConnector({ network: 'mainnet' });
+  }
+  return singletonConnector;
+};
+
 interface WalletState {
   isConnected: boolean;
   accountId: string | null;
@@ -19,87 +30,72 @@ export const useWallet = () => {
 
   useEffect(() => {
     console.log('🔵 useWallet: initializing connector');
-    
-    // Initialize connector
-    const nearConnector = new NearConnector({ 
-      network: "mainnet"
-    });
 
+    // Mark as initializing to prevent premature redirects
+    setWalletState((prev) => ({ ...prev, isConnecting: true }));
+
+    // Initialize or get singleton connector
+    const nearConnector = getNearConnector();
     setConnector(nearConnector);
 
-    // Set up event listeners
-    nearConnector.on("wallet:signIn", async (event) => {
-      console.log('🟢 wallet:signIn event received', event);
-      
-      const wallet = await nearConnector.wallet();
-      const accountId = event.accounts[0]?.accountId;
-      
-      console.log('📄 Setting wallet state:', { accountId, isConnected: true });
-      
-      setWalletState({
-        isConnected: true,
-        accountId,
-        isConnecting: false
-      });
-      
-      // Clear previous wallet data from localStorage
-      localStorage.removeItem('game-storage');
-      
-      // Save to localStorage for persistence
-      localStorage.setItem('walletConnected', 'true');
-      localStorage.setItem('walletAccountId', accountId || '');
-      
-      console.log('✅ Wallet connected, navigating to menu');
-      
-      toast({
-        title: "Кошелек подключен",
-        description: `Подключен аккаунт: ${accountId}`,
-      });
-      
-      // Navigate directly after successful connection
-      setTimeout(() => {
-        window.location.href = '/menu';
-      }, 500);
-    });
+    // Set up event listeners once
+    if (!listenersRegistered) {
+      listenersRegistered = true;
 
-    nearConnector.on("wallet:signOut", async () => {
-      console.log('🔴 wallet:signOut event received');
-      
-      setWalletState({
-        isConnected: false,
-        accountId: null,
-        isConnecting: false
+      nearConnector.on('wallet:signIn', async (event) => {
+        console.log('🟢 wallet:signIn event received', event);
+        const accountId = event.accounts[0]?.accountId;
+
+        console.log('📄 Setting wallet state:', { accountId, isConnected: true });
+        setWalletState({ isConnected: true, accountId, isConnecting: false });
+
+        // Reset previous game cache
+        localStorage.removeItem('game-storage');
+
+        // Persist wallet connection
+        localStorage.setItem('walletConnected', 'true');
+        localStorage.setItem('walletAccountId', accountId || '');
+
+        console.log('✅ Wallet connected, navigating to menu');
+        toast({ title: 'Кошелек подключен', description: `Подключен аккаунт: ${accountId}` });
+
+        // Force full reload and navigate
+        setTimeout(() => {
+          window.location.replace('/menu');
+        }, 300);
       });
-      
-      // Clear all localStorage data
-      localStorage.removeItem('walletConnected');
-      localStorage.removeItem('walletAccountId');
-      localStorage.removeItem('game-storage');
-      
-      toast({
-        title: "Кошелек отключен",
-        description: "Вы успешно отключили кошелек",
+
+      nearConnector.on('wallet:signOut', async () => {
+        console.log('🔴 wallet:signOut event received');
+
+        setWalletState({ isConnected: false, accountId: null, isConnecting: false });
+
+        // Clear persisted data
+        localStorage.removeItem('walletConnected');
+        localStorage.removeItem('walletAccountId');
+        localStorage.removeItem('game-storage');
+
+        toast({ title: 'Кошелек отключен', description: 'Вы успешно отключили кошелек' });
+
+        // Force full reload to auth
+        setTimeout(() => {
+          window.location.replace('/auth');
+        }, 300);
       });
-      
-      // Redirect to auth page
-      setTimeout(() => {
-        window.location.href = '/auth';
-      }, 500);
-    });
+    }
 
     // Check for existing connection
     const isConnected = localStorage.getItem('walletConnected') === 'true';
     const accountId = localStorage.getItem('walletAccountId');
-    
+
     console.log('📂 Checking localStorage:', { isConnected, accountId });
-    
+
     if (isConnected && accountId) {
       console.log('🔄 Restoring wallet state from localStorage');
-      setWalletState({
-        isConnected: true,
-        accountId,
-        isConnecting: false
-      });
+      setWalletState({ isConnected: true, accountId, isConnecting: false });
+    } else {
+      // Finish initializing
+      setWalletState((prev) => ({ ...prev, isConnecting: false }));
     }
 
     return () => {

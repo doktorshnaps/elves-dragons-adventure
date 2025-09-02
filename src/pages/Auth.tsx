@@ -10,14 +10,19 @@ export const Auth = () => {
   const { isConnected, isConnecting, connectWallet } = useWallet();
   const navigate = useNavigate();
 
-  // Redirect if already connected - simplified
+  // Redirect if already connected (with localStorage fallback) and force full reload
   useEffect(() => {
-    console.log('🔍 Auth page: checking connection status:', { isConnected });
-    if (isConnected) {
+    const lsConnected = localStorage.getItem('walletConnected') === 'true';
+    const shouldRedirect = isConnected || lsConnected;
+
+    console.log('🔍 Auth page: checking connection status:', { isConnected, lsConnected });
+
+    if (shouldRedirect) {
       console.log('✅ Already connected, redirecting to menu');
       navigate("/menu", { replace: true });
+      setTimeout(() => window.location.replace('/menu'), 50);
     }
-  }, [isConnected, navigate]);
+  }, [isConnected]);
 
   const handleConnectWallet = async () => {
     try {
