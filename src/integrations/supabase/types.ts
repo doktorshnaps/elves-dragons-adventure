@@ -56,6 +56,51 @@ export type Database = {
         }
         Relationships: []
       }
+      card_templates: {
+        Row: {
+          card_type: string
+          created_at: string
+          defense: number
+          description: string | null
+          faction: string | null
+          health: number
+          id: string
+          image_url: string | null
+          name: string
+          power: number
+          rarity: string
+          updated_at: string
+        }
+        Insert: {
+          card_type?: string
+          created_at?: string
+          defense?: number
+          description?: string | null
+          faction?: string | null
+          health?: number
+          id?: string
+          image_url?: string | null
+          name: string
+          power?: number
+          rarity?: string
+          updated_at?: string
+        }
+        Update: {
+          card_type?: string
+          created_at?: string
+          defense?: number
+          description?: string | null
+          faction?: string | null
+          health?: number
+          id?: string
+          image_url?: string | null
+          name?: string
+          power?: number
+          rarity?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       game_data: {
         Row: {
           account_experience: number
@@ -196,6 +241,47 @@ export type Database = {
           wallet_address?: string | null
         }
         Relationships: []
+      }
+      user_nft_cards: {
+        Row: {
+          card_template_name: string
+          created_at: string
+          id: string
+          nft_contract_id: string
+          nft_metadata: Json | null
+          nft_token_id: string
+          updated_at: string
+          wallet_address: string
+        }
+        Insert: {
+          card_template_name: string
+          created_at?: string
+          id?: string
+          nft_contract_id: string
+          nft_metadata?: Json | null
+          nft_token_id: string
+          updated_at?: string
+          wallet_address: string
+        }
+        Update: {
+          card_template_name?: string
+          created_at?: string
+          id?: string
+          nft_contract_id?: string
+          nft_metadata?: Json | null
+          nft_token_id?: string
+          updated_at?: string
+          wallet_address?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_nft_cards_card_template_name_fkey"
+            columns: ["card_template_name"]
+            isOneToOne: false
+            referencedRelation: "card_templates"
+            referencedColumns: ["name"]
+          },
+        ]
       }
       wallet_connections: {
         Row: {

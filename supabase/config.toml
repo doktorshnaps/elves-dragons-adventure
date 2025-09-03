@@ -1,1 +1,36 @@
 project_id = "oimhwdymghkwxznjarkv"
+
+[api]
+enabled = true
+port = 54321
+schemas = ["public", "graphql_public"]
+extra_search_path = ["public", "extensions"]
+max_rows = 1000
+
+[auth]
+enabled = true
+port = 54324
+external_url = "http://127.0.0.1:54324"
+additional_redirect_urls = ["https://lvkgvzqhxewvgchonwvo.supabase.co/auth/v1/callback"]
+
+[db]
+enabled = true
+port = 54322
+major_version = 15
+
+[edge_functions]
+enabled = true
+port = 54323
+
+[functions.sync-nft-cards]
+verify_jwt = false
+
+[studio]
+enabled = true
+port = 54324
+api_url = "http://127.0.0.1:54321"
+
+[auth.email]
+enable_signup = true
+double_confirm_changes = true
+enable_confirmations = false

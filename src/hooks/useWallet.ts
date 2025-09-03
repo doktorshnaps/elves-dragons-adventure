@@ -3,6 +3,7 @@ import { NearConnector } from '@hot-labs/near-connect';
 import { useToast } from '@/hooks/use-toast';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
+import { useNFTCards } from './useNFTCards';
 
 // Singleton NearConnector to avoid re-initialization across mounts
 let singletonConnector: NearConnector | null = null;
@@ -63,6 +64,7 @@ const saveWalletConnection = async (walletAddress: string, isConnecting: boolean
 export const useWallet = () => {
   const { toast } = useToast();
   const navigate = useNavigate();
+  const { syncNFTCards } = useNFTCards();
   const [walletState, setWalletState] = useState<WalletState>({
     isConnected: false,
     accountId: null,
@@ -101,6 +103,14 @@ export const useWallet = () => {
         // Save wallet connection to Supabase
         if (accountId) {
           await saveWalletConnection(accountId, true);
+          
+          // Sync NFT cards from wallet
+          try {
+            console.log('🎮 Syncing NFT cards for wallet:', accountId);
+            await syncNFTCards(accountId);
+          } catch (error) {
+            console.error('Error syncing NFT cards:', error);
+          }
         }
 
         console.log('✅ Wallet connected, navigating to menu');
