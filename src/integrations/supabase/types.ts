@@ -197,6 +197,42 @@ export type Database = {
         }
         Relationships: []
       }
+      wallet_connections: {
+        Row: {
+          connected_at: string
+          created_at: string
+          disconnected_at: string | null
+          id: string
+          ip_address: string | null
+          is_active: boolean
+          updated_at: string
+          user_agent: string | null
+          wallet_address: string
+        }
+        Insert: {
+          connected_at?: string
+          created_at?: string
+          disconnected_at?: string | null
+          id?: string
+          ip_address?: string | null
+          is_active?: boolean
+          updated_at?: string
+          user_agent?: string | null
+          wallet_address: string
+        }
+        Update: {
+          connected_at?: string
+          created_at?: string
+          disconnected_at?: string | null
+          id?: string
+          ip_address?: string | null
+          is_active?: boolean
+          updated_at?: string
+          user_agent?: string | null
+          wallet_address?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never

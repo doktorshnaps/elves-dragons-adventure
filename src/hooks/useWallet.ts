@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { NearConnector } from '@hot-labs/near-connect';
 import { useToast } from '@/hooks/use-toast';
 import { useNavigate } from 'react-router-dom';
+import { supabase } from '@/integrations/supabase/client';
 
 // Singleton NearConnector to avoid re-initialization across mounts
 let singletonConnector: NearConnector | null = null;
@@ -19,6 +20,45 @@ interface WalletState {
   accountId: string | null;
   isConnecting: boolean;
 }
+
+// Helper function to save wallet connection data to Supabase
+const saveWalletConnection = async (walletAddress: string, isConnecting: boolean) => {
+  try {
+    if (isConnecting) {
+      // Mark any existing active connections as inactive first
+      await supabase
+        .from('wallet_connections')
+        .update({ 
+          is_active: false, 
+          disconnected_at: new Date().toISOString() 
+        })
+        .eq('wallet_address', walletAddress)
+        .eq('is_active', true);
+
+      // Create new connection record
+      await supabase
+        .from('wallet_connections')
+        .insert({
+          wallet_address: walletAddress,
+          is_active: true,
+          user_agent: navigator.userAgent,
+          connected_at: new Date().toISOString()
+        });
+    } else {
+      // Mark current connection as disconnected
+      await supabase
+        .from('wallet_connections')
+        .update({ 
+          is_active: false, 
+          disconnected_at: new Date().toISOString() 
+        })
+        .eq('wallet_address', walletAddress)
+        .eq('is_active', true);
+    }
+  } catch (error) {
+    console.error('Failed to save wallet connection data:', error);
+  }
+};
 
 export const useWallet = () => {
   const { toast } = useToast();
@@ -58,6 +98,11 @@ export const useWallet = () => {
         localStorage.setItem('walletConnected', 'true');
         localStorage.setItem('walletAccountId', accountId || '');
 
+        // Save wallet connection to Supabase
+        if (accountId) {
+          await saveWalletConnection(accountId, true);
+        }
+
         console.log('✅ Wallet connected, navigating to menu');
         toast({ title: 'Кошелек подключен', description: `Подключен аккаунт: ${accountId}` });
 
@@ -67,8 +112,15 @@ export const useWallet = () => {
 
       nearConnector.on('wallet:signOut', async () => {
         console.log('🔴 wallet:signOut event received');
+        
+        const currentAccountId = localStorage.getItem('walletAccountId');
 
         setWalletState({ isConnected: false, accountId: null, isConnecting: false });
+
+        // Save wallet disconnection to Supabase
+        if (currentAccountId) {
+          await saveWalletConnection(currentAccountId, false);
+        }
 
         // Clear persisted data
         localStorage.removeItem('walletConnected');
@@ -129,12 +181,19 @@ export const useWallet = () => {
 
   const disconnectWallet = useCallback(async () => {
     try {
+      const currentAccountId = walletState.accountId;
+      
       // Immediately update state to prevent multiple clicks
       setWalletState({
         isConnected: false,
         accountId: null,
         isConnecting: false
       });
+      
+      // Save wallet disconnection to Supabase
+      if (currentAccountId) {
+        await saveWalletConnection(currentAccountId, false);
+      }
       
       // Clear localStorage immediately
       localStorage.removeItem('walletConnected');
@@ -156,7 +215,7 @@ export const useWallet = () => {
       // Navigate even on error
       navigate('/auth', { replace: true });
     }
-  }, [connector]);
+  }, [connector, walletState.accountId]);
 
   const getWallet = useCallback(async () => {
     if (!connector || !walletState.isConnected) return null;
