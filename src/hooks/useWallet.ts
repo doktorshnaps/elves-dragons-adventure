@@ -9,9 +9,34 @@ import { useNFTCards } from './useNFTCards';
 let singletonConnector: NearConnector | null = null;
 let listenersRegistered = false;
 
+// Detect if running in Telegram WebApp
+const isTelegramWebApp = () => {
+  return typeof window !== 'undefined' && 
+         (window as any).Telegram && 
+         (window as any).Telegram.WebApp;
+};
+
 const getNearConnector = () => {
   if (!singletonConnector) {
-    singletonConnector = new NearConnector({ network: 'mainnet' });
+    const config: any = { network: 'mainnet' };
+    
+    // If running in Telegram, configure for Telegram environment
+    if (isTelegramWebApp()) {
+      config.options = {
+        telegramWebApp: true,
+        onWalletRedirect: (url: string) => {
+          // For HOT Wallet in Telegram, use the bot URL
+          if (url.includes('hot') || url.includes('here')) {
+            const telegramBotUrl = 'https://t.me/herewalletbot';
+            window.open(telegramBotUrl, '_blank');
+            return false; // Prevent default redirect
+          }
+          return true; // Allow default redirect for other wallets
+        }
+      };
+    }
+    
+    singletonConnector = new NearConnector(config);
   }
   return singletonConnector;
 };
