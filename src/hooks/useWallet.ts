@@ -25,11 +25,28 @@ const getNearConnector = () => {
       config.options = {
         telegramWebApp: true,
         onWalletRedirect: (url: string) => {
-          // For HOT Wallet in Telegram, use the bot URL
-          if (url.includes('hot') || url.includes('here')) {
-            const telegramBotUrl = 'https://t.me/herewalletbot';
-            window.open(telegramBotUrl, '_blank');
-            return false; // Prevent default redirect
+          try {
+            if (typeof window !== 'undefined' && (window as any).Telegram?.WebApp) {
+              const tg = (window as any).Telegram.WebApp;
+              // If the wallet wants to open a Telegram link/deeplink, open it via Telegram API
+              if (/^(https?:\/\/)?t\.me\//i.test(url) || /^tg:\/\//i.test(url)) {
+                tg.openTelegramLink(url);
+                return false; // Prevent default redirect (handled by Telegram)
+              }
+              // Heuristics for HOT/Here wallet inside Telegram
+              if (url.includes('hot_wallet') || url.includes('hot-labs') || url.includes('herewallet')) {
+                tg.openTelegramLink('https://t.me/hot_wallet/app');
+                return false;
+              }
+            }
+          } catch (e) {
+            console.warn('Telegram link open failed, falling back', e);
+          }
+
+          // Fallback for browsers: open Telegram links in a new tab
+          if (/^(https?:\/\/)?t\.me\//i.test(url)) {
+            window.open(url, '_blank');
+            return false;
           }
           return true; // Allow default redirect for other wallets
         }
