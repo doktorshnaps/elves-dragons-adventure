@@ -47,6 +47,16 @@ export const Equipment = () => {
           <ArrowLeft className="w-4 h-4 mr-2" />
           Вернуться в меню
         </Button>
+        <Button 
+          variant="outline" 
+          className="bg-game-accent/20 border-game-accent text-game-accent hover:bg-game-accent/30"
+          onClick={() => {
+            // TODO: Implement NFT minting functionality
+            console.log('Mint functionality will be implemented here');
+          }}
+        >
+          Mint NFT
+        </Button>
         <h1 className="text-2xl font-bold text-game-accent">Снаряжение</h1>
       </div>
       
