@@ -7,6 +7,7 @@ import { CardDisplay } from "../CardDisplay";
 import { CardPreviewModal } from "../cards/CardPreviewModal";
 import { useToast } from "@/hooks/use-toast";
 import { useCardHealthSync } from "@/hooks/useCardHealthSync";
+import { useNFTCardIntegration } from "@/hooks/useNFTCardIntegration";
 interface DeckSelectionProps {
   cards: CardType[];
   selectedPairs: TeamPair[];
@@ -35,6 +36,9 @@ export const DeckSelection = ({
   const [previewDeleteAction, setPreviewDeleteAction] = useState<{ label: string; action: () => void } | null>(null);
   const [localCards, setLocalCards] = useState<CardType[]>(cards);
   const { toast } = useToast();
+  
+  // Интеграция NFT карт
+  const { nftCards, isLoading: nftLoading } = useNFTCardIntegration();
 
   // Use health synchronization for cards
   useCardHealthSync({
@@ -42,10 +46,11 @@ export const DeckSelection = ({
     onCardsUpdate: setLocalCards
   });
 
-  // Обновляем локальные карты при изменении пропсов
+  // Обновляем локальные карты при изменении пропсов и NFT карт
   useEffect(() => {
-    setLocalCards(cards);
-  }, [cards]);
+    const combinedCards = [...cards, ...nftCards];
+    setLocalCards(combinedCards);
+  }, [cards, nftCards]);
 
   // Слушаем события обновления карт для немедленной синхронизации
   useEffect(() => {

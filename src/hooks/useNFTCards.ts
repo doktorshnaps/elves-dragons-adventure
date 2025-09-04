@@ -38,7 +38,8 @@ export const useNFTCards = () => {
       const { data, error } = await supabase.functions.invoke('sync-nft-cards', {
         body: { 
           wallet_address: walletAddress,
-          contract_id: contractId || 'heroesnft.near'
+          contract_id: contractId || 'heroesnft.near',
+          additional_contracts: ['doubledog.hot.tg']
         }
       });
 

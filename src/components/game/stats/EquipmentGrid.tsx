@@ -193,5 +193,66 @@ export const EquipmentGrid = () => {
     slot: "accessory2",
     title: "Брошь 2"
   }];
-  return;
+
+  return (
+    <div className="space-y-6">
+      <div className="grid grid-cols-3 gap-4 p-4 bg-game-surface/50 rounded-lg border border-game-accent">
+        <div className="text-center">
+          <div className="text-2xl font-bold text-red-400">{totalStats.power}</div>
+          <div className="text-sm text-game-accent">Сила</div>
+        </div>
+        <div className="text-center">
+          <div className="text-2xl font-bold text-blue-400">{totalStats.defense}</div>
+          <div className="text-sm text-game-accent">Защита</div>
+        </div>
+        <div className="text-center">
+          <div className="text-2xl font-bold text-green-400">{totalStats.health}</div>
+          <div className="text-sm text-game-accent">Здоровье</div>
+        </div>
+      </div>
+      
+      <div className="grid grid-cols-7 gap-2">
+        {slots.map((slotInfo) => (
+          <div
+            key={slotInfo.slot}
+            className="h-20 border-2 border-game-accent/30 rounded-lg flex items-center justify-center bg-game-surface/30 hover:bg-game-accent/20 cursor-pointer transition-colors"
+            onClick={() => handleSlotClick(slotInfo.slot, getEquippedItemForSlot(slotInfo.slot))}
+          >
+            {getEquippedItemForSlot(slotInfo.slot) ? (
+              <div className="text-xs text-center text-game-accent">
+                {getEquippedItemForSlot(slotInfo.slot)?.name}
+              </div>
+            ) : (
+              <div className="text-xs text-center text-game-accent/50">
+                {slotInfo.title}
+              </div>
+            )}
+          </div>
+        ))}
+      </div>
+
+      {selectedSlot && (
+        <div className="bg-game-surface/50 p-4 rounded-lg border border-game-accent">
+          <h3 className="text-lg font-bold text-game-accent mb-3">Доступные предметы для слота {selectedSlot}</h3>
+          <div className="grid grid-cols-3 gap-2">
+            {availableItems.map((item) => (
+              <div
+                key={item.id}
+                className="p-2 border border-game-accent/30 rounded-lg cursor-pointer hover:bg-game-accent/20 transition-colors"
+                onClick={() => handleEquipItem(item)}
+              >
+                <div className="text-sm text-game-accent">{item.name}</div>
+              </div>
+            ))}
+          </div>
+          <button
+            className="mt-3 px-4 py-2 bg-game-accent text-game-surface rounded-lg hover:bg-game-accent/80 transition-colors"
+            onClick={() => setSelectedSlot(null)}
+          >
+            Закрыть
+          </button>
+        </div>
+      )}
+    </div>
+  );
 };

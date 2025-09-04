@@ -29,6 +29,10 @@ export interface Card {
   faction?: Faction;
   magicResistance?: MagicResistance;
   image?: string;
+  isNFT?: boolean;
+  nftContractId?: string;
+  nftTokenId?: string;
+  description?: string;
 }
 
 export interface CardPack {

@@ -33,72 +33,80 @@ Deno.serve(async (req) => {
       'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9pbWh3ZHltZ2hrd3h6bmphcmt2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTQ1MTMxMjEsImV4cCI6MjA3MDA4OTEyMX0.97FbtgxM3nYtzTQWf8TpKqvxJ7h_pvhpBOd0SYRd05k'
     )
 
-    const { wallet_address, contract_id } = await req.json()
+    const { wallet_address, contract_id, additional_contracts = [] } = await req.json()
     
     if (!wallet_address) {
       throw new Error('Wallet address is required')
     }
 
     const contractId = contract_id || 'heroesnft.near' // Default NFT contract
+    const contractsToCheck = [contractId, ...additional_contracts.filter(c => c !== contractId)]
     
-    console.log(`📖 Reading NFTs for wallet: ${wallet_address} from contract: ${contractId}`)
+    console.log(`📖 Reading NFTs for wallet: ${wallet_address} from contracts: [${contractsToCheck.join(', ')}]`)
 
-    // Call NEAR RPC to get NFTs for this wallet
+    // Call NEAR RPC to get NFTs for this wallet from all contracts
     const nearRpcUrl = 'https://rpc.mainnet.near.org'
-    const rpcResponse = await fetch(nearRpcUrl, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        jsonrpc: '2.0',
-        id: 'dontcare',
-        method: 'query',
-        params: {
-          request_type: 'call_function',
-          finality: 'final',
-          account_id: contractId,
-          method_name: 'nft_tokens_for_owner',
-          args_base64: btoa(JSON.stringify({
-            account_id: wallet_address,
-            limit: 100
-          }))
-        }
+    const allNFTs = []
+    
+    for (const currentContract of contractsToCheck) {
+      console.log(`🔍 Checking contract: ${currentContract}`)
+      
+      const rpcResponse = await fetch(nearRpcUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          jsonrpc: '2.0',
+          id: 'dontcare',
+          method: 'query',
+          params: {
+            request_type: 'call_function',
+            finality: 'final',
+            account_id: currentContract,
+            method_name: 'nft_tokens_for_owner',
+            args_base64: btoa(JSON.stringify({
+              account_id: wallet_address,
+              limit: 100
+            }))
+          }
+        })
       })
-    })
+      
+      if (!rpcResponse.ok) {
+        console.log(`⚠️ Error fetching from ${currentContract}: ${rpcResponse.statusText}`)
+        continue
+      }
 
-    if (!rpcResponse.ok) {
-      throw new Error(`NEAR RPC error: ${rpcResponse.statusText}`)
+      const rpcData = await rpcResponse.json()
+      
+      if (rpcData.error) {
+        console.log(`⚠️ No NFTs found or contract error for ${currentContract}:`, rpcData.error)
+        continue
+      }
+
+      // Parse NFT data
+      const nftData: NFTResponse = JSON.parse(
+        new TextDecoder().decode(
+          Uint8Array.from(atob(rpcData.result.result), c => c.charCodeAt(0))
+        )
+      )
+
+      console.log(`🎮 Found ${nftData.tokens?.length || 0} NFTs from ${currentContract}`)
+      
+      if (nftData.tokens && nftData.tokens.length > 0) {
+        // Add contract info to each NFT
+        const nftsWithContract = nftData.tokens.map(nft => ({
+          ...nft,
+          contract_id: currentContract
+        }))
+        allNFTs.push(...nftsWithContract)
+      }
     }
 
-    const rpcData = await rpcResponse.json()
-    console.log('📡 NEAR RPC Response:', JSON.stringify(rpcData, null, 2))
+    console.log(`🎮 Total NFTs found across all contracts: ${allNFTs.length}`)
 
-    if (rpcData.error) {
-      console.log('⚠️ No NFTs found or contract error:', rpcData.error)
-      return new Response(
-        JSON.stringify({ 
-          success: true, 
-          nft_cards: [],
-          message: 'No NFTs found for this wallet'
-        }),
-        { 
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-          status: 200
-        }
-      )
-    }
-
-    // Parse NFT data
-    const nftData: NFTResponse = JSON.parse(
-      new TextDecoder().decode(
-        Uint8Array.from(atob(rpcData.result.result), c => c.charCodeAt(0))
-      )
-    )
-
-    console.log(`🎮 Found ${nftData.tokens?.length || 0} NFTs`)
-
-    if (!nftData.tokens || nftData.tokens.length === 0) {
+    if (allNFTs.length === 0) {
       return new Response(
         JSON.stringify({ 
           success: true, 
@@ -112,12 +120,14 @@ Deno.serve(async (req) => {
       )
     }
 
-    // Clear existing NFT cards for this wallet
-    await supabase
-      .from('user_nft_cards')
-      .delete()
-      .eq('wallet_address', wallet_address)
-      .eq('nft_contract_id', contractId)
+    // Clear existing NFT cards for this wallet from all contracts
+    for (const currentContract of contractsToCheck) {
+      await supabase
+        .from('user_nft_cards')
+        .delete()
+        .eq('wallet_address', wallet_address)
+        .eq('nft_contract_id', currentContract)
+    }
 
     // Get all card templates to match with NFTs
     const { data: templates, error: templatesError } = await supabase
@@ -132,7 +142,7 @@ Deno.serve(async (req) => {
     const nftInserts = []
 
     // Process each NFT and try to match with card templates
-    for (const nft of nftData.tokens) {
+    for (const nft of allNFTs) {
       const cardName = nft.metadata?.title || nft.metadata?.description || 'Unknown Card'
       
       // Find matching template by name (case insensitive)
@@ -148,7 +158,7 @@ Deno.serve(async (req) => {
         // Create NFT mapping record
         nftInserts.push({
           wallet_address,
-          nft_contract_id: contractId,
+          nft_contract_id: nft.contract_id,
           nft_token_id: nft.token_id,
           card_template_name: template.name,
           nft_metadata: nft.metadata
@@ -156,7 +166,7 @@ Deno.serve(async (req) => {
 
         // Create game card with template stats
         gameCards.push({
-          id: `${contractId}_${nft.token_id}`,
+          id: `${nft.contract_id}_${nft.token_id}`,
           name: template.name,
           power: template.power,
           defense: template.defense,
@@ -168,7 +178,7 @@ Deno.serve(async (req) => {
           description: template.description,
           image: nft.metadata?.media || template.image_url || '/placeholder.svg',
           nft_token_id: nft.token_id,
-          nft_contract_id: contractId
+          nft_contract_id: nft.contract_id
         })
       } else {
         console.log(`⚠️ No template found for NFT: "${cardName}"`)
@@ -192,7 +202,7 @@ Deno.serve(async (req) => {
       JSON.stringify({ 
         success: true, 
         nft_cards: gameCards,
-        total_nfts: nftData.tokens.length,
+        total_nfts: allNFTs.length,
         matched_cards: gameCards.length
       }),
       { 
