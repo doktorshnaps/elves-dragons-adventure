@@ -85,12 +85,32 @@ Deno.serve(async (req) => {
         continue
       }
 
-      // Parse NFT data
-      const nftData: NFTResponse = JSON.parse(
-        new TextDecoder().decode(
-          Uint8Array.from(atob(rpcData.result.result), c => c.charCodeAt(0))
-        )
-      )
+      // Parse NFT data safely (handle base64 string or byte array)
+      const resultField = rpcData?.result?.result
+      let bytes: Uint8Array | null = null
+      if (typeof resultField === 'string') {
+        try {
+          bytes = Uint8Array.from(atob(resultField), c => c.charCodeAt(0))
+        } catch (e) {
+          console.log('⚠️ Failed base64 decode for', currentContract, 'error:', e)
+        }
+      } else if (Array.isArray(resultField)) {
+        bytes = new Uint8Array(resultField)
+      }
+
+      if (!bytes) {
+        console.log('⚠️ Unexpected RPC result format for', currentContract, 'resultField type:', typeof resultField)
+        continue
+      }
+
+      let decoded = new TextDecoder().decode(bytes)
+      let nftData: NFTResponse
+      try {
+        nftData = JSON.parse(decoded)
+      } catch (e) {
+        console.log('⚠️ Failed to parse NFT JSON for', currentContract, 'decoded snippet:', decoded?.slice(0, 200))
+        continue
+      }
 
       console.log(`🎮 Found ${nftData.tokens?.length || 0} NFTs from ${currentContract}`)
       

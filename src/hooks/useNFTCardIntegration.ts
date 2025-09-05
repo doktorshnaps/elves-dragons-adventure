@@ -24,7 +24,7 @@ export const useNFTCardIntegration = () => {
     setIsLoading(true);
     try {
       // Синхронизируем NFT с основного контракта и дополнительного
-      await syncNFTCards(accountId, 'heroesnft.near');
+      await syncNFTCards(accountId, 'doubledog.hot.tg');
       
       // Получаем обновленные NFT карты
       const cards = await getUserNFTCards(accountId);
