@@ -18,6 +18,17 @@ export interface NFTCard {
   nft_contract_id: string;
 }
 
+function normalizeMediaUrl(media?: string): string {
+  if (!media) return '/placeholder.svg';
+  try {
+    if (media.startsWith('ipfs://')) return media.replace('ipfs://', 'https://ipfs.io/ipfs/');
+    if (/^[a-zA-Z0-9]{46,}$/.test(media)) return `https://ipfs.io/ipfs/${media}`;
+    return media;
+  } catch {
+    return '/placeholder.svg';
+  }
+}
+
 export const useNFTCards = () => {
   const [nftCards, setNftCards] = useState<NFTCard[]>([]);
   const [loading, setLoading] = useState(false);
@@ -113,21 +124,52 @@ export const useNFTCards = () => {
       }
 
       // Convert to game card format
-      const cards: NFTCard[] = (nftMappings || []).map((mapping: any) => ({
-        id: `${mapping.nft_contract_id}_${mapping.nft_token_id}`,
-        name: mapping.card_templates.name,
-        power: mapping.card_templates.power,
-        defense: mapping.card_templates.defense,
-        health: mapping.card_templates.health,
-        currentHealth: mapping.card_templates.health,
-        rarity: mapping.card_templates.rarity,
-        faction: mapping.card_templates.faction,
-        type: mapping.card_templates.card_type,
-        description: mapping.card_templates.description,
-        image: mapping.nft_metadata?.media || mapping.card_templates.image_url || '/placeholder.svg',
-        nft_token_id: mapping.nft_token_id,
-        nft_contract_id: mapping.nft_contract_id
-      }));
+      const cards: NFTCard[] = (nftMappings || []).map((mapping: any) => {
+        const tpl = mapping.card_templates;
+        const meta = mapping.nft_metadata || {};
+        let extra: any = undefined;
+        if (typeof meta?.extra === 'string') {
+          try { extra = JSON.parse(meta.extra); } catch {}
+        }
+        const mediaCandidate = meta?.media || extra?.media || extra?.image || extra?.img;
+        const image = normalizeMediaUrl(mediaCandidate) || (tpl?.image_url ?? '/placeholder.svg');
+
+        if (tpl) {
+          return {
+            id: `${mapping.nft_contract_id}_${mapping.nft_token_id}`,
+            name: tpl.name,
+            power: tpl.power,
+            defense: tpl.defense,
+            health: tpl.health,
+            currentHealth: tpl.health,
+            rarity: tpl.rarity,
+            faction: tpl.faction,
+            type: tpl.card_type,
+            description: tpl.description,
+            image,
+            nft_token_id: mapping.nft_token_id,
+            nft_contract_id: mapping.nft_contract_id
+          } as NFTCard;
+        }
+
+        // Fallback when there is no matching template
+        const fallbackName = meta?.title || meta?.description || `Token #${mapping.nft_token_id}`;
+        return {
+          id: `${mapping.nft_contract_id}_${mapping.nft_token_id}`,
+          name: fallbackName,
+          power: 20,
+          defense: 15,
+          health: 100,
+          currentHealth: 100,
+          rarity: 'common',
+          faction: undefined,
+          type: 'pet',
+          description: meta?.description || 'NFT Card',
+          image,
+          nft_token_id: mapping.nft_token_id,
+          nft_contract_id: mapping.nft_contract_id
+        } as NFTCard;
+      });
 
       setNftCards(cards);
       return cards;

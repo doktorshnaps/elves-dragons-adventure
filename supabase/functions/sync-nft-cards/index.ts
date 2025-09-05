@@ -19,6 +19,22 @@ interface NFTResponse {
   tokens: NFTToken[]
 }
 
+function normalizeMediaUrl(media?: string): string | undefined {
+  if (!media) return undefined
+  try {
+    if (media.startsWith('ipfs://')) {
+      return media.replace('ipfs://', 'https://ipfs.io/ipfs/')
+    }
+    // bare CID
+    if (/^[a-zA-Z0-9]{46,}$/.test(media)) {
+      return `https://ipfs.io/ipfs/${media}`
+    }
+    return media
+  } catch (_) {
+    return media
+  }
+}
+
 Deno.serve(async (req) => {
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
@@ -65,10 +81,11 @@ Deno.serve(async (req) => {
             finality: 'final',
             account_id: currentContract,
             method_name: 'nft_tokens_for_owner',
-            args_base64: btoa(JSON.stringify({
-              account_id: wallet_address,
-              limit: 100
-            }))
+              args_base64: btoa(JSON.stringify({
+                account_id: wallet_address,
+                from_index: '0',
+                limit: 100
+              }))
           }
         })
       })
@@ -104,19 +121,22 @@ Deno.serve(async (req) => {
       }
 
       let decoded = new TextDecoder().decode(bytes)
-      let nftData: NFTResponse
+      let parsed: any
       try {
-        nftData = JSON.parse(decoded)
+        parsed = JSON.parse(decoded)
       } catch (e) {
         console.log('⚠️ Failed to parse NFT JSON for', currentContract, 'decoded snippet:', decoded?.slice(0, 200))
         continue
       }
 
-      console.log(`🎮 Found ${nftData.tokens?.length || 0} NFTs from ${currentContract}`)
+      const tokens: NFTToken[] = Array.isArray(parsed)
+        ? parsed
+        : (parsed?.tokens ?? [])
+
+      console.log(`🎮 Found ${tokens.length} NFTs from ${currentContract}`)
       
-      if (nftData.tokens && nftData.tokens.length > 0) {
-        // Add contract info to each NFT
-        const nftsWithContract = nftData.tokens.map(nft => ({
+      if (tokens.length > 0) {
+        const nftsWithContract = tokens.map((nft: any) => ({
           ...nft,
           contract_id: currentContract
         }))
@@ -196,12 +216,36 @@ Deno.serve(async (req) => {
           faction: template.faction,
           type: template.card_type,
           description: template.description,
-          image: nft.metadata?.media || template.image_url || '/placeholder.svg',
+          image: normalizeMediaUrl(nft.metadata?.media) || template.image_url || '/placeholder.svg',
           nft_token_id: nft.token_id,
           nft_contract_id: nft.contract_id
         })
       } else {
-        console.log(`⚠️ No template found for NFT: "${cardName}"`)
+        console.log(`⚠️ No template found for NFT: "${cardName}" — using fallback stats`)
+        // Still record the NFT mapping so the app can show it using metadata
+        nftInserts.push({
+          wallet_address,
+          nft_contract_id: nft.contract_id,
+          nft_token_id: nft.token_id,
+          card_template_name: cardName,
+          nft_metadata: nft.metadata
+        })
+        // Fallback lightweight game card so UI can render immediately
+        gameCards.push({
+          id: `${nft.contract_id}_${nft.token_id}`,
+          name: cardName,
+          power: 20,
+          defense: 15,
+          health: 100,
+          currentHealth: 100,
+          rarity: 'common',
+          faction: null,
+          type: 'pet', // default to pet so it appears in the dragon deck
+          description: nft.metadata?.description ?? 'NFT Card',
+          image: normalizeMediaUrl(nft.metadata?.media) || '/placeholder.svg',
+          nft_token_id: nft.token_id,
+          nft_contract_id: nft.contract_id
+        })
       }
     }
 
