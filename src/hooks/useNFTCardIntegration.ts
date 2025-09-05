@@ -24,28 +24,29 @@ export const useNFTCardIntegration = () => {
     setIsLoading(true);
     try {
       // Синхронизируем NFT с основного контракта и дополнительного
-      await syncNFTCards(accountId, 'doubledog.hot.tg');
+      const synced = await syncNFTCards(accountId, 'doubledog.hot.tg');
       
-      // Получаем обновленные NFT карты
-      const cards = await getUserNFTCards(accountId);
+      // Получаем обновленные NFT карты из БД (fallback)
+      const fetched = await getUserNFTCards(accountId);
+      const source = (synced && synced.length > 0) ? synced : fetched;
       
       // Конвертируем в формат игровых карт
-      const gameCards: CardType[] = cards.map(nftCard => ({
+      const gameCards: CardType[] = source.map(nftCard => ({
         id: nftCard.id,
         name: nftCard.name,
         power: nftCard.power,
         defense: nftCard.defense,
         health: nftCard.health,
         currentHealth: nftCard.currentHealth,
-        rarity: nftCard.rarity as any,
+        rarity: (typeof (nftCard as any).rarity === 'number' ? (nftCard as any).rarity : 1) as any,
         faction: nftCard.faction as any,
-        type: nftCard.type as 'character' | 'pet',
+        type: (nftCard.type === 'character' ? 'character' : 'pet'),
         description: nftCard.description || '',
         image: nftCard.image || '/placeholder.svg',
-        magic: 0, // Добавляем обязательное поле magic
+        magic: 0, // обязательное поле
         isNFT: true,
-        nftContractId: nftCard.nft_contract_id,
-        nftTokenId: nftCard.nft_token_id
+        nftContractId: (nftCard as any).nft_contract_id,
+        nftTokenId: (nftCard as any).nft_token_id
       }));
 
       setNftCards(gameCards);
