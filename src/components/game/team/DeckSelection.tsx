@@ -49,7 +49,12 @@ export const DeckSelection = ({
   // Обновляем локальные карты при изменении пропсов и NFT карт
   useEffect(() => {
     const combinedCards = [...cards, ...nftCards];
-    setLocalCards(combinedCards);
+    // Убираем дубликаты по ID
+    const uniqueCards = combinedCards.filter((card, index, arr) => 
+      arr.findIndex(c => c.id === card.id) === index
+    );
+    setLocalCards(uniqueCards);
+    console.log('🎮 Updated local cards:', uniqueCards.length, 'unique cards');
   }, [cards, nftCards]);
 
   // Слушаем события обновления карт для немедленной синхронизации

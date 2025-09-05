@@ -7,20 +7,26 @@ import { useToast } from './use-toast';
 export const useNFTCardIntegration = () => {
   const [nftCards, setNftCards] = useState<CardType[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [hasSynced, setHasSynced] = useState(false);
   const { isConnected, accountId } = useWallet();
   const { getUserNFTCards, syncNFTCards } = useNFTCards();
   const { toast } = useToast();
 
-  // Автоматическая синхронизация при подключении кошелька
+  // Автоматическая синхронизация при подключении кошелька (только один раз)
   useEffect(() => {
-    if (isConnected && accountId) {
+    if (isConnected && accountId && !hasSynced) {
+      console.log('🔄 Auto-syncing NFTs for:', accountId);
       syncNFTsFromWallet();
     }
-  }, [isConnected, accountId]);
+  }, [isConnected, accountId, hasSynced]);
 
   const syncNFTsFromWallet = async () => {
-    if (!accountId) return;
+    if (!accountId || isLoading) {
+      console.log('⚠️ Skipping sync - no accountId or already loading');
+      return;
+    }
 
+    console.log('🔄 Starting NFT sync for:', accountId);
     setIsLoading(true);
     try {
       // Синхронизируем NFT с основного контракта и дополнительного
@@ -30,8 +36,12 @@ export const useNFTCardIntegration = () => {
       const fetched = await getUserNFTCards(accountId);
       const source = (synced && synced.length > 0) ? synced : fetched;
       
-      // Конвертируем в формат игровых карт
-      const gameCards: CardType[] = source.map(nftCard => ({
+      // Убираем дубликаты по ID и конвертируем в формат игровых карт
+      const uniqueNFTs = source.filter((nft, index, arr) => 
+        arr.findIndex(n => n.id === nft.id) === index
+      );
+      
+      const gameCards: CardType[] = uniqueNFTs.map(nftCard => ({
         id: nftCard.id,
         name: nftCard.name,
         power: nftCard.power,
@@ -49,7 +59,9 @@ export const useNFTCardIntegration = () => {
         nftTokenId: (nftCard as any).nft_token_id
       }));
 
+      console.log('✅ NFT sync completed, cards:', gameCards.length);
       setNftCards(gameCards);
+      setHasSynced(true);
       
       if (gameCards.length > 0) {
         toast({
