@@ -18,12 +18,39 @@ export interface NFTCard {
   nft_contract_id: string;
 }
 
-function normalizeMediaUrl(media?: string): string {
-  if (!media) return '/placeholder.svg';
+function normalizeMediaUrl(media?: string, baseUri?: string): string {
+  const PLACEHOLDER = '/placeholder.svg';
+  if (!media && !baseUri) return PLACEHOLDER;
   try {
-    if (media.startsWith('ipfs://')) return media.replace('ipfs://', 'https://ipfs.io/ipfs/');
-    if (/^[a-zA-Z0-9]{46,}$/.test(media)) return `https://ipfs.io/ipfs/${media}`;
-    return media;
+    const isAbs = (u?: string) => !!u && (/^https?:\/\//i.test(u) || u.startsWith('data:'));
+
+    // Helper to normalize IPFS-like string to https gateway
+    const toIpfsPath = (cidOrPath: string) => {
+      if (cidOrPath.startsWith('ipfs://')) return cidOrPath.replace('ipfs://', 'https://ipfs.io/ipfs/');
+      if (/^[a-zA-Z0-9]{46,}$/.test(cidOrPath)) return `https://ipfs.io/ipfs/${cidOrPath}`;
+      return cidOrPath;
+    };
+
+    // Absolute media URL
+    if (isAbs(media)) return media as string;
+
+    // If media is relative and baseUri provided
+    if (media && baseUri && !isAbs(media)) {
+      const base = toIpfsPath(baseUri);
+      // Ensure single slash join
+      const joined = `${base.replace(/\/$/, '')}/${String(media).replace(/^\//, '')}`;
+      return joined;
+    }
+
+    // Handle pure ipfs values in media
+    if (media) {
+      return toIpfsPath(media);
+    }
+
+    // Fallback: just use normalized baseUri if present
+    if (baseUri) return toIpfsPath(baseUri);
+
+    return PLACEHOLDER;
   } catch {
     return '/placeholder.svg';
   }
@@ -131,8 +158,9 @@ export const useNFTCards = () => {
         if (typeof meta?.extra === 'string') {
           try { extra = JSON.parse(meta.extra); } catch {}
         }
+        const baseUri = meta?.base_uri || extra?.base_uri;
         const mediaCandidate = meta?.media || extra?.media || extra?.image || extra?.img;
-        const image = normalizeMediaUrl(mediaCandidate) || (tpl?.image_url ?? '/placeholder.svg');
+        const image = normalizeMediaUrl(mediaCandidate, baseUri) || (tpl?.image_url ?? '/placeholder.svg');
 
         if (tpl) {
           return {
