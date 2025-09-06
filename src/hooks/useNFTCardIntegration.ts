@@ -12,6 +12,27 @@ export const useNFTCardIntegration = () => {
   const { getUserNFTCards, syncNFTCards } = useNFTCards();
   const { toast } = useToast();
 
+  // Удаляем устаревшие NFT из локального хранилища и состояния игры
+  const cleanupLocalNFTs = (currentNFTIds: string[]) => {
+    try {
+      const raw = localStorage.getItem('gameCards');
+      if (!raw) return;
+      const parsed = JSON.parse(raw) as CardType[];
+      // Удаляем все NFT, которых нет среди текущих ID
+      const cleaned = parsed.filter(c => !c.isNFT || currentNFTIds.includes(c.id));
+      // Убираем дубликаты по id
+      const unique = cleaned.filter((c, i, arr) => arr.findIndex(x => x.id === c.id) === i);
+
+      if (JSON.stringify(parsed) !== JSON.stringify(unique)) {
+        localStorage.setItem('gameCards', JSON.stringify(unique));
+        window.dispatchEvent(new CustomEvent('cardsUpdate', { detail: { cards: unique } } as any));
+        console.log('🧹 Removed stale NFT cards from local storage');
+      }
+    } catch (e) {
+      console.warn('Cleanup local NFTs failed:', e);
+    }
+  };
+
   // Автоматическая синхронизация при подключении кошелька (только один раз)
   useEffect(() => {
     if (isConnected && accountId && !hasSynced) {
@@ -19,6 +40,15 @@ export const useNFTCardIntegration = () => {
       syncNFTsFromWallet();
     }
   }, [isConnected, accountId, hasSynced]);
+
+  // Периодическая синхронизация, чтобы удалять пропавшие из кошелька NFT
+  useEffect(() => {
+    if (!isConnected || !accountId) return;
+    const interval = setInterval(() => {
+      syncNFTsFromWallet();
+    }, 60000); // каждые 60 секунд
+    return () => clearInterval(interval);
+  }, [isConnected, accountId]);
 
   const syncNFTsFromWallet = async () => {
     if (!accountId || isLoading) {
@@ -61,6 +91,8 @@ export const useNFTCardIntegration = () => {
 
       console.log('✅ NFT sync completed, cards:', gameCards.length);
       setNftCards(gameCards);
+      // Синхронизируем локальное хранилище: удаляем несуществующие NFT
+      cleanupLocalNFTs(gameCards.map(c => c.id));
       setHasSynced(true);
       
       if (gameCards.length > 0) {
