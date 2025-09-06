@@ -20,18 +20,36 @@ interface NFTResponse {
 }
 
 function normalizeMediaUrl(media?: string): string | undefined {
-  if (!media) return undefined
+  if (!media) return undefined;
   try {
+    console.log('🔗 Normalizing media URL:', media);
+    
+    // IPFS URL нормализация
     if (media.startsWith('ipfs://')) {
-      return media.replace('ipfs://', 'https://ipfs.io/ipfs/')
+      const normalized = media.replace('ipfs://', 'https://ipfs.io/ipfs/');
+      console.log('✅ IPFS URL normalized:', normalized);
+      return normalized;
     }
-    // bare CID
+    
+    // Если это просто IPFS хэш
     if (/^[a-zA-Z0-9]{46,}$/.test(media)) {
-      return `https://ipfs.io/ipfs/${media}`
+      const normalized = `https://ipfs.io/ipfs/${media}`;
+      console.log('✅ IPFS hash normalized:', normalized);
+      return normalized;
     }
-    return media
-  } catch (_) {
-    return media
+    
+    // Arweave URL
+    if (media.startsWith('ar://')) {
+      const normalized = media.replace('ar://', 'https://arweave.net/');
+      console.log('✅ Arweave URL normalized:', normalized);
+      return normalized;
+    }
+    
+    console.log('✅ URL already normalized:', media);
+    return media;
+  } catch (error) {
+    console.error('❌ Error normalizing media URL:', error);
+    return undefined;
   }
 }
 
@@ -205,6 +223,14 @@ Deno.serve(async (req) => {
         })
 
         // Create game card with template stats
+        const imageUrl = normalizeMediaUrl(nft.metadata?.media) || 
+                        normalizeMediaUrl(nft.metadata?.image) || 
+                        normalizeMediaUrl(nft.metadata?.img) ||
+                        template.image_url || 
+                        '/placeholder.svg';
+        
+        console.log(`🖼️ Image URL for "${template.name}":`, imageUrl);
+        
         gameCards.push({
           id: `${nft.contract_id}_${nft.token_id}`,
           name: template.name,
@@ -216,7 +242,7 @@ Deno.serve(async (req) => {
           faction: template.faction,
           type: template.card_type,
           description: template.description,
-          image: normalizeMediaUrl(nft.metadata?.media) || template.image_url || '/placeholder.svg',
+          image: imageUrl,
           nft_token_id: nft.token_id,
           nft_contract_id: nft.contract_id
         })
@@ -231,6 +257,14 @@ Deno.serve(async (req) => {
           nft_metadata: nft.metadata
         })
         // Fallback lightweight game card so UI can render immediately
+        const fallbackImageUrl = normalizeMediaUrl(nft.metadata?.media) || 
+                                 normalizeMediaUrl(nft.metadata?.image) || 
+                                 normalizeMediaUrl(nft.metadata?.img) ||
+                                 '/placeholder.svg';
+        
+        console.log(`🖼️ Fallback image URL for "${cardName}":`, fallbackImageUrl);
+        console.log(`📋 NFT metadata:`, JSON.stringify(nft.metadata, null, 2));
+        
         gameCards.push({
           id: `${nft.contract_id}_${nft.token_id}`,
           name: cardName,
@@ -242,7 +276,7 @@ Deno.serve(async (req) => {
           faction: null,
           type: 'pet', // default to pet so it appears in the dragon deck
           description: nft.metadata?.description ?? 'NFT Card',
-          image: normalizeMediaUrl(nft.metadata?.media) || '/placeholder.svg',
+          image: fallbackImageUrl,
           nft_token_id: nft.token_id,
           nft_contract_id: nft.contract_id
         })
