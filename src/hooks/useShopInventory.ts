@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 
 interface ShopInventoryItem {
@@ -13,8 +13,9 @@ export const useShopInventory = () => {
   const [inventory, setInventory] = useState<ShopInventoryItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [timeUntilReset, setTimeUntilReset] = useState<number>(0);
+  const resettingRef = useRef(false);
 
-  const fetchInventory = async () => {
+   const fetchInventory = async () => {
     try {
       const { data, error } = await supabase
         .from('shop_inventory')
@@ -82,6 +83,20 @@ export const useShopInventory = () => {
     return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
   };
 
+  const triggerResetAndRefresh = async () => {
+    if (resettingRef.current) return;
+    try {
+      resettingRef.current = true;
+      const { error } = await supabase.functions.invoke('shop-reset', { body: {} });
+      if (error) throw error;
+    } catch (error) {
+      console.error('Error triggering shop reset:', error);
+    } finally {
+      await fetchInventory();
+      resettingRef.current = false;
+    }
+  };
+
   useEffect(() => {
     fetchInventory();
 
@@ -90,8 +105,8 @@ export const useShopInventory = () => {
       setTimeUntilReset(prev => {
         const newTime = Math.max(0, prev - 1000);
         if (newTime === 0) {
-          // Время вышло, перезагружаем инвентарь
-          fetchInventory();
+          // Время вышло — вызываем сброс инвентаря и обновление
+          triggerResetAndRefresh();
         }
         return newTime;
       });
