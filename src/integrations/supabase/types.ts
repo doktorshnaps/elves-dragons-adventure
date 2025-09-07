@@ -319,6 +319,7 @@ export type Database = {
           created_at: string
           disconnected_at: string | null
           id: string
+          identity_id: string | null
           ip_address: string | null
           is_active: boolean
           updated_at: string
@@ -330,6 +331,7 @@ export type Database = {
           created_at?: string
           disconnected_at?: string | null
           id?: string
+          identity_id?: string | null
           ip_address?: string | null
           is_active?: boolean
           updated_at?: string
@@ -341,10 +343,40 @@ export type Database = {
           created_at?: string
           disconnected_at?: string | null
           id?: string
+          identity_id?: string | null
           ip_address?: string | null
           is_active?: boolean
           updated_at?: string
           user_agent?: string | null
+          wallet_address?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "wallet_connections_identity_id_fkey"
+            columns: ["identity_id"]
+            isOneToOne: false
+            referencedRelation: "wallet_identities"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      wallet_identities: {
+        Row: {
+          created_at: string
+          id: string
+          updated_at: string
+          wallet_address: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          updated_at?: string
+          wallet_address: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          updated_at?: string
           wallet_address?: string
         }
         Relationships: []
@@ -360,6 +392,10 @@ export type Database = {
       }
       create_marketplace_listing: {
         Args: { p_item_id: string; p_listing_type: string; p_price: number }
+        Returns: string
+      }
+      get_or_create_wallet_identity: {
+        Args: { p_wallet_address: string }
         Returns: string
       }
       process_marketplace_purchase: {

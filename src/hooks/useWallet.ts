@@ -67,6 +67,15 @@ interface WalletState {
 // Helper function to save wallet connection data to Supabase
 const saveWalletConnection = async (walletAddress: string, isConnecting: boolean) => {
   try {
+    // Get or create stable identity for this wallet
+    const { data: identityId, error: identityError } = await supabase
+      .rpc('get_or_create_wallet_identity', { p_wallet_address: walletAddress });
+    
+    if (identityError) {
+      console.error('Failed to get wallet identity:', identityError);
+      return;
+    }
+
     if (isConnecting) {
       // Mark any existing active connections as inactive first
       await supabase
@@ -78,11 +87,12 @@ const saveWalletConnection = async (walletAddress: string, isConnecting: boolean
         .eq('wallet_address', walletAddress)
         .eq('is_active', true);
 
-      // Create new connection record
+      // Create new connection record with stable identity_id
       await supabase
         .from('wallet_connections')
         .insert({
           wallet_address: walletAddress,
+          identity_id: identityId,
           is_active: true,
           user_agent: navigator.userAgent,
           connected_at: new Date().toISOString()
