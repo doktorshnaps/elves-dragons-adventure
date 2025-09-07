@@ -242,6 +242,36 @@ export type Database = {
         }
         Relationships: []
       }
+      shop_inventory: {
+        Row: {
+          available_quantity: number
+          created_at: string
+          id: string
+          item_id: number
+          last_reset_time: string
+          next_reset_time: string
+          updated_at: string
+        }
+        Insert: {
+          available_quantity?: number
+          created_at?: string
+          id?: string
+          item_id: number
+          last_reset_time?: string
+          next_reset_time?: string
+          updated_at?: string
+        }
+        Update: {
+          available_quantity?: number
+          created_at?: string
+          id?: string
+          item_id?: number
+          last_reset_time?: string
+          next_reset_time?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       user_nft_cards: {
         Row: {
           card_template_name: string
@@ -334,6 +364,10 @@ export type Database = {
       }
       process_marketplace_purchase: {
         Args: { listing_id: string }
+        Returns: undefined
+      }
+      reset_shop_inventory: {
+        Args: Record<PropertyKey, never>
         Returns: undefined
       }
     }
