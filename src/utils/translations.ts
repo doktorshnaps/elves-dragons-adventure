@@ -75,6 +75,43 @@ export const translations = {
       dungeons: 'Подземелья',
       statistics: 'Статистика',
       information: 'Информация'
+    },
+    // Common UI
+    common: {
+      backToMenu: 'Вернуться в меню',
+      backToDungeons: 'Вернуться к подземельям',
+      backToDungeon: 'Вернуться в подземелье',
+      newCard: 'Новая карта!',
+      getCard: 'Получите бесплатную стартовую карту!',
+      getCardDescription: 'Получите бесплатную стартовую карту для начала игры',
+      inventoryEmpty: 'Инвентарь пуст',
+      cards: 'Карты',
+      healthPotion: 'Зелье здоровья',
+      cardPack: 'Набор карт'
+    },
+    // Items and descriptions
+    items: {
+      cardPackDescription: 'Содержит 1 случайную карту героя или дракона',
+      cardPackDescriptionValue: 'Содержит {value} случайных карт',
+      healthPotionDescription: 'Восстанавливает {value} единиц здоровья',
+      healthRestored: 'Восстановлено {value} здоровья',
+      noActiveCards: 'У вас нет активных карт героев или питомцев',
+      newCardReceived: 'Получена карта: {name} ({rarity}★)',
+      battleReturnWarning: 'Вы можете вернуться к битве через меню подземелий',
+      openPack: 'Открыть колоду',
+      use: 'Использовать',
+      sell: 'Продать',
+      startIncubation: 'Начать инкубацию',
+      leaveDungeon: 'Покинуть подземелье',
+      progressSaved: 'Прогресс сохранен',
+      dungeonLeft: 'Подземелье покинуто',
+      allProgressReset: 'Весь прогресс сброшен',
+      power: 'Сила',
+      defense: 'Защита',
+      health: 'Здоровье',
+      rarity: 'Редкость',
+      pet: 'Питомец',
+      dragonEgg: 'Яйцо дракона'
     }
   },
   en: {
@@ -151,11 +188,48 @@ export const translations = {
       dungeons: 'Dungeons',
       statistics: 'Statistics',
       information: 'Information'
+    },
+    // Common UI
+    common: {
+      backToMenu: 'Back to Menu',
+      backToDungeons: 'Back to Dungeons',
+      backToDungeon: 'Return to Dungeon',
+      newCard: 'New Card!',
+      getCard: 'Get Your Free Starter Card!',
+      getCardDescription: 'Get a free starter card to begin your game',
+      inventoryEmpty: 'Inventory is empty',
+      cards: 'Cards',
+      healthPotion: 'Health Potion',
+      cardPack: 'Card Pack'
+    },
+    // Items and descriptions
+    items: {
+      cardPackDescription: 'Contains 1 random hero or dragon card',
+      cardPackDescriptionValue: 'Contains {value} random cards',
+      healthPotionDescription: 'Restores {value} health points',
+      healthRestored: 'Restored {value} health',
+      noActiveCards: 'You have no active hero or pet cards',
+      newCardReceived: 'Card received: {name} ({rarity}★)',
+      battleReturnWarning: 'You can return to battle through the dungeons menu',
+      openPack: 'Open Pack',
+      use: 'Use',
+      sell: 'Sell',
+      startIncubation: 'Start Incubation',
+      leaveDungeon: 'Leave Dungeon',
+      progressSaved: 'Progress Saved',
+      dungeonLeft: 'Dungeon Left',
+      allProgressReset: 'All progress reset',
+      power: 'Power',
+      defense: 'Defense', 
+      health: 'Health',
+      rarity: 'Rarity',
+      pet: 'Pet',
+      dragonEgg: 'Dragon Egg'
     }
   }
 };
 
-export const t = (language: Language, key: string): string => {
+export const t = (language: Language, key: string, variables?: Record<string, string>): string => {
   const keys = key.split('.');
   let value: any = translations[language];
   
@@ -163,5 +237,14 @@ export const t = (language: Language, key: string): string => {
     value = value?.[k];
   }
   
-  return value || key;
+  let result = value || key;
+  
+  // Replace variables in the format {variableName}
+  if (variables && typeof result === 'string') {
+    Object.entries(variables).forEach(([varKey, varValue]) => {
+      result = result.replace(new RegExp(`\\{${varKey}\\}`, 'g'), varValue);
+    });
+  }
+  
+  return result;
 };

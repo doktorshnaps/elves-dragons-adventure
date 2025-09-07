@@ -4,6 +4,8 @@ import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, DoorOpen } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useGameData } from '@/hooks/useGameData';
+import { useLanguage } from '@/hooks/useLanguage';
+import { t } from '@/utils/translations';
 
 interface DungeonLayoutProps {
   children: React.ReactNode;
@@ -14,6 +16,7 @@ export const DungeonLayout = ({ children, backgroundImage }: DungeonLayoutProps)
   const navigate = useNavigate();
   const { toast } = useToast();
   const { gameData, updateGameData } = useGameData();
+  const { language } = useLanguage();
 
   const handleReturnToMenu = () => {
     // Сохраняем текущее состояние битвы перед возвратом в меню
@@ -22,8 +25,8 @@ export const DungeonLayout = ({ children, backgroundImage }: DungeonLayoutProps)
       updateGameData({ battleState: state });
       
       toast({
-        title: "Прогресс сохранен",
-        description: "Вы можете вернуться к битве через меню подземелий",
+        title: language === 'ru' ? "Прогресс сохранен" : "Progress saved",
+        description: t(language, 'items.battleReturnWarning'),
       });
     }
     navigate('/menu');
@@ -33,8 +36,8 @@ export const DungeonLayout = ({ children, backgroundImage }: DungeonLayoutProps)
       updateGameData({ battleState: null });
       navigate('/dungeons');
       toast({
-      title: "Подземелье покинуто",
-      description: "Весь прогресс сброшен",
+      title: t(language, 'items.dungeonLeft'),
+      description: t(language, 'items.allProgressReset'),
       variant: "destructive",
     });
   };
@@ -61,7 +64,7 @@ export const DungeonLayout = ({ children, backgroundImage }: DungeonLayoutProps)
           className="bg-game-surface/80 hover:bg-game-surface/90 text-game-primary border-game-primary/20"
         >
           <ArrowLeft className="mr-2 h-4 w-4" />
-          Вернуться в меню
+          {t(language, 'common.backToMenu')}
         </Button>
       </div>
 
@@ -72,7 +75,7 @@ export const DungeonLayout = ({ children, backgroundImage }: DungeonLayoutProps)
           className="bg-game-surface/80 hover:bg-game-surface/90 text-game-primary border-game-primary/20"
         >
           <DoorOpen className="mr-2 h-4 w-4" />
-          Покинуть подземелье
+          {t(language, 'items.leaveDungeon')}
         </Button>
       </div>
 

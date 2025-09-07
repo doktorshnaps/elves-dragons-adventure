@@ -1,6 +1,8 @@
 
 import { Button } from "@/components/ui/button";
 import { ArrowLeft } from "lucide-react";
+import { useLanguage } from "@/hooks/useLanguage";
+import { t } from "@/utils/translations";
 
 interface GameHeaderProps {
   balance: number;
@@ -8,6 +10,8 @@ interface GameHeaderProps {
 }
 
 export const GameHeader = ({ balance, onBack }: GameHeaderProps) => {
+  const { language } = useLanguage();
+  
   return (
     <div className="flex items-center h-full">
       <Button 
@@ -16,7 +20,7 @@ export const GameHeader = ({ balance, onBack }: GameHeaderProps) => {
         onClick={onBack}
       >
         <ArrowLeft className="w-4 h-4 mr-2" />
-        Вернуться в меню
+        {t(language, 'common.backToMenu')}
       </Button>
     </div>
   );

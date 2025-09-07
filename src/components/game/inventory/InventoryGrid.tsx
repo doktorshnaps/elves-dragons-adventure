@@ -11,6 +11,8 @@ import {
 } from "@/components/ui/dialog";
 import { Item } from "@/types/inventory";
 import { GroupedItem } from "./types";
+import { useLanguage } from "@/hooks/useLanguage";
+import { t } from "@/utils/translations";
 
 interface InventoryGridProps {
   groupedItems: GroupedItem[];
@@ -26,6 +28,7 @@ export const InventoryGrid = ({
   onSellItem 
 }: InventoryGridProps) => {
   const [openKey, setOpenKey] = useState<string | null>(null);
+  const { language } = useLanguage();
   const unequippedItems = groupedItems.filter(item => 
     !item.items.some(i => i.equipped)
   );
@@ -43,7 +46,7 @@ export const InventoryGrid = ({
   }, [unequippedItems, openKey]);
 
   if (unequippedItems.length === 0) {
-    return <p className="text-gray-400 col-span-full text-center py-4 text-sm">Инвентарь пуст</p>;
+    return <p className="text-gray-400 col-span-full text-center py-4 text-sm">{t(language, 'common.inventoryEmpty')}</p>;
   }
 
   return (
@@ -97,36 +100,36 @@ export const InventoryGrid = ({
           <DialogContent className="bg-game-surface border-game-accent">
             <DialogTitle className="text-game-accent">{item.name}</DialogTitle>
             <DialogDescription className="text-gray-400">
-              {item.type === 'cardPack' && 'Содержит 1 случайную карту героя или дракона'}
-              {item.type === 'healthPotion' && `Восстанавливает ${item.value} единиц здоровья`}
-              {item.type === 'dragon_egg' && (item.items[0].petName ? `Питомец: ${item.items[0].petName}` : 'Яйцо дракона')}
+              {item.type === 'cardPack' && t(language, 'items.cardPackDescription')}
+              {item.type === 'healthPotion' && t(language, 'items.healthPotionDescription', { value: String(item.value) })}
+              {item.type === 'dragon_egg' && (item.items[0].petName ? `${t(language, 'items.pet')}: ${item.items[0].petName}` : t(language, 'items.dragonEgg'))}
             </DialogDescription>
             <div className="space-y-4">
               <h4 className="font-semibold text-game-accent text-lg">{item.name}</h4>
               {item.type === 'cardPack' && (
-                <p className="text-sm text-gray-400">Содержит 1 случайную карту героя или дракона</p>
+                <p className="text-sm text-gray-400">{t(language, 'items.cardPackDescription')}</p>
               )}
               {item.type === 'healthPotion' && (
-                <p className="text-sm text-gray-400">Восстанавливает {item.value} единиц здоровья</p>
+                <p className="text-sm text-gray-400">{t(language, 'items.healthPotionDescription', { value: String(item.value) })}</p>
               )}
               {item.type === 'weapon' && item.items[0].stats && (
                 <div className="text-sm text-gray-400">
-                  {item.items[0].stats.power && <p>Сила: +{item.items[0].stats.power}</p>}
-                  {item.items[0].stats.defense && <p>Защита: +{item.items[0].stats.defense}</p>}
-                  {item.items[0].stats.health && <p>Здоровье: +{item.items[0].stats.health}</p>}
+                  {item.items[0].stats.power && <p>{t(language, 'items.power')}: +{item.items[0].stats.power}</p>}
+                  {item.items[0].stats.defense && <p>{t(language, 'items.defense')}: +{item.items[0].stats.defense}</p>}
+                  {item.items[0].stats.health && <p>{t(language, 'items.health')}: +{item.items[0].stats.health}</p>}
                 </div>
               )}
               {item.type === 'armor' && item.items[0].stats && (
                 <div className="text-sm text-gray-400">
-                  {item.items[0].stats.power && <p>Сила: +{item.items[0].stats.power}</p>}
-                  {item.items[0].stats.defense && <p>Защита: +{item.items[0].stats.defense}</p>}
-                  {item.items[0].stats.health && <p>Здоровье: +{item.items[0].stats.health}</p>}
+                  {item.items[0].stats.power && <p>{t(language, 'items.power')}: +{item.items[0].stats.power}</p>}
+                  {item.items[0].stats.defense && <p>{t(language, 'items.defense')}: +{item.items[0].stats.defense}</p>}
+                  {item.items[0].stats.health && <p>{t(language, 'items.health')}: +{item.items[0].stats.health}</p>}
                 </div>
               )}
               {item.type === 'dragon_egg' && (
                 <div className="text-sm text-gray-400">
-                  <p>Редкость: {item.value}</p>
-                  {item.items[0].petName && <p>Питомец: {item.items[0].petName}</p>}
+                  <p>{t(language, 'items.rarity')}: {item.value}</p>
+                  {item.items[0].petName && <p>{t(language, 'items.pet')}: {item.items[0].petName}</p>}
                 </div>
               )}
               {!readonly && (
@@ -137,7 +140,7 @@ export const InventoryGrid = ({
                         onClick={() => onUseItem(item)}
                         className="w-full bg-game-primary hover:bg-game-primary/80"
                       >
-                        Открыть колоду
+                        {t(language, 'items.openPack')}
                       </Button>
                     </DialogClose>
                   )}
@@ -147,7 +150,7 @@ export const InventoryGrid = ({
                       variant="outline"
                       className="w-full"
                     >
-                      Использовать
+                      {t(language, 'items.use')}
                     </Button>
                   )}
                   {item.type === 'dragon_egg' && (
@@ -155,7 +158,7 @@ export const InventoryGrid = ({
                       onClick={() => onUseItem(item)}
                       className="w-full bg-game-accent hover:bg-game-accent/80"
                     >
-                      Начать инкубацию
+                      {t(language, 'items.startIncubation')}
                     </Button>
                   )}
                   {item.type !== 'dragon_egg' && (
@@ -164,7 +167,7 @@ export const InventoryGrid = ({
                       variant="destructive"
                       className="w-full"
                     >
-                      Продать
+                      {t(language, 'items.sell')}
                     </Button>
                   )}
                 </div>
