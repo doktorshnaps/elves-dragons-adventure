@@ -45,7 +45,7 @@ export const useGameData = () => {
 
   // Загрузка данных из Supabase для кошелька
   const loadGameData = useCallback(async (walletAddress?: string) => {
-    const address = walletAddress || localStorage.getItem('accountId');
+    const address = walletAddress || localStorage.getItem('walletAccountId');
     
     if (!address) {
       setLoading(false);
@@ -119,14 +119,19 @@ export const useGameData = () => {
 
   // Обновление данных в Supabase для кошелька
   const updateGameData = useCallback(async (updates: Partial<GameData>) => {
-    const walletAddress = localStorage.getItem('accountId');
+    const walletAddress = localStorage.getItem('walletAccountId');
     if (!walletAddress) return;
 
     try {
+      // Получаем/создаём стабильный UUID идентичности для кошелька
+      const { data: identityId, error: idErr } = await supabase
+        .rpc('get_or_create_wallet_identity', { p_wallet_address: walletAddress });
+      if (idErr) throw idErr;
+
       // Формируем payload только из переданных полей, чтобы не затирать значения в БД
       const payload: any = { 
+        user_id: identityId as string,
         wallet_address: walletAddress,
-        user_id: walletAddress // Используем wallet address как user_id для совместимости
       };
       if (updates.balance !== undefined) payload.balance = updates.balance;
       if (updates.cards !== undefined) payload.cards = updates.cards as any;
@@ -143,9 +148,23 @@ export const useGameData = () => {
       // ВАЖНО: initialized обновляем только если явно передан
       if (updates.initialized !== undefined) payload.initialized = updates.initialized;
 
-      const { error } = await supabase
+      // Существующая запись?
+      const { data: existing, error: selErr } = await supabase
         .from('game_data')
-        .upsert(payload, { onConflict: 'user_id' });
+        .select('id')
+        .eq('wallet_address', walletAddress)
+        .maybeSingle();
+      if (selErr) throw selErr;
+
+      let error: any = null;
+      if (existing) {
+        const res = await supabase.from('game_data').update(payload).eq('wallet_address', walletAddress);
+        error = res.error;
+      } else {
+        const res = await supabase.from('game_data').insert(payload);
+        error = res.error;
+      }
+
 
       if (error) {
         console.error('Error updating game data:', error);
@@ -206,7 +225,7 @@ export const useGameData = () => {
 
   // Подписка на изменения в реальном времени для кошелька
   useEffect(() => {
-    const walletAddress = localStorage.getItem('accountId');
+    const walletAddress = localStorage.getItem('walletAccountId');
     if (!walletAddress) return;
 
     const channel = supabase
