@@ -6,6 +6,8 @@ import { useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
 import { TeamStatsModal } from "./TeamStatsModal";
 import { useToast } from "@/hooks/use-toast";
+import { useLanguage } from "@/hooks/useLanguage";
+import { t } from "@/utils/translations";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -30,6 +32,7 @@ export const GameHeader = ({
 }: GameHeaderProps) => {
   const isMobile = useIsMobile();
   const navigate = useNavigate();
+  const { language } = useLanguage();
   const [showStats, setShowStats] = useState(false);
   const [hasActiveBattle, setHasActiveBattle] = useState(false);
   const { toast } = useToast();
@@ -60,7 +63,7 @@ export const GameHeader = ({
         >
           <ShoppingCart className="w-4 h-4 flex-shrink-0" />
           <span className="truncate">
-            {isMobile ? "Магазин" : "Открыть магазин"}
+            {isMobile ? t(language, 'gameHeader.shop') : t(language, 'gameHeader.openShop')}
           </span>
         </Button>
 
@@ -73,13 +76,13 @@ export const GameHeader = ({
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-48 bg-game-surface border-game-accent">
             <DropdownMenuItem onClick={() => navigate('/dungeons')}>
-              Подземелья
+              {t(language, 'gameHeader.dungeons')}
             </DropdownMenuItem>
             <DropdownMenuItem onClick={() => setShowStats(true)}>
-              Статистика
+              {t(language, 'gameHeader.statistics')}
             </DropdownMenuItem>
             <DropdownMenuItem onClick={() => navigate('/info')}>
-              Информация
+              {t(language, 'gameHeader.information')}
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>

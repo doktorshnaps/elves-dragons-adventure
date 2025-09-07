@@ -5,11 +5,19 @@ export const translations = {
     // Menu
     menu: {
       title: 'Главное меню',
-      play: 'Играть',
-      shop: 'Магазин',
+      dungeon: 'Подземелье',
+      shop: 'Магический магазин',
+      marketplace: 'Торговая площадка',
+      grimoire: 'Гримуар',
       inventory: 'Инвентарь',
-      profile: 'Профиль',
-      settings: 'Настройки'
+      team: 'Команда',
+      quest: 'Бабло',
+      shelter: 'Убежище',
+      disconnectWallet: 'Отключить кошелек',
+      balance: 'Баланс:',
+      connected: 'Подключен',
+      connectWallet: 'Подключить кошелек',
+      connecting: 'Подключение...'
     },
     // Shop
     shop: {
@@ -45,17 +53,47 @@ export const translations = {
       level: 'Уровень',
       balance: 'Баланс',
       currency: 'ELL'
+    },
+    // Inventory
+    inventory: {
+      title: 'Инвентарь',
+      balance: 'Баланс:',
+      eggMoved: 'Яйцо перемещено в инкубатор',
+      eggMovedDescription: 'Нажмите \'Начать инкубацию\' у яйца сверху инвентаря',
+      itemUsed: 'Предмет использован',
+      itemUsedDescription: 'был использован',
+      itemUsedDescriptionRemaining: 'был использован (осталось',
+      cannotSell: 'Нельзя продать',
+      itemNotInInventory: 'Этот предмет уже отсутствует в вашем инвентаре',
+      noPacks: 'Нет колод',
+      noPacksToSell: 'У вас нет закрытых колод для продажи'
+    },
+    // GameHeader
+    gameHeader: {
+      openShop: 'Открыть магазин',
+      shop: 'Магазин',
+      dungeons: 'Подземелья',
+      statistics: 'Статистика',
+      information: 'Информация'
     }
   },
   en: {
     // Menu
     menu: {
       title: 'Main Menu',
-      play: 'Play',
-      shop: 'Shop',
+      dungeon: 'Dungeon',
+      shop: 'Magic Shop',
+      marketplace: 'Marketplace',
+      grimoire: 'Grimoire',
       inventory: 'Inventory',
-      profile: 'Profile',
-      settings: 'Settings'
+      team: 'Team',
+      quest: 'Quest',
+      shelter: 'Shelter',
+      disconnectWallet: 'Disconnect Wallet',
+      balance: 'Balance:',
+      connected: 'Connected',
+      connectWallet: 'Connect Wallet',
+      connecting: 'Connecting...'
     },
     // Shop
     shop: {
@@ -91,6 +129,28 @@ export const translations = {
       level: 'Level',
       balance: 'Balance',
       currency: 'ELL'
+    },
+    // Inventory
+    inventory: {
+      title: 'Inventory',
+      balance: 'Balance:',
+      eggMoved: 'Egg moved to incubator',
+      eggMovedDescription: 'Click \'Start incubation\' on the egg above inventory',
+      itemUsed: 'Item used',
+      itemUsedDescription: 'was used',
+      itemUsedDescriptionRemaining: 'was used (remaining',
+      cannotSell: 'Cannot sell',
+      itemNotInInventory: 'This item is no longer in your inventory',
+      noPacks: 'No packs',
+      noPacksToSell: 'You have no closed packs to sell'
+    },
+    // GameHeader
+    gameHeader: {
+      openShop: 'Open Shop',
+      shop: 'Shop',
+      dungeons: 'Dungeons',
+      statistics: 'Statistics',
+      information: 'Information'
     }
   }
 };

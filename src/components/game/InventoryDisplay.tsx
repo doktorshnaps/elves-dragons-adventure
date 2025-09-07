@@ -8,6 +8,8 @@ import { InventoryGrid } from "./inventory/InventoryGrid";
 import { CardRevealModal } from "./dialogs/CardRevealModal";
 import { useGameData } from "@/hooks/useGameData";
 import { useToast } from "@/hooks/use-toast";
+import { useLanguage } from "@/hooks/useLanguage";
+import { t } from "@/utils/translations";
 import { GroupedItem } from "./inventory/types";
 import { cardDatabase } from "@/data/cardDatabase";
 
@@ -26,6 +28,7 @@ export const InventoryDisplay = ({
 }: InventoryDisplayProps) => {
   const { eggs, addEgg } = useDragonEggs();
   const { gameData, updateGameData } = useGameData();
+  const { language } = useLanguage();
   const inventory = gameData.inventory || [];
   const { toast } = useToast();
   const {
@@ -63,8 +66,8 @@ export const InventoryDisplay = ({
       await updateGameData({ inventory: newInventory });
 
       toast({
-        title: "Яйцо перемещено в инкубатор",
-        description: "Нажмите 'Начать инкубацию' у яйца сверху инвентаря",
+        title: t(language, 'inventory.eggMoved'),
+        description: t(language, 'inventory.eggMovedDescription'),
       });
       return false;
     }
@@ -86,13 +89,13 @@ export const InventoryDisplay = ({
       // Если это была последняя копия предмета в стопке
       if (groupedItem.count === 1) {
         toast({
-          title: "Предмет использован",
-          description: `${groupedItem.name} был использован`
+          title: t(language, 'inventory.itemUsed'),
+          description: `${groupedItem.name} ${t(language, 'inventory.itemUsedDescription')}`
         });
       } else {
         toast({
-          title: "Предмет использован",
-          description: `${groupedItem.name} был использован (осталось ${groupedItem.count - 1})`
+          title: t(language, 'inventory.itemUsed'),
+          description: `${groupedItem.name} ${t(language, 'inventory.itemUsedDescription')} ${t(language, 'inventory.itemUsedDescriptionRemaining')} ${groupedItem.count - 1})`
         });
       }
     }
@@ -106,8 +109,8 @@ export const InventoryDisplay = ({
 
     if (!existingItem) {
       toast({
-        title: 'Нельзя продать',
-        description: 'Этот предмет уже отсутствует в вашем инвентаре',
+        title: t(language, 'inventory.cannotSell'),
+        description: t(language, 'inventory.itemNotInInventory'),
         variant: 'destructive'
       });
       return;
@@ -115,8 +118,8 @@ export const InventoryDisplay = ({
 
     if (groupedItem.type === 'cardPack' && packsLeft < 1) {
       toast({
-        title: 'Нет колод',
-        description: 'У вас нет закрытых колод для продажи',
+        title: t(language, 'inventory.noPacks'),
+        description: t(language, 'inventory.noPacksToSell'),
         variant: 'destructive'
       });
       return;
