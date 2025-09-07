@@ -18,49 +18,33 @@ serve(async (req) => {
     
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    console.log('🔄 Starting shop reset check...');
+    // Always reset inventory (function handles both empty and expired cases)
+    console.log('🔄 Forcing shop inventory reset via RPC');
+    const { error: resetError } = await supabase.rpc('reset_shop_inventory');
+    if (resetError) {
+      console.error('❌ Error resetting shop:', resetError);
+      throw resetError;
+    }
 
-    // Проверяем, нужно ли сбросить магазин
+    // Fetch inventory after reset
     const { data: inventoryData, error: fetchError } = await supabase
       .from('shop_inventory')
       .select('*')
-      .lte('next_reset_time', new Date().toISOString());
+      .order('item_id');
 
     if (fetchError) {
       console.error('❌ Error fetching inventory:', fetchError);
       throw fetchError;
     }
 
-    console.log(`📦 Found ${inventoryData?.length || 0} items needing reset`);
+    console.log(`✅ Shop inventory ready: ${inventoryData?.length || 0} items`);
 
-    if (inventoryData && inventoryData.length > 0) {
-      // Вызываем функцию сброса магазина
-      const { error: resetError } = await supabase.rpc('reset_shop_inventory');
-
-      if (resetError) {
-        console.error('❌ Error resetting shop:', resetError);
-        throw resetError;
-      }
-
-      console.log('✅ Shop inventory reset successfully');
-      
-      return new Response(JSON.stringify({ 
-        success: true, 
-        message: 'Shop inventory reset',
-        reset_items: inventoryData.length 
-      }), {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
-    } else {
-      console.log('ℹ️ No reset needed');
-      
-      return new Response(JSON.stringify({ 
-        success: true, 
-        message: 'No reset needed' 
-      }), {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
-    }
+    return new Response(JSON.stringify({ 
+      success: true, 
+      inventory: inventoryData || [] 
+    }), {
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    });
   } catch (error) {
     console.error('💥 Error in shop-reset function:', error);
     return new Response(JSON.stringify({ 

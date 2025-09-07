@@ -26,12 +26,16 @@ export const useShopInventory = () => {
 
       setInventory(data || []);
       
-      // Вычисляем время до сброса из первого элемента
-      if (data && data.length > 0) {
-        const nextReset = new Date(data[0].next_reset_time).getTime();
-        const now = new Date().getTime();
-        setTimeUntilReset(Math.max(0, nextReset - now));
+      // Если инвентарь пустой — инициируем сброс и повторную загрузку
+      if (!data || data.length === 0) {
+        await triggerResetAndRefresh();
+        return;
       }
+      
+      // Вычисляем время до сброса из первого элемента
+      const nextReset = new Date(data[0].next_reset_time).getTime();
+      const now = new Date().getTime();
+      setTimeUntilReset(Math.max(0, nextReset - now));
     } catch (error) {
       console.error('Error fetching shop inventory:', error);
     } finally {

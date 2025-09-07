@@ -200,7 +200,7 @@ return (
                 <Button
                   className="w-full bg-game-primary hover:bg-game-primary/80 disabled:opacity-50"
                   onClick={() => handleBuyItem(item)}
-                  disabled={(balance || gameData.balance) < item.price || !available}
+                  disabled={!available}
                 >
                   {!available ? t(language, 'shop.soldOutButton') : t(language, 'shop.buy')}
                 </Button>
