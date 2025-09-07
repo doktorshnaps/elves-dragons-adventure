@@ -1,8 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { shopItems } from "@/data/shopItems";
-import { useBalanceState } from "@/hooks/useBalanceState";
-import { useGameData } from "@/hooks/useGameData";
+import { useUnifiedGameState } from "@/hooks/useUnifiedGameState";
 import { useToast } from "@/hooks/use-toast";
 import { useShopInventory } from "@/hooks/useShopInventory";
 import { useWallet } from "@/hooks/useWallet";
@@ -20,8 +19,7 @@ interface ShopProps {
 }
 
 export const Shop = ({ onClose }: ShopProps) => {
-  const { gameData, updateGameData, loading } = useGameData();
-  const { balance, updateBalance } = useBalanceState();
+  const gameState = useUnifiedGameState();
   const { accountId } = useWallet();
   const { language } = useLanguage();
   const { 
@@ -35,7 +33,7 @@ export const Shop = ({ onClose }: ShopProps) => {
   const { toast } = useToast();
   const [showEffect, setShowEffect] = useState(false);
 
-  if (loading || inventoryLoading) {
+  if (gameState.loading || inventoryLoading) {
     return <div className="flex justify-center items-center h-64">{t(language, 'shop.loading')}</div>;
   }
 
@@ -58,18 +56,17 @@ export const Shop = ({ onClose }: ShopProps) => {
       return;
     }
 
-    if ((balance || gameData.balance) >= item.price) {
+    if (gameState.balance >= item.price) {
       try {
         console.log(`🛒 Purchasing item: ${item.name} for ${item.price} ELL`);
-        console.log(`💰 Current balance: ${balance || gameData.balance}`);
+        console.log(`💰 Current balance: ${gameState.balance}`);
         
         // Сначала обновляем количество в магазине
         await purchaseItem(item.id, accountId);
 
         // Рассчитываем новый баланс
-        const currentBalance = balance || gameData.balance;
-        const newBalance = currentBalance - item.price;
-        console.log(`💸 Updating balance from ${currentBalance} to ${newBalance}`);
+        const newBalance = gameState.balance - item.price;
+        console.log(`💸 Updating balance from ${gameState.balance} to ${newBalance}`);
 
         if (item.type === "cardPack") {
           // Создаем колоду карт как предмет в инвентаре
@@ -82,14 +79,14 @@ export const Shop = ({ onClose }: ShopProps) => {
             image: item.image
           };
 
-          const newInventory = [...(gameData.inventory || []), newItem];
+          const newInventory = [...(gameState.inventory || []), newItem];
           console.log(`📦 Adding item to inventory. Total items: ${newInventory.length}`);
           
-          // Обновляем баланс через специализированный хук и инвентарь через gameData
-          await Promise.all([
-            updateBalance(newBalance),
-            updateGameData({ inventory: newInventory })
-          ]);
+          // Используем батч обновление для оптимизации
+          await gameState.actions.batchUpdate({
+            balance: newBalance,
+            inventory: newInventory
+          });
 
           setShowEffect(true);
           toast({
@@ -110,14 +107,14 @@ export const Shop = ({ onClose }: ShopProps) => {
             equipped: false
           };
 
-          const newInventory = [...(gameData.inventory || []), newItem];
+          const newInventory = [...(gameState.inventory || []), newItem];
           console.log(`📦 Adding item to inventory. Total items: ${newInventory.length}`);
           
-          // Обновляем баланс через специализированный хук и инвентарь через gameData
-          await Promise.all([
-            updateBalance(newBalance),
-            updateGameData({ inventory: newInventory })
-          ]);
+          // Используем батч обновление для оптимизации
+          await gameState.actions.batchUpdate({
+            balance: newBalance,
+            inventory: newInventory
+          });
 
           setShowEffect(true);
           toast({

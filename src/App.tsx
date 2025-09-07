@@ -24,14 +24,16 @@ import { Shelter } from './pages/Shelter';
 import { ProtectedRoute } from './components/ProtectedRoute';
 import { useAccountSync } from './hooks/useAccountSync';
 import { LanguageProvider } from './contexts/LanguageContext';
+import { QueryProvider } from './providers/QueryProvider';
 
 function App() {
   useAccountSync();
   
   return (
     <ErrorBoundary>
-      <LanguageProvider>
-        <Routes>
+      <QueryProvider>
+        <LanguageProvider>
+          <Routes>
           <Route path="/" element={<Index />} />
           <Route path="/auth" element={<Auth />} />
           <Route path="/menu" element={<ProtectedRoute><Menu /></ProtectedRoute>} />
@@ -53,9 +55,10 @@ function App() {
           <Route path="/dungeons/spider-nest" element={<ProtectedRoute><SpiderNest /></ProtectedRoute>} />
           <Route path="/dungeons/bone-dungeon" element={<ProtectedRoute><BoneDemonDungeon /></ProtectedRoute>} />
           <Route path="/dungeons/sea-serpent" element={<ProtectedRoute><SeaSerpentLair /></ProtectedRoute>} />
-        </Routes>
-        <Toaster />
-      </LanguageProvider>
+          </Routes>
+          <Toaster />
+        </LanguageProvider>
+      </QueryProvider>
     </ErrorBoundary>
   );
 }
