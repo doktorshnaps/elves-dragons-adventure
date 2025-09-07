@@ -1,6 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { shopItems } from "@/data/shopItems";
+import { useBalanceState } from "@/hooks/useBalanceState";
 import { useGameData } from "@/hooks/useGameData";
 import { useToast } from "@/hooks/use-toast";
 import { useShopInventory } from "@/hooks/useShopInventory";
@@ -20,6 +21,7 @@ interface ShopProps {
 
 export const Shop = ({ onClose }: ShopProps) => {
   const { gameData, updateGameData, loading } = useGameData();
+  const { balance, updateBalance } = useBalanceState();
   const { accountId } = useWallet();
   const { language } = useLanguage();
   const { 
@@ -56,7 +58,7 @@ export const Shop = ({ onClose }: ShopProps) => {
       return;
     }
 
-    if (gameData.balance >= item.price) {
+    if ((balance || gameData.balance) >= item.price) {
       try {
         // Обновляем количество в магазине
         await purchaseItem(item.id, accountId);
@@ -73,7 +75,7 @@ export const Shop = ({ onClose }: ShopProps) => {
           };
 
           const newInventory = [...(gameData.inventory || []), newItem];
-          const newBalance = gameData.balance - item.price;
+          const newBalance = (balance || gameData.balance) - item.price;
           
           await updateGameData({
             inventory: newInventory,
@@ -100,7 +102,7 @@ export const Shop = ({ onClose }: ShopProps) => {
           };
 
           const newInventory = [...(gameData.inventory || []), newItem];
-          const newBalance = gameData.balance - item.price;
+          const newBalance = (balance || gameData.balance) - item.price;
           
           await updateGameData({
             inventory: newInventory,
@@ -198,7 +200,7 @@ return (
                 <Button
                   className="w-full bg-game-primary hover:bg-game-primary/80 disabled:opacity-50"
                   onClick={() => handleBuyItem(item)}
-                  disabled={gameData.balance < item.price || !available}
+                  disabled={(balance || gameData.balance) < item.price || !available}
                 >
                   {!available ? t(language, 'shop.soldOutButton') : t(language, 'shop.buy')}
                 </Button>
