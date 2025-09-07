@@ -2,6 +2,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Card as CardType } from "@/types/cards";
 import { getRarityLabel } from "@/utils/cardUtils";
 import { Sparkles } from "lucide-react";
+import { CardImage } from "./CardImage";
 
 interface CardPreviewModalProps {
   card: CardType | null;
@@ -23,15 +24,12 @@ export const CardPreviewModal = ({ card, open, onClose, actionLabel, onAction, d
           <DialogTitle className="text-game-accent">{card.name}</DialogTitle>
         </DialogHeader>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {/* Image */}
           <div className="w-full flex items-center justify-center">
-            <img
-              src={card.image || "/placeholder.svg"}
-              alt={`${card.name} полное изображение`}
-              className="max-h-[60vh] md:max-h-[80vh] w-auto max-w-full object-contain rounded-lg border border-game-accent shadow-lg"
-              loading="lazy"
-            />
+            <div className="w-full h-[60vh] md:h-[80vh] max-w-full rounded-lg border border-game-accent shadow-lg overflow-hidden">
+              <CardImage image={card.image || "/placeholder.svg"} name={`${card.name} полное изображение`} />
+            </div>
           </div>
+
 
           {/* Details */}
           <div className="space-y-3">
