@@ -60,8 +60,16 @@ export const Shop = ({ onClose }: ShopProps) => {
 
     if ((balance || gameData.balance) >= item.price) {
       try {
-        // Обновляем количество в магазине
+        console.log(`🛒 Purchasing item: ${item.name} for ${item.price} ELL`);
+        console.log(`💰 Current balance: ${balance || gameData.balance}`);
+        
+        // Сначала обновляем количество в магазине
         await purchaseItem(item.id, accountId);
+
+        // Рассчитываем новый баланс
+        const currentBalance = balance || gameData.balance;
+        const newBalance = currentBalance - item.price;
+        console.log(`💸 Updating balance from ${currentBalance} to ${newBalance}`);
 
         if (item.type === "cardPack") {
           // Создаем колоду карт как предмет в инвентаре
@@ -75,12 +83,13 @@ export const Shop = ({ onClose }: ShopProps) => {
           };
 
           const newInventory = [...(gameData.inventory || []), newItem];
-          const newBalance = (balance || gameData.balance) - item.price;
+          console.log(`📦 Adding item to inventory. Total items: ${newInventory.length}`);
           
-          await updateGameData({
-            inventory: newInventory,
-            balance: newBalance
-          });
+          // Обновляем баланс через специализированный хук и инвентарь через gameData
+          await Promise.all([
+            updateBalance(newBalance),
+            updateGameData({ inventory: newInventory })
+          ]);
 
           setShowEffect(true);
           toast({
@@ -102,12 +111,13 @@ export const Shop = ({ onClose }: ShopProps) => {
           };
 
           const newInventory = [...(gameData.inventory || []), newItem];
-          const newBalance = (balance || gameData.balance) - item.price;
+          console.log(`📦 Adding item to inventory. Total items: ${newInventory.length}`);
           
-          await updateGameData({
-            inventory: newInventory,
-            balance: newBalance
-          });
+          // Обновляем баланс через специализированный хук и инвентарь через gameData
+          await Promise.all([
+            updateBalance(newBalance),
+            updateGameData({ inventory: newInventory })
+          ]);
 
           setShowEffect(true);
           toast({
