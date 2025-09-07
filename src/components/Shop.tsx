@@ -5,6 +5,8 @@ import { useGameData } from "@/hooks/useGameData";
 import { useToast } from "@/hooks/use-toast";
 import { useShopInventory } from "@/hooks/useShopInventory";
 import { useWallet } from "@/hooks/useWallet";
+import { useLanguage } from "@/hooks/useLanguage";
+import { t } from "@/utils/translations";
 import { v4 as uuidv4 } from 'uuid';
 import { generateCard } from "@/utils/cardUtils";
 import { Item } from "@/types/inventory";
@@ -19,6 +21,7 @@ interface ShopProps {
 export const Shop = ({ onClose }: ShopProps) => {
   const { gameData, updateGameData, loading } = useGameData();
   const { accountId } = useWallet();
+  const { language } = useLanguage();
   const { 
     inventory, 
     loading: inventoryLoading, 
@@ -31,14 +34,14 @@ export const Shop = ({ onClose }: ShopProps) => {
   const [showEffect, setShowEffect] = useState(false);
 
   if (loading || inventoryLoading) {
-    return <div className="flex justify-center items-center h-64">Загрузка...</div>;
+    return <div className="flex justify-center items-center h-64">{t(language, 'shop.loading')}</div>;
   }
 
   const handleBuyItem = async (item: typeof shopItems[0]) => {
     if (!accountId) {
       toast({
-        title: "Ошибка",
-        description: "Подключите кошелек для покупок",
+        title: t(language, 'shop.error'),
+        description: t(language, 'shop.connectWallet'),
         variant: "destructive",
       });
       return;
@@ -46,8 +49,8 @@ export const Shop = ({ onClose }: ShopProps) => {
 
     if (!isItemAvailable(item.id)) {
       toast({
-        title: "Товар закончился",
-        description: "Этот товар временно закончился. Ждите пополнения!",
+        title: t(language, 'shop.itemSoldOut'),
+        description: t(language, 'shop.itemSoldOutDescription'),
         variant: "destructive",
       });
       return;
@@ -79,8 +82,8 @@ export const Shop = ({ onClose }: ShopProps) => {
 
           setShowEffect(true);
           toast({
-            title: "Колода карт куплена!",
-            description: "Колода карт добавлена в инвентарь. Откройте её чтобы получить карту!",
+            title: t(language, 'shop.cardPackBought'),
+            description: t(language, 'shop.cardPackDescription'),
           });
         } else {
           // Для остальных предметов используем систему инвентаря
@@ -106,21 +109,21 @@ export const Shop = ({ onClose }: ShopProps) => {
 
           setShowEffect(true);
           toast({
-            title: "Покупка успешна",
-            description: `Вы купили ${item.name}`,
+            title: t(language, 'shop.purchaseSuccess'),
+            description: `${t(language, 'shop.boughtItem')} ${item.name}`,
           });
         }
       } catch (error) {
         toast({
-          title: "Ошибка покупки",
-          description: "Произошла ошибка при покупке товара",
+          title: t(language, 'shop.purchaseError'),
+          description: t(language, 'shop.purchaseErrorDescription'),
           variant: "destructive",
         });
       }
     } else {
       toast({
-        title: "Недостаточно средств",
-        description: "У вас недостаточно ELL для покупки",
+        title: t(language, 'shop.insufficientFunds'),
+        description: t(language, 'shop.insufficientFundsDescription'),
         variant: "destructive",
       });
     }
@@ -137,12 +140,12 @@ return (
             className="flex items-center gap-2 text-game-accent hover:text-game-primary hover:bg-game-surface"
           >
             <ArrowLeft className="w-4 h-4" />
-            Вернуться в меню
+            {t(language, 'shop.backToMenu')}
           </Button>
           
           <div className="flex items-center gap-2 text-game-accent">
             <Clock className="w-4 h-4" />
-            <span className="text-sm">Пополнение через: {timeUntilReset}</span>
+            <span className="text-sm">{t(language, 'shop.refillIn')} {timeUntilReset}</span>
           </div>
         </div>
       </div>
@@ -164,7 +167,7 @@ return (
                   {!available && (
                     <div className="absolute inset-0 bg-red-500/20 flex items-center justify-center">
                       <span className="text-red-400 font-bold text-sm bg-red-900/80 px-2 py-1 rounded">
-                        РАСПРОДАНО
+                        {t(language, 'shop.soldOut')}
                       </span>
                     </div>
                   )}
@@ -181,23 +184,23 @@ return (
                 <p className="text-gray-400 text-sm">{item.description}</p>
                 {item.stats && (
                   <div className="text-game-accent text-sm">
-                    {item.stats.power && <p>Сила: +{item.stats.power}</p>}
-                    {item.stats.defense && <p>Защита: +{item.stats.defense}</p>}
-                    {item.stats.health && <p>Здоровье: +{item.stats.health}</p>}
+                    {item.stats.power && <p>{t(language, 'shop.power')} +{item.stats.power}</p>}
+                    {item.stats.defense && <p>{t(language, 'shop.defense')} +{item.stats.defense}</p>}
+                    {item.stats.health && <p>{t(language, 'shop.health')} +{item.stats.health}</p>}
                   </div>
                 )}
                 {item.requiredLevel && (
                   <p className="text-yellow-500 text-sm">
-                    Требуется уровень: {item.requiredLevel}
+                    {t(language, 'shop.requiredLevel')} {item.requiredLevel}
                   </p>
                 )}
-                <p className="text-game-secondary">Цена: {item.price} ELL</p>
+                <p className="text-game-secondary">{t(language, 'shop.price')} {item.price} {t(language, 'game.currency')}</p>
                 <Button
                   className="w-full bg-game-primary hover:bg-game-primary/80 disabled:opacity-50"
                   onClick={() => handleBuyItem(item)}
                   disabled={gameData.balance < item.price || !available}
                 >
-                  {!available ? 'Распродано' : 'Купить'}
+                  {!available ? t(language, 'shop.soldOutButton') : t(language, 'shop.buy')}
                 </Button>
               </div>
             </Card>
