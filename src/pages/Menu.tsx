@@ -6,6 +6,7 @@ import { useGameData } from "@/hooks/useGameData";
 import { useGameInitialization } from "@/components/game/initialization/useGameInitialization";
 import { FirstTimePackDialog } from "@/components/game/initialization/FirstTimePackDialog";
 import { useWallet } from "@/hooks/useWallet";
+import { useBalanceState } from "@/hooks/useBalanceState";
 import { useLanguage } from "@/hooks/useLanguage";
 import { t } from "@/utils/translations";
 import { LanguageToggle } from "@/components/LanguageToggle";
@@ -13,7 +14,8 @@ import { useState, useEffect } from "react";
 export const Menu = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
-  const { gameData } = useGameData();
+  const { gameData, loadGameData } = useGameData();
+  const { balance } = useBalanceState();
   const { language } = useLanguage();
   const {
     isConnected,
@@ -30,6 +32,14 @@ export const Menu = () => {
     showFirstTimePack,
     setShowFirstTimePack
   } = useGameInitialization(setCards);
+
+  // Загружаем данные при подключении кошелька
+  useEffect(() => {
+    if (isConnected && accountId) {
+      console.log('🔄 Loading game data for connected wallet:', accountId);
+      loadGameData(accountId);
+    }
+  }, [isConnected, accountId, loadGameData]);
   const handleDisconnectWallet = async () => {
     await disconnectWallet();
     navigate('/auth');
@@ -61,7 +71,7 @@ export const Menu = () => {
         <div className="bg-game-surface/90 px-6 py-3 rounded-lg border border-game-accent">
           <div className="flex items-center gap-2">
             <DollarSign className="w-5 h-5 text-game-accent" />
-            <span className="text-game-accent font-semibold">{t(language, 'menu.balance')} {gameData.balance} {t(language, 'game.currency')}</span>
+            <span className="text-game-accent font-semibold">{t(language, 'menu.balance')} {balance || gameData.balance} {t(language, 'game.currency')}</span>
           </div>
         </div>
         

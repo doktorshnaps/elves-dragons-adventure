@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { useAuth } from '@/hooks/useAuth';
+// Убираем зависимость от useAuth для работы с кошельками
 import { Card } from '@/types/cards';
 import { useToast } from '@/hooks/use-toast';
 import { processCardsHealthRegeneration, initializeCardHealth } from '@/utils/cardHealthUtils';
@@ -24,7 +24,7 @@ interface GameData {
 }
 
 export const useGameData = () => {
-  const { user } = useAuth();
+  // Удаляем зависимость от useAuth для работы с кошельками
   const { toast } = useToast();
   const [gameData, setGameData] = useState<GameData>({
     balance: 0,
@@ -43,9 +43,11 @@ export const useGameData = () => {
   });
   const [loading, setLoading] = useState(true);
 
-  // Загрузка данных из Supabase
-  const loadGameData = useCallback(async () => {
-    if (!user) {
+  // Загрузка данных из Supabase для кошелька
+  const loadGameData = useCallback(async (walletAddress?: string) => {
+    const address = walletAddress || localStorage.getItem('accountId');
+    
+    if (!address) {
       setLoading(false);
       return;
     }
@@ -54,7 +56,7 @@ export const useGameData = () => {
       const { data, error } = await supabase
         .from('game_data')
         .select('*')
-        .eq('user_id', user.id)
+        .eq('wallet_address', address)
         .single();
 
       if (error && error.code !== 'PGRST116') {
@@ -113,15 +115,19 @@ export const useGameData = () => {
     } finally {
       setLoading(false);
     }
-  }, [user]);
+  }, []);
 
-  // Обновление данных в Supabase
+  // Обновление данных в Supabase для кошелька
   const updateGameData = useCallback(async (updates: Partial<GameData>) => {
-    if (!user) return;
+    const walletAddress = localStorage.getItem('accountId');
+    if (!walletAddress) return;
 
     try {
       // Формируем payload только из переданных полей, чтобы не затирать значения в БД
-      const payload: any = { user_id: user.id };
+      const payload: any = { 
+        wallet_address: walletAddress,
+        user_id: walletAddress // Используем wallet address как user_id для совместимости
+      };
       if (updates.balance !== undefined) payload.balance = updates.balance;
       if (updates.cards !== undefined) payload.cards = updates.cards as any;
       if (updates.inventory !== undefined) payload.inventory = updates.inventory as any;
@@ -191,16 +197,17 @@ export const useGameData = () => {
     } catch (error) {
       console.error('Error in updateGameData:', error);
     }
-  }, [user, toast]);
+  }, [toast]);
 
   // Загружаем данные при инициализации
   useEffect(() => {
     loadGameData();
   }, [loadGameData]);
 
-  // Подписка на изменения в реальном времени
+  // Подписка на изменения в реальном времени для кошелька
   useEffect(() => {
-    if (!user) return;
+    const walletAddress = localStorage.getItem('accountId');
+    if (!walletAddress) return;
 
     const channel = supabase
       .channel('game-data-changes')
@@ -210,11 +217,11 @@ export const useGameData = () => {
           event: '*',
           schema: 'public',
           table: 'game_data',
-          filter: `user_id=eq.${user.id}`
+          filter: `wallet_address=eq.${walletAddress}`
         },
         (payload) => {
           console.log('Real-time update:', payload);
-          loadGameData();
+          loadGameData(walletAddress);
         }
       )
       .subscribe();
@@ -222,7 +229,7 @@ export const useGameData = () => {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [user, loadGameData]);
+  }, [loadGameData]);
 
   return {
     gameData,
