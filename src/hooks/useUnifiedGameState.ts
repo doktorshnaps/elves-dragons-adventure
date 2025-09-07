@@ -4,6 +4,8 @@ import { supabase } from '@/integrations/supabase/client';
 import { useWallet } from './useWallet';
 import { useOptimisticUpdates } from './useOptimisticUpdates';
 import { useRealTimeSync } from './useRealTimeSync';
+import { useVersioning } from './useVersioning';
+import { useErrorHandling } from './useErrorHandling';
 import { batchUpdateManager } from '@/utils/batchUpdates';
 import { GameData, UnifiedGameState } from '@/types/gameState';
 import { useToast } from './use-toast';
@@ -34,6 +36,8 @@ export const useUnifiedGameState = (): UnifiedGameState => {
   const { accountId } = useWallet();
   const queryClient = useQueryClient();
   const { toast } = useToast();
+  const { updateWithVersionCheck, getRecordVersion } = useVersioning();
+  const { withErrorHandling, retryOperation } = useErrorHandling();
 
   // Основной запрос данных игры
   const {
@@ -61,10 +65,21 @@ export const useUnifiedGameState = (): UnifiedGameState => {
     updateData
   } = useOptimisticUpdates(gameData);
 
-  // Мутация для обновления данных
+  // Мутация для обновления данных с версионированием
   const updateMutation = useMutation({
-    mutationFn: async (updates: Partial<GameData>) => {
+    mutationFn: async ({ updates, recordId, currentVersion }: { 
+      updates: Partial<GameData>, 
+      recordId?: string,
+      currentVersion?: number 
+    }) => {
       if (!accountId) throw new Error('No wallet connected');
+      
+      // Если передан recordId и версия, используем версионированное обновление
+      if (recordId && currentVersion !== undefined) {
+        return await updateWithVersionCheck('game_data', recordId, updates, currentVersion);
+      }
+      
+      // Иначе обычное обновление
       return await updateGameDataOnServer(accountId, updates);
     },
     onSuccess: (updatedData) => {
@@ -85,12 +100,13 @@ export const useUnifiedGameState = (): UnifiedGameState => {
     }
   });
 
-  // Настраиваем batch update handler
+  // Настраиваем batch update handler с обработкой ошибок
   useMemo(() => {
     batchUpdateManager.setBatchUpdateHandler(async (updates: Partial<GameData>) => {
-      await updateMutation.mutateAsync(updates);
+      const operation = () => updateMutation.mutateAsync({ updates });
+      await retryOperation(operation, { maxRetries: 2 });
     });
-  }, [updateMutation]);
+  }, [updateMutation, retryOperation]);
 
   // Real-time синхронизация
   const { forceSync } = useRealTimeSync({
@@ -118,33 +134,42 @@ export const useUnifiedGameState = (): UnifiedGameState => {
   // Действия для обновления состояния
   const actions = useMemo(() => ({
     updateBalance: async (balance: number) => {
-      await optimisticUpdate(
-        { ...optimisticData, balance },
-        async () => {
-          const result = await updateMutation.mutateAsync({ balance });
-          return result;
-        }
-      );
+      const operation = withErrorHandling(async () => {
+        await optimisticUpdate(
+          { ...optimisticData, balance },
+          async () => {
+            const result = await updateMutation.mutateAsync({ updates: { balance } });
+            return result;
+          }
+        );
+      });
+      await operation();
     },
 
     updateInventory: async (inventory: any[]) => {
-      await optimisticUpdate(
-        { ...optimisticData, inventory },
-        async () => {
-          const result = await updateMutation.mutateAsync({ inventory });
-          return result;
-        }
-      );
+      const operation = withErrorHandling(async () => {
+        await optimisticUpdate(
+          { ...optimisticData, inventory },
+          async () => {
+            const result = await updateMutation.mutateAsync({ updates: { inventory } });
+            return result;
+          }
+        );
+      });
+      await operation();
     },
 
     updateCards: async (cards: any[]) => {
-      await optimisticUpdate(
-        { ...optimisticData, cards },
-        async () => {
-          const result = await updateMutation.mutateAsync({ cards });
-          return result;
-        }
-      );
+      const operation = withErrorHandling(async () => {
+        await optimisticUpdate(
+          { ...optimisticData, cards },
+          async () => {
+            const result = await updateMutation.mutateAsync({ updates: { cards } });
+            return result;
+          }
+        );
+      });
+      await operation();
     },
 
     batchUpdate: async (updates: Partial<GameData>) => {
@@ -155,10 +180,13 @@ export const useUnifiedGameState = (): UnifiedGameState => {
     },
 
     optimisticUpdate: async <T>(key: keyof GameData, value: T, serverAction: () => Promise<GameData>) => {
-      const newData = { ...optimisticData, [key]: value } as GameData;
-      await optimisticUpdate(newData, serverAction);
+      const operation = withErrorHandling(async () => {
+        const newData = { ...optimisticData, [key]: value } as GameData;
+        await optimisticUpdate(newData, serverAction);
+      });
+      await operation();
     }
-  }), [optimisticData, optimisticUpdate, updateMutation]);
+  }), [optimisticData, optimisticUpdate, updateMutation, withErrorHandling]);
 
   return {
     ...optimisticData,

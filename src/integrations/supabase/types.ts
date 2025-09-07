@@ -454,6 +454,15 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: undefined
       }
+      resolve_version_conflict: {
+        Args: {
+          p_expected_version: number
+          p_new_data: Json
+          p_record_id: string
+          p_table_name: string
+        }
+        Returns: Json
+      }
     }
     Enums: {
       [_ in never]: never
