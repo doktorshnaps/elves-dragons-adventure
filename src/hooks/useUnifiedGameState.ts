@@ -173,10 +173,19 @@ export const useUnifiedGameState = (): UnifiedGameState => {
     },
 
     batchUpdate: async (updates: Partial<GameData>) => {
-      // Добавляем все обновления в батч
-      for (const [key, value] of Object.entries(updates)) {
-        await batchUpdateManager.addUpdate(key as keyof GameData, value);
-      }
+      const operation = withErrorHandling(async () => {
+        // Вычисляем новые оптимистичные данные
+        const newOptimisticData = { ...optimisticData, ...updates };
+        
+        await optimisticUpdate(
+          newOptimisticData,
+          async () => {
+            const result = await updateMutation.mutateAsync({ updates });
+            return result;
+          }
+        );
+      });
+      await operation();
     },
 
     optimisticUpdate: async <T>(key: keyof GameData, value: T, serverAction: () => Promise<GameData>) => {
