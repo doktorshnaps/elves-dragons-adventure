@@ -101,6 +101,48 @@ export type Database = {
         }
         Relationships: []
       }
+      data_changes: {
+        Row: {
+          change_type: string
+          created_at: string | null
+          created_by: string | null
+          id: string
+          new_data: Json | null
+          old_data: Json | null
+          record_id: string
+          table_name: string
+          version_from: number | null
+          version_to: number | null
+          wallet_address: string | null
+        }
+        Insert: {
+          change_type: string
+          created_at?: string | null
+          created_by?: string | null
+          id?: string
+          new_data?: Json | null
+          old_data?: Json | null
+          record_id: string
+          table_name: string
+          version_from?: number | null
+          version_to?: number | null
+          wallet_address?: string | null
+        }
+        Update: {
+          change_type?: string
+          created_at?: string | null
+          created_by?: string | null
+          id?: string
+          new_data?: Json | null
+          old_data?: Json | null
+          record_id?: string
+          table_name?: string
+          version_from?: number | null
+          version_to?: number | null
+          wallet_address?: string | null
+        }
+        Relationships: []
+      }
       game_data: {
         Row: {
           account_experience: number
@@ -122,6 +164,7 @@ export type Database = {
           social_quests: Json | null
           updated_at: string
           user_id: string
+          version: number | null
           wallet_address: string | null
         }
         Insert: {
@@ -144,6 +187,7 @@ export type Database = {
           social_quests?: Json | null
           updated_at?: string
           user_id: string
+          version?: number | null
           wallet_address?: string | null
         }
         Update: {
@@ -166,6 +210,7 @@ export type Database = {
           social_quests?: Json | null
           updated_at?: string
           user_id?: string
+          version?: number | null
           wallet_address?: string | null
         }
         Relationships: []
@@ -184,6 +229,7 @@ export type Database = {
           status: string
           type: string
           updated_at: string
+          version: number | null
         }
         Insert: {
           buyer_id?: string | null
@@ -198,6 +244,7 @@ export type Database = {
           status?: string
           type: string
           updated_at?: string
+          version?: number | null
         }
         Update: {
           buyer_id?: string | null
@@ -212,6 +259,7 @@ export type Database = {
           status?: string
           type?: string
           updated_at?: string
+          version?: number | null
         }
         Relationships: []
       }
