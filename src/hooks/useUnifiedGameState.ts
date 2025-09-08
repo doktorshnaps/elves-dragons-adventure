@@ -266,21 +266,30 @@ async function updateGameDataOnServer(walletAddress: string, updates: Partial<Ga
 }
 
 function transformServerData(serverData: any): GameData {
-  return {
-    balance: serverData.balance || 100,
-    cards: serverData.cards || [],
-    initialized: serverData.initialized || false,
-    inventory: serverData.inventory || [],
-    dragonEggs: serverData.dragon_eggs || [],
-    selectedTeam: serverData.selected_team || [],
-    battleState: serverData.battle_state || null,
-    marketplaceListings: serverData.marketplace_listings || [],
-    socialQuests: serverData.social_quests || [],
-    adventurePlayerStats: serverData.adventure_player_stats || null,
-    adventureCurrentMonster: serverData.adventure_current_monster || null,
-    barracksUpgrades: serverData.barracks_upgrades || [],
-    dragonLairUpgrades: serverData.dragon_lair_upgrades || [],
-    accountLevel: serverData.account_level || 1,
-    accountExperience: serverData.account_experience || 0
+  const transformed = {
+    balance: serverData.balance ?? 100,
+    cards: serverData.cards ?? [],
+    initialized: serverData.initialized ?? false,
+    inventory: serverData.inventory ?? [],
+    dragonEggs: serverData.dragon_eggs ?? [],
+    selectedTeam: serverData.selected_team ?? [],
+    battleState: serverData.battle_state ?? null,
+    marketplaceListings: serverData.marketplace_listings ?? [],
+    socialQuests: serverData.social_quests ?? [],
+    adventurePlayerStats: serverData.adventure_player_stats ?? null,
+    adventureCurrentMonster: serverData.adventure_current_monster ?? null,
+    barracksUpgrades: serverData.barracks_upgrades ?? [],
+    dragonLairUpgrades: serverData.dragon_lair_upgrades ?? [],
+    accountLevel: serverData.account_level ?? 1,
+    accountExperience: serverData.account_experience ?? 0
   };
+  
+  console.log('🔄 Transformed game data:', {
+    wallet: serverData.wallet_address,
+    balance: transformed.balance,
+    inventoryItems: transformed.inventory?.length ?? 0,
+    cards: transformed.cards?.length ?? 0
+  });
+  
+  return transformed;
 }
