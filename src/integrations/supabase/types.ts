@@ -434,6 +434,14 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      atomic_inventory_update: {
+        Args: {
+          p_new_item: Json
+          p_price_deduction: number
+          p_wallet_address: string
+        }
+        Returns: Json
+      }
       cancel_marketplace_listing: {
         Args: { p_listing_id: string }
         Returns: undefined

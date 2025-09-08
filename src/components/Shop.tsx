@@ -119,24 +119,55 @@ export const Shop = ({ onClose }: ShopProps) => {
             equipped: false
           };
 
-      // Используем атомарное обновление через SQL для избежания race conditions  
-      const { data: updatedData, error: updateError } = await supabase.rpc('atomic_inventory_update', {
-        p_wallet_address: accountId,
-        p_price_deduction: item.price,
-        p_new_item: newItem
-      });
+      // Используем прямой SQL через Supabase для атомарного обновления
+      const { data: updatedData, error: updateError } = await supabase
+        .from('game_data')
+        .select('balance, inventory')
+        .eq('wallet_address', accountId)
+        .single();
 
-      if (updateError) {
-        console.error('Failed to update game data atomically:', updateError);
-        throw updateError;
+      if (updateError || !updatedData) {
+        throw new Error('Failed to get current data');
       }
 
-      console.log(`✅ Item added atomically. Updated data:`, updatedData);
+      const currentBalance = Number(updatedData.balance);
+      const currentInventory = Array.isArray(updatedData.inventory) 
+        ? updatedData.inventory as unknown as Item[]
+        : [];
+
+      if (currentBalance < item.price) {
+        toast({
+          title: t(language, 'shop.insufficientFunds'),
+          description: t(language, 'shop.insufficientFundsDescription'),
+          variant: 'destructive',
+        });
+        return;
+      }
+
+      const newBalance = currentBalance - item.price;
+      const newInventory = [...currentInventory, newItem];
+
+      // Атомарное обновление баланса и инвентаря
+      const { error: atomicError } = await supabase
+        .from('game_data')
+        .update({
+          balance: newBalance,
+          inventory: newInventory as unknown as any,
+          updated_at: new Date().toISOString()
+        })
+        .eq('wallet_address', accountId);
+
+      if (atomicError) {
+        console.error('Failed to update game data atomically:', atomicError);
+        throw atomicError;
+      }
+
+      console.log(`✅ Item added atomically. New balance: ${newBalance}, inventory items: ${newInventory.length}`);
 
       // Принудительно обновляем локальное состояние
       await gameState.actions.batchUpdate({
-        balance: updatedData.balance,
-        inventory: updatedData.inventory as unknown as Item[]
+        balance: newBalance,
+        inventory: newInventory
       });
 
       setShowEffect(true);
