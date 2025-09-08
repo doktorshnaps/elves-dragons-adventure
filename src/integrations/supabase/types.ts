@@ -499,6 +499,16 @@ export type Database = {
         }
         Returns: boolean
       }
+      admin_find_user_by_wallet: {
+        Args: { p_admin_wallet_address: string; p_wallet_address: string }
+        Returns: {
+          account_level: number
+          balance: number
+          created_at: string
+          user_id: string
+          wallet_address: string
+        }[]
+      }
       admin_get_user_info: {
         Args: { p_admin_wallet_address: string; p_user_id: string }
         Returns: Json

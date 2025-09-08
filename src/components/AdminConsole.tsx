@@ -217,21 +217,21 @@ export const AdminConsole = () => {
 
     const walletAddress = parts[1];
 
-    const { data, error } = await supabase
-      .from('game_data')
-      .select('user_id, wallet_address, balance, account_level, created_at')
-      .eq('wallet_address', walletAddress)
-      .maybeSingle();
+    const { data, error } = await supabase.rpc('admin_find_user_by_wallet', {
+      p_wallet_address: walletAddress,
+      p_admin_wallet_address: accountId
+    });
 
     if (error) {
       addOutput(`Ошибка поиска: ${error.message}`);
-    } else if (data) {
+    } else if (data && data.length > 0) {
+      const player = data[0];
       addOutput('=== НАЙДЕН ИГРОК ===');
-      addOutput(`UUID: ${data.user_id}`);
-      addOutput(`Кошелек: ${data.wallet_address}`);
-      addOutput(`Баланс: ${data.balance} ELL`);
-      addOutput(`Уровень: ${data.account_level}`);
-      addOutput(`Создан: ${new Date(data.created_at).toLocaleString()}`);
+      addOutput(`UUID: ${player.user_id}`);
+      addOutput(`Кошелек: ${player.wallet_address}`);
+      addOutput(`Баланс: ${player.balance} ELL`);
+      addOutput(`Уровень: ${player.account_level}`);
+      addOutput(`Создан: ${new Date(player.created_at).toLocaleString()}`);
       addOutput('==================');
     } else {
       addOutput('Игрок с таким кошельком не найден');
