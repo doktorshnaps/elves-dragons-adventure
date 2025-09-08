@@ -34,6 +34,7 @@ export const Shop = ({ onClose }: ShopProps) => {
   const { toast } = useToast();
   const [showEffect, setShowEffect] = useState(false);
   const [liveBalance, setLiveBalance] = useState<number | null>(null);
+  const [purchasing, setPurchasing] = useState(false);
 
   useEffect(() => {
     if (!accountId) return;
@@ -91,10 +92,13 @@ export const Shop = ({ onClose }: ShopProps) => {
       return;
     }
 
+    if (purchasing) return;
+
     try {
+      setPurchasing(true);
       console.log(`🛒 Purchasing item: ${item.name} for ${item.price} ELL`);
       
-      // Теперь уменьшаем количество товара в магазине (сначала проверяем доступность)
+      // Уменьшаем количество товара в магазине
       await purchaseItem(item.id, accountId);
 
       // Формируем предмет, который кладём в инвентарь
@@ -119,55 +123,25 @@ export const Shop = ({ onClose }: ShopProps) => {
             equipped: false
           };
 
-      // Используем прямой SQL через Supabase для атомарного обновления
-      const { data: updatedData, error: updateError } = await supabase
-        .from('game_data')
-        .select('balance, inventory')
-        .eq('wallet_address', accountId)
-        .single();
+      // Атомарно списываем баланс и добавляем предмет в инвентарь (без потери данных при быстрых покупках)
+      const { data: result, error: rpcError } = await (supabase as any).rpc('atomic_inventory_update', {
+        p_wallet_address: accountId,
+        p_price_deduction: item.price,
+        p_new_item: newItem
+      });
 
-      if (updateError || !updatedData) {
-        throw new Error('Failed to get current data');
+      if (rpcError || !result) {
+        console.error('atomic_inventory_update error:', rpcError);
+        throw (rpcError || new Error('No result from RPC'));
       }
 
-      const currentBalance = Number(updatedData.balance);
-      const currentInventory = Array.isArray(updatedData.inventory) 
-        ? updatedData.inventory as unknown as Item[]
-        : [];
+      // Обновляем локальное состояние из результата сервера
+      const serverBalance = (result as any).balance as number;
+      const serverInventory = (result as any).inventory as Item[];
 
-      if (currentBalance < item.price) {
-        toast({
-          title: t(language, 'shop.insufficientFunds'),
-          description: t(language, 'shop.insufficientFundsDescription'),
-          variant: 'destructive',
-        });
-        return;
-      }
-
-      const newBalance = currentBalance - item.price;
-      const newInventory = [...currentInventory, newItem];
-
-      // Атомарное обновление баланса и инвентаря
-      const { error: atomicError } = await supabase
-        .from('game_data')
-        .update({
-          balance: newBalance,
-          inventory: newInventory as unknown as any,
-          updated_at: new Date().toISOString()
-        })
-        .eq('wallet_address', accountId);
-
-      if (atomicError) {
-        console.error('Failed to update game data atomically:', atomicError);
-        throw atomicError;
-      }
-
-      console.log(`✅ Item added atomically. New balance: ${newBalance}, inventory items: ${newInventory.length}`);
-
-      // Принудительно обновляем локальное состояние
       await gameState.actions.batchUpdate({
-        balance: newBalance,
-        inventory: newInventory
+        balance: serverBalance,
+        inventory: serverInventory as any
       });
 
       setShowEffect(true);
@@ -181,6 +155,8 @@ export const Shop = ({ onClose }: ShopProps) => {
         description: t(language, 'shop.purchaseErrorDescription'),
         variant: 'destructive',
       });
+    } finally {
+      setPurchasing(false);
     }
   };
 
@@ -260,7 +236,7 @@ return (
                   type="button"
                   className="w-full bg-game-primary hover:bg-game-primary/80 disabled:opacity-50"
                   onClick={() => handleBuyItem(item)}
-                  disabled={!available}
+                  disabled={!available || purchasing}
                 >
                   {!available ? t(language, 'shop.soldOutButton') : t(language, 'shop.buy')}
                 </Button>
