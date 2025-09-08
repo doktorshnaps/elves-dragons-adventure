@@ -47,9 +47,16 @@ export const useUnifiedGameState = (): UnifiedGameState => {
   } = useQuery({
     queryKey: [GAME_DATA_KEY, accountId],
     queryFn: async () => {
-      if (!accountId) return initialGameData;
+      if (!accountId) {
+        const cached = localStorage.getItem('gameData');
+        return cached ? JSON.parse(cached) : initialGameData;
+      }
       return await loadGameDataFromServer(accountId);
     },
+    initialData: (() => {
+      const cached = localStorage.getItem('gameData');
+      return cached ? JSON.parse(cached) : initialGameData;
+    })(),
     enabled: !!accountId,
     staleTime: STALE_TIME,
     gcTime: CACHE_TIME,
@@ -219,20 +226,21 @@ async function loadGameDataFromServer(walletAddress: string): Promise<GameData> 
   }
 
   if (!data) {
-    // Создаем новую запись для пользователя
+    // Создаем или обновляем запись для пользователя (без дублей)
     const newData = { 
       ...initialGameData, 
       wallet_address: walletAddress,
       user_id: '00000000-0000-0000-0000-000000000000' // Временный user_id
     };
-    const { data: created, error: createError } = await supabase
+
+    const { data: upserted, error: upsertError } = await supabase
       .from('game_data')
-      .insert([newData])
+      .upsert(newData, { onConflict: 'wallet_address' })
       .select()
       .single();
 
-    if (createError) throw createError;
-    return transformServerData(created);
+    if (upsertError) throw upsertError;
+    return transformServerData(upserted);
   }
 
   return transformServerData(data);
