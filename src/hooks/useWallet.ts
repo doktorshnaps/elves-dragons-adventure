@@ -64,19 +64,43 @@ interface WalletState {
   isConnecting: boolean;
 }
 
-// Helper function to save wallet connection data to Supabase
+// Helper function to save wallet connection data to Supabase and authenticate user
 const saveWalletConnection = async (walletAddress: string, isConnecting: boolean) => {
   try {
-    // Get or create stable identity for this wallet
-    const { data: identityId, error: identityError } = await supabase
-      .rpc('get_or_create_wallet_identity', { p_wallet_address: walletAddress });
-    
-    if (identityError) {
-      console.error('Failed to get wallet identity:', identityError);
-      return;
-    }
-
     if (isConnecting) {
+      // Authenticate the wallet session - this creates a Supabase auth user if needed
+      const { data: userId, error: authError } = await supabase
+        .rpc('authenticate_wallet_session', { 
+          p_wallet_address: walletAddress,
+          p_signature: 'wallet-connect', // In production, this would be a real signature
+          p_message: `Connect wallet ${walletAddress} at ${new Date().toISOString()}`
+        });
+      
+      if (authError) {
+        console.error('Failed to authenticate wallet session:', authError);
+        return;
+      }
+
+      // Sign in the user with Supabase auth
+      const { error: signInError } = await supabase.auth.signInWithPassword({
+        email: `${walletAddress}@wallet.local`,
+        password: 'wallet-auth'
+      });
+
+      if (signInError) {
+        console.error('Failed to sign in wallet user:', signInError);
+        return;
+      }
+
+      // Get or create stable identity for this wallet
+      const { data: identityId, error: identityError } = await supabase
+        .rpc('get_or_create_wallet_identity', { p_wallet_address: walletAddress });
+      
+      if (identityError) {
+        console.error('Failed to get wallet identity:', identityError);
+        return;
+      }
+
       // Mark any existing active connections as inactive first
       await supabase
         .from('wallet_connections')
@@ -107,6 +131,9 @@ const saveWalletConnection = async (walletAddress: string, isConnecting: boolean
         })
         .eq('wallet_address', walletAddress)
         .eq('is_active', true);
+
+      // Sign out from Supabase auth
+      await supabase.auth.signOut();
     }
   } catch (error) {
     console.error('Failed to save wallet connection data:', error);
