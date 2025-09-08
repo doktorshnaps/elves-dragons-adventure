@@ -4,10 +4,13 @@ import { Card as CardType } from "@/types/cards";
 import { useGameData } from '@/hooks/useGameData';
 import { useToast } from '@/hooks/use-toast';
 import { generateCard } from '@/utils/cardUtils';
+import { supabase } from '@/integrations/supabase/client';
+import { useWallet } from '@/hooks/useWallet';
 
 export const useCardPackOpening = () => {
-  const { gameData, updateGameData } = useGameData();
+  const { gameData, loadGameData } = useGameData();
   const { toast } = useToast();
+  const { accountId } = useWallet();
   const [isOpening, setIsOpening] = useState(false);
   const [revealedCard, setRevealedCard] = useState<CardType | null>(null);
   const [showRevealModal, setShowRevealModal] = useState(false);
@@ -63,58 +66,37 @@ export const useCardPackOpening = () => {
     setIsOpening(true);
 
     try {
-      const { updatedInventory, removedCount } = removeCardPacksFromInventory(count, packItem);
+      // Генерируем карты, которые будет содержать открытие
+      const newCards: CardType[] = Array.from({ length: count }, () =>
+        generateCard(Math.random() > 0.5 ? 'character' : 'pet')
+      );
 
-      if (removedCount < count) {
+      // Атомарно удаляем колоды и добавляем карты на сервере
+      const { data, error } = await (supabase as any).rpc('open_card_packs', {
+        p_wallet_address: accountId,
+        p_pack_name: packItem.name,
+        p_count: count,
+        p_new_cards: newCards
+      });
+
+      if (error) {
+        console.error('open_card_packs RPC error', error);
         toast({
-          title: 'Недостаточно колод',
-          description: `Доступно только ${available} колод(ы) этой серии для открытия`,
+          title: 'Ошибка',
+          description: 'Не удалось открыть колоды карт',
           variant: 'destructive',
         });
         return [];
       }
 
-      const newCards: CardType[] = Array.from({ length: count }, () =>
-        generateCard(Math.random() > 0.5 ? 'character' : 'pet')
-      );
+      // Обновляем локальные данные из Supabase чтобы исключить рассинхрон
+      await loadGameData();
 
-      const updatedCards = [...(gameData.cards || []), ...newCards];
-
-      await updateGameData({
-        inventory: updatedInventory,
-        cards: updatedCards,
-      });
-
-      // Keep localStorage and listeners in sync to immediately disable selling
-      try {
-        localStorage.setItem('gameInventory', JSON.stringify(updatedInventory));
-        localStorage.setItem('gameCards', JSON.stringify(updatedCards));
-        window.dispatchEvent(new CustomEvent('inventoryUpdate', { detail: { inventory: updatedInventory } }));
-        window.dispatchEvent(new CustomEvent('cardsUpdate', { detail: { cards: updatedCards } }));
-      } catch (err) {
-        console.error('Inventory sync error', err);
-        toast({
-          title: 'Ошибка синхронизации',
-          description: 'Не удалось синхронизировать инвентарь',
-          variant: 'destructive',
-        });
-      }
-
-      // Packs left of the same type/name
-      const packsLeftSame = updatedInventory.filter(
-        (i) => i.type === 'cardPack' && i.name === packItem.name
-      ).length;
-
-      if (packsLeftSame > 0) {
-        const last = newCards[newCards.length - 1] || null;
-        if (last) {
-          setRevealedCard(last);
-          setShowRevealModal(true);
-        }
-      } else {
-        // Last pack: close all related modals just like on sell flow
-        setShowRevealModal(false);
-        setRevealedCard(null);
+      // Если остались колоды той же серии, показываем последнюю карту
+      const last = newCards[newCards.length - 1] || null;
+      if (last) {
+        setRevealedCard(last);
+        setShowRevealModal(true);
       }
 
       toast({

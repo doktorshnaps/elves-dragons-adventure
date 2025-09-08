@@ -454,6 +454,15 @@ export type Database = {
         Args: { p_wallet_address: string }
         Returns: string
       }
+      open_card_packs: {
+        Args: {
+          p_count: number
+          p_new_cards: Json
+          p_pack_name: string
+          p_wallet_address: string
+        }
+        Returns: Json
+      }
       process_marketplace_purchase: {
         Args: { listing_id: string }
         Returns: undefined
