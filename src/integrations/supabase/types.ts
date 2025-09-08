@@ -442,24 +442,12 @@ export type Database = {
         }
         Returns: Json
       }
-      authenticate_wallet_session: {
-        Args: {
-          p_message: string
-          p_signature: string
-          p_wallet_address: string
-        }
-        Returns: string
-      }
       cancel_marketplace_listing: {
         Args: { p_listing_id: string }
         Returns: undefined
       }
       create_marketplace_listing: {
         Args: { p_item_id: string; p_listing_type: string; p_price: number }
-        Returns: string
-      }
-      get_current_user_wallet: {
-        Args: Record<PropertyKey, never>
         Returns: string
       }
       get_or_create_wallet_identity: {

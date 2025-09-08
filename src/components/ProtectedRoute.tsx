@@ -1,7 +1,6 @@
 import { useEffect } from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
 import { useWallet } from '@/hooks/useWallet';
-import { useAuth } from '@/hooks/useAuth';
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
@@ -9,23 +8,14 @@ interface ProtectedRouteProps {
 
 export const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
   const { isConnected, isConnecting } = useWallet();
-  const { user, loading } = useAuth();
   const location = useLocation();
   const lsConnected = (typeof window !== 'undefined' && localStorage.getItem('walletConnected') === 'true') || false;
 
   useEffect(() => {
-    console.log('🛡️ ProtectedRoute check:', { 
-      isConnected, 
-      isConnecting, 
-      lsConnected, 
-      hasAuthUser: !!user,
-      authLoading: loading,
-      path: location.pathname 
-    });
-  }, [isConnected, isConnecting, lsConnected, user, loading, location.pathname]);
+    console.log('🛡️ ProtectedRoute check:', { isConnected, isConnecting, lsConnected, path: location.pathname });
+  }, [isConnected, isConnecting, lsConnected, location.pathname]);
 
-  // Show loading state while authentication is being determined
-  if (loading || isConnecting || (!isConnected && lsConnected)) {
+  if (isConnecting || (!isConnected && lsConnected)) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-purple-900 to-black">
         <div className="text-white text-xl">Загрузка меню...</div>
@@ -33,9 +23,8 @@ export const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
     );
   }
 
-  // Check both wallet connection and Supabase authentication
-  if (!isConnected || !user) {
-    console.log('❌ Not authenticated, redirecting to auth');
+  if (!isConnected && !lsConnected) {
+    console.log('❌ Not connected, redirecting to auth');
     return <Navigate to="/auth" replace />;
   }
 
