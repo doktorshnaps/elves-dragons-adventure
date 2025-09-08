@@ -138,7 +138,7 @@ export const useWallet = () => {
     if (!listenersRegistered) {
       listenersRegistered = true;
 
-      nearConnector.on('wallet:signIn', async (event) => {
+      nearConnector.on('wallet:signIn', (event) => {
         console.log('🟢 wallet:signIn event received', event);
         const accountId = event.accounts[0]?.accountId;
 
@@ -152,53 +152,55 @@ export const useWallet = () => {
         localStorage.setItem('walletConnected', 'true');
         localStorage.setItem('walletAccountId', accountId || '');
 
-        // Save wallet connection to Supabase
-        if (accountId) {
-          await saveWalletConnection(accountId, true);
-
-          // Authenticate this wallet with Supabase (creates/links user + profile)
-          try {
-            await supabase.rpc('authenticate_wallet_session', {
-              p_wallet_address: accountId,
-              p_signature: '',
-              p_message: ''
-            });
-
-            // Sign in using deterministic email/password set by RPC
-            const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
-              email: `${accountId}@wallet.local`,
-              password: 'wallet-auth'
-            });
-            if (signInError) {
-              console.error('Supabase auth sign-in error:', signInError);
-            } else if (signInData?.user) {
-              // Ensure game_data row is linked to this auth user
-              await supabase
-                .from('game_data')
-                .update({ user_id: signInData.user.id })
-                .eq('wallet_address', accountId);
-            }
-          } catch (e) {
-            console.error('Wallet session auth error:', e);
-          }
-          
-          // Sync NFT cards from wallet
-          try {
-            console.log('🎮 Syncing NFT cards for wallet:', accountId);
-            await syncNFTCards(accountId);
-          } catch (error) {
-            console.error('Error syncing NFT cards:', error);
-          }
-        }
-
-        console.log('✅ Wallet connected, navigating to menu');
+        console.log('✅ Wallet connected, processing authentication...');
         toast({ title: 'Кошелек подключен', description: `Подключен аккаунт: ${accountId}` });
 
-        // Notify app about wallet change so data can be reloaded
-        window.dispatchEvent(new CustomEvent('wallet-changed', { detail: { walletAddress: accountId } }));
+        // Defer Supabase operations to prevent deadlock
+        if (accountId) {
+          setTimeout(async () => {
+            try {
+              // Save wallet connection to Supabase
+              await saveWalletConnection(accountId, true);
 
-        // Smooth navigation without full reload
-        navigate('/menu', { replace: true });
+              // Authenticate this wallet with Supabase (creates/links user + profile)
+              await supabase.rpc('authenticate_wallet_session', {
+                p_wallet_address: accountId,
+                p_signature: '',
+                p_message: ''
+              });
+
+              // Sign in using deterministic email/password set by RPC
+              const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
+                email: `${accountId}@wallet.local`,
+                password: 'wallet-auth'
+              });
+              if (signInError) {
+                console.error('Supabase auth sign-in error:', signInError);
+              } else if (signInData?.user) {
+                // Ensure game_data row is linked to this auth user
+                await supabase
+                  .from('game_data')
+                  .update({ user_id: signInData.user.id })
+                  .eq('wallet_address', accountId);
+              }
+
+              // Sync NFT cards from wallet
+              console.log('🎮 Syncing NFT cards for wallet:', accountId);
+              await syncNFTCards(accountId);
+
+              // Notify app about wallet change so data can be reloaded
+              window.dispatchEvent(new CustomEvent('wallet-changed', { detail: { walletAddress: accountId } }));
+
+              console.log('🔄 Authentication complete, navigating to menu');
+              // Smooth navigation without full reload
+              navigate('/menu', { replace: true });
+            } catch (error) {
+              console.error('Wallet authentication error:', error);
+              // Still navigate to menu even if auth fails
+              navigate('/menu', { replace: true });
+            }
+          }, 0);
+        }
       });
 
       nearConnector.on('wallet:signOut', async () => {
