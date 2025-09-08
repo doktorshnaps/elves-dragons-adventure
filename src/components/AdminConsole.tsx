@@ -48,6 +48,9 @@ export const AdminConsole = () => {
         case 'unban':
           await handleUnbanUser(parts);
           break;
+        case 'info':
+          await handleGetUserInfo(parts);
+          break;
         case 'help':
           showHelp();
           break;
@@ -67,11 +70,11 @@ export const AdminConsole = () => {
 
   const handleAddBalance = async (parts: string[]) => {
     if (parts.length !== 3) {
-      addOutput('Использование: addbalance <wallet_address> <amount>');
+      addOutput('Использование: addbalance <user_id> <amount>');
       return;
     }
 
-    const walletAddress = parts[1];
+    const userId = parts[1];
     const amount = parseInt(parts[2]);
 
     if (isNaN(amount)) {
@@ -79,8 +82,15 @@ export const AdminConsole = () => {
       return;
     }
 
-    const { error } = await supabase.rpc('admin_add_balance', {
-      p_target_wallet_address: walletAddress,
+    // Validate UUID format
+    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+    if (!uuidRegex.test(userId)) {
+      addOutput('Неверный формат UUID игрока');
+      return;
+    }
+
+    const { error } = await supabase.rpc('admin_add_balance_by_id', {
+      p_target_user_id: userId,
       p_amount: amount,
       p_admin_wallet_address: accountId
     });
@@ -88,25 +98,32 @@ export const AdminConsole = () => {
     if (error) {
       addOutput(`Ошибка добавления баланса: ${error.message}`);
     } else {
-      addOutput(`✅ Добавлено ${amount} ELL игроку ${walletAddress}`);
+      addOutput(`✅ Добавлено ${amount} ELL игроку ${userId}`);
       toast({
         title: "Баланс обновлен",
-        description: `Добавлено ${amount} ELL игроку ${walletAddress}`
+        description: `Добавлено ${amount} ELL игроку`
       });
     }
   };
 
   const handleBanUser = async (parts: string[]) => {
     if (parts.length < 3) {
-      addOutput('Использование: ban <wallet_address> <reason>');
+      addOutput('Использование: ban <user_id> <reason>');
       return;
     }
 
-    const walletAddress = parts[1];
+    const userId = parts[1];
     const reason = parts.slice(2).join(' ');
 
-    const { error } = await supabase.rpc('admin_ban_user', {
-      p_target_wallet_address: walletAddress,
+    // Validate UUID format
+    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+    if (!uuidRegex.test(userId)) {
+      addOutput('Неверный формат UUID игрока');
+      return;
+    }
+
+    const { error } = await supabase.rpc('admin_ban_user_by_id', {
+      p_target_user_id: userId,
       p_reason: reason,
       p_admin_wallet_address: accountId
     });
@@ -114,10 +131,10 @@ export const AdminConsole = () => {
     if (error) {
       addOutput(`Ошибка бана: ${error.message}`);
     } else {
-      addOutput(`🚫 Игрок ${walletAddress} забанен. Причина: ${reason}`);
+      addOutput(`🚫 Игрок ${userId} забанен. Причина: ${reason}`);
       toast({
         title: "Игрок забанен",
-        description: `${walletAddress} забанен за: ${reason}`,
+        description: `Игрок забанен за: ${reason}`,
         variant: "destructive"
       });
     }
@@ -125,33 +142,76 @@ export const AdminConsole = () => {
 
   const handleUnbanUser = async (parts: string[]) => {
     if (parts.length !== 2) {
-      addOutput('Использование: unban <wallet_address>');
+      addOutput('Использование: unban <user_id>');
       return;
     }
 
-    const walletAddress = parts[1];
+    const userId = parts[1];
 
-    const { error } = await supabase.rpc('admin_unban_user', {
-      p_target_wallet_address: walletAddress,
+    // Validate UUID format
+    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+    if (!uuidRegex.test(userId)) {
+      addOutput('Неверный формат UUID игрока');
+      return;
+    }
+
+    const { error } = await supabase.rpc('admin_unban_user_by_id', {
+      p_target_user_id: userId,
       p_admin_wallet_address: accountId
     });
 
     if (error) {
       addOutput(`Ошибка разбана: ${error.message}`);
     } else {
-      addOutput(`✅ Игрок ${walletAddress} разбанен`);
+      addOutput(`✅ Игрок ${userId} разбанен`);
       toast({
         title: "Игрок разбанен",
-        description: `${walletAddress} разбанен`
+        description: `Игрок разбанен`
       });
+    }
+  };
+
+  const handleGetUserInfo = async (parts: string[]) => {
+    if (parts.length !== 2) {
+      addOutput('Использование: info <user_id>');
+      return;
+    }
+
+    const userId = parts[1];
+
+    // Validate UUID format
+    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+    if (!uuidRegex.test(userId)) {
+      addOutput('Неверный формат UUID игрока');
+      return;
+    }
+
+    const { data, error } = await supabase.rpc('admin_get_user_info', {
+      p_user_id: userId,
+      p_admin_wallet_address: accountId
+    });
+
+    if (error) {
+      addOutput(`Ошибка получения информации: ${error.message}`);
+    } else if (data && typeof data === 'object' && data !== null) {
+      const userInfo = data as any;
+      addOutput('=== ИНФОРМАЦИЯ О ИГРОКЕ ===');
+      addOutput(`UUID: ${userInfo.user_id}`);
+      addOutput(`Кошелек: ${userInfo.wallet_address}`);
+      addOutput(`Баланс: ${userInfo.balance} ELL`);
+      addOutput(`Уровень: ${userInfo.account_level}`);
+      addOutput(`Забанен: ${userInfo.is_banned ? 'Да' : 'Нет'}`);
+      addOutput(`Создан: ${new Date(userInfo.created_at).toLocaleString()}`);
+      addOutput('==========================');
     }
   };
 
   const showHelp = () => {
     addOutput('=== АДМИНСКИЕ КОМАНДЫ ===');
-    addOutput('addbalance <wallet_address> <amount> - Добавить ELL на баланс игрока');
-    addOutput('ban <wallet_address> <reason> - Забанить игрока');
-    addOutput('unban <wallet_address> - Разбанить игрока');
+    addOutput('addbalance <user_id> <amount> - Добавить ELL на баланс игрока');
+    addOutput('ban <user_id> <reason> - Забанить игрока');
+    addOutput('unban <user_id> - Разбанить игрока');
+    addOutput('info <user_id> - Показать информацию о игроке');
     addOutput('clear - Очистить консоль');
     addOutput('help - Показать эту справку');
     addOutput('========================');
@@ -174,7 +234,7 @@ export const AdminConsole = () => {
       </CardHeader>
       <CardContent className="space-y-4">
         {/* Quick Actions */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-2">
           <Button
             onClick={() => setCommand('addbalance  1000')}
             variant="outline"
@@ -201,6 +261,15 @@ export const AdminConsole = () => {
           >
             <UserCheck className="w-4 h-4" />
             Разбанить игрока
+          </Button>
+          <Button
+            onClick={() => setCommand('info ')}
+            variant="outline"
+            className="flex items-center gap-2"
+            size="sm"
+          >
+            <Terminal className="w-4 h-4" />
+            Информация
           </Button>
         </div>
 
@@ -240,9 +309,10 @@ export const AdminConsole = () => {
         {/* Help */}
         <div className="text-xs text-muted-foreground space-y-1">
           <p><strong>Примеры команд:</strong></p>
-          <p>• addbalance wallet.near 5000</p>
-          <p>• ban cheater.near Использование читов</p>
-          <p>• unban player.near</p>
+          <p>• addbalance 550e8400-e29b-41d4-a716-446655440000 5000</p>
+          <p>• ban 550e8400-e29b-41d4-a716-446655440000 Использование читов</p>
+          <p>• unban 550e8400-e29b-41d4-a716-446655440000</p>
+          <p>• info 550e8400-e29b-41d4-a716-446655440000</p>
         </div>
       </CardContent>
     </Card>

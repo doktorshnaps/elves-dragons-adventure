@@ -475,6 +475,14 @@ export type Database = {
         }
         Returns: boolean
       }
+      admin_add_balance_by_id: {
+        Args: {
+          p_admin_wallet_address: string
+          p_amount: number
+          p_target_user_id: string
+        }
+        Returns: boolean
+      }
       admin_ban_user: {
         Args: {
           p_admin_wallet_address: string
@@ -483,11 +491,27 @@ export type Database = {
         }
         Returns: boolean
       }
+      admin_ban_user_by_id: {
+        Args: {
+          p_admin_wallet_address: string
+          p_reason: string
+          p_target_user_id: string
+        }
+        Returns: boolean
+      }
+      admin_get_user_info: {
+        Args: { p_admin_wallet_address: string; p_user_id: string }
+        Returns: Json
+      }
       admin_unban_user: {
         Args: {
           p_admin_wallet_address: string
           p_target_wallet_address: string
         }
+        Returns: boolean
+      }
+      admin_unban_user_by_id: {
+        Args: { p_admin_wallet_address: string; p_target_user_id: string }
         Returns: boolean
       }
       atomic_inventory_update: {
