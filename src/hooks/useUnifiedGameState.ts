@@ -90,12 +90,13 @@ export const useUnifiedGameState = (): UnifiedGameState => {
       return await updateGameDataOnServer(accountId, updates);
     },
     onSuccess: (updatedData) => {
+      console.log('✅ Data updated successfully:', { balance: updatedData.balance });
       // Обновляем кэш React Query
       queryClient.setQueryData([GAME_DATA_KEY, accountId], updatedData);
       updateData(updatedData);
       
-      // Синхронизируем с localStorage
-      localStorage.setItem('gameData', JSON.stringify(updatedData));
+      // Убираем localStorage sync - полагаемся только на Supabase
+      // localStorage.setItem('gameData', JSON.stringify(updatedData));
     },
     onError: (error) => {
       console.error('Failed to update game data:', error);
@@ -204,6 +205,13 @@ export const useUnifiedGameState = (): UnifiedGameState => {
     }
   }), [optimisticData, optimisticUpdate, updateMutation, withErrorHandling]);
 
+  // Принудительно обновляем данные при изменении accountId
+  useMemo(() => {
+    if (accountId) {
+      queryClient.invalidateQueries({ queryKey: [GAME_DATA_KEY, accountId] });
+    }
+  }, [accountId, queryClient]);
+
   return {
     ...optimisticData,
     loading: isLoading || updateMutation.isPending,
@@ -226,6 +234,7 @@ async function loadGameDataFromServer(walletAddress: string): Promise<GameData> 
   }
 
   if (!data) {
+    console.log('📋 No existing data found, creating new record for:', walletAddress);
     // Создаем или обновляем запись для пользователя (без дублей)
     const newData = { 
       ...initialGameData, 
@@ -239,10 +248,15 @@ async function loadGameDataFromServer(walletAddress: string): Promise<GameData> 
       .select()
       .single();
 
-    if (upsertError) throw upsertError;
+    if (upsertError) {
+      console.error('Failed to upsert game data:', upsertError);
+      throw upsertError;
+    }
+    console.log('✅ Created new game data with balance:', upserted.balance);
     return transformServerData(upserted);
   }
 
+  console.log('📂 Loaded existing game data with balance:', data.balance);
   return transformServerData(data);
 }
 
