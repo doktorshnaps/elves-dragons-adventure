@@ -556,6 +556,19 @@ export type Database = {
         Args: { p_wallet_address: string }
         Returns: string
       }
+      initialize_game_data_by_wallet: {
+        Args: { p_wallet_address: string }
+        Returns: {
+          account_experience: number
+          account_level: number
+          balance: number
+          cards: Json
+          dragon_eggs: Json
+          inventory: Json
+          selected_team: Json
+          user_id: string
+        }[]
+      }
       open_card_packs: {
         Args: {
           p_count: number

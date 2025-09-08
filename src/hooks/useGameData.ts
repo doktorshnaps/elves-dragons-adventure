@@ -54,40 +54,44 @@ export const useGameData = () => {
     }
 
     try {
-      const { data, error } = await supabase
-        .from('game_data')
-        .select('*')
-        .eq('wallet_address', address)
-        .maybeSingle();
+      console.log('🔄 Loading game data for wallet:', address);
+      
+      // Use the new initialization function that bypasses RLS
+      const { data, error } = await supabase.rpc('initialize_game_data_by_wallet', {
+        p_wallet_address: address
+      });
 
-      if (error && error.code !== 'PGRST116') {
-        console.error('Error loading game data:', error);
+      if (error) {
+        console.error('❌ Error loading game data:', error);
         setLoading(false);
         return;
       }
 
-      if (data) {
+      if (data && data.length > 0) {
+        const gameRecord = data[0];
+        console.log('✅ Game data loaded successfully:', gameRecord);
+        
         // Process cards with health initialization and regeneration
-        const rawCards = (data.cards as unknown as Card[]) || [];
+        const rawCards = (gameRecord.cards as unknown as Card[]) || [];
         const initializedCards = rawCards.map(initializeCardHealth);
         const processedCards = processCardsHealthRegeneration(initializedCards);
         
         const newGameData: GameData = {
-          balance: data.balance || 0,
+          balance: gameRecord.balance || 100,
           cards: processedCards,
-          initialized: data.initialized || false,
-          inventory: ((data as any).inventory as any[]) || [],
-          marketplaceListings: ((data as any).marketplace_listings as any[]) || [],
-          socialQuests: ((data as any).social_quests as any[]) || [],
-          adventurePlayerStats: (data as any).adventure_player_stats || null,
-          adventureCurrentMonster: (data as any).adventure_current_monster || null,
-          dragonEggs: ((data as any).dragon_eggs as any[]) || [],
-          battleState: (data as any).battle_state || null,
-          selectedTeam: ((data as any).selected_team as any[]) || [],
-          barracksUpgrades: ((data as any).barracks_upgrades as any[]) || [],
-          dragonLairUpgrades: ((data as any).dragon_lair_upgrades as any[]) || [],
-          accountLevel: (data as any).account_level || 1,
-          accountExperience: (data as any).account_experience || 0
+          initialized: true,
+          inventory: (gameRecord.inventory as any[]) || [],
+          marketplaceListings: [],
+          socialQuests: [],
+          adventurePlayerStats: null,
+          adventureCurrentMonster: null,
+          dragonEggs: (gameRecord.dragon_eggs as any[]) || [],
+          battleState: null,
+          selectedTeam: (gameRecord.selected_team as any[]) || [],
+          barracksUpgrades: [],
+          dragonLairUpgrades: [],
+          accountLevel: gameRecord.account_level || 1,
+          accountExperience: gameRecord.account_experience || 0
         };
         
         setGameData(newGameData);
@@ -110,6 +114,10 @@ export const useGameData = () => {
           localStorage.setItem('battleState', JSON.stringify(newGameData.battleState));
         }
         localStorage.setItem('selectedTeam', JSON.stringify(newGameData.selectedTeam));
+        
+        console.log('📦 Game data synced to localStorage');
+      } else {
+        console.log('⚠️ No game data returned from function');
       }
     } catch (error) {
       console.error('Error in loadGameData:', error);
