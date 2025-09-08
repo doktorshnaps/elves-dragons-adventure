@@ -31,15 +31,14 @@ export const useOptimisticUpdates = <T>(initialData: T) => {
     });
 
     try {
-      // Выполняем серверное действие
-      const serverResult = await serverAction();
+      // Выполняем серверное действие (но не обновляем состояние повторно)
+      await serverAction();
       
-      // Обновляем с реальными данными с сервера
-      setState({
-        data: serverResult,
-        isOptimistic: false,
-        timestamp: Date.now()
-      });
+      // Просто убираем флаг оптимистичности, оставляя данные как есть
+      setState(prev => ({
+        ...prev,
+        isOptimistic: false
+      }));
     } catch (error) {
       // Откатываемся к предыдущему состоянию
       setState({
