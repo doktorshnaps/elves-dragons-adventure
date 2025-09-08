@@ -167,11 +167,17 @@ export const useGameStore = create<GameState>()(
             .maybeSingle();
             
            if (!existingData) {
-             // Create new account data for this wallet
+             // Create new account data for this wallet (requires Supabase auth)
+             const { data: { user } } = await supabase.auth.getUser();
+             if (!user) {
+               console.warn('No Supabase user session; skipping game_data initialization');
+               return;
+             }
+
              await supabase
                .from('game_data')
                .insert({
-                 user_id: walletAddress,
+                 user_id: user.id,
                  wallet_address: walletAddress,
                  balance: 100,
                  account_level: 1,
@@ -182,20 +188,11 @@ export const useGameStore = create<GameState>()(
                  dragon_eggs: [],
                  initialized: true
                });
-               
-             // Also create profile
-             await supabase
-               .from('profiles')
-               .insert({
-                 user_id: walletAddress,
-                 wallet_address: walletAddress,
-                 display_name: walletAddress.substring(0, 8) + '...'
-               });
-           }
-        } catch (error) {
-          console.error('Failed to initialize account data:', error);
-        }
-      },
+            }
+          } catch (error) {
+            console.error('Failed to initialize account data:', error);
+          }
+        },
       
       clearAllData: () => {
         console.log('🧹 Clearing all game data');

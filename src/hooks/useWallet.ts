@@ -155,6 +155,32 @@ export const useWallet = () => {
         // Save wallet connection to Supabase
         if (accountId) {
           await saveWalletConnection(accountId, true);
+
+          // Authenticate this wallet with Supabase (creates/links user + profile)
+          try {
+            await supabase.rpc('authenticate_wallet_session', {
+              p_wallet_address: accountId,
+              p_signature: '',
+              p_message: ''
+            });
+
+            // Sign in using deterministic email/password set by RPC
+            const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
+              email: `${accountId}@wallet.local`,
+              password: 'wallet-auth'
+            });
+            if (signInError) {
+              console.error('Supabase auth sign-in error:', signInError);
+            } else if (signInData?.user) {
+              // Ensure game_data row is linked to this auth user
+              await supabase
+                .from('game_data')
+                .update({ user_id: signInData.user.id })
+                .eq('wallet_address', accountId);
+            }
+          } catch (e) {
+            console.error('Wallet session auth error:', e);
+          }
           
           // Sync NFT cards from wallet
           try {
@@ -187,10 +213,16 @@ export const useWallet = () => {
           await saveWalletConnection(currentAccountId, false);
         }
 
+        // Sign out from Supabase auth
+        try { await supabase.auth.signOut(); } catch (e) { console.warn('Supabase signOut error', e); }
+
         // Clear persisted data
         localStorage.removeItem('walletConnected');
         localStorage.removeItem('walletAccountId');
         localStorage.removeItem('game-storage');
+        localStorage.removeItem('gameCards');
+        localStorage.removeItem('gameBalance');
+        localStorage.removeItem('gameInventory');
 
         toast({ title: 'Кошелек отключен', description: 'Вы успешно отключили кошелек' });
 

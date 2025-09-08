@@ -124,14 +124,8 @@ export const useGameData = () => {
     if (!walletAddress) return;
 
     try {
-      // Получаем/создаём стабильный UUID идентичности для кошелька
-      const { data: identityId, error: idErr } = await supabase
-        .rpc('get_or_create_wallet_identity', { p_wallet_address: walletAddress });
-      if (idErr) throw idErr;
-
       // Формируем payload только из переданных полей, чтобы не затирать значения в БД
       const payload: any = { 
-        user_id: identityId as string,
         wallet_address: walletAddress,
       };
       if (updates.balance !== undefined) payload.balance = updates.balance;
@@ -162,7 +156,12 @@ export const useGameData = () => {
         const res = await supabase.from('game_data').update(payload).eq('wallet_address', walletAddress);
         error = res.error;
       } else {
-        const res = await supabase.from('game_data').insert(payload);
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) {
+          console.warn('No Supabase user session; skipping game_data insert');
+          return;
+        }
+        const res = await supabase.from('game_data').insert({ ...payload, user_id: user.id });
         error = res.error;
       }
 
