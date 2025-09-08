@@ -20,11 +20,11 @@ export default {
     extend: {
       colors: {
         'game': {
-          'primary': '#9b87f5',    // Мистический пурпурный
-          'secondary': '#7E69AB',   // Глубокий пурпурный
-          'accent': '#D946EF',      // Яркий магический
-          'background': '#1A1F2C',  // Тёмный фон
-          'surface': '#221F26',     // Поверхность
+          'primary': 'hsl(252, 85%, 76%)',    // Мистический пурпурный (было #9b87f5)
+          'secondary': 'hsl(259, 32%, 54%)',   // Глубокий пурпурный (было #7E69AB)
+          'accent': 'hsl(291, 88%, 68%)',      // Яркий магический (было #D946EF)
+          'background': 'hsl(220, 26%, 14%)',  // Тёмный фон (было #1A1F2C)
+          'surface': 'hsl(295, 9%, 25%)',     // Поверхность (было #221F26)
         },
         border: "hsl(var(--border))",
         input: "hsl(var(--input))",
@@ -87,9 +87,9 @@ export default {
           '100%': { transform: 'rotateY(180deg) scale(1)' },
         },
         cardGlow: {
-          '0%': { boxShadow: '0 0 5px #9b87f5' },
-          '50%': { boxShadow: '0 0 20px #D946EF' },
-          '100%': { boxShadow: '0 0 5px #9b87f5' },
+          '0%': { boxShadow: '0 0 5px hsl(252, 85%, 76%)' },  // Используем HSL вместо HEX
+          '50%': { boxShadow: '0 0 20px hsl(291, 88%, 68%)' },
+          '100%': { boxShadow: '0 0 5px hsl(252, 85%, 76%)' },
         }
       },
       animation: {
