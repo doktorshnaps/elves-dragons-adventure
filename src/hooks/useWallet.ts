@@ -168,6 +168,9 @@ export const useWallet = () => {
         console.log('✅ Wallet connected, navigating to menu');
         toast({ title: 'Кошелек подключен', description: `Подключен аккаунт: ${accountId}` });
 
+        // Notify app about wallet change so data can be reloaded
+        window.dispatchEvent(new CustomEvent('wallet-changed', { detail: { walletAddress: accountId } }));
+
         // Smooth navigation without full reload
         navigate('/menu', { replace: true });
       });
@@ -190,6 +193,9 @@ export const useWallet = () => {
         localStorage.removeItem('game-storage');
 
         toast({ title: 'Кошелек отключен', description: 'Вы успешно отключили кошелек' });
+
+        // Notify app that wallet disconnected
+        window.dispatchEvent(new Event('wallet-disconnected'));
 
         // Smooth navigation without full reload
         navigate('/auth', { replace: true });
