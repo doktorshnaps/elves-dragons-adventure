@@ -11,7 +11,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { generateCard } from "@/utils/cardUtils";
 import { Item } from "@/types/inventory";
 import { ArrowLeft, Clock, Package } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { PurchaseEffect } from "./shop/PurchaseEffect";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -33,7 +33,41 @@ export const Shop = ({ onClose }: ShopProps) => {
   } = useShopInventory();
   const { toast } = useToast();
   const [showEffect, setShowEffect] = useState(false);
+  const [liveBalance, setLiveBalance] = useState<number | null>(null);
 
+  useEffect(() => {
+    if (!accountId) return;
+    let isMounted = true;
+
+    const fetchBalance = async () => {
+      const { data } = await supabase
+        .from('game_data')
+        .select('balance')
+        .eq('wallet_address', accountId)
+        .maybeSingle();
+      if (isMounted && data?.balance !== undefined) {
+        setLiveBalance(Number(data.balance));
+      }
+    };
+
+    fetchBalance();
+
+    const channel = supabase
+      .channel('game-data-balance')
+      .on('postgres_changes',
+        { event: 'UPDATE', schema: 'public', table: 'game_data', filter: `wallet_address=eq.${accountId}` },
+        (payload) => {
+          const newBal = (payload.new as any)?.balance;
+          if (newBal !== undefined) setLiveBalance(Number(newBal));
+        }
+      )
+      .subscribe();
+
+    return () => {
+      isMounted = false;
+      supabase.removeChannel(channel);
+    };
+  }, [accountId]);
   if (gameState.loading || inventoryLoading) {
     return <div className="flex justify-center items-center h-64">{t(language, 'shop.loading')}</div>;
   }
@@ -150,7 +184,7 @@ return (
           
           <div className="flex items-center gap-2 bg-game-surface px-4 py-2 rounded-lg border border-game-accent">
             <div className="w-2 h-2 bg-yellow-500 rounded-full animate-pulse"></div>
-            <span className="text-game-accent font-semibold">{gameState.balance}</span>
+            <span className="text-game-accent font-semibold">{(liveBalance ?? gameState.balance)}</span>
             <span className="text-game-secondary text-sm">{t(language, 'game.currency')}</span>
           </div>
           
