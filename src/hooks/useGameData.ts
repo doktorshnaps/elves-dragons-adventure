@@ -42,7 +42,6 @@ export const useGameData = () => {
     dragonLairUpgrades: []
   });
   const [loading, setLoading] = useState(true);
-  const [currentWallet, setCurrentWallet] = useState<string | null>(localStorage.getItem('walletAccountId'));
 
   // Загрузка данных из Supabase для кошелька
   const loadGameData = useCallback(async (walletAddress?: string) => {
@@ -58,7 +57,7 @@ export const useGameData = () => {
         .from('game_data')
         .select('*')
         .eq('wallet_address', address)
-        .maybeSingle();
+        .single();
 
       if (error && error.code !== 'PGRST116') {
         console.error('Error loading game data:', error);
@@ -224,34 +223,10 @@ export const useGameData = () => {
     loadGameData();
   }, [loadGameData]);
 
-  // Слушаем смену кошелька и мгновенно подтягиваем данные
-  useEffect(() => {
-    const onWalletChanged = (e: Event) => {
-      const detail = (e as CustomEvent).detail as { walletAddress?: string };
-      const newWallet = detail?.walletAddress || localStorage.getItem('walletAccountId');
-      setCurrentWallet(newWallet || null);
-      if (newWallet) {
-        loadGameData(newWallet);
-      }
-    };
-
-    const onWalletDisconnected = () => {
-      setCurrentWallet(null);
-      setGameData((prev) => ({ ...prev, balance: 0 }));
-    };
-
-    window.addEventListener('wallet-changed', onWalletChanged as EventListener);
-    window.addEventListener('wallet-disconnected', onWalletDisconnected as EventListener);
-
-    return () => {
-      window.removeEventListener('wallet-changed', onWalletChanged as EventListener);
-      window.removeEventListener('wallet-disconnected', onWalletDisconnected as EventListener);
-    };
-  }, [loadGameData]);
-
   // Подписка на изменения в реальном времени для кошелька
   useEffect(() => {
-    if (!currentWallet) return;
+    const walletAddress = localStorage.getItem('walletAccountId');
+    if (!walletAddress) return;
 
     const channel = supabase
       .channel('game-data-changes')
@@ -261,11 +236,11 @@ export const useGameData = () => {
           event: '*',
           schema: 'public',
           table: 'game_data',
-          filter: `wallet_address=eq.${currentWallet}`
+          filter: `wallet_address=eq.${walletAddress}`
         },
         (payload) => {
           console.log('Real-time update:', payload);
-          loadGameData(currentWallet);
+          loadGameData(walletAddress);
         }
       )
       .subscribe();
@@ -273,7 +248,7 @@ export const useGameData = () => {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [currentWallet, loadGameData]);
+  }, [loadGameData]);
 
   return {
     gameData,

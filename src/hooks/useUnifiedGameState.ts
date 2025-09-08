@@ -221,27 +221,6 @@ export const useUnifiedGameState = (): UnifiedGameState => {
 };
 
 // Вспомогательные функции для работы с сервером
-function mapClientToServer(data: Partial<GameData> | GameData) {
-  const d: any = data;
-  const out: any = {};
-  if (d.balance !== undefined) out.balance = d.balance;
-  if (d.cards !== undefined) out.cards = d.cards;
-  if (d.initialized !== undefined) out.initialized = d.initialized;
-  if (d.inventory !== undefined) out.inventory = d.inventory;
-  if (d.marketplaceListings !== undefined) out.marketplace_listings = d.marketplaceListings;
-  if (d.socialQuests !== undefined) out.social_quests = d.socialQuests;
-  if (d.adventurePlayerStats !== undefined) out.adventure_player_stats = d.adventurePlayerStats;
-  if (d.adventureCurrentMonster !== undefined) out.adventure_current_monster = d.adventureCurrentMonster;
-  if (d.dragonEggs !== undefined) out.dragon_eggs = d.dragonEggs;
-  if (d.battleState !== undefined) out.battle_state = d.battleState;
-  if (d.selectedTeam !== undefined) out.selected_team = d.selectedTeam;
-  if (d.barracksUpgrades !== undefined) out.barracks_upgrades = d.barracksUpgrades;
-  if (d.dragonLairUpgrades !== undefined) out.dragon_lair_upgrades = d.dragonLairUpgrades;
-  if (d.accountLevel !== undefined) out.account_level = d.accountLevel;
-  if (d.accountExperience !== undefined) out.account_experience = d.accountExperience;
-  return out;
-}
-
 async function loadGameDataFromServer(walletAddress: string): Promise<GameData> {
   const { data, error } = await supabase
     .from('game_data')
@@ -257,11 +236,11 @@ async function loadGameDataFromServer(walletAddress: string): Promise<GameData> 
   if (!data) {
     console.log('📋 No existing data found, creating new record for:', walletAddress);
     // Создаем или обновляем запись для пользователя (без дублей)
-    const newData = {
-      ...mapClientToServer(initialGameData),
+    const newData = { 
+      ...initialGameData, 
       wallet_address: walletAddress,
-      user_id: '00000000-0000-0000-0000-000000000000'
-    } as any;
+      user_id: '00000000-0000-0000-0000-000000000000' // Временный user_id
+    };
 
     const { data: upserted, error: upsertError } = await supabase
       .from('game_data')
@@ -284,39 +263,19 @@ async function loadGameDataFromServer(walletAddress: string): Promise<GameData> 
 async function updateGameDataOnServer(walletAddress: string, updates: Partial<GameData>): Promise<GameData> {
   console.log(`🔄 Updating server data for ${walletAddress}:`, updates);
   
-  const serverUpdates = {
-    ...mapClientToServer(updates),
-    updated_at: new Date().toISOString()
-  } as any;
-
-  // Пытаемся обновить существующую запись
   const { data, error } = await supabase
     .from('game_data')
-    .update(serverUpdates)
+    .update({
+      ...updates,
+      updated_at: new Date().toISOString()
+    })
     .eq('wallet_address', walletAddress)
     .select()
-    .maybeSingle();
+    .single();
 
-  if (error && error.code !== 'PGRST116') {
+  if (error) {
     console.error('Failed to update game data:', error);
     throw error;
-  }
-
-  // Если записи не было, создаём её через upsert
-  if (!data) {
-    const { data: upserted, error: upsertError } = await supabase
-      .from('game_data')
-      .upsert({ ...serverUpdates, wallet_address: walletAddress }, { onConflict: 'wallet_address' })
-      .select()
-      .single();
-
-    if (upsertError) {
-      console.error('Failed to upsert game data:', upsertError);
-      throw upsertError;
-    }
-
-    console.log(`✅ Server upserted successfully. New balance: ${upserted.balance}`);
-    return transformServerData(upserted);
   }
 
   console.log(`✅ Server updated successfully. New balance: ${data.balance}`);
