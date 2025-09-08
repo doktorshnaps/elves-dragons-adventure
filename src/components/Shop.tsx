@@ -139,10 +139,9 @@ export const Shop = ({ onClose }: ShopProps) => {
       const serverBalance = (result as any).balance as number;
       const serverInventory = (result as any).inventory as Item[];
 
-      await gameState.actions.batchUpdate({
-        balance: serverBalance,
-        inventory: serverInventory as any
-      });
+      // Обновляем только локальное отображение баланса —
+      // глобальные данные подтянутся через realtime подписку на game_data
+      setLiveBalance(Number(serverBalance));
 
       setShowEffect(true);
       toast({
