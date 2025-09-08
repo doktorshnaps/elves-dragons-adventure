@@ -13,6 +13,7 @@ import { Item } from "@/types/inventory";
 import { ArrowLeft, Clock, Package } from "lucide-react";
 import { useState } from "react";
 import { PurchaseEffect } from "./shop/PurchaseEffect";
+import { supabase } from "@/integrations/supabase/client";
 
 interface ShopProps {
   onClose: () => void;
@@ -56,46 +57,50 @@ export const Shop = ({ onClose }: ShopProps) => {
       return;
     }
 
-    if (gameState.balance >= item.price) {
-      try {
-        console.log(`🛒 Purchasing item: ${item.name} for ${item.price} ELL`);
-        console.log(`💰 Current balance BEFORE: ${gameState.balance}`);
-        
-        // Сначала обновляем количество в магазине
-        await purchaseItem(item.id, accountId);
+    try {
+      console.log(`🛒 Purchasing item: ${item.name} for ${item.price} ELL`);
+      // Загружаем АКТУАЛЬНЫЕ данные кошелька из Supabase (не из кэша)
+      const { data: fresh, error: freshError } = await supabase
+        .from('game_data')
+        .select('balance, inventory')
+        .eq('wallet_address', accountId)
+        .maybeSingle();
 
-        // Рассчитываем новый баланс
-        const newBalance = gameState.balance - item.price;
-        console.log(`💸 Calculated new balance: ${gameState.balance} - ${item.price} = ${newBalance}`);
+      if (freshError || !fresh) {
+        console.error('Failed to fetch fresh game_data after purchase:', freshError);
+        throw new Error('Failed to fetch latest game data');
+      }
 
-        if (item.type === "cardPack") {
-          // Создаем колоду карт как предмет в инвентаре
-          const newItem: Item = {
+      const currentBalance = Number(fresh.balance ?? 0);
+      const currentInventory: Item[] = Array.isArray(fresh.inventory)
+        ? (fresh.inventory as unknown as Item[])
+        : [];
+
+      if (currentBalance < item.price) {
+        toast({
+          title: t(language, 'shop.insufficientFunds'),
+          description: t(language, 'shop.insufficientFundsDescription'),
+          variant: 'destructive',
+        });
+        return;
+      }
+
+      const newBalance = currentBalance - item.price;
+
+      // Теперь уменьшаем количество товара в магазине (после проверки баланса)
+      await purchaseItem(item.id, accountId);
+
+      // Формируем предмет, который кладём в инвентарь
+      const newItem: Item = item.type === 'cardPack'
+        ? {
             id: uuidv4(),
             name: item.name,
             type: item.type,
             value: item.value,
             description: item.description,
             image: item.image
-          };
-
-          const newInventory = [...(gameState.inventory || []), newItem];
-          console.log(`📦 Adding item to inventory. Total items: ${newInventory.length}`);
-          
-          // Используем батч обновление для оптимизации
-          await gameState.actions.batchUpdate({
-            balance: newBalance,
-            inventory: newInventory
-          });
-
-          setShowEffect(true);
-          toast({
-            title: t(language, 'shop.cardPackBought'),
-            description: t(language, 'shop.cardPackDescription'),
-          });
-        } else {
-          // Для остальных предметов используем систему инвентаря
-          const newItem: Item = {
+          }
+        : {
             id: uuidv4(),
             name: item.name,
             type: item.type,
@@ -107,33 +112,24 @@ export const Shop = ({ onClose }: ShopProps) => {
             equipped: false
           };
 
-          const newInventory = [...(gameState.inventory || []), newItem];
-          console.log(`📦 Adding item to inventory. Total items: ${newInventory.length}`);
-          
-          // Используем батч обновление для оптимизации
-          await gameState.actions.batchUpdate({
-            balance: newBalance,
-            inventory: newInventory
-          });
+      const newInventory = [...currentInventory, newItem];
 
-          setShowEffect(true);
-          toast({
-            title: t(language, 'shop.purchaseSuccess'),
-            description: `${t(language, 'shop.boughtItem')} ${item.name}`,
-          });
-        }
-      } catch (error) {
-        toast({
-          title: t(language, 'shop.purchaseError'),
-          description: t(language, 'shop.purchaseErrorDescription'),
-          variant: "destructive",
-        });
-      }
-    } else {
+      // Одно серверное обновление: баланс и инвентарь
+      await gameState.actions.batchUpdate({
+        balance: newBalance,
+        inventory: newInventory
+      });
+
+      setShowEffect(true);
       toast({
-        title: t(language, 'shop.insufficientFunds'),
-        description: t(language, 'shop.insufficientFundsDescription'),
-        variant: "destructive",
+        title: item.type === 'cardPack' ? t(language, 'shop.cardPackBought') : t(language, 'shop.purchaseSuccess'),
+        description: item.type === 'cardPack' ? t(language, 'shop.cardPackDescription') : `${t(language, 'shop.boughtItem')} ${item.name}`,
+      });
+    } catch (error) {
+      toast({
+        title: t(language, 'shop.purchaseError'),
+        description: t(language, 'shop.purchaseErrorDescription'),
+        variant: 'destructive',
       });
     }
   };
