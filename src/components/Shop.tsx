@@ -20,7 +20,7 @@ interface ShopProps {
 }
 
 export const Shop = ({ onClose }: ShopProps) => {
-  const { gameData, loading: gameDataLoading } = useGameData();
+  const { gameData, loading: gameDataLoading, loadGameData } = useGameData();
   const { accountId } = useWallet();
   const { language } = useLanguage();
   const { 
@@ -102,6 +102,12 @@ export const Shop = ({ onClose }: ShopProps) => {
         throw (rpcError || new Error('No result from RPC'));
       }
 
+      console.log('✅ Purchase successful, result:', result);
+      
+      // Reload game data to sync with updated balance and inventory
+      if (loadGameData) {
+        await loadGameData(accountId);
+      }
 
       setShowEffect(true);
       toast({

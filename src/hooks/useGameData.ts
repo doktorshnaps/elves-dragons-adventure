@@ -132,50 +132,30 @@ export const useGameData = () => {
     if (!walletAddress) return;
 
     try {
-      // Формируем payload только из переданных полей, чтобы не затирать значения в БД
-      const payload: any = { 
-        wallet_address: walletAddress,
-      };
-      if (updates.balance !== undefined) payload.balance = updates.balance;
-      if (updates.cards !== undefined) payload.cards = updates.cards as any;
-      if (updates.inventory !== undefined) payload.inventory = updates.inventory as any;
-      if (updates.marketplaceListings !== undefined) payload.marketplace_listings = updates.marketplaceListings as any;
-      if (updates.socialQuests !== undefined) payload.social_quests = updates.socialQuests as any;
-      if (updates.adventurePlayerStats !== undefined) payload.adventure_player_stats = updates.adventurePlayerStats as any;
-      if (updates.adventureCurrentMonster !== undefined) payload.adventure_current_monster = updates.adventureCurrentMonster as any;
-      if (updates.dragonEggs !== undefined) payload.dragon_eggs = updates.dragonEggs as any;
-      if (updates.battleState !== undefined) payload.battle_state = updates.battleState as any;
-      if (updates.selectedTeam !== undefined) payload.selected_team = updates.selectedTeam as any;
-      if (updates.barracksUpgrades !== undefined) payload.barracks_upgrades = updates.barracksUpgrades as any;
-      if (updates.dragonLairUpgrades !== undefined) payload.dragon_lair_upgrades = updates.dragonLairUpgrades as any;
-      // ВАЖНО: initialized обновляем только если явно передан
-      if (updates.initialized !== undefined) payload.initialized = updates.initialized;
-
-      // Существующая запись?
-      const { data: existing, error: selErr } = await supabase
-        .from('game_data')
-        .select('id')
-        .eq('wallet_address', walletAddress)
-        .maybeSingle();
-      if (selErr) throw selErr;
-
-      let error: any = null;
-      if (existing) {
-        const res = await supabase.from('game_data').update(payload).eq('wallet_address', walletAddress);
-        error = res.error;
-      } else {
-        const { data: { user } } = await supabase.auth.getUser();
-        if (!user) {
-          console.warn('No Supabase user session; skipping game_data insert');
-          return;
-        }
-        const res = await supabase.from('game_data').insert({ ...payload, user_id: user.id });
-        error = res.error;
-      }
-
+      console.log('🔄 Updating game data:', updates);
+      
+      // Use the secure function to update game data
+      const { data: success, error } = await supabase.rpc('update_game_data_by_wallet', {
+        p_wallet_address: walletAddress,
+        p_balance: updates.balance,
+        p_cards: updates.cards as any,
+        p_inventory: updates.inventory as any,
+        p_selected_team: updates.selectedTeam as any,
+        p_dragon_eggs: updates.dragonEggs as any,
+        p_account_level: updates.accountLevel,
+        p_account_experience: updates.accountExperience,
+        p_initialized: updates.initialized,
+        p_marketplace_listings: updates.marketplaceListings as any,
+        p_social_quests: updates.socialQuests as any,
+        p_adventure_player_stats: updates.adventurePlayerStats as any,
+        p_adventure_current_monster: updates.adventureCurrentMonster as any,
+        p_battle_state: updates.battleState as any,
+        p_barracks_upgrades: updates.barracksUpgrades as any,
+        p_dragon_lair_upgrades: updates.dragonLairUpgrades as any
+      });
 
       if (error) {
-        console.error('Error updating game data:', error);
+        console.error('❌ Error updating game data:', error);
         toast({
           title: "Ошибка сохранения",
           description: "Не удалось сохранить данные игры",
@@ -184,41 +164,45 @@ export const useGameData = () => {
         return;
       }
 
-      // Локально также не трогаем initialized, если он не был в updates
-      setGameData((prev) => ({ ...prev, ...updates }));
+      if (success) {
+        console.log('✅ Game data updated successfully');
+        
+        // Локально обновляем состояние
+        setGameData((prev) => ({ ...prev, ...updates }));
 
-      // Синхронизируем только изменённые ключи в localStorage
-      if (updates.cards !== undefined) localStorage.setItem('gameCards', JSON.stringify(updates.cards));
-      if (updates.balance !== undefined) localStorage.setItem('gameBalance', String(updates.balance));
-      if (updates.initialized !== undefined) localStorage.setItem('gameInitialized', String(updates.initialized));
-      if (updates.inventory !== undefined) localStorage.setItem('gameInventory', JSON.stringify(updates.inventory));
-      if (updates.marketplaceListings !== undefined) localStorage.setItem('marketplaceListings', JSON.stringify(updates.marketplaceListings));
-      if (updates.socialQuests !== undefined) localStorage.setItem('socialQuests', JSON.stringify(updates.socialQuests));
-      if (updates.adventurePlayerStats !== undefined && updates.adventurePlayerStats) {
-        localStorage.setItem('adventurePlayerStats', JSON.stringify(updates.adventurePlayerStats));
-      }
-      if (updates.adventureCurrentMonster !== undefined && updates.adventureCurrentMonster) {
-        localStorage.setItem('adventureCurrentMonster', JSON.stringify(updates.adventureCurrentMonster));
-      }
-      if (updates.dragonEggs !== undefined) localStorage.setItem('dragonEggs', JSON.stringify(updates.dragonEggs));
-      if (updates.battleState !== undefined && updates.battleState) {
-        localStorage.setItem('battleState', JSON.stringify(updates.battleState));
-      }
-      if (updates.selectedTeam !== undefined) localStorage.setItem('selectedTeam', JSON.stringify(updates.selectedTeam));
+        // Синхронизируем только изменённые ключи в localStorage
+        if (updates.cards !== undefined) localStorage.setItem('gameCards', JSON.stringify(updates.cards));
+        if (updates.balance !== undefined) localStorage.setItem('gameBalance', String(updates.balance));
+        if (updates.initialized !== undefined) localStorage.setItem('gameInitialized', String(updates.initialized));
+        if (updates.inventory !== undefined) localStorage.setItem('gameInventory', JSON.stringify(updates.inventory));
+        if (updates.marketplaceListings !== undefined) localStorage.setItem('marketplaceListings', JSON.stringify(updates.marketplaceListings));
+        if (updates.socialQuests !== undefined) localStorage.setItem('socialQuests', JSON.stringify(updates.socialQuests));
+        if (updates.adventurePlayerStats !== undefined && updates.adventurePlayerStats) {
+          localStorage.setItem('adventurePlayerStats', JSON.stringify(updates.adventurePlayerStats));
+        }
+        if (updates.adventureCurrentMonster !== undefined && updates.adventureCurrentMonster) {
+          localStorage.setItem('adventureCurrentMonster', JSON.stringify(updates.adventureCurrentMonster));
+        }
+        if (updates.dragonEggs !== undefined) localStorage.setItem('dragonEggs', JSON.stringify(updates.dragonEggs));
+        if (updates.battleState !== undefined && updates.battleState) {
+          localStorage.setItem('battleState', JSON.stringify(updates.battleState));
+        }
+        if (updates.selectedTeam !== undefined) localStorage.setItem('selectedTeam', JSON.stringify(updates.selectedTeam));
 
-      // Отправляем события для обновления UI
-      if (updates.balance !== undefined) {
-        const balanceEvent = new CustomEvent('balanceUpdate', { 
-          detail: { balance: updates.balance }
-        });
-        window.dispatchEvent(balanceEvent);
-      }
+        // Отправляем события для обновления UI
+        if (updates.balance !== undefined) {
+          const balanceEvent = new CustomEvent('balanceUpdate', { 
+            detail: { balance: updates.balance }
+          });
+          window.dispatchEvent(balanceEvent);
+        }
 
-      if (updates.cards !== undefined) {
-        const cardsEvent = new CustomEvent('cardsUpdate', { 
-          detail: { cards: updates.cards }
-        });
-        window.dispatchEvent(cardsEvent);
+        if (updates.cards !== undefined) {
+          const cardsEvent = new CustomEvent('cardsUpdate', { 
+            detail: { cards: updates.cards }
+          });
+          window.dispatchEvent(cardsEvent);
+        }
       }
 
     } catch (error) {
