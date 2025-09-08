@@ -6,6 +6,7 @@ import { useGameData } from "@/hooks/useGameData";
 import { useGameInitialization } from "@/components/game/initialization/useGameInitialization";
 import { FirstTimePackDialog } from "@/components/game/initialization/FirstTimePackDialog";
 import { useWallet } from "@/hooks/useWallet";
+import { AdminConsole } from "@/components/AdminConsole";
 
 import { useLanguage } from "@/hooks/useLanguage";
 import { t } from "@/utils/translations";
@@ -137,6 +138,13 @@ export const Menu = () => {
           <span>{t(language, 'menu.disconnectWallet')}</span>
         </Button>
       </div>
+
+      {/* Admin Console - только для админа */}
+      {accountId === 'mr_bruts.tg' && (
+        <div className="relative z-10 max-w-4xl mx-auto mt-8">
+          <AdminConsole />
+        </div>
+      )}
 
       <FirstTimePackDialog isOpen={showFirstTimePack} onClose={() => setShowFirstTimePack(false)} />
     </div>;
