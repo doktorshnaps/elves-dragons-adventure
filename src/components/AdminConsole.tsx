@@ -51,6 +51,9 @@ export const AdminConsole = () => {
         case 'info':
           await handleGetUserInfo(parts);
           break;
+        case 'find':
+          await handleFindUser(parts);
+          break;
         case 'help':
           showHelp();
           break;
@@ -206,8 +209,38 @@ export const AdminConsole = () => {
     }
   };
 
+  const handleFindUser = async (parts: string[]) => {
+    if (parts.length !== 2) {
+      addOutput('Использование: find <wallet_address>');
+      return;
+    }
+
+    const walletAddress = parts[1];
+
+    const { data, error } = await supabase
+      .from('game_data')
+      .select('user_id, wallet_address, balance, account_level, created_at')
+      .eq('wallet_address', walletAddress)
+      .single();
+
+    if (error) {
+      addOutput(`Ошибка поиска: ${error.message}`);
+    } else if (data) {
+      addOutput('=== НАЙДЕН ИГРОК ===');
+      addOutput(`UUID: ${data.user_id}`);
+      addOutput(`Кошелек: ${data.wallet_address}`);
+      addOutput(`Баланс: ${data.balance} ELL`);
+      addOutput(`Уровень: ${data.account_level}`);
+      addOutput(`Создан: ${new Date(data.created_at).toLocaleString()}`);
+      addOutput('==================');
+    } else {
+      addOutput('Игрок с таким кошельком не найден');
+    }
+  };
+
   const showHelp = () => {
     addOutput('=== АДМИНСКИЕ КОМАНДЫ ===');
+    addOutput('find <wallet_address> - Найти игрока по кошельку и получить UUID');
     addOutput('addbalance <user_id> <amount> - Добавить ELL на баланс игрока');
     addOutput('ban <user_id> <reason> - Забанить игрока');
     addOutput('unban <user_id> - Разбанить игрока');
@@ -309,10 +342,11 @@ export const AdminConsole = () => {
         {/* Help */}
         <div className="text-xs text-muted-foreground space-y-1">
           <p><strong>Примеры команд:</strong></p>
-          <p>• addbalance 550e8400-e29b-41d4-a716-446655440000 5000</p>
-          <p>• ban 550e8400-e29b-41d4-a716-446655440000 Использование читов</p>
-          <p>• unban 550e8400-e29b-41d4-a716-446655440000</p>
-          <p>• info 550e8400-e29b-41d4-a716-446655440000</p>
+          <p>• find mr_bruts.tg</p>
+          <p>• addbalance c45dcc01-8e2e-405f-81b9-54771f0717fa 5000</p>
+          <p>• ban c45dcc01-8e2e-405f-81b9-54771f0717fa Использование читов</p>
+          <p>• unban c45dcc01-8e2e-405f-81b9-54771f0717fa</p>
+          <p>• info c45dcc01-8e2e-405f-81b9-54771f0717fa</p>
         </div>
       </CardContent>
     </Card>
