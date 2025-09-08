@@ -548,6 +548,10 @@ export type Database = {
         Args: { p_item_id: string; p_listing_type: string; p_price: number }
         Returns: string
       }
+      ensure_game_data_exists: {
+        Args: { p_wallet_address: string }
+        Returns: string
+      }
       get_current_user_wallet: {
         Args: Record<PropertyKey, never>
         Returns: string

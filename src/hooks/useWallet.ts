@@ -162,6 +162,12 @@ export const useWallet = () => {
               // Save wallet connection to Supabase
               await saveWalletConnection(accountId, true);
 
+              // Ensure game_data record exists for this wallet (with 0 balance if new)
+              console.log('🎮 Ensuring game_data exists for wallet:', accountId);
+              await supabase.rpc('ensure_game_data_exists', {
+                p_wallet_address: accountId
+              });
+
               // Authenticate this wallet with Supabase (creates/links user + profile)
               await supabase.rpc('authenticate_wallet_session', {
                 p_wallet_address: accountId,
