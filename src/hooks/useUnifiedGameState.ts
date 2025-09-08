@@ -53,10 +53,7 @@ export const useUnifiedGameState = (): UnifiedGameState => {
       }
       return await loadGameDataFromServer(accountId);
     },
-    initialData: (() => {
-      const cached = localStorage.getItem('gameData');
-      return cached ? JSON.parse(cached) : initialGameData;
-    })(),
+    initialData: initialGameData,
     enabled: !!accountId,
     staleTime: STALE_TIME,
     gcTime: CACHE_TIME,
@@ -263,18 +260,18 @@ async function loadGameDataFromServer(walletAddress: string): Promise<GameData> 
       user_id: '00000000-0000-0000-0000-000000000000'
     } as any;
 
-    const { data: upserted, error: upsertError } = await supabase
+    const { data: inserted, error: insertError } = await supabase
       .from('game_data')
-      .upsert(newData, { onConflict: 'wallet_address' })
+      .insert(newData)
       .select()
       .single();
 
-    if (upsertError) {
-      console.error('Failed to upsert game data:', upsertError);
-      throw upsertError;
+    if (insertError) {
+      console.error('Failed to insert game data:', insertError);
+      throw insertError;
     }
-    console.log('✅ Created new game data with balance:', upserted.balance);
-    return transformServerData(upserted);
+    console.log('✅ Created new game data with balance:', inserted.balance);
+    return transformServerData(inserted);
   }
 
   console.log('📂 Loaded existing game data with balance:', data.balance);
@@ -304,19 +301,19 @@ async function updateGameDataOnServer(walletAddress: string, updates: Partial<Ga
 
   // Если записи не было, создаём её через upsert
   if (!data) {
-    const { data: upserted, error: upsertError } = await supabase
+    const { data: inserted, error: insertError } = await supabase
       .from('game_data')
-      .upsert({ ...serverUpdates, wallet_address: walletAddress }, { onConflict: 'wallet_address' })
+      .insert({ ...serverUpdates, wallet_address: walletAddress })
       .select()
       .single();
 
-    if (upsertError) {
-      console.error('Failed to upsert game data:', upsertError);
-      throw upsertError;
+    if (insertError) {
+      console.error('Failed to insert game data:', insertError);
+      throw insertError;
     }
 
-    console.log(`✅ Server upserted successfully. New balance: ${upserted.balance}`);
-    return transformServerData(upserted);
+    console.log(`✅ Server inserted successfully. New balance: ${inserted.balance}`);
+    return transformServerData(inserted);
   }
 
   console.log(`✅ Server updated successfully. New balance: ${data.balance}`);
