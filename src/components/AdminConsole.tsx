@@ -221,7 +221,7 @@ export const AdminConsole = () => {
       .from('game_data')
       .select('user_id, wallet_address, balance, account_level, created_at')
       .eq('wallet_address', walletAddress)
-      .single();
+      .maybeSingle();
 
     if (error) {
       addOutput(`Ошибка поиска: ${error.message}`);
