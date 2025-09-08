@@ -95,19 +95,11 @@ export const useNFTCardIntegration = () => {
       cleanupLocalNFTs(gameCards.map(c => c.id));
       setHasSynced(true);
       
-      if (gameCards.length > 0) {
-        toast({
-          title: "NFT карты синхронизированы",
-          description: `Загружено ${gameCards.length} NFT карт из кошелька`
-        });
-      }
+      // Убираем успешные уведомления - синхронизация в фоне
+      console.log(`✅ NFT sync completed silently, cards: ${gameCards.length}`);
     } catch (error) {
       console.error('Error syncing NFT cards:', error);
-      toast({
-        title: "Ошибка синхронизации",
-        description: "Не удалось загрузить NFT карты",
-        variant: "destructive"
-      });
+      // Убираем toast-ошибки - синхронизация происходит в фоне
     } finally {
       setIsLoading(false);
     }

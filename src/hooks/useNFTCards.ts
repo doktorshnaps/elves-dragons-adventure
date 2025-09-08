@@ -83,39 +83,20 @@ export const useNFTCards = () => {
 
       if (error) {
         console.error('Error syncing NFT cards:', error);
-        toast({
-          title: "Ошибка синхронизации NFT",
-          description: "Не удалось загрузить NFT карты из кошелька",
-          variant: "destructive"
-        });
+        // Убираем toast - синхронизация происходит в фоне
         return [];
       }
 
       const cards = data?.nft_cards || [];
       setNftCards(cards);
       
-      if (cards.length > 0) {
-        toast({
-          title: "NFT карты загружены",
-          description: `Найдено ${cards.length} NFT карт в кошельке`
-        });
-      } else {
-        toast({
-          title: "NFT карты не найдены",
-          description: "В вашем кошельке нет поддерживаемых NFT карт"
-        });
-      }
-
-      console.log(`✅ Synced ${cards.length} NFT cards`);
+      // Убираем все toast-уведомления - синхронизация происходит в фоне
+      console.log(`✅ Synced ${cards.length} NFT cards silently`);
       return cards;
 
     } catch (error) {
       console.error('Error in syncNFTCards:', error);
-      toast({
-        title: "Ошибка",
-        description: "Произошла ошибка при загрузке NFT карт",
-        variant: "destructive"
-      });
+      // Убираем toast - синхронизация происходит в фоне
       return [];
     } finally {
       setLoading(false);
