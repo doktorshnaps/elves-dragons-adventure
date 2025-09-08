@@ -107,13 +107,13 @@ export const useUnifiedGameState = (): UnifiedGameState => {
     }
   });
 
-  // Настраиваем batch update handler с обработкой ошибок
-  useMemo(() => {
-    batchUpdateManager.setBatchUpdateHandler(async (updates: Partial<GameData>) => {
-      const operation = () => updateMutation.mutateAsync({ updates });
-      await retryOperation(operation, { maxRetries: 2 });
-    });
-  }, [updateMutation, retryOperation]);
+  // Убираем batch update manager - используем прямые обновления
+  // useMemo(() => {
+  //   batchUpdateManager.setBatchUpdateHandler(async (updates: Partial<GameData>) => {
+  //     const operation = () => updateMutation.mutateAsync({ updates });
+  //     await retryOperation(operation, { maxRetries: 2 });
+  //   });
+  // }, [updateMutation, retryOperation]);
 
   // Real-time синхронизация
   const { forceSync } = useRealTimeSync({
@@ -247,6 +247,8 @@ async function loadGameDataFromServer(walletAddress: string): Promise<GameData> 
 }
 
 async function updateGameDataOnServer(walletAddress: string, updates: Partial<GameData>): Promise<GameData> {
+  console.log(`🔄 Updating server data for ${walletAddress}:`, updates);
+  
   const { data, error } = await supabase
     .from('game_data')
     .update({
@@ -262,6 +264,7 @@ async function updateGameDataOnServer(walletAddress: string, updates: Partial<Ga
     throw error;
   }
 
+  console.log(`✅ Server updated successfully. New balance: ${data.balance}`);
   return transformServerData(data);
 }
 

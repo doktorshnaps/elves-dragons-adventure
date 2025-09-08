@@ -59,14 +59,14 @@ export const Shop = ({ onClose }: ShopProps) => {
     if (gameState.balance >= item.price) {
       try {
         console.log(`🛒 Purchasing item: ${item.name} for ${item.price} ELL`);
-        console.log(`💰 Current balance: ${gameState.balance}`);
+        console.log(`💰 Current balance BEFORE: ${gameState.balance}`);
         
         // Сначала обновляем количество в магазине
         await purchaseItem(item.id, accountId);
 
         // Рассчитываем новый баланс
         const newBalance = gameState.balance - item.price;
-        console.log(`💸 Updating balance from ${gameState.balance} to ${newBalance}`);
+        console.log(`💸 Calculated new balance: ${gameState.balance} - ${item.price} = ${newBalance}`);
 
         if (item.type === "cardPack") {
           // Создаем колоду карт как предмет в инвентаре

@@ -23,6 +23,11 @@ export const useOptimisticUpdates = <T>(initialData: T) => {
     // Сохраняем текущие данные для отката
     setRollbackData(state.data);
     
+    // Логируем баланс при оптимистичных обновлениях
+    if ((newData as any)?.balance !== undefined) {
+      console.log(`🔄 Optimistic update - setting balance to: ${(newData as any).balance}`);
+    }
+    
     // Сразу обновляем UI (оптимистично)
     setState({
       data: newData,
