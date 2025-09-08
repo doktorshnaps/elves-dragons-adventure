@@ -266,6 +266,7 @@ export const useWallet = () => {
       // Clear localStorage immediately
       localStorage.removeItem('walletConnected');
       localStorage.removeItem('walletAccountId');
+      localStorage.removeItem('gameCards');
       
       // Then try to sign out from wallet
       if (connector) {
