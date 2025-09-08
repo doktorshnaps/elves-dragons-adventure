@@ -205,6 +205,7 @@ return (
                 )}
                 <p className="text-game-secondary">{t(language, 'shop.price')} {item.price} {t(language, 'game.currency')}</p>
                 <Button
+                  type="button"
                   className="w-full bg-game-primary hover:bg-game-primary/80 disabled:opacity-50"
                   onClick={() => handleBuyItem(item)}
                   disabled={!available}

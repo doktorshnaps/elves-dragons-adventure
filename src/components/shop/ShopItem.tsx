@@ -129,6 +129,7 @@ export const ShopItem = ({ item, balance, onBuy }: ShopItemProps) => {
           Цена: {item.price} ELL
         </p>
         <Button
+          type="button"
           className={`w-full bg-game-primary hover:bg-game-primary/80 ${isMobile ? 'text-[10px] py-1' : 'text-xs py-2'}`}
           onClick={() => onBuy(item)}
           disabled={!canAfford}
