@@ -74,7 +74,14 @@ export const InventoryDisplay = ({
 
     // Колоды карт открываются всегда (без внешнего обработчика)
     if (groupedItem.type === 'cardPack') {
-      return await handleOpenCardPack(groupedItem.items[0]);
+      const shouldRemove = await handleOpenCardPack(groupedItem.items[0]);
+      if (shouldRemove) {
+        // Немедленно убираем группу из UI, чтобы не оставалась видимой после открытия всех колод
+        const currentInventory = gameData.inventory || [];
+        const newInventory = currentInventory.filter(i => !(i.type === 'cardPack' && i.name === groupedItem.name));
+        await updateGameData({ inventory: newInventory });
+      }
+      return shouldRemove;
     }
 
     // Остальные предметы — через внешний обработчик, если он передан
