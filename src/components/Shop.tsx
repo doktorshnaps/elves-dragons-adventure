@@ -152,6 +152,12 @@ return (
             {t(language, 'shop.backToMenu')}
           </Button>
           
+          <div className="flex items-center gap-2 bg-game-surface px-4 py-2 rounded-lg border border-game-accent">
+            <div className="w-2 h-2 bg-yellow-500 rounded-full animate-pulse"></div>
+            <span className="text-game-accent font-semibold">{gameState.balance}</span>
+            <span className="text-game-secondary text-sm">{t(language, 'game.currency')}</span>
+          </div>
+          
           <div className="flex items-center gap-2 text-game-accent">
             <Clock className="w-4 h-4" />
             <span className="text-sm">{t(language, 'shop.refillIn')} {timeUntilReset}</span>
