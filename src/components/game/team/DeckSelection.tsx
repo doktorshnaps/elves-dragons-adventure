@@ -159,7 +159,7 @@ export const DeckSelection = ({
           <Badge variant="secondary">{heroes.length} карт</Badge>
         </Button>
 
-        <Button onClick={() => setShowDragonDeck(true)} className="h-32 flex flex-col items-center justify-center space-y-2 bg-game-surface border-2 border-game-accent hover:bg-game-surface/80">
+        <Button onClick={() => { setActivePairIndex(null); setShowDragonDeck(true); }} className="h-32 flex flex-col items-center justify-center space-y-2 bg-game-surface border-2 border-game-accent hover:bg-game-surface/80">
           <div className="text-lg font-bold">Колода драконов</div>
           <Badge variant="secondary">{dragons.length} карт</Badge>
         </Button>
@@ -190,7 +190,7 @@ export const DeckSelection = ({
       </Dialog>
 
       {/* Dragon Deck Dialog */}
-      <Dialog open={showDragonDeck} onOpenChange={setShowDragonDeck}>
+      <Dialog open={showDragonDeck} onOpenChange={(open) => { setShowDragonDeck(open); if (!open) setActivePairIndex(null); }}>
         <DialogContent className="max-w-4xl h-[80vh] bg-game-surface border-game-accent">
           <DialogHeader>
             <DialogTitle className="text-game-accent">Выберите дракона</DialogTitle>
