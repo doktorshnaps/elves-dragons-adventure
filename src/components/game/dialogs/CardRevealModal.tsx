@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   Dialog,
   DialogContent,
@@ -28,6 +28,14 @@ export const CardRevealModal = ({
   totalCards = 1 
 }: CardRevealModalProps) => {
   const [showCard, setShowCard] = useState(false);
+
+  useEffect(() => {
+    if (revealedCard) {
+      setShowCard(false);
+      const timer = setTimeout(() => setShowCard(true), 500);
+      return () => clearTimeout(timer);
+    }
+  }, [revealedCard]);
 
   const handleOpen = () => {
     setTimeout(() => setShowCard(true), 500);
