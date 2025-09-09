@@ -46,40 +46,39 @@ export const getStatsForRarity = (rarity: Rarity) => {
 
 export const getRarityDropRates = () => {
   return {
-    1: "40%",
-    2: "25%",
-    3: "15%",
-    4: "10%",
-    5: "5%",
-    6: "3%",
-    7: "1.5%",
-    8: "0.5%"
+    1: "80%",
+    2: "10%",
+    3: "5%",
+    4: "3%",
+    5: "1.5%",
+    6: "0.3%",
+    7: "0.15%",
+    8: "0.05%"
   };
 };
 
 const getPetRarityChance = (): Rarity => {
   const rand = Math.random() * 100;
-  if (rand < 85) return 1;  // Обычный
-  if (rand < 60) return 2;  // Необычный
-  if (rand < 45) return 3;  // Редкий
-  if (rand < 12) return 4;  // Эпический
-  if (rand < 4) return 5;   // Легендарный
-  if (rand < 2) return 6;   // Мифический
-  if (rand < 1) return 7;   // Этернал
-  if (rand < 0.5) return 8; // Империал
-  return 8;                 // Титан (0.1%)
+  if (rand < 80) return 1;    // 80%
+  if (rand < 90) return 2;    // 10%
+  if (rand < 95) return 3;    // 5%
+  if (rand < 98) return 4;    // 3%
+  if (rand < 99.5) return 5;  // 1.5%
+  if (rand < 99.8) return 6;  // 0.3%
+  if (rand < 99.95) return 7; // 0.15%
+  return 8;                   // 0.05%
 };
 
 const getHeroRarityChance = (): Rarity => {
   const rand = Math.random() * 100;
-  if (rand < 40) return 1;
-  if (rand < 65) return 2;
-  if (rand < 80) return 3;
-  if (rand < 90) return 4;
-  if (rand < 95) return 5;
-  if (rand < 98) return 6;
-  if (rand < 99.5) return 7;
-  return 8;
+  if (rand < 80) return 1;    // 80%
+  if (rand < 90) return 2;    // 10%
+  if (rand < 95) return 3;    // 5%
+  if (rand < 98) return 4;    // 3%
+  if (rand < 99.5) return 5;  // 1.5%
+  if (rand < 99.8) return 6;  // 0.3%
+  if (rand < 99.95) return 7; // 0.15%
+  return 8;                   // 0.05%
 };
 
 export const getRarityChance = (type: CardType): Rarity => {
