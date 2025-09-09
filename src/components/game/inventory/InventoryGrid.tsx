@@ -13,6 +13,7 @@ import { Item } from "@/types/inventory";
 import { GroupedItem } from "./types";
 import { useLanguage } from "@/hooks/useLanguage";
 import { t } from "@/utils/translations";
+import { getRarityDropRates } from "@/utils/cardUtils";
 
 interface InventoryGridProps {
   groupedItems: GroupedItem[];
@@ -107,7 +108,24 @@ export const InventoryGrid = ({
             <div className="space-y-4">
               <h4 className="font-semibold text-game-accent text-lg">{item.name}</h4>
               {item.type === 'cardPack' && (
-                <p className="text-sm text-gray-400">{t(language, 'items.cardPackDescription')}</p>
+                <div className="space-y-3">
+                  <p className="text-sm text-gray-400">{t(language, 'items.cardPackDescription')}</p>
+                  <div className="bg-game-surface/50 p-3 rounded-lg border border-game-accent/30">
+                    <h5 className="text-sm font-semibold text-game-accent mb-2">Шансы выпадения:</h5>
+                    <div className="grid grid-cols-2 gap-1 text-xs">
+                      {Object.entries(getRarityDropRates()).map(([rarity, chance]) => (
+                        <div key={rarity} className="flex justify-between items-center">
+                          <span className="text-yellow-400">{"⭐".repeat(Number(rarity))}</span>
+                          <span className="text-gray-300">{chance}</span>
+                        </div>
+                      ))}
+                    </div>
+                    <div className="mt-2 text-xs text-gray-400">
+                      <p>• 50% - Герой</p>
+                      <p>• 50% - Питомец</p>
+                    </div>
+                  </div>
+                </div>
               )}
               {item.type === 'healthPotion' && (
                 <p className="text-sm text-gray-400">{t(language, 'items.healthPotionDescription', { value: String(item.value) })}</p>
