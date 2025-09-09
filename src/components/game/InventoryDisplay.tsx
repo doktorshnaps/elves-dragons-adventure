@@ -39,7 +39,10 @@ export const InventoryDisplay = ({
     isOpening,
     revealedCard,
     showRevealModal,
-    closeRevealModal
+    closeRevealModal,
+    showNextCard,
+    currentCardIndex,
+    totalCards
   } = useInventoryLogic(inventory);
 
   const handleUseItem = async (groupedItem: GroupedItem): Promise<boolean | void> => {
@@ -171,6 +174,9 @@ export const InventoryDisplay = ({
         isOpen={showRevealModal}
         onClose={closeRevealModal}
         revealedCard={revealedCard}
+        onNextCard={showNextCard}
+        currentIndex={currentCardIndex}
+        totalCards={totalCards}
       />
     </div>
   );

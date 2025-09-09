@@ -14,9 +14,19 @@ interface CardRevealModalProps {
   isOpen: boolean;
   onClose: () => void;
   revealedCard: CardType | null;
+  onNextCard?: () => void;
+  currentIndex?: number;
+  totalCards?: number;
 }
 
-export const CardRevealModal = ({ isOpen, onClose, revealedCard }: CardRevealModalProps) => {
+export const CardRevealModal = ({ 
+  isOpen, 
+  onClose, 
+  revealedCard, 
+  onNextCard, 
+  currentIndex = 0, 
+  totalCards = 1 
+}: CardRevealModalProps) => {
   const [showCard, setShowCard] = useState(false);
 
   const handleOpen = () => {
@@ -42,7 +52,7 @@ export const CardRevealModal = ({ isOpen, onClose, revealedCard }: CardRevealMod
         <DialogHeader>
           <DialogTitle className="text-center text-xl font-bold text-game-accent flex items-center justify-center gap-2">
             <Sparkles className="w-5 h-5 text-yellow-400" />
-            Новая карта!
+            {totalCards > 1 ? `Карта ${currentIndex + 1} из ${totalCards}` : 'Новая карта!'}
             <Sparkles className="w-5 h-5 text-yellow-400" />
           </DialogTitle>
         </DialogHeader>
@@ -95,10 +105,17 @@ export const CardRevealModal = ({ isOpen, onClose, revealedCard }: CardRevealMod
 
           {showCard && (
             <Button 
-              onClick={handleClose}
+              onClick={() => {
+                if (onNextCard && currentIndex < totalCards - 1) {
+                  setShowCard(false);
+                  setTimeout(() => onNextCard(), 300);
+                } else {
+                  handleClose();
+                }
+              }}
               className="bg-game-primary hover:bg-game-primary/80 animate-in fade-in-50 duration-1000"
             >
-              Добавить в коллекцию
+              {currentIndex < totalCards - 1 ? 'Следующая карта' : 'Добавить в коллекцию'}
             </Button>
           )}
         </div>

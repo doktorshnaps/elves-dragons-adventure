@@ -14,6 +14,8 @@ export const useCardPackOpening = () => {
   const [isOpening, setIsOpening] = useState(false);
   const [revealedCard, setRevealedCard] = useState<CardType | null>(null);
   const [showRevealModal, setShowRevealModal] = useState(false);
+  const [cardQueue, setCardQueue] = useState<CardType[]>([]);
+  const [currentCardIndex, setCurrentCardIndex] = useState(0);
 
   const removeCardPacksFromInventory = (count: number, referencePack: Item) => {
     const inv = [...(gameData.inventory || [])];
@@ -92,10 +94,11 @@ export const useCardPackOpening = () => {
       // Обновляем локальные данные из Supabase чтобы исключить рассинхрон
       await loadGameData();
 
-      // Если остались колоды той же серии, показываем последнюю карту
-      const last = newCards[newCards.length - 1] || null;
-      if (last) {
-        setRevealedCard(last);
+      // Если получены карты, показываем их по очереди
+      if (newCards.length > 0) {
+        setCardQueue(newCards);
+        setCurrentCardIndex(0);
+        setRevealedCard(newCards[0]);
         setShowRevealModal(true);
       }
 
@@ -126,6 +129,18 @@ export const useCardPackOpening = () => {
   const closeRevealModal = () => {
     setShowRevealModal(false);
     setRevealedCard(null);
+    setCardQueue([]);
+    setCurrentCardIndex(0);
+  };
+
+  const showNextCard = () => {
+    const nextIndex = currentCardIndex + 1;
+    if (nextIndex < cardQueue.length) {
+      setCurrentCardIndex(nextIndex);
+      setRevealedCard(cardQueue[nextIndex]);
+    } else {
+      closeRevealModal();
+    }
   };
 
   return {
@@ -134,6 +149,9 @@ export const useCardPackOpening = () => {
     isOpening,
     revealedCard,
     showRevealModal,
-    closeRevealModal
+    closeRevealModal,
+    showNextCard,
+    currentCardIndex,
+    totalCards: cardQueue.length
   };
 };
