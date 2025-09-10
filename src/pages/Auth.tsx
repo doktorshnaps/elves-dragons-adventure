@@ -58,10 +58,10 @@ export const Auth = () => {
         >
           <div className="text-center">
             <h1 className="text-4xl font-bold text-white mb-2">
-              Dragon & Heroes
+              Dragon & Heroes - Подключение кошелька
             </h1>
             <p className="text-gray-300 text-lg">
-              Подключите NEAR кошелек для входа в игру
+              Подключите NEAR кошелек для входа в игру (НЕ email/password!)
             </p>
           </div>
 
