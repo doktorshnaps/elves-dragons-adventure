@@ -57,29 +57,32 @@ export const getRarityDropRates = () => {
   };
 };
 
-const getPetRarityChance = (): Rarity => {
-  const rand = Math.random() * 100;
-  if (rand < 80) return 1;    // 80%
-  if (rand < 90) return 2;    // 10%
-  if (rand < 95) return 3;    // 5%
-  if (rand < 98) return 4;    // 3%
-  if (rand < 99.5) return 5;  // 1.5%
-  if (rand < 99.8) return 6;  // 0.3%
-  if (rand < 99.95) return 7; // 0.15%
-  return 8;                   // 0.05%
+const pickRarity = (): Rarity => {
+  // Используем целочисленное распределение по базисным пунктам (1 = 0.01%)
+  // Итого 10000 = 100.00%
+  const weights: Array<{ r: Rarity; w: number }> = [
+    { r: 1, w: 8000 }, // 80.00%
+    { r: 2, w: 1000 }, // 10.00%
+    { r: 3, w: 500 },  // 5.00%
+    { r: 4, w: 300 },  // 3.00%
+    { r: 5, w: 150 },  // 1.50%
+    { r: 6, w: 30 },   // 0.30%
+    { r: 7, w: 15 },   // 0.15%
+    { r: 8, w: 5 },    // 0.05%
+  ];
+
+  const roll = Math.floor(Math.random() * 10000) + 1; // 1..10000
+  let cumulative = 0;
+  for (const { r, w } of weights) {
+    cumulative += w;
+    if (roll <= cumulative) return r;
+  }
+  return 1; // fallback на самый частый вариант
 };
 
-const getHeroRarityChance = (): Rarity => {
-  const rand = Math.random() * 100;
-  if (rand < 80) return 1;    // 80%
-  if (rand < 90) return 2;    // 10%
-  if (rand < 95) return 3;    // 5%
-  if (rand < 98) return 4;    // 3%
-  if (rand < 99.5) return 5;  // 1.5%
-  if (rand < 99.8) return 6;  // 0.3%
-  if (rand < 99.95) return 7; // 0.15%
-  return 8;                   // 0.05%
-};
+const getPetRarityChance = (): Rarity => pickRarity();
+
+const getHeroRarityChance = (): Rarity => pickRarity();
 
 export const getRarityChance = (type: CardType): Rarity => {
   return type === 'pet' ? getPetRarityChance() : getHeroRarityChance();
