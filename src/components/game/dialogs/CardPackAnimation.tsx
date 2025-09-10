@@ -76,23 +76,20 @@ export const CardPackAnimation = ({ winningCard, onAnimationComplete }: CardPack
 
   const dummyCards = generateDummyCards();
   
-  // Calculate exact position for winning card in the center
-  const totalCards = 41; // 40 dummy + 1 winning
-  const winningCardIndex = Math.floor(totalCards / 2); // Точно в центре
-  
-  // Create cards array with winning card at calculated center position
+  // Simplified positioning - place winning card at fixed position in array
+  const winningCardIndex = 20; // Фиксированная позиция в середине
   const allCards = [...dummyCards.slice(0, winningCardIndex), winningCard, ...dummyCards.slice(winningCardIndex)];
 
-  // Calculate exact positioning - the indicator is at left: 50% of container
-  // We need to position cards so winning card center aligns with this indicator
+  // Simple calculation for card positioning
   const cardWidth = 128; // w-32
-  const cardGap = 16; // gap-4 
+  const cardGap = 16; // gap-4
   
-  // Distance from start of cards row to center of winning card
-  const distanceToWinningCardCenter = winningCardIndex * (cardWidth + cardGap) + (cardWidth / 2);
+  // Calculate exact position to center winning card under indicator
+  // Total offset needed: position of winning card from start of container
+  const totalOffsetToWinningCard = winningCardIndex * (cardWidth + cardGap);
   
-  // Position the entire cards container so winning card center is at 50% of screen
-  const targetX = `calc(50% - ${distanceToWinningCardCenter}px)`;
+  // Final position: move container so winning card aligns with center indicator
+  const finalPosition = -totalOffsetToWinningCard + (cardWidth / 2);
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -100,7 +97,7 @@ export const CardPackAnimation = ({ winningCard, onAnimationComplete }: CardPack
       setTimeout(() => {
         onAnimationComplete();
       }, 1000);
-    }, 10000);
+    }, 8000); // Сократил время анимации до 8 секунд
 
     return () => clearTimeout(timer);
   }, [onAnimationComplete]);
@@ -139,10 +136,10 @@ export const CardPackAnimation = ({ winningCard, onAnimationComplete }: CardPack
               className="flex gap-4"
               initial={{ x: '100vw' }}
               animate={{ 
-                x: isAnimating ? ['-100vw', targetX] : targetX
+                x: isAnimating ? ['100vw', `calc(50% + ${finalPosition}px)`] : `calc(50% + ${finalPosition}px)`
               }}
               transition={{
-                duration: isAnimating ? 10 : 1,
+                duration: isAnimating ? 8 : 1,
                 ease: isAnimating ? "easeOut" : "easeInOut",
               }}
             >
