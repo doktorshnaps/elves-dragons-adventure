@@ -83,15 +83,16 @@ export const CardPackAnimation = ({ winningCard, onAnimationComplete }: CardPack
   // Create cards array with winning card at calculated center position
   const allCards = [...dummyCards.slice(0, winningCardIndex), winningCard, ...dummyCards.slice(winningCardIndex)];
 
-  // Calculate exact position to center winning card under the indicator
-  const cardWidth = 128; // w-32 = 128px
-  const cardGap = 16; // gap-4 = 16px
-  const containerWidth = typeof window !== 'undefined' ? window.innerWidth : 1024;
-  const centerX = containerWidth / 2;
+  // Calculate exact positioning - the indicator is at left: 50% of container
+  // We need to position cards so winning card center aligns with this indicator
+  const cardWidth = 128; // w-32
+  const cardGap = 16; // gap-4 
   
-  // Calculate position so winning card center aligns with indicator
-  const winningCardCenter = winningCardIndex * (cardWidth + cardGap) + cardWidth / 2;
-  const targetX = centerX - winningCardCenter;
+  // Distance from start of cards row to center of winning card
+  const distanceToWinningCardCenter = winningCardIndex * (cardWidth + cardGap) + (cardWidth / 2);
+  
+  // Position the entire cards container so winning card center is at 50% of screen
+  const targetX = `calc(50% - ${distanceToWinningCardCenter}px)`;
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -131,7 +132,8 @@ export const CardPackAnimation = ({ winningCard, onAnimationComplete }: CardPack
           {/* Cards container */}
           <div 
             ref={containerRef}
-            className="absolute top-1/2 transform -translate-y-1/2 h-60 flex items-center gap-4"
+            className="absolute top-1/2 transform -translate-y-1/2 h-60 flex items-center"
+            style={{ left: 0, right: 0 }}
           >
             <motion.div
               className="flex gap-4"
