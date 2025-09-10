@@ -30,7 +30,7 @@ export const CardPackAnimation = ({ winningCard, onAnimationComplete }: CardPack
         magic: Math.floor(Math.random() * 50) + 5,
         rarity: (Math.floor(Math.random() * 8) + 1) as any,
         faction: factions[Math.floor(Math.random() * factions.length)] as any,
-        image: '/placeholder.svg', // Заглушка для фейковых карт
+        image: undefined, // Убираем изображения у фейковых карт
       });
     }
     
@@ -39,7 +39,7 @@ export const CardPackAnimation = ({ winningCard, onAnimationComplete }: CardPack
 
   const dummyCards = generateDummyCards();
   // Insert winning card at position exactly in the center for precise targeting
-  const winningCardIndex = 20; // Позиция выигрышной карты
+  const winningCardIndex = 20; // Позиция выигрышной карты в массиве
   const allCards = [...dummyCards.slice(0, winningCardIndex), winningCard, ...dummyCards.slice(winningCardIndex)];
 
   useEffect(() => {
@@ -86,7 +86,7 @@ export const CardPackAnimation = ({ winningCard, onAnimationComplete }: CardPack
               className="flex gap-4"
               initial={{ x: '100vw' }}
               animate={{ 
-                x: isAnimating ? ['-200vw', `calc(-50vw - ${winningCardIndex * 144}px)`] : `calc(-50vw - ${winningCardIndex * 144}px)`
+                x: isAnimating ? ['-200vw', `calc(-50vw - ${winningCardIndex * 136}px)`] : `calc(-50vw - ${winningCardIndex * 136}px)`
               }}
               transition={{
                 duration: isAnimating ? 10 : 1,
