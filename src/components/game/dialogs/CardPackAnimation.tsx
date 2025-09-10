@@ -15,7 +15,7 @@ export const CardPackAnimation = ({ winningCard, onAnimationComplete }: CardPack
   const [availableImages, setAvailableImages] = useState<{[key: string]: string}>({});
   const imagesReady = Object.keys(availableImages).length > 0;
   const containerRef = useRef<HTMLDivElement>(null);
-  const animationDuration = 2.5; // seconds
+  const animationDuration = 10; // seconds
   const [targetX, setTargetX] = useState<number>(0);
   const [xStart, setXStart] = useState<number>(0);
   
@@ -148,12 +148,12 @@ export const CardPackAnimation = ({ winningCard, onAnimationComplete }: CardPack
               className="flex gap-4"
               initial={{ x: '100vw' }}
               animate={{ 
-                x: isAnimating ? [xStart, targetX - 600, targetX] : targetX
+                x: isAnimating ? ['100vw', targetX - 600, targetX] : targetX
               }}
               transition={{
                 duration: animationDuration,
                 ease: ['linear', 'easeOut'],
-                times: [0, 0.7, 1]
+                times: [0, 0.6, 1]
               }}
             >
               {allCards.map((card, index) => (
