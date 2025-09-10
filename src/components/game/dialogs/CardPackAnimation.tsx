@@ -13,13 +13,14 @@ interface CardPackAnimationProps {
 export const CardPackAnimation = ({ winningCard, onAnimationComplete }: CardPackAnimationProps) => {
   const [isAnimating, setIsAnimating] = useState(true);
   const [availableImages, setAvailableImages] = useState<{[key: string]: string}>({});
+  const imagesReady = Object.keys(availableImages).length > 0;
   const containerRef = useRef<HTMLDivElement>(null);
   
   // Load available images from database
   useEffect(() => {
     const loadImages = async () => {
       const { data: images } = await supabase
-        .from('card_pack_images')
+        .from<any>('card_pack_images')
         .select('card_name, image_url, rarity, card_type');
       
       if (images) {
@@ -73,6 +74,31 @@ export const CardPackAnimation = ({ winningCard, onAnimationComplete }: CardPack
   // Create cards array with winning card at calculated center position
   const allCards = [...dummyCards.slice(0, winningCardIndex), winningCard, ...dummyCards.slice(winningCardIndex)];
 
+  // Compute exact translateX so the indicator aligns with the winning card center
+  const [targetX, setTargetX] = useState(0);
+  const winningCardRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const measure = () => {
+      const containerEl = containerRef.current;
+      const cardEl = winningCardRef.current;
+      if (!containerEl || !cardEl) return;
+      const containerRect = containerEl.getBoundingClientRect();
+      const cardRect = cardEl.getBoundingClientRect();
+      const indicatorX = containerRect.left + containerRect.width / 2;
+      const winningCenter = cardRect.left + cardRect.width / 2;
+      setTargetX(indicatorX - winningCenter);
+    };
+
+    // Measure after DOM paints
+    const id = requestAnimationFrame(measure);
+    window.addEventListener('resize', measure);
+    return () => {
+      cancelAnimationFrame(id);
+      window.removeEventListener('resize', measure);
+    };
+  }, [availableImages, winningCard.id]);
+
   useEffect(() => {
     const timer = setTimeout(() => {
       setIsAnimating(false);
@@ -115,14 +141,10 @@ export const CardPackAnimation = ({ winningCard, onAnimationComplete }: CardPack
           >
             <motion.div
               className="flex gap-4"
-              initial={{ x: '100vw' }}
-              animate={{ 
-                x: isAnimating 
-                  ? ['-200vw', `calc(-50vw - ${winningCardIndex * 144}px + 72px)`] 
-                  : `calc(-50vw - ${winningCardIndex * 144}px + 72px)`
-              }}
+              initial={{ x: 0 }}
+              animate={{ x: isAnimating ? [0, targetX] : targetX }}
               transition={{
-                duration: isAnimating ? 10 : 1,
+                duration: isAnimating ? 10 : 0.8,
                 ease: isAnimating ? "easeOut" : "easeInOut",
                 times: isAnimating ? [0, 1] : undefined
               }}
@@ -131,6 +153,7 @@ export const CardPackAnimation = ({ winningCard, onAnimationComplete }: CardPack
                 <motion.div
                   key={`${card.id}-${index}`}
                   className="flex-shrink-0"
+                  ref={index === winningCardIndex ? winningCardRef : undefined}
                   animate={{
                     scale: index === winningCardIndex && !isAnimating ? 1.1 : 1,
                   }}
@@ -141,18 +164,17 @@ export const CardPackAnimation = ({ winningCard, onAnimationComplete }: CardPack
                   }`}>
                     <div className="flex flex-col h-full justify-between text-white">
                       {/* Card Image */}
-                      {card.image && (
-                        <div className="w-full h-16 mb-1 overflow-hidden rounded">
-                          <img 
-                            src={card.image} 
-                            alt={card.name}
-                            className="w-full h-full object-cover"
-                            onError={(e) => {
-                              e.currentTarget.src = '/placeholder.svg';
-                            }}
-                          />
-                        </div>
-                      )}
+                      <div className="w-full h-16 mb-1 overflow-hidden rounded">
+                        <img 
+                          src={card.image ?? availableImages[card.name] ?? '/placeholder.svg'} 
+                          alt={card.name}
+                          className="w-full h-full object-cover"
+                          loading="eager"
+                          onError={(e) => {
+                            e.currentTarget.src = '/placeholder.svg';
+                          }}
+                        />
+                      </div>
                       
                       <div>
                         <h3 className="text-sm font-bold truncate">{card.name}</h3>
