@@ -1,9 +1,10 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useMemo } from 'react';
 import { Card as CardType } from "@/types/cards";
 import { Card } from "@/components/ui/card";
 import { Star } from "lucide-react";
 import { motion } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
+import { cardDatabase } from "@/data/cardDatabase";
 
 interface CardPackAnimationProps {
   winningCard: CardType;
@@ -16,6 +17,21 @@ export const CardPackAnimation = ({ winningCard, onAnimationComplete }: CardPack
   const imagesReady = Object.keys(availableImages).length > 0;
   const containerRef = useRef<HTMLDivElement>(null);
   const animationDuration = 10; // seconds
+  
+  // Local database image map as immediate fallback
+  const dbImageMap = useMemo(() => {
+    const map: {[key: string]: string} = {};
+    cardDatabase.forEach((c: any) => {
+      if (c?.name && c?.image) map[c.name] = c.image as string;
+    });
+    return map;
+  }, []);
+
+  // Seed available images from local DB first
+  useEffect(() => {
+    setAvailableImages(dbImageMap);
+  }, [dbImageMap]);
+  
   const [targetX, setTargetX] = useState<number>(0);
   const [xStart, setXStart] = useState<number>(0);
   
@@ -37,7 +53,7 @@ export const CardPackAnimation = ({ winningCard, onAnimationComplete }: CardPack
           images.forEach((img: any) => {
             imageMap[img.card_name] = img.image_url;
           });
-          setAvailableImages(imageMap);
+          setAvailableImages(prev => ({ ...prev, ...imageMap }));
         }
       } catch (error) {
         console.error('Failed to load card images:', error);
@@ -179,7 +195,7 @@ export const CardPackAnimation = ({ winningCard, onAnimationComplete }: CardPack
                       {/* Card Image */}
                       <div className="w-full h-16 mb-1 overflow-hidden rounded">
                         <img 
-                          src={card.image || '/placeholder.svg'} 
+                          src={card.image ?? availableImages[card.name] ?? '/placeholder.svg'} 
                           alt={card.name}
                           className="w-full h-full object-cover"
                           loading="eager"
