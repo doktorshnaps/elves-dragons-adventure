@@ -19,7 +19,7 @@ export const CardPackAnimation = ({ winningCard, onAnimationComplete }: CardPack
     const types: ('character' | 'pet')[] = ['character', 'pet'];
     const factions = ['Каледор', 'Сильванести', 'Фаэлин', 'Элленар', 'Тэлэрион', 'Аэлантир', 'Лиорас'];
     
-    for (let i = 0; i < 50; i++) {
+    for (let i = 0; i < 40; i++) {
       dummyCards.push({
         id: `dummy-${i}`,
         name: `Карта ${i + 1}`,
@@ -30,6 +30,7 @@ export const CardPackAnimation = ({ winningCard, onAnimationComplete }: CardPack
         magic: Math.floor(Math.random() * 50) + 5,
         rarity: (Math.floor(Math.random() * 8) + 1) as any,
         faction: factions[Math.floor(Math.random() * factions.length)] as any,
+        image: '/placeholder.svg', // Заглушка для фейковых карт
       });
     }
     
@@ -37,8 +38,9 @@ export const CardPackAnimation = ({ winningCard, onAnimationComplete }: CardPack
   };
 
   const dummyCards = generateDummyCards();
-  // Insert winning card at position 25 (middle)
-  const allCards = [...dummyCards.slice(0, 25), winningCard, ...dummyCards.slice(25)];
+  // Insert winning card at position exactly in the center for precise targeting
+  const winningCardIndex = 20; // Позиция выигрышной карты
+  const allCards = [...dummyCards.slice(0, winningCardIndex), winningCard, ...dummyCards.slice(winningCardIndex)];
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -84,7 +86,7 @@ export const CardPackAnimation = ({ winningCard, onAnimationComplete }: CardPack
               className="flex gap-4"
               initial={{ x: '100vw' }}
               animate={{ 
-                x: isAnimating ? ['-200vw', '-50vw'] : '-50vw'
+                x: isAnimating ? ['-200vw', `calc(-50vw - ${winningCardIndex * 144}px)`] : `calc(-50vw - ${winningCardIndex * 144}px)`
               }}
               transition={{
                 duration: isAnimating ? 10 : 1,
@@ -97,14 +99,28 @@ export const CardPackAnimation = ({ winningCard, onAnimationComplete }: CardPack
                   key={`${card.id}-${index}`}
                   className="flex-shrink-0"
                   animate={{
-                    scale: index === 25 && !isAnimating ? 1.1 : 1,
+                    scale: index === winningCardIndex && !isAnimating ? 1.1 : 1,
                   }}
                   transition={{ duration: 0.5 }}
                 >
                   <Card className={`w-32 h-52 p-2 bg-gradient-to-br ${getRarityColor(card.rarity)} border-2 ${
-                    index === 25 && !isAnimating ? 'border-yellow-400 shadow-lg shadow-yellow-400/50' : 'border-gray-400'
+                    index === winningCardIndex && !isAnimating ? 'border-yellow-400 shadow-lg shadow-yellow-400/50' : 'border-gray-400'
                   }`}>
                     <div className="flex flex-col h-full justify-between text-white">
+                      {/* Card Image */}
+                      {card.image && (
+                        <div className="w-full h-16 mb-1 overflow-hidden rounded">
+                          <img 
+                            src={card.image} 
+                            alt={card.name}
+                            className="w-full h-full object-cover"
+                            onError={(e) => {
+                              e.currentTarget.src = '/placeholder.svg';
+                            }}
+                          />
+                        </div>
+                      )}
+                      
                       <div>
                         <h3 className="text-sm font-bold truncate">{card.name}</h3>
                         <p className="text-xs opacity-80">{card.type === 'character' ? 'Герой' : 'Питомец'}</p>
