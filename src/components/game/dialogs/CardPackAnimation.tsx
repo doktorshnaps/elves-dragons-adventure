@@ -57,12 +57,18 @@ export const CardPackAnimation = ({ winningCard, onAnimationComplete }: CardPack
     const availableCardNames = Object.keys(availableImages);
     
     for (let i = 0; i < 40; i++) {
-      const randomCardName = availableCardNames[Math.floor(Math.random() * availableCardNames.length)];
-      const randomImage = randomCardName ? availableImages[randomCardName] : undefined;
+      // Ensure every card gets an image by cycling through available images
+      const randomCardName = availableCardNames.length > 0 
+        ? availableCardNames[i % availableCardNames.length] 
+        : `Карта ${i + 1}`;
+      
+      const randomImage = availableCardNames.length > 0 
+        ? availableImages[randomCardName] 
+        : '/placeholder.svg';
       
       dummyCards.push({
         id: `dummy-${i}`,
-        name: randomCardName || `Карта ${i + 1}`,
+        name: randomCardName,
         type: types[Math.floor(Math.random() * types.length)],
         power: Math.floor(Math.random() * 100) + 10,
         defense: Math.floor(Math.random() * 100) + 10,
@@ -70,18 +76,19 @@ export const CardPackAnimation = ({ winningCard, onAnimationComplete }: CardPack
         magic: Math.floor(Math.random() * 50) + 5,
         rarity: (Math.floor(Math.random() * 8) + 1) as any,
         faction: factions[Math.floor(Math.random() * factions.length)] as any,
-        image: randomImage, // Используем изображения из БД
+        image: randomImage, // Все карты теперь имеют изображения
       });
     }
     
     return dummyCards;
   };
 
-  const dummyCards = generateDummyCards();
+  // Generate cards only when images are loaded
+  const dummyCards = imagesReady ? generateDummyCards() : [];
   
   // Simplified positioning - place winning card at fixed position in array
   const winningCardIndex = 20; // Фиксированная позиция в середине
-  const allCards = [...dummyCards.slice(0, winningCardIndex), winningCard, ...dummyCards.slice(winningCardIndex)];
+  const allCards = dummyCards.length > 0 ? [...dummyCards.slice(0, winningCardIndex), winningCard, ...dummyCards.slice(winningCardIndex)] : [];
 
   // Simple calculation for card positioning
   const cardWidth = 128; // w-32
@@ -172,7 +179,7 @@ export const CardPackAnimation = ({ winningCard, onAnimationComplete }: CardPack
                       {/* Card Image */}
                       <div className="w-full h-16 mb-1 overflow-hidden rounded">
                         <img 
-                          src={card.image ?? availableImages[card.name] ?? '/placeholder.svg'} 
+                          src={card.image || '/placeholder.svg'} 
                           alt={card.name}
                           className="w-full h-full object-cover"
                           loading="eager"
