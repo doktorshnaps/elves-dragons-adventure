@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Card as CardType } from "@/types/cards";
 import { CardDisplay } from "../CardDisplay";
 import { Sparkles, Star } from "lucide-react";
+import { CardPackAnimation } from "./CardPackAnimation";
 
 interface CardRevealModalProps {
   isOpen: boolean;
@@ -28,14 +29,20 @@ export const CardRevealModal = ({
   totalCards = 1 
 }: CardRevealModalProps) => {
   const [showCard, setShowCard] = useState(false);
+  const [showAnimation, setShowAnimation] = useState(false);
 
   useEffect(() => {
-    if (revealedCard) {
+    if (revealedCard && isOpen) {
       setShowCard(false);
-      const timer = setTimeout(() => setShowCard(true), 500);
-      return () => clearTimeout(timer);
+      setShowAnimation(true);
     }
-  }, [revealedCard]);
+  }, [revealedCard, isOpen]);
+
+  const handleAnimationComplete = () => {
+    setShowAnimation(false);
+    const timer = setTimeout(() => setShowCard(true), 500);
+    return () => clearTimeout(timer);
+  };
 
   const handleOpen = () => {
     setTimeout(() => setShowCard(true), 500);
@@ -47,6 +54,11 @@ export const CardRevealModal = ({
   };
 
   if (!revealedCard) return null;
+
+  // Show animation first
+  if (showAnimation) {
+    return <CardPackAnimation winningCard={revealedCard} onAnimationComplete={handleAnimationComplete} />;
+  }
 
   return (
     <Dialog 
