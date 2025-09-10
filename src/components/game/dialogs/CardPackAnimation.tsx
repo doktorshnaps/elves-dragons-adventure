@@ -19,16 +19,25 @@ export const CardPackAnimation = ({ winningCard, onAnimationComplete }: CardPack
   // Load available images from database
   useEffect(() => {
     const loadImages = async () => {
-      const { data: images } = await supabase
-        .from<any>('card_pack_images')
-        .select('card_name, image_url, rarity, card_type');
-      
-      if (images) {
-        const imageMap: {[key: string]: string} = {};
-        images.forEach(img => {
-          imageMap[img.card_name] = img.image_url;
-        });
-        setAvailableImages(imageMap);
+      try {
+        const { data: images, error } = await supabase
+          .from('card_pack_images')
+          .select('card_name, image_url, rarity, card_type');
+        
+        if (error) {
+          console.error('Error loading card images:', error);
+          return;
+        }
+        
+        if (images) {
+          const imageMap: {[key: string]: string} = {};
+          images.forEach((img: any) => {
+            imageMap[img.card_name] = img.image_url;
+          });
+          setAvailableImages(imageMap);
+        }
+      } catch (error) {
+        console.error('Failed to load card images:', error);
       }
     };
     
@@ -74,30 +83,15 @@ export const CardPackAnimation = ({ winningCard, onAnimationComplete }: CardPack
   // Create cards array with winning card at calculated center position
   const allCards = [...dummyCards.slice(0, winningCardIndex), winningCard, ...dummyCards.slice(winningCardIndex)];
 
-  // Compute exact translateX so the indicator aligns with the winning card center
-  const [targetX, setTargetX] = useState(0);
-  const winningCardRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    const measure = () => {
-      const containerEl = containerRef.current;
-      const cardEl = winningCardRef.current;
-      if (!containerEl || !cardEl) return;
-      const containerRect = containerEl.getBoundingClientRect();
-      const cardRect = cardEl.getBoundingClientRect();
-      const indicatorX = containerRect.left + containerRect.width / 2;
-      const winningCenter = cardRect.left + cardRect.width / 2;
-      setTargetX(indicatorX - winningCenter);
-    };
-
-    // Measure after DOM paints
-    const id = requestAnimationFrame(measure);
-    window.addEventListener('resize', measure);
-    return () => {
-      cancelAnimationFrame(id);
-      window.removeEventListener('resize', measure);
-    };
-  }, [availableImages, winningCard.id]);
+  // Calculate exact position to center winning card under the indicator
+  const cardWidth = 128; // w-32 = 128px
+  const cardGap = 16; // gap-4 = 16px
+  const containerWidth = typeof window !== 'undefined' ? window.innerWidth : 1024;
+  const centerX = containerWidth / 2;
+  
+  // Calculate position so winning card center aligns with indicator
+  const winningCardCenter = winningCardIndex * (cardWidth + cardGap) + cardWidth / 2;
+  const targetX = centerX - winningCardCenter;
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -141,19 +135,19 @@ export const CardPackAnimation = ({ winningCard, onAnimationComplete }: CardPack
           >
             <motion.div
               className="flex gap-4"
-              initial={{ x: 0 }}
-              animate={{ x: isAnimating ? [0, targetX] : targetX }}
+              initial={{ x: '100vw' }}
+              animate={{ 
+                x: isAnimating ? ['-100vw', targetX] : targetX
+              }}
               transition={{
-                duration: isAnimating ? 10 : 0.8,
+                duration: isAnimating ? 10 : 1,
                 ease: isAnimating ? "easeOut" : "easeInOut",
-                times: isAnimating ? [0, 1] : undefined
               }}
             >
               {allCards.map((card, index) => (
                 <motion.div
                   key={`${card.id}-${index}`}
                   className="flex-shrink-0"
-                  ref={index === winningCardIndex ? winningCardRef : undefined}
                   animate={{
                     scale: index === winningCardIndex && !isAnimating ? 1.1 : 1,
                   }}
