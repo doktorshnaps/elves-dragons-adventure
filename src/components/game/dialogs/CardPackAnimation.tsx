@@ -3,6 +3,7 @@ import { Card as CardType } from "@/types/cards";
 import { Card } from "@/components/ui/card";
 import { Star } from "lucide-react";
 import { motion } from "framer-motion";
+import { supabase } from "@/integrations/supabase/client";
 
 interface CardPackAnimationProps {
   winningCard: CardType;
@@ -11,18 +12,44 @@ interface CardPackAnimationProps {
 
 export const CardPackAnimation = ({ winningCard, onAnimationComplete }: CardPackAnimationProps) => {
   const [isAnimating, setIsAnimating] = useState(true);
+  const [availableImages, setAvailableImages] = useState<{[key: string]: string}>({});
   const containerRef = useRef<HTMLDivElement>(null);
   
-  // Generate dummy cards for animation
+  // Load available images from database
+  useEffect(() => {
+    const loadImages = async () => {
+      const { data: images } = await supabase
+        .from('card_pack_images')
+        .select('card_name, image_url, rarity, card_type');
+      
+      if (images) {
+        const imageMap: {[key: string]: string} = {};
+        images.forEach(img => {
+          imageMap[img.card_name] = img.image_url;
+        });
+        setAvailableImages(imageMap);
+      }
+    };
+    
+    loadImages();
+  }, []);
+  
+  // Generate dummy cards for animation using images from DB
   const generateDummyCards = (): CardType[] => {
     const dummyCards: CardType[] = [];
     const types: ('character' | 'pet')[] = ['character', 'pet'];
     const factions = ['Каледор', 'Сильванести', 'Фаэлин', 'Элленар', 'Тэлэрион', 'Аэлантир', 'Лиорас'];
     
+    // Get available card names from loaded images
+    const availableCardNames = Object.keys(availableImages);
+    
     for (let i = 0; i < 40; i++) {
+      const randomCardName = availableCardNames[Math.floor(Math.random() * availableCardNames.length)];
+      const randomImage = randomCardName ? availableImages[randomCardName] : undefined;
+      
       dummyCards.push({
         id: `dummy-${i}`,
-        name: `Карта ${i + 1}`,
+        name: randomCardName || `Карта ${i + 1}`,
         type: types[Math.floor(Math.random() * types.length)],
         power: Math.floor(Math.random() * 100) + 10,
         defense: Math.floor(Math.random() * 100) + 10,
@@ -30,7 +57,7 @@ export const CardPackAnimation = ({ winningCard, onAnimationComplete }: CardPack
         magic: Math.floor(Math.random() * 50) + 5,
         rarity: (Math.floor(Math.random() * 8) + 1) as any,
         faction: factions[Math.floor(Math.random() * factions.length)] as any,
-        image: undefined, // Убираем изображения у фейковых карт
+        image: randomImage, // Используем изображения из БД
       });
     }
     
@@ -38,8 +65,12 @@ export const CardPackAnimation = ({ winningCard, onAnimationComplete }: CardPack
   };
 
   const dummyCards = generateDummyCards();
-  // Insert winning card at position exactly in the center for precise targeting
-  const winningCardIndex = 20; // Позиция выигрышной карты в массиве
+  
+  // Calculate exact position for winning card in the center
+  const totalCards = 41; // 40 dummy + 1 winning
+  const winningCardIndex = Math.floor(totalCards / 2); // Точно в центре
+  
+  // Create cards array with winning card at calculated center position
   const allCards = [...dummyCards.slice(0, winningCardIndex), winningCard, ...dummyCards.slice(winningCardIndex)];
 
   useEffect(() => {
@@ -86,7 +117,9 @@ export const CardPackAnimation = ({ winningCard, onAnimationComplete }: CardPack
               className="flex gap-4"
               initial={{ x: '100vw' }}
               animate={{ 
-                x: isAnimating ? ['-200vw', `calc(-50vw - ${winningCardIndex * 136}px)`] : `calc(-50vw - ${winningCardIndex * 136}px)`
+                x: isAnimating 
+                  ? ['-200vw', `calc(-50vw - ${winningCardIndex * 144}px + 72px)`] 
+                  : `calc(-50vw - ${winningCardIndex * 144}px + 72px)`
               }}
               transition={{
                 duration: isAnimating ? 10 : 1,
