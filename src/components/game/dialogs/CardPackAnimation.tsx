@@ -148,7 +148,7 @@ export const CardPackAnimation = ({ winningCard, onAnimationComplete }: CardPack
               className="flex gap-4"
               initial={{ x: '100vw' }}
               animate={{ 
-                x: isAnimating ? ['100vw', targetX - 600, targetX] : targetX
+                x: isAnimating ? ['-300vw', targetX - 600, targetX] : targetX
               }}
               transition={{
                 duration: animationDuration,
