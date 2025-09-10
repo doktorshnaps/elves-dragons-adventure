@@ -15,6 +15,9 @@ export const CardPackAnimation = ({ winningCard, onAnimationComplete }: CardPack
   const [availableImages, setAvailableImages] = useState<{[key: string]: string}>({});
   const imagesReady = Object.keys(availableImages).length > 0;
   const containerRef = useRef<HTMLDivElement>(null);
+  const animationDuration = 2.5; // seconds
+  const [targetX, setTargetX] = useState<number>(0);
+  const [xStart, setXStart] = useState<number>(0);
   
   // Load available images from database
   useEffect(() => {
@@ -84,23 +87,32 @@ export const CardPackAnimation = ({ winningCard, onAnimationComplete }: CardPack
   const cardWidth = 128; // w-32
   const cardGap = 16; // gap-4
   
-  // Calculate exact position to center winning card under indicator
-  // Total offset needed: position of winning card from start of container
-  const totalOffsetToWinningCard = winningCardIndex * (cardWidth + cardGap);
-  
-  // Final position: move container so winning card aligns with center indicator
-  const finalPosition = -totalOffsetToWinningCard + (cardWidth / 2);
+  // Measure container width and compute exact targetX in pixels
+  useEffect(() => {
+    const measure = () => {
+      const el = containerRef.current;
+      if (!el) return;
+      const rect = el.getBoundingClientRect();
+      const centerX = rect.width / 2;
+      const winningCenter = winningCardIndex * (cardWidth + cardGap) + cardWidth / 2;
+      setTargetX(centerX - winningCenter);
+      setXStart(rect.width);
+    };
+    measure();
+    window.addEventListener('resize', measure);
+    return () => window.removeEventListener('resize', measure);
+  }, [containerRef, winningCardIndex]);
 
   useEffect(() => {
     const timer = setTimeout(() => {
       setIsAnimating(false);
       setTimeout(() => {
         onAnimationComplete();
-      }, 1000);
-    }, 8000); // Сократил время анимации до 8 секунд
+      }, 300);
+    }, animationDuration * 1000);
 
     return () => clearTimeout(timer);
-  }, [onAnimationComplete]);
+  }, [onAnimationComplete, animationDuration]);
 
   const getRarityColor = (rarity: number) => {
     const colors = [
@@ -136,11 +148,12 @@ export const CardPackAnimation = ({ winningCard, onAnimationComplete }: CardPack
               className="flex gap-4"
               initial={{ x: '100vw' }}
               animate={{ 
-                x: isAnimating ? ['100vw', `calc(50% + ${finalPosition}px)`] : `calc(50% + ${finalPosition}px)`
+                x: isAnimating ? [xStart, targetX - 600, targetX] : targetX
               }}
               transition={{
-                duration: isAnimating ? 8 : 1,
-                ease: isAnimating ? "easeOut" : "easeInOut",
+                duration: animationDuration,
+                ease: ['linear', 'easeOut'],
+                times: [0, 0.7, 1]
               }}
             >
               {allCards.map((card, index) => (
@@ -225,7 +238,7 @@ export const CardPackAnimation = ({ winningCard, onAnimationComplete }: CardPack
                 className="bg-gradient-to-r from-game-primary to-game-accent h-2 rounded-full"
                 initial={{ width: '0%' }}
                 animate={{ width: '100%' }}
-                transition={{ duration: 10, ease: "linear" }}
+                transition={{ duration: animationDuration, ease: "linear" }}
               />
             </div>
           )}
