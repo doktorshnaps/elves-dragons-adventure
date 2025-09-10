@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { X } from "lucide-react";
 import { MarketplaceListing } from "./types";
 import { getItemDisplayInfo } from "./utils";
-import { useAuth } from "@/hooks/useAuth";
+import { useWallet } from "@/hooks/useWallet";
 
 interface MarketplaceListingsProps {
   listings: MarketplaceListing[];
@@ -24,7 +24,7 @@ export const MarketplaceListings = ({
   selectedIds,
   onToggleSelect,
 }: MarketplaceListingsProps) => {
-  const { user } = useAuth();
+  const { accountId } = useWallet();
   if (listings.length === 0) {
     return (
       <div className="text-center py-8 text-gray-300 backdrop-blur-sm bg-black/30 rounded-lg">
@@ -37,7 +37,7 @@ export const MarketplaceListings = ({
     <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
       {listings.map((listing) => {
         const displayInfo = getItemDisplayInfo(listing.item);
-        const isOwnListing = listing.sellerId === user?.id;
+        const isOwnListing = listing.sellerId === accountId;
         const isCard = "rarity" in listing.item;
 
         return (

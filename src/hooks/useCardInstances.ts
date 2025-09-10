@@ -1,12 +1,13 @@
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { useAuth } from '@/hooks/useAuth';
+import { useWallet } from '@/hooks/useWallet';
 import { useToast } from '@/hooks/use-toast';
 import { Card } from '@/types/cards';
 
 interface CardInstance {
   id: string;
-  user_id: string;
+  user_id?: string | null;
+  wallet_address?: string;
   card_template_id: string;
   card_type: 'hero' | 'dragon';
   current_health: number;
@@ -18,21 +19,21 @@ interface CardInstance {
 }
 
 export const useCardInstances = () => {
-  const { user } = useAuth();
+  const { accountId, isConnected } = useWallet();
   const { toast } = useToast();
   const [cardInstances, setCardInstances] = useState<CardInstance[]>([]);
   const [loading, setLoading] = useState(true);
 
   // Загрузка всех экземпляров карт пользователя
   const loadCardInstances = useCallback(async () => {
-    if (!user) return;
+    if (!isConnected || !accountId) return;
     
     try {
       setLoading(true);
       const { data, error } = await supabase
         .from('card_instances')
         .select('*')
-        .eq('user_id', user.id)
+        .eq('wallet_address', accountId)
         .order('created_at', { ascending: false });
 
       if (error) throw error;
@@ -47,15 +48,16 @@ export const useCardInstances = () => {
     } finally {
       setLoading(false);
     }
-  }, [user, toast]);
+  }, [accountId, isConnected, toast]);
 
   // Создание нового экземпляра карты
   const createCardInstance = useCallback(async (card: Card, cardType: 'hero' | 'dragon') => {
-    if (!user) return null;
+    if (!isConnected || !accountId) return null;
 
     try {
       const instanceData = {
-        user_id: user.id,
+        wallet_address: accountId,
+        user_id: null,
         card_template_id: card.id,
         card_type: cardType,
         current_health: card.health,
@@ -83,11 +85,11 @@ export const useCardInstances = () => {
       });
       return null;
     }
-  }, [user, toast]);
+  }, [accountId, isConnected, toast]);
 
   // Обновление здоровья экземпляра карты
   const updateCardHealth = useCallback(async (instanceId: string, currentHealth: number, lastHealTime?: string) => {
-    if (!user) return false;
+    if (!isConnected || !accountId) return false;
 
     try {
       const updateData: any = { current_health: Math.max(0, currentHealth) };
@@ -99,7 +101,7 @@ export const useCardInstances = () => {
         .from('card_instances')
         .update(updateData)
         .eq('id', instanceId)
-        .eq('user_id', user.id);
+        .eq('wallet_address', accountId);
 
       if (error) throw error;
 
@@ -127,7 +129,7 @@ export const useCardInstances = () => {
       });
       return false;
     }
-  }, [user, toast]);
+  }, [accountId, isConnected, toast]);
 
   // Применение урона к экземпляру карты
   const applyDamageToInstance = useCallback(async (instanceId: string, damage: number) => {
@@ -140,14 +142,14 @@ export const useCardInstances = () => {
 
   // Удаление экземпляра карты
   const deleteCardInstance = useCallback(async (instanceId: string) => {
-    if (!user) return false;
+    if (!isConnected || !accountId) return false;
 
     try {
       const { error } = await supabase
         .from('card_instances')
         .delete()
         .eq('id', instanceId)
-        .eq('user_id', user.id);
+        .eq('wallet_address', accountId);
 
       if (error) throw error;
 
@@ -162,7 +164,7 @@ export const useCardInstances = () => {
       });
       return false;
     }
-  }, [user, toast]);
+  }, [accountId, isConnected, toast]);
 
   // Загрузка при инициализации
   useEffect(() => {
@@ -171,7 +173,7 @@ export const useCardInstances = () => {
 
   // Подписка на обновления в реальном времени
   useEffect(() => {
-    if (!user) return;
+    if (!isConnected || !accountId) return;
 
     const channel = supabase
       .channel('card_instances_changes')
@@ -181,7 +183,7 @@ export const useCardInstances = () => {
           event: '*',
           schema: 'public',
           table: 'card_instances',
-          filter: `user_id=eq.${user.id}`
+          filter: `wallet_address=eq.${accountId}`
         },
         (payload) => {
           console.log('Card instances realtime update:', payload);
@@ -193,7 +195,7 @@ export const useCardInstances = () => {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [user, loadCardInstances]);
+  }, [accountId, isConnected, loadCardInstances]);
 
   return {
     cardInstances,

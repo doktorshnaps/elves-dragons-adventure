@@ -1,14 +1,14 @@
 import { useEffect } from 'react';
 import { useGameStore } from '@/stores/gameStore';
 import { useGameData } from '@/hooks/useGameData';
-import { useAuth } from '@/hooks/useAuth';
+import { useWallet } from '@/hooks/useWallet';
 import { useCardInstanceSync } from '@/hooks/useCardInstanceSync';
 
 /**
  * Синхронизирует локальное состояние Zustand с Supabase
  */
 export const useGameSync = () => {
-  const { user } = useAuth();
+  const { accountId, isConnected } = useWallet();
   const { gameData, updateGameData, loading } = useGameData();
   const gameStore = useGameStore();
   
@@ -17,7 +17,7 @@ export const useGameSync = () => {
 
   // Загружаем данные из Supabase в локальное состояние при инициализации
   useEffect(() => {
-    if (!loading && user && gameData) {
+    if (!loading && isConnected && accountId && gameData) {
       gameStore.setBalance(gameData.balance);
       gameStore.setCards(gameData.cards);
       gameStore.setInventory(gameData.inventory || []);
@@ -27,11 +27,11 @@ export const useGameSync = () => {
         gameStore.setBattleState(gameData.battleState);
       }
     }
-  }, [loading, user, gameData]);
+  }, [loading, isConnected, accountId, gameData]);
 
   // Синхронизируем изменения локального состояния с Supabase
   useEffect(() => {
-    if (!user || loading) return;
+    if (!isConnected || !accountId || loading) return;
 
     const syncToSupabase = async () => {
       const state = useGameStore.getState();

@@ -3,25 +3,25 @@ import { useToast } from "@/hooks/use-toast";
 import { generatePack } from "@/utils/cardUtils";
 import { Card } from "@/types/cards";
 import { supabase } from "@/integrations/supabase/client";
-import { useAuth } from "@/hooks/useAuth";
+import { useWallet } from "@/hooks/useWallet";
 
 export const useGameInitialization = (setCards: (cards: Card[]) => void) => {
   const { toast } = useToast();
-  const { user } = useAuth();
+  const { accountId, isConnected } = useWallet();
   const [showFirstTimePack, setShowFirstTimePack] = useState(false);
 
   useEffect(() => {
-    if (!user) return;
+    if (!isConnected || !accountId) return;
 
     const initializeGame = async () => {
       try {
-        console.log('Initializing game for user:', user.id);
+        console.log('Initializing game for wallet:', accountId);
         
-        // Проверяем данные игры в Supabase
+        // Проверяем данные игры в Supabase по кошельку
         const { data: gameData, error } = await supabase
           .from('game_data')
           .select('*')
-          .eq('user_id', user.id)
+          .eq('wallet_address', accountId)
           .maybeSingle();
 
         if (error) {
@@ -38,7 +38,8 @@ export const useGameInitialization = (setCards: (cards: Card[]) => void) => {
           const { error: insertError } = await supabase
             .from('game_data')
             .insert({
-              user_id: user.id,
+              wallet_address: accountId,
+              user_id: null,
               cards: initialCards as any,
               balance: 100,
               initialized: true
@@ -89,7 +90,7 @@ export const useGameInitialization = (setCards: (cards: Card[]) => void) => {
     };
 
     initializeGame();
-  }, [user, setCards, toast]);
+  }, [accountId, isConnected, setCards, toast]);
 
   return { showFirstTimePack, setShowFirstTimePack };
 };
