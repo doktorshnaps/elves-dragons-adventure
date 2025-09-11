@@ -173,11 +173,17 @@ export const calculateTeamStats = (cards: Card[]) => {
   const maxHealth = baseStats.health + petsBonus.health;
   const currentHealth = baseStats.current + petsBonus.current;
 
+  // Расчет маны для команды (максимальная мана = общая магия)
+  const totalMagic = heroes.reduce((acc, hero) => acc + (hero.magic || 0), 0) +
+                     pets.reduce((acc, pet) => isPetActive(pet, heroes) ? acc + (pet.magic || 0) : acc, 0);
+
   return {
     power: baseStats.power + petsBonus.power,
     defense: baseStats.defense + petsBonus.defense,
     health: currentHealth,
-    maxHealth
+    maxHealth,
+    mana: totalMagic,
+    maxMana: totalMagic
   };
 };
 

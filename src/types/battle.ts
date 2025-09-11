@@ -5,6 +5,8 @@ export interface PlayerStats {
   maxHealth: number;
   power: number;
   defense: number;
+  mana?: number;
+  maxMana?: number;
 }
 
 export interface StatusEffect {

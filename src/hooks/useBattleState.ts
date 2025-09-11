@@ -3,6 +3,7 @@ import { useInventoryState } from './useInventoryState';
 import { useBalanceState } from './useBalanceState';
 import { useOpponentsState } from './useOpponentsState';
 import { useCombat } from './useCombat';
+import { useAbilities } from './useAbilities';
 import { useToast } from './use-toast';
 import { useEffect } from 'react';
 import { usePlayerHealthCheck } from './battle/usePlayerHealthCheck';
@@ -10,10 +11,15 @@ import { useDungeonLevelManager } from './battle/useDungeonLevelManager';
 import { useBattleStateManager } from './battle/useBattleStateManager';
 import { useInitialBattleState } from './battle/useInitialBattleState';
 import { useItemHandling } from './battle/useItemHandling';
+import { useGameStore } from '@/stores/gameStore';
 
 export const useBattleState = (initialLevel: number = 1) => {
   const { toast } = useToast();
   const initialState = useInitialBattleState(initialLevel);
+  const { cards, selectedTeam } = useGameStore();
+  
+  // Получаем карты из выбранной команды
+  const teamCards = selectedTeam.map(pair => pair.hero).filter(Boolean);
   
   const { playerStats, setPlayerStats } = usePlayerState(initialState.playerStats);
   const { inventory, updateInventory } = useInventoryState();
@@ -32,6 +38,14 @@ export const useBattleState = (initialLevel: number = 1) => {
     opponents,
     setOpponents,
     handleOpponentDefeat
+  );
+
+  const abilitySystem = useAbilities(
+    playerStats,
+    setPlayerStats,
+    opponents,
+    setOpponents,
+    teamCards
   );
 
   const { handleNextLevel } = useDungeonLevelManager(playerStats, initialState, setOpponents);
@@ -64,6 +78,8 @@ export const useBattleState = (initialLevel: number = 1) => {
     handleOpponentDefeat,
     updateBalance,
     updateInventory,
-    handleNextLevel
+    handleNextLevel,
+    // Система способностей
+    ...abilitySystem
   };
 };

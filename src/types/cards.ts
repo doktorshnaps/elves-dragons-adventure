@@ -33,6 +33,8 @@ export interface Card {
   nftContractId?: string;
   nftTokenId?: string;
   description?: string;
+  mana?: number;
+  maxMana?: number;
 }
 
 export interface CardPack {
@@ -45,4 +47,6 @@ export interface TeamStats {
   defense: number;
   health: number;
   maxHealth: number;
+  mana?: number;
+  maxMana?: number;
 }
