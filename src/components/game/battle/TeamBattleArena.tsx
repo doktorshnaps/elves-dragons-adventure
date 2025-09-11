@@ -3,19 +3,22 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
-import { Sword, Shield, Heart, ArrowLeft } from 'lucide-react';
+import { Sword, Shield, Heart, ArrowLeft, Zap } from 'lucide-react';
 import { TeamPair } from '@/types/teamBattle';
 import { Opponent } from '@/types/battle';
 import { useGameStore } from '@/stores/gameStore';
 import { getXPProgress } from '@/utils/accountLeveling';
 import { useNavigate } from 'react-router-dom';
 import { TeamHealthBars } from './TeamHealthBars';
+import { HERO_ABILITIES } from '@/types/abilities';
+import type { Ability } from '@/types/abilities';
 interface TeamBattleArenaProps {
   playerPairs: TeamPair[];
   opponents: Opponent[];
   attackOrder: string[];
   isPlayerTurn: boolean;
   onAttack: (pairId: string, targetId: number) => void;
+  onAbilityUse?: (pairId: string, abilityId: string, targetId: number) => void;
   onEnemyAttack: () => void;
   onCounterAttack: (attackerId: string | number, targetId: string | number, isEnemyAttacker: boolean) => void;
   level: number;
@@ -26,6 +29,7 @@ export const TeamBattleArena: React.FC<TeamBattleArenaProps> = ({
   attackOrder,
   isPlayerTurn,
   onAttack,
+  onAbilityUse,
   onEnemyAttack,
   onCounterAttack,
   level
@@ -43,6 +47,9 @@ export const TeamBattleArena: React.FC<TeamBattleArenaProps> = ({
   const [counterAttackingPair, setCounterAttackingPair] = React.useState<string | null>(null);
   const [counterAttackedTarget, setCounterAttackedTarget] = React.useState<number | null>(null);
   const [autoBattle, setAutoBattle] = useState(false);
+  const [selectedAbility, setSelectedAbility] = useState<Ability | null>(null);
+  const [showAbilityMenu, setShowAbilityMenu] = useState(false);
+  
   const alivePairs = playerPairs.filter(pair => pair.health > 0);
   const aliveOpponents = opponents.filter(opp => opp.health > 0);
   const handleAttack = () => {
@@ -183,8 +190,91 @@ export const TeamBattleArena: React.FC<TeamBattleArenaProps> = ({
       return () => clearTimeout(timer);
     }
    }, [autoBattle, isPlayerTurn, alivePairs.length, aliveOpponents.length]);
-  return <div className="min-h-screen p-4">
+  return (
+    <div className="min-h-screen p-4">
+      {/* Меню способностей */}
+      {showAbilityMenu && selectedPair && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <Card className="bg-card border-primary shadow-lg max-w-md w-full">
+            <CardHeader>
+              <CardTitle className="text-primary">Выберите способность</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-2">
+              {(() => {
+                const pair = playerPairs.find(p => p.id === selectedPair);
+                const heroAbilities = HERO_ABILITIES[pair?.hero.name] || [];
+                const currentMana = pair?.mana || 0;
+                
+                return (
+                  <>
+                    {heroAbilities.map((ability) => {
+                      const canUse = currentMana >= ability.manaCost;
+                      
+                      return (
+                        <Button
+                          key={ability.id}
+                          variant={canUse ? "default" : "secondary"}
+                          className="w-full justify-start text-left"
+                          disabled={!canUse}
+                          onClick={() => {
+                            setSelectedAbility(ability);
+                            setShowAbilityMenu(false);
+                          }}
+                        >
+                          <div className="flex flex-col items-start">
+                            <div className="font-medium">{ability.name}</div>
+                            <div className="text-xs opacity-70">
+                              {ability.description} (Мана: {ability.manaCost})
+                            </div>
+                          </div>
+                        </Button>
+                      );
+                    })}
+                    
+                    <Button 
+                      variant="outline" 
+                      className="w-full mt-4"
+                      onClick={() => {
+                        setShowAbilityMenu(false);
+                        setSelectedPair(null);
+                      }}
+                    >
+                      Отмена
+                    </Button>
+                  </>
+                );
+              })()}
+            </CardContent>
+          </Card>
+        </div>
+      )}
+
       <div className="max-w-6xl mx-auto space-y-6">
+        {/* Индикатор выбранной способности */}
+        {selectedAbility && (
+          <Card className="bg-blue-500/20 border-blue-400">
+            <CardContent className="p-4">
+              <div className="text-blue-400 font-medium">
+                Выбрана способность: {selectedAbility.name}
+              </div>
+              <div className="text-sm text-muted-foreground">
+                {selectedAbility.description}. Выберите цель для применения.
+              </div>
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={() => {
+                  setSelectedAbility(null);
+                  setSelectedPair(null);
+                }}
+                className="mt-2"
+              >
+                Отмена
+              </Button>
+            </CardContent>
+          </Card>
+        )}
+
         {/* Header */}
         <Card className="bg-card/50 backdrop-blur-sm border-primary/20">
           <CardHeader className="relative">
@@ -245,55 +335,137 @@ export const TeamBattleArena: React.FC<TeamBattleArenaProps> = ({
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              {playerPairs.map((pair, index) => <div key={pair.id} className={`p-4 rounded-lg border-2 transition-all cursor-pointer ${pair.health <= 0 ? 'bg-muted/50 border-muted opacity-50' : attackingPair === pair.id ? 'bg-red-500/30 border-red-500 animate-pulse scale-105 shadow-lg shadow-red-500/50' : counterAttackingPair === pair.id ? 'bg-yellow-500/40 border-yellow-500 animate-bounce scale-110 shadow-lg shadow-yellow-500/60' : defendingPair === pair.id ? 'bg-blue-500/30 border-blue-500 animate-pulse shadow-lg shadow-blue-500/50' : selectedPair === pair.id ? 'bg-primary/20 border-primary' : currentAttacker?.id === pair.id && isPlayerTurn ? 'bg-accent/20 border-accent' : 'bg-card border-border hover:border-primary/50'}`} onClick={() => pair.health > 0 && isPlayerTurn && setSelectedPair(pair.id)}>
-                   <div className="flex items-center gap-3 mb-2">
-                     <div className="flex gap-2">
-                       {/* Hero Image */}
-                       <div className="w-12 h-12 rounded-lg overflow-hidden border border-primary/30 bg-primary/10 flex-shrink-0">
-                         {pair.hero.image ? <img src={pair.hero.image} alt={pair.hero.name} className="w-full h-full object-cover" /> : <div className="w-full h-full flex items-center justify-center text-primary">
-                             <span className="text-lg">⚔️</span>
-                           </div>}
+               {playerPairs.map((pair, index) => {
+                 // Получаем способности для героя
+                 const heroAbilities = HERO_ABILITIES[pair.hero.name] || [];
+                 const hasAbilities = heroAbilities.length > 0;
+                 const currentMana = pair.mana || 0;
+                 const maxMana = pair.maxMana || pair.hero.magic || 0;
+                 
+                 return (
+                   <div 
+                     key={pair.id} 
+                     className={`p-4 rounded-lg border-2 transition-all cursor-pointer ${
+                       pair.health <= 0 
+                         ? 'bg-muted/50 border-muted opacity-50' 
+                         : attackingPair === pair.id 
+                           ? 'bg-red-500/30 border-red-500 animate-pulse scale-105 shadow-lg shadow-red-500/50' 
+                           : counterAttackingPair === pair.id 
+                             ? 'bg-yellow-500/40 border-yellow-500 animate-bounce scale-110 shadow-lg shadow-yellow-500/60' 
+                             : defendingPair === pair.id 
+                               ? 'bg-blue-500/30 border-blue-500 animate-pulse shadow-lg shadow-blue-500/50' 
+                               : selectedPair === pair.id 
+                                 ? 'bg-primary/20 border-primary' 
+                                 : currentAttacker?.id === pair.id && isPlayerTurn 
+                                   ? 'bg-accent/20 border-accent' 
+                                   : hasAbilities 
+                                     ? 'bg-card border-blue-400 hover:border-primary/50' 
+                                     : 'bg-card border-border hover:border-primary/50'
+                     }`} 
+                     onClick={() => {
+                       if (pair.health > 0 && isPlayerTurn) {
+                         if (hasAbilities && !selectedAbility) {
+                           // Показываем меню способностей
+                           setSelectedPair(pair.id);
+                           setShowAbilityMenu(true);
+                         } else {
+                           setSelectedPair(pair.id);
+                         }
+                       }
+                     }}
+                   >
+                     <div className="flex items-center gap-3 mb-2">
+                       <div className="flex gap-2">
+                         {/* Hero Image */}
+                         <div className="w-12 h-12 rounded-lg overflow-hidden border border-primary/30 bg-primary/10 flex-shrink-0">
+                           {pair.hero.image ? (
+                             <img src={pair.hero.image} alt={pair.hero.name} className="w-full h-full object-cover" />
+                           ) : (
+                             <div className="w-full h-full flex items-center justify-center text-primary">
+                               <span className="text-lg">⚔️</span>
+                             </div>
+                           )}
+                         </div>
+                         
+                         {/* Dragon Image */}
+                         {pair.dragon && (
+                           <div className="w-10 h-10 rounded-lg overflow-hidden border border-secondary/30 bg-secondary/10 flex-shrink-0">
+                             {pair.dragon.image ? (
+                               <img src={pair.dragon.image} alt={pair.dragon.name} className="w-full h-full object-cover" />
+                             ) : (
+                               <div className="w-full h-full flex items-center justify-center text-secondary">
+                                 <span className="text-sm">🐲</span>
+                               </div>
+                             )}
+                           </div>
+                         )}
                        </div>
                        
-                       {/* Dragon Image */}
-                       {pair.dragon && <div className="w-10 h-10 rounded-lg overflow-hidden border border-secondary/30 bg-secondary/10 flex-shrink-0">
-                           {pair.dragon.image ? <img src={pair.dragon.image} alt={pair.dragon.name} className="w-full h-full object-cover" /> : <div className="w-full h-full flex items-center justify-center text-secondary">
-                               <span className="text-sm">🐲</span>
-                             </div>}
-                         </div>}
+                       <div className="flex-1">
+                         <div className="flex items-center gap-2">
+                           <span className="font-semibold text-sm bg-primary/20 px-2 py-1 rounded">
+                             #{pair.attackOrder}
+                           </span>
+                           <span className="font-medium">{pair.hero.name}</span>
+                           {pair.dragon && (
+                             <span className="text-sm text-muted-foreground">
+                               + {pair.dragon.name}
+                             </span>
+                           )}
+                         </div>
+                         
+                         {/* Индикатор способностей */}
+                         {hasAbilities && (
+                           <div className="text-xs text-blue-400 mt-1">
+                             🔮 Способности: {heroAbilities.length}
+                           </div>
+                         )}
+                       </div>
+                       
+                       {currentAttacker?.id === pair.id && isPlayerTurn && (
+                         <div className="text-xs bg-accent px-2 py-1 rounded">
+                           Ходит
+                         </div>
+                       )}
                      </div>
-                     
-                     <div className="flex-1">
-                       <div className="flex items-center gap-2">
-                         <span className="font-semibold text-sm bg-primary/20 px-2 py-1 rounded">
-                           #{pair.attackOrder}
-                         </span>
-                         <span className="font-medium">{pair.hero.name}</span>
-                         {pair.dragon && <span className="text-sm text-muted-foreground">
-                             + {pair.dragon.name}
-                           </span>}
+                      
+                     <div className="space-y-2">
+                       <TeamHealthBars pair={pair} />
+                       
+                       {/* Мана-бар для героев со способностями */}
+                       {hasAbilities && maxMana > 0 && (
+                         <div className="space-y-1">
+                           <div className="flex items-center gap-2 text-xs">
+                             <Zap className="w-3 h-3 text-blue-400" />
+                             <Progress 
+                               value={(currentMana / maxMana) * 100} 
+                               className="flex-1 h-1.5"
+                             />
+                             <span className="text-blue-400">{currentMana}/{maxMana}</span>
+                           </div>
+                         </div>
+                       )}
+                      
+                       <div className="flex items-center justify-between text-xs text-muted-foreground">
+                         <div className="flex items-center gap-1">
+                           <Sword className="w-3 h-3" />
+                           {pair.power}
+                         </div>
+                         <div className="flex items-center gap-1">
+                           <Shield className="w-3 h-3" />
+                           {pair.defense}
+                         </div>
+                         {hasAbilities && (
+                           <div className="flex items-center gap-1 text-blue-400">
+                             <Zap className="w-3 h-3" />
+                             {pair.hero.magic}
+                           </div>
+                         )}
                        </div>
                      </div>
-                    {currentAttacker?.id === pair.id && isPlayerTurn && <div className="text-xs bg-accent px-2 py-1 rounded">
-                        Ходит
-                      </div>}
-                  </div>
-                   
-                   <div className="space-y-2">
-                     <TeamHealthBars pair={pair} />
-                    
-                    <div className="flex items-center justify-between text-xs text-muted-foreground">
-                      <div className="flex items-center gap-1">
-                        <Sword className="w-3 h-3" />
-                        {pair.power}
-                      </div>
-                      <div className="flex items-center gap-1">
-                        <Shield className="w-3 h-3" />
-                        {pair.defense}
-                      </div>
-                    </div>
-                  </div>
-                </div>)}
+                   </div>
+                 );
+               })}
             </CardContent>
           </Card>
 
@@ -310,23 +482,39 @@ export const TeamBattleArena: React.FC<TeamBattleArenaProps> = ({
                   {autoBattle ? 'Авто-бой ВКЛ' : 'Авто-бой ВЫКЛ'}
                 </Button>
                 
-                {!autoBattle && (
-                  <div className="flex items-center justify-center gap-4">
-                    {isPlayerTurn ? <>
-                        <Button onClick={handleAttack} disabled={!selectedPair || selectedTarget === null}>
-                          Атаковать
-                        </Button>
-                        <div className="text-sm text-muted-foreground mx-0 px-0 py-0 my-0">
-                          {!selectedPair ? 'Выберите атакующего' : selectedTarget === null ? 'Выберите цель' : 'Готов к атаке!'}
-                        </div>
-                      </> : <div className="text-center">
-                        <div className="text-sm text-muted-foreground mb-2">
-                          Противник атакует...
-                        </div>
-                        <div className="animate-spin w-6 h-6 border-2 border-destructive border-t-transparent rounded-full mx-auto"></div>
-                      </div>}
-                  </div>
-                )}
+                 {!autoBattle && (
+                   <div className="flex items-center justify-center gap-4">
+                     {isPlayerTurn ? (
+                       <>
+                         <Button 
+                           onClick={() => {
+                             if (selectedAbility && selectedPair && selectedTarget !== null && onAbilityUse) {
+                               onAbilityUse(selectedPair, selectedAbility.id, selectedTarget);
+                               setSelectedAbility(null);
+                               setSelectedPair(null);
+                               setSelectedTarget(null);
+                             } else {
+                               handleAttack();
+                             }
+                           }} 
+                           disabled={!selectedPair || selectedTarget === null}
+                         >
+                           {selectedAbility ? `Использовать ${selectedAbility.name}` : 'Атаковать'}
+                         </Button>
+                         <div className="text-sm text-muted-foreground mx-0 px-0 py-0 my-0">
+                           {!selectedPair ? 'Выберите атакующего' : selectedTarget === null ? 'Выберите цель' : selectedAbility ? 'Готов использовать способность!' : 'Готов к атаке!'}
+                         </div>
+                       </>
+                     ) : (
+                       <div className="text-center">
+                         <div className="text-sm text-muted-foreground mb-2">
+                           Противник атакует...
+                         </div>
+                         <div className="animate-spin w-6 h-6 border-2 border-destructive border-t-transparent rounded-full mx-auto"></div>
+                       </div>
+                     )}
+                   </div>
+                 )}
               </div>
             </CardContent>
           </Card>
@@ -339,14 +527,42 @@ export const TeamBattleArena: React.FC<TeamBattleArenaProps> = ({
                 Враги
               </CardTitle>
             </CardHeader>
-            <CardContent className="space-y-4">
-              {opponents.map(opponent => <div key={opponent.id} className={`p-4 rounded-lg border-2 transition-all cursor-pointer ${opponent.health <= 0 ? 'bg-muted/50 border-muted opacity-50' : attackedTarget === opponent.id ? 'bg-red-500/40 border-red-500 animate-bounce shadow-lg shadow-red-500/50 scale-110' : counterAttackedTarget === opponent.id ? 'bg-yellow-500/40 border-yellow-500 animate-pulse scale-105 shadow-lg shadow-yellow-500/60' : selectedTarget === opponent.id ? 'bg-destructive/20 border-destructive' : 'bg-card border-border hover:border-destructive/50'}`} onClick={() => opponent.health > 0 && setSelectedTarget(opponent.id)}>
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="font-medium">{opponent.name}</span>
-                    {opponent.isBoss && <span className="text-xs bg-destructive px-2 py-1 rounded text-white">
-                        БОСС
-                      </span>}
-                  </div>
+             <CardContent className="space-y-4">
+               {opponents.map(opponent => (
+                 <div 
+                   key={opponent.id} 
+                   className={`p-4 rounded-lg border-2 transition-all cursor-pointer ${
+                     opponent.health <= 0 
+                       ? 'bg-muted/50 border-muted opacity-50' 
+                       : attackedTarget === opponent.id 
+                         ? 'bg-red-500/40 border-red-500 animate-bounce shadow-lg shadow-red-500/50 scale-110' 
+                         : counterAttackedTarget === opponent.id 
+                           ? 'bg-yellow-500/40 border-yellow-500 animate-pulse scale-105 shadow-lg shadow-yellow-500/60' 
+                           : selectedTarget === opponent.id 
+                             ? 'bg-destructive/20 border-destructive' 
+                             : selectedAbility?.targetType === 'enemy' 
+                               ? 'bg-card border-red-400 hover:border-destructive/50' 
+                               : 'bg-card border-border hover:border-destructive/50'
+                   }`} 
+                   onClick={() => {
+                     if (opponent.health > 0) {
+                       setSelectedTarget(opponent.id);
+                     }
+                   }}
+                 >
+                   <div className="flex items-center justify-between mb-2">
+                     <span className="font-medium">{opponent.name}</span>
+                     {opponent.isBoss && (
+                       <span className="text-xs bg-destructive px-2 py-1 rounded text-white">
+                         БОСС
+                       </span>
+                     )}
+                     {selectedAbility?.targetType === 'enemy' && selectedTarget === opponent.id && (
+                       <span className="text-xs bg-red-500 px-2 py-1 rounded text-white">
+                         🎯 ЦЕЛЬ
+                       </span>
+                     )}
+                   </div>
                   
                   <div className="space-y-2">
                     <div className="flex items-center gap-2 text-sm">
@@ -362,11 +578,13 @@ export const TeamBattleArena: React.FC<TeamBattleArenaProps> = ({
                       </div>
                     </div>
                   </div>
-                </div>)}
-            </CardContent>
-          </Card>
-        </div>
+                 </div>
+               ))}
+             </CardContent>
+           </Card>
+         </div>
 
-      </div>
-    </div>;
-};
+       </div>
+     </div>
+   );
+ };

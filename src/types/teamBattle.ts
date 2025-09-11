@@ -1,3 +1,5 @@
+import { Ability } from './abilities';
+
 export interface TeamPair {
   id: string;
   hero: any;
@@ -7,6 +9,9 @@ export interface TeamPair {
   power: number;
   defense: number;
   attackOrder: number;
+  mana?: number;
+  maxMana?: number;
+  abilities?: Ability[];
 }
 
 export interface TeamBattleState {
@@ -19,8 +24,9 @@ export interface TeamBattleState {
 }
 
 export interface BattleAction {
-  type: 'attack' | 'defend' | 'skip';
+  type: 'attack' | 'defend' | 'skip' | 'ability';
   attackerId: string;
   targetId: number;
   damage?: number;
+  abilityId?: string;
 }
