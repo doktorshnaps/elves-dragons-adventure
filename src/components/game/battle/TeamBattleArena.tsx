@@ -271,7 +271,7 @@ export const TeamBattleArena: React.FC<TeamBattleArenaProps> = ({
           </CardHeader>
         </Card>
 
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 items-start">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 items-start">
           {/* Player Team */}
           <Card className="bg-card/50 backdrop-blur-sm border-primary/20">
             <CardHeader>
@@ -433,48 +433,50 @@ export const TeamBattleArena: React.FC<TeamBattleArenaProps> = ({
             </CardContent>
           </Card>
 
-          {/* Combat Controls - Between player and enemies */}
-          <Card className="bg-card/50 backdrop-blur-sm border-primary/20 lg:col-span-1 py-0 my-[240px] mx-[71px]">
-            <CardContent className="pt-6 mx-[108px] px-0 my-[25px] py-0">
-              <div className="flex flex-col items-center justify-center gap-4">
+          {/* Combat Controls - Center */}
+          <Card className="bg-card/50 backdrop-blur-sm border-primary/20 h-fit">
+            <CardContent className="pt-4 pb-4">
+              <div className="flex flex-col items-center justify-center gap-3">
                 {/* Auto Battle Button */}
                 <Button 
                   onClick={handleAutoBattle}
                   variant={autoBattle ? "default" : "destructive"}
-                  className={`${autoBattle ? 'bg-green-600 hover:bg-green-700 border-green-600' : 'bg-red-600 hover:bg-red-700 border-red-600'} transition-colors`}
+                  className={`${autoBattle ? 'bg-green-600 hover:bg-green-700 border-green-600' : 'bg-red-600 hover:bg-red-700 border-red-600'} transition-colors text-sm`}
+                  size="sm"
                 >
-                  {autoBattle ? 'Авто-бой ВКЛ' : 'Авто-бой ВЫКЛ'}
+                  {autoBattle ? 'Авто ВКЛ' : 'Авто ВЫКЛ'}
                 </Button>
                 
                  {!autoBattle && (
-                   <div className="flex items-center justify-center gap-4">
+                   <div className="flex flex-col items-center gap-2">
                      {isPlayerTurn ? (
                        <>
-                          <Button 
-                            onClick={() => {
-                              if (selectedAbility && selectedPair && selectedTarget !== null && onAbilityUse) {
-                                onAbilityUse(selectedPair, selectedAbility.id, selectedTarget);
-                                setSelectedAbility(null);
-                                setSelectedPair(null);
-                                setSelectedTarget(null);
-                              } else if (selectedPair && typeof selectedTarget === 'number') {
-                                handleAttack();
-                              }
-                            }} 
-                            disabled={!selectedPair || selectedTarget === null}
-                          >
-                            {selectedAbility ? 'Способность' : 'Атаковать'}
-                          </Button>
-                         <div className="text-sm text-muted-foreground mx-0 px-0 py-0 my-0">
-                           {!selectedPair ? 'Выберите атакующего' : selectedTarget === null ? 'Выберите цель' : selectedAbility ? 'Готов использовать способность!' : 'Готов к атаке!'}
+                         <Button 
+                           onClick={() => {
+                             if (selectedAbility && selectedPair && selectedTarget !== null && onAbilityUse) {
+                               onAbilityUse(selectedPair, selectedAbility.id, selectedTarget);
+                               setSelectedAbility(null);
+                               setSelectedPair(null);
+                               setSelectedTarget(null);
+                             } else if (selectedPair && typeof selectedTarget === 'number') {
+                               handleAttack();
+                             }
+                           }} 
+                           disabled={!selectedPair || selectedTarget === null}
+                           size="sm"
+                         >
+                           {selectedAbility ? 'Способность' : 'Атаковать'}
+                         </Button>
+                         <div className="text-xs text-muted-foreground text-center max-w-[120px]">
+                           {!selectedPair ? 'Выберите атакующего' : selectedTarget === null ? 'Выберите цель' : selectedAbility ? 'Готов!' : 'Готов к атаке!'}
                          </div>
                        </>
                      ) : (
                        <div className="text-center">
-                         <div className="text-sm text-muted-foreground mb-2">
+                         <div className="text-xs text-muted-foreground mb-2">
                            Противник атакует...
                          </div>
-                         <div className="animate-spin w-6 h-6 border-2 border-destructive border-t-transparent rounded-full mx-auto"></div>
+                         <div className="animate-spin w-4 h-4 border-2 border-destructive border-t-transparent rounded-full mx-auto"></div>
                        </div>
                      )}
                    </div>
@@ -483,7 +485,7 @@ export const TeamBattleArena: React.FC<TeamBattleArenaProps> = ({
             </CardContent>
           </Card>
 
-          {/* Enemies */}
+          {/* Enemies - Right */}
           <Card className="bg-card/50 backdrop-blur-sm border-destructive/20">
             <CardHeader>
               <CardTitle className="flex items-center gap-2 text-destructive">
@@ -491,11 +493,11 @@ export const TeamBattleArena: React.FC<TeamBattleArenaProps> = ({
                 Враги
               </CardTitle>
             </CardHeader>
-             <CardContent className="space-y-4">
+             <CardContent className="space-y-3">
                {opponents.map(opponent => (
                  <div 
                    key={opponent.id} 
-                   className={`p-4 rounded-lg border-2 transition-all cursor-pointer ${
+                   className={`p-3 rounded-lg border-2 transition-all cursor-pointer ${
                      opponent.health <= 0 
                        ? 'bg-muted/50 border-muted opacity-50' 
                        : attackedTarget === opponent.id 
@@ -508,71 +510,60 @@ export const TeamBattleArena: React.FC<TeamBattleArenaProps> = ({
                                ? 'bg-card border-red-400 hover:border-destructive/50' 
                                : 'bg-card border-border hover:border-destructive/50'
                    }`} 
-                     onClick={() => {
-                       if (opponent.health > 0) {
-                         // Способности исцеления не могут быть использованы на врагах
-                         if (selectedAbility && selectedAbility.targetType === 'ally') {
-                           return;
-                         }
-                         
-                         // Если повторно нажимаем на ту же цель, отменяем выбор
-                         if (selectedTarget === opponent.id) {
-                           setSelectedTarget(null);
-                         } else {
-                           setSelectedTarget(opponent.id);
-                         }
-                       }
-                     }}
+                    onClick={() => {
+                      if (opponent.health > 0) {
+                        // Способности исцеления не могут быть использованы на врагах
+                        if (selectedAbility && selectedAbility.targetType === 'ally') {
+                          return;
+                        }
+                        
+                        // Если повторно нажимаем на ту же цель, отменяем выбор
+                        if (selectedTarget === opponent.id) {
+                          setSelectedTarget(null);
+                        } else {
+                          setSelectedTarget(opponent.id);
+                        }
+                      }
+                    }}
                  >
                    <div className="flex items-center justify-between mb-2">
-                     <span className="font-medium">{opponent.name}</span>
-                     {opponent.isBoss && (
-                       <span className="text-xs bg-destructive px-2 py-1 rounded text-white">
-                         БОСС
-                       </span>
-                     )}
-                      {selectedAbility?.targetType === 'enemy' && selectedTarget === opponent.id && (
-                        <span className="text-xs bg-red-500 px-2 py-1 rounded text-white">
-                          🎯 ЦЕЛЬ
-                        </span>
-                      )}
-                      {selectedAbility?.targetType === 'ally' && (
-                        <span className="text-xs bg-gray-500 px-2 py-1 rounded text-white opacity-50">
-                          ❌ НЕДОСТУПНО
-                        </span>
-                      )}
+                     <span className="font-medium text-sm">{opponent.name}</span>
+                     <div className="flex items-center gap-1">
+                       {opponent.isBoss && (
+                         <span className="text-xs bg-destructive px-1.5 py-0.5 rounded text-white">
+                           БОСС
+                         </span>
+                       )}
+                       {selectedAbility?.targetType === 'enemy' && selectedTarget === opponent.id && (
+                         <span className="text-xs bg-red-500 px-1.5 py-0.5 rounded text-white">
+                           🎯
+                         </span>
+                       )}
+                       {selectedAbility?.targetType === 'ally' && (
+                         <span className="text-xs bg-gray-500 px-1.5 py-0.5 rounded text-white opacity-50">
+                           ❌
+                         </span>
+                       )}
+                     </div>
                    </div>
                   
-                  <div className="space-y-2">
+                  <div className="space-y-1.5">
                     <div className="flex items-center gap-2 text-sm">
-                      <Heart className="w-4 h-4 text-red-500" />
-                      <Progress value={opponent.health / opponent.maxHealth * 100} className="flex-1 h-2" />
-                      <span>{opponent.health}/{opponent.maxHealth}</span>
+                      <Heart className="w-3 h-3 text-red-500" />
+                      <Progress value={opponent.health / opponent.maxHealth * 100} className="flex-1 h-1.5" />
+                      <span className="text-xs">{opponent.health}/{opponent.maxHealth}</span>
                     </div>
                     
-                    <div className="flex items-center justify-between text-xs text-muted-foreground">
-                      <div className="flex items-center gap-1">
-                        <Sword className="w-3 h-3" />
-                        {opponent.power}
-                      </div>
+                    <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                      <Sword className="w-3 h-3" />
+                      <span>{opponent.power}</span>
                     </div>
                   </div>
                  </div>
                ))}
              </CardContent>
-            </Card>
-            
-            {/* Abilities Panel */}
-            <AbilitiesPanel 
-              selectedPair={selectedPair ? playerPairs.find(p => p.id === selectedPair) || null : null}
-              selectedAbility={selectedAbility}
-              onSelectAbility={setSelectedAbility}
-              onCancelAbility={() => {
-                setSelectedAbility(null);
-                setSelectedTarget(null);
-              }}
-            />
-          </div>
+           </Card>
+         </div>
 
        </div>
      </div>
