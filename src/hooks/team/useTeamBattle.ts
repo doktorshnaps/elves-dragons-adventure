@@ -43,6 +43,10 @@ export const useTeamBattle = (dungeonType: DungeonType, initialLevel: number = 1
         const dragonCurrent = pair.dragon ? (pair.dragon.currentHealth ?? pair.dragon.health ?? 0) : 0;
         const dragonAlive = pair.dragon ? (dragonCurrent > 0) : false;
         
+        const heroMana = heroStats.magic ?? 0;
+        const dragonMana = dragonAlive ? (pair.dragon?.magic ?? 0) : 0;
+        const totalMana = heroMana + dragonMana;
+        
         return {
           id: `pair-${index}`,
           hero: pair.hero,
@@ -51,7 +55,9 @@ export const useTeamBattle = (dungeonType: DungeonType, initialLevel: number = 1
           maxHealth: (heroStats.health ?? 0) + (dragonStats.health ?? 0),
           power: (heroStats.power ?? 0) + (dragonAlive ? (dragonStats.power ?? 0) : 0),
           defense: (heroStats.defense ?? 0) + (dragonAlive ? (dragonStats.defense ?? 0) : 0),
-          attackOrder: index + 1
+          attackOrder: index + 1,
+          mana: totalMana,
+          maxMana: totalMana
         };
       });
 
