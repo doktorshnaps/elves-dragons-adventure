@@ -261,6 +261,130 @@ export const useTeamBattle = (dungeonType: DungeonType, initialLevel: number = 1
       }, 1200);
     }
   };
+  
+  const executeEnemyAttack = async () => {
+    if (battleState.opponents.length === 0) return;
+
+    const alivePairs = battleState.playerPairs.filter(pair => pair.health > 0);
+    const aliveOpponents = battleState.opponents.filter(opp => opp.health > 0);
+    
+    if (alivePairs.length === 0) {
+      handleGameOver();
+      return;
+    }
+
+    const currentEnemy = aliveOpponents[Math.floor(Math.random() * aliveOpponents.length)];
+    const targetPair = alivePairs[Math.floor(Math.random() * alivePairs.length)];
+    const damage = Math.max(1, currentEnemy.power - targetPair.defense);
+    
+    const updatedPair = await applyDamageToPair(targetPair, damage, updateGameData, gameData);
+
+    setBattleState(prev => ({
+      ...prev,
+      playerPairs: prev.playerPairs.map(pair =>
+        pair.id === targetPair.id
+          ? updatedPair
+          : pair
+      )
+    }));
+
+    toast({
+      title: "Враг атакует!",
+      description: `${currentEnemy.name} наносит ${damage} урона!`,
+      variant: "destructive"
+    });
+
+    if (updatedPair.health > 0) {
+      setTimeout(() => {
+        executeCounterAttack(targetPair.id, currentEnemy.id, false);
+      }, 800);
+    }
+
+    if (alivePairs.length === 1 && updatedPair.health === 0) {
+      setTimeout(() => {
+        handleGameOver();
+      }, 1200);
+    } else {
+      setTimeout(() => {
+        switchTurn();
+      }, 1200);
+    }
+  };
+
+  const executeAbilityUse = async (pairId: string, abilityId: string, target: string | number) => {
+    try {
+      const prevState = battleState;
+      const isHealing = String(abilityId).toLowerCase().includes('heal');
+
+      if (isHealing) {
+        const targetPairId = typeof target === 'string' ? target : pairId;
+        const targetPair = prevState.playerPairs.find(p => p.id === targetPairId);
+        if (!targetPair) return;
+
+        const heroMax = targetPair.hero?.health ?? 0;
+        let heroCurrent = targetPair.hero?.currentHealth ?? heroMax;
+
+        const dragonMax = targetPair.dragon?.health ?? 0;
+        let dragonCurrent = targetPair.dragon ? (targetPair.dragon.currentHealth ?? dragonMax) : 0;
+
+        const heroMagic = targetPair.hero?.magic ?? 0;
+        const dragonMagic = targetPair.dragon?.magic ?? 0;
+
+        let healLeft = Math.max(10, Math.floor((heroMagic + dragonMagic) * 0.5));
+        const prevHealth = targetPair.health;
+
+        if (targetPair.dragon) {
+          const dragonHeal = Math.min(healLeft, Math.max(0, dragonMax - dragonCurrent));
+          dragonCurrent += dragonHeal;
+          healLeft -= dragonHeal;
+        }
+
+        if (healLeft > 0) {
+          const heroHeal = Math.min(healLeft, Math.max(0, heroMax - heroCurrent));
+          heroCurrent += heroHeal;
+          healLeft -= heroHeal;
+        }
+
+        const newPair = {
+          ...targetPair,
+          hero: {
+            ...targetPair.hero,
+            currentHealth: Math.min(heroMax, heroCurrent),
+          },
+          dragon: targetPair.dragon
+            ? {
+                ...targetPair.dragon,
+                currentHealth: Math.min(dragonMax, dragonCurrent),
+              }
+            : targetPair.dragon,
+          health: Math.min(heroMax, heroCurrent) + (targetPair.dragon ? Math.min(dragonMax, dragonCurrent) : 0),
+          mana: Math.max(0, targetPair.mana - 10),
+        };
+
+        setBattleState(prev => ({
+          ...prev,
+          playerPairs: prev.playerPairs.map(p => (p.id === targetPairId ? newPair : p)),
+        }));
+
+        const healedAmount = newPair.health - prevHealth;
+        toast({
+          title: "Исцеление применено!",
+          description: `Восстановлено ${healedAmount} здоровья`,
+        });
+
+        setTimeout(() => {
+          switchTurn();
+        }, 800);
+      } else {
+        console.warn('executeAbilityUse: неподдерживаемая способность', abilityId);
+        setTimeout(() => {
+          switchTurn();
+        }, 800);
+      }
+    } catch (error) {
+      console.error('executeAbilityUse error:', error);
+    }
+  };
 
   const switchTurn = () => {
     setBattleState(prev => {

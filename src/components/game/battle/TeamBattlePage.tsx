@@ -27,6 +27,7 @@ export const TeamBattlePage: React.FC<TeamBattlePageProps> = ({
     executePlayerAttack,
     executeEnemyAttack,
     executeCounterAttack,
+    executeAbilityUse,
     resetBattle,
     handleLevelComplete,
     isPlayerTurn,
