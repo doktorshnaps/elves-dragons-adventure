@@ -362,17 +362,23 @@ export const TeamBattleArena: React.FC<TeamBattleArenaProps> = ({
                                      ? 'bg-card border-blue-400 hover:border-primary/50' 
                                      : 'bg-card border-border hover:border-primary/50'
                      }`} 
-                     onClick={() => {
-                       if (pair.health > 0 && isPlayerTurn) {
-                         if (hasAbilities && !selectedAbility) {
-                           // Показываем меню способностей
-                           setSelectedPair(pair.id);
-                           setShowAbilityMenu(true);
-                         } else {
-                           setSelectedPair(pair.id);
-                         }
-                       }
-                     }}
+                      onClick={() => {
+                        if (pair.health > 0 && isPlayerTurn) {
+                          // Если выбираем нового персонажа, отменяем способность
+                          if (selectedPair !== pair.id && selectedAbility) {
+                            setSelectedAbility(null);
+                            setSelectedTarget(null);
+                          }
+                          
+                          if (hasAbilities && !selectedAbility) {
+                            // Показываем меню способностей
+                            setSelectedPair(pair.id);
+                            setShowAbilityMenu(true);
+                          } else {
+                            setSelectedPair(pair.id);
+                          }
+                        }
+                      }}
                    >
                      <div className="flex items-center gap-3 mb-2">
                        <div className="flex gap-2">
@@ -544,11 +550,16 @@ export const TeamBattleArena: React.FC<TeamBattleArenaProps> = ({
                                ? 'bg-card border-red-400 hover:border-destructive/50' 
                                : 'bg-card border-border hover:border-destructive/50'
                    }`} 
-                   onClick={() => {
-                     if (opponent.health > 0) {
-                       setSelectedTarget(opponent.id);
-                     }
-                   }}
+                    onClick={() => {
+                      if (opponent.health > 0) {
+                        // Если повторно нажимаем на ту же цель, отменяем выбор
+                        if (selectedTarget === opponent.id) {
+                          setSelectedTarget(null);
+                        } else {
+                          setSelectedTarget(opponent.id);
+                        }
+                      }
+                    }}
                  >
                    <div className="flex items-center justify-between mb-2">
                      <span className="font-medium">{opponent.name}</span>
