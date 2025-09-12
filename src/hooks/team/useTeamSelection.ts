@@ -10,7 +10,14 @@ export const useTeamSelection = () => {
   const [cards, setCards] = useState<CardType[]>(() => {
     try {
       const saved = localStorage.getItem('gameCards');
-      return saved ? JSON.parse(saved) : (gameData.cards || []);
+      if (saved) return JSON.parse(saved);
+      const persisted = localStorage.getItem('game-storage');
+      if (persisted) {
+        const parsed = JSON.parse(persisted);
+        const fromStore = parsed?.state?.cards ?? parsed?.cards;
+        if (Array.isArray(fromStore) && fromStore.length > 0) return fromStore;
+      }
+      return gameData.cards || [];
     } catch {
       return gameData.cards || [];
     }
@@ -48,7 +55,16 @@ export const useTeamSelection = () => {
     const handleStorageChange = () => {
       try {
         const saved = localStorage.getItem('gameCards');
-        if (saved) setCards(JSON.parse(saved));
+        if (saved) {
+          setCards(JSON.parse(saved));
+          return;
+        }
+        const persisted = localStorage.getItem('game-storage');
+        if (persisted) {
+          const parsed = JSON.parse(persisted);
+          const fromStore = parsed?.state?.cards ?? parsed?.cards;
+          if (Array.isArray(fromStore)) setCards(fromStore);
+        }
       } catch {}
     };
 

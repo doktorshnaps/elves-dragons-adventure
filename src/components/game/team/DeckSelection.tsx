@@ -114,10 +114,10 @@ export const DeckSelection = ({
   };
   return <div className="space-y-6">
       {/* Selected Pairs Display */}
-      <div className="bg-game-surface/50 p-4 rounded-lg border border-game-accent">
-        <h3 className="text-lg font-bold text-game-accent mb-4">
+      <section className="bg-game-surface/50 p-4 rounded-lg border border-game-accent" aria-label="Выбранная команда">
+        <h1 className="text-lg font-bold text-game-accent mb-4">
           Выбранная команда ({selectedPairs.length}/5)
-        </h3>
+        </h1>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
           {Array.from({
           length: 5

@@ -2,6 +2,13 @@ import { useDungeonSearch } from "@/hooks/useDungeonSearch";
 import { DungeonSearchDialog } from "./dungeon/DungeonSearchDialog";
 import { useEffect, useState } from "react";
 
+// SEO: title and meta for dungeon search
+if (typeof document !== 'undefined') {
+  document.title = "Поиск подземелий — активные карты героев и драконов";
+  const meta = document.querySelector('meta[name="description"]');
+  if (meta) meta.setAttribute('content', 'Начните поиск подземелья: проверьте наличие активных карт героев и драконов.');
+}
+
 interface DungeonSearchProps {
   onClose: () => void;
   balance: number;
@@ -44,7 +51,7 @@ export const DungeonSearch = ({ onClose, balance }: DungeonSearchProps) => {
 
     // Cross-tab updates
     const onStorage = (e: StorageEvent) => {
-      if (!e.key || e.key === 'gameData' || e.key === 'gameCards') update();
+      if (!e.key || e.key === 'gameData' || e.key === 'gameCards' || e.key === 'selectedTeam') update();
     };
     window.addEventListener('storage', onStorage);
 

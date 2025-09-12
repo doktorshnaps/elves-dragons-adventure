@@ -96,6 +96,11 @@ export const useGameData = () => {
         
         setGameData(newGameData);
         
+        // Also persist full game record for compatibility
+        try {
+          localStorage.setItem('gameData', JSON.stringify(gameRecord));
+        } catch {}
+        
         // Синхронизируем с localStorage для обратной совместимости
         localStorage.setItem('gameCards', JSON.stringify(newGameData.cards));
         localStorage.setItem('gameBalance', newGameData.balance.toString());
@@ -189,6 +194,27 @@ export const useGameData = () => {
         }
         if (updates.selectedTeam !== undefined) localStorage.setItem('selectedTeam', JSON.stringify(updates.selectedTeam));
 
+        // Maintain a full 'gameData' snapshot for components expecting snake_case
+        try {
+          const raw = localStorage.getItem('gameData');
+          const gd = raw ? JSON.parse(raw) : {};
+          if (updates.cards !== undefined) gd.cards = updates.cards;
+          if (updates.balance !== undefined) gd.balance = updates.balance;
+          if (updates.initialized !== undefined) gd.initialized = updates.initialized;
+          if (updates.inventory !== undefined) gd.inventory = updates.inventory;
+          if (updates.marketplaceListings !== undefined) gd.marketplace_listings = updates.marketplaceListings;
+          if (updates.socialQuests !== undefined) gd.social_quests = updates.socialQuests;
+          if (updates.adventurePlayerStats !== undefined) gd.adventure_player_stats = updates.adventurePlayerStats;
+          if (updates.adventureCurrentMonster !== undefined) gd.adventure_current_monster = updates.adventureCurrentMonster;
+          if (updates.dragonEggs !== undefined) gd.dragon_eggs = updates.dragonEggs;
+          if (updates.battleState !== undefined) gd.battle_state = updates.battleState;
+          if (updates.selectedTeam !== undefined) gd.selected_team = updates.selectedTeam;
+          if (updates.barracksUpgrades !== undefined) gd.barracks_upgrades = updates.barracksUpgrades;
+          if (updates.dragonLairUpgrades !== undefined) gd.dragon_lair_upgrades = updates.dragonLairUpgrades;
+          if (updates.accountLevel !== undefined) gd.account_level = updates.accountLevel;
+          if (updates.accountExperience !== undefined) gd.account_experience = updates.accountExperience;
+          localStorage.setItem('gameData', JSON.stringify(gd));
+        } catch {}
         // Отправляем события для обновления UI
         if (updates.balance !== undefined) {
           const balanceEvent = new CustomEvent('balanceUpdate', { 
