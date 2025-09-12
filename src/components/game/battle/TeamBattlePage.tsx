@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, startTransition } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -35,18 +35,24 @@ export const TeamBattlePage: React.FC<TeamBattlePageProps> = ({
     aliveOpponents
   } = useTeamBattle(dungeonType);
   const handleStartBattle = () => {
-    localStorage.setItem('activeBattleInProgress', 'true');
-    setBattleStarted(true);
+    startTransition(() => {
+      localStorage.setItem('activeBattleInProgress', 'true');
+      setBattleStarted(true);
+    });
   };
   const handleBackToMenu = () => {
-    localStorage.removeItem('activeBattleInProgress');
-    resetBattle();
-    navigate('/dungeons');
+    startTransition(() => {
+      localStorage.removeItem('activeBattleInProgress');
+      resetBattle();
+      navigate('/dungeons');
+    });
   };
   const handleNextLevel = () => {
-    handleLevelComplete();
-    localStorage.setItem('activeBattleInProgress', 'true');
-    setBattleStarted(false);
+    startTransition(() => {
+      handleLevelComplete();
+      localStorage.setItem('activeBattleInProgress', 'true');
+      setBattleStarted(false);
+    });
   };
 
   // Check if battle is over

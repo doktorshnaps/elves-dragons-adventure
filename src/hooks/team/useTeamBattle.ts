@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, startTransition } from 'react';
 import { TeamPair, TeamBattleState, BattleAction } from '@/types/teamBattle';
 import { useToast } from '@/hooks/use-toast';
 import { generateDungeonOpponents } from '@/dungeons/dungeonManager';
@@ -64,12 +64,14 @@ export const useTeamBattle = (dungeonType: DungeonType, initialLevel: number = 1
 
       const opponents = generateDungeonOpponents(dungeonType, initialLevel);
       
-      setBattleState(prev => ({
-        ...prev,
-        playerPairs: teamPairs,
-        opponents,
-        selectedDungeon: dungeonType
-      }));
+      startTransition(() => {
+        setBattleState(prev => ({
+          ...prev,
+          playerPairs: teamPairs,
+          opponents,
+          selectedDungeon: dungeonType
+        }));
+      });
       
       setAttackOrder(teamPairs.map(pair => pair.id));
     }
@@ -102,14 +104,16 @@ export const useTeamBattle = (dungeonType: DungeonType, initialLevel: number = 1
     const damage = Math.max(1, attackingPair.power - (target.defense || 0));
     const newTargetHealth = Math.max(0, target.health - damage);
 
-    setBattleState(prev => ({
-      ...prev,
-      opponents: prev.opponents.map(opp => 
-        opp.id === targetId 
-          ? { ...opp, health: newTargetHealth }
-          : opp
-      ).filter(opp => opp.health > 0)
-    }));
+    startTransition(() => {
+      setBattleState(prev => ({
+        ...prev,
+        opponents: prev.opponents.map(opp => 
+          opp.id === targetId 
+            ? { ...opp, health: newTargetHealth }
+            : opp
+        ).filter(opp => opp.health > 0)
+      }));
+    });
 
     // Добавляем опыт аккаунта за убийство монстра
     if (newTargetHealth <= 0) {
@@ -161,14 +165,16 @@ export const useTeamBattle = (dungeonType: DungeonType, initialLevel: number = 1
       // Apply damage using proper health logic
       const updatedPair = await applyDamageToPair(pair, damage, updateGameData, gameData);
 
-      setBattleState(prev => ({
-        ...prev,
-        playerPairs: prev.playerPairs.map(p =>
-          p.id === pair.id 
-            ? updatedPair
-            : p
-        )
-      }));
+      startTransition(() => {
+        setBattleState(prev => ({
+          ...prev,
+          playerPairs: prev.playerPairs.map(p =>
+            p.id === pair.id 
+              ? updatedPair
+              : p
+          )
+        }));
+      });
 
       toast({
         title: "Ответный удар врага!",
