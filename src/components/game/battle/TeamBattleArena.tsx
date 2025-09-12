@@ -499,7 +499,7 @@ export const TeamBattleArena: React.FC<TeamBattleArenaProps> = ({
                            }} 
                            disabled={!selectedPair || selectedTarget === null}
                          >
-                           {selectedAbility ? `Использовать ${selectedAbility.name}` : 'Атаковать'}
+                           {selectedAbility ? 'Способность' : 'Атаковать'}
                          </Button>
                          <div className="text-sm text-muted-foreground mx-0 px-0 py-0 my-0">
                            {!selectedPair ? 'Выберите атакующего' : selectedTarget === null ? 'Выберите цель' : selectedAbility ? 'Готов использовать способность!' : 'Готов к атаке!'}
