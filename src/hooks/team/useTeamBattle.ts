@@ -402,6 +402,8 @@ export const useTeamBattle = (dungeonType: DungeonType, initialLevel: number = 1
         return prev;
       }
 
+      // Only switch to enemy turn if it's currently player turn
+      // This prevents automatic enemy attacks from starting
       if (prev.currentTurn === 'player') {
         return {
           ...prev,
@@ -443,20 +445,31 @@ export const useTeamBattle = (dungeonType: DungeonType, initialLevel: number = 1
       variant: "destructive"
     });
 
+    // Clear all timeouts and reset battle state immediately
     localStorage.removeItem('teamBattleState');
     localStorage.removeItem('activeBattleInProgress');
+    
+    startTransition(() => {
+      setBattleState(prev => ({
+        ...prev,
+        currentTurn: 'player',
+        currentAttacker: 0
+      }));
+    });
   };
 
   const resetBattle = () => {
     localStorage.removeItem('teamBattleState');
     localStorage.removeItem('activeBattleInProgress');
-    setBattleState({
-      playerPairs: [],
-      opponents: [],
-      currentTurn: 'player',
-      currentAttacker: 0,
-      level: 1,
-      selectedDungeon: dungeonType
+    startTransition(() => {
+      setBattleState({
+        playerPairs: [],
+        opponents: [],
+        currentTurn: 'player',
+        currentAttacker: 0,
+        level: 1,
+        selectedDungeon: dungeonType
+      });
     });
   };
 

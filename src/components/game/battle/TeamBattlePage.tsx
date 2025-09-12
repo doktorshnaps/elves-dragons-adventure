@@ -14,12 +14,7 @@ export const TeamBattlePage: React.FC<TeamBattlePageProps> = ({
   dungeonType
 }) => {
   const navigate = useNavigate();
-  const [battleStarted, setBattleStarted] = useState<boolean>(() => {
-    // Check if there's an active battle to resume
-    const hasActiveBattle = localStorage.getItem('activeBattleInProgress') === 'true';
-    const hasSavedState = localStorage.getItem('teamBattleState');
-    return hasActiveBattle && !!hasSavedState;
-  });
+  const [battleStarted, setBattleStarted] = useState<boolean>(false);
   const {
     battleState,
     attackOrder,
