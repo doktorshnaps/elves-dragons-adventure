@@ -10,6 +10,7 @@ import { useGameStore } from '@/stores/gameStore';
 import { getXPProgress } from '@/utils/accountLeveling';
 import { useNavigate } from 'react-router-dom';
 import { TeamHealthBars } from './TeamHealthBars';
+import { AbilitiesPanel } from './AbilitiesPanel';
 import { HERO_ABILITIES } from '@/types/abilities';
 import type { Ability } from '@/types/abilities';
 interface TeamBattleArenaProps {
@@ -48,7 +49,7 @@ export const TeamBattleArena: React.FC<TeamBattleArenaProps> = ({
   const [counterAttackedTarget, setCounterAttackedTarget] = React.useState<number | null>(null);
   const [autoBattle, setAutoBattle] = useState(false);
   const [selectedAbility, setSelectedAbility] = useState<Ability | null>(null);
-  const [showAbilityMenu, setShowAbilityMenu] = useState(false);
+  
   
   const alivePairs = playerPairs.filter(pair => pair.health > 0);
   const aliveOpponents = opponents.filter(opp => opp.health > 0);
@@ -192,62 +193,7 @@ export const TeamBattleArena: React.FC<TeamBattleArenaProps> = ({
    }, [autoBattle, isPlayerTurn, alivePairs.length, aliveOpponents.length]);
   return (
     <div className="min-h-screen p-4">
-      {/* Меню способностей */}
-      {showAbilityMenu && selectedPair && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <Card className="bg-card border-primary shadow-lg max-w-md w-full">
-            <CardHeader>
-              <CardTitle className="text-primary">Выберите способность</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-2">
-              {(() => {
-                const pair = playerPairs.find(p => p.id === selectedPair);
-                const heroAbilities = HERO_ABILITIES[pair?.hero.name] || [];
-                const currentMana = pair?.mana || 0;
-                
-                return (
-                  <>
-                    {heroAbilities.map((ability) => {
-                      const canUse = currentMana >= ability.manaCost;
-                      
-                      return (
-                        <Button
-                          key={ability.id}
-                          variant={canUse ? "default" : "secondary"}
-                          className="w-full justify-start text-left"
-                          disabled={!canUse}
-                          onClick={() => {
-                            setSelectedAbility(ability);
-                            setShowAbilityMenu(false);
-                          }}
-                        >
-                          <div className="flex flex-col items-start">
-                            <div className="font-medium">{ability.name}</div>
-                            <div className="text-xs opacity-70">
-                              {ability.description} (Мана: {ability.manaCost})
-                            </div>
-                          </div>
-                        </Button>
-                      );
-                    })}
-                    
-                    <Button 
-                      variant="outline" 
-                      className="w-full mt-4"
-                      onClick={() => {
-                        setShowAbilityMenu(false);
-                        setSelectedPair(null);
-                      }}
-                    >
-                      Отмена
-                    </Button>
-                  </>
-                );
-              })()}
-            </CardContent>
-          </Card>
-        </div>
-      )}
+      {/* Removed old ability menu */}
 
       <div className="max-w-6xl mx-auto space-y-6">
         {/* Индикатор выбранной способности */}
@@ -325,7 +271,7 @@ export const TeamBattleArena: React.FC<TeamBattleArenaProps> = ({
           </CardHeader>
         </Card>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 items-start">
           {/* Player Team */}
           <Card className="bg-card/50 backdrop-blur-sm border-primary/20">
             <CardHeader>
@@ -362,31 +308,28 @@ export const TeamBattleArena: React.FC<TeamBattleArenaProps> = ({
                                      ? 'bg-card border-blue-400 hover:border-primary/50' 
                                      : 'bg-card border-border hover:border-primary/50'
                      }`} 
-                      onClick={() => {
-                        if (pair.health > 0 && isPlayerTurn) {
-                          // Если выбираем нового персонажа, отменяем способность
-                          if (selectedPair !== pair.id && selectedAbility) {
-                            setSelectedAbility(null);
-                            setSelectedTarget(null);
-                          }
-                          
-                          // Если способность выбрана и это способность исцеления
-                          if (selectedAbility && selectedAbility.targetType === 'ally') {
-                            // Если повторно нажимаем на ту же цель, отменяем выбор
-                            if (selectedTarget === pair.id) {
-                              setSelectedTarget(null);
-                            } else {
-                              setSelectedTarget(pair.id);
-                            }
-                          } else if (hasAbilities && !selectedAbility) {
-                            // Показываем меню способностей
-                            setSelectedPair(pair.id);
-                            setShowAbilityMenu(true);
-                          } else {
-                            setSelectedPair(pair.id);
-                          }
-                        }
-                      }}
+                       onClick={() => {
+                         if (pair.health > 0 && isPlayerTurn) {
+                           // Если выбираем нового персонажа, отменяем способность
+                           if (selectedPair !== pair.id && selectedAbility) {
+                             setSelectedAbility(null);
+                             setSelectedTarget(null);
+                           }
+                           
+                           // Если способность выбрана и это способность исцеления
+                           if (selectedAbility && selectedAbility.targetType === 'ally') {
+                             // Если повторно нажимаем на ту же цель, отменяем выбор
+                             if (selectedTarget === pair.id) {
+                               setSelectedTarget(null);
+                             } else {
+                               setSelectedTarget(pair.id);
+                             }
+                           } else {
+                             // Просто выбираем персонажа
+                             setSelectedPair(pair.id);
+                           }
+                         }
+                       }}
                    >
                      <div className="flex items-center gap-3 mb-2">
                        <div className="flex gap-2">
@@ -617,8 +560,19 @@ export const TeamBattleArena: React.FC<TeamBattleArenaProps> = ({
                  </div>
                ))}
              </CardContent>
-           </Card>
-         </div>
+            </Card>
+            
+            {/* Abilities Panel */}
+            <AbilitiesPanel 
+              selectedPair={selectedPair ? playerPairs.find(p => p.id === selectedPair) || null : null}
+              selectedAbility={selectedAbility}
+              onSelectAbility={setSelectedAbility}
+              onCancelAbility={() => {
+                setSelectedAbility(null);
+                setSelectedTarget(null);
+              }}
+            />
+          </div>
 
        </div>
      </div>
