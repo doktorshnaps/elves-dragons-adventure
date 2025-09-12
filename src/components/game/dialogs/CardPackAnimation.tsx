@@ -1,7 +1,8 @@
 import { useState, useEffect, useRef, useMemo } from 'react';
 import { Card as CardType } from "@/types/cards";
 import { Card } from "@/components/ui/card";
-import { Star } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Star, SkipForward } from "lucide-react";
 import { motion } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
 import { cardDatabase } from "@/data/cardDatabase";
@@ -127,6 +128,8 @@ export const CardPackAnimation = ({ winningCard, onAnimationComplete }: CardPack
   }, [containerRef, winningCardIndex]);
 
   useEffect(() => {
+    if (!isAnimating) return;
+    
     const timer = setTimeout(() => {
       setIsAnimating(false);
       setTimeout(() => {
@@ -135,7 +138,14 @@ export const CardPackAnimation = ({ winningCard, onAnimationComplete }: CardPack
     }, animationDuration * 1000);
 
     return () => clearTimeout(timer);
-  }, [onAnimationComplete, animationDuration]);
+  }, [onAnimationComplete, animationDuration, isAnimating]);
+
+  const handleSkip = () => {
+    setIsAnimating(false);
+    setTimeout(() => {
+      onAnimationComplete();
+    }, 300);
+  };
 
   const getRarityColor = (rarity: number) => {
     const colors = [
@@ -250,21 +260,32 @@ export const CardPackAnimation = ({ winningCard, onAnimationComplete }: CardPack
           )}
         </div>
         
-        {/* Progress indicator */}
+        {/* Progress indicator and skip button */}
         <div className="mt-4 text-center">
           <div className="text-game-accent text-lg font-bold">
             {isAnimating ? 'Открываем пак...' : 'Поздравляем!'}
           </div>
-          {isAnimating && (
-            <div className="w-full bg-game-surface rounded-full h-2 mt-2">
-              <motion.div
-                className="bg-gradient-to-r from-game-primary to-game-accent h-2 rounded-full"
-                initial={{ width: '0%' }}
-                animate={{ width: '100%' }}
-                transition={{ duration: animationDuration, ease: "linear" }}
-              />
+          {isAnimating ? (
+            <div className="space-y-3">
+              <div className="w-full bg-game-surface rounded-full h-2 mt-2">
+                <motion.div
+                  className="bg-gradient-to-r from-game-primary to-game-accent h-2 rounded-full"
+                  initial={{ width: '0%' }}
+                  animate={{ width: '100%' }}
+                  transition={{ duration: animationDuration, ease: "linear" }}
+                />
+              </div>
+              <Button
+                onClick={handleSkip}
+                variant="outline"
+                size="sm"
+                className="bg-game-surface/50 border-game-accent text-game-accent hover:bg-game-accent hover:text-game-background transition-colors"
+              >
+                <SkipForward className="w-4 h-4 mr-2" />
+                Пропустить анимацию
+              </Button>
             </div>
-          )}
+          ) : null}
         </div>
       </div>
     </div>
