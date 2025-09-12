@@ -19,7 +19,19 @@ export const useTeamBattle = (dungeonType: DungeonType, initialLevel: number = 1
   const [battleState, setBattleState] = useState<TeamBattleState>(() => {
     const savedState = localStorage.getItem('teamBattleState');
     if (savedState) {
-      return JSON.parse(savedState);
+      try {
+        const parsed = JSON.parse(savedState) as Partial<TeamBattleState>;
+        return {
+          playerPairs: Array.isArray(parsed.playerPairs) ? parsed.playerPairs : [],
+          opponents: Array.isArray(parsed.opponents) ? parsed.opponents : [],
+          currentTurn: parsed.currentTurn === 'enemy' || parsed.currentTurn === 'player' ? parsed.currentTurn : 'player',
+          currentAttacker: typeof parsed.currentAttacker === 'number' ? parsed.currentAttacker : 0,
+          level: typeof parsed.level === 'number' ? parsed.level : initialLevel,
+          selectedDungeon: parsed.selectedDungeon ?? dungeonType
+        };
+      } catch {
+        localStorage.removeItem('teamBattleState');
+      }
     }
     
     return {

@@ -42,12 +42,25 @@ export class ErrorBoundary extends Component<Props, State> {
               <p className="text-gray-400">
                 Произошла ошибка в игре. Попробуйте перезагрузить страницу.
               </p>
-              <Button 
-                onClick={() => window.location.reload()}
-                className="bg-game-primary hover:bg-game-primary/80"
-              >
-                Перезагрузить
-              </Button>
+              <div className="flex gap-3 justify-center">
+                <Button 
+                  variant="outline"
+                  onClick={() => {
+                    try {
+                      localStorage.removeItem('teamBattleState');
+                      localStorage.removeItem('activeBattleInProgress');
+                    } catch {}
+                  }}
+                >
+                  Сбросить бой
+                </Button>
+                <Button 
+                  onClick={() => window.location.reload()}
+                  className="bg-game-primary hover:bg-game-primary/80"
+                >
+                  Перезагрузить
+                </Button>
+              </div>
             </div>
           </Card>
         </div>
