@@ -217,65 +217,25 @@ export const useTeamBattle = (dungeonType: DungeonType, initialLevel: number = 1
         description: `${pair.hero.name} наносит ${damage} урона в ответ!`,
       });
     }
-    if (battleState.opponents.length === 0) return;
-
+    // Prevent auto-loop: do not chain new enemy attacks here.
+    // Flow is controlled by the initiating function (player/enemy attack).
+    const isActive = localStorage.getItem('activeBattleInProgress') === 'true';
     const alivePairs = battleState.playerPairs.filter(pair => pair.health > 0);
     const aliveOpponents = battleState.opponents.filter(opp => opp.health > 0);
-    
-    if (alivePairs.length === 0) {
-      handleGameOver();
+    if (!isActive || aliveOpponents.length === 0 || alivePairs.length === 0) {
       return;
-    }
-
-    // Enemy attacks random alive pair
-    const currentEnemy = aliveOpponents[Math.floor(Math.random() * aliveOpponents.length)];
-    const targetPair = alivePairs[Math.floor(Math.random() * alivePairs.length)];
-    const damage = Math.max(1, currentEnemy.power - targetPair.defense);
-    
-    // Apply damage using proper health logic
-    const updatedPair = await applyDamageToPair(targetPair, damage, updateGameData, gameData);
-
-    setBattleState(prev => ({
-      ...prev,
-      playerPairs: prev.playerPairs.map(pair =>
-        pair.id === targetPair.id
-          ? updatedPair
-          : pair
-      )
-    }));
-
-    toast({
-      title: "Враг атакует!",
-      description: `${currentEnemy.name} наносит ${damage} урона!`,
-      variant: "destructive"
-    });
-
-    // Ответный удар пары, если она жива
-    if (updatedPair.health > 0) {
-      setTimeout(() => {
-        executeCounterAttack(targetPair.id, currentEnemy.id, false);
-      }, 800);
-    }
-
-    if (alivePairs.length === 1 && updatedPair.health === 0) {
-      setTimeout(() => {
-        handleGameOver();
-      }, 1200);
-    } else {
-      setTimeout(() => {
-        switchTurn();
-      }, 1200);
     }
   };
   
   const executeEnemyAttack = async () => {
-    if (battleState.opponents.length === 0) return;
+    const isActive = localStorage.getItem('activeBattleInProgress') === 'true';
+    if (!isActive || battleState.currentTurn !== 'enemy') return;
 
     const alivePairs = battleState.playerPairs.filter(pair => pair.health > 0);
     const aliveOpponents = battleState.opponents.filter(opp => opp.health > 0);
     
-    if (alivePairs.length === 0) {
-      handleGameOver();
+    if (aliveOpponents.length === 0 || alivePairs.length === 0) {
+      if (alivePairs.length === 0) handleGameOver();
       return;
     }
 
@@ -394,11 +354,12 @@ export const useTeamBattle = (dungeonType: DungeonType, initialLevel: number = 1
 
   const switchTurn = () => {
     setBattleState(prev => {
+      const isActive = localStorage.getItem('activeBattleInProgress') === 'true';
       const aliveOpponents = prev.opponents.filter(o => o.health > 0).length;
       const alivePairs = prev.playerPairs.filter(p => p.health > 0).length;
 
-      // If one side has no units alive, do not switch turn (prevents unintended resets)
-      if (aliveOpponents === 0 || alivePairs === 0) {
+      // If battle is not active or one side has no units alive, do not switch turn
+      if (!isActive || aliveOpponents === 0 || alivePairs === 0) {
         return prev;
       }
 

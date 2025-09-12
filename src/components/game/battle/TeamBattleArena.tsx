@@ -120,10 +120,13 @@ export const TeamBattleArena: React.FC<TeamBattleArenaProps> = ({
 
   // Автоматический ход противника
   useEffect(() => {
+    const isActive = localStorage.getItem('activeBattleInProgress') === 'true';
+    if (!isActive) return;
+
     if (!isPlayerTurn && aliveOpponents.length > 0 && alivePairs.length > 0) {
       const timer = setTimeout(() => {
         handleEnemyAttack();
-      }, 1500); // Задержка 1.5 секунды перед ходом противника
+      }, 1500);
 
       return () => clearTimeout(timer);
     }

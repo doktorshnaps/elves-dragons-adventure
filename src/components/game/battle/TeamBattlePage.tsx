@@ -45,7 +45,7 @@ export const TeamBattlePage: React.FC<TeamBattlePageProps> = ({
   const handleNextLevel = () => {
     startTransition(() => {
       handleLevelComplete();
-      localStorage.setItem('activeBattleInProgress', 'true');
+      localStorage.removeItem('activeBattleInProgress');
       setBattleStarted(false);
     });
   };
