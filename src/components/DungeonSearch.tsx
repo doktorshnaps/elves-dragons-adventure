@@ -16,8 +16,19 @@ export const DungeonSearch = ({ onClose, balance }: DungeonSearchProps) => {
   } = useDungeonSearch(balance);
 
   const hasActiveCards = (() => {
-    const savedCards = localStorage.getItem('gameCards');
-    return savedCards ? JSON.parse(savedCards).length > 0 : false;
+    try {
+      const gameData = localStorage.getItem('gameData');
+      if (gameData) {
+        const parsedData = JSON.parse(gameData);
+        return parsedData.selected_team && parsedData.selected_team.length > 0;
+      }
+      
+      // Fallback to old gameCards format
+      const savedCards = localStorage.getItem('gameCards');
+      return savedCards ? JSON.parse(savedCards).length > 0 : false;
+    } catch {
+      return false;
+    }
   })();
 
   return (
