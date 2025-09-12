@@ -302,11 +302,11 @@ export const TeamBattleArena: React.FC<TeamBattleArenaProps> = ({
                                ? 'bg-blue-500/30 border-blue-500 animate-pulse shadow-lg shadow-blue-500/50' 
                                : selectedPair === pair.id 
                                  ? 'bg-primary/20 border-primary' 
-                                 : currentAttacker?.id === pair.id && isPlayerTurn 
-                                   ? 'bg-accent/20 border-accent' 
-                                   : hasAbilities 
-                                     ? 'bg-card border-blue-400 hover:border-primary/50' 
-                                     : 'bg-card border-border hover:border-primary/50'
+                                  : selectedAbility?.targetType === 'ally' && selectedTarget === pair.id
+                                    ? 'bg-green-500/20 border-green-400'
+                                    : selectedAbility?.targetType === 'ally'
+                                      ? 'bg-card border-green-400 hover:border-green-500/50'
+                                      : 'bg-card border-border hover:border-primary/50'
                      }`} 
                        onClick={() => {
                          if (pair.health > 0 && isPlayerTurn) {
