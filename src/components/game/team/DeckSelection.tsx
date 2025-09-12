@@ -150,7 +150,7 @@ export const DeckSelection = ({
               </div>;
         })}
         </div>
-      </div>
+      </section>
 
       {/* Deck Buttons */}
       <div className="grid grid-cols-2 gap-4">
