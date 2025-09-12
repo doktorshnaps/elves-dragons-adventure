@@ -371,12 +371,34 @@ export const TeamBattleArena: React.FC<TeamBattleArenaProps> = ({
                            )}
                          </div>
                          
-                          {/* Индикатор способностей */}
-                          {hasAbilities && (
-                            <div className="text-xs text-blue-400 mt-1">
-                              🔮 Способности: {heroAbilities.length}
-                            </div>
-                          )}
+                           {/* Индикатор способностей */}
+                           {hasAbilities && (
+                             <div className="flex items-center justify-between text-xs text-blue-400 mt-1">
+                               <span>🔮 Способности: {heroAbilities.length}</span>
+                               <Button
+                                 size="sm"
+                                 variant="outline"
+                                 className="h-5 px-2 text-xs border-blue-400/50 text-blue-400 hover:bg-blue-500/20"
+                                 onClick={(e) => {
+                                   e.stopPropagation();
+                                   if (heroAbilities.length === 1) {
+                                     // Если способность одна, сразу выбираем её
+                                     const ability = heroAbilities[0];
+                                     if (currentMana >= ability.manaCost) {
+                                       setSelectedAbility(ability);
+                                       setSelectedPair(pair.id);
+                                     }
+                                   } else {
+                                     // Если способностей несколько, открываем панель
+                                     setSelectedPair(pair.id);
+                                   }
+                                 }}
+                                 disabled={!heroAbilities.some(ability => currentMana >= ability.manaCost)}
+                               >
+                                 ⚡
+                               </Button>
+                             </div>
+                           )}
                           
                           {/* Индикатор цели для исцеления */}
                           {selectedAbility?.targetType === 'ally' && selectedTarget === pair.id && (
