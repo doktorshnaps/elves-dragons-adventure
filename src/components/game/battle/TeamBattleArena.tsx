@@ -18,7 +18,7 @@ interface TeamBattleArenaProps {
   attackOrder: string[];
   isPlayerTurn: boolean;
   onAttack: (pairId: string, targetId: number) => void;
-  onAbilityUse?: (pairId: string, abilityId: string, targetId: number) => void;
+  onAbilityUse?: (pairId: string, abilityId: string, targetId: number | string) => void;
   onEnemyAttack: () => void;
   onCounterAttack: (attackerId: string | number, targetId: string | number, isEnemyAttacker: boolean) => void;
   level: number;
@@ -40,7 +40,7 @@ export const TeamBattleArena: React.FC<TeamBattleArenaProps> = ({
     accountExperience
   } = useGameStore();
   const [selectedPair, setSelectedPair] = React.useState<string | null>(null);
-  const [selectedTarget, setSelectedTarget] = React.useState<number | null>(null);
+  const [selectedTarget, setSelectedTarget] = React.useState<number | string | null>(null);
   const [attackingPair, setAttackingPair] = React.useState<string | null>(null);
   const [attackedTarget, setAttackedTarget] = React.useState<number | null>(null);
   const [defendingPair, setDefendingPair] = React.useState<string | null>(null);
@@ -53,7 +53,7 @@ export const TeamBattleArena: React.FC<TeamBattleArenaProps> = ({
   const alivePairs = playerPairs.filter(pair => pair.health > 0);
   const aliveOpponents = opponents.filter(opp => opp.health > 0);
   const handleAttack = () => {
-    if (selectedPair && selectedTarget !== null) {
+    if (selectedPair && selectedTarget !== null && typeof selectedTarget === 'number') {
       const pairId = selectedPair;
       const targetId = selectedTarget;
       // Запускаем анимацию атаки
@@ -370,7 +370,15 @@ export const TeamBattleArena: React.FC<TeamBattleArenaProps> = ({
                             setSelectedTarget(null);
                           }
                           
-                          if (hasAbilities && !selectedAbility) {
+                          // Если способность выбрана и это способность исцеления
+                          if (selectedAbility && selectedAbility.targetType === 'ally') {
+                            // Если повторно нажимаем на ту же цель, отменяем выбор
+                            if (selectedTarget === pair.id) {
+                              setSelectedTarget(null);
+                            } else {
+                              setSelectedTarget(pair.id);
+                            }
+                          } else if (hasAbilities && !selectedAbility) {
                             // Показываем меню способностей
                             setSelectedPair(pair.id);
                             setShowAbilityMenu(true);
@@ -420,12 +428,19 @@ export const TeamBattleArena: React.FC<TeamBattleArenaProps> = ({
                            )}
                          </div>
                          
-                         {/* Индикатор способностей */}
-                         {hasAbilities && (
-                           <div className="text-xs text-blue-400 mt-1">
-                             🔮 Способности: {heroAbilities.length}
-                           </div>
-                         )}
+                          {/* Индикатор способностей */}
+                          {hasAbilities && (
+                            <div className="text-xs text-blue-400 mt-1">
+                              🔮 Способности: {heroAbilities.length}
+                            </div>
+                          )}
+                          
+                          {/* Индикатор цели для исцеления */}
+                          {selectedAbility?.targetType === 'ally' && selectedTarget === pair.id && (
+                            <div className="text-xs text-green-400 mt-1">
+                              💚 ЦЕЛЬ ДЛЯ ИСЦЕЛЕНИЯ
+                            </div>
+                          )}
                        </div>
                        
                        {currentAttacker?.id === pair.id && isPlayerTurn && (
@@ -492,21 +507,21 @@ export const TeamBattleArena: React.FC<TeamBattleArenaProps> = ({
                    <div className="flex items-center justify-center gap-4">
                      {isPlayerTurn ? (
                        <>
-                         <Button 
-                           onClick={() => {
-                             if (selectedAbility && selectedPair && selectedTarget !== null && onAbilityUse) {
-                               onAbilityUse(selectedPair, selectedAbility.id, selectedTarget);
-                               setSelectedAbility(null);
-                               setSelectedPair(null);
-                               setSelectedTarget(null);
-                             } else {
-                               handleAttack();
-                             }
-                           }} 
-                           disabled={!selectedPair || selectedTarget === null}
-                         >
-                           {selectedAbility ? 'Способность' : 'Атаковать'}
-                         </Button>
+                          <Button 
+                            onClick={() => {
+                              if (selectedAbility && selectedPair && selectedTarget !== null && onAbilityUse) {
+                                onAbilityUse(selectedPair, selectedAbility.id, selectedTarget);
+                                setSelectedAbility(null);
+                                setSelectedPair(null);
+                                setSelectedTarget(null);
+                              } else if (selectedPair && typeof selectedTarget === 'number') {
+                                handleAttack();
+                              }
+                            }} 
+                            disabled={!selectedPair || selectedTarget === null}
+                          >
+                            {selectedAbility ? 'Способность' : 'Атаковать'}
+                          </Button>
                          <div className="text-sm text-muted-foreground mx-0 px-0 py-0 my-0">
                            {!selectedPair ? 'Выберите атакующего' : selectedTarget === null ? 'Выберите цель' : selectedAbility ? 'Готов использовать способность!' : 'Готов к атаке!'}
                          </div>
@@ -550,16 +565,21 @@ export const TeamBattleArena: React.FC<TeamBattleArenaProps> = ({
                                ? 'bg-card border-red-400 hover:border-destructive/50' 
                                : 'bg-card border-border hover:border-destructive/50'
                    }`} 
-                    onClick={() => {
-                      if (opponent.health > 0) {
-                        // Если повторно нажимаем на ту же цель, отменяем выбор
-                        if (selectedTarget === opponent.id) {
-                          setSelectedTarget(null);
-                        } else {
-                          setSelectedTarget(opponent.id);
-                        }
-                      }
-                    }}
+                     onClick={() => {
+                       if (opponent.health > 0) {
+                         // Способности исцеления не могут быть использованы на врагах
+                         if (selectedAbility && selectedAbility.targetType === 'ally') {
+                           return;
+                         }
+                         
+                         // Если повторно нажимаем на ту же цель, отменяем выбор
+                         if (selectedTarget === opponent.id) {
+                           setSelectedTarget(null);
+                         } else {
+                           setSelectedTarget(opponent.id);
+                         }
+                       }
+                     }}
                  >
                    <div className="flex items-center justify-between mb-2">
                      <span className="font-medium">{opponent.name}</span>
@@ -568,11 +588,16 @@ export const TeamBattleArena: React.FC<TeamBattleArenaProps> = ({
                          БОСС
                        </span>
                      )}
-                     {selectedAbility?.targetType === 'enemy' && selectedTarget === opponent.id && (
-                       <span className="text-xs bg-red-500 px-2 py-1 rounded text-white">
-                         🎯 ЦЕЛЬ
-                       </span>
-                     )}
+                      {selectedAbility?.targetType === 'enemy' && selectedTarget === opponent.id && (
+                        <span className="text-xs bg-red-500 px-2 py-1 rounded text-white">
+                          🎯 ЦЕЛЬ
+                        </span>
+                      )}
+                      {selectedAbility?.targetType === 'ally' && (
+                        <span className="text-xs bg-gray-500 px-2 py-1 rounded text-white opacity-50">
+                          ❌ НЕДОСТУПНО
+                        </span>
+                      )}
                    </div>
                   
                   <div className="space-y-2">
