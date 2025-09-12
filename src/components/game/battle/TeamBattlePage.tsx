@@ -94,6 +94,6 @@ export const TeamBattlePage: React.FC<TeamBattlePageProps> = ({
         
       </div>
       
-      <TeamBattleArena playerPairs={battleState.playerPairs} opponents={battleState.opponents} attackOrder={attackOrder} isPlayerTurn={isPlayerTurn} onAttack={executePlayerAttack} onEnemyAttack={executeEnemyAttack} onCounterAttack={executeCounterAttack} level={battleState.level} />
+      <TeamBattleArena playerPairs={battleState.playerPairs} opponents={battleState.opponents} attackOrder={attackOrder} isPlayerTurn={isPlayerTurn} onAttack={executePlayerAttack} onAbilityUse={executeAbilityUse} onEnemyAttack={executeEnemyAttack} onCounterAttack={executeCounterAttack} level={battleState.level} />
     </>;
 };

@@ -8,6 +8,7 @@ import { addAccountExperience, getLevelFromXP } from '@/utils/accountLeveling';
 import { useGameStore } from '@/stores/gameStore';
 import { applyDamageToPair } from '@/utils/battleHealthUtils';
 import { useGameData } from '@/hooks/useGameData';
+import { HERO_ABILITIES } from '@/types/abilities';
 
 export const useTeamBattle = (dungeonType: DungeonType, initialLevel: number = 1) => {
   const { toast } = useToast();
@@ -210,9 +211,6 @@ export const useTeamBattle = (dungeonType: DungeonType, initialLevel: number = 1
         description: `${pair.hero.name} наносит ${damage} урона в ответ!`,
       });
     }
-  };
-
-  const executeEnemyAttack = async () => {
     if (battleState.opponents.length === 0) return;
 
     const alivePairs = battleState.playerPairs.filter(pair => pair.health > 0);
@@ -343,6 +341,7 @@ export const useTeamBattle = (dungeonType: DungeonType, initialLevel: number = 1
     handleLevelComplete,
     isPlayerTurn: battleState.currentTurn === 'player',
     alivePairs: battleState.playerPairs.filter(pair => pair.health > 0),
-    aliveOpponents: battleState.opponents.filter(opp => opp.health > 0)
+    aliveOpponents: battleState.opponents.filter(opp => opp.health > 0),
+    executeAbilityUse
   };
 };
