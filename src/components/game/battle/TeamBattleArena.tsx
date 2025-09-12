@@ -473,17 +473,33 @@ export const TeamBattleArena: React.FC<TeamBattleArenaProps> = ({
                    <div className="flex flex-col items-center gap-2">
                      {isPlayerTurn ? (
                        <>
-                         <Button 
-                           onClick={() => {
-                             if (selectedAbility && selectedPair && selectedTarget !== null && onAbilityUse) {
-                               onAbilityUse(selectedPair, selectedAbility.id, selectedTarget);
-                               setSelectedAbility(null);
-                               setSelectedPair(null);
-                               setSelectedTarget(null);
-                             } else if (selectedPair && typeof selectedTarget === 'number') {
-                               handleAttack();
-                             }
-                           }} 
+                          <Button 
+                            onClick={() => {
+                              console.log('Button clicked!');
+                              console.log('selectedAbility:', selectedAbility);
+                              console.log('selectedPair:', selectedPair);
+                              console.log('selectedTarget:', selectedTarget);
+                              console.log('onAbilityUse:', typeof onAbilityUse);
+                              
+                              if (selectedAbility && selectedPair && selectedTarget !== null && onAbilityUse) {
+                                console.log('Using ability:', selectedAbility.name, 'from:', selectedPair, 'on target:', selectedTarget);
+                                onAbilityUse(selectedPair, selectedAbility.id, selectedTarget);
+                                setSelectedAbility(null);
+                                setSelectedPair(null);
+                                setSelectedTarget(null);
+                              } else if (selectedPair && typeof selectedTarget === 'number') {
+                                console.log('Regular attack');
+                                handleAttack();
+                              } else {
+                                console.log('Conditions not met for ability or attack');
+                                console.log('Missing:', {
+                                  ability: !selectedAbility,
+                                  pair: !selectedPair,
+                                  target: selectedTarget === null,
+                                  onAbilityUse: !onAbilityUse
+                                });
+                              }
+                            }}
                            disabled={!selectedPair || selectedTarget === null}
                            size="sm"
                          >
