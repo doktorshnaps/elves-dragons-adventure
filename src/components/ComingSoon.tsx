@@ -76,13 +76,15 @@ export const ComingSoon = () => {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8, delay: 0.6 }}
-          className="mt-8"
+          className="mt-8 relative z-10"
+          style={{ pointerEvents: 'auto' }}
         >
           <Button
             onClick={handleDisconnect}
             variant="outline"
             size="lg"
-            className="bg-game-surface/20 border-game-accent text-game-accent hover:bg-game-accent hover:text-game-background transition-all duration-300 px-8 py-3 text-lg"
+            className="bg-game-surface/20 border-game-accent text-game-accent hover:bg-game-accent hover:text-game-background transition-all duration-300 px-8 py-3 text-lg cursor-pointer"
+            style={{ pointerEvents: 'auto' }}
           >
             Отключить кошелек
           </Button>
