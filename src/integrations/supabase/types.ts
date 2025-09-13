@@ -672,6 +672,10 @@ export type Database = {
           user_id: string
         }[]
       }
+      is_user_banned: {
+        Args: { p_wallet_address: string }
+        Returns: boolean
+      }
       is_whitelisted: {
         Args: { p_wallet_address: string }
         Returns: boolean
