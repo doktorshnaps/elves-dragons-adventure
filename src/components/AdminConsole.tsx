@@ -414,14 +414,14 @@ export const AdminConsole = () => {
       id: `admin-${Date.now()}-${Math.random()}`,
       name: dbCard?.name || cardNameInput,
       type: cardType,
-      rarity: dbCard?.rarity || rarityInput,
-      faction: dbCard?.faction,
-      power: dbCard?.power ?? 10,
-      defense: dbCard?.defense ?? 10,
-      health: dbCard?.health ?? 100,
-      maxHealth: dbCard?.health ?? 100,
-      image: dbCard?.image || '/placeholder.svg',
-      description: dbCard?.description || 'Карта выдана администратором'
+      rarity: rarityInput,
+      faction: (dbCard as any)?.faction,
+      power: 10,
+      defense: 10,
+      health: 100,
+      maxHealth: 100,
+      image: (dbCard as any)?.image || '/placeholder.svg',
+      description: (dbCard as any)?.description || 'Карта выдана администратором'
     };
 
     const { error } = await supabase.rpc('admin_give_player_card', {
@@ -433,10 +433,10 @@ export const AdminConsole = () => {
     if (error) {
       addOutput(`Ошибка выдачи карты: ${error.message}`);
     } else {
-      addOutput(`✅ Карта "${cardName}" выдана игроку ${userId}`);
+      addOutput(`✅ Карта "${cardData.name}" выдана игроку ${userId}`);
       toast({
         title: "Карта выдана",
-        description: `Карта "${cardName}" выдана игроку`
+        description: `Карта "${cardData.name}" выдана игроку`
       });
       
       // Обновляем локальные данные игрока если это текущий пользователь
