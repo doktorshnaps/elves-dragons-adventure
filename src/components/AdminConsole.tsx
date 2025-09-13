@@ -56,6 +56,21 @@ export const AdminConsole = () => {
         case 'find':
           await handleFindUser(parts);
           break;
+        case 'cards':
+          await handleViewCards(parts);
+          break;
+        case 'inventory':
+          await handleViewInventory(parts);
+          break;
+        case 'setbalance':
+          await handleSetBalance(parts);
+          break;
+        case 'givecard':
+          await handleGiveCard(parts);
+          break;
+        case 'giveitem':
+          await handleGiveItem(parts);
+          break;
         case 'help':
           showHelp();
           break;
@@ -240,16 +255,216 @@ export const AdminConsole = () => {
     }
   };
 
+  const handleViewCards = async (parts: string[]) => {
+    if (parts.length !== 2) {
+      addOutput('Использование: cards <user_id>');
+      return;
+    }
+
+    const userId = parts[1];
+    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+    if (!uuidRegex.test(userId)) {
+      addOutput('Неверный формат UUID игрока');
+      return;
+    }
+
+    const { data, error } = await supabase.rpc('admin_get_player_cards', {
+      p_user_id: userId,
+      p_admin_wallet_address: accountId
+    });
+
+    if (error) {
+      addOutput(`Ошибка получения карт: ${error.message}`);
+    } else {
+      const cards = data as any[];
+      addOutput(`=== КАРТЫ ИГРОКА (${cards.length}) ===`);
+      if (cards.length === 0) {
+        addOutput('У игрока нет карт');
+      } else {
+        cards.forEach((card, index) => {
+          addOutput(`${index + 1}. ${card.name || 'Безымянная карта'} (${card.type || 'unknown'}) - Редкость: ${card.rarity || 'common'}`);
+        });
+      }
+      addOutput('=========================');
+    }
+  };
+
+  const handleViewInventory = async (parts: string[]) => {
+    if (parts.length !== 2) {
+      addOutput('Использование: inventory <user_id>');
+      return;
+    }
+
+    const userId = parts[1];
+    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+    if (!uuidRegex.test(userId)) {
+      addOutput('Неверный формат UUID игрока');
+      return;
+    }
+
+    const { data, error } = await supabase.rpc('admin_get_player_inventory', {
+      p_user_id: userId,
+      p_admin_wallet_address: accountId
+    });
+
+    if (error) {
+      addOutput(`Ошибка получения инвентаря: ${error.message}`);
+    } else {
+      const items = data as any[];
+      addOutput(`=== ИНВЕНТАРЬ ИГРОКА (${items.length}) ===`);
+      if (items.length === 0) {
+        addOutput('Инвентарь пуст');
+      } else {
+        items.forEach((item, index) => {
+          addOutput(`${index + 1}. ${item.name || 'Безымянный предмет'} (${item.type || 'unknown'}) - Количество: ${item.quantity || 1}`);
+        });
+      }
+      addOutput('============================');
+    }
+  };
+
+  const handleSetBalance = async (parts: string[]) => {
+    if (parts.length !== 3) {
+      addOutput('Использование: setbalance <user_id> <amount>');
+      return;
+    }
+
+    const userId = parts[1];
+    const amount = parseInt(parts[2]);
+
+    if (isNaN(amount) || amount < 0) {
+      addOutput('Количество должно быть положительным числом');
+      return;
+    }
+
+    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+    if (!uuidRegex.test(userId)) {
+      addOutput('Неверный формат UUID игрока');
+      return;
+    }
+
+    const { error } = await supabase.rpc('admin_set_player_balance', {
+      p_user_id: userId,
+      p_balance: amount,
+      p_admin_wallet_address: accountId
+    });
+
+    if (error) {
+      addOutput(`Ошибка установки баланса: ${error.message}`);
+    } else {
+      addOutput(`✅ Баланс игрока ${userId} установлен на ${amount} ELL`);
+      toast({
+        title: "Баланс установлен",
+        description: `Баланс установлен на ${amount} ELL`
+      });
+    }
+  };
+
+  const handleGiveCard = async (parts: string[]) => {
+    if (parts.length < 3) {
+      addOutput('Использование: givecard <user_id> <card_name> [rarity] [type]');
+      return;
+    }
+
+    const userId = parts[1];
+    const cardName = parts[2];
+    const rarity = parts[3] || 'common';
+    const cardType = parts[4] || 'hero';
+
+    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+    if (!uuidRegex.test(userId)) {
+      addOutput('Неверный формат UUID игрока');
+      return;
+    }
+
+    const cardData = {
+      id: `admin-${Date.now()}-${Math.random()}`,
+      name: cardName,
+      type: cardType,
+      rarity: rarity,
+      power: 10,
+      defense: 10,
+      health: 100,
+      maxHealth: 100,
+      image: '/placeholder.svg',
+      description: `Карта выдана администратором`
+    };
+
+    const { error } = await supabase.rpc('admin_give_player_card', {
+      p_user_id: userId,
+      p_card_data: cardData,
+      p_admin_wallet_address: accountId
+    });
+
+    if (error) {
+      addOutput(`Ошибка выдачи карты: ${error.message}`);
+    } else {
+      addOutput(`✅ Карта "${cardName}" выдана игроку ${userId}`);
+      toast({
+        title: "Карта выдана",
+        description: `Карта "${cardName}" выдана игроку`
+      });
+    }
+  };
+
+  const handleGiveItem = async (parts: string[]) => {
+    if (parts.length < 3) {
+      addOutput('Использование: giveitem <user_id> <item_name> [quantity] [type]');
+      return;
+    }
+
+    const userId = parts[1];
+    const itemName = parts[2];
+    const quantity = parseInt(parts[3]) || 1;
+    const itemType = parts[4] || 'consumable';
+
+    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+    if (!uuidRegex.test(userId)) {
+      addOutput('Неверный формат UUID игрока');
+      return;
+    }
+
+    const itemData = {
+      id: `admin-item-${Date.now()}-${Math.random()}`,
+      name: itemName,
+      type: itemType,
+      quantity: quantity,
+      description: `Предмет выдан администратором`,
+      image: '/placeholder.svg'
+    };
+
+    const { error } = await supabase.rpc('admin_give_player_item', {
+      p_user_id: userId,
+      p_item_data: itemData,
+      p_admin_wallet_address: accountId
+    });
+
+    if (error) {
+      addOutput(`Ошибка выдачи предмета: ${error.message}`);
+    } else {
+      addOutput(`✅ Предмет "${itemName}" x${quantity} выдан игроку ${userId}`);
+      toast({
+        title: "Предмет выдан",
+        description: `Предмет "${itemName}" x${quantity} выдан игроку`
+      });
+    }
+  };
+
   const showHelp = () => {
     addOutput('=== АДМИНСКИЕ КОМАНДЫ ===');
     addOutput('find <wallet_address> - Найти игрока по кошельку и получить UUID');
+    addOutput('info <user_id> - Показать информацию о игроке');
+    addOutput('cards <user_id> - Просмотреть карты игрока');
+    addOutput('inventory <user_id> - Просмотреть инвентарь игрока');
     addOutput('addbalance <user_id> <amount> - Добавить ELL на баланс игрока');
+    addOutput('setbalance <user_id> <amount> - Установить баланс игрока');
+    addOutput('givecard <user_id> <name> [rarity] [type] - Выдать карту игроку');
+    addOutput('giveitem <user_id> <name> [quantity] [type] - Выдать предмет игроку');
     addOutput('ban <user_id> <reason> - Забанить игрока');
     addOutput('unban <user_id> - Разбанить игрока');
-    addOutput('info <user_id> - Показать информацию о игроке');
     addOutput('clear - Очистить консоль');
     addOutput('help - Показать эту справку');
-    addOutput('========================');
+    addOutput('===============================');
   };
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
@@ -269,41 +484,47 @@ export const AdminConsole = () => {
       </CardHeader>
       <CardContent className="space-y-4">
         {/* Quick Actions */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-2">
+        <div className="grid grid-cols-2 md:grid-cols-6 gap-2">
           <Button
-            onClick={() => setCommand('addbalance  1000')}
+            onClick={() => setCommand('cards ')}
             variant="outline"
-            className="flex items-center gap-2"
             size="sm"
           >
-            <DollarSign className="w-4 h-4" />
-            Добавить 1000 ELL
+            Карты
           </Button>
           <Button
-            onClick={() => setCommand('ban  Нарушение правил')}
+            onClick={() => setCommand('inventory ')}
             variant="outline"
-            className="flex items-center gap-2"
             size="sm"
           >
-            <Ban className="w-4 h-4" />
-            Забанить игрока
+            Инвентарь
           </Button>
           <Button
-            onClick={() => setCommand('unban ')}
+            onClick={() => setCommand('setbalance  1000')}
             variant="outline"
-            className="flex items-center gap-2"
             size="sm"
           >
-            <UserCheck className="w-4 h-4" />
-            Разбанить игрока
+            Установить баланс
+          </Button>
+          <Button
+            onClick={() => setCommand('givecard  ')}
+            variant="outline"
+            size="sm"
+          >
+            Выдать карту
+          </Button>
+          <Button
+            onClick={() => setCommand('giveitem  ')}
+            variant="outline"
+            size="sm"
+          >
+            Выдать предмет
           </Button>
           <Button
             onClick={() => setCommand('info ')}
             variant="outline"
-            className="flex items-center gap-2"
             size="sm"
           >
-            <Terminal className="w-4 h-4" />
             Информация
           </Button>
         </div>

@@ -583,12 +583,44 @@ export type Database = {
           wallet_address: string
         }[]
       }
+      admin_get_player_cards: {
+        Args: { p_admin_wallet_address: string; p_user_id: string }
+        Returns: Json
+      }
+      admin_get_player_inventory: {
+        Args: { p_admin_wallet_address: string; p_user_id: string }
+        Returns: Json
+      }
       admin_get_user_info: {
         Args: { p_admin_wallet_address: string; p_user_id: string }
         Returns: Json
       }
+      admin_give_player_card: {
+        Args: {
+          p_admin_wallet_address: string
+          p_card_data: Json
+          p_user_id: string
+        }
+        Returns: boolean
+      }
+      admin_give_player_item: {
+        Args: {
+          p_admin_wallet_address: string
+          p_item_data: Json
+          p_user_id: string
+        }
+        Returns: boolean
+      }
       admin_remove_from_whitelist: {
         Args: { p_admin_wallet_address?: string; p_wallet_address: string }
+        Returns: boolean
+      }
+      admin_set_player_balance: {
+        Args: {
+          p_admin_wallet_address: string
+          p_balance: number
+          p_user_id: string
+        }
         Returns: boolean
       }
       admin_unban_user: {
