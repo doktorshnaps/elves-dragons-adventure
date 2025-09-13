@@ -1,9 +1,28 @@
 import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { useWallet } from '@/hooks/useWallet';
+import { useToast } from '@/hooks/use-toast';
 
 export const ComingSoon = () => {
   const { disconnectWallet } = useWallet();
+  const { toast } = useToast();
+
+  const handleDisconnect = async () => {
+    try {
+      await disconnectWallet();
+      toast({
+        title: 'Кошелек отключен',
+        description: 'Вы успешно отключили кошелек',
+      });
+    } catch (error) {
+      console.error('Error disconnecting wallet:', error);
+      toast({
+        title: 'Ошибка',
+        description: 'Не удалось отключить кошелек',
+        variant: 'destructive',
+      });
+    }
+  };
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-purple-900 to-black relative overflow-hidden">
@@ -60,7 +79,7 @@ export const ComingSoon = () => {
           className="mt-8"
         >
           <Button
-            onClick={disconnectWallet}
+            onClick={handleDisconnect}
             variant="outline"
             size="lg"
             className="bg-game-surface/20 border-game-accent text-game-accent hover:bg-game-accent hover:text-game-background transition-all duration-300 px-8 py-3 text-lg"
