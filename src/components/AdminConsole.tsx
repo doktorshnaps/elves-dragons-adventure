@@ -439,6 +439,19 @@ export const AdminConsole = () => {
         title: "Карта выдана",
         description: `Карта "${cardName}" выдана игроку`
       });
+      
+      // Обновляем локальные данные игрока если это текущий пользователь
+      if (accountId === 'mr_bruts.tg') {
+        // Запускаем событие обновления карт для синхронизации
+        const updateEvent = new CustomEvent('cardsUpdate', {
+          detail: { cards: [] } // Пустой массив заставит перезагрузить данные
+        });
+        window.dispatchEvent(updateEvent);
+        
+        // Также обновляем localStorage чтобы вызвать перезагрузку
+        const currentCards = JSON.parse(localStorage.getItem('gameCards') || '[]');
+        localStorage.setItem('gameCards', JSON.stringify([...currentCards, cardData]));
+      }
     }
   };
 
@@ -482,6 +495,15 @@ export const AdminConsole = () => {
         title: "Предмет выдан",
         description: `Предмет "${itemName}" x${quantity} выдан игроку`
       });
+      
+      // Обновляем локальные данные игрока если это текущий пользователь
+      if (accountId === 'mr_bruts.tg') {
+        // Запускаем событие обновления для синхронизации
+        const updateEvent = new CustomEvent('inventoryUpdate', {
+          detail: { inventory: [] } // Пустой массив заставит перезагрузить данные
+        });
+        window.dispatchEvent(updateEvent);
+      }
     }
   };
 
