@@ -71,6 +71,12 @@ export const AdminConsole = () => {
         case 'giveitem':
           await handleGiveItem(parts);
           break;
+        case 'removecard':
+          await handleRemoveCard(parts);
+          break;
+        case 'removeitem':
+          await handleRemoveItem(parts);
+          break;
         case 'help':
           showHelp();
           break;
@@ -281,9 +287,28 @@ export const AdminConsole = () => {
       if (cards.length === 0) {
         addOutput('У игрока нет карт');
       } else {
+        let heroCount = 0;
+        let dragonCount = 0;
         cards.forEach((card, index) => {
-          addOutput(`${index + 1}. ${card.name || 'Безымянная карта'} (${card.type || 'unknown'}) - Редкость: ${card.rarity || 'common'}`);
+          const cardType = card.type || 'unknown';
+          const cardName = card.name || 'Безымянная карта';
+          const rarity = card.rarity || 'common';
+          const faction = card.faction || 'без фракции';
+          const power = card.power || 0;
+          const defense = card.defense || 0;
+          const health = card.health || 0;
+          const cardId = card.id || 'unknown';
+          
+          if (cardType === 'character') heroCount++;
+          if (cardType === 'pet') dragonCount++;
+          
+          addOutput(`${index + 1}. [ID: ${cardId}] ${cardName}`);
+          addOutput(`   Тип: ${cardType === 'character' ? 'Герой' : cardType === 'pet' ? 'Дракон' : cardType}`);
+          addOutput(`   Фракция: ${faction} | Редкость: ${rarity}`);
+          addOutput(`   Сила: ${power} | Защита: ${defense} | Здоровье: ${health}`);
+          addOutput('   ---');
         });
+        addOutput(`ИТОГО: Героев - ${heroCount}, Драконов - ${dragonCount}`);
       }
       addOutput('=========================');
     }
@@ -316,7 +341,17 @@ export const AdminConsole = () => {
         addOutput('Инвентарь пуст');
       } else {
         items.forEach((item, index) => {
-          addOutput(`${index + 1}. ${item.name || 'Безымянный предмет'} (${item.type || 'unknown'}) - Количество: ${item.quantity || 1}`);
+          const itemName = item.name || 'Безымянный предмет';
+          const itemType = item.type || 'unknown';
+          const itemId = item.id || 'unknown';
+          const quantity = item.quantity || 1;
+          const value = item.value || 0;
+          const description = item.description || 'Нет описания';
+          
+          addOutput(`${index + 1}. [ID: ${itemId}] ${itemName}`);
+          addOutput(`   Тип: ${itemType} | Количество: ${quantity} | Ценность: ${value}`);
+          addOutput(`   Описание: ${description}`);
+          addOutput('   ---');
         });
       }
       addOutput('============================');
@@ -450,6 +485,72 @@ export const AdminConsole = () => {
     }
   };
 
+  const handleRemoveCard = async (parts: string[]) => {
+    if (parts.length !== 3) {
+      addOutput('Использование: removecard <user_id> <card_id>');
+      return;
+    }
+
+    const userId = parts[1];
+    const cardId = parts[2];
+
+    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+    if (!uuidRegex.test(userId)) {
+      addOutput('Неверный формат UUID игрока');
+      return;
+    }
+
+    const { error } = await supabase.rpc('admin_remove_player_card', {
+      p_user_id: userId,
+      p_card_id: cardId,
+      p_admin_wallet_address: accountId
+    });
+
+    if (error) {
+      addOutput(`Ошибка удаления карты: ${error.message}`);
+    } else {
+      addOutput(`✅ Карта "${cardId}" удалена у игрока ${userId}`);
+      toast({
+        title: "Карта удалена",
+        description: `Карта удалена у игрока`,
+        variant: "destructive"
+      });
+    }
+  };
+
+  const handleRemoveItem = async (parts: string[]) => {
+    if (parts.length !== 3) {
+      addOutput('Использование: removeitem <user_id> <item_id>');
+      return;
+    }
+
+    const userId = parts[1];
+    const itemId = parts[2];
+
+    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+    if (!uuidRegex.test(userId)) {
+      addOutput('Неверный формат UUID игрока');
+      return;
+    }
+
+    const { error } = await supabase.rpc('admin_remove_player_item', {
+      p_user_id: userId,
+      p_item_id: itemId,
+      p_admin_wallet_address: accountId
+    });
+
+    if (error) {
+      addOutput(`Ошибка удаления предмета: ${error.message}`);
+    } else {
+      addOutput(`✅ Предмет "${itemId}" удален у игрока ${userId}`);
+      toast({
+        title: "Предмет удален",
+        description: `Предмет удален у игрока`,
+        variant: "destructive"
+      });
+    }
+  };
+
   const showHelp = () => {
     addOutput('=== АДМИНСКИЕ КОМАНДЫ ===');
     addOutput('find <wallet_address> - Найти игрока по кошельку и получить UUID');
@@ -460,6 +561,8 @@ export const AdminConsole = () => {
     addOutput('setbalance <user_id> <amount> - Установить баланс игрока');
     addOutput('givecard <user_id> <name> [rarity] [type] - Выдать карту игроку');
     addOutput('giveitem <user_id> <name> [quantity] [type] - Выдать предмет игроку');
+    addOutput('removecard <user_id> <card_id> - Удалить карту у игрока');
+    addOutput('removeitem <user_id> <item_id> - Удалить предмет у игрока');
     addOutput('ban <user_id> <reason> - Забанить игрока');
     addOutput('unban <user_id> - Разбанить игрока');
     addOutput('clear - Очистить консоль');
@@ -484,7 +587,7 @@ export const AdminConsole = () => {
       </CardHeader>
       <CardContent className="space-y-4">
         {/* Quick Actions */}
-        <div className="grid grid-cols-2 md:grid-cols-6 gap-2">
+        <div className="grid grid-cols-2 md:grid-cols-8 gap-2">
           <Button
             onClick={() => setCommand('cards ')}
             variant="outline"
@@ -519,6 +622,20 @@ export const AdminConsole = () => {
             size="sm"
           >
             Выдать предмет
+          </Button>
+          <Button
+            onClick={() => setCommand('removecard  ')}
+            variant="outline"
+            size="sm"
+          >
+            Удалить карту
+          </Button>
+          <Button
+            onClick={() => setCommand('removeitem  ')}
+            variant="outline"
+            size="sm"
+          >
+            Удалить предмет
           </Button>
           <Button
             onClick={() => setCommand('info ')}

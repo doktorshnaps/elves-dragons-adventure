@@ -615,6 +615,22 @@ export type Database = {
         Args: { p_admin_wallet_address?: string; p_wallet_address: string }
         Returns: boolean
       }
+      admin_remove_player_card: {
+        Args: {
+          p_admin_wallet_address: string
+          p_card_id: string
+          p_user_id: string
+        }
+        Returns: boolean
+      }
+      admin_remove_player_item: {
+        Args: {
+          p_admin_wallet_address: string
+          p_item_id: string
+          p_user_id: string
+        }
+        Returns: boolean
+      }
       admin_set_player_balance: {
         Args: {
           p_admin_wallet_address: string
