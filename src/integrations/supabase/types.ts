@@ -495,6 +495,39 @@ export type Database = {
         }
         Relationships: []
       }
+      whitelist: {
+        Row: {
+          added_at: string
+          added_by_wallet_address: string
+          created_at: string
+          id: string
+          is_active: boolean
+          notes: string | null
+          updated_at: string
+          wallet_address: string
+        }
+        Insert: {
+          added_at?: string
+          added_by_wallet_address: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          notes?: string | null
+          updated_at?: string
+          wallet_address: string
+        }
+        Update: {
+          added_at?: string
+          added_by_wallet_address?: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          notes?: string | null
+          updated_at?: string
+          wallet_address?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
@@ -513,6 +546,14 @@ export type Database = {
           p_admin_wallet_address: string
           p_amount: number
           p_target_user_id: string
+        }
+        Returns: boolean
+      }
+      admin_add_to_whitelist: {
+        Args: {
+          p_admin_wallet_address?: string
+          p_notes?: string
+          p_wallet_address: string
         }
         Returns: boolean
       }
@@ -545,6 +586,10 @@ export type Database = {
       admin_get_user_info: {
         Args: { p_admin_wallet_address: string; p_user_id: string }
         Returns: Json
+      }
+      admin_remove_from_whitelist: {
+        Args: { p_admin_wallet_address?: string; p_wallet_address: string }
+        Returns: boolean
       }
       admin_unban_user: {
         Args: {
@@ -626,6 +671,10 @@ export type Database = {
           selected_team: Json
           user_id: string
         }[]
+      }
+      is_whitelisted: {
+        Args: { p_wallet_address: string }
+        Returns: boolean
       }
       open_card_packs: {
         Args: {
