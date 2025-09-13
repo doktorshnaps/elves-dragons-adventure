@@ -3,6 +3,7 @@ import { useWallet } from '@/hooks/useWallet';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { WhitelistManager } from '@/components/admin/WhitelistManager';
+import { BannedUsersManager } from '@/components/admin/BannedUsersManager';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -359,6 +360,7 @@ export const AdminConsoleWithWhitelist = () => {
     <div className="space-y-6">
       <AdminConsole />
       <WhitelistManager />
+      <BannedUsersManager />
     </div>
   );
 };
