@@ -68,6 +68,9 @@ export const AdminConsole = () => {
         case 'givecard':
           await handleGiveCard(parts);
           break;
+        case 'listcards':
+          handleListCards();
+          break;
         case 'giveitem':
           await handleGiveItem(parts);
           break;
@@ -398,30 +401,44 @@ export const AdminConsole = () => {
 
   const handleGiveCard = async (parts: string[]) => {
     if (parts.length < 3) {
-      addOutput('Использование: givecard <user_id> <card_name> [rarity] [type]');
+      addOutput('Использование: givecard <user_id> <card_name_or_id> [rarity]');
+      addOutput('Для получения списка карт используйте команду: listcards');
       return;
     }
 
     const userId = parts[1];
-    const cardNameInput = parts[2];
-    const rarityInput = (parts[3] || 'common').toLowerCase();
-    const inputType = (parts[4] || 'character').toLowerCase();
-    const cardType = inputType === 'hero' ? 'character' : inputType === 'dragon' ? 'pet' : inputType;
+    const cardInput = parts[2];
+    const rarityInput = parts[3] || 'Обычный';
 
-    const dbCard = cardDatabase.find((c) => c.name.toLowerCase() === cardNameInput.toLowerCase());
+    // Поиск карты по ID (номеру) или имени
+    let dbCard = null;
+    
+    // Проверяем, является ли ввод числом (ID карты)
+    const cardId = parseInt(cardInput);
+    if (!isNaN(cardId) && cardId > 0 && cardId <= cardDatabase.length) {
+      dbCard = cardDatabase[cardId - 1]; // ID начинается с 1, но массив с 0
+    } else {
+      // Поиск по имени карты (частичное совпадение)
+      dbCard = cardDatabase.find((c) => c.name.toLowerCase().includes(cardInput.toLowerCase()));
+    }
+
+    if (!dbCard) {
+      addOutput(`❌ Карта "${cardInput}" не найдена. Используйте команду listcards для просмотра доступных карт.`);
+      return;
+    }
 
     const cardData = {
       id: `admin-${Date.now()}-${Math.random()}`,
-      name: dbCard?.name || cardNameInput,
-      type: cardType,
+      name: dbCard.name,
+      type: dbCard.type,
       rarity: rarityInput,
-      faction: (dbCard as any)?.faction,
-      power: 10,
-      defense: 10,
-      health: 100,
-      maxHealth: 100,
-      image: (dbCard as any)?.image || '/placeholder.svg',
-      description: (dbCard as any)?.description || 'Карта выдана администратором'
+      faction: dbCard.faction || 'Без фракции',
+      power: dbCard.baseStats.power,
+      defense: dbCard.baseStats.defense,
+      health: dbCard.baseStats.health,
+      maxHealth: dbCard.baseStats.health,
+      image: dbCard.image || '/placeholder.svg',
+      description: dbCard.description
     };
 
     const { error } = await supabase.rpc('admin_give_player_card', {
@@ -434,6 +451,8 @@ export const AdminConsole = () => {
       addOutput(`Ошибка выдачи карты: ${error.message}`);
     } else {
       addOutput(`✅ Карта "${cardData.name}" выдана игроку ${userId}`);
+      addOutput(`Тип: ${cardData.type === 'character' ? 'Герой' : 'Дракон'} | Фракция: ${cardData.faction} | Редкость: ${cardData.rarity}`);
+      addOutput(`Сила: ${cardData.power} | Защита: ${cardData.defense} | Здоровье: ${cardData.health} | Магия: ${dbCard.baseStats.magic}`);
       toast({
         title: "Карта выдана",
         description: `Карта "${cardData.name}" выдана игроку`
@@ -572,6 +591,50 @@ export const AdminConsole = () => {
     }
   };
 
+  const handleListCards = () => {
+    addOutput('=== СПИСОК ВСЕХ ДОСТУПНЫХ КАРТ ===');
+    addOutput('');
+    
+    // Группируем карты по фракциям
+    const cardsByFaction: Record<string, any[]> = {};
+    
+    cardDatabase.forEach((card, index) => {
+      const faction = card.faction || 'Без фракции';
+      if (!cardsByFaction[faction]) {
+        cardsByFaction[faction] = [];
+      }
+      cardsByFaction[faction].push({ ...card, index: index + 1 } as any);
+    });
+    
+    // Выводим карты по фракциям
+    Object.entries(cardsByFaction).forEach(([faction, cards]) => {
+      addOutput(`--- ${faction.toUpperCase()} ---`);
+      
+      // Группируем по типу (герои/драконы)
+      const heroes = cards.filter(c => c.type === 'character');
+      const pets = cards.filter(c => c.type === 'pet');
+      
+      if (heroes.length > 0) {
+        addOutput('ГЕРОИ:');
+        heroes.forEach((card: any) => {
+          addOutput(`${card.index}. ${card.name} | Сила: ${card.baseStats.power} | Защита: ${card.baseStats.defense} | Здоровье: ${card.baseStats.health} | Магия: ${card.baseStats.magic}`);
+        });
+      }
+      
+      if (pets.length > 0) {
+        addOutput('ДРАКОНЫ:');
+        pets.forEach((card: any) => {
+          addOutput(`${card.index}. ${card.name} | Сила: ${card.baseStats.power} | Защита: ${card.baseStats.defense} | Здоровье: ${card.baseStats.health} | Магия: ${card.baseStats.magic}`);
+        });
+      }
+      
+      addOutput('');
+    });
+    
+    addOutput(`ИТОГО: ${cardDatabase.length} карт`);
+    addOutput('Для выдачи карты используйте: givecard <user_id> <номер_карты_или_название> [редкость]');
+  };
+
   const showHelp = () => {
     addOutput('=== АДМИНСКИЕ КОМАНДЫ ===');
     addOutput('find <wallet_address> - Найти игрока по кошельку и получить UUID');
@@ -580,10 +643,11 @@ export const AdminConsole = () => {
     addOutput('inventory <user_id> - Просмотреть инвентарь игрока');
     addOutput('addbalance <user_id> <amount> - Добавить ELL на баланс игрока');
     addOutput('setbalance <user_id> <amount> - Установить баланс игрока');
-    addOutput('givecard <user_id> <name> [rarity] [type] - Выдать карту игроку');
+    addOutput('givecard <user_id> <name_or_id> [rarity] - Выдать карту игроку');
     addOutput('giveitem <user_id> <name> [quantity] [type] - Выдать предмет игроку');
     addOutput('removecard <user_id> <card_id> - Удалить карту у игрока');
     addOutput('removeitem <user_id> <item_id> - Удалить предмет у игрока');
+    addOutput('listcards - Показать список всех доступных карт с номерами');
     addOutput('ban <user_id> <reason> - Забанить игрока');
     addOutput('unban <user_id> - Разбанить игрока');
     addOutput('clear - Очистить консоль');
