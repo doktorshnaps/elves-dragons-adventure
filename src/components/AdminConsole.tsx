@@ -9,7 +9,7 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Terminal, DollarSign, Ban, UserCheck } from 'lucide-react';
-
+import { cardDatabase } from '@/data/cardDatabase';
 const ADMIN_WALLET = 'mr_bruts.tg';
 
 export const AdminConsole = () => {
@@ -290,20 +290,21 @@ export const AdminConsole = () => {
         let heroCount = 0;
         let dragonCount = 0;
         cards.forEach((card, index) => {
-          const cardType = card.type || 'unknown';
-          const cardName = card.name || 'Безымянная карта';
-          const rarity = card.rarity || 'common';
-          const faction = card.faction || 'без фракции';
-          const power = card.power || 0;
-          const defense = card.defense || 0;
-          const health = card.health || 0;
-          const cardId = card.id || 'unknown';
+          const rawType = card.type || card.card_type || (card.card_data && (card.card_data.type || card.card_data.card_type)) || 'unknown';
+          const normalizedType = rawType === 'hero' ? 'character' : rawType === 'dragon' ? 'pet' : rawType;
+          const cardName = card.name || card.card_name || (card.card_data && (card.card_data.name || card.card_data.card_name)) || 'Безымянная карта';
+          const rarity = card.rarity || card.card_rarity || (card.card_data && (card.card_data.rarity || card.card_data.card_rarity)) || 'common';
+          const faction = card.faction || (card.card_data && card.card_data.faction) || 'без фракции';
+          const power = card.power ?? (card.card_data && card.card_data.power) ?? 0;
+          const defense = card.defense ?? (card.card_data && card.card_data.defense) ?? 0;
+          const health = card.health ?? (card.card_data && card.card_data.health) ?? 0;
+          const cardId = card.id || (card.card_data && card.card_data.id) || 'unknown';
           
-          if (cardType === 'character') heroCount++;
-          if (cardType === 'pet') dragonCount++;
+          if (normalizedType === 'character') heroCount++;
+          if (normalizedType === 'pet') dragonCount++;
           
           addOutput(`${index + 1}. [ID: ${cardId}] ${cardName}`);
-          addOutput(`   Тип: ${cardType === 'character' ? 'Герой' : cardType === 'pet' ? 'Дракон' : cardType}`);
+          addOutput(`   Тип: ${normalizedType === 'character' ? 'Герой' : normalizedType === 'pet' ? 'Дракон' : normalizedType}`);
           addOutput(`   Фракция: ${faction} | Редкость: ${rarity}`);
           addOutput(`   Сила: ${power} | Защита: ${defense} | Здоровье: ${health}`);
           addOutput('   ---');
@@ -402,27 +403,25 @@ export const AdminConsole = () => {
     }
 
     const userId = parts[1];
-    const cardName = parts[2];
-    const rarity = parts[3] || 'common';
-    const cardType = parts[4] || 'hero';
+    const cardNameInput = parts[2];
+    const rarityInput = (parts[3] || 'common').toLowerCase();
+    const inputType = (parts[4] || 'character').toLowerCase();
+    const cardType = inputType === 'hero' ? 'character' : inputType === 'dragon' ? 'pet' : inputType;
 
-    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
-    if (!uuidRegex.test(userId)) {
-      addOutput('Неверный формат UUID игрока');
-      return;
-    }
+    const dbCard = cardDatabase.find((c) => c.name.toLowerCase() === cardNameInput.toLowerCase());
 
     const cardData = {
       id: `admin-${Date.now()}-${Math.random()}`,
-      name: cardName,
+      name: dbCard?.name || cardNameInput,
       type: cardType,
-      rarity: rarity,
-      power: 10,
-      defense: 10,
-      health: 100,
-      maxHealth: 100,
-      image: '/placeholder.svg',
-      description: `Карта выдана администратором`
+      rarity: dbCard?.rarity || rarityInput,
+      faction: dbCard?.faction,
+      power: dbCard?.power ?? 10,
+      defense: dbCard?.defense ?? 10,
+      health: dbCard?.health ?? 100,
+      maxHealth: dbCard?.health ?? 100,
+      image: dbCard?.image || '/placeholder.svg',
+      description: dbCard?.description || 'Карта выдана администратором'
     };
 
     const { error } = await supabase.rpc('admin_give_player_card', {
