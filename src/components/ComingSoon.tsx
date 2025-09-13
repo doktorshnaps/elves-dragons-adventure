@@ -37,7 +37,7 @@ export const ComingSoon = () => {
         transition={{ duration: 0.8, ease: "easeOut" }}
         className="flex flex-col items-center text-center max-w-2xl mx-auto p-8"
       >
-        {/* Coming Soon Image */}
+        {/* Blocked Player Image */}
         <motion.div
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
@@ -45,9 +45,9 @@ export const ComingSoon = () => {
           className="mb-8"
         >
           <img 
-            src="/coming-soon.png" 
-            alt="Coming Soon"
-            className="w-full max-w-md mx-auto rounded-lg shadow-2xl"
+            src="/blocked-player.png" 
+            alt="Заблокированный игрок"
+            className="w-full max-w-lg mx-auto rounded-lg shadow-2xl"
           />
         </motion.div>
 
@@ -58,16 +58,16 @@ export const ComingSoon = () => {
           transition={{ duration: 0.8, delay: 0.4 }}
           className="space-y-6"
         >
-          <h1 className="text-4xl md:text-6xl font-bold bg-gradient-to-r from-yellow-400 via-amber-500 to-orange-600 bg-clip-text text-transparent">
-            Скоро Открытие!
+          <h1 className="text-4xl md:text-6xl font-bold bg-gradient-to-r from-red-500 via-red-600 to-red-700 bg-clip-text text-transparent">
+            Доступ Ограничен
           </h1>
           
           <p className="text-xl md:text-2xl text-gray-300 leading-relaxed">
-            Игра находится в разработке. Доступ предоставляется только участникам закрытого тестирования.
+            Ваш аккаунт не находится в списке разрешенных для доступа к игре.
           </p>
           
           <p className="text-lg text-gray-400">
-            Следите за обновлениями в наших социальных сетях, чтобы не пропустить официальный запуск!
+            Обратитесь к администратору для получения доступа к игре.
           </p>
         </motion.div>
 
