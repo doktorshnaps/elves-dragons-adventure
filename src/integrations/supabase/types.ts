@@ -672,6 +672,10 @@ export type Database = {
           user_id: string
         }[]
       }
+      is_admin: {
+        Args: Record<PropertyKey, never>
+        Returns: boolean
+      }
       is_user_banned: {
         Args: { p_wallet_address: string }
         Returns: boolean
