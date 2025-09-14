@@ -26,13 +26,7 @@ export const LazyGrimoire = createLazyComponent(
   }
 );
 
-export const LazyBattle = createLazyComponent(
-  () => import('@/pages/Battle').then(module => ({ default: module.Battle })),
-  { 
-    fallback: <div className="p-4">Загрузка боевой системы...</div>,
-    preload: false 
-  }
-);
+// Lazy Battle удален - использует устаревшую механику подземелий
 
 export const LazyDungeons = createLazyComponent(
   () => import('@/pages/Dungeons'),
@@ -91,59 +85,11 @@ export const LazyShelter = createLazyComponent(
   }
 );
 
-// Lazy loading для подземелий
-export const LazyBlackDragonLair = createLazyComponent(
-  () => import('@/pages/dungeons/BlackDragonLair').then(module => ({ default: module.BlackDragonLair })),
-  { 
-    fallback: <div className="p-4">Загрузка логова черного дракона...</div>,
-    preload: false 
-  }
-);
-
-export const LazyForgottenSoulsCave = createLazyComponent(
-  () => import('@/pages/dungeons/ForgottenSoulsCave').then(module => ({ default: module.ForgottenSoulsCave })),
-  { 
-    fallback: <div className="p-4">Загрузка пещеры забытых душ...</div>,
-    preload: false 
-  }
-);
-
-export const LazyIcyThrone = createLazyComponent(
-  () => import('@/pages/dungeons/IcyThrone').then(module => ({ default: module.IcyThrone })),
-  { 
-    fallback: <div className="p-4">Загрузка ледяного трона...</div>,
-    preload: false 
-  }
-);
-
-export const LazyDarkMageTower = createLazyComponent(
-  () => import('@/pages/dungeons/DarkMageTower').then(module => ({ default: module.DarkMageTower })),
-  { 
-    fallback: <div className="p-4">Загрузка башни темного мага...</div>,
-    preload: false 
-  }
-);
-
+// Lazy loading для подземелий - только активные
 export const LazySpiderNest = createLazyComponent(
   () => import('@/pages/dungeons/SpiderNest').then(module => ({ default: module.SpiderNest })),
   { 
     fallback: <div className="p-4">Загрузка паучьего гнезда...</div>,
-    preload: false 
-  }
-);
-
-export const LazyBoneDemonDungeon = createLazyComponent(
-  () => import('@/pages/dungeons/BoneDemonDungeon').then(module => ({ default: module.BoneDemonDungeon })),
-  { 
-    fallback: <div className="p-4">Загрузка подземелья костяных демонов...</div>,
-    preload: false 
-  }
-);
-
-export const LazySeaSerpentLair = createLazyComponent(
-  () => import('@/pages/dungeons/SeaSerpentLair').then(module => ({ default: module.SeaSerpentLair })),
-  { 
-    fallback: <div className="p-4">Загрузка логова морского змея...</div>,
     preload: false 
   }
 );
@@ -178,7 +124,7 @@ export const LazyGameInterface = createLazyComponent(
 export const EquipmentWithLazyLoading = withLazyLoading(LazyEquipment);
 export const TeamStatsWithLazyLoading = withLazyLoading(LazyTeamStats);
 export const GrimoireWithLazyLoading = withLazyLoading(LazyGrimoire);
-export const BattleWithLazyLoading = withLazyLoading(LazyBattle);
+// BattleWithLazyLoading удален - использует устаревшую механику
 export const DungeonsWithLazyLoading = withLazyLoading(LazyDungeons);
 export const AdventuresPageWithLazyLoading = withLazyLoading(LazyAdventuresPage);
 export const MarketplaceWithLazyLoading = withLazyLoading(LazyMarketplace);
@@ -188,11 +134,5 @@ export const ShelterWithLazyLoading = withLazyLoading(LazyShelter);
 export const ShopWithLazyLoading = withLazyLoading(LazyShop);
 export const GameInterfaceWithLazyLoading = withLazyLoading(LazyGameInterface);
 
-// Обертки для подземелий
-export const BlackDragonLairWithLazyLoading = withLazyLoading(LazyBlackDragonLair);
-export const ForgottenSoulsCaveWithLazyLoading = withLazyLoading(LazyForgottenSoulsCave);
-export const IcyThroneWithLazyLoading = withLazyLoading(LazyIcyThrone);
-export const DarkMageTowerWithLazyLoading = withLazyLoading(LazyDarkMageTower);
+// Обертки для активных подземелий
 export const SpiderNestWithLazyLoading = withLazyLoading(LazySpiderNest);
-export const BoneDemonDungeonWithLazyLoading = withLazyLoading(LazyBoneDemonDungeon);
-export const SeaSerpentLairWithLazyLoading = withLazyLoading(LazySeaSerpentLair);

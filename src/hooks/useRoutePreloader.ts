@@ -5,7 +5,7 @@ import {
   LazyEquipment,
   LazyTeamStats,
   LazyGrimoire,
-  LazyBattle,
+  // LazyBattle удален - использует устаревшую механику
   LazyDungeons,
   LazyMarketplace,
   LazyShopPage,
@@ -21,7 +21,7 @@ const routeComponentMap = {
   '/team': LazyTeamStats,
   '/statistics': LazyTeamStats,
   '/grimoire': LazyGrimoire,
-  '/battle': LazyBattle,
+  // '/battle': LazyBattle, // удален - использует устаревшую механику
   '/dungeons': LazyDungeons,
   '/dungeons/spider-nest': LazySpiderNest,
   '/marketplace': LazyMarketplace,
@@ -35,12 +35,12 @@ const routeComponentMap = {
 const relatedComponents = {
   '/': [LazyEquipment, LazyTeamStats], // На главной preload основные разделы
   '/menu': [LazyEquipment, LazyTeamStats, LazyShopPage, LazySpiderNest],
-  '/dungeons': [LazyBattle, LazyAdventuresPage, LazySpiderNest],
+  '/dungeons': [LazyAdventuresPage, LazySpiderNest], // убрали LazyBattle
   '/equipment': [LazyTeamStats, LazyShopPage],
   '/marketplace': [LazyShopPage],
   '/shop': [LazyMarketplace],
-  '/battle': [LazyDungeons],
-  '/team': [LazyEquipment, LazyBattle]
+  // '/battle': [LazyDungeons], // удален
+  '/team': [LazyEquipment] // убрали LazyBattle
 };
 
 export const useRoutePreloader = () => {

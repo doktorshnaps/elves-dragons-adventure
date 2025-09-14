@@ -15,20 +15,14 @@ import {
   EquipmentWithLazyLoading,
   TeamStatsWithLazyLoading,
   GrimoireWithLazyLoading,
-  BattleWithLazyLoading,
+  // BattleWithLazyLoading удален - использует устаревшую механику
   DungeonsWithLazyLoading,
   AdventuresPageWithLazyLoading,
   MarketplaceWithLazyLoading,
   ShopPageWithLazyLoading,
   QuestPageWithLazyLoading,
   ShelterWithLazyLoading,
-  BlackDragonLairWithLazyLoading,
-  ForgottenSoulsCaveWithLazyLoading,
-  IcyThroneWithLazyLoading,
-  DarkMageTowerWithLazyLoading,
-  SpiderNestWithLazyLoading,
-  BoneDemonDungeonWithLazyLoading,
-  SeaSerpentLairWithLazyLoading
+  SpiderNestWithLazyLoading
 } from './components/lazy/LazyComponents';
 
 function App() {
@@ -46,21 +40,23 @@ function App() {
           <Route path="/team" element={<ProtectedRoute><TeamStatsWithLazyLoading /></ProtectedRoute>} />
           <Route path="/statistics" element={<ProtectedRoute><TeamStatsWithLazyLoading /></ProtectedRoute>} />
           <Route path="/equipment" element={<ProtectedRoute><EquipmentWithLazyLoading /></ProtectedRoute>} />
-          <Route path="/grimoire" element={<ProtectedRoute><GrimoireWithLazyLoading /></ProtectedRoute>} />
-          <Route path="/battle" element={<ProtectedRoute><BattleWithLazyLoading /></ProtectedRoute>} />
+{/* Battle удален - использует устаревшую механику */}
           <Route path="/dungeons" element={<ProtectedRoute><DungeonsWithLazyLoading /></ProtectedRoute>} />
           <Route path="/adventure" element={<ProtectedRoute><AdventuresPageWithLazyLoading /></ProtectedRoute>} />
           <Route path="/marketplace" element={<ProtectedRoute><MarketplaceWithLazyLoading /></ProtectedRoute>} />
           <Route path="/shop" element={<ProtectedRoute><ShopPageWithLazyLoading /></ProtectedRoute>} />
           <Route path="/quest" element={<ProtectedRoute><QuestPageWithLazyLoading /></ProtectedRoute>} />
           <Route path="/shelter" element={<ProtectedRoute><ShelterWithLazyLoading /></ProtectedRoute>} />
+{/* Только логово пауков активно */}
+<Route path="/dungeons/spider-nest" element={<ProtectedRoute><SpiderNestWithLazyLoading /></ProtectedRoute>} />
+{/* Остальные подземелья временно отключены
 <Route path="/dungeons/dragon-lair" element={<ProtectedRoute><BlackDragonLairWithLazyLoading /></ProtectedRoute>} />
 <Route path="/dungeons/forgotten-souls" element={<ProtectedRoute><ForgottenSoulsCaveWithLazyLoading /></ProtectedRoute>} />
 <Route path="/dungeons/icy-throne" element={<ProtectedRoute><IcyThroneWithLazyLoading /></ProtectedRoute>} />
 <Route path="/dungeons/dark-mage" element={<ProtectedRoute><DarkMageTowerWithLazyLoading /></ProtectedRoute>} />
-<Route path="/dungeons/spider-nest" element={<ProtectedRoute><SpiderNestWithLazyLoading /></ProtectedRoute>} />
 <Route path="/dungeons/bone-dungeon" element={<ProtectedRoute><BoneDemonDungeonWithLazyLoading /></ProtectedRoute>} />
 <Route path="/dungeons/sea-serpent" element={<ProtectedRoute><SeaSerpentLairWithLazyLoading /></ProtectedRoute>} />
+*/}
           </Routes>
           <Toaster />
         </LanguageProvider>
