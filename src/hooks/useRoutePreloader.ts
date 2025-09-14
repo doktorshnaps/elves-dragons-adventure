@@ -11,7 +11,8 @@ import {
   LazyShopPage,
   LazyQuestPage,
   LazyShelter,
-  LazyAdventuresPage
+  LazyAdventuresPage,
+  LazySpiderNest
 } from '@/components/lazy/LazyComponents';
 
 // Маппинг роутов к компонентам для preloading
@@ -22,6 +23,7 @@ const routeComponentMap = {
   '/grimoire': LazyGrimoire,
   '/battle': LazyBattle,
   '/dungeons': LazyDungeons,
+  '/dungeons/spider-nest': LazySpiderNest,
   '/marketplace': LazyMarketplace,
   '/shop': LazyShopPage,
   '/quest': LazyQuestPage,
@@ -32,8 +34,8 @@ const routeComponentMap = {
 // Связанные компоненты для интеллектуального preloading
 const relatedComponents = {
   '/': [LazyEquipment, LazyTeamStats], // На главной preload основные разделы
-  '/menu': [LazyEquipment, LazyTeamStats, LazyShopPage],
-  '/dungeons': [LazyBattle, LazyAdventuresPage],
+  '/menu': [LazyEquipment, LazyTeamStats, LazyShopPage, LazySpiderNest],
+  '/dungeons': [LazyBattle, LazyAdventuresPage, LazySpiderNest],
   '/equipment': [LazyTeamStats, LazyShopPage],
   '/marketplace': [LazyShopPage],
   '/shop': [LazyMarketplace],

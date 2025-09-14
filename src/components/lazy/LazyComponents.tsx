@@ -187,3 +187,12 @@ export const QuestPageWithLazyLoading = withLazyLoading(LazyQuestPage);
 export const ShelterWithLazyLoading = withLazyLoading(LazyShelter);
 export const ShopWithLazyLoading = withLazyLoading(LazyShop);
 export const GameInterfaceWithLazyLoading = withLazyLoading(LazyGameInterface);
+
+// Обертки для подземелий
+export const BlackDragonLairWithLazyLoading = withLazyLoading(LazyBlackDragonLair);
+export const ForgottenSoulsCaveWithLazyLoading = withLazyLoading(LazyForgottenSoulsCave);
+export const IcyThroneWithLazyLoading = withLazyLoading(LazyIcyThrone);
+export const DarkMageTowerWithLazyLoading = withLazyLoading(LazyDarkMageTower);
+export const SpiderNestWithLazyLoading = withLazyLoading(LazySpiderNest);
+export const BoneDemonDungeonWithLazyLoading = withLazyLoading(LazyBoneDemonDungeon);
+export const SeaSerpentLairWithLazyLoading = withLazyLoading(LazySeaSerpentLair);
