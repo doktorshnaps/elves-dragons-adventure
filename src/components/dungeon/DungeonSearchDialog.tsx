@@ -11,6 +11,7 @@ import { ActiveDungeonButton } from "./components/ActiveDungeonButton";
 import { DungeonControls } from "./components/DungeonControls";
 import { DungeonWarnings } from "./components/DungeonWarnings";
 import { usePlayerState } from "@/hooks/usePlayerState";
+import { useGameData } from "@/hooks/useGameData";
 
 interface DungeonSearchDialogProps {
   onClose: () => void;
@@ -58,9 +59,10 @@ export const DungeonSearchDialog = ({
   const navigate = useNavigate();
   const [activeDungeon, setActiveDungeon] = React.useState<string | null>(null);
   const { playerStats } = usePlayerState();
+  const { updateGameData } = useGameData();
 
   React.useEffect(() => {
-    // Check for team battle state first
+    // Check for team battle state only (new system)
     const teamBattleState = localStorage.getItem('teamBattleState');
     const hasActiveBattle = localStorage.getItem('activeBattleInProgress') === 'true';
     
@@ -75,21 +77,18 @@ export const DungeonSearchDialog = ({
         console.error('Error parsing teamBattleState:', error);
       }
     }
-    
-    // Fallback to regular battle state
-    const battleState = localStorage.getItem('battleState');
-    if (battleState) {
-      try {
-        const state = JSON.parse(battleState);
-        if (state?.selectedDungeon && state?.playerStats?.health > 0) {
-          setActiveDungeon(state.selectedDungeon);
-        }
-      } catch (error) {
-        console.error('Error parsing battleState:', error);
-      }
-    }
   }, []);
 
+  const handleResetActiveBattle = async () => {
+    try {
+      localStorage.removeItem('teamBattleState');
+      localStorage.removeItem('activeBattleInProgress');
+      localStorage.removeItem('battleState'); // legacy
+    } catch {}
+    try { await updateGameData({ battleState: null }); } catch {}
+    setActiveDungeon(null);
+    try { window.dispatchEvent(new CustomEvent('battleReset')); } catch {}
+  };
   const handleDungeonSelect = (dungeonType: DungeonType) => {
     // Only allow selection if no active dungeon or if it's the active dungeon
     if (!activeDungeon || activeDungeon === dungeonType) {
@@ -163,9 +162,18 @@ export const DungeonSearchDialog = ({
           </div>
 
           {activeDungeon && (
-            <p className="text-sm text-muted-foreground mt-4">
-              У вас есть активный бой в подземелье. Завершите его или сдайтесь, чтобы войти в другое подземелье.
-            </p>
+            <div className="text-sm text-muted-foreground mt-4 space-y-2">
+              <p>
+                У вас есть активный бой в подземелье. Завершите его или сдайтесь, чтобы войти в другое подземелье.
+              </p>
+              <Button
+                variant="destructive"
+                onClick={handleResetActiveBattle}
+                className="border border-destructive/40"
+              >
+                Сбросить активный бой
+              </Button>
+            </div>
           )}
 
           <Button

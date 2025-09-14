@@ -49,6 +49,7 @@ export class ErrorBoundary extends Component<Props, State> {
                     try {
                       localStorage.removeItem('teamBattleState');
                       localStorage.removeItem('activeBattleInProgress');
+                      localStorage.removeItem('battleState');
                     } catch {}
                   }}
                 >
