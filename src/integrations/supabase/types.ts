@@ -55,8 +55,11 @@ export type Database = {
           created_at: string
           current_health: number
           id: string
+          is_in_medical_bay: boolean | null
           last_heal_time: string | null
           max_health: number
+          medical_bay_heal_rate: number | null
+          medical_bay_start_time: string | null
           updated_at: string
           user_id: string
           wallet_address: string | null
@@ -68,8 +71,11 @@ export type Database = {
           created_at?: string
           current_health?: number
           id?: string
+          is_in_medical_bay?: boolean | null
           last_heal_time?: string | null
           max_health?: number
+          medical_bay_heal_rate?: number | null
+          medical_bay_start_time?: string | null
           updated_at?: string
           user_id: string
           wallet_address?: string | null
@@ -81,8 +87,11 @@ export type Database = {
           created_at?: string
           current_health?: number
           id?: string
+          is_in_medical_bay?: boolean | null
           last_heal_time?: string | null
           max_health?: number
+          medical_bay_heal_rate?: number | null
+          medical_bay_start_time?: string | null
           updated_at?: string
           user_id?: string
           wallet_address?: string | null
@@ -328,6 +337,53 @@ export type Database = {
           version?: number | null
         }
         Relationships: []
+      }
+      medical_bay: {
+        Row: {
+          card_instance_id: string
+          created_at: string
+          estimated_completion: string | null
+          heal_rate: number
+          id: string
+          is_completed: boolean
+          placed_at: string
+          updated_at: string
+          user_id: string
+          wallet_address: string | null
+        }
+        Insert: {
+          card_instance_id: string
+          created_at?: string
+          estimated_completion?: string | null
+          heal_rate?: number
+          id?: string
+          is_completed?: boolean
+          placed_at?: string
+          updated_at?: string
+          user_id: string
+          wallet_address?: string | null
+        }
+        Update: {
+          card_instance_id?: string
+          created_at?: string
+          estimated_completion?: string | null
+          heal_rate?: number
+          id?: string
+          is_completed?: boolean
+          placed_at?: string
+          updated_at?: string
+          user_id?: string
+          wallet_address?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "medical_bay_card_instance_id_fkey"
+            columns: ["card_instance_id"]
+            isOneToOne: false
+            referencedRelation: "card_instances"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       profiles: {
         Row: {
@@ -741,9 +797,21 @@ export type Database = {
         }
         Returns: Json
       }
+      place_card_in_medical_bay: {
+        Args: { p_card_instance_id: string; p_wallet_address: string }
+        Returns: Json
+      }
       process_marketplace_purchase: {
         Args: { listing_id: string }
         Returns: undefined
+      }
+      process_medical_bay_healing: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
+      }
+      remove_card_from_medical_bay: {
+        Args: { p_card_instance_id: string; p_wallet_address: string }
+        Returns: Json
       }
       reset_shop_inventory: {
         Args: Record<PropertyKey, never>

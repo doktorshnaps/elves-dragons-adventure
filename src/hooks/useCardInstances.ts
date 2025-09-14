@@ -4,7 +4,7 @@ import { useWallet } from '@/hooks/useWallet';
 import { useToast } from '@/hooks/use-toast';
 import { Card } from '@/types/cards';
 
-interface CardInstance {
+export interface CardInstance {
   id: string;
   user_id?: string | null;
   wallet_address?: string;
@@ -13,6 +13,9 @@ interface CardInstance {
   current_health: number;
   max_health: number;
   last_heal_time: string;
+  is_in_medical_bay?: boolean;
+  medical_bay_start_time?: string;
+  medical_bay_heal_rate?: number;
   card_data: Card;
   created_at: string;
   updated_at: string;

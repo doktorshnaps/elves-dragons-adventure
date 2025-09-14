@@ -1,7 +1,7 @@
 import { Card } from '@/types/cards';
 
 const HEAL_RATE = 1; // 1 HP per interval
-const HEAL_INTERVAL = 10 * 60 * 1000; // 10 minutes in milliseconds
+const HEAL_INTERVAL = 1 * 60 * 1000; // 1 minute in milliseconds
 
 /**
  * Initialize card health if not set
