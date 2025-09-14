@@ -1,6 +1,7 @@
 import { Card } from '@/types/cards';
 import { TeamPair } from '@/types/teamBattle';
 import { applyDamageToCard } from './cardHealthUtils';
+import { supabase } from '@/integrations/supabase/client';
 
 /**
  * Apply damage to cards in a team pair and update localStorage
@@ -36,23 +37,42 @@ export const applyDamageToPair = async (
     updatedHero = applyDamageToCard(pair.hero, remainingDamage);
   }
   
-  // Update cards in game data
-  const currentCards = (gameData.cards as Card[]) || [];
-  const updatedCards = currentCards.map(card => {
-    if (updatedHero && card.id === updatedHero.id) return updatedHero;
-    if (updatedDragon && card.id === updatedDragon.id) return updatedDragon;
-    return card;
-  });
-  
-  // Persist updated cards
-  await updateGameData({ cards: updatedCards });
-  // Sync localStorage and notify listeners
+  // Persist damage to Supabase card_instances (source of truth)
+  const wallet = (gameData && (gameData as any).wallet_address) || null;
+
+  // Calculate actual damage portions
+  const originalDragonHealth = pair.dragon ? (pair.dragon.currentHealth ?? pair.dragon.health ?? 0) : 0;
+  const appliedDragonDamage = pair.dragon ? Math.min(damage, Math.max(0, originalDragonHealth)) : 0;
+  const appliedHeroDamage = Math.max(0, damage - appliedDragonDamage);
+
   try {
-    localStorage.setItem('gameCards', JSON.stringify(updatedCards));
-    window.dispatchEvent(new CustomEvent('cardsUpdate', { detail: { cards: updatedCards } }));
-  } catch (e) {
-    // no-op if storage not available
+    if (wallet && updatedDragon && appliedDragonDamage > 0 && pair.dragon) {
+      const newDragonHealth = updatedDragon.currentHealth ?? updatedDragon.health;
+      await supabase
+        .from('card_instances')
+        .update({ current_health: newDragonHealth })
+        .eq('wallet_address', wallet)
+        .eq('card_template_id', pair.dragon.id)
+        .select();
+    }
+
+    if (wallet && updatedHero && appliedHeroDamage > 0 && pair.hero) {
+      const newHeroHealth = updatedHero.currentHealth ?? updatedHero.health;
+      await supabase
+        .from('card_instances')
+        .update({ current_health: newHeroHealth })
+        .eq('wallet_address', wallet)
+        .eq('card_template_id', pair.hero.id)
+        .select();
+    }
+
+    if ((appliedDragonDamage > 0 || appliedHeroDamage > 0)) {
+      window.dispatchEvent(new CustomEvent('cardInstanceHealthUpdate', { detail: {} }));
+    }
+  } catch (err) {
+    console.error('Failed to persist damage to Supabase:', err);
   }
+
   
   // Dispatch health sync events for immediate UI updates
   if (updatedHero) {
