@@ -142,8 +142,13 @@ const MonsterCard = ({ name, health, power, isBoss, image, specialAbilities, des
       </CardHeader>
       <CardContent className="space-y-3">
         {image && (
-          <div className="w-full h-32 bg-cover bg-center rounded-md border border-game-accent/20"
-               style={{ backgroundImage: `url(${image})` }} />
+          <div className="w-full h-48 overflow-hidden rounded-md border border-game-accent/20 bg-gradient-to-b from-gray-900/20 to-gray-900/40">
+            <img 
+              src={image} 
+              alt={name}
+              className="w-full h-full object-contain"
+            />
+          </div>
         )}
         
         {description && (
