@@ -42,10 +42,17 @@ export const useTeamSelection = () => {
   };
 
   const handlePairRemove = async (index: number) => {
-    console.log('🗑️ Removing pair at index:', index, 'from team with', selectedPairs.length, 'pairs');
-    const newPairs = selectedPairs.filter((_, i) => i !== index);
-    console.log('🗑️ New team size:', newPairs.length);
-    // Save to game data
+    const pair = selectedPairs[index];
+    if (!pair?.hero?.id) return;
+    const heroId = pair.hero.id;
+
+    console.log('🗑️ Removing pair by heroId:', heroId, 'at filtered index:', index);
+
+    const baseTeam = (gameData.selectedTeam ?? []) as TeamPair[];
+    const newPairs = baseTeam.filter(p => p?.hero?.id !== heroId);
+
+    console.log('🗑️ Team before:', baseTeam.length, 'after:', newPairs.length);
+
     await updateGameData({
       selectedTeam: newPairs
     });
