@@ -40,6 +40,18 @@ export const useCardInstances = () => {
 
       let list = (data || []) as unknown as CardInstance[];
 
+      // Always sync health data from game_data.cards (reflects latest battle damage)
+      try {
+        const { error: syncHealthError } = await supabase.rpc('sync_card_instances_health_from_game_data', {
+          p_wallet_address: accountId,
+        });
+        if (syncHealthError) {
+          console.warn('Sync health failed:', syncHealthError.message);
+        }
+      } catch (e) {
+        console.warn('Sync health exception:', e);
+      }
+
       // Auto-sync: if no instances yet but cards exist in game_data, create instances
       if (list.length === 0) {
         try {
@@ -57,6 +69,13 @@ export const useCardInstances = () => {
           }
         } catch (e) {
           console.warn('Sync card instances exception:', e);
+        }
+      } else {
+        // Reload after health sync to get updated values
+        const { data: dataAfter, error: errAfter } = await supabase
+          .rpc('get_card_instances_by_wallet', { p_wallet_address: accountId });
+        if (!errAfter) {
+          list = (dataAfter || []) as unknown as CardInstance[];
         }
       }
 
