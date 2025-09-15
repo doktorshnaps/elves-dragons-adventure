@@ -123,17 +123,6 @@ export const useGameStore = create<GameState>()(
 
       syncAccountData: async (walletAddress: string) => {
         try {
-          // Сброс состояния перед загрузкой новых данных
-          set({ 
-            accountLevel: 1, 
-            accountExperience: 0,
-            balance: 100,
-            cards: [],
-            inventory: [],
-            selectedTeam: [],
-            dragonEggs: [],
-            battleState: null
-          });
 
           const { data, error } = await supabase
             .from('game_data')
@@ -142,15 +131,15 @@ export const useGameStore = create<GameState>()(
             .maybeSingle();
 
             if (data && !error) {
-              set({ 
-                accountLevel: data.account_level || 1, 
-                accountExperience: data.account_experience || 0,
-                balance: data.balance || 100,
-                cards: Array.isArray(data.cards) ? (data.cards as unknown as Card[]) : [],
-                inventory: Array.isArray(data.inventory) ? (data.inventory as unknown as Item[]) : [],
-                selectedTeam: Array.isArray(data.selected_team) ? data.selected_team : [],
-                dragonEggs: Array.isArray(data.dragon_eggs) ? (data.dragon_eggs as unknown as DragonEgg[]) : []
-              });
+              set((state) => ({ 
+                accountLevel: Math.max(state.accountLevel ?? 1, data.account_level ?? state.accountLevel ?? 1), 
+                accountExperience: Math.max(state.accountExperience ?? 0, data.account_experience ?? state.accountExperience ?? 0),
+                balance: data.balance ?? state.balance,
+                cards: Array.isArray(data.cards) ? (data.cards as unknown as Card[]) : state.cards,
+                inventory: Array.isArray(data.inventory) ? (data.inventory as unknown as Item[]) : state.inventory,
+                selectedTeam: Array.isArray(data.selected_team) ? data.selected_team : state.selectedTeam,
+                dragonEggs: Array.isArray(data.dragon_eggs) ? (data.dragon_eggs as unknown as DragonEgg[]) : state.dragonEggs
+              }));
             }
         } catch (error) {
           console.error('Failed to sync account data from Supabase:', error);
