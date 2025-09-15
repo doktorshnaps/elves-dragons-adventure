@@ -7,6 +7,7 @@ import { Clock, Heart, Plus, Activity, ArrowRight, X } from 'lucide-react';
 import { useMedicalBay } from '@/hooks/useMedicalBay';
 import { useCardInstances } from '@/hooks/useCardInstances';
 import { useCardHealthSync } from '@/hooks/useCardHealthSync';
+import { useCardsWithHealth } from '@/hooks/useCardsWithHealth';
 import { CardDisplay } from '../CardDisplay';
 
 export const MedicalBayComponent = () => {
@@ -21,7 +22,8 @@ export const MedicalBayComponent = () => {
   } = useMedicalBay();
 
   const { cardInstances, loadCardInstances } = useCardInstances();
-  const { syncHealthFromInstances } = useCardHealthSync(); 
+  const { syncHealthFromInstances } = useCardHealthSync();
+  const { cardsWithHealth, selectedTeamWithHealth } = useCardsWithHealth();
   const [selectedCard, setSelectedCard] = useState<any>(null);
 
   useEffect(() => {
@@ -40,13 +42,67 @@ export const MedicalBayComponent = () => {
   }, [processMedicalBayHealing]);
 
   const getInjuredCards = () => {
+    console.log('🏥 Getting injured cards...');
+    
     // Получаем ID карт, которые сейчас в медпункте
     const cardsInMedicalBay = medicalBayEntries.map(entry => entry.card_instance_id);
+    console.log('🏥 Cards in medical bay:', cardsInMedicalBay);
     
-    return cardInstances.filter(card => 
-      card.current_health < card.max_health && 
-      !cardsInMedicalBay.includes(card.id)
-    );
+    // Используем все карты с синхронизированным здоровьем
+    const allCardsWithHealth = [...cardsWithHealth];
+    
+    // Добавляем карты из команды, которые могут не быть в общем списке
+    selectedTeamWithHealth.forEach(pair => {
+      if (pair.hero && !allCardsWithHealth.find(c => c.id === pair.hero.id)) {
+        allCardsWithHealth.push(pair.hero);
+      }
+      if (pair.dragon && !allCardsWithHealth.find(c => c.id === pair.dragon.id)) {
+        allCardsWithHealth.push(pair.dragon);
+      }
+    });
+    
+    // Создаем мапу для быстрого поиска card instances
+    const instancesMap = new Map(cardInstances.map(ci => [ci.card_template_id, ci]));
+    
+    // Фильтруем поврежденные карты
+    const injuredCards = allCardsWithHealth
+      .filter(card => {
+        const instance = instancesMap.get(card.id);
+        const currentHealth = instance?.current_health ?? card.currentHealth ?? card.health;
+        const maxHealth = instance?.max_health ?? card.health;
+        const isInMedicalBay = instance?.is_in_medical_bay || (card as any).isInMedicalBay;
+        const instanceId = instance?.id;
+        
+        const isInjured = currentHealth < maxHealth;
+        const notInMedicalBay = !isInMedicalBay && !cardsInMedicalBay.includes(instanceId);
+        
+        console.log('🏥 Card check:', {
+          name: card.name,
+          id: card.id,
+          instanceId,
+          currentHealth,
+          maxHealth,
+          isInjured,
+          isInMedicalBay,
+          notInMedicalBay
+        });
+        
+        return isInjured && notInMedicalBay;
+      })
+      .map(card => {
+        const instance = instancesMap.get(card.id);
+        return {
+          id: instance?.id || `virtual-${card.id}`,
+          card_template_id: card.id,
+          current_health: instance?.current_health ?? card.currentHealth ?? card.health,
+          max_health: instance?.max_health ?? card.health,
+          card_data: card,
+          wallet_address: instance?.wallet_address || ''
+        };
+      });
+    
+    console.log('🏥 Found injured cards:', injuredCards.length, injuredCards);
+    return injuredCards;
   };
 
   const getAvailableSlots = () => {
@@ -61,7 +117,17 @@ export const MedicalBayComponent = () => {
   const handleStartHealing = async () => {
     if (!selectedCard) return;
     
-    await placeCardInMedicalBay(selectedCard.id);
+    console.log('🏥 Starting healing for card:', selectedCard);
+    
+    // Если это виртуальная карта (нет реального экземпляра), создаем экземпляр
+    let cardInstanceId = selectedCard.id;
+    if (selectedCard.id.startsWith('virtual-')) {
+      console.log('🏥 Creating instance for virtual card:', selectedCard.card_template_id);
+      // Используем card_template_id для создания экземпляра
+      cardInstanceId = selectedCard.card_template_id;
+    }
+    
+    await placeCardInMedicalBay(cardInstanceId);
     await syncHealthFromInstances(); // Синхронизируем данные после помещения в медпункт
     setSelectedCard(null);
   };

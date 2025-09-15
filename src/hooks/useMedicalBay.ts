@@ -67,7 +67,7 @@ export const useMedicalBay = () => {
     }
   }, [accountId, toast]);
 
-  const placeCardInMedicalBay = useCallback(async (cardInstanceId: string) => {
+  const placeCardInMedicalBay = useCallback(async (cardInstanceIdOrTemplateId: string) => {
     if (!accountId) return;
 
     // Проверяем, есть ли активное подземелье
@@ -83,19 +83,37 @@ export const useMedicalBay = () => {
 
     try {
       setLoading(true);
-      console.log('🏥 Placing card in medical bay:', cardInstanceId);
+      console.log('🏥 Placing card in medical bay:', cardInstanceIdOrTemplateId);
 
-      // Получаем template id по instance id
-      const { data: instance, error: instErr } = await supabase
+      // Пытаемся найти экземпляр карты
+      let { data: instance, error: instErr } = await supabase
         .from('card_instances')
         .select('id, card_template_id')
-        .eq('id', cardInstanceId)
+        .eq('id', cardInstanceIdOrTemplateId)
         .maybeSingle();
-      if (instErr) throw instErr;
+      
+      // Если не найден по ID, ищем по template_id
+      if (!instance || instErr) {
+        console.log('🏥 Card instance not found by ID, searching by template_id...');
+        const { data: instanceByTemplate, error: templateErr } = await supabase
+          .from('card_instances')
+          .select('id, card_template_id')
+          .eq('card_template_id', cardInstanceIdOrTemplateId)
+          .eq('wallet_address', accountId)
+          .maybeSingle();
+          
+        if (templateErr) {
+          console.warn('🏥 Error finding instance by template:', templateErr);
+        }
+        
+        instance = instanceByTemplate;
+      }
+      
       const templateId = instance?.card_template_id as string | undefined;
+      const actualInstanceId = instance?.id || cardInstanceIdOrTemplateId;
       
       const { data, error } = await supabase.rpc('add_card_to_medical_bay', {
-        p_card_instance_id: cardInstanceId,
+        p_card_instance_id: actualInstanceId,
         p_wallet_address: accountId
       });
 
