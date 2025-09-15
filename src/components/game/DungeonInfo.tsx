@@ -8,6 +8,72 @@ import { dungeonNames, dungeonBackgrounds } from "@/constants/dungeons";
 import { generateDungeonOpponents } from "@/dungeons/dungeonManager";
 import { generateLootTable, formatDropChance } from "@/utils/lootUtils";
 
+// Import monster images
+import spiderSkeleton from "@/assets/monsters/spider-skeleton.png";
+import spiderJumper from "@/assets/monsters/spider-jumper.png";
+import spiderWeaver from "@/assets/monsters/spider-weaver.png";
+import spiderHunter from "@/assets/monsters/spider-hunter.png";
+import spiderQueenLarva from "@/assets/monsters/spider-queen-larva.png";
+import spiderCorpseEater from "@/assets/monsters/spider-corpse-eater.png";
+import spiderGuardian from "@/assets/monsters/spider-guardian.png";
+import spiderWyvern from "@/assets/monsters/spider-wyvern.png";
+import shadowSpiderCatcher from "@/assets/monsters/shadow-spider-catcher.png";
+import ancientSpiderHermit from "@/assets/monsters/ancient-spider-hermit.png";
+
+// Monster data with images and descriptions
+const monsterData: Record<number, { name: string; image: string; description: string }> = {
+  1: {
+    name: "Паучок-скелет",
+    image: spiderSkeleton,
+    description: "Останки древнего паука, оживленные темной магией. Хрупкий, но агрессивный противник для начинающих авантюристов."
+  },
+  2: {
+    name: "Паук-скакун",
+    image: spiderJumper,
+    description: "Быстрый и подвижный паук с мощными задними лапами. Способен внезапно атаковать с большого расстояния."
+  },
+  3: {
+    name: "Паук-прядильщик",
+    image: spiderWeaver,
+    description: "Мастер паутины, создающий сложные ловушки. Его сети могут замедлить даже самых опытных воинов."
+  },
+  4: {
+    name: "Паук-охотник",
+    image: spiderHunter,
+    description: "Свирепый хищник с острыми клыками и бронированным панцирем. Предпочитает прямые атаки."
+  },
+  5: {
+    name: "Паук-королева-личинка",
+    image: spiderQueenLarva,
+    description: "Молодая особь паучьей королевы. Несмотря на юный возраст, обладает значительной силой и магическими способностями."
+  },
+  6: {
+    name: "Паук-трупоед",
+    image: spiderCorpseEater,
+    description: "Мрачное создание, питающееся мертвечиной. Его укус ядовит и может ослабить даже сильнейших героев."
+  },
+  7: {
+    name: "Паук-стража",
+    image: spiderGuardian,
+    description: "Древний защитник паучьих сокровищ. Облачен в мистические доспехи и владеет боевой магией."
+  },
+  8: {
+    name: "Паук-виверна",
+    image: spiderWyvern,
+    description: "Редкий гибрид паука и дракона. Обладает крыльями и способностью к полету, что делает его крайне опасным."
+  },
+  9: {
+    name: "Теневой паук-ловец",
+    image: shadowSpiderCatcher,
+    description: "Мастер теней и иллюзий. Может становиться невидимым и атаковать из засады, используя темную магию."
+  },
+  10: {
+    name: "Древний паук-отшельник",
+    image: ancientSpiderHermit,
+    description: "Легендарный паук-маг, живущий в глубинах подземелья уже несколько веков. Владеет мощнейшими заклинаниями."
+  }
+};
+
 interface MonsterCardProps {
   name: string;
   health: number;
@@ -15,9 +81,10 @@ interface MonsterCardProps {
   isBoss?: boolean;
   image?: string;
   specialAbilities?: any[];
+  description?: string;
 }
 
-const MonsterCard = ({ name, health, power, isBoss, image, specialAbilities }: MonsterCardProps) => {
+const MonsterCard = ({ name, health, power, isBoss, image, specialAbilities, description }: MonsterCardProps) => {
   const lootTable = generateLootTable(isBoss || false);
   
   return (
@@ -35,6 +102,10 @@ const MonsterCard = ({ name, health, power, isBoss, image, specialAbilities }: M
         {image && (
           <div className="w-full h-32 bg-cover bg-center rounded-md border border-game-accent/20"
                style={{ backgroundImage: `url(${image})` }} />
+        )}
+        
+        {description && (
+          <p className="text-sm text-game-text/80 leading-relaxed">{description}</p>
         )}
         
         <div className="grid grid-cols-2 gap-2 text-sm">
@@ -92,13 +163,26 @@ interface DungeonLevelProps {
 const DungeonLevel = ({ dungeonType, level }: DungeonLevelProps) => {
   const opponents = generateDungeonOpponents(dungeonType as any, level);
   
+  // Enhance opponents with monster data
+  const enhancedOpponents = opponents.map(opponent => {
+    const levelBasedMonsterIndex = ((level - 1) % 10) + 1;
+    const monsterInfo = monsterData[levelBasedMonsterIndex];
+    
+    return {
+      ...opponent,
+      name: monsterInfo?.name || opponent.name,
+      image: monsterInfo?.image || opponent.image,
+      description: monsterInfo?.description
+    };
+  });
+  
   return (
     <div className="space-y-4">
       <h3 className="text-lg font-semibold text-game-accent border-b border-game-accent/30 pb-2">
         Уровень {level}
       </h3>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {opponents.map((opponent) => (
+        {enhancedOpponents.map((opponent) => (
           <MonsterCard
             key={opponent.id}
             name={opponent.name}
@@ -107,6 +191,7 @@ const DungeonLevel = ({ dungeonType, level }: DungeonLevelProps) => {
             isBoss={opponent.isBoss}
             image={opponent.image}
             specialAbilities={opponent.specialAbilities}
+            description={opponent.description}
           />
         ))}
       </div>
