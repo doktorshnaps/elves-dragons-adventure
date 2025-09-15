@@ -2,12 +2,56 @@ import { useEffect, useMemo } from 'react';
 import { Card as CardType } from "@/types/cards";
 import { useGameData } from '@/hooks/useGameData';
 import { useCardHealthSync } from '@/hooks/useCardHealthSync';
-import { useCardsWithHealth } from '@/hooks/useCardsWithHealth';
+import { useCardInstances } from '@/hooks/useCardInstances';
 import { TeamPair } from '@/components/game/team/DeckSelection';
 
 export const useTeamSelection = () => {
   const { gameData, updateGameData } = useGameData();
-  const { cardsWithHealth, selectedTeamWithHealth } = useCardsWithHealth();
+  const { cardInstances } = useCardInstances();
+
+  // Build cards with health using the SAME gameData instance to avoid desync
+  const cardsWithHealth = useMemo(() => {
+    const cards = (gameData.cards || []) as CardType[];
+    const instancesMap = new Map(cardInstances.map(ci => [ci.card_template_id, ci]));
+    return cards.map(card => {
+      const instance = instancesMap.get(card.id);
+      if (instance) {
+        return {
+          ...card,
+          currentHealth: instance.current_health,
+          lastHealTime: new Date(instance.last_heal_time).getTime(),
+          isInMedicalBay: instance.is_in_medical_bay || false
+        } as CardType;
+      }
+      return card;
+    });
+  }, [gameData.cards, cardInstances]);
+
+  // Build selected team with health using the SAME gameData instance
+  const selectedTeamWithHealth = useMemo(() => {
+    const selectedTeam = (gameData.selectedTeam || []) as any[];
+    const instancesMap = new Map(cardInstances.map(ci => [ci.card_template_id, ci]));
+    return selectedTeam.map((pair: any) => ({
+      hero: pair.hero ? (() => {
+        const instance = instancesMap.get(pair.hero.id);
+        return instance ? {
+          ...pair.hero,
+          currentHealth: instance.current_health,
+          lastHealTime: new Date(instance.last_heal_time).getTime(),
+          isInMedicalBay: instance.is_in_medical_bay || false
+        } : pair.hero;
+      })() : undefined,
+      dragon: pair.dragon ? (() => {
+        const instance = instancesMap.get(pair.dragon.id);
+        return instance ? {
+          ...pair.dragon,
+          currentHealth: instance.current_health,
+          lastHealTime: new Date(instance.last_heal_time).getTime(),
+          isInMedicalBay: instance.is_in_medical_bay || false
+        } : pair.dragon;
+      })() : undefined
+    })) as TeamPair[];
+  }, [gameData.selectedTeam, cardInstances]);
   const selectedPairs: TeamPair[] = useMemo(() => {
     const source: TeamPair[] = selectedTeamWithHealth.length > 0
       ? (selectedTeamWithHealth as TeamPair[])
