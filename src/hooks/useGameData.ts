@@ -71,9 +71,14 @@ export const useGameData = () => {
         const gameRecord = gameDataArray[0];
         console.log('✅ Game data loaded successfully:', gameRecord);
         
-        // Process cards with health initialization and regeneration
+        // Process cards with health initialization but preserve existing health values
         const rawCards = (gameRecord.cards as unknown as Card[]) || [];
-        const initializedCards = rawCards.map(initializeCardHealth);
+        // Только инициализируем поля для новых карт, но сохраняем текущее здоровье
+        const initializedCards = rawCards.map(card => ({
+          ...card,
+          lastHealTime: card.lastHealTime ?? Date.now()
+          // НЕ сбрасываем currentHealth здесь!
+        }));
         const processedCards = processCardsHealthRegeneration(initializedCards);
         
         const newGameData: GameData = {

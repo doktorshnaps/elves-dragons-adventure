@@ -7,9 +7,11 @@ const HEAL_INTERVAL = 1 * 60 * 1000; // 1 minute in milliseconds
  * Initialize card health if not set
  */
 export const initializeCardHealth = (card: Card): Card => {
+  // Только инициализируем lastHealTime, но НЕ сбрасываем currentHealth
+  // Если currentHealth не задан, устанавливаем его в максимальное значение только один раз
   return {
     ...card,
-    currentHealth: card.currentHealth ?? card.health,
+    currentHealth: card.currentHealth !== undefined ? card.currentHealth : card.health,
     lastHealTime: card.lastHealTime ?? Date.now()
   };
 };
