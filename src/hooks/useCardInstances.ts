@@ -3,6 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useWallet } from '@/hooks/useWallet';
 import { useToast } from '@/hooks/use-toast';
 import { Card } from '@/types/cards';
+import { useGameData } from '@/hooks/useGameData';
 
 export interface CardInstance {
   id: string;
@@ -24,6 +25,7 @@ export interface CardInstance {
 export const useCardInstances = () => {
   const { accountId, isConnected } = useWallet();
   const { toast } = useToast();
+  const { gameData } = useGameData();
   const [cardInstances, setCardInstances] = useState<CardInstance[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -40,23 +42,36 @@ export const useCardInstances = () => {
 
       let list = (data || []) as unknown as CardInstance[];
 
-      // Auto-sync: if no instances yet but cards exist in game_data, create instances
-      if (list.length === 0) {
-        try {
-          const { error: syncError } = await supabase.rpc('sync_card_instances_from_game_data', {
-            p_wallet_address: accountId,
-          });
-          if (!syncError) {
-            const { data: dataAfter, error: errAfter } = await supabase
-              .rpc('get_card_instances_by_wallet', { p_wallet_address: accountId });
-            if (!errAfter) {
-              list = (dataAfter || []) as unknown as CardInstance[];
+      // Проверяем наличие экземпляров для всех карт из gameData
+      const cards: Card[] = (gameData?.cards || []) as any;
+      const selectedTeam: any[] = (gameData?.selectedTeam || []) as any;
+      if (cards.length > 0 || selectedTeam.length > 0) {
+        const instanceIds = new Set(list.map(ci => ci.card_template_id));
+        const neededIds = new Set<string>();
+        cards.forEach(c => neededIds.add(c.id));
+        selectedTeam.forEach(pair => {
+          if (pair?.hero?.id) neededIds.add(pair.hero.id);
+          if (pair?.dragon?.id) neededIds.add(pair.dragon.id);
+        });
+        const missing = Array.from(neededIds).filter(id => !instanceIds.has(id));
+        if (missing.length > 0) {
+          console.log('🆕 Missing card instances detected, syncing from game_data:', missing);
+          try {
+            const { error: syncError } = await supabase.rpc('sync_card_instances_from_game_data', {
+              p_wallet_address: accountId,
+            });
+            if (!syncError) {
+              const { data: dataAfter, error: errAfter } = await supabase
+                .rpc('get_card_instances_by_wallet', { p_wallet_address: accountId });
+              if (!errAfter) {
+                list = (dataAfter || []) as unknown as CardInstance[];
+              }
+            } else {
+              console.warn('Sync card instances failed:', syncError.message);
             }
-          } else {
-            console.warn('Sync card instances failed:', syncError.message);
+          } catch (e) {
+            console.warn('Sync card instances exception:', e);
           }
-        } catch (e) {
-          console.warn('Sync card instances exception:', e);
         }
       }
 
@@ -71,7 +86,7 @@ export const useCardInstances = () => {
     } finally {
       setLoading(false);
     }
-  }, [accountId, isConnected, toast]);
+  }, [accountId, isConnected, toast, gameData?.cards]);
 
   // Создание нового экземпляра карты
   const createCardInstance = useCallback(async (card: Card, cardType: 'hero' | 'dragon') => {
