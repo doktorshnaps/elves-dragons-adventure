@@ -827,6 +827,14 @@ export type Database = {
         Args: { p_wallet_address: string }
         Returns: number
       }
+      test_damage_card: {
+        Args: {
+          p_card_template_id: string
+          p_damage_amount: number
+          p_wallet_address: string
+        }
+        Returns: boolean
+      }
       update_card_instance_health: {
         Args: {
           p_current_health: number
