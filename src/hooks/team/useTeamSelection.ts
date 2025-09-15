@@ -37,7 +37,9 @@ export const useTeamSelection = () => {
   };
 
   const handlePairRemove = async (index: number) => {
+    console.log('🗑️ Removing pair at index:', index, 'from team with', selectedPairs.length, 'pairs');
     const newPairs = selectedPairs.filter((_, i) => i !== index);
+    console.log('🗑️ New team size:', newPairs.length);
     setSelectedPairs(newPairs);
     
     // Save to game data

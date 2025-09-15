@@ -67,10 +67,11 @@ export const DeckSelection = ({
     });
   }, [cards, nftCards, cardInstances]);
 
-  // Обновляем локальные карты
+  // Обновляем локальные карты, исключаем карты в медпункте
   useEffect(() => {
-    setLocalCards(cardsWithHealthSync);
-    console.log('🎮 Updated local cards with health sync:', cardsWithHealthSync.length, 'unique cards');
+    const availableCards = cardsWithHealthSync.filter(card => !(card as any).isInMedicalBay);
+    setLocalCards(availableCards);
+    console.log('🎮 Updated local cards with health sync:', availableCards.length, 'available cards (excluding medical bay)');
   }, [cardsWithHealthSync]);
 
   const heroes = localCards.filter(card => card.type === 'character');
