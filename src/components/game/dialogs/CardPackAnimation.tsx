@@ -36,12 +36,8 @@ export const CardPackAnimation = ({ winningCard, onAnimationComplete }: CardPack
   const [targetX, setTargetX] = useState<number>(0);
   const [xStart, setXStart] = useState<number>(0);
   
-  // Используем изображения карт из локальной базы данных
-  useEffect(() => {
-    // Поскольку таблица card_pack_images удалена, используем статические изображения
-    // или изображения из cardDatabase
-    setAvailableImages({});
-  }, []);
+  // Remove this useEffect that was overriding the images from cardDatabase
+  // The images are already loaded from dbImageMap in the previous useEffect
   
   // Generate dummy cards for animation using images from DB
   const generateDummyCards = (): CardType[] => {
