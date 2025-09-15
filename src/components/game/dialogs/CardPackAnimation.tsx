@@ -46,37 +46,52 @@ export const CardPackAnimation = ({ winningCard, onAnimationComplete }: CardPack
   // Remove this useEffect that was overriding the images from cardDatabase
   // The images are already loaded from dbImageMap in the previous useEffect
   
-  // Generate dummy cards for animation using images from DB
+  // Generate dummy cards for animation using actual card data
   const generateDummyCards = (): CardType[] => {
     const dummyCards: CardType[] = [];
-    const types: ('character' | 'pet')[] = ['character', 'pet'];
-    const factions = ['Каледор', 'Сильванести', 'Фаэлин', 'Элленар', 'Тэлэрион', 'Аэлантир', 'Лиорас'];
-    
-    // Get available card names from loaded images
     const availableCardNames = Object.keys(availableImages);
     
-    for (let i = 0; i < 20; i++) { // Reduced from 40 to 20 for better performance
-      // Ensure every card gets an image by cycling through available images
-      const randomCardName = availableCardNames.length > 0 
-        ? availableCardNames[i % availableCardNames.length] 
-        : `Карта ${i + 1}`;
+    if (availableCardNames.length === 0) return [];
+    
+    for (let i = 0; i < 20; i++) {
+      // Get card name by cycling through available images
+      const cardName = availableCardNames[i % availableCardNames.length];
       
-      const randomImage = availableCardNames.length > 0 
-        ? availableImages[randomCardName] 
-        : '/placeholder.svg';
+      // Find the actual card data from cardDatabase
+      const actualCard = cardDatabase.find((c: any) => c?.name === cardName);
       
-      dummyCards.push({
-        id: `dummy-${i}`,
-        name: randomCardName,
-        type: types[Math.floor(Math.random() * types.length)],
-        power: Math.floor(Math.random() * 100) + 10,
-        defense: Math.floor(Math.random() * 100) + 10,
-        health: Math.floor(Math.random() * 200) + 50,
-        magic: Math.floor(Math.random() * 50) + 5,
-        rarity: (Math.floor(Math.random() * 8) + 1) as any,
-        faction: factions[Math.floor(Math.random() * factions.length)] as any,
-        image: randomImage, // Все карты теперь имеют изображения
-      });
+      if (actualCard) {
+        // Use actual card data with proper structure
+        dummyCards.push({
+          id: `dummy-${i}`,
+          name: actualCard.name,
+          type: actualCard.type,
+          power: actualCard.baseStats.power,
+          defense: actualCard.baseStats.defense,
+          health: actualCard.baseStats.health,
+          magic: actualCard.baseStats.magic,
+          rarity: (Math.floor(Math.random() * 8) + 1) as any, // Random rarity for variety
+          faction: (actualCard.faction || 'Каледор') as any,
+          image: availableImages[cardName],
+        });
+      } else {
+        // Fallback for cards not in database
+        const types: ('character' | 'pet')[] = ['character', 'pet'];
+        const factions = ['Каледор', 'Сильванести', 'Фаэлин', 'Элленар', 'Тэлэрион', 'Аэлантир', 'Лиорас'];
+        
+        dummyCards.push({
+          id: `dummy-${i}`,
+          name: cardName,
+          type: types[Math.floor(Math.random() * types.length)],
+          power: Math.floor(Math.random() * 100) + 10,
+          defense: Math.floor(Math.random() * 100) + 10,
+          health: Math.floor(Math.random() * 200) + 50,
+          magic: Math.floor(Math.random() * 50) + 5,
+          rarity: (Math.floor(Math.random() * 8) + 1) as any,
+          faction: factions[Math.floor(Math.random() * factions.length)] as any,
+          image: availableImages[cardName],
+        });
+      }
     }
     
     return dummyCards;
