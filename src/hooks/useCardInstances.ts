@@ -95,23 +95,27 @@ export const useCardInstances = () => {
     if (!isConnected || !accountId) return false;
 
     try {
-      const updateData: any = { current_health: Math.max(0, currentHealth) };
-      if (lastHealTime) {
-        updateData.last_heal_time = lastHealTime;
-      }
-
-      const { error } = await supabase
-        .from('card_instances')
-        .update(updateData)
-        .eq('id', instanceId)
-        .eq('wallet_address', accountId);
+      // Use RPC with SECURITY DEFINER to bypass RLS when authenticated via wallet
+      const { data, error } = await supabase.rpc('update_card_instance_health', {
+        p_instance_id: instanceId,
+        p_wallet_address: accountId,
+        p_current_health: Math.max(0, currentHealth),
+        p_last_heal_time: lastHealTime ?? null
+      });
 
       if (error) throw error;
+      if (data !== true) {
+        throw new Error('Update not applied');
+      }
 
       setCardInstances(prev => 
         prev.map(instance => 
           instance.id === instanceId 
-            ? { ...instance, ...updateData }
+            ? { 
+                ...instance, 
+                current_health: Math.max(0, currentHealth), 
+                ...(lastHealTime ? { last_heal_time: lastHealTime } : {})
+              }
             : instance
         )
       );

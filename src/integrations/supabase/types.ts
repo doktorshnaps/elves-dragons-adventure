@@ -847,6 +847,15 @@ export type Database = {
         }
         Returns: Json
       }
+      update_card_instance_health: {
+        Args: {
+          p_current_health: number
+          p_instance_id: string
+          p_last_heal_time?: string
+          p_wallet_address: string
+        }
+        Returns: boolean
+      }
       update_game_data_by_wallet: {
         Args: {
           p_account_experience?: number
