@@ -9,12 +9,14 @@ import { useGameStore } from '@/stores/gameStore';
 import { applyDamageToPair } from '@/utils/battleHealthUtils';
 import { useGameData } from '@/hooks/useGameData';
 import { HERO_ABILITIES } from '@/types/abilities';
+import { useCardInstances } from '@/hooks/useCardInstances';
 
 export const useTeamBattle = (dungeonType: DungeonType, initialLevel: number = 1) => {
   const { toast } = useToast();
   const { selectedPairs, getSelectedTeamStats } = useTeamSelection();
   const { accountLevel, accountExperience, addAccountExperience: addAccountExp } = useGameStore();
   const { gameData, updateGameData } = useGameData();
+  const { loading: cardInstancesLoading } = useCardInstances();
   
   const [battleState, setBattleState] = useState<TeamBattleState>(() => {
     const savedState = localStorage.getItem('teamBattleState');
@@ -48,6 +50,7 @@ export const useTeamBattle = (dungeonType: DungeonType, initialLevel: number = 1
 
   // Initialize battle with team pairs
   useEffect(() => {
+    if (cardInstancesLoading) return; // Wait until card instances are loaded to get accurate health
     if (selectedPairs.length > 0 && battleState.playerPairs.length === 0) {
       const cardsArr = (gameData.cards as any[]) || [];
       const byId = new Map(cardsArr.map((c: any) => [c.id, c]));
@@ -93,7 +96,7 @@ export const useTeamBattle = (dungeonType: DungeonType, initialLevel: number = 1
       
       setAttackOrder(teamPairs.map(pair => pair.id));
     }
-  }, [selectedPairs, dungeonType, initialLevel, gameData.cards]);
+  }, [selectedPairs, dungeonType, initialLevel, gameData.cards, cardInstancesLoading]);
 
   // Save battle state
   useEffect(() => {

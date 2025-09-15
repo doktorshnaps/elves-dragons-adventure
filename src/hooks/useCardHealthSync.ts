@@ -52,6 +52,11 @@ export const useCardHealthSync = () => {
     return () => window.removeEventListener('cardInstanceHealthUpdate', handleHealthUpdate);
   }, [loadCardInstances]);
 
+  // Load instances on mount to ensure initial sync
+  useEffect(() => {
+    loadCardInstances();
+  }, [loadCardInstances]);
+
   // Auto-sync when card instances change
   useEffect(() => {
     syncHealthFromInstances();

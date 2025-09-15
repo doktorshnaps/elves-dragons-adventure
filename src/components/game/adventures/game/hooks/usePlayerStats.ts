@@ -151,6 +151,16 @@ export const usePlayerStats = (initialLevel = 1) => {
     return () => window.removeEventListener('inventoryUpdate', handleInventoryUpdate);
   }, [stats.level, calculateBaseStats, calculateEquipmentBonuses, updateStats]);
 
+  // Re-sync current health from card_instances when instances or team selection change
+  useEffect(() => {
+    const equipmentBonuses = calculateEquipmentBonuses();
+    const { currentSum } = getTeamHealthSums();
+    updateStats(prev => ({
+      ...prev,
+      health: Math.min(currentSum + equipmentBonuses.health, prev.maxHealth)
+    }));
+  }, [calculateEquipmentBonuses, getTeamHealthSums, updateStats, cardInstances, gameData.selectedTeam]);
+
   const addExperience = useCallback((amount: number) => {
     updateStats(prev => {
       const newExperience = prev.experience + amount;
