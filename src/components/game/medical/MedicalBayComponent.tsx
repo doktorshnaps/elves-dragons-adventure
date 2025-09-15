@@ -6,6 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { Clock, Heart, Plus, Activity, ArrowRight } from 'lucide-react';
 import { useMedicalBay } from '@/hooks/useMedicalBay';
 import { useCardInstances } from '@/hooks/useCardInstances';
+import { useCardHealthSync } from '@/hooks/useCardHealthSync';
 import { CardDisplay } from '../CardDisplay';
 
 export const MedicalBayComponent = () => {
@@ -19,6 +20,7 @@ export const MedicalBayComponent = () => {
   } = useMedicalBay();
 
   const { cardInstances, loadCardInstances } = useCardInstances();
+  const { syncHealthFromInstances } = useCardHealthSync(); 
   const [selectedCard, setSelectedCard] = useState<any>(null);
 
   useEffect(() => {
@@ -59,6 +61,7 @@ export const MedicalBayComponent = () => {
     if (!selectedCard) return;
     
     await placeCardInMedicalBay(selectedCard.id);
+    await syncHealthFromInstances(); // Синхронизируем данные после помещения в медпункт
     setSelectedCard(null);
   };
 
@@ -166,14 +169,15 @@ export const MedicalBayComponent = () => {
                               <Button 
                                 onClick={async () => {
                                   console.log('🏥 Removing card from medical bay:', entry.card_instance_id);
-                                  try {
-                                    await removeCardFromMedicalBay(entry.card_instance_id);
-                                    console.log('🏥 Card removed successfully, reloading data...');
-                                    await Promise.all([
-                                      loadCardInstances(),
-                                      loadMedicalBayEntries()
-                                    ]);
-                                    console.log('🏥 Data reloaded successfully');
+                                   try {
+                                     await removeCardFromMedicalBay(entry.card_instance_id);
+                                     console.log('🏥 Card removed successfully, syncing health data...');
+                                     await Promise.all([
+                                       loadCardInstances(),
+                                       loadMedicalBayEntries(),
+                                       syncHealthFromInstances() // Синхронизируем здоровье из БД
+                                     ]);
+                                     console.log('🏥 Data reloaded and synced successfully');
                                   } catch (error) {
                                     console.error('🏥 Error removing card:', error);
                                   }
