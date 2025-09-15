@@ -32,17 +32,17 @@ export const AccountLevelDisplay = ({ experience: propExperience, level: propLev
           <div className="flex items-center gap-2">
             <Star className="h-5 w-5 text-primary" />
             <span className="text-2xl font-bold text-primary">
-              {xpProgress.currentLevel}
+              {level}
             </span>
           </div>
-          {xpProgress.currentLevel < 100 && (
+          {level < 100 && (
             <span className="text-sm text-muted-foreground">
-              до {xpProgress.currentLevel + 1}
+              до {level + 1}
             </span>
           )}
         </div>
         
-        {xpProgress.currentLevel < 100 ? (
+        {level < 100 ? (
           <>
             <Progress 
               value={progressPercentage} 

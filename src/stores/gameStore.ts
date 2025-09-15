@@ -108,13 +108,14 @@ export const useGameStore = create<GameState>()(
         try {
           const walletAddress = localStorage.getItem('walletAccountId');
           if (walletAddress) {
-            await supabase
-              .from('game_data')
-              .update({ 
-                account_level: newLevel, 
-                account_experience: newXP 
-              })
-              .eq('wallet_address', walletAddress);
+            const { data: success, error } = await supabase.rpc('update_game_data_by_wallet', {
+              p_wallet_address: walletAddress,
+              p_account_level: newLevel,
+              p_account_experience: newXP
+            });
+            if (error) {
+              console.error('Failed to sync account data to Supabase (RPC):', error);
+            }
           }
         } catch (error) {
           console.error('Failed to sync account data to Supabase:', error);

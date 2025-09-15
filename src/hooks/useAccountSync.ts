@@ -13,8 +13,9 @@ export const useAccountSync = () => {
         syncAccountData(accountId);
       });
     } else if (!isConnected) {
-      console.log('🧹 Account disconnected, clearing data');
-      clearAllData();
+      // Не сбрасываем данные мгновенно при кратковременном дисконнекте (например, при HMR)
+      // Оставляем локальные данные нетронутыми, чтобы избежать "сброса" уровня
+      console.log('⚠️ Disconnected temporarily — preserving local game data');
     }
   }, [isConnected, accountId, syncAccountData, initializeAccountData, clearAllData]);
 };
