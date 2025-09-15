@@ -29,10 +29,12 @@ export const useCardHealthSync = ({ cards, onCardsUpdate }: UseCardHealthSyncPro
   // Initialize health for all cards on first load
   useEffect(() => {
     if (cards && cards.length > 0) {
-      const needsInit = cards.some(card => card.currentHealth === undefined || card.lastHealTime === undefined);
-      
+      const needsInit = cards.some(card => card.lastHealTime === undefined);
       if (needsInit) {
-        const initializedCards = cards.map(initializeCardHealth);
+        const initializedCards = cards.map(card => ({
+          ...card,
+          lastHealTime: card.lastHealTime ?? Date.now()
+        }));
         syncCardsHealth(initializedCards);
       }
     }
@@ -65,31 +67,4 @@ export const useCardHealthSync = ({ cards, onCardsUpdate }: UseCardHealthSyncPro
     };
   }, [cards, syncCardsHealth]);
 
-  // Process health regeneration every minute
-  useEffect(() => {
-    const processRegeneration = () => {
-      if (!cards || cards.length === 0) return;
-      
-      const updatedCards = processCardsHealthRegeneration(cards);
-      
-      // Check if any cards actually regenerated health
-      const hasChanges = updatedCards.some((card, index) => {
-        const originalCard = cards[index];
-        return card.currentHealth !== originalCard?.currentHealth ||
-               card.lastHealTime !== originalCard?.lastHealTime;
-      });
-      
-      if (hasChanges) {
-        syncCardsHealth(updatedCards);
-      }
-    };
-
-    // Set up interval for health regeneration
-    const interval = setInterval(processRegeneration, 60 * 1000);
-    
-    // Process immediately on mount if enough time has passed
-    setTimeout(processRegeneration, 1000);
-
-    return () => clearInterval(interval);
-  }, [cards, syncCardsHealth]);
 };
