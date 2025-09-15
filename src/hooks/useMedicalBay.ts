@@ -160,25 +160,12 @@ export const useMedicalBay = () => {
       setLoading(true);
       console.log('🏥 Stopping healing without recovery:', cardInstanceId);
       
-      // Просто удаляем из медпункта без восстановления здоровья
-      const { error } = await supabase
-        .from('medical_bay')
-        .delete()
-        .eq('card_instance_id', cardInstanceId);
+      // Используем RPC функцию для безопасного удаления из медпункта
+      const { error } = await supabase.rpc('stop_healing_without_recovery', {
+        p_card_instance_id: cardInstanceId
+      });
 
       if (error) throw error;
-
-      // Обновляем card_instances чтобы убрать флаг is_in_medical_bay
-      const { error: updateError } = await supabase
-        .from('card_instances')
-        .update({
-          is_in_medical_bay: false,
-          medical_bay_start_time: null,
-          medical_bay_heal_rate: 1
-        })
-        .eq('id', cardInstanceId);
-
-      if (updateError) throw updateError;
 
       toast({
         title: "Лечение остановлено",
