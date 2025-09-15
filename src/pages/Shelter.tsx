@@ -3,13 +3,14 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { useNavigate } from "react-router-dom";
-import { ArrowLeft, Home, Hammer, Wrench, Package, Star, Shield, Flame } from "lucide-react";
+import { ArrowLeft, Home, Hammer, Wrench, Package, Star, Shield, Flame, Heart } from "lucide-react";
 import { useGameData } from "@/hooks/useGameData";
 import { useToast } from "@/hooks/use-toast";
 import { useGameStore } from "@/stores/gameStore";
 import { AccountLevelDisplay } from "@/components/game/account/AccountLevelDisplay";
 import { Barracks } from "@/components/game/shelter/Barracks";
 import { DragonLair } from "@/components/game/shelter/DragonLair";
+import { MedicalBayComponent } from "@/components/game/medical/MedicalBayComponent";
 import { useState } from "react";
 
 interface NestUpgrade {
@@ -37,7 +38,7 @@ export const Shelter = () => {
   const { toast } = useToast();
   const { accountLevel, accountExperience } = useGameStore();
   
-  const [activeTab, setActiveTab] = useState<"upgrades" | "crafting" | "barracks" | "dragonlair">("upgrades");
+  const [activeTab, setActiveTab] = useState<"upgrades" | "crafting" | "barracks" | "dragonlair" | "medical">("upgrades");
 
   // Временные данные ресурсов (в будущем будут из gameData)
   const [resources, setResources] = useState({
@@ -299,6 +300,14 @@ export const Shelter = () => {
             <Flame className="w-4 h-4" />
             Драконье Логово
           </Button>
+          <Button 
+            variant={activeTab === "medical" ? "default" : "outline"}
+            onClick={() => setActiveTab("medical")}
+            className="flex items-center gap-2"
+          >
+            <Heart className="w-4 h-4" />
+            Медпункт
+          </Button>
         </div>
 
         {/* Upgrades Tab */}
@@ -447,6 +456,11 @@ export const Shelter = () => {
               }
             }}
           />
+        )}
+
+        {/* Medical Bay Tab */}
+        {activeTab === "medical" && (
+          <MedicalBayComponent />
         )}
       </div>
     </div>
