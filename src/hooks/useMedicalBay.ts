@@ -70,6 +70,17 @@ export const useMedicalBay = () => {
   const placeCardInMedicalBay = useCallback(async (cardInstanceId: string) => {
     if (!accountId) return;
 
+    // Проверяем, есть ли активное подземелье
+    const isActiveBattle = localStorage.getItem('activeBattleInProgress') === 'true';
+    if (isActiveBattle) {
+      toast({
+        title: "Нельзя отправить на лечение",
+        description: "Карта используется в активном подземелье. Завершите бой или сдайтесь, чтобы отправить карту на лечение.",
+        variant: "destructive"
+      });
+      return;
+    }
+
     try {
       setLoading(true);
       console.log('🏥 Placing card in medical bay:', cardInstanceId);
