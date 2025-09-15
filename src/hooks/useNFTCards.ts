@@ -110,20 +110,7 @@ export const useNFTCards = () => {
       // Get user's NFT mappings from database
       const { data: nftMappings, error } = await supabase
         .from('user_nft_cards')
-        .select(`
-          *,
-          card_templates (
-            name,
-            power,
-            defense,
-            health,
-            rarity,
-            faction,
-            card_type,
-            description,
-            image_url
-          )
-        `)
+        .select('*')
         .eq('wallet_address', walletAddress);
 
       if (error) {
@@ -131,9 +118,8 @@ export const useNFTCards = () => {
         return [];
       }
 
-      // Convert to game card format
+      // Convert to game card format using NFT metadata
       const cards: NFTCard[] = (nftMappings || []).map((mapping: any) => {
-        const tpl = mapping.card_templates;
         const meta = mapping.nft_metadata || {};
         let extra: any = undefined;
         if (typeof meta?.extra === 'string') {
@@ -141,39 +127,21 @@ export const useNFTCards = () => {
         }
         const baseUri = meta?.base_uri || extra?.base_uri;
         const mediaCandidate = meta?.media || extra?.media || extra?.image || extra?.img;
-        const image = normalizeMediaUrl(mediaCandidate, baseUri) || (tpl?.image_url ?? '/placeholder.svg');
-
-        if (tpl) {
-          return {
-            id: `${mapping.nft_contract_id}_${mapping.nft_token_id}`,
-            name: tpl.name,
-            power: tpl.power,
-            defense: tpl.defense,
-            health: tpl.health,
-            currentHealth: tpl.health,
-            rarity: tpl.rarity,
-            faction: tpl.faction,
-            type: tpl.card_type,
-            description: tpl.description,
-            image,
-            nft_token_id: mapping.nft_token_id,
-            nft_contract_id: mapping.nft_contract_id
-          } as NFTCard;
-        }
-
-        // Fallback when there is no matching template
-        const fallbackName = meta?.title || meta?.description || `Token #${mapping.nft_token_id}`;
+        const image = normalizeMediaUrl(mediaCandidate, baseUri) || '/placeholder.svg';
+        
+        // Use NFT metadata or fallback values
+        const fallbackName = meta?.title || meta?.description || mapping.card_template_name || `Token #${mapping.nft_token_id}`;
         return {
           id: `${mapping.nft_contract_id}_${mapping.nft_token_id}`,
           name: fallbackName,
-          power: 20,
-          defense: 15,
-          health: 100,
-          currentHealth: 100,
-          rarity: 'common',
-          faction: undefined,
-          type: 'pet',
-          description: meta?.description || 'NFT Card',
+          power: meta?.power || extra?.power || 20,
+          defense: meta?.defense || extra?.defense || 15,
+          health: meta?.health || extra?.health || 100,
+          currentHealth: meta?.health || extra?.health || 100,
+          rarity: meta?.rarity || extra?.rarity || 'common',
+          faction: meta?.faction || extra?.faction,
+          type: meta?.type || extra?.type || 'pet',
+          description: meta?.description || extra?.description || 'NFT Card',
           image,
           nft_token_id: mapping.nft_token_id,
           nft_contract_id: mapping.nft_contract_id

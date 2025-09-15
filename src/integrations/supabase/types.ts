@@ -98,51 +98,6 @@ export type Database = {
         }
         Relationships: []
       }
-      card_templates: {
-        Row: {
-          card_type: string
-          created_at: string
-          defense: number
-          description: string | null
-          faction: string | null
-          health: number
-          id: string
-          image_url: string | null
-          name: string
-          power: number
-          rarity: string
-          updated_at: string
-        }
-        Insert: {
-          card_type?: string
-          created_at?: string
-          defense?: number
-          description?: string | null
-          faction?: string | null
-          health?: number
-          id?: string
-          image_url?: string | null
-          name: string
-          power?: number
-          rarity?: string
-          updated_at?: string
-        }
-        Update: {
-          card_type?: string
-          created_at?: string
-          defense?: number
-          description?: string | null
-          faction?: string | null
-          health?: number
-          id?: string
-          image_url?: string | null
-          name?: string
-          power?: number
-          rarity?: string
-          updated_at?: string
-        }
-        Relationships: []
-      }
       data_changes: {
         Row: {
           change_type: string
@@ -440,15 +395,7 @@ export type Database = {
           updated_at?: string
           wallet_address?: string
         }
-        Relationships: [
-          {
-            foreignKeyName: "user_nft_cards_card_template_name_fkey"
-            columns: ["card_template_name"]
-            isOneToOne: false
-            referencedRelation: "card_templates"
-            referencedColumns: ["name"]
-          },
-        ]
+        Relationships: []
       }
       wallet_connections: {
         Row: {
