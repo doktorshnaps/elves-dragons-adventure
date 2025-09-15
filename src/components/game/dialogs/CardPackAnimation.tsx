@@ -28,9 +28,16 @@ export const CardPackAnimation = ({ winningCard, onAnimationComplete }: CardPack
     return map;
   }, []);
 
-  // Seed available images from local DB first
+  // Seed available images from local DB first and preload them
   useEffect(() => {
     setAvailableImages(dbImageMap);
+    
+    // Preload the first few images for better performance
+    const imagesToPreload = Object.values(dbImageMap).slice(0, 10);
+    imagesToPreload.forEach(src => {
+      const img = new Image();
+      img.src = src;
+    });
   }, [dbImageMap]);
   
   const [targetX, setTargetX] = useState<number>(0);
@@ -48,7 +55,7 @@ export const CardPackAnimation = ({ winningCard, onAnimationComplete }: CardPack
     // Get available card names from loaded images
     const availableCardNames = Object.keys(availableImages);
     
-    for (let i = 0; i < 40; i++) {
+    for (let i = 0; i < 20; i++) { // Reduced from 40 to 20 for better performance
       // Ensure every card gets an image by cycling through available images
       const randomCardName = availableCardNames.length > 0 
         ? availableCardNames[i % availableCardNames.length] 
@@ -79,7 +86,7 @@ export const CardPackAnimation = ({ winningCard, onAnimationComplete }: CardPack
   const dummyCards = imagesReady ? generateDummyCards() : [];
   
   // Simplified positioning - place winning card at fixed position in array
-  const winningCardIndex = 20; // Фиксированная позиция в середине
+  const winningCardIndex = 10; // Adjusted for smaller array (was 20)
   const allCards = dummyCards.length > 0 ? [...dummyCards.slice(0, winningCardIndex), winningCard, ...dummyCards.slice(winningCardIndex)] : [];
 
   // Simple calculation for card positioning
@@ -183,7 +190,7 @@ export const CardPackAnimation = ({ winningCard, onAnimationComplete }: CardPack
                           src={card.image ?? availableImages[card.name] ?? '/placeholder.svg'} 
                           alt={card.name}
                           className="w-full h-full object-cover"
-                          loading="eager"
+                          loading={index <= 15 ? "eager" : "lazy"} // Load first 15 cards eagerly
                           onError={(e) => {
                             e.currentTarget.src = '/placeholder.svg';
                           }}
