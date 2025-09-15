@@ -38,7 +38,7 @@ export const applyDamageToPair = async (
   }
   
   // Persist damage to Supabase card_instances (source of truth)
-  const wallet = (gameData && (gameData as any).wallet_address) || null;
+  const wallet = ((gameData as any)?.wallet_address) || localStorage.getItem('walletAccountId');
 
   // Calculate actual damage portions
   const originalDragonHealth = pair.dragon ? (pair.dragon.currentHealth ?? pair.dragon.health ?? 0) : 0;
