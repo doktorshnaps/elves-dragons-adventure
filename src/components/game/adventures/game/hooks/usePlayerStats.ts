@@ -2,6 +2,7 @@ import { useState, useCallback, useEffect } from 'react';
 import { calculateTeamStats } from '@/utils/cardUtils';
 import { useToast } from '@/hooks/use-toast';
 import { useGameData } from '@/hooks/useGameData';
+import { useCardInstances } from '@/hooks/useCardInstances';
 import { Card } from '@/types/cards';
 
 interface PlayerStats {
@@ -19,6 +20,7 @@ interface PlayerStats {
 export const usePlayerStats = (initialLevel = 1) => {
   const { toast } = useToast();
   const { gameData, updateGameData } = useGameData();
+  const { cardInstances } = useCardInstances();
   
   const calculateEquipmentBonuses = useCallback(() => {
     if (!gameData.inventory) return { power: 0, defense: 0, health: 0 };
@@ -41,11 +43,14 @@ export const usePlayerStats = (initialLevel = 1) => {
     };
   }, [gameData.cards]);
 
-  // Calculate current and max team health based on selected team and cards state
+  // Calculate current and max team health based on selected team and card_instances
   const getTeamHealthSums = useCallback(() => {
     const cards = (gameData.cards as Card[]) || [];
     const selected = (gameData.selectedTeam as any[]) || [];
     const byId = new Map<string, Card>(cards.map((c) => [c.id, c]));
+    
+    // Create map of card instances for quick lookup of current health
+    const instancesById = new Map(cardInstances.map(inst => [inst.card_template_id, inst]));
 
     let currentSum = 0;
     let maxSum = 0;
@@ -54,7 +59,9 @@ export const usePlayerStats = (initialLevel = 1) => {
       const heroFromMap = byId.get(pair?.hero?.id) || pair?.hero;
       if (heroFromMap) {
         const heroMax = heroFromMap.health || pair.hero?.health || 0;
-        const heroCur = (heroFromMap.currentHealth ?? heroMax);
+        // Use actual health from card_instances if available, otherwise fallback to card data
+        const heroInstance = instancesById.get(heroFromMap.id);
+        const heroCur = heroInstance ? heroInstance.current_health : (heroFromMap.currentHealth ?? heroMax);
         maxSum += heroMax;
         currentSum += Math.max(0, Math.min(heroCur, heroMax));
       }
@@ -67,7 +74,9 @@ export const usePlayerStats = (initialLevel = 1) => {
         const rarityOk = (pair?.hero?.rarity ?? 0) >= (dragonFromMap?.rarity ?? 0);
         if (sameFaction && rarityOk) {
           const dMax = dragonFromMap.health || dragon.health || 0;
-          const dCur = (dragonFromMap.currentHealth ?? dMax);
+          // Use actual health from card_instances if available
+          const dragonInstance = instancesById.get(dragonFromMap.id);
+          const dCur = dragonInstance ? dragonInstance.current_health : (dragonFromMap.currentHealth ?? dMax);
           maxSum += dMax;
           currentSum += Math.max(0, Math.min(dCur, dMax));
         }
@@ -75,7 +84,7 @@ export const usePlayerStats = (initialLevel = 1) => {
     });
 
     return { currentSum, maxSum };
-  }, [gameData.cards, gameData.selectedTeam]);
+  }, [gameData.cards, gameData.selectedTeam, cardInstances]);
 
   const [stats, setStats] = useState<PlayerStats>(() => {
     if (gameData.adventurePlayerStats) {

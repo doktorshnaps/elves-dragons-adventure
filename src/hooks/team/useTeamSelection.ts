@@ -38,14 +38,7 @@ export const useTeamSelection = () => {
   }, [gameData.selectedTeam]);
 
   // Use the health synchronization hook
-  useCardHealthSync({
-    cards,
-    onCardsUpdate: (updatedCards) => {
-      setCards(updatedCards);
-      // Also update game data
-      updateGameData({ cards: updatedCards });
-    }
-  });
+  useCardHealthSync();
 
   // Listen for cross-app card updates and localStorage changes
   useEffect(() => {

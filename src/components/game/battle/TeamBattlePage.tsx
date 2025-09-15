@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ArrowLeft } from 'lucide-react';
 import { useTeamBattle } from '@/hooks/team/useTeamBattle';
+import { useCardHealthSync } from '@/hooks/useCardHealthSync';
 import { AttackOrderSelector } from './AttackOrderSelector';
 import { TeamBattleArena } from './TeamBattleArena';
 import { DungeonType } from '@/constants/dungeons';
@@ -15,6 +16,10 @@ export const TeamBattlePage: React.FC<TeamBattlePageProps> = ({
 }) => {
   const navigate = useNavigate();
   const [battleStarted, setBattleStarted] = useState<boolean>(false);
+  
+  // Sync health from database on component mount
+  useCardHealthSync();
+  
   const {
     battleState,
     attackOrder,

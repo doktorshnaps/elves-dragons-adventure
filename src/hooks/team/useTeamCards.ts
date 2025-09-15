@@ -21,10 +21,7 @@ export const useTeamCards = () => {
   const { handleUpgrade } = useCardUpgrade(cards, setCards, selectedCards, setSelectedCards);
 
   // Use health synchronization
-  useCardHealthSync({
-    cards,
-    onCardsUpdate: setCards
-  });
+  useCardHealthSync();
 
   useEffect(() => {
     const handleCardsUpdate = (e: CustomEvent<{ cards: CardType[] }>) => {

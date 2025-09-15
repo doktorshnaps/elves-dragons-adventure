@@ -1,70 +1,64 @@
 import { useEffect, useCallback } from 'react';
+import { useCardInstances } from './useCardInstances';
+import { useGameData } from './useGameData';
 import { Card } from '@/types/cards';
-import { initializeCardHealth, processCardsHealthRegeneration } from '@/utils/cardHealthUtils';
-
-interface UseCardHealthSyncProps {
-  cards: Card[];
-  onCardsUpdate: (cards: Card[]) => void;
-}
 
 /**
- * Hook for synchronizing card health across all game components
- * Ensures health changes persist across different game stages
+ * Hook to sync card health from card_instances to game data
+ * Ensures health is always accurate from database
  */
-export const useCardHealthSync = ({ cards, onCardsUpdate }: UseCardHealthSyncProps) => {
-  
-  const syncCardsHealth = useCallback((updatedCards: Card[]) => {
-    // Update localStorage for persistence
-    localStorage.setItem('gameCards', JSON.stringify(updatedCards));
-    
-    // Dispatch global event for immediate UI sync
-    const event = new CustomEvent('cardsUpdate', { 
-      detail: { cards: updatedCards }
-    });
-    window.dispatchEvent(event);
-    
-    onCardsUpdate(updatedCards);
-  }, [onCardsUpdate]);
+export const useCardHealthSync = () => {
+  const { cardInstances, loadCardInstances } = useCardInstances();
+  const { gameData, updateGameData } = useGameData();
 
-  // Initialize health for all cards on first load
-  useEffect(() => {
-    if (cards && cards.length > 0) {
-      const needsInit = cards.some(card => card.lastHealTime === undefined);
-      if (needsInit) {
-        const initializedCards = cards.map(card => ({
+  // Sync health from card_instances to cards in gameData
+  const syncHealthFromInstances = useCallback(async () => {
+    if (!cardInstances.length || !gameData.cards.length) return;
+
+    const instancesById = new Map(cardInstances.map(inst => [inst.card_template_id, inst]));
+    let hasChanges = false;
+
+    const updatedCards = gameData.cards.map((card: Card) => {
+      const instance = instancesById.get(card.id);
+      if (instance && instance.current_health !== card.currentHealth) {
+        hasChanges = true;
+        return {
           ...card,
-          lastHealTime: card.lastHealTime ?? Date.now()
-        }));
-        syncCardsHealth(initializedCards);
+          currentHealth: instance.current_health,
+          lastHealTime: new Date(instance.last_heal_time).getTime()
+        };
       }
+      return card;
+    });
+
+    if (hasChanges) {
+      console.log('🔄 Syncing card health from card_instances');
+      await updateGameData({ cards: updatedCards });
+      
+      // Dispatch event to notify other components
+      window.dispatchEvent(new CustomEvent('cardHealthSynced', { 
+        detail: { cards: updatedCards } 
+      }));
     }
-  }, []); // Only run once on mount
+  }, [cardInstances, gameData.cards, updateGameData]);
 
-  // Listen for health changes from battles/dungeons
+  // Listen for card health updates and sync
   useEffect(() => {
-    const handleCardHealthChange = (e: CustomEvent<{ card: Card; damage: number }>) => {
-      const { card: damagedCard } = e.detail;
-      
-      const updatedCards = cards.map(card => 
-        card.id === damagedCard.id ? damagedCard : card
-      );
-      
-      syncCardsHealth(updatedCards);
+    const handleHealthUpdate = () => {
+      loadCardInstances();
     };
 
-    const handleCardsHealthUpdate = (e: CustomEvent<{ cards: Card[] }>) => {
-      if (e.detail?.cards) {
-        syncCardsHealth(e.detail.cards);
-      }
-    };
+    window.addEventListener('cardInstanceHealthUpdate', handleHealthUpdate);
+    return () => window.removeEventListener('cardInstanceHealthUpdate', handleHealthUpdate);
+  }, [loadCardInstances]);
 
-    window.addEventListener('cardHealthChanged', handleCardHealthChange as EventListener);
-    window.addEventListener('cardsHealthUpdate', handleCardsHealthUpdate as EventListener);
-    
-    return () => {
-      window.removeEventListener('cardHealthChanged', handleCardHealthChange as EventListener);
-      window.removeEventListener('cardsHealthUpdate', handleCardsHealthUpdate as EventListener);
-    };
-  }, [cards, syncCardsHealth]);
+  // Auto-sync when card instances change
+  useEffect(() => {
+    syncHealthFromInstances();
+  }, [syncHealthFromInstances]);
 
+  return {
+    syncHealthFromInstances,
+    cardInstances
+  };
 };
