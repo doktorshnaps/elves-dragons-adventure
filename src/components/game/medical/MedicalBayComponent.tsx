@@ -266,24 +266,14 @@ export const MedicalBayComponent = () => {
                   >
                     <div className="relative">
                       <CardDisplay 
-                        card={cardData}
+                        card={{
+                          ...cardData,
+                          currentHealth: card.current_health, // Use actual health from card_instances
+                          health: card.max_health // Use max health from card_instances  
+                        }}
                         showSellButton={false}
                         className="w-full"
                       />
-                      
-                      {/* Health Bar Overlay */}
-                      <div className="absolute bottom-1 left-1 right-1">
-                        <div className="bg-black/50 rounded px-1 py-0.5">
-                          <div className="flex justify-between text-xs text-white mb-1">
-                            <span>HP:</span>
-                            <span>{card.current_health}/{card.max_health}</span>
-                          </div>
-                          <Progress 
-                            value={healthPercentage} 
-                            className="h-1"
-                          />
-                        </div>
-                      </div>
                       
                       {/* Selection Indicator */}
                       {isSelected && (
