@@ -2,75 +2,25 @@ import { useState, useEffect } from 'react';
 import { Card as CardType } from "@/types/cards";
 import { useGameData } from '@/hooks/useGameData';
 import { useCardHealthSync } from '@/hooks/useCardHealthSync';
+import { useCardsWithHealth } from '@/hooks/useCardsWithHealth';
 import { TeamPair } from '@/components/game/team/DeckSelection';
 
 export const useTeamSelection = () => {
   const { gameData, updateGameData } = useGameData();
+  const { cardsWithHealth, selectedTeamWithHealth } = useCardsWithHealth();
   const [selectedPairs, setSelectedPairs] = useState<TeamPair[]>([]);
-  const [cards, setCards] = useState<CardType[]>(() => {
-    try {
-      const saved = localStorage.getItem('gameCards');
-      if (saved) return JSON.parse(saved);
-      const persisted = localStorage.getItem('game-storage');
-      if (persisted) {
-        const parsed = JSON.parse(persisted);
-        const fromStore = parsed?.state?.cards ?? parsed?.cards;
-        if (Array.isArray(fromStore) && fromStore.length > 0) return fromStore;
-      }
-      return gameData.cards || [];
-    } catch {
-      return gameData.cards || [];
-    }
-  });
 
-  // Keep local cards in sync with game data
+  // Load selected team from game data with actual health
   useEffect(() => {
-    if (gameData.cards) {
-      setCards(gameData.cards);
-    }
-  }, [gameData.cards]);
-
-  // Load selected team from game data
-  useEffect(() => {
-    if (gameData.selectedTeam) {
+    if (selectedTeamWithHealth.length > 0) {
+      setSelectedPairs(selectedTeamWithHealth);
+    } else if (gameData.selectedTeam) {
       setSelectedPairs(gameData.selectedTeam);
     }
-  }, [gameData.selectedTeam]);
+  }, [selectedTeamWithHealth, gameData.selectedTeam]);
 
   // Use the health synchronization hook
   useCardHealthSync();
-
-  // Listen for cross-app card updates and localStorage changes
-  useEffect(() => {
-    const handleCardsUpdate = (e: CustomEvent<{ cards: CardType[] }>) => {
-      if (e.detail?.cards) setCards(e.detail.cards);
-    };
-    const handleStorageChange = () => {
-      try {
-        const saved = localStorage.getItem('gameCards');
-        if (saved) {
-          setCards(JSON.parse(saved));
-          return;
-        }
-        const persisted = localStorage.getItem('game-storage');
-        if (persisted) {
-          const parsed = JSON.parse(persisted);
-          const fromStore = parsed?.state?.cards ?? parsed?.cards;
-          if (Array.isArray(fromStore)) setCards(fromStore);
-        }
-      } catch {}
-    };
-
-    window.addEventListener('cardsUpdate', handleCardsUpdate as EventListener);
-    window.addEventListener('storage', handleStorageChange);
-    const interval = setInterval(handleStorageChange, 500);
-
-    return () => {
-      window.removeEventListener('cardsUpdate', handleCardsUpdate as EventListener);
-      window.removeEventListener('storage', handleStorageChange);
-      clearInterval(interval);
-    };
-  }, []);
 
   const handlePairSelect = async (hero: CardType, dragon?: CardType) => {
     if (selectedPairs.length >= 5) return;
@@ -122,12 +72,12 @@ export const useTeamSelection = () => {
     let totalHealth = 0;
 
     selectedPairs.forEach(pair => {
-      // Add hero stats (use current health)
+      // Add hero stats (use current health from card instances)
       totalPower += pair.hero.power;
       totalDefense += pair.hero.defense;
       totalHealth += pair.hero.currentHealth ?? pair.hero.health;
 
-      // Add dragon stats if present and same faction (use current health)
+      // Add dragon stats if present and same faction (use current health from card instances)
       if (pair.dragon && pair.dragon.faction === pair.hero.faction) {
         totalPower += pair.dragon.power;
         totalDefense += pair.dragon.defense;
@@ -144,7 +94,7 @@ export const useTeamSelection = () => {
   };
 
   return {
-    cards: cards,
+    cards: cardsWithHealth,
     selectedPairs,
     handlePairSelect,
     handlePairRemove,

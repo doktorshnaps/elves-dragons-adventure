@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Card as CardType } from '@/types/cards';
 import { useGameStore } from '@/stores/gameStore';
 import { Button } from '@/components/ui/button';
@@ -6,6 +6,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { CardDisplay } from '@/components/game/CardDisplay';
 import { Badge } from '@/components/ui/badge';
 import { Users, Plus, X } from 'lucide-react';
+import { useCardsWithHealth } from '@/hooks/useCardsWithHealth';
 
 interface TeamPair {
   hero: CardType;
@@ -13,15 +14,41 @@ interface TeamPair {
 }
 
 export const TeamManager = () => {
-  const { cards, selectedTeam, setSelectedTeam, getTeamStats } = useGameStore();
+  const { selectedTeam, setSelectedTeam, getTeamStats } = useGameStore();
+  const { cardsWithHealth, selectedTeamWithHealth } = useCardsWithHealth();
   const [showHeroSelection, setShowHeroSelection] = useState(false);
   const [showDragonSelection, setShowDragonSelection] = useState(false);
   const [editingSlot, setEditingSlot] = useState<number | null>(null);
 
-  const heroes = cards.filter(card => card.type === 'character');
-  const dragons = cards.filter(card => card.type === 'pet');
+  const heroes = cardsWithHealth.filter(card => card.type === 'character');
+  const dragons = cardsWithHealth.filter(card => card.type === 'pet');
+  const getTeamStatsWithHealth = (team: TeamPair[]) => {
+    let totalPower = 0;
+    let totalDefense = 0;
+    let totalHealth = 0;
+
+    team.forEach((pair: any) => {
+      if (pair.hero) {
+        totalPower += pair.hero.power;
+        totalDefense += pair.hero.defense;
+        totalHealth += pair.hero.currentHealth ?? pair.hero.health;
+      }
+      if (pair.dragon && pair.dragon.faction === pair.hero?.faction) {
+        totalPower += pair.dragon.power;
+        totalDefense += pair.dragon.defense;
+        totalHealth += pair.dragon.currentHealth ?? pair.dragon.health;
+      }
+    });
+
+    return {
+      power: totalPower,
+      defense: totalDefense,
+      health: totalHealth,
+      maxHealth: totalHealth
+    };
+  };
   
-  const teamStats = getTeamStats();
+  const teamStats = getTeamStatsWithHealth(selectedTeamWithHealth);
 
   const isHeroInTeam = (heroId: string) => {
     return selectedTeam.some((pair: TeamPair) => pair.hero?.id === heroId);
@@ -104,7 +131,7 @@ export const TeamManager = () => {
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
           {Array.from({ length: 5 }, (_, index) => {
-            const pair = selectedTeam[index] as TeamPair | undefined;
+            const pair = selectedTeamWithHealth[index] as TeamPair | undefined;
             
             return (
               <div key={index} className="border border-game-accent/30 rounded-lg p-3 min-h-[200px]">
@@ -205,7 +232,7 @@ export const TeamManager = () => {
           </DialogHeader>
           <div className="grid grid-cols-4 sm:grid-cols-6 gap-3 overflow-y-auto p-4">
             {editingSlot !== null && 
-              getAvailableDragons(selectedTeam[editingSlot]?.hero?.faction).map(dragon => (
+              getAvailableDragons(selectedTeamWithHealth[editingSlot]?.hero?.faction).map(dragon => (
                 <div
                   key={dragon.id}
                   className="cursor-pointer transition-all hover:scale-105"
@@ -216,7 +243,7 @@ export const TeamManager = () => {
               ))
             }
             {editingSlot !== null && 
-              getAvailableDragons(selectedTeam[editingSlot]?.hero?.faction).length === 0 && (
+              getAvailableDragons(selectedTeamWithHealth[editingSlot]?.hero?.faction).length === 0 && (
                 <div className="col-span-full text-center text-game-accent/60 text-sm">
                   Нет доступных драконов для выбранного героя
                 </div>
