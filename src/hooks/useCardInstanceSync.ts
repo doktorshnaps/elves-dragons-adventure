@@ -126,15 +126,15 @@ export const useCardInstanceSync = () => {
     }
   }, [gameData.cards, cardInstances, deleteCardInstanceByTemplate]);
 
-  // Таймер для регенерации здоровья
-  useEffect(() => {
-    const interval = setInterval(processHealthRegeneration, HEAL_INTERVAL);
-    
-    // Запуск сразу
-    setTimeout(processHealthRegeneration, 1000);
-    
-    return () => clearInterval(interval);
-  }, [processHealthRegeneration]);
+  // Таймер для регенерации здоровья ОТКЛЮЧЕН - здоровье не должно восстанавливаться автоматически
+  // useEffect(() => {
+  //   const interval = setInterval(processHealthRegeneration, HEAL_INTERVAL);
+  //   
+  //   // Запуск сразу
+  //   setTimeout(processHealthRegeneration, 1000);
+  //   
+  //   return () => clearInterval(interval);
+  // }, [processHealthRegeneration]);
 
   // Слушатель событий обновления здоровья
   useEffect(() => {
