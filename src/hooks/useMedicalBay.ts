@@ -30,23 +30,26 @@ export const useMedicalBay = () => {
     try {
       setLoading(true);
       const { data, error } = await supabase
-        .from('medical_bay')
-        .select(`
-          *,
-          card_instances (
-            id,
-            current_health,
-            max_health,
-            card_data
-          )
-        `)
-        .eq('wallet_address', accountId)
-        .eq('is_completed', false)
-        .order('placed_at', { ascending: false });
+        .rpc('get_medical_bay_entries', { p_wallet_address: accountId });
 
       if (error) throw error;
       
-      setMedicalBayEntries(data || []);
+      const mapped = (data as any[] | null)?.map((row: any) => ({
+        id: row.id,
+        card_instance_id: row.card_instance_id,
+        placed_at: row.placed_at,
+        estimated_completion: row.estimated_completion,
+        heal_rate: row.heal_rate,
+        is_completed: row.is_completed,
+        card_instances: {
+          id: row.ci_id,
+          current_health: row.ci_current_health,
+          max_health: row.ci_max_health,
+          card_data: row.ci_card_data,
+        },
+      })) || [];
+
+      setMedicalBayEntries(mapped);
     } catch (error) {
       console.error('Error loading medical bay entries:', error);
       toast({

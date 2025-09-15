@@ -717,6 +717,23 @@ export type Database = {
           user_id: string
         }[]
       }
+      get_medical_bay_entries: {
+        Args: { p_wallet_address: string }
+        Returns: {
+          card_instance_id: string
+          ci_card_data: Json
+          ci_current_health: number
+          ci_id: string
+          ci_max_health: number
+          estimated_completion: string
+          heal_rate: number
+          id: string
+          is_completed: boolean
+          placed_at: string
+          user_id: string
+          wallet_address: string
+        }[]
+      }
       get_or_create_wallet_identity: {
         Args: { p_wallet_address: string }
         Returns: string
