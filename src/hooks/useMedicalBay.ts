@@ -3,6 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { useWallet } from '@/hooks/useWallet';
 import { useGameData } from '@/hooks/useGameData';
+import { useGameStore } from '@/stores/gameStore';
 
 interface MedicalBayEntry {
   id: string;
@@ -72,30 +73,43 @@ export const useMedicalBay = () => {
     try {
       setLoading(true);
       console.log('🏥 Placing card in medical bay:', cardInstanceId);
-      
-      // Найдем карту, которую помещаем в медпункт
-      const cardToPlace = gameData.cards.find(card => card.id === cardInstanceId);
+
+      // Получаем template id по instance id
+      const { data: instance, error: instErr } = await supabase
+        .from('card_instances')
+        .select('id, card_template_id')
+        .eq('id', cardInstanceId)
+        .maybeSingle();
+      if (instErr) throw instErr;
+      const templateId = instance?.card_template_id as string | undefined;
       
       const { data, error } = await supabase.rpc('add_card_to_medical_bay', {
         p_card_instance_id: cardInstanceId,
         p_wallet_address: accountId
-        // Время теперь рассчитывается автоматически в БД на основе недостающего HP
       });
 
       if (error) throw error;
       console.log('🏥 Card placed successfully, medical bay ID:', data);
 
-      // Удаляем карту из команды, если она там была
-      if (cardToPlace && gameData.selectedTeam) {
-        const updatedTeam = gameData.selectedTeam.filter((pair: any) => {
-          const heroId = pair.hero?.id;
-          const dragonId = pair.dragon?.id;
-          return heroId !== cardInstanceId && dragonId !== cardInstanceId;
-        });
+      // Удаляем карту из команды (и из стора), если она там была
+      if (templateId && gameData.selectedTeam) {
+        const updatedTeam = (gameData.selectedTeam as any[])
+          .map((pair: any) => {
+            if (pair.hero?.id === templateId) return null; // если герой - удаляем всю пару
+            if (pair.dragon?.id === templateId) return { ...pair, dragon: undefined }; // если дракон - убираем только дракона
+            return pair;
+          })
+          .filter(Boolean) as any[];
         
         if (updatedTeam.length !== gameData.selectedTeam.length) {
           console.log('🏥 Removing card from team as it was placed in medical bay');
           await updateGameData({ selectedTeam: updatedTeam });
+          try {
+            const { setSelectedTeam } = useGameStore.getState();
+            setSelectedTeam(updatedTeam);
+          } catch (e) {
+            console.warn('🏥 Could not update local store selectedTeam:', e);
+          }
         }
       }
 
@@ -108,7 +122,7 @@ export const useMedicalBay = () => {
       await loadMedicalBayEntries();
       
       return data;
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error placing card in medical bay:', error);
       toast({
         title: "Ошибка",
@@ -118,7 +132,7 @@ export const useMedicalBay = () => {
     } finally {
       setLoading(false);
     }
-  }, [accountId, toast, loadMedicalBayEntries, gameData.cards, gameData.selectedTeam, updateGameData]);
+  }, [accountId, toast, loadMedicalBayEntries, gameData.selectedTeam, updateGameData]);
 
   const removeCardFromMedicalBay = useCallback(async (cardInstanceId: string) => {
     if (!accountId) return;

@@ -20,8 +20,8 @@ export const TeamManager = () => {
   const [showDragonSelection, setShowDragonSelection] = useState(false);
   const [editingSlot, setEditingSlot] = useState<number | null>(null);
 
-  const heroes = cardsWithHealth.filter(card => card.type === 'character');
-  const dragons = cardsWithHealth.filter(card => card.type === 'pet');
+  const heroes = cardsWithHealth.filter(card => card.type === 'character' && !(card as any).isInMedicalBay);
+  const dragons = cardsWithHealth.filter(card => card.type === 'pet' && !(card as any).isInMedicalBay);
   const getTeamStatsWithHealth = (team: TeamPair[]) => {
     let totalPower = 0;
     let totalDefense = 0;
