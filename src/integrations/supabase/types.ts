@@ -726,6 +726,27 @@ export type Database = {
         Args: { p_listing_id: string }
         Returns: undefined
       }
+      create_game_data_by_wallet: {
+        Args: { p_wallet_address: string }
+        Returns: {
+          account_experience: number
+          account_level: number
+          adventure_current_monster: Json
+          adventure_player_stats: Json
+          balance: number
+          barracks_upgrades: Json
+          battle_state: Json
+          cards: Json
+          dragon_eggs: Json
+          dragon_lair_upgrades: Json
+          initialized: boolean
+          inventory: Json
+          marketplace_listings: Json
+          selected_team: Json
+          social_quests: Json
+          user_id: string
+        }[]
+      }
       create_marketplace_listing: {
         Args: { p_item_id: string; p_listing_type: string; p_price: number }
         Returns: string
