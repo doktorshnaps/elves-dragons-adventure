@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
-import { Clock, Heart, Plus, Activity, ArrowRight } from 'lucide-react';
+import { Clock, Heart, Plus, Activity, ArrowRight, X } from 'lucide-react';
 import { useMedicalBay } from '@/hooks/useMedicalBay';
 import { useCardInstances } from '@/hooks/useCardInstances';
 import { useCardHealthSync } from '@/hooks/useCardHealthSync';
@@ -16,6 +16,7 @@ export const MedicalBayComponent = () => {
     loadMedicalBayEntries,
     placeCardInMedicalBay,
     removeCardFromMedicalBay,
+    stopHealingWithoutRecovery,
     processMedicalBayHealing
   } = useMedicalBay();
 
@@ -163,36 +164,60 @@ export const MedicalBayComponent = () => {
                             <span className="font-medium">
                               {cardData?.name || 'Неизвестная карта'}
                             </span>
-                          </div>
-                          <div className="flex items-center gap-2">
-                            {isReady ? (
-                              <Button 
-                                onClick={async () => {
-                                  console.log('🏥 Removing card from medical bay:', entry.card_instance_id);
-                                   try {
-                                     await removeCardFromMedicalBay(entry.card_instance_id);
-                                     console.log('🏥 Card removed successfully, syncing health data...');
-                                     await Promise.all([
-                                       loadCardInstances(),
-                                       loadMedicalBayEntries(),
-                                       syncHealthFromInstances() // Синхронизируем здоровье из БД
-                                     ]);
-                                     console.log('🏥 Data reloaded and synced successfully');
-                                  } catch (error) {
-                                    console.error('🏥 Error removing card:', error);
-                                  }
-                                }}
-                                size="sm"
-                                disabled={loading}
-                                className="bg-green-600 hover:bg-green-700"
-                              >
-                                Забрать
-                              </Button>
-                            ) : (
-                              <div className="flex items-center gap-1 text-sm">
-                                <Clock className="w-4 h-4" />
-                                {timeRemaining}
-                              </div>
+                           </div>
+                           <div className="flex items-center gap-2">
+                             <Button
+                               onClick={async () => {
+                                 console.log('🏥 Stopping healing without recovery:', entry.card_instance_id);
+                                 try {
+                                   await stopHealingWithoutRecovery(entry.card_instance_id);
+                                   console.log('🏥 Healing stopped successfully, syncing data...');
+                                   await Promise.all([
+                                     loadCardInstances(),
+                                     loadMedicalBayEntries(),
+                                     syncHealthFromInstances()
+                                   ]);
+                                   console.log('🏥 Data reloaded and synced successfully');
+                                 } catch (error) {
+                                   console.error('🏥 Error stopping healing:', error);
+                                 }
+                               }}
+                               size="sm"
+                               variant="outline"
+                               disabled={loading}
+                               className="border-red-500/30 text-red-400 hover:bg-red-500/10"
+                             >
+                               <X className="w-3 h-3 mr-1" />
+                               Остановить
+                             </Button>
+                             {isReady ? (
+                               <Button 
+                                 onClick={async () => {
+                                   console.log('🏥 Removing card from medical bay:', entry.card_instance_id);
+                                    try {
+                                      await removeCardFromMedicalBay(entry.card_instance_id);
+                                      console.log('🏥 Card removed successfully, syncing health data...');
+                                      await Promise.all([
+                                        loadCardInstances(),
+                                        loadMedicalBayEntries(),
+                                        syncHealthFromInstances() // Синхронизируем здоровье из БД
+                                      ]);
+                                      console.log('🏥 Data reloaded and synced successfully');
+                                   } catch (error) {
+                                     console.error('🏥 Error removing card:', error);
+                                   }
+                                 }}
+                                 size="sm"
+                                 disabled={loading}
+                                 className="bg-green-600 hover:bg-green-700"
+                               >
+                                 Забрать
+                               </Button>
+                             ) : (
+                               <div className="flex items-center gap-1 text-sm">
+                                 <Clock className="w-4 h-4" />
+                                 {timeRemaining}
+                               </div>
                             )}
                           </div>
                         </div>

@@ -153,6 +153,53 @@ export const useMedicalBay = () => {
     }
   }, [accountId, toast, loadMedicalBayEntries]);
 
+  const stopHealingWithoutRecovery = useCallback(async (cardInstanceId: string) => {
+    if (!accountId) return;
+
+    try {
+      setLoading(true);
+      console.log('🏥 Stopping healing without recovery:', cardInstanceId);
+      
+      // Просто удаляем из медпункта без восстановления здоровья
+      const { error } = await supabase
+        .from('medical_bay')
+        .delete()
+        .eq('card_instance_id', cardInstanceId);
+
+      if (error) throw error;
+
+      // Обновляем card_instances чтобы убрать флаг is_in_medical_bay
+      const { error: updateError } = await supabase
+        .from('card_instances')
+        .update({
+          is_in_medical_bay: false,
+          medical_bay_start_time: null,
+          medical_bay_heal_rate: 1
+        })
+        .eq('id', cardInstanceId);
+
+      if (updateError) throw updateError;
+
+      toast({
+        title: "Лечение остановлено",
+        description: "Карта извлечена из медпункта без восстановления здоровья",
+      });
+
+      // Перезагружаем данные
+      await loadMedicalBayEntries();
+      
+    } catch (error) {
+      console.error('Error stopping healing:', error);
+      toast({
+        title: "Ошибка",
+        description: error.message || "Не удалось остановить лечение",
+        variant: "destructive"
+      });
+    } finally {
+      setLoading(false);
+    }
+  }, [accountId, toast, loadMedicalBayEntries]);
+
   const processMedicalBayHealing = useCallback(async () => {
     try {
       console.log('🏥 Processing medical bay healing...');
@@ -173,6 +220,7 @@ export const useMedicalBay = () => {
     loadMedicalBayEntries,
     placeCardInMedicalBay,
     removeCardFromMedicalBay,
+    stopHealingWithoutRecovery,
     processMedicalBayHealing
   };
 };
