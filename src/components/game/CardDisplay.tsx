@@ -55,7 +55,11 @@ export const CardDisplay = ({
               <CardHealthBar currentHealth={card.currentHealth ?? card.health} maxHealth={card.health} size="small" />
             </div>
 
-            {card.magicResistance}
+            {card.magicResistance && (
+              <div className={`text-purple-400 leading-none ${isMobile ? 'text-[6px]' : 'text-[8px]'} mt-0.5`}>
+                {card.magicResistance.type}: {card.magicResistance.value}
+              </div>
+            )}
 
             {!isActive && card.type === 'pet' && <div className="text-red-400 text-[6px] mt-0.5 break-words leading-none tracking-tighter">
                 Требуется герой {card.faction} {card.rarity} или выше
