@@ -14,7 +14,7 @@ export const useInitialBattleState = (initialLevel: number = 1) => {
   return {
     playerStats: {
       health: teamStats.health,
-      maxHealth: teamStats.health,
+      maxHealth: teamStats.maxHealth,
       power: teamStats.power,
       defense: teamStats.defense
     },

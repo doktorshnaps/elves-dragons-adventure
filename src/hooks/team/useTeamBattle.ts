@@ -49,21 +49,27 @@ export const useTeamBattle = (dungeonType: DungeonType, initialLevel: number = 1
   // Initialize battle with team pairs
   useEffect(() => {
     if (selectedPairs.length > 0 && battleState.playerPairs.length === 0) {
+      const cardsArr = (gameData.cards as any[]) || [];
+      const byId = new Map(cardsArr.map((c: any) => [c.id, c]));
+
       const teamPairs: TeamPair[] = selectedPairs.map((pair, index) => {
-        const heroStats = pair.hero;
-        const dragonStats = pair.dragon || { power: 0, defense: 0, health: 0 };
+        const heroFromMap = byId.get(pair.hero.id) || pair.hero;
+        const dragonFromMap = pair.dragon ? (byId.get(pair.dragon.id) || pair.dragon) : undefined;
+
+        const heroStats = heroFromMap;
+        const dragonStats = dragonFromMap || { power: 0, defense: 0, health: 0 };
         const heroCurrent = heroStats?.currentHealth ?? heroStats.health ?? 0;
-        const dragonCurrent = pair.dragon ? (pair.dragon.currentHealth ?? pair.dragon.health ?? 0) : 0;
-        const dragonAlive = pair.dragon ? (dragonCurrent > 0) : false;
+        const dragonCurrent = dragonFromMap ? (dragonFromMap.currentHealth ?? dragonFromMap.health ?? 0) : 0;
+        const dragonAlive = !!dragonFromMap && (dragonCurrent > 0);
         
         const heroMana = heroStats.magic ?? 0;
-        const dragonMana = dragonAlive ? (pair.dragon?.magic ?? 0) : 0;
+        const dragonMana = dragonAlive ? (dragonFromMap?.magic ?? 0) : 0;
         const totalMana = heroMana + dragonMana;
         
         return {
           id: `pair-${index}`,
-          hero: pair.hero,
-          dragon: pair.dragon,
+          hero: heroFromMap,
+          dragon: dragonFromMap,
           health: heroCurrent + dragonCurrent,
           maxHealth: (heroStats.health ?? 0) + (dragonStats.health ?? 0),
           power: (heroStats.power ?? 0) + (dragonAlive ? (dragonStats.power ?? 0) : 0),
@@ -87,7 +93,7 @@ export const useTeamBattle = (dungeonType: DungeonType, initialLevel: number = 1
       
       setAttackOrder(teamPairs.map(pair => pair.id));
     }
-  }, [selectedPairs, dungeonType, initialLevel]);
+  }, [selectedPairs, dungeonType, initialLevel, gameData.cards]);
 
   // Save battle state
   useEffect(() => {

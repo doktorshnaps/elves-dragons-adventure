@@ -16,7 +16,7 @@ export const useBattleStateInitializer = () => {
     const battleState = {
       playerStats: {
         health: teamStats.health,
-        maxHealth: teamStats.health,
+        maxHealth: teamStats.maxHealth,
         power: teamStats.power,
         defense: teamStats.defense
       },
