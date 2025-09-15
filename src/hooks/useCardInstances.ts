@@ -106,7 +106,7 @@ export const useCardInstances = () => {
     try {
       // Use RPC with SECURITY DEFINER to bypass RLS when authenticated via wallet
       const { data, error } = await supabase.rpc('update_card_instance_health', {
-        p_instance_id: instanceId,
+        p_instance_id: instanceId, // Now correctly typed as uuid
         p_wallet_address: accountId,
         p_current_health: Math.max(0, currentHealth),
         p_last_heal_time: lastHealTime ?? null
