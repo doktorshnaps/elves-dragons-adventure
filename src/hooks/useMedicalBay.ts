@@ -2,6 +2,7 @@ import { useState, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { useWallet } from '@/hooks/useWallet';
+import { useGameData } from '@/hooks/useGameData';
 
 interface MedicalBayEntry {
   id: string;
@@ -23,6 +24,7 @@ export const useMedicalBay = () => {
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
   const { accountId } = useWallet();
+  const { gameData, updateGameData } = useGameData();
 
   const loadMedicalBayEntries = useCallback(async () => {
     if (!accountId) return;
@@ -70,6 +72,10 @@ export const useMedicalBay = () => {
     try {
       setLoading(true);
       console.log('🏥 Placing card in medical bay:', cardInstanceId);
+      
+      // Найдем карту, которую помещаем в медпункт
+      const cardToPlace = gameData.cards.find(card => card.id === cardInstanceId);
+      
       const { data, error } = await supabase.rpc('add_card_to_medical_bay', {
         p_card_instance_id: cardInstanceId,
         p_wallet_address: accountId
@@ -79,9 +85,23 @@ export const useMedicalBay = () => {
       if (error) throw error;
       console.log('🏥 Card placed successfully, medical bay ID:', data);
 
+      // Удаляем карту из команды, если она там была
+      if (cardToPlace && gameData.selectedTeam) {
+        const updatedTeam = gameData.selectedTeam.filter((pair: any) => {
+          const heroId = pair.hero?.id;
+          const dragonId = pair.dragon?.id;
+          return heroId !== cardInstanceId && dragonId !== cardInstanceId;
+        });
+        
+        if (updatedTeam.length !== gameData.selectedTeam.length) {
+          console.log('🏥 Removing card from team as it was placed in medical bay');
+          await updateGameData({ selectedTeam: updatedTeam });
+        }
+      }
+
       toast({
         title: "Успешно",
-        description: "Карта помещена в медпункт",
+        description: "Карта помещена в медпункт и удалена из команды",
       });
 
       // Перезагружаем данные
@@ -98,7 +118,7 @@ export const useMedicalBay = () => {
     } finally {
       setLoading(false);
     }
-  }, [accountId, toast, loadMedicalBayEntries]);
+  }, [accountId, toast, loadMedicalBayEntries, gameData.cards, gameData.selectedTeam, updateGameData]);
 
   const removeCardFromMedicalBay = useCallback(async (cardInstanceId: string) => {
     if (!accountId) return;
