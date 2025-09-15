@@ -69,12 +69,15 @@ export const useMedicalBay = () => {
 
     try {
       setLoading(true);
-      const { data, error } = await supabase.rpc('place_card_in_medical_bay', {
+      console.log('🏥 Placing card in medical bay:', cardInstanceId);
+      const { data, error } = await supabase.rpc('add_card_to_medical_bay', {
         p_card_instance_id: cardInstanceId,
-        p_wallet_address: accountId
+        p_wallet_address: accountId,
+        p_healing_hours: 2 // 2 hours default healing time
       });
 
       if (error) throw error;
+      console.log('🏥 Card placed successfully, medical bay ID:', data);
 
       toast({
         title: "Успешно",
@@ -102,9 +105,9 @@ export const useMedicalBay = () => {
 
     try {
       setLoading(true);
+      console.log('🏥 Removing card from medical bay:', cardInstanceId);
       const { data, error } = await supabase.rpc('remove_card_from_medical_bay', {
-        p_card_instance_id: cardInstanceId,
-        p_wallet_address: accountId
+        p_card_instance_id: cardInstanceId
       });
 
       if (error) throw error;

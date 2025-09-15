@@ -503,6 +503,14 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      add_card_to_medical_bay: {
+        Args: {
+          p_card_instance_id: string
+          p_healing_hours?: number
+          p_wallet_address: string
+        }
+        Returns: string
+      }
       admin_add_balance: {
         Args: {
           p_admin_wallet_address: string
@@ -785,8 +793,10 @@ export type Database = {
         Returns: undefined
       }
       remove_card_from_medical_bay: {
-        Args: { p_card_instance_id: string; p_wallet_address: string }
-        Returns: Json
+        Args:
+          | { p_card_instance_id: string }
+          | { p_card_instance_id: string; p_wallet_address: string }
+        Returns: boolean
       }
       remove_card_instance_by_id: {
         Args: { p_instance_id: string; p_wallet_address: string }
