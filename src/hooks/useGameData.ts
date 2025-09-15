@@ -3,7 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 // Убираем зависимость от useAuth для работы с кошельками
 import { Card } from '@/types/cards';
 import { useToast } from '@/hooks/use-toast';
-import { processCardsHealthRegeneration, initializeCardHealth } from '@/utils/cardHealthUtils';
+import { initializeCardHealth } from '@/utils/cardHealthUtils';
 
 interface GameData {
   balance: number;
@@ -79,11 +79,11 @@ export const useGameData = () => {
           lastHealTime: card.lastHealTime ?? Date.now()
           // НЕ сбрасываем currentHealth здесь!
         }));
-        const processedCards = processCardsHealthRegeneration(initializedCards);
+        // Убираем пассивное восстановление - только инициализируем карты
         
         const newGameData: GameData = {
           balance: gameRecord.balance || 0,
-          cards: processedCards,
+          cards: initializedCards,
           initialized: gameRecord.initialized || false,
           inventory: (gameRecord.inventory as any[]) || [],
           marketplaceListings: (gameRecord.marketplace_listings as any[]) || [],

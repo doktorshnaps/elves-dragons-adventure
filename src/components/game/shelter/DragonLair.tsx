@@ -7,7 +7,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useGameData } from '@/hooks/useGameData';
 import { Card as CardType } from '@/types/cards';
 import { CardDisplay } from '../CardDisplay';
-import { useCardHealthRegeneration } from '@/hooks/useCardHealthRegeneration';
+
 import { initializeCardHealth } from '@/utils/cardHealthUtils';
 import { Flame, Clock, Star, ArrowRight } from 'lucide-react';
 
@@ -31,15 +31,8 @@ export const DragonLair: React.FC<DragonLairProps> = ({ lairLevel, onUpgradeBuil
   const { gameData, updateGameData } = useGameData();
   const [currentTime, setCurrentTime] = useState(Date.now());
 
-  // Initialize cards and set up health regeneration
+  // Initialize cards without passive regeneration
   const initializedCards = (gameData.cards as CardType[] || []).map(initializeCardHealth);
-  
-  useCardHealthRegeneration({
-    cards: initializedCards,
-    onCardsUpdate: (updatedCards) => {
-      updateGameData({ cards: updatedCards });
-    }
-  });
 
   // Get active upgrades from Supabase data
   const activeUpgrades = (gameData.dragonLairUpgrades || []) as DragonUpgrade[];

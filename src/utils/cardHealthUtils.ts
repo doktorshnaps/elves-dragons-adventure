@@ -1,8 +1,5 @@
 import { Card } from '@/types/cards';
 
-const HEAL_RATE = 1; // 1 HP per interval
-const HEAL_INTERVAL = 1 * 60 * 1000; // 1 minute in milliseconds
-
 /**
  * Initialize card health if not set
  */
@@ -13,36 +10,6 @@ export const initializeCardHealth = (card: Card): Card => {
     ...card,
     currentHealth: card.currentHealth !== undefined ? card.currentHealth : card.health,
     lastHealTime: card.lastHealTime ?? Date.now()
-  };
-};
-
-/**
- * Calculate how much health should be restored based on time passed
- */
-export const calculateHealthRegeneration = (card: Card): Card => {
-  const now = Date.now();
-  const lastHeal = card.lastHealTime ?? now;
-  const timePassed = now - lastHeal;
-  
-  // If not enough time has passed, return original card
-  if (timePassed < HEAL_INTERVAL) {
-    return card;
-  }
-  
-  // Calculate how many heal intervals have passed
-  const healIntervals = Math.floor(timePassed / HEAL_INTERVAL);
-  const healthToRestore = healIntervals * HEAL_RATE;
-  
-  const currentHealth = card.currentHealth ?? card.health;
-  const newHealth = Math.min(card.health, currentHealth + healthToRestore);
-  
-  // Update last heal time to the last complete interval
-  const newLastHealTime = lastHeal + (healIntervals * HEAL_INTERVAL);
-  
-  return {
-    ...card,
-    currentHealth: newHealth,
-    lastHealTime: newLastHealTime
   };
 };
 
@@ -65,16 +32,6 @@ export const applyDamageToCard = (card: Card, damage: number): Card => {
   window.dispatchEvent(event);
 
   return updatedCard;
-};
-
-/**
- * Process health regeneration for all cards
- */
-export const processCardsHealthRegeneration = (cards: Card[]): Card[] => {
-  return cards.map(card => {
-    const initializedCard = initializeCardHealth(card);
-    return calculateHealthRegeneration(initializedCard);
-  });
 };
 
 /**
