@@ -819,6 +819,10 @@ export type Database = {
         }
         Returns: Json
       }
+      stop_healing_without_recovery: {
+        Args: { p_card_instance_id: string }
+        Returns: undefined
+      }
       sync_card_instances_from_game_data: {
         Args: { p_wallet_address: string }
         Returns: number
