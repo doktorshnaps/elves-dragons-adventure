@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useEffect, useMemo } from 'react';
 import { Card as CardType } from "@/types/cards";
 import { useGameData } from '@/hooks/useGameData';
 import { useCardHealthSync } from '@/hooks/useCardHealthSync';
@@ -8,15 +8,22 @@ import { TeamPair } from '@/components/game/team/DeckSelection';
 export const useTeamSelection = () => {
   const { gameData, updateGameData } = useGameData();
   const { cardsWithHealth, selectedTeamWithHealth } = useCardsWithHealth();
-  const [selectedPairs, setSelectedPairs] = useState<TeamPair[]>([]);
+  const selectedPairs: TeamPair[] = useMemo(() => {
+    const source: TeamPair[] = selectedTeamWithHealth.length > 0
+      ? (selectedTeamWithHealth as TeamPair[])
+      : ((gameData.selectedTeam ?? []) as TeamPair[]);
 
-  // Load selected team from game data with actual health
-  useEffect(() => {
-    if (selectedTeamWithHealth.length > 0) {
-      setSelectedPairs(selectedTeamWithHealth);
-    } else if (gameData.selectedTeam) {
-      setSelectedPairs(gameData.selectedTeam);
-    }
+    // Exclude pairs where hero is in medical bay and drop dragons that are in medical bay
+    const filtered: TeamPair[] = source
+      .filter(pair => pair?.hero && !(pair.hero as any).isInMedicalBay)
+      .map(pair => {
+        if (pair.dragon && (pair.dragon as any).isInMedicalBay) {
+          return { ...pair, dragon: undefined };
+        }
+        return pair;
+      });
+
+    return filtered;
   }, [selectedTeamWithHealth, gameData.selectedTeam]);
 
   // Use the health synchronization hook
@@ -28,8 +35,6 @@ export const useTeamSelection = () => {
     const newPair: TeamPair = { hero, dragon };
     const newPairs = [...selectedPairs, newPair];
     
-    setSelectedPairs(newPairs);
-    
     // Save to game data
     await updateGameData({
       selectedTeam: newPairs
@@ -40,8 +45,6 @@ export const useTeamSelection = () => {
     console.log('🗑️ Removing pair at index:', index, 'from team with', selectedPairs.length, 'pairs');
     const newPairs = selectedPairs.filter((_, i) => i !== index);
     console.log('🗑️ New team size:', newPairs.length);
-    setSelectedPairs(newPairs);
-    
     // Save to game data
     await updateGameData({
       selectedTeam: newPairs
@@ -52,7 +55,6 @@ export const useTeamSelection = () => {
     const newPairs = selectedPairs.map((pair, i) =>
       i === index ? { ...pair, dragon } : pair
     );
-    setSelectedPairs(newPairs);
     await updateGameData({
       selectedTeam: newPairs
     });
@@ -62,7 +64,7 @@ export const useTeamSelection = () => {
     const newPairs = selectedPairs.map((pair, i) =>
       i === index ? { ...pair, dragon: undefined } : pair
     );
-    setSelectedPairs(newPairs);
+    
     await updateGameData({
       selectedTeam: newPairs
     });
