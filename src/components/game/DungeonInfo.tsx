@@ -6,7 +6,7 @@ import { Progress } from "@/components/ui/progress";
 import { Sword, Shield, Skull, Coins, Heart } from "lucide-react";
 import { dungeonNames, dungeonBackgrounds } from "@/constants/dungeons";
 import { generateDungeonOpponents } from "@/dungeons/dungeonManager";
-import { generateLootTable, formatDropChance } from "@/utils/lootUtils";
+import { MonsterCardDisplay } from "./monsters/MonsterCardDisplay";
 
 // Import monster images
 import spiderSkeleton from "@/assets/monsters/spider-skeleton.png";
@@ -127,78 +127,16 @@ interface MonsterCardProps {
 }
 
 const MonsterCard = ({ name, health, power, isBoss, image, specialAbilities, description }: MonsterCardProps) => {
-  const lootTable = generateLootTable(isBoss || false);
-  
   return (
-    <Card className="bg-game-surface/50 border-game-accent/30 hover:border-game-accent/60 transition-colors">
-      <CardHeader className="pb-2">
-        <div className="flex items-center justify-between">
-          <CardTitle className="text-lg text-game-accent flex items-center gap-2">
-            {isBoss && <Skull className="w-5 h-5 text-orange-400" />}
-            {name}
-          </CardTitle>
-          {isBoss && <Badge variant="destructive" className="bg-orange-600">Босс</Badge>}
-        </div>
-      </CardHeader>
-      <CardContent className="space-y-3">
-        {image && (
-          <div className="w-full h-48 overflow-hidden rounded-md border border-game-accent/20 bg-gradient-to-b from-gray-900/20 to-gray-900/40">
-            <img 
-              src={image} 
-              alt={name}
-              className="w-full h-full object-contain"
-            />
-          </div>
-        )}
-        
-        {description && (
-          <p className="text-sm text-game-text/80 leading-relaxed">{description}</p>
-        )}
-        
-        <div className="grid grid-cols-2 gap-2 text-sm">
-          <div className="flex items-center gap-1 text-red-400">
-            <Heart className="w-4 h-4" />
-            <span>{health} HP</span>
-          </div>
-          <div className="flex items-center gap-1 text-yellow-400">
-            <Sword className="w-4 h-4" />
-            <span>{power} Урон</span>
-          </div>
-        </div>
-
-        {specialAbilities && specialAbilities.length > 0 && (
-          <div className="space-y-1">
-            <h4 className="text-sm font-medium text-game-accent">Способности:</h4>
-            <div className="flex flex-wrap gap-1">
-              {specialAbilities.map((ability, index) => (
-                <Badge key={index} variant="outline" className="text-xs bg-purple-900/20 text-purple-300 border-purple-400/30">
-                  {ability.type}
-                </Badge>
-              ))}
-            </div>
-          </div>
-        )}
-
-        <div className="space-y-2 pt-2 border-t border-game-accent/20">
-          <h4 className="text-sm font-medium text-game-accent flex items-center gap-1">
-            <Coins className="w-4 h-4" />
-            Возможный дроп:
-          </h4>
-          <div className="space-y-1 text-xs">
-            <div className="flex justify-between">
-              <span>Монеты ({lootTable.coins.min}-{lootTable.coins.max})</span>
-              <span className="text-green-400">{formatDropChance(lootTable.coins.chance)}</span>
-            </div>
-            {lootTable.healthPotion && (
-              <div className="flex justify-between">
-                <span>Зелье здоровья</span>
-                <span className="text-green-400">{formatDropChance(lootTable.healthPotion.chance)}</span>
-              </div>
-            )}
-          </div>
-        </div>
-      </CardContent>
-    </Card>
+    <MonsterCardDisplay
+      name={name}
+      health={health}
+      power={power}
+      isBoss={isBoss}
+      image={image}
+      specialAbilities={specialAbilities}
+      description={description}
+    />
   );
 };
 
@@ -228,7 +166,7 @@ const DungeonLevel = ({ dungeonType, level }: DungeonLevelProps) => {
       <h3 className="text-lg font-semibold text-game-accent border-b border-game-accent/30 pb-2">
         Уровень {level}
       </h3>
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
         {enhancedOpponents.map((opponent) => (
           <MonsterCard
             key={opponent.id}
