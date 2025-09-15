@@ -165,7 +165,10 @@ export const MedicalBayComponent = () => {
                               <Button 
                                 onClick={async () => {
                                   await removeCardFromMedicalBay(entry.card_instance_id);
-                                  await loadCardInstances();
+                                  await Promise.all([
+                                    loadCardInstances(),
+                                    loadMedicalBayEntries()
+                                  ]);
                                 }}
                                 size="sm"
                                 disabled={loading}
