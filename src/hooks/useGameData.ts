@@ -141,6 +141,10 @@ export const useGameData = () => {
     const walletAddress = localStorage.getItem('walletAccountId');
     if (!walletAddress) return;
 
+    // Optimistic UI update: apply changes immediately
+    const prevSnapshot = gameData;
+    setGameData((prev) => ({ ...prev, ...updates }));
+
     try {
       console.log('🔄 Updating game data:', updates);
       
@@ -166,6 +170,8 @@ export const useGameData = () => {
 
       if (error) {
         console.error('❌ Error updating game data:', error);
+        // Rollback optimistic update
+        setGameData(prevSnapshot);
         toast({
           title: "Ошибка сохранения",
           description: "Не удалось сохранить данные игры",
@@ -177,10 +183,7 @@ export const useGameData = () => {
       if (success) {
         console.log('✅ Game data updated successfully');
         
-        // Локально обновляем состояние
-        setGameData((prev) => ({ ...prev, ...updates }));
-
-        // Синхронизируем только изменённые ключи в localStorage
+        // Sync changed keys to localStorage (state already updated optimistically)
         if (updates.cards !== undefined) localStorage.setItem('gameCards', JSON.stringify(updates.cards));
         if (updates.balance !== undefined) localStorage.setItem('gameBalance', String(updates.balance));
         if (updates.initialized !== undefined) localStorage.setItem('gameInitialized', String(updates.initialized));
@@ -238,8 +241,10 @@ export const useGameData = () => {
 
     } catch (error) {
       console.error('Error in updateGameData:', error);
+      // Rollback optimistic update on unexpected errors
+      setGameData(prevSnapshot);
     }
-  }, [toast]);
+  }, [toast, gameData]);
 
   // Загружаем данные при инициализации
   useEffect(() => {
