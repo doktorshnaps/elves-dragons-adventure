@@ -98,39 +98,6 @@ export type Database = {
         }
         Relationships: []
       }
-      card_pack_images: {
-        Row: {
-          card_name: string
-          card_type: string
-          created_at: string | null
-          faction: string | null
-          id: string
-          image_url: string
-          rarity: number
-          updated_at: string | null
-        }
-        Insert: {
-          card_name: string
-          card_type: string
-          created_at?: string | null
-          faction?: string | null
-          id?: string
-          image_url: string
-          rarity: number
-          updated_at?: string | null
-        }
-        Update: {
-          card_name?: string
-          card_type?: string
-          created_at?: string | null
-          faction?: string | null
-          id?: string
-          image_url?: string
-          rarity?: number
-          updated_at?: string | null
-        }
-        Relationships: []
-      }
       card_templates: {
         Row: {
           card_type: string

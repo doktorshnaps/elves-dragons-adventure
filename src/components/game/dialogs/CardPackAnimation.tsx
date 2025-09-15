@@ -36,32 +36,11 @@ export const CardPackAnimation = ({ winningCard, onAnimationComplete }: CardPack
   const [targetX, setTargetX] = useState<number>(0);
   const [xStart, setXStart] = useState<number>(0);
   
-  // Load available images from database
+  // Используем изображения карт из локальной базы данных
   useEffect(() => {
-    const loadImages = async () => {
-      try {
-        const { data: images, error } = await supabase
-          .from('card_pack_images')
-          .select('card_name, image_url, rarity, card_type');
-        
-        if (error) {
-          console.error('Error loading card images:', error);
-          return;
-        }
-        
-        if (images) {
-          const imageMap: {[key: string]: string} = {};
-          images.forEach((img: any) => {
-            imageMap[img.card_name] = img.image_url;
-          });
-          setAvailableImages(prev => ({ ...prev, ...imageMap }));
-        }
-      } catch (error) {
-        console.error('Failed to load card images:', error);
-      }
-    };
-    
-    loadImages();
+    // Поскольку таблица card_pack_images удалена, используем статические изображения
+    // или изображения из cardDatabase
+    setAvailableImages({});
   }, []);
   
   // Generate dummy cards for animation using images from DB
