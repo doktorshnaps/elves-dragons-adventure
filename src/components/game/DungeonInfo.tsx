@@ -19,6 +19,13 @@ import spiderGuardian from "@/assets/monsters/spider-guardian.png";
 import spiderWyvern from "@/assets/monsters/spider-wyvern.png";
 import shadowSpiderCatcher from "@/assets/monsters/shadow-spider-catcher.png";
 import ancientSpiderHermit from "@/assets/monsters/ancient-spider-hermit.png";
+import spiderBerserker from "@/assets/monsters/spider-berserker.png";
+import spiderIllusionist from "@/assets/monsters/spider-illusionist.png";
+import spiderMotherGuardian from "@/assets/monsters/spider-mother-guardian.png";
+import spiderParasite from "@/assets/monsters/spider-parasite.png";
+import spiderTitan from "@/assets/monsters/spider-titan.png";
+import arachnidArchmage from "@/assets/monsters/arachnid-archmage.png";
+import arachnaProgenitor from "@/assets/monsters/arachna-progenitor.png";
 
 // Monster data with images and descriptions
 const monsterData: Record<number, { name: string; image: string; description: string }> = {
@@ -71,6 +78,41 @@ const monsterData: Record<number, { name: string; image: string; description: st
     name: "Древний паук-отшельник",
     image: ancientSpiderHermit,
     description: "Легендарный паук-маг, живущий в глубинах подземелья уже несколько веков. Владеет мощнейшими заклинаниями."
+  },
+  11: {
+    name: "Паук-берсерк",
+    image: spiderBerserker,
+    description: "Неистовый воин с броней из темного металла и клинками вместо лап. В бою впадает в кровожадную ярость."
+  },
+  12: {
+    name: "Паук-иллюзионист",
+    image: spiderIllusionist,
+    description: "Мастер обмана и магических иллюзий. Окружает себя мистическими символами и может создавать ложные образы."
+  },
+  13: {
+    name: "Паук-мать-стража",
+    image: spiderMotherGuardian,
+    description: "Древняя паучиха-прародительница, защищающая свое потомство. Обладает материнской яростью и мощной магией."
+  },
+  14: {
+    name: "Паук-паразит",
+    image: spiderParasite,
+    description: "Отвратительное создание с множественными паразитическими отростками. Питается жизненной силой своих жертв."
+  },
+  15: {
+    name: "Паук-титан",
+    image: spiderTitan,
+    description: "Колоссальный паук с мистическим кристаллом в груди. Его размеры превосходят все разумные пределы."
+  },
+  16: {
+    name: "Арахнидный Архимаг",
+    image: arachnidArchmage,
+    description: "Высший маг паучьего рода с множественными магическими сферами. Владеет запретными заклинаниями древности."
+  },
+  17: {
+    name: "Арахна, Мать-Прародительница",
+    image: arachnaProgenitor,
+    description: "Первородная мать всех пауков. Легендарное существо невообразимой силы, порождающее новую жизнь из тьмы."
   }
 };
 
@@ -165,7 +207,7 @@ const DungeonLevel = ({ dungeonType, level }: DungeonLevelProps) => {
   
   // Enhance opponents with monster data
   const enhancedOpponents = opponents.map(opponent => {
-    const levelBasedMonsterIndex = ((level - 1) % 10) + 1;
+    const levelBasedMonsterIndex = ((level - 1) % 17) + 1;
     const monsterInfo = monsterData[levelBasedMonsterIndex];
     
     return {
