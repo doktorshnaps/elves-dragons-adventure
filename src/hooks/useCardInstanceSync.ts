@@ -16,9 +16,17 @@ export const useCardInstanceSync = () => {
 
     const cards = gameData.cards as Card[];
     const existingInstanceIds = new Set(cardInstances.map(ci => ci.card_template_id));
+    
+    console.log('🔄 Checking cards for instances:', {
+      totalCards: cards.length,
+      existingInstances: existingInstanceIds.size,
+      cardIds: cards.map(c => c.id),
+      instanceIds: Array.from(existingInstanceIds)
+    });
 
     for (const card of cards) {
       if (!existingInstanceIds.has(card.id)) {
+        console.log(`🆕 Creating instance for card: ${card.name} (${card.id})`);
         const cardType = card.type === 'pet' ? 'dragon' : 'hero';
         await createCardInstance(card, cardType);
       }
@@ -32,23 +40,33 @@ export const useCardInstanceSync = () => {
     const cards = gameData.cards as Card[];
     const instancesById = new Map(cardInstances.map(ci => [ci.card_template_id, ci]));
     
+    console.log('🔄 Syncing health from instances:', {
+      cardsCount: cards.length,
+      instancesCount: cardInstances.length,
+      mappedInstances: Array.from(instancesById.keys())
+    });
+    
     let hasChanges = false;
     const updatedCards = cards.map(card => {
       const instance = instancesById.get(card.id);
       if (instance && 
           (card.currentHealth !== instance.current_health || 
            card.lastHealTime !== new Date(instance.last_heal_time).getTime())) {
+        console.log(`💊 Updating health for ${card.name}: ${card.currentHealth} -> ${instance.current_health}`);
         hasChanges = true;
         return {
           ...card,
           currentHealth: instance.current_health,
           lastHealTime: new Date(instance.last_heal_time).getTime()
         };
+      } else if (!instance) {
+        console.log(`⚠️ No instance found for card: ${card.name} (${card.id})`);
       }
       return card;
     });
 
     if (hasChanges) {
+      console.log('🔄 Updating game data with synced health');
       updateGameData({ cards: updatedCards });
       
       // Persist for legacy components and local sessions
