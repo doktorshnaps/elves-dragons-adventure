@@ -140,27 +140,33 @@ export const useMedicalBay = () => {
     try {
       setLoading(true);
       console.log('🏥 Removing card from medical bay:', cardInstanceId);
-      const { data, error } = await supabase.rpc('remove_card_from_medical_bay', {
+
+      // First, ensure healing is applied in DB for ready entries
+      const { error: healErr } = await supabase.rpc('process_medical_bay_healing');
+      if (healErr) {
+        console.warn('🏥 process_medical_bay_healing warning:', healErr.message);
+      }
+
+      // Then remove the specific card from medical bay
+      const { error } = await supabase.rpc('remove_card_from_medical_bay', {
         p_card_instance_id: cardInstanceId
       });
 
       if (error) throw error;
 
       toast({
-        title: "Успешно",
-        description: `Карта извлечена из медпункта. Восстановлено ${(data as any).healed_amount} HP`,
+        title: 'Успешно',
+        description: 'Карта извлечена из медпункта. Здоровье восстановлено.',
       });
 
-      // Перезагружаем данные
+      // Reload entries to reflect changes
       await loadMedicalBayEntries();
-      
-      return data;
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error removing card from medical bay:', error);
       toast({
-        title: "Ошибка",
-        description: error.message || "Не удалось извлечь карту из медпункта",
-        variant: "destructive"
+        title: 'Ошибка',
+        description: error.message || 'Не удалось извлечь карту из медпункта',
+        variant: 'destructive'
       });
     } finally {
       setLoading(false);
