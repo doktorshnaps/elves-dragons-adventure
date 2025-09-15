@@ -37,7 +37,30 @@ export const useCardInstances = () => {
         .rpc('get_card_instances_by_wallet', { p_wallet_address: accountId });
 
       if (error) throw error;
-      setCardInstances((data || []) as unknown as CardInstance[]);
+
+      let list = (data || []) as unknown as CardInstance[];
+
+      // Auto-sync: if no instances yet but cards exist in game_data, create instances
+      if (list.length === 0) {
+        try {
+          const { error: syncError } = await supabase.rpc('sync_card_instances_from_game_data', {
+            p_wallet_address: accountId,
+          });
+          if (!syncError) {
+            const { data: dataAfter, error: errAfter } = await supabase
+              .rpc('get_card_instances_by_wallet', { p_wallet_address: accountId });
+            if (!errAfter) {
+              list = (dataAfter || []) as unknown as CardInstance[];
+            }
+          } else {
+            console.warn('Sync card instances failed:', syncError.message);
+          }
+        } catch (e) {
+          console.warn('Sync card instances exception:', e);
+        }
+      }
+
+      setCardInstances(list);
     } catch (error) {
       console.error('Error loading card instances:', error);
       toast({

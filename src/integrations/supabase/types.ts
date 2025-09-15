@@ -809,6 +809,10 @@ export type Database = {
         }
         Returns: Json
       }
+      sync_card_instances_from_game_data: {
+        Args: { p_wallet_address: string }
+        Returns: number
+      }
       update_card_instance_health: {
         Args: {
           p_current_health: number
