@@ -58,27 +58,16 @@ export const useCardInstances = () => {
     if (!isConnected || !accountId) return null;
 
     try {
-      const instanceData = {
-        wallet_address: accountId,
-        user_id: null,
-        card_template_id: card.id,
-        card_type: cardType,
-        current_health: card.health,
-        max_health: card.health,
-        last_heal_time: new Date().toISOString(),
-        card_data: card as any
-      };
-
-      const { data, error } = await supabase
-        .from('card_instances')
-        .insert(instanceData)
-        .select()
-        .single();
+      const { data, error } = await supabase.rpc('create_card_instance_by_wallet', {
+        p_wallet_address: accountId,
+        p_card: card as any
+      });
 
       if (error) throw error;
-      
-      setCardInstances(prev => [data as unknown as CardInstance, ...prev]);
-      return data as unknown as CardInstance;
+      // Перезагружаем список из БД, чтобы избежать расхождений
+      await loadCardInstances();
+      // Возвращаем заглушку с id для совместимости
+      return { id: data } as unknown as CardInstance;
     } catch (error) {
       console.error('Error creating card instance:', error);
       toast({
@@ -88,7 +77,7 @@ export const useCardInstances = () => {
       });
       return null;
     }
-  }, [accountId, isConnected, toast]);
+  }, [accountId, isConnected, toast, loadCardInstances]);
 
   // Обновление здоровья экземпляра карты
   const updateCardHealth = useCallback(async (instanceId: string, currentHealth: number, lastHealTime?: string) => {
@@ -147,7 +136,7 @@ export const useCardInstances = () => {
     return await updateCardHealth(instanceId, newHealth);
   }, [cardInstances, updateCardHealth]);
 
-  // Удаление экземпляра карты
+  // Удаление экземпляра карты по instanceId (для совместимости)
   const deleteCardInstance = useCallback(async (instanceId: string) => {
     if (!isConnected || !accountId) return false;
 
@@ -172,6 +161,30 @@ export const useCardInstances = () => {
       return false;
     }
   }, [accountId, isConnected, toast]);
+
+  // Удаление экземпляра карты по template id (удобно при апгрейде/сжигании)
+  const deleteCardInstanceByTemplate = useCallback(async (cardTemplateId: string) => {
+    if (!isConnected || !accountId) return false;
+
+    try {
+      const { data, error } = await supabase.rpc('remove_card_instance_by_wallet', {
+        p_wallet_address: accountId,
+        p_card_template_id: cardTemplateId
+      });
+
+      if (error) throw error;
+      await loadCardInstances();
+      return data === true;
+    } catch (error) {
+      console.error('Error deleting card instance by template:', error);
+      toast({
+        title: 'Ошибка удаления карты',
+        description: 'Не удалось удалить экземпляр карты',
+        variant: 'destructive'
+      });
+      return false;
+    }
+  }, [accountId, isConnected, toast, loadCardInstances]);
 
   // Загрузка при инициализации
   useEffect(() => {
@@ -211,6 +224,7 @@ export const useCardInstances = () => {
     updateCardHealth,
     applyDamageToInstance,
     deleteCardInstance,
+    deleteCardInstanceByTemplate,
     loadCardInstances
   };
 };

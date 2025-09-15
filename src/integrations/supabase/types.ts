@@ -726,6 +726,10 @@ export type Database = {
         Args: { p_listing_id: string }
         Returns: undefined
       }
+      create_card_instance_by_wallet: {
+        Args: { p_card: Json; p_wallet_address: string }
+        Returns: string
+      }
       create_game_data_by_wallet: {
         Args: { p_wallet_address: string }
         Returns: {
@@ -833,6 +837,10 @@ export type Database = {
       remove_card_from_medical_bay: {
         Args: { p_card_instance_id: string; p_wallet_address: string }
         Returns: Json
+      }
+      remove_card_instance_by_wallet: {
+        Args: { p_card_template_id: string; p_wallet_address: string }
+        Returns: boolean
       }
       reset_shop_inventory: {
         Args: Record<PropertyKey, never>

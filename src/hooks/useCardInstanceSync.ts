@@ -7,7 +7,7 @@ const HEAL_INTERVAL = 60 * 1000; // 1 минута
 const HEAL_RATE = 1; // 1 HP за минуту
 
 export const useCardInstanceSync = () => {
-  const { cardInstances, updateCardHealth, createCardInstance } = useCardInstances();
+  const { cardInstances, updateCardHealth, createCardInstance, deleteCardInstanceByTemplate } = useCardInstances();
   const { gameData, updateGameData } = useGameData();
 
   // Создание экземпляров для карт, которых нет в базе
@@ -113,6 +113,18 @@ export const useCardInstanceSync = () => {
   useEffect(() => {
     syncHealthFromInstances();
   }, [syncHealthFromInstances]);
+
+  // Очистка экземпляров, которых больше нет в колоде (например, после апгрейда/сжигания)
+  useEffect(() => {
+    if (!gameData.cards || !cardInstances.length) return;
+    const cards = gameData.cards as Card[];
+    const ids = new Set(cards.map(c => c.id));
+
+    const toRemove = cardInstances.filter(inst => !ids.has(inst.card_template_id));
+    if (toRemove.length > 0) {
+      toRemove.forEach(inst => deleteCardInstanceByTemplate(inst.card_template_id));
+    }
+  }, [gameData.cards, cardInstances, deleteCardInstanceByTemplate]);
 
   // Таймер для регенерации здоровья
   useEffect(() => {
