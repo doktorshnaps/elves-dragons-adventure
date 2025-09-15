@@ -163,7 +163,10 @@ export const MedicalBayComponent = () => {
                           <div className="flex items-center gap-2">
                             {isReady ? (
                               <Button 
-                                onClick={() => removeCardFromMedicalBay(entry.card_instance_id)}
+                                onClick={async () => {
+                                  await removeCardFromMedicalBay(entry.card_instance_id);
+                                  await loadCardInstances();
+                                }}
                                 size="sm"
                                 disabled={loading}
                                 className="bg-green-600 hover:bg-green-700"
