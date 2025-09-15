@@ -34,10 +34,7 @@ export const useCardInstances = () => {
     try {
       setLoading(true);
       const { data, error } = await supabase
-        .from('card_instances')
-        .select('*')
-        .eq('wallet_address', accountId)
-        .order('created_at', { ascending: false });
+        .rpc('get_card_instances_by_wallet', { p_wallet_address: accountId });
 
       if (error) throw error;
       setCardInstances((data || []) as unknown as CardInstance[]);
@@ -141,13 +138,16 @@ export const useCardInstances = () => {
     if (!isConnected || !accountId) return false;
 
     try {
-      const { error } = await supabase
-        .from('card_instances')
-        .delete()
-        .eq('id', instanceId)
-        .eq('wallet_address', accountId);
+      const { data, error } = await supabase.rpc('remove_card_instance_by_id', {
+        p_wallet_address: accountId,
+        p_instance_id: instanceId
+      });
 
       if (error) throw error;
+
+      if (data !== true) {
+        throw new Error('Delete not applied');
+      }
 
       setCardInstances(prev => prev.filter(instance => instance.id !== instanceId));
       return true;

@@ -61,8 +61,8 @@ export type Database = {
           medical_bay_heal_rate: number | null
           medical_bay_start_time: string | null
           updated_at: string
-          user_id: string
-          wallet_address: string | null
+          user_id: string | null
+          wallet_address: string
         }
         Insert: {
           card_data: Json
@@ -77,8 +77,8 @@ export type Database = {
           medical_bay_heal_rate?: number | null
           medical_bay_start_time?: string | null
           updated_at?: string
-          user_id: string
-          wallet_address?: string | null
+          user_id?: string | null
+          wallet_address: string
         }
         Update: {
           card_data?: Json
@@ -93,8 +93,8 @@ export type Database = {
           medical_bay_heal_rate?: number | null
           medical_bay_start_time?: string | null
           updated_at?: string
-          user_id?: string
-          wallet_address?: string | null
+          user_id?: string | null
+          wallet_address?: string
         }
         Relationships: []
       }
@@ -759,6 +759,25 @@ export type Database = {
         Args: { p_wallet_address: string }
         Returns: string
       }
+      get_card_instances_by_wallet: {
+        Args: { p_wallet_address: string }
+        Returns: {
+          card_data: Json
+          card_template_id: string
+          card_type: string
+          created_at: string
+          current_health: number
+          id: string
+          is_in_medical_bay: boolean | null
+          last_heal_time: string | null
+          max_health: number
+          medical_bay_heal_rate: number | null
+          medical_bay_start_time: string | null
+          updated_at: string
+          user_id: string | null
+          wallet_address: string
+        }[]
+      }
       get_current_user_wallet: {
         Args: Record<PropertyKey, never>
         Returns: string
@@ -838,6 +857,10 @@ export type Database = {
         Args: { p_card_instance_id: string; p_wallet_address: string }
         Returns: Json
       }
+      remove_card_instance_by_id: {
+        Args: { p_instance_id: string; p_wallet_address: string }
+        Returns: boolean
+      }
       remove_card_instance_by_wallet: {
         Args: { p_card_template_id: string; p_wallet_address: string }
         Returns: boolean
@@ -859,6 +882,15 @@ export type Database = {
         Args: {
           p_current_health: number
           p_instance_id: string
+          p_last_heal_time?: string
+          p_wallet_address: string
+        }
+        Returns: boolean
+      }
+      update_card_instance_health_by_template: {
+        Args: {
+          p_card_template_id: string
+          p_current_health: number
           p_last_heal_time?: string
           p_wallet_address: string
         }
