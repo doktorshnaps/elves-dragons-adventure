@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { Card as CardType } from "@/types/cards";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -6,7 +6,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { CardDisplay } from "../CardDisplay";
 import { CardPreviewModal } from "../cards/CardPreviewModal";
 import { useToast } from "@/hooks/use-toast";
-import { useCardHealthSync } from "@/hooks/useCardHealthSync";
+import { useCardInstances } from "@/hooks/useCardInstances";
 import { useNFTCardIntegration } from "@/hooks/useNFTCardIntegration";
 interface DeckSelectionProps {
   cards: CardType[];
@@ -39,37 +39,40 @@ export const DeckSelection = ({
   
   // Интеграция NFT карт
   const { nftCards, isLoading: nftLoading } = useNFTCardIntegration();
+  
+  // Получаем актуальные card instances для отображения здоровья
+  const { cardInstances } = useCardInstances();
 
-  // Use health synchronization for cards
-  useCardHealthSync({
-    cards: localCards,
-    onCardsUpdate: setLocalCards
-  });
-
-  // Обновляем локальные карты при изменении пропсов и NFT карт
-  useEffect(() => {
+  // Создаем карты с актуальным здоровьем из card_instances
+  const cardsWithHealthSync = useMemo(() => {
     const combinedCards = [...cards, ...nftCards];
     // Убираем дубликаты по ID
     const uniqueCards = combinedCards.filter((card, index, arr) => 
       arr.findIndex(c => c.id === card.id) === index
     );
-    setLocalCards(uniqueCards);
-    console.log('🎮 Updated local cards:', uniqueCards.length, 'unique cards');
-  }, [cards, nftCards]);
-
-  // Слушаем события обновления карт для немедленной синхронизации
-  useEffect(() => {
-    const handleCardsUpdate = (e: CustomEvent<{ cards: CardType[] }>) => {
-      if (e.detail?.cards) {
-        setLocalCards(e.detail.cards);
+    
+    // Синхронизируем здоровье с card_instances
+    const instancesMap = new Map(cardInstances.map(ci => [ci.card_template_id, ci]));
+    
+    return uniqueCards.map(card => {
+      const instance = instancesMap.get(card.id);
+      if (instance) {
+        return {
+          ...card,
+          currentHealth: instance.current_health,
+          lastHealTime: new Date(instance.last_heal_time).getTime()
+        };
       }
-    };
+      return card;
+    });
+  }, [cards, nftCards, cardInstances]);
 
-    window.addEventListener('cardsUpdate', handleCardsUpdate as EventListener);
-    return () => {
-      window.removeEventListener('cardsUpdate', handleCardsUpdate as EventListener);
-    };
-  }, []);
+  // Обновляем локальные карты
+  useEffect(() => {
+    setLocalCards(cardsWithHealthSync);
+    console.log('🎮 Updated local cards with health sync:', cardsWithHealthSync.length, 'unique cards');
+  }, [cardsWithHealthSync]);
+
   const heroes = localCards.filter(card => card.type === 'character');
   const dragons = localCards.filter(card => card.type === 'pet');
   const isHeroSelected = (hero: CardType) => {
