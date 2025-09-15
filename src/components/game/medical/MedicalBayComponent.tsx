@@ -29,6 +29,7 @@ export const MedicalBayComponent = () => {
   // Автоматическая обработка лечения каждую минуту
   useEffect(() => {
     const interval = setInterval(() => {
+      console.log('🏥 Processing automatic healing...');
       processMedicalBayHealing();
     }, 60000); // каждую минуту
 
@@ -164,11 +165,18 @@ export const MedicalBayComponent = () => {
                             {isReady ? (
                               <Button 
                                 onClick={async () => {
-                                  await removeCardFromMedicalBay(entry.card_instance_id);
-                                  await Promise.all([
-                                    loadCardInstances(),
-                                    loadMedicalBayEntries()
-                                  ]);
+                                  console.log('🏥 Removing card from medical bay:', entry.card_instance_id);
+                                  try {
+                                    await removeCardFromMedicalBay(entry.card_instance_id);
+                                    console.log('🏥 Card removed successfully, reloading data...');
+                                    await Promise.all([
+                                      loadCardInstances(),
+                                      loadMedicalBayEntries()
+                                    ]);
+                                    console.log('🏥 Data reloaded successfully');
+                                  } catch (error) {
+                                    console.error('🏥 Error removing card:', error);
+                                  }
                                 }}
                                 size="sm"
                                 disabled={loading}

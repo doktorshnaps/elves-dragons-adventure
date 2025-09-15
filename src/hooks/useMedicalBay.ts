@@ -29,6 +29,7 @@ export const useMedicalBay = () => {
 
     try {
       setLoading(true);
+      console.log('🏥 Loading medical bay entries for:', accountId);
       const { data, error } = await supabase
         .rpc('get_medical_bay_entries', { p_wallet_address: accountId });
 
@@ -49,6 +50,7 @@ export const useMedicalBay = () => {
         },
       })) || [];
 
+      console.log('🏥 Loaded medical bay entries:', mapped.length, 'entries');
       setMedicalBayEntries(mapped);
     } catch (error) {
       console.error('Error loading medical bay entries:', error);
@@ -130,13 +132,15 @@ export const useMedicalBay = () => {
 
   const processMedicalBayHealing = useCallback(async () => {
     try {
+      console.log('🏥 Processing medical bay healing...');
       const { error } = await supabase.rpc('process_medical_bay_healing');
       if (error) throw error;
       
+      console.log('🏥 Medical bay healing processed, reloading entries...');
       // Перезагружаем данные после обработки лечения
       await loadMedicalBayEntries();
     } catch (error) {
-      console.error('Error processing medical bay healing:', error);
+      console.error('🏥 Error processing medical bay healing:', error);
     }
   }, [loadMedicalBayEntries]);
 
