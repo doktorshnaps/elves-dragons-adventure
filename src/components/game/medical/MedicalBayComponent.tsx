@@ -112,7 +112,7 @@ export const MedicalBayComponent = () => {
         <CardContent>
           <div className="space-y-4">
             <div className="text-sm text-muted-foreground">
-              <p>• Скорость лечения: 10 HP/мин</p>
+              <p>• Скорость лечения: 1 HP/мин</p>
               <p>• Активных лечений: {medicalBayEntries.length}/3</p>
               <p>• Раненых карт: {injuredCards.length}</p>
             </div>
@@ -348,11 +348,11 @@ export const MedicalBayComponent = () => {
                   </div>
                   <div className="flex justify-between">
                     <span>Время лечения:</span>
-                    <span>{Math.ceil((selectedCard.max_health - selectedCard.current_health) / 10)} мин</span>
+                    <span>{Math.ceil((selectedCard.max_health - selectedCard.current_health) / 1)} мин</span>
                   </div>
                   <div className="flex justify-between">
                     <span>Скорость:</span>
-                    <span>10 HP/мин</span>
+                    <span>1 HP/мин</span>
                   </div>
                 </div>
               </div>

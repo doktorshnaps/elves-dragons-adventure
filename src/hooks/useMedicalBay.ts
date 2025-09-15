@@ -72,8 +72,8 @@ export const useMedicalBay = () => {
       console.log('🏥 Placing card in medical bay:', cardInstanceId);
       const { data, error } = await supabase.rpc('add_card_to_medical_bay', {
         p_card_instance_id: cardInstanceId,
-        p_wallet_address: accountId,
-        p_healing_hours: 2 // 2 hours default healing time
+        p_wallet_address: accountId
+        // Время теперь рассчитывается автоматически в БД на основе недостающего HP
       });
 
       if (error) throw error;
