@@ -1,3 +1,4 @@
+import React, { memo } from "react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Heart, Sword, Shield, Skull, Coins } from "lucide-react";
@@ -16,7 +17,7 @@ interface MonsterCardDisplayProps {
   onClick?: (e: React.MouseEvent) => void;
 }
 
-export const MonsterCardDisplay = ({
+export const MonsterCardDisplay = memo(({
   name,
   health,
   power,
@@ -41,6 +42,8 @@ export const MonsterCardDisplay = ({
             src={image} 
             alt={name}
             className="w-full h-full object-cover"
+            loading="eager"
+            decoding="async"
             onError={(e) => {
               e.currentTarget.src = '/placeholder.svg';
             }}
@@ -115,4 +118,6 @@ export const MonsterCardDisplay = ({
       </div>
     </Card>
   );
-};
+});
+
+MonsterCardDisplay.displayName = 'MonsterCardDisplay';

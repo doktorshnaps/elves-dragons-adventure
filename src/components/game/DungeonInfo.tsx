@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, memo, useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
@@ -98,17 +98,16 @@ interface DungeonLevelProps {
   level: number;
 }
 
-const DungeonLevel = ({ dungeonType, level }: DungeonLevelProps) => {
-  const opponents = generateDungeonOpponents(dungeonType as any, level);
-  
-  // Enhance opponents with correct images and descriptions
-  const enhancedOpponents = opponents.map(opponent => {
-    return {
+const DungeonLevel = memo(({ dungeonType, level }: DungeonLevelProps) => {
+  const enhancedOpponents = useMemo(() => {
+    const opponents = generateDungeonOpponents(dungeonType as any, level);
+    
+    return opponents.map(opponent => ({
       ...opponent,
       image: monsterImages[opponent.name] || opponent.image,
       description: monsterDescriptions[opponent.name]
-    };
-  });
+    }));
+  }, [dungeonType, level]);
   
   return (
     <div className="space-y-4">
@@ -131,7 +130,9 @@ const DungeonLevel = ({ dungeonType, level }: DungeonLevelProps) => {
       </div>
     </div>
   );
-};
+});
+
+DungeonLevel.displayName = 'DungeonLevel';
 
 interface DungeonDetailProps {
   dungeonType: string;
