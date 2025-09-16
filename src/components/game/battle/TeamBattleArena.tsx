@@ -565,28 +565,41 @@ export const TeamBattleArena: React.FC<TeamBattleArenaProps> = ({
                           setSelectedTarget(opponent.id);
                         }
                       }
-                    }}
-                 >
-                   <div className="flex items-center justify-between mb-2">
-                     <span className="font-medium text-sm">{opponent.name}</span>
-                     <div className="flex items-center gap-1">
-                       {opponent.isBoss && (
-                         <span className="text-xs bg-destructive px-1.5 py-0.5 rounded text-white">
-                           БОСС
-                         </span>
-                       )}
-                       {selectedAbility?.targetType === 'enemy' && selectedTarget === opponent.id && (
-                         <span className="text-xs bg-red-500 px-1.5 py-0.5 rounded text-white">
-                           🎯
-                         </span>
-                       )}
-                       {selectedAbility?.targetType === 'ally' && (
-                         <span className="text-xs bg-gray-500 px-1.5 py-0.5 rounded text-white opacity-50">
-                           ❌
-                         </span>
-                       )}
-                     </div>
-                   </div>
+                     }}
+                  >
+                    {opponent.image && (
+                      <div className="w-16 h-16 mb-3 mx-auto rounded-lg overflow-hidden border border-game-accent/30">
+                        <img 
+                          src={opponent.image} 
+                          alt={opponent.name}
+                          className="w-full h-full object-cover"
+                          loading="eager"
+                          onError={(e) => {
+                            e.currentTarget.src = '/placeholder.svg';
+                          }}
+                        />
+                      </div>
+                    )}
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="font-medium text-sm">{opponent.name}</span>
+                      <div className="flex items-center gap-1">
+                        {opponent.isBoss && (
+                          <span className="text-xs bg-destructive px-1.5 py-0.5 rounded text-white">
+                            БОСС
+                          </span>
+                        )}
+                        {selectedAbility?.targetType === 'enemy' && selectedTarget === opponent.id && (
+                          <span className="text-xs bg-red-500 px-1.5 py-0.5 rounded text-white">
+                            🎯
+                          </span>
+                        )}
+                        {selectedAbility?.targetType === 'ally' && (
+                          <span className="text-xs bg-gray-500 px-1.5 py-0.5 rounded text-white opacity-50">
+                            ❌
+                          </span>
+                        )}
+                      </div>
+                    </div>
                   
                   <div className="space-y-1.5">
                     <div className="flex items-center gap-2 text-sm">

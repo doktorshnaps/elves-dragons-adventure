@@ -1,15 +1,53 @@
 import { Opponent } from "@/types/battle";
 
-interface MonsterData {
-  name: string;
-  count: number;
-  type: string;
-  isBoss?: boolean;
-}
+// Import monster images
+import spiderSkeleton from "@/assets/monsters/spider-skeleton.png";
+import spiderJumper from "@/assets/monsters/spider-jumper.png";
+import spiderWeaver from "@/assets/monsters/spider-weaver.png";
+import spiderHunter from "@/assets/monsters/spider-hunter.png";
+import spiderQueenLarva from "@/assets/monsters/spider-queen-larva.png";
+import spiderCorpseEater from "@/assets/monsters/spider-corpse-eater.png";
+import spiderGuardian from "@/assets/monsters/spider-guardian.png";
+import spiderWyvern from "@/assets/monsters/spider-wyvern.png";
+import shadowSpiderCatcher from "@/assets/monsters/shadow-spider-catcher.png";
+import ancientSpiderHermit from "@/assets/monsters/ancient-spider-hermit.png";
+import spiderBerserker from "@/assets/monsters/spider-berserker.png";
+import spiderIllusionist from "@/assets/monsters/spider-illusionist.png";
+import spiderMotherGuardian from "@/assets/monsters/spider-mother-guardian.png";
+import spiderParasite from "@/assets/monsters/spider-parasite.png";
+import spiderTitan from "@/assets/monsters/spider-titan.png";
+import arachnidArchmage from "@/assets/monsters/arachnid-archmage.png";
+import arachnaProgenitor from "@/assets/monsters/arachna-progenitor.png";
+
+// Monster images mapping
+const monsterImages: Record<string, string> = {
+  "skeleton_spider": spiderSkeleton,
+  "jumper_spider": spiderJumper,
+  "spinner_spider": spiderWeaver,
+  "hunter_spider": spiderHunter,
+  "queen_larva": spiderQueenLarva,
+  "corpse_eater": spiderCorpseEater,
+  "guardian_spider": spiderGuardian,
+  "wyvern_spider": spiderWyvern,
+  "shadow_catcher": shadowSpiderCatcher,
+  "ancient_hermit": ancientSpiderHermit,
+  "berserker_spider": spiderBerserker,
+  "illusionist_spider": spiderIllusionist,
+  "mother_guardian": spiderMotherGuardian,
+  "parasite_spider": spiderParasite,
+  "titan_spider": spiderTitan,
+  "arachnid_archmage": arachnidArchmage,
+  "arachne_mother": arachnaProgenitor
+};
 
 interface LevelData {
   name: string;
-  monsters: MonsterData[];
+  monsters: Array<{
+    name: string;
+    count: number;
+    type: string;
+    isBoss?: boolean;
+  }>;
 }
 
 const SPIDER_NEST_DATA: Record<number, LevelData> = {
@@ -103,7 +141,7 @@ const createMonsterByType = (type: string, id: number, level: number): Opponent 
         maxHealth: Math.floor(baseHealth * 0.6),
         power: Math.floor(basePower * 0.7),
         isBoss: false,
-        image: "/lovable-uploads/ebf85dda-c79b-4350-80c2-65fde21b31ad.png",
+        image: monsterImages["skeleton_spider"],
         specialAbilities: [{ type: 'lifesteal', value: 10 }]
       };
 
@@ -115,7 +153,7 @@ const createMonsterByType = (type: string, id: number, level: number): Opponent 
         maxHealth: Math.floor(baseHealth * 0.8),
         power: Math.floor(basePower * 0.9),
         isBoss: false,
-        image: "/lovable-uploads/ebf85dda-c79b-4350-80c2-65fde21b31ad.png"
+        image: monsterImages["jumper_spider"]
       };
 
     case "spinner_spider":
@@ -126,7 +164,7 @@ const createMonsterByType = (type: string, id: number, level: number): Opponent 
         maxHealth: Math.floor(baseHealth * 0.7),
         power: Math.floor(basePower * 0.8),
         isBoss: false,
-        image: "/lovable-uploads/ebf85dda-c79b-4350-80c2-65fde21b31ad.png",
+        image: monsterImages["spinner_spider"],
         specialAbilities: [{ type: 'slow_attack', value: 2 }]
       };
 
@@ -138,7 +176,7 @@ const createMonsterByType = (type: string, id: number, level: number): Opponent 
         maxHealth: baseHealth,
         power: basePower,
         isBoss: false,
-        image: "/lovable-uploads/ebf85dda-c79b-4350-80c2-65fde21b31ad.png",
+        image: monsterImages["hunter_spider"],
         specialAbilities: [{ type: 'poison_bite', value: 2 }]
       };
 
@@ -150,7 +188,7 @@ const createMonsterByType = (type: string, id: number, level: number): Opponent 
         maxHealth: Math.floor(baseHealth * 1.5),
         power: Math.floor(basePower * 1.2),
         isBoss: true,
-        image: "/lovable-uploads/ebf85dda-c79b-4350-80c2-65fde21b31ad.png",
+        image: monsterImages["queen_larva"],
         specialAbilities: [{ type: 'summon', cooldown: 4, currentCooldown: 0 }]
       };
 
@@ -162,64 +200,68 @@ const createMonsterByType = (type: string, id: number, level: number): Opponent 
         maxHealth: Math.floor(baseHealth * 0.9),
         power: Math.floor(basePower * 0.8),
         isBoss: false,
-        image: "/lovable-uploads/ebf85dda-c79b-4350-80c2-65fde21b31ad.png",
-        specialAbilities: [{ type: 'corpse_feed', cooldown: 2, currentCooldown: 0, value: 20 }]
+        image: monsterImages["corpse_eater"],
+        specialAbilities: [{ type: 'poison_bite', value: 1 }]
       };
 
     case "guardian_spider":
       return {
         id,
         name: "Паук-стража",
-        health: Math.floor(baseHealth * 1.2),
-        maxHealth: Math.floor(baseHealth * 1.2),
-        power: Math.floor(basePower * 0.9),
+        health: Math.floor(baseHealth * 1.3),
+        maxHealth: Math.floor(baseHealth * 1.3),
+        power: Math.floor(basePower * 1.1),
         isBoss: false,
-        image: "/lovable-uploads/ebf85dda-c79b-4350-80c2-65fde21b31ad.png"
+        image: monsterImages["guardian_spider"],
+        specialAbilities: [{ type: 'corpse_feed', value: 2 }]
       };
 
     case "wyvern_spider":
       return {
         id,
         name: "Паук-виверна",
-        health: Math.floor(baseHealth * 1.1),
-        maxHealth: Math.floor(baseHealth * 1.1),
-        power: Math.floor(basePower * 1.1),
+        health: Math.floor(baseHealth * 1.2),
+        maxHealth: Math.floor(baseHealth * 1.2),
+        power: Math.floor(basePower * 1.3),
         isBoss: false,
-        image: "/lovable-uploads/ebf85dda-c79b-4350-80c2-65fde21b31ad.png"
+        image: monsterImages["wyvern_spider"],
+        specialAbilities: [{ type: 'poison_bite', value: 15 }]
       };
 
     case "shadow_catcher":
       return {
         id,
         name: "Теневой паук-ловец",
-        health: Math.floor(baseHealth * 0.9),
-        maxHealth: Math.floor(baseHealth * 0.9),
-        power: Math.floor(basePower * 1.1),
+        health: Math.floor(baseHealth * 1.1),
+        maxHealth: Math.floor(baseHealth * 1.1),
+        power: Math.floor(basePower * 1.2),
         isBoss: false,
-        image: "/lovable-uploads/ebf85dda-c79b-4350-80c2-65fde21b31ad.png",
-        specialAbilities: [{ type: 'invisibility', cooldown: 3, currentCooldown: 0, value: 2 }]
+        image: monsterImages["shadow_catcher"],
+        specialAbilities: [{ type: 'invisibility', cooldown: 3, currentCooldown: 0 }]
       };
 
     case "ancient_hermit":
       return {
         id,
         name: "Древний паук-отшельник",
-        health: Math.floor(baseHealth * 1.3),
-        maxHealth: Math.floor(baseHealth * 1.3),
-        power: Math.floor(basePower * 1.3),
+        health: Math.floor(baseHealth * 1.4),
+        maxHealth: Math.floor(baseHealth * 1.4),
+        power: Math.floor(basePower * 1.1),
         isBoss: false,
-        image: "/lovable-uploads/ebf85dda-c79b-4350-80c2-65fde21b31ad.png"
+        image: monsterImages["ancient_hermit"],
+        specialAbilities: [{ type: 'dark_magic', cooldown: 5, currentCooldown: 0 }]
       };
 
     case "berserker_spider":
       return {
         id,
         name: "Паук-берсерк",
-        health: Math.floor(baseHealth * 0.8),
-        maxHealth: Math.floor(baseHealth * 0.8),
-        power: Math.floor(basePower * 1.6),
+        health: Math.floor(baseHealth * 1.2),
+        maxHealth: Math.floor(baseHealth * 1.2),
+        power: Math.floor(basePower * 1.4),
         isBoss: false,
-        image: "/lovable-uploads/ebf85dda-c79b-4350-80c2-65fde21b31ad.png"
+        image: monsterImages["berserker_spider"],
+        specialAbilities: [{ type: 'curse', cooldown: 6, currentCooldown: 0 }]
       };
 
     case "illusionist_spider":
@@ -230,8 +272,8 @@ const createMonsterByType = (type: string, id: number, level: number): Opponent 
         maxHealth: Math.floor(baseHealth * 1.1),
         power: Math.floor(basePower * 1.2),
         isBoss: false,
-        image: "/lovable-uploads/ebf85dda-c79b-4350-80c2-65fde21b31ad.png",
-        specialAbilities: [{ type: 'illusion', cooldown: 3, currentCooldown: 0 }]
+        image: monsterImages["illusionist_spider"],
+        specialAbilities: [{ type: 'illusion', cooldown: 4, currentCooldown: 0 }]
       };
 
     case "mother_guardian":
@@ -240,21 +282,22 @@ const createMonsterByType = (type: string, id: number, level: number): Opponent 
         name: "Паук-мать-стража",
         health: Math.floor(baseHealth * 1.8),
         maxHealth: Math.floor(baseHealth * 1.8),
-        power: Math.floor(basePower * 1.4),
+        power: Math.floor(basePower * 1.3),
         isBoss: true,
-        image: "/lovable-uploads/ebf85dda-c79b-4350-80c2-65fde21b31ad.png"
+        image: monsterImages["mother_guardian"],
+        specialAbilities: [{ type: 'corpse_feed', cooldown: 3, currentCooldown: 0 }]
       };
 
     case "parasite_spider":
       return {
         id,
         name: "Паук-паразит",
-        health: Math.floor(baseHealth * 0.9),
-        maxHealth: Math.floor(baseHealth * 0.9),
-        power: Math.floor(basePower * 0.8),
+        health: Math.floor(baseHealth * 1.3),
+        maxHealth: Math.floor(baseHealth * 1.3),
+        power: Math.floor(basePower * 1.1),
         isBoss: false,
-        image: "/lovable-uploads/ebf85dda-c79b-4350-80c2-65fde21b31ad.png",
-        specialAbilities: [{ type: 'curse' }]
+        image: monsterImages["parasite_spider"],
+        specialAbilities: [{ type: 'lifesteal', cooldown: 3, currentCooldown: 0 }]
       };
 
     case "titan_spider":
@@ -263,9 +306,10 @@ const createMonsterByType = (type: string, id: number, level: number): Opponent 
         name: "Паук-титан",
         health: Math.floor(baseHealth * 2.2),
         maxHealth: Math.floor(baseHealth * 2.2),
-        power: Math.floor(basePower * 1.8),
+        power: Math.floor(basePower * 1.5),
         isBoss: false,
-        image: "/lovable-uploads/ebf85dda-c79b-4350-80c2-65fde21b31ad.png"
+        image: monsterImages["titan_spider"],
+        specialAbilities: [{ type: 'dark_magic', cooldown: 5, currentCooldown: 0 }]
       };
 
     case "arachnid_archmage":
@@ -274,13 +318,12 @@ const createMonsterByType = (type: string, id: number, level: number): Opponent 
         name: "Арахнидный Архимаг",
         health: Math.floor(baseHealth * 2.5),
         maxHealth: Math.floor(baseHealth * 2.5),
-        power: Math.floor(basePower * 2.0),
+        power: Math.floor(basePower * 1.6),
         isBoss: true,
-        image: "/lovable-uploads/ebf85dda-c79b-4350-80c2-65fde21b31ad.png",
+        image: monsterImages["arachnid_archmage"],
         specialAbilities: [
-          { type: 'dark_magic' },
-          { type: 'summon', cooldown: 3, currentCooldown: 0 },
-          { type: 'poison_bite', value: 4 }
+          { type: 'dark_magic', cooldown: 3, currentCooldown: 0 },
+          { type: 'curse', cooldown: 4, currentCooldown: 0 }
         ]
       };
 
@@ -290,48 +333,47 @@ const createMonsterByType = (type: string, id: number, level: number): Opponent 
         name: "Арахна, Мать-Прародительница",
         health: Math.floor(baseHealth * 4.0),
         maxHealth: Math.floor(baseHealth * 4.0),
-        power: Math.floor(basePower * 2.5),
+        power: Math.floor(basePower * 2.0),
         isBoss: true,
-        image: "/lovable-uploads/ebf85dda-c79b-4350-80c2-65fde21b31ad.png",
+        image: monsterImages["arachne_mother"],
         specialAbilities: [
-          { type: 'dark_magic' },
-          { type: 'summon', cooldown: 2, currentCooldown: 0 },
-          { type: 'poison_bite', value: 5 },
-          { type: 'curse' }
+          { type: 'curse', cooldown: 4, currentCooldown: 0 },
+          { type: 'summon', cooldown: 6, currentCooldown: 0 },
+          { type: 'dark_magic', cooldown: 8, currentCooldown: 0 }
         ]
       };
 
     default:
       return {
         id,
-        name: "Неизвестный паук",
+        name: "Неизвестный монстр",
         health: baseHealth,
         maxHealth: baseHealth,
         power: basePower,
         isBoss: false,
-        image: "/lovable-uploads/ebf85dda-c79b-4350-80c2-65fde21b31ad.png"
+        image: monsterImages["skeleton_spider"],
+        specialAbilities: []
       };
   }
 };
 
 export const SpiderNestGenerator = (level: number): Opponent[] => {
-  if (level < 1 || level > 10) {
-    level = Math.min(Math.max(level, 1), 10);
+  const levelData = SPIDER_NEST_DATA[level];
+  if (!levelData) {
+    console.warn(`No data found for level ${level}`);
+    return [];
   }
 
-  const levelData = SPIDER_NEST_DATA[level as keyof typeof SPIDER_NEST_DATA];
   const opponents: Opponent[] = [];
   let currentId = 1;
 
-  levelData.monsters.forEach(monsterData => {
-    for (let i = 0; i < monsterData.count; i++) {
-      const opponent = createMonsterByType(monsterData.type, currentId, level);
-      opponent.name = monsterData.name;
-      if (monsterData.isBoss) {
-        opponent.isBoss = true;
+  levelData.monsters.forEach(monsterConfig => {
+    for (let i = 0; i < monsterConfig.count; i++) {
+      const monster = createMonsterByType(monsterConfig.type, currentId++, level);
+      if (monsterConfig.isBoss) {
+        monster.isBoss = true;
       }
-      opponents.push(opponent);
-      currentId++;
+      opponents.push(monster);
     }
   });
 
