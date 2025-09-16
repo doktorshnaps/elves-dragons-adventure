@@ -8,45 +8,7 @@ import { dungeonNames, dungeonBackgrounds } from "@/constants/dungeons";
 import { generateDungeonOpponents } from "@/dungeons/dungeonManager";
 import { MonsterCardDisplay } from "./monsters/MonsterCardDisplay";
 
-// Import monster images
-import spiderSkeleton from "@/assets/monsters/spider-skeleton.png";
-import spiderJumper from "@/assets/monsters/spider-jumper.png";
-import spiderWeaver from "@/assets/monsters/spider-weaver.png";
-import spiderHunter from "@/assets/monsters/spider-hunter.png";
-import spiderQueenLarva from "@/assets/monsters/spider-queen-larva.png";
-import spiderCorpseEater from "@/assets/monsters/spider-corpse-eater.png";
-import spiderGuardian from "@/assets/monsters/spider-guardian.png";
-import spiderWyvern from "@/assets/monsters/spider-wyvern.png";
-import shadowSpiderCatcher from "@/assets/monsters/shadow-spider-catcher.png";
-import ancientSpiderHermit from "@/assets/monsters/ancient-spider-hermit.png";
-import spiderBerserker from "@/assets/monsters/spider-berserker.png";
-import spiderIllusionist from "@/assets/monsters/spider-illusionist.png";
-import spiderMotherGuardian from "@/assets/monsters/spider-mother-guardian.png";
-import spiderParasite from "@/assets/monsters/spider-parasite.png";
-import spiderTitan from "@/assets/monsters/spider-titan.png";
-import arachnidArchmage from "@/assets/monsters/arachnid-archmage.png";
-import arachnaProgenitor from "@/assets/monsters/arachna-progenitor.png";
-
-// Monster images mapping for display
-const monsterImages: Record<string, string> = {
-  "Паучок-скелет": spiderSkeleton,
-  "Паук-скакун": spiderJumper,
-  "Паук-прядильщик": spiderWeaver,
-  "Паук-охотник": spiderHunter,
-  "Паук-королева-личинка": spiderQueenLarva,
-  "Паук-трупоед": spiderCorpseEater,
-  "Паук-стража": spiderGuardian,
-  "Паук-виверна": spiderWyvern,
-  "Теневой паук-ловец": shadowSpiderCatcher,
-  "Древний паук-отшельник": ancientSpiderHermit,
-  "Паук-берсерк": spiderBerserker,
-  "Паук-иллюзионист": spiderIllusionist,
-  "Паук-мать-стража": spiderMotherGuardian,
-  "Паук-паразит": spiderParasite,
-  "Паук-титан": spiderTitan,
-  "Арахнидный Архимаг": arachnidArchmage,
-  "Арахна, Мать-Прародительница": arachnaProgenitor
-};
+import { monsterImagesByName } from "@/constants/monsterImages";
 
 // Monster descriptions
 const monsterDescriptions: Record<string, string> = {
@@ -104,7 +66,7 @@ const DungeonLevel = memo(({ dungeonType, level }: DungeonLevelProps) => {
     
     return opponents.map(opponent => ({
       ...opponent,
-      image: monsterImages[opponent.name] || opponent.image,
+      image: monsterImagesByName[opponent.name] || opponent.image,
       description: monsterDescriptions[opponent.name]
     }));
   }, [dungeonType, level]);
