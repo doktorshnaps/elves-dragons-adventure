@@ -127,7 +127,7 @@ export const DeckSelection = ({
           length: 5
         }, (_, index) => {
           const pair = selectedPairs[index];
-          return <div key={index} className="relative overflow-hidden border border-game-accent/30 rounded-lg p-3 min-h-[200px]">
+          return <div key={index} className="relative border border-game-accent/30 rounded-lg p-3 min-h-[280px] flex flex-col justify-center">
                 {pair ? <div className="space-y-2">
                     <div className="text-sm text-game-accent font-medium">Пара {index + 1}</div>
                     <div className="grid grid-cols-2 gap-2 items-start justify-items-center">
