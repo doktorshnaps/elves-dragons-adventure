@@ -767,11 +767,21 @@ export const AdminConsole = () => {
         {/* Help */}
         <div className="text-xs text-muted-foreground space-y-1">
           <p><strong>Примеры команд:</strong></p>
-          <p>• find mr_bruts.tg</p>
-          <p>• addbalance c45dcc01-8e2e-405f-81b9-54771f0717fa 5000</p>
-          <p>• ban c45dcc01-8e2e-405f-81b9-54771f0717fa Использование читов</p>
-          <p>• unban c45dcc01-8e2e-405f-81b9-54771f0717fa</p>
-          <p>• info c45dcc01-8e2e-405f-81b9-54771f0717fa</p>
+          <p>• find mr_bruts.tg - найти игрока по кошельку</p>
+          <p>• info c45dcc01-8e2e-405f-81b9-54771f0717fa - информация об игроке</p>
+          <p>• addbalance c45dcc01-8e2e-405f-81b9-54771f0717fa 5000 - добавить баланс</p>
+          <p>• setbalance c45dcc01-8e2e-405f-81b9-54771f0717fa 10000 - установить баланс</p>
+          <p>• ban c45dcc01-8e2e-405f-81b9-54771f0717fa Использование читов - забанить игрока</p>
+          <p>• unban c45dcc01-8e2e-405f-81b9-54771f0717fa - разбанить игрока</p>
+          <p>• cards c45dcc01-8e2e-405f-81b9-54771f0717fa - посмотреть карты игрока</p>
+          <p>• inventory c45dcc01-8e2e-405f-81b9-54771f0717fa - посмотреть инвентарь игрока</p>
+          <p>• givecard c45dcc01-8e2e-405f-81b9-54771f0717fa Илиона Легендарный - выдать карту</p>
+          <p>• removecard c45dcc01-8e2e-405f-81b9-54771f0717fa card-id - удалить карту</p>
+          <p>• giveitem c45dcc01-8e2e-405f-81b9-54771f0717fa "Зелье лечения" 5 consumable - выдать предмет</p>
+          <p>• removeitem c45dcc01-8e2e-405f-81b9-54771f0717fa item-id 3 - удалить предмет</p>
+          <p>• listcards - список всех доступных карт</p>
+          <p>• help - показать справку</p>
+          <p>• clear - очистить консоль</p>
         </div>
       </CardContent>
     </Card>
