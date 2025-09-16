@@ -458,7 +458,7 @@ export const TeamBattleArena: React.FC<TeamBattleArenaProps> = ({
                 }} />}
                     
                     {/* Overlay for stats */}
-                    <div className="relative z-10 p-2 bg-black/20 backdrop-blur-sm h-full flex flex-col justify-between">
+                    <div className="relative z-10 p-2 bg-black/20 h-full flex flex-col justify-between">
                       {/* Health and Stats Overlay */}
                       <div className="text-right ml-4">
                         <div className="text-red-500 font-bold text-sm drop-shadow-lg">
