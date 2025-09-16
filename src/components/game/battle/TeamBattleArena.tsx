@@ -208,10 +208,10 @@ export const TeamBattleArena: React.FC<TeamBattleArenaProps> = ({
 
         {/* Header */}
         <Card className="bg-card/50 backdrop-blur-sm border-primary/20">
-          <CardHeader className="relative">
-            <div className="absolute left-4 top-4 flex flex-col gap-2">
+          <CardHeader className="relative py-3">
+            <div className="absolute left-4 top-3 flex gap-2">
               <Button variant="outline" size="sm" onClick={handleMenuReturn}>
-                <ArrowLeft className="w-4 h-4 mr-2" />
+                <ArrowLeft className="w-4 h-4 mr-1" />
                 Меню
               </Button>
               
@@ -236,20 +236,20 @@ export const TeamBattleArena: React.FC<TeamBattleArenaProps> = ({
               </AlertDialog>
             </div>
             
-            <CardTitle className="text-center text-2xl text-primary">
+            <CardTitle className="text-center text-lg text-primary">
               Командный бой - Уровень {level}
             </CardTitle>
             
             {/* Account Level and XP Progress */}
-            <div className="flex flex-col items-center gap-2 mt-4">
-              <div className="text-sm text-muted-foreground">
-                Уровень аккаунта: {accountLevel}
+            <div className="flex items-center justify-center gap-4 mt-2">
+              <div className="text-xs text-muted-foreground">
+                Уровень: {accountLevel}
               </div>
-              <div className="w-full max-w-md">
-                <Progress value={xpProgress.progress * 100} className="h-2" />
+              <div className="w-40">
+                <Progress value={xpProgress.progress * 100} className="h-1" />
                 <div className="flex justify-between text-xs text-muted-foreground mt-1">
-                  <span>{xpProgress.currentLevelXP} XP</span>
-                  <span>{xpProgress.nextLevelXP} XP</span>
+                  <span>{xpProgress.currentLevelXP}</span>
+                  <span>{xpProgress.nextLevelXP}</span>
                 </div>
               </div>
             </div>
@@ -378,9 +378,9 @@ export const TeamBattleArena: React.FC<TeamBattleArenaProps> = ({
 
           {/* Combat Actions - Center */}
           <Card className="bg-card/50 backdrop-blur-sm border-primary/20">
-            <CardContent className="p-6">
-              <div className="text-center space-y-4">
-                <div className="text-lg font-medium">
+            <CardContent className="p-3">
+              <div className="text-center space-y-2">
+                <div className="text-sm font-medium">
                   {isPlayerTurn ? <span className="text-primary">Ваш ход</span> : <span className="text-destructive">Ход противника</span>}
                 </div>
                 
@@ -393,14 +393,14 @@ export const TeamBattleArena: React.FC<TeamBattleArenaProps> = ({
                 setSelectedTarget(null);
               }} />}
                 
-                {isPlayerTurn && !autoBattle && <div className="space-y-2">
-                    {selectedAbility ? <div className="text-sm text-muted-foreground">
+                {isPlayerTurn && !autoBattle && <div className="space-y-1">
+                    {selectedAbility ? <div className="text-xs text-muted-foreground">
                         Выберите цель для способности "{selectedAbility.name}"
                       </div> : <>
-                        <Button onClick={handleAttack} disabled={!selectedPair || selectedTarget === null || typeof selectedTarget === 'string'} className="w-full">
+                        <Button onClick={handleAttack} disabled={!selectedPair || selectedTarget === null || typeof selectedTarget === 'string'} size="sm" className="w-40">
                           Атаковать
                         </Button>
-                        {selectedPair && !selectedTarget && <div className="text-sm text-muted-foreground">
+                        {selectedPair && !selectedTarget && <div className="text-xs text-muted-foreground">
                             Выберите цель для атаки
                           </div>}
                       </>}
@@ -410,10 +410,6 @@ export const TeamBattleArena: React.FC<TeamBattleArenaProps> = ({
                   <Button variant={autoBattle ? "destructive" : "outline"} size="sm" onClick={handleAutoBattle}>
                     {autoBattle ? "Стоп авто-бой" : "Авто-бой"}
                   </Button>
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {playerPairs.map(pair => <TeamHealthBars key={pair.id} pair={pair} />)}
                 </div>
               </div>
             </CardContent>
@@ -444,26 +440,38 @@ export const TeamBattleArena: React.FC<TeamBattleArenaProps> = ({
                   }
                 }
               }}>
+                    {/* Vertical Health Bar - Left Side */}
+                    <div className="absolute left-1 top-2 bottom-2 w-3 bg-black/60 rounded-full flex flex-col justify-end z-20">
+                      <div 
+                        className="bg-red-500 rounded-full transition-all duration-300"
+                        style={{ 
+                          height: `${(opponent.health / opponent.maxHealth) * 100}%`,
+                          minHeight: '2px'
+                        }}
+                      />
+                    </div>
+
                     {/* Background Image */}
-                    {opponent.image && <div className="absolute inset-0 bg-cover bg-center bg-no-repeat" style={{
-                  backgroundImage: `url(${opponent.image})`
+                    {opponent.image && <div className="absolute inset-0 bg-cover bg-center bg-no-repeat image-rendering-crisp-edges" style={{
+                  backgroundImage: `url(${opponent.image})`,
+                  imageRendering: 'crisp-edges'
                 }} />}
                     
                     {/* Overlay for stats */}
-                    <div className="relative z-10 p-4 bg-black/30 backdrop-blur-sm h-full flex flex-col justify-between">
+                    <div className="relative z-10 p-2 bg-black/20 backdrop-blur-sm h-full flex flex-col justify-between">
                       {/* Health and Stats Overlay */}
-                      <div className="text-center">
-                        <div className="text-red-500 font-bold text-2xl mb-2 drop-shadow-lg px-0 py-[2px] mx-[32px] my-0">
+                      <div className="text-right ml-4">
+                        <div className="text-red-500 font-bold text-sm drop-shadow-lg">
                           ❤️ {opponent.health}/{opponent.maxHealth}
                         </div>
-                        <div className="text-red-500 font-bold text-xl drop-shadow-lg mx-[40px] my-0 py-0 px-0">
+                        <div className="text-red-500 font-bold text-sm drop-shadow-lg">
                           ⚔️ {opponent.power}
                         </div>
                       </div>
                       
                       {/* Name */}
-                      <div className="text-center mt-2">
-                        <div className="text-red-500 font-bold text-lg drop-shadow-lg">
+                      <div className="text-center">
+                        <div className="text-red-500 font-bold text-sm drop-shadow-lg">
                           {opponent.name}
                         </div>
                       </div>
