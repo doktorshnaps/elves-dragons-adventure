@@ -62,7 +62,7 @@ export const InventoryGrid = ({
             
             <div className="space-y-4">
               <h4 className="font-semibold text-game-accent text-lg">{item.name}</h4>
-              {(item.type === 'cardPack' || item.type === 'heroPack' || item.type === 'dragonPack') && <div className="space-y-3">
+              {item.type === 'cardPack' && <div className="space-y-3">
                   <p className="text-sm text-gray-400">{t(language, 'items.cardPackDescription')}</p>
                   <div className="bg-game-surface/50 p-3 rounded-lg border border-game-accent/30">
                     <h5 className="text-sm font-semibold text-game-accent mb-2">Шансы выпадения:</h5>
@@ -96,7 +96,7 @@ export const InventoryGrid = ({
                   {item.items[0].petName && <p>{t(language, 'items.pet')}: {item.items[0].petName}</p>}
                 </div>}
               {!readonly && <div className="flex flex-col gap-2 mt-4">
-                  {(item.type === 'cardPack' || item.type === 'heroPack' || item.type === 'dragonPack') && <DialogClose asChild>
+                  {item.type === 'cardPack' && <DialogClose asChild>
                       <Button onClick={() => onUseItem(item)} className="w-full bg-game-primary hover:bg-game-primary/80">
                         {t(language, 'items.openPack')}
                       </Button>

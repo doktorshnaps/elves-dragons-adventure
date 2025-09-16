@@ -24,7 +24,7 @@ export const ItemCard = ({
 }: ItemCardProps) => {
   // Disable selling card packs if user has no unopened packs in actual inventory cache
   let canSell = !readonly;
-  if (item.type === 'cardPack' || item.type === 'heroPack' || item.type === 'dragonPack') {
+  if (item.type === 'cardPack') {
     try {
       const saved = localStorage.getItem('gameInventory');
       const inv: any[] = saved ? JSON.parse(saved) : [];
@@ -55,7 +55,7 @@ export const ItemCard = ({
           {item.name} {item.count > 1 && `(${item.count})`}
         </h3>
         <p className="text-gray-400 text-xs mb-auto">
-          {(item.type === 'cardPack' || item.type === 'heroPack' || item.type === 'dragonPack') && `Содержит ${item.value} случайных карт`}
+          {item.type === 'cardPack' && `Содержит ${item.value} случайных карт`}
         </p>
         <div className="flex gap-2 mt-4">
           {!readonly && showUseButton && (

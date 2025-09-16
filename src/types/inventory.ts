@@ -1,7 +1,7 @@
 export interface Item {
   id: string;
   name: string;
-  type: "cardPack" | "heroPack" | "dragonPack" | "healthPotion" | "defensePotion" | "dragon_egg" | "weapon" | "armor" | "accessory";
+  type: "cardPack" | "healthPotion" | "defensePotion" | "dragon_egg" | "weapon" | "armor" | "accessory";
   value: number;
   description?: string;
   image?: string;

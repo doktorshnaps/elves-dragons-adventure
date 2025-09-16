@@ -76,12 +76,12 @@ export const InventoryDisplay = ({
     }
 
     // Колоды карт открываются всегда (без внешнего обработчика)
-    if (groupedItem.type === 'cardPack' || groupedItem.type === 'heroPack' || groupedItem.type === 'dragonPack') {
+    if (groupedItem.type === 'cardPack') {
       const shouldRemove = await handleOpenCardPack(groupedItem.items[0]);
       if (shouldRemove) {
         // Немедленно убираем группу из UI, чтобы не оставалась видимой после открытия всех колод
         const currentInventory = gameData.inventory || [];
-        const newInventory = currentInventory.filter(i => !((i.type === 'cardPack' || i.type === 'heroPack' || i.type === 'dragonPack') && i.name === groupedItem.name));
+        const newInventory = currentInventory.filter(i => !(i.type === 'cardPack' && i.name === groupedItem.name));
         await updateGameData({ inventory: newInventory });
       }
       return shouldRemove;
@@ -115,7 +115,7 @@ export const InventoryDisplay = ({
     // Verify the item(s) still exist in current inventory before selling
     const currentInv = (gameData.inventory || []);
     const existingItem = groupedItem.items.find(it => currentInv.some(ci => ci.id === it.id));
-    const packsLeft = currentInv.filter(i => (i.type === 'cardPack' || i.type === 'heroPack' || i.type === 'dragonPack') && i.name === groupedItem.name).length;
+    const packsLeft = currentInv.filter(i => i.type === 'cardPack' && i.name === groupedItem.name).length;
 
     if (!existingItem) {
       toast({
@@ -126,7 +126,7 @@ export const InventoryDisplay = ({
       return;
     }
 
-    if ((groupedItem.type === 'cardPack' || groupedItem.type === 'heroPack' || groupedItem.type === 'dragonPack') && packsLeft < 1) {
+    if (groupedItem.type === 'cardPack' && packsLeft < 1) {
       toast({
         title: t(language, 'inventory.noPacks'),
         description: t(language, 'inventory.noPacksToSell'),

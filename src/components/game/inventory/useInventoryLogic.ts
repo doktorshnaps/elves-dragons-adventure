@@ -115,9 +115,9 @@ const groupItems = (items: Item[]): GroupedItem[] => {
     });
   };
   const handleOpenCardPack = async (item: Item): Promise<boolean> => {
-    if (item.type === 'cardPack' || item.type === 'heroPack' || item.type === 'dragonPack') {
+    if (item.type === 'cardPack') {
       // Ask for quantity to open
-      const allPacks = (gameData.inventory || []).filter(i => (i.type === 'cardPack' || i.type === 'heroPack' || i.type === 'dragonPack') && i.name === item.name);
+      const allPacks = (gameData.inventory || []).filter(i => i.type === 'cardPack' && i.name === item.name);
       const available = allPacks.length;
       const raw = window.prompt(`Сколько колод открыть? Доступно: ${available}`, '1');
       if (!raw) return false;
