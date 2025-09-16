@@ -536,93 +536,108 @@ export const TeamBattleArena: React.FC<TeamBattleArenaProps> = ({
             </CardHeader>
              <CardContent className="space-y-3">
                {opponents.map(opponent => (
-                  <div 
-                    key={opponent.id} 
-                    className={`p-3 rounded-lg border-2 transition-all cursor-pointer relative flex ${
-                      opponent.health <= 0 
-                        ? 'bg-muted/50 border-muted opacity-50' 
-                        : attackedTarget === opponent.id 
-                          ? 'bg-red-500/40 border-red-500 animate-bounce shadow-lg shadow-red-500/50 scale-110' 
-                          : counterAttackedTarget === opponent.id 
-                            ? 'bg-yellow-500/40 border-yellow-500 animate-pulse scale-105 shadow-lg shadow-yellow-500/60' 
-                            : selectedTarget === opponent.id 
-                              ? 'bg-destructive/20 border-destructive' 
-                              : selectedAbility?.targetType === 'enemy' 
-                                ? 'bg-card border-red-400 hover:border-destructive/50' 
-                                : 'bg-card border-border hover:border-destructive/50'
-                    }`} 
-                     onClick={() => {
-                       if (opponent.health > 0) {
-                         // Способности исцеления не могут быть использованы на врагах
-                         if (selectedAbility && selectedAbility.targetType === 'ally') {
-                           return;
-                         }
-                         
-                         // Если повторно нажимаем на ту же цель, отменяем выбор
-                         if (selectedTarget === opponent.id) {
-                           setSelectedTarget(null);
-                         } else {
-                           setSelectedTarget(opponent.id);
-                         }
-                       }
-                      }}
-                   >
-                     {/* Вертикальная полоса здоровья слева */}
-                     <div className="flex flex-col items-center mr-3 h-full min-h-[80px]">
-                       <div className="flex-1 w-3 bg-gray-200 rounded-full relative overflow-hidden">
-                         <div 
-                           className="absolute bottom-0 w-full bg-red-500 transition-all duration-300 rounded-full"
-                           style={{ height: `${(opponent.health / opponent.maxHealth) * 100}%` }}
-                         />
-                       </div>
-                       <Heart className="w-3 h-3 text-red-500 mt-1" />
-                       <span className="text-xs mt-1">{opponent.health}/{opponent.maxHealth}</span>
-                     </div>
-
-                     {/* Контент справа */}
-                     <div className="flex-1 flex flex-col">
-                       {/* Изображение - 50% ширины контента */}
-                       {opponent.image && (
-                         <div className="w-1/2 aspect-square mb-3 mx-auto rounded-lg overflow-hidden border border-game-accent/30">
-                           <img 
-                             src={opponent.image} 
-                             alt={opponent.name}
-                             className="w-full h-full object-cover"
-                             loading="eager"
-                             onError={(e) => {
-                               e.currentTarget.src = '/placeholder.svg';
-                             }}
-                           />
-                         </div>
-                       )}
-                       
-                       <div className="flex items-center justify-between mb-2">
-                         <span className="font-medium text-sm">{opponent.name}</span>
-                         <div className="flex items-center gap-1">
-                           {opponent.isBoss && (
-                             <span className="text-xs bg-destructive px-1.5 py-0.5 rounded text-white">
-                               БОСС
-                             </span>
-                           )}
-                           {selectedAbility?.targetType === 'enemy' && selectedTarget === opponent.id && (
-                             <span className="text-xs bg-red-500 px-1.5 py-0.5 rounded text-white">
-                               🎯
-                             </span>
-                           )}
-                           {selectedAbility?.targetType === 'ally' && (
-                             <span className="text-xs bg-gray-500 px-1.5 py-0.5 rounded text-white opacity-50">
-                               ❌
-                             </span>
-                           )}
-                         </div>
-                       </div>
-                     
-                       <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                         <Sword className="w-3 h-3" />
-                         <span>{opponent.power}</span>
-                       </div>
-                     </div>
-                  </div>
+                   <div 
+                     key={opponent.id} 
+                     className={`rounded-lg border-2 transition-all cursor-pointer relative aspect-square overflow-hidden ${
+                       opponent.health <= 0 
+                         ? 'border-muted opacity-50' 
+                         : attackedTarget === opponent.id 
+                           ? 'border-red-500 animate-bounce shadow-lg shadow-red-500/50 scale-110' 
+                           : counterAttackedTarget === opponent.id 
+                             ? 'border-yellow-500 animate-pulse scale-105 shadow-lg shadow-yellow-500/60' 
+                             : selectedTarget === opponent.id 
+                               ? 'border-destructive' 
+                               : selectedAbility?.targetType === 'enemy' 
+                                 ? 'border-red-400 hover:border-destructive/50' 
+                                 : 'border-border hover:border-destructive/50'
+                     }`} 
+                      onClick={() => {
+                        if (opponent.health > 0) {
+                          // Способности исцеления не могут быть использованы на врагах
+                          if (selectedAbility && selectedAbility.targetType === 'ally') {
+                            return;
+                          }
+                          
+                          // Если повторно нажимаем на ту же цель, отменяем выбор
+                          if (selectedTarget === opponent.id) {
+                            setSelectedTarget(null);
+                          } else {
+                            setSelectedTarget(opponent.id);
+                          }
+                        }
+                       }}
+                    >
+                      {/* Фоновое изображение на весь блок */}
+                      {opponent.image && (
+                        <img 
+                          src={opponent.image} 
+                          alt={opponent.name}
+                          className="absolute inset-0 w-full h-full object-cover"
+                          loading="eager"
+                          onError={(e) => {
+                            e.currentTarget.src = '/placeholder.svg';
+                          }}
+                        />
+                      )}
+                      
+                      {/* Темное наложение для читаемости текста */}
+                      <div className="absolute inset-0 bg-black/40" />
+                      
+                      {/* Контент поверх изображения */}
+                      <div className="relative z-10 p-3 h-full flex flex-col justify-between text-red-500">
+                        {/* Верхняя часть - имя и статус */}
+                        <div className="flex items-start justify-between">
+                          <div>
+                            <div className="font-bold text-lg text-red-500 drop-shadow-lg">
+                              {opponent.name}
+                            </div>
+                            {opponent.isBoss && (
+                              <div className="text-sm bg-red-600/80 px-2 py-1 rounded text-white font-bold mt-1">
+                                БОСС
+                              </div>
+                            )}
+                          </div>
+                          
+                          <div className="flex flex-col items-end gap-1">
+                            {selectedAbility?.targetType === 'enemy' && selectedTarget === opponent.id && (
+                              <span className="text-sm bg-red-500/80 px-2 py-1 rounded text-white font-bold">
+                                🎯
+                              </span>
+                            )}
+                            {selectedAbility?.targetType === 'ally' && (
+                              <span className="text-sm bg-gray-500/80 px-2 py-1 rounded text-white opacity-50">
+                                ❌
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                        
+                        {/* Нижняя часть - здоровье и сила */}
+                        <div className="space-y-2">
+                          {/* Здоровье */}
+                          <div className="flex items-center gap-2">
+                            <Heart className="w-5 h-5 text-red-500" />
+                            <div className="flex-1 bg-gray-700/60 rounded-full h-3 overflow-hidden">
+                              <div 
+                                className="h-full bg-red-500 transition-all duration-300"
+                                style={{ width: `${(opponent.health / opponent.maxHealth) * 100}%` }}
+                              />
+                            </div>
+                            <span className="font-bold text-lg text-red-500 drop-shadow-lg">
+                              {opponent.health}/{opponent.maxHealth}
+                            </span>
+                          </div>
+                          
+                          {/* Сила атаки */}
+                          <div className="flex items-center gap-2">
+                            <Sword className="w-5 h-5 text-red-500" />
+                            <span className="font-bold text-lg text-red-500 drop-shadow-lg">
+                              {opponent.power}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                   </div>
                ))}
              </CardContent>
            </Card>
