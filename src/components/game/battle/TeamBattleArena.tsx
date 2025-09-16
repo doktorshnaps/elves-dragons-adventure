@@ -184,10 +184,10 @@ export const TeamBattleArena: React.FC<TeamBattleArenaProps> = ({
       return () => clearTimeout(timer);
     }
   }, [autoBattle, isPlayerTurn, alivePairs.length, aliveOpponents.length]);
-  return <div className="min-h-screen p-2">
+  return <div className="h-screen w-screen overflow-hidden p-2 flex flex-col">
       {/* Removed old ability menu */}
 
-      <div className="w-full space-y-4">
+      <div className="w-full h-full flex flex-col space-y-2">
         {/* Индикатор выбранной способности */}
         {selectedAbility && <Card className="bg-blue-500/20 border-blue-400">
             <CardContent className="p-4">
@@ -256,17 +256,17 @@ export const TeamBattleArena: React.FC<TeamBattleArenaProps> = ({
           </CardHeader>
         </Card>
 
-        <div className="space-y-6">
+        <div className="flex-1 flex flex-col space-y-2 overflow-hidden">
           {/* Player Team - Upper Part */}
-          <Card className="bg-card/50 backdrop-blur-sm border-primary/20">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-primary justify-center">
-                <Shield className="w-5 h-5" />
+          <Card className="bg-card/50 backdrop-blur-sm border-primary/20 flex-1 min-h-0">
+            <CardHeader className="py-2">
+              <CardTitle className="flex items-center gap-2 text-primary justify-center text-sm">
+                <Shield className="w-4 h-4" />
                 Ваша команда
               </CardTitle>
             </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
+            <CardContent className="h-full overflow-auto">
+              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-2 h-full">
                 {playerPairs.map((pair, index) => {
                 // Получаем способности для героя
                 const heroAbilities = HERO_ABILITIES[pair.hero.name] || [];
@@ -377,8 +377,8 @@ export const TeamBattleArena: React.FC<TeamBattleArenaProps> = ({
           </Card>
 
           {/* Combat Actions - Center */}
-          <Card className="bg-card/50 backdrop-blur-sm border-primary/20">
-            <CardContent className="p-3">
+          <Card className="bg-card/50 backdrop-blur-sm border-primary/20 flex-shrink-0">
+            <CardContent className="p-2">
               <div className="text-center space-y-2">
                 <div className="text-sm font-medium">
                   {isPlayerTurn ? <span className="text-primary">Ваш ход</span> : <span className="text-destructive">Ход противника</span>}
@@ -416,16 +416,16 @@ export const TeamBattleArena: React.FC<TeamBattleArenaProps> = ({
           </Card>
 
           {/* Enemy Team - Lower Part */}
-          <Card className="bg-card/50 backdrop-blur-sm border-primary/20">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-destructive justify-center">
-                <Sword className="w-5 h-5" />
+          <Card className="bg-card/50 backdrop-blur-sm border-primary/20 flex-1 min-h-0">
+            <CardHeader className="py-2">
+              <CardTitle className="flex items-center gap-2 text-destructive justify-center text-sm">
+                <Sword className="w-4 h-4" />
                 Враги
               </CardTitle>
             </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
-                {opponents.map((opponent, index) => <div key={opponent.id} className={`relative rounded-lg border-2 transition-all cursor-pointer overflow-hidden min-h-[200px] ${opponent.health <= 0 ? 'opacity-50 border-muted' : attackedTarget === opponent.id ? 'border-yellow-500 animate-bounce scale-110 shadow-lg shadow-yellow-500/60' : counterAttackedTarget === opponent.id ? 'border-red-500 animate-pulse scale-105 shadow-lg shadow-red-500/50' : selectedTarget === opponent.id ? 'border-destructive bg-destructive/10' : selectedAbility?.targetType === 'enemy' ? 'border-red-400 hover:border-red-500/70' : 'border-border hover:border-destructive/50'}`} onClick={() => {
+            <CardContent className="h-full overflow-auto">
+              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-2 h-full">
+                {opponents.map((opponent, index) => <div key={opponent.id} className={`relative rounded-lg border-2 transition-all cursor-pointer overflow-hidden h-32 ${opponent.health <= 0 ? 'opacity-50 border-muted' : attackedTarget === opponent.id ? 'border-yellow-500 animate-bounce scale-110 shadow-lg shadow-yellow-500/60' : counterAttackedTarget === opponent.id ? 'border-red-500 animate-pulse scale-105 shadow-lg shadow-red-500/50' : selectedTarget === opponent.id ? 'border-destructive bg-destructive/10' : selectedAbility?.targetType === 'enemy' ? 'border-red-400 hover:border-red-500/70' : 'border-border hover:border-destructive/50'}`} onClick={() => {
                 if (opponent.health > 0 && isPlayerTurn) {
                   if (selectedAbility && selectedAbility.targetType === 'enemy') {
                     // Если повторно нажимаем на ту же цель, отменяем выбор
