@@ -69,7 +69,7 @@ export const Shop = ({ onClose }: ShopProps) => {
       await purchaseItem(item.id, accountId);
 
       // Формируем предмет, который кладём в инвентарь
-      const newItem: Item = item.type === 'cardPack'
+      const newItem: Item = (item.type === 'cardPack' || item.type === 'heroPack' || item.type === 'dragonPack')
         ? {
             id: uuidv4(),
             name: item.name,
@@ -111,8 +111,8 @@ export const Shop = ({ onClose }: ShopProps) => {
 
       setShowEffect(true);
       toast({
-        title: item.type === 'cardPack' ? t(language, 'shop.cardPackBought') : t(language, 'shop.purchaseSuccess'),
-        description: item.type === 'cardPack' ? t(language, 'shop.cardPackDescription') : `${t(language, 'shop.boughtItem')} ${item.name}`,
+        title: (item.type === 'cardPack' || item.type === 'heroPack' || item.type === 'dragonPack') ? t(language, 'shop.cardPackBought') : t(language, 'shop.purchaseSuccess'),
+        description: (item.type === 'cardPack' || item.type === 'heroPack' || item.type === 'dragonPack') ? t(language, 'shop.cardPackDescription') : `${t(language, 'shop.boughtItem')} ${item.name}`,
       });
     } catch (error) {
       toast({

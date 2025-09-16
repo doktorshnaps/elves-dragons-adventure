@@ -3,7 +3,7 @@ export interface ShopItem {
   name: string;
   description: string;
   price: number;
-  type: "cardPack" | "healthPotion" | "defensePotion" | "weapon" | "armor" | "accessory";
+  type: "cardPack" | "heroPack" | "dragonPack" | "healthPotion" | "defensePotion" | "weapon" | "armor" | "accessory";
   value: number;
   image?: string;
   stats?: {
@@ -19,12 +19,21 @@ export interface ShopItem {
 export const shopItems: ShopItem[] = [
   {
     id: 1,
-    name: "Колода карт",
-    description: "Содержит 1 случайную карту героя или питомца",
+    name: "Колода героев",
+    description: "Содержит 1 случайную карту героя",
     price: 1,
-    type: "cardPack",
+    type: "heroPack",
     value: 1,
-    image: "/lovable-uploads/e523dce0-4cda-4d32-b4e2-ecec40b1eb39.png"
+    image: "/hero-pack.png"
+  },
+  {
+    id: 20,
+    name: "Колода драконов",
+    description: "Содержит 1 случайную карту дракона",
+    price: 1,
+    type: "dragonPack",
+    value: 1,
+    image: "/dragon-pack.png"
   },
   {
     id: 2,

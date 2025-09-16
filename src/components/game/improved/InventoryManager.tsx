@@ -50,7 +50,7 @@ export const InventoryManager = () => {
     try {
       const item = groupedItem.items[0];
       
-      if (item.type === 'cardPack') {
+      if (item.type === 'cardPack' || item.type === 'heroPack' || item.type === 'dragonPack') {
         // Открываем колоду карт
         const newCard = generateCard(Math.random() > 0.5 ? 'character' : 'pet');
         addCard(newCard);
@@ -178,7 +178,7 @@ export const InventoryManager = () => {
                 
                 <div className="text-center space-y-2">
                   <p className="text-gray-400">
-                    {selectedItem.type === 'cardPack' && 'Содержит 1 случайную карту'}
+                    {(selectedItem.type === 'cardPack' || selectedItem.type === 'heroPack' || selectedItem.type === 'dragonPack') && 'Содержит 1 случайную карту'}
                     {selectedItem.type === 'healthPotion' && `Восстанавливает ${selectedItem.items[0]?.value} здоровья`}
                   </p>
                 </div>

@@ -118,8 +118,18 @@ export const generateCard = (type: CardType): Card => {
   };
 };
 
-export const generatePack = (): Card[] => {
-  const type: CardType = Math.random() > 0.5 ? 'character' : 'pet';
+export const generatePack = (packType?: 'heroPack' | 'dragonPack'): Card[] => {
+  let type: CardType;
+  
+  if (packType === 'heroPack') {
+    type = 'character';
+  } else if (packType === 'dragonPack') {
+    type = 'pet';
+  } else {
+    // Старая логика для совместимости
+    type = Math.random() > 0.5 ? 'character' : 'pet';
+  }
+  
   return [generateCard(type)];
 };
 

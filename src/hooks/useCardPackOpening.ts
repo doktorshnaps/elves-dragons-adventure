@@ -27,7 +27,7 @@ export const useCardPackOpening = () => {
 
     // Remove the exact referenced pack by id first (only one), then same-name packs
     for (const it of inv) {
-      const isPack = it.type === 'cardPack';
+      const isPack = it.type === 'cardPack' || it.type === 'heroPack' || it.type === 'dragonPack';
       const idStr = it?.id != null ? String(it.id) : "";
 
       if (isPack && removed < count) {
@@ -48,10 +48,10 @@ export const useCardPackOpening = () => {
   };
 
   const openCardPacks = async (packItem: Item, count: number): Promise<CardType[]> => {
-    if (packItem.type !== 'cardPack' || isOpening) return [];
+    if (!(packItem.type === 'cardPack' || packItem.type === 'heroPack' || packItem.type === 'dragonPack') || isOpening) return [];
 
     const allPacks = (gameData.inventory || []).filter(
-      (i) => i.type === 'cardPack' && i.name === packItem.name
+      (i) => (i.type === 'cardPack' || i.type === 'heroPack' || i.type === 'dragonPack') && i.name === packItem.name
     );
     const available = allPacks.length;
 
@@ -69,9 +69,16 @@ export const useCardPackOpening = () => {
 
     try {
       // Генерируем карты, которые будет содержать открытие
-      const newCards: CardType[] = Array.from({ length: count }, () =>
-        generateCard(Math.random() > 0.5 ? 'character' : 'pet')
-      );
+      const newCards: CardType[] = Array.from({ length: count }, () => {
+        if (packItem.type === 'heroPack') {
+          return generateCard('character');
+        } else if (packItem.type === 'dragonPack') {
+          return generateCard('pet');
+        } else {
+          // Старая логика для совместимости
+          return generateCard(Math.random() > 0.5 ? 'character' : 'pet');
+        }
+      });
 
       // Атомарно удаляем колоды и добавляем карты на сервере
       const { data, error } = await (supabase as any).rpc('open_card_packs', {
