@@ -184,10 +184,10 @@ export const TeamBattleArena: React.FC<TeamBattleArenaProps> = ({
       return () => clearTimeout(timer);
     }
   }, [autoBattle, isPlayerTurn, alivePairs.length, aliveOpponents.length]);
-  return <div className="min-h-screen p-4">
+  return <div className="min-h-screen p-2">
       {/* Removed old ability menu */}
 
-      <div className="max-w-6xl mx-auto space-y-6">
+      <div className="w-full space-y-4">
         {/* Индикатор выбранной способности */}
         {selectedAbility && <Card className="bg-blue-500/20 border-blue-400">
             <CardContent className="p-4">
