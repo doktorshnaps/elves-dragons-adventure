@@ -28,7 +28,7 @@ export const CardDisplay = ({
   onClick
 }: CardDisplayProps) => {
   const isMobile = useIsMobile();
-  return <Card onClick={onClick} className={`relative w-[90px] h-[180px] sm:w-[120px] sm:h-[240px] md:w-[130px] md:h-[260px] lg:w-[140px] lg:h-[280px]
+  return <Card onClick={onClick} className={`mx-auto w-[90px] h-[180px] sm:w-[120px] sm:h-[240px] md:w-[130px] md:h-[260px] lg:w-[140px] lg:h-[280px]
         p-0.5 bg-game-background border-game-accent hover:border-game-primary transition-all duration-300 
         ${!isActive && card.type === 'pet' ? 'opacity-50' : ''} ${onClick ? 'cursor-pointer' : ''} ${className}`}>
       <div className="flex flex-col h-full">
