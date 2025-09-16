@@ -274,376 +274,327 @@ export const TeamBattleArena: React.FC<TeamBattleArenaProps> = ({
           </CardHeader>
         </Card>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 items-start">
-          {/* Player Team */}
+        <div className="space-y-6">
+          {/* Player Team - Upper Part */}
           <Card className="bg-card/50 backdrop-blur-sm border-primary/20">
             <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-primary">
+              <CardTitle className="flex items-center gap-2 text-primary justify-center">
                 <Shield className="w-5 h-5" />
                 Ваша команда
               </CardTitle>
             </CardHeader>
-            <CardContent className="space-y-4">
-               {playerPairs.map((pair, index) => {
-                 // Получаем способности для героя
-                 const heroAbilities = HERO_ABILITIES[pair.hero.name] || [];
-                 const hasAbilities = heroAbilities.length > 0;
-                 const currentMana = pair.mana || 0;
-                 const maxMana = pair.maxMana || pair.hero.magic || 0;
-                 
-                 return (
-                   <div 
-                     key={pair.id} 
-                     className={`p-4 rounded-lg border-2 transition-all cursor-pointer ${
-                       pair.health <= 0 
-                         ? 'bg-muted/50 border-muted opacity-50' 
-                         : attackingPair === pair.id 
-                           ? 'bg-red-500/30 border-red-500 animate-pulse scale-105 shadow-lg shadow-red-500/50' 
-                           : counterAttackingPair === pair.id 
-                             ? 'bg-yellow-500/40 border-yellow-500 animate-bounce scale-110 shadow-lg shadow-yellow-500/60' 
-                             : defendingPair === pair.id 
-                               ? 'bg-blue-500/30 border-blue-500 animate-pulse shadow-lg shadow-blue-500/50' 
-                               : selectedPair === pair.id 
-                                 ? 'bg-primary/20 border-primary' 
-                                  : selectedAbility?.targetType === 'ally' && selectedTarget === pair.id
-                                    ? 'bg-green-500/20 border-green-400'
-                                    : selectedAbility?.targetType === 'ally'
-                                      ? 'bg-card border-green-400 hover:border-green-500/50'
-                                      : 'bg-card border-border hover:border-primary/50'
-                     }`} 
-                       onClick={() => {
-                         if (pair.health > 0 && isPlayerTurn) {
-                           // Если выбираем нового персонажа, отменяем способность
-                           if (selectedPair !== pair.id && selectedAbility) {
-                             setSelectedAbility(null);
-                             setSelectedTarget(null);
-                           }
-                           
-                           // Если способность выбрана и это способность исцеления
-                           if (selectedAbility && selectedAbility.targetType === 'ally') {
-                             // Если повторно нажимаем на ту же цель, отменяем выбор
-                             if (selectedTarget === pair.id) {
-                               setSelectedTarget(null);
-                             } else {
-                               setSelectedTarget(pair.id);
-                             }
-                           } else {
-                             // Просто выбираем персонажа
-                             setSelectedPair(pair.id);
-                           }
-                         }
-                       }}
-                   >
-                     <div className="flex items-center gap-3 mb-2">
-                       <div className="flex gap-2">
-                         {/* Hero Image */}
-                         <div className="w-12 h-12 rounded-lg overflow-hidden border border-primary/30 bg-primary/10 flex-shrink-0">
-                           {pair.hero.image ? (
-                             <img src={pair.hero.image} alt={pair.hero.name} className="w-full h-full object-cover" />
-                           ) : (
-                             <div className="w-full h-full flex items-center justify-center text-primary">
-                               <span className="text-lg">⚔️</span>
-                             </div>
-                           )}
-                         </div>
-                         
-                         {/* Dragon Image */}
-                         {pair.dragon && (
-                           <div className="w-10 h-10 rounded-lg overflow-hidden border border-secondary/30 bg-secondary/10 flex-shrink-0">
-                             {pair.dragon.image ? (
-                               <img src={pair.dragon.image} alt={pair.dragon.name} className="w-full h-full object-cover" />
-                             ) : (
-                               <div className="w-full h-full flex items-center justify-center text-secondary">
-                                 <span className="text-sm">🐲</span>
-                               </div>
-                             )}
-                           </div>
-                         )}
-                       </div>
-                       
-                       <div className="flex-1">
-                         <div className="flex items-center gap-2">
-                           <span className="font-semibold text-sm bg-primary/20 px-2 py-1 rounded">
-                             #{pair.attackOrder}
-                           </span>
-                           <span className="font-medium">{pair.hero.name}</span>
-                           {pair.dragon && (
-                             <span className="text-sm text-muted-foreground">
-                               + {pair.dragon.name}
-                             </span>
-                           )}
-                         </div>
-                         
-                           {/* Индикатор способностей */}
-                           {hasAbilities && (
-                             <div className="flex items-center justify-between text-xs text-blue-400 mt-1">
-                               <span>🔮 Способности: {heroAbilities.length}</span>
-                               <Button
-                                 size="sm"
-                                 variant="outline"
-                                 className="h-5 px-2 text-xs border-blue-400/50 text-blue-400 hover:bg-blue-500/20"
-                                 onClick={(e) => {
-                                   e.stopPropagation();
-                                   if (heroAbilities.length === 1) {
-                                     // Если способность одна, сразу выбираем её
-                                     const ability = heroAbilities[0];
-                                     if (currentMana >= ability.manaCost) {
-                                       setSelectedAbility(ability);
-                                       setSelectedPair(pair.id);
-                                     }
-                                   } else {
-                                     // Если способностей несколько, открываем панель
-                                     setSelectedPair(pair.id);
-                                   }
-                                 }}
-                                 disabled={!heroAbilities.some(ability => currentMana >= ability.manaCost)}
-                               >
-                                 ⚡
-                               </Button>
-                             </div>
-                           )}
+            <CardContent>
+              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
+                {playerPairs.map((pair, index) => {
+                  // Получаем способности для героя
+                  const heroAbilities = HERO_ABILITIES[pair.hero.name] || [];
+                  const hasAbilities = heroAbilities.length > 0;
+                  const currentMana = pair.mana || 0;
+                  const maxMana = pair.maxMana || pair.hero.magic || 0;
+                  
+                  return (
+                    <div 
+                      key={pair.id} 
+                      className={`p-4 rounded-lg border-2 transition-all cursor-pointer ${
+                        pair.health <= 0 
+                          ? 'bg-muted/50 border-muted opacity-50' 
+                          : attackingPair === pair.id 
+                            ? 'bg-red-500/30 border-red-500 animate-pulse scale-105 shadow-lg shadow-red-500/50' 
+                            : counterAttackingPair === pair.id 
+                              ? 'bg-yellow-500/40 border-yellow-500 animate-bounce scale-110 shadow-lg shadow-yellow-500/60' 
+                              : defendingPair === pair.id 
+                                ? 'bg-blue-500/30 border-blue-500 animate-pulse shadow-lg shadow-blue-500/50' 
+                                : selectedPair === pair.id 
+                                  ? 'bg-primary/20 border-primary' 
+                                   : selectedAbility?.targetType === 'ally' && selectedTarget === pair.id
+                                     ? 'bg-green-500/20 border-green-400'
+                                     : selectedAbility?.targetType === 'ally'
+                                       ? 'bg-card border-green-400 hover:border-green-500/50'
+                                       : 'bg-card border-border hover:border-primary/50'
+                      }`} 
+                        onClick={() => {
+                          if (pair.health > 0 && isPlayerTurn) {
+                            // Если выбираем нового персонажа, отменяем способность
+                            if (selectedPair !== pair.id && selectedAbility) {
+                              setSelectedAbility(null);
+                              setSelectedTarget(null);
+                            }
+                            
+                            // Если способность выбрана и это способность исцеления
+                            if (selectedAbility && selectedAbility.targetType === 'ally') {
+                              // Если повторно нажимаем на ту же цель, отменяем выбор
+                              if (selectedTarget === pair.id) {
+                                setSelectedTarget(null);
+                              } else {
+                                setSelectedTarget(pair.id);
+                              }
+                            } else {
+                              // Просто выбираем персонажа
+                              setSelectedPair(pair.id);
+                            }
+                          }
+                        }}
+                    >
+                      <div className="flex flex-col items-center gap-2">
+                        <div className="flex gap-1">
+                          {/* Hero Image */}
+                          <div className="w-12 h-12 rounded-lg overflow-hidden border border-primary/30 bg-primary/10 flex-shrink-0">
+                            {pair.hero.image ? (
+                              <img src={pair.hero.image} alt={pair.hero.name} className="w-full h-full object-cover" />
+                            ) : (
+                              <div className="w-full h-full flex items-center justify-center text-primary">
+                                <span className="text-lg">⚔️</span>
+                              </div>
+                            )}
+                          </div>
                           
-                          {/* Индикатор цели для исцеления */}
-                          {selectedAbility?.targetType === 'ally' && selectedTarget === pair.id && (
-                            <div className="text-xs text-green-400 mt-1">
-                              💚 ЦЕЛЬ ДЛЯ ИСЦЕЛЕНИЯ
+                          {/* Dragon Image */}
+                          {pair.dragon && (
+                            <div className="w-10 h-10 rounded-lg overflow-hidden border border-secondary/30 bg-secondary/10 flex-shrink-0">
+                              {pair.dragon.image ? (
+                                <img src={pair.dragon.image} alt={pair.dragon.name} className="w-full h-full object-cover" />
+                              ) : (
+                                <div className="w-full h-full flex items-center justify-center text-secondary">
+                                  <span className="text-sm">🐲</span>
+                                </div>
+                              )}
                             </div>
                           )}
-                       </div>
-                       
-                       {currentAttacker?.id === pair.id && isPlayerTurn && (
-                         <div className="text-xs bg-accent px-2 py-1 rounded">
-                           Ходит
-                         </div>
-                       )}
-                     </div>
-                      
-                     <div className="space-y-2">
-                       <TeamHealthBars pair={pair} />
-                       
-                       {/* Мана-бар для героев со способностями */}
-                       {hasAbilities && maxMana > 0 && (
-                         <div className="space-y-1">
-                           <div className="flex items-center gap-2 text-xs">
-                             <Zap className="w-3 h-3 text-blue-400" />
-                             <Progress 
-                               value={(currentMana / maxMana) * 100} 
-                               className="flex-1 h-1.5"
-                             />
-                             <span className="text-blue-400">{currentMana}/{maxMana}</span>
-                           </div>
-                         </div>
-                       )}
-                      
-                       <div className="flex items-center justify-between text-xs text-muted-foreground">
-                         <div className="flex items-center gap-1">
-                           <Sword className="w-3 h-3" />
-                           {pair.power}
-                         </div>
-                         <div className="flex items-center gap-1">
-                           <Shield className="w-3 h-3" />
-                           {pair.defense}
-                         </div>
-                         {hasAbilities && (
-                           <div className="flex items-center gap-1 text-blue-400">
-                             <Zap className="w-3 h-3" />
-                             {pair.hero.magic}
-                           </div>
-                         )}
-                       </div>
-                     </div>
-                   </div>
-                 );
-               })}
-            </CardContent>
-          </Card>
+                        </div>
+                        
+                        <div className="text-center">
+                          <div className="flex items-center gap-1 justify-center mb-1">
+                            <span className="font-semibold text-xs bg-primary/20 px-1 py-0.5 rounded">
+                              #{pair.attackOrder}
+                            </span>
+                          </div>
+                          <span className="font-medium text-sm">{pair.hero.name}</span>
+                          {pair.dragon && (
+                            <div className="text-xs text-muted-foreground">
+                              + {pair.dragon.name}
+                            </div>
+                          )}
+                        </div>
+                        
+                        {/* Health Bar */}
+                        <div className="w-full">
+                          <Progress 
+                            value={(pair.health / pair.maxHealth) * 100} 
+                            className="h-2"
+                          />
+                          <div className="text-xs text-center mt-1">
+                            <Heart className="w-3 h-3 inline mr-1" />
+                            {pair.health}/{pair.maxHealth}
+                          </div>
+                        </div>
 
-          {/* Combat Controls - Center */}
-          <Card className="bg-card/50 backdrop-blur-sm border-primary/20 h-fit">
-            <CardContent className="pt-4 pb-4">
-              <div className="flex flex-col items-center justify-center gap-3">
-                {/* Auto Battle Button */}
-                <Button 
-                  onClick={handleAutoBattle}
-                  variant={autoBattle ? "default" : "destructive"}
-                  className={`${autoBattle ? 'bg-green-600 hover:bg-green-700 border-green-600' : 'bg-red-600 hover:bg-red-700 border-red-600'} transition-colors text-sm`}
-                  size="sm"
-                >
-                  {autoBattle ? 'Авто ВКЛ' : 'Авто ВЫКЛ'}
-                </Button>
-                
-                 {!autoBattle && (
-                   <div className="flex flex-col items-center gap-2">
-                     {isPlayerTurn ? (
-                       <>
-                          <Button 
-                            onClick={() => {
-                              console.log('Button clicked!');
-                              console.log('selectedAbility:', selectedAbility);
-                              console.log('selectedPair:', selectedPair);
-                              console.log('selectedTarget:', selectedTarget);
-                              console.log('onAbilityUse:', typeof onAbilityUse);
-                              
-                              if (selectedAbility && selectedPair && selectedTarget !== null && onAbilityUse) {
-                                console.log('Using ability:', selectedAbility.name, 'from:', selectedPair, 'on target:', selectedTarget);
-                                onAbilityUse(selectedPair, selectedAbility.id, selectedTarget);
-                                setSelectedAbility(null);
-                                setSelectedPair(null);
-                                setSelectedTarget(null);
-                              } else if (selectedPair && typeof selectedTarget === 'number') {
-                                console.log('Regular attack');
-                                handleAttack();
-                              } else {
-                                console.log('Conditions not met for ability or attack');
-                                console.log('Missing:', {
-                                  ability: !selectedAbility,
-                                  pair: !selectedPair,
-                                  target: selectedTarget === null,
-                                  onAbilityUse: !onAbilityUse
-                                });
+                        {/* Mana Bar */}
+                        {hasAbilities && maxMana > 0 && (
+                          <div className="w-full">
+                            <Progress 
+                              value={(currentMana / maxMana) * 100} 
+                              className="h-1"
+                            />
+                            <div className="text-xs text-center text-blue-400 mt-1">
+                              <Zap className="w-3 h-3 inline mr-1" />
+                              {currentMana}/{maxMana}
+                            </div>
+                          </div>
+                        )}
+
+                        {/* Stats */}
+                        <div className="flex gap-2 text-xs">
+                          <span className="flex items-center">
+                            <Sword className="w-3 h-3 mr-1" />
+                            {pair.power}
+                          </span>
+                          <span className="flex items-center">
+                            <Shield className="w-3 h-3 mr-1" />
+                            {pair.defense}
+                          </span>
+                        </div>
+
+                        {/* Abilities Button */}
+                        {hasAbilities && (
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="h-6 px-2 text-xs border-blue-400/50 text-blue-400 hover:bg-blue-500/20 w-full"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              if (heroAbilities.length === 1) {
+                                // Если способность одна, сразу выбираем её
+                                const ability = heroAbilities[0];
+                                if (currentMana >= ability.manaCost) {
+                                  setSelectedAbility(ability);
+                                  setSelectedPair(pair.id);
+                                  setSelectedTarget(null);
+                                }
                               }
                             }}
-                           disabled={!selectedPair || selectedTarget === null}
-                           size="sm"
-                         >
-                           {selectedAbility ? 'Способность' : 'Атаковать'}
-                         </Button>
-                         <div className="text-xs text-muted-foreground text-center max-w-[120px]">
-                           {!selectedPair ? 'Выберите атакующего' : selectedTarget === null ? 'Выберите цель' : selectedAbility ? 'Готов!' : 'Готов к атаке!'}
-                         </div>
-                       </>
-                     ) : (
-                       <div className="text-center">
-                         <div className="text-xs text-muted-foreground mb-2">
-                           Противник атакует...
-                         </div>
-                         <div className="animate-spin w-4 h-4 border-2 border-destructive border-t-transparent rounded-full mx-auto"></div>
-                       </div>
-                     )}
-                   </div>
-                 )}
+                            disabled={!isPlayerTurn || pair.health <= 0}
+                          >
+                            🔮 Способности
+                          </Button>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
             </CardContent>
           </Card>
 
-          {/* Enemies - Right */}
-          <Card className="bg-card/50 backdrop-blur-sm border-destructive/20">
+          {/* Combat Actions - Center */}
+          <Card className="bg-card/50 backdrop-blur-sm border-primary/20">
+            <CardContent className="p-6">
+              <div className="text-center space-y-4">
+                <div className="text-lg font-medium">
+                  {isPlayerTurn ? (
+                    <span className="text-primary">Ваш ход</span>
+                  ) : (
+                    <span className="text-destructive">Ход противника</span>
+                  )}
+                </div>
+                
+                {selectedAbility && selectedPair && (
+                  <AbilitiesPanel
+                    selectedPair={playerPairs.find(p => p.id === selectedPair) || null}
+                    selectedAbility={selectedAbility}
+                    onSelectAbility={(ability) => {
+                      setSelectedAbility(ability);
+                      setSelectedTarget(null);
+                    }}
+                    onCancelAbility={() => {
+                      setSelectedAbility(null);
+                      setSelectedPair(null);
+                      setSelectedTarget(null);
+                    }}
+                  />
+                )}
+                
+                {isPlayerTurn && !autoBattle && (
+                  <div className="space-y-2">
+                    {selectedAbility ? (
+                      <div className="text-sm text-muted-foreground">
+                        Выберите цель для способности "{selectedAbility.name}"
+                      </div>
+                    ) : (
+                      <>
+                        <Button 
+                          onClick={handleAttack}
+                          disabled={!selectedPair || selectedTarget === null || typeof selectedTarget === 'string'}
+                          className="w-full"
+                        >
+                          Атаковать
+                        </Button>
+                        {selectedPair && !selectedTarget && (
+                          <div className="text-sm text-muted-foreground">
+                            Выберите цель для атаки
+                          </div>
+                        )}
+                      </>
+                    )}
+                  </div>
+                )}
+
+                <div className="flex gap-2 justify-center">
+                  <Button 
+                    variant={autoBattle ? "destructive" : "outline"} 
+                    size="sm" 
+                    onClick={handleAutoBattle}
+                  >
+                    {autoBattle ? "Стоп авто-бой" : "Авто-бой"}
+                  </Button>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {playerPairs.map((pair) => (
+                    <TeamHealthBars key={pair.id} pair={pair} />
+                  ))}
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Enemy Team - Lower Part */}
+          <Card className="bg-card/50 backdrop-blur-sm border-primary/20">
             <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-destructive">
+              <CardTitle className="flex items-center gap-2 text-destructive justify-center">
                 <Sword className="w-5 h-5" />
                 Враги
               </CardTitle>
             </CardHeader>
-             <CardContent className="space-y-3">
-               {opponents.map(opponent => (
-                   <div 
-                     key={opponent.id} 
-                     className={`rounded-lg border-2 transition-all cursor-pointer relative aspect-square overflow-hidden ${
-                       opponent.health <= 0 
-                         ? 'border-muted opacity-50' 
-                         : attackedTarget === opponent.id 
-                           ? 'border-red-500 animate-bounce shadow-lg shadow-red-500/50 scale-110' 
-                           : counterAttackedTarget === opponent.id 
-                             ? 'border-yellow-500 animate-pulse scale-105 shadow-lg shadow-yellow-500/60' 
-                             : selectedTarget === opponent.id 
-                               ? 'border-destructive' 
-                               : selectedAbility?.targetType === 'enemy' 
-                                 ? 'border-red-400 hover:border-destructive/50' 
-                                 : 'border-border hover:border-destructive/50'
-                     }`} 
-                      onClick={() => {
-                        if (opponent.health > 0) {
-                          // Способности исцеления не могут быть использованы на врагах
-                          if (selectedAbility && selectedAbility.targetType === 'ally') {
-                            return;
-                          }
-                          
+            <CardContent>
+              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
+                {opponents.map((opponent, index) => (
+                  <div 
+                    key={opponent.id} 
+                    className={`relative rounded-lg border-2 transition-all cursor-pointer overflow-hidden min-h-[200px] ${
+                      opponent.health <= 0 
+                        ? 'opacity-50 border-muted' 
+                        : attackedTarget === opponent.id 
+                          ? 'border-yellow-500 animate-bounce scale-110 shadow-lg shadow-yellow-500/60' 
+                          : counterAttackedTarget === opponent.id 
+                            ? 'border-red-500 animate-pulse scale-105 shadow-lg shadow-red-500/50' 
+                            : selectedTarget === opponent.id 
+                              ? 'border-destructive bg-destructive/10' 
+                              : selectedAbility?.targetType === 'enemy'
+                                ? 'border-red-400 hover:border-red-500/70'
+                                : 'border-border hover:border-destructive/50'
+                    }`} 
+                    onClick={() => {
+                      if (opponent.health > 0 && isPlayerTurn) {
+                        if (selectedAbility && selectedAbility.targetType === 'enemy') {
                           // Если повторно нажимаем на ту же цель, отменяем выбор
                           if (selectedTarget === opponent.id) {
                             setSelectedTarget(null);
                           } else {
                             setSelectedTarget(opponent.id);
                           }
+                        } else if (!selectedAbility) {
+                          // Обычный выбор цели для атаки
+                          setSelectedTarget(opponent.id);
                         }
-                       }}
-                    >
-                      {/* Фоновое изображение на весь блок */}
-                      {opponent.image && (
-                        <img 
-                          src={opponent.image} 
-                          alt={opponent.name}
-                          className="absolute inset-0 w-full h-full object-cover"
-                          loading="eager"
-                          onError={(e) => {
-                            e.currentTarget.src = '/placeholder.svg';
-                          }}
-                        />
-                      )}
-                      
-                      {/* Темное наложение для читаемости текста */}
-                      <div className="absolute inset-0 bg-black/40" />
-                      
-                      {/* Контент поверх изображения */}
-                      <div className="relative z-10 p-3 h-full flex flex-col justify-between text-red-500">
-                        {/* Верхняя часть - имя и статус */}
-                        <div className="flex items-start justify-between">
-                          <div>
-                            <div className="font-bold text-lg text-red-500 drop-shadow-lg">
-                              {opponent.name}
-                            </div>
-                            {opponent.isBoss && (
-                              <div className="text-sm bg-red-600/80 px-2 py-1 rounded text-white font-bold mt-1">
-                                БОСС
-                              </div>
-                            )}
-                          </div>
-                          
-                          <div className="flex flex-col items-end gap-1">
-                            {selectedAbility?.targetType === 'enemy' && selectedTarget === opponent.id && (
-                              <span className="text-sm bg-red-500/80 px-2 py-1 rounded text-white font-bold">
-                                🎯
-                              </span>
-                            )}
-                            {selectedAbility?.targetType === 'ally' && (
-                              <span className="text-sm bg-gray-500/80 px-2 py-1 rounded text-white opacity-50">
-                                ❌
-                              </span>
-                            )}
-                          </div>
+                      }
+                    }}
+                  >
+                    {/* Background Image */}
+                    {opponent.image && (
+                      <div 
+                        className="absolute inset-0 bg-cover bg-center bg-no-repeat"
+                        style={{
+                          backgroundImage: `url(${opponent.image})`,
+                        }}
+                      />
+                    )}
+                    
+                    {/* Overlay for stats */}
+                    <div className="relative z-10 p-4 bg-black/30 backdrop-blur-sm h-full flex flex-col justify-between">
+                      {/* Health and Stats Overlay */}
+                      <div className="text-center">
+                        <div className="text-red-500 font-bold text-2xl mb-2 drop-shadow-lg">
+                          ❤️ {opponent.health}/{opponent.maxHealth}
                         </div>
-                        
-                        {/* Нижняя часть - здоровье и сила */}
-                        <div className="space-y-2">
-                          {/* Здоровье */}
-                          <div className="flex items-center gap-2">
-                            <Heart className="w-5 h-5 text-red-500" />
-                            <div className="flex-1 bg-gray-700/60 rounded-full h-3 overflow-hidden">
-                              <div 
-                                className="h-full bg-red-500 transition-all duration-300"
-                                style={{ width: `${(opponent.health / opponent.maxHealth) * 100}%` }}
-                              />
-                            </div>
-                            <span className="font-bold text-lg text-red-500 drop-shadow-lg">
-                              {opponent.health}/{opponent.maxHealth}
-                            </span>
-                          </div>
-                          
-                          {/* Сила атаки */}
-                          <div className="flex items-center gap-2">
-                            <Sword className="w-5 h-5 text-red-500" />
-                            <span className="font-bold text-lg text-red-500 drop-shadow-lg">
-                              {opponent.power}
-                            </span>
-                          </div>
+                        <div className="text-red-500 font-bold text-xl drop-shadow-lg">
+                          ⚔️ {opponent.power}
                         </div>
                       </div>
-                   </div>
-               ))}
-             </CardContent>
-           </Card>
-         </div>
-
-       </div>
-     </div>
-   );
- };
+                      
+                      {/* Name */}
+                      <div className="text-center mt-2">
+                        <div className="text-red-500 font-bold text-lg drop-shadow-lg">
+                          {opponent.name}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    </div>
+  );
+};
