@@ -123,9 +123,7 @@ export const Equipment = () => {
       <DragonEggProvider>
         <Tabs defaultValue="equipment" className="w-full">
           <TabsList className="grid w-full grid-cols-2 bg-game-surface border-game-accent">
-            <TabsTrigger value="equipment" className="text-game-accent data-[state=active]:bg-game-accent data-[state=active]:text-game-surface">
-              Обычный инвентарь
-            </TabsTrigger>
+            <TabsTrigger value="equipment" className="text-game-accent data-[state=active]:bg-game-accent data-[state=active]:text-game-surface">Инвентарь</TabsTrigger>
             <TabsTrigger value="nft" className="text-game-accent data-[state=active]:bg-game-accent data-[state=active]:text-game-surface">
               NFT коллекция
             </TabsTrigger>
