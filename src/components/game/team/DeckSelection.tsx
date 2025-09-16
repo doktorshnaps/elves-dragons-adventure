@@ -32,28 +32,38 @@ export const DeckSelection = ({
   const [showDragonDeck, setShowDragonDeck] = useState(false);
   const [activePairIndex, setActivePairIndex] = useState<number | null>(null);
   const [previewCard, setPreviewCard] = useState<CardType | null>(null);
-  const [previewAction, setPreviewAction] = useState<{ label: string; action: () => void } | null>(null);
-  const [previewDeleteAction, setPreviewDeleteAction] = useState<{ label: string; action: () => void } | null>(null);
+  const [previewAction, setPreviewAction] = useState<{
+    label: string;
+    action: () => void;
+  } | null>(null);
+  const [previewDeleteAction, setPreviewDeleteAction] = useState<{
+    label: string;
+    action: () => void;
+  } | null>(null);
   const [localCards, setLocalCards] = useState<CardType[]>(cards);
-  const { toast } = useToast();
-  
+  const {
+    toast
+  } = useToast();
+
   // Интеграция NFT карт
-  const { nftCards, isLoading: nftLoading } = useNFTCardIntegration();
-  
+  const {
+    nftCards,
+    isLoading: nftLoading
+  } = useNFTCardIntegration();
+
   // Получаем актуальные card instances для отображения здоровья
-  const { cardInstances } = useCardInstances();
+  const {
+    cardInstances
+  } = useCardInstances();
 
   // Создаем карты с актуальным здоровьем из card_instances
   const cardsWithHealthSync = useMemo(() => {
     const combinedCards = [...cards, ...nftCards];
     // Убираем дубликаты по ID
-    const uniqueCards = combinedCards.filter((card, index, arr) => 
-      arr.findIndex(c => c.id === card.id) === index
-    );
-    
+    const uniqueCards = combinedCards.filter((card, index, arr) => arr.findIndex(c => c.id === card.id) === index);
+
     // Синхронизируем здоровье с card_instances
     const instancesMap = new Map(cardInstances.map(ci => [ci.card_template_id, ci]));
-    
     return uniqueCards.map(card => {
       const instance = instancesMap.get(card.id);
       if (instance) {
@@ -73,7 +83,6 @@ export const DeckSelection = ({
     setLocalCards(availableCards);
     console.log('🎮 Updated local cards with health sync:', availableCards.length, 'available cards (excluding medical bay)');
   }, [cardsWithHealthSync]);
-
   const heroes = localCards.filter(card => card.type === 'character');
   const dragons = localCards.filter(card => card.type === 'pet');
   const isHeroSelected = (hero: CardType) => {
@@ -96,9 +105,17 @@ export const DeckSelection = ({
       const pair = selectedPairs[activePairIndex];
       if (pair) {
         if (pair.hero.faction !== dragon.faction) {
-          toast({ title: 'Неверная фракция', description: 'Дракон должен быть той же фракции, что и герой', variant: 'destructive' });
+          toast({
+            title: 'Неверная фракция',
+            description: 'Дракон должен быть той же фракции, что и герой',
+            variant: 'destructive'
+          });
         } else if ((pair.hero.rarity ?? 0) < dragon.rarity) {
-          toast({ title: 'Недостаточный ранг героя', description: 'Герой может управлять драконом своего ранга или ниже', variant: 'destructive' });
+          toast({
+            title: 'Недостаточный ранг героя',
+            description: 'Герой может управлять драконом своего ранга или ниже',
+            variant: 'destructive'
+          });
         } else {
           onPairAssignDragon(activePairIndex, dragon);
         }
@@ -127,17 +144,33 @@ export const DeckSelection = ({
           length: 5
         }, (_, index) => {
           const pair = selectedPairs[index];
-          return <div key={index} className="relative border border-game-accent/30 rounded-lg p-3 min-h-[280px] flex flex-col justify-center">
+          return <div key={index} className="relative overflow-hidden border border-game-accent/30 rounded-lg p-3 min-h-[200px] py-[8px] mx-0 my-[5px] px-[29px]">
                 {pair ? <div className="space-y-2">
                     <div className="text-sm text-game-accent font-medium">Пара {index + 1}</div>
                     <div className="grid grid-cols-2 gap-2 items-start justify-items-center">
                       <div className="space-y-1">
                         <div className="text-xs text-game-accent/70">Герой</div>
-                        <CardDisplay card={pair.hero} showSellButton={false} className="w-[80px] h-[160px] sm:w-[100px] sm:h-[200px] md:w-[110px] md:h-[220px] lg:w-[120px] lg:h-[240px]" onClick={(e) => { e.stopPropagation(); setPreviewCard(pair.hero); setPreviewAction(null); setPreviewDeleteAction({ label: 'Удалить героя из команды', action: () => onPairRemove(index) }); }} />
+                        <CardDisplay card={pair.hero} showSellButton={false} className="w-[80px] h-[160px] sm:w-[100px] sm:h-[200px] md:w-[110px] md:h-[220px] lg:w-[120px] lg:h-[240px]" onClick={e => {
+                    e.stopPropagation();
+                    setPreviewCard(pair.hero);
+                    setPreviewAction(null);
+                    setPreviewDeleteAction({
+                      label: 'Удалить героя из команды',
+                      action: () => onPairRemove(index)
+                    });
+                  }} />
                       </div>
                       <div className="space-y-1">
                         <div className="text-xs text-game-accent/70">Дракон</div>
-                        {pair.dragon ? <CardDisplay card={pair.dragon} showSellButton={false} className="w-[80px] h-[160px] sm:w-[100px] sm:h-[200px] md:w-[110px] md:h-[220px] lg:w-[120px] lg:h-[240px]" onClick={(e) => { e.stopPropagation(); setPreviewCard(pair.dragon!); setPreviewAction(null); setPreviewDeleteAction({ label: 'Удалить дракона из команды', action: () => onPairRemoveDragon(index) }); }} /> : <button type="button" onClick={() => {
+                        {pair.dragon ? <CardDisplay card={pair.dragon} showSellButton={false} className="w-[80px] h-[160px] sm:w-[100px] sm:h-[200px] md:w-[110px] md:h-[220px] lg:w-[120px] lg:h-[240px]" onClick={e => {
+                    e.stopPropagation();
+                    setPreviewCard(pair.dragon!);
+                    setPreviewAction(null);
+                    setPreviewDeleteAction({
+                      label: 'Удалить дракона из команды',
+                      action: () => onPairRemoveDragon(index)
+                    });
+                  }} /> : <button type="button" onClick={() => {
                     setActivePairIndex(index);
                     setShowDragonDeck(true);
                   }} className="w-12 h-14 border border-dashed border-game-accent/30 rounded flex items-center justify-center text-xs text-game-accent/70 hover:text-game-accent hover:border-game-accent transition py-0 px-[1px] text-center mx-[44px] my-[7px]">
@@ -163,7 +196,10 @@ export const DeckSelection = ({
           <Badge variant="secondary">{heroes.length} карт</Badge>
         </Button>
 
-        <Button onClick={() => { setActivePairIndex(null); setShowDragonDeck(true); }} className="h-32 flex flex-col items-center justify-center space-y-2 bg-game-surface border-2 border-game-accent hover:bg-game-surface/80">
+        <Button onClick={() => {
+        setActivePairIndex(null);
+        setShowDragonDeck(true);
+      }} className="h-32 flex flex-col items-center justify-center space-y-2 bg-game-surface border-2 border-game-accent hover:bg-game-surface/80">
           <div className="text-lg font-bold">Колода драконов</div>
           <Badge variant="secondary">{dragons.length} карт</Badge>
         </Button>
@@ -177,24 +213,33 @@ export const DeckSelection = ({
           </DialogHeader>
           <div className="grid grid-cols-4 sm:grid-cols-6 gap-3 overflow-y-auto p-4">
             {heroes.map(hero => {
-              const isSelected = isHeroSelected(hero);
-              const teamFull = selectedPairs.length >= 5;
-              const canSelect = !isSelected && !teamFull;
-              return (
-                <div key={hero.id} className={`cursor-pointer transition-all ${isSelected ? 'opacity-50' : 'hover:scale-105'}`} onClick={() => canSelect && handleHeroSelect(hero)}>
-                  <CardDisplay card={hero} showSellButton={false} onClick={(e) => { e.stopPropagation(); setPreviewCard(hero); setPreviewAction(canSelect ? { label: 'Выбрать героя', action: () => handleHeroSelect(hero) } : null); setPreviewDeleteAction(null); }} />
+            const isSelected = isHeroSelected(hero);
+            const teamFull = selectedPairs.length >= 5;
+            const canSelect = !isSelected && !teamFull;
+            return <div key={hero.id} className={`cursor-pointer transition-all ${isSelected ? 'opacity-50' : 'hover:scale-105'}`} onClick={() => canSelect && handleHeroSelect(hero)}>
+                  <CardDisplay card={hero} showSellButton={false} onClick={e => {
+                e.stopPropagation();
+                setPreviewCard(hero);
+                setPreviewAction(canSelect ? {
+                  label: 'Выбрать героя',
+                  action: () => handleHeroSelect(hero)
+                } : null);
+                setPreviewDeleteAction(null);
+              }} />
                   <div className="text-center text-xs text-game-accent mt-1">
                     {isSelected ? 'Выбран' : teamFull ? 'Просмотр' : ''}
                   </div>
-                </div>
-              );
-            })}
+                </div>;
+          })}
           </div>
         </DialogContent>
       </Dialog>
 
       {/* Dragon Deck Dialog */}
-      <Dialog open={showDragonDeck} onOpenChange={(open) => { setShowDragonDeck(open); if (!open) setActivePairIndex(null); }}>
+      <Dialog open={showDragonDeck} onOpenChange={open => {
+      setShowDragonDeck(open);
+      if (!open) setActivePairIndex(null);
+    }}>
         <DialogContent className="max-w-4xl h-[80vh] bg-game-surface border-game-accent">
           <DialogHeader>
             <DialogTitle className="text-game-accent">Выберите дракона</DialogTitle>
@@ -204,7 +249,16 @@ export const DeckSelection = ({
             const isSelected = isDragonSelected(dragon);
             const canAssign = activePairIndex !== null ? !!selectedPairs[activePairIndex] && !selectedPairs[activePairIndex]?.dragon && selectedPairs[activePairIndex]?.hero.faction === dragon.faction && (selectedPairs[activePairIndex]?.hero.rarity ?? 0) >= dragon.rarity && !isSelected : false;
             return <div key={dragon.id} className={`cursor-pointer transition-all ${activePairIndex !== null ? !canAssign ? 'opacity-50 pointer-events-none' : 'hover:scale-105' : 'hover:scale-105'}`} onClick={() => canAssign && handleDragonSelect(dragon)}>
-                  <CardDisplay card={dragon} showSellButton={false} onClick={(e) => { e.stopPropagation(); setPreviewCard(dragon); const canAssignHere = (activePairIndex !== null) && !!selectedPairs[activePairIndex] && !selectedPairs[activePairIndex]?.dragon && selectedPairs[activePairIndex]?.hero.faction === dragon.faction && (selectedPairs[activePairIndex]?.hero.rarity ?? 0) >= dragon.rarity && !isSelected; setPreviewAction(canAssignHere ? { label: 'Назначить дракона', action: () => handleDragonSelect(dragon) } : null); setPreviewDeleteAction(null); }} />
+                  <CardDisplay card={dragon} showSellButton={false} onClick={e => {
+                e.stopPropagation();
+                setPreviewCard(dragon);
+                const canAssignHere = activePairIndex !== null && !!selectedPairs[activePairIndex] && !selectedPairs[activePairIndex]?.dragon && selectedPairs[activePairIndex]?.hero.faction === dragon.faction && (selectedPairs[activePairIndex]?.hero.rarity ?? 0) >= dragon.rarity && !isSelected;
+                setPreviewAction(canAssignHere ? {
+                  label: 'Назначить дракона',
+                  action: () => handleDragonSelect(dragon)
+                } : null);
+                setPreviewDeleteAction(null);
+              }} />
                   <div className="text-center text-xs text-game-accent mt-1">
                     {isSelected ? 'Выбран' : activePairIndex !== null ? selectedPairs[activePairIndex]?.hero.faction : 'Просмотр'}
                   </div>
@@ -218,14 +272,20 @@ export const DeckSelection = ({
       </Dialog>
 
       {/* Card Preview Modal */}
-      <CardPreviewModal
-        card={previewCard}
-        open={!!previewCard}
-        onClose={() => { setPreviewCard(null); setPreviewAction(null); setPreviewDeleteAction(null); }}
-        actionLabel={previewAction?.label}
-        onAction={previewAction ? () => { previewAction.action(); setPreviewCard(null); setPreviewAction(null); setPreviewDeleteAction(null); } : undefined}
-        deleteLabel={previewDeleteAction?.label}
-        onDelete={previewDeleteAction ? () => { previewDeleteAction.action(); setPreviewCard(null); setPreviewDeleteAction(null); setPreviewAction(null); } : undefined}
-      />
+      <CardPreviewModal card={previewCard} open={!!previewCard} onClose={() => {
+      setPreviewCard(null);
+      setPreviewAction(null);
+      setPreviewDeleteAction(null);
+    }} actionLabel={previewAction?.label} onAction={previewAction ? () => {
+      previewAction.action();
+      setPreviewCard(null);
+      setPreviewAction(null);
+      setPreviewDeleteAction(null);
+    } : undefined} deleteLabel={previewDeleteAction?.label} onDelete={previewDeleteAction ? () => {
+      previewDeleteAction.action();
+      setPreviewCard(null);
+      setPreviewDeleteAction(null);
+      setPreviewAction(null);
+    } : undefined} />
     </div>;
 };
