@@ -28,7 +28,18 @@ export const MarketplaceContent = ({
   onBuySelected
 }: MarketplaceContentProps) => {
   return (
-    <div className="flex-1 bg-game-surface/90 p-4 rounded-lg border border-game-accent backdrop-blur-sm flex flex-col min-h-0">
+    <div 
+      className="flex-1 bg-game-surface/90 p-4 rounded-lg border border-game-accent backdrop-blur-sm h-[calc(100vh-120px)] overflow-y-auto"
+      style={{ 
+        touchAction: 'pan-y',
+        WebkitOverflowScrolling: 'touch',
+        overscrollBehavior: 'contain',
+        msOverflowStyle: '-ms-autohiding-scrollbar',
+        scrollBehavior: 'smooth',
+        WebkitUserSelect: 'none',
+        userSelect: 'none'
+      }}
+    >
       <div className="flex justify-between items-center mb-6">
         <div className="flex items-center gap-2">
           <ShoppingBag className="w-6 h-6 text-game-accent" />
@@ -52,17 +63,15 @@ export const MarketplaceContent = ({
         </div>
       </div>
 
-      <div className="flex-1 min-h-0">
-        <MarketplaceListings 
-          listings={listings}
-          balance={balance}
-          onBuy={onBuy}
-          onCancelListing={onCancelListing}
-          enableSelection={enableSelection}
-          selectedIds={selectedIds}
-          onToggleSelect={onToggleSelect}
-        />
-      </div>
+      <MarketplaceListings 
+        listings={listings}
+        balance={balance}
+        onBuy={onBuy}
+        onCancelListing={onCancelListing}
+        enableSelection={enableSelection}
+        selectedIds={selectedIds}
+        onToggleSelect={onToggleSelect}
+      />
     </div>
   );
 };

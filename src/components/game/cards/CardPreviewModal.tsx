@@ -19,20 +19,20 @@ export const CardPreviewModal = ({ card, open, onClose, actionLabel, onAction, d
 
   return (
     <Dialog open={open} onOpenChange={(v) => { if (!v) onClose(); }}>
-      <DialogContent className="z-[60] max-w-[95vw] max-h-[95vh] bg-game-surface border-game-accent flex flex-col">
+      <DialogContent className="z-[60] max-w-3xl max-h-[90vh] overflow-y-auto bg-game-surface border-game-accent">
         <DialogHeader>
           <DialogTitle className="text-game-accent">{card.name}</DialogTitle>
         </DialogHeader>
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 flex-1 min-h-0">
-          <div className="flex items-center justify-center">
-            <div className="w-full aspect-[3/4] max-h-[50vh] lg:max-h-[70vh] rounded-lg border border-game-accent shadow-lg overflow-hidden">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="w-full flex items-center justify-center">
+            <div className="w-full h-[60vh] md:h-[80vh] max-w-full rounded-lg border border-game-accent shadow-lg overflow-hidden">
               <CardImage image={card.image || "/placeholder.svg"} name={`${card.name} полное изображение`} />
             </div>
           </div>
 
 
           {/* Details */}
-          <div className="space-y-2 overflow-y-auto lg:space-y-3">
+          <div className="space-y-3">
             <div className="flex items-center justify-between">
               <span className="text-game-accent font-semibold">{card.type === 'character' ? 'Герой' : 'Питомец'}</span>
               <span className="text-yellow-500">{getRarityLabel(card.rarity)}</span>
