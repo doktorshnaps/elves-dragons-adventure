@@ -59,6 +59,16 @@ export const Shop = ({ onClose }: ShopProps) => {
       return;
     }
 
+    // Check if user has enough balance before purchase
+    if (gameData.balance < item.price) {
+      toast({
+        title: t(language, 'shop.insufficientFunds'),
+        description: t(language, 'shop.insufficientFundsDescription'),
+        variant: "destructive",
+      });
+      return;
+    }
+
     if (purchasing) return;
 
     try {
@@ -156,9 +166,11 @@ return (
         {shopItems.map((item) => {
           const quantity = getItemQuantity(item.id);
           const available = isItemAvailable(item.id);
+          const canAfford = gameData.balance >= item.price;
+          const canBuy = available && canAfford;
           
           return (
-            <Card key={item.name} className={`p-4 bg-game-background border-game-accent hover:border-game-primary transition-all duration-300 ${!available ? 'opacity-50' : ''}`}>
+            <Card key={item.name} className={`p-4 bg-game-background border-game-accent hover:border-game-primary transition-all duration-300 ${!canBuy ? 'opacity-50' : ''}`}>
               {item.image && (
                 <div className="w-full aspect-[4/3] mb-2 rounded-lg overflow-hidden relative">
                   <img 
@@ -170,6 +182,13 @@ return (
                     <div className="absolute inset-0 bg-red-500/20 flex items-center justify-center">
                       <span className="text-red-400 font-bold text-sm bg-red-900/80 px-2 py-1 rounded">
                         {t(language, 'shop.soldOut')}
+                      </span>
+                    </div>
+                  )}
+                  {available && !canAfford && (
+                    <div className="absolute inset-0 bg-yellow-500/20 flex items-center justify-center">
+                      <span className="text-yellow-400 font-bold text-sm bg-yellow-900/80 px-2 py-1 rounded">
+                        {t(language, 'shop.insufficientFunds')}
                       </span>
                     </div>
                   )}
@@ -201,9 +220,11 @@ return (
                   type="button"
                   className="w-full bg-game-primary hover:bg-game-primary/80 disabled:opacity-50"
                   onClick={() => handleBuyItem(item)}
-                  disabled={!available || purchasing}
+                  disabled={!canBuy || purchasing}
                 >
-                  {!available ? t(language, 'shop.soldOutButton') : t(language, 'shop.buy')}
+                  {!available ? t(language, 'shop.soldOutButton') : 
+                   !canAfford ? t(language, 'shop.insufficientFundsButton') : 
+                   t(language, 'shop.buy')}
                 </Button>
               </div>
             </Card>
