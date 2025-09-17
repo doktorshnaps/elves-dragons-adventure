@@ -407,7 +407,12 @@ export const TeamBattleArena: React.FC<TeamBattleArenaProps> = ({
                   </div>}
 
                 <div className="flex gap-2 justify-center">
-                  <Button variant={autoBattle ? "destructive" : "outline"} size="sm" onClick={handleAutoBattle}>
+                  <Button 
+                    variant={autoBattle ? "destructive" : "default"} 
+                    size="sm" 
+                    onClick={handleAutoBattle}
+                    className={autoBattle ? "" : "bg-green-600 hover:bg-green-700 text-white"}
+                  >
                     {autoBattle ? "Стоп авто-бой" : "Авто-бой"}
                   </Button>
                 </div>
