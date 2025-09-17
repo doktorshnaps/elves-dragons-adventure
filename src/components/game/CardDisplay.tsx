@@ -37,16 +37,16 @@ export const CardDisplay = ({
         </div>
         
         <div className="flex flex-col flex-grow justify-between gap-0 p-0.5 h-[105px] sm:h-[140px] md:h-[150px] lg:h-[160px]">
-          <div className="flex flex-col gap-0">
+          <div className="flex flex-col gap-0 overflow-hidden">
             <CardHeader name={card.name} rarity={card.rarity} />
 
-            <div className={`text-purple-400 leading-none ${isMobile ? 'text-[6px]' : 'text-[10px]'}`}>
+            <div className={`text-purple-400 leading-none truncate ${isMobile ? 'text-[6px]' : 'text-[10px]'}`}>
               ({card.type === 'character' ? 'Герой' : 'Питомец'})
             </div>
 
-            {card.faction && <div className={`flex items-center gap-0.5 leading-none ${isMobile ? 'text-[6px]' : 'text-[10px]'} ${!isActive && card.type === 'pet' ? 'text-red-400' : 'text-purple-400'}`}>
-                <Sparkles className={`${isMobile ? 'w-1.5 h-1.5' : 'w-2.5 h-2.5'}`} />
-                <span className="break-words tracking-tighter">{card.faction}</span>
+            {card.faction && <div className={`flex items-center gap-0.5 leading-none ${isMobile ? 'text-[6px]' : 'text-[10px]'} ${!isActive && card.type === 'pet' ? 'text-red-400' : 'text-purple-400'} overflow-hidden`}>
+                <Sparkles className={`${isMobile ? 'w-1.5 h-1.5' : 'w-2.5 h-2.5'} flex-shrink-0`} />
+                <span className="truncate">{card.faction}</span>
               </div>}
             
             <CardStats health={card.health} power={card.power} defense={card.defense} />
