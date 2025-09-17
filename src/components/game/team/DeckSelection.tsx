@@ -144,17 +144,17 @@ export const DeckSelection = ({
           {Array.from({ length: 5 }, (_, index) => {
             const pair = selectedPairs[index];
             return (
-              <div key={index} className="relative overflow-hidden border border-game-accent/30 rounded-lg p-1 sm:p-2 min-h-[120px] sm:min-h-[160px]">
+              <div key={index} className="relative overflow-hidden border border-game-accent/30 rounded-lg p-1 sm:p-2 h-[100px] sm:h-[120px]">
                 {pair ? (
                   <div className="space-y-1">
                     <div className="text-xs text-game-accent font-medium text-center">#{index + 1}</div>
                     <div className="space-y-1">
                       <div className="text-center">
                         <div className="text-[10px] text-game-accent/70 mb-1">Герой</div>
-                        <CardDisplay 
-                          card={pair.hero} 
-                          showSellButton={false} 
-                          className="w-full max-w-[60px] sm:max-w-[80px] h-auto mx-auto" 
+                         <CardDisplay 
+                           card={pair.hero} 
+                           showSellButton={false} 
+                           className="w-full max-w-[50px] sm:max-w-[60px] h-auto mx-auto"
                           onClick={(e) => {
                             e.stopPropagation();
                             setPreviewCard(pair.hero);
@@ -169,10 +169,10 @@ export const DeckSelection = ({
                       <div className="text-center">
                         <div className="text-[10px] text-game-accent/70 mb-1">Дракон</div>
                         {pair.dragon ? (
-                          <CardDisplay 
-                            card={pair.dragon} 
-                            showSellButton={false} 
-                            className="w-full max-w-[60px] sm:max-w-[80px] h-auto mx-auto" 
+                           <CardDisplay 
+                             card={pair.dragon} 
+                             showSellButton={false} 
+                             className="w-full max-w-[50px] sm:max-w-[60px] h-auto mx-auto"
                             onClick={(e) => {
                               e.stopPropagation();
                               setPreviewCard(pair.dragon!);
@@ -190,7 +190,7 @@ export const DeckSelection = ({
                               setActivePairIndex(index);
                               setShowDragonDeck(true);
                             }}
-                            className="w-full max-w-[60px] sm:max-w-[80px] h-[48px] sm:h-[64px] mx-auto border border-dashed border-game-accent/30 rounded flex items-center justify-center text-[10px] text-game-accent/70 hover:text-game-accent hover:border-game-accent transition"
+                            className="w-full max-w-[50px] sm:max-w-[60px] h-[32px] sm:h-[40px] mx-auto border border-dashed border-game-accent/30 rounded flex items-center justify-center text-[10px] text-game-accent/70 hover:text-game-accent hover:border-game-accent transition"
                           >
                             +
                           </button>
@@ -217,27 +217,27 @@ export const DeckSelection = ({
         </div>
       </section>
 
-      {/* Deck Buttons */}
-      <div className="grid grid-cols-2 gap-2 sm:gap-3 flex-shrink-0">
-        <Button 
-          onClick={() => setShowHeroDeck(true)} 
-          className="h-16 sm:h-20 flex flex-col items-center justify-center space-y-1 bg-game-surface border-2 border-game-accent hover:bg-game-surface/80 text-xs sm:text-sm"
-        >
-          <div className="font-bold">Герои</div>
-          <Badge variant="secondary" className="text-[10px] sm:text-xs">{heroes.length}</Badge>
-        </Button>
+       {/* Deck Buttons */}
+       <div className="grid grid-cols-2 gap-2 sm:gap-3 flex-shrink-0">
+         <Button 
+           onClick={() => setShowHeroDeck(true)} 
+           className="h-12 sm:h-16 flex flex-col items-center justify-center space-y-1 bg-game-surface border-2 border-game-accent hover:bg-game-surface/80 text-xs sm:text-sm"
+         >
+           <div className="font-bold">Колода героев</div>
+           <Badge variant="secondary" className="text-[10px] sm:text-xs">{heroes.length}</Badge>
+         </Button>
 
-        <Button 
-          onClick={() => {
-            setActivePairIndex(null);
-            setShowDragonDeck(true);
-          }} 
-          className="h-16 sm:h-20 flex flex-col items-center justify-center space-y-1 bg-game-surface border-2 border-game-accent hover:bg-game-surface/80 text-xs sm:text-sm"
-        >
-          <div className="font-bold">Драконы</div>
-          <Badge variant="secondary" className="text-[10px] sm:text-xs">{dragons.length}</Badge>
-        </Button>
-      </div>
+         <Button 
+           onClick={() => {
+             setActivePairIndex(null);
+             setShowDragonDeck(true);
+           }} 
+           className="h-12 sm:h-16 flex flex-col items-center justify-center space-y-1 bg-game-surface border-2 border-game-accent hover:bg-game-surface/80 text-xs sm:text-sm"
+         >
+           <div className="font-bold">Колода драконов</div>
+           <Badge variant="secondary" className="text-[10px] sm:text-xs">{dragons.length}</Badge>
+         </Button>
+       </div>
 
       {/* Hero Deck Dialog */}
       <Dialog open={showHeroDeck} onOpenChange={setShowHeroDeck}>
