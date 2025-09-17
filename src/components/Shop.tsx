@@ -75,9 +75,6 @@ export const Shop = ({ onClose }: ShopProps) => {
       setPurchasing(true);
       console.log(`🛒 Purchasing item: ${item.name} for ${item.price} ELL`);
       
-      // Уменьшаем количество товара в магазине
-      await purchaseItem(item.id, accountId);
-
       // Формируем предмет, который кладём в инвентарь
       const newItem: Item = item.type === 'cardPack'
         ? {
@@ -100,7 +97,7 @@ export const Shop = ({ onClose }: ShopProps) => {
             equipped: false
           };
 
-      // Атомарно списываем баланс и добавляем предмет в инвентарь (без потери данных при быстрых покупках)
+      // Сначала атомарно списываем баланс и добавляем предмет в инвентарь
       const { data: result, error: rpcError } = await (supabase as any).rpc('atomic_inventory_update', {
         p_wallet_address: accountId,
         p_price_deduction: item.price,
@@ -113,6 +110,9 @@ export const Shop = ({ onClose }: ShopProps) => {
       }
 
       console.log('✅ Purchase successful, result:', result);
+      
+      // Только после успешной покупки уменьшаем количество товара в магазине
+      await purchaseItem(item.id, accountId);
       
       // Reload game data to sync with updated balance and inventory
       if (loadGameData) {
