@@ -135,22 +135,22 @@ export const DeckSelection = ({
   };
   return <div className="h-full flex flex-col space-y-3">
       {/* Selected Pairs Display */}
-      <section className="bg-game-surface/50 p-2 sm:p-3 rounded-lg border border-game-accent flex-shrink-0" aria-label="Выбранная команда">
-        <h1 className="text-sm sm:text-lg font-bold text-game-accent mb-2 sm:mb-3">
+      <section className="bg-game-surface/50 p-2 sm:p-4 rounded-lg border border-game-accent flex-shrink-0" aria-label="Выбранная команда">
+        <h1 className="text-sm sm:text-lg font-bold text-game-accent mb-2 sm:mb-4">
           Выбранная команда ({selectedPairs.length}/5)
         </h1>
-        <div className="grid grid-cols-5 gap-1 sm:gap-2">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-2 sm:gap-4">
           {Array.from({
           length: 5
         }, (_, index) => {
           const pair = selectedPairs[index];
-          return <div key={index} className="relative overflow-hidden border border-game-accent/30 rounded-lg p-1 sm:p-2 min-h-[140px] sm:min-h-[180px]">
-                {pair ? <div className="space-y-1">
-                    <div className="text-xs text-game-accent font-medium text-center">#{index + 1}</div>
-                    <div className="space-y-1">
-                      <div className="text-center">
-                        <div className="text-xs text-game-accent/70 mb-1">Герой</div>
-                        <CardDisplay card={pair.hero} showSellButton={false} className="w-[40px] h-[80px] sm:w-[60px] sm:h-[120px] mx-auto" onClick={e => {
+          return <div key={index} className="relative overflow-hidden border border-game-accent/30 rounded-lg p-2 sm:p-3 min-h-[160px] sm:min-h-[200px]">
+                {pair ? <div className="space-y-2">
+                    <div className="text-xs sm:text-sm text-game-accent font-medium">Пара {index + 1}</div>
+                    <div className="grid grid-cols-2 gap-2 items-start justify-items-center">
+                      <div className="space-y-1">
+                        <div className="text-xs text-game-accent/70">Герой</div>
+                        <CardDisplay card={pair.hero} showSellButton={false} className="w-[60px] h-[120px] sm:w-[80px] sm:h-[160px] md:w-[90px] md:h-[180px] lg:w-[100px] lg:h-[200px]" onClick={e => {
                     e.stopPropagation();
                     setPreviewCard(pair.hero);
                     setPreviewAction(null);
@@ -160,9 +160,9 @@ export const DeckSelection = ({
                     });
                   }} />
                       </div>
-                      <div className="text-center">
-                        <div className="text-xs text-game-accent/70 mb-1">Дракон</div>
-                        {pair.dragon ? <CardDisplay card={pair.dragon} showSellButton={false} className="w-[40px] h-[80px] sm:w-[60px] sm:h-[120px] mx-auto" onClick={e => {
+                      <div className="space-y-1">
+                        <div className="text-xs text-game-accent/70">Дракон</div>
+                        {pair.dragon ? <CardDisplay card={pair.dragon} showSellButton={false} className="w-[60px] h-[120px] sm:w-[80px] sm:h-[160px] md:w-[90px] md:h-[180px] lg:w-[100px] lg:h-[200px]" onClick={e => {
                     e.stopPropagation();
                     setPreviewCard(pair.dragon!);
                     setPreviewAction(null);
@@ -173,13 +173,16 @@ export const DeckSelection = ({
                   }} /> : <button type="button" onClick={() => {
                     setActivePairIndex(index);
                     setShowDragonDeck(true);
-                  }} className="w-[40px] h-[80px] sm:w-[60px] sm:h-[120px] border border-dashed border-game-accent/30 rounded flex items-center justify-center text-xs text-game-accent/70 hover:text-game-accent hover:border-game-accent transition mx-auto">
-                            +
+                  }} className="w-8 h-10 sm:w-12 sm:h-14 border border-dashed border-game-accent/30 rounded flex items-center justify-center text-xs text-game-accent/70 hover:text-game-accent hover:border-game-accent transition">
+                            Выбрать дракона
                           </button>}
                       </div>
                     </div>
-                  </div> : <div className="h-full flex items-center justify-center text-game-accent/50 text-xs">
-                    Пустой
+                    <Button size="sm" variant="outline" onClick={() => onPairRemove(index)} className="w-full text-xs">
+                      Удалить
+                    </Button>
+                  </div> : <div className="h-full flex items-center justify-center text-game-accent/50 text-xs sm:text-sm">
+                    Пустой слот
                   </div>}
               </div>;
         })}
@@ -188,17 +191,17 @@ export const DeckSelection = ({
 
       {/* Deck Buttons */}
       <div className="grid grid-cols-2 gap-2 sm:gap-4 flex-shrink-0">
-        <Button onClick={() => setShowHeroDeck(true)} className="h-16 sm:h-24 flex flex-col items-center justify-center space-y-1 bg-game-surface border-2 border-game-accent hover:bg-game-surface/80">
+        <Button onClick={() => setShowHeroDeck(true)} className="h-20 sm:h-32 flex flex-col items-center justify-center space-y-2 bg-game-surface border-2 border-game-accent hover:bg-game-surface/80">
           <div className="text-sm sm:text-lg font-bold">Колода героев</div>
-          <Badge variant="secondary" className="text-xs">{heroes.length} карт</Badge>
+          <Badge variant="secondary">{heroes.length} карт</Badge>
         </Button>
 
         <Button onClick={() => {
         setActivePairIndex(null);
         setShowDragonDeck(true);
-      }} className="h-16 sm:h-24 flex flex-col items-center justify-center space-y-1 bg-game-surface border-2 border-game-accent hover:bg-game-surface/80">
+      }} className="h-20 sm:h-32 flex flex-col items-center justify-center space-y-2 bg-game-surface border-2 border-game-accent hover:bg-game-surface/80">
           <div className="text-sm sm:text-lg font-bold">Колода драконов</div>
-          <Badge variant="secondary" className="text-xs">{dragons.length} карт</Badge>
+          <Badge variant="secondary">{dragons.length} карт</Badge>
         </Button>
       </div>
 

@@ -15,18 +15,23 @@ export const TeamStats = () => {
       <div className="absolute inset-0 bg-black/30" />
       
       <div className="relative z-10 flex flex-col h-full">
-        <div className="flex items-center gap-2 sm:gap-4 mb-3 sm:mb-4 flex-shrink-0">
-          <Button variant="outline" className="bg-game-surface/80 border-game-accent text-game-accent hover:bg-game-surface text-sm sm:text-base" onClick={() => navigate('/menu')}>
-            <ArrowLeft className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
+        <div className="flex items-center gap-2 sm:gap-4 mb-3 sm:mb-6 flex-shrink-0">
+          <Button variant="outline" className="bg-game-surface/80 border-game-accent text-game-accent hover:bg-game-surface" onClick={() => navigate('/menu')}>
+            <ArrowLeft className="w-4 h-4 mr-2" />
             Вернуться в меню
           </Button>
-          <h1 className="text-lg sm:text-2xl font-bold text-game-accent">Команда и статистика</h1>
+          <h1 className="text-xl sm:text-2xl font-bold text-game-accent">Команда и статистика</h1>
         </div>
         
         <DragonEggProvider>
-          <div className="flex-1 bg-game-surface/90 p-2 sm:p-4 rounded-lg border border-game-accent backdrop-blur-sm overflow-hidden">
-            <h2 className="text-lg sm:text-xl font-bold text-game-accent mb-2 sm:mb-4">Управление командой</h2>
-            <TeamCards />
+          <div className="flex-1 overflow-hidden space-y-3">
+            {/* Карты команды */}
+            <div className="h-full bg-game-surface/90 p-2 sm:p-4 rounded-lg border border-game-accent backdrop-blur-sm flex flex-col">
+              <h2 className="text-lg sm:text-xl font-bold text-game-accent mb-2 sm:mb-4 flex-shrink-0">Управление командой</h2>
+              <div className="flex-1 overflow-hidden">
+                <TeamCards />
+              </div>
+            </div>
           </div>
         </DragonEggProvider>
       </div>

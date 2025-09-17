@@ -35,8 +35,8 @@ export const TeamCards = () => {
       
       {/* Selected Team Stats */}
       {selectedPairs.length > 0 && (
-        <section className="bg-game-surface/50 p-2 sm:p-3 rounded-lg border border-game-accent flex-shrink-0" aria-label="Статистика команды">
-          <h1 className="text-sm sm:text-lg font-bold text-game-accent mb-2">Статистика команды</h1>
+        <section className="bg-game-surface/50 p-2 sm:p-4 rounded-lg border border-game-accent flex-shrink-0" aria-label="Статистика команды">
+          <h1 className="text-sm sm:text-lg font-bold text-game-accent mb-2 sm:mb-3">Статистика команды</h1>
           <div className="grid grid-cols-3 gap-2 sm:gap-4">
             {(() => {
               const stats = getSelectedTeamStats();
