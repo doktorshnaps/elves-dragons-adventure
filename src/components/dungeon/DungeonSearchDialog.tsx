@@ -92,6 +92,16 @@ export const DungeonSearchDialog = ({
   const handleDungeonSelect = (dungeonType: DungeonType) => {
     // Only allow selection if no active dungeon or if it's the active dungeon
     if (!activeDungeon || activeDungeon === dungeonType) {
+      // Use energy only when entering a new dungeon (not continuing an active one)
+      if (!activeDungeon) {
+        const { useEnergy } = require('@/utils/energyManager');
+        const energyUsed = useEnergy();
+        if (!energyUsed) {
+          console.warn('Not enough energy to enter dungeon');
+          return;
+        }
+      }
+      
       const route = dungeonRoutes[dungeonType];
       navigate(route);
     }

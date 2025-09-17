@@ -8,7 +8,7 @@ export const GAME_CONFIG = {
   
   // Энергия
   MAX_ENERGY: 10,
-  ENERGY_REGEN_TIME_MS: 6 * 60 * 1000, // 6 минут
+  ENERGY_REGEN_TIME_MS: 20 * 60 * 1000, // 20 минут
   
   // Команда
   MAX_TEAM_SIZE: 5,

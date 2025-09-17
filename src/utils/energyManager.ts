@@ -7,7 +7,7 @@ export interface EnergyState {
 
 const ENERGY_STORAGE_KEY = 'dungeonEnergy';
 const MAX_ENERGY = 10;
-const REGEN_TIME_MS = 6 * 60 * 1000; // 6 minutes in milliseconds
+const REGEN_TIME_MS = 20 * 60 * 1000; // 20 minutes in milliseconds
 
 export const getInitialEnergyState = (): EnergyState => {
   const savedEnergy = localStorage.getItem(ENERGY_STORAGE_KEY);
