@@ -6,7 +6,7 @@ import { Button } from "../ui/button";
 import { Card } from "../ui/card";
 import { EnergyDisplay } from "./EnergyDisplay";
 import { dungeonRoutes, DungeonType } from "@/constants/dungeons";
-import { EnergyState } from "@/utils/energyManager";
+import { EnergyState, useEnergy } from "@/utils/energyManager";
 import { ActiveDungeonButton } from "./components/ActiveDungeonButton";
 import { DungeonControls } from "./components/DungeonControls";
 import { DungeonWarnings } from "./components/DungeonWarnings";
@@ -94,7 +94,6 @@ export const DungeonSearchDialog = ({
     if (!activeDungeon || activeDungeon === dungeonType) {
       // Use energy only when entering a new dungeon (not continuing an active one)
       if (!activeDungeon) {
-        const { useEnergy } = require('@/utils/energyManager');
         const energyUsed = useEnergy();
         if (!energyUsed) {
           console.warn('Not enough energy to enter dungeon');
