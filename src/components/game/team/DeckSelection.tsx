@@ -134,7 +134,7 @@ export const DeckSelection = ({
     setShowDragonDeck(false);
   };
   return (
-    <div className="flex flex-col h-full space-y-3 sm:space-y-4 min-h-0">
+    <div className="flex flex-col h-full space-y-[3px] min-h-0">
       {/* Selected Pairs Display */}
       <section className="bg-game-surface/50 p-2 sm:p-3 rounded-lg border border-game-accent flex-shrink-0" aria-label="Выбранная команда">
         <h1 className="text-sm sm:text-base font-bold text-game-accent mb-2 sm:mb-3">
