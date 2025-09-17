@@ -20,7 +20,7 @@ export const TeamCards = () => {
   } = useTeamSelection();
 
   return (
-    <div className="flex flex-col h-full space-y-3 sm:space-y-4 min-h-0">
+    <div className="flex flex-col h-full space-y-[3px] min-h-0">
       {/* Team Selection Interface */}
       <div className="flex-1 min-h-0 overflow-hidden">
         <DeckSelection
