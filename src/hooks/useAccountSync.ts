@@ -10,12 +10,13 @@ export const useAccountSync = () => {
     if (isConnected && accountId) {
       console.log('🔄 Account connected, syncing data for:', accountId);
       initializeAccountData(accountId).then(() => {
+        // Всегда синхронизируем с БД при подключении
         syncAccountData(accountId);
       });
     } else if (!isConnected) {
-      // Не сбрасываем данные мгновенно при кратковременном дисконнекте (например, при HMR)
-      // Оставляем локальные данные нетронутыми, чтобы избежать "сброса" уровня
-      console.log('⚠️ Disconnected temporarily — preserving local game data');
+      console.log('⚠️ Wallet disconnected');
+      // При отключении кошелька сбрасываем только уровень и опыт до дефолтных значений
+      // остальные данные остаются для избежания потери прогресса при HMR
     }
-  }, [isConnected, accountId, syncAccountData, initializeAccountData, clearAllData]);
+  }, [isConnected, accountId, syncAccountData, initializeAccountData]);
 };

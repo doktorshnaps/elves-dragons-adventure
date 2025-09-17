@@ -124,24 +124,33 @@ export const useGameStore = create<GameState>()(
 
       syncAccountData: async (walletAddress: string) => {
         try {
-
+          console.log('🔄 Syncing account data from DB for:', walletAddress);
+          
           const { data, error } = await supabase
             .from('game_data')
             .select('account_level, account_experience, balance, cards, inventory, selected_team, dragon_eggs')
             .eq('wallet_address', walletAddress)
             .maybeSingle();
 
-            if (data && !error) {
-              set((state) => ({ 
-                accountLevel: Math.max(state.accountLevel ?? 1, data.account_level ?? state.accountLevel ?? 1), 
-                accountExperience: Math.max(state.accountExperience ?? 0, data.account_experience ?? state.accountExperience ?? 0),
-                balance: data.balance ?? state.balance,
-                cards: Array.isArray(data.cards) ? (data.cards as unknown as Card[]) : state.cards,
-                inventory: Array.isArray(data.inventory) ? (data.inventory as unknown as Item[]) : state.inventory,
-                selectedTeam: Array.isArray(data.selected_team) ? data.selected_team : state.selectedTeam,
-                dragonEggs: Array.isArray(data.dragon_eggs) ? (data.dragon_eggs as unknown as DragonEgg[]) : state.dragonEggs
-              }));
-            }
+          if (data && !error) {
+            // БД - единственный источник истины для уровня и опыта
+            set({
+              accountLevel: data.account_level ?? 1,
+              accountExperience: data.account_experience ?? 0,
+              balance: data.balance ?? 100,
+              cards: Array.isArray(data.cards) ? (data.cards as unknown as Card[]) : [],
+              inventory: Array.isArray(data.inventory) ? (data.inventory as unknown as Item[]) : [],
+              selectedTeam: Array.isArray(data.selected_team) ? data.selected_team : [],
+              dragonEggs: Array.isArray(data.dragon_eggs) ? (data.dragon_eggs as unknown as DragonEgg[]) : []
+            });
+            
+            console.log('✅ Account data synced from DB:', {
+              level: data.account_level,
+              experience: data.account_experience
+            });
+          } else if (error) {
+            console.error('Failed to sync account data from Supabase:', error);
+          }
         } catch (error) {
           console.error('Failed to sync account data from Supabase:', error);
         }
@@ -234,8 +243,7 @@ export const useGameStore = create<GameState>()(
         inventory: state.inventory,
         dragonEggs: state.dragonEggs,
         selectedTeam: state.selectedTeam,
-        accountLevel: state.accountLevel,
-        accountExperience: state.accountExperience,
+        // Убираем уровень и опыт из persist - только БД
       }),
     }
   )
