@@ -23,9 +23,17 @@ export const useGameSync = () => {
       gameStore.setInventory(gameData.inventory || []);
       gameStore.setDragonEggs(gameData.dragonEggs || []);
       gameStore.setSelectedTeam(gameData.selectedTeam || []);
+      // Синхронизируем уровень и опыт аккаунта
+      gameStore.setAccountLevel(gameData.accountLevel);
+      gameStore.setAccountExperience(gameData.accountExperience);
       if (gameData.battleState) {
         gameStore.setBattleState(gameData.battleState);
       }
+      
+      console.log('🔄 useGameSync: Account data synced:', {
+        level: gameData.accountLevel,
+        experience: gameData.accountExperience
+      });
     }
   }, [loading, isConnected, accountId, gameData]);
 
@@ -41,7 +49,9 @@ export const useGameSync = () => {
         inventory: state.inventory,
         dragonEggs: state.dragonEggs,
         selectedTeam: state.selectedTeam,
-        battleState: state.battleState
+        battleState: state.battleState,
+        accountLevel: state.accountLevel,
+        accountExperience: state.accountExperience
       });
     };
 
@@ -54,7 +64,9 @@ export const useGameSync = () => {
     gameStore.inventory,
     gameStore.dragonEggs,
     gameStore.selectedTeam,
-    gameStore.battleState
+    gameStore.battleState,
+    gameStore.accountLevel,
+    gameStore.accountExperience
   ]);
 
   return { loading };
