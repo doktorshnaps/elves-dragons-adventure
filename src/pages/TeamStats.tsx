@@ -6,16 +6,17 @@ import { TeamStats as TeamStatsComponent } from "@/components/game/TeamStats";
 import { DragonEggProvider } from "@/contexts/DragonEggContext";
 export const TeamStats = () => {
   const navigate = useNavigate();
-  return <div className="min-h-screen p-4 bg-cover bg-center bg-no-repeat" style={{
-    backgroundImage: 'url("/lovable-uploads/5c84c1ed-e8af-4eb6-8495-c82bc7d6cd65.png")',
-    backgroundSize: 'cover',
-    backgroundPosition: 'center',
-    backgroundRepeat: 'no-repeat'
-  }}>
+  return (
+    <div className="h-screen flex flex-col p-4 bg-cover bg-center bg-no-repeat" style={{
+      backgroundImage: 'url("/lovable-uploads/5c84c1ed-e8af-4eb6-8495-c82bc7d6cd65.png")',
+      backgroundSize: 'cover',
+      backgroundPosition: 'center',
+      backgroundRepeat: 'no-repeat'
+    }}>
       <div className="absolute inset-0 bg-black/30" />
       
-      <div className="relative z-10">
-        <div className="flex items-center gap-4 mb-6">
+      <div className="relative z-10 flex flex-col h-full">
+        <div className="flex items-center gap-4 mb-6 flex-shrink-0">
           <Button variant="outline" className="bg-game-surface/80 border-game-accent text-game-accent hover:bg-game-surface" onClick={() => navigate('/menu')}>
             <ArrowLeft className="w-4 h-4 mr-2" />
             Вернуться в меню
@@ -24,17 +25,16 @@ export const TeamStats = () => {
         </div>
         
         <DragonEggProvider>
-          <div className="space-y-6">
-            {/* Статистика команды */}
-            
-            
-            {/* Карты команды */}
-            <div className="bg-game-surface/90 p-4 rounded-lg border border-game-accent backdrop-blur-sm">
-              <h2 className="text-xl font-bold text-game-accent mb-4">Управление командой</h2>
-              <TeamCards />
+          <div className="flex-1 min-h-0">
+            <div className="bg-game-surface/90 p-4 rounded-lg border border-game-accent backdrop-blur-sm h-full flex flex-col">
+              <h2 className="text-xl font-bold text-game-accent mb-4 flex-shrink-0">Управление командой</h2>
+              <div className="flex-1 min-h-0">
+                <TeamCards />
+              </div>
             </div>
           </div>
         </DragonEggProvider>
       </div>
-    </div>;
+    </div>
+  );
 };

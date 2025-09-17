@@ -29,9 +29,9 @@ export const Grimoire = () => {
         <h1 className="text-2xl font-bold text-game-accent">Гримуар</h1>
       </div>
       
-      <div className="flex-1 bg-game-surface/90 p-4 rounded-lg border border-game-accent backdrop-blur-sm overflow-y-auto">
-        <Tabs defaultValue="cards" className="w-full h-full">
-          <TabsList className="grid w-full grid-cols-2 bg-game-surface/50 border border-game-accent/30 mb-6">
+      <div className="flex-1 bg-game-surface/90 p-4 rounded-lg border border-game-accent backdrop-blur-sm flex flex-col min-h-0">
+        <Tabs defaultValue="cards" className="w-full flex-1 flex flex-col min-h-0">
+          <TabsList className="grid w-full grid-cols-2 bg-game-surface/50 border border-game-accent/30 mb-4 flex-shrink-0">
             <TabsTrigger 
               value="cards" 
               className="data-[state=active]:bg-game-accent data-[state=active]:text-black flex items-center gap-2"
@@ -48,11 +48,11 @@ export const Grimoire = () => {
             </TabsTrigger>
           </TabsList>
           
-          <TabsContent value="cards" className="mt-0 h-full">
+          <TabsContent value="cards" className="mt-0 flex-1 min-h-0">
             <CardsInfo />
           </TabsContent>
           
-          <TabsContent value="dungeons" className="mt-0 h-full">
+          <TabsContent value="dungeons" className="mt-0 flex-1 min-h-0">
             <DungeonInfo />
           </TabsContent>
         </Tabs>
