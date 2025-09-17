@@ -11,7 +11,15 @@ export const RarityStats = ({ baseStats }: RarityStatsProps) => {
   return (
     <div className="space-y-2">
       {rarityLevels.map((rarity) => {
-        const stats = getStatsForRarity(rarity);
+        // Используем базовые характеристики карты и умножаем на множитель редкости
+        const multiplier = Math.pow(2, rarity - 1);
+        const stats = {
+          power: Math.floor(baseStats.power * multiplier),
+          defense: Math.floor(baseStats.defense * multiplier),
+          health: Math.floor(baseStats.health * multiplier),
+          magic: Math.floor(baseStats.magic * multiplier)
+        };
+        
         return (
           <div key={rarity} className="text-xs">
             <div className="font-semibold text-yellow-500 mb-1">
