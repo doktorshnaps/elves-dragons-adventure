@@ -223,17 +223,24 @@ export const Shelter = () => {
     <div className="min-h-screen bg-gradient-to-br from-green-50 to-blue-50 dark:from-green-950 dark:to-blue-950">
       <div className="container mx-auto p-4 space-y-6">
         {/* Header */}
-        <div className="flex items-center justify-between w-1/3">
-          <div className="flex items-center gap-4">
-            <Button variant="ghost" size="icon" onClick={() => navigate("/")}>
-              <ArrowLeft className="w-4 h-4" />
-            </Button>
-            <div className="flex items-center gap-2">
-              <Home className="w-6 h-6 text-primary" />
-              <h1 className="text-2xl font-bold">Убежище</h1>
-            </div>
-          </div>
+        {/* Кнопка возврата в левом верхнем углу */}
+        <div className="absolute top-4 left-4 z-10">
+          <Button variant="ghost" size="icon" onClick={() => navigate("/")}>
+            <ArrowLeft className="w-4 h-4" />
+          </Button>
+        </div>
+
+        {/* Информация об аккаунте в правом верхнем углу */}
+        <div className="absolute top-4 right-4 z-10">
           <AccountLevelDisplay level={accountLevel} experience={accountExperience} />
+        </div>
+
+        {/* Заголовок по центру */}
+        <div className="flex items-center justify-center py-2">
+          <div className="flex items-center gap-2">
+            <Home className="w-6 h-6 text-primary" />
+            <h1 className="text-2xl font-bold">Убежище</h1>
+          </div>
         </div>
 
         {/* Resources Display */}
