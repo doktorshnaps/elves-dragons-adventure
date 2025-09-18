@@ -62,7 +62,12 @@ export const Shelter = () => {
 
   // Функция для проверки, есть ли рабочие в здании
   const hasWorkersInBuilding = (buildingId: string) => {
-    return activeWorkers.some(worker => worker.building === buildingId);
+    return activeWorkers.some(worker => {
+      if (worker.building !== buildingId) return false;
+      const now = Date.now();
+      const elapsed = now - worker.startTime;
+      return elapsed < worker.duration; // Проверяем, что время работы не истекло
+    });
   };
 
   // Функция для проверки, активно ли здание
