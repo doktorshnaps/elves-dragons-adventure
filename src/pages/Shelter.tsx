@@ -12,6 +12,7 @@ import { Barracks } from "@/components/game/shelter/Barracks";
 import { DragonLair } from "@/components/game/shelter/DragonLair";
 import { MedicalBayComponent } from "@/components/game/medical/MedicalBayComponent";
 import { WorkersManagement } from "@/components/game/shelter/WorkersManagement";
+import { BuildingWorkerStatus } from "@/components/game/shelter/BuildingWorkerStatus";
 import { useState } from "react";
 
 interface NestUpgrade {
@@ -41,6 +42,9 @@ export const Shelter = () => {
   
   const [activeTab, setActiveTab] = useState<"upgrades" | "crafting" | "barracks" | "dragonlair" | "medical" | "workers">("upgrades");
   const [workersSpeedBoost, setWorkersSpeedBoost] = useState(0);
+
+  // Получаем активных рабочих из gameData
+  const activeWorkers = gameData.activeWorkers || [];
 
   // Временные данные ресурсов (в будущем будут из gameData)
   const [resources, setResources] = useState({
@@ -350,6 +354,12 @@ export const Shelter = () => {
                   >
                     {upgrade.level >= upgrade.maxLevel ? "Максимальный уровень" : "Улучшить"}
                   </Button>
+
+                  {/* Статус рабочих для этого здания */}
+                  <BuildingWorkerStatus 
+                    buildingId={upgrade.id}
+                    activeWorkers={activeWorkers}
+                  />
                 </CardContent>
               </Card>
             ))}
