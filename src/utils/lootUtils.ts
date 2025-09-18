@@ -48,14 +48,6 @@ export const rollLoot = (lootTable: LootTable): { items: Item[], coins: number }
     ? Math.floor(Math.random() * (lootTable.coins.max - lootTable.coins.min + 1)) + lootTable.coins.min
     : 0;
 
-  if (lootTable.healthPotion && Math.random() < lootTable.healthPotion.chance) {
-    items.push({
-      id: Date.now().toString(),
-      type: "healthPotion",
-      name: "Малое зелье здоровья",
-      value: 50
-    });
-  }
   
   return { items, coins };
 };

@@ -27,15 +27,6 @@ export const shopItems: ShopItem[] = [
     image: "/lovable-uploads/e523dce0-4cda-4d32-b4e2-ecec40b1eb39.png"
   },
   {
-    id: 2,
-    name: "Малое зелье здоровья",
-    description: "Восстанавливает 50 единиц здоровья",
-    price: 100,
-    type: "healthPotion",
-    value: 50,
-    image: "/lovable-uploads/54fc94d0-0050-4f98-99b9-58cec6e45173.png"
-  },
-  {
     id: 3,
     name: "Большое зелье здоровья",
     description: "Восстанавливает 150 единиц здоровья",
@@ -55,20 +46,6 @@ export const shopItems: ShopItem[] = [
     stats: {
       defense: 10,
       health: 25
-    },
-    slot: "chest"
-  },
-  {
-    id: 6,
-    name: "Стальной нагрудник",
-    description: "Прочная металлическая броня",
-    price: 500,
-    type: "armor",
-    value: 2,
-    image: "/lovable-uploads/2e415280-562c-485d-9dd8-067b743c3864.png",
-    stats: {
-      defense: 25,
-      health: 50
     },
     slot: "chest"
   },
