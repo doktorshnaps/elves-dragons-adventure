@@ -8,6 +8,8 @@ import { dungeonNames, dungeonBackgrounds } from "@/constants/dungeons";
 import { generateDungeonOpponents } from "@/dungeons/dungeonManager";
 import { MonsterCardDisplay } from "./monsters/MonsterCardDisplay";
 import { monsterImagesByName } from "@/constants/monsterImages";
+import { useLanguage } from "@/hooks/useLanguage";
+import { translateMonsterName, translateMonsterDescription, translateMonsterText } from "@/utils/monsterTranslations";
 
 // Monster descriptions
 const monsterDescriptions: Record<string, string> = {
@@ -57,20 +59,24 @@ const DungeonLevel = memo(({
   dungeonType,
   level
 }: DungeonLevelProps) => {
+  const { language } = useLanguage();
+  
   const enhancedOpponents = useMemo(() => {
     const opponents = generateDungeonOpponents(dungeonType as any, level);
     return opponents.map(opponent => ({
       ...opponent,
       image: monsterImagesByName[opponent.name] || opponent.image,
-      description: monsterDescriptions[opponent.name]
+      description: monsterDescriptions[opponent.name],
+      translatedName: translateMonsterName(language, opponent.name),
+      translatedDescription: translateMonsterDescription(language, monsterDescriptions[opponent.name] || '')
     }));
-  }, [dungeonType, level]);
+  }, [dungeonType, level, language]);
   return <div className="space-y-4">
       <h3 className="text-lg font-semibold text-game-accent border-b border-game-accent/30 pb-2">
-        Уровень {level}
+        {translateMonsterText(language, 'Уровень')} {level}
       </h3>
       <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-2 justify-items-center">
-        {enhancedOpponents.map(opponent => <MonsterCard key={opponent.id} name={opponent.name} health={opponent.health} power={opponent.power} isBoss={opponent.isBoss} image={opponent.image} specialAbilities={opponent.specialAbilities} description={opponent.description} />)}
+        {enhancedOpponents.map(opponent => <MonsterCard key={opponent.id} name={opponent.translatedName} health={opponent.health} power={opponent.power} isBoss={opponent.isBoss} image={opponent.image} specialAbilities={opponent.specialAbilities} description={opponent.translatedDescription} />)}
       </div>
     </div>;
 });
@@ -84,13 +90,14 @@ const DungeonDetail = ({
   dungeonName
 }: DungeonDetailProps) => {
   const [selectedLevel, setSelectedLevel] = useState(1);
+  const { language } = useLanguage();
   const backgroundImage = dungeonBackgrounds[dungeonType as keyof typeof dungeonBackgrounds];
   return <div className="space-y-6">
       
 
       <Card className="bg-game-surface/50 border-game-accent">
         <CardHeader>
-          <CardTitle className="text-lg text-game-accent">Выберите уровень</CardTitle>
+          <CardTitle className="text-lg text-game-accent">{translateMonsterText(language, 'Выберите уровень')}</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-5 md:grid-cols-10 gap-2 mb-6">
@@ -107,15 +114,17 @@ const DungeonDetail = ({
     </div>;
 };
 export const DungeonInfo = () => {
+  const { language } = useLanguage();
+  
   const availableDungeons = [{
     key: 'spider_nest',
     name: dungeonNames.spider_nest
   }];
   return <div className="space-y-6">
       <div className="text-center">
-        <h2 className="text-2xl font-bold text-game-accent mb-2">Гайд по подземельям</h2>
+        <h2 className="text-2xl font-bold text-game-accent mb-2">{translateMonsterText(language, 'Гайд по подземельям')}</h2>
         <p className="text-game-text">
-          Изучите монстров, их способности и возможный дроп в каждом подземелье
+          {translateMonsterText(language, 'Изучите монстров, их способности и возможный дроп в каждом подземелье')}
         </p>
       </div>
 
