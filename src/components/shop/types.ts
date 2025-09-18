@@ -45,18 +45,6 @@ export const shopItems: ShopItem[] = [
     image: "/lovable-uploads/bc24efd6-6a0c-45fe-a823-e610ee6540eb.png"
   },
   {
-    id: 4,
-    name: "Железный меч",
-    description: "Базовое оружие для начинающих воинов",
-    price: 300,
-    type: "weapon",
-    value: 1,
-    image: "/lovable-uploads/a983c8e3-bb18-4d44-b5bd-19441bf40f8f.png",
-    stats: {
-      power: 15
-    }
-  },
-  {
     id: 5,
     name: "Кожаная броня",
     description: "Легкая защитная броня",

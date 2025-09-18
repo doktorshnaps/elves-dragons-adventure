@@ -125,14 +125,6 @@ export const Shelter = () => {
 
   const craftRecipes: CraftRecipe[] = [
     {
-      id: "iron_sword",
-      name: "Железный меч",
-      description: "Качественное оружие ближнего боя",
-      requirements: { iron: 15, wood: 5, gold: 50 },
-      result: "Оружие (+25 урон)",
-      category: "weapon"
-    },
-    {
       id: "health_potion",
       name: "Зелье лечения",
       description: "Восстанавливает здоровье в бою",
