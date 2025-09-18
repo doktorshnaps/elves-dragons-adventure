@@ -83,15 +83,8 @@ export const WorkersManagement = ({ onSpeedBoostChange }: WorkersManagementProps
     }
   }, [gameData.activeWorkers]);
 
-  // Синхронизируем изменения с базой данных
+  // Вычисляем общее ускорение при изменении активных рабочих
   useEffect(() => {
-    // Обновляем базу данных при изменении активных рабочих
-    if (activeWorkers.length > 0 || gameData.activeWorkers?.length > 0) {
-      updateActiveWorkersInDB(activeWorkers);
-      updateGameData({ activeWorkers });
-    }
-    
-    // Вычисляем общее ускорение
     const totalBoost = activeWorkers.reduce((sum, worker) => sum + worker.speedBoost, 0);
     onSpeedBoostChange?.(totalBoost);
   }, [activeWorkers, onSpeedBoostChange]);
@@ -116,7 +109,6 @@ export const WorkersManagement = ({ onSpeedBoostChange }: WorkersManagementProps
         
         // Обновляем базу данных если список изменился
         if (stillWorking.length !== prev.length) {
-          updateActiveWorkersInDB(stillWorking);
           updateGameData({ activeWorkers: stillWorking });
           console.log('🔄 Updated active workers after completion:', stillWorking);
         }
@@ -143,14 +135,20 @@ export const WorkersManagement = ({ onSpeedBoostChange }: WorkersManagementProps
     };
 
     const updatedActiveWorkers = [...activeWorkers, newActiveWorker];
-    setActiveWorkers(updatedActiveWorkers);
 
     // Сразу обновляем состояние игры и базу данных
     try {
+      // Обновляем локальное состояние
+      setActiveWorkers(updatedActiveWorkers);
+      
+      // Обновляем game_data с новыми активными рабочими
       await updateGameData({ activeWorkers: updatedActiveWorkers });
-      await updateActiveWorkersInDB(updatedActiveWorkers);
+      
+      // Удаляем рабочего из инвентаря (card_instances)
+      await deleteCardInstance(worker.id);
       
       console.log('✅ Worker assigned and saved:', newActiveWorker);
+      console.log('🔄 Worker removed from inventory:', worker.id);
       
       toast({
         title: "Рабочий назначен",
