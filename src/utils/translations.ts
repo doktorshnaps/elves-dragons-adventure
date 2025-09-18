@@ -145,7 +145,44 @@ export const translations = {
       upgradeBuilding: 'Улучшить здание',
       buildingUpgraded: 'Здание улучшено!',
       itemCreated: 'Предмет создан!',
-      created: 'Создан:'
+      created: 'Создан:',
+      // Building names
+      mainHall: 'Главный зал',
+      workshop: 'Мастерская', 
+      storage: 'Склад',
+      sawmill: 'Лесопилка',
+      quarry: 'Каменоломня',
+      barracksBuilding: 'Казармы',
+      dragonLairBuilding: 'Драконье Логово',
+      medicalBuilding: 'Медицинский блок',
+      // Building descriptions
+      mainHallDesc: 'Увеличивает общую вместимость лагеря',
+      workshopDesc: 'Позволяет создавать более качественные предметы',
+      storageDesc: 'Увеличивает лимит хранения ресурсов',
+      sawmillDesc: 'Производит дерево для строительства',
+      quarryDesc: 'Добывает камень для укреплений',
+      barracksDesc: 'Обучает воинов и драконов',
+      dragonLairDesc: 'Место для разведения драконов',
+      medicalDesc: 'Лечит раненых воинов и драконов',
+      // Building benefits
+      mainHallBenefit: '+20 слотов инвентаря',
+      workshopBenefit: 'Разблокирует редкие рецепты',
+      storageBenefit: '+100 к лимиту ресурсов',
+      sawmillBenefit: '+10 дерева в час',
+      quarryBenefit: '+8 камня в час',
+      barracksBenefit: 'Разблокирует тренировки',
+      dragonLairBenefit: 'Увеличивает скорость вылупления',
+      medicalBenefit: 'Ускоряет лечение',
+      // Craft recipes
+      ironSword: 'Железный меч',
+      ironSwordDesc: 'Надежный меч для воинов',
+      ironSwordResult: 'Железный меч (+15 атака)',
+      leatherArmor: 'Кожаная броня',
+      leatherArmorDesc: 'Легкая защита',
+      leatherArmorResult: 'Кожаная броня (+10 защита)',
+      healthPotion: 'Зелье здоровья',
+      healthPotionDesc: 'Восстанавливает здоровье',
+      healthPotionResult: 'Зелье здоровья (+50 HP)'
     },
     // Grimoire
     grimoire: {
@@ -301,7 +338,44 @@ export const translations = {
       upgradeBuilding: 'Upgrade building',
       buildingUpgraded: 'Building upgraded!',
       itemCreated: 'Item created!',
-      created: 'Created:'
+      created: 'Created:',
+      // Building names
+      mainHall: 'Main Hall',
+      workshop: 'Workshop',
+      storage: 'Storage',
+      sawmill: 'Sawmill',
+      quarry: 'Quarry',
+      barracksBuilding: 'Barracks',
+      dragonLairBuilding: 'Dragon Lair',
+      medicalBuilding: 'Medical Bay',
+      // Building descriptions
+      mainHallDesc: 'Increases overall camp capacity',
+      workshopDesc: 'Allows crafting higher quality items',
+      storageDesc: 'Increases resource storage limit',
+      sawmillDesc: 'Produces wood for construction',
+      quarryDesc: 'Mines stone for fortifications',
+      barracksDesc: 'Trains warriors and dragons',
+      dragonLairDesc: 'Place for dragon breeding',
+      medicalDesc: 'Heals wounded warriors and dragons',
+      // Building benefits
+      mainHallBenefit: '+20 inventory slots',
+      workshopBenefit: 'Unlocks rare recipes',
+      storageBenefit: '+100 to resource limit',
+      sawmillBenefit: '+10 wood per hour',
+      quarryBenefit: '+8 stone per hour',
+      barracksBenefit: 'Unlocks training',
+      dragonLairBenefit: 'Increases hatching speed',
+      medicalBenefit: 'Accelerates healing',
+      // Craft recipes
+      ironSword: 'Iron Sword',
+      ironSwordDesc: 'Reliable sword for warriors',
+      ironSwordResult: 'Iron Sword (+15 attack)',
+      leatherArmor: 'Leather Armor',
+      leatherArmorDesc: 'Light protection',
+      leatherArmorResult: 'Leather Armor (+10 defense)',
+      healthPotion: 'Health Potion',
+      healthPotionDesc: 'Restores health',
+      healthPotionResult: 'Health Potion (+50 HP)'
     },
     // Grimoire
     grimoire: {

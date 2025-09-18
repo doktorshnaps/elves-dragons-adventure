@@ -87,8 +87,8 @@ export const Shelter = () => {
   });
   const nestUpgrades: NestUpgrade[] = [{
     id: "main_hall",
-    name: "Главный зал",
-    description: "Увеличивает общую вместимость лагеря",
+    name: t(language, 'shelter.mainHall'),
+    description: t(language, 'shelter.mainHallDesc'),
     level: 1,
     maxLevel: 10,
     cost: {
@@ -97,11 +97,11 @@ export const Shelter = () => {
       iron: 0,
       gold: 100
     },
-    benefit: "+20 слотов инвентаря"
+    benefit: t(language, 'shelter.mainHallBenefit')
   }, {
     id: "workshop",
-    name: "Мастерская",
-    description: "Позволяет создавать более качественные предметы",
+    name: t(language, 'shelter.workshop'),
+    description: t(language, 'shelter.workshopDesc'),
     level: 0,
     maxLevel: 5,
     cost: {
@@ -110,11 +110,11 @@ export const Shelter = () => {
       iron: 20,
       gold: 200
     },
-    benefit: "Разблокирует редкие рецепты"
+    benefit: t(language, 'shelter.workshopBenefit')
   }, {
     id: "storage",
-    name: "Склад",
-    description: "Увеличивает лимит хранения ресурсов",
+    name: t(language, 'shelter.storage'),
+    description: t(language, 'shelter.storageDesc'),
     level: 2,
     maxLevel: 8,
     cost: {
@@ -123,11 +123,11 @@ export const Shelter = () => {
       iron: 10,
       gold: 150
     },
-    benefit: "+100 к лимиту ресурсов"
+    benefit: t(language, 'shelter.storageBenefit')
   }, {
     id: "sawmill",
-    name: "Лесопилка",
-    description: "Производит дерево для строительства",
+    name: t(language, 'shelter.sawmill'),
+    description: t(language, 'shelter.sawmillDesc'),
     level: 0,
     maxLevel: 8,
     cost: {
@@ -136,11 +136,11 @@ export const Shelter = () => {
       iron: 5,
       gold: 80
     },
-    benefit: "+10 дерева в час"
+    benefit: t(language, 'shelter.sawmillBenefit')
   }, {
     id: "quarry",
-    name: "Каменоломня",
-    description: "Добывает камень для укреплений",
+    name: t(language, 'shelter.quarry'),
+    description: t(language, 'shelter.quarryDesc'),
     level: 0,
     maxLevel: 8,
     cost: {
@@ -149,11 +149,11 @@ export const Shelter = () => {
       iron: 10,
       gold: 120
     },
-    benefit: "+8 камня в час"
+    benefit: t(language, 'shelter.quarryBenefit')
   }, {
     id: "barracks",
-    name: "Казармы",
-    description: "Обучает воинов и драконов",
+    name: t(language, 'shelter.barracksBuilding'),
+    description: t(language, 'shelter.barracksDesc'),
     level: 1,
     maxLevel: 6,
     cost: {
@@ -162,11 +162,11 @@ export const Shelter = () => {
       iron: 30,
       gold: 300
     },
-    benefit: "Разблокирует тренировки"
+    benefit: t(language, 'shelter.barracksBenefit')
   }, {
     id: "dragon_lair",
-    name: "Драконье Логово",
-    description: "Место для разведения драконов",
+    name: t(language, 'shelter.dragonLairBuilding'),
+    description: t(language, 'shelter.dragonLairDesc'),
     level: 1,
     maxLevel: 5,
     cost: {
@@ -175,11 +175,11 @@ export const Shelter = () => {
       iron: 40,
       gold: 400
     },
-    benefit: "Увеличивает скорость вылупления"
+    benefit: t(language, 'shelter.dragonLairBenefit')
   }, {
     id: "medical",
-    name: "Медицинский блок",
-    description: "Лечит раненых воинов и драконов",
+    name: t(language, 'shelter.medicalBuilding'),
+    description: t(language, 'shelter.medicalDesc'),
     level: 1,
     maxLevel: 4,
     cost: {
@@ -188,39 +188,39 @@ export const Shelter = () => {
       iron: 25,
       gold: 250
     },
-    benefit: "Ускоряет лечение"
+    benefit: t(language, 'shelter.medicalBenefit')
   }];
   const craftRecipes: CraftRecipe[] = [{
     id: "iron_sword",
-    name: "Железный меч",
-    description: "Надежный меч для воинов",
+    name: t(language, 'shelter.ironSword'),
+    description: t(language, 'shelter.ironSwordDesc'),
     requirements: {
       iron: 15,
       wood: 5,
       gold: 50
     },
-    result: "Железный меч (+15 атака)",
+    result: t(language, 'shelter.ironSwordResult'),
     category: "weapon"
   }, {
     id: "leather_armor",
-    name: "Кожаная броня",
-    description: "Легкая защита",
+    name: t(language, 'shelter.leatherArmor'),
+    description: t(language, 'shelter.leatherArmorDesc'),
     requirements: {
       wood: 10,
       stone: 5,
       gold: 30
     },
-    result: "Кожаная броня (+10 защита)",
+    result: t(language, 'shelter.leatherArmorResult'),
     category: "armor"
   }, {
     id: "health_potion",
-    name: "Зелье здоровья",
-    description: "Восстанавливает здоровье",
+    name: t(language, 'shelter.healthPotion'),
+    description: t(language, 'shelter.healthPotionDesc'),
     requirements: {
       wood: 3,
       gold: 20
     },
-    result: "Зелье здоровья (+50 HP)",
+    result: t(language, 'shelter.healthPotionResult'),
     category: "potion"
   }];
   const canAffordUpgrade = (upgrade: NestUpgrade) => {
