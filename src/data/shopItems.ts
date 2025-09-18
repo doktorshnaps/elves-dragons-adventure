@@ -78,7 +78,8 @@ export const shopItems: ShopItem[] = [
     price: 200,
     type: "worker",
     value: 100,
-    stats: { workDuration: 86400000 } // 24 часа
+    stats: { workDuration: 86400000 }, // 24 часа
+    image: "/src/assets/workers/vladyka-remesel.png"
   },
   {
     id: 9,
