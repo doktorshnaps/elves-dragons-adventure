@@ -19,7 +19,7 @@ export const LazyTeamStats = createLazyComponent(
 );
 
 export const LazyGrimoire = createLazyComponent(
-  () => import('@/pages/Grimoire').then(module => ({ default: module.Grimoire })),
+  () => import('@/pages/Grimoire'),
   { 
     fallback: <div className="p-4">Загрузка гримуара...</div>,
     preload: false 

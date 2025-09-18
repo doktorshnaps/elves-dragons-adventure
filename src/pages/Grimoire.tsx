@@ -6,7 +6,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ArrowLeft, Book, Swords, Package } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
-export const Grimoire = () => {
+const Grimoire = () => {
   const navigate = useNavigate();
 
   return (
@@ -72,3 +72,5 @@ export const Grimoire = () => {
     </div>
   );
 };
+
+export default Grimoire;
