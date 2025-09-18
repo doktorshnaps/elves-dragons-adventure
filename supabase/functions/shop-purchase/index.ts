@@ -94,10 +94,18 @@ serve(async (req) => {
       };
 
       // Создаем card_instance для рабочего
-      const { error: cardError } = await supabase.rpc('create_card_instance_by_wallet', {
-        p_wallet_address: wallet_address,
-        p_card: cardData
-      });
+      const { data: cardInstanceId, error: cardError } = await supabase
+        .from('card_instances')
+        .insert({
+          wallet_address: wallet_address,
+          card_template_id: cardData.id,
+          card_type: 'workers',
+          current_health: cardData.health,
+          max_health: cardData.health,
+          card_data: cardData
+        })
+        .select('id')
+        .single();
 
       if (cardError) {
         console.error('❌ Error creating card instance:', cardError);

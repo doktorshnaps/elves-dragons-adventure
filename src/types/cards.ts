@@ -1,4 +1,4 @@
-export type CardType = 'character' | 'pet';
+export type CardType = 'character' | 'pet' | 'workers';
 export type Rarity = 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8;
 
 export type Faction = 

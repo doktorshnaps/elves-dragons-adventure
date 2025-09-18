@@ -62,10 +62,7 @@ export const WorkersManagement = ({ onSpeedBoostChange }: WorkersManagementProps
 
   // Получаем рабочих из card_instances
   const availableWorkers = cardInstances.filter(
-    instance => {
-      const cardData = instance.card_data as any;
-      return cardData?.type === "worker";
-    }
+    instance => instance.card_type === "workers"
   ).map(instance => {
     const cardData = instance.card_data as any;
     return {

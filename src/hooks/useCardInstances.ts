@@ -10,7 +10,7 @@ export interface CardInstance {
   user_id?: string | null;
   wallet_address?: string;
   card_template_id: string;
-  card_type: 'hero' | 'dragon';
+  card_type: 'hero' | 'dragon' | 'workers';
   current_health: number;
   max_health: number;
   last_heal_time: string;
