@@ -175,10 +175,14 @@ export const useCardInstances = () => {
   const deleteCardInstance = useCallback(async (instanceId: string) => {
     if (!isConnected || !accountId) return false;
 
+    const instance = cardInstances.find(ci => ci.id === instanceId);
+    if (!instance) return false;
+
     try {
-      const { data, error } = await supabase.rpc('remove_card_instance_by_id', {
+      // Используем имеющуюся функцию удаления по шаблону и кошельку
+      const { data, error } = await supabase.rpc('remove_card_instance_by_wallet', {
         p_wallet_address: accountId,
-        p_instance_id: instanceId
+        p_card_template_id: instance.card_template_id
       });
 
       if (error) throw error;
@@ -187,7 +191,7 @@ export const useCardInstances = () => {
         throw new Error('Delete not applied');
       }
 
-      setCardInstances(prev => prev.filter(instance => instance.id !== instanceId));
+      setCardInstances(prev => prev.filter(ci => ci.id !== instanceId));
       return true;
     } catch (error) {
       console.error('Error deleting card instance:', error);
@@ -198,7 +202,7 @@ export const useCardInstances = () => {
       });
       return false;
     }
-  }, [accountId, isConnected, toast]);
+  }, [accountId, isConnected, toast, cardInstances]);
 
   // Удаление экземпляра карты по template id (удобно при апгрейде/сжигании)
   const deleteCardInstanceByTemplate = useCallback(async (cardTemplateId: string) => {
