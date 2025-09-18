@@ -233,35 +233,6 @@ export const WorkersManagement = ({ onSpeedBoostChange }: WorkersManagementProps
         </CardContent>
       </Card>
 
-      {/* Активные рабочие */}
-      {activeWorkers.length > 0 && (
-        <Card>
-          <CardHeader>
-            <CardTitle>Активные рабочие</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              {activeWorkers.map(worker => (
-                <div key={worker.id} className="p-4 border rounded-lg">
-                  <div className="flex items-center justify-between mb-2">
-                    <div>
-                      <h4 className="font-medium">{worker.name}</h4>
-                      <p className="text-sm text-muted-foreground">
-                        {buildings.find(b => b.id === worker.building)?.name} • +{worker.speedBoost}% ускорение
-                      </p>
-                    </div>
-                    <Badge variant="secondary">
-                      {formatTime(getRemainingTime(worker))}
-                    </Badge>
-                  </div>
-                  <Progress value={getProgress(worker)} className="w-full" />
-                </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-      )}
-
       {/* Назначение новых рабочих */}
       <Card>
         <CardHeader>
@@ -337,6 +308,35 @@ export const WorkersManagement = ({ onSpeedBoostChange }: WorkersManagementProps
           </div>
         </CardContent>
       </Card>
+
+      {/* Активные рабочие */}
+      {activeWorkers.length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Активные рабочие</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              {activeWorkers.map(worker => (
+                <div key={worker.id} className="p-4 border rounded-lg">
+                  <div className="flex items-center justify-between mb-2">
+                    <div>
+                      <h4 className="font-medium">{worker.name}</h4>
+                      <p className="text-sm text-muted-foreground">
+                        {buildings.find(b => b.id === worker.building)?.name} • +{worker.speedBoost}% ускорение
+                      </p>
+                    </div>
+                    <Badge variant="secondary">
+                      {formatTime(getRemainingTime(worker))}
+                    </Badge>
+                  </div>
+                  <Progress value={getProgress(worker)} className="w-full" />
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 };
