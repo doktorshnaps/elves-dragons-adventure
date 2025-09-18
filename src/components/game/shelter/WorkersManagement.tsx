@@ -62,16 +62,22 @@ export const WorkersManagement = ({ onSpeedBoostChange }: WorkersManagementProps
 
   // Получаем рабочих из card_instances
   const availableWorkers = cardInstances.filter(
-    instance => instance.card_data?.type === "worker" || instance.card_type === "worker"
-  ).map(instance => ({
-    id: instance.id,
-    name: instance.card_data.name,
-    description: instance.card_data.description,
-    type: instance.card_data.type,
-    value: instance.card_data.value || 0,
-    stats: instance.card_data.stats || {},
-    image: instance.card_data.image
-  }));
+    instance => {
+      const cardData = instance.card_data as any;
+      return cardData?.type === "worker";
+    }
+  ).map(instance => {
+    const cardData = instance.card_data as any;
+    return {
+      id: instance.id,
+      name: cardData.name || 'Рабочий',
+      description: cardData.description || '',
+      type: cardData.type || 'worker',
+      value: cardData.value || 0,
+      stats: cardData.stats || {},
+      image: cardData.image
+    };
+  });
 
   // Загружаем активных рабочих из gameData
   useEffect(() => {
