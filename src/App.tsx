@@ -9,6 +9,7 @@ import { useAccountSync } from './hooks/useAccountSync';
 import { useRoutePreloader } from './hooks/useRoutePreloader';
 import { LanguageProvider } from './contexts/LanguageContext';
 import { QueryProvider } from './providers/QueryProvider';
+import { useGameSync } from './hooks/useGameSync';
 
 // Lazy imports
 import {
@@ -27,6 +28,7 @@ import {
 
 function App() {
   useAccountSync();
+  useGameSync();
   useRoutePreloader(); // Инициализируем preloading
   
   return (
