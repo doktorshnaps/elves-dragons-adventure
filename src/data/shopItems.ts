@@ -13,21 +13,23 @@ export const shopItems: ShopItem[] = [
   // Рабочие
   {
     id: 2,
-    name: "Подмастерье",
+    name: "Пылевой Батрак",
     description: "Обычный рабочий. Работает 2 часа, ускорение +10%",
     price: 5,
     type: "worker",
     value: 10, // процент ускорения
-    stats: { workDuration: 7200000 } // 2 часа в миллисекундах
+    stats: { workDuration: 7200000 }, // 2 часа в миллисекундах
+    image: "/src/assets/workers/pylevoy-batrak.png"
   },
   {
     id: 3,
-    name: "Мастеровой",
+    name: "Угольный Носильщик",
     description: "Опытный рабочий. Работает 4 часа, ускорение +20%",
     price: 15,
     type: "worker",
     value: 20,
-    stats: { workDuration: 14400000 } // 4 часа
+    stats: { workDuration: 14400000 }, // 4 часа
+    image: "/src/assets/workers/ugolny-nosiltschik.png"
   },
   {
     id: 4,
@@ -36,7 +38,8 @@ export const shopItems: ShopItem[] = [
     price: 30,
     type: "worker",
     value: 30,
-    stats: { workDuration: 21600000 } // 6 часов
+    stats: { workDuration: 21600000 }, // 6 часов
+    image: "/src/assets/workers/remeslennik.png"
   },
   {
     id: 5,
@@ -45,7 +48,8 @@ export const shopItems: ShopItem[] = [
     price: 50,
     type: "worker",
     value: 40,
-    stats: { workDuration: 28800000 } // 8 часов
+    stats: { workDuration: 28800000 }, // 8 часов
+    image: "/src/assets/workers/master.png"
   },
   {
     id: 6,
@@ -54,7 +58,8 @@ export const shopItems: ShopItem[] = [
     price: 80,
     type: "worker",
     value: 50,
-    stats: { workDuration: 43200000 } // 12 часов
+    stats: { workDuration: 43200000 }, // 12 часов
+    image: "/src/assets/workers/arkhimaster.png"
   },
   {
     id: 7,
@@ -63,7 +68,8 @@ export const shopItems: ShopItem[] = [
     price: 120,
     type: "worker",
     value: 70,
-    stats: { workDuration: 64800000 } // 18 часов
+    stats: { workDuration: 64800000 }, // 18 часов
+    image: "/src/assets/workers/grand-master.png"
   },
   {
     id: 8,
@@ -76,11 +82,12 @@ export const shopItems: ShopItem[] = [
   },
   {
     id: 9,
-    name: "Повелитель труда",
+    name: "Архонт мануфактур",
     description: "Божественный рабочий. Работает 48 часов, ускорение +150%",
     price: 400,
     type: "worker",
     value: 150,
-    stats: { workDuration: 172800000 } // 48 часов
+    stats: { workDuration: 172800000 }, // 48 часов
+    image: "/src/assets/workers/arkhont-manufaktur.png"
   }
 ];
