@@ -3,8 +3,6 @@ export const GAME_CONFIG = {
   // Баланс и экономика
   STARTING_BALANCE: 100,
   CARD_PACK_PRICE: 1,
-  HEALTH_POTION_SMALL_PRICE: 100,
-  HEALTH_POTION_LARGE_PRICE: 250,
   
   // Энергия
   MAX_ENERGY: 10,

@@ -124,22 +124,6 @@ export const Shelter = () => {
   ];
 
   const craftRecipes: CraftRecipe[] = [
-    {
-      id: "health_potion",
-      name: "Зелье лечения",
-      description: "Восстанавливает здоровье в бою",
-      requirements: { gold: 20 },
-      result: "Зелье (+50 ХП)",
-      category: "potion"
-    },
-    {
-      id: "leather_armor",
-      name: "Кожаная броня",
-      description: "Базовая защита для приключений",
-      requirements: { gold: 80, iron: 5 },
-      result: "Броня (+15 защита)",
-      category: "armor"
-    }
   ];
 
   const canAffordUpgrade = (upgrade: NestUpgrade) => {
