@@ -1,5 +1,7 @@
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
+import { useLanguage } from "@/hooks/useLanguage";
+import { t } from "@/utils/translations";
 import { Clock, Zap, Users } from "lucide-react";
 
 interface ActiveWorker {
@@ -19,6 +21,7 @@ interface BuildingWorkerStatusProps {
 }
 
 export const BuildingWorkerStatus = ({ buildingId, activeWorkers }: BuildingWorkerStatusProps) => {
+  const { language } = useLanguage();
   // Фильтруем рабочих по зданию и исключаем тех, у кого время работы закончилось
   const buildingWorkers = activeWorkers.filter(worker => {
     if (worker.building !== buildingId) return false;
@@ -57,7 +60,7 @@ export const BuildingWorkerStatus = ({ buildingId, activeWorkers }: BuildingWork
       <div className="flex items-center gap-2 mb-2">
         <Users className="w-4 h-4 text-primary" />
         <span className="text-sm font-medium text-primary">
-          Активные рабочие ({buildingWorkers.length})
+          {t(language, 'shelter.activeWorkers')} ({buildingWorkers.length})
         </span>
         <Badge variant="secondary" className="ml-auto">
           <Zap className="w-3 h-3 mr-1" />

@@ -265,7 +265,7 @@ export const Shelter = () => {
         {/* Header */}
         {/* Кнопка возврата в левом верхнем углу */}
         <div className="absolute top-4 left-4 z-10">
-          <Button variant="ghost" size="icon" onClick={() => navigate("/")}>
+          <Button variant="ghost" size="icon" onClick={() => navigate("/menu")}>
             <ArrowLeft className="w-4 h-4" />
           </Button>
         </div>
