@@ -172,11 +172,11 @@ return (
           return (
             <Card key={item.name} className={`p-4 bg-game-background border-game-accent hover:border-game-primary transition-all duration-300 ${!canBuy ? 'opacity-50' : ''}`}>
               {item.image && (
-                <div className="w-full aspect-[4/3] mb-2 rounded-lg overflow-hidden relative">
+                <div className="w-full aspect-[4/3] mb-2 rounded-lg overflow-hidden relative bg-gradient-to-br from-gray-800 to-gray-900">
                   <img 
                     src={item.image} 
                     alt={item.name}
-                    className="w-full h-full object-cover"
+                    className="w-full h-full object-contain"
                   />
                   {!available && (
                     <div className="absolute inset-0 bg-red-500/20 flex items-center justify-center">
