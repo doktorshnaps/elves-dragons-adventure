@@ -19,7 +19,13 @@ interface BuildingWorkerStatusProps {
 }
 
 export const BuildingWorkerStatus = ({ buildingId, activeWorkers }: BuildingWorkerStatusProps) => {
-  const buildingWorkers = activeWorkers.filter(worker => worker.building === buildingId);
+  // Фильтруем рабочих по зданию и исключаем тех, у кого время работы закончилось
+  const buildingWorkers = activeWorkers.filter(worker => {
+    if (worker.building !== buildingId) return false;
+    const now = Date.now();
+    const elapsed = now - worker.startTime;
+    return elapsed < worker.duration; // Показываем только активных рабочих
+  });
   
   if (buildingWorkers.length === 0) {
     return null;
