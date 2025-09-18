@@ -263,7 +263,7 @@ export const Shelter = () => {
         </div>
 
         {/* Объединенный блок: информация об аккаунте и ресурсы */}
-        <div className="absolute top-4 right-4 z-10 w-80">
+        <div className="absolute top-3 right-4 z-10 w-80">
           <Card className="bg-card/50 backdrop-blur-sm border-primary/20">
             <CardContent className="p-3 mx-0 py-0 my-0 px-[12px]">
               {/* Информация об уровне аккаунта */}
