@@ -23,17 +23,23 @@ export const useGameSync = () => {
       gameStore.setInventory(gameData.inventory || []);
       gameStore.setDragonEggs(gameData.dragonEggs || []);
       gameStore.setSelectedTeam(gameData.selectedTeam || []);
-      // Синхронизируем уровень и опыт аккаунта
-      gameStore.setAccountLevel(gameData.accountLevel);
-      gameStore.setAccountExperience(gameData.accountExperience);
+      
+      // Синхронизируем уровень и опыт аккаунта только если в gameData есть актуальные данные из БД
+      // и они не являются дефолтными значениями
+      if (gameData.accountLevel > 1 || gameData.accountExperience > 0) {
+        gameStore.setAccountLevel(gameData.accountLevel);
+        gameStore.setAccountExperience(gameData.accountExperience);
+        console.log('🔄 useGameSync: Account data synced from gameData:', {
+          level: gameData.accountLevel,
+          experience: gameData.accountExperience
+        });
+      } else {
+        console.log('⚠️ useGameSync: Skipping account sync - using default values from gameData, relying on useAccountSync');
+      }
+      
       if (gameData.battleState) {
         gameStore.setBattleState(gameData.battleState);
       }
-      
-      console.log('🔄 useGameSync: Account data synced:', {
-        level: gameData.accountLevel,
-        experience: gameData.accountExperience
-      });
     }
   }, [loading, isConnected, accountId, gameData]);
 

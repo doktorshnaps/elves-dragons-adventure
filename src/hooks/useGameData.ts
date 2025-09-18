@@ -95,8 +95,8 @@ export const useGameData = () => {
           selectedTeam: (gameRecord.selected_team as any[]) || [],
           barracksUpgrades: (gameRecord.barracks_upgrades as any[]) || [],
           dragonLairUpgrades: (gameRecord.dragon_lair_upgrades as any[]) || [],
-          accountLevel: gameRecord.account_level || 1,
-          accountExperience: gameRecord.account_experience || 0
+          accountLevel: gameRecord.account_level ?? 1,
+          accountExperience: gameRecord.account_experience ?? 0
         };
         
         setGameData(newGameData);
