@@ -168,8 +168,7 @@ export const useGameData = () => {
         p_adventure_current_monster: updates.adventureCurrentMonster as any,
         p_battle_state: updates.battleState as any,
         p_barracks_upgrades: updates.barracksUpgrades as any,
-        p_dragon_lair_upgrades: updates.dragonLairUpgrades as any,
-        p_active_workers: updates.activeWorkers as any
+        p_dragon_lair_upgrades: updates.dragonLairUpgrades as any
       });
 
       if (error) {

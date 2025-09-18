@@ -7,6 +7,7 @@ import { useGameData } from "@/hooks/useGameData";
 import { useToast } from "@/hooks/use-toast";
 import { Item } from "@/types/inventory";
 import { Users, Clock, Zap, AlertTriangle } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
 
 interface ActiveWorker {
   id: string;
@@ -27,6 +28,25 @@ export const WorkersManagement = ({ onSpeedBoostChange }: WorkersManagementProps
   const { toast } = useToast();
   const [activeWorkers, setActiveWorkers] = useState<ActiveWorker[]>([]);
   const [selectedBuilding, setSelectedBuilding] = useState<string>("main_hall");
+
+  // Функция для обновления активных рабочих в базе данных
+  const updateActiveWorkersInDB = async (workers: ActiveWorker[]) => {
+    const walletAddress = localStorage.getItem('walletAccountId');
+    if (!walletAddress) return;
+
+    try {
+      const { error } = await supabase
+        .from('game_data')
+        .update({ active_workers: workers as any })
+        .eq('wallet_address', walletAddress);
+      
+      if (error) {
+        console.error('Failed to update active workers:', error);
+      }
+    } catch (error) {
+      console.error('Error updating active workers:', error);
+    }
+  };
 
   const buildings = [
     { id: "main_hall", name: "Главный зал" },
@@ -77,6 +97,12 @@ export const WorkersManagement = ({ onSpeedBoostChange }: WorkersManagementProps
           }
           return !isFinished;
         });
+        
+        // Обновляем базу данных если список изменился
+        if (stillWorking.length !== prev.length) {
+          updateActiveWorkersInDB(stillWorking);
+        }
+        
         return stillWorking;
       });
     }, 1000);
@@ -99,9 +125,12 @@ export const WorkersManagement = ({ onSpeedBoostChange }: WorkersManagementProps
 
     setActiveWorkers(prev => [...prev, newActiveWorker]);
 
-    // Удаляем рабочего из инвентаря
+    // Удаляем рабочего из инвентаря и обновляем активных рабочих в базе данных
     const updatedInventory = (gameData.inventory || []).filter(item => item.id !== worker.id);
+    const updatedActiveWorkers = [...activeWorkers, newActiveWorker];
+    
     await updateGameData({ inventory: updatedInventory });
+    await updateActiveWorkersInDB(updatedActiveWorkers);
 
     toast({
       title: "Рабочий назначен",

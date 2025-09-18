@@ -717,6 +717,7 @@ export type Database = {
         Returns: {
           account_experience: number
           account_level: number
+          active_workers: Json
           adventure_current_monster: Json
           adventure_player_stats: Json
           balance: number
@@ -769,6 +770,7 @@ export type Database = {
         Returns: {
           account_experience: number
           account_level: number
+          active_workers: Json
           adventure_current_monster: Json
           adventure_player_stats: Json
           balance: number

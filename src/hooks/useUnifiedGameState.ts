@@ -29,7 +29,8 @@ const initialGameData: GameData = {
   barracksUpgrades: [],
   dragonLairUpgrades: [],
   accountLevel: 1,
-  accountExperience: 0
+  accountExperience: 0,
+  activeWorkers: []
 };
 
 export const useUnifiedGameState = (): UnifiedGameState => {
@@ -236,6 +237,7 @@ function mapClientToServer(data: Partial<GameData> | GameData) {
   if (d.dragonLairUpgrades !== undefined) out.dragon_lair_upgrades = d.dragonLairUpgrades;
   if (d.accountLevel !== undefined) out.account_level = d.accountLevel;
   if (d.accountExperience !== undefined) out.account_experience = d.accountExperience;
+  if (d.activeWorkers !== undefined) out.active_workers = d.activeWorkers;
   return out;
 }
 
@@ -336,14 +338,16 @@ function transformServerData(serverData: any): GameData {
     barracksUpgrades: serverData.barracks_upgrades ?? [],
     dragonLairUpgrades: serverData.dragon_lair_upgrades ?? [],
     accountLevel: serverData.account_level ?? 1,
-    accountExperience: serverData.account_experience ?? 0
+    accountExperience: serverData.account_experience ?? 0,
+    activeWorkers: serverData.active_workers ?? []
   };
   
   console.log('🔄 Transformed game data:', {
     wallet: serverData.wallet_address,
     balance: transformed.balance,
     inventoryItems: transformed.inventory?.length ?? 0,
-    cards: transformed.cards?.length ?? 0
+    cards: transformed.cards?.length ?? 0,
+    activeWorkers: transformed.activeWorkers?.length ?? 0
   });
   
   return transformed;
