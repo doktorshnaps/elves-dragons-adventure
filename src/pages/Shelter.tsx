@@ -231,32 +231,32 @@ export const Shelter = () => {
         </div>
 
         {/* Объединенный блок: информация об аккаунте и ресурсы */}
-        <div className="absolute top-4 right-4 z-10">
+        <div className="absolute top-4 right-4 z-10 w-80">
           <Card className="bg-card/50 backdrop-blur-sm border-primary/20">
-            <CardContent className="p-4 space-y-4">
+            <CardContent className="p-3">
               {/* Информация об уровне аккаунта */}
-              <div className="flex items-center gap-2">
+              <div className="flex items-center justify-center gap-2 mb-3">
                 <Star className="h-4 w-4 text-primary" />
                 <span className="text-sm font-medium">Уровень {accountLevel}</span>
               </div>
               
-              {/* Ресурсы */}
-              <div className="grid grid-cols-2 gap-3">
-                <div className="text-center">
+              {/* Ресурсы в одну строку */}
+              <div className="flex justify-between gap-2">
+                <div className="text-center flex-1">
                   <div className="text-lg">🪵</div>
-                  <div className="text-sm font-semibold">{resources.wood}</div>
+                  <div className="text-xs font-semibold">{resources.wood}</div>
                 </div>
-                <div className="text-center">
+                <div className="text-center flex-1">
                   <div className="text-lg">🪨</div>
-                  <div className="text-sm font-semibold">{resources.stone}</div>
+                  <div className="text-xs font-semibold">{resources.stone}</div>
                 </div>
-                <div className="text-center">
+                <div className="text-center flex-1">
                   <div className="text-lg">⚙️</div>
-                  <div className="text-sm font-semibold">{resources.iron}</div>
+                  <div className="text-xs font-semibold">{resources.iron}</div>
                 </div>
-                <div className="text-center">
+                <div className="text-center flex-1">
                   <div className="text-lg">💰</div>
-                  <div className="text-sm font-semibold">{resources.gold}</div>
+                  <div className="text-xs font-semibold">{resources.gold}</div>
                 </div>
               </div>
             </CardContent>
