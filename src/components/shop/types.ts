@@ -3,13 +3,14 @@ export interface ShopItem {
   name: string;
   description: string;
   price: number;
-  type: "cardPack" | "healthPotion" | "defensePotion" | "weapon" | "armor" | "accessory";
+  type: "cardPack" | "healthPotion" | "defensePotion" | "weapon" | "armor" | "accessory" | "worker";
   value: number;
   image?: string;
   stats?: {
     power?: number;
     defense?: number;
     health?: number;
+    workDuration?: number; // для рабочих - время работы в миллисекундах
   };
   requiredLevel?: number;
   slot?: "head" | "chest" | "hands" | "legs" | "feet" | "neck" | "ring1" | "ring2" | "weapon" | "offhand";
