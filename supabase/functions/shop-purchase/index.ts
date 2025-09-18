@@ -31,7 +31,7 @@ serve(async (req) => {
 
     console.log(`🛒 Processing purchase: item ${item_id} for wallet ${wallet_address}`);
 
-    // Получаем текущее количество товара
+    // Получаем информацию о товаре
     const { data: inventoryItem, error: fetchError } = await supabase
       .from('shop_inventory')
       .select('*')
@@ -53,6 +53,18 @@ serve(async (req) => {
       });
     }
 
+    // Получаем шаблон предмета
+    const { data: itemTemplate, error: templateError } = await supabase
+      .from('item_templates')
+      .select('*')
+      .eq('id', item_id)
+      .single();
+
+    if (templateError) {
+      console.error('❌ Error fetching item template:', templateError);
+      throw templateError;
+    }
+
     // Уменьшаем количество товара на 1
     const { error: updateError } = await supabase
       .from('shop_inventory')
@@ -67,11 +79,63 @@ serve(async (req) => {
       throw updateError;
     }
 
+    // Если это рабочий - создаем card_instance, иначе добавляем в inventory через atomic_inventory_update
+    if (itemTemplate.type === 'worker') {
+      const cardData = {
+        id: `worker_${item_id}_${Date.now()}`,
+        name: itemTemplate.name,
+        description: itemTemplate.description,
+        type: 'worker',
+        rarity: itemTemplate.rarity || 'common',
+        health: 100, // У рабочих базовое здоровье
+        value: itemTemplate.value,
+        stats: itemTemplate.stats,
+        image: itemTemplate.image_url
+      };
+
+      // Создаем card_instance для рабочего
+      const { error: cardError } = await supabase.rpc('create_card_instance_by_wallet', {
+        p_wallet_address: wallet_address,
+        p_card: cardData
+      });
+
+      if (cardError) {
+        console.error('❌ Error creating card instance:', cardError);
+        throw cardError;
+      }
+
+      console.log(`✅ Worker card instance created: ${cardData.id}`);
+    } else {
+      // Для обычных предметов используем старую логику через atomic_inventory_update
+      const itemData = {
+        id: `item_${item_id}_${Date.now()}`,
+        name: itemTemplate.name,
+        description: itemTemplate.description,
+        type: itemTemplate.type,
+        rarity: itemTemplate.rarity || 'common',
+        value: itemTemplate.value,
+        stats: itemTemplate.stats,
+        image: itemTemplate.image_url
+      };
+
+      const { error: inventoryError } = await supabase.rpc('atomic_inventory_update', {
+        p_wallet_address: wallet_address,
+        p_price_deduction: 0, // Цена уже списана в shop
+        p_new_item: itemData
+      });
+
+      if (inventoryError) {
+        console.error('❌ Error adding item to inventory:', inventoryError);
+        throw inventoryError;
+      }
+    }
+
     console.log(`✅ Purchase successful: item ${item_id}, remaining: ${inventoryItem.available_quantity - 1}`);
 
     return new Response(JSON.stringify({ 
       success: true,
-      remaining_quantity: inventoryItem.available_quantity - 1
+      remaining_quantity: inventoryItem.available_quantity - 1,
+      item_type: itemTemplate.type
     }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });

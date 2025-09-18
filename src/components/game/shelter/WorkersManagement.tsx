@@ -5,6 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { useGameData } from "@/hooks/useGameData";
 import { useToast } from "@/hooks/use-toast";
+import { useCardInstances } from "@/hooks/useCardInstances";
 import { Item } from "@/types/inventory";
 import { Users, Clock, Zap, AlertTriangle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
@@ -12,6 +13,7 @@ import { supabase } from "@/integrations/supabase/client";
 interface ActiveWorker {
   id: string;
   workerId: string;
+  cardInstanceId: string;
   name: string;
   speedBoost: number;
   startTime: number;
@@ -25,6 +27,7 @@ interface WorkersManagementProps {
 
 export const WorkersManagement = ({ onSpeedBoostChange }: WorkersManagementProps) => {
   const { gameData, updateGameData } = useGameData();
+  const { cardInstances, deleteCardInstance } = useCardInstances();
   const { toast } = useToast();
   const [activeWorkers, setActiveWorkers] = useState<ActiveWorker[]>([]);
   const [selectedBuilding, setSelectedBuilding] = useState<string>("main_hall");
@@ -57,10 +60,18 @@ export const WorkersManagement = ({ onSpeedBoostChange }: WorkersManagementProps
     { id: "dragon_lair", name: "Драконье Логово" }
   ];
 
-  // Получаем рабочих из инвентаря
-  const availableWorkers = (gameData.inventory || []).filter(
-    (item: Item) => item.type === "worker"
-  );
+  // Получаем рабочих из card_instances
+  const availableWorkers = cardInstances.filter(
+    instance => instance.card_data?.type === "worker" || instance.card_type === "worker"
+  ).map(instance => ({
+    id: instance.id,
+    name: instance.card_data.name,
+    description: instance.card_data.description,
+    type: instance.card_data.type,
+    value: instance.card_data.value || 0,
+    stats: instance.card_data.stats || {},
+    image: instance.card_data.image
+  }));
 
   // Загружаем активных рабочих из gameData
   useEffect(() => {
@@ -90,9 +101,11 @@ export const WorkersManagement = ({ onSpeedBoostChange }: WorkersManagementProps
         const stillWorking = prev.filter(worker => {
           const isFinished = now >= worker.startTime + worker.duration;
           if (isFinished) {
+            // Удаляем card_instance рабочего из базы данных
+            deleteCardInstance(worker.cardInstanceId);
             toast({
               title: "Работа завершена",
-              description: `${worker.name} завершил работу в здании "${buildings.find(b => b.id === worker.building)?.name}"`,
+              description: `${worker.name} завершил работу в здании "${buildings.find(b => b.id === worker.building)?.name}" и исчез`,
             });
           }
           return !isFinished;
@@ -110,12 +123,13 @@ export const WorkersManagement = ({ onSpeedBoostChange }: WorkersManagementProps
     return () => clearInterval(interval);
   }, [toast, buildings]);
 
-  const assignWorker = async (worker: Item) => {
+  const assignWorker = async (worker: any) => {
     if (!worker.stats?.workDuration) return;
 
     const newActiveWorker: ActiveWorker = {
       id: `${worker.id}_${Date.now()}`,
       workerId: worker.id,
+      cardInstanceId: worker.id, // ID card_instance
       name: worker.name,
       speedBoost: worker.value,
       startTime: Date.now(),
@@ -125,11 +139,8 @@ export const WorkersManagement = ({ onSpeedBoostChange }: WorkersManagementProps
 
     setActiveWorkers(prev => [...prev, newActiveWorker]);
 
-    // Удаляем рабочего из инвентаря и обновляем активных рабочих в базе данных
-    const updatedInventory = (gameData.inventory || []).filter(item => item.id !== worker.id);
+    // Обновляем активных рабочих в базе данных
     const updatedActiveWorkers = [...activeWorkers, newActiveWorker];
-    
-    await updateGameData({ inventory: updatedInventory });
     await updateActiveWorkersInDB(updatedActiveWorkers);
 
     toast({
