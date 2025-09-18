@@ -230,9 +230,37 @@ export const Shelter = () => {
           </Button>
         </div>
 
-        {/* Информация об аккаунте в правом верхнем углу */}
+        {/* Объединенный блок: информация об аккаунте и ресурсы */}
         <div className="absolute top-4 right-4 z-10">
-          <AccountLevelDisplay level={accountLevel} experience={accountExperience} />
+          <Card className="bg-card/50 backdrop-blur-sm border-primary/20">
+            <CardContent className="p-4 space-y-4">
+              {/* Информация об уровне аккаунта */}
+              <div className="flex items-center gap-2">
+                <Star className="h-4 w-4 text-primary" />
+                <span className="text-sm font-medium">Уровень {accountLevel}</span>
+              </div>
+              
+              {/* Ресурсы */}
+              <div className="grid grid-cols-2 gap-3">
+                <div className="text-center">
+                  <div className="text-lg">🪵</div>
+                  <div className="text-sm font-semibold">{resources.wood}</div>
+                </div>
+                <div className="text-center">
+                  <div className="text-lg">🪨</div>
+                  <div className="text-sm font-semibold">{resources.stone}</div>
+                </div>
+                <div className="text-center">
+                  <div className="text-lg">⚙️</div>
+                  <div className="text-sm font-semibold">{resources.iron}</div>
+                </div>
+                <div className="text-center">
+                  <div className="text-lg">💰</div>
+                  <div className="text-sm font-semibold">{resources.gold}</div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
         </div>
 
         {/* Заголовок по центру */}
@@ -242,34 +270,6 @@ export const Shelter = () => {
             <h1 className="text-2xl font-bold">Убежище</h1>
           </div>
         </div>
-
-        {/* Resources Display */}
-        <Card>
-          <CardContent className="pt-6">
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              <div className="text-center">
-                <div className="text-2xl font-bold text-amber-600">🪵</div>
-                <div className="text-lg font-semibold">{resources.wood}</div>
-                <div className="text-sm text-muted-foreground">Дерево</div>
-              </div>
-              <div className="text-center">
-                <div className="text-2xl font-bold text-stone-600">🪨</div>
-                <div className="text-lg font-semibold">{resources.stone}</div>
-                <div className="text-sm text-muted-foreground">Камень</div>
-              </div>
-              <div className="text-center">
-                <div className="text-2xl font-bold text-slate-600">⚙️</div>
-                <div className="text-lg font-semibold">{resources.iron}</div>
-                <div className="text-sm text-muted-foreground">Железо</div>
-              </div>
-              <div className="text-center">
-                <div className="text-2xl font-bold text-yellow-600">💰</div>
-                <div className="text-lg font-semibold">{resources.gold}</div>
-                <div className="text-sm text-muted-foreground">Золото</div>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
 
         {/* Tab Navigation */}
         <div className="flex flex-wrap gap-2">
