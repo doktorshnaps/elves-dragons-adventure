@@ -13,6 +13,8 @@ import { DragonLair } from "@/components/game/shelter/DragonLair";
 import { MedicalBayComponent } from "@/components/game/medical/MedicalBayComponent";
 import { WorkersManagement } from "@/components/game/shelter/WorkersManagement";
 import { BuildingWorkerStatus } from "@/components/game/shelter/BuildingWorkerStatus";
+import { useLanguage } from "@/hooks/useLanguage";
+import { t } from "@/utils/translations";
 import { useState } from "react";
 interface NestUpgrade {
   id: string;
@@ -43,6 +45,7 @@ interface CraftRecipe {
 }
 export const Shelter = () => {
   const navigate = useNavigate();
+  const { language } = useLanguage();
   const {
     gameData,
     updateGameData
@@ -304,7 +307,7 @@ export const Shelter = () => {
         <div className="flex items-center justify-center py-2">
           <div className="flex items-center gap-2">
             <Home className="w-6 h-6 text-primary" />
-            <h1 className="text-2xl font-bold">Убежище</h1>
+            <h1 className="text-2xl font-bold">{t(language, 'shelter.title')}</h1>
           </div>
         </div>
 
@@ -312,31 +315,31 @@ export const Shelter = () => {
         <div className="flex flex-wrap gap-2">
           <Button variant={activeTab === "upgrades" ? "default" : "outline"} onClick={() => setActiveTab("upgrades")} className="flex items-center gap-2">
             <Home className="w-4 h-4" />
-            Улучшения
+            {t(language, 'shelter.upgrades')}
           </Button>
           <Button variant={activeTab === "crafting" ? "default" : "outline"} onClick={() => setActiveTab("crafting")} className="flex items-center gap-2" disabled={!isBuildingActive("workshop")}>
             <Hammer className="w-4 h-4" />
-            Крафт
-            {!isBuildingActive("workshop") && <span className="text-xs">(неактивно)</span>}
+            {t(language, 'shelter.crafting')}
+            {!isBuildingActive("workshop") && <span className="text-xs">({t(language, 'shelter.inactive')})</span>}
           </Button>
           <Button variant={activeTab === "barracks" ? "default" : "outline"} onClick={() => setActiveTab("barracks")} className="flex items-center gap-2" disabled={!isBuildingActive("barracks")}>
             <Shield className="w-4 h-4" />
-            Казармы
-            {!isBuildingActive("barracks") && <span className="text-xs">(неактивно)</span>}
+            {t(language, 'shelter.barracks')}
+            {!isBuildingActive("barracks") && <span className="text-xs">({t(language, 'shelter.inactive')})</span>}
           </Button>
           <Button variant={activeTab === "dragonlair" ? "default" : "outline"} onClick={() => setActiveTab("dragonlair")} className="flex items-center gap-2" disabled={!isBuildingActive("dragon_lair")}>
             <Flame className="w-4 h-4" />
-            Драконье Логово
-            {!isBuildingActive("dragon_lair") && <span className="text-xs">(неактивно)</span>}
+            {t(language, 'shelter.dragonLair')}
+            {!isBuildingActive("dragon_lair") && <span className="text-xs">({t(language, 'shelter.inactive')})</span>}
           </Button>
           <Button variant={activeTab === "medical" ? "default" : "outline"} onClick={() => setActiveTab("medical")} className="flex items-center gap-2" disabled={!isBuildingActive("medical")}>
             <Heart className="w-4 h-4" />
-            Медпункт
-            {!isBuildingActive("medical") && <span className="text-xs">(неактивно)</span>}
+            {t(language, 'shelter.medical')}
+            {!isBuildingActive("medical") && <span className="text-xs">({t(language, 'shelter.inactive')})</span>}
           </Button>
           <Button variant={activeTab === "workers" ? "default" : "outline"} onClick={() => setActiveTab("workers")} className="flex items-center gap-2">
             <Users className="w-4 h-4" />
-            Рабочие
+            {t(language, 'shelter.workers')}
           </Button>
         </div>
 

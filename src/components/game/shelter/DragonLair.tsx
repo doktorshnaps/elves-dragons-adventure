@@ -5,6 +5,8 @@ import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { useToast } from '@/hooks/use-toast';
 import { useGameData } from '@/hooks/useGameData';
+import { useLanguage } from '@/hooks/useLanguage';
+import { t } from '@/utils/translations';
 import { Card as CardType } from '@/types/cards';
 import { CardDisplay } from '../CardDisplay';
 
@@ -29,6 +31,7 @@ interface DragonLairProps {
 export const DragonLair: React.FC<DragonLairProps> = ({ lairLevel, onUpgradeBuilding }) => {
   const { toast } = useToast();
   const { gameData, updateGameData } = useGameData();
+  const { language } = useLanguage();
   const [currentTime, setCurrentTime] = useState(Date.now());
 
   // Initialize cards without passive regeneration
@@ -358,10 +361,10 @@ export const DragonLair: React.FC<DragonLairProps> = ({ lairLevel, onUpgradeBuil
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Flame className="w-5 h-5 text-orange-500" />
-            Доступные драконы для улучшения
+            {t(language, 'shelter.availableDragons')}
           </CardTitle>
           <CardDescription>
-            Выберите двух одинаковых драконов для улучшения
+            {t(language, 'shelter.selectTwoDragons')}
           </CardDescription>
         </CardHeader>
         <CardContent>

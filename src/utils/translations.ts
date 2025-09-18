@@ -113,6 +113,48 @@ export const translations = {
       rarity: 'Редкость',
       pet: 'Питомец',
       dragonEgg: 'Яйцо дракона'
+    },
+    // Shelter
+    shelter: {
+      title: 'Убежище',
+      upgrades: 'Улучшения',
+      crafting: 'Крафт',
+      barracks: 'Казармы',
+      dragonLair: 'Драконье Логово',
+      medical: 'Медпункт',
+      workers: 'Рабочие',
+      inactive: 'неактивно',
+      requiresWorkers: 'Требуются рабочие',
+      workersRequired: 'требуются рабочие для работы и улучшений',
+      maxLevel: 'Максимальный уровень',
+      upgrade: 'Улучшить',
+      create: 'Создать',
+      level: 'Уровень',
+      cost: 'Стоимость улучшения:',
+      wood: 'Дерево',
+      stone: 'Камень',
+      iron: 'Железо',
+      gold: 'Золото',
+      bonus: 'Бонус:',
+      buildingInactive: 'неактивно',
+      assignWorkers: 'Назначить рабочих',
+      availableHeroes: 'Доступные герои для улучшения',
+      availableDragons: 'Доступные драконы для улучшения',
+      selectTwoHeroes: 'Выберите двух одинаковых героев для улучшения',
+      selectTwoDragons: 'Выберите двух одинаковых драконов для улучшения',
+      upgradeBuilding: 'Улучшить здание',
+      buildingUpgraded: 'Здание улучшено!',
+      itemCreated: 'Предмет создан!',
+      created: 'Создан:'
+    },
+    // Grimoire
+    grimoire: {
+      title: 'Гримуар',
+      cards: 'Карты',
+      dungeons: 'Подземелья',
+      items: 'Предметы',
+      heroes: 'Герои',
+      pets: 'Питомцы'
     }
   },
   en: {
@@ -227,6 +269,48 @@ export const translations = {
       rarity: 'Rarity',
       pet: 'Pet',
       dragonEgg: 'Dragon Egg'
+    },
+    // Shelter
+    shelter: {
+      title: 'Shelter',
+      upgrades: 'Upgrades',
+      crafting: 'Crafting',
+      barracks: 'Barracks',
+      dragonLair: 'Dragon Lair',
+      medical: 'Medical Bay',
+      workers: 'Workers',
+      inactive: 'inactive',
+      requiresWorkers: 'Requires Workers',
+      workersRequired: 'workers required for operation and upgrades',
+      maxLevel: 'Maximum level',
+      upgrade: 'Upgrade',
+      create: 'Create',
+      level: 'Level',
+      cost: 'Upgrade cost:',
+      wood: 'Wood',
+      stone: 'Stone',
+      iron: 'Iron',
+      gold: 'Gold',
+      bonus: 'Bonus:',
+      buildingInactive: 'inactive',
+      assignWorkers: 'Assign Workers',
+      availableHeroes: 'Available heroes for upgrade',
+      availableDragons: 'Available dragons for upgrade',
+      selectTwoHeroes: 'Select two identical heroes for upgrade',
+      selectTwoDragons: 'Select two identical dragons for upgrade',
+      upgradeBuilding: 'Upgrade building',
+      buildingUpgraded: 'Building upgraded!',
+      itemCreated: 'Item created!',
+      created: 'Created:'
+    },
+    // Grimoire
+    grimoire: {
+      title: 'Grimoire',
+      cards: 'Cards',
+      dungeons: 'Dungeons',
+      items: 'Items',
+      heroes: 'Heroes',
+      pets: 'Pets'
     }
   }
 };

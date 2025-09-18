@@ -7,6 +7,7 @@ import { useShopInventory } from "@/hooks/useShopInventory";
 import { useWallet } from "@/hooks/useWallet";
 import { useLanguage } from "@/hooks/useLanguage";
 import { t } from "@/utils/translations";
+import { translateShopItemName, translateShopItemDescription } from "@/utils/shopTranslations";
 import { v4 as uuidv4 } from 'uuid';
 import { generateCard } from "@/utils/cardUtils";
 import { Item } from "@/types/inventory";

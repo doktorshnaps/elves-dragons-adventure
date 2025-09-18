@@ -5,9 +5,12 @@ import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ArrowLeft, Book, Swords, Package } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { useLanguage } from "@/hooks/useLanguage";
+import { t } from "@/utils/translations";
 
 const Grimoire = () => {
   const navigate = useNavigate();
+  const { language } = useLanguage();
 
   return (
     <div 
@@ -25,9 +28,9 @@ const Grimoire = () => {
           onClick={() => navigate('/menu')}
         >
           <ArrowLeft className="w-4 h-4 mr-2" />
-          Вернуться в меню
+          {t(language, 'common.backToMenu')}
         </Button>
-        <h1 className="text-2xl font-bold text-game-accent">Гримуар</h1>
+        <h1 className="text-2xl font-bold text-game-accent">{t(language, 'grimoire.title')}</h1>
       </div>
       
       <div className="flex-1 bg-game-surface/90 p-4 rounded-lg border border-game-accent backdrop-blur-sm overflow-y-auto">
@@ -38,21 +41,21 @@ const Grimoire = () => {
               className="data-[state=active]:bg-game-accent data-[state=active]:text-black flex items-center gap-2"
             >
               <Book className="w-4 h-4" />
-              Карты
+              {t(language, 'grimoire.cards')}
             </TabsTrigger>
             <TabsTrigger 
               value="dungeons" 
               className="data-[state=active]:bg-game-accent data-[state=active]:text-black flex items-center gap-2"
             >
               <Swords className="w-4 h-4" />
-              Подземелья
+              {t(language, 'grimoire.dungeons')}
             </TabsTrigger>
             <TabsTrigger 
               value="items" 
               className="data-[state=active]:bg-game-accent data-[state=active]:text-black flex items-center gap-2"
             >
               <Package className="w-4 h-4" />
-              Предметы
+              {t(language, 'grimoire.items')}
             </TabsTrigger>
           </TabsList>
           
