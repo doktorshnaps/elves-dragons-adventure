@@ -12,7 +12,7 @@ import { Card as CardType } from "@/types/cards";
 import { Item } from "@/types/inventory";
 
 
-export const Marketplace = () => {
+const Marketplace = () => {
   const [showListingDialog, setShowListingDialog] = useState(false);
   const { balance, updateBalance } = useBalanceState();
   const { toast } = useToast();
@@ -375,3 +375,5 @@ export const Marketplace = () => {
     </MarketplaceLayout>
   );
 };
+
+export default Marketplace;

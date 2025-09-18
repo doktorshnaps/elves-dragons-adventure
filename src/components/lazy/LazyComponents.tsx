@@ -45,7 +45,7 @@ export const LazyAdventuresPage = createLazyComponent(
 );
 
 export const LazyMarketplace = createLazyComponent(
-  () => import('@/pages/Marketplace').then(module => ({ default: module.Marketplace })),
+  () => import('@/pages/Marketplace'),
   { 
     fallback: <div className="p-4">Загрузка торговой площадки...</div>,
     preload: false 
