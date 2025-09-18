@@ -228,7 +228,7 @@ export const WorkersManagement = ({ onSpeedBoostChange }: WorkersManagementProps
             <div className="flex items-center gap-2 p-3 bg-green-50 dark:bg-green-950/20 rounded-lg">
               <Zap className="w-4 h-4 text-green-600" />
               <span className="text-sm text-green-700 dark:text-green-400">
-                Все здания работают быстрее благодаря рабочим!
+                {t(language, 'shelter.workersBoostActive')}
               </span>
             </div>
           )}
