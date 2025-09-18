@@ -86,15 +86,15 @@ export const WorkersManagement = ({ onSpeedBoostChange }: WorkersManagementProps
   // Синхронизируем изменения с базой данных
   useEffect(() => {
     // Обновляем базу данных при изменении активных рабочих
-    if (gameData.activeWorkers !== undefined && 
-        JSON.stringify(activeWorkers) !== JSON.stringify(gameData.activeWorkers)) {
+    if (activeWorkers.length > 0 || gameData.activeWorkers?.length > 0) {
+      updateActiveWorkersInDB(activeWorkers);
       updateGameData({ activeWorkers });
     }
     
     // Вычисляем общее ускорение
     const totalBoost = activeWorkers.reduce((sum, worker) => sum + worker.speedBoost, 0);
     onSpeedBoostChange?.(totalBoost);
-  }, [activeWorkers, onSpeedBoostChange, gameData.activeWorkers, updateGameData]);
+  }, [activeWorkers, onSpeedBoostChange]);
 
   // Проверяем завершенных рабочих каждую секунду
   useEffect(() => {
@@ -117,6 +117,8 @@ export const WorkersManagement = ({ onSpeedBoostChange }: WorkersManagementProps
         // Обновляем базу данных если список изменился
         if (stillWorking.length !== prev.length) {
           updateActiveWorkersInDB(stillWorking);
+          updateGameData({ activeWorkers: stillWorking });
+          console.log('🔄 Updated active workers after completion:', stillWorking);
         }
         
         return stillWorking;
@@ -124,7 +126,7 @@ export const WorkersManagement = ({ onSpeedBoostChange }: WorkersManagementProps
     }, 1000);
 
     return () => clearInterval(interval);
-  }, [toast, buildings]);
+  }, [toast, buildings, deleteCardInstance, updateGameData]);
 
   const assignWorker = async (worker: any) => {
     if (!worker.stats?.workDuration) return;
@@ -140,16 +142,30 @@ export const WorkersManagement = ({ onSpeedBoostChange }: WorkersManagementProps
       building: selectedBuilding
     };
 
-    setActiveWorkers(prev => [...prev, newActiveWorker]);
-
-    // Обновляем активных рабочих в базе данных
     const updatedActiveWorkers = [...activeWorkers, newActiveWorker];
-    await updateActiveWorkersInDB(updatedActiveWorkers);
+    setActiveWorkers(updatedActiveWorkers);
 
-    toast({
-      title: "Рабочий назначен",
-      description: `${worker.name} приступил к работе в здании "${buildings.find(b => b.id === selectedBuilding)?.name}"`,
-    });
+    // Сразу обновляем состояние игры и базу данных
+    try {
+      await updateGameData({ activeWorkers: updatedActiveWorkers });
+      await updateActiveWorkersInDB(updatedActiveWorkers);
+      
+      console.log('✅ Worker assigned and saved:', newActiveWorker);
+      
+      toast({
+        title: "Рабочий назначен",
+        description: `${worker.name} приступил к работе в здании "${buildings.find(b => b.id === selectedBuilding)?.name}"`,
+      });
+    } catch (error) {
+      console.error('❌ Failed to save worker assignment:', error);
+      // Откатываем изменения при ошибке
+      setActiveWorkers(activeWorkers);
+      toast({
+        title: "Ошибка",
+        description: "Не удалось назначить рабочего. Попробуйте снова.",
+        variant: "destructive"
+      });
+    }
   };
 
   const formatTime = (ms: number) => {
