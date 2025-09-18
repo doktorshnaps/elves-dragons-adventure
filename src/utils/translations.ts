@@ -112,7 +112,8 @@ export const translations = {
       health: 'Здоровье',
       rarity: 'Редкость',
       pet: 'Питомец',
-      dragonEgg: 'Яйцо дракона'
+      dragonEgg: 'Яйцо дракона',
+      faction: 'Фракция'
     },
     // Shelter
     shelter: {
@@ -328,7 +329,8 @@ export const translations = {
       health: 'Health',
       rarity: 'Rarity',
       pet: 'Pet',
-      dragonEgg: 'Dragon Egg'
+      dragonEgg: 'Dragon Egg',
+      faction: 'Faction'
     },
     // Shelter
     shelter: {

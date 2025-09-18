@@ -168,3 +168,27 @@ export const translateFaction = (language: Language, faction: string): string =>
 export const translateCardType = (language: Language, type: string): string => {
   return cardTranslations[language][type] || type;
 };
+
+// Descriptions mapping (extend as needed)
+export const cardDescriptionTranslations: Record<Language, Record<string, string>> = {
+  ru: {
+    "Начинающий воин, только познающий основы боевого искусства.": "Начинающий воин, только познающий основы боевого искусства.",
+    "Опытный защитник, специализирующийся на обороне.": "Опытный защитник, специализирующийся на обороне.",
+    "Простой ледяной дракон Каледора.": "Простой ледяной дракон Каледора.",
+    "Улучшенный ледяной дракон Каледора.": "Улучшенный ледяной дракон Каледора.",
+    "Простой песчаный дракон Сильванести.": "Простой песчаный дракон Сильванести.",
+    "Улучшенный песчаный дракон Сильванести.": "Улучшенный песчаный дракон Сильванести."
+  },
+  en: {
+    "Начинающий воин, только познающий основы боевого искусства.": "A novice warrior just learning the basics of combat.",
+    "Опытный защитник, специализирующийся на обороне.": "An experienced defender specializing in defense.",
+    "Простой ледяной дракон Каледора.": "A simple ice dragon of Kaledor.",
+    "Улучшенный ледяной дракон Каледора.": "An improved ice dragon of Kaledor.",
+    "Простой песчаный дракон Сильванести.": "A simple sand dragon of Sylvanesti.",
+    "Улучшенный песчаный дракон Сильванести.": "An improved sand dragon of Sylvanesti."
+  }
+};
+
+export const translateCardDescription = (language: Language, description: string): string => {
+  return cardDescriptionTranslations[language][description] || description;
+};
