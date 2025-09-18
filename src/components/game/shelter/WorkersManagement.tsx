@@ -5,7 +5,8 @@ import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { useGameData } from "@/hooks/useGameData";
 import { useToast } from "@/hooks/use-toast";
-
+import { useLanguage } from "@/hooks/useLanguage";
+import { t } from "@/utils/translations";
 
 import { Users, Clock, Zap, AlertTriangle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
@@ -27,6 +28,7 @@ interface WorkersManagementProps {
 
 export const WorkersManagement = ({ onSpeedBoostChange }: WorkersManagementProps) => {
   const { gameData, updateGameData } = useGameData();
+  const { language } = useLanguage();
   
   const { toast } = useToast();
   const [activeWorkers, setActiveWorkers] = useState<ActiveWorker[]>([]);
@@ -49,16 +51,16 @@ export const WorkersManagement = ({ onSpeedBoostChange }: WorkersManagementProps
       console.error('Error updating active workers:', error);
     }
   };
-
+  
   const buildings = [
-    { id: "main_hall", name: "Главный зал" },
-    { id: "workshop", name: "Мастерская" },
-    { id: "storage", name: "Склад" },
-    { id: "sawmill", name: "Лесопилка" },
-    { id: "quarry", name: "Каменоломня" },
-    { id: "barracks", name: "Казармы" },
-    { id: "dragon_lair", name: "Драконье Логово" },
-    { id: "medical", name: "Медицинский блок" }
+    { id: "main_hall", name: t(language, 'shelter.mainHall') },
+    { id: "workshop", name: t(language, 'shelter.workshop') },
+    { id: "storage", name: t(language, 'shelter.storage') },
+    { id: "sawmill", name: t(language, 'shelter.sawmill') },
+    { id: "quarry", name: t(language, 'shelter.quarry') },
+    { id: "barracks", name: t(language, 'shelter.barracksBuilding') },
+    { id: "dragon_lair", name: t(language, 'shelter.dragonLairBuilding') },
+    { id: "medical", name: t(language, 'shelter.medicalBuilding') }
   ];
 
   // Получаем рабочих из card_instances
@@ -156,19 +158,19 @@ export const WorkersManagement = ({ onSpeedBoostChange }: WorkersManagementProps
          console.warn('⚠️ Could not find matching worker in inventory to remove');
        }
        
+        toast({
+          title: t(language, 'shelter.workerAssigned'),
+          description: `${worker.name} ${t(language, 'shelter.workerAssignedDesc')} "${buildings.find(b => b.id === selectedBuilding)?.name}"`,
+        });
+      } catch (error) {
+       console.error('❌ Failed to save worker assignment:', error);
+       // Откатываем изменения при ошибке
+       setActiveWorkers(activeWorkers);
        toast({
-         title: "Рабочий назначен",
-         description: `${worker.name} приступил к работе в здании "${buildings.find(b => b.id === selectedBuilding)?.name}"`,
+         title: t(language, 'shelter.error'),
+         description: t(language, 'shelter.failedToAssign'),
+         variant: "destructive"
        });
-     } catch (error) {
-      console.error('❌ Failed to save worker assignment:', error);
-      // Откатываем изменения при ошибке
-      setActiveWorkers(activeWorkers);
-      toast({
-        title: "Ошибка",
-        description: "Не удалось назначить рабочего. Попробуйте снова.",
-        variant: "destructive"
-      });
     }
   };
 
@@ -200,10 +202,10 @@ export const WorkersManagement = ({ onSpeedBoostChange }: WorkersManagementProps
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Users className="w-5 h-5" />
-            Управление рабочими
+            {t(language, 'shelter.workersInfo')}
           </CardTitle>
           <CardDescription>
-            Назначайте рабочих на здания для ускорения их работы
+            {t(language, 'shelter.hireWorkers')}
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -211,13 +213,13 @@ export const WorkersManagement = ({ onSpeedBoostChange }: WorkersManagementProps
             <div className="flex items-center gap-2">
               <Zap className="w-4 h-4 text-yellow-500" />
               <span className="text-sm font-medium">
-                Общее ускорение: +{totalSpeedBoost}%
+                {t(language, 'shelter.totalSpeedBoost')}: +{totalSpeedBoost}%
               </span>
             </div>
             <div className="flex items-center gap-2">
               <Clock className="w-4 h-4 text-blue-500" />
               <span className="text-sm text-muted-foreground">
-                Активных рабочих: {activeWorkers.length}
+                {t(language, 'shelter.activeWorkers')}: {activeWorkers.length}
               </span>
             </div>
           </div>
@@ -236,16 +238,16 @@ export const WorkersManagement = ({ onSpeedBoostChange }: WorkersManagementProps
       {/* Назначение новых рабочих */}
       <Card>
         <CardHeader>
-          <CardTitle>Назначить рабочего</CardTitle>
+          <CardTitle>{t(language, 'shelter.assignWorker')}</CardTitle>
           <CardDescription>
-            Выберите здание и назначьте рабочего. После назначения отменить нельзя!
+            {t(language, 'shelter.assignWorkerDesc')}
           </CardDescription>
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
             {/* Выбор здания */}
             <div>
-              <label className="text-sm font-medium mb-2 block">Здание:</label>
+              <label className="text-sm font-medium mb-2 block">{t(language, 'shelter.building')}</label>
               <div className="grid grid-cols-2 gap-2">
                 {buildings.map(building => (
                   <Button
@@ -263,12 +265,12 @@ export const WorkersManagement = ({ onSpeedBoostChange }: WorkersManagementProps
 
             {/* Доступные рабочие */}
             <div>
-              <label className="text-sm font-medium mb-2 block">Доступные рабочие:</label>
+              <label className="text-sm font-medium mb-2 block">{t(language, 'shelter.availableWorkers')}</label>
               {availableWorkers.length === 0 ? (
                 <div className="text-center py-8 text-muted-foreground">
                   <Users className="w-12 h-12 mx-auto mb-2 opacity-50" />
-                  <p>У вас нет рабочих в инвентаре</p>
-                  <p className="text-sm">Купите их в Магическом магазине</p>
+                  <p>{t(language, 'shelter.noWorkersInInventory')}</p>
+                  <p className="text-sm">{t(language, 'shelter.buyWorkersInShop')}</p>
                 </div>
               ) : (
                 <div className="grid gap-3">
@@ -288,7 +290,7 @@ export const WorkersManagement = ({ onSpeedBoostChange }: WorkersManagementProps
                         size="sm"
                         className="shrink-0"
                       >
-                        Назначить
+                        {t(language, 'shelter.assignButton')}
                       </Button>
                     </div>
                   ))}
@@ -300,8 +302,7 @@ export const WorkersManagement = ({ onSpeedBoostChange }: WorkersManagementProps
               <div className="flex items-start gap-2 p-3 bg-amber-50 dark:bg-amber-950/20 rounded-lg">
                 <AlertTriangle className="w-4 h-4 text-amber-600 mt-0.5 shrink-0" />
                 <div className="text-sm text-amber-700 dark:text-amber-400">
-                  <strong>Внимание:</strong> После назначения рабочего на здание отменить это действие нельзя. 
-                  По окончанию работы рабочий исчезнет навсегда.
+                  <strong>{t(language, 'shelter.warningTitle')}</strong> {t(language, 'shelter.warningText')}
                 </div>
               </div>
             )}
@@ -313,7 +314,7 @@ export const WorkersManagement = ({ onSpeedBoostChange }: WorkersManagementProps
       {activeWorkers.length > 0 && (
         <Card>
           <CardHeader>
-            <CardTitle>Активные рабочие</CardTitle>
+            <CardTitle>{t(language, 'shelter.activeWorkers')}</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
@@ -323,7 +324,7 @@ export const WorkersManagement = ({ onSpeedBoostChange }: WorkersManagementProps
                     <div>
                       <h4 className="font-medium">{worker.name}</h4>
                       <p className="text-sm text-muted-foreground">
-                        {buildings.find(b => b.id === worker.building)?.name} • +{worker.speedBoost}% ускорение
+                        {buildings.find(b => b.id === worker.building)?.name} • +{worker.speedBoost}% {t(language, 'shelter.speedBoost')}
                       </p>
                     </div>
                     <Badge variant="secondary">

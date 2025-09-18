@@ -182,7 +182,29 @@ export const translations = {
       leatherArmorResult: 'Кожаная броня (+10 защита)',
       healthPotion: 'Зелье здоровья',
       healthPotionDesc: 'Восстанавливает здоровье',
-      healthPotionResult: 'Зелье здоровья (+50 HP)'
+      healthPotionResult: 'Зелье здоровья (+50 HP)',
+      // Workers management
+      workersInfo: 'Информация о рабочих',
+      totalSpeedBoost: 'Общий бонус к скорости',
+      noActiveWorkers: 'У вас нет активных рабочих',
+      hireWorkers: 'Наймите рабочих для ускорения работы зданий',
+      assignWorker: 'Назначить рабочего',
+      assignWorkerDesc: 'Выберите здание и назначьте рабочего. После назначения отменить нельзя!',
+      building: 'Здание:',
+      availableWorkers: 'Доступные рабочие:',
+      noWorkersInInventory: 'У вас нет рабочих в инвентаре',
+      buyWorkersInShop: 'Купите их в Магическом магазине',
+      assignButton: 'Назначить',
+      warningTitle: 'Внимание:',
+      warningText: 'После назначения рабочего на здание отменить это действие нельзя. По окончанию работы рабочий исчезнет навсегда.',
+      activeWorkers: 'Активные рабочие',
+      timeLeft: 'Осталось времени:',
+      workingAt: 'Работает в здании:',
+      speedBoost: 'Ускорение:',
+      workerAssigned: 'Рабочий назначен',
+      workerAssignedDesc: 'приступил к работе в здании',
+      error: 'Ошибка',
+      failedToAssign: 'Не удалось назначить рабочего. Попробуйте снова.'
     },
     // Grimoire
     grimoire: {
@@ -375,7 +397,29 @@ export const translations = {
       leatherArmorResult: 'Leather Armor (+10 defense)',
       healthPotion: 'Health Potion',
       healthPotionDesc: 'Restores health',
-      healthPotionResult: 'Health Potion (+50 HP)'
+      healthPotionResult: 'Health Potion (+50 HP)',
+      // Workers management
+      workersInfo: 'Workers Information',
+      totalSpeedBoost: 'Total Speed Boost',
+      noActiveWorkers: 'You have no active workers',
+      hireWorkers: 'Hire workers to speed up building operations',
+      assignWorker: 'Assign Worker',
+      assignWorkerDesc: 'Select a building and assign a worker. Cannot be undone after assignment!',
+      building: 'Building:',
+      availableWorkers: 'Available Workers:',
+      noWorkersInInventory: 'You have no workers in inventory',
+      buyWorkersInShop: 'Buy them in the Magic Shop',
+      assignButton: 'Assign',
+      warningTitle: 'Warning:',
+      warningText: 'After assigning a worker to a building, this action cannot be undone. The worker will disappear forever after completing work.',
+      activeWorkers: 'Active Workers',
+      timeLeft: 'Time left:',
+      workingAt: 'Working at building:',
+      speedBoost: 'Speed boost:',
+      workerAssigned: 'Worker assigned',
+      workerAssignedDesc: 'started working at building',
+      error: 'Error',
+      failedToAssign: 'Failed to assign worker. Please try again.'
     },
     // Grimoire
     grimoire: {
