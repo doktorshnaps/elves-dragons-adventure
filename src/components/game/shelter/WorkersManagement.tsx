@@ -42,22 +42,25 @@ export const WorkersManagement = ({ onSpeedBoostChange }: WorkersManagementProps
     (item: Item) => item.type === "worker"
   );
 
-  // Загружаем активных рабочих из localStorage
+  // Загружаем активных рабочих из gameData
   useEffect(() => {
-    const saved = localStorage.getItem('active_workers');
-    if (saved) {
-      setActiveWorkers(JSON.parse(saved));
+    if (gameData.activeWorkers) {
+      setActiveWorkers(gameData.activeWorkers);
     }
-  }, []);
+  }, [gameData.activeWorkers]);
 
-  // Сохраняем активных рабочих в localStorage
+  // Синхронизируем изменения с базой данных
   useEffect(() => {
-    localStorage.setItem('active_workers', JSON.stringify(activeWorkers));
+    // Обновляем базу данных при изменении активных рабочих
+    if (gameData.activeWorkers !== undefined && 
+        JSON.stringify(activeWorkers) !== JSON.stringify(gameData.activeWorkers)) {
+      updateGameData({ activeWorkers });
+    }
     
     // Вычисляем общее ускорение
     const totalBoost = activeWorkers.reduce((sum, worker) => sum + worker.speedBoost, 0);
     onSpeedBoostChange?.(totalBoost);
-  }, [activeWorkers, onSpeedBoostChange]);
+  }, [activeWorkers, onSpeedBoostChange, gameData.activeWorkers, updateGameData]);
 
   // Проверяем завершенных рабочих каждую секунду
   useEffect(() => {

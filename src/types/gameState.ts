@@ -14,6 +14,7 @@ export interface GameData {
   dragonLairUpgrades: any[];
   accountLevel: number;
   accountExperience: number;
+  activeWorkers: any[];
 }
 
 export interface GameStateActions {

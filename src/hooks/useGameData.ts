@@ -21,6 +21,7 @@ interface GameData {
   dragonLairUpgrades?: any[];
   accountLevel?: number;
   accountExperience?: number;
+  activeWorkers?: any[];
 }
 
 export const useGameData = () => {
@@ -39,7 +40,8 @@ export const useGameData = () => {
     battleState: null,
     selectedTeam: [],
     barracksUpgrades: [],
-    dragonLairUpgrades: []
+    dragonLairUpgrades: [],
+    activeWorkers: []
   });
   const [loading, setLoading] = useState(true);
   const [currentWallet, setCurrentWallet] = useState<string | null>(localStorage.getItem('walletAccountId'));
@@ -96,7 +98,8 @@ export const useGameData = () => {
           barracksUpgrades: (gameRecord.barracks_upgrades as any[]) || [],
           dragonLairUpgrades: (gameRecord.dragon_lair_upgrades as any[]) || [],
           accountLevel: gameRecord.account_level ?? 1,
-          accountExperience: gameRecord.account_experience ?? 0
+          accountExperience: gameRecord.account_experience ?? 0,
+          activeWorkers: (gameRecord.active_workers as any[]) || []
         };
         
         setGameData(newGameData);
@@ -165,7 +168,8 @@ export const useGameData = () => {
         p_adventure_current_monster: updates.adventureCurrentMonster as any,
         p_battle_state: updates.battleState as any,
         p_barracks_upgrades: updates.barracksUpgrades as any,
-        p_dragon_lair_upgrades: updates.dragonLairUpgrades as any
+        p_dragon_lair_upgrades: updates.dragonLairUpgrades as any,
+        p_active_workers: updates.activeWorkers as any
       });
 
       if (error) {
