@@ -99,7 +99,7 @@ serve(async (req) => {
         .insert({
           wallet_address: wallet_address,
           card_template_id: cardData.id,
-          card_type: 'workers',
+          card_type: 'hero', // Используем 'hero' вместо 'workers' так как это единственный поддерживаемый тип для рабочих
           current_health: cardData.health,
           max_health: cardData.health,
           card_data: cardData
