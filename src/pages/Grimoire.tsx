@@ -1,8 +1,9 @@
 import { CardsInfo } from "@/components/game/CardsInfo";
 import { DungeonInfo } from "@/components/game/DungeonInfo";
+import { ItemsInfo } from "@/components/game/ItemsInfo";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ArrowLeft, Book, Swords } from "lucide-react";
+import { ArrowLeft, Book, Swords, Package } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
 export const Grimoire = () => {
@@ -31,7 +32,7 @@ export const Grimoire = () => {
       
       <div className="flex-1 bg-game-surface/90 p-4 rounded-lg border border-game-accent backdrop-blur-sm overflow-y-auto">
         <Tabs defaultValue="cards" className="w-full h-full">
-          <TabsList className="grid w-full grid-cols-2 bg-game-surface/50 border border-game-accent/30 mb-6">
+          <TabsList className="grid w-full grid-cols-3 bg-game-surface/50 border border-game-accent/30 mb-6">
             <TabsTrigger 
               value="cards" 
               className="data-[state=active]:bg-game-accent data-[state=active]:text-black flex items-center gap-2"
@@ -46,6 +47,13 @@ export const Grimoire = () => {
               <Swords className="w-4 h-4" />
               Подземелья
             </TabsTrigger>
+            <TabsTrigger 
+              value="items" 
+              className="data-[state=active]:bg-game-accent data-[state=active]:text-black flex items-center gap-2"
+            >
+              <Package className="w-4 h-4" />
+              Предметы
+            </TabsTrigger>
           </TabsList>
           
           <TabsContent value="cards" className="mt-0 h-full">
@@ -54,6 +62,10 @@ export const Grimoire = () => {
           
           <TabsContent value="dungeons" className="mt-0 h-full">
             <DungeonInfo />
+          </TabsContent>
+          
+          <TabsContent value="items" className="mt-0 h-full">
+            <ItemsInfo />
           </TabsContent>
         </Tabs>
       </div>

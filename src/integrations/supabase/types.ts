@@ -212,6 +212,63 @@ export type Database = {
         }
         Relationships: []
       }
+      item_templates: {
+        Row: {
+          created_at: string
+          description: string | null
+          drop_chance: number | null
+          id: number
+          image_url: string | null
+          item_id: string
+          level_requirement: number | null
+          name: string
+          rarity: string
+          slot: string | null
+          source_details: Json | null
+          source_type: string
+          stats: Json | null
+          type: string
+          updated_at: string
+          value: number | null
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          drop_chance?: number | null
+          id?: number
+          image_url?: string | null
+          item_id: string
+          level_requirement?: number | null
+          name: string
+          rarity: string
+          slot?: string | null
+          source_details?: Json | null
+          source_type: string
+          stats?: Json | null
+          type: string
+          updated_at?: string
+          value?: number | null
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          drop_chance?: number | null
+          id?: number
+          image_url?: string | null
+          item_id?: string
+          level_requirement?: number | null
+          name?: string
+          rarity?: string
+          slot?: string | null
+          source_details?: Json | null
+          source_type?: string
+          stats?: Json | null
+          type?: string
+          updated_at?: string
+          value?: number | null
+        }
+        Relationships: []
+      }
       marketplace_listings: {
         Row: {
           buyer_id: string | null
