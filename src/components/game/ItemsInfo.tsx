@@ -7,6 +7,28 @@ import { HoverCard, HoverCardContent, HoverCardTrigger } from "@/components/ui/h
 import { Sword, Shield, Gem, Heart, Hammer, Trophy, Coins } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
 
+// Import item images
+import spiderSilk from "@/assets/items/spider_silk.png";
+import spiderPoison from "@/assets/items/spider_poison.jpg";
+import spiderFang from "@/assets/items/spider_fang.png";
+import spiderEye from "@/assets/items/spider_eye.png";
+import chelicerae from "@/assets/items/chelicerae.png";
+import chitinFragment from "@/assets/items/chitin_fragment.png";
+import spiderLimbs from "@/assets/items/spider_limbs.png";
+import spiderTendons from "@/assets/items/spider_tendons.png";
+import poisonGland from "@/assets/items/poison_gland.png";
+import spiderEggs from "@/assets/items/spider_eggs.png";
+import skeletonSpiderBone from "@/assets/items/skeleton_spider_bone.png";
+import illusionPollen from "@/assets/items/illusion_pollen.png";
+import wyvernWing from "@/assets/items/wyvern_wing.png";
+import hunterClaw from "@/assets/items/hunter_claw.png";
+import silkCore from "@/assets/items/silk_core.png";
+import enhancedGuardianChitin from "@/assets/items/enhanced_guardian_chitin.png";
+import queenLarvaStinger from "@/assets/items/queen_larva_stinger.png";
+import concentratedPoisonGland from "@/assets/items/concentrated_poison_gland.png";
+import ancientHermitEye from "@/assets/items/ancient_hermit_eye.png";
+import shadowWebGland from "@/assets/items/shadow_web_gland.png";
+
 interface ItemTemplate {
   id: number;
   item_id: string;
@@ -21,6 +43,7 @@ interface ItemTemplate {
   slot: string;
   level_requirement: number;
   value: number;
+  image_url?: string;
 }
 
 const getRarityColor = (rarity: string) => {
@@ -55,10 +78,40 @@ const getSourceIcon = (sourceType: string) => {
 const getSourceLabel = (sourceType: string) => {
   switch (sourceType) {
     case 'monster_drop': return 'Добыча с монстров';
+    case 'boss_drop': return 'Добыча с боссов';
     case 'craft': return 'Крафт';
+    case 'crafting': return 'Крафт';
     case 'quest_reward': return 'Награда за квест';
     default: return 'Неизвестно';
   }
+};
+
+// Map item IDs to imported images
+const getItemImage = (itemId: string): string | null => {
+  const imageMap: Record<string, string> = {
+    spider_silk: spiderSilk,
+    spider_poison_small: spiderPoison,
+    spider_fang: spiderFang,
+    spider_eye: spiderEye,
+    chelicerae: chelicerae,
+    chitin_fragment: chitinFragment,
+    spider_limbs: spiderLimbs,
+    spider_tendons: spiderTendons,
+    poison_gland: poisonGland,
+    spider_eggs: spiderEggs,
+    skeleton_spider_bone: skeletonSpiderBone,
+    illusion_pollen: illusionPollen,
+    wyvern_wing: wyvernWing,
+    hunter_claw: hunterClaw,
+    silk_core: silkCore,
+    enhanced_guardian_chitin: enhancedGuardianChitin,
+    queen_larva_stinger: queenLarvaStinger,
+    concentrated_poison_gland: concentratedPoisonGland,
+    ancient_hermit_eye: ancientHermitEye,
+    shadow_web_gland: shadowWebGland,
+  };
+  
+  return imageMap[itemId] || null;
 };
 
 const ItemCard = ({ item }: { item: ItemTemplate }) => {
@@ -101,9 +154,21 @@ const ItemCard = ({ item }: { item: ItemTemplate }) => {
 
   const CardContent = () => (
     <Card className="p-2 bg-game-background border-game-accent hover:border-game-primary transition-all duration-300 h-full">
-      {/* Placeholder image area - можно добавить изображения предметов позже */}
       <div className="w-full aspect-[3/4] mb-2 rounded-lg overflow-hidden flex items-center justify-center bg-game-surface/30 border border-game-accent/20">
-        <div className="text-game-accent opacity-50">
+        {getItemImage(item.item_id) ? (
+          <img 
+            src={getItemImage(item.item_id)!} 
+            alt={item.name}
+            className="w-full h-full object-cover"
+            onError={(e) => {
+              // Fallback to icon if image fails to load
+              const target = e.target as HTMLImageElement;
+              target.style.display = 'none';
+              target.nextElementSibling?.classList.remove('hidden');
+            }}
+          />
+        ) : null}
+        <div className={`text-game-accent opacity-50 ${getItemImage(item.item_id) ? 'hidden' : ''}`}>
           {getTypeIcon(item.type)}
         </div>
       </div>
@@ -170,7 +235,20 @@ const ItemCard = ({ item }: { item: ItemTemplate }) => {
   const ExpandedCardContent = () => (
     <Card className="p-4 bg-game-background border-game-accent w-80 max-w-sm">
       <div className="w-full aspect-[3/4] mb-4 rounded-lg overflow-hidden flex items-center justify-center bg-game-surface/30 border border-game-accent/20">
-        <div className="text-game-accent opacity-50 text-4xl">
+        {getItemImage(item.item_id) ? (
+          <img 
+            src={getItemImage(item.item_id)!} 
+            alt={item.name}
+            className="w-full h-full object-cover"
+            onError={(e) => {
+              // Fallback to icon if image fails to load
+              const target = e.target as HTMLImageElement;
+              target.style.display = 'none';
+              target.nextElementSibling?.classList.remove('hidden');
+            }}
+          />
+        ) : null}
+        <div className={`text-game-accent opacity-50 text-4xl ${getItemImage(item.item_id) ? 'hidden' : ''}`}>
           {getTypeIcon(item.type)}
         </div>
       </div>
