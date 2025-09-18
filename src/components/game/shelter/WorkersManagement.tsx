@@ -5,8 +5,8 @@ import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { useGameData } from "@/hooks/useGameData";
 import { useToast } from "@/hooks/use-toast";
-import { useCardInstances } from "@/hooks/useCardInstances";
-import { Item } from "@/types/inventory";
+
+
 import { Users, Clock, Zap, AlertTriangle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -27,7 +27,7 @@ interface WorkersManagementProps {
 
 export const WorkersManagement = ({ onSpeedBoostChange }: WorkersManagementProps) => {
   const { gameData, updateGameData } = useGameData();
-  const { cardInstances, deleteCardInstance } = useCardInstances();
+  
   const { toast } = useToast();
   const [activeWorkers, setActiveWorkers] = useState<ActiveWorker[]>([]);
   const [selectedBuilding, setSelectedBuilding] = useState<string>("main_hall");
@@ -61,20 +61,17 @@ export const WorkersManagement = ({ onSpeedBoostChange }: WorkersManagementProps
   ];
 
   // Получаем рабочих из card_instances
-  const availableWorkers = cardInstances.filter(
-    instance => instance.card_type === "workers"
-  ).map(instance => {
-    const cardData = instance.card_data as any;
-    return {
-      id: instance.id,
-      name: cardData.name || 'Рабочий',
-      description: cardData.description || '',
-      type: cardData.type || 'worker',
-      value: cardData.value || 0,
-      stats: cardData.stats || {},
-      image: cardData.image
-    };
-  });
+  const availableWorkers = (gameData.inventory || [])
+    .filter((item: any) => item?.type === 'worker')
+    .map((item: any, index: number) => ({
+      id: item.id ?? `worker_${index}_${item.name}`,
+      name: item.name || 'Рабочий',
+      description: item.description || '',
+      type: item.type || 'worker',
+      value: item.value || 0,
+      stats: item.stats || {},
+      image: item.image
+    }));
 
   // Загружаем активных рабочих из gameData
   useEffect(() => {
@@ -96,29 +93,28 @@ export const WorkersManagement = ({ onSpeedBoostChange }: WorkersManagementProps
       setActiveWorkers(prev => {
         const stillWorking = prev.filter(worker => {
           const isFinished = now >= worker.startTime + worker.duration;
-          if (isFinished) {
-            // Удаляем card_instance рабочего из базы данных
-            deleteCardInstance(worker.cardInstanceId);
-            toast({
-              title: "Работа завершена",
-              description: `${worker.name} завершил работу в здании "${buildings.find(b => b.id === worker.building)?.name}" и исчез`,
-            });
-          }
+           if (isFinished) {
+             toast({
+               title: "Работа завершена",
+               description: `${worker.name} завершил работу в здании "${buildings.find(b => b.id === worker.building)?.name}" и исчез`,
+             });
+           }
           return !isFinished;
         });
         
-        // Обновляем базу данных если список изменился
-        if (stillWorking.length !== prev.length) {
-          updateGameData({ activeWorkers: stillWorking });
-          console.log('🔄 Updated active workers after completion:', stillWorking);
-        }
+         // Обновляем базу данных если список изменился
+         if (stillWorking.length !== prev.length) {
+           updateActiveWorkersInDB(stillWorking);
+           updateGameData({ activeWorkers: stillWorking });
+           console.log('🔄 Updated active workers after completion:', stillWorking);
+         }
         
         return stillWorking;
       });
     }, 1000);
 
     return () => clearInterval(interval);
-  }, [toast, buildings, deleteCardInstance, updateGameData]);
+  }, [toast, buildings, updateGameData]);
 
   const assignWorker = async (worker: any) => {
     if (!worker.stats?.workDuration) return;
@@ -137,24 +133,33 @@ export const WorkersManagement = ({ onSpeedBoostChange }: WorkersManagementProps
     const updatedActiveWorkers = [...activeWorkers, newActiveWorker];
 
     // Сразу обновляем состояние игры и базу данных
-    try {
-      // Обновляем локальное состояние
-      setActiveWorkers(updatedActiveWorkers);
-      
-      // Обновляем game_data с новыми активными рабочими
-      await updateGameData({ activeWorkers: updatedActiveWorkers });
-      
-      // Удаляем рабочего из инвентаря (card_instances)
-      await deleteCardInstance(worker.id);
-      
-      console.log('✅ Worker assigned and saved:', newActiveWorker);
-      console.log('🔄 Worker removed from inventory:', worker.id);
-      
-      toast({
-        title: "Рабочий назначен",
-        description: `${worker.name} приступил к работе в здании "${buildings.find(b => b.id === selectedBuilding)?.name}"`,
-      });
-    } catch (error) {
+     try {
+       // Обновляем локальное состояние
+       setActiveWorkers(updatedActiveWorkers);
+
+       // Формируем новый инвентарь без одного назначенного рабочего
+       const currentInventory = (gameData.inventory || []) as any[];
+       const removeIndex = currentInventory.findIndex((i: any) => i?.type === 'worker' && (i.id === worker.id || (i.name === worker.name && i.value === worker.value && (i.stats?.workDuration ?? null) === (worker.stats?.workDuration ?? null))));
+       const updatedInventory = removeIndex >= 0 ? currentInventory.filter((_, idx) => idx !== removeIndex) : currentInventory;
+
+       // Сохраняем активных рабочих напрямую в БД (RPC не поддерживает это поле)
+       await updateActiveWorkersInDB(updatedActiveWorkers);
+
+       // Обновляем game_data с новыми активными рабочими и инвентарем
+       await updateGameData({ activeWorkers: updatedActiveWorkers, inventory: updatedInventory });
+       
+       console.log('✅ Worker assigned and saved:', newActiveWorker);
+       if (removeIndex >= 0) {
+         console.log('🧹 Worker removed from inventory at index:', removeIndex);
+       } else {
+         console.warn('⚠️ Could not find matching worker in inventory to remove');
+       }
+       
+       toast({
+         title: "Рабочий назначен",
+         description: `${worker.name} приступил к работе в здании "${buildings.find(b => b.id === selectedBuilding)?.name}"`,
+       });
+     } catch (error) {
       console.error('❌ Failed to save worker assignment:', error);
       // Откатываем изменения при ошибке
       setActiveWorkers(activeWorkers);
