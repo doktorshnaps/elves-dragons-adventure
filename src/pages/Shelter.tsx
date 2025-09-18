@@ -46,6 +46,16 @@ export const Shelter = () => {
   // Получаем активных рабочих из gameData
   const activeWorkers = gameData.activeWorkers || [];
 
+  // Функция для проверки, есть ли рабочие в здании
+  const hasWorkersInBuilding = (buildingId: string) => {
+    return activeWorkers.some(worker => worker.building === buildingId);
+  };
+
+  // Функция для проверки, активно ли здание
+  const isBuildingActive = (buildingId: string) => {
+    return hasWorkersInBuilding(buildingId);
+  };
+
   // Временные данные ресурсов (в будущем будут из gameData)
   const [resources, setResources] = useState({
     wood: 150,
@@ -101,196 +111,210 @@ export const Shelter = () => {
       benefit: "+8 камня в час"
     },
     {
+      id: "barracks",
+      name: "Казармы",
+      description: "Обучает воинов и драконов",
+      level: 1,
+      maxLevel: 6,
+      cost: { wood: 100, stone: 80, iron: 30, gold: 300 },
+      benefit: "Разблокирует тренировки"
+    },
+    {
       id: "dragon_lair",
       name: "Драконье Логово",
-      description: "Таинственное место силы драконов",
+      description: "Место для разведения драконов",
       level: 1,
-      maxLevel: 8,
-      cost: { wood: 100, stone: 80, iron: 30, gold: 500 },
-      benefit: "+50% к опыту в бою"
+      maxLevel: 5,
+      cost: { wood: 120, stone: 60, iron: 40, gold: 400 },
+      benefit: "Увеличивает скорость вылупления"
     },
     {
-      id: "barracks",
-      name: "Казарма",
-      description: "Улучшение и тренировка героев",
+      id: "medical",
+      name: "Медицинский блок",
+      description: "Лечит раненых воинов и драконов",
       level: 1,
-      maxLevel: 8,
-      cost: { wood: 120, stone: 60, iron: 40, gold: 300 },
-      benefit: "Позволяет улучшать героев"
-    },
-    {
-      id: "medical_post",
-      name: "Медпункт",
-      description: "Лечит раненых и восстанавливает здоровье",
-      level: 0,
-      maxLevel: 8,
-      cost: { wood: 25, stone: 15, iron: 5, gold: 60 },
-      benefit: "Автовосстановление ХП"
+      maxLevel: 4,
+      cost: { wood: 70, stone: 90, iron: 25, gold: 250 },
+      benefit: "Ускоряет лечение"
     }
   ];
 
   const craftRecipes: CraftRecipe[] = [
+    {
+      id: "iron_sword",
+      name: "Железный меч",
+      description: "Надежный меч для воинов",
+      requirements: { iron: 15, wood: 5, gold: 50 },
+      result: "Железный меч (+15 атака)",
+      category: "weapon"
+    },
+    {
+      id: "leather_armor",
+      name: "Кожаная броня",
+      description: "Легкая защита",
+      requirements: { wood: 10, stone: 5, gold: 30 },
+      result: "Кожаная броня (+10 защита)",
+      category: "armor"
+    },
+    {
+      id: "health_potion",
+      name: "Зелье здоровья",
+      description: "Восстанавливает здоровье",
+      requirements: { wood: 3, gold: 20 },
+      result: "Зелье здоровья (+50 HP)",
+      category: "potion"
+    }
   ];
 
   const canAffordUpgrade = (upgrade: NestUpgrade) => {
-    return (
-      resources.wood >= upgrade.cost.wood &&
-      resources.stone >= upgrade.cost.stone &&
-      resources.iron >= upgrade.cost.iron &&
-      resources.gold >= upgrade.cost.gold &&
-      upgrade.level < upgrade.maxLevel
-    );
+    return upgrade.level < upgrade.maxLevel &&
+           resources.wood >= upgrade.cost.wood &&
+           resources.stone >= upgrade.cost.stone &&
+           resources.iron >= upgrade.cost.iron &&
+           resources.gold >= upgrade.cost.gold &&
+           isBuildingActive(upgrade.id);
   };
 
   const canAffordCraft = (recipe: CraftRecipe) => {
-    return (
-      (!recipe.requirements.wood || resources.wood >= recipe.requirements.wood) &&
-      (!recipe.requirements.stone || resources.stone >= recipe.requirements.stone) &&
-      (!recipe.requirements.iron || resources.iron >= recipe.requirements.iron) &&
-      (!recipe.requirements.gold || resources.gold >= recipe.requirements.gold)
-    );
+    return (!recipe.requirements.wood || resources.wood >= recipe.requirements.wood) &&
+           (!recipe.requirements.stone || resources.stone >= recipe.requirements.stone) &&
+           (!recipe.requirements.iron || resources.iron >= recipe.requirements.iron) &&
+           (!recipe.requirements.gold || resources.gold >= recipe.requirements.gold) &&
+           isBuildingActive("workshop");
   };
 
-  const handleUpgrade = (upgrade: NestUpgrade) => {
-    if (!canAffordUpgrade(upgrade)) {
-      toast({
-        title: "Недостаточно ресурсов",
-        description: "У вас не хватает ресурсов для этого улучшения",
-        variant: "destructive"
-      });
-      return;
-    }
+  const handleUpgrade = async (upgrade: NestUpgrade) => {
+    if (!canAffordUpgrade(upgrade)) return;
 
-    setResources(prev => ({
-      ...prev,
-      wood: prev.wood - upgrade.cost.wood,
-      stone: prev.stone - upgrade.cost.stone,
-      iron: prev.iron - upgrade.cost.iron,
-      gold: prev.gold - upgrade.cost.gold
-    }));
+    const newResources = {
+      wood: resources.wood - upgrade.cost.wood,
+      stone: resources.stone - upgrade.cost.stone,
+      iron: resources.iron - upgrade.cost.iron,
+      gold: resources.gold - upgrade.cost.gold
+    };
 
+    setResources(newResources);
+
+    // Здесь должно быть обновление уровня здания
     toast({
-      title: "Улучшение завершено!",
-      description: `${upgrade.name} улучшен до уровня ${upgrade.level + 1}`
+      title: "Здание улучшено!",
+      description: `${upgrade.name} улучшено до уровня ${upgrade.level + 1}`,
     });
   };
 
   const handleCraft = (recipe: CraftRecipe) => {
-    if (!canAffordCraft(recipe)) {
-      toast({
-        title: "Недостаточно ресурсов",
-        description: "У вас не хватает ресурсов для создания этого предмета",
-        variant: "destructive"
-      });
-      return;
-    }
+    if (!canAffordCraft(recipe)) return;
 
-    setResources(prev => ({
-      ...prev,
-      wood: prev.wood - (recipe.requirements.wood || 0),
-      stone: prev.stone - (recipe.requirements.stone || 0),
-      iron: prev.iron - (recipe.requirements.iron || 0),
-      gold: prev.gold - (recipe.requirements.gold || 0)
-    }));
+    const newResources = { ...resources };
+    if (recipe.requirements.wood) newResources.wood -= recipe.requirements.wood;
+    if (recipe.requirements.stone) newResources.stone -= recipe.requirements.stone;
+    if (recipe.requirements.iron) newResources.iron -= recipe.requirements.iron;
+    if (recipe.requirements.gold) newResources.gold -= recipe.requirements.gold;
+
+    setResources(newResources);
 
     toast({
       title: "Предмет создан!",
-      description: `Вы создали: ${recipe.name}`
+      description: `Создан: ${recipe.result}`,
     });
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background to-muted p-4">
-      <div className="max-w-6xl mx-auto">
+    <div className="min-h-screen bg-gradient-to-br from-green-50 to-blue-50 dark:from-green-950 dark:to-blue-950">
+      <div className="container mx-auto p-4 space-y-6">
         {/* Header */}
-        <div className="flex items-center gap-4 mb-6">
-          <Button variant="outline" size="icon" onClick={() => navigate('/menu')}>
-            <ArrowLeft className="w-4 h-4" />
-          </Button>
-          <div className="flex items-center gap-2">
-            <Home className="w-6 h-6 text-primary" />
-            <h1 className="text-3xl font-bold">Лагерь</h1>
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            <Button variant="ghost" size="icon" onClick={() => navigate("/")}>
+              <ArrowLeft className="w-4 h-4" />
+            </Button>
+            <div className="flex items-center gap-2">
+              <Home className="w-6 h-6 text-primary" />
+              <h1 className="text-2xl font-bold">Убежище</h1>
+            </div>
           </div>
+          <AccountLevelDisplay level={accountLevel} experience={accountExperience} />
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
-          {/* Account Level Display */}
-          <AccountLevelDisplay 
-            experience={accountExperience} 
-            level={accountLevel}
-          />
-          
-          {/* Resources Display */}
-          <Card className="lg:col-span-2">
-            <CardHeader>
-              <CardTitle>Ресурсы</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                <div className="flex items-center gap-2">
-                  <div className="w-8 h-8 bg-amber-600 rounded" />
-                  <span>Дерево: {resources.wood}</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <div className="w-8 h-8 bg-gray-500 rounded" />
-                  <span>Камень: {resources.stone}</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <div className="w-8 h-8 bg-slate-600 rounded" />
-                  <span>Железо: {resources.iron}</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <div className="w-8 h-8 bg-yellow-500 rounded-full" />
-                  <span>Золото: {resources.gold}</span>
-                </div>
+        {/* Resources Display */}
+        <Card>
+          <CardContent className="pt-6">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              <div className="text-center">
+                <div className="text-2xl font-bold text-amber-600">🪵</div>
+                <div className="text-lg font-semibold">{resources.wood}</div>
+                <div className="text-sm text-muted-foreground">Дерево</div>
               </div>
-            </CardContent>
-          </Card>
-        </div>
+              <div className="text-center">
+                <div className="text-2xl font-bold text-stone-600">🪨</div>
+                <div className="text-lg font-semibold">{resources.stone}</div>
+                <div className="text-sm text-muted-foreground">Камень</div>
+              </div>
+              <div className="text-center">
+                <div className="text-2xl font-bold text-slate-600">⚙️</div>
+                <div className="text-lg font-semibold">{resources.iron}</div>
+                <div className="text-sm text-muted-foreground">Железо</div>
+              </div>
+              <div className="text-center">
+                <div className="text-2xl font-bold text-yellow-600">💰</div>
+                <div className="text-lg font-semibold">{resources.gold}</div>
+                <div className="text-sm text-muted-foreground">Золото</div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
 
-        {/* Tabs */}
-        <div className="flex gap-2 mb-6">
-          <Button 
+        {/* Tab Navigation */}
+        <div className="flex flex-wrap gap-2">
+          <Button
             variant={activeTab === "upgrades" ? "default" : "outline"}
             onClick={() => setActiveTab("upgrades")}
             className="flex items-center gap-2"
           >
-            <Wrench className="w-4 h-4" />
-            Улучшения гнезда
+            <Home className="w-4 h-4" />
+            Улучшения
           </Button>
-          <Button 
+          <Button
             variant={activeTab === "crafting" ? "default" : "outline"}
             onClick={() => setActiveTab("crafting")}
             className="flex items-center gap-2"
+            disabled={!isBuildingActive("workshop")}
           >
             <Hammer className="w-4 h-4" />
-            Крафт предметов
+            Крафт
+            {!isBuildingActive("workshop") && <span className="text-xs">(неактивно)</span>}
           </Button>
-          <Button 
+          <Button
             variant={activeTab === "barracks" ? "default" : "outline"}
             onClick={() => setActiveTab("barracks")}
             className="flex items-center gap-2"
+            disabled={!isBuildingActive("barracks")}
           >
             <Shield className="w-4 h-4" />
-            Казарма
+            Казармы
+            {!isBuildingActive("barracks") && <span className="text-xs">(неактивно)</span>}
           </Button>
-          <Button 
+          <Button
             variant={activeTab === "dragonlair" ? "default" : "outline"}
             onClick={() => setActiveTab("dragonlair")}
             className="flex items-center gap-2"
+            disabled={!isBuildingActive("dragon_lair")}
           >
             <Flame className="w-4 h-4" />
             Драконье Логово
+            {!isBuildingActive("dragon_lair") && <span className="text-xs">(неактивно)</span>}
           </Button>
-          <Button 
+          <Button
             variant={activeTab === "medical" ? "default" : "outline"}
             onClick={() => setActiveTab("medical")}
             className="flex items-center gap-2"
+            disabled={!isBuildingActive("medical")}
           >
             <Heart className="w-4 h-4" />
             Медпункт
+            {!isBuildingActive("medical") && <span className="text-xs">(неактивно)</span>}
           </Button>
-          <Button 
+          <Button
             variant={activeTab === "workers" ? "default" : "outline"}
             onClick={() => setActiveTab("workers")}
             className="flex items-center gap-2"
@@ -300,25 +324,39 @@ export const Shelter = () => {
           </Button>
         </div>
 
+        {/* Content based on active tab */}
+        
         {/* Upgrades Tab */}
         {activeTab === "upgrades" && (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {nestUpgrades.map((upgrade) => (
-              <Card key={upgrade.id} className="relative">
+              <Card key={upgrade.id} className={`relative ${!isBuildingActive(upgrade.id) ? 'opacity-50 border-destructive/50' : ''}`}>
                 <CardHeader>
                   <div className="flex items-center justify-between">
-                    <CardTitle className="text-lg">{upgrade.name}</CardTitle>
-                    <Badge variant="secondary">
-                      Ур. {upgrade.level}/{upgrade.maxLevel}
+                    <CardTitle className="text-lg flex items-center gap-2">
+                      {upgrade.name}
+                      {!isBuildingActive(upgrade.id) && (
+                        <Badge variant="destructive" className="text-xs">
+                          Неактивно
+                        </Badge>
+                      )}
+                    </CardTitle>
+                    <Badge variant={upgrade.level > 0 ? "default" : "secondary"}>
+                      Уровень {upgrade.level}/{upgrade.maxLevel}
                     </Badge>
                   </div>
-                  <CardDescription>{upgrade.description}</CardDescription>
+                  <CardDescription>
+                    {upgrade.description}
+                    {!isBuildingActive(upgrade.id) && (
+                      <div className="mt-2 text-destructive text-sm font-medium">
+                        ⚠️ Здание неактивно - требуются рабочие для работы и улучшений
+                      </div>
+                    )}
+                  </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  <Progress value={(upgrade.level / upgrade.maxLevel) * 100} />
-                  
-                  <div className="text-sm text-muted-foreground">
-                    <strong>Эффект:</strong> {upgrade.benefit}
+                  <div className="text-sm">
+                    <strong>Бонус:</strong> {upgrade.benefit}
                   </div>
                   
                   <div className="space-y-2">
@@ -347,12 +385,20 @@ export const Shelter = () => {
                     </div>
                   </div>
                   
-                  <Button 
-                    className="w-full" 
-                    disabled={!canAffordUpgrade(upgrade)}
+                  <Button
+                    variant={upgrade.level >= upgrade.maxLevel ? "secondary" : "default"}
+                    size="sm"
+                    className="w-full"
+                    disabled={upgrade.level >= upgrade.maxLevel || 
+                             resources.wood < upgrade.cost.wood ||
+                             resources.stone < upgrade.cost.stone ||
+                             resources.iron < upgrade.cost.iron ||
+                             resources.gold < upgrade.cost.gold ||
+                             !isBuildingActive(upgrade.id)}
                     onClick={() => handleUpgrade(upgrade)}
                   >
-                    {upgrade.level >= upgrade.maxLevel ? "Максимальный уровень" : "Улучшить"}
+                    {upgrade.level >= upgrade.maxLevel ? "Максимальный уровень" : 
+                     !isBuildingActive(upgrade.id) ? "Требуются рабочие" : "Улучшить"}
                   </Button>
 
                   {/* Статус рабочих для этого здания */}
@@ -368,97 +414,178 @@ export const Shelter = () => {
 
         {/* Crafting Tab */}
         {activeTab === "crafting" && (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {craftRecipes.map((recipe) => (
-              <Card key={recipe.id} className="relative">
-                <CardHeader>
-                  <div className="flex items-center justify-between">
-                    <CardTitle className="text-lg">{recipe.name}</CardTitle>
-                    <Badge variant="outline">
-                      {recipe.category === "weapon" && <Star className="w-3 h-3 mr-1" />}
-                      {recipe.category === "armor" && <Package className="w-3 h-3 mr-1" />}
-                      {recipe.category === "potion" && <Package className="w-3 h-3 mr-1" />}
-                      {recipe.category}
-                    </Badge>
-                  </div>
-                  <CardDescription>{recipe.description}</CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="text-sm">
-                    <strong>Результат:</strong> {recipe.result}
-                  </div>
-                  
-                  <div className="space-y-2">
-                    <div className="text-sm font-medium">Требования:</div>
-                    <div className="grid grid-cols-2 gap-2 text-sm">
-                      {recipe.requirements.wood && (
-                        <div className={resources.wood >= recipe.requirements.wood ? "text-green-600" : "text-red-600"}>
-                          Дерево: {recipe.requirements.wood}
-                        </div>
-                      )}
-                      {recipe.requirements.stone && (
-                        <div className={resources.stone >= recipe.requirements.stone ? "text-green-600" : "text-red-600"}>
-                          Камень: {recipe.requirements.stone}
-                        </div>
-                      )}
-                      {recipe.requirements.iron && (
-                        <div className={resources.iron >= recipe.requirements.iron ? "text-green-600" : "text-red-600"}>
-                          Железо: {recipe.requirements.iron}
-                        </div>
-                      )}
-                      {recipe.requirements.gold && (
-                        <div className={resources.gold >= recipe.requirements.gold ? "text-green-600" : "text-red-600"}>
-                          Золото: {recipe.requirements.gold}
-                        </div>
-                      )}
+          isBuildingActive("workshop") ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {craftRecipes.map((recipe) => (
+                <Card key={recipe.id} className="relative">
+                  <CardHeader>
+                    <div className="flex items-center justify-between">
+                      <CardTitle className="text-lg">{recipe.name}</CardTitle>
+                      <Badge variant="outline">
+                        {recipe.category === "weapon" && <Star className="w-3 h-3 mr-1" />}
+                        {recipe.category === "armor" && <Package className="w-3 h-3 mr-1" />}
+                        {recipe.category === "potion" && <Package className="w-3 h-3 mr-1" />}
+                        {recipe.category}
+                      </Badge>
                     </div>
-                  </div>
-                  
+                    <CardDescription>{recipe.description}</CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div className="text-sm">
+                      <strong>Результат:</strong> {recipe.result}
+                    </div>
+                    
+                    <div className="space-y-2">
+                      <div className="text-sm font-medium">Требования:</div>
+                      <div className="grid grid-cols-2 gap-2 text-sm">
+                        {recipe.requirements.wood && (
+                          <div className={resources.wood >= recipe.requirements.wood ? "text-green-600" : "text-red-600"}>
+                            Дерево: {recipe.requirements.wood}
+                          </div>
+                        )}
+                        {recipe.requirements.stone && (
+                          <div className={resources.stone >= recipe.requirements.stone ? "text-green-600" : "text-red-600"}>
+                            Камень: {recipe.requirements.stone}
+                          </div>
+                        )}
+                        {recipe.requirements.iron && (
+                          <div className={resources.iron >= recipe.requirements.iron ? "text-green-600" : "text-red-600"}>
+                            Железо: {recipe.requirements.iron}
+                          </div>
+                        )}
+                        {recipe.requirements.gold && (
+                          <div className={resources.gold >= recipe.requirements.gold ? "text-green-600" : "text-red-600"}>
+                            Золото: {recipe.requirements.gold}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                    
+                    <Button 
+                      className="w-full" 
+                      disabled={!canAffordCraft(recipe)}
+                      onClick={() => handleCraft(recipe)}
+                    >
+                      <Hammer className="w-4 h-4 mr-2" />
+                      Создать
+                    </Button>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          ) : (
+            <Card>
+              <CardContent className="pt-6">
+                <div className="text-center py-8">
+                  <Hammer className="w-16 h-16 mx-auto mb-4 text-muted-foreground opacity-50" />
+                  <h3 className="text-lg font-medium mb-2">Мастерская неактивна</h3>
+                  <p className="text-muted-foreground mb-4">
+                    Назначьте рабочих в Мастерскую во вкладке "Рабочие", чтобы активировать крафт
+                  </p>
                   <Button 
-                    className="w-full" 
-                    disabled={!canAffordCraft(recipe)}
-                    onClick={() => handleCraft(recipe)}
+                    variant="outline" 
+                    onClick={() => setActiveTab("workers")}
                   >
-                    <Hammer className="w-4 h-4 mr-2" />
-                    Создать
+                    Назначить рабочих
                   </Button>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
+                </div>
+              </CardContent>
+            </Card>
+          )
         )}
 
         {/* Barracks Tab */}
         {activeTab === "barracks" && (
-          <Barracks 
-            barracksLevel={nestUpgrades.find(u => u.id === "barracks")?.level || 1}
-            onUpgradeBuilding={() => {
-              const barracks = nestUpgrades.find(u => u.id === "barracks");
-              if (barracks) {
-                handleUpgrade(barracks);
-              }
-            }}
-          />
+          isBuildingActive("barracks") ? (
+            <Barracks 
+              barracksLevel={nestUpgrades.find(u => u.id === "barracks")?.level || 1}
+              onUpgradeBuilding={() => {
+                const barracks = nestUpgrades.find(u => u.id === "barracks");
+                if (barracks) {
+                  handleUpgrade(barracks);
+                }
+              }}
+            />
+          ) : (
+            <Card>
+              <CardContent className="pt-6">
+                <div className="text-center py-8">
+                  <Shield className="w-16 h-16 mx-auto mb-4 text-muted-foreground opacity-50" />
+                  <h3 className="text-lg font-medium mb-2">Казармы неактивны</h3>
+                  <p className="text-muted-foreground mb-4">
+                    Назначьте рабочих в казармы во вкладке "Рабочие", чтобы активировать их функции
+                  </p>
+                  <Button 
+                    variant="outline" 
+                    onClick={() => setActiveTab("workers")}
+                  >
+                    Назначить рабочих
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          )
         )}
 
         {/* Dragon Lair Tab */}
         {activeTab === "dragonlair" && (
-          <DragonLair 
-            lairLevel={nestUpgrades.find(u => u.id === "dragon_lair")?.level || 1}
-            onUpgradeBuilding={() => {
-              const dragonLair = nestUpgrades.find(u => u.id === "dragon_lair");
-              if (dragonLair) {
-                handleUpgrade(dragonLair);
-              }
-            }}
-          />
+          isBuildingActive("dragon_lair") ? (
+            <DragonLair 
+              lairLevel={nestUpgrades.find(u => u.id === "dragon_lair")?.level || 1}
+              onUpgradeBuilding={() => {
+                const dragonLair = nestUpgrades.find(u => u.id === "dragon_lair");
+                if (dragonLair) {
+                  handleUpgrade(dragonLair);
+                }
+              }}
+            />
+          ) : (
+            <Card>
+              <CardContent className="pt-6">
+                <div className="text-center py-8">
+                  <Flame className="w-16 h-16 mx-auto mb-4 text-muted-foreground opacity-50" />
+                  <h3 className="text-lg font-medium mb-2">Драконье Логово неактивно</h3>
+                  <p className="text-muted-foreground mb-4">
+                    Назначьте рабочих в Драконье Логово во вкладке "Рабочие", чтобы активировать его функции
+                  </p>
+                  <Button 
+                    variant="outline" 
+                    onClick={() => setActiveTab("workers")}
+                  >
+                    Назначить рабочих
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          )
         )}
 
-        {/* Medical Bay Tab */}
+        {/* Medical Tab */}
         {activeTab === "medical" && (
-          <MedicalBayComponent />
+          isBuildingActive("medical") ? (
+            <MedicalBayComponent />
+          ) : (
+            <Card>
+              <CardContent className="pt-6">
+                <div className="text-center py-8">
+                  <Heart className="w-16 h-16 mx-auto mb-4 text-muted-foreground opacity-50" />
+                  <h3 className="text-lg font-medium mb-2">Медицинский блок неактивен</h3>
+                  <p className="text-muted-foreground mb-4">
+                    Назначьте рабочих в Медицинский блок во вкладке "Рабочие", чтобы активировать его функции
+                  </p>
+                  <Button 
+                    variant="outline" 
+                    onClick={() => setActiveTab("workers")}
+                  >
+                    Назначить рабочих
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          )
         )}
 
+        {/* Workers Tab */}
         {activeTab === "workers" && (
           <WorkersManagement onSpeedBoostChange={setWorkersSpeedBoost} />
         )}

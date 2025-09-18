@@ -56,7 +56,9 @@ export const WorkersManagement = ({ onSpeedBoostChange }: WorkersManagementProps
     { id: "storage", name: "Склад" },
     { id: "sawmill", name: "Лесопилка" },
     { id: "quarry", name: "Каменоломня" },
-    { id: "dragon_lair", name: "Драконье Логово" }
+    { id: "barracks", name: "Казармы" },
+    { id: "dragon_lair", name: "Драконье Логово" },
+    { id: "medical", name: "Медицинский блок" }
   ];
 
   // Получаем рабочих из card_instances
