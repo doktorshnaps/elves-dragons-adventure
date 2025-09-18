@@ -123,7 +123,7 @@ export const Shop = ({ onClose }: ShopProps) => {
       setShowEffect(true);
       toast({
         title: item.type === 'cardPack' ? t(language, 'shop.cardPackBought') : t(language, 'shop.purchaseSuccess'),
-        description: item.type === 'cardPack' ? t(language, 'shop.cardPackDescription') : `${t(language, 'shop.boughtItem')} ${item.name}`,
+        description: item.type === 'cardPack' ? t(language, 'shop.cardPackDescription') : `${t(language, 'shop.boughtItem')} ${translateShopItemName(language, item.name)}`,
       });
     } catch (error) {
       toast({
@@ -197,13 +197,13 @@ return (
               )}
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
-                  <h3 className="font-semibold text-game-accent">{item.name}</h3>
+                  <h3 className="font-semibold text-game-accent">{translateShopItemName(language, item.name)}</h3>
                   <div className="flex items-center gap-1 text-game-accent text-sm">
                     <Package className="w-3 h-3" />
                     <span>{quantity}</span>
                   </div>
                 </div>
-                <p className="text-gray-400 text-sm">{item.description}</p>
+                <p className="text-gray-400 text-sm">{translateShopItemDescription(language, item.description)}</p>
                 {item.stats && (
                   <div className="text-game-accent text-sm">
                     {item.stats.power && <p>{t(language, 'shop.power')} +{item.stats.power}</p>}

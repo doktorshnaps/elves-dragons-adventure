@@ -241,8 +241,8 @@ export const Shelter = () => {
 
     // Здесь должно быть обновление уровня здания
     toast({
-      title: "Здание улучшено!",
-      description: `${upgrade.name} улучшено до уровня ${upgrade.level + 1}`
+      title: t(language, 'shelter.buildingUpgraded'),
+      description: `${upgrade.name} ${t(language, 'shelter.level')} ${upgrade.level + 1}`
     });
   };
   const handleCraft = (recipe: CraftRecipe) => {
@@ -256,8 +256,8 @@ export const Shelter = () => {
     if (recipe.requirements.gold) newResources.gold -= recipe.requirements.gold;
     setResources(newResources);
     toast({
-      title: "Предмет создан!",
-      description: `Создан: ${recipe.result}`
+      title: t(language, 'shelter.itemCreated'),
+      description: `${t(language, 'shelter.created')} ${recipe.result}`
     });
   };
   return <div className="min-h-screen bg-gradient-to-br from-green-50 to-blue-50 dark:from-green-950 dark:to-blue-950">
@@ -352,46 +352,46 @@ export const Shelter = () => {
                   <div className="flex items-center justify-between">
                     <CardTitle className="text-lg flex items-center gap-2">
                       {upgrade.name}
-                      {!isBuildingActive(upgrade.id) && <Badge variant="destructive" className="text-xs">
-                          Неактивно
-                        </Badge>}
+                       {!isBuildingActive(upgrade.id) && <Badge variant="destructive" className="text-xs">
+                           {t(language, 'shelter.buildingInactive')}
+                         </Badge>}
                     </CardTitle>
-                    <Badge variant={upgrade.level > 0 ? "default" : "secondary"}>
-                      Уровень {upgrade.level}/{upgrade.maxLevel}
-                    </Badge>
+                     <Badge variant={upgrade.level > 0 ? "default" : "secondary"}>
+                       {t(language, 'shelter.level')} {upgrade.level}/{upgrade.maxLevel}
+                     </Badge>
                   </div>
                   <CardDescription>
                     {upgrade.description}
-                    {!isBuildingActive(upgrade.id) && <div className="mt-2 text-destructive text-sm font-medium">
-                        ⚠️ Здание неактивно - требуются рабочие для работы и улучшений
-                      </div>}
+                     {!isBuildingActive(upgrade.id) && <div className="mt-2 text-destructive text-sm font-medium">
+                         ⚠️ {t(language, 'shelter.buildingInactive')} - {t(language, 'shelter.workersRequired')}
+                       </div>}
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  <div className="text-sm">
-                    <strong>Бонус:</strong> {upgrade.benefit}
-                  </div>
+                   <div className="text-sm">
+                     <strong>{t(language, 'shelter.bonus')}</strong> {upgrade.benefit}
+                   </div>
                   
-                  <div className="space-y-2">
-                    <div className="text-sm font-medium">Стоимость улучшения:</div>
+                   <div className="space-y-2">
+                     <div className="text-sm font-medium">{t(language, 'shelter.cost')}</div>
                     <div className="grid grid-cols-2 gap-2 text-sm">
-                      {upgrade.cost.wood > 0 && <div className={resources.wood >= upgrade.cost.wood ? "text-green-600" : "text-red-600"}>
-                          Дерево: {upgrade.cost.wood}
-                        </div>}
-                      {upgrade.cost.stone > 0 && <div className={resources.stone >= upgrade.cost.stone ? "text-green-600" : "text-red-600"}>
-                          Камень: {upgrade.cost.stone}
-                        </div>}
-                      {upgrade.cost.iron > 0 && <div className={resources.iron >= upgrade.cost.iron ? "text-green-600" : "text-red-600"}>
-                          Железо: {upgrade.cost.iron}
-                        </div>}
-                      {upgrade.cost.gold > 0 && <div className={resources.gold >= upgrade.cost.gold ? "text-green-600" : "text-red-600"}>
-                          Золото: {upgrade.cost.gold}
-                        </div>}
-                    </div>
+                       {upgrade.cost.wood > 0 && <div className={resources.wood >= upgrade.cost.wood ? "text-green-600" : "text-red-600"}>
+                           {t(language, 'shelter.wood')}: {upgrade.cost.wood}
+                         </div>}
+                       {upgrade.cost.stone > 0 && <div className={resources.stone >= upgrade.cost.stone ? "text-green-600" : "text-red-600"}>
+                           {t(language, 'shelter.stone')}: {upgrade.cost.stone}
+                         </div>}
+                       {upgrade.cost.iron > 0 && <div className={resources.iron >= upgrade.cost.iron ? "text-green-600" : "text-red-600"}>
+                           {t(language, 'shelter.iron')}: {upgrade.cost.iron}
+                         </div>}
+                       {upgrade.cost.gold > 0 && <div className={resources.gold >= upgrade.cost.gold ? "text-green-600" : "text-red-600"}>
+                           {t(language, 'shelter.gold')}: {upgrade.cost.gold}
+                         </div>}
+                     </div>
                   </div>
                   
-                  <Button variant={upgrade.level >= upgrade.maxLevel ? "secondary" : "default"} size="sm" className="w-full" disabled={upgrade.level >= upgrade.maxLevel || resources.wood < upgrade.cost.wood || resources.stone < upgrade.cost.stone || resources.iron < upgrade.cost.iron || resources.gold < upgrade.cost.gold || !isBuildingActive(upgrade.id)} onClick={() => handleUpgrade(upgrade)}>
-                    {upgrade.level >= upgrade.maxLevel ? "Максимальный уровень" : !isBuildingActive(upgrade.id) ? "Требуются рабочие" : "Улучшить"}
+                   <Button variant={upgrade.level >= upgrade.maxLevel ? "secondary" : "default"} size="sm" className="w-full" disabled={upgrade.level >= upgrade.maxLevel || resources.wood < upgrade.cost.wood || resources.stone < upgrade.cost.stone || resources.iron < upgrade.cost.iron || resources.gold < upgrade.cost.gold || !isBuildingActive(upgrade.id)} onClick={() => handleUpgrade(upgrade)}>
+                     {upgrade.level >= upgrade.maxLevel ? t(language, 'shelter.maxLevel') : !isBuildingActive(upgrade.id) ? t(language, 'shelter.requiresWorkers') : t(language, 'shelter.upgrade')}
                   </Button>
 
                   {/* Статус рабочих для этого здания */}
@@ -440,7 +440,7 @@ export const Shelter = () => {
                     
                     <Button className="w-full" disabled={!canAffordCraft(recipe)} onClick={() => handleCraft(recipe)}>
                       <Hammer className="w-4 h-4 mr-2" />
-                      Создать
+                      {t(language, 'shelter.create')}
                     </Button>
                   </CardContent>
                 </Card>)}
@@ -448,12 +448,12 @@ export const Shelter = () => {
               <CardContent className="pt-6">
                 <div className="text-center py-8">
                   <Hammer className="w-16 h-16 mx-auto mb-4 text-muted-foreground opacity-50" />
-                  <h3 className="text-lg font-medium mb-2">Мастерская неактивна</h3>
+                  <h3 className="text-lg font-medium mb-2">{t(language, 'shelter.crafting')} {t(language, 'shelter.buildingInactive')}</h3>
                   <p className="text-muted-foreground mb-4">
-                    Назначьте рабочих в Мастерскую во вкладке "Рабочие", чтобы активировать крафт
+                    {t(language, 'shelter.assignWorkers')} в {t(language, 'shelter.crafting')} во вкладке "{t(language, 'shelter.workers')}", чтобы активировать крафт
                   </p>
                   <Button variant="outline" onClick={() => setActiveTab("workers")}>
-                    Назначить рабочих
+                    {t(language, 'shelter.assignWorkers')}
                   </Button>
                 </div>
               </CardContent>
@@ -469,12 +469,12 @@ export const Shelter = () => {
               <CardContent className="pt-6">
                 <div className="text-center py-8">
                   <Shield className="w-16 h-16 mx-auto mb-4 text-muted-foreground opacity-50" />
-                  <h3 className="text-lg font-medium mb-2">Казармы неактивны</h3>
+                  <h3 className="text-lg font-medium mb-2">{t(language, 'shelter.barracks')} {t(language, 'shelter.buildingInactive')}</h3>
                   <p className="text-muted-foreground mb-4">
-                    Назначьте рабочих в казармы во вкладке "Рабочие", чтобы активировать их функции
+                    {t(language, 'shelter.assignWorkers')} в {t(language, 'shelter.barracks')} во вкладке "{t(language, 'shelter.workers')}", чтобы активировать их функции
                   </p>
                   <Button variant="outline" onClick={() => setActiveTab("workers")}>
-                    Назначить рабочих
+                    {t(language, 'shelter.assignWorkers')}
                   </Button>
                 </div>
               </CardContent>
@@ -490,12 +490,12 @@ export const Shelter = () => {
               <CardContent className="pt-6">
                 <div className="text-center py-8">
                   <Flame className="w-16 h-16 mx-auto mb-4 text-muted-foreground opacity-50" />
-                  <h3 className="text-lg font-medium mb-2">Драконье Логово неактивно</h3>
+                  <h3 className="text-lg font-medium mb-2">{t(language, 'shelter.dragonLair')} {t(language, 'shelter.buildingInactive')}</h3>
                   <p className="text-muted-foreground mb-4">
-                    Назначьте рабочих в Драконье Логово во вкладке "Рабочие", чтобы активировать его функции
+                    {t(language, 'shelter.assignWorkers')} в {t(language, 'shelter.dragonLair')} во вкладке "{t(language, 'shelter.workers')}", чтобы активировать его функции
                   </p>
                   <Button variant="outline" onClick={() => setActiveTab("workers")}>
-                    Назначить рабочих
+                    {t(language, 'shelter.assignWorkers')}
                   </Button>
                 </div>
               </CardContent>
@@ -506,12 +506,12 @@ export const Shelter = () => {
               <CardContent className="pt-6">
                 <div className="text-center py-8">
                   <Heart className="w-16 h-16 mx-auto mb-4 text-muted-foreground opacity-50" />
-                  <h3 className="text-lg font-medium mb-2">Медицинский блок неактивен</h3>
+                  <h3 className="text-lg font-medium mb-2">{t(language, 'shelter.medical')} {t(language, 'shelter.buildingInactive')}</h3>
                   <p className="text-muted-foreground mb-4">
-                    Назначьте рабочих в Медицинский блок во вкладке "Рабочие", чтобы активировать его функции
+                    {t(language, 'shelter.assignWorkers')} в {t(language, 'shelter.medical')} во вкладке "{t(language, 'shelter.workers')}", чтобы активировать его функции
                   </p>
                   <Button variant="outline" onClick={() => setActiveTab("workers")}>
-                    Назначить рабочих
+                    {t(language, 'shelter.assignWorkers')}
                   </Button>
                 </div>
               </CardContent>

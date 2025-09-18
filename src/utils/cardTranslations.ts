@@ -51,14 +51,27 @@ export const cardTranslations = {
     "Адмирал": "Адмирал",
     "Повелитель Морей": "Повелитель Морей",
     
-    // Dragon names would go here...
-    "Малый Огненный Дракон": "Малый Огненный Дракон",
-    "Огненный Дракон": "Огненный Дракон",
-    // ... more dragons
+    // Kaledor Dragons
+    "Обычный ледяной дракон": "Обычный ледяной дракон",
+    "Необычный ледяной дракон": "Необычный ледяной дракон",
+    "Редкий ледяной дракон": "Редкий ледяной дракон",
+    "Эпический ледяной дракон": "Эпический ледяной дракон",
+    "Легендарный ледяной дракон": "Легендарный ледяной дракон",
+    
+    // Sylvanesti Dragons  
+    "Обычный песчаный дракон": "Обычный песчаный дракон",
+    "Необычный песчаный дракон": "Необычный песчаный дракон",
+    "Редкий песчаный дракон": "Редкий песчаный дракон",
+    "Эпический песчаный дракон": "Эпический песчаный дракон",
+    "Легендарный песчаный дракон": "Легендарный песчаный дракон",
+    
+    // Card types
+    "Герой": "Герой",
+    "Питомец": "Питомец",
     
     // Factions
     "Каледор": "Каледор",
-    "Сильванести": "Сильванести", 
+    "Сильванести": "Сильванести",
     "Фаэлин": "Фаэлин",
     "Элленар": "Элленар",
     "Телерион": "Телерион",
@@ -115,15 +128,28 @@ export const cardTranslations = {
     "Адмирал": "Admiral",
     "Повелитель Морей": "Sea Lord",
     
-    // Dragon names
-    "Малый Огненный Дракон": "Lesser Fire Dragon",
-    "Огненный Дракон": "Fire Dragon",
-    // ... more dragons
+    // Kaledor Dragons
+    "Обычный ледяной дракон": "Common Ice Dragon",
+    "Необычный ледяной дракон": "Uncommon Ice Dragon",
+    "Редкий ледяной дракон": "Rare Ice Dragon",
+    "Эпический ледяной дракон": "Epic Ice Dragon",
+    "Легендарный ледяной дракон": "Legendary Ice Dragon",
+    
+    // Sylvanesti Dragons
+    "Обычный песчаный дракон": "Common Sand Dragon",
+    "Необычный песчаный дракон": "Uncommon Sand Dragon",
+    "Редкий песчаный дракон": "Rare Sand Dragon",
+    "Эпический песчаный дракон": "Epic Sand Dragon",
+    "Легендарный песчаный дракон": "Legendary Sand Dragon",
+    
+    // Card types
+    "Герой": "Hero",
+    "Питомец": "Pet",
     
     // Factions
     "Каледор": "Kaledor",
     "Сильванести": "Sylvanesti",
-    "Фаэлин": "Faelin", 
+    "Фаэлин": "Faelin",
     "Элленар": "Ellenar",
     "Телерион": "Telerion",
     "Аэлантир": "Aelantir",
@@ -137,4 +163,8 @@ export const translateCardName = (language: Language, name: string): string => {
 
 export const translateFaction = (language: Language, faction: string): string => {
   return cardTranslations[language][faction] || faction;
+};
+
+export const translateCardType = (language: Language, type: string): string => {
+  return cardTranslations[language][type] || type;
 };
