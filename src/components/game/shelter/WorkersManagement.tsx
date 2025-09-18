@@ -32,16 +32,15 @@ export const WorkersManagement = ({ onSpeedBoostChange }: WorkersManagementProps
   const [activeWorkers, setActiveWorkers] = useState<ActiveWorker[]>([]);
   const [selectedBuilding, setSelectedBuilding] = useState<string>("main_hall");
 
-  // Функция для обновления активных рабочих в базе данных
   const updateActiveWorkersInDB = async (workers: ActiveWorker[]) => {
     const walletAddress = localStorage.getItem('walletAccountId');
     if (!walletAddress) return;
 
     try {
-      const { error } = await supabase
-        .from('game_data')
-        .update({ active_workers: workers as any })
-        .eq('wallet_address', walletAddress);
+      const { error } = await supabase.rpc('update_active_workers_by_wallet', { 
+        p_wallet_address: walletAddress,
+        p_active_workers: workers as any 
+      });
       
       if (error) {
         console.error('Failed to update active workers:', error);
