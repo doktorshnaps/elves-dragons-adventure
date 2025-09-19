@@ -30,6 +30,16 @@ import queenLarvaStinger from "@/assets/items/queen_larva_stinger.png";
 import concentratedPoisonGland from "@/assets/items/concentrated_poison_gland.png";
 import ancientHermitEye from "@/assets/items/ancient_hermit_eye.png";
 import shadowWebGland from "@/assets/items/shadow_web_gland.png";
+import berserkerFang from "@/assets/items/berserker-fang.png";
+import wyvernHeart from "@/assets/items/wyvern-heart.png";
+import titanShell from "@/assets/items/titan-shell.png";
+import carrionClaw from "@/assets/items/carrion-claw.png";
+import parasiteGland from "@/assets/items/parasite-gland.png";
+import guardianEgg from "@/assets/items/guardian-egg.png";
+import webSymbol from "@/assets/items/web-symbol.png";
+import archmageStaff from "@/assets/items/archmage-staff.png";
+import livingShadowMantle from "@/assets/items/living-shadow-mantle.png";
+import arachnidGrimoire from "@/assets/items/arachnid-grimoire.png";
 
 interface ItemTemplate {
   id: number;
@@ -104,6 +114,16 @@ const getItemImage = (itemId: string): string | null => {
     concentrated_poison_gland: concentratedPoisonGland,
     ancient_hermit_eye: ancientHermitEye,
     shadow_web_gland: shadowWebGland,
+    berserker_fang: berserkerFang,
+    wyvern_heart: wyvernHeart,
+    titan_shell: titanShell,
+    carrion_claw: carrionClaw,
+    parasite_gland: parasiteGland,
+    guardian_egg: guardianEgg,
+    web_symbol: webSymbol,
+    archmage_staff: archmageStaff,
+    living_shadow_mantle: livingShadowMantle,
+    arachnid_grimoire: arachnidGrimoire,
   };
   
   return imageMap[itemId] || null;
