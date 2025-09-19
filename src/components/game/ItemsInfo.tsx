@@ -41,6 +41,16 @@ import archmageStaff from "@/assets/items/archmage-staff.png";
 import livingShadowMantle from "@/assets/items/living-shadow-mantle.png";
 import arachnidGrimoire from "@/assets/items/arachnid-grimoire.png";
 
+// Import предметов Арахны
+import archmageSoulShard from "@/assets/items/archmage_soul_shard.png";
+import progenitorHeart from "@/assets/items/progenitor_heart.png";
+import arachneSilkGland from "@/assets/items/arachne_silk_gland.png";
+import progenitorEgg from "@/assets/items/progenitor_egg.png";
+import primasEye from "@/assets/items/primas_eye.png";
+import arachneClaw from "@/assets/items/arachne_claw.png";
+import arachneCrown from "@/assets/items/arachne_crown.png";
+import ashenThreadsCloak from "@/assets/items/ashen_threads_cloak.png";
+
 interface ItemTemplate {
   id: number;
   item_id: string;
@@ -124,6 +134,16 @@ const getItemImage = (itemId: string): string | null => {
     archmage_staff: archmageStaff,
     living_shadow_mantle: livingShadowMantle,
     arachnid_grimoire: arachnidGrimoire,
+    
+    // Предметы Арахны
+    archmage_soul_shard: archmageSoulShard,
+    progenitor_heart: progenitorHeart,
+    arachne_silk_gland: arachneSilkGland,
+    progenitor_egg: progenitorEgg,
+    primas_eye: primasEye,
+    arachne_claw: arachneClaw,
+    arachne_crown: arachneCrown,
+    ashen_threads_cloak: ashenThreadsCloak,
   };
   
   return imageMap[itemId] || null;
