@@ -3,7 +3,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
-import { useGameData } from "@/hooks/useGameData";
+import { useUnifiedGameState } from "@/hooks/useUnifiedGameState";
 import { useToast } from "@/hooks/use-toast";
 import { useLanguage } from "@/hooks/useLanguage";
 import { t } from "@/utils/translations";
@@ -27,7 +27,7 @@ interface WorkersManagementProps {
 }
 
 export const WorkersManagement = ({ onSpeedBoostChange }: WorkersManagementProps) => {
-  const { gameData, updateGameData } = useGameData();
+  const gameState = useUnifiedGameState();
   const { language } = useLanguage();
   
   const { toast } = useToast();
@@ -64,7 +64,7 @@ export const WorkersManagement = ({ onSpeedBoostChange }: WorkersManagementProps
   ];
 
   // Получаем рабочих из card_instances
-  const availableWorkers = (gameData.inventory || [])
+  const availableWorkers = (gameState.inventory || [])
     .filter((item: any) => item?.type === 'worker')
     .map((item: any, index: number) => ({
       id: item.id ?? `worker_${index}_${item.name}`,
@@ -76,12 +76,12 @@ export const WorkersManagement = ({ onSpeedBoostChange }: WorkersManagementProps
       image: item.image
     }));
 
-  // Загружаем активных рабочих из gameData
+  // Загружаем активных рабочих из gameState
   useEffect(() => {
-    if (gameData.activeWorkers) {
-      setActiveWorkers(gameData.activeWorkers);
+    if (gameState.activeWorkers) {
+      setActiveWorkers(gameState.activeWorkers);
     }
-  }, [gameData.activeWorkers]);
+  }, [gameState.activeWorkers]);
 
   // Вычисляем общее ускорение при изменении активных рабочих
   useEffect(() => {
@@ -108,7 +108,7 @@ export const WorkersManagement = ({ onSpeedBoostChange }: WorkersManagementProps
          // Обновляем базу данных если список изменился
          if (stillWorking.length !== prev.length) {
            updateActiveWorkersInDB(stillWorking);
-           updateGameData({ activeWorkers: stillWorking });
+           gameState.actions.batchUpdate({ activeWorkers: stillWorking }).catch(console.error);
            console.log('🔄 Updated active workers after completion:', stillWorking);
          }
         
@@ -117,7 +117,7 @@ export const WorkersManagement = ({ onSpeedBoostChange }: WorkersManagementProps
     }, 1000);
 
     return () => clearInterval(interval);
-  }, [toast, buildings, updateGameData]);
+  }, [toast, buildings, gameState.actions]);
 
   const assignWorker = async (worker: any) => {
     if (!worker.stats?.workDuration) return;
@@ -141,7 +141,7 @@ export const WorkersManagement = ({ onSpeedBoostChange }: WorkersManagementProps
        setActiveWorkers(updatedActiveWorkers);
 
        // Формируем новый инвентарь без одного назначенного рабочего
-       const currentInventory = (gameData.inventory || []) as any[];
+       const currentInventory = (gameState.inventory || []) as any[];
        const removeIndex = currentInventory.findIndex((i: any) => i?.type === 'worker' && (i.id === worker.id || (i.name === worker.name && i.value === worker.value && (i.stats?.workDuration ?? null) === (worker.stats?.workDuration ?? null))));
        const updatedInventory = removeIndex >= 0 ? currentInventory.filter((_, idx) => idx !== removeIndex) : currentInventory;
 
@@ -149,7 +149,7 @@ export const WorkersManagement = ({ onSpeedBoostChange }: WorkersManagementProps
        await updateActiveWorkersInDB(updatedActiveWorkers);
 
        // Обновляем game_data с новыми активными рабочими и инвентарем
-       await updateGameData({ activeWorkers: updatedActiveWorkers, inventory: updatedInventory });
+       await gameState.actions.batchUpdate({ activeWorkers: updatedActiveWorkers, inventory: updatedInventory });
        
        console.log('✅ Worker assigned and saved:', newActiveWorker);
        if (removeIndex >= 0) {

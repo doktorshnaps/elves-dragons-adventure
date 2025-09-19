@@ -154,16 +154,20 @@ export type Database = {
           created_at: string
           dragon_eggs: Json | null
           dragon_lair_upgrades: Json
+          gold: number
           id: string
           initialized: boolean
           inventory: Json | null
+          iron: number
           marketplace_listings: Json | null
           selected_team: Json | null
           social_quests: Json | null
+          stone: number
           updated_at: string
           user_id: string
           version: number | null
           wallet_address: string | null
+          wood: number
         }
         Insert: {
           account_experience?: number
@@ -178,16 +182,20 @@ export type Database = {
           created_at?: string
           dragon_eggs?: Json | null
           dragon_lair_upgrades?: Json
+          gold?: number
           id?: string
           initialized?: boolean
           inventory?: Json | null
+          iron?: number
           marketplace_listings?: Json | null
           selected_team?: Json | null
           social_quests?: Json | null
+          stone?: number
           updated_at?: string
           user_id: string
           version?: number | null
           wallet_address?: string | null
+          wood?: number
         }
         Update: {
           account_experience?: number
@@ -202,16 +210,20 @@ export type Database = {
           created_at?: string
           dragon_eggs?: Json | null
           dragon_lair_upgrades?: Json
+          gold?: number
           id?: string
           initialized?: boolean
           inventory?: Json | null
+          iron?: number
           marketplace_listings?: Json | null
           selected_team?: Json | null
           social_quests?: Json | null
+          stone?: number
           updated_at?: string
           user_id?: string
           version?: number | null
           wallet_address?: string | null
+          wood?: number
         }
         Relationships: []
       }
@@ -726,12 +738,16 @@ export type Database = {
           cards: Json
           dragon_eggs: Json
           dragon_lair_upgrades: Json
+          gold: number
           initialized: boolean
           inventory: Json
+          iron: number
           marketplace_listings: Json
           selected_team: Json
           social_quests: Json
+          stone: number
           user_id: string
+          wood: number
         }[]
       }
       create_marketplace_listing: {
@@ -779,12 +795,16 @@ export type Database = {
           cards: Json
           dragon_eggs: Json
           dragon_lair_upgrades: Json
+          gold: number
           initialized: boolean
           inventory: Json
+          iron: number
           marketplace_listings: Json
           selected_team: Json
           social_quests: Json
+          stone: number
           user_id: string
+          wood: number
         }[]
       }
       get_medical_bay_entries: {

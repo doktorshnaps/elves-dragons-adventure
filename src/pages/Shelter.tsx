@@ -4,7 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { useNavigate } from "react-router-dom";
 import { ArrowLeft, Home, Hammer, Wrench, Package, Star, Shield, Flame, Heart, Users } from "lucide-react";
-import { useGameData } from "@/hooks/useGameData";
+import { useUnifiedGameState } from "@/hooks/useUnifiedGameState";
 import { useToast } from "@/hooks/use-toast";
 import { useGameStore } from "@/stores/gameStore";
 import { AccountLevelDisplay } from "@/components/game/account/AccountLevelDisplay";
@@ -46,10 +46,7 @@ interface CraftRecipe {
 export const Shelter = () => {
   const navigate = useNavigate();
   const { language } = useLanguage();
-  const {
-    gameData,
-    updateGameData
-  } = useGameData();
+  const gameState = useUnifiedGameState();
   const {
     toast
   } = useToast();
@@ -60,8 +57,8 @@ export const Shelter = () => {
   const [activeTab, setActiveTab] = useState<"upgrades" | "crafting" | "barracks" | "dragonlair" | "medical" | "workers">("upgrades");
   const [workersSpeedBoost, setWorkersSpeedBoost] = useState(0);
 
-  // Получаем активных рабочих из gameData
-  const activeWorkers = gameData.activeWorkers || [];
+  // Получаем активных рабочих из gameState
+  const activeWorkers = gameState.activeWorkers || [];
 
   // Функция для проверки, есть ли рабочие в здании
   const hasWorkersInBuilding = (buildingId: string) => {
@@ -78,13 +75,13 @@ export const Shelter = () => {
     return hasWorkersInBuilding(buildingId);
   };
 
-  // Временные данные ресурсов (в будущем будут из gameData)
-  const [resources, setResources] = useState({
-    wood: 150,
-    stone: 80,
-    iron: 45,
-    gold: gameData.balance || 0
-  });
+  // Используем реальные балансы ресурсов из базы данных
+  const resources = {
+    wood: gameState.wood,
+    stone: gameState.stone,
+    iron: gameState.iron,
+    gold: gameState.gold
+  };
   const nestUpgrades: NestUpgrade[] = [{
     id: "main_hall",
     name: t(language, 'shelter.mainHall'),
@@ -237,7 +234,7 @@ export const Shelter = () => {
       iron: resources.iron - upgrade.cost.iron,
       gold: resources.gold - upgrade.cost.gold
     };
-    setResources(newResources);
+    await gameState.actions.updateResources(newResources);
 
     // Здесь должно быть обновление уровня здания
     toast({
@@ -245,7 +242,7 @@ export const Shelter = () => {
       description: `${upgrade.name} ${t(language, 'shelter.level')} ${upgrade.level + 1}`
     });
   };
-  const handleCraft = (recipe: CraftRecipe) => {
+  const handleCraft = async (recipe: CraftRecipe) => {
     if (!canAffordCraft(recipe)) return;
     const newResources = {
       ...resources
@@ -254,7 +251,7 @@ export const Shelter = () => {
     if (recipe.requirements.stone) newResources.stone -= recipe.requirements.stone;
     if (recipe.requirements.iron) newResources.iron -= recipe.requirements.iron;
     if (recipe.requirements.gold) newResources.gold -= recipe.requirements.gold;
-    setResources(newResources);
+    await gameState.actions.updateResources(newResources);
     toast({
       title: t(language, 'shelter.itemCreated'),
       description: `${t(language, 'shelter.created')} ${recipe.result}`

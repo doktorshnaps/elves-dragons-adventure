@@ -16,6 +16,10 @@ const CACHE_TIME = 10 * 60 * 1000; // 10 минут
 
 const initialGameData: GameData = {
   balance: 100,
+  wood: 150,
+  stone: 200,
+  iron: 75,
+  gold: 300,
   cards: [],
   initialized: false,
   inventory: [],
@@ -152,6 +156,20 @@ export const useUnifiedGameState = (): UnifiedGameState => {
       await operation();
     },
 
+    updateResources: async (resources: { wood?: number; stone?: number; iron?: number; gold?: number }) => {
+      const operation = withErrorHandling(async () => {
+        const newOptimisticData = { ...optimisticData, ...resources };
+        await optimisticUpdate(
+          newOptimisticData,
+          async () => {
+            const result = await updateMutation.mutateAsync({ updates: resources });
+            return result;
+          }
+        );
+      });
+      await operation();
+    },
+
     updateInventory: async (inventory: any[]) => {
       const operation = withErrorHandling(async () => {
         await optimisticUpdate(
@@ -223,6 +241,10 @@ function mapClientToServer(data: Partial<GameData> | GameData) {
   const d: any = data;
   const out: any = {};
   if (d.balance !== undefined) out.balance = d.balance;
+  if (d.wood !== undefined) out.wood = d.wood;
+  if (d.stone !== undefined) out.stone = d.stone;
+  if (d.iron !== undefined) out.iron = d.iron;
+  if (d.gold !== undefined) out.gold = d.gold;
   if (d.cards !== undefined) out.cards = d.cards;
   if (d.initialized !== undefined) out.initialized = d.initialized;
   if (d.inventory !== undefined) out.inventory = d.inventory;
@@ -325,6 +347,10 @@ async function updateGameDataOnServer(walletAddress: string, updates: Partial<Ga
 function transformServerData(serverData: any): GameData {
   const transformed = {
     balance: serverData.balance ?? 100,
+    wood: serverData.wood ?? 150,
+    stone: serverData.stone ?? 200,
+    iron: serverData.iron ?? 75,
+    gold: serverData.gold ?? 300,
     cards: serverData.cards ?? [],
     initialized: serverData.initialized ?? false,
     inventory: serverData.inventory ?? [],
