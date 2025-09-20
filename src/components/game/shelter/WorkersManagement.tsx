@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { useUnifiedGameState } from "@/hooks/useUnifiedGameState";
+import { useCardInstances } from "@/hooks/useCardInstances";
 import { useToast } from "@/hooks/use-toast";
 import { useLanguage } from "@/hooks/useLanguage";
 import { t } from "@/utils/translations";
@@ -28,6 +29,7 @@ interface WorkersManagementProps {
 
 export const WorkersManagement = ({ onSpeedBoostChange }: WorkersManagementProps) => {
   const gameState = useUnifiedGameState();
+  const { cardInstances, deleteCardInstance } = useCardInstances();
   const { language } = useLanguage();
   
   const { toast } = useToast();
@@ -63,8 +65,8 @@ export const WorkersManagement = ({ onSpeedBoostChange }: WorkersManagementProps
     { id: "medical", name: t(language, 'shelter.medicalBuilding') }
   ];
 
-  // Получаем рабочих из card_instances
-  const availableWorkers = (gameState.inventory || [])
+  // Получаем рабочих из card_instances и инвентаря
+  const inventoryWorkers = (gameState.inventory || [])
     .filter((item: any) => item?.type === 'worker')
     .map((item: any, index: number) => ({
       id: item.id ?? `worker_${index}_${item.name}`,
@@ -73,8 +75,34 @@ export const WorkersManagement = ({ onSpeedBoostChange }: WorkersManagementProps
       type: item.type || 'worker',
       value: item.value || 0,
       stats: item.stats || {},
-      image: item.image
+      image: item.image,
+      source: 'inventory'
     }));
+
+  const cardInstanceWorkers = cardInstances
+    .filter(instance => instance.card_type === 'workers')
+    .map(instance => ({
+      id: instance.card_template_id,
+      instanceId: instance.id,
+      name: instance.card_data.name || 'Рабочий',
+      description: instance.card_data.description || '',
+      type: 'worker',
+      value: (instance.card_data as any).value || 0,
+      stats: (instance.card_data as any).stats || {},
+      image: (instance.card_data as any).image,
+      source: 'card_instances',
+      currentHealth: instance.current_health,
+      maxHealth: instance.max_health
+    }));
+
+  // Объединяем рабочих из обоих источников, исключая дублирование
+  const allWorkerIds = new Set();
+  const availableWorkers = [...cardInstanceWorkers, ...inventoryWorkers]
+    .filter(worker => {
+      if (allWorkerIds.has(worker.id)) return false;
+      allWorkerIds.add(worker.id);
+      return true;
+    });
 
   // Загружаем активных рабочих из gameState
   useEffect(() => {
@@ -137,40 +165,46 @@ export const WorkersManagement = ({ onSpeedBoostChange }: WorkersManagementProps
 
     // Сразу обновляем состояние игры и базу данных
      try {
-       // Обновляем локальное состояние
-       setActiveWorkers(updatedActiveWorkers);
+        // Обновляем локальное состояние
+        setActiveWorkers(updatedActiveWorkers);
 
-       // Формируем новый инвентарь без одного назначенного рабочего
-       const currentInventory = (gameState.inventory || []) as any[];
-       const removeIndex = currentInventory.findIndex((i: any) => i?.type === 'worker' && (i.id === worker.id || (i.name === worker.name && i.value === worker.value && (i.stats?.workDuration ?? null) === (worker.stats?.workDuration ?? null))));
-       const updatedInventory = removeIndex >= 0 ? currentInventory.filter((_, idx) => idx !== removeIndex) : currentInventory;
+        // Удаляем рабочего из инвентаря
+        const currentInv = (gameState.inventory || []) as any[];
+        const removeIdx = currentInv.findIndex((i: any) => i?.type === 'worker' && (i.id === worker.id || (i.name === worker.name && i.value === worker.value && (i.stats?.workDuration ?? null) === (worker.stats?.workDuration ?? null))));
+        const updatedInv = removeIdx >= 0 ? currentInv.filter((_, idx) => idx !== removeIdx) : currentInv;
 
-       // Сохраняем активных рабочих напрямую в БД (RPC не поддерживает это поле)
-       await updateActiveWorkersInDB(updatedActiveWorkers);
+        // Удаляем из card_instances если это рабочий оттуда
+        if ((worker as any).source === 'card_instances' && (worker as any).instanceId) {
+          await deleteCardInstance((worker as any).instanceId);
+          console.log('🗑️ Deleted worker from card_instances:', (worker as any).instanceId);
+        }
 
-       // Обновляем game_data с новыми активными рабочими и инвентарем
-       await gameState.actions.batchUpdate({ activeWorkers: updatedActiveWorkers, inventory: updatedInventory });
-       
-       console.log('✅ Worker assigned and saved:', newActiveWorker);
-       if (removeIndex >= 0) {
-         console.log('🧹 Worker removed from inventory at index:', removeIndex);
-       } else {
-         console.warn('⚠️ Could not find matching worker in inventory to remove');
-       }
-       
+        // Сохраняем активных рабочих напрямую в БД
+        await updateActiveWorkersInDB(updatedActiveWorkers);
+
+        // Обновляем game_data с новыми активными рабочими и инвентарем
+        await gameState.actions.batchUpdate({ activeWorkers: updatedActiveWorkers, inventory: updatedInv });
+        
+        console.log('✅ Worker assigned and saved:', newActiveWorker);
+        if (removeIdx >= 0) {
+          console.log('🧹 Worker removed from inventory at index:', removeIdx);
+        } else {
+          console.warn('⚠️ Could not find matching worker in inventory to remove');
+        }
+        
+         toast({
+           title: t(language, 'shelter.workerAssigned'),
+           description: `${worker.name} ${t(language, 'shelter.workerAssignedDesc')} "${buildings.find(b => b.id === selectedBuilding)?.name}"`,
+         });
+       } catch (error) {
+        console.error('❌ Failed to save worker assignment:', error);
+        // Откатываем изменения при ошибке
+        setActiveWorkers(activeWorkers);
         toast({
-          title: t(language, 'shelter.workerAssigned'),
-          description: `${worker.name} ${t(language, 'shelter.workerAssignedDesc')} "${buildings.find(b => b.id === selectedBuilding)?.name}"`,
+          title: t(language, 'shelter.error'),
+          description: t(language, 'shelter.failedToAssign'),
+          variant: "destructive"
         });
-      } catch (error) {
-       console.error('❌ Failed to save worker assignment:', error);
-       // Откатываем изменения при ошибке
-       setActiveWorkers(activeWorkers);
-       toast({
-         title: t(language, 'shelter.error'),
-         description: t(language, 'shelter.failedToAssign'),
-         variant: "destructive"
-       });
     }
   };
 
@@ -280,6 +314,11 @@ export const WorkersManagement = ({ onSpeedBoostChange }: WorkersManagementProps
                         <h4 className="font-medium">{worker.name}</h4>
                         <p className="text-sm text-muted-foreground">
                           +{worker.value}% ускорение • {formatTime(worker.stats?.workDuration || 0)}
+                          {(worker as any).source === 'card_instances' && (worker as any).currentHealth < (worker as any).maxHealth && (
+                            <span className="text-amber-600 ml-2">
+                              ❤️ {(worker as any).currentHealth}/{(worker as any).maxHealth}
+                            </span>
+                          )}
                         </p>
                         {worker.description && (
                           <p className="text-xs text-muted-foreground mt-1">{worker.description}</p>
@@ -289,6 +328,7 @@ export const WorkersManagement = ({ onSpeedBoostChange }: WorkersManagementProps
                         onClick={() => assignWorker(worker)}
                         size="sm"
                         className="shrink-0"
+                        disabled={(worker as any).source === 'card_instances' && (worker as any).currentHealth <= 0}
                       >
                         {t(language, 'shelter.assignButton')}
                       </Button>
