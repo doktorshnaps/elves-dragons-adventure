@@ -103,6 +103,8 @@ export const useRealTimeSync = (options: RealTimeSyncOptions) => {
   }, [accountId, options.onCardInstanceChange]);
 
   useEffect(() => {
+    if (!accountId) return; // Не подписываемся без кошелька
+    
     const channels = [
       setupGameDataChannel(),
       setupMarketplaceChannel(),
@@ -117,7 +119,7 @@ export const useRealTimeSync = (options: RealTimeSyncOptions) => {
         }
       });
     };
-  }, [setupGameDataChannel, setupMarketplaceChannel, setupShopInventoryChannel, setupCardInstanceChannel]);
+  }, [accountId]); // Используем только accountId как зависимость
 
   // Функция для принудительной синхронизации
   const forceSync = useCallback(async () => {

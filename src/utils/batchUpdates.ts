@@ -3,7 +3,7 @@ import { BatchUpdate, GameData } from '@/types/gameState';
 class BatchUpdateManager {
   private pendingUpdates: Map<keyof GameData, BatchUpdate> = new Map();
   private batchTimeout: NodeJS.Timeout | null = null;
-  private readonly BATCH_DELAY = 1000; // 1 секунда
+  private readonly BATCH_DELAY = 3000; // Увеличиваем до 3 секунд для уменьшения частоты запросов
 
   addUpdate(key: keyof GameData, value: any): Promise<void> {
     return new Promise((resolve) => {

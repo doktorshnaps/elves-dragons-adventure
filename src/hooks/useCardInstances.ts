@@ -228,15 +228,19 @@ export const useCardInstances = () => {
     }
   }, [accountId, isConnected, toast, loadCardInstances]);
 
-  // Загрузка при инициализации
+  // Загрузка при инициализации (только при подключении кошелька)
   useEffect(() => {
-    loadCardInstances();
-  }, [loadCardInstances]);
+    if (isConnected && accountId) {
+      loadCardInstances();
+    }
+  }, [isConnected, accountId]); // Убираем loadCardInstances из зависимостей
 
-  // Подписка на обновления в реальном времени
+  // Подписка на обновления в реальном времени (с debounce)
   useEffect(() => {
     if (!isConnected || !accountId) return;
 
+    let timeoutId: NodeJS.Timeout;
+    
     const channel = supabase
       .channel('card_instances_changes')
       .on(
@@ -249,15 +253,20 @@ export const useCardInstances = () => {
         },
         (payload) => {
           console.log('Card instances realtime update:', payload);
-          loadCardInstances();
+          // Debounce перезагрузку чтобы избежать частых запросов
+          clearTimeout(timeoutId);
+          timeoutId = setTimeout(() => {
+            loadCardInstances();
+          }, 2000); // 2 секунды задержки
         }
       )
       .subscribe();
 
     return () => {
+      clearTimeout(timeoutId);
       supabase.removeChannel(channel);
     };
-  }, [accountId, isConnected, loadCardInstances]);
+  }, [accountId, isConnected]); // Убираем loadCardInstances из зависимостей
 
   return {
     cardInstances,
