@@ -12,8 +12,8 @@ export const useGameSync = () => {
   const { gameData, updateGameData, loading } = useGameData();
   const gameStore = useGameStore();
   
-  // Инициализация синхронизации экземпляров карт
-  useCardInstanceSync();
+  // Инициализация синхронизации экземпляров карт - ОТКЛЮЧЕНО
+  // useCardInstanceSync();
 
   // Загружаем данные из Supabase в локальное состояние при инициализации
   useEffect(() => {

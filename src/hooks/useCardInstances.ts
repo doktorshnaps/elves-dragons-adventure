@@ -99,8 +99,8 @@ export const useCardInstances = () => {
       });
 
       if (error) throw error;
-      // Перезагружаем список из БД, чтобы избежать расхождений
-      await loadCardInstances();
+      // НЕ перезагружаем автоматически, чтобы избежать циклов
+      // await loadCardInstances();
       // Возвращаем заглушку с id для совместимости
       return { id: data } as unknown as CardInstance;
     } catch (error) {
@@ -215,7 +215,8 @@ export const useCardInstances = () => {
       });
 
       if (error) throw error;
-      await loadCardInstances();
+      // НЕ перезагружаем автоматически
+      // await loadCardInstances();
       return data === true;
     } catch (error) {
       console.error('Error deleting card instance by template:', error);
@@ -228,45 +229,44 @@ export const useCardInstances = () => {
     }
   }, [accountId, isConnected, toast, loadCardInstances]);
 
-  // Загрузка при инициализации (только при подключении кошелька)
-  useEffect(() => {
-    if (isConnected && accountId) {
-      loadCardInstances();
-    }
-  }, [isConnected, accountId]); // Убираем loadCardInstances из зависимостей
+  // Загрузка при инициализации (только при подключении кошелька) - ОТКЛЮЧЕНО
+  // useEffect(() => {
+  //   if (isConnected && accountId) {
+  //     loadCardInstances();
+  //   }
+  // }, [isConnected, accountId]);
 
-  // Подписка на обновления в реальном времени (с debounce)
-  useEffect(() => {
-    if (!isConnected || !accountId) return;
+  // Подписка на обновления в реальном времени - ОТКЛЮЧЕНО
+  // useEffect(() => {
+  //   if (!isConnected || !accountId) return;
 
-    let timeoutId: NodeJS.Timeout;
+  //   let timeoutId: NodeJS.Timeout;
     
-    const channel = supabase
-      .channel('card_instances_changes')
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'card_instances',
-          filter: `wallet_address=eq.${accountId}`
-        },
-        (payload) => {
-          console.log('Card instances realtime update:', payload);
-          // Debounce перезагрузку чтобы избежать частых запросов
-          clearTimeout(timeoutId);
-          timeoutId = setTimeout(() => {
-            loadCardInstances();
-          }, 2000); // 2 секунды задержки
-        }
-      )
-      .subscribe();
+  //   const channel = supabase
+  //     .channel('card_instances_changes')
+  //     .on(
+  //       'postgres_changes',
+  //       {
+  //         event: '*',
+  //         schema: 'public',
+  //         table: 'card_instances',
+  //         filter: `wallet_address=eq.${accountId}`
+  //       },
+  //       (payload) => {
+  //         console.log('Card instances realtime update:', payload);
+  //         clearTimeout(timeoutId);
+  //         timeoutId = setTimeout(() => {
+  //           loadCardInstances();
+  //         }, 2000);
+  //       }
+  //     )
+  //     .subscribe();
 
-    return () => {
-      clearTimeout(timeoutId);
-      supabase.removeChannel(channel);
-    };
-  }, [accountId, isConnected]); // Убираем loadCardInstances из зависимостей
+  //   return () => {
+  //     clearTimeout(timeoutId);
+  //     supabase.removeChannel(channel);
+  //   };
+  // }, [accountId, isConnected]);
 
   return {
     cardInstances,
