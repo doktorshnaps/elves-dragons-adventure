@@ -11,7 +11,7 @@ export const shopItems: ShopItem[] = [
     value: 1,
     image: "/lovable-uploads/e523dce0-4cda-4d32-b4e2-ecec40b1eb39.png"
   },
-  // Рабочие
+  // Рабочие - названия синхронизированы с БД
   {
     id: 2,
     name: "Пылевой Батрак",
@@ -54,22 +54,22 @@ export const shopItems: ShopItem[] = [
   },
   {
     id: 6,
-    name: "Архимастер",
-    description: "Превосходный рабочий. Работает 12 часов, ускорение +50%",
+    name: "Виртуоз",
+    description: "Превосходный рабочий. Работает 12 часов, ускорение +60%",
     price: 80,
     type: "worker",
-    value: 50,
+    value: 60,
     stats: { workDuration: 43200000 }, // 12 часов
     image: workerImagesById[6]
   },
   {
     id: 7,
-    name: "Гранд-мастер",
-    description: "Легендарный рабочий. Работает 18 часов, ускорение +70%",
+    name: "Гроссмейстер", 
+    description: "Легендарный рабочий. Работает 24 часа, ускорение +100%",
     price: 120,
     type: "worker",
-    value: 70,
-    stats: { workDuration: 64800000 }, // 18 часов
+    value: 100,
+    stats: { workDuration: 86400000 }, // 24 часа
     image: workerImagesById[7]
   },
   {
