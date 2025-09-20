@@ -35,15 +35,15 @@ export const ItemCard = ({
 
   return (
     <Card
-      className={`p-4 bg-game-background min-h-[200px] w-full cursor-pointer
+      className={`p-4 bg-game-background h-[320px] w-full cursor-pointer
         ${isSelected ? 'border-purple-500' : 'border-game-accent'}
         ${!readonly ? 'hover:border-game-primary' : ''}
-        transition-all duration-300`}
+        transition-all duration-300 flex flex-col justify-between`}
       onClick={() => !readonly && onSelect()}
     >
       <div className="flex flex-col h-full">
         {item.image && (
-          <div className="w-full aspect-square mb-2 rounded-lg overflow-hidden">
+          <div className="w-full aspect-[4/3] mb-2 rounded-lg overflow-hidden">
             <img 
               src={item.image} 
               alt={item.name}
