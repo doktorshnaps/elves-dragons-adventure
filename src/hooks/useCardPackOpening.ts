@@ -94,11 +94,14 @@ export const useCardPackOpening = () => {
       // Обновляем локальные данные из Supabase чтобы исключить рассинхрон
       await loadGameData();
 
+      console.log('🎴 Cards generated for animation:', newCards);
+      
       // Если получены карты, показываем их по очереди
       if (newCards.length > 0) {
         setCardQueue(newCards);
         setCurrentCardIndex(0);
         setRevealedCard(newCards[0]);
+        console.log('🎴 Setting showRevealModal to true, card:', newCards[0]);
         setShowRevealModal(true);
       }
 

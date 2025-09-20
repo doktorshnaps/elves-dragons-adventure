@@ -32,9 +32,11 @@ export const CardRevealModal = ({
   const [showAnimation, setShowAnimation] = useState(false);
 
   useEffect(() => {
+    console.log('🎴 CardRevealModal useEffect:', { revealedCard: revealedCard?.name, isOpen, showAnimation });
     if (revealedCard && isOpen) {
       setShowCard(false);
       setShowAnimation(true);
+      console.log('🎴 Starting animation for card:', revealedCard.name);
     }
   }, [revealedCard, isOpen]);
 
