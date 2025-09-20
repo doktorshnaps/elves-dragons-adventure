@@ -81,11 +81,11 @@ serve(async (req) => {
       throw updateError;
     }
 
-    console.log(`🔍 Checking item type: ${itemTemplate.type}`);
+    console.log(`🔍 Checking item type: "${itemTemplate.type}" for item: ${itemTemplate.name}`);
     
-    // Если это рабочий - создаем card_instance, иначе добавляем в inventory через atomic_inventory_update
+    // Если это рабочий - создаем card_instance, иначе добавляем в inventory через atomic_inventory_update  
     if (itemTemplate.type === 'worker') {
-      console.log(`👷 Processing as worker: ${itemTemplate.name}`);
+      console.log(`👷 Processing as worker: ${itemTemplate.name} (item_id: ${itemTemplate.item_id})`);
       
       // Получаем user_id для кошелька
       const { data: gameData, error: gameDataError } = await supabase
