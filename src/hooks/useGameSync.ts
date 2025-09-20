@@ -43,37 +43,39 @@ export const useGameSync = () => {
     }
   }, [loading, isConnected, accountId, gameData]);
 
-  // Синхронизируем изменения локального состояния с Supabase
-  useEffect(() => {
-    if (!isConnected || !accountId || loading) return;
+  // Синхронизируем изменения локального состояния с Supabase - ОТКЛЮЧЕНО для снижения нагрузки
+  // Используем ручную синхронизацию через batchUpdateManager
+  
+  // useEffect(() => {
+  //   if (!isConnected || !accountId || loading) return;
 
-    const syncToSupabase = async () => {
-      const state = useGameStore.getState();
-      await updateGameData({
-        balance: state.balance,
-        cards: state.cards,
-        inventory: state.inventory,
-        dragonEggs: state.dragonEggs,
-        selectedTeam: state.selectedTeam,
-        battleState: state.battleState,
-        accountLevel: state.accountLevel,
-        accountExperience: state.accountExperience
-      });
-    };
+  //   const syncToSupabase = async () => {
+  //     const state = useGameStore.getState();
+  //     await updateGameData({
+  //       balance: state.balance,
+  //       cards: state.cards,
+  //       inventory: state.inventory,
+  //       dragonEggs: state.dragonEggs,
+  //       selectedTeam: state.selectedTeam,
+  //       battleState: state.battleState,
+  //       accountLevel: state.accountLevel,
+  //       accountExperience: state.accountExperience
+  //     });
+  //   };
 
-    // Дебаунсим синхронизацию
-    const timeoutId = setTimeout(syncToSupabase, 1000);
-    return () => clearTimeout(timeoutId);
-  }, [
-    gameStore.balance,
-    gameStore.cards,
-    gameStore.inventory,
-    gameStore.dragonEggs,
-    gameStore.selectedTeam,
-    gameStore.battleState,
-    gameStore.accountLevel,
-    gameStore.accountExperience
-  ]);
+  //   // Дебаунсим синхронизацию
+  //   const timeoutId = setTimeout(syncToSupabase, 5000); // Увеличили до 5 секунд
+  //   return () => clearTimeout(timeoutId);
+  // }, [
+  //   gameStore.balance,
+  //   gameStore.cards,
+  //   gameStore.inventory,
+  //   gameStore.dragonEggs,
+  //   gameStore.selectedTeam,
+  //   gameStore.battleState,
+  //   gameStore.accountLevel,
+  //   gameStore.accountExperience
+  // ]);
 
   return { loading };
 };

@@ -5,7 +5,7 @@ import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
 import { Clock, Heart, Plus, Activity, ArrowRight, X } from 'lucide-react';
 import { useMedicalBay } from '@/hooks/useMedicalBay';
-import { useCardInstances } from '@/hooks/useCardInstances';
+import { useCentralizedCardInstances } from '@/hooks/useCentralizedCardInstances';
 import { useCardHealthSync } from '@/hooks/useCardHealthSync';
 import { useCardsWithHealth } from '@/hooks/useCardsWithHealth';
 import { CardDisplay } from '../CardDisplay';
@@ -21,7 +21,7 @@ export const MedicalBayComponent = () => {
     processMedicalBayHealing
   } = useMedicalBay();
 
-  const { cardInstances, loadCardInstances } = useCardInstances();
+  const { cardInstances, loadCardInstances } = useCentralizedCardInstances();
   const { syncHealthFromInstances } = useCardHealthSync();
   const { cardsWithHealth, selectedTeamWithHealth } = useCardsWithHealth();
   const [selectedCard, setSelectedCard] = useState<any>(null);

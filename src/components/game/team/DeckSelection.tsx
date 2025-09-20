@@ -6,7 +6,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { CardDisplay } from "../CardDisplay";
 import { CardPreviewModal } from "../cards/CardPreviewModal";
 import { useToast } from "@/hooks/use-toast";
-import { useCardInstances } from "@/hooks/useCardInstances";
+import { useCentralizedCardInstances } from "@/hooks/useCentralizedCardInstances";
 import { useNFTCardIntegration } from "@/hooks/useNFTCardIntegration";
 interface DeckSelectionProps {
   cards: CardType[];
@@ -54,7 +54,7 @@ export const DeckSelection = ({
   // Получаем актуальные card instances для отображения здоровья
   const {
     cardInstances
-  } = useCardInstances();
+  } = useCentralizedCardInstances();
 
   // Создаем карты с актуальным здоровьем из card_instances
   const cardsWithHealthSync = useMemo(() => {

@@ -7,7 +7,7 @@ import { useUnifiedGameState } from "@/hooks/useUnifiedGameState";
 import { useToast } from "@/hooks/use-toast";
 import { useLanguage } from "@/hooks/useLanguage";
 import { t } from "@/utils/translations";
-import { useCardInstances } from "@/hooks/useCardInstances";
+import { useCentralizedCardInstances } from "@/hooks/useCentralizedCardInstances";
 
 import { Users, Clock, Zap, AlertTriangle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
@@ -30,7 +30,7 @@ interface WorkersManagementProps {
 export const WorkersManagement = ({ onSpeedBoostChange }: WorkersManagementProps) => {
   const gameState = useUnifiedGameState();
   const { language } = useLanguage();
-  const { cardInstances, loading: cardInstancesLoading, deleteCardInstance } = useCardInstances();
+  const { cardInstances, loading: cardInstancesLoading, deleteCardInstance } = useCentralizedCardInstances();
   
   const { toast } = useToast();
   const [activeWorkers, setActiveWorkers] = useState<ActiveWorker[]>([]);

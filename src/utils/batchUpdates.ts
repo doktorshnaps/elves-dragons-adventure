@@ -3,7 +3,8 @@ import { BatchUpdate, GameData } from '@/types/gameState';
 class BatchUpdateManager {
   private pendingUpdates: Map<keyof GameData, BatchUpdate> = new Map();
   private batchTimeout: NodeJS.Timeout | null = null;
-  private readonly BATCH_DELAY = 3000; // Увеличиваем до 3 секунд для уменьшения частоты запросов
+  private readonly BATCH_DELAY = 5000; // Увеличиваем до 5 секунд для дальнейшего снижения частоты
+  private isProcessing = false; // Флаг для предотвращения одновременной обработки
 
   addUpdate(key: keyof GameData, value: any): Promise<void> {
     return new Promise((resolve) => {
@@ -27,8 +28,9 @@ class BatchUpdateManager {
   }
 
   private async processBatch(): Promise<void> {
-    if (this.pendingUpdates.size === 0) return;
+    if (this.pendingUpdates.size === 0 || this.isProcessing) return;
 
+    this.isProcessing = true;
     const updates: Partial<GameData> = {};
     
     // Собираем все pending updates
@@ -40,8 +42,7 @@ class BatchUpdateManager {
     this.pendingUpdates.clear();
     this.batchTimeout = null;
 
-    // Здесь будет вызов к Supabase для батч обновления
-    console.log('Processing batch update:', updates);
+    console.log('Processing batch update:', Object.keys(updates));
     
     try {
       // Реальное обновление будет в useUnifiedGameState
@@ -49,6 +50,8 @@ class BatchUpdateManager {
     } catch (error) {
       console.error('Batch update failed:', error);
       throw error;
+    } finally {
+      this.isProcessing = false;
     }
   }
 

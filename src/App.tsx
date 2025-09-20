@@ -10,6 +10,7 @@ import { useRoutePreloader } from './hooks/useRoutePreloader';
 import { LanguageProvider } from './contexts/LanguageContext';
 import { QueryProvider } from './providers/QueryProvider';
 import { useGameSync } from './hooks/useGameSync';
+import { usePerformanceOptimizations } from './hooks/usePerformanceOptimizations';
 
 // Lazy imports
 import {
@@ -30,6 +31,7 @@ function App() {
   useAccountSync();
   useGameSync();
   useRoutePreloader(); // Инициализируем preloading
+  usePerformanceOptimizations(); // Глобальные оптимизации
   
   return (
     <ErrorBoundary>
