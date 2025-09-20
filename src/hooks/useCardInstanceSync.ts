@@ -33,6 +33,45 @@ export const useCardInstanceSync = () => {
     }
   }, [gameData.cards, cardInstances, createCardInstance]);
 
+  // Создание экземпляров для рабочих из инвентаря
+  const syncWorkersToInstances = useCallback(async () => {
+    if (!gameData.inventory || !cardInstances) return;
+
+    const workers = (gameData.inventory as any[]).filter(item => 
+      item?.type === 'worker' || (item?.stats?.workDuration != null && item?.name)
+    );
+    const existingInstanceIds = new Set(cardInstances.map(ci => ci.card_template_id));
+    
+    console.log('🔧 Checking workers for instances:', {
+      totalWorkers: workers.length,
+      existingInstances: existingInstanceIds.size,
+      workerIds: workers.map(w => w.id),
+      instanceIds: Array.from(existingInstanceIds)
+    });
+
+    for (const worker of workers) {
+      if (!existingInstanceIds.has(worker.id)) {
+        console.log(`🆕 Creating instance for worker: ${worker.name} (${worker.id})`);
+        // Создаем card instance для рабочего
+        const workerCard: Card = {
+          id: worker.id,
+          name: worker.name,
+          type: 'workers' as any,
+          description: worker.description || '',
+          image: worker.image || '',
+          power: 0,
+          defense: 0,
+          health: 100,
+          magic: 0,
+          rarity: 1,
+          currentHealth: 100,
+          lastHealTime: Date.now()
+        };
+        await createCardInstance(workerCard, 'hero'); // Use 'hero' as type since CardInstance supports hero/dragon
+      }
+    }
+  }, [gameData.inventory, cardInstances, createCardInstance]);
+
   // Синхронизация здоровья карт с экземплярами
   const syncHealthFromInstances = useCallback(() => {
     if (!gameData.cards || !cardInstances.length) return;
@@ -127,6 +166,10 @@ export const useCardInstanceSync = () => {
   useEffect(() => {
     syncCardsToInstances();
   }, [syncCardsToInstances]);
+
+  useEffect(() => {
+    syncWorkersToInstances();
+  }, [syncWorkersToInstances]);
 
   useEffect(() => {
     syncHealthFromInstances();

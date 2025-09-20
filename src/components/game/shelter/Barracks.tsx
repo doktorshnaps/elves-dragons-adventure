@@ -5,6 +5,8 @@ import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { useToast } from '@/hooks/use-toast';
 import { useGameData } from '@/hooks/useGameData';
+import { useLanguage } from '@/hooks/useLanguage';
+import { t } from '@/utils/translations';
 import { Card as CardType } from '@/types/cards';
 import { upgradeCard } from '@/utils/cardUtils';
 import { CardDisplay } from '../CardDisplay';
@@ -30,6 +32,7 @@ interface BarracksProps {
 export const Barracks: React.FC<BarracksProps> = ({ barracksLevel, onUpgradeBuilding }) => {
   const { toast } = useToast();
   const { gameData, updateGameData } = useGameData();
+  const { language } = useLanguage();
   const [selectedHeroes, setSelectedHeroes] = useState<CardType[]>([]);
   const [currentTime, setCurrentTime] = useState(Date.now());
 
@@ -360,10 +363,10 @@ export const Barracks: React.FC<BarracksProps> = ({ barracksLevel, onUpgradeBuil
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Swords className="w-5 h-5" />
-            Доступные герои для улучшения
+            {t(language, 'shelter.availableHeroes')}
           </CardTitle>
           <CardDescription>
-            Выберите двух одинаковых героев для улучшения
+            {t(language, 'shelter.selectTwoHeroes')}
           </CardDescription>
         </CardHeader>
         <CardContent>

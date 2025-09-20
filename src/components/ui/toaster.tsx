@@ -1,3 +1,4 @@
+import { useRef } from "react"
 import { useToast } from "@/hooks/use-toast"
 import {
   Toast,
@@ -10,6 +11,8 @@ import {
 
 export function Toaster() {
   const { toasts } = useToast()
+  const shownRef = useRef<Map<string, number>>(new Map())
+  const DEDUPE_MS = 5000
 
   return (
     <ToastProvider>
@@ -18,6 +21,15 @@ export function Toaster() {
           const text = `${title ?? ''} ${description ?? ''}`.toLowerCase();
           // Фильтруем уведомления о синхронизации NFT, чтобы не показывать игроку
           return !/nft|синхрон|синхронизац/.test(text);
+        })
+        .filter(({ title, description }) => {
+          // Убираем повторяющиеся ошибки в течение короткого времени
+          const key = `${title ?? ''}|${description ?? ''}`
+          const now = Date.now()
+          const last = shownRef.current.get(key) ?? 0
+          if (now - last < DEDUPE_MS) return false
+          shownRef.current.set(key, now)
+          return true
         })
         .map(function ({ id, title, description, action, ...props }) {
           return (

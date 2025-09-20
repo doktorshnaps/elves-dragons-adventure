@@ -3,10 +3,11 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
-import { useGameData } from "@/hooks/useGameData";
+import { useUnifiedGameState } from "@/hooks/useUnifiedGameState";
 import { useToast } from "@/hooks/use-toast";
-import { useCardInstances } from "@/hooks/useCardInstances";
-import { Item } from "@/types/inventory";
+import { useLanguage } from "@/hooks/useLanguage";
+import { t } from "@/utils/translations";
+
 import { Users, Clock, Zap, AlertTriangle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -26,22 +27,22 @@ interface WorkersManagementProps {
 }
 
 export const WorkersManagement = ({ onSpeedBoostChange }: WorkersManagementProps) => {
-  const { gameData, updateGameData } = useGameData();
-  const { cardInstances, deleteCardInstance } = useCardInstances();
+  const gameState = useUnifiedGameState();
+  const { language } = useLanguage();
+  
   const { toast } = useToast();
   const [activeWorkers, setActiveWorkers] = useState<ActiveWorker[]>([]);
   const [selectedBuilding, setSelectedBuilding] = useState<string>("main_hall");
 
-  // Функция для обновления активных рабочих в базе данных
   const updateActiveWorkersInDB = async (workers: ActiveWorker[]) => {
     const walletAddress = localStorage.getItem('walletAccountId');
     if (!walletAddress) return;
 
     try {
-      const { error } = await supabase
-        .from('game_data')
-        .update({ active_workers: workers as any })
-        .eq('wallet_address', walletAddress);
+      const { error } = await supabase.rpc('update_active_workers_by_wallet', { 
+        p_wallet_address: walletAddress,
+        p_active_workers: workers as any 
+      });
       
       if (error) {
         console.error('Failed to update active workers:', error);
@@ -50,51 +51,77 @@ export const WorkersManagement = ({ onSpeedBoostChange }: WorkersManagementProps
       console.error('Error updating active workers:', error);
     }
   };
-
+  
   const buildings = [
-    { id: "main_hall", name: "Главный зал" },
-    { id: "workshop", name: "Мастерская" },
-    { id: "storage", name: "Склад" },
-    { id: "sawmill", name: "Лесопилка" },
-    { id: "quarry", name: "Каменоломня" },
-    { id: "dragon_lair", name: "Драконье Логово" }
+    { id: "main_hall", name: t(language, 'shelter.mainHall') },
+    { id: "workshop", name: t(language, 'shelter.workshop') },
+    { id: "storage", name: t(language, 'shelter.storage') },
+    { id: "sawmill", name: t(language, 'shelter.sawmill') },
+    { id: "quarry", name: t(language, 'shelter.quarry') },
+    { id: "barracks", name: t(language, 'shelter.barracksBuilding') },
+    { id: "dragon_lair", name: t(language, 'shelter.dragonLairBuilding') },
+    { id: "medical", name: t(language, 'shelter.medicalBuilding') }
   ];
 
-  // Получаем рабочих из card_instances
-  const availableWorkers = cardInstances.filter(
-    instance => instance.card_type === "workers"
-  ).map(instance => {
-    const cardData = instance.card_data as any;
-    return {
-      id: instance.id,
-      name: cardData.name || 'Рабочий',
-      description: cardData.description || '',
-      type: cardData.type || 'worker',
-      value: cardData.value || 0,
-      stats: cardData.stats || {},
-      image: cardData.image
-    };
-  });
-
-  // Загружаем активных рабочих из gameData
-  useEffect(() => {
-    if (gameData.activeWorkers) {
-      setActiveWorkers(gameData.activeWorkers);
-    }
-  }, [gameData.activeWorkers]);
-
-  // Синхронизируем изменения с базой данных
-  useEffect(() => {
-    // Обновляем базу данных при изменении активных рабочих
-    if (gameData.activeWorkers !== undefined && 
-        JSON.stringify(activeWorkers) !== JSON.stringify(gameData.activeWorkers)) {
-      updateGameData({ activeWorkers });
+  // Получаем рабочих из актуального gameState (приоритет) или fallback при загрузке
+  const getInventoryWithFallback = () => {
+    // Если gameState загружен и не в состоянии загрузки, используем его данные (даже если пустые)
+    if (!gameState.loading && gameState.inventory !== undefined) {
+      console.log('🔍 Using gameState inventory:', gameState.inventory);
+      return gameState.inventory || [];
     }
     
-    // Вычисляем общее ускорение
+    // Fallback только при начальной загрузке или ошибках
+    try {
+      const persisted = localStorage.getItem('game-storage');
+      if (persisted) {
+        const parsed = JSON.parse(persisted);
+        const lsInv = parsed?.state?.inventory;
+        if (Array.isArray(lsInv)) {
+          console.log('🔍 Using fallback inventory from localStorage:', lsInv);
+          return lsInv;
+        }
+      }
+    } catch (e) {
+      console.warn('⚠️ Failed to read fallback inventory from localStorage', e);
+    }
+    
+    console.log('🔍 No inventory available, returning empty array');
+    return [];
+  };
+
+  const inventory = getInventoryWithFallback();
+
+  const availableWorkers = inventory
+    .filter((item: any) => {
+      const isWorker = item?.type === 'worker' || (item?.stats?.workDuration != null && item?.name);
+      if (!isWorker) return false;
+      return true;
+    })
+    .map((item: any, index: number) => ({
+      id: item.id ?? `worker_${index}_${item.name}`,
+      name: item.name || 'Рабочий',
+      description: item.description || '',
+      type: item.type || 'worker',
+      value: item.value || 0,
+      stats: item.stats || {},
+      image: item.image
+    }));
+
+  console.log('🔍 Available workers:', availableWorkers);
+
+  // Загружаем активных рабочих из gameState
+  useEffect(() => {
+    if (gameState.activeWorkers) {
+      setActiveWorkers(gameState.activeWorkers);
+    }
+  }, [gameState.activeWorkers]);
+
+  // Вычисляем общее ускорение при изменении активных рабочих
+  useEffect(() => {
     const totalBoost = activeWorkers.reduce((sum, worker) => sum + worker.speedBoost, 0);
     onSpeedBoostChange?.(totalBoost);
-  }, [activeWorkers, onSpeedBoostChange, gameData.activeWorkers, updateGameData]);
+  }, [activeWorkers, onSpeedBoostChange]);
 
   // Проверяем завершенных рабочих каждую секунду
   useEffect(() => {
@@ -103,28 +130,28 @@ export const WorkersManagement = ({ onSpeedBoostChange }: WorkersManagementProps
       setActiveWorkers(prev => {
         const stillWorking = prev.filter(worker => {
           const isFinished = now >= worker.startTime + worker.duration;
-          if (isFinished) {
-            // Удаляем card_instance рабочего из базы данных
-            deleteCardInstance(worker.cardInstanceId);
-            toast({
-              title: "Работа завершена",
-              description: `${worker.name} завершил работу в здании "${buildings.find(b => b.id === worker.building)?.name}" и исчез`,
-            });
-          }
+           if (isFinished) {
+             toast({
+               title: "Работа завершена",
+               description: `${worker.name} завершил работу в здании "${buildings.find(b => b.id === worker.building)?.name}" и исчез`,
+             });
+           }
           return !isFinished;
         });
         
-        // Обновляем базу данных если список изменился
-        if (stillWorking.length !== prev.length) {
-          updateActiveWorkersInDB(stillWorking);
-        }
+         // Обновляем базу данных если список изменился
+         if (stillWorking.length !== prev.length) {
+           updateActiveWorkersInDB(stillWorking);
+           gameState.actions.batchUpdate({ activeWorkers: stillWorking }).catch(console.error);
+           console.log('🔄 Updated active workers after completion:', stillWorking);
+         }
         
         return stillWorking;
       });
     }, 1000);
 
     return () => clearInterval(interval);
-  }, [toast, buildings]);
+  }, [toast, buildings, gameState.actions]);
 
   const assignWorker = async (worker: any) => {
     if (!worker.stats?.workDuration) return;
@@ -140,16 +167,45 @@ export const WorkersManagement = ({ onSpeedBoostChange }: WorkersManagementProps
       building: selectedBuilding
     };
 
-    setActiveWorkers(prev => [...prev, newActiveWorker]);
-
-    // Обновляем активных рабочих в базе данных
     const updatedActiveWorkers = [...activeWorkers, newActiveWorker];
-    await updateActiveWorkersInDB(updatedActiveWorkers);
 
-    toast({
-      title: "Рабочий назначен",
-      description: `${worker.name} приступил к работе в здании "${buildings.find(b => b.id === selectedBuilding)?.name}"`,
-    });
+    // Сразу обновляем состояние игры и базу данных
+     try {
+       // Обновляем локальное состояние
+       setActiveWorkers(updatedActiveWorkers);
+
+       // Формируем новый инвентарь без одного назначенного рабочего
+       const currentInventory = (gameState.inventory || []) as any[];
+       const removeIndex = currentInventory.findIndex((i: any) => i?.type === 'worker' && (i.id === worker.id || (i.name === worker.name && i.value === worker.value && (i.stats?.workDuration ?? null) === (worker.stats?.workDuration ?? null))));
+       const updatedInventory = removeIndex >= 0 ? currentInventory.filter((_, idx) => idx !== removeIndex) : currentInventory;
+
+       // Сохраняем активных рабочих напрямую в БД (RPC не поддерживает это поле)
+       await updateActiveWorkersInDB(updatedActiveWorkers);
+
+       // Обновляем game_data с новыми активными рабочими и инвентарем
+       await gameState.actions.batchUpdate({ activeWorkers: updatedActiveWorkers, inventory: updatedInventory });
+       
+       console.log('✅ Worker assigned and saved:', newActiveWorker);
+       if (removeIndex >= 0) {
+         console.log('🧹 Worker removed from inventory at index:', removeIndex);
+       } else {
+         console.warn('⚠️ Could not find matching worker in inventory to remove');
+       }
+       
+        toast({
+          title: t(language, 'shelter.workerAssigned'),
+          description: `${worker.name} ${t(language, 'shelter.workerAssignedDesc')} "${buildings.find(b => b.id === selectedBuilding)?.name}"`,
+        });
+      } catch (error) {
+       console.error('❌ Failed to save worker assignment:', error);
+       // Откатываем изменения при ошибке
+       setActiveWorkers(activeWorkers);
+       toast({
+         title: t(language, 'shelter.error'),
+         description: t(language, 'shelter.failedToAssign'),
+         variant: "destructive"
+       });
+    }
   };
 
   const formatTime = (ms: number) => {
@@ -180,10 +236,10 @@ export const WorkersManagement = ({ onSpeedBoostChange }: WorkersManagementProps
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Users className="w-5 h-5" />
-            Управление рабочими
+            {t(language, 'shelter.workersInfo')}
           </CardTitle>
           <CardDescription>
-            Назначайте рабочих на здания для ускорения их работы
+            {t(language, 'shelter.hireWorkers')}
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -191,13 +247,13 @@ export const WorkersManagement = ({ onSpeedBoostChange }: WorkersManagementProps
             <div className="flex items-center gap-2">
               <Zap className="w-4 h-4 text-yellow-500" />
               <span className="text-sm font-medium">
-                Общее ускорение: +{totalSpeedBoost}%
+                {t(language, 'shelter.totalSpeedBoost')}: +{totalSpeedBoost}%
               </span>
             </div>
             <div className="flex items-center gap-2">
               <Clock className="w-4 h-4 text-blue-500" />
               <span className="text-sm text-muted-foreground">
-                Активных рабочих: {activeWorkers.length}
+                {t(language, 'shelter.activeWorkers')}: {activeWorkers.length}
               </span>
             </div>
           </div>
@@ -206,55 +262,26 @@ export const WorkersManagement = ({ onSpeedBoostChange }: WorkersManagementProps
             <div className="flex items-center gap-2 p-3 bg-green-50 dark:bg-green-950/20 rounded-lg">
               <Zap className="w-4 h-4 text-green-600" />
               <span className="text-sm text-green-700 dark:text-green-400">
-                Все здания работают быстрее благодаря рабочим!
+                {t(language, 'shelter.workersBoostActive')}
               </span>
             </div>
           )}
         </CardContent>
       </Card>
 
-      {/* Активные рабочие */}
-      {activeWorkers.length > 0 && (
-        <Card>
-          <CardHeader>
-            <CardTitle>Активные рабочие</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              {activeWorkers.map(worker => (
-                <div key={worker.id} className="p-4 border rounded-lg">
-                  <div className="flex items-center justify-between mb-2">
-                    <div>
-                      <h4 className="font-medium">{worker.name}</h4>
-                      <p className="text-sm text-muted-foreground">
-                        {buildings.find(b => b.id === worker.building)?.name} • +{worker.speedBoost}% ускорение
-                      </p>
-                    </div>
-                    <Badge variant="secondary">
-                      {formatTime(getRemainingTime(worker))}
-                    </Badge>
-                  </div>
-                  <Progress value={getProgress(worker)} className="w-full" />
-                </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-      )}
-
       {/* Назначение новых рабочих */}
       <Card>
         <CardHeader>
-          <CardTitle>Назначить рабочего</CardTitle>
+          <CardTitle>{t(language, 'shelter.assignWorker')}</CardTitle>
           <CardDescription>
-            Выберите здание и назначьте рабочего. После назначения отменить нельзя!
+            {t(language, 'shelter.assignWorkerDesc')}
           </CardDescription>
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
             {/* Выбор здания */}
             <div>
-              <label className="text-sm font-medium mb-2 block">Здание:</label>
+              <label className="text-sm font-medium mb-2 block">{t(language, 'shelter.building')}</label>
               <div className="grid grid-cols-2 gap-2">
                 {buildings.map(building => (
                   <Button
@@ -272,12 +299,12 @@ export const WorkersManagement = ({ onSpeedBoostChange }: WorkersManagementProps
 
             {/* Доступные рабочие */}
             <div>
-              <label className="text-sm font-medium mb-2 block">Доступные рабочие:</label>
+              <label className="text-sm font-medium mb-2 block">{t(language, 'shelter.availableWorkers')}</label>
               {availableWorkers.length === 0 ? (
                 <div className="text-center py-8 text-muted-foreground">
                   <Users className="w-12 h-12 mx-auto mb-2 opacity-50" />
-                  <p>У вас нет рабочих в инвентаре</p>
-                  <p className="text-sm">Купите их в Магическом магазине</p>
+                  <p>{t(language, 'shelter.noWorkersInInventory')}</p>
+                  <p className="text-sm">{t(language, 'shelter.buyWorkersInShop')}</p>
                 </div>
               ) : (
                 <div className="grid gap-3">
@@ -297,7 +324,7 @@ export const WorkersManagement = ({ onSpeedBoostChange }: WorkersManagementProps
                         size="sm"
                         className="shrink-0"
                       >
-                        Назначить
+                        {t(language, 'shelter.assignButton')}
                       </Button>
                     </div>
                   ))}
@@ -309,14 +336,42 @@ export const WorkersManagement = ({ onSpeedBoostChange }: WorkersManagementProps
               <div className="flex items-start gap-2 p-3 bg-amber-50 dark:bg-amber-950/20 rounded-lg">
                 <AlertTriangle className="w-4 h-4 text-amber-600 mt-0.5 shrink-0" />
                 <div className="text-sm text-amber-700 dark:text-amber-400">
-                  <strong>Внимание:</strong> После назначения рабочего на здание отменить это действие нельзя. 
-                  По окончанию работы рабочий исчезнет навсегда.
+                  <strong>{t(language, 'shelter.warningTitle')}</strong> {t(language, 'shelter.warningText')}
                 </div>
               </div>
             )}
           </div>
         </CardContent>
       </Card>
+
+      {/* Активные рабочие */}
+      {activeWorkers.length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle>{t(language, 'shelter.activeWorkers')}</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              {activeWorkers.map(worker => (
+                <div key={worker.id} className="p-4 border rounded-lg">
+                  <div className="flex items-center justify-between mb-2">
+                    <div>
+                      <h4 className="font-medium">{worker.name}</h4>
+                      <p className="text-sm text-muted-foreground">
+                        {buildings.find(b => b.id === worker.building)?.name} • +{worker.speedBoost}% {t(language, 'shelter.speedBoost')}
+                      </p>
+                    </div>
+                    <Badge variant="secondary">
+                      {formatTime(getRemainingTime(worker))}
+                    </Badge>
+                  </div>
+                  <Progress value={getProgress(worker)} className="w-full" />
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 };

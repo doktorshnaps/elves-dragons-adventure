@@ -7,6 +7,7 @@ import { useShopInventory } from "@/hooks/useShopInventory";
 import { useWallet } from "@/hooks/useWallet";
 import { useLanguage } from "@/hooks/useLanguage";
 import { t } from "@/utils/translations";
+import { translateShopItemName, translateShopItemDescription } from "@/utils/shopTranslations";
 import { v4 as uuidv4 } from 'uuid';
 import { generateCard } from "@/utils/cardUtils";
 import { Item } from "@/types/inventory";
@@ -111,6 +112,23 @@ export const Shop = ({ onClose }: ShopProps) => {
 
       console.log('✅ Purchase successful, result:', result);
       
+      // If purchased item is a worker, create card instance for it
+      if (item.type === 'worker' || (item.stats?.workDuration != null)) {
+        try {
+          const { error: workerError } = await (supabase as any).rpc('create_worker_card_instance', {
+            p_wallet_address: accountId,
+            p_worker_data: newItem
+          });
+          if (workerError) {
+            console.warn('⚠️ Failed to create worker card instance:', workerError);
+          } else {
+            console.log('✅ Worker card instance created successfully');
+          }
+        } catch (e) {
+          console.warn('⚠️ Exception creating worker card instance:', e);
+        }
+      }
+      
       // Только после успешной покупки уменьшаем количество товара в магазине
       await purchaseItem(item.id, accountId);
       
@@ -122,7 +140,7 @@ export const Shop = ({ onClose }: ShopProps) => {
       setShowEffect(true);
       toast({
         title: item.type === 'cardPack' ? t(language, 'shop.cardPackBought') : t(language, 'shop.purchaseSuccess'),
-        description: item.type === 'cardPack' ? t(language, 'shop.cardPackDescription') : `${t(language, 'shop.boughtItem')} ${item.name}`,
+        description: item.type === 'cardPack' ? t(language, 'shop.cardPackDescription') : `${t(language, 'shop.boughtItem')} ${translateShopItemName(language, item.name)}`,
       });
     } catch (error) {
       toast({
@@ -196,13 +214,13 @@ return (
               )}
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
-                  <h3 className="font-semibold text-game-accent">{item.name}</h3>
+                  <h3 className="font-semibold text-game-accent">{translateShopItemName(language, item.name)}</h3>
                   <div className="flex items-center gap-1 text-game-accent text-sm">
                     <Package className="w-3 h-3" />
                     <span>{quantity}</span>
                   </div>
                 </div>
-                <p className="text-gray-400 text-sm">{item.description}</p>
+                <p className="text-gray-400 text-sm">{translateShopItemDescription(language, item.description)}</p>
                 {item.stats && (
                   <div className="text-game-accent text-sm">
                     {item.stats.power && <p>{t(language, 'shop.power')} +{item.stats.power}</p>}
