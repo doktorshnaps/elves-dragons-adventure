@@ -215,6 +215,17 @@ class CardInstanceManager {
    * Выполнение создания экземпляра
    */
   private async executeCreate(walletAddress: string, data: any): Promise<void> {
+    // КРИТИЧЕСКИЙ ЛОГ: отслеживаем откуда создаются рабочие на уровне executeCreate
+    if (data.card?.type === 'workers' || data.card?.name?.includes('Батрак') || data.card?.name?.includes('Носильщик') || data.card?.name?.includes('Мастер') || data.card?.name?.includes('Архимастер')) {
+      console.error('🚨 EXECUTECREATEWORKER:', {
+        walletAddress,
+        cardName: data.card?.name,
+        cardType: data.card?.type,
+        cardId: data.card?.id,
+        stackTrace: new Error().stack
+      });
+    }
+    
     const { data: result, error } = await supabase.rpc('create_card_instance_by_wallet', {
       p_wallet_address: walletAddress,
       p_card: data.card as any
