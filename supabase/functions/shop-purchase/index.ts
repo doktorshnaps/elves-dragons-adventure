@@ -83,7 +83,7 @@ serve(async (req) => {
     if (itemTemplate.type === 'worker') {
       const { error: balanceError } = await supabase.rpc('atomic_inventory_update', {
         p_wallet_address: wallet_address,
-        p_price_deduction: itemTemplate.value || 1,
+        p_price_deduction: itemTemplate.value || 1, // Используем стоимость из шаблона
         p_new_item: null // Не добавляем в inventory - для рабочих используем card_instances
       });
 
@@ -95,13 +95,13 @@ serve(async (req) => {
 
     // Если это рабочий - создаем card_instance, иначе добавляем в inventory через atomic_inventory_update
     if (itemTemplate.type === 'worker') {
-      // Проверяем, есть ли уже такой рабочий у пользователя - используем оператор JSONB
+      // Проверяем, есть ли уже такой рабочий у пользователя по card_template_id
       const { data: existingWorker, error: checkError } = await supabase
         .from('card_instances')
         .select('*')
         .eq('wallet_address', wallet_address)
         .eq('card_type', 'workers')
-        .eq('card_data->>name', itemTemplate.name)
+        .eq('card_template_id', `worker_${item_id}`)
         .maybeSingle();
 
       if (checkError && checkError.code !== 'PGRST116') {
@@ -133,11 +133,23 @@ serve(async (req) => {
         image: itemTemplate.image_url
       };
 
-      // Создаем card_instance для рабочего
+      // Создаем card_instance для рабочего с правильным user_id
+      const { data: gameData, error: gameDataError } = await supabase
+        .from('game_data')
+        .select('user_id')
+        .eq('wallet_address', wallet_address)
+        .maybeSingle();
+
+      if (gameDataError) {
+        console.error('❌ Error fetching user_id:', gameDataError);
+        throw gameDataError;
+      }
+
       const { data: cardInstanceId, error: cardError } = await supabase
         .from('card_instances')
         .insert({
           wallet_address: wallet_address,
+          user_id: gameData?.user_id,
           card_template_id: cardData.id,
           card_type: 'workers',
           current_health: cardData.health,
