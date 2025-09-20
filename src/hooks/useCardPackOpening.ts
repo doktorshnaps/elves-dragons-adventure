@@ -66,14 +66,19 @@ export const useCardPackOpening = () => {
     }
 
     setIsOpening(true);
+    console.log('🎴 Starting openCardPacks process');
 
     try {
       // Генерируем карты, которые будет содержать открытие
       const newCards: CardType[] = Array.from({ length: count }, () =>
         generateCard(Math.random() > 0.5 ? 'character' : 'pet')
       );
+      
+      console.log('🎴 Generated cards:', newCards);
 
       // Вызываем edge function для открытия колод
+      console.log('🎴 Calling edge function with:', { accountId, packName: packItem.name, count, cardsCount: newCards.length });
+      
       const { data, error } = await supabase.functions.invoke('open-card-packs', {
         body: {
           p_wallet_address: accountId,
@@ -84,14 +89,16 @@ export const useCardPackOpening = () => {
       });
 
       if (error) {
-        console.error('open_card_packs RPC error', error);
+        console.error('🎴 Edge function error:', error);
         toast({
           title: 'Ошибка',
-          description: 'Не удалось открыть колоды карт',
+          description: 'Не удалось открыть колоды карт: ' + error.message,
           variant: 'destructive',
         });
         return [];
       }
+      
+      console.log('🎴 Edge function response:', data);
 
       // Обновляем локальные данные из Supabase чтобы исключить рассинхрон
       await loadGameData();
