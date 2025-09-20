@@ -58,10 +58,12 @@ export const InventoryGrid = ({
             </Card>
           </DialogTrigger>
           <DialogContent className="bg-game-surface border-game-accent">
-            
-            
+            <DialogTitle className="text-game-accent font-semibold text-lg">{item.name}</DialogTitle>
+            <DialogDescription className="sr-only">
+              {t(language, 'items.itemDetails')}
+            </DialogDescription>
             <div className="space-y-4">
-              <h4 className="font-semibold text-game-accent text-lg">{item.name}</h4>
+              
               {item.type === 'cardPack' && <div className="space-y-3">
                   <p className="text-sm text-gray-400">{t(language, 'items.cardPackDescription')}</p>
                   <div className="bg-game-surface/50 p-3 rounded-lg border border-game-accent/30">

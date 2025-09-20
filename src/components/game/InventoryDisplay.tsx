@@ -151,8 +151,6 @@ export const InventoryDisplay = ({
       onSellItem(existingItem);
     } else {
       await handleSellItem(existingItem);
-      const newInventory = currentInv.filter(item => item.id !== existingItem.id);
-      await updateGameData({ inventory: newInventory });
     }
   };
   
