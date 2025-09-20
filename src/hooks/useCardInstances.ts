@@ -75,60 +75,6 @@ export const useCardInstances = () => {
         }
       }
 
-      // 🆕 СИНХРОНИЗИРУЕМ РАБОЧИХ ИЗ ИНВЕНТАРЯ
-      const inventory = gameData?.inventory || [];
-      const workers = inventory.filter((item: any) => item.type === 'worker');
-      
-      if (workers.length > 0) {
-        console.log('🔍 Checking workers from inventory:', workers.map((w: any) => ({ id: w.id, name: w.name })));
-        
-        const currentInstanceIds = new Set(list.map(ci => ci.card_template_id));
-        const missingWorkers = workers.filter((worker: any) => !currentInstanceIds.has(worker.id));
-        
-        if (missingWorkers.length > 0) {
-          console.log('🆕 Creating missing worker instances:', missingWorkers.map((w: any) => ({ id: w.id, name: w.name })));
-          
-          for (const worker of missingWorkers) {
-            try {
-              const workerCardData = {
-                id: worker.id,
-                name: worker.name,
-                type: 'worker',
-                image: worker.image,
-                stats: worker.stats,
-                value: worker.value,
-                description: worker.description,
-                health: 100 // Дефолтное здоровье для рабочих
-              };
-              
-              const { data: instanceId, error: createError } = await supabase.rpc('create_card_instance_by_wallet', {
-                p_wallet_address: accountId,
-                p_card: workerCardData
-              });
-              
-              if (createError) {
-                console.error('Error creating worker instance:', createError);
-              } else {
-                console.log('✅ Created worker instance:', worker.name, instanceId);
-              }
-            } catch (e) {
-              console.error('Exception creating worker instance:', e);
-            }
-          }
-          
-          // Перезагружаем список после создания worker instances
-          try {
-            const { data: dataAfterWorkers, error: errAfterWorkers } = await supabase
-              .rpc('get_card_instances_by_wallet', { p_wallet_address: accountId });
-            if (!errAfterWorkers) {
-              list = (dataAfterWorkers || []) as unknown as CardInstance[];
-            }
-          } catch (e) {
-            console.warn('Error reloading after worker sync:', e);
-          }
-        }
-      }
-
       setCardInstances(list);
     } catch (error) {
       console.error('Error loading card instances:', error);
@@ -140,7 +86,7 @@ export const useCardInstances = () => {
     } finally {
       setLoading(false);
     }
-  }, [accountId, isConnected, toast, gameData?.cards, gameData?.inventory]);
+  }, [accountId, isConnected, toast, gameData?.cards]);
 
   // Создание нового экземпляра карты
   const createCardInstance = useCallback(async (card: Card, cardType: 'hero' | 'dragon') => {

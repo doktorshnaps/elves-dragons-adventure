@@ -53,11 +53,11 @@ serve(async (req) => {
       });
     }
 
-    // Получаем шаблон предмета по id (НЕ по item_id!)
+    // Получаем шаблон предмета по item_id (не по id!)
     const { data: itemTemplate, error: templateError } = await supabase
       .from('item_templates')
       .select('*')
-      .eq('id', item_id) // Ищем по правильному полю id
+      .eq('item_id', `worker_${item_id}`) // Формируем правильный item_id
       .single();
 
     if (templateError) {
@@ -129,7 +129,7 @@ serve(async (req) => {
     } else {
       // Для обычных предметов используем старую логику через atomic_inventory_update
       const itemData = {
-        id: itemTemplate.item_id || `item_${item_id}_${Date.now()}`, // Используем правильный item_id
+        id: `item_${item_id}_${Date.now()}`,
         name: itemTemplate.name,
         description: itemTemplate.description,
         type: itemTemplate.type,
