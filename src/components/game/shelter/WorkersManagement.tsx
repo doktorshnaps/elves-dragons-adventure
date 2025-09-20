@@ -148,8 +148,8 @@ export const WorkersManagement = ({ onSpeedBoostChange }: WorkersManagementProps
        // Обновляем локальное состояние
        setActiveWorkers(updatedActiveWorkers);
 
-        // Удаляем card_instance рабочего (после назначения он исчезает) - ОТКЛЮЧЕНО
-        // await deleteCardInstance(worker.cardInstanceId);
+        // Удаляем card_instance рабочего (после назначения он исчезает)
+        await deleteCardInstance(worker.cardInstanceId);
 
        // Сохраняем активных рабочих в БД
        await updateActiveWorkersInDB(updatedActiveWorkers);

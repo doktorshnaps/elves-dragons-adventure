@@ -233,13 +233,15 @@ class CardInstanceManager {
   private async executeCreate(walletAddress: string, data: any): Promise<void> {
     // КРИТИЧЕСКИЙ ЛОГ: отслеживаем откуда создаются рабочие на уровне executeCreate
     if (data.card?.type === 'workers' || data.card?.name?.includes('Батрак') || data.card?.name?.includes('Носильщик') || data.card?.name?.includes('Мастер') || data.card?.name?.includes('Архимастер')) {
-      console.error('🚨 EXECUTECREATEWORKER:', {
+      console.error('🚨 BLOCKED: Trying to create worker through cardInstanceManager:', {
         walletAddress,
         cardName: data.card?.name,
         cardType: data.card?.type,
         cardId: data.card?.id,
         stackTrace: new Error().stack
       });
+      // БЛОКИРУЕМ создание рабочих через этот путь - они должны создаваться только через shop-purchase
+      return;
     }
     
     const { data: result, error } = await supabase.rpc('create_card_instance_by_wallet', {
