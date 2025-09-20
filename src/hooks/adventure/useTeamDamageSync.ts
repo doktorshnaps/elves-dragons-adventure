@@ -9,41 +9,37 @@ import { Card } from '@/types/cards';
  */
 export const useTeamDamageSync = () => {
   const { gameData, updateGameData } = useGameData();
-  // const { applyDamageToCard } = useCardInstanceSync(); // ОТКЛЮЧЕНО
+  const { applyDamageToCard } = useCardInstanceSync();
 
   const applyDamageToTeam = useCallback(async (damage: number) => {
     if (!damage || damage <= 0) return;
     const selectedTeam = (gameData.selectedTeam as any[]) || [];
     if (selectedTeam.length === 0) return;
 
-    // Пока отключаем нанесение урона по экземплярам карт
-    console.log('Damage to team requested but disabled:', damage);
-    return;
+    let remaining = damage;
 
-    // let remaining = damage;
+    for (const pair of selectedTeam) {
+      if (remaining <= 0) break;
 
-    // for (const pair of selectedTeam) {
-    //   if (remaining <= 0) break;
+      // Damage dragon first if exists and alive
+      const dragon = pair.dragon;
+      if (dragon && remaining > 0) {
+        const dragonDamage = Math.min(remaining, dragon.currentHealth || dragon.health);
+        await applyDamageToCard(dragon.id, dragonDamage);
+        remaining -= dragonDamage;
+      }
 
-    //   // Damage dragon first if exists and alive
-    //   const dragon = pair.dragon;
-    //   if (dragon && remaining > 0) {
-    //     const dragonDamage = Math.min(remaining, dragon.currentHealth || dragon.health);
-    //     // await applyDamageToCard(dragon.id, dragonDamage);
-    //     remaining -= dragonDamage;
-    //   }
+      if (remaining <= 0) break;
 
-    //   if (remaining <= 0) break;
-
-    //   // Then damage hero
-    //   const hero = pair.hero;
-    //   if (hero && remaining > 0) {
-    //     const heroDamage = Math.min(remaining, hero.currentHealth || hero.health);
-    //     // await applyDamageToCard(hero.id, heroDamage);
-    //     remaining -= heroDamage;
-    //   }
-    // }
-  }, [gameData.selectedTeam]);
+      // Then damage hero
+      const hero = pair.hero;
+      if (hero && remaining > 0) {
+        const heroDamage = Math.min(remaining, hero.currentHealth || hero.health);
+        await applyDamageToCard(hero.id, heroDamage);
+        remaining -= heroDamage;
+      }
+    }
+  }, [gameData.selectedTeam, applyDamageToCard]);
 
   return { applyDamageToTeam };
 };

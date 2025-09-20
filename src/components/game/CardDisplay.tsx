@@ -2,8 +2,6 @@ import { Card as CardType } from "@/types/cards";
 import { Card } from "@/components/ui/card";
 import { Sparkles } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { useLanguage } from "@/hooks/useLanguage";
-import { translateCardName, translateFaction, translateCardType } from "@/utils/cardTranslations";
 import { CardImage } from "./cards/CardImage";
 import { CardHeader } from "./cards/CardHeader";
 import { CardStats } from "./cards/CardStats";
@@ -30,7 +28,6 @@ export const CardDisplay = ({
   onClick
 }: CardDisplayProps) => {
   const isMobile = useIsMobile();
-  const { language } = useLanguage();
   return <Card onClick={onClick} className={`mx-auto w-[90px] h-[180px] sm:w-[120px] sm:h-[240px] md:w-[130px] md:h-[260px] lg:w-[140px] lg:h-[280px]
         p-0.5 bg-game-background border-game-accent hover:border-game-primary transition-all duration-300 
         ${!isActive && card.type === 'pet' ? 'opacity-50' : ''} ${onClick ? 'cursor-pointer' : ''} ${className}`}>
@@ -41,15 +38,15 @@ export const CardDisplay = ({
         
         <div className="flex flex-col flex-grow justify-between gap-0 p-0.5 h-[105px] sm:h-[140px] md:h-[150px] lg:h-[160px]">
           <div className="flex flex-col gap-0 overflow-hidden">
-            <CardHeader name={translateCardName(language, card.name)} rarity={card.rarity} />
+            <CardHeader name={card.name} rarity={card.rarity} />
 
             <div className={`text-purple-400 leading-none truncate ${isMobile ? 'text-[6px]' : 'text-[10px]'}`}>
-              ({translateCardType(language, card.type === 'character' ? 'Герой' : 'Питомец')})
+              ({card.type === 'character' ? 'Герой' : 'Питомец'})
             </div>
 
             {card.faction && <div className={`flex items-center gap-0.5 leading-none ${isMobile ? 'text-[6px]' : 'text-[10px]'} ${!isActive && card.type === 'pet' ? 'text-red-400' : 'text-purple-400'} overflow-hidden`}>
                 <Sparkles className={`${isMobile ? 'w-1.5 h-1.5' : 'w-2.5 h-2.5'} flex-shrink-0`} />
-                <span className="truncate">{translateFaction(language, card.faction)}</span>
+                <span className="truncate">{card.faction}</span>
               </div>}
             
             <CardStats health={card.health} power={card.power} defense={card.defense} />
@@ -65,7 +62,7 @@ export const CardDisplay = ({
             )}
 
             {!isActive && card.type === 'pet' && <div className="text-red-400 text-[6px] mt-0.5 break-words leading-none tracking-tighter truncate">
-                Требуется герой {translateFaction(language, card.faction)} {card.rarity} или выше
+                Требуется герой {card.faction} {card.rarity} или выше
               </div>}
           </div>
 

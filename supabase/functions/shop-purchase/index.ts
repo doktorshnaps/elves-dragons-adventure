@@ -79,50 +79,10 @@ serve(async (req) => {
       throw updateError;
     }
 
-    // Списываем баланс пользователя (только для рабочих, для остальных это делается в Shop.tsx)
-    if (itemTemplate.type === 'worker') {
-      const { error: balanceError } = await supabase.rpc('atomic_inventory_update', {
-        p_wallet_address: wallet_address,
-        p_price_deduction: itemTemplate.value || 1, // Используем стоимость из шаблона
-        p_new_item: null // Не добавляем в inventory - для рабочих используем card_instances
-      });
-
-      if (balanceError) {
-        console.error('❌ Error deducting balance for worker:', balanceError);
-        throw balanceError;
-      }
-    }
-
     // Если это рабочий - создаем card_instance, иначе добавляем в inventory через atomic_inventory_update
     if (itemTemplate.type === 'worker') {
-      // Проверяем, есть ли уже такой рабочий у пользователя по card_template_id
-      const { data: existingWorker, error: checkError } = await supabase
-        .from('card_instances')
-        .select('*')
-        .eq('wallet_address', wallet_address)
-        .eq('card_type', 'workers')
-        .eq('card_template_id', `worker_${item_id}`)
-        .maybeSingle();
-
-      if (checkError && checkError.code !== 'PGRST116') {
-        console.error('❌ Error checking existing worker:', checkError);
-        throw checkError;
-      }
-
-      if (existingWorker) {
-        console.log(`⚠️ Worker ${itemTemplate.name} already exists for wallet ${wallet_address}, skipping creation`);
-        return new Response(JSON.stringify({ 
-          success: true,
-          remaining_quantity: inventoryItem.available_quantity - 1,
-          item_type: itemTemplate.type,
-          message: 'Worker already exists'
-        }), {
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        });
-      }
-
       const cardData = {
-        id: `worker_${item_id}`, // Убираем timestamp для предотвращения дублирования
+        id: `worker_${item_id}_${Date.now()}`,
         name: itemTemplate.name,
         description: itemTemplate.description,
         type: 'worker',
@@ -133,23 +93,11 @@ serve(async (req) => {
         image: itemTemplate.image_url
       };
 
-      // Создаем card_instance для рабочего с правильным user_id
-      const { data: gameData, error: gameDataError } = await supabase
-        .from('game_data')
-        .select('user_id')
-        .eq('wallet_address', wallet_address)
-        .maybeSingle();
-
-      if (gameDataError) {
-        console.error('❌ Error fetching user_id:', gameDataError);
-        throw gameDataError;
-      }
-
+      // Создаем card_instance для рабочего
       const { data: cardInstanceId, error: cardError } = await supabase
         .from('card_instances')
         .insert({
           wallet_address: wallet_address,
-          user_id: gameData?.user_id,
           card_template_id: cardData.id,
           card_type: 'workers',
           current_health: cardData.health,

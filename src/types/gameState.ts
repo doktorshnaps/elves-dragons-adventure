@@ -1,9 +1,5 @@
 export interface GameData {
   balance: number;
-  wood: number;
-  stone: number;
-  iron: number;
-  gold: number;
   cards: any[];
   initialized: boolean;
   inventory: any[];
@@ -23,7 +19,6 @@ export interface GameData {
 
 export interface GameStateActions {
   updateBalance: (balance: number) => Promise<void>;
-  updateResources: (resources: { wood?: number; stone?: number; iron?: number; gold?: number }) => Promise<void>;
   updateInventory: (inventory: any[]) => Promise<void>;
   updateCards: (cards: any[]) => Promise<void>;
   batchUpdate: (updates: Partial<GameData>) => Promise<void>;

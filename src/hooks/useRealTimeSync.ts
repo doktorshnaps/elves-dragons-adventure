@@ -11,22 +11,6 @@ interface RealTimeSyncOptions {
 
 export const useRealTimeSync = (options: RealTimeSyncOptions) => {
   const { accountId } = useWallet();
-  
-  // Дебаунс для real-time обновлений (3 секунды)
-  const debounceMap = new Map<string, NodeJS.Timeout>();
-  
-  const debouncedCallback = (key: string, callback: (payload: any) => void, payload: any) => {
-    if (debounceMap.has(key)) {
-      clearTimeout(debounceMap.get(key));
-    }
-    
-    const timeout = setTimeout(() => {
-      callback(payload);
-      debounceMap.delete(key);
-    }, 3000);
-    
-    debounceMap.set(key, timeout);
-  };
 
   const setupGameDataChannel = useCallback(() => {
     if (!accountId || !options.onGameDataChange) return null;
@@ -42,10 +26,8 @@ export const useRealTimeSync = (options: RealTimeSyncOptions) => {
           filter: `wallet_address=eq.${accountId}`
         },
         (payload) => {
-          console.log('Real-time game data change (debounced):', payload);
-          if (options.onGameDataChange) {
-            debouncedCallback('gameData', options.onGameDataChange, payload);
-          }
+          console.log('Real-time game data change:', payload);
+          options.onGameDataChange?.(payload);
         }
       )
       .subscribe();
@@ -111,10 +93,8 @@ export const useRealTimeSync = (options: RealTimeSyncOptions) => {
           filter: `wallet_address=eq.${accountId}`
         },
         (payload) => {
-          console.log('Real-time card instance change (debounced):', payload);
-          if (options.onCardInstanceChange) {
-            debouncedCallback('cardInstance', options.onCardInstanceChange, payload);
-          }
+          console.log('Real-time card instance change:', payload);
+          options.onCardInstanceChange?.(payload);
         }
       )
       .subscribe();
@@ -123,8 +103,6 @@ export const useRealTimeSync = (options: RealTimeSyncOptions) => {
   }, [accountId, options.onCardInstanceChange]);
 
   useEffect(() => {
-    if (!accountId) return; // Не подписываемся без кошелька
-    
     const channels = [
       setupGameDataChannel(),
       setupMarketplaceChannel(),
@@ -139,7 +117,7 @@ export const useRealTimeSync = (options: RealTimeSyncOptions) => {
         }
       });
     };
-  }, [accountId]); // Используем только accountId как зависимость
+  }, [setupGameDataChannel, setupMarketplaceChannel, setupShopInventoryChannel, setupCardInstanceChannel]);
 
   // Функция для принудительной синхронизации
   const forceSync = useCallback(async () => {

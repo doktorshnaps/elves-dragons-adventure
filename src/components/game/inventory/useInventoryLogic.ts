@@ -31,7 +31,7 @@ export const useInventoryLogic = (initialInventory: Item[]) => {
   };
 
 const groupItems = (items: Item[]): GroupedItem[] => {
-    return items.filter(item => item !== null && item !== undefined).reduce<GroupedItem[]>((acc, item) => {
+    return items.reduce<GroupedItem[]>((acc, item) => {
       // Яйца драконов НЕ группируем — у каждого свой таймер инкубации
       if (item.type === 'dragon_egg') {
         acc.push({
@@ -116,19 +116,16 @@ const groupItems = (items: Item[]): GroupedItem[] => {
   };
   const handleOpenCardPack = async (item: Item): Promise<boolean> => {
     if (item.type === 'cardPack') {
-      console.log('🎴 Opening card pack:', item.name);
       // Ask for quantity to open
-      const allPacks = (gameData.inventory || []).filter(i => i && i.type === 'cardPack' && i.name === item.name);
+      const allPacks = (gameData.inventory || []).filter(i => i.type === 'cardPack' && i.name === item.name);
       const available = allPacks.length;
       const raw = window.prompt(`Сколько колод открыть? Доступно: ${available}`, '1');
       if (!raw) return false;
       const requested = Math.max(1, Math.min(available, Number.parseInt(raw, 10) || 0));
       if (!requested) return false;
       const shouldClose = requested >= available;
-      console.log('🎴 Opening', requested, 'packs');
       // Use new multi-open API
       await openCardPacks(item, requested);
-      console.log('🎴 Card packs opened, reloading game data');
       await loadGameData();
       return shouldClose;
     }

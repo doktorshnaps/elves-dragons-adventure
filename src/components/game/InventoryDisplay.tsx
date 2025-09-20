@@ -12,7 +12,6 @@ import { useLanguage } from "@/hooks/useLanguage";
 import { t } from "@/utils/translations";
 import { GroupedItem } from "./inventory/types";
 import { cardDatabase } from "@/data/cardDatabase";
-import { useCentralizedCardInstances } from "@/hooks/useCentralizedCardInstances";
 
 interface InventoryDisplayProps {
   onUseItem?: (item: Item) => void;
@@ -30,7 +29,6 @@ export const InventoryDisplay = ({
   const { eggs, addEgg } = useDragonEggs();
   const { gameData, updateGameData } = useGameData();
   const { language } = useLanguage();
-  const { cardInstances } = useCentralizedCardInstances();
   const inventory = gameData.inventory || [];
   const { toast } = useToast();
   const {
@@ -80,7 +78,12 @@ export const InventoryDisplay = ({
     // Колоды карт открываются всегда (без внешнего обработчика)
     if (groupedItem.type === 'cardPack') {
       const shouldRemove = await handleOpenCardPack(groupedItem.items[0]);
-      // Не удаляем группу сразу - пусть система обновится сама после анимации
+      if (shouldRemove) {
+        // Немедленно убираем группу из UI, чтобы не оставалась видимой после открытия всех колод
+        const currentInventory = gameData.inventory || [];
+        const newInventory = currentInventory.filter(i => !(i.type === 'cardPack' && i.name === groupedItem.name));
+        await updateGameData({ inventory: newInventory });
+      }
       return shouldRemove;
     }
 
@@ -109,20 +112,10 @@ export const InventoryDisplay = ({
   };
 
   const handleGroupedSellItem = async (groupedItem: GroupedItem) => {
-    // Для рабочих - нельзя продавать, так как они управляются через card_instances
-    if (groupedItem.type === 'worker') {
-      toast({
-        title: "Нельзя продать",
-        description: "Рабочих нельзя продать. Назначьте их на здания в Убежище.",
-        variant: "destructive"
-      });
-      return;
-    }
-    
     // Verify the item(s) still exist in current inventory before selling
-    const currentInv = (gameData.inventory || []).filter(item => item !== null && item !== undefined);
-    const existingItem = groupedItem.items.find(it => currentInv.some(ci => ci && ci.id === it.id));
-    const packsLeft = currentInv.filter(i => i && i.type === 'cardPack' && i.name === groupedItem.name).length;
+    const currentInv = (gameData.inventory || []);
+    const existingItem = groupedItem.items.find(it => currentInv.some(ci => ci.id === it.id));
+    const packsLeft = currentInv.filter(i => i.type === 'cardPack' && i.name === groupedItem.name).length;
 
     if (!existingItem) {
       toast({
@@ -146,30 +139,13 @@ export const InventoryDisplay = ({
       onSellItem(existingItem);
     } else {
       await handleSellItem(existingItem);
+      const newInventory = currentInv.filter(item => item.id !== existingItem.id);
+      await updateGameData({ inventory: newInventory });
     }
   };
-  
-  // Конвертируем рабочих из card_instances в формат Item для отображения в инвентаре
-  const workersAsItems: Item[] = cardInstances
-    .filter(instance => instance.card_type === 'workers')
-    .map(instance => {
-      const cardData = instance.card_data as any;
-      return {
-        id: instance.id,
-        name: cardData?.name || 'Рабочий',
-        description: cardData?.description || '',
-        type: 'worker' as any,
-        rarity: cardData?.rarity || 'common',
-        value: cardData?.value || 0,
-        stats: cardData?.stats || {},
-        image: cardData?.image,
-        equipped: false // Явно указываем, что рабочие не экипированы для корректной группировки
-      } as Item;
-    });
-  
   const filteredInventory = showOnlyPotions 
     ? inventory.filter(item => item.type === 'healthPotion')
-    : [...inventory, ...workersAsItems]; // Добавляем рабочих в инвентарь для отображения
+    : inventory;
 
   return (
     <div 

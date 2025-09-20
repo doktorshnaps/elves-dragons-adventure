@@ -6,8 +6,6 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { HoverCard, HoverCardContent, HoverCardTrigger } from "@/components/ui/hover-card";
 import { Sword, Shield, Gem, Heart, Hammer, Trophy, Coins } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { useLanguage } from "@/hooks/useLanguage";
-import { translateItemName, translateItemType, translateRarity, translateSourceType, translateStat, translateItemText } from "@/utils/itemTranslations";
 
 // Import item images
 import spiderSilk from "@/assets/items/spider_silk.png";
@@ -30,26 +28,6 @@ import queenLarvaStinger from "@/assets/items/queen_larva_stinger.png";
 import concentratedPoisonGland from "@/assets/items/concentrated_poison_gland.png";
 import ancientHermitEye from "@/assets/items/ancient_hermit_eye.png";
 import shadowWebGland from "@/assets/items/shadow_web_gland.png";
-import berserkerFang from "@/assets/items/berserker-fang.png";
-import wyvernHeart from "@/assets/items/wyvern-heart.png";
-import titanShell from "@/assets/items/titan-shell.png";
-import carrionClaw from "@/assets/items/carrion-claw.png";
-import parasiteGland from "@/assets/items/parasite-gland.png";
-import guardianEgg from "@/assets/items/guardian-egg.png";
-import webSymbol from "@/assets/items/web-symbol.png";
-import archmageStaff from "@/assets/items/archmage-staff.png";
-import livingShadowMantle from "@/assets/items/living-shadow-mantle.png";
-import arachnidGrimoire from "@/assets/items/arachnid-grimoire.png";
-
-// Import предметов Арахны
-import archmageSoulShard from "@/assets/items/archmage_soul_shard.png";
-import progenitorHeart from "@/assets/items/progenitor_heart.png";
-import arachneSilkGland from "@/assets/items/arachne_silk_gland.png";
-import progenitorEgg from "@/assets/items/progenitor_egg.png";
-import primasEye from "@/assets/items/primas_eye.png";
-import arachneClaw from "@/assets/items/arachne_claw.png";
-import arachneCrown from "@/assets/items/arachne_crown.png";
-import ashenThreadsCloak from "@/assets/items/ashen_threads_cloak.png";
 
 interface ItemTemplate {
   id: number;
@@ -97,8 +75,15 @@ const getSourceIcon = (sourceType: string) => {
   }
 };
 
-const getSourceLabel = (sourceType: string, language: 'ru' | 'en') => {
-  return translateSourceType(language, sourceType);
+const getSourceLabel = (sourceType: string) => {
+  switch (sourceType) {
+    case 'monster_drop': return 'Добыча с монстров';
+    case 'boss_drop': return 'Добыча с боссов';
+    case 'craft': return 'Крафт';
+    case 'crafting': return 'Крафт';
+    case 'quest_reward': return 'Награда за квест';
+    default: return 'Неизвестно';
+  }
 };
 
 // Map item IDs to imported images
@@ -124,26 +109,6 @@ const getItemImage = (itemId: string): string | null => {
     concentrated_poison_gland: concentratedPoisonGland,
     ancient_hermit_eye: ancientHermitEye,
     shadow_web_gland: shadowWebGland,
-    berserker_fang: berserkerFang,
-    wyvern_heart: wyvernHeart,
-    titan_shell: titanShell,
-    carrion_claw: carrionClaw,
-    parasite_gland: parasiteGland,
-    guardian_egg: guardianEgg,
-    web_symbol: webSymbol,
-    archmage_staff: archmageStaff,
-    living_shadow_mantle: livingShadowMantle,
-    arachnid_grimoire: arachnidGrimoire,
-    
-    // Предметы Арахны
-    archmage_soul_shard: archmageSoulShard,
-    progenitor_heart: progenitorHeart,
-    arachne_silk_gland: arachneSilkGland,
-    progenitor_egg: progenitorEgg,
-    primas_eye: primasEye,
-    arachne_claw: arachneClaw,
-    arachne_crown: arachneCrown,
-    ashen_threads_cloak: ashenThreadsCloak,
   };
   
   return imageMap[itemId] || null;
@@ -151,12 +116,16 @@ const getItemImage = (itemId: string): string | null => {
 
 const ItemCard = ({ item }: { item: ItemTemplate }) => {
   const isMobile = useIsMobile();
-  const { language } = useLanguage();
 
   const formatStats = (stats: any) => {
     if (!stats) return [];
     return Object.entries(stats).map(([key, value]) => {
-      const statName = translateStat(language, key);
+      const statName = key === 'power' ? 'Сила' : 
+                      key === 'defense' ? 'Защита' : 
+                      key === 'health' ? 'Здоровье' :
+                      key === 'heal' ? 'Лечение' :
+                      key === 'fire_damage' ? 'Урон огнем' :
+                      key === 'magic_resistance' ? 'Сопр. магии' : key;
       return { name: statName, value: value as number };
     });
   };
@@ -165,8 +134,8 @@ const ItemCard = ({ item }: { item: ItemTemplate }) => {
     if (!details) return '';
     
     if (sourceType === 'monster_drop') {
-      const monsters = details.monster_types?.join(', ') || translateItemText(language, 'Любые монстры');
-      const level = details.dungeon_level ? ` (${translateItemText(language, 'Уровень')} ${details.dungeon_level}+)` : '';
+      const monsters = details.monster_types?.join(', ') || 'Любые монстры';
+      const level = details.dungeon_level ? ` (Уровень ${details.dungeon_level}+)` : '';
       return monsters + level;
     }
     
@@ -206,10 +175,10 @@ const ItemCard = ({ item }: { item: ItemTemplate }) => {
       
       <div className="flex items-center justify-between mb-1">
         <h3 className="font-semibold text-game-accent text-[10px] sm:text-xs">
-          {translateItemName(language, item.name)}
+          {item.name}
         </h3>
         <Badge className={`text-[8px] px-1 py-0 text-white ${getRarityColor(item.rarity)}`}>
-          {translateRarity(language, item.rarity)}
+          {item.rarity}
         </Badge>
       </div>
       
@@ -220,7 +189,7 @@ const ItemCard = ({ item }: { item: ItemTemplate }) => {
       {stats.length > 0 && (
         <div className="mb-2">
           <div className="text-green-400 text-[8px] sm:text-[10px] mb-1">
-            {translateItemText(language, 'Характеристики:')}
+            Характеристики:
           </div>
           <div className="grid grid-cols-2 gap-1 text-[10px] sm:text-xs">
             {stats.slice(0, 4).map((stat, index) => (
@@ -235,26 +204,26 @@ const ItemCard = ({ item }: { item: ItemTemplate }) => {
       
       <div className="flex items-center gap-2 text-[8px] sm:text-[10px] text-blue-400 mb-1">
         {getSourceIcon(item.source_type)}
-        <span>{getSourceLabel(item.source_type, language)}</span>
+        <span>{getSourceLabel(item.source_type)}</span>
       </div>
       
       <div className="mt-auto pt-2 border-t border-game-accent/20">
         <div className="text-game-accent text-[8px] sm:text-[10px] flex items-center gap-1 mb-1">
           <Coins className="w-2 h-2" />
-          {translateItemText(language, 'Детали:')}
+          Детали:
         </div>
         <div className="text-[8px] space-y-0.5">
           <div className="flex justify-between">
-            <span className="text-gray-400">{translateItemText(language, 'Уровень')}</span>
+            <span className="text-gray-400">Уровень</span>
             <span className="text-yellow-400">{item.level_requirement}</span>
           </div>
           <div className="flex justify-between">
-            <span className="text-gray-400">{translateItemText(language, 'Стоимость')}</span>
+            <span className="text-gray-400">Стоимость</span>
             <span className="text-green-400">{item.value}</span>
           </div>
           {item.drop_chance && (
             <div className="flex justify-between">
-              <span className="text-gray-400">{translateItemText(language, 'Шанс')}</span>
+              <span className="text-gray-400">Шанс</span>
               <span className="text-orange-400">{(item.drop_chance * 100).toFixed(1)}%</span>
             </div>
           )}
@@ -286,10 +255,10 @@ const ItemCard = ({ item }: { item: ItemTemplate }) => {
       
       <div className="flex items-center justify-between mb-3">
         <h3 className="font-bold text-game-accent text-lg">
-          {translateItemName(language, item.name)}
+          {item.name}
         </h3>
         <Badge className={`text-xs px-2 py-1 text-white ${getRarityColor(item.rarity)}`}>
-          {translateRarity(language, item.rarity)}
+          {item.rarity}
         </Badge>
       </div>
       
@@ -300,7 +269,7 @@ const ItemCard = ({ item }: { item: ItemTemplate }) => {
       {stats.length > 0 && (
         <div className="mb-4">
           <div className="text-green-400 text-sm font-medium mb-2">
-            {translateItemText(language, 'Характеристики:')}
+            Характеристики:
           </div>
           <div className="grid grid-cols-2 gap-2">
             {stats.map((stat, index) => (
@@ -316,7 +285,7 @@ const ItemCard = ({ item }: { item: ItemTemplate }) => {
       <div className="pt-3 border-t border-game-accent/20">
         <div className="text-game-accent text-sm flex items-center gap-2 mb-3">
           {getSourceIcon(item.source_type)}
-          <span className="font-medium">{getSourceLabel(item.source_type, language)}</span>
+          <span className="font-medium">{getSourceLabel(item.source_type)}</span>
         </div>
         
         {formatSourceDetails(item.source_type, item.source_details) && (
@@ -327,16 +296,16 @@ const ItemCard = ({ item }: { item: ItemTemplate }) => {
         
         <div className="text-sm space-y-2">
           <div className="flex justify-between">
-            <span className="text-gray-400">{translateItemText(language, 'Требуемый уровень')}</span>
+            <span className="text-gray-400">Требуемый уровень</span>
             <span className="text-yellow-400 font-medium">{item.level_requirement}</span>
           </div>
           <div className="flex justify-between">
-            <span className="text-gray-400">{translateItemText(language, 'Стоимость')}</span>
-            <span className="text-green-400 font-medium">{item.value} {translateItemText(language, 'монет')}</span>
+            <span className="text-gray-400">Стоимость</span>
+            <span className="text-green-400 font-medium">{item.value} монет</span>
           </div>
           {item.drop_chance && (
             <div className="flex justify-between">
-              <span className="text-gray-400">{translateItemText(language, 'Шанс выпадения')}</span>
+              <span className="text-gray-400">Шанс выпадения</span>
               <span className="text-orange-400 font-medium">{(item.drop_chance * 100).toFixed(1)}%</span>
             </div>
           )}
@@ -397,12 +366,10 @@ export const ItemsInfo = () => {
     fetchItems();
   }, []);
 
-  const { language } = useLanguage();
-
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <div className="text-game-accent">{translateItemText(language, 'Загрузка предметов...')}</div>
+        <div className="text-game-accent">Загрузка предметов...</div>
       </div>
     );
   }
@@ -417,23 +384,23 @@ export const ItemsInfo = () => {
       <Tabs defaultValue="all" className="h-full">
         <TabsList className="grid w-full grid-cols-5 bg-game-surface/50 border border-game-accent/30 mb-4">
           <TabsTrigger value="all" className="data-[state=active]:bg-game-accent data-[state=active]:text-black">
-            {translateItemText(language, 'Все')}
+            Все
           </TabsTrigger>
           <TabsTrigger value="weapons" className="data-[state=active]:bg-game-accent data-[state=active]:text-black">
             <Sword className="w-4 h-4 mr-1" />
-            {translateItemType(language, 'weapon')}
+            Оружие
           </TabsTrigger>
           <TabsTrigger value="armor" className="data-[state=active]:bg-game-accent data-[state=active]:text-black">
             <Shield className="w-4 h-4 mr-1" />
-            {translateItemType(language, 'armor')}
+            Броня
           </TabsTrigger>
           <TabsTrigger value="accessories" className="data-[state=active]:bg-game-accent data-[state=active]:text-black">
             <Gem className="w-4 h-4 mr-1" />
-            {translateItemType(language, 'accessory')}
+            Аксессуары
           </TabsTrigger>
           <TabsTrigger value="consumables" className="data-[state=active]:bg-game-accent data-[state=active]:text-black">
             <Heart className="w-4 h-4 mr-1" />
-            {translateItemType(language, 'consumable')}
+            Расходники
           </TabsTrigger>
         </TabsList>
 

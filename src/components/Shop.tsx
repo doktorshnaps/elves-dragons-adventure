@@ -7,7 +7,6 @@ import { useShopInventory } from "@/hooks/useShopInventory";
 import { useWallet } from "@/hooks/useWallet";
 import { useLanguage } from "@/hooks/useLanguage";
 import { t } from "@/utils/translations";
-import { translateShopItemName, translateShopItemDescription } from "@/utils/shopTranslations";
 import { v4 as uuidv4 } from 'uuid';
 import { generateCard } from "@/utils/cardUtils";
 import { Item } from "@/types/inventory";
@@ -98,46 +97,22 @@ export const Shop = ({ onClose }: ShopProps) => {
             equipped: false
           };
 
-      // Для рабочих используем edge function shop-purchase напрямую, для остальных - atomic_inventory_update
-      if (item.type === 'worker' || (item.stats?.workDuration != null)) {
-        console.log('🔨 Purchasing worker via edge function:', item.name);
-        
-        // Для рабочих используем только edge function shop-purchase
-        const { data: result, error: rpcError } = await supabase.functions.invoke('shop-purchase', {
-          body: { item_id: item.id, wallet_address: accountId }
-        });
+      // Сначала атомарно списываем баланс и добавляем предмет в инвентарь
+      const { data: result, error: rpcError } = await (supabase as any).rpc('atomic_inventory_update', {
+        p_wallet_address: accountId,
+        p_price_deduction: item.price,
+        p_new_item: newItem
+      });
 
-        if (rpcError || !result?.success) {
-          console.error('shop-purchase error:', rpcError || result?.error);
-          throw (rpcError || new Error(result?.error || 'Purchase failed'));
-        }
-
-        console.log('✅ Worker purchase successful:', result);
-      } else {
-        console.log('🛒 Purchasing regular item via atomic_inventory_update:', item.name);
-        
-        // Для обычных предметов используем атомарное обновление
-        const { data: result, error: rpcError } = await (supabase as any).rpc('atomic_inventory_update', {
-          p_wallet_address: accountId,
-          p_price_deduction: item.price,
-          p_new_item: newItem
-        });
-
-        if (rpcError || !result) {
-          console.error('atomic_inventory_update error:', rpcError);
-          throw (rpcError || new Error('No result from RPC'));
-        }
-
-        console.log('✅ Regular item purchase successful:', result);
+      if (rpcError || !result) {
+        console.error('atomic_inventory_update error:', rpcError);
+        throw (rpcError || new Error('No result from RPC'));
       }
+
+      console.log('✅ Purchase successful, result:', result);
       
-      // ОТКЛЮЧЕНО - создание экземпляров карт рабочих через RPC
-      // Все рабочие теперь создаются через edge function shop-purchase
-      
-      // Только после успешной покупки уменьшаем количество товара в магазине (для обычных предметов)
-      if (item.type !== 'worker') {
-        await purchaseItem(item.id, accountId);
-      }
+      // Только после успешной покупки уменьшаем количество товара в магазине
+      await purchaseItem(item.id, accountId);
       
       // Reload game data to sync with updated balance and inventory
       if (loadGameData) {
@@ -147,7 +122,7 @@ export const Shop = ({ onClose }: ShopProps) => {
       setShowEffect(true);
       toast({
         title: item.type === 'cardPack' ? t(language, 'shop.cardPackBought') : t(language, 'shop.purchaseSuccess'),
-        description: item.type === 'cardPack' ? t(language, 'shop.cardPackDescription') : `${t(language, 'shop.boughtItem')} ${translateShopItemName(language, item.name)}`,
+        description: item.type === 'cardPack' ? t(language, 'shop.cardPackDescription') : `${t(language, 'shop.boughtItem')} ${item.name}`,
       });
     } catch (error) {
       toast({
@@ -221,13 +196,13 @@ return (
               )}
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
-                  <h3 className="font-semibold text-game-accent">{translateShopItemName(language, item.name)}</h3>
+                  <h3 className="font-semibold text-game-accent">{item.name}</h3>
                   <div className="flex items-center gap-1 text-game-accent text-sm">
                     <Package className="w-3 h-3" />
                     <span>{quantity}</span>
                   </div>
                 </div>
-                <p className="text-gray-400 text-sm">{translateShopItemDescription(language, item.description)}</p>
+                <p className="text-gray-400 text-sm">{item.description}</p>
                 {item.stats && (
                   <div className="text-game-accent text-sm">
                     {item.stats.power && <p>{t(language, 'shop.power')} +{item.stats.power}</p>}

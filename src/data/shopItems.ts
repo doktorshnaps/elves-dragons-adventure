@@ -1,5 +1,4 @@
 import { ShopItem } from "@/components/shop/types";
-import { workerImagesById } from '@/constants/workerImages';
 
 export const shopItems: ShopItem[] = [
   {
@@ -11,7 +10,7 @@ export const shopItems: ShopItem[] = [
     value: 1,
     image: "/lovable-uploads/e523dce0-4cda-4d32-b4e2-ecec40b1eb39.png"
   },
-  // Рабочие - названия синхронизированы с БД
+  // Рабочие
   {
     id: 2,
     name: "Пылевой Батрак",
@@ -20,7 +19,7 @@ export const shopItems: ShopItem[] = [
     type: "worker",
     value: 10, // процент ускорения
     stats: { workDuration: 7200000 }, // 2 часа в миллисекундах
-    image: workerImagesById[2]
+    image: "/src/assets/workers/pylevoy-batrak.png"
   },
   {
     id: 3,
@@ -30,7 +29,7 @@ export const shopItems: ShopItem[] = [
     type: "worker",
     value: 20,
     stats: { workDuration: 14400000 }, // 4 часа
-    image: workerImagesById[3]
+    image: "/src/assets/workers/ugolny-nosiltschik.png"
   },
   {
     id: 4,
@@ -40,7 +39,7 @@ export const shopItems: ShopItem[] = [
     type: "worker",
     value: 30,
     stats: { workDuration: 21600000 }, // 6 часов
-    image: workerImagesById[4]
+    image: "/src/assets/workers/remeslennik.png"
   },
   {
     id: 5,
@@ -50,27 +49,27 @@ export const shopItems: ShopItem[] = [
     type: "worker",
     value: 40,
     stats: { workDuration: 28800000 }, // 8 часов
-    image: workerImagesById[5]
+    image: "/src/assets/workers/master.png"
   },
   {
     id: 6,
-    name: "Виртуоз",
-    description: "Превосходный рабочий. Работает 12 часов, ускорение +60%",
+    name: "Архимастер",
+    description: "Превосходный рабочий. Работает 12 часов, ускорение +50%",
     price: 80,
     type: "worker",
-    value: 60,
+    value: 50,
     stats: { workDuration: 43200000 }, // 12 часов
-    image: workerImagesById[6]
+    image: "/src/assets/workers/arkhimaster.png"
   },
   {
     id: 7,
-    name: "Гроссмейстер", 
-    description: "Легендарный рабочий. Работает 24 часа, ускорение +100%",
+    name: "Гранд-мастер",
+    description: "Легендарный рабочий. Работает 18 часов, ускорение +70%",
     price: 120,
     type: "worker",
-    value: 100,
-    stats: { workDuration: 86400000 }, // 24 часа
-    image: workerImagesById[7]
+    value: 70,
+    stats: { workDuration: 64800000 }, // 18 часов
+    image: "/src/assets/workers/grand-master.png"
   },
   {
     id: 8,
@@ -80,7 +79,7 @@ export const shopItems: ShopItem[] = [
     type: "worker",
     value: 100,
     stats: { workDuration: 86400000 }, // 24 часа
-    image: workerImagesById[8]
+    image: "/src/assets/workers/vladyka-remesel.png"
   },
   {
     id: 9,
@@ -90,6 +89,6 @@ export const shopItems: ShopItem[] = [
     type: "worker",
     value: 150,
     stats: { workDuration: 172800000 }, // 48 часов
-    image: workerImagesById[9]
+    image: "/src/assets/workers/arkhont-manufaktur.png"
   }
 ];

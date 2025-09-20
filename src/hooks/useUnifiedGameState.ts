@@ -16,10 +16,6 @@ const CACHE_TIME = 10 * 60 * 1000; // 10 минут
 
 const initialGameData: GameData = {
   balance: 100,
-  wood: 150,
-  stone: 200,
-  iron: 75,
-  gold: 300,
   cards: [],
   initialized: false,
   inventory: [],
@@ -118,7 +114,7 @@ export const useUnifiedGameState = (): UnifiedGameState => {
   //   });
   // }, [updateMutation, retryOperation]);
 
-  // Real-time синхронизация (отключена для card_instances)
+  // Real-time синхронизация
   const { forceSync } = useRealTimeSync({
     onGameDataChange: (payload) => {
       if (payload.eventType === 'UPDATE' && payload.new) {
@@ -135,11 +131,10 @@ export const useUnifiedGameState = (): UnifiedGameState => {
       // Инвалидируем кэш магазина
       queryClient.invalidateQueries({ queryKey: ['shopInventory'] });
     },
-    // onCardInstanceChange: () => {
-    //   // ОТКЛЮЧЕНО - инвалидация кэша экземпляров карт
-    //   // Это может вызывать бесконечные перезагрузки
-    //   console.log('CardInstance change detected, but invalidation disabled');
-    // }
+    onCardInstanceChange: () => {
+      // Инвалидируем кэш экземпляров карт
+      queryClient.invalidateQueries({ queryKey: ['cardInstances'] });
+    }
   });
 
   // Действия для обновления состояния
@@ -150,20 +145,6 @@ export const useUnifiedGameState = (): UnifiedGameState => {
           { ...optimisticData, balance },
           async () => {
             const result = await updateMutation.mutateAsync({ updates: { balance } });
-            return result;
-          }
-        );
-      });
-      await operation();
-    },
-
-    updateResources: async (resources: { wood?: number; stone?: number; iron?: number; gold?: number }) => {
-      const operation = withErrorHandling(async () => {
-        const newOptimisticData = { ...optimisticData, ...resources };
-        await optimisticUpdate(
-          newOptimisticData,
-          async () => {
-            const result = await updateMutation.mutateAsync({ updates: resources });
             return result;
           }
         );
@@ -242,10 +223,6 @@ function mapClientToServer(data: Partial<GameData> | GameData) {
   const d: any = data;
   const out: any = {};
   if (d.balance !== undefined) out.balance = d.balance;
-  if (d.wood !== undefined) out.wood = d.wood;
-  if (d.stone !== undefined) out.stone = d.stone;
-  if (d.iron !== undefined) out.iron = d.iron;
-  if (d.gold !== undefined) out.gold = d.gold;
   if (d.cards !== undefined) out.cards = d.cards;
   if (d.initialized !== undefined) out.initialized = d.initialized;
   if (d.inventory !== undefined) out.inventory = d.inventory;
@@ -348,10 +325,6 @@ async function updateGameDataOnServer(walletAddress: string, updates: Partial<Ga
 function transformServerData(serverData: any): GameData {
   const transformed = {
     balance: serverData.balance ?? 100,
-    wood: serverData.wood ?? 150,
-    stone: serverData.stone ?? 200,
-    iron: serverData.iron ?? 75,
-    gold: serverData.gold ?? 300,
     cards: serverData.cards ?? [],
     initialized: serverData.initialized ?? false,
     inventory: serverData.inventory ?? [],

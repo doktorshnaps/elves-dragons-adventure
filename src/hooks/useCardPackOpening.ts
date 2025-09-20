@@ -66,64 +66,39 @@ export const useCardPackOpening = () => {
     }
 
     setIsOpening(true);
-    console.log('🎴 Starting openCardPacks process');
 
     try {
       // Генерируем карты, которые будет содержать открытие
       const newCards: CardType[] = Array.from({ length: count }, () =>
         generateCard(Math.random() > 0.5 ? 'character' : 'pet')
       );
-      
-      console.log('🎴 Generated cards:', newCards);
 
-      console.log('🎴 About to call edge function');
-      console.log('🎴 Supabase client available:', !!supabase);
-      console.log('🎴 Functions available:', !!supabase.functions);
-
-      let data: any;
-      let error: any;
-
-      try {
-        const result = await supabase.functions.invoke('open-card-packs', {
-          body: {
-            p_wallet_address: accountId,
-            p_pack_name: packItem.name,
-            p_count: count,
-            p_new_cards: newCards
-          }
-        });
-        data = result.data;
-        error = result.error;
-
-        console.log('🎴 Edge function call completed', { data, error });
-      } catch (invokeError) {
-        console.error('🎴 Error during invoke:', invokeError);
-        error = invokeError;
-      }
+      // Атомарно удаляем колоды и добавляем карты на сервере
+      const { data, error } = await (supabase as any).rpc('open_card_packs', {
+        p_wallet_address: accountId,
+        p_pack_name: packItem.name,
+        p_count: count,
+        p_new_cards: newCards
+      });
 
       if (error) {
-        console.error('🎴 Edge function error:', error);
+        console.error('open_card_packs RPC error', error);
         toast({
           title: 'Ошибка',
-          description: 'Не удалось открыть колоды карт: ' + (error.message || 'Неизвестная ошибка'),
+          description: 'Не удалось открыть колоды карт',
           variant: 'destructive',
         });
         return [];
       }
-      
-      console.log('🎴 Edge function response:', data);
 
       // Обновляем локальные данные из Supabase чтобы исключить рассинхрон
       await loadGameData();
 
-      console.log('🎴 Cards generated for animation:', newCards);
-      
       // Если получены карты, показываем их по очереди
       if (newCards.length > 0) {
         setCardQueue(newCards);
         setCurrentCardIndex(0);
         setRevealedCard(newCards[0]);
-        console.log('🎴 Setting showRevealModal to true, card:', newCards[0]);
         setShowRevealModal(true);
       }
 
