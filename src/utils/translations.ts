@@ -215,8 +215,7 @@ export const translations = {
       dungeons: 'Подземелья',
       items: 'Предметы',
       heroes: 'Герои',
-      pets: 'Питомцы',
-      workers: 'Рабочие'
+      pets: 'Питомцы'
     }
   },
   en: {
@@ -433,8 +432,7 @@ export const translations = {
       dungeons: 'Dungeons',
       items: 'Items',
       heroes: 'Heroes',
-      pets: 'Pets',
-      workers: 'Workers'
+      pets: 'Pets'
     }
   }
 };

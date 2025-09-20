@@ -45,9 +45,7 @@ interface CraftRecipe {
 }
 export const Shelter = () => {
   const navigate = useNavigate();
-  const {
-    language
-  } = useLanguage();
+  const { language } = useLanguage();
   const gameState = useUnifiedGameState();
   const {
     toast
@@ -272,7 +270,7 @@ export const Shelter = () => {
         {/* Объединенный блок: информация об аккаунте и ресурсы */}
         <div className="absolute top-3 right-4 z-10 w-80">
           <Card className="bg-card/50 backdrop-blur-sm border-primary/20">
-            <CardContent className="p-3 py-0 my-0 px-[13px] mx-[28px]">
+            <CardContent className="p-3 mx-0 py-0 my-0 px-[12px]">
               {/* Информация об уровне аккаунта */}
               <div className="flex items-center justify-center gap-2 mb-3">
                 <Star className="h-4 w-4 text-primary" />

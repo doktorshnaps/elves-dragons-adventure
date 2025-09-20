@@ -65,13 +65,11 @@ export const itemTranslations = {
 
     // Stats
     "power": "Сила",
-    "defense": "Защита", 
+    "defense": "Защита",
     "health": "Здоровье",
     "heal": "Лечение",
     "fire_damage": "Урон огнем",
     "magic_resistance": "Сопр. магии",
-    "speedBoost": "Ускорение",
-    "workDuration": "Время работы",
 
     // UI text
     "Характеристики:": "Характеристики:",
@@ -151,13 +149,11 @@ export const itemTranslations = {
 
     // Stats
     "power": "Power",
-    "defense": "Defense", 
+    "defense": "Defense",
     "health": "Health",
     "heal": "Heal",
     "fire_damage": "Fire Damage",
     "magic_resistance": "Magic Resistance",
-    "speedBoost": "Speed Boost",
-    "workDuration": "Work Duration",
 
     // UI text
     "Характеристики:": "Stats:",

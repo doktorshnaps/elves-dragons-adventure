@@ -754,10 +754,6 @@ export type Database = {
         Args: { p_item_id: string; p_listing_type: string; p_price: number }
         Returns: string
       }
-      create_worker_card_instance: {
-        Args: { p_wallet_address: string; p_worker_data: Json }
-        Returns: string
-      }
       ensure_game_data_exists: {
         Args: { p_wallet_address: string }
         Returns: string

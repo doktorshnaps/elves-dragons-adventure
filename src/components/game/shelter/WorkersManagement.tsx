@@ -63,41 +63,9 @@ export const WorkersManagement = ({ onSpeedBoostChange }: WorkersManagementProps
     { id: "medical", name: t(language, 'shelter.medicalBuilding') }
   ];
 
-  // Получаем рабочих из актуального gameState (приоритет) или fallback при загрузке
-  const getInventoryWithFallback = () => {
-    // Если gameState загружен и не в состоянии загрузки, используем его данные (даже если пустые)
-    if (!gameState.loading && gameState.inventory !== undefined) {
-      console.log('🔍 Using gameState inventory:', gameState.inventory);
-      return gameState.inventory || [];
-    }
-    
-    // Fallback только при начальной загрузке или ошибках
-    try {
-      const persisted = localStorage.getItem('game-storage');
-      if (persisted) {
-        const parsed = JSON.parse(persisted);
-        const lsInv = parsed?.state?.inventory;
-        if (Array.isArray(lsInv)) {
-          console.log('🔍 Using fallback inventory from localStorage:', lsInv);
-          return lsInv;
-        }
-      }
-    } catch (e) {
-      console.warn('⚠️ Failed to read fallback inventory from localStorage', e);
-    }
-    
-    console.log('🔍 No inventory available, returning empty array');
-    return [];
-  };
-
-  const inventory = getInventoryWithFallback();
-
-  const availableWorkers = inventory
-    .filter((item: any) => {
-      const isWorker = item?.type === 'worker' || (item?.stats?.workDuration != null && item?.name);
-      if (!isWorker) return false;
-      return true;
-    })
+  // Получаем рабочих из card_instances
+  const availableWorkers = (gameState.inventory || [])
+    .filter((item: any) => item?.type === 'worker')
     .map((item: any, index: number) => ({
       id: item.id ?? `worker_${index}_${item.name}`,
       name: item.name || 'Рабочий',
@@ -107,8 +75,6 @@ export const WorkersManagement = ({ onSpeedBoostChange }: WorkersManagementProps
       stats: item.stats || {},
       image: item.image
     }));
-
-  console.log('🔍 Available workers:', availableWorkers);
 
   // Загружаем активных рабочих из gameState
   useEffect(() => {
