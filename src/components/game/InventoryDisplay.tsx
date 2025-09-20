@@ -125,9 +125,9 @@ export const InventoryDisplay = ({
     }
     
     // Verify the item(s) still exist in current inventory before selling
-    const currentInv = (gameData.inventory || []);
-    const existingItem = groupedItem.items.find(it => currentInv.some(ci => ci.id === it.id));
-    const packsLeft = currentInv.filter(i => i.type === 'cardPack' && i.name === groupedItem.name).length;
+    const currentInv = (gameData.inventory || []).filter(item => item !== null && item !== undefined);
+    const existingItem = groupedItem.items.find(it => currentInv.some(ci => ci && ci.id === it.id));
+    const packsLeft = currentInv.filter(i => i && i.type === 'cardPack' && i.name === groupedItem.name).length;
 
     if (!existingItem) {
       toast({
