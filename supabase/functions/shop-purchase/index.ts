@@ -111,7 +111,7 @@ serve(async (req) => {
         .insert({
           user_id: gameData.user_id, // ВАЖНО: устанавливаем user_id
           wallet_address: wallet_address,
-          card_template_id: cardData.id,
+          card_template_id: itemTemplate.item_id, // Используем правильный item_id из шаблона
           card_type: 'workers',
           current_health: cardData.health,
           max_health: cardData.health,
