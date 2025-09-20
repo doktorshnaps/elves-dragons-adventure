@@ -2,6 +2,8 @@ import { supabase } from '@/integrations/supabase/client';
 import { Card } from '@/types/cards';
 import { CardInstance } from '@/types/cardInstance';
 
+const GLOBAL_LOADING_LOCK: Set<string> = new Set();
+
 interface BatchOperation {
   type: 'create' | 'delete' | 'update';
   data: any;
@@ -62,6 +64,13 @@ class CardInstanceManager {
     // КРИТИЧЕСКОЕ логирование для отслеживания массовых вызовов
     console.trace(`CardInstanceManager.getCardInstances called for ${walletAddress}, force=${force}`);
 
+    // ГЛОБАЛЬНАЯ ЗАЩИТА от множественных вызовов
+    const lockKey = `loading_${walletAddress}`;
+    if (GLOBAL_LOADING_LOCK.has(lockKey)) {
+      console.warn(`BLOCKED: Already loading ${walletAddress} globally!`);
+      return this.cache.get(walletAddress) || [];
+    }
+
     const now = Date.now();
     const lastLoad = this.lastLoadTime.get(walletAddress) || 0;
     const cached = this.cache.get(walletAddress);
@@ -77,6 +86,9 @@ class CardInstanceManager {
       console.log(`CardInstanceManager: Load already in progress for ${walletAddress}, returning cached data`);
       return cached || [];
     }
+
+    // Устанавливаем глобальную блокировку
+    GLOBAL_LOADING_LOCK.add(lockKey);
 
     this.loadingStates.set(walletAddress, true);
 
@@ -98,6 +110,7 @@ class CardInstanceManager {
       return cached || [];
     } finally {
       this.loadingStates.set(walletAddress, false);
+      GLOBAL_LOADING_LOCK.delete(`loading_${walletAddress}`);
     }
   }
 
