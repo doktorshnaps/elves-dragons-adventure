@@ -92,12 +92,20 @@ export const useUnifiedGameState = (): UnifiedGameState => {
       return await updateGameDataOnServer(accountId, updates);
     },
     onSuccess: (updatedData) => {
-      console.log('✅ Data updated successfully:', { balance: updatedData.balance });
+      console.log('✅ Data updated successfully:', { 
+        balance: updatedData.balance, 
+        activeWorkers: updatedData.activeWorkers?.length ?? 0 
+      });
       // Обновляем кэш React Query
       queryClient.setQueryData([GAME_DATA_KEY, accountId], updatedData);
       updateData(updatedData);
       
-      // Убираем localStorage sync - полагаемся только на Supabase
+      // Сохраняем в localStorage для быстрого доступа при переходах
+      try {
+        localStorage.setItem('gameData', JSON.stringify(updatedData));
+      } catch (error) {
+        console.warn('Failed to save to localStorage:', error);
+      }
       // localStorage.setItem('gameData', JSON.stringify(updatedData));
     },
     onError: (error) => {
@@ -373,7 +381,8 @@ function transformServerData(serverData: any): GameData {
     balance: transformed.balance,
     inventoryItems: transformed.inventory?.length ?? 0,
     cards: transformed.cards?.length ?? 0,
-    activeWorkers: transformed.activeWorkers?.length ?? 0
+    activeWorkers: transformed.activeWorkers?.length ?? 0,
+    activeWorkersData: transformed.activeWorkers
   });
   
   return transformed;

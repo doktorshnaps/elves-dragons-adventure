@@ -104,9 +104,19 @@ export const WorkersManagement = ({ onSpeedBoostChange }: WorkersManagementProps
       return true;
     });
 
+  console.log('👷 Workers analysis:', {
+    inventoryWorkers: inventoryWorkers.length,
+    cardInstanceWorkers: cardInstanceWorkers.length,
+    availableWorkers: availableWorkers.length,
+    activeWorkers: activeWorkers.length,
+    inventoryDetails: inventoryWorkers.map(w => ({ id: w.id, name: w.name, source: w.source })),
+    cardDetails: cardInstanceWorkers.map(w => ({ id: w.id, name: w.name, source: w.source, instanceId: (w as any).instanceId }))
+  });
+
   // Загружаем активных рабочих из gameState
   useEffect(() => {
-    if (gameState.activeWorkers) {
+    if (gameState.activeWorkers && Array.isArray(gameState.activeWorkers)) {
+      console.log('🔄 Loading active workers from gameState:', gameState.activeWorkers.length);
       setActiveWorkers(gameState.activeWorkers);
     }
   }, [gameState.activeWorkers]);
@@ -153,7 +163,7 @@ export const WorkersManagement = ({ onSpeedBoostChange }: WorkersManagementProps
     const newActiveWorker: ActiveWorker = {
       id: `${worker.id}_${Date.now()}`,
       workerId: worker.id,
-      cardInstanceId: worker.id, // ID card_instance
+      cardInstanceId: (worker as any).instanceId || worker.id,
       name: worker.name,
       speedBoost: worker.value,
       startTime: Date.now(),
@@ -163,55 +173,73 @@ export const WorkersManagement = ({ onSpeedBoostChange }: WorkersManagementProps
 
     const updatedActiveWorkers = [...activeWorkers, newActiveWorker];
 
-    // Сразу обновляем состояние игры и базу данных
-     try {
-        // Обновляем локальное состояние
-        setActiveWorkers(updatedActiveWorkers);
+    try {
+      // Обновляем локальное состояние
+      setActiveWorkers(updatedActiveWorkers);
 
-        let updatedInv = (gameState.inventory || []) as any[];
-        
-        // ВСЕГДА удаляем из card_instances если есть instanceId
-        if ((worker as any).instanceId) {
-          await deleteCardInstance((worker as any).instanceId);
-          console.log('🗑️ Deleted worker from card_instances:', (worker as any).instanceId);
-        }
-        
-        // ВСЕГДА удаляем из инвентаря если рабочий там есть
-        const removeIdx = updatedInv.findIndex((i: any) => 
+      let updatedInv = [...(gameState.inventory || [])] as any[];
+      
+      // Удаляем из card_instances если есть instanceId
+      if ((worker as any).instanceId) {
+        await deleteCardInstance((worker as any).instanceId);
+        console.log('🗑️ Deleted worker from card_instances:', (worker as any).instanceId);
+      }
+      
+      // Удаляем из инвентаря - более точный поиск
+      const originalLength = updatedInv.length;
+      
+      // Ищем по точному совпадению ID
+      let removeIdx = updatedInv.findIndex((i: any) => 
+        i?.type === 'worker' && i.id === worker.id
+      );
+      
+      // Если не найден по ID, ищем по имени и характеристикам
+      if (removeIdx === -1) {
+        removeIdx = updatedInv.findIndex((i: any) => 
           i?.type === 'worker' && 
-          (i.id === worker.id || 
-           (i.name === worker.name && i.value === worker.value))
+          i.name === worker.name && 
+          i.value === worker.value &&
+          JSON.stringify(i.stats) === JSON.stringify(worker.stats)
         );
-        
-        if (removeIdx >= 0) {
-          updatedInv = updatedInv.filter((_, idx) => idx !== removeIdx);
-          console.log('🧹 Worker removed from inventory at index:', removeIdx, 'worker:', worker.name);
-        } else {
-          console.warn('⚠️ Could not find matching worker in inventory to remove:', worker.id, worker.name);
-        }
-
-        // Сохраняем активных рабочих напрямую в БД
-        await updateActiveWorkersInDB(updatedActiveWorkers);
-
-        // Обновляем game_data с новыми активными рабочими и инвентарем
-        await gameState.actions.batchUpdate({ activeWorkers: updatedActiveWorkers, inventory: updatedInv });
-        
-        console.log('✅ Worker assigned and saved:', newActiveWorker);
-        console.log('📦 Updated inventory length:', updatedInv.length);
-        
-         toast({
-           title: t(language, 'shelter.workerAssigned'),
-           description: `${worker.name} ${t(language, 'shelter.workerAssignedDesc')} "${buildings.find(b => b.id === selectedBuilding)?.name}"`,
-         });
-       } catch (error) {
-        console.error('❌ Failed to save worker assignment:', error);
-        // Откатываем изменения при ошибке
-        setActiveWorkers(activeWorkers);
-        toast({
-          title: t(language, 'shelter.error'),
-          description: t(language, 'shelter.failedToAssign'),
-          variant: "destructive"
+      }
+      
+      if (removeIdx >= 0) {
+        updatedInv.splice(removeIdx, 1);
+        console.log('🧹 Worker removed from inventory at index:', removeIdx, 'worker:', worker.name);
+        console.log('📦 Inventory size changed from', originalLength, 'to', updatedInv.length);
+      } else {
+        console.warn('⚠️ Could not find matching worker in inventory to remove:', {
+          workerId: worker.id,
+          workerName: worker.name,
+          workerValue: worker.value,
+          inventoryWorkers: updatedInv.filter(i => i?.type === 'worker').map(w => ({
+            id: w.id, name: w.name, value: w.value
+          }))
         });
+      }
+
+      // Сохраняем активных рабочих и обновленный инвентарь
+      await updateActiveWorkersInDB(updatedActiveWorkers);
+      await gameState.actions.batchUpdate({ 
+        activeWorkers: updatedActiveWorkers, 
+        inventory: updatedInv 
+      });
+      
+      console.log('✅ Worker assigned and saved:', newActiveWorker);
+      
+      toast({
+        title: t(language, 'shelter.workerAssigned'),
+        description: `${worker.name} ${t(language, 'shelter.workerAssignedDesc')} "${buildings.find(b => b.id === selectedBuilding)?.name}"`,
+      });
+    } catch (error) {
+      console.error('❌ Failed to save worker assignment:', error);
+      // Откатываем изменения при ошибке
+      setActiveWorkers(activeWorkers);
+      toast({
+        title: t(language, 'shelter.error'),
+        description: t(language, 'shelter.failedToAssign'),
+        variant: "destructive"
+      });
     }
   };
 

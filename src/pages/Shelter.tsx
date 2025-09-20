@@ -59,6 +59,11 @@ export const Shelter = () => {
 
   // Получаем активных рабочих из gameState
   const activeWorkers = gameState.activeWorkers || [];
+  
+  console.log('🏠 Shelter page activeWorkers:', {
+    count: activeWorkers.length,
+    workers: activeWorkers.map((w: any) => ({ name: w.name, building: w.building, id: w.id }))
+  });
 
   // Функция для проверки, есть ли рабочие в здании
   const hasWorkersInBuilding = (buildingId: string) => {
