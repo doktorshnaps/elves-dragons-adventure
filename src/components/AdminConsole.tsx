@@ -80,6 +80,9 @@ export const AdminConsole = () => {
         case 'removeitem':
           await handleRemoveItem(parts);
           break;
+        case 'logs':
+          await handleViewLogs(parts);
+          break;
         case 'help':
           showHelp();
           break;
@@ -650,9 +653,75 @@ export const AdminConsole = () => {
     addOutput('listcards - Показать список всех доступных карт с номерами');
     addOutput('ban <user_id> <reason> - Забанить игрока');
     addOutput('unban <user_id> - Разбанить игрока');
+    addOutput('logs [type] [search] - Просмотр логов (console, postgres, edge)');
     addOutput('clear - Очистить консоль');
     addOutput('help - Показать эту справку');
     addOutput('===============================');
+  };
+
+  const handleViewLogs = async (parts: string[]) => {
+    const logType = parts[1] || 'console';
+    const searchQuery = parts.slice(2).join(' ') || '';
+
+    addOutput(`=== ПРОСМОТР ЛОГОВ (${logType.toUpperCase()}) ===`);
+
+    try {
+      if (logType === 'console') {
+        // Используем инструмент для чтения консольных логов
+        const logs = await readConsoleLogs(searchQuery);
+        if (logs && logs.length > 0) {
+          logs.slice(0, 20).forEach((log: any) => {
+            const timestamp = new Date(log.timestamp || Date.now()).toLocaleString();
+            const level = log.level || 'info';
+            const message = log.message || JSON.stringify(log);
+            addOutput(`[${timestamp}] ${level.toUpperCase()}: ${message}`);
+          });
+          if (logs.length > 20) {
+            addOutput(`... и еще ${logs.length - 20} записей`);
+          }
+        } else {
+          addOutput('Консольные логи не найдены или пусты');
+        }
+      } else if (logType === 'postgres') {
+        addOutput('PostgreSQL логи доступны через Supabase Dashboard');
+        addOutput('Перейдите в Analytics раздел для просмотра логов БД');
+      } else if (logType === 'edge') {
+        addOutput('Edge Functions логи пока не поддерживаются через консоль');
+        addOutput('Используйте Supabase Dashboard для просмотра Edge Functions логов');
+      } else {
+        addOutput('Неизвестный тип логов. Доступные типы: console, postgres, edge');
+        addOutput('Использование: logs [type] [search_query]');
+        addOutput('Примеры:');
+        addOutput('  logs console error - поиск ошибок в консоли');
+        addOutput('  logs postgres - все postgres логи');
+        addOutput('  logs postgres error - поиск ошибок в postgres');
+      }
+    } catch (error: any) {
+      addOutput(`Ошибка получения логов: ${error.message}`);
+    }
+
+    addOutput('=========================');
+  };
+
+  // Функция для чтения консольных логов (имитация API)
+  const readConsoleLogs = async (searchQuery: string) => {
+    try {
+      // Получаем логи из localStorage или создаем пустой массив
+      const storedLogs = localStorage.getItem('game_console_logs');
+      const logs = storedLogs ? JSON.parse(storedLogs) : [];
+      
+      // Если есть поисковый запрос, фильтруем логи
+      if (searchQuery) {
+        return logs.filter((log: any) => 
+          JSON.stringify(log).toLowerCase().includes(searchQuery.toLowerCase())
+        );
+      }
+      
+      return logs;
+    } catch (error) {
+      console.error('Error reading console logs:', error);
+      return [];
+    }
   };
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
@@ -729,6 +798,13 @@ export const AdminConsole = () => {
           >
             Информация
           </Button>
+          <Button
+            onClick={() => setCommand('logs console ')}
+            variant="outline"
+            size="sm"
+          >
+            Логи
+          </Button>
         </div>
 
         {/* Console Output */}
@@ -779,6 +855,8 @@ export const AdminConsole = () => {
           <p>• removecard c45dcc01-8e2e-405f-81b9-54771f0717fa card-id - удалить карту</p>
           <p>• giveitem c45dcc01-8e2e-405f-81b9-54771f0717fa "Зелье лечения" 5 consumable - выдать предмет</p>
           <p>• removeitem c45dcc01-8e2e-405f-81b9-54771f0717fa item-id 3 - удалить предмет</p>
+          <p>• logs console error - просмотр консольных логов с ошибками</p>
+          <p>• logs postgres - просмотр логов базы данных</p>
           <p>• listcards - список всех доступных карт</p>
           <p>• help - показать справку</p>
           <p>• clear - очистить консоль</p>
