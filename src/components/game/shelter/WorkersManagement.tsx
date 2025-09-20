@@ -168,15 +168,25 @@ export const WorkersManagement = ({ onSpeedBoostChange }: WorkersManagementProps
         // Обновляем локальное состояние
         setActiveWorkers(updatedActiveWorkers);
 
-        // Удаляем рабочего из инвентаря
-        const currentInv = (gameState.inventory || []) as any[];
-        const removeIdx = currentInv.findIndex((i: any) => i?.type === 'worker' && (i.id === worker.id || (i.name === worker.name && i.value === worker.value && (i.stats?.workDuration ?? null) === (worker.stats?.workDuration ?? null))));
-        const updatedInv = removeIdx >= 0 ? currentInv.filter((_, idx) => idx !== removeIdx) : currentInv;
-
+        let updatedInv = (gameState.inventory || []) as any[];
+        
         // Удаляем из card_instances если это рабочий оттуда
         if ((worker as any).source === 'card_instances' && (worker as any).instanceId) {
           await deleteCardInstance((worker as any).instanceId);
           console.log('🗑️ Deleted worker from card_instances:', (worker as any).instanceId);
+        } else {
+          // Если рабочий из инвентаря, удаляем его оттуда
+          const removeIdx = updatedInv.findIndex((i: any) => 
+            i?.type === 'worker' && 
+            i.id === worker.id
+          );
+          
+          if (removeIdx >= 0) {
+            updatedInv = updatedInv.filter((_, idx) => idx !== removeIdx);
+            console.log('🧹 Worker removed from inventory at index:', removeIdx);
+          } else {
+            console.warn('⚠️ Could not find matching worker in inventory to remove:', worker.id);
+          }
         }
 
         // Сохраняем активных рабочих напрямую в БД
@@ -186,11 +196,6 @@ export const WorkersManagement = ({ onSpeedBoostChange }: WorkersManagementProps
         await gameState.actions.batchUpdate({ activeWorkers: updatedActiveWorkers, inventory: updatedInv });
         
         console.log('✅ Worker assigned and saved:', newActiveWorker);
-        if (removeIdx >= 0) {
-          console.log('🧹 Worker removed from inventory at index:', removeIdx);
-        } else {
-          console.warn('⚠️ Could not find matching worker in inventory to remove');
-        }
         
          toast({
            title: t(language, 'shelter.workerAssigned'),
