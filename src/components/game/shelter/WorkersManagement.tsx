@@ -170,23 +170,24 @@ export const WorkersManagement = ({ onSpeedBoostChange }: WorkersManagementProps
 
         let updatedInv = (gameState.inventory || []) as any[];
         
-        // Удаляем из card_instances если это рабочий оттуда
-        if ((worker as any).source === 'card_instances' && (worker as any).instanceId) {
+        // ВСЕГДА удаляем из card_instances если есть instanceId
+        if ((worker as any).instanceId) {
           await deleteCardInstance((worker as any).instanceId);
           console.log('🗑️ Deleted worker from card_instances:', (worker as any).instanceId);
+        }
+        
+        // ВСЕГДА удаляем из инвентаря если рабочий там есть
+        const removeIdx = updatedInv.findIndex((i: any) => 
+          i?.type === 'worker' && 
+          (i.id === worker.id || 
+           (i.name === worker.name && i.value === worker.value))
+        );
+        
+        if (removeIdx >= 0) {
+          updatedInv = updatedInv.filter((_, idx) => idx !== removeIdx);
+          console.log('🧹 Worker removed from inventory at index:', removeIdx, 'worker:', worker.name);
         } else {
-          // Если рабочий из инвентаря, удаляем его оттуда
-          const removeIdx = updatedInv.findIndex((i: any) => 
-            i?.type === 'worker' && 
-            i.id === worker.id
-          );
-          
-          if (removeIdx >= 0) {
-            updatedInv = updatedInv.filter((_, idx) => idx !== removeIdx);
-            console.log('🧹 Worker removed from inventory at index:', removeIdx);
-          } else {
-            console.warn('⚠️ Could not find matching worker in inventory to remove:', worker.id);
-          }
+          console.warn('⚠️ Could not find matching worker in inventory to remove:', worker.id, worker.name);
         }
 
         // Сохраняем активных рабочих напрямую в БД
@@ -196,6 +197,7 @@ export const WorkersManagement = ({ onSpeedBoostChange }: WorkersManagementProps
         await gameState.actions.batchUpdate({ activeWorkers: updatedActiveWorkers, inventory: updatedInv });
         
         console.log('✅ Worker assigned and saved:', newActiveWorker);
+        console.log('📦 Updated inventory length:', updatedInv.length);
         
          toast({
            title: t(language, 'shelter.workerAssigned'),
