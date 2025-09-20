@@ -171,6 +171,17 @@ class CardInstanceManager {
    * Создание экземпляра карты (добавляется в пакет)
    */
   async createCardInstance(walletAddress: string, card: Card, cardType: 'hero' | 'dragon'): Promise<void> {
+    // КРИТИЧЕСКИЙ ЛОГ: отслеживаем откуда создаются рабочие
+    if (card.type === 'workers' || card.name?.includes('Батрак') || card.name?.includes('Носильщик') || card.name?.includes('Мастер') || card.name?.includes('Архимастер')) {
+      console.error('🚨 WORKER CREATION DETECTED:', {
+        walletAddress,
+        cardName: card.name,
+        cardType: card.type,
+        cardId: card.id,
+        stackTrace: new Error().stack
+      });
+    }
+    
     this.addToBatch(walletAddress, {
       type: 'create',
       data: { card, cardType },

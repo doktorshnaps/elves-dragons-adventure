@@ -623,6 +623,10 @@ export type Database = {
         }
         Returns: boolean
       }
+      admin_clear_user_card_instances: {
+        Args: { p_admin_wallet_address?: string; p_wallet_address: string }
+        Returns: boolean
+      }
       admin_find_user_by_wallet: {
         Args: { p_admin_wallet_address: string; p_wallet_address: string }
         Returns: {
