@@ -65,6 +65,8 @@ serve(async (req) => {
       throw templateError;
     }
 
+    console.log(`📋 Found item template:`, itemTemplate);
+
     // Уменьшаем количество товара на 1
     const { error: updateError } = await supabase
       .from('shop_inventory')
@@ -79,8 +81,12 @@ serve(async (req) => {
       throw updateError;
     }
 
+    console.log(`🔍 Checking item type: ${itemTemplate.type}`);
+    
     // Если это рабочий - создаем card_instance, иначе добавляем в inventory через atomic_inventory_update
     if (itemTemplate.type === 'worker') {
+      console.log(`👷 Processing as worker: ${itemTemplate.name}`);
+      
       // Получаем user_id для кошелька
       const { data: gameData, error: gameDataError } = await supabase
         .from('game_data')
@@ -127,6 +133,8 @@ serve(async (req) => {
 
       console.log(`✅ Worker card instance created: ${cardData.id}`);
     } else {
+      console.log(`📦 Processing as regular item: ${itemTemplate.name}`);
+      
       // Для обычных предметов используем старую логику через atomic_inventory_update
       const itemData = {
         id: `item_${item_id}_${Date.now()}`,
