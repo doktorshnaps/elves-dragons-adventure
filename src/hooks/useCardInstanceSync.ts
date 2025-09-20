@@ -162,18 +162,18 @@ export const useCardInstanceSync = () => {
     }
   }, [cardInstances, updateCardHealth]);
 
-  // Синхронизация при изменении данных - только когда данные действительно изменились
-  useEffect(() => {
-    if (gameData.cards && cardInstances) {
-      syncCardsToInstances();
-    }
-  }, [gameData.cards?.length, cardInstances?.length]); // Используем только length для сравнения
+  // Синхронизация при изменении данных - ОТКЛЮЧАЕМ чтобы избежать бесконечного цикла
+  // useEffect(() => {
+  //   if (gameData.cards && cardInstances) {
+  //     syncCardsToInstances();
+  //   }
+  // }, [gameData.cards?.length, cardInstances?.length]); // Используем только length для сравнения
 
-  useEffect(() => {
-    if (gameData.inventory && cardInstances) {
-      syncWorkersToInstances();
-    }
-  }, [gameData.inventory?.length, cardInstances?.length]); // Используем только length для сравнения
+  // useEffect(() => {
+  //   if (gameData.inventory && cardInstances) {
+  //     syncWorkersToInstances();
+  //   }
+  // }, [gameData.inventory?.length, cardInstances?.length]); // Используем только length для сравнения
 
   useEffect(() => {
     if (gameData.cards && cardInstances?.length) {
@@ -182,19 +182,20 @@ export const useCardInstanceSync = () => {
   }, [cardInstances?.length]); // Синхронизируем здоровье только при изменении количества instances
 
   // Очистка экземпляров, которых больше нет в колоде (например, после апгрейда/сжигания)
-  useEffect(() => {
-    if (!gameData.cards || !cardInstances.length) return;
-    const cards = gameData.cards as Card[];
-    const cardIds = new Set(cards.map(c => c.id));
-    const instanceIds = new Set(cardInstances.map(ci => ci.card_template_id));
+  // ОТКЛЮЧАЕМ автоматическую очистку чтобы избежать бесконечного цикла
+  // useEffect(() => {
+  //   if (!gameData.cards || !cardInstances.length) return;
+  //   const cards = gameData.cards as Card[];
+  //   const cardIds = new Set(cards.map(c => c.id));
+  //   const instanceIds = new Set(cardInstances.map(ci => ci.card_template_id));
 
-    // Только если есть реальная разница между наборами
-    const toRemove = cardInstances.filter(inst => !cardIds.has(inst.card_template_id));
-    if (toRemove.length > 0) {
-      console.log('🗑️ Removing obsolete card instances:', toRemove.map(i => i.card_template_id));
-      toRemove.forEach(inst => deleteCardInstanceByTemplate(inst.card_template_id));
-    }
-  }, [gameData.cards?.length, cardInstances?.length]); // Проверяем только изменения в количестве
+  //   // Только если есть реальная разница между наборами
+  //   const toRemove = cardInstances.filter(inst => !cardIds.has(inst.card_template_id));
+  //   if (toRemove.length > 0) {
+  //     console.log('🗑️ Removing obsolete card instances:', toRemove.map(i => i.card_template_id));
+  //     toRemove.forEach(inst => deleteCardInstanceByTemplate(inst.card_template_id));
+  //   }
+  // }, [gameData.cards?.length, cardInstances?.length]); // Проверяем только изменения в количестве
 
   // Таймер для регенерации здоровья ОТКЛЮЧЕН - здоровье не должно восстанавливаться автоматически
   // useEffect(() => {
