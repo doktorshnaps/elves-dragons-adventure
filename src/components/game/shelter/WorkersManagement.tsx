@@ -63,12 +63,34 @@ export const WorkersManagement = ({ onSpeedBoostChange }: WorkersManagementProps
     { id: "medical", name: t(language, 'shelter.medicalBuilding') }
   ];
 
-  // Получаем рабочих из card_instances
-  console.log('🔍 Debug inventory:', gameState.inventory);
-  const availableWorkers = (gameState.inventory || [])
+  // Получаем рабочих сFallback из gameState или локального Zustand-персиста
+  const getInventoryWithFallback = () => {
+    let inv = (gameState.inventory || []) as any[];
+    if (!Array.isArray(inv) || inv.length === 0) {
+      try {
+        const persisted = localStorage.getItem('game-storage');
+        if (persisted) {
+          const parsed = JSON.parse(persisted);
+          const lsInv = parsed?.state?.inventory;
+          if (Array.isArray(lsInv)) {
+            inv = lsInv;
+          }
+        }
+      } catch (e) {
+        console.warn('⚠️ Failed to read fallback inventory from localStorage', e);
+      }
+    }
+    console.log('🔍 Resolved inventory:', inv);
+    return inv;
+  };
+
+  const inventory = getInventoryWithFallback();
+
+  const availableWorkers = inventory
     .filter((item: any) => {
-      console.log('🔍 Checking item:', item, 'type:', item?.type);
-      return item?.type === 'worker';
+      const isWorker = item?.type === 'worker' || (item?.stats?.workDuration != null && item?.name);
+      if (!isWorker) return false;
+      return true;
     })
     .map((item: any, index: number) => ({
       id: item.id ?? `worker_${index}_${item.name}`,
@@ -79,8 +101,8 @@ export const WorkersManagement = ({ onSpeedBoostChange }: WorkersManagementProps
       stats: item.stats || {},
       image: item.image
     }));
-  
-  console.log('🔍 Available workers after filtering:', availableWorkers);
+
+  console.log('🔍 Available workers:', availableWorkers);
 
   // Загружаем активных рабочих из gameState
   useEffect(() => {
