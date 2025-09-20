@@ -81,8 +81,34 @@ serve(async (req) => {
 
     // Если это рабочий - создаем card_instance, иначе добавляем в inventory через atomic_inventory_update
     if (itemTemplate.type === 'worker') {
+      // Проверяем, есть ли уже такой рабочий у пользователя
+      const { data: existingWorker, error: checkError } = await supabase
+        .from('card_instances')
+        .select('*')
+        .eq('wallet_address', wallet_address)
+        .eq('card_type', 'workers')
+        .like('card_data->name', itemTemplate.name)
+        .maybeSingle();
+
+      if (checkError && checkError.code !== 'PGRST116') {
+        console.error('❌ Error checking existing worker:', checkError);
+        throw checkError;
+      }
+
+      if (existingWorker) {
+        console.log(`⚠️ Worker ${itemTemplate.name} already exists for wallet ${wallet_address}, skipping creation`);
+        return new Response(JSON.stringify({ 
+          success: true,
+          remaining_quantity: inventoryItem.available_quantity - 1,
+          item_type: itemTemplate.type,
+          message: 'Worker already exists'
+        }), {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+
       const cardData = {
-        id: `worker_${item_id}_${Date.now()}`,
+        id: `worker_${item_id}`, // Убираем timestamp для предотвращения дублирования
         name: itemTemplate.name,
         description: itemTemplate.description,
         type: 'worker',
