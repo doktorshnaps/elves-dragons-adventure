@@ -132,17 +132,32 @@ export const useCardInstanceSync = () => {
     syncHealthFromInstances();
   }, [syncHealthFromInstances]);
 
-  // Очистка экземпляров, которых больше нет в колоде (например, после апгрейда/сжигания)
+  // Очистка экземпляров, которых больше нет в колоде (НЕ КАСАЕТСЯ РАБОЧИХ!)
   useEffect(() => {
     if (!gameData.cards || !cardInstances.length) return;
     const cards = gameData.cards as Card[];
-    const ids = new Set(cards.map(c => c.id));
+    const cardIds = new Set(cards.map(c => c.id));
 
-    const toRemove = cardInstances.filter(inst => !ids.has(inst.card_template_id));
+    // Получаем ID рабочих из activeWorkers
+    const activeWorkerIds = new Set();
+    if (gameData.activeWorkers && Array.isArray(gameData.activeWorkers)) {
+      gameData.activeWorkers.forEach((worker: any) => {
+        if (worker?.id) activeWorkerIds.add(worker.id);
+      });
+    }
+
+    // Удаляем только экземпляры НЕ-рабочих карт, которых нет в колоде
+    const toRemove = cardInstances.filter(inst => 
+      inst.card_type !== 'workers' && // НЕ удаляем рабочих
+      !cardIds.has(inst.card_template_id) && 
+      !activeWorkerIds.has(inst.card_template_id)
+    );
+    
     if (toRemove.length > 0) {
+      console.log('🗑️ Removing card instances that are no longer in deck:', toRemove.map(r => r.card_template_id));
       toRemove.forEach(inst => deleteCardInstanceByTemplate(inst.card_template_id));
     }
-  }, [gameData.cards, cardInstances, deleteCardInstanceByTemplate]);
+  }, [gameData.cards, gameData.activeWorkers, cardInstances, deleteCardInstanceByTemplate]);
 
   // Таймер для регенерации здоровья ОТКЛЮЧЕН - здоровье не должно восстанавливаться автоматически
   // useEffect(() => {
