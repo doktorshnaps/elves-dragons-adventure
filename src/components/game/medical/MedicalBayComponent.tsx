@@ -31,15 +31,15 @@ export const MedicalBayComponent = () => {
     // loadCardInstances(); // ОТКЛЮЧЕНО - используем автоматическую подписку
   }, [loadMedicalBayEntries]); // Убираем loadCardInstances из зависимостей
 
-  // Автоматическая обработка лечения каждую минуту
-  useEffect(() => {
-    const interval = setInterval(() => {
-      console.log('🏥 Processing automatic healing...');
-      processMedicalBayHealing();
-    }, 60000); // каждую минуту
-
-    return () => clearInterval(interval);
-  }, [processMedicalBayHealing]);
+  // ОТКЛЮЧЕНО - автоматическая обработка лечения 
+  // Убираем setInterval который вызывал постоянные обновления card_instances
+  // useEffect(() => {
+  //   const interval = setInterval(() => {
+  //     console.log('🏥 Processing automatic healing...');
+  //     processMedicalBayHealing();
+  //   }, 60000);
+  //   return () => clearInterval(interval);
+  // }, [processMedicalBayHealing]);
 
   const getInjuredCards = () => {
     console.log('🏥 Getting injured cards...');
