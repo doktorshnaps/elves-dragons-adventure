@@ -95,13 +95,13 @@ serve(async (req) => {
 
     // Если это рабочий - создаем card_instance, иначе добавляем в inventory через atomic_inventory_update
     if (itemTemplate.type === 'worker') {
-      // Проверяем, есть ли уже такой рабочий у пользователя
+      // Проверяем, есть ли уже такой рабочий у пользователя - используем оператор JSONB
       const { data: existingWorker, error: checkError } = await supabase
         .from('card_instances')
         .select('*')
         .eq('wallet_address', wallet_address)
         .eq('card_type', 'workers')
-        .like('card_data->name', itemTemplate.name)
+        .eq('card_data->>name', itemTemplate.name)
         .maybeSingle();
 
       if (checkError && checkError.code !== 'PGRST116') {
