@@ -98,41 +98,46 @@ export const Shop = ({ onClose }: ShopProps) => {
             equipped: false
           };
 
-      // Сначала атомарно списываем баланс и добавляем предмет в инвентарь
-      const { data: result, error: rpcError } = await (supabase as any).rpc('atomic_inventory_update', {
-        p_wallet_address: accountId,
-        p_price_deduction: item.price,
-        p_new_item: newItem
-      });
+      // Для рабочих используем edge function shop-purchase напрямую, для остальных - atomic_inventory_update
+      if (item.type === 'worker' || (item.stats?.workDuration != null)) {
+        console.log('🔨 Purchasing worker via edge function:', item.name);
+        
+        // Для рабочих используем только edge function shop-purchase
+        const { data: result, error: rpcError } = await supabase.functions.invoke('shop-purchase', {
+          body: { item_id: item.id, wallet_address: accountId }
+        });
 
-      if (rpcError || !result) {
-        console.error('atomic_inventory_update error:', rpcError);
-        throw (rpcError || new Error('No result from RPC'));
+        if (rpcError || !result?.success) {
+          console.error('shop-purchase error:', rpcError || result?.error);
+          throw (rpcError || new Error(result?.error || 'Purchase failed'));
+        }
+
+        console.log('✅ Worker purchase successful:', result);
+      } else {
+        console.log('🛒 Purchasing regular item via atomic_inventory_update:', item.name);
+        
+        // Для обычных предметов используем атомарное обновление
+        const { data: result, error: rpcError } = await (supabase as any).rpc('atomic_inventory_update', {
+          p_wallet_address: accountId,
+          p_price_deduction: item.price,
+          p_new_item: newItem
+        });
+
+        if (rpcError || !result) {
+          console.error('atomic_inventory_update error:', rpcError);
+          throw (rpcError || new Error('No result from RPC'));
+        }
+
+        console.log('✅ Regular item purchase successful:', result);
       }
-
-      console.log('✅ Purchase successful, result:', result);
       
       // ОТКЛЮЧЕНО - создание экземпляров карт рабочих через RPC
-      // Используем централизованный менеджер для пакетных операций
-      if (item.type === 'worker' || (item.stats?.workDuration != null)) {
-        console.log('Shop: Worker card instance creation DISABLED - using centralized manager');
-        // try {
-        //   const { error: workerError } = await (supabase as any).rpc('create_worker_card_instance', {
-        //     p_wallet_address: accountId,
-        //     p_worker_data: newItem
-        //   });
-        //   if (workerError) {
-        //     console.warn('⚠️ Failed to create worker card instance:', workerError);
-        //   } else {
-        //     console.log('✅ Worker card instance created successfully');
-        //   }
-        // } catch (e) {
-        //   console.warn('⚠️ Exception creating worker card instance:', e);
-        // }
-      }
+      // Все рабочие теперь создаются через edge function shop-purchase
       
-      // Только после успешной покупки уменьшаем количество товара в магазине
-      await purchaseItem(item.id, accountId);
+      // Только после успешной покупки уменьшаем количество товара в магазине (для обычных предметов)
+      if (item.type !== 'worker') {
+        await purchaseItem(item.id, accountId);
+      }
       
       // Reload game data to sync with updated balance and inventory
       if (loadGameData) {

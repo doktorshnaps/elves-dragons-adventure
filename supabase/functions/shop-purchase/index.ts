@@ -79,6 +79,20 @@ serve(async (req) => {
       throw updateError;
     }
 
+    // Списываем баланс пользователя (только для рабочих, для остальных это делается в Shop.tsx)
+    if (itemTemplate.type === 'worker') {
+      const { error: balanceError } = await supabase.rpc('atomic_inventory_update', {
+        p_wallet_address: wallet_address,
+        p_price_deduction: itemTemplate.value || 1,
+        p_new_item: null // Не добавляем в inventory - для рабочих используем card_instances
+      });
+
+      if (balanceError) {
+        console.error('❌ Error deducting balance for worker:', balanceError);
+        throw balanceError;
+      }
+    }
+
     // Если это рабочий - создаем card_instance, иначе добавляем в inventory через atomic_inventory_update
     if (itemTemplate.type === 'worker') {
       // Проверяем, есть ли уже такой рабочий у пользователя
