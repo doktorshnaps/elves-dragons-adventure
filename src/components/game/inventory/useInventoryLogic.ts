@@ -34,7 +34,8 @@ const groupItems = (items: Item[]): GroupedItem[] => {
     // Фильтруем null и undefined значения перед группировкой
     const validItems = items.filter(item => item != null && typeof item === 'object');
       return validItems.reduce<GroupedItem[]>((acc, item) => {
-      if (item.type === 'dragon_egg') {
+      // Яйца драконов и рабочие НЕ группируем — у каждого свой таймер/уникальный ID
+      if (item.type === 'dragon_egg' || item.type === 'worker') {
         acc.push({
           name: item.name,
           type: item.type,

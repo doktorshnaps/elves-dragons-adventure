@@ -82,7 +82,7 @@ serve(async (req) => {
     // Если это рабочий - создаем card_instance, иначе добавляем в inventory через atomic_inventory_update
     if (itemTemplate.type === 'worker') {
       const cardData = {
-        id: `worker_${item_id}_${Date.now()}`,
+        id: `worker_${item_id}_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
         name: itemTemplate.name,
         description: itemTemplate.description,
         type: 'worker',
