@@ -73,12 +73,14 @@ export const useCardPackOpening = () => {
         generateCard(Math.random() > 0.5 ? 'character' : 'pet')
       );
 
-      // Атомарно удаляем колоды и добавляем карты на сервере
-      const { data, error } = await (supabase as any).rpc('open_card_packs', {
-        p_wallet_address: accountId,
-        p_pack_name: packItem.name,
-        p_count: count,
-        p_new_cards: newCards
+      // Вызываем edge function для открытия колод
+      const { data, error } = await supabase.functions.invoke('open-card-packs', {
+        body: {
+          p_wallet_address: accountId,
+          p_pack_name: packItem.name,
+          p_count: count,
+          p_new_cards: newCards
+        }
       });
 
       if (error) {

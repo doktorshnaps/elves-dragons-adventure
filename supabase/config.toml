@@ -1,1 +1,14 @@
 project_id = "oimhwdymghkwxznjarkv"
+
+[auth]
+enabled = true
+site_url = "http://localhost:3000"
+additional_redirect_urls = ["https://lovableproject.com"]
+
+[auth.email]
+enable_signup = true
+double_confirm_changes = true
+enable_confirmations = true
+
+[functions.open-card-packs]
+verify_jwt = false
