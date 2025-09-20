@@ -63,25 +63,31 @@ export const WorkersManagement = ({ onSpeedBoostChange }: WorkersManagementProps
     { id: "medical", name: t(language, 'shelter.medicalBuilding') }
   ];
 
-  // Получаем рабочих сFallback из gameState или локального Zustand-персиста
+  // Получаем рабочих из актуального gameState (приоритет) или fallback при загрузке
   const getInventoryWithFallback = () => {
-    let inv = (gameState.inventory || []) as any[];
-    if (!Array.isArray(inv) || inv.length === 0) {
-      try {
-        const persisted = localStorage.getItem('game-storage');
-        if (persisted) {
-          const parsed = JSON.parse(persisted);
-          const lsInv = parsed?.state?.inventory;
-          if (Array.isArray(lsInv)) {
-            inv = lsInv;
-          }
-        }
-      } catch (e) {
-        console.warn('⚠️ Failed to read fallback inventory from localStorage', e);
-      }
+    // Если gameState загружен и не в состоянии загрузки, используем его данные (даже если пустые)
+    if (!gameState.loading && gameState.inventory !== undefined) {
+      console.log('🔍 Using gameState inventory:', gameState.inventory);
+      return gameState.inventory || [];
     }
-    console.log('🔍 Resolved inventory:', inv);
-    return inv;
+    
+    // Fallback только при начальной загрузке или ошибках
+    try {
+      const persisted = localStorage.getItem('game-storage');
+      if (persisted) {
+        const parsed = JSON.parse(persisted);
+        const lsInv = parsed?.state?.inventory;
+        if (Array.isArray(lsInv)) {
+          console.log('🔍 Using fallback inventory from localStorage:', lsInv);
+          return lsInv;
+        }
+      }
+    } catch (e) {
+      console.warn('⚠️ Failed to read fallback inventory from localStorage', e);
+    }
+    
+    console.log('🔍 No inventory available, returning empty array');
+    return [];
   };
 
   const inventory = getInventoryWithFallback();
