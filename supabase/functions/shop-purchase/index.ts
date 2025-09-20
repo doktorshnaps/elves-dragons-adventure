@@ -129,7 +129,7 @@ serve(async (req) => {
     } else {
       // Для обычных предметов используем старую логику через atomic_inventory_update
       const itemData = {
-        id: `item_${item_id}_${Date.now()}`,
+        id: itemTemplate.item_id || `item_${item_id}_${Date.now()}`, // Используем правильный item_id
         name: itemTemplate.name,
         description: itemTemplate.description,
         type: itemTemplate.type,
