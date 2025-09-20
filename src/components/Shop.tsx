@@ -112,21 +112,23 @@ export const Shop = ({ onClose }: ShopProps) => {
 
       console.log('✅ Purchase successful, result:', result);
       
-      // If purchased item is a worker, create card instance for it
+      // ОТКЛЮЧЕНО - создание экземпляров карт рабочих через RPC
+      // Используем централизованный менеджер для пакетных операций
       if (item.type === 'worker' || (item.stats?.workDuration != null)) {
-        try {
-          const { error: workerError } = await (supabase as any).rpc('create_worker_card_instance', {
-            p_wallet_address: accountId,
-            p_worker_data: newItem
-          });
-          if (workerError) {
-            console.warn('⚠️ Failed to create worker card instance:', workerError);
-          } else {
-            console.log('✅ Worker card instance created successfully');
-          }
-        } catch (e) {
-          console.warn('⚠️ Exception creating worker card instance:', e);
-        }
+        console.log('Shop: Worker card instance creation DISABLED - using centralized manager');
+        // try {
+        //   const { error: workerError } = await (supabase as any).rpc('create_worker_card_instance', {
+        //     p_wallet_address: accountId,
+        //     p_worker_data: newItem
+        //   });
+        //   if (workerError) {
+        //     console.warn('⚠️ Failed to create worker card instance:', workerError);
+        //   } else {
+        //     console.log('✅ Worker card instance created successfully');
+        //   }
+        // } catch (e) {
+        //   console.warn('⚠️ Exception creating worker card instance:', e);
+        // }
       }
       
       // Только после успешной покупки уменьшаем количество товара в магазине

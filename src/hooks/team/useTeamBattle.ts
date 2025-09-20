@@ -9,14 +9,14 @@ import { useGameStore } from '@/stores/gameStore';
 import { applyDamageToPair } from '@/utils/battleHealthUtils';
 import { useGameData } from '@/hooks/useGameData';
 import { HERO_ABILITIES } from '@/types/abilities';
-import { useCardInstances } from '@/hooks/useCardInstances';
+import { useCentralizedCardInstances } from '@/hooks/useCentralizedCardInstances';
 
 export const useTeamBattle = (dungeonType: DungeonType, initialLevel: number = 1) => {
   const { toast } = useToast();
   const { selectedPairs, getSelectedTeamStats } = useTeamSelection();
   const { accountLevel, accountExperience, addAccountExperience: addAccountExp } = useGameStore();
   const { gameData, updateGameData } = useGameData();
-  const { loading: cardInstancesLoading } = useCardInstances();
+  const { loading: cardInstancesLoading } = useCentralizedCardInstances();
   
   const [battleState, setBattleState] = useState<TeamBattleState>(() => {
     const savedState = localStorage.getItem('teamBattleState');

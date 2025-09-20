@@ -2,7 +2,7 @@ import { useState, useCallback, useEffect } from 'react';
 import { calculateTeamStats } from '@/utils/cardUtils';
 import { useToast } from '@/hooks/use-toast';
 import { useGameData } from '@/hooks/useGameData';
-import { useCardInstances } from '@/hooks/useCardInstances';
+import { useCentralizedCardInstances } from '@/hooks/useCentralizedCardInstances';
 import { Card } from '@/types/cards';
 
 interface PlayerStats {
@@ -20,7 +20,7 @@ interface PlayerStats {
 export const usePlayerStats = (initialLevel = 1) => {
   const { toast } = useToast();
   const { gameData, updateGameData } = useGameData();
-  const { cardInstances } = useCardInstances();
+  const { cardInstances } = useCentralizedCardInstances();
   
   const calculateEquipmentBonuses = useCallback(() => {
     if (!gameData.inventory) return { power: 0, defense: 0, health: 0 };

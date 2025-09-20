@@ -46,23 +46,27 @@ export const applyDamageToPair = async (
   const appliedHeroDamage = Math.max(0, damage - appliedDragonDamage);
 
   try {
-    if (wallet && updatedDragon && appliedDragonDamage > 0 && pair.dragon) {
-      const newDragonHealth = updatedDragon.currentHealth ?? updatedDragon.health;
-      await supabase.rpc('update_card_instance_health_by_template', {
-        p_wallet_address: wallet,
-        p_card_template_id: pair.dragon.id,
-        p_current_health: newDragonHealth
-      });
-    }
+    // ОТКЛЮЧЕНО - обновление здоровья карт через RPC
+    // Используем централизованный менеджер для пакетных операций
+    console.log('battleHealthUtils: Card health updates DISABLED - using centralized manager');
+    
+    // if (wallet && updatedDragon && appliedDragonDamage > 0 && pair.dragon) {
+    //   const newDragonHealth = updatedDragon.currentHealth ?? updatedDragon.health;
+    //   await supabase.rpc('update_card_instance_health_by_template', {
+    //     p_wallet_address: wallet,
+    //     p_card_template_id: pair.dragon.id,
+    //     p_current_health: newDragonHealth
+    //   });
+    // }
 
-    if (wallet && updatedHero && appliedHeroDamage > 0 && pair.hero) {
-      const newHeroHealth = updatedHero.currentHealth ?? updatedHero.health;
-      await supabase.rpc('update_card_instance_health_by_template', {
-        p_wallet_address: wallet,
-        p_card_template_id: pair.hero.id,
-        p_current_health: newHeroHealth
-      });
-    }
+    // if (wallet && updatedHero && appliedHeroDamage > 0 && pair.hero) {
+    //   const newHeroHealth = updatedHero.currentHealth ?? updatedHero.health;
+    //   await supabase.rpc('update_card_instance_health_by_template', {
+    //     p_wallet_address: wallet,
+    //     p_card_template_id: pair.hero.id,
+    //     p_current_health: newHeroHealth
+    //   });
+    // }
 
     if ((appliedDragonDamage > 0 || appliedHeroDamage > 0)) {
       window.dispatchEvent(new CustomEvent('cardInstanceHealthUpdate', { detail: {} }));

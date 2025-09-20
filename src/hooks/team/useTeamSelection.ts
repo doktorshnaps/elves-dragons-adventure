@@ -2,12 +2,12 @@ import { useEffect, useMemo } from 'react';
 import { Card as CardType } from "@/types/cards";
 import { useGameData } from '@/hooks/useGameData';
 import { useCardHealthSync } from '@/hooks/useCardHealthSync';
-import { useCardInstances } from '@/hooks/useCardInstances';
+import { useCentralizedCardInstances } from '@/hooks/useCentralizedCardInstances';
 import { TeamPair } from '@/components/game/team/DeckSelection';
 
 export const useTeamSelection = () => {
   const { gameData, updateGameData } = useGameData();
-  const { cardInstances } = useCardInstances();
+  const { cardInstances } = useCentralizedCardInstances();
 
   // Build cards with health using the SAME gameData instance to avoid desync
   const cardsWithHealth = useMemo(() => {

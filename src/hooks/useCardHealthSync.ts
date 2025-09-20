@@ -1,69 +1,25 @@
-import { useEffect, useCallback } from 'react';
-import { useCardInstances } from './useCardInstances';
-import { useGameData } from './useGameData';
-import { Card } from '@/types/cards';
+import { useCallback } from 'react';
 
 /**
- * Hook to sync card health from card_instances to game data
- * Ensures health is always accurate from database
+ * ОТКЛЮЧЕННЫЙ хук для синхронизации здоровья карт
+ * Заменен на централизованный менеджер cardInstanceManager
  */
 export const useCardHealthSync = () => {
-  const { cardInstances, loadCardInstances } = useCardInstances();
-  const { gameData, updateGameData } = useGameData();
+  console.log('useCardHealthSync: Hook is DISABLED, using cardInstanceManager instead');
 
-  // Sync health from card_instances to cards in gameData
+  // Все функции отключены для совместимости
   const syncHealthFromInstances = useCallback(async () => {
-    if (!cardInstances.length || !gameData.cards.length) return;
+    console.log('syncHealthFromInstances: DISABLED');
+    return;
+  }, []);
 
-    const instancesById = new Map(cardInstances.map(inst => [inst.card_template_id, inst]));
-    let hasChanges = false;
-
-    const updatedCards = gameData.cards.map((card: Card) => {
-      const instance = instancesById.get(card.id);
-      if (instance && instance.current_health !== card.currentHealth) {
-        hasChanges = true;
-        return {
-          ...card,
-          currentHealth: instance.current_health,
-          lastHealTime: new Date(instance.last_heal_time).getTime()
-        };
-      }
-      return card;
-    });
-
-    if (hasChanges) {
-      console.log('🔄 Syncing card health from card_instances');
-      await updateGameData({ cards: updatedCards });
-      
-      // Dispatch event to notify other components
-      window.dispatchEvent(new CustomEvent('cardHealthSynced', { 
-        detail: { cards: updatedCards } 
-      }));
-    }
-  }, [cardInstances, gameData.cards, updateGameData]);
-
-  // Listen for card health updates and sync
-  useEffect(() => {
-    const handleHealthUpdate = () => {
-      loadCardInstances();
-    };
-
-    window.addEventListener('cardInstanceHealthUpdate', handleHealthUpdate);
-    return () => window.removeEventListener('cardInstanceHealthUpdate', handleHealthUpdate);
-  }, [loadCardInstances]);
-
-  // Load instances on mount to ensure initial sync
-  useEffect(() => {
-    loadCardInstances();
-  }, [loadCardInstances]);
-
-  // Auto-sync when card instances change
-  useEffect(() => {
-    syncHealthFromInstances();
-  }, [syncHealthFromInstances]);
+  const loadCardInstances = useCallback(async () => {
+    console.log('loadCardInstances: DISABLED');
+    return [];
+  }, []);
 
   return {
     syncHealthFromInstances,
-    cardInstances
+    loadCardInstances
   };
 };

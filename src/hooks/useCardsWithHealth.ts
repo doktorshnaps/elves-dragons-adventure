@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { useCardInstances } from './useCardInstances';
+import { useCentralizedCardInstances } from './useCentralizedCardInstances';
 import { useGameData } from './useGameData';
 import { Card } from '@/types/cards';
 
@@ -8,7 +8,7 @@ import { Card } from '@/types/cards';
  */
 export const useCardsWithHealth = () => {
   const { gameData } = useGameData();
-  const { cardInstances } = useCardInstances();
+  const { cardInstances } = useCentralizedCardInstances();
 
   const cardsWithHealth = useMemo(() => {
     const cards = gameData.cards || [];
