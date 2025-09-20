@@ -64,8 +64,12 @@ export const WorkersManagement = ({ onSpeedBoostChange }: WorkersManagementProps
   ];
 
   // Получаем рабочих из card_instances
+  console.log('🔍 Debug inventory:', gameState.inventory);
   const availableWorkers = (gameState.inventory || [])
-    .filter((item: any) => item?.type === 'worker')
+    .filter((item: any) => {
+      console.log('🔍 Checking item:', item, 'type:', item?.type);
+      return item?.type === 'worker';
+    })
     .map((item: any, index: number) => ({
       id: item.id ?? `worker_${index}_${item.name}`,
       name: item.name || 'Рабочий',
@@ -75,6 +79,8 @@ export const WorkersManagement = ({ onSpeedBoostChange }: WorkersManagementProps
       stats: item.stats || {},
       image: item.image
     }));
+  
+  console.log('🔍 Available workers after filtering:', availableWorkers);
 
   // Загружаем активных рабочих из gameState
   useEffect(() => {
