@@ -7,6 +7,7 @@ import { useUnifiedGameState } from "@/hooks/useUnifiedGameState";
 import { useToast } from "@/hooks/use-toast";
 import { useLanguage } from "@/hooks/useLanguage";
 import { t } from "@/utils/translations";
+import { useCardInstances } from "@/hooks/useCardInstances";
 
 import { Users, Clock, Zap, AlertTriangle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
@@ -29,6 +30,7 @@ interface WorkersManagementProps {
 export const WorkersManagement = ({ onSpeedBoostChange }: WorkersManagementProps) => {
   const gameState = useUnifiedGameState();
   const { language } = useLanguage();
+  const { cardInstances, loading: cardInstancesLoading, deleteCardInstance } = useCardInstances();
   
   const { toast } = useToast();
   const [activeWorkers, setActiveWorkers] = useState<ActiveWorker[]>([]);
@@ -63,50 +65,22 @@ export const WorkersManagement = ({ onSpeedBoostChange }: WorkersManagementProps
     { id: "medical", name: t(language, 'shelter.medicalBuilding') }
   ];
 
-  // Получаем рабочих из актуального gameState (приоритет) или fallback при загрузке
-  const getInventoryWithFallback = () => {
-    // Если gameState загружен и не в состоянии загрузки, используем его данные (даже если пустые)
-    if (!gameState.loading && gameState.inventory !== undefined) {
-      console.log('🔍 Using gameState inventory:', gameState.inventory);
-      return gameState.inventory || [];
-    }
-    
-    // Fallback только при начальной загрузке или ошибках
-    try {
-      const persisted = localStorage.getItem('game-storage');
-      if (persisted) {
-        const parsed = JSON.parse(persisted);
-        const lsInv = parsed?.state?.inventory;
-        if (Array.isArray(lsInv)) {
-          console.log('🔍 Using fallback inventory from localStorage:', lsInv);
-          return lsInv;
-        }
-      }
-    } catch (e) {
-      console.warn('⚠️ Failed to read fallback inventory from localStorage', e);
-    }
-    
-    console.log('🔍 No inventory available, returning empty array');
-    return [];
-  };
-
-  const inventory = getInventoryWithFallback();
-
-  const availableWorkers = inventory
-    .filter((item: any) => {
-      const isWorker = item?.type === 'worker' || (item?.stats?.workDuration != null && item?.name);
-      if (!isWorker) return false;
-      return true;
-    })
-    .map((item: any, index: number) => ({
-      id: item.id ?? `worker_${index}_${item.name}`,
-      name: item.name || 'Рабочий',
-      description: item.description || '',
-      type: item.type || 'worker',
-      value: item.value || 0,
-      stats: item.stats || {},
-      image: item.image
-    }));
+  // Получаем рабочих из card_instances (где они сохраняются после покупки)
+  const availableWorkers = cardInstances
+    .filter((instance) => instance.card_type === 'workers')
+    .map((instance) => {
+      const cardData = instance.card_data as any;
+      return {
+        id: instance.id,
+        cardInstanceId: instance.id,
+        name: cardData?.name || 'Рабочий',
+        description: cardData?.description || '',
+        type: 'worker',
+        value: cardData?.value || 0,
+        stats: cardData?.stats || {},
+        image: cardData?.image
+      };
+    });
 
   console.log('🔍 Available workers:', availableWorkers);
 
@@ -159,7 +133,7 @@ export const WorkersManagement = ({ onSpeedBoostChange }: WorkersManagementProps
     const newActiveWorker: ActiveWorker = {
       id: `${worker.id}_${Date.now()}`,
       workerId: worker.id,
-      cardInstanceId: worker.id, // ID card_instance
+      cardInstanceId: worker.cardInstanceId,
       name: worker.name,
       speedBoost: worker.value,
       startTime: Date.now(),
@@ -174,23 +148,16 @@ export const WorkersManagement = ({ onSpeedBoostChange }: WorkersManagementProps
        // Обновляем локальное состояние
        setActiveWorkers(updatedActiveWorkers);
 
-       // Формируем новый инвентарь без одного назначенного рабочего
-       const currentInventory = (gameState.inventory || []) as any[];
-       const removeIndex = currentInventory.findIndex((i: any) => i?.type === 'worker' && (i.id === worker.id || (i.name === worker.name && i.value === worker.value && (i.stats?.workDuration ?? null) === (worker.stats?.workDuration ?? null))));
-       const updatedInventory = removeIndex >= 0 ? currentInventory.filter((_, idx) => idx !== removeIndex) : currentInventory;
+       // Удаляем card_instance рабочего (после назначения он исчезает)
+       await deleteCardInstance(worker.cardInstanceId);
 
-       // Сохраняем активных рабочих напрямую в БД (RPC не поддерживает это поле)
+       // Сохраняем активных рабочих в БД
        await updateActiveWorkersInDB(updatedActiveWorkers);
 
-       // Обновляем game_data с новыми активными рабочими и инвентарем
-       await gameState.actions.batchUpdate({ activeWorkers: updatedActiveWorkers, inventory: updatedInventory });
+       // Обновляем game_data с новыми активными рабочими
+       await gameState.actions.batchUpdate({ activeWorkers: updatedActiveWorkers });
        
-       console.log('✅ Worker assigned and saved:', newActiveWorker);
-       if (removeIndex >= 0) {
-         console.log('🧹 Worker removed from inventory at index:', removeIndex);
-       } else {
-         console.warn('⚠️ Could not find matching worker in inventory to remove');
-       }
+       console.log('✅ Worker assigned and card instance deleted:', newActiveWorker);
        
         toast({
           title: t(language, 'shelter.workerAssigned'),
