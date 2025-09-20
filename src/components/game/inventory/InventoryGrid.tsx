@@ -25,8 +25,8 @@ export const InventoryGrid = ({
   } = useLanguage();
   const unequippedItems = groupedItems.filter(item => !item.items.some(i => i.equipped));
 
-  // Формируем единый ключ для группы (включая count)
-  const keyFor = (g: GroupedItem) => `${g.name}-${g.type}-${g.value}-${g.count}`;
+  // Формируем единый ключ для группы (включая count и первый id для уникальности)
+  const keyFor = (g: GroupedItem) => `${g.name}-${g.type}-${g.value}-${g.count}-${g.items[0]?.id || ''}`;
 
   // Авто-закрытие окна, если текущая группа предметов исчезла (например, после открытия последней колоды)
   useEffect(() => {
@@ -39,7 +39,7 @@ export const InventoryGrid = ({
   }
   return <>
       {unequippedItems.map(item => {
-      const dialogKey = `${item.name}-${item.type}-${item.value}-${item.count}`;
+      const dialogKey = `${item.name}-${item.type}-${item.value}-${item.count}-${item.items[0]?.id || ''}`;
       return <Dialog key={dialogKey} open={openKey === dialogKey} onOpenChange={open => setOpenKey(open ? dialogKey : null)}>
           <DialogTrigger asChild>
             <Card className="w-[80px] h-[90px] p-2 bg-game-surface/80 border-game-accent backdrop-blur-sm flex flex-col mx-1 my-1 cursor-pointer hover:border-game-accent/80">
