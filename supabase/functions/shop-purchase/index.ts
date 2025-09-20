@@ -81,6 +81,18 @@ serve(async (req) => {
 
     // Если это рабочий - создаем card_instance, иначе добавляем в inventory через atomic_inventory_update
     if (itemTemplate.type === 'worker') {
+      // Получаем user_id для кошелька
+      const { data: gameData, error: gameDataError } = await supabase
+        .from('game_data')
+        .select('user_id')
+        .eq('wallet_address', wallet_address)
+        .single();
+
+      if (gameDataError || !gameData?.user_id) {
+        console.error('❌ Error getting user_id for wallet:', gameDataError);
+        throw new Error('User not found for wallet address');
+      }
+
       const cardData = {
         id: `worker_${item_id}_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
         name: itemTemplate.name,
@@ -93,10 +105,11 @@ serve(async (req) => {
         image: itemTemplate.image_url
       };
 
-      // Создаем card_instance для рабочего
+      // Создаем card_instance для рабочего с правильным user_id
       const { data: cardInstanceId, error: cardError } = await supabase
         .from('card_instances')
         .insert({
+          user_id: gameData.user_id, // ВАЖНО: устанавливаем user_id
           wallet_address: wallet_address,
           card_template_id: cardData.id,
           card_type: 'workers',
