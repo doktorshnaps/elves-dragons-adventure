@@ -21,15 +21,15 @@ export const MedicalBayComponent = () => {
     processMedicalBayHealing
   } = useMedicalBay();
 
-  const { cardInstances, loadCardInstances } = useCentralizedCardInstances();
+  const { cardInstances } = useCentralizedCardInstances(); // Убираем loadCardInstances
   const { syncHealthFromInstances } = useCardHealthSync();
   const { cardsWithHealth, selectedTeamWithHealth } = useCardsWithHealth();
   const [selectedCard, setSelectedCard] = useState<any>(null);
 
   useEffect(() => {
     loadMedicalBayEntries();
-    loadCardInstances();
-  }, [loadMedicalBayEntries, loadCardInstances]);
+    // loadCardInstances(); // ОТКЛЮЧЕНО - используем автоматическую подписку
+  }, [loadMedicalBayEntries]); // Убираем loadCardInstances из зависимостей
 
   // Автоматическая обработка лечения каждую минуту
   useEffect(() => {
@@ -238,12 +238,13 @@ export const MedicalBayComponent = () => {
                                  try {
                                    await stopHealingWithoutRecovery(entry.card_instance_id);
                                    console.log('🏥 Healing stopped successfully, syncing data...');
-                                   await Promise.all([
-                                     loadCardInstances(),
-                                     loadMedicalBayEntries(),
-                                     syncHealthFromInstances()
-                                   ]);
-                                   console.log('🏥 Data reloaded and synced successfully');
+                                    // await Promise.all([
+                                    //   loadCardInstances(), // ОТКЛЮЧЕНО - данные обновятся автоматически
+                                    //   loadMedicalBayEntries(),
+                                    //   syncHealthFromInstances()
+                                    // ]);
+                                    await loadMedicalBayEntries(); // Только медбей
+                                    console.log('🏥 Medical bay data reloaded');
                                  } catch (error) {
                                    console.error('🏥 Error stopping healing:', error);
                                  }
@@ -263,12 +264,13 @@ export const MedicalBayComponent = () => {
                                     try {
                                       await removeCardFromMedicalBay(entry.card_instance_id);
                                       console.log('🏥 Card removed successfully, syncing health data...');
-                                      await Promise.all([
-                                        loadCardInstances(),
-                                        loadMedicalBayEntries(),
-                                        syncHealthFromInstances() // Синхронизируем здоровье из БД
-                                      ]);
-                                      console.log('🏥 Data reloaded and synced successfully');
+                                       // await Promise.all([
+                                       //   loadCardInstances(), // ОТКЛЮЧЕНО - данные обновятся автоматически
+                                       //   loadMedicalBayEntries(),
+                                       //   syncHealthFromInstances() // Синхронизируем здоровье из БД
+                                       // ]);
+                                       await loadMedicalBayEntries(); // Только медбей
+                                       console.log('🏥 Medical bay data reloaded');
                                    } catch (error) {
                                      console.error('🏥 Error removing card:', error);
                                    }

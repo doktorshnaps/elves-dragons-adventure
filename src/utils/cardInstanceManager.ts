@@ -16,9 +16,9 @@ class CardInstanceManager {
   private lastLoadTime: Map<string, number> = new Map();
   private pendingOperations: Map<string, BatchOperation[]> = new Map();
   private batchTimeout: NodeJS.Timeout | null = null;
-  private readonly CACHE_DURATION = 30000; // 30 секунд
-  private readonly BATCH_DELAY = 2000; // 2 секунды для группировки операций
-  private readonly MAX_LOAD_FREQUENCY = 30000; // Максимум 1 загрузка в 30 секунд
+  private readonly CACHE_DURATION = 60000; // Увеличиваем до 60 секунд
+  private readonly BATCH_DELAY = 5000; // Увеличиваем до 5 секунд для группировки операций
+  private readonly MAX_LOAD_FREQUENCY = 60000; // Увеличиваем до 60 секунд между загрузками
   private subscribers: Map<string, Set<(instances: CardInstance[]) => void>> = new Map();
   private loadingStates: Map<string, boolean> = new Map();
 
@@ -63,15 +63,15 @@ class CardInstanceManager {
     const lastLoad = this.lastLoadTime.get(walletAddress) || 0;
     const cached = this.cache.get(walletAddress);
 
-    // Проверяем частоту загрузки
-    if (!force && (now - lastLoad) < this.MAX_LOAD_FREQUENCY && cached) {
-      console.log(`CardInstanceManager: Using cached data for ${walletAddress}`);
+    // Строгая проверка частоты загрузки - увеличиваем до 60 секунд
+    if (!force && (now - lastLoad) < 60000 && cached) {
+      console.log(`CardInstanceManager: Using cached data for ${walletAddress}, age: ${Math.round((now - lastLoad) / 1000)}s`);
       return cached;
     }
 
     // Проверяем, идет ли уже загрузка
     if (this.loadingStates.get(walletAddress)) {
-      console.log(`CardInstanceManager: Load already in progress for ${walletAddress}`);
+      console.log(`CardInstanceManager: Load already in progress for ${walletAddress}, returning cached data`);
       return cached || [];
     }
 

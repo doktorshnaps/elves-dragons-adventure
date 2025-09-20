@@ -15,7 +15,7 @@ export const useCentralizedCardInstances = () => {
   const [cardInstances, setCardInstances] = useState<CardInstance[]>([]);
   const [loading, setLoading] = useState(false);
 
-  // Подписка на обновления от менеджера
+  // Подписка на обновления от менеджера и автоматическая загрузка
   useEffect(() => {
     if (!accountId || !isConnected) {
       setCardInstances([]);
@@ -26,6 +26,17 @@ export const useCentralizedCardInstances = () => {
       console.log('useCentralizedCardInstances: Received update from manager:', instances.length);
       setCardInstances(instances);
     });
+
+    // Автоматическая загрузка при подключении (с проверкой кэша)
+    const autoLoad = async () => {
+      try {
+        const instances = await cardInstanceManager.getCardInstances(accountId, false);
+        setCardInstances(instances);
+      } catch (error) {
+        console.error('Auto-load card instances failed:', error);
+      }
+    };
+    autoLoad();
 
     return unsubscribe;
   }, [accountId, isConnected]);

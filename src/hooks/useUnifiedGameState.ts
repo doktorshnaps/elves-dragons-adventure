@@ -118,7 +118,7 @@ export const useUnifiedGameState = (): UnifiedGameState => {
   //   });
   // }, [updateMutation, retryOperation]);
 
-  // Real-time синхронизация
+  // Real-time синхронизация (отключена для card_instances)
   const { forceSync } = useRealTimeSync({
     onGameDataChange: (payload) => {
       if (payload.eventType === 'UPDATE' && payload.new) {
@@ -135,10 +135,11 @@ export const useUnifiedGameState = (): UnifiedGameState => {
       // Инвалидируем кэш магазина
       queryClient.invalidateQueries({ queryKey: ['shopInventory'] });
     },
-    onCardInstanceChange: () => {
-      // Инвалидируем кэш экземпляров карт
-      queryClient.invalidateQueries({ queryKey: ['cardInstances'] });
-    }
+    // onCardInstanceChange: () => {
+    //   // ОТКЛЮЧЕНО - инвалидация кэша экземпляров карт
+    //   // Это может вызывать бесконечные перезагрузки
+    //   console.log('CardInstance change detected, but invalidation disabled');
+    // }
   });
 
   // Действия для обновления состояния
