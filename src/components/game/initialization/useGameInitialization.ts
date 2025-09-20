@@ -39,7 +39,6 @@ export const useGameInitialization = (setCards: (cards: Card[]) => void) => {
             .from('game_data')
             .insert({
               wallet_address: accountId,
-              user_id: null,
               cards: initialCards as any,
               balance: 100,
               initialized: true
