@@ -77,23 +77,35 @@ export const useCardPackOpening = () => {
       console.log('🎴 Generated cards:', newCards);
 
       console.log('🎴 About to call edge function');
+      console.log('🎴 Supabase client available:', !!supabase);
+      console.log('🎴 Functions available:', !!supabase.functions);
 
-      const { data, error } = await supabase.functions.invoke('open-card-packs', {
-        body: {
-          p_wallet_address: accountId,
-          p_pack_name: packItem.name,
-          p_count: count,
-          p_new_cards: newCards
-        }
-      });
+      let data: any;
+      let error: any;
 
-      console.log('🎴 Edge function call completed', { data, error });
+      try {
+        const result = await supabase.functions.invoke('open-card-packs', {
+          body: {
+            p_wallet_address: accountId,
+            p_pack_name: packItem.name,
+            p_count: count,
+            p_new_cards: newCards
+          }
+        });
+        data = result.data;
+        error = result.error;
+
+        console.log('🎴 Edge function call completed', { data, error });
+      } catch (invokeError) {
+        console.error('🎴 Error during invoke:', invokeError);
+        error = invokeError;
+      }
 
       if (error) {
         console.error('🎴 Edge function error:', error);
         toast({
           title: 'Ошибка',
-          description: 'Не удалось открыть колоды карт: ' + error.message,
+          description: 'Не удалось открыть колоды карт: ' + (error.message || 'Неизвестная ошибка'),
           variant: 'destructive',
         });
         return [];
