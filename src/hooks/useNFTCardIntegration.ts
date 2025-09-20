@@ -60,10 +60,22 @@ export const useNFTCardIntegration = () => {
     setIsLoading(true);
     try {
       // Синхронизируем NFT с основного контракта и дополнительного
-      const synced = await syncNFTCards(accountId, 'doubledog.hot.tg');
+      let synced: any[] = [];
+      let fetched: any[] = [];
       
-      // Получаем обновленные NFT карты из БД (fallback)
-      const fetched = await getUserNFTCards(accountId);
+      try {
+        synced = await syncNFTCards(accountId, 'doubledog.hot.tg');
+      } catch (syncError) {
+        console.log('NFT sync failed, using fallback:', syncError);
+      }
+      
+      try {
+        // Получаем обновленные NFT карты из БД (fallback)
+        fetched = await getUserNFTCards(accountId);
+      } catch (fetchError) {
+        console.log('NFT fetch failed:', fetchError);
+      }
+      
       const source = (synced && synced.length > 0) ? synced : fetched;
       
       // Убираем дубликаты по ID и конвертируем в формат игровых карт
