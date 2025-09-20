@@ -76,9 +76,8 @@ export const useCardPackOpening = () => {
       
       console.log('🎴 Generated cards:', newCards);
 
-      // Вызываем edge function для открытия колод
-      console.log('🎴 Calling edge function with:', { accountId, packName: packItem.name, count, cardsCount: newCards.length });
-      
+      console.log('🎴 About to call edge function');
+
       const { data, error } = await supabase.functions.invoke('open-card-packs', {
         body: {
           p_wallet_address: accountId,
@@ -87,6 +86,8 @@ export const useCardPackOpening = () => {
           p_new_cards: newCards
         }
       });
+
+      console.log('🎴 Edge function call completed', { data, error });
 
       if (error) {
         console.error('🎴 Edge function error:', error);
