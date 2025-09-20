@@ -169,7 +169,8 @@ export const InventoryDisplay = ({
         rarity: cardData?.rarity || 'common',
         value: cardData?.value || 0,
         stats: cardData?.stats || {},
-        image: cardData?.image
+        image: cardData?.image,
+        equipped: false // Явно указываем, что рабочие не экипированы для корректной группировки
       } as Item;
     });
   
