@@ -12,6 +12,7 @@ import { useLanguage } from "@/hooks/useLanguage";
 import { t } from "@/utils/translations";
 import { GroupedItem } from "./inventory/types";
 import { cardDatabase } from "@/data/cardDatabase";
+import { useCentralizedCardInstances } from "@/hooks/useCentralizedCardInstances";
 
 interface InventoryDisplayProps {
   onUseItem?: (item: Item) => void;
@@ -29,6 +30,7 @@ export const InventoryDisplay = ({
   const { eggs, addEgg } = useDragonEggs();
   const { gameData, updateGameData } = useGameData();
   const { language } = useLanguage();
+  const { cardInstances } = useCentralizedCardInstances();
   const inventory = gameData.inventory || [];
   const { toast } = useToast();
   const {
@@ -112,6 +114,16 @@ export const InventoryDisplay = ({
   };
 
   const handleGroupedSellItem = async (groupedItem: GroupedItem) => {
+    // Для рабочих - нельзя продавать, так как они управляются через card_instances
+    if (groupedItem.type === 'worker') {
+      toast({
+        title: "Нельзя продать",
+        description: "Рабочих нельзя продать. Назначьте их на здания в Убежище.",
+        variant: "destructive"
+      });
+      return;
+    }
+    
     // Verify the item(s) still exist in current inventory before selling
     const currentInv = (gameData.inventory || []);
     const existingItem = groupedItem.items.find(it => currentInv.some(ci => ci.id === it.id));
@@ -143,9 +155,27 @@ export const InventoryDisplay = ({
       await updateGameData({ inventory: newInventory });
     }
   };
+  
+  // Конвертируем рабочих из card_instances в формат Item для отображения в инвентаре
+  const workersAsItems: Item[] = cardInstances
+    .filter(instance => instance.card_type === 'workers')
+    .map(instance => {
+      const cardData = instance.card_data as any;
+      return {
+        id: instance.id,
+        name: cardData?.name || 'Рабочий',
+        description: cardData?.description || '',
+        type: 'worker' as any,
+        rarity: cardData?.rarity || 'common',
+        value: cardData?.value || 0,
+        stats: cardData?.stats || {},
+        image: cardData?.image
+      } as Item;
+    });
+  
   const filteredInventory = showOnlyPotions 
     ? inventory.filter(item => item.type === 'healthPotion')
-    : inventory;
+    : [...inventory, ...workersAsItems]; // Добавляем рабочих в инвентарь для отображения
 
   return (
     <div 
