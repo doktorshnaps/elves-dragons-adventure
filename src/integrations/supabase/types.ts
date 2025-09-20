@@ -623,6 +623,10 @@ export type Database = {
         }
         Returns: boolean
       }
+      admin_clear_user_card_instances: {
+        Args: { p_admin_wallet_address?: string; p_wallet_address: string }
+        Returns: boolean
+      }
       admin_find_user_by_wallet: {
         Args: { p_admin_wallet_address: string; p_wallet_address: string }
         Returns: {
@@ -752,6 +756,10 @@ export type Database = {
       }
       create_marketplace_listing: {
         Args: { p_item_id: string; p_listing_type: string; p_price: number }
+        Returns: string
+      }
+      create_worker_card_instance: {
+        Args: { p_wallet_address: string; p_worker_data: Json }
         Returns: string
       }
       ensure_game_data_exists: {
