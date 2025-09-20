@@ -31,8 +31,9 @@ export const useInventoryLogic = (initialInventory: Item[]) => {
   };
 
 const groupItems = (items: Item[]): GroupedItem[] => {
-    return items.reduce<GroupedItem[]>((acc, item) => {
-      // Яйца драконов НЕ группируем — у каждого свой таймер инкубации
+    // Фильтруем null и undefined значения перед группировкой
+    const validItems = items.filter(item => item != null && typeof item === 'object');
+      return validItems.reduce<GroupedItem[]>((acc, item) => {
       if (item.type === 'dragon_egg') {
         acc.push({
           name: item.name,
