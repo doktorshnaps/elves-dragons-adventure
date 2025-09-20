@@ -17,11 +17,15 @@ export const useCentralizedCardInstances = () => {
 
   // Подписка на обновления от менеджера и автоматическая загрузка
   useEffect(() => {
+    console.log(`useCentralizedCardInstances: useEffect triggered with accountId=${accountId}, isConnected=${isConnected}`);
+    
     if (!accountId || !isConnected) {
       setCardInstances([]);
       return;
     }
 
+    console.log(`useCentralizedCardInstances: Subscribing to ${accountId}`);
+    
     const unsubscribe = cardInstanceManager.subscribe(accountId, (instances) => {
       console.log('useCentralizedCardInstances: Received update from manager:', instances.length);
       setCardInstances(instances);
@@ -30,6 +34,7 @@ export const useCentralizedCardInstances = () => {
     // Автоматическая загрузка при подключении (с проверкой кэша)
     const autoLoad = async () => {
       try {
+        console.log(`useCentralizedCardInstances: Auto-loading for ${accountId}`);
         const instances = await cardInstanceManager.getCardInstances(accountId, false);
         setCardInstances(instances);
       } catch (error) {

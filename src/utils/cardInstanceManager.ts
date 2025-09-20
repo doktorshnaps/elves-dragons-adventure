@@ -59,6 +59,9 @@ class CardInstanceManager {
   async getCardInstances(walletAddress: string, force = false): Promise<CardInstance[]> {
     if (!walletAddress) return [];
 
+    // КРИТИЧЕСКОЕ логирование для отслеживания массовых вызовов
+    console.trace(`CardInstanceManager.getCardInstances called for ${walletAddress}, force=${force}`);
+
     const now = Date.now();
     const lastLoad = this.lastLoadTime.get(walletAddress) || 0;
     const cached = this.cache.get(walletAddress);
