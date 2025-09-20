@@ -35,17 +35,26 @@ export const useGameInitialization = (setCards: (cards: Card[]) => void) => {
           const secondPack = generatePack();
           const initialCards = [...firstPack, ...secondPack];
           
-          const { error: insertError } = await supabase
-            .from('game_data')
-            .insert({
-              wallet_address: accountId,
-              cards: initialCards as any,
-              balance: 100,
-              initialized: true
-            });
+          // Используем функцию для создания записи игровых данных
+          const { error: createError } = await supabase.rpc('ensure_game_data_exists', {
+            p_wallet_address: accountId
+          });
 
-          if (insertError) {
-            console.error('Error creating game data:', insertError);
+          if (createError) {
+            console.error('Error ensuring game data exists:', createError);
+            return;
+          }
+
+          // Обновляем созданную запись с начальными картами и балансом
+          const { error: updateError } = await supabase.rpc('update_game_data_by_wallet', {
+            p_wallet_address: accountId,
+            p_cards: initialCards as any,
+            p_balance: 100,
+            p_initialized: true
+          });
+
+          if (updateError) {
+            console.error('Error updating game data:', updateError);
             return;
           }
 
