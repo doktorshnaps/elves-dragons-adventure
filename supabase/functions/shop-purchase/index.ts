@@ -53,11 +53,11 @@ serve(async (req) => {
       });
     }
 
-    // Получаем шаблон предмета
+    // Получаем шаблон предмета по item_id (не по id!)
     const { data: itemTemplate, error: templateError } = await supabase
       .from('item_templates')
       .select('*')
-      .eq('id', item_id)
+      .eq('item_id', `worker_${item_id}`) // Формируем правильный item_id
       .single();
 
     if (templateError) {
