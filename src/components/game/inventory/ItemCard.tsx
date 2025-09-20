@@ -2,6 +2,7 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { GroupedItem } from "./types";
 import { Coins } from "lucide-react";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 interface ItemCardProps {
   item: GroupedItem;
@@ -22,6 +23,8 @@ export const ItemCard = ({
   onSell,
   showUseButton = true
 }: ItemCardProps) => {
+  const isMobile = useIsMobile();
+  
   // Disable selling card packs if user has no unopened packs in actual inventory cache
   let canSell = !readonly;
   if (item.type === 'cardPack') {
@@ -34,49 +37,54 @@ export const ItemCard = ({
   }
 
   return (
-    <Card
-      className={`p-4 bg-game-background h-[320px] w-full cursor-pointer
-        ${isSelected ? 'border-purple-500' : 'border-game-accent'}
-        ${!readonly ? 'hover:border-game-primary' : ''}
-        transition-all duration-300 flex flex-col justify-between`}
-      onClick={() => !readonly && onSelect()}
-    >
-      <div className="flex flex-col h-full">
-        {item.image && (
-          <div className="w-full aspect-[4/3] mb-2 rounded-lg overflow-hidden">
-            <img 
-              src={item.image} 
-              alt={item.name}
-              className="w-full h-full object-cover"
-            />
-          </div>
-        )}
-        <h3 className="font-semibold text-game-accent text-sm mb-2">
+    <Card className="p-4 bg-game-background border-game-accent hover:border-game-primary transition-all duration-300 h-[320px] flex flex-col justify-between">
+      {item.image && (
+        <div className="w-full aspect-[4/3] mb-2 rounded-lg overflow-hidden">
+          <img 
+            src={item.image} 
+            alt={item.name}
+            className="w-full h-full object-cover"
+          />
+        </div>
+      )}
+      <div className="flex-1 flex flex-col">
+        <h3 className={`font-semibold text-game-accent mb-1 ${isMobile ? 'text-xs' : 'text-sm'}`}>
           {item.name} {item.count > 1 && `(${item.count})`}
         </h3>
-        <p className="text-gray-400 text-xs mb-auto">
+        <p className={`text-gray-400 mb-1 flex-grow ${isMobile ? 'text-[10px]' : 'text-xs'}`}>
           {item.type === 'cardPack' && `Содержит ${item.value} случайных карт`}
+          {item.type === 'healthPotion' && `Восстанавливает ${item.value} здоровья`}
+          {item.type === 'weapon' && 'Оружие для боя'}
+          {item.type === 'armor' && 'Броня для защиты'}
+          {item.type === 'dragon_egg' && 'Яйцо дракона'}
         </p>
-        <div className="flex gap-2 mt-4">
+        
+        {/* Show stats if available */}
+        {item.items[0]?.stats && (
+          <div className={`text-game-accent mb-2 ${isMobile ? 'text-[10px]' : 'text-xs'}`}>
+            {item.items[0].stats.power && <p>Сила: +{item.items[0].stats.power}</p>}
+            {item.items[0].stats.defense && <p>Защита: +{item.items[0].stats.defense}</p>}
+            {item.items[0].stats.health && <p>Здоровье: +{item.items[0].stats.health}</p>}
+          </div>
+        )}
+
+        <div className="flex gap-2 mt-auto">
           {!readonly && showUseButton && (
             <Button
-              variant="outline"
-              size="sm"
-              className="w-full text-xs"
+              className={`w-full bg-game-primary hover:bg-game-primary/80 ${isMobile ? 'text-[10px] py-1' : 'text-xs py-2'}`}
               onClick={(e) => {
                 e.stopPropagation();
                 onUse();
               }}
             >
-              Использовать
+              {item.type === 'cardPack' ? 'Открыть' : 'Использовать'}
             </Button>
           )}
           {!readonly && (
             <Button
               variant="outline"
-              size="sm"
               disabled={!canSell}
-              className="w-full text-yellow-500 hover:text-yellow-600 text-xs disabled:opacity-50"
+              className={`w-full text-yellow-500 hover:text-yellow-600 disabled:opacity-50 ${isMobile ? 'text-[10px] py-1' : 'text-xs py-2'}`}
               onClick={(e) => {
                 e.stopPropagation();
                 if (!canSell) return;

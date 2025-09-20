@@ -37,26 +37,38 @@ export const InventoryGrid = ({
   if (unequippedItems.length === 0) {
     return <p className="text-gray-400 col-span-full text-center py-4 text-sm">{t(language, 'common.inventoryEmpty')}</p>;
   }
-  return <>
+  return (
+    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
       {unequippedItems.map(item => {
-      const dialogKey = `${item.name}-${item.type}-${item.value}-${item.count}-${item.items[0]?.id || ''}`;
-      return <Dialog key={dialogKey} open={openKey === dialogKey} onOpenChange={open => setOpenKey(open ? dialogKey : null)}>
-          <DialogTrigger asChild>
-            <Card className="w-[80px] h-[90px] p-2 bg-game-surface/80 border-game-accent backdrop-blur-sm flex flex-col mx-1 my-1 cursor-pointer hover:border-game-accent/80">
-              <div className="flex flex-col h-full">
-                {item.type === 'dragon_egg' ? <div className="relative w-full h-[45px] mb-1 rounded-lg overflow-hidden bg-gray-800">
-                    {item.items[0].image ? <img src={item.items[0].image} alt={item.name} className="w-full h-full object-contain opacity-50" /> : <img src="/lovable-uploads/8a069dd4-47ad-496c-a248-f796257f9233.png" alt="Dragon Egg" className="w-full h-full object-contain opacity-50" />}
-                  </div> : item.image && <div className="relative w-full h-[45px] mb-1 rounded-lg overflow-hidden">
-                    <img src={item.image} alt={item.name} className="w-full h-full object-contain" />
-                  </div>}
-                <div className="flex flex-col flex-grow">
-                  <h4 className="font-bold text-game-accent text-[7px] truncate">
+        const dialogKey = `${item.name}-${item.type}-${item.value}-${item.count}-${item.items[0]?.id || ''}`;
+        return (
+          <Dialog key={dialogKey} open={openKey === dialogKey} onOpenChange={open => setOpenKey(open ? dialogKey : null)}>
+            <DialogTrigger asChild>
+              <Card className="p-4 bg-game-background border-game-accent hover:border-game-primary transition-all duration-300 h-[320px] flex flex-col justify-between cursor-pointer">
+                {item.image ? (
+                  <div className="w-full aspect-[4/3] mb-2 rounded-lg overflow-hidden">
+                    <img 
+                      src={item.image} 
+                      alt={item.name}
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
+                ) : item.type === 'dragon_egg' ? (
+                  <div className="w-full aspect-[4/3] mb-2 rounded-lg overflow-hidden bg-gray-800 flex items-center justify-center">
+                    <img 
+                      src={item.items[0].image || "/lovable-uploads/8a069dd4-47ad-496c-a248-f796257f9233.png"} 
+                      alt="Dragon Egg" 
+                      className="w-full h-full object-contain opacity-50" 
+                    />
+                  </div>
+                ) : null}
+                <div className="flex-1 flex flex-col">
+                  <h3 className="font-semibold text-game-accent text-sm mb-2">
                     {item.name} {item.count > 1 && `(${item.count})`}
-                  </h4>
+                  </h3>
                 </div>
-              </div>
-            </Card>
-          </DialogTrigger>
+              </Card>
+            </DialogTrigger>
           <DialogContent className="bg-game-surface border-game-accent">
             
             
@@ -113,7 +125,9 @@ export const InventoryGrid = ({
                 </div>}
             </div>
           </DialogContent>
-        </Dialog>;
-    })}
-    </>;
+        </Dialog>
+        );
+      })}
+    </div>
+  );
 };
