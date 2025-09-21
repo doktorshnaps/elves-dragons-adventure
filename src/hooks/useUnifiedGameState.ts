@@ -100,13 +100,17 @@ export const useUnifiedGameState = (): UnifiedGameState => {
       queryClient.setQueryData([GAME_DATA_KEY, accountId], updatedData);
       updateData(updatedData);
       
+      // Сохраняем activeWorkers в localStorage для синхронизации между страницами
+      if (updatedData.activeWorkers) {
+        localStorage.setItem('activeWorkers', JSON.stringify(updatedData.activeWorkers));
+      }
+      
       // Сохраняем в localStorage для быстрого доступа при переходах
       try {
         localStorage.setItem('gameData', JSON.stringify(updatedData));
       } catch (error) {
         console.warn('Failed to save to localStorage:', error);
       }
-      // localStorage.setItem('gameData', JSON.stringify(updatedData));
     },
     onError: (error) => {
       console.error('Failed to update game data:', error);

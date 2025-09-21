@@ -102,6 +102,11 @@ export const InventoryGrid = ({
                   {item.items[0].stats.power && <p>{t(language, 'items.power')}: +{item.items[0].stats.power}</p>}
                   {item.items[0].stats.defense && <p>{t(language, 'items.defense')}: +{item.items[0].stats.defense}</p>}
                   {item.items[0].stats.health && <p>{t(language, 'items.health')}: +{item.items[0].stats.health}</p>}
+                 </div>}
+              {item.type === 'worker' && item.items[0].stats && <div className="text-sm text-gray-400">
+                  <p>{t(language, 'items.speedBoost')}: +{item.value}%</p>
+                  {item.items[0].stats.workDuration && <p>{t(language, 'items.workDuration')}: {Math.floor(item.items[0].stats.workDuration / 1000 / 60 / 60)} часов</p>}
+                  {item.items[0].description && <p className="mt-1">{item.items[0].description}</p>}
                 </div>}
               {item.type === 'dragon_egg' && <div className="text-sm text-gray-400">
                   <p>{t(language, 'items.rarity')}: {item.value}</p>

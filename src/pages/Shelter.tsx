@@ -14,6 +14,7 @@ import { MedicalBayComponent } from "@/components/game/medical/MedicalBayCompone
 import { WorkersManagement } from "@/components/game/shelter/WorkersManagement";
 import { BuildingWorkerStatus } from "@/components/game/shelter/BuildingWorkerStatus";
 import { useLanguage } from "@/hooks/useLanguage";
+import { useWorkerSync } from "@/hooks/useWorkerSync";
 import { t } from "@/utils/translations";
 import { useState } from "react";
 interface NestUpgrade {
@@ -47,6 +48,9 @@ export const Shelter = () => {
   const navigate = useNavigate();
   const { language } = useLanguage();
   const gameState = useUnifiedGameState();
+  
+  // Синхронизируем рабочих между card_instances и inventory
+  useWorkerSync();
   const {
     toast
   } = useToast();
