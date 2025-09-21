@@ -42,23 +42,25 @@ export const InventoryGrid = ({
       const dialogKey = `${item.name}-${item.type}-${item.value}-${item.count}-${item.items[0]?.id || ''}`;
       return <Dialog key={dialogKey} open={openKey === dialogKey} onOpenChange={open => setOpenKey(open ? dialogKey : null)}>
             <DialogTrigger asChild>
-              <Card className="p-4 bg-game-background border-game-accent hover:border-game-primary transition-all duration-300 h-[320px] flex flex-col cursor-pointer">
-                <div className="w-full aspect-[4/3] mb-3 rounded-lg overflow-hidden bg-game-surface/50">
-                  {item.image ? (
+              <Card className="p-4 bg-game-background border-game-accent hover:border-game-primary transition-all duration-300 h-[320px] flex flex-col justify-between cursor-pointer">
+                {item.image ? (
+                  <div className="w-full aspect-[4/3] mb-2 rounded-lg overflow-hidden">
                     <img src={item.image} alt={item.name} className="w-full h-full object-cover" />
-                  ) : item.type === 'dragon_egg' ? (
+                  </div>
+                ) : item.type === 'dragon_egg' ? (
+                  <div className="w-full aspect-[4/3] mb-2 rounded-lg overflow-hidden bg-gray-800 flex items-center justify-center">
                     <img src={item.items[0].image || "/lovable-uploads/8a069dd4-47ad-496c-a248-f796257f9233.png"} alt="Dragon Egg" className="w-full h-full object-contain opacity-50" />
-                  ) : (
-                    <div className="w-full h-full flex items-center justify-center">
-                      <span className="text-gray-400 text-xs">No Image</span>
-                    </div>
-                  )}
-                </div>
+                  </div>
+                ) : (
+                  <div className="w-full aspect-[4/3] mb-2 rounded-lg overflow-hidden bg-gray-800 flex items-center justify-center">
+                    <span className="text-gray-400 text-xs">No Image</span>
+                  </div>
+                )}
                 <div className="flex-1 flex flex-col">
                   <h3 className="font-semibold text-game-accent text-sm mb-1">
                     {item.name} {item.count > 1 && `(${item.count})`}
                   </h3>
-                  <p className="text-gray-400 text-xs flex-grow">
+                  <p className="text-gray-400 text-xs flex-grow mb-1">
                     {item.type === 'worker' && `Ускорение: +${item.value}%`}
                     {item.type === 'cardPack' && 'Колода карт'}
                     {item.type === 'weapon' && 'Оружие'}
