@@ -63,10 +63,14 @@ export const Shelter = () => {
 
   // Получаем активных рабочих из gameState
   const activeWorkers = gameState.activeWorkers || [];
-  
-  console.log('🏠 Shelter page activeWorkers:', {
-    count: activeWorkers.length,
-    workers: activeWorkers.map((w: any) => ({ name: w.name, building: w.building, id: w.id }))
+
+  console.log('🏠 Shelter page state:', {
+    gameStateLoading: gameState.loading,
+    gameStateError: gameState.error,
+    activeWorkersCount: activeWorkers.length,
+    activeWorkersFromGameState: gameState.activeWorkers?.length ?? 0,
+    workers: activeWorkers.map((w: any) => ({ name: w.name, building: w.building, id: w.id })),
+    rawGameStateActiveWorkers: gameState.activeWorkers
   });
 
   // Функция для проверки, есть ли рабочие в здании

@@ -54,9 +54,31 @@ export const useUnifiedGameState = (): UnifiedGameState => {
     queryFn: async () => {
       if (!accountId) {
         const cached = localStorage.getItem('gameData');
-        return cached ? JSON.parse(cached) : initialGameData;
+        const cachedActiveWorkers = localStorage.getItem('activeWorkers');
+        const baseData = cached ? JSON.parse(cached) : initialGameData;
+        
+        // Объединяем кэшированные activeWorkers с основными данными
+        if (cachedActiveWorkers) {
+          try {
+            baseData.activeWorkers = JSON.parse(cachedActiveWorkers);
+            console.log('🔄 Loaded activeWorkers from localStorage:', baseData.activeWorkers.length);
+          } catch (e) {
+            console.warn('Failed to parse cached activeWorkers:', e);
+          }
+        }
+        
+        return baseData;
       }
-      return await loadGameDataFromServer(accountId);
+      
+      const serverData = await loadGameDataFromServer(accountId);
+      
+      // Сохраняем activeWorkers в localStorage для синхронизации между страницами
+      if (serverData.activeWorkers && serverData.activeWorkers.length > 0) {
+        localStorage.setItem('activeWorkers', JSON.stringify(serverData.activeWorkers));
+        console.log('🔄 Saved activeWorkers to localStorage from server:', serverData.activeWorkers.length);
+      }
+      
+      return serverData;
     },
     initialData: initialGameData,
     enabled: !!accountId,

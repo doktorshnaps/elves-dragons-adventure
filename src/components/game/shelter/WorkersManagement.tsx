@@ -117,11 +117,31 @@ export const WorkersManagement = ({ onSpeedBoostChange }: WorkersManagementProps
     cardDetails: cardInstanceWorkers.map(w => ({ id: w.id, name: w.name, source: w.source, instanceId: (w as any).instanceId }))
   });
 
-  // Загружаем активных рабочих из gameState
+  // Загружаем активных рабочих из gameState и localStorage
   useEffect(() => {
-    if (gameState.activeWorkers && Array.isArray(gameState.activeWorkers)) {
+    console.log('🔄 WorkersManagement useEffect triggered:', {
+      gameStateActiveWorkers: gameState.activeWorkers?.length ?? 0,
+      isArray: Array.isArray(gameState.activeWorkers),
+      gameStateData: gameState.activeWorkers
+    });
+    
+    if (gameState.activeWorkers && Array.isArray(gameState.activeWorkers) && gameState.activeWorkers.length > 0) {
       console.log('🔄 Loading active workers from gameState:', gameState.activeWorkers.length);
       setActiveWorkers(gameState.activeWorkers);
+    } else {
+      // Если в gameState нет активных рабочих, пробуем загрузить из localStorage
+      const cachedActiveWorkers = localStorage.getItem('activeWorkers');
+      if (cachedActiveWorkers) {
+        try {
+          const parsed = JSON.parse(cachedActiveWorkers);
+          if (Array.isArray(parsed) && parsed.length > 0) {
+            console.log('🔄 Loading active workers from localStorage:', parsed.length);
+            setActiveWorkers(parsed);
+          }
+        } catch (e) {
+          console.warn('Failed to parse cached activeWorkers:', e);
+        }
+      }
     }
   }, [gameState.activeWorkers]);
 
