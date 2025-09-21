@@ -69,7 +69,9 @@ export const WorkersManagement = ({ onSpeedBoostChange }: WorkersManagementProps
   const inventoryWorkers = (gameState.inventory || [])
     .filter((item: any) => item?.type === 'worker')
     .map((item: any, index: number) => ({
-      id: item.id ?? `worker_${index}_${item.name}`,
+      id: item.instanceId || item.id || `worker_${index}_${item.name}`,
+      instanceId: item.instanceId || item.id,
+      templateId: item.templateId || undefined,
       name: item.name || 'Рабочий',
       description: item.description || '',
       type: item.type || 'worker',
@@ -82,8 +84,9 @@ export const WorkersManagement = ({ onSpeedBoostChange }: WorkersManagementProps
   const cardInstanceWorkers = cardInstances
     .filter(instance => instance.card_type === 'workers')
     .map(instance => ({
-      id: instance.card_template_id,
+      id: instance.id, // уникальный id экземпляра
       instanceId: instance.id,
+      templateId: instance.card_template_id,
       name: instance.card_data.name || 'Рабочий',
       description: instance.card_data.description || '',
       type: 'worker',
@@ -95,12 +98,13 @@ export const WorkersManagement = ({ onSpeedBoostChange }: WorkersManagementProps
       maxHealth: instance.max_health
     }));
 
-  // Объединяем рабочих из обоих источников, исключая дублирование
-  const allWorkerIds = new Set();
+  // Объединяем рабочих из обоих источников, исключая дублирование по instanceId (или id)
+  const seen = new Set<string>();
   const availableWorkers = [...cardInstanceWorkers, ...inventoryWorkers]
-    .filter(worker => {
-      if (allWorkerIds.has(worker.id)) return false;
-      allWorkerIds.add(worker.id);
+    .filter((worker: any) => {
+      const key = worker.instanceId || worker.id;
+      if (seen.has(key)) return false;
+      seen.add(key);
       return true;
     });
 
@@ -344,7 +348,7 @@ export const WorkersManagement = ({ onSpeedBoostChange }: WorkersManagementProps
               ) : (
                 <div className="grid gap-3">
                   {availableWorkers.map(worker => (
-                    <div key={worker.id} className="flex items-center justify-between p-3 border rounded-lg">
+                    <div key={(worker as any).instanceId || worker.id} className="flex items-center justify-between p-3 border rounded-lg">
                       <div>
                         <h4 className="font-medium">{worker.name}</h4>
                         <p className="text-sm text-muted-foreground">
