@@ -53,16 +53,33 @@ serve(async (req) => {
       });
     }
 
-    // Получаем шаблон предмета по item_id (не по id!)
-    const { data: itemTemplate, error: templateError } = await supabase
+    // Пытаемся получить шаблон по числовому id (совпадает с shop_inventory.item_id)
+    let itemTemplate: any = null;
+    let templateError: any = null;
+
+    const byNumeric = await supabase
       .from('item_templates')
       .select('*')
-      .eq('item_id', `worker_${item_id}`) // Формируем правильный item_id
-      .single();
+      .eq('id', item_id)
+      .maybeSingle();
 
-    if (templateError) {
+    if (byNumeric.error) templateError = byNumeric.error;
+    itemTemplate = byNumeric.data;
+
+    // Если не нашли (на случай старых данных) — пробуем по текстовому item_id для рабочих
+    if (!itemTemplate) {
+      const byWorkerKey = await supabase
+        .from('item_templates')
+        .select('*')
+        .eq('item_id', `worker_${item_id}`)
+        .maybeSingle();
+      if (byWorkerKey.error && !templateError) templateError = byWorkerKey.error;
+      itemTemplate = byWorkerKey.data;
+    }
+
+    if (!itemTemplate) {
       console.error('❌ Error fetching item template:', templateError);
-      throw templateError;
+      throw new Error('Item template not found');
     }
 
     console.log(`📋 Found item template:`, itemTemplate);
