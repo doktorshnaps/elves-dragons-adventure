@@ -65,7 +65,7 @@ export const WorkersManagement = ({ onSpeedBoostChange }: WorkersManagementProps
     { id: "medical", name: t(language, 'shelter.medicalBuilding') }
   ];
 
-  // Получаем рабочих из card_instances и инвентаря
+  // Получаем рабочих из card_instances, инвентаря и карт
   const inventoryWorkers = (gameState.inventory || [])
     .filter((item: any) => item?.type === 'worker')
     .map((item: any, index: number) => ({
@@ -98,13 +98,29 @@ export const WorkersManagement = ({ onSpeedBoostChange }: WorkersManagementProps
       maxHealth: instance.max_health
     }));
 
-  // Объединяем рабочих из обоих источников, исключая дублирование по instanceId (или id)
+  const cardsWorkers = (gameState.cards || [])
+    .filter((card: any) => card?.type === 'worker' || card?.type === 'workers')
+    .map((card: any, index: number) => ({
+      id: card.id,
+      templateId: card.id,
+      name: card.name || 'Рабочий',
+      description: card.description || '',
+      type: 'worker',
+      value: card.value || 0,
+      stats: card.stats || {},
+      image: card.image,
+      source: 'cards',
+      _idx: index
+    }));
+
+  // Объединяем рабочих из всех источников, избегая дублирования только по instanceId
   const seen = new Set<string>();
-  const availableWorkers = [...cardInstanceWorkers, ...inventoryWorkers]
+  const availableWorkers = [...cardInstanceWorkers, ...inventoryWorkers, ...cardsWorkers]
     .filter((worker: any) => {
-      const key = worker.instanceId || worker.id;
-      if (seen.has(key)) return false;
-      seen.add(key);
+      if (worker.instanceId) {
+        if (seen.has(worker.instanceId)) return false;
+        seen.add(worker.instanceId);
+      }
       return true;
     });
 
@@ -202,6 +218,7 @@ export const WorkersManagement = ({ onSpeedBoostChange }: WorkersManagementProps
       setActiveWorkers(updatedActiveWorkers);
 
       let updatedInv = [...(gameState.inventory || [])] as any[];
+      let updatedCards = [...(gameState.cards || [])] as any[];
       
       // Удаляем из card_instances если есть instanceId
       if ((worker as any).instanceId) {
@@ -242,11 +259,24 @@ export const WorkersManagement = ({ onSpeedBoostChange }: WorkersManagementProps
         });
       }
 
-      // Сохраняем активных рабочих и обновленный инвентарь
+      // Если рабочий из карт, удаляем одну копию из колоды
+      if ((worker as any).source === 'cards') {
+        const cardsBefore = updatedCards.length;
+        const idx = updatedCards.findIndex((c: any) => (c?.type === 'worker' || c?.type === 'workers') && c.id === worker.id);
+        if (idx >= 0) {
+          updatedCards.splice(idx, 1);
+          console.log('🧹 Worker removed from cards at index:', idx, 'size changed from', cardsBefore, 'to', updatedCards.length);
+        } else {
+          console.warn('⚠️ Could not find matching worker in cards to remove:', worker.id);
+        }
+      }
+
+      // Сохраняем активных рабочих и обновленные данные
       await updateActiveWorkersInDB(updatedActiveWorkers);
       await gameState.actions.batchUpdate({ 
         activeWorkers: updatedActiveWorkers, 
-        inventory: updatedInv 
+        inventory: updatedInv,
+        cards: updatedCards
       });
       
       console.log('✅ Worker assigned and saved:', newActiveWorker);
@@ -367,8 +397,8 @@ export const WorkersManagement = ({ onSpeedBoostChange }: WorkersManagementProps
                 </div>
               ) : (
                 <div className="grid gap-3">
-                  {availableWorkers.map(worker => (
-                    <div key={(worker as any).instanceId || worker.id} className="flex items-center justify-between p-3 border rounded-lg">
+                  {availableWorkers.map((worker, i) => (
+                    <div key={(worker as any).instanceId || `${worker.id}-${(worker as any)._idx ?? i}` } className="flex items-center justify-between p-3 border rounded-lg">
                       <div>
                         <h4 className="font-medium">{worker.name}</h4>
                         <p className="text-sm text-muted-foreground">

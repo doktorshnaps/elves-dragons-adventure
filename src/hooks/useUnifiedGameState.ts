@@ -123,7 +123,7 @@ export const useUnifiedGameState = (): UnifiedGameState => {
       updateData(updatedData);
       
       // Сохраняем activeWorkers в localStorage для синхронизации между страницами
-      if (updatedData.activeWorkers) {
+      if (Array.isArray(updatedData.activeWorkers) && updatedData.activeWorkers.length > 0) {
         localStorage.setItem('activeWorkers', JSON.stringify(updatedData.activeWorkers));
       }
       
@@ -298,42 +298,73 @@ function mapClientToServer(data: Partial<GameData> | GameData) {
 }
 
 async function loadGameDataFromServer(walletAddress: string): Promise<GameData> {
-  const { data, error } = await supabase
-    .from('game_data')
-    .select('*')
-    .eq('wallet_address', walletAddress)
-    .maybeSingle();
-
-  if (error) {
-    console.error('Failed to load game data:', error);
-    throw error;
-  }
-
-  if (!data) {
-    console.log('📋 No existing data found, creating new record for:', walletAddress);
-    // Создаем или обновляем запись для пользователя (без дублей)
-    const newData = {
-      ...mapClientToServer(initialGameData),
-      wallet_address: walletAddress,
-      user_id: '00000000-0000-0000-0000-000000000000'
-    } as any;
-
-    const { data: inserted, error: insertError } = await supabase
+  try {
+    const { data, error } = await supabase
       .from('game_data')
-      .insert(newData)
-      .select()
-      .single();
+      .select('*')
+      .eq('wallet_address', walletAddress)
+      .maybeSingle();
 
-    if (insertError) {
-      console.error('Failed to insert game data:', insertError);
-      throw insertError;
+    if (error) {
+      console.warn('Primary load (select) failed, falling back to RPC initialize_game_data_by_wallet:', error.message);
+      throw error;
     }
-    console.log('✅ Created new game data with balance:', inserted.balance);
-    return transformServerData(inserted);
-  }
 
-  console.log('📂 Loaded existing game data with balance:', data.balance);
-  return transformServerData(data);
+    if (!data) {
+      console.log('📋 No existing data found via select, creating new record for:', walletAddress);
+      const newData = {
+        ...mapClientToServer(initialGameData),
+        wallet_address: walletAddress,
+        user_id: '00000000-0000-0000-0000-000000000000'
+      } as any;
+
+      const { data: inserted, error: insertError } = await supabase
+        .from('game_data')
+        .insert(newData)
+        .select()
+        .single();
+
+      if (insertError) {
+        console.error('Failed to insert game data:', insertError);
+        throw insertError;
+      }
+      console.log('✅ Created new game data with balance:', inserted.balance);
+      return transformServerData(inserted);
+    }
+
+    console.log('📂 Loaded existing game data with balance (select):', data.balance);
+    return transformServerData(data);
+  } catch (e) {
+    // Fallback через SECURITY DEFINER функцию (обходит RLS)
+    const { data: rpcData, error: rpcError } = await supabase.rpc('initialize_game_data_by_wallet', {
+      p_wallet_address: walletAddress
+    });
+
+    if (rpcError) {
+      console.error('Both select and RPC failed to load game data:', rpcError);
+      // В крайнем случае берем из localStorage
+      const cached = localStorage.getItem('gameData');
+      if (cached) {
+        try {
+          const parsed = JSON.parse(cached);
+          console.warn('Using cached gameData due to load failure');
+          return transformServerData(parsed);
+        } catch {}
+      }
+      throw rpcError;
+    }
+
+    if (!rpcData) {
+      // Нет записей — вернем initial без создания
+      console.log('RPC returned no data, using initial game data');
+      return initialGameData;
+    }
+
+    // Функция возвращает TABLE — берем первую запись
+    const record = Array.isArray(rpcData) ? rpcData[0] : rpcData;
+    console.log('📂 Loaded existing game data via RPC, balance:', record.balance);
+    return transformServerData(record);
+  }
 }
 
 async function updateGameDataOnServer(walletAddress: string, updates: Partial<GameData>): Promise<GameData> {
