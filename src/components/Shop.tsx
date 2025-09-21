@@ -81,7 +81,18 @@ export const Shop = ({ onClose }: ShopProps) => {
         console.log(`👷 Processing worker purchase through shop-purchase: ${item.name}`);
         
         // Используем shop-purchase, который сам обработает и баланс и создание рабочего
-        await purchaseItem(item.id, accountId);
+        // Списываем баланс атомарно
+        const { data: balanceResult, error: balanceError } = await (supabase as any).rpc('atomic_balance_update', {
+          p_wallet_address: accountId,
+          p_price_deduction: item.price
+        });
+        if (balanceError || !balanceResult) {
+          console.error('Balance deduction error:', balanceError);
+          throw (balanceError || new Error('Failed to deduct balance'));
+        }
+
+        // Затем создаем рабочего через shop-purchase (qty=1)
+        await purchaseItem(item.id, accountId, 1);
       } else {
         // Для остальных предметов используем старую логику
         const newItem: Item = item.type === 'cardPack'

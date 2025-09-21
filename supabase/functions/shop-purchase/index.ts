@@ -67,22 +67,6 @@ serve(async (req) => {
 
     console.log(`📋 Found item template:`, itemTemplate);
 
-    // Для рабочих сначала списываем баланс
-    if (itemTemplate.type === 'worker') {
-      const totalPrice = itemTemplate.value * quantity;
-      console.log(`💰 Deducting balance: ${totalPrice} for ${quantity} workers`);
-      
-      const { error: balanceError } = await supabase.rpc('atomic_balance_update', {
-        p_wallet_address: wallet_address,
-        p_price_deduction: totalPrice
-      });
-
-      if (balanceError) {
-        console.error('❌ Error deducting balance:', balanceError);
-        throw balanceError;
-      }
-    }
-
     // Уменьшаем количество товара на quantity
     const { error: updateError } = await supabase
       .from('shop_inventory')

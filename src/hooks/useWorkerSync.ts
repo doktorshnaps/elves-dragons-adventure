@@ -23,8 +23,8 @@ export const useWorkerSync = () => {
 
       // Проверяем, есть ли рабочие в card_instances, которых нет в инвентаре
       const missingInInventory = workerInstances.filter(instance => {
-        const workerId = instance.card_template_id;
-        return !inventoryWorkers.some(worker => worker.id === workerId);
+        // Считаем, что каждый экземпляр рабочего уникален по instance.id
+        return !(inventoryWorkers || []).some(worker => worker.instanceId === (instance as any).id || worker.id === (instance as any).id);
       });
 
       if (missingInInventory.length > 0) {
@@ -32,7 +32,9 @@ export const useWorkerSync = () => {
         
         // Добавляем недостающих рабочих в инвентарь
         const workersToAdd = missingInInventory.map(instance => ({
-          id: instance.card_template_id,
+          id: (instance as any).id, // уникальный идентификатор экземпляра
+          instanceId: (instance as any).id,
+          templateId: instance.card_template_id,
           name: (instance.card_data as any).name || 'Рабочий',
           type: 'worker' as const,
           value: (instance.card_data as any).value || 0,

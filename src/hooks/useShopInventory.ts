@@ -43,10 +43,10 @@ export const useShopInventory = () => {
     }
   };
 
-  const purchaseItem = async (itemId: number, walletAddress: string) => {
+  const purchaseItem = async (itemId: number, walletAddress: string, quantity: number = 1) => {
     try {
       const { data, error } = await supabase.functions.invoke('shop-purchase', {
-        body: { item_id: itemId, wallet_address: walletAddress }
+        body: { item_id: itemId, wallet_address: walletAddress, quantity }
       });
 
       if (error) throw error;
