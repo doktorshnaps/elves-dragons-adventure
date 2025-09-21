@@ -704,6 +704,10 @@ export type Database = {
         Args: { p_admin_wallet_address: string; p_target_user_id: string }
         Returns: boolean
       }
+      atomic_balance_update: {
+        Args: { p_price_deduction: number; p_wallet_address: string }
+        Returns: Json
+      }
       atomic_inventory_update: {
         Args: {
           p_new_item: Json
