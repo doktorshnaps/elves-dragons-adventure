@@ -61,11 +61,23 @@ export const InventoryGrid = ({
                       className="w-full h-full object-contain opacity-50" 
                     />
                   </div>
-                ) : null}
+                ) : (
+                  <div className="w-full aspect-[4/3] mb-2 rounded-lg overflow-hidden bg-gray-800 flex items-center justify-center">
+                    <span className="text-gray-400 text-xs">No Image</span>
+                  </div>
+                )}
                 <div className="flex-1 flex flex-col">
-                  <h3 className="font-semibold text-game-accent text-sm mb-2">
+                  <h3 className="font-semibold text-game-accent text-sm mb-1">
                     {item.name} {item.count > 1 && `(${item.count})`}
                   </h3>
+                  <p className="text-gray-400 text-xs flex-grow">
+                    {item.type === 'worker' && `Ускорение: +${item.value}%`}
+                    {item.type === 'cardPack' && 'Колода карт'}
+                    {item.type === 'weapon' && 'Оружие'}
+                    {item.type === 'armor' && 'Броня'}
+                    {item.type === 'healthPotion' && `Восстанавливает ${item.value} HP`}
+                    {item.type === 'dragon_egg' && 'Яйцо дракона'}
+                  </p>
                 </div>
               </Card>
             </DialogTrigger>
