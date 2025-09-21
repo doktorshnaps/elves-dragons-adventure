@@ -18,7 +18,7 @@ serve(async (req) => {
     
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    const { item_id, wallet_address } = await req.json();
+    const { item_id, wallet_address, quantity = 1 } = await req.json();
 
     if (!item_id || !wallet_address) {
       return new Response(JSON.stringify({ 
@@ -29,7 +29,7 @@ serve(async (req) => {
       });
     }
 
-    console.log(`🛒 Processing purchase: item ${item_id} for wallet ${wallet_address}`);
+    console.log(`🛒 Processing purchase: item ${item_id} (qty: ${quantity}) for wallet ${wallet_address}`);
 
     // Получаем информацию о товаре
     const { data: inventoryItem, error: fetchError } = await supabase
@@ -43,9 +43,9 @@ serve(async (req) => {
       throw fetchError;
     }
 
-    if (!inventoryItem || inventoryItem.available_quantity <= 0) {
+    if (!inventoryItem || inventoryItem.available_quantity < quantity) {
       return new Response(JSON.stringify({ 
-        error: 'Item out of stock',
+        error: 'Item out of stock or insufficient quantity',
         success: false 
       }), {
         status: 400,
@@ -67,11 +67,27 @@ serve(async (req) => {
 
     console.log(`📋 Found item template:`, itemTemplate);
 
-    // Уменьшаем количество товара на 1
+    // Для рабочих сначала списываем баланс
+    if (itemTemplate.type === 'worker') {
+      const totalPrice = itemTemplate.value * quantity;
+      console.log(`💰 Deducting balance: ${totalPrice} for ${quantity} workers`);
+      
+      const { error: balanceError } = await supabase.rpc('atomic_balance_update', {
+        p_wallet_address: wallet_address,
+        p_price_deduction: totalPrice
+      });
+
+      if (balanceError) {
+        console.error('❌ Error deducting balance:', balanceError);
+        throw balanceError;
+      }
+    }
+
+    // Уменьшаем количество товара на quantity
     const { error: updateError } = await supabase
       .from('shop_inventory')
       .update({ 
-        available_quantity: inventoryItem.available_quantity - 1,
+        available_quantity: inventoryItem.available_quantity - quantity,
         updated_at: new Date().toISOString()
       })
       .eq('item_id', item_id);
@@ -83,9 +99,9 @@ serve(async (req) => {
 
     console.log(`🔍 Checking item type: "${itemTemplate.type}" for item: ${itemTemplate.name}`);
     
-    // Если это рабочий - создаем card_instance, иначе добавляем в inventory через atomic_inventory_update  
+    // Если это рабочий - создаем card_instance для каждого экземпляра, иначе добавляем в inventory через atomic_inventory_update  
     if (itemTemplate.type === 'worker') {
-      console.log(`👷 Processing as worker: ${itemTemplate.name} (item_id: ${itemTemplate.item_id})`);
+      console.log(`👷 Processing ${quantity} workers: ${itemTemplate.name} (item_id: ${itemTemplate.item_id})`);
       
       // Получаем user_id для кошелька
       const { data: gameData, error: gameDataError } = await supabase
@@ -99,39 +115,44 @@ serve(async (req) => {
         throw new Error('User not found for wallet address');
       }
 
-      const cardData = {
-        id: `worker_${item_id}_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
-        name: itemTemplate.name,
-        description: itemTemplate.description,
-        type: 'worker',
-        rarity: itemTemplate.rarity || 'common',
-        health: 100, // У рабочих базовое здоровье
-        value: itemTemplate.value,
-        stats: itemTemplate.stats,
-        image: itemTemplate.image_url
-      };
+      // Создаем массив записей для вставки
+      const cardInstances = [];
+      for (let i = 0; i < quantity; i++) {
+        const cardData = {
+          id: `worker_${item_id}_${Date.now()}_${Math.random().toString(36).substr(2, 9)}_${i}`,
+          name: itemTemplate.name,
+          description: itemTemplate.description,
+          type: 'worker',
+          rarity: itemTemplate.rarity || 'common',
+          health: 100, // У рабочих базовое здоровье
+          value: itemTemplate.value,
+          stats: itemTemplate.stats,
+          image: itemTemplate.image_url
+        };
 
-      // Создаем card_instance для рабочего с правильным user_id
-      const { data: cardInstanceId, error: cardError } = await supabase
-        .from('card_instances')
-        .insert({
-          user_id: gameData.user_id, // ВАЖНО: устанавливаем user_id
+        cardInstances.push({
+          user_id: gameData.user_id,
           wallet_address: wallet_address,
-          card_template_id: itemTemplate.item_id, // Используем правильный item_id из шаблона
+          card_template_id: itemTemplate.item_id,
           card_type: 'workers',
           current_health: cardData.health,
           max_health: cardData.health,
           card_data: cardData
-        })
-        .select('id')
-        .single();
+        });
+      }
+
+      // Создаем все card_instances одним запросом
+      const { data: cardInstanceIds, error: cardError } = await supabase
+        .from('card_instances')
+        .insert(cardInstances)
+        .select('id');
 
       if (cardError) {
-        console.error('❌ Error creating card instance:', cardError);
+        console.error('❌ Error creating card instances:', cardError);
         throw cardError;
       }
 
-      console.log(`✅ Worker card instance created: ${cardData.id}`);
+      console.log(`✅ Created ${quantity} worker card instances: ${cardInstanceIds?.map(c => c.id).join(', ')}`);
     } else {
       console.log(`📦 Processing as regular item: ${itemTemplate.name}`);
       
@@ -159,12 +180,13 @@ serve(async (req) => {
       }
     }
 
-    console.log(`✅ Purchase successful: item ${item_id}, remaining: ${inventoryItem.available_quantity - 1}`);
+    console.log(`✅ Purchase successful: item ${item_id}, remaining: ${inventoryItem.available_quantity - quantity}`);
 
     return new Response(JSON.stringify({ 
       success: true,
-      remaining_quantity: inventoryItem.available_quantity - 1,
-      item_type: itemTemplate.type
+      remaining_quantity: inventoryItem.available_quantity - quantity,
+      item_type: itemTemplate.type,
+      quantity_purchased: quantity
     }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });

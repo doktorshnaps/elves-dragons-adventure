@@ -76,44 +76,52 @@ export const Shop = ({ onClose }: ShopProps) => {
       setPurchasing(true);
       console.log(`🛒 Purchasing item: ${item.name} for ${item.price} ELL`);
       
-      // Формируем предмет, который кладём в инвентарь
-      const newItem: Item = item.type === 'cardPack'
-        ? {
-            id: uuidv4(),
-            name: item.name,
-            type: item.type,
-            value: item.value,
-            description: item.description,
-            image: item.image
-          }
-        : {
-            id: uuidv4(),
-            name: item.name,
-            type: item.type,
-            value: item.price,
-            description: item.description,
-            image: item.image,
-            stats: item.stats,
-            slot: item.slot,
-            equipped: false
-          };
+      // Для рабочих используем новую систему через shop-purchase
+      if (item.type === 'worker') {
+        console.log(`👷 Processing worker purchase through shop-purchase: ${item.name}`);
+        
+        // Используем shop-purchase, который сам обработает и баланс и создание рабочего
+        await purchaseItem(item.id, accountId);
+      } else {
+        // Для остальных предметов используем старую логику
+        const newItem: Item = item.type === 'cardPack'
+          ? {
+              id: uuidv4(),
+              name: item.name,
+              type: item.type,
+              value: item.value,
+              description: item.description,
+              image: item.image
+            }
+          : {
+              id: uuidv4(),
+              name: item.name,
+              type: item.type,
+              value: item.price,
+              description: item.description,
+              image: item.image,
+              stats: item.stats,
+              slot: item.slot,
+              equipped: false
+            };
 
-      // Сначала атомарно списываем баланс и добавляем предмет в инвентарь
-      const { data: result, error: rpcError } = await (supabase as any).rpc('atomic_inventory_update', {
-        p_wallet_address: accountId,
-        p_price_deduction: item.price,
-        p_new_item: newItem
-      });
+        // Атомарно списываем баланс и добавляем предмет в инвентарь
+        const { data: result, error: rpcError } = await (supabase as any).rpc('atomic_inventory_update', {
+          p_wallet_address: accountId,
+          p_price_deduction: item.price,
+          p_new_item: newItem
+        });
 
-      if (rpcError || !result) {
-        console.error('atomic_inventory_update error:', rpcError);
-        throw (rpcError || new Error('No result from RPC'));
+        if (rpcError || !result) {
+          console.error('atomic_inventory_update error:', rpcError);
+          throw (rpcError || new Error('No result from RPC'));
+        }
+
+        // Уменьшаем количество товара в магазине
+        await purchaseItem(item.id, accountId);
       }
 
-      console.log('✅ Purchase successful, result:', result);
-      
-      // Только после успешной покупки уменьшаем количество товара в магазине
-      await purchaseItem(item.id, accountId);
+      console.log('✅ Purchase successful');
       
       // Reload game data to sync with updated balance and inventory
       if (loadGameData) {
@@ -126,6 +134,7 @@ export const Shop = ({ onClose }: ShopProps) => {
         description: item.type === 'cardPack' ? t(language, 'shop.cardPackDescription') : `${t(language, 'shop.boughtItem')} ${translateShopItemName(language, item.name)}`,
       });
     } catch (error) {
+      console.error('Purchase error:', error);
       toast({
         title: t(language, 'shop.purchaseError'),
         description: t(language, 'shop.purchaseErrorDescription'),
