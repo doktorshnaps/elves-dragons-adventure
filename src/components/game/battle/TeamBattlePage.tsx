@@ -40,10 +40,16 @@ export const TeamBattlePage: React.FC<TeamBattlePageProps> = ({
       setBattleStarted(true);
     });
   };
-  const handleBackToMenu = () => {
+  const handleExitAndReset = () => {
     startTransition(() => {
       localStorage.removeItem('activeBattleInProgress');
       resetBattle();
+      navigate('/dungeons');
+    });
+  };
+  const handleBackToMenu = () => {
+    startTransition(() => {
+      // Preserve current battle progress and team; just navigate back
       navigate('/dungeons');
     });
   };
