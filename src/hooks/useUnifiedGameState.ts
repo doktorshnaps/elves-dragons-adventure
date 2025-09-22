@@ -81,7 +81,7 @@ export const useUnifiedGameState = (): UnifiedGameState => {
       return serverData;
     },
     initialData: initialGameData,
-    enabled: !!accountId,
+    enabled: true,
     staleTime: STALE_TIME,
     gcTime: CACHE_TIME,
     retry: 3,
@@ -298,73 +298,60 @@ function mapClientToServer(data: Partial<GameData> | GameData) {
 }
 
 async function loadGameDataFromServer(walletAddress: string): Promise<GameData> {
-  try {
-    const { data, error } = await supabase
-      .from('game_data')
-      .select('*')
-      .eq('wallet_address', walletAddress)
-      .maybeSingle();
+  // 1) Пытаемся получить ПОЛНУЮ запись через SECURITY DEFINER RPC (включая active_workers)
+  const { data: fullData, error: fullErr } = await supabase.rpc('get_game_data_by_wallet_full', {
+    p_wallet_address: walletAddress
+  });
 
-    if (error) {
-      console.warn('Primary load (select) failed, falling back to RPC initialize_game_data_by_wallet:', error.message);
-      throw error;
-    }
-
-    if (!data) {
-      console.log('📋 No existing data found via select, creating new record for:', walletAddress);
-      const newData = {
-        ...mapClientToServer(initialGameData),
-        wallet_address: walletAddress,
-        user_id: '00000000-0000-0000-0000-000000000000'
-      } as any;
-
-      const { data: inserted, error: insertError } = await supabase
-        .from('game_data')
-        .insert(newData)
-        .select()
-        .single();
-
-      if (insertError) {
-        console.error('Failed to insert game data:', insertError);
-        throw insertError;
-      }
-      console.log('✅ Created new game data with balance:', inserted.balance);
-      return transformServerData(inserted);
-    }
-
-    console.log('📂 Loaded existing game data with balance (select):', data.balance);
-    return transformServerData(data);
-  } catch (e) {
-    // Fallback через SECURITY DEFINER функцию (обходит RLS)
-    const { data: rpcData, error: rpcError } = await supabase.rpc('initialize_game_data_by_wallet', {
-      p_wallet_address: walletAddress
-    });
-
-    if (rpcError) {
-      console.error('Both select and RPC failed to load game data:', rpcError);
-      // В крайнем случае берем из localStorage
-      const cached = localStorage.getItem('gameData');
-      if (cached) {
-        try {
-          const parsed = JSON.parse(cached);
-          console.warn('Using cached gameData due to load failure');
-          return transformServerData(parsed);
-        } catch {}
-      }
-      throw rpcError;
-    }
-
-    if (!rpcData) {
-      // Нет записей — вернем initial без создания
-      console.log('RPC returned no data, using initial game data');
-      return initialGameData;
-    }
-
-    // Функция возвращает TABLE — берем первую запись
-    const record = Array.isArray(rpcData) ? rpcData[0] : rpcData;
-    console.log('📂 Loaded existing game data via RPC, balance:', record.balance);
+  if (!fullErr && fullData) {
+    const record = Array.isArray(fullData) ? (fullData as any[])[0] : (fullData as any);
+    console.log('📂 Loaded game data via RPC full. Balance:', (record as any).balance);
     return transformServerData(record);
   }
+
+  // 2) Если RPC недоступна, пробуем обычный SELECT (при наличии auth)
+  const { data, error } = await supabase
+    .from('game_data')
+    .select('*')
+    .eq('wallet_address', walletAddress)
+    .maybeSingle();
+
+  if (error) {
+    console.warn('Primary load (select) failed, falling back to initialize RPC:', error.message);
+  }
+
+  if (data) {
+    console.log('📂 Loaded existing game data with balance (select):', data.balance);
+    return transformServerData(data);
+  }
+
+  // 3) В крайнем случае инициализируем запись и/или возвращаем initial
+  const { data: rpcData, error: rpcError } = await supabase.rpc('initialize_game_data_by_wallet', {
+    p_wallet_address: walletAddress
+  });
+
+  if (rpcError) {
+    console.error('Both select and RPC initialize failed to load game data:', rpcError);
+    // Последний шанс — берем из localStorage
+    const cached = localStorage.getItem('gameData');
+    if (cached) {
+      try {
+        const parsed = JSON.parse(cached);
+        console.warn('Using cached gameData due to load failure');
+        return transformServerData(parsed);
+      } catch {}
+    }
+    throw rpcError;
+  }
+
+  if (!rpcData) {
+    console.log('RPC returned no data, using initial game data');
+    return initialGameData;
+  }
+
+  const rec = Array.isArray(rpcData) ? rpcData[0] : rpcData;
+  console.log('📂 Loaded existing game data via initialize RPC, balance:', rec.balance);
+  return transformServerData(rec);
 }
 
 async function updateGameDataOnServer(walletAddress: string, updates: Partial<GameData>): Promise<GameData> {

@@ -819,6 +819,10 @@ export type Database = {
           wood: number
         }[]
       }
+      get_game_data_by_wallet_full: {
+        Args: { p_wallet_address: string }
+        Returns: Json
+      }
       get_medical_bay_entries: {
         Args: { p_wallet_address: string }
         Returns: {
