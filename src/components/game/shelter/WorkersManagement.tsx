@@ -265,42 +265,44 @@ export const WorkersManagement = ({ onSpeedBoostChange }: WorkersManagementProps
       
       // Определяем источник рабочего и удаляем правильно
       if (worker.source === 'card_instances' && (worker as any).instanceId) {
-        // Удаляем из card_instances по instanceId с правильным порядком параметров
+        // Используем новую RPC функцию без конфликтов параметров
         console.log('🗑️ Attempting to delete worker from card_instances:', (worker as any).instanceId);
-        const { error } = await supabase.rpc('remove_card_instance_by_id', {
+        const { data: deleted, error } = await supabase.rpc('remove_card_instance_exact', {
           p_wallet_address: gameState.actions ? 
             (localStorage.getItem('walletAccountId') || 'mr_bruts.tg') : 'mr_bruts.tg',
           p_instance_id: (worker as any).instanceId
         });
         
-        if (error) {
+        if (error || !deleted) {
           console.error('❌ Failed to delete worker instance:', error);
-          throw new Error(`Failed to delete worker instance: ${error.message}`);
+          throw new Error(`Failed to delete worker instance: ${error?.message || 'Unknown error'}`);
         }
         
         await loadCardInstances();
         console.log('✅ Successfully deleted worker from card_instances:', (worker as any).instanceId);
       } else if (worker.source === 'inventory') {
-        // Удаляем из инвентаря по ID
+        // Удаляем из инвентаря по ID и сохраняем через actions
         const removeIdx = updatedInv.findIndex((i: any) => 
           i?.type === 'worker' && i.id === worker.id
         );
         
         if (removeIdx >= 0) {
           updatedInv.splice(removeIdx, 1);
-          console.log('🧹 Worker removed from inventory at index:', removeIdx, 'worker:', worker.name);
+          await gameState.actions.updateInventory(updatedInv);
+          console.log('✅ Worker removed from inventory at index:', removeIdx, 'worker:', worker.name);
         } else {
           console.warn('⚠️ Could not find matching worker in inventory to remove:', worker.id);
         }
       } else if (worker.source === 'cards') {
-        // Удаляем из карт по ID - берем первое совпадение
+        // Удаляем из карт по ID и сохраняем через actions
         const removeIdx = updatedCards.findIndex((c: any) => 
           (c?.type === 'worker' || c?.type === 'workers') && c.id === worker.id
         );
         
         if (removeIdx >= 0) {
           updatedCards.splice(removeIdx, 1);
-          console.log('🧹 Worker removed from cards at index:', removeIdx, 'worker:', worker.name);
+          await gameState.actions.updateCards(updatedCards);
+          console.log('✅ Worker removed from cards at index:', removeIdx, 'worker:', worker.name);
         } else {
           console.warn('⚠️ Could not find matching worker in cards to remove:', worker.id);
         }

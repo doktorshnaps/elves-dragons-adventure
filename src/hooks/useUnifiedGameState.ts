@@ -402,19 +402,11 @@ async function updateGameDataOnServer(walletAddress: string, updates: Partial<Ga
     updated_at: new Date().toISOString()
   } as any;
 
-  // Пытаемся обновить существующую запись (сработает, если пользователь аутентифицирован под RLS)
-  // Если нет auth-сессии, не пытаемся делать прямой UPDATE (во избежание 406/409 и RLS)
+  // Если нет auth-сессии, не делаем запросы в БД (избегаем 400 запросов/мин)
   const { data: sess } = await supabase.auth.getSession();
   if (!sess?.session) {
-    console.warn('⏭ Skipping direct update (no auth session). Fetching current data via RPC');
-    const { data: fullData } = await supabase.rpc('get_game_data_by_wallet_full', {
-      p_wallet_address: walletAddress
-    });
-    if (fullData) {
-      const record = Array.isArray(fullData) ? (fullData as any[])[0] : (fullData as any);
-      return transformServerData(record);
-    }
-    return initialGameData;
+    console.warn('⏭ No auth session - returning local data without server update');
+    return { ...initialGameData, ...updates };
   }
 
   const { data, error } = await supabase

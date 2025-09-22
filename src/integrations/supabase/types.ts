@@ -906,6 +906,10 @@ export type Database = {
         Args: { p_card_template_id: string; p_wallet_address: string }
         Returns: boolean
       }
+      remove_card_instance_exact: {
+        Args: { p_instance_id: string; p_wallet_address: string }
+        Returns: boolean
+      }
       reset_shop_inventory: {
         Args: Record<PropertyKey, never>
         Returns: undefined
