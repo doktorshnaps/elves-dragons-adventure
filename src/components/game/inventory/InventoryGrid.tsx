@@ -7,6 +7,7 @@ import { GroupedItem } from "./types";
 import { useLanguage } from "@/hooks/useLanguage";
 import { t } from "@/utils/translations";
 import { getRarityDropRates } from "@/utils/cardUtils";
+import { workerImagesByName } from "@/constants/workerImages";
 interface InventoryGridProps {
   groupedItems: GroupedItem[];
   readonly: boolean;
@@ -49,19 +50,22 @@ export const InventoryGrid = ({
       return <Dialog key={dialogKey} open={openKey === dialogKey} onOpenChange={open => setOpenKey(open ? dialogKey : null)}>
             <DialogTrigger asChild>
               <Card className="p-4 bg-game-background border-game-accent hover:border-game-primary transition-all duration-300 h-[320px] flex flex-col justify-between cursor-pointer">
-                {item.image ? (
-                  <div className="w-full aspect-[4/3] mb-2 rounded-lg overflow-hidden">
-                    <img src={normalizeImageSrc(item.image)} alt={item.name} className="w-full h-full object-cover" onError={(e) => { (e.currentTarget as HTMLImageElement).src = '/placeholder.svg'; }} />
-                  </div>
-                ) : item.type === 'dragon_egg' ? (
-                  <div className="w-full aspect-[4/3] mb-2 rounded-lg overflow-hidden bg-gray-800 flex items-center justify-center">
-                    <img src={normalizeImageSrc(item.items[0].image)} alt="Dragon Egg" className="w-full h-full object-contain opacity-50" onError={(e) => { (e.currentTarget as HTMLImageElement).src = '/placeholder.svg'; }} />
-                  </div>
-                ) : (
-                  <div className="w-full aspect-[4/3] mb-2 rounded-lg overflow-hidden bg-gray-800 flex items-center justify-center">
-                    <span className="text-gray-400 text-xs">No Image</span>
-                  </div>
-                )}
+                {(() => {
+                  const candidate = item.type === 'worker' 
+                    ? (workerImagesByName[item.name] || item.image || item.items[0]?.image)
+                    : (item.image || item.items[0]?.image);
+                  const safeSrc = normalizeImageSrc(candidate);
+                  return (
+                    <div className="w-full aspect-[4/3] mb-2 rounded-lg overflow-hidden">
+                      <img 
+                        src={safeSrc} 
+                        alt={item.name} 
+                        className="w-full h-full object-cover" 
+                        onError={(e) => { (e.currentTarget as HTMLImageElement).src = '/placeholder.svg'; }} 
+                      />
+                    </div>
+                  );
+                })()}
                 <div className="flex-1 flex flex-col">
                   <h3 className="font-semibold text-game-accent text-sm mb-1">
                     {item.name} {item.count > 1 && `(${item.count})`}
