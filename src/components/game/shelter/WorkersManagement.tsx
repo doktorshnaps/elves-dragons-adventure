@@ -187,6 +187,10 @@ export const WorkersManagement = ({ onSpeedBoostChange }: WorkersManagementProps
          if (stillWorking.length !== prev.length) {
            updateActiveWorkersInDB(stillWorking);
            gameState.actions.batchUpdate({ activeWorkers: stillWorking }).catch(console.error);
+           try {
+             localStorage.setItem('activeWorkers', JSON.stringify(stillWorking));
+           } catch {}
+           window.dispatchEvent(new CustomEvent('activeWorkers:changed', { detail: stillWorking }));
            console.log('🔄 Updated active workers after completion:', stillWorking);
          }
         
@@ -278,6 +282,10 @@ export const WorkersManagement = ({ onSpeedBoostChange }: WorkersManagementProps
         inventory: updatedInv,
         cards: updatedCards
       });
+      try {
+        localStorage.setItem('activeWorkers', JSON.stringify(updatedActiveWorkers));
+      } catch {}
+      window.dispatchEvent(new CustomEvent('activeWorkers:changed', { detail: updatedActiveWorkers }));
       
       console.log('✅ Worker assigned and saved:', newActiveWorker);
       

@@ -16,7 +16,7 @@ import { BuildingWorkerStatus } from "@/components/game/shelter/BuildingWorkerSt
 import { useLanguage } from "@/hooks/useLanguage";
 import { useWorkerSync } from "@/hooks/useWorkerSync";
 import { t } from "@/utils/translations";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 interface NestUpgrade {
   id: string;
   name: string;
@@ -61,8 +61,36 @@ export const Shelter = () => {
   const [activeTab, setActiveTab] = useState<"upgrades" | "crafting" | "barracks" | "dragonlair" | "medical" | "workers">("upgrades");
   const [workersSpeedBoost, setWorkersSpeedBoost] = useState(0);
 
-  // Получаем активных рабочих из gameState
-  const activeWorkers = gameState.activeWorkers || [];
+  // Получаем активных рабочих: сначала из gameState, при пустом значении — из localStorage
+  const getActiveWorkersSafe = () => {
+    const fromState = Array.isArray(gameState.activeWorkers) ? gameState.activeWorkers : [];
+    if (fromState.length > 0) return fromState;
+    try {
+      const cached = localStorage.getItem('activeWorkers');
+      if (cached) {
+        const parsed = JSON.parse(cached);
+        if (Array.isArray(parsed)) return parsed;
+      }
+    } catch {}
+    return [] as any[];
+  };
+  const [activeWorkersLocal, setActiveWorkersLocal] = useState<any[]>(getActiveWorkersSafe());
+  
+  // Обновляем локальный список при изменении данных игры
+  useEffect(() => {
+    setActiveWorkersLocal(getActiveWorkersSafe());
+  }, [gameState.activeWorkers]);
+  
+  // Слушаем локальные события об изменении активных рабочих
+  useEffect(() => {
+    const handler = (e: any) => {
+      setActiveWorkersLocal(e.detail || getActiveWorkersSafe());
+    };
+    window.addEventListener('activeWorkers:changed', handler as EventListener);
+    return () => window.removeEventListener('activeWorkers:changed', handler as EventListener);
+  }, []);
+  
+  const activeWorkers = activeWorkersLocal;
 
   console.log('🏠 Shelter page state:', {
     gameStateLoading: gameState.loading,
