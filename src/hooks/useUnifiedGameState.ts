@@ -372,13 +372,7 @@ async function updateGameDataOnServer(walletAddress: string, updates: Partial<Ga
   
   // Специальная обработка activeWorkers: обновляем через SECURITY DEFINER RPC, чтобы обойти RLS
   if (updates.activeWorkers !== undefined) {
-    try {
-      // Гарантируем наличие записи (SECURITY DEFINER)
-      await supabase.rpc('ensure_game_data_exists', { p_wallet_address: walletAddress });
-    } catch (e) {
-      console.warn('ensure_game_data_exists failed (may already exist):', e);
-    }
-
+    // Обновляем через SECURITY DEFINER RPC без ensure (избегаем 409 при гонках)
     const { data: ok, error: rpcErr } = await supabase.rpc('update_active_workers_by_wallet', {
       p_wallet_address: walletAddress,
       p_active_workers: updates.activeWorkers as any
@@ -409,6 +403,20 @@ async function updateGameDataOnServer(walletAddress: string, updates: Partial<Ga
   } as any;
 
   // Пытаемся обновить существующую запись (сработает, если пользователь аутентифицирован под RLS)
+  // Если нет auth-сессии, не пытаемся делать прямой UPDATE (во избежание 406/409 и RLS)
+  const { data: sess } = await supabase.auth.getSession();
+  if (!sess?.session) {
+    console.warn('⏭ Skipping direct update (no auth session). Fetching current data via RPC');
+    const { data: fullData } = await supabase.rpc('get_game_data_by_wallet_full', {
+      p_wallet_address: walletAddress
+    });
+    if (fullData) {
+      const record = Array.isArray(fullData) ? (fullData as any[])[0] : (fullData as any);
+      return transformServerData(record);
+    }
+    return initialGameData;
+  }
+
   const { data, error } = await supabase
     .from('game_data')
     .update(serverUpdates)
@@ -419,34 +427,30 @@ async function updateGameDataOnServer(walletAddress: string, updates: Partial<Ga
   if (error && error.code !== 'PGRST116') {
     console.error('Failed to update game data:', error);
 
-    // Фолбэк: пытаемся гарантировать существование записи и перезагрузить данные через RPC
-    try {
-      await supabase.rpc('ensure_game_data_exists', { p_wallet_address: walletAddress });
-      const { data: fullData } = await supabase.rpc('get_game_data_by_wallet_full', {
-        p_wallet_address: walletAddress
-      });
-      if (fullData) {
-        const record = Array.isArray(fullData) ? (fullData as any[])[0] : (fullData as any);
-        return transformServerData(record);
-      }
-    } catch (e) {
-      console.warn('Fallback ensure/fetch failed:', e);
+  // Фолбэк: просто перезагружаем данные через SECURITY DEFINER RPC без ensure
+  try {
+    const { data: fullData } = await supabase.rpc('get_game_data_by_wallet_full', {
+      p_wallet_address: walletAddress
+    });
+    if (fullData) {
+      const record = Array.isArray(fullData) ? (fullData as any[])[0] : (fullData as any);
+      return transformServerData(record);
     }
+  } catch (e) {
+    console.warn('Fallback fetch via RPC failed:', e);
+  }
 
     throw error;
   }
 
-  // Если обновление не вернуло данных (например, запись не найдена или блок RLS) — избегаем прямого insert
+  // Если обновление не вернуло данных (например, запись не найдена или блок RLS) — просто загружаем через RPC
   if (!data) {
-    console.warn('Update returned no data; ensuring record exists and refetching via RPC');
-    try {
-      await supabase.rpc('ensure_game_data_exists', { p_wallet_address: walletAddress });
-    } catch {}
+    console.warn('Update returned no data; refetching via RPC');
     const { data: fullData, error: fetchErr } = await supabase.rpc('get_game_data_by_wallet_full', {
       p_wallet_address: walletAddress
     });
     if (fetchErr || !fullData) {
-      throw fetchErr || new Error('Failed to fetch game data after ensure');
+      throw fetchErr || new Error('Failed to fetch game data after update');
     }
     const record = Array.isArray(fullData) ? (fullData as any[])[0] : (fullData as any);
     return transformServerData(record);
