@@ -6,6 +6,7 @@ import { useCardPackOpening } from "@/hooks/useCardPackOpening";
 import { GroupedItem } from "./types";
 import { shopItems } from "../../shop/types";
 import { useGameData } from "@/hooks/useGameData";
+import { workerImagesByName } from "@/constants/workerImages";
 
 export const useInventoryLogic = (initialInventory: Item[]) => {
   const { toast } = useToast();
@@ -25,7 +26,17 @@ export const useInventoryLogic = (initialInventory: Item[]) => {
   const balance = gameData.balance;
 
   const getItemImage = (item: Item) => {
-    if (item.image) return item.image;
+    // Для рабочих сначала проверяем mapping по имени
+    if (item.type === 'worker' && workerImagesByName[item.name]) {
+      return workerImagesByName[item.name];
+    }
+    
+    // Если у предмета есть изображение, но это неправильный путь /src/assets/, исправляем его
+    if (item.image && !item.image.startsWith('/src/')) {
+      return item.image;
+    }
+    
+    // Ищем в shopItems по имени
     const shopItem = shopItems.find(shopItem => shopItem.name === item.name);
     return shopItem?.image || '';
   };
