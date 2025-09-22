@@ -149,6 +149,24 @@ export const useGameData = () => {
     setGameData((prev) => ({ ...prev, ...updates }));
 
     try {
+      // Debug: trace card and team updates sources
+      if (updates.cards !== undefined) {
+        console.warn('🧭 updateGameData(cards): incoming', {
+          incoming: Array.isArray(updates.cards) ? updates.cards.length : 'n/a',
+          current: Array.isArray(gameData.cards) ? gameData.cards.length : 0,
+          activeBattle: localStorage.getItem('activeBattleInProgress') === 'true'
+        });
+        console.trace('updateGameData(cards) call stack');
+      }
+      if (updates.selectedTeam !== undefined) {
+        console.warn('🧭 updateGameData(selectedTeam): incoming', {
+          incoming: Array.isArray(updates.selectedTeam) ? updates.selectedTeam.length : 'n/a',
+          current: Array.isArray(gameData.selectedTeam) ? gameData.selectedTeam.length : 0,
+          activeBattle: localStorage.getItem('activeBattleInProgress') === 'true'
+        });
+        console.trace('updateGameData(selectedTeam) call stack');
+      }
+
       console.log('🔄 Updating game data:', updates);
       
       // Use the secure function to update game data
