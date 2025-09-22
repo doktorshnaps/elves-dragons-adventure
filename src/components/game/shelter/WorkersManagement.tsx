@@ -165,30 +165,30 @@ export const WorkersManagement = ({ onSpeedBoostChange }: WorkersManagementProps
       gameStateData: gameState.activeWorkers
     });
 
-    // DB — источник истины: если массив активных рабочих определён (даже если пустой) — используем его
-    if (Array.isArray(gameState.activeWorkers)) {
-      console.log('🔄 Using DB active workers:', gameState.activeWorkers.length);
-      setActiveWorkers(gameState.activeWorkers);
-      // Синхронизируем localStorage с БД (затираем старые локальные данные)
-      try {
-        localStorage.setItem('activeWorkers', JSON.stringify(gameState.activeWorkers));
-      } catch (e) {
-        console.warn('Failed to save active workers to localStorage:', e);
-      }
-      return;
-    }
-
-    // Фоллбек: если по какой-то причине из БД ничего не пришло, подхватываем из localStorage (НЕ пушим в БД)
+    // ВРЕМЕННО: Приоритет localStorage над БД до исправления удаления рабочих
     const cachedActiveWorkers = localStorage.getItem('activeWorkers');
     if (cachedActiveWorkers) {
       try {
         const parsed = JSON.parse(cachedActiveWorkers);
-        if (Array.isArray(parsed)) {
-          console.log('📦 Using fallback from localStorage (no DB data):', parsed.length);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          console.log('📦 Using localStorage workers (temporary fix):', parsed.length);
           setActiveWorkers(parsed);
+          return;
         }
       } catch (e) {
         console.warn('Failed to parse cached activeWorkers:', e);
+      }
+    }
+
+    // Фоллбек: DB только если localStorage пуст
+    if (Array.isArray(gameState.activeWorkers) && gameState.activeWorkers.length > 0) {
+      console.log('🔄 Using DB active workers as fallback:', gameState.activeWorkers.length);
+      setActiveWorkers(gameState.activeWorkers);
+      // Синхронизируем localStorage с БД
+      try {
+        localStorage.setItem('activeWorkers', JSON.stringify(gameState.activeWorkers));
+      } catch (e) {
+        console.warn('Failed to save active workers to localStorage:', e);
       }
     }
   }, [gameState.activeWorkers]);
@@ -265,13 +265,21 @@ export const WorkersManagement = ({ onSpeedBoostChange }: WorkersManagementProps
       
       // Определяем источник рабочего и удаляем правильно
       if (worker.source === 'card_instances' && (worker as any).instanceId) {
-        // Удаляем из card_instances по instanceId и обновляем локальный список экземпляров
-        const ok = await deleteCardInstance((worker as any).instanceId);
-        if (!ok) {
-          throw new Error('Failed to delete worker instance');
+        // Удаляем из card_instances по instanceId с правильным порядком параметров
+        console.log('🗑️ Attempting to delete worker from card_instances:', (worker as any).instanceId);
+        const { error } = await supabase.rpc('remove_card_instance_by_id', {
+          p_wallet_address: gameState.actions ? 
+            (localStorage.getItem('walletAccountId') || 'mr_bruts.tg') : 'mr_bruts.tg',
+          p_instance_id: (worker as any).instanceId
+        });
+        
+        if (error) {
+          console.error('❌ Failed to delete worker instance:', error);
+          throw new Error(`Failed to delete worker instance: ${error.message}`);
         }
+        
         await loadCardInstances();
-        console.log('🗑️ Deleted worker from card_instances:', (worker as any).instanceId);
+        console.log('✅ Successfully deleted worker from card_instances:', (worker as any).instanceId);
       } else if (worker.source === 'inventory') {
         // Удаляем из инвентаря по ID
         const removeIdx = updatedInv.findIndex((i: any) => 
