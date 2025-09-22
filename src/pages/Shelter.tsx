@@ -78,9 +78,47 @@ export const Shelter = () => {
     return activeWorkers.some(worker => {
       if (worker.building !== buildingId) return false;
       const now = Date.now();
-      const elapsed = now - worker.startTime;
-      return elapsed < worker.duration; // Проверяем, что время работы не истекло
+      const endTime = worker.startTime + worker.duration;
+      return now < endTime; // Проверяем, что время работы не истекло
     });
+  };
+
+  // Функция для получения активных рабочих в здании
+  const getActiveWorkersInBuilding = (buildingId: string) => {
+    return activeWorkers.filter(worker => {
+      if (worker.building !== buildingId) return false;
+      const now = Date.now();
+      const endTime = worker.startTime + worker.duration;
+      return now < endTime;
+    });
+  };
+
+  // Функция для получения общего буста скорости здания
+  const getBuildingSpeedBoost = (buildingId: string) => {
+    const workers = getActiveWorkersInBuilding(buildingId);
+    return workers.reduce((total, worker) => total + (worker.speedBoost || 0), 0);
+  };
+
+  // Функция для получения оставшегося времени работы здания
+  const getBuildingRemainingTime = (buildingId: string) => {
+    const workers = getActiveWorkersInBuilding(buildingId);
+    if (workers.length === 0) return 0;
+    
+    const now = Date.now();
+    const maxEndTime = Math.max(...workers.map(worker => worker.startTime + worker.duration));
+    return Math.max(0, maxEndTime - now);
+  };
+
+  // Функция для форматирования времени
+  const formatTime = (milliseconds: number) => {
+    const totalMinutes = Math.floor(milliseconds / (1000 * 60));
+    const hours = Math.floor(totalMinutes / 60);
+    const minutes = totalMinutes % 60;
+    
+    if (hours > 0) {
+      return `${hours}ч ${minutes}м`;
+    }
+    return `${minutes}м`;
   };
 
   // Функция для проверки, активно ли здание
@@ -404,8 +442,22 @@ export const Shelter = () => {
                      {upgrade.level >= upgrade.maxLevel ? t(language, 'shelter.maxLevel') : !isBuildingActive(upgrade.id) ? t(language, 'shelter.requiresWorkers') : t(language, 'shelter.upgrade')}
                   </Button>
 
-                  {/* Статус рабочих для этого здания */}
-                  <BuildingWorkerStatus buildingId={upgrade.id} activeWorkers={activeWorkers} />
+                   {/* Статус рабочих для этого здания */}
+                   <BuildingWorkerStatus buildingId={upgrade.id} activeWorkers={activeWorkers} />
+                   
+                   {/* Индикатор времени работы и буста */}
+                   {isBuildingActive(upgrade.id) && (
+                     <div className="mt-2 p-2 bg-green-50 dark:bg-green-950/20 rounded-md border border-green-200 dark:border-green-800">
+                       <div className="flex justify-between items-center text-sm">
+                         <span className="text-green-700 dark:text-green-300 font-medium">
+                           🏃 Буст: +{getBuildingSpeedBoost(upgrade.id)}%
+                         </span>
+                         <span className="text-green-600 dark:text-green-400">
+                           ⏱️ {formatTime(getBuildingRemainingTime(upgrade.id))}
+                         </span>
+                       </div>
+                     </div>
+                   )}
                 </CardContent>
               </Card>)}
           </div>}
