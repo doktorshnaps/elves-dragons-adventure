@@ -12,6 +12,7 @@ import { useToast } from './use-toast';
 
 const GAME_DATA_KEY = 'gameData';
 const STALE_TIME = 5 * 60 * 1000; // 5 минут
+const CACHE_TIME = 10 * 60 * 1000; // 10 минут
 
 const ensuredWallets = new Set<string>();
 const ensureOnce = async (wallet: string) => {
