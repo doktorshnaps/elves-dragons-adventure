@@ -156,7 +156,7 @@ serve(async (req) => {
         cardInstances.push({
           user_id: gameData.user_id,
           wallet_address: wallet_address,
-          card_template_id: itemTemplate.item_id,
+          card_template_id: `worker_${item_id}`, // Ensure consistent string format
           card_type: 'workers',
           current_health: cardData.health,
           max_health: cardData.health,
