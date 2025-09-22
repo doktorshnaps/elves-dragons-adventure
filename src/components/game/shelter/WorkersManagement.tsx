@@ -164,34 +164,31 @@ export const WorkersManagement = ({ onSpeedBoostChange }: WorkersManagementProps
       isArray: Array.isArray(gameState.activeWorkers),
       gameStateData: gameState.activeWorkers
     });
-    
-    if (gameState.activeWorkers && Array.isArray(gameState.activeWorkers) && gameState.activeWorkers.length > 0) {
-      console.log('🔄 Loading active workers from gameState:', gameState.activeWorkers.length);
+
+    // DB — источник истины: если массив активных рабочих определён (даже если пустой) — используем его
+    if (Array.isArray(gameState.activeWorkers)) {
+      console.log('🔄 Using DB active workers:', gameState.activeWorkers.length);
       setActiveWorkers(gameState.activeWorkers);
-      // Также обновляем localStorage с данными из БД
+      // Синхронизируем localStorage с БД (затираем старые локальные данные)
       try {
         localStorage.setItem('activeWorkers', JSON.stringify(gameState.activeWorkers));
       } catch (e) {
         console.warn('Failed to save active workers to localStorage:', e);
       }
-    } else {
-      // Если в gameState нет активных рабочих, пробуем загрузить из localStorage
-      const cachedActiveWorkers = localStorage.getItem('activeWorkers');
-      if (cachedActiveWorkers) {
-        try {
-          const parsed = JSON.parse(cachedActiveWorkers);
-          if (Array.isArray(parsed) && parsed.length > 0) {
-            console.log('🔄 Loading active workers from localStorage:', parsed.length);
-            console.log('📊 localStorage workers data:', parsed.map(w => ({ id: w.id, name: w.name, startTime: w.startTime, building: w.building })));
-            setActiveWorkers(parsed);
-            
-            // Важно! Синхронизируем localStorage с БД при загрузке
-            console.log('🔄 Syncing localStorage data to DB...');
-            updateActiveWorkersInDB(parsed);
-          }
-        } catch (e) {
-          console.warn('Failed to parse cached activeWorkers:', e);
+      return;
+    }
+
+    // Фоллбек: если по какой-то причине из БД ничего не пришло, подхватываем из localStorage (НЕ пушим в БД)
+    const cachedActiveWorkers = localStorage.getItem('activeWorkers');
+    if (cachedActiveWorkers) {
+      try {
+        const parsed = JSON.parse(cachedActiveWorkers);
+        if (Array.isArray(parsed)) {
+          console.log('📦 Using fallback from localStorage (no DB data):', parsed.length);
+          setActiveWorkers(parsed);
         }
+      } catch (e) {
+        console.warn('Failed to parse cached activeWorkers:', e);
       }
     }
   }, [gameState.activeWorkers]);
