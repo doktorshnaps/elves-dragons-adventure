@@ -6,6 +6,7 @@ import { InventoryHeader } from "./inventory/InventoryHeader";
 import { DragonEggsList } from "./inventory/DragonEggsList";
 import { InventoryGrid } from "./inventory/InventoryGrid";
 import { CardRevealModal } from "./dialogs/CardRevealModal";
+import { CardPackQuantityModal } from "./dialogs/CardPackQuantityModal";
 import { useGameData } from "@/hooks/useGameData";
 import { useToast } from "@/hooks/use-toast";
 import { useLanguage } from "@/hooks/useLanguage";
@@ -43,7 +44,11 @@ export const InventoryDisplay = ({
     closeRevealModal,
     showNextCard,
     currentCardIndex,
-    totalCards
+    totalCards,
+    showQuantityModal,
+    setShowQuantityModal,
+    selectedPackItem,
+    handleQuantityConfirm
   } = useInventoryLogic(inventory);
 
   // Включаем карточки рабочих из card_instances и из колоды карт в общий список инвентаря
@@ -216,6 +221,14 @@ export const InventoryDisplay = ({
         onNextCard={showNextCard}
         currentIndex={currentCardIndex}
         totalCards={totalCards}
+      />
+      
+      <CardPackQuantityModal
+        isOpen={showQuantityModal}
+        onClose={() => setShowQuantityModal(false)}
+        onConfirm={handleQuantityConfirm}
+        item={selectedPackItem}
+        availableCount={selectedPackItem ? (inventory || []).filter(i => i.type === 'cardPack' && i.name === selectedPackItem.name).length : 0}
       />
     </div>
   );

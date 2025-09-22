@@ -11,6 +11,8 @@ import { workerImagesByName } from "@/constants/workerImages";
 export const useInventoryLogic = (initialInventory: Item[]) => {
   const { toast } = useToast();
   const [selectedItems, setSelectedItems] = useState<Item[]>([]);
+  const [showQuantityModal, setShowQuantityModal] = useState(false);
+  const [selectedPackItem, setSelectedPackItem] = useState<Item | null>(null);
   const { gameData, updateGameData, loadGameData } = useGameData();
   const { 
     openCardPack,
@@ -129,20 +131,25 @@ const groupItems = (items: Item[]): GroupedItem[] => {
   };
   const handleOpenCardPack = async (item: Item): Promise<boolean> => {
     if (item.type === 'cardPack') {
-      // Ask for quantity to open
-      const allPacks = (gameData.inventory || []).filter(i => i.type === 'cardPack' && i.name === item.name);
-      const available = allPacks.length;
-      const raw = window.prompt(`Сколько колод открыть? Доступно: ${available}`, '1');
-      if (!raw) return false;
-      const requested = Math.max(1, Math.min(available, Number.parseInt(raw, 10) || 0));
-      if (!requested) return false;
-      const shouldClose = requested >= available;
-      // Use new multi-open API
-      await openCardPacks(item, requested);
-      await loadGameData();
-      return shouldClose;
+      setSelectedPackItem(item);
+      setShowQuantityModal(true);
+      return false; // Modal will handle the opening
     }
     return false;
+  };
+
+  const handleQuantityConfirm = async (quantity: number) => {
+    if (!selectedPackItem) return;
+    
+    const allPacks = (gameData.inventory || []).filter(i => i.type === 'cardPack' && i.name === selectedPackItem.name);
+    const available = allPacks.length;
+    const shouldClose = quantity >= available;
+    
+    await openCardPacks(selectedPackItem, quantity);
+    await loadGameData();
+    
+    setSelectedPackItem(null);
+    return shouldClose;
   };
   return {
     selectedItems,
@@ -157,6 +164,10 @@ const groupItems = (items: Item[]): GroupedItem[] => {
     closeRevealModal,
     showNextCard,
     currentCardIndex,
-    totalCards
+    totalCards,
+    showQuantityModal,
+    setShowQuantityModal,
+    selectedPackItem,
+    handleQuantityConfirm
   };
 };
