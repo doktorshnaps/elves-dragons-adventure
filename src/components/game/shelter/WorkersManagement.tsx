@@ -82,7 +82,10 @@ export const WorkersManagement = ({ onSpeedBoostChange }: WorkersManagementProps
     }));
 
   const cardInstanceWorkers = cardInstances
-    .filter(instance => instance.card_type === 'workers')
+    .filter(instance => 
+      instance.card_type === 'workers' ||
+      ((instance.card_data as any)?.type === 'worker' || (instance.card_data as any)?.type === 'workers')
+    )
     .map(instance => ({
       id: instance.id, // уникальный id экземпляра
       instanceId: instance.id,
@@ -193,7 +196,6 @@ export const WorkersManagement = ({ onSpeedBoostChange }: WorkersManagementProps
          // Обновляем базу данных если список изменился
          if (stillWorking.length !== prev.length) {
            updateActiveWorkersInDB(stillWorking);
-           gameState.actions.batchUpdate({ activeWorkers: stillWorking }).catch(console.error);
            try {
              localStorage.setItem('activeWorkers', JSON.stringify(stillWorking));
            } catch {}
@@ -274,13 +276,8 @@ export const WorkersManagement = ({ onSpeedBoostChange }: WorkersManagementProps
         }
       }
 
-      // Сохраняем активных рабочих и обновленные данные
+      // Сохраняем активных рабочих через RPC
       await updateActiveWorkersInDB(updatedActiveWorkers);
-      await gameState.actions.batchUpdate({ 
-        activeWorkers: updatedActiveWorkers, 
-        inventory: updatedInv,
-        cards: updatedCards
-      });
       try {
         localStorage.setItem('activeWorkers', JSON.stringify(updatedActiveWorkers));
       } catch {}
