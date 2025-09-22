@@ -76,61 +76,8 @@ export const Shop = ({ onClose }: ShopProps) => {
       setPurchasing(true);
       console.log(`🛒 Purchasing item: ${item.name} for ${item.price} ELL`);
       
-      // Для рабочих используем новую систему через shop-purchase
-      if (item.type === 'worker') {
-        console.log(`👷 Processing worker purchase through shop-purchase: ${item.name}`);
-        
-        // Используем shop-purchase, который сам обработает и баланс и создание рабочего
-        // Списываем баланс атомарно
-        const { data: balanceResult, error: balanceError } = await (supabase as any).rpc('atomic_balance_update', {
-          p_wallet_address: accountId,
-          p_price_deduction: item.price
-        });
-        if (balanceError || !balanceResult) {
-          console.error('Balance deduction error:', balanceError);
-          throw (balanceError || new Error('Failed to deduct balance'));
-        }
-
-        // Затем создаем рабочего через shop-purchase (qty=1)
-        await purchaseItem(item.id, accountId, 1);
-      } else {
-        // Для остальных предметов используем старую логику
-        const newItem: Item = item.type === 'cardPack'
-          ? {
-              id: uuidv4(),
-              name: item.name,
-              type: item.type,
-              value: item.value,
-              description: item.description,
-              image: item.image
-            }
-          : {
-              id: uuidv4(),
-              name: item.name,
-              type: item.type,
-              value: item.price,
-              description: item.description,
-              image: item.image,
-              stats: item.stats,
-              slot: item.slot,
-              equipped: false
-            };
-
-        // Атомарно списываем баланс и добавляем предмет в инвентарь
-        const { data: result, error: rpcError } = await (supabase as any).rpc('atomic_inventory_update', {
-          p_wallet_address: accountId,
-          p_price_deduction: item.price,
-          p_new_item: newItem
-        });
-
-        if (rpcError || !result) {
-          console.error('atomic_inventory_update error:', rpcError);
-          throw (rpcError || new Error('No result from RPC'));
-        }
-
-        // Уменьшаем количество товара в магазине
-        await purchaseItem(item.id, accountId);
-      }
+      // Используем shop-purchase edge function для всех типов товаров
+      await purchaseItem(item.id, accountId, 1);
 
       console.log('✅ Purchase successful');
       
