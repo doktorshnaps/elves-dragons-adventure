@@ -32,6 +32,14 @@ export const InventoryGrid = ({
     return src;
   };
 
+  const resolveGroupImage = (g: GroupedItem) => {
+    if (g.type === 'worker' && workerImagesByName[g.name]) {
+      return workerImagesByName[g.name];
+    }
+    const raw = g.image || g.items[0]?.image;
+    return normalizeImageSrc(raw);
+  };
+
   // Формируем единый ключ для группы (включая count и первый id для уникальности)
   const keyFor = (g: GroupedItem) => `${g.name}-${g.type}-${g.value}-${g.count}-${g.items[0]?.id || ''}`;
 
@@ -51,10 +59,7 @@ export const InventoryGrid = ({
             <DialogTrigger asChild>
               <Card className="p-4 bg-game-background border-game-accent hover:border-game-primary transition-all duration-300 h-[320px] flex flex-col justify-between cursor-pointer">
                 {(() => {
-                  const candidate = item.type === 'worker' 
-                    ? (workerImagesByName[item.name] || item.image || item.items[0]?.image)
-                    : (item.image || item.items[0]?.image);
-                  const safeSrc = normalizeImageSrc(candidate);
+                  const safeSrc = resolveGroupImage(item);
                   return (
                     <div className="w-full aspect-[4/3] mb-2 rounded-lg overflow-hidden">
                       <img 
@@ -66,6 +71,7 @@ export const InventoryGrid = ({
                     </div>
                   );
                 })()}
+
                 <div className="flex-1 flex flex-col">
                   <h3 className="font-semibold text-game-accent text-sm mb-1">
                     {item.name} {item.count > 1 && `(${item.count})`}
