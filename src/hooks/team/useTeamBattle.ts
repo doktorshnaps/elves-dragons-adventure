@@ -444,14 +444,14 @@ export const useTeamBattle = (dungeonType: DungeonType, initialLevel: number = 1
     localStorage.removeItem('teamBattleState');
     localStorage.removeItem('activeBattleInProgress');
     startTransition(() => {
-      setBattleState({
-        playerPairs: [],
+      setBattleState(prev => ({
+        ...prev,
         opponents: [],
         currentTurn: 'player',
         currentAttacker: 0,
         level: 1,
         selectedDungeon: dungeonType
-      });
+      }));
     });
   };
 

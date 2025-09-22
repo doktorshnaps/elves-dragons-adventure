@@ -35,11 +35,14 @@ export const useGameInitialization = (setCards: (cards: Card[]) => void) => {
           const secondPack = generatePack();
           const initialCards = [...firstPack, ...secondPack];
           
+          // Получаем текущего аутентифицированного пользователя
+          const { data: { user } } = await supabase.auth.getUser();
+          
           const { error: insertError } = await supabase
             .from('game_data')
             .insert({
+              user_id: user?.id,
               wallet_address: accountId,
-              user_id: null,
               cards: initialCards as any,
               balance: 100,
               initialized: true
