@@ -12,7 +12,19 @@ import { useToast } from './use-toast';
 
 const GAME_DATA_KEY = 'gameData';
 const STALE_TIME = 5 * 60 * 1000; // 5 минут
-const CACHE_TIME = 10 * 60 * 1000; // 10 минут
+
+const ensuredWallets = new Set<string>();
+const ensureOnce = async (wallet: string) => {
+  if (ensuredWallets.has(wallet)) return;
+  try {
+    await supabase.rpc('ensure_game_data_exists', { p_wallet_address: wallet });
+  } catch (e) {
+    console.warn('ensure_game_data_exists failed (may already exist):', e);
+  } finally {
+    ensuredWallets.add(wallet);
+  }
+};
+
 
 const initialGameData: GameData = {
   balance: 100,

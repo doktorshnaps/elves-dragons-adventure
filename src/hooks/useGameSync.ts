@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { useGameStore } from '@/stores/gameStore';
 import { useGameData } from '@/hooks/useGameData';
 import { useWallet } from '@/hooks/useWallet';
@@ -11,6 +11,8 @@ export const useGameSync = () => {
   const { accountId, isConnected } = useWallet();
   const { gameData, updateGameData, loading } = useGameData();
   const gameStore = useGameStore();
+  const isApplyingRef = useRef(false);
+  const lastSyncedRef = useRef<any>(null);
   
   // Инициализация синхронизации экземпляров карт
   useCardInstanceSync();
@@ -18,53 +20,84 @@ export const useGameSync = () => {
   // Загружаем данные из Supabase в локальное состояние при инициализации
   useEffect(() => {
     if (!loading && isConnected && accountId && gameData) {
-      gameStore.setBalance(gameData.balance);
-      gameStore.setCards(gameData.cards);
-      gameStore.setInventory(gameData.inventory || []);
-      gameStore.setDragonEggs(gameData.dragonEggs || []);
-      gameStore.setSelectedTeam(gameData.selectedTeam || []);
-      
-      // Синхронизируем уровень и опыт аккаунта только если в gameData есть актуальные данные из БД
-      // и они не являются дефолтными значениями
-      if (gameData.accountLevel > 1 || gameData.accountExperience > 0) {
-        gameStore.setAccountLevel(gameData.accountLevel);
-        gameStore.setAccountExperience(gameData.accountExperience);
-        console.log('🔄 useGameSync: Account data synced from gameData:', {
-          level: gameData.accountLevel,
-          experience: gameData.accountExperience
-        });
-      } else {
-        console.log('⚠️ useGameSync: Skipping account sync - using default values from gameData, relying on useAccountSync');
-      }
-      
-      if (gameData.battleState) {
-        gameStore.setBattleState(gameData.battleState);
+      isApplyingRef.current = true;
+      try {
+        gameStore.setBalance(gameData.balance);
+        gameStore.setCards(gameData.cards);
+        gameStore.setInventory(gameData.inventory || []);
+        gameStore.setDragonEggs(gameData.dragonEggs || []);
+        gameStore.setSelectedTeam(gameData.selectedTeam || []);
+        
+        // Синхронизируем уровень и опыт аккаунта только если в gameData есть актуальные данные из БД
+        // и они не являются дефолтными значениями
+        if (gameData.accountLevel > 1 || gameData.accountExperience > 0) {
+          gameStore.setAccountLevel(gameData.accountLevel);
+          gameStore.setAccountExperience(gameData.accountExperience);
+          console.log('🔄 useGameSync: Account data synced from gameData:', {
+            level: gameData.accountLevel,
+            experience: gameData.accountExperience
+          });
+        } else {
+          console.log('⚠️ useGameSync: Skipping account sync - using default values from gameData, relying on useAccountSync');
+        }
+        
+        if (gameData.battleState) {
+          gameStore.setBattleState(gameData.battleState);
+        }
+      } finally {
+        setTimeout(() => { isApplyingRef.current = false; }, 0);
       }
     }
   }, [loading, isConnected, accountId, gameData]);
 
-  // Синхронизируем изменения локального состояния с Supabase
+  // Синхронизируем изменения локального состояния с Supabase (без зацикливания)
   useEffect(() => {
     if (!isConnected || !accountId || loading) return;
+    if (isApplyingRef.current) return;
 
-    const syncToSupabase = async () => {
-      const state = useGameStore.getState();
-      await updateGameData({
-        balance: state.balance,
-        cards: state.cards,
-        inventory: state.inventory,
-        dragonEggs: state.dragonEggs,
-        selectedTeam: state.selectedTeam,
-        battleState: state.battleState,
-        accountLevel: state.accountLevel,
-        accountExperience: state.accountExperience
-      });
+    const state = useGameStore.getState();
+    const snapshot = {
+      balance: state.balance,
+      cards: state.cards,
+      inventory: state.inventory,
+      dragonEggs: state.dragonEggs,
+      selectedTeam: state.selectedTeam,
+      battleState: state.battleState,
+      accountLevel: state.accountLevel,
+      accountExperience: state.accountExperience,
     };
 
-    // Дебаунсим синхронизацию
-    const timeoutId = setTimeout(syncToSupabase, 1000);
+    const serverSnapshot = {
+      balance: gameData?.balance,
+      cards: gameData?.cards,
+      inventory: gameData?.inventory,
+      dragonEggs: gameData?.dragonEggs,
+      selectedTeam: gameData?.selectedTeam,
+      battleState: gameData?.battleState,
+      accountLevel: gameData?.accountLevel,
+      accountExperience: gameData?.accountExperience,
+    };
+
+    const sameAsServer = JSON.stringify(snapshot) === JSON.stringify(serverSnapshot);
+    const sameAsLastSynced = JSON.stringify(snapshot) === JSON.stringify(lastSyncedRef.current);
+
+    if (sameAsServer || sameAsLastSynced) return;
+
+    const syncToSupabase = async () => {
+      try {
+        await updateGameData(snapshot);
+        lastSyncedRef.current = snapshot;
+      } catch (e) {
+        console.warn('useGameSync: sync failed', e);
+      }
+    };
+
+    const timeoutId = setTimeout(syncToSupabase, 800);
     return () => clearTimeout(timeoutId);
   }, [
+    isConnected,
+    accountId,
+    loading,
     gameStore.balance,
     gameStore.cards,
     gameStore.inventory,
@@ -72,7 +105,8 @@ export const useGameSync = () => {
     gameStore.selectedTeam,
     gameStore.battleState,
     gameStore.accountLevel,
-    gameStore.accountExperience
+    gameStore.accountExperience,
+    gameData
   ]);
 
   return { loading };
