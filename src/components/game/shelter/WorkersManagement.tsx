@@ -29,7 +29,7 @@ interface WorkersManagementProps {
 
 export const WorkersManagement = ({ onSpeedBoostChange }: WorkersManagementProps) => {
   const gameState = useUnifiedGameState();
-  const { cardInstances, deleteCardInstance } = useCardInstances();
+  const { cardInstances, deleteCardInstance, loadCardInstances } = useCardInstances();
   const { language } = useLanguage();
   
   const { toast } = useToast();
@@ -123,6 +123,13 @@ export const WorkersManagement = ({ onSpeedBoostChange }: WorkersManagementProps
       }
       return true;
     });
+
+  // Исключаем уже назначенных активных рабочих из списка доступных
+  const activeInstanceIds = new Set(activeWorkers.map(w => w.cardInstanceId));
+  const activeWorkerIds = new Set(activeWorkers.map(w => w.workerId));
+  const visibleWorkers = availableWorkers.filter((w: any) =>
+    w.instanceId ? !activeInstanceIds.has(w.instanceId) : !activeWorkerIds.has(w.id)
+  );
 
   console.log('👷 Workers analysis:', {
     inventoryWorkers: inventoryWorkers.length,
@@ -234,8 +241,12 @@ export const WorkersManagement = ({ onSpeedBoostChange }: WorkersManagementProps
       
       // Определяем источник рабочего и удаляем правильно
       if (worker.source === 'card_instances' && (worker as any).instanceId) {
-        // Удаляем из card_instances по instanceId
-        await deleteCardInstance((worker as any).instanceId);
+        // Удаляем из card_instances по instanceId и обновляем локальный список экземпляров
+        const ok = await deleteCardInstance((worker as any).instanceId);
+        if (!ok) {
+          throw new Error('Failed to delete worker instance');
+        }
+        await loadCardInstances();
         console.log('🗑️ Deleted worker from card_instances:', (worker as any).instanceId);
       } else if (worker.source === 'inventory') {
         // Удаляем из инвентаря по ID
@@ -385,7 +396,7 @@ export const WorkersManagement = ({ onSpeedBoostChange }: WorkersManagementProps
             {/* Доступные рабочие */}
             <div>
               <label className="text-sm font-medium mb-2 block">{t(language, 'shelter.availableWorkers')}</label>
-              {availableWorkers.length === 0 ? (
+              {visibleWorkers.length === 0 ? (
                 <div className="text-center py-8 text-muted-foreground">
                   <Users className="w-12 h-12 mx-auto mb-2 opacity-50" />
                   <p>{t(language, 'shelter.noWorkersInInventory')}</p>
@@ -393,7 +404,7 @@ export const WorkersManagement = ({ onSpeedBoostChange }: WorkersManagementProps
                 </div>
               ) : (
                 <div className="grid gap-3">
-                  {availableWorkers.map((worker, i) => (
+                  {visibleWorkers.map((worker, i) => (
                     <div key={(worker as any).instanceId || `${worker.id}-${(worker as any)._idx ?? i}` } className="flex items-center justify-between p-3 border rounded-lg">
                       <div>
                         <h4 className="font-medium">{worker.name}</h4>
@@ -423,7 +434,7 @@ export const WorkersManagement = ({ onSpeedBoostChange }: WorkersManagementProps
               )}
             </div>
 
-            {availableWorkers.length > 0 && (
+            {visibleWorkers.length > 0 && (
               <div className="flex items-start gap-2 p-3 bg-amber-50 dark:bg-amber-950/20 rounded-lg">
                 <AlertTriangle className="w-4 h-4 text-amber-600 mt-0.5 shrink-0" />
                 <div className="text-sm text-amber-700 dark:text-amber-400">
