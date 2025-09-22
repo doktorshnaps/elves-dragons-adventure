@@ -50,6 +50,7 @@ import primasEye from "@/assets/items/primas_eye.png";
 import arachneClaw from "@/assets/items/arachne_claw.png";
 import arachneCrown from "@/assets/items/arachne_crown.png";
 import ashenThreadsCloak from "@/assets/items/ashen_threads_cloak.png";
+import { workerImagesByName } from "@/constants/workerImages";
 
 interface ItemTemplate {
   id: number;
@@ -149,6 +150,29 @@ const getItemImage = (itemId: string): string | null => {
   return imageMap[itemId] || null;
 };
 
+// Resolve image for item template with fallbacks
+const resolveItemImage = (item: ItemTemplate): string | null => {
+  // 1) Try imported static map
+  const mapped = getItemImage(item.item_id);
+  if (mapped) return mapped;
+
+  // 2) Workers images by name
+  if (item.type === 'worker' && workerImagesByName[item.name]) {
+    return workerImagesByName[item.name];
+  }
+
+  // 3) Use image_url from DB if it's a web path (not /src/)
+  if (item.image_url) {
+    if (item.image_url.startsWith('/src/')) {
+      // Invalid in browser bundle; fallback to known mappings
+      return null;
+    }
+    return item.image_url;
+  }
+
+  return null;
+};
+
 const ItemCard = ({ item }: { item: ItemTemplate }) => {
   const isMobile = useIsMobile();
   const { language } = useLanguage();
@@ -186,20 +210,18 @@ const ItemCard = ({ item }: { item: ItemTemplate }) => {
   const CardContent = () => (
     <Card className="p-2 bg-game-background border-game-accent hover:border-game-primary transition-all duration-300 h-full">
       <div className="w-full aspect-[3/4] mb-2 rounded-lg overflow-hidden flex items-center justify-center bg-game-surface/30 border border-game-accent/20">
-        {getItemImage(item.item_id) ? (
-          <img 
-            src={getItemImage(item.item_id)!} 
-            alt={item.name}
-            className="w-full h-full object-cover"
-            onError={(e) => {
-              // Fallback to icon if image fails to load
-              const target = e.target as HTMLImageElement;
-              target.style.display = 'none';
-              target.nextElementSibling?.classList.remove('hidden');
-            }}
-          />
-        ) : null}
-        <div className={`text-game-accent opacity-50 ${getItemImage(item.item_id) ? 'hidden' : ''}`}>
+        {(() => {
+          const src = resolveItemImage(item);
+          return src ? (
+            <img 
+              src={src}
+              alt={item.name}
+              className="w-full h-full object-cover"
+              onError={(e) => { (e.currentTarget as HTMLImageElement).src = '/placeholder.svg'; }}
+            />
+          ) : null;
+        })()}
+        <div className={`text-game-accent opacity-50 ${resolveItemImage(item) ? 'hidden' : ''}`}>
           {getTypeIcon(item.type)}
         </div>
       </div>
@@ -266,20 +288,18 @@ const ItemCard = ({ item }: { item: ItemTemplate }) => {
   const ExpandedCardContent = () => (
     <Card className="p-4 bg-game-background border-game-accent w-80 max-w-sm">
       <div className="w-full aspect-[3/4] mb-4 rounded-lg overflow-hidden flex items-center justify-center bg-game-surface/30 border border-game-accent/20">
-        {getItemImage(item.item_id) ? (
-          <img 
-            src={getItemImage(item.item_id)!} 
-            alt={item.name}
-            className="w-full h-full object-cover"
-            onError={(e) => {
-              // Fallback to icon if image fails to load
-              const target = e.target as HTMLImageElement;
-              target.style.display = 'none';
-              target.nextElementSibling?.classList.remove('hidden');
-            }}
-          />
-        ) : null}
-        <div className={`text-game-accent opacity-50 text-4xl ${getItemImage(item.item_id) ? 'hidden' : ''}`}>
+        {(() => {
+          const src = resolveItemImage(item);
+          return src ? (
+            <img 
+              src={src}
+              alt={item.name}
+              className="w-full h-full object-cover"
+              onError={(e) => { (e.currentTarget as HTMLImageElement).src = '/placeholder.svg'; }}
+            />
+          ) : null;
+        })()}
+        <div className={`text-game-accent opacity-50 text-4xl ${resolveItemImage(item) ? 'hidden' : ''}`}>
           {getTypeIcon(item.type)}
         </div>
       </div>
