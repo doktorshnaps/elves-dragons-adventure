@@ -37,8 +37,20 @@ export const WorkersManagement = ({ onSpeedBoostChange }: WorkersManagementProps
   const [selectedBuilding, setSelectedBuilding] = useState<string>("main_hall");
 
   const updateActiveWorkersInDB = async (workers: ActiveWorker[]) => {
-    const walletAddress = localStorage.getItem('walletAccountId');
-    if (!walletAddress) return;
+    // Используем game state для получения wallet address вместо localStorage
+    const walletAddress = gameState.loading ? localStorage.getItem('walletAccountId') : 
+                          (gameState as any).wallet_address || localStorage.getItem('walletAccountId');
+    
+    if (!walletAddress) {
+      console.warn('⚠️ No wallet address available for updating active workers in DB');
+      return;
+    }
+
+    console.log('🔄 Updating active workers in DB:', {
+      walletAddress,
+      workersCount: workers.length,
+      workers: workers.map(w => ({ id: w.id, name: w.name, building: w.building }))
+    });
 
     try {
       const { error } = await supabase.rpc('update_active_workers_by_wallet', { 
@@ -47,10 +59,12 @@ export const WorkersManagement = ({ onSpeedBoostChange }: WorkersManagementProps
       });
       
       if (error) {
-        console.error('Failed to update active workers:', error);
+        console.error('❌ Failed to update active workers in DB:', error);
+      } else {
+        console.log('✅ Active workers updated in DB successfully:', workers.length);
       }
     } catch (error) {
-      console.error('Error updating active workers:', error);
+      console.error('❌ Error updating active workers in DB:', error);
     }
   };
   
@@ -154,6 +168,12 @@ export const WorkersManagement = ({ onSpeedBoostChange }: WorkersManagementProps
     if (gameState.activeWorkers && Array.isArray(gameState.activeWorkers) && gameState.activeWorkers.length > 0) {
       console.log('🔄 Loading active workers from gameState:', gameState.activeWorkers.length);
       setActiveWorkers(gameState.activeWorkers);
+      // Также обновляем localStorage с данными из БД
+      try {
+        localStorage.setItem('activeWorkers', JSON.stringify(gameState.activeWorkers));
+      } catch (e) {
+        console.warn('Failed to save active workers to localStorage:', e);
+      }
     } else {
       // Если в gameState нет активных рабочих, пробуем загрузить из localStorage
       const cachedActiveWorkers = localStorage.getItem('activeWorkers');
@@ -162,7 +182,12 @@ export const WorkersManagement = ({ onSpeedBoostChange }: WorkersManagementProps
           const parsed = JSON.parse(cachedActiveWorkers);
           if (Array.isArray(parsed) && parsed.length > 0) {
             console.log('🔄 Loading active workers from localStorage:', parsed.length);
+            console.log('📊 localStorage workers data:', parsed.map(w => ({ id: w.id, name: w.name, startTime: w.startTime, building: w.building })));
             setActiveWorkers(parsed);
+            
+            // Важно! Синхронизируем localStorage с БД при загрузке
+            console.log('🔄 Syncing localStorage data to DB...');
+            updateActiveWorkersInDB(parsed);
           }
         } catch (e) {
           console.warn('Failed to parse cached activeWorkers:', e);
