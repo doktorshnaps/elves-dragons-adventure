@@ -100,6 +100,28 @@ serve(async (req) => {
 
     console.log(`🔍 Checking item type: "${itemTemplate.type}" for item: ${itemTemplate.name}`);
     
+    // Сначала списываем деньги с баланса пользователя
+    const totalCost = itemTemplate.value * quantity;
+    const { error: balanceError } = await supabase.rpc('atomic_balance_update', {
+      p_wallet_address: wallet_address,
+      p_price_deduction: totalCost
+    });
+
+    if (balanceError) {
+      console.error('❌ Error deducting balance:', balanceError);
+      // Откатываем изменения в инвентаре
+      await supabase
+        .from('shop_inventory')
+        .update({ 
+          available_quantity: inventoryItem.available_quantity,
+          updated_at: new Date().toISOString()
+        })
+        .eq('item_id', item_id);
+      throw balanceError;
+    }
+
+    console.log(`💰 Successfully deducted ${totalCost} ELL from balance`);
+    
     // Если это рабочий - создаем card_instance для каждого экземпляра, иначе добавляем в inventory через atomic_inventory_update  
     if (itemTemplate.type === 'worker') {
       console.log(`👷 Processing ${quantity} workers: ${itemTemplate.name} (item_id: ${itemTemplate.item_id})`);
@@ -157,27 +179,29 @@ serve(async (req) => {
     } else {
       console.log(`📦 Processing as regular item: ${itemTemplate.name}`);
       
-      // Для обычных предметов используем старую логику через atomic_inventory_update
-      const itemData = {
-        id: `item_${item_id}_${Date.now()}`,
-        name: itemTemplate.name,
-        description: itemTemplate.description,
-        type: itemTemplate.type,
-        rarity: itemTemplate.rarity || 'common',
-        value: itemTemplate.value,
-        stats: itemTemplate.stats,
-        image: itemTemplate.image_url
-      };
+      // Для обычных предметов добавляем в инвентарь без списания баланса (уже списан выше)
+      for (let i = 0; i < quantity; i++) {
+        const itemData = {
+          id: `item_${item_id}_${Date.now()}_${i}`,
+          name: itemTemplate.name,
+          description: itemTemplate.description,
+          type: itemTemplate.type,
+          rarity: itemTemplate.rarity || 'common',
+          value: itemTemplate.value,
+          stats: itemTemplate.stats,
+          image: itemTemplate.image_url
+        };
 
-      const { error: inventoryError } = await supabase.rpc('atomic_inventory_update', {
-        p_wallet_address: wallet_address,
-        p_price_deduction: 0, // Цена уже списана в shop
-        p_new_item: itemData
-      });
+        const { error: inventoryError } = await supabase.rpc('atomic_inventory_update', {
+          p_wallet_address: wallet_address,
+          p_price_deduction: 0, // Цена уже списана выше
+          p_new_item: itemData
+        });
 
-      if (inventoryError) {
-        console.error('❌ Error adding item to inventory:', inventoryError);
-        throw inventoryError;
+        if (inventoryError) {
+          console.error(`❌ Error adding item ${i+1}/${quantity} to inventory:`, inventoryError);
+          throw inventoryError;
+        }
       }
     }
 
