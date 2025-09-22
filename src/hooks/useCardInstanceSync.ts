@@ -10,73 +10,59 @@ export const useCardInstanceSync = () => {
   const { cardInstances, updateCardHealth, createCardInstance, deleteCardInstanceByTemplate } = useCardInstances();
   const { gameData, updateGameData } = useGameData();
 
-  // Создание экземпляров для карт, которых нет в базе
-  const syncCardsToInstances = useCallback(async () => {
-    if (!gameData.cards || !cardInstances) return;
+  // ОТКЛЮЧЕНО создание экземпляров из gameData.cards - card_instances теперь источник истины
+  // Больше не создаем экземпляры из gameData.cards, так как это может создавать дубликаты
 
-    const cards = gameData.cards as Card[];
-    const existingInstanceIds = new Set(cardInstances.map(ci => ci.card_template_id));
-    
-    console.log('🔄 Checking cards for instances:', {
-      totalCards: cards.length,
-      existingInstances: existingInstanceIds.size,
-      cardIds: cards.map(c => c.id),
-      instanceIds: Array.from(existingInstanceIds)
-    });
+  // Синхронизация всех карт из card_instances обратно в gameData
+  const syncAllCardsFromInstances = useCallback(async () => {
+    if (!cardInstances.length) return;
 
-    for (const card of cards) {
-      if (!existingInstanceIds.has(card.id)) {
-        console.log(`🆕 Creating instance for card: ${card.name} (${card.id})`);
-        const cardType = card.type === 'pet' ? 'dragon' : 'hero';
-        await createCardInstance(card, cardType);
-      }
-    }
-  }, [gameData.cards, cardInstances, createCardInstance]);
-
-  // Синхронизация здоровья карт с экземплярами
-  const syncHealthFromInstances = useCallback(() => {
-    if (!gameData.cards || !cardInstances.length) return;
-
-    const cards = gameData.cards as Card[];
-    const instancesById = new Map(cardInstances.map(ci => [ci.card_template_id, ci]));
-    
-    console.log('🔄 Syncing health from instances:', {
-      cardsCount: cards.length,
+    console.log('🔄 Rebuilding cards from card_instances:', {
       instancesCount: cardInstances.length,
-      mappedInstances: Array.from(instancesById.keys())
+      currentCardsCount: gameData.cards?.length || 0
     });
-    
-    let hasChanges = false;
-    const updatedCards = cards.map(card => {
-      const instance = instancesById.get(card.id);
-      if (instance && 
-          (card.currentHealth !== instance.current_health || 
-           card.lastHealTime !== new Date(instance.last_heal_time).getTime())) {
-        console.log(`💊 Updating health for ${card.name}: ${card.currentHealth} -> ${instance.current_health}`);
-        hasChanges = true;
+
+    // Создаем полную коллекцию карт из всех экземпляров 
+    const cardsFromInstances = cardInstances
+      .filter(instance => instance.card_type !== 'workers') // Исключаем рабочих
+      .map(instance => {
+        const cardData = instance.card_data as Card;
         return {
-          ...card,
+          ...cardData,
           currentHealth: instance.current_health,
-          lastHealTime: new Date(instance.last_heal_time).getTime()
-        };
-      } else if (!instance) {
-        console.log(`⚠️ No instance found for card: ${card.name} (${card.id})`);
-      }
-      return card;
+          lastHealTime: new Date(instance.last_heal_time).getTime(),
+          isInMedicalBay: instance.is_in_medical_bay || false
+        } as Card;
+      });
+
+    console.log('🔄 Cards rebuilt from instances:', {
+      totalCards: cardsFromInstances.length,
+      heroes: cardsFromInstances.filter(c => c.type === 'character').length,
+      dragons: cardsFromInstances.filter(c => c.type === 'pet').length
     });
+
+    // Обновляем gameData только если есть различия
+    const currentCards = gameData.cards || [];
+    const hasChanges = cardsFromInstances.length !== currentCards.length ||
+      cardsFromInstances.some(newCard => {
+        const existing = currentCards.find((c: any) => c.id === newCard.id);
+        return !existing || 
+          existing.currentHealth !== newCard.currentHealth ||
+          existing.lastHealTime !== newCard.lastHealTime;
+      });
 
     if (hasChanges) {
-      console.log('🔄 Updating game data with synced health');
-      updateGameData({ cards: updatedCards });
+      console.log('✅ Updating gameData with all cards from instances');
+      await updateGameData({ cards: cardsFromInstances });
       
       // Persist for legacy components and local sessions
-      localStorage.setItem('gameCards', JSON.stringify(updatedCards));
+      localStorage.setItem('gameCards', JSON.stringify(cardsFromInstances));
       
       // Dispatch global events for immediate UI sync
-      window.dispatchEvent(new CustomEvent('cardsUpdate', { detail: { cards: updatedCards } }));
-      window.dispatchEvent(new CustomEvent('cardsHealthUpdate', { detail: { cards: updatedCards } }));
+      window.dispatchEvent(new CustomEvent('cardsUpdate', { detail: { cards: cardsFromInstances } }));
+      window.dispatchEvent(new CustomEvent('cardsHealthUpdate', { detail: { cards: cardsFromInstances } }));
     }
-  }, [gameData.cards, cardInstances, updateGameData]);
+  }, [cardInstances, gameData.cards, updateGameData]);
 
   // Обработка регенерации здоровья
   const processHealthRegeneration = useCallback(async () => {
@@ -123,41 +109,15 @@ export const useCardInstanceSync = () => {
     }
   }, [cardInstances, updateCardHealth]);
 
-  // Синхронизация при изменении данных
-  useEffect(() => {
-    syncCardsToInstances();
-  }, [syncCardsToInstances]);
+  // ОТКЛЮЧЕНО создание экземпляров из gameData - источник истины теперь card_instances
 
   useEffect(() => {
-    syncHealthFromInstances();
-  }, [syncHealthFromInstances]);
+    syncAllCardsFromInstances();
+  }, [syncAllCardsFromInstances]);
 
-  // Очистка экземпляров, которых больше нет в колоде (НЕ КАСАЕТСЯ РАБОЧИХ!)
-  useEffect(() => {
-    if (!gameData.cards || !cardInstances.length) return;
-    const cards = gameData.cards as Card[];
-    const cardIds = new Set(cards.map(c => c.id));
-
-    // Получаем ID рабочих из activeWorkers
-    const activeWorkerIds = new Set();
-    if (gameData.activeWorkers && Array.isArray(gameData.activeWorkers)) {
-      gameData.activeWorkers.forEach((worker: any) => {
-        if (worker?.id) activeWorkerIds.add(worker.id);
-      });
-    }
-
-    // Удаляем только экземпляры НЕ-рабочих карт, которых нет в колоде
-    const toRemove = cardInstances.filter(inst => 
-      inst.card_type !== 'workers' && // НЕ удаляем рабочих
-      !cardIds.has(inst.card_template_id) && 
-      !activeWorkerIds.has(inst.card_template_id)
-    );
-    
-    if (toRemove.length > 0) {
-      console.log('🗑️ Removing card instances that are no longer in deck:', toRemove.map(r => r.card_template_id));
-      toRemove.forEach(inst => deleteCardInstanceByTemplate(inst.card_template_id));
-    }
-  }, [gameData.cards, gameData.activeWorkers, cardInstances, deleteCardInstanceByTemplate]);
+  // ОТКЛЮЧЕНА очистка экземпляров - card_instances теперь источник истины
+  // useEffect для очистки ОТКЛЮЧЕН, чтобы не удалять корректные карты
+  // Теперь card_instances является источником истины для коллекции карт
 
   // Таймер для регенерации здоровья ОТКЛЮЧЕН - здоровье не должно восстанавливаться автоматически
   // useEffect(() => {
@@ -173,7 +133,7 @@ export const useCardInstanceSync = () => {
   useEffect(() => {
     const handleHealthUpdate = (e: CustomEvent<{ instanceId: string; currentHealth: number; lastHealTime?: string }>) => {
       // Обновление произошло, синхронизируем с gameData
-      syncHealthFromInstances();
+      syncAllCardsFromInstances();
     };
 
     window.addEventListener('cardInstanceHealthUpdate', handleHealthUpdate as EventListener);
@@ -181,7 +141,7 @@ export const useCardInstanceSync = () => {
     return () => {
       window.removeEventListener('cardInstanceHealthUpdate', handleHealthUpdate as EventListener);
     };
-  }, [syncHealthFromInstances]);
+  }, [syncAllCardsFromInstances]);
 
   return {
     applyDamageToCard,
