@@ -897,7 +897,9 @@ export type Database = {
         Returns: boolean
       }
       remove_card_instance_by_id: {
-        Args: { p_instance_id: string; p_wallet_address: string }
+        Args:
+          | { p_instance_id: string; p_wallet_address: string }
+          | { p_instance_id: string; p_wallet_address: string }
         Returns: boolean
       }
       remove_card_instance_by_wallet: {

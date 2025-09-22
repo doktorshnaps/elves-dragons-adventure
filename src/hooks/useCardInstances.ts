@@ -179,10 +179,10 @@ export const useCardInstances = () => {
     if (!instance) return false;
 
     try {
-      // Используем имеющуюся функцию удаления по шаблону и кошельку
-      const { data, error } = await supabase.rpc('remove_card_instance_by_wallet', {
-        p_wallet_address: accountId,
-        p_card_template_id: instance.card_template_id
+      // Удаляем строго по instanceId и кошельку, чтобы не затронуть другие экземпляры этого шаблона
+      const { data, error } = await supabase.rpc('remove_card_instance_by_id', {
+        p_instance_id: instanceId,
+        p_wallet_address: accountId
       });
 
       if (error) throw error;
