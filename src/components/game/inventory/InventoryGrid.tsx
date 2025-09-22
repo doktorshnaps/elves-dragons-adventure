@@ -25,6 +25,12 @@ export const InventoryGrid = ({
   } = useLanguage();
   const unequippedItems = groupedItems.filter(item => !item.items.some(i => i.equipped));
 
+  const normalizeImageSrc = (src?: string) => {
+    if (!src) return '/placeholder.svg';
+    if (src.startsWith('/src/')) return '/placeholder.svg';
+    return src;
+  };
+
   // Формируем единый ключ для группы (включая count и первый id для уникальности)
   const keyFor = (g: GroupedItem) => `${g.name}-${g.type}-${g.value}-${g.count}-${g.items[0]?.id || ''}`;
 
@@ -45,11 +51,11 @@ export const InventoryGrid = ({
               <Card className="p-4 bg-game-background border-game-accent hover:border-game-primary transition-all duration-300 h-[320px] flex flex-col justify-between cursor-pointer">
                 {item.image ? (
                   <div className="w-full aspect-[4/3] mb-2 rounded-lg overflow-hidden">
-                    <img src={item.image} alt={item.name} className="w-full h-full object-cover" />
+                    <img src={normalizeImageSrc(item.image)} alt={item.name} className="w-full h-full object-cover" onError={(e) => { (e.currentTarget as HTMLImageElement).src = '/placeholder.svg'; }} />
                   </div>
                 ) : item.type === 'dragon_egg' ? (
                   <div className="w-full aspect-[4/3] mb-2 rounded-lg overflow-hidden bg-gray-800 flex items-center justify-center">
-                    <img src={item.items[0].image || "/lovable-uploads/8a069dd4-47ad-496c-a248-f796257f9233.png"} alt="Dragon Egg" className="w-full h-full object-contain opacity-50" />
+                    <img src={normalizeImageSrc(item.items[0].image)} alt="Dragon Egg" className="w-full h-full object-contain opacity-50" onError={(e) => { (e.currentTarget as HTMLImageElement).src = '/placeholder.svg'; }} />
                   </div>
                 ) : (
                   <div className="w-full aspect-[4/3] mb-2 rounded-lg overflow-hidden bg-gray-800 flex items-center justify-center">

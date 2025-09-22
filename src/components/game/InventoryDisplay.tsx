@@ -12,6 +12,7 @@ import { useLanguage } from "@/hooks/useLanguage";
 import { t } from "@/utils/translations";
 import { GroupedItem } from "./inventory/types";
 import { cardDatabase } from "@/data/cardDatabase";
+import { useCardInstances } from "@/hooks/useCardInstances";
 
 interface InventoryDisplayProps {
   onUseItem?: (item: Item) => void;
@@ -44,6 +45,40 @@ export const InventoryDisplay = ({
     currentCardIndex,
     totalCards
   } = useInventoryLogic(inventory);
+
+  // Включаем карточки рабочих из card_instances и из колоды карт в общий список инвентаря
+  const { cardInstances } = useCardInstances();
+
+  const workerItemsFromInstances: Item[] = (cardInstances || [])
+    .filter((ci) => ci.card_type === 'workers')
+    .map((ci) => ({
+      id: ci.id,
+      name: (ci.card_data as any)?.name || 'Рабочий',
+      type: 'worker',
+      value: (ci.card_data as any)?.stats?.speedBoost ?? (ci.card_data as any)?.value ?? 0,
+      description: (ci.card_data as any)?.description,
+      image: (ci.card_data as any)?.image,
+      stats: { workDuration: (ci.card_data as any)?.stats?.workDuration }
+    }));
+
+  const workerItemsFromCards: Item[] = (gameData.cards || [])
+    .filter((c: any) => c?.type === 'worker' || c?.type === 'workers')
+    .map((c: any) => ({
+      id: c.id,
+      name: c.name || 'Рабочий',
+      type: 'worker',
+      value: c.stats?.speedBoost ?? c.value ?? 0,
+      description: c.description,
+      image: c.image,
+      stats: { workDuration: c.stats?.workDuration }
+    }));
+
+  const allInventoryItems: Item[] = [
+    ...inventory,
+    ...(showOnlyPotions ? [] : workerItemsFromInstances),
+    ...(showOnlyPotions ? [] : workerItemsFromCards)
+  ];
+
 
   const handleUseItem = async (groupedItem: GroupedItem): Promise<boolean | void> => {
     if (readonly || groupedItem.items.length === 0) return false;
@@ -148,8 +183,8 @@ export const InventoryDisplay = ({
     }
   };
   const filteredInventory = showOnlyPotions 
-    ? inventory.filter(item => item.type === 'healthPotion')
-    : inventory;
+    ? allInventoryItems.filter(item => item.type === 'healthPotion')
+    : allInventoryItems;
 
   return (
     <div 
@@ -162,8 +197,8 @@ export const InventoryDisplay = ({
       }}
     >
       <div className="p-4">
-        <InventoryHeader balance={balance} />
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-y-1 gap-x-0.5">
+        <div className="space-y-4">
+          <InventoryHeader balance={balance} />
           {!showOnlyPotions && <DragonEggsList eggs={eggs} />}
           <InventoryGrid
             groupedItems={groupItems(filteredInventory)}
