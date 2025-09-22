@@ -224,52 +224,40 @@ export const WorkersManagement = ({ onSpeedBoostChange }: WorkersManagementProps
       let updatedInv = [...(gameState.inventory || [])] as any[];
       let updatedCards = [...(gameState.cards || [])] as any[];
       
-      // Удаляем из card_instances если есть instanceId
-      if ((worker as any).instanceId) {
+      console.log('🔍 Assigning worker:', {
+        workerId: worker.id,
+        workerName: worker.name,
+        workerSource: worker.source,
+        instanceId: (worker as any).instanceId,
+        templateId: (worker as any).templateId
+      });
+      
+      // Определяем источник рабочего и удаляем правильно
+      if (worker.source === 'card_instances' && (worker as any).instanceId) {
+        // Удаляем из card_instances по instanceId
         await deleteCardInstance((worker as any).instanceId);
         console.log('🗑️ Deleted worker from card_instances:', (worker as any).instanceId);
-      }
-      
-      // Удаляем из инвентаря - более точный поиск
-      const originalLength = updatedInv.length;
-      
-      // Ищем по точному совпадению ID
-      let removeIdx = updatedInv.findIndex((i: any) => 
-        i?.type === 'worker' && i.id === worker.id
-      );
-      
-      // Если не найден по ID, ищем по имени и характеристикам
-      if (removeIdx === -1) {
-        removeIdx = updatedInv.findIndex((i: any) => 
-          i?.type === 'worker' && 
-          i.name === worker.name && 
-          i.value === worker.value &&
-          JSON.stringify(i.stats) === JSON.stringify(worker.stats)
+      } else if (worker.source === 'inventory') {
+        // Удаляем из инвентаря по ID
+        const removeIdx = updatedInv.findIndex((i: any) => 
+          i?.type === 'worker' && i.id === worker.id
         );
-      }
-      
-      if (removeIdx >= 0) {
-        updatedInv.splice(removeIdx, 1);
-        console.log('🧹 Worker removed from inventory at index:', removeIdx, 'worker:', worker.name);
-        console.log('📦 Inventory size changed from', originalLength, 'to', updatedInv.length);
-      } else {
-        console.warn('⚠️ Could not find matching worker in inventory to remove:', {
-          workerId: worker.id,
-          workerName: worker.name,
-          workerValue: worker.value,
-          inventoryWorkers: updatedInv.filter(i => i?.type === 'worker').map(w => ({
-            id: w.id, name: w.name, value: w.value
-          }))
-        });
-      }
-
-      // Если рабочий из карт, удаляем одну копию из колоды
-      if ((worker as any).source === 'cards') {
-        const cardsBefore = updatedCards.length;
-        const idx = updatedCards.findIndex((c: any) => (c?.type === 'worker' || c?.type === 'workers') && c.id === worker.id);
-        if (idx >= 0) {
-          updatedCards.splice(idx, 1);
-          console.log('🧹 Worker removed from cards at index:', idx, 'size changed from', cardsBefore, 'to', updatedCards.length);
+        
+        if (removeIdx >= 0) {
+          updatedInv.splice(removeIdx, 1);
+          console.log('🧹 Worker removed from inventory at index:', removeIdx, 'worker:', worker.name);
+        } else {
+          console.warn('⚠️ Could not find matching worker in inventory to remove:', worker.id);
+        }
+      } else if (worker.source === 'cards') {
+        // Удаляем из карт по ID - берем первое совпадение
+        const removeIdx = updatedCards.findIndex((c: any) => 
+          (c?.type === 'worker' || c?.type === 'workers') && c.id === worker.id
+        );
+        
+        if (removeIdx >= 0) {
+          updatedCards.splice(removeIdx, 1);
+          console.log('🧹 Worker removed from cards at index:', removeIdx, 'worker:', worker.name);
         } else {
           console.warn('⚠️ Could not find matching worker in cards to remove:', worker.id);
         }
