@@ -290,8 +290,11 @@ export const useUnifiedGameState = (): UnifiedGameState => {
     }
   }, [accountId, queryClient]);
 
+  // Текущее состояние: показываем серверные данные, если нет активного оптимистичного апдейта
+  const currentData = isOptimistic ? (optimisticData as GameData) : (gameData as GameData);
+
   return {
-    ...optimisticData,
+    ...currentData,
     loading: isLoading || updateMutation.isPending,
     error: error?.message || null,
     actions
