@@ -1,5 +1,5 @@
 import { useQuery, useQueryClient, useMutation } from '@tanstack/react-query';
-import { useCallback, useMemo } from 'react';
+import { useCallback, useMemo, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useWallet } from './useWallet';
 import { useOptimisticUpdates } from './useOptimisticUpdates';
@@ -118,6 +118,11 @@ export const useUnifiedGameState = (): UnifiedGameState => {
     optimisticUpdate,
     updateData
   } = useOptimisticUpdates(gameData);
+
+  // Sync optimistic data with server data when query returns new values
+  useEffect(() => {
+    updateData(gameData);
+  }, [gameData, updateData]);
 
   // Мутация для обновления данных с версионированием
   const updateMutation = useMutation({
