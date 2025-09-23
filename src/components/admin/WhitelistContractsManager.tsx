@@ -139,6 +139,28 @@ export const WhitelistContractsManager = () => {
     }
   };
 
+  const validateAllNFTWhitelists = async () => {
+    try {
+      const { data, error } = await supabase.functions.invoke('check-nft-whitelist', {
+        body: { check_all_automatic: true }
+      });
+
+      if (error) throw error;
+
+      toast({
+        title: "Проверка завершена",
+        description: data?.message || "Проверка автоматических вайт-листов завершена",
+      });
+    } catch (error: any) {
+      console.error('Error validating NFT whitelists:', error);
+      toast({
+        title: "Ошибка",
+        description: "Не удалось выполнить проверку",
+        variant: "destructive",
+      });
+    }
+  };
+
   useEffect(() => {
     loadContracts();
   }, []);
@@ -182,6 +204,18 @@ export const WhitelistContractsManager = () => {
           <Button onClick={addContract} className="w-full">
             <Plus className="w-4 h-4 mr-2" />
             Добавить контракт
+          </Button>
+        </div>
+
+        {/* Кнопка валидации */}
+        <div className="p-4 border rounded-lg bg-yellow-50">
+          <h3 className="font-medium mb-2">Проверка существующих вайт-листов</h3>
+          <p className="text-sm text-muted-foreground mb-3">
+            Проверить всех игроков с автоматическим вайт-листом на наличие NFT. 
+            Если NFT больше нет, вайт-лист будет отозван.
+          </p>
+          <Button onClick={validateAllNFTWhitelists} variant="outline" className="w-full">
+            🔍 Проверить и отозвать недействительные вайт-листы
           </Button>
         </div>
 

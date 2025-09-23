@@ -544,9 +544,11 @@ export type Database = {
           created_at: string
           id: string
           is_active: boolean
+          nft_contract_used: string | null
           notes: string | null
           updated_at: string
           wallet_address: string
+          whitelist_source: string | null
         }
         Insert: {
           added_at?: string
@@ -554,9 +556,11 @@ export type Database = {
           created_at?: string
           id?: string
           is_active?: boolean
+          nft_contract_used?: string | null
           notes?: string | null
           updated_at?: string
           wallet_address: string
+          whitelist_source?: string | null
         }
         Update: {
           added_at?: string
@@ -564,9 +568,11 @@ export type Database = {
           created_at?: string
           id?: string
           is_active?: boolean
+          nft_contract_used?: string | null
           notes?: string | null
           updated_at?: string
           wallet_address?: string
+          whitelist_source?: string | null
         }
         Relationships: []
       }
@@ -959,6 +965,10 @@ export type Database = {
           p_table_name: string
         }
         Returns: Json
+      }
+      revoke_whitelist_if_no_nft: {
+        Args: { p_nft_contracts: string[]; p_wallet_address: string }
+        Returns: boolean
       }
       stop_healing_without_recovery: {
         Args: { p_card_instance_id: string }

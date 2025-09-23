@@ -39,3 +39,6 @@ verify_jwt = false
 
 [functions.sync-nft-cards]
 verify_jwt = false
+
+[functions.validate-nft-whitelist]
+verify_jwt = false

@@ -5,10 +5,6 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 }
 
-interface NFTResponse {
-  result?: any[];
-}
-
 // Функция для получения NFT с контракта
 async function fetchNFTsFromContract(walletAddress: string, contractId: string) {
   try {
@@ -58,11 +54,11 @@ Deno.serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     );
 
-    const { wallet_address } = await req.json();
+    const { wallet_address, check_all_automatic = false } = await req.json();
 
-    if (!wallet_address) {
+    if (!wallet_address && !check_all_automatic) {
       return new Response(
-        JSON.stringify({ error: 'wallet_address is required' }),
+        JSON.stringify({ error: 'wallet_address is required or set check_all_automatic=true' }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
@@ -86,7 +82,63 @@ Deno.serve(async (req) => {
     const contractAddresses = whitelistContracts.map(c => c.contract_address);
     console.log('📜 Checking contracts:', contractAddresses);
 
-    // Проверяем каждый контракт на наличие NFT
+    // Если запрошена проверка всех автоматических записей
+    if (check_all_automatic) {
+      console.log('🔄 Checking all automatic whitelist entries...');
+      
+      const { data: automaticEntries, error: entriesError } = await supabase
+        .from('whitelist')
+        .select('wallet_address')
+        .eq('whitelist_source', 'nft_automatic')
+        .eq('is_active', true);
+
+      if (entriesError) {
+        console.error('Error fetching automatic entries:', entriesError);
+        return new Response(
+          JSON.stringify({ error: 'Failed to fetch automatic entries' }),
+          { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      let revokedCount = 0;
+      for (const entry of automaticEntries || []) {
+        // Проверяем NFT для каждого кошелька
+        let hasQualifyingNFT = false;
+        const foundContracts: string[] = [];
+
+        for (const contractAddress of contractAddresses) {
+          const nfts = await fetchNFTsFromContract(entry.wallet_address, contractAddress);
+          if (nfts && nfts.length > 0) {
+            hasQualifyingNFT = true;
+            foundContracts.push(contractAddress);
+          }
+        }
+
+        // Если NFT больше нет, отзываем вайт-лист
+        if (!hasQualifyingNFT) {
+          const { data: revokeResult, error: revokeError } = await supabase
+            .rpc('revoke_whitelist_if_no_nft', {
+              p_wallet_address: entry.wallet_address,
+              p_nft_contracts: foundContracts
+            });
+
+          if (!revokeError && revokeResult) {
+            revokedCount++;
+            console.log(`❌ Revoked whitelist for ${entry.wallet_address} - no NFT found`);
+          }
+        }
+      }
+
+      return new Response(
+        JSON.stringify({ 
+          success: true, 
+          message: `Checked all automatic entries, revoked ${revokedCount} entries` 
+        }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // Проверяем конкретный кошелек
     let hasQualifyingNFT = false;
     const foundContracts: string[] = [];
 
@@ -99,45 +151,37 @@ Deno.serve(async (req) => {
       }
     }
 
-    // Если найдены квалифицирующие NFT, добавляем в вайт-лист
-    if (hasQualifyingNFT) {
-      const { data: whitelistResult, error: whitelistError } = await supabase
-        .rpc('check_and_add_to_whitelist_by_nft', {
-          p_wallet_address: wallet_address,
-          p_nft_contracts: foundContracts
-        });
+    // Вызываем функцию проверки/добавления/отзыва вайт-листа
+    const { data: whitelistResult, error: whitelistError } = await supabase
+      .rpc('check_and_add_to_whitelist_by_nft', {
+        p_wallet_address: wallet_address,
+        p_nft_contracts: foundContracts
+      });
 
-      if (whitelistError) {
-        console.error('Error adding to whitelist:', whitelistError);
-        return new Response(
-          JSON.stringify({ error: 'Failed to add to whitelist' }),
-          { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-        );
-      }
-
-      console.log('✅ Successfully added to whitelist via NFT ownership');
-      
+    if (whitelistError) {
+      console.error('Error checking whitelist:', whitelistError);
       return new Response(
-        JSON.stringify({ 
-          success: true, 
-          addedToWhitelist: whitelistResult,
-          foundContracts: foundContracts,
-          message: whitelistResult ? 'Added to whitelist via NFT ownership' : 'Already whitelisted'
-        }),
-        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
-    } else {
-      console.log('❌ No qualifying NFTs found');
-      return new Response(
-        JSON.stringify({ 
-          success: true, 
-          addedToWhitelist: false,
-          foundContracts: [],
-          message: 'No qualifying NFTs found'
-        }),
-        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        JSON.stringify({ error: 'Failed to check whitelist' }),
+        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
+
+    const message = hasQualifyingNFT 
+      ? (whitelistResult ? 'Added to whitelist via NFT ownership' : 'Already whitelisted')
+      : 'No qualifying NFTs found, automatic whitelist revoked if existed';
+
+    console.log('✅', message);
+    
+    return new Response(
+      JSON.stringify({ 
+        success: true, 
+        addedToWhitelist: whitelistResult,
+        foundContracts: foundContracts,
+        hasQualifyingNFT: hasQualifyingNFT,
+        message: message
+      }),
+      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+    );
 
   } catch (error) {
     console.error('Error in check-nft-whitelist:', error);
