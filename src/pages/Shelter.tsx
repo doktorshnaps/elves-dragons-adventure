@@ -17,6 +17,7 @@ import { useLanguage } from "@/hooks/useLanguage";
 import { useWorkerSync } from "@/hooks/useWorkerSync";
 import { t } from "@/utils/translations";
 import { useState, useEffect } from "react";
+import { useBuildingUpgrades } from "@/hooks/useBuildingUpgrades";
 
 interface NestUpgrade {
   id: string;
@@ -63,6 +64,8 @@ export const Shelter = () => {
   } = useGameStore();
   const [activeTab, setActiveTab] = useState<"upgrades" | "crafting" | "barracks" | "dragonlair" | "medical" | "workers">("upgrades");
   const [workersSpeedBoost, setWorkersSpeedBoost] = useState(0);
+  
+  const { startUpgrade, getUpgradeProgress, isUpgrading, formatRemainingTime } = useBuildingUpgrades();
 
   // Получаем активных рабочих: сначала из gameState, при пустом значении — из localStorage
   const getActiveWorkersSafe = () => {
@@ -180,9 +183,9 @@ export const Shelter = () => {
   // Функция для расчета стоимости апгрейда для каждого уровня
   const getUpgradeCost = (buildingId: string, currentLevel: number) => {
     const baseCosts = {
-      main_hall: { wood: 30, stone: 20, iron: 0, gold: 50 },
+      main_hall: { wood: 0, stone: 0, iron: 0, gold: 50 }, // Только ELL
       workshop: { wood: 40, stone: 25, iron: 10, gold: 80 },
-      storage: { wood: 35, stone: 35, iron: 5, gold: 60 },
+      storage: { wood: 0, stone: 0, iron: 0, gold: 100 }, // Только ELL + требует главный зал
       sawmill: { wood: 25, stone: 15, iron: 3, gold: 40 },
       quarry: { wood: 20, stone: 30, iron: 5, gold: 60 },
       barracks: { wood: 50, stone: 40, iron: 15, gold: 120 },
@@ -199,6 +202,30 @@ export const Shelter = () => {
       iron: Math.floor(baseCost.iron * multiplier),
       gold: Math.floor(baseCost.gold * multiplier)
     };
+  };
+
+  // Функция для получения времени улучшения (в минутах)
+  const getUpgradeTime = (buildingId: string) => {
+    const baseTimes = {
+      main_hall: 5, // 5 минут
+      storage: 10, // 10 минут
+      workshop: 15,
+      sawmill: 20,
+      quarry: 25,
+      barracks: 30,
+      dragon_lair: 35,
+      medical: 20
+    };
+    
+    return baseTimes[buildingId] || 15;
+  };
+
+  // Функция для проверки требований для улучшения
+  const canUpgradeBuilding = (buildingId: string) => {
+    if (buildingId === 'storage') {
+      return buildingLevels.main_hall >= 1; // Требует 1 уровень главного зала
+    }
+    return true;
   };
 
   const nestUpgrades: NestUpgrade[] = [
@@ -315,7 +342,8 @@ export const Shelter = () => {
            resources.wood >= upgrade.cost.wood && 
            resources.stone >= upgrade.cost.stone && 
            resources.iron >= upgrade.cost.iron && 
-           resources.gold >= upgrade.cost.gold;
+           resources.gold >= upgrade.cost.gold &&
+           canUpgradeBuilding(upgrade.id);
   };
   
   const canAffordCraft = (recipe: CraftRecipe) => {
@@ -327,7 +355,7 @@ export const Shelter = () => {
   };
 
   const handleUpgrade = async (upgrade: NestUpgrade) => {
-    if (!canAffordUpgrade(upgrade)) return;
+    if (!canAffordUpgrade(upgrade) || isUpgrading(upgrade.id)) return;
     
     const newResources = {
       wood: resources.wood - upgrade.cost.wood,
@@ -336,20 +364,16 @@ export const Shelter = () => {
       gold: resources.gold - upgrade.cost.gold
     };
     
-    const newBuildingLevels = {
-      ...buildingLevels,
-      [upgrade.id]: upgrade.level + 1
-    };
+    // Обновляем ресурсы
+    await gameState.actions.updateResources(newResources);
     
-    // Обновляем ресурсы и уровни зданий
-    await gameState.actions.batchUpdate({
-      ...newResources,
-      buildingLevels: newBuildingLevels
-    });
+    // Запускаем процесс улучшения
+    const upgradeTime = getUpgradeTime(upgrade.id);
+    startUpgrade(upgrade.id, upgradeTime, upgrade.level + 1);
 
     toast({
-      title: t(language, 'shelter.buildingUpgraded'),
-      description: `${upgrade.name} ${t(language, 'shelter.level')} ${upgrade.level + 1}`
+      title: "Улучшение начато!",
+      description: `${upgrade.name} будет улучшено через ${upgradeTime} минут`
     });
   };
 
@@ -394,15 +418,30 @@ export const Shelter = () => {
               <div className="flex justify-between gap-2">
                 <div className="text-center flex-1">
                   <div className="text-lg">🪵</div>
-                  <div className="text-xs font-semibold">{resources.wood}</div>
+                  <div className="text-xs font-semibold">
+                    {resources.wood}
+                    {buildingLevels.storage > 0 && (
+                      <span className="text-muted-foreground">/{100 * buildingLevels.storage}</span>
+                    )}
+                  </div>
                 </div>
                 <div className="text-center flex-1">
                   <div className="text-lg">🪨</div>
-                  <div className="text-xs font-semibold">{resources.stone}</div>
+                  <div className="text-xs font-semibold">
+                    {resources.stone}
+                    {buildingLevels.storage > 0 && (
+                      <span className="text-muted-foreground">/{100 * buildingLevels.storage}</span>
+                    )}
+                  </div>
                 </div>
                 <div className="text-center flex-1">
                   <div className="text-lg">⚙️</div>
-                  <div className="text-xs font-semibold">{resources.iron}</div>
+                  <div className="text-xs font-semibold">
+                    {resources.iron}
+                    {buildingLevels.storage > 0 && (
+                      <span className="text-muted-foreground">/{100 * buildingLevels.storage}</span>
+                    )}
+                  </div>
                 </div>
                 <div className="text-center flex-1">
                   <div className="text-lg">💰</div>
@@ -484,16 +523,35 @@ export const Shelter = () => {
                        <strong>{t(language, 'shelter.benefit')}:</strong> {upgrade.benefit}
                      </div>
                      
-                     {upgrade.level < upgrade.maxLevel && (
-                       <div className="space-y-2">
-                         <div className="text-sm font-medium">{t(language, 'shelter.upgradeCost')}:</div>
-                         <div className="grid grid-cols-4 gap-2 text-sm">
-                           <div className="flex items-center gap-1">
-                             <span>🪵</span>
-                             <span className={resources.wood >= upgrade.cost.wood ? 'text-green-600' : 'text-red-600'}>
-                               {upgrade.cost.wood}
-                             </span>
-                           </div>
+                      {/* Прогресс улучшения */}
+                      {(() => {
+                        const progress = getUpgradeProgress(upgrade.id);
+                        if (progress) {
+                          return (
+                            <div className="space-y-2">
+                              <div className="text-sm font-medium text-blue-600">
+                                Улучшается до уровня {progress.targetLevel}...
+                              </div>
+                              <Progress value={progress.progress} className="h-2" />
+                              <div className="text-xs text-muted-foreground">
+                                Осталось: {formatRemainingTime(progress.remainingTime)}
+                              </div>
+                            </div>
+                          );
+                        }
+                        return null;
+                      })()}
+                      
+                      {upgrade.level < upgrade.maxLevel && !isUpgrading(upgrade.id) && (
+                        <div className="space-y-2">
+                          <div className="text-sm font-medium">{t(language, 'shelter.upgradeCost')}:</div>
+                          <div className="grid grid-cols-4 gap-2 text-sm">
+                            <div className="flex items-center gap-1">
+                              <span>🪵</span>
+                              <span className={resources.wood >= upgrade.cost.wood ? 'text-green-600' : 'text-red-600'}>
+                                {upgrade.cost.wood}
+                              </span>
+                            </div>
                            <div className="flex items-center gap-1">
                              <span>🪨</span>
                              <span className={resources.stone >= upgrade.cost.stone ? 'text-green-600' : 'text-red-600'}>
@@ -513,13 +571,25 @@ export const Shelter = () => {
                              </span>
                            </div>
                          </div>
-                         <Button 
-                           onClick={() => handleUpgrade(upgrade)} 
-                           disabled={!canAffordUpgrade(upgrade)}
-                           className="w-full"
-                         >
-                           {upgrade.level === 0 ? t(language, 'shelter.build') : t(language, 'shelter.upgrade')}
-                         </Button>
+                          {/* Показываем время улучшения */}
+                          <div className="text-xs text-muted-foreground">
+                            Время улучшения: {getUpgradeTime(upgrade.id)} минут
+                          </div>
+                          
+                          {/* Показываем требования */}
+                          {upgrade.id === 'storage' && buildingLevels.main_hall < 1 && (
+                            <div className="text-xs text-red-600">
+                              Требуется: Главный зал 1 уровня
+                            </div>
+                          )}
+                          
+                          <Button 
+                            onClick={() => handleUpgrade(upgrade)} 
+                            disabled={!canAffordUpgrade(upgrade)}
+                            className="w-full"
+                          >
+                            {upgrade.level === 0 ? t(language, 'shelter.build') : t(language, 'shelter.upgrade')}
+                          </Button>
                        </div>
                      )}
                      

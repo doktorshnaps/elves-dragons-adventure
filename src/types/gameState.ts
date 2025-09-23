@@ -4,6 +4,9 @@ export interface GameData {
   stone: number;
   iron: number;
   gold: number;
+  maxWood?: number;
+  maxStone?: number;
+  maxIron?: number;
   cards: any[];
   initialized: boolean;
   inventory: any[];

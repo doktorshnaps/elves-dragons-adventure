@@ -1,4 +1,4 @@
-import React, { useState, startTransition } from 'react';
+import React, { useState, startTransition, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -8,6 +8,8 @@ import { useCardHealthSync } from '@/hooks/useCardHealthSync';
 import { AttackOrderSelector } from './AttackOrderSelector';
 import { TeamBattleArena } from './TeamBattleArena';
 import { DungeonType } from '@/constants/dungeons';
+import { DungeonRewardModal } from '@/components/game/modals/DungeonRewardModal';
+import { useDungeonRewards } from '@/hooks/adventure/useDungeonRewards';
 interface TeamBattlePageProps {
   dungeonType: DungeonType;
 }
@@ -16,9 +18,12 @@ export const TeamBattlePage: React.FC<TeamBattlePageProps> = ({
 }) => {
   const navigate = useNavigate();
   const [battleStarted, setBattleStarted] = useState<boolean>(false);
+  const [monstersKilled, setMonstersKilled] = useState<Array<{level: number, dungeonType: string}>>([]);
   
   // Sync health from database on component mount
   useCardHealthSync();
+  
+  const { pendingReward, processDungeonCompletion, clearPendingReward } = useDungeonRewards();
   
   const {
     battleState,
@@ -61,8 +66,32 @@ export const TeamBattlePage: React.FC<TeamBattlePageProps> = ({
     });
   };
 
+  // Отслеживаем убийства монстров
+  useEffect(() => {
+    if (battleState.opponents.length > aliveOpponents.length) {
+      const killedCount = battleState.opponents.length - aliveOpponents.length;
+      const newKills = Array(killedCount).fill({
+        level: battleState.level,
+        dungeonType: dungeonType
+      });
+      setMonstersKilled(prev => [...prev, ...newKills]);
+    }
+  }, [aliveOpponents.length, battleState.opponents.length, battleState.level, dungeonType]);
+
   // Check if battle is over
   const isBattleOver = alivePairs.length === 0 || aliveOpponents.length === 0;
+  
+  // Обработка завершения боя
+  useEffect(() => {
+    if (isBattleOver && battleStarted && monstersKilled.length > 0) {
+      const isVictory = alivePairs.length > 0;
+      const isFullCompletion = isVictory && battleState.level >= 10;
+      
+      // Обрабатываем награды за подземелье
+      processDungeonCompletion(monstersKilled, battleState.level, isFullCompletion);
+    }
+  }, [isBattleOver, battleStarted, monstersKilled, alivePairs.length, battleState.level, processDungeonCompletion]);
+  
   if (isBattleOver && battleStarted) {
     return <div className="min-h-screen p-4">
         <div className="max-w-2xl mx-auto pt-20">
@@ -108,5 +137,13 @@ export const TeamBattlePage: React.FC<TeamBattlePageProps> = ({
       </div>
       
       <TeamBattleArena playerPairs={battleState.playerPairs} opponents={battleState.opponents} attackOrder={attackOrder} isPlayerTurn={isPlayerTurn} onAttack={executePlayerAttack} onAbilityUse={executeAbilityUse} onEnemyAttack={executeEnemyAttack} onCounterAttack={executeCounterAttack} level={battleState.level} />
+      
+      {pendingReward && (
+        <DungeonRewardModal
+          isOpen={!!pendingReward}
+          onClose={clearPendingReward}
+          reward={pendingReward}
+        />
+      )}
     </>;
 };
