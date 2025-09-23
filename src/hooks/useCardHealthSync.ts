@@ -35,11 +35,17 @@ export const useCardHealthSync = () => {
       console.log('🔄 Syncing card health from card_instances (local UI update only)');
       try {
         localStorage.setItem('gameCards', JSON.stringify(updatedCards));
-      } catch {}
-      // Notify other components; no RPC write to avoid spam
-      window.dispatchEvent(new CustomEvent('cardsUpdate', {
-        detail: { cards: updatedCards }
-      }));
+        
+        // Debounce the localStorage sync to avoid conflicts with team selection
+        setTimeout(() => {
+          // Notify other components; no RPC write to avoid spam
+          window.dispatchEvent(new CustomEvent('cardsUpdate', {
+            detail: { cards: updatedCards }
+          }));
+        }, 100);
+      } catch (error) {
+        console.warn('Failed to sync card health to localStorage:', error);
+      }
     }
   }, [cardInstances, gameData.cards]);
 

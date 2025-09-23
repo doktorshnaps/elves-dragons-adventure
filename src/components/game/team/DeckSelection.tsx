@@ -96,7 +96,12 @@ export const DeckSelection = ({
     return dragons.filter(dragon => dragon.faction === heroFaction && (!heroRarity || dragon.rarity <= heroRarity) && !isDragonSelected(dragon));
   };
   const handleHeroSelect = (hero: CardType) => {
-    if (selectedPairs.length >= 5) return;
+    console.log('🎯 DeckSelection handleHeroSelect called for hero:', hero.name);
+    if (selectedPairs.length >= 5) {
+      console.warn('🚫 Team is full in DeckSelection');
+      return;
+    }
+    console.log('🎯 Calling onPairSelect from DeckSelection');
     onPairSelect(hero);
     setShowHeroDeck(false);
   };

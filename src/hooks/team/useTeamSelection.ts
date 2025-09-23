@@ -74,15 +74,26 @@ export const useTeamSelection = () => {
   useCardHealthSync();
 
   const handlePairSelect = async (hero: CardType, dragon?: CardType) => {
-    if (selectedPairs.length >= 5) return;
+    console.log('🎯 handlePairSelect called with hero:', hero.name, 'selectedPairs:', selectedPairs.length);
+    if (selectedPairs.length >= 5) {
+      console.warn('🚫 Team is full, cannot add more heroes');
+      return;
+    }
 
     const newPair: TeamPair = { hero, dragon };
     const newPairs = [...selectedPairs, newPair];
     
+    console.log('🎯 Adding new pair to team. New team size:', newPairs.length);
+    
     // Save to game data
-    await updateGameData({
-      selectedTeam: newPairs
-    });
+    try {
+      await updateGameData({
+        selectedTeam: newPairs
+      });
+      console.log('✅ Successfully added hero to team');
+    } catch (error) {
+      console.error('❌ Failed to add hero to team:', error);
+    }
   };
 
   const handlePairRemove = async (index: number) => {

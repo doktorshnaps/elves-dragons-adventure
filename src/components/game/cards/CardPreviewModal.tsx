@@ -19,11 +19,14 @@ export const CardPreviewModal = ({ card, open, onClose, actionLabel, onAction, d
 
   return (
     <Dialog open={open} onOpenChange={(v) => { if (!v) onClose(); }}>
-      <DialogContent className="z-[60] max-w-3xl max-h-[90vh] overflow-y-auto bg-game-surface border-game-accent">
+      <DialogContent 
+        className="z-[60] max-w-3xl max-h-[90vh] overflow-y-auto bg-game-surface border-game-accent"
+        aria-describedby="card-details"
+      >
         <DialogHeader>
           <DialogTitle className="text-game-accent">{card.name}</DialogTitle>
         </DialogHeader>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div id="card-details" className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div className="w-full flex items-center justify-center">
             <div className="w-full h-[60vh] md:h-[80vh] max-w-full rounded-lg border border-game-accent shadow-lg overflow-hidden">
               <CardImage image={card.image || "/placeholder.svg"} name={`${card.name} полное изображение`} />
@@ -74,7 +77,12 @@ export const CardPreviewModal = ({ card, open, onClose, actionLabel, onAction, d
             {actionLabel && onAction && (
               <button
                 type="button"
-                onClick={onAction}
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  console.log('🎯 Hero selection button clicked');
+                  onAction();
+                }}
                 className="w-full mt-2 bg-game-surface border-2 border-game-accent hover:bg-game-surface/80 text-game-accent rounded px-4 py-2 transition"
               >
                 {actionLabel}

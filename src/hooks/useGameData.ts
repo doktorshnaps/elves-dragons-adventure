@@ -155,11 +155,13 @@ export const useGameData = () => {
     const walletAddress = localStorage.getItem('walletAccountId');
     if (!walletAddress) return;
 
-    // Optimistic UI update: apply changes immediately
-    const prevSnapshot = gameData;
-    setGameData((prev) => ({ ...prev, ...updates }));
+    // Store original state for rollback
+    const originalGameData = { ...gameData };
 
     try {
+      // Optimistic UI update: apply changes immediately
+      setGameData((prev) => ({ ...prev, ...updates }));
+
       // Debug: trace card and team updates sources
       if (updates.cards !== undefined) {
         console.warn('🧭 updateGameData(cards): incoming', {
@@ -211,7 +213,7 @@ export const useGameData = () => {
       if (error) {
         console.error('❌ Error updating game data:', error);
         // Rollback optimistic update
-        setGameData(prevSnapshot);
+        setGameData(originalGameData);
         toast({
           title: "Ошибка сохранения",
           description: "Не удалось сохранить данные игры",
@@ -282,7 +284,7 @@ export const useGameData = () => {
     } catch (error) {
       console.error('Error in updateGameData:', error);
       // Rollback optimistic update on unexpected errors
-      setGameData(prevSnapshot);
+      setGameData(originalGameData);
     }
   }, [toast, gameData]);
 
