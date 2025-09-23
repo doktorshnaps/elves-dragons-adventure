@@ -194,6 +194,22 @@ export const useWallet = () => {
               console.log('🎮 Syncing NFT cards for wallet:', accountId);
               await syncNFTCards(accountId);
 
+              // Check NFT whitelist
+              try {
+                console.log('🔍 Checking NFT whitelist for:', accountId);
+                const { data, error } = await supabase.functions.invoke('check-nft-whitelist', {
+                  body: { wallet_address: accountId }
+                });
+                
+                if (error) {
+                  console.log('⚠️ NFT whitelist check failed:', error);
+                } else if (data?.addedToWhitelist) {
+                  console.log('✅ Added to whitelist via NFT ownership');
+                }
+              } catch (whitelistError) {
+                console.log('⚠️ NFT whitelist check failed (non-critical):', whitelistError);
+              }
+
               // Notify app about wallet change so data can be reloaded
               window.dispatchEvent(new CustomEvent('wallet-changed', { detail: { walletAddress: accountId } }));
 

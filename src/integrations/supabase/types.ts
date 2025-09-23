@@ -570,6 +570,39 @@ export type Database = {
         }
         Relationships: []
       }
+      whitelist_contracts: {
+        Row: {
+          added_by_wallet_address: string
+          contract_address: string
+          contract_name: string | null
+          created_at: string
+          description: string | null
+          id: string
+          is_active: boolean
+          updated_at: string
+        }
+        Insert: {
+          added_by_wallet_address: string
+          contract_address: string
+          contract_name?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          updated_at?: string
+        }
+        Update: {
+          added_by_wallet_address?: string
+          contract_address?: string
+          contract_name?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          updated_at?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
@@ -727,6 +760,10 @@ export type Database = {
       cancel_marketplace_listing: {
         Args: { p_listing_id: string }
         Returns: undefined
+      }
+      check_and_add_to_whitelist_by_nft: {
+        Args: { p_nft_contracts: string[]; p_wallet_address: string }
+        Returns: boolean
       }
       create_card_instance_by_wallet: {
         Args: { p_card: Json; p_wallet_address: string }
