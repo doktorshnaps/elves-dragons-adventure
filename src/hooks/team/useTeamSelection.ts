@@ -59,8 +59,9 @@ export const useTeamSelection = () => {
 
     // Exclude pairs where hero is in medical bay and drop dragons that are in medical bay
     const filtered: TeamPair[] = source
-      .filter(pair => pair?.hero && !(pair.hero as any).isInMedicalBay)
+      .filter(pair => !!pair?.hero)
       .map(pair => {
+        // Drop dragons that are currently in medical bay, but keep the hero visible
         if (pair.dragon && (pair.dragon as any).isInMedicalBay) {
           return { ...pair, dragon: undefined };
         }
@@ -69,6 +70,41 @@ export const useTeamSelection = () => {
 
     return filtered;
   }, [selectedTeamWithHealth, gameData.selectedTeam]);
+
+  // Cleanup: remove non-existing cards from selected team in DB
+  useEffect(() => {
+    const baseTeam = (gameData.selectedTeam || []) as TeamPair[];
+    if (!baseTeam || baseTeam.length === 0) return;
+
+    const validIds = new Set<string>([
+      ...cardInstances.map(ci => ci.card_template_id),
+      ...((gameData.cards || []) as CardType[]).map(c => c.id)
+    ]);
+
+    let changed = false;
+    const cleaned: TeamPair[] = baseTeam
+      .map(pair => {
+        // Drop dragon if it no longer exists
+        if (pair?.dragon && !validIds.has(pair.dragon.id)) {
+          changed = true;
+          return { ...pair, dragon: undefined };
+        }
+        return pair;
+      })
+      .filter(pair => {
+        const keep = !!pair?.hero?.id && validIds.has(pair.hero.id);
+        if (!keep) changed = true;
+        return keep;
+      });
+
+    if (changed) {
+      console.warn('🧹 Cleaning selectedTeam: removing non-existing cards', {
+        before: baseTeam.length,
+        after: cleaned.length
+      });
+      updateGameData({ selectedTeam: cleaned });
+    }
+  }, [gameData.selectedTeam, gameData.cards, cardInstances, updateGameData]);
 
   // Use the health synchronization hook
   useCardHealthSync();
