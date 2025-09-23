@@ -1,3 +1,4 @@
+import React from 'react'; // Added React import
 import { useQuery, useQueryClient, useMutation } from '@tanstack/react-query';
 import { useCallback, useMemo, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
@@ -9,6 +10,7 @@ import { useErrorHandling } from './useErrorHandling';
 import { batchUpdateManager } from '@/utils/batchUpdates';
 import { GameData, UnifiedGameState } from '@/types/gameState';
 import { useToast } from './use-toast';
+import { gameCache } from '@/utils/cacheStrategy';
 
 const GAME_DATA_KEY = 'gameData';
 const STALE_TIME = 5 * 60 * 1000; // 5 минут

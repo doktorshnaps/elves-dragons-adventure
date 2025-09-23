@@ -1,3 +1,4 @@
+import React from 'react'; // Added React import
 import { Routes, Route } from 'react-router-dom';
 import { ErrorBoundary } from './components/common/ErrorBoundary';
 import { Toaster } from './components/ui/toaster';
@@ -10,6 +11,8 @@ import { useRoutePreloader } from './hooks/useRoutePreloader';
 import { LanguageProvider } from './contexts/LanguageContext';
 import { QueryProvider } from './providers/QueryProvider';
 import { useGameSync } from './hooks/useGameSync';
+import { preloadCriticalLibs } from './utils/bundleOptimizations';
+import { registerGameServiceWorker } from './utils/cacheStrategy';
 
 // Lazy imports
 import {
@@ -30,6 +33,12 @@ function App() {
   useAccountSync();
   useGameSync();
   useRoutePreloader(); // Инициализируем preloading
+  
+  // Performance optimizations on app start
+  React.useEffect(() => {
+    preloadCriticalLibs();
+    registerGameServiceWorker();
+  }, []);
   
   return (
     <ErrorBoundary>
