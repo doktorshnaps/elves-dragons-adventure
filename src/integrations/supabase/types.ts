@@ -161,6 +161,9 @@ export type Database = {
           inventory: Json | null
           iron: number
           marketplace_listings: Json | null
+          max_iron: number | null
+          max_stone: number | null
+          max_wood: number | null
           selected_team: Json | null
           social_quests: Json | null
           stone: number
@@ -190,6 +193,9 @@ export type Database = {
           inventory?: Json | null
           iron?: number
           marketplace_listings?: Json | null
+          max_iron?: number | null
+          max_stone?: number | null
+          max_wood?: number | null
           selected_team?: Json | null
           social_quests?: Json | null
           stone?: number
@@ -219,6 +225,9 @@ export type Database = {
           inventory?: Json | null
           iron?: number
           marketplace_listings?: Json | null
+          max_iron?: number | null
+          max_stone?: number | null
+          max_wood?: number | null
           selected_team?: Json | null
           social_quests?: Json | null
           stone?: number
