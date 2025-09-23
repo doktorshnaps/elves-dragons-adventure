@@ -10,6 +10,17 @@ export const getItemPrice = (item: Item): number => {
     case "armor":
     case "accessory":
       return Math.floor(item.value * 300);
+    case "woodChunks":
+    case "magicalRoots":
+    case "rockStones":
+    case "blackCrystals":
+    case "illusionManuscript":
+    case "darkMonocle":
+    case "etherVine":
+    case "dwarvenTongs":
+    case "healingOil":
+    case "shimmeringCrystal":
+      return Math.floor(item.value * 50);
     default:
       return 0;
   }
