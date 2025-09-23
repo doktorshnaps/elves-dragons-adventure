@@ -14,6 +14,7 @@ interface WhitelistEntry {
   notes: string | null;
   added_at: string;
   is_active: boolean;
+  whitelist_source?: string;
 }
 
 export const WhitelistManager = () => {
@@ -28,6 +29,7 @@ export const WhitelistManager = () => {
       const { data, error } = await supabase
         .from('whitelist')
         .select('*')
+        .eq('is_active', true)
         .order('added_at', { ascending: false });
 
       if (error) throw error;
@@ -112,7 +114,7 @@ export const WhitelistManager = () => {
     }
   };
 
-  const activeEntries = entries.filter(entry => entry.is_active);
+  const activeEntries = entries;
 
   return (
     <Card className="bg-game-surface border-game-border">
@@ -185,6 +187,11 @@ export const WhitelistManager = () => {
                       <Badge variant="secondary" className="bg-green-500/20 text-green-400 border-green-500/30">
                         Активен
                       </Badge>
+                      {entry.whitelist_source === 'nft_automatic' && (
+                        <Badge variant="outline" className="bg-blue-500/20 text-blue-400 border-blue-500/30">
+                          NFT
+                        </Badge>
+                      )}
                     </div>
                     {entry.notes && (
                       <p className="text-sm text-game-text/70 truncate">
