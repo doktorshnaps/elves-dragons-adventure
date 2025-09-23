@@ -23,6 +23,7 @@ export interface GameData {
   accountExperience: number;
   activeWorkers: any[];
   buildingLevels: any;
+  activeBuildingUpgrades: any[];
 }
 
 export interface GameStateActions {

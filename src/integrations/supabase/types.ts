@@ -144,6 +144,7 @@ export type Database = {
         Row: {
           account_experience: number
           account_level: number
+          active_building_upgrades: Json | null
           active_workers: Json
           adventure_current_monster: Json | null
           adventure_player_stats: Json | null
@@ -176,6 +177,7 @@ export type Database = {
         Insert: {
           account_experience?: number
           account_level?: number
+          active_building_upgrades?: Json | null
           active_workers?: Json
           adventure_current_monster?: Json | null
           adventure_player_stats?: Json | null
@@ -208,6 +210,7 @@ export type Database = {
         Update: {
           account_experience?: number
           account_level?: number
+          active_building_upgrades?: Json | null
           active_workers?: Json
           adventure_current_monster?: Json | null
           adventure_player_stats?: Json | null

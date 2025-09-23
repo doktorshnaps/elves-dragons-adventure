@@ -57,7 +57,8 @@ const initialGameData: GameData = {
     barracks: 0,
     dragon_lair: 0,
     medical: 0
-  }
+  },
+  activeBuildingUpgrades: []
 };
 
 export const useUnifiedGameState = (): UnifiedGameState => {
@@ -543,7 +544,8 @@ function transformServerData(serverData: any): GameData {
       barracks: 0,
       dragon_lair: 0,
       medical: 0
-    }
+    },
+    activeBuildingUpgrades: serverData.active_building_upgrades ?? []
   };
   
   console.log('🔄 Transformed game data:', {

@@ -14,22 +14,18 @@ export const useBuildingUpgrades = () => {
   const { toast } = useToast();
   const [activeUpgrades, setActiveUpgrades] = useState<UpgradeProgress[]>([]);
 
-  // Загружаем активные улучшения из localStorage при инициализации
+  // Загружаем активные улучшения из gameState при инициализации
   useEffect(() => {
-    const saved = localStorage.getItem('activeUpgrades');
-    if (saved) {
-      try {
-        const upgrades = JSON.parse(saved);
-        setActiveUpgrades(upgrades);
-      } catch (error) {
-        console.error('Error loading active upgrades:', error);
-      }
+    if (gameState.activeBuildingUpgrades && Array.isArray(gameState.activeBuildingUpgrades)) {
+      setActiveUpgrades(gameState.activeBuildingUpgrades);
     }
-  }, []);
+  }, [gameState.activeBuildingUpgrades]);
 
-  // Сохраняем активные улучшения в localStorage
+  // Сохраняем активные улучшения в gameState и синхронизируем с БД
   useEffect(() => {
-    localStorage.setItem('activeUpgrades', JSON.stringify(activeUpgrades));
+    if (activeUpgrades.length > 0 || gameState.activeBuildingUpgrades?.length > 0) {
+      gameState.actions.batchUpdate({ activeBuildingUpgrades: activeUpgrades });
+    }
   }, [activeUpgrades]);
 
   // Проверяем завершенные улучшения
@@ -52,12 +48,17 @@ export const useBuildingUpgrades = () => {
       });
 
       // Применяем изменения в базе данных
-      gameState.actions.batchUpdate({ buildingLevels });
+      const remainingUpgrades = activeUpgrades.filter(upgrade => 
+        now < upgrade.startTime + upgrade.duration
+      );
+      
+      gameState.actions.batchUpdate({ 
+        buildingLevels,
+        activeBuildingUpgrades: remainingUpgrades
+      });
 
       // Удаляем завершенные улучшения
-      setActiveUpgrades(prev => prev.filter(upgrade => 
-        now < upgrade.startTime + upgrade.duration
-      ));
+      setActiveUpgrades(remainingUpgrades);
     }
   }, [activeUpgrades, gameState.actions, gameState.buildingLevels, toast]);
 
@@ -69,7 +70,11 @@ export const useBuildingUpgrades = () => {
       targetLevel
     };
 
-    setActiveUpgrades(prev => [...prev, upgrade]);
+    const newUpgrades = [...activeUpgrades, upgrade];
+    setActiveUpgrades(newUpgrades);
+    
+    // Сразу сохраняем в gameState
+    gameState.actions.batchUpdate({ activeBuildingUpgrades: newUpgrades });
   };
 
   const getUpgradeProgress = (buildingId: string) => {
