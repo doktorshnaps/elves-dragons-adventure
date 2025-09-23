@@ -74,16 +74,30 @@ export const useTeamSelection = () => {
   useCardHealthSync();
 
   const handlePairSelect = async (hero: CardType, dragon?: CardType) => {
-    console.log('🎯 handlePairSelect called with hero:', hero.name, 'selectedPairs:', selectedPairs.length);
-    if (selectedPairs.length >= 5) {
-      console.warn('🚫 Team is full, cannot add more heroes');
+    console.log('🎯 handlePairSelect called with hero:', hero.name);
+    console.log('🎯 Current selectedPairs (filtered):', selectedPairs.length);
+    console.log('🎯 Current gameData.selectedTeam (raw):', (gameData.selectedTeam || []).length);
+    console.log('🎯 Is hero already selected?', selectedPairs.some(pair => pair.hero.id === hero.id));
+    
+    const currentRawTeam = (gameData.selectedTeam || []) as TeamPair[];
+    
+    // Check team size limit against RAW team data (including medical bay)
+    if (currentRawTeam.length >= 5) {
+      console.warn('🚫 Team is full (raw team), cannot add more heroes');
+      return;
+    }
+
+    // Check if hero is already in team (including medical bay)
+    const isAlreadyInTeam = currentRawTeam.some((pair: any) => pair?.hero?.id === hero.id);
+    if (isAlreadyInTeam) {
+      console.warn('🚫 Hero already in team:', hero.name);
       return;
     }
 
     const newPair: TeamPair = { hero, dragon };
-    const newPairs = [...selectedPairs, newPair];
+    const newPairs = [...currentRawTeam, newPair];
     
-    console.log('🎯 Adding new pair to team. New team size:', newPairs.length);
+    console.log('🎯 Adding new pair to team. Raw team size will be:', newPairs.length);
     
     // Save to game data
     try {
@@ -114,17 +128,34 @@ export const useTeamSelection = () => {
   };
 
   const handleAssignDragon = async (index: number, dragon: CardType) => {
-    const newPairs = selectedPairs.map((pair, i) =>
-      i === index ? { ...pair, dragon } : pair
+    const baseTeam = (gameData.selectedTeam || []) as TeamPair[];
+    const filteredIndex = selectedPairs[index];
+    if (!filteredIndex?.hero?.id) return;
+    
+    // Find the real index in the base team
+    const realIndex = baseTeam.findIndex(pair => pair?.hero?.id === filteredIndex.hero.id);
+    if (realIndex === -1) return;
+    
+    const newPairs = baseTeam.map((pair, i) =>
+      i === realIndex ? { ...pair, dragon } : pair
     );
+    
     await updateGameData({
       selectedTeam: newPairs
     });
   };
 
   const handleRemoveDragon = async (index: number) => {
-    const newPairs = selectedPairs.map((pair, i) =>
-      i === index ? { ...pair, dragon: undefined } : pair
+    const baseTeam = (gameData.selectedTeam || []) as TeamPair[];
+    const filteredIndex = selectedPairs[index];
+    if (!filteredIndex?.hero?.id) return;
+    
+    // Find the real index in the base team
+    const realIndex = baseTeam.findIndex(pair => pair?.hero?.id === filteredIndex.hero.id);
+    if (realIndex === -1) return;
+    
+    const newPairs = baseTeam.map((pair, i) =>
+      i === realIndex ? { ...pair, dragon: undefined } : pair
     );
     
     await updateGameData({

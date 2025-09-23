@@ -97,10 +97,10 @@ export const DeckSelection = ({
   };
   const handleHeroSelect = (hero: CardType) => {
     console.log('🎯 DeckSelection handleHeroSelect called for hero:', hero.name);
-    if (selectedPairs.length >= 5) {
-      console.warn('🚫 Team is full in DeckSelection');
-      return;
-    }
+    console.log('🎯 selectedPairs.length:', selectedPairs.length);
+    console.log('🎯 Is hero already selected in filtered pairs?', selectedPairs.some(pair => pair.hero.id === hero.id));
+    
+    // Note: We don't check selectedPairs.length here because the real limit check is in handlePairSelect
     console.log('🎯 Calling onPairSelect from DeckSelection');
     onPairSelect(hero);
     setShowHeroDeck(false);
