@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 // Убираем зависимость от useAuth для работы с кошельками
 import { Card } from '@/types/cards';
@@ -138,8 +138,12 @@ export const useGameData = () => {
       setLoading(false);
     }
   }, []);
+  // Батчирование обновлений, чтобы не спамить RPC
+  const pendingRef = useRef<Partial<GameData>>({});
+  const timerRef = useRef<number | null>(null);
+  const waitersRef = useRef<Array<() => void>>([]);
 
-  // Обновление данных в Supabase для кошелька
+  // Обновление данных в Supabase для кошелька (с дебаунсом)
   const updateGameData = useCallback(async (updates: Partial<GameData>) => {
     const walletAddress = localStorage.getItem('walletAccountId');
     if (!walletAddress) return;
