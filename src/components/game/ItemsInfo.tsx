@@ -454,7 +454,7 @@ export const ItemsInfo = () => {
   const accessoryItems = items.filter(item => item.type === 'accessory');
   const consumableItems = items.filter(item => item.type === 'consumable');
   const magicalItems = items.filter(item => 
-    ['woodChunks', 'magicalRoots', 'rockStones', 'blackCrystals', 'illusionManuscript', 'darkMonocle', 'etherVine', 'dwarvenTongs', 'healingOil', 'shimmeringCrystal'].includes(item.type)
+    ['material', 'scroll', 'tool', 'gem'].includes(item.type)
   );
 
   return (

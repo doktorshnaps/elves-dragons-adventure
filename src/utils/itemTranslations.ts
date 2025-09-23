@@ -61,6 +61,10 @@ export const itemTranslations = {
     "armor": "Броня",
     "accessory": "Аксессуар",
     "consumable": "Расходники",
+    "material": "Материал",
+    "scroll": "Свиток", 
+    "tool": "Инструмент",
+    "gem": "Драгоценный камень",
 
     // Rarity
     "common": "Обычный",

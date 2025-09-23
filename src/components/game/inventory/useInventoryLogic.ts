@@ -33,6 +33,24 @@ export const useInventoryLogic = (initialInventory: Item[]) => {
       return workerImagesByName[item.name];
     }
     
+    // Новые предметы - прямые импорты
+    const newItemImages: Record<string, string> = {
+      'Древесные чурки': '/src/assets/items/wood-chunks.jpeg',
+      'Остатки магических корней': '/src/assets/items/magical-roots.jpeg',
+      'Камни горной породы': '/src/assets/items/rock-stones.jpeg',
+      'Черные кристаллы земляных духов': '/src/assets/items/black-crystals.jpeg',
+      'Манускрипт иллюзорных откровений': '/src/assets/items/illusion-manuscript.png',
+      'Магический монокль тьмы': '/src/assets/items/dark-monocle.png',
+      'Плетёная жила эфирной лозы': '/src/assets/items/ether-vine.png',
+      'Клещи из серебра древних гномов': '/src/assets/items/dwarven-tongs.png',
+      'Масло Целительного Прощения': '/src/assets/items/healing-oil.png',
+      'Мерцающий мерный кристалл': '/src/assets/items/shimmering-crystal.png'
+    };
+    
+    if (newItemImages[item.name]) {
+      return newItemImages[item.name];
+    }
+    
     // Если у предмета есть изображение, но это неправильный путь /src/assets/, исправляем его
     if (item.image && !item.image.startsWith('/src/')) {
       return item.image;
