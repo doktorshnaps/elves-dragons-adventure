@@ -114,6 +114,22 @@ export const WhitelistManager = () => {
     }
   };
 
+  const handleRefresh = async () => {
+    setLoading(true);
+    try {
+      // Синхронизация NFT-вайт-листа перед обновлением списка
+      await supabase.functions.invoke('validate-nft-whitelist', {
+        body: { validate_all: true },
+      });
+    } catch (e) {
+      console.warn('NFT sync skipped:', e);
+    } finally {
+      // В любом случае перезагружаем список
+      await loadWhitelist();
+      setLoading(false);
+    }
+  };
+
   const activeEntries = entries;
 
   return (
@@ -159,12 +175,13 @@ export const WhitelistManager = () => {
               Активные адреса ({activeEntries.length})
             </h3>
             <Button
-              onClick={loadWhitelist}
+              onClick={handleRefresh}
+              disabled={loading}
               variant="outline"
               size="sm"
               className="border-game-border text-game-text"
             >
-              Обновить
+              {loading ? 'Обновление...' : 'Обновить'}
             </Button>
           </div>
 
