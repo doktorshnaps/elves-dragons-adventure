@@ -55,7 +55,7 @@ Deno.serve(async (req) => {
   try {
     const supabase = createClient(
       'https://oimhwdymghkwxznjarkv.supabase.co',
-      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9pbWh3ZHltZ2hrd3h6bmphcmt2Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc1NDUxMzEyMSwiZXhwIjoyMDcwMDg5MTIxfQ.J_iJVh4b5iWlZXwEKfQGJwq4TfFT5c-5hpU4VdSSKFU'
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     );
 
     const { wallet_address } = await req.json();
