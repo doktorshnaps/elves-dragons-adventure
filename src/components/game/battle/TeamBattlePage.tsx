@@ -66,17 +66,30 @@ export const TeamBattlePage: React.FC<TeamBattlePageProps> = ({
     });
   };
 
-  // Отслеживаем убийства монстров
+  // Отслеживаем убийства монстров - добавляем только по одному за раз
   useEffect(() => {
-    if (battleState.opponents.length > aliveOpponents.length) {
-      const killedCount = battleState.opponents.length - aliveOpponents.length;
-      const newKills = Array(killedCount).fill({
-        level: battleState.level,
-        dungeonType: dungeonType
-      });
-      setMonstersKilled(prev => [...prev, ...newKills]);
+    const currentAlive = aliveOpponents.length;
+    const totalOpponents = battleState.opponents.length;
+    
+    // Если есть мертвые противники и мы не на стартовом состоянии
+    if (totalOpponents > 0 && currentAlive < totalOpponents && battleStarted) {
+      const expectedKills = totalOpponents - currentAlive;
+      const currentKills = monstersKilled.filter(kill => 
+        kill.level === battleState.level && kill.dungeonType === dungeonType
+      ).length;
+      
+      // Добавляем недостающие убийства
+      if (expectedKills > currentKills) {
+        const newKillsCount = expectedKills - currentKills;
+        const newKills = Array(newKillsCount).fill(null).map(() => ({
+          level: battleState.level,
+          dungeonType: dungeonType
+        }));
+        setMonstersKilled(prev => [...prev, ...newKills]);
+        console.log(`💀 Убито ${newKillsCount} монстров на уровне ${battleState.level}`);
+      }
     }
-  }, [aliveOpponents.length, battleState.opponents.length, battleState.level, dungeonType]);
+  }, [aliveOpponents.length, battleState.opponents.length, battleState.level, dungeonType, battleStarted, monstersKilled]);
 
   // Check if battle is over
   const isBattleOver = alivePairs.length === 0 || aliveOpponents.length === 0;
