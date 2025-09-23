@@ -1,7 +1,7 @@
 import { useEffect, useCallback } from 'react';
 import { useCardInstances } from './useCardInstances';
 import { useGameData } from './useGameData';
-import { Card } from '@/types/cards';
+import { Card, CardType } from '@/types/cards';
 
 const HEAL_INTERVAL = 60 * 1000; // 1 минута
 const HEAL_RATE = 1; // 1 HP за минуту
@@ -24,7 +24,17 @@ export const useCardInstanceSync = () => {
 
     // Создаем полную коллекцию карт из всех экземпляров 
     const cardsFromInstances = cardInstances
-      .filter(instance => instance.card_type !== 'workers') // Исключаем рабочих
+      .filter(instance => {
+        // Исключаем только рабочих, но показываем все остальные карты (включая heroes и dragons)
+        const cardType = instance.card_type;
+        const dataType = (instance.card_data as any)?.type as CardType;
+        
+        // Исключаем workers/рабочих (card_type в БД может быть 'worker' или 'workers')
+        const isWorker = cardType === 'workers' || (cardType as string) === 'worker' || 
+                        dataType === 'workers';
+        
+        return !isWorker;
+      })
       .map(instance => {
         const cardData = instance.card_data as Card;
         return {
@@ -38,7 +48,14 @@ export const useCardInstanceSync = () => {
     console.log('🔄 Cards rebuilt from instances:', {
       totalCards: cardsFromInstances.length,
       heroes: cardsFromInstances.filter(c => c.type === 'character').length,
-      dragons: cardsFromInstances.filter(c => c.type === 'pet').length
+      dragons: cardsFromInstances.filter(c => c.type === 'pet').length,
+      totalInstances: cardInstances.length,
+      excludedWorkers: cardInstances.filter(instance => {
+        const cardType = instance.card_type;
+        const dataType = (instance.card_data as any)?.type as CardType;
+        return cardType === 'workers' || (cardType as string) === 'worker' || 
+               dataType === 'workers';
+      }).length
     });
 
     // Обновляем gameData только если есть различия
