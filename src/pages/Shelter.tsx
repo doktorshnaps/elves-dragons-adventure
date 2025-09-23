@@ -553,9 +553,9 @@ export const Shelter = () => {
                                 <div className="text-sm font-medium text-green-600">
                                   Готово к установке: уровень {progress.targetLevel}
                                 </div>
-                                <Button onClick={() => installUpgrade(upgrade.id)} className="w-full">
-                                  Установить
-                                </Button>
+                                 <Button onClick={() => installUpgrade(upgrade.id)} className="w-full">
+                                   Применить
+                                 </Button>
                               </div>
                             ) : (
                               <div className="space-y-2">
@@ -614,13 +614,13 @@ export const Shelter = () => {
                             </div>
                           )}
                           
-                          <Button 
-                            onClick={() => handleUpgrade(upgrade)} 
-                            disabled={!canAffordUpgrade(upgrade)}
-                            className="w-full"
-                          >
-                            {upgrade.level === 0 ? t(language, 'shelter.build') : t(language, 'shelter.upgrade')}
-                          </Button>
+                           <Button 
+                             onClick={() => handleUpgrade(upgrade)} 
+                             disabled={!canAffordUpgrade(upgrade)}
+                             className="w-full"
+                           >
+                             Построить
+                           </Button>
                        </div>
                      )}
                      
