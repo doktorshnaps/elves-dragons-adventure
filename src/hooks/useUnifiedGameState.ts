@@ -327,6 +327,7 @@ function mapClientToServer(data: Partial<GameData> | GameData) {
   if (d.accountExperience !== undefined) out.account_experience = d.accountExperience;
   if (d.activeWorkers !== undefined) out.active_workers = d.activeWorkers;
   if (d.buildingLevels !== undefined) out.building_levels = d.buildingLevels;
+  if (d.activeBuildingUpgrades !== undefined) out.active_building_upgrades = d.activeBuildingUpgrades;
   return out;
 }
 
@@ -445,6 +446,7 @@ async function updateGameDataOnServer(walletAddress: string, updates: Partial<Ga
       p_dragon_lair_upgrades: updates.dragonLairUpgrades as any,
       p_active_workers: updates.activeWorkers as any,
       p_building_levels: updates.buildingLevels as any,
+      p_active_building_upgrades: updates.activeBuildingUpgrades as any,
       p_wood: updates.wood,
       p_stone: updates.stone,
       p_iron: updates.iron,
