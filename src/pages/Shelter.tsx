@@ -356,6 +356,13 @@ export const Shelter = () => {
 
   const handleUpgrade = async (upgrade: NestUpgrade) => {
     if (!canAffordUpgrade(upgrade) || isUpgrading(upgrade.id)) return;
+
+    console.log('🛠️ handleUpgrade called', {
+      building: upgrade.id,
+      cost: upgrade.cost,
+      balanceBefore: gameState.balance,
+      resourcesBefore: { wood: resources.wood, stone: resources.stone, iron: resources.iron }
+    });
     
     const newResources = {
       wood: resources.wood - upgrade.cost.wood,
@@ -365,11 +372,16 @@ export const Shelter = () => {
     
     const newBalance = gameState.balance - upgrade.cost.balance;
     
-    // Обновляем ресурсы и баланс
-    await gameState.actions.batchUpdate({
-      ...newResources,
-      balance: newBalance
-    });
+    try {
+      await gameState.actions.batchUpdate({
+        ...newResources,
+        balance: newBalance
+      });
+      console.log('✅ Resources and balance updated on server', { newResources, newBalance });
+    } catch (e) {
+      console.error('❌ Failed to update resources/balance', e);
+      return;
+    }
     
     // Запускаем процесс улучшения
     const upgradeTime = getUpgradeTime(upgrade.id);
@@ -380,7 +392,6 @@ export const Shelter = () => {
       description: `${upgrade.name} будет улучшено через ${upgradeTime} минут`
     });
   };
-
   const handleCraft = async (recipe: CraftRecipe) => {
     if (!canAffordCraft(recipe)) return;
     const newResources = {

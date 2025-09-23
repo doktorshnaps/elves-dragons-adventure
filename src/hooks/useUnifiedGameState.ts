@@ -423,96 +423,50 @@ async function updateGameDataOnServer(walletAddress: string, updates: Partial<Ga
     updated_at: new Date().toISOString()
   } as any;
 
-  // Проверяем auth-сессию
-  const { data: sess } = await supabase.auth.getSession();
-  if (!sess?.session) {
-    // Без auth: обновляем через SECURITY DEFINER RPC
-    const rpcPayload: any = {
-      p_wallet_address: walletAddress,
-      p_balance: updates.balance,
-      p_cards: updates.cards as any,
-      p_inventory: updates.inventory as any,
-      p_selected_team: updates.selectedTeam as any,
-      p_dragon_eggs: updates.dragonEggs as any,
-      p_account_level: updates.accountLevel,
-      p_account_experience: updates.accountExperience,
-      p_initialized: updates.initialized,
-      p_marketplace_listings: updates.marketplaceListings as any,
-      p_social_quests: updates.socialQuests as any,
-      p_adventure_player_stats: updates.adventurePlayerStats as any,
-      p_adventure_current_monster: updates.adventureCurrentMonster as any,
-      p_battle_state: updates.battleState as any,
-      p_barracks_upgrades: updates.barracksUpgrades as any,
-      p_dragon_lair_upgrades: updates.dragonLairUpgrades as any,
-      p_active_workers: updates.activeWorkers as any,
-      p_building_levels: updates.buildingLevels as any,
-      p_active_building_upgrades: updates.activeBuildingUpgrades as any,
-      p_wood: updates.wood,
-      p_stone: updates.stone,
-      p_iron: updates.iron,
-      p_gold: updates.gold
-    };
+  // Всегда обновляем через SECURITY DEFINER RPC, чтобы обойти RLS и гарантировать сохранение
+  const rpcPayload: any = {
+    p_wallet_address: walletAddress,
+    p_balance: updates.balance,
+    p_cards: updates.cards as any,
+    p_inventory: updates.inventory as any,
+    p_selected_team: updates.selectedTeam as any,
+    p_dragon_eggs: updates.dragonEggs as any,
+    p_account_level: updates.accountLevel,
+    p_account_experience: updates.accountExperience,
+    p_initialized: updates.initialized,
+    p_marketplace_listings: updates.marketplaceListings as any,
+    p_social_quests: updates.socialQuests as any,
+    p_adventure_player_stats: updates.adventurePlayerStats as any,
+    p_adventure_current_monster: updates.adventureCurrentMonster as any,
+    p_battle_state: updates.battleState as any,
+    p_barracks_upgrades: updates.barracksUpgrades as any,
+    p_dragon_lair_upgrades: updates.dragonLairUpgrades as any,
+    p_active_workers: updates.activeWorkers as any,
+    p_building_levels: updates.buildingLevels as any,
+    p_active_building_upgrades: updates.activeBuildingUpgrades as any,
+    p_wood: updates.wood,
+    p_stone: updates.stone,
+    p_iron: updates.iron,
+    p_gold: updates.gold
+  };
 
-    const { data: ok, error: rpcError } = await supabase.rpc('update_game_data_by_wallet', rpcPayload);
-    if (rpcError || ok !== true) {
-      console.error('RPC update_game_data_by_wallet failed:', rpcError);
-      throw rpcError || new Error('update_game_data_by_wallet returned false');
-    }
-
-    const { data: fullData, error: fullErr } = await supabase.rpc('get_game_data_by_wallet_full', {
-      p_wallet_address: walletAddress
-    });
-
-    if (fullErr || !fullData) {
-      throw fullErr || new Error('Failed to fetch updated game data');
-    }
-
-    const record = Array.isArray(fullData) ? (fullData as any[])[0] : (fullData as any);
-    console.log('✅ Server updated via RPC (no auth). New balance:', record.balance);
-    return transformServerData(record);
+  const { data: ok, error: rpcError } = await supabase.rpc('update_game_data_by_wallet', rpcPayload);
+  if (rpcError || ok !== true) {
+    console.error('RPC update_game_data_by_wallet failed:', rpcError);
+    throw rpcError || new Error('update_game_data_by_wallet returned false');
   }
 
-  const { data, error } = await supabase
-    .from('game_data')
-    .update(serverUpdates)
-    .eq('wallet_address', walletAddress)
-    .select()
-    .maybeSingle();
+  const { data: fullData, error: fullErr } = await supabase.rpc('get_game_data_by_wallet_full', {
+    p_wallet_address: walletAddress
+  });
 
-  if (error && error.code !== 'PGRST116') {
-    console.error('Failed to update game data:', error);
-
-  // Фолбэк: просто перезагружаем данные через SECURITY DEFINER RPC без ensure
-  try {
-    const { data: fullData } = await supabase.rpc('get_game_data_by_wallet_full', {
-      p_wallet_address: walletAddress
-    });
-    if (fullData) {
-      const record = Array.isArray(fullData) ? (fullData as any[])[0] : (fullData as any);
-      return transformServerData(record);
-    }
-  } catch (e) {
-    console.warn('Fallback fetch via RPC failed:', e);
+  if (fullErr || !fullData) {
+    throw fullErr || new Error('Failed to fetch updated game data');
   }
 
-    throw error;
-  }
-
-  // Если обновление не вернуло данных (например, запись не найдена или блок RLS) — просто загружаем через RPC
-  if (!data) {
-    console.warn('Update returned no data; refetching via RPC');
-    const { data: fullData, error: fetchErr } = await supabase.rpc('get_game_data_by_wallet_full', {
-      p_wallet_address: walletAddress
-    });
-    if (fetchErr || !fullData) {
-      throw fetchErr || new Error('Failed to fetch game data after update');
-    }
-    const record = Array.isArray(fullData) ? (fullData as any[])[0] : (fullData as any);
-    return transformServerData(record);
-  }
-
-  console.log(`✅ Server updated successfully. New balance: ${data.balance}`);
-  return transformServerData(data);
+  const record = Array.isArray(fullData) ? (fullData as any[])[0] : (fullData as any);
+  console.log('✅ Server updated via RPC. New balance:', record.balance);
+  return transformServerData(record);
 }
 
 function transformServerData(serverData: any): GameData {
