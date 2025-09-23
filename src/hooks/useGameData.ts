@@ -22,6 +22,13 @@ interface GameData {
   accountLevel?: number;
   accountExperience?: number;
   activeWorkers?: any[];
+  // New optional fields to match RPC signature and avoid ambiguity
+  buildingLevels?: any;
+  activeBuildingUpgrades?: any[];
+  wood?: number;
+  stone?: number;
+  iron?: number;
+  gold?: number;
 }
 
 export const useGameData = () => {
@@ -176,22 +183,29 @@ export const useGameData = () => {
       // Use the secure function to update game data
       const { data: success, error } = await supabase.rpc('update_game_data_by_wallet', {
         p_wallet_address: walletAddress,
-        p_balance: updates.balance,
-        p_cards: updates.cards as any,
-        p_inventory: updates.inventory as any,
-        p_selected_team: updates.selectedTeam as any,
-        p_dragon_eggs: updates.dragonEggs as any,
-        p_account_level: updates.accountLevel,
-        p_account_experience: updates.accountExperience,
-        p_initialized: updates.initialized,
-        p_marketplace_listings: updates.marketplaceListings as any,
-        p_social_quests: updates.socialQuests as any,
-        p_adventure_player_stats: updates.adventurePlayerStats as any,
-        p_adventure_current_monster: updates.adventureCurrentMonster as any,
-        p_battle_state: updates.battleState as any,
-        p_barracks_upgrades: updates.barracksUpgrades as any,
-        p_dragon_lair_upgrades: updates.dragonLairUpgrades as any,
-        p_active_workers: updates.activeWorkers as any
+        p_balance: updates.balance ?? null,
+        p_cards: (updates.cards as any) ?? null,
+        p_inventory: (updates.inventory as any) ?? null,
+        p_selected_team: (updates.selectedTeam as any) ?? null,
+        p_dragon_eggs: (updates.dragonEggs as any) ?? null,
+        p_account_level: updates.accountLevel ?? null,
+        p_account_experience: updates.accountExperience ?? null,
+        p_initialized: updates.initialized ?? null,
+        p_marketplace_listings: (updates.marketplaceListings as any) ?? null,
+        p_social_quests: (updates.socialQuests as any) ?? null,
+        p_adventure_player_stats: (updates.adventurePlayerStats as any) ?? null,
+        p_adventure_current_monster: (updates.adventureCurrentMonster as any) ?? null,
+        p_battle_state: (updates.battleState as any) ?? null,
+        p_barracks_upgrades: (updates.barracksUpgrades as any) ?? null,
+        p_dragon_lair_upgrades: (updates.dragonLairUpgrades as any) ?? null,
+        p_active_workers: (updates.activeWorkers as any) ?? null,
+        // Extra fields to disambiguate overloaded RPC
+        p_building_levels: (updates.buildingLevels as any) ?? null,
+        p_active_building_upgrades: (updates.activeBuildingUpgrades as any) ?? null,
+        p_wood: (updates.wood as any) ?? null,
+        p_stone: (updates.stone as any) ?? null,
+        p_iron: (updates.iron as any) ?? null,
+        p_gold: (updates.gold as any) ?? null
       });
 
       if (error) {

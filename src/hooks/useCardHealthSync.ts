@@ -9,7 +9,7 @@ import { Card } from '@/types/cards';
  */
 export const useCardHealthSync = () => {
   const { cardInstances, loadCardInstances } = useCardInstances();
-  const { gameData, updateGameData } = useGameData();
+  const { gameData } = useGameData();
 
   // Sync health from card_instances to cards in gameData
   const syncHealthFromInstances = useCallback(async () => {
@@ -32,15 +32,16 @@ export const useCardHealthSync = () => {
     });
 
     if (hasChanges) {
-      console.log('🔄 Syncing card health from card_instances');
-      await updateGameData({ cards: updatedCards });
-      
-      // Dispatch event to notify other components
-      window.dispatchEvent(new CustomEvent('cardHealthSynced', { 
-        detail: { cards: updatedCards } 
+      console.log('🔄 Syncing card health from card_instances (local UI update only)');
+      try {
+        localStorage.setItem('gameCards', JSON.stringify(updatedCards));
+      } catch {}
+      // Notify other components; no RPC write to avoid spam
+      window.dispatchEvent(new CustomEvent('cardsUpdate', {
+        detail: { cards: updatedCards }
       }));
     }
-  }, [cardInstances, gameData.cards, updateGameData]);
+  }, [cardInstances, gameData.cards]);
 
   // Listen for card health updates and sync
   useEffect(() => {
