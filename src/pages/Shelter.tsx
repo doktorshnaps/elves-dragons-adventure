@@ -455,7 +455,7 @@ export const Shelter = () => {
                 </div>
                 <div className="text-center flex-1">
                   <div className="text-lg">💰</div>
-                  <div className="text-xs font-semibold">{resources.gold}</div>
+                  <div className="text-xs font-semibold">{gameState.balance} ELL</div>
                 </div>
               </div>
             </CardContent>
