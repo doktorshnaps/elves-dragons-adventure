@@ -65,7 +65,7 @@ export const Shelter = () => {
   const [activeTab, setActiveTab] = useState<"upgrades" | "crafting" | "barracks" | "dragonlair" | "medical" | "workers">("upgrades");
   const [workersSpeedBoost, setWorkersSpeedBoost] = useState(0);
   
-  const { startUpgrade, getUpgradeProgress, isUpgrading, formatRemainingTime } = useBuildingUpgrades();
+  const { startUpgrade, installUpgrade, getUpgradeProgress, isUpgrading, formatRemainingTime } = useBuildingUpgrades();
 
   // Получаем активных рабочих: сначала из gameState, при пустом значении — из localStorage
   const getActiveWorkersSafe = () => {
@@ -538,15 +538,26 @@ export const Shelter = () => {
                         const progress = getUpgradeProgress(upgrade.id);
                         if (progress) {
                           return (
-                            <div className="space-y-2">
-                              <div className="text-sm font-medium text-blue-600">
-                                Улучшается до уровня {progress.targetLevel}...
+                            progress.remainingTime === 0 ? (
+                              <div className="space-y-2">
+                                <div className="text-sm font-medium text-green-600">
+                                  Готово к установке: уровень {progress.targetLevel}
+                                </div>
+                                <Button onClick={() => installUpgrade(upgrade.id)} className="w-full">
+                                  Установить
+                                </Button>
                               </div>
-                              <Progress value={progress.progress} className="h-2" />
-                              <div className="text-xs text-muted-foreground">
-                                Осталось: {formatRemainingTime(progress.remainingTime)}
+                            ) : (
+                              <div className="space-y-2">
+                                <div className="text-sm font-medium text-blue-600">
+                                  Улучшается до уровня {progress.targetLevel}...
+                                </div>
+                                <Progress value={progress.progress} className="h-2" />
+                                <div className="text-xs text-muted-foreground">
+                                  Осталось: {formatRemainingTime(progress.remainingTime)}
+                                </div>
                               </div>
-                            </div>
+                            )
                           );
                         }
                         return null;

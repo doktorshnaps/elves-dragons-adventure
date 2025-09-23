@@ -1032,6 +1032,31 @@ export type Database = {
           | {
               p_account_experience?: number
               p_account_level?: number
+              p_active_building_upgrades?: Json
+              p_active_workers?: Json
+              p_adventure_current_monster?: Json
+              p_adventure_player_stats?: Json
+              p_balance?: number
+              p_barracks_upgrades?: Json
+              p_battle_state?: Json
+              p_building_levels?: Json
+              p_cards?: Json
+              p_dragon_eggs?: Json
+              p_dragon_lair_upgrades?: Json
+              p_gold?: number
+              p_initialized?: boolean
+              p_inventory?: Json
+              p_iron?: number
+              p_marketplace_listings?: Json
+              p_selected_team?: Json
+              p_social_quests?: Json
+              p_stone?: number
+              p_wallet_address: string
+              p_wood?: number
+            }
+          | {
+              p_account_experience?: number
+              p_account_level?: number
               p_active_workers?: Json
               p_adventure_current_monster?: Json
               p_adventure_player_stats?: Json

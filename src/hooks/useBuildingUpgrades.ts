@@ -7,6 +7,7 @@ interface UpgradeProgress {
   startTime: number;
   duration: number;
   targetLevel: number;
+  status?: 'in_progress' | 'ready';
 }
 
 export const useBuildingUpgrades = () => {
@@ -28,46 +29,37 @@ export const useBuildingUpgrades = () => {
     }
   }, [activeUpgrades]);
 
-  // Проверяем завершенные улучшения
+  // Проверяем завершенные улучшения и помечаем как готовые к установке
   useEffect(() => {
     const now = Date.now();
-    const completedUpgrades = activeUpgrades.filter(upgrade => 
-      now >= upgrade.startTime + upgrade.duration
-    );
+    let changed = false;
 
-    if (completedUpgrades.length > 0) {
-      // Обновляем уровни зданий
-      const buildingLevels = { ...gameState.buildingLevels };
-      completedUpgrades.forEach(upgrade => {
-        buildingLevels[upgrade.buildingId] = upgrade.targetLevel;
-        
+    const updated = activeUpgrades.map(upgrade => {
+      const isDone = now >= upgrade.startTime + upgrade.duration;
+      if (isDone && upgrade.status !== 'ready') {
+        changed = true;
         toast({
-          title: "Улучшение завершено!",
-          description: `Здание достигло ${upgrade.targetLevel} уровня`
+          title: 'Улучшение завершено',
+          description: `Доступно к установке: уровень ${upgrade.targetLevel}`
         });
-      });
+        return { ...upgrade, status: 'ready' as const };
+      }
+      return upgrade;
+    });
 
-      // Применяем изменения в базе данных
-      const remainingUpgrades = activeUpgrades.filter(upgrade => 
-        now < upgrade.startTime + upgrade.duration
-      );
-      
-      gameState.actions.batchUpdate({ 
-        buildingLevels,
-        activeBuildingUpgrades: remainingUpgrades
-      });
-
-      // Удаляем завершенные улучшения
-      setActiveUpgrades(remainingUpgrades);
+    if (changed) {
+      setActiveUpgrades(updated);
+      gameState.actions.batchUpdate({ activeBuildingUpgrades: updated });
     }
-  }, [activeUpgrades, gameState.actions, gameState.buildingLevels, toast]);
+  }, [activeUpgrades, gameState.actions, toast]);
 
   const startUpgrade = (buildingId: string, duration: number, targetLevel: number) => {
     const upgrade: UpgradeProgress = {
       buildingId,
       startTime: Date.now(),
       duration: duration * 60 * 1000, // Конвертируем минуты в миллисекунды
-      targetLevel
+      targetLevel,
+      status: 'in_progress'
     };
 
     const newUpgrades = [...activeUpgrades, upgrade];
@@ -77,9 +69,35 @@ export const useBuildingUpgrades = () => {
     gameState.actions.batchUpdate({ activeBuildingUpgrades: newUpgrades });
   };
 
+  const installUpgrade = (buildingId: string) => {
+    const upgrade = activeUpgrades.find(u => u.buildingId === buildingId);
+    if (!upgrade || upgrade.status !== 'ready') return;
+
+    const buildingLevels = { ...gameState.buildingLevels, [buildingId]: upgrade.targetLevel } as any;
+    const remaining = activeUpgrades.filter(u => u.buildingId !== buildingId);
+
+    setActiveUpgrades(remaining);
+    gameState.actions.batchUpdate({
+      buildingLevels,
+      activeBuildingUpgrades: remaining
+    });
+
+    toast({
+      title: 'Установка выполнена',
+      description: `Здание обновлено до уровня ${upgrade.targetLevel}`
+    });
+  };
   const getUpgradeProgress = (buildingId: string) => {
     const upgrade = activeUpgrades.find(u => u.buildingId === buildingId);
     if (!upgrade) return null;
+
+    if (upgrade.status === 'ready') {
+      return {
+        progress: 100,
+        remainingTime: 0,
+        targetLevel: upgrade.targetLevel
+      };
+    }
 
     const now = Date.now();
     const elapsed = now - upgrade.startTime;
@@ -110,6 +128,7 @@ export const useBuildingUpgrades = () => {
 
   return {
     startUpgrade,
+    installUpgrade,
     getUpgradeProgress,
     isUpgrading,
     formatRemainingTime
