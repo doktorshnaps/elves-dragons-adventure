@@ -102,6 +102,13 @@ export const TeamBattlePage: React.FC<TeamBattlePageProps> = ({
       
       console.log(`🏁 Бой завершен. Победа: ${isVictory}, Уровень: ${battleState.level}, Убито монстров: ${monstersKilled.length}`);
       
+      // При поражении сбрасываем активное подземелье
+      if (!isVictory) {
+        localStorage.removeItem('teamBattleState');
+        localStorage.removeItem('activeBattleInProgress');
+        localStorage.removeItem('battleState'); // legacy
+      }
+      
       // Обрабатываем награды за подземелье, даже если монстров убито 0
       processDungeonCompletion(monstersKilled, battleState.level, isFullCompletion);
     }
