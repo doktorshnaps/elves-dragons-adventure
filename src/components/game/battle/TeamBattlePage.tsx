@@ -96,11 +96,13 @@ export const TeamBattlePage: React.FC<TeamBattlePageProps> = ({
   
   // Обработка завершения боя
   useEffect(() => {
-    if (isBattleOver && battleStarted && monstersKilled.length > 0) {
+    if (isBattleOver && battleStarted) {
       const isVictory = alivePairs.length > 0;
       const isFullCompletion = isVictory && battleState.level >= 10;
       
-      // Обрабатываем награды за подземелье
+      console.log(`🏁 Бой завершен. Победа: ${isVictory}, Уровень: ${battleState.level}, Убито монстров: ${monstersKilled.length}`);
+      
+      // Обрабатываем награды за подземелье, даже если монстров убито 0
       processDungeonCompletion(monstersKilled, battleState.level, isFullCompletion);
     }
   }, [isBattleOver, battleStarted, monstersKilled, alivePairs.length, battleState.level, processDungeonCompletion]);

@@ -67,7 +67,7 @@ export const useDungeonRewards = () => {
     currentLevel: number, 
     isFullCompletion: boolean = false
   ) => {
-    if (monsters.length === 0) return;
+    console.log(`💎 Обработка завершения подземелья. Монстров убито: ${monsters.length}, уровень: ${currentLevel}`);
 
     const reward = calculateReward(monsters);
     reward.isFullCompletion = isFullCompletion;
@@ -78,13 +78,18 @@ export const useDungeonRewards = () => {
       reward.totalELL += reward.completionBonus;
     }
 
-    if (reward.totalELL > 0) {
-      // Показываем модальное окно с наградой сразу
-      setPendingReward(reward);
+    // Показываем модальное окно с наградой всегда (даже если награда 0)
+    setPendingReward(reward);
 
+    if (reward.totalELL > 0) {
       toast({
         title: "Награда получена!",
         description: `Получено ${reward.totalELL} ELL за убийство монстров`,
+      });
+    } else {
+      toast({
+        title: "Подземелье завершено",
+        description: "Монстры не были убиты, награда не получена",
       });
     }
   }, [calculateReward, toast]);
