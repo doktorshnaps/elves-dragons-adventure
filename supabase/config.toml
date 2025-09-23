@@ -37,8 +37,8 @@ port = 54327
 [functions.check-nft-whitelist]
 verify_jwt = false
 
-[functions.sync-nft-cards]
+[functions.validate-nft-whitelist]
 verify_jwt = false
 
-[functions.validate-nft-whitelist]
+[functions.sync-nft-cards]
 verify_jwt = false
