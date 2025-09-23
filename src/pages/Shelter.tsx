@@ -65,7 +65,7 @@ export const Shelter = () => {
   const [activeTab, setActiveTab] = useState<"upgrades" | "crafting" | "barracks" | "dragonlair" | "medical" | "workers">("upgrades");
   const [workersSpeedBoost, setWorkersSpeedBoost] = useState(0);
   
-  const { startUpgrade, installUpgrade, getUpgradeProgress, isUpgrading, formatRemainingTime } = useBuildingUpgrades();
+  const { startUpgrade, startUpgradeAtomic, installUpgrade, getUpgradeProgress, isUpgrading, formatRemainingTime } = useBuildingUpgrades();
 
   // Получаем активных рабочих: сначала из gameState, при пустом значении — из localStorage
   const getActiveWorkersSafe = () => {
@@ -373,23 +373,22 @@ export const Shelter = () => {
     const newBalance = gameState.balance - upgrade.cost.balance;
     
     try {
-      await gameState.actions.batchUpdate({
-        ...newResources,
-        balance: newBalance
-      });
-      console.log('✅ Resources and balance updated on server', { newResources, newBalance });
+      const upgradeTime = getUpgradeTime(upgrade.id);
+      await startUpgradeAtomic(
+        upgrade.id,
+        upgradeTime,
+        upgrade.level + 1,
+        { ...newResources, balance: newBalance }
+      );
+      console.log('✅ Atomic start: resources+activeBuildingUpgrades saved');
     } catch (e) {
-      console.error('❌ Failed to update resources/balance', e);
+      console.error('❌ Failed to start upgrade atomically', e);
       return;
     }
-    
-    // Запускаем процесс улучшения
-    const upgradeTime = getUpgradeTime(upgrade.id);
-    startUpgrade(upgrade.id, upgradeTime, upgrade.level + 1);
 
     toast({
       title: "Улучшение начато!",
-      description: `${upgrade.name} будет улучшено через ${upgradeTime} минут`
+      description: `${upgrade.name} будет улучшено через ${getUpgradeTime(upgrade.id)} минут`
     });
   };
   const handleCraft = async (recipe: CraftRecipe) => {

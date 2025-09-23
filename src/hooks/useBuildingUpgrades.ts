@@ -125,6 +125,28 @@ export const useBuildingUpgrades = () => {
 
   return {
     startUpgrade,
+    startUpgradeAtomic: async (
+      buildingId: string,
+      duration: number,
+      targetLevel: number,
+      resourcePatch: { wood?: number; stone?: number; iron?: number; gold?: number; balance?: number }
+    ) => {
+      const upgrade: UpgradeProgress = {
+        buildingId,
+        startTime: Date.now(),
+        duration: duration * 60 * 1000,
+        targetLevel,
+        status: 'in_progress'
+      };
+
+      const newUpgrades = [...activeUpgrades, upgrade];
+      setActiveUpgrades(newUpgrades);
+
+      await gameState.actions.batchUpdate({
+        ...resourcePatch,
+        activeBuildingUpgrades: newUpgrades
+      });
+    },
     installUpgrade,
     getUpgradeProgress,
     isUpgrading,
