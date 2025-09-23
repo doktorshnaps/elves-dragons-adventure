@@ -54,7 +54,7 @@ export const useGameStore = create<GameState>()(
   persist(
     (set, get) => ({
       // Initial state
-      balance: 100,
+      balance: 0,
       cards: [],
       inventory: [],
       dragonEggs: [],
@@ -137,7 +137,7 @@ export const useGameStore = create<GameState>()(
             set({
               accountLevel: data.account_level ?? 1,
               accountExperience: data.account_experience ?? 0,
-              balance: data.balance ?? 100,
+              balance: data.balance ?? 0,
               cards: Array.isArray(data.cards) ? (data.cards as unknown as Card[]) : [],
               inventory: Array.isArray(data.inventory) ? (data.inventory as unknown as Item[]) : [],
               selectedTeam: Array.isArray(data.selected_team) ? data.selected_team : [],
@@ -178,7 +178,7 @@ export const useGameStore = create<GameState>()(
                .insert({
                  user_id: user.id,
                  wallet_address: walletAddress,
-                 balance: 100,
+                  balance: 0,
                  account_level: 1,
                  account_experience: 0,
                  cards: [],
@@ -196,7 +196,7 @@ export const useGameStore = create<GameState>()(
       clearAllData: () => {
         console.log('🧹 Clearing all game data');
         set({
-          balance: 100,
+          balance: 0,
           cards: [],
           inventory: [],
           dragonEggs: [],

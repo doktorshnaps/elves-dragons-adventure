@@ -28,11 +28,11 @@ const ensureOnce = async (wallet: string) => {
 
 
 const initialGameData: GameData = {
-  balance: 100,
-  wood: 150,
-  stone: 200,
-  iron: 75,
-  gold: 300,
+  balance: 0,
+  wood: 0,
+  stone: 0,
+  iron: 0,
+  gold: 0,
   cards: [],
   initialized: false,
   inventory: [],
@@ -454,11 +454,11 @@ async function updateGameDataOnServer(walletAddress: string, updates: Partial<Ga
 
 function transformServerData(serverData: any): GameData {
   const transformed = {
-    balance: serverData.balance ?? 100,
-    wood: serverData.wood ?? 150,
-    stone: serverData.stone ?? 200,
-    iron: serverData.iron ?? 75,
-    gold: serverData.gold ?? 300,
+    balance: serverData.balance ?? 0,
+    wood: serverData.wood ?? 0,
+    stone: serverData.stone ?? 0,
+    iron: serverData.iron ?? 0,
+    gold: serverData.gold ?? 0,
     cards: serverData.cards ?? [],
     initialized: serverData.initialized ?? false,
     inventory: serverData.inventory ?? [],

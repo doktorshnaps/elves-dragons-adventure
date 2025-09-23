@@ -1,7 +1,7 @@
 // Игровые константы
 export const GAME_CONFIG = {
   // Баланс и экономика
-  STARTING_BALANCE: 100,
+  STARTING_BALANCE: 0,
   CARD_PACK_PRICE: 1,
   
   // Энергия

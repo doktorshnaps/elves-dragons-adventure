@@ -44,7 +44,7 @@ export const useGameInitialization = (setCards: (cards: Card[]) => void) => {
               user_id: user?.id,
               wallet_address: accountId,
               cards: initialCards as any,
-              balance: 100,
+              balance: 0,
               initialized: true
             });
 
@@ -55,14 +55,14 @@ export const useGameInitialization = (setCards: (cards: Card[]) => void) => {
 
           // Синхронизируем с localStorage
           localStorage.setItem('gameCards', JSON.stringify(initialCards));
-          localStorage.setItem('gameBalance', '100');
+          localStorage.setItem('gameBalance', '0');
           localStorage.setItem('gameInitialized', 'true');
           
           setCards(initialCards);
           
           // Отправляем событие для обновления баланса
           const balanceEvent = new CustomEvent('balanceUpdate', { 
-            detail: { balance: 100 }
+            detail: { balance: 0 }
           });
           window.dispatchEvent(balanceEvent);
           
@@ -71,7 +71,7 @@ export const useGameInitialization = (setCards: (cards: Card[]) => void) => {
           
           toast({
             title: "Добро пожаловать в игру!",
-            description: "Вы получили 2 начальные колоды карт и 100 ELL",
+            description: "Вы получили 2 начальные колоды карт. Начните зарабатывать ресурсы!",
           });
         } else {
           // Загружаем существующие данные
