@@ -29,7 +29,7 @@ interface NestUpgrade {
     wood: number;
     stone: number;
     iron: number;
-    gold: number;
+    balance: number;
   };
   benefit: string;
 }
@@ -42,7 +42,7 @@ interface CraftRecipe {
     wood?: number;
     stone?: number;
     iron?: number;
-    gold?: number;
+    balance?: number;
   };
   result: string;
   category: "weapon" | "armor" | "potion" | "misc";
@@ -183,24 +183,24 @@ export const Shelter = () => {
   // Функция для расчета стоимости апгрейда для каждого уровня
   const getUpgradeCost = (buildingId: string, currentLevel: number) => {
     const baseCosts = {
-      main_hall: { wood: 0, stone: 0, iron: 0, gold: 50 }, // Только ELL
-      workshop: { wood: 40, stone: 25, iron: 10, gold: 80 },
-      storage: { wood: 0, stone: 0, iron: 0, gold: 100 }, // Только ELL + требует главный зал
-      sawmill: { wood: 25, stone: 15, iron: 3, gold: 40 },
-      quarry: { wood: 20, stone: 30, iron: 5, gold: 60 },
-      barracks: { wood: 50, stone: 40, iron: 15, gold: 120 },
-      dragon_lair: { wood: 60, stone: 30, iron: 20, gold: 160 },
-      medical: { wood: 35, stone: 45, iron: 12, gold: 100 }
+      main_hall: { wood: 0, stone: 0, iron: 0, balance: 50 }, // Только ELL
+      workshop: { wood: 40, stone: 25, iron: 10, balance: 80 },
+      storage: { wood: 0, stone: 0, iron: 0, balance: 100 }, // Только ELL + требует главный зал
+      sawmill: { wood: 25, stone: 15, iron: 3, balance: 40 },
+      quarry: { wood: 20, stone: 30, iron: 5, balance: 60 },
+      barracks: { wood: 50, stone: 40, iron: 15, balance: 120 },
+      dragon_lair: { wood: 60, stone: 30, iron: 20, balance: 160 },
+      medical: { wood: 35, stone: 45, iron: 12, balance: 100 }
     };
     
-    const baseCost = baseCosts[buildingId] || { wood: 30, stone: 20, iron: 5, gold: 50 };
+    const baseCost = baseCosts[buildingId] || { wood: 30, stone: 20, iron: 5, balance: 50 };
     const multiplier = Math.pow(1.5, currentLevel); // Каждый уровень дороже в 1.5 раза
     
     return {
       wood: Math.floor(baseCost.wood * multiplier),
       stone: Math.floor(baseCost.stone * multiplier),
       iron: Math.floor(baseCost.iron * multiplier),
-      gold: Math.floor(baseCost.gold * multiplier)
+      balance: Math.floor(baseCost.balance * multiplier)
     };
   };
 
@@ -310,7 +310,7 @@ export const Shelter = () => {
     requirements: {
       iron: 15,
       wood: 5,
-      gold: 50
+      balance: 50
     },
     result: t(language, 'shelter.ironSwordResult'),
     category: "weapon"
@@ -321,7 +321,7 @@ export const Shelter = () => {
     requirements: {
       wood: 10,
       stone: 5,
-      gold: 30
+      balance: 30
     },
     result: t(language, 'shelter.leatherArmorResult'),
     category: "armor"
@@ -331,7 +331,7 @@ export const Shelter = () => {
     description: t(language, 'shelter.healthPotionDesc'),
     requirements: {
       wood: 3,
-      gold: 20
+      balance: 20
     },
     result: t(language, 'shelter.healthPotionResult'),
     category: "potion"
@@ -342,7 +342,7 @@ export const Shelter = () => {
            resources.wood >= upgrade.cost.wood && 
            resources.stone >= upgrade.cost.stone && 
            resources.iron >= upgrade.cost.iron && 
-           resources.gold >= upgrade.cost.gold &&
+           gameState.balance >= upgrade.cost.balance &&
            canUpgradeBuilding(upgrade.id);
   };
   
@@ -350,7 +350,7 @@ export const Shelter = () => {
     return (!recipe.requirements.wood || resources.wood >= recipe.requirements.wood) && 
            (!recipe.requirements.stone || resources.stone >= recipe.requirements.stone) && 
            (!recipe.requirements.iron || resources.iron >= recipe.requirements.iron) && 
-           (!recipe.requirements.gold || resources.gold >= recipe.requirements.gold) && 
+           (!recipe.requirements.balance || gameState.balance >= recipe.requirements.balance) && 
            buildingLevels.workshop > 0;
   };
 
@@ -360,12 +360,16 @@ export const Shelter = () => {
     const newResources = {
       wood: resources.wood - upgrade.cost.wood,
       stone: resources.stone - upgrade.cost.stone,
-      iron: resources.iron - upgrade.cost.iron,
-      gold: resources.gold - upgrade.cost.gold
+      iron: resources.iron - upgrade.cost.iron
     };
     
-    // Обновляем ресурсы
-    await gameState.actions.updateResources(newResources);
+    const newBalance = gameState.balance - upgrade.cost.balance;
+    
+    // Обновляем ресурсы и баланс
+    await gameState.actions.batchUpdate({
+      ...newResources,
+      balance: newBalance
+    });
     
     // Запускаем процесс улучшения
     const upgradeTime = getUpgradeTime(upgrade.id);
@@ -385,8 +389,14 @@ export const Shelter = () => {
     if (recipe.requirements.wood) newResources.wood -= recipe.requirements.wood;
     if (recipe.requirements.stone) newResources.stone -= recipe.requirements.stone;
     if (recipe.requirements.iron) newResources.iron -= recipe.requirements.iron;
-    if (recipe.requirements.gold) newResources.gold -= recipe.requirements.gold;
-    await gameState.actions.updateResources(newResources);
+    
+    let newBalance = gameState.balance;
+    if (recipe.requirements.balance) newBalance -= recipe.requirements.balance;
+    
+    await gameState.actions.batchUpdate({
+      ...newResources,
+      balance: newBalance
+    });
     toast({
       title: t(language, 'shelter.itemCreated'),
       description: `${t(language, 'shelter.created')} ${recipe.result}`
@@ -564,12 +574,12 @@ export const Shelter = () => {
                                {upgrade.cost.iron}
                              </span>
                            </div>
-                           <div className="flex items-center gap-1">
-                             <span>💰</span>
-                             <span className={resources.gold >= upgrade.cost.gold ? 'text-green-600' : 'text-red-600'}>
-                               {upgrade.cost.gold}
-                             </span>
-                           </div>
+                            <div className="flex items-center gap-1">
+                              <span>💰</span>
+                              <span className={gameState.balance >= upgrade.cost.balance ? 'text-green-600' : 'text-red-600'}>
+                                {upgrade.cost.balance} ELL
+                              </span>
+                            </div>
                          </div>
                           {/* Показываем время улучшения */}
                           <div className="text-xs text-muted-foreground">
@@ -637,16 +647,16 @@ export const Shelter = () => {
                           🪨 {recipe.requirements.stone}
                         </div>
                       )}
-                      {recipe.requirements.iron && (
-                        <div className={resources.iron >= recipe.requirements.iron ? "text-green-600" : "text-red-600"}>
-                          ⚙️ {recipe.requirements.iron}
-                        </div>
-                      )}
-                      {recipe.requirements.gold && (
-                        <div className={resources.gold >= recipe.requirements.gold ? "text-green-600" : "text-red-600"}>
-                          💰 {recipe.requirements.gold}
-                        </div>
-                      )}
+                       {recipe.requirements.iron && (
+                         <div className={resources.iron >= recipe.requirements.iron ? "text-green-600" : "text-red-600"}>
+                           ⚙️ {recipe.requirements.iron}
+                         </div>
+                       )}
+                       {recipe.requirements.balance && (
+                         <div className={gameState.balance >= recipe.requirements.balance ? "text-green-600" : "text-red-600"}>
+                           💰 {recipe.requirements.balance} ELL
+                         </div>
+                       )}
                     </div>
                   </div>
                   
