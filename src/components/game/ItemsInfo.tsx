@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { HoverCard, HoverCardContent, HoverCardTrigger } from "@/components/ui/hover-card";
-import { Sword, Shield, Gem, Heart, Hammer, Trophy, Coins } from "lucide-react";
+import { Sword, Shield, Gem, Heart, Hammer, Trophy, Coins, Diamond } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useLanguage } from "@/hooks/useLanguage";
 import { translateItemName, translateItemType, translateRarity, translateSourceType, translateStat, translateItemText } from "@/utils/itemTranslations";
@@ -51,6 +51,16 @@ import arachneClaw from "@/assets/items/arachne_claw.png";
 import arachneCrown from "@/assets/items/arachne_crown.png";
 import ashenThreadsCloak from "@/assets/items/ashen_threads_cloak.png";
 import { workerImagesByName } from "@/constants/workerImages";
+import woodChunksImg from "@/assets/items/wood-chunks.jpeg";
+import magicalRootsImg from "@/assets/items/magical-roots.jpeg";
+import rockStonesImg from "@/assets/items/rock-stones.jpeg";
+import blackCrystalsImg from "@/assets/items/black-crystals.jpeg";
+import illusionManuscriptImg from "@/assets/items/illusion-manuscript.png";
+import darkMonocleImg from "@/assets/items/dark-monocle.png";
+import etherVineImg from "@/assets/items/ether-vine.png";
+import dwarvenTongsImg from "@/assets/items/dwarven-tongs.png";
+import healingOilImg from "@/assets/items/healing-oil.png";
+import shimmeringCrystalImg from "@/assets/items/shimmering-crystal.png";
 
 interface ItemTemplate {
   id: number;
@@ -145,6 +155,18 @@ const getItemImage = (itemId: string): string | null => {
     arachne_claw: arachneClaw,
     arachne_crown: arachneCrown,
     ashen_threads_cloak: ashenThreadsCloak,
+    
+    // Новые предметы
+    wood_chunks: woodChunksImg,
+    magical_roots: magicalRootsImg,
+    rock_stones: rockStonesImg,
+    black_crystals: blackCrystalsImg,
+    illusion_manuscript: illusionManuscriptImg,
+    dark_monocle: darkMonocleImg,
+    ether_vine: etherVineImg,
+    dwarven_tongs: dwarvenTongsImg,
+    healing_oil: healingOilImg,
+    shimmering_crystal: shimmeringCrystalImg,
   };
   
   return imageMap[itemId] || null;
@@ -431,29 +453,36 @@ export const ItemsInfo = () => {
   const armorItems = items.filter(item => item.type === 'armor');
   const accessoryItems = items.filter(item => item.type === 'accessory');
   const consumableItems = items.filter(item => item.type === 'consumable');
+  const magicalItems = items.filter(item => 
+    ['woodChunks', 'magicalRoots', 'rockStones', 'blackCrystals', 'illusionManuscript', 'darkMonocle', 'etherVine', 'dwarvenTongs', 'healingOil', 'shimmeringCrystal'].includes(item.type)
+  );
 
   return (
     <div className="h-full">
       <Tabs defaultValue="all" className="h-full">
-        <TabsList className="grid w-full grid-cols-5 bg-game-surface/50 border border-game-accent/30 mb-4">
-          <TabsTrigger value="all" className="data-[state=active]:bg-game-accent data-[state=active]:text-black">
+        <TabsList className="grid w-full grid-cols-6 bg-game-surface/50 border border-game-accent/30 mb-4">
+          <TabsTrigger value="all" className="data-[state=active]:bg-game-accent data-[state=active]:text-black text-xs">
             {translateItemText(language, 'Все')}
           </TabsTrigger>
-          <TabsTrigger value="weapons" className="data-[state=active]:bg-game-accent data-[state=active]:text-black">
-            <Sword className="w-4 h-4 mr-1" />
+          <TabsTrigger value="weapons" className="data-[state=active]:bg-game-accent data-[state=active]:text-black text-xs">
+            <Sword className="w-3 h-3 mr-1" />
             {translateItemType(language, 'weapon')}
           </TabsTrigger>
-          <TabsTrigger value="armor" className="data-[state=active]:bg-game-accent data-[state=active]:text-black">
-            <Shield className="w-4 h-4 mr-1" />
+          <TabsTrigger value="armor" className="data-[state=active]:bg-game-accent data-[state=active]:text-black text-xs">
+            <Shield className="w-3 h-3 mr-1" />
             {translateItemType(language, 'armor')}
           </TabsTrigger>
-          <TabsTrigger value="accessories" className="data-[state=active]:bg-game-accent data-[state=active]:text-black">
-            <Gem className="w-4 h-4 mr-1" />
+          <TabsTrigger value="accessories" className="data-[state=active]:bg-game-accent data-[state=active]:text-black text-xs">
+            <Gem className="w-3 h-3 mr-1" />
             {translateItemType(language, 'accessory')}
           </TabsTrigger>
-          <TabsTrigger value="consumables" className="data-[state=active]:bg-game-accent data-[state=active]:text-black">
-            <Heart className="w-4 h-4 mr-1" />
+          <TabsTrigger value="consumables" className="data-[state=active]:bg-game-accent data-[state=active]:text-black text-xs">
+            <Heart className="w-3 h-3 mr-1" />
             {translateItemType(language, 'consumable')}
+          </TabsTrigger>
+          <TabsTrigger value="magical" className="data-[state=active]:bg-game-accent data-[state=active]:text-black text-xs">
+            <Diamond className="w-3 h-3 mr-1" />
+            Магические
           </TabsTrigger>
         </TabsList>
 
@@ -491,12 +520,20 @@ export const ItemsInfo = () => {
 
         <TabsContent value="consumables" className="mt-0 h-[calc(100%-60px)] overflow-y-auto">
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-2 justify-items-center">
-            {consumableItems.map((item) => (
-              <ItemCard key={item.id} item={item} />
-            ))}
-          </div>
-        </TabsContent>
-      </Tabs>
-    </div>
-  );
-};
+             {consumableItems.map((item) => (
+               <ItemCard key={item.id} item={item} />
+             ))}
+           </div>
+         </TabsContent>
+
+         <TabsContent value="magical" className="mt-0 h-[calc(100%-60px)] overflow-y-auto">
+           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-2 justify-items-center">
+             {magicalItems.map((item) => (
+               <ItemCard key={item.id} item={item} />
+             ))}
+           </div>
+         </TabsContent>
+       </Tabs>
+     </div>
+   );
+ };
