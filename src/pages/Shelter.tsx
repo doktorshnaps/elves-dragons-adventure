@@ -17,6 +17,7 @@ import { useLanguage } from "@/hooks/useLanguage";
 import { useWorkerSync } from "@/hooks/useWorkerSync";
 import { t } from "@/utils/translations";
 import { useState, useEffect } from "react";
+
 interface NestUpgrade {
   id: string;
   name: string;
@@ -31,6 +32,7 @@ interface NestUpgrade {
   };
   benefit: string;
 }
+
 interface CraftRecipe {
   id: string;
   name: string;
@@ -44,6 +46,7 @@ interface CraftRecipe {
   result: string;
   category: "weapon" | "armor" | "potion" | "misc";
 }
+
 export const Shelter = () => {
   const navigate = useNavigate();
   const { language } = useLanguage();
@@ -161,111 +164,118 @@ export const Shelter = () => {
     iron: gameState.iron,
     gold: gameState.gold
   };
-  const nestUpgrades: NestUpgrade[] = [{
-    id: "main_hall",
-    name: t(language, 'shelter.mainHall'),
-    description: t(language, 'shelter.mainHallDesc'),
-    level: 1,
-    maxLevel: 10,
-    cost: {
-      wood: 50,
-      stone: 30,
-      iron: 0,
-      gold: 100
+
+  // Получаем уровни зданий из gameState с fallback значениями
+  const buildingLevels = gameState.buildingLevels || {
+    main_hall: 0,
+    workshop: 0,
+    storage: 0,
+    sawmill: 0,
+    quarry: 0,
+    barracks: 0,
+    dragon_lair: 0,
+    medical: 0
+  };
+
+  // Функция для расчета стоимости апгрейда для каждого уровня
+  const getUpgradeCost = (buildingId: string, currentLevel: number) => {
+    const baseCosts = {
+      main_hall: { wood: 30, stone: 20, iron: 0, gold: 50 },
+      workshop: { wood: 40, stone: 25, iron: 10, gold: 80 },
+      storage: { wood: 35, stone: 35, iron: 5, gold: 60 },
+      sawmill: { wood: 25, stone: 15, iron: 3, gold: 40 },
+      quarry: { wood: 20, stone: 30, iron: 5, gold: 60 },
+      barracks: { wood: 50, stone: 40, iron: 15, gold: 120 },
+      dragon_lair: { wood: 60, stone: 30, iron: 20, gold: 160 },
+      medical: { wood: 35, stone: 45, iron: 12, gold: 100 }
+    };
+    
+    const baseCost = baseCosts[buildingId] || { wood: 30, stone: 20, iron: 5, gold: 50 };
+    const multiplier = Math.pow(1.5, currentLevel); // Каждый уровень дороже в 1.5 раза
+    
+    return {
+      wood: Math.floor(baseCost.wood * multiplier),
+      stone: Math.floor(baseCost.stone * multiplier),
+      iron: Math.floor(baseCost.iron * multiplier),
+      gold: Math.floor(baseCost.gold * multiplier)
+    };
+  };
+
+  const nestUpgrades: NestUpgrade[] = [
+    {
+      id: "main_hall",
+      name: t(language, 'shelter.mainHall'),
+      description: t(language, 'shelter.mainHallDesc'),
+      level: buildingLevels.main_hall || 0,
+      maxLevel: 8,
+      cost: getUpgradeCost("main_hall", buildingLevels.main_hall || 0),
+      benefit: t(language, 'shelter.mainHallBenefit')
     },
-    benefit: t(language, 'shelter.mainHallBenefit')
-  }, {
-    id: "workshop",
-    name: t(language, 'shelter.workshop'),
-    description: t(language, 'shelter.workshopDesc'),
-    level: 0,
-    maxLevel: 5,
-    cost: {
-      wood: 80,
-      stone: 40,
-      iron: 20,
-      gold: 200
+    {
+      id: "workshop",
+      name: t(language, 'shelter.workshop'),
+      description: t(language, 'shelter.workshopDesc'),
+      level: buildingLevels.workshop || 0,
+      maxLevel: 8,
+      cost: getUpgradeCost("workshop", buildingLevels.workshop || 0),
+      benefit: t(language, 'shelter.workshopBenefit')
     },
-    benefit: t(language, 'shelter.workshopBenefit')
-  }, {
-    id: "storage",
-    name: t(language, 'shelter.storage'),
-    description: t(language, 'shelter.storageDesc'),
-    level: 2,
-    maxLevel: 8,
-    cost: {
-      wood: 60,
-      stone: 60,
-      iron: 10,
-      gold: 150
+    {
+      id: "storage",
+      name: t(language, 'shelter.storage'),
+      description: t(language, 'shelter.storageDesc'),
+      level: buildingLevels.storage || 0,
+      maxLevel: 8,
+      cost: getUpgradeCost("storage", buildingLevels.storage || 0),
+      benefit: t(language, 'shelter.storageBenefit')
     },
-    benefit: t(language, 'shelter.storageBenefit')
-  }, {
-    id: "sawmill",
-    name: t(language, 'shelter.sawmill'),
-    description: t(language, 'shelter.sawmillDesc'),
-    level: 0,
-    maxLevel: 8,
-    cost: {
-      wood: 40,
-      stone: 20,
-      iron: 5,
-      gold: 80
+    {
+      id: "sawmill",
+      name: t(language, 'shelter.sawmill'),
+      description: t(language, 'shelter.sawmillDesc'),
+      level: buildingLevels.sawmill || 0,
+      maxLevel: 8,
+      cost: getUpgradeCost("sawmill", buildingLevels.sawmill || 0),
+      benefit: t(language, 'shelter.sawmillBenefit')
     },
-    benefit: t(language, 'shelter.sawmillBenefit')
-  }, {
-    id: "quarry",
-    name: t(language, 'shelter.quarry'),
-    description: t(language, 'shelter.quarryDesc'),
-    level: 0,
-    maxLevel: 8,
-    cost: {
-      wood: 30,
-      stone: 50,
-      iron: 10,
-      gold: 120
+    {
+      id: "quarry",
+      name: t(language, 'shelter.quarry'),
+      description: t(language, 'shelter.quarryDesc'),
+      level: buildingLevels.quarry || 0,
+      maxLevel: 8,
+      cost: getUpgradeCost("quarry", buildingLevels.quarry || 0),
+      benefit: t(language, 'shelter.quarryBenefit')
     },
-    benefit: t(language, 'shelter.quarryBenefit')
-  }, {
-    id: "barracks",
-    name: t(language, 'shelter.barracksBuilding'),
-    description: t(language, 'shelter.barracksDesc'),
-    level: 1,
-    maxLevel: 6,
-    cost: {
-      wood: 100,
-      stone: 80,
-      iron: 30,
-      gold: 300
+    {
+      id: "barracks",
+      name: t(language, 'shelter.barracksBuilding'),
+      description: t(language, 'shelter.barracksDesc'),
+      level: buildingLevels.barracks || 0,
+      maxLevel: 8,
+      cost: getUpgradeCost("barracks", buildingLevels.barracks || 0),
+      benefit: t(language, 'shelter.barracksBenefit')
     },
-    benefit: t(language, 'shelter.barracksBenefit')
-  }, {
-    id: "dragon_lair",
-    name: t(language, 'shelter.dragonLairBuilding'),
-    description: t(language, 'shelter.dragonLairDesc'),
-    level: 1,
-    maxLevel: 5,
-    cost: {
-      wood: 120,
-      stone: 60,
-      iron: 40,
-      gold: 400
+    {
+      id: "dragon_lair",
+      name: t(language, 'shelter.dragonLairBuilding'),
+      description: t(language, 'shelter.dragonLairDesc'),
+      level: buildingLevels.dragon_lair || 0,
+      maxLevel: 8,
+      cost: getUpgradeCost("dragon_lair", buildingLevels.dragon_lair || 0),
+      benefit: t(language, 'shelter.dragonLairBenefit')
     },
-    benefit: t(language, 'shelter.dragonLairBenefit')
-  }, {
-    id: "medical",
-    name: t(language, 'shelter.medicalBuilding'),
-    description: t(language, 'shelter.medicalDesc'),
-    level: 1,
-    maxLevel: 4,
-    cost: {
-      wood: 70,
-      stone: 90,
-      iron: 25,
-      gold: 250
-    },
-    benefit: t(language, 'shelter.medicalBenefit')
-  }];
+    {
+      id: "medical",
+      name: t(language, 'shelter.medicalBuilding'),
+      description: t(language, 'shelter.medicalDesc'),
+      level: buildingLevels.medical || 0,
+      maxLevel: 8,
+      cost: getUpgradeCost("medical", buildingLevels.medical || 0),
+      benefit: t(language, 'shelter.medicalBenefit')
+    }
+  ];
+
   const craftRecipes: CraftRecipe[] = [{
     id: "iron_sword",
     name: t(language, 'shelter.ironSword'),
@@ -299,28 +309,50 @@ export const Shelter = () => {
     result: t(language, 'shelter.healthPotionResult'),
     category: "potion"
   }];
+
   const canAffordUpgrade = (upgrade: NestUpgrade) => {
-    return upgrade.level < upgrade.maxLevel && resources.wood >= upgrade.cost.wood && resources.stone >= upgrade.cost.stone && resources.iron >= upgrade.cost.iron && resources.gold >= upgrade.cost.gold && isBuildingActive(upgrade.id);
+    return upgrade.level < upgrade.maxLevel && 
+           resources.wood >= upgrade.cost.wood && 
+           resources.stone >= upgrade.cost.stone && 
+           resources.iron >= upgrade.cost.iron && 
+           resources.gold >= upgrade.cost.gold;
   };
+  
   const canAffordCraft = (recipe: CraftRecipe) => {
-    return (!recipe.requirements.wood || resources.wood >= recipe.requirements.wood) && (!recipe.requirements.stone || resources.stone >= recipe.requirements.stone) && (!recipe.requirements.iron || resources.iron >= recipe.requirements.iron) && (!recipe.requirements.gold || resources.gold >= recipe.requirements.gold) && isBuildingActive("workshop");
+    return (!recipe.requirements.wood || resources.wood >= recipe.requirements.wood) && 
+           (!recipe.requirements.stone || resources.stone >= recipe.requirements.stone) && 
+           (!recipe.requirements.iron || resources.iron >= recipe.requirements.iron) && 
+           (!recipe.requirements.gold || resources.gold >= recipe.requirements.gold) && 
+           buildingLevels.workshop > 0;
   };
+
   const handleUpgrade = async (upgrade: NestUpgrade) => {
     if (!canAffordUpgrade(upgrade)) return;
+    
     const newResources = {
       wood: resources.wood - upgrade.cost.wood,
       stone: resources.stone - upgrade.cost.stone,
       iron: resources.iron - upgrade.cost.iron,
       gold: resources.gold - upgrade.cost.gold
     };
-    await gameState.actions.updateResources(newResources);
+    
+    const newBuildingLevels = {
+      ...buildingLevels,
+      [upgrade.id]: upgrade.level + 1
+    };
+    
+    // Обновляем ресурсы и уровни зданий
+    await gameState.actions.batchUpdate({
+      ...newResources,
+      buildingLevels: newBuildingLevels
+    });
 
-    // Здесь должно быть обновление уровня здания
     toast({
       title: t(language, 'shelter.buildingUpgraded'),
       description: `${upgrade.name} ${t(language, 'shelter.level')} ${upgrade.level + 1}`
     });
   };
+
   const handleCraft = async (recipe: CraftRecipe) => {
     if (!canAffordCraft(recipe)) return;
     const newResources = {
@@ -336,7 +368,9 @@ export const Shelter = () => {
       description: `${t(language, 'shelter.created')} ${recipe.result}`
     });
   };
-  return <div className="min-h-screen bg-gradient-to-br from-green-50 to-blue-50 dark:from-green-950 dark:to-blue-950">
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-green-50 to-blue-50 dark:from-green-950 dark:to-blue-950">
       <div className="container mx-auto p-4 space-y-6">
         {/* Header */}
         {/* Кнопка возврата в левом верхнем углу */}
@@ -393,25 +427,25 @@ export const Shelter = () => {
             <Home className="w-4 h-4" />
             {t(language, 'shelter.upgrades')}
           </Button>
-          <Button variant={activeTab === "crafting" ? "default" : "outline"} onClick={() => setActiveTab("crafting")} className="flex items-center gap-2" disabled={!isBuildingActive("workshop")}>
+          <Button variant={activeTab === "crafting" ? "default" : "outline"} onClick={() => setActiveTab("crafting")} className="flex items-center gap-2" disabled={buildingLevels.workshop === 0}>
             <Hammer className="w-4 h-4" />
             {t(language, 'shelter.crafting')}
-            {!isBuildingActive("workshop") && <span className="text-xs">({t(language, 'shelter.inactive')})</span>}
+            {buildingLevels.workshop === 0 && <span className="text-xs">({t(language, 'shelter.notBuilt')})</span>}
           </Button>
-          <Button variant={activeTab === "barracks" ? "default" : "outline"} onClick={() => setActiveTab("barracks")} className="flex items-center gap-2" disabled={!isBuildingActive("barracks")}>
+          <Button variant={activeTab === "barracks" ? "default" : "outline"} onClick={() => setActiveTab("barracks")} className="flex items-center gap-2" disabled={buildingLevels.barracks === 0}>
             <Shield className="w-4 h-4" />
             {t(language, 'shelter.barracks')}
-            {!isBuildingActive("barracks") && <span className="text-xs">({t(language, 'shelter.inactive')})</span>}
+            {buildingLevels.barracks === 0 && <span className="text-xs">({t(language, 'shelter.notBuilt')})</span>}
           </Button>
-          <Button variant={activeTab === "dragonlair" ? "default" : "outline"} onClick={() => setActiveTab("dragonlair")} className="flex items-center gap-2" disabled={!isBuildingActive("dragon_lair")}>
+          <Button variant={activeTab === "dragonlair" ? "default" : "outline"} onClick={() => setActiveTab("dragonlair")} className="flex items-center gap-2" disabled={buildingLevels.dragon_lair === 0}>
             <Flame className="w-4 h-4" />
             {t(language, 'shelter.dragonLair')}
-            {!isBuildingActive("dragon_lair") && <span className="text-xs">({t(language, 'shelter.inactive')})</span>}
+            {buildingLevels.dragon_lair === 0 && <span className="text-xs">({t(language, 'shelter.notBuilt')})</span>}
           </Button>
-          <Button variant={activeTab === "medical" ? "default" : "outline"} onClick={() => setActiveTab("medical")} className="flex items-center gap-2" disabled={!isBuildingActive("medical")}>
+          <Button variant={activeTab === "medical" ? "default" : "outline"} onClick={() => setActiveTab("medical")} className="flex items-center gap-2" disabled={buildingLevels.medical === 0}>
             <Heart className="w-4 h-4" />
             {t(language, 'shelter.medical')}
-            {!isBuildingActive("medical") && <span className="text-xs">({t(language, 'shelter.inactive')})</span>}
+            {buildingLevels.medical === 0 && <span className="text-xs">({t(language, 'shelter.notBuilt')})</span>}
           </Button>
           <Button variant={activeTab === "workers" ? "default" : "outline"} onClick={() => setActiveTab("workers")} className="flex items-center gap-2">
             <Users className="w-4 h-4" />
@@ -422,193 +456,175 @@ export const Shelter = () => {
         {/* Content based on active tab */}
         
         {/* Upgrades Tab */}
-        {activeTab === "upgrades" && <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {nestUpgrades.map(upgrade => <Card key={upgrade.id} className={`relative ${!isBuildingActive(upgrade.id) ? 'opacity-50 border-destructive/50' : ''}`}>
+        {activeTab === "upgrades" && (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {nestUpgrades.map(upgrade => (
+              <Card key={upgrade.id} className={`relative ${upgrade.level === 0 ? 'opacity-75 border-secondary' : ''}`}>
                 <CardHeader>
                   <div className="flex items-center justify-between">
                     <CardTitle className="text-lg flex items-center gap-2">
                       {upgrade.name}
-                       {!isBuildingActive(upgrade.id) && <Badge variant="destructive" className="text-xs">
-                           {t(language, 'shelter.buildingInactive')}
-                         </Badge>}
+                       {upgrade.level === 0 && (
+                         <Badge variant="secondary" className="text-xs">
+                           {t(language, 'shelter.notBuilt')}
+                         </Badge>
+                       )}
                     </CardTitle>
                      <Badge variant={upgrade.level > 0 ? "default" : "secondary"}>
-                       {t(language, 'shelter.level')} {upgrade.level}/{upgrade.maxLevel}
-                     </Badge>
-                  </div>
-                  <CardDescription>
-                    {upgrade.description}
-                     {!isBuildingActive(upgrade.id) && <div className="mt-2 text-destructive text-sm font-medium">
-                         ⚠️ {t(language, 'shelter.buildingInactive')} - {t(language, 'shelter.workersRequired')}
-                       </div>}
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                   <div className="text-sm">
-                     <strong>{t(language, 'shelter.bonus')}</strong> {upgrade.benefit}
+                        {t(language, 'shelter.level')} {upgrade.level}/{upgrade.maxLevel}
+                      </Badge>
                    </div>
-                  
-                   <div className="space-y-2">
-                     <div className="text-sm font-medium">{t(language, 'shelter.cost')}</div>
-                    <div className="grid grid-cols-2 gap-2 text-sm">
-                       {upgrade.cost.wood > 0 && <div className={resources.wood >= upgrade.cost.wood ? "text-green-600" : "text-red-600"}>
-                           {t(language, 'shelter.wood')}: {upgrade.cost.wood}
-                         </div>}
-                       {upgrade.cost.stone > 0 && <div className={resources.stone >= upgrade.cost.stone ? "text-green-600" : "text-red-600"}>
-                           {t(language, 'shelter.stone')}: {upgrade.cost.stone}
-                         </div>}
-                       {upgrade.cost.iron > 0 && <div className={resources.iron >= upgrade.cost.iron ? "text-green-600" : "text-red-600"}>
-                           {t(language, 'shelter.iron')}: {upgrade.cost.iron}
-                         </div>}
-                       {upgrade.cost.gold > 0 && <div className={resources.gold >= upgrade.cost.gold ? "text-green-600" : "text-red-600"}>
-                           {t(language, 'shelter.gold')}: {upgrade.cost.gold}
-                         </div>}
+                   <CardDescription>
+                     {upgrade.description}
+                   </CardDescription>
+                 </CardHeader>
+                 <CardContent>
+                   <div className="space-y-3">
+                     <div className="text-sm">
+                       <strong>{t(language, 'shelter.benefit')}:</strong> {upgrade.benefit}
                      </div>
-                  </div>
-                  
-                   <Button variant={upgrade.level >= upgrade.maxLevel ? "secondary" : "default"} size="sm" className="w-full" disabled={upgrade.level >= upgrade.maxLevel || resources.wood < upgrade.cost.wood || resources.stone < upgrade.cost.stone || resources.iron < upgrade.cost.iron || resources.gold < upgrade.cost.gold || !isBuildingActive(upgrade.id)} onClick={() => handleUpgrade(upgrade)}>
-                     {upgrade.level >= upgrade.maxLevel ? t(language, 'shelter.maxLevel') : !isBuildingActive(upgrade.id) ? t(language, 'shelter.requiresWorkers') : t(language, 'shelter.upgrade')}
-                  </Button>
-
-                   {/* Статус рабочих для этого здания */}
-                   <BuildingWorkerStatus buildingId={upgrade.id} activeWorkers={activeWorkers} />
-                   
-                   {/* Индикатор времени работы и буста */}
-                   {isBuildingActive(upgrade.id) && (
-                     <div className="mt-2 p-2 bg-green-50 dark:bg-green-950/20 rounded-md border border-green-200 dark:border-green-800">
-                       <div className="flex justify-between items-center text-sm">
-                         <span className="text-green-700 dark:text-green-300 font-medium">
-                           🏃 Буст: +{getBuildingSpeedBoost(upgrade.id)}%
-                         </span>
-                         <span className="text-green-600 dark:text-green-400">
-                           ⏱️ {formatTime(getBuildingRemainingTime(upgrade.id))}
-                         </span>
+                     
+                     {upgrade.level < upgrade.maxLevel && (
+                       <div className="space-y-2">
+                         <div className="text-sm font-medium">{t(language, 'shelter.upgradeCost')}:</div>
+                         <div className="grid grid-cols-4 gap-2 text-sm">
+                           <div className="flex items-center gap-1">
+                             <span>🪵</span>
+                             <span className={resources.wood >= upgrade.cost.wood ? 'text-green-600' : 'text-red-600'}>
+                               {upgrade.cost.wood}
+                             </span>
+                           </div>
+                           <div className="flex items-center gap-1">
+                             <span>🪨</span>
+                             <span className={resources.stone >= upgrade.cost.stone ? 'text-green-600' : 'text-red-600'}>
+                               {upgrade.cost.stone}
+                             </span>
+                           </div>
+                           <div className="flex items-center gap-1">
+                             <span>⚙️</span>
+                             <span className={resources.iron >= upgrade.cost.iron ? 'text-green-600' : 'text-red-600'}>
+                               {upgrade.cost.iron}
+                             </span>
+                           </div>
+                           <div className="flex items-center gap-1">
+                             <span>💰</span>
+                             <span className={resources.gold >= upgrade.cost.gold ? 'text-green-600' : 'text-red-600'}>
+                               {upgrade.cost.gold}
+                             </span>
+                           </div>
+                         </div>
+                         <Button 
+                           onClick={() => handleUpgrade(upgrade)} 
+                           disabled={!canAffordUpgrade(upgrade)}
+                           className="w-full"
+                         >
+                           {upgrade.level === 0 ? t(language, 'shelter.build') : t(language, 'shelter.upgrade')}
+                         </Button>
                        </div>
-                     </div>
-                   )}
-                </CardContent>
-              </Card>)}
-          </div>}
+                     )}
+                     
+                     {upgrade.level === upgrade.maxLevel && (
+                       <div className="text-center py-2">
+                         <Badge variant="default" className="text-sm">
+                           {t(language, 'shelter.maxLevel')}
+                         </Badge>
+                       </div>
+                     )}
+                   </div>
+                 </CardContent>
+               </Card>
+             ))}
+           </div>
+         )}
 
         {/* Crafting Tab */}
-        {activeTab === "crafting" && (isBuildingActive("workshop") ? <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {craftRecipes.map(recipe => <Card key={recipe.id} className="relative">
-                  <CardHeader>
-                    <div className="flex items-center justify-between">
-                      <CardTitle className="text-lg">{recipe.name}</CardTitle>
-                      <Badge variant="outline">
-                        {recipe.category === "weapon" && <Star className="w-3 h-3 mr-1" />}
-                        {recipe.category === "armor" && <Package className="w-3 h-3 mr-1" />}
-                        {recipe.category === "potion" && <Package className="w-3 h-3 mr-1" />}
-                        {recipe.category}
-                      </Badge>
+        {activeTab === "crafting" && (buildingLevels.workshop > 0 ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {craftRecipes.map(recipe => (
+              <Card key={recipe.id} className="relative">
+                <CardHeader>
+                  <div className="flex items-center justify-between">
+                    <CardTitle className="text-lg">{recipe.name}</CardTitle>
+                    <Badge variant="outline">{recipe.category}</Badge>
+                  </div>
+                  <CardDescription>{recipe.description}</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="text-sm">
+                    <strong>{t(language, 'shelter.result')}:</strong> {recipe.result}
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <div className="text-sm font-medium">{t(language, 'shelter.requirements')}:</div>
+                    <div className="grid grid-cols-2 gap-2 text-sm">
+                      {recipe.requirements.wood && (
+                        <div className={resources.wood >= recipe.requirements.wood ? "text-green-600" : "text-red-600"}>
+                          🪵 {recipe.requirements.wood}
+                        </div>
+                      )}
+                      {recipe.requirements.stone && (
+                        <div className={resources.stone >= recipe.requirements.stone ? "text-green-600" : "text-red-600"}>
+                          🪨 {recipe.requirements.stone}
+                        </div>
+                      )}
+                      {recipe.requirements.iron && (
+                        <div className={resources.iron >= recipe.requirements.iron ? "text-green-600" : "text-red-600"}>
+                          ⚙️ {recipe.requirements.iron}
+                        </div>
+                      )}
+                      {recipe.requirements.gold && (
+                        <div className={resources.gold >= recipe.requirements.gold ? "text-green-600" : "text-red-600"}>
+                          💰 {recipe.requirements.gold}
+                        </div>
+                      )}
                     </div>
-                    <CardDescription>{recipe.description}</CardDescription>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    <div className="text-sm">
-                      <strong>Результат:</strong> {recipe.result}
-                    </div>
-                    
-                    <div className="space-y-2">
-                      <div className="text-sm font-medium">Требования:</div>
-                      <div className="grid grid-cols-2 gap-2 text-sm">
-                        {recipe.requirements.wood && <div className={resources.wood >= recipe.requirements.wood ? "text-green-600" : "text-red-600"}>
-                            Дерево: {recipe.requirements.wood}
-                          </div>}
-                        {recipe.requirements.stone && <div className={resources.stone >= recipe.requirements.stone ? "text-green-600" : "text-red-600"}>
-                            Камень: {recipe.requirements.stone}
-                          </div>}
-                        {recipe.requirements.iron && <div className={resources.iron >= recipe.requirements.iron ? "text-green-600" : "text-red-600"}>
-                            Железо: {recipe.requirements.iron}
-                          </div>}
-                        {recipe.requirements.gold && <div className={resources.gold >= recipe.requirements.gold ? "text-green-600" : "text-red-600"}>
-                            Золото: {recipe.requirements.gold}
-                          </div>}
-                      </div>
-                    </div>
-                    
-                    <Button className="w-full" disabled={!canAffordCraft(recipe)} onClick={() => handleCraft(recipe)}>
-                      <Hammer className="w-4 h-4 mr-2" />
-                      {t(language, 'shelter.create')}
-                    </Button>
-                  </CardContent>
-                </Card>)}
-            </div> : <Card>
-              <CardContent className="pt-6">
-                <div className="text-center py-8">
-                  <Hammer className="w-16 h-16 mx-auto mb-4 text-muted-foreground opacity-50" />
-                  <h3 className="text-lg font-medium mb-2">{t(language, 'shelter.crafting')} {t(language, 'shelter.buildingInactive')}</h3>
-                  <p className="text-muted-foreground mb-4">
-                    {t(language, 'shelter.assignWorkers')} в {t(language, 'shelter.crafting')} во вкладке "{t(language, 'shelter.workers')}", чтобы активировать крафт
-                  </p>
-                  <Button variant="outline" onClick={() => setActiveTab("workers")}>
-                    {t(language, 'shelter.assignWorkers')}
+                  </div>
+                  
+                  <Button 
+                    onClick={() => handleCraft(recipe)} 
+                    disabled={!canAffordCraft(recipe)}
+                    className="w-full"
+                  >
+                    {t(language, 'shelter.craft')}
                   </Button>
-                </div>
-              </CardContent>
-            </Card>)}
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        ) : (
+          <div className="text-center py-8">
+            <p className="text-muted-foreground">
+              {t(language, 'shelter.workshopRequired')}
+            </p>
+          </div>
+        ))}
 
         {/* Barracks Tab */}
-        {activeTab === "barracks" && (isBuildingActive("barracks") ? <Barracks barracksLevel={nestUpgrades.find(u => u.id === "barracks")?.level || 1} onUpgradeBuilding={() => {
-        const barracks = nestUpgrades.find(u => u.id === "barracks");
-        if (barracks) {
-          handleUpgrade(barracks);
-        }
-      }} /> : <Card>
-              <CardContent className="pt-6">
-                <div className="text-center py-8">
-                  <Shield className="w-16 h-16 mx-auto mb-4 text-muted-foreground opacity-50" />
-                  <h3 className="text-lg font-medium mb-2">{t(language, 'shelter.barracks')} {t(language, 'shelter.buildingInactive')}</h3>
-                  <p className="text-muted-foreground mb-4">
-                    {t(language, 'shelter.assignWorkers')} в {t(language, 'shelter.barracks')} во вкладке "{t(language, 'shelter.workers')}", чтобы активировать их функции
-                  </p>
-                  <Button variant="outline" onClick={() => setActiveTab("workers")}>
-                    {t(language, 'shelter.assignWorkers')}
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>)}
+        {activeTab === "barracks" && buildingLevels.barracks > 0 && (
+          <Barracks 
+            barracksLevel={buildingLevels.barracks} 
+            onUpgradeBuilding={() => {/* handled by upgrades tab */}} 
+          />
+        )}
 
         {/* Dragon Lair Tab */}
-        {activeTab === "dragonlair" && (isBuildingActive("dragon_lair") ? <DragonLair lairLevel={nestUpgrades.find(u => u.id === "dragon_lair")?.level || 1} onUpgradeBuilding={() => {
-        const dragonLair = nestUpgrades.find(u => u.id === "dragon_lair");
-        if (dragonLair) {
-          handleUpgrade(dragonLair);
-        }
-      }} /> : <Card>
-              <CardContent className="pt-6">
-                <div className="text-center py-8">
-                  <Flame className="w-16 h-16 mx-auto mb-4 text-muted-foreground opacity-50" />
-                  <h3 className="text-lg font-medium mb-2">{t(language, 'shelter.dragonLair')} {t(language, 'shelter.buildingInactive')}</h3>
-                  <p className="text-muted-foreground mb-4">
-                    {t(language, 'shelter.assignWorkers')} в {t(language, 'shelter.dragonLair')} во вкладке "{t(language, 'shelter.workers')}", чтобы активировать его функции
-                  </p>
-                  <Button variant="outline" onClick={() => setActiveTab("workers")}>
-                    {t(language, 'shelter.assignWorkers')}
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>)}
+        {activeTab === "dragonlair" && buildingLevels.dragon_lair > 0 && (
+          <DragonLair 
+            lairLevel={buildingLevels.dragon_lair} 
+            onUpgradeBuilding={() => {/* handled by upgrades tab */}} 
+          />
+        )}
 
         {/* Medical Tab */}
-        {activeTab === "medical" && (isBuildingActive("medical") ? <MedicalBayComponent /> : <Card>
-              <CardContent className="pt-6">
-                <div className="text-center py-8">
-                  <Heart className="w-16 h-16 mx-auto mb-4 text-muted-foreground opacity-50" />
-                  <h3 className="text-lg font-medium mb-2">{t(language, 'shelter.medical')} {t(language, 'shelter.buildingInactive')}</h3>
-                  <p className="text-muted-foreground mb-4">
-                    {t(language, 'shelter.assignWorkers')} в {t(language, 'shelter.medical')} во вкладке "{t(language, 'shelter.workers')}", чтобы активировать его функции
-                  </p>
-                  <Button variant="outline" onClick={() => setActiveTab("workers")}>
-                    {t(language, 'shelter.assignWorkers')}
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>)}
+        {activeTab === "medical" && buildingLevels.medical > 0 && (
+          <MedicalBayComponent />
+        )}
 
         {/* Workers Tab */}
-        {activeTab === "workers" && <WorkersManagement onSpeedBoostChange={setWorkersSpeedBoost} />}
+        {activeTab === "workers" && (
+          <WorkersManagement />
+        )}
       </div>
-    </div>;
+    </div>
+  );
 };

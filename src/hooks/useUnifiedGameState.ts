@@ -47,7 +47,17 @@ const initialGameData: GameData = {
   dragonLairUpgrades: [],
   accountLevel: 1,
   accountExperience: 0,
-  activeWorkers: []
+  activeWorkers: [],
+  buildingLevels: {
+    main_hall: 0,
+    workshop: 0,
+    storage: 0,
+    sawmill: 0,
+    quarry: 0,
+    barracks: 0,
+    dragon_lair: 0,
+    medical: 0
+  }
 };
 
 export const useUnifiedGameState = (): UnifiedGameState => {
@@ -473,7 +483,17 @@ function transformServerData(serverData: any): GameData {
     dragonLairUpgrades: serverData.dragon_lair_upgrades ?? [],
     accountLevel: serverData.account_level ?? 1,
     accountExperience: serverData.account_experience ?? 0,
-    activeWorkers: serverData.active_workers ?? []
+    activeWorkers: serverData.active_workers ?? [],
+    buildingLevels: serverData.building_levels ?? {
+      main_hall: 0,
+      workshop: 0,
+      storage: 0,
+      sawmill: 0,
+      quarry: 0,
+      barracks: 0,
+      dragon_lair: 0,
+      medical: 0
+    }
   };
   
   console.log('🔄 Transformed game data:', {

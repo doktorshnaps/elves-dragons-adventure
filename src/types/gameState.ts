@@ -19,6 +19,7 @@ export interface GameData {
   accountLevel: number;
   accountExperience: number;
   activeWorkers: any[];
+  buildingLevels: any;
 }
 
 export interface GameStateActions {

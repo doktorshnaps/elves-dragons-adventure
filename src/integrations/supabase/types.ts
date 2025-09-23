@@ -150,6 +150,7 @@ export type Database = {
           balance: number
           barracks_upgrades: Json
           battle_state: Json | null
+          building_levels: Json | null
           cards: Json
           created_at: string
           dragon_eggs: Json | null
@@ -178,6 +179,7 @@ export type Database = {
           balance?: number
           barracks_upgrades?: Json
           battle_state?: Json | null
+          building_levels?: Json | null
           cards?: Json
           created_at?: string
           dragon_eggs?: Json | null
@@ -206,6 +208,7 @@ export type Database = {
           balance?: number
           barracks_upgrades?: Json
           battle_state?: Json | null
+          building_levels?: Json | null
           cards?: Json
           created_at?: string
           dragon_eggs?: Json | null
