@@ -22,12 +22,9 @@ export const useBuildingUpgrades = () => {
     }
   }, [gameState.activeBuildingUpgrades]);
 
-  // Сохраняем активные улучшения в gameState и синхронизируем с БД
-  useEffect(() => {
-    if (activeUpgrades.length > 0 || gameState.activeBuildingUpgrades?.length > 0) {
-      gameState.actions.batchUpdate({ activeBuildingUpgrades: activeUpgrades });
-    }
-  }, [activeUpgrades]);
+  // Убираем авто-синхронизацию, сохраняем только по явным действиям (start/ready/install)
+  // это предотвращает сетевой спам RPC вызовами
+
 
   // Проверяем завершенные улучшения и помечаем как готовые к установке
   useEffect(() => {
