@@ -219,7 +219,7 @@ serve(async (req) => {
   } catch (error) {
     console.error('💥 Error in shop-purchase function:', error);
     return new Response(JSON.stringify({ 
-      error: error.message,
+      error: (error as any)?.message || 'Unknown error',
       success: false 
     }), {
       status: 500,

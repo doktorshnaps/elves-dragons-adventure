@@ -74,7 +74,7 @@ Deno.serve(async (req) => {
     }
 
     const contractId = contract_id || 'heroesnft.near' // Default NFT contract
-    const contractsToCheck = [contractId, ...additional_contracts.filter(c => c !== contractId)]
+    const contractsToCheck = [contractId, ...additional_contracts.filter((c: any) => c !== contractId)]
     
     console.log(`📖 Reading NFTs for wallet: ${wallet_address} from contracts: [${contractsToCheck.join(', ')}]`)
 
@@ -313,7 +313,7 @@ Deno.serve(async (req) => {
     console.error('❌ Error in sync-nft-cards:', error)
     return new Response(
       JSON.stringify({ 
-        error: error.message || 'Unknown error occurred',
+        error: (error as any)?.message || 'Unknown error occurred',
         success: false 
       }),
       { 

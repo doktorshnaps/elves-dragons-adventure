@@ -168,11 +168,15 @@ export type Database = {
           selected_team: Json | null
           social_quests: Json | null
           stone: number
+          stone_last_collection_time: number | null
+          stone_production_data: Json | null
           updated_at: string
           user_id: string
           version: number | null
           wallet_address: string | null
           wood: number
+          wood_last_collection_time: number | null
+          wood_production_data: Json | null
         }
         Insert: {
           account_experience?: number
@@ -201,11 +205,15 @@ export type Database = {
           selected_team?: Json | null
           social_quests?: Json | null
           stone?: number
+          stone_last_collection_time?: number | null
+          stone_production_data?: Json | null
           updated_at?: string
           user_id: string
           version?: number | null
           wallet_address?: string | null
           wood?: number
+          wood_last_collection_time?: number | null
+          wood_production_data?: Json | null
         }
         Update: {
           account_experience?: number
@@ -234,11 +242,15 @@ export type Database = {
           selected_team?: Json | null
           social_quests?: Json | null
           stone?: number
+          stone_last_collection_time?: number | null
+          stone_production_data?: Json | null
           updated_at?: string
           user_id?: string
           version?: number | null
           wallet_address?: string | null
           wood?: number
+          wood_last_collection_time?: number | null
+          wood_production_data?: Json | null
         }
         Relationships: []
       }

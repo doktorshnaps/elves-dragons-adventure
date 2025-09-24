@@ -24,6 +24,11 @@ export interface GameData {
   activeWorkers: any[];
   buildingLevels: any;
   activeBuildingUpgrades: any[];
+  // Production persistence (from DB)
+  woodLastCollectionTime?: number; // ms epoch
+  stoneLastCollectionTime?: number; // ms epoch
+  woodProductionData?: { isProducing: boolean; isStorageFull: boolean };
+  stoneProductionData?: { isProducing: boolean; isStorageFull: boolean };
 }
 
 export interface GameStateActions {
