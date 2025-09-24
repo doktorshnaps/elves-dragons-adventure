@@ -52,18 +52,50 @@ export const useResourceProduction = (): UseResourceProductionReturn => {
     }
   }, []);
 
+  // Эффект для автоматического обновления состояния производства каждую секунду
+  useEffect(() => {
+    const interval = setInterval(() => {
+      const warehouseLevel = gameState?.buildingLevels?.warehouse || 1;
+      const workingHours = getWarehouseWorkingHours(warehouseLevel);
+      
+      // Обновляем состояние лесопилки
+      if (getSawmillLevel() > 0) {
+        const timeElapsed = (Date.now() - woodProduction.lastCollectionTime) / 1000 / 3600;
+        const isStorageFull = timeElapsed >= workingHours;
+        setWoodProduction(prev => ({
+          ...prev,
+          isStorageFull,
+          isProducing: !isStorageFull
+        }));
+      }
+      
+      // Обновляем состояние каменоломни
+      if (getQuarryLevel() > 0) {
+        const timeElapsed = (Date.now() - stoneProduction.lastCollectionTime) / 1000 / 3600;
+        const isStorageFull = timeElapsed >= workingHours;
+        setStoneProduction(prev => ({
+          ...prev,
+          isStorageFull,
+          isProducing: !isStorageFull
+        }));
+      }
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, [woodProduction.lastCollectionTime, stoneProduction.lastCollectionTime, gameState?.buildingLevels]);
+
   // Получение уровня зданий
   const getSawmillLevel = useCallback(() => {
     return gameState?.buildingLevels?.sawmill || 0;
-  }, [gameState?.buildingLevels]);
+  }, [gameState?.buildingLevels?.sawmill]);
 
   const getQuarryLevel = useCallback(() => {
     return gameState?.buildingLevels?.quarry || 0;
-  }, [gameState?.buildingLevels]);
+  }, [gameState?.buildingLevels?.quarry]);
 
   const getWarehouseLevel = useCallback(() => {
-    return gameState?.buildingLevels?.warehouse || 1;
-  }, [gameState?.buildingLevels]);
+    return gameState?.buildingLevels?.storage || 1; // Исправлено на storage
+  }, [gameState?.buildingLevels?.storage]);
 
   // Получение производительности в час
   const getTotalWoodPerHour = useCallback(() => {

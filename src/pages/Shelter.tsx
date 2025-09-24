@@ -3,7 +3,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { useNavigate } from "react-router-dom";
-import { ArrowLeft, Home, Hammer, Wrench, Package, Star, Shield, Flame, Heart, Users } from "lucide-react";
+import { ArrowLeft, Home, Hammer, Wrench, Package, Star, Shield, Flame, Heart, Users, TreePine, Mountain } from "lucide-react";
 import { useUnifiedGameState } from "@/hooks/useUnifiedGameState";
 import { useToast } from "@/hooks/use-toast";
 import { useGameStore } from "@/stores/gameStore";
@@ -13,6 +13,7 @@ import { DragonLair } from "@/components/game/shelter/DragonLair";
 import { MedicalBayComponent } from "@/components/game/medical/MedicalBayComponent";
 import { WorkersManagement } from "@/components/game/shelter/WorkersManagement";
 import { BuildingWorkerStatus } from "@/components/game/shelter/BuildingWorkerStatus";
+import { ResourceBuilding } from "@/components/game/ResourceBuilding";
 import { useLanguage } from "@/hooks/useLanguage";
 import { useWorkerSync } from "@/hooks/useWorkerSync";
 import { t } from "@/utils/translations";
@@ -62,7 +63,7 @@ export const Shelter = () => {
     accountLevel,
     accountExperience
   } = useGameStore();
-  const [activeTab, setActiveTab] = useState<"upgrades" | "crafting" | "barracks" | "dragonlair" | "medical" | "workers">("upgrades");
+  const [activeTab, setActiveTab] = useState<"upgrades" | "crafting" | "barracks" | "dragonlair" | "medical" | "workers" | "production">("upgrades");
   const [workersSpeedBoost, setWorkersSpeedBoost] = useState(0);
   
   const { startUpgrade, startUpgradeAtomic, installUpgrade, getUpgradeProgress, isUpgrading, formatRemainingTime } = useBuildingUpgrades();
@@ -510,6 +511,11 @@ export const Shelter = () => {
             <Users className="w-4 h-4" />
             {t(language, 'shelter.workers')}
           </Button>
+          <Button variant={activeTab === "production" ? "default" : "outline"} onClick={() => setActiveTab("production")} className="flex items-center gap-2" disabled={buildingLevels.sawmill === 0 && buildingLevels.quarry === 0}>
+            <Package className="w-4 h-4" />
+            Производство
+            {buildingLevels.sawmill === 0 && buildingLevels.quarry === 0 && <span className="text-xs">(Не построено)</span>}
+          </Button>
         </div>
 
         {/* Content based on active tab */}
@@ -724,6 +730,35 @@ export const Shelter = () => {
         {/* Workers Tab */}
         {activeTab === "workers" && (
           <WorkersManagement />
+        )}
+
+        {/* Production Tab */}
+        {activeTab === "production" && (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {buildingLevels.sawmill > 0 && (
+              <ResourceBuilding
+                type="sawmill"
+                name="Лесопилка"
+                icon={<TreePine className="w-5 h-5" />}
+                resourceType="wood"
+              />
+            )}
+            {buildingLevels.quarry > 0 && (
+              <ResourceBuilding
+                type="quarry"
+                name="Каменоломня"
+                icon={<Mountain className="w-5 h-5" />}
+                resourceType="stone"
+              />
+            )}
+            {buildingLevels.sawmill === 0 && buildingLevels.quarry === 0 && (
+              <div className="col-span-2 text-center py-8">
+                <p className="text-muted-foreground">
+                  Постройте Лесопилку или Каменоломню в разделе "Улучшения"
+                </p>
+              </div>
+            )}
+          </div>
         )}
       </div>
     </div>
