@@ -539,10 +539,13 @@ export const Shelter = () => {
                    </CardDescription>
                  </CardHeader>
                  <CardContent>
-                   <div className="space-y-3">
-                     <div className="text-sm">
-                       <strong>{t(language, 'shelter.benefit')}:</strong> {upgrade.benefit}
-                     </div>
+                    <div className="space-y-3">
+                      {/* Скрываем стандартную информацию о пользе для зданий с производством */}
+                      {upgrade.id !== 'sawmill' && upgrade.id !== 'quarry' && (
+                        <div className="text-sm">
+                          <strong>{t(language, 'shelter.benefit')}:</strong> {upgrade.benefit}
+                        </div>
+                      )}
                      
                       {/* Прогресс улучшения */}
                       {(() => {
@@ -634,8 +637,8 @@ export const Shelter = () => {
                       )}
 
                       {/* Информация о производстве для лесопилки и каменоломни */}
-                      {(upgrade.id === 'sawmill' || upgrade.id === 'quarry') && upgrade.level > 0 && (
-                        <div className="mt-3 pt-3 border-t">
+                      {(upgrade.id === 'sawmill' || upgrade.id === 'quarry') && upgrade.level > 0 ? (
+                        <div className="space-y-3">
                           <ResourceBuilding
                             type={upgrade.id as 'sawmill' | 'quarry'}
                             name={upgrade.name}
@@ -643,7 +646,16 @@ export const Shelter = () => {
                             resourceType={upgrade.id === 'sawmill' ? 'wood' : 'stone'}
                           />
                         </div>
-                      )}
+                      ) : (upgrade.id === 'sawmill' || upgrade.id === 'quarry') && upgrade.level === 0 ? (
+                        <div className="text-center py-4">
+                          <p className="text-muted-foreground text-sm">
+                            {upgrade.id === 'sawmill' ? 'Лесопилка производит дерево автоматически' : 'Каменоломня производит камень автоматически'}
+                          </p>
+                          <p className="text-muted-foreground text-xs mt-1">
+                            Постройте здание для начала производства
+                          </p>
+                        </div>
+                      ) : null}
                    </div>
                  </CardContent>
                </Card>

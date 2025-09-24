@@ -120,110 +120,80 @@ export const ResourceBuilding: React.FC<ResourceBuildingProps> = ({
   };
 
   if (buildingLevel === 0) {
-    return (
-      <Card className="w-full max-w-sm">
-        <CardHeader className="pb-3">
-          <CardTitle className="flex items-center gap-2 text-lg">
-            {icon}
-            {name}
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="text-center py-4">
-            <p className="text-muted-foreground mb-4">Здание не построено</p>
-            <p className="text-sm text-muted-foreground">
-              Постройте здание в разделе улучшений
-            </p>
-          </div>
-        </CardContent>
-      </Card>
-    );
+    return null; // Не отображаем компонент если здание не построено
   }
 
   return (
-    <Card className="w-full max-w-sm">
-      <CardHeader className="pb-3">
-        <CardTitle className="flex items-center justify-between text-lg">
-          <div className="flex items-center gap-2">
-            {icon}
-            {name}
-          </div>
-          <Badge variant="secondary">Ур. {buildingLevel}</Badge>
-        </CardTitle>
-      </CardHeader>
-      <CardContent className="space-y-4">
-        {/* Производство */}
-        <div className="space-y-2">
-          <div className="flex items-center justify-between">
-            <span className="text-sm font-medium">Хранилище</span>
-            <span className="text-sm text-muted-foreground">
-              {readyResources}/{maxStorage}
-            </span>
-          </div>
-          
-          <div className="text-xs text-muted-foreground mb-2">
-            Производство: {productionPerHour}/час • Время работы: {workingHours}ч
-            <br />
-            Debug: Level={buildingLevel}, Type={type}, Expected={type === 'sawmill' ? (buildingLevel === 1 ? 60 : 'N/A') : (buildingLevel === 1 ? 30 : 'N/A')}
-          </div>
-          
-          <Progress value={productionProgress} className="mb-2" />
-          
-          {readyResources >= maxStorage ? (
-            <Button 
-              onClick={handleCollect}
-              className="w-full"
-              variant="default"
-            >
-              <Coins className="w-4 h-4 mr-2" />
-              Собрать {readyResources} {resourceType === 'wood' ? 'дерева' : 'камня'}
-            </Button>
-          ) : (
-            <div className="text-center py-2">
-              <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground">
-                <Clock className="w-4 h-4" />
-                {timeDisplay}
-              </div>
-            </div>
-          )}
+    <div className="space-y-4">
+      {/* Информация о хранилище и производстве */}
+      <div className="space-y-2">
+        <div className="flex items-center justify-between">
+          <span className="text-sm font-medium">Хранилище</span>
+          <span className="text-sm text-muted-foreground">
+            {readyResources}/{maxStorage}
+          </span>
         </div>
-
-        {/* Улучшение */}
-        {canUpgrade && (
-          <div className="space-y-2 pt-2 border-t">
-            <div className="flex items-center justify-between">
-              <span className="text-sm font-medium">Улучшение</span>
-              <Badge variant="outline">Ур. {buildingLevel + 1}</Badge>
+        
+        <div className="text-xs text-muted-foreground mb-2">
+          Производство: {productionPerHour}/час • Время работы: {workingHours}ч
+        </div>
+        
+        <Progress value={productionProgress} className="mb-2" />
+        
+        {readyResources >= maxStorage ? (
+          <Button 
+            onClick={handleCollect}
+            className="w-full"
+            variant="default"
+          >
+            <Coins className="w-4 h-4 mr-2" />
+            Собрать {readyResources} {resourceType === 'wood' ? 'дерева' : 'камня'}
+          </Button>
+        ) : (
+          <div className="text-center py-2">
+            <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground">
+              <Clock className="w-4 h-4" />
+              {timeDisplay}
             </div>
-            
-            <div className="space-y-1 text-xs text-muted-foreground">
-              <div className="flex justify-between">
-                <span>Дерево:</span>
-                <span className={`${(gameState?.wood || 0) >= upgradeCost.wood ? 'text-green-600' : 'text-red-600'}`}>
-                  {upgradeCost.wood.toLocaleString()}
-                </span>
-              </div>
-              <div className="flex justify-between">
-                <span>Камень:</span>
-                <span className={`${(gameState?.stone || 0) >= upgradeCost.stone ? 'text-green-600' : 'text-red-600'}`}>
-                  {upgradeCost.stone.toLocaleString()}
-                </span>
-              </div>
-            </div>
-
-            <Button
-              onClick={handleUpgrade}
-              disabled={!canAffordUpgrade}
-              variant="outline"
-              size="sm"
-              className="w-full"
-            >
-              <Hammer className="w-4 h-4 mr-2" />
-              Улучшить
-            </Button>
           </div>
         )}
-      </CardContent>
-    </Card>
+      </div>
+
+      {/* Улучшение */}
+      {canUpgrade && (
+        <div className="space-y-2 pt-2 border-t">
+          <div className="flex items-center justify-between">
+            <span className="text-sm font-medium">Улучшение</span>
+            <Badge variant="outline">Ур. {buildingLevel + 1}</Badge>
+          </div>
+          
+          <div className="space-y-1 text-xs text-muted-foreground">
+            <div className="flex justify-between">
+              <span>Дерево:</span>
+              <span className={`${(gameState?.wood || 0) >= upgradeCost.wood ? 'text-green-600' : 'text-red-600'}`}>
+                {upgradeCost.wood.toLocaleString()}
+              </span>
+            </div>
+            <div className="flex justify-between">
+              <span>Камень:</span>
+              <span className={`${(gameState?.stone || 0) >= upgradeCost.stone ? 'text-green-600' : 'text-red-600'}`}>
+                {upgradeCost.stone.toLocaleString()}
+              </span>
+            </div>
+          </div>
+
+          <Button
+            onClick={handleUpgrade}
+            disabled={!canAffordUpgrade}
+            variant="outline"
+            size="sm"
+            className="w-full"
+          >
+            <Hammer className="w-4 h-4 mr-2" />
+            Улучшить
+          </Button>
+        </div>
+      )}
+    </div>
   );
 };
