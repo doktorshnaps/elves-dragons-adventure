@@ -26,30 +26,37 @@ interface UseResourceProductionReturn {
 export const useResourceProduction = (): UseResourceProductionReturn => {
   const gameState = useUnifiedGameState();
   
-  const [woodProduction, setWoodProduction] = useState<ResourceProduction>({
-    lastCollectionTime: Date.now(),
-    isProducing: true,
-    isStorageFull: false
-  });
-  
-  const [stoneProduction, setStoneProduction] = useState<ResourceProduction>({
-    lastCollectionTime: Date.now(),
-    isProducing: true,
-    isStorageFull: false
-  });
+  // Инициализируем время из localStorage или устанавливаем текущее время только если данных нет
+  const getInitialTime = (key: string) => {
+    const saved = localStorage.getItem(key);
+    return saved ? parseInt(saved) : Date.now();
+  };
 
-  // Инициализация времени последнего сбора из локального хранилища
+  const [woodProduction, setWoodProduction] = useState<ResourceProduction>(() => ({
+    lastCollectionTime: getInitialTime('woodLastCollection'),
+    isProducing: true,
+    isStorageFull: false
+  }));
+  
+  const [stoneProduction, setStoneProduction] = useState<ResourceProduction>(() => ({
+    lastCollectionTime: getInitialTime('stoneLastCollection'),
+    isProducing: true,
+    isStorageFull: false
+  }));
+
+  // Синхронизация с localStorage только при изменении данных в хранилище
   useEffect(() => {
-    const savedWoodTime = localStorage.getItem('woodLastCollection');
-    const savedStoneTime = localStorage.getItem('stoneLastCollection');
-    
-    if (savedWoodTime) {
-      setWoodProduction(prev => ({ ...prev, lastCollectionTime: parseInt(savedWoodTime) }));
-    }
-    
-    if (savedStoneTime) {
-      setStoneProduction(prev => ({ ...prev, lastCollectionTime: parseInt(savedStoneTime) }));
-    }
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key === 'woodLastCollection' && e.newValue) {
+        setWoodProduction(prev => ({ ...prev, lastCollectionTime: parseInt(e.newValue!) }));
+      }
+      if (e.key === 'stoneLastCollection' && e.newValue) {
+        setStoneProduction(prev => ({ ...prev, lastCollectionTime: parseInt(e.newValue!) }));
+      }
+    };
+
+    window.addEventListener('storage', handleStorageChange);
+    return () => window.removeEventListener('storage', handleStorageChange);
   }, []);
 
   // Эффект для автоматического обновления состояния производства каждую секунду
