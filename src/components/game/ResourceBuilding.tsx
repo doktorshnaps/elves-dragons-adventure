@@ -163,6 +163,8 @@ export const ResourceBuilding: React.FC<ResourceBuildingProps> = ({
           
           <div className="text-xs text-muted-foreground mb-2">
             Производство: {productionPerHour}/час • Время работы: {workingHours}ч
+            <br />
+            Debug: Level={buildingLevel}, Type={type}, Expected={type === 'sawmill' ? (buildingLevel === 1 ? 60 : 'N/A') : (buildingLevel === 1 ? 30 : 'N/A')}
           </div>
           
           <Progress value={productionProgress} className="mb-2" />
