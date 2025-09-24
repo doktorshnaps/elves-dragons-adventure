@@ -5,6 +5,7 @@ import { Card } from '@/types/cards';
 import { useToast } from '@/hooks/use-toast';
 import { initializeCardHealth } from '@/utils/cardHealthUtils';
 import { updateGameDataByWalletThrottled } from '@/utils/updateGameDataThrottle';
+import { loadGameDataDeduped } from '@/utils/gameDataLoader';
 
 interface GameData {
   balance: number;
@@ -53,6 +54,12 @@ export const useGameData = () => {
   });
   const [loading, setLoading] = useState(true);
   const [currentWallet, setCurrentWallet] = useState<string | null>(localStorage.getItem('walletAccountId'));
+  
+  // Echo guard for realtime updates
+  const lastUpdateRef = useRef<number>(Date.now());
+  
+  // Loading deduplication
+  const isLoadingRef = useRef<boolean>(false);
 
   // Загрузка данных из Supabase для кошелька
   const loadGameData = useCallback(async (walletAddress?: string) => {
@@ -63,19 +70,19 @@ export const useGameData = () => {
       return;
     }
 
+    // Prevent multiple simultaneous loads
+    if (isLoadingRef.current) {
+      console.log('Load already in progress, skipping');
+      return;
+    }
+
+    isLoadingRef.current = true;
+
     try {
       console.log('🔄 Loading game data for wallet:', address);
       
-      // Use the secure function to get game data
-      const { data: gameDataArray, error } = await supabase.rpc('get_game_data_by_wallet', {
-        p_wallet_address: address
-      });
-
-      if (error) {
-        console.error('❌ Error loading game data:', error);
-        setLoading(false);
-        return;
-      }
+      // Use deduplicated loader to prevent multiple simultaneous requests
+      const gameDataArray = await loadGameDataDeduped(address);
 
       if (gameDataArray && gameDataArray.length > 0) {
         const gameRecord = gameDataArray[0];
@@ -140,6 +147,7 @@ export const useGameData = () => {
     } catch (error) {
       console.error('Error in loadGameData:', error);
     } finally {
+      isLoadingRef.current = false;
       setLoading(false);
     }
   }, []);
@@ -224,36 +232,35 @@ export const useGameData = () => {
 
       console.log('🔄 Updating game data:', changedUpdates);
 
-      // Use the secure function to update game data
-      const { data: success, error } = await supabase.rpc('update_game_data_by_wallet', {
+      // Use throttled RPC to avoid request storms
+      const ok = await updateGameDataByWalletThrottled({
         p_wallet_address: walletAddress,
-        p_balance: changedUpdates.balance ?? null,
-        p_cards: (changedUpdates.cards as any) ?? null,
-        p_inventory: (changedUpdates.inventory as any) ?? null,
-        p_selected_team: (changedUpdates.selectedTeam as any) ?? null,
-        p_dragon_eggs: (changedUpdates.dragonEggs as any) ?? null,
-        p_account_level: changedUpdates.accountLevel ?? null,
-        p_account_experience: changedUpdates.accountExperience ?? null,
-        p_initialized: changedUpdates.initialized ?? null,
-        p_marketplace_listings: (changedUpdates.marketplaceListings as any) ?? null,
-        p_social_quests: (changedUpdates.socialQuests as any) ?? null,
-        p_adventure_player_stats: (changedUpdates.adventurePlayerStats as any) ?? null,
-        p_adventure_current_monster: (changedUpdates.adventureCurrentMonster as any) ?? null,
-        p_battle_state: (changedUpdates.battleState as any) ?? null,
-        p_barracks_upgrades: (changedUpdates.barracksUpgrades as any) ?? null,
-        p_dragon_lair_upgrades: (changedUpdates.dragonLairUpgrades as any) ?? null,
-        p_active_workers: (changedUpdates.activeWorkers as any) ?? null,
-        // Extra fields to disambiguate overloaded RPC
-        p_building_levels: (changedUpdates.buildingLevels as any) ?? null,
-        p_active_building_upgrades: (changedUpdates.activeBuildingUpgrades as any) ?? null,
-        p_wood: (changedUpdates.wood as any) ?? null,
-        p_stone: (changedUpdates.stone as any) ?? null,
-        p_iron: (changedUpdates.iron as any) ?? null,
-        p_gold: (changedUpdates.gold as any) ?? null
+        p_balance: changedUpdates.balance,
+        p_cards: (changedUpdates.cards as any),
+        p_inventory: (changedUpdates.inventory as any),
+        p_selected_team: (changedUpdates.selectedTeam as any),
+        p_dragon_eggs: (changedUpdates.dragonEggs as any),
+        p_account_level: changedUpdates.accountLevel,
+        p_account_experience: changedUpdates.accountExperience,
+        p_initialized: changedUpdates.initialized,
+        p_marketplace_listings: (changedUpdates.marketplaceListings as any),
+        p_social_quests: (changedUpdates.socialQuests as any),
+        p_adventure_player_stats: (changedUpdates.adventurePlayerStats as any),
+        p_adventure_current_monster: (changedUpdates.adventureCurrentMonster as any),
+        p_battle_state: (changedUpdates.battleState as any),
+        p_barracks_upgrades: (changedUpdates.barracksUpgrades as any),
+        p_dragon_lair_upgrades: (changedUpdates.dragonLairUpgrades as any),
+        p_active_workers: (changedUpdates.activeWorkers as any),
+        p_building_levels: (changedUpdates.buildingLevels as any),
+        p_active_building_upgrades: (changedUpdates.activeBuildingUpgrades as any),
+        p_wood: changedUpdates.wood,
+        p_stone: changedUpdates.stone,
+        p_iron: changedUpdates.iron,
+        p_gold: changedUpdates.gold
       });
 
-      if (error) {
-        console.error('❌ Error updating game data:', error);
+      if (!ok) {
+        console.error('❌ Error updating game data (throttled RPC returned false)');
         // Rollback optimistic update
         setGameData(originalGameData);
         toast({
@@ -264,8 +271,8 @@ export const useGameData = () => {
         return;
       }
 
-      if (success) {
-        console.log('✅ Game data updated successfully');
+      // When ok === true, continue with success flow
+      console.log('✅ Game data updated successfully');
         
         // Sync changed keys to localStorage (state already updated optimistically)
         if (changedUpdates.cards !== undefined) localStorage.setItem('gameCards', JSON.stringify(changedUpdates.cards));
@@ -321,7 +328,6 @@ export const useGameData = () => {
           });
           window.dispatchEvent(cardsEvent);
         }
-      }
 
     } catch (error) {
       console.error('Error in updateGameData:', error);
@@ -363,7 +369,7 @@ export const useGameData = () => {
   // Подписка на изменения в реальном времени для кошелька
   useEffect(() => {
     if (!currentWallet) return;
-
+    
     const channel = supabase
       .channel('game-data-changes')
       .on(
@@ -375,7 +381,15 @@ export const useGameData = () => {
           filter: `wallet_address=eq.${currentWallet}`
         },
         (payload) => {
-          console.log('Real-time update:', payload);
+          const now = Date.now();
+          // Echo guard: ignore changes that happened too soon (likely our own update)
+          if (now - lastUpdateRef.current < 2000) {
+            console.log('Real-time update ignored (echo guard)', payload.eventType);
+            return;
+          }
+          
+          console.log('Real-time update accepted:', payload.eventType);
+          lastUpdateRef.current = now;
           loadGameData(currentWallet);
         }
       )

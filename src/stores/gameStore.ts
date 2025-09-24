@@ -5,6 +5,7 @@ import { Item } from '@/types/inventory';
 import { DragonEgg } from '@/contexts/DragonEggContext';
 import { supabase } from '@/integrations/supabase/client';
 import { getLevelFromXP } from '@/utils/accountLeveling';
+import { updateGameDataByWalletThrottled } from '@/utils/updateGameDataThrottle';
 
 interface GameState {
   // Core game data
@@ -108,13 +109,13 @@ export const useGameStore = create<GameState>()(
         try {
           const walletAddress = localStorage.getItem('walletAccountId');
           if (walletAddress) {
-            const { data: success, error } = await supabase.rpc('update_game_data_by_wallet', {
+            const ok = await updateGameDataByWalletThrottled({
               p_wallet_address: walletAddress,
               p_account_level: newLevel,
               p_account_experience: newXP
             });
-            if (error) {
-              console.error('Failed to sync account data to Supabase (RPC):', error);
+            if (!ok) {
+              console.error('Failed to sync account data to Supabase (throttled RPC returned false)');
             }
           }
         } catch (error) {
