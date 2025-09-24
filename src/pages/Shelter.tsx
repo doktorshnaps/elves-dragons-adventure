@@ -184,13 +184,13 @@ export const Shelter = () => {
   const getUpgradeCost = (buildingId: string, currentLevel: number) => {
     const baseCosts = {
       main_hall: { wood: 0, stone: 0, iron: 0, balance: 50 }, // Только ELL
-      workshop: { wood: 40, stone: 25, iron: 10, balance: 100 },
+      workshop: { wood: 0, stone: 0, iron: 0, balance: 100 },
       storage: { wood: 0, stone: 0, iron: 0, balance: 100 }, // Только ELL + требует главный зал
-      sawmill: { wood: 25, stone: 15, iron: 3, balance: 100 },
-      quarry: { wood: 20, stone: 30, iron: 5, balance: 100 },
-      barracks: { wood: 50, stone: 40, iron: 15, balance: 400 },
-      dragon_lair: { wood: 60, stone: 30, iron: 20, balance: 400 },
-      medical: { wood: 35, stone: 45, iron: 12, balance: 50 }
+      sawmill: { wood: 0, stone: 0, iron: 0, balance: 100 },
+      quarry: { wood: 0, stone: 0, iron: 0, balance: 100 },
+      barracks: { wood: 0, stone: 0, iron: 0, balance: 400 },
+      dragon_lair: { wood: 0, stone: 0, iron: 0, balance: 400 },
+      medical: { wood: 0, stone: 0, iron: 0, balance: 50 }
     };
     
     const baseCost = baseCosts[buildingId] || { wood: 30, stone: 20, iron: 5, balance: 50 };
