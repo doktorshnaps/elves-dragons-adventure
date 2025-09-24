@@ -11,6 +11,7 @@ import { batchUpdateManager } from '@/utils/batchUpdates';
 import { GameData, UnifiedGameState } from '@/types/gameState';
 import { useToast } from './use-toast';
 import { gameCache } from '@/utils/cacheStrategy';
+import { updateGameDataByWalletThrottled } from '@/utils/updateGameDataThrottle';
 
 const GAME_DATA_KEY = 'gameData';
 const STALE_TIME = 5 * 60 * 1000; // 5 минут
@@ -452,10 +453,9 @@ async function updateGameDataOnServer(walletAddress: string, updates: Partial<Ga
     p_gold: updates.gold
   };
 
-  const { data: ok, error: rpcError } = await supabase.rpc('update_game_data_by_wallet', rpcPayload);
-  if (rpcError || ok !== true) {
-    console.error('RPC update_game_data_by_wallet failed:', rpcError);
-    throw rpcError || new Error('update_game_data_by_wallet returned false');
+  const ok = await updateGameDataByWalletThrottled(rpcPayload);
+  if (!ok) {
+    throw new Error('update_game_data_by_wallet returned false');
   }
 
   const { data: fullData, error: fullErr } = await supabase.rpc('get_game_data_by_wallet_full', {
