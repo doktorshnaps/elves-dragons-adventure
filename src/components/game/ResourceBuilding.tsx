@@ -3,9 +3,9 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
-import { Hammer, Clock, Coins } from 'lucide-react';
+import { Clock, Coins } from 'lucide-react';
 import { useResourceProduction } from '@/hooks/useResourceProduction';
-import { getSawmillUpgradeCost, getQuarryUpgradeCost, getWarehouseWorkingHours } from '@/config/buildings';
+import { getWarehouseWorkingHours } from '@/config/buildings';
 import { useUnifiedGameState } from '@/hooks/useUnifiedGameState';
 
 interface ResourceBuildingProps {
@@ -55,14 +55,6 @@ export const ResourceBuilding: React.FC<ResourceBuildingProps> = ({
     workingHours
   });
   
-  const upgradeCost = isWood 
-    ? getSawmillUpgradeCost(buildingLevel)
-    : getQuarryUpgradeCost(buildingLevel);
-
-  const canUpgrade = upgradeCost && buildingLevel < 8;
-  const canAffordUpgrade = canUpgrade && 
-    (gameState?.wood || 0) >= upgradeCost.wood && 
-    (gameState?.stone || 0) >= upgradeCost.stone;
 
   // Обновление отображения времени до заполнения хранилища
   useEffect(() => {
@@ -98,26 +90,6 @@ export const ResourceBuilding: React.FC<ResourceBuildingProps> = ({
     }
   };
 
-  const handleUpgrade = async () => {
-    if (!canAffordUpgrade || !upgradeCost) return;
-
-    try {
-      await gameState.actions.updateResources({
-        wood: (gameState?.wood || 0) - upgradeCost.wood,
-        stone: (gameState?.stone || 0) - upgradeCost.stone
-      });
-
-      // Обновляем уровень здания
-      await gameState.actions.batchUpdate({
-        buildingLevels: {
-          ...gameState?.buildingLevels,
-          [type]: buildingLevel + 1
-        }
-      });
-    } catch (error) {
-      console.error('Ошибка при улучшении здания:', error);
-    }
-  };
 
   if (buildingLevel === 0) {
     return null; // Не отображаем компонент если здание не построено
@@ -159,41 +131,6 @@ export const ResourceBuilding: React.FC<ResourceBuildingProps> = ({
         )}
       </div>
 
-      {/* Улучшение */}
-      {canUpgrade && (
-        <div className="space-y-2 pt-2 border-t">
-          <div className="flex items-center justify-between">
-            <span className="text-sm font-medium">Улучшение</span>
-            <Badge variant="outline">Ур. {buildingLevel + 1}</Badge>
-          </div>
-          
-          <div className="space-y-1 text-xs text-muted-foreground">
-            <div className="flex justify-between">
-              <span>Дерево:</span>
-              <span className={`${(gameState?.wood || 0) >= upgradeCost.wood ? 'text-green-600' : 'text-red-600'}`}>
-                {upgradeCost.wood.toLocaleString()}
-              </span>
-            </div>
-            <div className="flex justify-between">
-              <span>Камень:</span>
-              <span className={`${(gameState?.stone || 0) >= upgradeCost.stone ? 'text-green-600' : 'text-red-600'}`}>
-                {upgradeCost.stone.toLocaleString()}
-              </span>
-            </div>
-          </div>
-
-          <Button
-            onClick={handleUpgrade}
-            disabled={!canAffordUpgrade}
-            variant="outline"
-            size="sm"
-            className="w-full"
-          >
-            <Hammer className="w-4 h-4 mr-2" />
-            Улучшить
-          </Button>
-        </div>
-      )}
     </div>
   );
 };
