@@ -1131,6 +1131,16 @@ export type Database = {
             }
         Returns: boolean
       }
+      update_resource_production_state_by_wallet: {
+        Args: {
+          p_is_producing: boolean
+          p_is_storage_full: boolean
+          p_last_collection_time: number
+          p_resource: string
+          p_wallet_address: string
+        }
+        Returns: boolean
+      }
     }
     Enums: {
       [_ in never]: never

@@ -26,65 +26,89 @@ interface UseResourceProductionReturn {
 export const useResourceProduction = (): UseResourceProductionReturn => {
   const gameState = useUnifiedGameState();
   
-  // Инициализируем время из localStorage или устанавливаем текущее время только если данных нет
-  const getInitialTime = (key: string) => {
+  // Инициализация из БД, fallback на localStorage или текущее время
+  const getInitialTime = (key: string, dbValue?: number) => {
+    if (dbValue) return dbValue;
     const saved = localStorage.getItem(key);
     return saved ? parseInt(saved) : Date.now();
   };
 
+  const getInitialProductionData = (dbValue?: { isProducing: boolean; isStorageFull: boolean }) => {
+    return dbValue ?? { isProducing: true, isStorageFull: false };
+  };
+
   const [woodProduction, setWoodProduction] = useState<ResourceProduction>(() => ({
-    lastCollectionTime: getInitialTime('woodLastCollection'),
-    isProducing: true,
-    isStorageFull: false
+    lastCollectionTime: getInitialTime('woodLastCollection', gameState?.woodLastCollectionTime),
+    ...getInitialProductionData(gameState?.woodProductionData)
   }));
   
   const [stoneProduction, setStoneProduction] = useState<ResourceProduction>(() => ({
-    lastCollectionTime: getInitialTime('stoneLastCollection'),
-    isProducing: true,
-    isStorageFull: false
+    lastCollectionTime: getInitialTime('stoneLastCollection', gameState?.stoneLastCollectionTime),
+    ...getInitialProductionData(gameState?.stoneProductionData)
   }));
 
-  // Синхронизация с localStorage только при изменении данных в хранилище
+  // Синхронизация с БД при изменении gameState
   useEffect(() => {
-    const handleStorageChange = (e: StorageEvent) => {
-      if (e.key === 'woodLastCollection' && e.newValue) {
-        setWoodProduction(prev => ({ ...prev, lastCollectionTime: parseInt(e.newValue!) }));
-      }
-      if (e.key === 'stoneLastCollection' && e.newValue) {
-        setStoneProduction(prev => ({ ...prev, lastCollectionTime: parseInt(e.newValue!) }));
-      }
-    };
-
-    window.addEventListener('storage', handleStorageChange);
-    return () => window.removeEventListener('storage', handleStorageChange);
-  }, []);
+    if (gameState?.woodLastCollectionTime && gameState.woodLastCollectionTime !== woodProduction.lastCollectionTime) {
+      setWoodProduction(prev => ({ 
+        ...prev, 
+        lastCollectionTime: gameState.woodLastCollectionTime!,
+        ...getInitialProductionData(gameState.woodProductionData)
+      }));
+    }
+    if (gameState?.stoneLastCollectionTime && gameState.stoneLastCollectionTime !== stoneProduction.lastCollectionTime) {
+      setStoneProduction(prev => ({ 
+        ...prev, 
+        lastCollectionTime: gameState.stoneLastCollectionTime!,
+        ...getInitialProductionData(gameState.stoneProductionData)
+      }));
+    }
+  }, [gameState?.woodLastCollectionTime, gameState?.stoneLastCollectionTime, gameState?.woodProductionData, gameState?.stoneProductionData]);
 
   // Эффект для автоматического обновления состояния производства каждую секунду
   useEffect(() => {
-    const interval = setInterval(() => {
-      const warehouseLevel = gameState?.buildingLevels?.warehouse || 1;
+    const interval = setInterval(async () => {
+      const warehouseLevel = gameState?.buildingLevels?.storage || 1;
       const workingHours = getWarehouseWorkingHours(warehouseLevel);
       
       // Обновляем состояние лесопилки
       if (getSawmillLevel() > 0) {
         const timeElapsed = (Date.now() - woodProduction.lastCollectionTime) / 1000 / 3600;
         const isStorageFull = timeElapsed >= workingHours;
-        setWoodProduction(prev => ({
-          ...prev,
+        const newWoodState = {
+          ...woodProduction,
           isStorageFull,
           isProducing: !isStorageFull
-        }));
+        };
+        
+        if (newWoodState.isStorageFull !== woodProduction.isStorageFull || 
+            newWoodState.isProducing !== woodProduction.isProducing) {
+          setWoodProduction(newWoodState);
+          // Сохраняем состояние в БД
+          await gameState.actions.batchUpdate({
+            woodProductionData: { isProducing: newWoodState.isProducing, isStorageFull: newWoodState.isStorageFull }
+          });
+        }
       }
       
       // Обновляем состояние каменоломни
       if (getQuarryLevel() > 0) {
         const timeElapsed = (Date.now() - stoneProduction.lastCollectionTime) / 1000 / 3600;
         const isStorageFull = timeElapsed >= workingHours;
-        setStoneProduction(prev => ({
-          ...prev,
+        const newStoneState = {
+          ...stoneProduction,
           isStorageFull,
           isProducing: !isStorageFull
-        }));
+        };
+        
+        if (newStoneState.isStorageFull !== stoneProduction.isStorageFull || 
+            newStoneState.isProducing !== stoneProduction.isProducing) {
+          setStoneProduction(newStoneState);
+          // Сохраняем состояние в БД
+          await gameState.actions.batchUpdate({
+            stoneProductionData: { isProducing: newStoneState.isProducing, isStorageFull: newStoneState.isStorageFull }
+          });
+        }
       }
     }, 1000);
 
@@ -203,13 +227,20 @@ export const useResourceProduction = (): UseResourceProductionReturn => {
       });
       
       const now = Date.now();
-      setWoodProduction(prev => ({ 
-        ...prev, 
+      const newWoodState = { 
+        ...woodProduction, 
         lastCollectionTime: now,
         isStorageFull: false,
         isProducing: true
-      }));
+      };
+      setWoodProduction(newWoodState);
+      
+      // Сохраняем в БД и localStorage
       localStorage.setItem('woodLastCollection', now.toString());
+      await gameState.actions.batchUpdate({
+        woodLastCollectionTime: now,
+        woodProductionData: { isProducing: true, isStorageFull: false }
+      });
     } catch (error) {
       console.error('Ошибка при сборе древесины:', error);
     }
@@ -226,13 +257,20 @@ export const useResourceProduction = (): UseResourceProductionReturn => {
       });
       
       const now = Date.now();
-      setStoneProduction(prev => ({ 
-        ...prev, 
+      const newStoneState = { 
+        ...stoneProduction, 
         lastCollectionTime: now,
         isStorageFull: false,
         isProducing: true
-      }));
+      };
+      setStoneProduction(newStoneState);
+      
+      // Сохраняем в БД и localStorage
       localStorage.setItem('stoneLastCollection', now.toString());
+      await gameState.actions.batchUpdate({
+        stoneLastCollectionTime: now,
+        stoneProductionData: { isProducing: true, isStorageFull: false }
+      });
     } catch (error) {
       console.error('Ошибка при сборе камня:', error);
     }

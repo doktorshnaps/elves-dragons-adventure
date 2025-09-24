@@ -331,6 +331,10 @@ function mapClientToServer(data: Partial<GameData> | GameData) {
   if (d.activeWorkers !== undefined) out.active_workers = d.activeWorkers;
   if (d.buildingLevels !== undefined) out.building_levels = d.buildingLevels;
   if (d.activeBuildingUpgrades !== undefined) out.active_building_upgrades = d.activeBuildingUpgrades;
+  if (d.woodLastCollectionTime !== undefined) out.wood_last_collection_time = d.woodLastCollectionTime;
+  if (d.stoneLastCollectionTime !== undefined) out.stone_last_collection_time = d.stoneLastCollectionTime;
+  if (d.woodProductionData !== undefined) out.wood_production_data = d.woodProductionData;
+  if (d.stoneProductionData !== undefined) out.stone_production_data = d.stoneProductionData;
   return out;
 }
 
@@ -450,7 +454,11 @@ async function updateGameDataOnServer(walletAddress: string, updates: Partial<Ga
     p_wood: updates.wood,
     p_stone: updates.stone,
     p_iron: updates.iron,
-    p_gold: updates.gold
+    p_gold: updates.gold,
+    p_wood_last_collection_time: updates.woodLastCollectionTime,
+    p_stone_last_collection_time: updates.stoneLastCollectionTime,
+    p_wood_production_data: updates.woodProductionData as any,
+    p_stone_production_data: updates.stoneProductionData as any
   };
 
   const ok = await updateGameDataByWalletThrottled(rpcPayload);
@@ -503,7 +511,11 @@ function transformServerData(serverData: any): GameData {
       dragon_lair: 0,
       medical: 0
     },
-    activeBuildingUpgrades: serverData.active_building_upgrades ?? []
+    activeBuildingUpgrades: serverData.active_building_upgrades ?? [],
+    woodLastCollectionTime: serverData.wood_last_collection_time,
+    stoneLastCollectionTime: serverData.stone_last_collection_time,
+    woodProductionData: serverData.wood_production_data ?? { isProducing: true, isStorageFull: false },
+    stoneProductionData: serverData.stone_production_data ?? { isProducing: true, isStorageFull: false }
   };
   
   console.log('🔄 Transformed game data:', {
