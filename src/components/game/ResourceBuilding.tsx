@@ -5,7 +5,7 @@ import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
 import { Hammer, Clock, Coins } from 'lucide-react';
 import { useResourceProduction } from '@/hooks/useResourceProduction';
-import { getSawmillUpgradeCost, getQuarryUpgradeCost } from '@/config/buildings';
+import { getSawmillUpgradeCost, getQuarryUpgradeCost, getWarehouseWorkingHours } from '@/config/buildings';
 import { useUnifiedGameState } from '@/hooks/useUnifiedGameState';
 
 interface ResourceBuildingProps {
@@ -28,15 +28,23 @@ export const ResourceBuilding: React.FC<ResourceBuildingProps> = ({
     getWoodReady,
     getStoneReady,
     getTotalWoodPerHour,
-    getTotalStonePerHour
+    getTotalStonePerHour,
+    getMaxWoodStorage,
+    getMaxStoneStorage,
+    getWoodProductionProgress,
+    getStoneProductionProgress
   } = useResourceProduction();
 
   const [timeDisplay, setTimeDisplay] = useState<string>('');
 
   const buildingLevel = gameState?.buildingLevels?.[type] || 0;
+  const warehouseLevel = gameState?.buildingLevels?.warehouse || 1;
   const isWood = resourceType === 'wood';
   const readyResources = isWood ? getWoodReady() : getStoneReady();
   const productionPerHour = isWood ? getTotalWoodPerHour() : getTotalStonePerHour();
+  const maxStorage = isWood ? getMaxWoodStorage() : getMaxStoneStorage();
+  const productionProgress = isWood ? getWoodProductionProgress() : getStoneProductionProgress();
+  const workingHours = getWarehouseWorkingHours(warehouseLevel);
   
   const upgradeCost = isWood 
     ? getSawmillUpgradeCost(buildingLevel)
@@ -47,19 +55,31 @@ export const ResourceBuilding: React.FC<ResourceBuildingProps> = ({
     (gameState?.wood || 0) >= upgradeCost.wood && 
     (gameState?.stone || 0) >= upgradeCost.stone;
 
-  // Обновление отображения времени
+  // Обновление отображения времени до заполнения хранилища
   useEffect(() => {
     const interval = setInterval(() => {
-      if (productionPerHour > 0) {
-        const timeForNextResource = 3600 / productionPerHour; // секунды на 1 ресурс
-        const minutes = Math.floor(timeForNextResource / 60);
-        const seconds = Math.floor(timeForNextResource % 60);
-        setTimeDisplay(`${minutes}:${seconds.toString().padStart(2, '0')}`);
+      if (productionPerHour > 0 && maxStorage > 0) {
+        const currentResources = readyResources;
+        const remainingResources = maxStorage - currentResources;
+        
+        if (remainingResources <= 0) {
+          setTimeDisplay('Хранилище полно');
+        } else {
+          const timeToFull = (remainingResources / productionPerHour) * 3600; // секунды
+          const hours = Math.floor(timeToFull / 3600);
+          const minutes = Math.floor((timeToFull % 3600) / 60);
+          
+          if (hours > 0) {
+            setTimeDisplay(`${hours}ч ${minutes}м`);
+          } else {
+            setTimeDisplay(`${minutes}м`);
+          }
+        }
       }
     }, 1000);
 
     return () => clearInterval(interval);
-  }, [productionPerHour]);
+  }, [productionPerHour, maxStorage, readyResources]);
 
   const handleCollect = async () => {
     if (isWood) {
@@ -126,11 +146,19 @@ export const ResourceBuilding: React.FC<ResourceBuildingProps> = ({
         {/* Производство */}
         <div className="space-y-2">
           <div className="flex items-center justify-between">
-            <span className="text-sm font-medium">Производство</span>
-            <span className="text-sm text-muted-foreground">{productionPerHour}/час</span>
+            <span className="text-sm font-medium">Хранилище</span>
+            <span className="text-sm text-muted-foreground">
+              {readyResources}/{maxStorage}
+            </span>
           </div>
           
-          {readyResources > 0 ? (
+          <div className="text-xs text-muted-foreground mb-2">
+            Производство: {productionPerHour}/час • Время работы: {workingHours}ч
+          </div>
+          
+          <Progress value={productionProgress} className="mb-2" />
+          
+          {readyResources >= maxStorage ? (
             <Button 
               onClick={handleCollect}
               className="w-full"
@@ -143,9 +171,8 @@ export const ResourceBuilding: React.FC<ResourceBuildingProps> = ({
             <div className="text-center py-2">
               <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground">
                 <Clock className="w-4 h-4" />
-                Следующий ресурс через {timeDisplay}
+                {timeDisplay}
               </div>
-              <Progress value={0} className="mt-2" />
             </div>
           )}
         </div>

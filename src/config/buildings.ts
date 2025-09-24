@@ -9,6 +9,23 @@ export interface ResourceBuildingConfig {
   };
 }
 
+// Конфигурация склада - определяет время работы производства
+export const WAREHOUSE_CONFIG = [
+  { level: 1, workingHours: 1 },
+  { level: 2, workingHours: 2 },
+  { level: 3, workingHours: 4 },
+  { level: 4, workingHours: 6 },
+  { level: 5, workingHours: 12 },
+  { level: 6, workingHours: 18 },
+  { level: 7, workingHours: 24 },
+  { level: 8, workingHours: 48 },
+];
+
+export const getWarehouseWorkingHours = (level: number): number => {
+  const config = WAREHOUSE_CONFIG.find(config => config.level === level);
+  return config ? config.workingHours : 1; // По умолчанию 1 час
+};
+
 // Конфигурация лесопилки
 export const SAWMILL_CONFIG: ResourceBuildingConfig[] = [
   { level: 1, productionPerHour: 60, upgradeCosts: { wood: 0, stone: 0 } },
