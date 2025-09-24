@@ -112,7 +112,8 @@ export const ResourceBuilding: React.FC<ResourceBuildingProps> = ({
         
         <Progress value={productionProgress} className="mb-2" />
         
-        {readyResources >= maxStorage ? (
+        {/* Кнопка сбора всегда доступна если есть ресурсы */}
+        {readyResources > 0 ? (
           <Button 
             onClick={handleCollect}
             className="w-full"
@@ -125,7 +126,7 @@ export const ResourceBuilding: React.FC<ResourceBuildingProps> = ({
           <div className="text-center py-2">
             <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground">
               <Clock className="w-4 h-4" />
-              {timeDisplay}
+              {timeDisplay || 'Производство...'}
             </div>
           </div>
         )}
