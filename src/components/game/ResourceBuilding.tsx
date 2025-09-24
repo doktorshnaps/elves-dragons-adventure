@@ -38,13 +38,22 @@ export const ResourceBuilding: React.FC<ResourceBuildingProps> = ({
   const [timeDisplay, setTimeDisplay] = useState<string>('');
 
   const buildingLevel = gameState?.buildingLevels?.[type] || 0;
-  const warehouseLevel = gameState?.buildingLevels?.warehouse || 1;
+  const warehouseLevel = gameState?.buildingLevels?.storage || 1;
   const isWood = resourceType === 'wood';
   const readyResources = isWood ? getWoodReady() : getStoneReady();
   const productionPerHour = isWood ? getTotalWoodPerHour() : getTotalStonePerHour();
   const maxStorage = isWood ? getMaxWoodStorage() : getMaxStoneStorage();
   const productionProgress = isWood ? getWoodProductionProgress() : getStoneProductionProgress();
   const workingHours = getWarehouseWorkingHours(warehouseLevel);
+
+  console.log(`🏭 ResourceBuilding debug (${type}):`, {
+    buildingLevel,
+    warehouseLevel, 
+    productionPerHour,
+    maxStorage,
+    readyResources,
+    workingHours
+  });
   
   const upgradeCost = isWood 
     ? getSawmillUpgradeCost(buildingLevel)

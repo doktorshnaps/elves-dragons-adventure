@@ -100,11 +100,13 @@ export const useResourceProduction = (): UseResourceProductionReturn => {
   // Получение производительности в час
   const getTotalWoodPerHour = useCallback(() => {
     const sawmillLevel = getSawmillLevel();
+    console.log('🏭 Wood production debug:', { sawmillLevel, production: getSawmillProduction(sawmillLevel) });
     return getSawmillProduction(sawmillLevel);
   }, [getSawmillLevel]);
 
   const getTotalStonePerHour = useCallback(() => {
     const quarryLevel = getQuarryLevel();
+    console.log('🏭 Stone production debug:', { quarryLevel, production: getQuarryProduction(quarryLevel) });
     return getQuarryProduction(quarryLevel);
   }, [getQuarryLevel]);
 
