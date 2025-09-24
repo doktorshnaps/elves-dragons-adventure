@@ -331,6 +331,11 @@ function mapClientToServer(data: Partial<GameData> | GameData) {
   if (d.activeWorkers !== undefined) out.active_workers = d.activeWorkers;
   if (d.buildingLevels !== undefined) out.building_levels = d.buildingLevels;
   if (d.activeBuildingUpgrades !== undefined) out.active_building_upgrades = d.activeBuildingUpgrades;
+  // Production data
+  if (d.woodLastCollectionTime !== undefined) out.wood_last_collection_time = d.woodLastCollectionTime;
+  if (d.stoneLastCollectionTime !== undefined) out.stone_last_collection_time = d.stoneLastCollectionTime;
+  if (d.woodProductionData !== undefined) out.wood_production_data = d.woodProductionData;
+  if (d.stoneProductionData !== undefined) out.stone_production_data = d.stoneProductionData;
   if (d.woodLastCollectionTime !== undefined) out.wood_last_collection_time = d.woodLastCollectionTime;
   if (d.stoneLastCollectionTime !== undefined) out.stone_last_collection_time = d.stoneLastCollectionTime;
   if (d.woodProductionData !== undefined) out.wood_production_data = d.woodProductionData;
@@ -512,6 +517,7 @@ function transformServerData(serverData: any): GameData {
       medical: 0
     },
     activeBuildingUpgrades: serverData.active_building_upgrades ?? [],
+    // Production data from DB
     woodLastCollectionTime: serverData.wood_last_collection_time,
     stoneLastCollectionTime: serverData.stone_last_collection_time,
     woodProductionData: serverData.wood_production_data ?? { isProducing: true, isStorageFull: false },
@@ -524,7 +530,9 @@ function transformServerData(serverData: any): GameData {
     inventoryItems: transformed.inventory?.length ?? 0,
     cards: transformed.cards?.length ?? 0,
     activeWorkers: transformed.activeWorkers?.length ?? 0,
-    activeWorkersData: transformed.activeWorkers
+    activeWorkersData: transformed.activeWorkers,
+    woodLastCollection: transformed.woodLastCollectionTime,
+    stoneLastCollection: transformed.stoneLastCollectionTime
   });
   
   return transformed;
