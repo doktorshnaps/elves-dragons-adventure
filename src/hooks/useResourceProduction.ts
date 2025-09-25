@@ -18,8 +18,6 @@ interface UseResourceProductionReturn {
   getStoneReady: () => number;
   getTotalWoodPerHour: () => number;
   getTotalStonePerHour: () => number;
-  getMaxWoodStorage: () => number;
-  getMaxStoneStorage: () => number;
   getWoodProductionProgress: () => number;
   getStoneProductionProgress: () => number;
 }
@@ -135,80 +133,63 @@ export const useResourceProduction = (): UseResourceProductionReturn => {
     return getQuarryProduction(quarryLevel);
   }, [getQuarryLevel]);
 
-  // Максимальное количество ресурсов в хранилище
-  const getMaxWoodStorage = useCallback(() => {
-    const warehouseLevel = getWarehouseLevel();
-    const workingHours = getWarehouseWorkingHours(warehouseLevel);
-    const woodPerHour = getTotalWoodPerHour();
-    return Math.floor(workingHours * woodPerHour);
-  }, [getWarehouseLevel, getTotalWoodPerHour]);
+  // Удалено - больше нет лимитов хранения
 
-  const getMaxStoneStorage = useCallback(() => {
-    const warehouseLevel = getWarehouseLevel();
-    const workingHours = getWarehouseWorkingHours(warehouseLevel);
-    const stonePerHour = getTotalStonePerHour();
-    return Math.floor(workingHours * stonePerHour);
-  }, [getWarehouseLevel, getTotalStonePerHour]);
-
-  // Расчет готовых ресурсов по системе майнинга
+  // Расчет готовых ресурсов без лимитов хранения
   const getWoodReady = useCallback(() => {
     if (!woodProduction.isProducing || getSawmillLevel() === 0) return 0;
     
     const timeElapsed = (Date.now() - woodProduction.lastCollectionTime) / 1000 / 3600; // в часах
     const woodPerHour = getTotalWoodPerHour();
-    const maxStorage = getMaxWoodStorage();
     const warehouseLevel = getWarehouseLevel();
     const workingHours = getWarehouseWorkingHours(warehouseLevel);
     
     // Если прошло времени больше чем рабочих часов склада - производство остановлено
     if (timeElapsed >= workingHours) {
-      return maxStorage;
+      return Math.floor(workingHours * woodPerHour);
     }
     
-    // Иначе вычисляем текущее производство
-    const produced = Math.floor(timeElapsed * woodPerHour);
-    return Math.min(produced, maxStorage);
-  }, [woodProduction, getSawmillLevel, getTotalWoodPerHour, getMaxWoodStorage, getWarehouseLevel]);
+    // Иначе вычисляем текущее производство без лимитов
+    return Math.floor(timeElapsed * woodPerHour);
+  }, [woodProduction, getSawmillLevel, getTotalWoodPerHour, getWarehouseLevel]);
 
   const getStoneReady = useCallback(() => {
     if (!stoneProduction.isProducing || getQuarryLevel() === 0) return 0;
     
     const timeElapsed = (Date.now() - stoneProduction.lastCollectionTime) / 1000 / 3600; // в часах
     const stonePerHour = getTotalStonePerHour();
-    const maxStorage = getMaxStoneStorage();
     const warehouseLevel = getWarehouseLevel();
     const workingHours = getWarehouseWorkingHours(warehouseLevel);
     
     // Если прошло времени больше чем рабочих часов склада - производство остановлено
     if (timeElapsed >= workingHours) {
-      return maxStorage;
+      return Math.floor(workingHours * stonePerHour);
     }
     
-    // Иначе вычисляем текущее производство
-    const produced = Math.floor(timeElapsed * stonePerHour);
-    return Math.min(produced, maxStorage);
-  }, [stoneProduction, getQuarryLevel, getTotalStonePerHour, getMaxStoneStorage, getWarehouseLevel]);
+    // Иначе вычисляем текущее производство без лимитов
+    return Math.floor(timeElapsed * stonePerHour);
+  }, [stoneProduction, getQuarryLevel, getTotalStonePerHour, getWarehouseLevel]);
 
-  // Прогресс производства (от 0 до 100)
+  // Прогресс производства (от 0 до 100) на основе времени работы склада
   const getWoodProductionProgress = useCallback(() => {
     if (getSawmillLevel() === 0) return 0;
     
-    const readyWood = getWoodReady();
-    const maxStorage = getMaxWoodStorage();
+    const timeElapsed = (Date.now() - woodProduction.lastCollectionTime) / 1000 / 3600;
+    const warehouseLevel = getWarehouseLevel();
+    const workingHours = getWarehouseWorkingHours(warehouseLevel);
     
-    if (maxStorage === 0) return 0;
-    return Math.min(100, (readyWood / maxStorage) * 100);
-  }, [getWoodReady, getMaxWoodStorage, getSawmillLevel]);
+    return Math.min(100, (timeElapsed / workingHours) * 100);
+  }, [woodProduction.lastCollectionTime, getSawmillLevel, getWarehouseLevel]);
 
   const getStoneProductionProgress = useCallback(() => {
     if (getQuarryLevel() === 0) return 0;
     
-    const readyStone = getStoneReady();
-    const maxStorage = getMaxStoneStorage();
+    const timeElapsed = (Date.now() - stoneProduction.lastCollectionTime) / 1000 / 3600;
+    const warehouseLevel = getWarehouseLevel();
+    const workingHours = getWarehouseWorkingHours(warehouseLevel);
     
-    if (maxStorage === 0) return 0;
-    return Math.min(100, (readyStone / maxStorage) * 100);
-  }, [getStoneReady, getMaxStoneStorage, getQuarryLevel]);
+    return Math.min(100, (timeElapsed / workingHours) * 100);
+  }, [stoneProduction.lastCollectionTime, getQuarryLevel, getWarehouseLevel]);
 
   // Функция для сохранения состояния производства в БД
   const saveProductionStateToDB = async (resource: 'wood' | 'stone', lastCollectionTime: number, isProducing: boolean, isStorageFull: boolean) => {
@@ -293,8 +274,6 @@ export const useResourceProduction = (): UseResourceProductionReturn => {
     getStoneReady,
     getTotalWoodPerHour,
     getTotalStonePerHour,
-    getMaxWoodStorage,
-    getMaxStoneStorage,
     getWoodProductionProgress,
     getStoneProductionProgress
   };

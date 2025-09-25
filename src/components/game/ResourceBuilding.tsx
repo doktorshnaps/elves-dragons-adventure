@@ -29,8 +29,6 @@ export const ResourceBuilding: React.FC<ResourceBuildingProps> = ({
     getStoneReady,
     getTotalWoodPerHour,
     getTotalStonePerHour,
-    getMaxWoodStorage,
-    getMaxStoneStorage,
     getWoodProductionProgress,
     getStoneProductionProgress
   } = useResourceProduction();
@@ -42,7 +40,6 @@ export const ResourceBuilding: React.FC<ResourceBuildingProps> = ({
   const isWood = resourceType === 'wood';
   const readyResources = isWood ? getWoodReady() : getStoneReady();
   const productionPerHour = isWood ? getTotalWoodPerHour() : getTotalStonePerHour();
-  const maxStorage = isWood ? getMaxWoodStorage() : getMaxStoneStorage();
   const productionProgress = isWood ? getWoodProductionProgress() : getStoneProductionProgress();
   const workingHours = getWarehouseWorkingHours(warehouseLevel);
 
@@ -50,37 +47,35 @@ export const ResourceBuilding: React.FC<ResourceBuildingProps> = ({
     buildingLevel,
     warehouseLevel, 
     productionPerHour,
-    maxStorage,
     readyResources,
     workingHours
   });
   
 
-  // Обновление отображения времени до заполнения хранилища
+  // Обновление отображения времени до остановки производства
   useEffect(() => {
     const interval = setInterval(() => {
-      if (productionPerHour > 0 && maxStorage > 0) {
-        const currentResources = readyResources;
-        const remainingResources = maxStorage - currentResources;
+      if (productionPerHour > 0) {
+        const timeElapsed = (Date.now() - (isWood ? gameState?.woodLastCollectionTime : gameState?.stoneLastCollectionTime) || Date.now()) / 1000 / 3600;
+        const remainingTime = workingHours - timeElapsed;
         
-        if (remainingResources <= 0) {
-          setTimeDisplay('Хранилище полно');
+        if (remainingTime <= 0) {
+          setTimeDisplay('Производство остановлено');
         } else {
-          const timeToFull = (remainingResources / productionPerHour) * 3600; // секунды
-          const hours = Math.floor(timeToFull / 3600);
-          const minutes = Math.floor((timeToFull % 3600) / 60);
+          const hours = Math.floor(remainingTime);
+          const minutes = Math.floor((remainingTime % 1) * 60);
           
           if (hours > 0) {
-            setTimeDisplay(`${hours}ч ${minutes}м`);
+            setTimeDisplay(`${hours}ч ${minutes}м до остановки`);
           } else {
-            setTimeDisplay(`${minutes}м`);
+            setTimeDisplay(`${minutes}м до остановки`);
           }
         }
       }
     }, 1000);
 
     return () => clearInterval(interval);
-  }, [productionPerHour, maxStorage, readyResources]);
+  }, [productionPerHour, workingHours, gameState?.woodLastCollectionTime, gameState?.stoneLastCollectionTime, isWood]);
 
   const handleCollect = async () => {
     if (isWood) {
@@ -97,17 +92,17 @@ export const ResourceBuilding: React.FC<ResourceBuildingProps> = ({
 
   return (
     <div className="space-y-4">
-      {/* Информация о хранилище и производстве */}
+      {/* Информация о производстве без лимитов */}
       <div className="space-y-2">
         <div className="flex items-center justify-between">
-          <span className="text-sm font-medium">Хранилище</span>
+          <span className="text-sm font-medium">Готово к сбору</span>
           <span className="text-sm text-muted-foreground">
-            {readyResources}/{maxStorage}
+            {readyResources} {resourceType === 'wood' ? 'дерева' : 'камня'}
           </span>
         </div>
         
         <div className="text-xs text-muted-foreground mb-2">
-          Производство: {productionPerHour}/час • Время работы: {workingHours}ч
+          Производство: {productionPerHour}/час • Время работы склада: {workingHours}ч
         </div>
         
         <Progress value={productionProgress} className="mb-2" />
