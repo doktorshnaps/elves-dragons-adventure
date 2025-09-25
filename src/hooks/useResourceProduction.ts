@@ -214,11 +214,13 @@ export const useResourceProduction = (): UseResourceProductionReturn => {
   // Сбор древесины
   const collectWood = useCallback(async () => {
     const readyWood = getWoodReady();
+    console.log('🪵 collectWood called - readyWood:', readyWood);
     if (readyWood <= 0) return;
 
     try {
       // Обновляем время ПЕРЕД обновлением ресурсов
       const now = Date.now();
+      console.log('🪵 collectWood executing - time:', now);
       
       // Обновляем локальное состояние сразу
       setWoodProduction(prev => ({ 
@@ -244,6 +246,7 @@ export const useResourceProduction = (): UseResourceProductionReturn => {
       
       // Fallback в localStorage
       localStorage.setItem('woodLastCollection', now.toString());
+      console.log('🪵 collectWood completed successfully');
     } catch (error) {
       console.error('Ошибка при сборе древесины:', error);
     }
@@ -252,11 +255,13 @@ export const useResourceProduction = (): UseResourceProductionReturn => {
   // Сбор камня
   const collectStone = useCallback(async () => {
     const readyStone = getStoneReady();
+    console.log('🪨 collectStone called - readyStone:', readyStone);
     if (readyStone <= 0) return;
 
     try {
       // Обновляем время ПЕРЕД обновлением ресурсов
       const now = Date.now();
+      console.log('🪨 collectStone executing - time:', now);
       
       // Обновляем локальное состояние сразу
       setStoneProduction(prev => ({ 
@@ -282,6 +287,7 @@ export const useResourceProduction = (): UseResourceProductionReturn => {
       
       // Fallback в localStorage
       localStorage.setItem('stoneLastCollection', now.toString());
+      console.log('🪨 collectStone completed successfully');
     } catch (error) {
       console.error('Ошибка при сборе камня:', error);
     }

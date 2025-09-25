@@ -50,7 +50,9 @@ export const ResourceBuilding: React.FC<ResourceBuildingProps> = ({
     warehouseLevel, 
     productionPerHour,
     readyResources,
-    workingHours
+    workingHours,
+    resourceType,
+    isWood
   });
   
 
@@ -83,9 +85,12 @@ export const ResourceBuilding: React.FC<ResourceBuildingProps> = ({
   }, [productionPerHour, workingHours, woodProduction.lastCollectionTime, stoneProduction.lastCollectionTime, isWood]);
 
   const handleCollect = async () => {
+    console.log(`🔧 COLLECT DEBUG: ${type} - ${resourceType} - isWood: ${isWood}`);
     if (isWood) {
+      console.log('🪵 Collecting WOOD via collectWood()');
       await collectWood();
     } else {
+      console.log('🪨 Collecting STONE via collectStone()');
       await collectStone();
     }
   };
