@@ -635,6 +635,7 @@ export const Shelter = () => {
                             name={upgrade.name}
                             icon={upgrade.id === 'sawmill' ? <TreePine className="w-5 h-5" /> : <Mountain className="w-5 h-5" />}
                             resourceType={upgrade.id === 'sawmill' ? 'wood' : 'stone'}
+                            hasActiveWorkers={hasWorkersInBuilding(upgrade.id)}
                           />
                         </div>
                       ) : (upgrade.id === 'sawmill' || upgrade.id === 'quarry') && upgrade.level === 0 ? (

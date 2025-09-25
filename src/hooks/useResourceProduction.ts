@@ -14,12 +14,12 @@ interface UseResourceProductionReturn {
   stoneProduction: ResourceProduction;
   collectWood: () => Promise<void>;
   collectStone: () => Promise<void>;
-  getWoodReady: () => number;
-  getStoneReady: () => number;
+  getWoodReady: (hasWorkers?: boolean) => number;
+  getStoneReady: (hasWorkers?: boolean) => number;
   getTotalWoodPerHour: () => number;
   getTotalStonePerHour: () => number;
-  getWoodProductionProgress: () => number;
-  getStoneProductionProgress: () => number;
+  getWoodProductionProgress: (hasWorkers?: boolean) => number;
+  getStoneProductionProgress: (hasWorkers?: boolean) => number;
 }
 
 export const useResourceProduction = (): UseResourceProductionReturn => {
@@ -138,8 +138,8 @@ export const useResourceProduction = (): UseResourceProductionReturn => {
   // Удалено - больше нет лимитов хранения
 
   // Расчет готовых ресурсов без лимитов хранения
-  const getWoodReady = useCallback(() => {
-    if (getSawmillLevel() === 0) return 0;
+  const getWoodReady = useCallback((hasWorkers: boolean = true) => {
+    if (!hasWorkers || getSawmillLevel() === 0) return 0;
     
     const timeElapsed = (Date.now() - woodProduction.lastCollectionTime) / 1000 / 3600; // в часах
     const woodPerHour = getTotalWoodPerHour();
@@ -155,8 +155,8 @@ export const useResourceProduction = (): UseResourceProductionReturn => {
     return Math.floor(timeElapsed * woodPerHour);
   }, [woodProduction.lastCollectionTime, getSawmillLevel, getTotalWoodPerHour, getWarehouseLevel]);
 
-  const getStoneReady = useCallback(() => {
-    if (getQuarryLevel() === 0) return 0;
+  const getStoneReady = useCallback((hasWorkers: boolean = true) => {
+    if (!hasWorkers || getQuarryLevel() === 0) return 0;
     
     const timeElapsed = (Date.now() - stoneProduction.lastCollectionTime) / 1000 / 3600; // в часах
     const stonePerHour = getTotalStonePerHour();
@@ -173,8 +173,8 @@ export const useResourceProduction = (): UseResourceProductionReturn => {
   }, [stoneProduction.lastCollectionTime, getQuarryLevel, getTotalStonePerHour, getWarehouseLevel]);
 
   // Прогресс производства (от 0 до 100) на основе времени работы склада
-  const getWoodProductionProgress = useCallback(() => {
-    if (getSawmillLevel() === 0) return 0;
+  const getWoodProductionProgress = useCallback((hasWorkers: boolean = true) => {
+    if (!hasWorkers || getSawmillLevel() === 0) return 0;
     
     const timeElapsed = (Date.now() - woodProduction.lastCollectionTime) / 1000 / 3600;
     const warehouseLevel = getWarehouseLevel();
@@ -183,8 +183,8 @@ export const useResourceProduction = (): UseResourceProductionReturn => {
     return Math.min(100, (timeElapsed / workingHours) * 100);
   }, [woodProduction.lastCollectionTime, getSawmillLevel, getWarehouseLevel]);
 
-  const getStoneProductionProgress = useCallback(() => {
-    if (getQuarryLevel() === 0) return 0;
+  const getStoneProductionProgress = useCallback((hasWorkers: boolean = true) => {
+    if (!hasWorkers || getQuarryLevel() === 0) return 0;
     
     const timeElapsed = (Date.now() - stoneProduction.lastCollectionTime) / 1000 / 3600;
     const warehouseLevel = getWarehouseLevel();
@@ -213,7 +213,7 @@ export const useResourceProduction = (): UseResourceProductionReturn => {
 
   // Сбор древесины
   const collectWood = useCallback(async () => {
-    const readyWood = getWoodReady();
+    const readyWood = getWoodReady(true); // Предполагаем что рабочие есть, если функция вызвана
     console.log('🪵 collectWood called - readyWood:', readyWood);
     if (readyWood <= 0) return;
 
@@ -254,7 +254,7 @@ export const useResourceProduction = (): UseResourceProductionReturn => {
 
   // Сбор камня
   const collectStone = useCallback(async () => {
-    const readyStone = getStoneReady();
+    const readyStone = getStoneReady(true); // Предполагаем что рабочие есть, если функция вызвана
     console.log('🪨 collectStone called - readyStone:', readyStone);
     if (readyStone <= 0) return;
 
