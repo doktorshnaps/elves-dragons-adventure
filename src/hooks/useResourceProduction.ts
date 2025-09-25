@@ -137,38 +137,38 @@ export const useResourceProduction = (): UseResourceProductionReturn => {
 
   // Расчет готовых ресурсов без лимитов хранения
   const getWoodReady = useCallback(() => {
-    if (!woodProduction.isProducing || getSawmillLevel() === 0) return 0;
+    if (getSawmillLevel() === 0) return 0;
     
     const timeElapsed = (Date.now() - woodProduction.lastCollectionTime) / 1000 / 3600; // в часах
     const woodPerHour = getTotalWoodPerHour();
     const warehouseLevel = getWarehouseLevel();
     const workingHours = getWarehouseWorkingHours(warehouseLevel);
     
-    // Если прошло времени больше чем рабочих часов склада - производство остановлено
+    // Если прошло времени больше чем рабочих часов склада - возвращаем максимум за рабочие часы
     if (timeElapsed >= workingHours) {
       return Math.floor(workingHours * woodPerHour);
     }
     
-    // Иначе вычисляем текущее производство без лимитов
+    // Иначе вычисляем текущее производство
     return Math.floor(timeElapsed * woodPerHour);
-  }, [woodProduction, getSawmillLevel, getTotalWoodPerHour, getWarehouseLevel]);
+  }, [woodProduction.lastCollectionTime, getSawmillLevel, getTotalWoodPerHour, getWarehouseLevel]);
 
   const getStoneReady = useCallback(() => {
-    if (!stoneProduction.isProducing || getQuarryLevel() === 0) return 0;
+    if (getQuarryLevel() === 0) return 0;
     
     const timeElapsed = (Date.now() - stoneProduction.lastCollectionTime) / 1000 / 3600; // в часах
     const stonePerHour = getTotalStonePerHour();
     const warehouseLevel = getWarehouseLevel();
     const workingHours = getWarehouseWorkingHours(warehouseLevel);
     
-    // Если прошло времени больше чем рабочих часов склада - производство остановлено
+    // Если прошло времени больше чем рабочих часов склада - возвращаем максимум за рабочие часы
     if (timeElapsed >= workingHours) {
       return Math.floor(workingHours * stonePerHour);
     }
     
-    // Иначе вычисляем текущее производство без лимитов
+    // Иначе вычисляем текущее производство
     return Math.floor(timeElapsed * stonePerHour);
-  }, [stoneProduction, getQuarryLevel, getTotalStonePerHour, getWarehouseLevel]);
+  }, [stoneProduction.lastCollectionTime, getQuarryLevel, getTotalStonePerHour, getWarehouseLevel]);
 
   // Прогресс производства (от 0 до 100) на основе времени работы склада
   const getWoodProductionProgress = useCallback(() => {
