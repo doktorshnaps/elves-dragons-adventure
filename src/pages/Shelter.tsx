@@ -441,27 +441,18 @@ export const Shelter = () => {
                   <div className="text-lg">🪵</div>
                   <div className="text-xs font-semibold">
                     {resources.wood}
-                    {buildingLevels.storage > 0 && (
-                      <span className="text-muted-foreground">/{100 * buildingLevels.storage}</span>
-                    )}
                   </div>
                 </div>
                 <div className="text-center flex-1">
                   <div className="text-lg">🪨</div>
                   <div className="text-xs font-semibold">
                     {resources.stone}
-                    {buildingLevels.storage > 0 && (
-                      <span className="text-muted-foreground">/{100 * buildingLevels.storage}</span>
-                    )}
                   </div>
                 </div>
                 <div className="text-center flex-1">
-                  <div className="text-lg">⚙️</div>
+                  <div className="text-lg">⛏️</div>
                   <div className="text-xs font-semibold">
                     {resources.iron}
-                    {buildingLevels.storage > 0 && (
-                      <span className="text-muted-foreground">/{100 * buildingLevels.storage}</span>
-                    )}
                   </div>
                 </div>
                 <div className="text-center flex-1">

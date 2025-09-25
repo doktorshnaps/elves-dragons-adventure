@@ -56,7 +56,10 @@ export const ResourceBuilding: React.FC<ResourceBuildingProps> = ({
   useEffect(() => {
     const interval = setInterval(() => {
       if (productionPerHour > 0) {
-        const timeElapsed = (Date.now() - (isWood ? gameState?.woodLastCollectionTime : gameState?.stoneLastCollectionTime) || Date.now()) / 1000 / 3600;
+        const lastCollectionTime = isWood ? 
+          (gameState?.woodLastCollectionTime || Date.now()) : 
+          (gameState?.stoneLastCollectionTime || Date.now());
+        const timeElapsed = (Date.now() - lastCollectionTime) / 1000 / 3600;
         const remainingTime = workingHours - timeElapsed;
         
         if (remainingTime <= 0) {

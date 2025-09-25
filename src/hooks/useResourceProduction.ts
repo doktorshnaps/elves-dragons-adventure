@@ -215,11 +215,10 @@ export const useResourceProduction = (): UseResourceProductionReturn => {
     if (readyWood <= 0) return;
 
     try {
-      await gameState.actions.updateResources({ 
-        wood: (gameState?.wood || 0) + readyWood 
-      });
-      
+      // Обновляем время ПЕРЕД обновлением ресурсов
       const now = Date.now();
+      
+      // Обновляем локальное состояние сразу
       setWoodProduction(prev => ({ 
         ...prev, 
         lastCollectionTime: now,
@@ -229,6 +228,11 @@ export const useResourceProduction = (): UseResourceProductionReturn => {
       
       // Сохраняем в БД
       await saveProductionStateToDB('wood', now, true, false);
+      
+      // Затем обновляем ресурсы
+      await gameState.actions.updateResources({ 
+        wood: (gameState?.wood || 0) + readyWood 
+      });
       
       // Fallback в localStorage
       localStorage.setItem('woodLastCollection', now.toString());
@@ -243,11 +247,10 @@ export const useResourceProduction = (): UseResourceProductionReturn => {
     if (readyStone <= 0) return;
 
     try {
-      await gameState.actions.updateResources({ 
-        stone: (gameState?.stone || 0) + readyStone 
-      });
-      
+      // Обновляем время ПЕРЕД обновлением ресурсов
       const now = Date.now();
+      
+      // Обновляем локальное состояние сразу
       setStoneProduction(prev => ({ 
         ...prev, 
         lastCollectionTime: now,
@@ -257,6 +260,11 @@ export const useResourceProduction = (): UseResourceProductionReturn => {
       
       // Сохраняем в БД
       await saveProductionStateToDB('stone', now, true, false);
+      
+      // Затем обновляем ресурсы
+      await gameState.actions.updateResources({ 
+        stone: (gameState?.stone || 0) + readyStone 
+      });
       
       // Fallback в localStorage
       localStorage.setItem('stoneLastCollection', now.toString());
