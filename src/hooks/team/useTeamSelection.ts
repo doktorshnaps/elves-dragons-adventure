@@ -4,10 +4,13 @@ import { useGameData } from '@/hooks/useGameData';
 import { useCardHealthSync } from '@/hooks/useCardHealthSync';
 import { useCardInstances } from '@/hooks/useCardInstances';
 import { TeamPair } from '@/components/game/team/DeckSelection';
+import { useToast } from '@/hooks/use-toast';
+import { checkActiveBattle, clearActiveBattle } from '@/utils/activeBattleChecker';
 
 export const useTeamSelection = () => {
   const { gameData, updateGameData } = useGameData();
   const { cardInstances } = useCardInstances();
+  const { toast } = useToast();
 
   // Build cards with health using the SAME gameData instance to avoid desync
   const cardsWithHealth = useMemo(() => {
@@ -115,6 +118,17 @@ export const useTeamSelection = () => {
     console.log('🎯 Current gameData.selectedTeam (raw):', (gameData.selectedTeam || []).length);
     console.log('🎯 Is hero already selected?', selectedPairs.some(pair => pair.hero.id === hero.id));
     
+    // Check for active battle before allowing team changes
+    const activeBattleInfo = checkActiveBattle();
+    if (activeBattleInfo.hasActiveBattle) {
+      toast({
+        title: "Активное подземелье",
+        description: `У вас есть активный бой в подземелье${activeBattleInfo.activeDungeon ? ` (${activeBattleInfo.activeDungeon})` : ''}. Завершите его или сбросьте, чтобы изменить команду.`,
+        variant: "destructive"
+      });
+      return;
+    }
+    
     const currentRawTeam = (gameData.selectedTeam || []) as TeamPair[];
     
     // Check team size limit against RAW team data (including medical bay)
@@ -147,6 +161,17 @@ export const useTeamSelection = () => {
   };
 
   const handlePairRemove = async (index: number) => {
+    // Check for active battle before allowing team changes
+    const activeBattleInfo = checkActiveBattle();
+    if (activeBattleInfo.hasActiveBattle) {
+      toast({
+        title: "Активное подземелье",
+        description: `У вас есть активный бой в подземелье${activeBattleInfo.activeDungeon ? ` (${activeBattleInfo.activeDungeon})` : ''}. Завершите его или сбросьте, чтобы изменить команду.`,
+        variant: "destructive"
+      });
+      return;
+    }
+
     const pair = selectedPairs[index];
     if (!pair?.hero?.id) return;
     const heroId = pair.hero.id;
@@ -164,6 +189,17 @@ export const useTeamSelection = () => {
   };
 
   const handleAssignDragon = async (index: number, dragon: CardType) => {
+    // Check for active battle before allowing team changes
+    const activeBattleInfo = checkActiveBattle();
+    if (activeBattleInfo.hasActiveBattle) {
+      toast({
+        title: "Активное подземелье",
+        description: `У вас есть активный бой в подземелье${activeBattleInfo.activeDungeon ? ` (${activeBattleInfo.activeDungeon})` : ''}. Завершите его или сбросьте, чтобы изменить команду.`,
+        variant: "destructive"
+      });
+      return;
+    }
+
     const baseTeam = (gameData.selectedTeam || []) as TeamPair[];
     const filteredIndex = selectedPairs[index];
     if (!filteredIndex?.hero?.id) return;
@@ -182,6 +218,17 @@ export const useTeamSelection = () => {
   };
 
   const handleRemoveDragon = async (index: number) => {
+    // Check for active battle before allowing team changes
+    const activeBattleInfo = checkActiveBattle();
+    if (activeBattleInfo.hasActiveBattle) {
+      toast({
+        title: "Активное подземелье",
+        description: `У вас есть активный бой в подземелье${activeBattleInfo.activeDungeon ? ` (${activeBattleInfo.activeDungeon})` : ''}. Завершите его или сбросьте, чтобы изменить команду.`,
+        variant: "destructive"
+      });
+      return;
+    }
+
     const baseTeam = (gameData.selectedTeam || []) as TeamPair[];
     const filteredIndex = selectedPairs[index];
     if (!filteredIndex?.hero?.id) return;

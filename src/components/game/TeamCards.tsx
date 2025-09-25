@@ -1,5 +1,6 @@
 import { DeckSelection } from "./team/DeckSelection";
 import { useTeamSelection } from "@/hooks/team/useTeamSelection";
+import { ActiveBattleWarning } from "./team/ActiveBattleWarning";
 
 // SEO: Team management page
 if (typeof document !== 'undefined') {
@@ -21,6 +22,9 @@ export const TeamCards = () => {
 
   return (
     <div className="h-full flex flex-col space-y-3">
+      {/* Active Battle Warning */}
+      <ActiveBattleWarning />
+      
       {/* Team Selection Interface */}
       <div className="flex-1 overflow-hidden">
         <DeckSelection
