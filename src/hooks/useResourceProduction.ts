@@ -27,19 +27,21 @@ export const useResourceProduction = (): UseResourceProductionReturn => {
   
   // Инициализируем время из БД или localStorage в качестве fallback
   const getInitialWoodTime = () => {
-    if (gameState?.woodLastCollectionTime) {
-      return gameState.woodLastCollectionTime;
-    }
+    const dbTime = gameState?.woodLastCollectionTime ?? 0;
     const saved = localStorage.getItem('woodLastCollection');
-    return saved ? parseInt(saved) : Date.now();
+    const localTime = saved ? parseInt(saved) : 0;
+    const now = Date.now();
+    const picked = Math.max(dbTime, localTime, now - 1); // гарантируем не в будущем
+    return picked > 0 ? picked : now;
   };
 
   const getInitialStoneTime = () => {
-    if (gameState?.stoneLastCollectionTime) {
-      return gameState.stoneLastCollectionTime;
-    }
+    const dbTime = gameState?.stoneLastCollectionTime ?? 0;
     const saved = localStorage.getItem('stoneLastCollection');
-    return saved ? parseInt(saved) : Date.now();
+    const localTime = saved ? parseInt(saved) : 0;
+    const now = Date.now();
+    const picked = Math.max(dbTime, localTime, now - 1);
+    return picked > 0 ? picked : now;
   };
 
   const [woodProduction, setWoodProduction] = useState<ResourceProduction>(() => ({
@@ -59,7 +61,7 @@ export const useResourceProduction = (): UseResourceProductionReturn => {
     if (gameState?.woodLastCollectionTime) {
       setWoodProduction(prev => ({ 
         ...prev, 
-        lastCollectionTime: gameState.woodLastCollectionTime!,
+        lastCollectionTime: Math.max(prev.lastCollectionTime, gameState.woodLastCollectionTime!),
         isProducing: gameState.woodProductionData?.isProducing ?? true,
         isStorageFull: gameState.woodProductionData?.isStorageFull ?? false
       }));
@@ -68,7 +70,7 @@ export const useResourceProduction = (): UseResourceProductionReturn => {
     if (gameState?.stoneLastCollectionTime) {
       setStoneProduction(prev => ({ 
         ...prev, 
-        lastCollectionTime: gameState.stoneLastCollectionTime!,
+        lastCollectionTime: Math.max(prev.lastCollectionTime, gameState.stoneLastCollectionTime!),
         isProducing: gameState.stoneProductionData?.isProducing ?? true,
         isStorageFull: gameState.stoneProductionData?.isStorageFull ?? false
       }));
@@ -228,6 +230,12 @@ export const useResourceProduction = (): UseResourceProductionReturn => {
       
       // Сохраняем в БД
       await saveProductionStateToDB('wood', now, true, false);
+
+      // Обновляем глобальный gameState, чтобы при ремонте не терять время сбора
+      await gameState.actions.batchUpdate({
+        woodLastCollectionTime: now,
+        woodProductionData: { isProducing: true, isStorageFull: false }
+      } as any);
       
       // Затем обновляем ресурсы
       await gameState.actions.updateResources({ 
@@ -260,6 +268,12 @@ export const useResourceProduction = (): UseResourceProductionReturn => {
       
       // Сохраняем в БД
       await saveProductionStateToDB('stone', now, true, false);
+
+      // Обновляем глобальный gameState
+      await gameState.actions.batchUpdate({
+        stoneLastCollectionTime: now,
+        stoneProductionData: { isProducing: true, isStorageFull: false }
+      } as any);
       
       // Затем обновляем ресурсы
       await gameState.actions.updateResources({ 

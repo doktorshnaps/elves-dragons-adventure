@@ -23,6 +23,8 @@ export const ResourceBuilding: React.FC<ResourceBuildingProps> = ({
 }) => {
   const gameState = useUnifiedGameState();
   const {
+    woodProduction,
+    stoneProduction,
     collectWood,
     collectStone,
     getWoodReady,
@@ -57,8 +59,8 @@ export const ResourceBuilding: React.FC<ResourceBuildingProps> = ({
     const interval = setInterval(() => {
       if (productionPerHour > 0) {
         const lastCollectionTime = isWood ? 
-          (gameState?.woodLastCollectionTime || Date.now()) : 
-          (gameState?.stoneLastCollectionTime || Date.now());
+          woodProduction.lastCollectionTime : 
+          stoneProduction.lastCollectionTime;
         const timeElapsed = (Date.now() - lastCollectionTime) / 1000 / 3600;
         const remainingTime = workingHours - timeElapsed;
         
@@ -78,7 +80,7 @@ export const ResourceBuilding: React.FC<ResourceBuildingProps> = ({
     }, 1000);
 
     return () => clearInterval(interval);
-  }, [productionPerHour, workingHours, gameState?.woodLastCollectionTime, gameState?.stoneLastCollectionTime, isWood]);
+  }, [productionPerHour, workingHours, woodProduction.lastCollectionTime, stoneProduction.lastCollectionTime, isWood]);
 
   const handleCollect = async () => {
     if (isWood) {
