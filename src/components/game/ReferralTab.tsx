@@ -119,6 +119,7 @@ export const ReferralTab = () => {
   const [showReferralTree, setShowReferralTree] = useState(false);
   const [referralTree, setReferralTree] = useState<ReferralTreeNode | null>(null);
   const [treeExpanded, setTreeExpanded] = useState(true);
+  const [whoReferredMe, setWhoReferredMe] = useState<{referrer_wallet_address: string, created_at: string} | null>(null);
   const { toast } = useToast();
   const { handleError, handleSuccess } = useErrorHandler();
   const { accountId } = useWallet();
@@ -148,12 +149,13 @@ export const ReferralTab = () => {
       if (referralsError) throw referralsError;
       
       // Check if I was referred by someone  
-      const { data: whoReferredMe, error: referredError } = await supabase
+      const { data: whoReferredMeData, error: referredError } = await supabase
         .rpc('get_referrer_for_wallet', { p_wallet_address: accountId });
 
-      console.log('Who referred me RPC result:', { whoReferredMe, referredError });
+      console.log('Who referred me RPC result:', { whoReferredMeData, referredError });
 
       setMyReferrals(myReferrals || []);
+      setWhoReferredMe(whoReferredMeData?.[0] || null);
 
       // Fetch my earnings using RPC
       const { data: earnings, error: earningsError } = await supabase
@@ -404,6 +406,31 @@ export const ReferralTab = () => {
           Это ваш уникальный ID. Поделитесь им с тем, кто вас пригласил
         </p>
       </div>
+
+      {/* Who Referred Me */}
+      {whoReferredMe && (
+        <div className="bg-game-surface/80 border border-game-accent rounded-lg p-6 mb-6">
+          <h3 className="text-xl text-game-accent mb-4">Кто меня пригласил</h3>
+          <div className="flex items-center justify-between p-4 bg-game-surface border border-game-accent/30 rounded">
+            <div>
+              <p className="text-white font-mono text-sm">
+                {whoReferredMe.referrer_wallet_address}
+              </p>
+              <p className="text-gray-300 text-xs mt-1">
+                Дата приглашения: {new Date(whoReferredMe.created_at).toLocaleDateString()}
+              </p>
+            </div>
+            <Button
+              onClick={() => navigator.clipboard.writeText(whoReferredMe.referrer_wallet_address)}
+              variant="outline"
+              size="sm"
+              className="bg-game-surface border-game-accent text-game-accent hover:bg-game-accent hover:text-game-surface"
+            >
+              <Copy className="h-4 w-4" />
+            </Button>
+          </div>
+        </div>
+      )}
 
       {/* Add Referrer */}
       <div className="bg-game-surface/80 border border-game-accent rounded-lg p-6">

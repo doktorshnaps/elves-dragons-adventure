@@ -1000,12 +1000,7 @@ export type Database = {
           created_at: string
           id: string
           level: number
-          referred_user_id: string | null
           referred_wallet_address: string
-          referrer_user_id: string | null
-          referrer_wallet_address: string
-          source_activity: string
-          updated_at: string
         }[]
       }
       get_referrals_by_referrer: {
@@ -1013,26 +1008,15 @@ export type Database = {
         Returns: {
           created_at: string
           id: string
-          is_active: boolean
-          referred_user_id: string | null
           referred_wallet_address: string
-          referrer_user_id: string | null
-          referrer_wallet_address: string
-          updated_at: string
         }[]
       }
       get_referrer_for_wallet: {
         Args: { p_wallet_address: string }
         Returns: {
           created_at: string
-          id: string
-          is_active: boolean
-          referred_user_id: string | null
-          referred_wallet_address: string
-          referrer_user_id: string | null
           referrer_wallet_address: string
-          updated_at: string
-        }
+        }[]
       }
       initialize_game_data_by_wallet: {
         Args: { p_wallet_address: string }
