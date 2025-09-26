@@ -339,8 +339,8 @@ export const Shelter = () => {
   }];
 
   const canAffordUpgrade = (upgrade: NestUpgrade) => {
-    // Главный зал не требует рабочих (базовое здание)
-    const requiresWorkers = upgrade.id !== 'main_hall';
+    // Главный зал и склад не требуют рабочих
+    const requiresWorkers = upgrade.id !== 'main_hall' && upgrade.id !== 'storage';
     const hasRequiredWorkers = !requiresWorkers || hasWorkersInBuilding(upgrade.id);
     
     return upgrade.level < upgrade.maxLevel && 
@@ -621,12 +621,12 @@ export const Shelter = () => {
                              </div>
                            )}
                            
-                           {/* Показываем требование рабочих для всех зданий кроме главного зала */}
-                           {upgrade.id !== 'main_hall' && !hasWorkersInBuilding(upgrade.id) && (
-                             <div className="text-xs text-orange-600">
-                               Требуется: Назначить рабочих в здание
-                             </div>
-                           )}
+                            {/* Показываем требование рабочих для всех зданий кроме главного зала и склада */}
+                            {upgrade.id !== 'main_hall' && upgrade.id !== 'storage' && !hasWorkersInBuilding(upgrade.id) && (
+                              <div className="text-xs text-orange-600">
+                                Требуется: Назначить рабочих в здание
+                              </div>
+                            )}
                            
                             <Button 
                               onClick={() => handleUpgrade(upgrade)} 
