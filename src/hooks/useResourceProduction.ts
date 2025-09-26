@@ -31,8 +31,15 @@ export const useResourceProduction = (): UseResourceProductionReturn => {
     const saved = localStorage.getItem('woodLastCollection');
     const localTime = saved ? parseInt(saved) : 0;
     const now = Date.now();
-    const picked = Math.max(dbTime, localTime, now - 1); // гарантируем не в будущем
-    return picked > 0 ? picked : now;
+    
+    // Если есть время из БД или localStorage, используем максимальное (но не из будущего)
+    if (dbTime > 0 || localTime > 0) {
+      const maxTime = Math.max(dbTime, localTime);
+      return maxTime <= now ? maxTime : now - 3600000; // Если время в будущем, ставим час назад
+    }
+    
+    // Если нет времени - ставим час назад для начала производства
+    return now - 3600000;
   };
 
   const getInitialStoneTime = () => {
@@ -40,8 +47,15 @@ export const useResourceProduction = (): UseResourceProductionReturn => {
     const saved = localStorage.getItem('stoneLastCollection');
     const localTime = saved ? parseInt(saved) : 0;
     const now = Date.now();
-    const picked = Math.max(dbTime, localTime, now - 1);
-    return picked > 0 ? picked : now;
+    
+    // Если есть время из БД или localStorage, используем максимальное (но не из будущего)
+    if (dbTime > 0 || localTime > 0) {
+      const maxTime = Math.max(dbTime, localTime);
+      return maxTime <= now ? maxTime : now - 3600000; // Если время в будущем, ставим час назад
+    }
+    
+    // Если нет времени - ставим час назад для начала производства
+    return now - 3600000;
   };
 
   const [woodProduction, setWoodProduction] = useState<ResourceProduction>(() => ({
@@ -58,22 +72,36 @@ export const useResourceProduction = (): UseResourceProductionReturn => {
 
   // Синхронизация состояния с БД при изменении gameState
   useEffect(() => {
-    if (gameState?.woodLastCollectionTime) {
-      setWoodProduction(prev => ({ 
-        ...prev, 
-        lastCollectionTime: Math.max(prev.lastCollectionTime, gameState.woodLastCollectionTime!),
-        isProducing: gameState.woodProductionData?.isProducing ?? true,
-        isStorageFull: gameState.woodProductionData?.isStorageFull ?? false
-      }));
+    if (gameState?.woodLastCollectionTime && gameState.woodLastCollectionTime > 0) {
+      setWoodProduction(prev => {
+        // Только обновляем если время из БД новее локального
+        if (gameState.woodLastCollectionTime! > prev.lastCollectionTime) {
+          console.log('🪵 Syncing wood production from DB:', gameState.woodLastCollectionTime);
+          return {
+            ...prev, 
+            lastCollectionTime: gameState.woodLastCollectionTime!,
+            isProducing: gameState.woodProductionData?.isProducing ?? true,
+            isStorageFull: gameState.woodProductionData?.isStorageFull ?? false
+          };
+        }
+        return prev;
+      });
     }
     
-    if (gameState?.stoneLastCollectionTime) {
-      setStoneProduction(prev => ({ 
-        ...prev, 
-        lastCollectionTime: Math.max(prev.lastCollectionTime, gameState.stoneLastCollectionTime!),
-        isProducing: gameState.stoneProductionData?.isProducing ?? true,
-        isStorageFull: gameState.stoneProductionData?.isStorageFull ?? false
-      }));
+    if (gameState?.stoneLastCollectionTime && gameState.stoneLastCollectionTime > 0) {
+      setStoneProduction(prev => {
+        // Только обновляем если время из БД новее локального
+        if (gameState.stoneLastCollectionTime! > prev.lastCollectionTime) {
+          console.log('🪨 Syncing stone production from DB:', gameState.stoneLastCollectionTime);
+          return {
+            ...prev, 
+            lastCollectionTime: gameState.stoneLastCollectionTime!,
+            isProducing: gameState.stoneProductionData?.isProducing ?? true,
+            isStorageFull: gameState.stoneProductionData?.isStorageFull ?? false
+          };
+        }
+        return prev;
+      });
     }
   }, [gameState?.woodLastCollectionTime, gameState?.stoneLastCollectionTime, gameState?.woodProductionData, gameState?.stoneProductionData]);
 
@@ -139,37 +167,65 @@ export const useResourceProduction = (): UseResourceProductionReturn => {
 
   // Расчет готовых ресурсов без лимитов хранения
   const getWoodReady = useCallback((hasWorkers: boolean = true) => {
-    if (!hasWorkers || getSawmillLevel() === 0) return 0;
+    if (!hasWorkers || getSawmillLevel() === 0) {
+      console.log('🪵 Wood production stopped - no workers or building:', { hasWorkers, level: getSawmillLevel() });
+      return 0;
+    }
     
     const timeElapsed = (Date.now() - woodProduction.lastCollectionTime) / 1000 / 3600; // в часах
     const woodPerHour = getTotalWoodPerHour();
     const warehouseLevel = getWarehouseLevel();
     const workingHours = getWarehouseWorkingHours(warehouseLevel);
     
+    console.log('🪵 Wood production calculation:', {
+      timeElapsed,
+      woodPerHour,
+      workingHours,
+      lastCollectionTime: new Date(woodProduction.lastCollectionTime).toLocaleString()
+    });
+    
     // Если прошло времени больше чем рабочих часов склада - возвращаем максимум за рабочие часы
     if (timeElapsed >= workingHours) {
-      return Math.floor(workingHours * woodPerHour);
+      const result = Math.floor(workingHours * woodPerHour);
+      console.log('🪵 Max wood ready (storage full):', result);
+      return result;
     }
     
     // Иначе вычисляем текущее производство
-    return Math.floor(timeElapsed * woodPerHour);
+    const result = Math.floor(timeElapsed * woodPerHour);
+    console.log('🪵 Current wood ready:', result);
+    return result;
   }, [woodProduction.lastCollectionTime, getSawmillLevel, getTotalWoodPerHour, getWarehouseLevel]);
 
   const getStoneReady = useCallback((hasWorkers: boolean = true) => {
-    if (!hasWorkers || getQuarryLevel() === 0) return 0;
+    if (!hasWorkers || getQuarryLevel() === 0) {
+      console.log('🪨 Stone production stopped - no workers or building:', { hasWorkers, level: getQuarryLevel() });
+      return 0;
+    }
     
     const timeElapsed = (Date.now() - stoneProduction.lastCollectionTime) / 1000 / 3600; // в часах
     const stonePerHour = getTotalStonePerHour();
     const warehouseLevel = getWarehouseLevel();
     const workingHours = getWarehouseWorkingHours(warehouseLevel);
     
+    console.log('🪨 Stone production calculation:', {
+      timeElapsed,
+      stonePerHour,
+      workingHours,
+      lastCollectionTime: new Date(stoneProduction.lastCollectionTime).toLocaleString()
+    });
+    
     // Если прошло времени больше чем рабочих часов склада - возвращаем максимум за рабочие часы
     if (timeElapsed >= workingHours) {
-      return Math.floor(workingHours * stonePerHour);
+      const result = Math.floor(workingHours * stonePerHour);
+      console.log('🪨 Max stone ready (storage full):', result);
+      return result;
     }
     
     // Иначе вычисляем текущее производство
-    return Math.floor(timeElapsed * stonePerHour);
+    const result = Math.floor(timeElapsed * stonePerHour);
+    console.log('🪨 Current stone ready:', result);
+    return result;
   }, [stoneProduction.lastCollectionTime, getQuarryLevel, getTotalStonePerHour, getWarehouseLevel]);
 
   // Прогресс производства (от 0 до 100) на основе времени работы склада
