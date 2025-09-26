@@ -1,11 +1,12 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
 import { useErrorHandler } from "@/hooks/useErrorHandler";
 import { supabase } from "@/integrations/supabase/client";
 import { useWallet } from "@/hooks/useWallet";
-import { Copy, Users, TrendingUp, Gift } from "lucide-react";
+import { Copy, Users, TrendingUp, Gift, ChevronDown, ChevronRight } from "lucide-react";
 
 interface Referral {
   id: string;
@@ -21,12 +22,103 @@ interface ReferralEarning {
   created_at: string;
 }
 
+interface ReferralTreeNode {
+  wallet_address: string;
+  level: number;
+  children: ReferralTreeNode[];
+  earnings?: number;
+  joinDate?: string;
+}
+
+const ReferralTreeView = ({ node, isExpanded, onToggle }: {
+  node: ReferralTreeNode;
+  isExpanded: boolean;
+  onToggle: () => void;
+}) => {
+  const [childrenExpanded, setChildrenExpanded] = useState<Record<string, boolean>>({});
+
+  const toggleChild = (wallet: string) => {
+    setChildrenExpanded(prev => ({
+      ...prev,
+      [wallet]: !prev[wallet]
+    }));
+  };
+
+  const getLevelColor = (level: number) => {
+    switch (level) {
+      case 0: return 'text-game-accent border-game-accent bg-game-accent/10';
+      case 1: return 'text-yellow-400 border-yellow-400/50 bg-yellow-400/10';
+      case 2: return 'text-blue-400 border-blue-400/50 bg-blue-400/10';
+      case 3: return 'text-green-400 border-green-400/50 bg-green-400/10';
+      default: return 'text-gray-400 border-gray-400/50 bg-gray-400/10';
+    }
+  };
+
+  const formatWallet = (wallet: string) => {
+    return `${wallet.slice(0, 8)}...${wallet.slice(-8)}`;
+  };
+
+  return (
+    <div className="space-y-2">
+      <div className={`flex items-center justify-between p-4 rounded-lg border ${getLevelColor(node.level)}`}>
+        <div className="flex items-center space-x-3">
+          {node.children.length > 0 && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={onToggle}
+              className="p-1 h-6 w-6"
+            >
+              {isExpanded ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
+            </Button>
+          )}
+          <div>
+            <div className="font-mono font-medium">
+              {node.level === 0 ? 'ВЫ' : formatWallet(node.wallet_address)}
+            </div>
+            <div className="text-xs opacity-75">
+              {node.level === 0 ? 'Главный игрок' : `Уровень ${node.level}`}
+              {node.joinDate && ` • ${new Date(node.joinDate).toLocaleDateString()}`}
+            </div>
+          </div>
+        </div>
+        <div className="text-right">
+          <div className="font-bold">
+            {node.children.length} реф.
+          </div>
+          {node.earnings !== undefined && (
+            <div className="text-sm opacity-75">
+              {node.earnings} ELL
+            </div>
+          )}
+        </div>
+      </div>
+      
+      {isExpanded && node.children.length > 0 && (
+        <div className="ml-8 space-y-2 border-l-2 border-game-accent/20 pl-4">
+          {node.children.map((child) => (
+            <ReferralTreeView
+              key={child.wallet_address}
+              node={child}
+              isExpanded={childrenExpanded[child.wallet_address] || false}
+              onToggle={() => toggleChild(child.wallet_address)}
+            />
+          ))}
+        </div>
+      )}
+    </div>
+  );
+};
+
 export const ReferralTab = () => {
   const [referralId, setReferralId] = useState("");
   const [myReferrals, setMyReferrals] = useState<Referral[]>([]);
   const [myEarnings, setMyEarnings] = useState<ReferralEarning[]>([]);
   const [totalEarnings, setTotalEarnings] = useState(0);
   const [loading, setLoading] = useState(false);
+  const [showReferralTree, setShowReferralTree] = useState(false);
+  const [referralTree, setReferralTree] = useState<ReferralTreeNode | null>(null);
+  const [treeExpanded, setTreeExpanded] = useState(true);
   const { toast } = useToast();
   const { handleError, handleSuccess } = useErrorHandler();
   const { accountId } = useWallet();
@@ -79,6 +171,63 @@ export const ReferralTab = () => {
     } catch (error) {
       console.error('Error in fetchReferralData:', error);
       handleError(error, 'Ошибка загрузки данных рефералов');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const buildReferralTree = async (rootWallet: string): Promise<ReferralTreeNode> => {
+    const tree: ReferralTreeNode = {
+      wallet_address: rootWallet,
+      level: 0,
+      children: []
+    };
+
+    const buildLevel = async (node: ReferralTreeNode, maxLevel = 3) => {
+      if (node.level >= maxLevel) return;
+
+      try {
+        const { data: directReferrals } = await supabase
+          .rpc('get_referrals_by_referrer', { p_wallet_address: node.wallet_address });
+
+        if (directReferrals && directReferrals.length > 0) {
+          for (const referral of directReferrals) {
+            const childNode: ReferralTreeNode = {
+              wallet_address: referral.referred_wallet_address,
+              level: node.level + 1,
+              children: [],
+              joinDate: referral.created_at
+            };
+
+            // Get earnings for this referral
+            const { data: earnings } = await supabase
+              .rpc('get_referral_earnings_by_referrer', { p_wallet_address: referral.referred_wallet_address });
+            
+            childNode.earnings = earnings?.reduce((sum, earning) => sum + earning.amount, 0) || 0;
+
+            node.children.push(childNode);
+            await buildLevel(childNode, maxLevel);
+          }
+        }
+      } catch (error) {
+        console.error('Error building referral tree level:', error);
+      }
+    };
+
+    await buildLevel(tree);
+    return tree;
+  };
+
+  const openReferralTree = async () => {
+    if (!accountId) return;
+    
+    setLoading(true);
+    try {
+      const tree = await buildReferralTree(accountId);
+      setReferralTree(tree);
+      setShowReferralTree(true);
+    } catch (error) {
+      handleError(error, 'Ошибка загрузки дерева рефералов');
     } finally {
       setLoading(false);
     }
@@ -165,12 +314,16 @@ export const ReferralTab = () => {
     <div className="space-y-6">
       {/* Header Stats */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div className="bg-game-surface/80 border border-game-accent rounded-lg p-4">
+        <div 
+          className="bg-game-surface/80 border border-game-accent rounded-lg p-4 cursor-pointer hover:bg-game-surface/90 transition-colors"
+          onClick={openReferralTree}
+        >
           <div className="flex items-center space-x-2 mb-2">
             <Users className="h-5 w-5 text-game-accent" />
             <span className="text-game-accent font-medium">Мои рефералы</span>
           </div>
           <p className="text-2xl font-bold text-white">{myReferrals.length}</p>
+          <p className="text-xs text-game-accent/70 mt-1">Нажмите для просмотра дерева</p>
         </div>
 
         <div className="bg-game-surface/80 border border-game-accent rounded-lg p-4">
@@ -189,6 +342,24 @@ export const ReferralTab = () => {
           <p className="text-2xl font-bold text-white">3</p>
         </div>
       </div>
+
+      {/* Referral Tree Dialog */}
+      <Dialog open={showReferralTree} onOpenChange={setShowReferralTree}>
+        <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto bg-game-surface border-game-accent">
+          <DialogHeader>
+            <DialogTitle className="text-game-accent">Дерево рефералов</DialogTitle>
+          </DialogHeader>
+          <div className="mt-4">
+            {referralTree && (
+              <ReferralTreeView
+                node={referralTree}
+                isExpanded={treeExpanded}
+                onToggle={() => setTreeExpanded(!treeExpanded)}
+              />
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
 
       {/* Referral Link Section */}
       <div className="bg-game-surface/80 border border-game-accent rounded-lg p-6">
