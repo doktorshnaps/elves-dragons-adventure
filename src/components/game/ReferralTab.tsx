@@ -47,37 +47,27 @@ export const ReferralTab = () => {
 
       console.log('Fetching referral data for wallet:', accountId);
 
-      // Fetch my referrals (those I referred)
+      // Use RPC functions to bypass RLS (they have SECURITY DEFINER)
       const { data: myReferrals, error: referralsError } = await supabase
-        .from('referrals')
-        .select('*')
-        .eq('referrer_wallet_address', accountId)
-        .eq('is_active', true);
+        .rpc('get_referrals_by_referrer', { p_wallet_address: accountId });
 
-      console.log('Referrals query result:', { myReferrals, referralsError });
+      console.log('Referrals RPC result:', { myReferrals, referralsError });
 
       if (referralsError) throw referralsError;
       
-      // Also check if I was referred by someone
+      // Check if I was referred by someone  
       const { data: whoReferredMe, error: referredError } = await supabase
-        .from('referrals')
-        .select('*')
-        .eq('referred_wallet_address', accountId)
-        .eq('is_active', true)
-        .maybeSingle();
+        .rpc('get_referrer_for_wallet', { p_wallet_address: accountId });
 
-      console.log('Who referred me:', { whoReferredMe, referredError });
+      console.log('Who referred me RPC result:', { whoReferredMe, referredError });
 
       setMyReferrals(myReferrals || []);
 
-      // Fetch my earnings
+      // Fetch my earnings using RPC
       const { data: earnings, error: earningsError } = await supabase
-        .from('referral_earnings')
-        .select('*')
-        .eq('referrer_wallet_address', accountId)
-        .order('created_at', { ascending: false });
+        .rpc('get_referral_earnings_by_referrer', { p_wallet_address: accountId });
 
-      console.log('Earnings query result:', { earnings, earningsError });
+      console.log('Earnings RPC result:', { earnings, earningsError });
 
       if (earningsError) throw earningsError;
       setMyEarnings(earnings || []);
@@ -85,15 +75,6 @@ export const ReferralTab = () => {
       // Calculate total earnings
       const total = earnings?.reduce((sum, earning) => sum + earning.amount, 0) || 0;
       setTotalEarnings(total);
-
-      // Debug current user authentication
-      const { data: { user } } = await supabase.auth.getUser();
-      console.log('Current authenticated user:', user);
-
-      // Check current user wallet function
-      const { data: currentWallet, error: walletError } = await supabase
-        .rpc('get_current_user_wallet');
-      console.log('get_current_user_wallet result:', { currentWallet, walletError });
 
     } catch (error) {
       console.error('Error in fetchReferralData:', error);
