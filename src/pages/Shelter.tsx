@@ -339,20 +339,28 @@ export const Shelter = () => {
   }];
 
   const canAffordUpgrade = (upgrade: NestUpgrade) => {
+    // Главный зал не требует рабочих (базовое здание)
+    const requiresWorkers = upgrade.id !== 'main_hall';
+    const hasRequiredWorkers = !requiresWorkers || hasWorkersInBuilding(upgrade.id);
+    
     return upgrade.level < upgrade.maxLevel && 
            resources.wood >= upgrade.cost.wood && 
            resources.stone >= upgrade.cost.stone && 
            resources.iron >= upgrade.cost.iron && 
            gameState.balance >= upgrade.cost.balance &&
-           canUpgradeBuilding(upgrade.id);
+           canUpgradeBuilding(upgrade.id) &&
+           hasRequiredWorkers;
   };
   
   const canAffordCraft = (recipe: CraftRecipe) => {
+    const hasWorkshopWorkers = hasWorkersInBuilding('workshop');
+    
     return (!recipe.requirements.wood || resources.wood >= recipe.requirements.wood) && 
            (!recipe.requirements.stone || resources.stone >= recipe.requirements.stone) && 
            (!recipe.requirements.iron || resources.iron >= recipe.requirements.iron) && 
            (!recipe.requirements.balance || gameState.balance >= recipe.requirements.balance) && 
-           buildingLevels.workshop > 0;
+           buildingLevels.workshop > 0 &&
+           hasWorkshopWorkers;
   };
 
   const handleUpgrade = async (upgrade: NestUpgrade) => {
@@ -478,25 +486,29 @@ export const Shelter = () => {
             <Home className="w-4 h-4" />
             {t(language, 'shelter.upgrades')}
           </Button>
-          <Button variant={activeTab === "crafting" ? "default" : "outline"} onClick={() => setActiveTab("crafting")} className="flex items-center gap-2" disabled={buildingLevels.workshop === 0}>
+          <Button variant={activeTab === "crafting" ? "default" : "outline"} onClick={() => setActiveTab("crafting")} className="flex items-center gap-2" disabled={buildingLevels.workshop === 0 || !hasWorkersInBuilding('workshop')}>
             <Hammer className="w-4 h-4" />
             {t(language, 'shelter.crafting')}
             {buildingLevels.workshop === 0 && <span className="text-xs">({t(language, 'shelter.notBuilt')})</span>}
+            {buildingLevels.workshop > 0 && !hasWorkersInBuilding('workshop') && <span className="text-xs">(Нет рабочих)</span>}
           </Button>
-          <Button variant={activeTab === "barracks" ? "default" : "outline"} onClick={() => setActiveTab("barracks")} className="flex items-center gap-2" disabled={buildingLevels.barracks === 0}>
+          <Button variant={activeTab === "barracks" ? "default" : "outline"} onClick={() => setActiveTab("barracks")} className="flex items-center gap-2" disabled={buildingLevels.barracks === 0 || !hasWorkersInBuilding('barracks')}>
             <Shield className="w-4 h-4" />
             {t(language, 'shelter.barracks')}
             {buildingLevels.barracks === 0 && <span className="text-xs">({t(language, 'shelter.notBuilt')})</span>}
+            {buildingLevels.barracks > 0 && !hasWorkersInBuilding('barracks') && <span className="text-xs">(Нет рабочих)</span>}
           </Button>
-          <Button variant={activeTab === "dragonlair" ? "default" : "outline"} onClick={() => setActiveTab("dragonlair")} className="flex items-center gap-2" disabled={buildingLevels.dragon_lair === 0}>
+          <Button variant={activeTab === "dragonlair" ? "default" : "outline"} onClick={() => setActiveTab("dragonlair")} className="flex items-center gap-2" disabled={buildingLevels.dragon_lair === 0 || !hasWorkersInBuilding('dragon_lair')}>
             <Flame className="w-4 h-4" />
             {t(language, 'shelter.dragonLair')}
             {buildingLevels.dragon_lair === 0 && <span className="text-xs">({t(language, 'shelter.notBuilt')})</span>}
+            {buildingLevels.dragon_lair > 0 && !hasWorkersInBuilding('dragon_lair') && <span className="text-xs">(Нет рабочих)</span>}
           </Button>
-          <Button variant={activeTab === "medical" ? "default" : "outline"} onClick={() => setActiveTab("medical")} className="flex items-center gap-2" disabled={buildingLevels.medical === 0}>
+          <Button variant={activeTab === "medical" ? "default" : "outline"} onClick={() => setActiveTab("medical")} className="flex items-center gap-2" disabled={buildingLevels.medical === 0 || !hasWorkersInBuilding('medical')}>
             <Heart className="w-4 h-4" />
             {t(language, 'shelter.medical')}
             {buildingLevels.medical === 0 && <span className="text-xs">({t(language, 'shelter.notBuilt')})</span>}
+            {buildingLevels.medical > 0 && !hasWorkersInBuilding('medical') && <span className="text-xs">(Нет рабочих)</span>}
           </Button>
           <Button variant={activeTab === "workers" ? "default" : "outline"} onClick={() => setActiveTab("workers")} className="flex items-center gap-2">
             <Users className="w-4 h-4" />
@@ -602,20 +614,27 @@ export const Shelter = () => {
                             Время улучшения: {getUpgradeTime(upgrade.id)} минут
                           </div>
                           
-                          {/* Показываем требования */}
-                          {upgrade.id === 'storage' && buildingLevels.main_hall < 1 && (
-                            <div className="text-xs text-red-600">
-                              Требуется: Главный зал 1 уровня
-                            </div>
-                          )}
-                          
-                           <Button 
-                             onClick={() => handleUpgrade(upgrade)} 
-                             disabled={!canAffordUpgrade(upgrade)}
-                             className="w-full"
-                           >
-                             Построить
-                           </Button>
+                           {/* Показываем требования */}
+                           {upgrade.id === 'storage' && buildingLevels.main_hall < 1 && (
+                             <div className="text-xs text-red-600">
+                               Требуется: Главный зал 1 уровня
+                             </div>
+                           )}
+                           
+                           {/* Показываем требование рабочих для всех зданий кроме главного зала */}
+                           {upgrade.id !== 'main_hall' && !hasWorkersInBuilding(upgrade.id) && (
+                             <div className="text-xs text-orange-600">
+                               Требуется: Назначить рабочих в здание
+                             </div>
+                           )}
+                           
+                            <Button 
+                              onClick={() => handleUpgrade(upgrade)} 
+                              disabled={!canAffordUpgrade(upgrade)}
+                              className="w-full"
+                            >
+                              Построить
+                            </Button>
                        </div>
                      )}
                      
@@ -695,16 +714,22 @@ export const Shelter = () => {
                            💰 {recipe.requirements.balance} ELL
                          </div>
                        )}
-                    </div>
-                  </div>
-                  
-                  <Button 
-                    onClick={() => handleCraft(recipe)} 
-                    disabled={!canAffordCraft(recipe)}
-                    className="w-full"
-                  >
-                    {t(language, 'shelter.craft')}
-                  </Button>
+                     </div>
+                   </div>
+                   
+                   {!hasWorkersInBuilding('workshop') && (
+                     <div className="text-xs text-orange-600">
+                       Требуется: Назначить рабочих в мастерскую
+                     </div>
+                   )}
+                   
+                   <Button 
+                     onClick={() => handleCraft(recipe)} 
+                     disabled={!canAffordCraft(recipe)}
+                     className="w-full"
+                   >
+                     {t(language, 'shelter.craft')}
+                   </Button>
                 </CardContent>
               </Card>
             ))}
