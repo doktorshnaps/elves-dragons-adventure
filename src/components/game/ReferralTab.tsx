@@ -12,6 +12,7 @@ interface Referral {
   id: string;
   referred_wallet_address: string;
   created_at: string;
+  isWhitelisted?: boolean;
 }
 
 interface ReferralEarning {
@@ -148,13 +149,25 @@ export const ReferralTab = () => {
 
       if (referralsError) throw referralsError;
       
+      // Check whitelist status for each referral
+      const referralsWithWhitelistStatus = await Promise.all(
+        (myReferrals || []).map(async (referral) => {
+          const { data: isWhitelisted } = await supabase
+            .rpc('is_whitelisted', { p_wallet_address: referral.referred_wallet_address });
+          return {
+            ...referral,
+            isWhitelisted: !!isWhitelisted
+          };
+        })
+      );
+      
       // Check if I was referred by someone  
       const { data: whoReferredMeData, error: referredError } = await supabase
         .rpc('get_referrer_for_wallet', { p_wallet_address: accountId });
 
       console.log('Who referred me RPC result:', { whoReferredMeData, referredError });
 
-      setMyReferrals(myReferrals || []);
+      setMyReferrals(referralsWithWhitelistStatus);
       setWhoReferredMe(whoReferredMeData?.[0] || null);
 
       // Fetch my earnings using RPC
@@ -487,9 +500,16 @@ export const ReferralTab = () => {
                 key={referral.id}
                 className="flex justify-between items-center p-3 bg-game-surface border border-game-accent/30 rounded"
               >
-                <span className="text-white font-mono">
-                  {referral.referred_wallet_address.slice(0, 8)}...{referral.referred_wallet_address.slice(-8)}
-                </span>
+                <div className="flex items-center gap-2">
+                  <span className="text-white font-mono">
+                    {referral.referred_wallet_address.slice(0, 8)}...{referral.referred_wallet_address.slice(-8)}
+                  </span>
+                  {!referral.isWhitelisted && (
+                    <span className="px-2 py-1 text-xs bg-yellow-600/20 text-yellow-400 rounded border border-yellow-600/30">
+                      no wl
+                    </span>
+                  )}
+                </div>
                 <span className="text-gray-300 text-sm">
                   {new Date(referral.created_at).toLocaleDateString()}
                 </span>
