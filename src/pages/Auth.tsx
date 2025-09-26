@@ -1,14 +1,58 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { useToast } from "@/hooks/use-toast";
 import { useWallet } from "@/hooks/useWallet";
-import { Navigate, useNavigate } from "react-router-dom";
+import { Navigate, useNavigate, useSearchParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
+import { supabase } from "@/integrations/supabase/client";
 
 export const Auth = () => {
   const { toast } = useToast();
-  const { isConnected, isConnecting, connectWallet } = useWallet();
+  const { isConnected, isConnecting, connectWallet, accountId } = useWallet();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const [referrerId, setReferrerId] = useState<string | null>(null);
+
+  // Get referrer ID from URL params
+  useEffect(() => {
+    const refParam = searchParams.get('ref');
+    if (refParam) {
+      setReferrerId(refParam);
+      console.log('🔗 Referral link detected:', refParam);
+    }
+  }, [searchParams]);
+
+  // Handle referral when wallet connects
+  useEffect(() => {
+    if (isConnected && accountId && referrerId) {
+      handleReferral();
+    }
+  }, [isConnected, accountId, referrerId]);
+
+  const handleReferral = async () => {
+    if (!accountId || !referrerId) return;
+    
+    try {
+      console.log('🔗 Adding referral:', { referrerId, referred: accountId });
+      const { data, error } = await supabase
+        .rpc('add_referral', {
+          p_referrer_wallet_address: referrerId,
+          p_referred_wallet_address: accountId
+        });
+
+      if (error) {
+        console.log('⚠️ Referral add failed:', error);
+      } else {
+        console.log('✅ Referral added successfully');
+        toast({
+          title: "Реферал добавлен",
+          description: "Вы успешно привязаны к пригласившему игроку",
+        });
+      }
+    } catch (error) {
+      console.log('⚠️ Referral add error:', error);
+    }
+  };
 
   // Redirect if already connected (with localStorage fallback) and force full reload
   useEffect(() => {
