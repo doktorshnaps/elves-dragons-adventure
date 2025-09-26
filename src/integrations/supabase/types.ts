@@ -433,6 +433,78 @@ export type Database = {
         }
         Relationships: []
       }
+      referral_earnings: {
+        Row: {
+          amount: number
+          created_at: string
+          id: string
+          level: number
+          referred_user_id: string | null
+          referred_wallet_address: string
+          referrer_user_id: string | null
+          referrer_wallet_address: string
+          source_activity: string
+          updated_at: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          id?: string
+          level: number
+          referred_user_id?: string | null
+          referred_wallet_address: string
+          referrer_user_id?: string | null
+          referrer_wallet_address: string
+          source_activity?: string
+          updated_at?: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          id?: string
+          level?: number
+          referred_user_id?: string | null
+          referred_wallet_address?: string
+          referrer_user_id?: string | null
+          referrer_wallet_address?: string
+          source_activity?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      referrals: {
+        Row: {
+          created_at: string
+          id: string
+          is_active: boolean
+          referred_user_id: string | null
+          referred_wallet_address: string
+          referrer_user_id: string | null
+          referrer_wallet_address: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          referred_user_id?: string | null
+          referred_wallet_address: string
+          referrer_user_id?: string | null
+          referrer_wallet_address: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          referred_user_id?: string | null
+          referred_wallet_address?: string
+          referrer_user_id?: string | null
+          referrer_wallet_address?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       shop_inventory: {
         Row: {
           available_quantity: number
@@ -648,6 +720,13 @@ export type Database = {
           p_wallet_address: string
         }
         Returns: string
+      }
+      add_referral: {
+        Args: {
+          p_referred_wallet_address: string
+          p_referrer_wallet_address: string
+        }
+        Returns: Json
       }
       admin_add_balance: {
         Args: {
@@ -958,6 +1037,10 @@ export type Database = {
       }
       process_medical_bay_healing: {
         Args: Record<PropertyKey, never>
+        Returns: undefined
+      }
+      process_referral_earnings: {
+        Args: { p_amount: number; p_earner_wallet_address: string }
         Returns: undefined
       }
       remove_card_from_medical_bay: {

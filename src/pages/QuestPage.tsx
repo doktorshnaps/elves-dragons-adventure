@@ -1,5 +1,7 @@
 import { Button } from "@/components/ui/button";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useNavigate } from "react-router-dom";
+import { ReferralTab } from "@/components/game/ReferralTab";
 
 export const QuestPage = () => {
   const navigate = useNavigate();
@@ -15,14 +17,37 @@ export const QuestPage = () => {
           Вернуться в меню
         </Button>
         
-        <h1 className="text-2xl text-game-accent mb-4">Квесты</h1>
+        <h1 className="text-2xl text-game-accent mb-6">Квесты и Рефералы</h1>
         
-        <div className="grid gap-4">
-          <div className="p-4 bg-game-surface/80 border border-game-accent rounded-lg">
-            <h2 className="text-xl text-game-accent mb-2">Скоро будут доступны новые квесты!</h2>
-            <p className="text-gray-300">Следите за обновлениями.</p>
-          </div>
-        </div>
+        <Tabs defaultValue="quests" className="w-full">
+          <TabsList className="grid w-full grid-cols-2 bg-game-surface/80 border border-game-accent">
+            <TabsTrigger 
+              value="quests" 
+              className="text-game-accent data-[state=active]:bg-game-accent data-[state=active]:text-game-surface"
+            >
+              Квесты
+            </TabsTrigger>
+            <TabsTrigger 
+              value="referrals" 
+              className="text-game-accent data-[state=active]:bg-game-accent data-[state=active]:text-game-surface"
+            >
+              Рефералы
+            </TabsTrigger>
+          </TabsList>
+          
+          <TabsContent value="quests" className="mt-6">
+            <div className="grid gap-4">
+              <div className="p-4 bg-game-surface/80 border border-game-accent rounded-lg">
+                <h2 className="text-xl text-game-accent mb-2">Скоро будут доступны новые квесты!</h2>
+                <p className="text-gray-300">Следите за обновлениями.</p>
+              </div>
+            </div>
+          </TabsContent>
+          
+          <TabsContent value="referrals" className="mt-6">
+            <ReferralTab />
+          </TabsContent>
+        </Tabs>
       </div>
     </div>
   );
