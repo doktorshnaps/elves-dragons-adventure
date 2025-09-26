@@ -89,7 +89,7 @@ export const ReferralTab = () => {
     if (!referralId.trim()) {
       toast({
         title: "Ошибка",
-        description: "Введите ID игрока",
+        description: "Введите ID игрока, который вас пригласил",
         variant: "destructive"
       });
       return;
@@ -104,23 +104,32 @@ export const ReferralTab = () => {
       return;
     }
 
+    if (referralId.trim() === accountId) {
+      toast({
+        title: "Ошибка",
+        description: "Нельзя указать себя как пригласившего",
+        variant: "destructive"
+      });
+      return;
+    }
+
     try {
       setLoading(true);
 
       const { data, error } = await supabase
         .rpc('add_referral', {
-          p_referrer_wallet_address: accountId,
-          p_referred_wallet_address: referralId.trim()
+          p_referrer_wallet_address: referralId.trim(),
+          p_referred_wallet_address: accountId
         });
 
       if (error) throw error;
 
-      handleSuccess('Реферал успешно добавлен!');
+      handleSuccess('Пригласивший игрок успешно указан!');
       setReferralId('');
       fetchReferralData();
 
     } catch (error: any) {
-      handleError(error, 'Ошибка добавления реферала');
+      handleError(error, 'Ошибка указания пригласившего игрока');
     } finally {
       setLoading(false);
     }
@@ -195,12 +204,34 @@ export const ReferralTab = () => {
         </p>
       </div>
 
-      {/* Manual Referral Add */}
-      <div className="bg-game-surface/80 border border-game-accent rounded-lg p-6">
-        <h3 className="text-xl text-game-accent mb-4">Добавить реферала вручную</h3>
+      {/* Player ID Info */}
+      <div className="bg-game-surface/80 border border-game-accent rounded-lg p-6 mb-6">
+        <h3 className="text-xl text-game-accent mb-4">Ваш ID игрока</h3>
         <div className="flex gap-2">
           <Input
-            placeholder="Введите ID игрока"
+            value={accountId || ''}
+            readOnly
+            className="bg-game-surface border-game-accent text-white font-mono text-sm"
+          />
+          <Button
+            onClick={() => accountId && navigator.clipboard.writeText(accountId)}
+            variant="outline"
+            className="bg-game-surface border-game-accent text-game-accent hover:bg-game-accent hover:text-game-surface"
+          >
+            <Copy className="h-4 w-4" />
+          </Button>
+        </div>
+        <p className="text-gray-300 text-sm mt-2">
+          Это ваш уникальный ID. Поделитесь им с тем, кто вас пригласил
+        </p>
+      </div>
+
+      {/* Add Referrer */}
+      <div className="bg-game-surface/80 border border-game-accent rounded-lg p-6">
+        <h3 className="text-xl text-game-accent mb-4">Указать кто вас пригласил</h3>
+        <div className="flex gap-2">
+          <Input
+            placeholder="Введите ID игрока, который вас пригласил"
             value={referralId}
             onChange={(e) => setReferralId(e.target.value)}
             className="bg-game-surface border-game-accent text-white"
@@ -210,11 +241,11 @@ export const ReferralTab = () => {
             disabled={loading}
             className="bg-game-accent text-game-surface hover:bg-game-accent/80"
           >
-            Добавить
+            Указать
           </Button>
         </div>
         <p className="text-gray-300 text-sm mt-2">
-          Если реферал не был добавлен по ссылке, введите его ID здесь
+          Если вас пригласили, но вы не перешли по ссылке, укажите ID пригласившего вас игрока
         </p>
       </div>
 
