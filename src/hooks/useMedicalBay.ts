@@ -70,6 +70,17 @@ export const useMedicalBay = () => {
   const placeCardInMedicalBay = useCallback(async (cardInstanceIdOrTemplateId: string) => {
     if (!accountId) return;
 
+    // Проверяем, есть ли назначенные рабочие в медпункт
+    const hasWorkersInMedical = gameData?.activeWorkers?.some((worker: any) => worker.assignedBuilding === 'medical') || false;
+    if (!hasWorkersInMedical) {
+      toast({
+        title: "Медпункт неактивен",
+        description: "Назначьте рабочих в медпункт для проведения лечения",
+        variant: "destructive"
+      });
+      return;
+    }
+
     // Проверяем, есть ли активное подземелье
     const isActiveBattle = localStorage.getItem('activeBattleInProgress') === 'true';
     if (isActiveBattle) {

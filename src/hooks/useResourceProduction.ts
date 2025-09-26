@@ -105,14 +105,23 @@ export const useResourceProduction = (): UseResourceProductionReturn => {
     }
   }, [gameState?.woodLastCollectionTime, gameState?.stoneLastCollectionTime, gameState?.woodProductionData, gameState?.stoneProductionData]);
 
+  // Проверка назначенных рабочих
+  const hasWorkersInSawmill = useCallback(() => {
+    return gameState?.activeWorkers?.some((worker: any) => worker.assignedBuilding === 'sawmill') || false;
+  }, [gameState?.activeWorkers]);
+
+  const hasWorkersInQuarry = useCallback(() => {
+    return gameState?.activeWorkers?.some((worker: any) => worker.assignedBuilding === 'quarry') || false;
+  }, [gameState?.activeWorkers]);
+
   // Эффект для автоматического обновления состояния производства каждую секунду
   useEffect(() => {
     const interval = setInterval(() => {
       const warehouseLevel = gameState?.buildingLevels?.storage || 1;
       const workingHours = getWarehouseWorkingHours(warehouseLevel);
       
-      // Обновляем состояние лесопилки
-      if (getSawmillLevel() > 0) {
+      // Обновляем состояние лесопилки только если есть рабочие
+      if (getSawmillLevel() > 0 && hasWorkersInSawmill()) {
         const timeElapsed = (Date.now() - woodProduction.lastCollectionTime) / 1000 / 3600;
         const isStorageFull = timeElapsed >= workingHours;
         setWoodProduction(prev => ({
@@ -120,10 +129,16 @@ export const useResourceProduction = (): UseResourceProductionReturn => {
           isStorageFull,
           isProducing: !isStorageFull
         }));
+      } else {
+        // Если нет рабочих - останавливаем производство
+        setWoodProduction(prev => ({
+          ...prev,
+          isProducing: false
+        }));
       }
       
-      // Обновляем состояние каменоломни
-      if (getQuarryLevel() > 0) {
+      // Обновляем состояние каменоломни только если есть рабочие
+      if (getQuarryLevel() > 0 && hasWorkersInQuarry()) {
         const timeElapsed = (Date.now() - stoneProduction.lastCollectionTime) / 1000 / 3600;
         const isStorageFull = timeElapsed >= workingHours;
         setStoneProduction(prev => ({
@@ -131,11 +146,17 @@ export const useResourceProduction = (): UseResourceProductionReturn => {
           isStorageFull,
           isProducing: !isStorageFull
         }));
+      } else {
+        // Если нет рабочих - останавливаем производство
+        setStoneProduction(prev => ({
+          ...prev,
+          isProducing: false
+        }));
       }
     }, 1000);
 
     return () => clearInterval(interval);
-  }, [woodProduction.lastCollectionTime, stoneProduction.lastCollectionTime, gameState?.buildingLevels]);
+  }, [woodProduction.lastCollectionTime, stoneProduction.lastCollectionTime, gameState?.buildingLevels, hasWorkersInSawmill, hasWorkersInQuarry]);
 
   // Получение уровня зданий
   const getSawmillLevel = useCallback(() => {
@@ -166,9 +187,10 @@ export const useResourceProduction = (): UseResourceProductionReturn => {
   // Удалено - больше нет лимитов хранения
 
   // Расчет готовых ресурсов без лимитов хранения
-  const getWoodReady = useCallback((hasWorkers: boolean = true) => {
-    if (!hasWorkers || getSawmillLevel() === 0) {
-      console.log('🪵 Wood production stopped - no workers or building:', { hasWorkers, level: getSawmillLevel() });
+  const getWoodReady = useCallback((hasWorkers?: boolean) => {
+    const workersAssigned = hasWorkers ?? hasWorkersInSawmill();
+    if (!workersAssigned || getSawmillLevel() === 0) {
+      console.log('🪵 Wood production stopped - no workers or building:', { workersAssigned, level: getSawmillLevel() });
       return 0;
     }
     
@@ -197,9 +219,10 @@ export const useResourceProduction = (): UseResourceProductionReturn => {
     return result;
   }, [woodProduction.lastCollectionTime, getSawmillLevel, getTotalWoodPerHour, getWarehouseLevel]);
 
-  const getStoneReady = useCallback((hasWorkers: boolean = true) => {
-    if (!hasWorkers || getQuarryLevel() === 0) {
-      console.log('🪨 Stone production stopped - no workers or building:', { hasWorkers, level: getQuarryLevel() });
+  const getStoneReady = useCallback((hasWorkers?: boolean) => {
+    const workersAssigned = hasWorkers ?? hasWorkersInQuarry();
+    if (!workersAssigned || getQuarryLevel() === 0) {
+      console.log('🪨 Stone production stopped - no workers or building:', { workersAssigned, level: getQuarryLevel() });
       return 0;
     }
     
@@ -229,25 +252,27 @@ export const useResourceProduction = (): UseResourceProductionReturn => {
   }, [stoneProduction.lastCollectionTime, getQuarryLevel, getTotalStonePerHour, getWarehouseLevel]);
 
   // Прогресс производства (от 0 до 100) на основе времени работы склада
-  const getWoodProductionProgress = useCallback((hasWorkers: boolean = true) => {
-    if (!hasWorkers || getSawmillLevel() === 0) return 0;
+  const getWoodProductionProgress = useCallback((hasWorkers?: boolean) => {
+    const workersAssigned = hasWorkers ?? hasWorkersInSawmill();
+    if (!workersAssigned || getSawmillLevel() === 0) return 0;
     
     const timeElapsed = (Date.now() - woodProduction.lastCollectionTime) / 1000 / 3600;
     const warehouseLevel = getWarehouseLevel();
     const workingHours = getWarehouseWorkingHours(warehouseLevel);
     
     return Math.min(100, (timeElapsed / workingHours) * 100);
-  }, [woodProduction.lastCollectionTime, getSawmillLevel, getWarehouseLevel]);
+  }, [woodProduction.lastCollectionTime, getSawmillLevel, getWarehouseLevel, hasWorkersInSawmill]);
 
-  const getStoneProductionProgress = useCallback((hasWorkers: boolean = true) => {
-    if (!hasWorkers || getQuarryLevel() === 0) return 0;
+  const getStoneProductionProgress = useCallback((hasWorkers?: boolean) => {
+    const workersAssigned = hasWorkers ?? hasWorkersInQuarry();
+    if (!workersAssigned || getQuarryLevel() === 0) return 0;
     
     const timeElapsed = (Date.now() - stoneProduction.lastCollectionTime) / 1000 / 3600;
     const warehouseLevel = getWarehouseLevel();
     const workingHours = getWarehouseWorkingHours(warehouseLevel);
     
     return Math.min(100, (timeElapsed / workingHours) * 100);
-  }, [stoneProduction.lastCollectionTime, getQuarryLevel, getWarehouseLevel]);
+  }, [stoneProduction.lastCollectionTime, getQuarryLevel, getWarehouseLevel, hasWorkersInQuarry]);
 
   // Функция для сохранения состояния производства в БД
   const saveProductionStateToDB = async (resource: 'wood' | 'stone', lastCollectionTime: number, isProducing: boolean, isStorageFull: boolean) => {

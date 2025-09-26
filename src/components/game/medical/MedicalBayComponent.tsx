@@ -8,6 +8,7 @@ import { useMedicalBay } from '@/hooks/useMedicalBay';
 import { useCardInstances } from '@/hooks/useCardInstances';
 import { useCardHealthSync } from '@/hooks/useCardHealthSync';
 import { useCardsWithHealth } from '@/hooks/useCardsWithHealth';
+import { useUnifiedGameState } from '@/hooks/useUnifiedGameState';
 import { CardDisplay } from '../CardDisplay';
 
 export const MedicalBayComponent = () => {
@@ -24,6 +25,7 @@ export const MedicalBayComponent = () => {
   const { cardInstances, loadCardInstances } = useCardInstances();
   const { syncHealthFromInstances } = useCardHealthSync();
   const { cardsWithHealth, selectedTeamWithHealth } = useCardsWithHealth();
+  const gameState = useUnifiedGameState();
   const [selectedCard, setSelectedCard] = useState<any>(null);
 
   useEffect(() => {
@@ -31,15 +33,24 @@ export const MedicalBayComponent = () => {
     loadCardInstances();
   }, [loadMedicalBayEntries, loadCardInstances]);
 
-  // Автоматическая обработка лечения каждую минуту
+  // Автоматическая обработка лечения каждую минуту (только если есть рабочие)
   useEffect(() => {
     const interval = setInterval(() => {
-      console.log('🏥 Processing automatic healing...');
-      processMedicalBayHealing();
+      const hasWorkersInMedical = cardsWithHealth.some(card => 
+        (card as any)?.assignedBuilding === 'medical'
+      ) || 
+      gameState?.activeWorkers?.some((worker: any) => worker.assignedBuilding === 'medical') || false;
+      
+      if (hasWorkersInMedical && medicalBayEntries.length > 0) {
+        console.log('🏥 Processing automatic healing...');
+        processMedicalBayHealing();
+      } else if (!hasWorkersInMedical) {
+        console.log('🏥 Medical bay inactive - no workers assigned');
+      }
     }, 60000); // каждую минуту
 
     return () => clearInterval(interval);
-  }, [processMedicalBayHealing]);
+  }, [processMedicalBayHealing, medicalBayEntries.length]);
 
   const getInjuredCards = () => {
     console.log('🏥 Getting injured cards...');
