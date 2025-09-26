@@ -123,7 +123,7 @@ export const ReferralTab = () => {
   const { handleError, handleSuccess } = useErrorHandler();
   const { accountId } = useWallet();
 
-  const referralLink = `${window.location.origin}/register?ref=${accountId}`;
+  const referralLink = `https://preview--elves-dragons-adventure.lovable.app/auth?ref=${accountId}`;
 
   useEffect(() => {
     if (accountId) {
