@@ -467,28 +467,30 @@ export const ReferralTab = () => {
         </div>
       )}
 
-      {/* Add Referrer */}
-      <div className="bg-game-surface/80 border border-game-accent rounded-lg p-6">
-        <h3 className="text-xl text-game-accent mb-4">Указать кто вас пригласил</h3>
-        <div className="flex gap-2">
-          <Input
-            placeholder="Введите ID игрока, который вас пригласил"
-            value={referralId}
-            onChange={(e) => setReferralId(e.target.value)}
-            className="bg-game-surface border-game-accent text-white"
-          />
-          <Button
-            onClick={addReferralManually}
-            disabled={loading}
-            className="bg-game-accent text-game-surface hover:bg-game-accent/80 disabled:opacity-50"
-          >
-            {loading ? "Обработка..." : "Указать"}
-          </Button>
+      {/* Add Referrer - только если еще не указан пригласивший */}
+      {!whoReferredMe && (
+        <div className="bg-game-surface/80 border border-game-accent rounded-lg p-6">
+          <h3 className="text-xl text-game-accent mb-4">Указать кто вас пригласил</h3>
+          <div className="flex gap-2">
+            <Input
+              placeholder="Введите ID игрока, который вас пригласил"
+              value={referralId}
+              onChange={(e) => setReferralId(e.target.value)}
+              className="bg-game-surface border-game-accent text-white"
+            />
+            <Button
+              onClick={addReferralManually}
+              disabled={loading}
+              className="bg-game-accent text-game-surface hover:bg-game-accent/80 disabled:opacity-50"
+            >
+              {loading ? "Обработка..." : "Указать"}
+            </Button>
+          </div>
+          <p className="text-gray-300 text-sm mt-2">
+            Если вас пригласили, но вы не перешли по ссылке, укажите ID пригласившего вас игрока
+          </p>
         </div>
-        <p className="text-gray-300 text-sm mt-2">
-          Если вас пригласили, но вы не перешли по ссылке, укажите ID пригласившего вас игрока
-        </p>
-      </div>
+      )}
 
       {/* Referral Levels Info */}
       <div className="bg-game-surface/80 border border-game-accent rounded-lg p-6">
