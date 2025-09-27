@@ -22,13 +22,6 @@ export const Auth = () => {
     }
   }, [searchParams]);
 
-  // Handle referral when wallet connects
-  useEffect(() => {
-    if (isConnected && accountId && referrerId) {
-      handleReferral();
-    }
-  }, [isConnected, accountId, referrerId]);
-
   const handleReferral = async () => {
     if (!accountId || !referrerId) return;
     
@@ -42,6 +35,11 @@ export const Auth = () => {
 
       if (error) {
         console.log('⚠️ Referral add failed:', error);
+        toast({
+          title: "Ошибка реферала",
+          description: error.message,
+          variant: "destructive",
+        });
       } else {
         console.log('✅ Referral added successfully');
         toast({
@@ -54,18 +52,33 @@ export const Auth = () => {
     }
   };
 
-  // Redirect if already connected (with localStorage fallback) and force full reload
+  // Handle referral when wallet connects or account ID becomes available
+  useEffect(() => {
+    if (isConnected && accountId && referrerId) {
+      handleReferral();
+    }
+  }, [isConnected, accountId, referrerId]);
+
+  // Redirect if already connected (with localStorage fallback) but AFTER handling referral
   useEffect(() => {
     const lsConnected = localStorage.getItem('walletConnected') === 'true';
     const shouldRedirect = isConnected || lsConnected;
 
-    console.log('🔍 Auth page: checking connection status:', { isConnected, lsConnected });
+    console.log('🔍 Auth page: checking connection status:', { isConnected, lsConnected, accountId, referrerId });
 
     if (shouldRedirect) {
-      console.log('✅ Already connected, redirecting to menu');
-      navigate("/menu", { replace: true });
+      // If we have a referral to process and account ID, do it first
+      if (referrerId && accountId) {
+        handleReferral().then(() => {
+          console.log('✅ Referral processed, redirecting to menu');
+          navigate("/menu", { replace: true });
+        });
+      } else {
+        console.log('✅ Already connected, redirecting to menu');
+        navigate("/menu", { replace: true });
+      }
     }
-  }, [isConnected]);
+  }, [isConnected, accountId, referrerId]);
 
   const handleConnectWallet = async () => {
     try {
