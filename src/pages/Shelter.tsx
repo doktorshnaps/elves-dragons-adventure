@@ -16,6 +16,7 @@ import { BuildingWorkerStatus } from "@/components/game/shelter/BuildingWorkerSt
 import { ResourceBuilding } from "@/components/game/ResourceBuilding";
 import { useLanguage } from "@/hooks/useLanguage";
 import { useWorkerSync } from "@/hooks/useWorkerSync";
+import { getSawmillProduction, getQuarryProduction, getWarehouseWorkingHours } from "@/config/buildings";
 import { t } from "@/utils/translations";
 import { useState, useEffect } from "react";
 import { useBuildingUpgrades } from "@/hooks/useBuildingUpgrades";
@@ -543,12 +544,49 @@ export const Shelter = () => {
                  </CardHeader>
                  <CardContent>
                     <div className="space-y-3">
-                      {/* Скрываем стандартную информацию о пользе для зданий с производством */}
-                      {upgrade.id !== 'sawmill' && upgrade.id !== 'quarry' && (
-                        <div className="text-sm">
-                          <strong>{t(language, 'shelter.benefit')}:</strong> {upgrade.benefit}
-                        </div>
-                      )}
+                       {/* Показываем конкретные характеристики зданий для каждого уровня */}
+                       <div className="text-sm space-y-1">
+                         {upgrade.id === 'sawmill' && (
+                           <div>
+                             <strong>{t(language, 'shelter.production')}:</strong> {getSawmillProduction(upgrade.level + 1)} {t(language, 'resources.wood')}/ч
+                           </div>
+                         )}
+                         {upgrade.id === 'quarry' && (
+                           <div>
+                             <strong>{t(language, 'shelter.production')}:</strong> {getQuarryProduction(upgrade.level + 1)} {t(language, 'resources.stone')}/ч
+                           </div>
+                         )}
+                         {upgrade.id === 'storage' && (
+                           <div>
+                             <strong>{t(language, 'shelter.workingHours')}:</strong> {getWarehouseWorkingHours(upgrade.level + 1)}ч
+                           </div>
+                         )}
+                         {upgrade.id === 'medical' && (
+                           <div>
+                             <strong>{t(language, 'shelter.healingRate')}:</strong> +{Math.floor((upgrade.level + 1) * 1.5)} {t(language, 'common.healthPerHour')}
+                           </div>
+                         )}
+                         {upgrade.id === 'barracks' && (
+                           <div>
+                             <strong>{t(language, 'shelter.workerSlots')}:</strong> +{upgrade.level + 1} {t(language, 'common.slots')}
+                           </div>
+                         )}
+                         {upgrade.id === 'dragon_lair' && (
+                           <div>
+                             <strong>{t(language, 'shelter.incubationBonus')}:</strong> -{Math.floor((upgrade.level + 1) * 5)}% {t(language, 'common.time')}
+                           </div>
+                         )}
+                         {upgrade.id === 'workshop' && (
+                           <div>
+                             <strong>{t(language, 'shelter.craftingBonus')}:</strong> -{Math.floor((upgrade.level + 1) * 10)}% {t(language, 'common.time')}
+                           </div>
+                         )}
+                         {upgrade.id === 'main_hall' && (
+                           <div>
+                             <strong>{t(language, 'shelter.accountBonus')}:</strong> +{Math.floor((upgrade.level + 1) * 2)}% {t(language, 'common.experience')}
+                           </div>
+                         )}
+                       </div>
                      
                       {/* Прогресс улучшения */}
                       {(() => {
