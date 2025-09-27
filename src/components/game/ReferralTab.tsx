@@ -322,6 +322,7 @@ export const ReferralTab = () => {
       }
 
     } catch (error: any) {
+      console.error('Referral error:', error);
       handleError(error, 'Ошибка указания пригласившего игрока');
     } finally {
       setLoading(false);
