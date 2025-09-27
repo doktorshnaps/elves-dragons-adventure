@@ -66,6 +66,17 @@ export const TeamBattlePage: React.FC<TeamBattlePageProps> = ({
     });
   };
 
+  // Автоматически активируем бой при загрузке, если есть активное подземелье
+  useEffect(() => {
+    const isActiveBattle = localStorage.getItem('activeBattleInProgress') === 'true';
+    const hasTeamBattleState = localStorage.getItem('teamBattleState');
+    
+    if (isActiveBattle && hasTeamBattleState && !battleStarted) {
+      console.log('🔄 Автовозобновление активного боя');
+      setBattleStarted(true);
+    }
+  }, [battleStarted]);
+
   // Отслеживаем убийства монстров - добавляем только по одному за раз
   useEffect(() => {
     const currentAlive = aliveOpponents.length;
