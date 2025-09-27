@@ -479,9 +479,9 @@ export const ReferralTab = () => {
           <Button
             onClick={addReferralManually}
             disabled={loading}
-            className="bg-game-accent text-game-surface hover:bg-game-accent/80"
+            className="bg-game-accent text-game-surface hover:bg-game-accent/80 disabled:opacity-50"
           >
-            Указать
+            {loading ? "Обработка..." : "Указать"}
           </Button>
         </div>
         <p className="text-gray-300 text-sm mt-2">
