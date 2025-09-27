@@ -19,6 +19,7 @@ export const TeamBattlePage: React.FC<TeamBattlePageProps> = ({
   const navigate = useNavigate();
   const [battleStarted, setBattleStarted] = useState<boolean>(false);
   const [monstersKilled, setMonstersKilled] = useState<Array<{level: number, dungeonType: string}>>([]);
+  const prevAliveOpponentsRef = React.useRef<number>(0);
   
   // Sync health from database on component mount
   useCardHealthSync();
@@ -77,30 +78,31 @@ export const TeamBattlePage: React.FC<TeamBattlePageProps> = ({
     }
   }, [battleStarted]);
 
-  // Отслеживаем убийства монстров - добавляем только по одному за раз
+  // Отслеживаем убийства монстров по уменьшению числа живых
   useEffect(() => {
     const currentAlive = aliveOpponents.length;
-    const totalOpponents = battleState.opponents.length;
-    
-    // Если есть мертвые противники и мы не на стартовом состоянии
-    if (totalOpponents > 0 && currentAlive < totalOpponents && battleStarted) {
-      const expectedKills = totalOpponents - currentAlive;
-      const currentKills = monstersKilled.filter(kill => 
-        kill.level === battleState.level && kill.dungeonType === dungeonType
-      ).length;
-      
-      // Добавляем недостающие убийства
-      if (expectedKills > currentKills) {
-        const newKillsCount = expectedKills - currentKills;
-        const newKills = Array(newKillsCount).fill(null).map(() => ({
-          level: battleState.level,
-          dungeonType: dungeonType
-        }));
-        setMonstersKilled(prev => [...prev, ...newKills]);
-        console.log(`💀 Убито ${newKillsCount} монстров на уровне ${battleState.level}`);
-      }
+
+    // Инициализация базового значения при старте/возвращении в бой
+    if (!battleStarted) {
+      prevAliveOpponentsRef.current = currentAlive;
+      return;
     }
-  }, [aliveOpponents.length, battleState.opponents.length, battleState.level, dungeonType, battleStarted, monstersKilled]);
+
+    const prevAlive = prevAliveOpponentsRef.current;
+
+    if (prevAlive > currentAlive) {
+      const newKillsCount = prevAlive - currentAlive;
+      const newKills = Array(newKillsCount).fill(null).map(() => ({
+        level: battleState.level,
+        dungeonType
+      }));
+      setMonstersKilled(prev => [...prev, ...newKills]);
+      console.log(`💀 Убито ${newKillsCount} монстров на уровне ${battleState.level}`);
+    }
+
+    // Обновляем счетчик "предыдущих живых"
+    prevAliveOpponentsRef.current = currentAlive;
+  }, [aliveOpponents.length, battleState.level, dungeonType, battleStarted]);
 
   // Check if battle is over
   const isBattleOver = alivePairs.length === 0 || aliveOpponents.length === 0;
