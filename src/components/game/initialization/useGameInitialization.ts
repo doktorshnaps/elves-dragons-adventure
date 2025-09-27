@@ -36,20 +36,29 @@ export const useGameInitialization = (setCards: (cards: Card[]) => void) => {
           const initialCards = [...firstPack, ...secondPack];
           
           // Получаем текущего аутентифицированного пользователя
-          const { data: { user } } = await supabase.auth.getUser();
-          
-          const { error: insertError } = await supabase
-            .from('game_data')
-            .insert({
-              user_id: user?.id,
-              wallet_address: accountId,
-              cards: initialCards as any,
-              balance: 0,
-              initialized: true
+          // Используем RPC функцию для безопасного создания game_data
+          const { data: userId, error: insertError } = await supabase
+            .rpc('ensure_game_data_exists', {
+              p_wallet_address: accountId
             });
 
           if (insertError) {
             console.error('Error creating game data:', insertError);
+            return;
+          }
+
+          // После создания записи обновляем её с начальными картами
+          const { error: updateError } = await supabase
+            .from('game_data')
+            .update({
+              cards: initialCards as any,
+              balance: 0,
+              initialized: true
+            })
+            .eq('wallet_address', accountId);
+
+          if (updateError) {
+            console.error('Error updating game data:', updateError);
             return;
           }
 

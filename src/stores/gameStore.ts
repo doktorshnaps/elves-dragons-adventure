@@ -166,20 +166,23 @@ export const useGameStore = create<GameState>()(
             .eq('wallet_address', walletAddress)
             .maybeSingle();
             
-           if (!existingData) {
-             // Create new account data for this wallet (requires Supabase auth)
-             const { data: { user } } = await supabase.auth.getUser();
-             if (!user) {
-               console.warn('No Supabase user session; skipping game_data initialization');
+            if (!existingData) {
+             // Используем RPC функцию для безопасного создания game_data
+             const { data: userId, error: rpcError } = await supabase
+               .rpc('ensure_game_data_exists', {
+                 p_wallet_address: walletAddress
+               });
+
+             if (rpcError) {
+               console.error('Error creating game data via RPC:', rpcError);
                return;
              }
 
-             await supabase
+             // После создания записи обновляем её с начальными данными
+             const { error: updateError } = await supabase
                .from('game_data')
-               .insert({
-                 user_id: user.id,
-                 wallet_address: walletAddress,
-                  balance: 0,
+               .update({
+                 balance: 0,
                  account_level: 1,
                  account_experience: 0,
                  cards: [],
@@ -187,7 +190,13 @@ export const useGameStore = create<GameState>()(
                  selected_team: [],
                  dragon_eggs: [],
                  initialized: true
-               });
+               })
+               .eq('wallet_address', walletAddress);
+
+             if (updateError) {
+               console.error('Error updating game data:', updateError);
+               return;
+             }
             }
           } catch (error) {
             console.error('Failed to initialize account data:', error);
