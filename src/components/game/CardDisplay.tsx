@@ -36,7 +36,7 @@ export const CardDisplay = ({
         ${!isActive && card.type === 'pet' ? 'opacity-50' : ''} ${onClick ? 'cursor-pointer' : ''} ${className}`}>
       <div className="flex flex-col h-full">
         <div className="w-full h-[75px] sm:h-[100px] md:h-[110px] lg:h-[120px] flex-shrink-0">
-          <CardImage image={card.image} name={card.name} />
+          <CardImage image={card.image} name={card.name} card={card} />
         </div>
         
         <div className="flex flex-col flex-grow justify-between gap-0 p-0.5 h-[105px] sm:h-[140px] md:h-[150px] lg:h-[160px]">

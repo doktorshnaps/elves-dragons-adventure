@@ -1,18 +1,28 @@
 import { useEffect, useRef } from "react";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { Card } from '@/types/cards';
+import { resolveCardImage } from '@/utils/cardImageResolver';
 
 interface CardImageProps {
   image?: string;
   name: string;
+  card?: Card; // Добавляем опциональный пропс для полной информации о карте
 }
 
-export const CardImage = ({ image, name }: CardImageProps) => {
+export const CardImage = ({ image, name, card }: CardImageProps) => {
   const isMobile = useIsMobile();
   const imgRef = useRef<HTMLImageElement>(null);
   const attemptRef = useRef(0);
 
   // Нормализация IPFS URL
   const normalizeImageUrl = (url?: string): string => {
+    // Если передана карта, используем resolver для получения изображения по редкости
+    if (card) {
+      const resolvedImage = resolveCardImage(card);
+      if (resolvedImage) {
+        url = resolvedImage;
+      }
+    }
     if (!url) return '/placeholder.svg';
     
     try {

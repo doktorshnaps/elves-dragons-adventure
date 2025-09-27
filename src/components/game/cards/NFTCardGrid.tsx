@@ -33,7 +33,7 @@ export const NFTCardGrid = ({ cards }: NFTCardGridProps) => {
             onClick={() => handleCardClick(card)}
           >
             <div className="aspect-[3/4] relative">
-              <CardImage image={card.image} name={card.name} />
+              <CardImage image={card.image} name={card.name} card={card} />
               
               {/* NFT Badge */}
               <div className="absolute top-2 right-2 bg-purple-600/90 text-white text-xs px-2 py-1 rounded">

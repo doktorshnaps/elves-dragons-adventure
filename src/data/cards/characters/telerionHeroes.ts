@@ -12,7 +12,7 @@ export const telerionHeroes: CardInfo[] = [
       health: 7,
       magic: 4
     },
-    image: "/lovable-uploads/9278c174-0cbd-4e3e-ae12-3d267733ff2c.png"
+    image: "/lovable-uploads/9278c174-0cbd-4e3e-ae12-3d267733ff2c.png" // базовое изображение, будет заменено на основе редкости
   },
   {
     name: "Страж",

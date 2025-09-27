@@ -29,7 +29,7 @@ export const CardPreviewModal = ({ card, open, onClose, actionLabel, onAction, d
         <div id="card-details" className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div className="w-full flex items-center justify-center">
             <div className="w-full h-[60vh] md:h-[80vh] max-w-full rounded-lg border border-game-accent shadow-lg overflow-hidden">
-              <CardImage image={card.image || "/placeholder.svg"} name={`${card.name} полное изображение`} />
+              <CardImage image={card.image || "/placeholder.svg"} name={`${card.name} полное изображение`} card={card} />
             </div>
           </div>
 
