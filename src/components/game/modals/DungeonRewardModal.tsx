@@ -22,6 +22,12 @@ export const DungeonRewardModal: React.FC<DungeonRewardModalProps> = ({
   onClose,
   reward
 }) => {
+  const [isSubmitting, setIsSubmitting] = React.useState(false);
+  const handleClaim = () => {
+    if (isSubmitting) return;
+    setIsSubmitting(true);
+    onClose();
+  };
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-md mx-auto bg-card/95 backdrop-blur-sm border-primary/20">
@@ -104,11 +110,13 @@ export const DungeonRewardModal: React.FC<DungeonRewardModalProps> = ({
           </div>
 
           <Button 
-            onClick={onClose} 
+            onClick={handleClaim}
             className="w-full"
             size="lg"
+            disabled={isSubmitting}
+            aria-busy={isSubmitting}
           >
-            Забрать награду
+            {isSubmitting ? 'Начисление...' : 'Забрать награду'}
           </Button>
         </div>
       </DialogContent>

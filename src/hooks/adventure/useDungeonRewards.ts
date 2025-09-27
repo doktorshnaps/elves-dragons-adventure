@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useRef } from 'react';
 import { useGameData } from '@/hooks/useGameData';
 import { useToast } from '@/hooks/use-toast';
 
@@ -23,6 +23,7 @@ export const useDungeonRewards = () => {
   const [pendingReward, setPendingReward] = useState<DungeonReward | null>(null);
   const { gameData, updateGameData } = useGameData();
   const { toast } = useToast();
+  const isClaimingRef = useRef(false);
 
   const calculateReward = useCallback((monsters: MonsterKill[]): DungeonReward => {
     let level1to3Count = 0;
@@ -95,23 +96,35 @@ export const useDungeonRewards = () => {
   }, [calculateReward, toast]);
 
   const clearPendingReward = useCallback(async () => {
-    if (pendingReward) {
-      try {
+    if (!pendingReward) {
+      setPendingReward(null);
+      return;
+    }
+    if (isClaimingRef.current) {
+      return; // уже идет начисление, игнорируем повторный клик
+    }
+    isClaimingRef.current = true;
+
+    try {
+      const rewardAmount = pendingReward.totalELL || 0;
+      if (rewardAmount > 0) {
         // Обновляем баланс при закрытии модального окна - добавляем к текущему балансу
         const currentBalance = gameData.balance || 0;
-        const newBalance = currentBalance + pendingReward.totalELL;
+        const newBalance = currentBalance + rewardAmount;
         await updateGameData({ balance: newBalance });
-        console.log(`💰 Добавлен баланс: ${pendingReward.totalELL} ELL (было: ${currentBalance}, стало: ${newBalance})`);
-      } catch (error) {
-        console.error('Ошибка при начислении награды:', error);
-        toast({
-          title: "Ошибка",
-          description: "Не удалось начислить награду",
-          variant: "destructive"
-        });
+        console.log(`💰 Добавлен баланс: ${rewardAmount} ELL (было: ${currentBalance}, стало: ${newBalance})`);
       }
+    } catch (error) {
+      console.error('Ошибка при начислении награды:', error);
+      toast({
+        title: "Ошибка",
+        description: "Не удалось начислить награду",
+        variant: "destructive"
+      });
+    } finally {
+      setPendingReward(null);
+      isClaimingRef.current = false;
     }
-    setPendingReward(null);
   }, [pendingReward, gameData.balance, updateGameData, toast]);
 
   return {
