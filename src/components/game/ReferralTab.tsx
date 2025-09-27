@@ -296,9 +296,30 @@ export const ReferralTab = () => {
 
       if (error) throw error;
 
-      handleSuccess('Пригласивший игрок успешно указан!');
-      setReferralId('');
-      fetchReferralData();
+      // Проверяем результат из базы данных
+      if (data && typeof data === 'object' && 'success' in data) {
+        const result = data as { success: boolean; message?: string; code?: string };
+        if (result.success) {
+          handleSuccess(String(result.message) || 'Пригласивший игрок успешно указан!');
+          setReferralId('');
+          fetchReferralData();
+        } else {
+          // Показываем понятное сообщение об ошибке
+          const errorMessage = result.code === 'already_referred' 
+            ? 'У вас уже есть пригласивший игрок'
+            : (String(result.message) || 'Не удалось добавить реферала');
+          
+          toast({
+            title: "Внимание",
+            description: errorMessage,
+            variant: "destructive"
+          });
+        }
+      } else {
+        handleSuccess('Пригласивший игрок успешно указан!');
+        setReferralId('');
+        fetchReferralData();
+      }
 
     } catch (error: any) {
       handleError(error, 'Ошибка указания пригласившего игрока');
