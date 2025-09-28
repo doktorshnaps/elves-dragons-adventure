@@ -29,6 +29,7 @@ interface ReferralTreeNode {
   children: ReferralTreeNode[];
   earnings?: number;
   joinDate?: string;
+  isWhitelisted?: boolean;
 }
 
 const ReferralTreeView = ({ node, isExpanded, onToggle }: {
@@ -74,8 +75,19 @@ const ReferralTreeView = ({ node, isExpanded, onToggle }: {
             </Button>
           )}
           <div>
-            <div className="font-mono font-medium">
-              {node.level === 0 ? 'ВЫ' : formatWallet(node.wallet_address)}
+            <div className="flex items-center space-x-2">
+              <span className="font-mono font-medium">
+                {node.level === 0 ? 'ВЫ' : formatWallet(node.wallet_address)}
+              </span>
+              {node.level > 0 && (
+                <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                  node.isWhitelisted 
+                    ? 'bg-green-500/20 text-green-400 border border-green-500/30' 
+                    : 'bg-red-500/20 text-red-400 border border-red-500/30'
+                }`}>
+                  {node.isWhitelisted ? 'WL ✓' : 'Без WL'}
+                </span>
+              )}
             </div>
             <div className="text-xs opacity-75">
               {node.level === 0 ? 'Главный игрок' : `Уровень ${node.level}`}
@@ -207,11 +219,16 @@ export const ReferralTab = () => {
 
         if (directReferrals && directReferrals.length > 0) {
           for (const referral of directReferrals) {
+            // Check whitelist status for this referral
+            const { data: isWhitelisted } = await supabase
+              .rpc('is_whitelisted', { p_wallet_address: referral.referred_wallet_address });
+
             const childNode: ReferralTreeNode = {
               wallet_address: referral.referred_wallet_address,
               level: node.level + 1,
               children: [],
-              joinDate: referral.created_at
+              joinDate: referral.created_at,
+              isWhitelisted: !!isWhitelisted
             };
 
             // Get earnings for this referral
@@ -528,11 +545,13 @@ export const ReferralTab = () => {
                   <span className="text-white font-mono">
                     {referral.referred_wallet_address.slice(0, 8)}...{referral.referred_wallet_address.slice(-8)}
                   </span>
-                  {!referral.isWhitelisted && (
-                    <span className="px-2 py-1 text-xs bg-yellow-600/20 text-yellow-400 rounded border border-yellow-600/30">
-                      no wl
-                    </span>
-                  )}
+                  <span className={`px-2 py-1 text-xs rounded border font-medium ${
+                    referral.isWhitelisted 
+                      ? 'bg-green-500/20 text-green-400 border-green-500/30' 
+                      : 'bg-red-500/20 text-red-400 border-red-500/30'
+                  }`}>
+                    {referral.isWhitelisted ? 'WL ✓' : 'Без WL'}
+                  </span>
                 </div>
                 <span className="text-gray-300 text-sm">
                   {new Date(referral.created_at).toLocaleDateString()}
