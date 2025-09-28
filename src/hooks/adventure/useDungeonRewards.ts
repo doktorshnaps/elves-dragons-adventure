@@ -1,10 +1,13 @@
 import { useState, useCallback, useRef } from 'react';
 import { useGameData } from '@/hooks/useGameData';
 import { useToast } from '@/hooks/use-toast';
+import { Item } from '@/types/inventory';
+import { getMonsterLoot } from '@/utils/monsterLootMapping';
 
 export interface MonsterKill {
   level: number;
   dungeonType: string;
+  name?: string; // Добавляем имя монстра для системы лута
 }
 
 export interface DungeonReward {
@@ -17,6 +20,7 @@ export interface DungeonReward {
     level8to10: { count: number; reward: number };
   };
   isFullCompletion: boolean;
+  lootedItems: Item[];
 }
 
 export const useDungeonRewards = () => {
@@ -29,6 +33,7 @@ export const useDungeonRewards = () => {
     let level1to3Count = 0;
     let level4to7Count = 0;
     let level8to10Count = 0;
+    const lootedItems: Item[] = [];
 
     // Подсчитываем убитых монстров по уровням для подземелья "Гнездо Гигантских Пауков"
     monsters.forEach(monster => {
@@ -39,6 +44,14 @@ export const useDungeonRewards = () => {
           level4to7Count++;
         } else if (monster.level >= 8 && monster.level <= 10) {
           level8to10Count++;
+        }
+
+        // Генерируем лут с монстра
+        if (monster.name) {
+          const loot = getMonsterLoot(monster.name);
+          if (loot) {
+            lootedItems.push(loot);
+          }
         }
       }
     });
@@ -59,7 +72,8 @@ export const useDungeonRewards = () => {
         level4to7: { count: level4to7Count, reward: level4to7Reward },
         level8to10: { count: level8to10Count, reward: level8to10Reward }
       },
-      isFullCompletion: false // Устанавливается при полном завершении подземелья
+      isFullCompletion: false, // Устанавливается при полном завершении подземелья
+      lootedItems
     };
   }, []);
 
@@ -107,12 +121,22 @@ export const useDungeonRewards = () => {
 
     try {
       const rewardAmount = pendingReward.totalELL || 0;
+      const lootedItems = pendingReward.lootedItems || [];
+      
       if (rewardAmount > 0) {
         // Обновляем баланс при закрытии модального окна - добавляем к текущему балансу
         const currentBalance = gameData.balance || 0;
         const newBalance = currentBalance + rewardAmount;
         await updateGameData({ balance: newBalance });
         console.log(`💰 Добавлен баланс: ${rewardAmount} ELL (было: ${currentBalance}, стало: ${newBalance})`);
+      }
+
+      // Добавляем полученные предметы в инвентарь
+      if (lootedItems.length > 0) {
+        const currentInventory = gameData.inventory || [];
+        const newInventory = [...currentInventory, ...lootedItems];
+        await updateGameData({ inventory: newInventory });
+        console.log(`🎒 Добавлено предметов в инвентарь: ${lootedItems.length}`);
       }
     } catch (error) {
       console.error('Ошибка при начислении награды:', error);

@@ -8,7 +8,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Coins, Trophy, Sword } from 'lucide-react';
+import { Coins, Trophy, Sword, Package } from 'lucide-react';
 import { DungeonReward } from '@/hooks/adventure/useDungeonRewards';
 
 interface DungeonRewardModalProps {
@@ -108,6 +108,41 @@ export const DungeonRewardModal: React.FC<DungeonRewardModalProps> = ({
               </div>
             )}
           </div>
+
+          {/* Полученные предметы */}
+          {reward.lootedItems && reward.lootedItems.length > 0 && (
+            <div className="space-y-2">
+              <h3 className="text-sm font-medium text-muted-foreground flex items-center gap-2">
+                <Package className="w-4 h-4" />
+                Полученные предметы:
+              </h3>
+              
+              <div className="grid grid-cols-2 gap-2">
+                {reward.lootedItems.map((item, index) => (
+                  <div 
+                    key={`${item.id}-${index}`}
+                    className="flex items-center gap-2 p-2 bg-background/50 rounded border"
+                  >
+                    {item.image && (
+                      <img 
+                        src={item.image} 
+                        alt={item.name}
+                        className="w-8 h-8 object-cover rounded"
+                      />
+                    )}
+                    <div className="flex-1 min-w-0">
+                      <div className="text-xs font-medium truncate">
+                        {item.name}
+                      </div>
+                      <div className="text-xs text-muted-foreground">
+                        {item.value} ELL
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
 
           <Button 
             onClick={handleClaim}
