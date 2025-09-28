@@ -11,7 +11,7 @@ interface ProtectedRouteProps {
 }
 
 export const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
-  const { isConnected, isConnecting } = useWallet();
+  const { isConnected, isConnecting, accountId } = useWallet();
   const { isWhitelisted, loading: whitelistLoading } = useWhitelist();
   const location = useLocation();
   const lsConnected = (typeof window !== 'undefined' && localStorage.getItem('walletConnected') === 'true') || false;
@@ -63,7 +63,13 @@ export const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
 
   // Check maintenance mode (before other checks)
   if (maintenanceStatus?.is_enabled) {
-    return <MaintenanceScreen message={maintenanceStatus.message} />;
+    const ADMIN_WALLET = 'mr_bruts.tg';
+    const isAdmin = isConnected && accountId === ADMIN_WALLET;
+    if (!isAdmin) {
+      return <MaintenanceScreen message={maintenanceStatus.message} />;
+    } else {
+      console.log('🛠️ Admin bypassing maintenance mode');
+    }
   }
 
   if (!isConnected && !lsConnected) {
