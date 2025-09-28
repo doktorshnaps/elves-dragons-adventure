@@ -20,6 +20,8 @@ export const AdminConsole = () => {
   const [command, setCommand] = useState('');
   const [output, setOutput] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
+  const [maintenanceEnabled, setMaintenanceEnabled] = useState(false);
+  const [maintenanceMessage, setMaintenanceMessage] = useState('');
 
   // Check if current user is admin
   const isAdmin = accountId === ADMIN_WALLET;
@@ -31,6 +33,25 @@ export const AdminConsole = () => {
   const addOutput = (text: string) => {
     setOutput(prev => [...prev, text]);
   };
+
+  // Load maintenance status on component mount
+  React.useEffect(() => {
+    const loadMaintenanceStatus = async () => {
+      try {
+        const { data, error } = await supabase.rpc('get_maintenance_status');
+        if (error) throw error;
+        
+        if (data) {
+          setMaintenanceEnabled((data as any).is_enabled || false);
+          setMaintenanceMessage((data as any).message || '');
+        }
+      } catch (error) {
+        console.error('Error loading maintenance status:', error);
+      }
+    };
+
+    loadMaintenanceStatus();
+  }, []);
 
   const executeCommand = async () => {
     if (!command.trim()) return;
@@ -81,6 +102,9 @@ export const AdminConsole = () => {
           break;
         case 'removeitem':
           await handleRemoveItem(parts);
+          break;
+        case 'maintenance':
+          await handleMaintenanceMode(parts);
           break;
         case 'help':
           showHelp();
@@ -637,6 +661,49 @@ export const AdminConsole = () => {
     addOutput('Для выдачи карты используйте: givecard <user_id> <номер_карты_или_название> [редкость]');
   };
 
+  const handleMaintenanceMode = async (parts: string[]) => {
+    if (parts.length < 2) {
+      addOutput('Использование: maintenance <on|off> [message]');
+      return;
+    }
+
+    const action = parts[1].toLowerCase();
+    const message = parts.slice(2).join(' ');
+
+    if (!['on', 'off'].includes(action)) {
+      addOutput('Используйте: maintenance on или maintenance off');
+      return;
+    }
+
+    const enabled = action === 'on';
+
+    try {
+      const { error } = await supabase.rpc('admin_toggle_maintenance_mode', {
+        p_enabled: enabled,
+        p_message: message || undefined,
+        p_admin_wallet_address: accountId
+      });
+
+      if (error) throw error;
+
+      setMaintenanceEnabled(enabled);
+      if (message) setMaintenanceMessage(message);
+
+      addOutput(`Режим технических работ: ${enabled ? 'ВКЛЮЧЕН' : 'ВЫКЛЮЧЕН'}`);
+      if (enabled && message) {
+        addOutput(`Сообщение: ${message}`);
+      }
+
+      toast({
+        title: "Режим технических работ обновлен",
+        description: `Режим ${enabled ? 'включен' : 'выключен'}`,
+        variant: enabled ? "destructive" : "default"
+      });
+    } catch (error: any) {
+      addOutput(`Ошибка: ${error.message}`);
+    }
+  };
+
   const showHelp = () => {
     addOutput('=== АДМИНСКИЕ КОМАНДЫ ===');
     addOutput('find <wallet_address> - Найти игрока по кошельку и получить UUID');
@@ -651,6 +718,8 @@ export const AdminConsole = () => {
     addOutput('removeitem <user_id> <item_id> - Удалить предмет у игрока');
     addOutput('listcards - Показать список всех доступных карт с номерами');
     addOutput('ban <user_id> <reason> - Забанить игрока');
+    addOutput('unban <user_id> - Разбанить игрока');
+    addOutput('maintenance <on|off> [message] - Управление режимом тех. работ');
     addOutput('unban <user_id> - Разбанить игрока');
     addOutput('clear - Очистить консоль');
     addOutput('help - Показать эту справку');
@@ -667,10 +736,19 @@ export const AdminConsole = () => {
   return (
     <Card className="w-full max-w-4xl mx-auto bg-card/50 backdrop-blur-sm border-primary/20">
       <CardHeader>
-        <CardTitle className="flex items-center gap-2 text-primary">
-          <Terminal className="w-5 h-5" />
-          Админ Консоль
-        </CardTitle>
+        <div className="flex justify-between items-center">
+          <CardTitle className="flex items-center gap-2 text-primary">
+            <Terminal className="w-5 h-5" />
+            Админ Консоль
+          </CardTitle>
+          <div className={`text-xs px-2 py-1 rounded border font-medium ${
+            maintenanceEnabled 
+              ? 'bg-red-500/20 text-red-400 border-red-500/30' 
+              : 'bg-green-500/20 text-green-400 border-green-500/30'
+          }`}>
+            Тех. работы: {maintenanceEnabled ? 'ВКЛ' : 'ВЫКЛ'}
+          </div>
+        </div>
       </CardHeader>
       <CardContent className="space-y-4">
         {/* Quick Actions */}
@@ -782,6 +860,8 @@ export const AdminConsole = () => {
           <p>• giveitem c45dcc01-8e2e-405f-81b9-54771f0717fa "Зелье лечения" 5 consumable - выдать предмет</p>
           <p>• removeitem c45dcc01-8e2e-405f-81b9-54771f0717fa item-id 3 - удалить предмет</p>
           <p>• listcards - список всех доступных карт</p>
+          <p>• maintenance on Обновление системы - включить тех. работы</p>
+          <p>• maintenance off - выключить тех. работы</p>
           <p>• help - показать справку</p>
           <p>• clear - очистить консоль</p>
         </div>

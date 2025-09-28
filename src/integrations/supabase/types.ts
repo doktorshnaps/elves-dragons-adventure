@@ -311,6 +311,33 @@ export type Database = {
         }
         Relationships: []
       }
+      maintenance_mode: {
+        Row: {
+          created_at: string
+          enabled_by_wallet_address: string
+          id: string
+          is_enabled: boolean
+          message: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          enabled_by_wallet_address?: string
+          id?: string
+          is_enabled?: boolean
+          message?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          enabled_by_wallet_address?: string
+          id?: string
+          is_enabled?: boolean
+          message?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       marketplace_listings: {
         Row: {
           buyer_id: string | null
@@ -838,6 +865,14 @@ export type Database = {
         }
         Returns: boolean
       }
+      admin_toggle_maintenance_mode: {
+        Args: {
+          p_admin_wallet_address?: string
+          p_enabled: boolean
+          p_message?: string
+        }
+        Returns: boolean
+      }
       admin_unban_user: {
         Args: {
           p_admin_wallet_address: string
@@ -972,6 +1007,10 @@ export type Database = {
         Args: { p_wallet_address: string }
         Returns: Json
       }
+      get_maintenance_status: {
+        Args: Record<PropertyKey, never>
+        Returns: Json
+      }
       get_medical_bay_entries: {
         Args: { p_wallet_address: string }
         Returns: {
@@ -1072,7 +1111,7 @@ export type Database = {
         Args:
           | { p_card_instance_id: string }
           | { p_card_instance_id: string; p_wallet_address: string }
-        Returns: boolean
+        Returns: Json
       }
       remove_card_instance_by_id: {
         Args:

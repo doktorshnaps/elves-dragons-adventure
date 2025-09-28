@@ -1,8 +1,10 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
 import { useWallet } from '@/hooks/useWallet';
 import { useWhitelist } from '@/hooks/useWhitelist';
 import { ComingSoon } from '@/components/ComingSoon';
+import { MaintenanceScreen } from '@/components/MaintenanceScreen';
+import { supabase } from '@/integrations/supabase/client';
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
@@ -13,6 +15,11 @@ export const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
   const { isWhitelisted, loading: whitelistLoading } = useWhitelist();
   const location = useLocation();
   const lsConnected = (typeof window !== 'undefined' && localStorage.getItem('walletConnected') === 'true') || false;
+  const [maintenanceStatus, setMaintenanceStatus] = useState<{
+    is_enabled: boolean;
+    message: string;
+  } | null>(null);
+  const [maintenanceLoading, setMaintenanceLoading] = useState(true);
 
   useEffect(() => {
     console.log('🛡️ ProtectedRoute check:', { 
@@ -25,12 +32,38 @@ export const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
     });
   }, [isConnected, isConnecting, lsConnected, isWhitelisted, whitelistLoading, location.pathname]);
 
-  if (isConnecting || whitelistLoading || (!isConnected && lsConnected)) {
+  useEffect(() => {
+    const checkMaintenanceStatus = async () => {
+      try {
+        const { data, error } = await supabase.rpc('get_maintenance_status');
+        if (error) throw error;
+        
+        setMaintenanceStatus(data ? {
+          is_enabled: (data as any).is_enabled || false,
+          message: (data as any).message || ''
+        } : { is_enabled: false, message: '' });
+      } catch (error) {
+        console.error('Error checking maintenance status:', error);
+        setMaintenanceStatus({ is_enabled: false, message: '' });
+      } finally {
+        setMaintenanceLoading(false);
+      }
+    };
+
+    checkMaintenanceStatus();
+  }, []);
+
+  if (isConnecting || whitelistLoading || maintenanceLoading || (!isConnected && lsConnected)) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-purple-900 to-black">
         <div className="text-white text-xl">Загрузка меню...</div>
       </div>
     );
+  }
+
+  // Check maintenance mode (before other checks)
+  if (maintenanceStatus?.is_enabled) {
+    return <MaintenanceScreen message={maintenanceStatus.message} />;
   }
 
   if (!isConnected && !lsConnected) {
