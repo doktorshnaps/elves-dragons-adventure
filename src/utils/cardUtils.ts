@@ -118,10 +118,6 @@ export const generateCard = (type: CardType): Card => {
   };
 };
 
-export const generatePack = (): Card[] => {
-  const type: CardType = Math.random() > 0.5 ? 'character' : 'pet';
-  return [generateCard(type)];
-};
 
 const isPetActive = (pet: Card, heroes: Card[]): boolean => {
   if (!pet.faction) return false;

@@ -10,7 +10,6 @@ import { useGameData } from "@/hooks/useGameData";
 import { useImagePreloader } from "@/hooks/useImagePreloader";
 import { GameSkeleton } from "./loading/GameSkeleton";
 import { useGameInitialization } from "./initialization/useGameInitialization";
-import { FirstTimePackDialog } from "./initialization/FirstTimePackDialog";
 
 const calculateTeamStats = (cards: Card[]) => {
   const power = cards.reduce((sum, c) => sum + (c.power || 0), 0);
@@ -40,7 +39,7 @@ export const GameContainer = () => {
 
   const imagesLoaded = useImagePreloader();
 
-  const { showFirstTimePack, setShowFirstTimePack } = useGameInitialization(setCards);
+  useGameInitialization(setCards);
 
   useEffect(() => {
     return () => {
@@ -86,10 +85,6 @@ export const GameContainer = () => {
             onBalanceChange={updateBalance}
           />
 
-          <FirstTimePackDialog
-            isOpen={showFirstTimePack}
-            onClose={() => setShowFirstTimePack(false)}
-          />
         </div>
       </motion.div>
     </AnimatePresence>

@@ -3,8 +3,6 @@ import { useNavigate } from "react-router-dom";
 import { Swords, ShoppingCart, BookOpen, Store, Shield, Users, DollarSign, LogOut, Home, Wallet } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useGameData } from "@/hooks/useGameData";
-import { useGameInitialization } from "@/components/game/initialization/useGameInitialization";
-import { FirstTimePackDialog } from "@/components/game/initialization/FirstTimePackDialog";
 import { useWallet } from "@/hooks/useWallet";
 import { AdminConsoleWithWhitelist } from "@/components/AdminConsole";
 
@@ -25,14 +23,6 @@ export const Menu = () => {
     connectWallet,
     disconnectWallet
   } = useWallet();
-  const [cards, setCards] = useState(() => {
-    const savedCards = localStorage.getItem('gameCards');
-    return savedCards ? JSON.parse(savedCards) : [];
-  });
-  const {
-    showFirstTimePack,
-    setShowFirstTimePack
-  } = useGameInitialization(setCards);
 
   // Загружаем данные при подключении кошелька
   useEffect(() => {
@@ -46,18 +36,6 @@ export const Menu = () => {
     navigate('/auth');
   };
 
-  // Слушаем обновления карт
-  useEffect(() => {
-    const handleCardsUpdate = (e: CustomEvent<{
-      cards: any[];
-    }>) => {
-      setCards(e.detail.cards);
-    };
-    window.addEventListener('cardsUpdate', handleCardsUpdate as EventListener);
-    return () => {
-      window.removeEventListener('cardsUpdate', handleCardsUpdate as EventListener);
-    };
-  }, []);
   return <div className="min-h-screen p-4 bg-cover bg-center bg-no-repeat" style={{
     backgroundImage: 'url("/lovable-uploads/5c84c1ed-e8af-4eb6-8495-c82bc7d6cd65.png")',
     backgroundSize: 'cover',
@@ -146,6 +124,6 @@ export const Menu = () => {
         </div>
       )}
 
-      <FirstTimePackDialog isOpen={showFirstTimePack} onClose={() => setShowFirstTimePack(false)} />
+      
     </div>;
 };
