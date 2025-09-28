@@ -18,8 +18,9 @@ export const TeamBattlePage: React.FC<TeamBattlePageProps> = ({
 }) => {
   const navigate = useNavigate();
   const [battleStarted, setBattleStarted] = useState<boolean>(false);
-  const [monstersKilled, setMonstersKilled] = useState<Array<{level: number, dungeonType: string}>>([]);
+  const [monstersKilled, setMonstersKilled] = useState<Array<{level: number, dungeonType: string, name?: string}>>([]);
   const prevAliveOpponentsRef = React.useRef<number>(0);
+  const prevOpponentsRef = React.useRef<Array<{id: number, name: string, health: number}>>([]);
   
   // Sync health from database on component mount
   useCardHealthSync();
@@ -78,31 +79,47 @@ export const TeamBattlePage: React.FC<TeamBattlePageProps> = ({
     }
   }, [battleStarted]);
 
-  // Отслеживаем убийства монстров по уменьшению числа живых
+  // Отслеживаем убийства монстров по уменьшению здоровья конкретных противников
   useEffect(() => {
-    const currentAlive = aliveOpponents.length;
-
-    // Инициализация базового значения при старте/возвращении в бой
     if (!battleStarted) {
-      prevAliveOpponentsRef.current = currentAlive;
+      // Инициализация при старте боя
+      prevOpponentsRef.current = aliveOpponents.map(opp => ({
+        id: opp.id,
+        name: opp.name,
+        health: opp.health
+      }));
+      prevAliveOpponentsRef.current = aliveOpponents.length;
       return;
     }
 
-    const prevAlive = prevAliveOpponentsRef.current;
+    const prevOpponents = prevOpponentsRef.current;
+    const currentOpponents = aliveOpponents.map(opp => ({
+      id: opp.id,
+      name: opp.name,
+      health: opp.health
+    }));
 
-    if (prevAlive > currentAlive) {
-      const newKillsCount = prevAlive - currentAlive;
-      const newKills = Array(newKillsCount).fill(null).map(() => ({
+    // Ищем монстров, которые были убиты (исчезли из списка живых)
+    const killedMonsters = prevOpponents.filter(prevOpp => 
+      prevOpp.health > 0 && // Был жив раньше
+      !currentOpponents.find(currOpp => currOpp.id === prevOpp.id && currOpp.health > 0) // Теперь мертв или отсутствует
+    );
+
+    if (killedMonsters.length > 0) {
+      const newKills = killedMonsters.map(monster => ({
         level: battleState.level,
-        dungeonType
+        dungeonType,
+        name: monster.name
       }));
+      
       setMonstersKilled(prev => [...prev, ...newKills]);
-      console.log(`💀 Убито ${newKillsCount} монстров на уровне ${battleState.level}`);
+      console.log(`💀 Убито монстров: ${killedMonsters.map(m => m.name).join(', ')} на уровне ${battleState.level}`);
     }
 
-    // Обновляем счетчик "предыдущих живых"
-    prevAliveOpponentsRef.current = currentAlive;
-  }, [aliveOpponents.length, battleState.level, dungeonType, battleStarted]);
+    // Обновляем предыдущее состояние
+    prevOpponentsRef.current = currentOpponents;
+    prevAliveOpponentsRef.current = aliveOpponents.length;
+  }, [aliveOpponents, battleState.level, dungeonType, battleStarted]);
 
   // Check if battle is over
   const isBattleOver = alivePairs.length === 0 || aliveOpponents.length === 0;

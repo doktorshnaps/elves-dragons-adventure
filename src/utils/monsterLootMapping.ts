@@ -30,20 +30,28 @@ export const monsterLootMapping: Record<string, string[]> = {
 
 // Получить случайный предмет от монстра
 export const getMonsterLoot = (monsterName: string): Item | null => {
+  console.log('🎲 Getting loot for monster:', monsterName);
   const possibleLoot = monsterLootMapping[monsterName];
+  console.log('🎁 Possible loot for', monsterName, ':', possibleLoot);
+  
   if (!possibleLoot || possibleLoot.length === 0) {
+    console.log('❌ No loot mapping found for monster:', monsterName);
     return null;
   }
 
   // 100% шанс дропа в тестовом режиме
   const randomLootType = possibleLoot[Math.floor(Math.random() * possibleLoot.length)];
+  console.log('🎯 Selected loot type:', randomLootType);
+  
   const itemTemplate = newItems.find(item => item.type === randomLootType);
+  console.log('📋 Found item template:', itemTemplate);
   
   if (!itemTemplate) {
+    console.log('❌ No item template found for type:', randomLootType);
     return null;
   }
 
-  return {
+  const finalItem = {
     id: uuidv4(),
     name: itemTemplate.name!,
     type: itemTemplate.type!,
@@ -51,6 +59,9 @@ export const getMonsterLoot = (monsterName: string): Item | null => {
     description: `${itemTemplate.description} Выпадает с: ${monsterName}`,
     image: itemTemplate.image
   };
+  
+  console.log('✅ Final generated item:', finalItem);
+  return finalItem;
 };
 
 // Получить список монстров, с которых выпадает предмет (для описания)

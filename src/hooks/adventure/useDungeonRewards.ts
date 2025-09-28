@@ -30,6 +30,7 @@ export const useDungeonRewards = () => {
   const isClaimingRef = useRef(false);
 
   const calculateReward = useCallback((monsters: MonsterKill[]): DungeonReward => {
+    console.log('🎯 calculateReward called with monsters:', monsters);
     let level1to3Count = 0;
     let level4to7Count = 0;
     let level8to10Count = 0;
@@ -37,6 +38,7 @@ export const useDungeonRewards = () => {
 
     // Подсчитываем убитых монстров по уровням для подземелья "Гнездо Гигантских Пауков"
     monsters.forEach(monster => {
+      console.log('🏹 Processing monster:', monster);
       if (monster.dungeonType === 'spider_nest') {
         if (monster.level >= 1 && monster.level <= 3) {
           level1to3Count++;
@@ -48,10 +50,16 @@ export const useDungeonRewards = () => {
 
         // Генерируем лут с монстра
         if (monster.name) {
+          console.log('🎁 Generating loot for monster:', monster.name);
           const loot = getMonsterLoot(monster.name);
           if (loot) {
+            console.log('💰 Generated loot:', loot);
             lootedItems.push(loot);
+          } else {
+            console.log('❌ No loot generated for:', monster.name);
           }
+        } else {
+          console.log('⚠️ Monster has no name:', monster);
         }
       }
     });
@@ -63,6 +71,7 @@ export const useDungeonRewards = () => {
 
     const totalELL = level1to3Reward + level4to7Reward + level8to10Reward;
     
+    console.log('💎 Final reward calculated:', { totalELL, lootedItems: lootedItems.length, breakdown: { level1to3Count, level4to7Count, level8to10Count } });
     return {
       totalELL,
       monstersKilled: monsters.length,
