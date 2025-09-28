@@ -26,16 +26,10 @@ export const AdminConsole = () => {
   // Check if current user is admin
   const isAdmin = accountId === ADMIN_WALLET;
 
-  if (!isAdmin) {
-    return null;
-  }
-
-  const addOutput = (text: string) => {
-    setOutput(prev => [...prev, text]);
-  };
-
   // Load maintenance status on component mount
   React.useEffect(() => {
+    if (!isAdmin) return;
+    
     const loadMaintenanceStatus = async () => {
       try {
         const { data, error } = await supabase.rpc('get_maintenance_status');
@@ -51,7 +45,15 @@ export const AdminConsole = () => {
     };
 
     loadMaintenanceStatus();
-  }, []);
+  }, [isAdmin]);
+
+  if (!isAdmin) {
+    return null;
+  }
+
+  const addOutput = (text: string) => {
+    setOutput(prev => [...prev, text]);
+  };
 
   const executeCommand = async () => {
     if (!command.trim()) return;
