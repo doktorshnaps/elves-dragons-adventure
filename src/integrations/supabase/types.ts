@@ -952,7 +952,7 @@ export type Database = {
       }
       ensure_game_data_exists: {
         Args: { p_wallet_address: string }
-        Returns: boolean
+        Returns: string
       }
       get_card_instances_by_wallet: {
         Args: { p_wallet_address: string }
