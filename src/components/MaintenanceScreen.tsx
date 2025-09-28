@@ -1,11 +1,23 @@
 import React from 'react';
 import technicalWorkImage from '@/assets/technical-work.png';
+import { Button } from '@/components/ui/button';
+import { useWallet } from '@/hooks/useWallet';
 
 interface MaintenanceScreenProps {
   message?: string;
 }
 
 export const MaintenanceScreen = ({ message }: MaintenanceScreenProps) => {
+  const { connectWallet, isConnecting } = useWallet();
+
+  const handleConnectWallet = async () => {
+    try {
+      await connectWallet();
+    } catch (error) {
+      console.error('Failed to connect wallet:', error);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-900 via-blue-900 to-black flex items-center justify-center p-4">
       <div className="max-w-2xl mx-auto text-center">
@@ -31,9 +43,18 @@ export const MaintenanceScreen = ({ message }: MaintenanceScreenProps) => {
             <span className="text-sm">Обновление системы...</span>
           </div>
           
-          <p className="text-sm text-gray-400 mt-4">
+          <p className="text-sm text-gray-400 mt-4 mb-6">
             Приносим извинения за временные неудобства
           </p>
+          
+          <Button 
+            onClick={handleConnectWallet}
+            disabled={isConnecting}
+            variant="outline"
+            className="bg-white/10 text-white border-white/20 hover:bg-white/20"
+          >
+            {isConnecting ? 'Подключение...' : 'Подключить кошелек'}
+          </Button>
         </div>
       </div>
     </div>
