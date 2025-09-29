@@ -90,7 +90,13 @@ const RARITY_MULTIPLIERS: Record<Rarity, number> = {
 // Получить множитель класса по имени карты
 const getClassMultiplier = (cardName: string, cardType: CardType): number => {
   if (cardType === 'pet') {
-    return DRAGON_CLASS_MULTIPLIERS[cardName] || 1.0;
+    // Для драконов ищем ключевое слово в названии
+    for (const [dragonClass, multiplier] of Object.entries(DRAGON_CLASS_MULTIPLIERS)) {
+      if (cardName.includes(dragonClass)) {
+        return multiplier;
+      }
+    }
+    return 1.0;
   }
   return CLASS_MULTIPLIERS[cardName] || 1.0;
 };
