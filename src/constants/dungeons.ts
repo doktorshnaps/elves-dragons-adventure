@@ -5,7 +5,8 @@ export const dungeonBackgrounds = {
   "ice_throne": "/lovable-uploads/301f4f03-6a87-48ec-a535-535b2213026f.png",
   "dark_mage": "/lovable-uploads/abf6e9af-a611-414c-b213-fed11ae0a767.png",
   "bone_dungeon": "/lovable-uploads/aef9e591-e676-4552-a70d-c7457b29b6c5.png",
-  "sea_serpent": "/lovable-uploads/d832d29a-6ce9-4bad-abaa-d15cb73b5382.png"
+  "sea_serpent": "/lovable-uploads/d832d29a-6ce9-4bad-abaa-d15cb73b5382.png",
+  "pantheon_gods": "/lovable-uploads/pantheon-of-gods.png"
 } as const;
 
 export const dungeons = [
@@ -15,7 +16,8 @@ export const dungeons = [
   "ice_throne",
   "dark_mage",
   "bone_dungeon",
-  "sea_serpent"
+  "sea_serpent",
+  "pantheon_gods"
 ] as const;
 
 export const dungeonNames = {
@@ -25,7 +27,8 @@ export const dungeonNames = {
   ice_throne: "Трон Ледяного Короля",
   dark_mage: "Лабиринт Темного Мага",
   bone_dungeon: "Темница Костяных Демонов",
-  sea_serpent: "Логово Морского Змея"
+  sea_serpent: "Логово Морского Змея",
+  pantheon_gods: "Пантеон Богов"
 } as const;
 
 export const dungeonRoutes = {
@@ -35,7 +38,8 @@ export const dungeonRoutes = {
   ice_throne: "/dungeons/ice-throne",
   dark_mage: "/dungeons/dark-mage",
   bone_dungeon: "/dungeons/bone-dungeon",
-  sea_serpent: "/dungeons/sea-serpent"
+  sea_serpent: "/dungeons/sea-serpent",
+  pantheon_gods: "/dungeons/pantheon-gods"
 } as const;
 
 export type DungeonType = keyof typeof dungeonNames;

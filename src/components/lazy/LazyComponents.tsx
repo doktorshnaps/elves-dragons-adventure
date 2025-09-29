@@ -94,6 +94,14 @@ export const LazySpiderNest = createLazyComponent(
   }
 );
 
+export const LazyPantheonOfGods = createLazyComponent(
+  () => import('@/pages/dungeons/PantheonOfGods').then(module => ({ default: module.PantheonOfGods })),
+  { 
+    fallback: <div className="p-4">Загрузка Пантеона Богов...</div>,
+    preload: false 
+  }
+);
+
 // Lazy loading для компонентов
 export const LazyShop = createLazyComponent(
   () => import('@/components/Shop').then(module => ({ default: module.Shop })),
@@ -136,3 +144,4 @@ export const GameInterfaceWithLazyLoading = withLazyLoading(LazyGameInterface);
 
 // Обертки для активных подземелий
 export const SpiderNestWithLazyLoading = withLazyLoading(LazySpiderNest);
+export const PantheonOfGodsWithLazyLoading = withLazyLoading(LazyPantheonOfGods);

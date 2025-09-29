@@ -26,7 +26,8 @@ import {
   ShopPageWithLazyLoading,
   QuestPageWithLazyLoading,
   ShelterWithLazyLoading,
-  SpiderNestWithLazyLoading
+  SpiderNestWithLazyLoading,
+  PantheonOfGodsWithLazyLoading
 } from './components/lazy/LazyComponents';
 
 function App() {
@@ -59,8 +60,9 @@ function App() {
           <Route path="/shop" element={<ProtectedRoute><ShopPageWithLazyLoading /></ProtectedRoute>} />
           <Route path="/quest" element={<ProtectedRoute><QuestPageWithLazyLoading /></ProtectedRoute>} />
           <Route path="/shelter" element={<ProtectedRoute><ShelterWithLazyLoading /></ProtectedRoute>} />
-          {/* Только логово пауков активно */}
+          {/* Активные подземелья */}
           <Route path="/dungeons/spider-nest" element={<ProtectedRoute><SpiderNestWithLazyLoading /></ProtectedRoute>} />
+          <Route path="/dungeons/pantheon-gods" element={<ProtectedRoute><PantheonOfGodsWithLazyLoading /></ProtectedRoute>} />
           {/* Остальные подземелья временно отключены
           <Route path="/dungeons/dragon-lair" element={<ProtectedRoute><BlackDragonLairWithLazyLoading /></ProtectedRoute>} />
           <Route path="/dungeons/forgotten-souls" element={<ProtectedRoute><ForgottenSoulsCaveWithLazyLoading /></ProtectedRoute>} />

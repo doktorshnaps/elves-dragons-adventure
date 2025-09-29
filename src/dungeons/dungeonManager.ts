@@ -5,6 +5,7 @@ import { DarkMageTowerGenerator } from './DarkMageTowerGenerator';
 import { SpiderNestGenerator } from './SpiderNestGenerator';
 import { BoneDemonDungeonGenerator } from './BoneDemonDungeonGenerator';
 import { SeaSerpentLairGenerator } from './SeaSerpentLairGenerator';
+import { PantheonOfGodsGenerator } from './PantheonOfGodsGenerator';
 import { DungeonType } from '@/constants/dungeons';
 
 const dungeonGenerators = {
@@ -14,7 +15,8 @@ const dungeonGenerators = {
   dark_mage: DarkMageTowerGenerator,
   spider_nest: SpiderNestGenerator,
   bone_dungeon: BoneDemonDungeonGenerator,
-  sea_serpent: SeaSerpentLairGenerator
+  sea_serpent: SeaSerpentLairGenerator,
+  pantheon_gods: PantheonOfGodsGenerator
 };
 
 export const generateDungeonOpponents = (dungeonType: DungeonType, level: number) => {

@@ -12,7 +12,8 @@ export const DungeonsList = () => {
     forgotten_souls: '/dungeons/forgotten-souls',
     ice_throne: '/dungeons/ice-throne',
     sea_serpent: '/dungeons/sea-serpent',
-    dragon_lair: '/dungeons/dragon-lair'
+    dragon_lair: '/dungeons/dragon-lair',
+    pantheon_gods: '/dungeons/pantheon-gods'
   };
 
   const handleDungeonSelect = (dungeonType: DungeonType) => {

@@ -32,7 +32,8 @@ const dungeonLevelRequirements = {
   forgotten_souls: 50,
   ice_throne: 70,
   sea_serpent: 90,
-  dragon_lair: 100
+  dragon_lair: 100,
+  pantheon_gods: 120
 };
 
 const dungeonNames = {
@@ -42,7 +43,8 @@ const dungeonNames = {
   forgotten_souls: "Пещеры Забытых Душ",
   ice_throne: "Трон Ледяного Короля",
   sea_serpent: "Логово Морского Змея",
-  dragon_lair: "Логово Черного Дракона"
+  dragon_lair: "Логово Черного Дракона",
+  pantheon_gods: "Пантеон Богов"
 };
 
 export const DungeonSearchDialog = ({
