@@ -61,6 +61,8 @@ export const getMonsterLoot = (monsterName: string): Item | null => {
   };
   
   console.log('✅ Final generated item:', finalItem);
+  console.log('🖼️ Item image type:', typeof finalItem.image);
+  console.log('🖼️ Item image value:', finalItem.image);
   return finalItem;
 };
 

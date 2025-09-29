@@ -7,6 +7,16 @@ import { GroupedItem } from "./types";
 import { shopItems } from "../../shop/types";
 import { useGameData } from "@/hooks/useGameData";
 import { workerImagesByName } from "@/constants/workerImages";
+import woodChunksImg from "@/assets/items/wood-chunks.jpeg";
+import magicalRootsImg from "@/assets/items/magical-roots.jpeg";
+import rockStonesImg from "@/assets/items/rock-stones.jpeg";
+import blackCrystalsImg from "@/assets/items/black-crystals.jpeg";
+import illusionManuscriptImg from "@/assets/items/illusion-manuscript.png";
+import darkMonocleImg from "@/assets/items/dark-monocle.png";
+import etherVineImg from "@/assets/items/ether-vine.png";
+import dwarvenTongsImg from "@/assets/items/dwarven-tongs.png";
+import healingOilImg from "@/assets/items/healing-oil.png";
+import shimmeringCrystalImg from "@/assets/items/shimmering-crystal.png";
 
 export const useInventoryLogic = (initialInventory: Item[]) => {
   const { toast } = useToast();
@@ -28,36 +38,41 @@ export const useInventoryLogic = (initialInventory: Item[]) => {
   const balance = gameData.balance;
 
   const getItemImage = (item: Item) => {
+    console.log('🖼️ getItemImage called for:', item.name, 'with image:', item.image);
+    
     // Для рабочих сначала проверяем mapping по имени
     if (item.type === 'worker' && workerImagesByName[item.name]) {
       return workerImagesByName[item.name];
     }
     
-    // Новые предметы - прямые импорты
+    // Новые предметы - правильные импорты изображений
     const newItemImages: Record<string, string> = {
-      'Древесные чурки': '/src/assets/items/wood-chunks.jpeg',
-      'Остатки магических корней': '/src/assets/items/magical-roots.jpeg',
-      'Камни горной породы': '/src/assets/items/rock-stones.jpeg',
-      'Черные кристаллы земляных духов': '/src/assets/items/black-crystals.jpeg',
-      'Манускрипт иллюзорных откровений': '/src/assets/items/illusion-manuscript.png',
-      'Магический монокль тьмы': '/src/assets/items/dark-monocle.png',
-      'Плетёная жила эфирной лозы': '/src/assets/items/ether-vine.png',
-      'Клещи из серебра древних гномов': '/src/assets/items/dwarven-tongs.png',
-      'Масло Целительного Прощения': '/src/assets/items/healing-oil.png',
-      'Мерцающий мерный кристалл': '/src/assets/items/shimmering-crystal.png'
+      'Древесные чурки': woodChunksImg,
+      'Остатки магических корней': magicalRootsImg,
+      'Камни горной породы': rockStonesImg,
+      'Черные кристаллы земляных духов': blackCrystalsImg,
+      'Манускрипт иллюзорных откровений': illusionManuscriptImg,
+      'Магический монокль тьмы': darkMonocleImg,
+      'Плетёная жила эфирной лозы': etherVineImg,
+      'Клещи из серебра древних гномов': dwarvenTongsImg,
+      'Масло Целительного Прощения': healingOilImg,
+      'Мерцающий мерный кристалл': shimmeringCrystalImg
     };
     
     if (newItemImages[item.name]) {
+      console.log('🖼️ Found image in newItemImages for:', item.name);
       return newItemImages[item.name];
     }
     
-    // Если у предмета есть изображение, но это неправильный путь /src/assets/, исправляем его
-    if (item.image && !item.image.startsWith('/src/')) {
+    // Если у предмета есть изображение, используем его
+    if (item.image) {
+      console.log('🖼️ Using item.image:', item.image);
       return item.image;
     }
     
     // Ищем в shopItems по имени
     const shopItem = shopItems.find(shopItem => shopItem.name === item.name);
+    console.log('🖼️ Fallback to shopItem image:', shopItem?.image || 'none');
     return shopItem?.image || '';
   };
 

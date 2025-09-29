@@ -26,27 +26,17 @@ export const InventoryGrid = ({
   } = useLanguage();
   const unequippedItems = groupedItems.filter(item => !item.items.some(i => i.equipped));
 
-  const normalizeImageSrc = (src?: string) => {
-    if (!src) return '/placeholder.svg';
-    if (src.startsWith('/src/')) return '/placeholder.svg';
-    return src;
-  };
-
   const resolveGroupImage = (g: GroupedItem) => {
     // Special handling for workers
     if (g.type === 'worker' && workerImagesByName[g.name]) {
       return workerImagesByName[g.name];
     }
     
-    // Try to get image from item data (same as in grimoire)
+    // Try to get image from grouped item data
     const itemImage = g.image || g.items[0]?.image;
     
-    // Return the image if it exists and is valid, otherwise placeholder
-    if (itemImage && !itemImage.startsWith('/src/')) {
-      return itemImage;
-    }
-    
-    return '/placeholder.svg';
+    // Return the image if it exists, otherwise placeholder
+    return itemImage || '/placeholder.svg';
   };
 
   // Формируем единый ключ для группы (включая count и первый id для уникальности)
