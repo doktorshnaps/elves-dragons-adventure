@@ -8,6 +8,7 @@ import { useLanguage } from "@/hooks/useLanguage";
 import { t } from "@/utils/translations";
 import { getRarityDropRates } from "@/utils/cardUtils";
 import { workerImagesByName } from "@/constants/workerImages";
+import { defaultItemImages } from "@/constants/itemImages";
 interface InventoryGridProps {
   groupedItems: GroupedItem[];
   readonly: boolean;
@@ -33,11 +34,24 @@ export const InventoryGrid = ({
   };
 
   const resolveGroupImage = (g: GroupedItem) => {
+    // Special handling for workers
     if (g.type === 'worker' && workerImagesByName[g.name]) {
       return workerImagesByName[g.name];
     }
+    
+    // Try to get image from item data
     const raw = g.image || g.items[0]?.image;
-    return normalizeImageSrc(raw);
+    if (raw && !raw.startsWith('/src/')) {
+      return raw;
+    }
+    
+    // Fall back to default image for this item type
+    if (defaultItemImages[g.type]) {
+      return defaultItemImages[g.type];
+    }
+    
+    // Final fallback
+    return '/placeholder.svg';
   };
 
   // Формируем единый ключ для группы (включая count и первый id для уникальности)

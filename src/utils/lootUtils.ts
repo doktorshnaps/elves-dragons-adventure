@@ -55,8 +55,7 @@ export const rollLoot = (lootTable: LootTable): { items: Item[], coins: number }
       name: "Зелье здоровья",
       type: "healthPotion",
       value: 20,
-      description: "Восстанавливает 50 здоровья",
-      image: "/lovable-uploads/health-potion.png"
+      description: "Восстанавливает 50 здоровья"
     });
   }
   
