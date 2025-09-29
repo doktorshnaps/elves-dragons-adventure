@@ -15,8 +15,8 @@ export const useCardStatsMigration = () => {
 
   useEffect(() => {
     const migrateCardStats = async () => {
-      // Проверяем, не выполняли ли мы уже миграцию (v4 исправляет множители драконов)
-      const migrationKey = 'cardStatsMigration_v4';
+      // Проверяем, не выполняли ли мы уже миграцию (v5 исправляет множители драконов с учетом ключевых слов)
+      const migrationKey = 'cardStatsMigration_v5';
       const hasMigrated = localStorage.getItem(migrationKey);
       
       if (hasMigrated || hasMigratedRef.current || !gameData.cards || gameData.cards.length === 0) {
