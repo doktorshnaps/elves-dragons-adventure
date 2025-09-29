@@ -33,14 +33,92 @@ const getMagicResistanceByFaction = (faction: Faction): MagicResistance => {
   return resistanceMap[faction];
 };
 
+// Базовые характеристики для Рекрута редкость 1
+const BASE_STATS = {
+  health: 100,
+  defense: 20, // броня
+  power: 30,   // атака
+  magic: 10    // базовая магия
+};
+
+// Множители по классам героев
+const CLASS_MULTIPLIERS: Record<string, number> = {
+  'Рекрут': 1.0,
+  'Страж': 1.2,
+  'Ветеран': 1.5,
+  'Маг': 1.8,
+  'Мастер Целитель': 2.0,
+  'Защитник': 2.3,
+  'Ветеран Защитник': 2.6,
+  'Стратег': 3.0,
+  'Верховный Стратег': 3.5
+};
+
+// Множители редкости
+const RARITY_MULTIPLIERS: Record<Rarity, number> = {
+  1: 1.0,
+  2: 1.5,
+  3: 2.2,
+  4: 3.2,
+  5: 4.6,
+  6: 6.7,
+  7: 9.8,
+  8: 14.0
+};
+
+// Получить множитель класса по имени карты
+const getClassMultiplier = (cardName: string): number => {
+  return CLASS_MULTIPLIERS[cardName] || 1.0;
+};
+
+// Специальные модификаторы для определенных классов
+const getClassModifiers = (cardName: string) => {
+  const modifiers = {
+    healthMod: 1.0,
+    defenseMod: 1.0,
+    powerMod: 1.0,
+    magicMod: 1.0
+  };
+
+  if (cardName === 'Маг') {
+    modifiers.defenseMod = 0.5; // малая броня
+    modifiers.powerMod = 1.3;   // высокая атака
+    modifiers.magicMod = 2.0;   // увеличенная магия
+  } else if (cardName === 'Мастер Целитель') {
+    modifiers.powerMod = 0.6;   // низкая атака
+    modifiers.healthMod = 1.4;  // увеличенное здоровье
+    modifiers.magicMod = 1.8;   // высокая магия
+  } else if (cardName === 'Защитник' || cardName === 'Ветеран Защитник') {
+    modifiers.defenseMod = 1.5; // упор на броню
+  }
+
+  return modifiers;
+};
+
 export const getStatsForRarity = (rarity: Rarity) => {
-  const multiplier = Math.pow(2, rarity - 1);
+  const multiplier = RARITY_MULTIPLIERS[rarity];
   
   return {
-    power: Math.floor(5 * multiplier),
-    defense: Math.floor(5 * multiplier),
-    health: Math.floor(10 * multiplier),
-    magic: Math.floor(3 * multiplier)
+    power: Math.floor(BASE_STATS.power * multiplier),
+    defense: Math.floor(BASE_STATS.defense * multiplier),
+    health: Math.floor(BASE_STATS.health * multiplier),
+    magic: Math.floor(BASE_STATS.magic * multiplier)
+  };
+};
+
+// Новая функция для расчета характеристик карты с учетом класса и редкости
+export const calculateCardStats = (cardName: string, rarity: Rarity) => {
+  const classMultiplier = getClassMultiplier(cardName);
+  const rarityMultiplier = RARITY_MULTIPLIERS[rarity];
+  const modifiers = getClassModifiers(cardName);
+  
+  const totalMultiplier = classMultiplier * rarityMultiplier;
+  
+  return {
+    power: Math.floor(BASE_STATS.power * totalMultiplier * modifiers.powerMod),
+    defense: Math.floor(BASE_STATS.defense * totalMultiplier * modifiers.defenseMod),
+    health: Math.floor(BASE_STATS.health * totalMultiplier * modifiers.healthMod),
+    magic: Math.floor(BASE_STATS.magic * totalMultiplier * modifiers.magicMod)
   };
 };
 
@@ -93,15 +171,8 @@ export const generateCard = (type: CardType): Card => {
   const selectedCard = availableCards[Math.floor(Math.random() * availableCards.length)];
   const rarity = getRarityChance(type);
   
-  const baseStats = selectedCard.baseStats;
-  const multiplier = Math.pow(2, rarity - 1);
-  
-  const stats = {
-    power: Math.floor(baseStats.power * multiplier),
-    defense: Math.floor(baseStats.defense * multiplier),
-    health: Math.floor(baseStats.health * multiplier),
-    magic: Math.floor(baseStats.magic * multiplier)
-  };
+  // Используем новую систему расчета характеристик
+  const stats = calculateCardStats(selectedCard.name, rarity);
   
   const faction = selectedCard.faction as Faction;
   const magicResistance = faction ? getMagicResistanceByFaction(faction) : undefined;
@@ -195,21 +266,8 @@ export const upgradeCard = (card1: Card, card2: Card): Card | null => {
 
   const newRarity = (card1.rarity + 1) as Rarity;
   
-  const baseCard = cardDatabase.find(card => 
-    card.name === card1.name && 
-    card.type === card1.type && 
-    card.faction === card1.faction
-  );
-  
-  if (!baseCard) return null;
-  
-  const multiplier = Math.pow(2, newRarity - 1);
-  const stats = {
-    power: Math.floor(baseCard.baseStats.power * multiplier),
-    defense: Math.floor(baseCard.baseStats.defense * multiplier),
-    health: Math.floor(baseCard.baseStats.health * multiplier),
-    magic: Math.floor(baseCard.baseStats.magic * multiplier)
-  };
+  // Используем новую систему расчета характеристик
+  const stats = calculateCardStats(card1.name, newRarity);
 
   return {
     id: Date.now().toString() + Math.random().toString(36).substr(2, 9),
