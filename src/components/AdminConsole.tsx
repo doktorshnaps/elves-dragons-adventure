@@ -12,6 +12,7 @@ import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Terminal, DollarSign, Ban, UserCheck } from 'lucide-react';
 import { cardDatabase } from '@/data/cardDatabase';
+import { calculateCardStats } from '@/utils/cardUtils';
 const ADMIN_WALLET = 'mr_bruts.tg';
 
 export const AdminConsole = () => {
@@ -455,16 +456,20 @@ export const AdminConsole = () => {
       return;
     }
 
+    const rarityAsNumber = parseInt(String(rarityInput), 10) as any;
+    const stats = calculateCardStats(dbCard.name, rarityAsNumber, dbCard.type);
+    
     const cardData = {
       id: `admin-${Date.now()}-${Math.random()}`,
       name: dbCard.name,
       type: dbCard.type,
-      rarity: rarityInput,
+      rarity: rarityAsNumber,
       faction: dbCard.faction || 'Без фракции',
-      power: dbCard.baseStats.power,
-      defense: dbCard.baseStats.defense,
-      health: dbCard.baseStats.health,
-      maxHealth: dbCard.baseStats.health,
+      power: stats.power,
+      defense: stats.defense,
+      health: stats.health,
+      maxHealth: stats.health,
+      magic: stats.magic,
       image: dbCard.image || '/placeholder.svg',
       description: dbCard.description
     };
@@ -480,7 +485,7 @@ export const AdminConsole = () => {
     } else {
       addOutput(`✅ Карта "${cardData.name}" выдана игроку ${userId}`);
       addOutput(`Тип: ${cardData.type === 'character' ? 'Герой' : 'Дракон'} | Фракция: ${cardData.faction} | Редкость: ${cardData.rarity}`);
-      addOutput(`Сила: ${cardData.power} | Защита: ${cardData.defense} | Здоровье: ${cardData.health} | Магия: ${dbCard.baseStats.magic}`);
+      addOutput(`Сила: ${cardData.power} | Защита: ${cardData.defense} | Здоровье: ${cardData.health} | Магия: ${cardData.magic}`);
       toast({
         title: "Карта выдана",
         description: `Карта "${cardData.name}" выдана игроку`

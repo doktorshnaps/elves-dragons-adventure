@@ -6,6 +6,7 @@ import { Star, SkipForward } from "lucide-react";
 import { motion } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
 import { cardDatabase } from "@/data/cardDatabase";
+import { calculateCardStats } from "@/utils/cardUtils";
 
 interface CardPackAnimationProps {
   winningCard: CardType;
@@ -61,16 +62,19 @@ export const CardPackAnimation = ({ winningCard, onAnimationComplete }: CardPack
       const actualCard = cardDatabase.find((c: any) => c?.name === cardName);
       
       if (actualCard) {
+        const rarity = (Math.floor(Math.random() * 8) + 1) as any;
+        const stats = calculateCardStats(actualCard.name, rarity, actualCard.type);
+        
         // Use actual card data with proper structure
         dummyCards.push({
           id: `dummy-${i}`,
           name: actualCard.name,
           type: actualCard.type,
-          power: actualCard.baseStats.power,
-          defense: actualCard.baseStats.defense,
-          health: actualCard.baseStats.health,
-          magic: actualCard.baseStats.magic,
-          rarity: (Math.floor(Math.random() * 8) + 1) as any, // Random rarity for variety
+          power: stats.power,
+          defense: stats.defense,
+          health: stats.health,
+          magic: stats.magic,
+          rarity: rarity, // Random rarity for variety
           faction: (actualCard.faction || 'Каледор') as any,
           image: availableImages[cardName],
         });

@@ -6,6 +6,7 @@ import { Card, Rarity, Faction } from "@/types/cards";
 import { cardDatabase } from "@/data/cardDatabase";
 import { Card as UICard } from "@/components/ui/card";
 import { useGameData } from "@/hooks/useGameData";
+import { calculateCardStats } from "@/utils/cardUtils";
 
 interface DragonEggsListProps {
   eggs: DragonEgg[];
@@ -46,15 +47,18 @@ export const DragonEggsList = ({ eggs }: DragonEggsListProps) => {
       return;
     }
 
+    // Используем новую систему расчета характеристик
+    const stats = calculateCardStats(basePet.name, egg.rarity as Rarity, basePet.type);
+    
     // Создаем нового питомца с корректными характеристиками
     const newPet: Card = {
       id: Date.now().toString(),
       name: egg.petName,
       type: 'pet',
-      power: basePet.baseStats.power * Math.pow(2, egg.rarity - 1),
-      defense: basePet.baseStats.defense * Math.pow(2, egg.rarity - 1),
-      health: basePet.baseStats.health * Math.pow(2, egg.rarity - 1),
-      magic: basePet.baseStats.magic * Math.pow(2, egg.rarity - 1),
+      power: stats.power,
+      defense: stats.defense,
+      health: stats.health,
+      magic: stats.magic,
       rarity: egg.rarity as Rarity,
       faction: basePet.faction as Faction,
       image: basePet.image

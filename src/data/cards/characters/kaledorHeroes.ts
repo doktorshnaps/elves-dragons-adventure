@@ -6,12 +6,6 @@ export const kaledorHeroes: CardInfo[] = [
     type: "character",
     description: "Начинающий воин, только познающий основы боевого искусства.",
     faction: "Каледор",
-    baseStats: {
-      power: 5,
-      defense: 5,
-      health: 10,
-      magic: 0
-    },
     image: "/lovable-uploads/27831c0a-e7a0-4ac4-84d9-642b6fa0e31c.png"
   },
   {
@@ -19,12 +13,6 @@ export const kaledorHeroes: CardInfo[] = [
     type: "character",
     description: "Опытный защитник, специализирующийся на обороне.",
     faction: "Каледор",
-    baseStats: {
-      power: 6,
-      defense: 8,
-      health: 12,
-      magic: 0
-    },
     image: "/lovable-uploads/6f418524-f8c0-444e-aac7-dc60d548275a.png"
   },
   {
@@ -32,12 +20,6 @@ export const kaledorHeroes: CardInfo[] = [
     type: "character",
     description: "Закаленный в боях воин с отличным балансом атаки и защиты.",
     faction: "Каледор",
-    baseStats: {
-      power: 8,
-      defense: 7,
-      health: 15,
-      magic: 2
-    },
     image: "/lovable-uploads/2e357adf-59ac-4ebc-8f34-fb77d085801d.png"
   },
   {
@@ -45,12 +27,6 @@ export const kaledorHeroes: CardInfo[] = [
     type: "character",
     description: "Могущественный заклинатель, владеющий тайными искусствами.",
     faction: "Каледор",
-    baseStats: {
-      power: 4,
-      defense: 4,
-      health: 10,
-      magic: 10
-    },
     image: "/lovable-uploads/5aa39f4e-18e2-4514-b338-2871069ebde3.png"
   },
   {
@@ -58,12 +34,6 @@ export const kaledorHeroes: CardInfo[] = [
     type: "character",
     description: "Искусный целитель, способный поддерживать союзников в бою.",
     faction: "Каледор",
-    baseStats: {
-      power: 3,
-      defense: 5,
-      health: 12,
-      magic: 9
-    },
     image: "/lovable-uploads/e2726d02-61d0-49f8-88cd-5eb5d7412563.png"
   },
   {
@@ -71,12 +41,6 @@ export const kaledorHeroes: CardInfo[] = [
     type: "character",
     description: "Специалист по защите, облаченный в тяжелую броню.",
     faction: "Каледор",
-    baseStats: {
-      power: 5,
-      defense: 10,
-      health: 15,
-      magic: 0
-    },
     image: "/lovable-uploads/c9a16f25-86df-4d19-8e29-6e9784d21cc0.png"
   },
   {
@@ -84,12 +48,6 @@ export const kaledorHeroes: CardInfo[] = [
     type: "character",
     description: "Элитный защитник с годами опыта в обороне.",
     faction: "Каледор",
-    baseStats: {
-      power: 7,
-      defense: 12,
-      health: 18,
-      magic: 2
-    },
     image: "/lovable-uploads/7472b221-f5e0-4f77-8fce-96b9cd408d98.png"
   },
   {
@@ -97,12 +55,6 @@ export const kaledorHeroes: CardInfo[] = [
     type: "character",
     description: "Опытный командир, умело сочетающий боевые и тактические навыки.",
     faction: "Каледор",
-    baseStats: {
-      power: 6,
-      defense: 6,
-      health: 14,
-      magic: 6
-    },
     image: "/lovable-uploads/27f02bff-5707-40b9-a94e-77669bd08bde.png"
   },
   {
@@ -110,12 +62,6 @@ export const kaledorHeroes: CardInfo[] = [
     type: "character",
     description: "Легендарный военачальник с выдающимися боевыми и магическими способностями.",
     faction: "Каледор",
-    baseStats: {
-      power: 8,
-      defense: 8,
-      health: 16,
-      magic: 8
-    },
     image: "/lovable-uploads/6f852396-ab0a-42af-8b0b-a19fad23fe91.png"
   }
 ];
