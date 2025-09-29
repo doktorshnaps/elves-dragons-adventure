@@ -10,6 +10,7 @@ import { applyDamageToPair } from '@/utils/battleHealthUtils';
 import { useGameData } from '@/hooks/useGameData';
 import { HERO_ABILITIES } from '@/types/abilities';
 import { useCardInstances } from '@/hooks/useCardInstances';
+import { calculateCardStats } from '@/utils/cardUtils';
 
 export const useTeamBattle = (dungeonType: DungeonType, initialLevel: number = 1) => {
   const { toast } = useToast();
@@ -59,24 +60,32 @@ export const useTeamBattle = (dungeonType: DungeonType, initialLevel: number = 1
         const heroFromMap = byId.get(pair.hero.id) || pair.hero;
         const dragonFromMap = pair.dragon ? (byId.get(pair.dragon.id) || pair.dragon) : undefined;
 
-        const heroStats = heroFromMap;
-        const dragonStats = dragonFromMap || { power: 0, defense: 0, health: 0 };
-        const heroCurrent = heroStats?.currentHealth ?? heroStats.health ?? 0;
-        const dragonCurrent = dragonFromMap ? (dragonFromMap.currentHealth ?? dragonFromMap.health ?? 0) : 0;
+        // Always recalculate stats to match Grimoire/Decks
+        const heroRarity = Number(heroFromMap.rarity) as any;
+        const heroCalc = calculateCardStats(heroFromMap.name, heroRarity, 'character');
+        const heroMax = heroCalc.health;
+        const heroCurrent = Math.min(heroFromMap.currentHealth ?? heroFromMap.health ?? heroMax, heroMax);
+
+        const dragonCalc = dragonFromMap ? calculateCardStats(dragonFromMap.name, Number(dragonFromMap.rarity) as any, 'pet') : { power: 0, defense: 0, health: 0, magic: 0 };
+        const dragonMax = dragonFromMap ? dragonCalc.health : 0;
+        const dragonCurrent = dragonFromMap ? Math.min(dragonFromMap.currentHealth ?? dragonFromMap.health ?? dragonMax, dragonMax) : 0;
         const dragonAlive = !!dragonFromMap && (dragonCurrent > 0);
-        
-        const heroMana = heroStats.magic ?? 0;
-        const dragonMana = dragonAlive ? (dragonFromMap?.magic ?? 0) : 0;
+
+        const heroWithCalc = { ...heroFromMap, ...heroCalc, health: heroMax, currentHealth: heroCurrent };
+        const dragonWithCalc = dragonFromMap ? { ...dragonFromMap, ...dragonCalc, health: dragonMax, currentHealth: dragonCurrent } : undefined;
+
+        const heroMana = heroWithCalc.magic ?? 0;
+        const dragonMana = dragonAlive ? (dragonWithCalc?.magic ?? 0) : 0;
         const totalMana = heroMana + dragonMana;
         
         return {
           id: `pair-${index}`,
-          hero: heroFromMap,
-          dragon: dragonFromMap,
+          hero: heroWithCalc,
+          dragon: dragonWithCalc,
           health: heroCurrent + dragonCurrent,
-          maxHealth: (heroStats.health ?? 0) + (dragonStats.health ?? 0),
-          power: (heroStats.power ?? 0) + (dragonAlive ? (dragonStats.power ?? 0) : 0),
-          defense: (heroStats.defense ?? 0) + (dragonAlive ? (dragonStats.defense ?? 0) : 0),
+          maxHealth: heroMax + (dragonMax || 0),
+          power: (heroWithCalc.power ?? 0) + (dragonAlive ? (dragonWithCalc?.power ?? 0) : 0),
+          defense: (heroWithCalc.defense ?? 0) + (dragonAlive ? (dragonWithCalc?.defense ?? 0) : 0),
           attackOrder: index + 1,
           mana: totalMana,
           maxMana: totalMana
@@ -97,6 +106,49 @@ export const useTeamBattle = (dungeonType: DungeonType, initialLevel: number = 1
       setAttackOrder(teamPairs.map(pair => pair.id));
     }
   }, [selectedPairs, dungeonType, initialLevel, gameData.cards, cardInstancesLoading]);
+
+  // Re-sync stats for existing saved battles to ensure new formula is used
+  useEffect(() => {
+    if (battleState.playerPairs.length === 0) return;
+    const cardsArr = (gameData.cards as any[]) || [];
+    const byId = new Map(cardsArr.map((c: any) => [c.id, c]));
+
+    const resyncedPairs = battleState.playerPairs.map((pair, index) => {
+      const heroSrc = byId.get(pair.hero.id) || pair.hero;
+      const dragonSrc = pair.dragon ? (byId.get(pair.dragon.id) || pair.dragon) : undefined;
+
+      const heroCalc = calculateCardStats(heroSrc.name, Number(heroSrc.rarity) as any, 'character');
+      const heroMax = heroCalc.health;
+      const heroCurrent = Math.min(pair.hero.currentHealth ?? pair.hero.health ?? heroMax, heroMax);
+
+      const dragonCalc = dragonSrc ? calculateCardStats(dragonSrc.name, Number(dragonSrc.rarity) as any, 'pet') : { power: 0, defense: 0, health: 0, magic: 0 };
+      const dragonMax = dragonSrc ? dragonCalc.health : 0;
+      const dragonCurrent = dragonSrc ? Math.min((pair.dragon?.currentHealth ?? pair.dragon?.health ?? dragonMax), dragonMax) : 0;
+      const dragonAlive = !!dragonSrc && (dragonCurrent > 0);
+
+      const heroWithCalc = { ...pair.hero, ...heroCalc, health: heroMax, currentHealth: heroCurrent };
+      const dragonWithCalc = dragonSrc ? { ...(pair.dragon as any), ...dragonCalc, health: dragonMax, currentHealth: dragonCurrent } : undefined;
+
+      const heroMana = heroWithCalc.magic ?? 0;
+      const dragonMana = dragonAlive ? (dragonWithCalc?.magic ?? 0) : 0;
+      const totalMana = heroMana + dragonMana;
+
+      return {
+        ...pair,
+        hero: heroWithCalc,
+        dragon: dragonWithCalc,
+        health: heroCurrent + dragonCurrent,
+        maxHealth: heroMax + (dragonMax || 0),
+        power: (heroWithCalc.power ?? 0) + (dragonAlive ? (dragonWithCalc?.power ?? 0) : 0),
+        defense: (heroWithCalc.defense ?? 0) + (dragonAlive ? (dragonWithCalc?.defense ?? 0) : 0),
+        mana: totalMana,
+        maxMana: totalMana
+      };
+    });
+
+    setBattleState(prev => ({ ...prev, playerPairs: resyncedPairs }));
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [gameData.cards]);
 
   // Save battle state
   useEffect(() => {
