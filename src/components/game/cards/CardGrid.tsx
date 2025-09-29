@@ -6,6 +6,7 @@ import { t } from "@/utils/translations";
 import { translateCardName, translateFaction, translateCardDescription } from "@/utils/cardTranslations";
 import { CardRarityModal } from "./CardRarityModal";
 import { CardInfo } from "@/data/cards/types";
+import { calculateCardStats } from "@/utils/cardUtils";
 import { useState } from "react";
 
 interface CardGridProps {
@@ -63,10 +64,17 @@ export const CardGrid = ({ type }: CardGridProps) => {
               </div>
             )}
             <div className="grid grid-cols-2 gap-1 text-[10px] sm:text-xs">
-              <div className="text-game-secondary">{t(language, 'items.power')}: {card.baseStats.power}</div>
-              <div className="text-game-secondary">{t(language, 'items.defense')}: {card.baseStats.defense}</div>
-              <div className="text-game-secondary">{t(language, 'items.health')}: {card.baseStats.health}</div>
-              <div className="text-game-secondary">{t(language, 'items.health')} (MP): {card.baseStats.magic}</div>
+              {(() => {
+                const stats = calculateCardStats(card.name, 1);
+                return (
+                  <>
+                    <div className="text-game-secondary">{t(language, 'items.power')}: {stats.power}</div>
+                    <div className="text-game-secondary">{t(language, 'items.defense')}: {stats.defense}</div>
+                    <div className="text-game-secondary">{t(language, 'items.health')}: {stats.health}</div>
+                    <div className="text-game-secondary">{t(language, 'items.health')} (MP): {stats.magic}</div>
+                  </>
+                );
+              })()}
             </div>
           </Card>
         ))}
