@@ -27,24 +27,22 @@ interface DungeonSearchDialogProps {
 
 const dungeonLevelRequirements = {
   spider_nest: 0,
-  // Остальные подземелья временно отключены
-  // bone_dungeon: 10,
-  // dark_mage: 30,
-  // forgotten_souls: 50,
-  // ice_throne: 70,
-  // sea_serpent: 90,
-  // dragon_lair: 100
+  bone_dungeon: 10,
+  dark_mage: 30,
+  forgotten_souls: 50,
+  ice_throne: 70,
+  sea_serpent: 90,
+  dragon_lair: 100
 };
 
 const dungeonNames = {
   spider_nest: "Гнездо Гигантских Пауков",
-  // Остальные подземелья временно отключены
-  // bone_dungeon: "Темница Костяных Демонов",
-  // dark_mage: "Лабиринт Темного Мага",
-  // forgotten_souls: "Пещеры Забытых Душ",
-  // ice_throne: "Трон Ледяного Короля",
-  // sea_serpent: "Логово Морского Змея",
-  // dragon_lair: "Логово Черного Дракона"
+  bone_dungeon: "Темница Костяных Демонов",
+  dark_mage: "Лабиринт Темного Мага",
+  forgotten_souls: "Пещеры Забытых Душ",
+  ice_throne: "Трон Ледяного Короля",
+  sea_serpent: "Логово Морского Змея",
+  dragon_lair: "Логово Черного Дракона"
 };
 
 export const DungeonSearchDialog = ({

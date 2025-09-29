@@ -7,7 +7,12 @@ export const DungeonsList = () => {
 
   const dungeonRoutes: Record<DungeonType, string> = {
     spider_nest: '/dungeons/spider-nest',
-    // Остальные подземелья временно отключены
+    bone_dungeon: '/dungeons/bone-dungeon',
+    dark_mage: '/dungeons/dark-mage',
+    forgotten_souls: '/dungeons/forgotten-souls',
+    ice_throne: '/dungeons/ice-throne',
+    sea_serpent: '/dungeons/sea-serpent',
+    dragon_lair: '/dungeons/dragon-lair'
   };
 
   const handleDungeonSelect = (dungeonType: DungeonType) => {
