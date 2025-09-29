@@ -15,8 +15,8 @@ export const useCardStatsMigration = () => {
 
   useEffect(() => {
     const migrateCardStats = async () => {
-      // Проверяем, не выполняли ли мы уже миграцию
-      const migrationKey = 'cardStatsMigration_v2';
+      // Проверяем, не выполняли ли мы уже миграцию (v3 включает драконов)
+      const migrationKey = 'cardStatsMigration_v3';
       const hasMigrated = localStorage.getItem(migrationKey);
       
       if (hasMigrated || hasMigratedRef.current || !gameData.cards || gameData.cards.length === 0) {
@@ -27,9 +27,9 @@ export const useCardStatsMigration = () => {
       console.log('🔄 Начинается миграция характеристик карт...');
 
       try {
-        // Обновляем характеристики всех карт
+        // Обновляем характеристики всех карт (героев и драконов)
         const updatedCards = gameData.cards.map(card => {
-          const newStats = calculateCardStats(card.name, card.rarity);
+          const newStats = calculateCardStats(card.name, card.rarity, card.type);
           
           return {
             ...card,
@@ -51,7 +51,7 @@ export const useCardStatsMigration = () => {
         const walletAddress = localStorage.getItem('walletAccountId');
         if (walletAddress) {
           for (const card of updatedCards) {
-            const newStats = calculateCardStats(card.name, card.rarity);
+            const newStats = calculateCardStats(card.name, card.rarity, card.type);
             
             const { error } = await supabase
               .from('card_instances')

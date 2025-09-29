@@ -1,7 +1,7 @@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { CardInfo } from "@/data/cards/types";
 import { Rarity } from "@/types/cards";
-import { getStatsForRarity } from "@/utils/cardUtils";
+import { calculateCardStats } from "@/utils/cardUtils";
 import { resolveCardImage } from "@/utils/cardImageResolver";
 import { Card } from "@/types/cards";
 import { useLanguage } from "@/hooks/useLanguage";
@@ -46,13 +46,8 @@ export const CardRarityModal = ({ cardInfo, open, onClose }: CardRarityModalProp
           {/* Сетка с редкостями */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
             {rarityLevels.map((rarity) => {
-              const multiplier = Math.pow(2, rarity - 1);
-              const stats = {
-                power: Math.floor(cardInfo.baseStats.power * multiplier),
-                defense: Math.floor(cardInfo.baseStats.defense * multiplier),
-                health: Math.floor(cardInfo.baseStats.health * multiplier),
-                magic: Math.floor(cardInfo.baseStats.magic * multiplier)
-              };
+              // Используем новую систему расчета характеристик с учетом типа карты
+              const stats = calculateCardStats(cardInfo.name, rarity, cardInfo.type);
 
               // Создаем временную карту для получения изображения по редкости
               const tempCard: Card = {

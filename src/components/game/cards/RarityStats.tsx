@@ -3,16 +3,17 @@ import { calculateCardStats } from "@/utils/cardUtils";
 
 interface RarityStatsProps {
   cardName: string;
+  cardType?: 'character' | 'pet';
 }
 
-export const RarityStats = ({ cardName }: RarityStatsProps) => {
+export const RarityStats = ({ cardName, cardType = 'character' }: RarityStatsProps) => {
   const rarityLevels: Rarity[] = [1, 2, 3, 4, 5, 6, 7, 8];
   
   return (
     <div className="space-y-2">
       {rarityLevels.map((rarity) => {
-        // Используем новую систему расчета характеристик
-        const stats = calculateCardStats(cardName, rarity);
+        // Используем новую систему расчета характеристик с учетом типа
+        const stats = calculateCardStats(cardName, rarity, cardType);
         
         return (
           <div key={rarity} className="text-xs">

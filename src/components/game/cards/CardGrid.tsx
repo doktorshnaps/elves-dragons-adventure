@@ -65,7 +65,7 @@ export const CardGrid = ({ type }: CardGridProps) => {
             )}
             <div className="grid grid-cols-2 gap-1 text-[10px] sm:text-xs">
               {(() => {
-                const stats = calculateCardStats(card.name, 1);
+                const stats = calculateCardStats(card.name, 1, card.type);
                 return (
                   <>
                     <div className="text-game-secondary">{t(language, 'items.power')}: {stats.power}</div>
