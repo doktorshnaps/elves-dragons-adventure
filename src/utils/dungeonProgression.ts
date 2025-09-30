@@ -14,14 +14,14 @@ const BASE_STATS: DungeonStats = {
 
 // Множители для каждого подземелья (каждый следующий в 3 раза сильнее)
 const DUNGEON_MULTIPLIERS: Record<string, number> = {
-  spider_nest: 1,      // Подземелье 1
-  bone_dungeon: 3,     // Подземелье 2
-  dark_mage: 9,        // Подземелье 3
-  forgotten_souls: 27, // Подземелье 4
-  ice_throne: 81,      // Подземелье 5
-  sea_serpent: 243,    // Подземелье 6
-  dragon_lair: 729,    // Подземелье 7
-  pantheon_gods: 2187  // Подземелье 8
+  spider_nest: 1,      // Подземелье 1 (самое легкое)
+  dragon_lair: 3,      // Подземелье 2
+  forgotten_souls: 9,  // Подземелье 3
+  ice_throne: 27,      // Подземелье 4
+  dark_mage: 81,       // Подземелье 5
+  bone_dungeon: 243,   // Подземелье 6
+  sea_serpent: 729,    // Подземелье 7
+  pantheon_gods: 2187  // Подземелье 8 (самое сложное)
 };
 
 /**
