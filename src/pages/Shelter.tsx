@@ -424,8 +424,17 @@ export const Shelter = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-green-50 to-blue-50 dark:from-green-950 dark:to-blue-950">
-      <div className="container mx-auto p-4 space-y-6">
+    <div 
+      className="min-h-screen bg-cover bg-center bg-no-repeat relative"
+      style={{
+        backgroundImage: 'url("/images/shelter-bg.jpeg")',
+        backgroundSize: 'cover',
+        backgroundPosition: 'center',
+        backgroundRepeat: 'no-repeat'
+      }}
+    >
+      <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" />
+      <div className="container mx-auto p-4 space-y-6 relative z-10">
         {/* Header */}
         {/* Кнопка возврата в левом верхнем углу */}
         <div className="absolute top-4 left-4 z-10">
