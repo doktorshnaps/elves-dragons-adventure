@@ -10,7 +10,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
-import { Terminal, DollarSign, Ban, UserCheck } from 'lucide-react';
+import { Terminal, DollarSign, Ban, UserCheck, Trash2 } from 'lucide-react';
 import { cardDatabase } from '@/data/cardDatabase';
 import { calculateCardStats } from '@/utils/cardUtils';
 const ADMIN_WALLET = 'mr_bruts.tg';
@@ -108,6 +108,9 @@ export const AdminConsole = () => {
           break;
         case 'maintenance':
           await handleMaintenanceMode(parts);
+          break;
+        case 'wipe':
+          await handleGameWipe();
           break;
         case 'help':
           showHelp();
@@ -668,6 +671,36 @@ export const AdminConsole = () => {
     addOutput('Для выдачи карты используйте: givecard <user_id> <номер_карты_или_название> [редкость]');
   };
 
+  const handleGameWipe = async () => {
+    addOutput('⚠️ ВНИМАНИЕ: Вы собираетесь удалить ВСЕ игровые данные!');
+    addOutput('⚠️ Это действие НЕОБРАТИМО!');
+    addOutput('⚠️ Для подтверждения введите: wipe confirm');
+    
+    if (command.toLowerCase() !== 'wipe confirm') {
+      return;
+    }
+
+    addOutput('🔄 Запуск вайпа игры...');
+
+    const { data, error } = await supabase.functions.invoke('game-wipe', {
+      body: { adminWallet: accountId }
+    });
+
+    if (error) {
+      addOutput(`❌ Ошибка вайпа: ${error.message}`);
+    } else if (data?.success) {
+      addOutput('✅ ВАЙП ЗАВЕРШЕН! Все игровые данные сброшены.');
+      addOutput('✅ Данные администратора сохранены.');
+      toast({
+        title: "Вайп завершен",
+        description: "Все игровые данные сброшены",
+        variant: "destructive"
+      });
+    } else {
+      addOutput(`❌ Ошибка: ${data?.error || 'Unknown error'}`);
+    }
+  };
+
   const handleMaintenanceMode = async (parts: string[]) => {
     if (parts.length < 2) {
       addOutput('Использование: maintenance <on|off> [message]');
@@ -727,7 +760,7 @@ export const AdminConsole = () => {
     addOutput('ban <user_id> <reason> - Забанить игрока');
     addOutput('unban <user_id> - Разбанить игрока');
     addOutput('maintenance <on|off> [message] - Управление режимом тех. работ');
-    addOutput('unban <user_id> - Разбанить игрока');
+    addOutput('wipe confirm - ВАЙП: Сбросить все игровые данные (НЕОБРАТИМО!)');
     addOutput('clear - Очистить консоль');
     addOutput('help - Показать эту справку');
     addOutput('===============================');
@@ -815,6 +848,14 @@ export const AdminConsole = () => {
             size="sm"
           >
             Информация
+          </Button>
+          <Button
+            onClick={() => setCommand('wipe confirm')}
+            variant="destructive"
+            size="sm"
+          >
+            <Trash2 className="w-4 h-4 mr-2" />
+            ВАЙП
           </Button>
         </div>
 

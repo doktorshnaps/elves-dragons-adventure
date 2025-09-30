@@ -42,3 +42,6 @@ verify_jwt = false
 
 [functions.sync-nft-cards]
 verify_jwt = false
+
+[functions.game-wipe]
+verify_jwt = false
