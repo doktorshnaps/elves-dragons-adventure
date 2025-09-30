@@ -91,7 +91,10 @@ const RARITY_MULTIPLIERS: Record<Rarity, number> = {
 const getClassMultiplier = (cardName: string, cardType: CardType): number => {
   if (cardType === 'pet') {
     // Для драконов ищем ключевое слово в названии
-    for (const [dragonClass, multiplier] of Object.entries(DRAGON_CLASS_MULTIPLIERS)) {
+    // Сортируем по длине ключевого слова (самые длинные первые) для более точного совпадения
+    const sortedClasses = Object.entries(DRAGON_CLASS_MULTIPLIERS).sort((a, b) => b[0].length - a[0].length);
+    
+    for (const [dragonClass, multiplier] of sortedClasses) {
       if (cardName.includes(dragonClass)) {
         return multiplier;
       }

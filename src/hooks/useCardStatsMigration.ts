@@ -15,10 +15,11 @@ export const useCardStatsMigration = () => {
 
   useEffect(() => {
     const migrateCardStats = async () => {
-      // Проверяем, не выполняли ли мы уже миграцию (v6 обновляет все карты по новой системе прогрессии)
-      const migrationKey = 'cardStatsMigration_v6';
+      // Проверяем, не выполняли ли мы уже миграцию (v7 исправляет порядок поиска множителей драконов)
+      const migrationKey = 'cardStatsMigration_v7';
       
       // Очищаем старые версии миграции
+      localStorage.removeItem('cardStatsMigration_v6');
       localStorage.removeItem('cardStatsMigration_v5');
       localStorage.removeItem('cardStatsMigration_v4');
       localStorage.removeItem('cardStatsMigration_v3');
