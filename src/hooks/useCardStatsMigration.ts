@@ -17,6 +17,12 @@ export const useCardStatsMigration = () => {
     const migrateCardStats = async () => {
       // Проверяем, не выполняли ли мы уже миграцию (v6 обновляет все карты по новой системе прогрессии)
       const migrationKey = 'cardStatsMigration_v6';
+      
+      // Очищаем старые версии миграции
+      localStorage.removeItem('cardStatsMigration_v5');
+      localStorage.removeItem('cardStatsMigration_v4');
+      localStorage.removeItem('cardStatsMigration_v3');
+      
       const hasMigrated = localStorage.getItem(migrationKey);
       
       if (hasMigrated || hasMigratedRef.current || !gameData.cards || gameData.cards.length === 0) {
