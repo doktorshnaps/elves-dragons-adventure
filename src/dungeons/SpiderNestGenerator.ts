@@ -1,5 +1,6 @@
 import { Opponent } from "@/types/battle";
 import { monsterImagesByType } from "@/constants/monsterImages";
+import { getFinalEnemyStats } from "@/utils/dungeonProgression";
 
 interface LevelData {
   name: string;
@@ -90,8 +91,7 @@ const SPIDER_NEST_DATA: Record<number, LevelData> = {
 };
 
 const createMonsterByType = (type: string, id: number, level: number): Opponent => {
-  const baseHealth = 60 + (level - 1) * 30;
-  const basePower = 7 + (level - 1) * 3.5;
+  const { stats, enemyType } = getFinalEnemyStats("spider_nest", level);
 
   switch (type) {
     case "skeleton_spider":
@@ -133,9 +133,9 @@ const createMonsterByType = (type: string, id: number, level: number): Opponent 
       return {
         id,
         name: "Паук-охотник",
-        health: baseHealth,
-        maxHealth: baseHealth,
-        power: basePower,
+        health: stats.health,
+        maxHealth: stats.health,
+        power: stats.power,
         isBoss: false,
         image: monsterImagesByType["hunter_spider"],
         specialAbilities: [{ type: 'poison_bite', value: 2 }]

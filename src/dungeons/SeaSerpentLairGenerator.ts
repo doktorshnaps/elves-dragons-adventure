@@ -1,17 +1,29 @@
 import { Opponent } from "@/types/battle";
+import { getFinalEnemyStats } from "@/utils/dungeonProgression";
 
 export const SeaSerpentLairGenerator = (level: number): Opponent[] => {
-  const baseHealth = 95 + (level - 1) * 47.5;
-  const basePower = 9.5 + (level - 1) * 4.75;
+  const { stats, enemyType } = getFinalEnemyStats("sea_serpent", level);
 
-  if (level % 5 === 0) {
+  if (enemyType === 'boss') {
     return [{
       id: 1,
       name: "Морской Змей",
-      health: baseHealth * 2,
-      maxHealth: baseHealth * 2,
-      power: basePower * 1.5,
+      health: stats.health,
+      maxHealth: stats.health,
+      power: stats.power,
       isBoss: true,
+      image: "/lovable-uploads/d832d29a-6ce9-4bad-abaa-d15cb73b5382.png"
+    }];
+  }
+
+  if (enemyType === 'miniboss') {
+    return [{
+      id: 1,
+      name: "Морской Лорд",
+      health: stats.health,
+      maxHealth: stats.health,
+      power: stats.power,
+      isBoss: false,
       image: "/lovable-uploads/d832d29a-6ce9-4bad-abaa-d15cb73b5382.png"
     }];
   }
@@ -20,9 +32,9 @@ export const SeaSerpentLairGenerator = (level: number): Opponent[] => {
     {
       id: 1,
       name: "Морской страж",
-      health: baseHealth,
-      maxHealth: baseHealth,
-      power: basePower,
+      health: stats.health,
+      maxHealth: stats.health,
+      power: stats.power,
       isBoss: false,
       image: "/lovable-uploads/d832d29a-6ce9-4bad-abaa-d15cb73b5382.png"
     }

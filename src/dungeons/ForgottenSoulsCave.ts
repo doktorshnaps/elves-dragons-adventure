@@ -1,17 +1,29 @@
 import { Opponent } from "@/types/battle";
+import { getFinalEnemyStats } from "@/utils/dungeonProgression";
 
 export const ForgottenSoulsCaveGenerator = (level: number): Opponent[] => {
-  const baseHealth = 80 + (level - 1) * 40;
-  const basePower = 8 + (level - 1) * 4;
+  const { stats, enemyType } = getFinalEnemyStats("forgotten_souls", level);
 
-  if (level % 5 === 0) {
+  if (enemyType === 'boss') {
     return [{
       id: 1,
       name: "Король Призраков",
-      health: baseHealth * 2,
-      maxHealth: baseHealth * 2,
-      power: basePower * 1.5,
+      health: stats.health,
+      maxHealth: stats.health,
+      power: stats.power,
       isBoss: true,
+      image: "/lovable-uploads/3445a1d0-8e5a-4785-bcce-f3b88bbd6f14.png"
+    }];
+  }
+
+  if (enemyType === 'miniboss') {
+    return [{
+      id: 1,
+      name: "Призрачный Лорд",
+      health: stats.health,
+      maxHealth: stats.health,
+      power: stats.power,
+      isBoss: false,
       image: "/lovable-uploads/3445a1d0-8e5a-4785-bcce-f3b88bbd6f14.png"
     }];
   }
@@ -20,9 +32,9 @@ export const ForgottenSoulsCaveGenerator = (level: number): Opponent[] => {
     {
       id: 1,
       name: "Потерянная душа",
-      health: baseHealth,
-      maxHealth: baseHealth,
-      power: basePower,
+      health: stats.health,
+      maxHealth: stats.health,
+      power: stats.power,
       isBoss: false,
       image: "/lovable-uploads/3445a1d0-8e5a-4785-bcce-f3b88bbd6f14.png"
     }

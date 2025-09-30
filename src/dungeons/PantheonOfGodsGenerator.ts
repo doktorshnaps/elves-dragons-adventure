@@ -1,17 +1,29 @@
 import { Opponent } from "@/types/battle";
+import { getFinalEnemyStats } from "@/utils/dungeonProgression";
 
 export const PantheonOfGodsGenerator = (level: number): Opponent[] => {
-  const baseHealth = 110 + (level - 1) * 55;
-  const basePower = 11 + (level - 1) * 5.5;
+  const { stats, enemyType } = getFinalEnemyStats("pantheon_gods", level);
 
-  if (level % 5 === 0) {
+  if (enemyType === 'boss') {
     return [{
       id: 1,
       name: "Верховный Бог",
-      health: baseHealth * 2,
-      maxHealth: baseHealth * 2,
-      power: basePower * 1.5,
+      health: stats.health,
+      maxHealth: stats.health,
+      power: stats.power,
       isBoss: true,
+      image: "/lovable-uploads/pantheon-of-gods.png"
+    }];
+  }
+
+  if (enemyType === 'miniboss') {
+    return [{
+      id: 1,
+      name: "Божественный Лорд",
+      health: stats.health,
+      maxHealth: stats.health,
+      power: stats.power,
+      isBoss: false,
       image: "/lovable-uploads/pantheon-of-gods.png"
     }];
   }
@@ -20,9 +32,9 @@ export const PantheonOfGodsGenerator = (level: number): Opponent[] => {
     {
       id: 1,
       name: "Божественный страж",
-      health: baseHealth,
-      maxHealth: baseHealth,
-      power: basePower,
+      health: stats.health,
+      maxHealth: stats.health,
+      power: stats.power,
       isBoss: false,
       image: "/lovable-uploads/pantheon-of-gods.png"
     }

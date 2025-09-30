@@ -1,17 +1,29 @@
 import { Opponent } from "@/types/battle";
+import { getFinalEnemyStats } from "@/utils/dungeonProgression";
 
 export const DarkMageTowerGenerator = (level: number): Opponent[] => {
-  const baseHealth = 70 + (level - 1) * 35;
-  const basePower = 12 + (level - 1) * 6;
+  const { stats, enemyType } = getFinalEnemyStats("dark_mage", level);
 
-  if (level % 5 === 0) {
+  if (enemyType === 'boss') {
     return [{
       id: 1,
       name: "Темный Архимаг",
-      health: baseHealth * 2,
-      maxHealth: baseHealth * 2,
-      power: basePower * 1.5,
+      health: stats.health,
+      maxHealth: stats.health,
+      power: stats.power,
       isBoss: true,
+      image: "/lovable-uploads/abf6e9af-a611-414c-b213-fed11ae0a767.png"
+    }];
+  }
+
+  if (enemyType === 'miniboss') {
+    return [{
+      id: 1,
+      name: "Темный Лорд",
+      health: stats.health,
+      maxHealth: stats.health,
+      power: stats.power,
+      isBoss: false,
       image: "/lovable-uploads/abf6e9af-a611-414c-b213-fed11ae0a767.png"
     }];
   }
@@ -20,9 +32,9 @@ export const DarkMageTowerGenerator = (level: number): Opponent[] => {
     {
       id: 1,
       name: "Темный маг",
-      health: baseHealth,
-      maxHealth: baseHealth,
-      power: basePower,
+      health: stats.health,
+      maxHealth: stats.health,
+      power: stats.power,
       isBoss: false,
       image: "/lovable-uploads/abf6e9af-a611-414c-b213-fed11ae0a767.png"
     }

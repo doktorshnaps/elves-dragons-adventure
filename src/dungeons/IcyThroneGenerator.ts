@@ -1,17 +1,29 @@
 import { Opponent } from "@/types/battle";
+import { getFinalEnemyStats } from "@/utils/dungeonProgression";
 
 export const IcyThroneGenerator = (level: number): Opponent[] => {
-  const baseHealth = 90 + (level - 1) * 45;
-  const basePower = 9 + (level - 1) * 4.5;
+  const { stats, enemyType } = getFinalEnemyStats("ice_throne", level);
 
-  if (level % 5 === 0) {
+  if (enemyType === 'boss') {
     return [{
       id: 1,
       name: "Ледяной Король",
-      health: baseHealth * 2,
-      maxHealth: baseHealth * 2,
-      power: basePower * 1.5,
+      health: stats.health,
+      maxHealth: stats.health,
+      power: stats.power,
       isBoss: true,
+      image: "/lovable-uploads/301f4f03-6a87-48ec-a535-535b2213026f.png"
+    }];
+  }
+
+  if (enemyType === 'miniboss') {
+    return [{
+      id: 1,
+      name: "Ледяной Лорд",
+      health: stats.health,
+      maxHealth: stats.health,
+      power: stats.power,
+      isBoss: false,
       image: "/lovable-uploads/301f4f03-6a87-48ec-a535-535b2213026f.png"
     }];
   }
@@ -20,9 +32,9 @@ export const IcyThroneGenerator = (level: number): Opponent[] => {
     {
       id: 1,
       name: "Ледяной воин",
-      health: baseHealth,
-      maxHealth: baseHealth,
-      power: basePower,
+      health: stats.health,
+      maxHealth: stats.health,
+      power: stats.power,
       isBoss: false,
       image: "/lovable-uploads/301f4f03-6a87-48ec-a535-535b2213026f.png"
     }
