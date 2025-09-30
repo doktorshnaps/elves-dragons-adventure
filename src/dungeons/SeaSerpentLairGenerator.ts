@@ -32,9 +32,18 @@ export const SeaSerpentLairGenerator = (level: number): Opponent[] => {
     {
       id: 1,
       name: "Морской страж",
-      health: stats.health,
-      maxHealth: stats.health,
-      power: stats.power,
+      health: Math.round(stats.health * 0.8),
+      maxHealth: Math.round(stats.health * 0.8),
+      power: Math.round(stats.power * 0.9),
+      isBoss: false,
+      image: "/lovable-uploads/d832d29a-6ce9-4bad-abaa-d15cb73b5382.png"
+    },
+    {
+      id: 2,
+      name: "Морской угорь",
+      health: Math.round(stats.health * 0.6),
+      maxHealth: Math.round(stats.health * 0.6),
+      power: Math.round(stats.power * 1.1),
       isBoss: false,
       image: "/lovable-uploads/d832d29a-6ce9-4bad-abaa-d15cb73b5382.png"
     }

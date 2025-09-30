@@ -27,7 +27,13 @@ import {
   QuestPageWithLazyLoading,
   ShelterWithLazyLoading,
   SpiderNestWithLazyLoading,
-  PantheonOfGodsWithLazyLoading
+  PantheonOfGodsWithLazyLoading,
+  BlackDragonLairWithLazyLoading,
+  ForgottenSoulsCaveWithLazyLoading,
+  IcyThroneWithLazyLoading,
+  DarkMageTowerWithLazyLoading,
+  BoneDemonDungeonWithLazyLoading,
+  SeaSerpentLairWithLazyLoading
 } from './components/lazy/LazyComponents';
 
 function App() {
@@ -63,14 +69,12 @@ function App() {
           {/* Активные подземелья */}
           <Route path="/dungeons/spider-nest" element={<ProtectedRoute><SpiderNestWithLazyLoading /></ProtectedRoute>} />
           <Route path="/dungeons/pantheon-gods" element={<ProtectedRoute><PantheonOfGodsWithLazyLoading /></ProtectedRoute>} />
-          {/* Остальные подземелья временно отключены
-          <Route path="/dungeons/dragon-lair" element={<ProtectedRoute><BlackDragonLairWithLazyLoading /></ProtectedRoute>} />
-          <Route path="/dungeons/forgotten-souls" element={<ProtectedRoute><ForgottenSoulsCaveWithLazyLoading /></ProtectedRoute>} />
-          <Route path="/dungeons/icy-throne" element={<ProtectedRoute><IcyThroneWithLazyLoading /></ProtectedRoute>} />
-          <Route path="/dungeons/dark-mage" element={<ProtectedRoute><DarkMageTowerWithLazyLoading /></ProtectedRoute>} />
-          <Route path="/dungeons/bone-dungeon" element={<ProtectedRoute><BoneDemonDungeonWithLazyLoading /></ProtectedRoute>} />
-          <Route path="/dungeons/sea-serpent" element={<ProtectedRoute><SeaSerpentLairWithLazyLoading /></ProtectedRoute>} />
-          */}
+<Route path="/dungeons/dragon-lair" element={<ProtectedRoute><BlackDragonLairWithLazyLoading /></ProtectedRoute>} />
+<Route path="/dungeons/forgotten-souls" element={<ProtectedRoute><ForgottenSoulsCaveWithLazyLoading /></ProtectedRoute>} />
+<Route path="/dungeons/icy-throne" element={<ProtectedRoute><IcyThroneWithLazyLoading /></ProtectedRoute>} />
+<Route path="/dungeons/dark-mage" element={<ProtectedRoute><DarkMageTowerWithLazyLoading /></ProtectedRoute>} />
+<Route path="/dungeons/bone-dungeon" element={<ProtectedRoute><BoneDemonDungeonWithLazyLoading /></ProtectedRoute>} />
+<Route path="/dungeons/sea-serpent" element={<ProtectedRoute><SeaSerpentLairWithLazyLoading /></ProtectedRoute>} />
           </Routes>
           <Toaster />
         </LanguageProvider>

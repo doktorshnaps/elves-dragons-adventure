@@ -32,9 +32,18 @@ export const BoneDemonDungeonGenerator = (level: number): Opponent[] => {
     {
       id: 1,
       name: "Скелет-воин",
-      health: stats.health,
-      maxHealth: stats.health,
-      power: stats.power,
+      health: Math.round(stats.health * 0.8),
+      maxHealth: Math.round(stats.health * 0.8),
+      power: Math.round(stats.power * 0.9),
+      isBoss: false,
+      image: "/lovable-uploads/aef9e591-e676-4552-a70d-c7457b29b6c5.png"
+    },
+    {
+      id: 2,
+      name: "Костяной страж",
+      health: Math.round(stats.health * 0.6),
+      maxHealth: Math.round(stats.health * 0.6),
+      power: Math.round(stats.power * 1.1),
       isBoss: false,
       image: "/lovable-uploads/aef9e591-e676-4552-a70d-c7457b29b6c5.png"
     }

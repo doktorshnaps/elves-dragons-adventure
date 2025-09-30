@@ -32,9 +32,18 @@ export const ForgottenSoulsCaveGenerator = (level: number): Opponent[] => {
     {
       id: 1,
       name: "Потерянная душа",
-      health: stats.health,
-      maxHealth: stats.health,
-      power: stats.power,
+      health: Math.round(stats.health * 0.8),
+      maxHealth: Math.round(stats.health * 0.8),
+      power: Math.round(stats.power * 0.9),
+      isBoss: false,
+      image: "/lovable-uploads/3445a1d0-8e5a-4785-bcce-f3b88bbd6f14.png"
+    },
+    {
+      id: 2,
+      name: "Забытый страж",
+      health: Math.round(stats.health * 0.6),
+      maxHealth: Math.round(stats.health * 0.6),
+      power: Math.round(stats.power * 1.1),
       isBoss: false,
       image: "/lovable-uploads/3445a1d0-8e5a-4785-bcce-f3b88bbd6f14.png"
     }
