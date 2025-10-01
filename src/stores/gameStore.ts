@@ -253,7 +253,6 @@ export const useGameStore = create<GameState>()(
         inventory: state.inventory,
         dragonEggs: state.dragonEggs,
         selectedTeam: state.selectedTeam,
-        // Убираем уровень и опыт из persist - только БД
       }),
     }
   )
