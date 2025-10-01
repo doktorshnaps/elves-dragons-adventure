@@ -6,6 +6,7 @@ import { useToast } from '@/hooks/use-toast';
 import { initializeCardHealth } from '@/utils/cardHealthUtils';
 import { updateGameDataByWalletThrottled } from '@/utils/updateGameDataThrottle';
 import { loadGameDataDeduped } from '@/utils/gameDataLoader';
+import { localStorageBatcher } from '@/utils/localStorageBatcher';
 
 interface GameData {
   balance: number;
@@ -121,26 +122,26 @@ export const useGameData = () => {
           localStorage.setItem('gameData', JSON.stringify(gameRecord));
         } catch {}
         
-        // Синхронизируем с localStorage для обратной совместимости
-        localStorage.setItem('gameCards', JSON.stringify(newGameData.cards));
-        localStorage.setItem('gameBalance', newGameData.balance.toString());
-        localStorage.setItem('gameInitialized', newGameData.initialized.toString());
-        localStorage.setItem('gameInventory', JSON.stringify(newGameData.inventory));
-        localStorage.setItem('marketplaceListings', JSON.stringify(newGameData.marketplaceListings));
-        localStorage.setItem('socialQuests', JSON.stringify(newGameData.socialQuests));
+        // Синхронизируем с localStorage через батчер
+        localStorageBatcher.setItem('gameCards', newGameData.cards);
+        localStorageBatcher.setItem('gameBalance', newGameData.balance.toString());
+        localStorageBatcher.setItem('gameInitialized', newGameData.initialized.toString());
+        localStorageBatcher.setItem('gameInventory', newGameData.inventory);
+        localStorageBatcher.setItem('marketplaceListings', newGameData.marketplaceListings);
+        localStorageBatcher.setItem('socialQuests', newGameData.socialQuests);
         if (newGameData.adventurePlayerStats) {
-          localStorage.setItem('adventurePlayerStats', JSON.stringify(newGameData.adventurePlayerStats));
+          localStorageBatcher.setItem('adventurePlayerStats', newGameData.adventurePlayerStats);
         }
         if (newGameData.adventureCurrentMonster) {
-          localStorage.setItem('adventureCurrentMonster', JSON.stringify(newGameData.adventureCurrentMonster));
+          localStorageBatcher.setItem('adventureCurrentMonster', newGameData.adventureCurrentMonster);
         }
-        localStorage.setItem('dragonEggs', JSON.stringify(newGameData.dragonEggs));
+        localStorageBatcher.setItem('dragonEggs', newGameData.dragonEggs);
         if (newGameData.battleState) {
-          localStorage.setItem('battleState', JSON.stringify(newGameData.battleState));
+          localStorageBatcher.setItem('battleState', newGameData.battleState);
         }
-        localStorage.setItem('selectedTeam', JSON.stringify(newGameData.selectedTeam));
+        localStorageBatcher.setItem('selectedTeam', newGameData.selectedTeam);
         
-        console.log('📦 Game data synced to localStorage');
+        console.log('📦 Game data queued for localStorage sync');
       } else {
         console.log('⚠️ No game data found in database');
       }
@@ -274,24 +275,24 @@ export const useGameData = () => {
       // When ok === true, continue with success flow
       console.log('✅ Game data updated successfully');
         
-        // Sync changed keys to localStorage (state already updated optimistically)
-        if (changedUpdates.cards !== undefined) localStorage.setItem('gameCards', JSON.stringify(changedUpdates.cards));
-        if (changedUpdates.balance !== undefined) localStorage.setItem('gameBalance', String(changedUpdates.balance));
-        if (changedUpdates.initialized !== undefined) localStorage.setItem('gameInitialized', String(changedUpdates.initialized));
-        if (changedUpdates.inventory !== undefined) localStorage.setItem('gameInventory', JSON.stringify(changedUpdates.inventory));
-        if (changedUpdates.marketplaceListings !== undefined) localStorage.setItem('marketplaceListings', JSON.stringify(changedUpdates.marketplaceListings));
-        if (changedUpdates.socialQuests !== undefined) localStorage.setItem('socialQuests', JSON.stringify(changedUpdates.socialQuests));
+        // Sync changed keys to localStorage через батчер
+        if (changedUpdates.cards !== undefined) localStorageBatcher.setItem('gameCards', changedUpdates.cards);
+        if (changedUpdates.balance !== undefined) localStorageBatcher.setItem('gameBalance', String(changedUpdates.balance));
+        if (changedUpdates.initialized !== undefined) localStorageBatcher.setItem('gameInitialized', String(changedUpdates.initialized));
+        if (changedUpdates.inventory !== undefined) localStorageBatcher.setItem('gameInventory', changedUpdates.inventory);
+        if (changedUpdates.marketplaceListings !== undefined) localStorageBatcher.setItem('marketplaceListings', changedUpdates.marketplaceListings);
+        if (changedUpdates.socialQuests !== undefined) localStorageBatcher.setItem('socialQuests', changedUpdates.socialQuests);
         if (changedUpdates.adventurePlayerStats !== undefined && changedUpdates.adventurePlayerStats) {
-          localStorage.setItem('adventurePlayerStats', JSON.stringify(changedUpdates.adventurePlayerStats));
+          localStorageBatcher.setItem('adventurePlayerStats', changedUpdates.adventurePlayerStats);
         }
         if (changedUpdates.adventureCurrentMonster !== undefined && changedUpdates.adventureCurrentMonster) {
-          localStorage.setItem('adventureCurrentMonster', JSON.stringify(changedUpdates.adventureCurrentMonster));
+          localStorageBatcher.setItem('adventureCurrentMonster', changedUpdates.adventureCurrentMonster);
         }
-        if (changedUpdates.dragonEggs !== undefined) localStorage.setItem('dragonEggs', JSON.stringify(changedUpdates.dragonEggs));
+        if (changedUpdates.dragonEggs !== undefined) localStorageBatcher.setItem('dragonEggs', changedUpdates.dragonEggs);
         if (changedUpdates.battleState !== undefined && changedUpdates.battleState) {
-          localStorage.setItem('battleState', JSON.stringify(changedUpdates.battleState));
+          localStorageBatcher.setItem('battleState', changedUpdates.battleState);
         }
-        if (changedUpdates.selectedTeam !== undefined) localStorage.setItem('selectedTeam', JSON.stringify(changedUpdates.selectedTeam));
+        if (changedUpdates.selectedTeam !== undefined) localStorageBatcher.setItem('selectedTeam', changedUpdates.selectedTeam);
 
         // Maintain a full 'gameData' snapshot for components expecting snake_case
         try {
