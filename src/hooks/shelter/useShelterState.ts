@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
-import { useUnifiedGameState } from '@/hooks/useUnifiedGameState';
+import { useBatchedGameState } from '@/hooks/useBatchedGameState';
 import { useLanguage } from '@/hooks/useLanguage';
 import { t } from '@/utils/translations';
 import { useToast } from '@/hooks/use-toast';
@@ -36,7 +36,7 @@ export interface CraftRecipe {
 
 export const useShelterState = () => {
   const { language } = useLanguage();
-  const gameState = useUnifiedGameState();
+  const gameState = useBatchedGameState(); // Используем батчированную версию
   const { toast } = useToast();
   const { startUpgradeAtomic, isUpgrading, getUpgradeProgress, formatRemainingTime } = useBuildingUpgrades();
   
