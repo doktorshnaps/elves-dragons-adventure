@@ -127,7 +127,7 @@ export const useBattleStateNew = (level: number) => {
 
   const handleNextLevel = useCallback(async () => {
     const nextLevel = battleState.currentDungeonLevel + 1;
-    const newOpponents = generateDungeonOpponents(battleState.selectedDungeon as DungeonType, nextLevel);
+    const newOpponents = await generateDungeonOpponents(battleState.selectedDungeon as DungeonType, nextLevel);
 
     await updateBattleState({
       opponents: newOpponents,

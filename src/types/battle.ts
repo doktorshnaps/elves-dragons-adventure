@@ -28,6 +28,7 @@ export interface Opponent {
   power: number;
   health: number;
   maxHealth: number;
+  armor?: number; // Броня монстра из CSV
   isBoss?: boolean;
   image?: string;
   statusEffects?: StatusEffect[];

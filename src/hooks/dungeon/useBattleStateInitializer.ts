@@ -6,12 +6,12 @@ import { DungeonType } from '@/constants/dungeons';
 export const useBattleStateInitializer = () => {
   const { toast } = useToast();
 
-  const initializeBattleState = (selectedDungeon: DungeonType, balance: number) => {
+  const initializeBattleState = async (selectedDungeon: DungeonType, balance: number) => {
     const savedCards = localStorage.getItem('gameCards');
     const cards = savedCards ? JSON.parse(savedCards) : [];
     const teamStats = calculateTeamStats(cards);
 
-    const opponents = generateDungeonOpponents(selectedDungeon, 1);
+    const opponents = await generateDungeonOpponents(selectedDungeon, 1);
 
     const battleState = {
       playerStats: {

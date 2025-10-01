@@ -16,7 +16,7 @@ export const useDungeonLevelManager = (
   const location = useLocation();
   const { toast } = useToast();
 
-  const handleNextLevel = () => {
+  const handleNextLevel = async () => {
     if (!playerStats || playerStats.health <= 0) return;
 
     const nextLevel = initialState.currentDungeonLevel + 1;
@@ -31,7 +31,7 @@ export const useDungeonLevelManager = (
       return;
     }
     
-    const newOpponents = generateDungeonOpponents(selectedDungeon, nextLevel);
+    const newOpponents = await generateDungeonOpponents(selectedDungeon, nextLevel);
     setOpponents(newOpponents);
     
     const battleState = {

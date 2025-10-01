@@ -92,18 +92,20 @@ export const useTeamBattle = (dungeonType: DungeonType, initialLevel: number = 1
         };
       });
 
-      const opponents = generateDungeonOpponents(dungeonType, initialLevel);
-      
-      startTransition(() => {
-        setBattleState(prev => ({
-          ...prev,
-          playerPairs: teamPairs,
-          opponents,
-          selectedDungeon: dungeonType
-        }));
-      });
-      
-      setAttackOrder(teamPairs.map(pair => pair.id));
+      (async () => {
+        const opponents = await generateDungeonOpponents(dungeonType, initialLevel);
+        
+        startTransition(() => {
+          setBattleState(prev => ({
+            ...prev,
+            playerPairs: teamPairs,
+            opponents,
+            selectedDungeon: dungeonType
+          }));
+        });
+        
+        setAttackOrder(teamPairs.map(pair => pair.id));
+      })();
     }
   }, [selectedPairs, dungeonType, initialLevel, gameData.cards, cardInstancesLoading]);
 
@@ -454,14 +456,14 @@ export const useTeamBattle = (dungeonType: DungeonType, initialLevel: number = 1
       }
     });
   };
-  const handleLevelComplete = () => {
+  const handleLevelComplete = async () => {
     toast({
       title: "Уровень завершен!",
       description: "Переход на следующий уровень...",
     });
 
     const nextLevel = battleState.level + 1;
-    const newOpponents = generateDungeonOpponents(dungeonType, nextLevel);
+    const newOpponents = await generateDungeonOpponents(dungeonType, nextLevel);
 
     setBattleState(prev => ({
       ...prev,

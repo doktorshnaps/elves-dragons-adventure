@@ -61,22 +61,29 @@ const DungeonLevel = memo(({
 }: DungeonLevelProps) => {
   const { language } = useLanguage();
   
-  const enhancedOpponents = useMemo(() => {
-    const opponents = generateDungeonOpponents(dungeonType as any, level);
-    return opponents.map(opponent => ({
-      ...opponent,
-      image: monsterImagesByName[opponent.name] || opponent.image,
-      description: monsterDescriptions[opponent.name],
-      translatedName: translateMonsterName(language, opponent.name),
-      translatedDescription: translateMonsterDescription(language, monsterDescriptions[opponent.name] || '')
-    }));
+  const [opponents, setOpponents] = React.useState<any[]>([]);
+
+  React.useEffect(() => {
+    const loadOpponents = async () => {
+      const baseOpponents = await generateDungeonOpponents(dungeonType as any, level);
+      const enhanced = baseOpponents.map(opponent => ({
+        ...opponent,
+        image: monsterImagesByName[opponent.name] || opponent.image,
+        description: monsterDescriptions[opponent.name],
+        translatedName: translateMonsterName(language, opponent.name),
+        translatedDescription: translateMonsterDescription(language, monsterDescriptions[opponent.name] || '')
+      }));
+      setOpponents(enhanced);
+    };
+    loadOpponents();
   }, [dungeonType, level, language]);
+
   return <div className="space-y-4">
       <h3 className="text-lg font-semibold text-game-accent border-b border-game-accent/30 pb-2">
         {translateMonsterText(language, 'Уровень')} {level}
       </h3>
       <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-2 justify-items-center">
-        {enhancedOpponents.map(opponent => <MonsterCard key={opponent.id} name={opponent.translatedName} health={opponent.health} power={opponent.power} isBoss={opponent.isBoss} image={opponent.image} specialAbilities={opponent.specialAbilities} description={opponent.translatedDescription} />)}
+        {opponents.map(opponent => <MonsterCard key={opponent.id} name={opponent.translatedName} health={opponent.health} power={opponent.power} isBoss={opponent.isBoss} image={opponent.image} specialAbilities={opponent.specialAbilities} description={opponent.translatedDescription} />)}
       </div>
     </div>;
 });
