@@ -1,5 +1,6 @@
 import { Opponent } from '@/types/battle';
 import { getMonsterData } from '@/utils/monsterDataParser';
+import { calculatePowerIndex, calculateMonsterStats, getDungeonNumber } from '@/utils/monsterPowerIndex';
 
 export interface DungeonConfig {
   internalName: string;
@@ -37,6 +38,12 @@ const getWaveConfig = (level: number): { monsterType: string; count: number } =>
 export const createBalancedGenerator = (config: DungeonConfig) => 
   async (level: number): Promise<Opponent[]> => {
     const waveConfig = getWaveConfig(level);
+    const dungeonNumber = getDungeonNumber(config.internalName);
+    
+    // Рассчитываем S_mob для этого уровня
+    const smob = calculatePowerIndex(dungeonNumber, level);
+    
+    // Пытаемся получить данные из CSV (для точной настройки)
     const monsterData = await getMonsterData(config.internalName, level);
     
     const opponents: Opponent[] = [];
@@ -46,113 +53,93 @@ export const createBalancedGenerator = (config: DungeonConfig) =>
       // Босс (один)
       const bossType = waveConfig.monsterType === 'boss50' ? 'boss50' : 'boss100';
       
-      if (monsterData) {
-        opponents.push({
-          id: currentId++,
-          name: config.monsterNames[bossType](level),
-          power: monsterData.attack,
-          health: monsterData.hp,
-          maxHealth: monsterData.hp,
-          armor: monsterData.armor,
-          isBoss: true,
-          image: config.monsterImages.boss()
-        });
-      } else {
-        // Fallback босс
-        const bossMultiplier = bossType === 'boss100' ? 4.0 : 2.5;
-        opponents.push({
-          id: currentId++,
-          name: config.monsterNames[bossType](level),
-          power: Math.floor(30 * level * bossMultiplier),
-          health: Math.floor(100 * level * bossMultiplier),
-          maxHealth: Math.floor(100 * level * bossMultiplier),
-          armor: Math.floor(20 * level * bossMultiplier),
-          isBoss: true,
-          image: config.monsterImages.boss()
-        });
-      }
+      // Используем формулу S_mob для расчета статов
+      const bossStats = calculateMonsterStats(smob, bossType);
+      
+      // Если есть CSV данные, используем их как приоритет (для точной балансировки)
+      const finalStats = monsterData ? {
+        hp: monsterData.hp,
+        armor: monsterData.armor,
+        attack: monsterData.attack
+      } : bossStats;
+      
+      opponents.push({
+        id: currentId++,
+        name: config.monsterNames[bossType](level),
+        power: finalStats.attack,
+        health: finalStats.hp,
+        maxHealth: finalStats.hp,
+        armor: finalStats.armor,
+        isBoss: true,
+        image: config.monsterImages.boss()
+      });
     } else if (waveConfig.monsterType === 'miniboss_wave') {
       // 9 обычных монстров
+      const normalStats = calculateMonsterStats(smob, 'normal');
+      
       for (let i = 0; i < 9; i++) {
-        if (monsterData) {
-          opponents.push({
-            id: currentId++,
-            name: config.monsterNames.monster(level),
-            power: monsterData.attack,
-            health: monsterData.hp,
-            maxHealth: monsterData.hp,
-            armor: monsterData.armor,
-            isBoss: false,
-            image: config.monsterImages.monster(level)
-          });
-        } else {
-          opponents.push({
-            id: currentId++,
-            name: config.monsterNames.monster(level),
-            power: Math.floor(30 * level),
-            health: Math.floor(100 * level),
-            maxHealth: Math.floor(100 * level),
-            armor: Math.floor(20 * level),
-            isBoss: false,
-            image: config.monsterImages.monster(level)
-          });
-        }
+        const finalStats = monsterData ? {
+          hp: monsterData.hp,
+          armor: monsterData.armor,
+          attack: monsterData.attack
+        } : normalStats;
+        
+        opponents.push({
+          id: currentId++,
+          name: config.monsterNames.monster(level),
+          power: finalStats.attack,
+          health: finalStats.hp,
+          maxHealth: finalStats.hp,
+          armor: finalStats.armor,
+          isBoss: false,
+          image: config.monsterImages.monster(level)
+        });
       }
       
       // + 1 минибосс
+      const minibossStats = calculateMonsterStats(smob, 'miniboss');
       const minibossData = await getMonsterData(config.internalName, level);
-      if (minibossData) {
-        opponents.push({
-          id: currentId++,
-          name: config.monsterNames.miniboss(level),
-          power: Math.floor(minibossData.attack * 1.5),
-          health: Math.floor(minibossData.hp * 1.5),
-          maxHealth: Math.floor(minibossData.hp * 1.5),
-          armor: Math.floor(minibossData.armor * 1.5),
-          isBoss: true,
-          image: config.monsterImages.miniboss()
-        });
-      } else {
-        opponents.push({
-          id: currentId++,
-          name: config.monsterNames.miniboss(level),
-          power: Math.floor(30 * level * 1.5),
-          health: Math.floor(100 * level * 1.5),
-          maxHealth: Math.floor(100 * level * 1.5),
-          armor: Math.floor(20 * level * 1.5),
-          isBoss: true,
-          image: config.monsterImages.miniboss()
-        });
-      }
+      
+      const finalMinibossStats = minibossData ? {
+        hp: Math.floor(minibossData.hp * 1.5),
+        armor: Math.floor(minibossData.armor * 1.5),
+        attack: Math.floor(minibossData.attack * 1.5)
+      } : minibossStats;
+      
+      opponents.push({
+        id: currentId++,
+        name: config.monsterNames.miniboss(level),
+        power: finalMinibossStats.attack,
+        health: finalMinibossStats.hp,
+        maxHealth: finalMinibossStats.hp,
+        armor: finalMinibossStats.armor,
+        isBoss: true,
+        image: config.monsterImages.miniboss()
+      });
     } else {
       // Обычные монстры (от 1 до 9)
+      const normalStats = calculateMonsterStats(smob, 'normal');
+      
       for (let i = 0; i < waveConfig.count; i++) {
-        if (monsterData) {
-          opponents.push({
-            id: currentId++,
-            name: config.monsterNames.monster(level),
-            power: monsterData.attack,
-            health: monsterData.hp,
-            maxHealth: monsterData.hp,
-            armor: monsterData.armor,
-            isBoss: false,
-            image: config.monsterImages.monster(level)
-          });
-        } else {
-          opponents.push({
-            id: currentId++,
-            name: config.monsterNames.monster(level),
-            power: Math.floor(30 * level),
-            health: Math.floor(100 * level),
-            maxHealth: Math.floor(100 * level),
-            armor: Math.floor(20 * level),
-            isBoss: false,
-            image: config.monsterImages.monster(level)
-          });
-        }
+        const finalStats = monsterData ? {
+          hp: monsterData.hp,
+          armor: monsterData.armor,
+          attack: monsterData.attack
+        } : normalStats;
+        
+        opponents.push({
+          id: currentId++,
+          name: config.monsterNames.monster(level),
+          power: finalStats.attack,
+          health: finalStats.hp,
+          maxHealth: finalStats.hp,
+          armor: finalStats.armor,
+          isBoss: false,
+          image: config.monsterImages.monster(level)
+        });
       }
     }
     
-    console.log(`[${config.internalName} Lv${level}] Generated ${opponents.length} opponents (type: ${waveConfig.monsterType})`);
+    console.log(`[${config.internalName} Lv${level}] S_mob=${smob.toFixed(1)}, Generated ${opponents.length} opponents (type: ${waveConfig.monsterType})`);
     return opponents;
   };

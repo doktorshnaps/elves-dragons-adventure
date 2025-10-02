@@ -13,6 +13,8 @@ import { useCardInstances } from '@/hooks/useCardInstances';
 import { calculateCardStats } from '@/utils/cardUtils';
 import { calculateD6Damage } from '@/utils/battleCalculations';
 import { applyFatigueDamage, getFatigueDescription } from '@/utils/expeditionFatigue';
+import { applyCrowdModifiers } from '@/utils/crowdEffects';
+import { getDungeonNumber } from '@/utils/monsterPowerIndex';
 
 export const useTeamBattle = (dungeonType: DungeonType, initialLevel: number = 1) => {
   const { toast } = useToast();
@@ -192,8 +194,20 @@ export const useTeamBattle = (dungeonType: DungeonType, initialLevel: number = 1
     
     if (!attackingPair || !target) return;
 
-    // Используем систему d6 согласно ТЗ
-    const damageResult = calculateD6Damage(attackingPair.power, target.armor || 0);
+    // Применяем модификаторы толпы
+    const aliveOpponents = battleState.opponents.filter(o => o.health > 0).length;
+    const dungeonNumber = getDungeonNumber(battleState.selectedDungeon || 'forgotten_souls');
+    const playerMods = applyCrowdModifiers(
+      attackingPair.defense,
+      attackingPair.power,
+      1, // allyCount для игрока
+      aliveOpponents,
+      dungeonNumber,
+      true // isPlayer
+    );
+    
+    // Используем систему d6 с учетом модификаторов
+    const damageResult = calculateD6Damage(playerMods.effectiveAttack, target.armor || 0);
     const newTargetHealth = Math.max(0, target.health - damageResult.damage);
 
     startTransition(() => {
@@ -255,8 +269,31 @@ export const useTeamBattle = (dungeonType: DungeonType, initialLevel: number = 1
       
       if (!enemy || !pair || pair.health <= 0) return;
 
-      // Используем систему d6 для врага
-      const damageResult = calculateD6Damage(enemy.power, pair.defense);
+      // Применяем модификаторы толпы для врага
+      const aliveOpponents = battleState.opponents.filter(o => o.health > 0).length;
+      const alivePairs = battleState.playerPairs.filter(p => p.health > 0).length;
+      const dungeonNumber = getDungeonNumber(battleState.selectedDungeon || 'forgotten_souls');
+      
+      const enemyMods = applyCrowdModifiers(
+        enemy.armor || 0,
+        enemy.power,
+        aliveOpponents,
+        alivePairs,
+        dungeonNumber,
+        false // isEnemy
+      );
+      
+      const playerMods = applyCrowdModifiers(
+        pair.defense,
+        pair.power,
+        alivePairs,
+        aliveOpponents,
+        dungeonNumber,
+        true // isPlayer
+      );
+
+      // Используем систему d6 с учетом модификаторов
+      const damageResult = calculateD6Damage(enemyMods.effectiveAttack, playerMods.effectiveArmor);
       
       // Применяем усталость похода к входящему урону
       const finalDamage = applyFatigueDamage(damageResult.damage, battleState.level);
@@ -294,8 +331,20 @@ export const useTeamBattle = (dungeonType: DungeonType, initialLevel: number = 1
       
       if (!pair || !enemy || enemy.health <= 0) return;
 
-      // Используем систему d6 для ответного удара пары
-      const damageResult = calculateD6Damage(pair.power, enemy.armor || 0);
+      // Применяем модификаторы толпы для контратаки
+      const aliveOpponents = battleState.opponents.filter(o => o.health > 0).length;
+      const dungeonNumber = getDungeonNumber(battleState.selectedDungeon || 'forgotten_souls');
+      const playerMods = applyCrowdModifiers(
+        pair.defense,
+        pair.power,
+        1,
+        aliveOpponents,
+        dungeonNumber,
+        true
+      );
+
+      // Используем систему d6 с учетом модификаторов для ответного удара пары
+      const damageResult = calculateD6Damage(playerMods.effectiveAttack, enemy.armor || 0);
       const damage = damageResult.damage;
       const newEnemyHealth = Math.max(0, enemy.health - damage);
 
@@ -352,8 +401,28 @@ export const useTeamBattle = (dungeonType: DungeonType, initialLevel: number = 1
     const currentEnemy = aliveOpponents[Math.floor(Math.random() * aliveOpponents.length)];
     const targetPair = alivePairs[Math.floor(Math.random() * alivePairs.length)];
     
-    // Используем систему d6 для атаки врага
-    const damageResult = calculateD6Damage(currentEnemy.power, targetPair.defense);
+    // Применяем модификаторы толпы для врага
+    const dungeonNumber = getDungeonNumber(battleState.selectedDungeon || 'forgotten_souls');
+    const enemyMods = applyCrowdModifiers(
+      currentEnemy.armor || 0,
+      currentEnemy.power,
+      aliveOpponents.length,
+      alivePairs.length,
+      dungeonNumber,
+      false
+    );
+    
+    const playerMods = applyCrowdModifiers(
+      targetPair.defense,
+      targetPair.power,
+      alivePairs.length,
+      aliveOpponents.length,
+      dungeonNumber,
+      true
+    );
+    
+    // Используем систему d6 с учетом модификаторов для атаки врага
+    const damageResult = calculateD6Damage(enemyMods.effectiveAttack, playerMods.effectiveArmor);
     
     // Применяем усталость похода к входящему урону
     const finalDamage = applyFatigueDamage(damageResult.damage, battleState.level);
