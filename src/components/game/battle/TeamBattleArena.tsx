@@ -46,8 +46,6 @@ export const TeamBattleArena: React.FC<TeamBattleArenaProps> = ({
   const [attackingPair, setAttackingPair] = React.useState<string | null>(null);
   const [attackedTarget, setAttackedTarget] = React.useState<number | null>(null);
   const [defendingPair, setDefendingPair] = React.useState<string | null>(null);
-  const [counterAttackingPair, setCounterAttackingPair] = React.useState<string | null>(null);
-  const [counterAttackedTarget, setCounterAttackedTarget] = React.useState<number | null>(null);
   const [autoBattle, setAutoBattle] = useState(false);
   const [selectedAbility, setSelectedAbility] = useState<Ability | null>(null);
   
@@ -56,8 +54,6 @@ export const TeamBattleArena: React.FC<TeamBattleArenaProps> = ({
   const [attackerDice, setAttackerDice] = useState<number | null>(null);
   const [defenderDice, setDefenderDice] = useState<number | null>(null);
   const [isPlayerAttacking, setIsPlayerAttacking] = useState(true);
-  const [diceAttackerName, setDiceAttackerName] = useState<string>('');
-  const [diceDefenderName, setDiceDefenderName] = useState<string>('');
   const alivePairs = playerPairs.filter(pair => pair.health > 0);
   const aliveOpponents = opponents.filter(opp => opp.health > 0);
   const handleAttack = () => {
@@ -65,14 +61,8 @@ export const TeamBattleArena: React.FC<TeamBattleArenaProps> = ({
       const pairId = selectedPair;
       const targetId = selectedTarget;
       
-      // Get names for dice display
-      const pair = playerPairs.find(p => p.id === pairId);
-      const target = opponents.find(o => o.id === targetId);
-      
       // Show dice roll animation - Player attacking
       setIsPlayerAttacking(true);
-      setDiceAttackerName(pair?.hero.name || 'Игрок');
-      setDiceDefenderName(target?.name || 'Враг');
       setAttackerDice(Math.floor(Math.random() * 6) + 1);
       setDefenderDice(Math.floor(Math.random() * 6) + 1);
       setIsDiceRolling(true);
@@ -95,26 +85,6 @@ export const TeamBattleArena: React.FC<TeamBattleArenaProps> = ({
             setAttackingPair(null);
             setAttackedTarget(null);
           }, 300);
-
-          // Визуальный эффект ответного удара врага по атакующей паре - показываем кубики врага
-          setTimeout(() => {
-            setDefendingPair(pairId);
-            setCounterAttackedTarget(targetId);
-            
-            // Show counter-attack dice - Enemy attacking
-            setIsPlayerAttacking(false);
-            setDiceAttackerName(target?.name || 'Враг');
-            setDiceDefenderName(pair?.hero.name || 'Игрок');
-            setAttackerDice(Math.floor(Math.random() * 6) + 1);
-            setDefenderDice(Math.floor(Math.random() * 6) + 1);
-            setIsDiceRolling(true);
-            
-            setTimeout(() => {
-              setIsDiceRolling(false);
-              setDefendingPair(null);
-              setCounterAttackedTarget(null);
-            }, 1000);
-          }, 600);
         }, 200);
       }, 1200);
     }
@@ -122,13 +92,10 @@ export const TeamBattleArena: React.FC<TeamBattleArenaProps> = ({
   const handleEnemyAttack = () => {
     // Случайно выбираем живую пару для защиты
     const randomPair = alivePairs[Math.floor(Math.random() * alivePairs.length)];
-    const randomEnemy = aliveOpponents[Math.floor(Math.random() * aliveOpponents.length)];
     
-    if (randomPair && randomEnemy) {
+    if (randomPair) {
       // Show dice roll animation - Enemy attacking
       setIsPlayerAttacking(false);
-      setDiceAttackerName(randomEnemy.name || 'Враг');
-      setDiceDefenderName(randomPair.hero.name || 'Игрок');
       setAttackerDice(Math.floor(Math.random() * 6) + 1);
       setDefenderDice(Math.floor(Math.random() * 6) + 1);
       setIsDiceRolling(true);
@@ -140,24 +107,6 @@ export const TeamBattleArena: React.FC<TeamBattleArenaProps> = ({
         
         setTimeout(() => {
           onEnemyAttack();
-
-          // Визуальный эффект ответной атаки пары после защиты
-          setTimeout(() => {
-            setCounterAttackingPair(randomPair.id);
-            
-            // Show counter-attack dice - Player attacking
-            setIsPlayerAttacking(true);
-            setDiceAttackerName(randomPair.hero.name || 'Игрок');
-            setDiceDefenderName(randomEnemy.name || 'Враг');
-            setAttackerDice(Math.floor(Math.random() * 6) + 1);
-            setDefenderDice(Math.floor(Math.random() * 6) + 1);
-            setIsDiceRolling(true);
-            
-            setTimeout(() => {
-              setIsDiceRolling(false);
-              setCounterAttackingPair(null);
-            }, 1000);
-          }, 600);
           
           setTimeout(() => {
             setDefendingPair(null);
@@ -229,14 +178,6 @@ export const TeamBattleArena: React.FC<TeamBattleArenaProps> = ({
                 setAttackingPair(null);
                 setAttackedTarget(null);
               }, 300);
-              setTimeout(() => {
-                setDefendingPair(randomPair.id);
-                setCounterAttackedTarget(randomTarget.id);
-                setTimeout(() => {
-                  setDefendingPair(null);
-                  setCounterAttackedTarget(null);
-                }, 400);
-              }, 600);
             }, 200);
           }
         }
@@ -334,7 +275,7 @@ export const TeamBattleArena: React.FC<TeamBattleArenaProps> = ({
                 const hasAbilities = heroAbilities.length > 0;
                 const currentMana = pair.mana || 0;
                 const maxMana = pair.maxMana || pair.hero.magic || 0;
-                return <div key={pair.id} className={`p-4 rounded-lg border-2 transition-all cursor-pointer ${pair.health <= 0 ? 'bg-muted/50 border-muted opacity-50' : attackingPair === pair.id ? 'bg-red-500/30 border-red-500 animate-pulse scale-105 shadow-lg shadow-red-500/50' : counterAttackingPair === pair.id ? 'bg-yellow-500/40 border-yellow-500 animate-bounce scale-110 shadow-lg shadow-yellow-500/60' : defendingPair === pair.id ? 'bg-blue-500/30 border-blue-500 animate-pulse shadow-lg shadow-blue-500/50' : selectedPair === pair.id ? 'bg-primary/20 border-primary' : selectedAbility?.targetType === 'ally' && selectedTarget === pair.id ? 'bg-green-500/20 border-green-400' : selectedAbility?.targetType === 'ally' ? 'bg-card border-green-400 hover:border-green-500/50' : 'bg-card border-border hover:border-primary/50'}`} onClick={() => {
+                return <div key={pair.id} className={`p-4 rounded-lg border-2 transition-all cursor-pointer ${pair.health <= 0 ? 'bg-muted/50 border-muted opacity-50' : attackingPair === pair.id ? 'bg-red-500/30 border-red-500 animate-pulse scale-105 shadow-lg shadow-red-500/50' : defendingPair === pair.id ? 'bg-blue-500/30 border-blue-500 animate-pulse shadow-lg shadow-blue-500/50' : selectedPair === pair.id ? 'bg-primary/20 border-primary' : selectedAbility?.targetType === 'ally' && selectedTarget === pair.id ? 'bg-green-500/20 border-green-400' : selectedAbility?.targetType === 'ally' ? 'bg-card border-green-400 hover:border-green-500/50' : 'bg-card border-border hover:border-primary/50'}`} onClick={() => {
                   if (pair.health > 0 && isPlayerTurn) {
                     // Если выбираем нового персонажа, отменяем способность
                     if (selectedPair !== pair.id && selectedAbility) {
@@ -459,14 +400,24 @@ export const TeamBattleArena: React.FC<TeamBattleArenaProps> = ({
                         Выберите цель для способности "{selectedAbility.name}"
                       </div> : <>
                         <div className="flex items-center justify-center gap-4">
-                          {/* Player Dice - Left */}
+                          {/* Player Dice - Left (показывается только когда игрок атакует) */}
                           <div className="w-20 flex justify-center">
-                            <InlineDiceDisplay
-                              isRolling={isDiceRolling && isPlayerAttacking}
-                              diceValue={isPlayerAttacking ? attackerDice : defenderDice}
-                              isAttacker={isPlayerAttacking}
-                              label={isPlayerAttacking ? 'Атака' : 'Защита'}
-                            />
+                            {isPlayerAttacking && (
+                              <InlineDiceDisplay
+                                isRolling={isDiceRolling}
+                                diceValue={attackerDice}
+                                isAttacker={true}
+                                label="Атака"
+                              />
+                            )}
+                            {!isPlayerAttacking && (
+                              <InlineDiceDisplay
+                                isRolling={isDiceRolling}
+                                diceValue={defenderDice}
+                                isAttacker={false}
+                                label="Защита"
+                              />
+                            )}
                           </div>
 
                           {/* Attack Button - Center */}
@@ -479,14 +430,24 @@ export const TeamBattleArena: React.FC<TeamBattleArenaProps> = ({
                             Атаковать
                           </Button>
 
-                          {/* Enemy Dice - Right */}
+                          {/* Enemy Dice - Right (показывается только когда враг атакует) */}
                           <div className="w-20 flex justify-center">
-                            <InlineDiceDisplay
-                              isRolling={isDiceRolling && !isPlayerAttacking}
-                              diceValue={!isPlayerAttacking ? attackerDice : defenderDice}
-                              isAttacker={!isPlayerAttacking}
-                              label={!isPlayerAttacking ? 'Атака' : 'Защита'}
-                            />
+                            {isPlayerAttacking && (
+                              <InlineDiceDisplay
+                                isRolling={isDiceRolling}
+                                diceValue={defenderDice}
+                                isAttacker={false}
+                                label="Защита"
+                              />
+                            )}
+                            {!isPlayerAttacking && (
+                              <InlineDiceDisplay
+                                isRolling={isDiceRolling}
+                                diceValue={attackerDice}
+                                isAttacker={true}
+                                label="Атака"
+                              />
+                            )}
                           </div>
                         </div>
                         {selectedPair && !selectedTarget && <div className="text-xs text-muted-foreground">
@@ -519,7 +480,7 @@ export const TeamBattleArena: React.FC<TeamBattleArenaProps> = ({
             </CardHeader>
             <CardContent className="h-full overflow-auto">
               <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-2">
-                {opponents.map((opponent, index) => <div key={opponent.id} className={`relative rounded-lg border-2 transition-all cursor-pointer overflow-hidden h-28 ${opponent.health <= 0 ? 'opacity-50 border-muted' : attackedTarget === opponent.id ? 'border-yellow-500 animate-bounce scale-110 shadow-lg shadow-yellow-500/60' : counterAttackedTarget === opponent.id ? 'border-red-500 animate-pulse scale-105 shadow-lg shadow-red-500/50' : selectedTarget === opponent.id ? 'border-destructive bg-destructive/10' : selectedAbility?.targetType === 'enemy' ? 'border-red-400 hover:border-red-500/70' : 'border-border hover:border-destructive/50'}`} onClick={() => {
+                {opponents.map((opponent, index) => <div key={opponent.id} className={`relative rounded-lg border-2 transition-all cursor-pointer overflow-hidden h-28 ${opponent.health <= 0 ? 'opacity-50 border-muted' : attackedTarget === opponent.id ? 'border-red-500 animate-pulse scale-105 shadow-lg shadow-red-500/50' : selectedTarget === opponent.id ? 'border-destructive bg-destructive/10' : selectedAbility?.targetType === 'enemy' ? 'border-red-400 hover:border-red-500/70' : 'border-border hover:border-destructive/50'}`} onClick={() => {
                 if (opponent.health > 0 && isPlayerTurn) {
                   if (selectedAbility && selectedAbility.targetType === 'enemy') {
                     // Если повторно нажимаем на ту же цель, отменяем выбор
