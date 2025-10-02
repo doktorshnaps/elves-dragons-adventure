@@ -15,7 +15,11 @@ export const useGameSync = () => {
   const lastSyncedRef = useRef<any>(null);
   
   // Инициализация синхронизации экземпляров карт
-  useCardInstanceSync();
+  try {
+    useCardInstanceSync();
+  } catch (error) {
+    console.error('❌ Error in useCardInstanceSync:', error);
+  }
 
   // Загружаем данные из Supabase в локальное состояние при инициализации
   useEffect(() => {

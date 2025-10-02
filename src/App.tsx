@@ -37,14 +37,23 @@ import {
 } from './components/lazy/LazyComponents';
 
 function App() {
-  useAccountSync();
-  useGameSync();
-  useRoutePreloader(); // Инициализируем preloading
+  // Добавляем обработку ошибок в хуках
+  try {
+    useAccountSync();
+    useGameSync();
+    useRoutePreloader(); // Инициализируем preloading
+  } catch (error) {
+    console.error('❌ Error in App hooks:', error);
+  }
   
   // Performance optimizations on app start
   React.useEffect(() => {
-    preloadCriticalLibs();
-    registerGameServiceWorker();
+    try {
+      preloadCriticalLibs();
+      registerGameServiceWorker();
+    } catch (error) {
+      console.error('❌ Error in app initialization:', error);
+    }
   }, []);
   
   return (
