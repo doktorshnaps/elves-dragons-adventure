@@ -13,7 +13,7 @@ import { TeamHealthBars } from './TeamHealthBars';
 import { AbilitiesPanel } from './AbilitiesPanel';
 import { HERO_ABILITIES } from '@/types/abilities';
 import type { Ability } from '@/types/abilities';
-import { TeamDiceRollDisplay } from './TeamDiceRollDisplay';
+import { InlineDiceDisplay } from './InlineDiceDisplay';
 interface TeamBattleArenaProps {
   playerPairs: TeamPair[];
   opponents: Opponent[];
@@ -246,16 +246,6 @@ export const TeamBattleArena: React.FC<TeamBattleArenaProps> = ({
     }
   }, [autoBattle, isPlayerTurn, alivePairs.length, aliveOpponents.length]);
   return <div className="h-screen w-screen overflow-hidden p-2 flex flex-col relative">
-      {/* Dice Roll Display */}
-      <TeamDiceRollDisplay
-        isRolling={isDiceRolling}
-        attackerDice={attackerDice}
-        defenderDice={defenderDice}
-        isPlayerAttacking={isPlayerAttacking}
-        attackerName={diceAttackerName}
-        defenderName={diceDefenderName}
-      />
-
       {/* Removed old ability menu */}
 
       <div className="w-full h-full flex flex-col space-y-2">
@@ -468,9 +458,37 @@ export const TeamBattleArena: React.FC<TeamBattleArenaProps> = ({
                     {selectedAbility ? <div className="text-xs text-muted-foreground">
                         Выберите цель для способности "{selectedAbility.name}"
                       </div> : <>
-                        <Button onClick={handleAttack} disabled={!selectedPair || selectedTarget === null || typeof selectedTarget === 'string'} size="sm" className="h-7 px-3">
-                          Атаковать
-                        </Button>
+                        <div className="flex items-center justify-center gap-4">
+                          {/* Player Dice - Left */}
+                          <div className="w-20 flex justify-center">
+                            <InlineDiceDisplay
+                              isRolling={isDiceRolling && isPlayerAttacking}
+                              diceValue={isPlayerAttacking ? attackerDice : defenderDice}
+                              isAttacker={isPlayerAttacking}
+                              label={isPlayerAttacking ? 'Атака' : 'Защита'}
+                            />
+                          </div>
+
+                          {/* Attack Button - Center */}
+                          <Button 
+                            onClick={handleAttack} 
+                            disabled={!selectedPair || selectedTarget === null || typeof selectedTarget === 'string'} 
+                            size="sm" 
+                            className="h-7 px-3"
+                          >
+                            Атаковать
+                          </Button>
+
+                          {/* Enemy Dice - Right */}
+                          <div className="w-20 flex justify-center">
+                            <InlineDiceDisplay
+                              isRolling={isDiceRolling && !isPlayerAttacking}
+                              diceValue={!isPlayerAttacking ? attackerDice : defenderDice}
+                              isAttacker={!isPlayerAttacking}
+                              label={!isPlayerAttacking ? 'Атака' : 'Защита'}
+                            />
+                          </div>
+                        </div>
                         {selectedPair && !selectedTarget && <div className="text-xs text-muted-foreground">
                             Выберите цель для атаки
                           </div>}
