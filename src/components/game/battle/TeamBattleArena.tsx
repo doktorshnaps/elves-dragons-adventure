@@ -13,6 +13,7 @@ import { TeamHealthBars } from './TeamHealthBars';
 import { AbilitiesPanel } from './AbilitiesPanel';
 import { HERO_ABILITIES } from '@/types/abilities';
 import type { Ability } from '@/types/abilities';
+import { TeamDiceRollDisplay } from './TeamDiceRollDisplay';
 interface TeamBattleArenaProps {
   playerPairs: TeamPair[];
   opponents: Opponent[];
@@ -49,60 +50,120 @@ export const TeamBattleArena: React.FC<TeamBattleArenaProps> = ({
   const [counterAttackedTarget, setCounterAttackedTarget] = React.useState<number | null>(null);
   const [autoBattle, setAutoBattle] = useState(false);
   const [selectedAbility, setSelectedAbility] = useState<Ability | null>(null);
+  
+  // Dice roll state
+  const [isDiceRolling, setIsDiceRolling] = useState(false);
+  const [attackerDice, setAttackerDice] = useState<number | null>(null);
+  const [defenderDice, setDefenderDice] = useState<number | null>(null);
+  const [isPlayerAttacking, setIsPlayerAttacking] = useState(true);
+  const [diceAttackerName, setDiceAttackerName] = useState<string>('');
+  const [diceDefenderName, setDiceDefenderName] = useState<string>('');
   const alivePairs = playerPairs.filter(pair => pair.health > 0);
   const aliveOpponents = opponents.filter(opp => opp.health > 0);
   const handleAttack = () => {
     if (selectedPair && selectedTarget !== null && typeof selectedTarget === 'number') {
       const pairId = selectedPair;
       const targetId = selectedTarget;
+      
+      // Get names for dice display
+      const pair = playerPairs.find(p => p.id === pairId);
+      const target = opponents.find(o => o.id === targetId);
+      
+      // Show dice roll animation - Player attacking
+      setIsPlayerAttacking(true);
+      setDiceAttackerName(pair?.hero.name || 'Игрок');
+      setDiceDefenderName(target?.name || 'Враг');
+      setAttackerDice(Math.floor(Math.random() * 6) + 1);
+      setDefenderDice(Math.floor(Math.random() * 6) + 1);
+      setIsDiceRolling(true);
+      
       // Запускаем анимацию атаки
       setAttackingPair(pairId);
       setAttackedTarget(targetId);
 
-      // Выполняем атаку через небольшую задержку для анимации
+      // Hide dice and execute attack
       setTimeout(() => {
-        onAttack(pairId, targetId);
-        setSelectedPair(null);
-        setSelectedTarget(null);
-
-        // Убираем эффекты атаки
+        setIsDiceRolling(false);
+        
         setTimeout(() => {
-          setAttackingPair(null);
-          setAttackedTarget(null);
-        }, 300);
+          onAttack(pairId, targetId);
+          setSelectedPair(null);
+          setSelectedTarget(null);
 
-        // Визуальный эффект ответного удара врага по атакующей паре
-        setTimeout(() => {
-          setDefendingPair(pairId);
-          // Подсветим также врага как участвующего в ответном ударе
-          setCounterAttackedTarget(targetId);
+          // Убираем эффекты атаки
           setTimeout(() => {
-            setDefendingPair(null);
-            setCounterAttackedTarget(null);
-          }, 400);
-        }, 600);
-      }, 200);
+            setAttackingPair(null);
+            setAttackedTarget(null);
+          }, 300);
+
+          // Визуальный эффект ответного удара врага по атакующей паре - показываем кубики врага
+          setTimeout(() => {
+            setDefendingPair(pairId);
+            setCounterAttackedTarget(targetId);
+            
+            // Show counter-attack dice - Enemy attacking
+            setIsPlayerAttacking(false);
+            setDiceAttackerName(target?.name || 'Враг');
+            setDiceDefenderName(pair?.hero.name || 'Игрок');
+            setAttackerDice(Math.floor(Math.random() * 6) + 1);
+            setDefenderDice(Math.floor(Math.random() * 6) + 1);
+            setIsDiceRolling(true);
+            
+            setTimeout(() => {
+              setIsDiceRolling(false);
+              setDefendingPair(null);
+              setCounterAttackedTarget(null);
+            }, 1000);
+          }, 600);
+        }, 200);
+      }, 1200);
     }
   };
   const handleEnemyAttack = () => {
     // Случайно выбираем живую пару для защиты
     const randomPair = alivePairs[Math.floor(Math.random() * alivePairs.length)];
-    if (randomPair) {
+    const randomEnemy = aliveOpponents[Math.floor(Math.random() * aliveOpponents.length)];
+    
+    if (randomPair && randomEnemy) {
+      // Show dice roll animation - Enemy attacking
+      setIsPlayerAttacking(false);
+      setDiceAttackerName(randomEnemy.name || 'Враг');
+      setDiceDefenderName(randomPair.hero.name || 'Игрок');
+      setAttackerDice(Math.floor(Math.random() * 6) + 1);
+      setDefenderDice(Math.floor(Math.random() * 6) + 1);
+      setIsDiceRolling(true);
+      
       setDefendingPair(randomPair.id);
+      
       setTimeout(() => {
-        onEnemyAttack();
+        setIsDiceRolling(false);
+        
+        setTimeout(() => {
+          onEnemyAttack();
 
-        // Визуальный эффект ответной атаки пары после защиты
-        setTimeout(() => {
-          setCounterAttackingPair(randomPair.id);
+          // Визуальный эффект ответной атаки пары после защиты
           setTimeout(() => {
-            setCounterAttackingPair(null);
-          }, 400);
-        }, 600);
-        setTimeout(() => {
-          setDefendingPair(null);
-        }, 300);
-      }, 200);
+            setCounterAttackingPair(randomPair.id);
+            
+            // Show counter-attack dice - Player attacking
+            setIsPlayerAttacking(true);
+            setDiceAttackerName(randomPair.hero.name || 'Игрок');
+            setDiceDefenderName(randomEnemy.name || 'Враг');
+            setAttackerDice(Math.floor(Math.random() * 6) + 1);
+            setDefenderDice(Math.floor(Math.random() * 6) + 1);
+            setIsDiceRolling(true);
+            
+            setTimeout(() => {
+              setIsDiceRolling(false);
+              setCounterAttackingPair(null);
+            }, 1000);
+          }, 600);
+          
+          setTimeout(() => {
+            setDefendingPair(null);
+          }, 300);
+        }, 200);
+      }, 1200);
     } else {
       onEnemyAttack();
     }
@@ -184,7 +245,17 @@ export const TeamBattleArena: React.FC<TeamBattleArenaProps> = ({
       return () => clearTimeout(timer);
     }
   }, [autoBattle, isPlayerTurn, alivePairs.length, aliveOpponents.length]);
-  return <div className="h-screen w-screen overflow-hidden p-2 flex flex-col">
+  return <div className="h-screen w-screen overflow-hidden p-2 flex flex-col relative">
+      {/* Dice Roll Display */}
+      <TeamDiceRollDisplay
+        isRolling={isDiceRolling}
+        attackerDice={attackerDice}
+        defenderDice={defenderDice}
+        isPlayerAttacking={isPlayerAttacking}
+        attackerName={diceAttackerName}
+        defenderName={diceDefenderName}
+      />
+
       {/* Removed old ability menu */}
 
       <div className="w-full h-full flex flex-col space-y-2">
