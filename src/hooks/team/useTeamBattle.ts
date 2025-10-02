@@ -11,6 +11,7 @@ import { useGameData } from '@/hooks/useGameData';
 import { HERO_ABILITIES } from '@/types/abilities';
 import { useCardInstances } from '@/hooks/useCardInstances';
 import { calculateCardStats } from '@/utils/cardUtils';
+import { calculateD6Damage } from '@/utils/battleCalculations';
 
 export const useTeamBattle = (dungeonType: DungeonType, initialLevel: number = 1) => {
   const { toast } = useToast();
@@ -78,6 +79,13 @@ export const useTeamBattle = (dungeonType: DungeonType, initialLevel: number = 1
         const dragonMana = dragonAlive ? (dragonWithCalc?.magic ?? 0) : 0;
         const totalMana = heroMana + dragonMana;
         
+        // Расчет брони по ТЗ: Armor_pair = (Armor_d + Armor_h) / 2
+        const heroArmor = heroWithCalc.defense ?? 0;
+        const dragonArmor = dragonAlive ? (dragonWithCalc?.defense ?? 0) : 0;
+        const pairArmor = dragonAlive 
+          ? Math.floor((heroArmor + dragonArmor) / 2)
+          : heroArmor;
+        
         return {
           id: `pair-${index}`,
           hero: heroWithCalc,
@@ -85,7 +93,7 @@ export const useTeamBattle = (dungeonType: DungeonType, initialLevel: number = 1
           health: heroCurrent + dragonCurrent,
           maxHealth: heroMax + (dragonMax || 0),
           power: (heroWithCalc.power ?? 0) + (dragonAlive ? (dragonWithCalc?.power ?? 0) : 0),
-          defense: (heroWithCalc.defense ?? 0) + (dragonAlive ? (dragonWithCalc?.defense ?? 0) : 0),
+          defense: pairArmor,
           attackOrder: index + 1,
           mana: totalMana,
           maxMana: totalMana
@@ -135,6 +143,13 @@ export const useTeamBattle = (dungeonType: DungeonType, initialLevel: number = 1
       const dragonMana = dragonAlive ? (dragonWithCalc?.magic ?? 0) : 0;
       const totalMana = heroMana + dragonMana;
 
+      // Расчет брони по ТЗ: Armor_pair = (Armor_d + Armor_h) / 2
+      const heroArmor = heroWithCalc.defense ?? 0;
+      const dragonArmor = dragonAlive ? (dragonWithCalc?.defense ?? 0) : 0;
+      const pairArmor = dragonAlive 
+        ? Math.floor((heroArmor + dragonArmor) / 2)
+        : heroArmor;
+      
       return {
         ...pair,
         hero: heroWithCalc,
@@ -142,7 +157,7 @@ export const useTeamBattle = (dungeonType: DungeonType, initialLevel: number = 1
         health: heroCurrent + dragonCurrent,
         maxHealth: heroMax + (dragonMax || 0),
         power: (heroWithCalc.power ?? 0) + (dragonAlive ? (dragonWithCalc?.power ?? 0) : 0),
-        defense: (heroWithCalc.defense ?? 0) + (dragonAlive ? (dragonWithCalc?.defense ?? 0) : 0),
+        defense: pairArmor,
         mana: totalMana,
         maxMana: totalMana
       };
@@ -176,8 +191,9 @@ export const useTeamBattle = (dungeonType: DungeonType, initialLevel: number = 1
     
     if (!attackingPair || !target) return;
 
-    const damage = Math.max(1, attackingPair.power - (target.defense || 0));
-    const newTargetHealth = Math.max(0, target.health - damage);
+    // Используем систему d6 согласно ТЗ
+    const damageResult = calculateD6Damage(attackingPair.power, target.armor || 0);
+    const newTargetHealth = Math.max(0, target.health - damageResult.damage);
 
     startTransition(() => {
       setBattleState(prev => ({
@@ -202,9 +218,12 @@ export const useTeamBattle = (dungeonType: DungeonType, initialLevel: number = 1
       });
     }
 
+    const critText = damageResult.isAttackerCrit ? " 🎯 КРИТ!" : "";
+    const defCritText = damageResult.isDefenderCrit ? " 🛡️" : "";
+    
     toast({
-      title: "Атака!",
-      description: `${attackingPair.hero.name} наносит ${damage} урона!`,
+      title: `Атака!${critText}`,
+      description: `${attackingPair.hero.name} (${damageResult.attackerRoll}+${attackingPair.power}) наносит ${damageResult.damage} урона${defCritText}`,
     });
 
     // Ответный удар противника, если он жив
@@ -235,7 +254,9 @@ export const useTeamBattle = (dungeonType: DungeonType, initialLevel: number = 1
       
       if (!enemy || !pair || pair.health <= 0) return;
 
-      const damage = Math.max(1, enemy.power - pair.defense);
+      // Используем систему d6 для врага
+      const damageResult = calculateD6Damage(enemy.power, pair.defense);
+      const damage = damageResult.damage;
       
       // Apply damage using proper health logic
       const updatedPair = await applyDamageToPair(pair, damage, updateGameData, gameData);
@@ -251,9 +272,12 @@ export const useTeamBattle = (dungeonType: DungeonType, initialLevel: number = 1
         }));
       });
 
+      const critText = damageResult.isAttackerCrit ? " 🎯 КРИТ!" : "";
+      const defCritText = damageResult.isDefenderCrit ? " 🛡️" : "";
+      
       toast({
-        title: "Ответный удар врага!",
-        description: `${enemy.name} наносит ${damage} урона в ответ!`,
+        title: `Ответный удар врага!${critText}`,
+        description: `${enemy.name} (${damageResult.attackerRoll}+${enemy.power}) наносит ${damage} урона${defCritText}`,
         variant: "destructive"
       });
     } else {
@@ -263,7 +287,9 @@ export const useTeamBattle = (dungeonType: DungeonType, initialLevel: number = 1
       
       if (!pair || !enemy || enemy.health <= 0) return;
 
-      const damage = Math.max(1, pair.power - (enemy.defense || 0));
+      // Используем систему d6 для ответного удара пары
+      const damageResult = calculateD6Damage(pair.power, enemy.armor || 0);
+      const damage = damageResult.damage;
       const newEnemyHealth = Math.max(0, enemy.health - damage);
 
       setBattleState(prev => ({
@@ -287,9 +313,11 @@ export const useTeamBattle = (dungeonType: DungeonType, initialLevel: number = 1
         });
       }
 
+      const critText = damageResult.isAttackerCrit ? " 🎯 КРИТ!" : "";
+      
       toast({
-        title: "Ответный удар!",
-        description: `${pair.hero.name} наносит ${damage} урона в ответ!`,
+        title: `Ответный удар!${critText}`,
+        description: `${pair.hero.name} (${damageResult.attackerRoll}+${pair.power}) наносит ${damage} урона в ответ!`,
       });
     }
     // Prevent auto-loop: do not chain new enemy attacks here.
@@ -316,7 +344,10 @@ export const useTeamBattle = (dungeonType: DungeonType, initialLevel: number = 1
 
     const currentEnemy = aliveOpponents[Math.floor(Math.random() * aliveOpponents.length)];
     const targetPair = alivePairs[Math.floor(Math.random() * alivePairs.length)];
-    const damage = Math.max(1, currentEnemy.power - targetPair.defense);
+    
+    // Используем систему d6 для атаки врага
+    const damageResult = calculateD6Damage(currentEnemy.power, targetPair.defense);
+    const damage = damageResult.damage;
     
     const updatedPair = await applyDamageToPair(targetPair, damage, updateGameData, gameData);
 
@@ -329,9 +360,12 @@ export const useTeamBattle = (dungeonType: DungeonType, initialLevel: number = 1
       )
     }));
 
+    const critText = damageResult.isAttackerCrit ? " 🎯 КРИТ!" : "";
+    const defCritText = damageResult.isDefenderCrit ? " 🛡️" : "";
+    
     toast({
-      title: "Враг атакует!",
-      description: `${currentEnemy.name} наносит ${damage} урона!`,
+      title: `Враг атакует!${critText}`,
+      description: `${currentEnemy.name} (${damageResult.attackerRoll}+${currentEnemy.power}) наносит ${damage} урона${defCritText}`,
       variant: "destructive"
     });
 
