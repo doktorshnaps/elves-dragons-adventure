@@ -12,6 +12,7 @@ import { HERO_ABILITIES } from '@/types/abilities';
 import { useCardInstances } from '@/hooks/useCardInstances';
 import { calculateCardStats } from '@/utils/cardUtils';
 import { calculateD6Damage } from '@/utils/battleCalculations';
+import { applyFatigueDamage, getFatigueDescription } from '@/utils/expeditionFatigue';
 
 export const useTeamBattle = (dungeonType: DungeonType, initialLevel: number = 1) => {
   const { toast } = useToast();
@@ -256,10 +257,12 @@ export const useTeamBattle = (dungeonType: DungeonType, initialLevel: number = 1
 
       // Используем систему d6 для врага
       const damageResult = calculateD6Damage(enemy.power, pair.defense);
-      const damage = damageResult.damage;
+      
+      // Применяем усталость похода к входящему урону
+      const finalDamage = applyFatigueDamage(damageResult.damage, battleState.level);
       
       // Apply damage using proper health logic
-      const updatedPair = await applyDamageToPair(pair, damage, updateGameData, gameData);
+      const updatedPair = await applyDamageToPair(pair, finalDamage, updateGameData, gameData);
 
       startTransition(() => {
         setBattleState(prev => ({
@@ -274,10 +277,14 @@ export const useTeamBattle = (dungeonType: DungeonType, initialLevel: number = 1
 
       const critText = damageResult.isAttackerCrit ? " 🎯 КРИТ!" : "";
       const defCritText = damageResult.isDefenderCrit ? " 🛡️" : "";
+      const fatigueInfo = getFatigueDescription(battleState.level);
+      const damageInfo = finalDamage > damageResult.damage 
+        ? `${damageResult.damage}→${finalDamage}` 
+        : `${finalDamage}`;
       
       toast({
         title: `Ответный удар врага!${critText}`,
-        description: `${enemy.name} (${damageResult.attackerRoll}+${enemy.power}) наносит ${damage} урона${defCritText}`,
+        description: `${enemy.name} (${damageResult.attackerRoll}+${enemy.power}) наносит ${damageInfo} урона${defCritText}${fatigueInfo ? '\n' + fatigueInfo : ''}`,
         variant: "destructive"
       });
     } else {
@@ -347,9 +354,11 @@ export const useTeamBattle = (dungeonType: DungeonType, initialLevel: number = 1
     
     // Используем систему d6 для атаки врага
     const damageResult = calculateD6Damage(currentEnemy.power, targetPair.defense);
-    const damage = damageResult.damage;
     
-    const updatedPair = await applyDamageToPair(targetPair, damage, updateGameData, gameData);
+    // Применяем усталость похода к входящему урону
+    const finalDamage = applyFatigueDamage(damageResult.damage, battleState.level);
+    
+    const updatedPair = await applyDamageToPair(targetPair, finalDamage, updateGameData, gameData);
 
     setBattleState(prev => ({
       ...prev,
@@ -362,10 +371,14 @@ export const useTeamBattle = (dungeonType: DungeonType, initialLevel: number = 1
 
     const critText = damageResult.isAttackerCrit ? " 🎯 КРИТ!" : "";
     const defCritText = damageResult.isDefenderCrit ? " 🛡️" : "";
+    const fatigueInfo = getFatigueDescription(battleState.level);
+    const damageInfo = finalDamage > damageResult.damage 
+      ? `${damageResult.damage}→${finalDamage}` 
+      : `${finalDamage}`;
     
     toast({
       title: `Враг атакует!${critText}`,
-      description: `${currentEnemy.name} (${damageResult.attackerRoll}+${currentEnemy.power}) наносит ${damage} урона${defCritText}`,
+      description: `${currentEnemy.name} (${damageResult.attackerRoll}+${currentEnemy.power}) наносит ${damageInfo} урона${defCritText}${fatigueInfo ? '\n' + fatigueInfo : ''}`,
       variant: "destructive"
     });
 
