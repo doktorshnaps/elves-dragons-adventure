@@ -9,113 +9,139 @@ import { useNFTCards } from './useNFTCards';
 let singletonConnector: NearConnector | null = null;
 let listenersRegistered = false;
 
-// Detect if running in Telegram WebApp
-const isTelegramWebApp = () => {
-  return typeof window !== 'undefined' && 
-         (window as any).Telegram && 
-         (window as any).Telegram.WebApp;
+// 1) Детект окружения
+const isTelegramWebApp = () =>
+  typeof window !== 'undefined' && (window as any).Telegram?.WebApp;
+
+const isMobileDevice = (): boolean =>
+  ('ontouchstart' in window) ||
+  (navigator.maxTouchPoints > 0) ||
+  ((navigator as any).msMaxTouchPoints > 0) ||
+  /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+
+// 2) Fallback-открытие внешних ссылок в WebView/Telegram
+const openExternalLink = (url: string) => {
+  const inTg = isTelegramWebApp();
+  if (inTg) {
+    const tg = (window as any).Telegram.WebApp;
+    if (/^tg:\/\//i.test(url) || /t\.me\//i.test(url)) {
+      tg.openTelegramLink(url);
+      return;
+    }
+    tg.openLink(url, { try_instant_view: false });
+    return;
+  }
+
+  const embedded = window.location !== window.parent.location;
+  if (embedded) {
+    try {
+      window.parent.postMessage({ type: 'OPEN_EXTERNAL_LINK', url }, '*');
+      return;
+    } catch { /* ignore */ }
+  }
+
+  // Мобильный fallback — безопасная ссылка в новый таб
+  const a = document.createElement('a');
+  a.href = url;
+  a.target = '_blank';
+  a.rel = 'noopener noreferrer';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
 };
 
-// Improved mobile device detection
-const isMobileDevice = (): boolean => {
-  return ('ontouchstart' in window) || 
-         (navigator.maxTouchPoints > 0) ||
-         ((navigator as any).msMaxTouchPoints > 0) ||
-         /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
-};
-
-// Ensure iframe is mobile-friendly
-const ensureIframeMobileSupport = (iframe: HTMLIFrameElement) => {
-  iframe.setAttribute('sandbox', 'allow-scripts allow-same-origin allow-popups allow-popups-to-escape-sandbox allow-forms');
-  iframe.style.touchAction = 'manipulation';
-  iframe.style.setProperty('-webkit-overflow-scrolling', 'touch');
-  
-  try {
-    const iframeDoc = iframe.contentDocument || iframe.contentWindow?.document;
-    if (iframeDoc) {
-      const viewportMeta = iframeDoc.querySelector('meta[name="viewport"]');
-      if (!viewportMeta) {
-        const meta = iframeDoc.createElement('meta');
-        meta.name = 'viewport';
-        meta.content = 'width=device-width, initial-scale=1.0, user-scalable=no, maximum-scale=1.0';
-        iframeDoc.head?.appendChild(meta);
+// 3) Обеспечение кликабельности на мобилках
+const ensureInteractive = (el: HTMLElement | null) => {
+  if (!el) return;
+  let p: HTMLElement | null = el;
+  let hops = 0;
+  while (p && p !== document.body && hops < 12) {
+    const cs = getComputedStyle(p);
+    if (cs.pointerEvents === 'none') {
+      try { p.style.setProperty('pointer-events', 'auto', 'important'); }
+      catch { p.style.pointerEvents = 'auto'; }
+    }
+    if (['fixed', 'absolute', 'sticky'].includes(cs.position)) {
+      const z = parseInt(cs.zIndex || '0', 10);
+      if (Number.isNaN(z) || z < 2147483647) {
+        try { p.style.setProperty('z-index', '2147483647', 'important'); }
+        catch { p.style.zIndex = '2147483647'; }
       }
     }
-  } catch (e) {
-    // Cross-origin iframes will fail, that's expected
+    p = p.parentElement;
+    hops++;
   }
 };
 
-// Make element mobile-friendly with touch events
-const makeMobileFriendly = (element: HTMLElement) => {
-  element.style.touchAction = 'manipulation';
-  element.style.setProperty('-webkit-touch-callout', 'none');
-  element.style.setProperty('-webkit-user-select', 'none');
-  element.style.setProperty('user-select', 'none');
-  element.style.cursor = 'pointer';
-  
-  // Ensure touch events work
-  const handleTouchEnd = (e: TouchEvent) => {
+const makeMobileFriendly = (el: HTMLElement) => {
+  el.style.touchAction = 'manipulation';
+  el.style.setProperty('-webkit-touch-callout', 'none');
+  el.style.setProperty('-webkit-user-select', 'none');
+  el.style.setProperty('user-select', 'none');
+  el.style.cursor = 'pointer';
+
+  const fireClick = () =>
+    requestAnimationFrame(() => setTimeout(() => el.click(), 60));
+
+  el.addEventListener('touchstart', (e) => { e.stopPropagation(); }, { passive: false });
+  el.addEventListener('touchend', (e) => {
     e.preventDefault();
     e.stopPropagation();
-    element.click();
-  };
-  
-  element.addEventListener('touchend', handleTouchEnd, { passive: false });
-  element.addEventListener('touchstart', (e) => e.stopPropagation(), { passive: false });
+    fireClick();
+  }, { passive: false });
 };
 
-// Temporary workaround for non-clickable buttons in HOT Wallet modal on mobile/Telegram
-// - Observes DOM for buttons labeled "Open Mobile" / "Open Telegram"
-// - Ensures their containers allow pointer events and auto-clicks the right one
+// 4) Глобальные стили для модалки
+const injectMobileModalStyles = () => {
+  if (document.getElementById('mobile-wallet-styles')) return;
+  const style = document.createElement('style');
+  style.id = 'mobile-wallet-styles';
+  style.textContent = `
+    .wallet-modal-open * { pointer-events: auto !important; }
+    @media (max-width: 768px) {
+      [class*="modal"], [class*="popup"] {
+        position: fixed !important;
+        inset: 0 !important;
+        width: 100vw !important;
+        height: 100vh !important;
+        z-index: 2147483647 !important;
+        touch-action: manipulation !important;
+        -webkit-overflow-scrolling: touch !important;
+      }
+      iframe { touch-action: manipulation !important; }
+      button, [role="button"], a {
+        min-height: 48px;
+        touch-action: manipulation;
+        -webkit-tap-highlight-color: transparent;
+      }
+    }
+  `;
+  document.head.appendChild(style);
+};
+
+// 5) Автоклик для HOT Wallet кнопок
 const setupHotModalAutoClick = () => {
   try {
     const isTg = isTelegramWebApp();
     const isMobile = isMobileDevice();
-
-    if (!isTg && !isMobile) return undefined; // Only needed on mobile/Telegram
+    if (!isTg && !isMobile) return undefined;
 
     let stopped = false;
     const startedAt = Date.now();
 
-    const ensureInteractive = (el: HTMLElement | null) => {
-      if (!el) return;
-      // Walk up and re-enable pointer events on ancestors just in case
-      let p: HTMLElement | null = el;
-      let hops = 0;
-      while (p && p !== document.body && hops < 8) {
-        if (getComputedStyle(p).pointerEvents === 'none') {
-          try { p.style.setProperty('pointer-events', 'auto', 'important'); } catch { p.style.pointerEvents = 'auto'; }
-        }
-        // Also bump z-index aggressively if overlay-like
-        if (getComputedStyle(p).position === 'fixed' || getComputedStyle(p).position === 'absolute') {
-          const z = parseInt(getComputedStyle(p).zIndex || '0', 10);
-          if (!Number.isNaN(z) && z < 2147483647) {
-            try { p.style.setProperty('z-index', '2147483647', 'important'); } catch { (p as any).style.zIndex = '2147483647'; }
-          }
-        }
-        p = p.parentElement;
-        hops++;
-      }
-    };
-
     const tryClick = () => {
       if (stopped) return false;
 
-      // 1) Boost common provider iframes (HOT/Here/NEAR) so they can capture touches
+      // Boost iframes
       const iframes = Array.from(document.querySelectorAll('iframe')) as HTMLIFrameElement[];
       for (const f of iframes) {
         const src = (f.getAttribute('src') || '').toLowerCase();
         if (/hot|here|near|wallet/.test(src)) {
           ensureInteractive(f as unknown as HTMLElement);
-          // Add mobile support for iframe
-          if (isMobile) {
-            ensureIframeMobileSupport(f);
-          }
         }
       }
 
-      // 2) Try to find provider action buttons in the DOM (non-iframe case)
+      // Find provider buttons
       const nodes = Array.from(document.querySelectorAll('button, a')) as HTMLElement[];
       let mobileBtn: HTMLElement | undefined;
       let tgBtn: HTMLElement | undefined;
@@ -129,33 +155,30 @@ const setupHotModalAutoClick = () => {
       if (isTg && tgBtn) {
         console.log('🛠 Auto-click: Open Telegram');
         ensureInteractive(tgBtn);
-        if (isMobile) makeMobileFriendly(tgBtn);
+        makeMobileFriendly(tgBtn);
         tgBtn.click();
         return true;
       }
       if (!isTg && isMobile && mobileBtn) {
         console.log('🛠 Auto-click: Open Mobile');
         ensureInteractive(mobileBtn);
-        if (isMobile) makeMobileFriendly(mobileBtn);
+        makeMobileFriendly(mobileBtn);
         mobileBtn.click();
         return true;
       }
       return false;
     };
 
-    // Run immediately in case modal already present
     tryClick();
 
     const observer = new MutationObserver(() => {
       if (tryClick()) {
-        // After successful click, we can stop shortly after
         setTimeout(() => stop(), 500);
       }
     });
     observer.observe(document.body, { childList: true, subtree: true });
 
     const interval = setInterval(() => {
-      // Safety timeout: stop trying after 15s
       if (Date.now() - startedAt > 15000) stop();
       else tryClick();
     }, 400);
@@ -174,71 +197,21 @@ const setupHotModalAutoClick = () => {
   }
 };
 
+// 6) Singleton NearConnector с улучшенной поддержкой мобильных устройств
 const getNearConnector = () => {
   if (!singletonConnector) {
-    const config: any = { 
+    singletonConnector = new NearConnector({
       network: 'mainnet',
-      options: {
-        // Enable mobile support for touch events
-        mobileSupport: true,
-        // Handle wallet redirects for mobile and Telegram
-        onWalletRedirect: (url: string) => {
-          console.log('🔗 Wallet redirect requested:', url);
-          
-          try {
-            // Check if running in Telegram WebApp
-            if (typeof window !== 'undefined' && (window as any).Telegram?.WebApp) {
-              const tg = (window as any).Telegram.WebApp;
-              
-              // Handle Telegram links/deeplinks
-              if (/^(https?:\/\/)?t\.me\//i.test(url) || /^tg:\/\//i.test(url)) {
-                console.log('📱 Opening Telegram link:', url);
-                tg.openTelegramLink(url);
-                return false; // Prevent default redirect
-              }
-              
-              // Handle HOT/Here wallet links in Telegram
-              if (url.includes('hot_wallet') || url.includes('hot-labs') || url.includes('herewallet')) {
-                console.log('📱 Opening HOT Wallet in Telegram');
-                tg.openTelegramLink('https://t.me/hot_wallet/app');
-                return false;
-              }
-            }
-            
-            // For mobile browsers, handle wallet app deep links
-            const isMobile = isMobileDevice();
-            if (isMobile) {
-              // Handle HOT Wallet mobile app
-              if (url.includes('hot_wallet') || url.includes('hot-labs') || url.includes('herewallet')) {
-                console.log('📱 Opening HOT Wallet mobile app');
-                window.location.href = url;
-                return false;
-              }
-              
-              // Handle Telegram bot links on mobile
-              if (/^(https?:\/\/)?t\.me\//i.test(url)) {
-                console.log('📱 Opening Telegram link on mobile');
-                window.location.href = url;
-                return false;
-              }
-            }
-          } catch (e) {
-            console.warn('❌ Wallet redirect handling failed:', e);
-          }
-
-          // Fallback: open in new tab for desktop browsers
-          if (/^(https?:\/\/)?t\.me\//i.test(url)) {
-            console.log('🖥️ Opening Telegram link in new tab');
-            window.open(url, '_blank', 'noopener,noreferrer');
-            return false;
-          }
-          
-          return true; // Allow default redirect for other cases
+      onWalletRedirect: (url: string) => {
+        console.log('🔗 Wallet redirect:', url);
+        try {
+          openExternalLink(url);
+          return false;
+        } catch {
+          return true;
         }
       }
-    };
-    
-    singletonConnector = new NearConnector(config);
+    } as any);
   }
   return singletonConnector;
 };
@@ -310,12 +283,11 @@ export const useWallet = () => {
   const [connector, setConnector] = useState<NearConnector | null>(null);
 
   useEffect(() => {
-    console.log('🔵 useWallet: initializing connector');
+    console.log('🔵 useWallet: initializing');
+    injectMobileModalStyles();
 
-    // Mark as initializing to prevent premature redirects
     setWalletState((prev) => ({ ...prev, isConnecting: true }));
 
-    // Initialize or get singleton connector
     const nearConnector = getNearConnector();
     setConnector(nearConnector);
 
@@ -324,32 +296,25 @@ export const useWallet = () => {
       listenersRegistered = true;
 
       nearConnector.on('wallet:signIn', (event) => {
-        console.log('🟢 wallet:signIn event received', event);
+        console.log('🟢 wallet:signIn', event);
         const accountId = event.accounts[0]?.accountId;
 
-        console.log('📄 Setting wallet state:', { accountId, isConnected: true });
         setWalletState({ isConnected: true, accountId, isConnecting: false });
         try { document.body.classList.remove('wallet-modal-open'); } catch {}
 
-        // Reset previous game cache
         localStorage.removeItem('game-storage');
-
-        // Persist wallet connection
         localStorage.setItem('walletConnected', 'true');
         localStorage.setItem('walletAccountId', accountId || '');
 
-        console.log('✅ Wallet connected, processing authentication...');
-        toast({ title: 'Кошелек подключен', description: `Подключен аккаунт: ${accountId}` });
+        toast({ title: 'Кошелек подключен', description: `Аккаунт: ${accountId}` });
 
         // Defer Supabase operations to prevent deadlock
         if (accountId) {
           setTimeout(async () => {
             try {
-              // Save wallet connection to Supabase
               await saveWalletConnection(accountId, true);
 
-              // Ensure game_data record exists for this wallet (with 0 balance if new)
-              console.log('🎮 Ensuring game_data exists for wallet:', accountId);
+              console.log('🎮 Ensuring game_data exists');
               await supabase.rpc('ensure_game_data_exists', {
                 p_wallet_address: accountId
               });
@@ -361,28 +326,24 @@ export const useWallet = () => {
                 p_message: ''
               });
 
-              // Sign in using deterministic email/password set by RPC
               const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
                 email: `${accountId}@wallet.local`,
                 password: 'wallet-auth'
               });
               if (signInError) {
-                console.error('Supabase auth sign-in error:', signInError);
+                console.error('Supabase auth error:', signInError);
               } else if (signInData?.user) {
-                // Ensure game_data row is linked to this auth user
                 await supabase
                   .from('game_data')
                   .update({ user_id: signInData.user.id })
                   .eq('wallet_address', accountId);
               }
 
-              // Sync NFT cards from wallet
-              console.log('🎮 Syncing NFT cards for wallet:', accountId);
+              console.log('🎮 Syncing NFT cards');
               await syncNFTCards(accountId);
 
-              // Check NFT whitelist
               try {
-                console.log('🔍 Checking NFT whitelist for:', accountId);
+                console.log('🔍 Checking NFT whitelist');
                 const { data, error } = await supabase.functions.invoke('check-nft-whitelist', {
                   body: { wallet_address: accountId }
                 });
@@ -390,17 +351,15 @@ export const useWallet = () => {
                 if (error) {
                   console.log('⚠️ NFT whitelist check failed:', error);
                 } else if (data?.addedToWhitelist) {
-                  console.log('✅ Added to whitelist via NFT ownership');
+                  console.log('✅ Added to whitelist via NFT');
                 }
               } catch (whitelistError) {
                 console.log('⚠️ NFT whitelist check failed (non-critical):', whitelistError);
               }
 
-              // Notify app about wallet change so data can be reloaded
               window.dispatchEvent(new CustomEvent('wallet-changed', { detail: { walletAddress: accountId } }));
 
-              console.log('🔄 Authentication complete, navigating to menu');
-              // Smooth navigation without full reload
+              console.log('🔄 Navigating to menu');
               navigate('/menu', { replace: true });
             } catch (error) {
               console.error('Wallet authentication error:', error);
@@ -412,22 +371,19 @@ export const useWallet = () => {
       });
 
       nearConnector.on('wallet:signOut', async () => {
-        console.log('🔴 wallet:signOut event received');
+        console.log('🔴 wallet:signOut');
         
         const currentAccountId = localStorage.getItem('walletAccountId');
 
         setWalletState({ isConnected: false, accountId: null, isConnecting: false });
         try { document.body.classList.remove('wallet-modal-open'); } catch {}
         
-        // Save wallet disconnection to Supabase
         if (currentAccountId) {
           await saveWalletConnection(currentAccountId, false);
         }
 
-        // Sign out from Supabase auth
         try { await supabase.auth.signOut(); } catch (e) { console.warn('Supabase signOut error', e); }
 
-        // Clear persisted data
         localStorage.removeItem('walletConnected');
         localStorage.removeItem('walletAccountId');
         localStorage.removeItem('game-storage');
@@ -437,56 +393,50 @@ export const useWallet = () => {
 
         toast({ title: 'Кошелек отключен', description: 'Вы успешно отключили кошелек' });
 
-        // Notify app that wallet disconnected
         window.dispatchEvent(new Event('wallet-disconnected'));
-
-        // Smooth navigation without full reload
         navigate('/auth', { replace: true });
       });
     }
 
-    // Check for existing connection
     const isConnected = localStorage.getItem('walletConnected') === 'true';
     const accountId = localStorage.getItem('walletAccountId');
 
-    console.log('📂 Checking localStorage:', { isConnected, accountId });
+    console.log('📂 localStorage:', { isConnected, accountId });
 
     if (isConnected && accountId) {
-      console.log('🔄 Restoring wallet state from localStorage');
+      console.log('🔄 Restoring wallet state');
       setWalletState({ isConnected: true, accountId, isConnecting: false });
     } else {
-      // Finish initializing
       setWalletState((prev) => ({ ...prev, isConnecting: false }));
     }
 
     return () => {
       console.log('🧹 useWallet cleanup');
     };
-  }, [toast]);
+  }, [toast, navigate, syncNFTCards]);
 
   const connectWallet = useCallback(async () => {
     console.log('🎯 connectWallet called');
     
     if (!connector) {
-      console.log('❌ No connector available');
+      console.log('❌ No connector');
       return;
     }
     
-    console.log('⏳ Setting isConnecting to true');
     setWalletState(prev => ({ ...prev, isConnecting: true }));
 
-    // While wallet modal is open, let it receive all pointer events
     try { document.body.classList.add('wallet-modal-open'); } catch {}
     
-    // Workaround: ensure HOT modal buttons are interactive on mobile/Telegram
-    const stopAutoClick = setupHotModalAutoClick?.();
+    const stopAutoClick = setupHotModalAutoClick();
     
     try {
       console.log('🚀 Calling connector.connect()');
+      // Критично: дать DOM устаканиться
+      await new Promise(resolve => requestAnimationFrame(() => setTimeout(resolve, 60)));
       await connector.connect();
       console.log('✅ connector.connect() completed');
     } catch (error) {
-      console.error('❌ Wallet connection error:', error);
+      console.error('❌ Connection error:', error);
       setWalletState(prev => ({ ...prev, isConnecting: false }));
       toast({
         title: "Ошибка подключения",
@@ -495,7 +445,6 @@ export const useWallet = () => {
       });
       try { document.body.classList.remove('wallet-modal-open'); } catch {}
     } finally {
-      // Cleanup observer/timers if any
       try { stopAutoClick && stopAutoClick(); } catch {}
     }
   }, [connector, toast]);
@@ -504,24 +453,20 @@ export const useWallet = () => {
     try {
       const currentAccountId = walletState.accountId;
       
-      // Immediately update state to prevent multiple clicks
       setWalletState({
         isConnected: false,
         accountId: null,
         isConnecting: false
       });
       
-      // Save wallet disconnection to Supabase
       if (currentAccountId) {
         await saveWalletConnection(currentAccountId, false);
       }
       
-      // Clear localStorage immediately
       localStorage.removeItem('walletConnected');
       localStorage.removeItem('walletAccountId');
       localStorage.removeItem('gameCards');
       
-      // Then try to sign out from wallet
       if (connector) {
         const wallet = await connector.wallet();
         if (wallet) {
@@ -529,15 +474,13 @@ export const useWallet = () => {
         }
       }
       
-      // Smooth navigation without full reload
       navigate('/auth', { replace: true });
       
     } catch (error) {
-      console.error('Wallet disconnect error:', error);
-      // Navigate even on error
+      console.error('Disconnect error:', error);
       navigate('/auth', { replace: true });
     }
-  }, [connector, walletState.accountId]);
+  }, [connector, walletState.accountId, navigate]);
 
   const getWallet = useCallback(async () => {
     if (!connector || !walletState.isConnected) return null;
