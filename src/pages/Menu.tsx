@@ -43,7 +43,7 @@ export const Menu = () => {
     backgroundRepeat: 'no-repeat'
   }}>
       <LanguageToggle />
-      <div className="absolute inset-0 bg-black/30 mx-0 my-0 py-0 px-0" />
+      <div className="pointer-events-none absolute inset-0 bg-black/30 mx-0 my-0 py-0 px-0" />
       
       {/* Balance and Wallet Display */}
       <div className="relative z-10 max-w-4xl mx-auto flex justify-center items-center gap-4 mb-4">

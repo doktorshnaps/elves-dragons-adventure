@@ -96,14 +96,14 @@ export const Auth = () => {
     <div className="min-h-screen relative overflow-hidden">
       {/* Background */}
       <div 
-        className="absolute inset-0 bg-cover bg-center bg-no-repeat"
+        className="pointer-events-none absolute inset-0 bg-cover bg-center bg-no-repeat"
         style={{
           backgroundImage: "url('https://images.unsplash.com/photo-1578662996442-48f60103fc96?ixlib=rb-4.0.3&auto=format&fit=crop&w=2070&q=80')"
         }}
       />
       
       {/* Dark overlay */}
-      <div className="absolute inset-0 bg-black/60" />
+      <div className="pointer-events-none absolute inset-0 bg-black/60" />
       
       {/* Content */}
       <div className="relative z-10 min-h-screen flex items-center justify-center p-4">
