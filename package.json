@@ -13,6 +13,12 @@
   "dependencies": {
     "@hookform/resolvers": "^3.9.0",
     "@hot-labs/near-connect": "^0.4.2",
+    "@near-wallet-selector/core": "^9.5.4",
+    "@near-wallet-selector/hot-wallet": "^9.5.4",
+    "@near-wallet-selector/meteor-wallet": "^9.5.4",
+    "@near-wallet-selector/modal-ui": "^9.5.4",
+    "@near-wallet-selector/my-near-wallet": "^9.5.4",
+    "@near-wallet-selector/nightly": "^9.5.4",
     "@radix-ui/react-accordion": "^1.2.0",
     "@radix-ui/react-alert-dialog": "^1.1.1",
     "@radix-ui/react-aspect-ratio": "^1.1.0",
@@ -55,6 +61,7 @@
     "input-otp": "^1.2.4",
     "lodash.debounce": "^4.0.8",
     "lucide-react": "^0.462.0",
+    "near-api-js": "^6.3.0",
     "next-themes": "^0.3.0",
     "react": "^18.3.1",
     "react-beautiful-dnd": "^13.1.1",
@@ -70,6 +77,7 @@
     "tailwindcss-animate": "^1.0.7",
     "uuid": "^11.0.5",
     "vaul": "^0.9.3",
+    "vite-plugin-node-polyfills": "^0.24.0",
     "zod": "^3.23.8",
     "zustand": "^5.0.7"
   },
