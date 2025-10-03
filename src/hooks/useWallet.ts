@@ -16,6 +16,98 @@ const isTelegramWebApp = () => {
          (window as any).Telegram.WebApp;
 };
 
+// Temporary workaround for non-clickable buttons in HOT Wallet modal on mobile/Telegram
+// - Observes DOM for buttons labeled "Open Mobile" / "Open Telegram"
+// - Ensures their containers allow pointer events and auto-clicks the right one
+const setupHotModalAutoClick = () => {
+  try {
+    const isTg = isTelegramWebApp();
+    const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+
+    if (!isTg && !isMobile) return undefined; // Only needed on mobile/Telegram
+
+    let stopped = false;
+    const startedAt = Date.now();
+
+    const ensureInteractive = (el: HTMLElement | null) => {
+      if (!el) return;
+      // Walk up and re-enable pointer events on ancestors just in case
+      let p: HTMLElement | null = el;
+      let hops = 0;
+      while (p && p !== document.body && hops < 8) {
+        if (getComputedStyle(p).pointerEvents === 'none') {
+          p.style.pointerEvents = 'auto';
+        }
+        // Also bump z-index a bit if overlay-like
+        if (getComputedStyle(p).position === 'fixed' || getComputedStyle(p).position === 'absolute') {
+          const z = parseInt(getComputedStyle(p).zIndex || '0', 10);
+          if (!Number.isNaN(z) && z < 99999) {
+            p.style.zIndex = '99999';
+          }
+        }
+        p = p.parentElement;
+        hops++;
+      }
+    };
+
+    const tryClick = () => {
+      if (stopped) return false;
+      const nodes = Array.from(document.querySelectorAll('button, a')) as HTMLElement[];
+      let mobileBtn: HTMLElement | undefined;
+      let tgBtn: HTMLElement | undefined;
+      for (const n of nodes) {
+        const text = (n.textContent || '').trim().toLowerCase();
+        if (!text) continue;
+        if (text.includes('open mobile')) mobileBtn = n;
+        if (text.includes('open telegram')) tgBtn = n;
+      }
+
+      if (isTg && tgBtn) {
+        console.log('🛠 Auto-click: Open Telegram');
+        ensureInteractive(tgBtn);
+        tgBtn.click();
+        return true;
+      }
+      if (!isTg && isMobile && mobileBtn) {
+        console.log('🛠 Auto-click: Open Mobile');
+        ensureInteractive(mobileBtn);
+        mobileBtn.click();
+        return true;
+      }
+      return false;
+    };
+
+    // Run immediately in case modal already present
+    tryClick();
+
+    const observer = new MutationObserver(() => {
+      if (tryClick()) {
+        // After successful click, we can stop shortly after
+        setTimeout(() => stop(), 500);
+      }
+    });
+    observer.observe(document.body, { childList: true, subtree: true });
+
+    const interval = setInterval(() => {
+      // Safety timeout: stop trying after 15s
+      if (Date.now() - startedAt > 15000) stop();
+      else tryClick();
+    }, 400);
+
+    const stop = () => {
+      if (stopped) return;
+      stopped = true;
+      observer.disconnect();
+      clearInterval(interval);
+    };
+
+    return stop;
+  } catch (e) {
+    console.warn('setupHotModalAutoClick failed:', e);
+    return undefined;
+  }
+};
+
 const getNearConnector = () => {
   if (!singletonConnector) {
     const config: any = { 
@@ -315,6 +407,9 @@ export const useWallet = () => {
     console.log('⏳ Setting isConnecting to true');
     setWalletState(prev => ({ ...prev, isConnecting: true }));
     
+    // Workaround: ensure HOT modal buttons are interactive on mobile/Telegram
+    const stopAutoClick = setupHotModalAutoClick?.();
+    
     try {
       console.log('🚀 Calling connector.connect()');
       await connector.connect();
@@ -327,6 +422,9 @@ export const useWallet = () => {
         description: "Не удалось подключить кошелек",
         variant: "destructive"
       });
+    } finally {
+      // Cleanup observer/timers if any
+      try { stopAutoClick && stopAutoClick(); } catch {}
     }
   }, [connector, toast]);
 
