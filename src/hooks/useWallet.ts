@@ -50,28 +50,6 @@ export function useWallet() {
     if (!singletonConnector) {
       singletonConnector = new NearConnector({
         network: 'mainnet',
-        walletConnect: {
-          // Заполните при использовании WC-кошельков
-          projectId: '',
-          metadata: {
-            name: 'Your Dapp',
-            description: 'Your Dapp on NEAR',
-            url: typeof window !== 'undefined' ? window.location.origin : 'https://your.app',
-            icons: [typeof window !== 'undefined' ? `${window.location.origin}/favicon.ico` : ''],
-          },
-        },
-        // Критично: единая точка редиректа для мобильных/WebView/Telegram
-        onWalletRedirect: (url: string) => {
-          try {
-            openExternalLink(url);
-            return false; // обработали сами
-          } catch {
-            return true;  // пусть NearConnector применит дефолт
-          }
-        },
-        logger: console,
-        // При необходимости можно отфильтровать кошельки по фичам:
-        // features: { signMessage: true, testnet: false },
       });
     }
     return singletonConnector!;
@@ -95,7 +73,7 @@ export function useWallet() {
   }, [connector]);
 
   // Запуск подключения (модалка/выбор кошелька)
-  const connect = async () => {
+  const connectWallet = async () => {
     try {
       setConnecting(true);
       // Даем кадр на рендер, чтобы модалка была готова
@@ -107,18 +85,18 @@ export function useWallet() {
     }
   };
 
-  const disconnect = async () => {
+  const disconnectWallet = async () => {
     try {
-      await connector.signOut();
+      await connector.disconnect();
     } catch (e) {
-      console.warn('signOut failed', e);
+      console.warn('disconnect failed', e);
     }
   };
 
   // Универсальные методы кошелька
-  const signMessage = async (message: string) => {
+  const signMessage = async (params: { message: string; recipient: string; nonce: Uint8Array }) => {
     const wallet = await connector.wallet();
-    return wallet.signMessage({ message });
+    return wallet.signMessage(params);
   };
 
   const signAndSendTransaction = async (tx: any) => {
@@ -128,14 +106,18 @@ export function useWallet() {
 
   const signAndSendTransactions = async (txs: any[]) => {
     const wallet = await connector.wallet();
-    return wallet.signAndSendTransactions(txs);
+    return wallet.signAndSendTransactions({ transactions: txs });
   };
 
   return {
     accountId,
     connecting,
-    connect,
-    disconnect,
+    isConnecting: connecting,
+    isConnected: !!accountId,
+    connect: connectWallet,
+    connectWallet,
+    disconnect: disconnectWallet,
+    disconnectWallet,
     signMessage,
     signAndSendTransaction,
     signAndSendTransactions,
