@@ -36,13 +36,13 @@ const setupHotModalAutoClick = () => {
       let hops = 0;
       while (p && p !== document.body && hops < 8) {
         if (getComputedStyle(p).pointerEvents === 'none') {
-          p.style.pointerEvents = 'auto';
+          try { p.style.setProperty('pointer-events', 'auto', 'important'); } catch { p.style.pointerEvents = 'auto'; }
         }
-        // Also bump z-index a bit if overlay-like
+        // Also bump z-index aggressively if overlay-like
         if (getComputedStyle(p).position === 'fixed' || getComputedStyle(p).position === 'absolute') {
           const z = parseInt(getComputedStyle(p).zIndex || '0', 10);
-          if (!Number.isNaN(z) && z < 99999) {
-            p.style.zIndex = '99999';
+          if (!Number.isNaN(z) && z < 2147483647) {
+            try { p.style.setProperty('z-index', '2147483647', 'important'); } catch { (p as any).style.zIndex = '2147483647'; }
           }
         }
         p = p.parentElement;

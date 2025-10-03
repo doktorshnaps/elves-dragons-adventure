@@ -114,12 +114,7 @@
 }
 
 /* Wallet modal interoperability: allow external HOT/Here wallet modals to receive input */
-body.wallet-modal-open .app-shell {
-  pointer-events: none !important;
-}
-body.wallet-modal-open .app-shell * {
-  pointer-events: none !important;
-}
+/* Removed global app-shell pointer-events disable to avoid blocking provider UI */
 /* If wallet provider uses iframe overlays, ensure they can sit on top */
 body.wallet-modal-open iframe {
   pointer-events: auto !important;
