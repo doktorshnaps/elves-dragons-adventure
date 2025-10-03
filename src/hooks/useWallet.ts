@@ -16,13 +16,62 @@ const isTelegramWebApp = () => {
          (window as any).Telegram.WebApp;
 };
 
+// Improved mobile device detection
+const isMobileDevice = (): boolean => {
+  return ('ontouchstart' in window) || 
+         (navigator.maxTouchPoints > 0) ||
+         ((navigator as any).msMaxTouchPoints > 0) ||
+         /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+};
+
+// Ensure iframe is mobile-friendly
+const ensureIframeMobileSupport = (iframe: HTMLIFrameElement) => {
+  iframe.setAttribute('sandbox', 'allow-scripts allow-same-origin allow-popups allow-popups-to-escape-sandbox allow-forms');
+  iframe.style.touchAction = 'manipulation';
+  iframe.style.setProperty('-webkit-overflow-scrolling', 'touch');
+  
+  try {
+    const iframeDoc = iframe.contentDocument || iframe.contentWindow?.document;
+    if (iframeDoc) {
+      const viewportMeta = iframeDoc.querySelector('meta[name="viewport"]');
+      if (!viewportMeta) {
+        const meta = iframeDoc.createElement('meta');
+        meta.name = 'viewport';
+        meta.content = 'width=device-width, initial-scale=1.0, user-scalable=no, maximum-scale=1.0';
+        iframeDoc.head?.appendChild(meta);
+      }
+    }
+  } catch (e) {
+    // Cross-origin iframes will fail, that's expected
+  }
+};
+
+// Make element mobile-friendly with touch events
+const makeMobileFriendly = (element: HTMLElement) => {
+  element.style.touchAction = 'manipulation';
+  element.style.setProperty('-webkit-touch-callout', 'none');
+  element.style.setProperty('-webkit-user-select', 'none');
+  element.style.setProperty('user-select', 'none');
+  element.style.cursor = 'pointer';
+  
+  // Ensure touch events work
+  const handleTouchEnd = (e: TouchEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    element.click();
+  };
+  
+  element.addEventListener('touchend', handleTouchEnd, { passive: false });
+  element.addEventListener('touchstart', (e) => e.stopPropagation(), { passive: false });
+};
+
 // Temporary workaround for non-clickable buttons in HOT Wallet modal on mobile/Telegram
 // - Observes DOM for buttons labeled "Open Mobile" / "Open Telegram"
 // - Ensures their containers allow pointer events and auto-clicks the right one
 const setupHotModalAutoClick = () => {
   try {
     const isTg = isTelegramWebApp();
-    const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+    const isMobile = isMobileDevice();
 
     if (!isTg && !isMobile) return undefined; // Only needed on mobile/Telegram
 
@@ -59,6 +108,10 @@ const setupHotModalAutoClick = () => {
         const src = (f.getAttribute('src') || '').toLowerCase();
         if (/hot|here|near|wallet/.test(src)) {
           ensureInteractive(f as unknown as HTMLElement);
+          // Add mobile support for iframe
+          if (isMobile) {
+            ensureIframeMobileSupport(f);
+          }
         }
       }
 
@@ -76,12 +129,14 @@ const setupHotModalAutoClick = () => {
       if (isTg && tgBtn) {
         console.log('🛠 Auto-click: Open Telegram');
         ensureInteractive(tgBtn);
+        if (isMobile) makeMobileFriendly(tgBtn);
         tgBtn.click();
         return true;
       }
       if (!isTg && isMobile && mobileBtn) {
         console.log('🛠 Auto-click: Open Mobile');
         ensureInteractive(mobileBtn);
+        if (isMobile) makeMobileFriendly(mobileBtn);
         mobileBtn.click();
         return true;
       }
@@ -151,7 +206,7 @@ const getNearConnector = () => {
             }
             
             // For mobile browsers, handle wallet app deep links
-            const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+            const isMobile = isMobileDevice();
             if (isMobile) {
               // Handle HOT Wallet mobile app
               if (url.includes('hot_wallet') || url.includes('hot-labs') || url.includes('herewallet')) {
