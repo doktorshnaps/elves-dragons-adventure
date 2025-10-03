@@ -93,7 +93,7 @@ export const Auth = () => {
   };
 
   return (
-    <div className="min-h-screen relative overflow-hidden">
+    <div className="app-shell auth-shell min-h-screen relative overflow-hidden">
       {/* Background */}
       <div 
         className="pointer-events-none absolute inset-0 bg-cover bg-center bg-no-repeat"

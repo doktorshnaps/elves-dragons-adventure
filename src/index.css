@@ -112,3 +112,16 @@
 .animate-card-glow {
   animation: card-glow 2s ease-in-out infinite;
 }
+
+/* Wallet modal interoperability: allow external HOT/Here wallet modals to receive input */
+body.wallet-modal-open .app-shell {
+  pointer-events: none !important;
+}
+body.wallet-modal-open .app-shell * {
+  pointer-events: none !important;
+}
+/* If wallet provider uses iframe overlays, ensure they can sit on top */
+body.wallet-modal-open iframe {
+  pointer-events: auto !important;
+  z-index: 2147483647 !important;
+}

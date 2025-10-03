@@ -52,6 +52,17 @@ const setupHotModalAutoClick = () => {
 
     const tryClick = () => {
       if (stopped) return false;
+
+      // 1) Boost common provider iframes (HOT/Here/NEAR) so they can capture touches
+      const iframes = Array.from(document.querySelectorAll('iframe')) as HTMLIFrameElement[];
+      for (const f of iframes) {
+        const src = (f.getAttribute('src') || '').toLowerCase();
+        if (/hot|here|near|wallet/.test(src)) {
+          ensureInteractive(f as unknown as HTMLElement);
+        }
+      }
+
+      // 2) Try to find provider action buttons in the DOM (non-iframe case)
       const nodes = Array.from(document.querySelectorAll('button, a')) as HTMLElement[];
       let mobileBtn: HTMLElement | undefined;
       let tgBtn: HTMLElement | undefined;
@@ -263,6 +274,7 @@ export const useWallet = () => {
 
         console.log('📄 Setting wallet state:', { accountId, isConnected: true });
         setWalletState({ isConnected: true, accountId, isConnecting: false });
+        try { document.body.classList.remove('wallet-modal-open'); } catch {}
 
         // Reset previous game cache
         localStorage.removeItem('game-storage');
@@ -350,7 +362,8 @@ export const useWallet = () => {
         const currentAccountId = localStorage.getItem('walletAccountId');
 
         setWalletState({ isConnected: false, accountId: null, isConnecting: false });
-
+        try { document.body.classList.remove('wallet-modal-open'); } catch {}
+        
         // Save wallet disconnection to Supabase
         if (currentAccountId) {
           await saveWalletConnection(currentAccountId, false);
@@ -406,6 +419,9 @@ export const useWallet = () => {
     
     console.log('⏳ Setting isConnecting to true');
     setWalletState(prev => ({ ...prev, isConnecting: true }));
+
+    // While wallet modal is open, let it receive all pointer events
+    try { document.body.classList.add('wallet-modal-open'); } catch {}
     
     // Workaround: ensure HOT modal buttons are interactive on mobile/Telegram
     const stopAutoClick = setupHotModalAutoClick?.();
@@ -422,6 +438,7 @@ export const useWallet = () => {
         description: "Не удалось подключить кошелек",
         variant: "destructive"
       });
+      try { document.body.classList.remove('wallet-modal-open'); } catch {}
     } finally {
       // Cleanup observer/timers if any
       try { stopAutoClick && stopAutoClick(); } catch {}
