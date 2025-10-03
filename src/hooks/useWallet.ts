@@ -18,40 +18,67 @@ const isTelegramWebApp = () => {
 
 const getNearConnector = () => {
   if (!singletonConnector) {
-    const config: any = { network: 'mainnet' };
-    
-    // If running in Telegram, configure for Telegram environment
-    if (isTelegramWebApp()) {
-      config.options = {
-        telegramWebApp: true,
+    const config: any = { 
+      network: 'mainnet',
+      options: {
+        // Enable mobile support for touch events
+        mobileSupport: true,
+        // Handle wallet redirects for mobile and Telegram
         onWalletRedirect: (url: string) => {
+          console.log('🔗 Wallet redirect requested:', url);
+          
           try {
+            // Check if running in Telegram WebApp
             if (typeof window !== 'undefined' && (window as any).Telegram?.WebApp) {
               const tg = (window as any).Telegram.WebApp;
-              // If the wallet wants to open a Telegram link/deeplink, open it via Telegram API
+              
+              // Handle Telegram links/deeplinks
               if (/^(https?:\/\/)?t\.me\//i.test(url) || /^tg:\/\//i.test(url)) {
+                console.log('📱 Opening Telegram link:', url);
                 tg.openTelegramLink(url);
-                return false; // Prevent default redirect (handled by Telegram)
+                return false; // Prevent default redirect
               }
-              // Heuristics for HOT/Here wallet inside Telegram
+              
+              // Handle HOT/Here wallet links in Telegram
               if (url.includes('hot_wallet') || url.includes('hot-labs') || url.includes('herewallet')) {
+                console.log('📱 Opening HOT Wallet in Telegram');
                 tg.openTelegramLink('https://t.me/hot_wallet/app');
                 return false;
               }
             }
+            
+            // For mobile browsers, handle wallet app deep links
+            const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+            if (isMobile) {
+              // Handle HOT Wallet mobile app
+              if (url.includes('hot_wallet') || url.includes('hot-labs') || url.includes('herewallet')) {
+                console.log('📱 Opening HOT Wallet mobile app');
+                window.location.href = url;
+                return false;
+              }
+              
+              // Handle Telegram bot links on mobile
+              if (/^(https?:\/\/)?t\.me\//i.test(url)) {
+                console.log('📱 Opening Telegram link on mobile');
+                window.location.href = url;
+                return false;
+              }
+            }
           } catch (e) {
-            console.warn('Telegram link open failed, falling back', e);
+            console.warn('❌ Wallet redirect handling failed:', e);
           }
 
-          // Fallback for browsers: open Telegram links in a new tab
+          // Fallback: open in new tab for desktop browsers
           if (/^(https?:\/\/)?t\.me\//i.test(url)) {
-            window.open(url, '_blank');
+            console.log('🖥️ Opening Telegram link in new tab');
+            window.open(url, '_blank', 'noopener,noreferrer');
             return false;
           }
-          return true; // Allow default redirect for other wallets
+          
+          return true; // Allow default redirect for other cases
         }
-      };
-    }
+      }
+    };
     
     singletonConnector = new NearConnector(config);
   }
