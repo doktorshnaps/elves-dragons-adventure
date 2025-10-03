@@ -212,11 +212,11 @@ export const DeckSelection = ({
 
       {/* Hero Deck Dialog */}
       <Dialog open={showHeroDeck} onOpenChange={setShowHeroDeck}>
-        <DialogContent className="max-w-4xl h-[80vh] bg-game-surface border-game-accent">
+        <DialogContent className="max-w-[95vw] sm:max-w-4xl h-[80vh] bg-game-surface border-game-accent overflow-hidden">
           <DialogHeader>
             <DialogTitle className="text-game-accent">Выберите героя</DialogTitle>
           </DialogHeader>
-          <div className="grid grid-cols-4 sm:grid-cols-6 gap-3 overflow-y-auto p-4">
+          <div className="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-6 gap-4 overflow-y-auto overflow-x-hidden p-4 justify-items-center">
             {heroes.map(hero => {
             const isSelected = isHeroSelected(hero);
             const teamFull = selectedPairs.length >= 5;
@@ -245,11 +245,11 @@ export const DeckSelection = ({
       setShowDragonDeck(open);
       if (!open) setActivePairIndex(null);
     }}>
-        <DialogContent className="max-w-4xl h-[80vh] bg-game-surface border-game-accent">
+        <DialogContent className="max-w-[95vw] sm:max-w-4xl h-[80vh] bg-game-surface border-game-accent overflow-hidden">
           <DialogHeader>
             <DialogTitle className="text-game-accent">Выберите дракона</DialogTitle>
           </DialogHeader>
-          <div className="grid grid-cols-4 sm:grid-cols-6 gap-3 overflow-y-auto p-4">
+          <div className="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-6 gap-4 overflow-y-auto overflow-x-hidden p-4 justify-items-center">
             {(activePairIndex !== null ? getAvailableDragons(selectedPairs[activePairIndex]?.hero.faction, selectedPairs[activePairIndex]?.hero.rarity) : dragons).map(dragon => {
             const isSelected = isDragonSelected(dragon);
             const canAssign = activePairIndex !== null ? !!selectedPairs[activePairIndex] && !selectedPairs[activePairIndex]?.dragon && selectedPairs[activePairIndex]?.hero.faction === dragon.faction && (selectedPairs[activePairIndex]?.hero.rarity ?? 0) >= dragon.rarity && !isSelected : false;
