@@ -212,11 +212,12 @@ export const DeckSelection = ({
 
       {/* Hero Deck Dialog */}
       <Dialog open={showHeroDeck} onOpenChange={setShowHeroDeck}>
-        <DialogContent className="max-w-[95vw] sm:max-w-4xl h-[80vh] bg-game-surface border-game-accent overflow-hidden">
-          <DialogHeader>
+        <DialogContent className="max-w-[95vw] sm:max-w-4xl h-[80vh] bg-game-surface border-game-accent overflow-hidden flex flex-col">
+          <DialogHeader className="flex-shrink-0">
             <DialogTitle className="text-game-accent">Выберите героя</DialogTitle>
           </DialogHeader>
-          <div className="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-6 gap-4 overflow-y-auto overflow-x-hidden p-4 justify-items-center">
+          <div className="flex-1 overflow-y-auto overflow-x-hidden px-4 pb-4">
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3 justify-items-center w-full">
             {heroes.map(hero => {
             const isSelected = isHeroSelected(hero);
             const teamFull = selectedPairs.length >= 5;
@@ -234,8 +235,9 @@ export const DeckSelection = ({
                   <div className="text-center text-xs text-game-accent mt-1">
                     {isSelected ? 'Выбран' : teamFull ? 'Просмотр' : ''}
                   </div>
-                </div>;
+                 </div>;
           })}
+            </div>
           </div>
         </DialogContent>
       </Dialog>
@@ -245,11 +247,12 @@ export const DeckSelection = ({
       setShowDragonDeck(open);
       if (!open) setActivePairIndex(null);
     }}>
-        <DialogContent className="max-w-[95vw] sm:max-w-4xl h-[80vh] bg-game-surface border-game-accent overflow-hidden">
-          <DialogHeader>
+        <DialogContent className="max-w-[95vw] sm:max-w-4xl h-[80vh] bg-game-surface border-game-accent overflow-hidden flex flex-col">
+          <DialogHeader className="flex-shrink-0">
             <DialogTitle className="text-game-accent">Выберите дракона</DialogTitle>
           </DialogHeader>
-          <div className="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-6 gap-4 overflow-y-auto overflow-x-hidden p-4 justify-items-center">
+          <div className="flex-1 overflow-y-auto overflow-x-hidden px-4 pb-4">
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3 justify-items-center w-full">
             {(activePairIndex !== null ? getAvailableDragons(selectedPairs[activePairIndex]?.hero.faction, selectedPairs[activePairIndex]?.hero.rarity) : dragons).map(dragon => {
             const isSelected = isDragonSelected(dragon);
             const canAssign = activePairIndex !== null ? !!selectedPairs[activePairIndex] && !selectedPairs[activePairIndex]?.dragon && selectedPairs[activePairIndex]?.hero.faction === dragon.faction && (selectedPairs[activePairIndex]?.hero.rarity ?? 0) >= dragon.rarity && !isSelected : false;
@@ -269,9 +272,10 @@ export const DeckSelection = ({
                   </div>
                 </div>;
           })}
-            {activePairIndex !== null && getAvailableDragons(selectedPairs[activePairIndex]?.hero.faction, selectedPairs[activePairIndex]?.hero.rarity).length === 0 && <div className="col-span-full text-center text-game-accent/60 text-sm">
-                Нет доступных драконов для выбранного героя
-              </div>}
+             {activePairIndex !== null && getAvailableDragons(selectedPairs[activePairIndex]?.hero.faction, selectedPairs[activePairIndex]?.hero.rarity).length === 0 && <div className="col-span-full text-center text-game-accent/60 text-sm">
+                 Нет доступных драконов для выбранного героя
+               </div>}
+            </div>
           </div>
         </DialogContent>
       </Dialog>
