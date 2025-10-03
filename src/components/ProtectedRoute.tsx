@@ -53,7 +53,7 @@ export const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
     checkMaintenanceStatus();
   }, []);
 
-  if (isConnecting || whitelistLoading || maintenanceLoading || (!isConnected && lsConnected)) {
+  if (isConnecting || whitelistLoading || maintenanceLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-purple-900 to-black">
         <div className="text-white text-xl">Загрузка меню...</div>
@@ -74,6 +74,13 @@ export const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
 
   if (!isConnected && !lsConnected) {
     console.log('❌ Not connected, redirecting to auth');
+    return <Navigate to="/auth" replace />;
+  }
+
+  // Если localStorage показывает подключение, но accountId нет - редирект на auth
+  if (lsConnected && !accountId) {
+    console.log('⚠️ localStorage connected but no accountId, redirecting to auth');
+    localStorage.removeItem('walletConnected');
     return <Navigate to="/auth" replace />;
   }
 
