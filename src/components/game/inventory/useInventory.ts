@@ -1,32 +1,17 @@
 import { useState, useEffect } from 'react';
 import { Item } from "@/types/inventory";
+import { useGameStore } from "@/stores/gameStore";
 
 export const useInventory = (initialInventory: Item[]) => {
-  const [inventory, setInventory] = useState(initialInventory);
+  const storeInventory = useGameStore((state) => state.inventory);
+  const [inventory, setInventory] = useState(storeInventory.length > 0 ? storeInventory : initialInventory);
 
+  // Синхронизируем с store
   useEffect(() => {
-    const handleInventoryUpdate = (e: CustomEvent<{ inventory: Item[] }>) => {
-      setInventory(e.detail.inventory);
-    };
-
-    const handleStorageChange = () => {
-      const savedInventory = localStorage.getItem('gameInventory');
-      if (savedInventory) {
-        setInventory(JSON.parse(savedInventory));
-      }
-    };
-
-    window.addEventListener('inventoryUpdate', handleInventoryUpdate as EventListener);
-    window.addEventListener('storage', handleStorageChange);
-
-    const interval = setInterval(handleStorageChange, 500);
-
-    return () => {
-      window.removeEventListener('inventoryUpdate', handleInventoryUpdate as EventListener);
-      window.removeEventListener('storage', handleStorageChange);
-      clearInterval(interval);
-    };
-  }, []);
+    if (storeInventory.length > 0) {
+      setInventory(storeInventory);
+    }
+  }, [storeInventory]);
 
   return inventory;
 };

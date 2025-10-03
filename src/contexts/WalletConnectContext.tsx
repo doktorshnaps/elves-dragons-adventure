@@ -68,6 +68,8 @@ export function WalletConnectProvider({ children }: { children: React.ReactNode 
           // Сохраняем в localStorage
           if (active?.accountId) {
             localStorage.setItem('walletConnected', 'true');
+            localStorage.setItem('walletAccountId', active.accountId);
+            console.log('💾 Wallet hydrated:', active.accountId);
           }
         } catch (e) {
           console.warn("[wallet] store hydrate error:", e);
@@ -87,8 +89,12 @@ export function WalletConnectProvider({ children }: { children: React.ReactNode 
           // Обновляем localStorage
           if (newAccountId) {
             localStorage.setItem('walletConnected', 'true');
+            localStorage.setItem('walletAccountId', newAccountId);
+            console.log('💾 Wallet connected:', newAccountId);
           } else {
             localStorage.removeItem('walletConnected');
+            localStorage.removeItem('walletAccountId');
+            console.log('💾 Wallet disconnected');
           }
         });
 
@@ -128,7 +134,31 @@ export function WalletConnectProvider({ children }: { children: React.ReactNode 
       const wallet = await selector.wallet();
       await wallet.signOut();
       setAccountId(null);
+      
+      // Очищаем localStorage от wallet данных
       localStorage.removeItem('walletConnected');
+      localStorage.removeItem('walletAccountId');
+      
+      // Очищаем все игровые данные из localStorage
+      const gameKeys = [
+        'game-storage',
+        'gameCards',
+        'gameBalance',
+        'gameInventory',
+        'gameDragonEggs',
+        'gameSelectedTeam',
+        'game_balance',
+        'game_cards',
+        'game_inventory',
+        'game_dragonEggs',
+        'game_selectedTeam',
+        'game_accountLevel',
+        'game_accountExperience'
+      ];
+      
+      gameKeys.forEach(key => localStorage.removeItem(key));
+      
+      console.log('✅ Wallet disconnected and all localStorage cleared');
     } catch (e) {
       console.warn("[wallet] disconnect error:", e);
     }

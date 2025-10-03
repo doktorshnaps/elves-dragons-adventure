@@ -72,16 +72,9 @@ export const useZustandSupabaseSync = (walletAddress: string | null) => {
     )
   ).current;
 
-  // Sync to Supabase when state changes
+  // Sync to Supabase when state changes (БЕЗ localStorage - данные только в Supabase)
   useEffect(() => {
     if (!walletAddress) return;
-
-    // Sync to localStorage via batcher
-    Object.entries(state).forEach(([key, value]) => {
-      if (value !== undefined) {
-        localStorageBatcher.setItem(`game_${key}`, JSON.stringify(value));
-      }
-    });
 
     // Sync to Supabase
     syncToSupabase(state, walletAddress);

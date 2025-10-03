@@ -13,6 +13,7 @@ export const useGameSync = () => {
   const gameStore = useGameStore();
   const isApplyingRef = useRef(false);
   const lastSyncedRef = useRef<any>(null);
+  const prevAccountIdRef = useRef<string | null>(null);
   
   // Инициализация синхронизации экземпляров карт
   try {
@@ -21,33 +22,72 @@ export const useGameSync = () => {
     console.error('❌ Error in useCardInstanceSync:', error);
   }
 
+  // Очищаем старые данные из localStorage при монтировании
+  useEffect(() => {
+    // Удаляем старый persist store и все старые ключи
+    const oldKeys = [
+      'game-storage',
+      'gameCards',
+      'gameBalance',
+      'gameInventory',
+      'gameDragonEggs',
+      'gameSelectedTeam',
+      'game_balance',
+      'game_cards',
+      'game_inventory',
+      'game_dragonEggs',
+      'game_selectedTeam',
+      'game_accountLevel',
+      'game_accountExperience'
+    ];
+    
+    oldKeys.forEach(key => {
+      if (localStorage.getItem(key)) {
+        localStorage.removeItem(key);
+        console.log(`🧹 Cleared old localStorage key: ${key}`);
+      }
+    });
+    
+    console.log('✅ localStorage cleanup complete - все данные теперь только в Supabase');
+  }, []);
+
+  // Очищаем store при отключении или смене кошелька
+  useEffect(() => {
+    if (prevAccountIdRef.current && prevAccountIdRef.current !== accountId) {
+      console.log('🔄 Wallet changed, clearing store data');
+      gameStore.clearAllData();
+      lastSyncedRef.current = null;
+    }
+    prevAccountIdRef.current = accountId;
+  }, [accountId]);
+
   // Загружаем данные из Supabase в локальное состояние при инициализации
   useEffect(() => {
     if (!loading && isConnected && accountId && gameData) {
       isApplyingRef.current = true;
       try {
+        console.log('🔄 useGameSync: Loading data from Supabase:', {
+          balance: gameData.balance,
+          cards: gameData.cards?.length,
+          inventory: gameData.inventory?.length,
+          dragonEggs: gameData.dragonEggs?.length,
+          accountLevel: gameData.accountLevel,
+          accountExperience: gameData.accountExperience
+        });
+        
         gameStore.setBalance(gameData.balance);
         gameStore.setCards(gameData.cards);
         gameStore.setInventory(gameData.inventory || []);
         gameStore.setDragonEggs(gameData.dragonEggs || []);
         gameStore.setSelectedTeam(gameData.selectedTeam || []);
-        
-        // Синхронизируем уровень и опыт аккаунта только если в gameData есть актуальные данные из БД
-        // и они не являются дефолтными значениями
-        if (gameData.accountLevel > 1 || gameData.accountExperience > 0) {
-          gameStore.setAccountLevel(gameData.accountLevel);
-          gameStore.setAccountExperience(gameData.accountExperience);
-          console.log('🔄 useGameSync: Account data synced from gameData:', {
-            level: gameData.accountLevel,
-            experience: gameData.accountExperience
-          });
-        } else {
-          console.log('⚠️ useGameSync: Skipping account sync - using default values from gameData, relying on useAccountSync');
-        }
+        gameStore.setAccountLevel(gameData.accountLevel || 1);
+        gameStore.setAccountExperience(gameData.accountExperience || 0);
         
         if (gameData.battleState) {
           gameStore.setBattleState(gameData.battleState);
         }
+        
+        console.log('✅ useGameSync: Data loaded to store');
       } finally {
         setTimeout(() => { isApplyingRef.current = false; }, 0);
       }
