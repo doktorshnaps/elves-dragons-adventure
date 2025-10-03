@@ -416,38 +416,31 @@ export const useWallet = () => {
   }, [toast, navigate, syncNFTCards]);
 
   const connectWallet = useCallback(async () => {
-    console.log('🎯 connectWallet called');
-    
-    if (!connector) {
-      console.log('❌ No connector');
-      return;
-    }
+    console.log('🎯 connectWallet called - opening HERE Wallet');
     
     setWalletState(prev => ({ ...prev, isConnecting: true }));
 
-    try { document.body.classList.add('wallet-modal-open'); } catch {}
-    
-    const stopAutoClick = setupHotModalAutoClick();
-    
     try {
-      console.log('🚀 Calling connector.connect()');
-      // Критично: дать DOM устаканиться
-      await new Promise(resolve => requestAnimationFrame(() => setTimeout(resolve, 60)));
-      await connector.connect();
-      console.log('✅ connector.connect() completed');
+      // Прямое открытие HERE Wallet бота в Telegram
+      const hereWalletUrl = 'https://t.me/herewalletbot/app';
+      console.log('🔗 Opening HERE Wallet:', hereWalletUrl);
+      
+      openExternalLink(hereWalletUrl);
+      
+      // Даем время на переход в бот
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
     } catch (error) {
       console.error('❌ Connection error:', error);
-      setWalletState(prev => ({ ...prev, isConnecting: false }));
       toast({
         title: "Ошибка подключения",
-        description: "Не удалось подключить кошелек",
+        description: "Не удалось открыть HERE Wallet",
         variant: "destructive"
       });
-      try { document.body.classList.remove('wallet-modal-open'); } catch {}
     } finally {
-      try { stopAutoClick && stopAutoClick(); } catch {}
+      setWalletState(prev => ({ ...prev, isConnecting: false }));
     }
-  }, [connector, toast]);
+  }, [toast]);
 
   const disconnectWallet = useCallback(async () => {
     try {
