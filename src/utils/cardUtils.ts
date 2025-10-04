@@ -175,8 +175,19 @@ const getClassMultiplier = (cardName: string, cardType: CardType) => {
     return { health_multiplier: 1.0, defense_multiplier: 1.0, power_multiplier: 1.0, magic_multiplier: 1.0 };
   }
   
-  // Для героев - точное совпадение имени с классом
-  return gameSettingsCache.classMultipliers[cardName] || { health_multiplier: 1.0, defense_multiplier: 1.0, power_multiplier: 1.0, magic_multiplier: 1.0 };
+  // Для героев ищем класс в названии карты (от более длинного к более короткому)
+  const sortedClasses = Object.keys(gameSettingsCache.classMultipliers).sort((a, b) => b.length - a.length);
+  
+  for (const heroClass of sortedClasses) {
+    if (cardName.includes(heroClass)) {
+      console.log(`✅ Found class multiplier for "${cardName}": ${heroClass}`, gameSettingsCache.classMultipliers[heroClass]);
+      return gameSettingsCache.classMultipliers[heroClass];
+    }
+  }
+  
+  console.warn(`⚠️ No class multiplier found for "${cardName}", using fallback 1.0`);
+  // Fallback
+  return { health_multiplier: 1.0, defense_multiplier: 1.0, power_multiplier: 1.0, magic_multiplier: 1.0 };
 };
 
 export const getStatsForRarity = (rarity: Rarity, cardType: CardType = 'character') => {
