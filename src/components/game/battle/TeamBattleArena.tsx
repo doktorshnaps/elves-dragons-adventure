@@ -52,6 +52,7 @@ export const TeamBattleArena: React.FC<TeamBattleArenaProps> = ({
   // Dice roll state - теперь берем из реальных бросков
   const [isDiceRolling, setIsDiceRolling] = useState(false);
   const [isPlayerAttacking, setIsPlayerAttacking] = useState(true);
+  const [diceKey, setDiceKey] = useState(0);
   const alivePairs = playerPairs.filter(pair => pair.health > 0);
   const aliveOpponents = opponents.filter(opp => opp.health > 0);
   const handleAttack = () => {
@@ -62,26 +63,27 @@ export const TeamBattleArena: React.FC<TeamBattleArenaProps> = ({
       // Show dice roll animation - Player attacking
       setIsPlayerAttacking(true);
       setIsDiceRolling(true);
+      setDiceKey(prev => prev + 1);
       
       // Запускаем анимацию атаки
       setAttackingPair(pairId);
       setAttackedTarget(targetId);
 
-      // Hide dice and execute attack
+      // Выполняем атаку чуть позже, чтобы анимация успела стартовать
+      setTimeout(() => {
+        onAttack(pairId, targetId);
+      }, 150);
+
+      // Останавливаем анимацию и чистим эффекты
       setTimeout(() => {
         setIsDiceRolling(false);
-        
-        setTimeout(() => {
-          onAttack(pairId, targetId);
-          setSelectedPair(null);
-          setSelectedTarget(null);
+        setSelectedPair(null);
+        setSelectedTarget(null);
 
-          // Убираем эффекты атаки
-          setTimeout(() => {
-            setAttackingPair(null);
-            setAttackedTarget(null);
-          }, 300);
-        }, 200);
+        setTimeout(() => {
+          setAttackingPair(null);
+          setAttackedTarget(null);
+        }, 300);
       }, 1200);
     }
   };
@@ -94,16 +96,19 @@ export const TeamBattleArena: React.FC<TeamBattleArenaProps> = ({
       setIsPlayerAttacking(false);
       setDefendingPair(randomPair.id);
       setIsDiceRolling(true);
+      setDiceKey(prev => prev + 1);
+      console.log('🎲 Enemy dice: start rolling');
 
-      // Быстро запускаем расчет бросков, чтобы финальные значения были доступны
+      // Запускаем расчет бросков чуть позже, чтобы UI начал анимировать
       setTimeout(() => {
         onEnemyAttack();
-      }, 100);
+      }, 150);
 
       // Останавливаем анимацию через 1.2с и убираем защитника
       setTimeout(() => {
         setIsDiceRolling(false);
         setTimeout(() => setDefendingPair(null), 300);
+        console.log('🎲 Enemy dice: stop rolling');
       }, 1200);
     } else {
       onEnemyAttack();
