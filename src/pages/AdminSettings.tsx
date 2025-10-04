@@ -1,5 +1,6 @@
 import { useNavigate } from "react-router-dom";
 import { useWallet } from "@/hooks/useWallet";
+import { useAdminCheck } from "@/hooks/useAdminCheck";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -11,9 +12,21 @@ import { ProtectedRoute } from "@/components/ProtectedRoute";
 const AdminSettingsContent = () => {
   const navigate = useNavigate();
   const { accountId } = useWallet();
+  const { isAdmin, loading } = useAdminCheck();
 
-  // Проверка прав доступа
-  if (accountId !== 'mr_bruts.tg') {
+  // Show loading while checking admin status
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-game-dark flex items-center justify-center p-4">
+        <div className="text-center">
+          <p className="text-gray-300">Проверка прав доступа...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Проверка прав доступа - разрешить доступ super admin или обычным админам
+  if (accountId !== 'mr_bruts.tg' && !isAdmin) {
     return (
       <div className="min-h-screen bg-game-dark flex items-center justify-center p-4">
         <div className="text-center">

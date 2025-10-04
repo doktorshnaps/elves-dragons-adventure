@@ -62,7 +62,6 @@ export const BannedUsersManager = () => {
       const { error } = await supabase.rpc('admin_ban_user', {
         p_target_wallet_address: newAddress.trim(),
         p_reason: banReason.trim() || 'Нарушение правил',
-        p_admin_wallet_address: 'mr_bruts.tg',
       });
 
       if (error) throw error;
@@ -92,7 +91,6 @@ export const BannedUsersManager = () => {
     try {
       const { error } = await supabase.rpc('admin_unban_user', {
         p_target_wallet_address: walletAddress,
-        p_admin_wallet_address: 'mr_bruts.tg',
       });
 
       if (error) throw error;

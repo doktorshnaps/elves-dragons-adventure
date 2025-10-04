@@ -59,13 +59,23 @@ export const WhitelistContractsManager = () => {
     }
 
     try {
+      // Get current wallet address from context
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('Not authenticated');
+      
+      const { data: profileData } = await supabase
+        .from('profiles')
+        .select('wallet_address')
+        .eq('user_id', user.id)
+        .single();
+      
       const { error } = await supabase
         .from('whitelist_contracts')
         .insert({
           contract_address: newContract.address.trim(),
           contract_name: newContract.name.trim() || null,
           description: newContract.description.trim() || null,
-          added_by_wallet_address: 'mr_bruts.tg'
+          added_by_wallet_address: profileData?.wallet_address || 'mr_bruts.tg'
         });
 
       if (error) throw error;

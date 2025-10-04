@@ -1013,16 +1013,18 @@ export type Database = {
         Returns: boolean
       }
       admin_add_to_whitelist: {
-        Args: {
-          p_admin_wallet_address?: string
-          p_notes?: string
-          p_wallet_address: string
-        }
+        Args:
+          | {
+              p_admin_wallet_address?: string
+              p_notes?: string
+              p_wallet_address: string
+            }
+          | { p_notes?: string; p_wallet_address: string }
         Returns: boolean
       }
       admin_ban_user: {
         Args: {
-          p_admin_wallet_address: string
+          p_admin_wallet_address?: string
           p_reason: string
           p_target_wallet_address: string
         }
@@ -1083,7 +1085,9 @@ export type Database = {
         Returns: boolean
       }
       admin_remove_from_whitelist: {
-        Args: { p_admin_wallet_address?: string; p_wallet_address: string }
+        Args:
+          | { p_admin_wallet_address?: string; p_wallet_address: string }
+          | { p_wallet_address: string }
         Returns: boolean
       }
       admin_remove_player_card: {
@@ -1120,7 +1124,7 @@ export type Database = {
       }
       admin_unban_user: {
         Args: {
-          p_admin_wallet_address: string
+          p_admin_wallet_address?: string
           p_target_wallet_address: string
         }
         Returns: boolean
@@ -1351,6 +1355,10 @@ export type Database = {
           created_at: string
           referrer_wallet_address: string
         }[]
+      }
+      has_admin_role: {
+        Args: { p_wallet_address: string }
+        Returns: boolean
       }
       has_role: {
         Args: {
