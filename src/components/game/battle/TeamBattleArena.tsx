@@ -397,24 +397,15 @@ export const TeamBattleArena: React.FC<TeamBattleArenaProps> = ({
                         Выберите цель для способности "{selectedAbility.name}"
                       </div> : <>
                         <div className="flex items-center justify-center gap-4">
-                          {/* Player Dice - Left (показывается только когда игрок атакует) */}
+                          {/* Left Dice (attacker for player turn, defender for enemy turn) */}
                           <div className="w-20 flex justify-center">
-                            {isPlayerAttacking && (
-                              <InlineDiceDisplay
-                                isRolling={isDiceRolling}
-                                diceValue={!isDiceRolling && lastRoll?.source === 'player' ? lastRoll.attackerRoll : null}
-                                isAttacker={true}
-                                label="Атака"
-                              />
-                            )}
-                            {!isPlayerAttacking && (
-                              <InlineDiceDisplay
-                                isRolling={isDiceRolling}
-                                diceValue={!isDiceRolling && lastRoll?.source === 'enemy' ? lastRoll.defenderRoll : null}
-                                isAttacker={false}
-                                label="Защита"
-                              />
-                            )}
+                            <InlineDiceDisplay
+                              key={`dice-left-${diceKey}`}
+                              isRolling={isDiceRolling}
+                              diceValue={lastRoll ? (lastRoll.source === 'player' ? lastRoll.attackerRoll : lastRoll.defenderRoll) : null}
+                              isAttacker={lastRoll ? lastRoll.source === 'player' : true}
+                              label={lastRoll ? (lastRoll.source === 'player' ? 'Атака' : 'Защита') : 'Атака'}
+                            />
                           </div>
 
                           {/* Attack Button - Center */}
@@ -427,24 +418,15 @@ export const TeamBattleArena: React.FC<TeamBattleArenaProps> = ({
                             Атаковать
                           </Button>
 
-                          {/* Enemy Dice - Right (показывается только когда враг атакует) */}
+                          {/* Right Dice (defender for player turn, attacker for enemy turn) */}
                           <div className="w-20 flex justify-center">
-                            {isPlayerAttacking && (
-                              <InlineDiceDisplay
-                                isRolling={isDiceRolling}
-                                diceValue={!isDiceRolling && lastRoll?.source === 'player' ? lastRoll.defenderRoll : null}
-                                isAttacker={false}
-                                label="Защита"
-                              />
-                            )}
-                            {!isPlayerAttacking && (
-                              <InlineDiceDisplay
-                                isRolling={isDiceRolling}
-                                diceValue={!isDiceRolling && lastRoll?.source === 'enemy' ? lastRoll.attackerRoll : null}
-                                isAttacker={true}
-                                label="Атака"
-                              />
-                            )}
+                            <InlineDiceDisplay
+                              key={`dice-right-${diceKey}`}
+                              isRolling={isDiceRolling}
+                              diceValue={lastRoll ? (lastRoll.source === 'player' ? lastRoll.defenderRoll : lastRoll.attackerRoll) : null}
+                              isAttacker={lastRoll ? lastRoll.source === 'enemy' : false}
+                              label={lastRoll ? (lastRoll.source === 'player' ? 'Защита' : 'Атака') : 'Защита'}
+                            />
                           </div>
                         </div>
                         {selectedPair && !selectedTarget && <div className="text-xs text-muted-foreground">
