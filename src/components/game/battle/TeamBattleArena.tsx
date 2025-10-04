@@ -22,7 +22,6 @@ interface TeamBattleArenaProps {
   onAttack: (pairId: string, targetId: number) => void;
   onAbilityUse?: (pairId: string, abilityId: string, targetId: number | string) => void;
   onEnemyAttack: () => void;
-  onCounterAttack: (attackerId: string | number, targetId: string | number, isEnemyAttacker: boolean) => void;
   level: number;
 }
 export const TeamBattleArena: React.FC<TeamBattleArenaProps> = ({
@@ -33,7 +32,6 @@ export const TeamBattleArena: React.FC<TeamBattleArenaProps> = ({
   onAttack,
   onAbilityUse,
   onEnemyAttack,
-  onCounterAttack,
   level
 }) => {
   const navigate = useNavigate();

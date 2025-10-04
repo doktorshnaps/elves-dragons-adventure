@@ -89,12 +89,12 @@ export const calculateMonsterStatsFromDB = async (
     attack: Math.floor(base_atk * atkLevelGrowth * dungeonFactor)
   };
 
-  // Типовые множители
+  // Типовые множители согласно новым требованиям
   const typeMultipliers = {
     normal: { hp: 1.0, armor: 1.0, attack: 1.0 },
-    miniboss: { hp: 1.5, armor: 1.2, attack: 1.0 },
-    boss50: { hp: 2.5, armor: 1.3, attack: 1.1 },
-    boss100: { hp: 4.0, armor: 1.5, attack: 1.15 }
+    miniboss: { hp: 1.5, armor: 1.5, attack: 1.5 },
+    boss50: { hp: 3.0, armor: 3.0, attack: 3.0 },
+    boss100: { hp: 5.0, armor: 5.0, attack: 5.0 }
   };
 
   const mult = typeMultipliers[monsterType];

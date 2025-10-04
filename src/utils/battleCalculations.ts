@@ -1,6 +1,11 @@
-// Система d6 согласно ТЗ: 1d6 + ATK vs 1d6 + Armor
-// Если атакующий > защитника, урон = разница
-// Крит: 6 у атакующего → ×1.5 урон; 6 у защитника → ×0.5 урон
+// Новая система d6 согласно ТЗ:
+// 1. Атакующий и защитник бросают по 1d6
+// 2. Если атакующий > защитника: урон = (ATK атакующего) - (Armor защитника)
+// 3. Если защитник >= атакующего: урон не наносится
+// 4. Если равные числа: переброс кубиков (рекурсия)
+// 5. Критические броски:
+//    - 6 у атакующего: урон ×1.5
+//    - 6 у защитника: урон не наносится + атакующий пропускает следующий ход
 
 const rollD6 = () => Math.floor(Math.random() * 6) + 1;
 
@@ -10,34 +15,42 @@ export interface D6DamageResult {
   defenderRoll: number;
   isAttackerCrit: boolean;
   isDefenderCrit: boolean;
-  totalAttack: number;
-  totalDefense: number;
+  skipNextTurn: boolean; // Новое поле для пропуска хода
 }
 
 export const calculateD6Damage = (attackPower: number, defenseArmor: number): D6DamageResult => {
-  const attackerRoll = rollD6();
-  const defenderRoll = rollD6();
+  let attackerRoll = rollD6();
+  let defenderRoll = rollD6();
   
-  const totalAttack = attackerRoll + attackPower;
-  const totalDefense = defenderRoll + defenseArmor;
+  // Переброс при равных значениях
+  while (attackerRoll === defenderRoll) {
+    attackerRoll = rollD6();
+    defenderRoll = rollD6();
+  }
   
   const isAttackerCrit = attackerRoll === 6;
   const isDefenderCrit = defenderRoll === 6;
   
   let damage = 0;
+  let skipNextTurn = false;
   
-  if (totalAttack > totalDefense) {
-    damage = Math.max(1, totalAttack - totalDefense);
+  // Если защитник выкинул 6 - полная блокировка + пропуск хода атакующего
+  if (isDefenderCrit) {
+    damage = 0;
+    skipNextTurn = true;
+  } 
+  // Если атакующий > защитника
+  else if (attackerRoll > defenderRoll) {
+    damage = Math.max(1, attackPower - defenseArmor);
     
-    // Применяем критические модификаторы
+    // Критический удар атакующего (6) увеличивает урон на 50%
     if (isAttackerCrit) {
       damage = Math.ceil(damage * 1.5);
     }
-    if (isDefenderCrit) {
-      damage = Math.ceil(damage * 0.5);
-    }
-  } else {
-    damage = 1; // Минимальный урон при неудачной атаке
+  }
+  // Если защитник >= атакующего (но не критическая защита)
+  else {
+    damage = 0;
   }
   
   return {
@@ -46,8 +59,7 @@ export const calculateD6Damage = (attackPower: number, defenseArmor: number): D6
     defenderRoll,
     isAttackerCrit,
     isDefenderCrit,
-    totalAttack,
-    totalDefense
+    skipNextTurn
   };
 };
 

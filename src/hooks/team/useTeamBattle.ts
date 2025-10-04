@@ -12,9 +12,6 @@ import { HERO_ABILITIES } from '@/types/abilities';
 import { useCardInstances } from '@/hooks/useCardInstances';
 import { calculateCardStats } from '@/utils/cardUtils';
 import { calculateD6Damage } from '@/utils/battleCalculations';
-import { applyFatigueDamage, getFatigueDescription } from '@/utils/expeditionFatigue';
-import { applyCrowdModifiers } from '@/utils/crowdEffects';
-import { getDungeonNumber } from '@/utils/monsterPowerIndex';
 
 export const useTeamBattle = (dungeonType: DungeonType, initialLevel: number = 1) => {
   const { toast } = useToast();
@@ -188,26 +185,38 @@ export const useTeamBattle = (dungeonType: DungeonType, initialLevel: number = 1
     }));
   };
 
+  const [skippedAttackerIds, setSkippedAttackerIds] = useState<Set<string>>(new Set());
+
   const executePlayerAttack = async (pairId: string, targetId: number) => {
     const attackingPair = battleState.playerPairs.find(p => p.id === pairId);
     const target = battleState.opponents.find(o => o.id === targetId);
     
     if (!attackingPair || !target) return;
 
-    // Применяем модификаторы толпы
-    const aliveOpponents = battleState.opponents.filter(o => o.health > 0).length;
-    const dungeonNumber = getDungeonNumber(battleState.selectedDungeon || 'forgotten_souls');
-    const playerMods = applyCrowdModifiers(
-      attackingPair.defense,
-      attackingPair.power,
-      1, // allyCount для игрока
-      aliveOpponents,
-      dungeonNumber,
-      true // isPlayer
-    );
-    
-    // Используем систему d6 с учетом модификаторов
-    const damageResult = calculateD6Damage(playerMods.effectiveAttack, target.armor || 0);
+    // Проверяем, не пропускает ли атакующий ход
+    if (skippedAttackerIds.has(pairId)) {
+      toast({
+        title: "Пропуск хода",
+        description: `${attackingPair.hero.name} пропускает ход из-за критической блокировки врага`,
+        variant: "destructive"
+      });
+      
+      // Убираем из списка пропущенных
+      setSkippedAttackerIds(prev => {
+        const newSet = new Set(prev);
+        newSet.delete(pairId);
+        return newSet;
+      });
+      
+      // Переходим к следующему ходу
+      setTimeout(() => {
+        switchTurn();
+      }, 1000);
+      return;
+    }
+
+    // Используем новую систему d6 без модификаторов толпы
+    const damageResult = calculateD6Damage(attackingPair.power, target.armor || 0);
     const newTargetHealth = Math.max(0, target.health - damageResult.damage);
 
     startTransition(() => {
@@ -234,19 +243,13 @@ export const useTeamBattle = (dungeonType: DungeonType, initialLevel: number = 1
     }
 
     const critText = damageResult.isAttackerCrit ? " 🎯 КРИТ!" : "";
-    const defCritText = damageResult.isDefenderCrit ? " 🛡️" : "";
+    const defCritText = damageResult.isDefenderCrit ? " 🛡️ БЛОК!" : "";
+    const skipText = damageResult.skipNextTurn ? " (пропуск хода)" : "";
     
     toast({
-      title: `Атака!${critText}`,
-      description: `${attackingPair.hero.name} (${damageResult.attackerRoll}+${attackingPair.power}) наносит ${damageResult.damage} урона${defCritText}`,
+      title: `Атака!${critText}${skipText}`,
+      description: `${attackingPair.hero.name} бросил ${damageResult.attackerRoll}, враг ${damageResult.defenderRoll}. Урон: ${damageResult.damage}${defCritText}`,
     });
-
-    // Ответный удар противника, если он жив
-    if (newTargetHealth > 0) {
-      setTimeout(() => {
-        executeCounterAttack(targetId, pairId, true);
-      }, 800);
-    }
 
     // Check if all enemies defeated
     if (battleState.opponents.filter(o => o.health > 0).length === 1 && newTargetHealth === 0) {
@@ -261,130 +264,7 @@ export const useTeamBattle = (dungeonType: DungeonType, initialLevel: number = 1
     }
   };
 
-  const executeCounterAttack = async (attackerId: string | number, targetId: string | number, isEnemyAttacker: boolean) => {
-    if (isEnemyAttacker) {
-      // Враг (в т.ч. босс) отвечает атакующей паре
-      const enemy = battleState.opponents.find(o => o.id === attackerId);
-      const pair = battleState.playerPairs.find(p => p.id === targetId);
-      
-      if (!enemy || !pair || pair.health <= 0) return;
-
-      // Применяем модификаторы толпы для врага
-      const aliveOpponents = battleState.opponents.filter(o => o.health > 0).length;
-      const alivePairs = battleState.playerPairs.filter(p => p.health > 0).length;
-      const dungeonNumber = getDungeonNumber(battleState.selectedDungeon || 'forgotten_souls');
-      
-      const enemyMods = applyCrowdModifiers(
-        enemy.armor || 0,
-        enemy.power,
-        aliveOpponents,
-        alivePairs,
-        dungeonNumber,
-        false // isEnemy
-      );
-      
-      const playerMods = applyCrowdModifiers(
-        pair.defense,
-        pair.power,
-        alivePairs,
-        aliveOpponents,
-        dungeonNumber,
-        true // isPlayer
-      );
-
-      // Используем систему d6 с учетом модификаторов
-      const damageResult = calculateD6Damage(enemyMods.effectiveAttack, playerMods.effectiveArmor);
-      
-      // Применяем усталость похода к входящему урону
-      const finalDamage = applyFatigueDamage(damageResult.damage, battleState.level);
-      
-      // Apply damage using proper health logic
-      const updatedPair = await applyDamageToPair(pair, finalDamage, updateGameData, gameData);
-
-      startTransition(() => {
-        setBattleState(prev => ({
-          ...prev,
-          playerPairs: prev.playerPairs.map(p =>
-            p.id === pair.id 
-              ? updatedPair
-              : p
-          )
-        }));
-      });
-
-      const critText = damageResult.isAttackerCrit ? " 🎯 КРИТ!" : "";
-      const defCritText = damageResult.isDefenderCrit ? " 🛡️" : "";
-      const fatigueInfo = getFatigueDescription(battleState.level);
-      const damageInfo = finalDamage > damageResult.damage 
-        ? `${damageResult.damage}→${finalDamage}` 
-        : `${finalDamage}`;
-      
-      toast({
-        title: `Ответный удар врага!${critText}`,
-        description: `${enemy.name} (${damageResult.attackerRoll}+${enemy.power}) наносит ${damageInfo} урона${defCritText}${fatigueInfo ? '\n' + fatigueInfo : ''}`,
-        variant: "destructive"
-      });
-    } else {
-      // Пара отвечает врагу
-      const pair = battleState.playerPairs.find(p => p.id === attackerId);
-      const enemy = battleState.opponents.find(o => o.id === targetId);
-      
-      if (!pair || !enemy || enemy.health <= 0) return;
-
-      // Применяем модификаторы толпы для контратаки
-      const aliveOpponents = battleState.opponents.filter(o => o.health > 0).length;
-      const dungeonNumber = getDungeonNumber(battleState.selectedDungeon || 'forgotten_souls');
-      const playerMods = applyCrowdModifiers(
-        pair.defense,
-        pair.power,
-        1,
-        aliveOpponents,
-        dungeonNumber,
-        true
-      );
-
-      // Используем систему d6 с учетом модификаторов для ответного удара пары
-      const damageResult = calculateD6Damage(playerMods.effectiveAttack, enemy.armor || 0);
-      const damage = damageResult.damage;
-      const newEnemyHealth = Math.max(0, enemy.health - damage);
-
-      setBattleState(prev => ({
-        ...prev,
-        opponents: prev.opponents.map(opp => 
-          opp.id === enemy.id 
-            ? { ...opp, health: newEnemyHealth }
-            : opp
-        ).filter(opp => opp.health > 0)
-      }));
-
-      // Добавляем опыт аккаунта за убийство монстра в ответном ударе
-      if (newEnemyHealth <= 0) {
-        const expReward = (accountLevel * 5) + 45 + (enemy.isBoss ? 150 : 0);
-        
-        addAccountExp(expReward);
-        
-        toast({
-          title: "Враг побежден!",
-          description: `Получено ${expReward} опыта аккаунта`,
-        });
-      }
-
-      const critText = damageResult.isAttackerCrit ? " 🎯 КРИТ!" : "";
-      
-      toast({
-        title: `Ответный удар!${critText}`,
-        description: `${pair.hero.name} (${damageResult.attackerRoll}+${pair.power}) наносит ${damage} урона в ответ!`,
-      });
-    }
-    // Prevent auto-loop: do not chain new enemy attacks here.
-    // Flow is controlled by the initiating function (player/enemy attack).
-    const isActive = localStorage.getItem('activeBattleInProgress') === 'true';
-    const alivePairs = battleState.playerPairs.filter(pair => pair.health > 0);
-    const aliveOpponents = battleState.opponents.filter(opp => opp.health > 0);
-    if (!isActive || aliveOpponents.length === 0 || alivePairs.length === 0) {
-      return;
-    }
-  };
+  // УБРАНА механика ответного удара (executeCounterAttack)
   
   const executeEnemyAttack = async () => {
     const isActive = localStorage.getItem('activeBattleInProgress') === 'true';
@@ -401,33 +281,19 @@ export const useTeamBattle = (dungeonType: DungeonType, initialLevel: number = 1
     const currentEnemy = aliveOpponents[Math.floor(Math.random() * aliveOpponents.length)];
     const targetPair = alivePairs[Math.floor(Math.random() * alivePairs.length)];
     
-    // Применяем модификаторы толпы для врага
-    const dungeonNumber = getDungeonNumber(battleState.selectedDungeon || 'forgotten_souls');
-    const enemyMods = applyCrowdModifiers(
-      currentEnemy.armor || 0,
-      currentEnemy.power,
-      aliveOpponents.length,
-      alivePairs.length,
-      dungeonNumber,
-      false
-    );
+    // Используем новую систему d6 без модификаторов толпы и усталости
+    const damageResult = calculateD6Damage(currentEnemy.power, targetPair.defense);
     
-    const playerMods = applyCrowdModifiers(
-      targetPair.defense,
-      targetPair.power,
-      alivePairs.length,
-      aliveOpponents.length,
-      dungeonNumber,
-      true
-    );
+    // Если защитник выкинул критическую защиту (6), враг пропускает следующий ход
+    if (damageResult.skipNextTurn) {
+      setSkippedAttackerIds(prev => {
+        const newSet = new Set(prev);
+        newSet.add(`enemy-${currentEnemy.id}`);
+        return newSet;
+      });
+    }
     
-    // Используем систему d6 с учетом модификаторов для атаки врага
-    const damageResult = calculateD6Damage(enemyMods.effectiveAttack, playerMods.effectiveArmor);
-    
-    // Применяем усталость похода к входящему урону
-    const finalDamage = applyFatigueDamage(damageResult.damage, battleState.level);
-    
-    const updatedPair = await applyDamageToPair(targetPair, finalDamage, updateGameData, gameData);
+    const updatedPair = await applyDamageToPair(targetPair, damageResult.damage, updateGameData, gameData);
 
     setBattleState(prev => ({
       ...prev,
@@ -439,23 +305,16 @@ export const useTeamBattle = (dungeonType: DungeonType, initialLevel: number = 1
     }));
 
     const critText = damageResult.isAttackerCrit ? " 🎯 КРИТ!" : "";
-    const defCritText = damageResult.isDefenderCrit ? " 🛡️" : "";
-    const fatigueInfo = getFatigueDescription(battleState.level);
-    const damageInfo = finalDamage > damageResult.damage 
-      ? `${damageResult.damage}→${finalDamage}` 
-      : `${finalDamage}`;
+    const defCritText = damageResult.isDefenderCrit ? " 🛡️ БЛОК!" : "";
+    const skipText = damageResult.skipNextTurn ? " (враг пропустит ход)" : "";
     
     toast({
-      title: `Враг атакует!${critText}`,
-      description: `${currentEnemy.name} (${damageResult.attackerRoll}+${currentEnemy.power}) наносит ${damageInfo} урона${defCritText}${fatigueInfo ? '\n' + fatigueInfo : ''}`,
+      title: `Враг атакует!${critText}${skipText}`,
+      description: `${currentEnemy.name} бросил ${damageResult.attackerRoll}, вы ${damageResult.defenderRoll}. Урон: ${damageResult.damage}${defCritText}`,
       variant: "destructive"
     });
 
-    if (updatedPair.health > 0) {
-      setTimeout(() => {
-        executeCounterAttack(targetPair.id, currentEnemy.id, false);
-      }, 800);
-    }
+    // УБРАНА механика ответного удара
 
     if (alivePairs.length === 1 && updatedPair.health === 0) {
       setTimeout(() => {
@@ -631,7 +490,6 @@ export const useTeamBattle = (dungeonType: DungeonType, initialLevel: number = 1
     updateAttackOrder,
     executePlayerAttack,
     executeEnemyAttack,
-    executeCounterAttack,
     resetBattle,
     handleLevelComplete,
     isPlayerTurn: battleState.currentTurn === 'player',

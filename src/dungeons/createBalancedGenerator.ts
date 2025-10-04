@@ -96,10 +96,11 @@ export const createBalancedGenerator = (config: DungeonConfig) =>
       const minibossStats = await calculateMonsterStatsFromDB(config.internalName, level, 'miniboss');
       const minibossData = await getMonsterData(config.internalName, level);
       
+      // Множители для минибосса уже применены в calculateMonsterStatsFromDB
       const finalMinibossStats = minibossData ? {
-        hp: Math.floor(minibossData.hp * 1.5),
-        armor: Math.floor(minibossData.armor * 1.5),
-        attack: Math.floor(minibossData.attack * 1.5)
+        hp: minibossData.hp,
+        armor: minibossData.armor,
+        attack: minibossData.attack
       } : minibossStats;
       
       opponents.push({
