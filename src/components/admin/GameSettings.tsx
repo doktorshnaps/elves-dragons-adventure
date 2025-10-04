@@ -365,7 +365,7 @@ export const GameSettings = () => {
                       />
                     </div>
                   </div>
-                  <Button onClick={saveHeroBaseStats} disabled={saving} className="w-full">
+                  <Button type="button" onClick={saveHeroBaseStats} disabled={saving} className="w-full">
                     {saving ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Save className="h-4 w-4 mr-2" />}
                     Применить изменения
                   </Button>
@@ -443,7 +443,7 @@ export const GameSettings = () => {
                   </div>
                 </div>
               ))}
-              <Button onClick={saveClassMultipliers} disabled={saving} className="w-full">
+              <Button type="button" onClick={saveClassMultipliers} disabled={saving} className="w-full">
                 {saving ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Save className="h-4 w-4 mr-2" />}
                 Применить изменения
               </Button>
@@ -506,7 +506,7 @@ export const GameSettings = () => {
                       />
                     </div>
                   </div>
-                  <Button onClick={saveDragonBaseStats} disabled={saving} className="w-full">
+                  <Button type="button" onClick={saveDragonBaseStats} disabled={saving} className="w-full">
                     {saving ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Save className="h-4 w-4 mr-2" />}
                     Применить изменения
                   </Button>
@@ -584,7 +584,7 @@ export const GameSettings = () => {
                   </div>
                 </div>
               ))}
-              <Button onClick={saveDragonClassMultipliers} disabled={saving} className="w-full">
+              <Button type="button" onClick={saveDragonClassMultipliers} disabled={saving} className="w-full">
                 {saving ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Save className="h-4 w-4 mr-2" />}
                 Применить изменения
               </Button>
@@ -617,7 +617,7 @@ export const GameSettings = () => {
                   </div>
                 ))}
               </div>
-              <Button onClick={saveRarityMultipliers} disabled={saving} className="w-full">
+              <Button type="button" onClick={saveRarityMultipliers} disabled={saving} className="w-full">
                 {saving ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Save className="h-4 w-4 mr-2" />}
                 Применить изменения
               </Button>
