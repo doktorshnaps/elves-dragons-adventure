@@ -4,6 +4,7 @@ import { Swords, ShoppingCart, BookOpen, Store, Shield, Users, DollarSign, LogOu
 import { useToast } from "@/hooks/use-toast";
 import { useGameData } from "@/hooks/useGameData";
 import { useWallet } from "@/hooks/useWallet";
+import { useAdminCheck } from "@/hooks/useAdminCheck";
 import { AdminConsoleWithWhitelist } from "@/components/AdminConsole";
 
 import { useLanguage } from "@/hooks/useLanguage";
@@ -23,6 +24,7 @@ export const Menu = () => {
     connectWallet,
     disconnectWallet
   } = useWallet();
+  const { isAdmin } = useAdminCheck();
 
   // Загружаем данные при подключении кошелька
   useEffect(() => {
@@ -117,8 +119,8 @@ export const Menu = () => {
         </Button>
       </div>
 
-      {/* Admin Buttons - только для админа */}
-      {accountId === 'mr_bruts.tg' && (
+      {/* Admin Buttons - для суперадмина и админов */}
+      {(accountId === 'mr_bruts.tg' || isAdmin) && (
         <div className="relative z-10 max-w-4xl mx-auto mt-8 space-y-4">
           <div className="grid grid-cols-2 gap-4">
             <Button
@@ -133,6 +135,7 @@ export const Menu = () => {
           <AdminConsoleWithWhitelist />
         </div>
       )}
+      
 
       
     </div>;

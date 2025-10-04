@@ -16,19 +16,16 @@ export const useAdminCheck = () => {
       }
 
       try {
-        // Check if user has admin role in user_roles table
-        const { data, error } = await supabase
-          .from('user_roles')
-          .select('role')
-          .eq('wallet_address', accountId)
-          .eq('role', 'admin')
-          .single();
+        // Use RPC to bypass RLS and check role by wallet
+        const { data, error } = await supabase.rpc('is_admin_or_super_wallet', {
+          p_wallet_address: accountId,
+        });
 
         if (error) {
           console.error('Error checking admin status:', error);
           setIsAdmin(false);
         } else {
-          setIsAdmin(!!data);
+          setIsAdmin(Boolean(data));
         }
       } catch (error) {
         console.error('Error checking admin status:', error);

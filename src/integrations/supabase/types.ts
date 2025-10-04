@@ -1384,6 +1384,10 @@ export type Database = {
         Args: { p_wallet_address: string }
         Returns: boolean
       }
+      is_admin_or_super_wallet: {
+        Args: { p_wallet_address: string }
+        Returns: boolean
+      }
       is_admin_wallet: {
         Args: { p_wallet_address?: string }
         Returns: boolean
