@@ -399,7 +399,7 @@ export const TeamBattleArena: React.FC<TeamBattleArenaProps> = ({
                             {isPlayerAttacking && (
                               <InlineDiceDisplay
                                 isRolling={isDiceRolling}
-                                diceValue={lastRoll?.source === 'player' ? lastRoll.attackerRoll : null}
+                                diceValue={!isDiceRolling && lastRoll?.source === 'player' ? lastRoll.attackerRoll : null}
                                 isAttacker={true}
                                 label="Атака"
                               />
@@ -407,7 +407,7 @@ export const TeamBattleArena: React.FC<TeamBattleArenaProps> = ({
                             {!isPlayerAttacking && (
                               <InlineDiceDisplay
                                 isRolling={isDiceRolling}
-                                diceValue={lastRoll?.source === 'enemy' ? lastRoll.defenderRoll : null}
+                                diceValue={!isDiceRolling && lastRoll?.source === 'enemy' ? lastRoll.defenderRoll : null}
                                 isAttacker={false}
                                 label="Защита"
                               />
@@ -429,7 +429,7 @@ export const TeamBattleArena: React.FC<TeamBattleArenaProps> = ({
                             {isPlayerAttacking && (
                               <InlineDiceDisplay
                                 isRolling={isDiceRolling}
-                                diceValue={lastRoll?.source === 'player' ? lastRoll.defenderRoll : null}
+                                diceValue={!isDiceRolling && lastRoll?.source === 'player' ? lastRoll.defenderRoll : null}
                                 isAttacker={false}
                                 label="Защита"
                               />
@@ -437,7 +437,7 @@ export const TeamBattleArena: React.FC<TeamBattleArenaProps> = ({
                             {!isPlayerAttacking && (
                               <InlineDiceDisplay
                                 isRolling={isDiceRolling}
-                                diceValue={lastRoll?.source === 'enemy' ? lastRoll.attackerRoll : null}
+                                diceValue={!isDiceRolling && lastRoll?.source === 'enemy' ? lastRoll.attackerRoll : null}
                                 isAttacker={true}
                                 label="Атака"
                               />

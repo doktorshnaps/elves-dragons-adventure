@@ -1,4 +1,5 @@
 import { motion, AnimatePresence } from 'framer-motion';
+import { useState, useEffect } from 'react';
 
 interface InlineDiceDisplayProps {
   isRolling: boolean;
@@ -13,18 +14,45 @@ export const InlineDiceDisplay = ({
   isAttacker,
   label
 }: InlineDiceDisplayProps) => {
+  const [displayValue, setDisplayValue] = useState<number>(1);
+  const [showDice, setShowDice] = useState(false);
+
+  useEffect(() => {
+    if (isRolling) {
+      setShowDice(true);
+      // Анимация случайных чисел во время броска
+      const interval = setInterval(() => {
+        setDisplayValue(Math.floor(Math.random() * 6) + 1);
+      }, 100);
+
+      return () => clearInterval(interval);
+    } else if (diceValue !== null) {
+      // Показываем финальное значение
+      setDisplayValue(diceValue);
+      // Скрываем через 2 секунды после остановки
+      const timeout = setTimeout(() => {
+        setShowDice(false);
+      }, 2000);
+      return () => clearTimeout(timeout);
+    }
+  }, [isRolling, diceValue]);
+
   return (
     <AnimatePresence>
-      {isRolling && diceValue !== null && (
+      {showDice && (
         <motion.div
           initial={{ scale: 0, opacity: 0, rotate: 0 }}
           animate={{ 
-            scale: [0, 1.2, 1], 
+            scale: isRolling ? [1, 1.1, 1] : 1,
             opacity: 1,
-            rotate: [0, 360, 720]
+            rotate: isRolling ? 360 : 0
           }}
           exit={{ scale: 0, opacity: 0 }}
-          transition={{ duration: 0.6, ease: "easeOut" }}
+          transition={{ 
+            duration: isRolling ? 0.3 : 0.6,
+            repeat: isRolling ? Infinity : 0,
+            ease: "easeInOut" 
+          }}
           className="flex flex-col items-center"
         >
           <div className={`${
@@ -36,7 +64,7 @@ export const InlineDiceDisplay = ({
               {isAttacker ? '⚔️' : '🛡️'} {label || (isAttacker ? 'Атака' : 'Защита')}
             </div>
             <div className="text-3xl font-bold text-white text-center">
-              {diceValue}
+              {displayValue}
             </div>
           </div>
         </motion.div>
