@@ -36,8 +36,6 @@ import {
   SeaSerpentLairWithLazyLoading
 } from './components/lazy/LazyComponents';
 
-import { AdminSettings } from './pages/AdminSettings';
-
 function App() {
   // Добавляем обработку ошибок в хуках
   try {
@@ -66,7 +64,6 @@ function App() {
           <Route path="/" element={<Index />} />
           <Route path="/auth" element={<Auth />} />
           <Route path="/menu" element={<ProtectedRoute><Menu /></ProtectedRoute>} />
-          <Route path="/admin-settings" element={<ProtectedRoute><AdminSettings /></ProtectedRoute>} />
           <Route path="/team" element={<ProtectedRoute><TeamStatsWithLazyLoading /></ProtectedRoute>} />
           <Route path="/statistics" element={<ProtectedRoute><TeamStatsWithLazyLoading /></ProtectedRoute>} />
           <Route path="/equipment" element={<ProtectedRoute><EquipmentWithLazyLoading /></ProtectedRoute>} />

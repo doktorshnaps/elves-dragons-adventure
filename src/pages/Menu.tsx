@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
-import { Swords, ShoppingCart, BookOpen, Store, Shield, Users, DollarSign, LogOut, Home, Wallet, Settings } from "lucide-react";
+import { Swords, ShoppingCart, BookOpen, Store, Shield, Users, DollarSign, LogOut, Home, Wallet } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useGameData } from "@/hooks/useGameData";
 import { useWallet } from "@/hooks/useWallet";
@@ -110,13 +110,6 @@ export const Menu = () => {
           <Home className="w-8 h-8" />
           <span>{t(language, 'menu.shelter')}</span>
         </Button>
-
-        {accountId === 'mr_bruts.tg' && (
-          <Button variant="outline" className="h-24 bg-game-surface/80 border-game-accent text-game-accent hover:bg-game-surface flex flex-col items-center justify-center gap-2" onClick={() => navigate('/admin-settings')}>
-            <Settings className="w-8 h-8" />
-            <span>Настройки</span>
-          </Button>
-        )}
 
         <Button variant="outline" className="h-24 bg-game-surface/80 border-red-500 text-red-500 hover:bg-red-500/20 flex flex-col items-center justify-center gap-2" onClick={handleDisconnectWallet}>
           <LogOut className="w-8 h-8" />
