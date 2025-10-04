@@ -90,22 +90,20 @@ export const TeamBattleArena: React.FC<TeamBattleArenaProps> = ({
     const randomPair = alivePairs[Math.floor(Math.random() * alivePairs.length)];
     
     if (randomPair) {
-      // Show dice roll animation - Enemy attacking
+      // Enemy turn dice animation
       setIsPlayerAttacking(false);
-      setIsDiceRolling(true);
-      
       setDefendingPair(randomPair.id);
-      
+      setIsDiceRolling(true);
+
+      // Быстро запускаем расчет бросков, чтобы финальные значения были доступны
+      setTimeout(() => {
+        onEnemyAttack();
+      }, 100);
+
+      // Останавливаем анимацию через 1.2с и убираем защитника
       setTimeout(() => {
         setIsDiceRolling(false);
-        
-        setTimeout(() => {
-          onEnemyAttack();
-          
-          setTimeout(() => {
-            setDefendingPair(null);
-          }, 300);
-        }, 200);
+        setTimeout(() => setDefendingPair(null), 300);
       }, 1200);
     } else {
       onEnemyAttack();
