@@ -238,7 +238,9 @@ export type Database = {
       }
       dungeon_settings: {
         Row: {
+          armor_growth: number
           armor_growth_coefficient: number
+          atk_growth: number
           atk_growth_coefficient: number
           base_armor: number
           base_atk: number
@@ -248,6 +250,7 @@ export type Database = {
           dungeon_name: string
           dungeon_number: number
           dungeon_type: string
+          hp_growth: number
           hp_growth_coefficient: number
           id: string
           level_beta: number
@@ -256,7 +259,9 @@ export type Database = {
           updated_at: string | null
         }
         Insert: {
+          armor_growth?: number
           armor_growth_coefficient?: number
+          atk_growth?: number
           atk_growth_coefficient?: number
           base_armor?: number
           base_atk?: number
@@ -266,6 +271,7 @@ export type Database = {
           dungeon_name: string
           dungeon_number: number
           dungeon_type: string
+          hp_growth?: number
           hp_growth_coefficient?: number
           id?: string
           level_beta?: number
@@ -274,7 +280,9 @@ export type Database = {
           updated_at?: string | null
         }
         Update: {
+          armor_growth?: number
           armor_growth_coefficient?: number
+          atk_growth?: number
           atk_growth_coefficient?: number
           base_armor?: number
           base_atk?: number
@@ -284,6 +292,7 @@ export type Database = {
           dungeon_name?: string
           dungeon_number?: number
           dungeon_type?: string
+          hp_growth?: number
           hp_growth_coefficient?: number
           id?: string
           level_beta?: number

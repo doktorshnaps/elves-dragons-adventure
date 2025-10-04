@@ -24,6 +24,9 @@ interface DungeonSetting {
   dungeon_alpha: number;
   level_beta: number;
   level_g_coefficient: number;
+  hp_growth: number;
+  armor_growth: number;
+  atk_growth: number;
 }
 
 export const DungeonSettings = () => {
@@ -202,35 +205,78 @@ export const DungeonSettings = () => {
                   </div>
                 </div>
 
-                {/* Коэффициенты роста */}
+                {/* Новые коэффициенты роста (формула эмулятора) */}
                 <div className="space-y-3">
-                  <h4 className="font-semibold text-sm">Коэффициенты роста</h4>
+                  <h4 className="font-semibold text-sm">Коэффициенты роста по уровням (новая формула)</h4>
+                  <p className="text-xs text-muted-foreground">
+                    Формула: stat = base × growth^((L-1)/10) × 1.2^(D-1)
+                  </p>
                   <div className="grid grid-cols-3 gap-3">
                     <div className="space-y-1">
-                      <Label className="text-xs">Рост HP</Label>
+                      <Label className="text-xs">HP Growth</Label>
+                      <Input
+                        type="number"
+                        step="0.01"
+                        value={dungeon.hp_growth || 1.15}
+                        onChange={(e) => updateDungeon(dungeon.id, 'hp_growth', parseFloat(e.target.value) || 1.15)}
+                      />
+                      <p className="text-[10px] text-muted-foreground">По умолчанию: 1.15</p>
+                    </div>
+                    <div className="space-y-1">
+                      <Label className="text-xs">Armor Growth</Label>
+                      <Input
+                        type="number"
+                        step="0.01"
+                        value={dungeon.armor_growth || 1.10}
+                        onChange={(e) => updateDungeon(dungeon.id, 'armor_growth', parseFloat(e.target.value) || 1.10)}
+                      />
+                      <p className="text-[10px] text-muted-foreground">По умолчанию: 1.10</p>
+                    </div>
+                    <div className="space-y-1">
+                      <Label className="text-xs">ATK Growth</Label>
+                      <Input
+                        type="number"
+                        step="0.01"
+                        value={dungeon.atk_growth || 1.12}
+                        onChange={(e) => updateDungeon(dungeon.id, 'atk_growth', parseFloat(e.target.value) || 1.12)}
+                      />
+                      <p className="text-[10px] text-muted-foreground">По умолчанию: 1.12</p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Старые коэффициенты (для совместимости) */}
+                <div className="space-y-3">
+                  <h4 className="font-semibold text-sm">Старые коэффициенты роста (устарело)</h4>
+                  <div className="grid grid-cols-3 gap-3">
+                    <div className="space-y-1">
+                      <Label className="text-xs">Рост HP (старый)</Label>
                       <Input
                         type="number"
                         step="0.01"
                         value={dungeon.hp_growth_coefficient}
                         onChange={(e) => updateDungeon(dungeon.id, 'hp_growth_coefficient', parseFloat(e.target.value) || 0)}
+                        disabled
                       />
                     </div>
                     <div className="space-y-1">
-                      <Label className="text-xs">Рост Armor</Label>
+                      <Label className="text-xs">Рост Armor (старый)</Label>
                       <Input
                         type="number"
                         step="0.01"
                         value={dungeon.armor_growth_coefficient}
                         onChange={(e) => updateDungeon(dungeon.id, 'armor_growth_coefficient', parseFloat(e.target.value) || 0)}
+                        disabled
                       />
                     </div>
                     <div className="space-y-1">
-                      <Label className="text-xs">Рост ATK</Label>
+                      <Label className="text-xs">Рост ATK (старый)</Label>
                       <Input
                         type="number"
                         step="0.01"
                         value={dungeon.atk_growth_coefficient}
                         onChange={(e) => updateDungeon(dungeon.id, 'atk_growth_coefficient', parseFloat(e.target.value) || 0)}
+                        disabled
                       />
                     </div>
                   </div>

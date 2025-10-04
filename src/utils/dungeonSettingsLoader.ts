@@ -15,6 +15,9 @@ export interface DungeonSettings {
   dungeon_alpha: number;
   level_beta: number;
   level_g_coefficient: number;
+  hp_growth: number;
+  armor_growth: number;
+  atk_growth: number;
 }
 
 let cachedSettings: DungeonSettings[] | null = null;
@@ -69,57 +72,64 @@ export interface MonsterStats {
 }
 
 /**
- * Рассчитывает статы монстра с учетом настроек из БД
+ * Рассчитывает статы монстра с учетом новых формул роста
+ * HP(D,L) = baseHP × hpGrowth^((L-1)/10) × dungeonFactor(D)
+ * Armor(D,L) = baseArmor × armorGrowth^((L-1)/10) × dungeonFactor(D)
+ * ATK(D,L) = baseATK × atkGrowth^((L-1)/10) × dungeonFactor(D)
  */
 export const calculateMonsterStatsFromDB = async (
   dungeonType: string,
   level: number,
   monsterType: 'normal' | 'miniboss' | 'boss50' | 'boss100'
 ): Promise<MonsterStats> => {
-  const smob = await calculatePowerIndexFromDB(dungeonType, level);
   const settings = await getDungeonSettings(dungeonType);
   
   if (!settings) {
-    // Fallback на стандартные пропорции
-    console.warn(`No settings found for ${dungeonType}, using default proportions`);
-    return calculateDefaultStats(smob, monsterType);
+    console.warn(`No settings found for ${dungeonType}, using defaults`);
+    return calculateDefaultStats(100, monsterType);
   }
   
-  const { base_hp, base_armor, base_atk, dungeon_alpha, level_beta, level_g_coefficient, dungeon_number } = settings;
+  const { 
+    base_hp, 
+    base_armor, 
+    base_atk, 
+    hp_growth, 
+    armor_growth, 
+    atk_growth,
+    dungeon_number 
+  } = settings;
 
-  // Рост от уровня и масштаб сложности данжа
-  const growth = Math.pow(1 + level_g_coefficient * Math.max(0, level - 1), level_beta);
-  const dungeonScale = Math.pow(dungeon_number, dungeon_alpha);
+  // Dungeon factor: 1.2^(D-1)
+  const dungeonFactor = Math.pow(1.2, dungeon_number - 1);
 
-  // Базовые статы + рост
-  const scaled = {
-    hp: Math.floor(base_hp * growth * dungeonScale),
-    armor: Math.floor(base_armor * growth * dungeonScale),
-    attack: Math.floor(base_atk * growth * dungeonScale)
-  } as MonsterStats;
+  // Рост по уровню: growth^((L-1)/10)
+  const levelIndex = Math.max(0, level - 1) / 10;
+  const hpLevelGrowth = Math.pow(hp_growth, levelIndex);
+  const armorLevelGrowth = Math.pow(armor_growth, levelIndex);
+  const atkLevelGrowth = Math.pow(atk_growth, levelIndex);
 
-  switch (monsterType) {
-    case 'normal':
-      return scaled;
-    case 'miniboss':
-      return {
-        hp: Math.floor(scaled.hp * 1.5),
-        armor: Math.floor(scaled.armor * 1.5),
-        attack: Math.floor(scaled.attack * 1.5)
-      };
-    case 'boss50':
-      return {
-        hp: Math.floor(scaled.hp * 2.5),
-        armor: Math.floor(scaled.armor * 2.5),
-        attack: Math.floor(scaled.attack * 2.5)
-      };
-    case 'boss100':
-      return {
-        hp: Math.floor(scaled.hp * 4.0),
-        armor: Math.floor(scaled.armor * 4.0),
-        attack: Math.floor(scaled.attack * 4.0)
-      };
-  }
+  // Базовые статы
+  const baseStats = {
+    hp: Math.floor(base_hp * hpLevelGrowth * dungeonFactor),
+    armor: Math.floor(base_armor * armorLevelGrowth * dungeonFactor),
+    attack: Math.floor(base_atk * atkLevelGrowth * dungeonFactor)
+  };
+
+  // Типовые множители
+  const typeMultipliers = {
+    normal: { hp: 1.0, armor: 1.0, attack: 1.0 },
+    miniboss: { hp: 1.5, armor: 1.2, attack: 1.0 },
+    boss50: { hp: 2.5, armor: 1.3, attack: 1.1 },
+    boss100: { hp: 4.0, armor: 1.5, attack: 1.15 }
+  };
+
+  const mult = typeMultipliers[monsterType];
+
+  return {
+    hp: Math.floor(baseStats.hp * mult.hp),
+    armor: Math.floor(baseStats.armor * mult.armor),
+    attack: Math.floor(baseStats.attack * mult.attack)
+  };
 };
 
 // Fallback функция с дефолтными пропорциями
