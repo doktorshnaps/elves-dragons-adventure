@@ -96,9 +96,12 @@ export const DungeonSettings = () => {
         p_base_hp: dungeon.base_hp,
         p_base_armor: dungeon.base_armor,
         p_base_atk: dungeon.base_atk,
-        p_hp_growth: dungeon.hp_growth_coefficient,
-        p_armor_growth: dungeon.armor_growth_coefficient,
-        p_atk_growth: dungeon.atk_growth_coefficient,
+        p_hp_growth: dungeon.hp_growth || 1.15,
+        p_armor_growth: dungeon.armor_growth || 1.10,
+        p_atk_growth: dungeon.atk_growth || 1.12,
+        p_hp_growth_old: dungeon.hp_growth_coefficient,
+        p_armor_growth_old: dungeon.armor_growth_coefficient,
+        p_atk_growth_old: dungeon.atk_growth_coefficient,
         p_s_mob_base: dungeon.s_mob_base,
         p_dungeon_alpha: dungeon.dungeon_alpha,
         p_level_beta: dungeon.level_beta,
@@ -282,9 +285,9 @@ export const DungeonSettings = () => {
                   </div>
                 </div>
 
-                {/* Параметры формулы S_mob */}
-                <div className="space-y-3">
-                  <h4 className="font-semibold text-sm">Параметры формулы S_mob</h4>
+                {/* Параметры формулы S_mob (устарело) */}
+                <div className="space-y-3 opacity-60">
+                  <h4 className="font-semibold text-sm">Параметры формулы S_mob (устарело)</h4>
                   <div className="grid grid-cols-2 gap-3">
                     <div className="space-y-1">
                       <Label className="text-xs">S_mob (Базовый множитель)</Label>
@@ -292,6 +295,7 @@ export const DungeonSettings = () => {
                         type="number"
                         value={dungeon.s_mob_base}
                         onChange={(e) => updateDungeon(dungeon.id, 's_mob_base', parseFloat(e.target.value) || 0)}
+                        disabled
                       />
                     </div>
                     <div className="space-y-1">
@@ -301,6 +305,7 @@ export const DungeonSettings = () => {
                         step="0.001"
                         value={dungeon.level_g_coefficient}
                         onChange={(e) => updateDungeon(dungeon.id, 'level_g_coefficient', parseFloat(e.target.value) || 0)}
+                        disabled
                       />
                     </div>
                     <div className="space-y-1">
@@ -310,6 +315,7 @@ export const DungeonSettings = () => {
                         step="0.1"
                         value={dungeon.dungeon_alpha}
                         onChange={(e) => updateDungeon(dungeon.id, 'dungeon_alpha', parseFloat(e.target.value) || 0)}
+                        disabled
                       />
                     </div>
                     <div className="space-y-1">
@@ -319,11 +325,31 @@ export const DungeonSettings = () => {
                         step="0.1"
                         value={dungeon.level_beta}
                         onChange={(e) => updateDungeon(dungeon.id, 'level_beta', parseFloat(e.target.value) || 0)}
+                        disabled
                       />
                     </div>
                   </div>
-                  <p className="text-xs text-muted-foreground mt-2">
-                    Формула: S_mob = {dungeon.s_mob_base} × D^{dungeon.dungeon_alpha} × (1 + {dungeon.level_g_coefficient} × L)^{dungeon.level_beta}
+                </div>
+
+                {/* Предпросмотр характеристик */}
+                <div className="space-y-3 bg-accent/20 p-4 rounded-lg">
+                  <h4 className="font-semibold text-sm">Предпросмотр монстров</h4>
+                  <div className="grid grid-cols-2 gap-4 text-xs">
+                    <div>
+                      <p className="font-medium mb-2">Уровень 1 (Normal):</p>
+                      <p>HP: {Math.floor(dungeon.base_hp * Math.pow(1.2, dungeon.dungeon_number - 1))}</p>
+                      <p>Armor: {Math.floor(dungeon.base_armor * Math.pow(1.2, dungeon.dungeon_number - 1))}</p>
+                      <p>ATK: {Math.floor(dungeon.base_atk * Math.pow(1.2, dungeon.dungeon_number - 1))}</p>
+                    </div>
+                    <div>
+                      <p className="font-medium mb-2">Уровень 50 (Boss):</p>
+                      <p>HP: {Math.floor(dungeon.base_hp * Math.pow(dungeon.hp_growth || 1.15, 4.9) * Math.pow(1.2, dungeon.dungeon_number - 1) * 2.5)}</p>
+                      <p>Armor: {Math.floor(dungeon.base_armor * Math.pow(dungeon.armor_growth || 1.10, 4.9) * Math.pow(1.2, dungeon.dungeon_number - 1) * 1.3)}</p>
+                      <p>ATK: {Math.floor(dungeon.base_atk * Math.pow(dungeon.atk_growth || 1.12, 4.9) * Math.pow(1.2, dungeon.dungeon_number - 1) * 1.1)}</p>
+                    </div>
+                  </div>
+                  <p className="text-[10px] text-muted-foreground mt-2">
+                    Типовые множители: Normal (1.0×), Miniboss (HP:1.5× Armor:1.2× ATK:1.0×), Boss50 (HP:2.5× Armor:1.3× ATK:1.1×), Boss100 (HP:4.0× Armor:1.5× ATK:1.15×)
                   </p>
                 </div>
 
