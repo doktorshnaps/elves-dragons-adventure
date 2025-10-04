@@ -1091,6 +1091,56 @@ export type Database = {
         Args: { p_admin_wallet_address: string; p_target_user_id: string }
         Returns: boolean
       }
+      admin_update_class_multiplier: {
+        Args: {
+          p_admin_wallet_address?: string
+          p_defense_multiplier: number
+          p_health_multiplier: number
+          p_id: string
+          p_magic_multiplier: number
+          p_power_multiplier: number
+        }
+        Returns: boolean
+      }
+      admin_update_dragon_base_stats: {
+        Args: {
+          p_admin_wallet_address?: string
+          p_defense: number
+          p_health: number
+          p_magic: number
+          p_power: number
+        }
+        Returns: boolean
+      }
+      admin_update_dragon_class_multiplier: {
+        Args: {
+          p_admin_wallet_address?: string
+          p_defense_multiplier: number
+          p_health_multiplier: number
+          p_id: string
+          p_magic_multiplier: number
+          p_power_multiplier: number
+        }
+        Returns: boolean
+      }
+      admin_update_hero_base_stats: {
+        Args: {
+          p_admin_wallet_address?: string
+          p_defense: number
+          p_health: number
+          p_magic: number
+          p_power: number
+        }
+        Returns: boolean
+      }
+      admin_update_rarity_multiplier: {
+        Args: {
+          p_admin_wallet_address?: string
+          p_id: string
+          p_multiplier: number
+        }
+        Returns: boolean
+      }
       atomic_balance_update: {
         Args: { p_price_deduction: number; p_wallet_address: string }
         Returns: Json

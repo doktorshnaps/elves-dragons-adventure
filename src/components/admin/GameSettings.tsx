@@ -6,6 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { useWallet } from "@/hooks/useWallet";
 import { Loader2, Save } from "lucide-react";
 
 interface HeroBaseStats {
@@ -41,6 +42,7 @@ interface ClassMultiplier {
 
 export const GameSettings = () => {
   const { toast } = useToast();
+  const { accountId } = useWallet();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
 
@@ -168,27 +170,25 @@ export const GameSettings = () => {
   };
 
   const saveRarityMultipliers = async () => {
+    if (!accountId) return;
     setSaving(true);
     try {
-      console.log('Saving rarity multipliers:', rarityMultipliers);
-      const updates = rarityMultipliers.map(rm => 
-        supabase
-          .from('rarity_multipliers')
-          .update({ multiplier: rm.multiplier })
-          .eq('id', rm.id)
-          .select()
-      );
-
-      const results = await Promise.all(updates);
+      console.log('Saving rarity multipliers via RPC:', rarityMultipliers);
       
-      // Check for any errors
-      const errors = results.filter(r => r.error);
-      if (errors.length > 0) {
-        console.error('Errors in updates:', errors);
-        throw new Error('Не все обновления выполнены успешно');
+      for (const rm of rarityMultipliers) {
+        const { error } = await supabase.rpc('admin_update_rarity_multiplier', {
+          p_id: rm.id,
+          p_multiplier: rm.multiplier,
+          p_admin_wallet_address: accountId
+        });
+        
+        if (error) {
+          console.error('Error updating rarity multiplier:', rm.id, error);
+          throw error;
+        }
       }
 
-      console.log('All updates successful:', results);
+      console.log('All rarity multipliers saved successfully');
       toast({
         title: "Успешно",
         description: "Множители редкости сохранены",
@@ -209,32 +209,28 @@ export const GameSettings = () => {
   };
 
   const saveClassMultipliers = async () => {
+    if (!accountId) return;
     setSaving(true);
     try {
-      console.log('Saving class multipliers:', classMultipliers);
-      const updates = classMultipliers.map(cm => 
-        supabase
-          .from('class_multipliers')
-          .update({
-            health_multiplier: cm.health_multiplier,
-            defense_multiplier: cm.defense_multiplier,
-            power_multiplier: cm.power_multiplier,
-            magic_multiplier: cm.magic_multiplier,
-          })
-          .eq('id', cm.id)
-          .select()
-      );
-
-      const results = await Promise.all(updates);
+      console.log('Saving class multipliers via RPC:', classMultipliers);
       
-      // Check for any errors
-      const errors = results.filter(r => r.error);
-      if (errors.length > 0) {
-        console.error('Errors in updates:', errors);
-        throw new Error('Не все обновления выполнены успешно');
+      for (const cm of classMultipliers) {
+        const { error } = await supabase.rpc('admin_update_class_multiplier', {
+          p_id: cm.id,
+          p_health_multiplier: cm.health_multiplier,
+          p_defense_multiplier: cm.defense_multiplier,
+          p_power_multiplier: cm.power_multiplier,
+          p_magic_multiplier: cm.magic_multiplier,
+          p_admin_wallet_address: accountId
+        });
+        
+        if (error) {
+          console.error('Error updating class multiplier:', cm.id, error);
+          throw error;
+        }
       }
 
-      console.log('All updates successful:', results);
+      console.log('All class multipliers saved successfully');
       toast({
         title: "Успешно",
         description: "Множители классов героев сохранены",
@@ -255,32 +251,28 @@ export const GameSettings = () => {
   };
 
   const saveDragonClassMultipliers = async () => {
+    if (!accountId) return;
     setSaving(true);
     try {
-      console.log('Saving dragon class multipliers:', dragonClassMultipliers);
-      const updates = dragonClassMultipliers.map(cm => 
-        supabase
-          .from('dragon_class_multipliers')
-          .update({
-            health_multiplier: cm.health_multiplier,
-            defense_multiplier: cm.defense_multiplier,
-            power_multiplier: cm.power_multiplier,
-            magic_multiplier: cm.magic_multiplier,
-          })
-          .eq('id', cm.id)
-          .select()
-      );
-
-      const results = await Promise.all(updates);
+      console.log('Saving dragon class multipliers via RPC:', dragonClassMultipliers);
       
-      // Check for any errors
-      const errors = results.filter(r => r.error);
-      if (errors.length > 0) {
-        console.error('Errors in updates:', errors);
-        throw new Error('Не все обновления выполнены успешно');
+      for (const cm of dragonClassMultipliers) {
+        const { error } = await supabase.rpc('admin_update_dragon_class_multiplier', {
+          p_id: cm.id,
+          p_health_multiplier: cm.health_multiplier,
+          p_defense_multiplier: cm.defense_multiplier,
+          p_power_multiplier: cm.power_multiplier,
+          p_magic_multiplier: cm.magic_multiplier,
+          p_admin_wallet_address: accountId
+        });
+        
+        if (error) {
+          console.error('Error updating dragon class multiplier:', cm.id, error);
+          throw error;
+        }
       }
 
-      console.log('All updates successful:', results);
+      console.log('All dragon class multipliers saved successfully');
       toast({
         title: "Успешно",
         description: "Множители классов драконов сохранены",
