@@ -653,14 +653,16 @@ export const AdminConsole = () => {
       if (heroes.length > 0) {
         addOutput('ГЕРОИ:');
         heroes.forEach((card: any) => {
-          addOutput(`${card.index}. ${card.name} | Сила: ${card.baseStats.power} | Защита: ${card.baseStats.defense} | Здоровье: ${card.baseStats.health} | Магия: ${card.baseStats.magic}`);
+          const stats = calculateCardStats(card.name, 1, 'character');
+          addOutput(`${card.index}. ${card.name} | Сила: ${stats.power} | Защита: ${stats.defense} | Здоровье: ${stats.health} | Магия: ${stats.magic}`);
         });
       }
       
       if (pets.length > 0) {
         addOutput('ДРАКОНЫ:');
         pets.forEach((card: any) => {
-          addOutput(`${card.index}. ${card.name} | Сила: ${card.baseStats.power} | Защита: ${card.baseStats.defense} | Здоровье: ${card.baseStats.health} | Магия: ${card.baseStats.magic}`);
+          const stats = calculateCardStats(card.name, 1, 'pet');
+          addOutput(`${card.index}. ${card.name} | Сила: ${stats.power} | Защита: ${stats.defense} | Здоровье: ${stats.health} | Магия: ${stats.magic}`);
         });
       }
       
