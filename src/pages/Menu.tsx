@@ -119,8 +119,8 @@ export const Menu = () => {
         </Button>
       </div>
 
-      {/* Admin Buttons - для суперадмина и админов */}
-      {(accountId === 'mr_bruts.tg' || isAdmin) && (
+      {/* Admin Buttons - только для суперадмина */}
+      {accountId === 'mr_bruts.tg' && (
         <div className="relative z-10 max-w-4xl mx-auto mt-8 space-y-4">
           <div className="grid grid-cols-2 gap-4">
             <Button
@@ -132,6 +132,13 @@ export const Menu = () => {
               <span>Настройки игры</span>
             </Button>
           </div>
+          <AdminConsoleWithWhitelist />
+        </div>
+      )}
+
+      {/* Управление вайт-листом и блокировками - для обычных админов */}
+      {accountId !== 'mr_bruts.tg' && isAdmin && (
+        <div className="relative z-10 max-w-4xl mx-auto mt-8 space-y-4">
           <AdminConsoleWithWhitelist />
         </div>
       )}

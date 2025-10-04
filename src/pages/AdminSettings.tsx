@@ -25,8 +25,8 @@ const AdminSettingsContent = () => {
     );
   }
 
-  // Проверка прав доступа - разрешить доступ super admin или обычным админам
-  if (accountId !== 'mr_bruts.tg' && !isAdmin) {
+  // Проверка прав доступа - только для суперадмина
+  if (accountId !== 'mr_bruts.tg') {
     return (
       <div className="min-h-screen bg-game-dark flex items-center justify-center p-4">
         <div className="text-center">
