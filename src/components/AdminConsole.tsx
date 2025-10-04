@@ -63,7 +63,7 @@ export const AdminConsole = () => {
     addOutput(`> ${command}`);
     
     try {
-      const parts = command.trim().split(' ');
+      const parts = command.trim().split(/\s+/);
       const cmd = parts[0].toLowerCase();
 
       switch (cmd) {
@@ -438,38 +438,54 @@ export const AdminConsole = () => {
       return;
     }
 
-    const walletAddress = parts[1];
-    const cardInput = parts[2];
-    const rarityInput = parts[3] || '1';
+    const target = parts[1];
+    // Собираем название карты, поддерживая многословные названия и необязательную редкость в конце
+    const tail = parts.slice(2);
+    let rarityInput = '1';
+    if (tail.length > 0 && /^[1-8]$/.test(tail[tail.length - 1])) {
+      rarityInput = tail.pop() as string;
+    }
+    const cardQuery = tail.join(' ').trim();
 
-    // Ищем пользователя по wallet
-    const { data: userData, error: userError } = await supabase
-      .rpc('admin_find_user_by_wallet', {
-        p_wallet_address: walletAddress,
-        p_admin_wallet_address: accountId
-      });
+    // Определяем пользователя: допускаем как UUID (user_id), так и wallet
+    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+    let userId: string | null = null;
+    let displayTarget = target;
 
-    if (userError || !userData || userData.length === 0) {
-      addOutput(`❌ Пользователь с wallet "${walletAddress}" не найден.`);
-      return;
+    if (uuidRegex.test(target)) {
+      userId = target;
+    } else {
+      const { data: userData, error: userError } = await supabase
+        .rpc('admin_find_user_by_wallet', {
+          p_wallet_address: target,
+          p_admin_wallet_address: accountId
+        });
+
+      if (userError || !userData || userData.length === 0) {
+        addOutput(`❌ Пользователь с wallet "${target}" не найден.`);
+        return;
+      }
+
+      userId = userData[0].user_id;
     }
 
-    const userId = userData[0].user_id;
+    // Поиск карты по ID (номеру) или имени (частичное совпадение)
+    let dbCard: any = null;
 
-    // Поиск карты по ID (номеру) или имени
-    let dbCard = null;
-    
-    // Проверяем, является ли ввод числом (ID карты из listcards)
-    const cardId = parseInt(cardInput);
-    if (!isNaN(cardId) && cardId > 0 && cardId <= cardDatabase.length) {
-      dbCard = cardDatabase[cardId - 1]; // ID начинается с 1, но массив с 0
-    } else {
-      // Поиск по имени карты (частичное совпадение)
-      dbCard = cardDatabase.find((c) => c.name.toLowerCase().includes(cardInput.toLowerCase()));
+    if (/^\d+$/.test(cardQuery)) {
+      const idx = parseInt(cardQuery, 10);
+      if (idx > 0 && idx <= cardDatabase.length) {
+        dbCard = cardDatabase[idx - 1]; // ID начинается с 1, а индекс с 0
+      }
+    }
+
+    if (!dbCard && cardQuery) {
+      const lc = cardQuery.toLowerCase();
+      dbCard = cardDatabase.find((c) => c.name.toLowerCase().includes(lc));
     }
 
     if (!dbCard) {
-      addOutput(`❌ Карта "${cardInput}" не найдена. Используйте команду listcards для просмотра доступных карт.`);
+      addOutput(`❌ Карта "${cardQuery || '(пусто)'}" не найдена. Используйте команду listcards для просмотра доступных карт.`);
       return;
     }
 
@@ -500,7 +516,7 @@ export const AdminConsole = () => {
     if (error) {
       addOutput(`Ошибка выдачи карты: ${error.message}`);
     } else {
-      addOutput(`✅ Карта "${cardData.name}" выдана игроку ${walletAddress}`);
+      addOutput(`✅ Карта "${cardData.name}" выдана игроку ${displayTarget}`);
       addOutput(`Тип: ${cardData.type === 'character' ? 'Герой' : 'Дракон'} | Фракция: ${cardData.faction} | Редкость: ${cardData.rarity}`);
       addOutput(`Сила: ${cardData.power} | Защита: ${cardData.defense} | Здоровье: ${cardData.health} | Магия: ${cardData.magic}`);
       toast({
