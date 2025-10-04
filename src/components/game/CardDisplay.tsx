@@ -9,6 +9,8 @@ import { CardHeader } from "./cards/CardHeader";
 import { CardStats } from "./cards/CardStats";
 import { CardHealthBar } from "./cards/CardHealthBar";
 import { CardActions } from "./cards/CardActions";
+import { calculateCardStats } from "@/utils/cardUtils";
+import { useMemo } from "react";
 interface CardDisplayProps {
   card: CardType;
   showSellButton?: boolean;
@@ -31,6 +33,12 @@ export const CardDisplay = ({
 }: CardDisplayProps) => {
   const isMobile = useIsMobile();
   const { language } = useLanguage();
+  
+  // Пересчитываем характеристики с учётом класса и редкости
+  const stats = useMemo(() => 
+    calculateCardStats(card.name, card.rarity, card.type), 
+    [card.name, card.rarity, card.type]
+  );
   return <Card onClick={onClick} className={`mx-auto w-[90px] h-[180px] sm:w-[120px] sm:h-[240px] md:w-[130px] md:h-[260px] lg:w-[140px] lg:h-[280px]
         p-0.5 bg-game-background border-game-accent hover:border-game-primary transition-all duration-300 
         ${!isActive && card.type === 'pet' ? 'opacity-50' : ''} ${onClick ? 'cursor-pointer' : ''} ${className}`}>
@@ -52,10 +60,10 @@ export const CardDisplay = ({
                 <span className="truncate">{translateFaction(language, card.faction)}</span>
               </div>}
             
-            <CardStats health={card.health} power={card.power} defense={card.defense} />
+            <CardStats health={stats.health} power={stats.power} defense={stats.defense} />
             
             <div className="mt-0.5">
-              <CardHealthBar currentHealth={card.currentHealth ?? card.health} maxHealth={card.health} size="small" />
+              <CardHealthBar currentHealth={card.currentHealth ?? stats.health} maxHealth={stats.health} size="small" />
             </div>
 
             {card.magicResistance && (

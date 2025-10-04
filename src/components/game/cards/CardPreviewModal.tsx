@@ -1,8 +1,9 @@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Card as CardType } from "@/types/cards";
-import { getRarityLabel } from "@/utils/cardUtils";
+import { getRarityLabel, calculateCardStats } from "@/utils/cardUtils";
 import { Sparkles } from "lucide-react";
 import { CardImage } from "./CardImage";
+import { useMemo } from "react";
 
 interface CardPreviewModalProps {
   card: CardType | null;
@@ -16,6 +17,12 @@ interface CardPreviewModalProps {
 
 export const CardPreviewModal = ({ card, open, onClose, actionLabel, onAction, deleteLabel, onDelete }: CardPreviewModalProps) => {
   if (!card) return null;
+
+  // Пересчитываем характеристики с учётом класса и редкости
+  const stats = useMemo(() => 
+    calculateCardStats(card.name, card.rarity, card.type), 
+    [card.name, card.rarity, card.type]
+  );
 
   return (
     <Dialog open={open} onOpenChange={(v) => { if (!v) onClose(); }}>
@@ -50,21 +57,21 @@ export const CardPreviewModal = ({ card, open, onClose, actionLabel, onAction, d
             <div className="grid grid-cols-3 gap-3">
               <div className="bg-game-surface/60 border border-game-accent rounded p-3 text-center">
                 <div className="text-sm text-game-accent">Сила</div>
-                <div className="text-2xl font-bold text-red-400">{card.power}</div>
+                <div className="text-2xl font-bold text-red-400">{stats.power}</div>
               </div>
               <div className="bg-game-surface/60 border border-game-accent rounded p-3 text-center">
                 <div className="text-sm text-game-accent">Защита</div>
-                <div className="text-2xl font-bold text-blue-400">{card.defense}</div>
+                <div className="text-2xl font-bold text-blue-400">{stats.defense}</div>
               </div>
               <div className="bg-game-surface/60 border border-game-accent rounded p-3 text-center">
                 <div className="text-sm text-game-accent">Здоровье</div>
-                <div className="text-2xl font-bold text-green-400">{card.health}</div>
+                <div className="text-2xl font-bold text-green-400">{stats.health}</div>
               </div>
             </div>
 
             <div className="bg-game-surface/60 border border-game-accent rounded p-3">
               <div className="text-sm text-game-accent">Магия</div>
-              <div className="text-lg font-semibold text-purple-300">{card.magic}</div>
+              <div className="text-lg font-semibold text-purple-300">{stats.magic}</div>
             </div>
 
             {card.magicResistance && (

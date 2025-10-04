@@ -1,6 +1,8 @@
 import { Card, CardContent } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { TeamCard } from "@/hooks/useAbilities";
+import { calculateCardStats } from "@/utils/cardUtils";
+import { useMemo } from "react";
 
 interface TeamCardDisplayProps {
   card: TeamCard;
@@ -10,6 +12,12 @@ interface TeamCardDisplayProps {
 
 export const TeamCardDisplay = ({ card, onClick, isSelected }: TeamCardDisplayProps) => {
   const hasAbilities = card.abilities.length > 0;
+  
+  // Пересчитываем характеристики с учётом класса и редкости
+  const stats = useMemo(() => 
+    calculateCardStats(card.name, card.rarity, card.type), 
+    [card.name, card.rarity, card.type]
+  );
   
   return (
     <Card 
@@ -25,10 +33,10 @@ export const TeamCardDisplay = ({ card, onClick, isSelected }: TeamCardDisplayPr
           {/* Здоровье */}
           <div className="mb-2">
             <div className="text-xs text-game-text mb-1">
-              Здоровье: {card.currentHealth || card.health}/{card.health}
+              Здоровье: {card.currentHealth || stats.health}/{stats.health}
             </div>
             <Progress 
-              value={((card.currentHealth || card.health) / card.health) * 100} 
+              value={((card.currentHealth || stats.health) / stats.health) * 100} 
               className="h-2"
             />
           </div>
@@ -50,15 +58,15 @@ export const TeamCardDisplay = ({ card, onClick, isSelected }: TeamCardDisplayPr
           <div className="grid grid-cols-3 gap-2 text-xs">
             <div className="text-red-400">
               <div>⚔️</div>
-              <div>{card.power}</div>
+              <div>{stats.power}</div>
             </div>
             <div className="text-blue-400">
               <div>🛡️</div>
-              <div>{card.defense}</div>
+              <div>{stats.defense}</div>
             </div>
             <div className="text-purple-400">
               <div>✨</div>
-              <div>{card.magic}</div>
+              <div>{stats.magic}</div>
             </div>
           </div>
 
