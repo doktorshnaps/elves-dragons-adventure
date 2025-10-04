@@ -1165,6 +1165,23 @@ export type Database = {
         }
         Returns: boolean
       }
+      admin_update_dungeon_setting: {
+        Args: {
+          p_admin_wallet_address: string
+          p_armor_growth: number
+          p_atk_growth: number
+          p_base_armor: number
+          p_base_atk: number
+          p_base_hp: number
+          p_dungeon_alpha: number
+          p_hp_growth: number
+          p_id: string
+          p_level_beta: number
+          p_level_g_coefficient: number
+          p_s_mob_base: number
+        }
+        Returns: boolean
+      }
       admin_update_hero_base_stats: {
         Args: {
           p_admin_wallet_address?: string

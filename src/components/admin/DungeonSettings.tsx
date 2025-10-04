@@ -5,6 +5,7 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { useWallet } from "@/hooks/useWallet";
 import { Loader2, Save, ChevronDown, ChevronUp } from "lucide-react";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 
@@ -27,6 +28,7 @@ interface DungeonSetting {
 
 export const DungeonSettings = () => {
   const { toast } = useToast();
+  const { accountId } = useWallet();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [dungeons, setDungeons] = useState<DungeonSetting[]>([]);
@@ -75,23 +77,31 @@ export const DungeonSettings = () => {
   };
 
   const saveDungeon = async (dungeon: DungeonSetting) => {
+    if (!accountId) {
+      toast({
+        variant: "destructive",
+        title: "Ошибка",
+        description: "Необходимо подключить кошелек",
+      });
+      return;
+    }
+
     setSaving(true);
     try {
-      const { error } = await supabase
-        .from('dungeon_settings')
-        .update({
-          base_hp: dungeon.base_hp,
-          base_armor: dungeon.base_armor,
-          base_atk: dungeon.base_atk,
-          hp_growth_coefficient: dungeon.hp_growth_coefficient,
-          armor_growth_coefficient: dungeon.armor_growth_coefficient,
-          atk_growth_coefficient: dungeon.atk_growth_coefficient,
-          s_mob_base: dungeon.s_mob_base,
-          dungeon_alpha: dungeon.dungeon_alpha,
-          level_beta: dungeon.level_beta,
-          level_g_coefficient: dungeon.level_g_coefficient,
-        })
-        .eq('id', dungeon.id);
+      const { data, error } = await supabase.rpc('admin_update_dungeon_setting', {
+        p_id: dungeon.id,
+        p_base_hp: dungeon.base_hp,
+        p_base_armor: dungeon.base_armor,
+        p_base_atk: dungeon.base_atk,
+        p_hp_growth: dungeon.hp_growth_coefficient,
+        p_armor_growth: dungeon.armor_growth_coefficient,
+        p_atk_growth: dungeon.atk_growth_coefficient,
+        p_s_mob_base: dungeon.s_mob_base,
+        p_dungeon_alpha: dungeon.dungeon_alpha,
+        p_level_beta: dungeon.level_beta,
+        p_level_g_coefficient: dungeon.level_g_coefficient,
+        p_admin_wallet_address: accountId
+      });
 
       if (error) throw error;
 
@@ -99,12 +109,15 @@ export const DungeonSettings = () => {
         title: "Успешно",
         description: `Настройки подземелья "${dungeon.dungeon_name}" сохранены`,
       });
+      
+      // Reload dungeons to get fresh data
+      await loadDungeons();
     } catch (error) {
       console.error('Error saving dungeon:', error);
       toast({
         variant: "destructive",
         title: "Ошибка",
-        description: "Не удалось сохранить настройки",
+        description: error instanceof Error ? error.message : "Не удалось сохранить настройки",
       });
     } finally {
       setSaving(false);
