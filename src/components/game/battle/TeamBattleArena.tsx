@@ -33,7 +33,8 @@ export const TeamBattleArena: React.FC<TeamBattleArenaProps> = ({
   onAttack,
   onAbilityUse,
   onEnemyAttack,
-  level
+  level,
+  lastRoll
 }) => {
   const navigate = useNavigate();
   const {
@@ -48,10 +49,8 @@ export const TeamBattleArena: React.FC<TeamBattleArenaProps> = ({
   const [autoBattle, setAutoBattle] = useState(false);
   const [selectedAbility, setSelectedAbility] = useState<Ability | null>(null);
   
-  // Dice roll state
+  // Dice roll state - теперь берем из реальных бросков
   const [isDiceRolling, setIsDiceRolling] = useState(false);
-  const [attackerDice, setAttackerDice] = useState<number | null>(null);
-  const [defenderDice, setDefenderDice] = useState<number | null>(null);
   const [isPlayerAttacking, setIsPlayerAttacking] = useState(true);
   const alivePairs = playerPairs.filter(pair => pair.health > 0);
   const aliveOpponents = opponents.filter(opp => opp.health > 0);
@@ -93,8 +92,6 @@ export const TeamBattleArena: React.FC<TeamBattleArenaProps> = ({
     if (randomPair) {
       // Show dice roll animation - Enemy attacking
       setIsPlayerAttacking(false);
-      setAttackerDice(Math.floor(Math.random() * 6) + 1);
-      setDefenderDice(Math.floor(Math.random() * 6) + 1);
       setIsDiceRolling(true);
       
       setDefendingPair(randomPair.id);
@@ -402,7 +399,7 @@ export const TeamBattleArena: React.FC<TeamBattleArenaProps> = ({
                             {isPlayerAttacking && (
                               <InlineDiceDisplay
                                 isRolling={isDiceRolling}
-                                diceValue={attackerDice}
+                                diceValue={lastRoll?.source === 'player' ? lastRoll.attackerRoll : null}
                                 isAttacker={true}
                                 label="Атака"
                               />
@@ -410,7 +407,7 @@ export const TeamBattleArena: React.FC<TeamBattleArenaProps> = ({
                             {!isPlayerAttacking && (
                               <InlineDiceDisplay
                                 isRolling={isDiceRolling}
-                                diceValue={defenderDice}
+                                diceValue={lastRoll?.source === 'enemy' ? lastRoll.defenderRoll : null}
                                 isAttacker={false}
                                 label="Защита"
                               />
@@ -432,7 +429,7 @@ export const TeamBattleArena: React.FC<TeamBattleArenaProps> = ({
                             {isPlayerAttacking && (
                               <InlineDiceDisplay
                                 isRolling={isDiceRolling}
-                                diceValue={defenderDice}
+                                diceValue={lastRoll?.source === 'player' ? lastRoll.defenderRoll : null}
                                 isAttacker={false}
                                 label="Защита"
                               />
@@ -440,7 +437,7 @@ export const TeamBattleArena: React.FC<TeamBattleArenaProps> = ({
                             {!isPlayerAttacking && (
                               <InlineDiceDisplay
                                 isRolling={isDiceRolling}
-                                diceValue={attackerDice}
+                                diceValue={lastRoll?.source === 'enemy' ? lastRoll.attackerRoll : null}
                                 isAttacker={true}
                                 label="Атака"
                               />
