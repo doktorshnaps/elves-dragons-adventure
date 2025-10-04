@@ -802,6 +802,36 @@ export type Database = {
         }
         Relationships: []
       }
+      user_roles: {
+        Row: {
+          created_at: string | null
+          created_by_wallet_address: string
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+          updated_at: string | null
+          user_id: string | null
+          wallet_address: string
+        }
+        Insert: {
+          created_at?: string | null
+          created_by_wallet_address: string
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          updated_at?: string | null
+          user_id?: string | null
+          wallet_address: string
+        }
+        Update: {
+          created_at?: string | null
+          created_by_wallet_address?: string
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          updated_at?: string | null
+          user_id?: string | null
+          wallet_address?: string
+        }
+        Relationships: []
+      }
       wallet_connections: {
         Row: {
           connected_at: string
@@ -962,6 +992,10 @@ export type Database = {
         }
         Returns: Json
       }
+      admin_add_administrator: {
+        Args: { p_admin_wallet_address?: string; p_wallet_address: string }
+        Returns: boolean
+      }
       admin_add_balance: {
         Args: {
           p_admin_wallet_address: string
@@ -1042,6 +1076,10 @@ export type Database = {
           p_item_data: Json
           p_user_id: string
         }
+        Returns: boolean
+      }
+      admin_remove_administrator: {
+        Args: { p_admin_wallet_address?: string; p_wallet_address: string }
         Returns: boolean
       }
       admin_remove_from_whitelist: {
@@ -1314,6 +1352,13 @@ export type Database = {
           referrer_wallet_address: string
         }[]
       }
+      has_role: {
+        Args: {
+          p_role: Database["public"]["Enums"]["app_role"]
+          p_wallet_address: string
+        }
+        Returns: boolean
+      }
       initialize_game_data_by_wallet: {
         Args: { p_wallet_address: string }
         Returns: {
@@ -1326,6 +1371,10 @@ export type Database = {
           selected_team: Json
           user_id: string
         }[]
+      }
+      is_admin_or_super: {
+        Args: { p_wallet_address: string }
+        Returns: boolean
       }
       is_admin_wallet: {
         Args: { p_wallet_address?: string }
@@ -1490,7 +1539,7 @@ export type Database = {
       }
     }
     Enums: {
-      [_ in never]: never
+      app_role: "super_admin" | "admin" | "user"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -1617,6 +1666,8 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      app_role: ["super_admin", "admin", "user"],
+    },
   },
 } as const

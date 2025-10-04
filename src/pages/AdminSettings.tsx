@@ -5,6 +5,7 @@ import { ArrowLeft } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { GameSettings } from "@/components/admin/GameSettings";
 import { DungeonSettings } from "@/components/admin/DungeonSettings";
+import { AdminRoleManager } from "@/components/admin/AdminRoleManager";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 
 const AdminSettingsContent = () => {
@@ -45,9 +46,10 @@ const AdminSettingsContent = () => {
         </div>
 
         <Tabs defaultValue="cards" className="w-full">
-          <TabsList className="grid w-full grid-cols-2 mb-6">
+          <TabsList className="grid w-full grid-cols-3 mb-6">
             <TabsTrigger value="cards">Карты (Герои и Драконы)</TabsTrigger>
             <TabsTrigger value="dungeons">Подземелья</TabsTrigger>
+            <TabsTrigger value="admins">Администраторы</TabsTrigger>
           </TabsList>
 
           <TabsContent value="cards" className="space-y-4">
@@ -56,6 +58,10 @@ const AdminSettingsContent = () => {
 
           <TabsContent value="dungeons" className="space-y-4">
             <DungeonSettings />
+          </TabsContent>
+
+          <TabsContent value="admins" className="space-y-4">
+            <AdminRoleManager />
           </TabsContent>
         </Tabs>
       </div>
