@@ -22,10 +22,14 @@ export const calculateD6Damage = (attackPower: number, defenseArmor: number): D6
   let attackerRoll = rollD6();
   let defenderRoll = rollD6();
   
+  console.log(`🎲 Initial rolls: Attacker=${attackerRoll}, Defender=${defenderRoll}`);
+  
   // Переброс при равных значениях
   while (attackerRoll === defenderRoll) {
+    console.log(`🔄 Rerolling due to tie (both rolled ${attackerRoll})`);
     attackerRoll = rollD6();
     defenderRoll = rollD6();
+    console.log(`🎲 Reroll result: Attacker=${attackerRoll}, Defender=${defenderRoll}`);
   }
   
   const isAttackerCrit = attackerRoll === 6;
@@ -38,20 +42,27 @@ export const calculateD6Damage = (attackPower: number, defenseArmor: number): D6
   if (isDefenderCrit) {
     damage = 0;
     skipNextTurn = true;
+    console.log(`🛡️ Defender rolled 6! Attack blocked, attacker skips next turn`);
   } 
   // Если атакующий > защитника
   else if (attackerRoll > defenderRoll) {
     damage = Math.max(1, attackPower - defenseArmor);
+    console.log(`⚔️ Attacker wins (${attackerRoll} > ${defenderRoll}). Base damage: ${attackPower} - ${defenseArmor} = ${damage}`);
     
     // Критический удар атакующего (6) увеличивает урон на 50%
     if (isAttackerCrit) {
+      const baseDamage = damage;
       damage = Math.ceil(damage * 1.5);
+      console.log(`🎯 Attacker critical hit! Damage boosted: ${baseDamage} → ${damage}`);
     }
   }
   // Если защитник >= атакующего (но не критическая защита)
   else {
     damage = 0;
+    console.log(`🛡️ Defender wins (${defenderRoll} >= ${attackerRoll}). No damage dealt.`);
   }
+  
+  console.log(`📊 Final result: Damage=${damage}, AttackerRoll=${attackerRoll}, DefenderRoll=${defenderRoll}, SkipTurn=${skipNextTurn}`);
   
   return {
     damage,
