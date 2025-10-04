@@ -5,6 +5,7 @@ import { Toaster } from './components/ui/toaster';
 import { Menu } from './pages/Menu';
 import Index from './pages/Index';
 import { Auth } from './pages/Auth';
+import AdminSettings from './pages/AdminSettings';
 import { ProtectedRoute } from './components/ProtectedRoute';
 import { useAccountSync } from './hooks/useAccountSync';
 import { useRoutePreloader } from './hooks/useRoutePreloader';
@@ -64,6 +65,7 @@ function App() {
           <Route path="/" element={<Index />} />
           <Route path="/auth" element={<Auth />} />
           <Route path="/menu" element={<ProtectedRoute><Menu /></ProtectedRoute>} />
+          <Route path="/admin-settings" element={<ProtectedRoute><AdminSettings /></ProtectedRoute>} />
           <Route path="/team" element={<ProtectedRoute><TeamStatsWithLazyLoading /></ProtectedRoute>} />
           <Route path="/statistics" element={<ProtectedRoute><TeamStatsWithLazyLoading /></ProtectedRoute>} />
           <Route path="/equipment" element={<ProtectedRoute><EquipmentWithLazyLoading /></ProtectedRoute>} />

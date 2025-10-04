@@ -98,6 +98,39 @@ export type Database = {
         }
         Relationships: []
       }
+      class_multipliers: {
+        Row: {
+          class_name: string
+          created_at: string | null
+          defense_multiplier: number
+          health_multiplier: number
+          id: string
+          magic_multiplier: number
+          power_multiplier: number
+          updated_at: string | null
+        }
+        Insert: {
+          class_name: string
+          created_at?: string | null
+          defense_multiplier?: number
+          health_multiplier?: number
+          id?: string
+          magic_multiplier?: number
+          power_multiplier?: number
+          updated_at?: string | null
+        }
+        Update: {
+          class_name?: string
+          created_at?: string | null
+          defense_multiplier?: number
+          health_multiplier?: number
+          id?: string
+          magic_multiplier?: number
+          power_multiplier?: number
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       data_changes: {
         Row: {
           change_type: string
@@ -137,6 +170,126 @@ export type Database = {
           version_from?: number | null
           version_to?: number | null
           wallet_address?: string | null
+        }
+        Relationships: []
+      }
+      dragon_base_stats: {
+        Row: {
+          created_at: string | null
+          defense: number
+          health: number
+          id: string
+          magic: number
+          power: number
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          defense?: number
+          health?: number
+          id?: string
+          magic?: number
+          power?: number
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          defense?: number
+          health?: number
+          id?: string
+          magic?: number
+          power?: number
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      dragon_class_multipliers: {
+        Row: {
+          class_name: string
+          created_at: string | null
+          defense_multiplier: number
+          health_multiplier: number
+          id: string
+          magic_multiplier: number
+          power_multiplier: number
+          updated_at: string | null
+        }
+        Insert: {
+          class_name: string
+          created_at?: string | null
+          defense_multiplier?: number
+          health_multiplier?: number
+          id?: string
+          magic_multiplier?: number
+          power_multiplier?: number
+          updated_at?: string | null
+        }
+        Update: {
+          class_name?: string
+          created_at?: string | null
+          defense_multiplier?: number
+          health_multiplier?: number
+          id?: string
+          magic_multiplier?: number
+          power_multiplier?: number
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      dungeon_settings: {
+        Row: {
+          armor_growth_coefficient: number
+          atk_growth_coefficient: number
+          base_armor: number
+          base_atk: number
+          base_hp: number
+          created_at: string | null
+          dungeon_alpha: number
+          dungeon_name: string
+          dungeon_number: number
+          dungeon_type: string
+          hp_growth_coefficient: number
+          id: string
+          level_beta: number
+          level_g_coefficient: number
+          s_mob_base: number
+          updated_at: string | null
+        }
+        Insert: {
+          armor_growth_coefficient?: number
+          atk_growth_coefficient?: number
+          base_armor?: number
+          base_atk?: number
+          base_hp?: number
+          created_at?: string | null
+          dungeon_alpha?: number
+          dungeon_name: string
+          dungeon_number: number
+          dungeon_type: string
+          hp_growth_coefficient?: number
+          id?: string
+          level_beta?: number
+          level_g_coefficient?: number
+          s_mob_base?: number
+          updated_at?: string | null
+        }
+        Update: {
+          armor_growth_coefficient?: number
+          atk_growth_coefficient?: number
+          base_armor?: number
+          base_atk?: number
+          base_hp?: number
+          created_at?: string | null
+          dungeon_alpha?: number
+          dungeon_name?: string
+          dungeon_number?: number
+          dungeon_type?: string
+          hp_growth_coefficient?: number
+          id?: string
+          level_beta?: number
+          level_g_coefficient?: number
+          s_mob_base?: number
+          updated_at?: string | null
         }
         Relationships: []
       }
@@ -251,6 +404,36 @@ export type Database = {
           wood?: number
           wood_last_collection_time?: number | null
           wood_production_data?: Json | null
+        }
+        Relationships: []
+      }
+      hero_base_stats: {
+        Row: {
+          created_at: string | null
+          defense: number
+          health: number
+          id: string
+          magic: number
+          power: number
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          defense?: number
+          health?: number
+          id?: string
+          magic?: number
+          power?: number
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          defense?: number
+          health?: number
+          id?: string
+          magic?: number
+          power?: number
+          updated_at?: string | null
         }
         Relationships: []
       }
@@ -457,6 +640,30 @@ export type Database = {
           updated_at?: string
           user_id?: string
           wallet_address?: string | null
+        }
+        Relationships: []
+      }
+      rarity_multipliers: {
+        Row: {
+          created_at: string | null
+          id: string
+          multiplier: number
+          rarity: number
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          multiplier?: number
+          rarity: number
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          multiplier?: number
+          rarity?: number
+          updated_at?: string | null
         }
         Relationships: []
       }

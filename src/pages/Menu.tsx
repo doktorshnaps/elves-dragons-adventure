@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
-import { Swords, ShoppingCart, BookOpen, Store, Shield, Users, DollarSign, LogOut, Home, Wallet } from "lucide-react";
+import { Swords, ShoppingCart, BookOpen, Store, Shield, Users, DollarSign, LogOut, Home, Wallet, Settings } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useGameData } from "@/hooks/useGameData";
 import { useWallet } from "@/hooks/useWallet";
@@ -117,9 +117,19 @@ export const Menu = () => {
         </Button>
       </div>
 
-      {/* Admin Console - только для админа */}
+      {/* Admin Buttons - только для админа */}
       {accountId === 'mr_bruts.tg' && (
-        <div className="relative z-10 max-w-4xl mx-auto mt-8">
+        <div className="relative z-10 max-w-4xl mx-auto mt-8 space-y-4">
+          <div className="grid grid-cols-2 gap-4">
+            <Button
+              variant="outline"
+              className="h-20 bg-purple-500/80 border-purple-300 text-white hover:bg-purple-600 flex flex-col items-center justify-center gap-2"
+              onClick={() => navigate('/admin-settings')}
+            >
+              <Settings className="w-6 h-6" />
+              <span>Настройки игры</span>
+            </Button>
+          </div>
           <AdminConsoleWithWhitelist />
         </div>
       )}
