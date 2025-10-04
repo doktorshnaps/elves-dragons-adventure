@@ -83,13 +83,13 @@ export const calculateMonsterStats = (
  */
 export const getDungeonNumber = (dungeonType: string): number => {
   const dungeonMap: Record<string, number> = {
-    'forgotten_souls': 1,
-    'spider_nest': 2,
-    'bone_dungeon': 3,
-    'dragon_lair': 4,
-    'dark_mage': 5,
+    'spider_nest': 1,
+    'bone_dungeon': 2,
+    'dark_mage': 3,
+    'forgotten_souls': 4,
+    'ice_throne': 5,
     'sea_serpent': 6,
-    'ice_throne': 7,
+    'dragon_lair': 7,
     'pantheon_gods': 8
   };
   return dungeonMap[dungeonType] || 1;

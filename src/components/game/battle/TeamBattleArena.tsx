@@ -522,6 +522,9 @@ export const TeamBattleArena: React.FC<TeamBattleArenaProps> = ({
                         <div className="text-red-500 font-bold text-sm drop-shadow-lg">
                           ⚔️ {opponent.power}
                         </div>
+                        <div className="text-red-500 font-bold text-sm drop-shadow-lg">
+                          🛡️ {opponent.armor ?? 0}
+                        </div>
                       </div>
                       
                       {/* Name */}
