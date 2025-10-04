@@ -91,24 +91,21 @@ export const GameSettings = () => {
     if (!heroBaseStats) return;
     setSaving(true);
     try {
-      console.log('Saving hero stats:', heroBaseStats);
-      const { data, error } = await supabase
-        .from('hero_base_stats')
-        .update({
-          health: heroBaseStats.health,
-          defense: heroBaseStats.defense,
-          power: heroBaseStats.power,
-          magic: heroBaseStats.magic,
-        })
-        .eq('id', heroBaseStats.id)
-        .select();
+      console.log('Saving hero stats via RPC:', heroBaseStats);
+      const { data, error } = await supabase.rpc('admin_update_hero_base_stats', {
+        p_health: heroBaseStats.health,
+        p_defense: heroBaseStats.defense,
+        p_power: heroBaseStats.power,
+        p_magic: heroBaseStats.magic,
+        p_admin_wallet_address: accountId
+      });
 
       if (error) {
-        console.error('Supabase error:', error);
+        console.error('Supabase RPC error:', error);
         throw error;
       }
 
-      console.log('Save successful:', data);
+      console.log('Save successful (RPC):', data);
       toast({
         title: "Успешно",
         description: "Базовые параметры героев сохранены",
@@ -132,24 +129,21 @@ export const GameSettings = () => {
     if (!dragonBaseStats) return;
     setSaving(true);
     try {
-      console.log('Saving dragon stats:', dragonBaseStats);
-      const { data, error } = await supabase
-        .from('dragon_base_stats')
-        .update({
-          health: dragonBaseStats.health,
-          defense: dragonBaseStats.defense,
-          power: dragonBaseStats.power,
-          magic: dragonBaseStats.magic,
-        })
-        .eq('id', dragonBaseStats.id)
-        .select();
+      console.log('Saving dragon stats via RPC:', dragonBaseStats);
+      const { data, error } = await supabase.rpc('admin_update_dragon_base_stats', {
+        p_health: dragonBaseStats.health,
+        p_defense: dragonBaseStats.defense,
+        p_power: dragonBaseStats.power,
+        p_magic: dragonBaseStats.magic,
+        p_admin_wallet_address: accountId
+      });
 
       if (error) {
-        console.error('Supabase error:', error);
+        console.error('Supabase RPC error:', error);
         throw error;
       }
 
-      console.log('Save successful:', data);
+      console.log('Save successful (RPC):', data);
       toast({
         title: "Успешно",
         description: "Базовые параметры драконов сохранены",
