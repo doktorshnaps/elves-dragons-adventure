@@ -1,6 +1,6 @@
 import { Opponent } from '@/types/battle';
 import { getMonsterData } from '@/utils/monsterDataParser';
-import { calculatePowerIndex, calculateMonsterStats, getDungeonNumber } from '@/utils/monsterPowerIndex';
+import { calculatePowerIndexFromDB, calculateMonsterStatsFromDB } from '@/utils/dungeonSettingsLoader';
 
 export interface DungeonConfig {
   internalName: string;
@@ -38,10 +38,9 @@ const getWaveConfig = (level: number): { monsterType: string; count: number } =>
 export const createBalancedGenerator = (config: DungeonConfig) => 
   async (level: number): Promise<Opponent[]> => {
     const waveConfig = getWaveConfig(level);
-    const dungeonNumber = getDungeonNumber(config.internalName);
     
-    // Рассчитываем S_mob для этого уровня
-    const smob = calculatePowerIndex(dungeonNumber, level);
+    // Рассчитываем S_mob для этого уровня из БД
+    const smob = await calculatePowerIndexFromDB(config.internalName, level);
     
     // Пытаемся получить данные из CSV (для точной настройки)
     const monsterData = await getMonsterData(config.internalName, level);
@@ -53,8 +52,8 @@ export const createBalancedGenerator = (config: DungeonConfig) =>
       // Босс (один)
       const bossType = waveConfig.monsterType === 'boss50' ? 'boss50' : 'boss100';
       
-      // Используем формулу S_mob для расчета статов
-      const bossStats = calculateMonsterStats(smob, bossType);
+      // Используем формулу S_mob для расчета статов из БД
+      const bossStats = await calculateMonsterStatsFromDB(config.internalName, level, bossType);
       
       // Если есть CSV данные, используем их как приоритет (для точной балансировки)
       const finalStats = monsterData ? {
@@ -75,7 +74,7 @@ export const createBalancedGenerator = (config: DungeonConfig) =>
       });
     } else if (waveConfig.monsterType === 'miniboss_wave') {
       // 9 обычных монстров
-      const normalStats = calculateMonsterStats(smob, 'normal');
+      const normalStats = await calculateMonsterStatsFromDB(config.internalName, level, 'normal');
       
       for (let i = 0; i < 9; i++) {
         const finalStats = monsterData ? {
@@ -97,7 +96,7 @@ export const createBalancedGenerator = (config: DungeonConfig) =>
       }
       
       // + 1 минибосс
-      const minibossStats = calculateMonsterStats(smob, 'miniboss');
+      const minibossStats = await calculateMonsterStatsFromDB(config.internalName, level, 'miniboss');
       const minibossData = await getMonsterData(config.internalName, level);
       
       const finalMinibossStats = minibossData ? {
@@ -118,7 +117,7 @@ export const createBalancedGenerator = (config: DungeonConfig) =>
       });
     } else {
       // Обычные монстры (от 1 до 9)
-      const normalStats = calculateMonsterStats(smob, 'normal');
+      const normalStats = await calculateMonsterStatsFromDB(config.internalName, level, 'normal');
       
       for (let i = 0; i < waveConfig.count; i++) {
         const finalStats = monsterData ? {
