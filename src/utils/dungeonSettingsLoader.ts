@@ -8,13 +8,6 @@ export interface DungeonSettings {
   base_hp: number;
   base_armor: number;
   base_atk: number;
-  hp_growth_coefficient: number;
-  armor_growth_coefficient: number;
-  atk_growth_coefficient: number;
-  s_mob_base: number;
-  dungeon_alpha: number;
-  level_beta: number;
-  level_g_coefficient: number;
   hp_growth: number;
   armor_growth: number;
   atk_growth: number;
@@ -45,25 +38,6 @@ export const getDungeonSettings = async (dungeonType: string): Promise<DungeonSe
   return cachedSettings?.find(s => s.dungeon_type === dungeonType) || null;
 };
 
-/**
- * Рассчитывает индекс мощности монстра с учетом настроек из БД
- */
-export const calculatePowerIndexFromDB = async (
-  dungeonType: string,
-  level: number
-): Promise<number> => {
-  const settings = await getDungeonSettings(dungeonType);
-  
-  if (!settings) {
-    // Fallback на дефолтные значения
-    console.warn(`No settings found for ${dungeonType}, using defaults`);
-    return 100 * Math.pow(1, 1.0) * Math.pow(1 + 0.045 * level, 1.0);
-  }
-  
-  const { s_mob_base, dungeon_alpha, level_g_coefficient, level_beta, dungeon_number } = settings;
-  
-  return s_mob_base * Math.pow(dungeon_number, dungeon_alpha) * Math.pow(1 + level_g_coefficient * level, level_beta);
-};
 
 export interface MonsterStats {
   hp: number;

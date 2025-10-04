@@ -17,13 +17,6 @@ interface DungeonSetting {
   base_hp: number;
   base_armor: number;
   base_atk: number;
-  hp_growth_coefficient: number;
-  armor_growth_coefficient: number;
-  atk_growth_coefficient: number;
-  s_mob_base: number;
-  dungeon_alpha: number;
-  level_beta: number;
-  level_g_coefficient: number;
   hp_growth: number;
   armor_growth: number;
   atk_growth: number;
@@ -99,13 +92,6 @@ export const DungeonSettings = () => {
         p_hp_growth: dungeon.hp_growth || 1.15,
         p_armor_growth: dungeon.armor_growth || 1.10,
         p_atk_growth: dungeon.atk_growth || 1.12,
-        p_hp_growth_old: dungeon.hp_growth_coefficient,
-        p_armor_growth_old: dungeon.armor_growth_coefficient,
-        p_atk_growth_old: dungeon.atk_growth_coefficient,
-        p_s_mob_base: dungeon.s_mob_base,
-        p_dungeon_alpha: dungeon.dungeon_alpha,
-        p_level_beta: dungeon.level_beta,
-        p_level_g_coefficient: dungeon.level_g_coefficient,
         p_admin_wallet_address: accountId
       });
 
@@ -208,9 +194,9 @@ export const DungeonSettings = () => {
                   </div>
                 </div>
 
-                {/* Новые коэффициенты роста (формула эмулятора) */}
+                {/* Коэффициенты роста по уровням */}
                 <div className="space-y-3">
-                  <h4 className="font-semibold text-sm">Коэффициенты роста по уровням (новая формула)</h4>
+                  <h4 className="font-semibold text-sm">Коэффициенты роста по уровням</h4>
                   <p className="text-xs text-muted-foreground">
                     Формула: stat = base × growth^((L-1)/10) × 1.2^(D-1)
                   </p>
@@ -244,89 +230,6 @@ export const DungeonSettings = () => {
                         onChange={(e) => updateDungeon(dungeon.id, 'atk_growth', parseFloat(e.target.value) || 1.12)}
                       />
                       <p className="text-[10px] text-muted-foreground">По умолчанию: 1.12</p>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Старые коэффициенты (для совместимости) */}
-                <div className="space-y-3">
-                  <h4 className="font-semibold text-sm">Старые коэффициенты роста (устарело)</h4>
-                  <div className="grid grid-cols-3 gap-3">
-                    <div className="space-y-1">
-                      <Label className="text-xs">Рост HP (старый)</Label>
-                      <Input
-                        type="number"
-                        step="0.01"
-                        value={dungeon.hp_growth_coefficient}
-                        onChange={(e) => updateDungeon(dungeon.id, 'hp_growth_coefficient', parseFloat(e.target.value) || 0)}
-                        disabled
-                      />
-                    </div>
-                    <div className="space-y-1">
-                      <Label className="text-xs">Рост Armor (старый)</Label>
-                      <Input
-                        type="number"
-                        step="0.01"
-                        value={dungeon.armor_growth_coefficient}
-                        onChange={(e) => updateDungeon(dungeon.id, 'armor_growth_coefficient', parseFloat(e.target.value) || 0)}
-                        disabled
-                      />
-                    </div>
-                    <div className="space-y-1">
-                      <Label className="text-xs">Рост ATK (старый)</Label>
-                      <Input
-                        type="number"
-                        step="0.01"
-                        value={dungeon.atk_growth_coefficient}
-                        onChange={(e) => updateDungeon(dungeon.id, 'atk_growth_coefficient', parseFloat(e.target.value) || 0)}
-                        disabled
-                      />
-                    </div>
-                  </div>
-                </div>
-
-                {/* Параметры формулы S_mob (устарело) */}
-                <div className="space-y-3 opacity-60">
-                  <h4 className="font-semibold text-sm">Параметры формулы S_mob (устарело)</h4>
-                  <div className="grid grid-cols-2 gap-3">
-                    <div className="space-y-1">
-                      <Label className="text-xs">S_mob (Базовый множитель)</Label>
-                      <Input
-                        type="number"
-                        value={dungeon.s_mob_base}
-                        onChange={(e) => updateDungeon(dungeon.id, 's_mob_base', parseFloat(e.target.value) || 0)}
-                        disabled
-                      />
-                    </div>
-                    <div className="space-y-1">
-                      <Label className="text-xs">Рост по уровню (g)</Label>
-                      <Input
-                        type="number"
-                        step="0.001"
-                        value={dungeon.level_g_coefficient}
-                        onChange={(e) => updateDungeon(dungeon.id, 'level_g_coefficient', parseFloat(e.target.value) || 0)}
-                        disabled
-                      />
-                    </div>
-                    <div className="space-y-1">
-                      <Label className="text-xs">Рост по данжу (α)</Label>
-                      <Input
-                        type="number"
-                        step="0.1"
-                        value={dungeon.dungeon_alpha}
-                        onChange={(e) => updateDungeon(dungeon.id, 'dungeon_alpha', parseFloat(e.target.value) || 0)}
-                        disabled
-                      />
-                    </div>
-                    <div className="space-y-1">
-                      <Label className="text-xs">Рост по уровню (β)</Label>
-                      <Input
-                        type="number"
-                        step="0.1"
-                        value={dungeon.level_beta}
-                        onChange={(e) => updateDungeon(dungeon.id, 'level_beta', parseFloat(e.target.value) || 0)}
-                        disabled
-                      />
                     </div>
                   </div>
                 </div>

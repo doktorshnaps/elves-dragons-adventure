@@ -1,6 +1,6 @@
 import { Opponent } from '@/types/battle';
 import { getMonsterData } from '@/utils/monsterDataParser';
-import { calculatePowerIndexFromDB, calculateMonsterStatsFromDB } from '@/utils/dungeonSettingsLoader';
+import { calculateMonsterStatsFromDB } from '@/utils/dungeonSettingsLoader';
 
 export interface DungeonConfig {
   internalName: string;
@@ -38,9 +38,6 @@ const getWaveConfig = (level: number): { monsterType: string; count: number } =>
 export const createBalancedGenerator = (config: DungeonConfig) => 
   async (level: number): Promise<Opponent[]> => {
     const waveConfig = getWaveConfig(level);
-    
-    // Рассчитываем S_mob для этого уровня из БД
-    const smob = await calculatePowerIndexFromDB(config.internalName, level);
     
     // Пытаемся получить данные из CSV (для точной настройки)
     const monsterData = await getMonsterData(config.internalName, level);
@@ -139,6 +136,6 @@ export const createBalancedGenerator = (config: DungeonConfig) =>
       }
     }
     
-    console.log(`[${config.internalName} Lv${level}] S_mob=${smob.toFixed(1)}, Generated ${opponents.length} opponents (type: ${waveConfig.monsterType})`);
+    console.log(`[${config.internalName} Lv${level}] Generated ${opponents.length} opponents (type: ${waveConfig.monsterType})`);
     return opponents;
   };
