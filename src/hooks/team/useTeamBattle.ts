@@ -49,6 +49,7 @@ export const useTeamBattle = (dungeonType: DungeonType, initialLevel: number = 1
   });
 
   const [attackOrder, setAttackOrder] = useState<string[]>([]);
+  const [lastRoll, setLastRoll] = useState<{ attackerRoll: number; defenderRoll: number; source: 'player' | 'enemy' } | null>(null);
 
   // Initialize battle with team pairs
   useEffect(() => {
@@ -216,11 +217,20 @@ export const useTeamBattle = (dungeonType: DungeonType, initialLevel: number = 1
     }
 
     const damageResult = calculateD6Damage(attackingPair.power, target.armor || 0);
+    setLastRoll({ attackerRoll: damageResult.attackerRoll, defenderRoll: damageResult.defenderRoll, source: 'player' });
     const appliedDamage = damageResult.attackerRoll > damageResult.defenderRoll ? damageResult.damage : 0;
     if (damageResult.damage > 0 && appliedDamage === 0) {
       console.warn("⚠️ Inconsistent damage prevented (player attack)", damageResult);
     }
     const newTargetHealth = Math.max(0, target.health - appliedDamage);
+
+    console.log("🧮 Player attack result", {
+      pair: attackingPair.id,
+      target: target.id,
+      rolls: { attacker: damageResult.attackerRoll, defender: damageResult.defenderRoll },
+      damage: { raw: damageResult.damage, applied: appliedDamage },
+      health: { before: target.health, after: newTargetHealth },
+    });
 
     startTransition(() => {
       setBattleState(prev => ({
@@ -251,7 +261,7 @@ export const useTeamBattle = (dungeonType: DungeonType, initialLevel: number = 1
     
     toast({
       title: `Атака!${critText}${skipText}`,
-      description: `${attackingPair.hero.name} бросил ${damageResult.attackerRoll}, враг ${damageResult.defenderRoll}. Урон: ${damageResult.damage}${defCritText}`,
+      description: `${attackingPair.hero.name} бросил ${damageResult.attackerRoll}, враг ${damageResult.defenderRoll}. Урон: ${appliedDamage}${defCritText}`,
     });
 
     // Check if all enemies defeated
@@ -285,7 +295,7 @@ export const useTeamBattle = (dungeonType: DungeonType, initialLevel: number = 1
     const targetPair = alivePairs[Math.floor(Math.random() * alivePairs.length)];
     
     const damageResult = calculateD6Damage(currentEnemy.power, targetPair.defense);
-    
+    setLastRoll({ attackerRoll: damageResult.attackerRoll, defenderRoll: damageResult.defenderRoll, source: 'enemy' });
     // Если защитник выкинул критическую защиту (6), враг пропускает следующий ход
     if (damageResult.skipNextTurn) {
       setSkippedAttackerIds(prev => {
@@ -317,7 +327,7 @@ export const useTeamBattle = (dungeonType: DungeonType, initialLevel: number = 1
     
     toast({
       title: `Враг атакует!${critText}${skipText}`,
-      description: `${currentEnemy.name} бросил ${damageResult.attackerRoll}, вы ${damageResult.defenderRoll}. Урон: ${damageResult.damage}${defCritText}`,
+      description: `${currentEnemy.name} бросил ${damageResult.attackerRoll}, пара ${damageResult.defenderRoll}. Урон: ${appliedDamage}${defCritText}`,
       variant: "destructive"
     });
 
@@ -502,6 +512,7 @@ export const useTeamBattle = (dungeonType: DungeonType, initialLevel: number = 1
     isPlayerTurn: battleState.currentTurn === 'player',
     alivePairs: battleState.playerPairs.filter(pair => pair.health > 0),
     aliveOpponents: battleState.opponents.filter(opp => opp.health > 0),
-    executeAbilityUse
+    executeAbilityUse,
+    lastRoll
   };
 };

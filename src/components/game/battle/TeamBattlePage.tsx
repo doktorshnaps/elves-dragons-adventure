@@ -38,7 +38,8 @@ export const TeamBattlePage: React.FC<TeamBattlePageProps> = ({
     handleLevelComplete,
     isPlayerTurn,
     alivePairs,
-    aliveOpponents
+    aliveOpponents,
+    lastRoll
   } = useTeamBattle(dungeonType);
   const handleStartBattle = () => {
     startTransition(() => {
@@ -197,7 +198,7 @@ export const TeamBattlePage: React.FC<TeamBattlePageProps> = ({
         
       </div>
       
-      <TeamBattleArena playerPairs={battleState.playerPairs} opponents={battleState.opponents} attackOrder={attackOrder} isPlayerTurn={isPlayerTurn} onAttack={executePlayerAttack} onAbilityUse={executeAbilityUse} onEnemyAttack={executeEnemyAttack} level={battleState.level} />
+      <TeamBattleArena playerPairs={battleState.playerPairs} opponents={battleState.opponents} attackOrder={attackOrder} isPlayerTurn={isPlayerTurn} onAttack={executePlayerAttack} onAbilityUse={executeAbilityUse} onEnemyAttack={executeEnemyAttack} level={battleState.level} lastRoll={lastRoll} />
       
       {pendingReward && (
         <DungeonRewardModal

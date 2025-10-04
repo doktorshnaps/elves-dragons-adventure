@@ -23,6 +23,7 @@ interface TeamBattleArenaProps {
   onAbilityUse?: (pairId: string, abilityId: string, targetId: number | string) => void;
   onEnemyAttack: () => void;
   level: number;
+  lastRoll?: { attackerRoll: number; defenderRoll: number; source: 'player' | 'enemy' } | null;
 }
 export const TeamBattleArena: React.FC<TeamBattleArenaProps> = ({
   playerPairs,
@@ -61,8 +62,6 @@ export const TeamBattleArena: React.FC<TeamBattleArenaProps> = ({
       
       // Show dice roll animation - Player attacking
       setIsPlayerAttacking(true);
-      setAttackerDice(Math.floor(Math.random() * 6) + 1);
-      setDefenderDice(Math.floor(Math.random() * 6) + 1);
       setIsDiceRolling(true);
       
       // Запускаем анимацию атаки
