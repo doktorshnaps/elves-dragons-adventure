@@ -1,5 +1,105 @@
 import { Card, CardType, Rarity, Faction, MagicResistance } from "@/types/cards";
 import { cardDatabase } from "@/data/cardDatabase";
+import { supabase } from "@/integrations/supabase/client";
+
+// Глобальный кеш настроек игры
+let gameSettingsCache: {
+  heroBaseStats: { health: number; defense: number; power: number; magic: number } | null;
+  dragonBaseStats: { health: number; defense: number; power: number; magic: number } | null;
+  rarityMultipliers: Record<number, number>;
+  classMultipliers: Record<string, { health_multiplier: number; defense_multiplier: number; power_multiplier: number; magic_multiplier: number }>;
+  dragonClassMultipliers: Record<string, { health_multiplier: number; defense_multiplier: number; power_multiplier: number; magic_multiplier: number }>;
+  lastLoaded: number;
+} = {
+  heroBaseStats: null,
+  dragonBaseStats: null,
+  rarityMultipliers: {},
+  classMultipliers: {},
+  dragonClassMultipliers: {},
+  lastLoaded: 0
+};
+
+// Загрузка настроек из БД
+const loadGameSettings = async () => {
+  const now = Date.now();
+  // Кеш на 5 секунд
+  if (now - gameSettingsCache.lastLoaded < 5000 && gameSettingsCache.heroBaseStats) {
+    return;
+  }
+
+  try {
+    const [heroRes, dragonRes, rarityRes, classRes, dragonClassRes] = await Promise.all([
+      supabase.from('hero_base_stats').select('*').limit(1).single(),
+      supabase.from('dragon_base_stats').select('*').limit(1).single(),
+      supabase.from('rarity_multipliers').select('*').order('rarity'),
+      supabase.from('class_multipliers').select('*'),
+      supabase.from('dragon_class_multipliers').select('*')
+    ]);
+
+    if (heroRes.data) {
+      gameSettingsCache.heroBaseStats = {
+        health: heroRes.data.health,
+        defense: heroRes.data.defense,
+        power: heroRes.data.power,
+        magic: heroRes.data.magic
+      };
+    }
+
+    if (dragonRes.data) {
+      gameSettingsCache.dragonBaseStats = {
+        health: dragonRes.data.health,
+        defense: dragonRes.data.defense,
+        power: dragonRes.data.power,
+        magic: dragonRes.data.magic
+      };
+    }
+
+    if (rarityRes.data) {
+      gameSettingsCache.rarityMultipliers = rarityRes.data.reduce((acc: Record<number, number>, r: any) => {
+        acc[r.rarity] = Number(r.multiplier);
+        return acc;
+      }, {});
+    }
+
+    if (classRes.data) {
+      gameSettingsCache.classMultipliers = classRes.data.reduce((acc: any, c: any) => {
+        acc[c.class_name] = {
+          health_multiplier: Number(c.health_multiplier),
+          defense_multiplier: Number(c.defense_multiplier),
+          power_multiplier: Number(c.power_multiplier),
+          magic_multiplier: Number(c.magic_multiplier)
+        };
+        return acc;
+      }, {});
+    }
+
+    if (dragonClassRes.data) {
+      gameSettingsCache.dragonClassMultipliers = dragonClassRes.data.reduce((acc: any, c: any) => {
+        acc[c.class_name] = {
+          health_multiplier: Number(c.health_multiplier),
+          defense_multiplier: Number(c.defense_multiplier),
+          power_multiplier: Number(c.power_multiplier),
+          magic_multiplier: Number(c.magic_multiplier)
+        };
+        return acc;
+      }, {});
+    }
+
+    gameSettingsCache.lastLoaded = now;
+    console.log('✅ Game settings loaded from DB:', gameSettingsCache);
+  } catch (error) {
+    console.error('Error loading game settings:', error);
+  }
+};
+
+// Инициализация при загрузке модуля
+loadGameSettings();
+
+// Функция для принудительного обновления кеша
+export const refreshGameSettings = async () => {
+  gameSettingsCache.lastLoaded = 0;
+  await loadGameSettings();
+};
 
 export const getRarityLabel = (rarity: Rarity): string => {
   return "⭐".repeat(rarity);
@@ -33,50 +133,23 @@ const getMagicResistanceByFaction = (faction: Faction): MagicResistance => {
   return resistanceMap[faction];
 };
 
-// Базовые характеристики для Рекрута редкость 1 (героя)
-const BASE_HERO_STATS = {
+// Fallback базовые характеристики (если БД недоступна)
+const FALLBACK_HERO_STATS = {
   health: 100,
-  defense: 20, // броня
-  power: 30,   // атака
-  magic: 10    // базовая магия
+  defense: 25,
+  power: 20,
+  magic: 15
 };
 
-// Базовые характеристики для обычного дракона редкость 1
-const BASE_PET_STATS = {
-  health: 150,
-  defense: 25, // броня
-  power: 40,   // атака
-  magic: 15    // базовая магия
+const FALLBACK_PET_STATS = {
+  health: 80,
+  defense: 20,
+  power: 25,
+  magic: 30
 };
 
-// Множители по классам героев
-const CLASS_MULTIPLIERS: Record<string, number> = {
-  'Рекрут': 1.0,
-  'Страж': 1.2,
-  'Ветеран': 1.5,
-  'Маг': 1.8,
-  'Мастер Целитель': 2.0,
-  'Защитник': 2.3,
-  'Ветеран Защитник': 2.6,
-  'Стратег': 3.0,
-  'Верховный Стратег': 3.5
-};
-
-// Множители по классам драконов
-const DRAGON_CLASS_MULTIPLIERS: Record<string, number> = {
-  'Обычный': 1.0,
-  'Необычный': 1.2,
-  'Редкий': 1.5,
-  'Эпический': 1.8,
-  'Легендарный': 2.1,
-  'Мифический': 2.5,
-  'Этернал': 3.0,
-  'Империал': 3.6,
-  'Титан': 4.2
-};
-
-// Множители редкости (по ТЗ)
-const RARITY_MULTIPLIERS: Record<Rarity, number> = {
+// Fallback множители редкости
+const FALLBACK_RARITY_MULTIPLIERS: Record<Rarity, number> = {
   1: 1.0,
   2: 1.6,
   3: 2.4,
@@ -87,50 +160,30 @@ const RARITY_MULTIPLIERS: Record<Rarity, number> = {
   8: 14.5
 };
 
-// Получить множитель класса по имени карты
-const getClassMultiplier = (cardName: string, cardType: CardType): number => {
+// Получить множитель класса по имени карты из БД
+const getClassMultiplier = (cardName: string, cardType: CardType) => {
   if (cardType === 'pet') {
-    // Для драконов ищем ключевое слово в названии
-    // Сортируем по длине ключевого слова (самые длинные первые) для более точного совпадения
-    const sortedClasses = Object.entries(DRAGON_CLASS_MULTIPLIERS).sort((a, b) => b[0].length - a[0].length);
+    // Для драконов ищем класс в названии
+    const sortedClasses = Object.keys(gameSettingsCache.dragonClassMultipliers).sort((a, b) => b.length - a.length);
     
-    for (const [dragonClass, multiplier] of sortedClasses) {
+    for (const dragonClass of sortedClasses) {
       if (cardName.includes(dragonClass)) {
-        return multiplier;
+        return gameSettingsCache.dragonClassMultipliers[dragonClass];
       }
     }
-    return 1.0;
+    // Fallback
+    return { health_multiplier: 1.0, defense_multiplier: 1.0, power_multiplier: 1.0, magic_multiplier: 1.0 };
   }
-  return CLASS_MULTIPLIERS[cardName] || 1.0;
-};
-
-// Специальные модификаторы для определенных классов
-const getClassModifiers = (cardName: string) => {
-  const modifiers = {
-    healthMod: 1.0,
-    defenseMod: 1.0,
-    powerMod: 1.0,
-    magicMod: 1.0
-  };
-
-  if (cardName === 'Маг') {
-    modifiers.defenseMod = 0.5; // малая броня
-    modifiers.powerMod = 1.3;   // высокая атака
-    modifiers.magicMod = 2.0;   // увеличенная магия
-  } else if (cardName === 'Мастер Целитель') {
-    modifiers.powerMod = 0.6;   // низкая атака
-    modifiers.healthMod = 1.4;  // увеличенное здоровье
-    modifiers.magicMod = 1.8;   // высокая магия
-  } else if (cardName === 'Защитник' || cardName === 'Ветеран Защитник') {
-    modifiers.defenseMod = 1.5; // упор на броню
-  }
-
-  return modifiers;
+  
+  // Для героев - точное совпадение имени с классом
+  return gameSettingsCache.classMultipliers[cardName] || { health_multiplier: 1.0, defense_multiplier: 1.0, power_multiplier: 1.0, magic_multiplier: 1.0 };
 };
 
 export const getStatsForRarity = (rarity: Rarity, cardType: CardType = 'character') => {
-  const multiplier = RARITY_MULTIPLIERS[rarity];
-  const baseStats = cardType === 'pet' ? BASE_PET_STATS : BASE_HERO_STATS;
+  const multiplier = gameSettingsCache.rarityMultipliers[rarity] || FALLBACK_RARITY_MULTIPLIERS[rarity] || 1.0;
+  const baseStats = cardType === 'pet' 
+    ? (gameSettingsCache.dragonBaseStats || FALLBACK_PET_STATS)
+    : (gameSettingsCache.heroBaseStats || FALLBACK_HERO_STATS);
   
   return {
     power: Math.floor(baseStats.power * multiplier),
@@ -140,20 +193,20 @@ export const getStatsForRarity = (rarity: Rarity, cardType: CardType = 'characte
   };
 };
 
-// Новая функция для расчета характеристик карты с учетом класса и редкости
+// Новая функция для расчета характеристик карты с учетом класса и редкости из БД
 export const calculateCardStats = (cardName: string, rarity: Rarity, cardType: CardType = 'character') => {
   const classMultiplier = getClassMultiplier(cardName, cardType);
-  const rarityMultiplier = RARITY_MULTIPLIERS[rarity];
-  const modifiers = getClassModifiers(cardName);
+  const rarityMultiplier = gameSettingsCache.rarityMultipliers[rarity] || FALLBACK_RARITY_MULTIPLIERS[rarity] || 1.0;
   
-  const totalMultiplier = classMultiplier * rarityMultiplier;
-  const baseStats = cardType === 'pet' ? BASE_PET_STATS : BASE_HERO_STATS;
+  const baseStats = cardType === 'pet' 
+    ? (gameSettingsCache.dragonBaseStats || FALLBACK_PET_STATS)
+    : (gameSettingsCache.heroBaseStats || FALLBACK_HERO_STATS);
   
   return {
-    power: Math.floor(baseStats.power * totalMultiplier * modifiers.powerMod),
-    defense: Math.floor(baseStats.defense * totalMultiplier * modifiers.defenseMod),
-    health: Math.floor(baseStats.health * totalMultiplier * modifiers.healthMod),
-    magic: Math.floor(baseStats.magic * totalMultiplier * modifiers.magicMod)
+    power: Math.floor(baseStats.power * rarityMultiplier * classMultiplier.power_multiplier),
+    defense: Math.floor(baseStats.defense * rarityMultiplier * classMultiplier.defense_multiplier),
+    health: Math.floor(baseStats.health * rarityMultiplier * classMultiplier.health_multiplier),
+    magic: Math.floor(baseStats.magic * rarityMultiplier * classMultiplier.magic_multiplier)
   };
 };
 
@@ -171,8 +224,6 @@ export const getRarityDropRates = () => {
 };
 
 const pickRarity = (): Rarity => {
-  // Используем целочисленное распределение по базисным пунктам (1 = 0.01%)
-  // Итого 10000 = 100.00%
   const weights: Array<{ r: Rarity; w: number }> = [
     { r: 1, w: 8000 }, // 80.00%
     { r: 2, w: 1000 }, // 10.00%
@@ -184,13 +235,13 @@ const pickRarity = (): Rarity => {
     { r: 8, w: 5 },    // 0.05%
   ];
 
-  const roll = Math.floor(Math.random() * 10000) + 1; // 1..10000
+  const roll = Math.floor(Math.random() * 10000) + 1;
   let cumulative = 0;
   for (const { r, w } of weights) {
     cumulative += w;
     if (roll <= cumulative) return r;
   }
-  return 1; // fallback на самый частый вариант
+  return 1;
 };
 
 const getPetRarityChance = (): Rarity => pickRarity();
@@ -206,7 +257,6 @@ export const generateCard = (type: CardType): Card => {
   const selectedCard = availableCards[Math.floor(Math.random() * availableCards.length)];
   const rarity = getRarityChance(type);
   
-  // Используем новую систему расчета характеристик с учетом типа карты
   const stats = calculateCardStats(selectedCard.name, rarity, type);
   
   const faction = selectedCard.faction as Faction;
@@ -239,7 +289,6 @@ export const calculateTeamStats = (cards: Card[]) => {
   const heroes = cards.filter(card => card.type === 'character');
   const pets = cards.filter(card => card.type === 'pet');
   
-  // Базовые характеристики от героев (и текущее здоровье)
   const baseStats = heroes.reduce((acc, hero) => {
     const maxH = hero.health || 0;
     const currH = Math.min(
@@ -254,7 +303,6 @@ export const calculateTeamStats = (cards: Card[]) => {
     };
   }, { power: 0, defense: 0, health: 0, current: 0 });
 
-  // Добавляем характеристики только от активных питомцев (и их текущее здоровье)
   const petsBonus = pets.reduce((acc, pet) => {
     if (isPetActive(pet, heroes)) {
       const maxH = pet.health || 0;
@@ -275,7 +323,6 @@ export const calculateTeamStats = (cards: Card[]) => {
   const maxHealth = baseStats.health + petsBonus.health;
   const currentHealth = baseStats.current + petsBonus.current;
 
-  // Расчет маны для команды (максимальная мана = общая магия)
   const totalMagic = heroes.reduce((acc, hero) => acc + (hero.magic || 0), 0) +
                      pets.reduce((acc, pet) => isPetActive(pet, heroes) ? acc + (pet.magic || 0) : acc, 0);
 
@@ -301,7 +348,6 @@ export const upgradeCard = (card1: Card, card2: Card): Card | null => {
 
   const newRarity = (card1.rarity + 1) as Rarity;
   
-  // Используем новую систему расчета характеристик с учетом типа карты
   const stats = calculateCardStats(card1.name, newRarity, card1.type);
 
   return {

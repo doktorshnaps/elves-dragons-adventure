@@ -8,6 +8,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useWallet } from "@/hooks/useWallet";
 import { Loader2, Save } from "lucide-react";
+import { refreshGameSettings } from "@/utils/cardUtils";
 
 interface HeroBaseStats {
   id: string;
@@ -111,6 +112,9 @@ export const GameSettings = () => {
         description: "Базовые параметры героев сохранены",
       });
       
+      // Обновляем кеш настроек
+      await refreshGameSettings();
+      
       // Reload settings to ensure sync
       await loadSettings();
     } catch (error: any) {
@@ -148,6 +152,9 @@ export const GameSettings = () => {
         title: "Успешно",
         description: "Базовые параметры драконов сохранены",
       });
+      
+      // Обновляем кеш настроек
+      await refreshGameSettings();
       
       // Reload settings to ensure sync
       await loadSettings();
@@ -187,6 +194,9 @@ export const GameSettings = () => {
         title: "Успешно",
         description: "Множители редкости сохранены",
       });
+      
+      // Обновляем кеш настроек
+      await refreshGameSettings();
       
       // Reload settings to ensure sync
       await loadSettings();
@@ -230,6 +240,9 @@ export const GameSettings = () => {
         description: "Множители классов героев сохранены",
       });
       
+      // Обновляем кеш настроек
+      await refreshGameSettings();
+      
       // Reload settings to ensure sync
       await loadSettings();
     } catch (error: any) {
@@ -271,6 +284,9 @@ export const GameSettings = () => {
         title: "Успешно",
         description: "Множители классов драконов сохранены",
       });
+      
+      // Обновляем кеш настроек
+      await refreshGameSettings();
       
       // Reload settings to ensure sync
       await loadSettings();
