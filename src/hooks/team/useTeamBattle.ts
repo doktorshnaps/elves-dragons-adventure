@@ -215,9 +215,12 @@ export const useTeamBattle = (dungeonType: DungeonType, initialLevel: number = 1
       return;
     }
 
-    // Используем новую систему d6 без модификаторов толпы
     const damageResult = calculateD6Damage(attackingPair.power, target.armor || 0);
-    const newTargetHealth = Math.max(0, target.health - damageResult.damage);
+    const appliedDamage = damageResult.attackerRoll > damageResult.defenderRoll ? damageResult.damage : 0;
+    if (damageResult.damage > 0 && appliedDamage === 0) {
+      console.warn("⚠️ Inconsistent damage prevented (player attack)", damageResult);
+    }
+    const newTargetHealth = Math.max(0, target.health - appliedDamage);
 
     startTransition(() => {
       setBattleState(prev => ({
@@ -281,7 +284,6 @@ export const useTeamBattle = (dungeonType: DungeonType, initialLevel: number = 1
     const currentEnemy = aliveOpponents[Math.floor(Math.random() * aliveOpponents.length)];
     const targetPair = alivePairs[Math.floor(Math.random() * alivePairs.length)];
     
-    // Используем новую систему d6 без модификаторов толпы и усталости
     const damageResult = calculateD6Damage(currentEnemy.power, targetPair.defense);
     
     // Если защитник выкинул критическую защиту (6), враг пропускает следующий ход
@@ -293,7 +295,12 @@ export const useTeamBattle = (dungeonType: DungeonType, initialLevel: number = 1
       });
     }
     
-    const updatedPair = await applyDamageToPair(targetPair, damageResult.damage, updateGameData, gameData);
+    const appliedDamage = damageResult.attackerRoll > damageResult.defenderRoll ? damageResult.damage : 0;
+    if (damageResult.damage > 0 && appliedDamage === 0) {
+      console.warn("⚠️ Inconsistent damage prevented (enemy attack)", damageResult);
+    }
+    
+    const updatedPair = await applyDamageToPair(targetPair, appliedDamage, updateGameData, gameData);
 
     setBattleState(prev => ({
       ...prev,
