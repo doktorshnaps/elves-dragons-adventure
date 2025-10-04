@@ -89,7 +89,8 @@ export const GameSettings = () => {
     if (!heroBaseStats) return;
     setSaving(true);
     try {
-      const { error } = await supabase
+      console.log('Saving hero stats:', heroBaseStats);
+      const { data, error } = await supabase
         .from('hero_base_stats')
         .update({
           health: heroBaseStats.health,
@@ -97,20 +98,28 @@ export const GameSettings = () => {
           power: heroBaseStats.power,
           magic: heroBaseStats.magic,
         })
-        .eq('id', heroBaseStats.id);
+        .eq('id', heroBaseStats.id)
+        .select();
 
-      if (error) throw error;
+      if (error) {
+        console.error('Supabase error:', error);
+        throw error;
+      }
 
+      console.log('Save successful:', data);
       toast({
         title: "Успешно",
         description: "Базовые параметры героев сохранены",
       });
-    } catch (error) {
+      
+      // Reload settings to ensure sync
+      await loadSettings();
+    } catch (error: any) {
       console.error('Error saving hero stats:', error);
       toast({
         variant: "destructive",
         title: "Ошибка",
-        description: "Не удалось сохранить настройки",
+        description: error.message || "Не удалось сохранить настройки",
       });
     } finally {
       setSaving(false);
@@ -121,7 +130,8 @@ export const GameSettings = () => {
     if (!dragonBaseStats) return;
     setSaving(true);
     try {
-      const { error } = await supabase
+      console.log('Saving dragon stats:', dragonBaseStats);
+      const { data, error } = await supabase
         .from('dragon_base_stats')
         .update({
           health: dragonBaseStats.health,
@@ -129,20 +139,28 @@ export const GameSettings = () => {
           power: dragonBaseStats.power,
           magic: dragonBaseStats.magic,
         })
-        .eq('id', dragonBaseStats.id);
+        .eq('id', dragonBaseStats.id)
+        .select();
 
-      if (error) throw error;
+      if (error) {
+        console.error('Supabase error:', error);
+        throw error;
+      }
 
+      console.log('Save successful:', data);
       toast({
         title: "Успешно",
         description: "Базовые параметры драконов сохранены",
       });
-    } catch (error) {
+      
+      // Reload settings to ensure sync
+      await loadSettings();
+    } catch (error: any) {
       console.error('Error saving dragon stats:', error);
       toast({
         variant: "destructive",
         title: "Ошибка",
-        description: "Не удалось сохранить настройки",
+        description: error.message || "Не удалось сохранить настройки",
       });
     } finally {
       setSaving(false);
@@ -152,25 +170,38 @@ export const GameSettings = () => {
   const saveRarityMultipliers = async () => {
     setSaving(true);
     try {
+      console.log('Saving rarity multipliers:', rarityMultipliers);
       const updates = rarityMultipliers.map(rm => 
         supabase
           .from('rarity_multipliers')
           .update({ multiplier: rm.multiplier })
           .eq('id', rm.id)
+          .select()
       );
 
-      await Promise.all(updates);
+      const results = await Promise.all(updates);
+      
+      // Check for any errors
+      const errors = results.filter(r => r.error);
+      if (errors.length > 0) {
+        console.error('Errors in updates:', errors);
+        throw new Error('Не все обновления выполнены успешно');
+      }
 
+      console.log('All updates successful:', results);
       toast({
         title: "Успешно",
         description: "Множители редкости сохранены",
       });
-    } catch (error) {
+      
+      // Reload settings to ensure sync
+      await loadSettings();
+    } catch (error: any) {
       console.error('Error saving rarity multipliers:', error);
       toast({
         variant: "destructive",
         title: "Ошибка",
-        description: "Не удалось сохранить настройки",
+        description: error.message || "Не удалось сохранить настройки",
       });
     } finally {
       setSaving(false);
@@ -180,6 +211,7 @@ export const GameSettings = () => {
   const saveClassMultipliers = async () => {
     setSaving(true);
     try {
+      console.log('Saving class multipliers:', classMultipliers);
       const updates = classMultipliers.map(cm => 
         supabase
           .from('class_multipliers')
@@ -190,20 +222,32 @@ export const GameSettings = () => {
             magic_multiplier: cm.magic_multiplier,
           })
           .eq('id', cm.id)
+          .select()
       );
 
-      await Promise.all(updates);
+      const results = await Promise.all(updates);
+      
+      // Check for any errors
+      const errors = results.filter(r => r.error);
+      if (errors.length > 0) {
+        console.error('Errors in updates:', errors);
+        throw new Error('Не все обновления выполнены успешно');
+      }
 
+      console.log('All updates successful:', results);
       toast({
         title: "Успешно",
         description: "Множители классов героев сохранены",
       });
-    } catch (error) {
+      
+      // Reload settings to ensure sync
+      await loadSettings();
+    } catch (error: any) {
       console.error('Error saving class multipliers:', error);
       toast({
         variant: "destructive",
         title: "Ошибка",
-        description: "Не удалось сохранить настройки",
+        description: error.message || "Не удалось сохранить настройки",
       });
     } finally {
       setSaving(false);
@@ -213,6 +257,7 @@ export const GameSettings = () => {
   const saveDragonClassMultipliers = async () => {
     setSaving(true);
     try {
+      console.log('Saving dragon class multipliers:', dragonClassMultipliers);
       const updates = dragonClassMultipliers.map(cm => 
         supabase
           .from('dragon_class_multipliers')
@@ -223,20 +268,32 @@ export const GameSettings = () => {
             magic_multiplier: cm.magic_multiplier,
           })
           .eq('id', cm.id)
+          .select()
       );
 
-      await Promise.all(updates);
+      const results = await Promise.all(updates);
+      
+      // Check for any errors
+      const errors = results.filter(r => r.error);
+      if (errors.length > 0) {
+        console.error('Errors in updates:', errors);
+        throw new Error('Не все обновления выполнены успешно');
+      }
 
+      console.log('All updates successful:', results);
       toast({
         title: "Успешно",
         description: "Множители классов драконов сохранены",
       });
-    } catch (error) {
+      
+      // Reload settings to ensure sync
+      await loadSettings();
+    } catch (error: any) {
       console.error('Error saving dragon class multipliers:', error);
       toast({
         variant: "destructive",
         title: "Ошибка",
-        description: "Не удалось сохранить настройки",
+        description: error.message || "Не удалось сохранить настройки",
       });
     } finally {
       setSaving(false);
