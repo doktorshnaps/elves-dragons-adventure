@@ -433,19 +433,33 @@ export const AdminConsole = () => {
 
   const handleGiveCard = async (parts: string[]) => {
     if (parts.length < 3) {
-      addOutput('Использование: givecard <user_id> <card_name_or_id> [rarity]');
+      addOutput('Использование: givecard <wallet_address> <card_name_or_id> [rarity]');
       addOutput('Для получения списка карт используйте команду: listcards');
       return;
     }
 
-    const userId = parts[1];
+    const walletAddress = parts[1];
     const cardInput = parts[2];
-    const rarityInput = parts[3] || 'Обычный';
+    const rarityInput = parts[3] || '1';
+
+    // Ищем пользователя по wallet
+    const { data: userData, error: userError } = await supabase
+      .rpc('admin_find_user_by_wallet', {
+        p_wallet_address: walletAddress,
+        p_admin_wallet_address: accountId
+      });
+
+    if (userError || !userData || userData.length === 0) {
+      addOutput(`❌ Пользователь с wallet "${walletAddress}" не найден.`);
+      return;
+    }
+
+    const userId = userData[0].user_id;
 
     // Поиск карты по ID (номеру) или имени
     let dbCard = null;
     
-    // Проверяем, является ли ввод числом (ID карты)
+    // Проверяем, является ли ввод числом (ID карты из listcards)
     const cardId = parseInt(cardInput);
     if (!isNaN(cardId) && cardId > 0 && cardId <= cardDatabase.length) {
       dbCard = cardDatabase[cardId - 1]; // ID начинается с 1, но массив с 0
@@ -486,7 +500,7 @@ export const AdminConsole = () => {
     if (error) {
       addOutput(`Ошибка выдачи карты: ${error.message}`);
     } else {
-      addOutput(`✅ Карта "${cardData.name}" выдана игроку ${userId}`);
+      addOutput(`✅ Карта "${cardData.name}" выдана игроку ${walletAddress}`);
       addOutput(`Тип: ${cardData.type === 'character' ? 'Герой' : 'Дракон'} | Фракция: ${cardData.faction} | Редкость: ${cardData.rarity}`);
       addOutput(`Сила: ${cardData.power} | Защита: ${cardData.defense} | Здоровье: ${cardData.health} | Магия: ${cardData.magic}`);
       toast({
