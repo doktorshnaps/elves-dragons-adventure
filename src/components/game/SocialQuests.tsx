@@ -32,6 +32,24 @@ export const SocialQuests = () => {
   const [progress, setProgress] = useState<Map<string, QuestProgress>>(new Map());
   const [loading, setLoading] = useState(true);
 
+  // Local persistence helpers
+  const storageKey = `questProgress:${accountId ?? 'anon'}`;
+  const getLocalProgress = (): Record<string, QuestProgress> => {
+    try {
+      const raw = localStorage.getItem(storageKey);
+      return raw ? JSON.parse(raw) : {};
+    } catch {
+      return {} as any;
+    }
+  };
+  const persistProgress = (map: Map<string, QuestProgress>) => {
+    const obj: Record<string, Omit<QuestProgress, 'quest_id'> & { quest_id?: string }> = {};
+    map.forEach((v, k) => {
+      obj[k] = { completed: v.completed, claimed: v.claimed, visited: v.visited } as any;
+    });
+    try { localStorage.setItem(storageKey, JSON.stringify(obj)); } catch {}
+  };
+
   useEffect(() => {
     if (accountId) {
       loadQuestsAndProgress();
@@ -88,6 +106,27 @@ export const SocialQuests = () => {
           visited: isVisited,
         });
       });
+
+      // Merge with local storage (persist optimistic state across reloads)
+      const local = getLocalProgress();
+      Object.entries(local).forEach(([id, lp]: any) => {
+        const cur = progressMap.get(id);
+        if (cur) {
+          progressMap.set(id, {
+            ...cur,
+            completed: cur.completed || lp.completed,
+            claimed: cur.claimed || lp.claimed,
+            visited: cur.visited || lp.visited,
+          });
+        } else {
+          progressMap.set(id, {
+            quest_id: id,
+            completed: lp.completed || false,
+            claimed: lp.claimed || false,
+            visited: lp.visited || false,
+          } as QuestProgress);
+        }
+      });
       
       // Preserve current visited state for quests not yet completed
       progress.forEach((currentProgress, questId) => {
@@ -97,6 +136,7 @@ export const SocialQuests = () => {
       });
       
       setProgress(progressMap);
+      persistProgress(progressMap);
     } catch (error) {
       console.error("Error loading quests:", error);
       toast({
@@ -116,12 +156,14 @@ export const SocialQuests = () => {
     window.open(quest.link_url, "_blank");
     
     // Mark as visited
-    setProgress(new Map(progress.set(quest.id, {
+    const newMap = new Map(progress.set(quest.id, {
       quest_id: quest.id,
       completed: questProgress?.completed || false,
       claimed: questProgress?.claimed || false,
       visited: true,
-    })));
+    }));
+    setProgress(newMap);
+    persistProgress(newMap);
   };
 
   const handleCompleteQuest = async (quest: Quest) => {
@@ -151,6 +193,7 @@ export const SocialQuests = () => {
     const optimistic = new Map(progress);
     optimistic.set(quest.id, { quest_id: quest.id, completed: true, claimed: false, visited: true });
     setProgress(optimistic);
+    persistProgress(optimistic);
 
     try {
       console.log('Completing quest via RPC...');
@@ -175,6 +218,7 @@ export const SocialQuests = () => {
       const reverted = new Map(progress);
       reverted.set(quest.id, questProgress ?? { quest_id: quest.id, completed: false, claimed: false, visited: true });
       setProgress(reverted);
+      persistProgress(reverted);
 
       console.error("Error completing quest:", error);
       toast({
