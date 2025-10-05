@@ -97,9 +97,29 @@ export const SocialQuests = () => {
 
   const handleCompleteQuest = async (quest: Quest) => {
     const questProgress = progress.get(quest.id);
-    if (questProgress?.completed) return;
+    
+    console.log('handleCompleteQuest called', { 
+      questId: quest.id, 
+      questProgress,
+      accountId 
+    });
+
+    if (questProgress?.completed) {
+      console.log('Quest already completed, skipping');
+      return;
+    }
+
+    if (!accountId) {
+      toast({
+        title: "Ошибка",
+        description: "Кошелек не подключен",
+        variant: "destructive",
+      });
+      return;
+    }
 
     try {
+      console.log('Upserting quest progress...');
       const { error } = await supabase
         .from("user_quest_progress")
         .upsert({
@@ -109,14 +129,21 @@ export const SocialQuests = () => {
           completed_at: new Date().toISOString(),
         });
 
-      if (error) throw error;
+      if (error) {
+        console.error('Supabase error:', error);
+        throw error;
+      }
 
-      setProgress(new Map(progress.set(quest.id, {
+      console.log('Quest progress updated successfully');
+
+      const newProgress = new Map(progress);
+      newProgress.set(quest.id, {
         quest_id: quest.id,
         completed: true,
         claimed: false,
         visited: true,
-      })));
+      });
+      setProgress(newProgress);
 
       toast({
         title: "Задание выполнено",
