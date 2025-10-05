@@ -72,11 +72,9 @@ export const SocialQuests = () => {
       if (questsError) throw questsError;
       setQuests(questsData || []);
 
-      // Load user progress
+      // Load user progress via RPC (bypass RLS)
       const { data: progressData, error: progressError } = await supabase
-        .from("user_quest_progress")
-        .select("*")
-        .eq("wallet_address", accountId);
+        .rpc('get_user_quest_progress', { p_wallet_address: accountId });
 
       if (progressError) throw progressError;
 

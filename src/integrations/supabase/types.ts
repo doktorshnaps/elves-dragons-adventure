@@ -1493,6 +1493,14 @@ export type Database = {
           referrer_wallet_address: string
         }[]
       }
+      get_user_quest_progress: {
+        Args: { p_wallet_address: string }
+        Returns: {
+          claimed: boolean
+          completed: boolean
+          quest_id: string
+        }[]
+      }
       has_admin_role: {
         Args: { p_wallet_address: string }
         Returns: boolean
