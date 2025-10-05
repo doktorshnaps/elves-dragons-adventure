@@ -233,39 +233,63 @@ export const SocialQuests = () => {
     const questProgress = progress.get(quest.id);
     if (!questProgress?.completed || questProgress?.claimed) return;
 
+    if (!accountId) {
+      toast({
+        title: "Ошибка",
+        description: "Кошелек не подключен",
+        variant: "destructive",
+      });
+      return;
+    }
+
     // Optimistic UI update
     const optimistic = new Map(progress);
     optimistic.set(quest.id, { quest_id: quest.id, completed: true, claimed: true, visited: true });
     setProgress(optimistic);
+    persistProgress(optimistic);
 
     try {
-      // Mark as claimed
-      const { error: claimError } = await supabase.rpc('mark_quest_claimed', {
+      // Claim via RPC - atomically marks as claimed and adds balance
+      const { data, error } = await supabase.rpc('claim_quest_and_reward', {
         p_wallet_address: accountId,
         p_quest_id: quest.id,
       });
 
-      if (claimError) throw claimError;
+      if (error) {
+        console.error('Claim error:', error);
+        throw error;
+      }
 
-      // Update balance
-      await updateGameData({
-        balance: gameData.balance + quest.reward_coins,
-      });
+      console.log('Quest claimed successfully:', data);
+
+      // Parse returned data
+      const result = data as any;
+      const newBalance = result?.balance ?? gameData.balance;
+      const rewardAmount = result?.reward ?? quest.reward_coins;
+
+      // Force reload game data to sync balance
+      await updateGameData({ balance: newBalance });
 
       toast({
         title: "Награда получена!",
-        description: `Вы получили ${quest.reward_coins} ELL`,
+        description: `Вы получили ${rewardAmount} ELL`,
       });
-    } catch (error) {
+    } catch (error: any) {
       // Revert optimistic update on error
       const reverted = new Map(progress);
       reverted.set(quest.id, questProgress);
       setProgress(reverted);
+      persistProgress(reverted);
 
       console.error("Error claiming reward:", error);
+      
+      const errorMsg = error?.message?.includes('already claimed') 
+        ? 'Награда уже получена ранее' 
+        : 'Не удалось получить награду';
+
       toast({
         title: "Ошибка",
-        description: "Не удалось получить награду",
+        description: errorMsg,
         variant: "destructive",
       });
     }

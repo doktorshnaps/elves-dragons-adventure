@@ -1344,6 +1344,10 @@ export type Database = {
         Args: { p_nft_contracts: string[]; p_wallet_address: string }
         Returns: boolean
       }
+      claim_quest_and_reward: {
+        Args: { p_quest_id: string; p_wallet_address: string }
+        Returns: Json
+      }
       complete_user_quest: {
         Args: { p_quest_id: string; p_wallet_address: string }
         Returns: boolean
