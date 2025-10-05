@@ -192,7 +192,7 @@ export const SocialQuests = () => {
                   <img
                     src={quest.image_url}
                     alt={quest.title}
-                    className="w-12 h-12 rounded object-cover"
+                    className="w-48 h-48 rounded object-cover"
                   />
                 )}
                 <div className="flex-1">
