@@ -18,26 +18,6 @@ interface SocialQuest {
 
 const SOCIAL_QUESTS: SocialQuest[] = [
   {
-    id: "social-1",
-    title: "Подписаться на CryptoFun News",
-    description: "t.me/CryptoFun_n",
-    progress: 0,
-    target: 1,
-    reward: { coins: 200 },
-    completed: false,
-    claimed: false,
-  },
-  {
-    id: "social-2",
-    title: "Присоединиться к чату CryptoFun",
-    description: "t.me/CryptoFun_Chat_t",
-    progress: 0,
-    target: 1,
-    reward: { coins: 200 },
-    completed: false,
-    claimed: false,
-  },
-  {
     id: "social-3",
     title: "Подписаться на Gold Ticket Team",
     description: "t.me/Gold_ticket_team",
