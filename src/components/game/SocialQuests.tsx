@@ -119,28 +119,23 @@ export const SocialQuests = () => {
     }
 
     // Optimistic UI update
-    const prev = questProgress ?? { quest_id: quest.id, completed: false, claimed: false, visited: true } as QuestProgress;
     const optimistic = new Map(progress);
     optimistic.set(quest.id, { quest_id: quest.id, completed: true, claimed: false, visited: true });
     setProgress(optimistic);
 
     try {
-      console.log('Upserting quest progress...');
-      const { error } = await supabase
-        .from("user_quest_progress")
-        .upsert({
-          wallet_address: accountId,
-          quest_id: quest.id,
-          completed: true,
-          completed_at: new Date().toISOString(),
-        });
+      console.log('Completing quest via RPC...');
+      const { error } = await supabase.rpc('complete_user_quest', {
+        p_wallet_address: accountId,
+        p_quest_id: quest.id,
+      });
 
       if (error) {
-        console.error('Supabase error:', error);
+        console.error('Supabase RPC error:', error);
         throw error;
       }
 
-      console.log('Quest progress updated successfully');
+      console.log('Quest completed successfully');
 
       toast({
         title: "Задание выполнено",
@@ -149,7 +144,7 @@ export const SocialQuests = () => {
     } catch (error) {
       // Revert optimistic update on error
       const reverted = new Map(progress);
-      reverted.set(quest.id, prev);
+      reverted.set(quest.id, questProgress ?? { quest_id: quest.id, completed: false, claimed: false, visited: true });
       setProgress(reverted);
 
       console.error("Error completing quest:", error);
@@ -165,36 +160,35 @@ export const SocialQuests = () => {
     const questProgress = progress.get(quest.id);
     if (!questProgress?.completed || questProgress?.claimed) return;
 
-    try {
-      // Update quest progress
-      const { error: progressError } = await supabase
-        .from("user_quest_progress")
-        .update({
-          claimed: true,
-          claimed_at: new Date().toISOString(),
-        })
-        .eq("wallet_address", accountId)
-        .eq("quest_id", quest.id);
+    // Optimistic UI update
+    const optimistic = new Map(progress);
+    optimistic.set(quest.id, { quest_id: quest.id, completed: true, claimed: true, visited: true });
+    setProgress(optimistic);
 
-      if (progressError) throw progressError;
+    try {
+      // Mark as claimed
+      const { error: claimError } = await supabase.rpc('mark_quest_claimed', {
+        p_wallet_address: accountId,
+        p_quest_id: quest.id,
+      });
+
+      if (claimError) throw claimError;
 
       // Update balance
       await updateGameData({
         balance: gameData.balance + quest.reward_coins,
       });
 
-      setProgress(new Map(progress.set(quest.id, {
-        quest_id: quest.id,
-        completed: true,
-        claimed: true,
-        visited: true,
-      })));
-
       toast({
         title: "Награда получена!",
         description: `Вы получили ${quest.reward_coins} ELL`,
       });
     } catch (error) {
+      // Revert optimistic update on error
+      const reverted = new Map(progress);
+      reverted.set(quest.id, questProgress);
+      setProgress(reverted);
+
       console.error("Error claiming reward:", error);
       toast({
         title: "Ошибка",

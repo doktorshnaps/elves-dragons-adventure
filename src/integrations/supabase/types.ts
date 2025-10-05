@@ -1344,6 +1344,10 @@ export type Database = {
         Args: { p_nft_contracts: string[]; p_wallet_address: string }
         Returns: boolean
       }
+      complete_user_quest: {
+        Args: { p_quest_id: string; p_wallet_address: string }
+        Returns: boolean
+      }
       create_card_instance_by_wallet: {
         Args: { p_card: Json; p_wallet_address: string }
         Returns: string
@@ -1535,6 +1539,10 @@ export type Database = {
       }
       is_whitelisted: {
         Args: { p_wallet_address: string }
+        Returns: boolean
+      }
+      mark_quest_claimed: {
+        Args: { p_quest_id: string; p_wallet_address: string }
         Returns: boolean
       }
       open_card_packs: {
