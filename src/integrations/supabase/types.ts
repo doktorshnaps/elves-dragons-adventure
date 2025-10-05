@@ -1501,7 +1501,9 @@ export type Database = {
         Args: { p_wallet_address: string }
         Returns: {
           claimed: boolean
+          claimed_at: string
           completed: boolean
+          completed_at: string
           quest_id: string
         }[]
       }
