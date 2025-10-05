@@ -116,34 +116,24 @@ export const QuestManagement = () => {
         if (uploadedUrl) imageUrl = uploadedUrl;
       }
 
-      const questData = {
-        ...formData,
-        image_url: imageUrl,
-        created_by_wallet_address: accountId || "unknown",
-      };
+      const { data, error } = await supabase.rpc('admin_upsert_quest', {
+        p_admin_wallet_address: accountId || 'unknown',
+        p_id: editingQuest?.id || null,
+        p_title: formData.title,
+        p_description: formData.description,
+        p_link_url: formData.link_url,
+        p_image_url: imageUrl,
+        p_reward_coins: formData.reward_coins,
+        p_is_active: true,
+        p_display_order: formData.display_order,
+      });
 
-      if (editingQuest) {
-        const { error } = await supabase
-          .from("quests")
-          .update(questData)
-          .eq("id", editingQuest.id);
+      if (error) throw error;
 
-        if (error) throw error;
-        toast({
-          title: "Успешно",
-          description: "Задание обновлено",
-        });
-      } else {
-        const { error } = await supabase
-          .from("quests")
-          .insert([questData]);
-
-        if (error) throw error;
-        toast({
-          title: "Успешно",
-          description: "Задание создано",
-        });
-      }
+      toast({
+        title: "Успешно",
+        description: editingQuest ? "Задание обновлено" : "Задание создано",
+      });
 
       resetForm();
       loadQuests();
@@ -174,10 +164,10 @@ export const QuestManagement = () => {
     if (!confirm("Вы уверены, что хотите удалить это задание?")) return;
 
     try {
-      const { error } = await supabase
-        .from("quests")
-        .delete()
-        .eq("id", id);
+      const { error } = await supabase.rpc('admin_delete_quest', {
+        p_admin_wallet_address: accountId || 'unknown',
+        p_id: id,
+      });
 
       if (error) throw error;
       toast({

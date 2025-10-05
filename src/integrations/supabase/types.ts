@@ -1122,6 +1122,10 @@ export type Database = {
         Args: { p_admin_wallet_address?: string; p_wallet_address: string }
         Returns: boolean
       }
+      admin_delete_quest: {
+        Args: { p_admin_wallet_address: string; p_id: string }
+        Returns: boolean
+      }
       admin_find_user_by_wallet: {
         Args: { p_admin_wallet_address: string; p_wallet_address: string }
         Returns: {
@@ -1297,6 +1301,20 @@ export type Database = {
           p_multiplier: number
         }
         Returns: boolean
+      }
+      admin_upsert_quest: {
+        Args: {
+          p_admin_wallet_address: string
+          p_description: string
+          p_display_order: number
+          p_id: string
+          p_image_url: string
+          p_is_active: boolean
+          p_link_url: string
+          p_reward_coins: number
+          p_title: string
+        }
+        Returns: string
       }
       atomic_balance_update: {
         Args: { p_price_deduction: number; p_wallet_address: string }
