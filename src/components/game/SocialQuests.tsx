@@ -3,151 +3,243 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
+import { useWallet } from "@/hooks/useWallet";
 import { useGameData } from "@/hooks/useGameData";
 
-interface SocialQuest {
+interface Quest {
   id: string;
   title: string;
   description: string;
-  progress: number;
-  target: number;
-  reward: { coins: number };
+  link_url: string;
+  image_url: string | null;
+  reward_coins: number;
+  is_active: boolean;
+}
+
+interface QuestProgress {
+  quest_id: string;
   completed: boolean;
   claimed: boolean;
 }
 
-const SOCIAL_QUESTS: SocialQuest[] = [
-  {
-    id: "social-3",
-    title: "Подписаться на Gold Ticket Team",
-    description: "t.me/Gold_ticket_team",
-    progress: 0,
-    target: 1,
-    reward: { coins: 100 },
-    completed: false,
-    claimed: false,
-  },
-];
-
 export const SocialQuests = () => {
   const { toast } = useToast();
+  const { accountId } = useWallet();
   const { gameData, updateGameData } = useGameData();
-  const balance = gameData.balance;
-  const [quests, setQuests] = useState<SocialQuest[]>(() => {
-    const saved = gameData.socialQuests as SocialQuest[] | undefined;
-    if (saved && Array.isArray(saved)) {
-      const byId = new Map(saved.map((q) => [q.id, q] as const));
-      SOCIAL_QUESTS.forEach((def) => {
-        if (!byId.has(def.id)) byId.set(def.id, def);
-      });
-      return Array.from(byId.values());
-    }
-    return SOCIAL_QUESTS;
-  });
+  const [quests, setQuests] = useState<Quest[]>([]);
+  const [progress, setProgress] = useState<Map<string, QuestProgress>>(new Map());
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const saved = gameData.socialQuests as SocialQuest[] | undefined;
-    if (saved && Array.isArray(saved)) {
-      const byId = new Map(saved.map((q) => [q.id, q] as const));
-      SOCIAL_QUESTS.forEach((def) => {
-        if (!byId.has(def.id)) byId.set(def.id, def);
-      });
-      const merged = Array.from(byId.values());
-      setQuests(merged);
-      if (saved.length !== merged.length) {
-        // Persist newly added default quests to DB
-        updateGameData({ socialQuests: merged });
-      }
-    } else {
-      setQuests(SOCIAL_QUESTS);
-      updateGameData({ socialQuests: SOCIAL_QUESTS });
+    if (accountId) {
+      loadQuestsAndProgress();
     }
-  }, [gameData.socialQuests, updateGameData]);
+  }, [accountId]);
 
-  const handleClaimReward = async (quest: SocialQuest) => {
-    if (!quest.completed || quest.claimed) return;
+  const loadQuestsAndProgress = async () => {
+    try {
+      // Load active quests
+      const { data: questsData, error: questsError } = await supabase
+        .from("quests")
+        .select("*")
+        .eq("is_active", true)
+        .order("display_order", { ascending: true });
 
-    const updatedQuests = quests.map((q) =>
-      q.id === quest.id ? { ...q, claimed: true } : q
+      if (questsError) throw questsError;
+      setQuests(questsData || []);
+
+      // Load user progress
+      const { data: progressData, error: progressError } = await supabase
+        .from("user_quest_progress")
+        .select("*")
+        .eq("wallet_address", accountId);
+
+      if (progressError) throw progressError;
+
+      const progressMap = new Map<string, QuestProgress>();
+      progressData?.forEach((p) => {
+        progressMap.set(p.quest_id, {
+          quest_id: p.quest_id,
+          completed: p.completed,
+          claimed: p.claimed,
+        });
+      });
+      setProgress(progressMap);
+    } catch (error) {
+      console.error("Error loading quests:", error);
+      toast({
+        title: "Ошибка",
+        description: "Не удалось загрузить задания",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleCompleteQuest = async (quest: Quest) => {
+    const questProgress = progress.get(quest.id);
+    if (questProgress?.completed) return;
+
+    try {
+      const { error } = await supabase
+        .from("user_quest_progress")
+        .upsert({
+          wallet_address: accountId,
+          quest_id: quest.id,
+          completed: true,
+          completed_at: new Date().toISOString(),
+        });
+
+      if (error) throw error;
+
+      setProgress(new Map(progress.set(quest.id, {
+        quest_id: quest.id,
+        completed: true,
+        claimed: false,
+      })));
+
+      toast({
+        title: "Задание выполнено",
+        description: "Теперь можно получить награду",
+      });
+    } catch (error) {
+      console.error("Error completing quest:", error);
+      toast({
+        title: "Ошибка",
+        description: "Не удалось отметить задание как выполненное",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleClaimReward = async (quest: Quest) => {
+    const questProgress = progress.get(quest.id);
+    if (!questProgress?.completed || questProgress?.claimed) return;
+
+    try {
+      // Update quest progress
+      const { error: progressError } = await supabase
+        .from("user_quest_progress")
+        .update({
+          claimed: true,
+          claimed_at: new Date().toISOString(),
+        })
+        .eq("wallet_address", accountId)
+        .eq("quest_id", quest.id);
+
+      if (progressError) throw progressError;
+
+      // Update balance
+      await updateGameData({
+        balance: gameData.balance + quest.reward_coins,
+      });
+
+      setProgress(new Map(progress.set(quest.id, {
+        quest_id: quest.id,
+        completed: true,
+        claimed: true,
+      })));
+
+      toast({
+        title: "Награда получена!",
+        description: `Вы получили ${quest.reward_coins} ELL`,
+      });
+    } catch (error) {
+      console.error("Error claiming reward:", error);
+      toast({
+        title: "Ошибка",
+        description: "Не удалось получить награду",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleLinkClick = (url: string) => {
+    window.open(url, "_blank");
+  };
+
+  if (loading) {
+    return (
+      <Card className="p-6 bg-game-surface border-game-accent">
+        <p className="text-center text-gray-400">Загрузка заданий...</p>
+      </Card>
     );
-    
-    await updateGameData({
-      socialQuests: updatedQuests,
-      balance: balance + quest.reward.coins
-    });
-    
-    setQuests(updatedQuests);
+  }
 
-    toast({
-      title: "Награда получена!",
-      description: `Вы получили ${quest.reward.coins} ELL`,
-    });
-  };
-
-  const handleCompleteQuest = async (quest: SocialQuest) => {
-    if (quest.completed) return;
-
-    const updatedQuests = quests.map((q) =>
-      q.id === quest.id ? { ...q, progress: q.target, completed: true } : q
+  if (quests.length === 0) {
+    return (
+      <Card className="p-6 bg-game-surface border-game-accent">
+        <p className="text-center text-gray-400">Заданий пока нет</p>
+      </Card>
     );
-
-    await updateGameData({ socialQuests: updatedQuests });
-    setQuests(updatedQuests);
-
-    toast({
-      title: "Задание выполнено",
-      description: "Теперь можно получить награду.",
-    });
-  };
-
-  const handleSocialClick = (url: string) => {
-    window.open(`https://${url}`, '_blank');
-  };
+  }
 
   return (
     <Card className="p-6 bg-game-surface border-game-accent">
       <h2 className="text-xl font-bold text-game-accent mb-4">Поддержка проекта</h2>
       <div className="space-y-4">
-        {quests.map((quest) => (
-          <div key={quest.id} className="bg-game-background rounded-lg p-4 space-y-2">
-            <div className="flex justify-between items-start">
-              <div>
-                <h4 className="font-medium text-game-primary">{quest.title}</h4>
-                <p 
-                  className="text-sm text-blue-400 cursor-pointer hover:underline"
-                  onClick={() => handleSocialClick(quest.description)}
-                >
-                  {quest.description}
-                </p>
+        {quests.map((quest) => {
+          const questProgress = progress.get(quest.id);
+          const isCompleted = questProgress?.completed || false;
+          const isClaimed = questProgress?.claimed || false;
+
+          return (
+            <div key={quest.id} className="bg-game-background rounded-lg p-4 space-y-2">
+              <div className="flex items-start gap-4">
+                {quest.image_url && (
+                  <img
+                    src={quest.image_url}
+                    alt={quest.title}
+                    className="w-12 h-12 rounded object-cover"
+                  />
+                )}
+                <div className="flex-1">
+                  <div className="flex justify-between items-start">
+                    <div>
+                      <h4 className="font-medium text-game-primary">{quest.title}</h4>
+                      <p className="text-sm text-gray-400">{quest.description}</p>
+                      <p
+                        className="text-sm text-blue-400 cursor-pointer hover:underline mt-1"
+                        onClick={() => handleLinkClick(quest.link_url)}
+                      >
+                        Перейти к заданию
+                      </p>
+                    </div>
+                    <div className="flex flex-col gap-2 items-end">
+                      {!isCompleted && !isClaimed && (
+                        <Button
+                          onClick={() => handleCompleteQuest(quest)}
+                          size="sm"
+                          className="bg-game-accent hover:bg-game-accent/90"
+                        >
+                          Выполнить
+                        </Button>
+                      )}
+                      {isCompleted && !isClaimed && (
+                        <Button
+                          onClick={() => handleClaimReward(quest)}
+                          size="sm"
+                          className="bg-game-accent hover:bg-game-accent/90"
+                        >
+                          Получить
+                        </Button>
+                      )}
+                      {isClaimed && (
+                        <span className="text-sm text-gray-400">Выполнено</span>
+                      )}
+                    </div>
+                  </div>
+                  <Progress value={isClaimed ? 100 : isCompleted ? 50 : 0} className="mt-2" />
+                  <div className="text-sm text-gray-400 mt-1">
+                    Награда: {quest.reward_coins} ELL
+                  </div>
+                </div>
               </div>
-              {!quest.completed && !quest.claimed && (
-                <Button
-                  onClick={() => handleCompleteQuest(quest)}
-                  size="sm"
-                  className="bg-game-accent hover:bg-game-accent/90"
-                >
-                  Выполнить
-                </Button>
-              )}
-              {quest.completed && !quest.claimed && (
-                <Button
-                  onClick={() => handleClaimReward(quest)}
-                  size="sm"
-                  className="bg-game-accent hover:bg-game-accent/90"
-                >
-                  Получить
-                </Button>
-              )}
-              {quest.claimed && (
-                <span className="text-sm text-gray-400">Выполнено</span>
-              )}
             </div>
-            <Progress value={(quest.progress / quest.target) * 100} />
-            <div className="text-sm text-gray-400">
-              Награда: {quest.reward.coins} ELL
-            </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
     </Card>
   );
