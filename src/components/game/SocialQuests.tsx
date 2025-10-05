@@ -54,12 +54,35 @@ export const SocialQuests = () => {
   const { gameData, updateGameData } = useGameData();
   const balance = gameData.balance;
   const [quests, setQuests] = useState<SocialQuest[]>(() => {
-    return gameData.socialQuests || SOCIAL_QUESTS;
+    const saved = gameData.socialQuests as SocialQuest[] | undefined;
+    if (saved && Array.isArray(saved)) {
+      const byId = new Map(saved.map((q) => [q.id, q] as const));
+      SOCIAL_QUESTS.forEach((def) => {
+        if (!byId.has(def.id)) byId.set(def.id, def);
+      });
+      return Array.from(byId.values());
+    }
+    return SOCIAL_QUESTS;
   });
 
   useEffect(() => {
-    setQuests(gameData.socialQuests || SOCIAL_QUESTS);
-  }, [gameData.socialQuests]);
+    const saved = gameData.socialQuests as SocialQuest[] | undefined;
+    if (saved && Array.isArray(saved)) {
+      const byId = new Map(saved.map((q) => [q.id, q] as const));
+      SOCIAL_QUESTS.forEach((def) => {
+        if (!byId.has(def.id)) byId.set(def.id, def);
+      });
+      const merged = Array.from(byId.values());
+      setQuests(merged);
+      if (saved.length !== merged.length) {
+        // Persist newly added default quests to DB
+        updateGameData({ socialQuests: merged });
+      }
+    } else {
+      setQuests(SOCIAL_QUESTS);
+      updateGameData({ socialQuests: SOCIAL_QUESTS });
+    }
+  }, [gameData.socialQuests, updateGameData]);
 
   const handleClaimReward = async (quest: SocialQuest) => {
     if (!quest.completed || quest.claimed) return;
@@ -78,6 +101,22 @@ export const SocialQuests = () => {
     toast({
       title: "Награда получена!",
       description: `Вы получили ${quest.reward.coins} ELL`,
+    });
+  };
+
+  const handleCompleteQuest = async (quest: SocialQuest) => {
+    if (quest.completed) return;
+
+    const updatedQuests = quests.map((q) =>
+      q.id === quest.id ? { ...q, progress: q.target, completed: true } : q
+    );
+
+    await updateGameData({ socialQuests: updatedQuests });
+    setQuests(updatedQuests);
+
+    toast({
+      title: "Задание выполнено",
+      description: "Теперь можно получить награду.",
     });
   };
 
@@ -101,6 +140,15 @@ export const SocialQuests = () => {
                   {quest.description}
                 </p>
               </div>
+              {!quest.completed && !quest.claimed && (
+                <Button
+                  onClick={() => handleCompleteQuest(quest)}
+                  size="sm"
+                  className="bg-game-accent hover:bg-game-accent/90"
+                >
+                  Выполнить
+                </Button>
+              )}
               {quest.completed && !quest.claimed && (
                 <Button
                   onClick={() => handleClaimReward(quest)}
@@ -111,7 +159,7 @@ export const SocialQuests = () => {
                 </Button>
               )}
               {quest.claimed && (
-                <span className="text-sm text-gray-400">Получено</span>
+                <span className="text-sm text-gray-400">Выполнено</span>
               )}
             </div>
             <Progress value={(quest.progress / quest.target) * 100} />
