@@ -82,6 +82,9 @@ export const SocialQuests = () => {
     const questProgress = progress.get(quest.id);
     if (questProgress?.completed) return;
 
+    // Open the quest link
+    window.open(quest.link_url, "_blank");
+
     try {
       const { error } = await supabase
         .from("user_quest_progress")
@@ -200,12 +203,6 @@ export const SocialQuests = () => {
                     <div>
                       <h4 className="font-medium text-game-primary">{quest.title}</h4>
                       <p className="text-sm text-gray-400">{quest.description}</p>
-                      <p
-                        className="text-sm text-blue-400 cursor-pointer hover:underline mt-1"
-                        onClick={() => handleLinkClick(quest.link_url)}
-                      >
-                        Перейти к заданию
-                      </p>
                     </div>
                     <div className="flex flex-col gap-2 items-end">
                       {!isCompleted && !isClaimed && (
