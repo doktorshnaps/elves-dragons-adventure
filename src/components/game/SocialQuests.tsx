@@ -37,6 +37,16 @@ const SOCIAL_QUESTS: SocialQuest[] = [
     completed: false,
     claimed: false,
   },
+  {
+    id: "social-3",
+    title: "Подписаться на Gold Ticket Team",
+    description: "t.me/Gold_ticket_team",
+    progress: 0,
+    target: 1,
+    reward: { coins: 100 },
+    completed: false,
+    claimed: false,
+  },
 ];
 
 export const SocialQuests = () => {
