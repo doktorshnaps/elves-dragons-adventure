@@ -21,6 +21,7 @@ interface QuestProgress {
   quest_id: string;
   completed: boolean;
   claimed: boolean;
+  visited: boolean; // Tracking if user clicked to visit the link
 }
 
 export const SocialQuests = () => {
@@ -63,6 +64,7 @@ export const SocialQuests = () => {
           quest_id: p.quest_id,
           completed: p.completed,
           claimed: p.claimed,
+          visited: false,
         });
       });
       setProgress(progressMap);
@@ -78,12 +80,24 @@ export const SocialQuests = () => {
     }
   };
 
+  const handleVisitQuest = (quest: Quest) => {
+    const questProgress = progress.get(quest.id);
+    
+    // Open the quest link
+    window.open(quest.link_url, "_blank");
+    
+    // Mark as visited
+    setProgress(new Map(progress.set(quest.id, {
+      quest_id: quest.id,
+      completed: questProgress?.completed || false,
+      claimed: questProgress?.claimed || false,
+      visited: true,
+    })));
+  };
+
   const handleCompleteQuest = async (quest: Quest) => {
     const questProgress = progress.get(quest.id);
     if (questProgress?.completed) return;
-
-    // Open the quest link
-    window.open(quest.link_url, "_blank");
 
     try {
       const { error } = await supabase
@@ -101,6 +115,7 @@ export const SocialQuests = () => {
         quest_id: quest.id,
         completed: true,
         claimed: false,
+        visited: true,
       })));
 
       toast({
@@ -143,6 +158,7 @@ export const SocialQuests = () => {
         quest_id: quest.id,
         completed: true,
         claimed: true,
+        visited: true,
       })));
 
       toast({
@@ -187,6 +203,7 @@ export const SocialQuests = () => {
           const questProgress = progress.get(quest.id);
           const isCompleted = questProgress?.completed || false;
           const isClaimed = questProgress?.claimed || false;
+          const isVisited = questProgress?.visited || false;
 
           return (
             <div key={quest.id} className="bg-game-background rounded-lg p-4 space-y-2">
@@ -205,13 +222,22 @@ export const SocialQuests = () => {
                       <p className="text-sm text-gray-400">{quest.description}</p>
                     </div>
                     <div className="flex flex-col gap-2 items-end">
-                      {!isCompleted && !isClaimed && (
+                      {!isVisited && !isCompleted && !isClaimed && (
+                        <Button
+                          onClick={() => handleVisitQuest(quest)}
+                          size="sm"
+                          className="bg-game-accent hover:bg-game-accent/90"
+                        >
+                          Выполнить
+                        </Button>
+                      )}
+                      {isVisited && !isCompleted && !isClaimed && (
                         <Button
                           onClick={() => handleCompleteQuest(quest)}
                           size="sm"
                           className="bg-game-accent hover:bg-game-accent/90"
                         >
-                          Выполнить
+                          Я подписался
                         </Button>
                       )}
                       {isCompleted && !isClaimed && (
