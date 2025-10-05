@@ -2,6 +2,7 @@ import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useNavigate } from "react-router-dom";
 import { ReferralTab } from "@/components/game/ReferralTab";
+import { SocialQuests } from "@/components/game/SocialQuests";
 
 export const QuestPage = () => {
   const navigate = useNavigate();
@@ -36,12 +37,7 @@ export const QuestPage = () => {
           </TabsList>
           
           <TabsContent value="quests" className="mt-6">
-            <div className="grid gap-4">
-              <div className="p-4 bg-game-surface/80 border border-game-accent rounded-lg">
-                <h2 className="text-xl text-game-accent mb-2">Скоро будут доступны новые квесты!</h2>
-                <p className="text-gray-300">Следите за обновлениями.</p>
-              </div>
-            </div>
+            <SocialQuests />
           </TabsContent>
           
           <TabsContent value="referrals" className="mt-6">
