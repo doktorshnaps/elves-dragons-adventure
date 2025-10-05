@@ -118,6 +118,12 @@ export const SocialQuests = () => {
       return;
     }
 
+    // Optimistic UI update
+    const prev = questProgress ?? { quest_id: quest.id, completed: false, claimed: false, visited: true } as QuestProgress;
+    const optimistic = new Map(progress);
+    optimistic.set(quest.id, { quest_id: quest.id, completed: true, claimed: false, visited: true });
+    setProgress(optimistic);
+
     try {
       console.log('Upserting quest progress...');
       const { error } = await supabase
@@ -136,20 +142,16 @@ export const SocialQuests = () => {
 
       console.log('Quest progress updated successfully');
 
-      const newProgress = new Map(progress);
-      newProgress.set(quest.id, {
-        quest_id: quest.id,
-        completed: true,
-        claimed: false,
-        visited: true,
-      });
-      setProgress(newProgress);
-
       toast({
         title: "Задание выполнено",
         description: "Теперь можно получить награду",
       });
     } catch (error) {
+      // Revert optimistic update on error
+      const reverted = new Map(progress);
+      reverted.set(quest.id, prev);
+      setProgress(reverted);
+
       console.error("Error completing quest:", error);
       toast({
         title: "Ошибка",
