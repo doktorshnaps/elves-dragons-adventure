@@ -35,6 +35,28 @@ export const SocialQuests = () => {
   useEffect(() => {
     if (accountId) {
       loadQuestsAndProgress();
+
+      // Subscribe to real-time updates
+      const subscription = supabase
+        .channel('quest-progress-changes')
+        .on(
+          'postgres_changes',
+          {
+            event: '*',
+            schema: 'public',
+            table: 'user_quest_progress',
+            filter: `wallet_address=eq.${accountId}`,
+          },
+          (payload) => {
+            console.log('Quest progress changed:', payload);
+            loadQuestsAndProgress();
+          }
+        )
+        .subscribe();
+
+      return () => {
+        supabase.removeChannel(subscription);
+      };
     }
   }, [accountId]);
 
@@ -60,13 +82,22 @@ export const SocialQuests = () => {
 
       const progressMap = new Map<string, QuestProgress>();
       progressData?.forEach((p) => {
+        const isVisited = p.completed || p.claimed; // If completed or claimed, must have been visited
         progressMap.set(p.quest_id, {
           quest_id: p.quest_id,
           completed: p.completed,
           claimed: p.claimed,
-          visited: false,
+          visited: isVisited,
         });
       });
+      
+      // Preserve current visited state for quests not yet completed
+      progress.forEach((currentProgress, questId) => {
+        if (!progressMap.has(questId) && currentProgress.visited) {
+          progressMap.set(questId, currentProgress);
+        }
+      });
+      
       setProgress(progressMap);
     } catch (error) {
       console.error("Error loading quests:", error);
