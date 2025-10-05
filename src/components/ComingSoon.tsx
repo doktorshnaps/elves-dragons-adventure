@@ -110,15 +110,27 @@ export const ComingSoon = () => {
           style={{ pointerEvents: 'auto' }}
         >
           {!isBanned && (
-            <Button
-              onClick={() => window.open('https://hotcraft.art/drop/golden_ticket', '_blank')}
-              variant="default"
-              size="lg"
-              className="bg-gradient-to-r from-yellow-400 via-amber-500 to-orange-600 hover:from-yellow-500 hover:via-amber-600 hover:to-orange-700 text-black font-semibold transition-all duration-300 px-6 md:px-8 py-2 md:py-3 text-base md:text-lg cursor-pointer shadow-lg hover:shadow-xl"
-              style={{ pointerEvents: 'auto' }}
-            >
-              Белый лист
-            </Button>
+            <>
+              <Button
+                onClick={() => window.open('https://hotcraft.art/drop/golden_ticket', '_blank')}
+                variant="default"
+                size="lg"
+                className="bg-gradient-to-r from-yellow-400 via-amber-500 to-orange-600 hover:from-yellow-500 hover:via-amber-600 hover:to-orange-700 text-black font-semibold transition-all duration-300 px-6 md:px-8 py-2 md:py-3 text-base md:text-lg cursor-pointer shadow-lg hover:shadow-xl"
+                style={{ pointerEvents: 'auto' }}
+              >
+                Белый лист
+              </Button>
+
+              <Button
+                onClick={() => window.open('https://t.me/Gold_ticket_team', '_blank')}
+                variant="secondary"
+                size="lg"
+                className="bg-blue-500 hover:bg-blue-600 text-white transition-all duration-300 px-6 md:px-8 py-2 md:py-3 text-base md:text-lg cursor-pointer shadow-lg hover:shadow-xl"
+                style={{ pointerEvents: 'auto' }}
+              >
+                Подробная информация здесь
+              </Button>
+            </>
           )}
 
           <Button
