@@ -14,19 +14,29 @@ import { DungeonReward } from '@/hooks/adventure/useDungeonRewards';
 interface DungeonRewardModalProps {
   isOpen: boolean;
   onClose: () => void;
+  onContinue?: () => void;
   reward: DungeonReward;
+  canContinue?: boolean;
 }
 
 export const DungeonRewardModal: React.FC<DungeonRewardModalProps> = ({
   isOpen,
   onClose,
-  reward
+  onContinue,
+  reward,
+  canContinue = false
 }) => {
   const [isSubmitting, setIsSubmitting] = React.useState(false);
+  
   const handleClaim = () => {
     if (isSubmitting) return;
     setIsSubmitting(true);
     onClose();
+  };
+
+  const handleContinue = () => {
+    if (isSubmitting || !onContinue) return;
+    onContinue();
   };
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -144,15 +154,45 @@ export const DungeonRewardModal: React.FC<DungeonRewardModalProps> = ({
             </div>
           )}
 
-          <Button 
-            onClick={handleClaim}
-            className="w-full"
-            size="lg"
-            disabled={isSubmitting}
-            aria-busy={isSubmitting}
-          >
-            {isSubmitting ? 'Начисление...' : 'Забрать награду'}
-          </Button>
+          {canContinue ? (
+            <div className="space-y-3">
+              <div className="p-3 bg-yellow-500/10 border border-yellow-500/30 rounded text-sm text-yellow-200">
+                ⚠️ При смерти команды или сдаче вся накопленная награда будет потеряна!
+              </div>
+              
+              <div className="grid grid-cols-2 gap-3">
+                <Button 
+                  onClick={handleClaim}
+                  variant="default"
+                  size="lg"
+                  disabled={isSubmitting}
+                  className="w-full"
+                >
+                  Забрать и выйти
+                </Button>
+                
+                <Button 
+                  onClick={handleContinue}
+                  variant="outline"
+                  size="lg"
+                  disabled={isSubmitting}
+                  className="w-full border-primary/50 hover:bg-primary/20"
+                >
+                  Рискнуть дальше
+                </Button>
+              </div>
+            </div>
+          ) : (
+            <Button 
+              onClick={handleClaim}
+              className="w-full"
+              size="lg"
+              disabled={isSubmitting}
+              aria-busy={isSubmitting}
+            >
+              {isSubmitting ? 'Начисление...' : 'Забрать награду'}
+            </Button>
+          )}
         </div>
       </DialogContent>
     </Dialog>

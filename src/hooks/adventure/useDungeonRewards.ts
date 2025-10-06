@@ -25,6 +25,7 @@ export interface DungeonReward {
 
 export const useDungeonRewards = () => {
   const [pendingReward, setPendingReward] = useState<DungeonReward | null>(null);
+  const [accumulatedReward, setAccumulatedReward] = useState<DungeonReward | null>(null);
   const { gameData, updateGameData } = useGameData();
   const { toast } = useToast();
   const isClaimingRef = useRef(false);
@@ -89,43 +90,62 @@ export const useDungeonRewards = () => {
   const processDungeonCompletion = useCallback(async (
     monsters: MonsterKill[], 
     currentLevel: number, 
-    isFullCompletion: boolean = false
+    isFullCompletion: boolean = false,
+    isDefeat: boolean = false
   ) => {
-    console.log(`💎 Обработка завершения подземелья. Монстров убито: ${monsters.length}, уровень: ${currentLevel}`);
+    console.log(`💎 Обработка завершения уровня. Монстров убито: ${monsters.length}, уровень: ${currentLevel}, Поражение: ${isDefeat}`);
 
-    const reward = calculateReward(monsters);
-    reward.isFullCompletion = isFullCompletion;
+    // Если поражение - сбрасываем все накопленные награды
+    if (isDefeat) {
+      setAccumulatedReward(null);
+      setPendingReward(null);
+      toast({
+        title: "Поражение!",
+        description: "Вся накопленная награда потеряна",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    const levelReward = calculateReward(monsters);
+    
+    // Суммируем с накопленной наградой
+    const totalAccumulated: DungeonReward = accumulatedReward ? {
+      totalELL: accumulatedReward.totalELL + levelReward.totalELL,
+      monstersKilled: accumulatedReward.monstersKilled + levelReward.monstersKilled,
+      completionBonus: 0,
+      breakdown: {
+        level1to3: {
+          count: accumulatedReward.breakdown.level1to3.count + levelReward.breakdown.level1to3.count,
+          reward: accumulatedReward.breakdown.level1to3.reward + levelReward.breakdown.level1to3.reward
+        },
+        level4to7: {
+          count: accumulatedReward.breakdown.level4to7.count + levelReward.breakdown.level4to7.count,
+          reward: accumulatedReward.breakdown.level4to7.reward + levelReward.breakdown.level4to7.reward
+        },
+        level8to10: {
+          count: accumulatedReward.breakdown.level8to10.count + levelReward.breakdown.level8to10.count,
+          reward: accumulatedReward.breakdown.level8to10.reward + levelReward.breakdown.level8to10.reward
+        }
+      },
+      isFullCompletion: false,
+      lootedItems: [...(accumulatedReward.lootedItems || []), ...(levelReward.lootedItems || [])]
+    } : levelReward;
+
+    totalAccumulated.isFullCompletion = isFullCompletion;
 
     // Если полное завершение подземелья (дошли до 10 уровня), добавляем бонус
     if (isFullCompletion) {
-      reward.completionBonus = Math.floor(reward.totalELL * 0.5); // 50% бонус за полное завершение
-      reward.totalELL += reward.completionBonus;
+      totalAccumulated.completionBonus = Math.floor(totalAccumulated.totalELL * 0.5);
+      totalAccumulated.totalELL += totalAccumulated.completionBonus;
     }
 
-    // Показываем модальное окно с наградой всегда (даже если награда 0)
-    setPendingReward(reward);
+    setAccumulatedReward(totalAccumulated);
+    setPendingReward(totalAccumulated);
+  }, [calculateReward, toast, accumulatedReward]);
 
-    if (reward.totalELL > 0) {
-      toast({
-        title: "Награда получена!",
-        description: `Получено ${reward.totalELL} ELL за убийство монстров`,
-      });
-    } else {
-      toast({
-        title: "Подземелье завершено",
-        description: "Монстры не были убиты, награда не получена",
-      });
-    }
-  }, [calculateReward, toast]);
-
-  const clearPendingReward = useCallback(async () => {
-    if (!pendingReward) {
-      setPendingReward(null);
-      return;
-    }
-    if (isClaimingRef.current) {
-      return; // уже идет начисление, игнорируем повторный клик
-    }
+  const claimRewardAndExit = useCallback(async () => {
+    if (!pendingReward || isClaimingRef.current) return;
     isClaimingRef.current = true;
 
     try {
@@ -133,20 +153,29 @@ export const useDungeonRewards = () => {
       const lootedItems = pendingReward.lootedItems || [];
       
       if (rewardAmount > 0) {
-        // Обновляем баланс при закрытии модального окна - добавляем к текущему балансу
         const currentBalance = gameData.balance || 0;
         const newBalance = currentBalance + rewardAmount;
         await updateGameData({ balance: newBalance });
         console.log(`💰 Добавлен баланс: ${rewardAmount} ELL (было: ${currentBalance}, стало: ${newBalance})`);
       }
 
-      // Добавляем полученные предметы в инвентарь
       if (lootedItems.length > 0) {
         const currentInventory = gameData.inventory || [];
         const newInventory = [...currentInventory, ...lootedItems];
         await updateGameData({ inventory: newInventory });
         console.log(`🎒 Добавлено предметов в инвентарь: ${lootedItems.length}`);
       }
+
+      // Сбрасываем все состояния
+      setPendingReward(null);
+      setAccumulatedReward(null);
+      
+      toast({
+        title: "Награда получена!",
+        description: `Получено ${rewardAmount} ELL`,
+      });
+
+      return true; // Сигнализируем о выходе
     } catch (error) {
       console.error('Ошибка при начислении награды:', error);
       toast({
@@ -154,16 +183,34 @@ export const useDungeonRewards = () => {
         description: "Не удалось начислить награду",
         variant: "destructive"
       });
+      return false;
     } finally {
-      setPendingReward(null);
       isClaimingRef.current = false;
     }
-  }, [pendingReward, gameData.balance, updateGameData, toast]);
+  }, [pendingReward, gameData.balance, gameData.inventory, updateGameData, toast]);
+
+  const continueWithRisk = useCallback(() => {
+    // Закрываем модальное окно, но сохраняем накопленную награду
+    setPendingReward(null);
+    toast({
+      title: "Продолжаем!",
+      description: "Будьте осторожны - при поражении вся награда будет потеряна",
+      variant: "default"
+    });
+  }, [toast]);
+
+  const resetRewards = useCallback(() => {
+    setAccumulatedReward(null);
+    setPendingReward(null);
+  }, []);
 
   return {
     pendingReward,
+    accumulatedReward,
     processDungeonCompletion,
-    clearPendingReward,
+    claimRewardAndExit,
+    continueWithRisk,
+    resetRewards,
     calculateReward
   };
 };

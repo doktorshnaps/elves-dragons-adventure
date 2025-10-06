@@ -25,7 +25,13 @@ export const TeamBattlePage: React.FC<TeamBattlePageProps> = ({
   // Sync health from database on component mount
   useCardHealthSync();
   
-  const { pendingReward, processDungeonCompletion, clearPendingReward } = useDungeonRewards();
+  const { 
+    pendingReward, 
+    processDungeonCompletion, 
+    claimRewardAndExit, 
+    continueWithRisk,
+    resetRewards 
+  } = useDungeonRewards();
   
   const {
     battleState,
@@ -51,6 +57,7 @@ export const TeamBattlePage: React.FC<TeamBattlePageProps> = ({
     startTransition(() => {
       localStorage.removeItem('activeBattleInProgress');
       resetBattle();
+      resetRewards();
       navigate('/dungeons');
     });
   };
@@ -63,9 +70,23 @@ export const TeamBattlePage: React.FC<TeamBattlePageProps> = ({
   const handleNextLevel = () => {
     startTransition(() => {
       handleLevelComplete();
+      setMonstersKilled([]); // Сбрасываем список убитых монстров для нового уровня
       localStorage.removeItem('activeBattleInProgress');
       setBattleStarted(false);
     });
+  };
+
+  const handleClaimAndExit = async () => {
+    const success = await claimRewardAndExit();
+    if (success) {
+      handleExitAndReset();
+    }
+  };
+
+  const handleContinue = () => {
+    continueWithRisk();
+    setMonstersKilled([]); // Сбрасываем только для UI, накопленные награды остаются
+    handleNextLevel();
   };
 
   // Автоматически активируем бой при загрузке, если есть активное подземелье
@@ -132,15 +153,16 @@ export const TeamBattlePage: React.FC<TeamBattlePageProps> = ({
       
       console.log(`🏁 Бой завершен. Победа: ${isVictory}, Уровень: ${battleState.level}, Убито монстров: ${monstersKilled.length}`);
       
-      // При поражении сбрасываем активное подземелье
+      // При поражении сбрасываем активное подземелье и награды
       if (!isVictory) {
         localStorage.removeItem('teamBattleState');
         localStorage.removeItem('activeBattleInProgress');
         localStorage.removeItem('battleState'); // legacy
+        processDungeonCompletion(monstersKilled, battleState.level, isFullCompletion, true); // isDefeat = true
+      } else {
+        // При победе обрабатываем награды
+        processDungeonCompletion(monstersKilled, battleState.level, isFullCompletion, false);
       }
-      
-      // Обрабатываем награды за подземелье, даже если монстров убито 0
-      processDungeonCompletion(monstersKilled, battleState.level, isFullCompletion);
     }
   }, [isBattleOver, battleStarted, monstersKilled, alivePairs.length, battleState.level, processDungeonCompletion]);
   
@@ -175,8 +197,10 @@ export const TeamBattlePage: React.FC<TeamBattlePageProps> = ({
         {pendingReward && (
           <DungeonRewardModal
             isOpen={!!pendingReward}
-            onClose={clearPendingReward}
+            onClose={handleClaimAndExit}
+            onContinue={handleContinue}
             reward={pendingReward}
+            canContinue={alivePairs.length > 0 && battleState.level < 10}
           />
         )}
       </>;
@@ -203,8 +227,10 @@ export const TeamBattlePage: React.FC<TeamBattlePageProps> = ({
       {pendingReward && (
         <DungeonRewardModal
           isOpen={!!pendingReward}
-          onClose={clearPendingReward}
+          onClose={handleClaimAndExit}
+          onContinue={handleContinue}
           reward={pendingReward}
+          canContinue={battleState.level < 10}
         />
       )}
     </>;
