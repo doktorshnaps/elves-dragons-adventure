@@ -274,9 +274,9 @@ export const useTeamBattle = (dungeonType: DungeonType, initialLevel: number = 1
 
     // Check if all enemies defeated
     if (battleState.opponents.filter(o => o.health > 0).length === 1 && newTargetHealth === 0) {
-      setTimeout(() => {
-        handleLevelComplete();
-      }, 3000);
+      // Level cleared — do not auto-advance. Let UI decide via reward modal.
+      localStorage.setItem('activeBattleInProgress', 'false');
+      // Do not call handleLevelComplete here and do not switch turn
     } else {
       // Switch to next attacker or enemy turn
       setTimeout(() => {
