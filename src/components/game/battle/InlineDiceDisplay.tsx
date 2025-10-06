@@ -15,48 +15,52 @@ export const InlineDiceDisplay = ({
   label
 }: InlineDiceDisplayProps) => {
   const [displayValue, setDisplayValue] = useState<number>(1);
-  const [showDice, setShowDice] = useState(false);
+  const [isResultVisible, setIsResultVisible] = useState<boolean>(false);
 
   useEffect(() => {
+    let intervalId: number | undefined;
+    let stopTimeoutId: number | undefined;
+    let resultTimeoutId: number | undefined;
+
     if (isRolling) {
-      setShowDice(true);
-      // Анимация случайных чисел во время броска (1200ms)
-      const interval = setInterval(() => {
+      // Начинаем крутить числа (каждые 100мс), скрываем финальный результат
+      setIsResultVisible(false);
+      intervalId = window.setInterval(() => {
         setDisplayValue(Math.floor(Math.random() * 6) + 1);
       }, 100);
 
-      // Останавливаем анимацию через 1200ms
-      const stopTimeout = setTimeout(() => {
-        clearInterval(interval);
+      // Останавливаем смену чисел через 1200мс
+      stopTimeoutId = window.setTimeout(() => {
+        if (intervalId) clearInterval(intervalId);
       }, 1200);
-
-      return () => {
-        clearInterval(interval);
-        clearTimeout(stopTimeout);
-      };
     } else if (diceValue !== null) {
-      // Показываем финальное значение 1200ms
+      // Фиксируем финальный результат и держим его 1500мс
       setDisplayValue(diceValue);
-      setShowDice(true);
-      const timeout = setTimeout(() => {
-        setShowDice(false);
-      }, 1200);
-      return () => clearTimeout(timeout);
+      setIsResultVisible(true);
+      resultTimeoutId = window.setTimeout(() => {
+        setIsResultVisible(false);
+      }, 1500);
     }
+
+    return () => {
+      if (intervalId) clearInterval(intervalId);
+      if (stopTimeoutId) clearTimeout(stopTimeoutId);
+      if (resultTimeoutId) clearTimeout(resultTimeoutId);
+    };
   }, [isRolling, diceValue]);
 
-  const isActive = isRolling || (showDice && diceValue !== null);
+  const isActive = isRolling || isResultVisible;
 
   return (
     <motion.div
       initial={{ scale: 1, opacity: 1 }}
       animate={{ 
-        scale: isRolling ? [1, 1.05, 1] : 1,
+        scale: isRolling ? [1, 1.1, 1] : 1,
         opacity: 1,
         rotate: isRolling ? 360 : 0
       }}
       transition={{ 
-        duration: isRolling ? 0.3 : 0.6,
+        duration: isRolling ? 1 : 0.6,
         repeat: isRolling ? Infinity : 0,
         ease: "easeInOut" 
       }}

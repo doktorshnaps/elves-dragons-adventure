@@ -392,48 +392,59 @@ export const TeamBattleArena: React.FC<TeamBattleArenaProps> = ({
                 setSelectedTarget(null);
               }} />}
                 
-                {isPlayerTurn && !autoBattle && <div className="space-y-1">
-                    {selectedAbility ? <div className="text-xs text-muted-foreground">
-                        Выберите цель для способности "{selectedAbility.name}"
-                      </div> : <>
-                        <div className="flex items-center justify-center gap-4">
-                          {/* Left Dice (attacker for player turn, defender for enemy turn) */}
-                          <div className="w-20 flex justify-center">
-                            <InlineDiceDisplay
-                              key={`dice-left-${diceKey}`}
-                              isRolling={isDiceRolling}
-                              diceValue={lastRoll ? (lastRoll.source === 'player' ? lastRoll.attackerRoll : lastRoll.defenderRoll) : null}
-                              isAttacker={lastRoll ? lastRoll.source === 'player' : true}
-                              label={lastRoll ? (lastRoll.source === 'player' ? 'Атака' : 'Защита') : 'Атака'}
-                            />
-                          </div>
+                <div className="space-y-1">
+                  {/* Всегда показываем кубики */}
+                  <div className="flex items-center justify-center gap-4">
+                    {/* Left Dice (Игрок) */}
+                    <div className="w-20 flex justify-center">
+                      <InlineDiceDisplay
+                        key={`dice-left-${diceKey}`}
+                        isRolling={isDiceRolling}
+                        diceValue={lastRoll ? (lastRoll.source === 'player' ? lastRoll.attackerRoll : lastRoll.defenderRoll) : null}
+                        isAttacker={lastRoll ? lastRoll.source === 'player' : true}
+                        label="Игрок"
+                      />
+                    </div>
 
-                          {/* Attack Button - Center */}
-                          <Button 
-                            onClick={handleAttack} 
-                            disabled={!selectedPair || selectedTarget === null || typeof selectedTarget === 'string'} 
-                            size="sm" 
-                            className="h-7 px-3"
-                          >
-                            Атаковать
-                          </Button>
+                    {/* Attack Button - Center (только в ход игрока) */}
+                    {isPlayerTurn && !autoBattle ? (
+                      <Button 
+                        onClick={handleAttack} 
+                        disabled={!selectedPair || selectedTarget === null || typeof selectedTarget === 'string'} 
+                        size="sm" 
+                        className="h-7 px-3"
+                      >
+                        Атаковать
+                      </Button>
+                    ) : (
+                      <div className="h-7 w-[88px]" />
+                    )}
 
-                          {/* Right Dice (defender for player turn, attacker for enemy turn) */}
-                          <div className="w-20 flex justify-center">
-                            <InlineDiceDisplay
-                              key={`dice-right-${diceKey}`}
-                              isRolling={isDiceRolling}
-                              diceValue={lastRoll ? (lastRoll.source === 'player' ? lastRoll.defenderRoll : lastRoll.attackerRoll) : null}
-                              isAttacker={lastRoll ? lastRoll.source === 'enemy' : false}
-                              label={lastRoll ? (lastRoll.source === 'player' ? 'Защита' : 'Атака') : 'Защита'}
-                            />
-                          </div>
-                        </div>
-                        {selectedPair && !selectedTarget && <div className="text-xs text-muted-foreground">
-                            Выберите цель для атаки
-                          </div>}
-                      </>}
-                  </div>}
+                    {/* Right Dice (Монстр) */}
+                    <div className="w-20 flex justify-center">
+                      <InlineDiceDisplay
+                        key={`dice-right-${diceKey}`}
+                        isRolling={isDiceRolling}
+                        diceValue={lastRoll ? (lastRoll.source === 'player' ? lastRoll.defenderRoll : lastRoll.attackerRoll) : null}
+                        isAttacker={lastRoll ? lastRoll.source === 'enemy' : false}
+                        label="Монстр"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Подсказки только в ход игрока */}
+                  {isPlayerTurn && !autoBattle && selectedAbility ? (
+                    <div className="text-xs text-muted-foreground">
+                      Выберите цель для способности "{selectedAbility.name}"
+                    </div>
+                  ) : null}
+
+                  {isPlayerTurn && !autoBattle && selectedPair && !selectedTarget && (
+                    <div className="text-xs text-muted-foreground">
+                      Выберите цель для атаки
+                    </div>
+                  )}
+                </div>
 
                 <div className="flex gap-2 justify-center">
                   <Button 
