@@ -23,7 +23,7 @@ interface TeamBattleArenaProps {
   onAbilityUse?: (pairId: string, abilityId: string, targetId: number | string) => void;
   onEnemyAttack: () => void;
   level: number;
-  lastRoll?: { attackerRoll: number; defenderRoll: number; source: 'player' | 'enemy' } | null;
+  lastRoll?: { attackerRoll: number; defenderRoll: number; source: 'player' | 'enemy'; damage: number; isBlocked: boolean } | null;
 }
 export const TeamBattleArena: React.FC<TeamBattleArenaProps> = ({
   playerPairs,
@@ -392,7 +392,7 @@ export const TeamBattleArena: React.FC<TeamBattleArenaProps> = ({
                 setSelectedTarget(null);
               }} />}
                 
-                <div className="space-y-1">
+                  <div className="space-y-1">
                   {/* Всегда показываем кубики */}
                   <div className="flex items-center justify-center gap-4">
                     {/* Left Dice (Игрок) */}
@@ -403,6 +403,8 @@ export const TeamBattleArena: React.FC<TeamBattleArenaProps> = ({
                         diceValue={lastRoll ? (lastRoll.source === 'player' ? lastRoll.attackerRoll : lastRoll.defenderRoll) : null}
                         isAttacker={lastRoll ? lastRoll.source === 'player' : true}
                         label="Игрок"
+                        damage={lastRoll && lastRoll.source === 'player' ? lastRoll.damage : undefined}
+                        isBlocked={lastRoll && lastRoll.source === 'player' ? lastRoll.isBlocked : undefined}
                       />
                     </div>
 
@@ -428,6 +430,8 @@ export const TeamBattleArena: React.FC<TeamBattleArenaProps> = ({
                         diceValue={lastRoll ? (lastRoll.source === 'player' ? lastRoll.defenderRoll : lastRoll.attackerRoll) : null}
                         isAttacker={lastRoll ? lastRoll.source === 'enemy' : false}
                         label="Монстр"
+                        damage={lastRoll && lastRoll.source === 'enemy' ? lastRoll.damage : undefined}
+                        isBlocked={lastRoll && lastRoll.source === 'enemy' ? lastRoll.isBlocked : undefined}
                       />
                     </div>
                   </div>
