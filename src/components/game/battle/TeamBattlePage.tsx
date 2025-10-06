@@ -167,33 +167,8 @@ export const TeamBattlePage: React.FC<TeamBattlePageProps> = ({
   }, [isBattleOver, battleStarted, monstersKilled, alivePairs.length, battleState.level, processDungeonCompletion]);
   
   if (isBattleOver && battleStarted) {
+    // Показываем только модальное окно с наградой, убираем промежуточный экран победы/поражения
     return <>
-        <div className="min-h-screen p-4">
-          <div className="max-w-2xl mx-auto pt-20">
-            <Card className="bg-card/50 backdrop-blur-sm border-primary/20">
-              <CardHeader>
-                <CardTitle className="text-center text-2xl">
-                  {alivePairs.length === 0 ? 'Поражение!' : 'Победа!'}
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="text-center space-y-4">
-                <p className="text-muted-foreground">
-                  {alivePairs.length === 0 ? 'Ваша команда пала в бою...' : `Уровень ${battleState.level} завершен!`}
-                </p>
-                <div className="flex gap-4 justify-center">
-                  <Button onClick={handleBackToMenu} variant="outline">
-                    <ArrowLeft className="w-4 h-4 mr-2" />
-                    Вернуться к подземельям
-                  </Button>
-                  {alivePairs.length > 0 && <Button onClick={handleNextLevel}>
-                      Следующий уровень
-                    </Button>}
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-        </div>
-
         {pendingReward && (
           <DungeonRewardModal
             isOpen={!!pendingReward}

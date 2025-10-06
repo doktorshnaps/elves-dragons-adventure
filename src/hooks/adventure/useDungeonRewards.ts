@@ -207,6 +207,7 @@ export const useDungeonRewards = () => {
     // Закрываем модальное окно, но сохраняем накопленную награду
     setPendingReward(null);
     isProcessingRef.current = false; // Разрешаем обработку следующего уровня
+    lastProcessedLevelRef.current = -1; // Сбрасываем последний обработанный уровень для нового раунда
     toast({
       title: "Продолжаем!",
       description: "Будьте осторожны - при поражении вся награда будет потеряна",
