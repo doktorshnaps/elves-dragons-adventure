@@ -404,8 +404,8 @@ export const TeamBattleArena: React.FC<TeamBattleArenaProps> = ({
                         diceValue={lastRoll ? (lastRoll.source === 'player' ? lastRoll.attackerRoll : lastRoll.defenderRoll) : null}
                         isAttacker={lastRoll ? lastRoll.source === 'player' : true}
                         label="Игрок"
-                        damage={lastRoll && lastRoll.source === 'player' ? lastRoll.damage : undefined}
-                        isBlocked={lastRoll && lastRoll.source === 'player' ? lastRoll.isBlocked : undefined}
+                        damage={lastRoll && lastRoll.source === 'enemy' ? lastRoll.damage : undefined}
+                        isBlocked={lastRoll && lastRoll.source === 'enemy' ? lastRoll.isBlocked : undefined}
                       />
                     </div>
 
@@ -431,8 +431,8 @@ export const TeamBattleArena: React.FC<TeamBattleArenaProps> = ({
                         diceValue={lastRoll ? (lastRoll.source === 'player' ? lastRoll.defenderRoll : lastRoll.attackerRoll) : null}
                         isAttacker={lastRoll ? lastRoll.source === 'enemy' : false}
                         label="Монстр"
-                        damage={lastRoll && lastRoll.source === 'enemy' ? lastRoll.damage : undefined}
-                        isBlocked={lastRoll && lastRoll.source === 'enemy' ? lastRoll.isBlocked : undefined}
+                        damage={lastRoll && lastRoll.source === 'player' ? lastRoll.damage : undefined}
+                        isBlocked={lastRoll && lastRoll.source === 'player' ? lastRoll.isBlocked : undefined}
                       />
                     </div>
                   </div>
