@@ -138,7 +138,7 @@ export const CardImage = ({ image, name, card }: CardImageProps) => {
       <img 
         ref={imgRef}
         alt={name}
-        className="w-full h-full object-cover"
+        className="w-full h-full object-contain"
         loading="eager"
         decoding="async"
         crossOrigin="anonymous"
