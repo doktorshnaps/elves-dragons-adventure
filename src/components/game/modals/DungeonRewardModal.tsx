@@ -1,16 +1,10 @@
 import React from 'react';
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Coins, Trophy, Sword, Package } from 'lucide-react';
 import { DungeonReward } from '@/hooks/adventure/useDungeonRewards';
-
 interface DungeonRewardModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -18,7 +12,6 @@ interface DungeonRewardModalProps {
   reward: DungeonReward;
   canContinue?: boolean;
 }
-
 export const DungeonRewardModal: React.FC<DungeonRewardModalProps> = ({
   isOpen,
   onClose,
@@ -27,19 +20,16 @@ export const DungeonRewardModal: React.FC<DungeonRewardModalProps> = ({
   canContinue = false
 }) => {
   const [isSubmitting, setIsSubmitting] = React.useState(false);
-  
   const handleClaim = () => {
     if (isSubmitting) return;
     setIsSubmitting(true);
     onClose();
   };
-
   const handleContinue = () => {
     if (isSubmitting || !onContinue) return;
     onContinue();
   };
-  return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
+  return <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-md mx-auto bg-card/95 backdrop-blur-sm border-primary/20">
         <DialogHeader>
           <DialogTitle className="text-center text-2xl flex items-center justify-center gap-2">
@@ -59,11 +49,9 @@ export const DungeonRewardModal: React.FC<DungeonRewardModalProps> = ({
                 </span>
                 <span className="text-lg text-muted-foreground">ELL</span>
               </div>
-              {reward.isFullCompletion && (
-                <Badge variant="secondary" className="bg-yellow-500/20 text-yellow-300">
+              {reward.isFullCompletion && <Badge variant="secondary" className="bg-yellow-500/20 text-yellow-300">
                   Полное завершение подземелья!
-                </Badge>
-              )}
+                </Badge>}
             </CardContent>
           </Card>
 
@@ -74,72 +62,53 @@ export const DungeonRewardModal: React.FC<DungeonRewardModalProps> = ({
               Убито монстров:
             </h3>
             
-            {reward.breakdown.level1to3.count > 0 && (
-              <div className="flex justify-between items-center p-2 bg-background/50 rounded">
+            {reward.breakdown.level1to3.count > 0 && <div className="flex justify-between items-center p-2 bg-background/50 rounded">
                 <span className="text-sm">
                   Уровни 1-3: {reward.breakdown.level1to3.count} монстров
                 </span>
                 <Badge variant="outline">
                   {reward.breakdown.level1to3.reward} ELL
                 </Badge>
-              </div>
-            )}
+              </div>}
             
-            {reward.breakdown.level4to7.count > 0 && (
-              <div className="flex justify-between items-center p-2 bg-background/50 rounded">
+            {reward.breakdown.level4to7.count > 0 && <div className="flex justify-between items-center p-2 bg-background/50 rounded">
                 <span className="text-sm">
                   Уровни 4-7: {reward.breakdown.level4to7.count} монстров
                 </span>
                 <Badge variant="outline">
                   {reward.breakdown.level4to7.reward} ELL
                 </Badge>
-              </div>
-            )}
+              </div>}
             
-            {reward.breakdown.level8to10.count > 0 && (
-              <div className="flex justify-between items-center p-2 bg-background/50 rounded">
+            {reward.breakdown.level8to10.count > 0 && <div className="flex justify-between items-center p-2 bg-background/50 rounded">
                 <span className="text-sm">
                   Уровни 8-10: {reward.breakdown.level8to10.count} монстров
                 </span>
                 <Badge variant="outline">
                   {reward.breakdown.level8to10.reward} ELL
                 </Badge>
-              </div>
-            )}
+              </div>}
 
-            {reward.completionBonus > 0 && (
-              <div className="flex justify-between items-center p-2 bg-yellow-500/10 rounded border border-yellow-500/20">
+            {reward.completionBonus > 0 && <div className="flex justify-between items-center p-2 bg-yellow-500/10 rounded border border-yellow-500/20">
                 <span className="text-sm text-yellow-300">
                   Бонус за завершение
                 </span>
                 <Badge className="bg-yellow-500/20 text-yellow-300">
                   {reward.completionBonus} ELL
                 </Badge>
-              </div>
-            )}
+              </div>}
           </div>
 
           {/* Полученные предметы */}
-          {reward.lootedItems && reward.lootedItems.length > 0 && (
-            <div className="space-y-2">
+          {reward.lootedItems && reward.lootedItems.length > 0 && <div className="space-y-2">
               <h3 className="text-sm font-medium text-muted-foreground flex items-center gap-2">
                 <Package className="w-4 h-4" />
                 Полученные предметы:
               </h3>
               
               <div className="grid grid-cols-2 gap-2">
-                {reward.lootedItems.map((item, index) => (
-                  <div 
-                    key={`${item.id}-${index}`}
-                    className="flex items-center gap-2 p-2 bg-background/50 rounded border"
-                  >
-                    {item.image && (
-                      <img 
-                        src={item.image} 
-                        alt={item.name}
-                        className="w-8 h-8 object-cover rounded"
-                      />
-                    )}
+                {reward.lootedItems.map((item, index) => <div key={`${item.id}-${index}`} className="flex items-center gap-2 p-2 bg-background/50 rounded border">
+                    {item.image && <img src={item.image} alt={item.name} className="w-8 h-8 object-cover rounded" />}
                     <div className="flex-1 min-w-0">
                       <div className="text-xs font-medium truncate">
                         {item.name}
@@ -148,53 +117,28 @@ export const DungeonRewardModal: React.FC<DungeonRewardModalProps> = ({
                         {item.value} ELL
                       </div>
                     </div>
-                  </div>
-                ))}
+                  </div>)}
               </div>
-            </div>
-          )}
+            </div>}
 
-          {canContinue ? (
-            <div className="space-y-3">
-              <div className="p-3 bg-yellow-500/10 border border-yellow-500/30 rounded text-sm text-yellow-200">
+          {canContinue ? <div className="space-y-3">
+              <div className="p-3 border border-yellow-500/30 text-sm text-yellow-200 bg-red-900 rounded-sm">
                 ⚠️ При смерти команды или сдаче вся накопленная награда будет потеряна!
               </div>
               
               <div className="grid grid-cols-2 gap-3">
-                <Button 
-                  onClick={handleClaim}
-                  variant="default"
-                  size="lg"
-                  disabled={isSubmitting}
-                  className="w-full"
-                >
+                <Button onClick={handleClaim} variant="default" size="lg" disabled={isSubmitting} className="w-full">
                   Забрать и выйти
                 </Button>
                 
-                <Button 
-                  onClick={handleContinue}
-                  variant="outline"
-                  size="lg"
-                  disabled={isSubmitting}
-                  className="w-full border-primary/50 hover:bg-primary/20"
-                >
+                <Button onClick={handleContinue} variant="outline" size="lg" disabled={isSubmitting} className="w-full border-primary/50 hover:bg-primary/20">
                   Рискнуть дальше
                 </Button>
               </div>
-            </div>
-          ) : (
-            <Button 
-              onClick={handleClaim}
-              className="w-full"
-              size="lg"
-              disabled={isSubmitting}
-              aria-busy={isSubmitting}
-            >
+            </div> : <Button onClick={handleClaim} className="w-full" size="lg" disabled={isSubmitting} aria-busy={isSubmitting}>
               {isSubmitting ? 'Начисление...' : 'Забрать награду'}
-            </Button>
-          )}
+            </Button>}
         </div>
       </DialogContent>
-    </Dialog>
-  );
+    </Dialog>;
 };
