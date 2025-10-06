@@ -69,22 +69,21 @@ export const TeamBattleArena: React.FC<TeamBattleArenaProps> = ({
       setAttackingPair(pairId);
       setAttackedTarget(targetId);
 
-      // Выполняем атаку чуть позже, чтобы анимация успела стартовать
-      setTimeout(() => {
-        onAttack(pairId, targetId);
-      }, 150);
-
-      // Останавливаем анимацию и чистим эффекты
+      // Останавливаем вращение кубиков через 1200мс (показываем результат)
       setTimeout(() => {
         setIsDiceRolling(false);
+        
+        // Сразу после остановки кубиков выполняем атаку (наносим урон)
+        onAttack(pairId, targetId);
+      }, 1200);
+
+      // Убираем эффекты анимации через 3000мс (после показа урона)
+      setTimeout(() => {
         setSelectedPair(null);
         setSelectedTarget(null);
-
-        setTimeout(() => {
-          setAttackingPair(null);
-          setAttackedTarget(null);
-        }, 300);
-      }, 1200);
+        setAttackingPair(null);
+        setAttackedTarget(null);
+      }, 3000);
     }
   };
   const handleEnemyAttack = () => {
@@ -99,17 +98,19 @@ export const TeamBattleArena: React.FC<TeamBattleArenaProps> = ({
       setDiceKey(prev => prev + 1);
       console.log('🎲 Enemy dice: start rolling');
 
-      // Запускаем расчет бросков чуть позже, чтобы UI начал анимировать
-      setTimeout(() => {
-        onEnemyAttack();
-      }, 150);
-
-      // Останавливаем анимацию через 1.2с и убираем защитника
+      // Останавливаем вращение кубиков через 1200мс (показываем результат)
       setTimeout(() => {
         setIsDiceRolling(false);
-        setTimeout(() => setDefendingPair(null), 300);
         console.log('🎲 Enemy dice: stop rolling');
+        
+        // Сразу после остановки кубиков выполняем атаку (наносим урон)
+        onEnemyAttack();
       }, 1200);
+
+      // Убираем защитника через 3000мс (после показа урона)
+      setTimeout(() => {
+        setDefendingPair(null);
+      }, 3000);
     } else {
       onEnemyAttack();
     }
