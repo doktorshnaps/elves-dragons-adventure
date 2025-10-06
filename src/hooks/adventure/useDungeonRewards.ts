@@ -29,6 +29,8 @@ export const useDungeonRewards = () => {
   const { gameData, updateGameData } = useGameData();
   const { toast } = useToast();
   const isClaimingRef = useRef(false);
+  const lastProcessedLevelRef = useRef<number>(-1);
+  const isProcessingRef = useRef(false);
 
   const calculateReward = useCallback((monsters: MonsterKill[]): DungeonReward => {
     console.log('🎯 calculateReward called with monsters:', monsters);
@@ -93,12 +95,23 @@ export const useDungeonRewards = () => {
     isFullCompletion: boolean = false,
     isDefeat: boolean = false
   ) => {
+    // Защита от повторной обработки того же уровня
+    if (isProcessingRef.current || lastProcessedLevelRef.current === currentLevel) {
+      console.log(`⚠️ Пропуск дублирующего вызова для уровня ${currentLevel}`);
+      return;
+    }
+
+    isProcessingRef.current = true;
+    lastProcessedLevelRef.current = currentLevel;
+
     console.log(`💎 Обработка завершения уровня. Монстров убито: ${monsters.length}, уровень: ${currentLevel}, Поражение: ${isDefeat}`);
 
     // Если поражение - сбрасываем все накопленные награды
     if (isDefeat) {
       setAccumulatedReward(null);
       setPendingReward(null);
+      lastProcessedLevelRef.current = -1;
+      isProcessingRef.current = false;
       toast({
         title: "Поражение!",
         description: "Вся накопленная награда потеряна",
@@ -142,6 +155,7 @@ export const useDungeonRewards = () => {
 
     setAccumulatedReward(totalAccumulated);
     setPendingReward(totalAccumulated);
+    isProcessingRef.current = false;
   }, [calculateReward, toast, accumulatedReward]);
 
   const claimRewardAndExit = useCallback(async () => {
@@ -192,6 +206,7 @@ export const useDungeonRewards = () => {
   const continueWithRisk = useCallback(() => {
     // Закрываем модальное окно, но сохраняем накопленную награду
     setPendingReward(null);
+    isProcessingRef.current = false; // Разрешаем обработку следующего уровня
     toast({
       title: "Продолжаем!",
       description: "Будьте осторожны - при поражении вся награда будет потеряна",
@@ -202,6 +217,8 @@ export const useDungeonRewards = () => {
   const resetRewards = useCallback(() => {
     setAccumulatedReward(null);
     setPendingReward(null);
+    lastProcessedLevelRef.current = -1;
+    isProcessingRef.current = false;
   }, []);
 
   return {
