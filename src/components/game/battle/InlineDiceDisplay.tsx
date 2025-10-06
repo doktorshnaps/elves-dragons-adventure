@@ -74,11 +74,10 @@ export const InlineDiceDisplay = ({
 
   const isPlayerDice = label === 'Игрок';
 
-  // Урон и блок показываются у защищающегося
-  // Позиция надписи зависит от того, кто это:
-  // Игрок -> слева, Монстр -> справа
-  const notificationOnLeft = showDamage && isPlayerDice;
-  const notificationOnRight = showDamage && !isPlayerDice;
+  // Урон и блок показываются только у защищающегося (!isAttacker)
+  const isDefender = !isAttacker;
+  const notificationOnLeft = showDamage && isDefender && isPlayerDice;
+  const notificationOnRight = showDamage && isDefender && !isPlayerDice;
 
   return (
     <div className="relative flex items-center gap-2">
