@@ -74,10 +74,18 @@ export const InlineDiceDisplay = ({
 
   const isPlayerDice = label === 'Игрок';
 
+  // Урон и блок показываются только у защитника (не атакующего)
+  const shouldShowNotification = showDamage && !isAttacker;
+  
+  // Позиция надписи зависит от того, кто защищается:
+  // Игрок защищается -> слева, Монстр защищается -> справа
+  const notificationOnLeft = shouldShowNotification && isPlayerDice;
+  const notificationOnRight = shouldShowNotification && !isPlayerDice;
+
   return (
     <div className="relative flex items-center gap-2">
-      {/* Damage/Block notification - Left side for player */}
-      {showDamage && isPlayerDice && (
+      {/* Damage/Block notification - Left side (player defending) */}
+      {notificationOnLeft && (
         <motion.div
           initial={{ scale: 0, opacity: 0, x: 20 }}
           animate={{ scale: 1, opacity: 1, x: 0 }}
@@ -125,8 +133,8 @@ export const InlineDiceDisplay = ({
         </div>
       </motion.div>
 
-      {/* Damage/Block notification - Right side for monster */}
-      {showDamage && !isPlayerDice && (
+      {/* Damage/Block notification - Right side (monster defending) */}
+      {notificationOnRight && (
         <motion.div
           initial={{ scale: 0, opacity: 0, x: -20 }}
           animate={{ scale: 1, opacity: 1, x: 0 }}
