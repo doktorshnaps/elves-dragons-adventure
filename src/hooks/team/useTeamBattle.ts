@@ -49,7 +49,7 @@ export const useTeamBattle = (dungeonType: DungeonType, initialLevel: number = 1
   });
 
   const [attackOrder, setAttackOrder] = useState<string[]>([]);
-  const [lastRoll, setLastRoll] = useState<{ attackerRoll: number; defenderRoll: number; source: 'player' | 'enemy'; damage: number; isBlocked: boolean } | null>(null);
+  const [lastRoll, setLastRoll] = useState<{ attackerRoll: number; defenderRoll: number; source: 'player' | 'enemy'; damage: number; isBlocked: boolean; isCritical?: boolean } | null>(null);
 
   // Initialize battle with team pairs
   useEffect(() => {
@@ -219,7 +219,14 @@ export const useTeamBattle = (dungeonType: DungeonType, initialLevel: number = 1
     const damageResult = calculateD6Damage(attackingPair.power, target.armor || 0);
     const appliedDamage = damageResult.attackerRoll > damageResult.defenderRoll ? damageResult.damage : 0;
     const isBlocked = damageResult.isDefenderCrit || damageResult.attackerRoll <= damageResult.defenderRoll;
-    setLastRoll({ attackerRoll: damageResult.attackerRoll, defenderRoll: damageResult.defenderRoll, source: 'player', damage: appliedDamage, isBlocked });
+    setLastRoll({ 
+      attackerRoll: damageResult.attackerRoll, 
+      defenderRoll: damageResult.defenderRoll, 
+      source: 'player', 
+      damage: appliedDamage, 
+      isBlocked,
+      isCritical: damageResult.isAttackerCrit && appliedDamage > 0
+    });
     if (damageResult.damage > 0 && appliedDamage === 0) {
       console.warn("⚠️ Inconsistent damage prevented (player attack)", damageResult);
     }
@@ -298,7 +305,14 @@ export const useTeamBattle = (dungeonType: DungeonType, initialLevel: number = 1
     const damageResult = calculateD6Damage(currentEnemy.power, targetPair.defense);
     const appliedDamage = damageResult.attackerRoll > damageResult.defenderRoll ? damageResult.damage : 0;
     const isBlocked = damageResult.isDefenderCrit || damageResult.attackerRoll <= damageResult.defenderRoll;
-    setLastRoll({ attackerRoll: damageResult.attackerRoll, defenderRoll: damageResult.defenderRoll, source: 'enemy', damage: appliedDamage, isBlocked });
+    setLastRoll({ 
+      attackerRoll: damageResult.attackerRoll, 
+      defenderRoll: damageResult.defenderRoll, 
+      source: 'enemy', 
+      damage: appliedDamage, 
+      isBlocked,
+      isCritical: damageResult.isAttackerCrit && appliedDamage > 0
+    });
     // Если защитник выкинул критическую защиту (6), враг пропускает следующий ход
     if (damageResult.skipNextTurn) {
       setSkippedAttackerIds(prev => {

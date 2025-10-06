@@ -8,6 +8,7 @@ interface InlineDiceDisplayProps {
   label?: string;
   damage?: number;
   isBlocked?: boolean;
+  isCritical?: boolean;
 }
 
 export const InlineDiceDisplay = ({
@@ -16,7 +17,8 @@ export const InlineDiceDisplay = ({
   isAttacker,
   label,
   damage,
-  isBlocked
+  isBlocked,
+  isCritical
 }: InlineDiceDisplayProps) => {
   const [displayValue, setDisplayValue] = useState<number>(1);
   const [isResultVisible, setIsResultVisible] = useState<boolean>(false);
@@ -50,10 +52,10 @@ export const InlineDiceDisplay = ({
         damageTimeoutId = window.setTimeout(() => {
           setShowDamage(true);
           
-          // Скрываем урон/блок через 1500мс
+          // Скрываем урон/блок через 2000мс (больше времени для критического урона)
           setTimeout(() => {
             setShowDamage(false);
-          }, 1500);
+          }, isCritical ? 2000 : 1500);
         }, 200);
       }
       
@@ -68,7 +70,7 @@ export const InlineDiceDisplay = ({
       if (resultTimeoutId) clearTimeout(resultTimeoutId);
       if (damageTimeoutId) clearTimeout(damageTimeoutId);
     };
-  }, [isRolling, diceValue, damage, isBlocked]);
+  }, [isRolling, diceValue, damage, isBlocked, isCritical]);
 
   const isActive = isRolling || isResultVisible;
 
@@ -85,14 +87,26 @@ export const InlineDiceDisplay = ({
       {notificationOnLeft && (
         <motion.div
           initial={{ scale: 0, opacity: 0, x: 20 }}
-          animate={{ scale: 1, opacity: 1, x: 0 }}
+          animate={{ 
+            scale: isCritical ? [1, 1.1, 1] : 1, 
+            opacity: 1, 
+            x: 0 
+          }}
           exit={{ scale: 0, opacity: 0 }}
-          transition={{ duration: 0.3 }}
-          className="absolute -left-24 whitespace-nowrap"
+          transition={{ 
+            duration: isCritical ? 0.5 : 0.3,
+            repeat: isCritical ? 2 : 0
+          }}
+          className="absolute -left-32 whitespace-nowrap"
         >
           {isBlocked ? (
             <div className="bg-blue-500/90 border-2 border-blue-300 rounded-lg px-4 py-2 shadow-lg">
               <div className="text-2xl font-bold text-white text-center">БЛОК</div>
+            </div>
+          ) : isCritical ? (
+            <div className="bg-gradient-to-r from-yellow-500 to-orange-500 border-2 border-yellow-300 rounded-lg px-4 py-2 shadow-[0_0_20px_rgba(251,191,36,0.6)] animate-pulse">
+              <div className="text-xs font-bold text-yellow-100 text-center">CRITICAL</div>
+              <div className="text-3xl font-bold text-white text-center">-{damage}</div>
             </div>
           ) : (
             <div className="bg-red-500/90 border-2 border-red-300 rounded-lg px-4 py-2 shadow-lg">
@@ -134,14 +148,26 @@ export const InlineDiceDisplay = ({
       {notificationOnRight && (
         <motion.div
           initial={{ scale: 0, opacity: 0, x: -20 }}
-          animate={{ scale: 1, opacity: 1, x: 0 }}
+          animate={{ 
+            scale: isCritical ? [1, 1.1, 1] : 1, 
+            opacity: 1, 
+            x: 0 
+          }}
           exit={{ scale: 0, opacity: 0 }}
-          transition={{ duration: 0.3 }}
-          className="absolute -right-24 whitespace-nowrap"
+          transition={{ 
+            duration: isCritical ? 0.5 : 0.3,
+            repeat: isCritical ? 2 : 0
+          }}
+          className="absolute -right-32 whitespace-nowrap"
         >
           {isBlocked ? (
             <div className="bg-blue-500/90 border-2 border-blue-300 rounded-lg px-4 py-2 shadow-lg">
               <div className="text-2xl font-bold text-white text-center">БЛОК</div>
+            </div>
+          ) : isCritical ? (
+            <div className="bg-gradient-to-r from-yellow-500 to-orange-500 border-2 border-yellow-300 rounded-lg px-4 py-2 shadow-[0_0_20px_rgba(251,191,36,0.6)] animate-pulse">
+              <div className="text-xs font-bold text-yellow-100 text-center">CRITICAL</div>
+              <div className="text-3xl font-bold text-white text-center">-{damage}</div>
             </div>
           ) : (
             <div className="bg-red-500/90 border-2 border-red-300 rounded-lg px-4 py-2 shadow-lg">

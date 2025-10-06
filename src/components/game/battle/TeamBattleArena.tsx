@@ -23,7 +23,7 @@ interface TeamBattleArenaProps {
   onAbilityUse?: (pairId: string, abilityId: string, targetId: number | string) => void;
   onEnemyAttack: () => void;
   level: number;
-  lastRoll?: { attackerRoll: number; defenderRoll: number; source: 'player' | 'enemy'; damage: number; isBlocked: boolean } | null;
+  lastRoll?: { attackerRoll: number; defenderRoll: number; source: 'player' | 'enemy'; damage: number; isBlocked: boolean; isCritical?: boolean } | null;
 }
 export const TeamBattleArena: React.FC<TeamBattleArenaProps> = ({
   playerPairs,
@@ -406,6 +406,7 @@ export const TeamBattleArena: React.FC<TeamBattleArenaProps> = ({
                         label="Игрок"
                         damage={lastRoll && lastRoll.source === 'enemy' ? lastRoll.damage : undefined}
                         isBlocked={lastRoll && lastRoll.source === 'enemy' ? lastRoll.isBlocked : undefined}
+                        isCritical={lastRoll && lastRoll.source === 'enemy' ? lastRoll.isCritical : undefined}
                       />
                     </div>
 
@@ -433,6 +434,7 @@ export const TeamBattleArena: React.FC<TeamBattleArenaProps> = ({
                         label="Монстр"
                         damage={lastRoll && lastRoll.source === 'player' ? lastRoll.damage : undefined}
                         isBlocked={lastRoll && lastRoll.source === 'player' ? lastRoll.isBlocked : undefined}
+                        isCritical={lastRoll && lastRoll.source === 'player' ? lastRoll.isCritical : undefined}
                       />
                     </div>
                   </div>
