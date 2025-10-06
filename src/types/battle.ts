@@ -35,6 +35,7 @@ export interface Opponent {
   specialAbilities?: SpecialAbility[];
   isIllusion?: boolean;
   originalId?: number;
+  isDead?: boolean;
 }
 
 export interface BattleState {

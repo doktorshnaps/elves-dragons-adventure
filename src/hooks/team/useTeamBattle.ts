@@ -238,9 +238,9 @@ export const useTeamBattle = (dungeonType: DungeonType, initialLevel: number = 1
         ...prev,
         opponents: prev.opponents.map(opp => 
           opp.id === targetId 
-            ? { ...opp, health: newTargetHealth }
+            ? { ...opp, health: newTargetHealth, isDead: newTargetHealth <= 0 }
             : opp
-        ).filter(opp => opp.health > 0)
+        )
       }));
     });
 
@@ -269,12 +269,12 @@ export const useTeamBattle = (dungeonType: DungeonType, initialLevel: number = 1
     if (battleState.opponents.filter(o => o.health > 0).length === 1 && newTargetHealth === 0) {
       setTimeout(() => {
         handleLevelComplete();
-      }, 1200);
+      }, 3000);
     } else {
       // Switch to next attacker or enemy turn
       setTimeout(() => {
         switchTurn();
-      }, 1200);
+      }, 3000);
     }
   };
 
@@ -338,11 +338,11 @@ export const useTeamBattle = (dungeonType: DungeonType, initialLevel: number = 1
     if (alivePairs.length === 1 && updatedPair.health === 0) {
       setTimeout(() => {
         handleGameOver();
-      }, 1200);
+      }, 3000);
     } else {
       setTimeout(() => {
         switchTurn();
-      }, 1200);
+      }, 3000);
     }
   };
 

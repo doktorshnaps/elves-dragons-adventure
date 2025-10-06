@@ -475,7 +475,7 @@ export const TeamBattleArena: React.FC<TeamBattleArenaProps> = ({
             </CardHeader>
             <CardContent className="h-full overflow-auto">
               <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-2">
-                {opponents.map((opponent, index) => <div key={opponent.id} className={`relative rounded-lg border-2 transition-all cursor-pointer overflow-hidden h-28 ${opponent.health <= 0 ? 'opacity-50 border-muted' : attackedTarget === opponent.id ? 'border-red-500 animate-pulse scale-105 shadow-lg shadow-red-500/50' : selectedTarget === opponent.id ? 'border-destructive bg-destructive/10' : selectedAbility?.targetType === 'enemy' ? 'border-red-400 hover:border-red-500/70' : 'border-border hover:border-destructive/50'}`} onClick={() => {
+                {opponents.map((opponent, index) => <div key={opponent.id} className={`relative rounded-lg border-2 transition-all overflow-hidden h-28 ${opponent.health <= 0 ? 'border-muted' : attackedTarget === opponent.id ? 'border-red-500 animate-pulse scale-105 shadow-lg shadow-red-500/50 cursor-pointer' : selectedTarget === opponent.id ? 'border-destructive bg-destructive/10 cursor-pointer' : selectedAbility?.targetType === 'enemy' ? 'border-red-400 hover:border-red-500/70 cursor-pointer' : 'border-border hover:border-destructive/50 cursor-pointer'}`} onClick={() => {
                 if (opponent.health > 0 && isPlayerTurn) {
                   if (selectedAbility && selectedAbility.targetType === 'enemy') {
                     // Если повторно нажимаем на ту же цель, отменяем выбор
@@ -502,10 +502,19 @@ export const TeamBattleArena: React.FC<TeamBattleArenaProps> = ({
                     </div>
 
                     {/* Background Image */}
-                    {opponent.image && <div className="absolute inset-0 bg-cover bg-center bg-no-repeat image-rendering-crisp-edges" style={{
+                    {opponent.image && <div className={`absolute inset-0 bg-cover bg-center bg-no-repeat image-rendering-crisp-edges transition-all ${opponent.health <= 0 ? 'grayscale' : ''}`} style={{
                   backgroundImage: `url(${opponent.image})`,
                   imageRendering: 'crisp-edges'
                 }} />}
+                    
+                    {/* Killed overlay */}
+                    {opponent.health <= 0 && (
+                      <div className="absolute inset-0 bg-black/60 flex items-center justify-center z-30">
+                        <div className="text-4xl font-bold text-red-500 drop-shadow-[0_0_10px_rgba(239,68,68,0.8)]">
+                          УБИТ
+                        </div>
+                      </div>
+                    )}
                     
                     {/* Overlay for stats */}
                     <div className="relative z-10 p-2 bg-black/20 h-full flex flex-col justify-between">
