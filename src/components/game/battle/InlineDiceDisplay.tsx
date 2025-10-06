@@ -72,10 +72,12 @@ export const InlineDiceDisplay = ({
 
   const isActive = isRolling || isResultVisible;
 
+  const isPlayerDice = label === 'Игрок';
+
   return (
     <div className="relative flex items-center gap-2">
       {/* Damage/Block notification - Left side for player */}
-      {showDamage && isAttacker && (
+      {showDamage && isPlayerDice && (
         <motion.div
           initial={{ scale: 0, opacity: 0, x: 20 }}
           animate={{ scale: 1, opacity: 1, x: 0 }}
@@ -124,7 +126,7 @@ export const InlineDiceDisplay = ({
       </motion.div>
 
       {/* Damage/Block notification - Right side for monster */}
-      {showDamage && !isAttacker && (
+      {showDamage && !isPlayerDice && (
         <motion.div
           initial={{ scale: 0, opacity: 0, x: -20 }}
           animate={{ scale: 1, opacity: 1, x: 0 }}
