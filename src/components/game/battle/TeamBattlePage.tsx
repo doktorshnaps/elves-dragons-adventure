@@ -21,6 +21,7 @@ export const TeamBattlePage: React.FC<TeamBattlePageProps> = ({
   const [monstersKilled, setMonstersKilled] = useState<Array<{level: number, dungeonType: string, name?: string}>>([]);
   const prevAliveOpponentsRef = React.useRef<number>(0);
   const prevOpponentsRef = React.useRef<Array<{id: number, name: string, health: number}>>([]);
+  const processedLevelRef = React.useRef<number | null>(null);
   
   // Sync health from database on component mount
   useCardHealthSync();
@@ -147,24 +148,30 @@ export const TeamBattlePage: React.FC<TeamBattlePageProps> = ({
   
   // Обработка завершения боя
   useEffect(() => {
-    if (isBattleOver && battleStarted) {
-      const isVictory = alivePairs.length > 0;
-      const isFullCompletion = isVictory && battleState.level >= 10;
-      
-      console.log(`🏁 Бой завершен. Победа: ${isVictory}, Уровень: ${battleState.level}, Убито монстров: ${monstersKilled.length}`);
-      
-      // При поражении сбрасываем активное подземелье и награды
-      if (!isVictory) {
-        localStorage.removeItem('teamBattleState');
-        localStorage.removeItem('activeBattleInProgress');
-        localStorage.removeItem('battleState'); // legacy
-        processDungeonCompletion(monstersKilled, battleState.level, isFullCompletion, true); // isDefeat = true
-      } else {
-        // При победе обрабатываем награды
-        processDungeonCompletion(monstersKilled, battleState.level, isFullCompletion, false);
-      }
+    if (!battleStarted) return;
+    if (!isBattleOver) return;
+
+    // Не обрабатываем, если никого не убили (предотвращает повторное модальное окно при инициализации нового уровня)
+    if (monstersKilled.length === 0) return;
+
+    // Предотвращаем повторную обработку одного и того же уровня
+    if (processedLevelRef.current === battleState.level) return;
+    processedLevelRef.current = battleState.level;
+
+    const isVictory = alivePairs.length > 0;
+    const isFullCompletion = isVictory && battleState.level >= 10;
+    
+    console.log(`🏁 Бой завершен. Победа: ${isVictory}, Уровень: ${battleState.level}, Убито монстров: ${monstersKilled.length}`);
+    
+    if (!isVictory) {
+      localStorage.removeItem('teamBattleState');
+      localStorage.removeItem('activeBattleInProgress');
+      localStorage.removeItem('battleState'); // legacy
+      processDungeonCompletion(monstersKilled, battleState.level, isFullCompletion, true); // isDefeat = true
+    } else {
+      processDungeonCompletion(monstersKilled, battleState.level, isFullCompletion, false);
     }
-  }, [isBattleOver, battleStarted, monstersKilled, alivePairs.length, battleState.level, processDungeonCompletion]);
+  }, [isBattleOver, battleStarted, monstersKilled.length, alivePairs.length, battleState.level, processDungeonCompletion]);
   
   if (isBattleOver && battleStarted) {
     // Показываем только модальное окно с наградой, убираем промежуточный экран победы/поражения
@@ -199,14 +206,5 @@ export const TeamBattlePage: React.FC<TeamBattlePageProps> = ({
       
       <TeamBattleArena playerPairs={battleState.playerPairs} opponents={battleState.opponents} attackOrder={attackOrder} isPlayerTurn={isPlayerTurn} onAttack={executePlayerAttack} onAbilityUse={executeAbilityUse} onEnemyAttack={executeEnemyAttack} level={battleState.level} lastRoll={lastRoll} />
       
-      {pendingReward && (
-        <DungeonRewardModal
-          isOpen={!!pendingReward}
-          onClose={handleClaimAndExit}
-          onContinue={handleContinue}
-          reward={pendingReward}
-          canContinue={battleState.level < 10}
-        />
-      )}
     </>;
 };
