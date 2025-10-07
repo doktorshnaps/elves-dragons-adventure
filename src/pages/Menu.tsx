@@ -50,7 +50,7 @@ export const Menu = () => {
   };
 
   return <div className="app-shell min-h-screen p-4 bg-cover bg-center bg-no-repeat" style={{
-    backgroundImage: 'url("/lovable-uploads/5c84c1ed-e8af-4eb6-8495-c82bc7d6cd65.png")',
+    backgroundImage: 'url("/menu-background.jpg")',
     backgroundSize: 'cover',
     backgroundPosition: 'center',
     backgroundRepeat: 'no-repeat'
