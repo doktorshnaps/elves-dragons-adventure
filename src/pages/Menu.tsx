@@ -72,86 +72,95 @@ export const Menu = () => {
         </div>
       </div>
       
-      <div className="relative z-10 max-w-4xl mx-auto grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 mt-8 my-[37px]">
+      <div className="relative z-10 max-w-4xl mx-auto grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6 mt-8 my-[37px]">
         <Button 
           variant="outline" 
-          className="h-32 bg-transparent border-2 border-black rounded-2xl text-black hover:bg-gray-50/80 transition-all flex flex-col items-center justify-center gap-3 shadow-lg backdrop-blur-sm"
+          className="h-36 bg-transparent border-2 border-black rounded-3xl text-black hover:bg-gray-50/80 transition-all flex flex-col items-center justify-center gap-3 backdrop-blur-sm"
+          style={{ boxShadow: '-33px 15px 10px rgba(0, 0, 0, 0.6)' }}
           onClick={() => navigate('/dungeons')}
         >
-          <Swords className="w-10 h-10" />
-          <span className="text-sm font-medium">{t(language, 'menu.dungeon')}</span>
+          <Swords className="w-12 h-12" />
+          <span className="text-base font-semibold leading-tight text-center">ПОДЗЕМЕЛЬЕ</span>
         </Button>
 
         <Button 
           variant="outline" 
-          className="h-32 bg-transparent border-2 border-black rounded-2xl text-black hover:bg-gray-50/80 transition-all flex flex-col items-center justify-center gap-3 shadow-lg backdrop-blur-sm"
+          className="h-36 bg-transparent border-2 border-black rounded-3xl text-black hover:bg-gray-50/80 transition-all flex flex-col items-center justify-center gap-3 backdrop-blur-sm"
+          style={{ boxShadow: '-33px 15px 10px rgba(0, 0, 0, 0.6)' }}
           onClick={() => navigate('/shop')}
         >
-          <ShoppingCart className="w-10 h-10" />
-          <span className="text-sm font-medium">{t(language, 'menu.shop')}</span>
+          <ShoppingCart className="w-12 h-12" />
+          <span className="text-base font-semibold leading-tight text-center">МАГИЧЕСКИЙ<br/>МАГАЗИН</span>
         </Button>
 
         <Button 
           variant="outline" 
-          className="h-32 bg-transparent border-2 border-black rounded-2xl text-black hover:bg-gray-50/80 transition-all flex flex-col items-center justify-center gap-3 shadow-lg backdrop-blur-sm"
+          className="h-36 bg-transparent border-2 border-black rounded-3xl text-black hover:bg-gray-50/80 transition-all flex flex-col items-center justify-center gap-3 backdrop-blur-sm"
+          style={{ boxShadow: '-33px 15px 10px rgba(0, 0, 0, 0.6)' }}
           onClick={() => navigate('/marketplace')}
         >
-          <Store className="w-10 h-10" />
-          <span className="text-sm font-medium">{t(language, 'menu.marketplace')}</span>
+          <Store className="w-12 h-12" />
+          <span className="text-base font-semibold leading-tight text-center">ТОРГОВАЯ<br/>ПЛОЩАДКА</span>
         </Button>
 
         <Button 
           variant="outline" 
-          className="h-32 bg-transparent border-2 border-black rounded-2xl text-black hover:bg-gray-50/80 transition-all flex flex-col items-center justify-center gap-3 shadow-lg backdrop-blur-sm"
+          className="h-36 bg-transparent border-2 border-black rounded-3xl text-black hover:bg-gray-50/80 transition-all flex flex-col items-center justify-center gap-3 backdrop-blur-sm"
+          style={{ boxShadow: '-33px 15px 10px rgba(0, 0, 0, 0.6)' }}
           onClick={() => navigate('/grimoire')}
         >
-          <BookOpen className="w-10 h-10" />
-          <span className="text-sm font-medium">{t(language, 'menu.grimoire')}</span>
+          <BookOpen className="w-12 h-12" />
+          <span className="text-base font-semibold leading-tight text-center">ГРИМУАР</span>
         </Button>
 
         <Button 
           variant="outline" 
-          className="h-32 bg-transparent border-2 border-black rounded-2xl text-black hover:bg-gray-50/80 transition-all flex flex-col items-center justify-center gap-3 shadow-lg backdrop-blur-sm"
+          className="h-36 bg-transparent border-2 border-black rounded-3xl text-black hover:bg-gray-50/80 transition-all flex flex-col items-center justify-center gap-3 backdrop-blur-sm"
+          style={{ boxShadow: '-33px 15px 10px rgba(0, 0, 0, 0.6)' }}
           onClick={() => navigate('/equipment')}
         >
-          <Shield className="w-10 h-10" />
-          <span className="text-sm font-medium">{t(language, 'menu.inventory')}</span>
+          <Shield className="w-12 h-12" />
+          <span className="text-base font-semibold leading-tight text-center">ИНВЕНТАРЬ</span>
         </Button>
 
         <Button 
           variant="outline" 
-          className="h-32 bg-transparent border-2 border-black rounded-2xl text-black hover:bg-gray-50/80 transition-all flex flex-col items-center justify-center gap-3 shadow-lg backdrop-blur-sm"
+          className="h-36 bg-transparent border-2 border-black rounded-3xl text-black hover:bg-gray-50/80 transition-all flex flex-col items-center justify-center gap-3 backdrop-blur-sm"
+          style={{ boxShadow: '-33px 15px 10px rgba(0, 0, 0, 0.6)' }}
           onClick={() => navigate('/team')}
         >
-          <Users className="w-10 h-10" />
-          <span className="text-sm font-medium">{t(language, 'menu.team')}</span>
+          <Users className="w-12 h-12" />
+          <span className="text-base font-semibold leading-tight text-center">КОМАНДА</span>
         </Button>
 
         <Button 
           variant="outline" 
-          className="h-32 bg-transparent border-2 border-black rounded-2xl text-black hover:bg-gray-50/80 transition-all flex flex-col items-center justify-center gap-3 shadow-lg backdrop-blur-sm"
+          className="h-36 bg-transparent border-2 border-black rounded-3xl text-black hover:bg-gray-50/80 transition-all flex flex-col items-center justify-center gap-3 backdrop-blur-sm"
+          style={{ boxShadow: '-33px 15px 10px rgba(0, 0, 0, 0.6)' }}
           onClick={() => navigate('/quest')}
         >
-          <DollarSign className="w-10 h-10" />
-          <span className="text-sm font-medium">{t(language, 'menu.quest')}</span>
+          <DollarSign className="w-12 h-12" />
+          <span className="text-base font-semibold leading-tight text-center">БАБЛО</span>
         </Button>
 
         <Button 
           variant="outline" 
-          className="h-32 bg-transparent border-2 border-black rounded-2xl text-black hover:bg-gray-50/80 transition-all flex flex-col items-center justify-center gap-3 shadow-lg backdrop-blur-sm"
+          className="h-36 bg-transparent border-2 border-black rounded-3xl text-black hover:bg-gray-50/80 transition-all flex flex-col items-center justify-center gap-3 backdrop-blur-sm"
+          style={{ boxShadow: '-33px 15px 10px rgba(0, 0, 0, 0.6)' }}
           onClick={() => navigate('/shelter')}
         >
-          <Home className="w-10 h-10" />
-          <span className="text-sm font-medium">{t(language, 'menu.shelter')}</span>
+          <Home className="w-12 h-12" />
+          <span className="text-base font-semibold leading-tight text-center">ЛАГЕРЬ</span>
         </Button>
 
         <Button 
           variant="outline" 
-          className="h-32 bg-transparent border-2 border-red-600 rounded-2xl text-red-600 hover:bg-red-50/80 transition-all flex flex-col items-center justify-center gap-3 shadow-lg backdrop-blur-sm"
+          className="h-36 bg-transparent border-2 border-black rounded-3xl text-black hover:bg-gray-50/80 transition-all flex flex-col items-center justify-center gap-3 backdrop-blur-sm"
+          style={{ boxShadow: '-33px 15px 10px rgba(0, 0, 0, 0.6)' }}
           onClick={handleDisconnectWallet}
         >
-          <LogOut className="w-10 h-10" />
-          <span className="text-sm font-medium">{t(language, 'menu.disconnectWallet')}</span>
+          <LogOut className="w-12 h-12" />
+          <span className="text-base font-semibold leading-tight text-center">ОТКЛЮЧИТЬ<br/>КОШЕЛЕК</span>
         </Button>
       </div>
 
