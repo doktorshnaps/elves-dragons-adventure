@@ -3,6 +3,7 @@ import { ErrorBoundary } from '@/components/common/ErrorBoundary';
 import { Toaster } from '@/components/ui/toaster';
 import { useGameSync } from '@/hooks/useGameSync';
 import { LoadingSpinner } from '@/components/common/LoadingSpinner';
+import { BackgroundMusic } from '@/components/BackgroundMusic';
 
 interface GameLayoutProps {
   children: React.ReactNode;
@@ -27,6 +28,7 @@ export const GameLayout = ({
 
   return (
     <ErrorBoundary>
+      <BackgroundMusic />
       <div 
         className="min-h-screen bg-game-background"
         style={backgroundImage ? {

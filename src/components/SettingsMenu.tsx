@@ -1,7 +1,8 @@
 import { Button } from "@/components/ui/button";
-import { Globe, Sun, Menu } from "lucide-react";
+import { Globe, Sun, Menu, Volume2, VolumeX } from "lucide-react";
 import { useLanguage } from "@/hooks/useLanguage";
 import { useBrightness } from "@/hooks/useBrightness";
+import { useMusic } from "@/hooks/useMusic";
 import { Slider } from "@/components/ui/slider";
 import {
   DropdownMenu,
@@ -15,6 +16,7 @@ import {
 export const SettingsMenu = () => {
   const { language, toggleLanguage } = useLanguage();
   const { brightness, setBrightness, backgroundBrightness, setBackgroundBrightness } = useBrightness();
+  const { volume, setVolume, isPlaying, setIsPlaying } = useMusic();
 
   return (
     <DropdownMenu>
@@ -69,7 +71,7 @@ export const SettingsMenu = () => {
         </div>
 
         <div 
-          className="bg-black/30 border-2 border-white rounded-2xl p-4"
+          className="bg-black/30 border-2 border-white rounded-2xl p-4 mb-3"
           style={{ boxShadow: '-10px 10px 8px rgba(0, 0, 0, 0.4)' }}
         >
           <div className="flex items-center justify-center mb-3">
@@ -83,6 +85,44 @@ export const SettingsMenu = () => {
             onValueChange={(value) => setBackgroundBrightness(value[0])}
             min={50}
             max={150}
+            step={5}
+            className="cursor-pointer"
+          />
+        </div>
+
+        <button
+          onClick={() => setIsPlaying(!isPlaying)}
+          className="w-full bg-black/30 border-2 border-white rounded-2xl p-3 mb-3 hover:bg-black/40 transition-all flex items-center justify-center gap-2"
+          style={{ boxShadow: '-10px 10px 8px rgba(0, 0, 0, 0.4)' }}
+        >
+          {isPlaying ? (
+            <Volume2 className="w-5 h-5 text-white" />
+          ) : (
+            <VolumeX className="w-5 h-5 text-white" />
+          )}
+          <span className="text-white font-semibold">
+            {language === 'ru' 
+              ? (isPlaying ? 'Музыка вкл' : 'Музыка выкл')
+              : (isPlaying ? 'Music On' : 'Music Off')
+            }
+          </span>
+        </button>
+
+        <div 
+          className="bg-black/30 border-2 border-white rounded-2xl p-4"
+          style={{ boxShadow: '-10px 10px 8px rgba(0, 0, 0, 0.4)' }}
+        >
+          <div className="flex items-center justify-center mb-3">
+            <Volume2 className="w-5 h-5 mr-2 text-white" />
+            <span className="text-white font-semibold">
+              {language === 'ru' ? 'Громкость музыки' : 'Music Volume'}: {volume}%
+            </span>
+          </div>
+          <Slider
+            value={[volume]}
+            onValueChange={(value) => setVolume(value[0])}
+            min={0}
+            max={100}
             step={5}
             className="cursor-pointer"
           />
