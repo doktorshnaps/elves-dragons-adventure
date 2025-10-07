@@ -50,7 +50,7 @@ export const Menu = () => {
     navigate('/auth');
   };
 
-  return <div className="app-shell min-h-screen p-4 bg-center bg-no-repeat relative">
+  return <div className="app-shell min-h-screen p-4 bg-center bg-no-repeat relative" style={{ filter: `brightness(${brightness}%)` }}>
       <div 
         className="absolute inset-0 bg-center bg-no-repeat"
         style={{
@@ -62,7 +62,7 @@ export const Menu = () => {
         }}
       />
       <SettingsMenu />
-      <div className="pointer-events-none absolute inset-0 bg-black/60 mx-0 my-0 py-0 px-0" />
+      <div className="pointer-events-none absolute inset-0 bg-black/30 mx-0 my-0 py-0 px-0" />
       
       {/* Balance and Wallet Display */}
       <div className="relative z-10 max-w-4xl mx-auto flex justify-center items-center gap-4 mb-4">
