@@ -21,40 +21,40 @@ export const SettingsMenu = () => {
       <DropdownMenuTrigger asChild>
         <Button
           variant="outline"
-          className="fixed top-4 right-4 z-50 bg-transparent border-2 border-black rounded-3xl hover:bg-gray-50/80 backdrop-blur-sm p-3"
+          className="fixed top-4 right-4 z-50 bg-black/30 border-2 border-white rounded-3xl hover:bg-black/40 backdrop-blur-sm p-3"
           style={{ boxShadow: '-33px 15px 10px rgba(0, 0, 0, 0.6)' }}
         >
-          <Menu className="w-5 h-5 text-black" />
+          <Menu className="w-5 h-5 text-white" />
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent 
         align="end" 
-        className="w-64 bg-transparent backdrop-blur-sm border-2 border-black rounded-3xl z-[100] p-4"
+        className="w-64 bg-black/40 backdrop-blur-sm border-2 border-white rounded-3xl z-[100] p-4"
         style={{ boxShadow: '-15px 15px 10px rgba(0, 0, 0, 0.6)' }}
       >
-        <DropdownMenuLabel className="text-black font-bold text-center mb-2">
+        <DropdownMenuLabel className="text-white font-bold text-center mb-2">
           {language === 'ru' ? 'Настройки' : 'Settings'}
         </DropdownMenuLabel>
-        <DropdownMenuSeparator className="bg-black/30 mb-3" />
+        <DropdownMenuSeparator className="bg-white/30 mb-3" />
         
         <button
           onClick={toggleLanguage}
-          className="w-full bg-transparent border-2 border-black rounded-2xl p-3 mb-3 hover:bg-gray-50/80 transition-all flex items-center justify-center gap-2"
+          className="w-full bg-black/30 border-2 border-white rounded-2xl p-3 mb-3 hover:bg-black/40 transition-all flex items-center justify-center gap-2"
           style={{ boxShadow: '-10px 10px 8px rgba(0, 0, 0, 0.4)' }}
         >
-          <Globe className="w-5 h-5 text-black" />
-          <span className="text-black font-semibold">
+          <Globe className="w-5 h-5 text-white" />
+          <span className="text-white font-semibold">
             {language === 'ru' ? 'Русский' : 'English'}
           </span>
         </button>
 
         <div 
-          className="bg-transparent border-2 border-black rounded-2xl p-4"
+          className="bg-black/30 border-2 border-white rounded-2xl p-4"
           style={{ boxShadow: '-10px 10px 8px rgba(0, 0, 0, 0.4)' }}
         >
           <div className="flex items-center justify-center mb-3">
-            <Sun className="w-5 h-5 mr-2 text-black" />
-            <span className="text-black font-semibold">
+            <Sun className="w-5 h-5 mr-2 text-white" />
+            <span className="text-white font-semibold">
               {language === 'ru' ? 'Яркость' : 'Brightness'}: {brightness}%
             </span>
           </div>
