@@ -8,7 +8,8 @@ import { useAdminCheck } from "@/hooks/useAdminCheck";
 
 import { useLanguage } from "@/hooks/useLanguage";
 import { t } from "@/utils/translations";
-import { LanguageToggle } from "@/components/LanguageToggle";
+import { SettingsMenu } from "@/components/SettingsMenu";
+import { useBrightness } from "@/hooks/useBrightness";
 import { useState, useEffect } from "react";
 
 // Import icons
@@ -27,6 +28,7 @@ export const Menu = () => {
   const { gameData, loadGameData } = useGameData();
   
   const { language } = useLanguage();
+  const { brightness } = useBrightness();
   const {
     isConnected,
     accountId,
@@ -52,9 +54,10 @@ export const Menu = () => {
     backgroundImage: 'url("/menu-background.jpg")',
     backgroundSize: '100% 100%',
     backgroundPosition: 'center',
-    backgroundRepeat: 'no-repeat'
+    backgroundRepeat: 'no-repeat',
+    filter: `brightness(${brightness}%)`
   }}>
-      <LanguageToggle />
+      <SettingsMenu />
       <div className="pointer-events-none absolute inset-0 bg-black/30 mx-0 my-0 py-0 px-0" />
       
       {/* Balance and Wallet Display */}

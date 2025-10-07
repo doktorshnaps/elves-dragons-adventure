@@ -10,6 +10,7 @@ import { ProtectedRoute } from './components/ProtectedRoute';
 import { useAccountSync } from './hooks/useAccountSync';
 import { useRoutePreloader } from './hooks/useRoutePreloader';
 import { LanguageProvider } from './contexts/LanguageContext';
+import { BrightnessProvider } from './contexts/BrightnessContext';
 import { QueryProvider } from './providers/QueryProvider';
 import { useGameSync } from './hooks/useGameSync';
 import { preloadCriticalLibs } from './utils/bundleOptimizations';
@@ -60,8 +61,9 @@ function App() {
   return (
     <ErrorBoundary>
       <QueryProvider>
-        <LanguageProvider>
-          <Routes>
+        <BrightnessProvider>
+          <LanguageProvider>
+            <Routes>
           <Route path="/" element={<Index />} />
           <Route path="/auth" element={<Auth />} />
           <Route path="/menu" element={<ProtectedRoute><Menu /></ProtectedRoute>} />
@@ -86,9 +88,10 @@ function App() {
 <Route path="/dungeons/dark-mage" element={<ProtectedRoute><DarkMageTowerWithLazyLoading /></ProtectedRoute>} />
 <Route path="/dungeons/bone-dungeon" element={<ProtectedRoute><BoneDemonDungeonWithLazyLoading /></ProtectedRoute>} />
 <Route path="/dungeons/sea-serpent" element={<ProtectedRoute><SeaSerpentLairWithLazyLoading /></ProtectedRoute>} />
-          </Routes>
-          <Toaster />
-        </LanguageProvider>
+            </Routes>
+            <Toaster />
+          </LanguageProvider>
+        </BrightnessProvider>
       </QueryProvider>
     </ErrorBoundary>
   );
