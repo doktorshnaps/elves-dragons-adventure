@@ -61,10 +61,6 @@ export const Menu = () => {
           filter: `brightness(${backgroundBrightness}%)`
         }}
       />
-      <div 
-        className="relative z-0"
-        style={{ filter: `brightness(${brightness}%)` }}
-      >
       <SettingsMenu />
       <div className="pointer-events-none absolute inset-0 bg-black/60 mx-0 my-0 py-0 px-0" />
       
@@ -200,6 +196,5 @@ export const Menu = () => {
         </div>
       )}
       
-      </div>
     </div>;
 };
