@@ -58,7 +58,7 @@ export const Menu = () => {
     filter: `brightness(${brightness}%)`
   }}>
       <SettingsMenu />
-      <div className="pointer-events-none absolute inset-0 bg-black/30 mx-0 my-0 py-0 px-0" />
+      <div className="pointer-events-none absolute inset-0 bg-black/60 mx-0 my-0 py-0 px-0" />
       
       {/* Balance and Wallet Display */}
       <div className="relative z-10 max-w-4xl mx-auto flex justify-center items-center gap-4 mb-4">
@@ -88,7 +88,7 @@ export const Menu = () => {
       <div className="relative z-10 max-w-4xl mx-auto grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6 mt-8 my-[37px]">
         <Button 
           variant="outline" 
-          className="h-36 bg-transparent border-2 border-black rounded-3xl text-black hover:bg-gray-50/80 transition-all flex flex-col items-center justify-center gap-3 backdrop-blur-sm"
+          className="h-36 bg-black/50 border-2 border-white rounded-3xl text-white hover:bg-black/70 transition-all flex flex-col items-center justify-center gap-3 backdrop-blur-sm"
           style={{ boxShadow: '-33px 15px 10px rgba(0, 0, 0, 0.6)' }}
           onClick={() => navigate('/dungeons')}
         >
@@ -98,7 +98,7 @@ export const Menu = () => {
 
         <Button 
           variant="outline" 
-          className="h-36 bg-transparent border-2 border-black rounded-3xl text-black hover:bg-gray-50/80 transition-all flex flex-col items-center justify-center gap-3 backdrop-blur-sm"
+          className="h-36 bg-black/50 border-2 border-white rounded-3xl text-white hover:bg-black/70 transition-all flex flex-col items-center justify-center gap-3 backdrop-blur-sm"
           style={{ boxShadow: '-33px 15px 10px rgba(0, 0, 0, 0.6)' }}
           onClick={() => navigate('/shop')}
         >
@@ -108,7 +108,7 @@ export const Menu = () => {
 
         <Button 
           variant="outline" 
-          className="h-36 bg-transparent border-2 border-black rounded-3xl text-black hover:bg-gray-50/80 transition-all flex flex-col items-center justify-center gap-3 backdrop-blur-sm"
+          className="h-36 bg-black/50 border-2 border-white rounded-3xl text-white hover:bg-black/70 transition-all flex flex-col items-center justify-center gap-3 backdrop-blur-sm"
           style={{ boxShadow: '-33px 15px 10px rgba(0, 0, 0, 0.6)' }}
           onClick={() => navigate('/marketplace')}
         >
@@ -118,7 +118,7 @@ export const Menu = () => {
 
         <Button 
           variant="outline" 
-          className="h-36 bg-transparent border-2 border-black rounded-3xl text-black hover:bg-gray-50/80 transition-all flex flex-col items-center justify-center gap-3 backdrop-blur-sm"
+          className="h-36 bg-black/50 border-2 border-white rounded-3xl text-white hover:bg-black/70 transition-all flex flex-col items-center justify-center gap-3 backdrop-blur-sm"
           style={{ boxShadow: '-33px 15px 10px rgba(0, 0, 0, 0.6)' }}
           onClick={() => navigate('/grimoire')}
         >
@@ -128,7 +128,7 @@ export const Menu = () => {
 
         <Button 
           variant="outline" 
-          className="h-36 bg-transparent border-2 border-black rounded-3xl text-black hover:bg-gray-50/80 transition-all flex flex-col items-center justify-center gap-3 backdrop-blur-sm"
+          className="h-36 bg-black/50 border-2 border-white rounded-3xl text-white hover:bg-black/70 transition-all flex flex-col items-center justify-center gap-3 backdrop-blur-sm"
           style={{ boxShadow: '-33px 15px 10px rgba(0, 0, 0, 0.6)' }}
           onClick={() => navigate('/equipment')}
         >
@@ -138,7 +138,7 @@ export const Menu = () => {
 
         <Button 
           variant="outline" 
-          className="h-36 bg-transparent border-2 border-black rounded-3xl text-black hover:bg-gray-50/80 transition-all flex flex-col items-center justify-center gap-3 backdrop-blur-sm"
+          className="h-36 bg-black/50 border-2 border-white rounded-3xl text-white hover:bg-black/70 transition-all flex flex-col items-center justify-center gap-3 backdrop-blur-sm"
           style={{ boxShadow: '-33px 15px 10px rgba(0, 0, 0, 0.6)' }}
           onClick={() => navigate('/team')}
         >
@@ -148,7 +148,7 @@ export const Menu = () => {
 
         <Button 
           variant="outline" 
-          className="h-36 bg-transparent border-2 border-black rounded-3xl text-black hover:bg-gray-50/80 transition-all flex flex-col items-center justify-center gap-3 backdrop-blur-sm"
+          className="h-36 bg-black/50 border-2 border-white rounded-3xl text-white hover:bg-black/70 transition-all flex flex-col items-center justify-center gap-3 backdrop-blur-sm"
           style={{ boxShadow: '-33px 15px 10px rgba(0, 0, 0, 0.6)' }}
           onClick={() => navigate('/quest')}
         >
@@ -158,7 +158,7 @@ export const Menu = () => {
 
         <Button 
           variant="outline" 
-          className="h-36 bg-transparent border-2 border-black rounded-3xl text-black hover:bg-gray-50/80 transition-all flex flex-col items-center justify-center gap-3 backdrop-blur-sm"
+          className="h-36 bg-black/50 border-2 border-white rounded-3xl text-white hover:bg-black/70 transition-all flex flex-col items-center justify-center gap-3 backdrop-blur-sm"
           style={{ boxShadow: '-33px 15px 10px rgba(0, 0, 0, 0.6)' }}
           onClick={() => navigate('/shelter')}
         >
@@ -168,7 +168,7 @@ export const Menu = () => {
 
         <Button 
           variant="outline" 
-          className="h-36 bg-transparent border-2 border-black rounded-3xl text-black hover:bg-gray-50/80 transition-all flex flex-col items-center justify-center gap-3 backdrop-blur-sm"
+          className="h-36 bg-black/50 border-2 border-white rounded-3xl text-white hover:bg-black/70 transition-all flex flex-col items-center justify-center gap-3 backdrop-blur-sm"
           style={{ boxShadow: '-33px 15px 10px rgba(0, 0, 0, 0.6)' }}
           onClick={handleDisconnectWallet}
         >
@@ -182,7 +182,7 @@ export const Menu = () => {
         <div className="relative z-10 max-w-4xl mx-auto mt-8">
           <Button 
             variant="outline" 
-            className="h-36 w-full bg-transparent border-2 border-black rounded-3xl text-black hover:bg-gray-50/80 transition-all flex flex-col items-center justify-center gap-3 backdrop-blur-sm"
+            className="h-36 w-full bg-black/50 border-2 border-white rounded-3xl text-white hover:bg-black/70 transition-all flex flex-col items-center justify-center gap-3 backdrop-blur-sm"
             style={{ boxShadow: '-33px 15px 10px rgba(0, 0, 0, 0.6)' }}
             onClick={() => navigate('/admin-settings')}
           >
