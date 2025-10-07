@@ -113,16 +113,8 @@ serve(async (req) => {
       throw marketplaceError;
     }
 
-    // Clear referral earnings (except admin)
-    const { error: earningsError } = await supabase
-      .from('referral_earnings')
-      .delete()
-      .neq('referrer_wallet_address', 'mr_bruts.tg');
-
-    if (earningsError) {
-      console.error('❌ Error wiping referral_earnings:', earningsError);
-      throw earningsError;
-    }
+    // NOTE: Referral data (referrals and referral_earnings) is preserved during wipe
+    // to maintain the referral tree structure across game resets
 
     console.log('✅ Game wipe completed successfully');
 
