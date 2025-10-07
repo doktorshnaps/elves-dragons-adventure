@@ -14,7 +14,7 @@ import {
 
 export const SettingsMenu = () => {
   const { language, toggleLanguage } = useLanguage();
-  const { brightness, setBrightness } = useBrightness();
+  const { brightness, setBrightness, backgroundBrightness, setBackgroundBrightness } = useBrightness();
 
   return (
     <DropdownMenu>
@@ -49,18 +49,38 @@ export const SettingsMenu = () => {
         </button>
 
         <div 
+          className="bg-black/30 border-2 border-white rounded-2xl p-4 mb-3"
+          style={{ boxShadow: '-10px 10px 8px rgba(0, 0, 0, 0.4)' }}
+        >
+          <div className="flex items-center justify-center mb-3">
+            <Sun className="w-5 h-5 mr-2 text-white" />
+            <span className="text-white font-semibold">
+              {language === 'ru' ? 'Яркость экрана' : 'Screen Brightness'}: {brightness}%
+            </span>
+          </div>
+          <Slider
+            value={[brightness]}
+            onValueChange={(value) => setBrightness(value[0])}
+            min={50}
+            max={150}
+            step={5}
+            className="cursor-pointer"
+          />
+        </div>
+
+        <div 
           className="bg-black/30 border-2 border-white rounded-2xl p-4"
           style={{ boxShadow: '-10px 10px 8px rgba(0, 0, 0, 0.4)' }}
         >
           <div className="flex items-center justify-center mb-3">
             <Sun className="w-5 h-5 mr-2 text-white" />
             <span className="text-white font-semibold">
-              {language === 'ru' ? 'Яркость' : 'Brightness'}: {brightness}%
+              {language === 'ru' ? 'Яркость фона' : 'Background Brightness'}: {backgroundBrightness}%
             </span>
           </div>
           <Slider
-            value={[brightness]}
-            onValueChange={(value) => setBrightness(value[0])}
+            value={[backgroundBrightness]}
+            onValueChange={(value) => setBackgroundBrightness(value[0])}
             min={50}
             max={150}
             step={5}
