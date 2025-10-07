@@ -29,7 +29,7 @@ export const SettingsMenu = () => {
       </DropdownMenuTrigger>
       <DropdownMenuContent 
         align="end" 
-        className="w-64 bg-black/40 backdrop-blur-sm border-2 border-white rounded-3xl z-[100] p-4"
+        className="w-64 bg-black/70 backdrop-blur-sm border-2 border-white rounded-3xl z-[100] p-4"
         style={{ boxShadow: '-15px 15px 10px rgba(0, 0, 0, 0.6)' }}
       >
         <DropdownMenuLabel className="text-white font-bold text-center mb-2">
