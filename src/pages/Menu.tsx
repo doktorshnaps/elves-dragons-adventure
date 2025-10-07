@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
-import { Swords, ShoppingCart, BookOpen, Store, Shield, Users, DollarSign, LogOut, Home, Wallet, Settings } from "lucide-react";
+import { Settings } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useGameData } from "@/hooks/useGameData";
 import { useWallet } from "@/hooks/useWallet";
@@ -11,6 +11,17 @@ import { useLanguage } from "@/hooks/useLanguage";
 import { t } from "@/utils/translations";
 import { LanguageToggle } from "@/components/LanguageToggle";
 import { useState, useEffect } from "react";
+
+// Import icons
+import grimoireIcon from "@/assets/grimoire-icon.png";
+import dungeonIcon from "@/assets/dungeon-icon.png";
+import shopIcon from "@/assets/shop-icon.png";
+import shelterIcon from "@/assets/shelter-icon.png";
+import walletIcon from "@/assets/wallet-icon.png";
+import marketplaceIcon from "@/assets/marketplace-icon.png";
+import moneyIcon from "@/assets/money-icon.png";
+import inventoryIcon from "@/assets/inventory-icon.png";
+import teamIcon from "@/assets/team-icon.png";
 export const Menu = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -51,14 +62,14 @@ export const Menu = () => {
       <div className="relative z-10 max-w-4xl mx-auto flex justify-center items-center gap-4 mb-4">
         <div className="bg-transparent backdrop-blur-sm px-6 py-3 rounded-2xl border-2 border-black shadow-lg">
           <div className="flex items-center gap-2">
-            <DollarSign className="w-5 h-5 text-black" />
+            <img src={walletIcon} alt="Balance" className="w-[23px] h-[23px]" />
             <span className="text-black font-semibold">{t(language, 'menu.balance')} {gameData.balance} {t(language, 'game.currency')}</span>
           </div>
         </div>
         
         <div className="bg-transparent backdrop-blur-sm px-6 py-3 rounded-2xl border-2 border-black shadow-lg">
           <div className="flex items-center gap-2">
-            <Wallet className="w-5 h-5 text-black" />
+            <img src={walletIcon} alt="Wallet" className="w-[23px] h-[23px]" />
             {isConnected ? <div className="flex items-center gap-2">
                 <span className="text-green-500 text-sm">●</span>
                 <span className="text-black font-medium text-sm">
@@ -79,7 +90,7 @@ export const Menu = () => {
           style={{ boxShadow: '-33px 15px 10px rgba(0, 0, 0, 0.6)' }}
           onClick={() => navigate('/dungeons')}
         >
-          <Swords className="w-12 h-12" />
+          <img src={dungeonIcon} alt="Dungeon" className="w-[23px] h-[23px]" />
           <span className="text-base font-semibold leading-tight text-center">ПОДЗЕМЕЛЬЕ</span>
         </Button>
 
@@ -89,7 +100,7 @@ export const Menu = () => {
           style={{ boxShadow: '-33px 15px 10px rgba(0, 0, 0, 0.6)' }}
           onClick={() => navigate('/shop')}
         >
-          <ShoppingCart className="w-12 h-12" />
+          <img src={shopIcon} alt="Shop" className="w-[23px] h-[23px]" />
           <span className="text-base font-semibold leading-tight text-center">МАГИЧЕСКИЙ<br/>МАГАЗИН</span>
         </Button>
 
@@ -99,7 +110,7 @@ export const Menu = () => {
           style={{ boxShadow: '-33px 15px 10px rgba(0, 0, 0, 0.6)' }}
           onClick={() => navigate('/marketplace')}
         >
-          <Store className="w-12 h-12" />
+          <img src={marketplaceIcon} alt="Marketplace" className="w-[23px] h-[23px]" />
           <span className="text-base font-semibold leading-tight text-center">ТОРГОВАЯ<br/>ПЛОЩАДКА</span>
         </Button>
 
@@ -109,7 +120,7 @@ export const Menu = () => {
           style={{ boxShadow: '-33px 15px 10px rgba(0, 0, 0, 0.6)' }}
           onClick={() => navigate('/grimoire')}
         >
-          <BookOpen className="w-12 h-12" />
+          <img src={grimoireIcon} alt="Grimoire" className="w-[23px] h-[23px]" />
           <span className="text-base font-semibold leading-tight text-center">ГРИМУАР</span>
         </Button>
 
@@ -119,7 +130,7 @@ export const Menu = () => {
           style={{ boxShadow: '-33px 15px 10px rgba(0, 0, 0, 0.6)' }}
           onClick={() => navigate('/equipment')}
         >
-          <Shield className="w-12 h-12" />
+          <img src={inventoryIcon} alt="Inventory" className="w-[23px] h-[23px]" />
           <span className="text-base font-semibold leading-tight text-center">ИНВЕНТАРЬ</span>
         </Button>
 
@@ -129,7 +140,7 @@ export const Menu = () => {
           style={{ boxShadow: '-33px 15px 10px rgba(0, 0, 0, 0.6)' }}
           onClick={() => navigate('/team')}
         >
-          <Users className="w-12 h-12" />
+          <img src={teamIcon} alt="Team" className="w-[23px] h-[23px]" />
           <span className="text-base font-semibold leading-tight text-center">КОМАНДА</span>
         </Button>
 
@@ -139,7 +150,7 @@ export const Menu = () => {
           style={{ boxShadow: '-33px 15px 10px rgba(0, 0, 0, 0.6)' }}
           onClick={() => navigate('/quest')}
         >
-          <DollarSign className="w-12 h-12" />
+          <img src={moneyIcon} alt="Money" className="w-[23px] h-[23px]" />
           <span className="text-base font-semibold leading-tight text-center">БАБЛО</span>
         </Button>
 
@@ -149,7 +160,7 @@ export const Menu = () => {
           style={{ boxShadow: '-33px 15px 10px rgba(0, 0, 0, 0.6)' }}
           onClick={() => navigate('/shelter')}
         >
-          <Home className="w-12 h-12" />
+          <img src={shelterIcon} alt="Shelter" className="w-[23px] h-[23px]" />
           <span className="text-base font-semibold leading-tight text-center">ЛАГЕРЬ</span>
         </Button>
 
@@ -159,7 +170,7 @@ export const Menu = () => {
           style={{ boxShadow: '-33px 15px 10px rgba(0, 0, 0, 0.6)' }}
           onClick={handleDisconnectWallet}
         >
-          <LogOut className="w-12 h-12" />
+          <img src={walletIcon} alt="Disconnect" className="w-[23px] h-[23px]" />
           <span className="text-base font-semibold leading-tight text-center">ОТКЛЮЧИТЬ<br/>КОШЕЛЕК</span>
         </Button>
       </div>
