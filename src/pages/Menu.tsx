@@ -5,7 +5,6 @@ import { useToast } from "@/hooks/use-toast";
 import { useGameData } from "@/hooks/useGameData";
 import { useWallet } from "@/hooks/useWallet";
 import { useAdminCheck } from "@/hooks/useAdminCheck";
-import { AdminConsoleWithWhitelist } from "@/components/AdminConsole";
 
 import { useLanguage } from "@/hooks/useLanguage";
 import { t } from "@/utils/translations";
@@ -175,27 +174,18 @@ export const Menu = () => {
         </Button>
       </div>
 
-      {/* Admin Buttons - только для суперадмина */}
-      {accountId === 'mr_bruts.tg' && (
-        <div className="relative z-10 max-w-4xl mx-auto mt-8 space-y-4">
-          <div className="grid grid-cols-2 gap-4">
-            <Button
-              variant="outline"
-              className="h-20 bg-purple-500/80 border-purple-300 text-white hover:bg-purple-600 flex flex-col items-center justify-center gap-2"
-              onClick={() => navigate('/admin-settings')}
-            >
-              <Settings className="w-6 h-6" />
-              <span>Настройки игры</span>
-            </Button>
-          </div>
-          <AdminConsoleWithWhitelist />
-        </div>
-      )}
-
-      {/* Управление вайт-листом и блокировками - для обычных админов */}
-      {accountId !== 'mr_bruts.tg' && isAdmin && (
-        <div className="relative z-10 max-w-4xl mx-auto mt-8 space-y-4">
-          <AdminConsoleWithWhitelist />
+      {/* Admin Button - для всех админов */}
+      {isAdmin && (
+        <div className="relative z-10 max-w-4xl mx-auto mt-8">
+          <Button 
+            variant="outline" 
+            className="h-36 w-full bg-transparent border-2 border-black rounded-3xl text-black hover:bg-gray-50/80 transition-all flex flex-col items-center justify-center gap-3 backdrop-blur-sm"
+            style={{ boxShadow: '-33px 15px 10px rgba(0, 0, 0, 0.6)' }}
+            onClick={() => navigate('/admin-settings')}
+          >
+            <Settings className="w-[23px] h-[23px]" />
+            <span className="text-base font-semibold leading-tight text-center">НАСТРОЙКИ ИГРЫ</span>
+          </Button>
         </div>
       )}
       

@@ -9,6 +9,7 @@ import { DungeonSettings } from "@/components/admin/DungeonSettings";
 import { AdminRoleManager } from "@/components/admin/AdminRoleManager";
 import { QuestManagement } from "@/components/admin/QuestManagement";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
+import { AdminConsoleWithWhitelist } from "@/components/AdminConsole";
 
 const AdminSettingsContent = () => {
   const navigate = useNavigate();
@@ -26,8 +27,8 @@ const AdminSettingsContent = () => {
     );
   }
 
-  // Проверка прав доступа - только для суперадмина
-  if (accountId !== 'mr_bruts.tg') {
+  // Проверка прав доступа - для всех админов
+  if (!isAdmin) {
     return (
       <div className="min-h-screen bg-game-dark flex items-center justify-center p-4">
         <div className="text-center">
@@ -40,6 +41,8 @@ const AdminSettingsContent = () => {
       </div>
     );
   }
+
+  const isSuperAdmin = accountId === 'mr_bruts.tg';
 
   return (
     <div className="min-h-screen bg-game-dark p-4">
@@ -59,29 +62,44 @@ const AdminSettingsContent = () => {
           </Button>
         </div>
 
-        <Tabs defaultValue="cards" className="w-full">
-          <TabsList className="grid w-full grid-cols-4 mb-6">
-            <TabsTrigger value="cards">Карты (Герои и Драконы)</TabsTrigger>
-            <TabsTrigger value="dungeons">Подземелья</TabsTrigger>
-            <TabsTrigger value="quests">Задания</TabsTrigger>
-            <TabsTrigger value="admins">Администраторы</TabsTrigger>
+        <Tabs defaultValue={isSuperAdmin ? "cards" : "management"} className="w-full">
+          <TabsList className={`grid w-full ${isSuperAdmin ? 'grid-cols-5' : 'grid-cols-1'} mb-6`}>
+            {isSuperAdmin && (
+              <>
+                <TabsTrigger value="cards">Карты (Герои и Драконы)</TabsTrigger>
+                <TabsTrigger value="dungeons">Подземелья</TabsTrigger>
+                <TabsTrigger value="quests">Задания</TabsTrigger>
+              </>
+            )}
+            <TabsTrigger value="management">Управление</TabsTrigger>
+            {isSuperAdmin && <TabsTrigger value="admins">Администраторы</TabsTrigger>}
           </TabsList>
 
-          <TabsContent value="cards" className="space-y-4">
-            <GameSettings />
+          {isSuperAdmin && (
+            <>
+              <TabsContent value="cards" className="space-y-4">
+                <GameSettings />
+              </TabsContent>
+
+              <TabsContent value="dungeons" className="space-y-4">
+                <DungeonSettings />
+              </TabsContent>
+
+              <TabsContent value="quests" className="space-y-4">
+                <QuestManagement />
+              </TabsContent>
+            </>
+          )}
+
+          <TabsContent value="management" className="space-y-4">
+            <AdminConsoleWithWhitelist />
           </TabsContent>
 
-          <TabsContent value="dungeons" className="space-y-4">
-            <DungeonSettings />
-          </TabsContent>
-
-          <TabsContent value="quests" className="space-y-4">
-            <QuestManagement />
-          </TabsContent>
-
-          <TabsContent value="admins" className="space-y-4">
-            <AdminRoleManager />
-          </TabsContent>
+          {isSuperAdmin && (
+            <TabsContent value="admins" className="space-y-4">
+              <AdminRoleManager />
+            </TabsContent>
+          )}
         </Tabs>
       </div>
     </div>
