@@ -152,6 +152,22 @@ export const NFTWhitelistValidator = () => {
                   {lastResults.summary.errors > 0 && (
                     <div className="text-orange-600">⚠️ Ошибок: {lastResults.summary.errors}</div>
                   )}
+                  
+                  {/* Список отозванных адресов */}
+                  {lastResults.results && Array.isArray(lastResults.results) && lastResults.results.filter((r: any) => r.success && !r.hadNFTs).length > 0 && (
+                    <div className="mt-3 p-3 bg-red-50 border border-red-200 rounded">
+                      <div className="font-medium text-red-800 mb-2">Отозванные вайт-листы:</div>
+                      <div className="space-y-1">
+                        {lastResults.results
+                          .filter((r: any) => r.success && !r.hadNFTs)
+                          .map((r: any, idx: number) => (
+                            <div key={idx} className="text-red-700">
+                              • {r.wallet}
+                            </div>
+                          ))}
+                      </div>
+                    </div>
+                  )}
                 </>
               ) : (
                 <div>
