@@ -143,11 +143,11 @@ Deno.serve(async (req) => {
         updateResult = result.data;
         updateError = result.error;
       } else {
-        // Если NFT НЕ найдены - отзываем вайт-лист
+        // Если NFT НЕ найдены - отзываем вайт-лист (передаем пустой список как сигнал отсутствия NFT)
         const result = await supabase
           .rpc('revoke_whitelist_if_no_nft', {
             p_wallet_address: walletToCheck,
-            p_nft_contracts: contractAddresses
+            p_nft_contracts: []
           });
         updateResult = result.data;
         updateError = result.error;
