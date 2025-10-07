@@ -130,11 +130,28 @@ Deno.serve(async (req) => {
       }
 
       // Обновляем статус вайт-листа
-      const { data: updateResult, error: updateError } = await supabase
-        .rpc('check_and_add_to_whitelist_by_nft', {
-          p_wallet_address: walletToCheck,
-          p_nft_contracts: foundContracts.length > 0 ? foundContracts : contractAddresses
-        });
+      let updateResult;
+      let updateError;
+      
+      if (hasQualifyingNFT) {
+        // Если NFT найдены - добавляем/подтверждаем вайт-лист
+        const result = await supabase
+          .rpc('check_and_add_to_whitelist_by_nft', {
+            p_wallet_address: walletToCheck,
+            p_nft_contracts: foundContracts
+          });
+        updateResult = result.data;
+        updateError = result.error;
+      } else {
+        // Если NFT НЕ найдены - отзываем вайт-лист
+        const result = await supabase
+          .rpc('revoke_whitelist_if_no_nft', {
+            p_wallet_address: walletToCheck,
+            p_nft_contracts: contractAddresses
+          });
+        updateResult = result.data;
+        updateError = result.error;
+      }
 
       if (updateError) {
         console.error(`Error updating whitelist for ${walletToCheck}:`, updateError);
