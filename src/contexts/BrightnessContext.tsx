@@ -10,7 +10,7 @@ export const BrightnessContext = createContext<BrightnessContextValue | undefine
 export const BrightnessProvider = ({ children }: { children: ReactNode }) => {
   const [brightness, setBrightness] = useState<number>(() => {
     const saved = localStorage.getItem('game-brightness');
-    return saved ? parseFloat(saved) : 75;
+    return saved ? parseFloat(saved) : 100;
   });
 
   useEffect(() => {

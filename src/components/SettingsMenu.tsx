@@ -62,7 +62,7 @@ export const SettingsMenu = () => {
             value={[brightness]}
             onValueChange={(value) => setBrightness(value[0])}
             min={50}
-            max={100}
+            max={150}
             step={5}
             className="cursor-pointer"
           />

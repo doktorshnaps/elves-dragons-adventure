@@ -5,7 +5,7 @@ export const useBrightness = () => {
   const ctx = useContext(BrightnessContext);
   if (!ctx) {
     console.warn('useBrightness used outside of BrightnessProvider.');
-    const brightness = parseFloat(localStorage.getItem('game-brightness') || '75');
+    const brightness = parseFloat(localStorage.getItem('game-brightness') || '100');
     const setBrightness = (value: number) => localStorage.setItem('game-brightness', value.toString());
     return { brightness, setBrightness };
   }
