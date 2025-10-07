@@ -7,7 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { Trash2, Plus, Users } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
-
+import { useWallet } from '@/hooks/useWallet';
 interface WhitelistEntry {
   id: string;
   wallet_address: string;
@@ -23,6 +23,7 @@ export const WhitelistManager = () => {
   const [newNotes, setNewNotes] = useState('');
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
+  const { accountId } = useWallet();
 
   const loadWhitelist = async () => {
     try {
@@ -63,6 +64,7 @@ export const WhitelistManager = () => {
       const { error } = await supabase.rpc('admin_add_to_whitelist', {
         p_wallet_address: newAddress.trim(),
         p_notes: newNotes.trim() || null,
+        p_admin_wallet_address: accountId,
       });
 
       if (error) throw error;
