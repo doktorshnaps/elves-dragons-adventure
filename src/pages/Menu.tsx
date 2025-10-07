@@ -49,9 +49,9 @@ export const Menu = () => {
     navigate('/auth');
   };
 
-  return <div className="app-shell min-h-screen p-4 bg-cover bg-center bg-no-repeat" style={{
+  return <div className="app-shell min-h-screen p-4 bg-center bg-no-repeat" style={{
     backgroundImage: 'url("/menu-background.jpg")',
-    backgroundSize: 'cover',
+    backgroundSize: '100% 100%',
     backgroundPosition: 'center',
     backgroundRepeat: 'no-repeat'
   }}>
