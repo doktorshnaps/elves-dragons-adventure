@@ -49,23 +49,23 @@ export const Menu = () => {
       
       {/* Balance and Wallet Display */}
       <div className="relative z-10 max-w-4xl mx-auto flex justify-center items-center gap-4 mb-4">
-        <div className="bg-game-surface/90 px-6 py-3 rounded-lg border border-game-accent">
+        <div className="bg-transparent backdrop-blur-sm px-6 py-3 rounded-2xl border-2 border-black shadow-lg">
           <div className="flex items-center gap-2">
-            <DollarSign className="w-5 h-5 text-game-accent" />
-            <span className="text-game-accent font-semibold">{t(language, 'menu.balance')} {gameData.balance} {t(language, 'game.currency')}</span>
+            <DollarSign className="w-5 h-5 text-black" />
+            <span className="text-black font-semibold">{t(language, 'menu.balance')} {gameData.balance} {t(language, 'game.currency')}</span>
           </div>
         </div>
         
-        <div className="bg-game-surface/90 px-6 py-3 rounded-lg border border-game-accent">
+        <div className="bg-transparent backdrop-blur-sm px-6 py-3 rounded-2xl border-2 border-black shadow-lg">
           <div className="flex items-center gap-2">
-            <Wallet className="w-5 h-5 text-game-accent" />
+            <Wallet className="w-5 h-5 text-black" />
             {isConnected ? <div className="flex items-center gap-2">
                 <span className="text-green-500 text-sm">●</span>
-                <span className="text-game-accent font-medium text-sm">
+                <span className="text-black font-medium text-sm">
                   {accountId ? `${accountId.slice(0, 8)}...${accountId.slice(-4)}` : t(language, 'menu.connected')}
                 </span>
                 
-              </div> : <Button size="sm" variant="outline" onClick={connectWallet} disabled={isConnecting} className="text-xs px-3 py-1 h-6 border-game-accent text-game-accent hover:bg-game-accent/20">
+              </div> : <Button size="sm" variant="outline" onClick={connectWallet} disabled={isConnecting} className="text-xs px-3 py-1 h-6 border-black text-black hover:bg-gray-50/80 bg-transparent rounded-xl">
                 {isConnecting ? t(language, 'menu.connecting') : t(language, 'menu.connectWallet')}
               </Button>}
           </div>
@@ -73,49 +73,85 @@ export const Menu = () => {
       </div>
       
       <div className="relative z-10 max-w-4xl mx-auto grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 mt-8 my-[37px]">
-        <Button variant="outline" className="h-24 bg-game-surface/80 border-game-accent text-game-accent hover:bg-game-surface flex flex-col items-center justify-center gap-2" onClick={() => navigate('/dungeons')}>
-          <Swords className="w-8 h-8" />
-          <span>{t(language, 'menu.dungeon')}</span>
+        <Button 
+          variant="outline" 
+          className="h-32 bg-transparent border-2 border-black rounded-2xl text-black hover:bg-gray-50/80 transition-all flex flex-col items-center justify-center gap-3 shadow-lg backdrop-blur-sm"
+          onClick={() => navigate('/dungeons')}
+        >
+          <Swords className="w-10 h-10" />
+          <span className="text-sm font-medium">{t(language, 'menu.dungeon')}</span>
         </Button>
 
-        <Button variant="outline" className="h-24 bg-game-surface/80 border-game-accent text-game-accent hover:bg-game-surface flex flex-col items-center justify-center gap-2" onClick={() => navigate('/shop')}>
-          <ShoppingCart className="w-8 h-8" />
-          <span>{t(language, 'menu.shop')}</span>
+        <Button 
+          variant="outline" 
+          className="h-32 bg-transparent border-2 border-black rounded-2xl text-black hover:bg-gray-50/80 transition-all flex flex-col items-center justify-center gap-3 shadow-lg backdrop-blur-sm"
+          onClick={() => navigate('/shop')}
+        >
+          <ShoppingCart className="w-10 h-10" />
+          <span className="text-sm font-medium">{t(language, 'menu.shop')}</span>
         </Button>
 
-        <Button variant="outline" className="h-24 bg-game-surface/80 border-game-accent text-game-accent hover:bg-game-surface flex flex-col items-center justify-center gap-2" onClick={() => navigate('/marketplace')}>
-          <Store className="w-8 h-8" />
-          <span>{t(language, 'menu.marketplace')}</span>
+        <Button 
+          variant="outline" 
+          className="h-32 bg-transparent border-2 border-black rounded-2xl text-black hover:bg-gray-50/80 transition-all flex flex-col items-center justify-center gap-3 shadow-lg backdrop-blur-sm"
+          onClick={() => navigate('/marketplace')}
+        >
+          <Store className="w-10 h-10" />
+          <span className="text-sm font-medium">{t(language, 'menu.marketplace')}</span>
         </Button>
 
-        <Button variant="outline" className="h-24 bg-game-surface/80 border-game-accent text-game-accent hover:bg-game-surface flex flex-col items-center justify-center gap-2" onClick={() => navigate('/grimoire')}>
-          <BookOpen className="w-8 h-8" />
-          <span>{t(language, 'menu.grimoire')}</span>
+        <Button 
+          variant="outline" 
+          className="h-32 bg-transparent border-2 border-black rounded-2xl text-black hover:bg-gray-50/80 transition-all flex flex-col items-center justify-center gap-3 shadow-lg backdrop-blur-sm"
+          onClick={() => navigate('/grimoire')}
+        >
+          <BookOpen className="w-10 h-10" />
+          <span className="text-sm font-medium">{t(language, 'menu.grimoire')}</span>
         </Button>
 
-        <Button variant="outline" className="h-24 bg-game-surface/80 border-game-accent text-game-accent hover:bg-game-surface flex flex-col items-center justify-center gap-2" onClick={() => navigate('/equipment')}>
-          <Shield className="w-8 h-8" />
-          <span>{t(language, 'menu.inventory')}</span>
+        <Button 
+          variant="outline" 
+          className="h-32 bg-transparent border-2 border-black rounded-2xl text-black hover:bg-gray-50/80 transition-all flex flex-col items-center justify-center gap-3 shadow-lg backdrop-blur-sm"
+          onClick={() => navigate('/equipment')}
+        >
+          <Shield className="w-10 h-10" />
+          <span className="text-sm font-medium">{t(language, 'menu.inventory')}</span>
         </Button>
 
-        <Button variant="outline" className="h-24 bg-game-surface/80 border-game-accent text-game-accent hover:bg-game-surface flex flex-col items-center justify-center gap-2" onClick={() => navigate('/team')}>
-          <Users className="w-8 h-8" />
-          <span>{t(language, 'menu.team')}</span>
+        <Button 
+          variant="outline" 
+          className="h-32 bg-transparent border-2 border-black rounded-2xl text-black hover:bg-gray-50/80 transition-all flex flex-col items-center justify-center gap-3 shadow-lg backdrop-blur-sm"
+          onClick={() => navigate('/team')}
+        >
+          <Users className="w-10 h-10" />
+          <span className="text-sm font-medium">{t(language, 'menu.team')}</span>
         </Button>
 
-        <Button variant="outline" className="h-24 bg-game-surface/80 border-game-accent text-game-accent hover:bg-game-surface flex flex-col items-center justify-center gap-2" onClick={() => navigate('/quest')}>
-          <DollarSign className="w-8 h-8" />
-          <span>{t(language, 'menu.quest')}</span>
+        <Button 
+          variant="outline" 
+          className="h-32 bg-transparent border-2 border-black rounded-2xl text-black hover:bg-gray-50/80 transition-all flex flex-col items-center justify-center gap-3 shadow-lg backdrop-blur-sm"
+          onClick={() => navigate('/quest')}
+        >
+          <DollarSign className="w-10 h-10" />
+          <span className="text-sm font-medium">{t(language, 'menu.quest')}</span>
         </Button>
 
-        <Button variant="outline" className="h-24 bg-game-surface/80 border-game-accent text-game-accent hover:bg-game-surface flex flex-col items-center justify-center gap-2" onClick={() => navigate('/shelter')}>
-          <Home className="w-8 h-8" />
-          <span>{t(language, 'menu.shelter')}</span>
+        <Button 
+          variant="outline" 
+          className="h-32 bg-transparent border-2 border-black rounded-2xl text-black hover:bg-gray-50/80 transition-all flex flex-col items-center justify-center gap-3 shadow-lg backdrop-blur-sm"
+          onClick={() => navigate('/shelter')}
+        >
+          <Home className="w-10 h-10" />
+          <span className="text-sm font-medium">{t(language, 'menu.shelter')}</span>
         </Button>
 
-        <Button variant="outline" className="h-24 bg-game-surface/80 border-red-500 text-red-500 hover:bg-red-500/20 flex flex-col items-center justify-center gap-2" onClick={handleDisconnectWallet}>
-          <LogOut className="w-8 h-8" />
-          <span>{t(language, 'menu.disconnectWallet')}</span>
+        <Button 
+          variant="outline" 
+          className="h-32 bg-transparent border-2 border-red-600 rounded-2xl text-red-600 hover:bg-red-50/80 transition-all flex flex-col items-center justify-center gap-3 shadow-lg backdrop-blur-sm"
+          onClick={handleDisconnectWallet}
+        >
+          <LogOut className="w-10 h-10" />
+          <span className="text-sm font-medium">{t(language, 'menu.disconnectWallet')}</span>
         </Button>
       </div>
 
