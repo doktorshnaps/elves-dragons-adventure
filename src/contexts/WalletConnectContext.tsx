@@ -88,6 +88,14 @@ export function WalletConnectProvider({ children }: { children: React.ReactNode 
     };
   }, [tgWebApp]);
 
+  // Синхронизация статуса подключения в localStorage (для роут-гвардов)
+  useEffect(() => {
+    try {
+      if (accountId) localStorage.setItem('walletConnected', 'true');
+      else localStorage.removeItem('walletConnected');
+    } catch {}
+  }, [accountId]);
+
   // Функция подключения кошелька через HOT Wallet
   const connect = async () => {
     if (!selector) {
@@ -99,14 +107,16 @@ export function WalletConnectProvider({ children }: { children: React.ReactNode 
       
       // Для Telegram Mini App добавляем параметр telegram=true в URL
       const signInParams: any = {
-        contractId: "",
+        contractId: "social.near", // требуется непустой contractId для корректного логина
         methodNames: [],
       };
       
       // Если в Telegram, добавляем параметр для автоматического выбора Telegram варианта
       if (tgWebApp) {
-        signInParams.successUrl = `${window.location.origin}${window.location.pathname}?telegram=true`;
-        signInParams.failureUrl = `${window.location.origin}${window.location.pathname}?telegram=true`;
+        const baseUrl = window.location.href.split('#')[0];
+        const urlWithParam = baseUrl.includes('?') ? `${baseUrl}&telegram=true` : `${baseUrl}?telegram=true`;
+        signInParams.successUrl = urlWithParam;
+        signInParams.failureUrl = urlWithParam;
       }
       
       await (wallet as any).signIn(signInParams);
