@@ -14,6 +14,7 @@
     "@hookform/resolvers": "^3.9.0",
     "@hot-labs/near-connect": "^0.4.2",
     "@near-wallet-selector/core": "^9.5.4",
+    "@near-wallet-selector/here-wallet": "^9.5.4",
     "@near-wallet-selector/hot-wallet": "^9.5.4",
     "@near-wallet-selector/meteor-wallet": "^9.5.4",
     "@near-wallet-selector/modal-ui": "^9.5.4",

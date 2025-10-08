@@ -63,13 +63,37 @@ export function WalletConnectProvider({ children }: { children: React.ReactNode 
         try {
           const state = sel.store.getState();
           const active = state.accounts?.find((a: AccountState) => a.active);
-          setAccountId(active?.accountId || null);
           
-          // Сохраняем в localStorage
           if (active?.accountId) {
+            setAccountId(active.accountId);
             localStorage.setItem('walletConnected', 'true');
             localStorage.setItem('walletAccountId', active.accountId);
             console.log('💾 Wallet hydrated:', active.accountId);
+          } else {
+            // Проверяем localStorage для восстановления после редиректа
+            const savedAccountId = localStorage.getItem('walletAccountId');
+            const wasConnected = localStorage.getItem('walletConnected');
+            
+            if (wasConnected && savedAccountId) {
+              console.log('🔄 Restoring wallet from localStorage:', savedAccountId);
+              setAccountId(savedAccountId);
+              
+              // Даем время на полную инициализацию wallet-selector
+              setTimeout(async () => {
+                try {
+                  const freshState = sel.store.getState();
+                  const freshActive = freshState.accounts?.find((a: AccountState) => a.active);
+                  if (freshActive?.accountId) {
+                    setAccountId(freshActive.accountId);
+                    console.log('✅ Wallet fully restored:', freshActive.accountId);
+                  }
+                } catch (err) {
+                  console.warn("[wallet] delayed hydration error:", err);
+                }
+              }, 1000);
+            } else {
+              setAccountId(null);
+            }
           }
         } catch (e) {
           console.warn("[wallet] store hydrate error:", e);
