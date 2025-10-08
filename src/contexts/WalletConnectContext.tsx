@@ -1,14 +1,11 @@
 // src/contexts/WalletConnectContext.tsx
 import React, { createContext, useContext, useEffect, useRef, useState } from "react";
-import { setupModal } from "@near-wallet-selector/modal-ui";
 import type { WalletSelector, AccountState } from "@near-wallet-selector/core";
 import useTelegram from "@/hooks/useTelegram";
 import { initSelector } from "@/utils/selector";
-import "@near-wallet-selector/modal-ui/styles.css";
 
 interface WalletContextType {
   selector: WalletSelector | null;
-  modal: any;
   accountId: string | null;
   isLoading: boolean;
   hasError: boolean;
@@ -18,7 +15,6 @@ interface WalletContextType {
 
 const WalletContext = createContext<WalletContextType>({
   selector: null,
-  modal: null,
   accountId: null,
   isLoading: true,
   hasError: false,
@@ -29,7 +25,6 @@ const WalletContext = createContext<WalletContextType>({
 export function WalletConnectProvider({ children }: { children: React.ReactNode }) {
   const { tgWebApp } = useTelegram();
   const [selector, setSelector] = useState<WalletSelector | null>(null);
-  const [modal, setModal] = useState<any>(null);
   const [accountId, setAccountId] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [hasError, setHasError] = useState(false);
@@ -52,12 +47,6 @@ export function WalletConnectProvider({ children }: { children: React.ReactNode 
         if (cancelled) return;
 
         setSelector(sel);
-
-        // Создаем модалку
-        const walletModal = setupModal(sel, {
-          contractId: "",
-        });
-        setModal(walletModal);
 
         // Гидратация активного аккаунта
         try {
@@ -142,13 +131,22 @@ export function WalletConnectProvider({ children }: { children: React.ReactNode 
     };
   }, [tgWebApp]);
 
-  // Функция подключения кошелька
+  // Функция подключения кошелька напрямую через HOT Wallet
   const connect = async () => {
-    if (!modal) {
-      console.warn("[wallet] modal not ready");
+    if (!selector) {
+      console.warn("[wallet] selector not ready");
       return;
     }
-    modal.show();
+    try {
+      const wallet = await selector.wallet("hot-wallet");
+      await (wallet as any).signIn({
+        contractId: "",
+      });
+      console.log('✅ Wallet connection initiated');
+    } catch (error) {
+      console.error("[wallet] connect error:", error);
+      throw error;
+    }
   };
 
   // Функция отключения кошелька
@@ -192,7 +190,6 @@ export function WalletConnectProvider({ children }: { children: React.ReactNode 
     <WalletContext.Provider
       value={{
         selector,
-        modal,
         accountId,
         isLoading,
         hasError,
