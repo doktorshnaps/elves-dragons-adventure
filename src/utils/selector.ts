@@ -16,12 +16,15 @@ export async function initSelector({
     const tg = window.Telegram.WebApp;
     const originalOpen = window.open;
     const originalAssign = window.location.assign;
+    const originalReplace = window.location.replace;
     
     // Перехват window.open
     window.open = function(url: any, target?: any, features?: any) {
       if (typeof url === 'string' && (url.includes('wallet.hot') || url.includes('herewallet'))) {
         console.log('🔗 Telegram redirect intercepted (window.open):', url);
-        tg.openLink(url);
+        // Добавляем параметр telegram=true для автоматического выбора
+        const redirectUrl = url.includes('?') ? `${url}&telegram=true` : `${url}?telegram=true`;
+        tg.openLink(redirectUrl);
         return null;
       }
       return originalOpen.call(window, url, target, features);
@@ -31,10 +34,22 @@ export async function initSelector({
     window.location.assign = function(url: string) {
       if (url.includes('wallet.hot') || url.includes('herewallet')) {
         console.log('🔗 Telegram redirect intercepted (location.assign):', url);
-        tg.openLink(url);
+        const redirectUrl = url.includes('?') ? `${url}&telegram=true` : `${url}?telegram=true`;
+        tg.openLink(redirectUrl);
         return;
       }
       return originalAssign.call(window.location, url);
+    };
+    
+    // Перехват window.location.replace
+    window.location.replace = function(url: string) {
+      if (url.includes('wallet.hot') || url.includes('herewallet')) {
+        console.log('🔗 Telegram redirect intercepted (location.replace):', url);
+        const redirectUrl = url.includes('?') ? `${url}&telegram=true` : `${url}?telegram=true`;
+        tg.openLink(redirectUrl);
+        return;
+      }
+      return originalReplace.call(window.location, url);
     };
   }
 

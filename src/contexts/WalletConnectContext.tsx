@@ -96,10 +96,20 @@ export function WalletConnectProvider({ children }: { children: React.ReactNode 
     }
     try {
       const wallet = await selector.wallet("hot-wallet");
-      await (wallet as any).signIn({
+      
+      // Для Telegram Mini App добавляем параметр telegram=true в URL
+      const signInParams: any = {
         contractId: "",
         methodNames: [],
-      });
+      };
+      
+      // Если в Telegram, добавляем параметр для автоматического выбора Telegram варианта
+      if (tgWebApp) {
+        signInParams.successUrl = `${window.location.origin}${window.location.pathname}?telegram=true`;
+        signInParams.failureUrl = `${window.location.origin}${window.location.pathname}?telegram=true`;
+      }
+      
+      await (wallet as any).signIn(signInParams);
       console.log('✅ Wallet connection initiated');
     } catch (error) {
       console.error("[wallet] connect error:", error);
