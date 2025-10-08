@@ -1,6 +1,6 @@
 import { useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { useWallet } from './useWallet';
+import { useWalletContext } from '@/contexts/WalletConnectContext';
 
 interface RetryOptions {
   maxRetries?: number;
@@ -17,7 +17,7 @@ const DEFAULT_RETRY_OPTIONS: RetryOptions = {
 };
 
 export const useErrorHandling = () => {
-  const { accountId } = useWallet();
+  const { accountId } = useWalletContext();
 
   const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 

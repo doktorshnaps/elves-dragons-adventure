@@ -6,7 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { useWallet } from "@/hooks/useWallet";
+import { useWalletContext } from "@/contexts/WalletConnectContext";
 import { Loader2, Save } from "lucide-react";
 import { refreshGameSettings } from "@/utils/cardUtils";
 
@@ -43,7 +43,7 @@ interface ClassMultiplier {
 
 export const GameSettings = () => {
   const { toast } = useToast();
-  const { accountId } = useWallet();
+  const { accountId } = useWalletContext();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
 

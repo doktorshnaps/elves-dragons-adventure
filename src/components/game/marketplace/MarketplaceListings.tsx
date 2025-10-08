@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { X } from "lucide-react";
 import { MarketplaceListing } from "./types";
 import { getItemDisplayInfo } from "./utils";
-import { useWallet } from "@/hooks/useWallet";
+import { useWalletContext } from "@/contexts/WalletConnectContext";
 
 interface MarketplaceListingsProps {
   listings: MarketplaceListing[];
@@ -24,7 +24,7 @@ export const MarketplaceListings = ({
   selectedIds,
   onToggleSelect,
 }: MarketplaceListingsProps) => {
-  const { accountId } = useWallet();
+  const { accountId } = useWalletContext();
   if (listings.length === 0) {
     return (
       <div className="text-center py-8 text-gray-300 backdrop-blur-sm bg-black/30 rounded-lg">

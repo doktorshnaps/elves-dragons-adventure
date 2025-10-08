@@ -1,5 +1,5 @@
 import { useNavigate } from "react-router-dom";
-import { useWallet } from "@/hooks/useWallet";
+import { useWalletContext } from "@/contexts/WalletConnectContext";
 import { useAdminCheck } from "@/hooks/useAdminCheck";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft } from "lucide-react";
@@ -13,7 +13,7 @@ import { AdminConsoleWithWhitelist } from "@/components/AdminConsole";
 
 const AdminSettingsContent = () => {
   const navigate = useNavigate();
-  const { accountId } = useWallet();
+  const { accountId } = useWalletContext();
   const { isAdmin, loading } = useAdminCheck();
 
   // Show loading while checking admin status

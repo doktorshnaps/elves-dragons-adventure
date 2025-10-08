@@ -1,6 +1,6 @@
 import { useEffect, useState, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { useWallet } from './useWallet';
+import { useWalletContext } from '@/contexts/WalletConnectContext';
 
 interface MarketplaceStats {
   type: string;
@@ -16,7 +16,7 @@ export const useMarketplaceStats = () => {
   const [stats, setStats] = useState<MarketplaceStats[]>([]);
   const [loading, setLoading] = useState(true);
   const [lastRefresh, setLastRefresh] = useState<Date>(new Date());
-  const { accountId } = useWallet();
+  const { accountId } = useWalletContext();
 
   // Функция для агрегации статистики на клиенте
   const aggregateMarketplaceStats = useCallback((listings: any[]): MarketplaceStats[] => {

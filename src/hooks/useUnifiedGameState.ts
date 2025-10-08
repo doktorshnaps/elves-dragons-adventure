@@ -2,7 +2,7 @@ import React from 'react'; // Added React import
 import { useQuery, useQueryClient, useMutation } from '@tanstack/react-query';
 import { useCallback, useMemo, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { useWallet } from './useWallet';
+import { useWalletContext } from '@/contexts/WalletConnectContext';
 import { useOptimisticUpdates } from './useOptimisticUpdates';
 import { useRealTimeSync } from './useRealTimeSync';
 import { useVersioning } from './useVersioning';
@@ -65,7 +65,7 @@ const initialGameData: GameData = {
 };
 
 export const useUnifiedGameState = (): UnifiedGameState => {
-  const { accountId } = useWallet();
+  const { accountId } = useWalletContext();
   const queryClient = useQueryClient();
   const { toast } = useToast();
   const { updateWithVersionCheck, getRecordVersion } = useVersioning();

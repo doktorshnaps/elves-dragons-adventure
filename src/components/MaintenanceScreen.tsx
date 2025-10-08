@@ -1,14 +1,14 @@
 import React from 'react';
 import technicalWorkImage from '@/assets/technical-work.png';
 import { Button } from '@/components/ui/button';
-import { useWallet } from '@/hooks/useWallet';
+import { useWalletContext } from '@/contexts/WalletConnectContext';
 
 interface MaintenanceScreenProps {
   message?: string;
 }
 
 export const MaintenanceScreen = ({ message }: MaintenanceScreenProps) => {
-  const { connectWallet, isConnecting } = useWallet();
+  const { connect: connectWallet, isLoading: isConnecting } = useWalletContext();
 
   const handleConnectWallet = async () => {
     try {

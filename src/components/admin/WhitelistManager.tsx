@@ -7,7 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { Trash2, Plus, Users } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
-import { useWallet } from '@/hooks/useWallet';
+import { useWalletContext } from '@/contexts/WalletConnectContext';
 interface WhitelistEntry {
   id: string;
   wallet_address: string;
@@ -23,7 +23,7 @@ export const WhitelistManager = () => {
   const [newNotes, setNewNotes] = useState('');
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
-  const { accountId } = useWallet();
+  const { accountId } = useWalletContext();
 
   const loadWhitelist = async () => {
     try {

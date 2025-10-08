@@ -1,14 +1,15 @@
 import { useEffect, useRef } from 'react';
 import { useGameStore } from '@/stores/gameStore';
 import { useGameData } from '@/hooks/useGameData';
-import { useWallet } from '@/hooks/useWallet';
+import { useWalletContext } from '@/contexts/WalletConnectContext';
 import { useCardInstanceSync } from '@/hooks/useCardInstanceSync';
 
 /**
  * Синхронизирует локальное состояние Zustand с Supabase
  */
 export const useGameSync = () => {
-  const { accountId, isConnected } = useWallet();
+  const { accountId } = useWalletContext();
+  const isConnected = !!accountId;
   const { gameData, updateGameData, loading } = useGameData();
   const gameStore = useGameStore();
   const isApplyingRef = useRef(false);

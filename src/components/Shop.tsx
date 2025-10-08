@@ -4,7 +4,7 @@ import { shopItems } from "@/data/shopItems";
 import { useGameData } from "@/hooks/useGameData";
 import { useToast } from "@/hooks/use-toast";
 import { useShopInventory } from "@/hooks/useShopInventory";
-import { useWallet } from "@/hooks/useWallet";
+import { useWalletContext } from "@/contexts/WalletConnectContext";
 import { useLanguage } from "@/hooks/useLanguage";
 import { t } from "@/utils/translations";
 import { translateShopItemName, translateShopItemDescription } from "@/utils/shopTranslations";
@@ -22,7 +22,7 @@ interface ShopProps {
 
 export const Shop = ({ onClose }: ShopProps) => {
   const { gameData, loading: gameDataLoading, loadGameData } = useGameData();
-  const { accountId } = useWallet();
+  const { accountId } = useWalletContext();
   const { language } = useLanguage();
   const { 
     inventory, 

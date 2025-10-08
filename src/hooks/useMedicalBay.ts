@@ -1,7 +1,7 @@
 import { useState, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
-import { useWallet } from '@/hooks/useWallet';
+import { useWalletContext } from '@/contexts/WalletConnectContext';
 import { useGameData } from '@/hooks/useGameData';
 import { useGameStore } from '@/stores/gameStore';
 
@@ -24,7 +24,7 @@ export const useMedicalBay = () => {
   const [medicalBayEntries, setMedicalBayEntries] = useState<MedicalBayEntry[]>([]);
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
-  const { accountId } = useWallet();
+  const { accountId } = useWalletContext();
   const { gameData, updateGameData } = useGameData();
 
   const loadMedicalBayEntries = useCallback(async () => {

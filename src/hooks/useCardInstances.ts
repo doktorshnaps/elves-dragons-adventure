@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { useWallet } from '@/hooks/useWallet';
+import { useWalletContext } from '@/contexts/WalletConnectContext';
 import { useToast } from '@/hooks/use-toast';
 import { Card } from '@/types/cards';
 import { useGameData } from '@/hooks/useGameData';
@@ -23,7 +23,8 @@ export interface CardInstance {
 }
 
 export const useCardInstances = () => {
-  const { accountId, isConnected } = useWallet();
+  const { accountId } = useWalletContext();
+  const isConnected = !!accountId;
   const { toast } = useToast();
   const { gameData } = useGameData();
   const [cardInstances, setCardInstances] = useState<CardInstance[]>([]);

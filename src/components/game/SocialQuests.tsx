@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { useWallet } from "@/hooks/useWallet";
+import { useWalletContext } from "@/contexts/WalletConnectContext";
 import { useGameData } from "@/hooks/useGameData";
 
 interface Quest {
@@ -26,7 +26,7 @@ interface QuestProgress {
 
 export const SocialQuests = () => {
   const { toast } = useToast();
-  const { accountId } = useWallet();
+  const { accountId } = useWalletContext();
   const { gameData, updateGameData } = useGameData();
   const [quests, setQuests] = useState<Quest[]>([]);
   const [progress, setProgress] = useState<Map<string, QuestProgress>>(new Map());

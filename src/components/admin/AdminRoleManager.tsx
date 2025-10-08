@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useWallet } from "@/hooks/useWallet";
+import { useWalletContext } from "@/contexts/WalletConnectContext";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -15,7 +15,7 @@ interface AdminRole {
 }
 
 export const AdminRoleManager = () => {
-  const { accountId } = useWallet();
+  const { accountId } = useWalletContext();
   const { toast } = useToast();
   const [admins, setAdmins] = useState<AdminRole[]>([]);
   const [newAdminAddress, setNewAdminAddress] = useState("");

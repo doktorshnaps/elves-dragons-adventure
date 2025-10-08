@@ -7,7 +7,7 @@ import { Card } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { Trash2, Edit, Plus, Upload, X } from "lucide-react";
-import { useWallet } from "@/hooks/useWallet";
+import { useWalletContext } from "@/contexts/WalletConnectContext";
 
 interface Quest {
   id: string;
@@ -22,7 +22,7 @@ interface Quest {
 
 export const QuestManagement = () => {
   const { toast } = useToast();
-  const { accountId } = useWallet();
+  const { accountId } = useWalletContext();
   const [quests, setQuests] = useState<Quest[]>([]);
   const [loading, setLoading] = useState(true);
   const [editingQuest, setEditingQuest] = useState<Quest | null>(null);

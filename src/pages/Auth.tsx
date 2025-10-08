@@ -1,14 +1,16 @@
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { useToast } from "@/hooks/use-toast";
-import { useWallet } from "@/hooks/useWallet";
+import { useWalletContext } from "@/contexts/WalletConnectContext";
 import { Navigate, useNavigate, useSearchParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 
 export const Auth = () => {
   const { toast } = useToast();
-  const { isConnected, isConnecting, connectWallet, accountId } = useWallet();
+  const { accountId, isLoading: isConnecting, connect } = useWalletContext();
+  const isConnected = !!accountId;
+  const connectWallet = connect;
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const [referrerId, setReferrerId] = useState<string | null>(null);

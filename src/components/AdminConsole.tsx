@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useWallet } from '@/hooks/useWallet';
+import { useWalletContext } from '@/contexts/WalletConnectContext';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { WhitelistManager } from '@/components/admin/WhitelistManager';
@@ -16,7 +16,7 @@ import { calculateCardStats } from '@/utils/cardUtils';
 const ADMIN_WALLET = 'mr_bruts.tg';
 
 export const AdminConsole = () => {
-  const { accountId } = useWallet();
+  const { accountId } = useWalletContext();
   const { toast } = useToast();
   const [command, setCommand] = useState('');
   const [output, setOutput] = useState<string[]>([]);

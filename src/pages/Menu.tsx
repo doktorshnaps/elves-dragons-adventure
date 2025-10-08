@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { Settings } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useGameData } from "@/hooks/useGameData";
-import { useWallet } from "@/hooks/useWallet";
+import { useWalletContext } from "@/contexts/WalletConnectContext";
 import { useAdminCheck } from "@/hooks/useAdminCheck";
 
 import { useLanguage } from "@/hooks/useLanguage";
@@ -30,12 +30,12 @@ export const Menu = () => {
   const { language } = useLanguage();
   const { brightness, backgroundBrightness } = useBrightness();
   const {
-    isConnected,
     accountId,
-    isConnecting,
-    connectWallet,
-    disconnectWallet
-  } = useWallet();
+    isLoading: isConnecting,
+    connect: connectWallet,
+    disconnect: disconnectWallet
+  } = useWalletContext();
+  const isConnected = !!accountId;
   const { isAdmin } = useAdminCheck();
 
   // Загружаем данные при подключении кошелька

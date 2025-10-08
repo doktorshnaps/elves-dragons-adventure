@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { useWallet } from './useWallet';
+import { useWalletContext } from '@/contexts/WalletConnectContext';
 import { useNFTCards } from './useNFTCards';
 import { Card as CardType } from '@/types/cards';
 import { useToast } from './use-toast';
@@ -8,7 +8,8 @@ export const useNFTCardIntegration = () => {
   const [nftCards, setNftCards] = useState<CardType[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [hasSynced, setHasSynced] = useState(false);
-  const { isConnected, accountId } = useWallet();
+  const { accountId } = useWalletContext();
+  const isConnected = !!accountId;
   const { getUserNFTCards, syncNFTCards } = useNFTCards();
   const { toast } = useToast();
 

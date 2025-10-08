@@ -1,9 +1,10 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { useWallet } from './useWallet';
+import { useWalletContext } from '@/contexts/WalletConnectContext';
 
 export const useAdminCheck = () => {
-  const { accountId, isConnected } = useWallet();
+  const { accountId } = useWalletContext();
+  const isConnected = !!accountId;
   const [isAdmin, setIsAdmin] = useState(false);
   const [loading, setLoading] = useState(true);
 

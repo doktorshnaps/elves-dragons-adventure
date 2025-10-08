@@ -5,7 +5,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { useToast } from "@/hooks/use-toast";
 import { useErrorHandler } from "@/hooks/useErrorHandler";
 import { supabase } from "@/integrations/supabase/client";
-import { useWallet } from "@/hooks/useWallet";
+import { useWalletContext } from "@/contexts/WalletConnectContext";
 import { Copy, Users, TrendingUp, Gift, ChevronDown, ChevronRight } from "lucide-react";
 
 interface Referral {
@@ -135,7 +135,7 @@ export const ReferralTab = () => {
   const [whoReferredMe, setWhoReferredMe] = useState<{referrer_wallet_address: string, created_at: string} | null>(null);
   const { toast } = useToast();
   const { handleError, handleSuccess } = useErrorHandler();
-  const { accountId } = useWallet();
+  const { accountId } = useWalletContext();
 
   const referralLink = `https://preview--elves-dragons-adventure.lovable.app/auth?ref=${accountId}`;
 

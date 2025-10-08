@@ -1,6 +1,6 @@
 import { useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { useWallet } from './useWallet';
+import { useWalletContext } from '@/contexts/WalletConnectContext';
 
 interface RealTimeSyncOptions {
   onGameDataChange?: (payload: any) => void;
@@ -10,7 +10,7 @@ interface RealTimeSyncOptions {
 }
 
 export const useRealTimeSync = (options: RealTimeSyncOptions) => {
-  const { accountId } = useWallet();
+  const { accountId } = useWalletContext();
 
   const setupGameDataChannel = useCallback(() => {
     if (!accountId || !options.onGameDataChange) return null;

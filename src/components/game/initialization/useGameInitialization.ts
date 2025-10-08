@@ -2,11 +2,12 @@ import { useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { Card } from "@/types/cards";
 import { supabase } from "@/integrations/supabase/client";
-import { useWallet } from "@/hooks/useWallet";
+import { useWalletContext } from "@/contexts/WalletConnectContext";
 
 export const useGameInitialization = (setCards: (cards: Card[]) => void) => {
   const { toast } = useToast();
-  const { accountId, isConnected } = useWallet();
+  const { accountId } = useWalletContext();
+  const isConnected = !!accountId;
 
   useEffect(() => {
     if (!isConnected || !accountId) return;

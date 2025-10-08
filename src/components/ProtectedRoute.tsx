@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
-import { useWallet } from '@/hooks/useWallet';
+import { useWalletContext } from '@/contexts/WalletConnectContext';
 import { useWhitelist } from '@/hooks/useWhitelist';
 import { ComingSoon } from '@/components/ComingSoon';
 import { MaintenanceScreen } from '@/components/MaintenanceScreen';
@@ -11,7 +11,8 @@ interface ProtectedRouteProps {
 }
 
 export const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
-  const { isConnected, isConnecting, accountId } = useWallet();
+  const { accountId, isLoading: isConnecting } = useWalletContext();
+  const isConnected = !!accountId;
   const { isWhitelisted, loading: whitelistLoading } = useWhitelist();
   const location = useLocation();
   const lsConnected = (typeof window !== 'undefined' && localStorage.getItem('walletConnected') === 'true') || false;

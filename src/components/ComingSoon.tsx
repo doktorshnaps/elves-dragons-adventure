@@ -1,11 +1,11 @@
 import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
-import { useWallet } from '@/hooks/useWallet';
+import { useWalletContext } from '@/contexts/WalletConnectContext';
 import { useToast } from '@/hooks/use-toast';
 import { useBanStatus } from '@/hooks/useBanStatus';
 
 export const ComingSoon = () => {
-  const { disconnectWallet } = useWallet();
+  const { disconnect: disconnectWallet } = useWalletContext();
   const { toast } = useToast();
   const { isBanned, loading: banLoading } = useBanStatus();
 

@@ -1,9 +1,10 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { useWallet } from '@/hooks/useWallet';
+import { useWalletContext } from '@/contexts/WalletConnectContext';
 
 export const useWhitelist = () => {
-  const { accountId, isConnected } = useWallet();
+  const { accountId } = useWalletContext();
+  const isConnected = !!accountId;
   const [isWhitelisted, setIsWhitelisted] = useState<boolean | null>(null);
   const [loading, setLoading] = useState(true);
 

@@ -5,12 +5,12 @@ import { useGameData } from '@/hooks/useGameData';
 import { useToast } from '@/hooks/use-toast';
 import { generateCard } from '@/utils/cardUtils';
 import { supabase } from '@/integrations/supabase/client';
-import { useWallet } from '@/hooks/useWallet';
+import { useWalletContext } from '@/contexts/WalletConnectContext';
 
 export const useCardPackOpening = () => {
   const { gameData, loadGameData } = useGameData();
   const { toast } = useToast();
-  const { accountId } = useWallet();
+  const { accountId } = useWalletContext();
   const [isOpening, setIsOpening] = useState(false);
   const [revealedCard, setRevealedCard] = useState<CardType | null>(null);
   const [showRevealModal, setShowRevealModal] = useState(false);

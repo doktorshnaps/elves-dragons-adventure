@@ -1,9 +1,10 @@
 import { useEffect } from 'react';
 import { useGameStore } from '@/stores/gameStore';
-import { useWallet } from '@/hooks/useWallet';
+import { useWalletContext } from '@/contexts/WalletConnectContext';
 
 export const useAccountSync = () => {
-  const { isConnected, accountId } = useWallet();
+  const { accountId } = useWalletContext();
+  const isConnected = !!accountId;
   const { syncAccountData, initializeAccountData, clearAllData } = useGameStore();
 
   useEffect(() => {
