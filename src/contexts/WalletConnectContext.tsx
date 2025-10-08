@@ -48,71 +48,28 @@ export function WalletConnectProvider({ children }: { children: React.ReactNode 
 
         setSelector(sel);
 
-        // Гидратация активного аккаунта
+        // 1) Гидратация активного аккаунта синхронно из store
         try {
           const state = sel.store.getState();
           const active = state.accounts?.find((a: AccountState) => a.active);
-          
-          if (active?.accountId) {
-            setAccountId(active.accountId);
-            localStorage.setItem('walletConnected', 'true');
-            localStorage.setItem('walletAccountId', active.accountId);
-            console.log('💾 Wallet hydrated:', active.accountId);
-          } else {
-            // Проверяем localStorage для восстановления после редиректа
-            const savedAccountId = localStorage.getItem('walletAccountId');
-            const wasConnected = localStorage.getItem('walletConnected');
-            
-            if (wasConnected && savedAccountId) {
-              console.log('🔄 Restoring wallet from localStorage:', savedAccountId);
-              setAccountId(savedAccountId);
-              
-              // Даем время на полную инициализацию wallet-selector
-              setTimeout(async () => {
-                try {
-                  const freshState = sel.store.getState();
-                  const freshActive = freshState.accounts?.find((a: AccountState) => a.active);
-                  if (freshActive?.accountId) {
-                    setAccountId(freshActive.accountId);
-                    console.log('✅ Wallet fully restored:', freshActive.accountId);
-                  }
-                } catch (err) {
-                  console.warn("[wallet] delayed hydration error:", err);
-                }
-              }, 1000);
-            } else {
-              setAccountId(null);
-            }
-          }
+          setAccountId(active?.accountId || null);
         } catch (e) {
           console.warn("[wallet] store hydrate error:", e);
           setAccountId(null);
         }
 
-        // Подписка на изменения store
+        // 2) Подписка на изменения store
         try {
           unsubscribeRef.current?.();
         } catch {}
-
-        const subscription = sel.store.observable.subscribe((state) => {
-          const active = state.accounts?.find((a: AccountState) => a.active);
-          const newAccountId = active?.accountId || null;
-          setAccountId(newAccountId);
-          
-          // Обновляем localStorage
-          if (newAccountId) {
-            localStorage.setItem('walletConnected', 'true');
-            localStorage.setItem('walletAccountId', newAccountId);
-            console.log('💾 Wallet connected:', newAccountId);
-          } else {
-            localStorage.removeItem('walletConnected');
-            localStorage.removeItem('walletAccountId');
-            console.log('💾 Wallet disconnected');
-          }
+        
+        const subscription = sel.store.observable.subscribe((nextState) => {
+          const active = nextState.accounts?.find((a: AccountState) => a.active);
+          setAccountId(active?.accountId || null);
         });
-
         unsubscribeRef.current = () => subscription.unsubscribe();
 
+        setHasError(false);
         setIsLoading(false);
       } catch (err) {
         console.error("[wallet] init error:", err);
@@ -131,7 +88,7 @@ export function WalletConnectProvider({ children }: { children: React.ReactNode 
     };
   }, [tgWebApp]);
 
-  // Функция подключения кошелька напрямую через HOT Wallet
+  // Функция подключения кошелька через HOT Wallet
   const connect = async () => {
     if (!selector) {
       console.warn("[wallet] selector not ready");
@@ -141,6 +98,7 @@ export function WalletConnectProvider({ children }: { children: React.ReactNode 
       const wallet = await selector.wallet("hot-wallet");
       await (wallet as any).signIn({
         contractId: "",
+        methodNames: [],
       });
       console.log('✅ Wallet connection initiated');
     } catch (error) {
@@ -153,34 +111,15 @@ export function WalletConnectProvider({ children }: { children: React.ReactNode 
   const disconnect = async () => {
     if (!selector) return;
     try {
-      const wallet = await selector.wallet();
+      const state = selector.store.getState();
+      const activeWalletId = state.selectedWalletId;
+      if (!activeWalletId) return;
+      
+      const wallet = await selector.wallet(activeWalletId);
       await wallet.signOut();
       setAccountId(null);
       
-      // Очищаем localStorage от wallet данных
-      localStorage.removeItem('walletConnected');
-      localStorage.removeItem('walletAccountId');
-      
-      // Очищаем все игровые данные из localStorage
-      const gameKeys = [
-        'game-storage',
-        'gameCards',
-        'gameBalance',
-        'gameInventory',
-        'gameDragonEggs',
-        'gameSelectedTeam',
-        'game_balance',
-        'game_cards',
-        'game_inventory',
-        'game_dragonEggs',
-        'game_selectedTeam',
-        'game_accountLevel',
-        'game_accountExperience'
-      ];
-      
-      gameKeys.forEach(key => localStorage.removeItem(key));
-      
-      console.log('✅ Wallet disconnected and all localStorage cleared');
+      console.log('✅ Wallet disconnected');
     } catch (e) {
       console.warn("[wallet] disconnect error:", e);
     }

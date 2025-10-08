@@ -11,23 +11,13 @@ export async function initSelector({
   miniApp = false, 
   telegramInitData = "" 
 }: InitSelectorParams) {
-  // Перехватываем window.open для Telegram Mini App
-  if (miniApp && window.Telegram?.WebApp) {
-    const originalOpen = window.open;
-    window.open = function(url: any, target?: any, features?: any) {
-      if (typeof url === 'string' && url.includes('wallet.hot')) {
-        console.log('🔗 Opening HOT Wallet in Telegram:', url);
-        window.Telegram?.WebApp?.openLink(url);
-        return null;
-      }
-      return originalOpen.call(window, url, target, features);
-    };
-  }
-
   return await setupWalletSelector({
     network: "mainnet",
     modules: [
-      setupHotWallet(),
+      setupHotWallet({
+        miniApp,
+        telegramInitData,
+      } as any),
     ],
   });
 }
