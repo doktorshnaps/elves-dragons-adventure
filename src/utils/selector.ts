@@ -14,7 +14,10 @@ export async function initSelector({
   return await setupWalletSelector({
     network: "mainnet",
     modules: [
-      setupHotWallet(),
+      setupHotWallet({
+        miniApp,
+        telegramInitData,
+      }),
     ],
   });
 }
