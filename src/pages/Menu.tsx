@@ -10,7 +10,6 @@ import { useLanguage } from "@/hooks/useLanguage";
 import { t } from "@/utils/translations";
 import { SettingsMenu } from "@/components/SettingsMenu";
 import { useBrightness } from "@/hooks/useBrightness";
-import { BackgroundMusic } from "@/components/BackgroundMusic";
 import { useState, useEffect } from "react";
 
 // Import icons
@@ -51,9 +50,7 @@ export const Menu = () => {
     navigate('/auth');
   };
 
-  return <>
-    <BackgroundMusic />
-    <div className="app-shell min-h-screen p-4 bg-center bg-no-repeat relative" style={{ filter: `brightness(${brightness}%)` }}>
+  return <div className="app-shell min-h-screen p-4 bg-center bg-no-repeat relative" style={{ filter: `brightness(${brightness}%)` }}>
       <div 
         className="absolute inset-0 bg-center bg-no-repeat"
         style={{
@@ -199,6 +196,5 @@ export const Menu = () => {
         </div>
       )}
       
-    </div>
-  </>;
+    </div>;
 };
