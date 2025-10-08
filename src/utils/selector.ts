@@ -37,11 +37,6 @@ export async function initSelector({
           autoOpened = true;
           console.log('🔗 Auto-opening Telegram link from provider UI:', anchor.href);
           tg.openLink(anchor.href);
-          // Попробуем закрыть модалку провайдера, если есть кнопка закрытия
-          const closeBtn = document.querySelector(
-            'button[aria-label="Close"], button[aria-label="Close modal"], [data-test="close"], .close, .modal-close'
-          ) as HTMLElement | null;
-          try { closeBtn?.dispatchEvent(new MouseEvent('click', { bubbles: true })); } catch {}
           return true;
         }
         return false;
