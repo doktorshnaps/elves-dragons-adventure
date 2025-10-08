@@ -16,6 +16,7 @@ import { QueryProvider } from './providers/QueryProvider';
 import { useGameSync } from './hooks/useGameSync';
 import { preloadCriticalLibs } from './utils/bundleOptimizations';
 import { registerGameServiceWorker } from './utils/cacheStrategy';
+import { BackgroundMusic } from './components/BackgroundMusic';
 
 // Lazy imports
 import {
@@ -65,6 +66,7 @@ function App() {
         <BrightnessProvider>
           <MusicProvider>
             <LanguageProvider>
+              <BackgroundMusic />
               <Routes>
           <Route path="/" element={<Index />} />
           <Route path="/auth" element={<Auth />} />
