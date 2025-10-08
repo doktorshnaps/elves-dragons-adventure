@@ -1,5 +1,5 @@
 import React from 'react'; // Added React import
-import { Routes, Route, useLocation } from 'react-router-dom';
+import { Routes, Route } from 'react-router-dom';
 import { ErrorBoundary } from './components/common/ErrorBoundary';
 import { Toaster } from './components/ui/toaster';
 import { Menu } from './pages/Menu';
@@ -16,7 +16,7 @@ import { QueryProvider } from './providers/QueryProvider';
 import { useGameSync } from './hooks/useGameSync';
 import { preloadCriticalLibs } from './utils/bundleOptimizations';
 import { registerGameServiceWorker } from './utils/cacheStrategy';
-import { BackgroundMusic } from './components/BackgroundMusic';
+import { MusicController } from './components/MusicController';
 
 // Lazy imports
 import {
@@ -41,9 +41,6 @@ import {
 } from './components/lazy/LazyComponents';
 
 function App() {
-  const location = useLocation();
-  const shouldPlayMusic = location.pathname !== '/' && location.pathname !== '/auth';
-  
   // Добавляем обработку ошибок в хуках
   try {
     useAccountSync();
@@ -69,7 +66,7 @@ function App() {
         <BrightnessProvider>
           <MusicProvider>
             <LanguageProvider>
-              {shouldPlayMusic && <BackgroundMusic />}
+              <MusicController />
               <Routes>
           <Route path="/" element={<Index />} />
           <Route path="/auth" element={<Auth />} />
