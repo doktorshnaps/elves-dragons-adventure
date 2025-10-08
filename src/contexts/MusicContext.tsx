@@ -26,7 +26,8 @@ export const MusicProvider = ({ children }: { children: ReactNode }) => {
   useEffect(() => {
     localStorage.setItem('game-music-volume', volume.toString());
     if (audioRef.current) {
-      audioRef.current.volume = volume / 100;
+      // Квадратичная шкала для более точного контроля на низких значениях
+      audioRef.current.volume = Math.pow(volume / 100, 2);
     }
   }, [volume]);
 
