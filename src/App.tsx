@@ -11,6 +11,7 @@ import { useAccountSync } from './hooks/useAccountSync';
 import { useRoutePreloader } from './hooks/useRoutePreloader';
 import { LanguageProvider } from './contexts/LanguageContext';
 import { BrightnessProvider } from './contexts/BrightnessContext';
+import { MusicProvider } from './contexts/MusicContext';
 import { QueryProvider } from './providers/QueryProvider';
 import { useGameSync } from './hooks/useGameSync';
 import { preloadCriticalLibs } from './utils/bundleOptimizations';
@@ -62,8 +63,9 @@ function App() {
     <ErrorBoundary>
       <QueryProvider>
         <BrightnessProvider>
-          <LanguageProvider>
-            <Routes>
+          <MusicProvider>
+            <LanguageProvider>
+              <Routes>
           <Route path="/" element={<Index />} />
           <Route path="/auth" element={<Auth />} />
           <Route path="/menu" element={<ProtectedRoute><Menu /></ProtectedRoute>} />
@@ -88,9 +90,10 @@ function App() {
 <Route path="/dungeons/dark-mage" element={<ProtectedRoute><DarkMageTowerWithLazyLoading /></ProtectedRoute>} />
 <Route path="/dungeons/bone-dungeon" element={<ProtectedRoute><BoneDemonDungeonWithLazyLoading /></ProtectedRoute>} />
 <Route path="/dungeons/sea-serpent" element={<ProtectedRoute><SeaSerpentLairWithLazyLoading /></ProtectedRoute>} />
-            </Routes>
-            <Toaster />
-          </LanguageProvider>
+              </Routes>
+              <Toaster />
+            </LanguageProvider>
+          </MusicProvider>
         </BrightnessProvider>
       </QueryProvider>
     </ErrorBoundary>
