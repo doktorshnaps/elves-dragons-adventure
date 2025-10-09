@@ -17,6 +17,7 @@ interface ShelterUpgradesProps {
   getActiveWorkersInBuilding: (buildingId: string) => any[];
   buildingLevels: Record<string, number>;
   getUpgradeTime: (buildingId: string) => number;
+  isUpgradeReady: (buildingId: string) => boolean;
 }
 
 export const ShelterUpgrades = ({
@@ -29,7 +30,8 @@ export const ShelterUpgrades = ({
   hasWorkersInBuilding,
   getActiveWorkersInBuilding,
   buildingLevels,
-  getUpgradeTime
+  getUpgradeTime,
+  isUpgradeReady
 }: ShelterUpgradesProps) => {
   const { language } = useLanguage();
 
@@ -50,6 +52,7 @@ export const ShelterUpgrades = ({
             activeWorkersCount={activeWorkers.length}
             onUpgrade={() => handleUpgrade(upgrade)}
             formatRemainingTime={formatRemainingTime}
+            isUpgradeReady={isUpgradeReady(upgrade.id)}
           >
             {/* Особая логика для разных типов зданий */}
             {upgrade.id === 'sawmill' && buildingLevels.sawmill > 0 && (

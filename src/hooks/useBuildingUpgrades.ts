@@ -176,6 +176,10 @@ export const useBuildingUpgrades = () => {
     installUpgrade,
     getUpgradeProgress,
     isUpgrading,
-    formatRemainingTime
+    formatRemainingTime,
+    isUpgradeReady: (buildingId: string) => {
+      const upgrade = activeUpgrades.find(u => u.buildingId === buildingId);
+      return upgrade?.status === 'ready';
+    }
   };
 };

@@ -17,6 +17,7 @@ interface BuildingCardProps {
   onUpgrade: () => void;
   formatRemainingTime: (ms: number) => string;
   children?: React.ReactNode;
+  isUpgradeReady: boolean;
 }
 
 export const BuildingCard = ({
@@ -28,7 +29,8 @@ export const BuildingCard = ({
   activeWorkersCount,
   onUpgrade,
   formatRemainingTime,
-  children
+  children,
+  isUpgradeReady
 }: BuildingCardProps) => {
   const { language } = useLanguage();
   const requiresWorkers = upgrade.id !== 'main_hall' && upgrade.id !== 'storage';
@@ -115,9 +117,15 @@ export const BuildingCard = ({
             <Button
               className="w-full"
               onClick={onUpgrade}
-              disabled={!canAfford || isUpgrading}
+              disabled={(!canAfford && !isUpgradeReady) || (isUpgrading && !isUpgradeReady)}
+              variant={isUpgradeReady ? "default" : undefined}
             >
-              {isUpgrading ? t(language, 'shelter.upgrading') : t(language, 'shelter.upgrade')}
+              {isUpgradeReady 
+                ? t(language, 'shelter.install') 
+                : isUpgrading 
+                  ? t(language, 'shelter.upgrading') 
+                  : t(language, 'shelter.upgrade')
+              }
             </Button>
           </div>
         )}

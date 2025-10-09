@@ -41,7 +41,8 @@ export const Shelter = () => {
     isUpgrading,
     getUpgradeProgress,
     formatRemainingTime,
-    getUpgradeTime
+    getUpgradeTime,
+    isUpgradeReady
   } = useShelterState();
 
   return (
@@ -146,6 +147,7 @@ export const Shelter = () => {
               getActiveWorkersInBuilding={getActiveWorkersInBuilding}
               buildingLevels={buildingLevels}
               getUpgradeTime={getUpgradeTime}
+              isUpgradeReady={isUpgradeReady}
             />
           </TabsContent>
 

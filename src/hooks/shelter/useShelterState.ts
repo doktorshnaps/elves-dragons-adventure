@@ -38,7 +38,7 @@ export const useShelterState = () => {
   const { language } = useLanguage();
   const gameState = useBatchedGameState(); // Используем батчированную версию
   const { toast } = useToast();
-  const { startUpgradeAtomic, isUpgrading, getUpgradeProgress, formatRemainingTime } = useBuildingUpgrades();
+  const { startUpgradeAtomic, isUpgrading, getUpgradeProgress, formatRemainingTime, installUpgrade, isUpgradeReady } = useBuildingUpgrades();
   
   const [activeTab, setActiveTab] = useState<"upgrades" | "crafting" | "barracks" | "dragonlair" | "medical" | "workers">("upgrades");
   
@@ -296,6 +296,12 @@ export const useShelterState = () => {
   };
 
   const handleUpgrade = async (upgrade: NestUpgrade) => {
+    // Если улучшение готово к установке, устанавливаем его
+    if (isUpgradeReady(upgrade.id)) {
+      installUpgrade(upgrade.id);
+      return;
+    }
+
     if (!canAffordUpgrade(upgrade) || isUpgrading(upgrade.id)) return;
     
     const newResources = {
@@ -364,6 +370,7 @@ export const useShelterState = () => {
     isUpgrading,
     getUpgradeProgress,
     formatRemainingTime,
-    getUpgradeTime
+    getUpgradeTime,
+    isUpgradeReady
   };
 };
