@@ -60,26 +60,39 @@ export const MedicalBayComponent = () => {
     const cardsInMedicalBay = medicalBayEntries.map(entry => entry.card_instance_id);
     console.log('🏥 Cards in medical bay:', cardsInMedicalBay);
     
-    // Используем все карты с синхронизированным здоровьем
-    const allCardsWithHealth = [...cardsWithHealth];
+    // Создаем мапу для дедупликации по instanceId
+    const uniqueCardsMap = new Map();
     
-    // Добавляем карты из команды, которые могут не быть в общем списке
-    selectedTeamWithHealth.forEach(pair => {
-      if (pair.hero && !allCardsWithHealth.find(c => c.id === pair.hero.id)) {
-        allCardsWithHealth.push(pair.hero);
-      }
-      if (pair.dragon && !allCardsWithHealth.find(c => c.id === pair.dragon.id)) {
-        allCardsWithHealth.push(pair.dragon);
+    // Добавляем карты из cardsWithHealth
+    cardsWithHealth.forEach(card => {
+      const instance = cardInstances.find(ci => ci.card_template_id === card.id);
+      const instanceId = instance?.id || card.id;
+      if (!uniqueCardsMap.has(instanceId)) {
+        uniqueCardsMap.set(instanceId, { card, instance });
       }
     });
     
-    // Создаем мапу для быстрого поиска card instances
-    const instancesMap = new Map(cardInstances.map(ci => [ci.card_template_id, ci]));
+    // Добавляем карты из команды (только если еще нет)
+    selectedTeamWithHealth.forEach(pair => {
+      if (pair.hero) {
+        const instance = cardInstances.find(ci => ci.card_template_id === pair.hero.id);
+        const instanceId = instance?.id || pair.hero.id;
+        if (!uniqueCardsMap.has(instanceId)) {
+          uniqueCardsMap.set(instanceId, { card: pair.hero, instance });
+        }
+      }
+      if (pair.dragon) {
+        const instance = cardInstances.find(ci => ci.card_template_id === pair.dragon.id);
+        const instanceId = instance?.id || pair.dragon.id;
+        if (!uniqueCardsMap.has(instanceId)) {
+          uniqueCardsMap.set(instanceId, { card: pair.dragon, instance });
+        }
+      }
+    });
     
     // Фильтруем поврежденные карты
-    const injuredCards = allCardsWithHealth
-      .filter(card => {
-        const instance = instancesMap.get(card.id);
+    const injuredCards = Array.from(uniqueCardsMap.values())
+      .filter(({ card, instance }) => {
         const currentHealth = instance?.current_health ?? card.currentHealth ?? card.health;
         const maxHealth = instance?.max_health ?? card.health;
         const isInMedicalBay = instance?.is_in_medical_bay || (card as any).isInMedicalBay;
@@ -88,32 +101,18 @@ export const MedicalBayComponent = () => {
         const isInjured = currentHealth < maxHealth;
         const notInMedicalBay = !isInMedicalBay && !cardsInMedicalBay.includes(instanceId);
         
-        console.log('🏥 Card check:', {
-          name: card.name,
-          id: card.id,
-          instanceId,
-          currentHealth,
-          maxHealth,
-          isInjured,
-          isInMedicalBay,
-          notInMedicalBay
-        });
-        
         return isInjured && notInMedicalBay;
       })
-      .map(card => {
-        const instance = instancesMap.get(card.id);
-        return {
-          id: instance?.id || `virtual-${card.id}`,
-          card_template_id: card.id,
-          current_health: instance?.current_health ?? card.currentHealth ?? card.health,
-          max_health: instance?.max_health ?? card.health,
-          card_data: card,
-          wallet_address: instance?.wallet_address || ''
-        };
-      });
+      .map(({ card, instance }) => ({
+        id: instance?.id || `virtual-${card.id}`,
+        card_template_id: card.id,
+        current_health: instance?.current_health ?? card.currentHealth ?? card.health,
+        max_health: instance?.max_health ?? card.health,
+        card_data: card,
+        wallet_address: instance?.wallet_address || ''
+      }));
     
-    console.log('🏥 Found injured cards:', injuredCards.length, injuredCards);
+    console.log('🏥 Found injured cards:', injuredCards.length);
     return injuredCards;
   };
 
