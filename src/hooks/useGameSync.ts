@@ -55,9 +55,33 @@ export const useGameSync = () => {
   // Очищаем store при отключении или смене кошелька
   useEffect(() => {
     if (prevAccountIdRef.current && prevAccountIdRef.current !== accountId) {
-      console.log('🔄 Wallet changed, clearing store data');
+      console.log('🔄 Wallet changed, clearing store data and localStorage');
       gameStore.clearAllData();
       lastSyncedRef.current = null;
+      
+      // Очищаем localStorage от данных предыдущего кошелька
+      const keysToRemove = [
+        'gameData',
+        'gameCards',
+        'gameBalance',
+        'gameInitialized',
+        'gameInventory',
+        'marketplaceListings',
+        'socialQuests',
+        'adventurePlayerStats',
+        'adventureCurrentMonster',
+        'dragonEggs',
+        'battleState',
+        'selectedTeam'
+      ];
+      
+      keysToRemove.forEach(key => {
+        try {
+          localStorage.removeItem(key);
+        } catch (e) {
+          console.error(`Failed to remove ${key} from localStorage:`, e);
+        }
+      });
     }
     prevAccountIdRef.current = accountId;
   }, [accountId]);
