@@ -8,7 +8,6 @@ import { addAccountExperience, getLevelFromXP } from '@/utils/accountLeveling';
 import { useGameStore } from '@/stores/gameStore';
 import { applyDamageToPair } from '@/utils/battleHealthUtils';
 import { useGameData } from '@/hooks/useGameData';
-import { HERO_ABILITIES } from '@/types/abilities';
 import { useCardInstances } from '@/hooks/useCardInstances';
 import { calculateCardStats } from '@/utils/cardUtils';
 import { calculateD6Damage } from '@/utils/battleCalculations';
@@ -407,7 +406,6 @@ export const useTeamBattle = (dungeonType: DungeonType, initialLevel: number = 1
               }
             : targetPair.dragon,
           health: Math.min(heroMax, heroCurrent) + (targetPair.dragon ? Math.min(dragonMax, dragonCurrent) : 0),
-          mana: Math.max(0, targetPair.mana - 10),
         };
 
         setBattleState(prev => ({

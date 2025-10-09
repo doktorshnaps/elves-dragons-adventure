@@ -29,21 +29,7 @@ export const useCombat = (
     
     setPlayerStats(newStats);
     
-    let message = `${opponent.name} контратакует с силой ${opponent.power}!`;
-    if (blockedDamage > 0) {
-      message += ` Защита блокирует ${blockedDamage.toFixed(0)} урона.`;
-    }
-    if (damageToHealth > 0) {
-      message += ` Нанесено ${damageToHealth.toFixed(0)} урона здоровью!`;
-    }
-    message += ` Защита уменьшилась на ${(playerStats.defense - newDefense).toFixed(0)}.`;
-    
-    toast({
-      title: opponent.isBoss ? "⚠️ Контратака босса!" : "Враг контратакует!",
-      description: message,
-      variant: opponent.isBoss ? "destructive" : "default",
-      duration: 1000
-    });
+    // Убрано системное уведомление во время боя
 
     const battleState = localStorage.getItem('battleState');
     if (battleState) {
@@ -61,14 +47,7 @@ export const useCombat = (
         const { damage, isCritical } = calculateDamage(playerStats.power);
         const newHealth = opponent.health - (damage || 0);
         
-        toast({
-          title: opponent.isBoss ? 
-            (isCritical ? "🎯 Критический удар по боссу!" : "⚔️ Атака босса!") :
-            (isCritical ? "Критическая атака!" : "Атака!"),
-          description: `Вы нанесли ${isCritical ? "критические " : ""}${damage ? damage.toFixed(0) : "0"} урона ${opponent.name}!`,
-          variant: isCritical ? "destructive" : "default",
-          duration: 1000
-        });
+        // Убрано системное уведомление во время боя
         
         if (newHealth <= 0) {
           handleOpponentDefeat(opponent);

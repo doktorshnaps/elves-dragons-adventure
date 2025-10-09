@@ -1,18 +1,15 @@
 import { Card, CardContent } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
-import { TeamCard } from "@/hooks/useAbilities";
 import { calculateCardStats } from "@/utils/cardUtils";
 import { useMemo } from "react";
 
 interface TeamCardDisplayProps {
-  card: TeamCard;
+  card: any;
   onClick: () => void;
   isSelected?: boolean;
 }
 
 export const TeamCardDisplay = ({ card, onClick, isSelected }: TeamCardDisplayProps) => {
-  const hasAbilities = card.abilities.length > 0;
-  
   // Пересчитываем характеристики с учётом класса и редкости
   const stats = useMemo(() => 
     calculateCardStats(card.name, card.rarity, card.type), 
@@ -23,7 +20,7 @@ export const TeamCardDisplay = ({ card, onClick, isSelected }: TeamCardDisplayPr
     <Card 
       className={`cursor-pointer transition-all hover:scale-105 ${
         isSelected ? 'ring-2 ring-game-accent' : ''
-      } ${hasAbilities ? 'border-blue-400' : 'border-game-accent'}`}
+      } border-game-accent`}
       onClick={onClick}
     >
       <CardContent className="p-3">
@@ -41,19 +38,6 @@ export const TeamCardDisplay = ({ card, onClick, isSelected }: TeamCardDisplayPr
             />
           </div>
 
-          {/* Мана (только для героев со способностями) */}
-          {hasAbilities && (
-            <div className="mb-2">
-              <div className="text-xs text-blue-400 mb-1">
-                Мана: {card.currentMana}/{card.maxMana}
-              </div>
-              <Progress 
-                value={(card.currentMana / card.maxMana) * 100} 
-                className="h-2"
-              />
-            </div>
-          )}
-
           {/* Статистики */}
           <div className="grid grid-cols-3 gap-2 text-xs">
             <div className="text-red-400">
@@ -69,13 +53,6 @@ export const TeamCardDisplay = ({ card, onClick, isSelected }: TeamCardDisplayPr
               <div>{stats.magic}</div>
             </div>
           </div>
-
-          {/* Индикатор способностей */}
-          {hasAbilities && (
-            <div className="mt-2 text-xs text-blue-400">
-              🔮 Способности: {card.abilities.length}
-            </div>
-          )}
         </div>
       </CardContent>
     </Card>

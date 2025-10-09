@@ -3,7 +3,6 @@ import { useInventoryState } from './useInventoryState';
 import { useBalanceState } from './useBalanceState';
 import { useOpponentsState } from './useOpponentsState';
 import { useCombat } from './useCombat';
-import { useAbilities } from './useAbilities';
 import { useToast } from './use-toast';
 import { useEffect } from 'react';
 import { usePlayerHealthCheck } from './battle/usePlayerHealthCheck';
@@ -40,14 +39,6 @@ export const useBattleState = (initialLevel: number = 1) => {
     handleOpponentDefeat
   );
 
-  const abilitySystem = useAbilities(
-    playerStats,
-    setPlayerStats,
-    opponents,
-    setOpponents,
-    teamCards
-  );
-
   const { handleNextLevel } = useDungeonLevelManager(playerStats, initialState, setOpponents);
 
   useBattleStateManager(playerStats, opponents, initialState, inventory, balance);
@@ -78,8 +69,6 @@ export const useBattleState = (initialLevel: number = 1) => {
     handleOpponentDefeat,
     updateBalance,
     updateInventory,
-    handleNextLevel,
-    // Система способностей
-    ...abilitySystem
+    handleNextLevel
   };
 };

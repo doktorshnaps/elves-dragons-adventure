@@ -1,5 +1,3 @@
-import { Ability } from './abilities';
-
 export interface TeamPair {
   id: string;
   hero: any;
@@ -9,9 +7,6 @@ export interface TeamPair {
   power: number;
   defense: number;
   attackOrder: number;
-  mana?: number;
-  maxMana?: number;
-  abilities?: Ability[];
 }
 
 export interface TeamBattleState {

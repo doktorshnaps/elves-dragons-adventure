@@ -10,9 +10,6 @@ import { useGameStore } from '@/stores/gameStore';
 import { getXPProgress } from '@/utils/accountLeveling';
 import { useNavigate } from 'react-router-dom';
 import { TeamHealthBars } from './TeamHealthBars';
-import { AbilitiesPanel } from './AbilitiesPanel';
-import { HERO_ABILITIES } from '@/types/abilities';
-import type { Ability } from '@/types/abilities';
 import { InlineDiceDisplay } from './InlineDiceDisplay';
 interface TeamBattleArenaProps {
   playerPairs: TeamPair[];
@@ -47,7 +44,6 @@ export const TeamBattleArena: React.FC<TeamBattleArenaProps> = ({
   const [attackedTarget, setAttackedTarget] = React.useState<number | null>(null);
   const [defendingPair, setDefendingPair] = React.useState<string | null>(null);
   const [autoBattle, setAutoBattle] = useState(false);
-  const [selectedAbility, setSelectedAbility] = useState<Ability | null>(null);
   
   // Dice roll state - теперь берем из реальных бросков
   const [isDiceRolling, setIsDiceRolling] = useState(false);
@@ -267,34 +263,12 @@ export const TeamBattleArena: React.FC<TeamBattleArenaProps> = ({
             </CardHeader>
             <CardContent className="h-full overflow-auto">
               <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-2">
-                {playerPairs.map((pair, index) => {
-                // Получаем способности для героя
-                const heroAbilities = HERO_ABILITIES[pair.hero.name] || [];
-                const hasAbilities = heroAbilities.length > 0;
-                const currentMana = pair.mana || 0;
-                const maxMana = pair.maxMana || pair.hero.magic || 0;
-                return <div key={pair.id} className={`p-4 rounded-lg border-2 transition-all cursor-pointer ${pair.health <= 0 ? 'bg-muted/50 border-muted opacity-50' : attackingPair === pair.id ? 'bg-red-500/30 border-red-500 animate-pulse scale-105 shadow-lg shadow-red-500/50' : defendingPair === pair.id ? 'bg-blue-500/30 border-blue-500 animate-pulse shadow-lg shadow-blue-500/50' : selectedPair === pair.id ? 'bg-primary/20 border-primary' : selectedAbility?.targetType === 'ally' && selectedTarget === pair.id ? 'bg-green-500/20 border-green-400' : selectedAbility?.targetType === 'ally' ? 'bg-card border-green-400 hover:border-green-500/50' : 'bg-card border-border hover:border-primary/50'}`} onClick={() => {
-                  if (pair.health > 0 && isPlayerTurn) {
-                    // Если выбираем нового персонажа, отменяем способность
-                    if (selectedPair !== pair.id && selectedAbility) {
-                      setSelectedAbility(null);
-                      setSelectedTarget(null);
-                    }
-
-                    // Если способность выбрана и это способность исцеления
-                    if (selectedAbility && selectedAbility.targetType === 'ally') {
-                      // Если повторно нажимаем на ту же цель, отменяем выбор
-                      if (selectedTarget === pair.id) {
-                        setSelectedTarget(null);
-                      } else {
-                        setSelectedTarget(pair.id);
-                      }
-                    } else {
-                      // Просто выбираем персонажа
+                {playerPairs.map((pair, index) => (
+                  <div key={pair.id} className={`p-4 rounded-lg border-2 transition-all cursor-pointer ${pair.health <= 0 ? 'bg-muted/50 border-muted opacity-50' : attackingPair === pair.id ? 'bg-red-500/30 border-red-500 animate-pulse scale-105 shadow-lg shadow-red-500/50' : defendingPair === pair.id ? 'bg-blue-500/30 border-blue-500 animate-pulse shadow-lg shadow-blue-500/50' : selectedPair === pair.id ? 'bg-primary/20 border-primary' : 'bg-card border-border hover:border-primary/50'}`} onClick={() => {
+                    if (pair.health > 0 && isPlayerTurn) {
                       setSelectedPair(pair.id);
                     }
-                  }
-                }}>
+                  }}>
                       <div className="flex flex-col items-center gap-2">
                         <div className="flex gap-1">
                           {/* Hero Image */}
@@ -333,15 +307,6 @@ export const TeamBattleArena: React.FC<TeamBattleArenaProps> = ({
                           </div>
                         </div>
 
-                        {/* Mana Bar */}
-                        {hasAbilities && maxMana > 0 && <div className="w-full">
-                            <Progress value={currentMana / maxMana * 100} className="h-1" />
-                            <div className="text-xs text-center text-blue-400 mt-1">
-                              <Zap className="w-3 h-3 inline mr-1" />
-                              {currentMana}/{maxMana}
-                            </div>
-                          </div>}
-
                         {/* Stats */}
                         <div className="flex gap-2 text-xs">
                           <span className="flex items-center">
@@ -353,25 +318,9 @@ export const TeamBattleArena: React.FC<TeamBattleArenaProps> = ({
                             {pair.defense}
                           </span>
                         </div>
-
-                        {/* Abilities Button */}
-                        {hasAbilities && <Button size="sm" variant="outline" className="h-6 px-2 text-xs border-blue-400/50 text-blue-400 hover:bg-blue-500/20 w-full" onClick={e => {
-                      e.stopPropagation();
-                      if (heroAbilities.length === 1) {
-                        // Если способность одна, сразу выбираем её
-                        const ability = heroAbilities[0];
-                        if (currentMana >= ability.manaCost) {
-                          setSelectedAbility(ability);
-                          setSelectedPair(pair.id);
-                          setSelectedTarget(null);
-                        }
-                      }
-                    }} disabled={!isPlayerTurn || pair.health <= 0}>
-                            🔮 Способности
-                          </Button>}
                       </div>
-                    </div>;
-              })}
+                    </div>
+                ))}
               </div>
             </CardContent>
           </Card>
@@ -384,14 +333,6 @@ export const TeamBattleArena: React.FC<TeamBattleArenaProps> = ({
                   {isPlayerTurn ? <span className="text-primary">Ваш ход</span> : <span className="text-destructive">Ход противника</span>}
                 </div>
                 
-                {selectedAbility && selectedPair && <AbilitiesPanel selectedPair={playerPairs.find(p => p.id === selectedPair) || null} selectedAbility={selectedAbility} onSelectAbility={ability => {
-                setSelectedAbility(ability);
-                setSelectedTarget(null);
-              }} onCancelAbility={() => {
-                setSelectedAbility(null);
-                setSelectedPair(null);
-                setSelectedTarget(null);
-              }} />}
                 
                   <div className="space-y-1">
                   {/* Всегда показываем кубики */}
