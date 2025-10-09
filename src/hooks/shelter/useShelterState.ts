@@ -41,6 +41,24 @@ export const useShelterState = () => {
   const { startUpgradeAtomic, isUpgrading, getUpgradeProgress, formatRemainingTime, installUpgrade, isUpgradeReady } = useBuildingUpgrades();
   
   const [activeTab, setActiveTab] = useState<"upgrades" | "crafting" | "barracks" | "dragonlair" | "medical" | "workers">("upgrades");
+  const [balance, setBalance] = useState(gameState.balance);
+  
+  // Синхронизируем баланс с gameState
+  useEffect(() => {
+    setBalance(gameState.balance);
+  }, [gameState.balance]);
+  
+  // Подписка на события обновления баланса
+  useEffect(() => {
+    const handleBalanceUpdate = (e: any) => {
+      if (e.detail?.balance !== undefined) {
+        setBalance(e.detail.balance);
+      }
+    };
+    
+    window.addEventListener('balanceUpdate', handleBalanceUpdate as EventListener);
+    return () => window.removeEventListener('balanceUpdate', handleBalanceUpdate as EventListener);
+  }, []);
   
   // Получаем активных рабочих: сначала из gameState, при пустом значении — из localStorage
   const getActiveWorkersSafe = () => {
@@ -371,6 +389,7 @@ export const useShelterState = () => {
     getUpgradeProgress,
     formatRemainingTime,
     getUpgradeTime,
-    isUpgradeReady
+    isUpgradeReady,
+    balance
   };
 };
