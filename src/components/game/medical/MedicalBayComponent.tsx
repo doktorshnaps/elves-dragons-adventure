@@ -319,7 +319,7 @@ export const MedicalBayComponent = () => {
                         </div>
                         
                         <div className="text-sm text-muted-foreground mt-2">
-                          Скорость лечения: {entry.heal_rate} HP/мин
+                          Скорость лечения: {HEAL_RATE} HP/мин
                         </div>
                       </div>
                     </div>
