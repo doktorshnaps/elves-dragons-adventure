@@ -193,7 +193,7 @@ export const MedicalBayComponent = () => {
         <CardContent>
           <div className="space-y-4">
             <div className="text-sm text-muted-foreground">
-              <p>• Скорость лечения: 1 HP/мин</p>
+              <p>• Скорость лечения: 100 HP/мин</p>
               <p>• Активных лечений: {medicalBayEntries.length}/3</p>
               <p>• Раненых карт: {injuredCards.length}</p>
             </div>
