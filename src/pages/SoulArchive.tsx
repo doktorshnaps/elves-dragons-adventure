@@ -85,124 +85,88 @@ export const SoulArchive = () => {
     try {
       setLoading(true);
       
-      // Получаем всех игроков
-      const { data: players, error: playersError } = await supabase
-        .from('game_data')
-        .select('wallet_address')
-        .eq('initialized', true);
+      // Используем новую RPC функцию для получения всей статистики
+      const { data, error } = await supabase.rpc('get_referral_stats');
 
-      if (playersError) throw playersError;
+      if (error) {
+        console.error('Error loading referral stats:', error);
+        throw error;
+      }
 
-      // Получаем все активные рефералы
-      const { data: referrals, error: refError } = await supabase
-        .from('referrals')
-        .select('referrer_wallet_address, referred_wallet_address, created_at, is_active')
-        .eq('is_active', true);
-
-      if (refError) {
-        console.error('Referrals query error:', refError);
-        // Если не можем получить данные напрямую, используем RPC функцию
-        toast({
-          title: "Информация",
-          description: "Данные о рефералах загружаются...",
-        });
-        setLoading(false);
+      if (!data) {
+        console.warn('No data returned from get_referral_stats');
         return;
       }
 
-      // Получаем все WL адреса
-      const { data: whitelisted, error: wlError } = await supabase
-        .from('whitelist')
-        .select('wallet_address')
-        .eq('is_active', true);
+      console.log('📊 Soul Archive stats loaded:', data);
 
-      if (wlError) throw wlError;
-
-      const wlAddresses = new Set(whitelisted?.map(w => w.wallet_address) || []);
-      
-      // Границы текущей недели
-      const { monday, sunday } = getWeekBounds();
-
-      // Группируем рефералы по реферерам
-      const statsMap = new Map<string, ReferralStats>();
-
-      referrals?.forEach(ref => {
-        const referrer = ref.referrer_wallet_address;
-        const hasWL = wlAddresses.has(ref.referred_wallet_address);
-        const createdAt = new Date(ref.created_at);
-        const isThisWeek = createdAt >= monday && createdAt <= sunday;
-
-        if (!statsMap.has(referrer)) {
-          statsMap.set(referrer, {
-            wallet_address: referrer,
-            total_referrals: 0,
-            wl_referrals: 0,
-            no_wl_referrals: 0,
-            weekly_referrals: 0,
-            weekly_wl_referrals: 0,
-            weekly_no_wl_referrals: 0,
-          });
-        }
-
-        const stats = statsMap.get(referrer)!;
-        stats.total_referrals++;
-        
-        if (hasWL) {
-          stats.wl_referrals++;
-        } else {
-          stats.no_wl_referrals++;
-        }
-
-        if (isThisWeek) {
-          stats.weekly_referrals++;
-          if (hasWL) {
-            stats.weekly_wl_referrals++;
-          } else {
-            stats.weekly_no_wl_referrals++;
-          }
-        }
-      });
-
-      const allStats = Array.from(statsMap.values());
-      
-      // Сортируем для all-time рейтинга
-      const sortedAllTime = [...allStats].sort((a, b) => b.total_referrals - a.total_referrals);
-      
-      // Сортируем для weekly рейтинга
-      const sortedWeekly = [...allStats].sort((a, b) => b.weekly_referrals - a.weekly_referrals);
-
-      // Вычисляем общую статистику
-      const totalPlayersCount = players?.length || 0;
-      const totalReferralsCount = referrals?.length || 0;
-      const totalWLCount = referrals?.filter(r => wlAddresses.has(r.referred_wallet_address)).length || 0;
-      const weeklyReferrals = referrals?.filter(r => {
-        const createdAt = new Date(r.created_at);
-        return createdAt >= monday && createdAt <= sunday;
-      }) || [];
-      const weeklyWLCount = weeklyReferrals.filter(r => wlAddresses.has(r.referred_wallet_address)).length;
-
-      const overall: OverallStats = {
-        totalPlayers: totalPlayersCount,
-        totalReferrals: totalReferralsCount,
-        totalWLReferrals: totalWLCount,
-        totalNoWLReferrals: totalReferralsCount - totalWLCount,
-        avgReferralsPerPlayer: allStats.length > 0 ? Math.round((totalReferralsCount / allStats.length) * 10) / 10 : 0,
-        weeklyTotalReferrals: weeklyReferrals.length,
-        weeklyWLReferrals: weeklyWLCount,
-        weeklyNoWLReferrals: weeklyReferrals.length - weeklyWLCount,
-        topReferrer: sortedAllTime[0]?.wallet_address || '-',
-        topReferrerCount: sortedAllTime[0]?.total_referrals || 0,
-        lastUpdated: new Date(),
+      const statsData = data as {
+        all_time: Array<{
+          wallet_address: string;
+          total_referrals: number;
+          wl_referrals: number;
+          no_wl_referrals: number;
+        }>;
+        weekly: Array<{
+          wallet_address: string;
+          weekly_referrals: number;
+          weekly_wl_referrals: number;
+          weekly_no_wl_referrals: number;
+        }>;
+        totals: {
+          totalPlayers: number;
+          totalReferrals: number;
+          weeklyTotalReferrals: number;
+        };
+        lastUpdated: string;
       };
 
-      console.log('📊 Soul Archive stats loaded:', {
-        totalPlayers: totalPlayersCount,
-        totalReferrals: totalReferralsCount,
-        referrersCount: allStats.length,
-      });
+      // Преобразуем данные all_time в нужный формат
+      const allTimeStats: ReferralStats[] = statsData.all_time.map(item => ({
+        wallet_address: item.wallet_address,
+        total_referrals: item.total_referrals,
+        wl_referrals: item.wl_referrals,
+        no_wl_referrals: item.no_wl_referrals,
+        weekly_referrals: 0,
+        weekly_wl_referrals: 0,
+        weekly_no_wl_referrals: 0,
+      }));
 
-      setAllTimeStats(sortedAllTime);
-      setWeeklyStats(sortedWeekly);
+      // Преобразуем данные weekly в нужный формат
+      const weeklyStats: ReferralStats[] = statsData.weekly.map(item => ({
+        wallet_address: item.wallet_address,
+        total_referrals: 0,
+        wl_referrals: 0,
+        no_wl_referrals: 0,
+        weekly_referrals: item.weekly_referrals,
+        weekly_wl_referrals: item.weekly_wl_referrals,
+        weekly_no_wl_referrals: item.weekly_no_wl_referrals,
+      }));
+
+      // Подсчитываем WL/noWL для общей статистики
+      const totalWLReferrals = allTimeStats.reduce((sum, stat) => sum + stat.wl_referrals, 0);
+      const totalNoWLReferrals = allTimeStats.reduce((sum, stat) => sum + stat.no_wl_referrals, 0);
+      const weeklyWLReferrals = weeklyStats.reduce((sum, stat) => sum + stat.weekly_wl_referrals, 0);
+      const weeklyNoWLReferrals = weeklyStats.reduce((sum, stat) => sum + stat.weekly_no_wl_referrals, 0);
+
+      const overall: OverallStats = {
+        totalPlayers: statsData.totals.totalPlayers,
+        totalReferrals: statsData.totals.totalReferrals,
+        totalWLReferrals: totalWLReferrals,
+        totalNoWLReferrals: totalNoWLReferrals,
+        avgReferralsPerPlayer: allTimeStats.length > 0 
+          ? Math.round((statsData.totals.totalReferrals / allTimeStats.length) * 10) / 10 
+          : 0,
+        weeklyTotalReferrals: statsData.totals.weeklyTotalReferrals,
+        weeklyWLReferrals: weeklyWLReferrals,
+        weeklyNoWLReferrals: weeklyNoWLReferrals,
+        topReferrer: allTimeStats[0]?.wallet_address || '-',
+        topReferrerCount: allTimeStats[0]?.total_referrals || 0,
+        lastUpdated: new Date(statsData.lastUpdated),
+      };
+
+      setAllTimeStats(allTimeStats);
+      setWeeklyStats(weeklyStats);
       setOverallStats(overall);
     } catch (error) {
       console.error('Error loading referral stats:', error);
@@ -218,33 +182,22 @@ export const SoulArchive = () => {
 
   const loadReferralDetails = async (wallet: string, wlFilter: boolean | null) => {
     try {
-      const { data: referrals, error: refError } = await supabase
-        .from('referrals')
-        .select('referred_wallet_address, created_at')
-        .eq('referrer_wallet_address', wallet)
-        .eq('is_active', true);
+      // Используем новую RPC функцию для получения деталей
+      const { data, error } = await supabase.rpc('get_referral_details', {
+        p_referrer_wallet: wallet,
+        p_wl_only: wlFilter
+      });
 
-      if (refError) throw refError;
-
-      const { data: whitelisted, error: wlError } = await supabase
-        .from('whitelist')
-        .select('wallet_address')
-        .eq('is_active', true);
-
-      if (wlError) throw wlError;
-
-      const wlAddresses = new Set(whitelisted?.map(w => w.wallet_address) || []);
-
-      let details = referrals?.map(ref => ({
-        wallet_address: ref.referred_wallet_address,
-        created_at: ref.created_at,
-        has_wl: wlAddresses.has(ref.referred_wallet_address),
-      })) || [];
-
-      // Фильтруем по WL если нужно
-      if (wlFilter !== null) {
-        details = details.filter(d => d.has_wl === wlFilter);
+      if (error) {
+        console.error('Error loading referral details:', error);
+        throw error;
       }
+
+      const details: ReferralDetail[] = (data || []).map((item: any) => ({
+        wallet_address: item.wallet_address,
+        created_at: item.created_at,
+        has_wl: item.has_wl,
+      }));
 
       setReferralDetails(details);
       setSelectedReferrer(wallet);
