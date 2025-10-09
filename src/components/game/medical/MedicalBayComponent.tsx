@@ -27,6 +27,7 @@ export const MedicalBayComponent = () => {
   const { cardsWithHealth, selectedTeamWithHealth } = useCardsWithHealth();
   const gameState = useUnifiedGameState();
   const [selectedCard, setSelectedCard] = useState<any>(null);
+  const HEAL_RATE = 100;
 
   useEffect(() => {
     loadMedicalBayEntries();
@@ -203,7 +204,7 @@ export const MedicalBayComponent = () => {
         <CardContent>
           <div className="space-y-4">
             <div className="text-sm text-muted-foreground">
-              <p>• Скорость лечения: 100 HP/мин</p>
+              <p>• Скорость лечения: {HEAL_RATE} HP/мин</p>
               <p>• Активных лечений: {medicalBayEntries.length}/3</p>
               <p>• Раненых карт: {injuredCards.length}</p>
             </div>
@@ -464,11 +465,11 @@ export const MedicalBayComponent = () => {
                   </div>
                   <div className="flex justify-between">
                     <span>Время лечения:</span>
-                    <span>{Math.ceil((selectedCard.max_health - selectedCard.current_health) / 1)} мин</span>
+                    <span>{Math.ceil((selectedCard.max_health - selectedCard.current_health) / HEAL_RATE)} мин</span>
                   </div>
                   <div className="flex justify-between">
                     <span>Скорость:</span>
-                    <span>1 HP/мин</span>
+                    <span>{HEAL_RATE} HP/мин</span>
                   </div>
                 </div>
               </div>
