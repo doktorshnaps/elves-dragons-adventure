@@ -139,7 +139,41 @@ export function WalletConnectProvider({ children }: { children: React.ReactNode 
       await wallet.signOut();
       setAccountId(null);
       
-      console.log('✅ Wallet disconnected');
+      // КРИТИЧЕСКИ ВАЖНО: Полная очистка всех игровых данных из localStorage
+      const keysToRemove = [
+        'walletAccountId',
+        'walletConnected',
+        'gameData',
+        'gameCards',
+        'gameBalance',
+        'gameInitialized',
+        'gameInventory',
+        'marketplaceListings',
+        'socialQuests',
+        'adventurePlayerStats',
+        'adventureCurrentMonster',
+        'dragonEggs',
+        'battleState',
+        'selectedTeam',
+        'activeBattleInProgress',
+        'battleHeroes',
+        'battleDragons',
+        'barracksUpgrades',
+        'dragonLairUpgrades'
+      ];
+      
+      keysToRemove.forEach(key => {
+        try {
+          localStorage.removeItem(key);
+        } catch (e) {
+          console.error(`Failed to remove ${key} from localStorage:`, e);
+        }
+      });
+      
+      // Отправляем событие для очистки store
+      window.dispatchEvent(new CustomEvent('wallet-disconnected'));
+      
+      console.log('✅ Wallet disconnected and all game data cleared');
     } catch (e) {
       console.warn("[wallet] disconnect error:", e);
     }

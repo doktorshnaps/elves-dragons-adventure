@@ -55,7 +55,7 @@ export const useGameSync = () => {
   // Очищаем store при отключении или смене кошелька
   useEffect(() => {
     if (prevAccountIdRef.current && prevAccountIdRef.current !== accountId) {
-      console.log('🔄 Wallet changed, clearing store data and localStorage');
+      console.log('🔄 Wallet changed, clearing all cached data');
       gameStore.clearAllData();
       lastSyncedRef.current = null;
       
@@ -82,6 +82,15 @@ export const useGameSync = () => {
           console.error(`Failed to remove ${key} from localStorage:`, e);
         }
       });
+      
+      // Очищаем memory cache
+      try {
+        const { gameCache } = require('@/utils/cacheStrategy');
+        gameCache.clear();
+        console.log('✅ Memory cache cleared');
+      } catch (e) {
+        console.warn('Failed to clear memory cache:', e);
+      }
     }
     prevAccountIdRef.current = accountId;
   }, [accountId]);

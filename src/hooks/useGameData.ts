@@ -80,7 +80,30 @@ export const useGameData = () => {
     isLoadingRef.current = true;
 
     try {
-      console.log('🔄 Loading game data for wallet:', address);
+      console.log('🔄 Loading game data from DB for wallet:', address);
+      
+      // КРИТИЧЕСКИ ВАЖНО: Очищаем localStorage перед загрузкой свежих данных из БД
+      // Это гарантирует, что мы не будем использовать старые данные
+      const gameDataKeys = [
+        'gameData',
+        'gameCards', 
+        'gameBalance',
+        'gameInitialized',
+        'gameInventory',
+        'marketplaceListings',
+        'socialQuests',
+        'adventurePlayerStats',
+        'adventureCurrentMonster',
+        'dragonEggs',
+        'battleState',
+        'selectedTeam'
+      ];
+      
+      gameDataKeys.forEach(key => {
+        try {
+          localStorage.removeItem(key);
+        } catch (e) {}
+      });
       
       // Use deduplicated loader to prevent multiple simultaneous requests
       const gameDataArray = await loadGameDataDeduped(address);
@@ -355,7 +378,23 @@ export const useGameData = () => {
 
     const onWalletDisconnected = () => {
       setCurrentWallet(null);
-      setGameData((prev) => ({ ...prev, balance: 0 }));
+      // Полный сброс состояния игры
+      setGameData({
+        balance: 0,
+        cards: [],
+        initialized: false,
+        inventory: [],
+        marketplaceListings: [],
+        socialQuests: [],
+        adventurePlayerStats: null,
+        adventureCurrentMonster: null,
+        dragonEggs: [],
+        battleState: null,
+        selectedTeam: [],
+        barracksUpgrades: [],
+        dragonLairUpgrades: [],
+        activeWorkers: []
+      });
     };
 
     window.addEventListener('wallet-changed', onWalletChanged as EventListener);
