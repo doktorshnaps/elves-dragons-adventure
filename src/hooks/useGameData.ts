@@ -82,29 +82,6 @@ export const useGameData = () => {
     try {
       console.log('🔄 Loading game data from DB for wallet:', address);
       
-      // КРИТИЧЕСКИ ВАЖНО: Очищаем localStorage перед загрузкой свежих данных из БД
-      // Это гарантирует, что мы не будем использовать старые данные
-      const gameDataKeys = [
-        'gameData',
-        'gameCards', 
-        'gameBalance',
-        'gameInitialized',
-        'gameInventory',
-        'marketplaceListings',
-        'socialQuests',
-        'adventurePlayerStats',
-        'adventureCurrentMonster',
-        'dragonEggs',
-        'battleState',
-        'selectedTeam'
-      ];
-      
-      gameDataKeys.forEach(key => {
-        try {
-          localStorage.removeItem(key);
-        } catch (e) {}
-      });
-      
       // Use deduplicated loader to prevent multiple simultaneous requests
       const gameDataArray = await loadGameDataDeduped(address);
 
