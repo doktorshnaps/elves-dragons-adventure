@@ -88,11 +88,18 @@ export function WalletConnectProvider({ children }: { children: React.ReactNode 
     };
   }, [tgWebApp]);
 
-  // Синхронизация статуса подключения в localStorage (для роут-гвардов)
+  // Синхронизация статуса подключения и оповещение приложения
   useEffect(() => {
     try {
-      if (accountId) localStorage.setItem('walletConnected', 'true');
-      else localStorage.removeItem('walletConnected');
+      if (accountId) {
+        localStorage.setItem('walletConnected', 'true');
+        localStorage.setItem('walletAccountId', accountId);
+        // Уведомляем систему о смене кошелька, чтобы подтянуть данные из БД
+        window.dispatchEvent(new CustomEvent('wallet-changed', { detail: { walletAddress: accountId } }));
+      } else {
+        localStorage.removeItem('walletConnected');
+        localStorage.removeItem('walletAccountId');
+      }
     } catch {}
   }, [accountId]);
 
