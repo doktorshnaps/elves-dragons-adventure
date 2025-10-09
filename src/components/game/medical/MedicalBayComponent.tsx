@@ -10,6 +10,7 @@ import { useCardHealthSync } from '@/hooks/useCardHealthSync';
 import { useCardsWithHealth } from '@/hooks/useCardsWithHealth';
 import { useUnifiedGameState } from '@/hooks/useUnifiedGameState';
 import { CardDisplay } from '../CardDisplay';
+import { normalizeCardHealth } from '@/utils/cardHealthNormalizer';
 
 export const MedicalBayComponent = () => {
   const {
@@ -93,8 +94,10 @@ export const MedicalBayComponent = () => {
     // Фильтруем поврежденные карты
     const injuredCards = Array.from(uniqueCardsMap.values())
       .filter(({ card, instance }) => {
-        const currentHealth = instance?.current_health ?? card.currentHealth ?? card.health;
-        const maxHealth = instance?.max_health ?? card.health;
+        // Используем normalizeCardHealth для получения правильного max_health
+        const normalizedCard = normalizeCardHealth(card);
+        const currentHealth = instance?.current_health ?? card.currentHealth ?? normalizedCard.currentHealth ?? normalizedCard.health;
+        const maxHealth = normalizedCard.health; // Правильное максимальное здоровье
         const isInMedicalBay = instance?.is_in_medical_bay || (card as any).isInMedicalBay;
         const instanceId = instance?.id;
         
@@ -103,14 +106,18 @@ export const MedicalBayComponent = () => {
         
         return isInjured && notInMedicalBay;
       })
-      .map(({ card, instance }) => ({
-        id: instance?.id || `virtual-${card.id}`,
-        card_template_id: card.id,
-        current_health: instance?.current_health ?? card.currentHealth ?? card.health,
-        max_health: instance?.max_health ?? card.health,
-        card_data: card,
-        wallet_address: instance?.wallet_address || ''
-      }));
+      .map(({ card, instance }) => {
+        // Используем normalizeCardHealth для правильного max_health
+        const normalizedCard = normalizeCardHealth(card);
+        return {
+          id: instance?.id || `virtual-${card.id}`,
+          card_template_id: card.id,
+          current_health: instance?.current_health ?? card.currentHealth ?? normalizedCard.currentHealth ?? normalizedCard.health,
+          max_health: normalizedCard.health, // Правильное максимальное здоровье из нормализации
+          card_data: normalizedCard, // Используем нормализованную карту
+          wallet_address: instance?.wallet_address || ''
+        };
+      });
     
     console.log('🏥 Found injured cards:', injuredCards.length);
     return injuredCards;
