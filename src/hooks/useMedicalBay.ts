@@ -71,7 +71,7 @@ export const useMedicalBay = () => {
     if (!accountId) return;
 
     // Проверяем, есть ли назначенные рабочие в медпункт
-    const hasWorkersInMedical = gameData?.activeWorkers?.some((worker: any) => worker.assignedBuilding === 'medical') || false;
+    const hasWorkersInMedical = gameData?.activeWorkers?.some((worker: any) => worker.building === 'medical') || false;
     if (!hasWorkersInMedical) {
       toast({
         title: "Медпункт неактивен",

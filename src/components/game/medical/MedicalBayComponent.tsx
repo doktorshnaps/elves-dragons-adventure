@@ -39,7 +39,7 @@ export const MedicalBayComponent = () => {
       const hasWorkersInMedical = cardsWithHealth.some(card => 
         (card as any)?.assignedBuilding === 'medical'
       ) || 
-      gameState?.activeWorkers?.some((worker: any) => worker.assignedBuilding === 'medical') || false;
+      gameState?.activeWorkers?.some((worker: any) => worker.building === 'medical') || false;
       
       if (hasWorkersInMedical && medicalBayEntries.length > 0) {
         console.log('🏥 Processing automatic healing...');
