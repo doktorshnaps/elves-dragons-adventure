@@ -1472,6 +1472,14 @@ export type Database = {
         Args: { p_wallet_address: string }
         Returns: string
       }
+      get_referral_details: {
+        Args: { p_referrer_wallet: string; p_wl_only?: boolean }
+        Returns: {
+          created_at: string
+          has_wl: boolean
+          wallet_address: string
+        }[]
+      }
       get_referral_earnings_by_referrer: {
         Args: { p_wallet_address: string }
         Returns: {
@@ -1481,6 +1489,10 @@ export type Database = {
           level: number
           referred_wallet_address: string
         }[]
+      }
+      get_referral_stats: {
+        Args: Record<PropertyKey, never>
+        Returns: Json
       }
       get_referrals_by_referrer: {
         Args: { p_wallet_address: string }
