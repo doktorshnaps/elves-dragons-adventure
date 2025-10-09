@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { ArrowLeft, Users, UserCheck, UserX } from "lucide-react";
+import { ArrowLeft, Users, UserCheck, UserX, TrendingUp, Award, Clock } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useWalletContext } from "@/contexts/WalletConnectContext";
 import { useBrightness } from "@/hooks/useBrightness";
@@ -26,6 +26,20 @@ interface ReferralDetail {
   has_wl: boolean;
 }
 
+interface OverallStats {
+  totalPlayers: number;
+  totalReferrals: number;
+  totalWLReferrals: number;
+  totalNoWLReferrals: number;
+  avgReferralsPerPlayer: number;
+  weeklyTotalReferrals: number;
+  weeklyWLReferrals: number;
+  weeklyNoWLReferrals: number;
+  topReferrer: string;
+  topReferrerCount: number;
+  lastUpdated: Date;
+}
+
 export const SoulArchive = () => {
   const navigate = useNavigate();
   const { accountId } = useWalletContext();
@@ -34,13 +48,23 @@ export const SoulArchive = () => {
   
   const [allTimeStats, setAllTimeStats] = useState<ReferralStats[]>([]);
   const [weeklyStats, setWeeklyStats] = useState<ReferralStats[]>([]);
+  const [overallStats, setOverallStats] = useState<OverallStats | null>(null);
   const [loading, setLoading] = useState(true);
   const [selectedReferrer, setSelectedReferrer] = useState<string | null>(null);
   const [referralDetails, setReferralDetails] = useState<ReferralDetail[]>([]);
   const [showWL, setShowWL] = useState<boolean | null>(null);
 
+  // Загрузка статистики при монтировании и каждый час
   useEffect(() => {
     loadReferralStats();
+    
+    // Автообновление каждый час (3600000 мс)
+    const intervalId = setInterval(() => {
+      console.log('🔄 Auto-refreshing Soul Archive stats...');
+      loadReferralStats();
+    }, 3600000);
+
+    return () => clearInterval(intervalId);
   }, []);
 
   const getWeekBounds = () => {
@@ -130,8 +154,32 @@ export const SoulArchive = () => {
       // Сортируем для weekly рейтинга
       const sortedWeekly = [...allStats].sort((a, b) => b.weekly_referrals - a.weekly_referrals);
 
+      // Вычисляем общую статистику
+      const totalReferralsCount = referrals?.length || 0;
+      const totalWLCount = referrals?.filter(r => wlAddresses.has(r.referred_wallet_address)).length || 0;
+      const weeklyReferrals = referrals?.filter(r => {
+        const createdAt = new Date(r.created_at);
+        return createdAt >= monday && createdAt <= sunday;
+      }) || [];
+      const weeklyWLCount = weeklyReferrals.filter(r => wlAddresses.has(r.referred_wallet_address)).length;
+
+      const overall: OverallStats = {
+        totalPlayers: allStats.length,
+        totalReferrals: totalReferralsCount,
+        totalWLReferrals: totalWLCount,
+        totalNoWLReferrals: totalReferralsCount - totalWLCount,
+        avgReferralsPerPlayer: allStats.length > 0 ? Math.round((totalReferralsCount / allStats.length) * 10) / 10 : 0,
+        weeklyTotalReferrals: weeklyReferrals.length,
+        weeklyWLReferrals: weeklyWLCount,
+        weeklyNoWLReferrals: weeklyReferrals.length - weeklyWLCount,
+        topReferrer: sortedAllTime[0]?.wallet_address || '-',
+        topReferrerCount: sortedAllTime[0]?.total_referrals || 0,
+        lastUpdated: new Date(),
+      };
+
       setAllTimeStats(sortedAllTime);
       setWeeklyStats(sortedWeekly);
+      setOverallStats(overall);
     } catch (error) {
       console.error('Error loading referral stats:', error);
       toast({
@@ -275,11 +323,90 @@ export const SoulArchive = () => {
           Назад в меню
         </Button>
 
+        {/* Общая статистика */}
+        {overallStats && (
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+            <Card className="bg-black/50 border-2 border-white backdrop-blur-sm">
+              <CardContent className="p-4">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 bg-primary/20 rounded-lg">
+                    <Users className="w-6 h-6 text-white" />
+                  </div>
+                  <div>
+                    <div className="text-xs text-white/70">Всего игроков</div>
+                    <div className="text-2xl font-bold text-white">{overallStats.totalPlayers}</div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card className="bg-black/50 border-2 border-white backdrop-blur-sm">
+              <CardContent className="p-4">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 bg-green-500/20 rounded-lg">
+                    <TrendingUp className="w-6 h-6 text-green-400" />
+                  </div>
+                  <div>
+                    <div className="text-xs text-white/70">Всего рефералов</div>
+                    <div className="text-2xl font-bold text-white">{overallStats.totalReferrals}</div>
+                    <div className="text-xs text-white/60">
+                      WL: {overallStats.totalWLReferrals} | noWL: {overallStats.totalNoWLReferrals}
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card className="bg-black/50 border-2 border-white backdrop-blur-sm">
+              <CardContent className="p-4">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 bg-yellow-500/20 rounded-lg">
+                    <Award className="w-6 h-6 text-yellow-400" />
+                  </div>
+                  <div>
+                    <div className="text-xs text-white/70">Среднее на игрока</div>
+                    <div className="text-2xl font-bold text-white">{overallStats.avgReferralsPerPlayer}</div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card className="bg-black/50 border-2 border-white backdrop-blur-sm md:col-span-2">
+              <CardContent className="p-4">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 bg-blue-500/20 rounded-lg">
+                    <Clock className="w-6 h-6 text-blue-400" />
+                  </div>
+                  <div className="flex-1">
+                    <div className="text-xs text-white/70">За эту неделю</div>
+                    <div className="text-xl font-bold text-white">{overallStats.weeklyTotalReferrals} рефералов</div>
+                    <div className="text-xs text-white/60">
+                      WL: {overallStats.weeklyWLReferrals} | noWL: {overallStats.weeklyNoWLReferrals}
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card className="bg-black/50 border-2 border-white backdrop-blur-sm">
+              <CardContent className="p-4">
+                <div className="text-xs text-white/70 mb-1">Последнее обновление</div>
+                <div className="text-sm font-medium text-white">
+                  {overallStats.lastUpdated.toLocaleTimeString('ru-RU')}
+                </div>
+                <div className="text-xs text-white/60 mt-1">
+                  Авто-обновление каждый час
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        )}
+
         <Card className="bg-black/50 border-2 border-white backdrop-blur-sm">
           <CardHeader>
             <CardTitle className="text-2xl font-bold text-white flex items-center gap-2">
               <img src="/src/assets/soul-archive-icon.png" alt="Soul Archive" className="w-8 h-8" />
-              Архив Душ
+              Рейтинг рефералов
             </CardTitle>
           </CardHeader>
           <CardContent>
