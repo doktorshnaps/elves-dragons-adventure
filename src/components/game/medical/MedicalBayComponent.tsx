@@ -131,16 +131,26 @@ export const MedicalBayComponent = () => {
     console.log('🏥 Starting healing for card:', selectedCard);
     
     // Если это виртуальная карта (нет реального экземпляра), создаем экземпляр
-    let cardInstanceId = selectedCard.id;
-    if (selectedCard.id.startsWith('virtual-')) {
+    let cardInstanceId = selectedCard.id as string;
+    if (String(selectedCard.id).startsWith('virtual-')) {
       console.log('🏥 Creating instance for virtual card:', selectedCard.card_template_id);
       // Используем card_template_id для создания экземпляра
       cardInstanceId = selectedCard.card_template_id;
     }
-    
-    await placeCardInMedicalBay(cardInstanceId);
-    await syncHealthFromInstances(); // Синхронизируем данные после помещения в медпункт
-    setSelectedCard(null);
+
+    try {
+      await placeCardInMedicalBay(cardInstanceId);
+      console.log('🏥 Placed in medical bay, reloading data...');
+      await Promise.all([
+        loadCardInstances(),
+        loadMedicalBayEntries(),
+        syncHealthFromInstances(),
+      ]);
+      console.log('🏥 Data reloaded after placing in medical bay');
+      setSelectedCard(null);
+    } catch (error) {
+      console.error('🏥 Error starting healing:', error);
+    }
   };
 
   const getEstimatedTimeRemaining = (estimatedCompletion: string) => {
