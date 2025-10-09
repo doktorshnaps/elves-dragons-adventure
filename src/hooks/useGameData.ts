@@ -7,6 +7,7 @@ import { initializeCardHealth } from '@/utils/cardHealthUtils';
 import { updateGameDataByWalletThrottled } from '@/utils/updateGameDataThrottle';
 import { loadGameDataDeduped } from '@/utils/gameDataLoader';
 import { localStorageBatcher } from '@/utils/localStorageBatcher';
+import { normalizeCardsHealth } from '@/utils/cardHealthNormalizer';
 
 interface GameData {
   balance: number;
@@ -89,16 +90,31 @@ export const useGameData = () => {
         const gameRecord = gameDataArray[0];
         console.log('✅ Game data loaded successfully:', gameRecord);
         
-        // Process cards without altering timestamps/health
+        // Process cards - normalize health to fix corrupted values
         const rawCards = (gameRecord.cards as unknown as Card[]) || [];
-        const initializedCards = rawCards.map(card => ({
-          ...card
-        }));
-        // Do not modify lastHealTime or currentHealth here
+        const normalizedCards = normalizeCardsHealth(rawCards);
+        
+        // Check if any cards were fixed and save back to DB
+        const hadCorruptedHealth = rawCards.some((card, i) => 
+          card.health !== normalizedCards[i].health
+        );
+        
+        if (hadCorruptedHealth) {
+          console.log('🔧 Found corrupted health values, fixing in database...');
+          // Save normalized cards back to database
+          try {
+            await updateGameDataByWalletThrottled({
+              p_wallet_address: address,
+              p_cards: normalizedCards as any
+            });
+          } catch (e) {
+            console.error('Failed to save normalized cards:', e);
+          }
+        }
         
         const newGameData: GameData = {
           balance: gameRecord.balance || 0,
-          cards: initializedCards,
+          cards: normalizedCards,
           initialized: gameRecord.initialized || false,
           inventory: (gameRecord.inventory as any[]) || [],
           marketplaceListings: (gameRecord.marketplace_listings as any[]) || [],
@@ -195,13 +211,13 @@ export const useGameData = () => {
       if (updates.iron !== undefined && updates.iron !== (gameData as any).iron) changedUpdates.iron = updates.iron;
       if (updates.gold !== undefined && updates.gold !== (gameData as any).gold) changedUpdates.gold = updates.gold;
 
-      // Cards: compare by id/currentHealth/lastHealTime/isInMedicalBay to avoid noise
+      // Cards: normalize health before comparing and saving
       if (updates.cards !== undefined) {
-        const a = Array.isArray(updates.cards) ? updates.cards : [];
+        const a = Array.isArray(updates.cards) ? normalizeCardsHealth(updates.cards) : [];
         const b = Array.isArray(gameData.cards) ? gameData.cards : [];
         const normalize = (arr: any[]) => arr.map((c) => ({ id: c.id, ch: c.currentHealth, lht: c.lastHealTime, mb: c.isInMedicalBay })).sort((x, y) => (x.id > y.id ? 1 : -1));
         if (!deepEqual(normalize(a), normalize(b))) {
-          changedUpdates.cards = updates.cards as any;
+          changedUpdates.cards = a as any;
         }
       }
 
