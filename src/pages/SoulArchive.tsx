@@ -294,7 +294,8 @@ export const SoulArchive = () => {
         <Button
           variant="outline"
           onClick={() => navigate('/menu')}
-          className="mb-4 border-2 border-white text-white hover:bg-white/10"
+          className="mb-4 bg-black/50 border-2 border-white rounded-3xl text-white hover:bg-black/70 hover:text-white backdrop-blur-sm"
+          style={{ boxShadow: '-33px 15px 10px rgba(0, 0, 0, 0.6)' }}
         >
           <ArrowLeft className="mr-2 h-4 w-4" />
           Назад в меню
