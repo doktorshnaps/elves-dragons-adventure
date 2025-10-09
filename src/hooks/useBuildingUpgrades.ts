@@ -53,7 +53,7 @@ export const useBuildingUpgrades = () => {
   const startUpgrade = (buildingId: string, duration: number, targetLevel: number) => {
     // Главный зал и склад не требуют рабочих
     if (buildingId !== 'main_hall' && buildingId !== 'storage') {
-      const hasWorkersInBuilding = gameState?.activeWorkers?.some((worker: any) => worker.assignedBuilding === buildingId) || false;
+      const hasWorkersInBuilding = gameState?.activeWorkers?.some((worker: any) => worker.building === buildingId) || false;
       if (!hasWorkersInBuilding) {
         toast({
           title: "Здание неактивно",
@@ -146,7 +146,7 @@ export const useBuildingUpgrades = () => {
     ) => {
       // Главный зал и склад не требуют рабочих
       if (buildingId !== 'main_hall' && buildingId !== 'storage') {
-        const hasWorkersInBuilding = gameState?.activeWorkers?.some((worker: any) => worker.assignedBuilding === buildingId) || false;
+        const hasWorkersInBuilding = gameState?.activeWorkers?.some((worker: any) => worker.building === buildingId) || false;
         if (!hasWorkersInBuilding) {
           toast({
             title: "Здание неактивно",
