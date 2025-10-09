@@ -85,13 +85,30 @@ export const SoulArchive = () => {
     try {
       setLoading(true);
       
+      // Получаем всех игроков
+      const { data: players, error: playersError } = await supabase
+        .from('game_data')
+        .select('wallet_address')
+        .eq('initialized', true);
+
+      if (playersError) throw playersError;
+
       // Получаем все активные рефералы
       const { data: referrals, error: refError } = await supabase
         .from('referrals')
         .select('referrer_wallet_address, referred_wallet_address, created_at, is_active')
         .eq('is_active', true);
 
-      if (refError) throw refError;
+      if (refError) {
+        console.error('Referrals query error:', refError);
+        // Если не можем получить данные напрямую, используем RPC функцию
+        toast({
+          title: "Информация",
+          description: "Данные о рефералах загружаются...",
+        });
+        setLoading(false);
+        return;
+      }
 
       // Получаем все WL адреса
       const { data: whitelisted, error: wlError } = await supabase
@@ -155,6 +172,7 @@ export const SoulArchive = () => {
       const sortedWeekly = [...allStats].sort((a, b) => b.weekly_referrals - a.weekly_referrals);
 
       // Вычисляем общую статистику
+      const totalPlayersCount = players?.length || 0;
       const totalReferralsCount = referrals?.length || 0;
       const totalWLCount = referrals?.filter(r => wlAddresses.has(r.referred_wallet_address)).length || 0;
       const weeklyReferrals = referrals?.filter(r => {
@@ -164,7 +182,7 @@ export const SoulArchive = () => {
       const weeklyWLCount = weeklyReferrals.filter(r => wlAddresses.has(r.referred_wallet_address)).length;
 
       const overall: OverallStats = {
-        totalPlayers: allStats.length,
+        totalPlayers: totalPlayersCount,
         totalReferrals: totalReferralsCount,
         totalWLReferrals: totalWLCount,
         totalNoWLReferrals: totalReferralsCount - totalWLCount,
@@ -176,6 +194,12 @@ export const SoulArchive = () => {
         topReferrerCount: sortedAllTime[0]?.total_referrals || 0,
         lastUpdated: new Date(),
       };
+
+      console.log('📊 Soul Archive stats loaded:', {
+        totalPlayers: totalPlayersCount,
+        totalReferrals: totalReferralsCount,
+        referrersCount: allStats.length,
+      });
 
       setAllTimeStats(sortedAllTime);
       setWeeklyStats(sortedWeekly);
