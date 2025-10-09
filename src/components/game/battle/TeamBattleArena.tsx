@@ -181,27 +181,7 @@ export const TeamBattleArena: React.FC<TeamBattleArenaProps> = ({
     }
   }, [autoBattle, isPlayerTurn, alivePairs.length, aliveOpponents.length]);
   return <div className="h-screen w-screen overflow-hidden p-2 flex flex-col relative">
-      {/* Removed old ability menu */}
-
       <div className="w-full h-full flex flex-col space-y-2">
-        {/* Индикатор выбранной способности */}
-        {selectedAbility && <Card className="bg-blue-500/20 border-blue-400">
-            <CardContent className="p-4">
-              <div className="text-blue-400 font-medium">
-                Выбрана способность: {selectedAbility.name}
-              </div>
-              <div className="text-sm text-muted-foreground">
-                {selectedAbility.description}. Выберите цель для применения.
-              </div>
-              <Button variant="outline" size="sm" onClick={() => {
-            setSelectedAbility(null);
-            setSelectedPair(null);
-          }} className="mt-2">
-                Отмена
-              </Button>
-            </CardContent>
-          </Card>}
-
         {/* Header */}
         <Card className="bg-card/50 backdrop-blur-sm border-primary/20">
           <CardHeader className="relative py-3">
@@ -381,12 +361,6 @@ export const TeamBattleArena: React.FC<TeamBattleArenaProps> = ({
                   </div>
 
                   {/* Подсказки только в ход игрока */}
-                  {isPlayerTurn && !autoBattle && selectedAbility ? (
-                    <div className="text-xs text-muted-foreground">
-                      Выберите цель для способности "{selectedAbility.name}"
-                    </div>
-                  ) : null}
-
                   {isPlayerTurn && !autoBattle && selectedPair && !selectedTarget && (
                     <div className="text-xs text-muted-foreground">
                       Выберите цель для атаки
@@ -418,19 +392,9 @@ export const TeamBattleArena: React.FC<TeamBattleArenaProps> = ({
             </CardHeader>
             <CardContent className="h-full overflow-auto">
               <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-2">
-                {opponents.map((opponent, index) => <div key={opponent.id} className={`relative rounded-lg border-2 transition-all overflow-hidden h-28 ${opponent.health <= 0 ? 'border-muted' : attackedTarget === opponent.id ? 'border-red-500 animate-pulse scale-105 shadow-lg shadow-red-500/50 cursor-pointer' : selectedTarget === opponent.id ? 'border-destructive bg-destructive/10 cursor-pointer' : selectedAbility?.targetType === 'enemy' ? 'border-red-400 hover:border-red-500/70 cursor-pointer' : 'border-border hover:border-destructive/50 cursor-pointer'}`} onClick={() => {
+                {opponents.map((opponent, index) => <div key={opponent.id} className={`relative rounded-lg border-2 transition-all overflow-hidden h-28 ${opponent.health <= 0 ? 'border-muted' : attackedTarget === opponent.id ? 'border-red-500 animate-pulse scale-105 shadow-lg shadow-red-500/50 cursor-pointer' : selectedTarget === opponent.id ? 'border-destructive bg-destructive/10 cursor-pointer' : 'border-border hover:border-destructive/50 cursor-pointer'}`} onClick={() => {
                 if (opponent.health > 0 && isPlayerTurn) {
-                  if (selectedAbility && selectedAbility.targetType === 'enemy') {
-                    // Если повторно нажимаем на ту же цель, отменяем выбор
-                    if (selectedTarget === opponent.id) {
-                      setSelectedTarget(null);
-                    } else {
-                      setSelectedTarget(opponent.id);
-                    }
-                  } else if (!selectedAbility) {
-                    // Обычный выбор цели для атаки
-                    setSelectedTarget(opponent.id);
-                  }
+                  setSelectedTarget(opponent.id);
                 }
               }}>
                     {/* Vertical Health Bar - Left Side */}

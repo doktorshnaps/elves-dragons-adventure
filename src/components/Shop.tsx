@@ -37,9 +37,19 @@ export const Shop = ({ onClose }: ShopProps) => {
   
   const [purchasing, setPurchasing] = useState(false);
 
+  // Force reload game data when shop opens to ensure fresh balance
+  useState(() => {
+    if (accountId && loadGameData) {
+      console.log('🛒 Shop opened, reloading game data for:', accountId);
+      loadGameData(accountId);
+    }
+  });
+
   if (gameDataLoading || inventoryLoading) {
     return <div className="flex justify-center items-center h-64">{t(language, 'shop.loading')}</div>;
   }
+
+  console.log('🛒 Shop render - balance:', gameData.balance, 'accountId:', accountId);
 
   const handleBuyItem = async (item: typeof shopItems[0]) => {
     if (!accountId) {
