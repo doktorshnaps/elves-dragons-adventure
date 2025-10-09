@@ -8,6 +8,7 @@ import { CardPreviewModal } from "../cards/CardPreviewModal";
 import { useToast } from "@/hooks/use-toast";
 import { useCardInstances } from "@/hooks/useCardInstances";
 import { useNFTCardIntegration } from "@/hooks/useNFTCardIntegration";
+import { ArrowUpDown, Sparkles, Swords } from "lucide-react";
 interface DeckSelectionProps {
   cards: CardType[];
   selectedPairs: TeamPair[];
@@ -32,6 +33,8 @@ export const DeckSelection = ({
   const [showDragonDeck, setShowDragonDeck] = useState(false);
   const [activePairIndex, setActivePairIndex] = useState<number | null>(null);
   const [previewCard, setPreviewCard] = useState<CardType | null>(null);
+  const [heroSortBy, setHeroSortBy] = useState<'none' | 'power' | 'rarity'>('none');
+  const [dragonSortBy, setDragonSortBy] = useState<'none' | 'power' | 'rarity'>('none');
   const [previewAction, setPreviewAction] = useState<{
     label: string;
     action: () => void;
@@ -83,8 +86,27 @@ export const DeckSelection = ({
     setLocalCards(cardsWithHealthSync);
     console.log('🎮 Updated local cards with health sync:', cardsWithHealthSync.length, 'total cards');
   }, [cardsWithHealthSync]);
-  const heroes = localCards.filter(card => card.type === 'character');
-  const dragons = localCards.filter(card => card.type === 'pet');
+  const heroes = useMemo(() => {
+    const filtered = localCards.filter(card => card.type === 'character');
+    if (heroSortBy === 'power') {
+      return [...filtered].sort((a, b) => b.power - a.power);
+    }
+    if (heroSortBy === 'rarity') {
+      return [...filtered].sort((a, b) => b.rarity - a.rarity);
+    }
+    return filtered;
+  }, [localCards, heroSortBy]);
+
+  const dragons = useMemo(() => {
+    const filtered = localCards.filter(card => card.type === 'pet');
+    if (dragonSortBy === 'power') {
+      return [...filtered].sort((a, b) => b.power - a.power);
+    }
+    if (dragonSortBy === 'rarity') {
+      return [...filtered].sort((a, b) => b.rarity - a.rarity);
+    }
+    return filtered;
+  }, [localCards, dragonSortBy]);
   const isHeroSelected = (hero: CardType) => {
     return selectedPairs.some(pair => pair.hero.id === hero.id);
   };
@@ -216,6 +238,28 @@ export const DeckSelection = ({
           <DialogHeader className="flex-shrink-0">
             <DialogTitle className="text-game-accent">Выберите героя</DialogTitle>
           </DialogHeader>
+          <div className="flex gap-2 px-4 pb-2 flex-shrink-0">
+            <Button
+              size="sm"
+              variant={heroSortBy === 'power' ? 'default' : 'outline'}
+              onClick={() => setHeroSortBy(heroSortBy === 'power' ? 'none' : 'power')}
+              className="flex items-center gap-2"
+            >
+              <Swords className="w-4 h-4" />
+              По силе
+              {heroSortBy === 'power' && <ArrowUpDown className="w-3 h-3" />}
+            </Button>
+            <Button
+              size="sm"
+              variant={heroSortBy === 'rarity' ? 'default' : 'outline'}
+              onClick={() => setHeroSortBy(heroSortBy === 'rarity' ? 'none' : 'rarity')}
+              className="flex items-center gap-2"
+            >
+              <Sparkles className="w-4 h-4" />
+              По редкости
+              {heroSortBy === 'rarity' && <ArrowUpDown className="w-3 h-3" />}
+            </Button>
+          </div>
           <div className="flex-1 overflow-y-auto overflow-x-hidden px-4 pb-4">
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3 justify-items-center w-full">
             {heroes.map(hero => {
@@ -251,6 +295,28 @@ export const DeckSelection = ({
           <DialogHeader className="flex-shrink-0">
             <DialogTitle className="text-game-accent">Выберите дракона</DialogTitle>
           </DialogHeader>
+          <div className="flex gap-2 px-4 pb-2 flex-shrink-0">
+            <Button
+              size="sm"
+              variant={dragonSortBy === 'power' ? 'default' : 'outline'}
+              onClick={() => setDragonSortBy(dragonSortBy === 'power' ? 'none' : 'power')}
+              className="flex items-center gap-2"
+            >
+              <Swords className="w-4 h-4" />
+              По силе
+              {dragonSortBy === 'power' && <ArrowUpDown className="w-3 h-3" />}
+            </Button>
+            <Button
+              size="sm"
+              variant={dragonSortBy === 'rarity' ? 'default' : 'outline'}
+              onClick={() => setDragonSortBy(dragonSortBy === 'rarity' ? 'none' : 'rarity')}
+              className="flex items-center gap-2"
+            >
+              <Sparkles className="w-4 h-4" />
+              По редкости
+              {dragonSortBy === 'rarity' && <ArrowUpDown className="w-3 h-3" />}
+            </Button>
+          </div>
           <div className="flex-1 overflow-y-auto overflow-x-hidden px-4 pb-4">
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3 justify-items-center w-full">
             {(activePairIndex !== null ? getAvailableDragons(selectedPairs[activePairIndex]?.hero.faction, selectedPairs[activePairIndex]?.hero.rarity) : dragons).map(dragon => {
