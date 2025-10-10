@@ -21,7 +21,8 @@ export const ActiveDungeonButton = ({ activeDungeon }: ActiveDungeonButtonProps)
   return (
     <Button
       onClick={handleReturnToDungeon}
-      className="bg-game-accent hover:bg-game-accent/80"
+      variant="menu"
+      style={{ boxShadow: '-33px 15px 10px rgba(0, 0, 0, 0.6)' }}
     >
       <DoorOpen className="mr-2 h-4 w-4" />
       Вернуться в подземелье

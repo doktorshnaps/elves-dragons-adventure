@@ -119,9 +119,10 @@ return (
       <div className="sticky top-0 z-10 bg-game-background p-4 border-b border-game-accent">
         <div className="flex items-center justify-between">
           <Button
-            variant="outline"
+            variant="menu"
             onClick={onClose}
-            className="flex items-center gap-2 text-game-accent hover:text-game-primary hover:bg-game-surface"
+            className="flex items-center gap-2"
+            style={{ boxShadow: '-33px 15px 10px rgba(0, 0, 0, 0.6)' }}
           >
             <ArrowLeft className="w-4 h-4" />
             {t(language, 'shop.backToMenu')}

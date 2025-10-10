@@ -16,7 +16,7 @@ export const TeamStats = () => {
       
       <div className="relative z-10 flex flex-col min-h-screen p-2 sm:p-4">
         <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-4 mb-3 sm:mb-6 flex-shrink-0">
-          <Button variant="outline" className="bg-game-surface/80 border-game-accent text-game-accent hover:bg-game-surface whitespace-nowrap" onClick={() => navigate('/menu')}>
+          <Button variant="menu" style={{ boxShadow: '-33px 15px 10px rgba(0, 0, 0, 0.6)' }} className="whitespace-nowrap" onClick={() => navigate('/menu')}>
             <ArrowLeft className="w-4 h-4 mr-2" />
             Вернуться в меню
           </Button>

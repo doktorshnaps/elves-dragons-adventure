@@ -15,7 +15,9 @@ export const AdventureControls = ({
     <Button 
       onClick={onStartAdventure} 
       disabled={isDisabled || playerHealth <= 0}
-      className="w-full bg-game-primary hover:bg-game-secondary text-lg py-6"
+      variant="menu"
+      className="w-full text-lg py-6"
+      style={{ boxShadow: '-33px 15px 10px rgba(0, 0, 0, 0.6)' }}
     >
       {playerHealth <= 0 ? "Герой обессилен" : "Начать приключение"}
     </Button>

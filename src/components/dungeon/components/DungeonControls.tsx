@@ -27,7 +27,8 @@ export const DungeonControls = ({
         <Button
           onClick={onRollDice}
           disabled={rolling || energyState.current <= 0 || isHealthTooLow || !hasActiveCards}
-          className="bg-game-primary hover:bg-game-primary/80"
+          variant="menu"
+          style={{ boxShadow: '-33px 15px 10px rgba(0, 0, 0, 0.6)' }}
         >
           {rolling ? "Поиск подземелья..." : "Искать подземелье"}
         </Button>
@@ -36,7 +37,8 @@ export const DungeonControls = ({
       {selectedDungeon && !rolling && (
         <Button
           onClick={handleDungeonSelect}
-          className="bg-game-accent hover:bg-game-accent/80"
+          variant="menu"
+          style={{ boxShadow: '-33px 15px 10px rgba(0, 0, 0, 0.6)' }}
         >
           Войти в подземелье
         </Button>

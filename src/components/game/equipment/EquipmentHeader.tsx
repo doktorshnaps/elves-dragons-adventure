@@ -10,8 +10,8 @@ export const EquipmentHeader = ({ onBack, onMintNFT }: EquipmentHeaderProps) => 
   return (
     <div className="flex items-center gap-4 mb-6">
       <Button 
-        variant="outline" 
-        className="bg-game-surface/80 border-game-accent text-game-accent hover:bg-game-surface" 
+        variant="menu"
+        style={{ boxShadow: '-33px 15px 10px rgba(0, 0, 0, 0.6)' }}
         onClick={onBack}
       >
         <ArrowLeft className="w-4 h-4 mr-2" />
@@ -19,8 +19,8 @@ export const EquipmentHeader = ({ onBack, onMintNFT }: EquipmentHeaderProps) => 
       </Button>
       
       <Button 
-        variant="outline" 
-        className="bg-game-accent/20 border-game-accent text-game-accent hover:bg-game-accent/30" 
+        variant="menu"
+        style={{ boxShadow: '-33px 15px 10px rgba(0, 0, 0, 0.6)' }}
         onClick={onMintNFT}
       >
         Mint NFT

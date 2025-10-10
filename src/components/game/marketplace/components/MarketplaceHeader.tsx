@@ -8,8 +8,8 @@ export const MarketplaceHeader = () => {
   return (
     <div className="flex justify-between items-center mb-4">
       <Button 
-        variant="outline" 
-        className="bg-game-surface/80 border-game-accent text-game-accent hover:bg-game-surface"
+        variant="menu"
+        style={{ boxShadow: '-33px 15px 10px rgba(0, 0, 0, 0.6)' }}
         onClick={() => navigate('/menu')}
       >
         <ArrowLeft className="w-4 h-4 mr-2" />
