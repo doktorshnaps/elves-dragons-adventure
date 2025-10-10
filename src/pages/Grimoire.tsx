@@ -23,36 +23,36 @@ const Grimoire = () => {
     >
       <div className="flex items-center gap-4 mb-6">
         <Button 
-          variant="outline" 
-          className="bg-game-surface/80 border-game-accent text-game-accent hover:bg-game-surface"
+          variant="menu"
+          style={{ boxShadow: '-33px 15px 10px rgba(0, 0, 0, 0.6)' }}
           onClick={() => navigate('/menu')}
         >
           <ArrowLeft className="w-4 h-4 mr-2" />
           {t(language, 'common.backToMenu')}
         </Button>
-        <h1 className="text-2xl font-bold text-game-accent">{t(language, 'grimoire.title')}</h1>
+        <h1 className="text-2xl font-bold text-white">{t(language, 'grimoire.title')}</h1>
       </div>
       
-      <div className="flex-1 bg-game-surface/90 p-4 rounded-lg border border-game-accent backdrop-blur-sm overflow-y-auto">
+      <div className="flex-1 bg-black/50 border-2 border-white rounded-3xl backdrop-blur-sm p-4 overflow-y-auto" style={{ boxShadow: '-33px 15px 10px rgba(0, 0, 0, 0.6)' }}>
         <Tabs defaultValue="cards" className="w-full h-full">
-          <TabsList className="grid w-full grid-cols-3 bg-game-surface/50 border border-game-accent/30 mb-6">
+          <TabsList className="grid w-full grid-cols-3 bg-black/40 border-2 border-white/50 backdrop-blur-sm rounded-3xl mb-6">
             <TabsTrigger 
               value="cards" 
-              className="data-[state=active]:bg-game-accent data-[state=active]:text-black flex items-center gap-2"
+              className="data-[state=active]:bg-white/20 data-[state=active]:text-white text-white flex items-center gap-2 rounded-3xl"
             >
               <Book className="w-4 h-4" />
               {t(language, 'grimoire.cards')}
             </TabsTrigger>
             <TabsTrigger 
               value="dungeons" 
-              className="data-[state=active]:bg-game-accent data-[state=active]:text-black flex items-center gap-2"
+              className="data-[state=active]:bg-white/20 data-[state=active]:text-white text-white flex items-center gap-2 rounded-3xl"
             >
               <Swords className="w-4 h-4" />
               {t(language, 'grimoire.dungeons')}
             </TabsTrigger>
             <TabsTrigger 
               value="items" 
-              className="data-[state=active]:bg-game-accent data-[state=active]:text-black flex items-center gap-2"
+              className="data-[state=active]:bg-white/20 data-[state=active]:text-white text-white flex items-center gap-2 rounded-3xl"
             >
               <Package className="w-4 h-4" />
               {t(language, 'grimoire.items')}

@@ -29,13 +29,15 @@ export const Equipment = () => {
         onMintNFT={handleMintNFT}
       />
       
-      <DragonEggProvider>
-        <EquipmentTabs 
-          onUseItem={toggleEquipItem}
-          nftCards={nftCards}
-          isLoadingNFT={isLoading}
-        />
-      </DragonEggProvider>
+      <div className="bg-black/50 border-2 border-white rounded-3xl backdrop-blur-sm p-4" style={{ boxShadow: '-33px 15px 10px rgba(0, 0, 0, 0.6)' }}>
+        <DragonEggProvider>
+          <EquipmentTabs 
+            onUseItem={toggleEquipItem}
+            nftCards={nftCards}
+            isLoadingNFT={isLoading}
+          />
+        </DragonEggProvider>
+      </div>
     </div>
   );
 };

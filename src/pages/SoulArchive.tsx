@@ -304,7 +304,7 @@ export const SoulArchive = () => {
         {/* Общая статистика */}
         {overallStats && (
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
-            <Card className="bg-black/50 border-2 border-white backdrop-blur-sm">
+          <Card variant="menu" style={{ boxShadow: '-33px 15px 10px rgba(0, 0, 0, 0.6)' }}>
               <CardContent className="p-4">
                 <div className="flex items-center gap-3">
                   <div className="p-2 bg-primary/20 rounded-lg">
@@ -318,7 +318,7 @@ export const SoulArchive = () => {
               </CardContent>
             </Card>
 
-            <Card className="bg-black/50 border-2 border-white backdrop-blur-sm">
+            <Card variant="menu" style={{ boxShadow: '-33px 15px 10px rgba(0, 0, 0, 0.6)' }}>
               <CardContent className="p-4">
                 <div className="flex items-center gap-3">
                   <div className="p-2 bg-green-500/20 rounded-lg">
@@ -335,7 +335,7 @@ export const SoulArchive = () => {
               </CardContent>
             </Card>
 
-            <Card className="bg-black/50 border-2 border-white backdrop-blur-sm">
+            <Card variant="menu" style={{ boxShadow: '-33px 15px 10px rgba(0, 0, 0, 0.6)' }}>
               <CardContent className="p-4">
                 <div className="flex items-center gap-3">
                   <div className="p-2 bg-yellow-500/20 rounded-lg">
@@ -349,7 +349,7 @@ export const SoulArchive = () => {
               </CardContent>
             </Card>
 
-            <Card className="bg-black/50 border-2 border-white backdrop-blur-sm md:col-span-2">
+            <Card variant="menu" className="md:col-span-2" style={{ boxShadow: '-33px 15px 10px rgba(0, 0, 0, 0.6)' }}>
               <CardContent className="p-4">
                 <div className="flex items-center gap-3">
                   <div className="p-2 bg-blue-500/20 rounded-lg">
@@ -366,7 +366,7 @@ export const SoulArchive = () => {
               </CardContent>
             </Card>
 
-            <Card className="bg-black/50 border-2 border-white backdrop-blur-sm">
+            <Card variant="menu" style={{ boxShadow: '-33px 15px 10px rgba(0, 0, 0, 0.6)' }}>
               <CardContent className="p-4">
                 <div className="text-xs text-white/70 mb-1">Последнее обновление</div>
                 <div className="text-sm font-medium text-white">
@@ -380,7 +380,7 @@ export const SoulArchive = () => {
           </div>
         )}
 
-        <Card className="bg-black/50 border-2 border-white backdrop-blur-sm">
+        <Card variant="menu" style={{ boxShadow: '-33px 15px 10px rgba(0, 0, 0, 0.6)' }}>
           <CardHeader>
             <CardTitle className="text-2xl font-bold text-white flex items-center gap-2">
               <img src="/src/assets/soul-archive-icon.png" alt="Soul Archive" className="w-8 h-8" />

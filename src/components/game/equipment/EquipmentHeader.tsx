@@ -26,7 +26,7 @@ export const EquipmentHeader = ({ onBack, onMintNFT }: EquipmentHeaderProps) => 
         Mint NFT
       </Button>
       
-      <h1 className="text-2xl font-bold text-game-accent">Снаряжение</h1>
+      <h1 className="text-2xl font-bold text-white">Снаряжение</h1>
     </div>
   );
 };

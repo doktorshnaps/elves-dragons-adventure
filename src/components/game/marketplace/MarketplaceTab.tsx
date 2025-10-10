@@ -107,8 +107,8 @@ export const MarketplaceTab = () => {
     <div className="space-y-4">
       <div className="flex justify-between items-center">
         <Button 
-          variant="outline" 
-          className="bg-game-surface/80 border-game-accent text-game-accent hover:bg-game-surface"
+          variant="menu"
+          style={{ boxShadow: '-33px 15px 10px rgba(0, 0, 0, 0.6)' }}
           onClick={() => navigate('/menu')}
         >
           <ArrowLeft className="w-4 h-4 mr-2" />
@@ -116,7 +116,8 @@ export const MarketplaceTab = () => {
         </Button>
         <Button
           onClick={() => setShowListingDialog(true)}
-          className="bg-game-accent hover:bg-game-accent/80"
+          variant="menu"
+          style={{ boxShadow: '-33px 15px 10px rgba(0, 0, 0, 0.6)' }}
         >
           Создать объявление
         </Button>
@@ -128,16 +129,16 @@ export const MarketplaceTab = () => {
           const isOwnListing = listing.sellerId === 'current-user';
 
           return (
-            <Card key={listing.id} className="p-4 bg-game-surface/90 border-game-accent backdrop-blur-sm">
+            <Card key={listing.id} variant="menu" className="p-4" style={{ boxShadow: '-33px 15px 10px rgba(0, 0, 0, 0.6)' }}>
               <div className="flex flex-col gap-2">
-                <h3 className="font-semibold text-game-accent">{listing.item.name}</h3>
-                <p className="text-sm text-gray-300">
+                <h3 className="font-semibold text-white">{listing.item.name}</h3>
+                <p className="text-sm text-white/80">
                   {displayInfo.type}
                   {displayInfo.rarity && ` - Редкость: ${displayInfo.rarity}`}
                   <br />
                   {displayInfo.description}
                 </p>
-                <p className="text-yellow-500 font-medium">{listing.price} ELL</p>
+                <p className="text-yellow-400 font-medium">{listing.price} ELL</p>
                 {isOwnListing ? (
                   <Button
                     onClick={() => handleCancelListing(listing)}
@@ -151,7 +152,9 @@ export const MarketplaceTab = () => {
                   <Button
                     onClick={() => handleBuy(listing)}
                     disabled={balance < listing.price}
-                    className="w-full mt-2 bg-game-accent hover:bg-game-accent/80"
+                    variant="menu"
+                    className="w-full mt-2"
+                    style={{ boxShadow: '-33px 15px 10px rgba(0, 0, 0, 0.6)' }}
                   >
                     Купить
                   </Button>

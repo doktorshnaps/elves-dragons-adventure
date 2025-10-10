@@ -128,13 +128,13 @@ return (
             {t(language, 'shop.backToMenu')}
           </Button>
           
-          <div className="flex items-center gap-2 bg-game-surface px-4 py-2 rounded-lg border border-game-accent">
+          <div className="flex items-center gap-2 bg-transparent backdrop-blur-sm px-4 py-2 rounded-2xl border-2 border-white" style={{ boxShadow: '-33px 15px 10px rgba(0, 0, 0, 0.6)' }}>
             <div className="w-2 h-2 bg-yellow-500 rounded-full animate-pulse"></div>
-            <span className="text-game-accent font-semibold">{gameData.balance}</span>
-            <span className="text-game-secondary text-sm">{t(language, 'game.currency')}</span>
+            <span className="text-white font-semibold">{gameData.balance}</span>
+            <span className="text-white/70 text-sm">{t(language, 'game.currency')}</span>
           </div>
           
-          <div className="flex items-center gap-2 text-game-accent">
+          <div className="flex items-center gap-2 text-white bg-transparent backdrop-blur-sm px-4 py-2 rounded-2xl border-2 border-white" style={{ boxShadow: '-33px 15px 10px rgba(0, 0, 0, 0.6)' }}>
             <Clock className="w-4 h-4" />
             <span className="text-sm">{t(language, 'shop.refillIn')} {timeUntilReset}</span>
           </div>
@@ -149,7 +149,7 @@ return (
           const canBuy = available && canAfford;
           
           return (
-            <Card key={item.name} className={`p-4 bg-game-background border-game-accent hover:border-game-primary transition-all duration-300 ${!canBuy ? 'opacity-50' : ''}`}>
+            <Card key={item.name} variant="menu" className={`p-4 ${!canBuy ? 'opacity-50' : ''}`} style={{ boxShadow: '-33px 15px 10px rgba(0, 0, 0, 0.6)' }}>
               {item.image && (
                 <div className="w-full aspect-[4/3] mb-2 rounded-lg overflow-hidden relative bg-gradient-to-br from-gray-800 to-gray-900">
                   <img 
@@ -175,29 +175,31 @@ return (
               )}
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
-                  <h3 className="font-semibold text-game-accent">{translateShopItemName(language, item.name)}</h3>
-                  <div className="flex items-center gap-1 text-game-accent text-sm">
+                  <h3 className="font-semibold text-white">{translateShopItemName(language, item.name)}</h3>
+                  <div className="flex items-center gap-1 text-white text-sm">
                     <Package className="w-3 h-3" />
                     <span>{quantity}</span>
                   </div>
                 </div>
-                <p className="text-gray-400 text-sm">{translateShopItemDescription(language, item.description)}</p>
+                <p className="text-white/70 text-sm">{translateShopItemDescription(language, item.description)}</p>
                 {item.stats && (
-                  <div className="text-game-accent text-sm">
+                  <div className="text-white text-sm">
                     {item.stats.power && <p>{t(language, 'shop.power')} +{item.stats.power}</p>}
                     {item.stats.defense && <p>{t(language, 'shop.defense')} +{item.stats.defense}</p>}
                     {item.stats.health && <p>{t(language, 'shop.health')} +{item.stats.health}</p>}
                   </div>
                 )}
                 {item.requiredLevel && (
-                  <p className="text-yellow-500 text-sm">
+                  <p className="text-yellow-400 text-sm">
                     {t(language, 'shop.requiredLevel')} {item.requiredLevel}
                   </p>
                 )}
-                <p className="text-game-secondary">{t(language, 'shop.price')} {item.price} {t(language, 'game.currency')}</p>
+                <p className="text-white/80">{t(language, 'shop.price')} {item.price} {t(language, 'game.currency')}</p>
                 <Button
                   type="button"
-                  className="w-full bg-game-primary hover:bg-game-primary/80 disabled:opacity-50"
+                  variant="menu"
+                  className="w-full disabled:opacity-50"
+                  style={{ boxShadow: '-33px 15px 10px rgba(0, 0, 0, 0.6)' }}
                   onClick={() => handleBuyItem(item)}
                   disabled={!canBuy || purchasing}
                 >

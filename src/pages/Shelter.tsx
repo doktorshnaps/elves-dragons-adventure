@@ -60,38 +60,39 @@ export const Shelter = () => {
       <div className="container mx-auto p-4 space-y-6 relative z-10">
         {/* Кнопка возврата */}
         <div className="absolute top-4 left-4 z-10">
-          <Button variant="ghost" size="icon" onClick={() => navigate("/menu")}>
-            <ArrowLeft className="w-4 h-4" />
+          <Button variant="menu" style={{ boxShadow: '-33px 15px 10px rgba(0, 0, 0, 0.6)' }} onClick={() => navigate("/menu")}>
+            <ArrowLeft className="w-4 h-4 mr-2" />
+            Назад в меню
           </Button>
         </div>
 
         {/* Информация об аккаунте и ресурсы */}
         <div className="absolute top-3 right-4 z-10 w-80">
-          <Card className="bg-card/50 backdrop-blur-sm border-primary/20">
+          <Card variant="menu" style={{ boxShadow: '-33px 15px 10px rgba(0, 0, 0, 0.6)' }}>
             <CardContent className="p-3">
               {/* Уровень аккаунта */}
               <div className="flex items-center justify-center gap-2 mb-3">
-                <Star className="h-4 w-4 text-primary" />
-                <span className="text-sm font-medium">Уровень {accountLevel}</span>
+                <Star className="h-4 w-4 text-white" />
+                <span className="text-sm font-medium text-white">Уровень {accountLevel}</span>
               </div>
               
               {/* Ресурсы */}
               <div className="flex justify-between gap-2">
                 <div className="text-center flex-1">
                   <div className="text-lg">🪵</div>
-                  <div className="text-xs font-semibold">{resources.wood}</div>
+                  <div className="text-xs font-semibold text-white">{resources.wood}</div>
                 </div>
                 <div className="text-center flex-1">
                   <div className="text-lg">🪨</div>
-                  <div className="text-xs font-semibold">{resources.stone}</div>
+                  <div className="text-xs font-semibold text-white">{resources.stone}</div>
                 </div>
                 <div className="text-center flex-1">
                   <div className="text-lg">⛏️</div>
-                  <div className="text-xs font-semibold">{resources.iron}</div>
+                  <div className="text-xs font-semibold text-white">{resources.iron}</div>
                 </div>
                 <div className="text-center flex-1">
                   <div className="text-lg">💰</div>
-                  <div className="text-xs font-semibold">{balance} ELL</div>
+                  <div className="text-xs font-semibold text-white">{balance} ELL</div>
                 </div>
               </div>
             </CardContent>
@@ -101,35 +102,35 @@ export const Shelter = () => {
         {/* Заголовок */}
         <div className="flex items-center justify-center py-2">
           <div className="flex items-center gap-2">
-            <Home className="w-6 h-6 text-primary" />
-            <h1 className="text-2xl font-bold">{t(language, 'shelter.title')}</h1>
+            <Home className="w-6 h-6 text-white" />
+            <h1 className="text-2xl font-bold text-white">{t(language, 'shelter.title')}</h1>
           </div>
         </div>
 
         {/* Вкладки управления */}
         <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as any)} className="w-full">
-          <TabsList className="grid w-full grid-cols-6 bg-card/50 backdrop-blur-sm">
-            <TabsTrigger value="upgrades" className="flex items-center gap-2">
+          <TabsList className="grid w-full grid-cols-6 bg-black/50 border-2 border-white backdrop-blur-sm rounded-3xl" style={{ boxShadow: '-33px 15px 10px rgba(0, 0, 0, 0.6)' }}>
+            <TabsTrigger value="upgrades" className="flex items-center gap-2 text-white data-[state=active]:bg-white/20 rounded-3xl">
               <Home className="w-4 h-4" />
               <span className="hidden sm:inline">{t(language, 'shelter.upgrades')}</span>
             </TabsTrigger>
-            <TabsTrigger value="crafting" className="flex items-center gap-2">
+            <TabsTrigger value="crafting" className="flex items-center gap-2 text-white data-[state=active]:bg-white/20 rounded-3xl">
               <Hammer className="w-4 h-4" />
               <span className="hidden sm:inline">{t(language, 'shelter.crafting')}</span>
             </TabsTrigger>
-            <TabsTrigger value="barracks" className="flex items-center gap-2">
+            <TabsTrigger value="barracks" className="flex items-center gap-2 text-white data-[state=active]:bg-white/20 rounded-3xl">
               <Shield className="w-4 h-4" />
               <span className="hidden sm:inline">{t(language, 'shelter.barracks')}</span>
             </TabsTrigger>
-            <TabsTrigger value="dragonlair" className="flex items-center gap-2">
+            <TabsTrigger value="dragonlair" className="flex items-center gap-2 text-white data-[state=active]:bg-white/20 rounded-3xl">
               <Flame className="w-4 h-4" />
               <span className="hidden sm:inline">{t(language, 'shelter.dragonLair')}</span>
             </TabsTrigger>
-            <TabsTrigger value="medical" className="flex items-center gap-2">
+            <TabsTrigger value="medical" className="flex items-center gap-2 text-white data-[state=active]:bg-white/20 rounded-3xl">
               <Heart className="w-4 h-4" />
               <span className="hidden sm:inline">{t(language, 'shelter.medical')}</span>
             </TabsTrigger>
-            <TabsTrigger value="workers" className="flex items-center gap-2">
+            <TabsTrigger value="workers" className="flex items-center gap-2 text-white data-[state=active]:bg-white/20 rounded-3xl">
               <Users className="w-4 h-4" />
               <span className="hidden sm:inline">{t(language, 'shelter.workers')}</span>
             </TabsTrigger>
@@ -171,11 +172,11 @@ export const Shelter = () => {
                 }}
               />
             ) : (
-              <Card className="bg-card/80 backdrop-blur-sm border-primary/20">
+              <Card variant="menu" style={{ boxShadow: '-33px 15px 10px rgba(0, 0, 0, 0.6)' }}>
                 <CardContent className="p-8 text-center">
-                  <Shield className="w-16 h-16 mx-auto mb-4 text-muted-foreground" />
-                  <h3 className="text-xl font-semibold mb-2">{t(language, 'shelter.barracksRequired')}</h3>
-                  <p className="text-muted-foreground">{t(language, 'shelter.barracksRequiredDesc')}</p>
+                  <Shield className="w-16 h-16 mx-auto mb-4 text-white/50" />
+                  <h3 className="text-xl font-semibold mb-2 text-white">{t(language, 'shelter.barracksRequired')}</h3>
+                  <p className="text-white/70">{t(language, 'shelter.barracksRequiredDesc')}</p>
                 </CardContent>
               </Card>
             )}
@@ -191,11 +192,11 @@ export const Shelter = () => {
                 }}
               />
             ) : (
-              <Card className="bg-card/80 backdrop-blur-sm border-primary/20">
+              <Card variant="menu" style={{ boxShadow: '-33px 15px 10px rgba(0, 0, 0, 0.6)' }}>
                 <CardContent className="p-8 text-center">
-                  <Flame className="w-16 h-16 mx-auto mb-4 text-muted-foreground" />
-                  <h3 className="text-xl font-semibold mb-2">{t(language, 'shelter.dragonLairRequired')}</h3>
-                  <p className="text-muted-foreground">{t(language, 'shelter.dragonLairRequiredDesc')}</p>
+                  <Flame className="w-16 h-16 mx-auto mb-4 text-white/50" />
+                  <h3 className="text-xl font-semibold mb-2 text-white">{t(language, 'shelter.dragonLairRequired')}</h3>
+                  <p className="text-white/70">{t(language, 'shelter.dragonLairRequiredDesc')}</p>
                 </CardContent>
               </Card>
             )}
@@ -205,11 +206,11 @@ export const Shelter = () => {
             {buildingLevels.medical > 0 ? (
               <MedicalBayComponent />
             ) : (
-              <Card className="bg-card/80 backdrop-blur-sm border-primary/20">
+              <Card variant="menu" style={{ boxShadow: '-33px 15px 10px rgba(0, 0, 0, 0.6)' }}>
                 <CardContent className="p-8 text-center">
-                  <Heart className="w-16 h-16 mx-auto mb-4 text-muted-foreground" />
-                  <h3 className="text-xl font-semibold mb-2">{t(language, 'shelter.medicalRequired')}</h3>
-                  <p className="text-muted-foreground">{t(language, 'shelter.medicalRequiredDesc')}</p>
+                  <Heart className="w-16 h-16 mx-auto mb-4 text-white/50" />
+                  <h3 className="text-xl font-semibold mb-2 text-white">{t(language, 'shelter.medicalRequired')}</h3>
+                  <p className="text-white/70">{t(language, 'shelter.medicalRequiredDesc')}</p>
                 </CardContent>
               </Card>
             )}

@@ -1,4 +1,5 @@
 import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
 import { ArrowLeft } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { TeamCards } from "@/components/game/TeamCards";
@@ -20,16 +21,16 @@ export const TeamStats = () => {
             <ArrowLeft className="w-4 h-4 mr-2" />
             Вернуться в меню
           </Button>
-          <h1 className="text-lg sm:text-2xl font-bold text-game-accent">Команда и статистика</h1>
+          <h1 className="text-lg sm:text-2xl font-bold text-white">Команда и статистика</h1>
         </div>
         
         <DragonEggProvider>
           <div className="flex-1 pb-4">
             {/* Карты команды */}
-            <div className="bg-game-surface/90 p-2 sm:p-4 rounded-lg border border-game-accent backdrop-blur-sm">
-              <h2 className="text-lg sm:text-xl font-bold text-game-accent mb-2 sm:mb-4">Управление командой</h2>
+            <Card variant="menu" className="p-2 sm:p-4" style={{ boxShadow: '-33px 15px 10px rgba(0, 0, 0, 0.6)' }}>
+              <h2 className="text-lg sm:text-xl font-bold text-white mb-2 sm:mb-4">Управление командой</h2>
               <TeamCards />
-            </div>
+            </Card>
           </div>
         </DragonEggProvider>
       </div>

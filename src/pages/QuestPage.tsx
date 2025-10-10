@@ -8,8 +8,18 @@ export const QuestPage = () => {
   const navigate = useNavigate();
 
   return (
-    <div className="min-h-screen p-4 bg-game-surface">
-      <div className="max-w-4xl mx-auto">
+    <div className="min-h-screen p-4 relative">
+      <div 
+        className="absolute inset-0 bg-center bg-no-repeat"
+        style={{
+          backgroundImage: 'url("/menu-background.jpg")',
+          backgroundSize: '100% 100%',
+          backgroundPosition: 'center',
+          backgroundRepeat: 'no-repeat',
+        }}
+      />
+      <div className="pointer-events-none absolute inset-0 bg-black/30" />
+      <div className="max-w-4xl mx-auto relative z-10">
         <Button
           variant="menu"
           className="mb-4"
@@ -19,19 +29,19 @@ export const QuestPage = () => {
           Вернуться в меню
         </Button>
         
-        <h1 className="text-2xl text-game-accent mb-6">Квесты и Рефералы</h1>
+        <h1 className="text-2xl text-white mb-6">Квесты и Рефералы</h1>
         
         <Tabs defaultValue="quests" className="w-full">
-          <TabsList className="grid w-full grid-cols-2 bg-game-surface/80 border border-game-accent">
+          <TabsList className="grid w-full grid-cols-2 bg-black/50 border-2 border-white backdrop-blur-sm rounded-3xl" style={{ boxShadow: '-33px 15px 10px rgba(0, 0, 0, 0.6)' }}>
             <TabsTrigger 
               value="quests" 
-              className="text-game-accent data-[state=active]:bg-game-accent data-[state=active]:text-game-surface"
+              className="text-white data-[state=active]:bg-white/20 data-[state=active]:text-white rounded-3xl"
             >
               Квесты
             </TabsTrigger>
             <TabsTrigger 
               value="referrals" 
-              className="text-game-accent data-[state=active]:bg-game-accent data-[state=active]:text-game-surface"
+              className="text-white data-[state=active]:bg-white/20 data-[state=active]:text-white rounded-3xl"
             >
               Рефералы
             </TabsTrigger>
