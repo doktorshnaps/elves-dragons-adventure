@@ -27,7 +27,7 @@ export const MarketplaceListings = ({
   const { accountId } = useWalletContext();
   if (listings.length === 0) {
     return (
-      <div className="text-center py-8 text-gray-300 backdrop-blur-sm bg-black/30 rounded-lg">
+      <div className="text-center py-8 text-white backdrop-blur-sm bg-black/50 rounded-3xl border-2 border-white" style={{ boxShadow: '-33px 15px 10px rgba(0, 0, 0, 0.6)' }}>
         На торговой площадке пока нет объявлений
       </div>
     );
@@ -41,7 +41,7 @@ export const MarketplaceListings = ({
         const isCard = "rarity" in listing.item;
 
         return (
-          <Card key={listing.id} className="p-4 bg-game-surface/90 border-game-accent backdrop-blur-sm">
+          <Card key={listing.id} variant="menu" className="p-4" style={{ boxShadow: '-33px 15px 10px rgba(0, 0, 0, 0.6)' }}>
             <div className="relative flex flex-col gap-3">
               {enableSelection && !isOwnListing && typeof onToggleSelect === 'function' && (
                 <label className="absolute top-2 left-2 z-10 flex items-center gap-1 text-xs select-none">
@@ -49,14 +49,14 @@ export const MarketplaceListings = ({
                     type="checkbox"
                     checked={!!(selectedIds && selectedIds.has(listing.id))}
                     onChange={() => onToggleSelect(listing.id)}
-                    className="h-4 w-4 accent-current text-game-accent"
+                    className="h-4 w-4 accent-current text-white"
                   />
-                  <span className="text-game-accent">Выбрать</span>
+                  <span className="text-white">Выбрать</span>
                 </label>
               )}
 
               {displayInfo.image && (
-                <div className="w-full aspect-[4/3] overflow-hidden rounded-md border border-game-accent/50">
+                <div className="w-full aspect-[4/3] overflow-hidden rounded-md border border-white/30">
                   <img
                     src={displayInfo.image}
                     alt={`Изображение ${displayInfo.type === "Карта" ? "карты" : "предмета"} ${listing.item.name}`}
@@ -66,7 +66,7 @@ export const MarketplaceListings = ({
                 </div>
               )}
 
-              <h3 className="font-semibold text-game-accent">{listing.item.name}</h3>
+              <h3 className="font-semibold text-white">{listing.item.name}</h3>
 
               <div className="text-sm text-gray-300 space-y-1">
                 <p>
@@ -102,7 +102,9 @@ export const MarketplaceListings = ({
                 <Button
                   onClick={() => onBuy(listing)}
                   disabled={balance < listing.price}
-                  className="w-full mt-2 bg-game-accent hover:bg-game-accent/80"
+                  variant="menu"
+                  className="w-full mt-2"
+                  style={{ boxShadow: '-33px 15px 10px rgba(0, 0, 0, 0.6)' }}
                 >
                   Купить
                 </Button>

@@ -29,7 +29,7 @@ export const MarketplaceContent = ({
 }: MarketplaceContentProps) => {
   return (
     <div 
-      className="flex-1 bg-game-surface/90 p-4 rounded-lg border border-game-accent backdrop-blur-sm h-[calc(100vh-120px)] overflow-y-auto"
+      className="flex-1 bg-black/50 p-4 rounded-3xl border-2 border-white backdrop-blur-sm h-[calc(100vh-120px)] overflow-y-auto"
       style={{ 
         touchAction: 'pan-y',
         WebkitOverflowScrolling: 'touch',
@@ -37,25 +37,28 @@ export const MarketplaceContent = ({
         msOverflowStyle: '-ms-autohiding-scrollbar',
         scrollBehavior: 'smooth',
         WebkitUserSelect: 'none',
-        userSelect: 'none'
+        userSelect: 'none',
+        boxShadow: '-33px 15px 10px rgba(0, 0, 0, 0.6)'
       }}
     >
       <div className="flex justify-between items-center mb-6">
         <div className="flex items-center gap-2">
-          <ShoppingBag className="w-6 h-6 text-game-accent" />
-          <span className="text-xl font-bold text-game-accent">Доступные предложения</span>
+          <ShoppingBag className="w-6 h-6 text-white" />
+          <span className="text-xl font-bold text-white">Доступные предложения</span>
         </div>
         <div className="flex items-center gap-2">
           <Button
             onClick={onBuySelected}
-            className="bg-game-accent hover:bg-game-accent/80"
+            variant="menu"
+            style={{ boxShadow: '-33px 15px 10px rgba(0, 0, 0, 0.6)' }}
           >
             <ShoppingBag className="w-4 h-4 mr-2" />
             Купить выбранные
           </Button>
           <Button
             onClick={onOpenListingDialog}
-            className="bg-game-accent hover:bg-game-accent/80"
+            variant="menu"
+            style={{ boxShadow: '-33px 15px 10px rgba(0, 0, 0, 0.6)' }}
           >
             <Plus className="w-4 h-4 mr-2" />
             Создать объявление
