@@ -79,7 +79,7 @@ const DungeonLevel = memo(({
   }, [dungeonType, level, language]);
 
   return <div className="space-y-4">
-      <h3 className="text-lg font-semibold text-game-accent border-b border-game-accent/30 pb-2">
+      <h3 className="text-lg font-semibold text-white border-b border-white/30 pb-2">
         {translateMonsterText(language, 'Уровень')} {level}
       </h3>
       <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-2 justify-items-center">
@@ -102,15 +102,15 @@ const DungeonDetail = ({
   return <div className="space-y-6">
       
 
-      <Card className="bg-game-surface/50 border-game-accent">
+      <Card variant="menu" style={{ boxShadow: '-33px 15px 10px rgba(0, 0, 0, 0.6)' }}>
         <CardHeader>
-          <CardTitle className="text-lg text-game-accent">{translateMonsterText(language, 'Выберите уровень')}</CardTitle>
+          <CardTitle className="text-lg text-white">{translateMonsterText(language, 'Выберите уровень')}</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-5 md:grid-cols-10 gap-2 mb-6">
             {Array.from({
             length: 10
-          }, (_, i) => i + 1).map(level => <button key={level} onClick={() => setSelectedLevel(level)} className={`p-2 rounded text-sm font-medium transition-colors ${selectedLevel === level ? 'bg-game-accent text-black' : 'bg-game-surface/30 text-game-text hover:bg-game-accent/20'}`}>
+          }, (_, i) => i + 1).map(level => <button key={level} onClick={() => setSelectedLevel(level)} className={`p-2 rounded-3xl text-sm font-medium transition-colors ${selectedLevel === level ? 'bg-white text-black' : 'bg-white/10 text-white hover:bg-white/20'}`}>
                 {level}
               </button>)}
           </div>
@@ -129,15 +129,15 @@ export const DungeonInfo = () => {
   }];
   return <div className="space-y-6">
       <div className="text-center">
-        <h2 className="text-2xl font-bold text-game-accent mb-2">{translateMonsterText(language, 'Гайд по подземельям')}</h2>
-        <p className="text-game-text">
+        <h2 className="text-2xl font-bold text-white mb-2">{translateMonsterText(language, 'Гайд по подземельям')}</h2>
+        <p className="text-white/80">
           {translateMonsterText(language, 'Изучите монстров, их способности и возможный дроп в каждом подземелье')}
         </p>
       </div>
 
       <Tabs defaultValue={availableDungeons[0]?.key} className="w-full">
-        <TabsList className="grid w-full grid-cols-1 bg-game-surface/50 border border-game-accent/30">
-          {availableDungeons.map(dungeon => <TabsTrigger key={dungeon.key} value={dungeon.key} className="data-[state=active]:bg-game-accent data-[state=active]:text-black">
+        <TabsList className="grid w-full grid-cols-1 bg-black/40 border-2 border-white/50 backdrop-blur-sm rounded-3xl">
+          {availableDungeons.map(dungeon => <TabsTrigger key={dungeon.key} value={dungeon.key} className="data-[state=active]:bg-white/20 text-white data-[state=active]:text-white rounded-3xl">
               {dungeon.name}
             </TabsTrigger>)}
         </TabsList>

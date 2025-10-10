@@ -45,17 +45,28 @@ const AdminSettingsContent = () => {
   const isSuperAdmin = accountId === 'mr_bruts.tg';
 
   return (
-    <div className="min-h-screen bg-game-dark p-4">
-      <div className="max-w-6xl mx-auto space-y-6">
+    <div className="min-h-screen p-4 relative">
+      <div 
+        className="absolute inset-0 bg-center bg-no-repeat"
+        style={{
+          backgroundImage: 'url("/menu-background.jpg")',
+          backgroundSize: '100% 100%',
+          backgroundPosition: 'center',
+          backgroundRepeat: 'no-repeat',
+        }}
+      />
+      <div className="pointer-events-none absolute inset-0 bg-black/30" />
+      <div className="max-w-6xl mx-auto space-y-6 relative z-10">
         <div className="flex items-center justify-between mb-6">
           <div>
-            <h1 className="text-3xl font-bold text-game-accent mb-2">Настройки игры</h1>
-            <p className="text-gray-400">Глубокая настройка параметров героев, драконов и подземелий</p>
+            <h1 className="text-3xl font-bold text-white mb-2">Настройки игры</h1>
+            <p className="text-white/70">Глубокая настройка параметров героев, драконов и подземелий</p>
           </div>
           <Button
-            variant="outline"
+            variant="menu"
             onClick={() => navigate('/menu')}
             className="gap-2"
+            style={{ boxShadow: '-33px 15px 10px rgba(0, 0, 0, 0.6)' }}
           >
             <ArrowLeft className="h-4 w-4" />
             Назад в меню
@@ -63,16 +74,16 @@ const AdminSettingsContent = () => {
         </div>
 
         <Tabs defaultValue={isSuperAdmin ? "cards" : "management"} className="w-full">
-          <TabsList className={`grid w-full ${isSuperAdmin ? 'grid-cols-5' : 'grid-cols-1'} mb-6`}>
+          <TabsList className={`grid w-full ${isSuperAdmin ? 'grid-cols-5' : 'grid-cols-1'} bg-black/50 border-2 border-white backdrop-blur-sm rounded-3xl mb-6`} style={{ boxShadow: '-33px 15px 10px rgba(0, 0, 0, 0.6)' }}>
             {isSuperAdmin && (
               <>
-                <TabsTrigger value="cards">Карты (Герои и Драконы)</TabsTrigger>
-                <TabsTrigger value="dungeons">Подземелья</TabsTrigger>
-                <TabsTrigger value="quests">Задания</TabsTrigger>
+                <TabsTrigger value="cards" className="text-white data-[state=active]:bg-white/20 rounded-3xl">Карты (Герои и Драконы)</TabsTrigger>
+                <TabsTrigger value="dungeons" className="text-white data-[state=active]:bg-white/20 rounded-3xl">Подземелья</TabsTrigger>
+                <TabsTrigger value="quests" className="text-white data-[state=active]:bg-white/20 rounded-3xl">Задания</TabsTrigger>
               </>
             )}
-            <TabsTrigger value="management">Управление</TabsTrigger>
-            {isSuperAdmin && <TabsTrigger value="admins">Администраторы</TabsTrigger>}
+            <TabsTrigger value="management" className="text-white data-[state=active]:bg-white/20 rounded-3xl">Управление</TabsTrigger>
+            {isSuperAdmin && <TabsTrigger value="admins" className="text-white data-[state=active]:bg-white/20 rounded-3xl">Администраторы</TabsTrigger>}
           </TabsList>
 
           {isSuperAdmin && (

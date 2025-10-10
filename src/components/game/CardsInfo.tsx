@@ -10,11 +10,11 @@ export const CardsInfo = () => {
 
   return (
     <Tabs defaultValue="heroes" className="w-full">
-      <TabsList className="grid w-full grid-cols-2 bg-game-surface text-[10px] sm:text-xs">
-        <TabsTrigger value="heroes" className="text-game-accent">
+      <TabsList className="grid w-full grid-cols-2 bg-black/40 border-2 border-white/50 backdrop-blur-sm rounded-3xl text-[10px] sm:text-xs">
+        <TabsTrigger value="heroes" className="text-white data-[state=active]:bg-white/20 rounded-3xl">
           {t(language, 'grimoire.heroes')}
         </TabsTrigger>
-        <TabsTrigger value="pets" className="text-game-accent">
+        <TabsTrigger value="pets" className="text-white data-[state=active]:bg-white/20 rounded-3xl">
           {t(language, 'grimoire.pets')}
         </TabsTrigger>
       </TabsList>

@@ -215,7 +215,7 @@ export const SoulArchive = () => {
   const renderLeaderboard = (stats: ReferralStats[], isWeekly: boolean) => {
     if (stats.length === 0) {
       return (
-        <div className="text-center py-8 text-muted-foreground">
+        <div className="text-center py-8 text-white/70">
           Нет данных о рефералах
         </div>
       );
@@ -229,18 +229,18 @@ export const SoulArchive = () => {
           const noWlCount = isWeekly ? stat.weekly_no_wl_referrals : stat.no_wl_referrals;
 
           return (
-            <Card key={stat.wallet_address} className="bg-card/80 backdrop-blur-sm border-primary/20">
+            <Card key={stat.wallet_address} variant="menu" style={{ boxShadow: '-33px 15px 10px rgba(0, 0, 0, 0.6)' }}>
               <CardContent className="p-4">
                 <div className="flex items-center justify-between gap-4">
                   <div className="flex items-center gap-3 flex-1 min-w-0">
-                    <div className="text-2xl font-bold text-primary w-8 flex-shrink-0">
+                    <div className="text-2xl font-bold text-white w-8 flex-shrink-0">
                       #{index + 1}
                     </div>
                     <div className="flex-1 min-w-0">
-                      <div className="text-sm font-medium truncate">
+                      <div className="text-sm font-medium truncate text-white">
                         {stat.wallet_address}
                       </div>
-                      <div className="flex items-center gap-2 mt-1 text-xs text-muted-foreground">
+                      <div className="flex items-center gap-2 mt-1 text-xs text-white/60">
                         <Users className="w-3 h-3" />
                         <span>{referrals} рефералов</span>
                       </div>
@@ -251,7 +251,7 @@ export const SoulArchive = () => {
                     <Button
                       size="sm"
                       variant="outline"
-                      className="text-xs px-3 py-1 h-7 border-green-500 text-green-500 hover:bg-green-500/10"
+                      className="text-xs px-3 py-1 h-7 border-green-500 text-green-500 hover:bg-green-500/10 rounded-3xl bg-green-500/5"
                       onClick={() => loadReferralDetails(stat.wallet_address, true)}
                     >
                       <UserCheck className="w-3 h-3 mr-1" />
@@ -260,7 +260,7 @@ export const SoulArchive = () => {
                     <Button
                       size="sm"
                       variant="outline"
-                      className="text-xs px-3 py-1 h-7 border-orange-500 text-orange-500 hover:bg-orange-500/10"
+                      className="text-xs px-3 py-1 h-7 border-orange-500 text-orange-500 hover:bg-orange-500/10 rounded-3xl bg-orange-500/5"
                       onClick={() => loadReferralDetails(stat.wallet_address, false)}
                     >
                       <UserX className="w-3 h-3 mr-1" />
@@ -392,9 +392,9 @@ export const SoulArchive = () => {
               <div className="text-center py-8 text-white">Загрузка...</div>
             ) : (
               <Tabs defaultValue="all-time" className="w-full">
-                <TabsList className="grid w-full grid-cols-2 mb-4">
-                  <TabsTrigger value="all-time">За все время</TabsTrigger>
-                  <TabsTrigger value="weekly">Недельный</TabsTrigger>
+                <TabsList className="grid w-full grid-cols-2 mb-4 bg-black/40 border-2 border-white/50 backdrop-blur-sm rounded-3xl">
+                  <TabsTrigger value="all-time" className="text-white data-[state=active]:bg-white/20 rounded-3xl">За все время</TabsTrigger>
+                  <TabsTrigger value="weekly" className="text-white data-[state=active]:bg-white/20 rounded-3xl">Недельный</TabsTrigger>
                 </TabsList>
                 
                 <TabsContent value="all-time">

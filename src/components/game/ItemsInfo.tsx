@@ -230,8 +230,8 @@ const ItemCard = ({ item }: { item: ItemTemplate }) => {
   const stats = formatStats(item.stats);
 
   const CardContent = () => (
-    <Card className="p-2 bg-game-background border-game-accent hover:border-game-primary transition-all duration-300 h-full">
-      <div className="w-full aspect-[3/4] mb-2 rounded-lg overflow-hidden flex items-center justify-center bg-game-surface/30 border border-game-accent/20">
+    <Card variant="menu" className="p-2 h-full" style={{ boxShadow: '-33px 15px 10px rgba(0, 0, 0, 0.6)' }}>
+      <div className="w-full aspect-[3/4] mb-2 rounded-lg overflow-hidden flex items-center justify-center bg-white/10 border border-white/20">
         {(() => {
           const src = resolveItemImage(item);
           return src ? (
@@ -243,13 +243,13 @@ const ItemCard = ({ item }: { item: ItemTemplate }) => {
             />
           ) : null;
         })()}
-        <div className={`text-game-accent opacity-50 ${resolveItemImage(item) ? 'hidden' : ''}`}>
+        <div className={`text-white opacity-50 ${resolveItemImage(item) ? 'hidden' : ''}`}>
           {getTypeIcon(item.type)}
         </div>
       </div>
       
       <div className="flex items-center justify-between mb-1">
-        <h3 className="font-semibold text-game-accent text-[10px] sm:text-xs">
+        <h3 className="font-semibold text-white text-[10px] sm:text-xs">
           {translateItemName(language, item.name)}
         </h3>
         <Badge className={`text-[8px] px-1 py-0 text-white ${getRarityColor(item.rarity)}`}>
@@ -257,7 +257,7 @@ const ItemCard = ({ item }: { item: ItemTemplate }) => {
         </Badge>
       </div>
       
-      <p className="text-gray-400 mb-2 text-[10px] sm:text-xs line-clamp-2">
+      <p className="text-white/70 mb-2 text-[10px] sm:text-xs line-clamp-2">
         {item.description}
       </p>
       
@@ -268,9 +268,9 @@ const ItemCard = ({ item }: { item: ItemTemplate }) => {
           </div>
           <div className="grid grid-cols-2 gap-1 text-[10px] sm:text-xs">
             {stats.slice(0, 4).map((stat, index) => (
-              <div key={index} className="text-game-secondary flex items-center gap-1">
+              <div key={index} className="text-white/80 flex items-center gap-1">
                 <span className="text-green-400">+{stat.value}</span>
-                <span className="text-gray-400 text-[8px] sm:text-[10px]">{stat.name}</span>
+                <span className="text-white/60 text-[8px] sm:text-[10px]">{stat.name}</span>
               </div>
             ))}
           </div>
@@ -282,23 +282,23 @@ const ItemCard = ({ item }: { item: ItemTemplate }) => {
         <span>{getSourceLabel(item.source_type, language)}</span>
       </div>
       
-      <div className="mt-auto pt-2 border-t border-game-accent/20">
-        <div className="text-game-accent text-[8px] sm:text-[10px] flex items-center gap-1 mb-1">
+      <div className="mt-auto pt-2 border-t border-white/20">
+        <div className="text-white text-[8px] sm:text-[10px] flex items-center gap-1 mb-1">
           <Coins className="w-2 h-2" />
           {translateItemText(language, 'Детали:')}
         </div>
         <div className="text-[8px] space-y-0.5">
           <div className="flex justify-between">
-            <span className="text-gray-400">{translateItemText(language, 'Уровень')}</span>
+            <span className="text-white/60">{translateItemText(language, 'Уровень')}</span>
             <span className="text-yellow-400">{item.level_requirement}</span>
           </div>
           <div className="flex justify-between">
-            <span className="text-gray-400">{translateItemText(language, 'Стоимость')}</span>
+            <span className="text-white/60">{translateItemText(language, 'Стоимость')}</span>
             <span className="text-green-400">{item.value}</span>
           </div>
           {item.drop_chance && (
             <div className="flex justify-between">
-              <span className="text-gray-400">{translateItemText(language, 'Шанс')}</span>
+              <span className="text-white/60">{translateItemText(language, 'Шанс')}</span>
               <span className="text-orange-400">{(item.drop_chance * 100).toFixed(1)}%</span>
             </div>
           )}
@@ -308,8 +308,8 @@ const ItemCard = ({ item }: { item: ItemTemplate }) => {
   );
 
   const ExpandedCardContent = () => (
-    <Card className="p-4 bg-game-background border-game-accent w-80 max-w-sm">
-      <div className="w-full aspect-[3/4] mb-4 rounded-lg overflow-hidden flex items-center justify-center bg-game-surface/30 border border-game-accent/20">
+    <Card variant="menu" className="p-4 w-80 max-w-sm" style={{ boxShadow: '-33px 15px 10px rgba(0, 0, 0, 0.6)' }}>
+      <div className="w-full aspect-[3/4] mb-4 rounded-lg overflow-hidden flex items-center justify-center bg-white/10 border border-white/20">
         {(() => {
           const src = resolveItemImage(item);
           return src ? (
@@ -321,13 +321,13 @@ const ItemCard = ({ item }: { item: ItemTemplate }) => {
             />
           ) : null;
         })()}
-        <div className={`text-game-accent opacity-50 text-4xl ${resolveItemImage(item) ? 'hidden' : ''}`}>
+        <div className={`text-white opacity-50 text-4xl ${resolveItemImage(item) ? 'hidden' : ''}`}>
           {getTypeIcon(item.type)}
         </div>
       </div>
       
       <div className="flex items-center justify-between mb-3">
-        <h3 className="font-bold text-game-accent text-lg">
+        <h3 className="font-bold text-white text-lg">
           {translateItemName(language, item.name)}
         </h3>
         <Badge className={`text-xs px-2 py-1 text-white ${getRarityColor(item.rarity)}`}>
@@ -335,7 +335,7 @@ const ItemCard = ({ item }: { item: ItemTemplate }) => {
         </Badge>
       </div>
       
-      <p className="text-gray-300 mb-4 text-sm leading-relaxed">
+      <p className="text-white/80 mb-4 text-sm leading-relaxed">
         {item.description}
       </p>
       
@@ -346,7 +346,7 @@ const ItemCard = ({ item }: { item: ItemTemplate }) => {
           </div>
           <div className="grid grid-cols-2 gap-2">
             {stats.map((stat, index) => (
-              <div key={index} className="text-game-secondary flex items-center gap-2">
+              <div key={index} className="text-white/80 flex items-center gap-2">
                 <span className="text-green-400 font-medium">+{stat.value}</span>
                 <span>{stat.name}</span>
               </div>
@@ -355,30 +355,30 @@ const ItemCard = ({ item }: { item: ItemTemplate }) => {
         </div>
       )}
       
-      <div className="pt-3 border-t border-game-accent/20">
-        <div className="text-game-accent text-sm flex items-center gap-2 mb-3">
+      <div className="pt-3 border-t border-white/20">
+        <div className="text-white text-sm flex items-center gap-2 mb-3">
           {getSourceIcon(item.source_type)}
           <span className="font-medium">{getSourceLabel(item.source_type, language)}</span>
         </div>
         
         {formatSourceDetails(item.source_type, item.source_details) && (
-          <div className="text-sm text-gray-400 mb-3">
+          <div className="text-sm text-white/70 mb-3">
             {formatSourceDetails(item.source_type, item.source_details)}
           </div>
         )}
         
         <div className="text-sm space-y-2">
           <div className="flex justify-between">
-            <span className="text-gray-400">{translateItemText(language, 'Требуемый уровень')}</span>
+            <span className="text-white/60">{translateItemText(language, 'Требуемый уровень')}</span>
             <span className="text-yellow-400 font-medium">{item.level_requirement}</span>
           </div>
           <div className="flex justify-between">
-            <span className="text-gray-400">{translateItemText(language, 'Стоимость')}</span>
+            <span className="text-white/60">{translateItemText(language, 'Стоимость')}</span>
             <span className="text-green-400 font-medium">{item.value} {translateItemText(language, 'монет')}</span>
           </div>
           {item.drop_chance && (
             <div className="flex justify-between">
-              <span className="text-gray-400">{translateItemText(language, 'Шанс выпадения')}</span>
+              <span className="text-white/60">{translateItemText(language, 'Шанс выпадения')}</span>
               <span className="text-orange-400 font-medium">{(item.drop_chance * 100).toFixed(1)}%</span>
             </div>
           )}
@@ -460,27 +460,27 @@ export const ItemsInfo = () => {
   return (
     <div className="h-full">
       <Tabs defaultValue="all" className="h-full">
-        <TabsList className="grid w-full grid-cols-6 bg-game-surface/50 border border-game-accent/30 mb-4">
-          <TabsTrigger value="all" className="data-[state=active]:bg-game-accent data-[state=active]:text-black text-xs">
+        <TabsList className="grid w-full grid-cols-6 bg-black/40 border-2 border-white/50 backdrop-blur-sm rounded-3xl mb-4">
+          <TabsTrigger value="all" className="data-[state=active]:bg-white/20 text-white data-[state=active]:text-white rounded-3xl text-xs">
             {translateItemText(language, 'Все')}
           </TabsTrigger>
-          <TabsTrigger value="weapons" className="data-[state=active]:bg-game-accent data-[state=active]:text-black text-xs">
+          <TabsTrigger value="weapons" className="data-[state=active]:bg-white/20 text-white data-[state=active]:text-white rounded-3xl text-xs">
             <Sword className="w-3 h-3 mr-1" />
             {translateItemType(language, 'weapon')}
           </TabsTrigger>
-          <TabsTrigger value="armor" className="data-[state=active]:bg-game-accent data-[state=active]:text-black text-xs">
+          <TabsTrigger value="armor" className="data-[state=active]:bg-white/20 text-white data-[state=active]:text-white rounded-3xl text-xs">
             <Shield className="w-3 h-3 mr-1" />
             {translateItemType(language, 'armor')}
           </TabsTrigger>
-          <TabsTrigger value="accessories" className="data-[state=active]:bg-game-accent data-[state=active]:text-black text-xs">
+          <TabsTrigger value="accessories" className="data-[state=active]:bg-white/20 text-white data-[state=active]:text-white rounded-3xl text-xs">
             <Gem className="w-3 h-3 mr-1" />
             {translateItemType(language, 'accessory')}
           </TabsTrigger>
-          <TabsTrigger value="consumables" className="data-[state=active]:bg-game-accent data-[state=active]:text-black text-xs">
+          <TabsTrigger value="consumables" className="data-[state=active]:bg-white/20 text-white data-[state=active]:text-white rounded-3xl text-xs">
             <Heart className="w-3 h-3 mr-1" />
             {translateItemType(language, 'consumable')}
           </TabsTrigger>
-          <TabsTrigger value="magical" className="data-[state=active]:bg-game-accent data-[state=active]:text-black text-xs">
+          <TabsTrigger value="magical" className="data-[state=active]:bg-white/20 text-white data-[state=active]:text-white rounded-3xl text-xs">
             <Diamond className="w-3 h-3 mr-1" />
             Магические
           </TabsTrigger>
