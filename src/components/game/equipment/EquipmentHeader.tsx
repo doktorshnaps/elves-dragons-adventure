@@ -11,7 +11,7 @@ export const EquipmentHeader = ({ onBack, onMintNFT }: EquipmentHeaderProps) => 
     <div className="flex items-center gap-4 mb-6">
       <Button 
         variant="menu"
-        style={{ boxShadow: '-33px 15px 10px rgba(0, 0, 0, 0.6)' }}
+        className="shadow-lg"
         onClick={onBack}
       >
         <ArrowLeft className="w-4 h-4 mr-2" />
@@ -20,7 +20,7 @@ export const EquipmentHeader = ({ onBack, onMintNFT }: EquipmentHeaderProps) => 
       
       <Button 
         variant="menu"
-        style={{ boxShadow: '-33px 15px 10px rgba(0, 0, 0, 0.6)' }}
+        className="shadow-lg"
         onClick={onMintNFT}
       >
         Mint NFT

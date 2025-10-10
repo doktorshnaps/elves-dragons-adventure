@@ -17,7 +17,7 @@ export const Equipment = () => {
 
   return (
     <div 
-      className="min-h-screen p-4 bg-cover bg-center bg-no-repeat" 
+      className="min-h-screen p-4 bg-cover bg-center bg-no-repeat overflow-x-hidden" 
       style={{
         backgroundImage: 'url("/lovable-uploads/29ea34c8-ede8-4cab-8ca2-049cdb5108c3.png")',
         backgroundColor: 'rgba(0, 0, 0, 0.85)',
@@ -29,7 +29,7 @@ export const Equipment = () => {
         onMintNFT={handleMintNFT}
       />
       
-      <div className="bg-black/50 border-2 border-white rounded-3xl backdrop-blur-sm p-4" style={{ boxShadow: '-33px 15px 10px rgba(0, 0, 0, 0.6)' }}>
+      <div className="bg-black/50 border-2 border-white rounded-3xl backdrop-blur-sm p-4" style={{ boxShadow: '0 15px 10px rgba(0, 0, 0, 0.6)' }}>
         <DragonEggProvider>
           <EquipmentTabs 
             onUseItem={toggleEquipItem}
