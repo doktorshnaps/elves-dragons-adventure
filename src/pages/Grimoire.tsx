@@ -24,7 +24,7 @@ const Grimoire = () => {
       <div className="flex items-center gap-4 mb-6">
         <Button 
           variant="menu"
-          style={{ boxShadow: '-33px 15px 10px rgba(0, 0, 0, 0.6)' }}
+          className="shadow-lg"
           onClick={() => navigate('/menu')}
         >
           <ArrowLeft className="w-4 h-4 mr-2" />
@@ -33,7 +33,7 @@ const Grimoire = () => {
         <h1 className="text-2xl font-bold text-white">{t(language, 'grimoire.title')}</h1>
       </div>
       
-      <div className="flex-1 bg-black/50 border-2 border-white rounded-3xl backdrop-blur-sm p-4 overflow-y-auto" style={{ boxShadow: '-33px 15px 10px rgba(0, 0, 0, 0.6)' }}>
+      <div className="flex-1 bg-black/50 border-2 border-white rounded-3xl backdrop-blur-sm p-4 overflow-y-auto" style={{ boxShadow: '0 15px 10px rgba(0, 0, 0, 0.6)' }}>
         <Tabs defaultValue="cards" className="w-full h-full">
           <TabsList className="grid w-full grid-cols-3 bg-black/40 border-2 border-white/50 backdrop-blur-sm rounded-3xl mb-6">
             <TabsTrigger 

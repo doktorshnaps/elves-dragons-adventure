@@ -39,7 +39,9 @@ export const CardGrid = ({ type }: CardGridProps) => {
         {cards.map((card, index) => (
           <Card 
             key={index}
-            className="p-2 bg-game-background border-game-accent hover:border-game-primary transition-all duration-300 h-full cursor-pointer"
+            variant="menu"
+            className="p-2 transition-all duration-300 h-full cursor-pointer hover:scale-105"
+            style={{ boxShadow: '0 15px 10px rgba(0, 0, 0, 0.6)' }}
             onClick={() => handleCardClick(card)}
           >
             {card.image && (
@@ -51,14 +53,14 @@ export const CardGrid = ({ type }: CardGridProps) => {
                 />
               </div>
             )}
-            <h3 className="font-semibold text-game-accent mb-1 text-[10px] sm:text-xs">
+            <h3 className="font-semibold text-white mb-1 text-[10px] sm:text-xs">
               {translateCardName(language, card.name)}
             </h3>
-            <p className="text-gray-400 mb-2 text-[10px] sm:text-xs line-clamp-2">
+            <p className="text-gray-300 mb-2 text-[10px] sm:text-xs line-clamp-2">
               {translateCardDescription(language, card.description)}
             </p>
             {card.faction && (
-              <div className="flex items-center gap-1 mb-2 text-[10px] sm:text-xs text-purple-400">
+              <div className="flex items-center gap-1 mb-2 text-[10px] sm:text-xs text-purple-300">
                 <Sparkles className="w-2 h-2 sm:w-3 sm:h-3" />
                 <span>{t(language, 'items.faction')}: {translateFaction(language, card.faction)}</span>
               </div>
@@ -68,10 +70,10 @@ export const CardGrid = ({ type }: CardGridProps) => {
                 const stats = calculateCardStats(card.name, 1, card.type);
                 return (
                   <>
-                    <div className="text-game-secondary">{t(language, 'items.power')}: {stats.power}</div>
-                    <div className="text-game-secondary">{t(language, 'items.defense')}: {stats.defense}</div>
-                    <div className="text-game-secondary">{t(language, 'items.health')}: {stats.health}</div>
-                    <div className="text-game-secondary">{t(language, 'items.health')} (MP): {stats.magic}</div>
+                    <div className="text-white/80">{t(language, 'items.power')}: {stats.power}</div>
+                    <div className="text-white/80">{t(language, 'items.defense')}: {stats.defense}</div>
+                    <div className="text-white/80">{t(language, 'items.health')}: {stats.health}</div>
+                    <div className="text-white/80">{t(language, 'items.health')} (MP): {stats.magic}</div>
                   </>
                 );
               })()}

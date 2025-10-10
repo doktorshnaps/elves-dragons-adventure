@@ -34,8 +34,10 @@ export const MonsterCardDisplay = memo(({
 
   const CardContent = () => (
     <Card 
-      onClick={onClick} 
-      className={`p-2 bg-game-background border-game-accent hover:border-game-primary transition-all duration-300 h-full ${onClick ? 'cursor-pointer' : ''} ${className}`}
+      onClick={onClick}
+      variant="menu"
+      className={`p-2 transition-all duration-300 h-full hover:scale-105 ${onClick ? 'cursor-pointer' : ''} ${className}`}
+      style={{ boxShadow: '0 15px 10px rgba(0, 0, 0, 0.6)' }}
     >
       {image && (
         <div className="w-full aspect-[3/4] mb-2 rounded-lg overflow-hidden flex items-center justify-center">
@@ -53,7 +55,7 @@ export const MonsterCardDisplay = memo(({
       )}
       
       <div className="flex items-center justify-between mb-1">
-        <h3 className="font-semibold text-game-accent text-[10px] sm:text-xs">
+        <h3 className="font-semibold text-white text-[10px] sm:text-xs">
           {name}
         </h3>
         {isBoss && (
@@ -64,7 +66,7 @@ export const MonsterCardDisplay = memo(({
       </div>
       
       {description && (
-        <p className="text-gray-400 mb-2 text-[10px] sm:text-xs line-clamp-2">
+        <p className="text-gray-300 mb-2 text-[10px] sm:text-xs line-clamp-2">
           {description}
         </p>
       )}
@@ -89,29 +91,29 @@ export const MonsterCardDisplay = memo(({
       )}
       
       <div className="grid grid-cols-2 gap-1 text-[10px] sm:text-xs mb-2">
-        <div className="text-game-secondary flex items-center gap-1">
+        <div className="text-white/80 flex items-center gap-1">
           <Heart className="w-2 h-2 sm:w-3 sm:h-3 text-red-500" />
           {health}
         </div>
-        <div className="text-game-secondary flex items-center gap-1">
+        <div className="text-white/80 flex items-center gap-1">
           <Sword className="w-2 h-2 sm:w-3 sm:h-3" />
           {power}
         </div>
       </div>
       
-      <div className="mt-auto pt-2 border-t border-game-accent/20">
-        <div className="text-game-accent text-[8px] sm:text-[10px] flex items-center gap-1 mb-1">
+      <div className="mt-auto pt-2 border-t border-white/20">
+        <div className="text-white text-[8px] sm:text-[10px] flex items-center gap-1 mb-1">
           <Coins className="w-2 h-2" />
           Дроп:
         </div>
         <div className="text-[8px] space-y-0.5">
           <div className="flex justify-between">
-            <span className="text-gray-400">Монеты</span>
+            <span className="text-gray-300">Монеты</span>
             <span className="text-green-400">{formatDropChance(lootTable.coins.chance)}</span>
           </div>
           {lootTable.healthPotion && (
             <div className="flex justify-between">
-              <span className="text-gray-400">Зелье</span>
+              <span className="text-gray-300">Зелье</span>
               <span className="text-green-400">{formatDropChance(lootTable.healthPotion.chance)}</span>
             </div>
           )}
@@ -121,7 +123,7 @@ export const MonsterCardDisplay = memo(({
   );
 
   const ExpandedCardContent = () => (
-    <Card className="p-4 bg-game-background border-game-accent w-80 max-w-sm">
+    <Card variant="menu" className="p-4 w-80 max-w-sm" style={{ boxShadow: '0 15px 10px rgba(0, 0, 0, 0.6)' }}>
       {image && (
         <div className="w-full aspect-[3/4] mb-4 rounded-lg overflow-hidden flex items-center justify-center">
           <img 
@@ -138,7 +140,7 @@ export const MonsterCardDisplay = memo(({
       )}
       
       <div className="flex items-center justify-between mb-3">
-        <h3 className="font-bold text-game-accent text-lg">
+        <h3 className="font-bold text-white text-lg">
           {name}
         </h3>
         {isBoss && (
@@ -149,7 +151,7 @@ export const MonsterCardDisplay = memo(({
       </div>
       
       {description && (
-        <p className="text-gray-300 mb-4 text-sm leading-relaxed">
+        <p className="text-white/90 mb-4 text-sm leading-relaxed">
           {description}
         </p>
       )}
@@ -174,29 +176,29 @@ export const MonsterCardDisplay = memo(({
       )}
       
       <div className="grid grid-cols-2 gap-4 text-sm mb-4">
-        <div className="text-game-secondary flex items-center gap-2">
+        <div className="text-white/80 flex items-center gap-2">
           <Heart className="w-4 h-4 text-red-500" />
           <span className="font-medium">{health} HP</span>
         </div>
-        <div className="text-game-secondary flex items-center gap-2">
+        <div className="text-white/80 flex items-center gap-2">
           <Sword className="w-4 h-4" />
           <span className="font-medium">{power} ATK</span>
         </div>
       </div>
       
-      <div className="pt-3 border-t border-game-accent/20">
-        <div className="text-game-accent text-sm flex items-center gap-2 mb-3">
+      <div className="pt-3 border-t border-white/20">
+        <div className="text-white text-sm flex items-center gap-2 mb-3">
           <Coins className="w-4 h-4" />
           <span className="font-medium">Возможный дроп:</span>
         </div>
         <div className="text-sm space-y-2">
           <div className="flex justify-between">
-            <span className="text-gray-400">Монеты</span>
+            <span className="text-gray-300">Монеты</span>
             <span className="text-green-400 font-medium">{formatDropChance(lootTable.coins.chance)}</span>
           </div>
           {lootTable.healthPotion && (
             <div className="flex justify-between">
-              <span className="text-gray-400">Зелье здоровья</span>
+              <span className="text-gray-300">Зелье здоровья</span>
               <span className="text-green-400 font-medium">{formatDropChance(lootTable.healthPotion.chance)}</span>
             </div>
           )}

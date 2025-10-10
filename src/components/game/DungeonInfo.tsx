@@ -102,7 +102,7 @@ const DungeonDetail = ({
   return <div className="space-y-6">
       
 
-      <Card variant="menu" style={{ boxShadow: '-33px 15px 10px rgba(0, 0, 0, 0.6)' }}>
+      <Card variant="menu" className="shadow-lg">
         <CardHeader>
           <CardTitle className="text-lg text-white">{translateMonsterText(language, 'Выберите уровень')}</CardTitle>
         </CardHeader>
