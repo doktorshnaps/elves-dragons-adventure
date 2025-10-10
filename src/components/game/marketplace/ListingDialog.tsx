@@ -76,7 +76,7 @@ export const ListingDialog = ({ onClose, onCreateListing }: ListingDialogProps) 
         <div
           key={item.id}
           className={`cursor-pointer ${
-            selectedItem?.id === item.id ? 'ring-2 ring-game-accent rounded-lg' : ''
+            selectedItem?.id === item.id ? 'ring-2 ring-white rounded-lg' : ''
           }`}
           onClick={() => setSelectedItem(item)}
         >
@@ -87,14 +87,16 @@ export const ListingDialog = ({ onClose, onCreateListing }: ListingDialogProps) 
       return (
         <Card
           key={item.id}
-          className={`p-4 bg-game-surface border-game-accent cursor-pointer ${
-            selectedItem?.id === item.id ? 'ring-2 ring-game-accent' : ''
+          variant="menu"
+          className={`p-4 cursor-pointer ${
+            selectedItem?.id === item.id ? 'ring-2 ring-white' : ''
           }`}
           onClick={() => setSelectedItem(item)}
+          style={{ boxShadow: '-33px 15px 10px rgba(0, 0, 0, 0.6)' }}
         >
           <div className="flex flex-col gap-2">
-            <h3 className="font-semibold text-game-accent">{item.name}</h3>
-            <p className="text-sm text-gray-400">
+            <h3 className="font-semibold text-white">{item.name}</h3>
+            <p className="text-sm text-gray-300">
               {item.type === 'healthPotion' ? 'Зелье здоровья' : 'Набор карт'}
             </p>
           </div>
@@ -107,10 +109,10 @@ export const ListingDialog = ({ onClose, onCreateListing }: ListingDialogProps) 
     <div className="fixed inset-0 z-50 flex items-start justify-center pt-20">
       <div className="fixed inset-0 bg-black/50" onClick={onClose} />
       <div className="relative z-50 w-full max-w-xl mx-4">
-        <Card className="bg-game-surface border-game-accent p-4 max-h-[70vh] overflow-y-auto">
+        <Card variant="menu" className="p-4 max-h-[70vh] overflow-y-auto" style={{ boxShadow: '-33px 15px 10px rgba(0, 0, 0, 0.6)' }}>
           <div className="flex justify-between items-center mb-4">
             <h2 className="text-lg font-bold text-white">Создать объявление</h2>
-            <Button variant="ghost" size="sm" onClick={onClose}>
+            <Button variant="ghost" size="sm" onClick={onClose} className="text-white hover:text-white">
               <X className="w-4 h-4" />
             </Button>
           </div>
@@ -118,18 +120,20 @@ export const ListingDialog = ({ onClose, onCreateListing }: ListingDialogProps) 
           <div className="space-y-4">
             <div className="flex gap-2">
               <Button
-                variant={selectedType === 'card' ? 'default' : 'outline'}
+                variant="menu"
                 onClick={() => setSelectedType('card')}
-                className="flex-1"
+                className={`flex-1 ${selectedType !== 'card' ? 'opacity-60' : ''}`}
                 size="sm"
+                style={{ boxShadow: '-33px 15px 10px rgba(0, 0, 0, 0.6)' }}
               >
                 Карты
               </Button>
               <Button
-                variant={selectedType === 'item' ? 'default' : 'outline'}
+                variant="menu"
                 onClick={() => setSelectedType('item')}
-                className="flex-1"
+                className={`flex-1 ${selectedType !== 'item' ? 'opacity-60' : ''}`}
                 size="sm"
+                style={{ boxShadow: '-33px 15px 10px rgba(0, 0, 0, 0.6)' }}
               >
                 Предметы
               </Button>
@@ -143,21 +147,23 @@ export const ListingDialog = ({ onClose, onCreateListing }: ListingDialogProps) 
             </div>
 
             <div className="space-y-2">
-              <label className="text-sm text-gray-400">Цена (в ELL)</label>
+              <label className="text-sm text-gray-300">Цена (в ELL)</label>
               <Input
                 type="number"
                 value={price}
                 onChange={(e) => setPrice(e.target.value)}
                 min="1"
-                className="bg-game-background border-game-accent h-8 text-sm"
+                className="bg-black/50 border-2 border-white text-white h-8 text-sm"
               />
             </div>
 
             <Button
               onClick={handleCreate}
               disabled={!selectedItem || !price || loading}
-              className="w-full bg-game-accent hover:bg-game-accent/80"
+              variant="menu"
+              className="w-full"
               size="sm"
+              style={{ boxShadow: '-33px 15px 10px rgba(0, 0, 0, 0.6)' }}
             >
               Создать объявление
             </Button>
