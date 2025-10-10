@@ -116,7 +116,7 @@ export const Shop = ({ onClose }: ShopProps) => {
 return (
     <div className="relative">
       {showEffect && <PurchaseEffect onComplete={() => setShowEffect(false)} />}
-      <div className="sticky top-0 z-10 bg-game-background p-4 border-b border-game-accent">
+      <div className="sticky top-0 z-10 bg-game-background p-4 border-b-2 border-white">
         <div className="flex items-center justify-between">
           <Button
             variant="menu"
