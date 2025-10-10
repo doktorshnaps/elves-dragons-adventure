@@ -124,25 +124,25 @@ export const DungeonSearchDialog = ({
       exit={{ opacity: 0 }}
       className="fixed inset-0 bg-black/80 flex items-center justify-center p-4 z-[100]"
     >
-      <Card className="bg-game-surface border-game-accent p-8 max-w-md w-full relative">
+      <Card variant="menu" className="p-8 max-w-md w-full relative" style={{ boxShadow: '-33px 15px 10px rgba(0, 0, 0, 0.6)' }}>
         <Button
           variant="ghost"
           size="icon"
-          className="absolute left-4 top-4 text-game-accent hover:text-game-accent/80"
+          className="absolute left-4 top-4 text-white hover:text-white/80"
           onClick={onClose}
         >
           <ArrowLeft className="h-5 w-5" />
         </Button>
 
         <div className="text-center">
-          <h2 className="text-2xl font-bold text-game-accent mb-6">
+          <h2 className="text-2xl font-bold text-white mb-6">
             {activeDungeon ? 'Активное подземелье' : 'Выбор подземелья'}
           </h2>
           
           <EnergyDisplay energyState={energyState} timeUntilNext={timeUntilNext} />
           
           <div className="mb-4">
-            <p className="text-game-accent">Баланс: {balance} ELL</p>
+            <p className="text-white">Баланс: {balance} ELL</p>
           </div>
 
           <div className="space-y-2">
@@ -155,13 +155,15 @@ export const DungeonSearchDialog = ({
                   key={dungeon}
                   onClick={() => handleDungeonSelect(dungeon as DungeonType)}
                   disabled={!canEnter}
-                  className={`w-full border transition-all ${
+                  variant="menu"
+                  className={`w-full ${
                     isActiveDungeon 
                       ? 'bg-green-600 hover:bg-green-700 border-green-500 text-white shadow-lg shadow-green-500/50' 
                       : activeDungeon 
-                        ? 'bg-muted/50 border-muted text-muted-foreground cursor-not-allowed opacity-50'
-                        : 'bg-game-surface border-game-accent text-game-accent hover:bg-game-surface/80'
+                        ? 'bg-black/30 border-white/30 text-white/50 cursor-not-allowed opacity-50'
+                        : ''
                   }`}
+                  style={!isActiveDungeon && !activeDungeon ? { boxShadow: '-33px 15px 10px rgba(0, 0, 0, 0.6)' } : undefined}
                 >
                   {dungeonNames[dungeon as keyof typeof dungeonNames]}
                   {isActiveDungeon && <span className="ml-2">⚔️</span>}
@@ -171,14 +173,14 @@ export const DungeonSearchDialog = ({
           </div>
 
           {activeDungeon && (
-            <div className="text-sm text-muted-foreground mt-4 space-y-2">
+            <div className="text-sm text-white/70 mt-4 space-y-2">
               <p>
                 У вас есть активный бой в подземелье. Завершите его или сдайтесь, чтобы войти в другое подземелье.
               </p>
               <Button
                 variant="destructive"
                 onClick={handleResetActiveBattle}
-                className="border border-destructive/40"
+                className="border border-red-500/40"
               >
                 Сбросить активный бой
               </Button>
@@ -187,8 +189,9 @@ export const DungeonSearchDialog = ({
 
           <Button
             onClick={onClose}
-            variant="outline"
-            className="border-game-accent text-game-accent mt-4"
+            variant="menu"
+            className="mt-4"
+            style={{ boxShadow: '-33px 15px 10px rgba(0, 0, 0, 0.6)' }}
           >
             Закрыть
           </Button>

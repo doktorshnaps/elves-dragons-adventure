@@ -183,10 +183,10 @@ export const TeamBattleArena: React.FC<TeamBattleArenaProps> = ({
   return <div className="h-screen w-screen overflow-hidden p-2 flex flex-col relative">
       <div className="w-full h-full flex flex-col space-y-2">
         {/* Header */}
-        <Card className="bg-card/50 backdrop-blur-sm border-primary/20">
+        <Card variant="menu" style={{ boxShadow: '-33px 15px 10px rgba(0, 0, 0, 0.6)' }}>
           <CardHeader className="relative py-3">
             <div className="absolute left-4 top-3 flex gap-2">
-              <Button variant="outline" size="sm" onClick={handleMenuReturn}>
+              <Button variant="menu" size="sm" style={{ boxShadow: '-33px 15px 10px rgba(0, 0, 0, 0.6)' }} onClick={handleMenuReturn}>
                 <ArrowLeft className="w-4 h-4 mr-1" />
                 Меню
               </Button>
@@ -212,18 +212,18 @@ export const TeamBattleArena: React.FC<TeamBattleArenaProps> = ({
               </AlertDialog>
             </div>
             
-            <CardTitle className="text-center text-lg text-primary">
+            <CardTitle className="text-center text-lg text-white">
               Командный бой - Уровень {level}
             </CardTitle>
             
             {/* Account Level and XP Progress */}
             <div className="flex items-center justify-center gap-4 mt-2">
-              <div className="text-xs text-muted-foreground">
+              <div className="text-xs text-white/70">
                 Уровень: {accountLevel}
               </div>
               <div className="w-40">
                 <Progress value={xpProgress.progress * 100} className="h-1" />
-                <div className="flex justify-between text-xs text-muted-foreground mt-1">
+                <div className="flex justify-between text-xs text-white/60 mt-1">
                   <span>{xpProgress.currentLevelXP}</span>
                   <span>{xpProgress.nextLevelXP}</span>
                 </div>
@@ -234,9 +234,9 @@ export const TeamBattleArena: React.FC<TeamBattleArenaProps> = ({
 
         <div className="flex-1 flex flex-col space-y-2 overflow-hidden">
           {/* Player Team - Upper Part */}
-          <Card className="bg-card/50 backdrop-blur-sm border-primary/20 flex-1 min-h-0">
+          <Card variant="menu" className="flex-1 min-h-0" style={{ boxShadow: '-33px 15px 10px rgba(0, 0, 0, 0.6)' }}>
             <CardHeader className="py-2">
-              <CardTitle className="flex items-center gap-2 text-primary justify-center text-sm">
+              <CardTitle className="flex items-center gap-2 text-white justify-center text-sm">
                 <Shield className="w-4 h-4" />
                 Ваша команда
               </CardTitle>
@@ -244,7 +244,7 @@ export const TeamBattleArena: React.FC<TeamBattleArenaProps> = ({
             <CardContent className="h-full overflow-auto">
               <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-2">
                 {playerPairs.map((pair, index) => (
-                  <div key={pair.id} className={`p-4 rounded-lg border-2 transition-all cursor-pointer ${pair.health <= 0 ? 'bg-muted/50 border-muted opacity-50' : attackingPair === pair.id ? 'bg-red-500/30 border-red-500 animate-pulse scale-105 shadow-lg shadow-red-500/50' : defendingPair === pair.id ? 'bg-blue-500/30 border-blue-500 animate-pulse shadow-lg shadow-blue-500/50' : selectedPair === pair.id ? 'bg-primary/20 border-primary' : 'bg-card border-border hover:border-primary/50'}`} onClick={() => {
+                  <div key={pair.id} className={`p-4 rounded-3xl border-2 transition-all cursor-pointer ${pair.health <= 0 ? 'bg-black/30 border-white/30 opacity-50' : attackingPair === pair.id ? 'bg-red-500/30 border-red-500 animate-pulse scale-105 shadow-lg shadow-red-500/50' : defendingPair === pair.id ? 'bg-blue-500/30 border-blue-500 animate-pulse shadow-lg shadow-blue-500/50' : selectedPair === pair.id ? 'bg-white/20 border-white' : 'bg-black/20 border-white/50 hover:border-white'}`} onClick={() => {
                     if (pair.health > 0 && isPlayerTurn) {
                       setSelectedPair(pair.id);
                     }
@@ -252,15 +252,15 @@ export const TeamBattleArena: React.FC<TeamBattleArenaProps> = ({
                       <div className="flex flex-col items-center gap-2">
                         <div className="flex gap-1">
                           {/* Hero Image */}
-                          <div className="w-12 h-12 rounded-lg overflow-hidden border border-primary/30 bg-primary/10 flex-shrink-0">
-                            {pair.hero.image ? <img src={pair.hero.image} alt={pair.hero.name} className="w-full h-full object-cover" /> : <div className="w-full h-full flex items-center justify-center text-primary">
+                          <div className="w-12 h-12 rounded-lg overflow-hidden border border-white/30 bg-white/10 flex-shrink-0">
+                            {pair.hero.image ? <img src={pair.hero.image} alt={pair.hero.name} className="w-full h-full object-cover" /> : <div className="w-full h-full flex items-center justify-center text-white">
                                 <span className="text-lg">⚔️</span>
                               </div>}
                           </div>
                           
                           {/* Dragon Image */}
-                          {pair.dragon && <div className="w-10 h-10 rounded-lg overflow-hidden border border-secondary/30 bg-secondary/10 flex-shrink-0">
-                              {pair.dragon.image ? <img src={pair.dragon.image} alt={pair.dragon.name} className="w-full h-full object-cover" /> : <div className="w-full h-full flex items-center justify-center text-secondary">
+                          {pair.dragon && <div className="w-10 h-10 rounded-lg overflow-hidden border border-white/30 bg-white/10 flex-shrink-0">
+                              {pair.dragon.image ? <img src={pair.dragon.image} alt={pair.dragon.name} className="w-full h-full object-cover" /> : <div className="w-full h-full flex items-center justify-center text-white">
                                   <span className="text-sm">🐲</span>
                                 </div>}
                             </div>}
@@ -268,12 +268,12 @@ export const TeamBattleArena: React.FC<TeamBattleArenaProps> = ({
                         
                         <div className="text-center">
                           <div className="flex items-center gap-1 justify-center mb-1">
-                            <span className="font-semibold text-xs bg-primary/20 px-1 py-0.5 rounded">
+                            <span className="font-semibold text-xs bg-white/20 text-white px-1 py-0.5 rounded">
                               #{pair.attackOrder}
                             </span>
                           </div>
-                          <span className="font-medium text-sm">{pair.hero.name}</span>
-                          {pair.dragon && <div className="text-xs text-muted-foreground">
+                          <span className="font-medium text-sm text-white">{pair.hero.name}</span>
+                          {pair.dragon && <div className="text-xs text-white/70">
                               + {pair.dragon.name}
                             </div>}
                         </div>
@@ -281,14 +281,14 @@ export const TeamBattleArena: React.FC<TeamBattleArenaProps> = ({
                         {/* Health Bar */}
                         <div className="w-full">
                           <Progress value={pair.health / pair.maxHealth * 100} className="h-2" />
-                          <div className="text-xs text-center mt-1">
+                          <div className="text-xs text-center mt-1 text-white">
                             <Heart className="w-3 h-3 inline mr-1" />
                             {pair.health}/{pair.maxHealth}
                           </div>
                         </div>
 
                         {/* Stats */}
-                        <div className="flex gap-2 text-xs">
+                        <div className="flex gap-2 text-xs text-white">
                           <span className="flex items-center">
                             <Sword className="w-3 h-3 mr-1" />
                             {pair.power}
@@ -306,11 +306,11 @@ export const TeamBattleArena: React.FC<TeamBattleArenaProps> = ({
           </Card>
 
           {/* Combat Actions - Center */}
-          <Card className="bg-card/50 backdrop-blur-sm border-primary/20 flex-shrink-0">
+          <Card variant="menu" className="flex-shrink-0" style={{ boxShadow: '-33px 15px 10px rgba(0, 0, 0, 0.6)' }}>
             <CardContent className="p-2">
               <div className="text-center space-y-2">
-                <div className="text-sm font-medium">
-                  {isPlayerTurn ? <span className="text-primary">Ваш ход</span> : <span className="text-destructive">Ход противника</span>}
+                <div className="text-sm font-medium text-white">
+                  {isPlayerTurn ? <span className="text-green-400">Ваш ход</span> : <span className="text-red-400">Ход противника</span>}
                 </div>
                 
                 
@@ -337,7 +337,9 @@ export const TeamBattleArena: React.FC<TeamBattleArenaProps> = ({
                         onClick={handleAttack} 
                         disabled={!selectedPair || selectedTarget === null || typeof selectedTarget === 'string'} 
                         size="sm" 
+                        variant="menu"
                         className="h-7 px-3"
+                        style={{ boxShadow: '-33px 15px 10px rgba(0, 0, 0, 0.6)' }}
                       >
                         Атаковать
                       </Button>
@@ -362,7 +364,7 @@ export const TeamBattleArena: React.FC<TeamBattleArenaProps> = ({
 
                   {/* Подсказки только в ход игрока */}
                   {isPlayerTurn && !autoBattle && selectedPair && !selectedTarget && (
-                    <div className="text-xs text-muted-foreground">
+                    <div className="text-xs text-white/70">
                       Выберите цель для атаки
                     </div>
                   )}
@@ -370,10 +372,11 @@ export const TeamBattleArena: React.FC<TeamBattleArenaProps> = ({
 
                 <div className="flex gap-2 justify-center">
                   <Button 
-                    variant={autoBattle ? "destructive" : "default"} 
+                    variant={autoBattle ? "destructive" : "menu"} 
                     size="sm" 
                     onClick={handleAutoBattle}
-                    className={autoBattle ? "" : "bg-green-600 hover:bg-green-700 text-white"}
+                    className={autoBattle ? "" : ""}
+                    style={!autoBattle ? { boxShadow: '-33px 15px 10px rgba(0, 0, 0, 0.6)' } : undefined}
                   >
                     {autoBattle ? "Стоп авто-бой" : "Авто-бой"}
                   </Button>
@@ -383,16 +386,16 @@ export const TeamBattleArena: React.FC<TeamBattleArenaProps> = ({
           </Card>
 
           {/* Enemy Team - Lower Part */}
-          <Card className="bg-card/50 backdrop-blur-sm border-primary/20 flex-1 min-h-0">
+          <Card variant="menu" className="flex-1 min-h-0" style={{ boxShadow: '-33px 15px 10px rgba(0, 0, 0, 0.6)' }}>
             <CardHeader className="py-2">
-              <CardTitle className="flex items-center gap-2 text-destructive justify-center text-sm">
+              <CardTitle className="flex items-center gap-2 text-red-400 justify-center text-sm">
                 <Sword className="w-4 h-4" />
                 Враги
               </CardTitle>
             </CardHeader>
             <CardContent className="h-full overflow-auto">
               <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-2">
-                {opponents.map((opponent, index) => <div key={opponent.id} className={`relative rounded-lg border-2 transition-all overflow-hidden h-28 ${opponent.health <= 0 ? 'border-muted' : attackedTarget === opponent.id ? 'border-red-500 animate-pulse scale-105 shadow-lg shadow-red-500/50 cursor-pointer' : selectedTarget === opponent.id ? 'border-destructive bg-destructive/10 cursor-pointer' : 'border-border hover:border-destructive/50 cursor-pointer'}`} onClick={() => {
+                {opponents.map((opponent, index) => <div key={opponent.id} className={`relative rounded-3xl border-2 transition-all overflow-hidden h-28 ${opponent.health <= 0 ? 'border-white/30' : attackedTarget === opponent.id ? 'border-red-500 animate-pulse scale-105 shadow-lg shadow-red-500/50 cursor-pointer' : selectedTarget === opponent.id ? 'border-red-400 bg-red-400/10 cursor-pointer' : 'border-white/50 hover:border-red-400/50 cursor-pointer'}`} onClick={() => {
                 if (opponent.health > 0 && isPlayerTurn) {
                   setSelectedTarget(opponent.id);
                 }

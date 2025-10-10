@@ -12,13 +12,13 @@ export const DungeonWarnings = ({ isHealthTooLow, hasActiveCards, activeDungeon 
   return (
     <>
       {isHealthTooLow && (
-        <p className="text-red-500 mt-4">
+        <p className="text-red-400 mt-4 bg-red-500/10 border border-red-500/30 rounded-2xl p-2">
           Здоровье слишком низкое для входа в подземелье
         </p>
       )}
 
       {!hasActiveCards && (
-        <p className="text-red-500 mt-4">
+        <p className="text-red-400 mt-4 bg-red-500/10 border border-red-500/30 rounded-2xl p-2">
           У вас нет активных карт героев или питомцев
         </p>
       )}
