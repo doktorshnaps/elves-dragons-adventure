@@ -29,7 +29,9 @@ export const NFTCardGrid = ({ cards }: NFTCardGridProps) => {
         {cards.map((card) => (
           <Card 
             key={card.id}
-            className="w-full max-w-[160px] cursor-pointer transition-all duration-200 hover:scale-105 hover:shadow-lg bg-game-surface border-game-accent overflow-hidden"
+            variant="menu"
+            className="w-full max-w-[160px] cursor-pointer transition-all duration-200 hover:scale-105 overflow-hidden"
+            style={{ boxShadow: '0 15px 10px rgba(0, 0, 0, 0.6)' }}
             onClick={() => handleCardClick(card)}
           >
             <div className="aspect-[3/4] relative">
@@ -50,7 +52,7 @@ export const NFTCardGrid = ({ cards }: NFTCardGridProps) => {
             </div>
             
             <div className="p-2">
-              <h3 className="text-xs font-semibold text-game-accent truncate mb-1">
+              <h3 className="text-xs font-semibold text-white truncate mb-1">
                 {card.name}
               </h3>
               
@@ -61,7 +63,7 @@ export const NFTCardGrid = ({ cards }: NFTCardGridProps) => {
               </div>
               
               {card.faction && (
-                <div className="text-xs text-purple-400 mt-1 truncate">
+                <div className="text-xs text-purple-300 mt-1 truncate">
                   {card.faction}
                 </div>
               )}

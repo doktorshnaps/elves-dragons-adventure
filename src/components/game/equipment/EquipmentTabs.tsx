@@ -14,16 +14,16 @@ interface EquipmentTabsProps {
 export const EquipmentTabs = ({ onUseItem, nftCards, isLoadingNFT }: EquipmentTabsProps) => {
   return (
     <Tabs defaultValue="equipment" className="w-full">
-      <TabsList className="grid w-full grid-cols-2 bg-game-surface border-game-accent">
+      <TabsList className="grid w-full grid-cols-2 bg-black/40 border-2 border-white/50 backdrop-blur-sm rounded-3xl">
         <TabsTrigger 
           value="equipment" 
-          className="text-game-accent data-[state=active]:bg-game-accent data-[state=active]:text-game-surface"
+          className="text-white data-[state=active]:bg-white/20 data-[state=active]:text-white rounded-3xl"
         >
           Инвентарь
         </TabsTrigger>
         <TabsTrigger 
           value="nft" 
-          className="text-game-accent data-[state=active]:bg-game-accent data-[state=active]:text-game-surface"
+          className="text-white data-[state=active]:bg-white/20 data-[state=active]:text-white rounded-3xl"
         >
           NFT коллекция
         </TabsTrigger>
@@ -31,7 +31,7 @@ export const EquipmentTabs = ({ onUseItem, nftCards, isLoadingNFT }: EquipmentTa
 
       <TabsContent value="equipment" className="space-y-6 mt-6">
         <div>
-          <h3 className="text-xl font-bold text-game-accent mb-4">
+          <h3 className="text-xl font-bold text-white mb-4">
             Обычные предметы (не заминченные)
           </h3>
           <InventoryDisplay onUseItem={onUseItem} readonly={false} />
@@ -39,20 +39,20 @@ export const EquipmentTabs = ({ onUseItem, nftCards, isLoadingNFT }: EquipmentTa
       </TabsContent>
 
       <TabsContent value="nft" className="space-y-6 mt-6">
-        <Card className="p-6 bg-game-surface border-game-accent">
-          <h2 className="text-xl font-bold text-game-accent mb-4">
-            NFT-коллекция из кошелька
-          </h2>
-          {isLoadingNFT ? (
-            <div className="text-center text-game-accent">Загрузка NFT...</div>
-          ) : nftCards.length > 0 ? (
-            <NFTCardGrid cards={nftCards} />
-          ) : (
-            <div className="text-center text-game-accent/70">
-              NFT карты не найдены в подключенном кошельке
-            </div>
-          )}
-        </Card>
+      <Card className="p-6 bg-black/50 border-2 border-white rounded-3xl backdrop-blur-sm" style={{ boxShadow: '0 15px 10px rgba(0, 0, 0, 0.6)' }}>
+        <h2 className="text-xl font-bold text-white mb-4">
+          NFT-коллекция из кошелька
+        </h2>
+        {isLoadingNFT ? (
+          <div className="text-center text-white">Загрузка NFT...</div>
+        ) : nftCards.length > 0 ? (
+          <NFTCardGrid cards={nftCards} />
+        ) : (
+          <div className="text-center text-white/70">
+            NFT карты не найдены в подключенном кошельке
+          </div>
+        )}
+      </Card>
       </TabsContent>
     </Tabs>
   );
