@@ -41,12 +41,12 @@ export const AttackOrderSelector: React.FC<AttackOrderSelectorProps> = ({
   return (
     <div className="min-h-screen flex flex-col justify-end">
       <div className="flex-1 flex items-center justify-center p-4">
-        <Card className="bg-card/50 backdrop-blur-sm border-primary/20 max-w-2xl w-full">
+        <Card variant="menu" className="max-w-2xl w-full" style={{ boxShadow: '-33px 15px 10px rgba(0, 0, 0, 0.6)' }}>
           <CardHeader>
-            <CardTitle className="text-center text-2xl">
+            <CardTitle className="text-center text-2xl text-white">
               Готовность к бою
             </CardTitle>
-            <p className="text-center text-muted-foreground">
+            <p className="text-center text-gray-300">
               Ваша команда готова к сражению
             </p>
           </CardHeader>
@@ -54,8 +54,10 @@ export const AttackOrderSelector: React.FC<AttackOrderSelectorProps> = ({
             <div className="flex justify-center">
               <Button 
                 onClick={onStartBattle}
+                variant="menu"
                 className="px-8 py-3 text-lg"
                 disabled={playerPairs.length === 0}
+                style={{ boxShadow: '-33px 15px 10px rgba(0, 0, 0, 0.6)' }}
               >
                 Начать бой
               </Button>
@@ -65,23 +67,23 @@ export const AttackOrderSelector: React.FC<AttackOrderSelectorProps> = ({
       </div>
       
       {/* Team Selection Panel at Bottom */}
-      <div className="bg-game-surface/50 border-t border-game-accent/30 p-4">
+      <div className="bg-black/50 border-t-2 border-white p-4 backdrop-blur-sm">
         <div className="max-w-6xl mx-auto">
-          <h3 className="text-lg font-bold text-game-accent mb-3 text-center">
+          <h3 className="text-lg font-bold text-white mb-3 text-center">
             Выбранная команда ({playerPairs.length}/5)
           </h3>
           <div className="grid grid-cols-5 gap-4">
             {Array.from({ length: 5 }, (_, index) => {
               const pair = playerPairs[index];
               return (
-                <div key={index} className="relative overflow-hidden border border-game-accent/30 rounded-lg p-3 min-h-[200px] bg-card/30">
+                <div key={index} className="relative overflow-hidden border-2 border-white rounded-3xl p-3 min-h-[200px] bg-black/30 backdrop-blur-sm" style={{ boxShadow: '-33px 15px 10px rgba(0, 0, 0, 0.6)' }}>
                   {pair ? (
                     <div className="space-y-2">
-                      <div className="text-xs text-game-accent font-medium text-center">Пара {index + 1}</div>
+                      <div className="text-xs text-white font-medium text-center">Пара {index + 1}</div>
                       
                       {/* Hero Image */}
                       <div className="flex justify-center">
-                        <div className="w-16 h-16 rounded-lg overflow-hidden border border-primary/30 bg-primary/10">
+                        <div className="w-16 h-16 rounded-lg overflow-hidden border-2 border-white/30 bg-black/30">
                           {pair.hero.image ? (
                             <img 
                               src={pair.hero.image} 
@@ -89,7 +91,7 @@ export const AttackOrderSelector: React.FC<AttackOrderSelectorProps> = ({
                               className="w-full h-full object-cover"
                             />
                           ) : (
-                            <div className="w-full h-full flex items-center justify-center text-primary">
+                            <div className="w-full h-full flex items-center justify-center text-white">
                               <span className="text-xl">⚔️</span>
                             </div>
                           )}
@@ -97,13 +99,13 @@ export const AttackOrderSelector: React.FC<AttackOrderSelectorProps> = ({
                       </div>
                       
                       <div className="text-center">
-                        <div className="text-xs text-game-accent/70">Герой</div>
-                        <div className="text-xs font-medium text-primary">{pair.hero.name}</div>
+                        <div className="text-xs text-white/70">Герой</div>
+                        <div className="text-xs font-medium text-white">{pair.hero.name}</div>
                         
                         {pair.dragon && (
                           <>
                             <div className="flex justify-center mt-1">
-                              <div className="w-12 h-12 rounded-lg overflow-hidden border border-secondary/30 bg-secondary/10">
+                              <div className="w-12 h-12 rounded-lg overflow-hidden border-2 border-white/30 bg-black/30">
                                 {pair.dragon.image ? (
                                   <img 
                                     src={pair.dragon.image} 
@@ -111,18 +113,18 @@ export const AttackOrderSelector: React.FC<AttackOrderSelectorProps> = ({
                                     className="w-full h-full object-cover"
                                   />
                                 ) : (
-                                  <div className="w-full h-full flex items-center justify-center text-secondary">
+                                  <div className="w-full h-full flex items-center justify-center text-white">
                                     <span className="text-sm">🐲</span>
                                   </div>
                                 )}
                               </div>
                             </div>
-                            <div className="text-xs text-game-accent/70 mt-1">Дракон</div>
-                            <div className="text-xs font-medium text-secondary">{pair.dragon.name}</div>
+                            <div className="text-xs text-white/70 mt-1">Дракон</div>
+                            <div className="text-xs font-medium text-white">{pair.dragon.name}</div>
                           </>
                         )}
                         
-                        <div className="text-xs text-muted-foreground mt-2 space-y-1">
+                        <div className="text-xs text-gray-300 mt-2 space-y-1">
                           <div>💪 {pair.power}</div>
                           <div>🛡️ {pair.defense}</div>
                           <div>❤️ {pair.health}</div>
@@ -130,7 +132,7 @@ export const AttackOrderSelector: React.FC<AttackOrderSelectorProps> = ({
                       </div>
                     </div>
                   ) : (
-                    <div className="flex items-center justify-center h-full text-muted-foreground">
+                    <div className="flex items-center justify-center h-full text-gray-300">
                       <div className="text-center">
                         <div className="text-xs">Пара {index + 1}</div>
                         <div className="text-xs mt-1">Не выбрана</div>
