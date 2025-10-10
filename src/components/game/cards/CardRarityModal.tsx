@@ -25,9 +25,9 @@ export const CardRarityModal = ({
   return <Dialog open={open} onOpenChange={v => {
     if (!v) onClose();
   }}>
-      <DialogContent className="z-[60] max-w-6xl max-h-[90vh] overflow-y-auto bg-game-surface border-game-accent" aria-describedby="card-rarities">
+      <DialogContent className="z-[60] max-w-6xl max-h-[90vh] overflow-y-auto bg-black/90 border-2 border-white backdrop-blur-sm" aria-describedby="card-rarities" style={{ boxShadow: '0 15px 10px rgba(0, 0, 0, 0.6)' }}>
         <DialogHeader>
-          <DialogTitle className="text-game-accent text-center">
+          <DialogTitle className="text-white text-center">
             {translateCardName(language, cardInfo.name)} - Все редкости
           </DialogTitle>
         </DialogHeader>
@@ -35,11 +35,11 @@ export const CardRarityModal = ({
         <div id="card-rarities" className="space-y-4">
           {/* Базовая информация о карте */}
           <div className="text-center space-y-2">
-            <div className="flex items-center justify-center gap-2 text-purple-400">
+            <div className="flex items-center justify-center gap-2 text-purple-300">
               <Sparkles className="w-4 h-4" />
               <span>{translateFaction(language, cardInfo.faction)}</span>
             </div>
-            <p className="text-game-secondary text-sm">{cardInfo.description}</p>
+            <p className="text-white/80 text-sm">{cardInfo.description}</p>
           </div>
 
           {/* Сетка с редкостями */}
@@ -62,7 +62,7 @@ export const CardRarityModal = ({
               magic: stats.magic
             };
             const cardImage = resolveCardImage(tempCard);
-            return <div key={rarity} className="bg-game-background border border-game-accent rounded-lg p-3 mx-0 my-0">
+            return <div key={rarity} className="bg-black/50 border-2 border-white rounded-3xl p-3 mx-0 my-0 backdrop-blur-sm" style={{ boxShadow: '0 15px 10px rgba(0, 0, 0, 0.6)' }}>
                   {/* Звёзды редкости */}
                   <div className="text-center mb-2">
                     
@@ -76,22 +76,22 @@ export const CardRarityModal = ({
                   {/* Характеристики */}
                   <div className="space-y-2">
                     <div className="grid grid-cols-2 gap-2 text-xs">
-                      <div className="bg-game-surface/60 border border-game-accent rounded p-2 text-center">
-                        <div className="text-game-accent">Сила</div>
+                      <div className="bg-black/30 border-2 border-white/30 rounded-3xl p-2 text-center">
+                        <div className="text-white">Сила</div>
                         <div className="text-red-400 font-bold">{stats.power}</div>
                       </div>
-                      <div className="bg-game-surface/60 border border-game-accent rounded p-2 text-center">
-                        <div className="text-game-accent">Защита</div>
+                      <div className="bg-black/30 border-2 border-white/30 rounded-3xl p-2 text-center">
+                        <div className="text-white">Защита</div>
                         <div className="text-blue-400 font-bold">{stats.defense}</div>
                       </div>
                     </div>
                     <div className="grid grid-cols-2 gap-2 text-xs">
-                      <div className="bg-game-surface/60 border border-game-accent rounded p-2 text-center">
-                        <div className="text-game-accent">Здоровье</div>
+                      <div className="bg-black/30 border-2 border-white/30 rounded-3xl p-2 text-center">
+                        <div className="text-white">Здоровье</div>
                         <div className="text-green-400 font-bold">{stats.health}</div>
                       </div>
-                      <div className="bg-game-surface/60 border border-game-accent rounded p-2 text-center">
-                        <div className="text-game-accent">Магия</div>
+                      <div className="bg-black/30 border-2 border-white/30 rounded-3xl p-2 text-center">
+                        <div className="text-white">Магия</div>
                         <div className="text-purple-300 font-bold">{stats.magic}</div>
                       </div>
                     </div>
