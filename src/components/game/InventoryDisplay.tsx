@@ -13,6 +13,7 @@ import { useLanguage } from "@/hooks/useLanguage";
 import { t } from "@/utils/translations";
 import { GroupedItem } from "./inventory/types";
 import { cardDatabase } from "@/data/cardDatabase";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 
 interface InventoryDisplayProps {
@@ -28,6 +29,7 @@ export const InventoryDisplay = ({
   readonly = false,
   showOnlyPotions = false
 }: InventoryDisplayProps) => {
+  const isMobile = useIsMobile();
   const { eggs, addEgg } = useDragonEggs();
   const { gameData, updateGameData } = useGameData();
   const { language } = useLanguage();
@@ -171,7 +173,7 @@ const allInventoryItems: Item[] = inventory;
         backgroundRepeat: 'no-repeat',
       }}
     >
-      <div className="p-4 max-h-[calc(100vh-200px)] overflow-y-auto">
+      <div className={`p-4 overflow-y-auto ${isMobile ? 'max-h-[calc(100vh-300px)]' : 'max-h-[calc(100vh-200px)]'}`}>
         <div className="space-y-4">
           <InventoryHeader balance={balance} />
           {!showOnlyPotions && <DragonEggsList eggs={eggs} />}
