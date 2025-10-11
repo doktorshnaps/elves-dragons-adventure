@@ -86,7 +86,7 @@ export const InventoryGrid = ({
                   })()}
                 </div>
 
-                <div className="flex-1 flex flex-col">
+                <div className="flex flex-col">
                   <h3 className={`font-semibold text-white mb-1 ${isMobile ? 'text-xs' : 'text-sm'}`}>
                     {item.name} {item.count > 1 && `(${item.count})`}
                   </h3>
