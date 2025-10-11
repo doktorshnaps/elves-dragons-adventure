@@ -153,8 +153,12 @@ export const WorkersManagement = ({ onSpeedBoostChange }: WorkersManagementProps
     cardInstanceWorkers: cardInstanceWorkers.length,
     availableWorkers: availableWorkers.length,
     activeWorkers: activeWorkers.length,
-    inventoryDetails: inventoryWorkers.map(w => ({ id: w.id, name: w.name, source: w.source })),
-    cardDetails: cardInstanceWorkers.map(w => ({ id: w.id, name: w.name, source: w.source, instanceId: (w as any).instanceId }))
+    visibleWorkers: visibleWorkers.length,
+    inventoryDetails: inventoryWorkers.map(w => ({ id: w.id, instanceId: w.instanceId, name: w.name, source: w.source })),
+    cardDetails: cardInstanceWorkers.map(w => ({ id: w.id, name: w.name, source: w.source, instanceId: (w as any).instanceId })),
+    activeWorkersDetails: activeWorkers.map(w => ({ workerId: w.workerId, cardInstanceId: w.cardInstanceId, name: w.name })),
+    activeInstanceIdsSet: Array.from(activeInstanceIds),
+    activeWorkerIdsSet: Array.from(activeWorkerIds)
   });
 
   // Загружаем активных рабочих из gameState и localStorage
@@ -192,6 +196,41 @@ export const WorkersManagement = ({ onSpeedBoostChange }: WorkersManagementProps
       }
     }
   }, [gameState.activeWorkers]);
+
+  // Автоматическая очистка зависших рабочих из инвентаря
+  useEffect(() => {
+    if (!gameState.actions || activeWorkers.length === 0) return;
+    
+    const cleanupStuckWorkers = async () => {
+      const activeInstanceIds = new Set(activeWorkers.map(w => w.cardInstanceId));
+      const activeWorkerIds = new Set(activeWorkers.map(w => w.workerId));
+      
+      const currentInv = [...(gameState.inventory || [])] as any[];
+      const workersInInv = currentInv.filter((item: any) => item?.type === 'worker');
+      
+      // Находим рабочих, которые уже назначены, но всё ещё в инвентаре
+      const stuckWorkers = workersInInv.filter((item: any) => {
+        const itemInstanceId = item.instanceId || item.id;
+        return activeInstanceIds.has(itemInstanceId) || activeWorkerIds.has(itemInstanceId);
+      });
+      
+      if (stuckWorkers.length > 0) {
+        console.log('🧹 Found stuck workers in inventory:', stuckWorkers.length, stuckWorkers.map(w => ({ id: w.id, instanceId: w.instanceId, name: w.name })));
+        
+        // Удаляем зависших рабочих
+        const cleanedInv = currentInv.filter((item: any) => {
+          if (item?.type !== 'worker') return true;
+          const itemInstanceId = item.instanceId || item.id;
+          return !activeInstanceIds.has(itemInstanceId) && !activeWorkerIds.has(itemInstanceId);
+        });
+        
+        await gameState.actions.updateInventory(cleanedInv);
+        console.log('✅ Cleaned up stuck workers from inventory. Removed:', stuckWorkers.length);
+      }
+    };
+    
+    cleanupStuckWorkers();
+  }, [activeWorkers, gameState.inventory, gameState.actions]);
 
   // Вычисляем общее ускорение при изменении активных рабочих
   useEffect(() => {
@@ -281,17 +320,24 @@ export const WorkersManagement = ({ onSpeedBoostChange }: WorkersManagementProps
         await loadCardInstances();
         console.log('✅ Successfully deleted worker from card_instances:', (worker as any).instanceId);
       } else if (worker.source === 'inventory') {
-        // Удаляем из инвентаря по ID и сохраняем через actions
+        // Удаляем из инвентаря - ищем по instanceId или id
         const removeIdx = updatedInv.findIndex((i: any) => 
-          i?.type === 'worker' && i.id === worker.id
+          i?.type === 'worker' && (
+            (worker.instanceId && (i.instanceId === worker.instanceId || i.id === worker.instanceId)) ||
+            (i.id === worker.id)
+          )
         );
         
         if (removeIdx >= 0) {
           updatedInv.splice(removeIdx, 1);
           await gameState.actions.updateInventory(updatedInv);
-          console.log('✅ Worker removed from inventory at index:', removeIdx, 'worker:', worker.name);
+          console.log('✅ Worker removed from inventory at index:', removeIdx, 'worker:', worker.name, 'id:', worker.id, 'instanceId:', worker.instanceId);
         } else {
-          console.warn('⚠️ Could not find matching worker in inventory to remove:', worker.id);
+          console.warn('⚠️ Could not find matching worker in inventory to remove. Worker:', {
+            id: worker.id,
+            instanceId: worker.instanceId,
+            name: worker.name
+          }, 'Inventory:', updatedInv.filter((i: any) => i?.type === 'worker').map((i: any) => ({ id: i.id, instanceId: i.instanceId, name: i.name })));
         }
       } else if (worker.source === 'cards') {
         // Удаляем из карт по ID и сохраняем через actions
