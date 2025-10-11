@@ -37,21 +37,21 @@ export const CardPackQuantityModal = ({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-md bg-game-surface border-game-accent">
+      <DialogContent className="sm:max-w-md bg-black/90 border-2 border-white backdrop-blur-sm" style={{ boxShadow: '0 15px 10px rgba(0, 0, 0, 0.6)' }}>
         <DialogHeader>
-          <DialogTitle className="text-game-accent">Открыть колоды карт</DialogTitle>
+          <DialogTitle className="text-white">Открыть колоды карт</DialogTitle>
         </DialogHeader>
         
         <div className="space-y-4 py-4">
-          <div className="text-sm text-muted-foreground">
+          <div className="text-sm text-gray-300">
             {item?.name && (
-              <p>Колода: <span className="text-foreground font-medium">{item.name}</span></p>
+              <p>Колода: <span className="text-white font-medium">{item.name}</span></p>
             )}
-            <p>Доступно колод: <span className="text-game-accent font-medium">{availableCount}</span></p>
+            <p>Доступно колод: <span className="text-yellow-400 font-medium">{availableCount}</span></p>
           </div>
           
           <div className="space-y-2">
-            <Label htmlFor="quantity" className="text-foreground">
+            <Label htmlFor="quantity" className="text-white">
               Количество колод для открытия:
             </Label>
             <Input
@@ -61,7 +61,7 @@ export const CardPackQuantityModal = ({
               max={availableCount}
               value={quantity}
               onChange={(e) => handleQuantityChange(e.target.value)}
-              className="bg-background border-game-accent text-foreground"
+              className="bg-black/50 border-2 border-white/30 text-white rounded-3xl"
             />
           </div>
           
@@ -70,7 +70,7 @@ export const CardPackQuantityModal = ({
               variant="outline"
               size="sm"
               onClick={() => setQuantity(1)}
-              className="flex-1"
+              className="flex-1 bg-black/50 border-2 border-white/30 text-white hover:bg-white/10 rounded-3xl"
             >
               1
             </Button>
@@ -79,7 +79,7 @@ export const CardPackQuantityModal = ({
                 variant="outline"
                 size="sm"
                 onClick={() => setQuantity(5)}
-                className="flex-1"
+                className="flex-1 bg-black/50 border-2 border-white/30 text-white hover:bg-white/10 rounded-3xl"
               >
                 5
               </Button>
@@ -89,7 +89,7 @@ export const CardPackQuantityModal = ({
                 variant="outline"
                 size="sm"
                 onClick={() => setQuantity(10)}
-                className="flex-1"
+                className="flex-1 bg-black/50 border-2 border-white/30 text-white hover:bg-white/10 rounded-3xl"
               >
                 10
               </Button>
@@ -98,7 +98,7 @@ export const CardPackQuantityModal = ({
               variant="outline"
               size="sm"
               onClick={() => setQuantity(availableCount)}
-              className="flex-1"
+              className="flex-1 bg-black/50 border-2 border-white/30 text-white hover:bg-white/10 rounded-3xl"
             >
               Все
             </Button>
@@ -106,10 +106,17 @@ export const CardPackQuantityModal = ({
         </div>
 
         <DialogFooter className="gap-2">
-          <Button variant="outline" onClick={onClose}>
+          <Button 
+            variant="outline" 
+            onClick={onClose}
+            className="bg-black/50 border-2 border-white/30 text-white hover:bg-white/10 rounded-3xl"
+          >
             Отмена
           </Button>
-          <Button onClick={handleConfirm} className="bg-primary text-primary-foreground hover:bg-primary/90">
+          <Button 
+            onClick={handleConfirm} 
+            className="bg-black/50 border-2 border-white text-white hover:bg-white/10 rounded-3xl"
+          >
             Открыть {quantity} колод{quantity > 1 ? (quantity > 4 ? '' : 'ы') : 'у'}
           </Button>
         </DialogFooter>
