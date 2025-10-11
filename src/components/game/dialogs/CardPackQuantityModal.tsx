@@ -37,9 +37,9 @@ export const CardPackQuantityModal = ({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-md bg-card border-border">
+      <DialogContent className="sm:max-w-md bg-game-surface border-game-accent">
         <DialogHeader>
-          <DialogTitle className="text-foreground">Открыть колоды карт</DialogTitle>
+          <DialogTitle className="text-game-accent">Открыть колоды карт</DialogTitle>
         </DialogHeader>
         
         <div className="space-y-4 py-4">
@@ -47,7 +47,7 @@ export const CardPackQuantityModal = ({
             {item?.name && (
               <p>Колода: <span className="text-foreground font-medium">{item.name}</span></p>
             )}
-            <p>Доступно колод: <span className="text-accent font-medium">{availableCount}</span></p>
+            <p>Доступно колод: <span className="text-game-accent font-medium">{availableCount}</span></p>
           </div>
           
           <div className="space-y-2">
@@ -61,7 +61,7 @@ export const CardPackQuantityModal = ({
               max={availableCount}
               value={quantity}
               onChange={(e) => handleQuantityChange(e.target.value)}
-              className="bg-background border-border text-foreground"
+              className="bg-background border-game-accent text-foreground"
             />
           </div>
           
