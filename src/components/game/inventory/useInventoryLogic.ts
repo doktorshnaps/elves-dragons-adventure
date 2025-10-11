@@ -80,8 +80,8 @@ const groupItems = (items: Item[]): GroupedItem[] => {
     // Фильтруем null и undefined значения перед группировкой
     const validItems = items.filter(item => item != null && typeof item === 'object');
       return validItems.reduce<GroupedItem[]>((acc, item) => {
-      // Яйца драконов и рабочие НЕ группируем — у каждого свой таймер/уникальный ID
-      if (item.type === 'dragon_egg' || item.type === 'worker') {
+      // Яйца драконов НЕ группируем — у каждого свой таймер/уникальный ID
+      if (item.type === 'dragon_egg') {
         acc.push({
           name: item.name,
           type: item.type,
@@ -93,7 +93,7 @@ const groupItems = (items: Item[]): GroupedItem[] => {
         return acc;
       }
 
-      // Группируем только предметы с одинаковым состоянием экипировки
+      // Группируем все остальные предметы (включая workers) с одинаковым состоянием экипировки
       const existingGroup = acc.find(
         group => 
           group.name === item.name && 
