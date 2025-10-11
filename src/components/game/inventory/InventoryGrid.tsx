@@ -24,7 +24,14 @@ export const InventoryGrid = ({
   const {
     language
   } = useLanguage();
-  const unequippedItems = groupedItems.filter(item => !item.items.some(i => i.equipped));
+  const unequippedItems = groupedItems
+    .filter(item => !item.items.some(i => i.equipped))
+    .sort((a, b) => {
+      // Card packs always come first
+      if (a.type === 'cardPack' && b.type !== 'cardPack') return -1;
+      if (a.type !== 'cardPack' && b.type === 'cardPack') return 1;
+      return 0;
+    });
 
   const resolveGroupImage = (g: GroupedItem) => {
     // Special handling for workers
