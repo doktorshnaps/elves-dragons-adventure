@@ -13,7 +13,7 @@ import { useLanguage } from "@/hooks/useLanguage";
 import { t } from "@/utils/translations";
 import { GroupedItem } from "./inventory/types";
 import { cardDatabase } from "@/data/cardDatabase";
-import { useCardInstances } from "@/hooks/useCardInstances";
+
 
 interface InventoryDisplayProps {
   onUseItem?: (item: Item) => void;
@@ -51,38 +51,8 @@ export const InventoryDisplay = ({
     handleQuantityConfirm
   } = useInventoryLogic(inventory);
 
-  // Включаем карточки рабочих из card_instances и из колоды карт в общий список инвентаря
-  const { cardInstances } = useCardInstances();
-
-  const workerItemsFromInstances: Item[] = (cardInstances || [])
-    .filter((ci) => ci.card_type === 'workers')
-    .map((ci) => ({
-      id: ci.id,
-      name: (ci.card_data as any)?.name || 'Рабочий',
-      type: 'worker',
-      value: (ci.card_data as any)?.stats?.speedBoost ?? (ci.card_data as any)?.value ?? 0,
-      description: (ci.card_data as any)?.description,
-      image: (ci.card_data as any)?.image,
-      stats: { workDuration: (ci.card_data as any)?.stats?.workDuration }
-    }));
-
-  const workerItemsFromCards: Item[] = (gameData.cards || [])
-    .filter((c: any) => c?.type === 'worker' || c?.type === 'workers')
-    .map((c: any) => ({
-      id: c.id,
-      name: c.name || 'Рабочий',
-      type: 'worker',
-      value: c.stats?.speedBoost ?? c.value ?? 0,
-      description: c.description,
-      image: c.image,
-      stats: { workDuration: c.stats?.workDuration }
-    }));
-
-  const allInventoryItems: Item[] = [
-    ...inventory,
-    ...(showOnlyPotions ? [] : workerItemsFromInstances),
-    ...(showOnlyPotions ? [] : workerItemsFromCards)
-  ];
+// Источник истины: только инвентарь из профиля (game_data.inventory)
+const allInventoryItems: Item[] = inventory;
 
 
   const handleUseItem = async (groupedItem: GroupedItem): Promise<boolean | void> => {

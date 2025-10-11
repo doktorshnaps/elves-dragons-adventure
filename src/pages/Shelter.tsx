@@ -9,7 +9,7 @@ import { DragonLair } from "@/components/game/shelter/DragonLair";
 import { MedicalBayComponent } from "@/components/game/medical/MedicalBayComponent";
 import { WorkersManagement } from "@/components/game/shelter/WorkersManagement";
 import { useLanguage } from "@/hooks/useLanguage";
-import { useWorkerSync } from "@/hooks/useWorkerSync";
+
 import { useInventoryDedupe } from "@/hooks/useInventoryDedupe";
 import { t } from "@/utils/translations";
 import { useShelterState } from "@/hooks/shelter/useShelterState";
@@ -19,9 +19,6 @@ import { ShelterCrafting } from "@/components/game/shelter/ShelterCrafting";
 export const Shelter = () => {
   const navigate = useNavigate();
   const { language } = useLanguage();
-  
-  // Синхронизируем рабочих между card_instances и inventory
-  useWorkerSync();
   
   // Удаляем дубликаты из инвентаря
   useInventoryDedupe();
