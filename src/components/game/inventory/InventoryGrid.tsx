@@ -8,6 +8,7 @@ import { useLanguage } from "@/hooks/useLanguage";
 import { t } from "@/utils/translations";
 import { getRarityDropRates } from "@/utils/cardUtils";
 import { workerImagesByName } from "@/constants/workerImages";
+import { useIsMobile } from "@/hooks/use-mobile";
 interface InventoryGridProps {
   groupedItems: GroupedItem[];
   readonly: boolean;
@@ -24,6 +25,7 @@ export const InventoryGrid = ({
   const {
     language
   } = useLanguage();
+  const isMobile = useIsMobile();
   const unequippedItems = groupedItems
     .filter(item => !item.items.some(i => i.equipped))
     .sort((a, b) => {
@@ -65,7 +67,7 @@ export const InventoryGrid = ({
             <DialogTrigger asChild>
               <Card 
                 variant="menu"
-                className="p-4 transition-all duration-300 h-[320px] flex flex-col justify-between cursor-pointer hover:scale-105"
+                className={`p-4 transition-all duration-300 flex flex-col justify-between cursor-pointer hover:scale-105 ${isMobile ? 'h-[240px]' : 'h-[320px]'}`}
                 style={{ boxShadow: '0 15px 10px rgba(0, 0, 0, 0.6)' }}
               >
                 <div className="w-full aspect-[4/3] mb-2 rounded-lg overflow-hidden flex items-center justify-center bg-black/30 border border-white/20">
@@ -85,10 +87,10 @@ export const InventoryGrid = ({
                 </div>
 
                 <div className="flex-1 flex flex-col">
-                  <h3 className="font-semibold text-white text-sm mb-1">
+                  <h3 className={`font-semibold text-white mb-1 ${isMobile ? 'text-xs' : 'text-sm'}`}>
                     {item.name} {item.count > 1 && `(${item.count})`}
                   </h3>
-                  <p className="text-gray-300 text-xs flex-grow mb-1">
+                  <p className={`text-gray-300 ${isMobile ? 'text-[10px] line-clamp-2' : 'text-xs'}`}>
                     {item.type === 'worker' && `Ускорение: +${item.value}%`}
                     {item.type === 'cardPack' && 'Колода карт'}
                     {item.type === 'weapon' && 'Оружие'}
