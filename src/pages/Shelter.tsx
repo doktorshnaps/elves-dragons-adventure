@@ -10,6 +10,7 @@ import { MedicalBayComponent } from "@/components/game/medical/MedicalBayCompone
 import { WorkersManagement } from "@/components/game/shelter/WorkersManagement";
 import { useLanguage } from "@/hooks/useLanguage";
 import { useWorkerSync } from "@/hooks/useWorkerSync";
+import { useInventoryDedupe } from "@/hooks/useInventoryDedupe";
 import { t } from "@/utils/translations";
 import { useShelterState } from "@/hooks/shelter/useShelterState";
 import { ShelterUpgrades } from "@/components/game/shelter/ShelterUpgrades";
@@ -21,6 +22,9 @@ export const Shelter = () => {
   
   // Синхронизируем рабочих между card_instances и inventory
   useWorkerSync();
+  
+  // Удаляем дубликаты из инвентаря
+  useInventoryDedupe();
   
   const { accountLevel } = useGameStore();
   
