@@ -122,60 +122,38 @@ serve(async (req) => {
 
     console.log(`💰 Successfully deducted ${totalCost} ELL from balance`);
     
-    // Если это рабочий - создаем card_instance для каждого экземпляра, иначе добавляем в inventory через atomic_inventory_update  
-    if (itemTemplate.type === 'worker') {
-      console.log(`👷 Processing ${quantity} workers: ${itemTemplate.name} (item_id: ${itemTemplate.item_id})`);
-      
-      // Получаем user_id для кошелька
-      const { data: gameData, error: gameDataError } = await supabase
-        .from('game_data')
-        .select('user_id')
-        .eq('wallet_address', wallet_address)
-        .single();
+// Рабочие теперь добавляем напрямую в inventory (не в card_instances)
+if (itemTemplate.type === 'worker') {
+  console.log(`👷 Processing ${quantity} workers: ${itemTemplate.name} (item_id: ${itemTemplate.item_id})`);
+  
+  // Для рабочих добавляем в инвентарь через atomic_inventory_update
+  for (let i = 0; i < quantity; i++) {
+    const workerData = {
+      id: `worker_${item_id}_${Date.now()}_${Math.random().toString(36).substr(2, 9)}_${i}`,
+      instanceId: `worker_${item_id}_${Date.now()}_${Math.random().toString(36).substr(2, 9)}_${i}`,
+      templateId: `worker_${item_id}`,
+      name: itemTemplate.name,
+      description: itemTemplate.description,
+      type: 'worker',
+      rarity: itemTemplate.rarity || 'common',
+      value: itemTemplate.value,
+      stats: itemTemplate.stats || {},
+      image: itemTemplate.image_url
+    };
 
-      if (gameDataError || !gameData?.user_id) {
-        console.error('❌ Error getting user_id for wallet:', gameDataError);
-        throw new Error('User not found for wallet address');
-      }
+    const { error: inventoryError } = await supabase.rpc('atomic_inventory_update', {
+      p_wallet_address: wallet_address,
+      p_price_deduction: 0, // Цена уже списана выше
+      p_new_item: workerData
+    });
 
-      // Создаем массив записей для вставки
-      const cardInstances = [];
-      for (let i = 0; i < quantity; i++) {
-        const cardData = {
-          id: `worker_${item_id}_${Date.now()}_${Math.random().toString(36).substr(2, 9)}_${i}`,
-          name: itemTemplate.name,
-          description: itemTemplate.description,
-          type: 'worker',
-          rarity: itemTemplate.rarity || 'common',
-          health: 100, // У рабочих базовое здоровье
-          value: itemTemplate.value,
-          stats: itemTemplate.stats,
-          image: itemTemplate.image_url
-        };
+    if (inventoryError) {
+      console.error(`❌ Error adding worker ${i+1}/${quantity} to inventory:`, inventoryError);
+      throw inventoryError;
+    }
+  }
 
-        cardInstances.push({
-          user_id: gameData.user_id,
-          wallet_address: wallet_address,
-          card_template_id: `worker_${item_id}`, // Ensure consistent string format
-          card_type: 'workers',
-          current_health: cardData.health,
-          max_health: cardData.health,
-          card_data: cardData
-        });
-      }
-
-      // Создаем все card_instances одним запросом
-      const { data: cardInstanceIds, error: cardError } = await supabase
-        .from('card_instances')
-        .insert(cardInstances)
-        .select('id');
-
-      if (cardError) {
-        console.error('❌ Error creating card instances:', cardError);
-        throw cardError;
-      }
-
-      console.log(`✅ Created ${quantity} worker card instances: ${cardInstanceIds?.map(c => c.id).join(', ')}`);
+  console.log(`✅ Added ${quantity} workers to inventory`);
     } else {
       console.log(`📦 Processing as regular item: ${itemTemplate.name}`);
       
