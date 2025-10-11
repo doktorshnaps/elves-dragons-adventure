@@ -67,7 +67,7 @@ export const InventoryGrid = ({
             <DialogTrigger asChild>
               <Card 
                 variant="menu"
-                className={`p-4 transition-all duration-300 flex flex-col cursor-pointer hover:scale-105 ${isMobile ? 'h-[240px]' : 'h-[320px]'}`}
+                className="p-4 transition-all duration-300 flex flex-col cursor-pointer hover:scale-105"
                 style={{ boxShadow: '0 15px 10px rgba(0, 0, 0, 0.6)' }}
               >
                 <div className="w-full aspect-[4/3] mb-2 rounded-lg overflow-hidden flex items-center justify-center bg-black/30 border border-white/20">
