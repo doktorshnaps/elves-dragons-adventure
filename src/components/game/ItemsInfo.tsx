@@ -61,6 +61,7 @@ import etherVineImg from "@/assets/items/ether-vine.png";
 import dwarvenTongsImg from "@/assets/items/dwarven-tongs.png";
 import healingOilImg from "@/assets/items/healing-oil.png";
 import shimmeringCrystalImg from "@/assets/items/shimmering-crystal.png";
+import lifeCrystalImg from "@/assets/items/life-crystal.png";
 
 interface ItemTemplate {
   id: number;
@@ -167,6 +168,7 @@ const getItemImage = (itemId: string): string | null => {
     dwarven_tongs: dwarvenTongsImg,
     healing_oil: healingOilImg,
     shimmering_crystal: shimmeringCrystalImg,
+    life_crystal: lifeCrystalImg,
   };
   
   return imageMap[itemId] || null;
