@@ -134,6 +134,7 @@ export const TeamBattlePage: React.FC<TeamBattlePageProps> = ({
         name: monster.name
       }));
       
+      console.log('🎯 KILL DEBUG: New kills data:', JSON.stringify(newKills, null, 2));
       setMonstersKilled(prev => [...prev, ...newKills]);
       console.log(`💀 Убито монстров: ${killedMonsters.map(m => m.name).join(', ')} на уровне ${battleState.level}`);
     }
@@ -162,6 +163,7 @@ export const TeamBattlePage: React.FC<TeamBattlePageProps> = ({
     const isFullCompletion = isVictory && battleState.level >= 10;
     
     console.log(`🏁 Бой завершен. Победа: ${isVictory}, Уровень: ${battleState.level}, Убито монстров: ${monstersKilled.length}`);
+    console.log('🎯 BATTLE END DEBUG: Monsters killed data:', JSON.stringify(monstersKilled, null, 2));
     
     if (!isVictory) {
       localStorage.removeItem('teamBattleState');
