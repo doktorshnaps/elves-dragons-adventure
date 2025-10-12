@@ -3,6 +3,8 @@ import { useGameData } from '@/hooks/useGameData';
 import { useToast } from '@/hooks/use-toast';
 import { Item } from '@/types/inventory';
 import { getMonsterLoot } from '@/utils/monsterLootMapping';
+import { v4 as uuidv4 } from 'uuid';
+import { newItems } from '@/data/newItems';
 
 export interface MonsterKill {
   level: number;
@@ -52,9 +54,10 @@ export const useDungeonRewards = () => {
         }
 
         // Генерируем лут с монстра
+        let loot: Item | null = null;
         if (monster.name) {
           console.log('🎁 Generating loot for monster:', monster.name);
-          const loot = getMonsterLoot(monster.name);
+          loot = getMonsterLoot(monster.name);
           if (loot) {
             console.log('💰 Generated loot:', loot);
             lootedItems.push(loot);
@@ -63,6 +66,29 @@ export const useDungeonRewards = () => {
           }
         } else {
           console.log('⚠️ Monster has no name:', monster);
+        }
+
+        // Гарантированный дроп Кристалла Жизни в паучьем гнезде (тестовый режим 100%)
+        try {
+          if (!loot || loot.type !== 'lifeCrystal') {
+            const tpl = newItems.find(i => i.type === 'lifeCrystal');
+            if (tpl && tpl.name && tpl.type && tpl.value !== undefined) {
+              const lifeCrystal: Item = {
+                id: uuidv4(),
+                name: tpl.name,
+                type: tpl.type as Item['type'],
+                value: tpl.value,
+                description: `${tpl.description} Выпадает с: ${monster.name ?? 'монстр'}`,
+                image: tpl.image
+              };
+              lootedItems.push(lifeCrystal);
+              console.log('💎 Guaranteed Life Crystal added:', lifeCrystal);
+            } else {
+              console.warn('⚠️ Life Crystal template not found or incomplete');
+            }
+          }
+        } catch (e) {
+          console.error('💥 Error adding guaranteed Life Crystal:', e);
         }
       }
     });
