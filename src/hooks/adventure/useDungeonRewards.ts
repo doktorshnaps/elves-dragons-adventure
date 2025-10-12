@@ -192,18 +192,28 @@ export const useDungeonRewards = () => {
       const rewardAmount = pendingReward.totalELL || 0;
       const lootedItems = pendingReward.lootedItems || [];
       
+      console.log(`🎁 Начисление награды: ${rewardAmount} ELL и ${lootedItems.length} предметов`);
+      console.log(`🎒 Предметы для добавления:`, lootedItems);
+      
+      // Объединяем обновления баланса и инвентаря в один вызов
+      const updates: any = {};
+      
       if (rewardAmount > 0) {
         const currentBalance = gameData.balance || 0;
-        const newBalance = currentBalance + rewardAmount;
-        await updateGameData({ balance: newBalance });
-        console.log(`💰 Добавлен баланс: ${rewardAmount} ELL (было: ${currentBalance}, стало: ${newBalance})`);
+        updates.balance = currentBalance + rewardAmount;
+        console.log(`💰 Новый баланс: ${updates.balance} (было: ${currentBalance})`);
       }
 
       if (lootedItems.length > 0) {
         const currentInventory = gameData.inventory || [];
-        const newInventory = [...currentInventory, ...lootedItems];
-        await updateGameData({ inventory: newInventory });
-        console.log(`🎒 Добавлено предметов в инвентарь: ${lootedItems.length}`);
+        updates.inventory = [...currentInventory, ...lootedItems];
+        console.log(`🎒 Новый инвентарь: ${updates.inventory.length} предметов (было: ${currentInventory.length})`);
+      }
+
+      // Единый вызов updateGameData с обоими обновлениями
+      if (Object.keys(updates).length > 0) {
+        await updateGameData(updates);
+        console.log('✅ Награда успешно начислена');
       }
 
       // Сбрасываем все состояния
@@ -212,7 +222,7 @@ export const useDungeonRewards = () => {
       
       toast({
         title: "Награда получена!",
-        description: `Получено ${rewardAmount} ELL`,
+        description: `Получено ${rewardAmount} ELL и ${lootedItems.length} предметов`,
       });
 
       return true; // Сигнализируем о выходе
