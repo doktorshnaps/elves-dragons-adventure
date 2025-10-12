@@ -17,7 +17,7 @@ export const useTeamBattle = (dungeonType: DungeonType, initialLevel: number = 1
   const { selectedPairs, getSelectedTeamStats } = useTeamSelection();
   const { accountLevel, accountExperience, addAccountExperience: addAccountExp } = useGameStore();
   const { gameData, updateGameData } = useGameData();
-  const { loading: cardInstancesLoading } = useCardInstances();
+  const { loading: cardInstancesLoading, incrementMonsterKills } = useCardInstances();
   
   const [battleState, setBattleState] = useState<TeamBattleState>(() => {
     const savedState = localStorage.getItem('teamBattleState');
@@ -250,9 +250,23 @@ export const useTeamBattle = (dungeonType: DungeonType, initialLevel: number = 1
       }));
     });
 
-    // Добавляем опыт аккаунта за убийство монстра
+    // Добавляем опыт аккаунта за убийство монстра и инкрементим убийства для пары
     if (newTargetHealth <= 0) {
       const expReward = (accountLevel * 5) + 45 + (target.isBoss ? 150 : 0);
+
+      // Засчитываем убийство обеим карточкам пары-атакующего
+      try {
+        if (attackingPair.hero?.id) {
+          const okHero = await incrementMonsterKills(attackingPair.hero.id, 1);
+          console.log('🔢 incrementMonsterKills hero', attackingPair.hero.id, okHero);
+        }
+        if (attackingPair.dragon?.id) {
+          const okDragon = await incrementMonsterKills(attackingPair.dragon.id, 1);
+          console.log('🔢 incrementMonsterKills dragon', attackingPair.dragon.id, okDragon);
+        }
+      } catch (e) {
+        console.warn('incrementMonsterKills error:', e);
+      }
       
       await addAccountExp(expReward);
       
