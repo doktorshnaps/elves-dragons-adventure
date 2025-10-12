@@ -232,24 +232,38 @@ export const useCardInstances = () => {
 
   // Инкремент убийств монстров для карты
   const incrementMonsterKills = useCallback(async (cardTemplateId: string, killsToAdd: number = 1) => {
-    if (!isConnected || !accountId) return false;
+    if (!isConnected || !accountId) {
+      console.warn('incrementMonsterKills: Not connected or no accountId');
+      return false;
+    }
 
+    console.log('incrementMonsterKills called for:', cardTemplateId, 'in instances:', cardInstances.map(ci => ci.card_template_id));
+    
     const instance = cardInstances.find(ci => ci.card_template_id === cardTemplateId);
-    if (!instance) return false;
+    if (!instance) {
+      console.warn(`incrementMonsterKills: No instance found for template ${cardTemplateId}`);
+      return false;
+    }
 
     try {
+      console.log('Calling increment_card_monster_kills RPC for:', cardTemplateId);
       const { error } = await supabase.rpc('increment_card_monster_kills', {
         p_card_template_id: cardTemplateId,
         p_wallet_address: accountId,
         p_kills_to_add: killsToAdd
       });
 
-      if (error) throw error;
+      if (error) {
+        console.error('RPC error:', error);
+        throw error;
+      }
+
+      console.log('Successfully incremented monster kills for:', cardTemplateId);
 
       // Обновляем локальное состояние
       setCardInstances(prev =>
         prev.map(ci =>
-          ci.id === instance.id
+          ci.card_template_id === cardTemplateId
             ? { ...ci, monster_kills: ci.monster_kills + killsToAdd }
             : ci
         )

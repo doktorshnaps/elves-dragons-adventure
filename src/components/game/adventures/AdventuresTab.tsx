@@ -52,12 +52,15 @@ export const AdventuresTab = () => {
       
       // Инкремент убийств монстров для всех карт в команде
       const selectedTeam = gameData.selectedTeam || [];
+      console.log('Selected team for monster kills:', selectedTeam);
       for (const pair of selectedTeam) {
         if (pair?.hero?.id) {
-          await incrementMonsterKills(pair.hero.id);
+          const result = await incrementMonsterKills(pair.hero.id);
+          console.log(`Hero ${pair.hero.id} monster kill increment result:`, result);
         }
         if (pair?.dragon?.id) {
-          await incrementMonsterKills(pair.dragon.id);
+          const result = await incrementMonsterKills(pair.dragon.id);
+          console.log(`Dragon ${pair.dragon.id} monster kill increment result:`, result);
         }
       }
       
