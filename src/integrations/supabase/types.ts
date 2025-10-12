@@ -1536,11 +1536,11 @@ export type Database = {
       }
       increment_card_monster_kills: {
         Args: {
-          p_card_instance_id: string
+          p_card_template_id: string
           p_kills_to_add?: number
           p_wallet_address: string
         }
-        Returns: boolean
+        Returns: undefined
       }
       initialize_game_data_by_wallet: {
         Args: { p_wallet_address: string }
