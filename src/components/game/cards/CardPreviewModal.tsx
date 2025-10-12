@@ -17,19 +17,21 @@ interface CardPreviewModalProps {
 }
 
 export const CardPreviewModal = ({ card, open, onClose, actionLabel, onAction, deleteLabel, onDelete }: CardPreviewModalProps) => {
+  // ВСЕ ХУКИ ДОЛЖНЫ БЫТЬ ВЫЗВАНЫ ДО ЛЮБЫХ УСЛОВНЫХ ВОЗВРАТОВ
   const { cardInstances } = useCardInstances();
   
-  if (!card) return null;
-
   // Пересчитываем характеристики с учётом класса и редкости
   const stats = useMemo(() => 
-    calculateCardStats(card.name, card.rarity, card.type), 
-    [card.name, card.rarity, card.type]
+    card ? calculateCardStats(card.name, card.rarity, card.type) : { power: 0, defense: 0, health: 0, magic: 0 }, 
+    [card?.name, card?.rarity, card?.type]
   );
 
   // Найти экземпляр карты для получения статистики убийств
-  const cardInstance = cardInstances.find(ci => ci.card_template_id === card.id);
+  const cardInstance = card ? cardInstances.find(ci => ci.card_template_id === card.id) : undefined;
   const monsterKills = cardInstance?.monster_kills || 0;
+
+  // Только после всех хуков проверяем условия
+  if (!card) return null;
 
   return (
     <Dialog open={open} onOpenChange={(v) => { if (!v) onClose(); }}>
