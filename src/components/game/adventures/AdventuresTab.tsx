@@ -13,6 +13,7 @@ import { GameContent } from "./components/GameContent";
 import { usePlayerStats } from "./game/hooks/usePlayerStats";
 import { addAccountExperience } from '@/utils/accountLeveling';
 import { useGameStore } from '@/stores/gameStore';
+import { useCardInstances } from '@/hooks/useCardInstances';
 
 export const AdventuresTab = () => {
   const navigate = useNavigate();
@@ -22,6 +23,7 @@ export const AdventuresTab = () => {
   const { generateMonster } = useMonsterGeneration(1);
   const { stats: playerStats, updateStats: setPlayerStats, addExperience } = usePlayerStats();
   const { accountLevel, accountExperience, addAccountExperience: addAccountExp } = useGameStore();
+  const { incrementMonsterKills } = useCardInstances();
 
   const [currentMonster, setCurrentMonster] = useState<Monster | null>(() => {
     const savedMonster = localStorage.getItem('adventureCurrentMonster');
@@ -47,6 +49,17 @@ export const AdventuresTab = () => {
     if (newMonsterHealth <= 0) {
       await updateGameData({ balance: balance + monster.reward });
       addExperience(monster.experienceReward);
+      
+      // Инкремент убийств монстров для всех карт в команде
+      const selectedTeam = gameData.selectedTeam || [];
+      for (const pair of selectedTeam) {
+        if (pair?.hero?.id) {
+          await incrementMonsterKills(pair.hero.id);
+        }
+        if (pair?.dragon?.id) {
+          await incrementMonsterKills(pair.dragon.id);
+        }
+      }
       
       // Добавляем опыт аккаунта за убийство монстра
       const accountExpReward = (accountLevel * 5) + 45 + (monster.isBoss ? 150 : 0);

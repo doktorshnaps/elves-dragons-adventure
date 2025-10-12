@@ -1,9 +1,10 @@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Card as CardType } from "@/types/cards";
 import { getRarityLabel, calculateCardStats } from "@/utils/cardUtils";
-import { Sparkles } from "lucide-react";
+import { Sparkles, Target } from "lucide-react";
 import { CardImage } from "./CardImage";
 import { useMemo } from "react";
+import { useCardInstances } from "@/hooks/useCardInstances";
 
 interface CardPreviewModalProps {
   card: CardType | null;
@@ -16,6 +17,8 @@ interface CardPreviewModalProps {
 }
 
 export const CardPreviewModal = ({ card, open, onClose, actionLabel, onAction, deleteLabel, onDelete }: CardPreviewModalProps) => {
+  const { cardInstances } = useCardInstances();
+  
   if (!card) return null;
 
   // Пересчитываем характеристики с учётом класса и редкости
@@ -23,6 +26,10 @@ export const CardPreviewModal = ({ card, open, onClose, actionLabel, onAction, d
     calculateCardStats(card.name, card.rarity, card.type), 
     [card.name, card.rarity, card.type]
   );
+
+  // Найти экземпляр карты для получения статистики убийств
+  const cardInstance = cardInstances.find(ci => ci.card_template_id === card.id);
+  const monsterKills = cardInstance?.monster_kills || 0;
 
   return (
     <Dialog open={open} onOpenChange={(v) => { if (!v) onClose(); }}>
@@ -80,6 +87,19 @@ export const CardPreviewModal = ({ card, open, onClose, actionLabel, onAction, d
                 <div className="text-xs text-blue-300">{card.magicResistance.type}: {card.magicResistance.value}%</div>
               </div>
             )}
+
+            {/* Monster Kills Stats */}
+            <div className="bg-gradient-to-br from-red-900/20 to-orange-900/10 backdrop-blur-sm border-2 border-red-500/40 rounded-lg p-2 shadow-[0_0_15px_rgba(239,68,68,0.15)]">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-1.5">
+                  <Target className="w-4 h-4 text-red-400" />
+                  <span className="text-xs font-medium text-game-text">Убито монстров</span>
+                </div>
+                <span className="text-lg font-bold bg-gradient-to-r from-red-400 to-orange-400 bg-clip-text text-transparent">
+                  {monsterKills}
+                </span>
+              </div>
+            </div>
 
             {actionLabel && onAction && (
               <button

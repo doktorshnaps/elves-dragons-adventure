@@ -17,6 +17,7 @@ export interface CardInstance {
   is_in_medical_bay?: boolean;
   medical_bay_start_time?: string;
   medical_bay_heal_rate?: number;
+  monster_kills: number;
   card_data: Card;
   created_at: string;
   updated_at: string;
@@ -229,6 +230,42 @@ export const useCardInstances = () => {
     }
   }, [accountId, isConnected, toast, loadCardInstances]);
 
+  // Инкремент убийств монстров для карты
+  const incrementMonsterKills = useCallback(async (cardTemplateId: string, killsToAdd: number = 1) => {
+    if (!isConnected || !accountId) return false;
+
+    const instance = cardInstances.find(ci => ci.card_template_id === cardTemplateId);
+    if (!instance) return false;
+
+    try {
+      const { data, error } = await supabase.rpc('increment_card_monster_kills', {
+        p_card_instance_id: instance.id,
+        p_wallet_address: accountId,
+        p_kills_to_add: killsToAdd
+      });
+
+      if (error) throw error;
+
+      if (data !== true) {
+        throw new Error('Increment not applied');
+      }
+
+      // Обновляем локальное состояние
+      setCardInstances(prev =>
+        prev.map(ci =>
+          ci.id === instance.id
+            ? { ...ci, monster_kills: ci.monster_kills + killsToAdd }
+            : ci
+        )
+      );
+
+      return true;
+    } catch (error) {
+      console.error('Error incrementing monster kills:', error);
+      return false;
+    }
+  }, [accountId, isConnected, cardInstances]);
+
   // Загрузка при инициализации
   useEffect(() => {
     loadCardInstances();
@@ -268,6 +305,7 @@ export const useCardInstances = () => {
     applyDamageToInstance,
     deleteCardInstance,
     deleteCardInstanceByTemplate,
+    incrementMonsterKills,
     loadCardInstances
   };
 };

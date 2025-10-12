@@ -60,6 +60,7 @@ export type Database = {
           max_health: number
           medical_bay_heal_rate: number | null
           medical_bay_start_time: string | null
+          monster_kills: number
           updated_at: string
           user_id: string | null
           wallet_address: string
@@ -76,6 +77,7 @@ export type Database = {
           max_health?: number
           medical_bay_heal_rate?: number | null
           medical_bay_start_time?: string | null
+          monster_kills?: number
           updated_at?: string
           user_id?: string | null
           wallet_address: string
@@ -92,6 +94,7 @@ export type Database = {
           max_health?: number
           medical_bay_heal_rate?: number | null
           medical_bay_start_time?: string | null
+          monster_kills?: number
           updated_at?: string
           user_id?: string | null
           wallet_address?: string
@@ -1408,6 +1411,7 @@ export type Database = {
           max_health: number
           medical_bay_heal_rate: number | null
           medical_bay_start_time: string | null
+          monster_kills: number
           updated_at: string
           user_id: string | null
           wallet_address: string
@@ -1526,6 +1530,14 @@ export type Database = {
       has_role: {
         Args: {
           p_role: Database["public"]["Enums"]["app_role"]
+          p_wallet_address: string
+        }
+        Returns: boolean
+      }
+      increment_card_monster_kills: {
+        Args: {
+          p_card_instance_id: string
+          p_kills_to_add?: number
           p_wallet_address: string
         }
         Returns: boolean
