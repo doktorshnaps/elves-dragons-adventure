@@ -238,17 +238,13 @@ export const useCardInstances = () => {
     if (!instance) return false;
 
     try {
-      const { data, error } = await supabase.rpc('increment_card_monster_kills', {
-        p_card_instance_id: instance.id,
+      const { error } = await supabase.rpc('increment_card_monster_kills', {
+        p_card_template_id: cardTemplateId,
         p_wallet_address: accountId,
         p_kills_to_add: killsToAdd
       });
 
       if (error) throw error;
-
-      if (data !== true) {
-        throw new Error('Increment not applied');
-      }
 
       // Обновляем локальное состояние
       setCardInstances(prev =>
