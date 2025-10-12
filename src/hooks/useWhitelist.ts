@@ -43,6 +43,17 @@ export const useWhitelist = () => {
       }
 
       try {
+        // Проверяем, является ли пользователь администратором
+        const { data: isAdmin } = await supabase
+          .rpc('is_admin_wallet', { p_wallet_address: accountId });
+        
+        if (isAdmin) {
+          console.log('✅ Admin wallet detected, granting access');
+          setIsWhitelisted(true);
+          setLoading(false);
+          return;
+        }
+
         // Сначала проверяем обычный вайт-лист
         const { data, error } = await supabase
           .rpc('is_whitelisted', { p_wallet_address: accountId });
