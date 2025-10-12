@@ -9,6 +9,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useWalletContext } from "@/contexts/WalletConnectContext";
 import { useBrightness } from "@/hooks/useBrightness";
 import { useToast } from "@/hooks/use-toast";
+import { SoulAltarTab } from "@/components/soul-altar/SoulAltarTab";
 
 interface ReferralStats {
   wallet_address: string;
@@ -384,28 +385,45 @@ export const SoulArchive = () => {
           <CardHeader>
             <CardTitle className="text-2xl font-bold text-white flex items-center gap-2">
               <img src="/src/assets/soul-archive-icon.png" alt="Soul Archive" className="w-8 h-8" />
-              Рейтинг рефералов
+              Soul Archive
             </CardTitle>
           </CardHeader>
           <CardContent>
-            {loading ? (
-              <div className="text-center py-8 text-white">Загрузка...</div>
-            ) : (
-              <Tabs defaultValue="all-time" className="w-full">
-                <TabsList className="grid w-full grid-cols-2 mb-4 bg-black/40 border-2 border-white/50 backdrop-blur-sm rounded-3xl">
-                  <TabsTrigger value="all-time" className="text-white data-[state=active]:bg-white/20 rounded-3xl">За все время</TabsTrigger>
-                  <TabsTrigger value="weekly" className="text-white data-[state=active]:bg-white/20 rounded-3xl">Недельный</TabsTrigger>
-                </TabsList>
-                
-                <TabsContent value="all-time">
-                  {renderLeaderboard(allTimeStats, false)}
-                </TabsContent>
-                
-                <TabsContent value="weekly">
-                  {renderLeaderboard(weeklyStats, true)}
-                </TabsContent>
-              </Tabs>
-            )}
+            <Tabs defaultValue="referrals" className="w-full">
+              <TabsList className="grid w-full grid-cols-2 mb-4 bg-black/40 border-2 border-white/50 backdrop-blur-sm rounded-3xl">
+                <TabsTrigger value="referrals" className="text-white data-[state=active]:bg-white/20 rounded-3xl">
+                  Рейтинг Рефералов
+                </TabsTrigger>
+                <TabsTrigger value="altar" className="text-white data-[state=active]:bg-white/20 rounded-3xl">
+                  Алтарь Душ
+                </TabsTrigger>
+              </TabsList>
+              
+              <TabsContent value="referrals">
+                {loading ? (
+                  <div className="text-center py-8 text-white">Загрузка...</div>
+                ) : (
+                  <Tabs defaultValue="all-time" className="w-full">
+                    <TabsList className="grid w-full grid-cols-2 mb-4 bg-black/40 border-2 border-white/50 backdrop-blur-sm rounded-3xl">
+                      <TabsTrigger value="all-time" className="text-white data-[state=active]:bg-white/20 rounded-3xl">За все время</TabsTrigger>
+                      <TabsTrigger value="weekly" className="text-white data-[state=active]:bg-white/20 rounded-3xl">Недельный</TabsTrigger>
+                    </TabsList>
+                    
+                    <TabsContent value="all-time">
+                      {renderLeaderboard(allTimeStats, false)}
+                    </TabsContent>
+                    
+                    <TabsContent value="weekly">
+                      {renderLeaderboard(weeklyStats, true)}
+                    </TabsContent>
+                  </Tabs>
+                )}
+              </TabsContent>
+              
+              <TabsContent value="altar">
+                <SoulAltarTab />
+              </TabsContent>
+            </Tabs>
           </CardContent>
         </Card>
       </div>

@@ -805,6 +805,33 @@ export type Database = {
         }
         Relationships: []
       }
+      soul_donations: {
+        Row: {
+          amount: number
+          created_at: string
+          id: string
+          updated_at: string
+          user_id: string | null
+          wallet_address: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          id?: string
+          updated_at?: string
+          user_id?: string | null
+          wallet_address: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          id?: string
+          updated_at?: string
+          user_id?: string | null
+          wallet_address?: string
+        }
+        Relationships: []
+      }
       user_nft_cards: {
         Row: {
           card_template_name: string
@@ -1511,6 +1538,16 @@ export type Database = {
         Returns: {
           created_at: string
           referrer_wallet_address: string
+        }[]
+      }
+      get_soul_donations_stats: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          donation_count: number
+          last_donation_at: string
+          rank: number
+          total_donated: number
+          wallet_address: string
         }[]
       }
       get_user_quest_progress: {
