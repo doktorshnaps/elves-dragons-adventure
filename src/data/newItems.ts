@@ -9,6 +9,7 @@ import etherVineImg from "@/assets/items/ether-vine.png";
 import dwarvenTongsImg from "@/assets/items/dwarven-tongs.png";
 import healingOilImg from "@/assets/items/healing-oil.png";
 import shimmeringCrystalImg from "@/assets/items/shimmering-crystal.png";
+import lifeCrystalImg from "@/assets/items/life-crystal.png";
 
 export const newItems: Partial<Item>[] = [
   {
@@ -80,5 +81,12 @@ export const newItems: Partial<Item>[] = [
     value: 90,
     description: "Кристалл, мерцающий внутренним светом и хранящий древние знания. Выпадает с: Паук-прядильщик, Паук-виверна, Древний паук-отшельник, Паук-мать-стража, Арахнидный Архимаг, Арахна Мать-Прародительница",
     image: shimmeringCrystalImg
+  },
+  {
+    name: "Кристалл Жизни",
+    type: "lifeCrystal",
+    value: 150,
+    description: "Редчайший кристалл, пульсирующий жизненной энергией. Можно добыть из монстров в Гнездо Гигантских Пауков",
+    image: lifeCrystalImg
   }
 ];

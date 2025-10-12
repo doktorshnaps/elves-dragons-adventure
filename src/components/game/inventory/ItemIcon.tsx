@@ -1,5 +1,5 @@
 import { Item } from "@/types/inventory";
-import { Sparkles, Heart, TreePine, Leaf, Mountain, Gem, BookOpen, Eye, Flower, Scissors, Droplets, Diamond } from "lucide-react";
+import { Sparkles, Heart, TreePine, Leaf, Mountain, Gem, BookOpen, Eye, Flower, Scissors, Droplets, Diamond, HeartPulse } from "lucide-react";
 
 interface ItemIconProps {
   type: Item["type"];
@@ -41,6 +41,9 @@ export const ItemIcon = ({ type }: ItemIconProps) => {
   }
   if (type === "shimmeringCrystal") {
     return <Diamond className="w-4 h-4 text-blue-400" />;
+  }
+  if (type === "lifeCrystal") {
+    return <HeartPulse className="w-4 h-4 text-green-400" />;
   }
   return null;
 };

@@ -5,27 +5,27 @@ import { newItems } from "@/data/newItems";
 // Маппинг монстров к предметам (все монстры из подземелья Гнездо Гигантских Пауков)
 export const monsterLootMapping: Record<string, string[]> = {
   // Уровни 1-3
-  "Паучок-скелет": ["woodChunks", "rockStones"],
-  "Паук-скакун": ["magicalRoots", "woodChunks"], 
-  "Паук-прядильщик": ["etherVine", "shimmeringCrystal"],
+  "Паучок-скелет": ["woodChunks", "rockStones", "lifeCrystal"],
+  "Паук-скакун": ["magicalRoots", "woodChunks", "lifeCrystal"], 
+  "Паук-прядильщик": ["etherVine", "shimmeringCrystal", "lifeCrystal"],
   
   // Уровни 4-7
-  "Паук-охотник": ["blackCrystals", "dwarvenTongs"],
-  "Паук-королева-личинка": ["healingOil", "illusionManuscript"],
-  "Паук-трупоед": ["rockStones", "blackCrystals"],
-  "Паук-стража": ["dwarvenTongs", "darkMonocle"],
+  "Паук-охотник": ["blackCrystals", "dwarvenTongs", "lifeCrystal"],
+  "Паук-королева-личинка": ["healingOil", "illusionManuscript", "lifeCrystal"],
+  "Паук-трупоед": ["rockStones", "blackCrystals", "lifeCrystal"],
+  "Паук-стража": ["dwarvenTongs", "darkMonocle", "lifeCrystal"],
   
   // Уровни 8-10
-  "Паук-виверна": ["shimmeringCrystal", "illusionManuscript"],
-  "Теневой паук-ловец": ["darkMonocle", "etherVine"],
-  "Древний паук-отшельник": ["healingOil", "shimmeringCrystal"],
-  "Паук-берсерк": ["blackCrystals", "dwarvenTongs"],
-  "Паук-иллюзионист": ["illusionManuscript", "darkMonocle"],
-  "Паук-мать-стража": ["healingOil", "shimmeringCrystal"],
-  "Паук-паразит": ["magicalRoots", "etherVine"],
-  "Паук-титан": ["dwarvenTongs", "blackCrystals"],
-  "Арахнидный Архимаг": ["illusionManuscript", "shimmeringCrystal"],
-  "Арахна, Мать-Прародительница": ["shimmeringCrystal", "healingOil", "darkMonocle"] // босс - может дропать больше предметов
+  "Паук-виверна": ["shimmeringCrystal", "illusionManuscript", "lifeCrystal"],
+  "Теневой паук-ловец": ["darkMonocle", "etherVine", "lifeCrystal"],
+  "Древний паук-отшельник": ["healingOil", "shimmeringCrystal", "lifeCrystal"],
+  "Паук-берсерк": ["blackCrystals", "dwarvenTongs", "lifeCrystal"],
+  "Паук-иллюзионист": ["illusionManuscript", "darkMonocle", "lifeCrystal"],
+  "Паук-мать-стража": ["healingOil", "shimmeringCrystal", "lifeCrystal"],
+  "Паук-паразит": ["magicalRoots", "etherVine", "lifeCrystal"],
+  "Паук-титан": ["dwarvenTongs", "blackCrystals", "lifeCrystal"],
+  "Арахнидный Архимаг": ["illusionManuscript", "shimmeringCrystal", "lifeCrystal"],
+  "Арахна, Мать-Прародительница": ["shimmeringCrystal", "healingOil", "darkMonocle", "lifeCrystal"] // босс - может дропать больше предметов
 };
 
 // Получить случайный предмет от монстра

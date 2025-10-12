@@ -1,7 +1,7 @@
 export interface Item {
   id: string;
   name: string;
-  type: "cardPack" | "healthPotion" | "defensePotion" | "dragon_egg" | "weapon" | "armor" | "accessory" | "worker" | "woodChunks" | "magicalRoots" | "rockStones" | "blackCrystals" | "illusionManuscript" | "darkMonocle" | "etherVine" | "dwarvenTongs" | "healingOil" | "shimmeringCrystal";
+  type: "cardPack" | "healthPotion" | "defensePotion" | "dragon_egg" | "weapon" | "armor" | "accessory" | "worker" | "woodChunks" | "magicalRoots" | "rockStones" | "blackCrystals" | "illusionManuscript" | "darkMonocle" | "etherVine" | "dwarvenTongs" | "healingOil" | "shimmeringCrystal" | "lifeCrystal";
   value: number;
   description?: string;
   image?: string;

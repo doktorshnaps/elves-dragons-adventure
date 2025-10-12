@@ -15,7 +15,7 @@ export const ItemDescription = ({ item }: ItemDescriptionProps) => {
   if (item.type === "healthPotion") {
     return <p className="text-sm text-gray-400 mb-2">{t(language, 'items.healthPotionDescription', { value: String(item.value) })}</p>;
   }
-  if (["woodChunks", "magicalRoots", "rockStones", "blackCrystals", "illusionManuscript", "darkMonocle", "etherVine", "dwarvenTongs", "healingOil", "shimmeringCrystal"].includes(item.type)) {
+  if (["woodChunks", "magicalRoots", "rockStones", "blackCrystals", "illusionManuscript", "darkMonocle", "etherVine", "dwarvenTongs", "healingOil", "shimmeringCrystal", "lifeCrystal"].includes(item.type)) {
     return <p className="text-sm text-gray-400 mb-2">Магический предмет редкости. Ценность: {item.value}</p>;
   }
   return null;
