@@ -124,8 +124,8 @@ export const useMedicalBay = () => {
       const actualInstanceId = instance?.id || cardInstanceIdOrTemplateId;
       
       const { data, error } = await supabase.rpc('add_card_to_medical_bay', {
-        p_card_instance_id: actualInstanceId,
-        p_wallet_address: accountId
+        p_wallet_address: accountId,
+        p_card_instance_id: actualInstanceId
       });
 
       if (error) throw error;
