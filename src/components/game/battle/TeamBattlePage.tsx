@@ -10,6 +10,7 @@ import { TeamBattleArena } from './TeamBattleArena';
 import { DungeonType } from '@/constants/dungeons';
 import { DungeonRewardModal } from '@/components/game/modals/DungeonRewardModal';
 import { useDungeonRewards } from '@/hooks/adventure/useDungeonRewards';
+import { preloadItemTemplates } from '@/utils/monsterLootMapping';
 interface TeamBattlePageProps {
   dungeonType: DungeonType;
 }
@@ -25,6 +26,11 @@ export const TeamBattlePage: React.FC<TeamBattlePageProps> = ({
   
   // Sync health from database on component mount
   useCardHealthSync();
+  
+  // Preload item templates for loot generation
+  useEffect(() => {
+    preloadItemTemplates();
+  }, []);
   
   const { 
     pendingReward, 

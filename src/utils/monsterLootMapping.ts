@@ -1,13 +1,33 @@
 import { Item } from "@/types/inventory";
 import { v4 as uuidv4 } from 'uuid';
-import { newItems } from "@/data/newItems";
+import { supabase } from "@/integrations/supabase/client";
 
-// Все предметы из гримуара (кроме рабочих) для дропа
-const ALL_GRIMOIRE_ITEMS = [
-  "woodChunks", "magicalRoots", "rockStones", "blackCrystals",
-  "illusionManuscript", "darkMonocle", "etherVine", "dwarvenTongs",
-  "healingOil", "shimmeringCrystal", "lifeCrystal"
-];
+// Все предметы из базы данных (кроме рабочих и колод карт) для дропа
+// Будут загружены динамически из item_templates
+let ALL_ITEM_TEMPLATES: any[] = [];
+
+// Функция для предзагрузки всех предметов из базы данных
+export const preloadItemTemplates = async () => {
+  try {
+    const { data, error } = await supabase
+      .from('item_templates')
+      .select('*')
+      .not('type', 'in', '("worker","cardPack")');
+    
+    if (error) {
+      console.error('❌ Error loading item templates:', error);
+      return;
+    }
+    
+    ALL_ITEM_TEMPLATES = data || [];
+    console.log(`✅ Loaded ${ALL_ITEM_TEMPLATES.length} item templates for loot`);
+  } catch (error) {
+    console.error('❌ Error in preloadItemTemplates:', error);
+  }
+};
+
+// Все item_id предметов, которые могут дропать (заполняется динамически)
+const ALL_GRIMOIRE_ITEMS: string[] = [];
 
 // Маппинг монстров к предметам (все монстры из подземелья Гнездо Гигантских Пауков)
 // 100% шанс дропа для тестирования - каждый монстр дропает все предметы
@@ -51,38 +71,28 @@ export const getMonsterLoot = (monsterName: string): Item[] => {
   const cleanName = monsterName.replace(/\s*\(Lv\d+\)\s*$/i, '').trim();
   console.log('🧹 Cleaned monster name:', cleanName);
   
-  const possibleLoot = monsterLootMapping[cleanName];
-  console.log('🎁 Possible loot types for', cleanName, ':', possibleLoot);
-  
-  if (!possibleLoot || possibleLoot.length === 0) {
-    console.log('❌ No loot mapping found for monster:', cleanName);
-    console.log('📋 Available monster names in mapping:', Object.keys(monsterLootMapping));
+  // Используем ВСЕ загруженные шаблоны предметов из базы данных
+  if (ALL_ITEM_TEMPLATES.length === 0) {
+    console.warn('⚠️ Item templates not loaded yet, using empty array');
     return [];
   }
 
-  // 100% шанс дропа всех предметов для тестирования
+  console.log(`🎁 Generating loot from ${ALL_ITEM_TEMPLATES.length} available item templates`);
+
+  // 100% шанс дропа ВСЕХ предметов для тестирования
   const allItems: Item[] = [];
   
-  for (const lootType of possibleLoot) {
-    const itemTemplate = newItems.find(item => item.type === lootType);
-    console.log(`📋 Processing loot type "${lootType}":`, itemTemplate);
-    
-    if (!itemTemplate) {
-      console.log('❌ No item template found for type:', lootType);
-      continue;
-    }
-
-    const finalItem = {
+  for (const template of ALL_ITEM_TEMPLATES) {
+    const finalItem: Item = {
       id: uuidv4(),
-      name: itemTemplate.name!,
-      type: itemTemplate.type!,
-      value: itemTemplate.value!,
-      description: itemTemplate.description || `Выпадает с: ${cleanName}`,
-      image: itemTemplate.image
+      name: template.name,
+      type: template.type as Item['type'],
+      value: template.value || 0,
+      description: template.description || `Выпадает с: ${cleanName}`,
+      image: template.image_url || undefined
     };
     
     allItems.push(finalItem);
-    console.log('✅ Added item:', finalItem.name);
   }
   
   console.log(`🎉 Total items generated: ${allItems.length} for monster: ${cleanName}`);
