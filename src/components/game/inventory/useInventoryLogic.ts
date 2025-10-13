@@ -93,12 +93,11 @@ const groupItems = (items: Item[]): GroupedItem[] => {
         return acc;
       }
 
-      // Группируем все остальные предметы (включая workers) с одинаковым состоянием экипировки
+      // Группируем предметы только по имени и equipped статусу
+      // Игнорируем различия в description и других полях
       const existingGroup = acc.find(
         group => 
           group.name === item.name && 
-          group.type === item.type && 
-          group.value === item.value &&
           group.items[0]?.equipped === item.equipped // Проверяем состояние экипировки
       );
 
