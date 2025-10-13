@@ -118,7 +118,7 @@ export const DungeonRewardModal: React.FC<DungeonRewardModalProps> = ({
                 Полученные предметы:
               </h3>
               
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-[300px] overflow-y-auto pr-2 scrollbar-thin scrollbar-thumb-primary/20 scrollbar-track-transparent">
                 {Object.values(groupedItems).map((item: any) => <div key={item.id} className="flex items-center gap-2 p-2 bg-background/50 rounded border">
                     {item.image && <img src={item.image} alt={item.name} className="w-8 h-8 object-cover rounded flex-shrink-0" />}
                     <div className="flex-1 min-w-0">
