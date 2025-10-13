@@ -3,6 +3,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import { Coins, Trophy, Sword, Package } from 'lucide-react';
 import { DungeonReward } from '@/hooks/adventure/useDungeonRewards';
 interface DungeonRewardModalProps {
@@ -62,41 +63,45 @@ export const DungeonRewardModal: React.FC<DungeonRewardModalProps> = ({
               Убито монстров:
             </h3>
             
-            {reward.breakdown.level1to3.count > 0 && <div className="flex justify-between items-center p-2 bg-background/50 rounded">
-                <span className="text-sm">
-                  Уровни 1-3: {reward.breakdown.level1to3.count} монстров
-                </span>
-                <Badge variant="outline">
-                  {reward.breakdown.level1to3.reward} ELL
-                </Badge>
-              </div>}
-            
-            {reward.breakdown.level4to7.count > 0 && <div className="flex justify-between items-center p-2 bg-background/50 rounded">
-                <span className="text-sm">
-                  Уровни 4-7: {reward.breakdown.level4to7.count} монстров
-                </span>
-                <Badge variant="outline">
-                  {reward.breakdown.level4to7.reward} ELL
-                </Badge>
-              </div>}
-            
-            {reward.breakdown.level8to10.count > 0 && <div className="flex justify-between items-center p-2 bg-background/50 rounded">
-                <span className="text-sm">
-                  Уровни 8-10: {reward.breakdown.level8to10.count} монстров
-                </span>
-                <Badge variant="outline">
-                  {reward.breakdown.level8to10.reward} ELL
-                </Badge>
-              </div>}
+            <ScrollArea className="max-h-[120px]">
+              <div className="space-y-2 pr-3">
+                {reward.breakdown.level1to3.count > 0 && <div className="flex justify-between items-center p-2 bg-background/50 rounded">
+                    <span className="text-sm">
+                      Уровни 1-3: {reward.breakdown.level1to3.count} монстров
+                    </span>
+                    <Badge variant="outline">
+                      {reward.breakdown.level1to3.reward} ELL
+                    </Badge>
+                  </div>}
+                
+                {reward.breakdown.level4to7.count > 0 && <div className="flex justify-between items-center p-2 bg-background/50 rounded">
+                    <span className="text-sm">
+                      Уровни 4-7: {reward.breakdown.level4to7.count} монстров
+                    </span>
+                    <Badge variant="outline">
+                      {reward.breakdown.level4to7.reward} ELL
+                    </Badge>
+                  </div>}
+                
+                {reward.breakdown.level8to10.count > 0 && <div className="flex justify-between items-center p-2 bg-background/50 rounded">
+                    <span className="text-sm">
+                      Уровни 8-10: {reward.breakdown.level8to10.count} монстров
+                    </span>
+                    <Badge variant="outline">
+                      {reward.breakdown.level8to10.reward} ELL
+                    </Badge>
+                  </div>}
 
-            {reward.completionBonus > 0 && <div className="flex justify-between items-center p-2 bg-yellow-500/10 rounded border border-yellow-500/20">
-                <span className="text-sm text-yellow-300">
-                  Бонус за завершение
-                </span>
-                <Badge className="bg-yellow-500/20 text-yellow-300">
-                  {reward.completionBonus} ELL
-                </Badge>
-              </div>}
+                {reward.completionBonus > 0 && <div className="flex justify-between items-center p-2 bg-yellow-500/10 rounded border border-yellow-500/20">
+                    <span className="text-sm text-yellow-300">
+                      Бонус за завершение
+                    </span>
+                    <Badge className="bg-yellow-500/20 text-yellow-300">
+                      {reward.completionBonus} ELL
+                    </Badge>
+                  </div>}
+              </div>
+            </ScrollArea>
           </div>
 
           {/* Полученные предметы */}
