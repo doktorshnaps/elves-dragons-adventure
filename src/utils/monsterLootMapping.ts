@@ -12,18 +12,14 @@ const ALL_GRIMOIRE_ITEMS = [
 // Маппинг монстров к предметам (все монстры из подземелья Гнездо Гигантских Пауков)
 // 100% шанс дропа для тестирования - каждый монстр дропает все предметы
 export const monsterLootMapping: Record<string, string[]> = {
-  // Уровни 1-3
+  // Старые имена монстров (из SpiderNestGenerator)
   "Паучок-скелет": ALL_GRIMOIRE_ITEMS,
   "Паук-скакун": ALL_GRIMOIRE_ITEMS, 
   "Паук-прядильщик": ALL_GRIMOIRE_ITEMS,
-  
-  // Уровни 4-7
   "Паук-охотник": ALL_GRIMOIRE_ITEMS,
   "Паук-королева-личинка": ALL_GRIMOIRE_ITEMS,
   "Паук-трупоед": ALL_GRIMOIRE_ITEMS,
   "Паук-стража": ALL_GRIMOIRE_ITEMS,
-  
-  // Уровни 8-10
   "Паук-виверна": ALL_GRIMOIRE_ITEMS,
   "Теневой паук-ловец": ALL_GRIMOIRE_ITEMS,
   "Древний паук-отшельник": ALL_GRIMOIRE_ITEMS,
@@ -33,17 +29,34 @@ export const monsterLootMapping: Record<string, string[]> = {
   "Паук-паразит": ALL_GRIMOIRE_ITEMS,
   "Паук-титан": ALL_GRIMOIRE_ITEMS,
   "Арахнидный Архимаг": ALL_GRIMOIRE_ITEMS,
-  "Арахна, Мать-Прародительница": ALL_GRIMOIRE_ITEMS
+  "Арахна, Мать-Прародительница": ALL_GRIMOIRE_ITEMS,
+  
+  // Новые имена монстров (из SpiderNestGeneratorBalanced)
+  "Теневой паук": ALL_GRIMOIRE_ITEMS,
+  "Древний паук": ALL_GRIMOIRE_ITEMS,
+  "Ядовитый паук": ALL_GRIMOIRE_ITEMS,
+  "Паук-некромант": ALL_GRIMOIRE_ITEMS,
+  "Паук-архимаг": ALL_GRIMOIRE_ITEMS,
+  "Легендарный паук": ALL_GRIMOIRE_ITEMS,
+  "Гигантский Паук-Страж": ALL_GRIMOIRE_ITEMS,
+  "Королева Пауков": ALL_GRIMOIRE_ITEMS,
+  "Арахна Прародительница": ALL_GRIMOIRE_ITEMS
 };
 
 // Получить ВСЕ предметы от монстра (100% шанс для тестирования)
 export const getMonsterLoot = (monsterName: string): Item[] => {
   console.log('🎲 Getting ALL loot for monster:', monsterName);
-  const possibleLoot = monsterLootMapping[monsterName];
-  console.log('🎁 Possible loot types for', monsterName, ':', possibleLoot);
+  
+  // Убираем уровень из имени монстра (например, "Паучок-скелет (Lv1)" -> "Паучок-скелет")
+  const cleanName = monsterName.replace(/\s*\(Lv\d+\)\s*$/i, '').trim();
+  console.log('🧹 Cleaned monster name:', cleanName);
+  
+  const possibleLoot = monsterLootMapping[cleanName];
+  console.log('🎁 Possible loot types for', cleanName, ':', possibleLoot);
   
   if (!possibleLoot || possibleLoot.length === 0) {
-    console.log('❌ No loot mapping found for monster:', monsterName);
+    console.log('❌ No loot mapping found for monster:', cleanName);
+    console.log('📋 Available monster names in mapping:', Object.keys(monsterLootMapping));
     return [];
   }
 
@@ -64,7 +77,7 @@ export const getMonsterLoot = (monsterName: string): Item[] => {
       name: itemTemplate.name!,
       type: itemTemplate.type!,
       value: itemTemplate.value!,
-      description: itemTemplate.description || `Выпадает с: ${monsterName}`,
+      description: itemTemplate.description || `Выпадает с: ${cleanName}`,
       image: itemTemplate.image
     };
     
@@ -72,7 +85,7 @@ export const getMonsterLoot = (monsterName: string): Item[] => {
     console.log('✅ Added item:', finalItem.name);
   }
   
-  console.log(`🎉 Total items generated: ${allItems.length}`);
+  console.log(`🎉 Total items generated: ${allItems.length} for monster: ${cleanName}`);
   return allItems;
 };
 
