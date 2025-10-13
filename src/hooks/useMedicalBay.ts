@@ -77,18 +77,33 @@ export const useMedicalBay = () => {
       return;
     }
 
-    // Проверяем, есть ли назначенные рабочие в медпункт
-    const hasWorkersInMedical = gameData?.activeWorkers?.some((worker: any) => worker.building === 'medical') || false;
-    console.log('🏥 [CHECK] hasWorkersInMedical:', hasWorkersInMedical);
+    // Проверяем, есть ли назначенные рабочие в медпункт (state или localStorage)
+    const getActiveWorkersSafe = () => {
+      const fromState = Array.isArray((gameData as any)?.activeWorkers) ? (gameData as any).activeWorkers : [];
+      if (fromState.length > 0) return fromState;
+      try {
+        const cached = localStorage.getItem('activeWorkers');
+        if (cached) {
+          const parsed = JSON.parse(cached);
+          if (Array.isArray(parsed)) return parsed;
+        }
+      } catch {}
+      return [] as any[];
+    };
+
+    const workers = getActiveWorkersSafe();
+    // Учитываем длительность задания рабочего
+    const now = Date.now();
+    const hasWorkersInMedical = workers.some((w: any) => w.building === 'medical' && (w.startTime + w.duration) > now);
+    console.log('🏥 [CHECK] hasWorkersInMedical:', hasWorkersInMedical, { workers });
     
     if (!hasWorkersInMedical) {
-      console.log('🏥 [ERROR] No workers in medical bay!');
+      console.log('🏥 [WARN] No workers in medical bay — proceeding with timer-based healing');
       toast({
-        title: "Медпункт неактивен",
-        description: "Назначьте рабочих в медпункт для проведения лечения",
-        variant: "destructive"
+        title: "Лечение начато",
+        description: "Рабочие не назначены — лечение будет идти по таймеру.",
       });
-      return;
+      // Продолжаем без возврата
     }
 
     // Проверяем, есть ли активное подземелье

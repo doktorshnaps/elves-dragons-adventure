@@ -101,16 +101,18 @@ export const MedicalBayComponent = () => {
         const isInMedicalBay = instance?.is_in_medical_bay || (card as any).isInMedicalBay;
         const instanceId = instance?.id;
         
+        // Дополнительно: лечим ТОЛЬКО реальные экземпляры (исключаем виртуальные карты без instanceId)
+        const hasRealInstance = Boolean(instanceId);
         const isInjured = currentHealth < maxHealth;
-        const notInMedicalBay = !isInMedicalBay && !cardsInMedicalBay.includes(instanceId);
+        const notInMedicalBay = !isInMedicalBay && instanceId && !cardsInMedicalBay.includes(instanceId);
         
-        return isInjured && notInMedicalBay;
+        return hasRealInstance && isInjured && notInMedicalBay;
       })
       .map(({ card, instance }) => {
         // Используем normalizeCardHealth для правильного max_health
         const normalizedCard = normalizeCardHealth(card);
         return {
-          id: instance?.id || `virtual-${card.id}`,
+          id: instance!.id, // гарантирован реально существующий экземпляр
           card_template_id: card.id,
           current_health: instance?.current_health ?? card.currentHealth ?? normalizedCard.currentHealth ?? normalizedCard.health,
           max_health: normalizedCard.health, // Правильное максимальное здоровье из нормализации
