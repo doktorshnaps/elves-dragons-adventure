@@ -68,11 +68,21 @@ export const useMedicalBay = () => {
   }, [accountId, toast]);
 
   const placeCardInMedicalBay = useCallback(async (cardInstanceIdOrTemplateId: string) => {
-    if (!accountId) return;
+    console.log('🏥 [MEDICAL BAY] placeCardInMedicalBay called with:', cardInstanceIdOrTemplateId);
+    console.log('🏥 [MEDICAL BAY] accountId:', accountId);
+    console.log('🏥 [MEDICAL BAY] gameData.activeWorkers:', gameData?.activeWorkers);
+    
+    if (!accountId) {
+      console.log('🏥 [ERROR] No accountId!');
+      return;
+    }
 
     // Проверяем, есть ли назначенные рабочие в медпункт
     const hasWorkersInMedical = gameData?.activeWorkers?.some((worker: any) => worker.building === 'medical') || false;
+    console.log('🏥 [CHECK] hasWorkersInMedical:', hasWorkersInMedical);
+    
     if (!hasWorkersInMedical) {
+      console.log('🏥 [ERROR] No workers in medical bay!');
       toast({
         title: "Медпункт неактивен",
         description: "Назначьте рабочих в медпункт для проведения лечения",
@@ -83,7 +93,10 @@ export const useMedicalBay = () => {
 
     // Проверяем, есть ли активное подземелье
     const isActiveBattle = localStorage.getItem('activeBattleInProgress') === 'true';
+    console.log('🏥 [CHECK] isActiveBattle:', isActiveBattle);
+    
     if (isActiveBattle) {
+      console.log('🏥 [ERROR] Active battle in progress!');
       toast({
         title: "Нельзя отправить на лечение",
         description: "Карта используется в активном подземелье. Завершите бой или сдайтесь, чтобы отправить карту на лечение.",
@@ -94,7 +107,7 @@ export const useMedicalBay = () => {
 
     try {
       setLoading(true);
-      console.log('🏥 Placing card in medical bay:', cardInstanceIdOrTemplateId);
+      console.log('🏥 [MEDICAL BAY] Placing card in medical bay:', cardInstanceIdOrTemplateId);
 
       // Пытаемся найти экземпляр карты
       let { data: instance, error: instErr } = await supabase

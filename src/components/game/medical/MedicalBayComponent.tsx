@@ -133,7 +133,14 @@ export const MedicalBayComponent = () => {
   };
 
   const handleStartHealing = async () => {
-    if (!selectedCard) return;
+    console.log('🏥 [START] handleStartHealing called');
+    console.log('🏥 [START] selectedCard:', selectedCard);
+    console.log('🏥 [START] gameState.activeWorkers:', gameState?.activeWorkers);
+    
+    if (!selectedCard) {
+      console.log('🏥 [ERROR] No card selected!');
+      return;
+    }
     
     console.log('🏥 Starting healing for card:', selectedCard);
     
@@ -144,6 +151,8 @@ export const MedicalBayComponent = () => {
       // Используем card_template_id для создания экземпляра
       cardInstanceId = selectedCard.card_template_id;
     }
+    
+    console.log('🏥 Calling placeCardInMedicalBay with ID:', cardInstanceId);
 
     try {
       await placeCardInMedicalBay(cardInstanceId);
