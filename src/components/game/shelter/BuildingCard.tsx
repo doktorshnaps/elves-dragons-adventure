@@ -124,7 +124,9 @@ export const BuildingCard = ({
                 ? t(language, 'shelter.install') 
                 : isUpgrading 
                   ? t(language, 'shelter.upgrading') 
-                  : t(language, 'shelter.upgrade')
+                  : upgrade.level === 0 
+                    ? t(language, 'shelter.build')
+                    : t(language, 'shelter.upgrade')
               }
             </Button>
           </div>
