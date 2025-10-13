@@ -111,13 +111,12 @@ export const useMedicalBay = () => {
     console.log('🏥 [CHECK] isActiveBattle:', isActiveBattle);
     
     if (isActiveBattle) {
-      console.log('🏥 [ERROR] Active battle in progress!');
+      console.log('🏥 [WARN] Active battle flag detected — proceeding with caution');
       toast({
-        title: "Нельзя отправить на лечение",
-        description: "Карта используется в активном подземелье. Завершите бой или сдайтесь, чтобы отправить карту на лечение.",
-        variant: "destructive"
+        title: "Внимание",
+        description: "Идёт бой. Лечение будет начато, карта будет исключена из команды.",
       });
-      return;
+      // Продолжаем без возврата
     }
 
     try {
