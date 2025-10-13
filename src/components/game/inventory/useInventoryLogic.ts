@@ -80,25 +80,11 @@ const groupItems = (items: Item[]): GroupedItem[] => {
     // Фильтруем null и undefined значения перед группировкой
     const validItems = items.filter(item => item != null && typeof item === 'object');
       return validItems.reduce<GroupedItem[]>((acc, item) => {
-      // Яйца драконов НЕ группируем — у каждого свой таймер/уникальный ID
-      if (item.type === 'dragon_egg') {
-        acc.push({
-          name: item.name,
-          type: item.type,
-          value: item.value,
-          count: 1,
-          items: [item],
-          image: getItemImage(item)
-        });
-        return acc;
-      }
-
-      // Группируем предметы только по имени и equipped статусу
-      // Игнорируем различия в description и других полях
+      // Группируем предметы по имени и статусу экипировки (если есть)
       const existingGroup = acc.find(
         group => 
           group.name === item.name && 
-          group.items[0]?.equipped === item.equipped // Проверяем состояние экипировки
+          group.items[0]?.equipped === item.equipped
       );
 
       if (existingGroup) {
