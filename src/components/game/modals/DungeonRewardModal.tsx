@@ -39,7 +39,7 @@ export const DungeonRewardModal: React.FC<DungeonRewardModalProps> = ({
           </DialogTitle>
         </DialogHeader>
         
-        <div className="space-y-4">
+        <div className="space-y-4 max-h-[70vh] overflow-y-auto pr-2">
           {/* Общая награда */}
           <Card className="border-primary/20 bg-background/50">
             <CardContent className="p-4 text-center">
