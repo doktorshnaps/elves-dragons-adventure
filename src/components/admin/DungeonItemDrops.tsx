@@ -71,26 +71,28 @@ export const DungeonItemDrops = () => {
       // Загрузка настроек дропа
       const { data: dropsData, error: dropsError } = await supabase
         .from("dungeon_item_drops" as any)
-        .select(`
-          id,
-          item_template_id,
-          dungeon_number,
-          min_dungeon_level,
-          max_dungeon_level,
-          drop_chance,
-          is_active,
-          item_templates (name)
-        `)
+        .select("*")
         .order("dungeon_number")
         .order("min_dungeon_level");
 
-      if (dropsError) throw dropsError;
+      console.log("Drops data:", dropsData);
+      console.log("Drops error:", dropsError);
+
+      if (dropsError) {
+        console.error("Error loading drops:", dropsError);
+        throw dropsError;
+      }
       
-      const formattedDrops = (dropsData || []).map((drop: any) => ({
-        ...drop,
-        item_name: drop.item_templates?.name || "Unknown",
-      }));
+      // Добавляем названия предметов из templates
+      const formattedDrops = (dropsData || []).map((drop: any) => {
+        const template = templates?.find((t) => t.id === drop.item_template_id);
+        return {
+          ...drop,
+          item_name: template?.name || "Unknown Item",
+        };
+      });
       
+      console.log("Formatted drops:", formattedDrops);
       setDrops(formattedDrops);
     } catch (error: any) {
       console.error("Error loading data:", error);
