@@ -67,8 +67,8 @@ export const useGameSettings = () => {
       settingsPromise = (async () => {
         try {
           const [heroRes, dragonRes, rarityRes, classRes, dragonClassRes] = await Promise.all([
-            supabase.from('hero_base_stats').select('*').limit(1).single(),
-            supabase.from('dragon_base_stats').select('*').limit(1).single(),
+            supabase.from('hero_base_stats').select('*').limit(1).maybeSingle(),
+            supabase.from('dragon_base_stats').select('*').limit(1).maybeSingle(),
             supabase.from('rarity_multipliers').select('*').order('rarity'),
             supabase.from('class_multipliers').select('*'),
             supabase.from('dragon_class_multipliers').select('*')

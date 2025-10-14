@@ -2,6 +2,9 @@ import { Card, CardType, Rarity, Faction, MagicResistance } from "@/types/cards"
 import { cardDatabase } from "@/data/cardDatabase";
 import { supabase } from "@/integrations/supabase/client";
 
+// Кэш для результатов calculateCardStats
+const statsCache = new Map<string, { power: number; defense: number; health: number; magic: number }>();
+
 // Глобальный кеш настроек игры
 let gameSettingsCache: {
   heroBaseStats: { health: number; defense: number; power: number; magic: number } | null;
@@ -19,18 +22,18 @@ let gameSettingsCache: {
   lastLoaded: 0
 };
 
-// Загрузка настроек из БД
+// Загрузка настроек из БД - используем .maybeSingle() вместо .single()
 const loadGameSettings = async () => {
   const now = Date.now();
-  // Кеш на 5 секунд
-  if (now - gameSettingsCache.lastLoaded < 5000 && gameSettingsCache.heroBaseStats) {
+  // Кеш на 30 секунд (увеличен с 5 для снижения частоты запросов)
+  if (now - gameSettingsCache.lastLoaded < 30000 && gameSettingsCache.heroBaseStats) {
     return;
   }
 
   try {
     const [heroRes, dragonRes, rarityRes, classRes, dragonClassRes] = await Promise.all([
-      supabase.from('hero_base_stats').select('*').limit(1).single(),
-      supabase.from('dragon_base_stats').select('*').limit(1).single(),
+      supabase.from('hero_base_stats').select('*').limit(1).maybeSingle(),
+      supabase.from('dragon_base_stats').select('*').limit(1).maybeSingle(),
       supabase.from('rarity_multipliers').select('*').order('rarity'),
       supabase.from('class_multipliers').select('*'),
       supabase.from('dragon_class_multipliers').select('*')
@@ -86,7 +89,8 @@ const loadGameSettings = async () => {
     }
 
     gameSettingsCache.lastLoaded = now;
-    console.log('✅ Game settings loaded from DB:', gameSettingsCache);
+    // Очищаем кэш статистик при загрузке новых настроек
+    statsCache.clear();
   } catch (error) {
     console.error('Error loading game settings:', error);
   }
@@ -98,6 +102,8 @@ loadGameSettings();
 // Функция для принудительного обновления кеша
 export const refreshGameSettings = async () => {
   gameSettingsCache.lastLoaded = 0;
+  statsCache.clear();
+  classMultiplierCache.clear();
   await loadGameSettings();
 };
 
@@ -160,34 +166,49 @@ const FALLBACK_RARITY_MULTIPLIERS: Record<Rarity, number> = {
   8: 14.5
 };
 
-// Получить множитель класса по имени карты из БД
+// Получить множитель класса по имени карты из БД (с кэшированием)
+const classMultiplierCache = new Map<string, any>();
+
 const getClassMultiplier = (cardName: string, cardType: CardType) => {
+  const cacheKey = `${cardName}_${cardType}`;
+  
+  if (classMultiplierCache.has(cacheKey)) {
+    return classMultiplierCache.get(cacheKey);
+  }
+
+  let result;
+  
   if (cardType === 'pet') {
     // Для драконов ищем класс в названии
     const sortedClasses = Object.keys(gameSettingsCache.dragonClassMultipliers).sort((a, b) => b.length - a.length);
     
     for (const dragonClass of sortedClasses) {
       if (cardName.includes(dragonClass)) {
-        return gameSettingsCache.dragonClassMultipliers[dragonClass];
+        result = gameSettingsCache.dragonClassMultipliers[dragonClass];
+        classMultiplierCache.set(cacheKey, result);
+        return result;
       }
     }
     // Fallback
-    return { health_multiplier: 1.0, defense_multiplier: 1.0, power_multiplier: 1.0, magic_multiplier: 1.0 };
-  }
-  
-  // Для героев ищем класс в названии карты (от более длинного к более короткому)
-  const sortedClasses = Object.keys(gameSettingsCache.classMultipliers).sort((a, b) => b.length - a.length);
-  
-  for (const heroClass of sortedClasses) {
-    if (cardName.includes(heroClass)) {
-      console.log(`✅ Found class multiplier for "${cardName}": ${heroClass}`, gameSettingsCache.classMultipliers[heroClass]);
-      return gameSettingsCache.classMultipliers[heroClass];
+    result = { health_multiplier: 1.0, defense_multiplier: 1.0, power_multiplier: 1.0, magic_multiplier: 1.0 };
+  } else {
+    // Для героев ищем класс в названии карты (от более длинного к более короткому)
+    const sortedClasses = Object.keys(gameSettingsCache.classMultipliers).sort((a, b) => b.length - a.length);
+    
+    for (const heroClass of sortedClasses) {
+      if (cardName.includes(heroClass)) {
+        result = gameSettingsCache.classMultipliers[heroClass];
+        classMultiplierCache.set(cacheKey, result);
+        return result;
+      }
     }
+    
+    // Fallback
+    result = { health_multiplier: 1.0, defense_multiplier: 1.0, power_multiplier: 1.0, magic_multiplier: 1.0 };
   }
   
-  console.warn(`⚠️ No class multiplier found for "${cardName}", using fallback 1.0`);
-  // Fallback
-  return { health_multiplier: 1.0, defense_multiplier: 1.0, power_multiplier: 1.0, magic_multiplier: 1.0 };
+  classMultiplierCache.set(cacheKey, result);
+  return result;
 };
 
 export const getStatsForRarity = (rarity: Rarity, cardType: CardType = 'character') => {
@@ -204,8 +225,16 @@ export const getStatsForRarity = (rarity: Rarity, cardType: CardType = 'characte
   };
 };
 
-// Новая функция для расчета характеристик карты с учетом класса и редкости из БД
+// Новая функция для расчета характеристик карты с КЭШИРОВАНИЕМ
 export const calculateCardStats = (cardName: string, rarity: Rarity, cardType: CardType = 'character') => {
+  // Создаем ключ кэша
+  const cacheKey = `${cardName}_${rarity}_${cardType}`;
+  
+  // Проверяем кэш
+  if (statsCache.has(cacheKey)) {
+    return statsCache.get(cacheKey)!;
+  }
+  
   const classMultiplier = getClassMultiplier(cardName, cardType);
   const rarityMultiplier = gameSettingsCache.rarityMultipliers[rarity] || FALLBACK_RARITY_MULTIPLIERS[rarity] || 1.0;
   
@@ -213,12 +242,17 @@ export const calculateCardStats = (cardName: string, rarity: Rarity, cardType: C
     ? (gameSettingsCache.dragonBaseStats || FALLBACK_PET_STATS)
     : (gameSettingsCache.heroBaseStats || FALLBACK_HERO_STATS);
   
-  return {
+  const result = {
     power: Math.floor(baseStats.power * rarityMultiplier * classMultiplier.power_multiplier),
     defense: Math.floor(baseStats.defense * rarityMultiplier * classMultiplier.defense_multiplier),
     health: Math.floor(baseStats.health * rarityMultiplier * classMultiplier.health_multiplier),
     magic: Math.floor(baseStats.magic * rarityMultiplier * classMultiplier.magic_multiplier)
   };
+  
+  // Сохраняем в кэш
+  statsCache.set(cacheKey, result);
+  
+  return result;
 };
 
 export const getRarityDropRates = () => {
