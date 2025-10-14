@@ -1,16 +1,15 @@
 import { useEffect, useRef } from 'react';
 import { useGameStore } from '@/stores/gameStore';
 import { supabase } from '@/integrations/supabase/client';
-import { localStorageBatcher } from '@/utils/localStorageBatcher';
 import debounce from 'lodash.debounce';
 
 /**
  * Hook для автоматической синхронизации Zustand с Supabase
- * Заменяет useGameSync с более простой и надежной реализацией
+ * Оптимизирован для снижения нагрузки на БД - обновляет только измененные поля
  */
 export const useZustandSupabaseSync = (walletAddress: string | null) => {
   const isSyncingRef = useRef(false);
-  const lastSyncedRef = useRef<string>('');
+  const lastStateRef = useRef<any>(null);
 
   const state = useGameStore((state) => ({
     balance: state.balance,
@@ -22,7 +21,7 @@ export const useZustandSupabaseSync = (walletAddress: string | null) => {
     accountExperience: state.accountExperience,
   }));
 
-  // Debounced sync function
+  // Debounced sync function - увеличен debounce до 2000ms для снижения нагрузки
   const syncToSupabase = useRef(
     debounce(
       async (currentState: typeof state, wallet: string) => {
@@ -31,34 +30,69 @@ export const useZustandSupabaseSync = (walletAddress: string | null) => {
           return;
         }
 
-        // Check if state changed
-        const stateHash = JSON.stringify(currentState);
-        if (stateHash === lastSyncedRef.current) {
+        // Определяем только измененные поля
+        const updates: any = { updated_at: new Date().toISOString() };
+        let hasChanges = false;
+
+        if (!lastStateRef.current) {
+          // Первая синхронизация - обновляем все
+          updates.balance = currentState.balance;
+          updates.cards = currentState.cards as any || [];
+          updates.inventory = currentState.inventory as any || [];
+          updates.dragon_eggs = currentState.dragonEggs as any || [];
+          updates.selected_team = currentState.selectedTeam as any || [];
+          updates.account_level = currentState.accountLevel || 1;
+          updates.account_experience = currentState.accountExperience || 0;
+          hasChanges = true;
+        } else {
+          // Обновляем только измененные поля
+          if (currentState.balance !== lastStateRef.current.balance) {
+            updates.balance = currentState.balance;
+            hasChanges = true;
+          }
+          if (JSON.stringify(currentState.cards) !== JSON.stringify(lastStateRef.current.cards)) {
+            updates.cards = currentState.cards as any || [];
+            hasChanges = true;
+          }
+          if (JSON.stringify(currentState.inventory) !== JSON.stringify(lastStateRef.current.inventory)) {
+            updates.inventory = currentState.inventory as any || [];
+            hasChanges = true;
+          }
+          if (JSON.stringify(currentState.dragonEggs) !== JSON.stringify(lastStateRef.current.dragonEggs)) {
+            updates.dragon_eggs = currentState.dragonEggs as any || [];
+            hasChanges = true;
+          }
+          if (JSON.stringify(currentState.selectedTeam) !== JSON.stringify(lastStateRef.current.selectedTeam)) {
+            updates.selected_team = currentState.selectedTeam as any || [];
+            hasChanges = true;
+          }
+          if (currentState.accountLevel !== lastStateRef.current.accountLevel) {
+            updates.account_level = currentState.accountLevel || 1;
+            hasChanges = true;
+          }
+          if (currentState.accountExperience !== lastStateRef.current.accountExperience) {
+            updates.account_experience = currentState.accountExperience || 0;
+            hasChanges = true;
+          }
+        }
+
+        if (!hasChanges) {
           return;
         }
 
         isSyncingRef.current = true;
         try {
-          console.log('🔄 [ZustandSync] Syncing to Supabase');
+          console.log('🔄 [ZustandSync] Syncing changed fields to Supabase:', Object.keys(updates).filter(k => k !== 'updated_at'));
 
           const { error } = await supabase
             .from('game_data')
-            .update({
-              balance: currentState.balance,
-              cards: currentState.cards as any || [],
-              inventory: currentState.inventory as any || [],
-              dragon_eggs: currentState.dragonEggs as any || [],
-              selected_team: currentState.selectedTeam as any || [],
-              account_level: currentState.accountLevel || 1,
-              account_experience: currentState.accountExperience || 0,
-              updated_at: new Date().toISOString(),
-            })
+            .update(updates)
             .eq('wallet_address', wallet);
 
           if (error) {
             console.error('❌ [ZustandSync] Sync failed:', error);
           } else {
-            lastSyncedRef.current = stateHash;
+            lastStateRef.current = { ...currentState };
             console.log('✅ [ZustandSync] Synced to Supabase');
           }
         } catch (error) {
@@ -67,8 +101,8 @@ export const useZustandSupabaseSync = (walletAddress: string | null) => {
           isSyncingRef.current = false;
         }
       },
-      800,
-      { leading: false, trailing: true, maxWait: 2000 }
+      2000,
+      { leading: false, trailing: true, maxWait: 5000 }
     )
   ).current;
 

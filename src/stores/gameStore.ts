@@ -97,6 +97,7 @@ export const useGameStore = create<GameState>()((set, get) => ({
     const newExperience = state.accountExperience + amount;
     const experienceForNextLevel = state.accountLevel * 100;
     
+    // Убраны дублирующиеся UPDATE - синхронизация происходит через useZustandSupabaseSync
     if (newExperience >= experienceForNextLevel) {
       const newLevel = state.accountLevel + 1;
       const remainingExperience = newExperience - experienceForNextLevel;
@@ -105,52 +106,14 @@ export const useGameStore = create<GameState>()((set, get) => ({
         accountLevel: newLevel, 
         accountExperience: remainingExperience 
       });
-      
-      // Sync to Supabase
-      const walletAddress = localStorage.getItem('walletAccountId');
-      if (walletAddress) {
-        await supabase
-          .from('game_data')
-          .update({ 
-            account_level: newLevel,
-            account_experience: remainingExperience,
-            updated_at: new Date().toISOString()
-          })
-          .eq('wallet_address', walletAddress);
-      }
     } else {
       set({ accountExperience: newExperience });
-      
-      // Sync to Supabase
-      const walletAddress = localStorage.getItem('walletAccountId');
-      if (walletAddress) {
-        await supabase
-          .from('game_data')
-          .update({ 
-            account_experience: newExperience,
-            updated_at: new Date().toISOString()
-          })
-          .eq('wallet_address', walletAddress);
-      }
     }
   },
   
+  // Deprecated - синхронизация теперь автоматическая через useZustandSupabaseSync
   syncAccountData: async (walletAddress: string) => {
-    if (!walletAddress) return;
-
-    const state = get();
-    const { error } = await supabase
-      .from('game_data')
-      .update({
-        account_level: state.accountLevel,
-        account_experience: state.accountExperience,
-        updated_at: new Date().toISOString(),
-      })
-      .eq('wallet_address', walletAddress);
-
-    if (error) {
-      console.error('Failed to sync account data:', error);
-    }
+    console.warn('syncAccountData is deprecated - sync happens automatically via useZustandSupabaseSync');
   },
   
   initializeAccountData: async (walletAddress: string) => {
