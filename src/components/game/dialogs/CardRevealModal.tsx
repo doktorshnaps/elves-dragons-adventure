@@ -49,6 +49,8 @@ export const CardRevealModal = ({
   };
 
   const handleClose = () => {
+    // Блокируем закрытие во время анимации
+    if (showAnimation) return;
     setShowCard(false);
     onClose();
   };
@@ -63,11 +65,28 @@ export const CardRevealModal = ({
   return (
     <Dialog 
       open={isOpen} 
-      onOpenChange={handleClose}
+      onOpenChange={(open) => {
+        // Разрешаем закрытие только если анимация не активна
+        if (!open && !showAnimation) {
+          handleClose();
+        }
+      }}
     >
       <DialogContent 
         className="max-w-md bg-game-surface border-game-accent"
         onOpenAutoFocus={handleOpen}
+        onPointerDownOutside={(e) => {
+          // Блокируем закрытие при клике вне модального окна во время анимации
+          if (showAnimation) {
+            e.preventDefault();
+          }
+        }}
+        onEscapeKeyDown={(e) => {
+          // Блокируем закрытие по Escape во время анимации
+          if (showAnimation) {
+            e.preventDefault();
+          }
+        }}
       >
         <DialogHeader>
           <DialogTitle className="text-center text-xl font-bold text-game-accent flex items-center justify-center gap-2">
