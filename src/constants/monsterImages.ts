@@ -1,5 +1,5 @@
 // Import monster images
-import spiderSkeleton from "@/assets/monsters/spider-skeleton (1).png";
+import spiderSkeleton from "@/assets/monsters/spider-skeleton.png";
 import spiderJumper from "@/assets/monsters/spider-jumper.png";
 import spiderWeaver from "@/assets/monsters/spider-weaver.png";
 import spiderHunter from "@/assets/monsters/spider-hunter.png";
