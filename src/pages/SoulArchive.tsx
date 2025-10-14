@@ -181,7 +181,7 @@ export const SoulArchive = () => {
     }
   };
 
-  const loadReferralDetails = async (wallet: string, wlFilter: boolean | null) => {
+  const loadReferralDetails = async (wallet: string, wlFilter: boolean | null, isWeekly: boolean = false) => {
     try {
       // Используем новую RPC функцию для получения деталей
       const { data, error } = await supabase.rpc('get_referral_details', {
@@ -194,11 +194,20 @@ export const SoulArchive = () => {
         throw error;
       }
 
-      const details: ReferralDetail[] = (data || []).map((item: any) => ({
+      let details: ReferralDetail[] = (data || []).map((item: any) => ({
         wallet_address: item.wallet_address,
         created_at: item.created_at,
         has_wl: item.has_wl,
       }));
+
+      // Фильтруем по текущей неделе если isWeekly === true
+      if (isWeekly) {
+        const { monday, sunday } = getWeekBounds();
+        details = details.filter(detail => {
+          const createdAt = new Date(detail.created_at);
+          return createdAt >= monday && createdAt <= sunday;
+        });
+      }
 
       setReferralDetails(details);
       setSelectedReferrer(wallet);
@@ -253,7 +262,7 @@ export const SoulArchive = () => {
                       size="sm"
                       variant="outline"
                       className="text-xs px-3 py-1 h-7 border-green-500 text-green-500 hover:bg-green-500/10 rounded-3xl bg-green-500/5"
-                      onClick={() => loadReferralDetails(stat.wallet_address, true)}
+                      onClick={() => loadReferralDetails(stat.wallet_address, true, isWeekly)}
                     >
                       <UserCheck className="w-3 h-3 mr-1" />
                       WL: {wlCount}
@@ -262,7 +271,7 @@ export const SoulArchive = () => {
                       size="sm"
                       variant="outline"
                       className="text-xs px-3 py-1 h-7 border-orange-500 text-orange-500 hover:bg-orange-500/10 rounded-3xl bg-orange-500/5"
-                      onClick={() => loadReferralDetails(stat.wallet_address, false)}
+                      onClick={() => loadReferralDetails(stat.wallet_address, false, isWeekly)}
                     >
                       <UserX className="w-3 h-3 mr-1" />
                       noWL: {noWlCount}
