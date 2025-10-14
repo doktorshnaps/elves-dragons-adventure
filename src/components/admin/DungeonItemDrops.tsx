@@ -332,78 +332,66 @@ export const DungeonItemDrops = () => {
         </CardContent>
       </Card>
 
-      <div className="space-y-4">
-        {drops.map((drop) => (
-          <Card key={drop.id}>
-            <CardContent className="pt-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-4 items-end">
-                <div className="space-y-2">
-                  <Label>Предмет</Label>
-                  <Input value={drop.item_name} disabled />
-                </div>
-
-                <div className="space-y-2">
-                  <Label>Подземелье</Label>
-                  <Input value={`Подземелье ${drop.dungeon_number}`} disabled />
-                </div>
-
-                <div className="space-y-2">
-                  <Label>Мин. уровень</Label>
-                  <Input
-                    type="number"
-                    value={drop.min_dungeon_level}
-                    onChange={(e) => {
-                      const updated = drops.map((d) =>
-                        d.id === drop.id
-                          ? { ...d, min_dungeon_level: parseInt(e.target.value) }
-                          : d
-                      );
-                      setDrops(updated);
-                    }}
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Label>Макс. уровень</Label>
-                  <Input
-                    type="number"
-                    value={drop.max_dungeon_level || ""}
-                    onChange={(e) => {
-                      const updated = drops.map((d) =>
-                        d.id === drop.id
-                          ? {
-                              ...d,
-                              max_dungeon_level: e.target.value
-                                ? parseInt(e.target.value)
-                                : null,
-                            }
-                          : d
-                      );
-                      setDrops(updated);
-                    }}
-                    placeholder="Без ограничения"
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Label>Шанс (%)</Label>
-                  <Input
-                    type="number"
-                    step="0.01"
-                    value={drop.drop_chance}
-                    onChange={(e) => {
-                      const updated = drops.map((d) =>
-                        d.id === drop.id
-                          ? { ...d, drop_chance: parseFloat(e.target.value) }
-                          : d
-                      );
-                      setDrops(updated);
-                    }}
-                  />
-                </div>
-
-                <div className="flex items-center gap-2">
-                  <div className="flex items-center gap-2">
+      <Card>
+        <CardHeader>
+          <CardTitle>Список всех настроек дропа ({drops.length})</CardTitle>
+        </CardHeader>
+        <CardContent>
+          {drops.length === 0 ? (
+            <p className="text-muted-foreground text-center py-8">
+              Настройки дропа не найдены. Добавьте первую настройку выше.
+            </p>
+          ) : (
+            <div className="space-y-2">
+              <div className="grid grid-cols-12 gap-2 px-4 py-2 bg-muted/50 rounded-lg font-semibold text-sm">
+                <div className="col-span-3">Предмет</div>
+                <div className="col-span-1">Подз.</div>
+                <div className="col-span-2">Уровни</div>
+                <div className="col-span-2">Шанс дропа</div>
+                <div className="col-span-1">Статус</div>
+                <div className="col-span-3">Действия</div>
+              </div>
+              
+              {drops.map((drop) => (
+                <div
+                  key={drop.id}
+                  className="grid grid-cols-12 gap-2 px-4 py-3 bg-card border rounded-lg items-center hover:bg-accent/50 transition-colors"
+                >
+                  <div className="col-span-3">
+                    <p className="font-medium text-sm">{drop.item_name}</p>
+                  </div>
+                  
+                  <div className="col-span-1">
+                    <p className="text-sm">{drop.dungeon_number}</p>
+                  </div>
+                  
+                  <div className="col-span-2">
+                    <p className="text-sm">
+                      {drop.min_dungeon_level}
+                      {drop.max_dungeon_level ? ` - ${drop.max_dungeon_level}` : '+'}
+                    </p>
+                  </div>
+                  
+                  <div className="col-span-2">
+                    <Input
+                      type="number"
+                      step="0.01"
+                      min="0"
+                      max="100"
+                      value={drop.drop_chance}
+                      onChange={(e) => {
+                        const updated = drops.map((d) =>
+                          d.id === drop.id
+                            ? { ...d, drop_chance: parseFloat(e.target.value) }
+                            : d
+                        );
+                        setDrops(updated);
+                      }}
+                      className="h-8 text-sm"
+                    />
+                  </div>
+                  
+                  <div className="col-span-1">
                     <Switch
                       checked={drop.is_active}
                       onCheckedChange={(checked) => {
@@ -413,30 +401,35 @@ export const DungeonItemDrops = () => {
                         setDrops(updated);
                       }}
                     />
-                    <Label className="text-xs">Активно</Label>
                   </div>
-
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={() => handleUpdateDrop(drop)}
-                  >
-                    <Save className="h-4 w-4" />
-                  </Button>
-
-                  <Button
-                    size="sm"
-                    variant="destructive"
-                    onClick={() => handleDeleteDrop(drop.id)}
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
+                  
+                  <div className="col-span-3 flex gap-2">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => handleUpdateDrop(drop)}
+                      className="h-8"
+                    >
+                      <Save className="h-3 w-3 mr-1" />
+                      Сохранить
+                    </Button>
+                    
+                    <Button
+                      size="sm"
+                      variant="destructive"
+                      onClick={() => handleDeleteDrop(drop.id)}
+                      className="h-8"
+                    >
+                      <Trash2 className="h-3 w-3 mr-1" />
+                      Удалить
+                    </Button>
+                  </div>
                 </div>
-              </div>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
+              ))}
+            </div>
+          )}
+        </CardContent>
+      </Card>
     </div>
   );
 };
