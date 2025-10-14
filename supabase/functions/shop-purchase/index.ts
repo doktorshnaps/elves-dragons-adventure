@@ -18,43 +18,19 @@ serve(async (req) => {
     
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    // Get Authorization header
-    const authHeader = req.headers.get('Authorization');
-    if (!authHeader) {
+    // Parse request body
+    const { item_id, wallet_address, quantity = 1 } = await req.json();
+
+    // Validate wallet_address
+    if (!wallet_address || typeof wallet_address !== 'string') {
       return new Response(JSON.stringify({ 
-        error: 'Missing authorization header',
+        error: 'Missing or invalid wallet_address',
         success: false 
       }), {
-        status: 401,
+        status: 400,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
-
-    // Create client with user's JWT to get their wallet
-    const userSupabase = createClient(supabaseUrl, Deno.env.get('SUPABASE_ANON_KEY')!, {
-      global: { headers: { Authorization: authHeader } }
-    });
-
-    // Get user's wallet address from their profile/game_data
-    const { data: userData, error: userError } = await userSupabase
-      .from('game_data')
-      .select('wallet_address')
-      .limit(1)
-      .single();
-
-    if (userError || !userData) {
-      return new Response(JSON.stringify({ 
-        error: 'Failed to get user wallet address',
-        success: false 
-      }), {
-        status: 401,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
-    }
-
-    const wallet_address = userData.wallet_address;
-
-    const { item_id, quantity = 1 } = await req.json();
 
     // Validate item_id
     if (!item_id) {
