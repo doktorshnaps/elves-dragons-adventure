@@ -18,11 +18,60 @@ serve(async (req) => {
     
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    const { item_id, wallet_address, quantity = 1 } = await req.json();
-
-    if (!item_id || !wallet_address) {
+    // Get Authorization header
+    const authHeader = req.headers.get('Authorization');
+    if (!authHeader) {
       return new Response(JSON.stringify({ 
-        error: 'Missing item_id or wallet_address' 
+        error: 'Missing authorization header',
+        success: false 
+      }), {
+        status: 401,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    // Create client with user's JWT to get their wallet
+    const userSupabase = createClient(supabaseUrl, Deno.env.get('SUPABASE_ANON_KEY')!, {
+      global: { headers: { Authorization: authHeader } }
+    });
+
+    // Get user's wallet address from their profile/game_data
+    const { data: userData, error: userError } = await userSupabase
+      .from('game_data')
+      .select('wallet_address')
+      .limit(1)
+      .single();
+
+    if (userError || !userData) {
+      return new Response(JSON.stringify({ 
+        error: 'Failed to get user wallet address',
+        success: false 
+      }), {
+        status: 401,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    const wallet_address = userData.wallet_address;
+
+    const { item_id, quantity = 1 } = await req.json();
+
+    // Validate item_id
+    if (!item_id) {
+      return new Response(JSON.stringify({ 
+        error: 'Missing item_id',
+        success: false 
+      }), {
+        status: 400,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    // Validate quantity - must be positive integer between 1 and 100
+    if (!Number.isInteger(quantity) || quantity < 1 || quantity > 100) {
+      return new Response(JSON.stringify({ 
+        error: 'Invalid quantity: must be integer between 1 and 100',
+        success: false 
       }), {
         status: 400,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },

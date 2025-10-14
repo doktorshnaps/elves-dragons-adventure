@@ -16,12 +16,46 @@ serve(async (req) => {
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    const { adminWallet } = await req.json();
+    // Get Authorization header
+    const authHeader = req.headers.get('Authorization');
+    if (!authHeader) {
+      return new Response(JSON.stringify({ 
+        error: 'Missing authorization header',
+        success: false 
+      }), {
+        status: 401,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    // Create client with user's JWT to get their wallet
+    const userSupabase = createClient(supabaseUrl, Deno.env.get('SUPABASE_ANON_KEY')!, {
+      global: { headers: { Authorization: authHeader } }
+    });
+
+    // Get user's wallet address from their profile/game_data
+    const { data: userData, error: userError } = await userSupabase
+      .from('game_data')
+      .select('wallet_address')
+      .limit(1)
+      .single();
+
+    if (userError || !userData) {
+      return new Response(JSON.stringify({ 
+        error: 'Failed to get user wallet address',
+        success: false 
+      }), {
+        status: 401,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    const adminWallet = userData.wallet_address;
 
     // Verify admin
     if (adminWallet !== 'mr_bruts.tg') {
       return new Response(JSON.stringify({ 
-        error: 'Unauthorized',
+        error: 'Unauthorized: Only admin can wipe game data',
         success: false 
       }), {
         status: 403,
