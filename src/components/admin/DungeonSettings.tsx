@@ -8,6 +8,8 @@ import { useToast } from "@/hooks/use-toast";
 import { useWalletContext } from "@/contexts/WalletConnectContext";
 import { Loader2, Save, ChevronDown, ChevronUp } from "lucide-react";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { DungeonItemDrops } from "./DungeonItemDrops";
 
 interface DungeonSetting {
   id: string;
@@ -125,15 +127,21 @@ export const DungeonSettings = () => {
   }
 
   return (
-    <div className="space-y-4">
-      <div className="mb-6">
-        <h2 className="text-2xl font-bold">Настройки подземелий</h2>
-        <p className="text-muted-foreground">
-          Управление характеристиками монстров и формулами расчета для каждого подземелья
-        </p>
-      </div>
+    <Tabs defaultValue="settings" className="w-full">
+      <TabsList className="grid w-full grid-cols-2 mb-6">
+        <TabsTrigger value="settings">Настройки подземелий</TabsTrigger>
+        <TabsTrigger value="drops">Настройки дропа</TabsTrigger>
+      </TabsList>
 
-      {dungeons.map((dungeon) => (
+      <TabsContent value="settings" className="space-y-4">
+        <div className="mb-6">
+          <h2 className="text-2xl font-bold">Настройки подземелий</h2>
+          <p className="text-muted-foreground">
+            Управление характеристиками монстров и формулами расчета для каждого подземелья
+          </p>
+        </div>
+
+        {dungeons.map((dungeon) => (
         <Collapsible
           key={dungeon.id}
           open={openDungeons.has(dungeon.id)}
@@ -272,7 +280,12 @@ export const DungeonSettings = () => {
             </CollapsibleContent>
           </Card>
         </Collapsible>
-      ))}
-    </div>
+        ))}
+      </TabsContent>
+
+      <TabsContent value="drops">
+        <DungeonItemDrops />
+      </TabsContent>
+    </Tabs>
   );
 };
