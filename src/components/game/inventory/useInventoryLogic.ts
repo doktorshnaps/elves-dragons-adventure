@@ -166,7 +166,10 @@ const groupItems = (items: Item[]): GroupedItem[] => {
     await openCardPacks(selectedPackItem, quantity);
     await loadGameData();
     
+    // Закрываем модальное окно после открытия
+    setShowQuantityModal(false);
     setSelectedPackItem(null);
+    
     return shouldClose;
   };
   return {
