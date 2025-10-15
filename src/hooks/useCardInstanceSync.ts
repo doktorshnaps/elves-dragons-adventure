@@ -41,27 +41,39 @@ export const useCardInstanceSync = () => {
       });
 
       // Создаем полную коллекцию карт из всех экземпляров 
-      const cardsFromInstances = cardInstances
+      // Группируем по card_template_id и берем самый свежий экземпляр
+      const instancesByTemplate = new Map();
+      
+      cardInstances
         .filter(instance => {
-          // Исключаем только рабочих, но показываем все остальные карты (включая heroes и dragons)
+          // Исключаем только рабочих
           const cardType = instance.card_type;
           const dataType = (instance.card_data as any)?.type as CardType;
-          
-          // Исключаем workers/рабочих (card_type в БД может быть 'worker' или 'workers')
           const isWorker = cardType === 'workers' || (cardType as string) === 'worker' || 
                           dataType === 'workers';
-          
           return !isWorker;
         })
-        .map(instance => {
-          const cardData = instance.card_data as Card;
-          return {
-            ...cardData,
-            currentHealth: instance.current_health,
-            lastHealTime: new Date(instance.last_heal_time).getTime(),
-            isInMedicalBay: instance.is_in_medical_bay || false
-          } as Card;
+        .forEach(instance => {
+          const templateId = instance.card_template_id;
+          const existing = instancesByTemplate.get(templateId);
+          
+          // Если дубликат, берем тот, что создан позже (или с наибольшим здоровьем при равной дате)
+          if (!existing || 
+              new Date(instance.created_at) > new Date(existing.created_at) ||
+              (instance.created_at === existing.created_at && instance.current_health > existing.current_health)) {
+            instancesByTemplate.set(templateId, instance);
+          }
         });
+
+      const cardsFromInstances = Array.from(instancesByTemplate.values()).map(instance => {
+        const cardData = instance.card_data as Card;
+        return {
+          ...cardData,
+          currentHealth: instance.current_health,
+          lastHealTime: new Date(instance.last_heal_time).getTime(),
+          isInMedicalBay: instance.is_in_medical_bay || false
+        } as Card;
+      });
 
       // Создаем хеш для сравнения (более эффективно чем JSON.stringify всего массива)
       const createCardsHash = (cards: Card[]) => {
@@ -79,17 +91,22 @@ export const useCardInstanceSync = () => {
         return;
       }
 
+      const workersCount = cardInstances.filter(instance => {
+        const cardType = instance.card_type;
+        const dataType = (instance.card_data as any)?.type as CardType;
+        return cardType === 'workers' || (cardType as string) === 'worker' || 
+               dataType === 'workers';
+      }).length;
+
+      const duplicatesRemoved = cardInstances.length - workersCount - instancesByTemplate.size;
+
       console.log('🔄 Cards rebuilt from instances:', {
         totalCards: cardsFromInstances.length,
         heroes: cardsFromInstances.filter(c => c.type === 'character').length,
         dragons: cardsFromInstances.filter(c => c.type === 'pet').length,
         totalInstances: cardInstances.length,
-        excludedWorkers: cardInstances.filter(instance => {
-          const cardType = instance.card_type;
-          const dataType = (instance.card_data as any)?.type as CardType;
-          return cardType === 'workers' || (cardType as string) === 'worker' || 
-                 dataType === 'workers';
-        }).length
+        excludedWorkers: workersCount,
+        duplicatesRemoved: duplicatesRemoved
       });
 
       // Обновляем gameData только если есть различия
