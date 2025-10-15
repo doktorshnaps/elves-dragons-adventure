@@ -26,7 +26,7 @@ import soulArchiveIcon from "@/assets/soul-archive-icon.png";
 export const Menu = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
-  const { gameData, loadGameData } = useGameData();
+  const { gameData, loadGameData, loading: gameDataLoading } = useGameData();
   
   const { language } = useLanguage();
   const { brightness, backgroundBrightness } = useBrightness();
@@ -38,14 +38,26 @@ export const Menu = () => {
   } = useWalletContext();
   const isConnected = !!accountId;
   const { isAdmin } = useAdminCheck();
+  const [initialLoadComplete, setInitialLoadComplete] = useState(false);
 
   // Загружаем данные при подключении кошелька
   useEffect(() => {
-    if (isConnected && accountId) {
+    if (isConnected && accountId && !gameDataLoading) {
       console.log('🔄 Loading game data for connected wallet:', accountId);
-      loadGameData(accountId);
+      loadGameData(accountId).then(() => {
+        setInitialLoadComplete(true);
+      });
     }
-  }, [isConnected, accountId, loadGameData]);
+  }, [isConnected, accountId]);
+  
+  // Показываем загрузку только при первой загрузке
+  if (isConnected && !initialLoadComplete && gameDataLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-game-background">
+        <div className="text-white text-xl">Загрузка меню...</div>
+      </div>
+    );
+  }
   const handleDisconnectWallet = async () => {
     await disconnectWallet();
     navigate('/auth');

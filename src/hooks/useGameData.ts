@@ -72,13 +72,16 @@ export const useGameData = () => {
       return;
     }
 
-    // Prevent multiple simultaneous loads
+    // Prevent multiple simultaneous loads for the same wallet
     if (isLoadingRef.current) {
-      console.log('Load already in progress, skipping');
+      console.log('Load already in progress, waiting...');
+      // Wait for current load to complete instead of skipping
+      await new Promise(resolve => setTimeout(resolve, 100));
       return;
     }
 
     isLoadingRef.current = true;
+    setLoading(true);
 
     try {
       console.log('🔄 Loading game data from DB for wallet:', address);
