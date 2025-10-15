@@ -239,6 +239,53 @@ export type Database = {
         }
         Relationships: []
       }
+      dungeon_item_drops: {
+        Row: {
+          created_at: string
+          created_by_wallet_address: string
+          drop_chance: number
+          dungeon_number: number
+          id: string
+          is_active: boolean
+          item_template_id: number
+          max_dungeon_level: number | null
+          min_dungeon_level: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by_wallet_address: string
+          drop_chance?: number
+          dungeon_number: number
+          id?: string
+          is_active?: boolean
+          item_template_id: number
+          max_dungeon_level?: number | null
+          min_dungeon_level?: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by_wallet_address?: string
+          drop_chance?: number
+          dungeon_number?: number
+          id?: string
+          is_active?: boolean
+          item_template_id?: number
+          max_dungeon_level?: number | null
+          min_dungeon_level?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "dungeon_item_drops_item_template_id_fkey"
+            columns: ["item_template_id"]
+            isOneToOne: false
+            referencedRelation: "item_templates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       dungeon_settings: {
         Row: {
           armor_growth: number
@@ -1122,6 +1169,17 @@ export type Database = {
         }
         Returns: boolean
       }
+      admin_add_dungeon_item_drop: {
+        Args: {
+          p_admin_wallet_address?: string
+          p_drop_chance: number
+          p_dungeon_number: number
+          p_item_template_id: number
+          p_max_dungeon_level: number
+          p_min_dungeon_level: number
+        }
+        Returns: string
+      }
       admin_add_to_whitelist: {
         Args:
           | {
@@ -1150,6 +1208,10 @@ export type Database = {
       }
       admin_clear_user_card_instances: {
         Args: { p_admin_wallet_address?: string; p_wallet_address: string }
+        Returns: boolean
+      }
+      admin_delete_dungeon_item_drop: {
+        Args: { p_admin_wallet_address?: string; p_drop_id: string }
         Returns: boolean
       }
       admin_delete_quest: {
@@ -1276,6 +1338,17 @@ export type Database = {
           p_id: string
           p_magic_multiplier: number
           p_power_multiplier: number
+        }
+        Returns: boolean
+      }
+      admin_update_dungeon_item_drop: {
+        Args: {
+          p_admin_wallet_address?: string
+          p_drop_chance: number
+          p_drop_id: string
+          p_is_active: boolean
+          p_max_dungeon_level: number
+          p_min_dungeon_level: number
         }
         Returns: boolean
       }
@@ -1447,6 +1520,16 @@ export type Database = {
       get_current_user_wallet: {
         Args: Record<PropertyKey, never>
         Returns: string
+      }
+      get_dungeon_item_drops: {
+        Args: { p_dungeon_level: number; p_dungeon_number: number }
+        Returns: {
+          drop_chance: number
+          item_id: number
+          item_name: string
+          item_rarity: string
+          item_type: string
+        }[]
       }
       get_game_data_by_wallet: {
         Args: { p_wallet_address: string }
