@@ -67,8 +67,9 @@ function App() {
         <BrightnessProvider>
           <MusicProvider>
             <LanguageProvider>
-              <MusicController />
-              <Routes>
+              <div className="overflow-x-hidden max-w-full w-full">
+                <MusicController />
+                <Routes>
           <Route path="/" element={<Index />} />
           <Route path="/auth" element={<Auth />} />
           <Route path="/menu" element={<ProtectedRoute><Menu /></ProtectedRoute>} />
@@ -94,8 +95,9 @@ function App() {
 <Route path="/dungeons/dark-mage" element={<ProtectedRoute><DarkMageTowerWithLazyLoading /></ProtectedRoute>} />
 <Route path="/dungeons/bone-dungeon" element={<ProtectedRoute><BoneDemonDungeonWithLazyLoading /></ProtectedRoute>} />
 <Route path="/dungeons/sea-serpent" element={<ProtectedRoute><SeaSerpentLairWithLazyLoading /></ProtectedRoute>} />
-              </Routes>
-              <Toaster />
+                </Routes>
+                <Toaster />
+              </div>
             </LanguageProvider>
           </MusicProvider>
         </BrightnessProvider>

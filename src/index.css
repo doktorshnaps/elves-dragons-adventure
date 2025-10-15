@@ -95,8 +95,46 @@
     @apply border-border;
   }
 
+  html,
   body {
     @apply bg-background text-foreground;
+    overflow-x: hidden;
+    max-width: 100vw;
+  }
+
+  body {
+    position: relative;
+    width: 100%;
+  }
+
+  #root {
+    overflow-x: hidden;
+    max-width: 100vw;
+    width: 100%;
+  }
+
+  /* Предотвращение горизонтального скролла на всех основных контейнерах */
+  main,
+  .container {
+    overflow-x: hidden;
+    max-width: 100%;
+    box-sizing: border-box;
+  }
+
+  /* Убедимся, что все элементы используют border-box */
+  *,
+  *::before,
+  *::after {
+    box-sizing: border-box;
+  }
+
+  /* Предотвращение выхода изображений за границы */
+  img,
+  video,
+  canvas,
+  svg {
+    max-width: 100%;
+    height: auto;
   }
 }
 
