@@ -58,81 +58,89 @@ export const Shelter = () => {
       }}
     >
       <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" />
-      <div className="container mx-auto p-4 space-y-6 relative z-10">
-        {/* Кнопка возврата */}
-        <div className="absolute top-4 left-4 z-10">
-          <Button variant="menu" style={{ boxShadow: '-33px 15px 10px rgba(0, 0, 0, 0.6)' }} onClick={() => navigate("/menu")}>
-            <ArrowLeft className="w-4 h-4 mr-2" />
-            Назад в меню
-          </Button>
-        </div>
+      <div className="container mx-auto p-2 sm:p-4 space-y-6 relative z-10">
+        {/* Кнопка возврата и информация - адаптивный layout */}
+        <div className="flex flex-col sm:flex-row sm:justify-between items-stretch sm:items-start gap-2 mb-16 sm:mb-6 pt-2">
+          {/* Кнопка возврата */}
+          <div className="w-full sm:w-auto">
+            <Button 
+              variant="menu" 
+              style={{ boxShadow: '-33px 15px 10px rgba(0, 0, 0, 0.6)' }} 
+              onClick={() => navigate("/menu")}
+              className="w-full sm:w-auto"
+            >
+              <ArrowLeft className="w-4 h-4 mr-2" />
+              Назад в меню
+            </Button>
+          </div>
 
-        {/* Информация об аккаунте и ресурсы */}
-        <div className="absolute top-3 right-4 z-10 w-80">
-          <Card variant="menu" style={{ boxShadow: '-33px 15px 10px rgba(0, 0, 0, 0.6)' }}>
-            <CardContent className="p-3">
-              {/* Уровень аккаунта */}
-              <div className="flex items-center justify-center gap-2 mb-3">
-                <Star className="h-4 w-4 text-white" />
-                <span className="text-sm font-medium text-white">Уровень {accountLevel}</span>
-              </div>
-              
-              {/* Ресурсы */}
-              <div className="flex justify-between gap-2">
-                <div className="text-center flex-1">
-                  <div className="text-lg">🪵</div>
-                  <div className="text-xs font-semibold text-white">{resources.wood}</div>
+          {/* Информация об аккаунте и ресурсы */}
+          <div className="w-full sm:w-80">
+            <Card variant="menu" style={{ boxShadow: '-33px 15px 10px rgba(0, 0, 0, 0.6)' }}>
+              <CardContent className="p-2 sm:p-3">
+                {/* Уровень аккаунта */}
+                <div className="flex items-center justify-center gap-2 mb-2 sm:mb-3">
+                  <Star className="h-4 w-4 text-white" />
+                  <span className="text-xs sm:text-sm font-medium text-white">Уровень {accountLevel}</span>
                 </div>
-                <div className="text-center flex-1">
-                  <div className="text-lg">🪨</div>
-                  <div className="text-xs font-semibold text-white">{resources.stone}</div>
+                
+                {/* Ресурсы */}
+                <div className="flex justify-between gap-1 sm:gap-2">
+                  <div className="text-center flex-1">
+                    <div className="text-base sm:text-lg">🪵</div>
+                    <div className="text-[10px] sm:text-xs font-semibold text-white">{resources.wood}</div>
+                  </div>
+                  <div className="text-center flex-1">
+                    <div className="text-base sm:text-lg">🪨</div>
+                    <div className="text-[10px] sm:text-xs font-semibold text-white">{resources.stone}</div>
+                  </div>
+                  <div className="text-center flex-1">
+                    <div className="text-base sm:text-lg">⛏️</div>
+                    <div className="text-[10px] sm:text-xs font-semibold text-white">{resources.iron}</div>
+                  </div>
+                  <div className="text-center flex-1">
+                    <div className="text-base sm:text-lg">💰</div>
+                    <div className="text-[10px] sm:text-xs font-semibold text-white">{balance} ELL</div>
+                  </div>
                 </div>
-                <div className="text-center flex-1">
-                  <div className="text-lg">⛏️</div>
-                  <div className="text-xs font-semibold text-white">{resources.iron}</div>
-                </div>
-                <div className="text-center flex-1">
-                  <div className="text-lg">💰</div>
-                  <div className="text-xs font-semibold text-white">{balance} ELL</div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+              </CardContent>
+            </Card>
+          </div>
         </div>
 
         {/* Заголовок */}
-        <div className="flex items-center justify-center py-2">
+        <div className="flex items-center justify-center py-2 sm:py-4">
           <div className="flex items-center gap-2">
-            <Home className="w-6 h-6 text-white" />
-            <h1 className="text-2xl font-bold text-white">{t(language, 'shelter.title')}</h1>
+            <Home className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
+            <h1 className="text-xl sm:text-2xl font-bold text-white">{t(language, 'shelter.title')}</h1>
           </div>
         </div>
 
         {/* Вкладки управления */}
         <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as any)} className="w-full">
-          <TabsList className="grid w-full grid-cols-6 bg-black/50 border-2 border-white backdrop-blur-sm rounded-3xl" style={{ boxShadow: '-33px 15px 10px rgba(0, 0, 0, 0.6)' }}>
-            <TabsTrigger value="upgrades" className="flex items-center gap-2 text-white data-[state=active]:bg-white/20 rounded-3xl">
-              <Home className="w-4 h-4" />
+          <TabsList className="grid w-full grid-cols-3 sm:grid-cols-6 gap-1 bg-black/50 border-2 border-white backdrop-blur-sm rounded-3xl p-1" style={{ boxShadow: '-33px 15px 10px rgba(0, 0, 0, 0.6)' }}>
+            <TabsTrigger value="upgrades" className="flex items-center justify-center gap-1 sm:gap-2 text-white data-[state=active]:bg-white/20 rounded-2xl text-xs sm:text-sm px-1 sm:px-3">
+              <Home className="w-3 h-3 sm:w-4 sm:h-4 flex-shrink-0" />
               <span className="hidden sm:inline">{t(language, 'shelter.upgrades')}</span>
             </TabsTrigger>
-            <TabsTrigger value="crafting" className="flex items-center gap-2 text-white data-[state=active]:bg-white/20 rounded-3xl">
-              <Hammer className="w-4 h-4" />
+            <TabsTrigger value="crafting" className="flex items-center justify-center gap-1 sm:gap-2 text-white data-[state=active]:bg-white/20 rounded-2xl text-xs sm:text-sm px-1 sm:px-3">
+              <Hammer className="w-3 h-3 sm:w-4 sm:h-4 flex-shrink-0" />
               <span className="hidden sm:inline">{t(language, 'shelter.crafting')}</span>
             </TabsTrigger>
-            <TabsTrigger value="barracks" className="flex items-center gap-2 text-white data-[state=active]:bg-white/20 rounded-3xl">
-              <Shield className="w-4 h-4" />
+            <TabsTrigger value="barracks" className="flex items-center justify-center gap-1 sm:gap-2 text-white data-[state=active]:bg-white/20 rounded-2xl text-xs sm:text-sm px-1 sm:px-3">
+              <Shield className="w-3 h-3 sm:w-4 sm:h-4 flex-shrink-0" />
               <span className="hidden sm:inline">{t(language, 'shelter.barracks')}</span>
             </TabsTrigger>
-            <TabsTrigger value="dragonlair" className="flex items-center gap-2 text-white data-[state=active]:bg-white/20 rounded-3xl">
-              <Flame className="w-4 h-4" />
+            <TabsTrigger value="dragonlair" className="flex items-center justify-center gap-1 sm:gap-2 text-white data-[state=active]:bg-white/20 rounded-2xl text-xs sm:text-sm px-1 sm:px-3">
+              <Flame className="w-3 h-3 sm:w-4 sm:h-4 flex-shrink-0" />
               <span className="hidden sm:inline">{t(language, 'shelter.dragonLair')}</span>
             </TabsTrigger>
-            <TabsTrigger value="medical" className="flex items-center gap-2 text-white data-[state=active]:bg-white/20 rounded-3xl">
-              <Heart className="w-4 h-4" />
+            <TabsTrigger value="medical" className="flex items-center justify-center gap-1 sm:gap-2 text-white data-[state=active]:bg-white/20 rounded-2xl text-xs sm:text-sm px-1 sm:px-3">
+              <Heart className="w-3 h-3 sm:w-4 sm:h-4 flex-shrink-0" />
               <span className="hidden sm:inline">{t(language, 'shelter.medical')}</span>
             </TabsTrigger>
-            <TabsTrigger value="workers" className="flex items-center gap-2 text-white data-[state=active]:bg-white/20 rounded-3xl">
-              <Users className="w-4 h-4" />
+            <TabsTrigger value="workers" className="flex items-center justify-center gap-1 sm:gap-2 text-white data-[state=active]:bg-white/20 rounded-2xl text-xs sm:text-sm px-1 sm:px-3">
+              <Users className="w-3 h-3 sm:w-4 sm:h-4 flex-shrink-0" />
               <span className="hidden sm:inline">{t(language, 'shelter.workers')}</span>
             </TabsTrigger>
           </TabsList>
