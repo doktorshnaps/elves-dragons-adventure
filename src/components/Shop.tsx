@@ -116,27 +116,28 @@ export const Shop = ({ onClose }: ShopProps) => {
 return (
     <div className="relative">
       {showEffect && <PurchaseEffect onComplete={() => setShowEffect(false)} />}
-      <div className="sticky top-0 z-10 bg-game-background p-4 border-b-2 border-white">
-        <div className="flex items-center justify-between">
+      <div className="sticky top-0 z-10 bg-game-background p-2 sm:p-4 border-b-2 border-white">
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-2">
           <Button
             variant="menu"
             onClick={onClose}
-            className="flex items-center gap-2"
+            className="flex items-center gap-2 w-full sm:w-auto text-sm sm:text-base"
             style={{ boxShadow: '-33px 15px 10px rgba(0, 0, 0, 0.6)' }}
           >
             <ArrowLeft className="w-4 h-4" />
-            {t(language, 'shop.backToMenu')}
+            <span className="hidden sm:inline">{t(language, 'shop.backToMenu')}</span>
+            <span className="sm:hidden">{t(language, 'shop.backToMenu').split(' ')[0]}</span>
           </Button>
           
-          <div className="flex items-center gap-2 bg-transparent backdrop-blur-sm px-4 py-2 rounded-2xl border-2 border-white" style={{ boxShadow: '-33px 15px 10px rgba(0, 0, 0, 0.6)' }}>
+          <div className="flex items-center gap-1 sm:gap-2 bg-transparent backdrop-blur-sm px-2 sm:px-4 py-1.5 sm:py-2 rounded-2xl border-2 border-white w-full sm:w-auto justify-center" style={{ boxShadow: '-33px 15px 10px rgba(0, 0, 0, 0.6)' }}>
             <div className="w-2 h-2 bg-yellow-500 rounded-full animate-pulse"></div>
-            <span className="text-white font-semibold">{gameData.balance}</span>
-            <span className="text-white/70 text-sm">{t(language, 'game.currency')}</span>
+            <span className="text-white font-semibold text-sm sm:text-base">{gameData.balance}</span>
+            <span className="text-white/70 text-xs sm:text-sm">{t(language, 'game.currency')}</span>
           </div>
           
-          <div className="flex items-center gap-2 text-white bg-transparent backdrop-blur-sm px-4 py-2 rounded-2xl border-2 border-white" style={{ boxShadow: '-33px 15px 10px rgba(0, 0, 0, 0.6)' }}>
-            <Clock className="w-4 h-4" />
-            <span className="text-sm">{t(language, 'shop.refillIn')} {timeUntilReset}</span>
+          <div className="flex items-center gap-1 sm:gap-2 text-white bg-transparent backdrop-blur-sm px-2 sm:px-4 py-1.5 sm:py-2 rounded-2xl border-2 border-white w-full sm:w-auto justify-center" style={{ boxShadow: '-33px 15px 10px rgba(0, 0, 0, 0.6)' }}>
+            <Clock className="w-3 h-3 sm:w-4 sm:h-4 flex-shrink-0" />
+            <span className="text-xs sm:text-sm whitespace-nowrap">{t(language, 'shop.refillIn')} {timeUntilReset}</span>
           </div>
         </div>
       </div>
