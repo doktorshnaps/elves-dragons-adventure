@@ -30,6 +30,7 @@ export const CardImageManager = () => {
   const [selectedCardType, setSelectedCardType] = useState<'hero' | 'dragon'>('hero');
   const [selectedRarity, setSelectedRarity] = useState<number>(1);
   const [uploadingFile, setUploadingFile] = useState(false);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
 
   // Получаем уникальные карты с фракциями из базы данных
   const uniqueCards = cardDatabase
@@ -68,20 +69,33 @@ export const CardImageManager = () => {
     loadCardImages();
   }, []);
 
-  const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
-    if (!file || !selectedCardName || !selectedFaction || !walletAddress) return;
+    if (file) {
+      setSelectedFile(file);
+    }
+  };
+
+  const handleUpload = async () => {
+    if (!selectedFile || !selectedCardName || !selectedFaction || !walletAddress) {
+      toast({
+        title: "Ошибка",
+        description: "Выберите карту, фракцию и файл изображения",
+        variant: "destructive"
+      });
+      return;
+    }
 
     setUploadingFile(true);
     try {
       // Загружаем файл в Storage
-      const fileExt = file.name.split('.').pop();
+      const fileExt = selectedFile.name.split('.').pop();
       const fileName = `${selectedCardName.toLowerCase().replace(/\s+/g, '-')}-rarity-${selectedRarity}-${Date.now()}.${fileExt}`;
       const filePath = `${fileName}`;
 
       const { error: uploadError } = await supabase.storage
         .from('card-images')
-        .upload(filePath, file, {
+        .upload(filePath, selectedFile, {
           cacheControl: '3600',
           upsert: true
         });
@@ -114,10 +128,13 @@ export const CardImageManager = () => {
         description: `Изображение для ${selectedCardName} (${selectedFaction}, редкость ${selectedRarity}) сохранено`
       });
 
-      // Сбрасываем кэш изображений
+      // Сбрасываем кэш изображений и выбранный файл
       invalidateCardImagesCache();
       loadCardImages();
-      event.target.value = '';
+      setSelectedFile(null);
+      // Очищаем input
+      const fileInput = document.getElementById('image-upload') as HTMLInputElement;
+      if (fileInput) fileInput.value = '';
     } catch (error) {
       console.error('Error uploading file:', error);
       toast({
@@ -249,17 +266,33 @@ export const CardImageManager = () => {
               id="image-upload"
               type="file"
               accept="image/*"
-              onChange={handleFileUpload}
+              onChange={handleFileSelect}
               disabled={!selectedCardName || !selectedFaction || uploadingFile}
             />
+            {selectedFile && (
+              <p className="text-sm text-green-400 mt-1">
+                Выбран файл: {selectedFile.name}
+              </p>
+            )}
           </div>
 
-          {uploadingFile && (
-            <div className="flex items-center gap-2 text-sm text-muted-foreground">
-              <Loader2 className="h-4 w-4 animate-spin" />
-              Загрузка...
-            </div>
-          )}
+          <Button
+            onClick={handleUpload}
+            disabled={!selectedFile || !selectedCardName || !selectedFaction || uploadingFile}
+            className="w-full"
+          >
+            {uploadingFile ? (
+              <>
+                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                Загрузка...
+              </>
+            ) : (
+              <>
+                <Upload className="h-4 w-4 mr-2" />
+                Применить изменения
+              </>
+            )}
+          </Button>
         </div>
       </Card>
 
