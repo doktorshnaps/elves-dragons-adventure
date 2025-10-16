@@ -88,7 +88,7 @@ export const CardImageManager = () => {
 
     setUploadingFile(true);
     try {
-      // Функция для транслитерации кириллицы в латиницу
+      // Функция для транслитерации кириллицы в латиницу и безопасного слага
       const transliterate = (text: string): string => {
         const ru: Record<string, string> = {
           'а': 'a', 'б': 'b', 'в': 'v', 'г': 'g', 'д': 'd', 'е': 'e', 'ё': 'yo', 'ж': 'zh',
@@ -99,10 +99,19 @@ export const CardImageManager = () => {
         return text.toLowerCase().split('').map(char => ru[char] || char).join('');
       };
 
+      const slugify = (text: string): string => {
+        return transliterate(text)
+          .normalize('NFKD')
+          .replace(/[\u0300-\u036f]/g, '')
+          .replace(/[^a-z0-9._-]/g, '-')
+          .replace(/-+/g, '-')
+          .replace(/^[-.]+|[-.]+$/g, '');
+      };
+
       // Загружаем файл в Storage
-      const fileExt = selectedFile.name.split('.').pop();
-      const safeName = transliterate(selectedCardName).replace(/\s+/g, '-');
-      const safeFaction = transliterate(selectedFaction).replace(/\s+/g, '-');
+      const fileExt = (selectedFile.name.split('.').pop() || 'png').toLowerCase();
+      const safeName = slugify(selectedCardName);
+      const safeFaction = slugify(selectedFaction);
       const fileName = `${safeName}-${safeFaction}-rarity-${selectedRarity}-${Date.now()}.${fileExt}`;
       const filePath = `${fileName}`;
 
