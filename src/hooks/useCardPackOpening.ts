@@ -92,7 +92,8 @@ export const useCardPackOpening = () => {
       }
 
       // Обновляем локальные данные из Supabase чтобы исключить рассинхрон
-      await loadGameData();
+      // НЕ вызываем loadGameData здесь, так как это вызовет множественные loadCardInstances
+      // Realtime subscription автоматически обновит данные
 
       // Если получены карты, показываем их по очереди
       if (newCards.length > 0) {

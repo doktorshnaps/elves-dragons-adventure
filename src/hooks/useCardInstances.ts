@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useWalletContext } from '@/contexts/WalletConnectContext';
 import { useToast } from '@/hooks/use-toast';
@@ -31,9 +31,20 @@ export const useCardInstances = () => {
   const [cardInstances, setCardInstances] = useState<CardInstance[]>([]);
   const [loading, setLoading] = useState(true);
 
+  // Защита от одновременных вызовов loadCardInstances
+  const isLoadingInstancesRef = useRef(false);
+
   // Загрузка всех экземпляров карт пользователя
   const loadCardInstances = useCallback(async () => {
     if (!isConnected || !accountId) return;
+    
+    // Предотвращаем одновременные вызовы
+    if (isLoadingInstancesRef.current) {
+      console.log('⏭️ loadCardInstances already in progress, skipping...');
+      return;
+    }
+
+    isLoadingInstancesRef.current = true;
     
     try {
       setLoading(true);
@@ -86,6 +97,7 @@ export const useCardInstances = () => {
         variant: 'destructive'
       });
     } finally {
+      isLoadingInstancesRef.current = false;
       setLoading(false);
     }
   }, [accountId, isConnected, toast, gameData?.cards]);
