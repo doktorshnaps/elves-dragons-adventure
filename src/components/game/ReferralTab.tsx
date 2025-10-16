@@ -218,28 +218,35 @@ export const ReferralTab = () => {
           .rpc('get_referrals_by_referrer', { p_wallet_address: node.wallet_address });
 
         if (directReferrals && directReferrals.length > 0) {
-          for (const referral of directReferrals) {
-            // Check whitelist status for this referral
-            const { data: isWhitelisted } = await supabase
-              .rpc('is_whitelisted', { p_wallet_address: referral.referred_wallet_address });
+          // Параллельная загрузка данных для всех рефералов этого уровня
+          const childNodesPromises = directReferrals.map(async (referral) => {
+            // Параллельно запрашиваем whitelist статус и доходы
+            const [whitelistResult, earningsResult] = await Promise.all([
+              supabase.rpc('is_whitelisted', { p_wallet_address: referral.referred_wallet_address }),
+              supabase.rpc('get_referral_earnings_by_referrer', { p_wallet_address: referral.referred_wallet_address })
+            ]);
 
             const childNode: ReferralTreeNode = {
               wallet_address: referral.referred_wallet_address,
               level: node.level + 1,
               children: [],
               joinDate: referral.created_at,
-              isWhitelisted: !!isWhitelisted
+              isWhitelisted: !!whitelistResult.data
             };
 
-            // Get earnings for this referral
-            const { data: earnings } = await supabase
-              .rpc('get_referral_earnings_by_referrer', { p_wallet_address: referral.referred_wallet_address });
-            
-            childNode.earnings = earnings?.reduce((sum, earning) => sum + earning.amount, 0) || 0;
+            childNode.earnings = earningsResult.data?.reduce((sum, earning) => sum + earning.amount, 0) || 0;
 
-            node.children.push(childNode);
-            await buildLevel(childNode, maxLevel);
-          }
+            return childNode;
+          });
+
+          // Ждем завершения всех параллельных запросов
+          const childNodes = await Promise.all(childNodesPromises);
+          node.children = childNodes;
+
+          // Рекурсивно строим следующий уровень для всех детей параллельно
+          await Promise.all(
+            childNodes.map(childNode => buildLevel(childNode, maxLevel))
+          );
         }
       } catch (error) {
         console.error('Error building referral tree level:', error);
