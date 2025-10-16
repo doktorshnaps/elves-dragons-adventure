@@ -1282,6 +1282,10 @@ export type Database = {
         }
         Returns: boolean
       }
+      admin_restore_nft_whitelist: {
+        Args: { p_admin_wallet_address?: string; p_wallet_address: string }
+        Returns: boolean
+      }
       admin_set_player_balance: {
         Args: {
           p_admin_wallet_address: string
