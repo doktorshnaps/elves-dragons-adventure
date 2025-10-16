@@ -9,41 +9,72 @@ interface NFTResponse {
   result?: any[];
 }
 
-// Функция для получения NFT с контракта
-async function fetchNFTsFromContract(walletAddress: string, contractId: string) {
-  try {
-    const response = await fetch('https://rpc.mainnet.near.org', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        jsonrpc: '2.0',
-        id: 'dontcare',
-        method: 'query',
-        params: {
-          request_type: 'call_function',
-          finality: 'final',
-          account_id: contractId,
-          method_name: 'nft_tokens_for_owner',
-          args_base64: btoa(JSON.stringify({
-            account_id: walletAddress,
-            limit: 100
-          }))
-        }
-      })
-    });
+// Функция для получения NFT с контракта с повторными попытками
+async function fetchNFTsFromContract(walletAddress: string, contractId: string, maxRetries = 3) {
+  for (let attempt = 1; attempt <= maxRetries; attempt++) {
+    try {
+      console.log(`📞 Fetching NFTs for ${walletAddress} from ${contractId} (attempt ${attempt}/${maxRetries})`);
+      
+      const response = await fetch('https://rpc.mainnet.near.org', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          jsonrpc: '2.0',
+          id: 'dontcare',
+          method: 'query',
+          params: {
+            request_type: 'call_function',
+            finality: 'final',
+            account_id: contractId,
+            method_name: 'nft_tokens_for_owner',
+            args_base64: btoa(JSON.stringify({
+              account_id: walletAddress,
+              limit: 100
+            }))
+          }
+        })
+      });
 
-    const data = await response.json();
-    if (data.result?.result) {
-      const resultString = new TextDecoder().decode(new Uint8Array(data.result.result));
-      return JSON.parse(resultString);
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const data = await response.json();
+      
+      // Проверка на ошибки NEAR RPC
+      if (data.error) {
+        console.error(`❌ NEAR RPC error for ${walletAddress}:`, data.error);
+        if (attempt < maxRetries) {
+          await new Promise(resolve => setTimeout(resolve, 1000 * attempt));
+          continue;
+        }
+        // При критической ошибке возвращаем null вместо пустого массива
+        return null;
+      }
+      
+      if (data.result?.result) {
+        const resultString = new TextDecoder().decode(new Uint8Array(data.result.result));
+        const nfts = JSON.parse(resultString);
+        console.log(`✅ Successfully fetched ${nfts.length} NFTs for ${walletAddress} from ${contractId}`);
+        return nfts;
+      }
+      
+      console.log(`ℹ️ No NFTs found for ${walletAddress} from ${contractId}`);
+      return [];
+    } catch (error) {
+      console.error(`❌ Attempt ${attempt}/${maxRetries} failed for ${walletAddress} from ${contractId}:`, error);
+      if (attempt < maxRetries) {
+        // Экспоненциальная задержка между попытками
+        await new Promise(resolve => setTimeout(resolve, 1000 * attempt));
+      } else {
+        // После всех попыток возвращаем null для обозначения ошибки
+        return null;
+      }
     }
-    return [];
-  } catch (error) {
-    console.error(`Failed to fetch NFTs from ${contractId}:`, error);
-    return [];
   }
+  return null;
 }
 
 Deno.serve(async (req) => {
@@ -118,15 +149,38 @@ Deno.serve(async (req) => {
       
       // Проверяем каждый контракт на наличие NFT
       let hasQualifyingNFT = false;
+      let hadRpcError = false;
       const foundContracts: string[] = [];
 
       for (const contractAddress of contractAddresses) {
         const nfts = await fetchNFTsFromContract(walletToCheck, contractAddress);
-        if (nfts && nfts.length > 0) {
+        
+        // null означает ошибку при получении данных
+        if (nfts === null) {
+          hadRpcError = true;
+          console.warn(`⚠️ RPC error while checking ${contractAddress} for ${walletToCheck}`);
+          continue;
+        }
+        
+        if (nfts.length > 0) {
           hasQualifyingNFT = true;
           foundContracts.push(contractAddress);
           console.log(`✅ Found ${nfts.length} NFTs in contract ${contractAddress} for ${walletToCheck}`);
         }
+      }
+
+      // Если были ошибки RPC, не отзываем whitelist
+      if (hadRpcError && !hasQualifyingNFT) {
+        console.warn(`⚠️ Skipping whitelist revocation for ${walletToCheck} due to RPC errors`);
+        results.push({
+          wallet: walletToCheck,
+          success: false,
+          error: 'RPC error - skipped to prevent incorrect revocation',
+          hadNFTs: false,
+          foundContracts: [],
+          skipped: true
+        });
+        continue;
       }
 
       // Обновляем статус вайт-листа
@@ -143,7 +197,7 @@ Deno.serve(async (req) => {
         updateResult = result.data;
         updateError = result.error;
       } else {
-        // Если NFT НЕ найдены - отзываем вайт-лист (передаем пустой список как сигнал отсутствия NFT)
+        // Если NFT НЕ найдены И не было ошибок RPC - отзываем вайт-лист
         const result = await supabase
           .rpc('revoke_whitelist_if_no_nft', {
             p_wallet_address: walletToCheck,

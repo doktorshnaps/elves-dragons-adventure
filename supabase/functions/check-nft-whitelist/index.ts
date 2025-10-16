@@ -9,41 +9,72 @@ interface NFTResponse {
   result?: any[];
 }
 
-// Функция для получения NFT с контракта
-async function fetchNFTsFromContract(walletAddress: string, contractId: string) {
-  try {
-    const response = await fetch('https://rpc.mainnet.near.org', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        jsonrpc: '2.0',
-        id: 'dontcare',
-        method: 'query',
-        params: {
-          request_type: 'call_function',
-          finality: 'final',
-          account_id: contractId,
-          method_name: 'nft_tokens_for_owner',
-          args_base64: btoa(JSON.stringify({
-            account_id: walletAddress,
-            limit: 100
-          }))
-        }
-      })
-    });
+// Функция для получения NFT с контракта с повторными попытками
+async function fetchNFTsFromContract(walletAddress: string, contractId: string, maxRetries = 3) {
+  for (let attempt = 1; attempt <= maxRetries; attempt++) {
+    try {
+      console.log(`📞 Fetching NFTs for ${walletAddress} from ${contractId} (attempt ${attempt}/${maxRetries})`);
+      
+      const response = await fetch('https://rpc.mainnet.near.org', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          jsonrpc: '2.0',
+          id: 'dontcare',
+          method: 'query',
+          params: {
+            request_type: 'call_function',
+            finality: 'final',
+            account_id: contractId,
+            method_name: 'nft_tokens_for_owner',
+            args_base64: btoa(JSON.stringify({
+              account_id: walletAddress,
+              limit: 100
+            }))
+          }
+        })
+      });
 
-    const data = await response.json();
-    if (data.result?.result) {
-      const resultString = new TextDecoder().decode(new Uint8Array(data.result.result));
-      return JSON.parse(resultString);
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const data = await response.json();
+      
+      // Проверка на ошибки NEAR RPC
+      if (data.error) {
+        console.error(`❌ NEAR RPC error for ${walletAddress}:`, data.error);
+        if (attempt < maxRetries) {
+          await new Promise(resolve => setTimeout(resolve, 1000 * attempt));
+          continue;
+        }
+        // При критической ошибке возвращаем null вместо пустого массива
+        return null;
+      }
+      
+      if (data.result?.result) {
+        const resultString = new TextDecoder().decode(new Uint8Array(data.result.result));
+        const nfts = JSON.parse(resultString);
+        console.log(`✅ Successfully fetched ${nfts.length} NFTs for ${walletAddress} from ${contractId}`);
+        return nfts;
+      }
+      
+      console.log(`ℹ️ No NFTs found for ${walletAddress} from ${contractId}`);
+      return [];
+    } catch (error) {
+      console.error(`❌ Attempt ${attempt}/${maxRetries} failed for ${walletAddress} from ${contractId}:`, error);
+      if (attempt < maxRetries) {
+        // Экспоненциальная задержка между попытками
+        await new Promise(resolve => setTimeout(resolve, 1000 * attempt));
+      } else {
+        // После всех попыток возвращаем null для обозначения ошибки
+        return null;
+      }
     }
-    return [];
-  } catch (error) {
-    console.error(`Failed to fetch NFTs from ${contractId}:`, error);
-    return [];
   }
+  return null;
 }
 
 Deno.serve(async (req) => {
