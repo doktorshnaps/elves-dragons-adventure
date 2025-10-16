@@ -88,9 +88,22 @@ export const CardImageManager = () => {
 
     setUploadingFile(true);
     try {
+      // Функция для транслитерации кириллицы в латиницу
+      const transliterate = (text: string): string => {
+        const ru: Record<string, string> = {
+          'а': 'a', 'б': 'b', 'в': 'v', 'г': 'g', 'д': 'd', 'е': 'e', 'ё': 'yo', 'ж': 'zh',
+          'з': 'z', 'и': 'i', 'й': 'y', 'к': 'k', 'л': 'l', 'м': 'm', 'н': 'n', 'о': 'o',
+          'п': 'p', 'р': 'r', 'с': 's', 'т': 't', 'у': 'u', 'ф': 'f', 'х': 'h', 'ц': 'ts',
+          'ч': 'ch', 'ш': 'sh', 'щ': 'sch', 'ъ': '', 'ы': 'y', 'ь': '', 'э': 'e', 'ю': 'yu', 'я': 'ya'
+        };
+        return text.toLowerCase().split('').map(char => ru[char] || char).join('');
+      };
+
       // Загружаем файл в Storage
       const fileExt = selectedFile.name.split('.').pop();
-      const fileName = `${selectedCardName.toLowerCase().replace(/\s+/g, '-')}-rarity-${selectedRarity}-${Date.now()}.${fileExt}`;
+      const safeName = transliterate(selectedCardName).replace(/\s+/g, '-');
+      const safeFaction = transliterate(selectedFaction).replace(/\s+/g, '-');
+      const fileName = `${safeName}-${safeFaction}-rarity-${selectedRarity}-${Date.now()}.${fileExt}`;
       const filePath = `${fileName}`;
 
       const { error: uploadError } = await supabase.storage
