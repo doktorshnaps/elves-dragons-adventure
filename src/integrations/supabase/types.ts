@@ -53,6 +53,7 @@ export type Database = {
           card_type: string
           created_at: string | null
           created_by_wallet_address: string
+          faction: string | null
           id: string
           image_url: string
           rarity: number
@@ -63,6 +64,7 @@ export type Database = {
           card_type: string
           created_at?: string | null
           created_by_wallet_address: string
+          faction?: string | null
           id?: string
           image_url: string
           rarity: number
@@ -73,6 +75,7 @@ export type Database = {
           card_type?: string
           created_at?: string | null
           created_by_wallet_address?: string
+          faction?: string | null
           id?: string
           image_url?: string
           rarity?: number

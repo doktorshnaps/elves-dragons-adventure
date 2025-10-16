@@ -9,6 +9,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Loader2, Upload, Trash2 } from "lucide-react";
 import { cardDatabase } from "@/data/cardDatabase";
 import { useWalletContext } from "@/contexts/WalletConnectContext";
+import { invalidateCardImagesCache } from '@/utils/cardImageResolver';
 
 interface CardImage {
   id: string;
@@ -113,6 +114,8 @@ export const CardImageManager = () => {
         description: `Изображение для ${selectedCardName} (${selectedFaction}, редкость ${selectedRarity}) сохранено`
       });
 
+      // Сбрасываем кэш изображений
+      invalidateCardImagesCache();
       loadCardImages();
       event.target.value = '';
     } catch (error) {
@@ -150,6 +153,8 @@ export const CardImageManager = () => {
         description: "Изображение удалено"
       });
 
+      // Сбрасываем кэш изображений
+      invalidateCardImagesCache();
       loadCardImages();
     } catch (error) {
       console.error('Error deleting image:', error);

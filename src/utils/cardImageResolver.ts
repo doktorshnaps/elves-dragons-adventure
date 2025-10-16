@@ -66,13 +66,16 @@ const loadDatabaseImages = async (): Promise<Map<string, string>> => {
     try {
       const { data, error } = await supabase
         .from('card_images')
-        .select('card_name, card_type, rarity, image_url');
+        .select('card_name, card_type, rarity, image_url, faction');
 
       if (error) throw error;
 
       const cache = new Map<string, string>();
       data?.forEach(img => {
-        const key = `${img.card_name}|${img.card_type}|${img.rarity}`;
+        // Используем faction в ключе, если она указана
+        const key = img.faction 
+          ? `${img.card_name}|${img.card_type}|${img.rarity}|${img.faction}`
+          : `${img.card_name}|${img.card_type}|${img.rarity}`;
         cache.set(key, img.image_url);
       });
 
@@ -98,7 +101,7 @@ export const invalidateCardImagesCache = () => {
 /**
  * Получает URL изображения для карты на основе её редкости
  * Приоритет:
- * 1. Изображение из базы данных
+ * 1. Изображение из базы данных (с фракцией)
  * 2. Специальные hardcoded изображения (Рекрут, Стратег)
  * 3. Стандартное изображение карты
  * @param card - карта, для которой нужно получить изображение
@@ -109,8 +112,20 @@ export const getCardImageByRarity = async (card: Card): Promise<string | undefin
   try {
     const dbImages = await loadDatabaseImages();
     const cardType = card.type === 'pet' ? 'dragon' : 'hero';
-    const key = `${card.name}|${cardType}|${card.rarity}`;
-    const dbImage = dbImages.get(key);
+    
+    // Сначала пытаемся найти с фракцией
+    if (card.faction) {
+      const keyWithFaction = `${card.name}|${cardType}|${card.rarity}|${card.faction}`;
+      const dbImageWithFaction = dbImages.get(keyWithFaction);
+      
+      if (dbImageWithFaction) {
+        return dbImageWithFaction;
+      }
+    }
+    
+    // Затем пытаемся найти без фракции (для обратной совместимости)
+    const keyWithoutFaction = `${card.name}|${cardType}|${card.rarity}`;
+    const dbImage = dbImages.get(keyWithoutFaction);
     
     if (dbImage) {
       return dbImage;
