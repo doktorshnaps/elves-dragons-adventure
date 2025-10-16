@@ -1559,7 +1559,38 @@ export type Database = {
       }
       get_game_data_by_wallet_full: {
         Args: { p_wallet_address: string }
-        Returns: Json
+        Returns: {
+          account_experience: number
+          account_level: number
+          active_building_upgrades: Json
+          active_workers: Json
+          adventure_current_monster: Json
+          adventure_player_stats: Json
+          balance: number
+          barracks_upgrades: Json
+          battle_state: Json
+          building_levels: Json
+          cards: Json
+          dragon_eggs: Json
+          dragon_lair_upgrades: Json
+          gold: number
+          inventory: Json
+          iron: number
+          marketplace_listings: Json
+          max_iron: number
+          max_stone: number
+          max_wood: number
+          selected_team: Json
+          social_quests: Json
+          stone: number
+          stone_last_collection_time: number
+          stone_production_data: Json
+          user_id: string
+          wallet_address: string
+          wood: number
+          wood_last_collection_time: number
+          wood_production_data: Json
+        }[]
       }
       get_maintenance_status: {
         Args: Record<PropertyKey, never>
