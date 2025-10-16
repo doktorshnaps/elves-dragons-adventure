@@ -47,6 +47,39 @@ export type Database = {
         }
         Relationships: []
       }
+      card_images: {
+        Row: {
+          card_name: string
+          card_type: string
+          created_at: string | null
+          created_by_wallet_address: string
+          id: string
+          image_url: string
+          rarity: number
+          updated_at: string | null
+        }
+        Insert: {
+          card_name: string
+          card_type: string
+          created_at?: string | null
+          created_by_wallet_address: string
+          id?: string
+          image_url: string
+          rarity: number
+          updated_at?: string | null
+        }
+        Update: {
+          card_name?: string
+          card_type?: string
+          created_at?: string | null
+          created_by_wallet_address?: string
+          id?: string
+          image_url?: string
+          rarity?: number
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       card_instances: {
         Row: {
           card_data: Json

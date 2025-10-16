@@ -1,7 +1,7 @@
 import { useEffect, useRef } from "react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { Card } from '@/types/cards';
-import { resolveCardImage } from '@/utils/cardImageResolver';
+import { resolveCardImageSync } from '@/utils/cardImageResolver';
 
 interface CardImageProps {
   image?: string;
@@ -18,7 +18,7 @@ export const CardImage = ({ image, name, card }: CardImageProps) => {
   const normalizeImageUrl = (url?: string): string => {
     // Если передана карта, используем resolver для получения изображения по редкости
     if (card) {
-      const resolvedImage = resolveCardImage(card);
+      const resolvedImage = resolveCardImageSync(card);
       if (resolvedImage) {
         url = resolvedImage;
       }

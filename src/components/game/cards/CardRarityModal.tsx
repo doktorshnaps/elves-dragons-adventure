@@ -2,7 +2,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { CardInfo } from "@/data/cards/types";
 import { Rarity } from "@/types/cards";
 import { calculateCardStats } from "@/utils/cardUtils";
-import { resolveCardImage } from "@/utils/cardImageResolver";
+import { resolveCardImageSync } from "@/utils/cardImageResolver";
 import { Card } from "@/types/cards";
 import { useLanguage } from "@/hooks/useLanguage";
 import { translateCardName, translateFaction } from "@/utils/cardTranslations";
@@ -61,7 +61,7 @@ export const CardRarityModal = ({
               health: stats.health,
               magic: stats.magic
             };
-            const cardImage = resolveCardImage(tempCard);
+            const cardImage = resolveCardImageSync(tempCard);
             return <div key={rarity} className="bg-black/50 border-2 border-white rounded-3xl p-3 mx-0 my-0 backdrop-blur-sm" style={{ boxShadow: '0 15px 10px rgba(0, 0, 0, 0.6)' }}>
                   {/* Звёзды редкости */}
                   <div className="text-center mb-2">

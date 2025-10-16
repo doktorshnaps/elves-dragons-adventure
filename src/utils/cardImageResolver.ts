@@ -1,4 +1,5 @@
 import { Card } from '@/types/cards';
+import { supabase } from '@/integrations/supabase/client';
 
 // Импорты изображений для героя "Рекрут"
 import recruitRarity1 from '@/assets/cards/recruit-rarity-1.png';
@@ -44,21 +45,86 @@ const strategistRarityImages: Record<number, string> = {
   8: strategistRarity8,
 };
 
+// Кэш для изображений из базы данных
+let dbImagesCache: Map<string, string> | null = null;
+let cacheLoadPromise: Promise<void> | null = null;
+
+/**
+ * Загружает изображения карт из базы данных
+ */
+const loadDatabaseImages = async (): Promise<Map<string, string>> => {
+  if (dbImagesCache) {
+    return dbImagesCache;
+  }
+
+  if (cacheLoadPromise) {
+    await cacheLoadPromise;
+    return dbImagesCache!;
+  }
+
+  cacheLoadPromise = (async () => {
+    try {
+      const { data, error } = await supabase
+        .from('card_images')
+        .select('card_name, card_type, rarity, image_url');
+
+      if (error) throw error;
+
+      const cache = new Map<string, string>();
+      data?.forEach(img => {
+        const key = `${img.card_name}|${img.card_type}|${img.rarity}`;
+        cache.set(key, img.image_url);
+      });
+
+      dbImagesCache = cache;
+    } catch (error) {
+      console.error('Error loading card images from database:', error);
+      dbImagesCache = new Map();
+    }
+  })();
+
+  await cacheLoadPromise;
+  return dbImagesCache!;
+};
+
+/**
+ * Сбрасывает кэш изображений карт
+ */
+export const invalidateCardImagesCache = () => {
+  dbImagesCache = null;
+  cacheLoadPromise = null;
+};
+
 /**
  * Получает URL изображения для карты на основе её редкости
- * Поддерживает специальные изображения для карт:
- * - "Рекрут" (Тэлэрион) - редкости 1-8
- * - "Стратег" (Тэлэрион) - редкости 1-8
+ * Приоритет:
+ * 1. Изображение из базы данных
+ * 2. Специальные hardcoded изображения (Рекрут, Стратег)
+ * 3. Стандартное изображение карты
  * @param card - карта, для которой нужно получить изображение
  * @returns URL изображения или undefined, если специального изображения нет
  */
-export const getCardImageByRarity = (card: Card): string | undefined => {
-  // Проверяем, является ли карта героем "Рекрут" из Тэлэриона
+export const getCardImageByRarity = async (card: Card): Promise<string | undefined> => {
+  // Пытаемся загрузить изображение из базы данных
+  try {
+    const dbImages = await loadDatabaseImages();
+    const cardType = card.type === 'pet' ? 'dragon' : 'hero';
+    const key = `${card.name}|${cardType}|${card.rarity}`;
+    const dbImage = dbImages.get(key);
+    
+    if (dbImage) {
+      return dbImage;
+    }
+  } catch (error) {
+    console.error('Error getting card image from database:', error);
+  }
+
+  // Проверяем hardcoded изображения для "Рекрут" из Тэлэриона
   if (card.name === "Рекрут" && card.faction === "Тэлэрион" && card.type === "character") {
     return recruitRarityImages[card.rarity] || card.image;
   }
   
-  // Проверяем, является ли карта героем "Стратег" из Тэлэриона
+  // Проверяем hardcoded изображения для "Стратег" из Тэлэриона
   if (card.name === "Стратег" && card.faction === "Тэлэрион" && card.type === "character") {
     return strategistRarityImages[card.rarity] || card.image;
   }
@@ -68,12 +134,39 @@ export const getCardImageByRarity = (card: Card): string | undefined => {
 };
 
 /**
- * Получает приоритетное изображение для карты
+ * Синхронная версия getCardImageByRarity для обратной совместимости
+ * Использует только hardcoded изображения и стандартное изображение карты
+ */
+export const getCardImageByRaritySync = (card: Card): string | undefined => {
+  // Проверяем hardcoded изображения для "Рекрут" из Тэлэриона
+  if (card.name === "Рекрут" && card.faction === "Тэлэрион" && card.type === "character") {
+    return recruitRarityImages[card.rarity] || card.image;
+  }
+  
+  // Проверяем hardcoded изображения для "Стратег" из Тэлэриона
+  if (card.name === "Стратег" && card.faction === "Тэлэрион" && card.type === "character") {
+    return strategistRarityImages[card.rarity] || card.image;
+  }
+  
+  // Для всех остальных карт возвращаем стандартное изображение
+  return card.image;
+};
+
+/**
+ * Получает приоритетное изображение для карты (асинхронная версия)
  * Сначала проверяет наличие изображения по редкости, затем стандартное
  * @param card - карта, для которой нужно получить изображение
- * @returns URL изображения
+ * @returns Promise с URL изображения
  */
-export const resolveCardImage = (card: Card): string | undefined => {
-  const rarityImage = getCardImageByRarity(card);
+export const resolveCardImage = async (card: Card): Promise<string | undefined> => {
+  const rarityImage = await getCardImageByRarity(card);
+  return rarityImage || card.image;
+};
+
+/**
+ * Синхронная версия resolveCardImage для обратной совместимости
+ */
+export const resolveCardImageSync = (card: Card): string | undefined => {
+  const rarityImage = getCardImageByRaritySync(card);
   return rarityImage || card.image;
 };

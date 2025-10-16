@@ -10,6 +10,7 @@ import { AdminRoleManager } from "@/components/admin/AdminRoleManager";
 import { QuestManagement } from "@/components/admin/QuestManagement";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { AdminConsoleWithWhitelist } from "@/components/AdminConsole";
+import { CardImageManager } from "@/components/admin/CardImageManager";
 
 const AdminSettingsContent = () => {
   const navigate = useNavigate();
@@ -74,10 +75,11 @@ const AdminSettingsContent = () => {
         </div>
 
         <Tabs defaultValue={isSuperAdmin ? "cards" : "management"} className="w-full">
-          <TabsList className={`grid w-full ${isSuperAdmin ? 'grid-cols-5' : 'grid-cols-1'} bg-black/50 border-2 border-white backdrop-blur-sm rounded-3xl mb-6`} style={{ boxShadow: '-33px 15px 10px rgba(0, 0, 0, 0.6)' }}>
+          <TabsList className={`grid w-full ${isSuperAdmin ? 'grid-cols-6' : 'grid-cols-1'} bg-black/50 border-2 border-white backdrop-blur-sm rounded-3xl mb-6`} style={{ boxShadow: '-33px 15px 10px rgba(0, 0, 0, 0.6)' }}>
             {isSuperAdmin && (
               <>
                 <TabsTrigger value="cards" className="text-white data-[state=active]:bg-white/20 rounded-3xl">Карты (Герои и Драконы)</TabsTrigger>
+                <TabsTrigger value="cardImages" className="text-white data-[state=active]:bg-white/20 rounded-3xl">Изображения карт</TabsTrigger>
                 <TabsTrigger value="dungeons" className="text-white data-[state=active]:bg-white/20 rounded-3xl">Подземелья</TabsTrigger>
                 <TabsTrigger value="quests" className="text-white data-[state=active]:bg-white/20 rounded-3xl">Задания</TabsTrigger>
               </>
@@ -90,6 +92,10 @@ const AdminSettingsContent = () => {
             <>
               <TabsContent value="cards" className="space-y-4">
                 <GameSettings />
+              </TabsContent>
+
+              <TabsContent value="cardImages" className="space-y-4">
+                <CardImageManager />
               </TabsContent>
 
               <TabsContent value="dungeons" className="space-y-4">
