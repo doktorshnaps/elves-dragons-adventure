@@ -16,6 +16,7 @@ interface CardImage {
   card_type: 'hero' | 'dragon';
   rarity: number;
   image_url: string;
+  faction?: string;
 }
 
 export const CardImageManager = () => {
@@ -24,21 +25,20 @@ export const CardImageManager = () => {
   const [loading, setLoading] = useState(false);
   const [cardImages, setCardImages] = useState<CardImage[]>([]);
   const [selectedCardName, setSelectedCardName] = useState<string>("");
+  const [selectedFaction, setSelectedFaction] = useState<string>("");
   const [selectedCardType, setSelectedCardType] = useState<'hero' | 'dragon'>('hero');
   const [selectedRarity, setSelectedRarity] = useState<number>(1);
   const [uploadingFile, setUploadingFile] = useState(false);
 
-  // Получаем уникальные имена карт из базы данных
-  const uniqueCards = Array.from(
-    new Map(
-      cardDatabase
-        .filter(card => card.type === 'character' || card.type === 'pet')
-        .map(card => [
-          card.name,
-          { name: card.name, type: card.type === 'pet' ? 'dragon' : 'hero' }
-        ])
-    ).values()
-  );
+  // Получаем уникальные карты с фракциями из базы данных
+  const uniqueCards = cardDatabase
+    .filter(card => card.type === 'character' || card.type === 'pet')
+    .map(card => ({
+      name: card.name,
+      faction: card.faction,
+      type: card.type === 'pet' ? 'dragon' as const : 'hero' as const,
+      displayName: `${card.name} (${card.faction})`
+    }));
 
   const loadCardImages = async () => {
     setLoading(true);
@@ -69,7 +69,7 @@ export const CardImageManager = () => {
 
   const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
-    if (!file || !selectedCardName || !walletAddress) return;
+    if (!file || !selectedCardName || !selectedFaction || !walletAddress) return;
 
     setUploadingFile(true);
     try {
@@ -98,18 +98,19 @@ export const CardImageManager = () => {
         .upsert({
           card_name: selectedCardName,
           card_type: selectedCardType,
+          faction: selectedFaction,
           rarity: selectedRarity,
           image_url: publicUrl,
           created_by_wallet_address: walletAddress
         }, {
-          onConflict: 'card_name,card_type,rarity'
+          onConflict: 'card_name,card_type,rarity,faction'
         });
 
       if (dbError) throw dbError;
 
       toast({
         title: "Успешно загружено",
-        description: `Изображение для ${selectedCardName} (редкость ${selectedRarity}) сохранено`
+        description: `Изображение для ${selectedCardName} (${selectedFaction}, редкость ${selectedRarity}) сохранено`
       });
 
       loadCardImages();
@@ -173,17 +174,28 @@ export const CardImageManager = () => {
       <Card className="p-6">
         <h3 className="text-lg font-semibold mb-4">Загрузить изображение карты</h3>
         <div className="grid gap-4">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
             <div>
               <Label>Название карты</Label>
-              <Select value={selectedCardName} onValueChange={setSelectedCardName}>
+              <Select 
+                value={`${selectedCardName}|${selectedFaction}`} 
+                onValueChange={(value) => {
+                  const [name, faction] = value.split('|');
+                  setSelectedCardName(name);
+                  setSelectedFaction(faction);
+                  const card = uniqueCards.find(c => c.name === name && c.faction === faction);
+                  if (card) {
+                    setSelectedCardType(card.type);
+                  }
+                }}
+              >
                 <SelectTrigger>
                   <SelectValue placeholder="Выберите карту" />
                 </SelectTrigger>
                 <SelectContent>
                   {uniqueCards.map(card => (
-                    <SelectItem key={card.name} value={card.name}>
-                      {card.name} ({card.type === 'hero' ? 'Герой' : 'Дракон'})
+                    <SelectItem key={`${card.name}-${card.faction}`} value={`${card.name}|${card.faction}`}>
+                      {card.displayName} ({card.type === 'hero' ? 'Герой' : 'Дракон'})
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -233,7 +245,7 @@ export const CardImageManager = () => {
               type="file"
               accept="image/*"
               onChange={handleFileUpload}
-              disabled={!selectedCardName || uploadingFile}
+              disabled={!selectedCardName || !selectedFaction || uploadingFile}
             />
           </div>
 
@@ -258,6 +270,9 @@ export const CardImageManager = () => {
               />
               <div className="space-y-1">
                 <p className="font-semibold">{image.card_name}</p>
+                {image.faction && (
+                  <p className="text-sm text-purple-400">{image.faction}</p>
+                )}
                 <p className="text-sm text-muted-foreground">
                   {image.card_type === 'hero' ? 'Герой' : 'Дракон'} | {"⭐".repeat(image.rarity)}
                 </p>
