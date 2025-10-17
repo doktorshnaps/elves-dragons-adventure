@@ -67,6 +67,28 @@ export const useCardInstanceSync = () => {
 
       const cardsFromInstances = Array.from(instancesByTemplate.values()).map(instance => {
         const cardData = instance.card_data as Card;
+        
+        // Проверяем, есть ли эта карта в текущем gameData с более свежими характеристиками
+        const existingCard = gameData.cards?.find((c: Card) => c.id === cardData.id);
+        
+        // Если карта уже есть и её характеристики (не здоровье!) актуальнее, используем их
+        if (existingCard && existingCard.power && existingCard.defense && existingCard.magic) {
+          return {
+            ...cardData,
+            // Сохраняем актуальные характеристики из gameData
+            power: existingCard.power,
+            defense: existingCard.defense,
+            health: existingCard.health,
+            magic: existingCard.magic,
+            rarity: existingCard.rarity,
+            // Но берем здоровье и статусы из card_instances (источник истины)
+            currentHealth: instance.current_health,
+            lastHealTime: new Date(instance.last_heal_time).getTime(),
+            isInMedicalBay: instance.is_in_medical_bay || false
+          } as Card;
+        }
+        
+        // Если карты нет в gameData или у нее нет характеристик, используем данные из instance
         return {
           ...cardData,
           currentHealth: instance.current_health,
