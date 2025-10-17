@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import { motion } from "framer-motion";
 import { ArrowLeft } from "lucide-react";
 import { useNavigate } from "react-router-dom";
@@ -12,6 +12,8 @@ import { DungeonControls } from "./components/DungeonControls";
 import { DungeonWarnings } from "./components/DungeonWarnings";
 import { usePlayerState } from "@/hooks/usePlayerState";
 import { useGameData } from "@/hooks/useGameData";
+import { useDungeonSync } from "@/hooks/useDungeonSync";
+import { ActiveDungeonWarning } from "./ActiveDungeonWarning";
 
 interface DungeonSearchDialogProps {
   onClose: () => void;
@@ -60,6 +62,9 @@ export const DungeonSearchDialog = ({
   const [activeDungeon, setActiveDungeon] = React.useState<string | null>(null);
   const { playerStats } = usePlayerState();
   const { updateGameData } = useGameData();
+  const { hasOtherActiveSessions, activeSessions, startDungeonSession, endDungeonSession } = useDungeonSync();
+  const [showActiveWarning, setShowActiveWarning] = useState(false);
+  const [pendingDungeon, setPendingDungeon] = useState<DungeonType | null>(null);
 
   React.useEffect(() => {
     // Check for team battle state only (new system)
@@ -89,7 +94,14 @@ export const DungeonSearchDialog = ({
     setActiveDungeon(null);
     try { window.dispatchEvent(new CustomEvent('battleReset')); } catch {}
   };
-  const handleDungeonSelect = (dungeonType: DungeonType) => {
+  const handleDungeonSelect = async (dungeonType: DungeonType) => {
+    // Проверяем наличие активного подземелья на других устройствах
+    if (hasOtherActiveSessions) {
+      setPendingDungeon(dungeonType);
+      setShowActiveWarning(true);
+      return;
+    }
+
     // Only allow selection if no active dungeon or if it's the active dungeon
     if (!activeDungeon || activeDungeon === dungeonType) {
       // Use energy only when entering a new dungeon (not continuing an active one)
@@ -99,11 +111,32 @@ export const DungeonSearchDialog = ({
           console.warn('Not enough energy to enter dungeon');
           return;
         }
+        
+        // Начинаем новую сессию подземелья
+        const started = await startDungeonSession(dungeonType, 1);
+        if (!started) {
+          console.warn('Failed to start dungeon session');
+          return;
+        }
       }
       
       const route = dungeonRoutes[dungeonType];
       navigate(route);
     }
+  };
+
+  const handleEndAndRestart = async () => {
+    if (!pendingDungeon) return;
+    
+    // Завершаем активную сессию на другом устройстве
+    await endDungeonSession();
+    
+    // Закрываем предупреждение
+    setShowActiveWarning(false);
+    
+    // Начинаем новое подземелье
+    await handleDungeonSelect(pendingDungeon);
+    setPendingDungeon(null);
   };
 
   const canEnterDungeon = (dungeonType: DungeonType, requiredLevel: number) => {
@@ -203,6 +236,20 @@ export const DungeonSearchDialog = ({
           />
         </div>
       </Card>
+
+      <ActiveDungeonWarning
+        open={showActiveWarning}
+        onContinue={() => {
+          setShowActiveWarning(false);
+          setPendingDungeon(null);
+        }}
+        onEndAndRestart={handleEndAndRestart}
+        onCancel={() => {
+          setShowActiveWarning(false);
+          setPendingDungeon(null);
+        }}
+        activeSessions={activeSessions}
+      />
     </motion.div>
   );
 };

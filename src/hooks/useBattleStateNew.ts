@@ -7,6 +7,7 @@ import { generateDungeonOpponents } from '@/dungeons/dungeonManager';
 import { DungeonType } from '@/constants/dungeons';
 import { addAccountExperience } from '@/utils/accountLeveling';
 import { useGameStore } from '@/stores/gameStore';
+import { useDungeonSync } from './useDungeonSync';
 
 interface BattleState {
   playerStats: any;
@@ -21,6 +22,7 @@ export const useBattleStateNew = (level: number) => {
   const { toast } = useToast();
   const navigate = useNavigate();
   const { accountLevel, accountExperience, addAccountExperience: addAccountExp } = useGameStore();
+  const { endDungeonSession } = useDungeonSync();
 
   const [battleState, setBattleState] = useState<BattleState>(() => {
     if (gameData.battleState) {
@@ -109,6 +111,7 @@ export const useBattleStateNew = (level: number) => {
       });
       
       await updateGameData({ battleState: null });
+      await endDungeonSession(); // Завершаем сессию подземелья
       setTimeout(() => navigate('/menu'), 2000);
       return;
     }
