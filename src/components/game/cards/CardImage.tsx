@@ -1,7 +1,7 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { Card } from '@/types/cards';
-import { resolveCardImageSync } from '@/utils/cardImageResolver';
+import { resolveCardImage } from '@/utils/cardImageResolver';
 
 interface CardImageProps {
   image?: string;
@@ -13,15 +13,20 @@ export const CardImage = ({ image, name, card }: CardImageProps) => {
   const isMobile = useIsMobile();
   const imgRef = useRef<HTMLImageElement>(null);
   const attemptRef = useRef(0);
+  const [resolvedImageUrl, setResolvedImageUrl] = useState<string | undefined>(undefined);
+
+  // Асинхронно загружаем изображение из БД если передана карта
+  useEffect(() => {
+    if (card) {
+      resolveCardImage(card).then(setResolvedImageUrl);
+    }
+  }, [card]);
 
   // Нормализация IPFS URL
   const normalizeImageUrl = (url?: string): string => {
-    // Если передана карта, используем resolver для получения изображения по редкости
-    if (card) {
-      const resolvedImage = resolveCardImageSync(card);
-      if (resolvedImage) {
-        url = resolvedImage;
-      }
+    // Используем resolvedImageUrl если оно загружено из БД
+    if (resolvedImageUrl) {
+      url = resolvedImageUrl;
     }
     if (!url) return '/placeholder.svg';
     
@@ -84,9 +89,9 @@ export const CardImage = ({ image, name, card }: CardImageProps) => {
     }
   };
   useEffect(() => {
-    if (!imgRef.current || !image) return;
+    if (!imgRef.current) return;
 
-    const normalizedUrl = normalizeImageUrl(image);
+    const normalizedUrl = normalizeImageUrl(resolvedImageUrl || image);
     const candidates = buildGatewayUrls(normalizedUrl);
 
     let isCancelled = false;
@@ -129,7 +134,7 @@ export const CardImage = ({ image, name, card }: CardImageProps) => {
     return () => {
       isCancelled = true;
     };
-  }, [image]);
+  }, [image, resolvedImageUrl]);
 
   if (!image) return null;
 

@@ -2,11 +2,12 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { CardInfo } from "@/data/cards/types";
 import { Rarity } from "@/types/cards";
 import { calculateCardStats } from "@/utils/cardUtils";
-import { resolveCardImageSync } from "@/utils/cardImageResolver";
+import { resolveCardImage } from "@/utils/cardImageResolver";
 import { Card } from "@/types/cards";
 import { useLanguage } from "@/hooks/useLanguage";
 import { translateCardName, translateFaction } from "@/utils/cardTranslations";
 import { Sparkles } from "lucide-react";
+import { useEffect, useState } from "react";
 interface CardRarityModalProps {
   cardInfo: CardInfo | null;
   open: boolean;
@@ -17,11 +18,43 @@ export const CardRarityModal = ({
   open,
   onClose
 }: CardRarityModalProps) => {
-  const {
-    language
-  } = useLanguage();
+  const { language } = useLanguage();
+  const [cardImages, setCardImages] = useState<Record<number, string>>({});
+  
   if (!cardInfo) return null;
   const rarityLevels: Rarity[] = [1, 2, 3, 4, 5, 6, 7, 8];
+
+  // Загружаем изображения для всех редкостей асинхронно
+  useEffect(() => {
+    if (!cardInfo) return;
+    
+    const loadImages = async () => {
+      const images: Record<number, string> = {};
+      
+      for (const rarity of rarityLevels) {
+        const stats = calculateCardStats(cardInfo.name, rarity, cardInfo.type);
+        const tempCard: Card = {
+          id: `temp-${cardInfo.name}-${rarity}`,
+          name: cardInfo.name,
+          type: cardInfo.type,
+          faction: cardInfo.faction as any,
+          rarity,
+          image: cardInfo.image,
+          power: stats.power,
+          defense: stats.defense,
+          health: stats.health,
+          magic: stats.magic
+        };
+        
+        const cardImage = await resolveCardImage(tempCard);
+        images[rarity] = cardImage || cardInfo.image;
+      }
+      
+      setCardImages(images);
+    };
+    
+    loadImages();
+  }, [cardInfo]);
   return <Dialog open={open} onOpenChange={v => {
     if (!v) onClose();
   }}>
@@ -47,21 +80,8 @@ export const CardRarityModal = ({
             {rarityLevels.map(rarity => {
             // Используем новую систему расчета характеристик с учетом типа карты
             const stats = calculateCardStats(cardInfo.name, rarity, cardInfo.type);
-
-            // Создаем временную карту для получения изображения по редкости
-            const tempCard: Card = {
-              id: `temp-${cardInfo.name}-${rarity}`,
-              name: cardInfo.name,
-              type: cardInfo.type,
-              faction: cardInfo.faction as any,
-              rarity,
-              image: cardInfo.image,
-              power: stats.power,
-              defense: stats.defense,
-              health: stats.health,
-              magic: stats.magic
-            };
-            const cardImage = resolveCardImageSync(tempCard);
+            const cardImage = cardImages[rarity] || cardInfo.image;
+            
             return <div key={rarity} className="bg-black/50 border-2 border-white rounded-3xl p-3 mx-0 my-0 backdrop-blur-sm" style={{ boxShadow: '0 15px 10px rgba(0, 0, 0, 0.6)' }}>
                   {/* Звёзды редкости */}
                   <div className="text-center mb-2">
