@@ -20,8 +20,6 @@ export const CardRarityModal = ({
 }: CardRarityModalProps) => {
   const { language } = useLanguage();
   const [cardImages, setCardImages] = useState<Record<number, string>>({});
-  
-  if (!cardInfo) return null;
   const rarityLevels: Rarity[] = [1, 2, 3, 4, 5, 6, 7, 8];
 
   // Загружаем изображения для всех редкостей асинхронно
@@ -55,6 +53,8 @@ export const CardRarityModal = ({
     
     loadImages();
   }, [cardInfo]);
+
+  if (!cardInfo) return null;
   return <Dialog open={open} onOpenChange={v => {
     if (!v) onClose();
   }}>
