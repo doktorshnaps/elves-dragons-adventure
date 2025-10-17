@@ -26,6 +26,31 @@ export const useDungeonSync = () => {
     return id;
   });
 
+  // Локальное состояние активной сессии подземелья для этого устройства
+  const [localSession, setLocalSession] = useState<ActiveDungeonSession | null>(() => {
+    try {
+      const raw = localStorage.getItem('activeDungeonSession');
+      return raw ? JSON.parse(raw) as ActiveDungeonSession : null;
+    } catch {
+      return null;
+    }
+  });
+
+  // Синхронизация между вкладками/приложениями через событие storage
+  useEffect(() => {
+    const onStorage = (e: StorageEvent) => {
+      if (e.key === 'activeDungeonSession') {
+        try {
+          setLocalSession(e.newValue ? (JSON.parse(e.newValue) as ActiveDungeonSession) : null);
+        } catch {
+          setLocalSession(null);
+        }
+      }
+    };
+    window.addEventListener('storage', onStorage);
+    return () => window.removeEventListener('storage', onStorage);
+  }, []);
+
   // Проверяем наличие активного подземелья из базы
   const checkActiveDungeon = useCallback(async (): Promise<ActiveDungeonSession | null> => {
     if (!accountId || !gameData.battleState) return null;
@@ -43,14 +68,27 @@ export const useDungeonSync = () => {
 
   // Отправляем heartbeat для активной сессии
   const sendHeartbeat = useCallback(async () => {
-    if (!accountId || !gameData.battleState) return;
+    if (!accountId) return;
+
+    // Берем данные активной сессии из локального состояния, 
+    // если его нет — пробуем из battleState (для обратной совместимости)
+    const baseSession: ActiveDungeonSession | null = localSession
+      ? { ...localSession }
+      : (gameData.battleState
+          ? {
+              device_id: deviceId,
+              started_at: Date.now(),
+              last_activity: Date.now(),
+              dungeon_type: gameData.battleState.selectedDungeon || 'unknown',
+              level: gameData.battleState.currentDungeonLevel || 1
+            }
+          : null);
+
+    if (!baseSession) return;
 
     const session: ActiveDungeonSession = {
-      device_id: deviceId,
-      started_at: Date.now(),
+      ...baseSession,
       last_activity: Date.now(),
-      dungeon_type: gameData.battleState.selectedDungeon || 'unknown',
-      level: gameData.battleState.currentDungeonLevel || 1
     };
 
     // Отправляем через realtime channel
@@ -60,7 +98,7 @@ export const useDungeonSync = () => {
       event: 'heartbeat',
       payload: session
     });
-  }, [accountId, gameData.battleState, deviceId]);
+  }, [accountId, deviceId, gameData.battleState, localSession]);
 
   // Проверяем есть ли активные сессии с других устройств
   const hasOtherActiveSessions = useCallback(() => {
@@ -78,7 +116,16 @@ export const useDungeonSync = () => {
   const endDungeonSession = useCallback(async () => {
     if (!accountId) return;
 
-    await updateGameData({ battleState: null });
+    // Чистим локальную сессию
+    try {
+      localStorage.removeItem('activeDungeonSession');
+      setLocalSession(null);
+    } catch {}
+
+    // Чистим состояние боя в базе (на всякий случай)
+    try {
+      await updateGameData({ battleState: null });
+    } catch {}
 
     const channel = supabase.channel(`dungeon_sync_${accountId}`);
     await channel.send({
@@ -104,6 +151,12 @@ export const useDungeonSync = () => {
       dungeon_type: dungeonType,
       level: level
     };
+
+    // Сохраняем локально, чтобы слать heartbeat даже вне боя/экрана подземелья
+    try {
+      localStorage.setItem('activeDungeonSession', JSON.stringify(session));
+      setLocalSession(session);
+    } catch {}
 
     const channel = supabase.channel(`dungeon_sync_${accountId}`);
     await channel.send({
@@ -154,13 +207,13 @@ export const useDungeonSync = () => {
 
   // Отправляем heartbeat каждые 3 секунды
   useEffect(() => {
-    if (!gameData.battleState) return;
+    if (!localSession) return;
 
     const interval = setInterval(sendHeartbeat, 3000);
     sendHeartbeat(); // Отправляем сразу
 
     return () => clearInterval(interval);
-  }, [gameData.battleState, sendHeartbeat]);
+  }, [localSession, sendHeartbeat]);
 
   // Очищаем устаревшие сессии
   useEffect(() => {
