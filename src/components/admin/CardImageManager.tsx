@@ -108,42 +108,29 @@ export const CardImageManager = () => {
           .replace(/^[-.]+|[-.]+$/g, '');
       };
 
-      // Загружаем файл в Storage
+      // Prepare file data
       const fileExt = (selectedFile.name.split('.').pop() || 'png').toLowerCase();
       const safeName = slugify(selectedCardName);
       const safeFaction = slugify(selectedFaction);
       const fileName = `${safeName}-${safeFaction}-rarity-${selectedRarity}-${Date.now()}.${fileExt}`;
       const filePath = `${fileName}`;
 
-      const { error: uploadError } = await supabase.storage
-        .from('card-images')
-        .upload(filePath, selectedFile, {
-          cacheControl: '3600',
-          upsert: true
-        });
+      // Create FormData for edge function
+      const formData = new FormData();
+      formData.append('file', selectedFile);
+      formData.append('filePath', filePath);
+      formData.append('walletAddress', walletAddress);
+      formData.append('cardName', selectedCardName);
+      formData.append('cardType', selectedCardType);
+      formData.append('faction', selectedFaction);
+      formData.append('rarity', selectedRarity.toString());
 
-      if (uploadError) throw uploadError;
+      // Call edge function to upload with admin privileges
+      const { data, error } = await supabase.functions.invoke('upload-card-image', {
+        body: formData,
+      });
 
-      // Получаем публичный URL
-      const { data: { publicUrl } } = supabase.storage
-        .from('card-images')
-        .getPublicUrl(filePath);
-
-      // Сохраняем запись в базе данных
-      const { error: dbError } = await supabase
-        .from('card_images')
-        .upsert({
-          card_name: selectedCardName,
-          card_type: selectedCardType,
-          faction: selectedFaction,
-          rarity: selectedRarity,
-          image_url: publicUrl,
-          created_by_wallet_address: walletAddress
-        }, {
-          onConflict: 'card_name,card_type,rarity,faction'
-        });
-
-      if (dbError) throw dbError;
+      if (error) throw error;
 
       toast({
         title: "Успешно загружено",
