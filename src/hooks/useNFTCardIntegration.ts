@@ -161,23 +161,35 @@ export const useNFTCardIntegration = () => {
       );
       
       const gameCards: CardType[] = uniqueNFTs.map(nftCard => {
-        const nftContractId = (nftCard as any).nft_contract_id || (nftCard as any).nft_contract;
-        const nftTokenId = (nftCard as any).nft_token_id;
+        // Prefer explicit fields; fallback to parsing composite id like "contract_token"
+        let nftContractId = (nftCard as any).nft_contract_id || (nftCard as any).nft_contract;
+        let nftTokenId = (nftCard as any).nft_token_id || (nftCard as any).token_id as string | undefined;
+
+        if ((!nftContractId || !nftTokenId) && typeof (nftCard as any).id === 'string') {
+          const composite = String((nftCard as any).id);
+          // If id looks like `${contract}_${token}` and token is numeric, split by last underscore
+          const lastUnderscore = composite.lastIndexOf('_');
+          const tail = lastUnderscore > -1 ? composite.slice(lastUnderscore + 1) : '';
+          if (lastUnderscore > 0 && /^\d+$/.test(tail)) {
+            nftContractId = composite.slice(0, lastUnderscore);
+            nftTokenId = tail;
+          }
+        }
         
         return {
-          id: nftCard.id,
-          name: nftCard.name,
-          power: nftCard.power,
-          defense: nftCard.defense,
-          health: nftCard.health,
-          currentHealth: nftCard.currentHealth || nftCard.health,
+          id: (nftCard as any).id,
+          name: (nftCard as any).name,
+          power: (nftCard as any).power,
+          defense: (nftCard as any).defense,
+          health: (nftCard as any).health,
+          currentHealth: (nftCard as any).currentHealth || (nftCard as any).health,
           rarity: (typeof (nftCard as any).rarity === 'number' ? (nftCard as any).rarity : 1) as any,
-          faction: nftCard.faction as any,
-          // Маппинг типа: 'hero' -> 'character', 'dragon' -> 'pet'
-          type: (nftCard.type === 'hero' ? 'character' : nftCard.type === 'dragon' ? 'pet' : 'character'),
-          description: nftCard.description || '',
-          image: nftCard.image || '/placeholder.svg',
-          magic: nftCard.magic || 0,
+          faction: (nftCard as any).faction as any,
+          // Map: 'hero' -> 'character', 'dragon' -> 'pet'
+          type: ((nftCard as any).type === 'hero' ? 'character' : (nftCard as any).type === 'dragon' ? 'pet' : 'character'),
+          description: (nftCard as any).description || '',
+          image: (nftCard as any).image || '/placeholder.svg',
+          magic: (nftCard as any).magic || 0,
           isNFT: true,
           nftContractId,
           nftTokenId
