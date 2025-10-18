@@ -22,6 +22,22 @@ let gameSettingsCache: {
   lastLoaded: 0
 };
 
+// Prefill settings from localStorage for instant availability
+try {
+  const ls = localStorage.getItem('game_settings_cache_v1');
+  if (ls) {
+    const parsed = JSON.parse(ls);
+    if (parsed.heroBaseStats) gameSettingsCache.heroBaseStats = parsed.heroBaseStats;
+    if (parsed.dragonBaseStats) gameSettingsCache.dragonBaseStats = parsed.dragonBaseStats;
+    if (parsed.rarityMultipliers) gameSettingsCache.rarityMultipliers = parsed.rarityMultipliers;
+    if (parsed.classMultipliers) gameSettingsCache.classMultipliers = parsed.classMultipliers;
+    if (parsed.dragonClassMultipliers) gameSettingsCache.dragonClassMultipliers = parsed.dragonClassMultipliers;
+    gameSettingsCache.lastLoaded = Date.now();
+  }
+} catch (e) {
+  console.debug('Failed to prefill game settings from localStorage', e);
+}
+
 // Загрузка настроек из БД - используем .maybeSingle() вместо .single()
 const loadGameSettings = async () => {
   const now = Date.now();
@@ -89,6 +105,27 @@ const loadGameSettings = async () => {
     }
 
     gameSettingsCache.lastLoaded = now;
+    // Persist to localStorage for instant availability on reload
+    try {
+      localStorage.setItem('game_settings_cache_v1', JSON.stringify({
+        heroBaseStats: gameSettingsCache.heroBaseStats,
+        dragonBaseStats: gameSettingsCache.dragonBaseStats,
+        rarityMultipliers: gameSettingsCache.rarityMultipliers,
+        classMultipliers: gameSettingsCache.classMultipliers,
+        dragonClassMultipliers: gameSettingsCache.dragonClassMultipliers
+      }));
+    } catch (e) {
+      console.debug('Failed to persist game settings', e);
+    }
+
+    console.debug('✅ Game settings loaded', {
+      heroBase: gameSettingsCache.heroBaseStats,
+      dragonBase: gameSettingsCache.dragonBaseStats,
+      rarityMultipliers: Object.keys(gameSettingsCache.rarityMultipliers).length,
+      classKeys: Object.keys(gameSettingsCache.classMultipliers || {}).slice(0, 10),
+      dragonClassKeys: Object.keys(gameSettingsCache.dragonClassMultipliers || {}).slice(0, 10)
+    });
+
     // Очищаем кэш статистик при загрузке новых настроек
     statsCache.clear();
   } catch (error) {
