@@ -133,6 +133,8 @@ export type Database = {
           medical_bay_heal_rate: number | null
           medical_bay_start_time: string | null
           monster_kills: number
+          nft_contract_id: string | null
+          nft_token_id: string | null
           updated_at: string
           user_id: string | null
           wallet_address: string
@@ -150,6 +152,8 @@ export type Database = {
           medical_bay_heal_rate?: number | null
           medical_bay_start_time?: string | null
           monster_kills?: number
+          nft_contract_id?: string | null
+          nft_token_id?: string | null
           updated_at?: string
           user_id?: string | null
           wallet_address: string
@@ -167,6 +171,8 @@ export type Database = {
           medical_bay_heal_rate?: number | null
           medical_bay_start_time?: string | null
           monster_kills?: number
+          nft_contract_id?: string | null
+          nft_token_id?: string | null
           updated_at?: string
           user_id?: string | null
           wallet_address?: string
@@ -1531,6 +1537,10 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: undefined
       }
+      cleanup_transferred_nft_cards: {
+        Args: { p_current_nft_tokens: Json; p_wallet_address: string }
+        Returns: number
+      }
       complete_user_quest: {
         Args: { p_quest_id: string; p_wallet_address: string }
         Returns: boolean
@@ -1592,6 +1602,8 @@ export type Database = {
           medical_bay_heal_rate: number | null
           medical_bay_start_time: string | null
           monster_kills: number
+          nft_contract_id: string | null
+          nft_token_id: string | null
           updated_at: string
           user_id: string | null
           wallet_address: string
@@ -1691,6 +1703,20 @@ export type Database = {
           placed_at: string
           user_id: string
           wallet_address: string
+        }[]
+      }
+      get_nft_card_instances_by_wallet: {
+        Args: { p_wallet_address: string }
+        Returns: {
+          card_data: Json
+          card_template_id: string
+          current_health: number
+          id: string
+          is_in_medical_bay: boolean
+          max_health: number
+          monster_kills: number
+          nft_contract_id: string
+          nft_token_id: string
         }[]
       }
       get_or_create_wallet_identity: {
@@ -1962,6 +1988,18 @@ export type Database = {
           p_wallet_address: string
         }
         Returns: boolean
+      }
+      upsert_nft_card_instance: {
+        Args: {
+          p_card_data: Json
+          p_card_template_id: string
+          p_card_type: string
+          p_max_health: number
+          p_nft_contract_id: string
+          p_nft_token_id: string
+          p_wallet_address: string
+        }
+        Returns: string
       }
     }
     Enums: {

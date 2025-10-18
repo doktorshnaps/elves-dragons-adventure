@@ -180,6 +180,64 @@ export const useNFTCardIntegration = () => {
       }));
 
       console.log('✅ NFT sync completed, total cards:', gameCards.length);
+      
+      // 🆕 Синхронизация NFT карточек с card_instances
+      if (gameCards.length > 0) {
+        console.log('🔄 Syncing NFT cards to card_instances...');
+        
+        // Создаем/обновляем записи для каждой NFT карточки
+        for (const card of gameCards) {
+          if (!card.nftContractId || !card.nftTokenId) {
+            console.warn('Missing NFT identifiers for card:', card.id);
+            continue;
+          }
+          
+          try {
+            const { data, error } = await supabase.rpc('upsert_nft_card_instance', {
+              p_wallet_address: accountId,
+              p_nft_contract_id: card.nftContractId,
+              p_nft_token_id: card.nftTokenId,
+              p_card_template_id: card.id,
+              p_card_type: card.type === 'pet' ? 'dragon' : 'hero',
+              p_max_health: card.health,
+              p_card_data: card as any
+            });
+            
+            if (error) {
+              console.error('Error upserting NFT card instance:', card.id, error);
+            } else {
+              console.log('✅ NFT card instance synced:', card.id, data);
+            }
+          } catch (err) {
+            console.error('Failed to upsert NFT card instance:', card.id, err);
+          }
+        }
+        
+        // Очистка переданных NFT
+        const currentTokens = gameCards.map(c => ({
+          contract_id: c.nftContractId,
+          token_id: c.nftTokenId
+        }));
+        
+        try {
+          const { data: cleanupCount, error: cleanupError } = await supabase.rpc(
+            'cleanup_transferred_nft_cards',
+            {
+              p_wallet_address: accountId,
+              p_current_nft_tokens: currentTokens as any
+            }
+          );
+          
+          if (cleanupError) {
+            console.error('Error cleaning up transferred NFTs:', cleanupError);
+          } else if (cleanupCount && cleanupCount > 0) {
+            console.log(`🧹 Cleaned up ${cleanupCount} transferred NFT cards`);
+          }
+        } catch (cleanupErr) {
+          console.error('Failed to cleanup transferred NFTs:', cleanupErr);
+        }
+      }
+      
       setNftCards(gameCards);
       // Синхронизируем локальное хранилище: удаляем несуществующие NFT
       cleanupLocalNFTs(gameCards.map(c => c.id));
