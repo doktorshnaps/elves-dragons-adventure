@@ -91,6 +91,10 @@ export const DungeonSearchDialog = ({
       localStorage.removeItem('battleState'); // legacy
     } catch {}
     try { await updateGameData({ battleState: null }); } catch {}
+    
+    // Завершаем сессию подземелья в БД
+    await endDungeonSession();
+    
     setActiveDungeon(null);
     try { window.dispatchEvent(new CustomEvent('battleReset')); } catch {}
   };
