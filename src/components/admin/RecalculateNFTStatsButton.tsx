@@ -23,8 +23,12 @@ export const RecalculateNFTStatsButton = () => {
 
     setIsRecalculating(true);
     try {
+      console.log('🔄 Starting NFT stats recalculation...');
+      
       // Обновляем кеш настроек игры
       await refreshGameSettings();
+      
+      console.log('✅ Game settings refreshed');
 
       // Получаем все NFT карточки
       const { data: nftInstances, error } = await supabase
@@ -52,12 +56,13 @@ export const RecalculateNFTStatsButton = () => {
         const rarity = Number(cardData.rarity) || 1;
         const cardType = (cardData?.type === 'pet') ? 'pet' : 'character';
 
-        console.log(`🔍 Processing card: ${cardName}, rarity: ${rarity}, type: ${cardType}`);
+        console.log(`🔍 Processing NFT card: "${cardName}", rarity: ${rarity}, type: ${cardType}`);
+        console.log(`📋 Full card data:`, cardData);
 
         // Пересчитываем характеристики с актуальными настройками
         const recalculatedStats = calculateCardStats(cardName, rarity as any, cardType);
 
-        console.log(`📊 Recalculated stats:`, recalculatedStats);
+        console.log(`📊 Recalculated stats for "${cardName}":`, recalculatedStats);
 
         // Обновляем card_data (сохраняем все существующие поля)
         const updatedCardData = {
