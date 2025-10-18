@@ -3,6 +3,7 @@ import { useWalletContext } from '@/contexts/WalletConnectContext';
 import { useNFTCards } from './useNFTCards';
 import { Card as CardType } from '@/types/cards';
 import { useToast } from './use-toast';
+import { supabase } from '@/integrations/supabase/client';
 
 export const useNFTCardIntegration = () => {
   const [nftCards, setNftCards] = useState<CardType[]>([]);
@@ -60,9 +61,10 @@ export const useNFTCardIntegration = () => {
     console.log('🔄 Starting NFT sync for:', accountId);
     setIsLoading(true);
     try {
-      // Синхронизируем NFT с основного контракта и дополнительного
+      // Синхронизируем NFT с основного контракта (doubledog.hot.tg)
       let synced: any[] = [];
       let fetched: any[] = [];
+      let mintbaseCards: any[] = [];
       
       try {
         synced = await syncNFTCards(accountId, 'doubledog.hot.tg');
@@ -76,11 +78,32 @@ export const useNFTCardIntegration = () => {
       } catch (fetchError) {
         console.log('NFT fetch failed:', fetchError);
       }
+
+      // Синхронизируем NFT из Mintbase контракта
+      try {
+        console.log('🔄 Syncing Mintbase NFTs...');
+        const { data: mintbaseData, error: mintbaseError } = await supabase.functions.invoke(
+          'sync-mintbase-nfts',
+          {
+            body: { wallet_address: accountId }
+          }
+        );
+
+        if (mintbaseError) {
+          console.error('Mintbase sync error:', mintbaseError);
+        } else if (mintbaseData?.cards) {
+          mintbaseCards = mintbaseData.cards;
+          console.log(`✅ Synced ${mintbaseCards.length} Mintbase NFTs`);
+        }
+      } catch (mintbaseError) {
+        console.log('Mintbase NFT sync failed:', mintbaseError);
+      }
       
-      const source = (synced && synced.length > 0) ? synced : fetched;
+      // Объединяем все источники NFT
+      const allNFTs = [...(synced || []), ...(fetched || []), ...mintbaseCards];
       
       // Убираем дубликаты по ID и конвертируем в формат игровых карт
-      const uniqueNFTs = source.filter((nft, index, arr) => 
+      const uniqueNFTs = allNFTs.filter((nft, index, arr) => 
         arr.findIndex(n => n.id === nft.id) === index
       );
       
@@ -90,19 +113,19 @@ export const useNFTCardIntegration = () => {
         power: nftCard.power,
         defense: nftCard.defense,
         health: nftCard.health,
-        currentHealth: nftCard.currentHealth,
+        currentHealth: nftCard.currentHealth || nftCard.health,
         rarity: (typeof (nftCard as any).rarity === 'number' ? (nftCard as any).rarity : 1) as any,
         faction: nftCard.faction as any,
         type: (nftCard.type === 'character' ? 'character' : 'pet'),
         description: nftCard.description || '',
         image: nftCard.image || '/placeholder.svg',
-        magic: 0, // обязательное поле
+        magic: nftCard.magic || 0,
         isNFT: true,
-        nftContractId: (nftCard as any).nft_contract_id,
+        nftContractId: (nftCard as any).nft_contract || (nftCard as any).nft_contract_id,
         nftTokenId: (nftCard as any).nft_token_id
       }));
 
-      console.log('✅ NFT sync completed, cards:', gameCards.length);
+      console.log('✅ NFT sync completed, total cards:', gameCards.length);
       setNftCards(gameCards);
       // Синхронизируем локальное хранилище: удаляем несуществующие NFT
       cleanupLocalNFTs(gameCards.map(c => c.id));

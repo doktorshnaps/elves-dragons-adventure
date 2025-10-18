@@ -176,9 +176,52 @@ export const WhitelistContractsManager = () => {
     }
   };
 
+  // Auto-add Mintbase contract on component mount if not exists
   useEffect(() => {
-    loadContracts();
-  }, []);
+    const autoAddMintbaseContract = async () => {
+      // Check if Mintbase contract already exists
+      const exists = contracts.some(c => c.contract_address === 'elleonortesr.mintbase1.near');
+      if (exists) return;
+
+      try {
+        const gameDataRaw = localStorage.getItem('gameData');
+        let walletAddress = 'mr_bruts.tg';
+        
+        if (gameDataRaw) {
+          try {
+            const gameData = JSON.parse(gameDataRaw);
+            if (gameData?.wallet_address) {
+              walletAddress = gameData.wallet_address;
+            }
+          } catch (e) {
+            console.warn('Could not parse gameData');
+          }
+        }
+
+        await supabase
+          .from('whitelist_contracts')
+          .insert({
+            contract_address: 'elleonortesr.mintbase1.near',
+            contract_name: 'Mintbase NFT Cards',
+            description: 'NFT контракт для карточек героев и драконов из Mintbase',
+            added_by_wallet_address: walletAddress,
+            is_active: true
+          });
+
+        console.log('✅ Auto-added Mintbase contract');
+        loadContracts();
+      } catch (error: any) {
+        // Ignore duplicate errors
+        if (!error.message?.includes('duplicate')) {
+          console.error('Error auto-adding Mintbase contract:', error);
+        }
+      }
+    };
+
+    if (contracts.length > 0) {
+      autoAddMintbaseContract();
+    }
+  }, [contracts.length]);
 
   return (
     <Card>
