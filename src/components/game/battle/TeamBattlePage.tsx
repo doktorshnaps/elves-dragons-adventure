@@ -245,19 +245,19 @@ export const TeamBattlePage: React.FC<TeamBattlePageProps> = ({
     if (!battleStarted) return;
     if (!isBattleOver) return;
 
-    // Не обрабатываем, если никого не убили (предотвращает повторное модальное окно при инициализации нового уровня)
-    if (monstersKilled.length === 0) return;
+    const isVictory = alivePairs.length > 0;
+    const isFullCompletion = isVictory && battleState.level >= 10;
+
+    // Если победа и никого не убили (фаза инициализации нового уровня) — пропускаем
+    if (isVictory && monstersKilled.length === 0) return;
 
     // Предотвращаем повторную обработку одного и того же уровня
     if (processedLevelRef.current === battleState.level) return;
     processedLevelRef.current = battleState.level;
 
-    const isVictory = alivePairs.length > 0;
-    const isFullCompletion = isVictory && battleState.level >= 10;
-    
     console.log(`🏁 Бой завершен. Победа: ${isVictory}, Уровень: ${battleState.level}, Убито монстров: ${monstersKilled.length}`);
     console.log('🎯 BATTLE END DEBUG: Monsters killed data:', JSON.stringify(monstersKilled, null, 2));
-    
+
     if (!isVictory) {
       localStorage.removeItem('teamBattleState');
       localStorage.removeItem('activeBattleInProgress');
@@ -269,8 +269,26 @@ export const TeamBattlePage: React.FC<TeamBattlePageProps> = ({
   }, [isBattleOver, battleStarted, monstersKilled.length, alivePairs.length, battleState.level, processDungeonCompletion]);
   
   if (isBattleOver && battleStarted) {
-    // Если модальное окно еще не готово, показываем заглушку
+    // Если модальное окно еще не готово
     if (!pendingReward) {
+      // При полном поражении награды нет — показываем экран поражения с выходом
+      if (alivePairs.length === 0) {
+        return (
+          <div className="fixed inset-0 bg-black/90 flex items-center justify-center z-[200]">
+            <Card variant="menu" className="p-6 max-w-md w-full">
+              <CardHeader>
+                <CardTitle className="text-white text-center">Команда пала</CardTitle>
+              </CardHeader>
+              <CardContent className="text-center space-y-4">
+                <p className="text-white/80">Награда не начисляется.</p>
+                <Button variant="menu" onClick={handleExitAndReset}>Выйти</Button>
+              </CardContent>
+            </Card>
+          </div>
+        );
+      }
+
+      // Иначе краткая заглушка на обработку (например, при победе)
       return (
         <div className="fixed inset-0 bg-black/90 flex items-center justify-center z-[200]">
           <Card variant="menu" className="p-6 max-w-md w-full">
