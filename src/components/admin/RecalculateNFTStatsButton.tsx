@@ -52,10 +52,14 @@ export const RecalculateNFTStatsButton = () => {
         const rarity = Number(cardData.rarity) || 1;
         const cardType = (cardData?.type === 'pet') ? 'pet' : 'character';
 
+        console.log(`🔍 Processing card: ${cardName}, rarity: ${rarity}, type: ${cardType}`);
+
         // Пересчитываем характеристики с актуальными настройками
         const recalculatedStats = calculateCardStats(cardName, rarity as any, cardType);
 
-        // Обновляем card_data
+        console.log(`📊 Recalculated stats:`, recalculatedStats);
+
+        // Обновляем card_data (сохраняем все существующие поля)
         const updatedCardData = {
           ...cardData,
           health: recalculatedStats.health,
@@ -70,7 +74,7 @@ export const RecalculateNFTStatsButton = () => {
           p_nft_contract_id: instance.nft_contract_id!,
           p_nft_token_id: instance.nft_token_id!,
           p_card_template_id: instance.card_template_id,
-          p_card_type: (cardData?.type === 'pet') ? 'dragon' : 'hero',
+          p_card_type: cardType === 'pet' ? 'dragon' : 'hero',
           p_max_health: recalculatedStats.health,
           p_card_data: updatedCardData
         });
