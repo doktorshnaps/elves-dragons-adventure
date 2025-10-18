@@ -4,6 +4,7 @@ import { useNFTCards } from './useNFTCards';
 import { Card as CardType } from '@/types/cards';
 import { useToast } from './use-toast';
 import { supabase } from '@/integrations/supabase/client';
+import { calculateCardStats } from '@/utils/cardUtils';
 
 let globalHasSynced = false;
 let syncInFlight = false;
@@ -222,17 +223,31 @@ export const useNFTCardIntegration = () => {
           const nftContractId = String(card.nftContractId).trim();
           const nftTokenId = String(card.nftTokenId).trim();
           const cardType = card.type === 'pet' ? 'dragon' : 'hero';
-          const maxHealth = Number.isFinite(Number(card.health)) 
-            ? Number(card.health) 
-            : Number(card.currentHealth ?? 100);
+          
+          // Пересчитываем характеристики с актуальными настройками из БД
+          const recalculatedStats = calculateCardStats(
+            card.name, 
+            Number(card.rarity) as any,
+            card.type === 'pet' ? 'pet' : 'character'
+          );
+          const maxHealth = recalculatedStats.health;
 
           if (!nftContractId || !nftTokenId || !Number.isFinite(maxHealth)) {
             console.warn('Skipping upsert due to invalid params', { nftContractId, nftTokenId, maxHealth, cardId: card.id });
             continue;
           }
 
+          // Обновляем card_data с пересчитанными характеристиками
+          const updatedCardData = {
+            ...card,
+            health: maxHealth,
+            power: recalculatedStats.power,
+            defense: recalculatedStats.defense,
+            magic: recalculatedStats.magic
+          };
+
           try {
-            console.log('⬆️ Upserting NFT card instance', { accountId, nftContractId, nftTokenId, cardTemplateId: card.id, cardType, maxHealth });
+            console.log('⬆️ Upserting NFT card instance', { accountId, nftContractId, nftTokenId, cardTemplateId: card.id, cardType, maxHealth, recalculatedStats });
             const { data, error } = await supabase.rpc('upsert_nft_card_instance', {
               p_wallet_address: accountId,
               p_nft_contract_id: nftContractId,
@@ -240,7 +255,7 @@ export const useNFTCardIntegration = () => {
               p_card_template_id: String(card.id),
               p_card_type: cardType,
               p_max_health: maxHealth,
-              p_card_data: card as any
+              p_card_data: updatedCardData as any
             });
             
             if (error) {
