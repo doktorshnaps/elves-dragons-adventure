@@ -14,6 +14,42 @@ export type Database = {
   }
   public: {
     Tables: {
+      active_dungeon_sessions: {
+        Row: {
+          account_id: string
+          created_at: string
+          device_id: string
+          dungeon_type: string
+          id: string
+          last_activity: number
+          level: number
+          started_at: number
+          updated_at: string
+        }
+        Insert: {
+          account_id: string
+          created_at?: string
+          device_id: string
+          dungeon_type: string
+          id?: string
+          last_activity: number
+          level?: number
+          started_at: number
+          updated_at?: string
+        }
+        Update: {
+          account_id?: string
+          created_at?: string
+          device_id?: string
+          dungeon_type?: string
+          id?: string
+          last_activity?: number
+          level?: number
+          started_at?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       banned_users: {
         Row: {
           banned_at: string
@@ -1490,6 +1526,10 @@ export type Database = {
       claim_quest_and_reward: {
         Args: { p_quest_id: string; p_wallet_address: string }
         Returns: Json
+      }
+      cleanup_old_dungeon_sessions: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
       }
       complete_user_quest: {
         Args: { p_quest_id: string; p_wallet_address: string }

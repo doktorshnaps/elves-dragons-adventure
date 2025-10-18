@@ -2,7 +2,7 @@ import { useEffect, useState, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useWalletContext } from '@/contexts/WalletConnectContext';
 import { useGameData } from './useGameData';
-import { RealtimeChannel } from '@supabase/supabase-js';
+import { RealtimeChannel, RealtimePostgresChangesPayload } from '@supabase/supabase-js';
 
 interface ActiveDungeonSession {
   device_id: string;
@@ -51,54 +51,59 @@ export const useDungeonSync = () => {
     return () => window.removeEventListener('storage', onStorage);
   }, []);
 
-  // Проверяем наличие активного подземелья из базы
-  const checkActiveDungeon = useCallback(async (): Promise<ActiveDungeonSession | null> => {
-    if (!accountId || !gameData.battleState) return null;
+  // Загружаем активные сессии из базы данных при монтировании
+  const loadActiveSessions = useCallback(async () => {
+    if (!accountId) return;
 
-    const currentSession: ActiveDungeonSession = {
-      device_id: deviceId,
-      started_at: Date.now(),
-      last_activity: Date.now(),
-      dungeon_type: gameData.battleState.selectedDungeon || 'unknown',
-      level: gameData.battleState.currentDungeonLevel || 1
-    };
+    try {
+      const { data, error } = await supabase
+        .from('active_dungeon_sessions')
+        .select('*')
+        .eq('account_id', accountId);
 
-    return currentSession;
-  }, [accountId, gameData.battleState, deviceId]);
+      if (error) throw error;
+
+      if (data) {
+        setActiveSessions(data.map(row => ({
+          device_id: row.device_id,
+          started_at: row.started_at,
+          last_activity: row.last_activity,
+          dungeon_type: row.dungeon_type,
+          level: row.level
+        })));
+      }
+    } catch (error) {
+      console.error('Error loading active sessions:', error);
+    }
+  }, [accountId]);
 
   // Отправляем heartbeat для активной сессии
   const sendHeartbeat = useCallback(async () => {
-    if (!accountId) return;
-
-    // Берем данные активной сессии из локального состояния, 
-    // если его нет — пробуем из battleState (для обратной совместимости)
-    const baseSession: ActiveDungeonSession | null = localSession
-      ? { ...localSession }
-      : (gameData.battleState
-          ? {
-              device_id: deviceId,
-              started_at: Date.now(),
-              last_activity: Date.now(),
-              dungeon_type: gameData.battleState.selectedDungeon || 'unknown',
-              level: gameData.battleState.currentDungeonLevel || 1
-            }
-          : null);
-
-    if (!baseSession) return;
+    if (!accountId || !localSession) return;
 
     const session: ActiveDungeonSession = {
-      ...baseSession,
+      ...localSession,
       last_activity: Date.now(),
     };
 
-    // Отправляем через realtime channel
-    const channel = supabase.channel(`dungeon_sync_${accountId}`);
-    await channel.send({
-      type: 'broadcast',
-      event: 'heartbeat',
-      payload: session
-    });
-  }, [accountId, deviceId, gameData.battleState, localSession]);
+    try {
+      // Обновляем в базе данных
+      await supabase
+        .from('active_dungeon_sessions')
+        .upsert({
+          account_id: accountId,
+          device_id: deviceId,
+          dungeon_type: session.dungeon_type,
+          level: session.level,
+          started_at: session.started_at,
+          last_activity: session.last_activity
+        }, {
+          onConflict: 'account_id,device_id'
+        });
+    } catch (error) {
+      console.error('Error sending heartbeat:', error);
+    }
+  }, [accountId, deviceId, localSession]);
 
   // Проверяем есть ли активные сессии с других устройств
   const hasOtherActiveSessions = useCallback(() => {
@@ -122,17 +127,21 @@ export const useDungeonSync = () => {
       setLocalSession(null);
     } catch {}
 
+    // Удаляем из базы данных
+    try {
+      await supabase
+        .from('active_dungeon_sessions')
+        .delete()
+        .eq('account_id', accountId)
+        .eq('device_id', deviceId);
+    } catch (error) {
+      console.error('Error ending dungeon session:', error);
+    }
+
     // Чистим состояние боя в базе (на всякий случай)
     try {
       await updateGameData({ battleState: null });
     } catch {}
-
-    const channel = supabase.channel(`dungeon_sync_${accountId}`);
-    await channel.send({
-      type: 'broadcast',
-      event: 'end_session',
-      payload: { device_id: deviceId }
-    });
   }, [accountId, deviceId, updateGameData]);
 
   // Начинаем новое подземелье и уведомляем другие устройства
@@ -158,52 +167,59 @@ export const useDungeonSync = () => {
       setLocalSession(session);
     } catch {}
 
-    const channel = supabase.channel(`dungeon_sync_${accountId}`);
-    await channel.send({
-      type: 'broadcast',
-      event: 'start_session',
-      payload: session
-    });
+    // Сохраняем в базе данных
+    try {
+      await supabase
+        .from('active_dungeon_sessions')
+        .upsert({
+          account_id: accountId,
+          device_id: deviceId,
+          dungeon_type: dungeonType,
+          level: level,
+          started_at: session.started_at,
+          last_activity: session.last_activity
+        }, {
+          onConflict: 'account_id,device_id'
+        });
+    } catch (error) {
+      console.error('Error starting dungeon session:', error);
+      return false;
+    }
 
     return true;
   }, [accountId, deviceId, hasOtherActiveSessions]);
 
-  // Подписываемся на обновления от других устройств
+  // Загружаем активные сессии при монтировании
+  useEffect(() => {
+    loadActiveSessions();
+  }, [loadActiveSessions]);
+
+  // Подписываемся на изменения в базе данных через Realtime
   useEffect(() => {
     if (!accountId) return;
 
-    let channel: RealtimeChannel;
-
-    const setupChannel = async () => {
-      channel = supabase.channel(`dungeon_sync_${accountId}`)
-        .on('broadcast', { event: 'heartbeat' }, ({ payload }) => {
-          setActiveSessions(prev => {
-            const filtered = prev.filter(s => s.device_id !== payload.device_id);
-            return [...filtered, payload as ActiveDungeonSession];
-          });
-        })
-        .on('broadcast', { event: 'start_session' }, ({ payload }) => {
-          setActiveSessions(prev => {
-            const filtered = prev.filter(s => s.device_id !== payload.device_id);
-            return [...filtered, payload as ActiveDungeonSession];
-          });
-        })
-        .on('broadcast', { event: 'end_session' }, ({ payload }) => {
-          setActiveSessions(prev => 
-            prev.filter(s => s.device_id !== payload.device_id)
-          );
-        })
-        .subscribe();
-    };
-
-    setupChannel();
+    const channel = supabase
+      .channel(`active_dungeon_sessions:${accountId}`)
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'active_dungeon_sessions',
+          filter: `account_id=eq.${accountId}`
+        },
+        (payload: RealtimePostgresChangesPayload<any>) => {
+          console.log('📡 Dungeon session change:', payload);
+          // Перезагружаем все сессии при любом изменении
+          loadActiveSessions();
+        }
+      )
+      .subscribe();
 
     return () => {
-      if (channel) {
-        supabase.removeChannel(channel);
-      }
+      supabase.removeChannel(channel);
     };
-  }, [accountId]);
+  }, [accountId, loadActiveSessions]);
 
   // Отправляем heartbeat каждые 3 секунды
   useEffect(() => {
