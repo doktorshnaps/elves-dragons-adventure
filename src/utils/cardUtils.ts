@@ -244,9 +244,19 @@ const getClassMultiplier = (cardName: string, cardType: CardType) => {
   }
 
   // 0) Пробуем явное сопоставление по таблице card_class_mappings
-  const directClassName = cardType === 'pet'
-    ? gameSettingsCache.dragonNameToClass[cardName]
-    : gameSettingsCache.heroNameToClass[cardName];
+  const directMap = cardType === 'pet' ? gameSettingsCache.dragonNameToClass : gameSettingsCache.heroNameToClass;
+  let directClassName = directMap[cardName];
+
+  if (!directClassName) {
+    // Нормализованный поиск по карте соответствий (на случай различий регистра/пробелов)
+    const nameNorm = normalize(cardName);
+    for (const key of Object.keys(directMap)) {
+      if (normalize(key) === nameNorm) {
+        directClassName = directMap[key];
+        break;
+      }
+    }
+  }
 
   if (directClassName) {
     const byMap = cardType === 'pet'
