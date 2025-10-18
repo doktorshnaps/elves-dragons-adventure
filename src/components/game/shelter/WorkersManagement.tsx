@@ -404,7 +404,6 @@ export const WorkersManagement = ({ onSpeedBoostChange }: WorkersManagementProps
                         onClick={() => assignWorker(worker)}
                         size="sm"
                         className="shrink-0"
-                        disabled={(worker as any).source === 'card_instances' && (worker as any).currentHealth <= 0}
                       >
                         {t(language, 'shelter.assignButton')}
                       </Button>
