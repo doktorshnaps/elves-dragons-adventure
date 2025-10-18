@@ -269,18 +269,29 @@ export const TeamBattlePage: React.FC<TeamBattlePageProps> = ({
   }, [isBattleOver, battleStarted, monstersKilled.length, alivePairs.length, battleState.level, processDungeonCompletion]);
   
   if (isBattleOver && battleStarted) {
+    // Если модальное окно еще не готово, показываем заглушку
+    if (!pendingReward) {
+      return (
+        <div className="fixed inset-0 bg-black/90 flex items-center justify-center z-[200]">
+          <Card variant="menu" className="p-6 max-w-md w-full">
+            <CardContent className="text-center">
+              <p className="text-white/80">Обработка результатов боя...</p>
+            </CardContent>
+          </Card>
+        </div>
+      );
+    }
+
     // Показываем только модальное окно с наградой, убираем промежуточный экран победы/поражения
-    return <>
-        {pendingReward && (
-          <DungeonRewardModal
-            isOpen={!!pendingReward}
-            onClose={handleClaimAndExit}
-            onContinue={handleContinue}
-            reward={pendingReward}
-            canContinue={alivePairs.length > 0 && battleState.level < 10}
-          />
-        )}
-      </>;
+    return (
+      <DungeonRewardModal
+        isOpen={!!pendingReward}
+        onClose={handleClaimAndExit}
+        onContinue={handleContinue}
+        reward={pendingReward}
+        canContinue={alivePairs.length > 0 && battleState.level < 10}
+      />
+    );
   }
 
   // Блокирующее окно при удалении сессии на другом устройстве
