@@ -63,70 +63,17 @@ export const monsterLootMapping: Record<string, string[]> = {
   "Арахна Прародительница": ALL_GRIMOIRE_ITEMS
 };
 
-// Получить ВСЕ предметы от монстра (100% шанс для тестирования)
+// Получить предметы от монстра (дропы настраиваются вручную через админ панель)
 export const getMonsterLoot = (monsterName: string): Item[] => {
-  console.log('🎲 Getting ALL loot for monster:', monsterName);
+  console.log('🎲 Getting loot for monster:', monsterName);
   
   // Убираем уровень из имени монстра (например, "Паучок-скелет (Lv1)" -> "Паучок-скелет")
   const cleanName = monsterName.replace(/\s*\(Lv\d+\)\s*$/i, '').trim();
   console.log('🧹 Cleaned monster name:', cleanName);
   
-  // Используем ВСЕ загруженные шаблоны предметов из базы данных
-  if (ALL_ITEM_TEMPLATES.length === 0) {
-    console.warn('⚠️ Item templates not loaded yet, using empty array');
-    return [];
-  }
-
-  console.log(`🎁 Generating loot from ${ALL_ITEM_TEMPLATES.length} available item templates`);
-
-  // 100% шанс дропа ВСЕХ предметов для тестирования
-  const allItems: Item[] = [];
-  
-  for (const template of ALL_ITEM_TEMPLATES) {
-    // Маппинг типов из базы данных в типы Item
-    const typeMapping: Record<string, Item['type']> = {
-      'material': 'woodChunks',
-      'consumable': 'healthPotion',
-      'scroll': 'illusionManuscript',
-      'accessory': 'accessory',
-      'tool': 'dwarvenTongs',
-      'weapon': 'weapon',
-      'armor': 'armor',
-      'dragon_egg': 'dragon_egg'
-    };
-    
-    // Используем item_id для более точного определения типа
-    let itemType: Item['type'] = typeMapping[template.type] || 'woodChunks';
-    
-    // Для специфических item_id используем точный тип
-    if (template.item_id === 'life_crystal') itemType = 'lifeCrystal';
-    else if (template.item_id === 'wood_chunks') itemType = 'woodChunks';
-    else if (template.item_id === 'magical_roots') itemType = 'magicalRoots';
-    else if (template.item_id === 'rock_stones') itemType = 'rockStones';
-    else if (template.item_id === 'black_crystals') itemType = 'blackCrystals';
-    else if (template.item_id === 'illusion_manuscript') itemType = 'illusionManuscript';
-    else if (template.item_id === 'dark_monocle') itemType = 'darkMonocle';
-    else if (template.item_id === 'ether_vine') itemType = 'etherVine';
-    else if (template.item_id === 'dwarven_tongs') itemType = 'dwarvenTongs';
-    else if (template.item_id === 'healing_oil') itemType = 'healingOil';
-    else if (template.item_id === 'shimmering_crystal') itemType = 'shimmeringCrystal';
-    
-    const finalItem: Item = {
-      id: uuidv4(),
-      name: template.name,
-      type: itemType,
-      value: template.value || 0,
-      description: template.description || `Выпадает с: ${cleanName}`,
-      image: template.image_url || undefined,
-      stats: template.stats || undefined,
-      slot: template.slot || undefined
-    };
-    
-    allItems.push(finalItem);
-  }
-  
-  console.log(`🎉 Total items generated: ${allItems.length} for monster: ${cleanName}`);
-  return allItems;
+  // Дропы настраиваются вручную через dungeon_item_drops таблицу
+  console.log('ℹ️ Item drops are configured manually via admin panel');
+  return [];
 };
 
 // Получить список монстров, с которых выпадает предмет (для описания)
