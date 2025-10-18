@@ -87,13 +87,20 @@ export const Shop = ({ onClose }: ShopProps) => {
       console.log(`🛒 Purchasing item: ${item.name} for ${item.price} ELL`);
       
       // Используем shop-purchase edge function для всех типов товаров
-      await purchaseItem(item.id, accountId, 1);
+      const result = await purchaseItem(item.id, accountId, 1);
 
-      console.log('✅ Purchase successful');
+      console.log('✅ Purchase successful, new balance:', result.new_balance);
       
-      // Reload game data to sync with updated balance and inventory
-      if (loadGameData) {
-        await loadGameData(accountId);
+      // Обновляем баланс локально без перезагрузки всей страницы
+      const { data: freshGameData } = await supabase
+        .from('game_data')
+        .select('balance, inventory')
+        .eq('wallet_address', accountId)
+        .single();
+      
+      if (freshGameData && loadGameData) {
+        // Загружаем полные данные в фоне (без блокировки UI)
+        loadGameData(accountId);
       }
 
       setShowEffect(true);
