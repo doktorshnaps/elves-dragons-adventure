@@ -54,9 +54,15 @@ export const RecalculateNFTStatsButton = () => {
         const cardData = instance.card_data as any;
         const cardName = cardData.name || '';
         const rarity = Number(cardData.rarity) || 1;
-        const cardType = (cardData?.type === 'pet') ? 'pet' : 'character';
+        
+        // Определяем тип карты только из card_data.type
+        let cardType: 'pet' | 'character' = 'character';
+        if (cardData?.type === 'pet') {
+          cardType = 'pet';
+        }
 
-        console.log(`🔍 Processing NFT card: "${cardName}", rarity: ${rarity}, type: ${cardType}`);
+        console.log(`🔍 Processing NFT card: "${cardName}", rarity: ${rarity}, cardType: ${cardType}`);
+        console.log(`📋 cardData.type: "${cardData?.type}"`);
         console.log(`📋 Full card data:`, cardData);
 
         // Пересчитываем характеристики с актуальными настройками
