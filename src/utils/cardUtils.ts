@@ -293,7 +293,9 @@ export const calculateCardStats = (cardName: string, rarity: Rarity, cardType: C
   
   // Проверяем кэш
   if (statsCache.has(cacheKey)) {
-    return statsCache.get(cacheKey)!;
+    const cached = statsCache.get(cacheKey)!;
+    console.log(`♻️ Using cached stats for "${cardName}" (${cardType}):`, cached);
+    return cached;
   }
   
   const classMultiplier = getClassMultiplier(cardName, cardType);
@@ -303,16 +305,12 @@ export const calculateCardStats = (cardName: string, rarity: Rarity, cardType: C
     ? (gameSettingsCache.dragonBaseStats || FALLBACK_PET_STATS)
     : (gameSettingsCache.heroBaseStats || FALLBACK_HERO_STATS);
   
-  console.log(`📊 calculateCardStats DEBUG:`, {
-    cardName,
-    rarity,
-    cardType,
+  console.log(`🔢 calculateCardStats for "${cardName}" (${cardType}, rarity ${rarity}):`, {
     baseStats,
     rarityMultiplier,
     classMultiplier,
-    availableClasses: cardType === 'pet' 
-      ? Object.keys(gameSettingsCache.dragonClassMultipliers)
-      : Object.keys(gameSettingsCache.classMultipliers)
+    availableHeroClasses: Object.keys(gameSettingsCache.classMultipliers || {}),
+    availableDragonClasses: Object.keys(gameSettingsCache.dragonClassMultipliers || {})
   });
   
   const result = {
@@ -322,7 +320,7 @@ export const calculateCardStats = (cardName: string, rarity: Rarity, cardType: C
     magic: Math.floor(baseStats.magic * rarityMultiplier * classMultiplier.magic_multiplier)
   };
   
-  console.log(`✅ Calculated stats for ${cardName}:`, result);
+  console.log(`✅ Final stats for "${cardName}":`, result);
   
   // Сохраняем в кэш
   statsCache.set(cacheKey, result);
