@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -80,20 +80,23 @@ export const WorkersManagement = ({ onSpeedBoostChange }: WorkersManagementProps
   ];
 
   // Получаем рабочих из card_instances, инвентаря и карт
-  const inventoryWorkers = (gameState.inventory || [])
-    .filter((item: any) => item?.type === 'worker')
-    .map((item: any, index: number) => ({
-      id: item.instanceId || item.id || `worker_${index}_${item.name}`,
-      instanceId: item.instanceId || item.id,
-      templateId: item.templateId || undefined,
-      name: item.name || 'Рабочий',
-      description: item.description || '',
-      type: item.type || 'worker',
-      value: item.value || 0,
-      stats: item.stats || {},
-      image: item.image,
-      source: 'inventory'
-    }));
+  // ВАЖНО: пересчитываем при каждом изменении gameState.inventory
+  const inventoryWorkers = useMemo(() => {
+    return (gameState.inventory || [])
+      .filter((item: any) => item?.type === 'worker')
+      .map((item: any, index: number) => ({
+        id: item.instanceId || item.id || `worker_${index}_${item.name}`,
+        instanceId: item.instanceId || item.id,
+        templateId: item.templateId || undefined,
+        name: item.name || 'Рабочий',
+        description: item.description || '',
+        type: item.type || 'worker',
+        value: item.value || 0,
+        stats: item.stats || {},
+        image: item.image,
+        source: 'inventory'
+      }));
+  }, [gameState.inventory]);
 
   const cardInstanceWorkers = cardInstances
     .filter(instance => 
