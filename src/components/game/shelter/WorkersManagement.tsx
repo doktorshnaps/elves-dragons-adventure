@@ -85,8 +85,8 @@ export const WorkersManagement = ({ onSpeedBoostChange }: WorkersManagementProps
     return (gameState.inventory || [])
       .filter((item: any) => item?.type === 'worker')
       .map((item: any, index: number) => ({
-        id: item.instanceId || item.id || `worker_${index}_${item.name}`,
-        instanceId: item.instanceId || item.id,
+        id: item.id || item.instanceId || `worker_${index}_${item.name}`,
+        instanceId: item.instanceId,
         templateId: item.templateId || undefined,
         name: item.name || 'Рабочий',
         description: item.description || '',
@@ -293,7 +293,7 @@ export const WorkersManagement = ({ onSpeedBoostChange }: WorkersManagementProps
 
     const newActiveWorker: ActiveWorker = {
       id: `${worker.id}_${Date.now()}`,
-      workerId: worker.id,
+      workerId: (worker as any).instanceId || `${worker.id}_${Date.now()}`,
       cardInstanceId: (worker as any).instanceId || `${worker.id}_${Date.now()}`,
       name: worker.name,
       speedBoost: worker.value,
