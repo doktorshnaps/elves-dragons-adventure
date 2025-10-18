@@ -123,7 +123,7 @@ export const useGameStore = create<GameState>()((set, get) => ({
       .from('game_data')
       .select('account_level, account_experience')
       .eq('wallet_address', walletAddress)
-      .single();
+      .maybeSingle();
 
     if (!error && data) {
       set({
