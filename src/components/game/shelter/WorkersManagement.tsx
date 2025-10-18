@@ -148,15 +148,19 @@ export const WorkersManagement = ({ onSpeedBoostChange }: WorkersManagementProps
     w.instanceId ? !activeInstanceIds.has(w.instanceId) : !activeWorkerIds.has(w.id)
   );
 
-  // ГРУППИРОВКА рабочих по id для отображения с количеством
+  // ГРУППИРОВКА рабочих по базовому ID (извлекаем базовый шаблон из полного ID)
+  // Формат ID: "worker_5_1760824615866_4zfpkgu9l_0" -> группируем по "worker_5"
   const groupedWorkers = visibleWorkers.reduce((acc: any[], worker: any) => {
-    const existingGroup = acc.find(g => g.id === worker.id);
+    // Извлекаем базовый ID шаблона (первые 2 части до timestamp)
+    const baseId = worker.id.split('_').slice(0, 2).join('_'); // "worker_5"
+    const existingGroup = acc.find(g => g.baseId === baseId);
     if (existingGroup) {
       existingGroup.count += 1;
       existingGroup.instances.push(worker);
     } else {
       acc.push({
         ...worker,
+        baseId,
         count: 1,
         instances: [worker]
       });
