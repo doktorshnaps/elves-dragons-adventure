@@ -9,6 +9,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useWalletContext } from "@/contexts/WalletConnectContext";
 import { Loader2, Save } from "lucide-react";
 import { refreshGameSettings } from "@/utils/cardUtils";
+import { RecalculateNFTStatsButton } from "./RecalculateNFTStatsButton";
 
 interface HeroBaseStats {
   id: string;
@@ -312,6 +313,10 @@ export const GameSettings = () => {
 
   return (
     <div className="space-y-6">
+      <div className="mb-4">
+        <RecalculateNFTStatsButton />
+      </div>
+
       <Tabs defaultValue="heroes" className="w-full">
         <TabsList className="grid w-full grid-cols-4">
           <TabsTrigger value="heroes">Герои</TabsTrigger>
