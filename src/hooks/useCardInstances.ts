@@ -21,6 +21,8 @@ export interface CardInstance {
   card_data: Card;
   created_at: string;
   updated_at: string;
+  nft_contract_id?: string;
+  nft_token_id?: string;
 }
 
 export const useCardInstances = () => {

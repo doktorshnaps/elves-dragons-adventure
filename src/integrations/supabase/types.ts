@@ -1719,6 +1719,16 @@ export type Database = {
           nft_token_id: string
         }[]
       }
+      get_nft_card_stats: {
+        Args: { p_nft_contract_id: string; p_nft_token_id: string }
+        Returns: {
+          current_health: number
+          current_owner: string
+          is_in_medical_bay: boolean
+          max_health: number
+          monster_kills: number
+        }[]
+      }
       get_or_create_wallet_identity: {
         Args: { p_wallet_address: string }
         Returns: string
@@ -1797,7 +1807,7 @@ export type Database = {
           p_kills_to_add?: number
           p_wallet_address: string
         }
-        Returns: undefined
+        Returns: boolean
       }
       initialize_game_data_by_wallet: {
         Args: { p_wallet_address: string }
