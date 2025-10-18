@@ -96,7 +96,11 @@ export const DungeonSearchDialog = ({
     await endDungeonSession();
     
     setActiveDungeon(null);
-    try { window.dispatchEvent(new CustomEvent('battleReset')); } catch {}
+    
+    // Перезагружаем данные после короткой задержки
+    setTimeout(() => {
+      window.location.reload();
+    }, 300);
   };
   const handleDungeonSelect = async (dungeonType: DungeonType) => {
     // Блокируем выбор, если на другом устройстве есть активная сессия

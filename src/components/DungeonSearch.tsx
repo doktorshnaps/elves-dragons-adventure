@@ -94,6 +94,34 @@ export const DungeonSearch = ({ onClose, balance }: DungeonSearchProps) => {
       }
     };
     check();
+
+    // Подписываемся на изменения в БД для автообновления
+    if (!accountId) return;
+    
+    const channel = supabase
+      .channel(`dungeon_search_monitor:${accountId}`)
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'active_dungeon_sessions',
+          filter: `account_id=eq.${accountId}`
+        },
+        () => {
+          console.log('Session changed, rechecking...');
+          check();
+        }
+      )
+      .subscribe();
+
+    // Периодическая перезагрузка на случай пропуска realtime событий
+    const interval = setInterval(check, 5000);
+
+    return () => {
+      supabase.removeChannel(channel);
+      clearInterval(interval);
+    };
   }, [accountId]);
 
   if (remoteSession) {
