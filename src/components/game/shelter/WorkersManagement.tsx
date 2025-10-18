@@ -355,24 +355,18 @@ export const WorkersManagement = ({ onSpeedBoostChange }: WorkersManagementProps
         await loadCardInstances();
         console.log('✅ Successfully deleted worker from card_instances:', (worker as any).instanceId);
       } else if (worker.source === 'inventory') {
-        // Удаляем из инвентаря - ищем ТОЧНОЕ совпадение по instanceId (приоритет) или по id
-        // ВАЖНО: удаляем ТОЛЬКО ОДИН экземпляр, даже если есть дубликаты
-        let removeIdx = -1;
+        // Удаляем из инвентаря - ищем ТОЧНОЕ совпадение ТОЛЬКО по instanceId конкретного рабочего
+        console.log('🗑️ Attempting to delete worker from inventory:', {
+          workerId: worker.id,
+          workerInstanceId: worker.instanceId,
+          workerName: worker.name
+        });
         
-        // Приоритет 1: точное совпадение instanceId
-        if (worker.instanceId) {
-          removeIdx = updatedInv.findIndex((i: any) => 
-            i?.type === 'worker' && 
-            (i.instanceId === worker.instanceId || i.id === worker.instanceId)
-          );
-        }
-        
-        // Приоритет 2: если не нашли по instanceId, ищем по id
-        if (removeIdx < 0) {
-          removeIdx = updatedInv.findIndex((i: any) => 
-            i?.type === 'worker' && i.id === worker.id
-          );
-        }
+        const removeIdx = updatedInv.findIndex((i: any) => 
+          i?.type === 'worker' && 
+          i.instanceId === worker.instanceId &&
+          i.id === worker.id
+        );
         
         if (removeIdx >= 0) {
           // Сохраняем информацию об удаляемом рабочем для логирования
@@ -382,9 +376,7 @@ export const WorkersManagement = ({ onSpeedBoostChange }: WorkersManagementProps
           console.log('✅ Worker removed from inventory at index:', removeIdx, 'worker:', {
             name: removedWorker.name,
             id: removedWorker.id,
-            instanceId: removedWorker.instanceId,
-            originalWorkerId: worker.id,
-            originalWorkerInstanceId: worker.instanceId
+            instanceId: removedWorker.instanceId
           });
         } else {
           console.warn('⚠️ Could not find matching worker in inventory to remove. Worker:', {
