@@ -11,6 +11,9 @@ import { DungeonType } from '@/constants/dungeons';
 import { DungeonRewardModal } from '@/components/game/modals/DungeonRewardModal';
 import { useDungeonRewards } from '@/hooks/adventure/useDungeonRewards';
 import { preloadItemTemplates } from '@/utils/monsterLootMapping';
+import { supabase } from '@/integrations/supabase/client';
+import { useWalletContext } from '@/contexts/WalletConnectContext';
+import { useDungeonSync } from '@/hooks/useDungeonSync';
 interface TeamBattlePageProps {
   dungeonType: DungeonType;
 }
@@ -23,6 +26,10 @@ export const TeamBattlePage: React.FC<TeamBattlePageProps> = ({
   const prevAliveOpponentsRef = React.useRef<number>(0);
   const prevOpponentsRef = React.useRef<Array<{id: number, name: string, health: number}>>([]);
   const processedLevelRef = React.useRef<number | null>(null);
+  
+  const { accountId } = useWalletContext();
+  const { deviceId } = useDungeonSync();
+  const [sessionTerminated, setSessionTerminated] = useState(false);
   
   // Sync health from database on component mount
   useCardHealthSync();
@@ -95,6 +102,62 @@ export const TeamBattlePage: React.FC<TeamBattlePageProps> = ({
     setMonstersKilled([]); // Сбрасываем только для UI, накопленные награды остаются
     handleNextLevel();
   };
+
+  // Мониторинг активной сессии в БД: если удалена на другом устройстве — блокируем
+  useEffect(() => {
+    if (!accountId || !deviceId) return;
+
+    const checkSession = async () => {
+      try {
+        const now = Date.now();
+        const TIMEOUT = 30000;
+        const { data, error } = await supabase
+          .from('active_dungeon_sessions')
+          .select('device_id')
+          .eq('account_id', accountId)
+          .eq('device_id', deviceId)
+          .gte('last_activity', now - TIMEOUT)
+          .limit(1);
+
+        if (error) throw error;
+        // Если записи нет — сессия была удалена на другом устройстве
+        if (!data || data.length === 0) {
+          setSessionTerminated(true);
+        }
+      } catch (e) {
+        console.error('Session check error:', e);
+      }
+    };
+
+    // Проверяем сразу
+    checkSession();
+
+    // Подписываемся на изменения в БД
+    const channel = supabase
+      .channel(`battle_session_monitor:${accountId}`)
+      .on(
+        'postgres_changes',
+        {
+          event: 'DELETE',
+          schema: 'public',
+          table: 'active_dungeon_sessions',
+          filter: `account_id=eq.${accountId}`
+        },
+        () => {
+          console.log('Session deleted remotely, blocking battle');
+          setSessionTerminated(true);
+        }
+      )
+      .subscribe();
+
+    // Периодическая проверка на случай пропуска realtime-события
+    const interval = setInterval(checkSession, 5000);
+
+    return () => {
+      supabase.removeChannel(channel);
+      clearInterval(interval);
+    };
+  }, [accountId, deviceId]);
 
   // Автоматически активируем бой при загрузке, если есть активное подземелье
   useEffect(() => {
@@ -195,6 +258,28 @@ export const TeamBattlePage: React.FC<TeamBattlePageProps> = ({
         )}
       </>;
   }
+
+  // Блокирующее окно при удалении сессии на другом устройстве
+  if (sessionTerminated) {
+    return (
+      <div className="fixed inset-0 bg-black/90 flex items-center justify-center p-4 z-[200]">
+        <Card variant="menu" className="p-6 max-w-md w-full">
+          <CardHeader>
+            <CardTitle className="text-white text-center">Подземелье завершено</CardTitle>
+          </CardHeader>
+          <CardContent className="text-center space-y-4">
+            <p className="text-white/80">
+              Подземелье было завершено на другом устройстве. Ваш бой больше не активен.
+            </p>
+            <Button variant="menu" onClick={handleExitAndReset}>
+              Закрыть подземелье
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
   if (!battleStarted) {
     return <>
         <div className="fixed top-4 left-4 z-10">
