@@ -109,10 +109,29 @@ export const DeckSelection = ({
     return filtered;
   }, [localCards, dragonSortBy]);
   const isHeroSelected = (hero: CardType) => {
-    return selectedPairs.some(pair => pair.hero.id === hero.id);
+    // Для NFT карт сравниваем как по ID, так и по контракту/токену
+    return selectedPairs.some(pair => {
+      if (pair.hero.id === hero.id) return true;
+      // Дополнительная проверка для NFT карт
+      if (hero.isNFT && pair.hero.isNFT && 
+          hero.nftContractId === pair.hero.nftContractId && 
+          hero.nftTokenId === pair.hero.nftTokenId) {
+        return true;
+      }
+      return false;
+    });
   };
   const isDragonSelected = (dragon: CardType) => {
-    return selectedPairs.some(pair => pair.dragon?.id === dragon.id);
+    return selectedPairs.some(pair => {
+      if (pair.dragon?.id === dragon.id) return true;
+      // Дополнительная проверка для NFT карт
+      if (dragon.isNFT && pair.dragon?.isNFT && 
+          dragon.nftContractId === pair.dragon.nftContractId && 
+          dragon.nftTokenId === pair.dragon.nftTokenId) {
+        return true;
+      }
+      return false;
+    });
   };
   const getAvailableDragons = (heroFaction?: string, heroRarity?: number) => {
     if (!heroFaction) return [];
