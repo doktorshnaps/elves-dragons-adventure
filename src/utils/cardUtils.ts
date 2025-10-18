@@ -242,12 +242,26 @@ export const calculateCardStats = (cardName: string, rarity: Rarity, cardType: C
     ? (gameSettingsCache.dragonBaseStats || FALLBACK_PET_STATS)
     : (gameSettingsCache.heroBaseStats || FALLBACK_HERO_STATS);
   
+  console.log(`📊 calculateCardStats DEBUG:`, {
+    cardName,
+    rarity,
+    cardType,
+    baseStats,
+    rarityMultiplier,
+    classMultiplier,
+    availableClasses: cardType === 'pet' 
+      ? Object.keys(gameSettingsCache.dragonClassMultipliers)
+      : Object.keys(gameSettingsCache.classMultipliers)
+  });
+  
   const result = {
     power: Math.floor(baseStats.power * rarityMultiplier * classMultiplier.power_multiplier),
     defense: Math.floor(baseStats.defense * rarityMultiplier * classMultiplier.defense_multiplier),
     health: Math.floor(baseStats.health * rarityMultiplier * classMultiplier.health_multiplier),
     magic: Math.floor(baseStats.magic * rarityMultiplier * classMultiplier.magic_multiplier)
   };
+  
+  console.log(`✅ Calculated stats for ${cardName}:`, result);
   
   // Сохраняем в кэш
   statsCache.set(cacheKey, result);
