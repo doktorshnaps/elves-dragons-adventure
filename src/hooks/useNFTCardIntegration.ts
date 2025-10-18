@@ -160,24 +160,29 @@ export const useNFTCardIntegration = () => {
         arr.findIndex(n => n.id === nft.id) === index
       );
       
-      const gameCards: CardType[] = uniqueNFTs.map(nftCard => ({
-        id: nftCard.id,
-        name: nftCard.name,
-        power: nftCard.power,
-        defense: nftCard.defense,
-        health: nftCard.health,
-        currentHealth: nftCard.currentHealth || nftCard.health,
-        rarity: (typeof (nftCard as any).rarity === 'number' ? (nftCard as any).rarity : 1) as any,
-        faction: nftCard.faction as any,
-        // Маппинг типа: 'hero' -> 'character', 'dragon' -> 'pet'
-        type: (nftCard.type === 'hero' ? 'character' : nftCard.type === 'dragon' ? 'pet' : 'character'),
-        description: nftCard.description || '',
-        image: nftCard.image || '/placeholder.svg',
-        magic: nftCard.magic || 0,
-        isNFT: true,
-        nftContractId: (nftCard as any).nft_contract || (nftCard as any).nft_contract_id,
-        nftTokenId: (nftCard as any).nft_token_id
-      }));
+      const gameCards: CardType[] = uniqueNFTs.map(nftCard => {
+        const nftContractId = (nftCard as any).nft_contract_id || (nftCard as any).nft_contract;
+        const nftTokenId = (nftCard as any).nft_token_id;
+        
+        return {
+          id: nftCard.id,
+          name: nftCard.name,
+          power: nftCard.power,
+          defense: nftCard.defense,
+          health: nftCard.health,
+          currentHealth: nftCard.currentHealth || nftCard.health,
+          rarity: (typeof (nftCard as any).rarity === 'number' ? (nftCard as any).rarity : 1) as any,
+          faction: nftCard.faction as any,
+          // Маппинг типа: 'hero' -> 'character', 'dragon' -> 'pet'
+          type: (nftCard.type === 'hero' ? 'character' : nftCard.type === 'dragon' ? 'pet' : 'character'),
+          description: nftCard.description || '',
+          image: nftCard.image || '/placeholder.svg',
+          magic: nftCard.magic || 0,
+          isNFT: true,
+          nftContractId,
+          nftTokenId
+        };
+      });
 
       console.log('✅ NFT sync completed, total cards:', gameCards.length);
       
