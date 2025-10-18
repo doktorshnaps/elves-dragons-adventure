@@ -137,7 +137,7 @@ export const useDungeonSync = () => {
   // Завершаем подземелье на текущем устройстве (и для аккаунта в целом)
   const endDungeonSession = useCallback(async () => {
     // Пытаемся определить аккаунт даже если контекст ещё не инициализировался
-    const targetAccountId = accountId || gameData?.wallet_address || localStorage.getItem('walletAddress');
+    const targetAccountId = accountId || localStorage.getItem('walletAddress');
     if (!targetAccountId) {
       console.warn('endDungeonSession: missing account id');
       return;
@@ -164,7 +164,7 @@ export const useDungeonSync = () => {
     try {
       await updateGameData({ battleState: null });
     } catch {}
-  }, [accountId, gameData?.wallet_address, updateGameData]);
+  }, [accountId, updateGameData]);
 
   // Начинаем новое подземелье и уведомляем другие устройства
   const startDungeonSession = useCallback(async (dungeonType: string, level: number) => {
