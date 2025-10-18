@@ -108,7 +108,7 @@ export const useDungeonSync = () => {
   // Проверяем есть ли активные сессии с других устройств
   const hasOtherActiveSessions = useCallback(() => {
     const now = Date.now();
-    const TIMEOUT = 10000; // 10 секунд без активности = сессия неактивна
+    const TIMEOUT = 30000; // 30 секунд без активности = сессия неактивна (синхронизировано с БД)
 
     return activeSessions.some(
       session => 
@@ -153,6 +153,26 @@ export const useDungeonSync = () => {
       return false; // Блокируем начало нового подземелья
     }
 
+    // Серверная проверка для избежания гонки
+    try {
+      const now = Date.now();
+      const TIMEOUT = 30000; // 30 секунд
+      const { data: existing, error: existingError } = await supabase
+        .from('active_dungeon_sessions')
+        .select('device_id,last_activity')
+        .eq('account_id', accountId)
+        .gte('last_activity', now - TIMEOUT)
+        .limit(1);
+
+      if (existingError) throw existingError;
+      if (existing && existing.length > 0 && existing[0].device_id !== deviceId) {
+        return false;
+      }
+    } catch (e) {
+      console.error('Error during preflight session check:', e);
+      return false;
+    }
+
     const session: ActiveDungeonSession = {
       device_id: deviceId,
       started_at: Date.now(),
@@ -162,10 +182,7 @@ export const useDungeonSync = () => {
     };
 
     // Сохраняем локально, чтобы слать heartbeat даже вне боя/экрана подземелья
-    try {
-      localStorage.setItem('activeDungeonSession', JSON.stringify(session));
-      setLocalSession(session);
-    } catch {}
+    
 
     // Сохраняем в базе данных
     try {
@@ -185,6 +202,11 @@ export const useDungeonSync = () => {
       console.error('Error starting dungeon session:', error);
       return false;
     }
+    // После успешной записи в БД сохраняем локально, чтобы слать heartbeat
+    try {
+      localStorage.setItem('activeDungeonSession', JSON.stringify(session));
+      setLocalSession(session);
+    } catch {}
 
     return true;
   }, [accountId, deviceId, hasOtherActiveSessions]);
@@ -235,7 +257,7 @@ export const useDungeonSync = () => {
   useEffect(() => {
     const interval = setInterval(() => {
       const now = Date.now();
-      const TIMEOUT = 10000;
+      const TIMEOUT = 30000; // держим 30с окно, чтобы совпадало с триггером БД
 
       setActiveSessions(prev => 
         prev.filter(session => (now - session.last_activity) < TIMEOUT)
