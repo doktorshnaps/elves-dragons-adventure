@@ -223,54 +223,51 @@ const getClassMultiplier = (cardName: string, cardType: CardType) => {
   }
 
   const nameNorm = normalize(cardName);
-  console.log(`🔍 Looking for class multiplier: cardName="${cardName}", normalized="${nameNorm}", type=${cardType}`);
+  const nameTokens = nameNorm.split(' ').filter(Boolean);
+  const lastWord = nameTokens[nameTokens.length - 1];
   
   let result;
   
+  const tryMatch = (classes: Record<string, any>) => {
+    const entries = Object.keys(classes)
+      .map(k => ({ key: k, norm: normalize(k) }))
+      .sort((a, b) => b.norm.length - a.norm.length);
+
+    // 1) Прямое включение всей строки
+    for (const { key, norm } of entries) {
+      if (norm && nameNorm.includes(norm)) return classes[key];
+    }
+
+    // 2) Совпадение по последнему слову (часто это и есть класс)
+    if (lastWord && lastWord.length >= 3) {
+      for (const { key, norm } of entries) {
+        if (!norm) continue;
+        if (norm === lastWord || norm.includes(lastWord) || lastWord.includes(norm)) {
+          return classes[key];
+        }
+      }
+    }
+
+    // 3) Токен-бейз матчинг в обе стороны
+    for (const token of nameTokens) {
+      if (token.length < 3) continue;
+      for (const { key, norm } of entries) {
+        if (!norm) continue;
+        if (norm.includes(token) || token.includes(norm)) {
+          return classes[key];
+        }
+      }
+    }
+
+    return null;
+  };
+
   if (cardType === 'pet') {
-    // Для драконов ищем класс в названии (без учета регистра и знаков)
-    const sortedClasses = Object.keys(gameSettingsCache.dragonClassMultipliers)
-      .sort((a, b) => b.length - a.length);
-    
-    console.log(`🐉 Available dragon classes:`, sortedClasses);
-    
-    for (const dragonClass of sortedClasses) {
-      const clsNorm = normalize(dragonClass);
-      if (!clsNorm) continue;
-      if (nameNorm.includes(clsNorm)) {
-        result = gameSettingsCache.dragonClassMultipliers[dragonClass];
-        console.log(`✅ Found dragon class "${dragonClass}" for "${cardName}":`, result);
-        classMultiplierCache.set(cacheKey, result);
-        return result;
-      }
-    }
-    // Fallback
-    result = { health_multiplier: 1.0, defense_multiplier: 1.0, power_multiplier: 1.0, magic_multiplier: 1.0 };
-    console.log(`⚠️ No dragon class found for "${cardName}", using fallback`);
+    result = tryMatch(gameSettingsCache.dragonClassMultipliers) || { health_multiplier: 1.0, defense_multiplier: 1.0, power_multiplier: 1.0, magic_multiplier: 1.0 };
   } else {
-    // Для героев ищем класс в названии карты (от более длинного к более короткому, без учета регистра)
-    const sortedClasses = Object.keys(gameSettingsCache.classMultipliers)
-      .sort((a, b) => b.length - a.length);
-    
-    console.log(`🦸 Available hero classes:`, sortedClasses);
-    
-    for (const heroClass of sortedClasses) {
-      const clsNorm = normalize(heroClass);
-      if (!clsNorm) continue;
-      console.log(`  Checking if "${nameNorm}" includes "${clsNorm}"`);
-      if (nameNorm.includes(clsNorm)) {
-        result = gameSettingsCache.classMultipliers[heroClass];
-        console.log(`✅ Found hero class "${heroClass}" for "${cardName}":`, result);
-        classMultiplierCache.set(cacheKey, result);
-        return result;
-      }
-    }
-    
-    // Fallback
-    result = { health_multiplier: 1.0, defense_multiplier: 1.0, power_multiplier: 1.0, magic_multiplier: 1.0 };
-    console.log(`⚠️ No hero class found for "${cardName}", using fallback (1.0 multipliers)`);
+    result = tryMatch(gameSettingsCache.classMultipliers) || { health_multiplier: 1.0, defense_multiplier: 1.0, power_multiplier: 1.0, magic_multiplier: 1.0 };
   }
-  
+
   classMultiplierCache.set(cacheKey, result);
   return result;
 };
