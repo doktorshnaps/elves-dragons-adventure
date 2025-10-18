@@ -180,7 +180,9 @@ export const WorkersManagement = ({ onSpeedBoostChange }: WorkersManagementProps
     activeWorkersDetails: activeWorkers.map(w => ({ workerId: w.workerId, cardInstanceId: w.cardInstanceId, name: w.name })),
     activeInstanceIdsSet: Array.from(activeInstanceIds),
     activeWorkerIdsSet: Array.from(activeWorkerIds),
-    groupedDetails: groupedWorkers.map(g => ({ id: g.id, name: g.name, count: g.count }))
+    groupedDetails: groupedWorkers.map(g => ({ baseId: g.baseId, id: g.id, name: g.name, count: g.count })),
+    fullInventory: (gameState.inventory || []).filter((i: any) => i?.type === 'worker'),
+    fullInventoryCount: (gameState.inventory || []).filter((i: any) => i?.type === 'worker').length
   });
 
   // Загружаем активных рабочих из gameState и localStorage
