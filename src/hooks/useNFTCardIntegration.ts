@@ -52,6 +52,58 @@ export const useNFTCardIntegration = () => {
     return () => clearInterval(interval);
   }, [isConnected, accountId]);
 
+  // Проверка потери NFT во время активного подземелья
+  useEffect(() => {
+    if (!isConnected || !accountId || nftCards.length === 0) return;
+
+    const checkNFTLoss = () => {
+      // Проверяем наличие активного подземелья
+      const teamBattleState = localStorage.getItem('teamBattleState');
+      const hasActiveBattle = localStorage.getItem('activeBattleInProgress') === 'true';
+      
+      if (!teamBattleState || !hasActiveBattle) return;
+
+      try {
+        const state = JSON.parse(teamBattleState);
+        const selectedTeam = state?.selectedTeam || [];
+        
+        if (selectedTeam.length === 0) return;
+
+        // Собираем ID всех NFT карт в команде
+        const nftIdsInTeam = new Set<string>();
+        selectedTeam.forEach((pair: any) => {
+          if (pair?.hero?.isNFT) nftIdsInTeam.add(pair.hero.id);
+          if (pair?.dragon?.isNFT) nftIdsInTeam.add(pair.dragon.id);
+        });
+
+        if (nftIdsInTeam.size === 0) return;
+
+        // Проверяем, есть ли все NFT карты в текущем списке
+        const currentNftIds = new Set(nftCards.map(c => c.id));
+        const missingNfts = Array.from(nftIdsInTeam).filter(id => !currentNftIds.has(id));
+
+        if (missingNfts.length > 0) {
+          console.warn('⚠️ NFT карты были переданы во время активного подземелья:', missingNfts);
+          
+          // Очищаем активное подземелье
+          localStorage.removeItem('teamBattleState');
+          localStorage.removeItem('activeBattleInProgress');
+          window.dispatchEvent(new CustomEvent('battleReset'));
+          
+          // Показываем модальное окно
+          window.dispatchEvent(new CustomEvent('nftTransferredDuringBattle', {
+            detail: { missingNftIds: missingNfts }
+          }));
+        }
+      } catch (error) {
+        console.error('Error checking NFT loss:', error);
+      }
+    };
+
+    // Проверяем при каждом изменении NFT карт
+    checkNFTLoss();
+  }, [nftCards, isConnected, accountId]);
+
   const syncNFTsFromWallet = async () => {
     if (!accountId || isLoading) {
       console.log('⚠️ Skipping sync - no accountId or already loading');
