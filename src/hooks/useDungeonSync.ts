@@ -252,16 +252,30 @@ export const useDungeonSync = () => {
           table: 'active_dungeon_sessions',
           filter: `account_id=eq.${accountId}`
         },
-        (payload: RealtimePostgresChangesPayload<any>) => {
+        async (payload: RealtimePostgresChangesPayload<any>) => {
           console.log('📡 Dungeon session change:', payload);
           
-          // Если удалена сессия текущего устройства - останавливаем heartbeat
-          if (payload.eventType === 'DELETE' && payload.old?.device_id === deviceId) {
-            console.log('🛑 Session deleted for current device, stopping heartbeat');
+          // Если удалена любая сессия для этого аккаунта — гарантированно завершаем локальную
+          if (payload.eventType === 'DELETE') {
+            console.log('🛑 Session DELETE detected for account, forcing local stop & cleanup');
             try {
               localStorage.removeItem('activeDungeonSession');
+              localStorage.removeItem('teamBattleState');
+              localStorage.removeItem('activeBattleInProgress');
+              localStorage.removeItem('battleState');
               setLocalSession(null);
+              try { window.dispatchEvent(new CustomEvent('battleReset')); } catch {}
             } catch {}
+
+            // Повторно удалим на сервере (на случай гонки с heartbeat), операция идемпотентна
+            try {
+              await supabase
+                .from('active_dungeon_sessions')
+                .delete()
+                .eq('account_id', accountId);
+            } catch (e) {
+              console.warn('Retry delete after DELETE event failed:', e);
+            }
           }
           
           // Перезагружаем все сессии при любом изменении
