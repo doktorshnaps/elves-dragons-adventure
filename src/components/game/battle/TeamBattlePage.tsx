@@ -29,7 +29,7 @@ export const TeamBattlePage: React.FC<TeamBattlePageProps> = ({
   const processedLevelRef = React.useRef<number | null>(null);
   
   const { accountId } = useWalletContext();
-  const { deviceId, startDungeonSession } = useDungeonSync();
+  const { deviceId, startDungeonSession, endDungeonSession } = useDungeonSync();
   const [sessionTerminated, setSessionTerminated] = useState(false);
   
   // Sync health from database on component mount
@@ -82,7 +82,10 @@ export const TeamBattlePage: React.FC<TeamBattlePageProps> = ({
       setBattleStarted(true);
     });
   };
-  const handleExitAndReset = () => {
+  const handleExitAndReset = async () => {
+    // Завершаем сессию подземелья в БД
+    await endDungeonSession();
+    
     startTransition(() => {
       localStorage.removeItem('activeBattleInProgress');
       resetBattle();
