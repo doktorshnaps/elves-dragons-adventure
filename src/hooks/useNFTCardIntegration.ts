@@ -170,7 +170,7 @@ export const useNFTCardIntegration = () => {
       
       const gameCards: CardType[] = uniqueNFTs.map(nftCard => {
         // Prefer explicit fields; fallback to parsing composite id like "contract_token"
-        let nftContractId = (nftCard as any).nft_contract_id || (nftCard as any).nft_contract;
+        let nftContractId = (nftCard as any).nft_contract_id || (nftCard as any).nft_contract || (nftCard as any).contract_id;
         let nftTokenId = (nftCard as any).nft_token_id || (nftCard as any).token_id as string | undefined;
 
         if ((!nftContractId || !nftTokenId) && typeof (nftCard as any).id === 'string') {
