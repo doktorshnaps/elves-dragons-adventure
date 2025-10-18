@@ -28,7 +28,7 @@ export const useInventoryDedupe = () => {
 
       inventory.forEach((item: any) => {
         // Обработка рабочих отдельно
-        if (item?.type === 'worker') {
+        if (item?.type === 'worker' || item?.type === 'workers') {
           const workerInstanceId = item.instanceId; // не используем fallback на id, т.к. у одинаковых типов он общий
           if (!workerInstanceId) {
             // Нет instanceId — это уникальная запись рабочего

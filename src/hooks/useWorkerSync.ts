@@ -20,7 +20,7 @@ export const useWorkerSync = () => {
       );
 
       // Получаем рабочих из инвентаря
-      const inventoryWorkers = (gameState.inventory || []).filter(item => item?.type === 'worker');
+      const inventoryWorkers = (gameState.inventory || []).filter(item => item?.type === 'worker' || item?.type === 'workers');
       
       // Создаем Set из instanceId в инвентаре для быстрой проверки
       const inventoryInstanceIds = new Set(

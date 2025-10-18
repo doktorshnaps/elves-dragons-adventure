@@ -83,7 +83,7 @@ export const WorkersManagement = ({ onSpeedBoostChange }: WorkersManagementProps
   // ВАЖНО: пересчитываем при каждом изменении gameState.inventory
   const inventoryWorkers = useMemo(() => {
     return (gameState.inventory || [])
-      .filter((item: any) => item?.type === 'worker')
+      .filter((item: any) => item?.type === 'worker' || item?.type === 'workers')
       .map((item: any, index: number) => ({
         id: item.id || item.instanceId || `worker_${index}_${item.name}`,
         instanceId: item.instanceId,
@@ -164,8 +164,8 @@ export const WorkersManagement = ({ onSpeedBoostChange }: WorkersManagementProps
     activeWorkersDetails: activeWorkers.map(w => ({ workerId: w.workerId, cardInstanceId: w.cardInstanceId, name: w.name })),
     activeInstanceIdsSet: Array.from(activeInstanceIds),
     activeWorkerIdsSet: Array.from(activeWorkerIds),
-    fullInventory: (gameState.inventory || []).filter((i: any) => i?.type === 'worker'),
-    fullInventoryCount: (gameState.inventory || []).filter((i: any) => i?.type === 'worker').length
+    fullInventory: (gameState.inventory || []).filter((i: any) => i?.type === 'worker' || i?.type === 'workers'),
+    fullInventoryCount: (gameState.inventory || []).filter((i: any) => i?.type === 'worker' || i?.type === 'workers').length
   });
 
   // Загружаем активных рабочих из gameState и localStorage
@@ -212,7 +212,7 @@ export const WorkersManagement = ({ onSpeedBoostChange }: WorkersManagementProps
       const activeInstanceIds = new Set(activeWorkers.map(w => w.cardInstanceId));
       
       const currentInv = [...(gameState.inventory || [])] as any[];
-      const workersInInv = currentInv.filter((item: any) => item?.type === 'worker');
+      const workersInInv = currentInv.filter((item: any) => item?.type === 'worker' || item?.type === 'workers');
       
       // Находим рабочих, которые уже назначены, но всё ещё в инвентаре
       // ВАЖНО: считаем «застрявшими» ТОЛЬКО тех, у кого есть УНИКАЛЬНЫЙ instanceId.
@@ -226,7 +226,7 @@ export const WorkersManagement = ({ onSpeedBoostChange }: WorkersManagementProps
         
         // Удаляем зависших рабочих строго по instanceId
         const cleanedInv = currentInv.filter((item: any) => {
-          if (item?.type !== 'worker') return true;
+          if (!(item?.type === 'worker' || item?.type === 'workers')) return true;
           const itemInstanceId = item.instanceId;
           // Не трогаем предметы без instanceId — они уже удаляются точечно при назначении
           if (!itemInstanceId) return true;
@@ -345,7 +345,7 @@ export const WorkersManagement = ({ onSpeedBoostChange }: WorkersManagementProps
         });
         
         const removeIdx = updatedInv.findIndex((i: any) => 
-          i?.type === 'worker' && 
+          (i?.type === 'worker' || i?.type === 'workers') && 
           i.instanceId === worker.instanceId &&
           i.id === worker.id
         );
@@ -365,7 +365,7 @@ export const WorkersManagement = ({ onSpeedBoostChange }: WorkersManagementProps
             id: worker.id,
             instanceId: worker.instanceId,
             name: worker.name
-          }, 'Inventory workers:', updatedInv.filter((i: any) => i?.type === 'worker').map((i: any) => ({ id: i.id, instanceId: i.instanceId, name: i.name })));
+          }, 'Inventory workers:', updatedInv.filter((i: any) => i?.type === 'worker' || i?.type === 'workers').map((i: any) => ({ id: i.id, instanceId: i.instanceId, name: i.name })));
         }
       } else if (worker.source === 'cards') {
         // Удаляем из карт по ID и сохраняем через actions
