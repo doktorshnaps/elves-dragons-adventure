@@ -132,8 +132,7 @@ export const useDungeonSync = () => {
       await supabase
         .from('active_dungeon_sessions')
         .delete()
-        .eq('account_id', accountId)
-        .eq('device_id', deviceId);
+        .eq('account_id', accountId); // удаляем все активные сессии для кошелька, включая другие устройства
     } catch (error) {
       console.error('Error ending dungeon session:', error);
     }

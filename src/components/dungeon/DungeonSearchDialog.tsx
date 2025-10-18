@@ -99,10 +99,8 @@ export const DungeonSearchDialog = ({
     try { window.dispatchEvent(new CustomEvent('battleReset')); } catch {}
   };
   const handleDungeonSelect = async (dungeonType: DungeonType) => {
-    // Проверяем наличие активного подземелья на других устройствах
+    // Блокируем выбор, если на другом устройстве есть активная сессия
     if (hasOtherActiveSessions) {
-      setPendingDungeon(dungeonType);
-      setShowActiveWarning(true);
       return;
     }
 
@@ -144,6 +142,11 @@ export const DungeonSearchDialog = ({
   };
 
   const canEnterDungeon = (dungeonType: DungeonType, requiredLevel: number) => {
+    // Блокируем выбор, если есть активная сессия на другом устройстве
+    if (hasOtherActiveSessions) {
+      return false;
+    }
+
     const basicRequirements = !isHealthTooLow && hasActiveCards && energyState.current > 0;
     
     // If there's an active dungeon, only allow access to that specific dungeon
@@ -181,6 +184,15 @@ export const DungeonSearchDialog = ({
           <div className="mb-4">
             <p className="text-white">Баланс: {balance} ELL</p>
           </div>
+
+          {hasOtherActiveSessions && (
+            <div className="text-sm text-white/80 bg-yellow-500/10 border border-yellow-400/30 rounded-md p-3 mb-4">
+              <p className="mb-2">На другом устройстве уже запущено подземелье. Вход заблокирован.</p>
+              <Button variant="destructive" onClick={async () => { await endDungeonSession(); }}>
+                Завершить подземелье на другом устройстве
+              </Button>
+            </div>
+          )}
 
           <div className="space-y-2">
             {Object.entries(dungeonLevelRequirements).map(([dungeon, requiredLevel]) => {
