@@ -254,6 +254,16 @@ export const useDungeonSync = () => {
         },
         (payload: RealtimePostgresChangesPayload<any>) => {
           console.log('📡 Dungeon session change:', payload);
+          
+          // Если удалена сессия текущего устройства - останавливаем heartbeat
+          if (payload.eventType === 'DELETE' && payload.old?.device_id === deviceId) {
+            console.log('🛑 Session deleted for current device, stopping heartbeat');
+            try {
+              localStorage.removeItem('activeDungeonSession');
+              setLocalSession(null);
+            } catch {}
+          }
+          
           // Перезагружаем все сессии при любом изменении
           loadActiveSessions();
         }
@@ -263,7 +273,7 @@ export const useDungeonSync = () => {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [accountId, loadActiveSessions]);
+  }, [accountId, deviceId, loadActiveSessions]);
 
   // Отправляем heartbeat каждые 3 секунды
   useEffect(() => {
