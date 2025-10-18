@@ -210,25 +210,27 @@ export const WorkersManagement = ({ onSpeedBoostChange }: WorkersManagementProps
     
     const cleanupStuckWorkers = async () => {
       const activeInstanceIds = new Set(activeWorkers.map(w => w.cardInstanceId));
-      const activeWorkerIds = new Set(activeWorkers.map(w => w.workerId));
       
       const currentInv = [...(gameState.inventory || [])] as any[];
       const workersInInv = currentInv.filter((item: any) => item?.type === 'worker');
       
       // Находим рабочих, которые уже назначены, но всё ещё в инвентаре
+      // ВАЖНО: считаем «застрявшими» ТОЛЬКО тех, у кого есть УНИКАЛЬНЫЙ instanceId.
       const stuckWorkers = workersInInv.filter((item: any) => {
-        const itemInstanceId = item.instanceId || item.id;
-        return activeInstanceIds.has(itemInstanceId) || activeWorkerIds.has(itemInstanceId);
+        const itemInstanceId = item.instanceId; // не используем fallback на item.id, т.к. он может быть общим для типа
+        return !!itemInstanceId && activeInstanceIds.has(itemInstanceId);
       });
       
       if (stuckWorkers.length > 0) {
-        console.log('🧹 Found stuck workers in inventory:', stuckWorkers.length, stuckWorkers.map(w => ({ id: w.id, instanceId: w.instanceId, name: w.name })));
+        console.log('🧹 Found stuck workers in inventory (strict by instanceId):', stuckWorkers.length, stuckWorkers.map((w: any) => ({ id: w.id, instanceId: w.instanceId, name: w.name })));
         
-        // Удаляем зависших рабочих
+        // Удаляем зависших рабочих строго по instanceId
         const cleanedInv = currentInv.filter((item: any) => {
           if (item?.type !== 'worker') return true;
-          const itemInstanceId = item.instanceId || item.id;
-          return !activeInstanceIds.has(itemInstanceId) && !activeWorkerIds.has(itemInstanceId);
+          const itemInstanceId = item.instanceId;
+          // Не трогаем предметы без instanceId — они уже удаляются точечно при назначении
+          if (!itemInstanceId) return true;
+          return !activeInstanceIds.has(itemInstanceId);
         });
         
         await gameState.actions.updateInventory(cleanedInv);
@@ -292,7 +294,7 @@ export const WorkersManagement = ({ onSpeedBoostChange }: WorkersManagementProps
     const newActiveWorker: ActiveWorker = {
       id: `${worker.id}_${Date.now()}`,
       workerId: worker.id,
-      cardInstanceId: (worker as any).instanceId || worker.id,
+      cardInstanceId: (worker as any).instanceId || `${worker.id}_${Date.now()}`,
       name: worker.name,
       speedBoost: worker.value,
       startTime: Date.now(),
