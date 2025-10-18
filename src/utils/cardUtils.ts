@@ -495,6 +495,7 @@ export const calculateTeamStats = (cards: Card[]) => {
     return acc;
   }, { power: 0, defense: 0, health: 0, current: 0 });
 
+  // Используем максимальное здоровье для подсчета характеристик команды
   const maxHealth = baseStats.health + petsBonus.health;
   const currentHealth = baseStats.current + petsBonus.current;
 
@@ -504,7 +505,7 @@ export const calculateTeamStats = (cards: Card[]) => {
   return {
     power: baseStats.power + petsBonus.power,
     defense: baseStats.defense + petsBonus.defense,
-    health: currentHealth,
+    health: maxHealth, // Показываем максимальное здоровье вместо текущего
     maxHealth,
     mana: totalMagic,
     maxMana: totalMagic
