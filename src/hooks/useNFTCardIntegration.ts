@@ -116,7 +116,8 @@ export const useNFTCardIntegration = () => {
         currentHealth: nftCard.currentHealth || nftCard.health,
         rarity: (typeof (nftCard as any).rarity === 'number' ? (nftCard as any).rarity : 1) as any,
         faction: nftCard.faction as any,
-        type: (nftCard.type === 'character' ? 'character' : 'pet'),
+        // Маппинг типа: 'hero' -> 'character', 'dragon' -> 'pet'
+        type: (nftCard.type === 'hero' ? 'character' : nftCard.type === 'dragon' ? 'pet' : 'character'),
         description: nftCard.description || '',
         image: nftCard.image || '/placeholder.svg',
         magic: nftCard.magic || 0,

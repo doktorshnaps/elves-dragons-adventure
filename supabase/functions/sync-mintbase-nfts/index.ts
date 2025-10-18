@@ -207,15 +207,35 @@ function mapNFTToCard(metadata: NFTMetadata, tokenId: string): CardMapping | nul
     }
   }
   
-  // 3. Определяем тип карты (hero или dragon)
+  // 3. Определяем тип карты - СТРОГО по ключевым словам дракона
+  // По умолчанию ВСЕ карты - герои, драконы только если явно указано
   let card_type: 'hero' | 'dragon' = 'hero';
-  const dragonKeywords = ['dragon', 'дракон', 'drake', 'wyrm'];
+  
+  // Ключевые слова ТОЛЬКО для драконов - очень строгая проверка
+  const dragonKeywords = [
+    'dragon', 
+    'дракон',
+    'drake',
+    'wyrm',
+    'wyvern',
+    'змей'
+  ];
+  
   const titleLower = title.toLowerCase();
   const descLower = description.toLowerCase();
   
-  if (dragonKeywords.some(keyword => titleLower.includes(keyword) || descLower.includes(keyword))) {
+  // Проверяем СТРОГО наличие слова "dragon" или его вариантов
+  const isDragon = dragonKeywords.some(keyword => {
+    // Проверяем что ключевое слово стоит отдельно (не часть другого слова)
+    const regex = new RegExp(`\\b${keyword}\\b`, 'i');
+    return regex.test(titleLower) || regex.test(descLower);
+  });
+  
+  if (isDragon) {
     card_type = 'dragon';
     console.log(`🐉 Detected dragon card`);
+  } else {
+    console.log(`⚔️ Detected hero card`);
   }
   
   // 4. Рассчитываем характеристики на основе редкости и типа карты
@@ -233,7 +253,7 @@ function mapNFTToCard(metadata: NFTMetadata, tokenId: string): CardMapping | nul
     magic: Math.floor(baseStats.magic * multiplier),
   };
   
-  console.log(`📊 Calculated stats (multiplier ${multiplier}x):`, stats);
+  console.log(`📊 Calculated stats (type: ${card_type}, multiplier ${multiplier}x):`, stats);
   
   return {
     card_name: title || `NFT ${tokenId}`,
