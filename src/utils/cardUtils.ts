@@ -223,6 +223,8 @@ const getClassMultiplier = (cardName: string, cardType: CardType) => {
   }
 
   const nameNorm = normalize(cardName);
+  console.log(`🔍 Looking for class multiplier: cardName="${cardName}", normalized="${nameNorm}", type=${cardType}`);
+  
   let result;
   
   if (cardType === 'pet') {
@@ -230,27 +232,35 @@ const getClassMultiplier = (cardName: string, cardType: CardType) => {
     const sortedClasses = Object.keys(gameSettingsCache.dragonClassMultipliers)
       .sort((a, b) => b.length - a.length);
     
+    console.log(`🐉 Available dragon classes:`, sortedClasses);
+    
     for (const dragonClass of sortedClasses) {
       const clsNorm = normalize(dragonClass);
       if (!clsNorm) continue;
       if (nameNorm.includes(clsNorm)) {
         result = gameSettingsCache.dragonClassMultipliers[dragonClass];
+        console.log(`✅ Found dragon class "${dragonClass}" for "${cardName}":`, result);
         classMultiplierCache.set(cacheKey, result);
         return result;
       }
     }
     // Fallback
     result = { health_multiplier: 1.0, defense_multiplier: 1.0, power_multiplier: 1.0, magic_multiplier: 1.0 };
+    console.log(`⚠️ No dragon class found for "${cardName}", using fallback`);
   } else {
     // Для героев ищем класс в названии карты (от более длинного к более короткому, без учета регистра)
     const sortedClasses = Object.keys(gameSettingsCache.classMultipliers)
       .sort((a, b) => b.length - a.length);
     
+    console.log(`🦸 Available hero classes:`, sortedClasses);
+    
     for (const heroClass of sortedClasses) {
       const clsNorm = normalize(heroClass);
       if (!clsNorm) continue;
+      console.log(`  Checking if "${nameNorm}" includes "${clsNorm}"`);
       if (nameNorm.includes(clsNorm)) {
         result = gameSettingsCache.classMultipliers[heroClass];
+        console.log(`✅ Found hero class "${heroClass}" for "${cardName}":`, result);
         classMultiplierCache.set(cacheKey, result);
         return result;
       }
@@ -258,16 +268,9 @@ const getClassMultiplier = (cardName: string, cardType: CardType) => {
     
     // Fallback
     result = { health_multiplier: 1.0, defense_multiplier: 1.0, power_multiplier: 1.0, magic_multiplier: 1.0 };
+    console.log(`⚠️ No hero class found for "${cardName}", using fallback (1.0 multipliers)`);
   }
   
-  // Легкое логирование для диагностики несопадений
-  console.debug('Class multiplier not found, using fallback', {
-    cardName,
-    cardType,
-    availableHeroClasses: Object.keys(gameSettingsCache.classMultipliers),
-    availableDragonClasses: Object.keys(gameSettingsCache.dragonClassMultipliers)
-  });
-
   classMultiplierCache.set(cacheKey, result);
   return result;
 };
