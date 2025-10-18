@@ -12,6 +12,8 @@ let gameSettingsCache: {
   rarityMultipliers: Record<number, number>;
   classMultipliers: Record<string, { health_multiplier: number; defense_multiplier: number; power_multiplier: number; magic_multiplier: number }>;
   dragonClassMultipliers: Record<string, { health_multiplier: number; defense_multiplier: number; power_multiplier: number; magic_multiplier: number }>;
+  heroNameToClass: Record<string, string>;
+  dragonNameToClass: Record<string, string>;
   lastLoaded: number;
 } = {
   heroBaseStats: null,
@@ -19,6 +21,8 @@ let gameSettingsCache: {
   rarityMultipliers: {},
   classMultipliers: {},
   dragonClassMultipliers: {},
+  heroNameToClass: {},
+  dragonNameToClass: {},
   lastLoaded: 0
 };
 
@@ -32,6 +36,8 @@ try {
     if (parsed.rarityMultipliers) gameSettingsCache.rarityMultipliers = parsed.rarityMultipliers;
     if (parsed.classMultipliers) gameSettingsCache.classMultipliers = parsed.classMultipliers;
     if (parsed.dragonClassMultipliers) gameSettingsCache.dragonClassMultipliers = parsed.dragonClassMultipliers;
+    if (parsed.heroNameToClass) gameSettingsCache.heroNameToClass = parsed.heroNameToClass;
+    if (parsed.dragonNameToClass) gameSettingsCache.dragonNameToClass = parsed.dragonNameToClass;
     gameSettingsCache.lastLoaded = Date.now();
   }
 } catch (e) {
@@ -47,12 +53,13 @@ const loadGameSettings = async () => {
   }
 
   try {
-    const [heroRes, dragonRes, rarityRes, classRes, dragonClassRes] = await Promise.all([
+    const [heroRes, dragonRes, rarityRes, classRes, dragonClassRes, nameMapRes] = await Promise.all([
       supabase.from('hero_base_stats').select('*').limit(1).maybeSingle(),
       supabase.from('dragon_base_stats').select('*').limit(1).maybeSingle(),
       supabase.from('rarity_multipliers').select('*').order('rarity'),
       supabase.from('class_multipliers').select('*'),
-      supabase.from('dragon_class_multipliers').select('*')
+      supabase.from('dragon_class_multipliers').select('*'),
+      supabase.from('card_class_mappings').select('*')
     ]);
 
     if (heroRes.data) {
@@ -104,6 +111,18 @@ const loadGameSettings = async () => {
       }, {});
     }
 
+    // Name -> class mappings
+    if (nameMapRes.data) {
+      const heroMap: Record<string, string> = {};
+      const dragonMap: Record<string, string> = {};
+      for (const row of nameMapRes.data as any[]) {
+        if (row.card_type === 'hero') heroMap[row.card_name] = row.class_name;
+        else if (row.card_type === 'dragon') dragonMap[row.card_name] = row.class_name;
+      }
+      gameSettingsCache.heroNameToClass = heroMap;
+      gameSettingsCache.dragonNameToClass = dragonMap;
+    }
+
     gameSettingsCache.lastLoaded = now;
     // Persist to localStorage for instant availability on reload
     try {
@@ -112,7 +131,9 @@ const loadGameSettings = async () => {
         dragonBaseStats: gameSettingsCache.dragonBaseStats,
         rarityMultipliers: gameSettingsCache.rarityMultipliers,
         classMultipliers: gameSettingsCache.classMultipliers,
-        dragonClassMultipliers: gameSettingsCache.dragonClassMultipliers
+        dragonClassMultipliers: gameSettingsCache.dragonClassMultipliers,
+        heroNameToClass: gameSettingsCache.heroNameToClass,
+        dragonNameToClass: gameSettingsCache.dragonNameToClass
       }));
     } catch (e) {
       console.debug('Failed to persist game settings', e);
@@ -220,6 +241,22 @@ const getClassMultiplier = (cardName: string, cardType: CardType) => {
   
   if (classMultiplierCache.has(cacheKey)) {
     return classMultiplierCache.get(cacheKey);
+  }
+
+  // 0) Пробуем явное сопоставление по таблице card_class_mappings
+  const directClassName = cardType === 'pet'
+    ? gameSettingsCache.dragonNameToClass[cardName]
+    : gameSettingsCache.heroNameToClass[cardName];
+
+  if (directClassName) {
+    const byMap = cardType === 'pet'
+      ? gameSettingsCache.dragonClassMultipliers[directClassName]
+      : gameSettingsCache.classMultipliers[directClassName];
+
+    if (byMap) {
+      classMultiplierCache.set(cacheKey, byMap);
+      return byMap;
+    }
   }
 
   const nameNorm = normalize(cardName);

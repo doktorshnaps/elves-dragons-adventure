@@ -83,6 +83,36 @@ export type Database = {
         }
         Relationships: []
       }
+      card_class_mappings: {
+        Row: {
+          card_name: string
+          card_type: string
+          class_name: string
+          created_at: string
+          created_by_wallet_address: string | null
+          id: string
+          updated_at: string
+        }
+        Insert: {
+          card_name: string
+          card_type: string
+          class_name: string
+          created_at?: string
+          created_by_wallet_address?: string | null
+          id?: string
+          updated_at?: string
+        }
+        Update: {
+          card_name?: string
+          card_type?: string
+          class_name?: string
+          created_at?: string
+          created_by_wallet_address?: string | null
+          id?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       card_images: {
         Row: {
           card_name: string
