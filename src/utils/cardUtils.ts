@@ -169,6 +169,15 @@ const FALLBACK_RARITY_MULTIPLIERS: Record<Rarity, number> = {
 // Получить множитель класса по имени карты из БД (с кэшированием)
 const classMultiplierCache = new Map<string, any>();
 
+const normalize = (s: string) =>
+  (s || "")
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '') // remove diacritics
+    .replace(/[^\p{L}\p{N}\s-]/gu, '') // keep letters/numbers/spaces/hyphen
+    .replace(/\s+/g, ' ')
+    .trim();
+
 const getClassMultiplier = (cardName: string, cardType: CardType) => {
   const cacheKey = `${cardName}_${cardType}`;
   
@@ -176,14 +185,18 @@ const getClassMultiplier = (cardName: string, cardType: CardType) => {
     return classMultiplierCache.get(cacheKey);
   }
 
+  const nameNorm = normalize(cardName);
   let result;
   
   if (cardType === 'pet') {
-    // Для драконов ищем класс в названии
-    const sortedClasses = Object.keys(gameSettingsCache.dragonClassMultipliers).sort((a, b) => b.length - a.length);
+    // Для драконов ищем класс в названии (без учета регистра и знаков)
+    const sortedClasses = Object.keys(gameSettingsCache.dragonClassMultipliers)
+      .sort((a, b) => b.length - a.length);
     
     for (const dragonClass of sortedClasses) {
-      if (cardName.includes(dragonClass)) {
+      const clsNorm = normalize(dragonClass);
+      if (!clsNorm) continue;
+      if (nameNorm.includes(clsNorm)) {
         result = gameSettingsCache.dragonClassMultipliers[dragonClass];
         classMultiplierCache.set(cacheKey, result);
         return result;
@@ -192,11 +205,14 @@ const getClassMultiplier = (cardName: string, cardType: CardType) => {
     // Fallback
     result = { health_multiplier: 1.0, defense_multiplier: 1.0, power_multiplier: 1.0, magic_multiplier: 1.0 };
   } else {
-    // Для героев ищем класс в названии карты (от более длинного к более короткому)
-    const sortedClasses = Object.keys(gameSettingsCache.classMultipliers).sort((a, b) => b.length - a.length);
+    // Для героев ищем класс в названии карты (от более длинного к более короткому, без учета регистра)
+    const sortedClasses = Object.keys(gameSettingsCache.classMultipliers)
+      .sort((a, b) => b.length - a.length);
     
     for (const heroClass of sortedClasses) {
-      if (cardName.includes(heroClass)) {
+      const clsNorm = normalize(heroClass);
+      if (!clsNorm) continue;
+      if (nameNorm.includes(clsNorm)) {
         result = gameSettingsCache.classMultipliers[heroClass];
         classMultiplierCache.set(cacheKey, result);
         return result;
@@ -207,6 +223,14 @@ const getClassMultiplier = (cardName: string, cardType: CardType) => {
     result = { health_multiplier: 1.0, defense_multiplier: 1.0, power_multiplier: 1.0, magic_multiplier: 1.0 };
   }
   
+  // Легкое логирование для диагностики несопадений
+  console.debug('Class multiplier not found, using fallback', {
+    cardName,
+    cardType,
+    availableHeroClasses: Object.keys(gameSettingsCache.classMultipliers),
+    availableDragonClasses: Object.keys(gameSettingsCache.dragonClassMultipliers)
+  });
+
   classMultiplierCache.set(cacheKey, result);
   return result;
 };
