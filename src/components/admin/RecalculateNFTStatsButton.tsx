@@ -28,10 +28,7 @@ export const RecalculateNFTStatsButton = () => {
 
       // Получаем все NFT карточки
       const { data: nftInstances, error } = await supabase
-        .from('card_instances')
-        .select('*')
-        .not('nft_contract_id', 'is', null)
-        .not('nft_token_id', 'is', null);
+        .rpc('get_nft_card_instances_by_wallet', { p_wallet_address: accountId });
 
       if (error) throw error;
 
@@ -53,7 +50,7 @@ export const RecalculateNFTStatsButton = () => {
         const cardData = instance.card_data as any;
         const cardName = cardData.name || '';
         const rarity = Number(cardData.rarity) || 1;
-        const cardType = instance.card_type === 'dragon' ? 'pet' : 'character';
+        const cardType = (cardData?.type === 'pet') ? 'pet' : 'character';
 
         // Пересчитываем характеристики с актуальными настройками
         const recalculatedStats = calculateCardStats(cardName, rarity as any, cardType);
@@ -69,11 +66,11 @@ export const RecalculateNFTStatsButton = () => {
 
         // Обновляем в БД
         const { error: updateError } = await supabase.rpc('upsert_nft_card_instance', {
-          p_wallet_address: instance.wallet_address,
+          p_wallet_address: accountId,
           p_nft_contract_id: instance.nft_contract_id!,
           p_nft_token_id: instance.nft_token_id!,
           p_card_template_id: instance.card_template_id,
-          p_card_type: instance.card_type,
+          p_card_type: (cardData?.type === 'pet') ? 'dragon' : 'hero',
           p_max_health: recalculatedStats.health,
           p_card_data: updatedCardData
         });

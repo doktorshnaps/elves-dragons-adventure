@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { calculateCardStats } from '@/utils/cardUtils';
+import { calculateCardStats, refreshGameSettings } from '@/utils/cardUtils';
 import { useWalletContext } from '@/contexts/WalletConnectContext';
 import { useToast } from './use-toast';
 
@@ -74,13 +74,10 @@ export const useNFTStatsRecalculation = () => {
 
   const recalculateNFTStats = async (walletAddress: string) => {
     try {
+      await refreshGameSettings();
       // Получаем все NFT карточки пользователя из card_instances
       const { data: nftInstances, error } = await supabase
-        .from('card_instances')
-        .select('*')
-        .eq('wallet_address', walletAddress)
-        .not('nft_contract_id', 'is', null)
-        .not('nft_token_id', 'is', null);
+        .rpc('get_nft_card_instances_by_wallet', { p_wallet_address: walletAddress });
 
       if (error) {
         console.error('Error fetching NFT instances:', error);
@@ -99,7 +96,7 @@ export const useNFTStatsRecalculation = () => {
         const cardData = instance.card_data as any;
         const cardName = cardData.name || '';
         const rarity = Number(cardData.rarity) || 1;
-        const cardType = instance.card_type === 'dragon' ? 'pet' : 'character';
+        const cardType = (cardData?.type === 'pet') ? 'pet' : 'character';
 
         // Пересчитываем характеристики
         const recalculatedStats = calculateCardStats(cardName, rarity as any, cardType);
@@ -119,7 +116,7 @@ export const useNFTStatsRecalculation = () => {
           p_nft_contract_id: instance.nft_contract_id!,
           p_nft_token_id: instance.nft_token_id!,
           p_card_template_id: instance.card_template_id,
-          p_card_type: instance.card_type,
+          p_card_type: (cardData?.type === 'pet') ? 'dragon' : 'hero',
           p_max_health: recalculatedStats.health,
           p_card_data: updatedCardData
         });
