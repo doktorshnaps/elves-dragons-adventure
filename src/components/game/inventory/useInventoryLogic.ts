@@ -80,7 +80,20 @@ const groupItems = (items: Item[]): GroupedItem[] => {
     // Фильтруем null и undefined значения перед группировкой
     const validItems = items.filter(item => item != null && typeof item === 'object');
       return validItems.reduce<GroupedItem[]>((acc, item) => {
-      // Группируем предметы по имени и статусу экипировки (если есть)
+      // НЕ группируем рабочих - каждый отображается отдельно
+      if (item.type === 'worker') {
+        acc.push({
+          name: item.name,
+          type: item.type,
+          value: item.value,
+          count: 1,
+          items: [item],
+          image: getItemImage(item)
+        });
+        return acc;
+      }
+
+      // Группируем остальные предметы по имени и статусу экипировки (если есть)
       const existingGroup = acc.find(
         group => 
           group.name === item.name && 
