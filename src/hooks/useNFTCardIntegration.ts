@@ -43,12 +43,12 @@ export const useNFTCardIntegration = () => {
     }
   }, [isConnected, accountId, hasSynced]);
 
-  // Периодическая синхронизация, чтобы удалять пропавшие из кошелька NFT
+  // Периодическая синхронизация - УВЕЛИЧЕНО до 5 минут для снижения нагрузки
   useEffect(() => {
     if (!isConnected || !accountId) return;
     const interval = setInterval(() => {
       syncNFTsFromWallet();
-    }, 60000); // каждые 60 секунд
+    }, 300000); // каждые 5 минут (вместо 60 секунд)
     return () => clearInterval(interval);
   }, [isConnected, accountId]);
 
@@ -100,8 +100,9 @@ export const useNFTCardIntegration = () => {
       }
     };
 
-    // Проверяем при каждом изменении NFT карт
-    checkNFTLoss();
+    // Проверяем при каждом изменении NFT карт (но не чаще чем раз в минуту)
+    const timeoutId = setTimeout(checkNFTLoss, 1000);
+    return () => clearTimeout(timeoutId);
   }, [nftCards, isConnected, accountId]);
 
   const syncNFTsFromWallet = async () => {

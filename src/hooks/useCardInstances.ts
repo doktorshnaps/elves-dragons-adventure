@@ -100,7 +100,7 @@ export const useCardInstances = () => {
       isLoadingInstancesRef.current = false;
       setLoading(false);
     }
-  }, [accountId, isConnected, toast, gameData?.cards]);
+  }, [accountId, isConnected, toast, gameData?.cards, gameData?.selectedTeam]);
 
   // Создание нового экземпляра карты
   const createCardInstance = useCallback(async (card: Card, cardType: 'hero' | 'dragon') => {
@@ -293,31 +293,32 @@ export const useCardInstances = () => {
     loadCardInstances();
   }, [loadCardInstances]);
 
-  // Подписка на обновления в реальном времени
-  useEffect(() => {
-    if (!isConnected || !accountId) return;
+  // Подписка на обновления в реальном времени - ОТКЛЮЧЕНА для снижения нагрузки
+  // Используем ручную синхронизацию через loadCardInstances при необходимости
+  // useEffect(() => {
+  //   if (!isConnected || !accountId) return;
 
-    const channel = supabase
-      .channel('card_instances_changes')
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'card_instances',
-          filter: `wallet_address=eq.${accountId}`
-        },
-        (payload) => {
-          console.log('Card instances realtime update:', payload);
-          loadCardInstances();
-        }
-      )
-      .subscribe();
+  //   const channel = supabase
+  //     .channel('card_instances_changes')
+  //     .on(
+  //       'postgres_changes',
+  //       {
+  //         event: '*',
+  //         schema: 'public',
+  //         table: 'card_instances',
+  //         filter: `wallet_address=eq.${accountId}`
+  //       },
+  //       (payload) => {
+  //         console.log('Card instances realtime update:', payload);
+  //         loadCardInstances();
+  //       }
+  //     )
+  //     .subscribe();
 
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, [accountId, isConnected, loadCardInstances]);
+  //   return () => {
+  //     supabase.removeChannel(channel);
+  //   };
+  // }, [accountId, isConnected, loadCardInstances]);
 
   return {
     cardInstances,
