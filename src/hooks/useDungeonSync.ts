@@ -134,31 +134,37 @@ export const useDungeonSync = () => {
     );
   }, [activeSessions, deviceId]);
 
-  // Завершаем подземелье на текущем устройстве
+  // Завершаем подземелье на текущем устройстве (и для аккаунта в целом)
   const endDungeonSession = useCallback(async () => {
-    if (!accountId) return;
+    // Пытаемся определить аккаунт даже если контекст ещё не инициализировался
+    const targetAccountId = accountId || gameData?.wallet_address || localStorage.getItem('walletAddress');
+    if (!targetAccountId) {
+      console.warn('endDungeonSession: missing account id');
+      return;
+    }
 
-    // Чистим локальную сессию
+    // Чистим локальную сессию и выключаем heartbeat в ЭТОМ табе
     try {
       localStorage.removeItem('activeDungeonSession');
       setLocalSession(null);
     } catch {}
 
-    // Удаляем из базы данных
+    // Удаляем из базы данных все активные сессии для кошелька
     try {
-      await supabase
+      const { error } = await supabase
         .from('active_dungeon_sessions')
         .delete()
-        .eq('account_id', accountId); // удаляем все активные сессии для кошелька, включая другие устройства
+        .eq('account_id', targetAccountId);
+      if (error) throw error;
     } catch (error) {
       console.error('Error ending dungeon session:', error);
     }
 
-    // Чистим состояние боя в базе (на всякий случай)
+    // Чистим состояние боя в БД (на всякий случай)
     try {
       await updateGameData({ battleState: null });
     } catch {}
-  }, [accountId, deviceId, updateGameData]);
+  }, [accountId, gameData?.wallet_address, updateGameData]);
 
   // Начинаем новое подземелье и уведомляем другие устройства
   const startDungeonSession = useCallback(async (dungeonType: string, level: number) => {
