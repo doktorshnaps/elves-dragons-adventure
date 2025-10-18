@@ -5,16 +5,12 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-interface MintbaseNFT {
-  token_id: string;
-  metadata: {
-    title?: string;
-    description?: string;
-    media?: string;
-    reference?: string;
-    extra?: string;
-  };
-  owner_id: string;
+interface NFTMetadata {
+  title?: string;
+  description?: string;
+  media?: string;
+  reference?: string;
+  copies?: number;
 }
 
 interface CardMapping {
@@ -29,6 +25,17 @@ interface CardMapping {
     magic: number;
   };
 }
+
+// Маппинг фракций с английского на русский
+const FACTION_MAP: Record<string, string> = {
+  'Kaledor': 'Каледор',
+  'Silvanesti': 'Сильванести',
+  'Faelin': 'Фаэлин',
+  'Ellenar': 'Элленар',
+  'Telerion': 'Тэлэрион',
+  'Aelantir': 'Аэлантир',
+  'Lioras': 'Лиорас'
+};
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
@@ -49,84 +56,71 @@ Deno.serve(async (req) => {
 
     console.log(`🔄 Syncing Mintbase NFTs for wallet: ${wallet_address}`);
 
-    // Fetch NFTs from Mintbase GraphQL API
-    const mintbaseQuery = {
-      query: `
-        query GetNFTs($owner: String!) {
-          mb_views_nft_tokens(
-            where: {
-              owner: { _eq: $owner }
-              nft_contract_id: { _eq: "elleonortesr.mintbase1.near" }
-            }
-          ) {
-            token_id
-            metadata_id
-            owner
-            nft_contract_id
-            minted_timestamp
-          }
-        }
-      `,
-      variables: {
-        owner: wallet_address
-      }
-    };
-
-    const mintbaseResponse = await fetch('https://graph.mintbase.xyz/mainnet', {
+    // Вызываем NEAR RPC для получения NFT
+    const nearRpcResponse = await fetch('https://rpc.mainnet.near.org', {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'mb-api-key': 'anon',
-      },
-      body: JSON.stringify(mintbaseQuery),
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        jsonrpc: '2.0',
+        id: 'dontcare',
+        method: 'query',
+        params: {
+          request_type: 'call_function',
+          finality: 'final',
+          account_id: 'elleonortesr.mintbase1.near',
+          method_name: 'nft_tokens_for_owner',
+          args_base64: btoa(JSON.stringify({ account_id: wallet_address }))
+        }
+      })
     });
 
-    if (!mintbaseResponse.ok) {
-      throw new Error(`Mintbase API error: ${mintbaseResponse.statusText}`);
+    const nearRpcData = await nearRpcResponse.json();
+    
+    if (nearRpcData.error) {
+      throw new Error(`NEAR RPC error: ${JSON.stringify(nearRpcData.error)}`);
     }
 
-    const mintbaseData = await mintbaseResponse.json();
-    const nfts = mintbaseData?.data?.mb_views_nft_tokens || [];
+    const resultBytes = nearRpcData.result?.result;
+    if (!resultBytes) {
+      console.log('⚠️ No NFTs found for this wallet');
+      return new Response(
+        JSON.stringify({ success: true, nft_count: 0, card_count: 0, cards: [] }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 200 }
+      );
+    }
 
-    console.log(`📦 Found ${nfts.length} NFTs from Mintbase`);
+    const nfts = JSON.parse(new TextDecoder().decode(new Uint8Array(resultBytes)));
+    console.log(`📦 Found ${nfts.length} NFTs from Mintbase contract`);
 
-    // Fetch metadata for each NFT
+    // Обрабатываем NFT и создаем карты
     const nftCards = [];
     for (const nft of nfts) {
       try {
-        // Get metadata from NEAR blockchain
-        const metadataUrl = `https://arweave.net/${nft.metadata_id}`;
-        const metadataResponse = await fetch(metadataUrl);
+        const metadata = nft.metadata || {};
+        const cardMapping = mapNFTToCard(metadata, nft.token_id);
         
-        if (metadataResponse.ok) {
-          const metadata = await metadataResponse.json();
-          
-          // Map NFT to card based on metadata
-          const cardMapping = mapNFTToCard(metadata, nft);
-          
-          if (cardMapping) {
-            nftCards.push({
-              id: `mintbase_${nft.token_id}`,
-              name: cardMapping.card_name,
-              type: cardMapping.card_type,
-              image: metadata.media || metadata.reference,
-              rarity: cardMapping.rarity,
-              faction: cardMapping.faction,
-              health: cardMapping.stats.health,
-              defense: cardMapping.stats.defense,
-              power: cardMapping.stats.power,
-              magic: cardMapping.stats.magic,
-              maxHealth: cardMapping.stats.health,
-              currentHealth: cardMapping.stats.health,
-              lastHealTime: Date.now(),
-              isInMedicalBay: false,
-              nft_contract: 'elleonortesr.mintbase1.near',
-              nft_token_id: nft.token_id,
-            });
-          }
+        if (cardMapping) {
+          nftCards.push({
+            id: `mintbase_${nft.token_id}`,
+            name: cardMapping.card_name,
+            type: cardMapping.card_type,
+            image: metadata.media || metadata.reference || '/placeholder.svg',
+            rarity: cardMapping.rarity,
+            faction: cardMapping.faction,
+            health: cardMapping.stats.health,
+            defense: cardMapping.stats.defense,
+            power: cardMapping.stats.power,
+            magic: cardMapping.stats.magic,
+            maxHealth: cardMapping.stats.health,
+            currentHealth: cardMapping.stats.health,
+            lastHealTime: Date.now(),
+            isInMedicalBay: false,
+            nft_contract: 'elleonortesr.mintbase1.near',
+            nft_token_id: nft.token_id,
+          });
         }
       } catch (error) {
-        console.error(`Error fetching metadata for token ${nft.token_id}:`, error);
+        console.error(`Error mapping NFT ${nft.token_id}:`, error);
       }
     }
 
@@ -186,66 +180,66 @@ Deno.serve(async (req) => {
   }
 });
 
-function mapNFTToCard(metadata: any, nft: any): CardMapping | null {
+function mapNFTToCard(metadata: NFTMetadata, tokenId: string): CardMapping | null {
   const title = metadata.title || '';
   const description = metadata.description || '';
   
-  // Parse metadata to determine card type and stats
-  // This is a basic mapping - adjust based on your NFT metadata structure
+  console.log(`📝 Mapping NFT: ${title}`);
   
-  let card_type: 'hero' | 'dragon' = 'hero';
+  // 1. Извлекаем редкость из (rarity1)...(rarity8) в названии
   let rarity = 1;
-  let faction = 'Каледор';
+  const rarityMatch = title.match(/\(rarity(\d)\)/i);
+  if (rarityMatch) {
+    const extractedRarity = parseInt(rarityMatch[1]);
+    if (extractedRarity >= 1 && extractedRarity <= 8) {
+      rarity = extractedRarity;
+      console.log(`✨ Extracted rarity: ${rarity}`);
+    }
+  }
   
-  // Determine type from title or attributes
-  if (title.toLowerCase().includes('dragon') || description.toLowerCase().includes('дракон')) {
+  // 2. Определяем фракцию из названия (английский транскрипт)
+  let faction = 'Каледор'; // default
+  for (const [englishName, russianName] of Object.entries(FACTION_MAP)) {
+    if (title.includes(englishName)) {
+      faction = russianName;
+      console.log(`🏛️ Detected faction: ${englishName} -> ${faction}`);
+      break;
+    }
+  }
+  
+  // 3. Определяем тип карты (hero или dragon)
+  let card_type: 'hero' | 'dragon' = 'hero';
+  const dragonKeywords = ['dragon', 'дракон', 'drake', 'wyrm'];
+  const titleLower = title.toLowerCase();
+  const descLower = description.toLowerCase();
+  
+  if (dragonKeywords.some(keyword => titleLower.includes(keyword) || descLower.includes(keyword))) {
     card_type = 'dragon';
+    console.log(`🐉 Detected dragon card`);
   }
   
-  // Determine rarity from attributes or title
-  if (metadata.attributes) {
-    const rarityAttr = metadata.attributes.find((attr: any) => 
-      attr.trait_type?.toLowerCase() === 'rarity'
-    );
-    if (rarityAttr) {
-      const rarityMap: Record<string, number> = {
-        'common': 1,
-        'uncommon': 2,
-        'rare': 3,
-        'epic': 4,
-        'legendary': 5,
-      };
-      rarity = rarityMap[rarityAttr.value?.toLowerCase()] || 1;
-    }
-  }
-  
-  // Determine faction from attributes
-  if (metadata.attributes) {
-    const factionAttr = metadata.attributes.find((attr: any) => 
-      attr.trait_type?.toLowerCase() === 'faction'
-    );
-    if (factionAttr) {
-      faction = factionAttr.value || 'Каледор';
-    }
-  }
-  
-  // Calculate stats based on rarity and type
+  // 4. Рассчитываем характеристики на основе редкости и типа карты
   const baseStats = card_type === 'dragon' 
     ? { health: 80, defense: 20, power: 25, magic: 30 }
     : { health: 100, defense: 25, power: 20, magic: 15 };
   
+  // Множитель увеличивается с редкостью: rarity1=1x, rarity2=1.5x, rarity3=2x и т.д.
   const multiplier = 1 + (rarity - 1) * 0.5;
   
+  const stats = {
+    health: Math.floor(baseStats.health * multiplier),
+    defense: Math.floor(baseStats.defense * multiplier),
+    power: Math.floor(baseStats.power * multiplier),
+    magic: Math.floor(baseStats.magic * multiplier),
+  };
+  
+  console.log(`📊 Calculated stats (multiplier ${multiplier}x):`, stats);
+  
   return {
-    card_name: title || `NFT ${nft.token_id}`,
+    card_name: title || `NFT ${tokenId}`,
     card_type,
     rarity,
     faction,
-    stats: {
-      health: Math.floor(baseStats.health * multiplier),
-      defense: Math.floor(baseStats.defense * multiplier),
-      power: Math.floor(baseStats.power * multiplier),
-      magic: Math.floor(baseStats.magic * multiplier),
-    },
+    stats,
   };
 }
