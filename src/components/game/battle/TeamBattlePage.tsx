@@ -14,6 +14,7 @@ import { preloadItemTemplates } from '@/utils/monsterLootMapping';
 import { supabase } from '@/integrations/supabase/client';
 import { useWalletContext } from '@/contexts/WalletConnectContext';
 import { useDungeonSync } from '@/hooks/useDungeonSync';
+import { useEnergy } from '@/utils/energyManager';
 interface TeamBattlePageProps {
   dungeonType: DungeonType;
 }
@@ -28,7 +29,7 @@ export const TeamBattlePage: React.FC<TeamBattlePageProps> = ({
   const processedLevelRef = React.useRef<number | null>(null);
   
   const { accountId } = useWalletContext();
-  const { deviceId } = useDungeonSync();
+  const { deviceId, startDungeonSession } = useDungeonSync();
   const [sessionTerminated, setSessionTerminated] = useState(false);
   
   // Sync health from database on component mount
@@ -61,7 +62,21 @@ export const TeamBattlePage: React.FC<TeamBattlePageProps> = ({
     aliveOpponents,
     lastRoll
   } = useTeamBattle(dungeonType);
-  const handleStartBattle = () => {
+  const handleStartBattle = async () => {
+    // Снимаем энергию при начале боя
+    const energyUsed = useEnergy();
+    if (!energyUsed) {
+      console.warn('Not enough energy to start battle');
+      return;
+    }
+    
+    // Создаем запись в БД о начале сессии подземелья
+    const started = await startDungeonSession(dungeonType, 1);
+    if (!started) {
+      console.warn('Failed to start dungeon session');
+      return;
+    }
+    
     startTransition(() => {
       localStorage.setItem('activeBattleInProgress', 'true');
       setBattleStarted(true);

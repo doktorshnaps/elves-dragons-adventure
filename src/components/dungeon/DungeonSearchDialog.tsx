@@ -106,22 +106,7 @@ export const DungeonSearchDialog = ({
 
     // Only allow selection if no active dungeon or if it's the active dungeon
     if (!activeDungeon || activeDungeon === dungeonType) {
-      // Use energy only when entering a new dungeon (not continuing an active one)
-      if (!activeDungeon) {
-        const energyUsed = useEnergy();
-        if (!energyUsed) {
-          console.warn('Not enough energy to enter dungeon');
-          return;
-        }
-        
-        // Начинаем новую сессию подземелья
-        const started = await startDungeonSession(dungeonType, 1);
-        if (!started) {
-          console.warn('Failed to start dungeon session');
-          return;
-        }
-      }
-      
+      // Просто переходим в подземелье, энергия и сессия создадутся при нажатии "Начать бой"
       const route = dungeonRoutes[dungeonType];
       navigate(route);
     }
