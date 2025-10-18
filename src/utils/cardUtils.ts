@@ -256,6 +256,16 @@ const getClassMultiplier = (cardName: string, cardType: CardType) => {
         break;
       }
     }
+    // Поиск по ключевым словам: если имя карты содержит ключевую фразу из сопоставлений
+    if (!directClassName) {
+      for (const key of Object.keys(directMap)) {
+        const keyNorm = normalize(key);
+        if (keyNorm && nameNorm.includes(keyNorm)) {
+          directClassName = directMap[key];
+          break;
+        }
+      }
+    }
   }
 
   if (directClassName) {
