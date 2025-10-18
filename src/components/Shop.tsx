@@ -89,6 +89,10 @@ export const Shop = ({ onClose }: ShopProps) => {
       // Используем shop-purchase edge function для всех типов товаров
       const result = await purchaseItem(item.id, accountId, 1);
 
+      if (!result || result.error) {
+        throw new Error(result?.error || 'Purchase failed');
+      }
+
       console.log('✅ Purchase successful, new balance:', result.new_balance);
       
       // Обновляем баланс локально без перезагрузки всей страницы
