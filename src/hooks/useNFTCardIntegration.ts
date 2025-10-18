@@ -5,6 +5,9 @@ import { Card as CardType } from '@/types/cards';
 import { useToast } from './use-toast';
 import { supabase } from '@/integrations/supabase/client';
 
+let globalHasSynced = false;
+let syncInFlight = false;
+
 export const useNFTCardIntegration = () => {
   const [nftCards, setNftCards] = useState<CardType[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -37,19 +40,12 @@ export const useNFTCardIntegration = () => {
 
   // Автоматическая синхронизация при подключении кошелька (только один раз)
   useEffect(() => {
-    if (isConnected && accountId && !hasSynced) {
+    if (isConnected && accountId && !hasSynced && !globalHasSynced) {
       console.log('🔄 Auto-syncing NFTs for:', accountId);
       syncNFTsFromWallet();
     }
   }, [isConnected, accountId, hasSynced]);
 
-  // 🔥 ВРЕМЕННАЯ принудительная синхронизация для проверки изменений
-  useEffect(() => {
-    if (isConnected && accountId) {
-      console.log('🔥 FORCE SYNC: Triggering immediate NFT sync');
-      syncNFTsFromWallet();
-    }
-  }, []);
 
   // Периодическая синхронизация - УВЕЛИЧЕНО до 5 минут для снижения нагрузки
   useEffect(() => {
@@ -114,12 +110,18 @@ export const useNFTCardIntegration = () => {
   }, [nftCards, isConnected, accountId]);
 
   const syncNFTsFromWallet = async () => {
-    if (!accountId || isLoading) {
-      console.log('⚠️ Skipping sync - no accountId or already loading');
+    if (!accountId) {
+      console.log('⚠️ Skipping sync - no accountId');
       return;
     }
-
-    console.log('🔄 Starting NFT sync for:', accountId);
+    if (syncInFlight) {
+      console.log('⏳ Skipping sync - another sync is in flight');
+      return;
+    }
+    syncInFlight = true;
+    if (isLoading) {
+      console.log('⏳ Instance already loading, but proceeding with global gate');
+    }
     setIsLoading(true);
     try {
       // Синхронизируем NFT с основного контракта (doubledog.hot.tg)
@@ -290,6 +292,8 @@ export const useNFTCardIntegration = () => {
       // Убираем toast-ошибки - синхронизация происходит в фоне
     } finally {
       setIsLoading(false);
+      syncInFlight = false;
+      if (!globalHasSynced) globalHasSynced = true;
     }
   };
 

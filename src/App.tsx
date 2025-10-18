@@ -18,7 +18,6 @@ import { useGameSync } from './hooks/useGameSync';
 import { preloadCriticalLibs } from './utils/bundleOptimizations';
 import { registerGameServiceWorker } from './utils/cacheStrategy';
 import { MusicController } from './components/MusicController';
-import NFTBackgroundSync from './components/nft/NFTBackgroundSync';
 
 // Lazy imports
 import {
@@ -70,7 +69,6 @@ function App() {
             <LanguageProvider>
               <div className="overflow-x-hidden max-w-full w-full">
                 <MusicController />
-                <NFTBackgroundSync />
                 <Routes>
           <Route path="/" element={<Index />} />
           <Route path="/auth" element={<Auth />} />
