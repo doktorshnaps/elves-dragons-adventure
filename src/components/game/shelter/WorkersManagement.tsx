@@ -151,25 +151,7 @@ export const WorkersManagement = ({ onSpeedBoostChange }: WorkersManagementProps
     w.instanceId ? !activeInstanceIds.has(w.instanceId) : !activeWorkerIds.has(w.id)
   );
 
-  // ГРУППИРОВКА рабочих по базовому ID (извлекаем базовый шаблон из полного ID)
-  // Формат ID: "worker_5_1760824615866_4zfpkgu9l_0" -> группируем по "worker_5"
-  const groupedWorkers = visibleWorkers.reduce((acc: any[], worker: any) => {
-    // Извлекаем базовый ID шаблона (первые 2 части до timestamp)
-    const baseId = worker.id.split('_').slice(0, 2).join('_'); // "worker_5"
-    const existingGroup = acc.find(g => g.baseId === baseId);
-    if (existingGroup) {
-      existingGroup.count += 1;
-      existingGroup.instances.push(worker);
-    } else {
-      acc.push({
-        ...worker,
-        baseId,
-        count: 1,
-        instances: [worker]
-      });
-    }
-    return acc;
-  }, []);
+  const groupedWorkers = visibleWorkers;
 
   console.log('👷 Workers analysis:', {
     inventoryWorkers: inventoryWorkers.length,
@@ -177,13 +159,11 @@ export const WorkersManagement = ({ onSpeedBoostChange }: WorkersManagementProps
     availableWorkers: availableWorkers.length,
     activeWorkers: activeWorkers.length,
     visibleWorkers: visibleWorkers.length,
-    groupedWorkers: groupedWorkers.length,
     inventoryDetails: inventoryWorkers.map(w => ({ id: w.id, instanceId: w.instanceId, name: w.name, source: w.source })),
     cardDetails: cardInstanceWorkers.map(w => ({ id: w.id, name: w.name, source: w.source, instanceId: (w as any).instanceId })),
     activeWorkersDetails: activeWorkers.map(w => ({ workerId: w.workerId, cardInstanceId: w.cardInstanceId, name: w.name })),
     activeInstanceIdsSet: Array.from(activeInstanceIds),
     activeWorkerIdsSet: Array.from(activeWorkerIds),
-    groupedDetails: groupedWorkers.map(g => ({ baseId: g.baseId, id: g.id, name: g.name, count: g.count })),
     fullInventory: (gameState.inventory || []).filter((i: any) => i?.type === 'worker'),
     fullInventoryCount: (gameState.inventory || []).filter((i: any) => i?.type === 'worker').length
   });
@@ -517,7 +497,7 @@ export const WorkersManagement = ({ onSpeedBoostChange }: WorkersManagementProps
             {/* Доступные рабочие */}
             <div>
               <label className="text-sm font-medium mb-2 block">{t(language, 'shelter.availableWorkers')}</label>
-              {groupedWorkers.length === 0 ? (
+              {visibleWorkers.length === 0 ? (
                 <div className="text-center py-8 text-muted-foreground">
                   <Users className="w-12 h-12 mx-auto mb-2 opacity-50" />
                   <p>{t(language, 'shelter.noWorkersInInventory')}</p>
@@ -525,34 +505,27 @@ export const WorkersManagement = ({ onSpeedBoostChange }: WorkersManagementProps
                 </div>
               ) : (
                 <div className="grid gap-3">
-                  {groupedWorkers.map((workerGroup, i) => (
-                    <div key={workerGroup.instances[0].instanceId || `${workerGroup.id}-${i}`} className="flex items-center justify-between p-3 border rounded-lg">
+                  {visibleWorkers.map((worker, i) => (
+                    <div key={(worker as any).instanceId || `${worker.id}-${i}`} className="flex items-center justify-between p-3 border rounded-lg">
                       <div>
-                        <h4 className="font-medium">
-                          {workerGroup.name}
-                          {workerGroup.count > 1 && (
-                            <span className="ml-2 px-2 py-0.5 text-xs bg-primary/10 text-primary rounded-full font-semibold">
-                              ×{workerGroup.count}
-                            </span>
-                          )}
-                        </h4>
+                        <h4 className="font-medium">{worker.name}</h4>
                         <p className="text-sm text-muted-foreground">
-                          +{workerGroup.value}% ускорение • {formatTime(workerGroup.stats?.workDuration || 0)}
-                          {(workerGroup as any).source === 'card_instances' && (workerGroup as any).currentHealth < (workerGroup as any).maxHealth && (
+                          +{worker.value}% ускорение • {formatTime(worker.stats?.workDuration || 0)}
+                          {(worker as any).source === 'card_instances' && (worker as any).currentHealth < (worker as any).maxHealth && (
                             <span className="text-amber-600 ml-2">
-                              ❤️ {(workerGroup as any).currentHealth}/{(workerGroup as any).maxHealth}
+                              ❤️ {(worker as any).currentHealth}/{(worker as any).maxHealth}
                             </span>
                           )}
                         </p>
-                        {workerGroup.description && (
-                          <p className="text-xs text-muted-foreground mt-1">{workerGroup.description}</p>
+                        {worker.description && (
+                          <p className="text-xs text-muted-foreground mt-1">{worker.description}</p>
                         )}
                       </div>
                       <Button 
-                        onClick={() => assignWorker(workerGroup)}
+                        onClick={() => assignWorker(worker)}
                         size="sm"
                         className="shrink-0"
-                        disabled={(workerGroup as any).source === 'card_instances' && (workerGroup as any).currentHealth <= 0}
+                        disabled={(worker as any).source === 'card_instances' && (worker as any).currentHealth <= 0}
                       >
                         {t(language, 'shelter.assignButton')}
                       </Button>
@@ -562,14 +535,6 @@ export const WorkersManagement = ({ onSpeedBoostChange }: WorkersManagementProps
               )}
             </div>
 
-            {groupedWorkers.length > 0 && (
-              <div className="flex items-start gap-2 p-3 bg-amber-50 dark:bg-amber-950/20 rounded-lg">
-                <AlertTriangle className="w-4 h-4 text-amber-600 mt-0.5 shrink-0" />
-                <div className="text-sm text-amber-700 dark:text-amber-400">
-                  <strong>{t(language, 'shelter.warningTitle')}</strong> {t(language, 'shelter.warningText')}
-                </div>
-              </div>
-            )}
           </div>
         </CardContent>
       </Card>
