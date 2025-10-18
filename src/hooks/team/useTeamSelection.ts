@@ -87,15 +87,16 @@ export const useTeamSelection = () => {
     let changed = false;
     const cleaned: TeamPair[] = baseTeam
       .map(pair => {
-        // Drop dragon if it no longer exists
-        if (pair?.dragon && !validIds.has(pair.dragon.id)) {
+        // Drop dragon if it no longer exists (but keep NFT dragons)
+        if (pair?.dragon && !pair.dragon.isNFT && !validIds.has(pair.dragon.id)) {
           changed = true;
           return { ...pair, dragon: undefined };
         }
         return pair;
       })
       .filter(pair => {
-        const keep = !!pair?.hero?.id && validIds.has(pair.hero.id);
+        // Keep NFT heroes even if not present in base cards/instances
+        const keep = !!pair?.hero?.id && (pair.hero.isNFT || validIds.has(pair.hero.id));
         if (!keep) changed = true;
         return keep;
       });
