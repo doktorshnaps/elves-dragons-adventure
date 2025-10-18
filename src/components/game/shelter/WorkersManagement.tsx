@@ -148,17 +148,35 @@ export const WorkersManagement = ({ onSpeedBoostChange }: WorkersManagementProps
     w.instanceId ? !activeInstanceIds.has(w.instanceId) : !activeWorkerIds.has(w.id)
   );
 
+  // ГРУППИРОВКА рабочих по id для отображения с количеством
+  const groupedWorkers = visibleWorkers.reduce((acc: any[], worker: any) => {
+    const existingGroup = acc.find(g => g.id === worker.id);
+    if (existingGroup) {
+      existingGroup.count += 1;
+      existingGroup.instances.push(worker);
+    } else {
+      acc.push({
+        ...worker,
+        count: 1,
+        instances: [worker]
+      });
+    }
+    return acc;
+  }, []);
+
   console.log('👷 Workers analysis:', {
     inventoryWorkers: inventoryWorkers.length,
     cardInstanceWorkers: cardInstanceWorkers.length,
     availableWorkers: availableWorkers.length,
     activeWorkers: activeWorkers.length,
     visibleWorkers: visibleWorkers.length,
+    groupedWorkers: groupedWorkers.length,
     inventoryDetails: inventoryWorkers.map(w => ({ id: w.id, instanceId: w.instanceId, name: w.name, source: w.source })),
     cardDetails: cardInstanceWorkers.map(w => ({ id: w.id, name: w.name, source: w.source, instanceId: (w as any).instanceId })),
     activeWorkersDetails: activeWorkers.map(w => ({ workerId: w.workerId, cardInstanceId: w.cardInstanceId, name: w.name })),
     activeInstanceIdsSet: Array.from(activeInstanceIds),
-    activeWorkerIdsSet: Array.from(activeWorkerIds)
+    activeWorkerIdsSet: Array.from(activeWorkerIds),
+    groupedDetails: groupedWorkers.map(g => ({ id: g.id, name: g.name, count: g.count }))
   });
 
   // Загружаем активных рабочих из gameState и localStorage
@@ -271,8 +289,16 @@ export const WorkersManagement = ({ onSpeedBoostChange }: WorkersManagementProps
     return () => clearInterval(interval);
   }, [toast, buildings, gameState.actions]);
 
-  const assignWorker = async (worker: any) => {
+  const assignWorker = async (workerGroup: any) => {
+    // Берём ПЕРВЫЙ экземпляр из группы для назначения
+    const worker = workerGroup.instances ? workerGroup.instances[0] : workerGroup;
+    
     if (!worker.stats?.workDuration) return;
+
+    console.log('👷 Assigning worker from group:', {
+      group: workerGroup.count ? { id: workerGroup.id, name: workerGroup.name, count: workerGroup.count } : 'single worker',
+      selectedInstance: { id: worker.id, instanceId: worker.instanceId, source: worker.source }
+    });
 
     const newActiveWorker: ActiveWorker = {
       id: `${worker.id}_${Date.now()}`,
@@ -490,7 +516,7 @@ export const WorkersManagement = ({ onSpeedBoostChange }: WorkersManagementProps
             {/* Доступные рабочие */}
             <div>
               <label className="text-sm font-medium mb-2 block">{t(language, 'shelter.availableWorkers')}</label>
-              {visibleWorkers.length === 0 ? (
+              {groupedWorkers.length === 0 ? (
                 <div className="text-center py-8 text-muted-foreground">
                   <Users className="w-12 h-12 mx-auto mb-2 opacity-50" />
                   <p>{t(language, 'shelter.noWorkersInInventory')}</p>
@@ -498,27 +524,27 @@ export const WorkersManagement = ({ onSpeedBoostChange }: WorkersManagementProps
                 </div>
               ) : (
                 <div className="grid gap-3">
-                  {visibleWorkers.map((worker, i) => (
-                    <div key={(worker as any).instanceId || `${worker.id}-${(worker as any)._idx ?? i}` } className="flex items-center justify-between p-3 border rounded-lg">
+                  {groupedWorkers.map((workerGroup, i) => (
+                    <div key={workerGroup.instances[0].instanceId || `${workerGroup.id}-${i}`} className="flex items-center justify-between p-3 border rounded-lg">
                       <div>
                         <h4 className="font-medium">{worker.name}</h4>
                         <p className="text-sm text-muted-foreground">
-                          +{worker.value}% ускорение • {formatTime(worker.stats?.workDuration || 0)}
-                          {(worker as any).source === 'card_instances' && (worker as any).currentHealth < (worker as any).maxHealth && (
+                          +{workerGroup.value}% ускорение • {formatTime(workerGroup.stats?.workDuration || 0)}
+                          {(workerGroup as any).source === 'card_instances' && (workerGroup as any).currentHealth < (workerGroup as any).maxHealth && (
                             <span className="text-amber-600 ml-2">
-                              ❤️ {(worker as any).currentHealth}/{(worker as any).maxHealth}
+                              ❤️ {(workerGroup as any).currentHealth}/{(workerGroup as any).maxHealth}
                             </span>
                           )}
                         </p>
-                        {worker.description && (
-                          <p className="text-xs text-muted-foreground mt-1">{worker.description}</p>
+                        {workerGroup.description && (
+                          <p className="text-xs text-muted-foreground mt-1">{workerGroup.description}</p>
                         )}
                       </div>
                       <Button 
-                        onClick={() => assignWorker(worker)}
+                        onClick={() => assignWorker(workerGroup)}
                         size="sm"
                         className="shrink-0"
-                        disabled={(worker as any).source === 'card_instances' && (worker as any).currentHealth <= 0}
+                        disabled={(workerGroup as any).source === 'card_instances' && (workerGroup as any).currentHealth <= 0}
                       >
                         {t(language, 'shelter.assignButton')}
                       </Button>
@@ -528,7 +554,7 @@ export const WorkersManagement = ({ onSpeedBoostChange }: WorkersManagementProps
               )}
             </div>
 
-            {visibleWorkers.length > 0 && (
+            {groupedWorkers.length > 0 && (
               <div className="flex items-start gap-2 p-3 bg-amber-50 dark:bg-amber-950/20 rounded-lg">
                 <AlertTriangle className="w-4 h-4 text-amber-600 mt-0.5 shrink-0" />
                 <div className="text-sm text-amber-700 dark:text-amber-400">
