@@ -120,7 +120,9 @@ export const TeamBattlePage: React.FC<TeamBattlePageProps> = ({
 
   // Мониторинг активной сессии в БД: если удалена на другом устройстве — блокируем
   useEffect(() => {
-    if (!accountId || !deviceId) return;
+    // Следим ТОЛЬКО когда бой активен на этом устройстве
+    const isActiveLocal = battleStarted || localStorage.getItem('activeBattleInProgress') === 'true';
+    if (!accountId || !deviceId || !isActiveLocal) return;
 
     const checkSession = async () => {
       try {
@@ -135,8 +137,9 @@ export const TeamBattlePage: React.FC<TeamBattlePageProps> = ({
           .limit(1);
 
         if (error) throw error;
-        // Если записи нет — сессия была удалена на другом устройстве
-        if (!data || data.length === 0) {
+        // Если записи нет — считаем, что сессию завершили удаленно (только если локально бой активен)
+        const stillActiveLocal = battleStarted || localStorage.getItem('activeBattleInProgress') === 'true';
+        if ((!data || data.length === 0) && stillActiveLocal) {
           setSessionTerminated(true);
         }
       } catch (e) {
@@ -159,8 +162,11 @@ export const TeamBattlePage: React.FC<TeamBattlePageProps> = ({
           filter: `account_id=eq.${accountId}`
         },
         () => {
-          console.log('Session deleted remotely, blocking battle');
-          setSessionTerminated(true);
+          const stillActiveLocal = battleStarted || localStorage.getItem('activeBattleInProgress') === 'true';
+          if (stillActiveLocal) {
+            console.log('Session deleted remotely, blocking battle');
+            setSessionTerminated(true);
+          }
         }
       )
       .subscribe();
@@ -172,7 +178,7 @@ export const TeamBattlePage: React.FC<TeamBattlePageProps> = ({
       supabase.removeChannel(channel);
       clearInterval(interval);
     };
-  }, [accountId, deviceId]);
+  }, [accountId, deviceId, battleStarted]);
 
   // Автоматически активируем бой при загрузке, если есть активное подземелье
   useEffect(() => {
