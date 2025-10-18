@@ -153,8 +153,10 @@ if (itemTemplate.type === 'worker') {
   
   // Для рабочих создаем записи в card_instances
   for (let i = 0; i < quantity; i++) {
+    const instanceId = `${itemTemplate.item_id || `worker_${item_id}`}_${crypto.randomUUID()}`;
     const workerCardData = {
-      id: itemTemplate.item_id || `worker_${item_id}`,
+      id: instanceId,
+      template_id: itemTemplate.item_id || `worker_${item_id}`,
       name: itemTemplate.name,
       description: itemTemplate.description,
       type: 'worker',
