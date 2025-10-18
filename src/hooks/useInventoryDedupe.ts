@@ -27,21 +27,10 @@ export const useInventoryDedupe = () => {
       const duplicates: Item[] = [];
 
       inventory.forEach((item: any) => {
-        // Обработка рабочих отдельно
+        // Рабочих больше нет в inventory, пропускаем их
         if (item?.type === 'worker' || item?.type === 'workers') {
-          const workerInstanceId = item.instanceId; // не используем fallback на id, т.к. у одинаковых типов он общий
-          if (!workerInstanceId) {
-            // Нет instanceId — это уникальная запись рабочего
-            uniqueItems.push(item);
-            return;
-          }
-          if (seenIds.has(workerInstanceId)) {
-            duplicates.push(item);
-          } else {
-            seenIds.add(workerInstanceId);
-            uniqueItems.push(item);
-          }
-          return;
+          console.warn('⚠️ Found worker in inventory, but workers should only be in card_instances:', item);
+          return; // Не добавляем в uniqueItems
         }
 
         // Для прочих предметов используем instanceId или id

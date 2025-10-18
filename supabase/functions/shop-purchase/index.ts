@@ -147,16 +147,14 @@ serve(async (req) => {
 
     console.log(`💰 Successfully deducted ${totalCost} ELL from balance`);
     
-// Рабочие теперь добавляем напрямую в inventory (не в card_instances)
+// Рабочие добавляем в card_instances (каждый рабочий = отдельная запись)
 if (itemTemplate.type === 'worker') {
   console.log(`👷 Processing ${quantity} workers: ${itemTemplate.name} (item_id: ${itemTemplate.item_id})`);
   
-  // Для рабочих добавляем в инвентарь через atomic_inventory_update
+  // Для рабочих создаем записи в card_instances
   for (let i = 0; i < quantity; i++) {
-    const workerData = {
-      id: `worker_${item_id}_${Date.now()}_${Math.random().toString(36).substr(2, 9)}_${i}`,
-      instanceId: `worker_${item_id}_${Date.now()}_${Math.random().toString(36).substr(2, 9)}_${i}`,
-      templateId: `worker_${item_id}`,
+    const workerCardData = {
+      id: itemTemplate.item_id || `worker_${item_id}`,
       name: itemTemplate.name,
       description: itemTemplate.description,
       type: 'worker',
@@ -166,19 +164,20 @@ if (itemTemplate.type === 'worker') {
       image: itemTemplate.image_url
     };
 
-    const { error: inventoryError } = await supabase.rpc('atomic_inventory_update', {
+    const { data: instanceData, error: instanceError } = await supabase.rpc('create_card_instance_by_wallet', {
       p_wallet_address: wallet_address,
-      p_price_deduction: 0, // Цена уже списана выше
-      p_new_item: workerData
+      p_card: workerCardData
     });
 
-    if (inventoryError) {
-      console.error(`❌ Error adding worker ${i+1}/${quantity} to inventory:`, inventoryError);
-      throw inventoryError;
+    if (instanceError) {
+      console.error(`❌ Error creating card instance for worker ${i+1}/${quantity}:`, instanceError);
+      throw instanceError;
     }
+
+    console.log(`✅ Created card instance for worker ${i+1}/${quantity}:`, instanceData);
   }
 
-  console.log(`✅ Added ${quantity} workers to inventory`);
+  console.log(`✅ Added ${quantity} workers to card_instances`);
     } else {
       console.log(`📦 Processing as regular item: ${itemTemplate.name}`);
       
