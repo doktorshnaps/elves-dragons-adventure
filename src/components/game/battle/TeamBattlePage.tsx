@@ -88,10 +88,18 @@ export const TeamBattlePage: React.FC<TeamBattlePageProps> = ({
     
     startTransition(() => {
       localStorage.removeItem('activeBattleInProgress');
+      localStorage.removeItem('teamBattleState');
+      localStorage.removeItem('battleState');
       resetBattle();
       resetRewards();
       navigate('/dungeons');
     });
+  };
+
+  const handleSurrender = () => {
+    // Сбрасываем все награды и сразу выходим без показа модального окна
+    resetRewards();
+    handleExitAndReset();
   };
   const handleBackToMenu = () => {
     startTransition(() => {
@@ -350,7 +358,18 @@ export const TeamBattlePage: React.FC<TeamBattlePageProps> = ({
         
       </div>
       
-      <TeamBattleArena playerPairs={battleState.playerPairs} opponents={battleState.opponents} attackOrder={attackOrder} isPlayerTurn={isPlayerTurn} onAttack={executePlayerAttack} onAbilityUse={executeAbilityUse} onEnemyAttack={executeEnemyAttack} level={battleState.level} lastRoll={lastRoll} />
+      <TeamBattleArena 
+        playerPairs={battleState.playerPairs} 
+        opponents={battleState.opponents} 
+        attackOrder={attackOrder} 
+        isPlayerTurn={isPlayerTurn} 
+        onAttack={executePlayerAttack} 
+        onAbilityUse={executeAbilityUse} 
+        onEnemyAttack={executeEnemyAttack} 
+        level={battleState.level} 
+        lastRoll={lastRoll}
+        onSurrender={handleSurrender}
+      />
       
     </>;
 };
