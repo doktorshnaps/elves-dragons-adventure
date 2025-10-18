@@ -59,15 +59,20 @@ export const WhitelistContractsManager = () => {
     }
 
     try {
-      // Get current wallet address from context
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error('Not authenticated');
+      // Try to get wallet address from game_data
+      const gameDataRaw = localStorage.getItem('gameData');
+      let walletAddress = 'mr_bruts.tg'; // default fallback
       
-      const { data: profileData } = await supabase
-        .from('profiles')
-        .select('wallet_address')
-        .eq('user_id', user.id)
-        .single();
+      if (gameDataRaw) {
+        try {
+          const gameData = JSON.parse(gameDataRaw);
+          if (gameData?.wallet_address) {
+            walletAddress = gameData.wallet_address;
+          }
+        } catch (e) {
+          console.warn('Could not parse gameData from localStorage');
+        }
+      }
       
       const { error } = await supabase
         .from('whitelist_contracts')
@@ -75,7 +80,7 @@ export const WhitelistContractsManager = () => {
           contract_address: newContract.address.trim(),
           contract_name: newContract.name.trim() || null,
           description: newContract.description.trim() || null,
-          added_by_wallet_address: profileData?.wallet_address || 'mr_bruts.tg'
+          added_by_wallet_address: walletAddress
         });
 
       if (error) throw error;
