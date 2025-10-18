@@ -43,6 +43,14 @@ export const useNFTCardIntegration = () => {
     }
   }, [isConnected, accountId, hasSynced]);
 
+  // 🔥 ВРЕМЕННАЯ принудительная синхронизация для проверки изменений
+  useEffect(() => {
+    if (isConnected && accountId) {
+      console.log('🔥 FORCE SYNC: Triggering immediate NFT sync');
+      syncNFTsFromWallet();
+    }
+  }, []);
+
   // Периодическая синхронизация - УВЕЛИЧЕНО до 5 минут для снижения нагрузки
   useEffect(() => {
     if (!isConnected || !accountId) return;
