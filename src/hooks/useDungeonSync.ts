@@ -64,13 +64,30 @@ export const useDungeonSync = () => {
       if (error) throw error;
 
       if (data) {
-        setActiveSessions(data.map(row => ({
+        const mapped = data.map(row => ({
           device_id: row.device_id,
           started_at: row.started_at,
           last_activity: row.last_activity,
           dungeon_type: row.dungeon_type,
           level: row.level
-        })));
+        }));
+        setActiveSessions(mapped);
+
+        // Если для текущего устройства нет актуальной записи, сбрасываем локальную сессию
+        const TIMEOUT = 30000;
+        const now = Date.now();
+        const hasThisDevice = mapped.some(r => r.device_id === deviceId && (now - r.last_activity) < TIMEOUT);
+        if (!hasThisDevice && localSession) {
+          try {
+            localStorage.removeItem('activeDungeonSession');
+            // Синхронизируем и боевую часть, чтобы UI на устройстве очистился
+            localStorage.removeItem('teamBattleState');
+            localStorage.removeItem('activeBattleInProgress');
+            localStorage.removeItem('battleState');
+            setLocalSession(null);
+            try { window.dispatchEvent(new CustomEvent('battleReset')); } catch {}
+          } catch {}
+        }
       }
     } catch (error) {
       console.error('Error loading active sessions:', error);
