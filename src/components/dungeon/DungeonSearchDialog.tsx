@@ -188,7 +188,7 @@ export const DungeonSearchDialog = ({
           {hasOtherActiveSessions && (
             <div className="text-sm text-white/80 bg-yellow-500/10 border border-yellow-400/30 rounded-md p-3 mb-4">
               <p className="mb-2">На другом устройстве уже запущено подземелье. Вход заблокирован.</p>
-              <Button variant="destructive" onClick={async () => { await endDungeonSession(); }}>
+              <Button variant="destructive" className="w-full text-xs sm:text-sm" onClick={async () => { await endDungeonSession(); }}>
                 Завершить подземелье на другом устройстве
               </Button>
             </div>
