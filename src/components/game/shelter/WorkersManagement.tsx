@@ -527,7 +527,14 @@ export const WorkersManagement = ({ onSpeedBoostChange }: WorkersManagementProps
                   {groupedWorkers.map((workerGroup, i) => (
                     <div key={workerGroup.instances[0].instanceId || `${workerGroup.id}-${i}`} className="flex items-center justify-between p-3 border rounded-lg">
                       <div>
-                        <h4 className="font-medium">{worker.name}</h4>
+                        <h4 className="font-medium">
+                          {workerGroup.name}
+                          {workerGroup.count > 1 && (
+                            <span className="ml-2 px-2 py-0.5 text-xs bg-primary/10 text-primary rounded-full font-semibold">
+                              ×{workerGroup.count}
+                            </span>
+                          )}
+                        </h4>
                         <p className="text-sm text-muted-foreground">
                           +{workerGroup.value}% ускорение • {formatTime(workerGroup.stats?.workDuration || 0)}
                           {(workerGroup as any).source === 'card_instances' && (workerGroup as any).currentHealth < (workerGroup as any).maxHealth && (
