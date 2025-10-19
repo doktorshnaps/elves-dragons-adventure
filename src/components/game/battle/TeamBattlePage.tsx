@@ -1,4 +1,4 @@
-import React, { useState, startTransition, useEffect } from 'react';
+import React, { useState, startTransition, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -15,6 +15,8 @@ import { supabase } from '@/integrations/supabase/client';
 import { useWalletContext } from '@/contexts/WalletConnectContext';
 import { useDungeonSync } from '@/hooks/useDungeonSync';
 import { useEnergy } from '@/utils/energyManager';
+import { useTeamSelection } from '@/hooks/team/useTeamSelection';
+import type { TeamPair as BattleTeamPair } from '@/types/teamBattle';
 interface TeamBattlePageProps {
   dungeonType: DungeonType;
 }
@@ -62,6 +64,35 @@ export const TeamBattlePage: React.FC<TeamBattlePageProps> = ({
     aliveOpponents,
     lastRoll
   } = useTeamBattle(dungeonType);
+
+  const { selectedPairs } = useTeamSelection();
+  const displayPairs: BattleTeamPair[] = useMemo(() => {
+    if (battleState.playerPairs.length > 0) return battleState.playerPairs as BattleTeamPair[];
+    return selectedPairs.map((pair, index) => {
+      const hero: any = pair.hero;
+      const dragon: any = pair.dragon;
+      const heroMax = hero?.health ?? 0;
+      const dragonMax = dragon?.health ?? 0;
+      const heroCurrent = hero?.currentHealth ?? heroMax;
+      const dragonCurrent = dragon ? (dragon.currentHealth ?? dragonMax) : 0;
+      const dragonAlive = !!dragon && dragonCurrent > 0;
+      const heroArmor = hero?.defense ?? 0;
+      const dragonArmor = dragonAlive ? (dragon?.defense ?? 0) : 0;
+      const pairArmor = dragonAlive ? Math.floor((heroArmor + dragonArmor) / 2) : heroArmor;
+      const power = (hero?.power ?? 0) + (dragonAlive ? (dragon?.power ?? 0) : 0);
+      return {
+        id: `pair-${index}`,
+        hero,
+        dragon,
+        health: heroCurrent + (dragonCurrent || 0),
+        maxHealth: heroMax + (dragonMax || 0),
+        power,
+        defense: pairArmor,
+        attackOrder: index + 1,
+      } as BattleTeamPair;
+    });
+  }, [battleState.playerPairs, selectedPairs]);
+
   const handleStartBattle = async () => {
     // Снимаем энергию при начале боя
     const energyUsed = useEnergy();
@@ -357,14 +388,14 @@ export const TeamBattlePage: React.FC<TeamBattlePageProps> = ({
 
   if (!battleStarted) {
     return <>
-        <div className="fixed top-4 left-4 z-10">
+        <div className="fixed top-4 left-4 z-[500]">
           <Button onClick={handleBackToMenu} variant="ghost" size="sm" className="bg-card/50 backdrop-blur-sm border border-border/50">
             <ArrowLeft className="w-4 h-4 mr-2" />
             Назад
           </Button>
         </div>
         
-        <AttackOrderSelector playerPairs={battleState.playerPairs} attackOrder={attackOrder} onOrderChange={updateAttackOrder} onStartBattle={handleStartBattle} />
+        <AttackOrderSelector playerPairs={displayPairs} attackOrder={attackOrder} onOrderChange={updateAttackOrder} onStartBattle={handleStartBattle} />
       </>;
   }
   return <>
