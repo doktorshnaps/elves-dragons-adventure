@@ -133,19 +133,10 @@ export const DungeonSearchDialog = ({
   const canEnterDungeon = (dungeonType: DungeonType, requiredLevel: number) => {
     // Блокируем выбор, если есть активная сессия на другом устройстве
     if (hasOtherActiveSessions) {
-      console.log('🚫 Cannot enter dungeon: other active sessions');
       return false;
     }
 
     const basicRequirements = !isHealthTooLow && hasActiveCards && energyState.current > 0;
-    
-    console.log(`🔍 Dungeon ${dungeonType} check:`, {
-      hasActiveCards,
-      energy: energyState.current,
-      isHealthTooLow,
-      basicRequirements,
-      activeDungeon
-    });
     
     // If there's an active dungeon, only allow access to that specific dungeon
     if (activeDungeon) {
@@ -162,11 +153,11 @@ export const DungeonSearchDialog = ({
       exit={{ opacity: 0 }}
       className="fixed inset-0 bg-black/80 flex items-center justify-center p-4 z-[100]"
     >
-      <Card variant="menu" className="p-8 max-w-md w-full relative z-[500]" style={{ boxShadow: '-33px 15px 10px rgba(0, 0, 0, 0.6)' }}>
+      <Card variant="menu" className="p-8 max-w-md w-full relative" style={{ boxShadow: '-33px 15px 10px rgba(0, 0, 0, 0.6)' }}>
         <Button
           variant="ghost"
           size="icon"
-          className="absolute left-4 top-4 text-white hover:text-white/80 z-[600]"
+          className="absolute left-4 top-4 text-white hover:text-white/80"
           onClick={onClose}
         >
           <ArrowLeft className="h-5 w-5" />
@@ -203,7 +194,7 @@ export const DungeonSearchDialog = ({
                   onClick={() => handleDungeonSelect(dungeon as DungeonType)}
                   disabled={!canEnter}
                   variant="menu"
-                  className={`w-full relative z-[510] ${
+                  className={`w-full ${
                     isActiveDungeon 
                       ? 'bg-green-600 hover:bg-green-700 border-green-500 text-white shadow-lg shadow-green-500/50' 
                       : activeDungeon 
@@ -237,7 +228,7 @@ export const DungeonSearchDialog = ({
           <Button
             onClick={onClose}
             variant="menu"
-            className="mt-4 z-[510] relative"
+            className="mt-4"
             style={{ boxShadow: '-33px 15px 10px rgba(0, 0, 0, 0.6)' }}
           >
             Закрыть

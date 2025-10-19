@@ -1,4 +1,4 @@
-import React, { useState, startTransition, useEffect, useMemo } from 'react';
+import React, { useState, startTransition, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -15,8 +15,6 @@ import { supabase } from '@/integrations/supabase/client';
 import { useWalletContext } from '@/contexts/WalletConnectContext';
 import { useDungeonSync } from '@/hooks/useDungeonSync';
 import { useEnergy } from '@/utils/energyManager';
-import { useTeamSelection } from '@/hooks/team/useTeamSelection';
-import type { TeamPair as BattleTeamPair } from '@/types/teamBattle';
 interface TeamBattlePageProps {
   dungeonType: DungeonType;
 }
@@ -64,35 +62,6 @@ export const TeamBattlePage: React.FC<TeamBattlePageProps> = ({
     aliveOpponents,
     lastRoll
   } = useTeamBattle(dungeonType);
-
-  const { selectedPairs } = useTeamSelection();
-  const displayPairs: BattleTeamPair[] = useMemo(() => {
-    if (battleState.playerPairs.length > 0) return battleState.playerPairs as BattleTeamPair[];
-    return selectedPairs.map((pair, index) => {
-      const hero: any = pair.hero;
-      const dragon: any = pair.dragon;
-      const heroMax = hero?.health ?? 0;
-      const dragonMax = dragon?.health ?? 0;
-      const heroCurrent = hero?.currentHealth ?? heroMax;
-      const dragonCurrent = dragon ? (dragon.currentHealth ?? dragonMax) : 0;
-      const dragonAlive = !!dragon && dragonCurrent > 0;
-      const heroArmor = hero?.defense ?? 0;
-      const dragonArmor = dragonAlive ? (dragon?.defense ?? 0) : 0;
-      const pairArmor = dragonAlive ? Math.floor((heroArmor + dragonArmor) / 2) : heroArmor;
-      const power = (hero?.power ?? 0) + (dragonAlive ? (dragon?.power ?? 0) : 0);
-      return {
-        id: `pair-${index}`,
-        hero,
-        dragon,
-        health: heroCurrent + (dragonCurrent || 0),
-        maxHealth: heroMax + (dragonMax || 0),
-        power,
-        defense: pairArmor,
-        attackOrder: index + 1,
-      } as BattleTeamPair;
-    });
-  }, [battleState.playerPairs, selectedPairs]);
-
   const handleStartBattle = async () => {
     // Снимаем энергию при начале боя
     const energyUsed = useEnergy();
@@ -141,7 +110,7 @@ export const TeamBattlePage: React.FC<TeamBattlePageProps> = ({
   const handleNextLevel = () => {
     startTransition(() => {
       handleLevelComplete();
-      // НЕ сбрасываем monstersKilled здесь - это делается в useEffect при старте нового боя
+      setMonstersKilled([]); // Сбрасываем список убитых монстров для нового уровня
       localStorage.removeItem('activeBattleInProgress');
       setBattleStarted(false);
     });
@@ -156,7 +125,7 @@ export const TeamBattlePage: React.FC<TeamBattlePageProps> = ({
 
   const handleContinue = () => {
     continueWithRisk();
-    // НЕ сбрасываем monstersKilled здесь - это делается в useEffect при старте нового боя
+    setMonstersKilled([]); // Сбрасываем только для UI, накопленные награды остаются
     handleNextLevel();
   };
 
@@ -182,11 +151,7 @@ export const TeamBattlePage: React.FC<TeamBattlePageProps> = ({
         // Если записи нет — считаем, что сессию завершили удаленно (только если локально бой активен)
         const stillActiveLocal = battleStarted || localStorage.getItem('activeBattleInProgress') === 'true';
         if ((!data || data.length === 0) && stillActiveLocal) {
-          setSessionTerminated(prev => {
-            // Предотвращаем бесконечный цикл - устанавливаем только если еще не установлено
-            if (!prev) return true;
-            return prev;
-          });
+          setSessionTerminated(true);
         }
       } catch (e) {
         console.error('Session check error:', e);
@@ -211,7 +176,7 @@ export const TeamBattlePage: React.FC<TeamBattlePageProps> = ({
           const stillActiveLocal = battleStarted || localStorage.getItem('activeBattleInProgress') === 'true';
           if (stillActiveLocal) {
             console.log('Session deleted remotely, blocking battle');
-            setSessionTerminated(prev => !prev ? true : prev);
+            setSessionTerminated(true);
           }
         }
       )
@@ -240,8 +205,7 @@ export const TeamBattlePage: React.FC<TeamBattlePageProps> = ({
   // Отслеживаем убийства монстров по уменьшению здоровья конкретных противников
   useEffect(() => {
     if (!battleStarted) {
-      // Инициализация при старте боя - сбрасываем счетчик убитых монстров
-      setMonstersKilled([]);
+      // Инициализация при старте боя
       prevOpponentsRef.current = aliveOpponents.map(opp => ({
         id: opp.id,
         name: opp.name,
@@ -292,32 +256,23 @@ export const TeamBattlePage: React.FC<TeamBattlePageProps> = ({
     const isVictory = alivePairs.length > 0;
     const isFullCompletion = isVictory && battleState.level >= 10;
 
+    // Если победа и никого не убили (фаза инициализации нового уровня) — пропускаем
+    if (isVictory && monstersKilled.length === 0) return;
+
     // Предотвращаем повторную обработку одного и того же уровня
     if (processedLevelRef.current === battleState.level) return;
     processedLevelRef.current = battleState.level;
 
-    // Fallback: если по гонке состояний монстры не успели попасть в state, вычислим убийства напрямую
-    const prevOpponents = prevOpponentsRef.current;
-    const currentOpponents = aliveOpponents.map(opp => ({ id: opp.id, name: opp.name, health: opp.health }));
-    const fallbackKills = prevOpponents
-      .filter(prevOpp => prevOpp.health > 0 && !currentOpponents.find(currOpp => currOpp.id === prevOpp.id && currOpp.health > 0))
-      .map(monster => ({ level: battleState.level, dungeonType, name: monster.name }));
-
-    // Объединяем убийства из state и fallback, убираем дубликаты (по name+level)
-    const mergedKills = [...monstersKilled, ...fallbackKills];
-    const killsMap = new Map(mergedKills.map(k => [`${k.name}|${k.level}`, k]));
-    const killsToProcess = Array.from(killsMap.values());
-
-    console.log(`🏁 Бой завершен. Победа: ${isVictory}, Уровень: ${battleState.level}, StateKills: ${monstersKilled.length}, Fallback: ${fallbackKills.length}, Merged: ${killsToProcess.length}`);
-    console.log('🎯 BATTLE END DEBUG: Kills to process:', JSON.stringify(killsToProcess, null, 2));
+    console.log(`🏁 Бой завершен. Победа: ${isVictory}, Уровень: ${battleState.level}, Убито монстров: ${monstersKilled.length}`);
+    console.log('🎯 BATTLE END DEBUG: Monsters killed data:', JSON.stringify(monstersKilled, null, 2));
 
     if (!isVictory) {
       localStorage.removeItem('teamBattleState');
       localStorage.removeItem('activeBattleInProgress');
       localStorage.removeItem('battleState'); // legacy
-      processDungeonCompletion(killsToProcess, battleState.level, isFullCompletion, true); // isDefeat = true
+      processDungeonCompletion(monstersKilled, battleState.level, isFullCompletion, true); // isDefeat = true
     } else {
-      processDungeonCompletion(killsToProcess, battleState.level, isFullCompletion, false);
+      processDungeonCompletion(monstersKilled, battleState.level, isFullCompletion, false);
     }
   }, [isBattleOver, battleStarted, monstersKilled.length, alivePairs.length, battleState.level, processDungeonCompletion]);
   
@@ -388,14 +343,14 @@ export const TeamBattlePage: React.FC<TeamBattlePageProps> = ({
 
   if (!battleStarted) {
     return <>
-        <div className="fixed top-4 left-4 z-[500]">
+        <div className="fixed top-4 left-4 z-10">
           <Button onClick={handleBackToMenu} variant="ghost" size="sm" className="bg-card/50 backdrop-blur-sm border border-border/50">
             <ArrowLeft className="w-4 h-4 mr-2" />
             Назад
           </Button>
         </div>
         
-        <AttackOrderSelector playerPairs={displayPairs} attackOrder={attackOrder} onOrderChange={updateAttackOrder} onStartBattle={handleStartBattle} />
+        <AttackOrderSelector playerPairs={battleState.playerPairs} attackOrder={attackOrder} onOrderChange={updateAttackOrder} onStartBattle={handleStartBattle} />
       </>;
   }
   return <>

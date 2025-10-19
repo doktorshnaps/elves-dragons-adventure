@@ -52,22 +52,8 @@ export const useTeamBattle = (dungeonType: DungeonType, initialLevel: number = 1
 
   // Initialize battle with team pairs
   useEffect(() => {
-    // Proceed even if card instances are still loading; stats will resync later
-
-    // Parse saved state (if any) and detect if it actually has pairs
-    let saved: Partial<TeamBattleState> | null = null;
-    try {
-      const s = localStorage.getItem('teamBattleState');
-      if (s) saved = JSON.parse(s) as Partial<TeamBattleState>;
-    } catch {
-      saved = null;
-    }
-    const hasSavedPairs = !!(saved && Array.isArray(saved.playerPairs) && saved.playerPairs.length > 0);
-
-    // Initialize only when we have selected pairs and no saved pairs/playerPairs yet
-    const needsInit = selectedPairs.length > 0 && !hasSavedPairs && battleState.playerPairs.length === 0;
-
-    if (needsInit) {
+    if (cardInstancesLoading) return; // Wait until card instances are loaded to get accurate health
+    if (selectedPairs.length > 0 && battleState.playerPairs.length === 0) {
       const cardsArr = (gameData.cards as any[]) || [];
       const byId = new Map(cardsArr.map((c: any) => [c.id, c]));
 
@@ -92,12 +78,14 @@ export const useTeamBattle = (dungeonType: DungeonType, initialLevel: number = 1
         const heroMana = heroWithCalc.magic ?? 0;
         const dragonMana = dragonAlive ? (dragonWithCalc?.magic ?? 0) : 0;
         const totalMana = heroMana + dragonMana;
-
-        // Armor per spec
+        
+        // Расчет брони по ТЗ: Armor_pair = (Armor_d + Armor_h) / 2
         const heroArmor = heroWithCalc.defense ?? 0;
         const dragonArmor = dragonAlive ? (dragonWithCalc?.defense ?? 0) : 0;
-        const pairArmor = dragonAlive ? Math.floor((heroArmor + dragonArmor) / 2) : heroArmor;
-
+        const pairArmor = dragonAlive 
+          ? Math.floor((heroArmor + dragonArmor) / 2)
+          : heroArmor;
+        
         return {
           id: `pair-${index}`,
           hero: heroWithCalc,
@@ -109,12 +97,12 @@ export const useTeamBattle = (dungeonType: DungeonType, initialLevel: number = 1
           attackOrder: index + 1,
           mana: totalMana,
           maxMana: totalMana
-        } as any;
+        };
       });
 
       (async () => {
         const opponents = await generateDungeonOpponents(dungeonType, initialLevel);
-
+        
         startTransition(() => {
           setBattleState(prev => ({
             ...prev,
@@ -123,11 +111,11 @@ export const useTeamBattle = (dungeonType: DungeonType, initialLevel: number = 1
             selectedDungeon: dungeonType
           }));
         });
-
+        
         setAttackOrder(teamPairs.map(pair => pair.id));
       })();
     }
-  }, [selectedPairs, dungeonType, initialLevel, gameData.cards, cardInstancesLoading, battleState.playerPairs.length]);
+  }, [selectedPairs, dungeonType, initialLevel, gameData.cards, cardInstancesLoading]);
 
   // Re-sync stats for existing saved battles to ensure new formula is used
   useEffect(() => {

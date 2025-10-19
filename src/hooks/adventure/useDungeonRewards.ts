@@ -34,61 +34,40 @@ export const useDungeonRewards = () => {
   const lastProcessedLevelRef = useRef<number>(-1);
   const isProcessingRef = useRef(false);
 
-  const calculateReward = useCallback(async (monsters: MonsterKill[]): Promise<DungeonReward> => {
+  const calculateReward = useCallback((monsters: MonsterKill[]): DungeonReward => {
     console.log('🎯 calculateReward called with monsters:', monsters);
-    console.log('🎯 calculateReward: Total monsters to process:', monsters.length);
     let level1to3Count = 0;
     let level4to7Count = 0;
     let level8to10Count = 0;
     const lootedItems: Item[] = [];
 
-    // Мапинг типов подземелий к номерам
-    const dungeonTypeToNumber: Record<string, number> = {
-      'spider_nest': 1,
-      'bone_dungeon': 2,
-      'dark_mage': 3,
-      'sea_serpent': 4,
-      'ice_throne': 5,
-      'forgotten_souls': 6,
-      'dragon_lair': 7,
-      'pantheon_gods': 8
-    };
-
-    // Подсчитываем убитых монстров по уровням и собираем лут
-    console.log('🔄 Starting to process monsters for loot...');
-    for (const monster of monsters) {
+    // Подсчитываем убитых монстров по уровням для подземелья "Гнездо Гигантских Пауков"
+    monsters.forEach(monster => {
       console.log('🏹 Processing monster:', monster);
-      
-      if (monster.level >= 1 && monster.level <= 3) {
-        level1to3Count++;
-      } else if (monster.level >= 4 && monster.level <= 7) {
-        level4to7Count++;
-      } else if (monster.level >= 8 && monster.level <= 10) {
-        level8to10Count++;
-      }
-
-      // Генерируем предметы с монстра используя систему дропов из БД
-      if (monster.name && monster.dungeonType) {
-        const dungeonNumber = dungeonTypeToNumber[monster.dungeonType] || 1;
-        console.log(`🎁 Rolling loot for monster: ${monster.name} (dungeon ${dungeonNumber}, level ${monster.level})`);
-        console.log(`🎁 Before getMonsterLoot call - Current lootedItems count: ${lootedItems.length}`);
-        
-        const monsterLoot = await getMonsterLoot(monster.name, dungeonNumber, monster.level);
-        
-        console.log(`🎁 After getMonsterLoot call - Received ${monsterLoot?.length || 0} items`);
-        if (monsterLoot && monsterLoot.length > 0) {
-          console.log(`💰 Generated ${monsterLoot.length} items from monster:`, monsterLoot);
-          lootedItems.push(...monsterLoot);
-          console.log(`💰 Total lootedItems after adding: ${lootedItems.length}`);
-        } else {
-          console.log('❌ No loot generated for:', monster.name);
+      if (monster.dungeonType === 'spider_nest') {
+        if (monster.level >= 1 && monster.level <= 3) {
+          level1to3Count++;
+        } else if (monster.level >= 4 && monster.level <= 7) {
+          level4to7Count++;
+        } else if (monster.level >= 8 && monster.level <= 10) {
+          level8to10Count++;
         }
-      } else {
-        console.log('⚠️ Monster missing name or dungeonType:', monster);
-      }
-    }
-    console.log(`🔚 Finished processing ${monsters.length} monsters. Total loot: ${lootedItems.length}`);
 
+        // Генерируем ВСЕ предметы с монстра (100% шанс для тестирования)
+        if (monster.name) {
+          console.log('🎁 Generating ALL loot for monster:', monster.name);
+          const allLoot = getMonsterLoot(monster.name);
+          if (allLoot && allLoot.length > 0) {
+            console.log(`💰 Generated ${allLoot.length} items from monster:`, allLoot);
+            lootedItems.push(...allLoot);
+          } else {
+            console.log('❌ No loot generated for:', monster.name);
+          }
+        } else {
+          console.log('⚠️ Monster has no name:', monster);
+        }
+      }
+    });
 
     // Рассчитываем награды согласно условиям
     const level1to3Reward = level1to3Count * 1; // 1 ELL за монстров 1-3 уровня
@@ -128,8 +107,6 @@ export const useDungeonRewards = () => {
     lastProcessedLevelRef.current = currentLevel;
 
     console.log(`💎 Обработка завершения уровня. Монстров убито: ${monsters.length}, уровень: ${currentLevel}, Поражение: ${isDefeat}`);
-    console.log(`💎 Monster details:`, monsters);
-    console.log(`💎 Current accumulatedReward:`, accumulatedReward);
 
     // Если поражение - сбрасываем все накопленные награды
     if (isDefeat) {
@@ -145,9 +122,7 @@ export const useDungeonRewards = () => {
       return;
     }
 
-    const levelReward = await calculateReward(monsters);
-    console.log(`💎 Level reward calculated:`, levelReward);
-    console.log(`💎 Level reward loot count: ${levelReward.lootedItems?.length || 0}`);
+    const levelReward = calculateReward(monsters);
     
     // Суммируем с накопленной наградой
     const totalAccumulated: DungeonReward = accumulatedReward ? {
@@ -207,10 +182,8 @@ export const useDungeonRewards = () => {
 
       if (lootedItems.length > 0) {
         const currentInventory = gameData.inventory || [];
-        // Добавляем новые предметы в начало, чтобы они всегда попадали в первые 200,
-        // которые возвращает RPC get_game_data_by_wallet_full
-        updates.inventory = [...lootedItems, ...currentInventory];
-        console.log(`🎒 Новый инвентарь (новые предметы в начале): ${updates.inventory.length} предметов (было: ${currentInventory.length})`);
+        updates.inventory = [...currentInventory, ...lootedItems];
+        console.log(`🎒 Новый инвентарь: ${updates.inventory.length} предметов (было: ${currentInventory.length})`);
       }
 
       // Единый вызов updateGameData с обоими обновлениями
