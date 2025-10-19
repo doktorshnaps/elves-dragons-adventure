@@ -21,7 +21,6 @@ interface TeamBattleArenaProps {
   onEnemyAttack: () => void;
   level: number;
   lastRoll?: { attackerRoll: number; defenderRoll: number; source: 'player' | 'enemy'; damage: number; isBlocked: boolean; isCritical?: boolean } | null;
-  onSurrender?: () => void;
 }
 export const TeamBattleArena: React.FC<TeamBattleArenaProps> = ({
   playerPairs,
@@ -32,8 +31,7 @@ export const TeamBattleArena: React.FC<TeamBattleArenaProps> = ({
   onAbilityUse,
   onEnemyAttack,
   level,
-  lastRoll,
-  onSurrender
+  lastRoll
 }) => {
   const navigate = useNavigate();
   const {
@@ -139,10 +137,11 @@ export const TeamBattleArena: React.FC<TeamBattleArenaProps> = ({
     navigate('/menu');
   };
   const handleSurrender = () => {
-    // Вызываем обработчик сдачи из родительского компонента
-    if (onSurrender) {
-      onSurrender();
-    }
+    // Сброс состояния подземелья
+    localStorage.removeItem('battleState');
+    localStorage.removeItem('teamBattleState');
+    localStorage.removeItem('activeBattleInProgress');
+    navigate('/dungeons');
   };
   const handleAutoBattle = () => {
     if (autoBattle) {
