@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -79,8 +79,21 @@ export const WorkersManagement = ({ onSpeedBoostChange }: WorkersManagementProps
     { id: "medical", name: t(language, 'shelter.medicalBuilding') }
   ];
 
-  // Получаем рабочих ТОЛЬКО из card_instances (источник истины для рабочих)
-  // Инвентарь и cards больше не используются для рабочих
+  // Получаем рабочих из card_instances, инвентаря и карт
+  const inventoryWorkers = (gameState.inventory || [])
+    .filter((item: any) => item?.type === 'worker')
+    .map((item: any, index: number) => ({
+      id: item.instanceId || item.id || `worker_${index}_${item.name}`,
+      instanceId: item.instanceId || item.id,
+      templateId: item.templateId || undefined,
+      name: item.name || 'Рабочий',
+      description: item.description || '',
+      type: item.type || 'worker',
+      value: item.value || 0,
+      stats: item.stats || {},
+      image: item.image,
+      source: 'inventory'
+    }));
 
   const cardInstanceWorkers = cardInstances
     .filter(instance => 
@@ -102,8 +115,31 @@ export const WorkersManagement = ({ onSpeedBoostChange }: WorkersManagementProps
       maxHealth: instance.max_health
     }));
 
-  // Рабочие берутся ТОЛЬКО из card_instances (источник истины)
-  const availableWorkers = cardInstanceWorkers;
+  const cardsWorkers = (gameState.cards || [])
+    .filter((card: any) => card?.type === 'worker' || card?.type === 'workers')
+    .map((card: any, index: number) => ({
+      id: card.id,
+      templateId: card.id,
+      name: card.name || 'Рабочий',
+      description: card.description || '',
+      type: 'worker',
+      value: card.value || 0,
+      stats: card.stats || {},
+      image: card.image,
+      source: 'cards',
+      _idx: index
+    }));
+
+  // Объединяем рабочих из всех источников, избегая дублирования только по instanceId
+  const seen = new Set<string>();
+  const availableWorkers = [...cardInstanceWorkers, ...inventoryWorkers, ...cardsWorkers]
+    .filter((worker: any) => {
+      if (worker.instanceId) {
+        if (seen.has(worker.instanceId)) return false;
+        seen.add(worker.instanceId);
+      }
+      return true;
+    });
 
   // Исключаем уже назначенных активных рабочих из списка доступных
   const activeInstanceIds = new Set(activeWorkers.map(w => w.cardInstanceId));
@@ -112,13 +148,13 @@ export const WorkersManagement = ({ onSpeedBoostChange }: WorkersManagementProps
     w.instanceId ? !activeInstanceIds.has(w.instanceId) : !activeWorkerIds.has(w.id)
   );
 
-  const groupedWorkers = visibleWorkers;
-
   console.log('👷 Workers analysis:', {
+    inventoryWorkers: inventoryWorkers.length,
     cardInstanceWorkers: cardInstanceWorkers.length,
     availableWorkers: availableWorkers.length,
     activeWorkers: activeWorkers.length,
     visibleWorkers: visibleWorkers.length,
+    inventoryDetails: inventoryWorkers.map(w => ({ id: w.id, instanceId: w.instanceId, name: w.name, source: w.source })),
     cardDetails: cardInstanceWorkers.map(w => ({ id: w.id, name: w.name, source: w.source, instanceId: (w as any).instanceId })),
     activeWorkersDetails: activeWorkers.map(w => ({ workerId: w.workerId, cardInstanceId: w.cardInstanceId, name: w.name })),
     activeInstanceIdsSet: Array.from(activeInstanceIds),
@@ -161,7 +197,40 @@ export const WorkersManagement = ({ onSpeedBoostChange }: WorkersManagementProps
     }
   }, [gameState.activeWorkers]);
 
-  // Больше не нужна очистка инвентаря, так как рабочие теперь только в card_instances
+  // Автоматическая очистка зависших рабочих из инвентаря
+  useEffect(() => {
+    if (!gameState.actions || activeWorkers.length === 0) return;
+    
+    const cleanupStuckWorkers = async () => {
+      const activeInstanceIds = new Set(activeWorkers.map(w => w.cardInstanceId));
+      const activeWorkerIds = new Set(activeWorkers.map(w => w.workerId));
+      
+      const currentInv = [...(gameState.inventory || [])] as any[];
+      const workersInInv = currentInv.filter((item: any) => item?.type === 'worker');
+      
+      // Находим рабочих, которые уже назначены, но всё ещё в инвентаре
+      const stuckWorkers = workersInInv.filter((item: any) => {
+        const itemInstanceId = item.instanceId || item.id;
+        return activeInstanceIds.has(itemInstanceId) || activeWorkerIds.has(itemInstanceId);
+      });
+      
+      if (stuckWorkers.length > 0) {
+        console.log('🧹 Found stuck workers in inventory:', stuckWorkers.length, stuckWorkers.map(w => ({ id: w.id, instanceId: w.instanceId, name: w.name })));
+        
+        // Удаляем зависших рабочих
+        const cleanedInv = currentInv.filter((item: any) => {
+          if (item?.type !== 'worker') return true;
+          const itemInstanceId = item.instanceId || item.id;
+          return !activeInstanceIds.has(itemInstanceId) && !activeWorkerIds.has(itemInstanceId);
+        });
+        
+        await gameState.actions.updateInventory(cleanedInv);
+        console.log('✅ Cleaned up stuck workers from inventory. Removed:', stuckWorkers.length);
+      }
+    };
+    
+    cleanupStuckWorkers();
+  }, [activeWorkers, gameState.inventory, gameState.actions]);
 
   // Вычисляем общее ускорение при изменении активных рабочих
   useEffect(() => {
@@ -202,21 +271,13 @@ export const WorkersManagement = ({ onSpeedBoostChange }: WorkersManagementProps
     return () => clearInterval(interval);
   }, [toast, buildings, gameState.actions]);
 
-  const assignWorker = async (workerGroup: any) => {
-    // Берём ПЕРВЫЙ экземпляр из группы для назначения
-    const worker = workerGroup.instances ? workerGroup.instances[0] : workerGroup;
-    
+  const assignWorker = async (worker: any) => {
     if (!worker.stats?.workDuration) return;
-
-    console.log('👷 Assigning worker from group:', {
-      group: workerGroup.count ? { id: workerGroup.id, name: workerGroup.name, count: workerGroup.count } : 'single worker',
-      selectedInstance: { id: worker.id, instanceId: worker.instanceId, source: worker.source }
-    });
 
     const newActiveWorker: ActiveWorker = {
       id: `${worker.id}_${Date.now()}`,
-      workerId: (worker as any).instanceId || `${worker.id}_${Date.now()}`,
-      cardInstanceId: (worker as any).instanceId || `${worker.id}_${Date.now()}`,
+      workerId: worker.id,
+      cardInstanceId: (worker as any).instanceId || worker.id,
       name: worker.name,
       speedBoost: worker.value,
       startTime: Date.now(),
@@ -229,6 +290,9 @@ export const WorkersManagement = ({ onSpeedBoostChange }: WorkersManagementProps
     try {
       // Обновляем локальное состояние
       setActiveWorkers(updatedActiveWorkers);
+
+      let updatedInv = [...(gameState.inventory || [])] as any[];
+      let updatedCards = [...(gameState.cards || [])] as any[];
       
       console.log('🔍 Assigning worker:', {
         workerId: worker.id,
@@ -238,9 +302,10 @@ export const WorkersManagement = ({ onSpeedBoostChange }: WorkersManagementProps
         templateId: (worker as any).templateId
       });
       
-      // Рабочие теперь всегда из card_instances, удаляем только оттуда
-      if ((worker as any).instanceId) {
-        console.log('🗑️ Deleting worker from card_instances:', (worker as any).instanceId);
+      // Определяем источник рабочего и удаляем правильно
+      if (worker.source === 'card_instances' && (worker as any).instanceId) {
+        // Используем новую RPC функцию без конфликтов параметров
+        console.log('🗑️ Attempting to delete worker from card_instances:', (worker as any).instanceId);
         const { data: deleted, error } = await supabase.rpc('remove_card_instance_exact', {
           p_wallet_address: gameState.actions ? 
             (localStorage.getItem('walletAccountId') || 'mr_bruts.tg') : 'mr_bruts.tg',
@@ -254,9 +319,39 @@ export const WorkersManagement = ({ onSpeedBoostChange }: WorkersManagementProps
         
         await loadCardInstances();
         console.log('✅ Successfully deleted worker from card_instances:', (worker as any).instanceId);
-      } else {
-        console.error('❌ Worker missing instanceId, cannot delete:', worker);
-        throw new Error('Worker missing instanceId');
+      } else if (worker.source === 'inventory') {
+        // Удаляем из инвентаря - ищем по instanceId или id
+        const removeIdx = updatedInv.findIndex((i: any) => 
+          i?.type === 'worker' && (
+            (worker.instanceId && (i.instanceId === worker.instanceId || i.id === worker.instanceId)) ||
+            (i.id === worker.id)
+          )
+        );
+        
+        if (removeIdx >= 0) {
+          updatedInv.splice(removeIdx, 1);
+          await gameState.actions.updateInventory(updatedInv);
+          console.log('✅ Worker removed from inventory at index:', removeIdx, 'worker:', worker.name, 'id:', worker.id, 'instanceId:', worker.instanceId);
+        } else {
+          console.warn('⚠️ Could not find matching worker in inventory to remove. Worker:', {
+            id: worker.id,
+            instanceId: worker.instanceId,
+            name: worker.name
+          }, 'Inventory:', updatedInv.filter((i: any) => i?.type === 'worker').map((i: any) => ({ id: i.id, instanceId: i.instanceId, name: i.name })));
+        }
+      } else if (worker.source === 'cards') {
+        // Удаляем из карт по ID и сохраняем через actions
+        const removeIdx = updatedCards.findIndex((c: any) => 
+          (c?.type === 'worker' || c?.type === 'workers') && c.id === worker.id
+        );
+        
+        if (removeIdx >= 0) {
+          updatedCards.splice(removeIdx, 1);
+          await gameState.actions.updateCards(updatedCards);
+          console.log('✅ Worker removed from cards at index:', removeIdx, 'worker:', worker.name);
+        } else {
+          console.warn('⚠️ Could not find matching worker in cards to remove:', worker.id);
+        }
       }
 
       // Сохраняем активных рабочих через RPC
@@ -385,7 +480,7 @@ export const WorkersManagement = ({ onSpeedBoostChange }: WorkersManagementProps
               ) : (
                 <div className="grid gap-3">
                   {visibleWorkers.map((worker, i) => (
-                    <div key={(worker as any).instanceId || `${worker.id}-${i}`} className="flex items-center justify-between p-3 border rounded-lg">
+                    <div key={(worker as any).instanceId || `${worker.id}-${(worker as any)._idx ?? i}` } className="flex items-center justify-between p-3 border rounded-lg">
                       <div>
                         <h4 className="font-medium">{worker.name}</h4>
                         <p className="text-sm text-muted-foreground">
@@ -404,6 +499,7 @@ export const WorkersManagement = ({ onSpeedBoostChange }: WorkersManagementProps
                         onClick={() => assignWorker(worker)}
                         size="sm"
                         className="shrink-0"
+                        disabled={(worker as any).source === 'card_instances' && (worker as any).currentHealth <= 0}
                       >
                         {t(language, 'shelter.assignButton')}
                       </Button>
@@ -413,6 +509,14 @@ export const WorkersManagement = ({ onSpeedBoostChange }: WorkersManagementProps
               )}
             </div>
 
+            {visibleWorkers.length > 0 && (
+              <div className="flex items-start gap-2 p-3 bg-amber-50 dark:bg-amber-950/20 rounded-lg">
+                <AlertTriangle className="w-4 h-4 text-amber-600 mt-0.5 shrink-0" />
+                <div className="text-sm text-amber-700 dark:text-amber-400">
+                  <strong>{t(language, 'shelter.warningTitle')}</strong> {t(language, 'shelter.warningText')}
+                </div>
+              </div>
+            )}
           </div>
         </CardContent>
       </Card>

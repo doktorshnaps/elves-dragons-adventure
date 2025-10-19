@@ -147,16 +147,16 @@ serve(async (req) => {
 
     console.log(`💰 Successfully deducted ${totalCost} ELL from balance`);
     
-// Рабочие добавляем в card_instances (каждый рабочий = отдельная запись)
+// Рабочие теперь добавляем напрямую в inventory (не в card_instances)
 if (itemTemplate.type === 'worker') {
   console.log(`👷 Processing ${quantity} workers: ${itemTemplate.name} (item_id: ${itemTemplate.item_id})`);
   
-  // Для рабочих создаем записи в card_instances
+  // Для рабочих добавляем в инвентарь через atomic_inventory_update
   for (let i = 0; i < quantity; i++) {
-    const instanceId = `${itemTemplate.item_id || `worker_${item_id}`}_${crypto.randomUUID()}`;
-    const workerCardData = {
-      id: instanceId,
-      template_id: itemTemplate.item_id || `worker_${item_id}`,
+    const workerData = {
+      id: `worker_${item_id}_${Date.now()}_${Math.random().toString(36).substr(2, 9)}_${i}`,
+      instanceId: `worker_${item_id}_${Date.now()}_${Math.random().toString(36).substr(2, 9)}_${i}`,
+      templateId: `worker_${item_id}`,
       name: itemTemplate.name,
       description: itemTemplate.description,
       type: 'worker',
@@ -166,20 +166,19 @@ if (itemTemplate.type === 'worker') {
       image: itemTemplate.image_url
     };
 
-    const { data: instanceData, error: instanceError } = await supabase.rpc('create_card_instance_by_wallet', {
+    const { error: inventoryError } = await supabase.rpc('atomic_inventory_update', {
       p_wallet_address: wallet_address,
-      p_card: workerCardData
+      p_price_deduction: 0, // Цена уже списана выше
+      p_new_item: workerData
     });
 
-    if (instanceError) {
-      console.error(`❌ Error creating card instance for worker ${i+1}/${quantity}:`, instanceError);
-      throw instanceError;
+    if (inventoryError) {
+      console.error(`❌ Error adding worker ${i+1}/${quantity} to inventory:`, inventoryError);
+      throw inventoryError;
     }
-
-    console.log(`✅ Created card instance for worker ${i+1}/${quantity}:`, instanceData);
   }
 
-  console.log(`✅ Added ${quantity} workers to card_instances`);
+  console.log(`✅ Added ${quantity} workers to inventory`);
     } else {
       console.log(`📦 Processing as regular item: ${itemTemplate.name}`);
       

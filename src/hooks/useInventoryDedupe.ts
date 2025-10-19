@@ -19,30 +19,25 @@ export const useInventoryDedupe = () => {
       const inventory = gameState.inventory || [];
       if (inventory.length === 0) return;
 
-      // Создаем Set для отслеживания уникальных ID
-      // ВАЖНО: Для рабочих считаем дубликатами ТОЛЬКО совпадающий instanceId.
-      // Рабочие без instanceId всегда считаются уникальными (по одному на запись).
+      // Создаем Set для отслеживания уникальных instanceId/id
       const seenIds = new Set<string>();
       const uniqueItems: Item[] = [];
       const duplicates: Item[] = [];
 
       inventory.forEach((item: any) => {
-        // Рабочих больше нет в inventory, пропускаем их
-        if (item?.type === 'worker' || item?.type === 'workers') {
-          console.warn('⚠️ Found worker in inventory, but workers should only be in card_instances:', item);
-          return; // Не добавляем в uniqueItems
-        }
-
-        // Для прочих предметов используем instanceId или id
         const itemId = item.instanceId || item.id;
+        
         if (!itemId) {
+          // Если нет ID, оставляем предмет (это может быть старый предмет)
           uniqueItems.push(item);
           return;
         }
 
         if (seenIds.has(itemId)) {
+          // Это дубликат
           duplicates.push(item);
         } else {
+          // Первое вхождение
           seenIds.add(itemId);
           uniqueItems.push(item);
         }
