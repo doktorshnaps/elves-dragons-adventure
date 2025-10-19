@@ -151,7 +151,11 @@ export const TeamBattlePage: React.FC<TeamBattlePageProps> = ({
         // Если записи нет — считаем, что сессию завершили удаленно (только если локально бой активен)
         const stillActiveLocal = battleStarted || localStorage.getItem('activeBattleInProgress') === 'true';
         if ((!data || data.length === 0) && stillActiveLocal) {
-          setSessionTerminated(true);
+          setSessionTerminated(prev => {
+            // Предотвращаем бесконечный цикл - устанавливаем только если еще не установлено
+            if (!prev) return true;
+            return prev;
+          });
         }
       } catch (e) {
         console.error('Session check error:', e);
@@ -176,7 +180,7 @@ export const TeamBattlePage: React.FC<TeamBattlePageProps> = ({
           const stillActiveLocal = battleStarted || localStorage.getItem('activeBattleInProgress') === 'true';
           if (stillActiveLocal) {
             console.log('Session deleted remotely, blocking battle');
-            setSessionTerminated(true);
+            setSessionTerminated(prev => !prev ? true : prev);
           }
         }
       )
