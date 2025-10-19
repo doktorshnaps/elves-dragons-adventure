@@ -110,7 +110,7 @@ export const TeamBattlePage: React.FC<TeamBattlePageProps> = ({
   const handleNextLevel = () => {
     startTransition(() => {
       handleLevelComplete();
-      setMonstersKilled([]); // Сбрасываем список убитых монстров для нового уровня
+      // НЕ сбрасываем monstersKilled здесь - это делается в useEffect при старте нового боя
       localStorage.removeItem('activeBattleInProgress');
       setBattleStarted(false);
     });
@@ -125,7 +125,7 @@ export const TeamBattlePage: React.FC<TeamBattlePageProps> = ({
 
   const handleContinue = () => {
     continueWithRisk();
-    setMonstersKilled([]); // Сбрасываем только для UI, накопленные награды остаются
+    // НЕ сбрасываем monstersKilled здесь - это делается в useEffect при старте нового боя
     handleNextLevel();
   };
 
@@ -205,7 +205,8 @@ export const TeamBattlePage: React.FC<TeamBattlePageProps> = ({
   // Отслеживаем убийства монстров по уменьшению здоровья конкретных противников
   useEffect(() => {
     if (!battleStarted) {
-      // Инициализация при старте боя
+      // Инициализация при старте боя - сбрасываем счетчик убитых монстров
+      setMonstersKilled([]);
       prevOpponentsRef.current = aliveOpponents.map(opp => ({
         id: opp.id,
         name: opp.name,
