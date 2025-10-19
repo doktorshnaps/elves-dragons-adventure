@@ -36,6 +36,7 @@ export const useDungeonRewards = () => {
 
   const calculateReward = useCallback(async (monsters: MonsterKill[]): Promise<DungeonReward> => {
     console.log('🎯 calculateReward called with monsters:', monsters);
+    console.log('🎯 calculateReward: Total monsters to process:', monsters.length);
     let level1to3Count = 0;
     let level4to7Count = 0;
     let level8to10Count = 0;
@@ -54,6 +55,7 @@ export const useDungeonRewards = () => {
     };
 
     // Подсчитываем убитых монстров по уровням и собираем лут
+    console.log('🔄 Starting to process monsters for loot...');
     for (const monster of monsters) {
       console.log('🏹 Processing monster:', monster);
       
@@ -69,12 +71,15 @@ export const useDungeonRewards = () => {
       if (monster.name && monster.dungeonType) {
         const dungeonNumber = dungeonTypeToNumber[monster.dungeonType] || 1;
         console.log(`🎁 Rolling loot for monster: ${monster.name} (dungeon ${dungeonNumber}, level ${monster.level})`);
+        console.log(`🎁 Before getMonsterLoot call - Current lootedItems count: ${lootedItems.length}`);
         
         const monsterLoot = await getMonsterLoot(monster.name, dungeonNumber, monster.level);
         
+        console.log(`🎁 After getMonsterLoot call - Received ${monsterLoot?.length || 0} items`);
         if (monsterLoot && monsterLoot.length > 0) {
           console.log(`💰 Generated ${monsterLoot.length} items from monster:`, monsterLoot);
           lootedItems.push(...monsterLoot);
+          console.log(`💰 Total lootedItems after adding: ${lootedItems.length}`);
         } else {
           console.log('❌ No loot generated for:', monster.name);
         }
@@ -82,6 +87,8 @@ export const useDungeonRewards = () => {
         console.log('⚠️ Monster missing name or dungeonType:', monster);
       }
     }
+    console.log(`🔚 Finished processing ${monsters.length} monsters. Total loot: ${lootedItems.length}`);
+
 
     // Рассчитываем награды согласно условиям
     const level1to3Reward = level1to3Count * 1; // 1 ELL за монстров 1-3 уровня
@@ -121,6 +128,8 @@ export const useDungeonRewards = () => {
     lastProcessedLevelRef.current = currentLevel;
 
     console.log(`💎 Обработка завершения уровня. Монстров убито: ${monsters.length}, уровень: ${currentLevel}, Поражение: ${isDefeat}`);
+    console.log(`💎 Monster details:`, monsters);
+    console.log(`💎 Current accumulatedReward:`, accumulatedReward);
 
     // Если поражение - сбрасываем все накопленные награды
     if (isDefeat) {
@@ -137,6 +146,8 @@ export const useDungeonRewards = () => {
     }
 
     const levelReward = await calculateReward(monsters);
+    console.log(`💎 Level reward calculated:`, levelReward);
+    console.log(`💎 Level reward loot count: ${levelReward.lootedItems?.length || 0}`);
     
     // Суммируем с накопленной наградой
     const totalAccumulated: DungeonReward = accumulatedReward ? {
