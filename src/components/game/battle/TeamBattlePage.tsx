@@ -256,23 +256,29 @@ export const TeamBattlePage: React.FC<TeamBattlePageProps> = ({
     const isVictory = alivePairs.length > 0;
     const isFullCompletion = isVictory && battleState.level >= 10;
 
-    // Если победа и никого не убили (фаза инициализации нового уровня) — пропускаем
-    if (isVictory && monstersKilled.length === 0) return;
-
     // Предотвращаем повторную обработку одного и того же уровня
     if (processedLevelRef.current === battleState.level) return;
     processedLevelRef.current = battleState.level;
 
-    console.log(`🏁 Бой завершен. Победа: ${isVictory}, Уровень: ${battleState.level}, Убито монстров: ${monstersKilled.length}`);
-    console.log('🎯 BATTLE END DEBUG: Monsters killed data:', JSON.stringify(monstersKilled, null, 2));
+    // Fallback: если по гонке состояний монстры не успели попасть в state, вычислим убийства напрямую
+    const prevOpponents = prevOpponentsRef.current;
+    const currentOpponents = aliveOpponents.map(opp => ({ id: opp.id, name: opp.name, health: opp.health }));
+    const fallbackKills = prevOpponents
+      .filter(prevOpp => prevOpp.health > 0 && !currentOpponents.find(currOpp => currOpp.id === prevOpp.id && currOpp.health > 0))
+      .map(monster => ({ level: battleState.level, dungeonType, name: monster.name }));
+
+    const killsToProcess = (monstersKilled.length > 0) ? monstersKilled : fallbackKills;
+
+    console.log(`🏁 Бой завершен. Победа: ${isVictory}, Уровень: ${battleState.level}, Убито монстров в state: ${monstersKilled.length}, Fallback: ${fallbackKills.length}`);
+    console.log('🎯 BATTLE END DEBUG: Kills to process:', JSON.stringify(killsToProcess, null, 2));
 
     if (!isVictory) {
       localStorage.removeItem('teamBattleState');
       localStorage.removeItem('activeBattleInProgress');
       localStorage.removeItem('battleState'); // legacy
-      processDungeonCompletion(monstersKilled, battleState.level, isFullCompletion, true); // isDefeat = true
+      processDungeonCompletion(killsToProcess, battleState.level, isFullCompletion, true); // isDefeat = true
     } else {
-      processDungeonCompletion(monstersKilled, battleState.level, isFullCompletion, false);
+      processDungeonCompletion(killsToProcess, battleState.level, isFullCompletion, false);
     }
   }, [isBattleOver, battleStarted, monstersKilled.length, alivePairs.length, battleState.level, processDungeonCompletion]);
   
