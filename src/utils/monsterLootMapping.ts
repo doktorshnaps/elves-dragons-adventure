@@ -96,15 +96,17 @@ export const getMonsterLoot = async (
     for (const drop of drops) {
       const roll = Math.random() * 100; // Генерируем случайное число от 0 до 100
       const dropChance = Number(drop.drop_chance);
+      const itemName = (drop as any).name ?? (drop as any).item_name; // поддержка обоих вариантов
+      const itemType = (drop as any).type ?? (drop as any).item_type; // поддержка обоих вариантов
       
-      console.log(`🎯 Rolling for ${drop.item_name}: rolled ${roll.toFixed(2)}, need <= ${dropChance}`);
+      console.log(`🎯 Rolling for ${itemName}: rolled ${roll.toFixed(2)}, need <= ${dropChance}`);
       
       if (roll <= dropChance) {
         // Предмет выпал!
         const item: Item = {
           id: uuidv4(),
-          name: drop.item_name,
-          type: drop.item_type as any,
+          name: itemName,
+          type: itemType as any,
           value: 1,
           description: `Получено с ${monsterName}`,
         };
@@ -112,7 +114,7 @@ export const getMonsterLoot = async (
         lootedItems.push(item);
         console.log(`✅ Item dropped: ${item.name}`);
       } else {
-        console.log(`❌ Item didn't drop: ${drop.item_name} (${roll.toFixed(2)} > ${dropChance})`);
+        console.log(`❌ Item didn't drop: ${itemName} (${roll.toFixed(2)} > ${dropChance})`);
       }
     }
 
