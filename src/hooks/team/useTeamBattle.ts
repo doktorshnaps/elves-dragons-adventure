@@ -53,7 +53,13 @@ export const useTeamBattle = (dungeonType: DungeonType, initialLevel: number = 1
   // Initialize battle with team pairs
   useEffect(() => {
     if (cardInstancesLoading) return; // Wait until card instances are loaded to get accurate health
-    if (selectedPairs.length > 0 && battleState.playerPairs.length === 0) {
+    
+    // Check if we need to initialize playerPairs from selectedPairs
+    const needsInit = selectedPairs.length > 0 && battleState.playerPairs.length === 0;
+    const savedState = localStorage.getItem('teamBattleState');
+    
+    // If there's no saved state and we have selected pairs, initialize
+    if (needsInit && !savedState) {
       const cardsArr = (gameData.cards as any[]) || [];
       const byId = new Map(cardsArr.map((c: any) => [c.id, c]));
 
@@ -114,8 +120,10 @@ export const useTeamBattle = (dungeonType: DungeonType, initialLevel: number = 1
         
         setAttackOrder(teamPairs.map(pair => pair.id));
       })();
+    } else if (selectedPairs.length === 0 && !savedState && battleState.playerPairs.length === 0) {
+      console.log('⚠️ No selected pairs available for battle initialization');
     }
-  }, [selectedPairs, dungeonType, initialLevel, gameData.cards, cardInstancesLoading]);
+  }, [selectedPairs, dungeonType, initialLevel, gameData.cards, cardInstancesLoading, battleState.playerPairs.length]);
 
   // Re-sync stats for existing saved battles to ensure new formula is used
   useEffect(() => {
