@@ -207,8 +207,10 @@ export const useDungeonRewards = () => {
 
       if (lootedItems.length > 0) {
         const currentInventory = gameData.inventory || [];
-        updates.inventory = [...currentInventory, ...lootedItems];
-        console.log(`🎒 Новый инвентарь: ${updates.inventory.length} предметов (было: ${currentInventory.length})`);
+        // Добавляем новые предметы в начало, чтобы они всегда попадали в первые 200,
+        // которые возвращает RPC get_game_data_by_wallet_full
+        updates.inventory = [...lootedItems, ...currentInventory];
+        console.log(`🎒 Новый инвентарь (новые предметы в начале): ${updates.inventory.length} предметов (было: ${currentInventory.length})`);
       }
 
       // Единый вызов updateGameData с обоими обновлениями
