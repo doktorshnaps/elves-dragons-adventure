@@ -267,9 +267,12 @@ export const TeamBattlePage: React.FC<TeamBattlePageProps> = ({
       .filter(prevOpp => prevOpp.health > 0 && !currentOpponents.find(currOpp => currOpp.id === prevOpp.id && currOpp.health > 0))
       .map(monster => ({ level: battleState.level, dungeonType, name: monster.name }));
 
-    const killsToProcess = (monstersKilled.length > 0) ? monstersKilled : fallbackKills;
+    // Объединяем убийства из state и fallback, убираем дубликаты (по name+level)
+    const mergedKills = [...monstersKilled, ...fallbackKills];
+    const killsMap = new Map(mergedKills.map(k => [`${k.name}|${k.level}`, k]));
+    const killsToProcess = Array.from(killsMap.values());
 
-    console.log(`🏁 Бой завершен. Победа: ${isVictory}, Уровень: ${battleState.level}, Убито монстров в state: ${monstersKilled.length}, Fallback: ${fallbackKills.length}`);
+    console.log(`🏁 Бой завершен. Победа: ${isVictory}, Уровень: ${battleState.level}, StateKills: ${monstersKilled.length}, Fallback: ${fallbackKills.length}, Merged: ${killsToProcess.length}`);
     console.log('🎯 BATTLE END DEBUG: Kills to process:', JSON.stringify(killsToProcess, null, 2));
 
     if (!isVictory) {
