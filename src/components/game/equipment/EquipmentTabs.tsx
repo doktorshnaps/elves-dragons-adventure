@@ -41,7 +41,7 @@ export const EquipmentTabs = ({ onUseItem }: EquipmentTabsProps) => {
         </TabsContent>
 
         <TabsContent value="workers" className="mt-4">
-          <div>
+          <div className="max-h-[calc(100vh-16rem)] overflow-y-auto pr-2">
             <h3 className="text-xl font-bold text-white mb-4">
               Доступные рабочие
             </h3>
@@ -58,7 +58,7 @@ export const EquipmentTabs = ({ onUseItem }: EquipmentTabsProps) => {
                 Нет доступных рабочих
               </div>
             ) : (
-              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 pb-4">
                 {workers.map((worker) => {
                   const data = worker.card_data as any;
                   return (
