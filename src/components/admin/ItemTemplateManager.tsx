@@ -188,61 +188,55 @@ export const ItemTemplateManager = () => {
       }
 
       if (editingItem) {
-        // Update existing item
-        const updateData = {
-          item_id: formData.item_id,
-          name: formData.name,
-          type: formData.type,
-          rarity: formData.rarity,
-          description: formData.description || null,
-          source_type: formData.source_type,
-          image_url: imageUrl || null,
-          slot: formData.slot === "none" ? null : formData.slot,
-          value: formData.value,
-          level_requirement: formData.level_requirement,
-          drop_chance: formData.drop_chance || null,
-        };
+        // Update existing item using security definer function
+        console.log('Updating item with value:', formData.value);
         
-        console.log('Updating item with data:', updateData);
-        
-        const { error } = await supabase
-          .from("item_templates")
-          .update(updateData)
-          .eq("id", editingItem.id);
+        const { data, error } = await supabase.rpc('admin_update_item_template', {
+          p_wallet_address: accountId,
+          p_id: editingItem.id,
+          p_item_id: formData.item_id,
+          p_name: formData.name,
+          p_type: formData.type,
+          p_rarity: formData.rarity,
+          p_description: formData.description || null,
+          p_source_type: formData.source_type,
+          p_image_url: imageUrl || null,
+          p_slot: formData.slot === "none" ? null : formData.slot,
+          p_value: formData.value,
+          p_level_requirement: formData.level_requirement,
+          p_drop_chance: formData.drop_chance || null,
+        });
 
         if (error) {
           console.error('Update error:', error);
           throw error;
         }
-        console.log('Item updated successfully');
+        console.log('Item updated successfully, new data:', data);
         toast({ title: "Успех", description: "Предмет успешно обновлен" });
       } else {
-        // Insert new item
-        const insertData = {
-          item_id: formData.item_id,
-          name: formData.name,
-          type: formData.type,
-          rarity: formData.rarity,
-          description: formData.description || null,
-          source_type: formData.source_type,
-          image_url: imageUrl || null,
-          slot: formData.slot === "none" ? null : formData.slot,
-          value: formData.value,
-          level_requirement: formData.level_requirement,
-          drop_chance: formData.drop_chance || null,
-        };
+        // Insert new item using security definer function
+        console.log('Inserting item with value:', formData.value);
         
-        console.log('Inserting item with data:', insertData);
-        
-        const { error } = await supabase
-          .from("item_templates")
-          .insert(insertData);
+        const { data, error } = await supabase.rpc('admin_insert_item_template', {
+          p_wallet_address: accountId,
+          p_item_id: formData.item_id,
+          p_name: formData.name,
+          p_type: formData.type,
+          p_rarity: formData.rarity,
+          p_description: formData.description || null,
+          p_source_type: formData.source_type,
+          p_image_url: imageUrl || null,
+          p_slot: formData.slot === "none" ? null : formData.slot,
+          p_value: formData.value,
+          p_level_requirement: formData.level_requirement,
+          p_drop_chance: formData.drop_chance || null,
+        });
 
         if (error) {
           console.error('Insert error:', error);
           throw error;
         }
-        console.log('Item inserted successfully');
+        console.log('Item inserted successfully, new data:', data);
         toast({ title: "Успех", description: "Предмет успешно добавлен" });
       }
 

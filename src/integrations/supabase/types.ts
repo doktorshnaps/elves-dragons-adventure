@@ -1364,6 +1364,40 @@ export type Database = {
         }
         Returns: boolean
       }
+      admin_insert_item_template: {
+        Args: {
+          p_description: string
+          p_drop_chance: number
+          p_image_url: string
+          p_item_id: string
+          p_level_requirement: number
+          p_name: string
+          p_rarity: string
+          p_slot: string
+          p_source_type: string
+          p_type: string
+          p_value: number
+          p_wallet_address: string
+        }
+        Returns: {
+          created_at: string
+          description: string | null
+          drop_chance: number | null
+          id: number
+          image_url: string | null
+          item_id: string
+          level_requirement: number | null
+          name: string
+          rarity: string
+          slot: string | null
+          source_details: Json | null
+          source_type: string
+          stats: Json | null
+          type: string
+          updated_at: string
+          value: number | null
+        }
+      }
       admin_remove_administrator: {
         Args: { p_admin_wallet_address?: string; p_wallet_address: string }
         Returns: boolean
@@ -1508,6 +1542,41 @@ export type Database = {
           p_power: number
         }
         Returns: boolean
+      }
+      admin_update_item_template: {
+        Args: {
+          p_description: string
+          p_drop_chance: number
+          p_id: number
+          p_image_url: string
+          p_item_id: string
+          p_level_requirement: number
+          p_name: string
+          p_rarity: string
+          p_slot: string
+          p_source_type: string
+          p_type: string
+          p_value: number
+          p_wallet_address: string
+        }
+        Returns: {
+          created_at: string
+          description: string | null
+          drop_chance: number | null
+          id: number
+          image_url: string | null
+          item_id: string
+          level_requirement: number | null
+          name: string
+          rarity: string
+          slot: string | null
+          source_details: Json | null
+          source_type: string
+          stats: Json | null
+          type: string
+          updated_at: string
+          value: number | null
+        }
       }
       admin_update_rarity_multiplier: {
         Args: {
