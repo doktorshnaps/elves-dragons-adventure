@@ -42,6 +42,37 @@ const Marketplace = () => {
     loadGameData
   });
 
+  // Ensure Supabase session using NEAR wallet address
+  const ensureSupabaseAuth = async (wallet: string): Promise<boolean> => {
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session) return true;
+
+      const email = `${wallet}@near.wallet`;
+      const password = `NEAR_${wallet}_${wallet.slice(-10)}`;
+
+      console.log('🔐 Ensuring Supabase auth (Marketplace)');
+      const { error: signInError } = await supabase.auth.signInWithPassword({ email, password });
+      if (signInError) {
+        if (signInError.message.includes('Invalid login credentials')) {
+          const { error: signUpError } = await supabase.auth.signUp({
+            email,
+            password,
+            options: { emailRedirectTo: `${window.location.origin}/` }
+          });
+          if (signUpError) throw signUpError;
+        } else {
+          throw signInError;
+        }
+      }
+      return true;
+    } catch (e: any) {
+      console.error('❌ Supabase auth ensure error (Marketplace):', e);
+      toast({ title: 'Ошибка авторизации', description: 'Не удалось авторизоваться в базе', variant: 'destructive' });
+      return false;
+    }
+  };
+
   const handleCreateListing = async (listing: MarketplaceListing) => {
     console.log('🧾 handleCreateListing called:', {
       isNFT: listing.isNFT,
@@ -70,6 +101,14 @@ const Marketplace = () => {
         paymentTokenRaw: listing.paymentToken,
         nftCard 
       });
+
+      // Ensure Supabase session is active before DB writes
+      const supaOk = await ensureSupabaseAuth(accountId);
+      if (!supaOk) {
+        console.warn('⛔ Aborting listing due to missing Supabase session');
+        return;
+      }
+
       await createNFTListing(
         nftCard,
         listing.price,
