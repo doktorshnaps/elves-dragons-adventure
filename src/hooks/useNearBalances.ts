@@ -3,6 +3,7 @@ import * as nearAPI from 'near-api-js';
 
 const { connect, keyStores, utils } = nearAPI;
 
+
 interface NearBalances {
   nearBalance: string;
   gtBalance: string;
@@ -10,11 +11,40 @@ interface NearBalances {
   error: string | null;
 }
 
+// Precise formatter for large integer balances using BigInt
+const formatTokenBalance = (
+  raw: string,
+  decimals: number,
+  fractionDigits = 2
+): string => {
+  try {
+    const value = BigInt(raw);
+    const base = BigInt(10) ** BigInt(decimals);
+    const integer = value / base;
+    const fraction = value % base;
+
+    if (fractionDigits <= 0) return integer.toString();
+
+    const scaled = (fraction * BigInt(10 ** Math.min(fractionDigits, 18))) / base;
+    const fractionStr = scaled.toString().padStart(Math.min(fractionDigits, 18), '0');
+
+    // Trim trailing zeros
+    const trimmedFraction = fractionStr.replace(/0+$/, '');
+
+    return trimmedFraction.length
+      ? `${integer.toString()}.${trimmedFraction.slice(0, fractionDigits)}`
+      : integer.toString();
+  } catch {
+    return '0';
+  }
+};
+
 export const useNearBalances = (accountId: string | null): NearBalances => {
   const [nearBalance, setNearBalance] = useState<string>('0');
   const [gtBalance, setGtBalance] = useState<string>('0');
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
+  const [refreshNonce, setRefreshNonce] = useState<number>(0);
 
   useEffect(() => {
     if (!accountId) {
@@ -40,14 +70,30 @@ export const useNearBalances = (accountId: string | null): NearBalances => {
 
         const near = await connect(config);
 
-        // NEAR balance
+        // NEAR balance via RPC view_account with fallback to account.getAccountBalance
         try {
-          const account = await near.account(accountId);
-          const accountBalance = await account.getAccountBalance();
-          const nearBalanceInNear = utils.format.formatNearAmount(accountBalance.available);
-          const formattedNear = parseFloat(nearBalanceInNear).toFixed(3);
+          let formattedNear = '0.000';
+          try {
+            const view: any = await near.connection.provider.query({
+              request_type: 'view_account',
+              account_id: accountId,
+              finality: 'final',
+            });
+            const totalNear = utils.format.formatNearAmount(view.amount);
+            formattedNear = parseFloat(totalNear).toFixed(3);
+          } catch (e) {
+            const account = await near.account(accountId);
+            const accountBalance = await account.getAccountBalance();
+            const nearBalanceInNear = utils.format.formatNearAmount(accountBalance.available);
+            formattedNear = parseFloat(nearBalanceInNear).toFixed(3);
+          }
           console.log('✅ NEAR balance:', formattedNear);
           setNearBalance(formattedNear);
+          try {
+            const key = 'walletBalances';
+            const current = JSON.parse(localStorage.getItem(key) || '{}');
+            localStorage.setItem(key, JSON.stringify({ ...current, [accountId]: { ...(current?.[accountId]||{}), near: formattedNear } }));
+          } catch {}
         } catch (err) {
           console.warn('Error fetching NEAR balance:', err);
           setNearBalance('0');
@@ -72,9 +118,16 @@ export const useNearBalances = (accountId: string | null): NearBalances => {
           const parsed = JSON.parse(text); // returns the raw balance as string
 
           const raw = typeof parsed === 'string' ? parsed : String(parsed);
-          const gt = (Number(raw) / Math.pow(10, 18)).toFixed(2);
+          const gt = formatTokenBalance(raw, 18, 2);
           console.log('✅ GT balance:', gt);
           setGtBalance(gt);
+
+          try {
+            const key = 'walletBalances';
+            const current = JSON.parse(localStorage.getItem(key) || '{}');
+            const prev = current?.[accountId] || {};
+            localStorage.setItem(key, JSON.stringify({ ...current, [accountId]: { ...prev, ft: { ...(prev.ft||{}), [gtContract]: gt } } }));
+          } catch {}
         } catch (err) {
           console.warn('Error fetching GT balance:', err);
           setGtBalance('0');
@@ -90,6 +143,21 @@ export const useNearBalances = (accountId: string | null): NearBalances => {
     };
 
     fetchBalances();
+  }, [accountId, refreshNonce]);
+
+  // Refresh balances on wallet events
+  useEffect(() => {
+    const onWalletChanged = () => setRefreshNonce((n) => n + 1);
+    const onWalletDisconnected = () => {
+      setNearBalance('0');
+      setGtBalance('0');
+    };
+    window.addEventListener('wallet-changed', onWalletChanged as any);
+    window.addEventListener('wallet-disconnected', onWalletDisconnected as any);
+    return () => {
+      window.removeEventListener('wallet-changed', onWalletChanged as any);
+      window.removeEventListener('wallet-disconnected', onWalletDisconnected as any);
+    };
   }, [accountId]);
 
   return { nearBalance, gtBalance, loading, error };
