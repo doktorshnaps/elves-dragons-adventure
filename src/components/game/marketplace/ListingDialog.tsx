@@ -10,6 +10,7 @@ import { Item } from "@/types/inventory";
 import { supabase } from "@/integrations/supabase/client";
 import { NFTCard } from "@/hooks/useNFTCards";
 import { useWalletContext } from "@/contexts/WalletConnectContext";
+import { useNFTCardIntegration } from "@/hooks/useNFTCardIntegration";
 interface ListingDialogProps {
   onClose: () => void;
   onCreateListing: (listing: MarketplaceListing) => void;
@@ -22,10 +23,8 @@ export const ListingDialog = ({
   const [price, setPrice] = useState('');
   const [selectedItem, setSelectedItem] = useState<CardType | Item | NFTCard | null>(null);
   const [paymentToken, setPaymentToken] = useState<'ELL' | 'GT'>('ELL');
-  const {
-    accountId
-  } = useWalletContext();
-  const [nftCards, setNftCards] = useState<NFTCard[]>([]);
+  const { accountId } = useWalletContext();
+  const { nftCards: integratedNftCards, isLoading: nftLoading, syncNFTsFromWallet } = useNFTCardIntegration();
   useEffect(() => {
     const load = async () => {
       try {
@@ -53,42 +52,14 @@ export const ListingDialog = ({
           setInventory((data.inventory as any[] || []) as Item[]);
         }
 
-        // Load NFT cards if wallet is connected
+        // Ensure NFT sync using unified integration hook (same logic as decks/collection)
         const wallet = accountId || localStorage.getItem('nearAccountId') || localStorage.getItem('walletAccountId');
         if (wallet) {
-          console.log('🔄 Loading NFT cards for marketplace from wallet:', wallet);
-
-          // Sync NFTs from elleonortesr.mintbase1.near (optional)
+          console.log('🔄 Ensuring NFT sync via useNFTCardIntegration for wallet:', wallet);
           try {
-            await supabase.functions.invoke('sync-mintbase-nfts', {
-              body: {
-                wallet_address: wallet,
-                contract_id: 'elleonortesr.mintbase1.near'
-              }
-            });
+            await syncNFTsFromWallet();
           } catch (e) {
-            console.warn('Failed to sync elleonortesr.mintbase1.near NFTs:', e);
-          }
-
-          // Load NFT cards ONLY from user_nft_cards table via edge function (bypasses RLS)
-          try {
-            const {
-              data: fnRes,
-              error: fnErr
-            } = await supabase.functions.invoke('get-user-nft-cards', {
-              body: {
-                wallet_address: wallet,
-                contract_id: 'elleonortesr.mintbase1.near'
-              }
-            });
-            if (fnErr) throw fnErr;
-            const nfts = (fnRes?.cards || []) as NFTCard[];
-            const mintbaseNfts = nfts.filter(n => n.nft_contract_id === 'elleonortesr.mintbase1.near');
-            console.log('📦 NFTs from user_nft_cards (edge):', mintbaseNfts.length);
-            setNftCards(mintbaseNfts);
-          } catch (e) {
-            console.error('Failed to load NFTs from user_nft_cards:', e);
-            setNftCards([]);
+            console.warn('NFT sync failed:', e);
           }
         }
       } finally {
@@ -96,7 +67,7 @@ export const ListingDialog = ({
       }
     };
     load();
-  }, [accountId]);
+  }, [accountId, syncNFTsFromWallet]);
   const [cards, setCards] = useState<CardType[]>([]);
   const [inventory, setInventory] = useState<Item[]>([]);
   const [loading, setLoading] = useState(true);
@@ -115,7 +86,7 @@ export const ListingDialog = ({
     onCreateListing(listing);
   };
   const renderItem = (item: CardType | Item | NFTCard, index: number) => {
-    const isNFT = 'nft_token_id' in item && 'nft_contract_id' in item;
+    const isNFT = (item as any).isNFT === true || ('nft_token_id' in item && 'nft_contract_id' in item);
     if ('rarity' in item) {
       return <div key={item.id} className={`cursor-pointer ${selectedItem?.id === item.id ? 'ring-2 ring-white rounded-lg' : ''}`} onClick={() => setSelectedItem(item)}>
           <CardDisplay card={item as CardType} showSellButton={false} />
@@ -171,8 +142,8 @@ export const ListingDialog = ({
               </div>}
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-[35vh] overflow-y-auto">
-              {selectedType === 'card' ? cards.map((card: CardType, index: number) => renderItem(card, index)) : selectedType === 'nft' ? nftCards.map((nft: NFTCard, index: number) => renderItem(nft, index)) : inventory.map((item: Item, index: number) => renderItem(item, index))}
-              {selectedType === 'nft' && nftCards.length === 0 && !loading && <div className="col-span-2 text-center text-gray-400 py-4">
+              {selectedType === 'card' ? cards.map((card: CardType, index: number) => renderItem(card, index)) : selectedType === 'nft' ? integratedNftCards.filter((c: any) => c.isNFT && c.nftContractId === 'elleonortesr.mintbase1.near').map((nft: CardType, index: number) => renderItem(nft, index)) : inventory.map((item: Item, index: number) => renderItem(item, index))}
+              {selectedType === 'nft' && integratedNftCards.filter((c: any) => c.isNFT && c.nftContractId === 'elleonortesr.mintbase1.near').length === 0 && !nftLoading && <div className="col-span-2 text-center text-gray-400 py-4">
                   У вас нет доступных NFT для продажи
                 </div>}
             </div>
