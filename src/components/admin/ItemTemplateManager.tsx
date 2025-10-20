@@ -174,44 +174,60 @@ export const ItemTemplateManager = () => {
 
       if (editingItem) {
         // Update existing item
+        const updateData = {
+          item_id: formData.item_id,
+          name: formData.name,
+          type: formData.type,
+          rarity: formData.rarity,
+          description: formData.description || null,
+          source_type: formData.source_type,
+          image_url: imageUrl || null,
+          slot: formData.slot === "none" ? null : formData.slot,
+          value: formData.value,
+          level_requirement: formData.level_requirement,
+          drop_chance: formData.drop_chance || null,
+        };
+        
+        console.log('Updating item with data:', updateData);
+        
         const { error } = await supabase
           .from("item_templates")
-          .update({
-            item_id: formData.item_id,
-            name: formData.name,
-            type: formData.type,
-            rarity: formData.rarity,
-            description: formData.description || null,
-            source_type: formData.source_type,
-            image_url: imageUrl || null,
-            slot: formData.slot || null,
-            value: formData.value,
-            level_requirement: formData.level_requirement,
-            drop_chance: formData.drop_chance || null,
-          })
+          .update(updateData)
           .eq("id", editingItem.id);
 
-        if (error) throw error;
+        if (error) {
+          console.error('Update error:', error);
+          throw error;
+        }
+        console.log('Item updated successfully');
         toast({ title: "Успех", description: "Предмет успешно обновлен" });
       } else {
         // Insert new item
+        const insertData = {
+          item_id: formData.item_id,
+          name: formData.name,
+          type: formData.type,
+          rarity: formData.rarity,
+          description: formData.description || null,
+          source_type: formData.source_type,
+          image_url: imageUrl || null,
+          slot: formData.slot === "none" ? null : formData.slot,
+          value: formData.value,
+          level_requirement: formData.level_requirement,
+          drop_chance: formData.drop_chance || null,
+        };
+        
+        console.log('Inserting item with data:', insertData);
+        
         const { error } = await supabase
           .from("item_templates")
-          .insert({
-            item_id: formData.item_id,
-            name: formData.name,
-            type: formData.type,
-            rarity: formData.rarity,
-            description: formData.description || null,
-            source_type: formData.source_type,
-            image_url: imageUrl || null,
-            slot: formData.slot || null,
-            value: formData.value,
-            level_requirement: formData.level_requirement,
-            drop_chance: formData.drop_chance || null,
-          });
+          .insert(insertData);
 
-        if (error) throw error;
+        if (error) {
+          console.error('Insert error:', error);
+          throw error;
+        }
+        console.log('Item inserted successfully');
         toast({ title: "Успех", description: "Предмет успешно добавлен" });
       }
 
@@ -227,6 +243,7 @@ export const ItemTemplateManager = () => {
   };
 
   const handleEdit = (item: ItemTemplate) => {
+    console.log('Editing item:', item);
     setEditingItem(item);
     setFormData({
       item_id: item.item_id,
