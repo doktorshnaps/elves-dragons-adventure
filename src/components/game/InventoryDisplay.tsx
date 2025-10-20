@@ -14,7 +14,6 @@ import { t } from "@/utils/translations";
 import { GroupedItem } from "./inventory/types";
 import { cardDatabase } from "@/data/cardDatabase";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { useWorkerSync } from "@/hooks/useWorkerSync";
 
 
 interface InventoryDisplayProps {
@@ -36,10 +35,6 @@ export const InventoryDisplay = ({
   const { language } = useLanguage();
   const inventory = gameData.inventory || [];
   const { toast } = useToast();
-  
-  // Синхронизируем рабочих из card_instances в inventory
-  useWorkerSync();
-  
   const {
     balance,
     groupItems,
@@ -59,7 +54,8 @@ export const InventoryDisplay = ({
   } = useInventoryLogic(inventory);
 
 // Источник истины: только инвентарь из профиля (game_data.inventory)
-const allInventoryItems: Item[] = inventory;
+// Рабочие НЕ должны быть в inventory - они хранятся в card_instances
+const allInventoryItems: Item[] = inventory.filter(item => item?.type !== 'worker');
 
 
   const handleUseItem = async (groupedItem: GroupedItem): Promise<boolean | void> => {
