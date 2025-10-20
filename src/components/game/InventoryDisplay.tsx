@@ -14,7 +14,7 @@ import { t } from "@/utils/translations";
 import { GroupedItem } from "./inventory/types";
 import { cardDatabase } from "@/data/cardDatabase";
 import { useIsMobile } from "@/hooks/use-mobile";
-
+import { useCardInstances } from "@/hooks/useCardInstances";
 
 interface InventoryDisplayProps {
   onUseItem?: (item: Item) => void;
@@ -53,9 +53,27 @@ export const InventoryDisplay = ({
     handleQuantityConfirm
   } = useInventoryLogic(inventory);
 
-// Источник истины: только инвентарь из профиля (game_data.inventory)
-// Рабочие НЕ должны быть в inventory - они хранятся в card_instances
-const allInventoryItems: Item[] = inventory.filter(item => item?.type !== 'worker');
+// Источник истины: предметы из game_data + отображаем рабочих из card_instances
+const { cardInstances } = useCardInstances();
+
+const baseItems: Item[] = (inventory || []).filter((item): item is Item => !!item);
+const workerItems: Item[] = (cardInstances || [])
+  .filter(ci => ci.card_type === 'workers')
+  .map(ci => ({
+    id: ci.id,
+    name: (ci.card_data as any)?.name || 'Рабочий',
+    type: 'worker',
+    value: (ci.card_data as any)?.value || 0,
+    description: (ci.card_data as any)?.description,
+    image: (ci.card_data as any)?.image,
+    stats: (ci.card_data as any)?.stats || {}
+  } as Item));
+
+// Исключаем рабочих из сохранённого инвентаря, чтобы избежать дубликатов
+const allInventoryItems: Item[] = [
+  ...baseItems.filter(i => i.type !== 'worker'),
+  ...workerItems,
+];
 
 
   const handleUseItem = async (groupedItem: GroupedItem): Promise<boolean | void> => {
