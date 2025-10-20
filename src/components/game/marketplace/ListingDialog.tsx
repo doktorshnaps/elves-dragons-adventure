@@ -74,8 +74,34 @@ export const ListingDialog = ({
   const filteredNFTs = integratedNftCards.filter((c: any) => {
     const isNft = c?.isNFT === true || (!!c?.nft_token_id && !!c?.nft_contract_id) || (!!c?.nftTokenId && !!c?.nftContractId);
     const contractId = c?.nftContractId ?? c?.nft_contract_id;
-    return isNft && contractId === 'elleonortesr.mintbase1.near';
+    const matches = isNft && contractId === 'elleonortesr.mintbase1.near';
+    
+    if (isNft && integratedNftCards.length > 0 && !matches) {
+      console.log('🔍 NFT filtered out:', { 
+        id: c?.id, 
+        name: c?.name, 
+        contractId, 
+        expected: 'elleonortesr.mintbase1.near',
+        nftContractId: c?.nftContractId,
+        nft_contract_id: c?.nft_contract_id
+      });
+    }
+    
+    return matches;
   });
+
+  // Debug logging
+  useEffect(() => {
+    if (integratedNftCards.length > 0 || nftLoading) {
+      console.log('📊 ListingDialog NFT state:', {
+        totalNFTs: integratedNftCards.length,
+        filteredNFTs: filteredNFTs.length,
+        nftLoading,
+        accountId,
+        sampleNFT: integratedNftCards[0]
+      });
+    }
+  }, [integratedNftCards, filteredNFTs, nftLoading, accountId]);
   const handleCreate = () => {
     if (!selectedItem || !price) return;
     const listing: MarketplaceListing = {
