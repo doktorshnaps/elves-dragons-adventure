@@ -143,9 +143,11 @@ export const useNFTCardIntegration = () => {
         console.log('NFT fetch failed:', fetchError);
       }
 
-      // Синхронизируем NFT из Mintbase контракта
+      // Синхронизируем NFT из Mintbase контрактов
       try {
         console.log('🔄 Syncing Mintbase NFTs...');
+        
+        // Sync from default Mintbase contract
         const { data: mintbaseData, error: mintbaseError } = await supabase.functions.invoke(
           'sync-mintbase-nfts',
           {
@@ -157,7 +159,25 @@ export const useNFTCardIntegration = () => {
           console.error('Mintbase sync error:', mintbaseError);
         } else if (mintbaseData?.cards) {
           mintbaseCards = mintbaseData.cards;
-          console.log(`✅ Synced ${mintbaseCards.length} Mintbase NFTs`);
+          console.log(`✅ Synced ${mintbaseCards.length} Mintbase NFTs from default contract`);
+        }
+
+        // Sync from elleonortesr.mintbase1.near
+        const { data: elleonortesr, error: elleonortesrError } = await supabase.functions.invoke(
+          'sync-mintbase-nfts',
+          {
+            body: { 
+              wallet_address: accountId,
+              contract_id: 'elleonortesr.mintbase1.near'
+            }
+          }
+        );
+
+        if (elleonortesrError) {
+          console.error('Elleonortesr Mintbase sync error:', elleonortesrError);
+        } else if (elleonortesr?.cards) {
+          mintbaseCards = [...mintbaseCards, ...elleonortesr.cards];
+          console.log(`✅ Synced ${elleonortesr.cards.length} NFTs from elleonortesr.mintbase1.near`);
         }
       } catch (mintbaseError) {
         console.log('Mintbase NFT sync failed:', mintbaseError);

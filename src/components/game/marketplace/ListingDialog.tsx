@@ -53,7 +53,21 @@ export const ListingDialog = ({ onClose, onCreateListing }: ListingDialogProps) 
 
         // Load NFT cards if wallet is connected
         if (accountId) {
+          // Sync NFTs from elleonortesr.mintbase1.near contract
+          console.log('🔄 Syncing Mintbase NFTs from elleonortesr.mintbase1.near...');
+          try {
+            await supabase.functions.invoke('sync-mintbase-nfts', {
+              body: { 
+                wallet_address: accountId,
+                contract_id: 'elleonortesr.mintbase1.near'
+              }
+            });
+          } catch (e) {
+            console.warn('Failed to sync elleonortesr.mintbase1.near NFTs:', e);
+          }
+
           const nfts = await getUserNFTCards(accountId);
+          
           // Filter out NFT cards that are already on marketplace
           const { data: marketplaceNFTs } = await supabase
             .from('card_instances')
@@ -66,6 +80,7 @@ export const ListingDialog = ({ onClose, onCreateListing }: ListingDialogProps) 
           );
           
           const availableNFTs = nfts.filter(nft => !marketplaceNFTIds.has(nft.id));
+          console.log('✅ Available NFTs for marketplace:', availableNFTs.length);
           setNftCards(availableNFTs);
         }
       } finally {
