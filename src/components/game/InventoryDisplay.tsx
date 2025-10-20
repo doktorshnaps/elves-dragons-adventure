@@ -15,6 +15,7 @@ import { GroupedItem } from "./inventory/types";
 import { cardDatabase } from "@/data/cardDatabase";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useCardInstances } from "@/hooks/useCardInstances";
+import { useInventoryCleanup } from "@/hooks/useInventoryCleanup";
 
 interface InventoryDisplayProps {
   onUseItem?: (item: Item) => void;
@@ -35,6 +36,10 @@ export const InventoryDisplay = ({
   const { language } = useLanguage();
   const inventory = gameData.inventory || [];
   const { toast } = useToast();
+  
+  // Очищаем рабочих из inventory при загрузке
+  useInventoryCleanup();
+  
   const {
     balance,
     groupItems,
@@ -69,11 +74,24 @@ const workerItems: Item[] = (cardInstances || [])
     stats: (ci.card_data as any)?.stats || {}
   } as Item));
 
+console.log('📦 Inventory Display Debug:', {
+  totalInventoryItems: inventory?.length || 0,
+  baseItems: baseItems.length,
+  baseItemsTypes: baseItems.map(i => i.type),
+  workerItems: workerItems.length,
+  cardInstances: cardInstances?.length || 0
+});
+
 // Исключаем рабочих из сохранённого инвентаря, чтобы избежать дубликатов
 const allInventoryItems: Item[] = [
   ...baseItems.filter(i => i.type !== 'worker'),
   ...workerItems,
 ];
+
+console.log('✨ Final inventory to display:', {
+  total: allInventoryItems.length,
+  types: allInventoryItems.map(i => i.type)
+});
 
 
   const handleUseItem = async (groupedItem: GroupedItem): Promise<boolean | void> => {

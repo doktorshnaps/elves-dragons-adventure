@@ -170,6 +170,7 @@ export const useDungeonRewards = () => {
       
       console.log(`🎁 Начисление награды: ${rewardAmount} ELL и ${lootedItems.length} предметов`);
       console.log(`🎒 Предметы для добавления:`, lootedItems);
+      console.log(`📦 Current inventory before update:`, gameData.inventory);
       
       // Объединяем обновления баланса и инвентаря в один вызов
       const updates: any = {};
@@ -184,12 +185,16 @@ export const useDungeonRewards = () => {
         const currentInventory = gameData.inventory || [];
         updates.inventory = [...currentInventory, ...lootedItems];
         console.log(`🎒 Новый инвентарь: ${updates.inventory.length} предметов (было: ${currentInventory.length})`);
+        console.log(`🎒 Новый инвентарь детально:`, updates.inventory);
       }
 
       // Единый вызов updateGameData с обоими обновлениями
       if (Object.keys(updates).length > 0) {
         await updateGameData(updates);
-        console.log('✅ Награда успешно начислена');
+        console.log('✅ Награда успешно начислена через updateGameData');
+        console.log('✅ Updated game data:', updates);
+      } else {
+        console.warn('⚠️ No updates to apply!');
       }
 
       // Сбрасываем все состояния
@@ -203,7 +208,7 @@ export const useDungeonRewards = () => {
 
       return true; // Сигнализируем о выходе
     } catch (error) {
-      console.error('Ошибка при начислении награды:', error);
+      console.error('❌ Ошибка при начислении награды:', error);
       toast({
         title: "Ошибка",
         description: "Не удалось начислить награду",
