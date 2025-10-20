@@ -25,14 +25,20 @@ export const useNFTMarketplace = () => {
       console.log('👤 User check', { userId, hasUser: !!userRes?.user });
       
       if (!userId) {
+        console.error('❌ No user ID found');
         onError('Требуется вход');
         return;
       }
 
+      console.log('✅ User authenticated, checking wallet selector');
+
       if (!walletSelector) {
+        console.error('❌ No wallet selector');
         onError('Кошелек не подключен');
         return;
       }
+
+      console.log('✅ Wallet selector ready, proceeding to check existing listing');
 
       // Check if NFT is already listed
       console.log('🔍 Checking existing listing', { 
@@ -47,9 +53,9 @@ export const useNFTMarketplace = () => {
         .eq('nft_contract_id', nftCard.nft_contract_id)
         .eq('nft_token_id', nftCard.nft_token_id)
         .eq('wallet_address', walletAddress)
-        .single();
+        .maybeSingle();
 
-      console.log('📊 Existing check result', { existing, checkError });
+      console.log('📊 Existing check result', { existing, checkError, is_on_marketplace: existing?.is_on_marketplace });
 
       if (existing?.is_on_marketplace) {
         onError('Этот NFT уже выставлен на продажу');
