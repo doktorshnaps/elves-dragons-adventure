@@ -103,6 +103,7 @@ export const getMonsterLoot = (monsterName: string): Item[] => {
       name: template.name,
       type: itemType,
       value: template.value || 0,
+      sell_price: template.sell_price,
       description: template.description || `Выпадает с: ${cleanName}`,
       image: template.image_url || undefined,
       stats: template.stats || undefined,

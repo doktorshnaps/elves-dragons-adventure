@@ -174,6 +174,7 @@ if (itemTemplate.type === 'worker') {
       type: 'worker',
       rarity: itemTemplate.rarity || 'common',
       value: itemTemplate.value,
+      sell_price: itemTemplate.sell_price,
       stats: itemTemplate.stats || {},
       image: itemTemplate.image_url,
       templateId: itemTemplate.item_id
@@ -216,6 +217,7 @@ if (itemTemplate.type === 'worker') {
           type: itemTemplate.type,
           rarity: itemTemplate.rarity || 'common',
           value: itemTemplate.value,
+          sell_price: itemTemplate.sell_price,
           stats: itemTemplate.stats,
           image: itemTemplate.image_url
         };

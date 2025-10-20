@@ -72,7 +72,8 @@ export const InventoryManager = () => {
   const sellItem = (groupedItem: GroupedItem) => {
     try {
       const item = groupedItem.items[0];
-      const sellPrice = Math.floor(item.value * 0.7);
+      // Используем sell_price из item_templates, если он есть
+      const sellPrice = item.sell_price ?? Math.floor(item.value * 0.7);
       
       removeItem(item.id);
       useGameStore.getState().addBalance(sellPrice);

@@ -3,6 +3,7 @@ export interface Item {
   name: string;
   type: "cardPack" | "healthPotion" | "defensePotion" | "dragon_egg" | "weapon" | "armor" | "accessory" | "worker" | "material" | "woodChunks" | "magicalRoots" | "rockStones" | "blackCrystals" | "illusionManuscript" | "darkMonocle" | "etherVine" | "dwarvenTongs" | "healingOil" | "shimmeringCrystal" | "lifeCrystal";
   value: number;
+  sell_price?: number;
   description?: string;
   image?: string;
   petName?: string;

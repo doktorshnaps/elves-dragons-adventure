@@ -5,6 +5,7 @@ export interface ShopItem {
   price: number;
   type: "cardPack" | "healthPotion" | "defensePotion" | "weapon" | "armor" | "accessory" | "worker" | "material" | "woodChunks" | "magicalRoots" | "rockStones" | "blackCrystals" | "illusionManuscript" | "darkMonocle" | "etherVine" | "dwarvenTongs" | "healingOil" | "shimmeringCrystal" | "lifeCrystal";
   value: number;
+  sell_price?: number;
   image?: string;
   stats?: {
     power?: number;

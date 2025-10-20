@@ -131,8 +131,8 @@ const groupItems = (items: Item[]): GroupedItem[] => {
       }
     }
 
-    const price = getItemPrice(item);
-    const sellPrice = Math.floor(price * 0.7);
+    // Используем sell_price из item_templates, если он есть
+    const sellPrice = item.sell_price ?? Math.floor(getItemPrice(item) * 0.7);
     const newBalance = balance + sellPrice;
     
     const newInventory = currentInv.filter(i => i.id !== item.id);
