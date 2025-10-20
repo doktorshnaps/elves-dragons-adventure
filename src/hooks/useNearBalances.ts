@@ -28,6 +28,8 @@ export const useNearBalances = (accountId: string | null): NearBalances => {
       setError(null);
 
       try {
+        console.log('🔄 Fetching balances for account:', accountId);
+        
         const config = {
           networkId: 'mainnet',
           keyStore: new keyStores.BrowserLocalStorageKeyStore(),
@@ -37,24 +39,38 @@ export const useNearBalances = (accountId: string | null): NearBalances => {
         };
 
         const near = await connect(config);
-        const account = await near.account(accountId);
+        
+        // Получаем баланс NEAR через provider
+        try {
+          const account = await near.account(accountId);
+          const accountBalance = await account.getAccountBalance();
+          const nearBalanceInNear = utils.format.formatNearAmount(accountBalance.available);
+          const formattedNear = parseFloat(nearBalanceInNear).toFixed(3);
+          console.log('✅ NEAR balance:', formattedNear);
+          setNearBalance(formattedNear);
+        } catch (err) {
+          console.warn('Error fetching NEAR balance:', err);
+          setNearBalance('0');
+        }
 
-        // Получаем баланс NEAR
-        const accountBalance = await account.getAccountBalance();
-        const nearBalanceInNear = utils.format.formatNearAmount(accountBalance.available);
-        setNearBalance(parseFloat(nearBalanceInNear).toFixed(2));
-
-        // Получаем баланс GT токенов
+        // Получаем баланс GT токенов через view call
         try {
           const gtContract = 'gt-1733.meme-cooking.near';
-          const result: any = await account.viewFunction({
-            contractId: gtContract,
-            methodName: 'ft_balance_of',
-            args: { account_id: accountId },
+          
+          const response: any = await near.connection.provider.query({
+            request_type: 'call_function',
+            account_id: gtContract,
+            method_name: 'ft_balance_of',
+            args_base64: Buffer.from(JSON.stringify({ account_id: accountId })).toString('base64'),
+            finality: 'final',
           });
 
+          const result = JSON.parse(Buffer.from(response.result).toString());
+          console.log('Raw GT balance:', result);
+          
           // GT токены имеют 18 decimals
           const gtBalanceFormatted = (parseInt(result) / Math.pow(10, 18)).toFixed(2);
+          console.log('✅ GT balance:', gtBalanceFormatted);
           setGtBalance(gtBalanceFormatted);
         } catch (err) {
           console.warn('Error fetching GT balance:', err);
