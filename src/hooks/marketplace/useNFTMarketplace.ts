@@ -49,7 +49,8 @@ export const useNFTMarketplace = () => {
       const priceInYocto = nearAPI.utils.format.parseNearAmount(price.toString()) || '0';
 
       // Step 1: Call nft_approve on the NFT contract via NEAR wallet
-      console.log('📝 Calling nft_approve for NFT:', {
+      console.log('📝 Step 1: Preparing nft_approve call');
+      console.log('NFT details:', {
         contract: 'nft-elleonortesr.mintbase1.near',
         token_id: nftCard.nft_token_id,
         account_id: 'elleonortesr.mintbase1.near',
@@ -59,7 +60,9 @@ export const useNFTMarketplace = () => {
       });
 
       try {
+        console.log('🔑 Getting wallet from selector...');
         const wallet = await walletSelector.wallet();
+        console.log('✅ Wallet obtained, initiating transaction...');
         
         const approveResult = await wallet.signAndSendTransaction({
           receiverId: 'nft-elleonortesr.mintbase1.near',
@@ -85,13 +88,16 @@ export const useNFTMarketplace = () => {
         });
 
         console.log('✅ nft_approve transaction completed:', approveResult);
+        console.log('📊 Transaction hash:', approveResult?.transaction?.hash);
       } catch (walletError: any) {
         console.error('❌ Error calling nft_approve:', walletError);
+        console.error('Error details:', { message: walletError.message, stack: walletError.stack });
         onError('Не удалось подтвердить NFT в кошельке: ' + (walletError.message || 'Неизвестная ошибка'));
         return;
       }
 
       // Step 2: Create marketplace listing in database
+      console.log('📝 Step 2: Creating marketplace listing in database...');
       const { data: listing, error: listingError } = await supabase
         .from('marketplace_listings')
         .insert([{
@@ -110,12 +116,15 @@ export const useNFTMarketplace = () => {
         .single();
 
       if (listingError) {
-        console.error('Error creating NFT listing:', listingError);
+        console.error('❌ Error creating NFT listing:', listingError);
         onError(listingError.message);
         return;
       }
 
+      console.log('✅ Marketplace listing created:', listing.id);
+      
       // Step 3: Lock NFT in card_instances
+      console.log('📝 Step 3: Locking NFT in card_instances...');
       const { error: lockError } = await supabase
         .from('card_instances')
         .update({
@@ -127,8 +136,9 @@ export const useNFTMarketplace = () => {
         .eq('wallet_address', walletAddress);
 
       if (lockError) {
-        console.error('Error locking NFT:', lockError);
+        console.error('❌ Error locking NFT:', lockError);
         // Rollback listing
+        console.log('🔄 Rolling back marketplace listing...');
         await supabase
           .from('marketplace_listings')
           .delete()
@@ -137,6 +147,8 @@ export const useNFTMarketplace = () => {
         return;
       }
 
+      console.log('✅ NFT locked successfully');
+      console.log('🎉 All steps completed! NFT listing created successfully');
       onSuccess();
     } catch (error: any) {
       console.error('Error in createNFTListing:', error);
