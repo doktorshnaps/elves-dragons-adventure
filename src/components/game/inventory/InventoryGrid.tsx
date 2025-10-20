@@ -70,14 +70,14 @@ export const InventoryGrid = ({
                 className="p-4 transition-all duration-300 flex flex-col cursor-pointer hover:scale-105"
                 style={{ boxShadow: '0 15px 10px rgba(0, 0, 0, 0.6)' }}
               >
-                <div className="w-full aspect-[4/3] mb-2 rounded-lg overflow-hidden flex items-center justify-center bg-black/30 border border-white/20">
+                <div className="w-full h-32 sm:h-40 mb-2 rounded-lg overflow-hidden flex items-center justify-center bg-black/30 border border-white/20">
                   {(() => {
                     const imageSrc = resolveGroupImage(item);
                     return (
                       <img 
                         src={imageSrc} 
                         alt={item.name} 
-                        className="w-full h-full object-cover" 
+                        className="w-full h-full object-contain" 
                         onError={(e) => { 
                           (e.currentTarget as HTMLImageElement).src = '/placeholder.svg'; 
                         }} 
