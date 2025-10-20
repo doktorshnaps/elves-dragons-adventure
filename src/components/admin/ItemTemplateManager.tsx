@@ -43,6 +43,7 @@ interface ItemTemplate {
   image_url: string | null;
   slot: string | null;
   value: number;
+  sell_price: number;
   level_requirement: number;
   drop_chance: number | null;
   stats: any;
@@ -92,6 +93,7 @@ export const ItemTemplateManager = () => {
     image_url: "",
     slot: "",
     value: 0,
+    sell_price: 0,
     level_requirement: 1,
     drop_chance: 0,
   });
@@ -203,6 +205,7 @@ export const ItemTemplateManager = () => {
           p_image_url: imageUrl || null,
           p_slot: formData.slot === "none" ? null : formData.slot,
           p_value: formData.value,
+          p_sell_price: formData.sell_price,
           p_level_requirement: formData.level_requirement,
           p_drop_chance: formData.drop_chance || null,
         });
@@ -228,6 +231,7 @@ export const ItemTemplateManager = () => {
           p_image_url: imageUrl || null,
           p_slot: formData.slot === "none" ? null : formData.slot,
           p_value: formData.value,
+          p_sell_price: formData.sell_price,
           p_level_requirement: formData.level_requirement,
           p_drop_chance: formData.drop_chance || null,
         });
@@ -264,6 +268,7 @@ export const ItemTemplateManager = () => {
       image_url: item.image_url || "",
       slot: item.slot || "none",
       value: item.value,
+      sell_price: item.sell_price || 0,
       level_requirement: item.level_requirement,
       drop_chance: item.drop_chance || 0,
     });
@@ -305,6 +310,7 @@ export const ItemTemplateManager = () => {
       image_url: "",
       slot: "none",
       value: 0,
+      sell_price: 0,
       level_requirement: 1,
       drop_chance: 0,
     });
@@ -450,12 +456,23 @@ export const ItemTemplateManager = () => {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="value" className="text-white">Ценность</Label>
+                  <Label htmlFor="value" className="text-white">Цена покупки</Label>
                   <Input
                     id="value"
                     type="number"
                     value={formData.value}
                     onChange={(e) => setFormData({ ...formData, value: parseInt(e.target.value) || 0 })}
+                    className="bg-black/50 border-white text-white"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="sell_price" className="text-white">Цена продажи</Label>
+                  <Input
+                    id="sell_price"
+                    type="number"
+                    value={formData.sell_price}
+                    onChange={(e) => setFormData({ ...formData, sell_price: parseInt(e.target.value) || 0 })}
                     className="bg-black/50 border-white text-white"
                   />
                 </div>
@@ -539,20 +556,21 @@ export const ItemTemplateManager = () => {
               <TableHead className="text-white">Тип</TableHead>
               <TableHead className="text-white">Редкость</TableHead>
               <TableHead className="text-white">Источник</TableHead>
-              <TableHead className="text-white">Ценность</TableHead>
+              <TableHead className="text-white">Цена покупки</TableHead>
+              <TableHead className="text-white">Цена продажи</TableHead>
               <TableHead className="text-white text-right">Действия</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {loading ? (
               <TableRow>
-                <TableCell colSpan={8} className="text-center text-white/70">
+                <TableCell colSpan={9} className="text-center text-white/70">
                   Загрузка...
                 </TableCell>
               </TableRow>
             ) : items.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={8} className="text-center text-white/70">
+                <TableCell colSpan={9} className="text-center text-white/70">
                   Нет предметов
                 </TableCell>
               </TableRow>
@@ -574,6 +592,7 @@ export const ItemTemplateManager = () => {
                   <TableCell className="text-white/90">{item.rarity}</TableCell>
                   <TableCell className="text-white/90">{item.source_type}</TableCell>
                   <TableCell className="text-white/90">{item.value}</TableCell>
+                  <TableCell className="text-white/90">{item.sell_price || 0}</TableCell>
                   <TableCell className="text-right">
                     <div className="flex gap-2 justify-end">
                       <Button
