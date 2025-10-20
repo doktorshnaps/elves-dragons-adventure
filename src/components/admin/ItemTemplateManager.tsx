@@ -28,7 +28,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { toast } from "sonner";
+import { toast } from "@/hooks/use-toast";
 import { Pencil, Trash2, Plus } from "lucide-react";
 import { Card } from "@/components/ui/card";
 
@@ -112,7 +112,7 @@ export const ItemTemplateManager = () => {
       setItems(data || []);
     } catch (error) {
       console.error("Error loading items:", error);
-      toast.error("Ошибка при загрузке предметов");
+      toast({ title: "Ошибка", description: "Ошибка при загрузке предметов", variant: "destructive" });
     } finally {
       setLoading(false);
     }
@@ -122,7 +122,7 @@ export const ItemTemplateManager = () => {
     e.preventDefault();
     
     if (!formData.item_id || !formData.name || !formData.type || !formData.rarity || !formData.source_type) {
-      toast.error("Заполните все обязательные поля");
+      toast({ title: "Ошибка", description: "Заполните все обязательные поля", variant: "destructive" });
       return;
     }
 
@@ -149,7 +149,7 @@ export const ItemTemplateManager = () => {
           .eq("id", editingItem.id);
 
         if (error) throw error;
-        toast.success("Предмет успешно обновлен");
+        toast({ title: "Успех", description: "Предмет успешно обновлен" });
       } else {
         // Insert new item
         const { error } = await supabase
@@ -168,8 +168,8 @@ export const ItemTemplateManager = () => {
             drop_chance: formData.drop_chance || null,
           });
 
-        if (error) throw error;
-        toast.success("Предмет успешно добавлен");
+      if (error) throw error;
+      toast({ title: "Успех", description: "Предмет успешно добавлен" });
       }
 
       resetForm();
@@ -177,7 +177,7 @@ export const ItemTemplateManager = () => {
       loadItems();
     } catch (error) {
       console.error("Error saving item:", error);
-      toast.error("Ошибка при сохранении предмета");
+      toast({ title: "Ошибка", description: "Ошибка при сохранении предмета", variant: "destructive" });
     } finally {
       setLoading(false);
     }
@@ -193,7 +193,7 @@ export const ItemTemplateManager = () => {
       description: item.description || "",
       source_type: item.source_type,
       image_url: item.image_url || "",
-      slot: item.slot || "",
+      slot: item.slot || "none",
       value: item.value,
       level_requirement: item.level_requirement,
       drop_chance: item.drop_chance || 0,
@@ -212,11 +212,11 @@ export const ItemTemplateManager = () => {
         .eq("id", id);
 
       if (error) throw error;
-      toast.success("Предмет успешно удален");
+      toast({ title: "Успех", description: "Предмет успешно удален" });
       loadItems();
     } catch (error) {
       console.error("Error deleting item:", error);
-      toast.error("Ошибка при удалении предмета");
+      toast({ title: "Ошибка", description: "Ошибка при удалении предмета", variant: "destructive" });
     } finally {
       setLoading(false);
     }
@@ -232,7 +232,7 @@ export const ItemTemplateManager = () => {
       description: "",
       source_type: "",
       image_url: "",
-      slot: "",
+      slot: "none",
       value: 0,
       level_requirement: 1,
       drop_chance: 0,
@@ -341,12 +341,12 @@ export const ItemTemplateManager = () => {
 
                 <div className="space-y-2">
                   <Label htmlFor="slot" className="text-white">Слот</Label>
-                  <Select value={formData.slot} onValueChange={(value) => setFormData({ ...formData, slot: value })}>
+                  <Select value={formData.slot} onValueChange={(value) => setFormData({ ...formData, slot: value === "none" ? "" : value })}>
                     <SelectTrigger className="bg-black/50 border-white text-white">
                       <SelectValue placeholder="Выберите слот" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="">Нет</SelectItem>
+                      <SelectItem value="none">Нет</SelectItem>
                       {SLOTS.map((slot) => (
                         <SelectItem key={slot} value={slot}>
                           {slot}
