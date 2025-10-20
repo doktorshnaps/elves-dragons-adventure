@@ -156,9 +156,11 @@ export const InventoryGrid = ({
                   {item.type === 'dragon_egg' && <Button onClick={() => onUseItem(item)} className="w-full bg-game-accent hover:bg-game-accent/80">
                       {t(language, 'items.startIncubation')}
                     </Button>}
-                  {item.type !== 'dragon_egg' && <Button onClick={() => onSellItem(item)} variant="destructive" className="w-full">
-                      {t(language, 'items.sell')}
-                    </Button>}
+                  {item.type !== 'dragon_egg' && (
+                    <Button onClick={() => onSellItem(item)} variant="destructive" className="w-full">
+                      {`Продать за ${(item.items[0]?.sell_price ?? Math.floor(item.value * 0.7))} ELL`}
+                    </Button>
+                  )}
                 </div>}
             </div>
           </DialogContent>
