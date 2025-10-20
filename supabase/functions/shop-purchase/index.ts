@@ -147,38 +147,60 @@ serve(async (req) => {
 
     console.log(`💰 Successfully deducted ${totalCost} ELL from balance`);
     
-// Рабочие теперь добавляем напрямую в inventory (не в card_instances)
+// Рабочие теперь добавляем как card_instances
 if (itemTemplate.type === 'worker') {
   console.log(`👷 Processing ${quantity} workers: ${itemTemplate.name} (item_id: ${itemTemplate.item_id})`);
   
-  // Для рабочих добавляем в инвентарь через atomic_inventory_update
+  // Получаем user_id для создания card_instances
+  const { data: userData, error: userError } = await supabase
+    .from('game_data')
+    .select('user_id')
+    .eq('wallet_address', wallet_address)
+    .single();
+  
+  if (userError || !userData) {
+    console.error('❌ Error fetching user data:', userError);
+    throw new Error('User not found');
+  }
+  
+  // Для каждого рабочего создаем отдельную запись в card_instances
   for (let i = 0; i < quantity; i++) {
-    const workerData = {
-      id: `worker_${item_id}_${Date.now()}_${Math.random().toString(36).substr(2, 9)}_${i}`,
-      instanceId: `worker_${item_id}_${Date.now()}_${Math.random().toString(36).substr(2, 9)}_${i}`,
-      templateId: `worker_${item_id}`,
+    const workerInstanceId = `worker_${item_id}_${Date.now()}_${Math.random().toString(36).substr(2, 9)}_${i}`;
+    
+    const cardData = {
+      id: workerInstanceId,
       name: itemTemplate.name,
       description: itemTemplate.description,
       type: 'worker',
       rarity: itemTemplate.rarity || 'common',
       value: itemTemplate.value,
       stats: itemTemplate.stats || {},
-      image: itemTemplate.image_url
+      image: itemTemplate.image_url,
+      templateId: itemTemplate.item_id
     };
 
-    const { error: inventoryError } = await supabase.rpc('atomic_inventory_update', {
-      p_wallet_address: wallet_address,
-      p_price_deduction: 0, // Цена уже списана выше
-      p_new_item: workerData
-    });
+    const { error: cardInstanceError } = await supabase
+      .from('card_instances')
+      .insert({
+        user_id: userData.user_id,
+        wallet_address: wallet_address,
+        card_template_id: workerInstanceId,
+        card_type: 'workers',
+        current_health: 100,
+        max_health: 100,
+        card_data: cardData,
+        last_heal_time: new Date().toISOString(),
+        is_in_medical_bay: false,
+        monster_kills: 0
+      });
 
-    if (inventoryError) {
-      console.error(`❌ Error adding worker ${i+1}/${quantity} to inventory:`, inventoryError);
-      throw inventoryError;
+    if (cardInstanceError) {
+      console.error(`❌ Error creating card instance for worker ${i+1}/${quantity}:`, cardInstanceError);
+      throw cardInstanceError;
     }
   }
 
-  console.log(`✅ Added ${quantity} workers to inventory`);
+  console.log(`✅ Created ${quantity} worker card instances`);
     } else {
       console.log(`📦 Processing as regular item: ${itemTemplate.name}`);
       
