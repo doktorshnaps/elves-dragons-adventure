@@ -54,6 +54,8 @@ const Marketplace = () => {
 
     // Handle NFT listings separately
     if (listing.isNFT) {
+      console.log('📍 Entered NFT listing block', { accountId, selector: !!selector });
+      
       if (!accountId || !selector) {
         console.warn('⚠️ Wallet not connected or selector missing for NFT listing', { accountId, selectorExists: !!selector });
         toast({ title: 'Подключите кошелек', description: 'Для продажи NFT подключите NEAR-кошелек', variant: 'destructive' });
@@ -61,8 +63,13 @@ const Marketplace = () => {
       }
 
       const nftCard = listing.item as NFTCard;
-      const paymentToken = listing.paymentToken ? 'GT' : 'ELL';
-      console.log('🚀 Initiating NFT listing via createNFTListing', { paymentToken, nftCard });
+      // paymentToken может быть строкой с адресом контракта или undefined
+      const paymentToken = listing.paymentToken === 'gt-1733.meme-cooking.near' ? 'GT' : 'ELL';
+      console.log('🚀 Initiating NFT listing via createNFTListing', { 
+        paymentToken, 
+        paymentTokenRaw: listing.paymentToken,
+        nftCard 
+      });
       await createNFTListing(
         nftCard,
         listing.price,
