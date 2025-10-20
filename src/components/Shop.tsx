@@ -36,6 +36,7 @@ export const Shop = ({ onClose }: ShopProps) => {
   const [showEffect, setShowEffect] = useState(false);
   const [purchasing, setPurchasing] = useState(false);
   const [localBalance, setLocalBalance] = useState<number | null>(null);
+  const [cardPackPrice, setCardPackPrice] = useState<number | null>(null);
 
   // Load game data when shop opens
   useEffect(() => {
@@ -45,6 +46,23 @@ export const Shop = ({ onClose }: ShopProps) => {
     }
   }, [accountId, loadGameData]);
 
+  // Load dynamic price for Card Pack from item_templates
+  useEffect(() => {
+    const fetchCardPackPrice = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('item_templates')
+          .select('value')
+          .eq('item_id', 'card_pack')
+          .single();
+        if (error) throw error;
+        setCardPackPrice((data as any)?.value ?? null);
+      } catch (err) {
+        console.error('Error loading card pack price:', err);
+      }
+    };
+    fetchCardPackPrice();
+  }, []);
   // Use local balance if available, otherwise use gameData balance
   const displayBalance = localBalance !== null ? localBalance : gameData.balance;
 
@@ -155,18 +173,19 @@ return (
       
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 p-4">
         {shopItems.map((item) => {
-          const quantity = getItemQuantity(item.id);
-          const available = isItemAvailable(item.id);
-          const canAfford = displayBalance >= item.price;
+          const displayItem = item.type === 'cardPack' && cardPackPrice !== null ? { ...item, price: cardPackPrice } : item;
+          const quantity = getItemQuantity(displayItem.id);
+          const available = isItemAvailable(displayItem.id);
+          const canAfford = displayBalance >= displayItem.price;
           const canBuy = available && canAfford;
           
           return (
-            <Card key={item.name} variant="menu" className={`p-4 ${!canBuy ? 'opacity-50' : ''}`} style={{ boxShadow: '-33px 15px 10px rgba(0, 0, 0, 0.6)' }}>
-              {item.image && (
+            <Card key={displayItem.name} variant="menu" className={`p-4 ${!canBuy ? 'opacity-50' : ''}`} style={{ boxShadow: '-33px 15px 10px rgba(0, 0, 0, 0.6)' }}>
+              {displayItem.image && (
                 <div className="w-full aspect-[4/3] mb-2 rounded-lg overflow-hidden relative bg-gradient-to-br from-gray-800 to-gray-900">
                   <img 
-                    src={item.image} 
-                    alt={item.name}
+                    src={displayItem.image} 
+                    alt={displayItem.name}
                     className="w-full h-full object-contain"
                   />
                   {!available && (
@@ -187,32 +206,32 @@ return (
               )}
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
-                  <h3 className="font-semibold text-white">{translateShopItemName(language, item.name)}</h3>
+                  <h3 className="font-semibold text-white">{translateShopItemName(language, displayItem.name)}</h3>
                   <div className="flex items-center gap-1 text-white text-sm">
                     <Package className="w-3 h-3" />
                     <span>{quantity}</span>
                   </div>
                 </div>
-                <p className="text-white/70 text-sm">{translateShopItemDescription(language, item.description)}</p>
-                {item.stats && (
+                <p className="text-white/70 text-sm">{translateShopItemDescription(language, displayItem.description)}</p>
+                {displayItem.stats && (
                   <div className="text-white text-sm">
-                    {item.stats.power && <p>{t(language, 'shop.power')} +{item.stats.power}</p>}
-                    {item.stats.defense && <p>{t(language, 'shop.defense')} +{item.stats.defense}</p>}
-                    {item.stats.health && <p>{t(language, 'shop.health')} +{item.stats.health}</p>}
+                    {displayItem.stats.power && <p>{t(language, 'shop.power')} +{displayItem.stats.power}</p>}
+                    {displayItem.stats.defense && <p>{t(language, 'shop.defense')} +{displayItem.stats.defense}</p>}
+                    {displayItem.stats.health && <p>{t(language, 'shop.health')} +{displayItem.stats.health}</p>}
                   </div>
                 )}
-                {item.requiredLevel && (
+                {displayItem.requiredLevel && (
                   <p className="text-yellow-400 text-sm">
-                    {t(language, 'shop.requiredLevel')} {item.requiredLevel}
+                    {t(language, 'shop.requiredLevel')} {displayItem.requiredLevel}
                   </p>
                 )}
-                <p className="text-white/80">{t(language, 'shop.price')} {item.price} {t(language, 'game.currency')}</p>
+                <p className="text-white/80">{t(language, 'shop.price')} {displayItem.price} {t(language, 'game.currency')}</p>
                 <Button
                   type="button"
                   variant="menu"
                   className="w-full disabled:opacity-50"
                   style={{ boxShadow: '-33px 15px 10px rgba(0, 0, 0, 0.6)' }}
-                  onClick={() => handleBuyItem(item)}
+                  onClick={() => handleBuyItem(displayItem)}
                   disabled={!canBuy || purchasing}
                 >
                   {!available ? t(language, 'shop.soldOutButton') : 
