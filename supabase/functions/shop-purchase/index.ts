@@ -179,7 +179,7 @@ if (itemTemplate.type === 'worker') {
       templateId: itemTemplate.item_id
     };
 
-    const { error: cardInstanceError } = await supabase
+    const { data: insertedCard, error: cardInstanceError } = await supabase
       .from('card_instances')
       .insert({
         user_id: userData.user_id,
@@ -192,12 +192,15 @@ if (itemTemplate.type === 'worker') {
         last_heal_time: new Date().toISOString(),
         is_in_medical_bay: false,
         monster_kills: 0
-      });
+      })
+      .select();
 
     if (cardInstanceError) {
       console.error(`❌ Error creating card instance for worker ${i+1}/${quantity}:`, cardInstanceError);
       throw cardInstanceError;
     }
+    
+    console.log(`✅ Created card instance ${i+1}/${quantity}:`, insertedCard);
   }
 
   console.log(`✅ Created ${quantity} worker card instances`);
