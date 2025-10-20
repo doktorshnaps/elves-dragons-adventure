@@ -14,6 +14,7 @@ export const Auth = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const [referrerId, setReferrerId] = useState<string | null>(null);
+  const [supabaseAuthenticating, setSupabaseAuthenticating] = useState(false);
 
   // Get referrer ID from URL params
   useEffect(() => {
@@ -53,6 +54,78 @@ export const Auth = () => {
       console.log('⚠️ Referral add error:', error);
     }
   };
+
+  // Auto-register in Supabase when NEAR wallet connects
+  const ensureSupabaseAuth = async (walletAddress: string) => {
+    try {
+      console.log('🔐 Ensuring Supabase auth for wallet:', walletAddress);
+      setSupabaseAuthenticating(true);
+
+      // Check if already logged in to Supabase
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session) {
+        console.log('✅ Already authenticated in Supabase');
+        setSupabaseAuthenticating(false);
+        return;
+      }
+
+      // Create a deterministic email and password from wallet address
+      const email = `${walletAddress}@near.wallet`;
+      const password = `NEAR_${walletAddress}_${walletAddress.slice(-10)}`;
+
+      console.log('📧 Attempting Supabase sign in with wallet credentials');
+      
+      // Try to sign in first
+      const { error: signInError } = await supabase.auth.signInWithPassword({
+        email,
+        password
+      });
+
+      if (signInError) {
+        if (signInError.message.includes("Invalid login credentials")) {
+          // User doesn't exist, create account
+          console.log('📝 Creating new Supabase account');
+          const { error: signUpError } = await supabase.auth.signUp({
+            email,
+            password,
+            options: {
+              emailRedirectTo: `${window.location.origin}/`,
+              data: {
+                wallet_address: walletAddress
+              }
+            }
+          });
+
+          if (signUpError) {
+            throw signUpError;
+          }
+
+          console.log('✅ Supabase account created and signed in');
+        } else {
+          throw signInError;
+        }
+      } else {
+        console.log('✅ Signed in to existing Supabase account');
+      }
+
+      setSupabaseAuthenticating(false);
+    } catch (error: any) {
+      console.error('❌ Supabase auth error:', error);
+      setSupabaseAuthenticating(false);
+      toast({
+        title: "Ошибка авторизации",
+        description: "Не удалось подключиться к базе данных",
+        variant: "destructive"
+      });
+    }
+  };
+
+  // Handle Supabase authentication when wallet connects
+  useEffect(() => {
+    if (accountId && isConnected) {
+      ensureSupabaseAuth(accountId);
+    }
+  }, [accountId, isConnected]);
 
   // Handle referral when wallet connects or account ID becomes available
   useEffect(() => {
@@ -132,10 +205,14 @@ export const Auth = () => {
               
               <Button
                 onClick={handleConnectWallet}
-                disabled={isConnecting}
+                disabled={isConnecting || supabaseAuthenticating}
                 className="w-full bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white font-semibold py-3 rounded-lg transition-all duration-300"
               >
-                {isConnecting ? "Подключение..." : "Подключить NEAR кошелек"}
+                {supabaseAuthenticating 
+                  ? "Настройка аккаунта..." 
+                  : isConnecting 
+                    ? "Подключение..." 
+                    : "Подключить NEAR кошелек"}
               </Button>
               
               <div className="text-xs text-gray-400 mt-4">
