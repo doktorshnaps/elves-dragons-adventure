@@ -248,7 +248,7 @@ export const ItemTemplateManager = () => {
 
       resetForm();
       setIsDialogOpen(false);
-      loadItems();
+      await loadItems();
     } catch (error) {
       console.error("Error saving item:", error);
       toast({ title: "Ошибка", description: "Ошибка при сохранении предмета", variant: "destructive" });
@@ -440,7 +440,7 @@ export const ItemTemplateManager = () => {
 
                 <div className="space-y-2">
                   <Label htmlFor="slot" className="text-white">Слот</Label>
-                  <Select value={formData.slot} onValueChange={(value) => setFormData({ ...formData, slot: value === "none" ? "" : value })}>
+                  <Select value={formData.slot} onValueChange={(value) => setFormData({ ...formData, slot: value })}>
                     <SelectTrigger className="bg-black/50 border-white text-white">
                       <SelectValue placeholder="Выберите слот" />
                     </SelectTrigger>
