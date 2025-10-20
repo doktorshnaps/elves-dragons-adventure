@@ -52,14 +52,15 @@ export const ListingDialog = ({ onClose, onCreateListing }: ListingDialogProps) 
         }
 
         // Load NFT cards if wallet is connected
-        if (accountId) {
-          console.log('🔄 Loading NFT cards for marketplace from wallet:', accountId);
+        const wallet = accountId || localStorage.getItem('nearAccountId') || localStorage.getItem('walletAccountId');
+        if (wallet) {
+          console.log('🔄 Loading NFT cards for marketplace from wallet:', wallet);
           
-          // Sync NFTs from all contracts
+          // Sync NFTs from elleonortesr.mintbase1.near (optional)
           try {
             await supabase.functions.invoke('sync-mintbase-nfts', {
               body: { 
-                wallet_address: accountId,
+                wallet_address: wallet,
                 contract_id: 'elleonortesr.mintbase1.near'
               }
             });
@@ -70,7 +71,7 @@ export const ListingDialog = ({ onClose, onCreateListing }: ListingDialogProps) 
           // Load NFT cards ONLY from user_nft_cards table
           try {
             const { data: fnRes, error: fnErr } = await supabase.functions.invoke('get-user-nft-cards', {
-              body: { wallet_address: accountId, contract_id: 'elleonortesr.mintbase1.near' }
+              body: { wallet_address: wallet, contract_id: 'elleonortesr.mintbase1.near' }
             });
             if (fnErr) throw fnErr;
             const nfts = (fnRes?.cards || []) as NFTCard[];
@@ -80,7 +81,7 @@ export const ListingDialog = ({ onClose, onCreateListing }: ListingDialogProps) 
             const { data: marketplaceNFTs } = await supabase
               .from('card_instances')
               .select('nft_contract_id, nft_token_id')
-              .eq('wallet_address', accountId)
+              .eq('wallet_address', wallet)
               .eq('is_on_marketplace', true);
             
             const marketplaceNFTIds = new Set(
