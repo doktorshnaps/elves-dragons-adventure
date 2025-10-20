@@ -12,7 +12,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { generateCard } from "@/utils/cardUtils";
 import { Item } from "@/types/inventory";
 import { ArrowLeft, Clock, Package } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { PurchaseEffect } from "./shop/PurchaseEffect";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -21,7 +21,7 @@ interface ShopProps {
 }
 
 export const Shop = ({ onClose }: ShopProps) => {
-  const { gameData, loading: gameDataLoading, loadGameData } = useGameData();
+  const { gameData, loading: gameDataLoading, loadGameData, updateGameData } = useGameData();
   const { accountId } = useWalletContext();
   const { language } = useLanguage();
   const { 
@@ -34,22 +34,25 @@ export const Shop = ({ onClose }: ShopProps) => {
   } = useShopInventory();
   const { toast } = useToast();
   const [showEffect, setShowEffect] = useState(false);
-  
   const [purchasing, setPurchasing] = useState(false);
+  const [localBalance, setLocalBalance] = useState<number | null>(null);
 
-  // Force reload game data when shop opens to ensure fresh balance
-  useState(() => {
+  // Load game data when shop opens
+  useEffect(() => {
     if (accountId && loadGameData) {
-      console.log('🛒 Shop opened, reloading game data for:', accountId);
+      console.log('🛒 Shop opened, loading game data for:', accountId);
       loadGameData(accountId);
     }
-  });
+  }, [accountId, loadGameData]);
+
+  // Use local balance if available, otherwise use gameData balance
+  const displayBalance = localBalance !== null ? localBalance : gameData.balance;
 
   if (gameDataLoading || inventoryLoading) {
     return <div className="flex justify-center items-center h-64">{t(language, 'shop.loading')}</div>;
   }
 
-  console.log('🛒 Shop render - balance:', gameData.balance, 'accountId:', accountId);
+  console.log('🛒 Shop render - balance:', displayBalance, 'local:', localBalance, 'gameData:', gameData.balance, 'accountId:', accountId);
 
   const handleBuyItem = async (item: typeof shopItems[0]) => {
     if (!accountId) {
@@ -71,7 +74,7 @@ export const Shop = ({ onClose }: ShopProps) => {
     }
 
     // Check if user has enough balance before purchase
-    if (gameData.balance < item.price) {
+    if (displayBalance < item.price) {
       toast({
         title: t(language, 'shop.insufficientFunds'),
         description: t(language, 'shop.insufficientFundsDescription'),
@@ -86,14 +89,27 @@ export const Shop = ({ onClose }: ShopProps) => {
       setPurchasing(true);
       console.log(`🛒 Purchasing item: ${item.name} for ${item.price} ELL`);
       
-      // Используем shop-purchase edge function для всех типов товаров
+      // Instantly update local balance for immediate UI feedback
+      const newBalance = displayBalance - item.price;
+      setLocalBalance(newBalance);
+      
+      // Purchase item via edge function
       await purchaseItem(item.id, accountId, 1);
 
       console.log('✅ Purchase successful');
       
-      // Reload game data to sync with updated balance and inventory
+      // Update balance in background without blocking UI
+      if (updateGameData) {
+        updateGameData({ balance: newBalance }).catch(err => {
+          console.error('Background balance update failed:', err);
+        });
+      }
+      
+      // Reload full game data in background for inventory sync
       if (loadGameData) {
-        await loadGameData(accountId);
+        loadGameData(accountId).catch(err => {
+          console.error('Background game data reload failed:', err);
+        });
       }
 
       setShowEffect(true);
@@ -103,6 +119,8 @@ export const Shop = ({ onClose }: ShopProps) => {
       });
     } catch (error) {
       console.error('Purchase error:', error);
+      // Revert local balance on error
+      setLocalBalance(null);
       toast({
         title: t(language, 'shop.purchaseError'),
         description: t(language, 'shop.purchaseErrorDescription'),
@@ -131,7 +149,7 @@ return (
           
           <div className="flex items-center gap-1 sm:gap-2 bg-transparent backdrop-blur-sm px-2 sm:px-4 py-1.5 sm:py-2 rounded-2xl border-2 border-white w-full sm:w-auto justify-center" style={{ boxShadow: '-33px 15px 10px rgba(0, 0, 0, 0.6)' }}>
             <div className="w-2 h-2 bg-yellow-500 rounded-full animate-pulse"></div>
-            <span className="text-white font-semibold text-sm sm:text-base">{gameData.balance}</span>
+            <span className="text-white font-semibold text-sm sm:text-base">{displayBalance}</span>
             <span className="text-white/70 text-xs sm:text-sm">{t(language, 'game.currency')}</span>
           </div>
           
@@ -146,7 +164,7 @@ return (
         {shopItems.map((item) => {
           const quantity = getItemQuantity(item.id);
           const available = isItemAvailable(item.id);
-          const canAfford = gameData.balance >= item.price;
+          const canAfford = displayBalance >= item.price;
           const canBuy = available && canAfford;
           
           return (
