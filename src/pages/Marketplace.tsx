@@ -43,11 +43,26 @@ const Marketplace = () => {
   });
 
   const handleCreateListing = async (listing: MarketplaceListing) => {
+    console.log('🧾 handleCreateListing called:', {
+      isNFT: listing.isNFT,
+      accountId,
+      selectorReady: !!selector,
+      item: listing.item,
+      price: listing.price,
+      paymentTokenRaw: listing.paymentToken
+    });
+
     // Handle NFT listings separately
-    if (listing.isNFT && accountId) {
+    if (listing.isNFT) {
+      if (!accountId || !selector) {
+        console.warn('⚠️ Wallet not connected or selector missing for NFT listing', { accountId, selectorExists: !!selector });
+        toast({ title: 'Подключите кошелек', description: 'Для продажи NFT подключите NEAR-кошелек', variant: 'destructive' });
+        return;
+      }
+
       const nftCard = listing.item as NFTCard;
       const paymentToken = listing.paymentToken ? 'GT' : 'ELL';
-      
+      console.log('🚀 Initiating NFT listing via createNFTListing', { paymentToken, nftCard });
       await createNFTListing(
         nftCard,
         listing.price,
@@ -70,7 +85,6 @@ const Marketplace = () => {
       );
       return;
     }
-
     // Regular listing
     await createListing(
       listing,
@@ -89,7 +103,6 @@ const Marketplace = () => {
       }
     );
   };
-
   const handleCancelListing = async (listing: MarketplaceListing) => {
     await cancelListing(
       listing.id,
