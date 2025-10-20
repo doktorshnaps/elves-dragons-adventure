@@ -98,17 +98,10 @@ export const Shop = ({ onClose }: ShopProps) => {
 
       console.log('✅ Purchase successful');
       
-      // Update balance in background without blocking UI
+      // Update balance in background without reloading full data
       if (updateGameData) {
         updateGameData({ balance: newBalance }).catch(err => {
           console.error('Background balance update failed:', err);
-        });
-      }
-      
-      // Reload full game data in background for inventory sync
-      if (loadGameData) {
-        loadGameData(accountId).catch(err => {
-          console.error('Background game data reload failed:', err);
         });
       }
 
