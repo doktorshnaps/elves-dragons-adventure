@@ -102,11 +102,10 @@ const Marketplace = () => {
         nftCard 
       });
 
-      // Ensure Supabase session is active before DB writes
+      // Ensure Supabase session is active before DB writes (optional)
       const supaOk = await ensureSupabaseAuth(accountId);
       if (!supaOk) {
-        console.warn('⛔ Aborting listing due to missing Supabase session');
-        return;
+        console.warn('⚠️ Proceeding without Supabase session; Edge Function fallback will be used');
       }
 
       await createNFTListing(
