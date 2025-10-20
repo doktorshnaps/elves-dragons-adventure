@@ -152,10 +152,22 @@ export const ItemTemplateManager = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
+    console.log('Submit triggered, formData:', formData);
+    console.log('Editing item:', editingItem);
+    
     if (!formData.item_id || !formData.name || !formData.type || !formData.rarity || !formData.source_type) {
+      console.log('Validation failed:', {
+        item_id: formData.item_id,
+        name: formData.name,
+        type: formData.type,
+        rarity: formData.rarity,
+        source_type: formData.source_type
+      });
       toast({ title: "Ошибка", description: "Заполните все обязательные поля", variant: "destructive" });
       return;
     }
+    
+    console.log('Validation passed, proceeding...');
 
     try {
       setLoading(true);
@@ -163,11 +175,14 @@ export const ItemTemplateManager = () => {
       // Upload image if selected
       let imageUrl = formData.image_url;
       if (selectedImage) {
+        console.log('Uploading image...');
         const uploadedUrl = await uploadImage(selectedImage);
         if (uploadedUrl) {
           imageUrl = uploadedUrl;
+          console.log('Image uploaded:', imageUrl);
         } else {
           toast({ title: "Ошибка", description: "Не удалось загрузить изображение", variant: "destructive" });
+          setLoading(false);
           return;
         }
       }
