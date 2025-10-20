@@ -95,6 +95,8 @@ export const ItemTemplateManager = () => {
     level_requirement: 1,
     drop_chance: 0,
   });
+  const [selectedImage, setSelectedImage] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState<string>("");
 
   useEffect(() => {
     loadItems();
@@ -118,6 +120,35 @@ export const ItemTemplateManager = () => {
     }
   };
 
+  const uploadImage = async (file: File): Promise<string | null> => {
+    try {
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${Date.now()}_${Math.random().toString(36).substring(7)}.${fileExt}`;
+      const filePath = `${fileName}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from('item-images')
+        .upload(filePath, file, {
+          cacheControl: '3600',
+          upsert: false
+        });
+
+      if (uploadError) {
+        console.error('Upload error:', uploadError);
+        throw uploadError;
+      }
+
+      const { data } = supabase.storage
+        .from('item-images')
+        .getPublicUrl(filePath);
+
+      return data.publicUrl;
+    } catch (error) {
+      console.error('Error uploading image:', error);
+      return null;
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -128,6 +159,18 @@ export const ItemTemplateManager = () => {
 
     try {
       setLoading(true);
+
+      // Upload image if selected
+      let imageUrl = formData.image_url;
+      if (selectedImage) {
+        const uploadedUrl = await uploadImage(selectedImage);
+        if (uploadedUrl) {
+          imageUrl = uploadedUrl;
+        } else {
+          toast({ title: "Ошибка", description: "Не удалось загрузить изображение", variant: "destructive" });
+          return;
+        }
+      }
 
       if (editingItem) {
         // Update existing item
@@ -140,7 +183,7 @@ export const ItemTemplateManager = () => {
             rarity: formData.rarity,
             description: formData.description || null,
             source_type: formData.source_type,
-            image_url: formData.image_url || null,
+            image_url: imageUrl || null,
             slot: formData.slot || null,
             value: formData.value,
             level_requirement: formData.level_requirement,
@@ -161,15 +204,15 @@ export const ItemTemplateManager = () => {
             rarity: formData.rarity,
             description: formData.description || null,
             source_type: formData.source_type,
-            image_url: formData.image_url || null,
+            image_url: imageUrl || null,
             slot: formData.slot || null,
             value: formData.value,
             level_requirement: formData.level_requirement,
             drop_chance: formData.drop_chance || null,
           });
 
-      if (error) throw error;
-      toast({ title: "Успех", description: "Предмет успешно добавлен" });
+        if (error) throw error;
+        toast({ title: "Успех", description: "Предмет успешно добавлен" });
       }
 
       resetForm();
@@ -198,6 +241,8 @@ export const ItemTemplateManager = () => {
       level_requirement: item.level_requirement,
       drop_chance: item.drop_chance || 0,
     });
+    setSelectedImage(null);
+    setImagePreview(item.image_url || "");
     setIsDialogOpen(true);
   };
 
@@ -237,6 +282,28 @@ export const ItemTemplateManager = () => {
       level_requirement: 1,
       drop_chance: 0,
     });
+    setSelectedImage(null);
+    setImagePreview("");
+  };
+
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      if (file.size > 5 * 1024 * 1024) {
+        toast({ title: "Ошибка", description: "Размер файла не должен превышать 5MB", variant: "destructive" });
+        return;
+      }
+      if (!file.type.startsWith('image/')) {
+        toast({ title: "Ошибка", description: "Выберите файл изображения", variant: "destructive" });
+        return;
+      }
+      setSelectedImage(file);
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setImagePreview(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
   };
 
   const handleDialogClose = () => {
@@ -392,14 +459,23 @@ export const ItemTemplateManager = () => {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="image_url" className="text-white">URL изображения</Label>
+                <Label htmlFor="image_file" className="text-white">Изображение предмета</Label>
                 <Input
-                  id="image_url"
-                  value={formData.image_url}
-                  onChange={(e) => setFormData({ ...formData, image_url: e.target.value })}
-                  placeholder="https://example.com/image.png"
-                  className="bg-black/50 border-white text-white"
+                  id="image_file"
+                  type="file"
+                  accept="image/*"
+                  onChange={handleImageChange}
+                  className="bg-black/50 border-white text-white file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-white file:text-black hover:file:bg-gray-100"
                 />
+                {imagePreview && (
+                  <div className="mt-2">
+                    <img 
+                      src={imagePreview} 
+                      alt="Preview" 
+                      className="w-32 h-32 object-cover rounded border-2 border-white"
+                    />
+                  </div>
+                )}
               </div>
 
               <div className="space-y-2">
