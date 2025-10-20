@@ -12,6 +12,7 @@ export const useNFTMarketplace = () => {
     price: number,
     paymentToken: string,
     walletAddress: string,
+    walletSelector: any,
     onSuccess: () => void,
     onError: (error: string) => void
   ) => {
@@ -21,6 +22,11 @@ export const useNFTMarketplace = () => {
       
       if (!userId) {
         onError('Требуется вход');
+        return;
+      }
+
+      if (!walletSelector) {
+        onError('Кошелек не подключен');
         return;
       }
 
@@ -38,7 +44,54 @@ export const useNFTMarketplace = () => {
         return;
       }
 
-      // Create marketplace listing
+      // Determine payment token contract
+      const ftContract = paymentToken === 'GT' ? 'gt-1733.meme-cooking.near' : null;
+      const priceInYocto = nearAPI.utils.format.parseNearAmount(price.toString()) || '0';
+
+      // Step 1: Call nft_approve on the NFT contract via NEAR wallet
+      console.log('📝 Calling nft_approve for NFT:', {
+        contract: 'nft-elleonortesr.mintbase1.near',
+        token_id: nftCard.nft_token_id,
+        account_id: 'elleonortesr.mintbase1.near',
+        price: priceInYocto,
+        paymentToken,
+        ftContract
+      });
+
+      try {
+        const wallet = await walletSelector.wallet();
+        
+        const approveResult = await wallet.signAndSendTransaction({
+          receiverId: 'nft-elleonortesr.mintbase1.near',
+          actions: [
+            {
+              type: 'FunctionCall',
+              params: {
+                methodName: 'nft_approve',
+                args: {
+                  token_id: nftCard.nft_token_id,
+                  account_id: 'elleonortesr.mintbase1.near',
+                  msg: JSON.stringify({
+                    price: priceInYocto,
+                    ft_contract: ftContract,
+                    market_type: 'list_sale'
+                  })
+                },
+                gas: '100000000000000',
+                deposit: nearAPI.utils.format.parseNearAmount('0.01') || '0'
+              }
+            }
+          ]
+        });
+
+        console.log('✅ nft_approve transaction completed:', approveResult);
+      } catch (walletError: any) {
+        console.error('❌ Error calling nft_approve:', walletError);
+        onError('Не удалось подтвердить NFT в кошельке: ' + (walletError.message || 'Неизвестная ошибка'));
+        return;
+      }
+
+      // Step 2: Create marketplace listing in database
       const { data: listing, error: listingError } = await supabase
         .from('marketplace_listings')
         .insert([{
@@ -51,7 +104,7 @@ export const useNFTMarketplace = () => {
           is_nft_listing: true,
           nft_contract_id: nftCard.nft_contract_id,
           nft_token_id: nftCard.nft_token_id,
-          payment_token_contract: paymentToken === 'GT' ? 'gt-1733.meme-cooking.near' : null
+          payment_token_contract: ftContract
         }])
         .select()
         .single();
@@ -62,7 +115,7 @@ export const useNFTMarketplace = () => {
         return;
       }
 
-      // Lock NFT in card_instances
+      // Step 3: Lock NFT in card_instances
       const { error: lockError } = await supabase
         .from('card_instances')
         .update({

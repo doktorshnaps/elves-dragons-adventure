@@ -14,7 +14,7 @@ import { NFTCard } from "@/hooks/useNFTCards";
 
 const Marketplace = () => {
   const [showListingDialog, setShowListingDialog] = useState(false);
-  const { accountId } = useWalletContext();
+  const { accountId, selector } = useWalletContext();
   
   const {
     listings,
@@ -53,6 +53,7 @@ const Marketplace = () => {
         listing.price,
         paymentToken,
         accountId,
+        selector,
         async () => {
           setShowListingDialog(false);
           toast({
