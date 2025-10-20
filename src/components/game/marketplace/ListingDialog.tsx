@@ -8,7 +8,7 @@ import { MarketplaceListing } from "./types";
 import { Card as CardType } from "@/types/cards";
 import { Item } from "@/types/inventory";
 import { supabase } from "@/integrations/supabase/client";
-import { useNFTCards, NFTCard } from "@/hooks/useNFTCards";
+import { NFTCard } from "@/hooks/useNFTCards";
 import { useWalletContext } from "@/contexts/WalletConnectContext";
 
 interface ListingDialogProps {
@@ -22,7 +22,7 @@ export const ListingDialog = ({ onClose, onCreateListing }: ListingDialogProps) 
   const [selectedItem, setSelectedItem] = useState<CardType | Item | NFTCard | null>(null);
   const [paymentToken, setPaymentToken] = useState<'ELL' | 'GT'>('ELL');
   const { accountId } = useWalletContext();
-  const { getUserNFTCards } = useNFTCards();
+  
   const [nftCards, setNftCards] = useState<NFTCard[]>([]);
 
   useEffect(() => {
@@ -69,8 +69,12 @@ export const ListingDialog = ({ onClose, onCreateListing }: ListingDialogProps) 
 
           // Load NFT cards ONLY from user_nft_cards table
           try {
-            const nfts = await getUserNFTCards(accountId);
-            console.log('📦 NFTs from user_nft_cards:', nfts.length);
+            const { data: fnRes, error: fnErr } = await supabase.functions.invoke('get-user-nft-cards', {
+              body: { wallet_address: accountId }
+            });
+            if (fnErr) throw fnErr;
+            const nfts = (fnRes?.cards || []) as NFTCard[];
+            console.log('📦 NFTs from user_nft_cards (edge):', nfts.length);
             
             // Filter out NFT cards that are already on marketplace
             const { data: marketplaceNFTs } = await supabase
@@ -97,7 +101,7 @@ export const ListingDialog = ({ onClose, onCreateListing }: ListingDialogProps) 
       }
     };
     load();
-  }, [accountId, getUserNFTCards]);
+  }, [accountId]);
 
   const [cards, setCards] = useState<CardType[]>([]);
   const [inventory, setInventory] = useState<Item[]>([]);
