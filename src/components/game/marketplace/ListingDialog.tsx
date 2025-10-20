@@ -19,7 +19,7 @@ export const ListingDialog = ({
   onClose,
   onCreateListing
 }: ListingDialogProps) => {
-  const [selectedType, setSelectedType] = useState<'card' | 'item' | 'nft'>('card');
+  const [selectedType, setSelectedType] = useState<'card' | 'item' | 'nft'>('nft');
   const [price, setPrice] = useState('');
   const [selectedItem, setSelectedItem] = useState<CardType | Item | NFTCard | null>(null);
   const [paymentToken, setPaymentToken] = useState<'ELL' | 'GT'>('ELL');
@@ -71,6 +71,11 @@ export const ListingDialog = ({
   const [cards, setCards] = useState<CardType[]>([]);
   const [inventory, setInventory] = useState<Item[]>([]);
   const [loading, setLoading] = useState(true);
+  const filteredNFTs = integratedNftCards.filter((c: any) => {
+    const isNft = c?.isNFT === true || (!!c?.nft_token_id && !!c?.nft_contract_id) || (!!c?.nftTokenId && !!c?.nftContractId);
+    const contractId = c?.nftContractId ?? c?.nft_contract_id;
+    return isNft && contractId === 'elleonortesr.mintbase1.near';
+  });
   const handleCreate = () => {
     if (!selectedItem || !price) return;
     const listing: MarketplaceListing = {
@@ -86,7 +91,7 @@ export const ListingDialog = ({
     onCreateListing(listing);
   };
   const renderItem = (item: CardType | Item | NFTCard, index: number) => {
-    const isNFT = (item as any).isNFT === true || ('nft_token_id' in item && 'nft_contract_id' in item);
+    const isNFT = (item as any).isNFT === true || !!((item as any).nft_token_id && (item as any).nft_contract_id) || !!((item as any).nftTokenId && (item as any).nftContractId);
     if ('rarity' in item) {
       return <div key={item.id} className={`cursor-pointer ${selectedItem?.id === item.id ? 'ring-2 ring-white rounded-lg' : ''}`} onClick={() => setSelectedItem(item)}>
           <CardDisplay card={item as CardType} showSellButton={false} />
@@ -142,8 +147,8 @@ export const ListingDialog = ({
               </div>}
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-[35vh] overflow-y-auto">
-              {selectedType === 'card' ? cards.map((card: CardType, index: number) => renderItem(card, index)) : selectedType === 'nft' ? integratedNftCards.filter((c: any) => c.isNFT && c.nftContractId === 'elleonortesr.mintbase1.near').map((nft: CardType, index: number) => renderItem(nft, index)) : inventory.map((item: Item, index: number) => renderItem(item, index))}
-              {selectedType === 'nft' && integratedNftCards.filter((c: any) => c.isNFT && c.nftContractId === 'elleonortesr.mintbase1.near').length === 0 && !nftLoading && <div className="col-span-2 text-center text-gray-400 py-4">
+              {selectedType === 'card' ? cards.map((card: CardType, index: number) => renderItem(card, index)) : selectedType === 'nft' ? filteredNFTs.map((nft: any, index: number) => renderItem(nft, index)) : inventory.map((item: Item, index: number) => renderItem(item, index))}
+              {selectedType === 'nft' && filteredNFTs.length === 0 && !nftLoading && <div className="col-span-2 text-center text-gray-400 py-4">
                   У вас нет доступных NFT для продажи
                 </div>}
             </div>
