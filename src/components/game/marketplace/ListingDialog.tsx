@@ -70,11 +70,50 @@ export const ListingDialog = ({ onClose, onCreateListing }: ListingDialogProps) 
           // Get NFT cards from multiple sources
           let allNFTs: NFTCard[] = [];
 
+          // 0. Load from game_data.cards (matches cards shown in decks)
+          try {
+            if (data && Array.isArray((data as any).cards)) {
+              const cardsArr = (data as any).cards as any[];
+              const teamIdsSet = new Set<string>();
+              const st = ((data as any).selected_team as any[]) || [];
+              st.forEach((slot: any) => {
+                const heroId = slot?.hero?.id;
+                const dragonId = slot?.dragon?.id;
+                if (heroId) teamIdsSet.add(heroId);
+                if (dragonId) teamIdsSet.add(dragonId);
+              });
+
+              const nftsFromGameData = cardsArr
+                .filter((c: any) => (c.isNFT && c.nftContractId && c.nftTokenId) || (!!c.nftContractId && !!c.nftTokenId))
+                .filter((c: any) => !teamIdsSet.has(c.id))
+                .map((c: any) => ({
+                  id: c.nftContractId && c.nftTokenId ? `${c.nftContractId}_${c.nftTokenId}` : c.id,
+                  name: c.name,
+                  power: c.power ?? 20,
+                  defense: c.defense ?? 15,
+                  health: c.health ?? 100,
+                  currentHealth: c.currentHealth ?? c.health ?? 100,
+                  rarity: c.rarity ?? 1,
+                  faction: c.faction,
+                  type: c.type === 'character' ? 'character' : 'pet',
+                  description: c.description || 'NFT Card',
+                  image: c.image || '/placeholder.svg',
+                  nft_token_id: c.nftTokenId,
+                  nft_contract_id: c.nftContractId,
+                })) as NFTCard[];
+
+              console.log('📦 NFTs from game_data.cards:', nftsFromGameData.length);
+              allNFTs = [...allNFTs, ...nftsFromGameData];
+            }
+          } catch (e) {
+            console.warn('Failed to load NFTs from game_data.cards:', e);
+          }
+
           // 1. Load from user_nft_cards table
           try {
             const nftsFromDB = await getUserNFTCards(accountId);
             console.log('📦 NFTs from user_nft_cards:', nftsFromDB.length);
-            allNFTs = [...nftsFromDB];
+            allNFTs = [...allNFTs, ...nftsFromDB];
           } catch (e) {
             console.warn('Failed to load from user_nft_cards:', e);
           }
