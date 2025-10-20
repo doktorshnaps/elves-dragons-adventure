@@ -17,8 +17,12 @@ export const useNFTMarketplace = () => {
     onError: (error: string) => void
   ) => {
     try {
+      console.log('🎬 createNFTListing started', { nftCard, price, paymentToken, walletAddress });
+      
       const { data: userRes } = await supabase.auth.getUser();
       const userId = userRes?.user?.id;
+      
+      console.log('👤 User check', { userId, hasUser: !!userRes?.user });
       
       if (!userId) {
         onError('Требуется вход');
@@ -31,13 +35,21 @@ export const useNFTMarketplace = () => {
       }
 
       // Check if NFT is already listed
-      const { data: existing } = await supabase
+      console.log('🔍 Checking existing listing', { 
+        nft_contract_id: nftCard.nft_contract_id,
+        nft_token_id: nftCard.nft_token_id,
+        walletAddress 
+      });
+      
+      const { data: existing, error: checkError } = await supabase
         .from('card_instances')
         .select('is_on_marketplace')
         .eq('nft_contract_id', nftCard.nft_contract_id)
         .eq('nft_token_id', nftCard.nft_token_id)
         .eq('wallet_address', walletAddress)
         .single();
+
+      console.log('📊 Existing check result', { existing, checkError });
 
       if (existing?.is_on_marketplace) {
         onError('Этот NFT уже выставлен на продажу');
@@ -47,6 +59,7 @@ export const useNFTMarketplace = () => {
       // Determine payment token contract
       const ftContract = paymentToken === 'GT' ? 'gt-1733.meme-cooking.near' : null;
       const priceInYocto = nearAPI.utils.format.parseNearAmount(price.toString()) || '0';
+      console.log('💰 Price conversion', { price, priceInYocto, ftContract });
 
       // Step 1: Call nft_approve on the NFT contract via NEAR wallet
       console.log('📝 Step 1: Preparing nft_approve call');
