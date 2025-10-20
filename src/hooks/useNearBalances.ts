@@ -47,7 +47,8 @@ export const useNearBalances = (accountId: string | null): NearBalances => {
   const [refreshNonce, setRefreshNonce] = useState<number>(0);
 
   useEffect(() => {
-    if (!accountId) {
+    const targetId = accountId || localStorage.getItem('nearAccountId') || localStorage.getItem('walletAccountId');
+    if (!targetId) {
       setNearBalance('0');
       setGtBalance('0');
       return;
@@ -58,7 +59,7 @@ export const useNearBalances = (accountId: string | null): NearBalances => {
       setError(null);
 
       try {
-        console.log('🔄 Fetching balances for account:', accountId);
+        console.log('🔄 Fetching balances for account:', targetId);
 
         const config = {
           networkId: 'mainnet',
@@ -76,13 +77,13 @@ export const useNearBalances = (accountId: string | null): NearBalances => {
           try {
             const view: any = await near.connection.provider.query({
               request_type: 'view_account',
-              account_id: accountId,
+              account_id: targetId,
               finality: 'final',
             });
             const totalNear = utils.format.formatNearAmount(view.amount);
             formattedNear = parseFloat(totalNear).toFixed(3);
           } catch (e) {
-            const account = await near.account(accountId);
+            const account = await near.account(targetId);
             const accountBalance = await account.getAccountBalance();
             const nearBalanceInNear = utils.format.formatNearAmount(accountBalance.available);
             formattedNear = parseFloat(nearBalanceInNear).toFixed(3);
@@ -92,7 +93,7 @@ export const useNearBalances = (accountId: string | null): NearBalances => {
           try {
             const key = 'walletBalances';
             const current = JSON.parse(localStorage.getItem(key) || '{}');
-            localStorage.setItem(key, JSON.stringify({ ...current, [accountId]: { ...(current?.[accountId]||{}), near: formattedNear } }));
+            localStorage.setItem(key, JSON.stringify({ ...current, [targetId]: { ...(current?.[targetId]||{}), near: formattedNear } }));
           } catch {}
         } catch (err) {
           console.warn('Error fetching NEAR balance:', err);
@@ -103,7 +104,7 @@ export const useNearBalances = (accountId: string | null): NearBalances => {
         try {
           const gtContract = 'gt-1733.meme-cooking.near';
 
-          const args = JSON.stringify({ account_id: accountId });
+          const args = JSON.stringify({ account_id: targetId });
           const response: any = await near.connection.provider.query({
             request_type: 'call_function',
             account_id: gtContract,
@@ -125,8 +126,8 @@ export const useNearBalances = (accountId: string | null): NearBalances => {
           try {
             const key = 'walletBalances';
             const current = JSON.parse(localStorage.getItem(key) || '{}');
-            const prev = current?.[accountId] || {};
-            localStorage.setItem(key, JSON.stringify({ ...current, [accountId]: { ...prev, ft: { ...(prev.ft||{}), [gtContract]: gt } } }));
+            const prev = current?.[targetId] || {};
+            localStorage.setItem(key, JSON.stringify({ ...current, [targetId]: { ...prev, ft: { ...(prev.ft||{}), [gtContract]: gt } } }));
           } catch {}
         } catch (err) {
           console.warn('Error fetching GT balance:', err);

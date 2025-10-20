@@ -40,7 +40,8 @@ export const Menu = () => {
   } = useWalletContext();
   const isConnected = !!accountId;
   const { isAdmin } = useAdminCheck();
-  const { nearBalance, gtBalance, loading: balancesLoading } = useNearBalances(nearAccountId);
+  const chainAccountId = nearAccountId || accountId || localStorage.getItem('nearAccountId') || localStorage.getItem('walletAccountId');
+  const { nearBalance, gtBalance, loading: balancesLoading } = useNearBalances(chainAccountId);
   const [initialLoadComplete, setInitialLoadComplete] = useState(false);
 
   // Загружаем данные при подключении кошелька
@@ -66,6 +67,7 @@ export const Menu = () => {
     navigate('/auth');
   };
 
+  console.log('[Menu] Wallet/Balances:', { accountId, nearAccountId, chainAccountId, isConnected, balancesLoading, nearBalance, gtBalance });
   return <div className="app-shell min-h-screen p-4 bg-center bg-no-repeat relative" style={{ filter: `brightness(${brightness}%)` }}>
       <div 
         className="absolute inset-0 bg-center bg-no-repeat"
