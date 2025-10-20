@@ -29,18 +29,18 @@ export const useNearBalances = (accountId: string | null): NearBalances => {
 
       try {
         console.log('🔄 Fetching balances for account:', accountId);
-        
+
         const config = {
           networkId: 'mainnet',
           keyStore: new keyStores.BrowserLocalStorageKeyStore(),
           nodeUrl: 'https://rpc.mainnet.near.org',
           walletUrl: 'https://wallet.mainnet.near.org',
           helperUrl: 'https://helper.mainnet.near.org',
-        };
+        } as const;
 
         const near = await connect(config);
-        
-        // Получаем баланс NEAR через provider
+
+        // NEAR balance
         try {
           const account = await near.account(accountId);
           const accountBalance = await account.getAccountBalance();
@@ -53,25 +53,28 @@ export const useNearBalances = (accountId: string | null): NearBalances => {
           setNearBalance('0');
         }
 
-        // Получаем баланс GT токенов через view call
+        // GT token balance (gt-1733.meme-cooking.near, decimals: 18)
         try {
           const gtContract = 'gt-1733.meme-cooking.near';
-          
+
+          const args = JSON.stringify({ account_id: accountId });
           const response: any = await near.connection.provider.query({
             request_type: 'call_function',
             account_id: gtContract,
             method_name: 'ft_balance_of',
-            args_base64: Buffer.from(JSON.stringify({ account_id: accountId })).toString('base64'),
+            args_base64: btoa(args),
             finality: 'final',
           });
 
-          const result = JSON.parse(Buffer.from(response.result).toString());
-          console.log('Raw GT balance:', result);
-          
-          // GT токены имеют 18 decimals
-          const gtBalanceFormatted = (parseInt(result) / Math.pow(10, 18)).toFixed(2);
-          console.log('✅ GT balance:', gtBalanceFormatted);
-          setGtBalance(gtBalanceFormatted);
+          // response.result is a Uint8Array/array of bytes → decode to string → JSON.parse
+          const decoder = new TextDecoder();
+          const text = decoder.decode(Uint8Array.from(response.result));
+          const parsed = JSON.parse(text); // returns the raw balance as string
+
+          const raw = typeof parsed === 'string' ? parsed : String(parsed);
+          const gt = (Number(raw) / Math.pow(10, 18)).toFixed(2);
+          console.log('✅ GT balance:', gt);
+          setGtBalance(gt);
         } catch (err) {
           console.warn('Error fetching GT balance:', err);
           setGtBalance('0');
