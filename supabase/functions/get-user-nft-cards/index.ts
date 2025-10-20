@@ -5,9 +5,37 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
+function normalizeMediaUrl(media?: string, baseUri?: string): string {
+  const PLACEHOLDER = '/placeholder.svg';
+  if (!media && !baseUri) return PLACEHOLDER;
+  try {
+    const isAbs = (u?: string) => !!u && (/^https?:\/\//i.test(u) || u.startsWith('data:'));
+    const toIpfsPath = (cidOrPath: string) => {
+      if (!cidOrPath) return '';
+      if (cidOrPath.startsWith('ipfs://')) return cidOrPath.replace('ipfs://', 'https://ipfs.io/ipfs/');
+      if (/^[a-zA-Z0-9]{46,}$/.test(cidOrPath)) return `https://ipfs.io/ipfs/${cidOrPath}`;
+      return cidOrPath;
+    };
+
+    if (media && isAbs(media)) return media;
+
+    const base = baseUri ? toIpfsPath(baseUri) : '';
+    const mediaPath = media ? toIpfsPath(media) : '';
+
+    if (mediaPath && isAbs(mediaPath)) return mediaPath;
+
+    if (base && mediaPath) return `${base.replace(/\/$/, '')}/${mediaPath.replace(/^\//, '')}`;
+    if (mediaPath) return mediaPath;
+    if (base) return base;
+    return PLACEHOLDER;
+  } catch {
+    return '/placeholder.svg';
+  }
+}
+
 interface RequestBody {
   wallet_address: string;
-  contract_id?: string; // optional filter
+  contract_id?: string;
 }
 
 Deno.serve(async (req) => {
@@ -57,12 +85,14 @@ Deno.serve(async (req) => {
       }
 
       const name = meta?.title || meta?.description || mapping.card_template_name || `Token #${mapping.nft_token_id}`;
-      const image = meta?.media || extra?.media || extra?.image || extra?.img || '/placeholder.svg';
+      const baseUri = meta?.base_uri || extra?.base_uri;
+      const mediaCandidate = meta?.media || extra?.media || extra?.image || extra?.img;
+      const image = normalizeMediaUrl(mediaCandidate, baseUri);
       const power = meta?.power || extra?.power || 20;
       const defense = meta?.defense || extra?.defense || 15;
       const health = meta?.health || extra?.health || 100;
       const rarity = meta?.rarity || extra?.rarity || 'common';
-      const type = meta?.type || extra?.type || 'pet';
+      const type = (meta?.type || extra?.type) === 'character' ? 'character' : 'pet';
       const faction = meta?.faction || extra?.faction;
       const description = meta?.description || extra?.description || 'NFT Card';
 

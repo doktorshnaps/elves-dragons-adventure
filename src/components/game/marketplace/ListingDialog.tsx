@@ -70,7 +70,7 @@ export const ListingDialog = ({ onClose, onCreateListing }: ListingDialogProps) 
           // Load NFT cards ONLY from user_nft_cards table
           try {
             const { data: fnRes, error: fnErr } = await supabase.functions.invoke('get-user-nft-cards', {
-              body: { wallet_address: accountId }
+              body: { wallet_address: accountId, contract_id: 'elleonortesr.mintbase1.near' }
             });
             if (fnErr) throw fnErr;
             const nfts = (fnRes?.cards || []) as NFTCard[];
