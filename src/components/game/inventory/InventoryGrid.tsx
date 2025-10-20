@@ -158,7 +158,7 @@ export const InventoryGrid = ({
                     </Button>}
                   {item.type !== 'dragon_egg' && (
                     <Button onClick={() => onSellItem(item)} variant="destructive" className="w-full">
-                      {`Продать за ${(item.items[0]?.sell_price ?? Math.floor(item.value * 0.7))} ELL`}
+                      {`Продать за ${(item.items[0]?.sell_price !== undefined ? item.items[0].sell_price : Math.floor(item.value * 0.7))} ELL`}
                     </Button>
                   )}
                 </div>}
