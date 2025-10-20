@@ -8,7 +8,7 @@ import { MarketplaceListing } from "./types";
 import { Card as CardType } from "@/types/cards";
 import { Item } from "@/types/inventory";
 import { supabase } from "@/integrations/supabase/client";
-import { NFTCard } from "@/hooks/useNFTCards";
+import { NFTCard, useNFTCards } from "@/hooks/useNFTCards";
 import { useWalletContext } from "@/contexts/WalletConnectContext";
 
 interface ListingDialogProps {
@@ -24,6 +24,7 @@ export const ListingDialog = ({ onClose, onCreateListing }: ListingDialogProps) 
   const { accountId } = useWalletContext();
   
   const [nftCards, setNftCards] = useState<NFTCard[]>([]);
+  const { getUserNFTCards } = useNFTCards();
 
   useEffect(() => {
     const load = async () => {
@@ -68,30 +69,13 @@ export const ListingDialog = ({ onClose, onCreateListing }: ListingDialogProps) 
             console.warn('Failed to sync elleonortesr.mintbase1.near NFTs:', e);
           }
 
-          // Load NFT cards ONLY from user_nft_cards table
+          // Load NFT cards ONLY from user_nft_cards table (same logic as decks/collection)
           try {
-            const { data: fnRes, error: fnErr } = await supabase.functions.invoke('get-user-nft-cards', {
-              body: { wallet_address: wallet, contract_id: 'elleonortesr.mintbase1.near' }
-            });
-            if (fnErr) throw fnErr;
-            const nfts = (fnRes?.cards || []) as NFTCard[];
-            console.log('📦 NFTs from user_nft_cards (edge):', nfts.length);
-            
-            // Filter out NFT cards that are already on marketplace
-            const { data: marketplaceNFTs } = await supabase
-              .from('card_instances')
-              .select('nft_contract_id, nft_token_id')
-              .eq('wallet_address', wallet)
-              .eq('is_on_marketplace', true);
-            
-            const marketplaceNFTIds = new Set(
-              (marketplaceNFTs || []).map(n => `${n.nft_contract_id}_${n.nft_token_id}`)
-            );
-            
-            const availableNFTs = nfts.filter(nft => !marketplaceNFTIds.has(nft.id));
-            console.log('✅ Available NFTs for marketplace:', availableNFTs.length);
-            console.log('📋 NFT details:', availableNFTs.map(n => ({ id: n.id, name: n.name, contract: n.nft_contract_id })));
-            setNftCards(availableNFTs);
+            const fetched = await getUserNFTCards(wallet);
+            // Keep only NFTs from elleonortesr.mintbase1.near
+            const mintbaseNfts = (fetched || []).filter(n => n.nft_contract_id === 'elleonortesr.mintbase1.near');
+            console.log('📦 NFTs from user_nft_cards (client):', mintbaseNfts.length);
+            setNftCards(mintbaseNfts);
           } catch (e) {
             console.error('Failed to load NFTs from user_nft_cards:', e);
             setNftCards([]);
