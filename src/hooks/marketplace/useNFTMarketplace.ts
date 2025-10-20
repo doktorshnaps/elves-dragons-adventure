@@ -70,7 +70,7 @@ export const useNFTMarketplace = () => {
       // Step 1: Call nft_approve on the NFT contract via NEAR wallet
       console.log('📝 Step 1: Preparing nft_approve call');
       console.log('NFT details:', {
-        contract: 'nft-elleonortesr.mintbase1.near',
+        contract: 'elleonortesr.mintbase1.near',
         token_id: nftCard.nft_token_id,
         account_id: 'elleonortesr.mintbase1.near',
         price: priceInYocto,
@@ -84,7 +84,7 @@ export const useNFTMarketplace = () => {
         console.log('✅ Wallet obtained, initiating transaction...');
         
         const approveResult = await wallet.signAndSendTransaction({
-          receiverId: 'nft-elleonortesr.mintbase1.near',
+          receiverId: 'elleonortesr.mintbase1.near',
           actions: [
             {
               type: 'FunctionCall',
