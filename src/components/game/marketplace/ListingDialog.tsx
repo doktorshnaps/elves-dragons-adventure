@@ -8,7 +8,7 @@ import { MarketplaceListing } from "./types";
 import { Card as CardType } from "@/types/cards";
 import { Item } from "@/types/inventory";
 import { supabase } from "@/integrations/supabase/client";
-import { NFTCard, useNFTCards } from "@/hooks/useNFTCards";
+import { NFTCard } from "@/hooks/useNFTCards";
 import { useWalletContext } from "@/contexts/WalletConnectContext";
 
 interface ListingDialogProps {
@@ -24,7 +24,6 @@ export const ListingDialog = ({ onClose, onCreateListing }: ListingDialogProps) 
   const { accountId } = useWalletContext();
   
   const [nftCards, setNftCards] = useState<NFTCard[]>([]);
-  const { getUserNFTCards } = useNFTCards();
 
   useEffect(() => {
     const load = async () => {
@@ -69,12 +68,15 @@ export const ListingDialog = ({ onClose, onCreateListing }: ListingDialogProps) 
             console.warn('Failed to sync elleonortesr.mintbase1.near NFTs:', e);
           }
 
-          // Load NFT cards ONLY from user_nft_cards table (same logic as decks/collection)
+          // Load NFT cards ONLY from user_nft_cards table via edge function (bypasses RLS)
           try {
-            const fetched = await getUserNFTCards(wallet);
-            // Keep only NFTs from elleonortesr.mintbase1.near
-            const mintbaseNfts = (fetched || []).filter(n => n.nft_contract_id === 'elleonortesr.mintbase1.near');
-            console.log('📦 NFTs from user_nft_cards (client):', mintbaseNfts.length);
+            const { data: fnRes, error: fnErr } = await supabase.functions.invoke('get-user-nft-cards', {
+              body: { wallet_address: wallet, contract_id: 'elleonortesr.mintbase1.near' }
+            });
+            if (fnErr) throw fnErr;
+            const nfts = (fnRes?.cards || []) as NFTCard[];
+            const mintbaseNfts = nfts.filter(n => n.nft_contract_id === 'elleonortesr.mintbase1.near');
+            console.log('📦 NFTs from user_nft_cards (edge):', mintbaseNfts.length);
             setNftCards(mintbaseNfts);
           } catch (e) {
             console.error('Failed to load NFTs from user_nft_cards:', e);
