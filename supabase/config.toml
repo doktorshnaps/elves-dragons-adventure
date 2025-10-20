@@ -8,3 +8,6 @@ verify_jwt = true
 
 [functions.sync-mintbase-nfts]
 verify_jwt = true
+
+[functions.check-nft-whitelist]
+verify_jwt = false
