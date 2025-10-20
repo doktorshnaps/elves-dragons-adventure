@@ -67,146 +67,30 @@ export const ListingDialog = ({ onClose, onCreateListing }: ListingDialogProps) 
             console.warn('Failed to sync elleonortesr.mintbase1.near NFTs:', e);
           }
 
-          // Get NFT cards from multiple sources
-          let allNFTs: NFTCard[] = [];
-
-          // 0. Load from game_data.cards (matches cards shown in decks)
+          // Load NFT cards ONLY from user_nft_cards table
           try {
-            if (data && Array.isArray((data as any).cards)) {
-              const cardsArr = (data as any).cards as any[];
-              const teamIdsSet = new Set<string>();
-              const st = ((data as any).selected_team as any[]) || [];
-              st.forEach((slot: any) => {
-                const heroId = slot?.hero?.id;
-                const dragonId = slot?.dragon?.id;
-                if (heroId) teamIdsSet.add(heroId);
-                if (dragonId) teamIdsSet.add(dragonId);
-              });
-
-              const nftsFromGameData = cardsArr
-                .filter((c: any) => (c.isNFT && c.nftContractId && c.nftTokenId) || (!!c.nftContractId && !!c.nftTokenId))
-                .filter((c: any) => !teamIdsSet.has(c.id))
-                .map((c: any) => ({
-                  id: c.nftContractId && c.nftTokenId ? `${c.nftContractId}_${c.nftTokenId}` : c.id,
-                  name: c.name,
-                  power: c.power ?? 20,
-                  defense: c.defense ?? 15,
-                  health: c.health ?? 100,
-                  currentHealth: c.currentHealth ?? c.health ?? 100,
-                  rarity: c.rarity ?? 1,
-                  faction: c.faction,
-                  type: c.type === 'character' ? 'character' : 'pet',
-                  description: c.description || 'NFT Card',
-                  image: c.image || '/placeholder.svg',
-                  nft_token_id: c.nftTokenId,
-                  nft_contract_id: c.nftContractId,
-                })) as NFTCard[];
-
-              console.log('📦 NFTs from game_data.cards:', nftsFromGameData.length);
-              allNFTs = [...allNFTs, ...nftsFromGameData];
-            }
-          } catch (e) {
-            console.warn('Failed to load NFTs from game_data.cards:', e);
-          }
-
-          // 1. Load from user_nft_cards table
-          try {
-            const nftsFromDB = await getUserNFTCards(accountId);
-            console.log('📦 NFTs from user_nft_cards:', nftsFromDB.length);
-            allNFTs = [...allNFTs, ...nftsFromDB];
-          } catch (e) {
-            console.warn('Failed to load from user_nft_cards:', e);
-          }
-
-          // 2. Load from card_instances (NFT cards with nft_contract_id)
-          try {
-            const { data: cardInstances } = await supabase
+            const nfts = await getUserNFTCards(accountId);
+            console.log('📦 NFTs from user_nft_cards:', nfts.length);
+            
+            // Filter out NFT cards that are already on marketplace
+            const { data: marketplaceNFTs } = await supabase
               .from('card_instances')
-              .select('*')
+              .select('nft_contract_id, nft_token_id')
               .eq('wallet_address', accountId)
-              .not('nft_contract_id', 'is', null)
-              .not('nft_token_id', 'is', null);
-
-            console.log('📦 NFT card_instances:', cardInstances?.length || 0);
-
-            if (cardInstances && cardInstances.length > 0) {
-              const instanceNFTs: NFTCard[] = cardInstances.map((inst: any) => {
-                const cardData = inst.card_data || {};
-                return {
-                  id: `${inst.nft_contract_id}_${inst.nft_token_id}`,
-                  name: cardData.name || `NFT #${inst.nft_token_id}`,
-                  power: cardData.power || inst.card_data?.power || 20,
-                  defense: cardData.defense || inst.card_data?.defense || 15,
-                  health: inst.max_health || 100,
-                  currentHealth: inst.current_health || inst.max_health || 100,
-                  rarity: cardData.rarity || 1,
-                  faction: cardData.faction,
-                  type: inst.card_type === 'dragon' ? 'pet' : 'character',
-                  description: cardData.description || 'NFT Card',
-                  image: cardData.image || '/placeholder.svg',
-                  nft_token_id: inst.nft_token_id,
-                  nft_contract_id: inst.nft_contract_id
-                } as NFTCard;
-              });
-              allNFTs = [...allNFTs, ...instanceNFTs];
-            }
+              .eq('is_on_marketplace', true);
+            
+            const marketplaceNFTIds = new Set(
+              (marketplaceNFTs || []).map(n => `${n.nft_contract_id}_${n.nft_token_id}`)
+            );
+            
+            const availableNFTs = nfts.filter(nft => !marketplaceNFTIds.has(nft.id));
+            console.log('✅ Available NFTs for marketplace:', availableNFTs.length);
+            console.log('📋 NFT details:', availableNFTs.map(n => ({ id: n.id, name: n.name, contract: n.nft_contract_id })));
+            setNftCards(availableNFTs);
           } catch (e) {
-            console.warn('Failed to load from card_instances:', e);
+            console.error('Failed to load NFTs from user_nft_cards:', e);
+            setNftCards([]);
           }
-
-          // 3. Load from localStorage (game cards with isNFT flag)
-          try {
-            const localCards = localStorage.getItem('gameCards');
-            if (localCards) {
-              const parsed = JSON.parse(localCards);
-              const nftCards = parsed.filter((c: any) => 
-                c.isNFT && c.nftContractId && c.nftTokenId
-              );
-              console.log('📦 NFTs from localStorage:', nftCards.length);
-              
-              const localNFTs: NFTCard[] = nftCards.map((c: any) => ({
-                id: c.id,
-                name: c.name,
-                power: c.power,
-                defense: c.defense,
-                health: c.health,
-                currentHealth: c.currentHealth || c.health,
-                rarity: c.rarity,
-                faction: c.faction,
-                type: c.type === 'character' ? 'character' : 'pet',
-                description: c.description || 'NFT Card',
-                image: c.image || '/placeholder.svg',
-                nft_token_id: c.nftTokenId,
-                nft_contract_id: c.nftContractId
-              }));
-              allNFTs = [...allNFTs, ...localNFTs];
-            }
-          } catch (e) {
-            console.warn('Failed to load from localStorage:', e);
-          }
-
-          // Remove duplicates by id
-          const uniqueNFTs = allNFTs.filter((nft, index, arr) => 
-            arr.findIndex(n => n.id === nft.id) === index
-          );
-
-          console.log('📦 Total unique NFTs found:', uniqueNFTs.length);
-          
-          // Filter out NFT cards that are already on marketplace
-          const { data: marketplaceNFTs } = await supabase
-            .from('card_instances')
-            .select('nft_contract_id, nft_token_id')
-            .eq('wallet_address', accountId)
-            .eq('is_on_marketplace', true);
-          
-          const marketplaceNFTIds = new Set(
-            (marketplaceNFTs || []).map(n => `${n.nft_contract_id}_${n.nft_token_id}`)
-          );
-          
-          const availableNFTs = uniqueNFTs.filter(nft => !marketplaceNFTIds.has(nft.id));
-          console.log('✅ Available NFTs for marketplace:', availableNFTs.length);
-          console.log('📋 NFT details:', availableNFTs.map(n => ({ id: n.id, name: n.name, contract: n.nft_contract_id })));
-          setNftCards(availableNFTs);
         }
       } finally {
         setLoading(false);
