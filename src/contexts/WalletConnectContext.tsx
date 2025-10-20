@@ -7,6 +7,7 @@ import { initSelector } from "@/utils/selector";
 interface WalletContextType {
   selector: WalletSelector | null;
   accountId: string | null;
+  nearAccountId: string | null; // Real NEAR account from wallet.getAccounts()
   isLoading: boolean;
   hasError: boolean;
   connect: () => Promise<void>;
@@ -16,6 +17,7 @@ interface WalletContextType {
 const WalletContext = createContext<WalletContextType>({
   selector: null,
   accountId: null,
+  nearAccountId: null,
   isLoading: true,
   hasError: false,
   connect: async () => {},
@@ -26,6 +28,7 @@ export function WalletConnectProvider({ children }: { children: React.ReactNode 
   const { tgWebApp } = useTelegram();
   const [selector, setSelector] = useState<WalletSelector | null>(null);
   const [accountId, setAccountId] = useState<string | null>(null);
+  const [nearAccountId, setNearAccountId] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [hasError, setHasError] = useState(false);
 
@@ -52,10 +55,28 @@ export function WalletConnectProvider({ children }: { children: React.ReactNode 
         try {
           const state = sel.store.getState();
           const active = state.accounts?.find((a: AccountState) => a.active);
-          setAccountId(active?.accountId || null);
+          const id = active?.accountId || null;
+          setAccountId(id);
+          
+          // Get real NEAR account immediately
+          if (id && state.selectedWalletId) {
+            try {
+              const wallet = await sel.wallet(state.selectedWalletId);
+              const accounts = await wallet.getAccounts();
+              const nearAccount = accounts?.[0]?.accountId || null;
+              console.log('🔍 Initial NEAR account:', nearAccount, 'from wallet accounts:', accounts);
+              setNearAccountId(nearAccount);
+            } catch (e) {
+              console.warn('Failed to get initial NEAR accounts:', e);
+              setNearAccountId(null);
+            }
+          } else {
+            setNearAccountId(null);
+          }
         } catch (e) {
           console.warn("[wallet] store hydrate error:", e);
           setAccountId(null);
+          setNearAccountId(null);
         }
 
         // 2) Подписка на изменения store
@@ -63,9 +84,26 @@ export function WalletConnectProvider({ children }: { children: React.ReactNode 
           unsubscribeRef.current?.();
         } catch {}
         
-        const subscription = sel.store.observable.subscribe((nextState) => {
+        const subscription = sel.store.observable.subscribe(async (nextState) => {
           const active = nextState.accounts?.find((a: AccountState) => a.active);
-          setAccountId(active?.accountId || null);
+          const id = active?.accountId || null;
+          setAccountId(id);
+          
+          // Get real NEAR account
+          if (id && nextState.selectedWalletId) {
+            try {
+              const wallet = await sel.wallet(nextState.selectedWalletId);
+              const accounts = await wallet.getAccounts();
+              const nearAccount = accounts?.[0]?.accountId || null;
+              console.log('🔍 Real NEAR account:', nearAccount, 'from wallet accounts:', accounts);
+              setNearAccountId(nearAccount);
+            } catch (e) {
+              console.warn('Failed to get NEAR accounts:', e);
+              setNearAccountId(null);
+            }
+          } else {
+            setNearAccountId(null);
+          }
         });
         unsubscribeRef.current = () => subscription.unsubscribe();
 
@@ -94,14 +132,19 @@ export function WalletConnectProvider({ children }: { children: React.ReactNode 
       if (accountId) {
         localStorage.setItem('walletConnected', 'true');
         localStorage.setItem('walletAccountId', accountId);
+        // For NEAR balances, use the real NEAR account if available
+        if (nearAccountId) {
+          localStorage.setItem('nearAccountId', nearAccountId);
+        }
         // Уведомляем систему о смене кошелька, чтобы подтянуть данные из БД
-        window.dispatchEvent(new CustomEvent('wallet-changed', { detail: { walletAddress: accountId } }));
+        window.dispatchEvent(new CustomEvent('wallet-changed', { detail: { walletAddress: accountId, nearAccountId } }));
       } else {
         localStorage.removeItem('walletConnected');
         localStorage.removeItem('walletAccountId');
+        localStorage.removeItem('nearAccountId');
       }
     } catch {}
-  }, [accountId]);
+  }, [accountId, nearAccountId]);
 
   // Функция подключения кошелька через HOT Wallet
   const connect = async () => {
@@ -145,6 +188,7 @@ export function WalletConnectProvider({ children }: { children: React.ReactNode 
       const wallet = await selector.wallet(activeWalletId);
       await wallet.signOut();
       setAccountId(null);
+      setNearAccountId(null);
       
       // КРИТИЧЕСКИ ВАЖНО: Полная очистка всех игровых данных из localStorage
       const keysToRemove = [
@@ -191,6 +235,7 @@ export function WalletConnectProvider({ children }: { children: React.ReactNode 
       value={{
         selector,
         accountId,
+        nearAccountId,
         isLoading,
         hasError,
         connect,

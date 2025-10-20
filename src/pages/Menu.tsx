@@ -33,13 +33,14 @@ export const Menu = () => {
   const { brightness, backgroundBrightness } = useBrightness();
   const {
     accountId,
+    nearAccountId,
     isLoading: isConnecting,
     connect: connectWallet,
     disconnect: disconnectWallet
   } = useWalletContext();
   const isConnected = !!accountId;
   const { isAdmin } = useAdminCheck();
-  const { nearBalance, gtBalance, loading: balancesLoading } = useNearBalances(accountId);
+  const { nearBalance, gtBalance, loading: balancesLoading } = useNearBalances(nearAccountId);
   const [initialLoadComplete, setInitialLoadComplete] = useState(false);
 
   // Загружаем данные при подключении кошелька

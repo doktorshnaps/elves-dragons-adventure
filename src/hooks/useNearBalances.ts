@@ -147,7 +147,10 @@ export const useNearBalances = (accountId: string | null): NearBalances => {
 
   // Refresh balances on wallet events
   useEffect(() => {
-    const onWalletChanged = () => setRefreshNonce((n) => n + 1);
+    const onWalletChanged = (e: any) => {
+      console.log('🔄 Wallet changed event received for NEAR balances:', e.detail);
+      setRefreshNonce((n) => n + 1);
+    };
     const onWalletDisconnected = () => {
       setNearBalance('0');
       setGtBalance('0');
