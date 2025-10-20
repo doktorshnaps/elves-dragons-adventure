@@ -158,7 +158,9 @@ export type Database = {
           current_health: number
           id: string
           is_in_medical_bay: boolean | null
+          is_on_marketplace: boolean | null
           last_heal_time: string | null
+          marketplace_listing_id: string | null
           max_health: number
           medical_bay_heal_rate: number | null
           medical_bay_start_time: string | null
@@ -177,7 +179,9 @@ export type Database = {
           current_health?: number
           id?: string
           is_in_medical_bay?: boolean | null
+          is_on_marketplace?: boolean | null
           last_heal_time?: string | null
+          marketplace_listing_id?: string | null
           max_health?: number
           medical_bay_heal_rate?: number | null
           medical_bay_start_time?: string | null
@@ -196,7 +200,9 @@ export type Database = {
           current_health?: number
           id?: string
           is_in_medical_bay?: boolean | null
+          is_on_marketplace?: boolean | null
           last_heal_time?: string | null
+          marketplace_listing_id?: string | null
           max_health?: number
           medical_bay_heal_rate?: number | null
           medical_bay_start_time?: string | null
@@ -676,7 +682,11 @@ export type Database = {
           buyer_wallet_address: string | null
           created_at: string
           id: string
+          is_nft_listing: boolean | null
           item: Json
+          nft_contract_id: string | null
+          nft_token_id: string | null
+          payment_token_contract: string | null
           price: number
           seller_id: string
           seller_wallet_address: string | null
@@ -691,7 +701,11 @@ export type Database = {
           buyer_wallet_address?: string | null
           created_at?: string
           id?: string
+          is_nft_listing?: boolean | null
           item: Json
+          nft_contract_id?: string | null
+          nft_token_id?: string | null
+          payment_token_contract?: string | null
           price: number
           seller_id: string
           seller_wallet_address?: string | null
@@ -706,7 +720,11 @@ export type Database = {
           buyer_wallet_address?: string | null
           created_at?: string
           id?: string
+          is_nft_listing?: boolean | null
           item?: Json
+          nft_contract_id?: string | null
+          nft_token_id?: string | null
+          payment_token_contract?: string | null
           price?: number
           seller_id?: string
           seller_wallet_address?: string | null
@@ -1734,7 +1752,9 @@ export type Database = {
           current_health: number
           id: string
           is_in_medical_bay: boolean | null
+          is_on_marketplace: boolean | null
           last_heal_time: string | null
+          marketplace_listing_id: string | null
           max_health: number
           medical_bay_heal_rate: number | null
           medical_bay_start_time: string | null

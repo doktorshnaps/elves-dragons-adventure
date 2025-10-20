@@ -8,6 +8,8 @@ import { MarketplaceListing } from "./types";
 import { Card as CardType } from "@/types/cards";
 import { Item } from "@/types/inventory";
 import { supabase } from "@/integrations/supabase/client";
+import { useNFTCards, NFTCard } from "@/hooks/useNFTCards";
+import { useWalletContext } from "@/contexts/WalletConnectContext";
 
 interface ListingDialogProps {
   onClose: () => void;
@@ -15,9 +17,13 @@ interface ListingDialogProps {
 }
 
 export const ListingDialog = ({ onClose, onCreateListing }: ListingDialogProps) => {
-  const [selectedType, setSelectedType] = useState<'card' | 'item'>('card');
+  const [selectedType, setSelectedType] = useState<'card' | 'item' | 'nft'>('card');
   const [price, setPrice] = useState('');
-  const [selectedItem, setSelectedItem] = useState<CardType | Item | null>(null);
+  const [selectedItem, setSelectedItem] = useState<CardType | Item | NFTCard | null>(null);
+  const [paymentToken, setPaymentToken] = useState<'ELL' | 'GT'>('ELL');
+  const { accountId } = useWalletContext();
+  const { getUserNFTCards } = useNFTCards();
+  const [nftCards, setNftCards] = useState<NFTCard[]>([]);
 
   useEffect(() => {
     const load = async () => {
@@ -44,12 +50,30 @@ export const ListingDialog = ({ onClose, onCreateListing }: ListingDialogProps) 
           setCards(filteredCards);
           setInventory(((data.inventory as any[]) || []) as Item[]);
         }
+
+        // Load NFT cards if wallet is connected
+        if (accountId) {
+          const nfts = await getUserNFTCards(accountId);
+          // Filter out NFT cards that are already on marketplace
+          const { data: marketplaceNFTs } = await supabase
+            .from('card_instances')
+            .select('nft_contract_id, nft_token_id')
+            .eq('wallet_address', accountId)
+            .eq('is_on_marketplace', true);
+          
+          const marketplaceNFTIds = new Set(
+            (marketplaceNFTs || []).map(n => `${n.nft_contract_id}_${n.nft_token_id}`)
+          );
+          
+          const availableNFTs = nfts.filter(nft => !marketplaceNFTIds.has(nft.id));
+          setNftCards(availableNFTs);
+        }
       } finally {
         setLoading(false);
       }
     };
     load();
-  }, []);
+  }, [accountId, getUserNFTCards]);
 
   const [cards, setCards] = useState<CardType[]>([]);
   const [inventory, setInventory] = useState<Item[]>([]);
@@ -60,17 +84,21 @@ export const ListingDialog = ({ onClose, onCreateListing }: ListingDialogProps) 
 
     const listing: MarketplaceListing = {
       id: Date.now().toString(),
-      type: selectedType,
+      type: selectedType === 'nft' ? 'card' : selectedType,
       item: selectedItem,
       price: Number(price),
       sellerId: 'current-user',
       createdAt: new Date().toISOString(),
+      isNFT: selectedType === 'nft',
+      paymentToken: paymentToken === 'GT' ? 'gt-1733.meme-cooking.near' : undefined,
     };
 
     onCreateListing(listing);
   };
 
-  const renderItem = (item: CardType | Item, index: number) => {
+  const renderItem = (item: CardType | Item | NFTCard, index: number) => {
+    const isNFT = 'nft_token_id' in item && 'nft_contract_id' in item;
+    
     if ('rarity' in item) {
       return (
         <div
@@ -81,6 +109,11 @@ export const ListingDialog = ({ onClose, onCreateListing }: ListingDialogProps) 
           onClick={() => setSelectedItem(item)}
         >
           <CardDisplay card={item as CardType} showSellButton={false} />
+          {isNFT && (
+            <div className="absolute top-2 right-2 bg-purple-600 text-white text-xs px-2 py-1 rounded">
+              NFT
+            </div>
+          )}
         </div>
       );
     } else {
@@ -130,6 +163,15 @@ export const ListingDialog = ({ onClose, onCreateListing }: ListingDialogProps) 
               </Button>
               <Button
                 variant="menu"
+                onClick={() => setSelectedType('nft')}
+                className={`flex-1 ${selectedType !== 'nft' ? 'opacity-60' : ''}`}
+                size="sm"
+                style={{ boxShadow: '-33px 15px 10px rgba(0, 0, 0, 0.6)' }}
+              >
+                NFT
+              </Button>
+              <Button
+                variant="menu"
                 onClick={() => setSelectedType('item')}
                 className={`flex-1 ${selectedType !== 'item' ? 'opacity-60' : ''}`}
                 size="sm"
@@ -139,20 +181,54 @@ export const ListingDialog = ({ onClose, onCreateListing }: ListingDialogProps) 
               </Button>
             </div>
 
+            {selectedType === 'nft' && (
+              <div className="flex gap-2 items-center">
+                <span className="text-sm text-gray-300">Оплата:</span>
+                <Button
+                  variant="menu"
+                  size="sm"
+                  onClick={() => setPaymentToken('ELL')}
+                  className={`flex-1 ${paymentToken !== 'ELL' ? 'opacity-60' : ''}`}
+                  style={{ boxShadow: '-33px 15px 10px rgba(0, 0, 0, 0.6)' }}
+                >
+                  ELL
+                </Button>
+                <Button
+                  variant="menu"
+                  size="sm"
+                  onClick={() => setPaymentToken('GT')}
+                  className={`flex-1 ${paymentToken !== 'GT' ? 'opacity-60' : ''}`}
+                  style={{ boxShadow: '-33px 15px 10px rgba(0, 0, 0, 0.6)' }}
+                >
+                  GT Token
+                </Button>
+              </div>
+            )}
+
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-[35vh] overflow-y-auto">
               {selectedType === 'card'
                 ? cards.map((card: CardType, index: number) => renderItem(card, index))
+                : selectedType === 'nft'
+                ? nftCards.map((nft: NFTCard, index: number) => renderItem(nft, index))
                 : inventory.map((item: Item, index: number) => renderItem(item, index))
               }
+              {selectedType === 'nft' && nftCards.length === 0 && !loading && (
+                <div className="col-span-2 text-center text-gray-400 py-4">
+                  У вас нет доступных NFT для продажи
+                </div>
+              )}
             </div>
 
             <div className="space-y-2">
-              <label className="text-sm text-gray-300">Цена (в ELL)</label>
+              <label className="text-sm text-gray-300">
+                Цена (в {selectedType === 'nft' && paymentToken === 'GT' ? 'GT токенах' : 'ELL'})
+              </label>
               <Input
                 type="number"
                 value={price}
                 onChange={(e) => setPrice(e.target.value)}
                 min="1"
+                step={selectedType === 'nft' && paymentToken === 'GT' ? '0.01' : '1'}
                 className="bg-black/50 border-2 border-white text-white h-8 text-sm"
               />
             </div>

@@ -8,9 +8,13 @@ import { MarketplaceListing } from "@/components/game/marketplace/types";
 import { useMarketplaceState } from "@/hooks/marketplace/useMarketplaceState";
 import { useMarketplaceBuy } from "@/hooks/marketplace/useMarketplaceBuy";
 import { useMarketplaceOperations } from "@/hooks/marketplace/useMarketplaceOperations";
+import { useNFTMarketplace } from "@/hooks/marketplace/useNFTMarketplace";
+import { useWalletContext } from "@/contexts/WalletConnectContext";
+import { NFTCard } from "@/hooks/useNFTCards";
 
 const Marketplace = () => {
   const [showListingDialog, setShowListingDialog] = useState(false);
+  const { accountId } = useWalletContext();
   
   const {
     listings,
@@ -27,6 +31,7 @@ const Marketplace = () => {
   } = useMarketplaceState();
 
   const { createListing, cancelListing } = useMarketplaceOperations();
+  const { createNFTListing, cancelNFTListing } = useNFTMarketplace();
 
   const { handleBuy, handleBuySelected } = useMarketplaceBuy({
     balance,
@@ -38,6 +43,34 @@ const Marketplace = () => {
   });
 
   const handleCreateListing = async (listing: MarketplaceListing) => {
+    // Handle NFT listings separately
+    if (listing.isNFT && accountId) {
+      const nftCard = listing.item as NFTCard;
+      const paymentToken = listing.paymentToken ? 'GT' : 'ELL';
+      
+      await createNFTListing(
+        nftCard,
+        listing.price,
+        paymentToken,
+        accountId,
+        async () => {
+          setShowListingDialog(false);
+          toast({
+            title: "NFT выставлен на продажу",
+            description: `${listing.item.name} выставлен за ${listing.price} ${paymentToken}`,
+          });
+          const { data: userRes } = await supabase.auth.getUser();
+          const uid = userRes?.user?.id;
+          if (uid) await syncLocalCaches(uid);
+        },
+        (error) => {
+          toast({ title: 'Ошибка', description: error, variant: 'destructive' });
+        }
+      );
+      return;
+    }
+
+    // Regular listing
     await createListing(
       listing,
       async () => {
@@ -46,19 +79,12 @@ const Marketplace = () => {
           title: "Предмет выставлен на продажу",
           description: `${listing.item.name} выставлен за ${listing.price} ELL`,
         });
-
         const { data: userRes } = await supabase.auth.getUser();
         const uid = userRes?.user?.id;
-        if (uid) {
-          await syncLocalCaches(uid);
-        }
+        if (uid) await syncLocalCaches(uid);
       },
       (error) => {
-        toast({ 
-          title: 'Не удалось создать объявление', 
-          description: error, 
-          variant: 'destructive' 
-        });
+        toast({ title: 'Не удалось создать объявление', description: error, variant: 'destructive' });
       }
     );
   };
