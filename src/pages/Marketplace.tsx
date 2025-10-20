@@ -93,7 +93,14 @@ const Marketplace = () => {
         return;
       }
 
-      const nftCard = listing.item as NFTCard;
+      // Normalize NFT card data (handle both camelCase and snake_case)
+      const rawCard = listing.item as any;
+      const nftCard: NFTCard = {
+        ...rawCard,
+        nft_token_id: rawCard.nft_token_id || rawCard.nftTokenId,
+        nft_contract_id: rawCard.nft_contract_id || rawCard.nftContractId
+      } as NFTCard;
+      
       // paymentToken может быть строкой с адресом контракта или undefined
       const paymentToken = listing.paymentToken === 'gt-1733.meme-cooking.near' ? 'GT' : 'ELL';
       console.log('🚀 Initiating NFT listing via createNFTListing', { 
