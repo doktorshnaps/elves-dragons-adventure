@@ -3,7 +3,7 @@ export interface ShopItem {
   name: string;
   description: string;
   price: number;
-  type: "cardPack" | "healthPotion" | "defensePotion" | "weapon" | "armor" | "accessory" | "worker" | "woodChunks" | "magicalRoots" | "rockStones" | "blackCrystals" | "illusionManuscript" | "darkMonocle" | "etherVine" | "dwarvenTongs" | "healingOil" | "shimmeringCrystal" | "lifeCrystal";
+  type: "cardPack" | "healthPotion" | "defensePotion" | "weapon" | "armor" | "accessory" | "worker" | "material" | "woodChunks" | "magicalRoots" | "rockStones" | "blackCrystals" | "illusionManuscript" | "darkMonocle" | "etherVine" | "dwarvenTongs" | "healingOil" | "shimmeringCrystal" | "lifeCrystal";
   value: number;
   image?: string;
   stats?: {

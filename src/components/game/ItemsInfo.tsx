@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { HoverCard, HoverCardContent, HoverCardTrigger } from "@/components/ui/hover-card";
-import { Sword, Shield, Gem, Heart, Hammer, Trophy, Coins, Diamond } from "lucide-react";
+import { Sword, Shield, Gem, Heart, Hammer, Trophy, Coins, Diamond, Sparkles } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useLanguage } from "@/hooks/useLanguage";
 import { translateItemName, translateItemType, translateRarity, translateSourceType, translateStat, translateItemText } from "@/utils/itemTranslations";
@@ -96,6 +96,9 @@ const getTypeIcon = (type: string) => {
     case 'armor': return <Shield className="w-4 h-4" />;
     case 'accessory': return <Gem className="w-4 h-4" />;
     case 'consumable': return <Heart className="w-4 h-4" />;
+    case 'material': return <Gem className="w-4 h-4" />;
+    case 'worker': return <Hammer className="w-4 h-4" />;
+    case 'cardPack': return <Sparkles className="w-4 h-4" />;
     default: return <Gem className="w-4 h-4" />;
   }
 };
