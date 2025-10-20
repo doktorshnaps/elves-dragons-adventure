@@ -5,6 +5,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useGameData } from "@/hooks/useGameData";
 import { useWalletContext } from "@/contexts/WalletConnectContext";
 import { useAdminCheck } from "@/hooks/useAdminCheck";
+import { useNearBalances } from "@/hooks/useNearBalances";
 
 import { useLanguage } from "@/hooks/useLanguage";
 import { t } from "@/utils/translations";
@@ -38,6 +39,7 @@ export const Menu = () => {
   } = useWalletContext();
   const isConnected = !!accountId;
   const { isAdmin } = useAdminCheck();
+  const { nearBalance, gtBalance, loading: balancesLoading } = useNearBalances(accountId);
   const [initialLoadComplete, setInitialLoadComplete] = useState(false);
 
   // Загружаем данные при подключении кошелька
@@ -78,13 +80,35 @@ export const Menu = () => {
       <div className="pointer-events-none absolute inset-0 bg-black/30 mx-0 my-0 py-0 px-0" />
       
       {/* Balance and Wallet Display */}
-      <div className="relative z-10 max-w-4xl mx-auto flex justify-center items-center gap-4 mb-4">
+      <div className="relative z-10 max-w-4xl mx-auto flex flex-wrap justify-center items-center gap-4 mb-4">
         <div className="bg-transparent backdrop-blur-sm px-6 py-3 rounded-2xl border-2 border-black shadow-lg">
           <div className="flex items-center gap-2">
             <img src={walletIcon} alt="Balance" className="w-[23px] h-[23px]" />
             <span className="text-black font-semibold">{t(language, 'menu.balance')} {gameData.balance} {t(language, 'game.currency')}</span>
           </div>
         </div>
+
+        {isConnected && (
+          <>
+            <div className="bg-transparent backdrop-blur-sm px-6 py-3 rounded-2xl border-2 border-black shadow-lg">
+              <div className="flex items-center gap-2">
+                <img src={walletIcon} alt="NEAR" className="w-[23px] h-[23px]" />
+                <span className="text-black font-semibold">
+                  {balancesLoading ? '...' : `${nearBalance} NEAR`}
+                </span>
+              </div>
+            </div>
+
+            <div className="bg-transparent backdrop-blur-sm px-6 py-3 rounded-2xl border-2 border-black shadow-lg">
+              <div className="flex items-center gap-2">
+                <img src={walletIcon} alt="GT" className="w-[23px] h-[23px]" />
+                <span className="text-black font-semibold">
+                  {balancesLoading ? '...' : `${gtBalance} GT`}
+                </span>
+              </div>
+            </div>
+          </>
+        )}
         
         <div className="bg-transparent backdrop-blur-sm px-6 py-3 rounded-2xl border-2 border-black shadow-lg">
           <div className="flex items-center gap-2">
