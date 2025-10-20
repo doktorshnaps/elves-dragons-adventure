@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import * as nearAPI from 'near-api-js';
 
-const { connect, keyStores, utils } = nearAPI;
+const { providers, utils } = nearAPI;
 
 
 interface NearBalances {
@@ -39,6 +39,14 @@ const formatTokenBalance = (
   }
 };
 
+// Timeout helper for RPC calls
+const withTimeout = async <T>(promise: Promise<T>, ms = 12000): Promise<T> => {
+  return (await Promise.race([
+    promise,
+    new Promise<never>((_, reject) => setTimeout(() => reject(new Error('RPC timeout')), ms)),
+  ])) as T;
+};
+
 export const useNearBalances = (accountId: string | null): NearBalances => {
   const [nearBalance, setNearBalance] = useState<string>('0');
   const [gtBalance, setGtBalance] = useState<string>('0');
@@ -61,34 +69,19 @@ export const useNearBalances = (accountId: string | null): NearBalances => {
       try {
         console.log('🔄 Fetching balances for account:', targetId);
 
-        const config = {
-          networkId: 'mainnet',
-          keyStore: new keyStores.BrowserLocalStorageKeyStore(),
-          nodeUrl: 'https://rpc.mainnet.near.org',
-          walletUrl: 'https://wallet.mainnet.near.org',
-          helperUrl: 'https://helper.mainnet.near.org',
-        } as const;
+        const provider = new providers.JsonRpcProvider({ url: 'https://rpc.mainnet.near.org' });
 
-        const near = await connect(config);
-
-        // NEAR balance via RPC view_account with fallback to account.getAccountBalance
+        // NEAR balance via RPC view_account
         try {
           let formattedNear = '0.000';
-          try {
-            const view: any = await near.connection.provider.query({
-              request_type: 'view_account',
-              account_id: targetId,
-              finality: 'final',
-            });
-            const totalNear = utils.format.formatNearAmount(view.amount);
-            formattedNear = parseFloat(totalNear).toFixed(3);
-          } catch (e) {
-            const account = await near.account(targetId);
-            const accountBalance = await account.getAccountBalance();
-            const nearBalanceInNear = utils.format.formatNearAmount(accountBalance.available);
-            formattedNear = parseFloat(nearBalanceInNear).toFixed(3);
-          }
-          console.log('✅ NEAR balance:', formattedNear);
+          const view: any = await withTimeout(provider.query({
+            request_type: 'view_account',
+            account_id: targetId,
+            finality: 'final',
+          }), 12000);
+          const totalNear = utils.format.formatNearAmount(view.amount);
+          formattedNear = parseFloat(totalNear).toFixed(3);
+          console.log('✅ NEAR balance:', formattedNear, '(raw yoctoNEAR:', view.amount, ')');
           setNearBalance(formattedNear);
           try {
             const key = 'walletBalances';
@@ -105,13 +98,13 @@ export const useNearBalances = (accountId: string | null): NearBalances => {
           const gtContract = 'gt-1733.meme-cooking.near';
 
           const args = JSON.stringify({ account_id: targetId });
-          const response: any = await near.connection.provider.query({
+          const response: any = await withTimeout(provider.query({
             request_type: 'call_function',
             account_id: gtContract,
             method_name: 'ft_balance_of',
             args_base64: btoa(args),
             finality: 'final',
-          });
+          }), 12000);
 
           // response.result is a Uint8Array/array of bytes → decode to string → JSON.parse
           const decoder = new TextDecoder();

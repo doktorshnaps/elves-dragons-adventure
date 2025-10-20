@@ -91,7 +91,7 @@ export const Menu = () => {
           </div>
         </div>
 
-        {isConnected && (
+        {chainAccountId && (
           <>
             <div className="bg-transparent backdrop-blur-sm px-6 py-3 rounded-2xl border-2 border-black shadow-lg">
               <div className="flex items-center gap-2">
