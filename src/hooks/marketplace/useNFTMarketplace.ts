@@ -64,11 +64,10 @@ export const useNFTMarketplace = () => {
 
       // Determine payment token contract
       const ftContract = paymentToken === 'GT' ? 'gt-1733.meme-cooking.near' : null;
-      // GT tokens use 18 decimals, not 24 like NEAR
-      const priceInYocto = paymentToken === 'GT' 
-        ? (BigInt(price) * BigInt(10 ** 18)).toString()
-        : nearAPI.utils.format.parseNearAmount(price.toString()) || '0';
-      console.log('💰 Price conversion', { price, priceInYocto, ftContract, paymentToken });
+      // For FT (GT) we pass price exactly as entered (no decimal scaling)
+      const rawPrice = price.toString();
+      const priceInYocto = ftContract ? rawPrice : nearAPI.utils.format.parseNearAmount(rawPrice) || '0';
+      console.log('💰 Price conversion', { price, rawPrice, priceInYocto, ftContract, paymentToken });
 
       // Step 1: Call nft_approve on the NFT contract via NEAR wallet
       console.log('📝 Step 1: Preparing nft_approve call');
@@ -113,9 +112,11 @@ export const useNFTMarketplace = () => {
         console.log('📊 Transaction hash:', approveResult?.transaction?.hash);
       } catch (walletError: any) {
         console.error('❌ Error calling nft_approve:', walletError);
-        console.error('Error details:', { message: walletError.message, stack: walletError.stack });
-        onError('Не удалось подтвердить NFT в кошельке: ' + (walletError.message || 'Неизвестная ошибка'));
-        return;
+         const safeMessage = walletError && typeof walletError === 'object' && 'message' in walletError
+           ? (walletError as any).message
+           : 'Неизвестная ошибка';
+         onError('Не удалось подтвердить NFT в кошельке: ' + safeMessage);
+         return;
       }
 
       // Step 2: Create marketplace listing (DB)
