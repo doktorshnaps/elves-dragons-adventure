@@ -594,6 +594,7 @@ export type Database = {
           created_at: string
           description: string | null
           drop_chance: number | null
+          dungeon_drop_settings: Json | null
           id: number
           image_url: string | null
           item_id: string
@@ -613,6 +614,7 @@ export type Database = {
           created_at?: string
           description?: string | null
           drop_chance?: number | null
+          dungeon_drop_settings?: Json | null
           id?: number
           image_url?: string | null
           item_id: string
@@ -632,6 +634,7 @@ export type Database = {
           created_at?: string
           description?: string | null
           drop_chance?: number | null
+          dungeon_drop_settings?: Json | null
           id?: number
           image_url?: string | null
           item_id?: string
@@ -1420,6 +1423,7 @@ export type Database = {
           created_at: string
           description: string | null
           drop_chance: number | null
+          dungeon_drop_settings: Json | null
           id: number
           image_url: string | null
           item_id: string
@@ -1626,6 +1630,7 @@ export type Database = {
           created_at: string
           description: string | null
           drop_chance: number | null
+          dungeon_drop_settings: Json | null
           id: number
           image_url: string | null
           item_id: string
