@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
 import { useWalletContext } from '@/contexts/WalletConnectContext';
 import { useWhitelist } from '@/hooks/useWhitelist';
+import { useAdminCheck } from '@/hooks/useAdminCheck';
 import { ComingSoon } from '@/components/ComingSoon';
 import { MaintenanceScreen } from '@/components/MaintenanceScreen';
 import { supabase } from '@/integrations/supabase/client';
@@ -14,6 +15,7 @@ export const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
   const { accountId, isLoading: isConnecting } = useWalletContext();
   const isConnected = !!accountId;
   const { isWhitelisted, loading: whitelistLoading } = useWhitelist();
+  const { isAdmin, loading: adminLoading } = useAdminCheck();
   const location = useLocation();
   const lsConnected = (typeof window !== 'undefined' && localStorage.getItem('walletConnected') === 'true') || false;
   const [maintenanceStatus, setMaintenanceStatus] = useState<{
@@ -54,7 +56,7 @@ export const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
     checkMaintenanceStatus();
   }, []);
 
-  if (isConnecting || whitelistLoading || maintenanceLoading) {
+  if (isConnecting || whitelistLoading || maintenanceLoading || adminLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-purple-900 to-black">
         <div className="text-white text-xl">Загрузка меню...</div>
@@ -64,12 +66,10 @@ export const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
 
   // Check maintenance mode (before other checks)
   if (maintenanceStatus?.is_enabled) {
-    const ADMIN_WALLET = 'mr_bruts.tg';
-    const isAdmin = isConnected && accountId === ADMIN_WALLET;
     if (!isAdmin) {
       return <MaintenanceScreen message={maintenanceStatus.message} />;
     } else {
-      console.log('🛠️ Admin bypassing maintenance mode');
+      console.log('🛠️ Admin/Super Admin bypassing maintenance mode');
     }
   }
 
