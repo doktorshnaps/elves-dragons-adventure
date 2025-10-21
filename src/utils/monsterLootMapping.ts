@@ -62,9 +62,9 @@ export const monsterLootMapping: Record<string, string[]> = {
   "Арахна Прародительница": ALL_GRIMOIRE_ITEMS
 };
 
-// Получить лут от монстра с учётом шансов дропа
-export const getMonsterLoot = (monsterName: string): Item[] => {
-  console.log('🎲 Rolling for loot from monster:', monsterName);
+// Получить лут от монстра с учётом шансов дропа и настроек подземелий
+export const getMonsterLoot = (monsterName: string, dungeonNumber?: number, currentLevel?: number): Item[] => {
+  console.log('🎲 Rolling for loot from monster:', monsterName, 'Dungeon:', dungeonNumber, 'Level:', currentLevel);
   
   // Убираем уровень из имени монстра (например, "Паучок-скелет (Lv1)" -> "Паучок-скелет")
   const cleanName = monsterName.replace(/\s*\(Lv\d+\)\s*$/i, '').trim();
@@ -82,15 +82,42 @@ export const getMonsterLoot = (monsterName: string): Item[] => {
   const droppedItems: Item[] = [];
   
   for (const template of ALL_ITEM_TEMPLATES) {
-    // Получаем шанс дропа из базы данных (в процентах: 0-100)
-    const dropChance = template.drop_chance || 0;
+    // Проверяем настройки дропа для подземелий
+    let canDrop = false;
+    let effectiveDropChance = template.drop_chance || 0;
+    
+    if (dungeonNumber !== undefined && currentLevel !== undefined && template.dungeon_drop_settings && Array.isArray(template.dungeon_drop_settings)) {
+      // Ищем подходящую настройку дропа для текущего подземелья и уровня
+      const dungeonSettings = template.dungeon_drop_settings.find((setting: any) => {
+        const matchesDungeon = setting.dungeon_number === dungeonNumber;
+        const matchesLevel = currentLevel >= setting.min_level && (setting.max_level === null || currentLevel <= setting.max_level);
+        const isActive = setting.is_active !== false;
+        return matchesDungeon && matchesLevel && isActive;
+      });
+      
+      if (dungeonSettings) {
+        canDrop = true;
+        effectiveDropChance = dungeonSettings.drop_chance || effectiveDropChance;
+        console.log(`✅ Item ${template.name} can drop in dungeon ${dungeonNumber}, level ${currentLevel} (chance: ${effectiveDropChance}%)`);
+      } else {
+        console.log(`❌ Item ${template.name} cannot drop in dungeon ${dungeonNumber}, level ${currentLevel} (no matching settings)`);
+      }
+    } else {
+      // Если настройки подземелья не указаны, используем базовый шанс дропа
+      canDrop = true;
+      console.log(`⚠️ No dungeon settings for item ${template.name}, using base drop chance: ${effectiveDropChance}%`);
+    }
+    
+    if (!canDrop) {
+      continue;
+    }
     
     // Генерируем случайное число от 0 до 100
     const roll = Math.random() * 100;
     
     // Проверяем, выпал ли предмет
-    if (roll <= dropChance) {
-      console.log(`✅ Item dropped: ${template.name} (chance: ${dropChance}%, roll: ${roll.toFixed(2)}%)`);
+    if (roll <= effectiveDropChance) {
+      console.log(`✅ Item dropped: ${template.name} (chance: ${effectiveDropChance}%, roll: ${roll.toFixed(2)}%)`);
       
       // Маппинг типов из базы данных в типы Item
       const typeMapping: Record<string, Item['type']> = {
@@ -121,7 +148,7 @@ export const getMonsterLoot = (monsterName: string): Item[] => {
       
       droppedItems.push(finalItem);
     } else {
-      console.log(`❌ Item NOT dropped: ${template.name} (chance: ${dropChance}%, roll: ${roll.toFixed(2)}%)`);
+      console.log(`❌ Item NOT dropped: ${template.name} (chance: ${effectiveDropChance}%, roll: ${roll.toFixed(2)}%)`);
     }
   }
   

@@ -53,10 +53,12 @@ export const useDungeonRewards = () => {
           level8to10Count++;
         }
 
-        // Генерируем ВСЕ предметы с монстра (100% шанс для тестирования)
+        // Генерируем лут с учётом подземелья и уровня
         if (monster.name) {
-          console.log('🎁 Generating ALL loot for monster:', monster.name);
-          const allLoot = getMonsterLoot(monster.name);
+          console.log('🎁 Generating loot for monster:', monster.name, 'Level:', monster.level);
+          // Определяем номер подземелья на основе dungeonType
+          const dungeonNumber = monster.dungeonType === 'spider_nest' ? 1 : undefined;
+          const allLoot = getMonsterLoot(monster.name, dungeonNumber, monster.level);
           if (allLoot && allLoot.length > 0) {
             console.log(`💰 Generated ${allLoot.length} items from monster:`, allLoot);
             lootedItems.push(...allLoot);
