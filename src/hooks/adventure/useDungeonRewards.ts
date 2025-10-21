@@ -106,10 +106,14 @@ export const useDungeonRewards = () => {
     isProcessingRef.current = true;
     lastProcessedLevelRef.current = currentLevel;
 
-    console.log(`💎 Обработка завершения уровня. Монстров убито: ${monsters.length}, уровень: ${currentLevel}, Поражение: ${isDefeat}`);
+    console.log(`🏁 ============ ОБРАБОТКА ЗАВЕРШЕНИЯ УРОВНЯ ${currentLevel} ============`);
+    console.log(`💎 Монстров убито на уровне: ${monsters.length}`);
+    console.log(`🎯 Поражение: ${isDefeat}`);
+    console.log(`📊 Текущая накопленная награда ПЕРЕД обработкой:`, accumulatedReward);
 
     // Если поражение - сбрасываем все накопленные награды
     if (isDefeat) {
+      console.log(`❌ ПОРАЖЕНИЕ! Сброс всех накопленных наград`);
       setAccumulatedReward(null);
       setPendingReward(null);
       lastProcessedLevelRef.current = -1;
@@ -123,6 +127,7 @@ export const useDungeonRewards = () => {
     }
 
     const levelReward = calculateReward(monsters);
+    console.log(`💰 Награда за текущий уровень ${currentLevel}:`, levelReward);
     
     // Суммируем с накопленной наградой
     const totalAccumulated: DungeonReward = accumulatedReward ? {
@@ -153,7 +158,14 @@ export const useDungeonRewards = () => {
     if (isFullCompletion) {
       totalAccumulated.completionBonus = Math.floor(totalAccumulated.totalELL * 0.5);
       totalAccumulated.totalELL += totalAccumulated.completionBonus;
+      console.log(`🎉 ПОЛНОЕ ЗАВЕРШЕНИЕ! Бонус +50%: ${totalAccumulated.completionBonus} ELL`);
     }
+
+    console.log(`✅ ИТОГОВАЯ накопленная награда ПОСЛЕ обработки уровня ${currentLevel}:`, totalAccumulated);
+    console.log(`📈 Всего ELL накоплено: ${totalAccumulated.totalELL}`);
+    console.log(`📈 Всего монстров убито: ${totalAccumulated.monstersKilled}`);
+    console.log(`📈 Всего предметов: ${totalAccumulated.lootedItems.length}`);
+    console.log(`🏁 ============================================================\n`);
 
     setAccumulatedReward(totalAccumulated);
     setPendingReward(totalAccumulated);
@@ -164,13 +176,17 @@ export const useDungeonRewards = () => {
     if (!pendingReward || isClaimingRef.current) return;
     isClaimingRef.current = true;
 
+    console.log(`💎 ============ ЗАБИРАЕМ НАГРАДУ И ВЫХОДИМ ============`);
+    console.log(`🎁 Награда к начислению:`, pendingReward);
+
     try {
       const rewardAmount = pendingReward.totalELL || 0;
       const lootedItems = pendingReward.lootedItems || [];
       
-      console.log(`🎁 Начисление награды: ${rewardAmount} ELL и ${lootedItems.length} предметов`);
-      console.log(`🎒 Предметы для добавления:`, lootedItems);
-      console.log(`📦 Current inventory before update:`, gameData.inventory);
+      console.log(`💰 Начисляем ${rewardAmount} ELL`);
+      console.log(`🎒 Начисляем ${lootedItems.length} предметов`);
+      console.log(`📦 Текущий баланс: ${gameData.balance} ELL`);
+      console.log(`📦 Текущий инвентарь: ${gameData.inventory?.length || 0} предметов`);
       
       // Объединяем обновления баланса и инвентаря в один вызов
       const updates: any = {};
@@ -178,28 +194,28 @@ export const useDungeonRewards = () => {
       if (rewardAmount > 0) {
         const currentBalance = gameData.balance || 0;
         updates.balance = currentBalance + rewardAmount;
-        console.log(`💰 Новый баланс: ${updates.balance} (было: ${currentBalance})`);
+        console.log(`💰 Новый баланс: ${updates.balance} ELL (было: ${currentBalance})`);
       }
 
       if (lootedItems.length > 0) {
         const currentInventory = gameData.inventory || [];
         updates.inventory = [...currentInventory, ...lootedItems];
         console.log(`🎒 Новый инвентарь: ${updates.inventory.length} предметов (было: ${currentInventory.length})`);
-        console.log(`🎒 Новый инвентарь детально:`, updates.inventory);
       }
 
       // Единый вызов updateGameData с обоими обновлениями
       if (Object.keys(updates).length > 0) {
         await updateGameData(updates);
-        console.log('✅ Награда успешно начислена через updateGameData');
-        console.log('✅ Updated game data:', updates);
+        console.log('✅ Награда успешно начислена!');
       } else {
-        console.warn('⚠️ No updates to apply!');
+        console.warn('⚠️ Нет обновлений для начисления!');
       }
 
       // Сбрасываем все состояния
       setPendingReward(null);
       setAccumulatedReward(null);
+      
+      console.log(`💎 =====================================================\n`);
       
       toast({
         title: "Награда получена!",
@@ -221,6 +237,11 @@ export const useDungeonRewards = () => {
   }, [pendingReward, gameData.balance, gameData.inventory, updateGameData, toast]);
 
   const continueWithRisk = useCallback(() => {
+    console.log(`🎲 ============ ИГРОК ВЫБРАЛ ПРОДОЛЖИТЬ ============`);
+    console.log(`💰 Сохраняем накопленную награду:`, accumulatedReward);
+    console.log(`⚠️ При поражении вся награда будет потеряна!`);
+    console.log(`🎲 ================================================\n`);
+    
     // Закрываем модальное окно, но сохраняем накопленную награду
     setPendingReward(null);
     isProcessingRef.current = false; // Разрешаем обработку следующего уровня
@@ -230,7 +251,7 @@ export const useDungeonRewards = () => {
       description: "Будьте осторожны - при поражении вся награда будет потеряна",
       variant: "default"
     });
-  }, [toast]);
+  }, [toast, accumulatedReward]);
 
   const resetRewards = useCallback(() => {
     setAccumulatedReward(null);

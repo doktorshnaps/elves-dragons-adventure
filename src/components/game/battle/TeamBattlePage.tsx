@@ -116,9 +116,8 @@ export const TeamBattlePage: React.FC<TeamBattlePageProps> = ({
   };
 
   const handleContinue = () => {
-    continueWithRisk();
-    setMonstersKilled([]); // Сбрасываем только для UI, накопленные награды остаются
-    handleNextLevel();
+    continueWithRisk(); // Сохраняет накопленные награды в accumulatedReward
+    handleNextLevel(); // Очистит monstersKilled и перейдет на следующий уровень
   };
 
   // Мониторинг активной сессии в БД: если удалена на другом устройстве — блокируем
