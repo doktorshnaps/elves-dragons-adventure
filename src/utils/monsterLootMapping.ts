@@ -29,8 +29,7 @@ export const preloadItemTemplates = async () => {
 // Все item_id предметов, которые могут дропать (заполняется динамически)
 const ALL_GRIMOIRE_ITEMS: string[] = [];
 
-// Маппинг монстров к предметам (все монстры из подземелья Гнездо Гигантских Пауков)
-// 100% шанс дропа для тестирования - каждый монстр дропает все предметы
+// Маппинг монстров к предметам (все монстры могут дропать любые предметы с шансом из базы данных)
 export const monsterLootMapping: Record<string, string[]> = {
   // Старые имена монстров (из SpiderNestGenerator)
   "Паучок-скелет": ALL_GRIMOIRE_ITEMS,
@@ -63,9 +62,9 @@ export const monsterLootMapping: Record<string, string[]> = {
   "Арахна Прародительница": ALL_GRIMOIRE_ITEMS
 };
 
-// Получить ВСЕ предметы от монстра (100% шанс для тестирования)
+// Получить лут от монстра с учётом шансов дропа
 export const getMonsterLoot = (monsterName: string): Item[] => {
-  console.log('🎲 Getting ALL loot for monster:', monsterName);
+  console.log('🎲 Rolling for loot from monster:', monsterName);
   
   // Убираем уровень из имени монстра (например, "Паучок-скелет (Lv1)" -> "Паучок-скелет")
   const cleanName = monsterName.replace(/\s*\(Lv\d+\)\s*$/i, '').trim();
@@ -77,44 +76,57 @@ export const getMonsterLoot = (monsterName: string): Item[] => {
     return [];
   }
 
-  console.log(`🎁 Generating loot from ${ALL_ITEM_TEMPLATES.length} available item templates`);
+  console.log(`🎁 Rolling loot from ${ALL_ITEM_TEMPLATES.length} available item templates`);
 
-  // 100% шанс дропа ВСЕХ предметов для тестирования
-  const allItems: Item[] = [];
+  // Собираем предметы с учётом шанса дропа
+  const droppedItems: Item[] = [];
   
   for (const template of ALL_ITEM_TEMPLATES) {
-    // Маппинг типов из базы данных в типы Item
-    const typeMapping: Record<string, Item['type']> = {
-      'material': 'material',  // ✅ Материалы остаются как material
-      'consumable': 'healthPotion',
-      'scroll': 'illusionManuscript',
-      'accessory': 'accessory',
-      'tool': 'dwarvenTongs',
-      'weapon': 'weapon',
-      'armor': 'armor',
-      'dragon_egg': 'dragon_egg'
-    };
+    // Получаем шанс дропа из базы данных (в процентах: 0-100)
+    const dropChance = template.drop_chance || 0;
     
-    // Используем тип из базы данных
-    let itemType: Item['type'] = typeMapping[template.type] || 'material';
+    // Генерируем случайное число от 0 до 100
+    const roll = Math.random() * 100;
     
-    const finalItem: Item = {
-      id: uuidv4(),
-      name: template.name,
-      type: itemType,
-      value: template.value || 0,
-      sell_price: template.sell_price,
-      description: template.description || `Выпадает с: ${cleanName}`,
-      image: template.image_url || undefined,
-      stats: template.stats || undefined,
-      slot: template.slot || undefined
-    };
-    
-    allItems.push(finalItem);
+    // Проверяем, выпал ли предмет
+    if (roll <= dropChance) {
+      console.log(`✅ Item dropped: ${template.name} (chance: ${dropChance}%, roll: ${roll.toFixed(2)}%)`);
+      
+      // Маппинг типов из базы данных в типы Item
+      const typeMapping: Record<string, Item['type']> = {
+        'material': 'material',
+        'consumable': 'healthPotion',
+        'scroll': 'illusionManuscript',
+        'accessory': 'accessory',
+        'tool': 'dwarvenTongs',
+        'weapon': 'weapon',
+        'armor': 'armor',
+        'dragon_egg': 'dragon_egg'
+      };
+      
+      // Используем тип из базы данных
+      let itemType: Item['type'] = typeMapping[template.type] || 'material';
+      
+      const finalItem: Item = {
+        id: uuidv4(),
+        name: template.name,
+        type: itemType,
+        value: template.value || 0,
+        sell_price: template.sell_price,
+        description: template.description || `Выпадает с: ${cleanName}`,
+        image: template.image_url || undefined,
+        stats: template.stats || undefined,
+        slot: template.slot || undefined
+      };
+      
+      droppedItems.push(finalItem);
+    } else {
+      console.log(`❌ Item NOT dropped: ${template.name} (chance: ${dropChance}%, roll: ${roll.toFixed(2)}%)`);
+    }
   }
   
-  console.log(`🎉 Total items generated: ${allItems.length} for monster: ${cleanName}`);
-  return allItems;
+  console.log(`🎉 Total items dropped: ${droppedItems.length}/${ALL_ITEM_TEMPLATES.length} for monster: ${cleanName}`);
+  return droppedItems;
 };
 
 // Получить список монстров, с которых выпадает предмет (для описания)
