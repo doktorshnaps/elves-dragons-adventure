@@ -21,6 +21,19 @@ export const DungeonRewardModal: React.FC<DungeonRewardModalProps> = ({
   canContinue = false
 }) => {
   const [isSubmitting, setIsSubmitting] = React.useState(false);
+
+  // Логирование получаемой награды
+  React.useEffect(() => {
+    if (isOpen && reward) {
+      console.log('🎁 ============ МОДАЛЬНОЕ ОКНО НАГРАДЫ ОТКРЫТО ============');
+      console.log('💰 Reward данные:', JSON.stringify(reward, null, 2));
+      console.log('📊 Breakdown:', reward.breakdown);
+      console.log('🎯 Total ELL:', reward.totalELL);
+      console.log('💀 Monsters killed:', reward.monstersKilled);
+      console.log('📦 Looted items count:', reward.lootedItems?.length || 0);
+      console.log('🎁 =======================================================\n');
+    }
+  }, [isOpen, reward]);
   const handleClaim = () => {
     if (isSubmitting) return;
     setIsSubmitting(true);
