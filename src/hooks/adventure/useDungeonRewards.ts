@@ -115,7 +115,6 @@ export const useDungeonRewards = () => {
     console.log(`🏁 ============ ОБРАБОТКА ЗАВЕРШЕНИЯ УРОВНЯ ${currentLevel} ============`);
     console.log(`💎 Монстров убито на уровне: ${monsters.length}`);
     console.log(`🎯 Поражение: ${isDefeat}`);
-    console.log(`📊 Текущая накопленная награда ПЕРЕД обработкой:`, accumulatedReward);
 
     // Если поражение - сбрасываем все накопленные награды
     if (isDefeat) {
@@ -135,48 +134,54 @@ export const useDungeonRewards = () => {
     const levelReward = calculateReward(monsters);
     console.log(`💰 Награда за текущий уровень ${currentLevel}:`, levelReward);
     
-    // Суммируем с накопленной наградой
-    const totalAccumulated: DungeonReward = accumulatedReward ? {
-      totalELL: accumulatedReward.totalELL + levelReward.totalELL,
-      monstersKilled: accumulatedReward.monstersKilled + levelReward.monstersKilled,
-      completionBonus: 0,
-      breakdown: {
-        level1to3: {
-          count: accumulatedReward.breakdown.level1to3.count + levelReward.breakdown.level1to3.count,
-          reward: accumulatedReward.breakdown.level1to3.reward + levelReward.breakdown.level1to3.reward
+    // Используем функциональное обновление для правильного чтения текущего значения
+    setAccumulatedReward(prevAccumulated => {
+      console.log(`📊 Предыдущая накопленная награда:`, prevAccumulated);
+      
+      // Суммируем с накопленной наградой
+      const totalAccumulated: DungeonReward = prevAccumulated ? {
+        totalELL: prevAccumulated.totalELL + levelReward.totalELL,
+        monstersKilled: prevAccumulated.monstersKilled + levelReward.monstersKilled,
+        completionBonus: 0,
+        breakdown: {
+          level1to3: {
+            count: prevAccumulated.breakdown.level1to3.count + levelReward.breakdown.level1to3.count,
+            reward: prevAccumulated.breakdown.level1to3.reward + levelReward.breakdown.level1to3.reward
+          },
+          level4to7: {
+            count: prevAccumulated.breakdown.level4to7.count + levelReward.breakdown.level4to7.count,
+            reward: prevAccumulated.breakdown.level4to7.reward + levelReward.breakdown.level4to7.reward
+          },
+          level8to10: {
+            count: prevAccumulated.breakdown.level8to10.count + levelReward.breakdown.level8to10.count,
+            reward: prevAccumulated.breakdown.level8to10.reward + levelReward.breakdown.level8to10.reward
+          }
         },
-        level4to7: {
-          count: accumulatedReward.breakdown.level4to7.count + levelReward.breakdown.level4to7.count,
-          reward: accumulatedReward.breakdown.level4to7.reward + levelReward.breakdown.level4to7.reward
-        },
-        level8to10: {
-          count: accumulatedReward.breakdown.level8to10.count + levelReward.breakdown.level8to10.count,
-          reward: accumulatedReward.breakdown.level8to10.reward + levelReward.breakdown.level8to10.reward
-        }
-      },
-      isFullCompletion: false,
-      lootedItems: [...(accumulatedReward.lootedItems || []), ...(levelReward.lootedItems || [])]
-    } : levelReward;
+        isFullCompletion: false,
+        lootedItems: [...(prevAccumulated.lootedItems || []), ...(levelReward.lootedItems || [])]
+      } : levelReward;
 
-    totalAccumulated.isFullCompletion = isFullCompletion;
+      totalAccumulated.isFullCompletion = isFullCompletion;
 
-    // Если полное завершение подземелья (дошли до 10 уровня), добавляем бонус
-    if (isFullCompletion) {
-      totalAccumulated.completionBonus = Math.floor(totalAccumulated.totalELL * 0.5);
-      totalAccumulated.totalELL += totalAccumulated.completionBonus;
-      console.log(`🎉 ПОЛНОЕ ЗАВЕРШЕНИЕ! Бонус +50%: ${totalAccumulated.completionBonus} ELL`);
-    }
+      // Если полное завершение подземелья (дошли до 10 уровня), добавляем бонус
+      if (isFullCompletion) {
+        totalAccumulated.completionBonus = Math.floor(totalAccumulated.totalELL * 0.5);
+        totalAccumulated.totalELL += totalAccumulated.completionBonus;
+        console.log(`🎉 ПОЛНОЕ ЗАВЕРШЕНИЕ! Бонус +50%: ${totalAccumulated.completionBonus} ELL`);
+      }
 
-    console.log(`✅ ИТОГОВАЯ накопленная награда ПОСЛЕ обработки уровня ${currentLevel}:`, totalAccumulated);
-    console.log(`📈 Всего ELL накоплено: ${totalAccumulated.totalELL}`);
-    console.log(`📈 Всего монстров убито: ${totalAccumulated.monstersKilled}`);
-    console.log(`📈 Всего предметов: ${totalAccumulated.lootedItems.length}`);
-    console.log(`🏁 ============================================================\n`);
+      console.log(`✅ ИТОГОВАЯ накопленная награда ПОСЛЕ обработки уровня ${currentLevel}:`, totalAccumulated);
+      console.log(`📈 Всего ELL накоплено: ${totalAccumulated.totalELL}`);
+      console.log(`📈 Всего монстров убито: ${totalAccumulated.monstersKilled}`);
+      console.log(`📈 Всего предметов: ${totalAccumulated.lootedItems.length}`);
+      console.log(`🏁 ============================================================\n`);
 
-    setAccumulatedReward(totalAccumulated);
-    setPendingReward(totalAccumulated);
+      setPendingReward(totalAccumulated);
+      return totalAccumulated;
+    });
+    
     isProcessingRef.current = false;
-  }, [calculateReward, toast, accumulatedReward]);
+  }, [calculateReward, toast]);
 
   const claimRewardAndExit = useCallback(async () => {
     if (!pendingReward || isClaimingRef.current) return;
@@ -243,21 +248,25 @@ export const useDungeonRewards = () => {
   }, [pendingReward, gameData.balance, gameData.inventory, updateGameData, toast]);
 
   const continueWithRisk = useCallback(() => {
-    console.log(`🎲 ============ ИГРОК ВЫБРАЛ ПРОДОЛЖИТЬ ============`);
-    console.log(`💰 Сохраняем накопленную награду:`, accumulatedReward);
-    console.log(`⚠️ При поражении вся награда будет потеряна!`);
-    console.log(`🎲 ================================================\n`);
+    setAccumulatedReward(prev => {
+      console.log(`🎲 ============ ИГРОК ВЫБРАЛ ПРОДОЛЖИТЬ ============`);
+      console.log(`💰 Сохраняем накопленную награду:`, prev);
+      console.log(`⚠️ При поражении вся награда будет потеряна!`);
+      console.log(`🎲 ================================================\n`);
+      return prev; // Возвращаем то же значение, просто для логирования
+    });
     
     // Закрываем модальное окно, но сохраняем накопленную награду
     setPendingReward(null);
     isProcessingRef.current = false; // Разрешаем обработку следующего уровня
-    lastProcessedLevelRef.current = -1; // Сбрасываем последний обработанный уровень для нового раунда
+    // НЕ сбрасываем lastProcessedLevelRef - пусть он отслеживает последний обработанный уровень
+    
     toast({
       title: "Продолжаем!",
       description: "Будьте осторожны - при поражении вся награда будет потеряна",
       variant: "default"
     });
-  }, [toast, accumulatedReward]);
+  }, [toast]);
 
   const resetRewards = useCallback(() => {
     setAccumulatedReward(null);
