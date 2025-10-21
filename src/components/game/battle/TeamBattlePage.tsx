@@ -42,6 +42,7 @@ export const TeamBattlePage: React.FC<TeamBattlePageProps> = ({
   
   const { 
     pendingReward, 
+    accumulatedReward,
     processDungeonCompletion, 
     claimRewardAndExit, 
     continueWithRisk,
@@ -315,7 +316,7 @@ export const TeamBattlePage: React.FC<TeamBattlePageProps> = ({
         isOpen={!!pendingReward}
         onClose={handleClaimAndExit}
         onContinue={handleContinue}
-        reward={pendingReward}
+        reward={accumulatedReward ?? pendingReward}
         canContinue={alivePairs.length > 0 && battleState.level < 10}
       />
     );
