@@ -1,4 +1,4 @@
-import React, { useState, startTransition, useEffect } from 'react';
+import React, { useState, startTransition, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -26,6 +26,7 @@ export const TeamBattlePage: React.FC<TeamBattlePageProps> = ({
   const { toast } = useToast();
   const [battleStarted, setBattleStarted] = useState<boolean>(false);
   const [monstersKilled, setMonstersKilled] = useState<Array<{level: number, dungeonType: string, name?: string}>>([]);
+  const monstersKilledRef = useRef<Array<{level: number, dungeonType: string, name?: string}>>([]);
   const prevAliveOpponentsRef = React.useRef<number>(0);
   const prevOpponentsRef = React.useRef<Array<{id: number, name: string, health: number}>>([]);
   const processedLevelRef = React.useRef<number | null>(null);
@@ -258,6 +259,11 @@ export const TeamBattlePage: React.FC<TeamBattlePageProps> = ({
     prevAliveOpponentsRef.current = aliveOpponents.length;
   }, [aliveOpponents, battleState.level, dungeonType, battleStarted]);
 
+  // Синхронизируем ref с актуальными убийствами, чтобы избежать гонок состояний
+  useEffect(() => {
+    monstersKilledRef.current = monstersKilled;
+  }, [monstersKilled]);
+
   // Check if battle is over
   const isBattleOver = alivePairs.length === 0 || aliveOpponents.length === 0;
   
@@ -275,28 +281,26 @@ export const TeamBattlePage: React.FC<TeamBattlePageProps> = ({
       return;
     }
 
-    // Для победы должны быть убитые монстры
-    if (isVictory && monstersKilled.length === 0) {
-      console.log(`⚠️ Победа без убитых монстров - пропускаем обработку`);
-      return;
-    }
-
+    // Фикс гонки: ждём, пока эффект подсчёта убийств обновит state
     processedLevelRef.current = battleState.level;
 
-    console.log(`🏁 Бой завершен. Победа: ${isVictory}, Уровень: ${battleState.level}, Убито монстров: ${monstersKilled.length}`);
-    console.log('🎯 BATTLE END DEBUG: Monsters killed data:', JSON.stringify(monstersKilled, null, 2));
+    setTimeout(() => {
+      const kills = monstersKilledRef.current;
+      console.log(`🏁 Бой завершен. Победа: ${isVictory}, Уровень: ${battleState.level}, Убито монстров (из ref): ${kills.length}`);
+      console.log('🎯 BATTLE END DEBUG (from ref):', JSON.stringify(kills, null, 2));
 
-    if (!isVictory) {
-      console.log('💀 ПОРАЖЕНИЕ - очистка состояния боя');
-      localStorage.removeItem('teamBattleState');
-      localStorage.removeItem('activeBattleInProgress');
-      localStorage.removeItem('battleState'); // legacy
-      processDungeonCompletion(monstersKilled, battleState.level, isFullCompletion, true); // isDefeat = true
-    } else {
-      console.log('✅ ПОБЕДА - обработка наград');
-      processDungeonCompletion(monstersKilled, battleState.level, isFullCompletion, false);
-    }
-  }, [isBattleOver, battleStarted, monstersKilled.length, alivePairs.length, battleState.level, processDungeonCompletion]);
+      if (!isVictory) {
+        console.log('💀 ПОРАЖЕНИЕ - очистка состояния боя');
+        localStorage.removeItem('teamBattleState');
+        localStorage.removeItem('activeBattleInProgress');
+        localStorage.removeItem('battleState'); // legacy
+        processDungeonCompletion(kills, battleState.level, isFullCompletion, true); // isDefeat = true
+      } else {
+        console.log('✅ ПОБЕДА - обработка наград');
+        processDungeonCompletion(kills, battleState.level, isFullCompletion, false);
+      }
+    }, 0);
+  }, [isBattleOver, battleStarted, alivePairs.length, battleState.level, processDungeonCompletion]);
   
   if (isBattleOver && battleStarted) {
     // Если модальное окно еще не готово
