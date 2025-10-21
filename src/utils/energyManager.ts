@@ -13,7 +13,7 @@ const REGEN_TIME_MS = 20 * 60 * 1000; // 20 minutes in milliseconds
 
 const getMaxEnergy = (): number => {
   try {
-    const accountId = localStorage.getItem('accountId');
+    const accountId = localStorage.getItem('walletAccountId');
     return accountId === ADMIN_WALLET ? ADMIN_MAX_ENERGY : MAX_ENERGY;
   } catch {
     return MAX_ENERGY;
