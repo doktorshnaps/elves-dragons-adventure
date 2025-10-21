@@ -355,6 +355,7 @@ export type Database = {
       }
       dungeon_item_drops: {
         Row: {
+          allowed_monsters: string[] | null
           created_at: string
           created_by_wallet_address: string
           drop_chance: number
@@ -367,6 +368,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          allowed_monsters?: string[] | null
           created_at?: string
           created_by_wallet_address: string
           drop_chance?: number
@@ -379,6 +381,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          allowed_monsters?: string[] | null
           created_at?: string
           created_by_wallet_address?: string
           drop_chance?: number

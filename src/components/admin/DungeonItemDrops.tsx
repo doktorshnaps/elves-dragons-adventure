@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { useWalletContext } from "@/contexts/WalletConnectContext";
-import { Loader2, Plus, Trash2, Save } from "lucide-react";
+import { Loader2, Plus, Trash2, Save, X } from "lucide-react";
 import {
   Select,
   SelectContent,
@@ -15,6 +15,63 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
+import { Badge } from "@/components/ui/badge";
+import { Checkbox } from "@/components/ui/checkbox";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+
+// Список монстров по подземельям
+const DUNGEON_MONSTERS: Record<number, string[]> = {
+  1: [ // Spider Nest
+    "Теневой паук",
+    "Древний паук",
+    "Ядовитый паук",
+    "Паук-некромант",
+    "Паук-архимаг",
+    "Легендарный паук",
+    "Гигантский Паук-Страж",
+    "Королева Пауков",
+    "Арахна Прародительница"
+  ],
+  2: [ // Bone Dungeon
+    "Скелет-воин",
+    "Скелет-маг",
+    "Скелет-лучник",
+    "Костяной дракон",
+    "Король скелетов"
+  ],
+  3: [ // Dark Mage Tower
+    "Тёмный маг",
+    "Тёмный архимаг",
+    "Повелитель тьмы"
+  ],
+  4: [ // Forgotten Souls Cave
+    "Забытая душа",
+    "Призрачный дух",
+    "Древняя душа"
+  ],
+  5: [ // Icy Throne
+    "Ледяной воин",
+    "Ледяной маг",
+    "Ледяной король"
+  ],
+  6: [ // Sea Serpent Lair
+    "Морской змей",
+    "Гигантский морской змей",
+    "Повелитель морских змеев"
+  ],
+  7: [ // Pantheon of Gods
+    "Божественный страж",
+    "Младший бог",
+    "Древний бог"
+  ],
+  8: [ // Future dungeon
+    "Неизвестный враг"
+  ]
+};
 
 interface ItemTemplate {
   id: number;
@@ -35,6 +92,7 @@ interface DungeonItemDrop {
   max_dungeon_level: number | null;
   drop_chance: number;
   is_active: boolean;
+  allowed_monsters: string[] | null;
 }
 
 export const DungeonItemDrops = () => {
@@ -52,6 +110,7 @@ export const DungeonItemDrops = () => {
     min_dungeon_level: "1",
     max_dungeon_level: "",
     drop_chance: "5.00",
+    allowed_monsters: [] as string[],
   });
 
   useEffect(() => {
@@ -169,6 +228,7 @@ export const DungeonItemDrops = () => {
         min_dungeon_level: "1",
         max_dungeon_level: "",
         drop_chance: "5.00",
+        allowed_monsters: [],
       });
 
       loadData();
@@ -356,6 +416,73 @@ export const DungeonItemDrops = () => {
                 }
               />
             </div>
+          </div>
+
+          {/* Выбор монстров */}
+          <div className="space-y-2">
+            <Label>Монстры (опционально)</Label>
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button variant="outline" className="w-full justify-start">
+                  {newDrop.allowed_monsters.length === 0
+                    ? "Все монстры подземелья"
+                    : `Выбрано монстров: ${newDrop.allowed_monsters.length}`}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-80 p-4" align="start">
+                <div className="space-y-2">
+                  <div className="font-semibold mb-2">Выберите монстров</div>
+                  <div className="text-sm text-muted-foreground mb-3">
+                    Если не выбрано - предмет может выпасть с любого монстра
+                  </div>
+                  {DUNGEON_MONSTERS[parseInt(newDrop.dungeon_number)]?.map((monster) => (
+                    <div key={monster} className="flex items-center space-x-2">
+                      <Checkbox
+                        id={`new-${monster}`}
+                        checked={newDrop.allowed_monsters.includes(monster)}
+                        onCheckedChange={(checked) => {
+                          if (checked) {
+                            setNewDrop({
+                              ...newDrop,
+                              allowed_monsters: [...newDrop.allowed_monsters, monster],
+                            });
+                          } else {
+                            setNewDrop({
+                              ...newDrop,
+                              allowed_monsters: newDrop.allowed_monsters.filter((m) => m !== monster),
+                            });
+                          }
+                        }}
+                      />
+                      <label
+                        htmlFor={`new-${monster}`}
+                        className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
+                      >
+                        {monster}
+                      </label>
+                    </div>
+                  ))}
+                </div>
+              </PopoverContent>
+            </Popover>
+            {newDrop.allowed_monsters.length > 0 && (
+              <div className="flex flex-wrap gap-1 mt-2">
+                {newDrop.allowed_monsters.map((monster) => (
+                  <Badge key={monster} variant="secondary" className="gap-1">
+                    {monster}
+                    <X
+                      className="h-3 w-3 cursor-pointer"
+                      onClick={() => {
+                        setNewDrop({
+                          ...newDrop,
+                          allowed_monsters: newDrop.allowed_monsters.filter((m) => m !== monster),
+                        });
+                      }}
+                    />
+                  </Badge>
+                ))}
+              </div>
+            )}
           </div>
 
           <Button onClick={handleAddDrop} disabled={saving}>
