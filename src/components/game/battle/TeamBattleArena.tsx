@@ -11,6 +11,7 @@ import { getXPProgress } from '@/utils/accountLeveling';
 import { useNavigate } from 'react-router-dom';
 import { TeamHealthBars } from './TeamHealthBars';
 import { InlineDiceDisplay } from './InlineDiceDisplay';
+import { useDungeonSync } from '@/hooks/useDungeonSync';
 interface TeamBattleArenaProps {
   playerPairs: TeamPair[];
   opponents: Opponent[];
@@ -34,6 +35,7 @@ export const TeamBattleArena: React.FC<TeamBattleArenaProps> = ({
   lastRoll
 }) => {
   const navigate = useNavigate();
+  const { endDungeonSession } = useDungeonSync();
   const {
     accountLevel,
     accountExperience
@@ -136,7 +138,10 @@ export const TeamBattleArena: React.FC<TeamBattleArenaProps> = ({
     localStorage.setItem('activeBattleInProgress', 'true');
     navigate('/menu');
   };
-  const handleSurrender = () => {
+  const handleSurrender = async () => {
+    // Завершаем сессию в БД
+    await endDungeonSession();
+    
     // Сброс состояния подземелья
     localStorage.removeItem('battleState');
     localStorage.removeItem('teamBattleState');

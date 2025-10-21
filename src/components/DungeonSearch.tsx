@@ -126,31 +126,34 @@ export const DungeonSearch = ({ onClose, balance }: DungeonSearchProps) => {
 
   if (remoteSession) {
     const isSameDevice = remoteSession.device_id === deviceId;
-    return (
-      <div className="fixed inset-0 bg-black/80 flex items-center justify-center p-4 z-[100]">
-        <Card variant="menu" className="p-6 max-w-md w-full" style={{ boxShadow: '-33px 15px 10px rgba(0, 0, 0, 0.6)' }}>
-          <h2 className="text-2xl font-bold text-white mb-4">
-            {isSameDevice ? 'Найдено активное подземелье' : 'Подземелье активно на другом устройстве'}
-          </h2>
-          <p className="text-white/80 mb-6">
-            {isSameDevice ? 'Вы можете продолжить или сбросить подземелье.' : 'Вход заблокирован. Вы можете только завершить активное подземелье.'}
-          </p>
-          <div className="flex gap-3 justify-end">
-            {isSameDevice && (
-              <Button variant="menu" onClick={() => navigate(dungeonRoutes[remoteSession.dungeon_type as DungeonType])}>
-                Продолжить
+    
+    // Если это то же устройство - не показываем блокирующее окно, разрешаем продолжить
+    if (isSameDevice) {
+      // Просто не показываем окно, пользователь может продолжить выбор подземелья
+      // Но добавим кнопку "Сбросить" в интерфейс выбора подземелья
+    } else {
+      // Другое устройство - блокируем
+      return (
+        <div className="fixed inset-0 bg-black/80 flex items-center justify-center p-4 z-[100]">
+          <Card variant="menu" className="p-6 max-w-md w-full" style={{ boxShadow: '-33px 15px 10px rgba(0, 0, 0, 0.6)' }}>
+            <h2 className="text-2xl font-bold text-white mb-4">
+              Подземелье активно на другом устройстве
+            </h2>
+            <p className="text-white/80 mb-6">
+              Вход заблокирован. Завершите подземелье на другом устройстве или сбросьте его здесь.
+            </p>
+            <div className="flex gap-3 justify-end">
+              <Button
+                variant="destructive"
+                onClick={async () => { await endDungeonSession(); setRemoteSession(null); }}
+              >
+                Завершить на всех устройствах
               </Button>
-            )}
-            <Button
-              variant="destructive"
-              onClick={async () => { await endDungeonSession(); setRemoteSession(null); }}
-            >
-              Сбросить активное
-            </Button>
-          </div>
-        </Card>
-      </div>
-    );
+            </div>
+          </Card>
+        </div>
+      );
+    }
   }
 
   return (
