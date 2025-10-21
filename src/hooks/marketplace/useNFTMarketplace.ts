@@ -64,8 +64,11 @@ export const useNFTMarketplace = () => {
 
       // Determine payment token contract
       const ftContract = paymentToken === 'GT' ? 'gt-1733.meme-cooking.near' : null;
-      const priceInYocto = nearAPI.utils.format.parseNearAmount(price.toString()) || '0';
-      console.log('💰 Price conversion', { price, priceInYocto, ftContract });
+      // GT tokens use 18 decimals, not 24 like NEAR
+      const priceInYocto = paymentToken === 'GT' 
+        ? (BigInt(price) * BigInt(10 ** 18)).toString()
+        : nearAPI.utils.format.parseNearAmount(price.toString()) || '0';
+      console.log('💰 Price conversion', { price, priceInYocto, ftContract, paymentToken });
 
       // Step 1: Call nft_approve on the NFT contract via NEAR wallet
       console.log('📝 Step 1: Preparing nft_approve call');
