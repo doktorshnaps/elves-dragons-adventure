@@ -212,6 +212,7 @@ export const DungeonItemDrops = () => {
         p_max_dungeon_level: newDrop.max_dungeon_level ? parseInt(newDrop.max_dungeon_level) : null,
         p_drop_chance: parseFloat(newDrop.drop_chance),
         p_admin_wallet_address: accountId,
+        p_allowed_monsters: newDrop.allowed_monsters.length > 0 ? newDrop.allowed_monsters : null,
       });
 
       if (error) throw error;
@@ -270,6 +271,7 @@ export const DungeonItemDrops = () => {
         p_drop_chance: drop.drop_chance,
         p_is_active: drop.is_active,
         p_admin_wallet_address: accountId,
+        p_allowed_monsters: drop.allowed_monsters && drop.allowed_monsters.length > 0 ? drop.allowed_monsters : null,
       });
 
       if (error) throw error;
@@ -508,10 +510,11 @@ export const DungeonItemDrops = () => {
           ) : (
             <div className="space-y-2">
               <div className="grid grid-cols-12 gap-2 px-4 py-2 bg-muted/50 rounded-lg font-semibold text-sm">
-                <div className="col-span-3">Предмет</div>
+                <div className="col-span-2">Предмет</div>
                 <div className="col-span-1">Подз.</div>
                 <div className="col-span-2">Уровни</div>
-                <div className="col-span-2">Шанс дропа</div>
+                <div className="col-span-1">Шанс</div>
+                <div className="col-span-2">Монстры</div>
                 <div className="col-span-1">Статус</div>
                 <div className="col-span-3">Действия</div>
               </div>
@@ -519,24 +522,24 @@ export const DungeonItemDrops = () => {
               {drops.map((drop) => (
                 <div
                   key={drop.id}
-                  className="grid grid-cols-12 gap-2 px-4 py-3 bg-card border rounded-lg items-center hover:bg-accent/50 transition-colors"
+                  className="grid grid-cols-12 gap-2 px-4 py-3 bg-card border rounded-lg items-start hover:bg-accent/50 transition-colors"
                 >
-                  <div className="col-span-3">
+                  <div className="col-span-2">
                     <p className="font-medium text-sm">{drop.item_name}</p>
                   </div>
                   
-                  <div className="col-span-1">
+                  <div className="col-span-1 flex items-center">
                     <p className="text-sm">{drop.dungeon_number}</p>
                   </div>
                   
-                  <div className="col-span-2">
+                  <div className="col-span-2 flex items-center">
                     <p className="text-sm">
                       {drop.min_dungeon_level}
                       {drop.max_dungeon_level ? ` - ${drop.max_dungeon_level}` : '+'}
                     </p>
                   </div>
                   
-                  <div className="col-span-2">
+                  <div className="col-span-1">
                     <Input
                       type="number"
                       step="0.01"
@@ -555,7 +558,70 @@ export const DungeonItemDrops = () => {
                     />
                   </div>
                   
-                  <div className="col-span-1">
+                  <div className="col-span-2">
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <Button variant="outline" size="sm" className="w-full h-8 text-xs">
+                          {!drop.allowed_monsters || drop.allowed_monsters.length === 0
+                            ? "Все"
+                            : `${drop.allowed_monsters.length} монстров`}
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-64 p-4" align="start">
+                        <div className="space-y-2">
+                          <div className="font-semibold text-sm">Выберите монстров</div>
+                          <div className="text-xs text-muted-foreground mb-2">
+                            Пусто = все монстры
+                          </div>
+                          {DUNGEON_MONSTERS[drop.dungeon_number]?.map((monster) => (
+                            <div key={monster} className="flex items-center space-x-2">
+                              <Checkbox
+                                id={`drop-${drop.id}-${monster}`}
+                                checked={drop.allowed_monsters?.includes(monster) || false}
+                                onCheckedChange={(checked) => {
+                                  const updated = drops.map((d) => {
+                                    if (d.id === drop.id) {
+                                      const current = d.allowed_monsters || [];
+                                      return {
+                                        ...d,
+                                        allowed_monsters: checked
+                                          ? [...current, monster]
+                                          : current.filter((m) => m !== monster),
+                                      };
+                                    }
+                                    return d;
+                                  });
+                                  setDrops(updated);
+                                }}
+                              />
+                              <label
+                                htmlFor={`drop-${drop.id}-${monster}`}
+                                className="text-xs leading-none cursor-pointer"
+                              >
+                                {monster}
+                              </label>
+                            </div>
+                          ))}
+                        </div>
+                      </PopoverContent>
+                    </Popover>
+                    {drop.allowed_monsters && drop.allowed_monsters.length > 0 && (
+                      <div className="flex flex-wrap gap-1 mt-1">
+                        {drop.allowed_monsters.slice(0, 2).map((monster) => (
+                          <Badge key={monster} variant="secondary" className="text-xs py-0 px-1">
+                            {monster.length > 12 ? `${monster.slice(0, 12)}...` : monster}
+                          </Badge>
+                        ))}
+                        {drop.allowed_monsters.length > 2 && (
+                          <Badge variant="secondary" className="text-xs py-0 px-1">
+                            +{drop.allowed_monsters.length - 2}
+                          </Badge>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                  
+                  <div className="col-span-1 flex items-center">
                     <Switch
                       checked={drop.is_active}
                       onCheckedChange={(checked) => {

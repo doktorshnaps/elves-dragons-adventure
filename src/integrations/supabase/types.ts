@@ -1305,14 +1305,24 @@ export type Database = {
         Returns: boolean
       }
       admin_add_dungeon_item_drop: {
-        Args: {
-          p_admin_wallet_address?: string
-          p_drop_chance: number
-          p_dungeon_number: number
-          p_item_template_id: number
-          p_max_dungeon_level: number
-          p_min_dungeon_level: number
-        }
+        Args:
+          | {
+              p_admin_wallet_address: string
+              p_allowed_monsters?: string[]
+              p_drop_chance: number
+              p_dungeon_number: number
+              p_item_template_id: number
+              p_max_dungeon_level: number
+              p_min_dungeon_level: number
+            }
+          | {
+              p_admin_wallet_address?: string
+              p_drop_chance: number
+              p_dungeon_number: number
+              p_item_template_id: number
+              p_max_dungeon_level: number
+              p_min_dungeon_level: number
+            }
         Returns: string
       }
       admin_add_to_whitelist: {
@@ -1533,14 +1543,24 @@ export type Database = {
         Returns: boolean
       }
       admin_update_dungeon_item_drop: {
-        Args: {
-          p_admin_wallet_address?: string
-          p_drop_chance: number
-          p_drop_id: string
-          p_is_active: boolean
-          p_max_dungeon_level: number
-          p_min_dungeon_level: number
-        }
+        Args:
+          | {
+              p_admin_wallet_address: string
+              p_allowed_monsters?: string[]
+              p_drop_chance: number
+              p_drop_id: string
+              p_is_active: boolean
+              p_max_dungeon_level: number
+              p_min_dungeon_level: number
+            }
+          | {
+              p_admin_wallet_address?: string
+              p_drop_chance: number
+              p_drop_id: string
+              p_is_active: boolean
+              p_max_dungeon_level: number
+              p_min_dungeon_level: number
+            }
         Returns: boolean
       }
       admin_update_dungeon_setting: {

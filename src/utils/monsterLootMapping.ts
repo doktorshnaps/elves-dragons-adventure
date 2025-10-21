@@ -92,15 +92,21 @@ export const getMonsterLoot = (monsterName: string, dungeonNumber?: number, curr
         const matchesDungeon = setting.dungeon_number === dungeonNumber;
         const matchesLevel = currentLevel >= setting.min_level && (setting.max_level === null || currentLevel <= setting.max_level);
         const isActive = setting.is_active !== false;
-        return matchesDungeon && matchesLevel && isActive;
+        
+        // Проверяем, разрешен ли дроп с этого монстра
+        const matchesMonster = !setting.allowed_monsters || 
+                               setting.allowed_monsters.length === 0 || 
+                               setting.allowed_monsters.includes(cleanName);
+        
+        return matchesDungeon && matchesLevel && isActive && matchesMonster;
       });
       
       if (dungeonSettings) {
         canDrop = true;
         effectiveDropChance = dungeonSettings.drop_chance || effectiveDropChance;
-        console.log(`✅ Item ${template.name} can drop in dungeon ${dungeonNumber}, level ${currentLevel} (chance: ${effectiveDropChance}%)`);
+        console.log(`✅ Item ${template.name} can drop from ${cleanName} in dungeon ${dungeonNumber}, level ${currentLevel} (chance: ${effectiveDropChance}%)`);
       } else {
-        console.log(`❌ Item ${template.name} cannot drop in dungeon ${dungeonNumber}, level ${currentLevel} (no matching settings)`);
+        console.log(`❌ Item ${template.name} cannot drop from ${cleanName} in dungeon ${dungeonNumber}, level ${currentLevel} (no matching settings or wrong monster)`);
       }
     } else {
       // Если настройки подземелья не указаны, используем базовый шанс дропа
