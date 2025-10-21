@@ -131,6 +131,25 @@ export const DungeonItemDrops = () => {
     try {
       setSaving(true);
 
+      // 1. Обновляем базовый шанс дропа в item_templates
+      const selectedItem = itemTemplates.find(item => item.id === parseInt(newDrop.item_template_id));
+      
+      if (selectedItem) {
+        const { error: updateError } = await supabase
+          .from("item_templates")
+          .update({ 
+            drop_chance: parseFloat(newDrop.drop_chance),
+            updated_at: new Date().toISOString()
+          })
+          .eq("id", parseInt(newDrop.item_template_id));
+
+        if (updateError) {
+          console.error("Error updating item template:", updateError);
+          throw new Error(`Ошибка обновления базового шанса: ${updateError.message}`);
+        }
+      }
+
+      // 2. Добавляем настройку дропа для подземелья
       const { error } = await supabase.rpc("admin_add_dungeon_item_drop" as any, {
         p_item_template_id: parseInt(newDrop.item_template_id),
         p_dungeon_number: parseInt(newDrop.dungeon_number),
@@ -144,7 +163,7 @@ export const DungeonItemDrops = () => {
 
       toast({
         title: "Успешно",
-        description: "Настройка дропа добавлена",
+        description: "Настройка дропа добавлена и базовый шанс обновлен",
       });
 
       // Сброс формы
@@ -173,6 +192,21 @@ export const DungeonItemDrops = () => {
     if (!accountId) return;
 
     try {
+      // 1. Обновляем базовый шанс дропа в item_templates
+      const { error: updateTemplateError } = await supabase
+        .from("item_templates")
+        .update({ 
+          drop_chance: drop.drop_chance,
+          updated_at: new Date().toISOString()
+        })
+        .eq("id", drop.item_template_id);
+
+      if (updateTemplateError) {
+        console.error("Error updating item template:", updateTemplateError);
+        throw new Error(`Ошибка обновления базового шанса: ${updateTemplateError.message}`);
+      }
+
+      // 2. Обновляем настройку дропа для подземелья
       const { error } = await supabase.rpc("admin_update_dungeon_item_drop" as any, {
         p_drop_id: drop.id,
         p_min_dungeon_level: drop.min_dungeon_level,
@@ -186,8 +220,10 @@ export const DungeonItemDrops = () => {
 
       toast({
         title: "Успешно",
-        description: "Настройка обновлена",
+        description: "Настройка и базовый шанс обновлены",
       });
+      
+      loadData();
     } catch (error: any) {
       console.error("Error updating drop:", error);
       toast({
