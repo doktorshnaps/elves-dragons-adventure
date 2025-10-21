@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { cardDatabase } from '@/data/cardDatabase';
 import { allMonsterImages } from '@/constants/monsterImages';
 import { allWorkerImages } from '@/constants/workerImages';
+import { allItemImages } from '@/constants/itemImages';
 
 // Создаем объект для кэширования загруженных изображений
 const imageCache: { [key: string]: HTMLImageElement } = {};
@@ -42,8 +43,8 @@ export const useImagePreloader = () => {
       .map(card => card.image)
       .filter((url): url is string => !!url);
 
-    // Объединяем изображения карт, монстров и рабочих
-    const allImageUrls = [...cardImageUrls, ...allMonsterImages, ...allWorkerImages];
+    // Объединяем изображения карт, монстров, рабочих и предметов
+    const allImageUrls = [...cardImageUrls, ...allMonsterImages, ...allWorkerImages, ...allItemImages];
 
     // Удаляем дубликаты URL
     const uniqueUrls = Array.from(new Set(allImageUrls));

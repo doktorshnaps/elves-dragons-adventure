@@ -41,27 +41,8 @@ import archmageStaff from "@/assets/items/archmage-staff.png";
 import livingShadowMantle from "@/assets/items/living-shadow-mantle.png";
 import arachnidGrimoire from "@/assets/items/arachnid-grimoire.png";
 
-// Import предметов Арахны
-import archmageSoulShard from "@/assets/items/archmage_soul_shard.png";
-import progenitorHeart from "@/assets/items/progenitor_heart.png";
-import arachneSilkGland from "@/assets/items/arachne_silk_gland.png";
-import progenitorEgg from "@/assets/items/progenitor_egg.png";
-import primasEye from "@/assets/items/primas_eye.png";
-import arachneClaw from "@/assets/items/arachne_claw.png";
-import arachneCrown from "@/assets/items/arachne_crown.png";
-import ashenThreadsCloak from "@/assets/items/ashen_threads_cloak.png";
 import { workerImagesByName } from "@/constants/workerImages";
-import woodChunksImg from "@/assets/items/wood-chunks.jpeg";
-import magicalRootsImg from "@/assets/items/magical-roots.jpeg";
-import rockStonesImg from "@/assets/items/rock-stones.jpeg";
-import blackCrystalsImg from "@/assets/items/black-crystals.jpeg";
-import illusionManuscriptImg from "@/assets/items/illusion-manuscript.png";
-import darkMonocleImg from "@/assets/items/dark-monocle.png";
-import etherVineImg from "@/assets/items/ether-vine.png";
-import dwarvenTongsImg from "@/assets/items/dwarven-tongs.png";
-import healingOilImg from "@/assets/items/healing-oil.png";
-import shimmeringCrystalImg from "@/assets/items/shimmering-crystal.png";
-import lifeCrystalImg from "@/assets/items/life-crystal.png";
+import { itemImagesByItemId } from "@/constants/itemImages";
 
 interface ItemTemplate {
   id: number;
@@ -118,63 +99,7 @@ const getSourceLabel = (sourceType: string, language: 'ru' | 'en') => {
 
 // Map item IDs to imported images
 const getItemImage = (itemId: string): string | null => {
-  const imageMap: Record<string, string> = {
-    spider_silk: spiderSilk,
-    spider_poison_small: spiderPoison,
-    spider_fang: spiderFang,
-    spider_eye: spiderEye,
-    chelicerae: chelicerae,
-    chitin_fragment: chitinFragment,
-    spider_limbs: spiderLimbs,
-    spider_tendons: spiderTendons,
-    poison_gland: poisonGland,
-    spider_eggs: spiderEggs,
-    skeleton_spider_bone: skeletonSpiderBone,
-    illusion_pollen: illusionPollen,
-    wyvern_wing: wyvernWing,
-    hunter_claw: hunterClaw,
-    silk_core: silkCore,
-    enhanced_guardian_chitin: enhancedGuardianChitin,
-    queen_larva_stinger: queenLarvaStinger,
-    concentrated_poison_gland: concentratedPoisonGland,
-    ancient_hermit_eye: ancientHermitEye,
-    shadow_web_gland: shadowWebGland,
-    berserker_fang: berserkerFang,
-    wyvern_heart: wyvernHeart,
-    titan_shell: titanShell,
-    carrion_claw: carrionClaw,
-    parasite_gland: parasiteGland,
-    guardian_egg: guardianEgg,
-    web_symbol: webSymbol,
-    archmage_staff: archmageStaff,
-    living_shadow_mantle: livingShadowMantle,
-    arachnid_grimoire: arachnidGrimoire,
-    
-    // Предметы Арахны
-    archmage_soul_shard: archmageSoulShard,
-    progenitor_heart: progenitorHeart,
-    arachne_silk_gland: arachneSilkGland,
-    progenitor_egg: progenitorEgg,
-    primas_eye: primasEye,
-    arachne_claw: arachneClaw,
-    arachne_crown: arachneCrown,
-    ashen_threads_cloak: ashenThreadsCloak,
-    
-    // Новые предметы
-    wood_chunks: woodChunksImg,
-    magical_roots: magicalRootsImg,
-    rock_stones: rockStonesImg,
-    black_crystals: blackCrystalsImg,
-    illusion_manuscript: illusionManuscriptImg,
-    dark_monocle: darkMonocleImg,
-    ether_vine: etherVineImg,
-    dwarven_tongs: dwarvenTongsImg,
-    healing_oil: healingOilImg,
-    shimmering_crystal: shimmeringCrystalImg,
-    life_crystal: lifeCrystalImg,
-  };
-  
-  return imageMap[itemId] || null;
+  return itemImagesByItemId[itemId] || null;
 };
 
 // Resolve image for item template with fallbacks
