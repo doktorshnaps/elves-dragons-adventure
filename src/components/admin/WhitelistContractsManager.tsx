@@ -48,6 +48,10 @@ export const WhitelistContractsManager = () => {
     }
   };
 
+  useEffect(() => {
+    loadContracts();
+  }, []);
+
   const addContract = async () => {
     if (!newContract.address.trim()) {
       toast({
@@ -74,14 +78,13 @@ export const WhitelistContractsManager = () => {
         }
       }
       
-      const { error } = await supabase
-        .from('whitelist_contracts')
-        .insert({
-          contract_address: newContract.address.trim(),
-          contract_name: newContract.name.trim() || null,
-          description: newContract.description.trim() || null,
-          added_by_wallet_address: walletAddress
-        });
+      const { error } = await supabase.rpc('admin_add_whitelist_contract', {
+        p_admin_wallet_address: walletAddress,
+        p_contract_address: newContract.address.trim(),
+        p_contract_name: newContract.name.trim(),
+        p_description: newContract.description.trim(),
+        p_is_active: true
+      });
 
       if (error) throw error;
 
@@ -157,7 +160,7 @@ export const WhitelistContractsManager = () => {
   const validateAllNFTWhitelists = async () => {
     try {
       const { data, error } = await supabase.functions.invoke('check-nft-whitelist', {
-        body: { check_all_automatic: true }
+        body: { check_all_nft_users: true }
       });
 
       if (error) throw error;
@@ -166,11 +169,14 @@ export const WhitelistContractsManager = () => {
         title: "Проверка завершена",
         description: data?.message || "Проверка автоматических вайт-листов завершена",
       });
+
+      // Refresh contracts list after validation
+      loadContracts();
     } catch (error: any) {
       console.error('Error validating NFT whitelists:', error);
       toast({
         title: "Ошибка",
-        description: "Не удалось выполнить проверку",
+        description: error.message || "Не удалось выполнить проверку",
         variant: "destructive",
       });
     }
@@ -198,23 +204,19 @@ export const WhitelistContractsManager = () => {
           }
         }
 
-        await supabase
-          .from('whitelist_contracts')
-          .insert({
-            contract_address: 'elleonortesr.mintbase1.near',
-            contract_name: 'Mintbase NFT Cards',
-            description: 'NFT контракт для карточек героев и драконов из Mintbase',
-            added_by_wallet_address: walletAddress,
-            is_active: true
-          });
+        await supabase.rpc('admin_add_whitelist_contract', {
+          p_admin_wallet_address: walletAddress,
+          p_contract_address: 'elleonortesr.mintbase1.near',
+          p_contract_name: 'Mintbase NFT Cards',
+          p_description: 'NFT контракт для карточек героев и драконов из Mintbase',
+          p_is_active: true
+        });
 
         console.log('✅ Auto-added Mintbase contract');
         loadContracts();
       } catch (error: any) {
-        // Ignore duplicate errors
-        if (!error.message?.includes('duplicate')) {
-          console.error('Error auto-adding Mintbase contract:', error);
-        }
+        // Ignore errors - contract might already exist
+        console.log('Mintbase contract check:', error.message);
       }
     };
 

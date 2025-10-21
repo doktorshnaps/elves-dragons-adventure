@@ -1335,6 +1335,16 @@ export type Database = {
           | { p_notes?: string; p_wallet_address: string }
         Returns: boolean
       }
+      admin_add_whitelist_contract: {
+        Args: {
+          p_admin_wallet_address: string
+          p_contract_address: string
+          p_contract_name: string
+          p_description: string
+          p_is_active?: boolean
+        }
+        Returns: string
+      }
       admin_ban_user: {
         Args: {
           p_admin_wallet_address?: string
