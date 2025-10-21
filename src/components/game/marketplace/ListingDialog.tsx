@@ -51,23 +51,12 @@ export const ListingDialog = ({
           setCards(filteredCards);
           setInventory((data.inventory as any[] || []) as Item[]);
         }
-
-        // Ensure NFT sync using unified integration hook (same logic as decks/collection)
-        const wallet = accountId || localStorage.getItem('nearAccountId') || localStorage.getItem('walletAccountId');
-        if (wallet) {
-          console.log('🔄 Ensuring NFT sync via useNFTCardIntegration for wallet:', wallet);
-          try {
-            await syncNFTsFromWallet();
-          } catch (e) {
-            console.warn('NFT sync failed:', e);
-          }
-        }
       } finally {
         setLoading(false);
       }
     };
     load();
-  }, [accountId, syncNFTsFromWallet]);
+  }, [accountId]);
   const [cards, setCards] = useState<CardType[]>([]);
   const [inventory, setInventory] = useState<Item[]>([]);
   const [loading, setLoading] = useState(true);
