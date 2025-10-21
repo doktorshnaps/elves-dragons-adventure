@@ -69,8 +69,72 @@ export const useNFTMarketplace = () => {
       const priceInYocto = ftContract ? rawPrice : nearAPI.utils.format.parseNearAmount(rawPrice) || '0';
       console.log('💰 Price conversion', { price, rawPrice, priceInYocto, ftContract, paymentToken });
 
-      // Step 1: Call nft_approve on the NFT contract via NEAR wallet
-      console.log('📝 Step 1: Preparing nft_approve call');
+      const marketplaceContract = 'elleonortesr.mintbase1.near';
+
+      // Step 1: Check and ensure storage deposit on marketplace
+      console.log('📝 Step 1: Checking storage balance on marketplace');
+      try {
+        console.log('🔑 Getting wallet from selector...');
+        const wallet = await walletSelector.wallet();
+        
+        // Check storage balance
+        const provider = new nearAPI.providers.JsonRpcProvider({
+          url: 'https://rpc.mainnet.near.org'
+        });
+        
+        const storageBalanceArgs = {
+          account_id: walletAddress
+        };
+        
+        console.log('🔍 Checking storage_balance_of:', { marketplaceContract, walletAddress });
+        
+        const rawResult = await provider.query({
+          request_type: 'call_function',
+          account_id: marketplaceContract,
+          method_name: 'storage_balance_of',
+          args_base64: Buffer.from(JSON.stringify(storageBalanceArgs)).toString('base64'),
+          finality: 'final'
+        });
+        
+        const storageBalance = JSON.parse(Buffer.from((rawResult as any).result).toString());
+        console.log('📊 Storage balance result:', storageBalance);
+        
+        // If no storage or insufficient, deposit storage
+        if (!storageBalance || !storageBalance.total) {
+          console.log('⚠️ No storage balance found, making storage_deposit...');
+          
+          const depositResult = await wallet.signAndSendTransaction({
+            receiverId: marketplaceContract,
+            actions: [
+              {
+                type: 'FunctionCall',
+                params: {
+                  methodName: 'storage_deposit',
+                  args: {
+                    account_id: walletAddress
+                  },
+                  gas: '30000000000000',
+                  deposit: nearAPI.utils.format.parseNearAmount('0.01') || '0'
+                }
+              }
+            ]
+          });
+          
+          console.log('✅ Storage deposit completed:', depositResult);
+        } else {
+          console.log('✅ Storage balance exists, proceeding...');
+        }
+      } catch (storageError: any) {
+        console.error('❌ Error checking/depositing storage:', storageError);
+        const safeMessage = storageError && typeof storageError === 'object' && 'message' in storageError
+          ? (storageError as any).message
+          : 'Неизвестная ошибка';
+        onError('Не удалось подготовить storage для маркетплейса: ' + safeMessage);
+        return;
+      }
+
+      // Step 2: Call nft_approve on the NFT contract via NEAR wallet
+      console.log('📝 Step 2: Preparing nft_approve call');
       console.log('NFT details:', {
         contract: 'elleonortesr.mintbase1.near',
         token_id: nftCard.nft_token_id,
@@ -81,9 +145,8 @@ export const useNFTMarketplace = () => {
       });
 
       try {
-        console.log('🔑 Getting wallet from selector...');
         const wallet = await walletSelector.wallet();
-        console.log('✅ Wallet obtained, initiating transaction...');
+        console.log('✅ Wallet obtained, initiating nft_approve transaction...');
         
         const approveResult = await wallet.signAndSendTransaction({
           receiverId: 'elleonortesr.mintbase1.near',
@@ -119,8 +182,8 @@ export const useNFTMarketplace = () => {
          return;
       }
 
-      // Step 2: Create marketplace listing (DB)
-      console.log('📝 Step 2: Creating marketplace listing...');
+      // Step 3: Create marketplace listing (DB)
+      console.log('📝 Step 3: Creating marketplace listing...');
 
       if (hasSupabaseSession) {
         const { data: listing, error: listingError } = await supabase
@@ -148,8 +211,8 @@ export const useNFTMarketplace = () => {
 
         console.log('✅ Marketplace listing created:', listing.id);
         
-        // Step 3: Lock NFT in card_instances
-        console.log('📝 Step 3: Locking NFT in card_instances...');
+        // Step 4: Lock NFT in card_instances
+        console.log('📝 Step 4: Locking NFT in card_instances...');
         const { error: lockError } = await supabase
           .from('card_instances')
           .update({
