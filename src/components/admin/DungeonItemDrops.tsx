@@ -131,23 +131,19 @@ export const DungeonItemDrops = () => {
     try {
       setSaving(true);
 
-      // 1. Обновляем базовый шанс дропа в item_templates
-      const selectedItem = itemTemplates.find(item => item.id === parseInt(newDrop.item_template_id));
-      
-      if (selectedItem) {
-        const { error: updateError } = await supabase
-          .from("item_templates")
-          .update({ 
-            drop_chance: parseFloat(newDrop.drop_chance),
-            updated_at: new Date().toISOString()
-          })
-          .eq("id", parseInt(newDrop.item_template_id));
+      // 1. Обновляем базовый шанс дропа в item_templates через admin функцию
+      const { error: updateError } = await supabase.rpc("admin_update_item_drop_chance", {
+        p_item_id: parseInt(newDrop.item_template_id),
+        p_drop_chance: parseFloat(newDrop.drop_chance),
+        p_admin_wallet_address: accountId,
+      });
 
-        if (updateError) {
-          console.error("Error updating item template:", updateError);
-          throw new Error(`Ошибка обновления базового шанса: ${updateError.message}`);
-        }
+      if (updateError) {
+        console.error("Error updating item drop chance:", updateError);
+        throw new Error(`Ошибка обновления базового шанса: ${updateError.message}`);
       }
+
+      console.log(`✅ Updated drop_chance for item ${newDrop.item_template_id} to ${newDrop.drop_chance}%`);
 
       // 2. Добавляем настройку дропа для подземелья
       const { error } = await supabase.rpc("admin_add_dungeon_item_drop" as any, {
@@ -192,19 +188,19 @@ export const DungeonItemDrops = () => {
     if (!accountId) return;
 
     try {
-      // 1. Обновляем базовый шанс дропа в item_templates
-      const { error: updateTemplateError } = await supabase
-        .from("item_templates")
-        .update({ 
-          drop_chance: drop.drop_chance,
-          updated_at: new Date().toISOString()
-        })
-        .eq("id", drop.item_template_id);
+      // 1. Обновляем базовый шанс дропа в item_templates через admin функцию
+      const { error: updateTemplateError } = await supabase.rpc("admin_update_item_drop_chance", {
+        p_item_id: drop.item_template_id,
+        p_drop_chance: drop.drop_chance,
+        p_admin_wallet_address: accountId,
+      });
 
       if (updateTemplateError) {
-        console.error("Error updating item template:", updateTemplateError);
+        console.error("Error updating item drop chance:", updateTemplateError);
         throw new Error(`Ошибка обновления базового шанса: ${updateTemplateError.message}`);
       }
+
+      console.log(`✅ Updated drop_chance for item ${drop.item_template_id} to ${drop.drop_chance}%`);
 
       // 2. Обновляем настройку дропа для подземелья
       const { error } = await supabase.rpc("admin_update_dungeon_item_drop" as any, {

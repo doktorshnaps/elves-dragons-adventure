@@ -1581,6 +1581,14 @@ export type Database = {
         }
         Returns: boolean
       }
+      admin_update_item_drop_chance: {
+        Args: {
+          p_admin_wallet_address?: string
+          p_drop_chance: number
+          p_item_id: number
+        }
+        Returns: boolean
+      }
       admin_update_item_template: {
         Args:
           | {
