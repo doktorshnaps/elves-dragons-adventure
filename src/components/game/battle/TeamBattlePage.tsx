@@ -15,6 +15,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useWalletContext } from '@/contexts/WalletConnectContext';
 import { useDungeonSync } from '@/hooks/useDungeonSync';
 import { useEnergy } from '@/utils/energyManager';
+import { useToast } from '@/hooks/use-toast';
 interface TeamBattlePageProps {
   dungeonType: DungeonType;
 }
@@ -22,6 +23,7 @@ export const TeamBattlePage: React.FC<TeamBattlePageProps> = ({
   dungeonType
 }) => {
   const navigate = useNavigate();
+  const { toast } = useToast();
   const [battleStarted, setBattleStarted] = useState<boolean>(false);
   const [monstersKilled, setMonstersKilled] = useState<Array<{level: number, dungeonType: string, name?: string}>>([]);
   const prevAliveOpponentsRef = React.useRef<number>(0);
@@ -64,12 +66,30 @@ export const TeamBattlePage: React.FC<TeamBattlePageProps> = ({
     lastRoll
   } = useTeamBattle(dungeonType);
   const handleStartBattle = async () => {
+    // Проверяем энергию перед началом боя
+    const { getInitialEnergyState } = await import('@/utils/energyManager');
+    const currentEnergy = getInitialEnergyState();
+    
+    console.log('⚡ Проверка энергии перед боем:', currentEnergy);
+    
+    if (currentEnergy.current <= 0) {
+      console.warn('❌ Not enough energy to start battle. Current:', currentEnergy.current);
+      toast({
+        title: "Недостаточно энергии",
+        description: "Подождите, пока энергия восстановится",
+        variant: "destructive"
+      });
+      return;
+    }
+    
     // Снимаем энергию при начале боя
     const energyUsed = useEnergy();
     if (!energyUsed) {
-      console.warn('Not enough energy to start battle');
+      console.warn('❌ Failed to use energy');
       return;
     }
+    
+    console.log('✅ Энергия использована. Осталось:', currentEnergy.current - 1);
     
     // Создаем запись в БД о начале сессии подземелья
     const started = await startDungeonSession(dungeonType, 1);
