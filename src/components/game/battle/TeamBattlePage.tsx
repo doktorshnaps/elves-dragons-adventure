@@ -203,6 +203,7 @@ export const TeamBattlePage: React.FC<TeamBattlePageProps> = ({
         health: opp.health
       }));
       prevAliveOpponentsRef.current = aliveOpponents.length;
+      processedLevelRef.current = null; // Сброс при старте нового боя
       return;
     }
 
@@ -247,22 +248,31 @@ export const TeamBattlePage: React.FC<TeamBattlePageProps> = ({
     const isVictory = alivePairs.length > 0;
     const isFullCompletion = isVictory && battleState.level >= 10;
 
-    // Если победа и никого не убили (фаза инициализации нового уровня) — пропускаем
-    if (isVictory && monstersKilled.length === 0) return;
-
     // Предотвращаем повторную обработку одного и того же уровня
-    if (processedLevelRef.current === battleState.level) return;
+    if (processedLevelRef.current === battleState.level) {
+      console.log(`⚠️ Уровень ${battleState.level} уже обработан, пропускаем`);
+      return;
+    }
+
+    // Для победы должны быть убитые монстры
+    if (isVictory && monstersKilled.length === 0) {
+      console.log(`⚠️ Победа без убитых монстров - пропускаем обработку`);
+      return;
+    }
+
     processedLevelRef.current = battleState.level;
 
     console.log(`🏁 Бой завершен. Победа: ${isVictory}, Уровень: ${battleState.level}, Убито монстров: ${monstersKilled.length}`);
     console.log('🎯 BATTLE END DEBUG: Monsters killed data:', JSON.stringify(monstersKilled, null, 2));
 
     if (!isVictory) {
+      console.log('💀 ПОРАЖЕНИЕ - очистка состояния боя');
       localStorage.removeItem('teamBattleState');
       localStorage.removeItem('activeBattleInProgress');
       localStorage.removeItem('battleState'); // legacy
       processDungeonCompletion(monstersKilled, battleState.level, isFullCompletion, true); // isDefeat = true
     } else {
+      console.log('✅ ПОБЕДА - обработка наград');
       processDungeonCompletion(monstersKilled, battleState.level, isFullCompletion, false);
     }
   }, [isBattleOver, battleStarted, monstersKilled.length, alivePairs.length, battleState.level, processDungeonCompletion]);

@@ -98,8 +98,14 @@ export const useDungeonRewards = () => {
     isDefeat: boolean = false
   ) => {
     // Защита от повторной обработки того же уровня
-    if (isProcessingRef.current || lastProcessedLevelRef.current === currentLevel) {
-      console.log(`⚠️ Пропуск дублирующего вызова для уровня ${currentLevel}`);
+    if (isProcessingRef.current) {
+      console.log(`⚠️ Уже идет обработка, пропуск вызова для уровня ${currentLevel}`);
+      return;
+    }
+    
+    // Для побед: проверяем, не обработали ли уже этот уровень
+    if (!isDefeat && lastProcessedLevelRef.current === currentLevel && pendingReward !== null) {
+      console.log(`⚠️ Уровень ${currentLevel} уже обработан и награда готова`);
       return;
     }
 
