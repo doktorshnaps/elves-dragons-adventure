@@ -21,6 +21,9 @@ interface ItemTemplate {
   name: string;
   type: string;
   rarity: string;
+  drop_chance?: number;
+  description?: string;
+  image_url?: string;
 }
 
 interface DungeonItemDrop {
@@ -62,7 +65,7 @@ export const DungeonItemDrops = () => {
       // Загрузка шаблонов предметов
       const { data: templates, error: templatesError } = await supabase
         .from("item_templates")
-        .select("id, name, type, rarity")
+        .select("id, name, type, rarity, drop_chance, description, image_url")
         .order("name");
 
       if (templatesError) throw templatesError;
@@ -428,6 +431,81 @@ export const DungeonItemDrops = () => {
                   </div>
                 </div>
               ))}
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Все предметы из базы данных ({itemTemplates.length})</CardTitle>
+        </CardHeader>
+        <CardContent>
+          {itemTemplates.length === 0 ? (
+            <p className="text-muted-foreground text-center py-8">
+              Предметы не найдены
+            </p>
+          ) : (
+            <div className="space-y-2">
+              <div className="grid grid-cols-12 gap-2 px-4 py-2 bg-muted/50 rounded-lg font-semibold text-sm">
+                <div className="col-span-3">Предмет</div>
+                <div className="col-span-2">Тип</div>
+                <div className="col-span-1">Редкость</div>
+                <div className="col-span-2">Базовый шанс</div>
+                <div className="col-span-4">Настройки дропа в подземельях</div>
+              </div>
+              
+              {itemTemplates.map((item) => {
+                // Находим все настройки дропа для этого предмета
+                const itemDrops = drops.filter(d => d.item_template_id === item.id && d.is_active);
+                
+                return (
+                  <div
+                    key={item.id}
+                    className="grid grid-cols-12 gap-2 px-4 py-3 bg-card border rounded-lg items-start hover:bg-accent/50 transition-colors"
+                  >
+                    <div className="col-span-3">
+                      <p className="font-medium text-sm">{item.name}</p>
+                      {item.description && (
+                        <p className="text-xs text-muted-foreground mt-1">{item.description}</p>
+                      )}
+                    </div>
+                    
+                    <div className="col-span-2">
+                      <p className="text-sm capitalize">{item.type}</p>
+                    </div>
+                    
+                    <div className="col-span-1">
+                      <p className="text-sm capitalize">{item.rarity}</p>
+                    </div>
+                    
+                    <div className="col-span-2">
+                      <p className="text-sm font-semibold">
+                        {item.drop_chance !== undefined ? `${item.drop_chance}%` : 'Не указан'}
+                      </p>
+                    </div>
+                    
+                    <div className="col-span-4">
+                      {itemDrops.length === 0 ? (
+                        <p className="text-xs text-muted-foreground">
+                          Нет настроек дропа
+                        </p>
+                      ) : (
+                        <div className="space-y-1">
+                          {itemDrops.map((drop) => (
+                            <div key={drop.id} className="text-xs bg-muted/50 px-2 py-1 rounded">
+                              <span className="font-semibold">Подз. {drop.dungeon_number}:</span>{' '}
+                              Ур. {drop.min_dungeon_level}
+                              {drop.max_dungeon_level ? `-${drop.max_dungeon_level}` : '+'},
+                              {' '}Шанс: {drop.drop_chance}%
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
             </div>
           )}
         </CardContent>
