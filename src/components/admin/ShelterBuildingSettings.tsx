@@ -154,11 +154,15 @@ export default function ShelterBuildingSettings() {
         
         console.log('Update data:', updateData);
         
-        const { error } = await supabase
+        const { data: updateResult, error } = await supabase
           .from('building_configs')
           .update(updateData)
-          .eq('id', config.id);
+          .eq('id', config.id)
+          .select();
 
+        console.log('Update result:', updateResult);
+        console.log('Update error:', error);
+        
         if (error) throw error;
         toast.success('Настройки обновлены');
       } else {
@@ -184,10 +188,14 @@ export default function ShelterBuildingSettings() {
         
         console.log('Insert data:', insertData);
         
-        const { error } = await supabase
+        const { data: insertResult, error } = await supabase
           .from('building_configs')
-          .insert(insertData);
+          .insert(insertData)
+          .select();
 
+        console.log('Insert result:', insertResult);
+        console.log('Insert error:', error);
+        
         if (error) throw error;
         toast.success('Уровень добавлен');
       }
