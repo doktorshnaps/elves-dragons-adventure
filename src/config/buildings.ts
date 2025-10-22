@@ -1,4 +1,5 @@
 // Конфигурация зданий для добычи ресурсов
+import { supabase } from '@/integrations/supabase/client';
 
 export interface ResourceBuildingConfig {
   level: number;
@@ -6,8 +7,52 @@ export interface ResourceBuildingConfig {
   upgradeCosts: {
     wood: number;
     stone: number;
+    iron?: number;
+    gold?: number;
+    ell?: number;
+    gt?: number;
   };
 }
+
+// Кэш для конфигураций из базы данных
+let configsCache: Map<string, any[]> | null = null;
+let cachePromise: Promise<void> | null = null;
+
+// Загрузка конфигураций из базы данных
+const loadConfigsFromDB = async (): Promise<Map<string, any[]>> => {
+  if (configsCache) return configsCache;
+  
+  if (cachePromise) {
+    await cachePromise;
+    return configsCache || new Map();
+  }
+
+  cachePromise = (async () => {
+    try {
+      const { data, error } = await supabase
+        .from('building_configs')
+        .select('*')
+        .eq('is_active', true)
+        .order('level', { ascending: true });
+
+      if (error) throw error;
+
+      const grouped = new Map<string, any[]>();
+      data?.forEach(config => {
+        const existing = grouped.get(config.building_id) || [];
+        grouped.set(config.building_id, [...existing, config]);
+      });
+
+      configsCache = grouped;
+    } catch (error) {
+      console.error('Error loading building configs from DB:', error);
+      configsCache = new Map();
+    }
+  })();
+
+  await cachePromise;
+  return configsCache || new Map();
+};
 
 // Конфигурация склада - определяет время работы производства
 export const WAREHOUSE_CONFIG = [
@@ -22,11 +67,18 @@ export const WAREHOUSE_CONFIG = [
 ];
 
 export const getWarehouseWorkingHours = (level: number): number => {
+  if (configsCache) {
+    const configs = configsCache.get('storage');
+    const dbConfig = configs?.find(c => c.level === level);
+    if (dbConfig && dbConfig.working_hours > 0) {
+      return dbConfig.working_hours;
+    }
+  }
   const config = WAREHOUSE_CONFIG.find(config => config.level === level);
-  return config ? config.workingHours : 1; // По умолчанию 1 час
+  return config ? config.workingHours : 1;
 };
 
-// Конфигурация лесопилки
+// Конфигурация лесопилки (fallback)
 export const SAWMILL_CONFIG: ResourceBuildingConfig[] = [
   { level: 1, productionPerHour: 60, upgradeCosts: { wood: 0, stone: 0 } },
   { level: 2, productionPerHour: 81, upgradeCosts: { wood: 2200, stone: 990 } },
@@ -38,7 +90,7 @@ export const SAWMILL_CONFIG: ResourceBuildingConfig[] = [
   { level: 8, productionPerHour: 486, upgradeCosts: { wood: 74826, stone: 33671 } },
 ];
 
-// Конфигурация каменоломни
+// Конфигурация каменоломни (fallback)
 export const QUARRY_CONFIG: ResourceBuildingConfig[] = [
   { level: 1, productionPerHour: 30, upgradeCosts: { wood: 0, stone: 0 } },
   { level: 2, productionPerHour: 39, upgradeCosts: { wood: 562, stone: 1250 } },
@@ -50,23 +102,59 @@ export const QUARRY_CONFIG: ResourceBuildingConfig[] = [
   { level: 8, productionPerHour: 207, upgradeCosts: { wood: 19131, stone: 42515 } },
 ];
 
-// Функции для получения конфигурации зданий
+// Функции для получения конфигурации зданий (с приоритетом базы данных)
 export const getSawmillConfig = (level: number): ResourceBuildingConfig | null => {
+  if (configsCache) {
+    const configs = configsCache.get('sawmill');
+    const dbConfig = configs?.find(c => c.level === level);
+    if (dbConfig) {
+      return {
+        level: dbConfig.level,
+        productionPerHour: dbConfig.production_per_hour,
+        upgradeCosts: {
+          wood: dbConfig.cost_wood,
+          stone: dbConfig.cost_stone,
+          iron: dbConfig.cost_iron,
+          gold: dbConfig.cost_gold,
+          ell: dbConfig.cost_ell,
+          gt: dbConfig.cost_gt,
+        }
+      };
+    }
+  }
   return SAWMILL_CONFIG.find(config => config.level === level) || null;
 };
 
 export const getQuarryConfig = (level: number): ResourceBuildingConfig | null => {
+  if (configsCache) {
+    const configs = configsCache.get('quarry');
+    const dbConfig = configs?.find(c => c.level === level);
+    if (dbConfig) {
+      return {
+        level: dbConfig.level,
+        productionPerHour: dbConfig.production_per_hour,
+        upgradeCosts: {
+          wood: dbConfig.cost_wood,
+          stone: dbConfig.cost_stone,
+          iron: dbConfig.cost_iron,
+          gold: dbConfig.cost_gold,
+          ell: dbConfig.cost_ell,
+          gt: dbConfig.cost_gt,
+        }
+      };
+    }
+  }
   return QUARRY_CONFIG.find(config => config.level === level) || null;
 };
 
 // Функции для получения стоимости улучшения
 export const getSawmillUpgradeCost = (currentLevel: number) => {
-  const nextLevelConfig = SAWMILL_CONFIG.find(config => config.level === currentLevel + 1);
+  const nextLevelConfig = getSawmillConfig(currentLevel + 1);
   return nextLevelConfig ? nextLevelConfig.upgradeCosts : null;
 };
 
 export const getQuarryUpgradeCost = (currentLevel: number) => {
-  const nextLevelConfig = QUARRY_CONFIG.find(config => config.level === currentLevel + 1);
+  const nextLevelConfig = getQuarryConfig(currentLevel + 1);
   return nextLevelConfig ? nextLevelConfig.upgradeCosts : null;
 };
 
@@ -79,4 +167,14 @@ export const getSawmillProduction = (level: number): number => {
 export const getQuarryProduction = (level: number): number => {
   const config = getQuarryConfig(level);
   return config ? config.productionPerHour : 0;
+};
+
+// Инициализация кэша при импорте модуля
+loadConfigsFromDB().catch(console.error);
+
+// Функция для принудительного обновления кэша
+export const refreshBuildingConfigs = async () => {
+  configsCache = null;
+  cachePromise = null;
+  await loadConfigsFromDB();
 };
