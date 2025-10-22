@@ -96,10 +96,29 @@ export default function ShelterBuildingSettings() {
         .order('level', { ascending: true });
 
       if (error) throw error;
-      const formattedData = (data || []).map(item => ({
-        ...item,
-        required_items: (Array.isArray(item.required_items) ? item.required_items : []) as Array<{ item_id: number; quantity: number }>
-      })) as BuildingConfig[];
+      
+      const formattedData = (data || []).map(item => {
+        let requiredItems: Array<{ item_id: number; quantity: number }> = [];
+        
+        if (item.required_items) {
+          if (typeof item.required_items === 'string') {
+            try {
+              requiredItems = JSON.parse(item.required_items);
+            } catch (e) {
+              console.error('Error parsing required_items:', e);
+            }
+          } else if (Array.isArray(item.required_items)) {
+            requiredItems = item.required_items as Array<{ item_id: number; quantity: number }>;
+          }
+        }
+        
+        return {
+          ...item,
+          required_items: requiredItems
+        };
+      }) as BuildingConfig[];
+      
+      console.log('Loaded configs:', formattedData);
       setConfigs(formattedData);
     } catch (error: any) {
       console.error('Error loading building configs:', error);
@@ -113,50 +132,61 @@ export default function ShelterBuildingSettings() {
     try {
       setSaving(true);
       
+      console.log('Saving config:', config);
+      console.log('Required items:', config.required_items);
+      
       if (config.id) {
         // Update existing
+        const updateData = {
+          production_per_hour: config.production_per_hour || 0,
+          cost_wood: config.cost_wood || 0,
+          cost_stone: config.cost_stone || 0,
+          cost_iron: config.cost_iron || 0,
+          cost_gold: config.cost_gold || 0,
+          cost_ell: config.cost_ell || 0,
+          cost_gt: config.cost_gt || 0,
+          required_items: config.required_items || [],
+          required_main_hall_level: config.required_main_hall_level || 0,
+          upgrade_time_hours: config.upgrade_time_hours || 1,
+          storage_capacity: config.storage_capacity || 0,
+          working_hours: config.working_hours || 0,
+        };
+        
+        console.log('Update data:', updateData);
+        
         const { error } = await supabase
           .from('building_configs')
-          .update({
-            production_per_hour: config.production_per_hour || 0,
-            cost_wood: config.cost_wood || 0,
-            cost_stone: config.cost_stone || 0,
-            cost_iron: config.cost_iron || 0,
-            cost_gold: config.cost_gold || 0,
-            cost_ell: config.cost_ell || 0,
-            cost_gt: config.cost_gt || 0,
-            required_items: config.required_items || [],
-            required_main_hall_level: config.required_main_hall_level || 0,
-            upgrade_time_hours: config.upgrade_time_hours || 1,
-            storage_capacity: config.storage_capacity || 0,
-            working_hours: config.working_hours || 0,
-          })
+          .update(updateData)
           .eq('id', config.id);
 
         if (error) throw error;
         toast.success('Настройки обновлены');
       } else {
         // Insert new
+        const insertData = {
+          building_id: selectedBuilding,
+          building_name: BUILDING_TYPES.find(b => b.id === selectedBuilding)?.name || selectedBuilding,
+          level: config.level || 1,
+          production_per_hour: config.production_per_hour || 0,
+          cost_wood: config.cost_wood || 0,
+          cost_stone: config.cost_stone || 0,
+          cost_iron: config.cost_iron || 0,
+          cost_gold: config.cost_gold || 0,
+          cost_ell: config.cost_ell || 0,
+          cost_gt: config.cost_gt || 0,
+          required_items: config.required_items || [],
+          required_main_hall_level: config.required_main_hall_level || 0,
+          upgrade_time_hours: config.upgrade_time_hours || 1,
+          storage_capacity: config.storage_capacity || 0,
+          working_hours: config.working_hours || 0,
+          created_by_wallet_address: 'admin',
+        };
+        
+        console.log('Insert data:', insertData);
+        
         const { error } = await supabase
           .from('building_configs')
-          .insert({
-            building_id: selectedBuilding,
-            building_name: BUILDING_TYPES.find(b => b.id === selectedBuilding)?.name || selectedBuilding,
-            level: config.level || 1,
-            production_per_hour: config.production_per_hour || 0,
-            cost_wood: config.cost_wood || 0,
-            cost_stone: config.cost_stone || 0,
-            cost_iron: config.cost_iron || 0,
-            cost_gold: config.cost_gold || 0,
-            cost_ell: config.cost_ell || 0,
-            cost_gt: config.cost_gt || 0,
-            required_items: config.required_items || [],
-            required_main_hall_level: config.required_main_hall_level || 0,
-            upgrade_time_hours: config.upgrade_time_hours || 1,
-            storage_capacity: config.storage_capacity || 0,
-            working_hours: config.working_hours || 0,
-            created_by_wallet_address: 'admin',
-          });
+          .insert(insertData);
 
         if (error) throw error;
         toast.success('Уровень добавлен');
