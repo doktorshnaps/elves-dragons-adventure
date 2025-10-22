@@ -115,12 +115,42 @@ export const BuildingCard = ({
                 </div>
                 <div className="flex flex-wrap gap-2">
                   {upgrade.requiredItems.map((rawItem: any, idx) => {
-                    const rawId = rawItem.item_id ?? rawItem.itemId ?? rawItem.id ?? rawItem.type ?? '';
-                    const itemKey = resolveItemKey(String(rawId));
-                    const reqQty = Number(rawItem.quantity ?? rawItem.qty ?? rawItem.count ?? rawItem.amount ?? 1);
-                    const itemName = getItemName(itemKey, language);
-                    const playerHas = inventoryCounts[itemKey] || 0;
+                    console.log('🔍 Building upgrade required item:', rawItem);
+                    
+                    let itemKey = '';
+                    let reqQty = 1;
+                    let rawName: string | undefined;
+                    
+                    // Проверяем разные возможные структуры данных
+                    if (typeof rawItem === 'string' || typeof rawItem === 'number') {
+                      // Если это строка/число, возможно это ID
+                      itemKey = resolveItemKey(String(rawItem));
+                    } else if (typeof rawItem === 'object' && rawItem !== null) {
+                      // Объект - ищем ID и имя в разных полях
+                      rawName = rawItem.name ?? rawItem.item_name ?? rawItem.title ?? rawItem.display_name;
+                      const rawId = rawItem.item_id ?? rawItem.itemId ?? rawItem.id ?? rawItem.type ?? rawName ?? '';
+                      itemKey = resolveItemKey(String(rawId));
+                      reqQty = Number(rawItem.quantity ?? rawItem.qty ?? rawItem.count ?? rawItem.amount ?? 1);
+                    } else {
+                      // Неизвестный формат
+                      console.warn('Unknown required item format:', rawItem);
+                      itemKey = String(rawItem);
+                    }
+                    
+                    const fallbackName = getItemName(itemKey, language);
+                    const displayName = (rawName && typeof rawName === 'string') ? rawName : fallbackName;
+                    
+                    // Подсчёт количества у игрока с несколькими стратегиями сопоставления
+                    let playerHas = inventoryCounts[itemKey] || 0;
+                    if (!playerHas && rawName) {
+                      // Попытка сопоставить по локализованному имени
+                      const lower = rawName.toLowerCase();
+                      playerHas = inventory.filter(i => (i.name || '').toLowerCase() === lower).length || playerHas;
+                    }
+                    
                     const hasEnough = playerHas >= reqQty;
+                    
+                    console.log('🔍 Resolved:', { rawItem, itemKey, displayName, reqQty, playerHas });
                     
                     return (
                       <Badge 
@@ -128,7 +158,7 @@ export const BuildingCard = ({
                         variant="outline" 
                         className={`text-xs ${hasEnough ? 'border-green-500/50 text-green-600' : 'border-red-500/50 text-red-600'}`}
                       >
-                        {itemName} x{reqQty} ({playerHas})
+                        {displayName} x{reqQty} ({playerHas})
                       </Badge>
                     );
                   })}
