@@ -141,12 +141,22 @@ Deno.serve(async (req) => {
     
     if (validate_all) {
       // Получаем всех пользователей с автоматическим вайт-листом
-      const { data: autoWhitelisted, error: autoError } = await supabase
+      let query = supabase
         .from('whitelist')
-        .select('wallet_address')
+        .select('wallet_address, nft_contract_used')
         .eq('whitelist_source', 'nft_automatic')
-        .eq('is_active', true)
-        .limit(20); // Ограничиваем 20 кошельками за раз для предотвращения таймаута
+        .eq('is_active', true);
+      
+      // Если указан конкретный контракт - фильтруем только его холдеров
+      if (specific_contract) {
+        query = query.eq('nft_contract_used', specific_contract);
+        console.log(`🎯 Filtering by contract: ${specific_contract}`);
+      } else {
+        // Ограничиваем только если проверяем все контракты
+        query = query.limit(50);
+      }
+
+      const { data: autoWhitelisted, error: autoError } = await query;
 
       if (autoError) {
         console.error('Error fetching auto-whitelisted users:', autoError);
@@ -157,7 +167,7 @@ Deno.serve(async (req) => {
       }
 
       walletsToCheck = autoWhitelisted.map(w => w.wallet_address);
-      console.log(`🔍 Validating ${walletsToCheck.length} auto-whitelisted wallets (limited batch)`);
+      console.log(`🔍 Validating ${walletsToCheck.length} auto-whitelisted wallets${specific_contract ? ` for contract ${specific_contract}` : ' (limited to 50)'}`);
     } else {
       walletsToCheck = [wallet_address];
     }

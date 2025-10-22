@@ -92,9 +92,13 @@ export const NFTWhitelistValidator = () => {
   const validateAllUsers = async () => {
     setValidating(true);
     
+    const contractInfo = selectedContract !== 'all' 
+      ? ` контракта ${contracts.find(c => c.contract_address === selectedContract)?.contract_name || selectedContract}`
+      : ' (первые 50)';
+    
     const loadingToast = toast({
       title: "Проверка запущена",
-      description: "Проверка первых 20 пользователей...",
+      description: `Проверка холдеров${contractInfo}...`,
       duration: Infinity,
     });
 
@@ -127,7 +131,7 @@ export const NFTWhitelistValidator = () => {
         ? ` (частичные результаты, осталось ${summary.remainingWallets})`
         : '';
       
-      const message = `Проверено ${summary.totalChecked} пользователей: ${summary.confirmed} подтверждено, ${summary.revoked} отозвано${timedOutMsg}`;
+      const message = `Проверено ${summary.totalChecked} пользователей${contractInfo}: ${summary.confirmed} подтверждено, ${summary.revoked} отозвано${timedOutMsg}`;
 
       toast({
         title: summary.timedOut ? "Частичная проверка завершена" : "Массовая проверка завершена",
@@ -225,7 +229,11 @@ export const NFTWhitelistValidator = () => {
             <div className="text-center">
               <div className="font-medium">Проверить всех</div>
               <div className="text-sm text-muted-foreground">
-                {validating ? 'Проверка...' : 'Массовая валидация (первые 20)'}
+                {validating 
+                  ? 'Проверка...' 
+                  : selectedContract !== 'all' 
+                    ? 'Все холдеры контракта' 
+                    : 'Первые 50 адресов'}
               </div>
             </div>
           </Button>
