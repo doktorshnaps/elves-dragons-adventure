@@ -7,7 +7,7 @@ import { NestUpgrade } from "@/hooks/shelter/useShelterState";
 import { useLanguage } from "@/hooks/useLanguage";
 import { t } from "@/utils/translations";
 import { useInventoryState } from "@/hooks/useInventoryState";
-import { getItemName } from "@/utils/itemNames";
+import { getItemName, resolveItemKey } from "@/utils/itemNames";
 import { useMemo } from "react";
 
 interface BuildingCardProps {
@@ -43,7 +43,8 @@ export const BuildingCard = ({
   const inventoryCounts = useMemo(() => {
     const counts: Record<string, number> = {};
     inventory.forEach(item => {
-      counts[item.type] = (counts[item.type] || 0) + 1;
+      const key = resolveItemKey(item.type);
+      counts[key] = (counts[key] || 0) + 1;
     });
     return counts;
   }, [inventory]);
@@ -113,10 +114,13 @@ export const BuildingCard = ({
                   {t(language, 'shelter.requiredItems')}:
                 </div>
                 <div className="flex flex-wrap gap-2">
-                  {upgrade.requiredItems.map((item, idx) => {
-                    const itemName = getItemName(item.item_id, language);
-                    const playerHas = inventoryCounts[item.item_id] || 0;
-                    const hasEnough = playerHas >= item.quantity;
+                  {upgrade.requiredItems.map((rawItem: any, idx) => {
+                    const rawId = rawItem.item_id ?? rawItem.itemId ?? rawItem.id ?? rawItem.type ?? '';
+                    const itemKey = resolveItemKey(String(rawId));
+                    const reqQty = Number(rawItem.quantity ?? rawItem.qty ?? rawItem.count ?? rawItem.amount ?? 1);
+                    const itemName = getItemName(itemKey, language);
+                    const playerHas = inventoryCounts[itemKey] || 0;
+                    const hasEnough = playerHas >= reqQty;
                     
                     return (
                       <Badge 
@@ -124,7 +128,7 @@ export const BuildingCard = ({
                         variant="outline" 
                         className={`text-xs ${hasEnough ? 'border-green-500/50 text-green-600' : 'border-red-500/50 text-red-600'}`}
                       >
-                        {itemName} x{item.quantity} ({playerHas})
+                        {itemName} x{reqQty} ({playerHas})
                       </Badge>
                     );
                   })}
