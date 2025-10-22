@@ -22,7 +22,7 @@ export const ListingDialog = ({
   const [selectedType, setSelectedType] = useState<'card' | 'item' | 'nft'>('nft');
   const [price, setPrice] = useState('');
   const [selectedItem, setSelectedItem] = useState<CardType | Item | NFTCard | null>(null);
-  const [paymentToken, setPaymentToken] = useState<'ELL' | 'GT'>('ELL');
+  const paymentToken = 'GT'; // Все предметы торгуются только за GT
   const { accountId } = useWalletContext();
   const { nftCards: integratedNftCards, isLoading: nftLoading, syncNFTsFromWallet } = useNFTCardIntegration();
   useEffect(() => {
@@ -153,15 +153,6 @@ export const ListingDialog = ({
               
             </div>
 
-            {selectedType === 'nft' && <div className="flex gap-2 items-center">
-                <span className="text-sm text-gray-300">Оплата:</span>
-                
-                <Button variant="menu" size="sm" onClick={() => setPaymentToken('GT')} className={`flex-1 ${paymentToken !== 'GT' ? 'opacity-60' : ''}`} style={{
-              boxShadow: '-33px 15px 10px rgba(0, 0, 0, 0.6)'
-            }}>
-                  GT Token
-                </Button>
-              </div>}
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-[35vh] overflow-y-auto">
               {selectedType === 'card' ? cards.map((card: CardType, index: number) => renderItem(card, index)) : selectedType === 'nft' ? filteredNFTs.map((nft: any, index: number) => renderItem(nft, index)) : inventory.map((item: Item, index: number) => renderItem(item, index))}
@@ -172,9 +163,9 @@ export const ListingDialog = ({
 
             <div className="space-y-2">
               <label className="text-sm text-gray-300">
-                Цена (в {selectedType === 'nft' && paymentToken === 'GT' ? 'GT токенах' : 'ELL'})
+                Цена (в GT токенах)
               </label>
-              <Input type="number" value={price} onChange={e => setPrice(e.target.value)} min="1" step={selectedType === 'nft' && paymentToken === 'GT' ? '0.01' : '1'} className="bg-black/50 border-2 border-white text-white h-8 text-sm" />
+              <Input type="number" value={price} onChange={e => setPrice(e.target.value)} min="0.01" step="0.01" className="bg-black/50 border-2 border-white text-white h-8 text-sm" />
             </div>
 
             <Button onClick={handleCreate} disabled={!selectedItem || !price || loading} variant="menu" className="w-full" size="sm" style={{
