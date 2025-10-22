@@ -15,6 +15,7 @@ interface WhitelistContract {
 
 export const NFTWhitelistValidator = () => {
   const [loading, setLoading] = useState(false);
+  const [validating, setValidating] = useState(false);
   const [lastResults, setLastResults] = useState<any>(null);
   const [contracts, setContracts] = useState<WhitelistContract[]>([]);
   const [selectedContract, setSelectedContract] = useState<string>('all');
@@ -89,8 +90,19 @@ export const NFTWhitelistValidator = () => {
   };
 
   const validateAllUsers = async () => {
-    setLoading(true);
+    setValidating(true);
+    
+    const loadingToast = toast({
+      title: "Проверка запущена",
+      description: "Проверка первых 20 пользователей...",
+      duration: Infinity,
+    });
+
     try {
+      // Таймаут 2 минуты для edge функции
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 120000);
+
       const body: any = { validate_all: true };
       
       // Если выбран конкретный контракт, передаем его
@@ -99,30 +111,49 @@ export const NFTWhitelistValidator = () => {
       }
 
       const { data, error } = await supabase.functions.invoke('validate-nft-whitelist', {
-        body
+        body,
+        signal: controller.signal as any
       });
+
+      clearTimeout(timeoutId);
+      loadingToast.dismiss();
 
       if (error) throw error;
 
       setLastResults(data);
       
       const { summary } = data;
-      const message = `Проверено ${summary.totalChecked} пользователей: ${summary.confirmed} подтверждено, ${summary.revoked} отозвано`;
+      const timedOutMsg = summary.timedOut 
+        ? ` (частичные результаты, осталось ${summary.remainingWallets})`
+        : '';
+      
+      const message = `Проверено ${summary.totalChecked} пользователей: ${summary.confirmed} подтверждено, ${summary.revoked} отозвано${timedOutMsg}`;
 
       toast({
-        title: "Массовая проверка завершена",
+        title: summary.timedOut ? "Частичная проверка завершена" : "Массовая проверка завершена",
         description: message,
+        duration: 10000,
       });
 
     } catch (error: any) {
+      loadingToast.dismiss();
       console.error('Error validating all users:', error);
-      toast({
-        title: "Ошибка",
-        description: error.message || "Не удалось выполнить массовую проверку",
-        variant: "destructive",
-      });
+      
+      if (error.name === 'AbortError') {
+        toast({
+          title: "Превышен таймаут",
+          description: "Проверка заняла слишком много времени",
+          variant: "destructive",
+        });
+      } else {
+        toast({
+          title: "Ошибка",
+          description: error.message || "Не удалось выполнить массовую проверку",
+          variant: "destructive",
+        });
+      }
     } finally {
-      setLoading(false);
+      setValidating(false);
     }
   };
 
@@ -186,14 +217,16 @@ export const NFTWhitelistValidator = () => {
 
           <Button
             onClick={validateAllUsers}
-            disabled={loading}
+            disabled={loading || validating}
             variant="outline"
             className="h-20 flex flex-col items-center space-y-2"
           >
-            <RefreshCw className={`w-6 h-6 ${loading ? 'animate-spin' : ''}`} />
+            <RefreshCw className={`w-6 h-6 ${(loading || validating) ? 'animate-spin' : ''}`} />
             <div className="text-center">
               <div className="font-medium">Проверить всех</div>
-              <div className="text-sm text-muted-foreground">Массовая валидация всех NFT вайт-листов</div>
+              <div className="text-sm text-muted-foreground">
+                {validating ? 'Проверка...' : 'Массовая валидация (первые 20)'}
+              </div>
             </div>
           </Button>
         </div>

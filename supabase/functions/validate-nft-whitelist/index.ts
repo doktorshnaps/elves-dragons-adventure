@@ -145,7 +145,8 @@ Deno.serve(async (req) => {
         .from('whitelist')
         .select('wallet_address')
         .eq('whitelist_source', 'nft_automatic')
-        .eq('is_active', true);
+        .eq('is_active', true)
+        .limit(20); // Ограничиваем 20 кошельками за раз для предотвращения таймаута
 
       if (autoError) {
         console.error('Error fetching auto-whitelisted users:', autoError);
@@ -156,16 +157,43 @@ Deno.serve(async (req) => {
       }
 
       walletsToCheck = autoWhitelisted.map(w => w.wallet_address);
-      console.log(`🔍 Validating ${walletsToCheck.length} auto-whitelisted wallets`);
+      console.log(`🔍 Validating ${walletsToCheck.length} auto-whitelisted wallets (limited batch)`);
     } else {
       walletsToCheck = [wallet_address];
     }
 
     const results = [];
-    const BATCH_SIZE = 5; // Обрабатываем по 5 кошельков за раз
-    const WALLET_DELAY = 500; // 500ms задержка между кошельками
+    const BATCH_SIZE = 3; // Уменьшено для более быстрой обработки
+    const WALLET_DELAY = 400; // 400ms задержка между кошельками
+    const MAX_EXECUTION_TIME = 110000; // 110 секунд (оставляем запас до таймаута 120 сек)
+    const startTime = Date.now();
 
     for (let i = 0; i < walletsToCheck.length; i++) {
+      // Проверяем, не превысили ли мы максимальное время выполнения
+      const elapsedTime = Date.now() - startTime;
+      if (elapsedTime > MAX_EXECUTION_TIME) {
+        console.warn(`⏰ Max execution time reached after ${i} wallets. Returning partial results.`);
+        
+        const summary = {
+          totalChecked: i,
+          confirmed: results.filter(r => r.success && r.hadNFTs).length,
+          revoked: results.filter(r => r.success && !r.hadNFTs).length,
+          errors: results.filter(r => !r.success).length,
+          timedOut: true,
+          remainingWallets: walletsToCheck.length - i
+        };
+
+        return new Response(
+          JSON.stringify({ 
+            success: true,
+            summary,
+            results: validate_all ? results : results[0],
+            message: `Partial validation completed. ${summary.totalChecked} wallets checked before timeout. ${summary.remainingWallets} remaining.`
+          }),
+          { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
       const walletToCheck = walletsToCheck[i];
       console.log(`🔍 Checking wallet ${i + 1}/${walletsToCheck.length}: ${walletToCheck}`);
       
@@ -263,7 +291,7 @@ Deno.serve(async (req) => {
       // Дополнительная пауза каждые BATCH_SIZE кошельков
       if ((i + 1) % BATCH_SIZE === 0 && i < walletsToCheck.length - 1) {
         console.log(`⏸️ Batch pause after ${i + 1} wallets...`);
-        await new Promise(resolve => setTimeout(resolve, 2000));
+        await new Promise(resolve => setTimeout(resolve, 1500)); // Уменьшено до 1.5 сек
       }
     }
 
