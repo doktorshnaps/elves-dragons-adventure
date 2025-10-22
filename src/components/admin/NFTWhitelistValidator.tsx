@@ -1,14 +1,43 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { Shield, RefreshCw, Users, AlertTriangle } from 'lucide-react';
 
+interface WhitelistContract {
+  id: string;
+  contract_address: string;
+  contract_name: string | null;
+  description: string | null;
+}
+
 export const NFTWhitelistValidator = () => {
   const [loading, setLoading] = useState(false);
   const [lastResults, setLastResults] = useState<any>(null);
+  const [contracts, setContracts] = useState<WhitelistContract[]>([]);
+  const [selectedContract, setSelectedContract] = useState<string>('all');
   const { toast } = useToast();
+
+  useEffect(() => {
+    loadContracts();
+  }, []);
+
+  const loadContracts = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('whitelist_contracts')
+        .select('*')
+        .eq('is_active', true)
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+      setContracts(data || []);
+    } catch (error: any) {
+      console.error('Error loading contracts:', error);
+    }
+  };
 
   const validateSingleUser = async (walletAddress: string) => {
     if (!walletAddress.trim()) {
@@ -22,8 +51,15 @@ export const NFTWhitelistValidator = () => {
 
     setLoading(true);
     try {
+      const body: any = { wallet_address: walletAddress.trim() };
+      
+      // Если выбран конкретный контракт, передаем его
+      if (selectedContract !== 'all') {
+        body.specific_contract = selectedContract;
+      }
+
       const { data, error } = await supabase.functions.invoke('validate-nft-whitelist', {
-        body: { wallet_address: walletAddress.trim() }
+        body
       });
 
       if (error) throw error;
@@ -55,8 +91,15 @@ export const NFTWhitelistValidator = () => {
   const validateAllUsers = async () => {
     setLoading(true);
     try {
+      const body: any = { validate_all: true };
+      
+      // Если выбран конкретный контракт, передаем его
+      if (selectedContract !== 'all') {
+        body.specific_contract = selectedContract;
+      }
+
       const { data, error } = await supabase.functions.invoke('validate-nft-whitelist', {
-        body: { validate_all: true }
+        body
       });
 
       if (error) throw error;
@@ -99,6 +142,34 @@ export const NFTWhitelistValidator = () => {
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-6">
+        {/* Выбор контракта для проверки */}
+        <div className="p-4 border rounded-lg bg-blue-50 border-blue-200">
+          <label className="text-sm font-medium mb-2 block">
+            Контракт для проверки держателей NFT
+          </label>
+          <Select value={selectedContract} onValueChange={setSelectedContract}>
+            <SelectTrigger>
+              <SelectValue placeholder="Выберите контракт" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Все активные контракты</SelectItem>
+              {contracts.map((contract) => (
+                <SelectItem key={contract.id} value={contract.contract_address}>
+                  {contract.contract_name || contract.contract_address}
+                  {contract.description && (
+                    <span className="text-xs text-muted-foreground ml-2">
+                      ({contract.description})
+                    </span>
+                  )}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <p className="text-xs text-muted-foreground mt-2">
+            Выберите конкретный контракт для проверки NFT или оставьте "Все контракты" для проверки по всем активным контрактам
+          </p>
+        </div>
+
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <Button
             onClick={checkSpecificUser}

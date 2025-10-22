@@ -100,7 +100,7 @@ Deno.serve(async (req) => {
     );
 
     const body = await req.json();
-    const { wallet_address, validate_all } = body;
+    const { wallet_address, validate_all, specific_contract } = body;
 
     if (!wallet_address && !validate_all) {
       return new Response(
@@ -109,24 +109,33 @@ Deno.serve(async (req) => {
       );
     }
 
-    console.log('🔍 Validating NFT whitelist for:', wallet_address || 'all users');
+    console.log('🔍 Validating NFT whitelist for:', wallet_address || 'all users', 'contract:', specific_contract || 'all');
 
     // Получаем активные контракты для вайт-листа
-    const { data: whitelistContracts, error: contractsError } = await supabase
-      .from('whitelist_contracts')
-      .select('contract_address')
-      .eq('is_active', true);
+    let contractAddresses: string[];
+    
+    if (specific_contract) {
+      // Проверяем только указанный контракт
+      contractAddresses = [specific_contract];
+      console.log('📜 Checking specific contract:', specific_contract);
+    } else {
+      // Проверяем все активные контракты
+      const { data: whitelistContracts, error: contractsError } = await supabase
+        .from('whitelist_contracts')
+        .select('contract_address')
+        .eq('is_active', true);
 
-    if (contractsError) {
-      console.error('Error fetching whitelist contracts:', contractsError);
-      return new Response(
-        JSON.stringify({ error: 'Failed to fetch whitelist contracts' }),
-        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
+      if (contractsError) {
+        console.error('Error fetching whitelist contracts:', contractsError);
+        return new Response(
+          JSON.stringify({ error: 'Failed to fetch whitelist contracts' }),
+          { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      contractAddresses = whitelistContracts.map(c => c.contract_address);
+      console.log('📜 Checking all contracts:', contractAddresses);
     }
-
-    const contractAddresses = whitelistContracts.map(c => c.contract_address);
-    console.log('📜 Checking contracts:', contractAddresses);
 
     let walletsToCheck: string[] = [];
     

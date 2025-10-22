@@ -97,18 +97,25 @@ Deno.serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     );
 
-    const { wallet_address, check_all_nft_users } = await req.json();
+    const { wallet_address, check_all_nft_users, specific_contract } = await req.json();
 
     // Режим массовой проверки всех пользователей с NFT вайт-листом
     if (check_all_nft_users) {
-      console.log('🔍 Starting mass NFT whitelist validation...');
+      console.log('🔍 Starting mass NFT whitelist validation...', specific_contract ? `for contract: ${specific_contract}` : 'for all contracts');
       
       // Получаем всех пользователей с автоматическим вайт-листом
-      const { data: nftUsers, error: usersError } = await supabase
+      const query = supabase
         .from('whitelist')
         .select('wallet_address, nft_contract_used')
         .eq('whitelist_source', 'nft_automatic')
         .eq('is_active', true);
+      
+      // Если указан конкретный контракт, фильтруем по нему
+      if (specific_contract) {
+        query.eq('nft_contract_used', specific_contract);
+      }
+
+      const { data: nftUsers, error: usersError } = await query;
 
       if (usersError) {
         console.error('Error fetching NFT users:', usersError);
@@ -177,24 +184,33 @@ Deno.serve(async (req) => {
       );
     }
 
-    console.log('🔍 Checking whitelist NFTs for wallet:', wallet_address);
+    console.log('🔍 Checking whitelist NFTs for wallet:', wallet_address, specific_contract ? `in contract: ${specific_contract}` : '');
 
     // Получаем активные контракты для вайт-листа
-    const { data: whitelistContracts, error: contractsError } = await supabase
-      .from('whitelist_contracts')
-      .select('contract_address')
-      .eq('is_active', true);
+    let contractAddresses: string[];
+    
+    if (specific_contract) {
+      // Проверяем только указанный контракт
+      contractAddresses = [specific_contract];
+      console.log('📜 Checking specific contract:', specific_contract);
+    } else {
+      // Проверяем все активные контракты
+      const { data: whitelistContracts, error: contractsError } = await supabase
+        .from('whitelist_contracts')
+        .select('contract_address')
+        .eq('is_active', true);
 
-    if (contractsError) {
-      console.error('Error fetching whitelist contracts:', contractsError);
-      return new Response(
-        JSON.stringify({ error: 'Failed to fetch whitelist contracts' }),
-        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
+      if (contractsError) {
+        console.error('Error fetching whitelist contracts:', contractsError);
+        return new Response(
+          JSON.stringify({ error: 'Failed to fetch whitelist contracts' }),
+          { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      contractAddresses = whitelistContracts.map(c => c.contract_address);
+      console.log('📜 Checking all contracts:', contractAddresses);
     }
-
-    const contractAddresses = whitelistContracts.map(c => c.contract_address);
-    console.log('📜 Checking contracts:', contractAddresses);
 
     // Проверяем каждый контракт на наличие NFT
     let hasQualifyingNFT = false;
