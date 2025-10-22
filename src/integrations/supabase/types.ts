@@ -1486,6 +1486,7 @@ export type Database = {
         }
         Returns: boolean
       }
+      admin_insert_building_config: { Args: { p_data: Json }; Returns: string }
       admin_insert_item_template:
         | {
             Args: {
@@ -1602,6 +1603,10 @@ export type Database = {
       }
       admin_unban_user_by_id: {
         Args: { p_admin_wallet_address: string; p_target_user_id: string }
+        Returns: boolean
+      }
+      admin_update_building_config: {
+        Args: { p_id: string; p_update: Json }
         Returns: boolean
       }
       admin_update_class_multiplier: {

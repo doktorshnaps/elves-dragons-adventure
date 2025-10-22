@@ -154,14 +154,14 @@ export default function ShelterBuildingSettings() {
         
         console.log('Update data:', updateData);
         
-        const { data: updateResult, error } = await supabase
-          .from('building_configs')
-          .update(updateData)
-          .eq('id', config.id)
-          .select();
+        const { data: updateRpcRes, error } = await supabase
+          .rpc('admin_update_building_config', {
+            p_id: config.id,
+            p_update: updateData as any
+          });
 
-        console.log('Update result:', updateResult);
-        console.log('Update error:', error);
+        console.log('Update RPC result:', updateRpcRes);
+        console.log('Update RPC error:', error);
         
         if (error) throw error;
         toast.success('Настройки обновлены');
@@ -188,13 +188,13 @@ export default function ShelterBuildingSettings() {
         
         console.log('Insert data:', insertData);
         
-        const { data: insertResult, error } = await supabase
-          .from('building_configs')
-          .insert(insertData)
-          .select();
+        const { data: insertRpcRes, error } = await supabase
+          .rpc('admin_insert_building_config', {
+            p_data: insertData as any
+          });
 
-        console.log('Insert result:', insertResult);
-        console.log('Insert error:', error);
+        console.log('Insert RPC result:', insertRpcRes);
+        console.log('Insert RPC error:', error);
         
         if (error) throw error;
         toast.success('Уровень добавлен');
