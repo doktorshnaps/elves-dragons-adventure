@@ -19,6 +19,7 @@ interface WhitelistContract {
 export const WhitelistContractsManager = () => {
   const [contracts, setContracts] = useState<WhitelistContract[]>([]);
   const [loading, setLoading] = useState(false);
+  const [validating, setValidating] = useState(false);
   const [newContract, setNewContract] = useState({
     address: '',
     name: '',
@@ -158,27 +159,59 @@ export const WhitelistContractsManager = () => {
   };
 
   const validateAllNFTWhitelists = async () => {
+    setValidating(true);
+    
+    const loadingToast = toast({
+      title: "Проверка запущена",
+      description: "Проверка NFT вайт-листов может занять несколько минут...",
+      duration: Infinity,
+    });
+
     try {
-      const { data, error } = await supabase.functions.invoke('check-nft-whitelist', {
-        body: { check_all_nft_users: true }
+      // Увеличиваем таймаут для долгих операций
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 300000); // 5 минут
+
+      const { data, error } = await supabase.functions.invoke('validate-nft-whitelist', {
+        body: { validate_all: true },
+        signal: controller.signal as any
       });
+
+      clearTimeout(timeoutId);
+      loadingToast.dismiss();
 
       if (error) throw error;
 
+      const summary = data?.summary || {};
       toast({
         title: "Проверка завершена",
-        description: data?.message || "Проверка автоматических вайт-листов завершена",
+        description: `Проверено: ${summary.totalChecked || 0}, Подтверждено: ${summary.confirmed || 0}, Отозвано: ${summary.revoked || 0}`,
+        duration: 10000,
       });
 
       // Refresh contracts list after validation
-      loadContracts();
+      await loadContracts();
     } catch (error: any) {
+      loadingToast.dismiss();
       console.error('Error validating NFT whitelists:', error);
-      toast({
-        title: "Ошибка",
-        description: error.message || "Не удалось выполнить проверку",
-        variant: "destructive",
-      });
+      
+      if (error.name === 'AbortError') {
+        toast({
+          title: "Превышен таймаут",
+          description: "Проверка заняла слишком много времени. Попробуйте позже.",
+          variant: "destructive",
+          duration: 10000,
+        });
+      } else {
+        toast({
+          title: "Ошибка",
+          description: error.message || "Не удалось выполнить проверку",
+          variant: "destructive",
+          duration: 10000,
+        });
+      }
+    } finally {
+      setValidating(false);
     }
   };
 
@@ -274,8 +307,17 @@ export const WhitelistContractsManager = () => {
             Проверить всех игроков с автоматическим вайт-листом на наличие NFT. 
             Если NFT больше нет, вайт-лист будет отозван.
           </p>
-          <Button onClick={validateAllNFTWhitelists} variant="outline" className="w-full">
-            🔍 Проверить и отозвать недействительные вайт-листы
+          <Button 
+            onClick={validateAllNFTWhitelists} 
+            variant="outline" 
+            className="w-full"
+            disabled={validating}
+          >
+            {validating ? (
+              <>⏳ Проверка... (это может занять несколько минут)</>
+            ) : (
+              <>🔍 Проверить и отозвать недействительные вайт-листы</>
+            )}
           </Button>
         </div>
 

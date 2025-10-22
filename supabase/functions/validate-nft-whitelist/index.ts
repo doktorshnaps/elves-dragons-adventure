@@ -9,7 +9,7 @@ interface NFTResponse {
   result?: any[];
 }
 
-// Функция для получения NFT с контракта с повторными попытками
+// Функция для получения NFT с контракта с повторными попытками и rate limiting
 async function fetchNFTsFromContract(walletAddress: string, contractId: string, maxRetries = 3) {
   for (let attempt = 1; attempt <= maxRetries; attempt++) {
     try {
@@ -38,6 +38,15 @@ async function fetchNFTsFromContract(walletAddress: string, contractId: string, 
       });
 
       if (!response.ok) {
+        // Специальная обработка 429 (Too Many Requests)
+        if (response.status === 429) {
+          console.warn(`⚠️ Rate limited (429) for ${walletAddress} from ${contractId}`);
+          if (attempt < maxRetries) {
+            // Увеличиваем задержку для rate limit
+            await new Promise(resolve => setTimeout(resolve, 3000 * attempt));
+            continue;
+          }
+        }
         throw new Error(`HTTP error! status: ${response.status}`);
       }
 
@@ -47,10 +56,9 @@ async function fetchNFTsFromContract(walletAddress: string, contractId: string, 
       if (data.error) {
         console.error(`❌ NEAR RPC error for ${walletAddress}:`, data.error);
         if (attempt < maxRetries) {
-          await new Promise(resolve => setTimeout(resolve, 1000 * attempt));
+          await new Promise(resolve => setTimeout(resolve, 2000 * attempt));
           continue;
         }
-        // При критической ошибке возвращаем null вместо пустого массива
         return null;
       }
       
@@ -58,18 +66,20 @@ async function fetchNFTsFromContract(walletAddress: string, contractId: string, 
         const resultString = new TextDecoder().decode(new Uint8Array(data.result.result));
         const nfts = JSON.parse(resultString);
         console.log(`✅ Successfully fetched ${nfts.length} NFTs for ${walletAddress} from ${contractId}`);
+        // Добавляем небольшую задержку после успешного запроса для rate limiting
+        await new Promise(resolve => setTimeout(resolve, 300));
         return nfts;
       }
       
       console.log(`ℹ️ No NFTs found for ${walletAddress} from ${contractId}`);
+      await new Promise(resolve => setTimeout(resolve, 300));
       return [];
     } catch (error) {
       console.error(`❌ Attempt ${attempt}/${maxRetries} failed for ${walletAddress} from ${contractId}:`, error);
       if (attempt < maxRetries) {
         // Экспоненциальная задержка между попытками
-        await new Promise(resolve => setTimeout(resolve, 1000 * attempt));
+        await new Promise(resolve => setTimeout(resolve, 2000 * attempt));
       } else {
-        // После всех попыток возвращаем null для обозначения ошибки
         return null;
       }
     }
@@ -143,9 +153,12 @@ Deno.serve(async (req) => {
     }
 
     const results = [];
+    const BATCH_SIZE = 5; // Обрабатываем по 5 кошельков за раз
+    const WALLET_DELAY = 500; // 500ms задержка между кошельками
 
-    for (const walletToCheck of walletsToCheck) {
-      console.log(`🔍 Checking wallet: ${walletToCheck}`);
+    for (let i = 0; i < walletsToCheck.length; i++) {
+      const walletToCheck = walletsToCheck[i];
+      console.log(`🔍 Checking wallet ${i + 1}/${walletsToCheck.length}: ${walletToCheck}`);
       
       // Проверяем каждый контракт на наличие NFT
       let hasQualifyingNFT = false;
@@ -167,6 +180,9 @@ Deno.serve(async (req) => {
           foundContracts.push(contractAddress);
           console.log(`✅ Found ${nfts.length} NFTs in contract ${contractAddress} for ${walletToCheck}`);
         }
+        
+        // Задержка между проверками контрактов
+        await new Promise(resolve => setTimeout(resolve, 400));
       }
 
       // Если были ошибки RPC, не отзываем whitelist
@@ -228,6 +244,17 @@ Deno.serve(async (req) => {
           foundContracts,
           whitelistUpdated: updateResult
         });
+      }
+      
+      // Задержка между кошельками для rate limiting
+      if (i < walletsToCheck.length - 1) {
+        await new Promise(resolve => setTimeout(resolve, WALLET_DELAY));
+      }
+      
+      // Дополнительная пауза каждые BATCH_SIZE кошельков
+      if ((i + 1) % BATCH_SIZE === 0 && i < walletsToCheck.length - 1) {
+        console.log(`⏸️ Batch pause after ${i + 1} wallets...`);
+        await new Promise(resolve => setTimeout(resolve, 2000));
       }
     }
 

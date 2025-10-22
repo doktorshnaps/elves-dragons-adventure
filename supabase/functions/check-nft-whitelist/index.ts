@@ -9,7 +9,7 @@ interface NFTResponse {
   result?: any[];
 }
 
-// Функция для получения NFT с контракта с повторными попытками
+// Функция для получения NFT с контракта с повторными попытками и rate limiting
 async function fetchNFTsFromContract(walletAddress: string, contractId: string, maxRetries = 3) {
   for (let attempt = 1; attempt <= maxRetries; attempt++) {
     try {
@@ -38,6 +38,14 @@ async function fetchNFTsFromContract(walletAddress: string, contractId: string, 
       });
 
       if (!response.ok) {
+        // Специальная обработка 429 (Too Many Requests)
+        if (response.status === 429) {
+          console.warn(`⚠️ Rate limited (429) for ${walletAddress} from ${contractId}`);
+          if (attempt < maxRetries) {
+            await new Promise(resolve => setTimeout(resolve, 3000 * attempt));
+            continue;
+          }
+        }
         throw new Error(`HTTP error! status: ${response.status}`);
       }
 
@@ -47,10 +55,9 @@ async function fetchNFTsFromContract(walletAddress: string, contractId: string, 
       if (data.error) {
         console.error(`❌ NEAR RPC error for ${walletAddress}:`, data.error);
         if (attempt < maxRetries) {
-          await new Promise(resolve => setTimeout(resolve, 1000 * attempt));
+          await new Promise(resolve => setTimeout(resolve, 2000 * attempt));
           continue;
         }
-        // При критической ошибке возвращаем null вместо пустого массива
         return null;
       }
       
@@ -58,18 +65,19 @@ async function fetchNFTsFromContract(walletAddress: string, contractId: string, 
         const resultString = new TextDecoder().decode(new Uint8Array(data.result.result));
         const nfts = JSON.parse(resultString);
         console.log(`✅ Successfully fetched ${nfts.length} NFTs for ${walletAddress} from ${contractId}`);
+        // Добавляем задержку после успешного запроса для rate limiting
+        await new Promise(resolve => setTimeout(resolve, 300));
         return nfts;
       }
       
       console.log(`ℹ️ No NFTs found for ${walletAddress} from ${contractId}`);
+      await new Promise(resolve => setTimeout(resolve, 300));
       return [];
     } catch (error) {
       console.error(`❌ Attempt ${attempt}/${maxRetries} failed for ${walletAddress} from ${contractId}:`, error);
       if (attempt < maxRetries) {
-        // Экспоненциальная задержка между попытками
-        await new Promise(resolve => setTimeout(resolve, 1000 * attempt));
+        await new Promise(resolve => setTimeout(resolve, 2000 * attempt));
       } else {
-        // После всех попыток возвращаем null для обозначения ошибки
         return null;
       }
     }
@@ -112,9 +120,13 @@ Deno.serve(async (req) => {
 
       let revokedCount = 0;
       const revokedUsers: string[] = [];
+      const BATCH_SIZE = 5;
 
-      // Проверяем каждого пользователя
-      for (const user of nftUsers || []) {
+      // Проверяем каждого пользователя с задержками
+      for (let i = 0; i < (nftUsers || []).length; i++) {
+        const user = nftUsers[i];
+        console.log(`🔍 Checking user ${i + 1}/${nftUsers.length}: ${user.wallet_address}`);
+        
         const nfts = await fetchNFTsFromContract(user.wallet_address, user.nft_contract_used || 'golden_ticket.nfts.tg');
         
         if (!nfts || nfts.length === 0) {
@@ -132,6 +144,17 @@ Deno.serve(async (req) => {
           } else {
             console.error(`❌ Failed to revoke whitelist for ${user.wallet_address}:`, revokeError);
           }
+        }
+        
+        // Задержка между пользователями
+        if (i < nftUsers.length - 1) {
+          await new Promise(resolve => setTimeout(resolve, 500));
+        }
+        
+        // Пауза каждые BATCH_SIZE пользователей
+        if ((i + 1) % BATCH_SIZE === 0 && i < nftUsers.length - 1) {
+          console.log(`⏸️ Batch pause after ${i + 1} users...`);
+          await new Promise(resolve => setTimeout(resolve, 2000));
         }
       }
 
@@ -184,6 +207,8 @@ Deno.serve(async (req) => {
         foundContracts.push(contractAddress);
         console.log(`✅ Found ${nfts.length} NFTs in contract ${contractAddress}`);
       }
+      // Задержка между контрактами для rate limiting
+      await new Promise(resolve => setTimeout(resolve, 400));
     }
 
     // Обновляем вайт-лист (добавляем или отзываем)
