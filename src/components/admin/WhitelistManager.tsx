@@ -119,15 +119,19 @@ export const WhitelistManager = () => {
   const handleRefresh = async () => {
     setLoading(true);
     try {
-      // Синхронизация NFT-вайт-листа перед обновлением списка
-      await supabase.functions.invoke('validate-nft-whitelist', {
-        body: { validate_all: true },
-      });
-    } catch (e) {
-      console.warn('NFT sync skipped:', e);
-    } finally {
-      // В любом случае перезагружаем список
       await loadWhitelist();
+      toast({
+        title: 'Успех',
+        description: 'Список вайт-листа обновлен',
+      });
+    } catch (error) {
+      console.error('Error refreshing whitelist:', error);
+      toast({
+        title: 'Ошибка',
+        description: 'Не удалось обновить список',
+        variant: 'destructive',
+      });
+    } finally {
       setLoading(false);
     }
   };
