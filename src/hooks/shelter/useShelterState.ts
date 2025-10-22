@@ -16,8 +16,12 @@ export interface NestUpgrade {
     wood: number;
     stone: number;
     iron: number;
+    gold: number;
     balance: number;
+    gt: number;
   };
+  requiredItems: Array<{ item_id: string; quantity: number }>;
+  requiredMainHallLevel: number;
   benefit: string;
 }
 
@@ -144,7 +148,9 @@ export const useShelterState = () => {
         wood: costFromDB.wood || 0,
         stone: costFromDB.stone || 0,
         iron: costFromDB.iron || 0,
-        balance: costFromDB.ell || 0 // ell = игровая валюта (balance)
+        gold: costFromDB.gold || 0,
+        balance: costFromDB.ell || 0, // ell = игровая валюта (balance)
+        gt: costFromDB.gt || 0
       };
     }
     
@@ -167,7 +173,9 @@ export const useShelterState = () => {
       wood: Math.floor(baseCost.wood * multiplier),
       stone: Math.floor(baseCost.stone * multiplier),
       iron: Math.floor(baseCost.iron * multiplier),
-      balance: Math.floor(baseCost.balance * multiplier)
+      gold: 0,
+      balance: Math.floor(baseCost.balance * multiplier),
+      gt: 0
     };
   };
 
@@ -221,80 +229,35 @@ export const useShelterState = () => {
     return true;
   };
 
-  const nestUpgrades: NestUpgrade[] = useMemo(() => [
-    {
-      id: "main_hall",
-      name: t(language, 'shelter.mainHall'),
-      description: t(language, 'shelter.mainHallDesc'),
-      level: buildingLevels.main_hall || 0,
-      maxLevel: 8,
-      cost: getUpgradeCost("main_hall", buildingLevels.main_hall || 0),
-      benefit: t(language, 'shelter.mainHallBenefit')
-    },
-    {
-      id: "workshop",
-      name: t(language, 'shelter.workshop'),
-      description: t(language, 'shelter.workshopDesc'),
-      level: buildingLevels.workshop || 0,
-      maxLevel: 8,
-      cost: getUpgradeCost("workshop", buildingLevels.workshop || 0),
-      benefit: t(language, 'shelter.workshopBenefit')
-    },
-    {
-      id: "storage",
-      name: t(language, 'shelter.storage'),
-      description: t(language, 'shelter.storageDesc'),
-      level: buildingLevels.storage || 0,
-      maxLevel: 8,
-      cost: getUpgradeCost("storage", buildingLevels.storage || 0),
-      benefit: t(language, 'shelter.storageBenefit')
-    },
-    {
-      id: "sawmill",
-      name: t(language, 'shelter.sawmill'),
-      description: t(language, 'shelter.sawmillDesc'),
-      level: buildingLevels.sawmill || 0,
-      maxLevel: 8,
-      cost: getUpgradeCost("sawmill", buildingLevels.sawmill || 0),
-      benefit: t(language, 'shelter.sawmillBenefit')
-    },
-    {
-      id: "quarry",
-      name: t(language, 'shelter.quarry'),
-      description: t(language, 'shelter.quarryDesc'),
-      level: buildingLevels.quarry || 0,
-      maxLevel: 8,
-      cost: getUpgradeCost("quarry", buildingLevels.quarry || 0),
-      benefit: t(language, 'shelter.quarryBenefit')
-    },
-    {
-      id: "barracks",
-      name: t(language, 'shelter.barracksBuilding'),
-      description: t(language, 'shelter.barracksDesc'),
-      level: buildingLevels.barracks || 0,
-      maxLevel: 8,
-      cost: getUpgradeCost("barracks", buildingLevels.barracks || 0),
-      benefit: t(language, 'shelter.barracksBenefit')
-    },
-    {
-      id: "dragon_lair",
-      name: t(language, 'shelter.dragonLairBuilding'),
-      description: t(language, 'shelter.dragonLairDesc'),
-      level: buildingLevels.dragon_lair || 0,
-      maxLevel: 8,
-      cost: getUpgradeCost("dragon_lair", buildingLevels.dragon_lair || 0),
-      benefit: t(language, 'shelter.dragonLairBenefit')
-    },
-    {
-      id: "medical",
-      name: t(language, 'shelter.medicalBuilding'),
-      description: t(language, 'shelter.medicalDesc'),
-      level: buildingLevels.medical || 0,
-      maxLevel: 8,
-      cost: getUpgradeCost("medical", buildingLevels.medical || 0),
-      benefit: t(language, 'shelter.medicalBenefit')
-    }
-  ], [buildingLevels, language]);
+  const nestUpgrades: NestUpgrade[] = useMemo(() => {
+    const createUpgrade = (buildingId: string, nameKey: string, descKey: string, benefitKey: string): NestUpgrade => {
+      const currentLevel = buildingLevels[buildingId as keyof typeof buildingLevels] || 0;
+      const config = getBuildingConfig(buildingId, currentLevel + 1);
+      
+      return {
+        id: buildingId,
+        name: t(language, nameKey),
+        description: t(language, descKey),
+        level: currentLevel,
+        maxLevel: 8,
+        cost: getUpgradeCost(buildingId, currentLevel),
+        requiredItems: config?.required_items || [],
+        requiredMainHallLevel: config?.required_main_hall_level || 0,
+        benefit: t(language, benefitKey)
+      };
+    };
+
+    return [
+    createUpgrade("main_hall", 'shelter.mainHall', 'shelter.mainHallDesc', 'shelter.mainHallBenefit'),
+    createUpgrade("workshop", 'shelter.workshop', 'shelter.workshopDesc', 'shelter.workshopBenefit'),
+    createUpgrade("storage", 'shelter.storage', 'shelter.storageDesc', 'shelter.storageBenefit'),
+    createUpgrade("sawmill", 'shelter.sawmill', 'shelter.sawmillDesc', 'shelter.sawmillBenefit'),
+    createUpgrade("quarry", 'shelter.quarry', 'shelter.quarryDesc', 'shelter.quarryBenefit'),
+    createUpgrade("barracks", 'shelter.barracksBuilding', 'shelter.barracksDesc', 'shelter.barracksBenefit'),
+    createUpgrade("dragon_lair", 'shelter.dragonLairBuilding', 'shelter.dragonLairDesc', 'shelter.dragonLairBenefit'),
+    createUpgrade("medical", 'shelter.medicalBuilding', 'shelter.medicalDesc', 'shelter.medicalBenefit')
+  ];
+  }, [buildingLevels, language, getBuildingConfig]);
 
   const craftRecipes: CraftRecipe[] = useMemo(() => [{
     id: "iron_sword",

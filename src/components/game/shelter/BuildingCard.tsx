@@ -83,29 +83,68 @@ export const BuildingCard = ({
         {upgrade.level < upgrade.maxLevel && (
           <div className="space-y-3">
             <div className="text-sm font-medium">{t(language, 'shelter.upgradeCost')}:</div>
+            
+            {/* Требования по уровню главного зала */}
+            {upgrade.requiredMainHallLevel > 0 && (
+              <div className="p-2 bg-amber-500/10 border border-amber-500/20 rounded text-sm">
+                <span className="text-amber-600">
+                  {t(language, 'shelter.requiresMainHall')}: {upgrade.requiredMainHallLevel}
+                </span>
+              </div>
+            )}
+
+            {/* Требуемые предметы */}
+            {upgrade.requiredItems && upgrade.requiredItems.length > 0 && (
+              <div className="space-y-1">
+                <div className="text-xs font-medium text-muted-foreground">
+                  {t(language, 'shelter.requiredItems')}:
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  {upgrade.requiredItems.map((item, idx) => (
+                    <Badge key={idx} variant="outline" className="text-xs">
+                      {item.item_id} x{item.quantity}
+                    </Badge>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Ресурсы */}
             <div className="grid grid-cols-2 gap-2">
               {upgrade.cost.wood > 0 && (
-                <div className={`flex items-center gap-2 ${upgrade.cost.wood <= 0 ? 'opacity-50' : ''}`}>
+                <div className="flex items-center gap-2 text-sm">
                   <span>🪵</span>
-                  <span className="text-sm">{upgrade.cost.wood}</span>
+                  <span>{upgrade.cost.wood}</span>
                 </div>
               )}
               {upgrade.cost.stone > 0 && (
-                <div className={`flex items-center gap-2 ${upgrade.cost.stone <= 0 ? 'opacity-50' : ''}`}>
+                <div className="flex items-center gap-2 text-sm">
                   <span>🪨</span>
-                  <span className="text-sm">{upgrade.cost.stone}</span>
+                  <span>{upgrade.cost.stone}</span>
                 </div>
               )}
               {upgrade.cost.iron > 0 && (
-                <div className={`flex items-center gap-2 ${upgrade.cost.iron <= 0 ? 'opacity-50' : ''}`}>
+                <div className="flex items-center gap-2 text-sm">
                   <span>⛏️</span>
-                  <span className="text-sm">{upgrade.cost.iron}</span>
+                  <span>{upgrade.cost.iron}</span>
+                </div>
+              )}
+              {upgrade.cost.gold > 0 && (
+                <div className="flex items-center gap-2 text-sm">
+                  <span>🪙</span>
+                  <span>{upgrade.cost.gold}</span>
                 </div>
               )}
               {upgrade.cost.balance > 0 && (
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 text-sm">
                   <span>💰</span>
-                  <span className="text-sm">{upgrade.cost.balance} ELL</span>
+                  <span>{upgrade.cost.balance} ELL</span>
+                </div>
+              )}
+              {upgrade.cost.gt > 0 && (
+                <div className="flex items-center gap-2 text-sm">
+                  <span>💎</span>
+                  <span>{upgrade.cost.gt} GT</span>
                 </div>
               )}
             </div>
