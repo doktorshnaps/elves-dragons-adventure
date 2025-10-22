@@ -4,6 +4,7 @@ import { useLanguage } from '@/hooks/useLanguage';
 import { t } from '@/utils/translations';
 import { useToast } from '@/hooks/use-toast';
 import { useBuildingUpgrades } from '@/hooks/useBuildingUpgrades';
+import { useBuildingConfigs } from '@/hooks/useBuildingConfigs';
 
 export interface NestUpgrade {
   id: string;
@@ -39,6 +40,7 @@ export const useShelterState = () => {
   const gameState = useBatchedGameState(); // Используем батчированную версию
   const { toast } = useToast();
   const { startUpgradeAtomic, isUpgrading, getUpgradeProgress, formatRemainingTime, installUpgrade, isUpgradeReady } = useBuildingUpgrades();
+  const { getBuildingConfig, getUpgradeCost: getUpgradeCostFromDB, loading: configsLoading } = useBuildingConfigs();
   
   const [activeTab, setActiveTab] = useState<"upgrades" | "crafting" | "barracks" | "dragonlair" | "medical" | "workers">("upgrades");
   const [balance, setBalance] = useState(gameState.balance);
@@ -134,6 +136,19 @@ export const useShelterState = () => {
 
   // Функция для расчета стоимости апгрейда для каждого уровня
   const getUpgradeCost = (buildingId: string, currentLevel: number) => {
+    // Получаем стоимость из building_configs
+    const costFromDB = getUpgradeCostFromDB(buildingId, currentLevel);
+    
+    if (costFromDB) {
+      return {
+        wood: costFromDB.wood || 0,
+        stone: costFromDB.stone || 0,
+        iron: costFromDB.iron || 0,
+        balance: costFromDB.ell || 0 // ell = игровая валюта (balance)
+      };
+    }
+    
+    // Fallback на захардкоженные значения (на случай если БД недоступна)
     const baseCosts: Record<string, any> = {
       main_hall: { wood: 0, stone: 0, iron: 0, balance: 50 },
       workshop: { wood: 0, stone: 0, iron: 0, balance: 100 },
@@ -158,6 +173,14 @@ export const useShelterState = () => {
 
   // Функция для получения времени улучшения (в минутах)
   const getUpgradeTime = (buildingId: string) => {
+    const currentLevel = buildingLevels[buildingId as keyof typeof buildingLevels] || 0;
+    const config = getBuildingConfig(buildingId, currentLevel + 1);
+    
+    if (config?.upgrade_time_hours) {
+      return config.upgrade_time_hours * 60; // Преобразуем часы в минуты
+    }
+    
+    // Fallback на захардкоженные значения
     const baseTimes: Record<string, number> = {
       main_hall: 5,
       storage: 10,
@@ -174,6 +197,24 @@ export const useShelterState = () => {
 
   // Функция для проверки требований для улучшения
   const canUpgradeBuilding = (buildingId: string) => {
+    const currentLevel = buildingLevels[buildingId as keyof typeof buildingLevels] || 0;
+    const config = getBuildingConfig(buildingId, currentLevel + 1);
+    
+    // Проверяем требования из building_configs
+    if (config) {
+      // Проверяем required_main_hall_level
+      if (config.required_main_hall_level && buildingLevels.main_hall < config.required_main_hall_level) {
+        return false;
+      }
+      
+      // Проверяем required_items (если есть)
+      if (config.required_items && Array.isArray(config.required_items) && config.required_items.length > 0) {
+        // TODO: Проверить наличие требуемых предметов в инвентаре
+        // Пока пропускаем эту проверку
+      }
+    }
+    
+    // Fallback на старую логику
     if (buildingId === 'storage') {
       return buildingLevels.main_hall >= 1;
     }
