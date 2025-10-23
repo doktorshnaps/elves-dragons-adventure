@@ -8,6 +8,7 @@ import { useInventoryState } from "@/hooks/useInventoryState";
 import { resolveItemKey } from "@/utils/itemNames";
 import { useMemo } from "react";
 import { useItemTemplates } from "@/hooks/useItemTemplates";
+import { useGameStore } from "@/stores/gameStore";
 interface BuildingDetailsPanelProps {
   selectedBuilding: NestUpgrade | null;
   canAfford: boolean;
@@ -32,7 +33,9 @@ export const BuildingDetailsPanel = ({
   resources
 }: BuildingDetailsPanelProps) => {
   const { language } = useLanguage();
-  const { inventory } = useInventoryState();
+  const { inventory: localInventory } = useInventoryState();
+  const storeInventory = useGameStore((state) => state.inventory);
+  const inventory = (storeInventory?.length ?? 0) > 0 ? storeInventory : localInventory;
   const { getItemName, getTemplate } = useItemTemplates();
 
   // Подсчитываем количество каждого предмета в инвентаре
