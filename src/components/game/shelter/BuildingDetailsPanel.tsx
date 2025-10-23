@@ -5,8 +5,9 @@ import { NestUpgrade } from "@/hooks/shelter/useShelterState";
 import { useLanguage } from "@/hooks/useLanguage";
 import { t } from "@/utils/translations";
 import { useInventoryState } from "@/hooks/useInventoryState";
-import { getItemName, resolveItemKey } from "@/utils/itemNames";
+import { resolveItemKey } from "@/utils/itemNames";
 import { useMemo } from "react";
+import { useItemTemplates } from "@/hooks/useItemTemplates";
 interface BuildingDetailsPanelProps {
   selectedBuilding: NestUpgrade | null;
   canAfford: boolean;
@@ -30,12 +31,9 @@ export const BuildingDetailsPanel = ({
   insideDialog = false,
   resources
 }: BuildingDetailsPanelProps) => {
-  const {
-    language
-  } = useLanguage();
-  const {
-    inventory
-  } = useInventoryState();
+  const { language } = useLanguage();
+  const { inventory } = useInventoryState();
+  const { getItemName } = useItemTemplates();
 
   // Подсчитываем количество каждого предмета в инвентаре
   const inventoryCounts = useMemo(() => {
@@ -161,24 +159,19 @@ export const BuildingDetailsPanel = ({
               <h3 className="text-lg font-semibold">{t(language, 'shelter.requiredItems')}</h3>
               <div className="space-y-1">
                 {normalizedRequiredItems.map((rawItem: any, idx: number) => {
-                  let itemKey = '';
+                  let itemId = '';
                   let reqQty = 1;
-                  let rawName: string | undefined;
+                  
                   if (typeof rawItem === 'string' || typeof rawItem === 'number') {
-                    itemKey = resolveItemKey(String(rawItem));
+                    itemId = String(rawItem);
                   } else if (typeof rawItem === 'object' && rawItem !== null) {
-                    rawName = rawItem.name ?? rawItem.item_name ?? rawItem.title ?? rawItem.display_name;
-                    const rawId = rawItem.item_id ?? rawItem.itemId ?? rawItem.id ?? rawItem.type ?? rawName ?? '';
-                    itemKey = resolveItemKey(String(rawId));
+                    itemId = rawItem.item_id ?? rawItem.itemId ?? rawItem.id ?? rawItem.type ?? '';
                     reqQty = Number(rawItem.quantity ?? rawItem.qty ?? rawItem.count ?? rawItem.amount ?? 1);
                   }
-                  const fallbackName = getItemName(itemKey, language);
-                  const displayName = rawName && typeof rawName === 'string' ? rawName : fallbackName;
-                  let playerHas = inventoryCounts[itemKey] || 0;
-                  if (!playerHas && rawName) {
-                    const lower = rawName.toLowerCase();
-                    playerHas = inventory.filter(i => (i.name || '').toLowerCase() === lower).length || playerHas;
-                  }
+                  
+                  const displayName = getItemName(itemId);
+                  const itemKey = resolveItemKey(itemId);
+                  const playerHas = inventoryCounts[itemKey] || 0;
                   return (
                     <div key={idx} className="flex items-center justify-between px-3 py-2 rounded-lg border border-border bg-muted/20">
                       <span className="text-sm font-medium">{displayName}</span>
