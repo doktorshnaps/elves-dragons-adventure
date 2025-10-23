@@ -21,9 +21,8 @@ export const AttackAnimation: React.FC<AttackAnimationProps> = ({
 
   useEffect(() => {
     if (isActive) {
-      // Для обычной атаки и блокировки показываем эффект попадания через 500мс (полет меча)
-      // Для критической - сразу показываем эффект на защитнике
-      const delay = (type === 'normal' || type === 'blocked') ? 500 : 0;
+      // Для всех типов атак показываем эффект попадания через 500мс (полет меча)
+      const delay = 500;
       
       const timer = setTimeout(() => {
         setShowImpact(true);
@@ -48,8 +47,8 @@ export const AttackAnimation: React.FC<AttackAnimationProps> = ({
   return (
     <div className="absolute inset-0 pointer-events-none z-50">
       <AnimatePresence>
-        {/* Проектайл атаки - для обычной атаки и блокировки */}
-        {!showImpact && (type === 'normal' || type === 'blocked') && (
+        {/* Проектайл атаки - для всех типов атак */}
+        {!showImpact && (
           <motion.div
             key="projectile"
             className="absolute"
@@ -76,14 +75,15 @@ export const AttackAnimation: React.FC<AttackAnimationProps> = ({
           >
             <motion.div
               animate={{
-                rotate: [0, 360]
+                rotate: [0, 360],
+                scale: type === 'critical' ? [1, 1.3, 1] : 1
               }}
               transition={{
                 duration: 0.5,
                 ease: 'linear'
               }}
             >
-              <Sword className="w-12 h-12 text-red-500 drop-shadow-[0_0_10px_rgba(239,68,68,0.6)]" />
+              <Sword className={`w-12 h-12 ${type === 'critical' ? 'text-yellow-400 drop-shadow-[0_0_15px_rgba(250,204,21,0.8)]' : 'text-red-500 drop-shadow-[0_0_10px_rgba(239,68,68,0.6)]'}`} />
             </motion.div>
           </motion.div>
         )}
