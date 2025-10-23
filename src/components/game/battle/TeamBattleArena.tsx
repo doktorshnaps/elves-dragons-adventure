@@ -22,7 +22,7 @@ interface TeamBattleArenaProps {
   onAbilityUse?: (pairId: string, abilityId: string, targetId: number | string) => void;
   onEnemyAttack: () => void;
   level: number;
-  lastRoll?: { attackerRoll: number; defenderRoll: number; source: 'player' | 'enemy'; damage: number; isBlocked: boolean; isCritical?: boolean } | null;
+  lastRoll?: { attackerRoll: number; defenderRoll: number; source: 'player' | 'enemy'; damage: number; isBlocked: boolean; isCritical?: boolean; level: number } | null;
 }
 export const TeamBattleArena: React.FC<TeamBattleArenaProps> = ({
   playerPairs,
@@ -163,7 +163,8 @@ export const TeamBattleArena: React.FC<TeamBattleArenaProps> = ({
 
   // Запускаем анимацию атаки когда кубики перестают вращаться
   useEffect(() => {
-    if (lastRoll && !isDiceRolling) {
+    // Проверяем что lastRoll существует, кубики не вращаются и уровень совпадает
+    if (lastRoll && !isDiceRolling && lastRoll.level === level) {
       // Небольшая задержка перед запуском анимации, чтобы кубики остановились
       const startTimer = setTimeout(() => {
         const animationType = lastRoll.isBlocked 
@@ -188,7 +189,7 @@ export const TeamBattleArena: React.FC<TeamBattleArenaProps> = ({
 
       return () => clearTimeout(startTimer);
     }
-  }, [lastRoll, isDiceRolling]);
+  }, [lastRoll, isDiceRolling, level]);
 
   // Автоматический ход противника
   useEffect(() => {
