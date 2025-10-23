@@ -151,7 +151,7 @@ export const TeamBattlePage: React.FC<TeamBattlePageProps> = ({
     const checkSession = async () => {
       try {
         const now = Date.now();
-        const TIMEOUT = 30000;
+        const TIMEOUT = 45000; // Увеличиваем до 45 секунд с учетом интервала heartbeat 10 секунд
         const { data, error } = await supabase
           .from('active_dungeon_sessions')
           .select('device_id')

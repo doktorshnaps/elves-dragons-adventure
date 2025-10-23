@@ -117,8 +117,11 @@ export const useDungeonSync = () => {
         }, {
           onConflict: 'account_id,device_id'
         });
-    } catch (error) {
-      console.error('Error sending heartbeat:', error);
+    } catch (error: any) {
+      // Игнорируем ошибку о существующей активной сессии - это нормально при частых heartbeat
+      if (!error?.message?.includes('Active dungeon session already exists')) {
+        console.error('Error sending heartbeat:', error);
+      }
     }
   }, [accountId, deviceId, localSession]);
 
@@ -289,11 +292,11 @@ export const useDungeonSync = () => {
     };
   }, [accountId, deviceId, loadActiveSessions]);
 
-  // Отправляем heartbeat каждые 3 секунды
+  // Отправляем heartbeat каждые 10 секунд (чтобы избежать конфликтов с БД)
   useEffect(() => {
     if (!localSession) return;
 
-    const interval = setInterval(sendHeartbeat, 3000);
+    const interval = setInterval(sendHeartbeat, 10000);
     sendHeartbeat(); // Отправляем сразу
 
     return () => clearInterval(interval);
