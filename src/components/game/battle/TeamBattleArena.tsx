@@ -11,6 +11,7 @@ import { getXPProgress } from '@/utils/accountLeveling';
 import { useNavigate } from 'react-router-dom';
 import { TeamHealthBars } from './TeamHealthBars';
 import { InlineDiceDisplay } from './InlineDiceDisplay';
+import { AttackAnimation } from './AttackAnimation';
 import { useDungeonSync } from '@/hooks/useDungeonSync';
 interface TeamBattleArenaProps {
   playerPairs: TeamPair[];
@@ -51,6 +52,17 @@ export const TeamBattleArena: React.FC<TeamBattleArenaProps> = ({
   const [isDiceRolling, setIsDiceRolling] = useState(false);
   const [isPlayerAttacking, setIsPlayerAttacking] = useState(true);
   const [diceKey, setDiceKey] = useState(0);
+  
+  // Attack animation state
+  const [attackAnimation, setAttackAnimation] = useState<{
+    isActive: boolean;
+    type: 'normal' | 'critical' | 'blocked';
+    source: 'player' | 'enemy';
+  }>({
+    isActive: false,
+    type: 'normal',
+    source: 'player'
+  });
   const alivePairs = playerPairs.filter(pair => pair.health > 0);
   const aliveOpponents = opponents.filter(opp => opp.health > 0);
   const handleAttack = () => {
@@ -81,6 +93,7 @@ export const TeamBattleArena: React.FC<TeamBattleArenaProps> = ({
         setSelectedTarget(null);
         setAttackingPair(null);
         setAttackedTarget(null);
+        setAttackAnimation({ isActive: false, type: 'normal', source: 'player' });
       }, 3000);
     }
   };
@@ -108,6 +121,7 @@ export const TeamBattleArena: React.FC<TeamBattleArenaProps> = ({
       // Убираем защитника через 3000мс (после показа урона)
       setTimeout(() => {
         setDefendingPair(null);
+        setAttackAnimation({ isActive: false, type: 'normal', source: 'enemy' });
       }, 3000);
     } else {
       onEnemyAttack();
@@ -121,6 +135,30 @@ export const TeamBattleArena: React.FC<TeamBattleArenaProps> = ({
 
   // Получаем прогресс опыта для отображения
   const xpProgress = getXPProgress(accountExperience);
+
+  // Запускаем анимацию атаки когда получаем результат броска кубиков
+  useEffect(() => {
+    if (lastRoll && !isDiceRolling) {
+      const animationType = lastRoll.isBlocked 
+        ? 'blocked' 
+        : lastRoll.isCritical 
+          ? 'critical' 
+          : 'normal';
+      
+      setAttackAnimation({
+        isActive: true,
+        type: animationType,
+        source: lastRoll.source
+      });
+
+      // Останавливаем анимацию через 1500мс
+      const timer = setTimeout(() => {
+        setAttackAnimation(prev => ({ ...prev, isActive: false }));
+      }, 1500);
+
+      return () => clearTimeout(timer);
+    }
+  }, [lastRoll, isDiceRolling]);
 
   // Автоматический ход противника
   useEffect(() => {
@@ -186,6 +224,12 @@ export const TeamBattleArena: React.FC<TeamBattleArenaProps> = ({
     }
   }, [autoBattle, isPlayerTurn, alivePairs.length, aliveOpponents.length]);
   return <div className="h-screen w-screen overflow-hidden p-2 flex flex-col relative">
+      {/* Attack Animation Overlay */}
+      <AttackAnimation 
+        isActive={attackAnimation.isActive}
+        type={attackAnimation.type}
+        source={attackAnimation.source}
+      />
       <div className="w-full h-full flex flex-col space-y-2">
         {/* Header */}
         <Card variant="menu" style={{ boxShadow: '-33px 15px 10px rgba(0, 0, 0, 0.6)' }}>
