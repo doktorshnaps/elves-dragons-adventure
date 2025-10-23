@@ -3,19 +3,16 @@ import { BuildingGridCard } from "./BuildingGridCard";
 import { BuildingDetailsPanel } from "./BuildingDetailsPanel";
 import { InventoryPanel } from "./InventoryPanel";
 import { NestUpgrade } from "@/hooks/shelter/useShelterState";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 interface ShelterUpgradesProps {
   upgrades: NestUpgrade[];
   canAffordUpgrade: (upgrade: NestUpgrade) => boolean;
   handleUpgrade: (upgrade: NestUpgrade) => void;
   isUpgrading: (buildingId: string) => boolean;
-  getUpgradeProgress: (buildingId: string) => { progress: number; remainingTime: number } | null;
+  getUpgradeProgress: (buildingId: string) => {
+    progress: number;
+    remainingTime: number;
+  } | null;
   formatRemainingTime: (ms: number) => string;
   hasWorkersInBuilding: (buildingId: string) => boolean;
   getActiveWorkersInBuilding: (buildingId: string) => any[];
@@ -23,7 +20,6 @@ interface ShelterUpgradesProps {
   getUpgradeTime: (buildingId: string) => number;
   isUpgradeReady: (buildingId: string) => boolean;
 }
-
 export const ShelterUpgrades = ({
   upgrades,
   canAffordUpgrade,
@@ -37,7 +33,6 @@ export const ShelterUpgrades = ({
 }: ShelterUpgradesProps) => {
   const [selectedBuilding, setSelectedBuilding] = useState<NestUpgrade | null>(null);
   const [isMobileDialogOpen, setIsMobileDialogOpen] = useState(false);
-
   const handleBuildingClick = (building: NestUpgrade) => {
     setSelectedBuilding(building);
     // На мобильных и планшетах открываем диалог
@@ -45,48 +40,25 @@ export const ShelterUpgrades = ({
       setIsMobileDialogOpen(true);
     }
   };
-
-  return (
-    <>
+  return <>
       <div className="flex gap-6">
         {/* Left Panel - Inventory (скрыта на малых экранах) */}
-        <div className="w-64 flex-shrink-0 hidden lg:block">
-          <InventoryPanel />
-        </div>
+        
 
         {/* Center - Buildings Grid */}
         <div className="flex-1">
           <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-            {upgrades.map((upgrade) => {
-              const activeWorkers = getActiveWorkersInBuilding(upgrade.id);
-              const hasWorkers = hasWorkersInBuilding(upgrade.id);
-              
-              return (
-                <BuildingGridCard
-                  key={upgrade.id}
-                  upgrade={upgrade}
-                  isSelected={selectedBuilding?.id === upgrade.id}
-                  isUpgrading={isUpgrading(upgrade.id)}
-                  upgradeProgress={getUpgradeProgress(upgrade.id)}
-                  hasWorkers={hasWorkers}
-                  activeWorkersCount={activeWorkers.length}
-                  onClick={() => handleBuildingClick(upgrade)}
-                  formatRemainingTime={formatRemainingTime}
-                />
-              );
-            })}
+            {upgrades.map(upgrade => {
+            const activeWorkers = getActiveWorkersInBuilding(upgrade.id);
+            const hasWorkers = hasWorkersInBuilding(upgrade.id);
+            return <BuildingGridCard key={upgrade.id} upgrade={upgrade} isSelected={selectedBuilding?.id === upgrade.id} isUpgrading={isUpgrading(upgrade.id)} upgradeProgress={getUpgradeProgress(upgrade.id)} hasWorkers={hasWorkers} activeWorkersCount={activeWorkers.length} onClick={() => handleBuildingClick(upgrade)} formatRemainingTime={formatRemainingTime} />;
+          })}
           </div>
         </div>
 
         {/* Right Panel - Building Details (скрыта на экранах меньше XL) */}
         <div className="w-80 flex-shrink-0 hidden xl:block">
-          <BuildingDetailsPanel
-            selectedBuilding={selectedBuilding}
-            canAfford={selectedBuilding ? canAffordUpgrade(selectedBuilding) : false}
-            isUpgrading={selectedBuilding ? isUpgrading(selectedBuilding.id) : false}
-            onUpgrade={() => selectedBuilding && handleUpgrade(selectedBuilding)}
-            isUpgradeReady={selectedBuilding ? isUpgradeReady(selectedBuilding.id) : false}
-          />
+          <BuildingDetailsPanel selectedBuilding={selectedBuilding} canAfford={selectedBuilding ? canAffordUpgrade(selectedBuilding) : false} isUpgrading={selectedBuilding ? isUpgrading(selectedBuilding.id) : false} onUpgrade={() => selectedBuilding && handleUpgrade(selectedBuilding)} isUpgradeReady={selectedBuilding ? isUpgradeReady(selectedBuilding.id) : false} />
         </div>
       </div>
 
@@ -99,22 +71,14 @@ export const ShelterUpgrades = ({
             </DialogTitle>
           </DialogHeader>
           <div className="mt-4">
-            <BuildingDetailsPanel
-              selectedBuilding={selectedBuilding}
-              canAfford={selectedBuilding ? canAffordUpgrade(selectedBuilding) : false}
-              isUpgrading={selectedBuilding ? isUpgrading(selectedBuilding.id) : false}
-              onUpgrade={() => {
-                if (selectedBuilding) {
-                  handleUpgrade(selectedBuilding);
-                  setIsMobileDialogOpen(false);
-                }
-              }}
-              isUpgradeReady={selectedBuilding ? isUpgradeReady(selectedBuilding.id) : false}
-              insideDialog={true}
-            />
+            <BuildingDetailsPanel selectedBuilding={selectedBuilding} canAfford={selectedBuilding ? canAffordUpgrade(selectedBuilding) : false} isUpgrading={selectedBuilding ? isUpgrading(selectedBuilding.id) : false} onUpgrade={() => {
+            if (selectedBuilding) {
+              handleUpgrade(selectedBuilding);
+              setIsMobileDialogOpen(false);
+            }
+          }} isUpgradeReady={selectedBuilding ? isUpgradeReady(selectedBuilding.id) : false} insideDialog={true} />
           </div>
         </DialogContent>
       </Dialog>
-    </>
-  );
+    </>;
 };
