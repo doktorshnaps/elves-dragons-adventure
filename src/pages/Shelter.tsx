@@ -159,6 +159,7 @@ export const Shelter = () => {
               buildingLevels={buildingLevels}
               getUpgradeTime={getUpgradeTime}
               isUpgradeReady={isUpgradeReady}
+              resources={resources}
             />
           </TabsContent>
 

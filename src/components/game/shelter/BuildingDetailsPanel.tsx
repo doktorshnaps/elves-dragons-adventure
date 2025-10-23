@@ -14,6 +14,12 @@ interface BuildingDetailsPanelProps {
   onUpgrade: () => void;
   isUpgradeReady: boolean;
   insideDialog?: boolean;
+  resources?: {
+    wood: number;
+    stone: number;
+    iron: number;
+    gold: number;
+  };
 }
 export const BuildingDetailsPanel = ({
   selectedBuilding,
@@ -21,7 +27,8 @@ export const BuildingDetailsPanel = ({
   isUpgrading,
   onUpgrade,
   isUpgradeReady,
-  insideDialog = false
+  insideDialog = false,
+  resources
 }: BuildingDetailsPanelProps) => {
   const {
     language
@@ -84,28 +91,40 @@ export const BuildingDetailsPanel = ({
                     <span className="text-lg">🪵</span>
                     <span className="text-sm">{t(language, 'resources.wood') || 'Дерево'}</span>
                   </div>
-                  <span className="font-bold">{selectedBuilding.cost.wood}</span>
+                  <span className="font-bold">
+                    {selectedBuilding.cost.wood}
+                    {resources && <span className="text-xs ml-1 opacity-70">({resources.wood})</span>}
+                  </span>
                 </div>}
               {selectedBuilding.cost.stone > 0 && <div className="flex items-center justify-between px-3 py-2 bg-muted/30 rounded-lg border border-border">
                   <div className="flex items-center gap-2">
                     <span className="text-lg">🪨</span>
                     <span className="text-sm">{t(language, 'resources.stone') || 'Камень'}</span>
                   </div>
-                  <span className="font-bold">{selectedBuilding.cost.stone}</span>
+                  <span className="font-bold">
+                    {selectedBuilding.cost.stone}
+                    {resources && <span className="text-xs ml-1 opacity-70">({resources.stone})</span>}
+                  </span>
                 </div>}
               {selectedBuilding.cost.iron > 0 && <div className="flex items-center justify-between px-3 py-2 bg-muted/30 rounded-lg border border-border">
                   <div className="flex items-center gap-2">
                     <span className="text-lg">⛏️</span>
                     <span className="text-sm">{t(language, 'resources.iron') || 'Железо'}</span>
                   </div>
-                  <span className="font-bold">{selectedBuilding.cost.iron}</span>
+                  <span className="font-bold">
+                    {selectedBuilding.cost.iron}
+                    {resources && <span className="text-xs ml-1 opacity-70">({resources.iron})</span>}
+                  </span>
                 </div>}
               {selectedBuilding.cost.gold > 0 && <div className="flex items-center justify-between px-3 py-2 bg-muted/30 rounded-lg border border-border">
                   <div className="flex items-center gap-2">
                     <span className="text-lg">🪙</span>
                     <span className="text-sm">{t(language, 'resources.gold') || 'Золото'}</span>
                   </div>
-                  <span className="font-bold">{selectedBuilding.cost.gold}</span>
+                  <span className="font-bold">
+                    {selectedBuilding.cost.gold}
+                    {resources && <span className="text-xs ml-1 opacity-70">({resources.gold})</span>}
+                  </span>
                 </div>}
               {selectedBuilding.cost.balance > 0 && <div className="flex items-center justify-between px-3 py-2 bg-primary/15 rounded-lg border-2 border-primary/30">
                   <div className="flex items-center gap-2">
@@ -162,12 +181,10 @@ export const BuildingDetailsPanel = ({
                         </span>
                         <span className="text-sm font-medium">{displayName}</span>
                       </div>
-                      <div className="flex items-center gap-2">
-                        <span className="text-sm font-bold">×{reqQty}</span>
-                        <Badge variant="outline" className={`text-xs ${hasEnough ? 'border-success text-success' : 'border-destructive text-destructive'}`}>
-                          {playerHas}
-                        </Badge>
-                      </div>
+                      <span className="text-sm font-bold">
+                        ×{reqQty}
+                        <span className="text-xs ml-1 opacity-70">({playerHas})</span>
+                      </span>
                     </div>;
           })}
               </div>

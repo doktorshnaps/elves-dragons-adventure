@@ -19,6 +19,12 @@ interface ShelterUpgradesProps {
   buildingLevels: Record<string, number>;
   getUpgradeTime: (buildingId: string) => number;
   isUpgradeReady: (buildingId: string) => boolean;
+  resources?: {
+    wood: number;
+    stone: number;
+    iron: number;
+    gold: number;
+  };
 }
 export const ShelterUpgrades = ({
   upgrades,
@@ -29,7 +35,8 @@ export const ShelterUpgrades = ({
   formatRemainingTime,
   hasWorkersInBuilding,
   getActiveWorkersInBuilding,
-  isUpgradeReady
+  isUpgradeReady,
+  resources
 }: ShelterUpgradesProps) => {
   const [selectedBuilding, setSelectedBuilding] = useState<NestUpgrade | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -68,7 +75,7 @@ export const ShelterUpgrades = ({
               handleUpgrade(selectedBuilding);
               setIsDialogOpen(false);
             }
-          }} isUpgradeReady={selectedBuilding ? isUpgradeReady(selectedBuilding.id) : false} insideDialog={true} />
+          }} isUpgradeReady={selectedBuilding ? isUpgradeReady(selectedBuilding.id) : false} insideDialog={true} resources={resources} />
           </div>
         </DialogContent>
       </Dialog>
