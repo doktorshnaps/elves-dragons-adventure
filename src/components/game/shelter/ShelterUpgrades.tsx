@@ -32,13 +32,10 @@ export const ShelterUpgrades = ({
   isUpgradeReady
 }: ShelterUpgradesProps) => {
   const [selectedBuilding, setSelectedBuilding] = useState<NestUpgrade | null>(null);
-  const [isMobileDialogOpen, setIsMobileDialogOpen] = useState(false);
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
   const handleBuildingClick = (building: NestUpgrade) => {
     setSelectedBuilding(building);
-    // На мобильных и планшетах открываем диалог
-    if (window.innerWidth < 1280) {
-      setIsMobileDialogOpen(true);
-    }
+    setIsDialogOpen(true);
   };
   return <>
       <div className="flex gap-6">
@@ -55,15 +52,10 @@ export const ShelterUpgrades = ({
           })}
           </div>
         </div>
-
-        {/* Right Panel - Building Details (скрыта на экранах меньше XL) */}
-        <div className="w-80 flex-shrink-0 hidden xl:block">
-          <BuildingDetailsPanel selectedBuilding={selectedBuilding} canAfford={selectedBuilding ? canAffordUpgrade(selectedBuilding) : false} isUpgrading={selectedBuilding ? isUpgrading(selectedBuilding.id) : false} onUpgrade={() => selectedBuilding && handleUpgrade(selectedBuilding)} isUpgradeReady={selectedBuilding ? isUpgradeReady(selectedBuilding.id) : false} />
-        </div>
       </div>
 
-      {/* Mobile/Tablet Dialog для деталей здания */}
-      <Dialog open={isMobileDialogOpen} onOpenChange={setIsMobileDialogOpen}>
+      {/* Dialog для деталей здания */}
+      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
         <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="text-2xl font-bold text-primary">
@@ -74,7 +66,7 @@ export const ShelterUpgrades = ({
             <BuildingDetailsPanel selectedBuilding={selectedBuilding} canAfford={selectedBuilding ? canAffordUpgrade(selectedBuilding) : false} isUpgrading={selectedBuilding ? isUpgrading(selectedBuilding.id) : false} onUpgrade={() => {
             if (selectedBuilding) {
               handleUpgrade(selectedBuilding);
-              setIsMobileDialogOpen(false);
+              setIsDialogOpen(false);
             }
           }} isUpgradeReady={selectedBuilding ? isUpgradeReady(selectedBuilding.id) : false} insideDialog={true} />
           </div>
