@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { useWalletContext } from "@/contexts/WalletConnectContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -23,6 +24,7 @@ interface ItemTemplate {
 
 export const ItemGiveawayManager = () => {
   const { toast } = useToast();
+  const { accountId } = useWalletContext();
   const [items, setItems] = useState<ItemTemplate[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
@@ -65,7 +67,7 @@ export const ItemGiveawayManager = () => {
   );
 
   const handleGiveItem = async () => {
-    if (!selectedItem || !walletAddress.trim() || quantity < 1) {
+    if (!selectedItem || !walletAddress.trim() || quantity < 1 || !accountId) {
       toast({
         title: "Ошибка",
         description: "Заполните все поля корректно",
@@ -77,26 +79,6 @@ export const ItemGiveawayManager = () => {
     try {
       setIsGiving(true);
 
-      // Получаем текущий инвентарь игрока
-      const { data: gameData, error: fetchError } = await supabase
-        .from('game_data')
-        .select('inventory')
-        .eq('wallet_address', walletAddress.trim())
-        .maybeSingle();
-
-      if (fetchError) throw fetchError;
-
-      if (!gameData) {
-        toast({
-          title: "Ошибка",
-          description: "Игрок с таким wallet_address не найден",
-          variant: "destructive",
-        });
-        return;
-      }
-
-      const currentInventory = Array.isArray(gameData.inventory) ? gameData.inventory : [];
-      
       // Создаём новые предметы с уникальными ID
       const newItems = Array.from({ length: quantity }, () => ({
         id: uuidv4(),
@@ -107,15 +89,14 @@ export const ItemGiveawayManager = () => {
         image: selectedItem.image_url || undefined,
       }));
 
-      // Обновляем инвентарь
-      const updatedInventory = [...currentInventory, ...newItems];
+      // Используем RPC функцию для выдачи предметов (обходим RLS)
+      const { data, error } = await supabase.rpc('admin_give_items_to_player', {
+        p_admin_wallet_address: accountId,
+        p_target_wallet_address: walletAddress.trim(),
+        p_items: newItems
+      });
 
-      const { error: updateError } = await supabase
-        .from('game_data')
-        .update({ inventory: updatedInventory })
-        .eq('wallet_address', walletAddress.trim());
-
-      if (updateError) throw updateError;
+      if (error) throw error;
 
       toast({
         title: "Успешно!",
@@ -127,11 +108,11 @@ export const ItemGiveawayManager = () => {
       setQuantity(1);
       setSelectedItem(null);
       setIsDialogOpen(false);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error giving item:', error);
       toast({
         title: "Ошибка выдачи",
-        description: "Не удалось выдать предмет",
+        description: error.message || "Не удалось выдать предмет",
         variant: "destructive",
       });
     } finally {

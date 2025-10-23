@@ -1470,6 +1470,14 @@ export type Database = {
         Args: { p_admin_wallet_address: string; p_user_id: string }
         Returns: Json
       }
+      admin_give_items_to_player: {
+        Args: {
+          p_admin_wallet_address: string
+          p_items: Json
+          p_target_wallet_address: string
+        }
+        Returns: boolean
+      }
       admin_give_player_card: {
         Args: {
           p_admin_wallet_address: string
