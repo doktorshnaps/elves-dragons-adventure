@@ -46,6 +46,18 @@ export const BuildingDetailsPanel = ({
     });
     return counts;
   }, [inventory]);
+
+  // Нормализуем требуемые предметы (поддержка массива и объектной формы из БД)
+  const normalizedRequiredItems = useMemo(() => {
+    const raw = selectedBuilding?.requiredItems as any;
+    if (!raw) return [] as any[];
+    if (Array.isArray(raw)) return raw;
+    if (typeof raw === 'object') {
+      return Object.entries(raw).map(([key, qty]) => ({ item_id: key, quantity: Number(qty) }));
+    }
+    return [] as any[];
+  }, [selectedBuilding]);
+
   if (!selectedBuilding) {
     const emptyContent = (
       <div className="p-8 text-center space-y-4 opacity-40">
@@ -144,14 +156,14 @@ export const BuildingDetailsPanel = ({
           </div>
 
           {/* Required Items */}
-          {selectedBuilding.requiredItems && selectedBuilding.requiredItems.length > 0 && <div className="space-y-3">
+          {normalizedRequiredItems && normalizedRequiredItems.length > 0 && <div className="space-y-3">
               <h3 className="text-lg font-semibold flex items-center gap-2">
                 <span className="text-xl">🎒</span>
                 {t(language, 'shelter.requiredItems')}
               </h3>
               
               <div className="space-y-2">
-                {selectedBuilding.requiredItems.map((rawItem: any, idx: number) => {
+                {normalizedRequiredItems.map((rawItem: any, idx: number) => {
             let itemKey = '';
             let reqQty = 1;
             let rawName: string | undefined;
