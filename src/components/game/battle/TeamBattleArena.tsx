@@ -95,22 +95,21 @@ export const TeamBattleArena: React.FC<TeamBattleArenaProps> = ({
       setAttackingPair(pairId);
       setAttackedTarget(targetId);
 
-      // Останавливаем вращение кубиков через 1200мс (показываем результат)
+      // Останавливаем вращение кубиков через 1500мс (показываем результат)
       setTimeout(() => {
         setIsDiceRolling(false);
         
         // Сразу после остановки кубиков выполняем атаку (наносим урон)
         onAttack(pairId, targetId);
-      }, 1200);
+      }, 1500);
 
-      // Убираем эффекты анимации через 3000мс (после показа урона)
+      // Убираем эффекты анимации через 4000мс (после полного цикла анимации)
       setTimeout(() => {
         setSelectedPair(null);
         setSelectedTarget(null);
         setAttackingPair(null);
         setAttackedTarget(null);
-        setAttackAnimation({ isActive: false, type: 'normal', source: 'player' });
-      }, 3000);
+      }, 4000);
     }
   };
   const handleEnemyAttack = () => {
@@ -125,20 +124,19 @@ export const TeamBattleArena: React.FC<TeamBattleArenaProps> = ({
       setDiceKey(prev => prev + 1);
       console.log('🎲 Enemy dice: start rolling');
 
-      // Останавливаем вращение кубиков через 1200мс (показываем результат)
+      // Останавливаем вращение кубиков через 1500мс (показываем результат)
       setTimeout(() => {
         setIsDiceRolling(false);
         console.log('🎲 Enemy dice: stop rolling');
         
         // Сразу после остановки кубиков выполняем атаку (наносим урон)
         onEnemyAttack();
-      }, 1200);
+      }, 1500);
 
-      // Убираем защитника через 3000мс (после показа урона)
+      // Убираем защитника через 4000мс (после полного цикла анимации)
       setTimeout(() => {
         setDefendingPair(null);
-        setAttackAnimation({ isActive: false, type: 'normal', source: 'enemy' });
-      }, 3000);
+      }, 4000);
     } else {
       onEnemyAttack();
     }
@@ -152,27 +150,32 @@ export const TeamBattleArena: React.FC<TeamBattleArenaProps> = ({
   // Получаем прогресс опыта для отображения
   const xpProgress = getXPProgress(accountExperience);
 
-  // Запускаем анимацию атаки когда получаем результат броска кубиков
+  // Запускаем анимацию атаки когда кубики перестают вращаться
   useEffect(() => {
     if (lastRoll && !isDiceRolling) {
-      const animationType = lastRoll.isBlocked 
-        ? 'blocked' 
-        : lastRoll.isCritical 
-          ? 'critical' 
-          : 'normal';
-      
-      setAttackAnimation({
-        isActive: true,
-        type: animationType,
-        source: lastRoll.source
-      });
+      // Небольшая задержка перед запуском анимации, чтобы кубики остановились
+      const startTimer = setTimeout(() => {
+        const animationType = lastRoll.isBlocked 
+          ? 'blocked' 
+          : lastRoll.isCritical 
+            ? 'critical' 
+            : 'normal';
+        
+        setAttackAnimation({
+          isActive: true,
+          type: animationType,
+          source: lastRoll.source
+        });
 
-      // Останавливаем анимацию через 1500мс
-      const timer = setTimeout(() => {
-        setAttackAnimation(prev => ({ ...prev, isActive: false }));
-      }, 1500);
+        // Останавливаем анимацию через 2000мс (длительность всей анимации)
+        const stopTimer = setTimeout(() => {
+          setAttackAnimation({ isActive: false, type: 'normal', source: 'player' });
+        }, 2000);
 
-      return () => clearTimeout(timer);
+        return () => clearTimeout(stopTimer);
+      }, 100);
+
+      return () => clearTimeout(startTimer);
     }
   }, [lastRoll, isDiceRolling]);
 
