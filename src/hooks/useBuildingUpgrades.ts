@@ -142,7 +142,7 @@ export const useBuildingUpgrades = () => {
       buildingId: string,
       duration: number,
       targetLevel: number,
-      resourcePatch: { wood?: number; stone?: number; iron?: number; gold?: number; balance?: number }
+      resourcePatch: { wood?: number; stone?: number; iron?: number; gold?: number; balance?: number; inventory?: any[] }
     ) => {
       // Главный зал и склад не требуют рабочих
       if (buildingId !== 'main_hall' && buildingId !== 'storage') {

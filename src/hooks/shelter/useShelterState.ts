@@ -334,13 +334,30 @@ export const useShelterState = () => {
     
     const newBalance = gameState.balance - upgrade.cost.balance;
     
+    // Удаляем требуемые предметы из inventory (ищем по name)
+    let newInventory = [...gameState.inventory];
+    if (upgrade.requiredItems && upgrade.requiredItems.length > 0) {
+      upgrade.requiredItems.forEach(reqItem => {
+        let removedCount = 0;
+        
+        newInventory = newInventory.filter(invItem => {
+          // Ищем совпадение по name предмета с item_id из требований
+          if (invItem.name === reqItem.item_id && removedCount < reqItem.quantity) {
+            removedCount++;
+            return false; // удаляем предмет (по уникальному id)
+          }
+          return true; // оставляем предмет
+        });
+      });
+    }
+    
     try {
       const upgradeTime = getUpgradeTime(upgrade.id);
       await startUpgradeAtomic(
         upgrade.id,
         upgradeTime,
         upgrade.level + 1,
-        { ...newResources, balance: newBalance }
+        { ...newResources, balance: newBalance, inventory: newInventory }
       );
     } catch (e) {
       console.error('❌ Failed to start upgrade atomically', e);

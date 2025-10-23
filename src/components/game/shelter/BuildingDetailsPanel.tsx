@@ -38,12 +38,12 @@ export const BuildingDetailsPanel = ({
   const inventory = (storeInventory?.length ?? 0) > 0 ? storeInventory : localInventory;
   const { getItemName, getTemplate } = useItemTemplates();
 
-  // Подсчитываем количество каждого предмета в инвентаре
+  // Подсчитываем количество каждого предмета в инвентаре по name (группируем по name, считаем уникальные id)
   const inventoryCounts = useMemo(() => {
     const counts: Record<string, number> = {};
     inventory.forEach(item => {
-      const key = resolveItemKey(item.type);
-      counts[key] = (counts[key] || 0) + 1;
+      const itemName = item.name; // используем name напрямую
+      counts[itemName] = (counts[itemName] || 0) + 1;
     });
     return counts;
   }, [inventory]);
@@ -175,18 +175,8 @@ export const BuildingDetailsPanel = ({
                   const template = getTemplate(itemId);
                   const displayName = template?.name || getItemName(itemId);
 
-                  // Try multiple keys: template.item_id, numeric id, and resolved variants
-                  let playerHas = 0;
-                  if (template?.item_id) {
-                    // Try the template's item_id (e.g., "wood_chunks" -> "woodChunks")
-                    const templateKey = resolveItemKey(String(template.item_id));
-                    playerHas = inventoryCounts[templateKey] || 0;
-                  }
-                  // If not found, try the numeric ID
-                  if (playerHas === 0) {
-                    const numericKey = resolveItemKey(itemId);
-                    playerHas = inventoryCounts[numericKey] || 0;
-                  }
+                  // Ищем по name в inventory, считаем количество уникальных id
+                  const playerHas = inventoryCounts[displayName] || 0;
                   return (
                     <div key={idx} className="flex items-center justify-between px-3 py-2 rounded-lg border border-border bg-muted/20">
                       <span className="text-sm font-medium">{displayName}</span>
