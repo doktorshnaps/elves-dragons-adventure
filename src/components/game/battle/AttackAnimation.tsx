@@ -6,12 +6,16 @@ interface AttackAnimationProps {
   isActive: boolean;
   type: 'normal' | 'critical' | 'blocked';
   source: 'player' | 'enemy';
+  attackerPosition?: { x: number; y: number };
+  defenderPosition?: { x: number; y: number };
 }
 
 export const AttackAnimation: React.FC<AttackAnimationProps> = ({
   isActive,
   type,
-  source
+  source,
+  attackerPosition,
+  defenderPosition
 }) => {
   const [showImpact, setShowImpact] = useState(false);
 
@@ -33,27 +37,29 @@ export const AttackAnimation: React.FC<AttackAnimationProps> = ({
 
   if (!isActive) return null;
 
-  // Определяем направление атаки (игрок сверху, враг снизу)
+  // Определяем позиции атакующего и защищающегося
   const isPlayerAttacking = source === 'player';
-  const startY = isPlayerAttacking ? '0%' : '100%';
-  const endY = isPlayerAttacking ? '100%' : '0%';
+  const startPos = attackerPosition || { x: 0, y: 0 };
+  const endPos = defenderPosition || { x: 0, y: 0 };
 
   return (
     <div className="absolute inset-0 pointer-events-none z-50">
       <AnimatePresence>
-        {/* Проектайл атаки */}
-        {!showImpact && (
+        {/* Проектайл атаки - только для обычной атаки */}
+        {!showImpact && type === 'normal' && (
           <motion.div
             key="projectile"
-            className="absolute left-1/2 -translate-x-1/2"
+            className="absolute"
             initial={{ 
-              y: startY,
+              left: startPos.x,
+              top: startPos.y,
               scale: 1,
               opacity: 1
             }}
             animate={{ 
-              y: endY,
-              scale: type === 'critical' ? [1, 1.5, 1.2] : 1,
+              left: endPos.x,
+              top: endPos.y,
+              scale: 1,
               opacity: 1
             }}
             exit={{ 
@@ -65,61 +71,36 @@ export const AttackAnimation: React.FC<AttackAnimationProps> = ({
               ease: 'easeInOut'
             }}
           >
-            {type === 'critical' ? (
-              <div className="relative">
-                <motion.div
-                  animate={{
-                    rotate: [0, 360],
-                    scale: [1, 1.2, 1]
-                  }}
-                  transition={{
-                    duration: 0.5,
-                    ease: 'linear'
-                  }}
-                >
-                  <Zap className="w-16 h-16 text-yellow-400 drop-shadow-[0_0_15px_rgba(250,204,21,0.8)]" />
-                </motion.div>
-                <motion.div
-                  className="absolute inset-0"
-                  animate={{
-                    scale: [0.8, 1.5, 0.8],
-                    opacity: [0.8, 0.3, 0.8]
-                  }}
-                  transition={{
-                    duration: 0.5,
-                    repeat: Infinity
-                  }}
-                >
-                  <Sparkles className="w-16 h-16 text-yellow-300" />
-                </motion.div>
-              </div>
-            ) : (
-              <motion.div
-                animate={{
-                  rotate: isPlayerAttacking ? [0, 180] : [180, 360]
-                }}
-                transition={{
-                  duration: 0.5,
-                  ease: 'linear'
-                }}
-              >
-                <Sword className="w-12 h-12 text-red-500 drop-shadow-[0_0_10px_rgba(239,68,68,0.6)]" />
-              </motion.div>
-            )}
+            <motion.div
+              animate={{
+                rotate: [0, 360]
+              }}
+              transition={{
+                duration: 0.5,
+                ease: 'linear'
+              }}
+            >
+              <Sword className="w-12 h-12 text-red-500 drop-shadow-[0_0_10px_rgba(239,68,68,0.6)]" />
+            </motion.div>
           </motion.div>
         )}
 
-        {/* Эффект попадания */}
+        {/* Эффект попадания - на защитнике */}
         {showImpact && (
           <motion.div
             key="impact"
-            className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2"
+            className="absolute"
+            style={{
+              left: endPos.x,
+              top: endPos.y,
+              transform: 'translate(-50%, -50%)'
+            }}
             initial={{ 
               scale: 0,
               opacity: 1
             }}
             animate={{ 
-              scale: type === 'blocked' ? [0, 1, 1.2, 0] : [0, 1.5, 2, 0],
+              scale: type === 'blocked' ? [0, 1, 1.2, 0] : type === 'critical' ? [0, 1.2, 1.5, 0] : [0, 1.5, 2, 0],
               opacity: [1, 1, 0.8, 0]
             }}
             transition={{ 

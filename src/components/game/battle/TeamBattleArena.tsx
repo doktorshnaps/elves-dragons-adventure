@@ -63,6 +63,22 @@ export const TeamBattleArena: React.FC<TeamBattleArenaProps> = ({
     type: 'normal',
     source: 'player'
   });
+
+  // Refs для получения позиций кубиков
+  const playerDiceRef = React.useRef<HTMLDivElement>(null);
+  const enemyDiceRef = React.useRef<HTMLDivElement>(null);
+
+  // Функция для получения центра элемента относительно его родителя
+  const getDicePosition = (ref: React.RefObject<HTMLDivElement>) => {
+    if (!ref.current) return { x: 0, y: 0 };
+    const rect = ref.current.getBoundingClientRect();
+    const parentRect = ref.current.offsetParent?.getBoundingClientRect();
+    if (!parentRect) return { x: 0, y: 0 };
+    return {
+      x: rect.left - parentRect.left + rect.width / 2,
+      y: rect.top - parentRect.top + rect.height / 2
+    };
+  };
   const alivePairs = playerPairs.filter(pair => pair.health > 0);
   const aliveOpponents = opponents.filter(opp => opp.health > 0);
   const handleAttack = () => {
@@ -356,6 +372,8 @@ export const TeamBattleArena: React.FC<TeamBattleArenaProps> = ({
                 isActive={attackAnimation.isActive}
                 type={attackAnimation.type}
                 source={attackAnimation.source}
+                attackerPosition={attackAnimation.source === 'player' ? getDicePosition(playerDiceRef) : getDicePosition(enemyDiceRef)}
+                defenderPosition={attackAnimation.source === 'player' ? getDicePosition(enemyDiceRef) : getDicePosition(playerDiceRef)}
               />
               <div className="text-center space-y-2">
                 <div className="text-sm font-medium text-white">
@@ -367,7 +385,7 @@ export const TeamBattleArena: React.FC<TeamBattleArenaProps> = ({
                   {/* Всегда показываем кубики */}
                   <div className="flex items-center justify-center gap-4">
                     {/* Left Dice (Игрок) */}
-                    <div className="w-20 flex justify-center">
+                    <div ref={playerDiceRef} className="w-20 flex justify-center">
                       <InlineDiceDisplay
                         key={`dice-left-${diceKey}`}
                         isRolling={isDiceRolling}
@@ -397,7 +415,7 @@ export const TeamBattleArena: React.FC<TeamBattleArenaProps> = ({
                     )}
 
                     {/* Right Dice (Монстр) */}
-                    <div className="w-20 flex justify-center">
+                    <div ref={enemyDiceRef} className="w-20 flex justify-center">
                       <InlineDiceDisplay
                         key={`dice-right-${diceKey}`}
                         isRolling={isDiceRolling}
