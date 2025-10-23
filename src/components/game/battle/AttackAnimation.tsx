@@ -21,9 +21,9 @@ export const AttackAnimation: React.FC<AttackAnimationProps> = ({
 
   useEffect(() => {
     if (isActive) {
-      // Для обычной атаки показываем эффект попадания через 500мс (полет меча)
-      // Для критической и блокировки - сразу показываем эффект на защитнике
-      const delay = type === 'normal' ? 500 : 0;
+      // Для обычной атаки и блокировки показываем эффект попадания через 500мс (полет меча)
+      // Для критической - сразу показываем эффект на защитнике
+      const delay = (type === 'normal' || type === 'blocked') ? 500 : 0;
       
       const timer = setTimeout(() => {
         setShowImpact(true);
@@ -48,8 +48,8 @@ export const AttackAnimation: React.FC<AttackAnimationProps> = ({
   return (
     <div className="absolute inset-0 pointer-events-none z-50">
       <AnimatePresence>
-        {/* Проектайл атаки - только для обычной атаки */}
-        {!showImpact && type === 'normal' && (
+        {/* Проектайл атаки - для обычной атаки и блокировки */}
+        {!showImpact && (type === 'normal' || type === 'blocked') && (
           <motion.div
             key="projectile"
             className="absolute"
