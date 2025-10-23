@@ -13,7 +13,8 @@ export interface ItemTemplate {
 }
 
 export const useItemTemplates = () => {
-  const [templates, setTemplates] = useState<Map<string, ItemTemplate>>(new Map());
+  const [byItemId, setByItemId] = useState<Map<string, ItemTemplate>>(new Map());
+  const [byNumericId, setByNumericId] = useState<Map<string, ItemTemplate>>(new Map());
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -21,16 +22,21 @@ export const useItemTemplates = () => {
       try {
         const { data, error } = await supabase
           .from('item_templates')
-          .select('*');
+          .select('id, item_id, name, type, rarity, description, value, image_url');
 
         if (error) throw error;
 
-        const templatesMap = new Map<string, ItemTemplate>();
+        const itemIdMap = new Map<string, ItemTemplate>();
+        const numericIdMap = new Map<string, ItemTemplate>();
+
         data?.forEach((template) => {
-          templatesMap.set(template.item_id, template as ItemTemplate);
+          const t = template as unknown as ItemTemplate;
+          if (t.item_id) itemIdMap.set(String(t.item_id), t);
+          if (typeof t.id !== 'undefined') numericIdMap.set(String(t.id), t);
         });
 
-        setTemplates(templatesMap);
+        setByItemId(itemIdMap);
+        setByNumericId(numericIdMap);
       } catch (error) {
         console.error('Error loading item templates:', error);
       } finally {
@@ -41,9 +47,18 @@ export const useItemTemplates = () => {
     loadTemplates();
   }, []);
 
-  const getItemName = (itemId: string): string => {
-    return templates.get(itemId)?.name || itemId;
+  const getTemplate = (idOrItemId: string): ItemTemplate | undefined => {
+    const key = String(idOrItemId);
+    return byItemId.get(key) || byNumericId.get(key) || byItemId.get(key.toLowerCase());
   };
 
-  return { templates, loading, getItemName };
+  const getItemName = (idOrItemId: string): string => {
+    const t = getTemplate(idOrItemId);
+    return t?.name || String(idOrItemId);
+  };
+
+  // Keep a merged map for compatibility (by item_id keys)
+  const templates = byItemId;
+
+  return { templates, loading, getItemName, getTemplate };
 };

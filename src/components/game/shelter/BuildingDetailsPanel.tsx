@@ -33,7 +33,7 @@ export const BuildingDetailsPanel = ({
 }: BuildingDetailsPanelProps) => {
   const { language } = useLanguage();
   const { inventory } = useInventoryState();
-  const { getItemName } = useItemTemplates();
+  const { getItemName, getTemplate } = useItemTemplates();
 
   // Подсчитываем количество каждого предмета в инвентаре
   const inventoryCounts = useMemo(() => {
@@ -161,16 +161,20 @@ export const BuildingDetailsPanel = ({
                 {normalizedRequiredItems.map((rawItem: any, idx: number) => {
                   let itemId = '';
                   let reqQty = 1;
-                  
+
                   if (typeof rawItem === 'string' || typeof rawItem === 'number') {
                     itemId = String(rawItem);
                   } else if (typeof rawItem === 'object' && rawItem !== null) {
-                    itemId = rawItem.item_id ?? rawItem.itemId ?? rawItem.id ?? rawItem.type ?? '';
+                    itemId = String(rawItem.item_id ?? rawItem.itemId ?? rawItem.id ?? rawItem.type ?? '');
                     reqQty = Number(rawItem.quantity ?? rawItem.qty ?? rawItem.count ?? rawItem.amount ?? 1);
                   }
-                  
-                  const displayName = getItemName(itemId);
-                  const itemKey = resolveItemKey(itemId);
+
+                  const template = getTemplate(itemId);
+                  const displayName = template?.name || getItemName(itemId);
+
+                  // Use the canonical item_id from template (if available) to match inventory keys
+                  const canonicalId = template?.item_id ? String(template.item_id) : itemId;
+                  const itemKey = resolveItemKey(canonicalId);
                   const playerHas = inventoryCounts[itemKey] || 0;
                   return (
                     <div key={idx} className="flex items-center justify-between px-3 py-2 rounded-lg border border-border bg-muted/20">
