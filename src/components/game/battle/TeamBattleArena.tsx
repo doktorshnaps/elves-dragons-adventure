@@ -224,12 +224,6 @@ export const TeamBattleArena: React.FC<TeamBattleArenaProps> = ({
     }
   }, [autoBattle, isPlayerTurn, alivePairs.length, aliveOpponents.length]);
   return <div className="h-screen w-screen overflow-hidden p-2 flex flex-col relative">
-      {/* Attack Animation Overlay */}
-      <AttackAnimation 
-        isActive={attackAnimation.isActive}
-        type={attackAnimation.type}
-        source={attackAnimation.source}
-      />
       <div className="w-full h-full flex flex-col space-y-2">
         {/* Header */}
         <Card variant="menu" style={{ boxShadow: '-33px 15px 10px rgba(0, 0, 0, 0.6)' }}>
@@ -356,7 +350,13 @@ export const TeamBattleArena: React.FC<TeamBattleArenaProps> = ({
 
           {/* Combat Actions - Center */}
           <Card variant="menu" className="flex-shrink-0" style={{ boxShadow: '-33px 15px 10px rgba(0, 0, 0, 0.6)' }}>
-            <CardContent className="p-2">
+            <CardContent className="p-2 relative">
+              {/* Attack Animation Overlay */}
+              <AttackAnimation 
+                isActive={attackAnimation.isActive}
+                type={attackAnimation.type}
+                source={attackAnimation.source}
+              />
               <div className="text-center space-y-2">
                 <div className="text-sm font-medium text-white">
                   {isPlayerTurn ? <span className="text-green-400">Ваш ход</span> : <span className="text-red-400">Ход противника</span>}

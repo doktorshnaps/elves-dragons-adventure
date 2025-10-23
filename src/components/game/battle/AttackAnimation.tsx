@@ -39,7 +39,7 @@ export const AttackAnimation: React.FC<AttackAnimationProps> = ({
   const endY = isPlayerAttacking ? '100%' : '0%';
 
   return (
-    <div className="fixed inset-0 pointer-events-none z-50">
+    <div className="absolute inset-0 pointer-events-none z-50">
       <AnimatePresence>
         {/* Проектайл атаки */}
         {!showImpact && (
