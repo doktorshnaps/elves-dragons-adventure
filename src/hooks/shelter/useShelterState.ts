@@ -5,6 +5,7 @@ import { t } from '@/utils/translations';
 import { useToast } from '@/hooks/use-toast';
 import { useBuildingUpgrades } from '@/hooks/useBuildingUpgrades';
 import { useBuildingConfigs } from '@/hooks/useBuildingConfigs';
+import { useItemTemplates } from '@/hooks/useItemTemplates';
 
 export interface NestUpgrade {
   id: string;
@@ -45,7 +46,7 @@ export const useShelterState = () => {
   const { toast } = useToast();
   const { startUpgradeAtomic, isUpgrading, getUpgradeProgress, formatRemainingTime, installUpgrade, isUpgradeReady } = useBuildingUpgrades();
   const { getBuildingConfig, getUpgradeCost: getUpgradeCostFromDB, loading: configsLoading } = useBuildingConfigs();
-  
+  const { getTemplate, getItemName } = useItemTemplates();
   const [activeTab, setActiveTab] = useState<"upgrades" | "crafting" | "barracks" | "dragonlair" | "medical" | "workers">("upgrades");
   const [balance, setBalance] = useState(gameState.balance);
   
@@ -336,19 +337,38 @@ export const useShelterState = () => {
     
     // Удаляем требуемые предметы из inventory (ищем по name)
     let newInventory = [...gameState.inventory];
-    if (upgrade.requiredItems && upgrade.requiredItems.length > 0) {
-      upgrade.requiredItems.forEach(reqItem => {
-        let removedCount = 0;
-        
-        newInventory = newInventory.filter(invItem => {
-          // Ищем совпадение по name предмета с item_id из требований
-          if (invItem.name === reqItem.item_id && removedCount < reqItem.quantity) {
-            removedCount++;
-            return false; // удаляем предмет (по уникальному id)
-          }
-          return true; // оставляем предмет
-        });
-      });
+    if (upgrade.requiredItems && (Array.isArray(upgrade.requiredItems) || typeof upgrade.requiredItems === 'object')) {
+      const toRemove = new Map<string, number>();
+
+      // Нормализуем список требуемых предметов из массива или объектной формы
+      const entries: Array<{ item_id: string; quantity: number }> = Array.isArray(upgrade.requiredItems)
+        ? (upgrade.requiredItems as any[]).map((req: any) => ({
+            item_id: String(req.item_id ?? req.id ?? req.type ?? ''),
+            quantity: Number(req.quantity ?? req.qty ?? req.count ?? 1)
+          }))
+        : Object.entries(upgrade.requiredItems as Record<string, any>)
+            .map(([key, qty]) => ({ item_id: String(key), quantity: Number(qty ?? 1) }));
+
+      // Считаем, сколько каких предметов по ИМЕНИ нужно удалить
+      for (const req of entries) {
+        const template = getTemplate(req.item_id);
+        const targetName = (template?.name || getItemName(req.item_id) || req.item_id) as string;
+        const prev = toRemove.get(targetName) || 0;
+        toRemove.set(targetName, prev + (req.quantity || 1));
+      }
+
+      // Одним проходом удаляем РОВНО нужное кол-во экземпляров (по уникальным id), совпадающих по name
+      const filtered: any[] = [];
+      for (const item of newInventory) {
+        const name = (item?.name ?? '') as string;
+        const need = toRemove.get(name) || 0;
+        if (need > 0) {
+          toRemove.set(name, need - 1);
+          continue; // удаляем этот экземпляр
+        }
+        filtered.push(item);
+      }
+      newInventory = filtered;
     }
     
     try {
