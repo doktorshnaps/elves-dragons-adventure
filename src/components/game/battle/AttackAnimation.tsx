@@ -5,6 +5,9 @@ import blockSound1 from '@/assets/sounds/blok-mechom.mp3';
 import blockSound2 from '@/assets/sounds/blok-mechom-2.mp3';
 import blockSound3 from '@/assets/sounds/blok-mechom-3.mp3';
 import blockSound4 from '@/assets/sounds/blok-mechom-4.mp3';
+import attackSound1 from '@/assets/sounds/mech-v-telo-1.mp3';
+import attackSound2 from '@/assets/sounds/mech-v-telo-2.mp3';
+import criticalSound from '@/assets/sounds/mech-razrubanie.mp3';
 
 interface AttackAnimationProps {
   isActive: boolean;
@@ -23,6 +26,8 @@ export const AttackAnimation: React.FC<AttackAnimationProps> = ({
 }) => {
   const [showImpact, setShowImpact] = useState(false);
   const blockSoundsRef = useRef<HTMLAudioElement[]>([]);
+  const attackSoundsRef = useRef<HTMLAudioElement[]>([]);
+  const criticalSoundRef = useRef<HTMLAudioElement | null>(null);
 
   // Инициализация аудио объектов
   useEffect(() => {
@@ -33,10 +38,25 @@ export const AttackAnimation: React.FC<AttackAnimationProps> = ({
       new Audio(blockSound4)
     ];
     
+    attackSoundsRef.current = [
+      new Audio(attackSound1),
+      new Audio(attackSound2)
+    ];
+    
+    criticalSoundRef.current = new Audio(criticalSound);
+    
     // Настройка громкости
     blockSoundsRef.current.forEach(audio => {
       audio.volume = 0.5;
     });
+    
+    attackSoundsRef.current.forEach(audio => {
+      audio.volume = 0.6;
+    });
+    
+    if (criticalSoundRef.current) {
+      criticalSoundRef.current.volume = 0.7;
+    }
   }, []);
 
   useEffect(() => {
@@ -57,15 +77,25 @@ export const AttackAnimation: React.FC<AttackAnimationProps> = ({
     }
   }, [isActive, type]);
 
-  // Воспроизведение звука блокировки
+  // Воспроизведение звуков атаки
   useEffect(() => {
-    if (showImpact && type === 'blocked') {
-      const randomIndex = Math.floor(Math.random() * blockSoundsRef.current.length);
-      const selectedSound = blockSoundsRef.current[randomIndex];
-      
-      // Сброс и воспроизведение
-      selectedSound.currentTime = 0;
-      selectedSound.play().catch(err => console.log('Block sound play failed:', err));
+    if (showImpact) {
+      if (type === 'blocked') {
+        const randomIndex = Math.floor(Math.random() * blockSoundsRef.current.length);
+        const selectedSound = blockSoundsRef.current[randomIndex];
+        selectedSound.currentTime = 0;
+        selectedSound.play().catch(err => console.log('Block sound play failed:', err));
+      } else if (type === 'critical') {
+        if (criticalSoundRef.current) {
+          criticalSoundRef.current.currentTime = 0;
+          criticalSoundRef.current.play().catch(err => console.log('Critical sound play failed:', err));
+        }
+      } else if (type === 'normal') {
+        const randomIndex = Math.floor(Math.random() * attackSoundsRef.current.length);
+        const selectedSound = attackSoundsRef.current[randomIndex];
+        selectedSound.currentTime = 0;
+        selectedSound.play().catch(err => console.log('Attack sound play failed:', err));
+      }
     }
   }, [showImpact, type]);
 
