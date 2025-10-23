@@ -34,6 +34,7 @@ export const TeamBattlePage: React.FC<TeamBattlePageProps> = ({
   const { accountId } = useWalletContext();
   const { deviceId, startDungeonSession, endDungeonSession } = useDungeonSync();
   const [sessionTerminated, setSessionTerminated] = useState(false);
+  const [showingFinishDelay, setShowingFinishDelay] = useState(false);
   
   // Sync health from database on component mount
   useCardHealthSync();
@@ -284,25 +285,28 @@ export const TeamBattlePage: React.FC<TeamBattlePageProps> = ({
     // Фикс гонки: ждём, пока эффект подсчёта убийств обновит state
     processedLevelRef.current = battleState.level;
 
-    setTimeout(() => {
+    // Победа/поражение — даём времени анимациям
+    if (!isVictory) {
       const kills = monstersKilledRef.current;
-      console.log(`🏁 Бой завершен. Победа: ${isVictory}, Уровень: ${battleState.level}, Убито монстров (из ref): ${kills.length}`);
-      console.log('🎯 BATTLE END DEBUG (from ref):', JSON.stringify(kills, null, 2));
-
-      if (!isVictory) {
-        console.log('💀 ПОРАЖЕНИЕ - очистка состояния боя');
-        localStorage.removeItem('teamBattleState');
-        localStorage.removeItem('activeBattleInProgress');
-        localStorage.removeItem('battleState'); // legacy
-        processDungeonCompletion(kills, battleState.level, isFullCompletion, true); // isDefeat = true
-      } else {
-        console.log('✅ ПОБЕДА - обработка наград');
+      console.log('💀 ПОРАЖЕНИЕ - очистка состояния боя');
+      localStorage.removeItem('teamBattleState');
+      localStorage.removeItem('activeBattleInProgress');
+      localStorage.removeItem('battleState'); // legacy
+      processDungeonCompletion(kills, battleState.level, isFullCompletion, true); // isDefeat = true
+    } else {
+      // Задержка 1.8с, чтобы успели проиграться бросок кубика, полет оружия и смерть монстра
+      setShowingFinishDelay(true);
+      const delayMs = 1800;
+      setTimeout(() => {
+        const kills = monstersKilledRef.current;
+        console.log('✅ ПОБЕДА - обработка наград (после задержки)', { delayMs, level: battleState.level, kills: kills.length });
         processDungeonCompletion(kills, battleState.level, isFullCompletion, false);
-      }
-    }, 0);
+        setShowingFinishDelay(false);
+      }, delayMs);
+    }
   }, [isBattleOver, battleStarted, alivePairs.length, battleState.level, processDungeonCompletion]);
   
-  if (isBattleOver && battleStarted) {
+  if (isBattleOver && battleStarted && !showingFinishDelay) {
     // Если модальное окно еще не готово
     if (!pendingReward) {
       // При полном поражении награды нет — показываем экран поражения с выходом
