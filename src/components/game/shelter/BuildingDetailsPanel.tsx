@@ -40,12 +40,12 @@ export const BuildingDetailsPanel = ({
 
   if (!selectedBuilding) {
     const emptyContent = (
-      <div className="p-6 text-center">
-        <div className="text-6xl mb-4">🏗️</div>
-        <h2 className="text-2xl font-bold text-primary mb-3">
+      <div className="p-6 text-center opacity-40">
+        <div className="text-4xl mb-3 opacity-60">🏗️</div>
+        <h2 className="text-lg font-semibold text-muted-foreground mb-2">
           {t(language, 'shelter.selectBuilding') || 'Выберите здание'}
         </h2>
-        <p className="text-muted-foreground text-sm leading-relaxed">
+        <p className="text-muted-foreground/60 text-xs leading-relaxed">
           {t(language, 'shelter.selectBuildingDesc') || 
             'Нажмите на здание, чтобы увидеть подробную информацию и возможности улучшения.'}
         </p>
@@ -57,7 +57,7 @@ export const BuildingDetailsPanel = ({
     }
     
     return (
-      <Card variant="glassmorphic" className="sticky top-6 h-fit">
+      <Card variant="glassmorphic" className="sticky top-6 h-fit opacity-50 bg-card/40">
         {emptyContent}
       </Card>
     );
