@@ -1,6 +1,10 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Sword, Shield, Zap, Sparkles } from 'lucide-react';
+import blockSound1 from '@/assets/sounds/blok-mechom.mp3';
+import blockSound2 from '@/assets/sounds/blok-mechom-2.mp3';
+import blockSound3 from '@/assets/sounds/blok-mechom-3.mp3';
+import blockSound4 from '@/assets/sounds/blok-mechom-4.mp3';
 
 interface AttackAnimationProps {
   isActive: boolean;
@@ -18,6 +22,22 @@ export const AttackAnimation: React.FC<AttackAnimationProps> = ({
   defenderPosition
 }) => {
   const [showImpact, setShowImpact] = useState(false);
+  const blockSoundsRef = useRef<HTMLAudioElement[]>([]);
+
+  // Инициализация аудио объектов
+  useEffect(() => {
+    blockSoundsRef.current = [
+      new Audio(blockSound1),
+      new Audio(blockSound2),
+      new Audio(blockSound3),
+      new Audio(blockSound4)
+    ];
+    
+    // Настройка громкости
+    blockSoundsRef.current.forEach(audio => {
+      audio.volume = 0.5;
+    });
+  }, []);
 
   useEffect(() => {
     if (isActive) {
@@ -36,6 +56,18 @@ export const AttackAnimation: React.FC<AttackAnimationProps> = ({
       setShowImpact(false);
     }
   }, [isActive, type]);
+
+  // Воспроизведение звука блокировки
+  useEffect(() => {
+    if (showImpact && type === 'blocked') {
+      const randomIndex = Math.floor(Math.random() * blockSoundsRef.current.length);
+      const selectedSound = blockSoundsRef.current[randomIndex];
+      
+      // Сброс и воспроизведение
+      selectedSound.currentTime = 0;
+      selectedSound.play().catch(err => console.log('Block sound play failed:', err));
+    }
+  }, [showImpact, type]);
 
   if (!isActive) return null;
 
