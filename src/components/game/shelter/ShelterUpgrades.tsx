@@ -1,10 +1,14 @@
-import { BuildingCard } from "./BuildingCard";
-import { BuildingWorkerStatus } from "./BuildingWorkerStatus";
-import { ResourceBuilding } from "../ResourceBuilding";
+import { useState } from "react";
+import { BuildingGridCard } from "./BuildingGridCard";
+import { BuildingDetailsPanel } from "./BuildingDetailsPanel";
+import { InventoryPanel } from "./InventoryPanel";
 import { NestUpgrade } from "@/hooks/shelter/useShelterState";
-import { getWarehouseWorkingHours } from "@/config/buildings";
-import { useLanguage } from "@/hooks/useLanguage";
-import { t } from "@/utils/translations";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
 interface ShelterUpgradesProps {
   upgrades: NestUpgrade[];
@@ -29,67 +33,88 @@ export const ShelterUpgrades = ({
   formatRemainingTime,
   hasWorkersInBuilding,
   getActiveWorkersInBuilding,
-  buildingLevels,
-  getUpgradeTime,
   isUpgradeReady
 }: ShelterUpgradesProps) => {
-  const { language } = useLanguage();
+  const [selectedBuilding, setSelectedBuilding] = useState<NestUpgrade | null>(null);
+  const [isMobileDialogOpen, setIsMobileDialogOpen] = useState(false);
+
+  const handleBuildingClick = (building: NestUpgrade) => {
+    setSelectedBuilding(building);
+    // На мобильных и планшетах открываем диалог
+    if (window.innerWidth < 1280) {
+      setIsMobileDialogOpen(true);
+    }
+  };
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-      {upgrades.map((upgrade) => {
-        const activeWorkers = getActiveWorkersInBuilding(upgrade.id);
-        const hasWorkers = hasWorkersInBuilding(upgrade.id);
-        
-        return (
-          <BuildingCard
-            key={upgrade.id}
-            upgrade={upgrade}
-            canAfford={canAffordUpgrade(upgrade)}
-            isUpgrading={isUpgrading(upgrade.id)}
-            upgradeProgress={getUpgradeProgress(upgrade.id)}
-            hasWorkers={hasWorkers}
-            activeWorkersCount={activeWorkers.length}
-            onUpgrade={() => handleUpgrade(upgrade)}
-            formatRemainingTime={formatRemainingTime}
-            isUpgradeReady={isUpgradeReady(upgrade.id)}
-          >
-            {/* Особая логика для разных типов зданий */}
-            {upgrade.id === 'sawmill' && buildingLevels.sawmill > 0 && (
-              <ResourceBuilding
-                type="sawmill"
-                name="Лесопилка"
-                icon={<span>🪵</span>}
-                resourceType="wood"
-                hasActiveWorkers={hasWorkers}
-              />
-            )}
+    <>
+      <div className="flex gap-6">
+        {/* Left Panel - Inventory (скрыта на малых экранах) */}
+        <div className="w-64 flex-shrink-0 hidden lg:block">
+          <InventoryPanel />
+        </div>
 
-            {upgrade.id === 'quarry' && buildingLevels.quarry > 0 && (
-              <ResourceBuilding
-                type="quarry"
-                name="Каменоломня"
-                icon={<span>🪨</span>}
-                resourceType="stone"
-                hasActiveWorkers={hasWorkers}
-              />
-            )}
+        {/* Center - Buildings Grid */}
+        <div className="flex-1">
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+            {upgrades.map((upgrade) => {
+              const activeWorkers = getActiveWorkersInBuilding(upgrade.id);
+              const hasWorkers = hasWorkersInBuilding(upgrade.id);
+              
+              return (
+                <BuildingGridCard
+                  key={upgrade.id}
+                  upgrade={upgrade}
+                  isSelected={selectedBuilding?.id === upgrade.id}
+                  isUpgrading={isUpgrading(upgrade.id)}
+                  upgradeProgress={getUpgradeProgress(upgrade.id)}
+                  hasWorkers={hasWorkers}
+                  activeWorkersCount={activeWorkers.length}
+                  onClick={() => handleBuildingClick(upgrade)}
+                  formatRemainingTime={formatRemainingTime}
+                />
+              );
+            })}
+          </div>
+        </div>
 
-            {upgrade.id === 'storage' && (
-              <div className="text-sm space-y-1 p-2 bg-muted/50 rounded">
-                <div>{t(language, 'shelter.storageCapacity')}: {getWarehouseWorkingHours(buildingLevels.storage)} {t(language, 'shelter.hours')}</div>
-              </div>
-            )}
+        {/* Right Panel - Building Details (скрыта на экранах меньше XL) */}
+        <div className="w-80 flex-shrink-0 hidden xl:block">
+          <BuildingDetailsPanel
+            selectedBuilding={selectedBuilding}
+            canAfford={selectedBuilding ? canAffordUpgrade(selectedBuilding) : false}
+            isUpgrading={selectedBuilding ? isUpgrading(selectedBuilding.id) : false}
+            onUpgrade={() => selectedBuilding && handleUpgrade(selectedBuilding)}
+            isUpgradeReady={selectedBuilding ? isUpgradeReady(selectedBuilding.id) : false}
+          />
+        </div>
+      </div>
 
-            {(upgrade.id === 'workshop' || upgrade.id === 'sawmill' || upgrade.id === 'quarry') && activeWorkers.length > 0 && (
-              <BuildingWorkerStatus
-                buildingId={upgrade.id}
-                activeWorkers={activeWorkers}
-              />
-            )}
-          </BuildingCard>
-        );
-      })}
-    </div>
+      {/* Mobile/Tablet Dialog для деталей здания */}
+      <Dialog open={isMobileDialogOpen} onOpenChange={setIsMobileDialogOpen}>
+        <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="text-2xl font-bold text-primary">
+              {selectedBuilding?.name}
+            </DialogTitle>
+          </DialogHeader>
+          <div className="mt-4">
+            <BuildingDetailsPanel
+              selectedBuilding={selectedBuilding}
+              canAfford={selectedBuilding ? canAffordUpgrade(selectedBuilding) : false}
+              isUpgrading={selectedBuilding ? isUpgrading(selectedBuilding.id) : false}
+              onUpgrade={() => {
+                if (selectedBuilding) {
+                  handleUpgrade(selectedBuilding);
+                  setIsMobileDialogOpen(false);
+                }
+              }}
+              isUpgradeReady={selectedBuilding ? isUpgradeReady(selectedBuilding.id) : false}
+              insideDialog={true}
+            />
+          </div>
+        </DialogContent>
+      </Dialog>
+    </>
   );
 };
