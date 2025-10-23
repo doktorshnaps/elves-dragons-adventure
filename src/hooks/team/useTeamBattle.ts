@@ -288,8 +288,11 @@ export const useTeamBattle = (dungeonType: DungeonType, initialLevel: number = 1
 
     // Check if all enemies defeated
     if (battleState.opponents.filter(o => o.health > 0).length === 1 && newTargetHealth === 0) {
-      // Level cleared — do not auto-advance. Let UI decide via reward modal.
-      localStorage.setItem('activeBattleInProgress', 'false');
+      // Level cleared — добавляем задержку для показа анимаций перед завершением уровня
+      // Задержка: 2 сек (бросок кубиков) + 1 сек (полет меча) + 0.8 сек (анимация попадания) + 1.5 сек (показ смерти монстра) = ~5 секунд
+      setTimeout(() => {
+        localStorage.setItem('activeBattleInProgress', 'false');
+      }, 5000);
       // Do not call handleLevelComplete here and do not switch turn
     } else {
       // Switch to next attacker or enemy turn
