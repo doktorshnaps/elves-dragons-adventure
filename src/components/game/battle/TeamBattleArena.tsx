@@ -150,6 +150,17 @@ export const TeamBattleArena: React.FC<TeamBattleArenaProps> = ({
   // Получаем прогресс опыта для отображения
   const xpProgress = getXPProgress(accountExperience);
 
+  // Сбрасываем все состояния анимаций при смене уровня
+  useEffect(() => {
+    setAttackAnimation({ isActive: false, type: 'normal', source: 'player' });
+    setIsDiceRolling(false);
+    setAttackingPair(null);
+    setAttackedTarget(null);
+    setDefendingPair(null);
+    setSelectedPair(null);
+    setSelectedTarget(null);
+  }, [level]);
+
   // Запускаем анимацию атаки когда кубики перестают вращаться
   useEffect(() => {
     if (lastRoll && !isDiceRolling) {
