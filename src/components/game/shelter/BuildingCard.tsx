@@ -50,42 +50,83 @@ export const BuildingCard = ({
   }, [inventory]);
 
   return (
-    <Card className="bg-card/80 backdrop-blur-sm border-primary/20 hover:border-primary/40 transition-all">
-      <CardHeader>
+    <Card 
+      variant="glassmorphic" 
+      className={`group relative overflow-hidden min-h-[200px] transition-all duration-300 hover:shadow-[0_8px_32px_rgba(251,191,36,0.2)] hover:-translate-y-1 ${isUpgrading ? 'animate-pulse-slow' : ''}`}
+    >
+      <CardHeader className="space-y-3">
         <div className="flex items-center justify-between">
-          <CardTitle className="text-xl">{upgrade.name}</CardTitle>
-          <Badge variant="secondary" className="text-sm">
+          <CardTitle className="text-lg font-semibold text-foreground group-hover:text-primary transition-colors">
+            {upgrade.name}
+          </CardTitle>
+          <Badge 
+            variant="default" 
+            className="text-xs font-bold bg-primary text-primary-foreground px-2 py-1 rounded-full"
+          >
             {t(language, 'shelter.level')} {upgrade.level}/{upgrade.maxLevel}
           </Badge>
         </div>
-        <CardDescription className="text-sm">{upgrade.description}</CardDescription>
+        
+        {/* Level Progress Bar */}
+        {upgrade.level > 0 && upgrade.level < upgrade.maxLevel && (
+          <div className="w-full h-2 bg-muted/30 rounded-full overflow-hidden">
+            <div 
+              className="h-full bg-gradient-to-r from-primary via-primary to-yellow-400 transition-all duration-500 relative overflow-hidden"
+              style={{ width: `${(upgrade.level / upgrade.maxLevel) * 100}%` }}
+            >
+              <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent animate-shimmer" />
+            </div>
+          </div>
+        )}
+        
+        <CardDescription className="text-sm text-muted-foreground leading-relaxed">
+          {upgrade.description}
+        </CardDescription>
       </CardHeader>
       
       <CardContent className="space-y-4">
-        {/* Прогресс апгрейда */}
+        {/* Прогресс апгрейда с анимацией */}
         {isUpgrading && upgradeProgress && (
-          <div className="space-y-2 p-3 bg-primary/10 rounded-lg border border-primary/20">
+          <div className="space-y-2 p-3 rounded-lg border-2 border-primary/30 bg-gradient-to-r from-primary/10 via-primary/5 to-primary/10 backdrop-blur-sm relative overflow-hidden">
+            {/* Animated production indicator */}
+            <div className="absolute top-2 right-2 px-2 py-1 bg-success text-white text-[10px] font-bold rounded-full animate-pulse-slow">
+              {t(language, 'shelter.producing')}
+            </div>
+            
             <div className="flex items-center justify-between text-sm">
-              <span className="flex items-center gap-2">
-                <Clock className="w-4 h-4" />
+              <span className="flex items-center gap-2 font-medium text-foreground">
+                <Clock className="w-4 h-4 text-primary animate-pulse" />
                 {t(language, 'shelter.upgrading')}
               </span>
-              <span className="font-medium">
+              <span className="font-bold text-primary">
                 {formatRemainingTime(upgradeProgress.remainingTime)}
               </span>
             </div>
-            <Progress value={upgradeProgress.progress} className="h-2" />
+            
+            {/* Progress bar with shimmer effect */}
+            <div className="relative w-full h-2 bg-muted/30 rounded-full overflow-hidden">
+              <div 
+                className="h-full bg-gradient-to-r from-success via-primary to-success transition-all duration-300 relative"
+                style={{ width: `${upgradeProgress.progress}%` }}
+              >
+                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/40 to-transparent animate-shimmer" />
+              </div>
+            </div>
           </div>
         )}
 
-        {/* Статус рабочих */}
+        {/* Статус рабочих с улучшенным дизайном */}
         {requiresWorkers && (
-          <div className={`flex items-center gap-2 text-sm p-2 rounded ${hasWorkers ? 'bg-green-500/10 text-green-600' : 'bg-amber-500/10 text-amber-600'}`}>
-            <Users className="w-4 h-4" />
+          <div className={`flex items-center gap-2 text-sm p-2.5 rounded-lg border ${
+            hasWorkers 
+              ? 'bg-success/10 text-success border-success/30' 
+              : 'bg-warning/10 text-warning border-warning/30'
+          }`}>
+            <Users className="w-4 h-4 flex-shrink-0" />
             {hasWorkers ? (
-              <span>{t(language, 'shelter.workersActive')}: {activeWorkersCount}</span>
+              <span className="font-medium">{t(language, 'shelter.workersActive')}: <strong>{activeWorkersCount}</strong></span>
             ) : (
-              <span>{t(language, 'shelter.needWorkers')}</span>
+              <span className="font-medium">{t(language, 'shelter.needWorkers')}</span>
             )}
           </div>
         )}
@@ -100,17 +141,19 @@ export const BuildingCard = ({
             
             {/* Требования по уровню главного зала */}
             {upgrade.requiredMainHallLevel > 0 && (
-              <div className="p-2 bg-amber-500/10 border border-amber-500/20 rounded text-sm">
-                <span className="text-amber-600">
-                  {t(language, 'shelter.requiresMainHall')}: {upgrade.requiredMainHallLevel}
+              <div className="p-3 bg-warning/15 border-2 border-warning/30 rounded-lg text-sm flex items-center gap-2">
+                <span className="text-2xl">🏛️</span>
+                <span className="font-semibold text-warning">
+                  {t(language, 'shelter.requiresMainHall')}: <strong className="text-base">{upgrade.requiredMainHallLevel}</strong>
                 </span>
               </div>
             )}
 
-            {/* Требуемые предметы */}
+            {/* Требуемые предметы с улучшенным дизайном */}
             {upgrade.requiredItems && upgrade.requiredItems.length > 0 && (
-              <div className="space-y-1">
-                <div className="text-xs font-medium text-muted-foreground">
+              <div className="space-y-2">
+                <div className="text-sm font-semibold text-primary flex items-center gap-2">
+                  <span className="text-lg">🎒</span>
                   {t(language, 'shelter.requiredItems')}:
                 </div>
                 <div className="flex flex-wrap gap-2">
@@ -153,84 +196,102 @@ export const BuildingCard = ({
                     console.log('🔍 Resolved:', { rawItem, itemKey, displayName, reqQty, playerHas });
                     
                     return (
-                      <Badge 
-                        key={idx} 
-                        variant="outline" 
-                        className={`text-xs ${hasEnough ? 'border-green-500/50 text-green-600' : 'border-red-500/50 text-red-600'}`}
+                      <div 
+                        key={idx}
+                        className={`
+                          px-3 py-2 rounded-lg text-xs font-semibold border-2 transition-all
+                          ${hasEnough 
+                            ? 'bg-success/15 border-success/40 text-success shadow-sm' 
+                            : 'bg-destructive/15 border-destructive/40 text-destructive shadow-sm'
+                          }
+                        `}
                       >
-                        {displayName} x{reqQty} ({playerHas})
-                      </Badge>
+                        <div className="flex items-center gap-1.5">
+                          <span>{hasEnough ? '✓' : '✗'}</span>
+                          <span className="font-bold">{displayName}</span>
+                          <span className="opacity-75">×{reqQty}</span>
+                          <span className={`ml-1 px-1.5 py-0.5 rounded ${hasEnough ? 'bg-success/20' : 'bg-destructive/20'}`}>
+                            {playerHas}
+                          </span>
+                        </div>
+                      </div>
                     );
                   })}
                 </div>
               </div>
             )}
 
-            {/* Ресурсы */}
-            <div className="grid grid-cols-2 gap-2">
+            {/* Ресурсы с улучшенным дизайном */}
+            <div className="grid grid-cols-2 gap-3">
               {upgrade.cost.wood > 0 && (
-                <div className="flex items-center gap-2 text-sm">
-                  <span>🪵</span>
-                  <span>{upgrade.cost.wood}</span>
+                <div className="flex items-center gap-2 px-3 py-2 bg-muted/30 rounded-lg border border-border">
+                  <span className="text-lg">🪵</span>
+                  <span className="font-bold text-foreground">{upgrade.cost.wood}</span>
                 </div>
               )}
               {upgrade.cost.stone > 0 && (
-                <div className="flex items-center gap-2 text-sm">
-                  <span>🪨</span>
-                  <span>{upgrade.cost.stone}</span>
+                <div className="flex items-center gap-2 px-3 py-2 bg-muted/30 rounded-lg border border-border">
+                  <span className="text-lg">🪨</span>
+                  <span className="font-bold text-foreground">{upgrade.cost.stone}</span>
                 </div>
               )}
               {upgrade.cost.iron > 0 && (
-                <div className="flex items-center gap-2 text-sm">
-                  <span>⛏️</span>
-                  <span>{upgrade.cost.iron}</span>
+                <div className="flex items-center gap-2 px-3 py-2 bg-muted/30 rounded-lg border border-border">
+                  <span className="text-lg">⛏️</span>
+                  <span className="font-bold text-foreground">{upgrade.cost.iron}</span>
                 </div>
               )}
               {upgrade.cost.gold > 0 && (
-                <div className="flex items-center gap-2 text-sm">
-                  <span>🪙</span>
-                  <span>{upgrade.cost.gold}</span>
+                <div className="flex items-center gap-2 px-3 py-2 bg-muted/30 rounded-lg border border-border">
+                  <span className="text-lg">🪙</span>
+                  <span className="font-bold text-foreground">{upgrade.cost.gold}</span>
                 </div>
               )}
               {upgrade.cost.balance > 0 && (
-                <div className="flex items-center gap-2 text-sm">
-                  <span>💰</span>
-                  <span>{upgrade.cost.balance} ELL</span>
+                <div className="flex items-center gap-2 px-3 py-2 bg-primary/15 rounded-lg border-2 border-primary/30">
+                  <span className="text-lg">💰</span>
+                  <span className="font-bold text-primary">{upgrade.cost.balance} ELL</span>
                 </div>
               )}
               {upgrade.cost.gt > 0 && (
-                <div className="flex items-center gap-2 text-sm">
-                  <span>💎</span>
-                  <span>{upgrade.cost.gt} GT</span>
+                <div className="flex items-center gap-2 px-3 py-2 bg-primary/15 rounded-lg border-2 border-primary/30">
+                  <span className="text-lg">💎</span>
+                  <span className="font-bold text-primary">{upgrade.cost.gt} GT</span>
                 </div>
               )}
             </div>
 
-            <div className="text-sm text-muted-foreground p-2 bg-muted/50 rounded">
-              <strong>{t(language, 'shelter.benefit')}:</strong> {upgrade.benefit}
+            <div className="text-sm p-3 bg-accent/10 rounded-lg border-2 border-accent/30">
+              <div className="flex items-start gap-2">
+                <span className="text-lg">✨</span>
+                <div>
+                  <div className="font-bold text-accent mb-1">{t(language, 'shelter.benefit')}:</div>
+                  <div className="text-muted-foreground leading-relaxed">{upgrade.benefit}</div>
+                </div>
+              </div>
             </div>
 
             <Button
-              className="w-full"
+              className="w-full font-bold text-base py-6 transition-all duration-300 hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed"
               onClick={onUpgrade}
               disabled={(!canAfford && !isUpgradeReady) || (isUpgrading && !isUpgradeReady)}
               variant={isUpgradeReady ? "default" : undefined}
             >
               {isUpgradeReady 
-                ? t(language, 'shelter.install') 
+                ? `✨ ${t(language, 'shelter.install')}` 
                 : isUpgrading 
-                  ? t(language, 'shelter.upgrading') 
+                  ? `⏳ ${t(language, 'shelter.upgrading')}` 
                   : upgrade.level === 0 
-                    ? t(language, 'shelter.build')
-                    : t(language, 'shelter.upgrade')
+                    ? `🏗️ ${t(language, 'shelter.build')}`
+                    : `⬆️ ${t(language, 'shelter.upgrade')}`
               }
             </Button>
           </div>
         )}
 
         {upgrade.level >= upgrade.maxLevel && (
-          <Badge variant="default" className="w-full justify-center py-2">
-            {t(language, 'shelter.maxLevel')}
+          <Badge variant="default" className="w-full justify-center py-3 text-sm font-bold bg-gradient-to-r from-primary via-yellow-400 to-primary">
+            ⭐ {t(language, 'shelter.maxLevel')} ⭐
           </Badge>
         )}
       </CardContent>
