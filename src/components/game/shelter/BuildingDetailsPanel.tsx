@@ -156,51 +156,39 @@ export const BuildingDetailsPanel = ({
           </div>
 
           {/* Required Items */}
-          {normalizedRequiredItems && normalizedRequiredItems.length > 0 && <div className="space-y-3">
-              <h3 className="text-lg font-semibold flex items-center gap-2">
-                <span className="text-xl">🎒</span>
-                {t(language, 'shelter.requiredItems')}
-              </h3>
-              
-              <div className="space-y-2">
+          {normalizedRequiredItems && normalizedRequiredItems.length > 0 && (
+            <div className="space-y-2">
+              <h3 className="text-lg font-semibold">{t(language, 'shelter.requiredItems')}</h3>
+              <div className="space-y-1">
                 {normalizedRequiredItems.map((rawItem: any, idx: number) => {
-            let itemKey = '';
-            let reqQty = 1;
-            let rawName: string | undefined;
-            if (typeof rawItem === 'string' || typeof rawItem === 'number') {
-              itemKey = resolveItemKey(String(rawItem));
-            } else if (typeof rawItem === 'object' && rawItem !== null) {
-              rawName = rawItem.name ?? rawItem.item_name ?? rawItem.title ?? rawItem.display_name;
-              const rawId = rawItem.item_id ?? rawItem.itemId ?? rawItem.id ?? rawItem.type ?? rawName ?? '';
-              itemKey = resolveItemKey(String(rawId));
-              reqQty = Number(rawItem.quantity ?? rawItem.qty ?? rawItem.count ?? rawItem.amount ?? 1);
-            }
-            const fallbackName = getItemName(itemKey, language);
-            const displayName = rawName && typeof rawName === 'string' ? rawName : fallbackName;
-            let playerHas = inventoryCounts[itemKey] || 0;
-            if (!playerHas && rawName) {
-              const lower = rawName.toLowerCase();
-              playerHas = inventory.filter(i => (i.name || '').toLowerCase() === lower).length || playerHas;
-            }
-            const hasEnough = playerHas >= reqQty;
-            return <div key={idx} className={`
-                        flex items-center justify-between px-3 py-2 rounded-lg border-2
-                        ${hasEnough ? 'bg-success/15 border-success/40' : 'bg-destructive/15 border-destructive/40'}
-                      `}>
-                      <div className="flex items-center gap-2">
-                        <span className={hasEnough ? 'text-success' : 'text-destructive'}>
-                          {hasEnough ? '✓' : '✗'}
-                        </span>
-                        <span className="text-sm font-medium">{displayName}</span>
-                      </div>
-                      <span className="text-sm font-bold">
-                        ×{reqQty}
-                        <span className="text-xs ml-1 opacity-70">({playerHas})</span>
-                      </span>
-                    </div>;
-          })}
+                  let itemKey = '';
+                  let reqQty = 1;
+                  let rawName: string | undefined;
+                  if (typeof rawItem === 'string' || typeof rawItem === 'number') {
+                    itemKey = resolveItemKey(String(rawItem));
+                  } else if (typeof rawItem === 'object' && rawItem !== null) {
+                    rawName = rawItem.name ?? rawItem.item_name ?? rawItem.title ?? rawItem.display_name;
+                    const rawId = rawItem.item_id ?? rawItem.itemId ?? rawItem.id ?? rawItem.type ?? rawName ?? '';
+                    itemKey = resolveItemKey(String(rawId));
+                    reqQty = Number(rawItem.quantity ?? rawItem.qty ?? rawItem.count ?? rawItem.amount ?? 1);
+                  }
+                  const fallbackName = getItemName(itemKey, language);
+                  const displayName = rawName && typeof rawName === 'string' ? rawName : fallbackName;
+                  let playerHas = inventoryCounts[itemKey] || 0;
+                  if (!playerHas && rawName) {
+                    const lower = rawName.toLowerCase();
+                    playerHas = inventory.filter(i => (i.name || '').toLowerCase() === lower).length || playerHas;
+                  }
+                  return (
+                    <div key={idx} className="flex items-center justify-between px-3 py-2 rounded-lg border border-border bg-muted/20">
+                      <span className="text-sm font-medium">{displayName}</span>
+                      <span className="text-sm">×{reqQty} ({playerHas})</span>
+                    </div>
+                  );
+                })}
               </div>
-            </div>}
+            </div>
+          )}
 
           {/* Benefits */}
           <div className="space-y-3">
