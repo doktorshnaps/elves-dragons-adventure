@@ -40,7 +40,15 @@ export const BuildingDetailsPanel = ({
     return counts;
   }, [inventory]);
   if (!selectedBuilding) {
-    const emptyContent;
+    const emptyContent = (
+      <div className="p-6 text-center opacity-40">
+        <div className="text-4xl mb-2">🏰</div>
+        <p className="text-sm text-muted-foreground">
+          {t(language, 'shelter.selectBuilding') || 'Выберите здание'}
+        </p>
+      </div>
+    );
+    
     if (insideDialog) {
       return emptyContent;
     }
