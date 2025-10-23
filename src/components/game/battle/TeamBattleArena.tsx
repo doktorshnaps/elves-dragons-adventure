@@ -47,6 +47,7 @@ export const TeamBattleArena: React.FC<TeamBattleArenaProps> = ({
   const [attackedTarget, setAttackedTarget] = React.useState<number | null>(null);
   const [defendingPair, setDefendingPair] = React.useState<string | null>(null);
   const [autoBattle, setAutoBattle] = useState(false);
+  const [isAttacking, setIsAttacking] = useState(false);
   
   // Dice roll state - теперь берем из реальных бросков
   const [isDiceRolling, setIsDiceRolling] = useState(false);
@@ -161,6 +162,7 @@ export const TeamBattleArena: React.FC<TeamBattleArenaProps> = ({
     setDefendingPair(null);
     setSelectedPair(null);
     setSelectedTarget(null);
+    setIsAttacking(false);
   }, [level]);
 
   // Запускаем анимацию атаки когда кубики перестают вращаться
@@ -226,6 +228,7 @@ export const TeamBattleArena: React.FC<TeamBattleArenaProps> = ({
       setAutoBattle(false);
       setSelectedPair(null);
       setSelectedTarget(null);
+      setIsAttacking(false);
     } else {
       // Включаем автобой
       setAutoBattle(true);
@@ -234,29 +237,30 @@ export const TeamBattleArena: React.FC<TeamBattleArenaProps> = ({
 
   // Автобой логика
   useEffect(() => {
-    if (autoBattle && alivePairs.length > 0 && aliveOpponents.length > 0) {
+    // Проверяем что не в процессе атаки, чтобы не запустить несколько атак подряд
+    if (autoBattle && isPlayerTurn && !isAttacking && alivePairs.length > 0 && aliveOpponents.length > 0) {
       const timer = setTimeout(() => {
-        if (isPlayerTurn) {
-          // Ход игрока - выбираем случайную пару и цель
-          const randomPair = alivePairs[Math.floor(Math.random() * alivePairs.length)];
-          const randomTarget = aliveOpponents[Math.floor(Math.random() * aliveOpponents.length)];
-          if (randomPair && randomTarget) {
-            setAttackingPair(randomPair.id);
-            setAttackedTarget(randomTarget.id);
+        // Ход игрока - выбираем случайную пару и цель
+        const randomPair = alivePairs[Math.floor(Math.random() * alivePairs.length)];
+        const randomTarget = aliveOpponents[Math.floor(Math.random() * aliveOpponents.length)];
+        if (randomPair && randomTarget) {
+          setIsAttacking(true);
+          setAttackingPair(randomPair.id);
+          setAttackedTarget(randomTarget.id);
+          setTimeout(() => {
+            onAttack(randomPair.id, randomTarget.id);
             setTimeout(() => {
-              onAttack(randomPair.id, randomTarget.id);
-              setTimeout(() => {
-                setAttackingPair(null);
-                setAttackedTarget(null);
-              }, 300);
-            }, 200);
-          }
+              setAttackingPair(null);
+              setAttackedTarget(null);
+              setIsAttacking(false);
+            }, 3500); // Ждем завершения анимации и переключения хода
+          }, 200);
         }
       }, 1000); // Задержка 1 секунда для автобоя
 
       return () => clearTimeout(timer);
     }
-  }, [autoBattle, isPlayerTurn, alivePairs.length, aliveOpponents.length]);
+  }, [autoBattle, isPlayerTurn, isAttacking, alivePairs.length, aliveOpponents.length, alivePairs, aliveOpponents, onAttack]);
   return <div className="h-screen w-screen overflow-hidden p-2 flex flex-col relative">
       <div className="w-full h-full flex flex-col space-y-2">
         {/* Header */}
