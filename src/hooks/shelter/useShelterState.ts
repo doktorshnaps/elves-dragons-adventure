@@ -233,22 +233,23 @@ export const useShelterState = () => {
   const nestUpgrades: NestUpgrade[] = useMemo(() => {
     const createUpgrade = (buildingId: string, nameKey: string, descKey: string, benefitKey: string): NestUpgrade => {
       const currentLevel = buildingLevels[buildingId as keyof typeof buildingLevels] || 0;
-      const config = getBuildingConfig(buildingId, currentLevel + 1);
+      const nextLevelConfig = getBuildingConfig(buildingId, currentLevel + 1);
+      const currentLevelConfig = getBuildingConfig(buildingId, currentLevel);
       
       // Формируем динамический benefit на основе данных из building_configs
       let benefit = t(language, benefitKey);
       
-      // Для sawmill и quarry показываем реальную скорость производства
-      if ((buildingId === 'sawmill' || buildingId === 'quarry') && config?.production_per_hour) {
+      // Для sawmill и quarry показываем реальную скорость производства ТЕКУЩЕГО уровня
+      if ((buildingId === 'sawmill' || buildingId === 'quarry') && currentLevelConfig?.production_per_hour) {
         const resourceName = buildingId === 'sawmill' 
           ? t(language, 'resources.wood') || 'дерева'
           : t(language, 'resources.stone') || 'камня';
-        benefit = `${config.production_per_hour} ${resourceName} ${t(language, 'shelter.perHour') || 'в час'}`;
+        benefit = `${currentLevelConfig.production_per_hour} ${resourceName} ${t(language, 'shelter.perHour') || 'в час'}`;
       }
       
-      // Для storage показываем рабочие часы
-      if (buildingId === 'storage' && config?.working_hours) {
-        benefit = `${t(language, 'shelter.workingHours') || 'Рабочих часов'}: ${config.working_hours}`;
+      // Для storage показываем рабочие часы ТЕКУЩЕГО уровня
+      if (buildingId === 'storage' && currentLevelConfig?.working_hours) {
+        benefit = `${t(language, 'shelter.workingHours') || 'Рабочих часов'}: ${currentLevelConfig.working_hours}`;
       }
       
       return {
@@ -258,8 +259,8 @@ export const useShelterState = () => {
         level: currentLevel,
         maxLevel: 8,
         cost: getUpgradeCost(buildingId, currentLevel),
-        requiredItems: config?.required_items || [],
-        requiredMainHallLevel: config?.required_main_hall_level || 0,
+        requiredItems: nextLevelConfig?.required_items || [],
+        requiredMainHallLevel: nextLevelConfig?.required_main_hall_level || 0,
         benefit
       };
     };
