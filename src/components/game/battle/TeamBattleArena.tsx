@@ -58,10 +58,12 @@ export const TeamBattleArena: React.FC<TeamBattleArenaProps> = ({
     isActive: boolean;
     type: 'normal' | 'critical' | 'blocked';
     source: 'player' | 'enemy';
+    damage?: number;
   }>({
     isActive: false,
     type: 'normal',
-    source: 'player'
+    source: 'player',
+    damage: 0
   });
 
   // Refs для получения позиций кубиков
@@ -152,7 +154,7 @@ export const TeamBattleArena: React.FC<TeamBattleArenaProps> = ({
 
   // Сбрасываем все состояния анимаций при смене уровня
   useEffect(() => {
-    setAttackAnimation({ isActive: false, type: 'normal', source: 'player' });
+    setAttackAnimation({ isActive: false, type: 'normal', source: 'player', damage: 0 });
     setIsDiceRolling(false);
     setAttackingPair(null);
     setAttackedTarget(null);
@@ -176,12 +178,13 @@ export const TeamBattleArena: React.FC<TeamBattleArenaProps> = ({
         setAttackAnimation({
           isActive: true,
           type: animationType,
-          source: lastRoll.source
+          source: lastRoll.source,
+          damage: lastRoll.damage
         });
 
         // Останавливаем анимацию через 2000мс (длительность всей анимации)
         const stopTimer = setTimeout(() => {
-          setAttackAnimation({ isActive: false, type: 'normal', source: 'player' });
+          setAttackAnimation({ isActive: false, type: 'normal', source: 'player', damage: 0 });
         }, 2000);
 
         return () => clearTimeout(stopTimer);
@@ -389,6 +392,7 @@ export const TeamBattleArena: React.FC<TeamBattleArenaProps> = ({
                 source={attackAnimation.source}
                 attackerPosition={attackAnimation.source === 'player' ? getDicePosition(playerDiceRef) : getDicePosition(enemyDiceRef)}
                 defenderPosition={attackAnimation.source === 'player' ? getDicePosition(enemyDiceRef) : getDicePosition(playerDiceRef)}
+                damage={attackAnimation.damage}
               />
               <div className="text-center space-y-2">
                 <div className="text-sm font-medium text-white">

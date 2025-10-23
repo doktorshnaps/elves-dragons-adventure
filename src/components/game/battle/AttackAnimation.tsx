@@ -15,6 +15,7 @@ interface AttackAnimationProps {
   source: 'player' | 'enemy';
   attackerPosition?: { x: number; y: number };
   defenderPosition?: { x: number; y: number };
+  damage?: number;
 }
 
 export const AttackAnimation: React.FC<AttackAnimationProps> = ({
@@ -22,7 +23,8 @@ export const AttackAnimation: React.FC<AttackAnimationProps> = ({
   type,
   source,
   attackerPosition,
-  defenderPosition
+  defenderPosition,
+  damage = 0
 }) => {
   const [showImpact, setShowImpact] = useState(false);
   const blockSoundsRef = useRef<HTMLAudioElement[]>([]);
@@ -85,19 +87,21 @@ export const AttackAnimation: React.FC<AttackAnimationProps> = ({
         const selectedSound = blockSoundsRef.current[randomIndex];
         selectedSound.currentTime = 0;
         selectedSound.play().catch(err => console.log('Block sound play failed:', err));
-      } else if (type === 'critical') {
+      } else if (type === 'critical' && damage > 0) {
+        // Критический звук только если урон был нанесен
         if (criticalSoundRef.current) {
           criticalSoundRef.current.currentTime = 0;
           criticalSoundRef.current.play().catch(err => console.log('Critical sound play failed:', err));
         }
-      } else if (type === 'normal') {
+      } else if (type === 'normal' && damage > 0) {
+        // Обычный звук атаки только если урон был нанесен
         const randomIndex = Math.floor(Math.random() * attackSoundsRef.current.length);
         const selectedSound = attackSoundsRef.current[randomIndex];
         selectedSound.currentTime = 0;
         selectedSound.play().catch(err => console.log('Attack sound play failed:', err));
       }
     }
-  }, [showImpact, type]);
+  }, [showImpact, type, damage]);
 
   if (!isActive) return null;
 
