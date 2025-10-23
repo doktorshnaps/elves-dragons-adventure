@@ -12,6 +12,7 @@ import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { AdminConsoleWithWhitelist } from "@/components/AdminConsole";
 import { CardImageManager } from "@/components/admin/CardImageManager";
 import { ItemTemplateManager } from "@/components/admin/ItemTemplateManager";
+import { ItemGiveawayManager } from "@/components/admin/ItemGiveawayManager";
 import ShelterBuildingSettings from "@/components/admin/ShelterBuildingSettings";
 
 const AdminSettingsContent = () => {
@@ -77,7 +78,7 @@ const AdminSettingsContent = () => {
         </div>
 
         <Tabs defaultValue={isSuperAdmin ? "cards" : "management"} className="w-full">
-          <TabsList className={`grid w-full ${isSuperAdmin ? 'grid-cols-8' : 'grid-cols-1'} bg-black/50 border-2 border-white backdrop-blur-sm rounded-3xl mb-6`} style={{ boxShadow: '-33px 15px 10px rgba(0, 0, 0, 0.6)' }}>
+          <TabsList className={`grid w-full ${isSuperAdmin ? 'grid-cols-9' : 'grid-cols-1'} bg-black/50 border-2 border-white backdrop-blur-sm rounded-3xl mb-6`} style={{ boxShadow: '-33px 15px 10px rgba(0, 0, 0, 0.6)' }}>
             {isSuperAdmin && (
               <>
                 <TabsTrigger value="cards" className="text-white data-[state=active]:bg-white/20 rounded-3xl">Карты (Герои и Драконы)</TabsTrigger>
@@ -85,6 +86,7 @@ const AdminSettingsContent = () => {
                 <TabsTrigger value="dungeons" className="text-white data-[state=active]:bg-white/20 rounded-3xl">Подземелья</TabsTrigger>
                 <TabsTrigger value="quests" className="text-white data-[state=active]:bg-white/20 rounded-3xl">Задания</TabsTrigger>
                 <TabsTrigger value="items" className="text-white data-[state=active]:bg-white/20 rounded-3xl">Предметы</TabsTrigger>
+                <TabsTrigger value="giveaway" className="text-white data-[state=active]:bg-white/20 rounded-3xl">Выдать предмет</TabsTrigger>
                 <TabsTrigger value="shelter" className="text-white data-[state=active]:bg-white/20 rounded-3xl">Убежище</TabsTrigger>
               </>
             )}
@@ -112,6 +114,10 @@ const AdminSettingsContent = () => {
 
               <TabsContent value="items" className="space-y-4">
                 <ItemTemplateManager />
+              </TabsContent>
+
+              <TabsContent value="giveaway" className="space-y-4">
+                <ItemGiveawayManager />
               </TabsContent>
 
               <TabsContent value="shelter" className="space-y-4">
