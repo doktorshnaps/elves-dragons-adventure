@@ -235,6 +235,22 @@ export const useShelterState = () => {
       const currentLevel = buildingLevels[buildingId as keyof typeof buildingLevels] || 0;
       const config = getBuildingConfig(buildingId, currentLevel + 1);
       
+      // Формируем динамический benefit на основе данных из building_configs
+      let benefit = t(language, benefitKey);
+      
+      // Для sawmill и quarry показываем реальную скорость производства
+      if ((buildingId === 'sawmill' || buildingId === 'quarry') && config?.production_per_hour) {
+        const resourceName = buildingId === 'sawmill' 
+          ? t(language, 'resources.wood') || 'дерева'
+          : t(language, 'resources.stone') || 'камня';
+        benefit = `${config.production_per_hour} ${resourceName} ${t(language, 'shelter.perHour') || 'в час'}`;
+      }
+      
+      // Для storage показываем рабочие часы
+      if (buildingId === 'storage' && config?.working_hours) {
+        benefit = `${t(language, 'shelter.workingHours') || 'Рабочих часов'}: ${config.working_hours}`;
+      }
+      
       return {
         id: buildingId,
         name: t(language, nameKey),
@@ -244,7 +260,7 @@ export const useShelterState = () => {
         cost: getUpgradeCost(buildingId, currentLevel),
         requiredItems: config?.required_items || [],
         requiredMainHallLevel: config?.required_main_hall_level || 0,
-        benefit: t(language, benefitKey)
+        benefit
       };
     };
 
