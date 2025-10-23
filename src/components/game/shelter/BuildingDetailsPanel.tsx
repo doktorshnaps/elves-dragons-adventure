@@ -172,10 +172,18 @@ export const BuildingDetailsPanel = ({
                   const template = getTemplate(itemId);
                   const displayName = template?.name || getItemName(itemId);
 
-                  // Use the canonical item_id from template (if available) to match inventory keys
-                  const canonicalId = template?.item_id ? String(template.item_id) : itemId;
-                  const itemKey = resolveItemKey(canonicalId);
-                  const playerHas = inventoryCounts[itemKey] || 0;
+                  // Try multiple keys: template.item_id, numeric id, and resolved variants
+                  let playerHas = 0;
+                  if (template?.item_id) {
+                    // Try the template's item_id (e.g., "wood_chunks" -> "woodChunks")
+                    const templateKey = resolveItemKey(String(template.item_id));
+                    playerHas = inventoryCounts[templateKey] || 0;
+                  }
+                  // If not found, try the numeric ID
+                  if (playerHas === 0) {
+                    const numericKey = resolveItemKey(itemId);
+                    playerHas = inventoryCounts[numericKey] || 0;
+                  }
                   return (
                     <div key={idx} className="flex items-center justify-between px-3 py-2 rounded-lg border border-border bg-muted/20">
                       <span className="text-sm font-medium">{displayName}</span>
