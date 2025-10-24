@@ -414,12 +414,10 @@ export const useShelterState = () => {
     
     const newBalance = gameState.balance - upgrade.cost.balance;
     
-    // Удаляем требуемые предметы из inventory — строго по ключу типа, ровно нужное количество
+    // Удаляем требуемые предметы из inventory — строго по item_id, ровно нужное количество (случайные экземпляры)
     let newInventory = [...gameState.inventory];
     if (upgrade.requiredItems && (Array.isArray(upgrade.requiredItems) || typeof upgrade.requiredItems === 'object')) {
-      const toRemoveByKey = new Map<string, number>();
-
-      // Нормализуем список требуемых предметов из массива или объектной формы
+      // 1) Нормализуем требования
       const entries: Array<{ item_id: string; quantity: number }> = Array.isArray(upgrade.requiredItems)
         ? (upgrade.requiredItems as any[]).map((req: any) => ({
             item_id: String(req.item_id ?? req.id ?? req.type ?? ''),
@@ -428,24 +426,33 @@ export const useShelterState = () => {
         : Object.entries(upgrade.requiredItems as Record<string, any>)
             .map(([key, qty]) => ({ item_id: String(key), quantity: Number(qty ?? 1) }));
 
-      for (const req of entries) {
-        const template = getTemplate(req.item_id);
-        const requiredKey = template?.item_id ?? req.item_id;
-        const prev = toRemoveByKey.get(requiredKey) || 0;
-        toRemoveByKey.set(requiredKey, prev + (req.quantity || 1));
+      // 2) Индексируем инвентарь по item_id из шаблонов
+      const indexByKey = new Map<string, number[]>(); // key=item_id (например, primas_eye) -> индексы в массиве newInventory
+      for (let i = 0; i < newInventory.length; i++) {
+        const item = newInventory[i];
+        const tplByName = getTemplateByName((item as any)?.name);
+        const key = (tplByName?.item_id) || getItemMatchKey(item);
+        if (!indexByKey.has(key)) indexByKey.set(key, []);
+        indexByKey.get(key)!.push(i);
       }
 
-      const filtered: any[] = [];
-      for (const item of newInventory) {
-        const key = getItemMatchKey(item);
-        const need = toRemoveByKey.get(key) || 0;
-        if (need > 0) {
-          toRemoveByKey.set(key, need - 1);
-          continue; // удаляем этот экземпляр
+      // 3) Выбираем случайные индексы для удаления по каждому требованию
+      const indicesToRemove = new Set<number>();
+      for (const req of entries) {
+        const tpl = getTemplate(req.item_id);
+        const requiredKey = tpl?.item_id ?? String(req.item_id);
+        const available = indexByKey.get(requiredKey) || [];
+        if (available.length === 0) continue;
+        // Перемешаем индексы и возьмем нужное количество
+        const shuffled = [...available].sort(() => Math.random() - 0.5);
+        const take = Math.min(req.quantity || 1, shuffled.length);
+        for (let k = 0; k < take; k++) {
+          indicesToRemove.add(shuffled[k]);
         }
-        filtered.push(item);
       }
-      newInventory = filtered;
+
+      // 4) Применяем удаление по рассчитанным индексам
+      newInventory = newInventory.filter((_, idx) => !indicesToRemove.has(idx));
     }
     
     try {
