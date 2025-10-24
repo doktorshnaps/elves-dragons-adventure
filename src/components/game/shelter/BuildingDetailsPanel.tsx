@@ -9,7 +9,6 @@ import { resolveItemKey } from "@/utils/itemNames";
 import { useMemo } from "react";
 import { useItemTemplates } from "@/hooks/useItemTemplates";
 import { useGameStore } from "@/stores/gameStore";
-import { useItemInstances } from "@/hooks/useItemInstances";
 interface BuildingDetailsPanelProps {
   selectedBuilding: NestUpgrade | null;
   canAfford: boolean;
@@ -23,6 +22,7 @@ interface BuildingDetailsPanelProps {
     iron: number;
     gold: number;
   };
+  inventoryCounts?: Record<string, number>;
 }
 export const BuildingDetailsPanel = ({
   selectedBuilding,
@@ -31,20 +31,11 @@ export const BuildingDetailsPanel = ({
   onUpgrade,
   isUpgradeReady,
   insideDialog = false,
-  resources
+  resources,
+  inventoryCounts = {}
 }: BuildingDetailsPanelProps) => {
   const { language } = useLanguage();
-  const { inventory: localInventory } = useInventoryState();
-  const storeInventory = useGameStore((state) => state.inventory);
-  const inventory = (storeInventory?.length ?? 0) > 0 ? storeInventory : localInventory;
   const { getItemName, getTemplate } = useItemTemplates();
-  const { getCountsByItemId, instances } = useItemInstances();
-
-  const inventoryCounts = useMemo(() => {
-    const instanceCounts = getCountsByItemId();
-    console.log('📦 [BuildingDetailsPanel] Item instance counts:', instanceCounts);
-    return instanceCounts;
-  }, [instances]);
 
   // Нормализуем требуемые предметы (поддержка массива и объектной формы из БД)
   const normalizedRequiredItems = useMemo(() => {
@@ -176,7 +167,6 @@ export const BuildingDetailsPanel = ({
 
                   // Используем item_id из шаблона для поиска в item_instances
                   const playerHas = inventoryCounts[templateItemId] || 0;
-                  console.log(`📦 [BuildingDetailsPanel] ${displayName} (${templateItemId}): has ${playerHas}, needs ${reqQty}`);
                   return (
                     <div key={idx} className="flex items-center justify-between px-3 py-2 rounded-lg border border-border bg-muted/20">
                       <span className="text-sm font-medium">{displayName}</span>

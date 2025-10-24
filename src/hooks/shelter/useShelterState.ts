@@ -51,6 +51,11 @@ export const useShelterState = () => {
   const { getBuildingConfig, getUpgradeCost: getUpgradeCostFromDB, loading: configsLoading } = useBuildingConfigs();
   const { getTemplate, getItemName, getTemplateByName } = useItemTemplates();
   const { instances, getCountsByItemId, getInstancesByItemId, removeItemInstancesByIds } = useItemInstances();
+  
+  // Мемоизируем счётчики предметов для передачи в компоненты
+  const inventoryCounts = useMemo(() => {
+    return getCountsByItemId();
+  }, [instances, getCountsByItemId]);
   const [activeTab, setActiveTab] = useState<"upgrades" | "crafting" | "barracks" | "dragonlair" | "medical" | "workers">("upgrades");
   const [balance, setBalance] = useState(gameState.balance);
   
@@ -540,6 +545,7 @@ export const useShelterState = () => {
     formatRemainingTime,
     getUpgradeTime,
     isUpgradeReady,
-    balance
+    balance,
+    inventoryCounts
   };
 };

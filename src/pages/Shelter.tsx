@@ -44,7 +44,8 @@ export const Shelter = () => {
     formatRemainingTime,
     getUpgradeTime,
     isUpgradeReady,
-    balance
+    balance,
+    inventoryCounts
   } = useShelterState();
 
   return (
@@ -160,6 +161,7 @@ export const Shelter = () => {
               getUpgradeTime={getUpgradeTime}
               isUpgradeReady={isUpgradeReady}
               resources={resources}
+              inventoryCounts={inventoryCounts}
             />
           </TabsContent>
 

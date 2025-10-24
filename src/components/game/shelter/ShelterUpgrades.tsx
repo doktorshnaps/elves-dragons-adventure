@@ -25,6 +25,7 @@ interface ShelterUpgradesProps {
     iron: number;
     gold: number;
   };
+  inventoryCounts?: Record<string, number>;
 }
 export const ShelterUpgrades = ({
   upgrades,
@@ -36,7 +37,8 @@ export const ShelterUpgrades = ({
   hasWorkersInBuilding,
   getActiveWorkersInBuilding,
   isUpgradeReady,
-  resources
+  resources,
+  inventoryCounts
 }: ShelterUpgradesProps) => {
   const [selectedBuilding, setSelectedBuilding] = useState<NestUpgrade | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -70,7 +72,7 @@ export const ShelterUpgrades = ({
             </DialogTitle>
           </DialogHeader>
           <div className="mt-4">
-            <BuildingDetailsPanel selectedBuilding={selectedBuilding} canAfford={selectedBuilding ? canAffordUpgrade(selectedBuilding) : false} isUpgrading={selectedBuilding ? isUpgrading(selectedBuilding.id) : false} onUpgrade={() => {
+            <BuildingDetailsPanel selectedBuilding={selectedBuilding} canAfford={selectedBuilding ? canAffordUpgrade(selectedBuilding) : false} isUpgrading={selectedBuilding ? isUpgrading(selectedBuilding.id) : false} inventoryCounts={inventoryCounts} onUpgrade={() => {
             if (selectedBuilding) {
               handleUpgrade(selectedBuilding);
               setIsDialogOpen(false);
