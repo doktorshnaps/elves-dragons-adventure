@@ -49,8 +49,22 @@ export const useCardPackOpening = () => {
   };
 
   const openCardPacks = async (packItem: Item, count: number): Promise<CardType[]> => {
-    console.log('🔔 openCardPacks CALLED', { packItem: packItem.name, count, isOpening });
-    if (packItem.type !== 'cardPack' || isOpening) return [];
+    console.log('🔔 openCardPacks CALLED START', { 
+      packItemName: packItem.name, 
+      packItemType: packItem.type,
+      count, 
+      isOpening,
+      packItem 
+    });
+    
+    if (packItem.type !== 'cardPack' || isOpening) {
+      console.log('❌ Early exit:', { 
+        reason: packItem.type !== 'cardPack' ? 'not a cardPack' : 'already opening',
+        packItemType: packItem.type,
+        isOpening 
+      });
+      return [];
+    }
 
     const allPacks = (gameData.inventory || []).filter(
       (i) => i.type === 'cardPack' && i.name === packItem.name
