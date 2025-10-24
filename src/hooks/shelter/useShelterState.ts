@@ -315,13 +315,42 @@ export const useShelterState = () => {
     const requiresWorkers = upgrade.id !== 'main_hall' && upgrade.id !== 'storage';
     const hasRequiredWorkers = !requiresWorkers || hasWorkersInBuilding(upgrade.id);
     
+    // Проверяем наличие требуемых предметов
+    let hasRequiredItems = true;
+    if (upgrade.requiredItems && (Array.isArray(upgrade.requiredItems) || typeof upgrade.requiredItems === 'object')) {
+      const inventoryCounts: Record<string, number> = {};
+      gameState.inventory.forEach(item => {
+        const itemName = item.name;
+        inventoryCounts[itemName] = (inventoryCounts[itemName] || 0) + 1;
+      });
+
+      const entries: Array<{ item_id: string; quantity: number }> = Array.isArray(upgrade.requiredItems)
+        ? (upgrade.requiredItems as any[]).map((req: any) => ({
+            item_id: String(req.item_id ?? req.id ?? req.type ?? ''),
+            quantity: Number(req.quantity ?? req.qty ?? req.count ?? 1)
+          }))
+        : Object.entries(upgrade.requiredItems as Record<string, any>)
+            .map(([key, qty]) => ({ item_id: String(key), quantity: Number(qty ?? 1) }));
+
+      for (const req of entries) {
+        const template = getTemplate(req.item_id);
+        const targetName = template?.name || getItemName(req.item_id) || req.item_id;
+        const playerHas = inventoryCounts[targetName] || 0;
+        if (playerHas < req.quantity) {
+          hasRequiredItems = false;
+          break;
+        }
+      }
+    }
+    
     return upgrade.level < upgrade.maxLevel && 
            resources.wood >= upgrade.cost.wood && 
            resources.stone >= upgrade.cost.stone && 
            resources.iron >= upgrade.cost.iron && 
            gameState.balance >= upgrade.cost.balance &&
            canUpgradeBuilding(upgrade.id) &&
-           hasRequiredWorkers;
+           hasRequiredWorkers &&
+           hasRequiredItems;
   };
   
   const canAffordCraft = (recipe: CraftRecipe) => {
