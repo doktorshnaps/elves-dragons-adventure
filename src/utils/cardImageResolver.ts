@@ -111,12 +111,16 @@ export const getCardImageByRarity = async (card: Card): Promise<string | undefin
   // Пытаемся загрузить изображение из базы данных
   try {
     const dbImages = await loadDatabaseImages();
-    const cardType = card.type === 'pet' ? 'dragon' : 'hero';
+    
+    // Используем тип карты напрямую, без преобразования
+    const cardType = card.type === 'pet' ? 'pet' : 'character';
     
     // Сначала пытаемся найти с фракцией
     if (card.faction) {
       const keyWithFaction = `${card.name}|${cardType}|${card.rarity}|${card.faction}`;
       const dbImageWithFaction = dbImages.get(keyWithFaction);
+      
+      console.log(`🔍 Looking for image with faction: ${keyWithFaction}`, dbImageWithFaction ? '✅ Found' : '❌ Not found');
       
       if (dbImageWithFaction) {
         return dbImageWithFaction;
@@ -126,6 +130,8 @@ export const getCardImageByRarity = async (card: Card): Promise<string | undefin
     // Затем пытаемся найти без фракции (для обратной совместимости)
     const keyWithoutFaction = `${card.name}|${cardType}|${card.rarity}`;
     const dbImage = dbImages.get(keyWithoutFaction);
+    
+    console.log(`🔍 Looking for image without faction: ${keyWithoutFaction}`, dbImage ? '✅ Found' : '❌ Not found');
     
     if (dbImage) {
       return dbImage;
@@ -145,6 +151,7 @@ export const getCardImageByRarity = async (card: Card): Promise<string | undefin
   }
   
   // Для всех остальных карт возвращаем стандартное изображение
+  console.log(`📷 Using standard image for ${card.name}:`, card.image);
   return card.image;
 };
 

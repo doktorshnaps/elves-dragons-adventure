@@ -262,20 +262,22 @@ function generateCard() {
   
   const magicResistance = getMagicResistanceByFaction(selectedCard.faction);
   
+  // Use the selected card's name directly, don't override with cardClass
+  // This ensures we use the exact card from the database with its correct image
   const card = {
     id: Date.now().toString() + Math.random().toString(36).substr(2, 9),
-    name: selectedCard.name,
+    name: selectedCard.name, // Keep the original card name (e.g., "Рекрут" for specific faction)
     type: cardType,
     rarity: 1, // Always 1 star now
-    cardClass, // New field for card class
+    cardClass, // New field for card class (e.g., "Рекрут", "Страж", etc.)
     classLevel, // Store level for stats calculation
     faction: selectedCard.faction,
     magicResistance,
-    image: selectedCard.image,
+    image: selectedCard.image, // Use the exact image from selected card
     // Stats будут рассчитаны на клиенте через calculateCardStats с учетом classLevel
   };
   
-  console.log(`✨ Generated Card: ${selectedCard.name} (${cardType}) 1⭐ Class: ${cardClass} (level ${classLevel}) faction=${selectedCard.faction}`);
+  console.log(`✨ Generated Card: ${selectedCard.name} (${cardType}) 1⭐ Class: ${cardClass} (level ${classLevel}) faction=${selectedCard.faction} image=${selectedCard.image}`);
   
   return card;
 }
