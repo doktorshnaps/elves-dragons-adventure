@@ -6,7 +6,7 @@ import { Item } from "@/types/inventory";
 import { GroupedItem } from "./types";
 import { useLanguage } from "@/hooks/useLanguage";
 import { t } from "@/utils/translations";
-import { getRarityDropRates } from "@/utils/cardUtils";
+import { getClassDropRates } from "@/utils/cardUtils";
 import { workerImagesByName } from "@/constants/workerImages";
 import { useIsMobile } from "@/hooks/use-mobile";
 interface InventoryGridProps {
@@ -107,18 +107,32 @@ export const InventoryGrid = ({
             <div className="space-y-4">
               <h4 className="font-semibold text-white text-lg">{item.name}</h4>
               {item.type === 'cardPack' && <div className="space-y-3">
-                  <p className="text-sm text-gray-300">{t(language, 'items.cardPackDescription')}</p>
+                  <p className="text-sm text-gray-300">Все карты выпадают с редкостью 1 звезда, но с разными классами</p>
                   <div className="bg-black/50 p-3 rounded-3xl border-2 border-white/30">
-                    <h5 className="text-sm font-semibold text-white mb-2">Шансы выпадения:</h5>
-                    <div className="grid grid-cols-2 gap-1 text-xs">
-                      {Object.entries(getRarityDropRates()).map(([rarity, chance]) => <div key={rarity} className="flex justify-between items-center">
-                          <span className="text-yellow-400">{"⭐".repeat(Number(rarity))}</span>
-                          <span className="text-gray-300">{chance}</span>
-                        </div>)}
+                    <h5 className="text-sm font-semibold text-white mb-2">Шансы выпадения классов:</h5>
+                    
+                    <div className="mb-3">
+                      <h6 className="text-xs font-semibold text-yellow-400 mb-1">Герои (80%):</h6>
+                      <div className="grid grid-cols-2 gap-1 text-xs">
+                        {Object.entries(getClassDropRates().heroes).map(([className, chance]) => (
+                          <div key={className} className="flex justify-between items-center">
+                            <span className="text-gray-300 truncate">{className}</span>
+                            <span className="text-gray-400 text-[10px]">{chance}</span>
+                          </div>
+                        ))}
+                      </div>
                     </div>
-                    <div className="mt-2 text-xs text-gray-300">
-                      <p>• 50% - Герой</p>
-                      <p>• 50% - Питомец</p>
+                    
+                    <div>
+                      <h6 className="text-xs font-semibold text-purple-400 mb-1">Драконы (20%):</h6>
+                      <div className="grid grid-cols-2 gap-1 text-xs">
+                        {Object.entries(getClassDropRates().dragons).map(([className, chance]) => (
+                          <div key={className} className="flex justify-between items-center">
+                            <span className="text-gray-300 truncate">{className}</span>
+                            <span className="text-gray-400 text-[10px]">{chance}</span>
+                          </div>
+                        ))}
+                      </div>
                     </div>
                   </div>
                 </div>}

@@ -386,18 +386,35 @@ export const calculateCardStats = (cardName: string, rarity: Rarity, cardType: C
   return result;
 };
 
-export const getRarityDropRates = () => {
+export const getClassDropRates = () => {
   return {
-    1: "80%",
-    2: "10%",
-    3: "5%",
-    4: "3%",
-    5: "1.5%",
-    6: "0.3%",
-    7: "0.15%",
-    8: "0.05%"
+    heroes: {
+      'Рекрут': '80%',
+      'Страж': '20%',
+      'Ветеран': '15%',
+      'Маг': '10%',
+      'Мастер Целитель': '5%',
+      'Защитник': '3%',
+      'Ветеран Защитник': '2%',
+      'Стратег': '1%',
+      'Верховный Стратег': '0.5%'
+    },
+    dragons: {
+      'Обычный': '80%',
+      'Необычный': '20%',
+      'Редкий': '15%',
+      'Эпический': '10%',
+      'Легендарный': '5%',
+      'Мифический': '3%',
+      'Этернал': '2%',
+      'Империал': '1%',
+      'Титан': '0.5%'
+    }
   };
 };
+
+// Legacy function for backwards compatibility
+export const getRarityDropRates = getClassDropRates;
 
 const pickRarity = (): Rarity => {
   // Генерируем случайное число от 0.01 до 100.00 (как в подземельях)

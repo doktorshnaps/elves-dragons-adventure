@@ -62,8 +62,8 @@ export const CardPackAnimation = ({ winningCard, onAnimationComplete }: CardPack
       const actualCard = cardDatabase.find((c: any) => c?.name === cardName);
       
       if (actualCard) {
-        const rarity = (Math.floor(Math.random() * 8) + 1) as any;
-        const stats = calculateCardStats(actualCard.name, rarity, actualCard.type);
+        // All cards now have rarity 1
+        const stats = calculateCardStats(actualCard.name, 1, actualCard.type);
         
         // Use actual card data with proper structure
         dummyCards.push({
@@ -74,7 +74,7 @@ export const CardPackAnimation = ({ winningCard, onAnimationComplete }: CardPack
           defense: stats.defense,
           health: stats.health,
           magic: stats.magic,
-          rarity: rarity, // Random rarity for variety
+          rarity: 1, // All cards are now 1 star
           faction: (actualCard.faction || 'Каледор') as any,
           image: availableImages[cardName],
         });
@@ -91,7 +91,7 @@ export const CardPackAnimation = ({ winningCard, onAnimationComplete }: CardPack
           defense: Math.floor(Math.random() * 100) + 10,
           health: Math.floor(Math.random() * 200) + 50,
           magic: Math.floor(Math.random() * 50) + 5,
-          rarity: (Math.floor(Math.random() * 8) + 1) as any,
+          rarity: 1, // All cards are now 1 star
           faction: factions[Math.floor(Math.random() * factions.length)] as any,
           image: availableImages[cardName],
         });
@@ -149,17 +149,8 @@ export const CardPackAnimation = ({ winningCard, onAnimationComplete }: CardPack
   };
 
   const getRarityColor = (rarity: number) => {
-    const colors = [
-      'from-gray-400 to-gray-600',     // 1
-      'from-green-400 to-green-600',   // 2
-      'from-blue-400 to-blue-600',     // 3
-      'from-purple-400 to-purple-600', // 4
-      'from-pink-400 to-pink-600',     // 5
-      'from-yellow-400 to-yellow-600', // 6
-      'from-orange-400 to-orange-600', // 7
-      'from-red-400 to-red-600',       // 8
-    ];
-    return colors[rarity - 1] || colors[0];
+    // All cards are now 1 star, use a consistent gradient
+    return 'from-purple-500 to-blue-600';
   };
 
   return (
