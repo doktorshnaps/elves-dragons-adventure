@@ -120,20 +120,34 @@ const groupItems = (items: Item[]): GroupedItem[] => {
     });
   };
   const handleOpenCardPack = async (item: Item): Promise<boolean> => {
+    console.log('🎫 handleOpenCardPack CALLED', { itemName: item.name, itemType: item.type });
     if (item.type === 'cardPack') {
       setSelectedPackItem(item);
       setShowQuantityModal(true);
+      console.log('✅ Modal opened for pack:', item.name);
       return false; // Modal will handle the opening
     }
+    console.log('❌ Not a cardPack:', item.type);
     return false;
   };
 
   const handleQuantityConfirm = async (quantity: number) => {
-    if (!selectedPackItem) return;
+    console.log('📋 handleQuantityConfirm CALLED', { 
+      quantity, 
+      selectedPackItem,
+      hasSelectedPackItem: !!selectedPackItem 
+    });
+    
+    if (!selectedPackItem) {
+      console.log('❌ No selectedPackItem, returning');
+      return;
+    }
     
     const allPacks = (gameData.inventory || []).filter(i => i.type === 'cardPack' && i.name === selectedPackItem.name);
     const available = allPacks.length;
     const shouldClose = quantity >= available;
+    
+    console.log('🎒 Pack info:', { available, quantity, shouldClose, packName: selectedPackItem.name });
     
     await openCardPacks(selectedPackItem, quantity);
     await loadGameData();
