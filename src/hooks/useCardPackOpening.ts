@@ -69,8 +69,9 @@ export const useCardPackOpening = () => {
 
     try {
       // Генерируем карты, которые будет содержать открытие
+      // Теперь generateCard сам делает ролл для выбора типа карты
       const newCards: CardType[] = Array.from({ length: count }, () =>
-        generateCard(Math.random() > 0.5 ? 'character' : 'pet')
+        generateCard()
       );
 
       // Атомарно удаляем колоды и добавляем карты на сервере

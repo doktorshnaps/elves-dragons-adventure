@@ -399,24 +399,18 @@ export const getRarityDropRates = () => {
 };
 
 const pickRarity = (): Rarity => {
-  const weights: Array<{ r: Rarity; w: number }> = [
-    { r: 1, w: 8000 }, // 80.00%
-    { r: 2, w: 1000 }, // 10.00%
-    { r: 3, w: 500 },  // 5.00%
-    { r: 4, w: 300 },  // 3.00%
-    { r: 5, w: 150 },  // 1.50%
-    { r: 6, w: 30 },   // 0.30%
-    { r: 7, w: 15 },   // 0.15%
-    { r: 8, w: 5 },    // 0.05%
-  ];
-
-  const roll = Math.floor(Math.random() * 10000) + 1;
-  let cumulative = 0;
-  for (const { r, w } of weights) {
-    cumulative += w;
-    if (roll <= cumulative) return r;
-  }
-  return 1;
+  // Генерируем случайное число от 0.01 до 100.00 (как в подземельях)
+  const roll = Math.random() * 100;
+  
+  // Проверяем в какой диапазон попадает число
+  if (roll <= 80.00) return 1;      // 1 звезда: 0.01-80.00 (80%)
+  if (roll <= 90.00) return 2;      // 2 звезды: 80.01-90.00 (10%)
+  if (roll <= 95.00) return 3;      // 3 звезды: 90.01-95.00 (5%)
+  if (roll <= 98.00) return 4;      // 4 звезды: 95.01-98.00 (3%)
+  if (roll <= 99.50) return 5;      // 5 звезд: 98.01-99.50 (1.5%)
+  if (roll <= 99.80) return 6;      // 6 звезд: 99.51-99.80 (0.3%)
+  if (roll <= 99.95) return 7;      // 7 звезд: 99.81-99.95 (0.15%)
+  return 8;                         // 8 звезд: 99.95-100.00 (0.05%)
 };
 
 const getPetRarityChance = (): Rarity => pickRarity();
@@ -427,12 +421,21 @@ export const getRarityChance = (type: CardType): Rarity => {
   return type === 'pet' ? getPetRarityChance() : getHeroRarityChance();
 };
 
-export const generateCard = (type: CardType): Card => {
-  const availableCards = cardDatabase.filter(card => card.type === type);
-  const selectedCard = availableCards[Math.floor(Math.random() * availableCards.length)];
-  const rarity = getRarityChance(type);
+export const generateCard = (type?: CardType): Card => {
+  // Если тип не указан, делаем ролл: 1 = герой, 2 = дракон
+  let cardType: CardType;
+  if (!type) {
+    const typeRoll = Math.floor(Math.random() * 2) + 1;
+    cardType = typeRoll === 1 ? 'character' : 'pet';
+  } else {
+    cardType = type;
+  }
   
-  const stats = calculateCardStats(selectedCard.name, rarity, type);
+  const availableCards = cardDatabase.filter(card => card.type === cardType);
+  const selectedCard = availableCards[Math.floor(Math.random() * availableCards.length)];
+  const rarity = getRarityChance(cardType);
+  
+  const stats = calculateCardStats(selectedCard.name, rarity, cardType);
   
   const faction = selectedCard.faction as Faction;
   const magicResistance = faction ? getMagicResistanceByFaction(faction) : undefined;
@@ -440,7 +443,7 @@ export const generateCard = (type: CardType): Card => {
   return {
     id: Date.now().toString() + Math.random().toString(36).substr(2, 9),
     name: selectedCard.name,
-    type,
+    type: cardType,
     rarity,
     faction,
     magicResistance,
