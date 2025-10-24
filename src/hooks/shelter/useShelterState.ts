@@ -312,9 +312,6 @@ export const useShelterState = () => {
   }], [language]);
 
   const canAffordUpgrade = (upgrade: NestUpgrade) => {
-    const requiresWorkers = upgrade.id !== 'main_hall' && upgrade.id !== 'storage';
-    const hasRequiredWorkers = !requiresWorkers || hasWorkersInBuilding(upgrade.id);
-    
     // Проверяем наличие требуемых предметов
     let hasRequiredItems = true;
     if (upgrade.requiredItems && (Array.isArray(upgrade.requiredItems) || typeof upgrade.requiredItems === 'object')) {
@@ -349,7 +346,6 @@ export const useShelterState = () => {
            resources.iron >= upgrade.cost.iron && 
            gameState.balance >= upgrade.cost.balance &&
            canUpgradeBuilding(upgrade.id) &&
-           hasRequiredWorkers &&
            hasRequiredItems;
   };
   

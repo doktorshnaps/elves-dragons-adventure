@@ -51,19 +51,6 @@ export const useBuildingUpgrades = () => {
   }, [activeUpgrades, gameState.actions, toast]);
 
   const startUpgrade = (buildingId: string, duration: number, targetLevel: number) => {
-    // Главный зал и склад не требуют рабочих
-    if (buildingId !== 'main_hall' && buildingId !== 'storage') {
-      const hasWorkersInBuilding = gameState?.activeWorkers?.some((worker: any) => worker.building === buildingId) || false;
-      if (!hasWorkersInBuilding) {
-        toast({
-          title: "Здание неактивно",
-          description: `Назначьте рабочих в ${buildingId} для начала улучшения`,
-          variant: "destructive"
-        });
-        return;
-      }
-    }
-
     const upgrade: UpgradeProgress = {
       buildingId,
       startTime: Date.now(),
@@ -74,8 +61,6 @@ export const useBuildingUpgrades = () => {
 
     const newUpgrades = [...activeUpgrades, upgrade];
     setActiveUpgrades(newUpgrades);
-    
-    // Сразу сохраняем в gameState
     gameState.actions.batchUpdate({ activeBuildingUpgrades: newUpgrades });
   };
 
@@ -144,19 +129,6 @@ export const useBuildingUpgrades = () => {
       targetLevel: number,
       resourcePatch: { wood?: number; stone?: number; iron?: number; gold?: number; balance?: number; inventory?: any[] }
     ) => {
-      // Главный зал и склад не требуют рабочих
-      if (buildingId !== 'main_hall' && buildingId !== 'storage') {
-        const hasWorkersInBuilding = gameState?.activeWorkers?.some((worker: any) => worker.building === buildingId) || false;
-        if (!hasWorkersInBuilding) {
-          toast({
-            title: "Здание неактивно",
-            description: `Назначьте рабочих в ${buildingId} для начала улучшения`,
-            variant: "destructive"
-          });
-          return;
-        }
-      }
-
       const upgrade: UpgradeProgress = {
         buildingId,
         startTime: Date.now(),
