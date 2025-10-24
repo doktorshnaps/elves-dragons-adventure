@@ -15,15 +15,15 @@ interface CardInfo {
 // Simplified card database (основные карты из каждой фракции)
 const cardDatabase: CardInfo[] = [
   // Kaledor Heroes
-  { name: 'Рекрут', type: 'character', image: '/lovable-uploads/6ba29742-0bdb-477e-924e-c97d968909f4.png', faction: 'Каледор' },
-  { name: 'Страж', type: 'character', image: '/lovable-uploads/f3a95c8d-26a1-43ce-86ff-01a8aba5bb95.png', faction: 'Каледор' },
-  { name: 'Ветеран', type: 'character', image: '/lovable-uploads/64ceab84-8336-40e0-9219-31f4e51ea217.png', faction: 'Каледор' },
-  { name: 'Маг', type: 'character', image: '/lovable-uploads/20f876ac-c5a5-48c5-8d7c-a4cbcb5e3af7.png', faction: 'Каледор' },
-  { name: 'Мастер Целитель', type: 'character', image: '/lovable-uploads/6ba29742-0bdb-477e-924e-c97d968909f4.png', faction: 'Каледор' },
-  { name: 'Защитник', type: 'character', image: '/lovable-uploads/f3a95c8d-26a1-43ce-86ff-01a8aba5bb95.png', faction: 'Каледор' },
-  { name: 'Ветеран Защитник', type: 'character', image: '/lovable-uploads/64ceab84-8336-40e0-9219-31f4e51ea217.png', faction: 'Каледор' },
-  { name: 'Стратег', type: 'character', image: '/lovable-uploads/a67b0362-c82a-4564-99e8-8776f6bf6591.png', faction: 'Каледор' },
-  { name: 'Верховный Стратег', type: 'character', image: '/lovable-uploads/a67b0362-c82a-4564-99e8-8776f6bf6591.png', faction: 'Каледор' },
+  { name: 'Рекрут', type: 'character', image: '/lovable-uploads/27831c0a-e7a0-4ac4-84d9-642b6fa0e31c.png', faction: 'Каледор' },
+  { name: 'Страж', type: 'character', image: '/lovable-uploads/6f418524-f8c0-444e-aac7-dc60d548275a.png', faction: 'Каледор' },
+  { name: 'Ветеран', type: 'character', image: '/lovable-uploads/2e357adf-59ac-4ebc-8f34-fb77d085801d.png', faction: 'Каледор' },
+  { name: 'Маг', type: 'character', image: '/lovable-uploads/5aa39f4e-18e2-4514-b338-2871069ebde3.png', faction: 'Каледор' },
+  { name: 'Мастер Целитель', type: 'character', image: '/lovable-uploads/e2726d02-61d0-49f8-88cd-5eb5d7412563.png', faction: 'Каледор' },
+  { name: 'Защитник', type: 'character', image: '/lovable-uploads/c9a16f25-86df-4d19-8e29-6e9784d21cc0.png', faction: 'Каледор' },
+  { name: 'Ветеран Защитник', type: 'character', image: '/lovable-uploads/7472b221-f5e0-4f77-8fce-96b9cd408d98.png', faction: 'Каледор' },
+  { name: 'Стратег', type: 'character', image: '/lovable-uploads/27f02bff-5707-40b9-a94e-77669bd08bde.png', faction: 'Каледор' },
+  { name: 'Верховный Стратег', type: 'character', image: '/lovable-uploads/6f852396-ab0a-42af-8b0b-a19fad23fe91.png', faction: 'Каледор' },
   
   // Kaledor Dragons
   { name: 'Обычный ледяной дракон', type: 'pet', image: '/lovable-uploads/a684a167-5ab8-4c2c-916e-c1e2b2c7a335.png', faction: 'Каледор' },
@@ -47,10 +47,16 @@ const cardDatabase: CardInfo[] = [
   { name: 'Стратег', type: 'character', image: '/lovable-uploads/1935aa54-a23e-4c99-84bf-dff3404feb2d.png', faction: 'Сильванести' },
   { name: 'Верховный Стратег', type: 'character', image: '/lovable-uploads/981732c0-c6c4-41bf-9eff-e1dc31c3e000.png', faction: 'Сильванести' },
   
-  // Sylvanesti Dragons
-  { name: 'Обычный лесной дракон', type: 'pet', image: '/lovable-uploads/a6d08592-67c9-42b0-8625-4713b997376f.png', faction: 'Сильванести' },
-  { name: 'Необычный лесной дракон', type: 'pet', image: '/lovable-uploads/a6d08592-67c9-42b0-8625-4713b997376f.png', faction: 'Сильванести' },
-  { name: 'Эпический лесной дракон', type: 'pet', image: '/lovable-uploads/a6d08592-67c9-42b0-8625-4713b997376f.png', faction: 'Сильванести' },
+  // Sylvanesti Dragons  
+  { name: 'Обычный песчаный дракон', type: 'pet', image: '/lovable-uploads/d812fbd1-74f7-4cad-83c1-c009ba0f77b5.png', faction: 'Сильванести' },
+  { name: 'Необычный песчаный дракон', type: 'pet', image: '/lovable-uploads/a6d08592-67c9-42b0-8625-4713b997376f.png', faction: 'Сильванести' },
+  { name: 'Редкий песчаный дракон', type: 'pet', image: '/lovable-uploads/0686d153-7d4f-4946-9212-f1ba3ebbca32.png', faction: 'Сильванести' },
+  { name: 'Эпический песчаный дракон', type: 'pet', image: '/lovable-uploads/bccd3f95-c340-4678-bacf-5a589f379683.png', faction: 'Сильванести' },
+  { name: 'Легендарный песчаный дракон', type: 'pet', image: '/lovable-uploads/64ceab84-8336-40e0-9219-31f4e51ea217.png', faction: 'Сильванести' },
+  { name: 'Мифический песчаный дракон', type: 'pet', image: '/lovable-uploads/9876a84c-a134-4d64-b0fa-064fb1dd6f5f.png', faction: 'Сильванести' },
+  { name: 'Этернал песчаный дракон', type: 'pet', image: '/lovable-uploads/3db3c69b-58d8-467c-a075-a0adc7ac1fa4.png', faction: 'Сильванести' },
+  { name: 'Империал песчаный дракон', type: 'pet', image: '/lovable-uploads/2c707ae0-ddf1-426e-95ae-509431a7cf65.png', faction: 'Сильванести' },
+  { name: 'Титан песчаный дракон', type: 'pet', image: '/lovable-uploads/aa7ab873-cb54-4825-a3f9-95d935df9b5d.png', faction: 'Сильванести' },
   
   // Faelin Heroes
   { name: 'Рекрут', type: 'character', image: '/lovable-uploads/5fed4049-637c-47a4-a2b1-3f1c9151ce6a.png', faction: 'Фаэлин' },
@@ -64,9 +70,15 @@ const cardDatabase: CardInfo[] = [
   { name: 'Верховный Стратег', type: 'character', image: '/lovable-uploads/3070cb69-0e5b-4302-bb5a-58fca3176ad8.png', faction: 'Фаэлин' },
   
   // Faelin Dragons
-  { name: 'Обычный водный дракон', type: 'pet', image: '/lovable-uploads/20deedc6-2a07-448e-85c1-04c7f76eac4d.png', faction: 'Фаэлин' },
-  { name: 'Эпический водный дракон', type: 'pet', image: '/lovable-uploads/20deedc6-2a07-448e-85c1-04c7f76eac4d.png', faction: 'Фаэлин' },
+  { name: 'Обычный водный дракон', type: 'pet', image: '/lovable-uploads/ad27c2c4-b16c-4acd-804e-3f8e5d3cd854.png', faction: 'Фаэлин' },
+  { name: 'Необычный водный дракон', type: 'pet', image: '/lovable-uploads/b460c0ff-11e9-42f3-9513-449548603837.png', faction: 'Фаэлин' },
+  { name: 'Редкий водный дракон', type: 'pet', image: '/lovable-uploads/062fe717-3d1f-4352-b4a9-08e0b4d5725c.png', faction: 'Фаэлин' },
+  { name: 'Эпический водный дракон', type: 'pet', image: '/lovable-uploads/f97dbde4-585c-4a9d-b47a-32fe1cf9392f.png', faction: 'Фаэлин' },
   { name: 'Легендарный водный дракон', type: 'pet', image: '/lovable-uploads/20deedc6-2a07-448e-85c1-04c7f76eac4d.png', faction: 'Фаэлин' },
+  { name: 'Мифический водный дракон', type: 'pet', image: '/lovable-uploads/3d06ad8d-92f6-484b-8546-e0ef65e11a8a.png', faction: 'Фаэлин' },
+  { name: 'Этернал водный дракон', type: 'pet', image: '/lovable-uploads/caf6b106-e3b0-4bfa-a0a5-33dc2788b459.png', faction: 'Фаэлин' },
+  { name: 'Империал водный дракон', type: 'pet', image: '/lovable-uploads/cffdaff4-73e2-4415-82e4-e70ec09780de.png', faction: 'Фаэлин' },
+  { name: 'Титан водный дракон', type: 'pet', image: '/lovable-uploads/b11af136-e52a-47d2-8cb0-4b6e268ff771.png', faction: 'Фаэлин' },
   
   // Ellenar Heroes
   { name: 'Рекрут', type: 'character', image: '/lovable-uploads/1ef80899-e4c6-4721-8a05-de94e0c343dc.png', faction: 'Элленар' },
@@ -80,9 +92,15 @@ const cardDatabase: CardInfo[] = [
   { name: 'Верховный Стратег', type: 'character', image: '/lovable-uploads/f32f0976-8067-4774-a02d-776393efc5e5.png', faction: 'Элленар' },
   
   // Ellenar Dragons
-  { name: 'Обычный земной дракон', type: 'pet', image: '/lovable-uploads/58195e56-c35c-4a7b-8868-c3a29d8e7c0c.png', faction: 'Элленар' },
-  { name: 'Редкий земной дракон', type: 'pet', image: '/lovable-uploads/58195e56-c35c-4a7b-8868-c3a29d8e7c0c.png', faction: 'Элленар' },
-  { name: 'Легендарный земной дракон', type: 'pet', image: '/lovable-uploads/58195e56-c35c-4a7b-8868-c3a29d8e7c0c.png', faction: 'Элленар' },
+  { name: 'Обычный светлый дракон', type: 'pet', image: '/lovable-uploads/4e90788f-f14d-4972-b8e1-b89bf85bc890.png', faction: 'Элленар' },
+  { name: 'Необычный светлый дракон', type: 'pet', image: '/lovable-uploads/7fb8c699-793a-44b4-a2d3-88f652d02df0.png', faction: 'Элленар' },
+  { name: 'Редкий светлый дракон', type: 'pet', image: '/lovable-uploads/2e6a0e07-5212-42e8-8b87-f121469fcc0e.png', faction: 'Элленар' },
+  { name: 'Эпический светлый дракон', type: 'pet', image: '/lovable-uploads/09258293-d0bc-46b5-a0aa-d606cc9d860a.png', faction: 'Элленар' },
+  { name: 'Легендарный светлый дракон', type: 'pet', image: '/lovable-uploads/6ba29742-0bdb-477e-924e-c97d968909f4.png', faction: 'Элленар' },
+  { name: 'Мифический светлый дракон', type: 'pet', image: '/lovable-uploads/2e0dbff7-125d-4e5e-9402-73de3eeba9a1.png', faction: 'Элленар' },
+  { name: 'Этернал светлый дракон', type: 'pet', image: '/lovable-uploads/c38ed092-c0bd-4f34-9b21-35ab70d00e91.png', faction: 'Элленар' },
+  { name: 'Империал светлый дракон', type: 'pet', image: '/lovable-uploads/09caa6d5-c3fe-490f-9c3f-f7a4e43d4542.png', faction: 'Элленар' },
+  { name: 'Титан светлый дракон', type: 'pet', image: '/lovable-uploads/d0cfd02f-9c08-4ece-a326-fd76f6f915f9.png', faction: 'Элленар' },
   
   // Telerion Heroes
   { name: 'Рекрут', type: 'character', image: '/lovable-uploads/9278c174-0cbd-4e3e-ae12-3d267733ff2c.png', faction: 'Тэлэрион' },
@@ -96,8 +114,15 @@ const cardDatabase: CardInfo[] = [
   { name: 'Верховный Стратег', type: 'character', image: '/lovable-uploads/157ea897-e1c6-408f-944a-8463c3ec1424.png', faction: 'Тэлэрион' },
   
   // Telerion Dragons
-  { name: 'Обычный ледяной дракон', type: 'pet', image: '/lovable-uploads/1c428823-cebc-41ea-a9c0-6f741e5ae1ae.png', faction: 'Тэлэрион' },
-  { name: 'Легендарный ледяной дракон', type: 'pet', image: '/lovable-uploads/1c428823-cebc-41ea-a9c0-6f741e5ae1ae.png', faction: 'Тэлэрион' },
+  { name: 'Обычный теневой дракон', type: 'pet', image: '/lovable-uploads/8a7f1faf-6eb6-4516-9a43-88db6cc83016.png', faction: 'Тэлэрион' },
+  { name: 'Необычный теневой дракон', type: 'pet', image: '/lovable-uploads/755cdb02-5979-4591-9cf1-d9b72af904df.png', faction: 'Тэлэрион' },
+  { name: 'Редкий теневой дракон', type: 'pet', image: '/lovable-uploads/fa290afb-f4ef-445f-b1e1-65ecf8b90bc2.png', faction: 'Тэлэрион' },
+  { name: 'Эпический теневой дракон', type: 'pet', image: '/lovable-uploads/c1ade134-8b22-40f8-a928-a1e07f4f0395.png', faction: 'Тэлэрион' },
+  { name: 'Легендарный теневой дракон', type: 'pet', image: '/lovable-uploads/14e70f3f-fbe9-4d39-bbe7-707940e520b3.png', faction: 'Тэлэрион' },
+  { name: 'Мифический теневой дракон', type: 'pet', image: '/lovable-uploads/937ab950-dfce-4271-aeea-64516080f84f.png', faction: 'Тэлэрион' },
+  { name: 'Этернал теневой дракон', type: 'pet', image: '/lovable-uploads/50e7d6a4-063e-4d5d-859b-87a1eedd4e5e.png', faction: 'Тэлэрион' },
+  { name: 'Империал теневой дракон', type: 'pet', image: '/lovable-uploads/7cbb0d6f-8c9e-4ec2-9e47-1942e3d6750c.png', faction: 'Тэлэрион' },
+  { name: 'Титан теневой дракон', type: 'pet', image: '/lovable-uploads/7358b58a-6645-4d85-ac12-696fdf68e2f7.png', faction: 'Тэлэрион' },
   
   // Aelantir Heroes
   { name: 'Рекрут', type: 'character', image: '/lovable-uploads/195033f3-1c3d-461f-88ca-243f19a1a2b2.png', faction: 'Аэлантир' },
@@ -111,8 +136,15 @@ const cardDatabase: CardInfo[] = [
   { name: 'Верховный Стратег', type: 'character', image: '/lovable-uploads/ec76b547-e84b-479c-8301-966e46bd410f.png', faction: 'Аэлантир' },
   
   // Aelantir Dragons
-  { name: 'Обычный светлый дракон', type: 'pet', image: '/lovable-uploads/be276b54-cf74-4b5f-bc81-eb10e6b4f96f.png', faction: 'Аэлантир' },
-  { name: 'Эпический светлый дракон', type: 'pet', image: '/lovable-uploads/be276b54-cf74-4b5f-bc81-eb10e6b4f96f.png', faction: 'Аэлантир' },
+  { name: 'Обычный земной дракон', type: 'pet', image: '/lovable-uploads/c7fb83f7-8fd4-460f-a46e-afdcda1ebf5f.png', faction: 'Аэлантир' },
+  { name: 'Необычный земной дракон', type: 'pet', image: '/lovable-uploads/a67b0362-c82a-4564-99e8-8776f6bf6591.png', faction: 'Аэлантир' },
+  { name: 'Редкий земной дракон', type: 'pet', image: '/lovable-uploads/83540e14-d8ed-424d-9244-694381bdbddf.png', faction: 'Аэлантир' },
+  { name: 'Эпический земной дракон', type: 'pet', image: '/lovable-uploads/36e1d451-fecc-4db6-ae8b-42c341c78f27.png', faction: 'Аэлантир' },
+  { name: 'Легендарный земной дракон', type: 'pet', image: '/lovable-uploads/d983aa63-95f4-4409-8d62-e92b853c851b.png', faction: 'Аэлантир' },
+  { name: 'Мифический земной дракон', type: 'pet', image: '/lovable-uploads/1c898dd5-a044-49f9-be5b-782331a277db.png', faction: 'Аэлантир' },
+  { name: 'Этернал земной дракон', type: 'pet', image: '/lovable-uploads/0ebba56d-d197-40d9-818a-070d54268140.png', faction: 'Аэлантир' },
+  { name: 'Империал земной дракон', type: 'pet', image: '/lovable-uploads/ce3292f0-e4aa-4a42-a73a-753b3887a621.png', faction: 'Аэлантир' },
+  { name: 'Титан земной дракон', type: 'pet', image: '/lovable-uploads/deabe14b-dfed-4776-a35b-2c533979952c.png', faction: 'Аэлантир' },
   
   // Lioras Heroes
   { name: 'Рекрут', type: 'character', image: '/lovable-uploads/7ab893a1-5053-46ee-b7ae-3ec02eaf27cc.png', faction: 'Лиорас' },
@@ -126,15 +158,15 @@ const cardDatabase: CardInfo[] = [
   { name: 'Верховный Стратег', type: 'character', image: '/lovable-uploads/5cd82d92-0700-4a7b-ac18-db694d3e0e95.png', faction: 'Лиорас' },
   
   // Lioras Dragons
-  { name: 'Обычный песчаный дракон', type: 'pet', image: '/lovable-uploads/72e17d22-1cd5-4087-aa0f-2b05c55eac0a.png', faction: 'Лиорас' },
-  { name: 'Необычный песчаный дракон', type: 'pet', image: '/lovable-uploads/72e17d22-1cd5-4087-aa0f-2b05c55eac0a.png', faction: 'Лиорас' },
-  { name: 'Эпический песчаный дракон', type: 'pet', image: '/lovable-uploads/72e17d22-1cd5-4087-aa0f-2b05c55eac0a.png', faction: 'Лиорас' },
-  { name: 'Легендарный песчаный дракон', type: 'pet', image: '/lovable-uploads/72e17d22-1cd5-4087-aa0f-2b05c55eac0a.png', faction: 'Лиорас' },
-  { name: 'Этернал песчаный дракон', type: 'pet', image: '/lovable-uploads/72e17d22-1cd5-4087-aa0f-2b05c55eac0a.png', faction: 'Лиорас' },
-  
-  // Shadow Dragons
-  { name: 'Империал теневой дракон', type: 'pet', image: '/lovable-uploads/6c79ca6c-46f0-4a71-a57f-efa81b68e0be.png', faction: 'Тень' },
-  { name: 'Этернал теневой дракон', type: 'pet', image: '/lovable-uploads/6c79ca6c-46f0-4a71-a57f-efa81b68e0be.png', faction: 'Тень' },
+  { name: 'Обычный лесной дракон', type: 'pet', image: '/lovable-uploads/d081d1db-aab3-4a95-b5a3-569454011d36.png', faction: 'Лиорас' },
+  { name: 'Необычный лесной дракон', type: 'pet', image: '/lovable-uploads/7d753ea0-0d79-490a-aea7-bfa1c207c1af.png', faction: 'Лиорас' },
+  { name: 'Редкий лесной дракон', type: 'pet', image: '/lovable-uploads/65dc676f-631e-4c33-ab62-54640607c321.png', faction: 'Лиорас' },
+  { name: 'Эпический лесной дракон', type: 'pet', image: '/lovable-uploads/ee5368e1-44c7-43d4-be3b-b8114fe275d8.png', faction: 'Лиорас' },
+  { name: 'Легендарный лесной дракон', type: 'pet', image: '/lovable-uploads/45f1daa1-fe0a-4415-966d-97180027eb93.png', faction: 'Лиорас' },
+  { name: 'Мифический лесной дракон', type: 'pet', image: '/lovable-uploads/954afd3f-3148-4e1f-9d99-223655cc522e.png', faction: 'Лиорас' },
+  { name: 'Этернал лесной дракон', type: 'pet', image: '/lovable-uploads/20f876ac-c5a5-48c5-8d7c-a4cbcb5e3af7.png', faction: 'Лиорас' },
+  { name: 'Империал лесной дракон', type: 'pet', image: '/lovable-uploads/282ffbe2-827c-409d-b018-1d5ef3e51376.png', faction: 'Лиорас' },
+  { name: 'Титан лесной дракон', type: 'pet', image: '/lovable-uploads/a8780075-c97a-42ae-a5b9-da3863dc754e.png', faction: 'Лиорас' },
 ];
 
 type ClassLevel = 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9;
