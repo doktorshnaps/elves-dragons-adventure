@@ -343,15 +343,19 @@ export const useShelterState = () => {
     // Проверяем наличие требуемых предметов по ключу типа (а не по локализованному имени)
     let hasRequiredItems = true;
     if (upgrade.requiredItems && (Array.isArray(upgrade.requiredItems) || typeof upgrade.requiredItems === 'object')) {
+      // Считаем инвентарь по item_id из шаблонов (строго по шаблону)
       const invCountsByKey: Record<string, number> = {};
-      effectiveInventory.forEach(item => {
-        const key = getItemMatchKey(item);
-        invCountsByKey[key] = (invCountsByKey[key] || 0) + 1;
+      effectiveInventory.forEach((it) => {
+        const tplByName = getTemplateByName((it as any)?.name);
+        if (tplByName?.item_id) {
+          invCountsByKey[tplByName.item_id] = (invCountsByKey[tplByName.item_id] || 0) + 1;
+        }
       });
 
-      console.log('🔍 [canAffordUpgrade] Inventory counts by key:', invCountsByKey);
+      console.log('🔍 [canAffordUpgrade] Inventory counts by item_id:', invCountsByKey);
 
-      const entries: Array<{ item_id: string; quantity: number }> = Array.isArray(upgrade.requiredItems)
+      // 1) Нормализуем требования
+      const rawEntries: Array<{ item_id: string; quantity: number }> = Array.isArray(upgrade.requiredItems)
         ? (upgrade.requiredItems as any[]).map((req: any) => ({
             item_id: String(req.item_id ?? req.id ?? req.type ?? ''),
             quantity: Number(req.quantity ?? req.qty ?? req.count ?? 1)
@@ -359,21 +363,27 @@ export const useShelterState = () => {
         : Object.entries(upgrade.requiredItems as Record<string, any>)
             .map(([key, qty]) => ({ item_id: String(key), quantity: Number(qty ?? 1) }));
 
-      console.log('🔍 [canAffordUpgrade] Required items entries:', entries);
+      // 2) Дедуплируем по реальному item_id шаблона. Если одно и то же задано дважды разными ключами, берём МАКСИМУМ, а не сумму
+      const dedupMap = new Map<string, number>();
+      for (const r of rawEntries) {
+        const tpl = getTemplate(r.item_id);
+        const key = tpl?.item_id ?? String(r.item_id);
+        const prev = dedupMap.get(key) || 0;
+        dedupMap.set(key, Math.max(prev, Number(r.quantity || 1)));
+      }
+      const entries = Array.from(dedupMap, ([item_id, quantity]) => ({ item_id, quantity }));
+
+      console.log('🔍 [canAffordUpgrade] Deduped required entries:', entries);
 
       for (const req of entries) {
-        const template = getTemplate(req.item_id); // req.item_id может быть числовым ID типа "43"
-        const requiredKey = template?.item_id ?? req.item_id; // получаем item_id типа "primas_eye"
-        const playerHas = invCountsByKey[requiredKey] || 0;
-        
-        console.log(`🔍 [canAffordUpgrade] Checking: req.item_id=${req.item_id}, template=${template?.name}, requiredKey=${requiredKey}, playerHas=${playerHas}, need=${req.quantity}`);
-        
+        const playerHas = invCountsByKey[req.item_id] || 0;
+        console.log(`🔍 [canAffordUpgrade] Need ${req.quantity} of ${req.item_id}, playerHas=${playerHas}`);
         if (playerHas < req.quantity) {
           hasRequiredItems = false;
           break;
         }
       }
-      
+
       console.log('🔍 [canAffordUpgrade] hasRequiredItems:', hasRequiredItems);
     }
     
@@ -426,32 +436,39 @@ export const useShelterState = () => {
         : Object.entries(upgrade.requiredItems as Record<string, any>)
             .map(([key, qty]) => ({ item_id: String(key), quantity: Number(qty ?? 1) }));
 
-      // 2) Индексируем инвентарь по item_id из шаблонов
-      const indexByKey = new Map<string, number[]>(); // key=item_id (например, primas_eye) -> индексы в массиве newInventory
+      // 2) Индексируем инвентарь по ТЕПЛОНУМЕРУ (numeric id) для строгого соответствия
+      const indexByTplId = new Map<number, number[]>(); // key=numeric template id -> индексы в newInventory
+      const indexByItemId = new Map<string, number[]>(); // key=item_id (строка) -> индексы
       for (let i = 0; i < newInventory.length; i++) {
-        const item = newInventory[i];
-        const tplByName = getTemplateByName((item as any)?.name);
-        const key = (tplByName?.item_id) || getItemMatchKey(item);
-        if (!indexByKey.has(key)) indexByKey.set(key, []);
-        indexByKey.get(key)!.push(i);
+        const it = newInventory[i];
+        const tpl = getTemplateByName((it as any)?.name);
+        if (tpl && typeof tpl.id === 'number') {
+          if (!indexByTplId.has(tpl.id)) indexByTplId.set(tpl.id, []);
+          indexByTplId.get(tpl.id)!.push(i);
+          if (tpl.item_id) {
+            if (!indexByItemId.has(tpl.item_id)) indexByItemId.set(tpl.item_id, []);
+            indexByItemId.get(tpl.item_id)!.push(i);
+          }
+        }
       }
 
-      // 3) Выбираем случайные индексы для удаления по каждому требованию
+      // 3) Выбираем случайные индексы для удаления по каждому требованию (строго по шаблону)
       const indicesToRemove = new Set<number>();
       for (const req of entries) {
         const tpl = getTemplate(req.item_id);
-        const requiredKey = tpl?.item_id ?? String(req.item_id);
-        const available = indexByKey.get(requiredKey) || [];
+        const candidateByTpl = (tpl && typeof tpl.id === 'number') ? (indexByTplId.get(tpl.id) || []) : [];
+        const candidateByItemId = tpl?.item_id ? (indexByItemId.get(tpl.item_id) || []) : [];
+        // Предпочитаем numeric id (уникален), fallback — item_id
+        const available = candidateByTpl.length > 0 ? candidateByTpl : candidateByItemId;
         if (available.length === 0) continue;
-        // Перемешаем индексы и возьмем нужное количество
         const shuffled = [...available].sort(() => Math.random() - 0.5);
-        const take = Math.min(req.quantity || 1, shuffled.length);
+        const take = Math.min(Number(req.quantity || 1), shuffled.length);
         for (let k = 0; k < take; k++) {
           indicesToRemove.add(shuffled[k]);
         }
       }
 
-      // 4) Применяем удаление по рассчитанным индексам
+      // 4) Применяем удаление по рассчитанным индексам (оставшиеся предметы не трогаем)
       newInventory = newInventory.filter((_, idx) => !indicesToRemove.has(idx));
     }
     
