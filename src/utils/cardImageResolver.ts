@@ -108,6 +108,10 @@ export const invalidateCardImagesCache = () => {
  * @returns URL изображения или undefined, если специального изображения нет
  */
 export const getCardImageByRarity = async (card: Card): Promise<string | undefined> => {
+  // Если карта уже содержит конкретное изображение (например, из edge-функции), используем его приоритетно
+  if (card.cardClass && card.image) {
+    return card.image;
+  }
   // Пытаемся загрузить изображение из базы данных
   try {
     const dbImages = await loadDatabaseImages();
@@ -160,6 +164,10 @@ export const getCardImageByRarity = async (card: Card): Promise<string | undefin
  * Использует только hardcoded изображения и стандартное изображение карты
  */
 export const getCardImageByRaritySync = (card: Card): string | undefined => {
+  // Если карта уже содержит конкретное изображение (например, из edge-функции), используем его приоритетно
+  if (card.cardClass && card.image) {
+    return card.image;
+  }
   // Проверяем hardcoded изображения для "Рекрут" из Тэлэриона
   if (card.name === "Рекрут" && card.faction === "Тэлэрион" && card.type === "character") {
     return recruitRarityImages[card.rarity] || card.image;
