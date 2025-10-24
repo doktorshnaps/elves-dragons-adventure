@@ -48,6 +48,7 @@ export const useCardPackOpening = () => {
   };
 
   const openCardPacks = async (packItem: Item, count: number): Promise<CardType[]> => {
+    console.log('🔔 openCardPacks CALLED', { packItem: packItem.name, count, isOpening });
     if (packItem.type !== 'cardPack' || isOpening) return [];
 
     const allPacks = (gameData.inventory || []).filter(
