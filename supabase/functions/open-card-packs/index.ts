@@ -26,15 +26,15 @@ const cardDatabase: CardInfo[] = [
   { name: 'Верховный Стратег', type: 'character', image: '/lovable-uploads/a67b0362-c82a-4564-99e8-8776f6bf6591.png', faction: 'Каледор' },
   
   // Kaledor Dragons
-  { name: 'Обычный огненный дракон', type: 'pet', image: '/lovable-uploads/cffdaff4-73e2-4415-82e4-e70ec09780de.png', faction: 'Каледор' },
-  { name: 'Необычный огненный дракон', type: 'pet', image: '/lovable-uploads/cffdaff4-73e2-4415-82e4-e70ec09780de.png', faction: 'Каледор' },
-  { name: 'Редкий огненный дракон', type: 'pet', image: '/lovable-uploads/cffdaff4-73e2-4415-82e4-e70ec09780de.png', faction: 'Каледор' },
-  { name: 'Эпический огненный дракон', type: 'pet', image: '/lovable-uploads/cffdaff4-73e2-4415-82e4-e70ec09780de.png', faction: 'Каледор' },
-  { name: 'Легендарный огненный дракон', type: 'pet', image: '/lovable-uploads/cffdaff4-73e2-4415-82e4-e70ec09780de.png', faction: 'Каледор' },
-  { name: 'Мифический огненный дракон', type: 'pet', image: '/lovable-uploads/cffdaff4-73e2-4415-82e4-e70ec09780de.png', faction: 'Каледор' },
-  { name: 'Этернал огненный дракон', type: 'pet', image: '/lovable-uploads/cffdaff4-73e2-4415-82e4-e70ec09780de.png', faction: 'Каледор' },
-  { name: 'Империал огненный дракон', type: 'pet', image: '/lovable-uploads/cffdaff4-73e2-4415-82e4-e70ec09780de.png', faction: 'Каледор' },
-  { name: 'Титан огненный дракон', type: 'pet', image: '/lovable-uploads/cffdaff4-73e2-4415-82e4-e70ec09780de.png', faction: 'Каледор' },
+  { name: 'Обычный ледяной дракон', type: 'pet', image: '/lovable-uploads/a684a167-5ab8-4c2c-916e-c1e2b2c7a335.png', faction: 'Каледор' },
+  { name: 'Необычный ледяной дракон', type: 'pet', image: '/lovable-uploads/dec21ec3-c2d5-41c0-bb9b-991822a2e180.png', faction: 'Каледор' },
+  { name: 'Редкий ледяной дракон', type: 'pet', image: '/lovable-uploads/6e94c9a2-5307-4802-8e31-dc179c870b4b.png', faction: 'Каледор' },
+  { name: 'Эпический ледяной дракон', type: 'pet', image: '/lovable-uploads/ce617343-8823-428c-b91d-8f847977046a.png', faction: 'Каледор' },
+  { name: 'Легендарный ледяной дракон', type: 'pet', image: '/lovable-uploads/1c428823-cebc-41ea-a9c0-6f741e5ae1ae.png', faction: 'Каледор' },
+  { name: 'Мифический ледяной дракон', type: 'pet', image: '/lovable-uploads/3eab57b0-ee8f-4abf-bedc-fb4ae9384d33.png', faction: 'Каледор' },
+  { name: 'Этернал ледяной дракон', type: 'pet', image: '/lovable-uploads/d9fed790-128c-40f2-b174-66bff52f9028.png', faction: 'Каледор' },
+  { name: 'Империал ледяной дракон', type: 'pet', image: '/lovable-uploads/9f15a393-34df-4a04-9fc8-31b2aa858458.png', faction: 'Каледор' },
+  { name: 'Титан ледяной дракон', type: 'pet', image: '/lovable-uploads/372deb79-915d-44a2-ab23-ef5e9e85252d.png', faction: 'Каледор' },
   
   // Sylvanesti Heroes
   { name: 'Рекрут', type: 'character', image: '/lovable-uploads/1f4e533a-06b4-4168-8645-92c4dfcc0f83.png', faction: 'Сильванести' },
@@ -252,28 +252,47 @@ function generateCard() {
   const cardType = typeRoll === 1 ? 'character' : 'pet';
   console.log(`🎲 Type Roll: ${typeRoll} → ${cardType === 'character' ? 'Герой' : 'Дракон'}`);
   
-  const availableCards = cardDatabase.filter(card => card.type === cardType);
-  const selectedCard = availableCards[Math.floor(Math.random() * availableCards.length)];
-  
   // Pick class level (instead of rarity)
   const classLevel = pickClassLevel();
   const cardClass = getCardClass(classLevel, cardType);
   console.log(`🎖️ Card Class: ${cardClass} (level ${classLevel})`);
   
+  // Filter cards by type and classLevel to get matching cards
+  // For heroes: cardClass is the actual hero name (e.g., "Рекрут", "Страж")
+  // For dragons: we need to find cards that start with cardClass (e.g., "Обычный ледяной дракон")
+  let matchingCards: CardInfo[];
+  
+  if (cardType === 'character') {
+    // For heroes, the cardClass IS the name
+    matchingCards = cardDatabase.filter(card => 
+      card.type === 'character' && card.name === cardClass
+    );
+  } else {
+    // For dragons, find cards that start with the cardClass prefix
+    matchingCards = cardDatabase.filter(card => 
+      card.type === 'pet' && card.name.startsWith(cardClass)
+    );
+  }
+  
+  if (matchingCards.length === 0) {
+    console.error(`⚠️ No matching cards found for type=${cardType}, class=${cardClass}`);
+    // Fallback to any card of this type
+    matchingCards = cardDatabase.filter(card => card.type === cardType);
+  }
+  
+  const selectedCard = matchingCards[Math.floor(Math.random() * matchingCards.length)];
   const magicResistance = getMagicResistanceByFaction(selectedCard.faction);
   
-  // Use the selected card's name directly, don't override with cardClass
-  // This ensures we use the exact card from the database with its correct image
   const card = {
     id: Date.now().toString() + Math.random().toString(36).substr(2, 9),
-    name: selectedCard.name, // Keep the original card name (e.g., "Рекрут" for specific faction)
+    name: selectedCard.name,
     type: cardType,
     rarity: 1, // Always 1 star now
-    cardClass, // New field for card class (e.g., "Рекрут", "Страж", etc.)
-    classLevel, // Store level for stats calculation
+    cardClass,
+    classLevel,
     faction: selectedCard.faction,
     magicResistance,
-    image: selectedCard.image, // Use the exact image from selected card
+    image: selectedCard.image,
     // Stats будут рассчитаны на клиенте через calculateCardStats с учетом classLevel
   };
   
