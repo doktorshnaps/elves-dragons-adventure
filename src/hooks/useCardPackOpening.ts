@@ -70,9 +70,11 @@ export const useCardPackOpening = () => {
     try {
       // Генерируем карты, которые будет содержать открытие
       // Теперь generateCard сам делает ролл для выбора типа карты
+      console.log(`🎁 Opening ${count} card pack(s)...`);
       const newCards: CardType[] = Array.from({ length: count }, () =>
         generateCard()
       );
+      console.log(`📦 Total cards generated: ${newCards.length}`, newCards.map(c => `${c.name} (${c.type}) ${c.rarity}⭐`));
 
       // Атомарно удаляем колоды и добавляем карты на сервере
       const { data, error } = await (supabase as any).rpc('open_card_packs', {
