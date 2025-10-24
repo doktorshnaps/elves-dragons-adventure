@@ -2043,6 +2043,20 @@ export type Database = {
           wood_production_data: Json
         }[]
       }
+      get_item_instances_by_wallet: {
+        Args: { p_wallet_address: string }
+        Returns: {
+          created_at: string
+          id: string
+          item_id: string
+          name: string
+          template_id: number
+          type: string
+          updated_at: string
+          user_id: string
+          wallet_address: string
+        }[]
+      }
       get_maintenance_status: { Args: never; Returns: Json }
       get_medical_bay_entries: {
         Args: { p_wallet_address: string }

@@ -29,12 +29,12 @@ export const useItemInstances = () => {
     const fetchInstances = async () => {
       try {
         setLoading(true);
+        // Используем RPC функцию для обхода RLS
         const { data, error } = await supabase
-          .from('item_instances')
-          .select('*')
-          .eq('wallet_address', accountId);
+          .rpc('get_item_instances_by_wallet', { p_wallet_address: accountId });
 
         if (error) throw error;
+        console.log('✅ [useItemInstances] Loaded instances:', data?.length || 0);
         setInstances((data as ItemInstance[]) || []);
       } catch (e) {
         console.error('❌ Failed to fetch item_instances:', e);
