@@ -340,7 +340,9 @@ export const useShelterState = () => {
             .map(([key, qty]) => ({ item_id: String(key), quantity: Number(qty ?? 1) }));
 
       for (const req of entries) {
-        const requiredKey = resolveItemKey(req.item_id);
+        const template = getTemplate(req.item_id);
+        const requiredKeyRaw = (template as any)?.item_id ?? req.item_id; // предпочитаем item_id из шаблона (совпадает с типом)
+        const requiredKey = resolveItemKey(String(requiredKeyRaw));
         const playerHas = invCountsByKey[requiredKey] || 0;
         if (playerHas < req.quantity) {
           hasRequiredItems = false;
@@ -401,7 +403,9 @@ export const useShelterState = () => {
             .map(([key, qty]) => ({ item_id: String(key), quantity: Number(qty ?? 1) }));
 
       for (const req of entries) {
-        const requiredKey = resolveItemKey(req.item_id);
+        const template = getTemplate(req.item_id);
+        const requiredKeyRaw = (template as any)?.item_id ?? req.item_id;
+        const requiredKey = resolveItemKey(String(requiredKeyRaw));
         const prev = toRemoveByKey.get(requiredKey) || 0;
         toRemoveByKey.set(requiredKey, prev + (req.quantity || 1));
       }
