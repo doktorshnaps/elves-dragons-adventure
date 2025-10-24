@@ -8,6 +8,7 @@ import { useBuildingConfigs } from '@/hooks/useBuildingConfigs';
 import { useItemTemplates } from '@/hooks/useItemTemplates';
 import { useInventoryState } from '@/hooks/useInventoryState';
 import { useGameStore } from '@/stores/gameStore';
+import { resolveItemKey } from '@/utils/itemNames';
 export interface NestUpgrade {
   id: string;
   name: string;
@@ -321,13 +322,13 @@ export const useShelterState = () => {
   }], [language]);
 
   const canAffordUpgrade = (upgrade: NestUpgrade) => {
-    // Проверяем наличие требуемых предметов
+    // Проверяем наличие требуемых предметов по ключу типа (а не по локализованному имени)
     let hasRequiredItems = true;
     if (upgrade.requiredItems && (Array.isArray(upgrade.requiredItems) || typeof upgrade.requiredItems === 'object')) {
-      const inventoryCounts: Record<string, number> = {};
+      const invCountsByKey: Record<string, number> = {};
       effectiveInventory.forEach(item => {
-        const itemName = item.name;
-        inventoryCounts[itemName] = (inventoryCounts[itemName] || 0) + 1;
+        const key = resolveItemKey((item as any).type || (item as any).name);
+        invCountsByKey[key] = (invCountsByKey[key] || 0) + 1;
       });
 
       const entries: Array<{ item_id: string; quantity: number }> = Array.isArray(upgrade.requiredItems)
@@ -339,9 +340,8 @@ export const useShelterState = () => {
             .map(([key, qty]) => ({ item_id: String(key), quantity: Number(qty ?? 1) }));
 
       for (const req of entries) {
-        const template = getTemplate(req.item_id);
-        const targetName = template?.name || getItemName(req.item_id) || req.item_id;
-        const playerHas = inventoryCounts[targetName] || 0;
+        const requiredKey = resolveItemKey(req.item_id);
+        const playerHas = invCountsByKey[requiredKey] || 0;
         if (playerHas < req.quantity) {
           hasRequiredItems = false;
           break;
@@ -386,10 +386,10 @@ export const useShelterState = () => {
     
     const newBalance = gameState.balance - upgrade.cost.balance;
     
-    // Удаляем требуемые предметы из inventory (ищем по name)
+    // Удаляем требуемые предметы из inventory — строго по ключу типа, ровно нужное количество
     let newInventory = [...gameState.inventory];
     if (upgrade.requiredItems && (Array.isArray(upgrade.requiredItems) || typeof upgrade.requiredItems === 'object')) {
-      const toRemove = new Map<string, number>();
+      const toRemoveByKey = new Map<string, number>();
 
       // Нормализуем список требуемых предметов из массива или объектной формы
       const entries: Array<{ item_id: string; quantity: number }> = Array.isArray(upgrade.requiredItems)
@@ -400,21 +400,18 @@ export const useShelterState = () => {
         : Object.entries(upgrade.requiredItems as Record<string, any>)
             .map(([key, qty]) => ({ item_id: String(key), quantity: Number(qty ?? 1) }));
 
-      // Считаем, сколько каких предметов по ИМЕНИ нужно удалить
       for (const req of entries) {
-        const template = getTemplate(req.item_id);
-        const targetName = (template?.name || getItemName(req.item_id) || req.item_id) as string;
-        const prev = toRemove.get(targetName) || 0;
-        toRemove.set(targetName, prev + (req.quantity || 1));
+        const requiredKey = resolveItemKey(req.item_id);
+        const prev = toRemoveByKey.get(requiredKey) || 0;
+        toRemoveByKey.set(requiredKey, prev + (req.quantity || 1));
       }
 
-      // Одним проходом удаляем РОВНО нужное кол-во экземпляров (по уникальным id), совпадающих по name
       const filtered: any[] = [];
       for (const item of newInventory) {
-        const name = (item?.name ?? '') as string;
-        const need = toRemove.get(name) || 0;
+        const key = resolveItemKey((item as any).type || (item as any).name);
+        const need = toRemoveByKey.get(key) || 0;
         if (need > 0) {
-          toRemove.set(name, need - 1);
+          toRemoveByKey.set(key, need - 1);
           continue; // удаляем этот экземпляр
         }
         filtered.push(item);
