@@ -48,7 +48,7 @@ export const useShelterState = () => {
   const { toast } = useToast();
   const { startUpgradeAtomic, isUpgrading, getUpgradeProgress, formatRemainingTime, installUpgrade, isUpgradeReady } = useBuildingUpgrades();
   const { getBuildingConfig, getUpgradeCost: getUpgradeCostFromDB, loading: configsLoading } = useBuildingConfigs();
-  const { getTemplate, getItemName } = useItemTemplates();
+  const { getTemplate, getItemName, getTemplateByName } = useItemTemplates();
   const [activeTab, setActiveTab] = useState<"upgrades" | "crafting" | "barracks" | "dragonlair" | "medical" | "workers">("upgrades");
   const [balance, setBalance] = useState(gameState.balance);
   
@@ -129,21 +129,22 @@ export const useShelterState = () => {
     });
   };
 
-  // Ключи материалов/предметов, участвующих в требованиях апгрейда
-  const MATERIAL_KEYS = new Set<string>([
-    'woodChunks', 'magicalRoots', 'rockStones', 'blackCrystals',
-    'illusionManuscript','darkMonocle','etherVine','dwarvenTongs',
-    'healingOil','shimmeringCrystal','lifeCrystal'
-  ]);
-
-  // Унифицированное определение ключа предмета для сопоставления
+  // Унифицированное определение ключа предмета для сопоставления через item_id из шаблона
   const getItemMatchKey = (item: any): string => {
+    // Сначала пытаемся найти шаблон по имени предмета
+    const templateByName = getTemplateByName(item?.name);
+    if (templateByName?.item_id) {
+      return templateByName.item_id;
+    }
+    
+    // Если не нашли по имени, пробуем по типу через resolveItemKey
     const typeKey = resolveItemKey(String(item?.type ?? ''));
-    const nameKey = resolveItemKey(String(item?.name ?? ''));
-    if (MATERIAL_KEYS.has(typeKey)) return typeKey;
-    if (MATERIAL_KEYS.has(nameKey)) return nameKey;
-    // Если это не материал из списка — используем тип (или имя как запасной вариант)
-    return typeKey || nameKey;
+    if (typeKey && typeKey !== 'material') {
+      return typeKey;
+    }
+    
+    // Запасной вариант - имя через resolveItemKey
+    return resolveItemKey(String(item?.name ?? ''));
   };
 
   // Используем реальные балансы ресурсов из базы данных
@@ -348,6 +349,8 @@ export const useShelterState = () => {
         invCountsByKey[key] = (invCountsByKey[key] || 0) + 1;
       });
 
+      console.log('🔍 [canAffordUpgrade] Inventory counts by key:', invCountsByKey);
+
       const entries: Array<{ item_id: string; quantity: number }> = Array.isArray(upgrade.requiredItems)
         ? (upgrade.requiredItems as any[]).map((req: any) => ({
             item_id: String(req.item_id ?? req.id ?? req.type ?? ''),
@@ -356,16 +359,22 @@ export const useShelterState = () => {
         : Object.entries(upgrade.requiredItems as Record<string, any>)
             .map(([key, qty]) => ({ item_id: String(key), quantity: Number(qty ?? 1) }));
 
+      console.log('🔍 [canAffordUpgrade] Required items entries:', entries);
+
       for (const req of entries) {
-        const template = getTemplate(req.item_id);
-        const requiredKeyRaw = (template as any)?.item_id ?? req.item_id; // предпочитаем item_id из шаблона (совпадает с типом)
-        const requiredKey = resolveItemKey(String(requiredKeyRaw));
+        const template = getTemplate(req.item_id); // req.item_id может быть числовым ID типа "43"
+        const requiredKey = template?.item_id ?? req.item_id; // получаем item_id типа "primas_eye"
         const playerHas = invCountsByKey[requiredKey] || 0;
+        
+        console.log(`🔍 [canAffordUpgrade] Checking: req.item_id=${req.item_id}, template=${template?.name}, requiredKey=${requiredKey}, playerHas=${playerHas}, need=${req.quantity}`);
+        
         if (playerHas < req.quantity) {
           hasRequiredItems = false;
           break;
         }
       }
+      
+      console.log('🔍 [canAffordUpgrade] hasRequiredItems:', hasRequiredItems);
     }
     
     return upgrade.level < upgrade.maxLevel && 
@@ -421,8 +430,7 @@ export const useShelterState = () => {
 
       for (const req of entries) {
         const template = getTemplate(req.item_id);
-        const requiredKeyRaw = (template as any)?.item_id ?? req.item_id;
-        const requiredKey = resolveItemKey(String(requiredKeyRaw));
+        const requiredKey = template?.item_id ?? req.item_id;
         const prev = toRemoveByKey.get(requiredKey) || 0;
         toRemoveByKey.set(requiredKey, prev + (req.quantity || 1));
       }
