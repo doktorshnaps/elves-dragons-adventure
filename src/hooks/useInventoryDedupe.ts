@@ -19,26 +19,26 @@ export const useInventoryDedupe = () => {
       const inventory = gameState.inventory || [];
       if (inventory.length === 0) return;
 
-      // Создаем Set для отслеживания уникальных instanceId/id
-      const seenIds = new Set<string>();
+      // Создаем Set для отслеживания уникальных instanceId (ТОЛЬКО по instanceId, не по template id)
+      const seenInstanceIds = new Set<string>();
       const uniqueItems: Item[] = [];
       const duplicates: Item[] = [];
 
       inventory.forEach((item: any) => {
-        const itemId = item.instanceId || item.id;
-        
-        if (!itemId) {
-          // Если нет ID, оставляем предмет (это может быть старый предмет)
+        const instanceId = item.instanceId;
+
+        if (!instanceId) {
+          // Нет уникального instanceId — НЕ считаем такие предметы дубликатами
           uniqueItems.push(item);
           return;
         }
 
-        if (seenIds.has(itemId)) {
-          // Это дубликат
+        if (seenInstanceIds.has(instanceId)) {
+          // Это дубликат по instanceId
           duplicates.push(item);
         } else {
           // Первое вхождение
-          seenIds.add(itemId);
+          seenInstanceIds.add(instanceId);
           uniqueItems.push(item);
         }
       });

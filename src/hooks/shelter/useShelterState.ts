@@ -454,12 +454,14 @@ export const useShelterState = () => {
 
       // 3) Выбираем случайные индексы для удаления по каждому требованию (строго по шаблону)
       const indicesToRemove = new Set<number>();
+      console.log('🧪 [upgrade] Required entries to remove:', entries);
       for (const req of entries) {
         const tpl = getTemplate(req.item_id);
         const candidateByTpl = (tpl && typeof tpl.id === 'number') ? (indexByTplId.get(tpl.id) || []) : [];
         const candidateByItemId = tpl?.item_id ? (indexByItemId.get(tpl.item_id) || []) : [];
         // Предпочитаем numeric id (уникален), fallback — item_id
         const available = candidateByTpl.length > 0 ? candidateByTpl : candidateByItemId;
+        console.log('🧪 [upgrade] Candidate indices for', req.item_id, '->', available);
         if (available.length === 0) continue;
         const shuffled = [...available].sort(() => Math.random() - 0.5);
         const take = Math.min(Number(req.quantity || 1), shuffled.length);
@@ -468,8 +470,11 @@ export const useShelterState = () => {
         }
       }
 
+      console.log('🧪 [upgrade] Total indices to remove:', indicesToRemove.size, 'of', newInventory.length);
+
       // 4) Применяем удаление по рассчитанным индексам (оставшиеся предметы не трогаем)
       newInventory = newInventory.filter((_, idx) => !indicesToRemove.has(idx));
+      console.log('🧪 [upgrade] Inventory after removal:', newInventory.length);
     }
     
     try {
