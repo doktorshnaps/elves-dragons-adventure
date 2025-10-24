@@ -6,7 +6,8 @@ import { useToast } from '@/hooks/use-toast';
 import { useBuildingUpgrades } from '@/hooks/useBuildingUpgrades';
 import { useBuildingConfigs } from '@/hooks/useBuildingConfigs';
 import { useItemTemplates } from '@/hooks/useItemTemplates';
-
+import { useInventoryState } from '@/hooks/useInventoryState';
+import { useGameStore } from '@/stores/gameStore';
 export interface NestUpgrade {
   id: string;
   name: string;
@@ -55,6 +56,14 @@ export const useShelterState = () => {
     setBalance(gameState.balance);
   }, [gameState.balance]);
   
+  // Источники инвентаря: приоритет — store, потом gameState, затем local
+  const { inventory: localInventory } = useInventoryState();
+  const storeInventory = useGameStore((state) => state.inventory);
+  const effectiveInventory = (storeInventory?.length ?? 0) > 0
+    ? storeInventory
+    : (gameState.inventory?.length ?? 0) > 0
+      ? gameState.inventory
+      : localInventory;
   // Подписка на события обновления баланса
   useEffect(() => {
     const handleBalanceUpdate = (e: any) => {
@@ -316,7 +325,7 @@ export const useShelterState = () => {
     let hasRequiredItems = true;
     if (upgrade.requiredItems && (Array.isArray(upgrade.requiredItems) || typeof upgrade.requiredItems === 'object')) {
       const inventoryCounts: Record<string, number> = {};
-      gameState.inventory.forEach(item => {
+      effectiveInventory.forEach(item => {
         const itemName = item.name;
         inventoryCounts[itemName] = (inventoryCounts[itemName] || 0) + 1;
       });
