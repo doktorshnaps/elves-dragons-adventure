@@ -42,36 +42,6 @@ const Marketplace = () => {
     loadGameData
   });
 
-  // Ensure Supabase session using NEAR wallet address
-  const ensureSupabaseAuth = async (wallet: string): Promise<boolean> => {
-    try {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (session) return true;
-
-      const email = `${wallet}@near.wallet`;
-      const password = `NEAR_${wallet}_${wallet.slice(-10)}`;
-
-      console.log('🔐 Ensuring Supabase auth (Marketplace)');
-      const { error: signInError } = await supabase.auth.signInWithPassword({ email, password });
-      if (signInError) {
-        if (signInError.message.includes('Invalid login credentials')) {
-          const { error: signUpError } = await supabase.auth.signUp({
-            email,
-            password,
-            options: { emailRedirectTo: `${window.location.origin}/` }
-          });
-          if (signUpError) throw signUpError;
-        } else {
-          throw signInError;
-        }
-      }
-      return true;
-    } catch (e: any) {
-      console.error('❌ Supabase auth ensure error (Marketplace):', e);
-      toast({ title: 'Ошибка авторизации', description: 'Не удалось авторизоваться в базе', variant: 'destructive' });
-      return false;
-    }
-  };
 
   const handleCreateListing = async (listing: MarketplaceListing) => {
     console.log('🧾 handleCreateListing called:', {
@@ -109,12 +79,6 @@ const Marketplace = () => {
         nftCard 
       });
 
-      // Ensure Supabase session is active before DB writes (optional)
-      const supaOk = await ensureSupabaseAuth(accountId);
-      if (!supaOk) {
-        console.warn('⚠️ Proceeding without Supabase session; Edge Function fallback will be used');
-      }
-
       await createNFTListing(
         nftCard,
         listing.price,
@@ -127,9 +91,7 @@ const Marketplace = () => {
             title: "NFT выставлен на продажу",
             description: `${listing.item.name} выставлен за ${listing.price} ${paymentToken}`,
           });
-          const { data: userRes } = await supabase.auth.getUser();
-          const uid = userRes?.user?.id;
-          if (uid) await syncLocalCaches(uid);
+          if (accountId) await syncLocalCaches(accountId);
         },
         (error) => {
           toast({ title: 'Ошибка', description: error, variant: 'destructive' });
@@ -146,9 +108,7 @@ const Marketplace = () => {
           title: "Предмет выставлен на продажу",
           description: `${listing.item.name} выставлен за ${listing.price} ELL`,
         });
-        const { data: userRes } = await supabase.auth.getUser();
-        const uid = userRes?.user?.id;
-        if (uid) await syncLocalCaches(uid);
+        if (accountId) await syncLocalCaches(accountId);
       },
       (error) => {
         toast({ title: 'Не удалось создать объявление', description: error, variant: 'destructive' });
@@ -161,10 +121,8 @@ const Marketplace = () => {
       async () => {
         removeListing(listing.id);
 
-        const { data: userRes } = await supabase.auth.getUser();
-        const userId = userRes?.user?.id;
-        if (userId) {
-          await syncLocalCaches(userId);
+        if (accountId) {
+          await syncLocalCaches(accountId);
         }
 
         toast({

@@ -19,18 +19,7 @@ export const useNFTMarketplace = () => {
     try {
       console.log('🎬 createNFTListing started', { nftCard, price, paymentToken, walletAddress });
       
-      const { data: userRes } = await supabase.auth.getUser();
-      const userId = userRes?.user?.id;
-      
-      console.log('👤 User check', { userId, hasUser: !!userRes?.user });
-      
-      let hasSupabaseSession = true;
-      if (!userId) {
-        console.warn('⚠️ No Supabase user session; will use Edge Function fallback');
-        hasSupabaseSession = false;
-      }
-
-      console.log('✅ User authenticated, checking wallet selector');
+      console.log('✅ Checking wallet selector');
 
       if (!walletSelector) {
         console.error('❌ No wallet selector');
@@ -118,85 +107,29 @@ export const useNFTMarketplace = () => {
          return;
       }
 
-      // Step 3: Create marketplace listing (DB)
-      console.log('📝 Step 3: Creating marketplace listing...');
-
-      if (hasSupabaseSession) {
-        const { data: listing, error: listingError } = await supabase
-          .from('marketplace_listings')
-          .insert([{
-            seller_id: userId,
-            seller_wallet_address: walletAddress,
-            item: nftCard as any,
-            price,
-            type: 'card',
-            status: 'active',
-            is_nft_listing: true,
-            nft_contract_id: nftCard.nft_contract_id,
-            nft_token_id: nftCard.nft_token_id,
-            payment_token_contract: ftContract
-          }])
-          .select()
-          .single();
-
-        if (listingError) {
-          console.error('❌ Error creating NFT listing:', listingError);
-          onError(listingError.message);
-          return;
+      // Step 3: Create marketplace listing via Edge Function
+      console.log('📝 Step 3: Creating marketplace listing via Edge Function...');
+      
+      const { data, error } = await supabase.functions.invoke('marketplace-create-nft-listing', {
+        body: {
+          seller_wallet_address: walletAddress,
+          item: nftCard,
+          price,
+          nft_contract_id: nftCard.nft_contract_id,
+          nft_token_id: nftCard.nft_token_id,
+          payment_token_contract: ftContract
         }
+      });
 
-        console.log('✅ Marketplace listing created:', listing.id);
-        
-        // Step 4: Lock NFT in card_instances
-        console.log('📝 Step 4: Locking NFT in card_instances...');
-        const { error: lockError } = await supabase
-          .from('card_instances')
-          .update({
-            is_on_marketplace: true,
-            marketplace_listing_id: listing.id
-          })
-          .eq('nft_contract_id', nftCard.nft_contract_id)
-          .eq('nft_token_id', nftCard.nft_token_id)
-          .eq('wallet_address', walletAddress);
-
-        if (lockError) {
-          console.error('❌ Error locking NFT:', lockError);
-          // Rollback listing
-          console.log('🔄 Rolling back marketplace listing...');
-          await supabase
-            .from('marketplace_listings')
-            .delete()
-            .eq('id', listing.id);
-          onError('Не удалось заблокировать NFT');
-          return;
-        }
-
-        console.log('✅ NFT locked successfully');
-        console.log('🎉 All steps completed! NFT listing created successfully');
-        onSuccess();
-      } else {
-        console.log('🛰️ Using Edge Function fallback: marketplace-create-nft-listing');
-        const { data, error } = await supabase.functions.invoke('marketplace-create-nft-listing', {
-          body: {
-            seller_wallet_address: walletAddress,
-            item: nftCard,
-            price,
-            nft_contract_id: nftCard.nft_contract_id,
-            nft_token_id: nftCard.nft_token_id,
-            payment_token_contract: ftContract
-          }
-        });
-
-        if (error) {
-          console.error('❌ Edge function error creating listing:', error);
-          onError(error.message || 'Не удалось создать листинг через Edge Function');
-          return;
-        }
-
-        console.log('✅ Edge function listing created:', (data as any)?.listing?.id);
-        console.log('🎉 All steps completed via edge function!');
-        onSuccess();
+      if (error) {
+        console.error('❌ Edge function error creating listing:', error);
+        onError(error.message || 'Не удалось создать листинг');
+        return;
       }
+
+      console.log('✅ Listing created:', (data as any)?.listing?.id);
+      console.log('🎉 NFT listing created successfully!');
+      onSuccess();
     } catch (error: any) {
       console.error('Error in createNFTListing:', error);
       onError(error.message || 'Неизвестная ошибка');
