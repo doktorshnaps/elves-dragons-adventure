@@ -28,6 +28,22 @@ export const useCardInstanceSync = () => {
 
     if (!cardInstances.length) {
       console.log('⏭️ No card instances to sync');
+      // Если экземпляров нет, очищаем карты в gameData и localStorage, чтобы не показывать старые данные
+      try {
+        const hadCards = Array.isArray(gameData.cards) && gameData.cards.length > 0;
+        const lsCards = localStorage.getItem('gameCards');
+        const hadLsCards = !!lsCards && JSON.parse(lsCards).length > 0;
+        if (hadCards || hadLsCards) {
+          console.log('🧹 Clearing cards due to empty card_instances');
+          await updateGameData({ cards: [] });
+          localStorage.setItem('gameCards', JSON.stringify([]));
+          window.dispatchEvent(new CustomEvent('cardsUpdate', { detail: { cards: [] } }));
+          window.dispatchEvent(new CustomEvent('cardsHealthUpdate', { detail: { cards: [] } }));
+          lastSyncedDataRef.current = '';
+        }
+      } catch (e) {
+        console.warn('Failed to clear cards on empty instances:', e);
+      }
       return;
     }
 

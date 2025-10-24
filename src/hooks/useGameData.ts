@@ -163,6 +163,34 @@ export const useGameData = () => {
         console.log('📦 Game data queued for localStorage sync');
       } else {
         console.log('⚠️ No game data found in database');
+        // Если записи нет вообще — очищаем локальные данные, чтобы не показывать старые карты
+        const emptyState = {
+          balance: 0,
+          cards: [],
+          initialized: false,
+          inventory: [],
+          marketplaceListings: [],
+          socialQuests: [],
+          adventurePlayerStats: null,
+          adventureCurrentMonster: null,
+          dragonEggs: [],
+          battleState: null,
+          selectedTeam: [],
+          barracksUpgrades: [],
+          dragonLairUpgrades: [],
+          accountLevel: 1,
+          accountExperience: 0,
+          activeWorkers: []
+        } as any;
+        setGameData(emptyState);
+        try {
+          localStorage.setItem('gameData', JSON.stringify(emptyState));
+          localStorage.setItem('gameCards', JSON.stringify([]));
+          localStorage.setItem('gameBalance', '0');
+          localStorage.setItem('gameInitialized', 'false');
+          localStorage.setItem('selectedTeam', JSON.stringify([]));
+        } catch {}
+
       }
     } catch (error) {
       console.error('Error in loadGameData:', error);
