@@ -257,27 +257,46 @@ function generateCard() {
   const cardClass = getCardClass(classLevel, cardType);
   console.log(`🎖️ Card Class: ${cardClass} (level ${classLevel})`);
   
-  // Filter cards by type and classLevel to get matching cards
-  // For heroes: cardClass is the actual hero name (e.g., "Рекрут", "Страж")
-  // For dragons: we need to find cards that start with cardClass (e.g., "Обычный ледяной дракон")
-  let matchingCards: CardInfo[];
+  // Determine available factions for this type + class
+  const availableFactions = Array.from(
+    new Set(
+      cardDatabase
+        .filter((c) =>
+          c.type === cardType &&
+          (cardType === 'character' ? c.name === cardClass : c.name.startsWith(cardClass))
+        )
+        .map((c) => c.faction)
+    )
+  ).filter(Boolean) as string[];
   
+  const selectedFaction = availableFactions.length
+    ? availableFactions[Math.floor(Math.random() * availableFactions.length)]
+    : (Array.from(new Set(cardDatabase.filter((c) => c.type === cardType).map((c) => c.faction))).filter(Boolean)[0] as string | undefined);
+  
+  console.log(`🏳️ Selected faction for this roll: ${selectedFaction || 'none'}`);
+  
+  // Filter cards by type, class and faction to ensure consistency with the grimoire
+  let matchingCards: CardInfo[];
   if (cardType === 'character') {
-    // For heroes, the cardClass IS the name
-    matchingCards = cardDatabase.filter(card => 
-      card.type === 'character' && card.name === cardClass
+    matchingCards = cardDatabase.filter(
+      (card) => card.type === 'character' && card.name === cardClass && card.faction === selectedFaction
     );
   } else {
-    // For dragons, find cards that start with the cardClass prefix
-    matchingCards = cardDatabase.filter(card => 
-      card.type === 'pet' && card.name.startsWith(cardClass)
+    matchingCards = cardDatabase.filter(
+      (card) => card.type === 'pet' && card.name.startsWith(cardClass) && card.faction === selectedFaction
     );
   }
   
+  // Fallbacks
   if (matchingCards.length === 0) {
-    console.error(`⚠️ No matching cards found for type=${cardType}, class=${cardClass}`);
-    // Fallback to any card of this type
-    matchingCards = cardDatabase.filter(card => card.type === cardType);
+    console.warn(`⚠️ No cards for type=${cardType}, class=${cardClass}, faction=${selectedFaction}. Falling back to class-only.`);
+    matchingCards = cardDatabase.filter((card) =>
+      card.type === cardType && (cardType === 'character' ? card.name === cardClass : card.name.startsWith(cardClass))
+    );
+  }
+  if (matchingCards.length === 0) {
+    console.error(`❌ No cards for type=${cardType}, class=${cardClass}. Falling back to type-only.`);
+    matchingCards = cardDatabase.filter((card) => card.type === cardType);
   }
   
   const selectedCard = matchingCards[Math.floor(Math.random() * matchingCards.length)];
