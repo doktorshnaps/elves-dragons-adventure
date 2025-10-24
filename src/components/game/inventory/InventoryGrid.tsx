@@ -114,10 +114,10 @@ export const InventoryGrid = ({
                     <div className="mb-3">
                       <h6 className="text-xs font-semibold text-yellow-400 mb-1">Герои (80%):</h6>
                       <div className="grid grid-cols-2 gap-1 text-xs">
-                        {Object.entries(getClassDropRates().heroes).map(([className, chance]) => (
-                          <div key={className} className="flex justify-between items-center">
-                            <span className="text-gray-300 truncate">{className}</span>
-                            <span className="text-gray-400 text-[10px]">{chance}</span>
+                        {Object.values(getClassDropRates().heroes).map((item) => (
+                          <div key={item.name} className="flex justify-between items-center">
+                            <span className="text-gray-300 truncate">{item.name}</span>
+                            <span className="text-gray-400 text-[10px]">{item.chance}</span>
                           </div>
                         ))}
                       </div>
@@ -126,10 +126,10 @@ export const InventoryGrid = ({
                     <div>
                       <h6 className="text-xs font-semibold text-purple-400 mb-1">Драконы (20%):</h6>
                       <div className="grid grid-cols-2 gap-1 text-xs">
-                        {Object.entries(getClassDropRates().dragons).map(([className, chance]) => (
-                          <div key={className} className="flex justify-between items-center">
-                            <span className="text-gray-300 truncate">{className}</span>
-                            <span className="text-gray-400 text-[10px]">{chance}</span>
+                        {Object.values(getClassDropRates().dragons).map((item) => (
+                          <div key={item.name} className="flex justify-between items-center">
+                            <span className="text-gray-300 truncate">{item.name}</span>
+                            <span className="text-gray-400 text-[10px]">{item.chance}</span>
                           </div>
                         ))}
                       </div>

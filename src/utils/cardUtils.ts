@@ -389,26 +389,26 @@ export const calculateCardStats = (cardName: string, rarity: Rarity, cardType: C
 export const getClassDropRates = () => {
   return {
     heroes: {
-      'Рекрут': '80%',
-      'Страж': '20%',
-      'Ветеран': '15%',
-      'Маг': '10%',
-      'Мастер Целитель': '5%',
-      'Защитник': '3%',
-      'Ветеран Защитник': '2%',
-      'Стратег': '1%',
-      'Верховный Стратег': '0.5%'
+      recruit: { name: 'Рекрут', chance: '80%' },
+      guard: { name: 'Страж', chance: '20%' },
+      veteran: { name: 'Ветеран', chance: '15%' },
+      mage: { name: 'Маг', chance: '10%' },
+      healer: { name: 'Мастер Целитель', chance: '5%' },
+      defender: { name: 'Защитник', chance: '3%' },
+      veteran_defender: { name: 'Ветеран Защитник', chance: '2%' },
+      strategist: { name: 'Стратег', chance: '1%' },
+      supreme_strategist: { name: 'Верховный Стратег', chance: '0.5%' }
     },
     dragons: {
-      'Обычный': '80%',
-      'Необычный': '20%',
-      'Редкий': '15%',
-      'Эпический': '10%',
-      'Легендарный': '5%',
-      'Мифический': '3%',
-      'Этернал': '2%',
-      'Империал': '1%',
-      'Титан': '0.5%'
+      common: { name: 'Обычный', chance: '80%' },
+      uncommon: { name: 'Необычный', chance: '20%' },
+      rare: { name: 'Редкий', chance: '15%' },
+      epic: { name: 'Эпический', chance: '10%' },
+      legendary: { name: 'Легендарный', chance: '5%' },
+      mythical: { name: 'Мифический', chance: '3%' },
+      eternal: { name: 'Этернал', chance: '2%' },
+      imperial: { name: 'Империал', chance: '1%' },
+      titan: { name: 'Титан', chance: '0.5%' }
     }
   };
 };

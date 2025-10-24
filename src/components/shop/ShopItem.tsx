@@ -78,14 +78,24 @@ export const ShopItem = ({ item, balance, onBuy }: ShopItemProps) => {
                   Шансы выпадения:
                 </h4>
                 <div className="space-y-1">
-                  {Object.entries(getRarityDropRates()).map(([rarity, chance]) => (
-                    <div key={rarity} className="flex justify-between text-[10px]">
-                      <span className="text-gray-400">
-                        {getRarityLabel(Number(rarity) as 1|2|3|4|5|6|7|8)}
-                      </span>
-                      <span className="text-game-accent">{chance}</span>
-                    </div>
-                  ))}
+                  <div className="mb-2">
+                    <p className="text-[10px] text-gray-400 mb-1">Герои (80%):</p>
+                    {Object.values(getRarityDropRates().heroes).map((item) => (
+                      <div key={item.name} className="flex justify-between text-[10px]">
+                        <span className="text-gray-400">{item.name}</span>
+                        <span className="text-game-accent">{item.chance}</span>
+                      </div>
+                    ))}
+                  </div>
+                  <div>
+                    <p className="text-[10px] text-gray-400 mb-1">Драконы (20%):</p>
+                    {Object.values(getRarityDropRates().dragons).map((item) => (
+                      <div key={item.name} className="flex justify-between text-[10px]">
+                        <span className="text-gray-400">{item.name}</span>
+                        <span className="text-game-accent">{item.chance}</span>
+                      </div>
+                    ))}
+                  </div>
                 </div>
               </HoverCardContent>
             </HoverCard>
