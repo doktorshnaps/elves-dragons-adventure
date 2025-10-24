@@ -51,7 +51,7 @@ export const useInventoryLogic = (initialInventory: Item[]) => {
 const groupItems = (items: Item[]): GroupedItem[] => {
     // Фильтруем null и undefined значения перед группировкой
     const validItems = items.filter(item => item != null && typeof item === 'object');
-      return validItems.reduce<GroupedItem[]>((acc, item) => {
+    const grouped = validItems.reduce<GroupedItem[]>((acc, item) => {
       // Группируем предметы по имени и статусу экипировки (если есть)
       const existingGroup = acc.find(
         group => 
@@ -75,6 +75,21 @@ const groupItems = (items: Item[]): GroupedItem[] => {
 
       return acc;
     }, []);
+
+    // Сортируем: колоды карт всегда на первом месте, остальные по убыванию количества
+    return grouped.sort((a, b) => {
+      const aIsCardPack = a.type === 'cardPack';
+      const bIsCardPack = b.type === 'cardPack';
+      
+      // Если оба или ни один не являются колодами карт
+      if (aIsCardPack === bIsCardPack) {
+        // Сортируем по количеству (от большего к меньшему)
+        return b.count - a.count;
+      }
+      
+      // Колода карт всегда перед остальными
+      return aIsCardPack ? -1 : 1;
+    });
   };
 
   const handleSellItem = async (item: Item) => {
