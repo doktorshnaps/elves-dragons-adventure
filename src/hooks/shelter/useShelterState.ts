@@ -129,6 +129,23 @@ export const useShelterState = () => {
     });
   };
 
+  // Ключи материалов/предметов, участвующих в требованиях апгрейда
+  const MATERIAL_KEYS = new Set<string>([
+    'woodChunks', 'magicalRoots', 'rockStones', 'blackCrystals',
+    'illusionManuscript','darkMonocle','etherVine','dwarvenTongs',
+    'healingOil','shimmeringCrystal','lifeCrystal'
+  ]);
+
+  // Унифицированное определение ключа предмета для сопоставления
+  const getItemMatchKey = (item: any): string => {
+    const typeKey = resolveItemKey(String(item?.type ?? ''));
+    const nameKey = resolveItemKey(String(item?.name ?? ''));
+    if (MATERIAL_KEYS.has(typeKey)) return typeKey;
+    if (MATERIAL_KEYS.has(nameKey)) return nameKey;
+    // Если это не материал из списка — используем тип (или имя как запасной вариант)
+    return typeKey || nameKey;
+  };
+
   // Используем реальные балансы ресурсов из базы данных
   const resources = {
     wood: gameState.wood,
@@ -327,7 +344,7 @@ export const useShelterState = () => {
     if (upgrade.requiredItems && (Array.isArray(upgrade.requiredItems) || typeof upgrade.requiredItems === 'object')) {
       const invCountsByKey: Record<string, number> = {};
       effectiveInventory.forEach(item => {
-        const key = resolveItemKey((item as any).type || (item as any).name);
+        const key = getItemMatchKey(item);
         invCountsByKey[key] = (invCountsByKey[key] || 0) + 1;
       });
 
@@ -412,7 +429,7 @@ export const useShelterState = () => {
 
       const filtered: any[] = [];
       for (const item of newInventory) {
-        const key = resolveItemKey((item as any).type || (item as any).name);
+        const key = getItemMatchKey(item);
         const need = toRemoveByKey.get(key) || 0;
         if (need > 0) {
           toRemoveByKey.set(key, need - 1);
