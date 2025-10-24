@@ -661,6 +661,50 @@ export type Database = {
         }
         Relationships: []
       }
+      item_instances: {
+        Row: {
+          created_at: string
+          id: string
+          item_id: string | null
+          name: string | null
+          template_id: number | null
+          type: string | null
+          updated_at: string
+          user_id: string | null
+          wallet_address: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          item_id?: string | null
+          name?: string | null
+          template_id?: number | null
+          type?: string | null
+          updated_at?: string
+          user_id?: string | null
+          wallet_address: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          item_id?: string | null
+          name?: string | null
+          template_id?: number | null
+          type?: string | null
+          updated_at?: string
+          user_id?: string | null
+          wallet_address?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "item_instances_template_id_fkey"
+            columns: ["template_id"]
+            isOneToOne: false
+            referencedRelation: "item_templates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       item_templates: {
         Row: {
           created_at: string

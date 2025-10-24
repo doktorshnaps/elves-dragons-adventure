@@ -4,6 +4,7 @@ import { generateOpponents } from '@/utils/opponentGenerator';
 import { rollLoot, generateLootTable } from '@/utils/lootUtils';
 import { useToast } from '@/hooks/use-toast';
 import { Item } from "@/types/inventory";
+import { useAddItemToInstances } from '@/hooks/useAddItemToInstances';
 
 export const useOpponentsState = (
   level: number,
@@ -11,6 +12,7 @@ export const useOpponentsState = (
   updateInventory: (items: Item[]) => void
 ) => {
   const { toast } = useToast();
+  const { addItemsToInstances } = useAddItemToInstances();
   const [opponents, setOpponents] = useState<Opponent[]>(() => {
     const savedState = localStorage.getItem('battleState');
     if (savedState) {
@@ -34,7 +36,7 @@ export const useOpponentsState = (
     }
   }, [level]);
 
-  const handleOpponentDefeat = (opponent: Opponent) => {
+  const handleOpponentDefeat = async (opponent: Opponent) => {
     // Получаем награду за убийство
     const { items: droppedItems, coins: droppedCoins } = rollLoot(generateLootTable(opponent.isBoss ?? false));
     
@@ -47,6 +49,12 @@ export const useOpponentsState = (
       const savedInventory = localStorage.getItem('gameInventory');
       const currentInventory = savedInventory ? JSON.parse(savedInventory) : [];
       updateInventory([...currentInventory, ...droppedItems]);
+      
+      // Добавляем дроп в item_instances
+      await addItemsToInstances(droppedItems.map(it => ({
+        name: it.name,
+        type: it.type
+      })));
     }
 
     // Проверяем, был ли это последний противник

@@ -208,7 +208,30 @@ if (itemTemplate.type === 'worker') {
     } else {
       console.log(`📦 Processing as regular item: ${itemTemplate.name}`);
       
-      // Для обычных предметов добавляем в инвентарь без списания баланса (уже списан выше)
+      // Для обычных предметов добавляем в item_instances (новая система)
+      const itemRows = [];
+      for (let i = 0; i < quantity; i++) {
+        itemRows.push({
+          wallet_address: wallet_address,
+          template_id: itemTemplate.id,
+          item_id: itemTemplate.item_id,
+          name: itemTemplate.name,
+          type: itemTemplate.type
+        });
+      }
+
+      const { error: instancesError } = await supabase
+        .from('item_instances')
+        .insert(itemRows);
+
+      if (instancesError) {
+        console.error(`❌ Error adding items to item_instances:`, instancesError);
+        throw instancesError;
+      }
+
+      console.log(`✅ Added ${quantity} items to item_instances`);
+
+      // Legacy: также добавляем в JSON inventory для обратной совместимости
       for (let i = 0; i < quantity; i++) {
         const itemData = {
           id: `item_${item_id}_${Date.now()}_${i}`,
@@ -230,7 +253,7 @@ if (itemTemplate.type === 'worker') {
 
         if (inventoryError) {
           console.error(`❌ Error adding item ${i+1}/${quantity} to inventory:`, inventoryError);
-          throw inventoryError;
+          // Не бросаем ошибку, т.к. item_instances уже добавлены
         }
       }
     }
