@@ -57,51 +57,10 @@ export const useCardInstances = () => {
 
       let list = (data || []) as unknown as CardInstance[];
 
-      // ✅ Синхронизация ТОЛЬКО для NFT карточек (обычные карточки управляются вручную)
-      const cards: Card[] = (gameData?.cards || []) as any;
-      const selectedTeam: any[] = (gameData?.selectedTeam || []) as any;
-      
-      if (cards.length > 0 || selectedTeam.length > 0) {
-        const instanceIds = new Set(list.map(ci => ci.card_template_id));
-        const neededIds = new Set<string>();
-        
-        // Добавляем только NFT карточки (с nftContractId/nftTokenId)
-        cards.forEach((c: any) => {
-          if (c.isNFT && (c.nftContractId || c.nftTokenId)) {
-            neededIds.add(c.id);
-          }
-        });
-        
-        selectedTeam.forEach((pair: any) => {
-          if (pair?.hero?.isNFT && (pair.hero.nftContractId || pair.hero.nftTokenId)) {
-            neededIds.add(pair.hero.id);
-          }
-          if (pair?.dragon?.isNFT && (pair.dragon.nftContractId || pair.dragon.nftTokenId)) {
-            neededIds.add(pair.dragon.id);
-          }
-        });
-        
-        const missing = Array.from(neededIds).filter(id => !instanceIds.has(id));
-        if (missing.length > 0) {
-          console.log('🆕 Missing NFT card instances detected, syncing from game_data:', missing);
-          try {
-            const { error: syncError } = await supabase.rpc('sync_card_instances_from_game_data', {
-              p_wallet_address: accountId,
-            });
-            if (!syncError) {
-              const { data: dataAfter, error: errAfter } = await supabase
-                .rpc('get_card_instances_by_wallet', { p_wallet_address: accountId });
-              if (!errAfter) {
-                list = (dataAfter || []) as unknown as CardInstance[];
-              }
-            } else {
-              console.warn('Sync NFT card instances failed:', syncError.message);
-            }
-          } catch (e) {
-            console.warn('Sync NFT card instances exception:', e);
-          }
-        }
-      }
+      // ⛔️ Отключено авто-восстановление card_instances из game_data
+      // Причина: это восстанавливало удалённые карты из локального кеша/legacy JSON
+      // Теперь card_instances — единственный источник истины, а NFT синхронизируются отдельно через useNFTCardIntegration
+
 
       setCardInstances(list);
     } catch (error) {
