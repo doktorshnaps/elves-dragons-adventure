@@ -9,6 +9,7 @@ import { resolveItemKey } from "@/utils/itemNames";
 import { useMemo } from "react";
 import { useItemTemplates } from "@/hooks/useItemTemplates";
 import { useGameStore } from "@/stores/gameStore";
+import { useItemInstances } from "@/hooks/useItemInstances";
 interface BuildingDetailsPanelProps {
   selectedBuilding: NestUpgrade | null;
   canAfford: boolean;
@@ -37,16 +38,13 @@ export const BuildingDetailsPanel = ({
   const storeInventory = useGameStore((state) => state.inventory);
   const inventory = (storeInventory?.length ?? 0) > 0 ? storeInventory : localInventory;
   const { getItemName, getTemplate } = useItemTemplates();
+  const { getCountsByItemId, instances } = useItemInstances();
 
-  // Подсчитываем количество каждого предмета в инвентаре по name (группируем по name, считаем уникальные id)
   const inventoryCounts = useMemo(() => {
-    const counts: Record<string, number> = {};
-    inventory.forEach(item => {
-      const itemName = item.name; // используем name напрямую
-      counts[itemName] = (counts[itemName] || 0) + 1;
-    });
-    return counts;
-  }, [inventory]);
+    const instanceCounts = getCountsByItemId();
+    console.log('📦 [BuildingDetailsPanel] Item instance counts:', instanceCounts);
+    return instanceCounts;
+  }, [instances]);
 
   // Нормализуем требуемые предметы (поддержка массива и объектной формы из БД)
   const normalizedRequiredItems = useMemo(() => {
@@ -174,9 +172,11 @@ export const BuildingDetailsPanel = ({
 
                   const template = getTemplate(itemId);
                   const displayName = template?.name || getItemName(itemId);
+                  const templateItemId = template?.item_id || itemId;
 
-                  // Ищем по name в inventory, считаем количество уникальных id
-                  const playerHas = inventoryCounts[displayName] || 0;
+                  // Используем item_id из шаблона для поиска в item_instances
+                  const playerHas = inventoryCounts[templateItemId] || 0;
+                  console.log(`📦 [BuildingDetailsPanel] ${displayName} (${templateItemId}): has ${playerHas}, needs ${reqQty}`);
                   return (
                     <div key={idx} className="flex items-center justify-between px-3 py-2 rounded-lg border border-border bg-muted/20">
                       <span className="text-sm font-medium">{displayName}</span>

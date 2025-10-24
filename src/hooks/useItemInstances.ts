@@ -117,11 +117,14 @@ export const useItemInstances = () => {
    * Group instances by item_id, returning counts
    */
   const getCountsByItemId = (): Record<string, number> => {
+    console.log('🔍 [getCountsByItemId] Total instances:', instances.length);
+    console.log('🔍 [getCountsByItemId] accountId:', accountId);
     const counts: Record<string, number> = {};
     instances.forEach(inst => {
       const key = inst.item_id || inst.name || 'unknown';
       counts[key] = (counts[key] || 0) + 1;
     });
+    console.log('🔍 [getCountsByItemId] Counts by item_id:', counts);
     return counts;
   };
 
