@@ -112,7 +112,7 @@ export const InventoryGrid = ({
                     <h5 className="text-sm font-semibold text-white mb-2">Шансы выпадения классов:</h5>
                     
                     <div className="mb-3">
-                      <h6 className="text-xs font-semibold text-yellow-400 mb-1">Герои (80%):</h6>
+                      <h6 className="text-xs font-semibold text-yellow-400 mb-1">Герои (50%):</h6>
                       <div className="grid grid-cols-2 gap-1 text-xs">
                         {Object.values(getClassDropRates().heroes).map((item) => (
                           <div key={item.name} className="flex justify-between items-center">
@@ -124,7 +124,7 @@ export const InventoryGrid = ({
                     </div>
                     
                     <div>
-                      <h6 className="text-xs font-semibold text-purple-400 mb-1">Драконы (20%):</h6>
+                      <h6 className="text-xs font-semibold text-purple-400 mb-1">Драконы (50%):</h6>
                       <div className="grid grid-cols-2 gap-1 text-xs">
                         {Object.values(getClassDropRates().dragons).map((item) => (
                           <div key={item.name} className="flex justify-between items-center">

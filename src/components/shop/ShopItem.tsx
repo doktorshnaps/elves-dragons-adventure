@@ -79,7 +79,7 @@ export const ShopItem = ({ item, balance, onBuy }: ShopItemProps) => {
                 </h4>
                 <div className="space-y-1">
                   <div className="mb-2">
-                    <p className="text-[10px] text-gray-400 mb-1">Герои (80%):</p>
+                    <p className="text-[10px] text-gray-400 mb-1">Герои (50%):</p>
                     {Object.values(getRarityDropRates().heroes).map((item) => (
                       <div key={item.name} className="flex justify-between text-[10px]">
                         <span className="text-gray-400">{item.name}</span>
@@ -88,7 +88,7 @@ export const ShopItem = ({ item, balance, onBuy }: ShopItemProps) => {
                     ))}
                   </div>
                   <div>
-                    <p className="text-[10px] text-gray-400 mb-1">Драконы (20%):</p>
+                    <p className="text-[10px] text-gray-400 mb-1">Драконы (50%):</p>
                     {Object.values(getRarityDropRates().dragons).map((item) => (
                       <div key={item.name} className="flex justify-between text-[10px]">
                         <span className="text-gray-400">{item.name}</span>
