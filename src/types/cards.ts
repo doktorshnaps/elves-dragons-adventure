@@ -1,5 +1,29 @@
 export type CardType = 'character' | 'pet' | 'workers';
-export type Rarity = 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8;
+export type Rarity = 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9;
+
+export type HeroClass = 
+  | 'Рекрут'
+  | 'Страж'
+  | 'Ветеран'
+  | 'Маг'
+  | 'Мастер Целитель'
+  | 'Защитник'
+  | 'Ветеран Защитник'
+  | 'Стратег'
+  | 'Верховный Стратег';
+
+export type DragonClass = 
+  | 'Обычный'
+  | 'Необычный'
+  | 'Редкий'
+  | 'Эпический'
+  | 'Легендарный'
+  | 'Мифический'
+  | 'Этернал'
+  | 'Империал'
+  | 'Титан';
+
+export type CardClass = HeroClass | DragonClass;
 
 export type Faction = 
   | 'Каледор'
@@ -26,6 +50,7 @@ export interface Card {
   lastHealTime?: number; // Время последнего лечения
   magic: number;
   rarity: Rarity;
+  cardClass?: CardClass; // Класс карты (определяется при открытии)
   faction?: Faction;
   magicResistance?: MagicResistance;
   image?: string;

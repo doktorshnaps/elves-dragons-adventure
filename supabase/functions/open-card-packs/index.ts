@@ -68,43 +68,100 @@ const cardDatabase: CardInfo[] = [
   { name: 'Этернал теневой дракон', type: 'pet', image: '/lovable-uploads/6c79ca6c-46f0-4a71-a57f-efa81b68e0be.png', faction: 'shadow' },
 ];
 
-type Rarity = 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8;
+type ClassLevel = 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9;
 
-function pickRarity(): Rarity {
+type HeroClass = 
+  | 'Рекрут'
+  | 'Страж'
+  | 'Ветеран'
+  | 'Маг'
+  | 'Мастер Целитель'
+  | 'Защитник'
+  | 'Ветеран Защитник'
+  | 'Стратег'
+  | 'Верховный Стратег';
+
+type DragonClass = 
+  | 'Обычный'
+  | 'Необычный'
+  | 'Редкий'
+  | 'Эпический'
+  | 'Легендарный'
+  | 'Мифический'
+  | 'Этернал'
+  | 'Империал'
+  | 'Титан';
+
+// Function to pick a random class level based on weighted probabilities
+function pickClassLevel(): ClassLevel {
   const roll = Math.random() * 100;
   
-  let rarity: Rarity;
+  let classLevel: ClassLevel;
   let range: string;
   
   if (roll <= 80.00) {
-    rarity = 1;
+    classLevel = 1;
     range = "0.01-80.00 (80%)";
   } else if (roll <= 90.00) {
-    rarity = 2;
-    range = "80.01-90.00 (10%)";
+    classLevel = 2;
+    range = "80.01-90.00 (20%)";
   } else if (roll <= 95.00) {
-    rarity = 3;
-    range = "90.01-95.00 (5%)";
+    classLevel = 3;
+    range = "90.01-95.00 (15%)";
   } else if (roll <= 98.00) {
-    rarity = 4;
-    range = "95.01-98.00 (3%)";
-  } else if (roll <= 99.50) {
-    rarity = 5;
-    range = "98.01-99.50 (1.5%)";
-  } else if (roll <= 99.80) {
-    rarity = 6;
-    range = "99.51-99.80 (0.3%)";
-  } else if (roll <= 99.95) {
-    rarity = 7;
-    range = "99.81-99.95 (0.15%)";
+    classLevel = 4;
+    range = "95.01-98.00 (10%)";
+  } else if (roll <= 99.00) {
+    classLevel = 5;
+    range = "98.01-99.00 (5%)";
+  } else if (roll <= 99.70) {
+    classLevel = 6;
+    range = "99.01-99.70 (3%)";
+  } else if (roll <= 99.90) {
+    classLevel = 7;
+    range = "99.71-99.90 (2%)";
+  } else if (roll <= 99.99) {
+    classLevel = 8;
+    range = "99.91-99.99 (1%)";
   } else {
-    rarity = 8;
-    range = "99.96-100.00 (0.05%)";
+    classLevel = 9;
+    range = "99.991-100.00 (0.5%)";
   }
   
-  console.log(`🎲 Rarity Roll: ${roll.toFixed(4)} → ${rarity}⭐ (${range})`);
+  console.log(`🎲 Class Level Roll: ${roll.toFixed(4)} → Level ${classLevel} (${range})`);
   
-  return rarity;
+  return classLevel;
+}
+
+// Convert class level to actual class name based on card type
+function getCardClass(level: ClassLevel, cardType: 'character' | 'pet'): HeroClass | DragonClass {
+  if (cardType === 'character') {
+    const heroClasses: HeroClass[] = [
+      'Рекрут',
+      'Страж',
+      'Ветеран',
+      'Маг',
+      'Мастер Целитель',
+      'Защитник',
+      'Ветеран Защитник',
+      'Стратег',
+      'Верховный Стратег'
+    ];
+    return heroClasses[level - 1];
+  } else {
+    const dragonClasses: DragonClass[] = [
+      'Обычный',
+      'Необычный',
+      'Редкий',
+      'Эпический',
+      'Легендарный',
+      'Мифический',
+      'Этернал',
+      'Империал',
+      'Титан'
+    ];
+    return dragonClasses[level - 1];
+  }
 }
 
 function getMagicResistanceByFaction(faction: string): number | undefined {
@@ -128,7 +185,11 @@ function generateCard() {
   
   const availableCards = cardDatabase.filter(card => card.type === cardType);
   const selectedCard = availableCards[Math.floor(Math.random() * availableCards.length)];
-  const rarity = pickRarity();
+  
+  // Pick class level (instead of rarity)
+  const classLevel = pickClassLevel();
+  const cardClass = getCardClass(classLevel, cardType);
+  console.log(`🎖️ Card Class: ${cardClass} (level ${classLevel})`);
   
   const magicResistance = getMagicResistanceByFaction(selectedCard.faction);
   
@@ -136,14 +197,16 @@ function generateCard() {
     id: Date.now().toString() + Math.random().toString(36).substr(2, 9),
     name: selectedCard.name,
     type: cardType,
-    rarity,
+    rarity: 1, // Always 1 star now
+    cardClass, // New field for card class
+    classLevel, // Store level for stats calculation
     faction: selectedCard.faction,
     magicResistance,
     image: selectedCard.image,
-    // Stats будут рассчитаны на клиенте через calculateCardStats
+    // Stats будут рассчитаны на клиенте через calculateCardStats с учетом classLevel
   };
   
-  console.log(`✨ Generated Card: ${selectedCard.name} (${cardType}) ${rarity}⭐ faction=${selectedCard.faction}`);
+  console.log(`✨ Generated Card: ${selectedCard.name} (${cardType}) 1⭐ Class: ${cardClass} (level ${classLevel}) faction=${selectedCard.faction}`);
   
   return card;
 }
@@ -156,7 +219,7 @@ Deno.serve(async (req) => {
   try {
     const { wallet_address, pack_name, count } = await req.json();
     
-    console.log(`🎁 EDGE FUNCTION: Opening ${count} card pack(s) for wallet ${wallet_address}`);
+    console.log(`🎁 EDGE FUNCTION v2.0: Opening ${count} card pack(s) for wallet ${wallet_address}`);
     
     if (!wallet_address || !pack_name || !count || count < 1) {
       throw new Error('Invalid parameters');
@@ -171,7 +234,7 @@ Deno.serve(async (req) => {
     }
     
     console.log(`\n✅ Generated ${newCards.length} cards total`);
-    console.log('Summary:', newCards.map(c => `${c.name} ${c.rarity}⭐`).join(', '));
+    console.log('Summary:', newCards.map(c => `${c.name} 1⭐ ${c.cardClass}`).join(', '));
 
     // Call RPC to atomically update inventory and add cards
     const supabaseUrl = 'https://oimhwdymghkwxznjarkv.supabase.co';
