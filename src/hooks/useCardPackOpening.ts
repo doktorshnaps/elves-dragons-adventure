@@ -8,6 +8,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useWalletContext } from '@/contexts/WalletConnectContext';
 
 export const useCardPackOpening = () => {
+  console.log('🚀 useCardPackOpening v2.0 LOADED - with detailed roll logging');
   const { gameData, loadGameData } = useGameData();
   const { toast } = useToast();
   const { accountId } = useWalletContext();
