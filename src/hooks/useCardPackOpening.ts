@@ -3,12 +3,11 @@ import { Item } from "@/types/inventory";
 import { Card as CardType } from "@/types/cards";
 import { useGameData } from '@/hooks/useGameData';
 import { useToast } from '@/hooks/use-toast';
-import { generateCard } from '@/utils/cardUtils';
 import { supabase } from '@/integrations/supabase/client';
 import { useWalletContext } from '@/contexts/WalletConnectContext';
 
 export const useCardPackOpening = () => {
-  console.log('🚀 useCardPackOpening v2.0 LOADED - with detailed roll logging');
+  console.log('🚀 useCardPackOpening v3.0 LOADED - using edge function for generation');
   const { gameData, loadGameData } = useGameData();
   const { toast } = useToast();
   const { accountId } = useWalletContext();
@@ -84,31 +83,25 @@ export const useCardPackOpening = () => {
     setIsOpening(true);
 
     try {
-      // Генерируем карты, которые будет содержать открытие
-      // Теперь generateCard сам делает ролл для выбора типа карты
-      console.log(`🎁 Opening ${count} card pack(s)...`);
-      const newCards: CardType[] = Array.from({ length: count }, () =>
-        generateCard()
-      );
-      console.log(`📦 Total cards generated: ${newCards.length}`, newCards.map(c => `${c.name} (${c.type}) ${c.rarity}⭐`));
-
-      // Атомарно удаляем колоды и добавляем карты на сервере
-      const { data, error } = await (supabase as any).rpc('open_card_packs', {
-        p_wallet_address: accountId,
-        p_pack_name: packItem.name,
-        p_count: count,
-        p_new_cards: newCards
+      // Вызываем edge function для генерации карт с серверным логированием
+      console.log(`🎁 Calling edge function to open ${count} card pack(s)...`);
+      
+      const { data, error } = await supabase.functions.invoke('open-card-packs', {
+        body: {
+          wallet_address: accountId,
+          pack_name: packItem.name,
+          count: count
+        }
       });
-
+      
       if (error) {
-        console.error('open_card_packs RPC error', error);
-        toast({
-          title: 'Ошибка',
-          description: 'Не удалось открыть колоды карт',
-          variant: 'destructive',
-        });
-        return [];
+        console.error('Edge function error:', error);
+        throw error;
       }
+      
+      const newCards = data.cards as CardType[];
+
+      console.log(`📦 Received ${newCards.length} cards from edge function`);
 
       // Обновляем локальные данные из Supabase чтобы исключить рассинхрон
       // НЕ вызываем loadGameData здесь, так как это вызовет множественные loadCardInstances

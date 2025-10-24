@@ -20,3 +20,6 @@ verify_jwt = false
 
 [functions.marketplace-create-nft-listing]
 verify_jwt = false
+
+[functions.open-card-packs]
+verify_jwt = false
