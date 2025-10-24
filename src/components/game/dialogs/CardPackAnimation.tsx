@@ -50,52 +50,34 @@ export const CardPackAnimation = ({ winningCard, onAnimationComplete }: CardPack
   // Generate dummy cards for animation using actual card data
   const generateDummyCards = (): CardType[] => {
     const dummyCards: CardType[] = [];
-    const availableCardNames = Object.keys(availableImages);
     
-    if (availableCardNames.length === 0) return [];
+    if (Object.keys(availableImages).length === 0) return [];
+    
+    // Get all available cards from database
+    const allCards = cardDatabase.filter((c: any) => c?.name && c?.image && availableImages[c.name]);
+    
+    if (allCards.length === 0) return [];
     
     for (let i = 0; i < 20; i++) {
-      // Get card name by cycling through available images
-      const cardName = availableCardNames[i % availableCardNames.length];
+      // Randomly select a card from database
+      const randomCard = allCards[Math.floor(Math.random() * allCards.length)];
       
-      // Find the actual card data from cardDatabase
-      const actualCard = cardDatabase.find((c: any) => c?.name === cardName);
+      // All cards now have rarity 1
+      const stats = calculateCardStats(randomCard.name, 1, randomCard.type);
       
-      if (actualCard) {
-        // All cards now have rarity 1
-        const stats = calculateCardStats(actualCard.name, 1, actualCard.type);
-        
-        // Use actual card data with proper structure
-        dummyCards.push({
-          id: `dummy-${i}`,
-          name: actualCard.name,
-          type: actualCard.type,
-          power: stats.power,
-          defense: stats.defense,
-          health: stats.health,
-          magic: stats.magic,
-          rarity: 1, // All cards are now 1 star
-          faction: (actualCard.faction || 'Каледор') as any,
-          image: availableImages[cardName],
-        });
-      } else {
-        // Fallback for cards not in database
-        const types: ('character' | 'pet')[] = ['character', 'pet'];
-        const factions = ['Каледор', 'Сильванести', 'Фаэлин', 'Элленар', 'Тэлэрион', 'Аэлантир', 'Лиорас'];
-        
-        dummyCards.push({
-          id: `dummy-${i}`,
-          name: cardName,
-          type: types[Math.floor(Math.random() * types.length)],
-          power: Math.floor(Math.random() * 100) + 10,
-          defense: Math.floor(Math.random() * 100) + 10,
-          health: Math.floor(Math.random() * 200) + 50,
-          magic: Math.floor(Math.random() * 50) + 5,
-          rarity: 1, // All cards are now 1 star
-          faction: factions[Math.floor(Math.random() * factions.length)] as any,
-          image: availableImages[cardName],
-        });
-      }
+      // Use actual card data with proper structure
+      dummyCards.push({
+        id: `dummy-${i}`,
+        name: randomCard.name,
+        type: randomCard.type,
+        power: stats.power,
+        defense: stats.defense,
+        health: stats.health,
+        magic: stats.magic,
+        rarity: 1, // All cards are now 1 star
+        faction: (randomCard.faction || 'Каледор') as any,
+        image: availableImages[randomCard.name],
+      });
     }
     
     return dummyCards;
