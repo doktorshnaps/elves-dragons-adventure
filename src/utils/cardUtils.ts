@@ -402,15 +402,39 @@ const pickRarity = (): Rarity => {
   // Генерируем случайное число от 0.01 до 100.00 (как в подземельях)
   const roll = Math.random() * 100;
   
+  let rarity: Rarity;
+  let range: string;
+  
   // Проверяем в какой диапазон попадает число
-  if (roll <= 80.00) return 1;      // 1 звезда: 0.01-80.00 (80%)
-  if (roll <= 90.00) return 2;      // 2 звезды: 80.01-90.00 (10%)
-  if (roll <= 95.00) return 3;      // 3 звезды: 90.01-95.00 (5%)
-  if (roll <= 98.00) return 4;      // 4 звезды: 95.01-98.00 (3%)
-  if (roll <= 99.50) return 5;      // 5 звезд: 98.01-99.50 (1.5%)
-  if (roll <= 99.80) return 6;      // 6 звезд: 99.51-99.80 (0.3%)
-  if (roll <= 99.95) return 7;      // 7 звезд: 99.81-99.95 (0.15%)
-  return 8;                         // 8 звезд: 99.95-100.00 (0.05%)
+  if (roll <= 80.00) {
+    rarity = 1;
+    range = "0.01-80.00 (80%)";
+  } else if (roll <= 90.00) {
+    rarity = 2;
+    range = "80.01-90.00 (10%)";
+  } else if (roll <= 95.00) {
+    rarity = 3;
+    range = "90.01-95.00 (5%)";
+  } else if (roll <= 98.00) {
+    rarity = 4;
+    range = "95.01-98.00 (3%)";
+  } else if (roll <= 99.50) {
+    rarity = 5;
+    range = "98.01-99.50 (1.5%)";
+  } else if (roll <= 99.80) {
+    rarity = 6;
+    range = "99.51-99.80 (0.3%)";
+  } else if (roll <= 99.95) {
+    rarity = 7;
+    range = "99.81-99.95 (0.15%)";
+  } else {
+    rarity = 8;
+    range = "99.96-100.00 (0.05%)";
+  }
+  
+  console.log(`🎲 Rarity Roll: ${roll.toFixed(4)} → ${rarity}⭐ (${range})`);
+  
+  return rarity;
 };
 
 const getPetRarityChance = (): Rarity => pickRarity();
@@ -427,8 +451,10 @@ export const generateCard = (type?: CardType): Card => {
   if (!type) {
     const typeRoll = Math.floor(Math.random() * 2) + 1;
     cardType = typeRoll === 1 ? 'character' : 'pet';
+    console.log(`🎲 Type Roll: ${typeRoll} → ${cardType === 'character' ? 'Герой' : 'Дракон'}`);
   } else {
     cardType = type;
+    console.log(`🎯 Fixed Type: ${cardType === 'character' ? 'Герой' : 'Дракон'}`);
   }
   
   const availableCards = cardDatabase.filter(card => card.type === cardType);
@@ -439,6 +465,8 @@ export const generateCard = (type?: CardType): Card => {
   
   const faction = selectedCard.faction as Faction;
   const magicResistance = faction ? getMagicResistanceByFaction(faction) : undefined;
+  
+  console.log(`✨ Generated Card: ${selectedCard.name} (${cardType}) ${rarity}⭐`, stats);
   
   return {
     id: Date.now().toString() + Math.random().toString(36).substr(2, 9),
