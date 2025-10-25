@@ -50,6 +50,27 @@ export type Database = {
         }
         Relationships: []
       }
+      api_rate_limits: {
+        Row: {
+          created_at: string
+          endpoint: string
+          id: string
+          ip_address: string
+        }
+        Insert: {
+          created_at?: string
+          endpoint: string
+          id?: string
+          ip_address: string
+        }
+        Update: {
+          created_at?: string
+          endpoint?: string
+          id?: string
+          ip_address?: string
+        }
+        Relationships: []
+      }
       banned_users: {
         Row: {
           banned_at: string
@@ -1894,6 +1915,7 @@ export type Database = {
         Returns: Json
       }
       cleanup_old_dungeon_sessions: { Args: never; Returns: undefined }
+      cleanup_old_rate_limits: { Args: never; Returns: undefined }
       cleanup_transferred_nft_cards: {
         Args: { p_current_nft_tokens: Json; p_wallet_address: string }
         Returns: number

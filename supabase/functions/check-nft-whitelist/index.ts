@@ -9,6 +9,40 @@ interface NFTResponse {
   result?: any[];
 }
 
+// Rate limiting function to prevent abuse
+async function checkRateLimit(supabaseClient: any, clientIp: string, endpoint: string): Promise<void> {
+  const oneMinuteAgo = new Date(Date.now() - 60000).toISOString();
+  
+  // Count requests from this IP in the last minute
+  const { count, error: countError } = await supabaseClient
+    .from('api_rate_limits')
+    .select('*', { count: 'exact', head: true })
+    .eq('ip_address', clientIp)
+    .eq('endpoint', endpoint)
+    .gte('created_at', oneMinuteAgo);
+  
+  if (countError) {
+    console.error('Rate limit check error:', countError);
+    // Don't block on rate limit errors
+    return;
+  }
+  
+  // Different limits for different operations
+  const limit = endpoint === 'check-nft-whitelist-mass' ? 2 : 5;
+  
+  if (count && count >= limit) {
+    throw new Error(`Rate limit exceeded: maximum ${limit} requests per minute`);
+  }
+  
+  // Record this request
+  await supabaseClient
+    .from('api_rate_limits')
+    .insert({ 
+      ip_address: clientIp,
+      endpoint: endpoint
+    });
+}
+
 // Функция для получения NFT с контракта с повторными попытками и rate limiting
 async function fetchNFTsFromContract(walletAddress: string, contractId: string, maxRetries = 3) {
     for (let attempt = 1; attempt <= maxRetries; attempt++) {
@@ -97,7 +131,35 @@ Deno.serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     );
 
+    // Get client IP for rate limiting
+    const clientIp = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || 
+                     req.headers.get('x-real-ip') || 
+                     'unknown';
+
     const { wallet_address, check_all_nft_users, specific_contract } = await req.json();
+
+    // Check rate limit before processing (different limits for mass vs single checks)
+    const endpoint = check_all_nft_users ? 'check-nft-whitelist-mass' : 'check-nft-whitelist';
+    
+    try {
+      await checkRateLimit(supabase, clientIp, endpoint);
+    } catch (rateLimitError) {
+      console.error('Rate limit exceeded:', rateLimitError);
+      return new Response(
+        JSON.stringify({ 
+          error: rateLimitError.message || 'Rate limit exceeded',
+          retryAfter: 60 
+        }),
+        { 
+          status: 429, 
+          headers: { 
+            ...corsHeaders, 
+            'Content-Type': 'application/json',
+            'Retry-After': '60'
+          } 
+        }
+      );
+    }
 
     // Режим массовой проверки всех пользователей с NFT вайт-листом
     if (check_all_nft_users) {
