@@ -19,6 +19,7 @@ import { preloadCriticalLibs } from './utils/bundleOptimizations';
 import { registerGameServiceWorker } from './utils/cacheStrategy';
 import { MusicController } from './components/MusicController';
 import { useNFTStatsRecalculation } from './hooks/useNFTStatsRecalculation';
+import { useSecureStorage } from './hooks/useSecureStorage';
 
 // Lazy imports
 import {
@@ -49,6 +50,7 @@ function App() {
     useGameSync();
     useRoutePreloader(); // Инициализируем preloading
     useNFTStatsRecalculation(); // Автоматический пересчет NFT при изменении настроек
+    useSecureStorage(); // Проверка целостности localStorage данных
   } catch (error) {
     console.error('❌ Error in App hooks:', error);
   }
