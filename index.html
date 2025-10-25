@@ -10,6 +10,17 @@
     <meta property="og:image" content="/og-image.png" />
     <link href="https://fonts.googleapis.com/css2?family=MedievalSharp&display=swap" rel="stylesheet">
     <base href="/" />
+    <script>
+      (function() {
+        try {
+          if (location.pathname === '/' || location.pathname === '') {
+            history.replaceState(null, '', '/auth');
+          }
+        } catch (e) {
+          /* no-op */
+        }
+      })();
+    </script>
   </head>
 
   <body>
