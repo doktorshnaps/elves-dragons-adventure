@@ -132,30 +132,30 @@ export const ItemTemplateManager = () => {
       const fileName = `${Date.now()}_${Math.random().toString(36).substring(7)}.${fileExt}`;
       const filePath = `${fileName}`;
 
-      const session = await supabase.auth.getSession();
-      const token = session.data.session?.access_token;
-
-      if (!token) {
-        throw new Error('No auth token');
-      }
+      const { data: { session } } = await supabase.auth.getSession();
+      const token = session?.access_token || undefined;
 
       const formData = new FormData();
       formData.append('image', file);
       formData.append('filePath', filePath);
       formData.append('walletAddress', accountId);
 
-      const response = await supabase.functions.invoke('upload-item-image', {
+      const functionsUrl = "https://oimhwdymghkwxznjarkv.functions.supabase.co/upload-item-image";
+      const headers: Record<string, string> = {};
+      if (token) headers.Authorization = `Bearer ${token}`;
+      const resp = await fetch(functionsUrl, {
+        method: 'POST',
+        headers,
         body: formData,
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
       });
 
-      if (response.error) {
-        throw new Error(response.error.message || 'Upload failed');
+      if (!resp.ok) {
+        const err = await resp.text();
+        throw new Error(err || 'Upload failed');
       }
 
-      const { url } = response.data;
+      const json = await resp.json();
+      const { url } = json;
       return url;
     } catch (error) {
       console.error('Error uploading image:', error);

@@ -1,5 +1,5 @@
 import React from 'react'; // Added React import
-import { Routes, Route } from 'react-router-dom';
+import { Routes, Route, Navigate } from 'react-router-dom';
 import { ErrorBoundary } from './components/common/ErrorBoundary';
 import { Toaster } from './components/ui/toaster';
 import { Menu } from './pages/Menu';
@@ -72,7 +72,7 @@ function App() {
               <div className="overflow-x-hidden max-w-full w-full">
                 <MusicController />
                 <Routes>
-          <Route path="/" element={<Index />} />
+          <Route path="/" element={<Navigate to="/auth" replace />} />
           <Route path="/auth" element={<Auth />} />
           <Route path="/menu" element={<ProtectedRoute><Menu /></ProtectedRoute>} />
           <Route path="/admin-settings" element={<ProtectedRoute><AdminSettings /></ProtectedRoute>} />
