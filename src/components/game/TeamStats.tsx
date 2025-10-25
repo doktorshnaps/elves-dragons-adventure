@@ -6,48 +6,17 @@ import { TeamStatsSection } from "./stats/TeamStatsSection";
 import { calculateTeamStats } from "@/utils/cardUtils";
 import { TeamStatsModal } from "./TeamStatsModal";
 import { useTeamCards } from "@/hooks/team/useTeamCards";
+import { useGameStore } from "@/stores/gameStore";
 
 export const TeamStats = () => {
   const [showStats, setShowStats] = React.useState(false);
   const { cards } = useTeamCards();
   const teamStats = calculateTeamStats(cards);
   
-  const [balance, setBalance] = React.useState(() => {
-    return Number(localStorage.getItem('gameBalance') || '0');
-  });
+  // Use Zustand store instead of localStorage
+  const balance = useGameStore(state => state.balance);
 
-  React.useEffect(() => {
-    const handleCardsUpdate = () => {
-      const savedCards = localStorage.getItem('gameCards');
-      if (savedCards) {
-        const cards = JSON.parse(savedCards);
-        const heroes = cards.filter(card => card.type === 'character');
-        const pets = cards.filter(card => card.type === 'pet');
-        
-        const activePets = pets.filter(pet => {
-          if (!pet.faction) return false;
-          return heroes.some(hero => 
-            hero.type === 'character' && 
-            hero.faction === pet.faction && 
-            hero.rarity >= pet.rarity
-          );
-        });
-
-        const activeCards = [...heroes, ...activePets];
-        const activeStats = calculateTeamStats(activeCards);
-      }
-    };
-
-    window.addEventListener('cardsUpdate', handleCardsUpdate);
-    window.addEventListener('storage', handleCardsUpdate);
-
-    handleCardsUpdate();
-
-    return () => {
-      window.removeEventListener('cardsUpdate', handleCardsUpdate);
-      window.removeEventListener('storage', handleCardsUpdate);
-    };
-  }, []);
+  // No longer need effect - store updates automatically
 
   return (
     <>

@@ -8,12 +8,17 @@ import { ArrowLeft, X } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { getItemDisplayInfo } from "./utils";
 import { ListingDialog } from "./ListingDialog";
+import { useGameStore } from "@/stores/gameStore";
 
 export const MarketplaceTab = () => {
   const { toast } = useToast();
   const [showListingDialog, setShowListingDialog] = useState(false);
   const { gameData, updateGameData } = useGameData();
-  const balance = gameData.balance;
+  // Use Zustand store instead of localStorage
+  const balance = useGameStore(state => state.balance);
+  const inventory = useGameStore(state => state.inventory);
+  const cards = useGameStore(state => state.cards);
+  const { addItem, addCard, setBalance } = useGameStore();
   const navigate = useNavigate();
   const [listings, setListings] = useState<MarketplaceListing[]>(() => {
     const saved = localStorage.getItem('marketplaceListings');
@@ -36,24 +41,11 @@ export const MarketplaceTab = () => {
     setListings(newListings);
     localStorage.setItem('marketplaceListings', JSON.stringify(newListings));
 
+    // Use Zustand store instead of localStorage
     if (listing.type === 'item') {
-      const currentInventory = JSON.parse(localStorage.getItem('gameInventory') || '[]');
-      const newInventory = [...currentInventory, listing.item];
-      localStorage.setItem('gameInventory', JSON.stringify(newInventory));
-      
-      const inventoryEvent = new CustomEvent('inventoryUpdate', { 
-        detail: { inventory: newInventory }
-      });
-      window.dispatchEvent(inventoryEvent);
+      addItem(listing.item as any);
     } else {
-      const currentCards = JSON.parse(localStorage.getItem('gameCards') || '[]');
-      const newCards = [...currentCards, listing.item];
-      localStorage.setItem('gameCards', JSON.stringify(newCards));
-      
-      const cardsEvent = new CustomEvent('cardsUpdate', { 
-        detail: { cards: newCards }
-      });
-      window.dispatchEvent(cardsEvent);
+      addCard(listing.item as any);
     }
 
     toast({
@@ -75,26 +67,15 @@ export const MarketplaceTab = () => {
     const newListings = listings.filter(l => l.id !== listing.id);
     setListings(newListings);
     localStorage.setItem('marketplaceListings', JSON.stringify(newListings));
+    
+    // Use Zustand store instead of localStorage - server validates balance
     await updateGameData({ balance: balance - listing.price });
+    setBalance(balance - listing.price);
 
     if (listing.type === 'item') {
-      const currentInventory = JSON.parse(localStorage.getItem('gameInventory') || '[]');
-      const newInventory = [...currentInventory, { ...listing.item, id: Date.now() }];
-      localStorage.setItem('gameInventory', JSON.stringify(newInventory));
-      
-      const inventoryEvent = new CustomEvent('inventoryUpdate', { 
-        detail: { inventory: newInventory }
-      });
-      window.dispatchEvent(inventoryEvent);
+      addItem({ ...listing.item, id: Date.now().toString() } as any);
     } else {
-      const currentCards = JSON.parse(localStorage.getItem('gameCards') || '[]');
-      const newCards = [...currentCards, { ...listing.item, id: Date.now() }];
-      localStorage.setItem('gameCards', JSON.stringify(newCards));
-      
-      const cardsEvent = new CustomEvent('cardsUpdate', { 
-        detail: { cards: newCards }
-      });
-      window.dispatchEvent(cardsEvent);
+      addCard({ ...listing.item, id: Date.now().toString() } as any);
     }
 
     toast({

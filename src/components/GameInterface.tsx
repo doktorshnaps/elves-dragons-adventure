@@ -8,6 +8,7 @@ import { TeamDialog } from "./game/dialogs/TeamDialog";
 import { Shop } from "./Shop";
 import { DungeonSearch } from "./DungeonSearch";
 import { TeamStatsModal } from "./game/TeamStatsModal";
+import { useGameStore } from "@/stores/gameStore";
 
 export const GameInterface = () => {
   const [showShop, setShowShop] = useState(false);
@@ -16,24 +17,12 @@ export const GameInterface = () => {
   const [showStats, setShowStats] = useState(false);
   const [showEquipment, setShowEquipment] = useState(false);
   const [showTeam, setShowTeam] = useState(false);
-  const [hasCards, setHasCards] = useState(false);
   const { balance, updateBalance } = useBalanceState();
-
-  useEffect(() => {
-    const checkCards = () => {
-      const savedCards = localStorage.getItem('gameCards');
-      const cards = savedCards ? JSON.parse(savedCards) : [];
-      setHasCards(cards.length > 0);
-    };
-
-    checkCards();
-    window.addEventListener('cardsUpdate', checkCards);
-    return () => window.removeEventListener('cardsUpdate', checkCards);
-  }, []);
+  // Use Zustand store instead of localStorage
+  const cards = useGameStore(state => state.cards);
+  const hasCards = cards.length > 0;
 
   const getTeamStats = () => {
-    const savedCards = localStorage.getItem('gameCards');
-    const cards = savedCards ? JSON.parse(savedCards) : [];
     return calculateTeamStats(cards);
   };
 

@@ -22,7 +22,7 @@ export const AdventuresTab = () => {
   const balance = gameData.balance;
   const { generateMonster } = useMonsterGeneration(1);
   const { stats: playerStats, updateStats: setPlayerStats, addExperience } = usePlayerStats();
-  const { accountLevel, accountExperience, addAccountExperience: addAccountExp } = useGameStore();
+  const { accountLevel, accountExperience, addAccountExperience: addAccountExp, inventory, removeItem } = useGameStore();
   const { incrementMonsterKills } = useCardInstances();
 
   const [currentMonster, setCurrentMonster] = useState<Monster | null>(() => {
@@ -127,41 +127,20 @@ export const AdventuresTab = () => {
         description: `Восстановлено ${item.value} здоровья`
       });
 
-      const inventory = localStorage.getItem('gameInventory');
-      if (!inventory) return;
-
-      const items = JSON.parse(inventory);
-      const updatedItems = items.filter((i: Item) => i.id !== item.id);
-      
-      localStorage.setItem('gameInventory', JSON.stringify(updatedItems));
-      
-      const event = new CustomEvent('inventoryUpdate', {
-        detail: { inventory: updatedItems }
-      });
-      window.dispatchEvent(event);
+      // Use Zustand store instead of localStorage
+      removeItem(item.id);
     }
   };
 
   const handleSellItem = async (item: Item) => {
-    const inventory = localStorage.getItem('gameInventory');
-    if (!inventory) return;
-
-    const items = JSON.parse(inventory);
-    const updatedItems = items.filter((i: Item) => i.id !== item.id);
-    
+    // Use Zustand store instead of localStorage - server validates balance
     await updateGameData({ balance: balance + 10 });
-    
-    localStorage.setItem('gameInventory', JSON.stringify(updatedItems));
+    removeItem(item.id);
     
     toast({
       title: "Предмет продан",
       description: "Получено 10 ELL"
     });
-    
-    const event = new CustomEvent('inventoryUpdate', {
-      detail: { inventory: updatedItems }
-    });
-    window.dispatchEvent(event);
   };
 
   useEffect(() => {
