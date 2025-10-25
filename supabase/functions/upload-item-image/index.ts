@@ -5,6 +5,35 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
+// Rate limiting function to prevent abuse
+async function checkRateLimit(supabaseClient: any, clientIp: string, endpoint: string): Promise<void> {
+  const oneMinuteAgo = new Date(Date.now() - 60000).toISOString();
+  
+  const { count, error: countError } = await supabaseClient
+    .from('api_rate_limits')
+    .select('*', { count: 'exact', head: true })
+    .eq('ip_address', clientIp)
+    .eq('endpoint', endpoint)
+    .gte('created_at', oneMinuteAgo);
+  
+  if (countError) {
+    console.error('Rate limit check error:', countError);
+    return;
+  }
+  
+  // 3 uploads per minute for admin endpoint
+  if (count && count >= 3) {
+    throw new Error('Rate limit exceeded: maximum 3 uploads per minute');
+  }
+  
+  await supabaseClient
+    .from('api_rate_limits')
+    .insert({ 
+      ip_address: clientIp,
+      endpoint: endpoint
+    });
+}
+
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
@@ -21,6 +50,32 @@ Deno.serve(async (req) => {
         },
       }
     );
+
+    // Get client IP for rate limiting
+    const clientIp = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || 
+                     req.headers.get('x-real-ip') || 
+                     'unknown';
+
+    // Check rate limit before processing
+    try {
+      await checkRateLimit(supabaseServiceClient, clientIp, 'upload-item-image');
+    } catch (rateLimitError) {
+      console.error('Rate limit exceeded:', rateLimitError);
+      return new Response(
+        JSON.stringify({ 
+          error: rateLimitError.message || 'Rate limit exceeded',
+          retryAfter: 60 
+        }),
+        { 
+          status: 429, 
+          headers: { 
+            ...corsHeaders, 
+            'Content-Type': 'application/json',
+            'Retry-After': '60'
+          } 
+        }
+      );
+    }
 
     const authHeader = req.headers.get('Authorization');
     if (!authHeader) {
