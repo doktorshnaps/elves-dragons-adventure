@@ -2199,6 +2199,10 @@ export type Database = {
       }
       is_admin_wallet: { Args: { p_wallet_address?: string }; Returns: boolean }
       is_quest_admin: { Args: never; Returns: boolean }
+      is_super_admin_wallet: {
+        Args: { p_wallet_address: string }
+        Returns: boolean
+      }
       is_user_banned: { Args: { p_wallet_address: string }; Returns: boolean }
       is_whitelisted: { Args: { p_wallet_address: string }; Returns: boolean }
       mark_quest_claimed: {
