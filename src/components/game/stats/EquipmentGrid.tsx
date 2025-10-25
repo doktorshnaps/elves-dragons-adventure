@@ -1,155 +1,93 @@
 import { useEffect, useState } from "react";
-import { ShopItem } from "@/components/shop/types";
+import { Item } from "@/types/inventory";
 import { useToast } from "@/hooks/use-toast";
-import { EquipmentSlot } from "./equipment/EquipmentSlot";
-import { EquipmentStats } from "./equipment/EquipmentStats";
-import { EquipmentSelectionDialog } from "./equipment/EquipmentDialog";
+import { useGameStore } from "@/stores/gameStore";
+
 export const EquipmentGrid = () => {
-  const [equippedItems, setEquippedItems] = useState<ShopItem[]>([]);
+  const inventory = useGameStore((state) => state.inventory);
+  const equipItem = useGameStore((state) => state.equipItem);
+  const unequipItem = useGameStore((state) => state.unequipItem);
+  
+  const [equippedItems, setEquippedItems] = useState<Item[]>([]);
   const [totalStats, setTotalStats] = useState({
     power: 0,
     defense: 0,
     health: 0
   });
   const [selectedSlot, setSelectedSlot] = useState<string | null>(null);
-  const [availableItems, setAvailableItems] = useState<ShopItem[]>([]);
-  const {
-    toast
-  } = useToast();
+  const [availableItems, setAvailableItems] = useState<Item[]>([]);
+  const { toast } = useToast();
+
   useEffect(() => {
-    const inventory = localStorage.getItem('gameInventory');
-    if (inventory) {
-      const items = JSON.parse(inventory);
-      const equipped = items.filter((item: ShopItem) => item.equipped);
-      setEquippedItems(equipped);
-      const stats = equipped.reduce((acc: any, item: ShopItem) => {
-        if (item.stats) {
-          acc.power += item.stats.power || 0;
-          acc.defense += item.stats.defense || 0;
-          acc.health += item.stats.health || 0;
-        }
-        return acc;
-      }, {
-        power: 0,
-        defense: 0,
-        health: 0
-      });
-      setTotalStats(stats);
-    }
-  }, []);
-  const handleEquipItem = (item: ShopItem) => {
-    const inventory = localStorage.getItem('gameInventory');
-    if (inventory) {
-      const items = JSON.parse(inventory);
-      const updatedItems = items.map((invItem: ShopItem) => {
-        if (invItem.equipped && invItem.slot === selectedSlot) {
-          return {
-            ...invItem,
-            equipped: false
-          };
-        }
-        if (invItem.id === item.id) {
-          return {
-            ...invItem,
-            equipped: true
-          };
-        }
-        return invItem;
-      });
-      localStorage.setItem('gameInventory', JSON.stringify(updatedItems));
-      const equipped = updatedItems.filter((item: ShopItem) => item.equipped);
-      setEquippedItems(equipped);
-      const stats = equipped.reduce((acc: any, item: ShopItem) => {
-        if (item.stats) {
-          acc.power += item.stats.power || 0;
-          acc.defense += item.stats.defense || 0;
-          acc.health += item.stats.health || 0;
-        }
-        return acc;
-      }, {
-        power: 0,
-        defense: 0,
-        health: 0
-      });
-      setTotalStats(stats);
-      toast({
-        title: "Предмет экипирован",
-        description: `${item.name} был экипирован`
-      });
+    const equipped = inventory.filter((item: Item) => item.equipped);
+    setEquippedItems(equipped);
+    
+    const stats = equipped.reduce((acc, item: Item) => {
+      if (item.stats) {
+        acc.power += item.stats.power || 0;
+        acc.defense += item.stats.defense || 0;
+        acc.health += item.stats.health || 0;
+      }
+      return acc;
+    }, {
+      power: 0,
+      defense: 0,
+      health: 0
+    });
+    setTotalStats(stats);
+  }, [inventory]);
 
-      // Отправляем события об изменении экипировки
-      const inventoryEvent = new CustomEvent('inventoryUpdate', {
-        detail: {
-          inventory: updatedItems
-        }
-      });
-      window.dispatchEvent(inventoryEvent);
-      const equipmentEvent = new CustomEvent('equipmentChange');
-      window.dispatchEvent(equipmentEvent);
-      setSelectedSlot(null);
-    }
-  };
-  const handleUnequipItem = (item: ShopItem) => {
-    const inventory = localStorage.getItem('gameInventory');
-    if (inventory) {
-      const items = JSON.parse(inventory);
-      const updatedItems = items.map((invItem: ShopItem) => {
-        if (invItem.id === item.id) {
-          return {
-            ...invItem,
-            equipped: false
-          };
-        }
-        return invItem;
-      });
-      localStorage.setItem('gameInventory', JSON.stringify(updatedItems));
-      const equipped = updatedItems.filter((item: ShopItem) => item.equipped);
-      setEquippedItems(equipped);
-      const stats = equipped.reduce((acc: any, item: ShopItem) => {
-        if (item.stats) {
-          acc.power += item.stats.power || 0;
-          acc.defense += item.stats.defense || 0;
-          acc.health += item.stats.health || 0;
-        }
-        return acc;
-      }, {
-        power: 0,
-        defense: 0,
-        health: 0
-      });
-      setTotalStats(stats);
-      toast({
-        title: "Предмет снят",
-        description: `${item.name} был снят`
-      });
+  const handleEquipItem = (item: Item) => {
+    if (!selectedSlot) return;
+    
+    equipItem(item, selectedSlot);
+    
+    toast({
+      title: "Предмет экипирован",
+      description: `${item.name} был экипирован`
+    });
 
-      // Отправляем события об изменении экипировки
-      const inventoryEvent = new CustomEvent('inventoryUpdate', {
-        detail: {
-          inventory: updatedItems
-        }
-      });
-      window.dispatchEvent(inventoryEvent);
-      const equipmentEvent = new CustomEvent('equipmentChange');
-      window.dispatchEvent(equipmentEvent);
-    }
+    // Отправляем события об изменении экипировки
+    const inventoryEvent = new CustomEvent('inventoryUpdate', {
+      detail: { inventory }
+    });
+    window.dispatchEvent(inventoryEvent);
+    const equipmentEvent = new CustomEvent('equipmentChange');
+    window.dispatchEvent(equipmentEvent);
+    setSelectedSlot(null);
   };
-  const handleSlotClick = (slot: string, equippedItem?: ShopItem) => {
+
+  const handleUnequipItem = (item: Item) => {
+    unequipItem(item.id);
+    
+    toast({
+      title: "Предмет снят",
+      description: `${item.name} был снят`
+    });
+
+    // Отправляем события об изменении экипировки
+    const inventoryEvent = new CustomEvent('inventoryUpdate', {
+      detail: { inventory }
+    });
+    window.dispatchEvent(inventoryEvent);
+    const equipmentEvent = new CustomEvent('equipmentChange');
+    window.dispatchEvent(equipmentEvent);
+  };
+
+  const handleSlotClick = (slot: string, equippedItem?: Item) => {
     if (equippedItem) {
       handleUnequipItem(equippedItem);
     } else {
-      const inventory = localStorage.getItem('gameInventory');
-      if (inventory) {
-        const items = JSON.parse(inventory);
-        const availableForSlot = items.filter((item: ShopItem) => !item.equipped && item.slot === slot);
-        setAvailableItems(availableForSlot);
-        setSelectedSlot(slot);
-      }
+      const availableForSlot = inventory.filter((item: Item) => !item.equipped && item.slot === slot);
+      setAvailableItems(availableForSlot);
+      setSelectedSlot(slot);
     }
   };
+
   const getEquippedItemForSlot = (slot: string) => {
     return equippedItems.find(item => item.slot === slot);
   };
+
   const slots = [{
     slot: "head",
     title: "Голова"

@@ -14,6 +14,7 @@ import { usePlayerState } from "@/hooks/usePlayerState";
 import { useGameData } from "@/hooks/useGameData";
 import { useDungeonSync } from "@/hooks/useDungeonSync";
 import { ActiveDungeonWarning } from "./ActiveDungeonWarning";
+import { useGameStore } from "@/stores/gameStore";
 
 interface DungeonSearchDialogProps {
   onClose: () => void;
@@ -59,6 +60,10 @@ export const DungeonSearchDialog = ({
   hasActiveCards
 }: DungeonSearchDialogProps) => {
   const navigate = useNavigate();
+  const teamBattleState = useGameStore((state) => state.teamBattleState);
+  const activeBattleInProgress = useGameStore((state) => state.activeBattleInProgress);
+  const clearTeamBattleState = useGameStore((state) => state.clearTeamBattleState);
+  
   const [activeDungeon, setActiveDungeon] = React.useState<string | null>(null);
   const { playerStats } = usePlayerState();
   const { updateGameData } = useGameData();
@@ -67,29 +72,18 @@ export const DungeonSearchDialog = ({
   const [pendingDungeon, setPendingDungeon] = useState<DungeonType | null>(null);
 
   React.useEffect(() => {
-    // Check for team battle state only (new system)
-    const teamBattleState = localStorage.getItem('teamBattleState');
-    const hasActiveBattle = localStorage.getItem('activeBattleInProgress') === 'true';
-    
-    if (teamBattleState && hasActiveBattle) {
-      try {
-        const state = JSON.parse(teamBattleState);
-        if (state?.selectedDungeon) {
-          setActiveDungeon(state.selectedDungeon);
-          return;
-        }
-      } catch (error) {
-        console.error('Error parsing teamBattleState:', error);
+    // Check for team battle state from Zustand store
+    if (teamBattleState && activeBattleInProgress) {
+      if (teamBattleState?.selectedDungeon) {
+        setActiveDungeon(teamBattleState.selectedDungeon);
       }
     }
-  }, []);
+  }, [teamBattleState, activeBattleInProgress]);
 
   const handleResetActiveBattle = async () => {
-    try {
-      localStorage.removeItem('teamBattleState');
-      localStorage.removeItem('activeBattleInProgress');
-      localStorage.removeItem('battleState'); // legacy
-    } catch {}
+    // Clear battle state from Zustand store
+    clearTeamBattleState();
+    
     try { await updateGameData({ battleState: null }); } catch {}
     
     // Завершаем сессию подземелья в БД

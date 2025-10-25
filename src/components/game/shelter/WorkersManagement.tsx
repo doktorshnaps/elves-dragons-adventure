@@ -37,9 +37,8 @@ export const WorkersManagement = ({ onSpeedBoostChange }: WorkersManagementProps
   const [selectedBuilding, setSelectedBuilding] = useState<string>("main_hall");
 
   const updateActiveWorkersInDB = async (workers: ActiveWorker[]) => {
-    // Используем game state для получения wallet address вместо localStorage
-    const walletAddress = gameState.loading ? localStorage.getItem('walletAccountId') : 
-                          (gameState as any).wallet_address || localStorage.getItem('walletAccountId');
+    // Получаем wallet address из game state или контекста
+    const walletAddress = (gameState as any).wallet_address;
     
     if (!walletAddress) {
       console.warn('⚠️ No wallet address available for updating active workers in DB');
@@ -306,9 +305,9 @@ export const WorkersManagement = ({ onSpeedBoostChange }: WorkersManagementProps
       if (worker.source === 'card_instances' && (worker as any).instanceId) {
         // Используем новую RPC функцию без конфликтов параметров
         console.log('🗑️ Attempting to delete worker from card_instances:', (worker as any).instanceId);
+        const walletAddress = (gameState as any).wallet_address || 'mr_bruts.tg';
         const { data: deleted, error } = await supabase.rpc('remove_card_instance_exact', {
-          p_wallet_address: gameState.actions ? 
-            (localStorage.getItem('walletAccountId') || 'mr_bruts.tg') : 'mr_bruts.tg',
+          p_wallet_address: walletAddress,
           p_instance_id: (worker as any).instanceId
         });
         

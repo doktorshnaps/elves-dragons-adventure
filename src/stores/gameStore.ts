@@ -21,9 +21,18 @@ interface GameState {
   // Battle state
   battleState: any | null;
   activeBattleInProgress: boolean;
+  teamBattleState: any | null;
+  
+  // Equipment state
+  equippedItems: Item[];
   
   // Actions
   setActiveBattleInProgress: (active: boolean) => void;
+  setTeamBattleState: (state: any) => void;
+  clearTeamBattleState: () => void;
+  setEquippedItems: (items: Item[]) => void;
+  equipItem: (item: Item, slot: string) => void;
+  unequipItem: (itemId: string) => void;
   setBalance: (balance: number) => void;
   addBalance: (amount: number) => void;
   setCards: (cards: Card[]) => void;
@@ -73,6 +82,8 @@ export const useGameStore = create<GameState>()((set, get) => ({
   accountExperience: 0,
   battleState: null,
   activeBattleInProgress: false,
+  teamBattleState: null,
+  equippedItems: [],
   
   // Actions
   setBalance: (balance) => set({ balance }),
@@ -100,6 +111,36 @@ export const useGameStore = create<GameState>()((set, get) => ({
   setBattleState: (battleState) => set({ battleState }),
   clearBattleState: () => set({ battleState: null }),
   setActiveBattleInProgress: (active: boolean) => set({ activeBattleInProgress: active }),
+  setTeamBattleState: (state: any) => set({ teamBattleState: state }),
+  clearTeamBattleState: () => set({ teamBattleState: null, activeBattleInProgress: false }),
+  
+  // Equipment actions
+  setEquippedItems: (equippedItems) => set({ equippedItems }),
+  equipItem: (item: Item, slot: string) => {
+    const state = get();
+    const updatedInventory = state.inventory.map((invItem) => {
+      if (invItem.equipped && invItem.slot === slot) {
+        return { ...invItem, equipped: false };
+      }
+      if (invItem.id === item.id) {
+        return { ...invItem, equipped: true };
+      }
+      return invItem;
+    });
+    const equipped = updatedInventory.filter((item) => item.equipped);
+    set({ inventory: updatedInventory, equippedItems: equipped });
+  },
+  unequipItem: (itemId: string) => {
+    const state = get();
+    const updatedInventory = state.inventory.map((invItem) => {
+      if (invItem.id === itemId) {
+        return { ...invItem, equipped: false };
+      }
+      return invItem;
+    });
+    const equipped = updatedInventory.filter((item) => item.equipped);
+    set({ inventory: updatedInventory, equippedItems: equipped });
+  },
   
   // Account progression actions
   setAccountLevel: (accountLevel) => set({ accountLevel }),
@@ -159,6 +200,9 @@ export const useGameStore = create<GameState>()((set, get) => ({
       accountLevel: 1,
       accountExperience: 0,
       battleState: null,
+      activeBattleInProgress: false,
+      teamBattleState: null,
+      equippedItems: [],
     });
   },
   
