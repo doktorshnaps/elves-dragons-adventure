@@ -16,6 +16,7 @@ import { useWalletContext } from '@/contexts/WalletConnectContext';
 import { useDungeonSync } from '@/hooks/useDungeonSync';
 import { useEnergy } from '@/utils/energyManager';
 import { useToast } from '@/hooks/use-toast';
+import { useGameStore } from '@/stores/gameStore';
 interface TeamBattlePageProps {
   dungeonType: DungeonType;
 }
@@ -101,7 +102,7 @@ export const TeamBattlePage: React.FC<TeamBattlePageProps> = ({
     }
     
     startTransition(() => {
-      localStorage.setItem('activeBattleInProgress', 'true');
+      useGameStore.getState().setActiveBattleInProgress(true);
       setBattleStarted(true);
     });
   };
@@ -110,7 +111,7 @@ export const TeamBattlePage: React.FC<TeamBattlePageProps> = ({
     await endDungeonSession();
     
     startTransition(() => {
-      localStorage.removeItem('activeBattleInProgress');
+      useGameStore.getState().setActiveBattleInProgress(false);
       resetBattle();
       resetRewards();
       navigate('/dungeons');
@@ -146,7 +147,7 @@ export const TeamBattlePage: React.FC<TeamBattlePageProps> = ({
   // Мониторинг активной сессии в БД: если удалена на другом устройстве — блокируем
   useEffect(() => {
     // Следим ТОЛЬКО когда бой активен на этом устройстве
-    const isActiveLocal = battleStarted || localStorage.getItem('activeBattleInProgress') === 'true';
+    const isActiveLocal = battleStarted || useGameStore.getState().activeBattleInProgress;
     if (!accountId || !deviceId || !isActiveLocal) return;
 
     const checkSession = async () => {
@@ -163,7 +164,7 @@ export const TeamBattlePage: React.FC<TeamBattlePageProps> = ({
 
         if (error) throw error;
         // Если записи нет — считаем, что сессию завершили удаленно (только если локально бой активен)
-        const stillActiveLocal = battleStarted || localStorage.getItem('activeBattleInProgress') === 'true';
+        const stillActiveLocal = battleStarted || useGameStore.getState().activeBattleInProgress;
         if ((!data || data.length === 0) && stillActiveLocal) {
           setSessionTerminated(true);
         }
@@ -207,8 +208,8 @@ export const TeamBattlePage: React.FC<TeamBattlePageProps> = ({
 
   // Автоматически активируем бой при загрузке, если есть активное подземелье
   useEffect(() => {
-    const isActiveBattle = localStorage.getItem('activeBattleInProgress') === 'true';
-    const hasTeamBattleState = localStorage.getItem('teamBattleState');
+    const isActiveBattle = useGameStore.getState().activeBattleInProgress;
+    const hasTeamBattleState = useGameStore.getState().battleState;
     
     if (isActiveBattle && hasTeamBattleState && !battleStarted) {
       console.log('🔄 Автовозобновление активного боя');

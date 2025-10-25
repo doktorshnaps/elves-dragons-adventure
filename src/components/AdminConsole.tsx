@@ -16,6 +16,7 @@ import { cardDatabase } from '@/data/cardDatabase';
 import { calculateCardStats } from '@/utils/cardUtils';
 import { adminCommandBalanceSchema, adminCommandBanSchema, uuidSchema, formatValidationErrors } from '@/utils/validationSchemas';
 import { z } from 'zod';
+import { useGameStore } from '@/stores/gameStore';
 
 export const AdminConsole = () => {
   const { accountId } = useWalletContext();
@@ -542,13 +543,13 @@ export const AdminConsole = () => {
       if (accountId === 'mr_bruts.tg') {
         // Запускаем событие обновления карт для синхронизации
         const updateEvent = new CustomEvent('cardsUpdate', {
-          detail: { cards: [] } // Пустой массив заставит перезагрузить данные
+        detail: { cards: [] } // Пустой массив заставит перезагрузить данные
         });
         window.dispatchEvent(updateEvent);
         
-        // Также обновляем localStorage чтобы вызвать перезагрузку
-        const currentCards = JSON.parse(localStorage.getItem('gameCards') || '[]');
-        localStorage.setItem('gameCards', JSON.stringify([...currentCards, cardData]));
+        // Используем Zustand store для обновления карт
+        const currentCards = useGameStore.getState().cards;
+        useGameStore.getState().setCards([...currentCards, cardData]);
       }
     }
   };

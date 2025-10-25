@@ -198,7 +198,7 @@ export const TeamBattleArena: React.FC<TeamBattleArenaProps> = ({
 
   // Автоматический ход противника
   useEffect(() => {
-    const isActive = localStorage.getItem('activeBattleInProgress') === 'true';
+    const isActive = useGameStore.getState().activeBattleInProgress;
     if (!isActive) return;
     if (!isPlayerTurn && aliveOpponents.length > 0 && alivePairs.length > 0) {
       const timer = setTimeout(() => {

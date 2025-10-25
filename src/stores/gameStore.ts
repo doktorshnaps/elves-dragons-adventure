@@ -20,8 +20,10 @@ interface GameState {
   
   // Battle state
   battleState: any | null;
+  activeBattleInProgress: boolean;
   
   // Actions
+  setActiveBattleInProgress: (active: boolean) => void;
   setBalance: (balance: number) => void;
   addBalance: (amount: number) => void;
   setCards: (cards: Card[]) => void;
@@ -70,6 +72,7 @@ export const useGameStore = create<GameState>()((set, get) => ({
   accountLevel: 1,
   accountExperience: 0,
   battleState: null,
+  activeBattleInProgress: false,
   
   // Actions
   setBalance: (balance) => set({ balance }),
@@ -96,6 +99,7 @@ export const useGameStore = create<GameState>()((set, get) => ({
   setSelectedTeam: (selectedTeam) => set({ selectedTeam }),
   setBattleState: (battleState) => set({ battleState }),
   clearBattleState: () => set({ battleState: null }),
+  setActiveBattleInProgress: (active: boolean) => set({ activeBattleInProgress: active }),
   
   // Account progression actions
   setAccountLevel: (accountLevel) => set({ accountLevel }),

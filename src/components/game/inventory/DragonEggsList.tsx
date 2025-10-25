@@ -7,6 +7,7 @@ import { cardDatabase } from "@/data/cardDatabase";
 import { Card as UICard } from "@/components/ui/card";
 import { useGameData } from "@/hooks/useGameData";
 import { calculateCardStats } from "@/utils/cardUtils";
+import { useGameStore } from "@/stores/gameStore";
 
 interface DragonEggsListProps {
   eggs: DragonEgg[];
@@ -74,24 +75,18 @@ export const DragonEggsList = ({ eggs }: DragonEggsListProps) => {
     const inv = gameData.inventory || [];
     const newInv = inv.filter((i) => i.id !== egg.id);
 
-    // Сохраняем обновленные данные в Supabase и localStorage одновременно
+    // Сохраняем обновленные данные в Supabase и обновляем Zustand store
     await updateGameData({ 
       cards: updatedCards,
       inventory: newInv 
     });
     
-    localStorage.setItem('gameCards', JSON.stringify(updatedCards));
+    // Обновляем store вместо localStorage
+    useGameStore.getState().setCards(updatedCards);
+    useGameStore.getState().setInventory(newInv);
 
     // Удаляем яйцо из контекста
     await removeEgg(egg.id);
-
-    // Удаляем яйцо также из localStorage (на всякий случай для синхронизации)
-    const savedEggs = localStorage.getItem('dragonEggs');
-    if (savedEggs) {
-      const currentEggs = JSON.parse(savedEggs);
-      const updatedEggs = currentEggs.filter((e: DragonEgg) => e.id !== egg.id);
-      localStorage.setItem('dragonEggs', JSON.stringify(updatedEggs));
-    }
 
     // Отправляем событие обновления карт
     const cardsEvent = new CustomEvent('cardsUpdate', { 

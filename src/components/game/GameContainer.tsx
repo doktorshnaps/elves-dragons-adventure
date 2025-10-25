@@ -10,6 +10,7 @@ import { useGameData } from "@/hooks/useGameData";
 import { useImagePreloader } from "@/hooks/useImagePreloader";
 import { GameSkeleton } from "./loading/GameSkeleton";
 import { useGameInitialization } from "./initialization/useGameInitialization";
+import { useGameStore } from "@/stores/gameStore";
 
 const calculateTeamStats = (cards: Card[]) => {
   const power = cards.reduce((sum, c) => sum + (c.power || 0), 0);
@@ -32,10 +33,8 @@ export const GameContainer = () => {
   const [showDungeonSearch, setShowDungeonSearch] = useState(false);
   const [showShop, setShowShop] = useState(false);
   const [hasActiveDungeon, setHasActiveDungeon] = useState(false);
-  const [cards, setCards] = useState<Card[]>(() => {
-    const savedCards = localStorage.getItem('gameCards');
-    return savedCards ? JSON.parse(savedCards) : [];
-  });
+  const cards = useGameStore(state => state.cards);
+  const setCards = useGameStore(state => state.setCards);
 
   const imagesLoaded = useImagePreloader();
 
@@ -43,7 +42,8 @@ export const GameContainer = () => {
 
   useEffect(() => {
     return () => {
-      localStorage.removeItem('battleState');
+      useGameStore.getState().clearBattleState();
+      useGameStore.getState().setActiveBattleInProgress(false);
       toast({
         title: "Игра закрыта",
         description: "Подземелье автоматически завершено",

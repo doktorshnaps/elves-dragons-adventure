@@ -3,6 +3,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Card } from "@/types/cards";
 import { supabase } from "@/integrations/supabase/client";
 import { useWalletContext } from "@/contexts/WalletConnectContext";
+import { useGameStore } from "@/stores/gameStore";
 
 export const useGameInitialization = (setCards: (cards: Card[]) => void) => {
   const { toast } = useToast();
@@ -56,10 +57,9 @@ export const useGameInitialization = (setCards: (cards: Card[]) => void) => {
             return;
           }
 
-          // Синхронизируем с localStorage
-          localStorage.setItem('gameCards', JSON.stringify([]));
-          localStorage.setItem('gameBalance', '0');
-          localStorage.setItem('gameInitialized', 'true');
+          // Синхронизируем с Zustand store
+          useGameStore.getState().setCards([]);
+          useGameStore.getState().setBalance(0);
           
           setCards([]);
           
@@ -77,9 +77,8 @@ export const useGameInitialization = (setCards: (cards: Card[]) => void) => {
           // Загружаем существующие данные
           const cards = Array.isArray(gameData.cards) ? gameData.cards as unknown as Card[] : [];
           setCards(cards);
-          localStorage.setItem('gameCards', JSON.stringify(cards));
-          localStorage.setItem('gameBalance', gameData.balance.toString());
-          localStorage.setItem('gameInitialized', 'true');
+          useGameStore.getState().setCards(cards);
+          useGameStore.getState().setBalance(gameData.balance);
           
           // Отправляем событие для обновления баланса
           const balanceEvent = new CustomEvent('balanceUpdate', { 
