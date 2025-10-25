@@ -5,16 +5,27 @@ import { useWalletContext } from "@/contexts/WalletConnectContext";
 import { Navigate, useNavigate, useSearchParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
+import useTelegram from "@/hooks/useTelegram";
 
 export const Auth = () => {
   const { toast } = useToast();
   const { accountId, isLoading: isConnecting, connect } = useWalletContext();
+  const { isTelegram, tgWebApp } = useTelegram();
   const isConnected = !!accountId;
   const connectWallet = connect;
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const [referrerId, setReferrerId] = useState<string | null>(null);
   const [supabaseAuthenticating, setSupabaseAuthenticating] = useState(false);
+
+  // Initialize Telegram Web App
+  useEffect(() => {
+    if (isTelegram && tgWebApp) {
+      console.log('📱 Telegram Web App initialized');
+      tgWebApp.ready();
+      tgWebApp.expand();
+    }
+  }, [isTelegram, tgWebApp]);
 
   // Get referrer ID from URL params
   useEffect(() => {

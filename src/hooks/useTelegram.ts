@@ -11,6 +11,8 @@ interface TelegramWebApp {
       username?: string;
     };
   };
+  ready: () => void;
+  expand: () => void;
   openTelegramLink: (url: string) => void;
   openLink: (url: string, options?: { try_instant_view: boolean }) => void;
 }
