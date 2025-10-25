@@ -31,6 +31,8 @@ import {
 import { toast } from "@/hooks/use-toast";
 import { Pencil, Trash2, Plus } from "lucide-react";
 import { Card } from "@/components/ui/card";
+import { itemTemplateSchema, formatValidationErrors } from "@/utils/validationSchemas";
+import { z } from "zod";
 
 interface ItemTemplate {
   id: number;
@@ -169,16 +171,22 @@ export const ItemTemplateManager = () => {
     console.log('Submit triggered, formData:', formData);
     console.log('Editing item:', editingItem);
     
-    if (!formData.item_id || !formData.name || !formData.type || !formData.rarity || !formData.source_type) {
-      console.log('Validation failed:', {
-        item_id: formData.item_id,
-        name: formData.name,
-        type: formData.type,
-        rarity: formData.rarity,
-        source_type: formData.source_type
-      });
-      toast({ title: "Ошибка", description: "Заполните все обязательные поля", variant: "destructive" });
-      return;
+    // Validate form data with zod schema
+    try {
+      const validatedData = itemTemplateSchema.parse(formData);
+      console.log('✅ Validation passed:', validatedData);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        const errorMessage = formatValidationErrors(error);
+        console.error('❌ Validation failed:', errorMessage);
+        toast({ 
+          title: "Ошибка валидации", 
+          description: errorMessage, 
+          variant: "destructive" 
+        });
+        return;
+      }
+      throw error;
     }
     
     console.log('Validation passed, proceeding...');

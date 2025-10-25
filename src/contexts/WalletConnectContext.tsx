@@ -89,6 +89,9 @@ export function WalletConnectProvider({ children }: { children: React.ReactNode 
           const id = active?.accountId || null;
           setAccountId(id);
           
+          // Store wallet address globally for secure storage access
+          (window as any).__WALLET_ADDRESS__ = id;
+          
           // Get real NEAR account
           if (id && nextState.selectedWalletId) {
             try {

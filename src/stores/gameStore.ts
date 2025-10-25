@@ -1,8 +1,10 @@
 import { create } from 'zustand';
+import { persist } from 'zustand/middleware';
 import { Card } from '@/types/cards';
 import { Item } from '@/types/inventory';
 import { DragonEgg } from '@/contexts/DragonEggContext';
 import { supabase } from '@/integrations/supabase/client';
+import { secureSetItem, secureGetItem, clearCriticalData, validateCriticalData } from '@/utils/secureStorage';
 
 interface GameState {
   // Core game data
@@ -47,6 +49,16 @@ interface GameState {
   // Computed values
   getTeamStats: () => { power: number; defense: number; health: number; maxHealth: number };
 }
+
+// Helper to get wallet address from window context
+const getWalletAddress = (): string | null => {
+  try {
+    // This will be set by WalletConnectContext
+    return (window as any).__WALLET_ADDRESS__ || null;
+  } catch {
+    return null;
+  }
+};
 
 export const useGameStore = create<GameState>()((set, get) => ({
   // Initial state - все данные приходят из Supabase через useGameSync

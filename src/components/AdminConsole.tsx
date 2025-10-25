@@ -14,6 +14,8 @@ import { Textarea } from '@/components/ui/textarea';
 import { Terminal, DollarSign, Ban, UserCheck, Trash2 } from 'lucide-react';
 import { cardDatabase } from '@/data/cardDatabase';
 import { calculateCardStats } from '@/utils/cardUtils';
+import { adminCommandBalanceSchema, adminCommandBanSchema, uuidSchema, formatValidationErrors } from '@/utils/validationSchemas';
+import { z } from 'zod';
 
 export const AdminConsole = () => {
   const { accountId } = useWalletContext();
@@ -146,16 +148,14 @@ export const AdminConsole = () => {
     const userId = parts[1];
     const amount = parseInt(parts[2]);
 
-    if (isNaN(amount)) {
-      addOutput('Количество должно быть числом');
-      return;
-    }
-
-    // Validate UUID format
-    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
-    if (!uuidRegex.test(userId)) {
-      addOutput('Неверный формат UUID игрока');
-      return;
+    // Validate with zod schema
+    try {
+      adminCommandBalanceSchema.parse({ userId, amount });
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        addOutput(`❌ Ошибка валидации: ${formatValidationErrors(error)}`);
+        return;
+      }
     }
 
     const { error } = await supabase.rpc('admin_add_balance_by_id', {
@@ -184,11 +184,14 @@ export const AdminConsole = () => {
     const userId = parts[1];
     const reason = parts.slice(2).join(' ');
 
-    // Validate UUID format
-    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
-    if (!uuidRegex.test(userId)) {
-      addOutput('Неверный формат UUID игрока');
-      return;
+    // Validate with zod schema
+    try {
+      adminCommandBanSchema.parse({ userId, reason });
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        addOutput(`❌ Ошибка валидации: ${formatValidationErrors(error)}`);
+        return;
+      }
     }
 
     const { error } = await supabase.rpc('admin_ban_user_by_id', {
@@ -217,11 +220,14 @@ export const AdminConsole = () => {
 
     const userId = parts[1];
 
-    // Validate UUID format
-    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
-    if (!uuidRegex.test(userId)) {
-      addOutput('Неверный формат UUID игрока');
-      return;
+    // Validate with zod schema
+    try {
+      uuidSchema.parse(userId);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        addOutput(`❌ Ошибка валидации: ${formatValidationErrors(error)}`);
+        return;
+      }
     }
 
     const { error } = await supabase.rpc('admin_unban_user_by_id', {
