@@ -54,7 +54,7 @@ serve(async (req) => {
       });
     }
 
-    console.log(`🛒 Processing purchase: item ${item_id} (qty: ${quantity}) for wallet ${wallet_address}`);
+    console.log(`🛒 Processing purchase: item ${item_id} (qty: ${quantity})`);
 
     // Получаем информацию о товаре
     const { data: inventoryItem, error: fetchError } = await supabase
@@ -64,7 +64,7 @@ serve(async (req) => {
       .single();
 
     if (fetchError) {
-      console.error('❌ Error fetching inventory item:', fetchError);
+      console.error('❌ Error fetching inventory item');
       throw fetchError;
     }
 
@@ -103,11 +103,11 @@ serve(async (req) => {
     }
 
     if (!itemTemplate) {
-      console.error('❌ Error fetching item template:', templateError);
+      console.error('❌ Error fetching item template');
       throw new Error('Item template not found');
     }
 
-    console.log(`📋 Found item template:`, itemTemplate);
+    console.log(`📋 Found item template: ${itemTemplate.name}`);
 
     // Уменьшаем количество товара на quantity
     const { error: updateError } = await supabase

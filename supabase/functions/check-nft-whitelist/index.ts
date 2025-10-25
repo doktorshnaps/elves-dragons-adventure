@@ -11,9 +11,9 @@ interface NFTResponse {
 
 // Функция для получения NFT с контракта с повторными попытками и rate limiting
 async function fetchNFTsFromContract(walletAddress: string, contractId: string, maxRetries = 3) {
-  for (let attempt = 1; attempt <= maxRetries; attempt++) {
+    for (let attempt = 1; attempt <= maxRetries; attempt++) {
     try {
-      console.log(`📞 Fetching NFTs for ${walletAddress} from ${contractId} (attempt ${attempt}/${maxRetries})`);
+      console.log(`📞 Fetching NFTs (attempt ${attempt}/${maxRetries})`);
       
       const response = await fetch('https://rpc.mainnet.near.org', {
         method: 'POST',
@@ -40,7 +40,7 @@ async function fetchNFTsFromContract(walletAddress: string, contractId: string, 
       if (!response.ok) {
         // Специальная обработка 429 (Too Many Requests)
         if (response.status === 429) {
-          console.warn(`⚠️ Rate limited (429) for ${walletAddress} from ${contractId}`);
+          console.warn(`⚠️ Rate limited (429)`);
           if (attempt < maxRetries) {
             await new Promise(resolve => setTimeout(resolve, 3000 * attempt));
             continue;
@@ -53,7 +53,7 @@ async function fetchNFTsFromContract(walletAddress: string, contractId: string, 
       
       // Проверка на ошибки NEAR RPC
       if (data.error) {
-        console.error(`❌ NEAR RPC error for ${walletAddress}:`, data.error);
+        console.error(`❌ NEAR RPC error:`, data.error);
         if (attempt < maxRetries) {
           await new Promise(resolve => setTimeout(resolve, 2000 * attempt));
           continue;
@@ -64,17 +64,17 @@ async function fetchNFTsFromContract(walletAddress: string, contractId: string, 
       if (data.result?.result) {
         const resultString = new TextDecoder().decode(new Uint8Array(data.result.result));
         const nfts = JSON.parse(resultString);
-        console.log(`✅ Successfully fetched ${nfts.length} NFTs for ${walletAddress} from ${contractId}`);
+        console.log(`✅ Successfully fetched ${nfts.length} NFTs`);
         // Добавляем задержку после успешного запроса для rate limiting
         await new Promise(resolve => setTimeout(resolve, 300));
         return nfts;
       }
       
-      console.log(`ℹ️ No NFTs found for ${walletAddress} from ${contractId}`);
+      console.log(`ℹ️ No NFTs found`);
       await new Promise(resolve => setTimeout(resolve, 300));
       return [];
     } catch (error) {
-      console.error(`❌ Attempt ${attempt}/${maxRetries} failed for ${walletAddress} from ${contractId}:`, error);
+      console.error(`❌ Attempt ${attempt}/${maxRetries} failed:`, error);
       if (attempt < maxRetries) {
         await new Promise(resolve => setTimeout(resolve, 2000 * attempt));
       } else {
@@ -132,7 +132,7 @@ Deno.serve(async (req) => {
       // Проверяем каждого пользователя с задержками
       for (let i = 0; i < (nftUsers || []).length; i++) {
         const user = nftUsers[i];
-        console.log(`🔍 Checking user ${i + 1}/${nftUsers.length}: ${user.wallet_address}`);
+        console.log(`🔍 Checking user ${i + 1}/${nftUsers.length}`);
         
         const nfts = await fetchNFTsFromContract(user.wallet_address, user.nft_contract_used || 'golden_ticket.nfts.tg');
         
@@ -147,9 +147,9 @@ Deno.serve(async (req) => {
           if (!revokeError) {
             revokedCount++;
             revokedUsers.push(user.wallet_address);
-            console.log(`✅ Revoked whitelist for ${user.wallet_address} - no NFT found`);
+            console.log(`✅ Revoked whitelist - no NFT found`);
           } else {
-            console.error(`❌ Failed to revoke whitelist for ${user.wallet_address}:`, revokeError);
+            console.error(`❌ Failed to revoke whitelist:`, revokeError);
           }
         }
         
@@ -184,7 +184,7 @@ Deno.serve(async (req) => {
       );
     }
 
-    console.log('🔍 Checking whitelist NFTs for wallet:', wallet_address, specific_contract ? `in contract: ${specific_contract}` : '');
+    console.log('🔍 Checking whitelist NFTs', specific_contract ? `in specific contract` : '');
 
     // Получаем активные контракты для вайт-листа
     let contractAddresses: string[];

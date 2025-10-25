@@ -25,14 +25,16 @@ export const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
   const [maintenanceLoading, setMaintenanceLoading] = useState(true);
 
   useEffect(() => {
-    console.log('🛡️ ProtectedRoute check:', { 
-      isConnected, 
-      isConnecting, 
-      lsConnected, 
-      isWhitelisted, 
-      whitelistLoading, 
-      path: location.pathname 
-    });
+    if (import.meta.env.DEV) {
+      console.log('🛡️ ProtectedRoute check:', { 
+        isConnected, 
+        isConnecting, 
+        lsConnected, 
+        isWhitelisted, 
+        whitelistLoading, 
+        path: location.pathname 
+      });
+    }
   }, [isConnected, isConnecting, lsConnected, isWhitelisted, whitelistLoading, location.pathname]);
 
   useEffect(() => {
@@ -46,7 +48,9 @@ export const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
           message: (data as any).message || ''
         } : { is_enabled: false, message: '' });
       } catch (error) {
-        console.error('Error checking maintenance status:', error);
+        if (import.meta.env.DEV) {
+          console.error('Error checking maintenance status:', error);
+        }
         setMaintenanceStatus({ is_enabled: false, message: '' });
       } finally {
         setMaintenanceLoading(false);
@@ -68,26 +72,21 @@ export const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
   if (maintenanceStatus?.is_enabled) {
     if (!isAdmin) {
       return <MaintenanceScreen message={maintenanceStatus.message} />;
-    } else {
-      console.log('🛠️ Admin/Super Admin bypassing maintenance mode');
     }
   }
 
   if (!isConnected && !lsConnected) {
-    console.log('❌ Not connected, redirecting to auth');
     return <Navigate to="/auth" replace />;
   }
 
   // Если localStorage показывает подключение, но accountId нет - редирект на auth
   if (lsConnected && !accountId) {
-    console.log('⚠️ localStorage connected but no accountId, redirecting to auth');
     localStorage.removeItem('walletConnected');
     return <Navigate to="/auth" replace />;
   }
 
   // Check whitelist access after wallet is connected
   if (isConnected && isWhitelisted === false) {
-    console.log('❌ Not whitelisted, showing coming soon');
     return <ComingSoon />;
   }
 

@@ -70,7 +70,7 @@ Deno.serve(async (req) => {
     const { data, error } = await query;
 
     if (error) {
-      console.error('get-user-nft-cards error:', error);
+      console.error('get-user-nft-cards error');
       return new Response(JSON.stringify({ error: error.message }), {
         status: 500,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },

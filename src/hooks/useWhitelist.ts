@@ -12,24 +12,32 @@ export const useWhitelist = () => {
     if (!accountId) return false;
     
     try {
-      console.log('🔍 Checking NFT whitelist for:', accountId);
+      if (import.meta.env.DEV) {
+        console.log('🔍 Checking NFT whitelist');
+      }
       const { data, error } = await supabase.functions.invoke('check-nft-whitelist', {
         body: { wallet_address: accountId }
       });
       
       if (error) {
-        console.log('⚠️ NFT whitelist check failed:', error);
+        if (import.meta.env.DEV) {
+          console.log('⚠️ NFT whitelist check failed:', error);
+        }
         return false;
       }
       
       if (data?.addedToWhitelist) {
-        console.log('✅ Added to whitelist via NFT ownership');
+        if (import.meta.env.DEV) {
+          console.log('✅ Added to whitelist via NFT ownership');
+        }
         return true;
       }
       
       return false;
     } catch (error) {
-      console.log('⚠️ NFT whitelist check failed:', error);
+      if (import.meta.env.DEV) {
+        console.log('⚠️ NFT whitelist check failed:', error);
+      }
       return false;
     }
   };
@@ -48,7 +56,6 @@ export const useWhitelist = () => {
           .rpc('is_admin_wallet', { p_wallet_address: accountId });
         
         if (isAdmin) {
-          console.log('✅ Admin wallet detected, granting access');
           setIsWhitelisted(true);
           setLoading(false);
           return;
@@ -59,13 +66,14 @@ export const useWhitelist = () => {
           .rpc('is_whitelisted', { p_wallet_address: accountId });
 
         if (error) {
-          console.error('Error checking whitelist:', error);
+          if (import.meta.env.DEV) {
+            console.error('Error checking whitelist:', error);
+          }
           setIsWhitelisted(false);
         } else if (data) {
           setIsWhitelisted(true);
         } else {
           // Если не в обычном вайт-листе, проверяем NFT
-          console.log('🔍 Not in regular whitelist, checking NFT whitelist...');
           const nftWhitelisted = await checkNFTWhitelist();
           setIsWhitelisted(nftWhitelisted);
           
@@ -79,7 +87,9 @@ export const useWhitelist = () => {
           }
         }
       } catch (error) {
-        console.error('Error checking whitelist:', error);
+        if (import.meta.env.DEV) {
+          console.error('Error checking whitelist:', error);
+        }
         setIsWhitelisted(false);
       } finally {
         setLoading(false);

@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useWalletContext } from '@/contexts/WalletConnectContext';
+import { useAdminCheck } from '@/hooks/useAdminCheck';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { WhitelistManager } from '@/components/admin/WhitelistManager';
@@ -13,19 +14,16 @@ import { Textarea } from '@/components/ui/textarea';
 import { Terminal, DollarSign, Ban, UserCheck, Trash2 } from 'lucide-react';
 import { cardDatabase } from '@/data/cardDatabase';
 import { calculateCardStats } from '@/utils/cardUtils';
-const ADMIN_WALLET = 'mr_bruts.tg';
 
 export const AdminConsole = () => {
   const { accountId } = useWalletContext();
+  const { isAdmin, loading: adminLoading } = useAdminCheck();
   const { toast } = useToast();
   const [command, setCommand] = useState('');
   const [output, setOutput] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
   const [maintenanceEnabled, setMaintenanceEnabled] = useState(false);
   const [maintenanceMessage, setMaintenanceMessage] = useState('');
-
-  // Check if current user is admin
-  const isAdmin = accountId === ADMIN_WALLET;
 
   // Load maintenance status on component mount
   React.useEffect(() => {
@@ -41,12 +39,22 @@ export const AdminConsole = () => {
           setMaintenanceMessage((data as any).message || '');
         }
       } catch (error) {
-        console.error('Error loading maintenance status:', error);
+        if (import.meta.env.DEV) {
+          console.error('Error loading maintenance status:', error);
+        }
       }
     };
 
     loadMaintenanceStatus();
   }, [isAdmin]);
+
+  if (adminLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-white text-xl">Loading...</div>
+      </div>
+    );
+  }
 
   if (!isAdmin) {
     return null;

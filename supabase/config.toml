@@ -13,16 +13,16 @@ verify_jwt = true
 verify_jwt = false
 
 [functions.get-user-nft-cards]
-verify_jwt = false
+verify_jwt = true
 
 [functions.marketplace-buy-nft]
-verify_jwt = false
+verify_jwt = true
 
 [functions.marketplace-create-nft-listing]
-verify_jwt = false
+verify_jwt = true
 
 [functions.open-card-packs]
-verify_jwt = false
+verify_jwt = true
 
 [functions.upload-item-image]
 verify_jwt = false

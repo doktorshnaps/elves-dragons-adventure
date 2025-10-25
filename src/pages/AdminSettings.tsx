@@ -1,6 +1,8 @@
+import React from "react";
 import { useNavigate } from "react-router-dom";
 import { useWalletContext } from "@/contexts/WalletConnectContext";
 import { useAdminCheck } from "@/hooks/useAdminCheck";
+import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -46,7 +48,19 @@ const AdminSettingsContent = () => {
     );
   }
 
-  const isSuperAdmin = accountId === 'mr_bruts.tg';
+  // Check if user has super admin role via server-side verification
+  const [isSuperAdmin, setIsSuperAdmin] = React.useState(false);
+  
+  React.useEffect(() => {
+    const checkSuperAdmin = async () => {
+      if (!accountId) return;
+      const { data } = await supabase.rpc('is_super_admin_wallet', { 
+        p_wallet_address: accountId 
+      });
+      setIsSuperAdmin(Boolean(data));
+    };
+    checkSuperAdmin();
+  }, [accountId]);
 
   return (
     <div className="min-h-screen p-4 relative">
