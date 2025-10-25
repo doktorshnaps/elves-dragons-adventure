@@ -124,27 +124,39 @@ export const ItemTemplateManager = () => {
 
   const uploadImage = async (file: File): Promise<string | null> => {
     try {
+      if (!accountId) {
+        throw new Error('Wallet not connected');
+      }
+
       const fileExt = file.name.split('.').pop();
       const fileName = `${Date.now()}_${Math.random().toString(36).substring(7)}.${fileExt}`;
       const filePath = `${fileName}`;
 
-      const { error: uploadError } = await supabase.storage
-        .from('item-images')
-        .upload(filePath, file, {
-          cacheControl: '3600',
-          upsert: false
-        });
+      const session = await supabase.auth.getSession();
+      const token = session.data.session?.access_token;
 
-      if (uploadError) {
-        console.error('Upload error:', uploadError);
-        throw uploadError;
+      if (!token) {
+        throw new Error('No auth token');
       }
 
-      const { data } = supabase.storage
-        .from('item-images')
-        .getPublicUrl(filePath);
+      const formData = new FormData();
+      formData.append('image', file);
+      formData.append('filePath', filePath);
+      formData.append('walletAddress', accountId);
 
-      return data.publicUrl;
+      const response = await supabase.functions.invoke('upload-item-image', {
+        body: formData,
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (response.error) {
+        throw new Error(response.error.message || 'Upload failed');
+      }
+
+      const { url } = response.data;
+      return url;
     } catch (error) {
       console.error('Error uploading image:', error);
       return null;
