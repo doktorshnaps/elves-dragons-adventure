@@ -13,8 +13,16 @@
     <meta name="telegram-webapp-manifest" content="/manifest.json" />
     <meta http-equiv="Content-Security-Policy" content="frame-ancestors 'self' https://web.telegram.org https://telegram.org" />
     
+    <!-- Preconnect to external domains for faster loading -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="preconnect" href="https://telegram.org">
+    
+    <!-- Optimized font loading with display=swap to prevent blocking -->
     <link href="https://fonts.googleapis.com/css2?family=MedievalSharp&display=swap" rel="stylesheet">
-    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    
+    <!-- Defer Telegram script to not block initial render -->
+    <script src="https://telegram.org/js/telegram-web-app.js" defer></script>
     <base href="/" />
     <script>
       (function() {
