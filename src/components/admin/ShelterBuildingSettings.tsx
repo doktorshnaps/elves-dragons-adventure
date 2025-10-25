@@ -4,7 +4,8 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card } from '@/components/ui/card';
 import { toast } from 'sonner';
-import { Loader2, Plus, Save, Trash2, X } from 'lucide-react';
+import { Loader2, Plus, Save, Trash2, X, Upload, Image } from 'lucide-react';
+import { useWalletContext } from '@/contexts/WalletConnectContext';
 import {
   Table,
   TableBody,
@@ -39,6 +40,7 @@ interface BuildingConfig {
   storage_capacity: number;
   working_hours: number;
   is_active: boolean;
+  background_image_url?: string;
 }
 
 interface MaterialItem {
@@ -59,12 +61,15 @@ const BUILDING_TYPES = [
 ];
 
 export default function ShelterBuildingSettings() {
+  const { accountId } = useWalletContext();
   const [configs, setConfigs] = useState<BuildingConfig[]>([]);
   const [materials, setMaterials] = useState<MaterialItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [selectedBuilding, setSelectedBuilding] = useState<string>('sawmill');
   const [editingConfig, setEditingConfig] = useState<Partial<BuildingConfig> | null>(null);
+  const [uploading, setUploading] = useState(false);
+  const [currentBackgroundUrl, setCurrentBackgroundUrl] = useState<string | null>(null);
 
   useEffect(() => {
     loadMaterials();
@@ -120,6 +125,13 @@ export default function ShelterBuildingSettings() {
       
       console.log('Loaded configs:', formattedData);
       setConfigs(formattedData);
+      
+      // Устанавливаем URL фонового изображения для выбранного здания
+      if (formattedData.length > 0 && formattedData[0].background_image_url) {
+        setCurrentBackgroundUrl(formattedData[0].background_image_url);
+      } else {
+        setCurrentBackgroundUrl(null);
+      }
     } catch (error: any) {
       console.error('Error loading building configs:', error);
       toast.error('Ошибка загрузки настроек');
@@ -284,6 +296,51 @@ export default function ShelterBuildingSettings() {
     setConfigs(updated);
   };
 
+  const handleImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file || !accountId) {
+      toast.error('Выберите файл и убедитесь что вы авторизованы');
+      return;
+    }
+
+    try {
+      setUploading(true);
+      const session = await supabase.auth.getSession();
+      const token = session.data.session?.access_token;
+
+      if (!token) {
+        throw new Error('Нет токена авторизации');
+      }
+
+      const formData = new FormData();
+      formData.append('image', file);
+      formData.append('filePath', `${selectedBuilding}/${Date.now()}-${file.name}`);
+      formData.append('buildingId', selectedBuilding);
+      formData.append('walletAddress', accountId);
+
+      const response = await supabase.functions.invoke('upload-building-background', {
+        body: formData,
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (response.error) {
+        throw new Error(response.error.message || 'Ошибка загрузки');
+      }
+
+      const { url } = response.data;
+      setCurrentBackgroundUrl(url);
+      toast.success('Фоновое изображение загружено успешно');
+      await loadConfigs();
+    } catch (error: any) {
+      console.error('Error uploading background:', error);
+      toast.error(error.message || 'Ошибка загрузки изображения');
+    } finally {
+      setUploading(false);
+    }
+  };
+
   return (
     <div className="space-y-6 p-6">
       <div className="flex justify-between items-center">
@@ -295,20 +352,79 @@ export default function ShelterBuildingSettings() {
       </div>
 
       <Card className="p-4 bg-black/50 border-white/20">
-        <div className="flex gap-4 items-center mb-6">
-          <label className="text-white font-medium">Здание:</label>
-          <Select value={selectedBuilding} onValueChange={setSelectedBuilding}>
-            <SelectTrigger className="w-64 bg-black/50 border-white/20 text-white">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {BUILDING_TYPES.map(building => (
-                <SelectItem key={building.id} value={building.id}>
-                  {building.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+        <div className="space-y-6">
+          <div className="flex gap-4 items-center">
+            <label className="text-white font-medium">Здание:</label>
+            <Select value={selectedBuilding} onValueChange={setSelectedBuilding}>
+              <SelectTrigger className="w-64 bg-black/50 border-white/20 text-white">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {BUILDING_TYPES.map(building => (
+                  <SelectItem key={building.id} value={building.id}>
+                    {building.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          {/* Секция загрузки фонового изображения */}
+          <div className="border-t border-white/10 pt-6">
+            <div className="flex items-center gap-4">
+              <div className="flex-1">
+                <label className="text-white font-medium block mb-2">
+                  Фоновое изображение здания:
+                </label>
+                {currentBackgroundUrl && (
+                  <div className="flex items-center gap-4 mb-4">
+                    <div className="relative w-48 h-32 rounded-lg overflow-hidden border border-white/20">
+                      <img 
+                        src={currentBackgroundUrl} 
+                        alt="Building background" 
+                        className="w-full h-full object-cover"
+                      />
+                    </div>
+                    <div className="text-sm text-white/60 flex items-center gap-2">
+                      <Image className="w-4 h-4" />
+                      Текущее изображение
+                    </div>
+                  </div>
+                )}
+                <div className="flex gap-2">
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={handleImageUpload}
+                    disabled={uploading}
+                    className="hidden"
+                    id="background-upload"
+                  />
+                  <Button
+                    onClick={() => document.getElementById('background-upload')?.click()}
+                    disabled={uploading}
+                    variant="outline"
+                    className="gap-2"
+                  >
+                    {uploading ? (
+                      <>
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                        Загрузка...
+                      </>
+                    ) : (
+                      <>
+                        <Upload className="w-4 h-4" />
+                        {currentBackgroundUrl ? 'Изменить изображение' : 'Загрузить изображение'}
+                      </>
+                    )}
+                  </Button>
+                </div>
+                <p className="text-xs text-white/40 mt-2">
+                  Загрузите фоновое изображение для этого здания. Оно будет применено ко всем уровням.
+                </p>
+              </div>
+            </div>
+          </div>
         </div>
 
         {loading ? (

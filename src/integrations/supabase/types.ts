@@ -85,6 +85,7 @@ export type Database = {
       }
       building_configs: {
         Row: {
+          background_image_url: string | null
           building_id: string
           building_name: string
           cost_ell: number | null
@@ -107,6 +108,7 @@ export type Database = {
           working_hours: number | null
         }
         Insert: {
+          background_image_url?: string | null
           building_id: string
           building_name: string
           cost_ell?: number | null
@@ -129,6 +131,7 @@ export type Database = {
           working_hours?: number | null
         }
         Update: {
+          background_image_url?: string | null
           building_id?: string
           building_name?: string
           cost_ell?: number | null
