@@ -287,12 +287,6 @@ export const WorkersManagement = ({ onSpeedBoostChange }: WorkersManagementProps
     const updatedActiveWorkers = [...activeWorkers, newActiveWorker];
 
     try {
-      // Обновляем локальное состояние
-      setActiveWorkers(updatedActiveWorkers);
-
-      let updatedInv = [...(gameState.inventory || [])] as any[];
-      let updatedCards = [...(gameState.cards || [])] as any[];
-      
       console.log('🔍 Assigning worker:', {
         workerId: worker.id,
         workerName: worker.name,
@@ -301,59 +295,10 @@ export const WorkersManagement = ({ onSpeedBoostChange }: WorkersManagementProps
         templateId: (worker as any).templateId
       });
       
-      // Определяем источник рабочего и удаляем правильно
-      if (worker.source === 'card_instances' && (worker as any).instanceId) {
-        // Используем новую RPC функцию без конфликтов параметров
-        console.log('🗑️ Attempting to delete worker from card_instances:', (worker as any).instanceId);
-        const walletAddress = (gameState as any).wallet_address || 'mr_bruts.tg';
-        const { data: deleted, error } = await supabase.rpc('remove_card_instance_exact', {
-          p_wallet_address: walletAddress,
-          p_instance_id: (worker as any).instanceId
-        });
-        
-        if (error || !deleted) {
-          console.error('❌ Failed to delete worker instance:', error);
-          throw new Error(`Failed to delete worker instance: ${error?.message || 'Unknown error'}`);
-        }
-        
-        await loadCardInstances();
-        console.log('✅ Successfully deleted worker from card_instances:', (worker as any).instanceId);
-      } else if (worker.source === 'inventory') {
-        // Удаляем из инвентаря - ищем по instanceId или id
-        const removeIdx = updatedInv.findIndex((i: any) => 
-          i?.type === 'worker' && (
-            (worker.instanceId && (i.instanceId === worker.instanceId || i.id === worker.instanceId)) ||
-            (i.id === worker.id)
-          )
-        );
-        
-        if (removeIdx >= 0) {
-          updatedInv.splice(removeIdx, 1);
-          await gameState.actions.updateInventory(updatedInv);
-          console.log('✅ Worker removed from inventory at index:', removeIdx, 'worker:', worker.name, 'id:', worker.id, 'instanceId:', worker.instanceId);
-        } else {
-          console.warn('⚠️ Could not find matching worker in inventory to remove. Worker:', {
-            id: worker.id,
-            instanceId: worker.instanceId,
-            name: worker.name
-          }, 'Inventory:', updatedInv.filter((i: any) => i?.type === 'worker').map((i: any) => ({ id: i.id, instanceId: i.instanceId, name: i.name })));
-        }
-      } else if (worker.source === 'cards') {
-        // Удаляем из карт по ID и сохраняем через actions
-        const removeIdx = updatedCards.findIndex((c: any) => 
-          (c?.type === 'worker' || c?.type === 'workers') && c.id === worker.id
-        );
-        
-        if (removeIdx >= 0) {
-          updatedCards.splice(removeIdx, 1);
-          await gameState.actions.updateCards(updatedCards);
-          console.log('✅ Worker removed from cards at index:', removeIdx, 'worker:', worker.name);
-        } else {
-          console.warn('⚠️ Could not find matching worker in cards to remove:', worker.id);
-        }
-      }
+      // Обновляем локальное состояние
+      setActiveWorkers(updatedActiveWorkers);
 
-      // Сохраняем активных рабочих через RPC
+      // Сохраняем активных рабочих через RPC (НЕ удаляем рабочих из источников!)
       await updateActiveWorkersInDB(updatedActiveWorkers);
       try {
         localStorage.setItem('activeWorkers', JSON.stringify(updatedActiveWorkers));
