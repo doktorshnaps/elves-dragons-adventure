@@ -271,30 +271,32 @@ export const MedicalBayComponent = () => {
                             </span>
                            </div>
                            <div className="flex items-center gap-2">
-                             <Button
-                               onClick={async () => {
-                                 console.log('🏥 Stopping healing without recovery:', entry.card_instance_id);
-                                 try {
-                                   await stopHealingWithoutRecovery(entry.card_instance_id);
-                                   console.log('🏥 Healing stopped successfully, syncing data...');
-                                   await Promise.all([
-                                     loadCardInstances(),
-                                     loadMedicalBayEntries(),
-                                     syncHealthFromInstances()
-                                   ]);
-                                   console.log('🏥 Data reloaded and synced successfully');
-                                 } catch (error) {
-                                   console.error('🏥 Error stopping healing:', error);
-                                 }
-                               }}
-                               size="sm"
-                               variant="outline"
-                               disabled={loading}
-                               className="border-red-500/30 text-red-400 hover:bg-red-500/10"
-                             >
-                               <X className="w-3 h-3 mr-1" />
-                               Остановить
-                             </Button>
+                             {!isReady && (
+                               <Button
+                                 onClick={async () => {
+                                   console.log('🏥 Stopping healing without recovery:', entry.card_instance_id);
+                                   try {
+                                     await stopHealingWithoutRecovery(entry.card_instance_id);
+                                     console.log('🏥 Healing stopped successfully, syncing data...');
+                                     await Promise.all([
+                                       loadCardInstances(),
+                                       loadMedicalBayEntries(),
+                                       syncHealthFromInstances()
+                                     ]);
+                                     console.log('🏥 Data reloaded and synced successfully');
+                                   } catch (error) {
+                                     console.error('🏥 Error stopping healing:', error);
+                                   }
+                                 }}
+                                 size="sm"
+                                 variant="outline"
+                                 disabled={loading}
+                                 className="border-red-500/30 text-red-400 hover:bg-red-500/10"
+                               >
+                                 <X className="w-3 h-3 mr-1" />
+                                 Остановить
+                               </Button>
+                             )}
                              {isReady ? (
                                <Button 
                                  onClick={async () => {
