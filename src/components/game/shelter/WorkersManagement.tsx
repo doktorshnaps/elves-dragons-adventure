@@ -257,7 +257,24 @@ export const WorkersManagement = ({ onSpeedBoostChange }: WorkersManagementProps
   }, [toast, buildings, gameState.actions]);
 
   const assignWorker = async (worker: any) => {
-    if (!worker.stats?.workDuration) return;
+    console.log('🎯 assignWorker CALLED with worker:', {
+      id: worker.id,
+      name: worker.name,
+      source: worker.source,
+      stats: worker.stats,
+      workDuration: worker.stats?.workDuration,
+      value: worker.value
+    });
+
+    if (!worker.stats?.workDuration) {
+      console.error('❌ assignWorker EARLY RETURN: no workDuration found!', worker.stats);
+      toast({
+        title: t(language, 'shelter.error'),
+        description: 'Рабочий не имеет длительности работы',
+        variant: "destructive"
+      });
+      return;
+    }
 
     const newActiveWorker: ActiveWorker = {
       id: `${worker.id}_${Date.now()}`,
@@ -439,7 +456,10 @@ export const WorkersManagement = ({ onSpeedBoostChange }: WorkersManagementProps
                         )}
                       </div>
                       <Button 
-                        onClick={() => assignWorker(worker)}
+                        onClick={() => {
+                          console.log('🖱️ BUTTON CLICKED for worker:', worker.id, worker.name);
+                          assignWorker(worker);
+                        }}
                         size="sm"
                         className="shrink-0"
                         disabled={(worker as any).source === 'card_instances' && (worker as any).currentHealth <= 0}
