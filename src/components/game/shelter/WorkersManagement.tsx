@@ -160,32 +160,16 @@ export const WorkersManagement = ({ onSpeedBoostChange }: WorkersManagementProps
     activeWorkerIdsSet: Array.from(activeWorkerIds)
   });
 
-  // Загружаем активных рабочих из gameState и localStorage
+  // Загружаем активных рабочих только ОДИН РАЗ при монтировании из БД
   useEffect(() => {
-    console.log('🔄 WorkersManagement useEffect triggered:', {
+    console.log('🔄 WorkersManagement mounted, loading active workers from DB:', {
       gameStateActiveWorkers: gameState.activeWorkers?.length ?? 0,
-      isArray: Array.isArray(gameState.activeWorkers),
-      gameStateData: gameState.activeWorkers
+      isArray: Array.isArray(gameState.activeWorkers)
     });
 
-    // ВРЕМЕННО: Приоритет localStorage над БД до исправления удаления рабочих
-    const cachedActiveWorkers = localStorage.getItem('activeWorkers');
-    if (cachedActiveWorkers) {
-      try {
-        const parsed = JSON.parse(cachedActiveWorkers);
-        if (Array.isArray(parsed) && parsed.length > 0) {
-          console.log('📦 Using localStorage workers (temporary fix):', parsed.length);
-          setActiveWorkers(parsed);
-          return;
-        }
-      } catch (e) {
-        console.warn('Failed to parse cached activeWorkers:', e);
-      }
-    }
-
-    // Фоллбек: DB только если localStorage пуст
+    // Загружаем из БД только при первой загрузке
     if (Array.isArray(gameState.activeWorkers) && gameState.activeWorkers.length > 0) {
-      console.log('🔄 Using DB active workers as fallback:', gameState.activeWorkers.length);
+      console.log('📦 Initial load from DB:', gameState.activeWorkers.length);
       setActiveWorkers(gameState.activeWorkers);
       // Синхронизируем localStorage с БД
       try {
@@ -194,7 +178,7 @@ export const WorkersManagement = ({ onSpeedBoostChange }: WorkersManagementProps
         console.warn('Failed to save active workers to localStorage:', e);
       }
     }
-  }, [gameState.activeWorkers]);
+  }, []); // Пустой массив зависимостей - загружаем только один раз
 
   // Автоматическая очистка зависших рабочих из инвентаря
   useEffect(() => {
