@@ -457,15 +457,17 @@ export const WorkersManagement = ({ onSpeedBoostChange }: WorkersManagementProps
                       </div>
                       <Button 
                         type="button"
+                        onMouseDown={(e) => {
+                          console.log('🖱️ MOUSEDOWN on assign for worker:', worker.id, worker.name);
+                        }}
                         onClick={(e) => {
                           e.preventDefault();
                           e.stopPropagation();
-                          console.log('🖱️ BUTTON CLICKED for worker:', worker.id, worker.name, 'disabled?', ((worker as any).source === 'card_instances' && (worker as any).currentHealth <= 0));
+                          console.log('🖱️ BUTTON CLICKED for worker:', worker.id, worker.name);
                           assignWorker(worker);
                         }}
                         size="sm"
                         className="shrink-0 pointer-events-auto"
-                        disabled={(worker as any).source === 'card_instances' && (worker as any).currentHealth <= 0}
                       >
                         {t(language, 'shelter.assignButton')}
                       </Button>
