@@ -9,7 +9,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useLanguage } from "@/hooks/useLanguage";
 import { t } from "@/utils/translations";
 
-import { Users, Clock, Zap, AlertTriangle } from "lucide-react";
+import { Users, Clock, Zap, AlertTriangle, Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useWalletContext } from '@/contexts/WalletConnectContext';
 
@@ -37,6 +37,7 @@ export const WorkersManagement = ({ onSpeedBoostChange }: WorkersManagementProps
   const { toast } = useToast();
   const [activeWorkers, setActiveWorkers] = useState<ActiveWorker[]>([]);
   const [selectedBuilding, setSelectedBuilding] = useState<string>("main_hall");
+  const [assigningId, setAssigningId] = useState<string | null>(null);
 
   const updateActiveWorkersInDB = async (workers: ActiveWorker[]) => {
     // Получаем wallet из контекста кошелька
@@ -297,8 +298,9 @@ export const WorkersManagement = ({ onSpeedBoostChange }: WorkersManagementProps
         instanceId: (worker as any).instanceId,
         templateId: (worker as any).templateId
       });
-      
-      // Обновляем локальное состояние позже, после успешного удаления из card_instances
+      // Мгновенно обновляем локальное состояние для визуального отклика
+      setAssigningId((worker as any).instanceId || worker.id);
+      setActiveWorkers(updatedActiveWorkers);
 
       // Удаляем рабочего из card_instances, если он оттуда
       if (worker.source === 'card_instances' && (worker as any).instanceId) {
@@ -322,6 +324,7 @@ export const WorkersManagement = ({ onSpeedBoostChange }: WorkersManagementProps
       window.dispatchEvent(new CustomEvent('activeWorkers:changed', { detail: updatedActiveWorkers }));
       
       console.log('✅ Worker assigned and saved:', newActiveWorker);
+      setAssigningId(null);
       
       toast({
         title: t(language, 'shelter.workerAssigned'),
@@ -468,8 +471,16 @@ export const WorkersManagement = ({ onSpeedBoostChange }: WorkersManagementProps
                         }}
                         size="sm"
                         className="shrink-0 pointer-events-auto"
+                        disabled={assigningId === ((worker as any).instanceId || worker.id) || ((worker as any).source === 'card_instances' && (worker as any).currentHealth <= 0)}
                       >
-                        {t(language, 'shelter.assignButton')}
+                        {assigningId === ((worker as any).instanceId || worker.id) ? (
+                          <span className="inline-flex items-center">
+                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                            {t(language, 'shelter.assignButton')}
+                          </span>
+                        ) : (
+                          t(language, 'shelter.assignButton')
+                        )}
                       </Button>
                     </div>
                   ))}
