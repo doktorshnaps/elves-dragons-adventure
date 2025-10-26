@@ -286,23 +286,13 @@ export const WorkersManagement = ({ onSpeedBoostChange }: WorkersManagementProps
 
       // Удаляем рабочего из card_instances, если он оттуда
       if (worker.source === 'card_instances' && (worker as any).instanceId) {
-        console.log('🗑️ Deleting worker from card_instances:', (worker as any).instanceId, 'wallet:', accountId);
-        if (!accountId) {
-          console.warn('⚠️ No wallet connected: cannot delete card instance');
-        } else {
-          const { data: deleted, error } = await supabase.rpc('remove_card_instance_exact', {
-            p_wallet_address: accountId,
-            p_instance_id: (worker as any).instanceId
-          });
-          
-          if (error || !deleted) {
-            console.error('❌ Failed to delete worker from card_instances:', error);
-            throw new Error(`Failed to delete worker: ${error?.message || 'Unknown error'}`);
-          }
-          
-          await loadCardInstances();
-          console.log('✅ Worker deleted from card_instances:', (worker as any).instanceId);
+        console.log('🗑️ Deleting worker from card_instances via helper:', (worker as any).instanceId);
+        const ok = await deleteCardInstance((worker as any).instanceId);
+        if (!ok) {
+          console.error('❌ deleteCardInstance returned false for', (worker as any).instanceId);
+          throw new Error('Failed to delete worker instance');
         }
+        console.log('✅ Worker deleted from card_instances:', (worker as any).instanceId);
       }
 
       // Сохраняем активных рабочих через RPC
