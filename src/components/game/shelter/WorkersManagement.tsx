@@ -304,13 +304,66 @@ export const WorkersManagement = ({ onSpeedBoostChange }: WorkersManagementProps
 
       // Удаляем рабочего из card_instances, если он оттуда
       if (worker.source === 'card_instances' && (worker as any).instanceId) {
-        console.log('🗑️ Deleting worker from card_instances via helper:', (worker as any).instanceId);
-        const ok = await deleteCardInstance((worker as any).instanceId);
-        if (!ok) {
-          console.error('❌ deleteCardInstance returned false for', (worker as any).instanceId);
-          throw new Error('Failed to delete worker instance');
+        const instId = (worker as any).instanceId as string;
+        console.log('🗑️ Deleting worker from card_instances via helper:', instId);
+        let removed = false;
+        try {
+          const ok = await deleteCardInstance(instId);
+          removed = !!ok;
+          console.log('🔎 deleteCardInstance returned:', ok);
+        } catch (e) {
+          console.warn('⚠️ deleteCardInstance threw:', e);
         }
-        console.log('✅ Worker deleted from card_instances:', (worker as any).instanceId);
+
+        if (!removed) {
+          // Пробуем прямой вызов RPC (SECURITY DEFINER)
+          try {
+            console.log('➡️ Direct RPC remove_card_instance_exact for', instId, 'wallet:', accountId);
+            const { data: exactOk, error: exactErr } = await supabase.rpc('remove_card_instance_exact', {
+              p_instance_id: instId,
+              p_wallet_address: accountId
+            });
+            if (exactErr) {
+              console.warn('remove_card_instance_exact error:', exactErr);
+            } else if (exactOk === true) {
+              removed = true;
+            }
+          } catch (e) {
+            console.warn('remove_card_instance_exact threw:', e);
+          }
+        }
+
+        if (!removed) {
+          try {
+            console.log('↩️ Fallback RPC remove_card_instance_by_id for', instId);
+            const { data: byIdOk, error: byIdErr } = await supabase.rpc('remove_card_instance_by_id', {
+              p_instance_id: instId,
+              p_wallet_address: accountId
+            });
+            if (byIdErr) {
+              console.warn('remove_card_instance_by_id error:', byIdErr);
+            } else if (byIdOk === true) {
+              removed = true;
+            }
+          } catch (e) {
+            console.warn('remove_card_instance_by_id threw:', e);
+          }
+        }
+
+        if (!removed) {
+          console.error('❌ Failed to delete worker instance after all attempts:', instId);
+          setAssigningId(null);
+          setActiveWorkers(activeWorkers); // откат визуального состояния
+          toast({
+            title: t(language, 'shelter.error'),
+            description: t(language, 'shelter.failedToAssign'),
+            variant: 'destructive'
+          });
+          return; // прерываем назначение
+        }
+
+        await loadCardInstances();
+        console.log('✅ Worker deleted from card_instances:', instId);
       }
 
       // Теперь обновляем локальное состояние
