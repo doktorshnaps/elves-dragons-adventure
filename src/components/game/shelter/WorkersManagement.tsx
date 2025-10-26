@@ -282,7 +282,28 @@ export const WorkersManagement = ({ onSpeedBoostChange }: WorkersManagementProps
       // Обновляем локальное состояние
       setActiveWorkers(updatedActiveWorkers);
 
-      // Сохраняем активных рабочих через RPC (НЕ удаляем рабочих из источников!)
+      // Удаляем рабочего из card_instances, если он оттуда
+      if (worker.source === 'card_instances' && (worker as any).instanceId) {
+        console.log('🗑️ Deleting worker from card_instances:', (worker as any).instanceId);
+        const walletAddress = (gameState as any).wallet_address;
+        
+        if (walletAddress) {
+          const { data: deleted, error } = await supabase.rpc('remove_card_instance_exact', {
+            p_wallet_address: walletAddress,
+            p_instance_id: (worker as any).instanceId
+          });
+          
+          if (error || !deleted) {
+            console.error('❌ Failed to delete worker from card_instances:', error);
+            throw new Error(`Failed to delete worker: ${error?.message || 'Unknown error'}`);
+          }
+          
+          await loadCardInstances();
+          console.log('✅ Worker deleted from card_instances:', (worker as any).instanceId);
+        }
+      }
+
+      // Сохраняем активных рабочих через RPC
       await updateActiveWorkersInDB(updatedActiveWorkers);
       try {
         localStorage.setItem('activeWorkers', JSON.stringify(updatedActiveWorkers));
