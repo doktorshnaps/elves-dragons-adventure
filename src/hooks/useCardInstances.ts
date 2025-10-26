@@ -166,22 +166,45 @@ export const useCardInstances = () => {
     const instance = cardInstances.find(ci => ci.id === instanceId);
     if (!instance) return false;
 
-    try {
-      // Удаляем строго по instanceId и кошельку, чтобы не затронуть другие экземпляры этого шаблона
-      const { data, error } = await supabase.rpc('remove_card_instance_by_id', {
-        p_instance_id: instanceId,
-        p_wallet_address: accountId
-      });
+      try {
+        // Пытаемся удалить через SECURITY DEFINER RPC (обходит RLS по wallet)
+        console.log('🗑️ deleteCardInstance try exact:', instanceId, 'wallet:', accountId);
+        let rpcOk = false;
 
-      if (error) throw error;
+        // 1) Основной способ: remove_card_instance_exact (SECURITY DEFINER)
+        try {
+          const { data: exactRes, error: exactErr } = await supabase.rpc('remove_card_instance_exact', {
+            p_instance_id: instanceId,
+            p_wallet_address: accountId
+          });
+          if (exactErr) {
+            console.warn('remove_card_instance_exact error:', exactErr);
+          } else {
+            rpcOk = exactRes === true;
+          }
+        } catch (e) {
+          console.warn('remove_card_instance_exact threw:', e);
+        }
 
-      if (data !== true) {
-        throw new Error('Delete not applied');
-      }
+        // 2) Фоллбек: remove_card_instance_by_id (если exact недоступна)
+        if (!rpcOk) {
+          console.log('↩️ Fallback remove_card_instance_by_id for', instanceId);
+          const { data, error } = await supabase.rpc('remove_card_instance_by_id', {
+            p_instance_id: instanceId,
+            p_wallet_address: accountId
+          });
+          if (error) throw error;
+          rpcOk = data === true;
+        }
 
-      setCardInstances(prev => prev.filter(ci => ci.id !== instanceId));
-      return true;
-    } catch (error) {
+        if (!rpcOk) {
+          throw new Error('Delete not applied');
+        }
+
+        setCardInstances(prev => prev.filter(ci => ci.id !== instanceId));
+        console.log('✅ deleteCardInstance success:', instanceId);
+        return true;
+      } catch (error) {
       console.error('Error deleting card instance:', error);
       toast({
         title: 'Ошибка удаления карты',
