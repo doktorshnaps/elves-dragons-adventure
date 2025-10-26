@@ -11,6 +11,7 @@ import { t } from "@/utils/translations";
 
 import { Users, Clock, Zap, AlertTriangle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { useWalletContext } from '@/contexts/WalletConnectContext';
 
 interface ActiveWorker {
   id: string;
@@ -31,17 +32,18 @@ export const WorkersManagement = ({ onSpeedBoostChange }: WorkersManagementProps
   const gameState = useUnifiedGameState();
   const { cardInstances, deleteCardInstance, loadCardInstances } = useCardInstances();
   const { language } = useLanguage();
+  const { accountId } = useWalletContext();
   
   const { toast } = useToast();
   const [activeWorkers, setActiveWorkers] = useState<ActiveWorker[]>([]);
   const [selectedBuilding, setSelectedBuilding] = useState<string>("main_hall");
 
   const updateActiveWorkersInDB = async (workers: ActiveWorker[]) => {
-    // Получаем wallet address из game state или контекста
-    const walletAddress = (gameState as any).wallet_address;
+    // Получаем wallet из контекста кошелька
+    const walletAddress = accountId;
     
     if (!walletAddress) {
-      console.warn('⚠️ No wallet address available for updating active workers in DB');
+      console.warn('⚠️ No wallet connected: skip DB update for active workers');
       return;
     }
 
@@ -284,12 +286,12 @@ export const WorkersManagement = ({ onSpeedBoostChange }: WorkersManagementProps
 
       // Удаляем рабочего из card_instances, если он оттуда
       if (worker.source === 'card_instances' && (worker as any).instanceId) {
-        console.log('🗑️ Deleting worker from card_instances:', (worker as any).instanceId);
-        const walletAddress = (gameState as any).wallet_address;
-        
-        if (walletAddress) {
+        console.log('🗑️ Deleting worker from card_instances:', (worker as any).instanceId, 'wallet:', accountId);
+        if (!accountId) {
+          console.warn('⚠️ No wallet connected: cannot delete card instance');
+        } else {
           const { data: deleted, error } = await supabase.rpc('remove_card_instance_exact', {
-            p_wallet_address: walletAddress,
+            p_wallet_address: accountId,
             p_instance_id: (worker as any).instanceId
           });
           
