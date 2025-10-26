@@ -456,12 +456,15 @@ export const WorkersManagement = ({ onSpeedBoostChange }: WorkersManagementProps
                         )}
                       </div>
                       <Button 
-                        onClick={() => {
-                          console.log('🖱️ BUTTON CLICKED for worker:', worker.id, worker.name);
+                        type="button"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          console.log('🖱️ BUTTON CLICKED for worker:', worker.id, worker.name, 'disabled?', ((worker as any).source === 'card_instances' && (worker as any).currentHealth <= 0));
                           assignWorker(worker);
                         }}
                         size="sm"
-                        className="shrink-0"
+                        className="shrink-0 pointer-events-auto"
                         disabled={(worker as any).source === 'card_instances' && (worker as any).currentHealth <= 0}
                       >
                         {t(language, 'shelter.assignButton')}
