@@ -2312,7 +2312,7 @@ export type Database = {
       }
       update_active_workers_by_wallet: {
         Args: { p_active_workers: Json; p_wallet_address: string }
-        Returns: boolean
+        Returns: undefined
       }
       update_card_instance_health: {
         Args: {
