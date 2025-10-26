@@ -281,8 +281,7 @@ export const WorkersManagement = ({ onSpeedBoostChange }: WorkersManagementProps
         templateId: (worker as any).templateId
       });
       
-      // Обновляем локальное состояние
-      setActiveWorkers(updatedActiveWorkers);
+      // Обновляем локальное состояние позже, после успешного удаления из card_instances
 
       // Удаляем рабочего из card_instances, если он оттуда
       if (worker.source === 'card_instances' && (worker as any).instanceId) {
@@ -294,6 +293,9 @@ export const WorkersManagement = ({ onSpeedBoostChange }: WorkersManagementProps
         }
         console.log('✅ Worker deleted from card_instances:', (worker as any).instanceId);
       }
+
+      // Теперь обновляем локальное состояние
+      setActiveWorkers(updatedActiveWorkers);
 
       // Сохраняем активных рабочих через RPC
       await updateActiveWorkersInDB(updatedActiveWorkers);
