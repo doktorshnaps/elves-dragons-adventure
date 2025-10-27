@@ -3,7 +3,7 @@ import { BuildingGridCard } from "./BuildingGridCard";
 import { BuildingDetailsPanel } from "./BuildingDetailsPanel";
 import { InventoryPanel } from "./InventoryPanel";
 import { NestUpgrade } from "@/hooks/shelter/useShelterState";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 interface ShelterUpgradesProps {
   upgrades: NestUpgrade[];
   canAffordUpgrade: (upgrade: NestUpgrade) => boolean;
@@ -70,6 +70,9 @@ export const ShelterUpgrades = ({
             <DialogTitle className="text-2xl font-bold text-primary">
               {selectedBuilding?.name}
             </DialogTitle>
+            <DialogDescription>
+              {selectedBuilding?.description}
+            </DialogDescription>
           </DialogHeader>
           <div className="mt-4">
             <BuildingDetailsPanel selectedBuilding={selectedBuilding} canAfford={selectedBuilding ? canAffordUpgrade(selectedBuilding) : false} isUpgrading={selectedBuilding ? isUpgrading(selectedBuilding.id) : false} inventoryCounts={inventoryCounts} onUpgrade={() => {

@@ -37,6 +37,20 @@ export const BuildingDetailsPanel = ({
   const { language } = useLanguage();
   const { getItemName, getTemplate } = useItemTemplates();
 
+  // Debug: compute disabled state for Upgrade button
+  const computedDisabled = !isUpgradeReady && (isUpgrading || !canAfford);
+  if (selectedBuilding) {
+    try {
+      console.log('🧪 [BuildingDetailsPanel] state', {
+        buildingId: selectedBuilding.id,
+        canAfford,
+        isUpgrading,
+        isUpgradeReady,
+        computedDisabled
+      });
+    } catch {}
+  }
+
   // Нормализуем требуемые предметы (поддержка массива и объектной формы из БД)
   const normalizedRequiredItems = useMemo(() => {
     const raw = selectedBuilding?.requiredItems as any;
@@ -192,7 +206,7 @@ export const BuildingDetailsPanel = ({
           </div>
 
           {/* Upgrade Button */}
-          <Button className="w-full font-bold text-base py-6 transition-all duration-300 hover:-translate-y-0.5" onClick={onUpgrade} disabled={!isUpgradeReady && (isUpgrading || !canAfford)} variant={isUpgradeReady ? "default" : undefined}>
+          <Button className="w-full font-bold text-base py-6 transition-all duration-300 hover:-translate-y-0.5" onClick={onUpgrade} disabled={computedDisabled} variant={isUpgradeReady ? "default" : undefined}>
             {isUpgradeReady ? `✨ ${t(language, 'shelter.install')}` : isUpgrading ? `⏳ ${t(language, 'shelter.upgrading')}` : selectedBuilding.level === 0 ? `🏗️ ${t(language, 'shelter.build')}` : `⬆️ ${t(language, 'shelter.upgrade')}`}
           </Button>
         </>}

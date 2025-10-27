@@ -385,13 +385,32 @@ export const useShelterState = () => {
       console.log('🔍 [canAffordUpgrade] hasRequiredItems:', hasRequiredItems);
     }
     
-    return upgrade.level < upgrade.maxLevel && 
-           resources.wood >= upgrade.cost.wood && 
-           resources.stone >= upgrade.cost.stone && 
-           resources.iron >= upgrade.cost.iron && 
-           gameState.balance >= upgrade.cost.balance &&
-           canUpgradeBuilding(upgrade.id) &&
-           hasRequiredItems;
+    const levelOk = upgrade.level < upgrade.maxLevel;
+    const woodOk = resources.wood >= (upgrade.cost.wood || 0);
+    const stoneOk = resources.stone >= (upgrade.cost.stone || 0);
+    const ironOk = resources.iron >= (upgrade.cost.iron || 0);
+    const balanceOk = gameState.balance >= (upgrade.cost.balance || 0);
+    const mhOk = canUpgradeBuilding(upgrade.id);
+
+    const result = levelOk && woodOk && stoneOk && ironOk && balanceOk && mhOk && hasRequiredItems;
+    try {
+      console.log('🧪 [canAffordUpgrade:check]', {
+        id: upgrade.id,
+        level: upgrade.level,
+        maxLevel: upgrade.maxLevel,
+        levelOk,
+        woodOk,
+        stoneOk,
+        ironOk,
+        balanceOk,
+        mhOk,
+        hasRequiredItems,
+        cost: upgrade.cost,
+        resources,
+        balance: gameState.balance
+      });
+    } catch {}
+    return result;
   };
   
   const canAffordCraft = (recipe: CraftRecipe) => {
