@@ -21,6 +21,20 @@ const AdminSettingsContent = () => {
   const navigate = useNavigate();
   const { accountId } = useWalletContext();
   const { isAdmin, loading } = useAdminCheck();
+  
+  // Check if user has super admin role via server-side verification
+  const [isSuperAdmin, setIsSuperAdmin] = React.useState(false);
+  
+  React.useEffect(() => {
+    const checkSuperAdmin = async () => {
+      if (!accountId) return;
+      const { data } = await supabase.rpc('is_super_admin_wallet', { 
+        p_wallet_address: accountId 
+      });
+      setIsSuperAdmin(Boolean(data));
+    };
+    checkSuperAdmin();
+  }, [accountId]);
 
   // Show loading while checking admin status
   if (loading) {
@@ -47,20 +61,6 @@ const AdminSettingsContent = () => {
       </div>
     );
   }
-
-  // Check if user has super admin role via server-side verification
-  const [isSuperAdmin, setIsSuperAdmin] = React.useState(false);
-  
-  React.useEffect(() => {
-    const checkSuperAdmin = async () => {
-      if (!accountId) return;
-      const { data } = await supabase.rpc('is_super_admin_wallet', { 
-        p_wallet_address: accountId 
-      });
-      setIsSuperAdmin(Boolean(data));
-    };
-    checkSuperAdmin();
-  }, [accountId]);
 
   return (
     <div className="min-h-screen p-4 relative">
