@@ -28,6 +28,47 @@ export default defineConfig(({ mode }) => ({
       process: "process/browser",
     },
   },
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks: (id) => {
+          // Split heavy libraries into separate chunks to reduce main thread blocking
+          if (id.includes('node_modules')) {
+            // React ecosystem
+            if (id.includes('react') || id.includes('react-dom') || id.includes('react-router')) {
+              return 'react-vendor';
+            }
+            // UI libraries
+            if (id.includes('lucide-react')) {
+              return 'lucide-icons';
+            }
+            if (id.includes('framer-motion')) {
+              return 'framer-motion';
+            }
+            if (id.includes('@radix-ui')) {
+              return 'radix-ui';
+            }
+            // Blockchain/Wallet libraries
+            if (id.includes('near') || id.includes('wallet')) {
+              return 'near-vendor';
+            }
+            // Supabase
+            if (id.includes('@supabase')) {
+              return 'supabase-vendor';
+            }
+            // Other heavy libraries
+            if (id.includes('recharts') || id.includes('date-fns') || id.includes('lodash')) {
+              return 'utils-vendor';
+            }
+            // Remaining node_modules
+            return 'vendor';
+          }
+        },
+      },
+    },
+    // Reduce chunk size warnings threshold
+    chunkSizeWarningLimit: 1000,
+  },
   optimizeDeps: {
     include: [
       'buffer',
