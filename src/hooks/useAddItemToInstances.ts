@@ -10,7 +10,7 @@ export const useAddItemToInstances = () => {
   const { getTemplateByName, loading } = useItemTemplates();
 
   /**
-   * Add items to item_instances table
+   * Add items to item_instances table using RPC to bypass RLS
    * @param items - Array of items to add (can have name, type, or template info)
    */
   const addItemsToInstances = async (items: Array<{ name?: string; type?: string; template_id?: number; item_id?: string }>) => {
@@ -25,44 +25,30 @@ export const useAddItemToInstances = () => {
     }
 
     try {
-      console.log('📝 Adding items to item_instances:', items);
+      console.log('📝 Adding items to item_instances via RPC:', items);
       
-      const rows = items.map(it => {
-        let template_id: number | null = it.template_id ?? null;
-        let item_id: string | null = it.item_id ?? null;
-        let name: string | null = it.name ?? null;
-        let type: string | null = it.type ?? 'material';
+      // Prepare items array for RPC call
+      const itemsJson = items.map(it => ({
+        name: it.name ?? null,
+        type: it.type ?? 'material',
+        template_id: it.template_id ? String(it.template_id) : null,
+        item_id: it.item_id ?? null
+      }));
 
-        // If we have a name but no template info, try to find the template
-        if (name && !template_id && !item_id) {
-          const tpl = getTemplateByName(name);
-          if (tpl) {
-            template_id = tpl.id;
-            item_id = tpl.item_id;
-            type = tpl.type;
-            console.log(`✅ Found template for "${name}": id=${template_id}, item_id=${item_id}`);
-          } else {
-            console.warn(`⚠️ Template not found for item: "${name}"`);
-          }
-        }
-
-        return {
-          wallet_address: accountId,
-          template_id,
-          item_id,
-          name,
-          type
-        };
+      console.log('📦 Calling add_item_instances RPC with:', { 
+        wallet: accountId, 
+        items: itemsJson 
       });
 
-      console.log('📦 Inserting rows into item_instances:', rows);
-
-      const { error } = await supabase
-        .from('item_instances')
-        .insert(rows);
+      // Use RPC to bypass RLS
+      const { data, error } = await supabase.rpc('add_item_instances', {
+        p_wallet_address: accountId,
+        p_items: itemsJson
+      });
 
       if (error) throw error;
-      console.log('✅ Added', items.length, 'items to item_instances');
+      
+      console.log(`✅ Added ${data} items to item_instances via RPC`);
     } catch (e) {
       console.error('❌ Failed to add items to item_instances:', e);
     }

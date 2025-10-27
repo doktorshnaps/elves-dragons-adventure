@@ -1414,6 +1414,10 @@ export type Database = {
         }
         Returns: string
       }
+      add_item_instances: {
+        Args: { p_items: Json; p_wallet_address: string }
+        Returns: number
+      }
       add_referral: {
         Args: {
           p_referred_wallet_address: string
