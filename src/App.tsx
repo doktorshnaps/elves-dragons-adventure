@@ -55,7 +55,7 @@ function App() {
     console.error('❌ Error in App hooks:', error);
   }
   
-  // Performance optimizations on app start - deferred to idle time to reduce FID
+  // Performance optimizations on app start
   React.useEffect(() => {
     // Defer non-critical operations to idle time to improve First Input Delay
     const scheduleIdleTask = (task: () => void) => {
@@ -67,19 +67,17 @@ function App() {
     };
 
     try {
+      // Register service worker immediately for better caching
+      registerGameServiceWorker().catch(error => {
+        console.error('❌ Error registering service worker:', error);
+      });
+
+      // Defer library preloading to idle time
       scheduleIdleTask(() => {
         try {
           preloadCriticalLibs();
         } catch (error) {
           console.error('❌ Error preloading libs:', error);
-        }
-      });
-
-      scheduleIdleTask(() => {
-        try {
-          registerGameServiceWorker();
-        } catch (error) {
-          console.error('❌ Error registering service worker:', error);
         }
       });
     } catch (error) {

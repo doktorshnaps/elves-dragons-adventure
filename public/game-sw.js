@@ -1,16 +1,15 @@
 // Game Service Worker for caching game assets
-const CACHE_NAME = 'heroes-game-cache-v1';
-const STATIC_CACHE_NAME = 'heroes-static-cache-v1';
+const CACHE_NAME = 'heroes-game-cache-v2';
+const STATIC_CACHE_NAME = 'heroes-static-cache-v2';
 
 // Assets to cache immediately
 const STATIC_ASSETS = [
   '/',
   '/index.html',
   '/manifest.json',
-  // Add critical CSS and JS files here
 ];
 
-// Game assets patterns to cache
+// Game assets patterns to cache - includes all static assets
 const GAME_ASSET_PATTERNS = [
   /\/images\/cards\//,
   /\/images\/heroes\//,
@@ -20,7 +19,9 @@ const GAME_ASSET_PATTERNS = [
   /\.jpg$/,
   /\.png$/,
   /\/api\/cards/,
-  /\/api\/game-data/
+  /\/api\/game-data/,
+  /\/assets\/.*\.js$/,   // Cache all JS bundles
+  /\/assets\/.*\.css$/   // Cache all CSS bundles
 ];
 
 // Install event - cache static assets
@@ -209,16 +210,17 @@ async function handleAPIRequest(request) {
   }
 }
 
-// Check if cache should be updated (older than 1 hour)
+// Check if cache should be updated (older than 24 hours for static assets, 1 hour for others)
 function shouldUpdateCache(response) {
   const cacheDate = response.headers.get('date');
   if (!cacheDate) return true;
   
   const cacheTime = new Date(cacheDate).getTime();
   const now = Date.now();
-  const oneHour = 60 * 60 * 1000;
+  const twentyFourHours = 24 * 60 * 60 * 1000;
   
-  return (now - cacheTime) > oneHour;
+  // Cache static assets longer (24 hours)
+  return (now - cacheTime) > twentyFourHours;
 }
 
 // Update cache in background
