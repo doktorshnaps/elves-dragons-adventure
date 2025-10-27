@@ -1902,6 +1902,10 @@ export type Database = {
         }
         Returns: string
       }
+      backfill_item_instances_from_inventory: {
+        Args: { p_wallet_address: string }
+        Returns: number
+      }
       cancel_marketplace_listing: {
         Args: { p_listing_id: string }
         Returns: undefined
