@@ -29,6 +29,8 @@ export default defineConfig(({ mode }) => ({
     },
   },
   build: {
+    // Enable minification with esbuild for optimal compression
+    minify: 'esbuild',
     rollupOptions: {
       output: {
         manualChunks: (id) => {
@@ -87,5 +89,12 @@ export default defineConfig(({ mode }) => ({
         global: 'globalThis',
       },
     },
+  },
+  esbuild: {
+    // Aggressive minification settings for production
+    legalComments: 'none',
+    minifyIdentifiers: true,
+    minifySyntax: true,
+    minifyWhitespace: true,
   },
 }));
