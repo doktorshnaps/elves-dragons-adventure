@@ -56,6 +56,20 @@ function App() {
   
   // Performance optimizations on app start
   React.useEffect(() => {
+    // Add preconnect hints to reduce network latency
+    const addPreconnectLink = (href: string, crossorigin?: boolean) => {
+      const link = document.createElement('link');
+      link.rel = 'preconnect';
+      link.href = href;
+      if (crossorigin) link.crossOrigin = 'anonymous';
+      document.head.appendChild(link);
+    };
+
+    // Preconnect to critical origins
+    addPreconnectLink('https://oimhwdymghkwxznjarkv.supabase.co');
+    addPreconnectLink('https://fonts.googleapis.com');
+    addPreconnectLink('https://fonts.gstatic.com', true);
+
     // Defer non-critical operations to idle time to improve First Input Delay
     const scheduleIdleTask = (task: () => void) => {
       if ('requestIdleCallback' in window) {
