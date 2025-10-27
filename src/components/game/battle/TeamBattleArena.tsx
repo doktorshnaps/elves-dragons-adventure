@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
@@ -115,7 +115,8 @@ export const TeamBattleArena: React.FC<TeamBattleArenaProps> = ({
       }, 4000);
     }
   };
-  const handleEnemyAttack = () => {
+  const handleEnemyAttack = useCallback(() => {
+    console.log('🎯 handleEnemyAttack called, alivePairs:', alivePairs.length);
     // Случайно выбираем живую пару для защиты
     const randomPair = alivePairs[Math.floor(Math.random() * alivePairs.length)];
     
@@ -133,6 +134,7 @@ export const TeamBattleArena: React.FC<TeamBattleArenaProps> = ({
         console.log('🎲 Enemy dice: stop rolling');
         
         // Сразу после остановки кубиков выполняем атаку (наносим урон)
+        console.log('⚔️ Calling onEnemyAttack');
         onEnemyAttack();
       }, 1500);
 
@@ -141,9 +143,10 @@ export const TeamBattleArena: React.FC<TeamBattleArenaProps> = ({
         setDefendingPair(null);
       }, 4000);
     } else {
+      console.log('⚔️ No pair to defend, calling onEnemyAttack directly');
       onEnemyAttack();
     }
-  };
+  }, [alivePairs, onEnemyAttack]);
   const getCurrentAttacker = () => {
     const orderedPairs = [...alivePairs].sort((a, b) => a.attackOrder - b.attackOrder);
     return orderedPairs[0];
@@ -201,12 +204,14 @@ export const TeamBattleArena: React.FC<TeamBattleArenaProps> = ({
     const isActive = useGameStore.getState().activeBattleInProgress;
     if (!isActive) return;
     if (!isPlayerTurn && aliveOpponents.length > 0 && alivePairs.length > 0) {
+      console.log('🎯 Enemy turn triggered - scheduling attack');
       const timer = setTimeout(() => {
+        console.log('⚔️ Executing enemy attack');
         handleEnemyAttack();
       }, 1500);
       return () => clearTimeout(timer);
     }
-  }, [isPlayerTurn, aliveOpponents.length, alivePairs.length]);
+  }, [isPlayerTurn, aliveOpponents.length, alivePairs.length, handleEnemyAttack]);
   const handleMenuReturn = () => {
     // Mark that we're in an active battle for auto-resume
     localStorage.setItem('activeBattleInProgress', 'true');

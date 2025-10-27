@@ -1,4 +1,4 @@
-import { useState, useEffect, startTransition } from 'react';
+import { useState, useEffect, useCallback, startTransition } from 'react';
 import { TeamPair, TeamBattleState, BattleAction } from '@/types/teamBattle';
 import { useToast } from '@/hooks/use-toast';
 import { generateDungeonOpponents } from '@/dungeons/dungeonManager';
@@ -304,12 +304,18 @@ export const useTeamBattle = (dungeonType: DungeonType, initialLevel: number = 1
 
   // УБРАНА механика ответного удара (executeCounterAttack)
   
-  const executeEnemyAttack = async () => {
+  const executeEnemyAttack = useCallback(async () => {
+    console.log('🔴 executeEnemyAttack called, currentTurn:', battleState.currentTurn);
     const isActive = localStorage.getItem('activeBattleInProgress') === 'true';
-    if (!isActive || battleState.currentTurn !== 'enemy') return;
+    if (!isActive || battleState.currentTurn !== 'enemy') {
+      console.log('⚠️ Skipping enemy attack - isActive:', isActive, 'currentTurn:', battleState.currentTurn);
+      return;
+    }
 
     const alivePairs = battleState.playerPairs.filter(pair => pair.health > 0);
     const aliveOpponents = battleState.opponents.filter(opp => opp.health > 0);
+    
+    console.log('⚔️ Enemy attacking - alivePairs:', alivePairs.length, 'aliveOpponents:', aliveOpponents.length);
     
     if (aliveOpponents.length === 0 || alivePairs.length === 0) {
       if (alivePairs.length === 0) handleGameOver();
@@ -318,6 +324,8 @@ export const useTeamBattle = (dungeonType: DungeonType, initialLevel: number = 1
 
     const currentEnemy = aliveOpponents[Math.floor(Math.random() * aliveOpponents.length)];
     const targetPair = alivePairs[Math.floor(Math.random() * alivePairs.length)];
+    
+    console.log('🎯 Enemy target:', currentEnemy.name, '→', targetPair.hero?.name || targetPair.dragon?.name);
     
     const damageResult = calculateD6Damage(currentEnemy.power, targetPair.defense);
     const appliedDamage = damageResult.attackerRoll > damageResult.defenderRoll ? damageResult.damage : 0;
@@ -372,11 +380,12 @@ export const useTeamBattle = (dungeonType: DungeonType, initialLevel: number = 1
         handleGameOver();
       }, 3000);
     } else {
+      console.log('🔄 Switching turn after enemy attack in 3s');
       setTimeout(() => {
         switchTurn();
       }, 3000);
     }
-  };
+  }, [battleState, gameData, updateGameData, toast]);
 
   const executeAbilityUse = async (pairId: string, abilityId: string, target: string | number) => {
     try {
@@ -454,18 +463,21 @@ export const useTeamBattle = (dungeonType: DungeonType, initialLevel: number = 1
 
   const switchTurn = () => {
     setBattleState(prev => {
+      console.log('🔄 switchTurn called, currentTurn:', prev.currentTurn);
       const isActive = localStorage.getItem('activeBattleInProgress') === 'true';
       const aliveOpponents = prev.opponents.filter(o => o.health > 0).length;
       const alivePairs = prev.playerPairs.filter(p => p.health > 0).length;
 
       // If battle is not active or one side has no units alive, do not switch turn
       if (!isActive || aliveOpponents === 0 || alivePairs === 0) {
+        console.log('⚠️ Not switching turn - isActive:', isActive, 'aliveOpponents:', aliveOpponents, 'alivePairs:', alivePairs);
         return prev;
       }
 
       // Only switch to enemy turn if it's currently player turn
       // This prevents automatic enemy attacks from starting
       if (prev.currentTurn === 'player') {
+        console.log('✅ Switching from player to enemy turn');
         return {
           ...prev,
           currentTurn: 'enemy',
@@ -473,6 +485,7 @@ export const useTeamBattle = (dungeonType: DungeonType, initialLevel: number = 1
         };
       } else {
         const nextIndex = alivePairs > 0 ? (prev.currentAttacker + 1) % alivePairs : 0;
+        console.log('✅ Switching from enemy to player turn, nextAttacker:', nextIndex);
         return {
           ...prev,
           currentTurn: 'player',
