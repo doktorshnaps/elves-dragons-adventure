@@ -115,7 +115,7 @@ export const SettingsMenu = () => {
           <div className="flex items-center justify-center mb-3">
             <Volume2 className="w-5 h-5 mr-2 text-white" />
             <span className="text-white font-semibold">
-              {language === 'ru' ? 'Громкость музыки' : 'Music Volume'}: {volume}%
+              {language === 'ru' ? 'Общая громкость' : 'Master Volume'}: {volume}%
             </span>
           </div>
           <Slider

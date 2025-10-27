@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Sword, Shield, Zap, Sparkles } from 'lucide-react';
+import { useMusic } from '@/hooks/useMusic';
 import blockSound1 from '@/assets/sounds/blok-mechom.mp3';
 import blockSound2 from '@/assets/sounds/blok-mechom-2.mp3';
 import blockSound3 from '@/assets/sounds/blok-mechom-3.mp3';
@@ -26,6 +27,7 @@ export const AttackAnimation: React.FC<AttackAnimationProps> = ({
   defenderPosition,
   damage = 0
 }) => {
+  const { getSoundEffectVolume } = useMusic();
   const [showImpact, setShowImpact] = useState(false);
   const blockSoundsRef = useRef<HTMLAudioElement[]>([]);
   const attackSoundsRef = useRef<HTMLAudioElement[]>([]);
@@ -46,20 +48,24 @@ export const AttackAnimation: React.FC<AttackAnimationProps> = ({
     ];
     
     criticalSoundRef.current = new Audio(criticalSound);
+  }, []);
+
+  // Обновление громкости звуков при изменении настроек
+  useEffect(() => {
+    const masterVolume = getSoundEffectVolume();
     
-    // Настройка громкости
     blockSoundsRef.current.forEach(audio => {
-      audio.volume = 0.5;
+      audio.volume = 0.5 * masterVolume;
     });
     
     attackSoundsRef.current.forEach(audio => {
-      audio.volume = 0.6;
+      audio.volume = 0.6 * masterVolume;
     });
     
     if (criticalSoundRef.current) {
-      criticalSoundRef.current.volume = 0.7;
+      criticalSoundRef.current.volume = 0.7 * masterVolume;
     }
-  }, []);
+  }, [getSoundEffectVolume]);
 
   useEffect(() => {
     if (isActive) {

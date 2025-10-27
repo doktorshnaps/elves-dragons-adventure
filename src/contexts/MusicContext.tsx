@@ -6,6 +6,7 @@ interface MusicContextValue {
   isPlaying: boolean;
   setIsPlaying: (value: boolean) => void;
   audioRef: React.RefObject<HTMLAudioElement>;
+  getSoundEffectVolume: () => number;
 }
 
 export const MusicContext = createContext<MusicContextValue | undefined>(undefined);
@@ -42,12 +43,17 @@ export const MusicProvider = ({ children }: { children: ReactNode }) => {
     }
   }, [isPlaying]);
 
+  const getSoundEffectVolume = () => {
+    return Math.pow(volume / 100, 2);
+  };
+
   const value = useMemo(() => ({ 
     volume, 
     setVolume, 
     isPlaying, 
     setIsPlaying,
-    audioRef 
+    audioRef,
+    getSoundEffectVolume
   }), [volume, isPlaying]);
 
   return (

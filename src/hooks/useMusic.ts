@@ -9,7 +9,8 @@ export const useMusic = () => {
     const setVolume = (value: number) => localStorage.setItem('game-music-volume', value.toString());
     const isPlaying = localStorage.getItem('game-music-playing') === 'true';
     const setIsPlaying = (value: boolean) => localStorage.setItem('game-music-playing', value.toString());
-    return { volume, setVolume, isPlaying, setIsPlaying, audioRef: { current: null } };
+    const getSoundEffectVolume = () => Math.pow(volume / 100, 2);
+    return { volume, setVolume, isPlaying, setIsPlaying, audioRef: { current: null }, getSoundEffectVolume };
   }
   return ctx;
 };
