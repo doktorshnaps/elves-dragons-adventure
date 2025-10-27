@@ -248,6 +248,14 @@ export const useShelterState = () => {
     if (config) {
       // Проверяем required_main_hall_level
       if (config.required_main_hall_level && buildingLevels.main_hall < config.required_main_hall_level) {
+        try {
+          console.log('🚫 [canUpgradeBuilding] Требуется уровень главного зала!', {
+            buildingId,
+            requiredMainHallLevel: config.required_main_hall_level,
+            currentMainHallLevel: buildingLevels.main_hall,
+            canUpgrade: false
+          });
+        } catch {}
         return false;
       }
       
