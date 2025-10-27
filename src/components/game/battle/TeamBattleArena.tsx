@@ -201,8 +201,6 @@ export const TeamBattleArena: React.FC<TeamBattleArenaProps> = ({
 
   // Автоматический ход противника
   useEffect(() => {
-    const isActive = useGameStore.getState().activeBattleInProgress;
-    if (!isActive) return;
     if (!isPlayerTurn && aliveOpponents.length > 0 && alivePairs.length > 0) {
       console.log('🎯 Enemy turn triggered - scheduling attack');
       const timer = setTimeout(() => {

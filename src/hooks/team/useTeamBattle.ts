@@ -306,9 +306,8 @@ export const useTeamBattle = (dungeonType: DungeonType, initialLevel: number = 1
   
   const executeEnemyAttack = useCallback(async () => {
     console.log('🔴 executeEnemyAttack called, currentTurn:', battleState.currentTurn);
-    const isActive = localStorage.getItem('activeBattleInProgress') === 'true';
-    if (!isActive || battleState.currentTurn !== 'enemy') {
-      console.log('⚠️ Skipping enemy attack - isActive:', isActive, 'currentTurn:', battleState.currentTurn);
+    if (battleState.currentTurn !== 'enemy') {
+      console.log('⚠️ Skipping enemy attack - not enemy turn');
       return;
     }
 
@@ -464,13 +463,12 @@ export const useTeamBattle = (dungeonType: DungeonType, initialLevel: number = 1
   const switchTurn = () => {
     setBattleState(prev => {
       console.log('🔄 switchTurn called, currentTurn:', prev.currentTurn);
-      const isActive = localStorage.getItem('activeBattleInProgress') === 'true';
       const aliveOpponents = prev.opponents.filter(o => o.health > 0).length;
       const alivePairs = prev.playerPairs.filter(p => p.health > 0).length;
 
-      // If battle is not active or one side has no units alive, do not switch turn
-      if (!isActive || aliveOpponents === 0 || alivePairs === 0) {
-        console.log('⚠️ Not switching turn - isActive:', isActive, 'aliveOpponents:', aliveOpponents, 'alivePairs:', alivePairs);
+      // If one side has no units alive, do not switch turn
+      if (aliveOpponents === 0 || alivePairs === 0) {
+        console.log('⚠️ Not switching turn - aliveOpponents:', aliveOpponents, 'alivePairs:', alivePairs);
         return prev;
       }
 
