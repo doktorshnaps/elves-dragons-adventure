@@ -16,6 +16,7 @@ import { cardDatabase } from "@/data/cardDatabase";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useCardInstances } from "@/hooks/useCardInstances";
 import { useInventoryCleanup } from "@/hooks/useInventoryCleanup";
+import { useItemInstances } from "@/hooks/useItemInstances";
 
 interface InventoryDisplayProps {
   onUseItem?: (item: Item) => void;
@@ -58,10 +59,13 @@ export const InventoryDisplay = ({
     handleQuantityConfirm
   } = useInventoryLogic(inventory);
 
-// Источник истины: предметы из game_data + отображаем рабочих из card_instances
+// Источник истины: предметы из game_data + отображаем рабочих и колоды из item_instances
 const { cardInstances } = useCardInstances();
+const { instances: itemInstances } = useItemInstances();
 
 const baseItems: Item[] = (inventory || []).filter((item): item is Item => !!item);
+
+// Добавляем рабочих из card_instances
 const workerItems: Item[] = (cardInstances || [])
   .filter(ci => ci.card_type === 'workers')
   .map(ci => ({
@@ -74,18 +78,33 @@ const workerItems: Item[] = (cardInstances || [])
     stats: (ci.card_data as any)?.stats || {}
   } as Item));
 
+// Добавляем колоды карт из item_instances
+const cardPackItems: Item[] = (itemInstances || [])
+  .filter(inst => inst.type === 'cardPack')
+  .map(inst => ({
+    id: inst.id,
+    name: inst.name || 'Колода карт',
+    type: 'cardPack',
+    value: 1,
+    description: 'Содержит 1 случайную карту',
+    image: '/lovable-uploads/e523dce0-4cda-4d32-b4e2-ecec40b1eb39.png'
+  } as Item));
+
 console.log('📦 Inventory Display Debug:', {
   totalInventoryItems: inventory?.length || 0,
   baseItems: baseItems.length,
   baseItemsTypes: baseItems.map(i => i.type),
   workerItems: workerItems.length,
-  cardInstances: cardInstances?.length || 0
+  cardPackItems: cardPackItems.length,
+  cardInstances: cardInstances?.length || 0,
+  itemInstances: itemInstances?.length || 0
 });
 
-// Исключаем рабочих из сохранённого инвентаря, чтобы избежать дубликатов
+// Исключаем рабочих и колоды из сохранённого инвентаря, чтобы избежать дубликатов
 const allInventoryItems: Item[] = [
-  ...baseItems.filter(i => i.type !== 'worker'),
+  ...baseItems.filter(i => i.type !== 'worker' && i.type !== 'cardPack'),
   ...workerItems,
+  ...cardPackItems,
 ];
 
 console.log('✨ Final inventory to display:', {
