@@ -28,9 +28,9 @@ const preloadSingleImage = (url: string): Promise<void> => {
       resolve(); // Разрешаем промис даже при ошибке
     };
 
-    // Устанавливаем максимальный приоритет загрузки
-    img.fetchPriority = 'high';
-    img.loading = 'eager';
+    // Устанавливаем низкий приоритет для фоновой загрузки (не блокирует LCP)
+    img.fetchPriority = 'low';
+    img.loading = 'lazy';
     img.src = url;
   });
 };
@@ -39,29 +39,32 @@ export const useImagePreloader = () => {
   const [imagesLoaded, setImagesLoaded] = useState(false);
 
   useEffect(() => {
-    const cardImageUrls = cardDatabase
-      .map(card => card.image)
-      .filter((url): url is string => !!url);
+    // Откладываем предзагрузку изображений, чтобы не блокировать LCP
+    const timeoutId = setTimeout(() => {
+      const cardImageUrls = cardDatabase
+        .map(card => card.image)
+        .filter((url): url is string => !!url);
 
-    // Объединяем изображения карт, монстров, рабочих и предметов
-    const allImageUrls = [...cardImageUrls, ...allMonsterImages, ...allWorkerImages, ...allItemImages];
+      // Объединяем изображения карт, монстров, рабочих и предметов
+      const allImageUrls = [...cardImageUrls, ...allMonsterImages, ...allWorkerImages, ...allItemImages];
 
-    // Удаляем дубликаты URL
-    const uniqueUrls = Array.from(new Set(allImageUrls));
+      // Удаляем дубликаты URL
+      const uniqueUrls = Array.from(new Set(allImageUrls));
 
-    // Загружаем все изображения сразу
-    Promise.all(uniqueUrls.map(preloadSingleImage))
-      .then(() => {
-        setImagesLoaded(true);
-        console.log(`All images loaded successfully (${uniqueUrls.length} images)`);
-      })
-      .catch(error => {
-        console.error('Error loading images:', error);
-        setImagesLoaded(true);
-      });
+      // Загружаем все изображения в фоне с низким приоритетом
+      Promise.all(uniqueUrls.map(preloadSingleImage))
+        .then(() => {
+          setImagesLoaded(true);
+          console.log(`All images loaded successfully (${uniqueUrls.length} images)`);
+        })
+        .catch(error => {
+          console.error('Error loading images:', error);
+          setImagesLoaded(true);
+        });
+    }, 1000); // Откладываем на 1 секунду после начального рендера
 
     return () => {
-      // Кэш сохраняется между рендерами
+      clearTimeout(timeoutId);
     };
   }, []);
 
