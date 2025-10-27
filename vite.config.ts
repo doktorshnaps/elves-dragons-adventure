@@ -31,6 +31,8 @@ export default defineConfig(({ mode }) => ({
   build: {
     // Enable minification with esbuild for optimal compression
     minify: 'esbuild',
+    // Enable CSS code splitting to reduce unused CSS
+    cssCodeSplit: true,
     rollupOptions: {
       output: {
         manualChunks: (id) => {
