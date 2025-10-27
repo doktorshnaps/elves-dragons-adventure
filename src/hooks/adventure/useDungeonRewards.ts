@@ -5,6 +5,7 @@ import { Item } from '@/types/inventory';
 import { getMonsterLoot } from '@/utils/monsterLootMapping';
 import { v4 as uuidv4 } from 'uuid';
 import { newItems } from '@/data/newItems';
+import { useAddItemToInstances } from '@/hooks/useAddItemToInstances';
 
 export interface MonsterKill {
   level: number;
@@ -30,6 +31,7 @@ export const useDungeonRewards = () => {
   const [accumulatedReward, setAccumulatedReward] = useState<DungeonReward | null>(null);
   const { gameData, updateGameData } = useGameData();
   const { toast } = useToast();
+  const { addItemsToInstances } = useAddItemToInstances();
   const isClaimingRef = useRef(false);
   const lastProcessedLevelRef = useRef<number>(-1);
   const isProcessingRef = useRef(false);
@@ -214,6 +216,14 @@ export const useDungeonRewards = () => {
         const currentInventory = gameData.inventory || [];
         updates.inventory = [...currentInventory, ...lootedItems];
         console.log(`🎒 Новый инвентарь: ${updates.inventory.length} предметов (было: ${currentInventory.length})`);
+        
+        // Добавляем предметы в item_instances
+        console.log('📝 Добавляем предметы в item_instances:', lootedItems);
+        await addItemsToInstances(lootedItems.map(it => ({
+          name: it.name,
+          type: it.type
+        })));
+        console.log('✅ Предметы добавлены в item_instances');
       }
 
       // Единый вызов updateGameData с обоими обновлениями
