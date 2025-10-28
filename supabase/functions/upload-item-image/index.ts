@@ -77,11 +77,6 @@ Deno.serve(async (req) => {
       );
     }
 
-    const authHeader = req.headers.get('Authorization');
-    if (!authHeader) {
-      throw new Error('Missing Authorization header');
-    }
-
     const formData = await req.formData();
     const image = formData.get('image') as File;
     const filePath = formData.get('filePath') as string;
