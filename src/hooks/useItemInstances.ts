@@ -95,7 +95,7 @@ export const useItemInstances = () => {
   };
 
   /**
-   * Remove N item instances by their UUIDs
+   * Remove N item instances by their UUIDs using RPC to bypass RLS
    */
   const removeItemInstancesByIds = async (ids: string[]) => {
     if (!accountId || ids.length === 0) {
@@ -107,19 +107,18 @@ export const useItemInstances = () => {
     console.log('🚀 [removeItemInstancesByIds] IDs to remove:', ids);
 
     try {
-      const { data, error } = await supabase
-        .from('item_instances')
-        .delete()
-        .in('id', ids)
-        .select();
+      // Use RPC to bypass RLS (similar to add_item_instances)
+      const { data, error } = await supabase.rpc('remove_item_instances', {
+        p_wallet_address: accountId,
+        p_instance_ids: ids
+      });
 
       if (error) {
-        console.error('❌ [removeItemInstancesByIds] Supabase error:', error);
+        console.error('❌ [removeItemInstancesByIds] Supabase RPC error:', error);
         throw error;
       }
       
-      console.log('✅ [removeItemInstancesByIds] Successfully removed', ids.length, 'item instances from DB');
-      console.log('✅ [removeItemInstancesByIds] Removed data:', data);
+      console.log('✅ [removeItemInstancesByIds] Successfully removed', data, 'item instances from DB via RPC');
       
       // Сразу обновляем локальное состояние для быстрого отклика UI
       setInstances(prev => prev.filter(inst => !ids.includes(inst.id)));

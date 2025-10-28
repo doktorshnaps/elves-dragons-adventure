@@ -2285,6 +2285,10 @@ export type Database = {
         Args: { p_instance_id: string; p_wallet_address: string }
         Returns: boolean
       }
+      remove_item_instances: {
+        Args: { p_instance_ids: string[]; p_wallet_address: string }
+        Returns: number
+      }
       reset_shop_inventory: { Args: never; Returns: undefined }
       resolve_version_conflict: {
         Args: {
