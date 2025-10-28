@@ -147,13 +147,14 @@ Deno.serve(async (req) => {
         .eq('whitelist_source', 'nft_automatic')
         .eq('is_active', true);
       
-      // Если указан конкретный контракт - фильтруем только его холдеров
+      // Если указан конкретный контракт - фильтруем только его холдеров (БЕЗ ЛИМИТА)
       if (specific_contract) {
         query = query.eq('nft_contract_used', specific_contract);
-        console.log(`🎯 Filtering by contract: ${specific_contract}`);
+        console.log(`🎯 Filtering by contract: ${specific_contract} (NO LIMIT)`);
       } else {
         // Ограничиваем только если проверяем все контракты
         query = query.limit(50);
+        console.log(`🎯 Checking all contracts (limited to 50 wallets)`);
       }
 
       const { data: autoWhitelisted, error: autoError } = await query;
@@ -173,10 +174,12 @@ Deno.serve(async (req) => {
     }
 
     const results = [];
-    const BATCH_SIZE = 3; // Уменьшено для более быстрой обработки
-    const WALLET_DELAY = 400; // 400ms задержка между кошельками
+    const BATCH_SIZE = 5; // Увеличено для более быстрой обработки
+    const WALLET_DELAY = 500; // 500ms задержка между кошельками для уменьшения rate limit
     const MAX_EXECUTION_TIME = 110000; // 110 секунд (оставляем запас до таймаута 120 сек)
     const startTime = Date.now();
+    
+    console.log(`⏱️ Starting validation of ${walletsToCheck.length} wallets at ${new Date().toISOString()}`);
 
     for (let i = 0; i < walletsToCheck.length; i++) {
       // Проверяем, не превысили ли мы максимальное время выполнения
@@ -300,8 +303,8 @@ Deno.serve(async (req) => {
       
       // Дополнительная пауза каждые BATCH_SIZE кошельков
       if ((i + 1) % BATCH_SIZE === 0 && i < walletsToCheck.length - 1) {
-        console.log(`⏸️ Batch pause after ${i + 1} wallets...`);
-        await new Promise(resolve => setTimeout(resolve, 1500)); // Уменьшено до 1.5 сек
+        console.log(`⏸️ Batch pause after ${i + 1} wallets... (${Math.round((Date.now() - startTime) / 1000)}s elapsed)`);
+        await new Promise(resolve => setTimeout(resolve, 2000)); // Увеличено до 2 сек для rate limit
       }
     }
 
@@ -309,15 +312,19 @@ Deno.serve(async (req) => {
       totalChecked: walletsToCheck.length,
       confirmed: results.filter(r => r.success && r.hadNFTs).length,
       revoked: results.filter(r => r.success && !r.hadNFTs).length,
-      errors: results.filter(r => !r.success).length
+      errors: results.filter(r => !r.success).length,
+      skipped: results.filter(r => r.skipped).length,
+      executionTimeSeconds: Math.round((Date.now() - startTime) / 1000)
     };
+
+    console.log(`✅ Validation complete: ${summary.totalChecked} checked, ${summary.confirmed} confirmed, ${summary.revoked} revoked, ${summary.errors} errors, ${summary.skipped} skipped in ${summary.executionTimeSeconds}s`);
 
     return new Response(
       JSON.stringify({ 
         success: true,
         summary,
         results: validate_all ? results : results[0],
-        message: `Validated ${summary.totalChecked} wallets: ${summary.confirmed} confirmed, ${summary.revoked} revoked`
+        message: `Validated ${summary.totalChecked} wallets: ${summary.confirmed} confirmed, ${summary.revoked} revoked, ${summary.skipped} skipped due to RPC errors`
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );

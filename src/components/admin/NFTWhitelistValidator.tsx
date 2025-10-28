@@ -94,11 +94,11 @@ export const NFTWhitelistValidator = () => {
     
     const contractInfo = selectedContract !== 'all' 
       ? ` контракта ${contracts.find(c => c.contract_address === selectedContract)?.contract_name || selectedContract}`
-      : ' (первые 50)';
+      : ' (первые 50 из всех контрактов)';
     
     const loadingToast = toast({
       title: "Проверка запущена",
-      description: `Проверка холдеров${contractInfo}...`,
+      description: `Проверка всех холдеров${contractInfo}. Это может занять несколько минут...`,
       duration: Infinity,
     });
 
@@ -130,13 +130,15 @@ export const NFTWhitelistValidator = () => {
       const timedOutMsg = summary.timedOut 
         ? ` (частичные результаты, осталось ${summary.remainingWallets})`
         : '';
+      const skippedMsg = summary.skipped > 0 ? `, ${summary.skipped} пропущено (ошибки RPC)` : '';
+      const timeMsg = summary.executionTimeSeconds ? ` за ${summary.executionTimeSeconds}с` : '';
       
-      const message = `Проверено ${summary.totalChecked} пользователей${contractInfo}: ${summary.confirmed} подтверждено, ${summary.revoked} отозвано${timedOutMsg}`;
+      const message = `Проверено ${summary.totalChecked} пользователей${contractInfo}: ${summary.confirmed} подтверждено, ${summary.revoked} отозвано${skippedMsg}${timedOutMsg}${timeMsg}`;
 
       toast({
         title: summary.timedOut ? "Частичная проверка завершена" : "Массовая проверка завершена",
         description: message,
-        duration: 10000,
+        duration: 15000,
       });
 
     } catch (error: any) {
@@ -227,13 +229,13 @@ export const NFTWhitelistValidator = () => {
           >
             <RefreshCw className={`w-6 h-6 ${(loading || validating) ? 'animate-spin' : ''}`} />
             <div className="text-center">
-              <div className="font-medium">Проверить всех</div>
+              <div className="font-medium">Проверить всех холдеров</div>
               <div className="text-sm text-muted-foreground">
                 {validating 
-                  ? 'Проверка...' 
+                  ? 'Проверка (может занять 2-3 мин)...' 
                   : selectedContract !== 'all' 
-                    ? 'Все холдеры контракта' 
-                    : 'Первые 50 адресов'}
+                    ? 'Все из whitelist для контракта' 
+                    : 'Первые 50 из всех контрактов'}
               </div>
             </div>
           </Button>
@@ -264,16 +266,54 @@ export const NFTWhitelistValidator = () => {
                   {lastResults.summary.errors > 0 && (
                     <div className="text-orange-600">⚠️ Ошибок: {lastResults.summary.errors}</div>
                   )}
+                  {lastResults.summary.skipped > 0 && (
+                    <div className="text-yellow-600">⏭️ Пропущено (RPC ошибки): {lastResults.summary.skipped}</div>
+                  )}
+                  {lastResults.summary.executionTimeSeconds && (
+                    <div className="text-blue-600">⏱️ Время выполнения: {lastResults.summary.executionTimeSeconds}с</div>
+                  )}
+                  
+                  {/* Список подтвержденных адресов */}
+                  {lastResults.results && Array.isArray(lastResults.results) && lastResults.results.filter((r: any) => r.success && r.hadNFTs).length > 0 && (
+                    <div className="mt-3 p-3 bg-green-50 border border-green-200 rounded max-h-60 overflow-y-auto">
+                      <div className="font-medium text-green-800 mb-2">✅ Подтвержденные ({lastResults.results.filter((r: any) => r.success && r.hadNFTs).length}):</div>
+                      <div className="space-y-1 text-xs">
+                        {lastResults.results
+                          .filter((r: any) => r.success && r.hadNFTs)
+                          .map((r: any, idx: number) => (
+                            <div key={idx} className="text-green-700 font-mono">
+                              • {r.wallet}
+                            </div>
+                          ))}
+                      </div>
+                    </div>
+                  )}
                   
                   {/* Список отозванных адресов */}
                   {lastResults.results && Array.isArray(lastResults.results) && lastResults.results.filter((r: any) => r.success && !r.hadNFTs).length > 0 && (
-                    <div className="mt-3 p-3 bg-red-50 border border-red-200 rounded">
-                      <div className="font-medium text-red-800 mb-2">Отозванные вайт-листы:</div>
-                      <div className="space-y-1">
+                    <div className="mt-3 p-3 bg-red-50 border border-red-200 rounded max-h-60 overflow-y-auto">
+                      <div className="font-medium text-red-800 mb-2">❌ Отозванные ({lastResults.results.filter((r: any) => r.success && !r.hadNFTs).length}):</div>
+                      <div className="space-y-1 text-xs">
                         {lastResults.results
                           .filter((r: any) => r.success && !r.hadNFTs)
                           .map((r: any, idx: number) => (
-                            <div key={idx} className="text-red-700">
+                            <div key={idx} className="text-red-700 font-mono">
+                              • {r.wallet}
+                            </div>
+                          ))}
+                      </div>
+                    </div>
+                  )}
+                  
+                  {/* Список пропущенных адресов */}
+                  {lastResults.results && Array.isArray(lastResults.results) && lastResults.results.filter((r: any) => r.skipped).length > 0 && (
+                    <div className="mt-3 p-3 bg-yellow-50 border border-yellow-200 rounded max-h-60 overflow-y-auto">
+                      <div className="font-medium text-yellow-800 mb-2">⏭️ Пропущенные из-за RPC ошибок ({lastResults.results.filter((r: any) => r.skipped).length}):</div>
+                      <div className="space-y-1 text-xs">
+                        {lastResults.results
+                          .filter((r: any) => r.skipped)
+                          .map((r: any, idx: number) => (
+                            <div key={idx} className="text-yellow-700 font-mono">
                               • {r.wallet}
                             </div>
                           ))}
