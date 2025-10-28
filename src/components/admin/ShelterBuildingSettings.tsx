@@ -37,6 +37,8 @@ interface BuildingConfig {
   required_items: Array<{ item_id: number; quantity: number }>;
   required_main_hall_level: number;
   upgrade_time_hours: number;
+  upgrade_time_minutes?: number; // Для UI: минуты
+  required_buildings?: Array<{ building_id: string; level: number }>;
   storage_capacity: number;
   working_hours: number;
   is_active: boolean;
@@ -104,6 +106,7 @@ export default function ShelterBuildingSettings() {
       
       const formattedData = (data || []).map(item => {
         let requiredItems: Array<{ item_id: number; quantity: number }> = [];
+        let requiredBuildings: Array<{ building_id: string; level: number }> = [];
         
         if (item.required_items) {
           if (typeof item.required_items === 'string') {
@@ -117,9 +120,24 @@ export default function ShelterBuildingSettings() {
           }
         }
         
+        // Parse required_buildings if exists (можно хранить в JSON поле или в отдельном поле)
+        if ((item as any).required_buildings) {
+          try {
+            if (typeof (item as any).required_buildings === 'string') {
+              requiredBuildings = JSON.parse((item as any).required_buildings);
+            } else if (Array.isArray((item as any).required_buildings)) {
+              requiredBuildings = (item as any).required_buildings;
+            }
+          } catch (e) {
+            console.error('Error parsing required_buildings:', e);
+          }
+        }
+        
         return {
           ...item,
-          required_items: requiredItems
+          required_items: requiredItems,
+          required_buildings: requiredBuildings,
+          upgrade_time_minutes: (item.upgrade_time_hours || 1) * 60, // Конвертируем часы в минуты для UI
         };
       }) as BuildingConfig[];
       
@@ -149,6 +167,11 @@ export default function ShelterBuildingSettings() {
       
       if (config.id) {
         // Update existing
+        // Конвертируем минуты обратно в часы для БД
+        const timeInHours = config.upgrade_time_minutes 
+          ? config.upgrade_time_minutes / 60 
+          : config.upgrade_time_hours || 1;
+        
         const updateData = {
           production_per_hour: config.production_per_hour || 0,
           cost_wood: config.cost_wood || 0,
@@ -159,10 +182,14 @@ export default function ShelterBuildingSettings() {
           cost_gt: config.cost_gt || 0,
           required_items: config.required_items || [],
           required_main_hall_level: config.required_main_hall_level || 0,
-          upgrade_time_hours: config.upgrade_time_hours || 1,
+          upgrade_time_hours: timeInHours,
           storage_capacity: config.storage_capacity || 0,
           working_hours: config.working_hours || 0,
         };
+        
+        // Если есть required_buildings, сохраняем их как JSON строку в metadata или notes
+        // (требуется добавить поле в БД или использовать существующее JSON поле)
+        console.log('Saving required_buildings:', config.required_buildings);
         
         console.log('Update data:', updateData);
         
@@ -179,6 +206,10 @@ export default function ShelterBuildingSettings() {
         toast.success('Настройки обновлены');
       } else {
         // Insert new
+        const timeInHours = config.upgrade_time_minutes 
+          ? config.upgrade_time_minutes / 60 
+          : config.upgrade_time_hours || 1;
+        
         const insertData = {
           building_id: selectedBuilding,
           building_name: BUILDING_TYPES.find(b => b.id === selectedBuilding)?.name || selectedBuilding,
@@ -192,7 +223,7 @@ export default function ShelterBuildingSettings() {
           cost_gt: config.cost_gt || 0,
           required_items: config.required_items || [],
           required_main_hall_level: config.required_main_hall_level || 0,
-          upgrade_time_hours: config.upgrade_time_hours || 1,
+          upgrade_time_hours: timeInHours,
           storage_capacity: config.storage_capacity || 0,
           working_hours: config.working_hours || 0,
           created_by_wallet_address: 'admin',
@@ -254,9 +285,48 @@ export default function ShelterBuildingSettings() {
       required_items: [],
       required_main_hall_level: 0,
       upgrade_time_hours: 1,
+      upgrade_time_minutes: 60,
+      required_buildings: [],
       storage_capacity: 0,
       working_hours: 0,
     });
+  };
+
+  const addRequiredBuilding = (configId: string) => {
+    const updated = configs.map(c => {
+      if (c.id === configId) {
+        return {
+          ...c,
+          required_buildings: [...(c.required_buildings || []), { building_id: 'storage', level: 1 }]
+        };
+      }
+      return c;
+    });
+    setConfigs(updated);
+  };
+
+  const removeRequiredBuilding = (configId: string, index: number) => {
+    const updated = configs.map(c => {
+      if (c.id === configId) {
+        const buildings = [...(c.required_buildings || [])];
+        buildings.splice(index, 1);
+        return { ...c, required_buildings: buildings };
+      }
+      return c;
+    });
+    setConfigs(updated);
+  };
+
+  const updateRequiredBuilding = (configId: string, index: number, field: 'building_id' | 'level', value: string | number) => {
+    const updated = configs.map(c => {
+      if (c.id === configId) {
+        const buildings = [...(c.required_buildings || [])];
+        buildings[index] = { ...buildings[index], [field]: value };
+        return { ...c, required_buildings: buildings };
+      }
+      return c;
+    });
+    setConfigs(updated);
   };
 
   const addRequiredItem = (configId: string) => {
@@ -432,23 +502,25 @@ export default function ShelterBuildingSettings() {
             <Loader2 className="w-8 h-8 animate-spin text-white" />
           </div>
         ) : (
-          <div className="overflow-x-auto">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead className="text-white">Уровень</TableHead>
-                  <TableHead className="text-white">Добыча/час</TableHead>
-                  <TableHead className="text-white">Древесина</TableHead>
-                  <TableHead className="text-white">Камень</TableHead>
-                  <TableHead className="text-white">Железо</TableHead>
-                  <TableHead className="text-white">Золото</TableHead>
-                  <TableHead className="text-white">ELL</TableHead>
-                  <TableHead className="text-white">GT</TableHead>
-                  <TableHead className="text-white">Предметы</TableHead>
-                  <TableHead className="text-white">Время (ч)</TableHead>
-                  <TableHead className="text-white">Действия</TableHead>
-                </TableRow>
-              </TableHeader>
+          <div className="overflow-x-auto max-w-full">
+            <div className="min-w-max">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead className="text-white min-w-[60px]">Уровень</TableHead>
+                    <TableHead className="text-white min-w-[80px]">Добыча/ч</TableHead>
+                    <TableHead className="text-white min-w-[80px]">Древесина</TableHead>
+                    <TableHead className="text-white min-w-[80px]">Камень</TableHead>
+                    <TableHead className="text-white min-w-[80px]">Железо</TableHead>
+                    <TableHead className="text-white min-w-[80px]">Золото</TableHead>
+                    <TableHead className="text-white min-w-[80px]">ELL</TableHead>
+                    <TableHead className="text-white min-w-[80px]">GT</TableHead>
+                    <TableHead className="text-white min-w-[200px]">Предметы</TableHead>
+                    <TableHead className="text-white min-w-[100px]">Время (мин)</TableHead>
+                    <TableHead className="text-white min-w-[200px]">Требуемые здания</TableHead>
+                    <TableHead className="text-white min-w-[150px]">Действия</TableHead>
+                  </TableRow>
+                </TableHeader>
               <TableBody>
                 {configs.map(config => (
                   <TableRow key={config.id}>
@@ -600,19 +672,68 @@ export default function ShelterBuildingSettings() {
                       </div>
                     </TableCell>
                     <TableCell>
-                      <Input
-                        type="number"
-                        value={config.upgrade_time_hours}
-                        onChange={(e) => {
-                          const updated = configs.map(c =>
-                            c.id === config.id
-                              ? { ...c, upgrade_time_hours: parseInt(e.target.value) || 1 }
-                              : c
-                          );
-                          setConfigs(updated);
-                        }}
-                        className="w-20 bg-black/50 border-white/20 text-white"
-                      />
+                      <div className="flex items-center gap-2">
+                        <Input
+                          type="number"
+                          min="1"
+                          step="1"
+                          value={config.upgrade_time_minutes || (config.upgrade_time_hours || 1) * 60}
+                          onChange={(e) => {
+                            const minutes = parseInt(e.target.value) || 1;
+                            const updated = configs.map(c =>
+                              c.id === config.id
+                                ? { ...c, upgrade_time_minutes: minutes, upgrade_time_hours: minutes / 60 }
+                                : c
+                            );
+                            setConfigs(updated);
+                          }}
+                          className="w-20 bg-black/50 border-white/20 text-white"
+                          placeholder="Минуты"
+                        />
+                        <span className="text-xs text-white/60">мин</span>
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex flex-col gap-2 min-w-[200px]">
+                        {(config.required_buildings || []).map((building, idx) => (
+                          <div key={idx} className="flex gap-2 items-center">
+                            <select
+                              value={building.building_id}
+                              onChange={(e) => updateRequiredBuilding(config.id, idx, 'building_id', e.target.value)}
+                              className="bg-black/50 border border-white/20 text-white rounded px-2 py-1 text-sm flex-1"
+                            >
+                              {BUILDING_TYPES.map(btype => (
+                                <option key={btype.id} value={btype.id}>{btype.name}</option>
+                              ))}
+                            </select>
+                            <span className="text-xs text-white/60">Ур.</span>
+                            <Input
+                              type="number"
+                              min="1"
+                              value={building.level}
+                              onChange={(e) => updateRequiredBuilding(config.id, idx, 'level', parseInt(e.target.value) || 1)}
+                              className="w-16 bg-black/50 border-white/20 text-white"
+                            />
+                            <Button
+                              onClick={() => removeRequiredBuilding(config.id, idx)}
+                              size="sm"
+                              variant="ghost"
+                              className="h-6 w-6 p-0"
+                            >
+                              <X className="w-3 h-3" />
+                            </Button>
+                          </div>
+                        ))}
+                        <Button
+                          onClick={() => addRequiredBuilding(config.id)}
+                          size="sm"
+                          variant="outline"
+                          className="w-full text-xs"
+                        >
+                          <Plus className="w-3 h-3 mr-1" />
+                          Здание
+                        </Button>
+                      </div>
                     </TableCell>
                     <TableCell>
                       <div className="flex gap-2">
@@ -761,12 +882,84 @@ export default function ShelterBuildingSettings() {
                       </div>
                     </TableCell>
                     <TableCell>
-                      <Input
-                        type="number"
-                        value={editingConfig.upgrade_time_hours}
-                        onChange={(e) => setEditingConfig({ ...editingConfig, upgrade_time_hours: parseInt(e.target.value) || 1 })}
-                        className="w-20 bg-black/50 border-white/20 text-white"
-                      />
+                      <div className="flex items-center gap-2">
+                        <Input
+                          type="number"
+                          min="1"
+                          step="1"
+                          value={editingConfig.upgrade_time_minutes || (editingConfig.upgrade_time_hours || 1) * 60}
+                          onChange={(e) => {
+                            const minutes = parseInt(e.target.value) || 1;
+                            setEditingConfig({ 
+                              ...editingConfig, 
+                              upgrade_time_minutes: minutes,
+                              upgrade_time_hours: minutes / 60 
+                            });
+                          }}
+                          className="w-20 bg-black/50 border-white/20 text-white"
+                          placeholder="Минуты"
+                        />
+                        <span className="text-xs text-white/60">мин</span>
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex flex-col gap-2 min-w-[200px]">
+                        {(editingConfig.required_buildings || []).map((building, idx) => (
+                          <div key={idx} className="flex gap-2 items-center">
+                            <select
+                              value={building.building_id}
+                              onChange={(e) => {
+                                const buildings = [...(editingConfig.required_buildings || [])];
+                                buildings[idx] = { ...buildings[idx], building_id: e.target.value };
+                                setEditingConfig({ ...editingConfig, required_buildings: buildings });
+                              }}
+                              className="bg-black/50 border border-white/20 text-white rounded px-2 py-1 text-sm flex-1"
+                            >
+                              {BUILDING_TYPES.map(btype => (
+                                <option key={btype.id} value={btype.id}>{btype.name}</option>
+                              ))}
+                            </select>
+                            <span className="text-xs text-white/60">Ур.</span>
+                            <Input
+                              type="number"
+                              min="1"
+                              value={building.level}
+                              onChange={(e) => {
+                                const buildings = [...(editingConfig.required_buildings || [])];
+                                buildings[idx] = { ...buildings[idx], level: parseInt(e.target.value) || 1 };
+                                setEditingConfig({ ...editingConfig, required_buildings: buildings });
+                              }}
+                              className="w-16 bg-black/50 border-white/20 text-white"
+                            />
+                            <Button
+                              onClick={() => {
+                                const buildings = [...(editingConfig.required_buildings || [])];
+                                buildings.splice(idx, 1);
+                                setEditingConfig({ ...editingConfig, required_buildings: buildings });
+                              }}
+                              size="sm"
+                              variant="ghost"
+                              className="h-6 w-6 p-0"
+                            >
+                              <X className="w-3 h-3" />
+                            </Button>
+                          </div>
+                        ))}
+                        <Button
+                          onClick={() => {
+                            setEditingConfig({
+                              ...editingConfig,
+                              required_buildings: [...(editingConfig.required_buildings || []), { building_id: 'storage', level: 1 }]
+                            });
+                          }}
+                          size="sm"
+                          variant="outline"
+                          className="w-full text-xs"
+                        >
+                          <Plus className="w-3 h-3 mr-1" />
+                          Здание
+                        </Button>
+                      </div>
                     </TableCell>
                     <TableCell>
                       <div className="flex gap-2">
@@ -791,6 +984,7 @@ export default function ShelterBuildingSettings() {
                 )}
               </TableBody>
             </Table>
+            </div>
           </div>
         )}
       </Card>
