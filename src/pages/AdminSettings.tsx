@@ -15,6 +15,7 @@ import { AdminConsoleWithWhitelist } from "@/components/AdminConsole";
 import { CardImageManager } from "@/components/admin/CardImageManager";
 import { ItemTemplateManager } from "@/components/admin/ItemTemplateManager";
 import { ItemGiveawayManager } from "@/components/admin/ItemGiveawayManager";
+import { InventorySyncManager } from "@/components/admin/InventorySyncManager";
 import ShelterBuildingSettings from "@/components/admin/ShelterBuildingSettings";
 
 const AdminSettingsContent = () => {
@@ -92,7 +93,7 @@ const AdminSettingsContent = () => {
         </div>
 
         <Tabs defaultValue={isSuperAdmin ? "cards" : "management"} className="w-full">
-          <TabsList className={`grid w-full ${isSuperAdmin ? 'grid-cols-9' : 'grid-cols-1'} bg-black/50 border-2 border-white backdrop-blur-sm rounded-3xl mb-6`} style={{ boxShadow: '-33px 15px 10px rgba(0, 0, 0, 0.6)' }}>
+          <TabsList className={`grid w-full ${isSuperAdmin ? 'grid-cols-10' : 'grid-cols-1'} bg-black/50 border-2 border-white backdrop-blur-sm rounded-3xl mb-6`} style={{ boxShadow: '-33px 15px 10px rgba(0, 0, 0, 0.6)' }}>
             {isSuperAdmin && (
               <>
                 <TabsTrigger value="cards" className="text-white data-[state=active]:bg-white/20 rounded-3xl">Карты (Герои и Драконы)</TabsTrigger>
@@ -102,6 +103,7 @@ const AdminSettingsContent = () => {
                 <TabsTrigger value="items" className="text-white data-[state=active]:bg-white/20 rounded-3xl">Предметы</TabsTrigger>
                 <TabsTrigger value="giveaway" className="text-white data-[state=active]:bg-white/20 rounded-3xl">Выдать предмет</TabsTrigger>
                 <TabsTrigger value="shelter" className="text-white data-[state=active]:bg-white/20 rounded-3xl">Убежище</TabsTrigger>
+                <TabsTrigger value="sync" className="text-white data-[state=active]:bg-white/20 rounded-3xl">Синхронизация</TabsTrigger>
               </>
             )}
             <TabsTrigger value="management" className="text-white data-[state=active]:bg-white/20 rounded-3xl">Управление</TabsTrigger>
@@ -136,6 +138,10 @@ const AdminSettingsContent = () => {
 
               <TabsContent value="shelter" className="space-y-4">
                 <ShelterBuildingSettings />
+              </TabsContent>
+
+              <TabsContent value="sync" className="space-y-4">
+                <InventorySyncManager />
               </TabsContent>
             </>
           )}
