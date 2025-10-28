@@ -29,3 +29,6 @@ verify_jwt = true
 
 [functions.upload-item-image]
 verify_jwt = false
+
+[functions.sync-all-inventories]
+verify_jwt = true

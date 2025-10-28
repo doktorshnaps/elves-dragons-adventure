@@ -4,7 +4,7 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, Trash2, Database, CheckCircle2 } from "lucide-react";
+import { Loader2, Trash2, Database, CheckCircle2, Users } from "lucide-react";
 import { useWalletContext } from "@/contexts/WalletConnectContext";
 
 export const InventorySyncManager = () => {
@@ -18,6 +18,16 @@ export const InventorySyncManager = () => {
     removedCount: number;
     addedCount: number;
   } | null>(null);
+  const [massResult, setMassResult] = useState<{
+    total: number;
+    results: Array<{
+      wallet_address: string;
+      removed: number;
+      added: number;
+      error?: string;
+    }>;
+  } | null>(null);
+  const [isMassSyncing, setIsMassSyncing] = useState(false);
 
   const handleSync = async () => {
     if (!targetWallet.trim()) {
@@ -40,9 +50,18 @@ export const InventorySyncManager = () => {
         .from('game_data')
         .select('inventory')
         .eq('wallet_address', targetWallet)
-        .single();
+        .maybeSingle();
 
       if (gameDataError) throw gameDataError;
+
+      if (!gameData) {
+        toast({
+          title: "Игрок не найден",
+          description: `Нет данных для кошелька ${targetWallet}`,
+          variant: "destructive",
+        });
+        return;
+      }
 
       const inventoryJson = (gameData?.inventory || []) as any[];
       console.log('📦 Game data inventory count:', inventoryJson.length);
@@ -184,6 +203,43 @@ export const InventorySyncManager = () => {
     }
   };
 
+  const handleMassSync = async () => {
+    setIsMassSyncing(true);
+    setMassResult(null);
+
+    try {
+      console.log('🔄 Starting mass inventory sync...');
+
+      const { data, error } = await supabase.functions.invoke('sync-all-inventories');
+
+      if (error) throw error;
+
+      console.log('✅ Mass sync result:', data);
+
+      setMassResult({
+        total: data.total_players,
+        results: data.results
+      });
+
+      const successCount = data.results.filter((r: any) => !r.error).length;
+      const errorCount = data.results.filter((r: any) => r.error).length;
+
+      toast({
+        title: "Массовая синхронизация завершена",
+        description: `Успешно: ${successCount}, Ошибок: ${errorCount}`,
+      });
+    } catch (error: any) {
+      console.error('❌ Mass sync error:', error);
+      toast({
+        title: "Ошибка массовой синхронизации",
+        description: error.message || "Не удалось синхронизировать всех игроков",
+        variant: "destructive",
+      });
+    } finally {
+      setIsMassSyncing(false);
+    }
+  };
+
   return (
     <Card>
       <CardHeader>
@@ -196,59 +252,117 @@ export const InventorySyncManager = () => {
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
-        <div className="flex gap-2">
-          <Input
-            placeholder="Адрес кошелька"
-            value={targetWallet}
-            onChange={(e) => setTargetWallet(e.target.value)}
-          />
+        {/* Одиночная синхронизация */}
+        <div className="space-y-4 pb-4 border-b">
+          <h3 className="text-sm font-semibold">Синхронизация одного игрока</h3>
+          <div className="flex gap-2">
+            <Input
+              placeholder="Адрес кошелька"
+              value={targetWallet}
+              onChange={(e) => setTargetWallet(e.target.value)}
+            />
+            <Button
+              variant="outline"
+              onClick={handleSyncCurrentUser}
+              disabled={!accountId}
+            >
+              Мой кошелек
+            </Button>
+          </div>
+
           <Button
-            variant="outline"
-            onClick={handleSyncCurrentUser}
-            disabled={!accountId}
+            onClick={handleSync}
+            disabled={isSyncing || !targetWallet.trim()}
+            className="w-full"
           >
-            Мой кошелек
+            {isSyncing ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Синхронизация...
+              </>
+            ) : (
+              <>
+                <CheckCircle2 className="mr-2 h-4 w-4" />
+                Синхронизировать
+              </>
+            )}
           </Button>
+
+          {syncResult && (
+            <Card className="bg-secondary/20">
+              <CardContent className="pt-4 space-y-2">
+                <div className="text-sm">
+                  <strong>Результаты синхронизации:</strong>
+                </div>
+                <div className="text-sm space-y-1">
+                  <div>📦 Предметов в JSON инвентаре: {syncResult.gameDataInventoryCount}</div>
+                  <div>💾 Было записей в item_instances: {syncResult.itemInstancesCount}</div>
+                  <div className="text-destructive">
+                    <Trash2 className="inline h-3 w-3 mr-1" />
+                    Удалено лишних записей: {syncResult.removedCount}
+                  </div>
+                  <div className="text-primary">
+                    ➕ Добавлено недостающих записей: {syncResult.addedCount}
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          )}
         </div>
 
-        <Button
-          onClick={handleSync}
-          disabled={isSyncing || !targetWallet.trim()}
-          className="w-full"
-        >
-          {isSyncing ? (
-            <>
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              Синхронизация...
-            </>
-          ) : (
-            <>
-              <CheckCircle2 className="mr-2 h-4 w-4" />
-              Синхронизировать
-            </>
-          )}
-        </Button>
+        {/* Массовая синхронизация */}
+        <div className="space-y-4">
+          <h3 className="text-sm font-semibold">Массовая синхронизация всех игроков</h3>
+          <Button
+            onClick={handleMassSync}
+            disabled={isMassSyncing}
+            variant="destructive"
+            className="w-full"
+          >
+            {isMassSyncing ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Синхронизация всех игроков...
+              </>
+            ) : (
+              <>
+                <Users className="mr-2 h-4 w-4" />
+                Синхронизировать всех игроков
+              </>
+            )}
+          </Button>
 
-        {syncResult && (
-          <Card className="bg-secondary/20">
-            <CardContent className="pt-4 space-y-2">
-              <div className="text-sm">
-                <strong>Результаты синхронизации:</strong>
-              </div>
-              <div className="text-sm space-y-1">
-                <div>📦 Предметов в JSON инвентаре: {syncResult.gameDataInventoryCount}</div>
-                <div>💾 Было записей в item_instances: {syncResult.itemInstancesCount}</div>
-                <div className="text-destructive">
-                  <Trash2 className="inline h-3 w-3 mr-1" />
-                  Удалено лишних записей: {syncResult.removedCount}
+          {massResult && (
+            <Card className="bg-secondary/20">
+              <CardContent className="pt-4 space-y-2">
+                <div className="text-sm">
+                  <strong>Результаты массовой синхронизации:</strong>
                 </div>
-                <div className="text-primary">
-                  ➕ Добавлено недостающих записей: {syncResult.addedCount}
+                <div className="text-sm space-y-1">
+                  <div>👥 Всего игроков: {massResult.total}</div>
+                  <div className="text-primary">
+                    ✅ Успешно: {massResult.results.filter(r => !r.error).length}
+                  </div>
+                  <div className="text-destructive">
+                    ❌ Ошибок: {massResult.results.filter(r => r.error).length}
+                  </div>
                 </div>
-              </div>
-            </CardContent>
-          </Card>
-        )}
+                <div className="max-h-40 overflow-y-auto text-xs space-y-1 mt-2">
+                  {massResult.results.slice(0, 20).map((r, i) => (
+                    <div key={i} className={r.error ? "text-destructive" : "text-muted-foreground"}>
+                      {r.wallet_address}: {r.error || `удалено ${r.removed}, добавлено ${r.added}`}
+                    </div>
+                  ))}
+                  {massResult.results.length > 20 && (
+                    <div className="text-muted-foreground">
+                      ... и еще {massResult.results.length - 20} игроков
+                    </div>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+          )}
+        </div>
 
         <div className="text-xs text-muted-foreground space-y-1">
           <p>⚠️ Эта операция:</p>
