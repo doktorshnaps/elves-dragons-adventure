@@ -69,13 +69,15 @@ export const itemTemplateSchema = z.object({
   
   image_url: z.string()
     .trim()
-    .url("Invalid URL format")
     .max(500, "Image URL too long")
+    .refine((val) => !val || val === '' || z.string().url().safeParse(val).success, {
+      message: "Invalid URL format"
+    })
     .optional()
     .or(z.literal('')),
   
   slot: z.string()
-    .refine((val) => !val || ['head', 'chest', 'hands', 'legs', 'feet', 'neck', 'ring', 'weapon', 'offhand'].includes(val), {
+    .refine((val) => !val || val === 'none' || ['head', 'chest', 'hands', 'legs', 'feet', 'neck', 'ring', 'weapon', 'offhand'].includes(val), {
       message: "Invalid equipment slot"
     })
     .optional()
