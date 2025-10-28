@@ -98,18 +98,34 @@ export const useItemInstances = () => {
    * Remove N item instances by their UUIDs
    */
   const removeItemInstancesByIds = async (ids: string[]) => {
-    if (!accountId || ids.length === 0) return;
+    if (!accountId || ids.length === 0) {
+      console.log('⚠️ [removeItemInstancesByIds] Skipped - no accountId or empty ids array', { accountId, idsLength: ids.length });
+      return;
+    }
+
+    console.log('🚀 [removeItemInstancesByIds] Starting removal of', ids.length, 'instances for wallet:', accountId);
+    console.log('🚀 [removeItemInstancesByIds] IDs to remove:', ids);
 
     try {
-      const { error } = await supabase
+      const { data, error } = await supabase
         .from('item_instances')
         .delete()
-        .in('id', ids);
+        .in('id', ids)
+        .select();
 
-      if (error) throw error;
-      console.log('✅ Removed', ids.length, 'item instances from DB');
+      if (error) {
+        console.error('❌ [removeItemInstancesByIds] Supabase error:', error);
+        throw error;
+      }
+      
+      console.log('✅ [removeItemInstancesByIds] Successfully removed', ids.length, 'item instances from DB');
+      console.log('✅ [removeItemInstancesByIds] Removed data:', data);
+      
+      // Сразу обновляем локальное состояние для быстрого отклика UI
+      setInstances(prev => prev.filter(inst => !ids.includes(inst.id)));
     } catch (e) {
-      console.error('❌ Failed to remove item_instances:', e);
+      console.error('❌ [removeItemInstancesByIds] Failed to remove item_instances:', e);
+      throw e; // Пробрасываем ошибку дальше, чтобы handleUpgrade мог её обработать
     }
   };
 

@@ -469,17 +469,36 @@ export const useShelterState = () => {
         const tpl = getTemplate(req.item_id);
         const itemId = tpl?.item_id ?? String(req.item_id);
         const available = getInstancesByItemId(itemId);
-        console.log('🧪 [upgrade] Available instances for', itemId, ':', available.length);
+        console.log('🧪 [upgrade] Available instances for', itemId, ':', available.length, available.map(i => i.id));
         
         const shuffled = [...available].sort(() => Math.random() - 0.5);
         const take = Math.min(Number(req.quantity || 1), shuffled.length);
+        console.log(`🧪 [upgrade] Taking ${take} out of ${shuffled.length} instances for ${itemId}`);
         for (let i = 0; i < take; i++) {
+          console.log(`🧪 [upgrade] Adding to remove list: ${shuffled[i].id}`);
           idsToRemove.push(shuffled[i].id);
         }
       }
 
-      console.log('🧪 [upgrade] Total instance IDs to remove:', idsToRemove.length);
-      await removeItemInstancesByIds(idsToRemove);
+      console.log('🧪 [upgrade] Total instance IDs to remove:', idsToRemove.length, idsToRemove);
+      
+      if (idsToRemove.length > 0) {
+        try {
+          console.log('🚀 [upgrade] Calling removeItemInstancesByIds with:', idsToRemove);
+          await removeItemInstancesByIds(idsToRemove);
+          console.log('✅ [upgrade] Successfully removed instances from DB');
+        } catch (error) {
+          console.error('❌ [upgrade] Failed to remove item instances:', error);
+          toast({
+            title: "Ошибка удаления предметов",
+            description: "Не удалось удалить предметы из базы данных",
+            variant: "destructive"
+          });
+          return; // Прерываем выполнение, чтобы не начинать улучшение
+        }
+      } else {
+        console.log('⚠️ [upgrade] No instance IDs to remove - this might be an error!');
+      }
 
       // 2) Синхронно чистим JSON-инвентарь game_data (по item_id шаблона)
       if (newInventoryJson.length > 0) {
