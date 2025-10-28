@@ -103,48 +103,96 @@ export const NFTWhitelistValidator = () => {
     });
 
     try {
-      // Таймаут 2 минуты для edge функции
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 120000);
-
-      const body: any = { validate_all: true };
-      
-      // Если выбран конкретный контракт, передаем его
       if (selectedContract !== 'all') {
-        body.specific_contract = selectedContract;
+        // Batching для конкретного контракта, чтобы избежать таймаутов и 429
+        const batchSize = 25;
+        let offset = 0;
+        let aggregatedResults: any[] = [];
+        const summary = { totalChecked: 0, confirmed: 0, revoked: 0, errors: 0, skipped: 0, executionTimeSeconds: 0 } as any;
+        const startedAt = Date.now();
+
+        // Максимум 20 батчей на случай непредвиденных ситуаций
+        for (let batch = 0; batch < 20; batch++) {
+          const controller = new AbortController();
+          const timeoutId = setTimeout(() => controller.abort(), 90000);
+
+          const { data, error } = await supabase.functions.invoke('validate-nft-whitelist', {
+            body: { validate_all: true, specific_contract: selectedContract, limit: batchSize, offset },
+            signal: controller.signal as any
+          });
+
+          clearTimeout(timeoutId);
+
+          if (error) throw error;
+
+          const batchResults = Array.isArray(data.results) ? data.results : (data.results ? [data.results] : []);
+          aggregatedResults.push(...batchResults);
+
+          // Агрегируем суммарные метрики
+          summary.totalChecked += data.summary?.totalChecked || batchResults.length;
+          summary.confirmed += data.summary?.confirmed || batchResults.filter((r: any) => r.success && r.hadNFTs).length;
+          summary.revoked += data.summary?.revoked || batchResults.filter((r: any) => r.success && !r.hadNFTs).length;
+          summary.errors += data.summary?.errors || batchResults.filter((r: any) => !r.success && !r.skipped).length;
+          summary.skipped += data.summary?.skipped || batchResults.filter((r: any) => r.skipped).length;
+
+          // Если результатов меньше batchSize — это последний батч
+          if (batchResults.length < batchSize) {
+            break;
+          }
+
+          offset += batchSize;
+          // Небольшая пауза между батчами, чтобы не словить rate limit RPC
+          await new Promise((r) => setTimeout(r, 1000));
+        }
+
+        summary.executionTimeSeconds = Math.round((Date.now() - startedAt) / 1000);
+
+        setLastResults({ summary, results: aggregatedResults });
+
+        const skippedMsg = summary.skipped > 0 ? `, ${summary.skipped} пропущено (ошибки RPC)` : '';
+        const timeMsg = summary.executionTimeSeconds ? ` за ${summary.executionTimeSeconds}с` : '';
+        const message = `Проверено ${summary.totalChecked} пользователей${contractInfo}: ${summary.confirmed} подтверждено, ${summary.revoked} отозвано${skippedMsg}${timeMsg}`;
+
+        loadingToast.dismiss();
+        toast({
+          title: "Массовая проверка завершена",
+          description: message,
+          duration: 15000,
+        });
+      } else {
+        // Старый путь для "Все контракты" (ограничено 50)
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 120000);
+
+        const body: any = { validate_all: true };
+        const { data, error } = await supabase.functions.invoke('validate-nft-whitelist', {
+          body,
+          signal: controller.signal as any
+        });
+
+        clearTimeout(timeoutId);
+        loadingToast.dismiss();
+        if (error) throw error;
+
+        setLastResults(data);
+        const { summary } = data;
+        const timedOutMsg = summary.timedOut 
+          ? ` (частичные результаты, осталось ${summary.remainingWallets})`
+          : '';
+        const skippedMsg = summary.skipped > 0 ? `, ${summary.skipped} пропущено (ошибки RPC)` : '';
+        const timeMsg = summary.executionTimeSeconds ? ` за ${summary.executionTimeSeconds}с` : '';
+        const message = `Проверено ${summary.totalChecked} пользователей${contractInfo}: ${summary.confirmed} подтверждено, ${summary.revoked} отозвано${skippedMsg}${timedOutMsg}${timeMsg}`;
+
+        toast({
+          title: summary.timedOut ? "Частичная проверка завершена" : "Массовая проверка завершена",
+          description: message,
+          duration: 15000,
+        });
       }
-
-      const { data, error } = await supabase.functions.invoke('validate-nft-whitelist', {
-        body,
-        signal: controller.signal as any
-      });
-
-      clearTimeout(timeoutId);
-      loadingToast.dismiss();
-
-      if (error) throw error;
-
-      setLastResults(data);
-      
-      const { summary } = data;
-      const timedOutMsg = summary.timedOut 
-        ? ` (частичные результаты, осталось ${summary.remainingWallets})`
-        : '';
-      const skippedMsg = summary.skipped > 0 ? `, ${summary.skipped} пропущено (ошибки RPC)` : '';
-      const timeMsg = summary.executionTimeSeconds ? ` за ${summary.executionTimeSeconds}с` : '';
-      
-      const message = `Проверено ${summary.totalChecked} пользователей${contractInfo}: ${summary.confirmed} подтверждено, ${summary.revoked} отозвано${skippedMsg}${timedOutMsg}${timeMsg}`;
-
-      toast({
-        title: summary.timedOut ? "Частичная проверка завершена" : "Массовая проверка завершена",
-        description: message,
-        duration: 15000,
-      });
 
     } catch (error: any) {
       loadingToast.dismiss();
       console.error('Error validating all users:', error);
-      
       if (error.name === 'AbortError') {
         toast({
           title: "Превышен таймаут",

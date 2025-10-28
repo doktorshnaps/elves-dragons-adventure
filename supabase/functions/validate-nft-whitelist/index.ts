@@ -99,9 +99,10 @@ Deno.serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     );
 
-    const body = await req.json();
-    const { wallet_address, validate_all, specific_contract } = body;
-
+  const body = await req.json();
+  const { wallet_address, validate_all, specific_contract } = body;
+  const limit = Number(body?.limit) || (specific_contract ? 100 : 50);
+  const offset = Number(body?.offset) || 0;
     if (!wallet_address && !validate_all) {
       return new Response(
         JSON.stringify({ error: 'wallet_address is required or set validate_all to true' }),
@@ -139,23 +140,24 @@ Deno.serve(async (req) => {
 
     let walletsToCheck: string[] = [];
     
-    if (validate_all) {
-      // Получаем всех пользователей с автоматическим вайт-листом
+  if (validate_all) {
+      // Получаем всех пользователей с автоматическим вайт-листом, с пагинацией
       let query = supabase
         .from('whitelist')
         .select('wallet_address, nft_contract_used')
         .eq('whitelist_source', 'nft_automatic')
         .eq('is_active', true);
       
-      // Если указан конкретный контракт - фильтруем только его холдеров (БЕЗ ЛИМИТА)
+      // Если указан конкретный контракт - фильтруем только его холдеров
       if (specific_contract) {
         query = query.eq('nft_contract_used', specific_contract);
-        console.log(`🎯 Filtering by contract: ${specific_contract} (NO LIMIT)`);
+        console.log(`🎯 Filtering by contract: ${specific_contract}`);
       } else {
-        // Ограничиваем только если проверяем все контракты
-        query = query.limit(50);
-        console.log(`🎯 Checking all contracts (limited to 50 wallets)`);
+        console.log('🎯 Checking all active contracts');
       }
+
+      // Пагинация: диапазон по offset/limit
+      query = query.range(offset, offset + limit - 1);
 
       const { data: autoWhitelisted, error: autoError } = await query;
 
@@ -167,8 +169,8 @@ Deno.serve(async (req) => {
         );
       }
 
-      walletsToCheck = autoWhitelisted.map(w => w.wallet_address);
-      console.log(`🔍 Validating ${walletsToCheck.length} auto-whitelisted wallets${specific_contract ? ` for contract ${specific_contract}` : ' (limited to 50)'}`);
+      walletsToCheck = (autoWhitelisted || []).map(w => w.wallet_address);
+      console.log(`🔍 Validating ${walletsToCheck.length} wallets (offset=${offset}, limit=${limit})${specific_contract ? ` for contract ${specific_contract}` : ''}`);
     } else {
       walletsToCheck = [wallet_address];
     }
