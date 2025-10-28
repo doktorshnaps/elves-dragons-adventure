@@ -370,13 +370,13 @@ export const useShelterState = () => {
         : Object.entries(upgrade.requiredItems as Record<string, any>)
             .map(([key, qty]) => ({ item_id: String(key), quantity: Number(qty ?? 1) }));
 
-      // Dedupe by real item_id from template
+      // Dedupe by real item_id from template - СУММИРУЕМ количества для одинаковых item_id
       const dedupMap = new Map<string, number>();
       for (const r of rawEntries) {
         const tpl = getTemplate(r.item_id);
         const key = tpl?.item_id ?? String(r.item_id);
         const prev = dedupMap.get(key) || 0;
-        dedupMap.set(key, Math.max(prev, Number(r.quantity || 1)));
+        dedupMap.set(key, prev + Number(r.quantity || 1)); // СУММА, не max!
       }
       const entries = Array.from(dedupMap, ([item_id, quantity]) => ({ item_id, quantity }));
       console.log('🔍 [canAffordUpgrade] Deduped required entries:', entries);
@@ -453,7 +453,7 @@ export const useShelterState = () => {
     let newInventoryJson = Array.isArray(gameState.inventory) ? [...gameState.inventory] : [];
 
     if (upgrade.requiredItems && (Array.isArray(upgrade.requiredItems) || typeof upgrade.requiredItems === 'object')) {
-      const entries: Array<{ item_id: string; quantity: number }> = Array.isArray(upgrade.requiredItems)
+      const rawEntries: Array<{ item_id: string; quantity: number }> = Array.isArray(upgrade.requiredItems)
         ? (upgrade.requiredItems as any[]).map((req: any) => ({
             item_id: String(req.item_id ?? req.id ?? req.type ?? ''),
             quantity: Number(req.quantity ?? req.qty ?? req.count ?? 1)
@@ -461,9 +461,19 @@ export const useShelterState = () => {
         : Object.entries(upgrade.requiredItems as Record<string, any>)
             .map(([key, qty]) => ({ item_id: String(key), quantity: Number(qty ?? 1) }));
 
+      // Dedupe by real item_id from template - СУММИРУЕМ количества для одинаковых item_id
+      const dedupMap = new Map<string, number>();
+      for (const r of rawEntries) {
+        const tpl = getTemplate(r.item_id);
+        const key = tpl?.item_id ?? String(r.item_id);
+        const prev = dedupMap.get(key) || 0;
+        dedupMap.set(key, prev + Number(r.quantity || 1)); // СУММА, не max!
+      }
+      const entries = Array.from(dedupMap, ([item_id, quantity]) => ({ item_id, quantity }));
+      console.log('🧪 [upgrade] Deduped required entries to remove:', entries);
+
       // 1) Собираем UUID инстансов для удаления
       const idsToRemove: string[] = [];
-      console.log('🧪 [upgrade] Required entries to remove:', entries);
 
       for (const req of entries) {
         const tpl = getTemplate(req.item_id);
