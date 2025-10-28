@@ -100,7 +100,7 @@ export const itemTemplateSchema = z.object({
   
   drop_chance: z.number()
     .min(0, "Drop chance cannot be negative")
-    .max(1, "Drop chance cannot exceed 1.0")
+    .max(100, "Drop chance cannot exceed 100%")
     .optional()
     .or(z.literal(0))
 });
