@@ -12,6 +12,9 @@ verify_jwt = true
 [functions.check-nft-whitelist]
 verify_jwt = false
 
+[functions.validate-nft-whitelist]
+verify_jwt = false
+
 [functions.get-user-nft-cards]
 verify_jwt = true
 
