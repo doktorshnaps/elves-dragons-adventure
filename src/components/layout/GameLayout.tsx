@@ -1,7 +1,6 @@
 import React from 'react';
 import { ErrorBoundary } from '@/components/common/ErrorBoundary';
 import { Toaster } from '@/components/ui/toaster';
-import { useGameSync } from '@/hooks/useGameSync';
 
 
 interface GameLayoutProps {
@@ -15,8 +14,6 @@ export const GameLayout = ({
   backgroundImage,
   showHeader = true 
 }: GameLayoutProps) => {
-  useGameSync();
-
   return (
     <ErrorBoundary>
       

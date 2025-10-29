@@ -6,8 +6,6 @@ import { LanguageProvider } from './contexts/LanguageContext';
 import { BrightnessProvider } from './contexts/BrightnessContext';
 import { MusicProvider } from './contexts/MusicContext';
 import { QueryProvider } from './providers/QueryProvider';
-import { useAccountSync } from './hooks/useAccountSync';
-import { useGameSync } from './hooks/useGameSync';
 import { useRoutePreloader } from './hooks/useRoutePreloader';
 import { useNFTStatsRecalculation } from './hooks/useNFTStatsRecalculation';
 import { useSecureStorage } from './hooks/useSecureStorage';
@@ -43,10 +41,8 @@ const SeaSerpentLairWithLazyLoading = lazy(() => import('./components/lazy/LazyC
 const PageLoader = () => <div style={{ minHeight: '100vh' }} />;
 
 function App() {
-  // Добавляем обработку ошибок в хуках
+  // Запускаем только легковесные хуки на уровне App
   try {
-    useAccountSync();
-    useGameSync();
     useRoutePreloader();
     useNFTStatsRecalculation();
     useSecureStorage();
