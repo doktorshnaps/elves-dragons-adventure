@@ -7,6 +7,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useWalletContext } from "@/contexts/WalletConnectContext";
 import { useToast } from "@/hooks/use-toast";
 import { useGameData } from "@/hooks/useGameData";
+import { useItemInstances } from "@/hooks/useItemInstances";
 
 interface DonationStats {
   wallet_address: string;
@@ -26,6 +27,7 @@ export const SoulAltarTab = () => {
   const { accountId } = useWalletContext();
   const { toast } = useToast();
   const { gameData, updateGameData } = useGameData();
+  const { instances: itemInstances, removeItemInstancesByIds } = useItemInstances();
   
   const [leaderboard, setLeaderboard] = useState<DonationStats[]>([]);
   const [myStats, setMyStats] = useState<DonationStats | null>(null);
@@ -115,6 +117,16 @@ export const SoulAltarTab = () => {
           updatedInventory.splice(i, 1);
           removed++;
         }
+      }
+
+      // Удаляем кристаллы из item_instances
+      const crystalInstances = itemInstances.filter(inst => 
+        inst.name === "Кристалл Жизни" || inst.item_id === "lifeCrystal"
+      ).slice(0, amount);
+      
+      if (crystalInstances.length > 0) {
+        const instanceIds = crystalInstances.map(inst => inst.id);
+        await removeItemInstancesByIds(instanceIds);
       }
 
       // Обновляем игровые данные
