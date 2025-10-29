@@ -134,34 +134,35 @@ export const useGameSync = () => {
     if (isApplyingRef.current) return;
 
     const state = useGameStore.getState();
-    const snapshot = {
-      balance: state.balance,
-      cards: state.cards,
-      inventory: state.inventory,
-      dragonEggs: state.dragonEggs,
-      selectedTeam: state.selectedTeam,
-      battleState: state.battleState,
-      accountLevel: state.accountLevel,
-      accountExperience: state.accountExperience,
-    };
-
-    const serverSnapshot = {
-      balance: gameData?.balance,
-      cards: gameData?.cards,
-      inventory: gameData?.inventory,
-      dragonEggs: gameData?.dragonEggs,
-      selectedTeam: gameData?.selectedTeam,
-      battleState: gameData?.battleState,
-      accountLevel: gameData?.accountLevel,
-      accountExperience: gameData?.accountExperience,
-    };
-
-    const sameAsServer = JSON.stringify(snapshot) === JSON.stringify(serverSnapshot);
-    const sameAsLastSynced = JSON.stringify(snapshot) === JSON.stringify(lastSyncedRef.current);
-
-    if (sameAsServer || sameAsLastSynced) return;
-
+    
     const syncToSupabase = async () => {
+      const snapshot = {
+        balance: state.balance,
+        cards: state.cards,
+        inventory: state.inventory,
+        dragonEggs: state.dragonEggs,
+        selectedTeam: state.selectedTeam,
+        battleState: state.battleState,
+        accountLevel: state.accountLevel,
+        accountExperience: state.accountExperience,
+      };
+
+      const serverSnapshot = {
+        balance: gameData?.balance,
+        cards: gameData?.cards,
+        inventory: gameData?.inventory,
+        dragonEggs: gameData?.dragonEggs,
+        selectedTeam: gameData?.selectedTeam,
+        battleState: gameData?.battleState,
+        accountLevel: gameData?.accountLevel,
+        accountExperience: gameData?.accountExperience,
+      };
+
+      const sameAsServer = JSON.stringify(snapshot) === JSON.stringify(serverSnapshot);
+      const sameAsLastSynced = JSON.stringify(snapshot) === JSON.stringify(lastSyncedRef.current);
+
+      if (sameAsServer || sameAsLastSynced) return;
+
       try {
         await updateGameData(snapshot);
         lastSyncedRef.current = snapshot;
@@ -170,22 +171,9 @@ export const useGameSync = () => {
       }
     };
 
-    const timeoutId = setTimeout(syncToSupabase, 800);
+    const timeoutId = setTimeout(syncToSupabase, 500);
     return () => clearTimeout(timeoutId);
-  }, [
-    isConnected,
-    accountId,
-    loading,
-    gameStore.balance,
-    gameStore.cards,
-    gameStore.inventory,
-    gameStore.dragonEggs,
-    gameStore.selectedTeam,
-    gameStore.battleState,
-    gameStore.accountLevel,
-    gameStore.accountExperience,
-    gameData
-  ]);
+  }, [isConnected, accountId, loading, gameData, updateGameData]);
 
   return { loading };
 };

@@ -183,10 +183,10 @@ export const useCardInstanceSync = () => {
 
   // Debounced версия синхронизации для предотвращения частых вызовов
   const syncAllCardsFromInstances = useMemo(
-    () => debounce(syncAllCardsFromInstancesInternal, 500, {
+    () => debounce(syncAllCardsFromInstancesInternal, 300, {
       leading: true,  // Вызвать сразу при первом вызове
-      trailing: true, // И через 500ms после последнего вызова
-      maxWait: 2000   // Но не дольше 2 секунд
+      trailing: true, // И через 300ms после последнего вызова
+      maxWait: 800   // Но не дольше 800ms
     }),
     [syncAllCardsFromInstancesInternal]
   );

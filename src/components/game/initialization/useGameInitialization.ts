@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { Card } from "@/types/cards";
 import { supabase } from "@/integrations/supabase/client";
@@ -9,12 +9,14 @@ export const useGameInitialization = (setCards: (cards: Card[]) => void) => {
   const { toast } = useToast();
   const { accountId } = useWalletContext();
   const isConnected = !!accountId;
+  const hasInitializedRef = useRef(false);
 
   useEffect(() => {
-    if (!isConnected || !accountId) return;
+    if (!isConnected || !accountId || hasInitializedRef.current) return;
 
     const initializeGame = async () => {
       try {
+        hasInitializedRef.current = true;
         console.log('Initializing game for wallet:', accountId);
         
         // Проверяем данные игры в Supabase по кошельку
@@ -92,6 +94,11 @@ export const useGameInitialization = (setCards: (cards: Card[]) => void) => {
     };
 
     initializeGame();
+    
+    // Сброс флага при смене кошелька
+    return () => {
+      hasInitializedRef.current = false;
+    };
   }, [accountId, isConnected, setCards, toast]);
 
   return {};

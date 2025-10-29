@@ -18,7 +18,13 @@ export const GameLayout = ({
 }: GameLayoutProps) => {
   const { loading } = useGameSync();
 
-  if (loading) {
+  // Не показываем загрузку на главной странице и страницах без авторизации
+  const shouldShowLoading = loading && typeof window !== 'undefined' && 
+    localStorage.getItem('walletAccountId') && 
+    window.location.pathname !== '/' && 
+    window.location.pathname !== '/auth';
+
+  if (shouldShowLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-game-background">
         <LoadingSpinner size="lg" text="Загрузка игры..." />
