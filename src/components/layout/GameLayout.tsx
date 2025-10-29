@@ -2,7 +2,6 @@ import React from 'react';
 import { ErrorBoundary } from '@/components/common/ErrorBoundary';
 import { Toaster } from '@/components/ui/toaster';
 import { useGameSync } from '@/hooks/useGameSync';
-import { LoadingSpinner } from '@/components/common/LoadingSpinner';
 
 
 interface GameLayoutProps {
@@ -16,21 +15,7 @@ export const GameLayout = ({
   backgroundImage,
   showHeader = true 
 }: GameLayoutProps) => {
-  const { loading } = useGameSync();
-
-  // Не показываем загрузку на главной странице и страницах без авторизации
-  const shouldShowLoading = loading && typeof window !== 'undefined' && 
-    localStorage.getItem('walletAccountId') && 
-    window.location.pathname !== '/' && 
-    window.location.pathname !== '/auth';
-
-  if (shouldShowLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-game-background">
-        <LoadingSpinner size="lg" text="Загрузка игры..." />
-      </div>
-    );
-  }
+  useGameSync();
 
   return (
     <ErrorBoundary>

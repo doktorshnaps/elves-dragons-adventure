@@ -71,16 +71,11 @@ export const Auth = () => {
     }
   }, [isConnected, accountId, referrerId]);
 
-  // Redirect if already connected (with localStorage fallback) but AFTER handling referral
+  // Redirect if already connected
   useEffect(() => {
-    const lsConnected = localStorage.getItem('walletConnected') === 'true';
-    const shouldRedirect = isConnected || lsConnected;
-
-    console.log('🔍 Auth page: checking connection status:', { isConnected, lsConnected, accountId, referrerId });
-
-    if (shouldRedirect) {
-      // If we have a referral to process and account ID, do it first
-      if (referrerId && accountId) {
+    if (isConnected && accountId) {
+      // If we have a referral to process, do it first
+      if (referrerId) {
         handleReferral().then(() => {
           console.log('✅ Referral processed, redirecting to menu');
           navigate("/menu", { replace: true });

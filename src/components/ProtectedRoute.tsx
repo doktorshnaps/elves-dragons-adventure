@@ -63,7 +63,7 @@ export const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
   if (isConnecting || whitelistLoading || maintenanceLoading || adminLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-purple-900 to-black">
-        <div className="text-white text-xl">Загрузка меню...</div>
+        <div className="text-white text-xl">Загрузка...</div>
       </div>
     );
   }
