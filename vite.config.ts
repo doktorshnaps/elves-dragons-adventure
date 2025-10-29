@@ -14,9 +14,19 @@ export default defineConfig(({ mode }) => ({
     mode === 'development' && componentTagger(),
     nodePolyfills({
       include: ['buffer', 'stream', 'crypto', 'util', 'assert', 'process'],
+      globals: {
+        Buffer: true,
+        global: true,
+        process: true,
+      },
+      protocolImports: true,
     }),
   ].filter(Boolean),
   base: "./",
+  define: {
+    'global': 'globalThis',
+    'process.env': {},
+  },
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./src"),
@@ -86,7 +96,7 @@ export default defineConfig(({ mode }) => ({
       'crypto-browserify',
       'util',
       'assert',
-      'process',
+      'process/browser',
       'readable-stream',
       'string_decoder',
       'safe-buffer',
@@ -96,6 +106,7 @@ export default defineConfig(({ mode }) => ({
       define: {
         global: 'globalThis',
       },
+      plugins: [],
     },
   },
   esbuild: {

@@ -103,9 +103,12 @@ export class GameCacheManager {
 
 // Service Worker registration for game assets
 export const registerGameServiceWorker = async (): Promise<void> => {
-  if ('serviceWorker' in navigator && process.env.NODE_ENV === 'production') {
+  if ('serviceWorker' in navigator && import.meta.env.PROD) {
     try {
-      const registration = await navigator.serviceWorker.register('/game-sw.js');
+      const registration = await navigator.serviceWorker.register('/game-sw.js', {
+        scope: '/',
+        updateViaCache: 'none' // Don't cache SW itself
+      });
       console.log('🔧 Game Service Worker registered:', registration);
       
       // Handle updates
@@ -114,12 +117,30 @@ export const registerGameServiceWorker = async (): Promise<void> => {
         if (newWorker) {
           newWorker.addEventListener('statechange', () => {
             if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
-              console.log('🔄 New game content available, reload to update');
-              // Можно показать уведомление пользователю
+              console.log('🔄 New game content available, activating...');
+              // Skip waiting and activate new SW immediately
+              newWorker.postMessage({ type: 'SKIP_WAITING' });
             }
           });
         }
       });
+      
+      // Listen for SW messages
+      navigator.serviceWorker.addEventListener('message', (event) => {
+        if (event.data && event.data.type === 'SW_ACTIVATED') {
+          console.log('✅ New Service Worker activated, reloading...');
+          // Reload page to get fresh content
+          window.location.reload();
+        }
+      });
+      
+      // Check for updates every 5 minutes
+      setInterval(() => {
+        registration.update().catch(err => {
+          console.warn('SW update check failed:', err);
+        });
+      }, 5 * 60 * 1000);
+      
     } catch (error) {
       console.warn('🚫 Service Worker registration failed:', error);
     }

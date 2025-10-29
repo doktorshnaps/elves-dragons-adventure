@@ -28,6 +28,15 @@
     
     <!-- Defer Telegram script to not block initial render -->
     <script src="https://telegram.org/js/telegram-web-app.js" defer></script>
+    
+    <!-- Early polyfills initialization for NEAR wallet - prevents "Cannot access before initialization" errors -->
+    <script>
+      // Initialize global polyfills before any module loads
+      window.global = window.globalThis = window;
+      window.process = window.process || { env: {}, browser: true };
+      window.Buffer = window.Buffer || undefined; // Will be set by vite polyfills
+    </script>
+    
     <base href="/" />
     <script>
       (function() {

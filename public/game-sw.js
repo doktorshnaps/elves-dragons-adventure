@@ -1,6 +1,6 @@
 // Game Service Worker for caching game assets
-const CACHE_NAME = 'heroes-game-cache-v2';
-const STATIC_CACHE_NAME = 'heroes-static-cache-v2';
+const CACHE_NAME = 'heroes-game-cache-v3';
+const STATIC_CACHE_NAME = 'heroes-static-cache-v3';
 
 // Assets to cache immediately
 const STATIC_ASSETS = [
@@ -41,7 +41,7 @@ self.addEventListener('install', (event) => {
   );
 });
 
-// Activate event - clean old caches
+// Activate event - clean old caches and force update
 self.addEventListener('activate', (event) => {
   console.log('🔧 Game SW: Activating...');
   
@@ -58,8 +58,20 @@ self.addEventListener('activate', (event) => {
         );
       })
       .then(() => {
-        console.log('🔧 Game SW: Activation complete');
+        console.log('🔧 Game SW: Activation complete, claiming clients');
+        // Force all clients to use new service worker immediately
         return self.clients.claim();
+      })
+      .then(() => {
+        // Notify all clients to reload
+        return self.clients.matchAll().then(clients => {
+          clients.forEach(client => {
+            client.postMessage({
+              type: 'SW_ACTIVATED',
+              cacheName: CACHE_NAME
+            });
+          });
+        });
       })
   );
 });
@@ -108,18 +120,39 @@ function isAPIRequest(url) {
   return url.includes('/api/') || url.includes('/rest/v1/');
 }
 
-// Handle game assets with cache-first strategy
+// Handle game assets with cache-first strategy but always validate
 async function handleGameAsset(request) {
   try {
     const cache = await caches.open(CACHE_NAME);
+    
+    // For JS/CSS bundles, try network first to get latest version
+    if (request.url.match(/\/assets\/.*\.(js|css)$/)) {
+      try {
+        console.log('🎮 Game SW: Fetching latest bundle', request.url);
+        const networkResponse = await fetch(request, { cache: 'no-cache' });
+        
+        if (networkResponse.ok) {
+          const responseToCache = networkResponse.clone();
+          cache.put(request, responseToCache);
+          console.log('🎮 Game SW: Updated bundle cache', request.url);
+          return networkResponse;
+        }
+      } catch (networkError) {
+        console.warn('🎮 Game SW: Network failed for bundle, trying cache', request.url);
+        // Fall through to cache check
+      }
+    }
+    
     const cachedResponse = await cache.match(request);
     
     if (cachedResponse) {
       console.log('🎮 Game SW: Cache hit for', request.url);
       
-      // Background update for expired cache
-      if (shouldUpdateCache(cachedResponse)) {
-        updateCacheInBackground(request, cache);
+      // Background update for non-bundle assets
+      if (!request.url.match(/\/assets\/.*\.(js|css)$/)) {
+        if (shouldUpdateCache(cachedResponse)) {
+          updateCacheInBackground(request, cache);
+        }
       }
       
       return cachedResponse;
@@ -129,7 +162,6 @@ async function handleGameAsset(request) {
     const networkResponse = await fetch(request);
     
     if (networkResponse.ok) {
-      // Clone response before caching
       const responseToCache = networkResponse.clone();
       cache.put(request, responseToCache);
       console.log('🎮 Game SW: Cached', request.url);
