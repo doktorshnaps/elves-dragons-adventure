@@ -108,11 +108,15 @@ const DungeonDetail = ({
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-5 md:grid-cols-10 gap-2 mb-6">
-            {Array.from({
-            length: 10
-          }, (_, i) => i + 1).map(level => <button key={level} onClick={() => setSelectedLevel(level)} className={`p-2 rounded-3xl text-sm font-medium transition-colors ${selectedLevel === level ? 'bg-white text-black' : 'bg-white/10 text-white hover:bg-white/20'}`}>
+            {Array.from({ length: 100 }, (_, i) => i + 1).map(level => (
+              <button
+                key={level}
+                onClick={() => setSelectedLevel(level)}
+                className={`p-2 rounded-3xl text-sm font-medium transition-colors ${selectedLevel === level ? 'bg-white text-black' : 'bg-white/10 text-white hover:bg-white/20'}`}
+              >
                 {level}
-              </button>)}
+              </button>
+            ))}
           </div>
           
           <DungeonLevel dungeonType={dungeonType} level={selectedLevel} />
