@@ -78,11 +78,12 @@ function App() {
     try {
       // Register service worker and preload libs in idle time
       scheduleIdleTask(() => {
-        import('./utils/cacheStrategy').then(({ registerGameServiceWorker }) => {
-          registerGameServiceWorker().catch(error => {
-            console.error('❌ Error registering service worker:', error);
-          });
-        });
+        // Temporarily disable Service Worker on production to avoid stale vendor bundles
+        // import('./utils/cacheStrategy').then(({ registerGameServiceWorker }) => {
+        //   registerGameServiceWorker().catch(error => {
+        //     console.error('❌ Error registering service worker:', error);
+        //   });
+        // });
         
         import('./utils/bundleOptimizations').then(({ preloadCriticalLibs }) => {
           try {

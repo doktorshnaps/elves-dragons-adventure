@@ -25,12 +25,12 @@
     <!-- Defer Telegram script to not block initial render -->
     <script src="https://telegram.org/js/telegram-web-app.js" defer></script>
     
-    <!-- Early polyfills initialization for NEAR wallet - prevents "Cannot access before initialization" errors -->
+    <!-- Critical early polyfills for React and NEAR -->
     <script>
-      // Initialize global polyfills before any module loads
+      // Initialize globals immediately before any modules load
       window.global = window.globalThis = window;
-      window.process = window.process || { env: {}, browser: true };
-      window.Buffer = window.Buffer || undefined; // Will be set by vite polyfills
+      window.process = { env: {}, browser: true, version: '16.0.0' };
+      window.Buffer = window.Buffer || undefined;
     </script>
     
     <base href="/" />
@@ -58,6 +58,6 @@
       </div>
       <style>@keyframes spin{to{transform:rotate(360deg)}}</style>
     </div>
-    <script type="module" src="/src/main.tsx" fetchpriority="high"></script>
+    <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

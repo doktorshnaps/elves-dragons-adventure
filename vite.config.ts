@@ -46,32 +46,25 @@ export default defineConfig(({ mode }) => ({
     rollupOptions: {
       output: {
         manualChunks: (id) => {
-          // Split heavy libraries into separate chunks to reduce main thread blocking
+          // Simplified chunking - keep React together to avoid initialization issues
           if (id.includes('node_modules')) {
-            // React ecosystem
-            if (id.includes('react') || id.includes('react-dom') || id.includes('react-router')) {
+            // Keep React ecosystem together
+            if (id.includes('react') || id.includes('react-dom')) {
               return 'react-vendor';
             }
             // UI libraries
-            if (id.includes('lucide-react')) {
-              return 'lucide-icons';
-            }
-            if (id.includes('framer-motion')) {
-              return 'framer-motion';
-            }
             if (id.includes('@radix-ui')) {
               return 'radix-ui';
             }
-            // Keep default bundling for NEAR/Wallet libs to avoid circular init issues
             // Supabase
             if (id.includes('@supabase')) {
               return 'supabase-vendor';
             }
             // Other heavy libraries
-            if (id.includes('recharts') || id.includes('date-fns') || id.includes('lodash')) {
+            if (id.includes('framer-motion') || id.includes('lucide-react')) {
               return 'utils-vendor';
             }
-            // Remaining node_modules
+            // Remaining node_modules - keep smaller chunks
             return 'vendor';
           }
         },
@@ -82,27 +75,16 @@ export default defineConfig(({ mode }) => ({
   },
   optimizeDeps: {
     include: [
+      'react',
+      'react-dom',
+      'react-dom/client',
       'buffer',
-      'stream-browserify',
-      'crypto-browserify',
-      'util',
-      'assert',
       'process/browser',
-      'readable-stream',
-      'string_decoder',
-      'safe-buffer',
-      'process-nextick-args',
-    ],
-    exclude: [
-      '@near-wallet-selector/core',
-      '@near-wallet-selector/hot-wallet',
-      'near-api-js'
     ],
     esbuildOptions: {
       define: {
         global: 'globalThis',
       },
-      plugins: [],
     },
   },
   esbuild: {
