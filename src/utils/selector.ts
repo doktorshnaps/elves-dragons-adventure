@@ -1,6 +1,6 @@
 // src/utils/selector.ts
-import { setupWalletSelector } from "@near-wallet-selector/core";
-import { setupHotWallet } from "@near-wallet-selector/hot-wallet";
+// Use dynamic imports to avoid circular init issues in production bundles
+
 
 interface InitSelectorParams {
   miniApp?: boolean;
@@ -107,6 +107,11 @@ export async function initSelector({
       console.warn('⚠️ Failed to override location.replace (read-only in iframe):', e);
     }
   }
+
+  const [{ setupWalletSelector }, { setupHotWallet }] = await Promise.all([
+    import("@near-wallet-selector/core"),
+    import("@near-wallet-selector/hot-wallet"),
+  ]);
 
   return await setupWalletSelector({
     network: "mainnet",
