@@ -1,6 +1,8 @@
 import React from 'react';
 import { ErrorBoundary } from '@/components/common/ErrorBoundary';
 import { Toaster } from '@/components/ui/toaster';
+import { useAccountSync } from '@/hooks/useAccountSync';
+import { useGameSync } from '@/hooks/useGameSync';
 
 
 interface GameLayoutProps {
@@ -14,6 +16,10 @@ export const GameLayout = ({
   backgroundImage,
   showHeader = true 
 }: GameLayoutProps) => {
+  // Инициализируем синхронизацию (с guards внутри для проверки готовности wallet)
+  useAccountSync();
+  useGameSync();
+  
   return (
     <ErrorBoundary>
       

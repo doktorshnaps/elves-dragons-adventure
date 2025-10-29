@@ -8,7 +8,7 @@ import { useCardInstanceSync } from '@/hooks/useCardInstanceSync';
  * Синхронизирует локальное состояние Zustand с Supabase
  */
 export const useGameSync = () => {
-  const { accountId } = useWalletContext();
+  const { accountId, selector, isLoading: walletLoading } = useWalletContext();
   const isConnected = !!accountId;
   const { gameData, updateGameData, loading } = useGameData();
   const gameStore = useGameStore();
@@ -16,12 +16,8 @@ export const useGameSync = () => {
   const lastSyncedRef = useRef<any>(null);
   const prevAccountIdRef = useRef<string | null>(null);
   
-  // Инициализация синхронизации экземпляров карт
-  try {
-    useCardInstanceSync();
-  } catch (error) {
-    console.error('❌ Error in useCardInstanceSync:', error);
-  }
+  // Всегда вызываем хук, но внутри него будет проверка готовности
+  useCardInstanceSync();
 
   // Очищаем старые данные из localStorage при монтировании
   useEffect(() => {
@@ -97,6 +93,9 @@ export const useGameSync = () => {
 
   // Загружаем данные из Supabase в локальное состояние при инициализации
   useEffect(() => {
+    // Не загружаем данные пока wallet не готов
+    if (walletLoading || !selector) return;
+    
     if (!loading && isConnected && accountId && gameData) {
       isApplyingRef.current = true;
       try {
@@ -126,10 +125,12 @@ export const useGameSync = () => {
         setTimeout(() => { isApplyingRef.current = false; }, 0);
       }
     }
-  }, [loading, isConnected, accountId, gameData]);
+  }, [loading, isConnected, accountId, gameData, walletLoading, selector]);
 
   // Синхронизируем изменения локального состояния с Supabase (без зацикливания)
   useEffect(() => {
+    // Не синхронизируем пока wallet не готов
+    if (walletLoading || !selector) return;
     if (!isConnected || !accountId || loading) return;
     if (isApplyingRef.current) return;
 
@@ -173,7 +174,7 @@ export const useGameSync = () => {
 
     const timeoutId = setTimeout(syncToSupabase, 500);
     return () => clearTimeout(timeoutId);
-  }, [isConnected, accountId, loading, gameData, updateGameData]);
+  }, [isConnected, accountId, loading, gameData, updateGameData, walletLoading, selector]);
 
   return { loading };
 };

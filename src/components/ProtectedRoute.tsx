@@ -3,8 +3,6 @@ import { Navigate, useLocation } from 'react-router-dom';
 import { useWalletContext } from '@/contexts/WalletConnectContext';
 import { useWhitelist } from '@/hooks/useWhitelist';
 import { useAdminCheck } from '@/hooks/useAdminCheck';
-import { useAccountSync } from '@/hooks/useAccountSync';
-import { useGameSync } from '@/hooks/useGameSync';
 import { ComingSoon } from '@/components/ComingSoon';
 import { MaintenanceScreen } from '@/components/MaintenanceScreen';
 import { supabase } from '@/integrations/supabase/client';
@@ -25,10 +23,6 @@ export const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
     message: string;
   } | null>(null);
   const [maintenanceLoading, setMaintenanceLoading] = useState(true);
-  
-  // Инициализируем синхронизацию только для авторизованных пользователей
-  useAccountSync();
-  useGameSync();
 
   useEffect(() => {
     if (import.meta.env.DEV) {

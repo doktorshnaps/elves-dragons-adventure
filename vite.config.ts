@@ -52,8 +52,14 @@ export default defineConfig(({ mode }) => ({
             if (id.includes('@radix-ui')) {
               return 'radix-ui';
             }
-            // Blockchain/Wallet libraries
-            if (id.includes('near') || id.includes('wallet')) {
+            // Blockchain/Wallet libraries - split into smaller chunks
+            if (id.includes('near-api-js')) {
+              return 'near-api';
+            }
+            if (id.includes('@near-wallet-selector')) {
+              return 'near-wallet-selector';
+            }
+            if (id.includes('wallet') || id.includes('near')) {
               return 'near-vendor';
             }
             // Supabase
@@ -93,9 +99,9 @@ export default defineConfig(({ mode }) => ({
     },
   },
   esbuild: {
-    // Aggressive minification settings for production
+    // More conservative minification to avoid breaking NEAR wallet selector
     legalComments: 'none',
-    minifyIdentifiers: true,
+    minifyIdentifiers: false, // Отключаем минификацию идентификаторов для NEAR
     minifySyntax: true,
     minifyWhitespace: true,
   },

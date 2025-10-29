@@ -26,7 +26,7 @@ export interface CardInstance {
 }
 
 export const useCardInstances = () => {
-  const { accountId } = useWalletContext();
+  const { accountId, selector, isLoading: walletLoading } = useWalletContext();
   const isConnected = !!accountId;
   const { toast } = useToast();
   const { gameData } = useGameData();
@@ -38,6 +38,11 @@ export const useCardInstances = () => {
 
   // Загрузка всех экземпляров карт пользователя
   const loadCardInstances = useCallback(async () => {
+    // Не загружаем пока wallet не готов
+    if (walletLoading || !selector) {
+      console.log('⏭️ Wallet not ready, skipping loadCardInstances');
+      return;
+    }
     if (!isConnected || !accountId) return;
     
     // Предотвращаем одновременные вызовы
@@ -74,7 +79,7 @@ export const useCardInstances = () => {
       isLoadingInstancesRef.current = false;
       setLoading(false);
     }
-  }, [accountId, isConnected, toast, gameData?.cards, gameData?.selectedTeam]);
+  }, [accountId, isConnected, toast, gameData?.cards, gameData?.selectedTeam, selector, walletLoading]);
 
   // Создание нового экземпляра карты
   const createCardInstance = useCallback(async (card: Card, cardType: 'hero' | 'dragon') => {

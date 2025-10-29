@@ -1,6 +1,7 @@
 import { useEffect, useCallback, useRef, useMemo } from 'react';
 import { useCardInstances } from './useCardInstances';
 import { useGameData } from './useGameData';
+import { useWalletContext } from '@/contexts/WalletConnectContext';
 import { Card, CardType } from '@/types/cards';
 import debounce from 'lodash.debounce';
 
@@ -8,6 +9,7 @@ const HEAL_INTERVAL = 60 * 1000; // 1 минута
 const HEAL_RATE = 1; // 1 HP за минуту
 
 export const useCardInstanceSync = () => {
+  const { selector, isLoading: walletLoading } = useWalletContext();
   const { cardInstances, updateCardHealth, createCardInstance, deleteCardInstanceByTemplate } = useCardInstances();
   const { gameData, updateGameData } = useGameData();
 
@@ -15,11 +17,20 @@ export const useCardInstanceSync = () => {
   const isSyncingRef = useRef(false);
   const lastSyncedDataRef = useRef<string>('');
 
+  // Не синхронизируем пока wallet не готов
+  const isWalletReady = !walletLoading && selector;
+
   // ОТКЛЮЧЕНО создание экземпляров из gameData.cards - card_instances теперь источник истины
   // Больше не создаем экземпляры из gameData.cards, так как это может создавать дубликаты
 
   // Синхронизация всех карт из card_instances обратно в gameData
   const syncAllCardsFromInstancesInternal = useCallback(async () => {
+    // Не синхронизируем пока wallet не готов
+    if (!isWalletReady) {
+      console.log('⏭️ Wallet not ready, skipping sync');
+      return;
+    }
+    
     // Проверка: если уже идет синхронизация, пропускаем
     if (isSyncingRef.current) {
       console.log('⏭️ Sync already in progress, skipping...');
@@ -179,7 +190,7 @@ export const useCardInstanceSync = () => {
       // Всегда снимаем флаг синхронизации
       isSyncingRef.current = false;
     }
-  }, [cardInstances, gameData.cards, updateGameData]);
+  }, [cardInstances, gameData.cards, updateGameData, isWalletReady]);
 
   // Debounced версия синхронизации для предотвращения частых вызовов
   const syncAllCardsFromInstances = useMemo(
@@ -200,7 +211,7 @@ export const useCardInstanceSync = () => {
 
   // Обработка регенерации здоровья
   const processHealthRegeneration = useCallback(async () => {
-    if (!cardInstances.length) return;
+    if (!isWalletReady || !cardInstances.length) return;
 
     const now = Date.now();
     
@@ -223,10 +234,12 @@ export const useCardInstanceSync = () => {
         }
       }
     }
-  }, [cardInstances, updateCardHealth]);
+  }, [cardInstances, updateCardHealth, isWalletReady]);
 
   // Применение урона к экземпляру по ID карты
   const applyDamageToCard = useCallback(async (cardId: string, damage: number) => {
+    if (!isWalletReady) return;
+    
     const instance = cardInstances.find(ci => ci.card_template_id === cardId);
     if (instance) {
       const newHealth = Math.max(0, instance.current_health - damage);
@@ -241,13 +254,15 @@ export const useCardInstanceSync = () => {
       });
       window.dispatchEvent(event);
     }
-  }, [cardInstances, updateCardHealth]);
+  }, [cardInstances, updateCardHealth, isWalletReady]);
 
   // ОТКЛЮЧЕНО создание экземпляров из gameData - источник истины теперь card_instances
 
   useEffect(() => {
-    syncAllCardsFromInstances();
-  }, [syncAllCardsFromInstances]);
+    if (isWalletReady) {
+      syncAllCardsFromInstances();
+    }
+  }, [syncAllCardsFromInstances, isWalletReady]);
 
   // ОТКЛЮЧЕНА очистка экземпляров - card_instances теперь источник истины
   // useEffect для очистки ОТКЛЮЧЕН, чтобы не удалять корректные карты
