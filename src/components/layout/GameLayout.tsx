@@ -16,11 +16,12 @@ export const GameLayout = ({
   backgroundImage,
   showHeader = true 
 }: GameLayoutProps) => {
-  const { loading } = useGameSync();
+  // Не вызываем useGameSync на страницах без авторизации
+  const isConnected = typeof window !== 'undefined' && localStorage.getItem('walletAccountId');
+  const { loading } = isConnected ? useGameSync() : { loading: false };
 
-  // Не показываем загрузку на главной странице и страницах без авторизации
-  const shouldShowLoading = loading && typeof window !== 'undefined' && 
-    localStorage.getItem('walletAccountId') && 
+  // Показываем загрузку только на авторизованных страницах
+  const shouldShowLoading = loading && isConnected && 
     window.location.pathname !== '/' && 
     window.location.pathname !== '/auth';
 

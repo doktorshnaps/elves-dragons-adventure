@@ -46,7 +46,13 @@ function App() {
   // Добавляем обработку ошибок в хуках
   try {
     useAccountSync();
-    useGameSync();
+    
+    // Запускаем синхронизацию только если кошелек подключен
+    const isConnected = typeof window !== 'undefined' && localStorage.getItem('walletAccountId');
+    if (isConnected) {
+      useGameSync();
+    }
+    
     useRoutePreloader();
     useNFTStatsRecalculation();
     useSecureStorage();
