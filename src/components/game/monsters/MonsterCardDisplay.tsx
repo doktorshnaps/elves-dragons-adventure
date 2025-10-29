@@ -1,7 +1,7 @@
-import React, { memo } from "react";
+import React, { memo, useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { HoverCard, HoverCardContent, HoverCardTrigger } from "@/components/ui/hover-card";
+import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
 import { Heart, Sword, Shield, Skull, Coins } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { generateLootTable, formatDropChance } from "@/utils/lootUtils";
@@ -30,6 +30,7 @@ export const MonsterCardDisplay = memo(({
   onClick
 }: MonsterCardDisplayProps) => {
   const isMobile = useIsMobile();
+  const [isOpen, setIsOpen] = useState(false);
   const lootTable = generateLootTable(isBoss || false);
 
   const CardContent = () => (
@@ -212,21 +213,16 @@ export const MonsterCardDisplay = memo(({
   }
 
   return (
-    <HoverCard openDelay={300} closeDelay={150}>
-      <HoverCardTrigger asChild>
+    <Dialog open={isOpen} onOpenChange={setIsOpen}>
+      <DialogTrigger asChild>
         <div>
           <CardContent />
         </div>
-      </HoverCardTrigger>
-      <HoverCardContent 
-        side="right" 
-        align="start"
-        className="p-0 border-0 bg-transparent shadow-none z-50"
-        sideOffset={10}
-      >
+      </DialogTrigger>
+      <DialogContent className="p-0 border-0 bg-transparent shadow-none max-w-fit">
         <ExpandedCardContent />
-      </HoverCardContent>
-    </HoverCard>
+      </DialogContent>
+    </Dialog>
   );
 });
 
