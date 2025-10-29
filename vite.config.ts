@@ -45,29 +45,7 @@ export default defineConfig(({ mode }) => ({
     cssCodeSplit: true,
     rollupOptions: {
       output: {
-        manualChunks: (id) => {
-          // Simplified chunking - keep React together to avoid initialization issues
-          if (id.includes('node_modules')) {
-            // Keep React ecosystem together
-            if (id.includes('react') || id.includes('react-dom')) {
-              return 'react-vendor';
-            }
-            // UI libraries
-            if (id.includes('@radix-ui')) {
-              return 'radix-ui';
-            }
-            // Supabase
-            if (id.includes('@supabase')) {
-              return 'supabase-vendor';
-            }
-            // Other heavy libraries
-            if (id.includes('framer-motion') || id.includes('lucide-react')) {
-              return 'utils-vendor';
-            }
-            // Remaining node_modules - keep smaller chunks
-            return 'vendor';
-          }
-        },
+        manualChunks: undefined, // Disable all manual chunking to prevent React init issues
       },
     },
     // Reduce chunk size warnings threshold

@@ -45,6 +45,24 @@
         }
       })();
     </script>
+    <script>
+      // One-time Service Worker cleanup to fix stale vendor bundles
+      (function() {
+        try {
+          if ('serviceWorker' in navigator && !sessionStorage.getItem('swCleanupDone')) {
+            navigator.serviceWorker.getRegistrations().then(async (regs) => {
+              try { await Promise.all(regs.map(r => r.unregister())); } catch (e) { /* no-op */ }
+              try {
+                const keys = await caches.keys();
+                await Promise.all(keys.map(k => caches.delete(k)));
+              } catch (e) { /* no-op */ }
+              sessionStorage.setItem('swCleanupDone', '1');
+              location.reload();
+            });
+          }
+        } catch (e) { /* no-op */ }
+      })();
+    </script>
   </head>
 
   <body>
