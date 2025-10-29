@@ -11,16 +11,12 @@
     
     <!-- Telegram Mini App Configuration -->
     <meta name="telegram-webapp-manifest" content="/manifest.json" />
-    <meta http-equiv="Content-Security-Policy" content="frame-ancestors 'self' https://web.telegram.org https://*.telegram.org https://t.me https://*.t.me" />
     
     <!-- Preconnect to external domains for faster loading -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link rel="preconnect" href="https://telegram.org">
     <link rel="preconnect" href="https://oimhwdymghkwxznjarkv.supabase.co">
-    
-    <!-- Preload critical resources for faster LCP -->
-    <link rel="modulepreload" href="/src/main.tsx" as="script">
     
     <!-- Optimized font loading - asynchronous loading to prevent render blocking -->
     <link href="https://fonts.googleapis.com/css2?family=MedievalSharp&display=swap" rel="stylesheet" media="print" onload="this.media='all'">

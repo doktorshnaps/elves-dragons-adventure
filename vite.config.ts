@@ -62,16 +62,7 @@ export default defineConfig(({ mode }) => ({
             if (id.includes('@radix-ui')) {
               return 'radix-ui';
             }
-            // Blockchain/Wallet libraries - split into smaller chunks
-            if (id.includes('near-api-js')) {
-              return 'near-api';
-            }
-            if (id.includes('@near-wallet-selector')) {
-              return 'near-wallet-selector';
-            }
-            if (id.includes('wallet') || id.includes('near')) {
-              return 'near-vendor';
-            }
+            // Keep default bundling for NEAR/Wallet libs to avoid circular init issues
             // Supabase
             if (id.includes('@supabase')) {
               return 'supabase-vendor';
@@ -101,6 +92,11 @@ export default defineConfig(({ mode }) => ({
       'string_decoder',
       'safe-buffer',
       'process-nextick-args',
+    ],
+    exclude: [
+      '@near-wallet-selector/core',
+      '@near-wallet-selector/hot-wallet',
+      'near-api-js'
     ],
     esbuildOptions: {
       define: {
