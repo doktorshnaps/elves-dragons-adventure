@@ -9,9 +9,20 @@ import { useLanguage } from '@/hooks/useLanguage';
 import { t } from '@/utils/translations';
 import { Card as CardType } from '@/types/cards';
 import { CardDisplay } from '../CardDisplay';
-
+import { useItemInstances } from '@/hooks/useItemInstances';
 import { initializeCardHealth } from '@/utils/cardHealthUtils';
-import { Flame, Clock, Star, ArrowRight } from 'lucide-react';
+import { Flame, Clock, Star, ArrowRight, Coins, Sparkles, AlertCircle } from 'lucide-react';
+import { getUpgradeRequirement, rollUpgradeSuccess } from '@/utils/upgradeRequirements';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 interface DragonUpgrade {
   id: string;
@@ -33,6 +44,9 @@ export const DragonLair: React.FC<DragonLairProps> = ({ lairLevel, onUpgradeBuil
   const { gameData, updateGameData } = useGameData();
   const { language } = useLanguage();
   const [currentTime, setCurrentTime] = useState(Date.now());
+  const { instances: itemInstances, getCountsByItemId, removeItemInstancesByIds } = useItemInstances();
+  const [upgradeDialogOpen, setUpgradeDialogOpen] = useState(false);
+  const [pendingUpgradeDragons, setPendingUpgradeDragons] = useState<CardType[]>([]);
 
   // Initialize cards without passive regeneration
   const initializedCards = (gameData.cards as CardType[] || []).map(initializeCardHealth);
@@ -146,7 +160,46 @@ export const DragonLair: React.FC<DragonLairProps> = ({ lairLevel, onUpgradeBuil
     return activeUpgrades.length < getMaxConcurrentUpgrades();
   };
 
-  const startUpgrade = async (dragons: CardType[]) => {
+  const checkUpgradeRequirements = (dragons: CardType[]): { canUpgrade: boolean; missingItems: string[] } => {
+    if (dragons.length < 2) return { canUpgrade: false, missingItems: ['Недостаточно драконов'] };
+    
+    const dragon = dragons[0];
+    const requirements = getUpgradeRequirement(dragon.rarity, 'dragonLair');
+    
+    if (!requirements) return { canUpgrade: false, missingItems: ['Нет данных об улучшении'] };
+    
+    const missingItems: string[] = [];
+    const itemCounts = getCountsByItemId();
+    
+    // Check resources
+    if (requirements.costs.balance && gameData.balance < requirements.costs.balance) {
+      missingItems.push(`Монет: ${requirements.costs.balance - gameData.balance}`);
+    }
+    if (requirements.costs.wood && gameData.wood < requirements.costs.wood) {
+      missingItems.push(`Дерева: ${requirements.costs.wood - gameData.wood}`);
+    }
+    if (requirements.costs.stone && gameData.stone < requirements.costs.stone) {
+      missingItems.push(`Камня: ${requirements.costs.stone - gameData.stone}`);
+    }
+    if (requirements.costs.iron && gameData.iron < requirements.costs.iron) {
+      missingItems.push(`Железа: ${requirements.costs.iron - gameData.iron}`);
+    }
+    if (requirements.costs.gold && (gameData.gold || 0) < requirements.costs.gold) {
+      missingItems.push(`Золота: ${requirements.costs.gold - (gameData.gold || 0)}`);
+    }
+    
+    // Check required items
+    requirements.requiredItems.forEach(reqItem => {
+      const available = itemCounts[reqItem.itemId] || 0;
+      if (available < reqItem.quantity) {
+        missingItems.push(`${reqItem.name}: ${reqItem.quantity - available}`);
+      }
+    });
+    
+    return { canUpgrade: missingItems.length === 0, missingItems };
+  };
+
+  const initiateDragonUpgrade = (dragons: CardType[]) => {
     if (!canStartUpgrade()) {
       toast({
         title: 'Недостаточно места',
@@ -165,54 +218,123 @@ export const DragonLair: React.FC<DragonLairProps> = ({ lairLevel, onUpgradeBuil
       return;
     }
 
-    const dragon1 = dragons[0];
-    const dragon2 = dragons[1];
+    const dragon = dragons[0];
     
-    if (dragon1.rarity > lairLevel) {
+    if (dragon.rarity > lairLevel) {
       toast({
         title: 'Недостаточный уровень логова',
-        description: `Для улучшения драконов ${dragon1.rarity} ранга нужно логово уровня ${dragon1.rarity}`,
+        description: `Для улучшения драконов ${dragon.rarity} ранга нужно логово уровня ${dragon.rarity}`,
         variant: 'destructive'
       });
       return;
     }
 
-    const upgradeTime = getUpgradeTime(dragon1.rarity);
-    const startTime = Date.now();
-    const endTime = startTime + upgradeTime;
-
-    const newUpgrade: DragonUpgrade = {
-      id: `${dragon1.id}_${startTime}`,
-      dragonId: dragon1.id,
-      startTime,
-      endTime,
-      fromRarity: dragon1.rarity,
-      toRarity: dragon1.rarity + 1,
-      baseCard: dragon1
-    };
-
-    // Remove the two used dragons from cards
-    const currentCards = gameData.cards as CardType[] || [];
-    const newCards = currentCards.filter(c => c.id !== dragon1.id && c.id !== dragon2.id);
+    const { canUpgrade, missingItems } = checkUpgradeRequirements(dragons);
     
-    // Add new upgrade to Supabase
-    const updatedUpgrades = [...activeUpgrades, newUpgrade];
+    if (!canUpgrade) {
+      toast({
+        title: 'Недостаточно ресурсов',
+        description: `Не хватает: ${missingItems.join(', ')}`,
+        variant: 'destructive'
+      });
+      return;
+    }
+
+    setPendingUpgradeDragons(dragons);
+    setUpgradeDialogOpen(true);
+  };
+
+  const executeDragonUpgrade = async () => {
+    const dragons = pendingUpgradeDragons;
+    if (dragons.length < 2) return;
+
+    const dragon1 = dragons[0];
+    const dragon2 = dragons[1];
+    const requirements = getUpgradeRequirement(dragon1.rarity, 'dragonLair');
     
-    await updateGameData({ 
-      cards: newCards,
-      dragonLairUpgrades: updatedUpgrades
+    if (!requirements) return;
+
+    // Roll for success
+    const isSuccess = rollUpgradeSuccess(requirements.successChance);
+
+    // Remove resources and items regardless of success
+    const resourceUpdates: any = {};
+    
+    if (requirements.costs.balance) {
+      resourceUpdates.balance = gameData.balance - requirements.costs.balance;
+    }
+    if (requirements.costs.wood) {
+      resourceUpdates.wood = gameData.wood - requirements.costs.wood;
+    }
+    if (requirements.costs.stone) {
+      resourceUpdates.stone = gameData.stone - requirements.costs.stone;
+    }
+    if (requirements.costs.iron) {
+      resourceUpdates.iron = gameData.iron - requirements.costs.iron;
+    }
+    if (requirements.costs.gold) {
+      resourceUpdates.gold = (gameData.gold || 0) - requirements.costs.gold;
+    }
+
+    // Remove required items
+    const itemsToRemove: string[] = [];
+    requirements.requiredItems.forEach(reqItem => {
+      const availableInstances = itemInstances.filter(inst => 
+        (inst.item_id === reqItem.itemId || inst.name === reqItem.name)
+      ).slice(0, reqItem.quantity);
+      itemsToRemove.push(...availableInstances.map(inst => inst.id));
     });
 
-    toast({
-      title: 'Улучшение начато!',
-      description: `${dragon1.name} будет улучшен через ${Math.ceil(upgradeTime / 1000)} секунд`,
-    });
+    if (itemsToRemove.length > 0) {
+      await removeItemInstancesByIds(itemsToRemove);
+    }
 
-    // Dispatch event to update cards in other components
-    const cardsEvent = new CustomEvent('cardsUpdate', {
-      detail: { cards: newCards }
-    });
-    window.dispatchEvent(cardsEvent);
+    if (isSuccess) {
+      // Success: create upgraded dragon immediately
+      const upgradedDragon: CardType = {
+        ...dragon1,
+        id: Date.now().toString() + Math.random().toString(36).substr(2, 9),
+        rarity: (dragon1.rarity + 1) as any,
+        power: Math.floor(dragon1.power * 1.8),
+        defense: Math.floor(dragon1.defense * 1.8),
+        health: Math.floor(dragon1.health * 1.8),
+        magic: Math.floor(dragon1.magic * 1.8)
+      };
+
+      // Remove both dragons and add upgraded one
+      const currentCards = gameData.cards as CardType[] || [];
+      const newCards = currentCards
+        .filter(c => c.id !== dragon1.id && c.id !== dragon2.id)
+        .concat(upgradedDragon);
+
+      await updateGameData({
+        ...resourceUpdates,
+        cards: newCards
+      });
+
+      toast({
+        title: '✨ Улучшение успешно!',
+        description: `${dragon1.name} улучшен до ${dragon1.rarity + 1} ранга!`,
+      });
+
+      // Dispatch event to update cards
+      const cardsEvent = new CustomEvent('cardsUpdate', {
+        detail: { cards: newCards }
+      });
+      window.dispatchEvent(cardsEvent);
+    } else {
+      // Failure: dragons stay, but resources are consumed
+      await updateGameData(resourceUpdates);
+
+      toast({
+        title: '❌ Улучшение не удалось',
+        description: `Попытка улучшения провалилась. Драконы остались, но ресурсы потрачены.`,
+        variant: 'destructive'
+      });
+    }
+
+    setUpgradeDialogOpen(false);
+    setPendingUpgradeDragons([]);
   };
 
   const formatTimeRemaining = (endTime: number): string => {
@@ -382,19 +504,23 @@ export const DragonLair: React.FC<DragonLairProps> = ({ lairLevel, onUpgradeBuil
           ) : (
             <div className="space-y-6">
               {Object.entries(upgradeableGroups).map(([key, dragons]) => {
-                 const dragon = dragons[0];
-                 const previewUpgraded = {
-                   ...dragon,
-                   rarity: (dragon.rarity + 1) as any,
-                   power: Math.floor(dragon.power * 1.8),
-                   defense: Math.floor(dragon.defense * 1.8),
-                   health: Math.floor(dragon.health * 1.8),
-                   magic: Math.floor(dragon.magic * 1.8)
-                 };
-                 
-                 return (
-                    <div key={key} className="p-2 sm:p-4 border border-primary/20 rounded-lg overflow-hidden">
-                      <div className="flex flex-col sm:flex-row items-start gap-2 sm:gap-4 mb-4">
+                  const dragon = dragons[0];
+                  const previewUpgraded = {
+                    ...dragon,
+                    rarity: (dragon.rarity + 1) as any,
+                    power: Math.floor(dragon.power * 1.8),
+                    defense: Math.floor(dragon.defense * 1.8),
+                    health: Math.floor(dragon.health * 1.8),
+                    magic: Math.floor(dragon.magic * 1.8)
+                  };
+                  
+                  const requirements = getUpgradeRequirement(dragon.rarity, 'dragonLair');
+                  const { canUpgrade, missingItems } = checkUpgradeRequirements(dragons);
+                  const itemCounts = getCountsByItemId();
+                  
+                  return (
+                     <div key={key} className="p-2 sm:p-4 border border-primary/20 rounded-lg overflow-hidden">
+                       <div className="flex flex-col sm:flex-row items-start gap-2 sm:gap-4 mb-4">
                         {/* Current Dragons Preview */}
                         <div className="flex-shrink-0 w-full sm:w-auto">
                           <div className="text-xs text-muted-foreground mb-2">
@@ -429,31 +555,77 @@ export const DragonLair: React.FC<DragonLairProps> = ({ lairLevel, onUpgradeBuil
                           </div>
                         </div>
                         
-                        {/* Dragon Info and Action */}
-                        <div className="flex-1 w-full">
-                          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
-                            <div className="w-full sm:w-auto">
-                              <h4 className="font-medium text-sm sm:text-base">{dragon.name}</h4>
-                              <p className="text-xs sm:text-sm text-muted-foreground">
-                                {dragon.faction} • Ранг {dragon.rarity} → {dragon.rarity + 1}
-                              </p>
-                              <div className="text-xs text-muted-foreground mt-1 grid grid-cols-2 sm:flex sm:flex-col gap-1">
-                                <div>⚔️ {dragon.power} → {previewUpgraded.power}</div>
-                                <div>🛡️ {dragon.defense} → {previewUpgraded.defense}</div>
-                                <div>❤️ {dragon.health} → {previewUpgraded.health}</div>
-                                <div>✨ {dragon.magic} → {previewUpgraded.magic}</div>
-                              </div>
-                            </div>
-                            <Button
-                              onClick={() => startUpgrade(dragons)}
-                              disabled={!canStartUpgrade() || dragons.length < 2}
-                              size="sm"
-                              className="w-full sm:w-auto whitespace-nowrap"
-                            >
-                              Улучшить ({getUpgradeTime(dragon.rarity) / 1000}с)
-                            </Button>
-                          </div>
-                        </div>
+                         {/* Dragon Info and Action */}
+                         <div className="flex-1 w-full">
+                           <div className="flex flex-col gap-3">
+                             <div>
+                               <h4 className="font-medium text-sm sm:text-base">{dragon.name}</h4>
+                               <p className="text-xs sm:text-sm text-muted-foreground">
+                                 {dragon.faction} • Ранг {dragon.rarity} → {dragon.rarity + 1}
+                               </p>
+                             </div>
+                             
+                             {requirements && (
+                               <div className="space-y-2">
+                                 <div className="flex items-center gap-2">
+                                   <Sparkles className="w-3 h-3 text-yellow-500" />
+                                   <span className="text-xs font-medium">Шанс успеха: {requirements.successChance}%</span>
+                                 </div>
+                                 
+                                 <div className="space-y-1">
+                                   <div className="text-xs font-medium">Требования:</div>
+                                   <div className="flex flex-wrap gap-1">
+                                     {requirements.costs.balance && (
+                                       <Badge variant="outline" className="text-xs">
+                                         <Coins className="w-3 h-3 mr-1" />
+                                         {requirements.costs.balance}
+                                       </Badge>
+                                     )}
+                                     {requirements.costs.wood && (
+                                       <Badge variant="outline" className="text-xs">🪵 {requirements.costs.wood}</Badge>
+                                     )}
+                                     {requirements.costs.stone && (
+                                       <Badge variant="outline" className="text-xs">🪨 {requirements.costs.stone}</Badge>
+                                     )}
+                                     {requirements.costs.iron && (
+                                       <Badge variant="outline" className="text-xs">⚙️ {requirements.costs.iron}</Badge>
+                                     )}
+                                     {requirements.costs.gold && (
+                                       <Badge variant="outline" className="text-xs">💰 {requirements.costs.gold}</Badge>
+                                     )}
+                                   </div>
+                                   
+                                   {requirements.requiredItems.length > 0 && (
+                                     <div className="flex flex-wrap gap-1 mt-1">
+                                       {requirements.requiredItems.map(item => {
+                                         const available = itemCounts[item.itemId] || 0;
+                                         const hasEnough = available >= item.quantity;
+                                         return (
+                                           <Badge 
+                                             key={item.itemId} 
+                                             variant={hasEnough ? "secondary" : "destructive"}
+                                             className="text-xs"
+                                           >
+                                             {item.name}: {available}/{item.quantity}
+                                           </Badge>
+                                         );
+                                       })}
+                                     </div>
+                                   )}
+                                 </div>
+                               </div>
+                             )}
+                             
+                             <Button
+                               onClick={() => initiateDragonUpgrade(dragons)}
+                               disabled={!canStartUpgrade() || !canUpgrade}
+                               className="w-full sm:w-auto"
+                               size="sm"
+                             >
+                               {!canStartUpgrade() ? 'Нет места' : !canUpgrade ? 'Недостаточно ресурсов' : 'Улучшить'}
+                             </Button>
+                           </div>
+                         </div>
                       </div>
                     </div>
                  );
@@ -462,6 +634,55 @@ export const DragonLair: React.FC<DragonLairProps> = ({ lairLevel, onUpgradeBuil
           )}
         </CardContent>
       </Card>
+
+      {/* Upgrade Confirmation Dialog */}
+      <AlertDialog open={upgradeDialogOpen} onOpenChange={setUpgradeDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2">
+              <AlertCircle className="w-5 h-5 text-yellow-500" />
+              Подтверждение улучшения
+            </AlertDialogTitle>
+            <AlertDialogDescription className="space-y-3">
+              {pendingUpgradeDragons.length > 0 && (() => {
+                const dragon = pendingUpgradeDragons[0];
+                const requirements = getUpgradeRequirement(dragon.rarity, 'dragonLair');
+                
+                return requirements ? (
+                  <>
+                    <p>
+                      Вы хотите улучшить <strong>{dragon.name}</strong> с {dragon.rarity} до {dragon.rarity + 1} ранга.
+                    </p>
+                    <div className="p-3 bg-yellow-500/10 border border-yellow-500/20 rounded-lg">
+                      <p className="font-medium text-yellow-600 dark:text-yellow-400 mb-2">
+                        ⚠️ Шанс успеха: {requirements.successChance}%
+                      </p>
+                      <p className="text-xs">
+                        <strong>При успехе:</strong> Драконы объединятся в улучшенного дракона {dragon.rarity + 1} ранга.
+                      </p>
+                      <p className="text-xs mt-1">
+                        <strong>При неудаче:</strong> Драконы останутся, но все ресурсы и предметы будут потрачены.
+                      </p>
+                    </div>
+                    <p className="text-sm">
+                      Будет потрачено: {Object.entries(requirements.costs).filter(([_, v]) => v).map(([key, value]) => 
+                        `${key === 'balance' ? 'Монеты' : key === 'wood' ? 'Дерево' : key === 'stone' ? 'Камень' : key === 'iron' ? 'Железо' : 'Золото'}: ${value}`
+                      ).join(', ')}
+                      {requirements.requiredItems.length > 0 && `, ${requirements.requiredItems.map(i => `${i.name} x${i.quantity}`).join(', ')}`}
+                    </p>
+                  </>
+                ) : null;
+              })()}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Отмена</AlertDialogCancel>
+            <AlertDialogAction onClick={executeDragonUpgrade}>
+              Улучшить
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };
