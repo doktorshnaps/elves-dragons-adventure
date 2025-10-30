@@ -96,7 +96,7 @@ export async function updateGameDataByWalletThrottled(payload: Record<string, an
       for (const [k, v] of Object.entries(toSend)) {
         if (v !== undefined) args[k] = v; // keep nulls if explicitly set
       }
-      const { data, error } = await supabase.rpc('update_game_data_by_wallet', args as any);
+      const { data, error } = await supabase.rpc('update_game_data_by_wallet_v2', args as any);
       if (error) throw error;
       return data === true;
     };
