@@ -1,10 +1,14 @@
 import { supabase } from '@/integrations/supabase/client';
 import { MarketplaceListing } from '@/components/game/marketplace/types';
+import { useItemInstances } from '@/hooks/useItemInstances';
 
 /**
  * Hook for marketplace purchase and listing operations
+ * Работает ТОЛЬКО с item_instances (единственный источник истины)
  */
 export const useMarketplaceOperations = () => {
+  const { addItemInstances } = useItemInstances();
+
   /**
    * Create a new marketplace listing
    */
@@ -85,7 +89,8 @@ export const useMarketplaceOperations = () => {
   };
 
   /**
-   * Ensure purchased item is in local state
+   * Ensure purchased item is in local state and item_instances
+   * Добавляет предмет в item_instances, если его там нет после покупки
    */
   const ensurePurchaseApplied = async (
     userId: string,
@@ -97,7 +102,7 @@ export const useMarketplaceOperations = () => {
 
     const { data: gd } = await supabase
       .from('game_data')
-      .select('inventory,cards')
+      .select('cards')
       .eq('user_id', userId)
       .maybeSingle();
 
@@ -119,22 +124,16 @@ export const useMarketplaceOperations = () => {
         }));
       }
     } else {
-      const inventory = ((gd?.inventory as any[]) || []);
-      const hasItem = inventory.some((it: any) => it?.id === purchasedId);
+      // Для предметов - добавляем в item_instances, если еще нет
+      const item = listing.item as any;
+      console.log('[Marketplace] Ensuring item is in item_instances:', item);
       
-      if (!hasItem) {
-        console.warn('[Marketplace] Item missing after purchase, patching locally', { 
-          purchasedId, 
-          listingId: listing.id 
-        });
-        
-        const patched = [...inventory, listing.item as any];
-        await updateGameData({ inventory: patched as any });
-        localStorage.setItem('gameInventory', JSON.stringify(patched));
-        window.dispatchEvent(new CustomEvent('inventoryUpdate', { 
-          detail: { inventory: patched } 
-        }));
-      }
+      await addItemInstances([{
+        name: item.name,
+        type: item.type || 'material'
+      }]);
+      
+      console.log('[Marketplace] Item added to item_instances');
     }
   };
 

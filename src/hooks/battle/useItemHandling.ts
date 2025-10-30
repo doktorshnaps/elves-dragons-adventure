@@ -1,8 +1,8 @@
-
 import { Item } from "@/types/inventory";
 import { PlayerStats } from "@/types/battle";
 import { useToast } from '@/hooks/use-toast';
 import { useInitialBattleState } from './useInitialBattleState';
+import { useItemInstances } from '@/hooks/useItemInstances';
 
 export const useItemHandling = (
   playerStats: PlayerStats | null,
@@ -12,8 +12,9 @@ export const useItemHandling = (
 ) => {
   const { toast } = useToast();
   const initialState = useInitialBattleState();
+  const { removeItemInstancesByIds } = useItemInstances();
 
-  const useItem = (item: Item) => {
+  const useItem = async (item: Item) => {
     if (!playerStats) return;
     
     if (item.type === "healthPotion") {
@@ -36,6 +37,9 @@ export const useItemHandling = (
         description: `Восстановлено ${item.value} здоровья`,
         duration: 2000
       });
+      
+      // Удаляем предмет из item_instances
+      await removeItemInstancesByIds([item.id]);
     } else if (item.type === "cardPack") {
       toast({
         title: "Недоступно",
@@ -45,12 +49,9 @@ export const useItemHandling = (
       return; // Не удаляем предмет, если это колода карт
     }
 
-    // Удаляем использованный предмет из инвентаря
+    // Удаляем использованный предмет из локального состояния
     const newInventory = inventory.filter(i => i.id !== item.id);
     updateInventory(newInventory);
-
-    // Сохраняем обновленное состояние инвентаря
-    localStorage.setItem('gameInventory', JSON.stringify(newInventory));
 
     // Обновляем UI через событие
     const event = new CustomEvent('inventoryUpdate', {

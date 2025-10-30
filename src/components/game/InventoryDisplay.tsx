@@ -15,7 +15,6 @@ import { GroupedItem } from "./inventory/types";
 import { cardDatabase } from "@/data/cardDatabase";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useCardInstances } from "@/hooks/useCardInstances";
-import { useInventoryCleanup } from "@/hooks/useInventoryCleanup";
 import { useItemInstances } from "@/hooks/useItemInstances";
 
 interface InventoryDisplayProps {
@@ -38,9 +37,10 @@ export const InventoryDisplay = ({
   const inventory = gameData.inventory || [];
   const { toast } = useToast();
   
-  // Очищаем рабочих из inventory при загрузке
-  useInventoryCleanup();
-  
+  // Очистка рабочих из inventory больше не нужна - они хранятся только в card_instances
+  // useInventoryCleanup был удален
+
+  // Источник истины: используем ТОЛЬКО item_instances для всех предметов
   const {
     balance,
     groupItems,
@@ -121,7 +121,7 @@ console.log('✨ Final inventory to display:', {
       const basePet = petName ? cardDatabase.find(c => c.type === 'pet' && c.name === petName) : undefined;
       const faction = (basePet as any)?.faction || 'Каледор';
 
-      // Добавляем яйцо в контекст яиц и удаляем предмет из инвентаря
+      // Добавляем яйцо в контекст яиц
       await addEgg({
         id: String(eggItem.id),
         petName: petName || 'Неизвестный питомец',
@@ -131,8 +131,8 @@ console.log('✨ Final inventory to display:', {
         incubationStarted: false,
       }, faction);
 
-      const newInventory = inventory.filter(item => item.id !== eggItem.id);
-      await updateGameData({ inventory: newInventory });
+      // Яйца НЕ хранятся в item_instances, только в контексте DragonEggContext
+      // Ничего не удаляем из instances
 
       toast({
         title: t(language, 'inventory.eggMoved'),
@@ -144,12 +144,7 @@ console.log('✨ Final inventory to display:', {
     // Колоды карт открываются всегда (без внешнего обработчика)
     if (groupedItem.type === 'cardPack') {
       const shouldRemove = await handleOpenCardPack(groupedItem.items[0]);
-      if (shouldRemove) {
-        // Немедленно убираем группу из UI, чтобы не оставалась видимой после открытия всех колод
-        const currentInventory = gameData.inventory || [];
-        const newInventory = currentInventory.filter(i => !(i.type === 'cardPack' && i.name === groupedItem.name));
-        await updateGameData({ inventory: newInventory });
-      }
+      // Колоды удаляются из item_instances внутри handleOpenCardPack
       return shouldRemove;
     }
 
@@ -157,10 +152,7 @@ console.log('✨ Final inventory to display:', {
     if (onUseItem) {
       const itemToUse = groupedItem.items[0];
       onUseItem(itemToUse);
-
-      // Обновляем инвентарь после использования предмета
-      const newInventory = inventory.filter(item => item.id !== itemToUse.id);
-      await updateGameData({ inventory: newInventory });
+      // Предмет будет удален из item_instances внутри onUseItem
 
       // Если это была последняя копия предмета в стопке
       if (groupedItem.count === 1) {
@@ -178,14 +170,8 @@ console.log('✨ Final inventory to display:', {
   };
 
   const handleGroupedSellItem = async (groupedItem: GroupedItem) => {
-    // Verify the item(s) still exist in current inventory before selling
-    const currentInv = (gameData.inventory || []).filter(item => item != null);
-    const existingItem = groupedItem.items.find(it => 
-      currentInv.some(ci => ci && ci.id === it.id)
-    );
-    const packsLeft = currentInv.filter(i => 
-      i && i.type === 'cardPack' && i.name === groupedItem.name
-    ).length;
+    // Берем первый предмет из группы
+    const existingItem = groupedItem.items[0];
 
     if (!existingItem) {
       toast({
@@ -196,21 +182,11 @@ console.log('✨ Final inventory to display:', {
       return;
     }
 
-    if (groupedItem.type === 'cardPack' && packsLeft < 1) {
-      toast({
-        title: t(language, 'inventory.noPacks'),
-        description: t(language, 'inventory.noPacksToSell'),
-        variant: 'destructive'
-      });
-      return;
-    }
-
     if (onSellItem) {
       onSellItem(existingItem);
     } else {
+      // handleSellItem работает с item_instances напрямую
       await handleSellItem(existingItem);
-      const newInventory = currentInv.filter(item => item.id !== existingItem.id);
-      await updateGameData({ inventory: newInventory });
     }
   };
   const filteredInventory = showOnlyPotions 

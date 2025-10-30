@@ -93,40 +93,13 @@ const groupItems = (items: Item[]): GroupedItem[] => {
   };
 
   const handleSellItem = async (item: Item) => {
-    // Safety: verify the item still exists in current inventory to avoid selling non-existent packs
-    const currentInv = (gameData.inventory || []);
-    const exists = currentInv.some(i => i.id === item.id);
-    if (!exists) {
-      toast({
-        title: 'Нельзя продать',
-        description: 'Этот предмет уже отсутствует в вашем инвентаре',
-        variant: 'destructive'
-      });
-      return;
-    }
-
-    // Additional rule: prevent selling card packs if there are none left (should be covered by exists check)
-    if (item.type === 'cardPack') {
-      const packsLeft = currentInv.filter(i => i.type === 'cardPack').length;
-      if (packsLeft < 1) {
-        toast({
-          title: 'Нет колод',
-          description: 'У вас нет закрытых колод для продажи',
-          variant: 'destructive'
-        });
-        return;
-      }
-    }
-
     // Используем sell_price из item_templates, если он определен
     const sellPrice = item.sell_price !== undefined ? item.sell_price : Math.floor(getItemPrice(item) * 0.7);
     const newBalance = balance + sellPrice;
     
-    const newInventory = currentInv.filter(i => i.id !== item.id);
-    
+    // Обновляем только баланс (предмет удаляется через useItemOperations)
     await updateGameData({
-      balance: newBalance,
-      inventory: newInventory
+      balance: newBalance
     });
     
     toast({

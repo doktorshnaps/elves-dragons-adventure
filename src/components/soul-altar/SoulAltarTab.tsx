@@ -122,22 +122,9 @@ export const SoulAltarTab = () => {
       const crystalInstancesToRemove = allCrystalInstances.slice(0, amount);
       const instanceIds = crystalInstancesToRemove.map(inst => inst.id);
       
-      console.log(`Удаление ${amount} кристаллов жизни. IDs:`, instanceIds);
+      console.log(`Удаление ${amount} кристаллов жизни из item_instances. IDs:`, instanceIds);
       await removeItemInstancesByIds(instanceIds);
-
-      // Удаляем кристаллы из инвентаря game_data
-      const updatedInventory = [...(gameData.inventory || [])];
-      let removed = 0;
-      
-      for (let i = updatedInventory.length - 1; i >= 0 && removed < amount; i--) {
-        if (updatedInventory[i].name === "Кристалл Жизни") {
-          updatedInventory.splice(i, 1);
-          removed++;
-        }
-      }
-
-      // Обновляем игровые данные
-      await updateGameData({ inventory: updatedInventory });
+      console.log('✅ Кристаллы удалены из item_instances');
 
       // Записываем пожертвование
       const { error } = await supabase

@@ -71,19 +71,14 @@ export const DragonEggsList = ({ eggs }: DragonEggsListProps) => {
     // Добавляем нового питомца
     const updatedCards = [...currentCards, newPet];
     
-    // Удаляем яйцо из инвентаря
-    const inv = gameData.inventory || [];
-    const newInv = inv.filter((i) => i.id !== egg.id);
-
-    // Сохраняем обновленные данные в Supabase и обновляем Zustand store
+    // Яйца НЕ хранятся в inventory - они управляются через DragonEggContext
+    // Сохраняем только обновленные карты в Supabase
     await updateGameData({ 
-      cards: updatedCards,
-      inventory: newInv 
+      cards: updatedCards
     });
     
     // Обновляем store вместо localStorage
     useGameStore.getState().setCards(updatedCards);
-    useGameStore.getState().setInventory(newInv);
 
     // Удаляем яйцо из контекста
     await removeEgg(egg.id);

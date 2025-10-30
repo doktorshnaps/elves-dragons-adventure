@@ -9,6 +9,7 @@ export interface GameData {
   maxIron?: number;
   cards: any[];
   initialized: boolean;
+  /** @deprecated Use item_instances table instead. This field is kept for backward compatibility but should not be used for new features. */
   inventory: any[];
   dragonEggs: any[];
   selectedTeam: any[];

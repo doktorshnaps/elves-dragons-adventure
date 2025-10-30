@@ -213,11 +213,7 @@ export const useDungeonRewards = () => {
       }
 
       if (lootedItems.length > 0) {
-        const currentInventory = gameData.inventory || [];
-        updates.inventory = [...currentInventory, ...lootedItems];
-        console.log(`🎒 Новый инвентарь: ${updates.inventory.length} предметов (было: ${currentInventory.length})`);
-        
-        // Добавляем предметы в item_instances
+        // Добавляем предметы ТОЛЬКО в item_instances (единственный источник истины)
         console.log('📝 Добавляем предметы в item_instances:', lootedItems);
         await addItemsToInstances(lootedItems.map(it => ({
           name: it.name,
@@ -257,7 +253,7 @@ export const useDungeonRewards = () => {
     } finally {
       isClaimingRef.current = false;
     }
-  }, [pendingReward, gameData.balance, gameData.inventory, updateGameData, toast]);
+  }, [pendingReward, gameData.balance, updateGameData, toast, addItemsToInstances]);
 
   const continueWithRisk = useCallback(() => {
     setAccumulatedReward(prev => {

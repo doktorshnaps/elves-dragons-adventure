@@ -132,17 +132,7 @@ addEgg({
         incubationStarted: false,
       }, upgradedCard.faction || 'Каледор');
 
-      const eggItem: Item = {
-        id: eggId,
-        name: 'Яйцо дракона',
-        type: 'dragon_egg',
-        value: upgradedCard.rarity,
-        description: `${upgradedCard.name}`,
-        image: '/lovable-uploads/8a069dd4-47ad-496c-a248-f796257f9233.png',
-        petName: upgradedCard.name,
-      };
-      await updateGameData({ inventory: [ ...(gameData.inventory || []), eggItem ] });
-
+      // Яйца НЕ добавляются в inventory - они управляются через DragonEggContext
       toast({
         title: "Создано яйцо дракона!",
         description: `Улучшенный питомец появится через некоторое время`,
