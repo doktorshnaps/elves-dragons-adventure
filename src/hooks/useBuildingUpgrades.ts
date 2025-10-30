@@ -83,6 +83,13 @@ export const useBuildingUpgrades = () => {
   }, [activeUpgrades, gameState.actions, toast]);
 
   const startUpgrade = (buildingId: string, duration: number, targetLevel: number) => {
+    console.log('🚀 [startUpgrade] Starting upgrade:', {
+      buildingId,
+      duration,
+      targetLevel,
+      currentActiveUpgrades: activeUpgrades.length
+    });
+    
     const upgrade: UpgradeProgress = {
       buildingId,
       startTime: Date.now(),
@@ -92,21 +99,55 @@ export const useBuildingUpgrades = () => {
     };
 
     const newUpgrades = [...activeUpgrades, upgrade];
+    console.log('🚀 [startUpgrade] New upgrades array:', newUpgrades);
+    
     setActiveUpgrades(newUpgrades);
-    gameState.actions.batchUpdate({ activeBuildingUpgrades: newUpgrades });
+    gameState.actions.batchUpdate({ activeBuildingUpgrades: newUpgrades })
+      .then(() => {
+        console.log('✅ [startUpgrade] Successfully saved to server');
+      })
+      .catch((error) => {
+        console.error('❌ [startUpgrade] Failed to save:', error);
+      });
   };
 
   const installUpgrade = (buildingId: string) => {
+    console.log('🏗️ [installUpgrade] Starting installation for:', buildingId);
+    
     const upgrade = activeUpgrades.find(u => u.buildingId === buildingId);
-    if (!upgrade || upgrade.status !== 'ready') return;
+    console.log('🏗️ [installUpgrade] Found upgrade:', upgrade);
+    
+    if (!upgrade || upgrade.status !== 'ready') {
+      console.log('🏗️ [installUpgrade] Upgrade not ready or not found:', {
+        upgradeExists: !!upgrade,
+        status: upgrade?.status,
+        activeUpgrades
+      });
+      return;
+    }
 
-    const buildingLevels = { ...gameState.buildingLevels, [buildingId]: upgrade.targetLevel } as any;
+    const currentBuildingLevels = gameState.buildingLevels || {};
+    const newBuildingLevels = { ...currentBuildingLevels, [buildingId]: upgrade.targetLevel };
     const remaining = activeUpgrades.filter(u => u.buildingId !== buildingId);
 
+    console.log('🏗️ [installUpgrade] Updating levels:', {
+      buildingId,
+      fromLevel: currentBuildingLevels[buildingId] || 0,
+      toLevel: upgrade.targetLevel,
+      newBuildingLevels,
+      remainingUpgrades: remaining.length
+    });
+
     setActiveUpgrades(remaining);
+    
+    // Сначала обновляем локальное состояние, затем сервер
     gameState.actions.batchUpdate({
-      buildingLevels,
+      buildingLevels: newBuildingLevels,
       activeBuildingUpgrades: remaining
+    }).then(() => {
+      console.log('✅ [installUpgrade] Successfully updated building level');
+    }).catch((error) => {
+      console.error('❌ [installUpgrade] Failed to update:', error);
     });
 
     toast({
@@ -161,6 +202,13 @@ export const useBuildingUpgrades = () => {
       targetLevel: number,
       resourcePatch: { wood?: number; stone?: number; iron?: number; gold?: number; balance?: number; inventory?: any[] }
     ) => {
+      console.log('🚀 [startUpgradeAtomic] Starting atomic upgrade:', {
+        buildingId,
+        duration,
+        targetLevel,
+        resourcePatch
+      });
+      
       const upgrade: UpgradeProgress = {
         buildingId,
         startTime: Date.now(),
@@ -170,12 +218,19 @@ export const useBuildingUpgrades = () => {
       };
 
       const newUpgrades = [...activeUpgrades, upgrade];
+      console.log('🚀 [startUpgradeAtomic] Setting active upgrades:', newUpgrades);
       setActiveUpgrades(newUpgrades);
 
-      await gameState.actions.batchUpdate({
-        ...resourcePatch,
-        activeBuildingUpgrades: newUpgrades
-      });
+      try {
+        await gameState.actions.batchUpdate({
+          ...resourcePatch,
+          activeBuildingUpgrades: newUpgrades
+        });
+        console.log('✅ [startUpgradeAtomic] Successfully saved upgrade to server');
+      } catch (error) {
+        console.error('❌ [startUpgradeAtomic] Failed to save upgrade:', error);
+        throw error;
+      }
     },
     installUpgrade,
     getUpgradeProgress,
