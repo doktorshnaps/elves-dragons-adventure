@@ -211,64 +211,65 @@ function mapNFTToCard(metadata: NFTMetadata, tokenId: string): CardMapping | nul
   // По умолчанию ВСЕ карты - герои, драконы только если явно указано
   let card_type: 'hero' | 'dragon' = 'hero';
   
-  // Ключевые слова ТОЛЬКО для драконов - очень строгая проверка
+  // Ключевые слова ТОЛЬКО для драконов — строго ограниченный список
+  // Важно: учитываем только эти слова и только в явном виде
   const dragonKeywords = [
-    'dragon', 
-    'дракон',
+    'dragon',
     'drake',
-    'wyrm',
-    'wyvern',
-    'змей'
+    'wyvern'
   ];
   
-  // Ключевые слова героев для исключения ложных срабатываний
-  const heroKeywords = [
+  // Приоритетные ключевые слова героев — всегда герои
+  const heroPriorityKeywords = [
     'strategist',
-    'стратег', 
     'warrior',
+    'knight'
+  ];
+  
+  // Дополнительные (менее приоритетные) ключевые слова героев
+  const heroExtraKeywords = [
+    'стратег',
     'воин',
-    'knight',
     'рыцарь',
-    'mage',
-    'маг',
-    'hero',
-    'герой',
-    'guard',
-    'страж',
-    'defender',
-    'защитник',
-    'healer',
-    'целитель',
-    'veteran',
-    'ветеран',
-    'recruit',
-    'рекрут'
+    'mage', 'маг',
+    'hero', 'герой',
+    'guard', 'страж',
+    'defender', 'защитник',
+    'healer', 'целитель',
+    'veteran', 'ветеран',
+    'recruit', 'рекрут'
   ];
   
   const titleLower = title.toLowerCase();
   const descLower = description.toLowerCase();
   
-  // Сначала проверяем, это точно герой?
-  const isDefinitelyHero = heroKeywords.some(keyword => {
+  // 1) Приоритет: если в названии/описании встречается одно из heroPriorityKeywords → это герой
+  const isPriorityHero = heroPriorityKeywords.some(keyword => {
     const regex = new RegExp(`\\b${keyword}\\b`, 'i');
     return regex.test(titleLower) || regex.test(descLower);
   });
-  
-  if (isDefinitelyHero) {
+
+  if (isPriorityHero) {
     card_type = 'hero';
-    console.log(`⚔️ Definitely hero card (matched hero keyword)`);
+    console.log(`⚔️ Hero by priority keyword`);
   } else {
-    // Только если это НЕ герой, проверяем драконов
+    // 2) Если нет приоритетных — проверяем dragon keywords
     const isDragon = dragonKeywords.some(keyword => {
       const regex = new RegExp(`\\b${keyword}\\b`, 'i');
       return regex.test(titleLower) || regex.test(descLower);
     });
-    
+
     if (isDragon) {
       card_type = 'dragon';
-      console.log(`🐉 Detected dragon card`);
+      console.log(`🐉 Dragon by keyword`);
     } else {
-      console.log(`⚔️ Default hero card`);
+      // 3) Если нет dragon — проверяем расширенные hero keywords
+      const isHero = heroExtraKeywords.some(keyword => {
+        const regex = new RegExp(`\\b${keyword}\\b`, 'i');
+        return regex.test(titleLower) || regex.test(descLower);
+      });
+      card_type = isHero ? 'hero' : 'hero';
+      console.log(isHero ? `⚔️ Hero by extra keyword` : `⚔️ Default to hero`);
     }
   }
   
