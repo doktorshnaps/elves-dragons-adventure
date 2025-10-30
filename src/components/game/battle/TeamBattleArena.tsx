@@ -199,30 +199,29 @@ export const TeamBattleArena: React.FC<TeamBattleArenaProps> = ({
     }
   }, [lastRoll, isDiceRolling, level]);
 
-  // Флаг для предотвращения множественных атак врага
-  const enemyAttackScheduledRef = React.useRef(false);
+  // Таймер хода врага — гарантирует единичное срабатывание даже при лагах сети
+  const enemyAttackTimerRef = React.useRef<number | null>(null);
   
   // Автоматический ход противника
   useEffect(() => {
-    if (!isPlayerTurn && aliveOpponents.length > 0 && alivePairs.length > 0 && !enemyAttackScheduledRef.current) {
-      console.log('🎯 Enemy turn triggered - scheduling attack');
-      enemyAttackScheduledRef.current = true;
-      const timer = setTimeout(() => {
-        console.log('⚔️ Executing enemy attack');
-        handleEnemyAttack();
-        enemyAttackScheduledRef.current = false;
-      }, 1500);
-      return () => {
-        clearTimeout(timer);
-        enemyAttackScheduledRef.current = false;
-      };
+    if (!isPlayerTurn) {
+      if (enemyAttackTimerRef.current == null) {
+        console.log('🎯 Enemy turn triggered - scheduling attack');
+        enemyAttackTimerRef.current = window.setTimeout(() => {
+          console.log('⚔️ Executing enemy attack');
+          handleEnemyAttack();
+          enemyAttackTimerRef.current = null;
+        }, 1500);
+      }
+    } else {
+      // Смена хода на игрока — отменяем запланированную атаку, если была
+      if (enemyAttackTimerRef.current != null) {
+        clearTimeout(enemyAttackTimerRef.current);
+        enemyAttackTimerRef.current = null;
+      }
     }
-    
-    // Сброс флага при смене хода на игрока
-    if (isPlayerTurn) {
-      enemyAttackScheduledRef.current = false;
-    }
-  }, [isPlayerTurn, aliveOpponents.length, alivePairs.length, handleEnemyAttack]);
+    // Без cleanup: повторные ререндеры не должны сбрасывать таймер на enemy-ходу
+  }, [isPlayerTurn, handleEnemyAttack]);
   const handleMenuReturn = () => {
     // Mark that we're in an active battle for auto-resume
     localStorage.setItem('activeBattleInProgress', 'true');

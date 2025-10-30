@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, startTransition } from 'react';
+import { useState, useEffect, useCallback, startTransition, useRef } from 'react';
 import { TeamPair, TeamBattleState, BattleAction } from '@/types/teamBattle';
 import { useToast } from '@/hooks/use-toast';
 import { generateDungeonOpponents } from '@/dungeons/dungeonManager';
@@ -49,6 +49,9 @@ export const useTeamBattle = (dungeonType: DungeonType, initialLevel: number = 1
 
   const [attackOrder, setAttackOrder] = useState<string[]>([]);
   const [lastRoll, setLastRoll] = useState<{ attackerRoll: number; defenderRoll: number; source: 'player' | 'enemy'; damage: number; isBlocked: boolean; isCritical?: boolean; level: number } | null>(null);
+
+  // Блокировка повторных вызовов атаки врага (анти-дубль при лагах)
+  const enemyAttackLockRef = useRef(false);
 
   // Initialize battle with team pairs
   useEffect(() => {
@@ -310,6 +313,13 @@ export const useTeamBattle = (dungeonType: DungeonType, initialLevel: number = 1
       console.log('⚠️ Skipping enemy attack - not enemy turn');
       return;
     }
+    
+    // Анти-дубль: если атака врага уже запущена, игнорируем повтор
+    if (enemyAttackLockRef.current) {
+      console.log('⏳ Enemy attack in progress, skipping duplicate');
+      return;
+    }
+    enemyAttackLockRef.current = true;
 
     const alivePairs = battleState.playerPairs.filter(pair => pair.health > 0);
     const aliveOpponents = battleState.opponents.filter(opp => opp.health > 0);
@@ -318,6 +328,7 @@ export const useTeamBattle = (dungeonType: DungeonType, initialLevel: number = 1
     
     if (aliveOpponents.length === 0 || alivePairs.length === 0) {
       if (alivePairs.length === 0) handleGameOver();
+      enemyAttackLockRef.current = false;
       return;
     }
 
@@ -376,11 +387,13 @@ export const useTeamBattle = (dungeonType: DungeonType, initialLevel: number = 1
 
     if (alivePairs.length === 1 && updatedPair.health === 0) {
       setTimeout(() => {
+        enemyAttackLockRef.current = false;
         handleGameOver();
       }, 3000);
     } else {
       console.log('🔄 Switching turn after enemy attack in 3s');
       setTimeout(() => {
+        enemyAttackLockRef.current = false;
         switchTurn();
       }, 3000);
     }
