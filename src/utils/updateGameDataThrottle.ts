@@ -39,6 +39,65 @@ function mergePayload(base: Record<string, any>, next: Record<string, any>) {
   return out;
 }
 
+// Map camelCase state keys to RPC function parameter names (p_*)
+function buildRpcArgs(input: Record<string, any>): Record<string, any> {
+  const map: Record<string, string> = {
+    // core
+    p_wallet_address: 'p_wallet_address',
+    balance: 'p_balance',
+    cards: 'p_cards',
+    selectedTeam: 'p_selected_team',
+    dragonEggs: 'p_dragon_eggs',
+    accountLevel: 'p_account_level',
+    accountExperience: 'p_account_experience',
+    initialized: 'p_initialized',
+    marketplaceListings: 'p_marketplace_listings',
+    socialQuests: 'p_social_quests',
+    adventurePlayerStats: 'p_adventure_player_stats',
+    adventureCurrentMonster: 'p_adventure_current_monster',
+    battleState: 'p_battle_state',
+    barracksUpgrades: 'p_barracks_upgrades',
+    dragonLairUpgrades: 'p_dragon_lair_upgrades',
+    activeWorkers: 'p_active_workers',
+    buildingLevels: 'p_building_levels',
+    activeBuildingUpgrades: 'p_active_building_upgrades',
+    // resources
+    wood: 'p_wood',
+    stone: 'p_stone',
+    iron: 'p_iron',
+    gold: 'p_gold',
+    maxWood: 'p_max_wood',
+    maxStone: 'p_max_stone',
+    maxIron: 'p_max_iron',
+    woodLastCollectionTime: 'p_wood_last_collection_time',
+    stoneLastCollectionTime: 'p_stone_last_collection_time',
+    woodProductionData: 'p_wood_production_data',
+    stoneProductionData: 'p_stone_production_data',
+  };
+
+  const out: Record<string, any> = {};
+
+  // If caller already passed p_* keys, keep them (except deprecated ones)
+  for (const [k, v] of Object.entries(input)) {
+    if (k.startsWith('p_')) {
+      if (k === 'p_inventory') continue; // strip deprecated
+      if (v !== undefined) out[k] = v;
+    }
+  }
+
+  // Map camelCase to p_* if not already present
+  for (const [k, v] of Object.entries(input)) {
+    if (k.startsWith('p_')) continue; // already handled
+    if (k === 'inventory') continue; // strip deprecated field to avoid 42703
+    const target = map[k];
+    if (target && out[target] === undefined) {
+      if (v !== undefined) out[target] = v;
+    }
+  }
+
+  return out;
+}
+
 interface QueueState {
   pending: Record<string, any> | null;
   timer: number | null;
@@ -91,12 +150,9 @@ export async function updateGameDataByWalletThrottled(payload: Record<string, an
 
     // Execute single RPC call
     const exec = async () => {
-      // Only include provided keys (avoid forcing nulls)
-      const args: Record<string, any> = {};
-      for (const [k, v] of Object.entries(toSend)) {
-        if (v !== undefined) args[k] = v; // keep nulls if explicitly set
-      }
-      const { data, error } = await supabase.rpc('update_game_data_by_wallet_v2', args as any);
+      // Build safe args for stable RPC and strip deprecated fields
+      const args = buildRpcArgs(toSend);
+      const { data, error } = await supabase.rpc('update_game_data_by_wallet', args as any);
       if (error) throw error;
       return data === true;
     };
