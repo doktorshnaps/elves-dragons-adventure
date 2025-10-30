@@ -88,24 +88,38 @@ export const DeckSelection = ({
     console.log('🎮 Updated local cards with health sync:', cardsWithHealthSync.length, 'total cards');
   }, [cardsWithHealthSync]);
   const heroes = useMemo(() => {
-    const filtered = localCards.filter(card => card.type === 'character');
+    const filtered = localCards.filter(card => {
+      const isHero = card.type === 'character';
+      if (card.isNFT) {
+        console.log(`🎴 NFT Card filtering: ${card.name} type=${card.type} isHero=${isHero}`);
+      }
+      return isHero;
+    });
     if (heroSortBy === 'power') {
       return [...filtered].sort((a, b) => b.power - a.power);
     }
     if (heroSortBy === 'rarity') {
       return [...filtered].sort((a, b) => b.rarity - a.rarity);
     }
+    console.log(`✅ Filtered ${filtered.length} heroes (${filtered.filter(h => h.isNFT).length} NFT)`);
     return filtered;
   }, [localCards, heroSortBy]);
 
   const dragons = useMemo(() => {
-    const filtered = localCards.filter(card => card.type === 'pet');
+    const filtered = localCards.filter(card => {
+      const isDragon = card.type === 'pet';
+      if (card.isNFT) {
+        console.log(`🐉 NFT Card filtering: ${card.name} type=${card.type} isDragon=${isDragon}`);
+      }
+      return isDragon;
+    });
     if (dragonSortBy === 'power') {
       return [...filtered].sort((a, b) => b.power - a.power);
     }
     if (dragonSortBy === 'rarity') {
       return [...filtered].sort((a, b) => b.rarity - a.rarity);
     }
+    console.log(`✅ Filtered ${filtered.length} dragons (${filtered.filter(d => d.isNFT).length} NFT)`);
     return filtered;
   }, [localCards, dragonSortBy]);
   const isHeroSelected = (hero: CardType) => {
@@ -135,7 +149,21 @@ export const DeckSelection = ({
   };
   const getAvailableDragons = (heroFaction?: string, heroRarity?: number) => {
     if (!heroFaction) return [];
-    return dragons.filter(dragon => dragon.faction === heroFaction && (!heroRarity || dragon.rarity <= heroRarity) && !isDragonSelected(dragon));
+    
+    console.log(`🔍 Finding dragons for hero: faction=${heroFaction}, rarity=${heroRarity}`);
+    
+    const availableDragons = dragons.filter(dragon => {
+      const sameFaction = dragon.faction === heroFaction;
+      const notSelected = !isDragonSelected(dragon);
+      const rarityOk = !heroRarity || (dragon.rarity ?? 1) <= heroRarity;
+      
+      console.log(`  🐉 Dragon ${dragon.name} (${dragon.id}): faction=${dragon.faction} sameFaction=${sameFaction}, rarity=${dragon.rarity}, rarityOk=${rarityOk}, notSelected=${notSelected}, isNFT=${dragon.isNFT}`);
+      
+      return sameFaction && rarityOk && notSelected;
+    });
+    
+    console.log(`✅ Found ${availableDragons.length} available dragons`);
+    return availableDragons;
   };
   const handleHeroSelect = (hero: CardType) => {
     console.log('🎯 DeckSelection handleHeroSelect called for hero:', hero.name);
@@ -148,22 +176,29 @@ export const DeckSelection = ({
     setShowHeroDeck(false);
   };
   const handleDragonSelect = (dragon: CardType) => {
+    console.log(`🐉 handleDragonSelect called: ${dragon.name} (faction: ${dragon.faction}, rarity: ${dragon.rarity}, isNFT: ${dragon.isNFT})`);
+    
     if (activePairIndex !== null) {
       const pair = selectedPairs[activePairIndex];
       if (pair) {
+        console.log(`  👤 Selected hero: ${pair.hero.name} (faction: ${pair.hero.faction}, rarity: ${pair.hero.rarity}, isNFT: ${pair.hero.isNFT})`);
+        
         if (pair.hero.faction !== dragon.faction) {
+          console.log(`  ❌ Faction mismatch: ${pair.hero.faction} !== ${dragon.faction}`);
           toast({
             title: 'Неверная фракция',
             description: 'Дракон должен быть той же фракции, что и герой',
             variant: 'destructive'
           });
-        } else if ((pair.hero.rarity ?? 0) < dragon.rarity) {
+        } else if ((pair.hero.rarity ?? 1) < (dragon.rarity ?? 1)) {
+          console.log(`  ❌ Rarity check failed: hero rarity ${pair.hero.rarity ?? 1} < dragon rarity ${dragon.rarity ?? 1}`);
           toast({
             title: 'Недостаточный ранг героя',
             description: 'Герой может управлять драконом своего ранга или ниже',
             variant: 'destructive'
           });
         } else {
+          console.log(`  ✅ Assigning dragon to hero`);
           onPairAssignDragon(activePairIndex, dragon);
         }
       }
@@ -173,10 +208,19 @@ export const DeckSelection = ({
     }
 
     // Fallback: assign to any available hero without a dragon of the same faction
-    const heroWithSameFaction = selectedPairs.find(pair => pair.hero.faction === dragon.faction && !pair.dragon && (pair.hero.rarity ?? 0) >= dragon.rarity);
+    console.log(`  🔄 Fallback: finding hero with same faction without dragon`);
+    const heroWithSameFaction = selectedPairs.find(pair => 
+      pair.hero.faction === dragon.faction && 
+      !pair.dragon && 
+      (pair.hero.rarity ?? 1) >= (dragon.rarity ?? 1)
+    );
+    
     if (heroWithSameFaction) {
       const pairIndex = selectedPairs.findIndex(pair => pair === heroWithSameFaction);
+      console.log(`  ✅ Found hero ${heroWithSameFaction.hero.name} at index ${pairIndex}`);
       onPairAssignDragon(pairIndex, dragon);
+    } else {
+      console.log(`  ❌ No suitable hero found for this dragon`);
     }
     setShowDragonDeck(false);
   };

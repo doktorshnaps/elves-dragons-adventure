@@ -221,21 +221,55 @@ function mapNFTToCard(metadata: NFTMetadata, tokenId: string): CardMapping | nul
     'змей'
   ];
   
+  // Ключевые слова героев для исключения ложных срабатываний
+  const heroKeywords = [
+    'strategist',
+    'стратег', 
+    'warrior',
+    'воин',
+    'knight',
+    'рыцарь',
+    'mage',
+    'маг',
+    'hero',
+    'герой',
+    'guard',
+    'страж',
+    'defender',
+    'защитник',
+    'healer',
+    'целитель',
+    'veteran',
+    'ветеран',
+    'recruit',
+    'рекрут'
+  ];
+  
   const titleLower = title.toLowerCase();
   const descLower = description.toLowerCase();
   
-  // Проверяем СТРОГО наличие слова "dragon" или его вариантов
-  const isDragon = dragonKeywords.some(keyword => {
-    // Проверяем что ключевое слово стоит отдельно (не часть другого слова)
+  // Сначала проверяем, это точно герой?
+  const isDefinitelyHero = heroKeywords.some(keyword => {
     const regex = new RegExp(`\\b${keyword}\\b`, 'i');
     return regex.test(titleLower) || regex.test(descLower);
   });
   
-  if (isDragon) {
-    card_type = 'dragon';
-    console.log(`🐉 Detected dragon card`);
+  if (isDefinitelyHero) {
+    card_type = 'hero';
+    console.log(`⚔️ Definitely hero card (matched hero keyword)`);
   } else {
-    console.log(`⚔️ Detected hero card`);
+    // Только если это НЕ герой, проверяем драконов
+    const isDragon = dragonKeywords.some(keyword => {
+      const regex = new RegExp(`\\b${keyword}\\b`, 'i');
+      return regex.test(titleLower) || regex.test(descLower);
+    });
+    
+    if (isDragon) {
+      card_type = 'dragon';
+      console.log(`🐉 Detected dragon card`);
+    } else {
+      console.log(`⚔️ Default hero card`);
+    }
   }
   
   // 4. Рассчитываем характеристики на основе редкости и типа карты

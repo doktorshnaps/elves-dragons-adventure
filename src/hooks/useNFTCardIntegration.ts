@@ -207,15 +207,21 @@ export const useNFTCardIntegration = () => {
           }
         }
         
-        // Правильный маппинг типов NFT карт
+        // Правильный маппинг типов NFT карт с логированием
         const rawType = (nftCard as any).type;
         let cardType: 'character' | 'pet' = 'character';
+        
+        console.log(`🔄 NFT Mapping: ${(nftCard as any).name}, rawType=${rawType}`);
         
         // Проверяем все возможные варианты типов для драконов и героев
         if (rawType === 'dragon' || rawType === 'pet') {
           cardType = 'pet';
+          console.log(`  ✅ Mapped to 'pet' (dragon)`);
         } else if (rawType === 'hero' || rawType === 'character') {
           cardType = 'character';
+          console.log(`  ✅ Mapped to 'character' (hero)`);
+        } else {
+          console.warn(`  ⚠️ Unknown type ${rawType}, defaulting to 'character'`);
         }
         
         return {
