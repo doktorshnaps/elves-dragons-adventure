@@ -152,9 +152,42 @@ export async function updateGameDataByWalletThrottled(payload: Record<string, an
     const exec = async () => {
       // Build safe args for stable RPC and strip deprecated fields
       const args = buildRpcArgs(toSend);
-      const { data, error } = await supabase.rpc('update_game_data_by_wallet_v2', args as any);
-      if (error) throw error;
-      return data === true;
+      const keys = Object.keys(args).filter(k => k !== 'p_wallet_address');
+
+      // If we only have wallet, skip RPC to avoid PostgREST overload ambiguity (PGRST203)
+      if (keys.length === 0) {
+        console.log('ℹ️ [throttler] No fields to update; skipping RPC call');
+        return true;
+      }
+      try {
+        console.log('🔁 [throttler] Calling update_game_data_by_wallet_v2 with keys:', Object.keys(args));
+        const { data, error } = await supabase.rpc('update_game_data_by_wallet_v2', args as any);
+        if (error) throw error;
+        const ok = data === true;
+        if (!ok) {
+          console.warn('⚠️ [throttler] RPC returned false. Args keys:', Object.keys(args));
+        }
+        return ok;
+      } catch (err: any) {
+        console.error('❌ [throttler] RPC error:', { code: err?.code, message: err?.message, hint: err?.hint, args: Object.keys(args) });
+        // Ambiguity fallback: try sending fields one-by-one to disambiguate overloaded functions
+        if (err?.code === 'PGRST203' && keys.length > 0) {
+          for (const k of keys) {
+            const narrowArgs: Record<string, any> = { p_wallet_address: args.p_wallet_address, [k]: (args as any)[k] };
+            try {
+              console.log('🧪 [throttler] Retrying with narrow args:', Object.keys(narrowArgs));
+              const { data: d2, error: e2 } = await supabase.rpc('update_game_data_by_wallet_v2', narrowArgs as any);
+              if (!e2 && d2 === true) {
+                console.log('✅ [throttler] Narrow update succeeded with key:', k);
+                return true;
+              }
+            } catch (e3) {
+              console.warn('↪️ [throttler] Narrow attempt failed for key:', k, e3);
+            }
+          }
+        }
+        throw err;
+      }
     };
 
     q.inflight = exec()

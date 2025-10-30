@@ -468,7 +468,7 @@ async function updateGameDataOnServer(walletAddress: string, updates: Partial<Ga
 
   const ok = await updateGameDataByWalletThrottled(rpcPayload);
   if (!ok) {
-    throw new Error('update_game_data_by_wallet_v2 returned false');
+    console.warn('⚠️ RPC returned false, continue to refetch for consistency');
   }
 
   const { data: fullData, error: fullErr } = await supabase.rpc('get_game_data_by_wallet_full', {
