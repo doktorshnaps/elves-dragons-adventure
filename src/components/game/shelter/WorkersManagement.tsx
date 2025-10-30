@@ -194,26 +194,28 @@ export const WorkersManagement = ({ onSpeedBoostChange }: WorkersManagementProps
     const interval = setInterval(() => {
       const now = Date.now();
       setActiveWorkers(prev => {
-        const stillWorking = prev.filter(worker => {
-          const isFinished = now >= worker.startTime + worker.duration;
-           if (isFinished) {
-             toast({
-               title: "Работа завершена",
-               description: `${worker.name} завершил работу в здании "${buildings.find(b => b.id === worker.building)?.name}" и исчез`,
-             });
-           }
-          return !isFinished;
+        const finishedWorkers = prev.filter(worker => now >= worker.startTime + worker.duration);
+        const stillWorking = prev.filter(worker => now < worker.startTime + worker.duration);
+        
+        // Показываем toast для завершенных рабочих вне setState
+        finishedWorkers.forEach(worker => {
+          setTimeout(() => {
+            toast({
+              title: "Работа завершена",
+              description: `${worker.name} завершил работу в здании "${buildings.find(b => b.id === worker.building)?.name}" и исчез`,
+            });
+          }, 0);
         });
         
-         // Обновляем базу данных если список изменился
-         if (stillWorking.length !== prev.length) {
-           updateActiveWorkersInDB(stillWorking);
-           try {
-             localStorage.setItem('activeWorkers', JSON.stringify(stillWorking));
-           } catch {}
-           window.dispatchEvent(new CustomEvent('activeWorkers:changed', { detail: stillWorking }));
-           console.log('🔄 Updated active workers after completion:', stillWorking);
-         }
+        // Обновляем базу данных если список изменился
+        if (stillWorking.length !== prev.length) {
+          updateActiveWorkersInDB(stillWorking);
+          try {
+            localStorage.setItem('activeWorkers', JSON.stringify(stillWorking));
+          } catch {}
+          window.dispatchEvent(new CustomEvent('activeWorkers:changed', { detail: stillWorking }));
+          console.log('🔄 Updated active workers after completion:', stillWorking);
+        }
         
         return stillWorking;
       });
