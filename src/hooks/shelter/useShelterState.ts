@@ -394,9 +394,7 @@ export const useShelterState = () => {
     
     const newBalance = gameState.balance - upgrade.cost.balance;
     
-    // Удаляем требуемые предметы из item_instances (по UUID) И синхронно из legacy JSON-инвентаря
-    let newInventoryJson = Array.isArray(gameState.inventory) ? [...gameState.inventory] : [];
-
+    // Удаляем требуемые предметы из item_instances (по UUID)
     if (upgrade.requiredItems && (Array.isArray(upgrade.requiredItems) || typeof upgrade.requiredItems === 'object')) {
       const rawEntries: Array<{ item_id: string; quantity: number }> = Array.isArray(upgrade.requiredItems)
         ? (upgrade.requiredItems as any[]).map((req: any) => ({
@@ -453,36 +451,6 @@ export const useShelterState = () => {
         }
       } else {
         console.log('⚠️ [upgrade] No instance IDs to remove - this might be an error!');
-      }
-
-      // 2) Синхронно чистим JSON-инвентарь game_data (по item_id шаблона)
-      if (newInventoryJson.length > 0) {
-        // Индексация по item_id из шаблонов (по имени предмета в JSON)
-        const indexByItemId = new Map<string, number[]>();
-        for (let i = 0; i < newInventoryJson.length; i++) {
-          const it: any = newInventoryJson[i];
-          const tplByName = getTemplateByName(it?.name);
-          const key = tplByName?.item_id;
-          if (!key) continue;
-          if (!indexByItemId.has(key)) indexByItemId.set(key, []);
-          indexByItemId.get(key)!.push(i);
-        }
-
-        const indicesToRemoveJson = new Set<number>();
-        for (const req of entries) {
-          const tpl = getTemplate(req.item_id);
-          const key = tpl?.item_id ?? String(req.item_id);
-          const candidates = indexByItemId.get(key) || [];
-          const shuffled = [...candidates].sort(() => Math.random() - 0.5);
-          const take = Math.min(Number(req.quantity || 1), shuffled.length);
-          for (let k = 0; k < take; k++) indicesToRemoveJson.add(shuffled[k]);
-        }
-
-        if (indicesToRemoveJson.size > 0) {
-          const before = newInventoryJson.length;
-          newInventoryJson = newInventoryJson.filter((_, idx) => !indicesToRemoveJson.has(idx));
-          console.log('🧪 [upgrade] JSON inventory removed', before - newInventoryJson.length, 'items; left:', newInventoryJson.length);
-        }
       }
     }
     
