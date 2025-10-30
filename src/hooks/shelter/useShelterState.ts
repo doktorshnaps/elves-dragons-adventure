@@ -9,6 +9,8 @@ import { useItemTemplates } from '@/hooks/useItemTemplates';
 import { useItemInstances } from '@/hooks/useItemInstances';
 import { useGameStore } from '@/stores/gameStore';
 import { resolveItemKey } from '@/utils/itemNames';
+import { useCraftingRecipes } from '@/hooks/useCraftingRecipes';
+import { useAddItemToInstances } from '@/hooks/useAddItemToInstances';
 export interface NestUpgrade {
   id: string;
   name: string;
@@ -49,6 +51,8 @@ export const useShelterState = () => {
   const { getBuildingConfig, getUpgradeCost: getUpgradeCostFromDB, loading: configsLoading } = useBuildingConfigs();
   const { getTemplate, getItemName, getTemplateByName } = useItemTemplates();
   const { instances, getCountsByItemId, getInstancesByItemId, removeItemInstancesByIds } = useItemInstances();
+  const { recipes: craftingRecipesFromDB, loading: recipesLoading } = useCraftingRecipes();
+  const { addItemsToInstances } = useAddItemToInstances();
   
   // Мемоизируем счётчики предметов для передачи в компоненты
   const inventoryCounts = useMemo(() => {
@@ -288,7 +292,10 @@ export const useShelterState = () => {
   ];
   }, [buildingLevels, language, getBuildingConfig]);
 
-  const craftRecipes: CraftRecipe[] = useMemo(() => [{
+  const craftRecipes: CraftRecipe[] = useMemo(() => {
+    if (recipesLoading || craftingRecipesFromDB.length === 0) {
+      // Fallback на старые рецепты пока грузятся данные
+      return [{
     id: "iron_sword",
     name: t(language, 'shelter.ironSword'),
     description: t(language, 'shelter.ironSwordDesc'),
@@ -320,7 +327,24 @@ export const useShelterState = () => {
     },
     result: t(language, 'shelter.healthPotionResult'),
     category: "potion"
-  }], [language]);
+  }];
+    }
+    
+    // Преобразуем рецепты из БД в формат CraftRecipe
+    return craftingRecipesFromDB.map(recipe => {
+      const resultTemplate = getTemplate(String(recipe.result_item_id));
+      return {
+        id: recipe.id,
+        name: recipe.recipe_name,
+        description: recipe.description || '',
+        requirements: {
+          balance: 0 // В БД нет стоимости ELL для крафта, можно добавить позже
+        },
+        result: resultTemplate?.name || 'Неизвестный предмет',
+        category: (recipe.category as any) || 'misc'
+      };
+    });
+  }, [language, craftingRecipesFromDB, recipesLoading, getTemplate]);
 
   const canAffordUpgrade = useCallback((upgrade: NestUpgrade) => {
     // Проверяем наличие требуемых предметов по item_id из item_instances
@@ -475,25 +499,59 @@ export const useShelterState = () => {
   };
 
   const handleCraft = async (recipe: CraftRecipe) => {
-    if (!canAffordCraft(recipe)) return;
+    const dbRecipe = craftingRecipesFromDB.find(r => r.id === recipe.id);
+    if (!dbRecipe) {
+      toast({
+        title: t(language, 'error'),
+        description: 'Рецепт не найден',
+        variant: 'destructive'
+      });
+      return;
+    }
+
+    const missingMaterials: string[] = [];
+    const itemsToRemove: string[] = [];
     
-    const newResources = { ...resources };
-    if (recipe.requirements.wood) newResources.wood -= recipe.requirements.wood;
-    if (recipe.requirements.stone) newResources.stone -= recipe.requirements.stone;
-    if (recipe.requirements.iron) newResources.iron -= recipe.requirements.iron;
-    
-    let newBalance = gameState.balance;
-    if (recipe.requirements.balance) newBalance -= recipe.requirements.balance;
-    
-    await gameState.actions.batchUpdate({
-      ...newResources,
-      balance: newBalance
+    dbRecipe.required_materials?.forEach((mat: any) => {
+      const count = inventoryCounts[mat.item_id] || 0;
+      if (count < mat.quantity) {
+        const template = getTemplate(mat.item_id);
+        missingMaterials.push(`${template?.name || mat.item_id}: ${mat.quantity - count}`);
+      } else {
+        const instances = getInstancesByItemId(mat.item_id);
+        itemsToRemove.push(...instances.slice(0, mat.quantity).map(i => i.id));
+      }
     });
-    
-    toast({
-      title: t(language, 'shelter.itemCreated'),
-      description: `${t(language, 'shelter.created')} ${recipe.result}`
-    });
+
+    if (missingMaterials.length > 0) {
+      toast({
+        title: t(language, 'error'),
+        description: `Недостаточно: ${missingMaterials.join(', ')}`,
+        variant: 'destructive'
+      });
+      return;
+    }
+
+    if (itemsToRemove.length > 0) {
+      await removeItemInstancesByIds(itemsToRemove);
+    }
+
+    const resultTemplate = getTemplate(String(dbRecipe.result_item_id));
+    if (resultTemplate) {
+      await addItemsToInstances(
+        Array(dbRecipe.result_quantity).fill({
+          template_id: dbRecipe.result_item_id,
+          item_id: resultTemplate.item_id,
+          name: resultTemplate.name,
+          type: resultTemplate.type
+        })
+      );
+
+      toast({
+        title: t(language, 'success'),
+        description: `Создано: ${resultTemplate.name} x${dbRecipe.result_quantity}`,
+      });
+    }
   };
 
   return {
