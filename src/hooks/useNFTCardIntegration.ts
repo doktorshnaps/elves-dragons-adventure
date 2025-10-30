@@ -207,6 +207,17 @@ export const useNFTCardIntegration = () => {
           }
         }
         
+        // Правильный маппинг типов NFT карт
+        const rawType = (nftCard as any).type;
+        let cardType: 'character' | 'pet' = 'character';
+        
+        // Проверяем все возможные варианты типов для драконов и героев
+        if (rawType === 'dragon' || rawType === 'pet') {
+          cardType = 'pet';
+        } else if (rawType === 'hero' || rawType === 'character') {
+          cardType = 'character';
+        }
+        
         return {
           id: (nftCard as any).id,
           name: (nftCard as any).name,
@@ -216,8 +227,7 @@ export const useNFTCardIntegration = () => {
           currentHealth: (nftCard as any).currentHealth || (nftCard as any).health,
           rarity: (typeof (nftCard as any).rarity === 'number' ? (nftCard as any).rarity : 1) as any,
           faction: (nftCard as any).faction as any,
-          // Map: 'hero' -> 'character', 'dragon' -> 'pet'
-          type: ((nftCard as any).type === 'hero' ? 'character' : (nftCard as any).type === 'dragon' ? 'pet' : 'character'),
+          type: cardType,
           description: (nftCard as any).description || '',
           image: (nftCard as any).image || '/placeholder.svg',
           magic: (nftCard as any).magic || 0,
