@@ -1,5 +1,8 @@
 project_id = "oimhwdymghkwxznjarkv"
 
+[functions.sync-nft-cards]
+verify_jwt = true
+
 [functions.game-wipe]
 verify_jwt = true
 

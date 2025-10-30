@@ -187,100 +187,49 @@ Deno.serve(async (req) => {
         .eq('nft_contract_id', currentContract)
     }
 
-    // Get all card templates to match with NFTs
-    const { data: templates, error: templatesError } = await supabase
-      .from('card_templates')
-      .select('*')
-
-    if (templatesError) {
-      throw new Error(`Error fetching card templates: ${templatesError.message}`)
-    }
-
     const gameCards = []
     const nftInserts = []
 
-    // Process each NFT and try to match with card templates
+    console.log('📋 Processing NFTs with metadata-based stats')
+
+    // Process each NFT using metadata directly (no template matching)
     for (const nft of allNFTs) {
       const cardName = nft.metadata?.title || nft.metadata?.description || 'Unknown Card'
       
-      // Find matching template by name (case insensitive)
-      const template = templates?.find(t => 
-        t.name.toLowerCase() === cardName.toLowerCase() ||
-        cardName.toLowerCase().includes(t.name.toLowerCase()) ||
-        t.name.toLowerCase().includes(cardName.toLowerCase())
-      )
-
-      if (template) {
-        console.log(`✅ Matched NFT "${cardName}" with template "${template.name}"`)
-        
-        // Create NFT mapping record
-        nftInserts.push({
-          wallet_address,
-          nft_contract_id: nft.contract_id,
-          nft_token_id: nft.token_id,
-          card_template_name: template.name,
-          nft_metadata: nft.metadata
-        })
-
-        // Create game card with template stats
-        const imageUrl = normalizeMediaUrl(nft.metadata?.media) || 
-                        normalizeMediaUrl(nft.metadata?.image) || 
-                        normalizeMediaUrl(nft.metadata?.img) ||
-                        template.image_url || 
-                        '/placeholder.svg';
-        
-        console.log(`🖼️ Image URL for "${template.name}":`, imageUrl);
-        
-        gameCards.push({
-          id: `${nft.contract_id}_${nft.token_id}`,
-          name: template.name,
-          power: template.power,
-          defense: template.defense,
-          health: template.health,
-          currentHealth: template.health,
-          rarity: template.rarity,
-          faction: template.faction,
-          type: template.card_type,
-          description: template.description,
-          image: imageUrl,
-          nft_token_id: nft.token_id,
-          nft_contract_id: nft.contract_id
-        })
-      } else {
-        console.log(`⚠️ No template found for NFT: "${cardName}" — using fallback stats`)
-        // Still record the NFT mapping so the app can show it using metadata
-        nftInserts.push({
-          wallet_address,
-          nft_contract_id: nft.contract_id,
-          nft_token_id: nft.token_id,
-          card_template_name: cardName,
-          nft_metadata: nft.metadata
-        })
-        // Fallback lightweight game card so UI can render immediately
-        const fallbackImageUrl = normalizeMediaUrl(nft.metadata?.media) || 
-                                 normalizeMediaUrl(nft.metadata?.image) || 
-                                 normalizeMediaUrl(nft.metadata?.img) ||
-                                 '/placeholder.svg';
-        
-        console.log(`🖼️ Fallback image URL for "${cardName}":`, fallbackImageUrl);
-        console.log(`📋 NFT metadata:`, JSON.stringify(nft.metadata, null, 2));
-        
-        gameCards.push({
-          id: `${nft.contract_id}_${nft.token_id}`,
-          name: cardName,
-          power: 20,
-          defense: 15,
-          health: 100,
-          currentHealth: 100,
-          rarity: 'common',
-          faction: null,
-          type: 'pet', // default to pet so it appears in the dragon deck
-          description: nft.metadata?.description ?? 'NFT Card',
-          image: fallbackImageUrl,
-          nft_token_id: nft.token_id,
-          nft_contract_id: nft.contract_id
-        })
-      }
+      console.log(`🎴 Processing NFT: "${cardName}"`)
+      
+      // Record the NFT mapping
+      nftInserts.push({
+        wallet_address,
+        nft_contract_id: nft.contract_id,
+        nft_token_id: nft.token_id,
+        card_template_name: cardName,
+        nft_metadata: nft.metadata
+      })
+      
+      // Create game card using NFT metadata
+      const imageUrl = normalizeMediaUrl(nft.metadata?.media) || 
+                       normalizeMediaUrl(nft.metadata?.image) || 
+                       normalizeMediaUrl(nft.metadata?.img) ||
+                       '/placeholder.svg';
+      
+      console.log(`🖼️ Image URL for "${cardName}":`, imageUrl);
+      
+      gameCards.push({
+        id: `${nft.contract_id}_${nft.token_id}`,
+        name: cardName,
+        power: 20,
+        defense: 15,
+        health: 100,
+        currentHealth: 100,
+        rarity: 'common',
+        faction: null,
+        type: 'pet',
+        description: nft.metadata?.description ?? 'NFT Card',
+        image: imageUrl,
+        nft_token_id: nft.token_id,
+        nft_contract_id: nft.contract_id
+      })
     }
 
     // Insert NFT mappings
