@@ -59,13 +59,11 @@ export const InventoryDisplay = ({
     handleQuantityConfirm
   } = useInventoryLogic(inventory);
 
-// Источник истины: предметы из game_data + отображаем рабочих и колоды из item_instances
+// Источник истины: используем ТОЛЬКО item_instances для всех предметов
 const { cardInstances } = useCardInstances();
 const { instances: itemInstances } = useItemInstances();
 
-const baseItems: Item[] = (inventory || []).filter((item): item is Item => !!item);
-
-// Добавляем рабочих из card_instances
+// Рабочие из card_instances
 const workerItems: Item[] = (cardInstances || [])
   .filter(ci => ci.card_type === 'workers')
   .map(ci => ({
@@ -78,38 +76,38 @@ const workerItems: Item[] = (cardInstances || [])
     stats: (ci.card_data as any)?.stats || {}
   } as Item));
 
-// Добавляем колоды карт из item_instances
-const cardPackItems: Item[] = (itemInstances || [])
-  .filter(inst => inst.type === 'cardPack')
+// ВСЕ предметы из item_instances (включая колоды и материалы)
+const instanceItems: Item[] = (itemInstances || [])
   .map(inst => ({
     id: inst.id,
-    name: inst.name || 'Колода карт',
-    type: 'cardPack',
+    name: inst.name || 'Предмет',
+    type: inst.type || 'material',
     value: 1,
-    description: 'Содержит 1 случайную карту',
-    image: '/lovable-uploads/e523dce0-4cda-4d32-b4e2-ecec40b1eb39.png'
+    description: inst.type === 'cardPack' ? 'Содержит 1 случайную карту' : '',
+    image: inst.type === 'cardPack' 
+      ? '/lovable-uploads/e523dce0-4cda-4d32-b4e2-ecec40b1eb39.png'
+      : undefined
   } as Item));
 
-console.log('📦 Inventory Display Debug:', {
-  totalInventoryItems: inventory?.length || 0,
-  baseItems: baseItems.length,
-  baseItemsTypes: baseItems.map(i => i.type),
+console.log('📦 Inventory Display (только из instances):', {
   workerItems: workerItems.length,
-  cardPackItems: cardPackItems.length,
+  instanceItems: instanceItems.length,
   cardInstances: cardInstances?.length || 0,
   itemInstances: itemInstances?.length || 0
 });
 
-// Исключаем рабочих и колоды из сохранённого инвентаря, чтобы избежать дубликатов
+// Объединяем только instance-based предметы
 const allInventoryItems: Item[] = [
-  ...baseItems.filter(i => i.type !== 'worker' && i.type !== 'cardPack'),
   ...workerItems,
-  ...cardPackItems,
+  ...instanceItems,
 ];
 
 console.log('✨ Final inventory to display:', {
   total: allInventoryItems.length,
-  types: allInventoryItems.map(i => i.type)
+  types: allInventoryItems.reduce((acc, i) => {
+    acc[i.type] = (acc[i.type] || 0) + 1;
+    return acc;
+  }, {} as Record<string, number>)
 });
 
 
