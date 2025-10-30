@@ -79,21 +79,18 @@ export const ItemGiveawayManager = () => {
     try {
       setIsGiving(true);
 
-      // Создаём новые предметы с уникальными ID
-      const newItems = Array.from({ length: quantity }, () => ({
-        id: uuidv4(),
+      // Подготовка предметов для RPC
+      const itemsToAdd = Array.from({ length: quantity }, () => ({
         name: selectedItem.name,
         type: selectedItem.type,
-        value: 0,
-        description: selectedItem.description || '',
-        image: selectedItem.image_url || undefined,
+        template_id: selectedItem.id.toString(),
+        item_id: selectedItem.item_id
       }));
 
       // Используем RPC функцию для выдачи предметов (обходим RLS)
-      const { data, error } = await supabase.rpc('admin_give_items_to_player', {
-        p_admin_wallet_address: accountId,
-        p_target_wallet_address: walletAddress.trim(),
-        p_items: newItems
+      const { data, error } = await supabase.rpc('add_item_instances', {
+        p_wallet_address: walletAddress.trim(),
+        p_items: itemsToAdd
       });
 
       if (error) throw error;
