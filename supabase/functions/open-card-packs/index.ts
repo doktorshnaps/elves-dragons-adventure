@@ -418,11 +418,6 @@ Deno.serve(async (req) => {
       throw updateCardsErr;
     }
 
-    if (error) {
-      console.error('RPC error:', error);
-      throw error;
-    }
-
     console.log('✅ Database updated successfully');
 
     return new Response(
