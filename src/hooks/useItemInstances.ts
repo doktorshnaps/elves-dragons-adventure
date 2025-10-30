@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useWalletContext } from '@/contexts/WalletConnectContext';
 
@@ -131,24 +131,21 @@ export const useItemInstances = () => {
   /**
    * Group instances by item_id, returning counts
    */
-  const getCountsByItemId = (): Record<string, number> => {
-    console.log('🔍 [getCountsByItemId] Total instances:', instances.length);
-    console.log('🔍 [getCountsByItemId] accountId:', accountId);
+  const getCountsByItemId = useCallback((): Record<string, number> => {
     const counts: Record<string, number> = {};
     instances.forEach(inst => {
       const key = inst.item_id || inst.name || 'unknown';
       counts[key] = (counts[key] || 0) + 1;
     });
-    console.log('🔍 [getCountsByItemId] Counts by item_id:', counts);
     return counts;
-  };
+  }, [instances]);
 
   /**
    * Get all instances matching a given item_id
    */
-  const getInstancesByItemId = (itemId: string): ItemInstance[] => {
+  const getInstancesByItemId = useCallback((itemId: string): ItemInstance[] => {
     return instances.filter(inst => inst.item_id === itemId);
-  };
+  }, [instances]);
 
   return {
     instances,

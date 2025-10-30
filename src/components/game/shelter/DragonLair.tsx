@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -47,6 +47,9 @@ export const DragonLair: React.FC<DragonLairProps> = ({ lairLevel, onUpgradeBuil
   const { instances: itemInstances, getCountsByItemId, removeItemInstancesByIds } = useItemInstances();
   const [upgradeDialogOpen, setUpgradeDialogOpen] = useState(false);
   const [pendingUpgradeDragons, setPendingUpgradeDragons] = useState<CardType[]>([]);
+
+  // Мемоизируем подсчет предметов
+  const itemCounts = useMemo(() => getCountsByItemId(), [getCountsByItemId]);
 
   // Initialize cards without passive regeneration
   const initializedCards = (gameData.cards as CardType[] || []).map(initializeCardHealth);
@@ -169,7 +172,6 @@ export const DragonLair: React.FC<DragonLairProps> = ({ lairLevel, onUpgradeBuil
     if (!requirements) return { canUpgrade: false, missingItems: ['Нет данных об улучшении'] };
     
     const missingItems: string[] = [];
-    const itemCounts = getCountsByItemId();
     
     // Check resources
     if (requirements.costs.balance && gameData.balance < requirements.costs.balance) {
@@ -516,7 +518,6 @@ export const DragonLair: React.FC<DragonLairProps> = ({ lairLevel, onUpgradeBuil
                   
                   const requirements = getUpgradeRequirement(dragon.rarity, 'dragonLair');
                   const { canUpgrade, missingItems } = checkUpgradeRequirements(dragons);
-                  const itemCounts = getCountsByItemId();
                   
                   return (
                      <div key={key} className="p-2 sm:p-4 border border-primary/20 rounded-lg overflow-hidden">

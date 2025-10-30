@@ -1,0 +1,35 @@
+-- Drop old update_game_data_by_wallet function to resolve PGRST203 ambiguity
+-- The v2 version without inventory field will remain active
+
+DROP FUNCTION IF EXISTS public.update_game_data_by_wallet(
+  p_wallet_address text,
+  p_balance numeric,
+  p_cards jsonb,
+  p_inventory jsonb,
+  p_selected_team jsonb,
+  p_dragon_eggs jsonb,
+  p_account_level integer,
+  p_account_experience integer,
+  p_initialized boolean,
+  p_marketplace_listings jsonb,
+  p_social_quests jsonb,
+  p_adventure_player_stats jsonb,
+  p_adventure_current_monster jsonb,
+  p_battle_state jsonb,
+  p_barracks_upgrades jsonb,
+  p_dragon_lair_upgrades jsonb,
+  p_active_workers jsonb,
+  p_building_levels jsonb,
+  p_active_building_upgrades jsonb,
+  p_wood numeric,
+  p_stone numeric,
+  p_iron numeric,
+  p_gold numeric,
+  p_max_wood numeric,
+  p_max_stone numeric,
+  p_max_iron numeric,
+  p_wood_last_collection_time bigint,
+  p_stone_last_collection_time bigint,
+  p_wood_production_data jsonb,
+  p_stone_production_data jsonb
+);

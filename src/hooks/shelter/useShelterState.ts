@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useBatchedGameState } from '@/hooks/useBatchedGameState';
 import { useLanguage } from '@/hooks/useLanguage';
 import { t } from '@/utils/translations';
@@ -53,7 +53,7 @@ export const useShelterState = () => {
   // Мемоизируем счётчики предметов для передачи в компоненты
   const inventoryCounts = useMemo(() => {
     return getCountsByItemId();
-  }, [instances, getCountsByItemId]);
+  }, [getCountsByItemId]);
   const [activeTab, setActiveTab] = useState<"upgrades" | "crafting" | "barracks" | "dragonlair" | "medical" | "workers">("upgrades");
   const [balance, setBalance] = useState(gameState.balance);
   // Синхронизируем баланс с gameState
@@ -322,12 +322,11 @@ export const useShelterState = () => {
     category: "potion"
   }], [language]);
 
-  const canAffordUpgrade = (upgrade: NestUpgrade) => {
+  const canAffordUpgrade = useCallback((upgrade: NestUpgrade) => {
     // Проверяем наличие требуемых предметов по item_id из item_instances
     let hasRequiredItems = true;
     if (upgrade.requiredItems && (Array.isArray(upgrade.requiredItems) || typeof upgrade.requiredItems === 'object')) {
-      const instanceCounts = getCountsByItemId();
-      console.log('🔍 [canAffordUpgrade] Item instance counts:', instanceCounts);
+      const instanceCounts = inventoryCounts;
 
       // Normalize required items
       const rawEntries: Array<{ item_id: string; quantity: number }> = Array.isArray(upgrade.requiredItems)
@@ -347,18 +346,14 @@ export const useShelterState = () => {
         dedupMap.set(key, prev + Number(r.quantity || 1)); // СУММА, не max!
       }
       const entries = Array.from(dedupMap, ([item_id, quantity]) => ({ item_id, quantity }));
-      console.log('🔍 [canAffordUpgrade] Deduped required entries:', entries);
 
       for (const req of entries) {
         const playerHas = instanceCounts[req.item_id] || 0;
-        console.log(`🔍 [canAffordUpgrade] Need ${req.quantity} of ${req.item_id}, playerHas=${playerHas}`);
         if (playerHas < req.quantity) {
           hasRequiredItems = false;
           break;
         }
       }
-
-      console.log('🔍 [canAffordUpgrade] hasRequiredItems:', hasRequiredItems);
     }
     
     const levelOk = upgrade.level < upgrade.maxLevel;
@@ -368,26 +363,8 @@ export const useShelterState = () => {
     const balanceOk = gameState.balance >= (upgrade.cost.balance || 0);
     const mhOk = canUpgradeBuilding(upgrade.id);
 
-    const result = levelOk && woodOk && stoneOk && ironOk && balanceOk && mhOk && hasRequiredItems;
-    try {
-      console.log('🧪 [canAffordUpgrade:check]', {
-        id: upgrade.id,
-        level: upgrade.level,
-        maxLevel: upgrade.maxLevel,
-        levelOk,
-        woodOk,
-        stoneOk,
-        ironOk,
-        balanceOk,
-        mhOk,
-        hasRequiredItems,
-        cost: upgrade.cost,
-        resources,
-        balance: gameState.balance
-      });
-    } catch {}
-    return result;
-  };
+    return levelOk && woodOk && stoneOk && ironOk && balanceOk && mhOk && hasRequiredItems;
+  }, [inventoryCounts, resources, gameState.balance, getTemplate, canUpgradeBuilding]);
   
   const canAffordCraft = (recipe: CraftRecipe) => {
     const hasWorkshopWorkers = hasWorkersInBuilding('workshop');
