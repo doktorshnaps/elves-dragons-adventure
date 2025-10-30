@@ -316,7 +316,7 @@ function mapClientToServer(data: Partial<GameData> | GameData) {
   if (d.gold !== undefined) out.gold = d.gold;
   if (d.cards !== undefined) out.cards = d.cards;
   if (d.initialized !== undefined) out.initialized = d.initialized;
-  if (d.inventory !== undefined) out.inventory = d.inventory;
+  // inventory removed (legacy field, use item_instances table)
   if (d.marketplaceListings !== undefined) out.marketplace_listings = d.marketplaceListings;
   if (d.socialQuests !== undefined) out.social_quests = d.socialQuests;
   if (d.adventurePlayerStats !== undefined) out.adventure_player_stats = d.adventurePlayerStats;
@@ -440,7 +440,7 @@ async function updateGameDataOnServer(walletAddress: string, updates: Partial<Ga
     p_wallet_address: walletAddress,
     p_balance: updates.balance,
     p_cards: updates.cards as any,
-    p_inventory: updates.inventory as any,
+    // p_inventory removed (legacy field, use item_instances table)
     p_selected_team: updates.selectedTeam as any,
     p_dragon_eggs: updates.dragonEggs as any,
     p_account_level: updates.accountLevel,

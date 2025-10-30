@@ -43,7 +43,8 @@ export const BuildingDetailsPanel = ({
         canAfford,
         isUpgrading,
         isUpgradeReady,
-        computedDisabled
+        computedDisabled,
+        reason: !canAfford ? 'cannot afford' : isUpgrading ? 'upgrading' : 'ready'
       });
     } catch {}
   }

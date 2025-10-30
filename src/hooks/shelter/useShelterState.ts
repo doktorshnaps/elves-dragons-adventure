@@ -515,7 +515,8 @@ export const useShelterState = () => {
         upgrade.id,
         upgradeTime,
         upgrade.level + 1,
-        { ...newResources, balance: newBalance, inventory: newInventoryJson }
+        { ...newResources, balance: newBalance }
+        // inventory removed: use item_instances table instead
       );
     } catch (e) {
       console.error('❌ Failed to start upgrade atomically', e);
