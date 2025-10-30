@@ -24,7 +24,6 @@ export interface NestUpgrade {
     gt: number;
   };
   requiredItems: Array<{ item_id: string; quantity: number }>;
-  requiredMainHallLevel: number;
   benefit: string;
 }
 
@@ -231,32 +230,10 @@ export const useShelterState = () => {
     return baseTimes[buildingId] || 15;
   };
 
-  // Функция для проверки требований для улучшения
+  // Функция для проверки требований для улучшения (убрана проверка required_main_hall_level)
   const canUpgradeBuilding = (buildingId: string) => {
-    const currentLevel = buildingLevels[buildingId as keyof typeof buildingLevels] || 0;
-    const config = getBuildingConfig(buildingId, currentLevel + 1);
-    
-    // Проверяем требования из building_configs
-    if (config) {
-      // Проверяем required_main_hall_level
-      if (config.required_main_hall_level && buildingLevels.main_hall < config.required_main_hall_level) {
-        try {
-          console.log('🚫 [canUpgradeBuilding] Требуется уровень главного зала!', {
-            buildingId,
-            requiredMainHallLevel: config.required_main_hall_level,
-            currentMainHallLevel: buildingLevels.main_hall,
-            canUpgrade: false
-          });
-        } catch {}
-        return false;
-      }
-      
-      // Проверяем required_items (если есть)
-      if (config.required_items && Array.isArray(config.required_items) && config.required_items.length > 0) {
-        // TODO: Проверить наличие требуемых предметов в инвентаре
-        // Пока пропускаем эту проверку
-      }
-    }
+    // Все требования теперь проверяются только через required_items в админ панели
+    // Скрытые автоматические проверки удалены
     
     // Fallback на старую логику
     if (buildingId === 'storage') {
@@ -295,7 +272,6 @@ export const useShelterState = () => {
         maxLevel: 8,
         cost: getUpgradeCost(buildingId, currentLevel),
         requiredItems: nextLevelConfig?.required_items || [],
-        requiredMainHallLevel: nextLevelConfig?.required_main_hall_level || 0,
         benefit
       };
     };

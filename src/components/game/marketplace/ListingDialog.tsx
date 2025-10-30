@@ -36,7 +36,7 @@ export const ListingDialog = ({
         const {
           data,
           error
-        } = await supabase.from('game_data').select('cards, inventory, selected_team').eq('user_id', userId).maybeSingle();
+        } = await supabase.from('game_data').select('cards, selected_team').eq('user_id', userId).maybeSingle();
         if (!error && data) {
           const teamIds = new Set<string>();
           const st = data.selected_team as any[] || [];
@@ -49,7 +49,6 @@ export const ListingDialog = ({
           const allCards: CardType[] = data.cards as any[] || [];
           const filteredCards = allCards.filter(c => !teamIds.has(c.id));
           setCards(filteredCards);
-          setInventory((data.inventory as any[] || []) as Item[]);
         }
       } finally {
         setLoading(false);
@@ -58,7 +57,6 @@ export const ListingDialog = ({
     load();
   }, [accountId]);
   const [cards, setCards] = useState<CardType[]>([]);
-  const [inventory, setInventory] = useState<Item[]>([]);
   const [loading, setLoading] = useState(true);
   // Use hook NFTs or fallback to cached local cards to avoid empty state on fast reopen
   const nftSource: any[] = integratedNftCards.length > 0 ? integratedNftCards : (() => {
@@ -155,7 +153,7 @@ export const ListingDialog = ({
 
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-[35vh] overflow-y-auto">
-              {selectedType === 'card' ? cards.map((card: CardType, index: number) => renderItem(card, index)) : selectedType === 'nft' ? filteredNFTs.map((nft: any, index: number) => renderItem(nft, index)) : inventory.map((item: Item, index: number) => renderItem(item, index))}
+              {selectedType === 'card' ? cards.map((card: CardType, index: number) => renderItem(card, index)) : filteredNFTs.map((nft: any, index: number) => renderItem(nft, index))}
               {selectedType === 'nft' && filteredNFTs.length === 0 && !nftLoading && <div className="col-span-2 text-center text-gray-400 py-4">
                   У вас нет доступных NFT для продажи
                 </div>}

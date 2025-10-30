@@ -138,16 +138,6 @@ export const BuildingCard = ({
         {upgrade.level < upgrade.maxLevel && (
           <div className="space-y-3">
             <div className="text-sm font-medium">{t(language, 'shelter.upgradeCost')}:</div>
-            
-            {/* Требования по уровню главного зала */}
-            {upgrade.requiredMainHallLevel > 0 && (
-              <div className="p-3 bg-warning/15 border-2 border-warning/30 rounded-lg text-sm flex items-center gap-2">
-                <span className="text-2xl">🏛️</span>
-                <span className="font-semibold text-warning">
-                  {t(language, 'shelter.requiresMainHall')}: <strong className="text-base">{upgrade.requiredMainHallLevel}</strong>
-                </span>
-              </div>
-            )}
 
             {/* Требуемые предметы с улучшенным дизайном */}
             {upgrade.requiredItems && upgrade.requiredItems.length > 0 && (
