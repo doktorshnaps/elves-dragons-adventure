@@ -377,18 +377,46 @@ Deno.serve(async (req) => {
     console.log(`\n✅ Generated ${newCards.length} cards total`);
     console.log('Summary:', newCards.map(c => `${c.name} 1⭐ ${c.cardClass}`).join(', '));
 
-    // Call RPC to atomically update inventory and add cards
-    const supabaseUrl = 'https://oimhwdymghkwxznjarkv.supabase.co';
-    const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9pbWh3ZHltZ2hrd3h6bmphcmt2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTQ1MTMxMjEsImV4cCI6MjA3MDA4OTEyMX0.97FbtgxM3nYtzTQWf8TpKqvxJ7h_pvhpBOd0SYRd05k';
-    
+    // Persist generated cards without legacy inventory JSON or deprecated RPC
+    const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+    const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseKey);
-    
-    const { data, error } = await supabase.rpc('open_card_packs', {
-      p_wallet_address: wallet_address,
-      p_pack_name: pack_name,
-      p_count: count,
-      p_new_cards: newCards
-    });
+
+    // Ensure game_data exists for the wallet
+    let { data: gameData, error: gameDataErr } = await supabase
+      .from('game_data')
+      .select('cards')
+      .eq('wallet_address', wallet_address)
+      .maybeSingle();
+
+    if (gameDataErr) {
+      console.error('❌ Error fetching game_data:', gameDataErr);
+      throw gameDataErr;
+    }
+
+    if (!gameData) {
+      const { data: created, error: createErr } = await supabase.rpc('create_game_data_by_wallet', {
+        p_wallet_address: wallet_address,
+      });
+      if (createErr) {
+        console.error('❌ Error creating game_data:', createErr);
+        throw createErr;
+      }
+      gameData = { cards: created?.cards ?? [] } as any;
+    }
+
+    const existingCards = Array.isArray((gameData as any).cards) ? (gameData as any).cards : [];
+    const updatedCards = [...existingCards, ...newCards];
+
+    const { error: updateCardsErr } = await supabase
+      .from('game_data')
+      .update({ cards: updatedCards, updated_at: new Date().toISOString() })
+      .eq('wallet_address', wallet_address);
+
+    if (updateCardsErr) {
+      console.error('❌ Error updating cards array:', updateCardsErr);
+      throw updateCardsErr;
+    }
 
     if (error) {
       console.error('RPC error:', error);

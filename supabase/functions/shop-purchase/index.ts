@@ -231,31 +231,10 @@ if (itemTemplate.type === 'worker') {
 
       console.log(`✅ Added ${quantity} items to item_instances`);
 
-      // Legacy: также добавляем в JSON inventory для обратной совместимости
-      for (let i = 0; i < quantity; i++) {
-        const itemData = {
-          id: `item_${item_id}_${Date.now()}_${i}`,
-          name: itemTemplate.name,
-          description: itemTemplate.description,
-          type: itemTemplate.type,
-          rarity: itemTemplate.rarity || 'common',
-          value: itemTemplate.value,
-          sell_price: itemTemplate.sell_price,
-          stats: itemTemplate.stats,
-          image: itemTemplate.image_url
-        };
+      // Legacy JSON inventory update removed. Items are persisted in item_instances only.
+      // This avoids referencing deprecated game_data.inventory column.
+      // If needed, a migration can backfill from item_instances.
 
-        const { error: inventoryError } = await supabase.rpc('atomic_inventory_update', {
-          p_wallet_address: wallet_address,
-          p_price_deduction: 0, // Цена уже списана выше
-          p_new_item: itemData
-        });
-
-        if (inventoryError) {
-          console.error(`❌ Error adding item ${i+1}/${quantity} to inventory:`, inventoryError);
-          // Не бросаем ошибку, т.к. item_instances уже добавлены
-        }
-      }
     }
 
     console.log(`✅ Purchase successful: item ${item_id}, remaining: ${inventoryItem.available_quantity - quantity}`);
