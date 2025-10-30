@@ -50,8 +50,8 @@ export const useTeamBattle = (dungeonType: DungeonType, initialLevel: number = 1
   const [attackOrder, setAttackOrder] = useState<string[]>([]);
   const [lastRoll, setLastRoll] = useState<{ attackerRoll: number; defenderRoll: number; source: 'player' | 'enemy'; damage: number; isBlocked: boolean; isCritical?: boolean; level: number } | null>(null);
 
-  // Тайминги последовательности боя
-  const RESULT_DISPLAY_MS = 600; // показ результатов броска
+  // Тайминги последовательности боя (синхронизированы с UI анимациями)
+  const DICE_ROLL_MS = 1500; // кубики крутятся
   const ATTACK_ANIMATION_MS = 2000; // анимация атаки
   const TURN_DELAY_MS = 1000; // пауза перед сменой хода
   const delay = (ms: number) => new Promise<void>((res) => setTimeout(res, ms));
@@ -197,6 +197,9 @@ export const useTeamBattle = (dungeonType: DungeonType, initialLevel: number = 1
   const [skippedAttackerIds, setSkippedAttackerIds] = useState<Set<string>>(new Set());
 
   const executePlayerAttack = async (pairId: string, targetId: number) => {
+    const turnStartTime = Date.now();
+    console.log(`🎲 [PLAYER] НАЧАЛО БРОСКА КУБИКА (${new Date().toISOString()})`);
+    
     const attackingPair = battleState.playerPairs.find(p => p.id === pairId);
     const target = battleState.opponents.find(o => o.id === targetId);
     
@@ -223,7 +226,7 @@ export const useTeamBattle = (dungeonType: DungeonType, initialLevel: number = 1
     const appliedDamage = damageResult.attackerRoll > damageResult.defenderRoll ? damageResult.damage : 0;
     const isBlocked = damageResult.isDefenderCrit || damageResult.attackerRoll <= damageResult.defenderRoll;
 
-    console.log('🧭 [PLAYER] STEP 1: roll calculated', damageResult);
+    console.log(`✅ [PLAYER] БРОСОК ЗАВЕРШЕН: result=${damageResult.attackerRoll}vs${damageResult.defenderRoll}, damage=${appliedDamage} (${Date.now() - turnStartTime}ms, ${new Date().toISOString()})`);
 
     // Публикуем результат броска (UI сам покажет результаты и запустит анимацию)
     setLastRoll({
@@ -245,12 +248,12 @@ export const useTeamBattle = (dungeonType: DungeonType, initialLevel: number = 1
     });
 
     // Ждем: показ результата + анимация атаки
-    console.log('⏳ [PLAYER] STEP 2: wait for result display and attack animation');
-    await delay(RESULT_DISPLAY_MS + ATTACK_ANIMATION_MS);
+    console.log(`💥 [PLAYER] НАЧАЛО АНИМАЦИИ АТАКИ (${Date.now() - turnStartTime}ms, ${new Date().toISOString()})`);
+    await delay(DICE_ROLL_MS + ATTACK_ANIMATION_MS);
 
     // Применяем урон после завершения анимации
     const newTargetHealth = Math.max(0, target.health - appliedDamage);
-    console.log('💥 [PLAYER] STEP 3: apply damage', { before: target.health, after: newTargetHealth });
+    console.log(`⚔️ [PLAYER] НАНЕСЕНИЕ УРОНА: damage=${appliedDamage}, health=${target.health}→${newTargetHealth} (${Date.now() - turnStartTime}ms, ${new Date().toISOString()})`);
 
     startTransition(() => {
       setBattleState(prev => ({
@@ -282,6 +285,8 @@ export const useTeamBattle = (dungeonType: DungeonType, initialLevel: number = 1
       toast({ title: "Враг побежден!", description: `Получено ${expReward} опыта аккаунта` });
     }
 
+    console.log(`✅ [PLAYER] ХОД ЗАВЕРШЕН (${Date.now() - turnStartTime}ms, ${new Date().toISOString()})`);
+
     // Проверяем завершение уровня
     if (battleState.opponents.filter(o => o.health > 0).length === 1 && newTargetHealth === 0) {
       // Даем UI доиграть смерти и переход
@@ -290,7 +295,6 @@ export const useTeamBattle = (dungeonType: DungeonType, initialLevel: number = 1
       }, 1800);
     } else {
       // Смена хода после короткой паузы
-      console.log('🔄 [PLAYER] STEP 4: switch turn');
       setTimeout(() => switchTurn(), TURN_DELAY_MS);
     }
   };
@@ -298,7 +302,10 @@ export const useTeamBattle = (dungeonType: DungeonType, initialLevel: number = 1
   // УБРАНА механика ответного удара (executeCounterAttack)
   
   const executeEnemyAttack = useCallback(async () => {
+    const turnStartTime = Date.now();
+    console.log(`🎲 [ENEMY] НАЧАЛО БРОСКА КУБИКА (${new Date().toISOString()})`);
     console.log('🔴 executeEnemyAttack called, currentTurn:', battleState.currentTurn);
+    
     if (battleState.currentTurn !== 'enemy') {
       console.log('⚠️ Skipping enemy attack - not enemy turn');
       return;
@@ -313,7 +320,6 @@ export const useTeamBattle = (dungeonType: DungeonType, initialLevel: number = 1
 
     const alivePairs = battleState.playerPairs.filter(pair => pair.health > 0);
     const aliveOpponents = battleState.opponents.filter(opp => opp.health > 0);
-    
     console.log('⚔️ Enemy attacking - alivePairs:', alivePairs.length, 'aliveOpponents:', aliveOpponents.length);
     
     if (aliveOpponents.length === 0 || alivePairs.length === 0) {
@@ -324,22 +330,27 @@ export const useTeamBattle = (dungeonType: DungeonType, initialLevel: number = 1
 
     const currentEnemy = aliveOpponents[Math.floor(Math.random() * aliveOpponents.length)];
     const targetPair = alivePairs[Math.floor(Math.random() * alivePairs.length)];
-    
     console.log('🎯 Enemy target:', currentEnemy.name, '→', targetPair.hero?.name || targetPair.dragon?.name);
-    
+
+    // Расчет результата броска (без немедленного урона)
     const damageResult = calculateD6Damage(currentEnemy.power, targetPair.defense);
     const appliedDamage = damageResult.attackerRoll > damageResult.defenderRoll ? damageResult.damage : 0;
     const isBlocked = damageResult.isDefenderCrit || damageResult.attackerRoll <= damageResult.defenderRoll;
-    setLastRoll({ 
-      attackerRoll: damageResult.attackerRoll, 
-      defenderRoll: damageResult.defenderRoll, 
-      source: 'enemy', 
-      damage: appliedDamage, 
+
+    console.log(`✅ [ENEMY] БРОСОК ЗАВЕРШЕН: result=${damageResult.attackerRoll}vs${damageResult.defenderRoll}, damage=${appliedDamage} (${Date.now() - turnStartTime}ms, ${new Date().toISOString()})`);
+
+    // Публикуем результат броска (UI сам покажет результаты и анимацию)
+    setLastRoll({
+      attackerRoll: damageResult.attackerRoll,
+      defenderRoll: damageResult.defenderRoll,
+      source: 'enemy',
+      damage: appliedDamage,
       isBlocked,
       isCritical: damageResult.isAttackerCrit && appliedDamage > 0,
       level: battleState.level
     });
-    // Если защитник выкинул критическую защиту (6), враг пропускает следующий ход
+
+    // Крит-блокировка врага: отметим пропуск следующего хода
     if (damageResult.skipNextTurn) {
       setSkippedAttackerIds(prev => {
         const newSet = new Set(prev);
@@ -347,11 +358,22 @@ export const useTeamBattle = (dungeonType: DungeonType, initialLevel: number = 1
         return newSet;
       });
     }
-    
-    if (damageResult.damage > 0 && appliedDamage === 0) {
-      console.warn("⚠️ Inconsistent damage prevented (enemy attack)", damageResult);
-    }
-    
+
+    const critText = damageResult.isAttackerCrit ? " 🎯 КРИТ!" : "";
+    const defCritText = damageResult.isDefenderCrit ? " 🛡️ БЛОК!" : "";
+    const skipText = damageResult.skipNextTurn ? " (враг пропустит ход)" : "";
+    toast({
+      title: `Враг атакует!${critText}${skipText}`,
+      description: `${currentEnemy.name} бросил ${damageResult.attackerRoll}, пара ${damageResult.defenderRoll}. Потенциальный урон: ${appliedDamage}${defCritText}`,
+      variant: "destructive"
+    });
+
+    // Ждем: показ результата + анимация атаки
+    console.log(`💥 [ENEMY] НАЧАЛО АНИМАЦИИ АТАКИ (${Date.now() - turnStartTime}ms, ${new Date().toISOString()})`);
+    await delay(DICE_ROLL_MS + ATTACK_ANIMATION_MS);
+
+    // Применяем урон
+    console.log(`⚔️ [ENEMY] НАНЕСЕНИЕ УРОНА: damage=${appliedDamage}, targetPair=${targetPair.id} (${Date.now() - turnStartTime}ms, ${new Date().toISOString()})`);
     const updatedPair = await applyDamageToPair(targetPair, appliedDamage, updateGameData, gameData);
 
     setBattleState(prev => ({
@@ -363,29 +385,19 @@ export const useTeamBattle = (dungeonType: DungeonType, initialLevel: number = 1
       )
     }));
 
-    const critText = damageResult.isAttackerCrit ? " 🎯 КРИТ!" : "";
-    const defCritText = damageResult.isDefenderCrit ? " 🛡️ БЛОК!" : "";
-    const skipText = damageResult.skipNextTurn ? " (враг пропустит ход)" : "";
-    
-    toast({
-      title: `Враг атакует!${critText}${skipText}`,
-      description: `${currentEnemy.name} бросил ${damageResult.attackerRoll}, пара ${damageResult.defenderRoll}. Урон: ${appliedDamage}${defCritText}`,
-      variant: "destructive"
-    });
+    console.log(`✅ [ENEMY] ХОД ЗАВЕРШЕН (${Date.now() - turnStartTime}ms, ${new Date().toISOString()})`);
 
-    // УБРАНА механика ответного удара
-
+    // Финализация: смена хода или конец игры
     if (alivePairs.length === 1 && updatedPair.health === 0) {
       setTimeout(() => {
         enemyAttackLockRef.current = false;
         handleGameOver();
-      }, 3000);
+      }, TURN_DELAY_MS);
     } else {
-      console.log('🔄 Switching turn after enemy attack in 3s');
       setTimeout(() => {
         enemyAttackLockRef.current = false;
         switchTurn();
-      }, 3000);
+      }, TURN_DELAY_MS);
     }
   }, [battleState, gameData, updateGameData, toast]);
 

@@ -89,64 +89,31 @@ export const TeamBattleArena: React.FC<TeamBattleArenaProps> = ({
       const pairId = selectedPair;
       const targetId = selectedTarget;
       
-      // Show dice roll animation - Player attacking
-      setIsPlayerAttacking(true);
-      setIsDiceRolling(true);
-      setDiceKey(prev => prev + 1);
+      console.log('🎬 [UI] handleAttack: starting player attack flow');
       
-      // Запускаем анимацию атаки
-      setAttackingPair(pairId);
-      setAttackedTarget(targetId);
-
-      // Останавливаем вращение кубиков через 1500мс (показываем результат)
-      setTimeout(() => {
-        setIsDiceRolling(false);
-        
-        // Сразу после остановки кубиков выполняем атаку (наносим урон)
-        onAttack(pairId, targetId);
-      }, 1500);
-
-      // Убираем эффекты анимации через 4000мс (после полного цикла анимации)
+      // Просто вызываем атаку, все таймиги управляются из useTeamBattle
+      onAttack(pairId, targetId);
+      
+      // Сбрасываем UI состояния после полного цикла (3s тайминг из useTeamBattle + margin)
       setTimeout(() => {
         setSelectedPair(null);
         setSelectedTarget(null);
         setAttackingPair(null);
         setAttackedTarget(null);
-      }, 4000);
+      }, 4500);
     }
   };
   const handleEnemyAttack = useCallback(() => {
-    console.log('🎯 handleEnemyAttack called, alivePairs:', alivePairs.length);
-    // Случайно выбираем живую пару для защиты
-    const randomPair = alivePairs[Math.floor(Math.random() * alivePairs.length)];
+    console.log('🎬 [UI] handleEnemyAttack: starting enemy attack flow, alivePairs:', alivePairs.length);
     
-    if (randomPair) {
-      // Enemy turn dice animation
-      setIsPlayerAttacking(false);
-      setDefendingPair(randomPair.id);
-      setIsDiceRolling(true);
-      setDiceKey(prev => prev + 1);
-      console.log('🎲 Enemy dice: start rolling');
-
-      // Останавливаем вращение кубиков через 1500мс (показываем результат)
-      setTimeout(() => {
-        setIsDiceRolling(false);
-        console.log('🎲 Enemy dice: stop rolling');
-        
-        // Сразу после остановки кубиков выполняем атаку (наносим урон)
-        console.log('⚔️ Calling onEnemyAttack');
-        onEnemyAttack();
-      }, 1500);
-
-      // Убираем защитника через 4000мс (после полного цикла анимации)
-      setTimeout(() => {
-        setDefendingPair(null);
-      }, 4000);
-    } else {
-      console.log('⚔️ No pair to defend, calling onEnemyAttack directly');
-      onEnemyAttack();
-    }
-  }, [alivePairs, onEnemyAttack]);
+    // Просто вызываем атаку врага, все таймиги управляются из useTeamBattle
+    onEnemyAttack();
+    
+    // Сбрасываем UI состояния после полного цикла
+    setTimeout(() => {
+      setDefendingPair(null);
+    }, 4500);
+  }, [alivePairs.length, onEnemyAttack]);
   const getCurrentAttacker = () => {
     const orderedPairs = [...alivePairs].sort((a, b) => a.attackOrder - b.attackOrder);
     return orderedPairs[0];
@@ -198,6 +165,26 @@ export const TeamBattleArena: React.FC<TeamBattleArenaProps> = ({
       return () => clearTimeout(startTimer);
     }
   }, [lastRoll, isDiceRolling, level]);
+
+  // Автоматический запуск анимации кубиков при получении lastRoll
+  useEffect(() => {
+    if (lastRoll && lastRoll.level === level) {
+      console.log(`🎲 [UI] Starting dice animation for ${lastRoll.source} (${new Date().toISOString()})`);
+      
+      // Устанавливаем кто атакует
+      setIsPlayerAttacking(lastRoll.source === 'player');
+      setIsDiceRolling(true);
+      setDiceKey(prev => prev + 1);
+      
+      // Останавливаем кубики через 1500ms (синхронно с RESULT_DISPLAY_MS из useTeamBattle)
+      const stopDiceTimer = setTimeout(() => {
+        console.log(`🎲 [UI] Stopping dice animation (${new Date().toISOString()})`);
+        setIsDiceRolling(false);
+      }, 1500);
+      
+      return () => clearTimeout(stopDiceTimer);
+    }
+  }, [lastRoll, level]);
 
   // Таймер хода врага — гарантирует единичное срабатывание даже при лагах сети
   const enemyAttackTimerRef = React.useRef<number | null>(null);
