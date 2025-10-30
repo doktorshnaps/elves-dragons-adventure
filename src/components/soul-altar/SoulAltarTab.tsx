@@ -35,8 +35,9 @@ export const SoulAltarTab = () => {
   const [loading, setLoading] = useState(true);
   const [donating, setDonating] = useState(false);
 
-  const soulCrystals = gameData.inventory?.filter(
-    (item: any) => item.name === "Кристалл Жизни"
+  // Считаем кристаллы из item_instances для точности
+  const soulCrystals = itemInstances.filter(inst => 
+    inst.name === "Кристалл Жизни" || inst.item_id === "lifeCrystal"
   ).length || 0;
 
   useEffect(() => {
@@ -108,7 +109,23 @@ export const SoulAltarTab = () => {
     try {
       setDonating(true);
 
-      // Удаляем кристаллы из инвентаря
+      // Получаем все кристаллы из item_instances
+      const allCrystalInstances = itemInstances.filter(inst => 
+        inst.name === "Кристалл Жизни" || inst.item_id === "lifeCrystal"
+      );
+      
+      if (allCrystalInstances.length < amount) {
+        throw new Error(`Недостаточно кристаллов в базе данных. Найдено: ${allCrystalInstances.length}, требуется: ${amount}`);
+      }
+
+      // Берем точное количество для удаления
+      const crystalInstancesToRemove = allCrystalInstances.slice(0, amount);
+      const instanceIds = crystalInstancesToRemove.map(inst => inst.id);
+      
+      console.log(`Удаление ${amount} кристаллов жизни. IDs:`, instanceIds);
+      await removeItemInstancesByIds(instanceIds);
+
+      // Удаляем кристаллы из инвентаря game_data
       const updatedInventory = [...(gameData.inventory || [])];
       let removed = 0;
       
@@ -117,16 +134,6 @@ export const SoulAltarTab = () => {
           updatedInventory.splice(i, 1);
           removed++;
         }
-      }
-
-      // Удаляем кристаллы из item_instances
-      const crystalInstances = itemInstances.filter(inst => 
-        inst.name === "Кристалл Жизни" || inst.item_id === "lifeCrystal"
-      ).slice(0, amount);
-      
-      if (crystalInstances.length > 0) {
-        const instanceIds = crystalInstances.map(inst => inst.id);
-        await removeItemInstancesByIds(instanceIds);
       }
 
       // Обновляем игровые данные
