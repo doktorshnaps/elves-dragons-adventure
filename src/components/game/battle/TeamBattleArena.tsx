@@ -199,15 +199,28 @@ export const TeamBattleArena: React.FC<TeamBattleArenaProps> = ({
     }
   }, [lastRoll, isDiceRolling, level]);
 
+  // Флаг для предотвращения множественных атак врага
+  const enemyAttackScheduledRef = React.useRef(false);
+  
   // Автоматический ход противника
   useEffect(() => {
-    if (!isPlayerTurn && aliveOpponents.length > 0 && alivePairs.length > 0) {
+    if (!isPlayerTurn && aliveOpponents.length > 0 && alivePairs.length > 0 && !enemyAttackScheduledRef.current) {
       console.log('🎯 Enemy turn triggered - scheduling attack');
+      enemyAttackScheduledRef.current = true;
       const timer = setTimeout(() => {
         console.log('⚔️ Executing enemy attack');
         handleEnemyAttack();
+        enemyAttackScheduledRef.current = false;
       }, 1500);
-      return () => clearTimeout(timer);
+      return () => {
+        clearTimeout(timer);
+        enemyAttackScheduledRef.current = false;
+      };
+    }
+    
+    // Сброс флага при смене хода на игрока
+    if (isPlayerTurn) {
+      enemyAttackScheduledRef.current = false;
     }
   }, [isPlayerTurn, aliveOpponents.length, alivePairs.length, handleEnemyAttack]);
   const handleMenuReturn = () => {
