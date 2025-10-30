@@ -50,6 +50,12 @@ export const useTeamBattle = (dungeonType: DungeonType, initialLevel: number = 1
   const [attackOrder, setAttackOrder] = useState<string[]>([]);
   const [lastRoll, setLastRoll] = useState<{ attackerRoll: number; defenderRoll: number; source: 'player' | 'enemy'; damage: number; isBlocked: boolean; isCritical?: boolean; level: number } | null>(null);
 
+  // Тайминги последовательности боя
+  const RESULT_DISPLAY_MS = 600; // показ результатов броска
+  const ATTACK_ANIMATION_MS = 2000; // анимация атаки
+  const TURN_DELAY_MS = 1000; // пауза перед сменой хода
+  const delay = (ms: number) => new Promise<void>((res) => setTimeout(res, ms));
+
   // Блокировка повторных вызовов атаки врага (анти-дубль при лагах)
   const enemyAttackLockRef = useRef(false);
 
@@ -203,45 +209,48 @@ export const useTeamBattle = (dungeonType: DungeonType, initialLevel: number = 1
         description: `${attackingPair.hero.name} пропускает ход из-за критической блокировки врага`,
         variant: "destructive"
       });
-      
-      // Убираем из списка пропущенных
       setSkippedAttackerIds(prev => {
         const newSet = new Set(prev);
         newSet.delete(pairId);
         return newSet;
       });
-      
-      // Переходим к следующему ходу
-      setTimeout(() => {
-        switchTurn();
-      }, 1000);
+      setTimeout(() => switchTurn(), TURN_DELAY_MS);
       return;
     }
 
+    // Расчет результата броска и будущего урона (без немедленного применения)
     const damageResult = calculateD6Damage(attackingPair.power, target.armor || 0);
     const appliedDamage = damageResult.attackerRoll > damageResult.defenderRoll ? damageResult.damage : 0;
     const isBlocked = damageResult.isDefenderCrit || damageResult.attackerRoll <= damageResult.defenderRoll;
-    setLastRoll({ 
-      attackerRoll: damageResult.attackerRoll, 
-      defenderRoll: damageResult.defenderRoll, 
-      source: 'player', 
-      damage: appliedDamage, 
+
+    console.log('🧭 [PLAYER] STEP 1: roll calculated', damageResult);
+
+    // Публикуем результат броска (UI сам покажет результаты и запустит анимацию)
+    setLastRoll({
+      attackerRoll: damageResult.attackerRoll,
+      defenderRoll: damageResult.defenderRoll,
+      source: 'player',
+      damage: appliedDamage,
       isBlocked,
       isCritical: damageResult.isAttackerCrit && appliedDamage > 0,
       level: battleState.level
     });
-    if (damageResult.damage > 0 && appliedDamage === 0) {
-      console.warn("⚠️ Inconsistent damage prevented (player attack)", damageResult);
-    }
-    const newTargetHealth = Math.max(0, target.health - appliedDamage);
 
-    console.log("🧮 Player attack result", {
-      pair: attackingPair.id,
-      target: target.id,
-      rolls: { attacker: damageResult.attackerRoll, defender: damageResult.defenderRoll },
-      damage: { raw: damageResult.damage, applied: appliedDamage },
-      health: { before: target.health, after: newTargetHealth },
+    const critText = damageResult.isAttackerCrit ? " 🎯 КРИТ!" : "";
+    const defCritText = damageResult.isDefenderCrit ? " 🛡️ БЛОК!" : "";
+    const skipText = damageResult.skipNextTurn ? " (пропуск хода)" : "";
+    toast({
+      title: `Атака!${critText}${skipText}`,
+      description: `${attackingPair.hero.name} бросил ${damageResult.attackerRoll}, враг ${damageResult.defenderRoll}. Потенциальный урон: ${appliedDamage}${defCritText}`,
     });
+
+    // Ждем: показ результата + анимация атаки
+    console.log('⏳ [PLAYER] STEP 2: wait for result display and attack animation');
+    await delay(RESULT_DISPLAY_MS + ATTACK_ANIMATION_MS);
+
+    // Применяем урон после завершения анимации
+    const newTargetHealth = Math.max(0, target.health - appliedDamage);
+    console.log('💥 [PLAYER] STEP 3: apply damage', { before: target.health, after: newTargetHealth });
 
     startTransition(() => {
       setBattleState(prev => ({
@@ -254,11 +263,9 @@ export const useTeamBattle = (dungeonType: DungeonType, initialLevel: number = 1
       }));
     });
 
-    // Добавляем опыт аккаунта за убийство монстра и инкрементим убийства для пары
+    // Награды/опыт если цель убита
     if (newTargetHealth <= 0) {
       const expReward = (accountLevel * 5) + 45 + (target.isBoss ? 150 : 0);
-
-      // Засчитываем убийство обеим карточкам пары-атакующего
       try {
         if (attackingPair.hero?.id) {
           const okHero = await incrementMonsterKills(attackingPair.hero.id, 1);
@@ -271,37 +278,20 @@ export const useTeamBattle = (dungeonType: DungeonType, initialLevel: number = 1
       } catch (e) {
         console.warn('incrementMonsterKills error:', e);
       }
-      
       await addAccountExp(expReward);
-      
-      toast({
-        title: "Враг побежден!",
-        description: `Получено ${expReward} опыта аккаунта`,
-      });
+      toast({ title: "Враг побежден!", description: `Получено ${expReward} опыта аккаунта` });
     }
 
-    const critText = damageResult.isAttackerCrit ? " 🎯 КРИТ!" : "";
-    const defCritText = damageResult.isDefenderCrit ? " 🛡️ БЛОК!" : "";
-    const skipText = damageResult.skipNextTurn ? " (пропуск хода)" : "";
-    
-    toast({
-      title: `Атака!${critText}${skipText}`,
-      description: `${attackingPair.hero.name} бросил ${damageResult.attackerRoll}, враг ${damageResult.defenderRoll}. Урон: ${appliedDamage}${defCritText}`,
-    });
-
-    // Check if all enemies defeated
+    // Проверяем завершение уровня
     if (battleState.opponents.filter(o => o.health > 0).length === 1 && newTargetHealth === 0) {
-      // Level cleared — добавляем задержку для показа анимаций перед завершением уровня
-      // Задержка: 2 сек (бросок кубиков) + 1 сек (полет меча) + 0.8 сек (анимация попадания) + 1.5 сек (показ смерти монстра) = ~5 секунд
+      // Даем UI доиграть смерти и переход
       setTimeout(() => {
         localStorage.setItem('activeBattleInProgress', 'false');
-      }, 5000);
-      // Do not call handleLevelComplete here and do not switch turn
+      }, 1800);
     } else {
-      // Switch to next attacker or enemy turn
-      setTimeout(() => {
-        switchTurn();
-      }, 3000);
+      // Смена хода после короткой паузы
+      console.log('🔄 [PLAYER] STEP 4: switch turn');
+      setTimeout(() => switchTurn(), TURN_DELAY_MS);
     }
   };
 
