@@ -466,9 +466,9 @@ async function updateGameDataOnServer(walletAddress: string, updates: Partial<Ga
     p_stone_production_data: updates.stoneProductionData as any
   };
 
-  const ok = await updateGameDataByWalletThrottled(rpcPayload);
-  if (!ok) {
-    throw new Error('update_game_data_by_wallet returned false');
+  const { data: ok, error: upErr } = await supabase.rpc('update_game_data_by_wallet_v2', rpcPayload);
+  if (upErr || ok !== true) {
+    throw upErr || new Error('update_game_data_by_wallet_v2 returned false');
   }
 
   const { data: fullData, error: fullErr } = await supabase.rpc('get_game_data_by_wallet_full', {

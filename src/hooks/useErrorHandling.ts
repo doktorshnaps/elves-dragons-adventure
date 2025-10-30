@@ -110,24 +110,11 @@ export const useErrorHandling = () => {
 
   const logError = useCallback(async (error: any, context: string) => {
     try {
-      // Не логируем, если нет подключения к кошельку
       if (!accountId) return;
-
-      await supabase.from('data_changes').insert({
-        table_name: 'error_log',
-        record_id: crypto.randomUUID(),
-        wallet_address: accountId,
-        change_type: 'ERROR',
-        new_data: {
-          error: error?.message || 'Unknown error',
-          code: error?.code,
-          context,
-          timestamp: new Date().toISOString(),
-          stack: error?.stack
-        }
-      });
+      // Skip DB logging to avoid RLS errors (data_changes)
+      console.warn('[logError] skipped DB insert:', { message: error?.message, code: error?.code, context });
+      return;
     } catch (logError) {
-      // Игнорируем ошибки логирования
       console.warn('Failed to log error:', logError);
     }
   }, [accountId]);
