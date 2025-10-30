@@ -9,6 +9,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { GameSettings } from "@/components/admin/GameSettings";
 import { DungeonSettings } from "@/components/admin/DungeonSettings";
 import { AdminRoleManager } from "@/components/admin/AdminRoleManager";
+import { CardUpgradeManager } from "@/components/admin/CardUpgradeManager";
+import { CraftingRecipeManager } from "@/components/admin/CraftingRecipeManager";
 import { QuestManagement } from "@/components/admin/QuestManagement";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { AdminConsoleWithWhitelist } from "@/components/AdminConsole";
@@ -92,7 +94,7 @@ const AdminSettingsContent = () => {
         </div>
 
         <Tabs defaultValue={isSuperAdmin ? "cards" : "management"} className="w-full">
-          <TabsList className={`grid w-full ${isSuperAdmin ? 'grid-cols-9' : 'grid-cols-1'} bg-black/50 border-2 border-white backdrop-blur-sm rounded-3xl mb-6`} style={{ boxShadow: '-33px 15px 10px rgba(0, 0, 0, 0.6)' }}>
+          <TabsList className={`grid w-full ${isSuperAdmin ? 'grid-cols-11' : 'grid-cols-1'} bg-black/50 border-2 border-white backdrop-blur-sm rounded-3xl mb-6`} style={{ boxShadow: '-33px 15px 10px rgba(0, 0, 0, 0.6)' }}>
             {isSuperAdmin && (
               <>
                 <TabsTrigger value="cards" className="text-white data-[state=active]:bg-white/20 rounded-3xl">Карты (Герои и Драконы)</TabsTrigger>
@@ -102,6 +104,8 @@ const AdminSettingsContent = () => {
                 <TabsTrigger value="items" className="text-white data-[state=active]:bg-white/20 rounded-3xl">Предметы</TabsTrigger>
                 <TabsTrigger value="giveaway" className="text-white data-[state=active]:bg-white/20 rounded-3xl">Выдать предмет</TabsTrigger>
                 <TabsTrigger value="shelter" className="text-white data-[state=active]:bg-white/20 rounded-3xl">Убежище</TabsTrigger>
+                <TabsTrigger value="card-upgrades" className="text-white data-[state=active]:bg-white/20 rounded-3xl">Улучшения карт</TabsTrigger>
+                <TabsTrigger value="crafting" className="text-white data-[state=active]:bg-white/20 rounded-3xl">Рецепты крафта</TabsTrigger>
               </>
             )}
             <TabsTrigger value="management" className="text-white data-[state=active]:bg-white/20 rounded-3xl">Управление</TabsTrigger>
@@ -136,6 +140,14 @@ const AdminSettingsContent = () => {
 
               <TabsContent value="shelter" className="space-y-4">
                 <ShelterBuildingSettings />
+              </TabsContent>
+
+              <TabsContent value="card-upgrades" className="space-y-4">
+                <CardUpgradeManager />
+              </TabsContent>
+
+              <TabsContent value="crafting" className="space-y-4">
+                <CraftingRecipeManager />
               </TabsContent>
             </>
           )}

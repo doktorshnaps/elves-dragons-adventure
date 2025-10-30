@@ -308,6 +308,57 @@ export type Database = {
         }
         Relationships: []
       }
+      card_upgrade_requirements: {
+        Row: {
+          card_type: string
+          cost_ell: number
+          cost_gold: number | null
+          cost_iron: number | null
+          cost_stone: number | null
+          cost_wood: number | null
+          created_at: string | null
+          created_by_wallet_address: string
+          id: string
+          is_active: boolean | null
+          rarity: string
+          required_items: Json | null
+          success_chance: number
+          updated_at: string | null
+        }
+        Insert: {
+          card_type: string
+          cost_ell?: number
+          cost_gold?: number | null
+          cost_iron?: number | null
+          cost_stone?: number | null
+          cost_wood?: number | null
+          created_at?: string | null
+          created_by_wallet_address: string
+          id?: string
+          is_active?: boolean | null
+          rarity: string
+          required_items?: Json | null
+          success_chance?: number
+          updated_at?: string | null
+        }
+        Update: {
+          card_type?: string
+          cost_ell?: number
+          cost_gold?: number | null
+          cost_iron?: number | null
+          cost_stone?: number | null
+          cost_wood?: number | null
+          created_at?: string | null
+          created_by_wallet_address?: string
+          id?: string
+          is_active?: boolean | null
+          rarity?: string
+          required_items?: Json | null
+          success_chance?: number
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       class_multipliers: {
         Row: {
           class_name: string
@@ -340,6 +391,56 @@ export type Database = {
           updated_at?: string | null
         }
         Relationships: []
+      }
+      crafting_recipes: {
+        Row: {
+          category: string | null
+          created_at: string | null
+          created_by_wallet_address: string
+          description: string | null
+          id: string
+          is_active: boolean | null
+          recipe_name: string
+          required_materials: Json
+          result_item_id: number
+          result_quantity: number
+          updated_at: string | null
+        }
+        Insert: {
+          category?: string | null
+          created_at?: string | null
+          created_by_wallet_address: string
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          recipe_name: string
+          required_materials?: Json
+          result_item_id: number
+          result_quantity?: number
+          updated_at?: string | null
+        }
+        Update: {
+          category?: string | null
+          created_at?: string | null
+          created_by_wallet_address?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          recipe_name?: string
+          required_materials?: Json
+          result_item_id?: number
+          result_quantity?: number
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "crafting_recipes_result_item_id_fkey"
+            columns: ["result_item_id"]
+            isOneToOne: false
+            referencedRelation: "item_templates"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       data_changes: {
         Row: {

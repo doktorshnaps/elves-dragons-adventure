@@ -14,6 +14,7 @@ import { useItemInstances } from '@/hooks/useItemInstances';
 import { initializeCardHealth } from '@/utils/cardHealthUtils';
 import { Shield, Swords, Clock, Star, ArrowRight, Coins, Sparkles, AlertCircle } from 'lucide-react';
 import { getUpgradeRequirement, rollUpgradeSuccess } from '@/utils/upgradeRequirements';
+import { useCardUpgradeRequirements } from '@/hooks/useCardUpgradeRequirements';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -46,9 +47,10 @@ export const Barracks: React.FC<BarracksProps> = ({ barracksLevel, onUpgradeBuil
   const { language } = useLanguage();
   const [selectedHeroes, setSelectedHeroes] = useState<CardType[]>([]);
   const [currentTime, setCurrentTime] = useState(Date.now());
-  const { instances: itemInstances, getCountsByItemId, removeItemInstancesByIds } = useItemInstances();
+  const { instances: itemInstances, getCountsByItemId, removeItemInstancesByIds, getInstancesByItemId } = useItemInstances();
   const [upgradeDialogOpen, setUpgradeDialogOpen] = useState(false);
   const [pendingUpgradeHeroes, setPendingUpgradeHeroes] = useState<CardType[]>([]);
+  const { getRequirement } = useCardUpgradeRequirements();
 
   // Мемоизируем подсчет предметов
   const itemCounts = useMemo(() => getCountsByItemId(), [getCountsByItemId]);
@@ -254,39 +256,47 @@ export const Barracks: React.FC<BarracksProps> = ({ barracksLevel, onUpgradeBuil
 
     const hero1 = heroes[0];
     const hero2 = heroes[1];
-    const requirements = getUpgradeRequirement(hero1.rarity, 'barracks');
+    
+    const rarityMap: Record<number, string> = {
+      1: 'common',
+      2: 'uncommon',
+      3: 'rare',
+      4: 'epic',
+      5: 'legendary',
+      6: 'mythic'
+    };
+    
+    const requirements = getRequirement('hero', rarityMap[hero1.rarity] || 'common');
     
     if (!requirements) return;
 
     // Roll for success
-    const isSuccess = rollUpgradeSuccess(requirements.successChance);
+    const isSuccess = Math.random() * 100 < requirements.success_chance;
 
     // Remove resources and items regardless of success
     const resourceUpdates: any = {};
     
-    if (requirements.costs.balance) {
-      resourceUpdates.balance = gameData.balance - requirements.costs.balance;
+    if (requirements.cost_ell) {
+      resourceUpdates.balance = gameData.balance - requirements.cost_ell;
     }
-    if (requirements.costs.wood) {
-      resourceUpdates.wood = gameData.wood - requirements.costs.wood;
+    if (requirements.cost_wood) {
+      resourceUpdates.wood = gameData.wood - requirements.cost_wood;
     }
-    if (requirements.costs.stone) {
-      resourceUpdates.stone = gameData.stone - requirements.costs.stone;
+    if (requirements.cost_stone) {
+      resourceUpdates.stone = gameData.stone - requirements.cost_stone;
     }
-    if (requirements.costs.iron) {
-      resourceUpdates.iron = gameData.iron - requirements.costs.iron;
+    if (requirements.cost_iron) {
+      resourceUpdates.iron = gameData.iron - requirements.cost_iron;
     }
-    if (requirements.costs.gold) {
-      resourceUpdates.gold = (gameData.gold || 0) - requirements.costs.gold;
+    if (requirements.cost_gold) {
+      resourceUpdates.gold = (gameData.gold || 0) - requirements.cost_gold;
     }
 
-    // Remove required items
+    // Удаляем требуемые предметы из item_instances
     const itemsToRemove: string[] = [];
-    requirements.requiredItems.forEach(reqItem => {
-      const availableInstances = itemInstances.filter(inst => 
-        (inst.item_id === reqItem.itemId || inst.name === reqItem.name)
-      ).slice(0, reqItem.quantity);
-      itemsToRemove.push(...availableInstances.map(inst => inst.id));
+    requirements.required_items?.forEach((reqItem) => {
+      const instances = getInstancesByItemId(reqItem.item_id);
+      itemsToRemove.push(...instances.slice(0, reqItem.quantity).map(i => i.id));
     });
 
     if (itemsToRemove.length > 0) {
