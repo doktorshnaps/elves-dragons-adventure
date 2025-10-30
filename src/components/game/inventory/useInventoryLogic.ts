@@ -131,11 +131,8 @@ const groupItems = (items: Item[]): GroupedItem[] => {
       return;
     }
     
-    const allPacks = (gameData.inventory || []).filter(i => i.type === 'cardPack' && i.name === selectedPackItem.name);
-    const available = allPacks.length;
-    const shouldClose = quantity >= available;
-    
-    console.log('🎒 Pack info:', { available, quantity, shouldClose, packName: selectedPackItem.name });
+    // Card packs are now in item_instances, not gameData.inventory
+    console.log('🎒 Opening pack from item_instances:', { quantity, packName: selectedPackItem.name });
     
     await openCardPacks(selectedPackItem, quantity);
     await loadGameData();
@@ -143,8 +140,6 @@ const groupItems = (items: Item[]): GroupedItem[] => {
     // Закрываем модальное окно после открытия
     setShowQuantityModal(false);
     setSelectedPackItem(null);
-    
-    return shouldClose;
   };
   return {
     selectedItems,

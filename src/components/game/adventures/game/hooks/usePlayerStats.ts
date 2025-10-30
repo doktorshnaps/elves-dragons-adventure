@@ -23,15 +23,9 @@ export const usePlayerStats = (initialLevel = 1) => {
   const { cardInstances } = useCardInstances();
   
   const calculateEquipmentBonuses = useCallback(() => {
-    if (!gameData.inventory) return { power: 0, defense: 0, health: 0 };
-
-    const equippedItems = gameData.inventory.filter((item: any) => item.equipped);
-    return equippedItems.reduce((acc: any, item: any) => ({
-      power: acc.power + (item.stats?.power || 0),
-      defense: acc.defense + (item.stats?.defense || 0),
-      health: acc.health + (item.stats?.health || 0)
-    }), { power: 0, defense: 0, health: 0 });
-  }, [gameData.inventory]);
+    // Equipment bonuses now handled through item_instances, not gameData.inventory
+    return { power: 0, defense: 0, health: 0 };
+  }, []);
 
   const calculateBaseStats = useCallback((level: number) => {
     const teamStats = calculateTeamStats(gameData.cards);

@@ -32,9 +32,7 @@ export const InventoryDisplay = ({
 }: InventoryDisplayProps) => {
   const isMobile = useIsMobile();
   const { eggs, addEgg } = useDragonEggs();
-  const { gameData, updateGameData } = useGameData();
   const { language } = useLanguage();
-  const inventory = gameData.inventory || [];
   const { toast } = useToast();
   
   // Очистка рабочих из inventory больше не нужна - они хранятся только в card_instances
@@ -57,7 +55,7 @@ export const InventoryDisplay = ({
     setShowQuantityModal,
     selectedPackItem,
     handleQuantityConfirm
-  } = useInventoryLogic(inventory);
+  } = useInventoryLogic([]);  // inventory больше не используется
 
 // Источник истины: используем ТОЛЬКО item_instances для всех предметов
 const { cardInstances } = useCardInstances();
@@ -230,7 +228,7 @@ console.log('✨ Final inventory to display:', {
         onClose={() => setShowQuantityModal(false)}
         onConfirm={handleQuantityConfirm}
         item={selectedPackItem}
-        availableCount={selectedPackItem ? (inventory || []).filter(i => i.type === 'cardPack' && i.name === selectedPackItem.name).length : 0}
+        availableCount={selectedPackItem ? itemInstances.filter(i => i.type === 'cardPack' && i.name === selectedPackItem.name).length : 0}
       />
     </div>
   );

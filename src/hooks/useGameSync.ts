@@ -102,7 +102,6 @@ export const useGameSync = () => {
         console.log('🔄 useGameSync: Loading data from Supabase:', {
           balance: gameData.balance,
           cards: gameData.cards?.length,
-          inventory: gameData.inventory?.length,
           dragonEggs: gameData.dragonEggs?.length,
           accountLevel: gameData.accountLevel,
           accountExperience: gameData.accountExperience
@@ -110,7 +109,6 @@ export const useGameSync = () => {
         
         gameStore.setBalance(gameData.balance);
         gameStore.setCards(gameData.cards);
-        gameStore.setInventory(gameData.inventory || []);
         gameStore.setDragonEggs(gameData.dragonEggs || []);
         gameStore.setSelectedTeam(gameData.selectedTeam || []);
         gameStore.setAccountLevel(gameData.accountLevel || 1);
@@ -140,7 +138,6 @@ export const useGameSync = () => {
       const snapshot = {
         balance: state.balance,
         cards: state.cards,
-        inventory: state.inventory,
         dragonEggs: state.dragonEggs,
         selectedTeam: state.selectedTeam,
         battleState: state.battleState,
@@ -151,7 +148,6 @@ export const useGameSync = () => {
       const serverSnapshot = {
         balance: gameData?.balance,
         cards: gameData?.cards,
-        inventory: gameData?.inventory,
         dragonEggs: gameData?.dragonEggs,
         selectedTeam: gameData?.selectedTeam,
         battleState: gameData?.battleState,

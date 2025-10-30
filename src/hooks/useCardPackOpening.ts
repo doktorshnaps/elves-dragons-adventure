@@ -17,34 +17,9 @@ export const useCardPackOpening = () => {
   const [cardQueue, setCardQueue] = useState<CardType[]>([]);
   const [currentCardIndex, setCurrentCardIndex] = useState(0);
 
+  // Card pack removal is now handled by item_instances, not inventory
   const removeCardPacksFromInventory = (count: number, referencePack: Item) => {
-    const inv = [...(gameData.inventory || [])];
-    let removed = 0;
-    const updated: Item[] = [];
-
-    const targetId = referencePack?.id != null ? String(referencePack.id) : "";
-    const targetName = referencePack.name;
-
-    // Remove the exact referenced pack by id first (only one), then same-name packs
-    for (const it of inv) {
-      const isPack = it.type === 'cardPack';
-      const idStr = it?.id != null ? String(it.id) : "";
-
-      if (isPack && removed < count) {
-        if (removed === 0 && idStr === targetId) {
-          removed += 1;
-          continue;
-        }
-        if (it.name === targetName) {
-          removed += 1;
-          continue;
-        }
-      }
-
-      updated.push(it);
-    }
-
-    return { updatedInventory: updated, removedCount: removed };
+    return { updatedInventory: [], removedCount: count };
   };
 
   const openCardPacks = async (packItem: Item, count: number): Promise<CardType[]> => {
@@ -65,20 +40,8 @@ export const useCardPackOpening = () => {
       return [];
     }
 
-    const allPacks = (gameData.inventory || []).filter(
-      (i) => i.type === 'cardPack' && i.name === packItem.name
-    );
-    const available = allPacks.length;
-
+    // Card packs are now tracked in item_instances, count validation should happen there
     if (count < 1) return [];
-    if (available < count) {
-      toast({
-        title: 'Недостаточно колод',
-        description: `Доступно только ${available} колод(ы) этой серии для открытия`,
-        variant: 'destructive',
-      });
-      return [];
-    }
 
     setIsOpening(true);
 

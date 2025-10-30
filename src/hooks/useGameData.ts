@@ -13,7 +13,6 @@ interface GameData {
   balance: number;
   cards: Card[];
   initialized: boolean;
-  inventory?: any[];
   marketplaceListings?: any[];
   socialQuests?: any[];
   adventurePlayerStats?: any;
@@ -42,7 +41,6 @@ export const useGameData = () => {
     balance: 0,
     cards: [],
     initialized: false,
-    inventory: [],
     marketplaceListings: [],
     socialQuests: [],
     adventurePlayerStats: null,
@@ -119,7 +117,6 @@ export const useGameData = () => {
           balance: gameRecord.balance || 0,
           cards: normalizedCards,
           initialized: gameRecord.initialized || false,
-          inventory: (gameRecord.inventory as any[]) || [],
           marketplaceListings: (gameRecord.marketplace_listings as any[]) || [],
           socialQuests: (gameRecord.social_quests as any[]) || [],
           adventurePlayerStats: gameRecord.adventure_player_stats || null,
@@ -145,7 +142,6 @@ export const useGameData = () => {
         localStorageBatcher.setItem('gameCards', newGameData.cards);
         localStorageBatcher.setItem('gameBalance', newGameData.balance.toString());
         localStorageBatcher.setItem('gameInitialized', newGameData.initialized.toString());
-        localStorageBatcher.setItem('gameInventory', newGameData.inventory);
         localStorageBatcher.setItem('marketplaceListings', newGameData.marketplaceListings);
         localStorageBatcher.setItem('socialQuests', newGameData.socialQuests);
         if (newGameData.adventurePlayerStats) {
@@ -168,7 +164,6 @@ export const useGameData = () => {
           balance: 0,
           cards: [],
           initialized: false,
-          inventory: [],
           marketplaceListings: [],
           socialQuests: [],
           adventurePlayerStats: null,
@@ -224,7 +219,6 @@ export const useGameData = () => {
       if (updates.initialized !== undefined && updates.initialized !== gameData.initialized) changedUpdates.initialized = updates.initialized;
       if (updates.accountLevel !== undefined && updates.accountLevel !== gameData.accountLevel) changedUpdates.accountLevel = updates.accountLevel;
       if (updates.accountExperience !== undefined && updates.accountExperience !== gameData.accountExperience) changedUpdates.accountExperience = updates.accountExperience;
-      if (updates.inventory !== undefined && !deepEqual(updates.inventory, gameData.inventory)) changedUpdates.inventory = updates.inventory;
       if (updates.marketplaceListings !== undefined && !deepEqual(updates.marketplaceListings, gameData.marketplaceListings)) changedUpdates.marketplaceListings = updates.marketplaceListings;
       if (updates.socialQuests !== undefined && !deepEqual(updates.socialQuests, gameData.socialQuests)) changedUpdates.socialQuests = updates.socialQuests;
       if (updates.adventurePlayerStats !== undefined && !deepEqual(updates.adventurePlayerStats, gameData.adventurePlayerStats)) changedUpdates.adventurePlayerStats = updates.adventurePlayerStats;
@@ -285,7 +279,6 @@ export const useGameData = () => {
         p_wallet_address: walletAddress,
         p_balance: changedUpdates.balance,
         p_cards: (changedUpdates.cards as any),
-        p_inventory: (changedUpdates.inventory as any),
         p_selected_team: (changedUpdates.selectedTeam as any),
         p_dragon_eggs: (changedUpdates.dragonEggs as any),
         p_account_level: changedUpdates.accountLevel,
@@ -326,7 +319,6 @@ export const useGameData = () => {
         if (changedUpdates.cards !== undefined) localStorageBatcher.setItem('gameCards', changedUpdates.cards);
         if (changedUpdates.balance !== undefined) localStorageBatcher.setItem('gameBalance', String(changedUpdates.balance));
         if (changedUpdates.initialized !== undefined) localStorageBatcher.setItem('gameInitialized', String(changedUpdates.initialized));
-        if (changedUpdates.inventory !== undefined) localStorageBatcher.setItem('gameInventory', changedUpdates.inventory);
         if (changedUpdates.marketplaceListings !== undefined) localStorageBatcher.setItem('marketplaceListings', changedUpdates.marketplaceListings);
         if (changedUpdates.socialQuests !== undefined) localStorageBatcher.setItem('socialQuests', changedUpdates.socialQuests);
         if (changedUpdates.adventurePlayerStats !== undefined && changedUpdates.adventurePlayerStats) {
@@ -348,7 +340,6 @@ export const useGameData = () => {
           if (changedUpdates.cards !== undefined) gd.cards = changedUpdates.cards;
           if (changedUpdates.balance !== undefined) gd.balance = changedUpdates.balance;
           if (changedUpdates.initialized !== undefined) gd.initialized = changedUpdates.initialized;
-          if (changedUpdates.inventory !== undefined) gd.inventory = changedUpdates.inventory;
           if (changedUpdates.marketplaceListings !== undefined) gd.marketplace_listings = changedUpdates.marketplaceListings;
           if (changedUpdates.socialQuests !== undefined) gd.social_quests = changedUpdates.socialQuests;
           if (changedUpdates.adventurePlayerStats !== undefined) gd.adventure_player_stats = changedUpdates.adventurePlayerStats;
@@ -407,7 +398,6 @@ export const useGameData = () => {
         balance: 0,
         cards: [],
         initialized: false,
-        inventory: [],
         marketplaceListings: [],
         socialQuests: [],
         adventurePlayerStats: null,
