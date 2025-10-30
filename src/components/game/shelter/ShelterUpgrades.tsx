@@ -75,12 +75,21 @@ export const ShelterUpgrades = ({
             </DialogDescription>
           </DialogHeader>
           <div className="mt-4">
-            <BuildingDetailsPanel selectedBuilding={selectedBuilding} canAfford={selectedBuilding ? canAffordUpgrade(selectedBuilding) : false} isUpgrading={selectedBuilding ? isUpgrading(selectedBuilding.id) : false} inventoryCounts={inventoryCounts} onUpgrade={() => {
-            if (selectedBuilding) {
-              handleUpgrade(selectedBuilding);
-              setIsDialogOpen(false);
-            }
-          }} isUpgradeReady={selectedBuilding ? isUpgradeReady(selectedBuilding.id) : false} insideDialog={true} resources={resources} />
+            <BuildingDetailsPanel 
+              selectedBuilding={selectedBuilding} 
+              canAfford={selectedBuilding ? canAffordUpgrade(selectedBuilding) : false} 
+              isUpgrading={selectedBuilding ? isUpgrading(selectedBuilding.id) : false} 
+              inventoryCounts={inventoryCounts || {}}
+              onUpgrade={() => {
+                if (selectedBuilding) {
+                  handleUpgrade(selectedBuilding);
+                  setIsDialogOpen(false);
+                }
+              }} 
+              isUpgradeReady={selectedBuilding ? isUpgradeReady(selectedBuilding.id) : false} 
+              insideDialog={true} 
+              resources={resources} 
+            />
           </div>
         </DialogContent>
       </Dialog>

@@ -28,6 +28,8 @@ export const useBuildingUpgrades = () => {
 
   // Проверяем завершенные улучшения и помечаем как готовые к установке
   useEffect(() => {
+    if (activeUpgrades.length === 0) return;
+    
     const now = Date.now();
     let changed = false;
 
@@ -48,6 +50,36 @@ export const useBuildingUpgrades = () => {
       setActiveUpgrades(updated);
       gameState.actions.batchUpdate({ activeBuildingUpgrades: updated });
     }
+  }, [activeUpgrades, gameState.actions, toast]);
+
+  // Дополнительная проверка таймеров каждую секунду
+  useEffect(() => {
+    const interval = setInterval(() => {
+      if (activeUpgrades.length === 0) return;
+      
+      const now = Date.now();
+      let needsUpdate = false;
+
+      const updated = activeUpgrades.map(upgrade => {
+        const isDone = now >= upgrade.startTime + upgrade.duration;
+        if (isDone && upgrade.status !== 'ready') {
+          needsUpdate = true;
+          toast({
+            title: 'Улучшение завершено',
+            description: `Доступно к установке: уровень ${upgrade.targetLevel}`
+          });
+          return { ...upgrade, status: 'ready' as const };
+        }
+        return upgrade;
+      });
+
+      if (needsUpdate) {
+        setActiveUpgrades(updated);
+        gameState.actions.batchUpdate({ activeBuildingUpgrades: updated });
+      }
+    }, 1000);
+
+    return () => clearInterval(interval);
   }, [activeUpgrades, gameState.actions, toast]);
 
   const startUpgrade = (buildingId: string, duration: number, targetLevel: number) => {
