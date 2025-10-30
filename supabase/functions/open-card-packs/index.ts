@@ -382,6 +382,42 @@ Deno.serve(async (req) => {
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseKey);
 
+    // 🔥 УДАЛЯЕМ ОТКРЫТЫЕ КОЛОДЫ ИЗ item_instances
+    console.log(`\n🗑️ Removing ${count} card pack(s) "${pack_name}" from item_instances...`);
+    
+    // Получаем ID instances для удаления
+    const { data: packInstances, error: fetchErr } = await supabase
+      .from('item_instances')
+      .select('id')
+      .eq('wallet_address', wallet_address)
+      .eq('name', pack_name)
+      .limit(count);
+    
+    if (fetchErr) {
+      console.error('❌ Error fetching pack instances:', fetchErr);
+      throw fetchErr;
+    }
+    
+    if (!packInstances || packInstances.length < count) {
+      console.error(`❌ Not enough card packs found. Required: ${count}, Found: ${packInstances?.length || 0}`);
+      throw new Error(`Not enough card packs. Required: ${count}, Found: ${packInstances?.length || 0}`);
+    }
+    
+    const idsToRemove = packInstances.map(inst => inst.id);
+    console.log(`📋 Found ${idsToRemove.length} pack instance(s) to remove:`, idsToRemove);
+    
+    // Удаляем через RPC
+    const { error: removeErr } = await supabase.rpc('remove_item_instances', {
+      instance_ids: idsToRemove
+    });
+    
+    if (removeErr) {
+      console.error('❌ Error removing pack instances:', removeErr);
+      throw removeErr;
+    }
+    
+    console.log(`✅ Successfully removed ${idsToRemove.length} card pack(s) from item_instances`);
+
     // Ensure game_data exists for the wallet
     let { data: gameData, error: gameDataErr } = await supabase
       .from('game_data')
