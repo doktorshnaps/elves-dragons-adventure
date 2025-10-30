@@ -209,21 +209,19 @@ export const useNFTCardIntegration = () => {
           }
         }
         
-        // Правильный маппинг типов NFT карт с логированием
-        const rawType = (nftCard as any).type;
+        // СТРОГИЙ маппинг типов NFT карт: только карты со словом "дракон/dragon" - драконы, остальные - герои
+        const cardName = String((nftCard as any).name || '').toLowerCase();
         let cardType: 'character' | 'pet' = 'character';
         
-        console.log(`🔄 NFT Mapping: ${(nftCard as any).name}, rawType=${rawType}`);
+        console.log(`🔄 NFT Mapping: ${(nftCard as any).name}`);
         
-        // Проверяем все возможные варианты типов для драконов и героев
-        if (rawType === 'dragon' || rawType === 'pet') {
+        // Строгая проверка: только если в названии есть "dragon" или "дракон", это дракон
+        if (cardName.includes('dragon') || cardName.includes('дракон')) {
           cardType = 'pet';
-          console.log(`  ✅ Mapped to 'pet' (dragon)`);
-        } else if (rawType === 'hero' || rawType === 'character') {
-          cardType = 'character';
-          console.log(`  ✅ Mapped to 'character' (hero)`);
+          console.log(`  ✅ Mapped to 'pet' (dragon) - found dragon keyword`);
         } else {
-          console.warn(`  ⚠️ Unknown type ${rawType}, defaulting to 'character'`);
+          cardType = 'character';
+          console.log(`  ✅ Mapped to 'character' (hero) - no dragon keyword`);
         }
         
         return {
