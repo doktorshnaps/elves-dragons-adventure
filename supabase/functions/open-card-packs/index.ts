@@ -408,7 +408,8 @@ Deno.serve(async (req) => {
     
     // Удаляем через RPC
     const { error: removeErr } = await supabase.rpc('remove_item_instances', {
-      instance_ids: idsToRemove
+      p_instance_ids: idsToRemove,
+      p_wallet_address: wallet_address
     });
     
     if (removeErr) {
