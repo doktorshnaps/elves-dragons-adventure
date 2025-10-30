@@ -152,7 +152,7 @@ export async function updateGameDataByWalletThrottled(payload: Record<string, an
     const exec = async () => {
       // Build safe args for stable RPC and strip deprecated fields
       const args = buildRpcArgs(toSend);
-      const { data, error } = await supabase.rpc('update_game_data_by_wallet', args as any);
+      const { data, error } = await supabase.rpc('update_game_data_by_wallet_v2', args as any);
       if (error) throw error;
       return data === true;
     };
