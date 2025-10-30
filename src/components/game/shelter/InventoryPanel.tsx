@@ -1,40 +1,29 @@
 import { Card } from "@/components/ui/card";
-import { useInventoryState } from "@/hooks/useInventoryState";
+import { useItemInstances } from "@/hooks/useItemInstances";
 import { getItemName, resolveItemKey } from "@/utils/itemNames";
 import { useLanguage } from "@/hooks/useLanguage";
 import { t } from "@/utils/translations";
 import { useMemo } from "react";
-export const InventoryPanel = () => {
-  const {
-    language
-  } = useLanguage();
-  const {
-    inventory
-  } = useInventoryState();
 
-  // Группируем предметы по типу и считаем количество
+export const InventoryPanel = () => {
+  const { language } = useLanguage();
+  const { instances } = useItemInstances();
+  
+  // Группируем предметы по типу
   const groupedInventory = useMemo(() => {
-    const groups: Record<string, {
-      name: string;
-      count: number;
-      rarity: string;
-      icon: string;
-    }> = {};
-    inventory.forEach(item => {
-      const key = resolveItemKey(item.type);
-      if (!groups[key]) {
-        const itemData = item as any;
-        groups[key] = {
-          name: item.name || getItemName(key, language),
-          count: 0,
-          rarity: itemData.rarity || 'common',
-          icon: itemData.icon || '📦'
-        };
-      }
-      groups[key].count++;
+    const groups: Record<string, number> = {};
+    instances.forEach(inst => {
+      const key = inst.name || inst.type || 'unknown';
+      groups[key] = (groups[key] || 0) + 1;
     });
-    return Object.values(groups);
-  }, [inventory, language]);
+    return Object.entries(groups).map(([name, count]) => ({
+      name,
+      count,
+      rarity: 'common',
+      icon: '📦'
+    }));
+  }, [instances]);
+
   const getRarityClass = (rarity: string) => {
     switch (rarity.toLowerCase()) {
       case 'legendary':
@@ -56,7 +45,7 @@ export const InventoryPanel = () => {
             {t(language, 'inventory.title') || 'Инвентарь'}
           </h2>
           <span className="text-sm text-muted-foreground">
-            {inventory.length} {t(language, 'inventory.items') || 'предметов'}
+            {instances.length} {t(language, 'inventory.items') || 'предметов'}
           </span>
         </div>
 

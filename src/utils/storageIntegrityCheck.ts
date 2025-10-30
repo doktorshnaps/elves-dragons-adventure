@@ -115,16 +115,10 @@ export function performIntegrityCheck(): IntegrityCheckResult {
       }
     }
     
-    // Проверка инвентаря
+    // Проверка инвентаря - DEPRECATED (теперь используется item_instances)
     const inventoryStr = localStorage.getItem('gameInventory');
     if (inventoryStr) {
-      try {
-        const inventory = JSON.parse(inventoryStr);
-        const inventoryWarnings = validateInventory(inventory);
-        result.warnings.push(...inventoryWarnings);
-      } catch (e) {
-        result.errors.push('Failed to parse gameInventory');
-      }
+      result.warnings.push('gameInventory в localStorage устарел, используйте item_instances');
     }
     
     // Если есть критические ошибки, проверка не пройдена

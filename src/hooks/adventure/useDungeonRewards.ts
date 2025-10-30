@@ -199,11 +199,9 @@ export const useDungeonRewards = () => {
       const lootedItems = pendingReward.lootedItems || [];
       
       console.log(`💰 Начисляем ${rewardAmount} ELL`);
-      console.log(`🎒 Начисляем ${lootedItems.length} предметов`);
-      console.log(`📦 Текущий баланс: ${gameData.balance} ELL`);
-      console.log(`📦 Текущий инвентарь: ${gameData.inventory?.length || 0} предметов`);
+      console.log(`🎒 Начисляем ${lootedItems.length} предметов в item_instances`);
       
-      // Объединяем обновления баланса и инвентаря в один вызов
+      // Объединяем обновления баланса в один вызов
       const updates: any = {};
       
       if (rewardAmount > 0) {

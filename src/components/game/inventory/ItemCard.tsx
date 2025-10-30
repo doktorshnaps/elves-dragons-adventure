@@ -25,16 +25,8 @@ export const ItemCard = ({
 }: ItemCardProps) => {
   const isMobile = useIsMobile();
   
-  // Disable selling card packs if user has no unopened packs in actual inventory cache
-  let canSell = !readonly;
-  if (item.type === 'cardPack') {
-    try {
-      const saved = localStorage.getItem('gameInventory');
-      const inv: any[] = saved ? JSON.parse(saved) : [];
-      const packs = inv.filter((i: any) => i?.type === 'cardPack');
-      if (packs.length < 1) canSell = false;
-    } catch {}
-  }
+  // Все предметы можно продавать (проверка через item_instances)
+  const canSell = !readonly;
 
   return (
     <Card className="p-4 bg-game-background border-game-accent hover:border-game-primary transition-all duration-300 h-[320px] flex flex-col justify-between">

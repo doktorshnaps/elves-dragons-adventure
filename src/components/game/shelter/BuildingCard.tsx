@@ -6,7 +6,7 @@ import { Clock, Users } from "lucide-react";
 import { NestUpgrade } from "@/hooks/shelter/useShelterState";
 import { useLanguage } from "@/hooks/useLanguage";
 import { t } from "@/utils/translations";
-import { useInventoryState } from "@/hooks/useInventoryState";
+import { useItemInstances } from "@/hooks/useItemInstances";
 import { getItemName, resolveItemKey } from "@/utils/itemNames";
 import { useMemo } from "react";
 
@@ -36,18 +36,18 @@ export const BuildingCard = ({
   isUpgradeReady
 }: BuildingCardProps) => {
   const { language } = useLanguage();
-  const { inventory } = useInventoryState();
+  const { instances } = useItemInstances();
   const requiresWorkers = upgrade.id !== 'main_hall' && upgrade.id !== 'storage';
 
-  // Подсчитываем количество каждого предмета в инвентаре
+  // Подсчитываем количество каждого предмета в item_instances
   const inventoryCounts = useMemo(() => {
     const counts: Record<string, number> = {};
-    inventory.forEach(item => {
-      const key = resolveItemKey(item.type);
+    instances.forEach(inst => {
+      const key = resolveItemKey(inst.type || 'material');
       counts[key] = (counts[key] || 0) + 1;
     });
     return counts;
-  }, [inventory]);
+  }, [instances]);
 
   return (
     <Card 
@@ -183,12 +183,12 @@ export const BuildingCard = ({
                     const fallbackName = getItemName(itemKey, language);
                     const displayName = (rawName && typeof rawName === 'string') ? rawName : fallbackName;
                     
-                    // Подсчёт количества у игрока с несколькими стратегиями сопоставления
+                    // Подсчёт количества у игрока из item_instances
                     let playerHas = inventoryCounts[itemKey] || 0;
                     if (!playerHas && rawName) {
                       // Попытка сопоставить по локализованному имени
                       const lower = rawName.toLowerCase();
-                      playerHas = inventory.filter(i => (i.name || '').toLowerCase() === lower).length || playerHas;
+                      playerHas = instances.filter(i => (i.name || '').toLowerCase() === lower).length || playerHas;
                     }
                     
                     const hasEnough = playerHas >= reqQty;

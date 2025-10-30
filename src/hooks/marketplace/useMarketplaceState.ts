@@ -92,12 +92,12 @@ export const useMarketplaceState = () => {
   const syncLocalCaches = async (userId: string) => {
     const { data: gd } = await supabase
       .from('game_data')
-      .select('inventory,cards,balance')
+      .select('cards,balance')
       .eq('user_id', userId)
       .maybeSingle();
 
     if (gd) {
-      localStorage.setItem('gameInventory', JSON.stringify(gd.inventory || []));
+      // Синхронизируем только cards и balance (inventory теперь в item_instances)
       localStorage.setItem('gameCards', JSON.stringify(gd.cards || []));
       
       const newBalance = (gd as any).balance;
@@ -108,11 +108,10 @@ export const useMarketplaceState = () => {
         }));
       }
 
-      window.dispatchEvent(new CustomEvent('inventoryUpdate', { 
-        detail: { inventory: gd.inventory || [] } 
-      }));
+      // inventory обновляется через item_instances real-time subscription
+      // Не отправляем событие inventoryUpdate из localStorage
       
-      window.dispatchEvent(new CustomEvent('cardsUpdate', { 
+      window.dispatchEvent(new CustomEvent('cardsUpdate', {
         detail: { cards: gd.cards || [] } 
       }));
 

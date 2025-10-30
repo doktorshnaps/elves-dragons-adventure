@@ -1,5 +1,4 @@
 import { usePlayerState } from './usePlayerState';
-import { useInventoryState } from './useInventoryState';
 import { useBalanceState } from './useBalanceState';
 import { useOpponentsState } from './useOpponentsState';
 import { useCombat } from './useCombat';
@@ -21,12 +20,12 @@ export const useBattleState = (initialLevel: number = 1) => {
   const teamCards = selectedTeam.map(pair => pair.hero).filter(Boolean);
   
   const { playerStats, setPlayerStats } = usePlayerState(initialState.playerStats);
-  const { inventory, updateInventory } = useInventoryState();
   const { balance, updateBalance } = useBalanceState();
+  // inventory управляется через item_instances напрямую
   const { opponents, setOpponents, handleOpponentDefeat } = useOpponentsState(
     initialState.currentDungeonLevel,
     updateBalance,
-    updateInventory
+    (items) => {} // Stub function - items added via item_instances
   );
 
   usePlayerHealthCheck(playerStats);
@@ -41,9 +40,9 @@ export const useBattleState = (initialLevel: number = 1) => {
 
   const { handleNextLevel } = useDungeonLevelManager(playerStats, initialState, setOpponents);
 
-  useBattleStateManager(playerStats, opponents, initialState, inventory, balance);
+  useBattleStateManager(playerStats, opponents, initialState, [], balance);
 
-  const { useItem } = useItemHandling(playerStats, setPlayerStats, updateInventory, inventory);
+  const { useItem } = useItemHandling(playerStats, setPlayerStats, (items) => {}, []);
 
   useEffect(() => {
     if (opponents && opponents.length === 0 && playerStats?.health > 0) {
@@ -60,7 +59,7 @@ export const useBattleState = (initialLevel: number = 1) => {
     coins: balance,
     playerStats,
     opponents,
-    inventory,
+    inventory: [], // inventory теперь через item_instances
     isPlayerTurn,
     attackEnemy,
     handleOpponentAttack,
@@ -68,7 +67,7 @@ export const useBattleState = (initialLevel: number = 1) => {
     setOpponents,
     handleOpponentDefeat,
     updateBalance,
-    updateInventory,
+    updateInventory: (items: any[]) => {}, // Stub - items managed via item_instances
     handleNextLevel
   };
 };

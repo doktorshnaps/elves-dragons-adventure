@@ -6,10 +6,9 @@ import { useToast } from '@/hooks/use-toast';
 import { useBuildingUpgrades } from '@/hooks/useBuildingUpgrades';
 import { useBuildingConfigs } from '@/hooks/useBuildingConfigs';
 import { useItemTemplates } from '@/hooks/useItemTemplates';
-import { useInventoryState } from '@/hooks/useInventoryState';
+import { useItemInstances } from '@/hooks/useItemInstances';
 import { useGameStore } from '@/stores/gameStore';
 import { resolveItemKey } from '@/utils/itemNames';
-import { useItemInstances } from '@/hooks/useItemInstances';
 export interface NestUpgrade {
   id: string;
   name: string;
@@ -58,20 +57,13 @@ export const useShelterState = () => {
   }, [instances, getCountsByItemId]);
   const [activeTab, setActiveTab] = useState<"upgrades" | "crafting" | "barracks" | "dragonlair" | "medical" | "workers">("upgrades");
   const [balance, setBalance] = useState(gameState.balance);
-  
   // Синхронизируем баланс с gameState
   useEffect(() => {
     setBalance(gameState.balance);
   }, [gameState.balance]);
   
-  // Источники инвентаря: приоритет — store, потом gameState, затем local
-  const { inventory: localInventory } = useInventoryState();
-  const storeInventory = useGameStore((state) => state.inventory);
-  const effectiveInventory = (storeInventory?.length ?? 0) > 0
-    ? storeInventory
-    : (gameState.inventory?.length ?? 0) > 0
-      ? gameState.inventory
-      : localInventory;
+  // inventory теперь управляется через item_instances
+  const { instances: effectiveInventory } = useItemInstances();
   // Подписка на события обновления баланса
   useEffect(() => {
     const handleBalanceUpdate = (e: any) => {

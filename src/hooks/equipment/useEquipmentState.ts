@@ -1,15 +1,25 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Item } from '@/types/inventory';
-import { useInventoryState } from '@/hooks/useInventoryState';
+import { useItemInstances } from '@/hooks/useItemInstances';
 import { useToast } from '@/hooks/use-toast';
 import { canEquipItem, getEquipmentSlot } from '@/utils/itemUtils';
 
 /**
- * Hook for managing equipment state and operations
+ * Hook for managing equipment state and operations (работает с item_instances)
  */
 export const useEquipmentState = () => {
-  const { inventory, updateInventory } = useInventoryState();
+  const { instances } = useItemInstances();
   const { toast } = useToast();
+  
+  // Преобразуем instances в Item[] формат
+  const inventory: Item[] = instances.map(inst => ({
+    id: inst.id,
+    name: inst.name || 'Предмет',
+    type: (inst.type as any) || 'material',
+    value: 1,
+    equipped: false, // TODO: добавить поле в item_instances
+    slot: undefined // TODO: добавить поле в item_instances
+  }));
 
   /**
    * Equip or unequip an item
@@ -36,13 +46,8 @@ export const useEquipmentState = () => {
 
     // If already equipped, unequip
     if (item.equipped) {
-      const updatedInventory = inventory.map(invItem => 
-        invItem.id === item.id 
-          ? { ...invItem, equipped: false } 
-          : invItem
-      );
-      
-      updateInventory(updatedInventory);
+      // TODO: Обновить equipped статус в item_instances через RPC
+      console.log('Item unequipped:', item.name);
       
       toast({
         title: "Готово",
@@ -66,7 +71,8 @@ export const useEquipmentState = () => {
       return invItem;
     });
 
-    updateInventory(updatedInventory);
+    // TODO: Обновить equipped статус в item_instances через RPC
+    console.log('Item equipped:', item.name);
     
     toast({
       title: "Готово",
@@ -74,7 +80,7 @@ export const useEquipmentState = () => {
     });
     
     return true;
-  }, [inventory, updateInventory, toast]);
+  }, [inventory, toast]);
 
   /**
    * Get equipped items
@@ -91,22 +97,12 @@ export const useEquipmentState = () => {
   }, [inventory]);
 
   /**
-   * Sync equipment changes across tabs
+   * Sync equipment changes across tabs (через item_instances)
    */
   useEffect(() => {
     const handleEquipmentChange = () => {
-      try {
-        const currentInventory = localStorage.getItem('gameInventory');
-        const parsedInventory = currentInventory ? JSON.parse(currentInventory) : [];
-        
-        const event = new CustomEvent('inventoryUpdate', {
-          detail: { inventory: parsedInventory }
-        });
-        
-        window.dispatchEvent(event);
-      } catch (error) {
-        console.error('Error handling equipment change:', error);
-      }
+      // Синхронизация происходит через item_instances real-time subscription
+      // Не используем localStorage для инвентаря
     };
 
     window.addEventListener('equipmentChange', handleEquipmentChange);

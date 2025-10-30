@@ -4,7 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import { NestUpgrade } from "@/hooks/shelter/useShelterState";
 import { useLanguage } from "@/hooks/useLanguage";
 import { t } from "@/utils/translations";
-import { useInventoryState } from "@/hooks/useInventoryState";
+import { useItemInstances } from "@/hooks/useItemInstances";
 import { resolveItemKey } from "@/utils/itemNames";
 import { useMemo } from "react";
 import { useItemTemplates } from "@/hooks/useItemTemplates";

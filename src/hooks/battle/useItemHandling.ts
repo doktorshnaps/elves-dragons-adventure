@@ -32,32 +32,22 @@ export const useItemHandling = (
         localStorage.setItem('adventurePlayerStats', JSON.stringify(stats));
       }
       
+      // Удаляем предмет из item_instances
+      await removeItemInstancesByIds([item.id]);
+      
       toast({
         title: "Зелье использовано",
         description: `Восстановлено ${item.value} здоровья`,
         duration: 2000
       });
-      
-      // Удаляем предмет из item_instances
-      await removeItemInstancesByIds([item.id]);
     } else if (item.type === "cardPack") {
       toast({
         title: "Недоступно",
         description: "Колоды карт можно использовать только в магазине",
         duration: 2000
       });
-      return; // Не удаляем предмет, если это колода карт
+      return;
     }
-
-    // Удаляем использованный предмет из локального состояния
-    const newInventory = inventory.filter(i => i.id !== item.id);
-    updateInventory(newInventory);
-
-    // Обновляем UI через событие
-    const event = new CustomEvent('inventoryUpdate', {
-      detail: { inventory: newInventory }
-    });
-    window.dispatchEvent(event);
   };
 
   return { useItem };

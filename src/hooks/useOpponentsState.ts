@@ -44,13 +44,8 @@ export const useOpponentsState = (
     const currentBalance = Number(localStorage.getItem('gameBalance')) || 0;
     updateBalance(currentBalance + droppedCoins);
     
-    // Обновляем инвентарь
+    // Добавляем дроп ТОЛЬКО в item_instances (единственный источник истины)
     if (droppedItems.length > 0) {
-      const savedInventory = localStorage.getItem('gameInventory');
-      const currentInventory = savedInventory ? JSON.parse(savedInventory) : [];
-      updateInventory([...currentInventory, ...droppedItems]);
-      
-      // Добавляем дроп в item_instances
       await addItemsToInstances(droppedItems.map(it => ({
         name: it.name,
         type: it.type
