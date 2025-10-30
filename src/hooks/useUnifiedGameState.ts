@@ -38,7 +38,6 @@ const initialGameData: GameData = {
   gold: 0,
   cards: [],
   initialized: false,
-  inventory: [],
   dragonEggs: [],
   selectedTeam: [],
   battleState: null,
@@ -236,18 +235,6 @@ export const useUnifiedGameState = (): UnifiedGameState => {
       await operation();
     },
 
-    updateInventory: async (inventory: any[]) => {
-      const operation = withErrorHandling(async () => {
-        await optimisticUpdate(
-          { ...optimisticData, inventory },
-          async () => {
-            const result = await updateMutation.mutateAsync({ updates: { inventory } });
-            return result;
-          }
-        );
-      });
-      await operation();
-    },
 
     updateCards: async (cards: any[]) => {
       const operation = withErrorHandling(async () => {
@@ -493,7 +480,6 @@ function transformServerData(serverData: any): GameData {
     gold: serverData.gold ?? 0,
     cards: serverData.cards ?? [],
     initialized: serverData.initialized ?? false,
-    inventory: serverData.inventory ?? [],
     dragonEggs: serverData.dragon_eggs ?? [],
     selectedTeam: serverData.selected_team ?? [],
     battleState: serverData.battle_state ?? null,
@@ -527,7 +513,6 @@ function transformServerData(serverData: any): GameData {
   console.log('🔄 Transformed game data:', {
     wallet: serverData.wallet_address,
     balance: transformed.balance,
-    inventoryItems: transformed.inventory?.length ?? 0,
     cards: transformed.cards?.length ?? 0,
     activeWorkers: transformed.activeWorkers?.length ?? 0,
     activeWorkersData: transformed.activeWorkers,

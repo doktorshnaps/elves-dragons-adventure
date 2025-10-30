@@ -183,41 +183,6 @@ export const WorkersManagement = ({ onSpeedBoostChange }: WorkersManagementProps
     }
   }, []); // Пустой массив зависимостей - загружаем только один раз
 
-  // Автоматическая очистка зависших рабочих из инвентаря
-  useEffect(() => {
-    if (!gameState.actions || activeWorkers.length === 0) return;
-    
-    const cleanupStuckWorkers = async () => {
-      const activeInstanceIds = new Set(activeWorkers.map(w => w.cardInstanceId));
-      const activeWorkerIds = new Set(activeWorkers.map(w => w.workerId));
-      
-      const currentInv = [...(gameState.inventory || [])] as any[];
-      const workersInInv = currentInv.filter((item: any) => item?.type === 'worker');
-      
-      // Находим рабочих, которые уже назначены, но всё ещё в инвентаре
-      const stuckWorkers = workersInInv.filter((item: any) => {
-        const itemInstanceId = item.instanceId || item.id;
-        return activeInstanceIds.has(itemInstanceId) || activeWorkerIds.has(itemInstanceId);
-      });
-      
-      if (stuckWorkers.length > 0) {
-        console.log('🧹 Found stuck workers in inventory:', stuckWorkers.length, stuckWorkers.map(w => ({ id: w.id, instanceId: w.instanceId, name: w.name })));
-        
-        // Удаляем зависших рабочих
-        const cleanedInv = currentInv.filter((item: any) => {
-          if (item?.type !== 'worker') return true;
-          const itemInstanceId = item.instanceId || item.id;
-          return !activeInstanceIds.has(itemInstanceId) && !activeWorkerIds.has(itemInstanceId);
-        });
-        
-        await gameState.actions.updateInventory(cleanedInv);
-        console.log('✅ Cleaned up stuck workers from inventory. Removed:', stuckWorkers.length);
-      }
-    };
-    
-    cleanupStuckWorkers();
-  }, [activeWorkers, gameState.inventory, gameState.actions]);
-
   // Вычисляем общее ускорение при изменении активных рабочих
   useEffect(() => {
     const totalBoost = activeWorkers.reduce((sum, worker) => sum + worker.speedBoost, 0);

@@ -10,7 +10,7 @@ export interface GameData {
   cards: any[];
   initialized: boolean;
   /** @deprecated Use item_instances table instead. This field is kept for backward compatibility but should not be used for new features. */
-  inventory: any[];
+  inventory?: any[];
   dragonEggs: any[];
   selectedTeam: any[];
   battleState: any;
@@ -35,7 +35,6 @@ export interface GameData {
 export interface GameStateActions {
   updateBalance: (balance: number) => Promise<void>;
   updateResources: (resources: { wood?: number; stone?: number; iron?: number; gold?: number }) => Promise<void>;
-  updateInventory: (inventory: any[]) => Promise<void>;
   updateCards: (cards: any[]) => Promise<void>;
   batchUpdate: (updates: Partial<GameData>) => Promise<void>;
   optimisticUpdate: <T>(key: keyof GameData, value: T, serverAction: () => Promise<GameData>) => Promise<void>;

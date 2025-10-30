@@ -200,7 +200,7 @@ export const useBuildingUpgrades = () => {
       buildingId: string,
       duration: number,
       targetLevel: number,
-      resourcePatch: { wood?: number; stone?: number; iron?: number; gold?: number; balance?: number; inventory?: any[] }
+      resourcePatch: { wood?: number; stone?: number; iron?: number; gold?: number; balance?: number }
     ) => {
       console.log('🚀 [startUpgradeAtomic] Starting atomic upgrade:', {
         buildingId,
