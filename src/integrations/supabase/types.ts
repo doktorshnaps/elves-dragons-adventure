@@ -2056,7 +2056,6 @@ export type Database = {
           dragon_eggs: Json
           dragon_lair_upgrades: Json
           gold: number
-          inventory: Json
           iron: number
           marketplace_listings: Json
           max_iron: number
