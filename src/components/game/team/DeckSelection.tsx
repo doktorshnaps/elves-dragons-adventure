@@ -30,6 +30,10 @@ export const DeckSelection = ({
   onPairAssignDragon,
   onPairRemoveDragon
 }: DeckSelectionProps) => {
+  console.log(`🎮 DeckSelection mounted: ${cards.length} cards received, ${selectedPairs.length} pairs selected`);
+  console.log(`🎮 Cards breakdown: ${cards.filter(c => c.type === 'character').length} heroes, ${cards.filter(c => c.type === 'pet').length} dragons`);
+  console.log(`🎮 NFT cards: ${cards.filter(c => c.isNFT).length} total`);
+  
   const [showHeroDeck, setShowHeroDeck] = useState(false);
   const [showDragonDeck, setShowDragonDeck] = useState(false);
   const [activePairIndex, setActivePairIndex] = useState<number | null>(null);
@@ -63,12 +67,15 @@ export const DeckSelection = ({
   // Создаем карты с актуальным здоровьем из card_instances
   const cardsWithHealthSync = useMemo(() => {
     const combinedCards = [...cards, ...nftCards];
+    console.log(`🎮 DeckSelection: Total cards = ${cards.length}, NFT cards = ${nftCards.length}`);
+    
     // Убираем дубликаты по ID
     const uniqueCards = combinedCards.filter((card, index, arr) => arr.findIndex(c => c.id === card.id) === index);
+    console.log(`🎮 After dedup: ${uniqueCards.length} unique cards`);
 
     // Синхронизируем здоровье с card_instances
     const instancesMap = new Map(cardInstances.map(ci => [ci.card_template_id, ci]));
-    return uniqueCards.map(card => {
+    const result = uniqueCards.map(card => {
       const instance = instancesMap.get(card.id);
       if (instance) {
         return {
@@ -79,6 +86,11 @@ export const DeckSelection = ({
       }
       return card;
     });
+    
+    console.log(`🎮 Final cards: ${result.length} total, ${result.filter(c => c.isNFT).length} NFT`);
+    console.log(`🎮 NFT breakdown: ${result.filter(c => c.isNFT && c.type === 'character').length} heroes, ${result.filter(c => c.isNFT && c.type === 'pet').length} dragons`);
+    
+    return result;
   }, [cards, nftCards, cardInstances]);
 
   // Обновляем локальные карты, исключаем только карты которые действительно в медпункте

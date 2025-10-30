@@ -185,11 +185,13 @@ export const useNFTCardIntegration = () => {
       
       // Объединяем все источники NFT
       const allNFTs = [...(synced || []), ...(fetched || []), ...mintbaseCards];
+      console.log(`🔄 NFT Sources: synced=${synced?.length || 0}, fetched=${fetched?.length || 0}, mintbase=${mintbaseCards.length}`);
       
       // Убираем дубликаты по ID и конвертируем в формат игровых карт
       const uniqueNFTs = allNFTs.filter((nft, index, arr) => 
         arr.findIndex(n => n.id === nft.id) === index
       );
+      console.log(`✅ Total unique NFTs before mapping: ${uniqueNFTs.length}`);
       
       const gameCards: CardType[] = uniqueNFTs.map(nftCard => {
         // Prefer explicit fields; fallback to parsing composite id like "contract_token"
@@ -244,6 +246,14 @@ export const useNFTCardIntegration = () => {
       });
 
       console.log('✅ NFT sync completed, total cards:', gameCards.length);
+      console.log(`📊 NFT breakdown: ${gameCards.filter(c => c.type === 'character').length} heroes, ${gameCards.filter(c => c.type === 'pet').length} dragons`);
+      
+      if (gameCards.length > 0) {
+        console.log('🎴 Sample NFT cards:');
+        gameCards.slice(0, 3).forEach(card => {
+          console.log(`  - ${card.name}: type=${card.type}, faction=${card.faction}, isNFT=${card.isNFT}`);
+        });
+      }
       
       // 🆕 Синхронизация NFT карточек с card_instances
       if (gameCards.length > 0) {
