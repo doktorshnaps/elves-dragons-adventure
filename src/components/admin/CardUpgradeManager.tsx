@@ -24,7 +24,8 @@ export const CardUpgradeManager = () => {
 
   const [formData, setFormData] = useState({
     card_type: 'hero' as 'hero' | 'dragon',
-    rarity: 1,
+    from_rarity: 1,
+    to_rarity: 2,
     success_chance: 90,
     cost_ell: 0,
     cost_wood: 0,
@@ -52,18 +53,21 @@ export const CardUpgradeManager = () => {
             .eq('id', editingId)
         : await supabase
             .from('card_upgrade_requirements')
-            .insert({
+            .insert([{
               card_type: formData.card_type,
-              rarity: String(formData.rarity),
+              rarity: String(formData.from_rarity), // Для совместимости со старой схемой
+              from_rarity: formData.from_rarity,
+              to_rarity: formData.to_rarity,
               success_chance: formData.success_chance,
               cost_ell: formData.cost_ell,
               cost_wood: formData.cost_wood,
               cost_stone: formData.cost_stone,
               cost_iron: formData.cost_iron,
               cost_gold: formData.cost_gold,
-              required_items: formData.required_items,
-              created_by_wallet_address: 'mr_bruts.tg'
-            });
+              required_items: formData.required_items as any,
+              created_by_wallet_address: 'mr_bruts.tg',
+              is_active: true
+            }]);
 
       if (error) throw error;
 
@@ -89,7 +93,8 @@ export const CardUpgradeManager = () => {
     setEditingId(req.id);
     setFormData({
       card_type: req.card_type,
-      rarity: req.rarity,
+      from_rarity: req.from_rarity,
+      to_rarity: req.to_rarity,
       success_chance: req.success_chance,
       cost_ell: req.cost_ell,
       cost_wood: req.cost_wood || 0,
@@ -138,7 +143,8 @@ export const CardUpgradeManager = () => {
     setEditingId(null);
     setFormData({
       card_type: 'hero',
-      rarity: 1,
+      from_rarity: 1,
+      to_rarity: 2,
       success_chance: 90,
       cost_ell: 0,
       cost_wood: 0,
@@ -220,10 +226,17 @@ export const CardUpgradeManager = () => {
             </div>
 
             <div>
-              <Label>Редкость (1-8)</Label>
+              <Label>Исходная редкость</Label>
               <Select
-                value={String(formData.rarity)}
-                onValueChange={(value) => setFormData({ ...formData, rarity: parseInt(value) })}
+                value={String(formData.from_rarity)}
+                onValueChange={(value) => {
+                  const fromRarity = parseInt(value);
+                  setFormData({ 
+                    ...formData, 
+                    from_rarity: fromRarity,
+                    to_rarity: Math.max(fromRarity + 1, formData.to_rarity)
+                  });
+                }}
                 disabled={!!editingId}
               >
                 <SelectTrigger>
@@ -237,7 +250,24 @@ export const CardUpgradeManager = () => {
                   <SelectItem value="5">Редкость 5</SelectItem>
                   <SelectItem value="6">Редкость 6</SelectItem>
                   <SelectItem value="7">Редкость 7</SelectItem>
-                  <SelectItem value="8">Редкость 8</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div>
+              <Label>Целевая редкость</Label>
+              <Select
+                value={String(formData.to_rarity)}
+                onValueChange={(value) => setFormData({ ...formData, to_rarity: parseInt(value) })}
+                disabled={!!editingId}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {[2, 3, 4, 5, 6, 7, 8].filter(r => r > formData.from_rarity).map(r => (
+                    <SelectItem key={r} value={String(r)}>Редкость {r}</SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             </div>
@@ -400,7 +430,7 @@ export const CardUpgradeManager = () => {
               >
                 <div>
                   <div className="font-semibold">
-                    {req.card_type === 'hero' ? 'Герой' : 'Дракон'} - Редкость {req.rarity}
+                    {req.card_type === 'hero' ? 'Герой' : 'Дракон'} - Редкость {req.from_rarity} → {req.to_rarity}
                   </div>
                   <div className="text-sm text-muted-foreground">
                     Шанс: {req.success_chance}% | ELL: {req.cost_ell} | 🪵 {req.cost_wood} | 🪨{' '}

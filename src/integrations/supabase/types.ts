@@ -318,11 +318,13 @@ export type Database = {
           cost_wood: number | null
           created_at: string | null
           created_by_wallet_address: string
+          from_rarity: number
           id: string
           is_active: boolean | null
           rarity: string
           required_items: Json | null
           success_chance: number
+          to_rarity: number
           updated_at: string | null
         }
         Insert: {
@@ -334,11 +336,13 @@ export type Database = {
           cost_wood?: number | null
           created_at?: string | null
           created_by_wallet_address: string
+          from_rarity: number
           id?: string
           is_active?: boolean | null
           rarity: string
           required_items?: Json | null
           success_chance?: number
+          to_rarity: number
           updated_at?: string | null
         }
         Update: {
@@ -350,11 +354,13 @@ export type Database = {
           cost_wood?: number | null
           created_at?: string | null
           created_by_wallet_address?: string
+          from_rarity?: number
           id?: string
           is_active?: boolean | null
           rarity?: string
           required_items?: Json | null
           success_chance?: number
+          to_rarity?: number
           updated_at?: string | null
         }
         Relationships: []

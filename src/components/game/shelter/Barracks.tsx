@@ -257,18 +257,19 @@ export const Barracks: React.FC<BarracksProps> = ({ barracksLevel, onUpgradeBuil
     const hero1 = heroes[0];
     const hero2 = heroes[1];
     
-    const rarityMap: Record<number, string> = {
-      1: 'common',
-      2: 'uncommon',
-      3: 'rare',
-      4: 'epic',
-      5: 'legendary',
-      6: 'mythic'
-    };
+    const fromRarity = hero1.rarity;
+    const toRarity = hero1.rarity + 1;
     
-    const requirements = getRequirement('hero', rarityMap[hero1.rarity] || 'common');
+    const requirements = getRequirement('hero', fromRarity, toRarity);
     
-    if (!requirements) return;
+    if (!requirements) {
+      toast({
+        title: 'Ошибка',
+        description: `Настройки улучшения для редкости ${fromRarity} → ${toRarity} не найдены`,
+        variant: 'destructive'
+      });
+      return;
+    }
 
     // Roll for success
     const isSuccess = Math.random() * 100 < requirements.success_chance;
