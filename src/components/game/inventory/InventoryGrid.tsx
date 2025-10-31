@@ -8,6 +8,7 @@ import { useLanguage } from "@/hooks/useLanguage";
 import { t } from "@/utils/translations";
 import { getClassDropRates } from "@/utils/cardUtils";
 import { workerImagesByName } from "@/constants/workerImages";
+import { itemImagesByName, itemImagesByItemId } from "@/constants/itemImages";
 import { useIsMobile } from "@/hooks/use-mobile";
 interface InventoryGridProps {
   groupedItems: GroupedItem[];
@@ -36,16 +37,24 @@ export const InventoryGrid = ({
     });
 
   const resolveGroupImage = (g: GroupedItem) => {
-    // Special handling for workers
+    // 1. Special handling for workers (приоритет)
     if (g.type === 'worker' && workerImagesByName[g.name]) {
       return workerImagesByName[g.name];
     }
     
-    // Try to get image from grouped item data
-    const itemImage = g.image || g.items[0]?.image;
+    // 2. Check centralized item images by name (Russian names)
+    if (itemImagesByName[g.name]) {
+      return itemImagesByName[g.name];
+    }
     
-    // Return the image if it exists, otherwise placeholder
-    return itemImage || '/placeholder.svg';
+    // 3. Try to get image from grouped item data (from DB or shop)
+    const itemImage = g.image || g.items[0]?.image;
+    if (itemImage && itemImage !== '/placeholder.svg') {
+      return itemImage;
+    }
+    
+    // 4. Fallback to placeholder
+    return '/placeholder.svg';
   };
 
   // Формируем единый ключ для группы (включая count и первый id для уникальности)
@@ -70,18 +79,38 @@ export const InventoryGrid = ({
                 className="p-4 transition-all duration-300 flex flex-col cursor-pointer hover:scale-105"
                 style={{ boxShadow: '0 15px 10px rgba(0, 0, 0, 0.6)' }}
               >
-                <div className="w-full h-32 sm:h-40 mb-2 rounded-lg overflow-hidden flex items-center justify-center bg-black/30 border border-white/20">
+                <div className="w-full h-32 sm:h-40 mb-2 rounded-lg overflow-hidden flex items-center justify-center bg-gradient-to-br from-black/40 to-black/20 border border-white/10">
                   {(() => {
                     const imageSrc = resolveGroupImage(item);
+                    const [imageLoaded, setImageLoaded] = useState(false);
+                    const [imageError, setImageError] = useState(false);
+                    
                     return (
-                      <img 
-                        src={imageSrc} 
-                        alt={item.name} 
-                        className="w-full h-full object-contain" 
-                        onError={(e) => { 
-                          (e.currentTarget as HTMLImageElement).src = '/placeholder.svg'; 
-                        }} 
-                      />
+                      <>
+                        {!imageLoaded && !imageError && (
+                          <div className="absolute inset-0 flex items-center justify-center">
+                            <div className="w-8 h-8 border-2 border-white/20 border-t-white/60 rounded-full animate-spin" />
+                          </div>
+                        )}
+                        <img 
+                          src={imageSrc} 
+                          alt={item.name} 
+                          className={`w-full h-full object-contain transition-opacity duration-300 ${
+                            imageLoaded ? 'opacity-100' : 'opacity-0'
+                          }`}
+                          onLoad={() => setImageLoaded(true)}
+                          onError={(e) => { 
+                            console.error('Failed to load image for:', item.name, imageSrc);
+                            setImageError(true);
+                            (e.currentTarget as HTMLImageElement).src = '/placeholder.svg'; 
+                          }} 
+                        />
+                        {imageError && imageSrc === '/placeholder.svg' && (
+                          <div className="absolute inset-0 flex items-center justify-center text-white/40 text-4xl">
+                            📦
+                          </div>
+                        )}
+                      </>
                     );
                   })()}
                 </div>
