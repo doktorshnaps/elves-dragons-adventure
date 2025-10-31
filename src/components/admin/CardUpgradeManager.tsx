@@ -22,7 +22,7 @@ export const CardUpgradeManager = () => {
 
   const [formData, setFormData] = useState({
     card_type: 'hero' as 'hero' | 'dragon',
-    rarity: 'common' as any,
+    rarity: 1,
     success_chance: 90,
     cost_ell: 0,
     cost_wood: 0,
@@ -51,7 +51,15 @@ export const CardUpgradeManager = () => {
         : await supabase
             .from('card_upgrade_requirements')
             .insert({
-              ...formData,
+              card_type: formData.card_type,
+              rarity: String(formData.rarity),
+              success_chance: formData.success_chance,
+              cost_ell: formData.cost_ell,
+              cost_wood: formData.cost_wood,
+              cost_stone: formData.cost_stone,
+              cost_iron: formData.cost_iron,
+              cost_gold: formData.cost_gold,
+              required_items: formData.required_items,
               created_by_wallet_address: 'mr_bruts.tg'
             });
 
@@ -119,7 +127,7 @@ export const CardUpgradeManager = () => {
     setEditingId(null);
     setFormData({
       card_type: 'hero',
-      rarity: 'common',
+      rarity: 1,
       success_chance: 90,
       cost_ell: 0,
       cost_wood: 0,
@@ -201,22 +209,24 @@ export const CardUpgradeManager = () => {
             </div>
 
             <div>
-              <Label>Редкость</Label>
+              <Label>Редкость (1-8)</Label>
               <Select
-                value={formData.rarity}
-                onValueChange={(value) => setFormData({ ...formData, rarity: value })}
+                value={String(formData.rarity)}
+                onValueChange={(value) => setFormData({ ...formData, rarity: parseInt(value) })}
                 disabled={!!editingId}
               >
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="common">Common</SelectItem>
-                  <SelectItem value="uncommon">Uncommon</SelectItem>
-                  <SelectItem value="rare">Rare</SelectItem>
-                  <SelectItem value="epic">Epic</SelectItem>
-                  <SelectItem value="legendary">Legendary</SelectItem>
-                  <SelectItem value="mythic">Mythic</SelectItem>
+                  <SelectItem value="1">Редкость 1</SelectItem>
+                  <SelectItem value="2">Редкость 2</SelectItem>
+                  <SelectItem value="3">Редкость 3</SelectItem>
+                  <SelectItem value="4">Редкость 4</SelectItem>
+                  <SelectItem value="5">Редкость 5</SelectItem>
+                  <SelectItem value="6">Редкость 6</SelectItem>
+                  <SelectItem value="7">Редкость 7</SelectItem>
+                  <SelectItem value="8">Редкость 8</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -379,7 +389,7 @@ export const CardUpgradeManager = () => {
               >
                 <div>
                   <div className="font-semibold">
-                    {req.card_type === 'hero' ? 'Герой' : 'Дракон'} - {req.rarity}
+                    {req.card_type === 'hero' ? 'Герой' : 'Дракон'} - Редкость {req.rarity}
                   </div>
                   <div className="text-sm text-muted-foreground">
                     Шанс: {req.success_chance}% | ELL: {req.cost_ell} | 🪵 {req.cost_wood} | 🪨{' '}
