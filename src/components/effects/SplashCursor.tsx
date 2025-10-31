@@ -8,8 +8,9 @@ export const SplashCursor = () => {
     if (!canvas) return;
 
     // Initial canvas size setup
-    canvas.width = canvas.clientWidth;
-    canvas.height = canvas.clientHeight;
+    const rect = canvas.getBoundingClientRect();
+    canvas.width = rect.width || window.innerWidth;
+    canvas.height = rect.height || window.innerHeight;
 
     const config = {
       SIM_RESOLUTION: 128,
@@ -39,7 +40,7 @@ export const SplashCursor = () => {
       deltaY = 0;
       down = false;
       moved = false;
-      color = [30, 0, 300];
+      color = [30, 0, 255];
     }
 
     const pointers: PointerPrototype[] = [];
@@ -733,8 +734,9 @@ export const SplashCursor = () => {
     }
 
     function resizeCanvas(): boolean {
-      const width = canvas.clientWidth;
-      const height = canvas.clientHeight;
+      const rect = canvas.getBoundingClientRect();
+      const width = rect.width || window.innerWidth;
+      const height = rect.height || window.innerHeight;
       if (canvas.width !== width || canvas.height !== height) {
         canvas.width = width;
         canvas.height = height;
