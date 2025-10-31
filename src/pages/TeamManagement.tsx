@@ -179,17 +179,26 @@ export const TeamManagement = () => {
                             </div>
                             <div className="unit-stats-grid">
                               <div className="unit-stat-item">
-                                <span className="unit-stat-value">{pair.hero.currentHealth ?? pair.hero.health}</span>
-                                <span className="unit-stat-label">❤️ HP</span>
+                                <span className="unit-stat-label">Ур. 1</span>
                               </div>
                               <div className="unit-stat-item">
-                                <span className="unit-stat-value">{pair.hero.defense}</span>
-                                <span className="unit-stat-label">🛡️ Armor</span>
+                                <span className="unit-stat-label">Здоровье</span>
+                                <span className="unit-stat-value">{pair.hero.currentHealth ?? pair.hero.health}/{pair.hero.health}</span>
                               </div>
                               <div className="unit-stat-item">
+                                <span className="unit-stat-label">Атака</span>
                                 <span className="unit-stat-value">{pair.hero.power}</span>
-                                <span className="unit-stat-label">⚔️ ATK</span>
                               </div>
+                              <div className="unit-stat-item">
+                                <span className="unit-stat-label">Защита</span>
+                                <span className="unit-stat-value">{pair.hero.defense}</span>
+                              </div>
+                            </div>
+                            <div className="unit-progress-bar">
+                              <div 
+                                className="unit-progress-fill" 
+                                style={{ width: `${((pair.hero.currentHealth ?? pair.hero.health) / pair.hero.health) * 100}%` }}
+                              />
                             </div>
                           </>
                         ) : (
@@ -218,17 +227,26 @@ export const TeamManagement = () => {
                             </div>
                             <div className="unit-stats-grid">
                               <div className="unit-stat-item">
-                                <span className="unit-stat-value">{pair.dragon.currentHealth ?? pair.dragon.health}</span>
-                                <span className="unit-stat-label">❤️ HP</span>
+                                <span className="unit-stat-label">Ур. 1</span>
                               </div>
                               <div className="unit-stat-item">
-                                <span className="unit-stat-value">{pair.dragon.defense}</span>
-                                <span className="unit-stat-label">🛡️ Armor</span>
+                                <span className="unit-stat-label">Здоровье</span>
+                                <span className="unit-stat-value">{pair.dragon.currentHealth ?? pair.dragon.health}/{pair.dragon.health}</span>
                               </div>
                               <div className="unit-stat-item">
+                                <span className="unit-stat-label">Атака</span>
                                 <span className="unit-stat-value">{pair.dragon.power}</span>
-                                <span className="unit-stat-label">⚔️ ATK</span>
                               </div>
+                              <div className="unit-stat-item">
+                                <span className="unit-stat-label">Защита</span>
+                                <span className="unit-stat-value">{pair.dragon.defense}</span>
+                              </div>
+                            </div>
+                            <div className="unit-progress-bar">
+                              <div 
+                                className="unit-progress-fill" 
+                                style={{ width: `${((pair.dragon.currentHealth ?? pair.dragon.health) / pair.dragon.health) * 100}%` }}
+                              />
                             </div>
                           </>
                         ) : pair.hero ? (
@@ -251,23 +269,6 @@ export const TeamManagement = () => {
               )}
             </div>
 
-            {/* Team Summary */}
-            {selectedTeam.length > 0 && (
-              <div className="team-summary">
-                <div className="summary-stats">
-                  <div className="summary-row">
-                    <div className="summary-stat">
-                      <span className="stat-label">Общие Характеристики Команды:</span>
-                      <div className="stat-group">
-                        <span className="stat-item">❤️ <span id="total-team-hp">{teamStats.health}</span></span>
-                        <span className="stat-item">🛡️ <span id="total-team-armor">{teamStats.defense}</span></span>
-                        <span className="stat-item">⚔️ <span id="total-team-attack">{teamStats.power}</span></span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            )}
           </section>
 
           {/* Action Buttons */}
@@ -297,6 +298,27 @@ export const TeamManagement = () => {
               </div>
             </button>
           </section>
+
+          {/* Team Statistics */}
+          {selectedTeam.length > 0 && (
+            <section className="stats-section">
+              <h2>Статистика команды</h2>
+              <div className="stats-grid">
+                <div className="stat-box">
+                  <div className="stat-box-value">{teamStats.power}</div>
+                  <div className="stat-box-label">Сила</div>
+                </div>
+                <div className="stat-box">
+                  <div className="stat-box-value">{teamStats.defense}</div>
+                  <div className="stat-box-label">Защита</div>
+                </div>
+                <div className="stat-box">
+                  <div className="stat-box-value">{teamStats.health}</div>
+                  <div className="stat-box-label">Здоровье</div>
+                </div>
+              </div>
+            </section>
+          )}
         </div>
       </main>
 
