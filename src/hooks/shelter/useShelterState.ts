@@ -38,9 +38,11 @@ export interface CraftRecipe {
     stone?: number;
     iron?: number;
     balance?: number;
+    materials?: Array<{ item_id: string; quantity: number }>;
   };
   result: string;
   category: "weapon" | "armor" | "potion" | "misc";
+  craftingTime?: number;
 }
 
 export const useShelterState = () => {
@@ -338,10 +340,12 @@ export const useShelterState = () => {
         name: recipe.recipe_name,
         description: recipe.description || '',
         requirements: {
-          balance: 0 // В БД нет стоимости ELL для крафта, можно добавить позже
+          balance: 0, // В БД нет стоимости ELL для крафта, можно добавить позже
+          materials: recipe.required_materials || []
         },
         result: resultTemplate?.name || 'Неизвестный предмет',
-        category: (recipe.category as any) || 'misc'
+        category: (recipe.category as any) || 'misc',
+        craftingTime: recipe.crafting_time_hours || 1
       };
     });
   }, [language, craftingRecipesFromDB, recipesLoading, getTemplate]);
@@ -393,12 +397,29 @@ export const useShelterState = () => {
   const canAffordCraft = (recipe: CraftRecipe) => {
     const hasWorkshopWorkers = hasWorkersInBuilding('workshop');
     
-    return (!recipe.requirements.wood || resources.wood >= recipe.requirements.wood) && 
-           (!recipe.requirements.stone || resources.stone >= recipe.requirements.stone) && 
-           (!recipe.requirements.iron || resources.iron >= recipe.requirements.iron) && 
-           (!recipe.requirements.balance || gameState.balance >= recipe.requirements.balance) && 
+    // Проверка базовых ресурсов
+    const basicResourcesCheck = 
+      (!recipe.requirements.wood || resources.wood >= recipe.requirements.wood) && 
+      (!recipe.requirements.stone || resources.stone >= recipe.requirements.stone) && 
+      (!recipe.requirements.iron || resources.iron >= recipe.requirements.iron) && 
+      (!recipe.requirements.balance || gameState.balance >= recipe.requirements.balance);
+    
+    // Проверка требуемых материалов
+    let hasMaterials = true;
+    if (recipe.requirements.materials && recipe.requirements.materials.length > 0) {
+      for (const mat of recipe.requirements.materials) {
+        const count = inventoryCounts[mat.item_id] || 0;
+        if (count < mat.quantity) {
+          hasMaterials = false;
+          break;
+        }
+      }
+    }
+    
+    return basicResourcesCheck && 
            buildingLevels.workshop > 0 &&
-           hasWorkshopWorkers;
+           hasWorkshopWorkers &&
+           hasMaterials;
   };
 
   const handleUpgrade = async (upgrade: NestUpgrade) => {

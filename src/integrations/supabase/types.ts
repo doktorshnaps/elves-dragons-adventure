@@ -395,6 +395,7 @@ export type Database = {
       crafting_recipes: {
         Row: {
           category: string | null
+          crafting_time_hours: number
           created_at: string | null
           created_by_wallet_address: string
           description: string | null
@@ -408,6 +409,7 @@ export type Database = {
         }
         Insert: {
           category?: string | null
+          crafting_time_hours?: number
           created_at?: string | null
           created_by_wallet_address: string
           description?: string | null
@@ -421,6 +423,7 @@ export type Database = {
         }
         Update: {
           category?: string | null
+          crafting_time_hours?: number
           created_at?: string | null
           created_by_wallet_address?: string
           description?: string | null

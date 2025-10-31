@@ -4,7 +4,8 @@ import { Badge } from "@/components/ui/badge";
 import { CraftRecipe } from "@/hooks/shelter/useShelterState";
 import { useLanguage } from "@/hooks/useLanguage";
 import { t } from "@/utils/translations";
-import { Hammer } from "lucide-react";
+import { Hammer, Clock } from "lucide-react";
+import { useItemTemplates } from "@/hooks/useItemTemplates";
 
 interface ShelterCraftingProps {
   recipes: CraftRecipe[];
@@ -38,6 +39,7 @@ export const ShelterCrafting = ({
   workshopLevel
 }: ShelterCraftingProps) => {
   const { language } = useLanguage();
+  const { getItemName } = useItemTemplates();
 
   if (workshopLevel === 0) {
     return (
@@ -106,8 +108,25 @@ export const ShelterCrafting = ({
                       <span className="text-sm">{recipe.requirements.balance} ELL</span>
                     </div>
                   )}
+                  {recipe.requirements.materials && recipe.requirements.materials.length > 0 && (
+                    recipe.requirements.materials.map((mat, idx) => (
+                      <div key={idx} className="flex items-center gap-2">
+                        <span>📦</span>
+                        <span className="text-sm">
+                          {getItemName(mat.item_id)} x{mat.quantity}
+                        </span>
+                      </div>
+                    ))
+                  )}
                 </div>
               </div>
+
+              {recipe.craftingTime && (
+                <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                  <Clock className="w-4 h-4" />
+                  <span>{t(language, 'shelter.craftingTime')}: {recipe.craftingTime}ч</span>
+                </div>
+              )}
 
               <div className="text-sm text-muted-foreground p-2 bg-muted/50 rounded">
                 <strong>{t(language, 'shelter.result')}:</strong> {recipe.result}

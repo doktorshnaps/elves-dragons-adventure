@@ -29,7 +29,8 @@ export const CraftingRecipeManager = () => {
     result_quantity: 1,
     required_materials: [] as Array<{ item_id: string; quantity: number }>,
     category: 'general',
-    description: ''
+    description: '',
+    crafting_time_hours: 1
   });
 
   const handleSave = async () => {
@@ -53,7 +54,8 @@ export const CraftingRecipeManager = () => {
               result_quantity: formData.result_quantity,
               required_materials: formData.required_materials,
               category: formData.category,
-              description: formData.description
+              description: formData.description,
+              crafting_time_hours: formData.crafting_time_hours
             })
             .eq('id', editingId)
         : await supabase
@@ -91,7 +93,8 @@ export const CraftingRecipeManager = () => {
       result_quantity: recipe.result_quantity,
       required_materials: recipe.required_materials || [],
       category: recipe.category || 'general',
-      description: recipe.description || ''
+      description: recipe.description || '',
+      crafting_time_hours: recipe.crafting_time_hours || 1
     });
   };
 
@@ -128,7 +131,8 @@ export const CraftingRecipeManager = () => {
       result_quantity: 1,
       required_materials: [],
       category: 'general',
-      description: ''
+      description: '',
+      crafting_time_hours: 1
     });
   };
 
@@ -213,7 +217,7 @@ export const CraftingRecipeManager = () => {
             />
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-3 gap-4">
             <div>
               <Label>Результат крафта</Label>
               <Select
@@ -244,6 +248,19 @@ export const CraftingRecipeManager = () => {
                   setFormData({ ...formData, result_quantity: parseInt(e.target.value) || 1 })
                 }
                 min={1}
+              />
+            </div>
+
+            <div>
+              <Label>Время крафта (часов)</Label>
+              <Input
+                type="number"
+                value={formData.crafting_time_hours}
+                onChange={(e) =>
+                  setFormData({ ...formData, crafting_time_hours: parseInt(e.target.value) || 1 })
+                }
+                min={1}
+                placeholder="1"
               />
             </div>
           </div>
@@ -332,6 +349,9 @@ export const CraftingRecipeManager = () => {
                     <div className="font-semibold">{recipe.recipe_name}</div>
                     <div className="text-sm text-muted-foreground">
                       Результат: {resultItem?.name} x{recipe.result_quantity}
+                    </div>
+                    <div className="text-sm text-muted-foreground">
+                      Время крафта: {recipe.crafting_time_hours || 1} ч
                     </div>
                     {recipe.required_materials && recipe.required_materials.length > 0 && (
                       <div className="text-sm">

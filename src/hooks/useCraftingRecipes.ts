@@ -13,6 +13,7 @@ export interface CraftingRecipe {
   category: string;
   description?: string;
   is_active: boolean;
+  crafting_time_hours?: number;
 }
 
 export const useCraftingRecipes = () => {
