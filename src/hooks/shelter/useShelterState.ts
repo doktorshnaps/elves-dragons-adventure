@@ -573,11 +573,27 @@ export const useShelterState = () => {
     };
 
     const updatedWorkers = [...activeWorkers, newWorker];
+    
+    // Сохраняем в localStorage для быстрой синхронизации
     try {
       localStorage.setItem('activeWorkers', JSON.stringify(updatedWorkers));
       window.dispatchEvent(new CustomEvent('activeWorkers:changed', { detail: updatedWorkers }));
     } catch (e) {
-      console.error('Failed to save crafting worker', e);
+      console.error('Failed to save crafting worker to localStorage', e);
+    }
+
+    // КРИТИЧНО: Сохраняем в базу данных через gameState
+    try {
+      await gameState.actions.batchUpdate({ activeWorkers: updatedWorkers });
+      console.log('✅ Crafting worker saved to database');
+    } catch (e) {
+      console.error('❌ Failed to save crafting worker to database', e);
+      toast({
+        title: "Ошибка сохранения",
+        description: "Не удалось сохранить крафт в базу данных",
+        variant: "destructive"
+      });
+      return;
     }
 
     const resultTemplate = getTemplate(String(dbRecipe.result_item_id));
@@ -596,6 +612,8 @@ export const useShelterState = () => {
       );
       
       if (completedCrafts.length > 0) {
+        console.log(`✅ Completing ${completedCrafts.length} crafting tasks`);
+        
         for (const craft of completedCrafts) {
           const resultTemplate = getTemplate(String(craft.resultItemId));
           if (resultTemplate) {
@@ -607,20 +625,39 @@ export const useShelterState = () => {
                 type: resultTemplate.type
               })
             );
+            
+            toast({
+              title: t(language, 'shelter.craftingCompleted') || 'Крафт завершен',
+              description: `${resultTemplate.name} x${craft.resultQuantity || 1} готов!`,
+            });
           }
         }
         
         const updatedWorkers = activeWorkers.filter(
           w => !(w.task === 'crafting' && w.building === 'workshop' && now >= w.startTime + w.duration)
         );
-        localStorage.setItem('activeWorkers', JSON.stringify(updatedWorkers));
-        window.dispatchEvent(new CustomEvent('activeWorkers:changed', { detail: updatedWorkers }));
+        
+        // Сохраняем в localStorage
+        try {
+          localStorage.setItem('activeWorkers', JSON.stringify(updatedWorkers));
+          window.dispatchEvent(new CustomEvent('activeWorkers:changed', { detail: updatedWorkers }));
+        } catch (e) {
+          console.error('Failed to update localStorage', e);
+        }
+        
+        // КРИТИЧНО: Обновляем в базе данных
+        try {
+          await gameState.actions.batchUpdate({ activeWorkers: updatedWorkers });
+          console.log('✅ Completed crafts removed from database');
+        } catch (e) {
+          console.error('❌ Failed to update database after craft completion', e);
+        }
       }
     };
     
     const interval = setInterval(checkCraftingCompletion, 1000);
     return () => clearInterval(interval);
-  }, [activeWorkers, getTemplate, addItemsToInstances]);
+  }, [activeWorkers, getTemplate, addItemsToInstances, gameState.actions, toast, language]);
 
   return {
     activeTab,
