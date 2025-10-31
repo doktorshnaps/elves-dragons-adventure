@@ -117,7 +117,7 @@ export const Auth = () => {
       <SplashCursor />
       
       {/* Animated gradient orbs */}
-      <div className="absolute inset-0 overflow-hidden z-0">
+      <div className="absolute inset-0 overflow-hidden">
         <motion.div className="absolute -top-40 -left-40 w-96 h-96 bg-purple-500/30 rounded-full blur-3xl" animate={{
         x: [0, 100, 0],
         y: [0, 50, 0],
@@ -148,7 +148,7 @@ export const Auth = () => {
       </div>
 
       {/* Content */}
-      <div className="relative z-20 min-h-screen flex items-center justify-center p-4">
+      <div className="relative z-10 min-h-screen flex items-center justify-center p-4">
         <motion.div initial={{
         opacity: 0,
         y: 30,

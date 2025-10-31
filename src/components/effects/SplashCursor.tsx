@@ -5,7 +5,6 @@ export const SplashCursor = () => {
 
   useEffect(() => {
     const canvas = canvasRef.current;
-    console.log('[SplashCursor] mount, canvas element present:', !!canvas);
     if (!canvas) return;
 
     // Initial canvas size setup
@@ -49,14 +48,10 @@ export const SplashCursor = () => {
 
     const { gl, ext } = getWebGLContext(canvas);
 
-    console.log('[SplashCursor] getWebGLContext done:', { hasGL: !!gl });
-
     if (!gl) {
-      console.error('[SplashCursor] WebGL not supported');
+      console.error('WebGL not supported');
       return;
     }
-
-    console.log('[SplashCursor] WebGL context acquired');
 
     if (!ext.supportLinearFiltering) {
       config.DYE_RESOLUTION = 512;
@@ -1084,32 +1079,18 @@ export const SplashCursor = () => {
     window.addEventListener('mousemove', handleMouseMove);
     window.addEventListener('touchmove', handleTouchMove, { passive: false });
 
-    const onContextLost = (e: Event) => {
-      console.error('[SplashCursor] WebGL context lost', e);
-      e.preventDefault?.();
-    };
-    const onContextRestored = () => {
-      console.warn('[SplashCursor] WebGL context restored');
-    };
-    canvas.addEventListener('webglcontextlost', onContextLost as EventListener);
-    canvas.addEventListener('webglcontextrestored', onContextRestored as EventListener);
-
-    console.log('[SplashCursor] mouse/touch listeners attached, starting animation loop');
-
     update();
 
     return () => {
       window.removeEventListener('mousemove', handleMouseMove);
       window.removeEventListener('touchmove', handleTouchMove);
-      canvas.removeEventListener('webglcontextlost', onContextLost as EventListener);
-      canvas.removeEventListener('webglcontextrestored', onContextRestored as EventListener);
     };
   }, []);
 
   return (
     <canvas
       ref={canvasRef}
-      className="fixed inset-0 pointer-events-none z-10"
+      className="fixed inset-0 pointer-events-none z-0"
       style={{ width: '100vw', height: '100vh' }}
     />
   );
