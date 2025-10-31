@@ -10,11 +10,13 @@ import { useToast } from '@/hooks/use-toast';
 import { Loader2, Plus, Trash2, Save } from 'lucide-react';
 import { useItemTemplates } from '@/hooks/useItemTemplates';
 import { useCraftingRecipes } from '@/hooks/useCraftingRecipes';
+import { useAdminCheck } from '@/hooks/useAdminCheck';
 
 export const CraftingRecipeManager = () => {
   const { toast } = useToast();
   const { templates } = useItemTemplates();
   const { recipes, loading: loadingRecipes, reload } = useCraftingRecipes();
+  const { isAdmin } = useAdminCheck();
   const [saving, setSaving] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
 
@@ -99,6 +101,15 @@ export const CraftingRecipeManager = () => {
   };
 
   const handleDelete = async (id: string) => {
+    if (!isAdmin) {
+      toast({
+        title: 'Нет доступа',
+        description: 'Только администраторы могут удалять рецепты',
+        variant: 'destructive'
+      });
+      return;
+    }
+
     if (!confirm('Вы уверены что хотите удалить этот рецепт?')) return;
 
     try {
@@ -107,7 +118,10 @@ export const CraftingRecipeManager = () => {
         .delete()
         .eq('id', id);
 
-      if (error) throw error;
+      if (error) {
+        console.error('Delete error:', error);
+        throw error;
+      }
 
       toast({
         title: 'Рецепт удален',
@@ -116,8 +130,8 @@ export const CraftingRecipeManager = () => {
       reload();
     } catch (error: any) {
       toast({
-        title: 'Ошибка',
-        description: error.message,
+        title: 'Ошибка удаления',
+        description: error.message || 'Недостаточно прав для удаления рецепта',
         variant: 'destructive'
       });
     }
@@ -366,13 +380,20 @@ export const CraftingRecipeManager = () => {
                     )}
                   </div>
                   <div className="flex gap-2">
-                    <Button onClick={() => handleEdit(recipe)} size="sm" variant="outline">
+                    <Button 
+                      onClick={() => handleEdit(recipe)} 
+                      size="sm" 
+                      variant="outline"
+                      disabled={!isAdmin}
+                    >
                       Редактировать
                     </Button>
                     <Button
                       onClick={() => handleDelete(recipe.id)}
                       size="sm"
                       variant="destructive"
+                      disabled={!isAdmin}
+                      title={!isAdmin ? 'Только администраторы могут удалять рецепты' : ''}
                     >
                       <Trash2 className="w-4 h-4" />
                     </Button>
