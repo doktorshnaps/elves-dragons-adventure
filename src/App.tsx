@@ -21,7 +21,6 @@ const MusicController = lazy(() => import('./components/MusicController').then(m
 // Lazy load route-specific components
 const EquipmentWithLazyLoading = lazy(() => import('./components/lazy/LazyComponents').then(m => ({ default: m.EquipmentWithLazyLoading })));
 const TeamStatsWithLazyLoading = lazy(() => import('./components/lazy/LazyComponents').then(m => ({ default: m.TeamStatsWithLazyLoading })));
-const TeamManagementWithLazyLoading = lazy(() => import('./components/lazy/LazyComponents').then(m => ({ default: m.TeamManagementWithLazyLoading })));
 const GrimoireWithLazyLoading = lazy(() => import('./components/lazy/LazyComponents').then(m => ({ default: m.GrimoireWithLazyLoading })));
 const DungeonsWithLazyLoading = lazy(() => import('./components/lazy/LazyComponents').then(m => ({ default: m.DungeonsWithLazyLoading })));
 const AdventuresPageWithLazyLoading = lazy(() => import('./components/lazy/LazyComponents').then(m => ({ default: m.AdventuresPageWithLazyLoading })));
@@ -118,7 +117,7 @@ function App() {
                     <Route path="/menu" element={<Suspense fallback={<PageLoader />}><ProtectedRoute><Menu /></ProtectedRoute></Suspense>} />
                     <Route path="/admin-settings" element={<Suspense fallback={<PageLoader />}><ProtectedRoute><AdminSettings /></ProtectedRoute></Suspense>} />
                     <Route path="/soul-archive" element={<Suspense fallback={<PageLoader />}><ProtectedRoute><SoulArchive /></ProtectedRoute></Suspense>} />
-                    <Route path="/team" element={<Suspense fallback={<PageLoader />}><ProtectedRoute><TeamManagementWithLazyLoading /></ProtectedRoute></Suspense>} />
+                    <Route path="/team" element={<Suspense fallback={<PageLoader />}><ProtectedRoute><TeamStatsWithLazyLoading /></ProtectedRoute></Suspense>} />
                     <Route path="/statistics" element={<Suspense fallback={<PageLoader />}><ProtectedRoute><TeamStatsWithLazyLoading /></ProtectedRoute></Suspense>} />
                     <Route path="/equipment" element={<Suspense fallback={<PageLoader />}><ProtectedRoute><EquipmentWithLazyLoading /></ProtectedRoute></Suspense>} />
                     <Route path="/grimoire" element={<Suspense fallback={<PageLoader />}><ProtectedRoute><GrimoireWithLazyLoading /></ProtectedRoute></Suspense>} />

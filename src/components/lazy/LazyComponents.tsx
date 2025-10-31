@@ -18,14 +18,6 @@ export const LazyTeamStats = createLazyComponent(
   }
 );
 
-export const LazyTeamManagement = createLazyComponent(
-  () => import('@/pages/TeamManagement').then(module => ({ default: module.TeamManagement })),
-  { 
-    fallback: <div className="p-4">Загрузка управления командой...</div>,
-    preload: false 
-  }
-);
-
 export const LazyGrimoire = createLazyComponent(
   () => import('@/pages/Grimoire'),
   { 
@@ -187,7 +179,6 @@ export const LazyGameInterface = createLazyComponent(
 // Обертки с error handling
 export const EquipmentWithLazyLoading = withLazyLoading(LazyEquipment);
 export const TeamStatsWithLazyLoading = withLazyLoading(LazyTeamStats);
-export const TeamManagementWithLazyLoading = withLazyLoading(LazyTeamManagement);
 export const GrimoireWithLazyLoading = withLazyLoading(LazyGrimoire);
 // BattleWithLazyLoading удален - использует устаревшую механику
 export const DungeonsWithLazyLoading = withLazyLoading(LazyDungeons);
