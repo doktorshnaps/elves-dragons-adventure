@@ -1613,6 +1613,10 @@ export type Database = {
         Args: { p_admin_wallet_address?: string; p_wallet_address: string }
         Returns: boolean
       }
+      admin_delete_crafting_recipe: {
+        Args: { p_id: string; p_wallet: string }
+        Returns: undefined
+      }
       admin_delete_dungeon_item_drop: {
         Args: { p_admin_wallet_address?: string; p_drop_id: string }
         Returns: boolean
