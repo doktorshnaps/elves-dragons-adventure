@@ -1,5 +1,3 @@
-import { Button } from "@/components/ui/button";
-import { ShoppingCart, BarChart3 } from "lucide-react";
 
 interface GameActionsProps {
   onOpenShop: () => void;
@@ -8,23 +6,25 @@ interface GameActionsProps {
 
 export const GameActions = ({ onOpenShop, onOpenStats }: GameActionsProps) => {
   return (
-    <div className="mt-8 flex justify-center gap-4">
-      <Button
-        variant="outline"
-        className="bg-game-surface/80 border-game-accent text-game-accent hover:bg-game-surface"
+    <div className="mt-8 grid grid-cols-1 md:grid-cols-2 gap-6 max-w-4xl mx-auto">
+      <button
         onClick={onOpenShop}
+        className="group relative bg-game-surface/30 border-2 border-game-accent/50 rounded-lg p-6 text-left transition-all hover:border-game-accent hover:bg-game-surface/50"
       >
-        <ShoppingCart className="w-4 h-4 mr-2" />
-        Открыть магазин
-      </Button>
-      <Button
-        variant="outline"
-        className="bg-game-surface/80 border-game-accent text-game-accent hover:bg-game-surface"
+        <div className="flex flex-col items-center text-center">
+          <h3 className="text-xl font-bold text-white mb-2">Колода героев</h3>
+          <p className="text-sm text-game-accent/70">Выбор</p>
+        </div>
+      </button>
+      <button
         onClick={onOpenStats}
+        className="group relative bg-game-surface/30 border-2 border-game-accent/50 rounded-lg p-6 text-left transition-all hover:border-game-accent hover:bg-game-surface/50"
       >
-        <BarChart3 className="w-4 h-4 mr-2" />
-        Статистика
-      </Button>
+        <div className="flex flex-col items-center text-center">
+          <h3 className="text-xl font-bold text-white mb-2">Колода драконов</h3>
+          <p className="text-sm text-game-accent/70">Выбор</p>
+        </div>
+      </button>
     </div>
   );
 };
