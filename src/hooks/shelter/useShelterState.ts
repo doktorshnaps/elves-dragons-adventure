@@ -553,27 +553,74 @@ export const useShelterState = () => {
       return;
     }
 
+    // Удаляем материалы
     if (itemsToRemove.length > 0) {
       await removeItemInstancesByIds(itemsToRemove);
     }
 
-    const resultTemplate = getTemplate(String(dbRecipe.result_item_id));
-    if (resultTemplate) {
-      await addItemsToInstances(
-        Array(dbRecipe.result_quantity).fill({
-          template_id: dbRecipe.result_item_id,
-          item_id: resultTemplate.item_id,
-          name: resultTemplate.name,
-          type: resultTemplate.type
-        })
-      );
+    // Добавляем крафт в очередь с таймером
+    const craftingTimeMs = (dbRecipe.crafting_time_hours || 1) * 60 * 60 * 1000;
+    const now = Date.now();
+    const newWorker = {
+      id: `craft_${Date.now()}_${Math.random()}`,
+      building: 'workshop',
+      startTime: now,
+      duration: craftingTimeMs,
+      task: 'crafting',
+      recipeId: recipe.id,
+      resultItemId: dbRecipe.result_item_id,
+      resultQuantity: dbRecipe.result_quantity
+    };
 
-      toast({
-        title: t(language, 'success'),
-        description: `Создано: ${resultTemplate.name} x${dbRecipe.result_quantity}`,
-      });
+    const updatedWorkers = [...activeWorkers, newWorker];
+    try {
+      localStorage.setItem('activeWorkers', JSON.stringify(updatedWorkers));
+      window.dispatchEvent(new CustomEvent('activeWorkers:changed', { detail: updatedWorkers }));
+    } catch (e) {
+      console.error('Failed to save crafting worker', e);
     }
+
+    const resultTemplate = getTemplate(String(dbRecipe.result_item_id));
+    toast({
+      title: t(language, 'shelter.craftingStarted') || 'Крафт начат',
+      description: `${resultTemplate?.name || 'Предмет'} будет готов через ${dbRecipe.crafting_time_hours || 1}ч`,
+    });
   };
+
+  // Добавляем useEffect для проверки и завершения готовых крафтов
+  useEffect(() => {
+    const checkCraftingCompletion = async () => {
+      const now = Date.now();
+      const completedCrafts = activeWorkers.filter(
+        w => w.task === 'crafting' && w.building === 'workshop' && now >= w.startTime + w.duration
+      );
+      
+      if (completedCrafts.length > 0) {
+        for (const craft of completedCrafts) {
+          const resultTemplate = getTemplate(String(craft.resultItemId));
+          if (resultTemplate) {
+            await addItemsToInstances(
+              Array(craft.resultQuantity || 1).fill({
+                template_id: craft.resultItemId,
+                item_id: resultTemplate.item_id,
+                name: resultTemplate.name,
+                type: resultTemplate.type
+              })
+            );
+          }
+        }
+        
+        const updatedWorkers = activeWorkers.filter(
+          w => !(w.task === 'crafting' && w.building === 'workshop' && now >= w.startTime + w.duration)
+        );
+        localStorage.setItem('activeWorkers', JSON.stringify(updatedWorkers));
+        window.dispatchEvent(new CustomEvent('activeWorkers:changed', { detail: updatedWorkers }));
+      }
+    };
+    
+    const interval = setInterval(checkCraftingCompletion, 1000);
+    return () => clearInterval(interval);
+  }, [activeWorkers, getTemplate, addItemsToInstances]);
 
   return {
     activeTab,

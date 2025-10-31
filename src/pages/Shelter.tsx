@@ -171,6 +171,7 @@ export const Shelter = () => {
               canAffordCraft={canAffordCraft}
               handleCraft={handleCraft}
               workshopLevel={buildingLevels.workshop}
+              inventoryCounts={inventoryCounts}
             />
           </TabsContent>
 

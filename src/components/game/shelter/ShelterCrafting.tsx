@@ -12,6 +12,7 @@ interface ShelterCraftingProps {
   canAffordCraft: (recipe: CraftRecipe) => boolean;
   handleCraft: (recipe: CraftRecipe) => void;
   workshopLevel: number;
+  inventoryCounts: Record<string, number>;
 }
 
 const getCategoryIcon = (category: string) => {
@@ -36,7 +37,8 @@ export const ShelterCrafting = ({
   recipes,
   canAffordCraft,
   handleCraft,
-  workshopLevel
+  workshopLevel,
+  inventoryCounts
 }: ShelterCraftingProps) => {
   const { language } = useLanguage();
   const { getItemName } = useItemTemplates();
@@ -109,14 +111,18 @@ export const ShelterCrafting = ({
                     </div>
                   )}
                   {recipe.requirements.materials && recipe.requirements.materials.length > 0 && (
-                    recipe.requirements.materials.map((mat, idx) => (
-                      <div key={idx} className="flex items-center gap-2">
-                        <span>📦</span>
-                        <span className="text-sm">
-                          {getItemName(mat.item_id)} x{mat.quantity}
-                        </span>
-                      </div>
-                    ))
+                    recipe.requirements.materials.map((mat, idx) => {
+                      const playerHas = inventoryCounts[mat.item_id] || 0;
+                      const hasEnough = playerHas >= mat.quantity;
+                      return (
+                        <div key={idx} className="flex items-center gap-2">
+                          <span>📦</span>
+                          <span className={`text-sm ${hasEnough ? '' : 'text-destructive'}`}>
+                            {getItemName(mat.item_id)} ({playerHas}/{mat.quantity})
+                          </span>
+                        </div>
+                      );
+                    })
                   )}
                 </div>
               </div>
