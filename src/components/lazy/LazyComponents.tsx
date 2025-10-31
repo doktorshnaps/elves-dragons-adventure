@@ -11,9 +11,9 @@ export const LazyEquipment = createLazyComponent(
 );
 
 export const LazyTeamStats = createLazyComponent(
-  () => import('@/pages/Team').then(module => ({ default: module.Team })),
+  () => import('@/pages/TeamStats').then(module => ({ default: module.TeamStats })),
   { 
-    fallback: <div className="p-4">Загрузка команды...</div>,
+    fallback: <div className="p-4">Загрузка статистики команды...</div>,
     preload: false 
   }
 );
