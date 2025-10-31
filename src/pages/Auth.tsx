@@ -181,7 +181,7 @@ export const Auth = () => {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.4 }}
               >
-                Dragon & Heroes
+                ElleonorAI Подключение кошелька
               </motion.h1>
 
               {/* Subtitle */}
@@ -228,7 +228,15 @@ export const Auth = () => {
                 animate={{ opacity: 1 }}
                 transition={{ delay: 0.8 }}
               >
-                Для игры необходим установленный NEAR кошелек
+                Для игры необходим установленный NEAR кошелек.{" "}
+                <a 
+                  href="https://www.mynearwallet.com/" 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="text-purple-400 hover:text-purple-300 underline transition-colors"
+                >
+                  Создать кошелек
+                </a>
               </motion.p>
             </div>
           </div>
