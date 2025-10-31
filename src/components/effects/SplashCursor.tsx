@@ -7,13 +7,9 @@ export const SplashCursor = () => {
     const canvas = canvasRef.current;
     if (!canvas) return;
 
-    const resizeCanvas = () => {
-      canvas.width = canvas.clientWidth;
-      canvas.height = canvas.clientHeight;
-    };
-
-    resizeCanvas();
-    window.addEventListener('resize', resizeCanvas);
+    // Initial canvas size setup
+    canvas.width = canvas.clientWidth;
+    canvas.height = canvas.clientHeight;
 
     const config = {
       SIM_RESOLUTION: 128,
@@ -736,6 +732,17 @@ export const SplashCursor = () => {
       else return { width: min, height: max };
     }
 
+    function resizeCanvas(): boolean {
+      const width = canvas.clientWidth;
+      const height = canvas.clientHeight;
+      if (canvas.width !== width || canvas.height !== height) {
+        canvas.width = width;
+        canvas.height = height;
+        return true;
+      }
+      return false;
+    }
+
     initFramebuffers();
     
     let lastUpdateTime = Date.now();
@@ -1053,7 +1060,6 @@ export const SplashCursor = () => {
     update();
 
     return () => {
-      window.removeEventListener('resize', resizeCanvas);
       window.removeEventListener('mousemove', handleMouseMove);
       window.removeEventListener('touchmove', handleTouchMove);
     };
