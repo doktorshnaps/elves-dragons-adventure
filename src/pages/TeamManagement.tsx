@@ -19,6 +19,7 @@ export const TeamManagement = () => {
   const [showHeroDialog, setShowHeroDialog] = useState(false);
   const [showDragonDialog, setShowDragonDialog] = useState(false);
   const [editingSlot, setEditingSlot] = useState<number | null>(null);
+  const [editingType, setEditingType] = useState<'hero' | 'dragon' | null>(null);
 
   const heroes = cardsWithHealth.filter(card => card.type === 'character' && !(card as any).isInMedicalBay);
   const dragons = cardsWithHealth.filter(card => card.type === 'pet' && !(card as any).isInMedicalBay);
@@ -89,66 +90,145 @@ export const TeamManagement = () => {
   };
 
   return (
-    <div className="min-h-screen bg-[var(--color-background)] text-[var(--color-text)]">
+    <div className="min-h-screen" style={{ 
+      backgroundColor: 'var(--color-background)',
+      color: 'var(--color-text)',
+      fontFamily: 'var(--font-family-base)'
+    }}>
       {/* Header */}
-      <header className="border-b border-[var(--color-border)] bg-[var(--color-surface)]">
-        <div className="container mx-auto px-4 py-4">
-          <div className="flex items-center gap-4 mb-4">
+      <header style={{
+        borderBottom: '1px solid var(--color-border)',
+        backgroundColor: 'var(--color-surface)',
+        padding: 'var(--space-16) 0'
+      }}>
+        <div className="container mx-auto px-4">
+          <div className="flex items-center gap-3 mb-3">
             <button
               onClick={() => navigate('/menu')}
-              className="p-2 hover:bg-[var(--color-secondary)] rounded-lg transition-colors"
+              style={{
+                padding: 'var(--space-8)',
+                borderRadius: 'var(--radius-base)',
+                backgroundColor: 'transparent',
+                border: 'none',
+                cursor: 'pointer',
+                transition: 'background-color var(--duration-fast) var(--ease-standard)',
+                display: 'flex',
+                alignItems: 'center'
+              }}
+              onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'var(--color-secondary)'}
+              onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
               aria-label="Назад"
             >
-              <ArrowLeft className="w-5 h-5" />
+              <ArrowLeft size={20} />
             </button>
-            <h1 className="text-2xl font-semibold">Управление командой</h1>
+            <h1 style={{ 
+              fontSize: 'var(--font-size-3xl)', 
+              fontWeight: 'var(--font-weight-semibold)',
+              margin: 0
+            }}>
+              Управление командой
+            </h1>
           </div>
-          <div className="flex gap-4 text-sm">
-            <div className="flex items-center gap-2">
-              <span className="text-[var(--color-text-secondary)]">Наборочная команда:</span>
-              <span className="font-medium">{selectedTeam.length}/5</span>
-            </div>
+          <div style={{ 
+            fontSize: 'var(--font-size-base)',
+            color: 'var(--color-text-secondary)'
+          }}>
+            Наборочная команда ({selectedTeam.length}/5)
           </div>
         </div>
       </header>
 
       {/* Main Content */}
-      <main className="container mx-auto px-4 py-6">
+      <main className="container mx-auto px-4" style={{ padding: 'var(--space-24) var(--space-16)' }}>
         {/* Team Grid */}
-        <section className="mb-8">
-          <div className="grid grid-cols-1 lg:grid-cols-5 gap-4">
+        <section style={{ marginBottom: 'var(--space-32)' }}>
+          <div className="grid grid-cols-1 lg:grid-cols-5 gap-3">
             {Array.from({ length: 5 }, (_, index) => {
               const pair = selectedTeamWithHealth[index] as TeamPair | undefined;
               
               return (
-                <div key={index} className="border border-[var(--color-card-border)] rounded-lg bg-[var(--color-surface)] p-4">
-                  <div className="flex items-center justify-between mb-3">
-                    <h3 className="font-medium text-sm">Пара {index + 1}</h3>
+                <div 
+                  key={index} 
+                  style={{
+                    border: '1px solid var(--color-card-border)',
+                    borderRadius: 'var(--radius-lg)',
+                    backgroundColor: 'var(--color-surface)',
+                    padding: 'var(--space-12)'
+                  }}
+                >
+                  <div style={{ 
+                    display: 'flex', 
+                    alignItems: 'center', 
+                    justifyContent: 'space-between',
+                    marginBottom: 'var(--space-12)',
+                    fontSize: 'var(--font-size-sm)',
+                    fontWeight: 'var(--font-weight-medium)'
+                  }}>
+                    <span>Пара {index + 1}</span>
+                    {pair && (
+                      <button
+                        onClick={() => removeFromSlot(index)}
+                        style={{
+                          padding: 'var(--space-4)',
+                          backgroundColor: 'transparent',
+                          border: 'none',
+                          cursor: 'pointer',
+                          color: 'var(--color-error)',
+                          borderRadius: 'var(--radius-sm)',
+                          transition: 'background-color var(--duration-fast) var(--ease-standard)'
+                        }}
+                        onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'rgba(var(--color-error-rgb), 0.1)'}
+                        onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
+                      >
+                        <Trash2 size={14} />
+                      </button>
+                    )}
                   </div>
 
-                  <div className="space-y-3">
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--space-8)' }}>
                     {/* Hero Section */}
                     <div>
-                      <div className="text-xs text-[var(--color-text-secondary)] mb-1">Герой</div>
+                      <div style={{ 
+                        fontSize: 'var(--font-size-xs)', 
+                        color: 'var(--color-text-secondary)',
+                        marginBottom: 'var(--space-4)'
+                      }}>
+                        Герой
+                      </div>
                       {pair?.hero ? (
-                        <div className="relative">
+                        <div>
                           <CardDisplay 
                             card={pair.hero} 
                             showSellButton={false}
                             className="w-full"
                           />
-                          <div className="mt-2 space-y-1 text-xs">
-                            <div className="flex items-center gap-1">
-                              <Heart className="w-3 h-3 text-red-500" />
-                              <span>Здоровье: {pair.hero.currentHealth ?? pair.hero.health}/{pair.hero.health}</span>
+                          <div style={{ 
+                            marginTop: 'var(--space-6)',
+                            fontSize: 'var(--font-size-xs)',
+                            display: 'flex',
+                            flexDirection: 'column',
+                            gap: 'var(--space-2)'
+                          }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-4)' }}>
+                              <Heart size={10} style={{ color: 'var(--color-error)' }} />
+                              <span>Здоровье</span>
                             </div>
-                            <div className="flex items-center gap-1">
-                              <Sword className="w-3 h-3 text-orange-500" />
-                              <span>Атака: {pair.hero.power}</span>
+                            <div style={{ fontWeight: 'var(--font-weight-medium)' }}>
+                              {pair.hero.currentHealth ?? pair.hero.health}/{pair.hero.health}
                             </div>
-                            <div className="flex items-center gap-1">
-                              <Shield className="w-3 h-3 text-blue-500" />
-                              <span>Защита: {pair.hero.defense}</span>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-4)' }}>
+                              <Sword size={10} style={{ color: 'var(--color-warning)' }} />
+                              <span>Атака</span>
+                            </div>
+                            <div style={{ fontWeight: 'var(--font-weight-medium)' }}>
+                              {pair.hero.power}
+                            </div>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-4)' }}>
+                              <Shield size={10} style={{ color: 'var(--color-primary)' }} />
+                              <span>Защита</span>
+                            </div>
+                            <div style={{ fontWeight: 'var(--font-weight-medium)' }}>
+                              {pair.hero.defense}
                             </div>
                           </div>
                         </div>
@@ -156,37 +236,80 @@ export const TeamManagement = () => {
                         <button
                           onClick={() => {
                             setEditingSlot(index);
+                            setEditingType('hero');
                             setShowHeroDialog(true);
                           }}
-                          className="w-full h-32 border-2 border-dashed border-[var(--color-border)] rounded-lg hover:border-[var(--color-primary)] hover:bg-[var(--color-secondary)] transition-colors flex items-center justify-center text-sm text-[var(--color-text-secondary)]"
+                          style={{
+                            width: '100%',
+                            height: '140px',
+                            border: '2px dashed var(--color-border)',
+                            borderRadius: 'var(--radius-base)',
+                            backgroundColor: 'transparent',
+                            cursor: 'pointer',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            fontSize: 'var(--font-size-xs)',
+                            color: 'var(--color-text-secondary)',
+                            transition: 'all var(--duration-fast) var(--ease-standard)'
+                          }}
+                          onMouseEnter={(e) => {
+                            e.currentTarget.style.borderColor = 'var(--color-primary)';
+                            e.currentTarget.style.backgroundColor = 'var(--color-secondary)';
+                          }}
+                          onMouseLeave={(e) => {
+                            e.currentTarget.style.borderColor = 'var(--color-border)';
+                            e.currentTarget.style.backgroundColor = 'transparent';
+                          }}
                         >
-                          + Добавить героя
+                          + Герой
                         </button>
                       )}
                     </div>
 
                     {/* Dragon Section */}
                     <div>
-                      <div className="text-xs text-[var(--color-text-secondary)] mb-1">Дракон</div>
+                      <div style={{ 
+                        fontSize: 'var(--font-size-xs)', 
+                        color: 'var(--color-text-secondary)',
+                        marginBottom: 'var(--space-4)'
+                      }}>
+                        Дракон
+                      </div>
                       {pair?.dragon ? (
-                        <div className="relative">
+                        <div>
                           <CardDisplay 
                             card={pair.dragon} 
                             showSellButton={false}
                             className="w-full"
                           />
-                          <div className="mt-2 space-y-1 text-xs">
-                            <div className="flex items-center gap-1">
-                              <Heart className="w-3 h-3 text-red-500" />
-                              <span>Здоровье: {pair.dragon.currentHealth ?? pair.dragon.health}/{pair.dragon.health}</span>
+                          <div style={{ 
+                            marginTop: 'var(--space-6)',
+                            fontSize: 'var(--font-size-xs)',
+                            display: 'flex',
+                            flexDirection: 'column',
+                            gap: 'var(--space-2)'
+                          }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-4)' }}>
+                              <Heart size={10} style={{ color: 'var(--color-error)' }} />
+                              <span>Здоровье</span>
                             </div>
-                            <div className="flex items-center gap-1">
-                              <Sword className="w-3 h-3 text-orange-500" />
-                              <span>Атака: {pair.dragon.power}</span>
+                            <div style={{ fontWeight: 'var(--font-weight-medium)' }}>
+                              {pair.dragon.currentHealth ?? pair.dragon.health}/{pair.dragon.health}
                             </div>
-                            <div className="flex items-center gap-1">
-                              <Shield className="w-3 h-3 text-blue-500" />
-                              <span>Защита: {pair.dragon.defense}</span>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-4)' }}>
+                              <Sword size={10} style={{ color: 'var(--color-warning)' }} />
+                              <span>Атака</span>
+                            </div>
+                            <div style={{ fontWeight: 'var(--font-weight-medium)' }}>
+                              {pair.dragon.power}
+                            </div>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-4)' }}>
+                              <Shield size={10} style={{ color: 'var(--color-primary)' }} />
+                              <span>Защита</span>
+                            </div>
+                            <div style={{ fontWeight: 'var(--font-weight-medium)' }}>
+                              {pair.dragon.defense}
                             </div>
                           </div>
                         </div>
@@ -194,27 +317,45 @@ export const TeamManagement = () => {
                         <button
                           onClick={() => {
                             setEditingSlot(index);
+                            setEditingType('dragon');
                             setShowDragonDialog(true);
                           }}
-                          className="w-full h-32 border-2 border-dashed border-[var(--color-border)] rounded-lg hover:border-[var(--color-primary)] hover:bg-[var(--color-secondary)] transition-colors flex items-center justify-center text-sm text-[var(--color-text-secondary)]"
+                          style={{
+                            width: '100%',
+                            height: '140px',
+                            border: '2px dashed var(--color-border)',
+                            borderRadius: 'var(--radius-base)',
+                            backgroundColor: 'transparent',
+                            cursor: 'pointer',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            fontSize: 'var(--font-size-xs)',
+                            color: 'var(--color-text-secondary)',
+                            transition: 'all var(--duration-fast) var(--ease-standard)'
+                          }}
+                          onMouseEnter={(e) => {
+                            e.currentTarget.style.borderColor = 'var(--color-primary)';
+                            e.currentTarget.style.backgroundColor = 'var(--color-secondary)';
+                          }}
+                          onMouseLeave={(e) => {
+                            e.currentTarget.style.borderColor = 'var(--color-border)';
+                            e.currentTarget.style.backgroundColor = 'transparent';
+                          }}
                         >
-                          + Добавить дракона
+                          + Дракон
                         </button>
                       ) : (
-                        <div className="w-full h-32 border border-[var(--color-border)] rounded-lg bg-[var(--color-background)] opacity-50" />
+                        <div style={{
+                          width: '100%',
+                          height: '140px',
+                          border: '1px solid var(--color-border)',
+                          borderRadius: 'var(--radius-base)',
+                          backgroundColor: 'var(--color-background)',
+                          opacity: 0.3
+                        }} />
                       )}
                     </div>
-
-                    {/* Remove Button */}
-                    {pair && (
-                      <button
-                        onClick={() => removeFromSlot(index)}
-                        className="w-full py-2 px-3 bg-[var(--color-secondary)] hover:bg-[var(--color-secondary-hover)] rounded-lg transition-colors flex items-center justify-center gap-2 text-sm"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                        Удалить
-                      </button>
-                    )}
                   </div>
                 </div>
               );
@@ -223,24 +364,96 @@ export const TeamManagement = () => {
         </section>
 
         {/* Action Buttons */}
-        <section className="mb-8">
+        <section style={{ marginBottom: 'var(--space-32)' }}>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-4xl mx-auto">
             <button
-              onClick={() => setShowHeroDialog(true)}
-              className="group relative bg-[var(--color-surface)] border-2 border-[var(--color-card-border)] rounded-lg p-6 text-left transition-all hover:border-[var(--color-primary)] hover:bg-[var(--color-secondary)]"
+              onClick={() => {
+                setEditingSlot(null);
+                setEditingType('hero');
+                setShowHeroDialog(true);
+              }}
+              style={{
+                backgroundColor: 'rgba(var(--color-teal-500-rgb), 0.08)',
+                border: '2px solid rgba(var(--color-teal-500-rgb), 0.3)',
+                borderRadius: 'var(--radius-lg)',
+                padding: 'var(--space-24)',
+                cursor: 'pointer',
+                transition: 'all var(--duration-normal) var(--ease-standard)'
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.borderColor = 'var(--color-primary)';
+                e.currentTarget.style.backgroundColor = 'rgba(var(--color-teal-500-rgb), 0.15)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.borderColor = 'rgba(var(--color-teal-500-rgb), 0.3)';
+                e.currentTarget.style.backgroundColor = 'rgba(var(--color-teal-500-rgb), 0.08)';
+              }}
             >
-              <div className="flex flex-col items-center text-center">
-                <h3 className="text-xl font-bold mb-2">Колода героев</h3>
-                <p className="text-sm text-[var(--color-text-secondary)]">Выбор</p>
+              <div style={{ 
+                display: 'flex', 
+                flexDirection: 'column', 
+                alignItems: 'center', 
+                textAlign: 'center' 
+              }}>
+                <h3 style={{ 
+                  fontSize: 'var(--font-size-xl)', 
+                  fontWeight: 'var(--font-weight-bold)',
+                  marginBottom: 'var(--space-8)',
+                  color: 'var(--color-text)'
+                }}>
+                  Колода героев
+                </h3>
+                <p style={{ 
+                  fontSize: 'var(--font-size-sm)', 
+                  color: 'var(--color-text-secondary)' 
+                }}>
+                  Выбор
+                </p>
               </div>
             </button>
             <button
-              onClick={() => setShowDragonDialog(true)}
-              className="group relative bg-[var(--color-surface)] border-2 border-[var(--color-card-border)] rounded-lg p-6 text-left transition-all hover:border-[var(--color-primary)] hover:bg-[var(--color-secondary)]"
+              onClick={() => {
+                setEditingSlot(null);
+                setEditingType('dragon');
+                setShowDragonDialog(true);
+              }}
+              style={{
+                backgroundColor: 'rgba(var(--color-teal-500-rgb), 0.08)',
+                border: '2px solid rgba(var(--color-teal-500-rgb), 0.3)',
+                borderRadius: 'var(--radius-lg)',
+                padding: 'var(--space-24)',
+                cursor: 'pointer',
+                transition: 'all var(--duration-normal) var(--ease-standard)'
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.borderColor = 'var(--color-primary)';
+                e.currentTarget.style.backgroundColor = 'rgba(var(--color-teal-500-rgb), 0.15)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.borderColor = 'rgba(var(--color-teal-500-rgb), 0.3)';
+                e.currentTarget.style.backgroundColor = 'rgba(var(--color-teal-500-rgb), 0.08)';
+              }}
             >
-              <div className="flex flex-col items-center text-center">
-                <h3 className="text-xl font-bold mb-2">Колода драконов</h3>
-                <p className="text-sm text-[var(--color-text-secondary)]">Выбор</p>
+              <div style={{ 
+                display: 'flex', 
+                flexDirection: 'column', 
+                alignItems: 'center', 
+                textAlign: 'center' 
+              }}>
+                <h3 style={{ 
+                  fontSize: 'var(--font-size-xl)', 
+                  fontWeight: 'var(--font-weight-bold)',
+                  marginBottom: 'var(--space-8)',
+                  color: 'var(--color-text)'
+                }}>
+                  Колода драконов
+                </h3>
+                <p style={{ 
+                  fontSize: 'var(--font-size-sm)', 
+                  color: 'var(--color-text-secondary)' 
+                }}>
+                  Выбор
+                </p>
               </div>
             </button>
           </div>
@@ -248,20 +461,67 @@ export const TeamManagement = () => {
 
         {/* Team Statistics */}
         <section className="max-w-4xl mx-auto">
-          <div className="border border-[var(--color-card-border)] rounded-lg bg-[var(--color-surface)] p-6">
-            <h2 className="text-lg font-semibold mb-4">Статистика команды</h2>
-            <div className="grid grid-cols-3 gap-6">
-              <div className="text-center">
-                <div className="text-3xl font-bold text-[var(--color-primary)] mb-1">{teamStats.power}</div>
-                <div className="text-sm text-[var(--color-text-secondary)]">Сила</div>
+          <div style={{
+            border: '1px solid var(--color-card-border)',
+            borderRadius: 'var(--radius-lg)',
+            backgroundColor: 'var(--color-surface)',
+            padding: 'var(--space-24)'
+          }}>
+            <h2 style={{ 
+              fontSize: 'var(--font-size-xl)', 
+              fontWeight: 'var(--font-weight-semibold)',
+              marginBottom: 'var(--space-16)'
+            }}>
+              Статистика команды
+            </h2>
+            <div className="grid grid-cols-3 gap-8">
+              <div style={{ textAlign: 'center' }}>
+                <div style={{ 
+                  fontSize: 'var(--font-size-4xl)', 
+                  fontWeight: 'var(--font-weight-bold)',
+                  color: 'var(--color-primary)',
+                  marginBottom: 'var(--space-4)'
+                }}>
+                  {teamStats.power}
+                </div>
+                <div style={{ 
+                  fontSize: 'var(--font-size-sm)', 
+                  color: 'var(--color-text-secondary)' 
+                }}>
+                  Сила
+                </div>
               </div>
-              <div className="text-center">
-                <div className="text-3xl font-bold text-[var(--color-primary)] mb-1">{teamStats.defense}</div>
-                <div className="text-sm text-[var(--color-text-secondary)]">Защита</div>
+              <div style={{ textAlign: 'center' }}>
+                <div style={{ 
+                  fontSize: 'var(--font-size-4xl)', 
+                  fontWeight: 'var(--font-weight-bold)',
+                  color: 'var(--color-primary)',
+                  marginBottom: 'var(--space-4)'
+                }}>
+                  {teamStats.defense}
+                </div>
+                <div style={{ 
+                  fontSize: 'var(--font-size-sm)', 
+                  color: 'var(--color-text-secondary)' 
+                }}>
+                  Защита
+                </div>
               </div>
-              <div className="text-center">
-                <div className="text-3xl font-bold text-[var(--color-primary)] mb-1">{teamStats.health}</div>
-                <div className="text-sm text-[var(--color-text-secondary)]">Здоровье</div>
+              <div style={{ textAlign: 'center' }}>
+                <div style={{ 
+                  fontSize: 'var(--font-size-4xl)', 
+                  fontWeight: 'var(--font-weight-bold)',
+                  color: 'var(--color-primary)',
+                  marginBottom: 'var(--space-4)'
+                }}>
+                  {teamStats.health}
+                </div>
+                <div style={{ 
+                  fontSize: 'var(--font-size-sm)', 
+                  color: 'var(--color-text-secondary)' 
+                }}>
+                  Здоровье
+                </div>
               </div>
             </div>
           </div>
