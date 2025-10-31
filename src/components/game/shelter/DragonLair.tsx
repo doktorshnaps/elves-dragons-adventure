@@ -11,7 +11,10 @@ import { Card as CardType } from '@/types/cards';
 import { CardDisplay } from '../CardDisplay';
 import { useItemInstances } from '@/hooks/useItemInstances';
 import { initializeCardHealth } from '@/utils/cardHealthUtils';
-import { Flame, Clock, Star, ArrowRight, Coins, Sparkles, AlertCircle } from 'lucide-react';
+import { Flame, Clock, Star, ArrowRight, Coins, Sparkles, AlertCircle, BookOpen } from 'lucide-react';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { useCardUpgradeRequirements } from '@/hooks/useCardUpgradeRequirements';
 import { getUpgradeRequirement, rollUpgradeSuccess } from '@/utils/upgradeRequirements';
 import {
   AlertDialog,
@@ -47,9 +50,24 @@ export const DragonLair: React.FC<DragonLairProps> = ({ lairLevel, onUpgradeBuil
   const { instances: itemInstances, getCountsByItemId, removeItemInstancesByIds } = useItemInstances();
   const [upgradeDialogOpen, setUpgradeDialogOpen] = useState(false);
   const [pendingUpgradeDragons, setPendingUpgradeDragons] = useState<CardType[]>([]);
+  const [factionFilter, setFactionFilter] = useState<string>('all');
+  const [rarityFilter, setRarityFilter] = useState<string>('all');
+  const { requirements: allRequirements } = useCardUpgradeRequirements();
 
   // Мемоизируем подсчет предметов
   const itemCounts = useMemo(() => getCountsByItemId(), [getCountsByItemId]);
+
+  // Фильтрованные требования для рецептов
+  const filteredRequirements = useMemo(() => {
+    return allRequirements.filter(req => {
+      if (req.card_type !== 'dragon') return false;
+      if (factionFilter !== 'all' && req.faction !== factionFilter) return false;
+      if (rarityFilter !== 'all' && req.from_rarity.toString() !== rarityFilter) return false;
+      return true;
+    });
+  }, [allRequirements, factionFilter, rarityFilter]);
+
+  const factions = ['Каледор', 'Сильванести', 'Фаэлин', 'Элленар', 'Тэлэрион', 'Аэлантир', 'Лиорас'];
 
   // Initialize cards without passive regeneration
   const initializedCards = (gameData.cards as CardType[] || []).map(initializeCardHealth);
@@ -390,251 +408,377 @@ export const DragonLair: React.FC<DragonLairProps> = ({ lairLevel, onUpgradeBuil
         </CardContent>
       </Card>
 
-      {/* Active Upgrades */}
-      {activeUpgrades.length > 0 && (
-        <Card className="bg-card/50 backdrop-blur-sm border-orange-500/20">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Clock className="w-5 h-5" />
-              Улучшения в процессе
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              {activeUpgrades.map(upgrade => {
-                 const progress = Math.min(100, ((currentTime - upgrade.startTime) / (upgrade.endTime - upgrade.startTime)) * 100);
-                 const remaining = formatTimeRemaining(upgrade.endTime);
-                 const isCompleted = upgrade.endTime <= currentTime;
-                 const baseCard = (upgrade as any).baseCard;
-                 
-                 return (
-                    <div key={upgrade.id} className="p-2 sm:p-4 border border-orange-500/20 rounded-lg overflow-hidden">
-                      <div className="flex flex-col sm:flex-row items-start gap-2 sm:gap-4 mb-4">
-                        {/* Current Card Preview */}
-                        {baseCard && (
-                          <div className="flex-shrink-0 w-full sm:w-auto">
-                            <div className="text-xs text-muted-foreground mb-1">Улучшается:</div>
-                            <div className="flex justify-center sm:block">
-                              <CardDisplay 
-                                card={baseCard}
-                                showSellButton={false}
-                                className="w-12 h-20 sm:w-16 sm:h-24 text-xs"
-                              />
-                            </div>
-                          </div>
-                        )}
-                        
-                        {/* Arrow */}
-                        <div className="flex-shrink-0 flex items-center justify-center w-full sm:w-auto sm:mt-6">
-                          <ArrowRight className="w-4 h-4 text-muted-foreground rotate-90 sm:rotate-0" />
-                        </div>
-                        
-                        {/* Result Card Preview */}
-                        {baseCard && (
-                          <div className="flex-shrink-0 w-full sm:w-auto">
-                            <div className="text-xs text-muted-foreground mb-1">Результат:</div>
-                            <div className="flex justify-center sm:block">
-                              <CardDisplay 
-                                card={{
-                                  ...baseCard,
-                                  rarity: upgrade.toRarity as any,
-                                  power: Math.floor(baseCard.power * Math.pow(1.8, upgrade.toRarity - (baseCard.rarity as number))),
-                                  defense: Math.floor(baseCard.defense * Math.pow(1.8, upgrade.toRarity - (baseCard.rarity as number))),
-                                  health: Math.floor(baseCard.health * Math.pow(1.8, upgrade.toRarity - (baseCard.rarity as number))),
-                                  magic: Math.floor(baseCard.magic * Math.pow(1.8, upgrade.toRarity - (baseCard.rarity as number)))
-                                }}
-                                showSellButton={false}
-                                className="w-12 h-20 sm:w-16 sm:h-24 text-xs"
-                              />
-                            </div>
-                          </div>
-                        )}
-                        
-                        {/* Upgrade Info */}
-                        <div className="flex-1 w-full">
-                          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 mb-2">
-                            <div className="flex items-center gap-2">
-                              <Star className="w-3 h-3 sm:w-4 sm:h-4 text-orange-500 flex-shrink-0" />
-                              <span className="font-medium text-sm sm:text-base">
-                                Улучшение {upgrade.fromRarity} → {upgrade.toRarity} ранг
-                              </span>
-                            </div>
-                            <div className="flex items-center gap-2 w-full sm:w-auto">
-                              {isCompleted ? (
-                                <Button 
-                                  onClick={() => claimUpgrade(upgrade)}
-                                  size="sm"
-                                  className="bg-green-600 hover:bg-green-700 w-full sm:w-auto"
-                                >
-                                  Забрать
-                                </Button>
-                              ) : (
-                                <span className="text-xs sm:text-sm text-muted-foreground">{remaining}</span>
-                              )}
-                            </div>
-                          </div>
-                          {!isCompleted && <Progress value={progress} className="h-2" />}
-                        </div>
-                      </div>
-                    </div>
-                 );
-              })}
-            </div>
-          </CardContent>
-        </Card>
-      )}
+      {/* Tabs for Recipes, Dragons, and Active Upgrades */}
+      <Tabs defaultValue="recipes" className="w-full">
+        <TabsList className="grid w-full grid-cols-3">
+          <TabsTrigger value="recipes">Рецепты</TabsTrigger>
+          <TabsTrigger value="dragons">Драконы</TabsTrigger>
+          <TabsTrigger value="active">Активные</TabsTrigger>
+        </TabsList>
 
-      {/* Available Dragons for Upgrade */}
-      <Card className="bg-card/50 backdrop-blur-sm border-primary/20">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Flame className="w-5 h-5 text-orange-500" />
-            {t(language, 'shelter.availableDragons')}
-          </CardTitle>
-          <CardDescription>
-            {t(language, 'shelter.selectTwoDragons')}
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          {Object.keys(upgradeableGroups).length === 0 ? (
-            <div className="text-center text-muted-foreground py-8">
-              <p>Нет доступных драконов для улучшения</p>
-              <p className="text-sm mt-2">
-                Нужно два одинаковых дракона {lairLevel} ранга или ниже
-              </p>
-            </div>
-          ) : (
-            <div className="space-y-6">
-              {Object.entries(upgradeableGroups).map(([key, dragons]) => {
-                  const dragon = dragons[0];
-                  const previewUpgraded = {
-                    ...dragon,
-                    rarity: (dragon.rarity + 1) as any,
-                    power: Math.floor(dragon.power * 1.8),
-                    defense: Math.floor(dragon.defense * 1.8),
-                    health: Math.floor(dragon.health * 1.8),
-                    magic: Math.floor(dragon.magic * 1.8)
-                  };
-                  
-                  const requirements = getUpgradeRequirement(dragon.rarity, 'dragonLair');
-                  const { canUpgrade, missingItems } = checkUpgradeRequirements(dragons);
-                  
-                  return (
-                     <div key={key} className="p-2 sm:p-4 border border-primary/20 rounded-lg overflow-hidden">
-                       <div className="flex flex-col sm:flex-row items-start gap-2 sm:gap-4 mb-4">
-                        {/* Current Dragons Preview */}
-                        <div className="flex-shrink-0 w-full sm:w-auto">
-                          <div className="text-xs text-muted-foreground mb-2">
-                            Требуется: 2 карты (доступно: {dragons.length})
+        {/* Recipes Tab */}
+        <TabsContent value="recipes">
+          <Card className="bg-card/50 backdrop-blur-sm border-primary/20">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <BookOpen className="w-5 h-5" />
+                Рецепты улучшения драконов
+              </CardTitle>
+              <CardDescription>
+                Требования для улучшения драконов разных рангов
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                {/* Filters */}
+                <div className="flex flex-col sm:flex-row gap-4">
+                  <div className="flex-1">
+                    <label className="text-sm font-medium mb-2 block">Фракция</label>
+                    <Select value={factionFilter} onValueChange={setFactionFilter}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Все фракции" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">Все фракции</SelectItem>
+                        {factions.map(faction => (
+                          <SelectItem key={faction} value={faction}>{faction}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="flex-1">
+                    <label className="text-sm font-medium mb-2 block">Ранг</label>
+                    <Select value={rarityFilter} onValueChange={setRarityFilter}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Все ранги" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">Все ранги</SelectItem>
+                        {[1, 2, 3, 4, 5, 6, 7, 8].map(r => (
+                          <SelectItem key={r} value={r.toString()}>Ранг {r}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+
+                {/* Requirements List */}
+                <div className="space-y-4">
+                  {filteredRequirements.length === 0 ? (
+                    <div className="text-center text-muted-foreground py-8">
+                      <p>Нет рецептов для выбранных фильтров</p>
+                    </div>
+                  ) : (
+                    filteredRequirements.map((req, idx) => (
+                      <div key={idx} className="p-4 border border-primary/20 rounded-lg space-y-2">
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <h4 className="font-medium">
+                              {req.faction || 'Любая фракция'} • Ранг {req.from_rarity} → {req.to_rarity}
+                            </h4>
+                            <p className="text-sm text-muted-foreground">
+                              {req.card_class || 'Любой класс'}
+                            </p>
                           </div>
-                          <div className="flex gap-1 justify-center sm:justify-start">
-                            <CardDisplay 
-                              card={dragon}
-                              showSellButton={false}
-                              className="w-12 h-20 sm:w-16 sm:h-24 text-xs"
-                            />
-                            <div className="w-12 h-20 sm:w-16 sm:h-24 border border-dashed border-primary/40 rounded flex items-center justify-center text-xs text-muted-foreground">
-                              +1
+                          <Badge variant="secondary" className="flex items-center gap-1">
+                            <Sparkles className="w-3 h-3" />
+                            {req.success_chance}%
+                          </Badge>
+                        </div>
+                        
+                        <div className="flex flex-wrap gap-2">
+                          {req.cost_ell > 0 && (
+                            <Badge variant="outline">
+                              <Coins className="w-3 h-3 mr-1" />
+                              {req.cost_ell}
+                            </Badge>
+                          )}
+                          {req.cost_wood > 0 && <Badge variant="outline">🪵 {req.cost_wood}</Badge>}
+                          {req.cost_stone > 0 && <Badge variant="outline">🪨 {req.cost_stone}</Badge>}
+                          {req.cost_iron > 0 && <Badge variant="outline">⚙️ {req.cost_iron}</Badge>}
+                          {req.cost_gold > 0 && <Badge variant="outline">💰 {req.cost_gold}</Badge>}
+                        </div>
+                        
+                        {req.required_items && req.required_items.length > 0 && (
+                          <div className="pt-2 border-t border-border">
+                            <p className="text-xs font-medium mb-2">Требуемые предметы:</p>
+                            <div className="flex flex-wrap gap-2">
+                              {req.required_items.map((item: any, itemIdx: number) => (
+                                <Badge key={itemIdx} variant="secondary" className="text-xs">
+                                  {item.name} x{item.quantity}
+                                </Badge>
+                              ))}
                             </div>
                           </div>
-                        </div>
-                        
-                        {/* Arrow */}
-                        <div className="flex-shrink-0 flex items-center justify-center w-full sm:w-auto sm:mt-8">
-                          <ArrowRight className="w-4 h-4 sm:w-5 sm:h-5 text-primary rotate-90 sm:rotate-0" />
-                        </div>
-                        
-                        {/* Result Preview */}
-                        <div className="flex-shrink-0 w-full sm:w-auto">
-                          <div className="text-xs text-muted-foreground mb-2">Результат:</div>
-                          <div className="flex justify-center sm:block">
-                            <CardDisplay 
-                              card={previewUpgraded}
-                              showSellButton={false}
-                              className="w-12 h-20 sm:w-16 sm:h-24 text-xs"
-                            />
-                          </div>
-                        </div>
-                        
-                         {/* Dragon Info and Action */}
-                         <div className="flex-1 w-full">
-                           <div className="flex flex-col gap-3">
-                             <div>
-                               <h4 className="font-medium text-sm sm:text-base">{dragon.name}</h4>
-                               <p className="text-xs sm:text-sm text-muted-foreground">
-                                 {dragon.faction} • Ранг {dragon.rarity} → {dragon.rarity + 1}
-                               </p>
-                             </div>
-                             
-                             {requirements && (
-                               <div className="space-y-2">
-                                 <div className="flex items-center gap-2">
-                                   <Sparkles className="w-3 h-3 text-yellow-500" />
-                                   <span className="text-xs font-medium">Шанс успеха: {requirements.successChance}%</span>
+                        )}
+                      </div>
+                    ))
+                  )}
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* Dragons Tab */}
+        <TabsContent value="dragons">
+          <Card className="bg-card/50 backdrop-blur-sm border-primary/20">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Flame className="w-5 h-5 text-orange-500" />
+                {t(language, 'shelter.availableDragons')}
+              </CardTitle>
+              <CardDescription>
+                {t(language, 'shelter.selectTwoDragons')}
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              {Object.keys(upgradeableGroups).length === 0 ? (
+                <div className="text-center text-muted-foreground py-8">
+                  <p>Нет доступных драконов для улучшения</p>
+                  <p className="text-sm mt-2">
+                    Нужно два одинаковых дракона {lairLevel} ранга или ниже
+                  </p>
+                </div>
+              ) : (
+                <div className="space-y-6">
+                  {Object.entries(upgradeableGroups).map(([key, dragons]) => {
+                      const dragon = dragons[0];
+                      const previewUpgraded = {
+                        ...dragon,
+                        rarity: (dragon.rarity + 1) as any,
+                        power: Math.floor(dragon.power * 1.8),
+                        defense: Math.floor(dragon.defense * 1.8),
+                        health: Math.floor(dragon.health * 1.8),
+                        magic: Math.floor(dragon.magic * 1.8)
+                      };
+                      
+                      const requirements = getUpgradeRequirement(dragon.rarity, 'dragonLair');
+                      const { canUpgrade, missingItems } = checkUpgradeRequirements(dragons);
+                      
+                      return (
+                         <div key={key} className="p-2 sm:p-4 border border-primary/20 rounded-lg overflow-hidden">
+                           <div className="flex flex-col sm:flex-row items-start gap-2 sm:gap-4 mb-4">
+                            {/* Current Dragons Preview */}
+                            <div className="flex-shrink-0 w-full sm:w-auto">
+                              <div className="text-xs text-muted-foreground mb-2">
+                                Требуется: 2 карты (доступно: {dragons.length})
+                              </div>
+                              <div className="flex gap-1 justify-center sm:justify-start">
+                                <CardDisplay 
+                                  card={dragon}
+                                  showSellButton={false}
+                                  className="w-12 h-20 sm:w-16 sm:h-24 text-xs"
+                                />
+                                <div className="w-12 h-20 sm:w-16 sm:h-24 border border-dashed border-primary/40 rounded flex items-center justify-center text-xs text-muted-foreground">
+                                  +1
+                                </div>
+                              </div>
+                            </div>
+                            
+                            {/* Arrow */}
+                            <div className="flex-shrink-0 flex items-center justify-center w-full sm:w-auto sm:mt-8">
+                              <ArrowRight className="w-4 h-4 sm:w-5 sm:h-5 text-primary rotate-90 sm:rotate-0" />
+                            </div>
+                            
+                            {/* Result Preview */}
+                            <div className="flex-shrink-0 w-full sm:w-auto">
+                              <div className="text-xs text-muted-foreground mb-2">Результат:</div>
+                              <div className="flex justify-center sm:block">
+                                <CardDisplay 
+                                  card={previewUpgraded}
+                                  showSellButton={false}
+                                  className="w-12 h-20 sm:w-16 sm:h-24 text-xs"
+                                />
+                              </div>
+                            </div>
+                            
+                             {/* Dragon Info and Action */}
+                             <div className="flex-1 w-full">
+                               <div className="flex flex-col gap-3">
+                                 <div>
+                                   <h4 className="font-medium text-sm sm:text-base">{dragon.name}</h4>
+                                   <p className="text-xs sm:text-sm text-muted-foreground">
+                                     {dragon.faction} • Ранг {dragon.rarity} → {dragon.rarity + 1}
+                                   </p>
                                  </div>
                                  
-                                 <div className="space-y-1">
-                                   <div className="text-xs font-medium">Требования:</div>
-                                   <div className="flex flex-wrap gap-1">
-                                     {requirements.costs.balance && (
-                                       <Badge variant="outline" className="text-xs">
-                                         <Coins className="w-3 h-3 mr-1" />
-                                         {requirements.costs.balance}
-                                       </Badge>
-                                     )}
-                                     {requirements.costs.wood && (
-                                       <Badge variant="outline" className="text-xs">🪵 {requirements.costs.wood}</Badge>
-                                     )}
-                                     {requirements.costs.stone && (
-                                       <Badge variant="outline" className="text-xs">🪨 {requirements.costs.stone}</Badge>
-                                     )}
-                                     {requirements.costs.iron && (
-                                       <Badge variant="outline" className="text-xs">⚙️ {requirements.costs.iron}</Badge>
-                                     )}
-                                     {requirements.costs.gold && (
-                                       <Badge variant="outline" className="text-xs">💰 {requirements.costs.gold}</Badge>
-                                     )}
-                                   </div>
-                                   
-                                   {requirements.requiredItems.length > 0 && (
-                                     <div className="flex flex-wrap gap-1 mt-1">
-                                       {requirements.requiredItems.map(item => {
-                                         const available = itemCounts[item.itemId] || 0;
-                                         const hasEnough = available >= item.quantity;
-                                         return (
-                                           <Badge 
-                                             key={item.itemId} 
-                                             variant={hasEnough ? "secondary" : "destructive"}
-                                             className="text-xs"
-                                           >
-                                             {item.name}: {available}/{item.quantity}
-                                           </Badge>
-                                         );
-                                       })}
+                                 {requirements && (
+                                   <div className="space-y-2">
+                                     <div className="flex items-center gap-2">
+                                       <Sparkles className="w-3 h-3 text-yellow-500" />
+                                       <span className="text-xs font-medium">Шанс успеха: {requirements.successChance}%</span>
                                      </div>
-                                   )}
-                                 </div>
+                                     
+                                     <div className="space-y-1">
+                                       <div className="text-xs font-medium">Требования:</div>
+                                       <div className="flex flex-wrap gap-1">
+                                         {requirements.costs.balance && (
+                                           <Badge variant="outline" className="text-xs">
+                                             <Coins className="w-3 h-3 mr-1" />
+                                             {requirements.costs.balance}
+                                           </Badge>
+                                         )}
+                                         {requirements.costs.wood && (
+                                           <Badge variant="outline" className="text-xs">🪵 {requirements.costs.wood}</Badge>
+                                         )}
+                                         {requirements.costs.stone && (
+                                           <Badge variant="outline" className="text-xs">🪨 {requirements.costs.stone}</Badge>
+                                         )}
+                                         {requirements.costs.iron && (
+                                           <Badge variant="outline" className="text-xs">⚙️ {requirements.costs.iron}</Badge>
+                                         )}
+                                         {requirements.costs.gold && (
+                                           <Badge variant="outline" className="text-xs">💰 {requirements.costs.gold}</Badge>
+                                         )}
+                                       </div>
+                                       
+                                       {requirements.requiredItems.length > 0 && (
+                                         <div className="flex flex-wrap gap-1 mt-1">
+                                           {requirements.requiredItems.map(item => {
+                                             const available = itemCounts[item.itemId] || 0;
+                                             const hasEnough = available >= item.quantity;
+                                             return (
+                                               <Badge 
+                                                 key={item.itemId} 
+                                                 variant={hasEnough ? "secondary" : "destructive"}
+                                                 className="text-xs"
+                                               >
+                                                 {item.name}: {available}/{item.quantity}
+                                               </Badge>
+                                             );
+                                           })}
+                                         </div>
+                                       )}
+                                     </div>
+                                   </div>
+                                 )}
+                                 
+                                 <Button
+                                   onClick={() => initiateDragonUpgrade(dragons)}
+                                   disabled={!canStartUpgrade() || !canUpgrade}
+                                   className="w-full sm:w-auto"
+                                   size="sm"
+                                 >
+                                   {!canStartUpgrade() ? 'Нет места' : !canUpgrade ? 'Недостаточно ресурсов' : 'Улучшить'}
+                                 </Button>
                                </div>
-                             )}
-                             
-                             <Button
-                               onClick={() => initiateDragonUpgrade(dragons)}
-                               disabled={!canStartUpgrade() || !canUpgrade}
-                               className="w-full sm:w-auto"
-                               size="sm"
-                             >
-                               {!canStartUpgrade() ? 'Нет места' : !canUpgrade ? 'Недостаточно ресурсов' : 'Улучшить'}
-                             </Button>
-                           </div>
-                         </div>
-                      </div>
-                    </div>
-                 );
-              })}
-            </div>
+                             </div>
+                          </div>
+                        </div>
+                     );
+                  })}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* Active Upgrades Tab */}
+        <TabsContent value="active">
+          {activeUpgrades.length === 0 ? (
+            <Card className="bg-card/50 backdrop-blur-sm border-primary/20">
+              <CardContent className="pt-6">
+                <div className="text-center text-muted-foreground py-8">
+                  <Clock className="w-12 h-12 mx-auto mb-4 opacity-50" />
+                  <p>Нет активных улучшений</p>
+                </div>
+              </CardContent>
+            </Card>
+          ) : (
+            <Card className="bg-card/50 backdrop-blur-sm border-orange-500/20">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Clock className="w-5 h-5" />
+                  Улучшения в процессе
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  {activeUpgrades.map(upgrade => {
+                     const progress = Math.min(100, ((currentTime - upgrade.startTime) / (upgrade.endTime - upgrade.startTime)) * 100);
+                     const remaining = formatTimeRemaining(upgrade.endTime);
+                     const isCompleted = upgrade.endTime <= currentTime;
+                     const baseCard = (upgrade as any).baseCard;
+                     
+                     return (
+                        <div key={upgrade.id} className="p-2 sm:p-4 border border-orange-500/20 rounded-lg overflow-hidden">
+                          <div className="flex flex-col sm:flex-row items-start gap-2 sm:gap-4 mb-4">
+                            {/* Current Card Preview */}
+                            {baseCard && (
+                              <div className="flex-shrink-0 w-full sm:w-auto">
+                                <div className="text-xs text-muted-foreground mb-1">Улучшается:</div>
+                                <div className="flex justify-center sm:block">
+                                  <CardDisplay 
+                                    card={baseCard}
+                                    showSellButton={false}
+                                    className="w-12 h-20 sm:w-16 sm:h-24 text-xs"
+                                  />
+                                </div>
+                              </div>
+                            )}
+                            
+                            {/* Arrow */}
+                            <div className="flex-shrink-0 flex items-center justify-center w-full sm:w-auto sm:mt-6">
+                              <ArrowRight className="w-4 h-4 text-muted-foreground rotate-90 sm:rotate-0" />
+                            </div>
+                            
+                            {/* Result Card Preview */}
+                            {baseCard && (
+                              <div className="flex-shrink-0 w-full sm:w-auto">
+                                <div className="text-xs text-muted-foreground mb-1">Результат:</div>
+                                <div className="flex justify-center sm:block">
+                                  <CardDisplay 
+                                    card={{
+                                      ...baseCard,
+                                      rarity: upgrade.toRarity as any,
+                                      power: Math.floor(baseCard.power * Math.pow(1.8, upgrade.toRarity - (baseCard.rarity as number))),
+                                      defense: Math.floor(baseCard.defense * Math.pow(1.8, upgrade.toRarity - (baseCard.rarity as number))),
+                                      health: Math.floor(baseCard.health * Math.pow(1.8, upgrade.toRarity - (baseCard.rarity as number))),
+                                      magic: Math.floor(baseCard.magic * Math.pow(1.8, upgrade.toRarity - (baseCard.rarity as number)))
+                                    }}
+                                    showSellButton={false}
+                                    className="w-12 h-20 sm:w-16 sm:h-24 text-xs"
+                                  />
+                                </div>
+                              </div>
+                            )}
+                            
+                            {/* Upgrade Info */}
+                            <div className="flex-1 w-full">
+                              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 mb-2">
+                                <div className="flex items-center gap-2">
+                                  <Star className="w-3 h-3 sm:w-4 sm:h-4 text-orange-500 flex-shrink-0" />
+                                  <span className="font-medium text-sm sm:text-base">
+                                    Улучшение {upgrade.fromRarity} → {upgrade.toRarity} ранг
+                                  </span>
+                                </div>
+                                <div className="flex items-center gap-2 w-full sm:w-auto">
+                                  {isCompleted ? (
+                                    <Button 
+                                      onClick={() => claimUpgrade(upgrade)}
+                                      size="sm"
+                                      className="bg-green-600 hover:bg-green-700 w-full sm:w-auto"
+                                    >
+                                      Забрать
+                                    </Button>
+                                  ) : (
+                                    <span className="text-xs sm:text-sm text-muted-foreground">{remaining}</span>
+                                  )}
+                                </div>
+                              </div>
+                              {!isCompleted && <Progress value={progress} className="h-2" />}
+                            </div>
+                          </div>
+                        </div>
+                     );
+                  })}
+                </div>
+              </CardContent>
+            </Card>
           )}
-        </CardContent>
-      </Card>
+        </TabsContent>
+      </Tabs>
 
       {/* Upgrade Confirmation Dialog */}
       <AlertDialog open={upgradeDialogOpen} onOpenChange={setUpgradeDialogOpen}>
