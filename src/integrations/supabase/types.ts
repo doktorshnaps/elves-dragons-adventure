@@ -1613,6 +1613,10 @@ export type Database = {
         Args: { p_admin_wallet_address?: string; p_wallet_address: string }
         Returns: boolean
       }
+      admin_delete_card_upgrade_requirement: {
+        Args: { p_id: string; p_wallet: string }
+        Returns: undefined
+      }
       admin_delete_crafting_recipe: {
         Args: { p_id: string; p_wallet: string }
         Returns: undefined

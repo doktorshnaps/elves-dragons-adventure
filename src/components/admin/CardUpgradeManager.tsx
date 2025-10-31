@@ -102,12 +102,20 @@ export const CardUpgradeManager = () => {
     if (!confirm('Вы уверены что хотите удалить это требование?')) return;
     
     try {
-      const { error } = await supabase
-        .from('card_upgrade_requirements')
-        .delete()
-        .eq('id', id);
+      const walletAddress = localStorage.getItem('accountId');
+      if (!walletAddress) {
+        throw new Error('Wallet not connected');
+      }
 
-      if (error) throw error;
+      const { error } = await supabase.rpc('admin_delete_card_upgrade_requirement', {
+        p_id: id,
+        p_wallet: walletAddress
+      });
+
+      if (error) {
+        console.error('Delete error:', error);
+        throw error;
+      }
 
       toast({
         title: 'Требование удалено',
@@ -115,9 +123,10 @@ export const CardUpgradeManager = () => {
       });
       reload();
     } catch (error: any) {
+      console.error('Delete failed:', error);
       toast({
         title: 'Ошибка',
-        description: error.message,
+        description: error.message || 'Недостаточно прав для удаления',
         variant: 'destructive'
       });
     }
