@@ -153,6 +153,11 @@ export const itemImagesByName: Record<string, string> = {
   'Масло Целительного Прощения': healingOilImg,
   'Мерцающий мерный кристалл': shimmeringCrystalImg,
   'Кристалл жизни': lifeCrystalImg,
+  // Доп. синонимы и вариации названий
+  'Кристал Жизни': lifeCrystalImg,
+  'Кристалл Жизни': lifeCrystalImg,
+  'Брюшная Железа Арахны': arachneSilkGland,
+  'Брюшная железа Арахны': arachneSilkGland,
 };
 
 // Export all images for preloading
