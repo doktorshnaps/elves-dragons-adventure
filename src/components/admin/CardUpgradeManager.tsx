@@ -24,8 +24,8 @@ export const CardUpgradeManager = () => {
 
   const [formData, setFormData] = useState({
     card_type: 'hero' as 'hero' | 'dragon',
-    card_class: '' as string,
-    faction: '' as string,
+    card_class: 'all' as string,
+    faction: 'all' as string,
     from_rarity: 1,
     to_rarity: 2,
     success_chance: 90,
@@ -57,8 +57,8 @@ export const CardUpgradeManager = () => {
             .from('card_upgrade_requirements')
             .insert([{
               card_type: formData.card_type,
-              card_class: formData.card_class || null,
-              faction: formData.faction || null,
+              card_class: formData.card_class === 'all' ? null : formData.card_class,
+              faction: formData.faction === 'all' ? null : formData.faction,
               rarity: String(formData.from_rarity),
               from_rarity: formData.from_rarity,
               to_rarity: formData.to_rarity,
@@ -97,8 +97,8 @@ export const CardUpgradeManager = () => {
     setEditingId(req.id);
     setFormData({
       card_type: req.card_type,
-      card_class: req.card_class || '',
-      faction: req.faction || '',
+      card_class: req.card_class || 'all',
+      faction: req.faction || 'all',
       from_rarity: req.from_rarity,
       to_rarity: req.to_rarity,
       success_chance: req.success_chance,
@@ -149,8 +149,8 @@ export const CardUpgradeManager = () => {
     setEditingId(null);
     setFormData({
       card_type: 'hero',
-      card_class: '',
-      faction: '',
+      card_class: 'all',
+      faction: 'all',
       from_rarity: 1,
       to_rarity: 2,
       success_chance: 90,
@@ -219,7 +219,7 @@ export const CardUpgradeManager = () => {
               <Select
                 value={formData.card_type}
                 onValueChange={(value: 'hero' | 'dragon') =>
-                  setFormData({ ...formData, card_type: value, card_class: '', faction: '' })
+                  setFormData({ ...formData, card_type: value, card_class: 'all', faction: 'all' })
                 }
                 disabled={!!editingId}
               >
@@ -246,7 +246,7 @@ export const CardUpgradeManager = () => {
                   <SelectValue placeholder="Все классы" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">Все классы</SelectItem>
+                  <SelectItem value="all">Все классы</SelectItem>
                   {formData.card_type === 'hero' ? (
                     <>
                       <SelectItem value="Рекрут">Рекрут</SelectItem>
@@ -291,7 +291,7 @@ export const CardUpgradeManager = () => {
                   <SelectValue placeholder="Все фракции" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">Все фракции</SelectItem>
+                  <SelectItem value="all">Все фракции</SelectItem>
                   <SelectItem value="Каледор">Каледор</SelectItem>
                   <SelectItem value="Сильванести">Сильванести</SelectItem>
                   <SelectItem value="Фаэлин">Фаэлин</SelectItem>
