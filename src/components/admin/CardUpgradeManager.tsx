@@ -9,11 +9,13 @@ import { useToast } from '@/hooks/use-toast';
 import { Loader2, Plus, Trash2, Save } from 'lucide-react';
 import { useItemTemplates } from '@/hooks/useItemTemplates';
 import { useCardUpgradeRequirements } from '@/hooks/useCardUpgradeRequirements';
+import { useWalletContext } from '@/contexts/WalletConnectContext';
 
 export const CardUpgradeManager = () => {
   const { toast } = useToast();
   const { templates } = useItemTemplates();
   const { requirements, loading: loadingReqs, reload } = useCardUpgradeRequirements();
+  const { accountId } = useWalletContext();
   const [saving, setSaving] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   
@@ -102,7 +104,7 @@ export const CardUpgradeManager = () => {
     if (!confirm('Вы уверены что хотите удалить это требование?')) return;
     
     try {
-      const walletAddress = localStorage.getItem('accountId');
+      const walletAddress = accountId;
       if (!walletAddress) {
         throw new Error('Wallet not connected');
       }
