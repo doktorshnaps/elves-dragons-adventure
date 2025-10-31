@@ -216,6 +216,8 @@ export const SplashCursor = () => {
       
       gl.attachShader(program, vertexShader);
       gl.attachShader(program, fragmentShader);
+      // Ensure attribute location 0 maps to aPosition used in base vertex shader
+      gl.bindAttribLocation(program, 0, 'aPosition');
       gl.linkProgram(program);
 
       if (!gl.getProgramParameter(program, gl.LINK_STATUS)) {
@@ -480,6 +482,21 @@ export const SplashCursor = () => {
   `
     );
 
+    // Display shader to render dye texture to the screen
+    const displayShader = compileShader(
+      gl.FRAGMENT_SHADER,
+      `
+      precision highp float;
+      precision highp sampler2D;
+      varying vec2 vUv;
+      uniform sampler2D uTexture;
+      void main () {
+          vec3 color = texture2D(uTexture, vUv).rgb;
+          gl_FragColor = vec4(color, 1.0);
+      }
+    `
+    );
+ 
     const blit = (() => {
       if (!baseVertexShader || !clearShader) return null;
       
@@ -497,19 +514,19 @@ export const SplashCursor = () => {
       );
       gl.vertexAttribPointer(0, 2, gl.FLOAT, false, 0, 0);
       gl.enableVertexAttribArray(0);
-
+ 
       return (target: WebGLFramebuffer | null, clear = false) => {
         if (clear) {
           gl.clearColor(0.0, 0.0, 0.0, 1.0);
           gl.clear(gl.COLOR_BUFFER_BIT);
         }
-
+ 
         gl.bindFramebuffer(gl.FRAMEBUFFER, target);
         gl.drawElements(gl.TRIANGLES, 6, gl.UNSIGNED_SHORT, 0);
       };
     })();
-
-    if (!blit || !baseVertexShader || !splatShader || !advectionShader || !divergenceShader || !curlShader || !vorticityShader || !pressureShader || !gradientSubtractShader || !clearShader) {
+ 
+    if (!blit || !baseVertexShader || !splatShader || !advectionShader || !divergenceShader || !curlShader || !vorticityShader || !pressureShader || !gradientSubtractShader || !clearShader || !displayShader) {
       console.error('Failed to initialize shaders');
       return;
     }
@@ -528,6 +545,7 @@ export const SplashCursor = () => {
     const vorticityProgram = new Program(baseVertexShader, vorticityShader);
     const pressureProgram = new Program(baseVertexShader, pressureShader);
     const gradienSubtractProgram = new Program(baseVertexShader, gradientSubtractShader);
+    const displayProgram = new Program(baseVertexShader, displayShader);
 
     function hashCode(s: string) {
       if (s.length === 0) return 0;
@@ -925,8 +943,10 @@ export const SplashCursor = () => {
       gl.clear(gl.COLOR_BUFFER_BIT);
       gl.bindFramebuffer(gl.FRAMEBUFFER, target);
       
-      gl.activeTexture(gl.TEXTURE0);
-      gl.bindTexture(gl.TEXTURE_2D, dye.read.texture);
+      // Bind display program to draw dye texture to screen
+      displayProgram.bind();
+      gl.uniform1i(displayProgram.uniforms.uTexture, dye.read.attach(0));
+      
       gl.drawElements(gl.TRIANGLES, 6, gl.UNSIGNED_SHORT, 0);
     }
 
