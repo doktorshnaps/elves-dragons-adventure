@@ -4,6 +4,8 @@ import { supabase } from '@/integrations/supabase/client';
 export interface CardUpgradeRequirement {
   id: string;
   card_type: 'hero' | 'dragon';
+  card_class?: string;
+  faction?: string;
   from_rarity: number;
   to_rarity: number;
   success_chance: number;
@@ -66,9 +68,19 @@ export const useCardUpgradeRequirements = () => {
     }
   };
 
-  const getRequirement = (cardType: 'hero' | 'dragon', fromRarity: number, toRarity: number): CardUpgradeRequirement | undefined => {
+  const getRequirement = (
+    cardType: 'hero' | 'dragon', 
+    fromRarity: number, 
+    toRarity: number,
+    cardClass?: string,
+    faction?: string
+  ): CardUpgradeRequirement | undefined => {
     return requirements.find(
-      req => req.card_type === cardType && req.from_rarity === fromRarity && req.to_rarity === toRarity
+      req => req.card_type === cardType && 
+             req.from_rarity === fromRarity && 
+             req.to_rarity === toRarity &&
+             (!cardClass || req.card_class === cardClass || !req.card_class) &&
+             (!faction || req.faction === faction || !req.faction)
     );
   };
 

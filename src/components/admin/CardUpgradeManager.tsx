@@ -24,6 +24,8 @@ export const CardUpgradeManager = () => {
 
   const [formData, setFormData] = useState({
     card_type: 'hero' as 'hero' | 'dragon',
+    card_class: '' as string,
+    faction: '' as string,
     from_rarity: 1,
     to_rarity: 2,
     success_chance: 90,
@@ -55,7 +57,9 @@ export const CardUpgradeManager = () => {
             .from('card_upgrade_requirements')
             .insert([{
               card_type: formData.card_type,
-              rarity: String(formData.from_rarity), // Для совместимости со старой схемой
+              card_class: formData.card_class || null,
+              faction: formData.faction || null,
+              rarity: String(formData.from_rarity),
               from_rarity: formData.from_rarity,
               to_rarity: formData.to_rarity,
               success_chance: formData.success_chance,
@@ -93,6 +97,8 @@ export const CardUpgradeManager = () => {
     setEditingId(req.id);
     setFormData({
       card_type: req.card_type,
+      card_class: req.card_class || '',
+      faction: req.faction || '',
       from_rarity: req.from_rarity,
       to_rarity: req.to_rarity,
       success_chance: req.success_chance,
@@ -143,6 +149,8 @@ export const CardUpgradeManager = () => {
     setEditingId(null);
     setFormData({
       card_type: 'hero',
+      card_class: '',
+      faction: '',
       from_rarity: 1,
       to_rarity: 2,
       success_chance: 90,
@@ -211,7 +219,7 @@ export const CardUpgradeManager = () => {
               <Select
                 value={formData.card_type}
                 onValueChange={(value: 'hero' | 'dragon') =>
-                  setFormData({ ...formData, card_type: value })
+                  setFormData({ ...formData, card_type: value, card_class: '', faction: '' })
                 }
                 disabled={!!editingId}
               >
@@ -221,6 +229,76 @@ export const CardUpgradeManager = () => {
                 <SelectContent>
                   <SelectItem value="hero">Герой</SelectItem>
                   <SelectItem value="dragon">Дракон</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div>
+              <Label>Класс (опционально)</Label>
+              <Select
+                value={formData.card_class}
+                onValueChange={(value) =>
+                  setFormData({ ...formData, card_class: value })
+                }
+                disabled={!!editingId}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Все классы" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="">Все классы</SelectItem>
+                  {formData.card_type === 'hero' ? (
+                    <>
+                      <SelectItem value="Рекрут">Рекрут</SelectItem>
+                      <SelectItem value="Страж">Страж</SelectItem>
+                      <SelectItem value="Ветеран">Ветеран</SelectItem>
+                      <SelectItem value="Маг">Маг</SelectItem>
+                      <SelectItem value="Мастер Целитель">Мастер Целитель</SelectItem>
+                      <SelectItem value="Защитник">Защитник</SelectItem>
+                      <SelectItem value="Ветеран Защитник">Ветеран Защитник</SelectItem>
+                      <SelectItem value="Стратег">Стратег</SelectItem>
+                      <SelectItem value="Верховный Стратег">Верховный Стратег</SelectItem>
+                    </>
+                  ) : (
+                    <>
+                      <SelectItem value="Обычный">Обычный</SelectItem>
+                      <SelectItem value="Необычный">Необычный</SelectItem>
+                      <SelectItem value="Редкий">Редкий</SelectItem>
+                      <SelectItem value="Эпический">Эпический</SelectItem>
+                      <SelectItem value="Легендарный">Легендарный</SelectItem>
+                      <SelectItem value="Мифический">Мифический</SelectItem>
+                      <SelectItem value="Этернал">Этернал</SelectItem>
+                      <SelectItem value="Империал">Империал</SelectItem>
+                      <SelectItem value="Титан">Титан</SelectItem>
+                    </>
+                  )}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <Label>Фракция (опционально)</Label>
+              <Select
+                value={formData.faction}
+                onValueChange={(value) =>
+                  setFormData({ ...formData, faction: value })
+                }
+                disabled={!!editingId}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Все фракции" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="">Все фракции</SelectItem>
+                  <SelectItem value="Каледор">Каледор</SelectItem>
+                  <SelectItem value="Сильванести">Сильванести</SelectItem>
+                  <SelectItem value="Фаэлин">Фаэлин</SelectItem>
+                  <SelectItem value="Элленар">Элленар</SelectItem>
+                  <SelectItem value="Тэлэрион">Тэлэрион</SelectItem>
+                  <SelectItem value="Аэлантир">Аэлантир</SelectItem>
+                  <SelectItem value="Лиорас">Лиорас</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -431,6 +509,8 @@ export const CardUpgradeManager = () => {
                 <div>
                   <div className="font-semibold">
                     {req.card_type === 'hero' ? 'Герой' : 'Дракон'} - Редкость {req.from_rarity} → {req.to_rarity}
+                    {req.card_class && ` - ${req.card_class}`}
+                    {req.faction && ` (${req.faction})`}
                   </div>
                   <div className="text-sm text-muted-foreground">
                     Шанс: {req.success_chance}% | ELL: {req.cost_ell} | 🪵 {req.cost_wood} | 🪨{' '}

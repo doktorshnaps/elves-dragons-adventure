@@ -310,6 +310,7 @@ export type Database = {
       }
       card_upgrade_requirements: {
         Row: {
+          card_class: string | null
           card_type: string
           cost_ell: number
           cost_gold: number | null
@@ -318,6 +319,7 @@ export type Database = {
           cost_wood: number | null
           created_at: string | null
           created_by_wallet_address: string
+          faction: string | null
           from_rarity: number
           id: string
           is_active: boolean | null
@@ -328,6 +330,7 @@ export type Database = {
           updated_at: string | null
         }
         Insert: {
+          card_class?: string | null
           card_type: string
           cost_ell?: number
           cost_gold?: number | null
@@ -336,6 +339,7 @@ export type Database = {
           cost_wood?: number | null
           created_at?: string | null
           created_by_wallet_address: string
+          faction?: string | null
           from_rarity: number
           id?: string
           is_active?: boolean | null
@@ -346,6 +350,7 @@ export type Database = {
           updated_at?: string | null
         }
         Update: {
+          card_class?: string | null
           card_type?: string
           cost_ell?: number
           cost_gold?: number | null
@@ -354,6 +359,7 @@ export type Database = {
           cost_wood?: number | null
           created_at?: string | null
           created_by_wallet_address?: string
+          faction?: string | null
           from_rarity?: number
           id?: string
           is_active?: boolean | null
