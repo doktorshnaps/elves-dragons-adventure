@@ -7,12 +7,12 @@ import { useToast } from '@/hooks/use-toast';
 import { useGameData } from '@/hooks/useGameData';
 import { useLanguage } from '@/hooks/useLanguage';
 import { t } from '@/utils/translations';
-import { Card as CardType } from '@/types/cards';
+import { Card as CardType, Faction } from '@/types/cards';
 import { upgradeCard } from '@/utils/cardUtils';
 import { CardDisplay } from '../CardDisplay';
 import { useItemInstances } from '@/hooks/useItemInstances';
 import { initializeCardHealth } from '@/utils/cardHealthUtils';
-import { Shield, Swords, Clock, Star, ArrowRight, Coins, Sparkles, AlertCircle } from 'lucide-react';
+import { Shield, Swords, Clock, Star, ArrowRight, Coins, Sparkles, AlertCircle, BookOpen } from 'lucide-react';
 import { getUpgradeRequirement, rollUpgradeSuccess } from '@/utils/upgradeRequirements';
 import { useCardUpgradeRequirements } from '@/hooks/useCardUpgradeRequirements';
 import {
@@ -25,6 +25,8 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 interface BarracksUpgrade {
   id: string;
@@ -50,7 +52,9 @@ export const Barracks: React.FC<BarracksProps> = ({ barracksLevel, onUpgradeBuil
   const { instances: itemInstances, getCountsByItemId, removeItemInstancesByIds, getInstancesByItemId } = useItemInstances();
   const [upgradeDialogOpen, setUpgradeDialogOpen] = useState(false);
   const [pendingUpgradeHeroes, setPendingUpgradeHeroes] = useState<CardType[]>([]);
-  const { getRequirement } = useCardUpgradeRequirements();
+  const { requirements: allRequirements, getRequirement } = useCardUpgradeRequirements();
+  const [factionFilter, setFactionFilter] = useState<string>('all');
+  const [rarityFilter, setRarityFilter] = useState<string>('all');
 
   // Мемоизируем подсчет предметов
   const itemCounts = useMemo(() => getCountsByItemId(), [getCountsByItemId]);
@@ -369,6 +373,18 @@ export const Barracks: React.FC<BarracksProps> = ({ barracksLevel, onUpgradeBuil
 
   const upgradeableGroups = getUpgradeableHeroes();
 
+  // Filter requirements for recipes tab
+  const filteredRequirements = useMemo(() => {
+    return allRequirements.filter(req => {
+      if (req.card_type !== 'hero') return false;
+      if (factionFilter !== 'all' && req.faction !== factionFilter && req.faction !== null) return false;
+      if (rarityFilter !== 'all' && req.from_rarity !== parseInt(rarityFilter)) return false;
+      return true;
+    });
+  }, [allRequirements, factionFilter, rarityFilter]);
+
+  const factions: Faction[] = ['Каледор', 'Сильванести', 'Фаэлин', 'Элленар', 'Тэлэрион', 'Аэлантир', 'Лиорас'];
+
   return (
     <div className="space-y-6">
       {/* Barracks Info */}
@@ -403,8 +419,306 @@ export const Barracks: React.FC<BarracksProps> = ({ barracksLevel, onUpgradeBuil
         </CardContent>
       </Card>
 
-      {/* Active Upgrades */}
-      {activeUpgrades.length > 0 && (
+      <Tabs defaultValue="recipes" className="w-full">
+        <TabsList className="grid w-full grid-cols-3">
+          <TabsTrigger value="recipes" className="flex items-center gap-2">
+            <BookOpen className="w-4 h-4" />
+            <span className="hidden sm:inline">Рецепты</span>
+          </TabsTrigger>
+          <TabsTrigger value="heroes" className="flex items-center gap-2">
+            <Swords className="w-4 h-4" />
+            <span className="hidden sm:inline">Герои</span>
+          </TabsTrigger>
+          <TabsTrigger value="active" className="flex items-center gap-2">
+            <Clock className="w-4 h-4" />
+            <span className="hidden sm:inline">Активные</span>
+            {activeUpgrades.length > 0 && (
+              <Badge variant="secondary" className="ml-1">{activeUpgrades.length}</Badge>
+            )}
+          </TabsTrigger>
+        </TabsList>
+
+        {/* Recipes Tab */}
+        <TabsContent value="recipes" className="mt-4">
+          <Card className="bg-card/50 backdrop-blur-sm border-primary/20">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <BookOpen className="w-5 h-5" />
+                Рецепты улучшений
+              </CardTitle>
+              <CardDescription>
+                Настройки требований для улучшения героев
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              {/* Filters */}
+              <div className="flex flex-col sm:flex-row gap-4 mb-6">
+                <div className="flex-1">
+                  <label className="text-sm font-medium mb-2 block">Фракция</label>
+                  <Select value={factionFilter} onValueChange={setFactionFilter}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Все фракции" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">Все фракции</SelectItem>
+                      {factions.map(faction => (
+                        <SelectItem key={faction} value={faction}>{faction}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="flex-1">
+                  <label className="text-sm font-medium mb-2 block">Редкость</label>
+                  <Select value={rarityFilter} onValueChange={setRarityFilter}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Все редкости" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">Все редкости</SelectItem>
+                      {[1, 2, 3, 4, 5, 6, 7, 8].map(rarity => (
+                        <SelectItem key={rarity} value={rarity.toString()}>
+                          Ранг {rarity}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+
+              {/* Requirements List */}
+              <div className="space-y-4">
+                {filteredRequirements.length === 0 ? (
+                  <div className="text-center text-muted-foreground py-8">
+                    <p>Нет рецептов для выбранных фильтров</p>
+                  </div>
+                ) : (
+                  filteredRequirements.map((req) => (
+                    <div key={req.id} className="p-4 border border-primary/20 rounded-lg">
+                      <div className="flex flex-col sm:flex-row justify-between gap-4">
+                        <div className="space-y-2">
+                          <div className="flex items-center gap-2">
+                            <Star className="w-4 h-4 text-primary" />
+                            <span className="font-medium">
+                              Улучшение {req.from_rarity} → {req.to_rarity} ранг
+                            </span>
+                          </div>
+                          <div className="flex flex-wrap gap-2 text-sm text-muted-foreground">
+                            {req.faction && <Badge variant="outline">{req.faction}</Badge>}
+                            {req.card_class && <Badge variant="outline">{req.card_class}</Badge>}
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <Sparkles className="w-3 h-3 text-yellow-500" />
+                            <span className="text-sm">Шанс успеха: {req.success_chance}%</span>
+                          </div>
+                        </div>
+                        
+                        <div className="space-y-2">
+                          <div className="text-sm font-medium">Требования:</div>
+                          <div className="flex flex-wrap gap-1">
+                            {req.cost_ell > 0 && (
+                              <Badge variant="outline" className="text-xs">
+                                <Coins className="w-3 h-3 mr-1" />
+                                {req.cost_ell}
+                              </Badge>
+                            )}
+                            {req.cost_wood > 0 && (
+                              <Badge variant="outline" className="text-xs">🪵 {req.cost_wood}</Badge>
+                            )}
+                            {req.cost_stone > 0 && (
+                              <Badge variant="outline" className="text-xs">🪨 {req.cost_stone}</Badge>
+                            )}
+                            {req.cost_iron > 0 && (
+                              <Badge variant="outline" className="text-xs">⚙️ {req.cost_iron}</Badge>
+                            )}
+                            {req.cost_gold > 0 && (
+                              <Badge variant="outline" className="text-xs">💰 {req.cost_gold}</Badge>
+                            )}
+                          </div>
+                          {req.required_items && Array.isArray(req.required_items) && req.required_items.length > 0 && (
+                            <div className="flex flex-wrap gap-1">
+                              {req.required_items.map((item: any, idx: number) => (
+                                <Badge key={idx} variant="secondary" className="text-xs">
+                                  {item.name || item.item_id}: {item.quantity}
+                                </Badge>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* Heroes Tab */}
+        <TabsContent value="heroes" className="mt-4">
+          <Card className="bg-card/50 backdrop-blur-sm border-primary/20">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Swords className="w-5 h-5" />
+                {t(language, 'shelter.availableHeroes')}
+              </CardTitle>
+              <CardDescription>
+                {t(language, 'shelter.selectTwoHeroes')}
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              {Object.keys(upgradeableGroups).length === 0 ? (
+                <div className="text-center text-muted-foreground py-8">
+                  <p>Нет доступных героев для улучшения</p>
+                  <p className="text-sm mt-2">
+                    Нужно два одинаковых героя {barracksLevel} ранга или ниже
+                  </p>
+                </div>
+              ) : (
+                <div className="space-y-6">
+                  {Object.entries(upgradeableGroups).map(([key, heroes]) => {
+                      const hero = heroes[0];
+                      const previewUpgraded = {
+                        ...hero,
+                        rarity: (hero.rarity + 1) as any,
+                        power: Math.floor(hero.power * 1.8),
+                        defense: Math.floor(hero.defense * 1.8),
+                        health: Math.floor(hero.health * 1.8),
+                        magic: Math.floor(hero.magic * 1.8)
+                      };
+                      
+                      const requirements = getUpgradeRequirement(hero.rarity, 'barracks');
+                      const { canUpgrade, missingItems } = checkUpgradeRequirements(heroes);
+                      
+                      return (
+                         <div key={key} className="p-2 sm:p-4 border border-primary/20 rounded-lg overflow-hidden">
+                           <div className="flex flex-col sm:flex-row items-start gap-2 sm:gap-4 mb-4">
+                            {/* Current Heroes Preview */}
+                            <div className="flex-shrink-0 w-full sm:w-auto">
+                              <div className="text-xs text-muted-foreground mb-2">
+                                Требуется: 2 карты (доступно: {heroes.length})
+                              </div>
+                              <div className="flex gap-1 justify-center sm:justify-start">
+                                <CardDisplay 
+                                  card={hero}
+                                  showSellButton={false}
+                                  className="w-12 h-20 sm:w-16 sm:h-24 text-xs"
+                                />
+                                <div className="w-12 h-20 sm:w-16 sm:h-24 border border-dashed border-primary/40 rounded flex items-center justify-center text-xs text-muted-foreground">
+                                  +1
+                                </div>
+                              </div>
+                            </div>
+                            
+                            {/* Arrow */}
+                            <div className="flex-shrink-0 flex items-center justify-center w-full sm:w-auto sm:mt-8">
+                              <ArrowRight className="w-4 h-4 sm:w-5 sm:h-5 text-primary rotate-90 sm:rotate-0" />
+                            </div>
+                            
+                            {/* Result Preview */}
+                            <div className="flex-shrink-0 w-full sm:w-auto">
+                              <div className="text-xs text-muted-foreground mb-2">Результат:</div>
+                              <div className="flex justify-center sm:block">
+                                <CardDisplay 
+                                  card={previewUpgraded}
+                                  showSellButton={false}
+                                  className="w-12 h-20 sm:w-16 sm:h-24 text-xs"
+                                />
+                              </div>
+                            </div>
+                            
+                             {/* Hero Info and Action */}
+                             <div className="flex-1 w-full">
+                               <div className="flex flex-col gap-3">
+                                 <div>
+                                   <h4 className="font-medium text-sm sm:text-base">{hero.name}</h4>
+                                   <p className="text-xs sm:text-sm text-muted-foreground">
+                                     {hero.faction} • Ранг {hero.rarity} → {hero.rarity + 1}
+                                   </p>
+                                 </div>
+                                 
+                                 {requirements && (
+                                   <div className="space-y-2">
+                                     <div className="flex items-center gap-2">
+                                       <Sparkles className="w-3 h-3 text-yellow-500" />
+                                       <span className="text-xs font-medium">Шанс успеха: {requirements.successChance}%</span>
+                                     </div>
+                                     
+                                     <div className="space-y-1">
+                                       <div className="text-xs font-medium">Требования:</div>
+                                       <div className="flex flex-wrap gap-1">
+                                         {requirements.costs.balance && (
+                                           <Badge variant="outline" className="text-xs">
+                                             <Coins className="w-3 h-3 mr-1" />
+                                             {requirements.costs.balance}
+                                           </Badge>
+                                         )}
+                                         {requirements.costs.wood && (
+                                           <Badge variant="outline" className="text-xs">🪵 {requirements.costs.wood}</Badge>
+                                         )}
+                                         {requirements.costs.stone && (
+                                           <Badge variant="outline" className="text-xs">🪨 {requirements.costs.stone}</Badge>
+                                         )}
+                                         {requirements.costs.iron && (
+                                           <Badge variant="outline" className="text-xs">⚙️ {requirements.costs.iron}</Badge>
+                                         )}
+                                         {requirements.costs.gold && (
+                                           <Badge variant="outline" className="text-xs">💰 {requirements.costs.gold}</Badge>
+                                         )}
+                                       </div>
+                                       
+                                       {requirements.requiredItems.length > 0 && (
+                                         <div className="flex flex-wrap gap-1 mt-1">
+                                           {requirements.requiredItems.map(item => {
+                                             const available = itemCounts[item.itemId] || 0;
+                                             const hasEnough = available >= item.quantity;
+                                             return (
+                                               <Badge 
+                                                 key={item.itemId} 
+                                                 variant={hasEnough ? "secondary" : "destructive"}
+                                                 className="text-xs"
+                                               >
+                                                 {item.name}: {available}/{item.quantity}
+                                               </Badge>
+                                             );
+                                           })}
+                                         </div>
+                                       )}
+                                     </div>
+                                   </div>
+                                 )}
+                                 
+                                 <Button
+                                   onClick={() => initiateUpgrade(heroes)}
+                                   disabled={!canStartUpgrade() || !canUpgrade}
+                                   className="w-full sm:w-auto"
+                                   size="sm"
+                                 >
+                                   {!canStartUpgrade() ? 'Нет места' : !canUpgrade ? 'Недостаточно ресурсов' : 'Улучшить'}
+                                 </Button>
+                               </div>
+                             </div>
+                          </div>
+                        </div>
+                     );
+                  })}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* Active Upgrades Tab */}
+        <TabsContent value="active" className="mt-4">
+          {activeUpgrades.length === 0 ? (
+            <Card className="bg-card/50 backdrop-blur-sm border-primary/20">
+              <CardContent className="pt-6">
+                <div className="text-center text-muted-foreground py-8">
+                  <Clock className="w-12 h-12 mx-auto mb-4 opacity-50" />
+                  <p>Нет активных улучшений</p>
+                </div>
+              </CardContent>
+            </Card>
+          ) : (
         <Card className="bg-card/50 backdrop-blur-sm border-orange-500/20">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
@@ -492,162 +806,12 @@ export const Barracks: React.FC<BarracksProps> = ({ barracksLevel, onUpgradeBuil
                     </div>
                  );
               })}
-            </div>
+             </div>
           </CardContent>
         </Card>
-      )}
-
-      {/* Available Heroes for Upgrade */}
-      <Card className="bg-card/50 backdrop-blur-sm border-primary/20">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Swords className="w-5 h-5" />
-            {t(language, 'shelter.availableHeroes')}
-          </CardTitle>
-          <CardDescription>
-            {t(language, 'shelter.selectTwoHeroes')}
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          {Object.keys(upgradeableGroups).length === 0 ? (
-            <div className="text-center text-muted-foreground py-8">
-              <p>Нет доступных героев для улучшения</p>
-              <p className="text-sm mt-2">
-                Нужно два одинаковых героя {barracksLevel} ранга или ниже
-              </p>
-            </div>
-          ) : (
-            <div className="space-y-6">
-              {Object.entries(upgradeableGroups).map(([key, heroes]) => {
-                  const hero = heroes[0];
-                  const previewUpgraded = {
-                    ...hero,
-                    rarity: (hero.rarity + 1) as any,
-                    power: Math.floor(hero.power * 1.8),
-                    defense: Math.floor(hero.defense * 1.8),
-                    health: Math.floor(hero.health * 1.8),
-                    magic: Math.floor(hero.magic * 1.8)
-                  };
-                  
-                  const requirements = getUpgradeRequirement(hero.rarity, 'barracks');
-                  const { canUpgrade, missingItems } = checkUpgradeRequirements(heroes);
-                  
-                  return (
-                     <div key={key} className="p-2 sm:p-4 border border-primary/20 rounded-lg overflow-hidden">
-                       <div className="flex flex-col sm:flex-row items-start gap-2 sm:gap-4 mb-4">
-                        {/* Current Heroes Preview */}
-                        <div className="flex-shrink-0 w-full sm:w-auto">
-                          <div className="text-xs text-muted-foreground mb-2">
-                            Требуется: 2 карты (доступно: {heroes.length})
-                          </div>
-                          <div className="flex gap-1 justify-center sm:justify-start">
-                            <CardDisplay 
-                              card={hero}
-                              showSellButton={false}
-                              className="w-12 h-20 sm:w-16 sm:h-24 text-xs"
-                            />
-                            <div className="w-12 h-20 sm:w-16 sm:h-24 border border-dashed border-primary/40 rounded flex items-center justify-center text-xs text-muted-foreground">
-                              +1
-                            </div>
-                          </div>
-                        </div>
-                        
-                        {/* Arrow */}
-                        <div className="flex-shrink-0 flex items-center justify-center w-full sm:w-auto sm:mt-8">
-                          <ArrowRight className="w-4 h-4 sm:w-5 sm:h-5 text-primary rotate-90 sm:rotate-0" />
-                        </div>
-                        
-                        {/* Result Preview */}
-                        <div className="flex-shrink-0 w-full sm:w-auto">
-                          <div className="text-xs text-muted-foreground mb-2">Результат:</div>
-                          <div className="flex justify-center sm:block">
-                            <CardDisplay 
-                              card={previewUpgraded}
-                              showSellButton={false}
-                              className="w-12 h-20 sm:w-16 sm:h-24 text-xs"
-                            />
-                          </div>
-                        </div>
-                        
-                         {/* Hero Info and Action */}
-                         <div className="flex-1 w-full">
-                           <div className="flex flex-col gap-3">
-                             <div>
-                               <h4 className="font-medium text-sm sm:text-base">{hero.name}</h4>
-                               <p className="text-xs sm:text-sm text-muted-foreground">
-                                 {hero.faction} • Ранг {hero.rarity} → {hero.rarity + 1}
-                               </p>
-                             </div>
-                             
-                             {requirements && (
-                               <div className="space-y-2">
-                                 <div className="flex items-center gap-2">
-                                   <Sparkles className="w-3 h-3 text-yellow-500" />
-                                   <span className="text-xs font-medium">Шанс успеха: {requirements.successChance}%</span>
-                                 </div>
-                                 
-                                 <div className="space-y-1">
-                                   <div className="text-xs font-medium">Требования:</div>
-                                   <div className="flex flex-wrap gap-1">
-                                     {requirements.costs.balance && (
-                                       <Badge variant="outline" className="text-xs">
-                                         <Coins className="w-3 h-3 mr-1" />
-                                         {requirements.costs.balance}
-                                       </Badge>
-                                     )}
-                                     {requirements.costs.wood && (
-                                       <Badge variant="outline" className="text-xs">🪵 {requirements.costs.wood}</Badge>
-                                     )}
-                                     {requirements.costs.stone && (
-                                       <Badge variant="outline" className="text-xs">🪨 {requirements.costs.stone}</Badge>
-                                     )}
-                                     {requirements.costs.iron && (
-                                       <Badge variant="outline" className="text-xs">⚙️ {requirements.costs.iron}</Badge>
-                                     )}
-                                     {requirements.costs.gold && (
-                                       <Badge variant="outline" className="text-xs">💰 {requirements.costs.gold}</Badge>
-                                     )}
-                                   </div>
-                                   
-                                   {requirements.requiredItems.length > 0 && (
-                                     <div className="flex flex-wrap gap-1 mt-1">
-                                       {requirements.requiredItems.map(item => {
-                                         const available = itemCounts[item.itemId] || 0;
-                                         const hasEnough = available >= item.quantity;
-                                         return (
-                                           <Badge 
-                                             key={item.itemId} 
-                                             variant={hasEnough ? "secondary" : "destructive"}
-                                             className="text-xs"
-                                           >
-                                             {item.name}: {available}/{item.quantity}
-                                           </Badge>
-                                         );
-                                       })}
-                                     </div>
-                                   )}
-                                 </div>
-                               </div>
-                             )}
-                             
-                             <Button
-                               onClick={() => initiateUpgrade(heroes)}
-                               disabled={!canStartUpgrade() || !canUpgrade}
-                               className="w-full sm:w-auto"
-                               size="sm"
-                             >
-                               {!canStartUpgrade() ? 'Нет места' : !canUpgrade ? 'Недостаточно ресурсов' : 'Улучшить'}
-                             </Button>
-                           </div>
-                         </div>
-                      </div>
-                    </div>
-                 );
-              })}
-            </div>
           )}
-        </CardContent>
-      </Card>
+        </TabsContent>
+      </Tabs>
 
       {/* Upgrade Confirmation Dialog */}
       <AlertDialog open={upgradeDialogOpen} onOpenChange={setUpgradeDialogOpen}>
