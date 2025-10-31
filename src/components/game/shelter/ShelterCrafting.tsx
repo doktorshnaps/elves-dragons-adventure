@@ -6,7 +6,6 @@ import { useLanguage } from "@/hooks/useLanguage";
 import { t } from "@/utils/translations";
 import { Hammer, Clock } from "lucide-react";
 import { useItemTemplates } from "@/hooks/useItemTemplates";
-import { ActiveCrafts } from "./ActiveCrafts";
 
 interface ShelterCraftingProps {
   recipes: CraftRecipe[];
@@ -14,7 +13,6 @@ interface ShelterCraftingProps {
   handleCraft: (recipe: CraftRecipe) => void;
   workshopLevel: number;
   inventoryCounts: Record<string, number>;
-  activeWorkers: any[];
 }
 
 const getCategoryIcon = (category: string) => {
@@ -40,8 +38,7 @@ export const ShelterCrafting = ({
   canAffordCraft,
   handleCraft,
   workshopLevel,
-  inventoryCounts,
-  activeWorkers
+  inventoryCounts
 }: ShelterCraftingProps) => {
   const { language } = useLanguage();
   const { getItemName } = useItemTemplates();
@@ -61,10 +58,8 @@ export const ShelterCrafting = ({
   }
 
   return (
-    <div className="flex flex-col lg:flex-row gap-6">
-      {/* Рецепты крафта */}
-      <div className="flex-1 grid grid-cols-1 md:grid-cols-2 gap-4">
-        {recipes.map((recipe) => {
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+      {recipes.map((recipe) => {
         const canCraft = canAffordCraft(recipe);
         
         return (
@@ -155,13 +150,7 @@ export const ShelterCrafting = ({
             </CardContent>
           </Card>
         );
-        })}
-      </div>
-
-      {/* Активные крафты */}
-      <div className="lg:w-80">
-        <ActiveCrafts activeWorkers={activeWorkers} />
-      </div>
+      })}
     </div>
   );
 };
