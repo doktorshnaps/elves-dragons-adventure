@@ -8,7 +8,7 @@ import { Barracks } from "@/components/game/shelter/Barracks";
 import { DragonLair } from "@/components/game/shelter/DragonLair";
 import { MedicalBayComponent } from "@/components/game/medical/MedicalBayComponent";
 import { WorkersManagement } from "@/components/game/shelter/WorkersManagement";
-import { ActiveCrafts } from "@/components/game/shelter/ActiveCrafts";
+import { CraftingTabs } from "@/components/game/shelter/CraftingTabs";
 import { useLanguage } from "@/hooks/useLanguage";
 
 import { useInventoryDedupe } from "@/hooks/useInventoryDedupe";
@@ -121,18 +121,14 @@ export const Shelter = () => {
 
         {/* Вкладки управления */}
         <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as any)} className="w-full">
-          <TabsList className="grid w-full grid-cols-4 sm:grid-cols-7 gap-1 bg-black/50 border-2 border-white backdrop-blur-sm rounded-3xl p-1" style={{ boxShadow: '-33px 15px 10px rgba(0, 0, 0, 0.6)' }}>
+          <TabsList className="grid w-full grid-cols-3 sm:grid-cols-6 gap-1 bg-black/50 border-2 border-white backdrop-blur-sm rounded-3xl p-1" style={{ boxShadow: '-33px 15px 10px rgba(0, 0, 0, 0.6)' }}>
             <TabsTrigger value="upgrades" className="flex items-center justify-center gap-1 sm:gap-2 text-white data-[state=active]:bg-white/20 rounded-2xl text-xs sm:text-sm px-1 sm:px-3">
               <Home className="w-3 h-3 sm:w-4 sm:h-4 flex-shrink-0" />
               <span className="hidden sm:inline">{t(language, 'shelter.upgrades')}</span>
             </TabsTrigger>
             <TabsTrigger value="crafting" className="flex items-center justify-center gap-1 sm:gap-2 text-white data-[state=active]:bg-white/20 rounded-2xl text-xs sm:text-sm px-1 sm:px-3">
               <Hammer className="w-3 h-3 sm:w-4 sm:h-4 flex-shrink-0" />
-              <span className="hidden sm:inline">Рецепты</span>
-            </TabsTrigger>
-            <TabsTrigger value="activecrafts" className="flex items-center justify-center gap-1 sm:gap-2 text-white data-[state=active]:bg-white/20 rounded-2xl text-xs sm:text-sm px-1 sm:px-3">
-              <Flame className="w-3 h-3 sm:w-4 sm:h-4 flex-shrink-0" />
-              <span className="hidden sm:inline">Активные</span>
+              <span className="hidden sm:inline">{t(language, 'shelter.crafting')}</span>
             </TabsTrigger>
             <TabsTrigger value="barracks" className="flex items-center justify-center gap-1 sm:gap-2 text-white data-[state=active]:bg-white/20 rounded-2xl text-xs sm:text-sm px-1 sm:px-3">
               <Shield className="w-3 h-3 sm:w-4 sm:h-4 flex-shrink-0" />
@@ -172,17 +168,14 @@ export const Shelter = () => {
           </TabsContent>
 
           <TabsContent value="crafting" className="mt-6">
-            <ShelterCrafting
+            <CraftingTabs
               recipes={craftRecipes}
               canAffordCraft={canAffordCraft}
               handleCraft={handleCraft}
               workshopLevel={buildingLevels.workshop}
               inventoryCounts={inventoryCounts}
+              activeWorkers={activeWorkers}
             />
-          </TabsContent>
-
-          <TabsContent value="activecrafts" className="mt-6">
-            <ActiveCrafts activeWorkers={activeWorkers} />
           </TabsContent>
 
           <TabsContent value="barracks" className="mt-6">
