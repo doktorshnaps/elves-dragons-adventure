@@ -10,6 +10,7 @@ import { Loader2, Save, ChevronDown, ChevronUp } from "lucide-react";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { DungeonItemDrops } from "./DungeonItemDrops";
+import { MonsterManagement } from "./MonsterManagement";
 import { Checkbox } from "@/components/ui/checkbox";
 
 interface LevelMonsterConfig {
@@ -265,9 +266,10 @@ export const DungeonSettings = () => {
 
   return (
     <Tabs defaultValue="settings" className="w-full">
-      <TabsList className="grid w-full grid-cols-2 mb-6">
+      <TabsList className="grid w-full grid-cols-3 mb-6">
         <TabsTrigger value="settings">Настройки подземелий</TabsTrigger>
         <TabsTrigger value="drops">Настройки дропа</TabsTrigger>
+        <TabsTrigger value="monsters">Управление монстрами</TabsTrigger>
       </TabsList>
 
       <TabsContent value="settings" className="space-y-4">
@@ -637,6 +639,10 @@ export const DungeonSettings = () => {
 
       <TabsContent value="drops">
         <DungeonItemDrops />
+      </TabsContent>
+
+      <TabsContent value="monsters">
+        <MonsterManagement />
       </TabsContent>
     </Tabs>
   );
