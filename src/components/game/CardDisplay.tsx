@@ -11,6 +11,7 @@ import { CardHealthBar } from "./cards/CardHealthBar";
 import { CardActions } from "./cards/CardActions";
 import { calculateCardStats } from "@/utils/cardUtils";
 import { useMemo } from "react";
+import { t } from "@/utils/translations";
 interface CardDisplayProps {
   card: CardType;
   showSellButton?: boolean;
@@ -52,7 +53,7 @@ export const CardDisplay = ({
             <CardHeader name={translateCardName(language, card.name)} rarity={card.rarity} />
 
             <div className={`text-purple-400 leading-none truncate ${isMobile ? 'text-[6px]' : 'text-[10px]'}`}>
-              ({translateCardType(language, card.type === 'character' ? 'Герой' : 'Питомец')})
+              ({translateCardType(language, card.type === 'character' ? t(language, 'cardDisplay.hero') : t(language, 'cardDisplay.pet'))})
             </div>
 
             {card.faction && <div className={`flex items-center gap-0.5 leading-none ${isMobile ? 'text-[6px]' : 'text-[10px]'} ${!isActive && card.type === 'pet' ? 'text-red-400' : 'text-purple-400'} overflow-hidden`}>
@@ -73,7 +74,7 @@ export const CardDisplay = ({
             )}
 
             {!isActive && card.type === 'pet' && <div className="text-red-400 text-[6px] mt-0.5 break-words leading-none tracking-tighter truncate">
-                Требуется герой {translateFaction(language, card.faction)} {card.rarity} или выше
+                {t(language, 'cardDisplay.requiresHero')} {translateFaction(language, card.faction)} {card.rarity}+
               </div>}
           </div>
 

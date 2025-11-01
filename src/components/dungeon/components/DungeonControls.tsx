@@ -1,6 +1,8 @@
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { DungeonType } from '@/constants/dungeons';
+import { useLanguage } from '@/hooks/useLanguage';
+import { t } from '@/utils/translations';
 
 interface DungeonControlsProps {
   selectedDungeon: DungeonType | null;
@@ -21,6 +23,8 @@ export const DungeonControls = ({
   onRollDice,
   handleDungeonSelect
 }: DungeonControlsProps) => {
+  const { language } = useLanguage();
+  
   return (
     <>
       {!selectedDungeon && (
@@ -30,7 +34,7 @@ export const DungeonControls = ({
           variant="menu"
           style={{ boxShadow: '-33px 15px 10px rgba(0, 0, 0, 0.6)' }}
         >
-          {rolling ? "Поиск подземелья..." : "Искать подземелье"}
+          {rolling ? t(language, 'dungeonSearch.searching') : t(language, 'dungeonSearch.search')}
         </Button>
       )}
       
@@ -40,7 +44,7 @@ export const DungeonControls = ({
           variant="menu"
           style={{ boxShadow: '-33px 15px 10px rgba(0, 0, 0, 0.6)' }}
         >
-          Войти в подземелье
+          {t(language, 'dungeonSearch.enter')}
         </Button>
       )}
     </>

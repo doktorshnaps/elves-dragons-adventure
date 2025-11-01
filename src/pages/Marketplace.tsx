@@ -11,8 +11,11 @@ import { useMarketplaceOperations } from "@/hooks/marketplace/useMarketplaceOper
 import { useNFTMarketplace } from "@/hooks/marketplace/useNFTMarketplace";
 import { useWalletContext } from "@/contexts/WalletConnectContext";
 import { NFTCard } from "@/hooks/useNFTCards";
+import { useLanguage } from "@/hooks/useLanguage";
+import { t } from "@/utils/translations";
 
 const Marketplace = () => {
+  const { language } = useLanguage();
   const [showListingDialog, setShowListingDialog] = useState(false);
   const { accountId, selector } = useWalletContext();
   
@@ -59,7 +62,11 @@ const Marketplace = () => {
       
       if (!accountId || !selector) {
         console.warn('⚠️ Wallet not connected or selector missing for NFT listing', { accountId, selectorExists: !!selector });
-        toast({ title: 'Подключите кошелек', description: 'Для продажи NFT подключите NEAR-кошелек', variant: 'destructive' });
+        toast({ 
+          title: t(language, 'marketplace.connectWallet'), 
+          description: t(language, 'marketplace.connectWalletDesc'), 
+          variant: 'destructive' 
+        });
         return;
       }
 
@@ -88,13 +95,13 @@ const Marketplace = () => {
         async () => {
           setShowListingDialog(false);
           toast({
-            title: "NFT выставлен на продажу",
-            description: `${listing.item.name} выставлен за ${listing.price} ${paymentToken}`,
+            title: t(language, 'marketplace.nftListed'),
+            description: `${listing.item.name} ${t(language, 'marketplace.listedFor')} ${listing.price} ${paymentToken}`,
           });
           if (accountId) await syncLocalCaches(accountId);
         },
         (error) => {
-          toast({ title: 'Ошибка', description: error, variant: 'destructive' });
+          toast({ title: t(language, 'marketplace.error'), description: error, variant: 'destructive' });
         }
       );
       return;
@@ -105,13 +112,13 @@ const Marketplace = () => {
       async () => {
         setShowListingDialog(false);
         toast({
-          title: "Предмет выставлен на продажу",
-          description: `${listing.item.name} выставлен за ${listing.price} ELL`,
+          title: t(language, 'marketplace.itemListed'),
+          description: `${listing.item.name} ${t(language, 'marketplace.listedFor')} ${listing.price} ELL`,
         });
         if (accountId) await syncLocalCaches(accountId);
       },
       (error) => {
-        toast({ title: 'Не удалось создать объявление', description: error, variant: 'destructive' });
+        toast({ title: t(language, 'marketplace.failedToList'), description: error, variant: 'destructive' });
       }
     );
   };
@@ -126,13 +133,13 @@ const Marketplace = () => {
         }
 
         toast({
-          title: 'Объявление отменено',
-          description: `${listing.item.name} возвращен(а) в ваш инвентарь/колоду`,
+          title: t(language, 'marketplace.listingCancelled'),
+          description: `${listing.item.name} ${t(language, 'marketplace.returnedToInventory')}`,
         });
       },
       (error) => {
         toast({ 
-          title: 'Не удалось отменить объявление', 
+          title: t(language, 'marketplace.failedToCancel'),
           description: error, 
           variant: 'destructive' 
         });

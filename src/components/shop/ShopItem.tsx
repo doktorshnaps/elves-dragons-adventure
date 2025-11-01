@@ -9,6 +9,8 @@ import { getRarityLabel, getRarityDropRates } from "@/utils/cardUtils";
 import { ShopItem as ShopItemType } from "./types";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useState, useCallback } from "react";
+import { useLanguage } from "@/hooks/useLanguage";
+import { t } from "@/utils/translations";
 
 interface ShopItemProps {
   item: ShopItemType;
@@ -17,6 +19,7 @@ interface ShopItemProps {
 }
 
 export const ShopItem = ({ item, balance, onBuy }: ShopItemProps) => {
+  const { language } = useLanguage();
   const isMobile = useIsMobile();
   const [showDropRates, setShowDropRates] = useState(false);
   const canAfford = balance >= item.price;
@@ -54,7 +57,7 @@ export const ShopItem = ({ item, balance, onBuy }: ShopItemProps) => {
             {item.description}
           </p>
           <p className={`text-game-secondary mb-2 ${isMobile ? 'text-[10px]' : 'text-xs'}`}>
-            Цена: {item.price} ELL
+            {t(language, 'shopItem.price')} {item.price} ELL
           </p>
           <div 
             onMouseEnter={() => setShowDropRates(true)}
@@ -70,16 +73,16 @@ export const ShopItem = ({ item, balance, onBuy }: ShopItemProps) => {
                   onClick={() => onBuy(item)}
                   disabled={!canAfford}
                 >
-                  Купить
+                  {t(language, 'shopItem.buy')}
                 </Button>
               </HoverCardTrigger>
               <HoverCardContent className="w-48 bg-game-background border-game-accent p-2">
                 <h4 className={`text-game-accent font-semibold mb-1 ${isMobile ? 'text-[10px]' : 'text-xs'}`}>
-                  Шансы выпадения:
+                  {t(language, 'shopItem.dropRates')}
                 </h4>
                 <div className="space-y-1">
                   <div className="mb-2">
-                    <p className="text-[10px] text-gray-400 mb-1">Герои (50%):</p>
+                    <p className="text-[10px] text-gray-400 mb-1">{t(language, 'shopItem.heroes')}</p>
                     {Object.values(getRarityDropRates().heroes).map((item) => (
                       <div key={item.name} className="flex justify-between text-[10px]">
                         <span className="text-gray-400">{item.name}</span>
@@ -88,7 +91,7 @@ export const ShopItem = ({ item, balance, onBuy }: ShopItemProps) => {
                     ))}
                   </div>
                   <div>
-                    <p className="text-[10px] text-gray-400 mb-1">Драконы (50%):</p>
+                    <p className="text-[10px] text-gray-400 mb-1">{t(language, 'shopItem.dragons')}</p>
                     {Object.values(getRarityDropRates().dragons).map((item) => (
                       <div key={item.name} className="flex justify-between text-[10px]">
                         <span className="text-gray-400">{item.name}</span>
@@ -125,18 +128,18 @@ export const ShopItem = ({ item, balance, onBuy }: ShopItemProps) => {
         </p>
         {item.stats && (
           <div className={`text-game-accent mb-2 ${isMobile ? 'text-[10px]' : 'text-xs'}`}>
-            {item.stats.power && <p>Сила: +{item.stats.power}</p>}
-            {item.stats.defense && <p>Защита: +{item.stats.defense}</p>}
-            {item.stats.health && <p>Здоровье: +{item.stats.health}</p>}
+            {item.stats.power && <p>{t(language, 'shopItem.power')} +{item.stats.power}</p>}
+            {item.stats.defense && <p>{t(language, 'shopItem.defense')} +{item.stats.defense}</p>}
+            {item.stats.health && <p>{t(language, 'shopItem.health')} +{item.stats.health}</p>}
           </div>
         )}
         {item.requiredLevel && (
           <p className={`text-yellow-500 mb-2 ${isMobile ? 'text-[10px]' : 'text-xs'}`}>
-            Требуется уровень: {item.requiredLevel}
+            {t(language, 'shopItem.requiredLevel')} {item.requiredLevel}
           </p>
         )}
         <p className={`text-game-secondary mb-2 ${isMobile ? 'text-[10px]' : 'text-xs'}`}>
-          Цена: {item.price} ELL
+          {t(language, 'shopItem.price')} {item.price} ELL
         </p>
         <Button
           type="button"
@@ -144,7 +147,7 @@ export const ShopItem = ({ item, balance, onBuy }: ShopItemProps) => {
           onClick={() => onBuy(item)}
           disabled={!canAfford}
         >
-          Купить
+          {t(language, 'shopItem.buy')}
         </Button>
       </div>
     </Card>

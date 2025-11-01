@@ -3,12 +3,15 @@ import { Button } from '@/components/ui/button';
 import { DoorOpen } from 'lucide-react';
 import { DungeonType, dungeonRoutes } from '@/constants/dungeons';
 import { useNavigate } from 'react-router-dom';
+import { useLanguage } from '@/hooks/useLanguage';
+import { t } from '@/utils/translations';
 
 interface ActiveDungeonButtonProps {
   activeDungeon: string | null;
 }
 
 export const ActiveDungeonButton = ({ activeDungeon }: ActiveDungeonButtonProps) => {
+  const { language } = useLanguage();
   const navigate = useNavigate();
 
   const handleReturnToDungeon = () => {
@@ -25,7 +28,7 @@ export const ActiveDungeonButton = ({ activeDungeon }: ActiveDungeonButtonProps)
       style={{ boxShadow: '-33px 15px 10px rgba(0, 0, 0, 0.6)' }}
     >
       <DoorOpen className="mr-2 h-4 w-4" />
-      Вернуться в подземелье
+      {t(language, 'dungeonSearch.returnToDungeon')}
     </Button>
   );
 };
