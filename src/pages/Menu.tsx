@@ -58,7 +58,7 @@ export const Menu = () => {
   if (isConnected && !initialLoadComplete && gameDataLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-game-background">
-        <div className="text-white text-xl">Загрузка меню...</div>
+        <div className="text-white text-xl">{t(language, 'menu.loadingMenu')}</div>
       </div>
     );
   }
@@ -137,7 +137,7 @@ export const Menu = () => {
           onClick={() => navigate('/dungeons')}
         >
           <img src={dungeonIcon} alt="Dungeon" className="w-[23px] h-[23px]" />
-          <span className="text-base font-semibold leading-tight text-center">ПОДЗЕМЕЛЬЕ</span>
+          <span className="text-base font-semibold leading-tight text-center">{t(language, 'menu.dungeon').toUpperCase()}</span>
         </Button>
 
         <Button 
@@ -147,7 +147,7 @@ export const Menu = () => {
           onClick={() => navigate('/shop')}
         >
           <img src={shopIcon} alt="Shop" className="w-[23px] h-[23px]" />
-          <span className="text-base font-semibold leading-tight text-center">МАГИЧЕСКИЙ<br/>МАГАЗИН</span>
+          <span className="text-base font-semibold leading-tight text-center">{t(language, 'menu.magicShop').toUpperCase().replace(' ', '\n')}</span>
         </Button>
 
         <Button 
@@ -157,7 +157,7 @@ export const Menu = () => {
           onClick={() => navigate('/marketplace')}
         >
           <img src={marketplaceIcon} alt="Marketplace" className="w-[23px] h-[23px]" />
-          <span className="text-base font-semibold leading-tight text-center">ТОРГОВАЯ<br/>ПЛОЩАДКА</span>
+          <span className="text-base font-semibold leading-tight text-center">{t(language, 'menu.tradingPlatform').toUpperCase().replace(' ', '\n')}</span>
         </Button>
 
         <Button 
@@ -167,7 +167,7 @@ export const Menu = () => {
           onClick={() => navigate('/grimoire')}
         >
           <img src={grimoireIcon} alt="Grimoire" className="w-[23px] h-[23px]" />
-          <span className="text-base font-semibold leading-tight text-center">ГРИМУАР</span>
+          <span className="text-base font-semibold leading-tight text-center">{t(language, 'menu.grimoire').toUpperCase()}</span>
         </Button>
 
         <Button 
@@ -177,7 +177,7 @@ export const Menu = () => {
           onClick={() => navigate('/equipment')}
         >
           <img src={inventoryIcon} alt="Inventory" className="w-[23px] h-[23px]" />
-          <span className="text-base font-semibold leading-tight text-center">ИНВЕНТАРЬ</span>
+          <span className="text-base font-semibold leading-tight text-center">{t(language, 'menu.inventory').toUpperCase()}</span>
         </Button>
 
         <Button 
@@ -187,7 +187,7 @@ export const Menu = () => {
           onClick={() => navigate('/team')}
         >
           <img src={teamIcon} alt="Team" className="w-[23px] h-[23px]" />
-          <span className="text-base font-semibold leading-tight text-center">КОМАНДА</span>
+          <span className="text-base font-semibold leading-tight text-center">{t(language, 'menu.team').toUpperCase()}</span>
         </Button>
 
         <Button 
@@ -197,7 +197,7 @@ export const Menu = () => {
           onClick={() => navigate('/quest')}
         >
           <img src={moneyIcon} alt="Money" className="w-[23px] h-[23px]" />
-          <span className="text-base font-semibold leading-tight text-center">БАБЛО</span>
+          <span className="text-base font-semibold leading-tight text-center">{t(language, 'menu.quest').toUpperCase()}</span>
         </Button>
 
         <Button 
@@ -207,7 +207,7 @@ export const Menu = () => {
           onClick={() => navigate('/shelter')}
         >
           <img src={shelterIcon} alt="Shelter" className="w-[23px] h-[23px]" />
-          <span className="text-base font-semibold leading-tight text-center">ЛАГЕРЬ</span>
+          <span className="text-base font-semibold leading-tight text-center">{t(language, 'menu.camp').toUpperCase()}</span>
         </Button>
 
         <Button 
@@ -217,7 +217,7 @@ export const Menu = () => {
           onClick={() => navigate('/soul-archive')}
         >
           <img src={soulArchiveIcon} alt="Soul Archive" className="w-[23px] h-[23px]" />
-          <span className="text-base font-semibold leading-tight text-center">АРХИВ ДУШ</span>
+          <span className="text-base font-semibold leading-tight text-center">{t(language, 'menu.soulArchive').toUpperCase().replace(' ', '\n')}</span>
         </Button>
 
         <Button 
@@ -227,7 +227,7 @@ export const Menu = () => {
           onClick={handleDisconnectWallet}
         >
           <img src={walletIcon} alt="Disconnect" className="w-[23px] h-[23px]" />
-          <span className="text-base font-semibold leading-tight text-center">ОТКЛЮЧИТЬ<br/>КОШЕЛЕК</span>
+          <span className="text-base font-semibold leading-tight text-center">{t(language, 'menu.disconnectWallet').toUpperCase().replace(' ', '\n')}</span>
         </Button>
       </div>
 
@@ -241,7 +241,7 @@ export const Menu = () => {
             onClick={() => navigate('/admin-settings')}
           >
             <Settings className="w-[23px] h-[23px]" />
-            <span className="text-base font-semibold leading-tight text-center">НАСТРОЙКИ ИГРЫ</span>
+            <span className="text-base font-semibold leading-tight text-center">{t(language, 'menu.gameSettings').toUpperCase().replace(' ', '\n')}</span>
           </Button>
         </div>
       )}

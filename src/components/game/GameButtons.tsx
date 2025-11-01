@@ -2,6 +2,8 @@ import { Button } from "@/components/ui/button";
 import { Swords, ShoppingCart, BookOpen, BarChart3, Store, Shield, Users } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { useLanguage } from "@/hooks/useLanguage";
+import { t } from "@/utils/translations";
 
 interface GameButtonsProps {
   onGameModeClick: () => void;
@@ -20,6 +22,7 @@ export const GameButtons = ({
 }: GameButtonsProps) => {
   const navigate = useNavigate();
   const isMobile = useIsMobile();
+  const { language } = useLanguage();
 
   return (
     <div className="flex flex-wrap sm:flex-nowrap gap-1 sm:gap-4 mb-2 sm:mb-6">
@@ -29,7 +32,7 @@ export const GameButtons = ({
         onClick={() => navigate('/dungeons')}
       >
         <Swords className="w-4 h-4" />
-        {!isMobile && <span className="ml-2">Подземелье</span>}
+        {!isMobile && <span className="ml-2">{t(language, 'menu.dungeon')}</span>}
       </Button>
       
       <Button
@@ -38,7 +41,7 @@ export const GameButtons = ({
         onClick={onShopClick}
       >
         <ShoppingCart className="w-4 h-4" />
-        {!isMobile && <span className="ml-2">Открыть магазин</span>}
+        {!isMobile && <span className="ml-2">{t(language, 'gameHeader.openShop')}</span>}
       </Button>
 
       <Button
@@ -47,7 +50,7 @@ export const GameButtons = ({
         onClick={() => navigate('/marketplace')}
       >
         <Store className="w-4 h-4" />
-        {!isMobile && <span className="ml-2">Торговая площадка</span>}
+        {!isMobile && <span className="ml-2">{t(language, 'menu.marketplace')}</span>}
       </Button>
 
       <Button
@@ -56,7 +59,7 @@ export const GameButtons = ({
         onClick={onStatsClick}
       >
         <BarChart3 className="w-4 h-4" />
-        {!isMobile && <span className="ml-2">Статистика</span>}
+        {!isMobile && <span className="ml-2">{t(language, 'gameHeader.statistics')}</span>}
       </Button>
 
       <Button
@@ -65,7 +68,7 @@ export const GameButtons = ({
         onClick={() => navigate('/grimoire')}
       >
         <BookOpen className="w-4 h-4" />
-        {!isMobile && <span className="ml-2">Гримуар</span>}
+        {!isMobile && <span className="ml-2">{t(language, 'menu.grimoire')}</span>}
       </Button>
 
       <Button
@@ -74,7 +77,7 @@ export const GameButtons = ({
         onClick={onEquipmentClick}
       >
         <Shield className="w-4 h-4" />
-        {!isMobile && <span className="ml-2">Снаряжение</span>}
+        {!isMobile && <span className="ml-2">{t(language, 'equipment.title')}</span>}
       </Button>
 
       <Button
@@ -83,7 +86,7 @@ export const GameButtons = ({
         onClick={onTeamClick}
       >
         <Users className="w-4 h-4" />
-        {!isMobile && <span className="ml-2">Команда</span>}
+        {!isMobile && <span className="ml-2">{t(language, 'menu.team')}</span>}
       </Button>
     </div>
   );

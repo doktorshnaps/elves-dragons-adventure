@@ -389,19 +389,19 @@ export const DragonLair: React.FC<DragonLairProps> = ({ lairLevel, onUpgradeBuil
             </Badge>
           </div>
           <CardDescription>
-            Улучшение драконов. Макс. одновременных улучшений: {getMaxConcurrentUpgrades()}
+            {t(language, 'dragonLair.upgradeDragons')}. {t(language, 'dragonLair.maxUpgrades')} {getMaxConcurrentUpgrades()}
           </CardDescription>
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
             <div className="text-sm text-muted-foreground">
-              <p>• На уровне {lairLevel} можно улучшать драконов до {lairLevel + 1} ранга</p>
-              <p>• Активных улучшений: {activeUpgrades.length}/{getMaxConcurrentUpgrades()}</p>
+              <p>• {t(language, 'dragonLair.atLevel')} {lairLevel} {t(language, 'dragonLair.canUpgrade')} {lairLevel + 1} {t(language, 'dragonLair.rank')}</p>
+              <p>• {t(language, 'dragonLair.activeUpgrades')} {activeUpgrades.length}/{getMaxConcurrentUpgrades()}</p>
             </div>
             
             {lairLevel < 8 && (
               <Button onClick={onUpgradeBuilding} variant="outline">
-                Улучшить логово
+                {t(language, 'dragonLair.upgradeLair')}
               </Button>
             )}
           </div>
@@ -411,9 +411,9 @@ export const DragonLair: React.FC<DragonLairProps> = ({ lairLevel, onUpgradeBuil
       {/* Tabs for Recipes, Dragons, and Active Upgrades */}
       <Tabs defaultValue="recipes" className="w-full">
         <TabsList className="grid w-full grid-cols-3">
-          <TabsTrigger value="recipes">Рецепты</TabsTrigger>
-          <TabsTrigger value="dragons">Драконы</TabsTrigger>
-          <TabsTrigger value="active">Активные</TabsTrigger>
+          <TabsTrigger value="recipes">{t(language, 'dragonLair.recipes')}</TabsTrigger>
+          <TabsTrigger value="dragons">{t(language, 'dragonLair.dragons')}</TabsTrigger>
+          <TabsTrigger value="active">{t(language, 'dragonLair.active')}</TabsTrigger>
         </TabsList>
 
         {/* Recipes Tab */}
@@ -422,10 +422,10 @@ export const DragonLair: React.FC<DragonLairProps> = ({ lairLevel, onUpgradeBuil
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <BookOpen className="w-5 h-5" />
-                Рецепты улучшения драконов
+                {t(language, 'dragonLair.upgradeRecipes')}
               </CardTitle>
               <CardDescription>
-                Требования для улучшения драконов разных рангов
+                {t(language, 'dragonLair.requirements')}
               </CardDescription>
             </CardHeader>
             <CardContent>

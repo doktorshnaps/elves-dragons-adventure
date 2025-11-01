@@ -13,11 +13,17 @@ export const translations = {
       team: 'Команда',
       quest: 'Бабло',
       shelter: 'Убежище',
+      camp: 'Лагерь',
       disconnectWallet: 'Отключить кошелек',
       balance: 'Баланс:',
       connected: 'Подключен',
       connectWallet: 'Подключить кошелек',
-      connecting: 'Подключение...'
+      connecting: 'Подключение...',
+      loadingMenu: 'Загрузка меню...',
+      soulArchive: 'Архив душ',
+      magicShop: 'Магический магазин',
+      tradingPlatform: 'Торговая площадка',
+      gameSettings: 'Настройки игры'
     },
     // Shop
     shop: {
@@ -229,6 +235,123 @@ export const translations = {
       items: 'Предметы',
       heroes: 'Герои',
       pets: 'Питомцы'
+    },
+    // Dungeons
+    dungeons: {
+      title: 'Подземелья',
+      backToMenu: 'Вернуться в меню',
+      returnToDungeon: 'Вернуться в подземелье'
+    },
+    // Quest Page
+    quest: {
+      title: 'Квесты и Рефералы',
+      backToMenu: 'Вернуться в меню',
+      quests: 'Квесты',
+      referrals: 'Рефералы'
+    },
+    // Soul Archive
+    soulArchive: {
+      title: 'Soul Archive',
+      backToMenu: 'Назад в меню',
+      totalPlayers: 'Всего игроков',
+      totalReferrals: 'Всего рефералов',
+      avgPerPlayer: 'Среднее на игрока',
+      thisWeek: 'За эту неделю',
+      referrals: 'рефералов',
+      lastUpdate: 'Последнее обновление',
+      autoRefresh: 'Авто-обновление каждый час',
+      referralRating: 'Рейтинг Рефералов',
+      soulAltar: 'Алтарь Душ',
+      allTime: 'За все время',
+      weekly: 'Недельный',
+      noData: 'Нет данных о рефералах',
+      referralDetails: 'Детали рефералов',
+      close: 'Закрыть',
+      loading: 'Загрузка...',
+      error: 'Ошибка',
+      loadError: 'Не удалось загрузить статистику рефералов',
+      detailsError: 'Не удалось загрузить список рефералов'
+    },
+    // Team Stats
+    team: {
+      title: 'Команда и статистика',
+      backToMenu: 'Вернуться в меню',
+      management: 'Управление командой',
+      yourTeam: 'Ваша команда'
+    },
+    // Equipment
+    equipment: {
+      title: 'Снаряжение',
+      backToMenu: 'Вернуться в меню',
+      mintNFT: 'Mint NFT',
+      playerEquipment: 'Снаряжение игрока'
+    },
+    // Marketplace
+    marketplace: {
+      backToMenu: 'Вернуться в меню',
+      availableOffers: 'Доступные предложения'
+    },
+    // Barracks
+    barracks: {
+      upgradeHeroes: 'Улучшение героев',
+      maxUpgrades: 'Макс. одновременных улучшений:',
+      atLevel: 'На уровне',
+      canUpgrade: 'можно улучшать героев до',
+      rank: 'ранга',
+      activeUpgrades: 'Активных улучшений:',
+      upgradeBarracks: 'Улучшить казарму',
+      recipes: 'Рецепты',
+      heroes: 'Герои',
+      active: 'Активные',
+      upgradeRecipes: 'Рецепты улучшений',
+      requirements: 'Настройки требований для улучшения героев',
+      faction: 'Фракция',
+      allFactions: 'Все фракции',
+      rarity: 'Редкость',
+      allRarities: 'Все редкости',
+      upgrade: 'Улучшение',
+      upgradeCompleted: 'Улучшение завершено!',
+      upgradeSuccess: '✨ Улучшение успешно!',
+      upgradeFailed: '❌ Улучшение не удалось',
+      upgradeFailedDesc: 'Попытка улучшения провалилась. Герои остались, но ресурсы потрачены.',
+      onSuccess: 'При успехе:',
+      onSuccessDesc: 'Герои объединятся в улучшенного героя',
+      onFailure: 'При неудаче:',
+      onFailureDesc: 'Герои останутся, но все ресурсы и предметы будут потрачены.',
+      selectHeroes: 'Выберите героев для улучшения',
+      noHeroesAvailable: 'Нет доступных героев для улучшения',
+      needTwoHeroes: 'Необходимо иметь 2 одинаковых героя одной фракции для улучшения'
+    },
+    // Dragon Lair
+    dragonLair: {
+      upgradeDragons: 'Улучшение драконов',
+      maxUpgrades: 'Макс. одновременных улучшений:',
+      atLevel: 'На уровне',
+      canUpgrade: 'можно улучшать драконов до',
+      rank: 'ранга',
+      activeUpgrades: 'Активных улучшений:',
+      upgradeLair: 'Улучшить логово',
+      recipes: 'Рецепты',
+      dragons: 'Драконы',
+      active: 'Активные',
+      upgradeRecipes: 'Рецепты улучшения драконов',
+      requirements: 'Требования для улучшения драконов разных рангов',
+      faction: 'Фракция',
+      allFactions: 'Все фракции',
+      rarity: 'Редкость',
+      allRarities: 'Все редкости',
+      upgrade: 'Улучшение',
+      upgradeCompleted: 'Улучшение завершено!',
+      upgradeSuccess: '✨ Улучшение успешно!',
+      upgradeFailed: '❌ Улучшение не удалось',
+      upgradeFailedDesc: 'Попытка улучшения провалилась. Драконы остались, но ресурсы потрачены.',
+      onSuccess: 'При успехе:',
+      onSuccessDesc: 'Драконы объединятся в улучшенного дракона',
+      onFailure: 'При неудаче:',
+      onFailureDesc: 'Драконы останутся, но все ресурсы и предметы будут потрачены.',
+      selectDragons: 'Выберите драконов для улучшения',
+      noDragonsAvailable: 'Нет доступных драконов для улучшения',
+      needTwoDragons: 'Необходимо иметь 2 одинаковых дракона одной фракции для улучшения'
     }
   },
   en: {
@@ -243,11 +366,17 @@ export const translations = {
       team: 'Team',
       quest: 'Quest',
       shelter: 'Shelter',
+      camp: 'Camp',
       disconnectWallet: 'Disconnect Wallet',
       balance: 'Balance:',
       connected: 'Connected',
       connectWallet: 'Connect Wallet',
-      connecting: 'Connecting...'
+      connecting: 'Connecting...',
+      loadingMenu: 'Loading menu...',
+      soulArchive: 'Soul Archive',
+      magicShop: 'Magic Shop',
+      tradingPlatform: 'Marketplace',
+      gameSettings: 'Game Settings'
     },
     // Shop
     shop: {
@@ -459,6 +588,123 @@ export const translations = {
       items: 'Items',
       heroes: 'Heroes',
       pets: 'Pets'
+    },
+    // Dungeons
+    dungeons: {
+      title: 'Dungeons',
+      backToMenu: 'Back to Menu',
+      returnToDungeon: 'Return to Dungeon'
+    },
+    // Quest Page
+    quest: {
+      title: 'Quests and Referrals',
+      backToMenu: 'Back to Menu',
+      quests: 'Quests',
+      referrals: 'Referrals'
+    },
+    // Soul Archive
+    soulArchive: {
+      title: 'Soul Archive',
+      backToMenu: 'Back to Menu',
+      totalPlayers: 'Total Players',
+      totalReferrals: 'Total Referrals',
+      avgPerPlayer: 'Average per Player',
+      thisWeek: 'This Week',
+      referrals: 'referrals',
+      lastUpdate: 'Last Update',
+      autoRefresh: 'Auto-refresh every hour',
+      referralRating: 'Referral Ranking',
+      soulAltar: 'Soul Altar',
+      allTime: 'All Time',
+      weekly: 'Weekly',
+      noData: 'No referral data',
+      referralDetails: 'Referral Details',
+      close: 'Close',
+      loading: 'Loading...',
+      error: 'Error',
+      loadError: 'Failed to load referral statistics',
+      detailsError: 'Failed to load referral list'
+    },
+    // Team Stats
+    team: {
+      title: 'Team and Statistics',
+      backToMenu: 'Back to Menu',
+      management: 'Team Management',
+      yourTeam: 'Your Team'
+    },
+    // Equipment
+    equipment: {
+      title: 'Equipment',
+      backToMenu: 'Back to Menu',
+      mintNFT: 'Mint NFT',
+      playerEquipment: 'Player Equipment'
+    },
+    // Marketplace
+    marketplace: {
+      backToMenu: 'Back to Menu',
+      availableOffers: 'Available Offers'
+    },
+    // Barracks
+    barracks: {
+      upgradeHeroes: 'Hero Upgrades',
+      maxUpgrades: 'Max concurrent upgrades:',
+      atLevel: 'At level',
+      canUpgrade: 'can upgrade heroes up to',
+      rank: 'rank',
+      activeUpgrades: 'Active upgrades:',
+      upgradeBarracks: 'Upgrade Barracks',
+      recipes: 'Recipes',
+      heroes: 'Heroes',
+      active: 'Active',
+      upgradeRecipes: 'Upgrade Recipes',
+      requirements: 'Hero upgrade requirement settings',
+      faction: 'Faction',
+      allFactions: 'All Factions',
+      rarity: 'Rarity',
+      allRarities: 'All Rarities',
+      upgrade: 'Upgrade',
+      upgradeCompleted: 'Upgrade Completed!',
+      upgradeSuccess: '✨ Upgrade Successful!',
+      upgradeFailed: '❌ Upgrade Failed',
+      upgradeFailedDesc: 'Upgrade attempt failed. Heroes remain, but resources were spent.',
+      onSuccess: 'On Success:',
+      onSuccessDesc: 'Heroes will merge into an upgraded hero',
+      onFailure: 'On Failure:',
+      onFailureDesc: 'Heroes will remain, but all resources and items will be consumed.',
+      selectHeroes: 'Select Heroes for Upgrade',
+      noHeroesAvailable: 'No heroes available for upgrade',
+      needTwoHeroes: 'Need 2 identical heroes of the same faction for upgrade'
+    },
+    // Dragon Lair
+    dragonLair: {
+      upgradeDragons: 'Dragon Upgrades',
+      maxUpgrades: 'Max concurrent upgrades:',
+      atLevel: 'At level',
+      canUpgrade: 'can upgrade dragons up to',
+      rank: 'rank',
+      activeUpgrades: 'Active upgrades:',
+      upgradeLair: 'Upgrade Lair',
+      recipes: 'Recipes',
+      dragons: 'Dragons',
+      active: 'Active',
+      upgradeRecipes: 'Dragon Upgrade Recipes',
+      requirements: 'Requirements for upgrading dragons of different ranks',
+      faction: 'Faction',
+      allFactions: 'All Factions',
+      rarity: 'Rarity',
+      allRarities: 'All Rarities',
+      upgrade: 'Upgrade',
+      upgradeCompleted: 'Upgrade Completed!',
+      upgradeSuccess: '✨ Upgrade Successful!',
+      upgradeFailed: '❌ Upgrade Failed',
+      upgradeFailedDesc: 'Upgrade attempt failed. Dragons remain, but resources were spent.',
+      onSuccess: 'On Success:',
+      onSuccessDesc: 'Dragons will merge into an upgraded dragon',
+      onFailure: 'On Failure:',
+      onFailureDesc: 'Dragons will remain, but all resources and items will be consumed.',
+      selectDragons: 'Select Dragons for Upgrade',
+      noDragonsAvailable: 'No dragons available for upgrade',
+      needTwoDragons: 'Need 2 identical dragons of the same faction for upgrade'
     }
   }
 };

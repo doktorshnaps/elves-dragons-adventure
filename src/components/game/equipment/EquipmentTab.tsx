@@ -3,9 +3,12 @@ import { EquipmentGrid } from "../stats/EquipmentGrid";
 import { InventoryDisplay } from "../InventoryDisplay";
 import { Item } from "@/types/inventory";
 import { useToast } from "@/hooks/use-toast";
+import { useLanguage } from "@/hooks/useLanguage";
+import { t } from "@/utils/translations";
 
 export const EquipmentTab = () => {
   const { toast } = useToast();
+  const { language } = useLanguage();
 
   const handleUseItem = (item: Item) => {
     // Экипировка предметов временно отключена (нужно добавить поля в item_instances)
@@ -28,7 +31,7 @@ export const EquipmentTab = () => {
       >
         <div className="absolute inset-0 bg-game-surface/90 backdrop-blur-sm" />
         <div className="relative z-10">
-          <h2 className="text-xl font-bold text-game-accent mb-6">Снаряжение игрока</h2>
+          <h2 className="text-xl font-bold text-game-accent mb-6">{t(language, 'equipment.playerEquipment')}</h2>
           <EquipmentGrid />
         </div>
       </Card>

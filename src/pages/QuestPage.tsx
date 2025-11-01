@@ -3,9 +3,12 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useNavigate } from "react-router-dom";
 import { ReferralTab } from "@/components/game/ReferralTab";
 import { SocialQuests } from "@/components/game/SocialQuests";
+import { useLanguage } from "@/hooks/useLanguage";
+import { t } from "@/utils/translations";
 
 export const QuestPage = () => {
   const navigate = useNavigate();
+  const { language } = useLanguage();
 
   return (
     <div className="min-h-screen p-4 relative">
@@ -26,10 +29,10 @@ export const QuestPage = () => {
           style={{ boxShadow: '-33px 15px 10px rgba(0, 0, 0, 0.6)' }}
           onClick={() => navigate('/menu')}
         >
-          Вернуться в меню
+          {t(language, 'quest.backToMenu')}
         </Button>
         
-        <h1 className="text-2xl text-white mb-6">Квесты и Рефералы</h1>
+        <h1 className="text-2xl text-white mb-6">{t(language, 'quest.title')}</h1>
         
         <Tabs defaultValue="quests" className="w-full">
           <TabsList className="grid w-full grid-cols-2 bg-black/50 border-2 border-white backdrop-blur-sm rounded-3xl" style={{ boxShadow: '-33px 15px 10px rgba(0, 0, 0, 0.6)' }}>
@@ -37,13 +40,13 @@ export const QuestPage = () => {
               value="quests" 
               className="text-white data-[state=active]:bg-white/20 data-[state=active]:text-white rounded-3xl"
             >
-              Квесты
+              {t(language, 'quest.quests')}
             </TabsTrigger>
             <TabsTrigger 
               value="referrals" 
               className="text-white data-[state=active]:bg-white/20 data-[state=active]:text-white rounded-3xl"
             >
-              Рефералы
+              {t(language, 'quest.referrals')}
             </TabsTrigger>
           </TabsList>
           

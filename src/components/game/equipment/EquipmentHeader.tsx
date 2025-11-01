@@ -1,5 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { ArrowLeft } from "lucide-react";
+import { useLanguage } from "@/hooks/useLanguage";
+import { t } from "@/utils/translations";
 
 interface EquipmentHeaderProps {
   onBack: () => void;
@@ -7,6 +9,7 @@ interface EquipmentHeaderProps {
 }
 
 export const EquipmentHeader = ({ onBack, onMintNFT }: EquipmentHeaderProps) => {
+  const { language } = useLanguage();
   return (
     <div className="flex items-center gap-4 mb-6">
       <Button 
@@ -15,7 +18,7 @@ export const EquipmentHeader = ({ onBack, onMintNFT }: EquipmentHeaderProps) => 
         onClick={onBack}
       >
         <ArrowLeft className="w-4 h-4 mr-2" />
-        Вернуться в меню
+        {t(language, 'equipment.backToMenu')}
       </Button>
       
       <Button 
@@ -23,10 +26,10 @@ export const EquipmentHeader = ({ onBack, onMintNFT }: EquipmentHeaderProps) => 
         className="shadow-lg"
         onClick={onMintNFT}
       >
-        Mint NFT
+        {t(language, 'equipment.mintNFT')}
       </Button>
       
-      <h1 className="text-2xl font-bold text-white">Снаряжение</h1>
+      <h1 className="text-2xl font-bold text-white">{t(language, 'equipment.title')}</h1>
     </div>
   );
 };

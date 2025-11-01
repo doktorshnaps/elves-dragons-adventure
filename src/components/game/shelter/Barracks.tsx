@@ -400,19 +400,19 @@ export const Barracks: React.FC<BarracksProps> = ({ barracksLevel, onUpgradeBuil
             </Badge>
           </div>
           <CardDescription>
-            Улучшение героев. Макс. одновременных улучшений: {getMaxConcurrentUpgrades()}
+            {t(language, 'barracks.upgradeHeroes')}. {t(language, 'barracks.maxUpgrades')} {getMaxConcurrentUpgrades()}
           </CardDescription>
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
             <div className="text-sm text-muted-foreground">
-              <p>• На уровне {barracksLevel} можно улучшать героев до {barracksLevel + 1} ранга</p>
-              <p>• Активных улучшений: {activeUpgrades.length}/{getMaxConcurrentUpgrades()}</p>
+              <p>• {t(language, 'barracks.atLevel')} {barracksLevel} {t(language, 'barracks.canUpgrade')} {barracksLevel + 1} {t(language, 'barracks.rank')}</p>
+              <p>• {t(language, 'barracks.activeUpgrades')} {activeUpgrades.length}/{getMaxConcurrentUpgrades()}</p>
             </div>
             
             {barracksLevel < 8 && (
               <Button onClick={onUpgradeBuilding} variant="outline">
-                Улучшить казарму
+                {t(language, 'barracks.upgradeBarracks')}
               </Button>
             )}
           </div>
@@ -423,15 +423,15 @@ export const Barracks: React.FC<BarracksProps> = ({ barracksLevel, onUpgradeBuil
         <TabsList className="grid w-full grid-cols-3">
           <TabsTrigger value="recipes" className="flex items-center gap-2">
             <BookOpen className="w-4 h-4" />
-            <span className="hidden sm:inline">Рецепты</span>
+            <span className="hidden sm:inline">{t(language, 'barracks.recipes')}</span>
           </TabsTrigger>
           <TabsTrigger value="heroes" className="flex items-center gap-2">
             <Swords className="w-4 h-4" />
-            <span className="hidden sm:inline">Герои</span>
+            <span className="hidden sm:inline">{t(language, 'barracks.heroes')}</span>
           </TabsTrigger>
           <TabsTrigger value="active" className="flex items-center gap-2">
             <Clock className="w-4 h-4" />
-            <span className="hidden sm:inline">Активные</span>
+            <span className="hidden sm:inline">{t(language, 'barracks.active')}</span>
             {activeUpgrades.length > 0 && (
               <Badge variant="secondary" className="ml-1">{activeUpgrades.length}</Badge>
             )}
@@ -444,37 +444,37 @@ export const Barracks: React.FC<BarracksProps> = ({ barracksLevel, onUpgradeBuil
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <BookOpen className="w-5 h-5" />
-                Рецепты улучшений
+                {t(language, 'barracks.upgradeRecipes')}
               </CardTitle>
               <CardDescription>
-                Настройки требований для улучшения героев
+                {t(language, 'barracks.requirements')}
               </CardDescription>
             </CardHeader>
             <CardContent>
               {/* Filters */}
               <div className="flex flex-col sm:flex-row gap-4 mb-6">
-                <div className="flex-1">
-                  <label className="text-sm font-medium mb-2 block">Фракция</label>
-                  <Select value={factionFilter} onValueChange={setFactionFilter}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Все фракции" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">Все фракции</SelectItem>
-                      {factions.map(faction => (
-                        <SelectItem key={faction} value={faction}>{faction}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="flex-1">
-                  <label className="text-sm font-medium mb-2 block">Редкость</label>
-                  <Select value={rarityFilter} onValueChange={setRarityFilter}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Все редкости" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">Все редкости</SelectItem>
+                  <div className="flex-1">
+                    <label className="text-sm font-medium mb-2 block">{t(language, 'barracks.faction')}</label>
+                    <Select value={factionFilter} onValueChange={setFactionFilter}>
+                      <SelectTrigger>
+                        <SelectValue placeholder={t(language, 'barracks.allFactions')} />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">{t(language, 'barracks.allFactions')}</SelectItem>
+                        {factions.map(faction => (
+                          <SelectItem key={faction} value={faction}>{faction}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="flex-1">
+                    <label className="text-sm font-medium mb-2 block">{t(language, 'barracks.rarity')}</label>
+                    <Select value={rarityFilter} onValueChange={setRarityFilter}>
+                      <SelectTrigger>
+                        <SelectValue placeholder={t(language, 'barracks.allRarities')} />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">{t(language, 'barracks.allRarities')}</SelectItem>
                       {[1, 2, 3, 4, 5, 6, 7, 8].map(rarity => (
                         <SelectItem key={rarity} value={rarity.toString()}>
                           Ранг {rarity}
