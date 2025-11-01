@@ -15,6 +15,7 @@ import { AttackAnimation } from './AttackAnimation';
 import { useDungeonSync } from '@/hooks/useDungeonSync';
 import { useLanguage } from '@/hooks/useLanguage';
 import { t } from '@/utils/translations';
+import { getTranslatedCardName } from '@/utils/cardNameTranslations';
 interface TeamBattleArenaProps {
   playerPairs: TeamPair[];
   opponents: Opponent[];
@@ -358,9 +359,9 @@ export const TeamBattleArena: React.FC<TeamBattleArenaProps> = ({
                               #{pair.attackOrder}
                             </span>
                           </div>
-                          <span className="font-medium text-sm text-white">{pair.hero.name}</span>
+                          <span className="font-medium text-sm text-white">{getTranslatedCardName(pair.hero.name, language)}</span>
                           {pair.dragon && <div className="text-xs text-white/70">
-                              + {pair.dragon.name}
+                              + {getTranslatedCardName(pair.dragon.name, language)}
                             </div>}
                         </div>
                         

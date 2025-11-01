@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { TeamPair } from '@/types/teamBattle';
 import { useLanguage } from '@/hooks/useLanguage';
 import { t } from '@/utils/translations';
+import { getTranslatedCardName } from '@/utils/cardNameTranslations';
 
 interface AttackOrderSelectorProps {
   playerPairs: TeamPair[];
@@ -103,7 +104,7 @@ export const AttackOrderSelector: React.FC<AttackOrderSelectorProps> = ({
                       
                       <div className="text-center">
                         <div className="text-xs text-white/70">{t(language, 'attackOrder.hero')}</div>
-                        <div className="text-xs font-medium text-white">{pair.hero.name}</div>
+                        <div className="text-xs font-medium text-white">{getTranslatedCardName(pair.hero.name, language)}</div>
                         
                         {pair.dragon && (
                           <>
@@ -123,7 +124,7 @@ export const AttackOrderSelector: React.FC<AttackOrderSelectorProps> = ({
                               </div>
                             </div>
                             <div className="text-xs text-white/70 mt-1">{t(language, 'attackOrder.dragon')}</div>
-                            <div className="text-xs font-medium text-white">{pair.dragon.name}</div>
+                            <div className="text-xs font-medium text-white">{getTranslatedCardName(pair.dragon.name, language)}</div>
                           </>
                         )}
                         
