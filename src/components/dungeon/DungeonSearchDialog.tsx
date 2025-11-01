@@ -41,15 +41,18 @@ const dungeonLevelRequirements = {
   pantheon_gods: 120
 };
 
-const dungeonNames = {
-  spider_nest: t('ru', 'dungeonSearch.spiderNest'),
-  bone_dungeon: t('ru', 'dungeonSearch.boneDungeon'),
-  dark_mage: t('ru', 'dungeonSearch.darkMage'),
-  forgotten_souls: t('ru', 'dungeonSearch.forgottenSouls'),
-  ice_throne: t('ru', 'dungeonSearch.iceThrone'),
-  sea_serpent: t('ru', 'dungeonSearch.seaSerpent'),
-  dragon_lair: t('ru', 'dungeonSearch.dragonLair'),
-  pantheon_gods: t('ru', 'dungeonSearch.pantheonGods')
+const getDungeonName = (dungeon: DungeonType, lang: string) => {
+  const keys: Record<DungeonType, string> = {
+    spider_nest: 'dungeonSearch.spiderNest',
+    bone_dungeon: 'dungeonSearch.boneDungeon',
+    dark_mage: 'dungeonSearch.darkMage',
+    forgotten_souls: 'dungeonSearch.forgottenSouls',
+    ice_throne: 'dungeonSearch.iceThrone',
+    sea_serpent: 'dungeonSearch.seaSerpent',
+    dragon_lair: 'dungeonSearch.dragonLair',
+    pantheon_gods: 'dungeonSearch.pantheonGods'
+  };
+  return t(lang as any, keys[dungeon]);
 };
 
 export const DungeonSearchDialog = ({
@@ -200,7 +203,7 @@ export const DungeonSearchDialog = ({
                   }`}
                   style={!isActiveDungeon && !activeDungeon ? { boxShadow: '-33px 15px 10px rgba(0, 0, 0, 0.6)' } : undefined}
                 >
-                  {dungeonNames[dungeon as keyof typeof dungeonNames]}
+                  {getDungeonName(dungeon as DungeonType, language)}
                   {isActiveDungeon && <span className="ml-2">⚔️</span>}
                 </Button>
               );
