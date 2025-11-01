@@ -1,6 +1,6 @@
 import { Opponent } from '@/types/battle';
 import { getMonsterData } from '@/utils/monsterDataParser';
-import { calculateMonsterStatsFromDB } from '@/utils/dungeonSettingsLoader';
+import { calculateMonsterStatsFromDB, getDungeonSettings } from '@/utils/dungeonSettingsLoader';
 
 export interface DungeonConfig {
   internalName: string;
@@ -17,27 +17,42 @@ export interface DungeonConfig {
   };
 }
 
-// Определяем тип монстра и количество согласно ТЗ
-const getWaveConfig = (level: number): { monsterType: string; count: number } => {
-  // Уровни 50 и 100 - только босс
-  if (level === 50) return { monsterType: 'boss50', count: 1 };
-  if (level === 100) return { monsterType: 'boss100', count: 1 };
+// Определяем тип монстра и количество - теперь с учетом настроек из БД
+const getWaveConfig = async (dungeonType: string, level: number): Promise<{ monsterType: string; count: number }> => {
+  const settings = await getDungeonSettings(dungeonType);
   
-  // Определяем позицию в десятке (1-10)
-  const posInTen = ((level - 1) % 10) + 1;
+  if (!settings) {
+    // Fallback к дефолтной логике, если настройки не загружены
+    if (level === 50) return { monsterType: 'boss50', count: 1 };
+    if (level === 100) return { monsterType: 'boss100', count: 1 };
+    const posInTen = ((level - 1) % 10) + 1;
+    if (posInTen === 10) return { monsterType: 'miniboss_wave', count: 10 };
+    return { monsterType: 'monster', count: posInTen };
+  }
   
-  // Уровень 10, 20, 30, 40 и т.д. - 9 обычных + минибосс
-  if (posInTen === 10) {
+  const { monster_spawn_config } = settings;
+  
+  // Проверяем, является ли уровень боссом 50 или 100
+  if (level === monster_spawn_config.boss50.level) {
+    return { monsterType: 'boss50', count: 1 };
+  }
+  if (level === monster_spawn_config.boss100.level) {
+    return { monsterType: 'boss100', count: 1 };
+  }
+  
+  // Проверяем, является ли уровень уровнем минибосса
+  if (monster_spawn_config.miniboss.levels.includes(level)) {
     return { monsterType: 'miniboss_wave', count: 10 }; // 9 обычных + 1 минибосс
   }
   
-  // Уровни 1-9 в десятке: количество = номер в десятке
+  // Определяем позицию в десятке для обычных монстров (1-9)
+  const posInTen = ((level - 1) % 10) + 1;
   return { monsterType: 'monster', count: posInTen };
 };
 
 export const createBalancedGenerator = (config: DungeonConfig) => 
   async (level: number): Promise<Opponent[]> => {
-    const waveConfig = getWaveConfig(level);
+    const waveConfig = await getWaveConfig(config.internalName, level);
     
     // Пытаемся получить данные из CSV (для точной настройки)
     const monsterData = await getMonsterData(config.internalName, level);

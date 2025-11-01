@@ -11,6 +11,18 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/component
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { DungeonItemDrops } from "./DungeonItemDrops";
 
+interface MonsterSpawnConfig {
+  normal: { min_level: number; max_level: number };
+  miniboss: { levels: number[] };
+  boss50: { level: number };
+  boss100: { level: number };
+}
+
+interface BossMultipliers {
+  boss50: number;
+  boss100: number;
+}
+
 interface DungeonSetting {
   id: string;
   dungeon_type: string;
@@ -22,6 +34,10 @@ interface DungeonSetting {
   hp_growth: number;
   armor_growth: number;
   atk_growth: number;
+  monster_spawn_config: MonsterSpawnConfig;
+  boss_hp_multipliers: BossMultipliers;
+  boss_armor_multipliers: BossMultipliers;
+  boss_atk_multipliers: BossMultipliers;
 }
 
 export const DungeonSettings = () => {
@@ -45,7 +61,16 @@ export const DungeonSettings = () => {
         .order('dungeon_number');
 
       if (error) throw error;
-      if (data) setDungeons(data);
+      if (data) {
+        const dungeonSettings: DungeonSetting[] = data.map(d => ({
+          ...d,
+          monster_spawn_config: d.monster_spawn_config as unknown as MonsterSpawnConfig,
+          boss_hp_multipliers: d.boss_hp_multipliers as unknown as BossMultipliers,
+          boss_armor_multipliers: d.boss_armor_multipliers as unknown as BossMultipliers,
+          boss_atk_multipliers: d.boss_atk_multipliers as unknown as BossMultipliers,
+        }));
+        setDungeons(dungeonSettings);
+      }
     } catch (error) {
       console.error('Error loading dungeons:', error);
       toast({
@@ -68,10 +93,31 @@ export const DungeonSettings = () => {
     setOpenDungeons(newOpen);
   };
 
-  const updateDungeon = (dungeonId: string, field: keyof DungeonSetting, value: number) => {
+  const updateDungeon = (dungeonId: string, field: keyof DungeonSetting, value: number | MonsterSpawnConfig | BossMultipliers) => {
     setDungeons(dungeons.map(d => 
       d.id === dungeonId ? { ...d, [field]: value } : d
     ));
+  };
+
+  const updateMinibossLevels = (dungeonId: string, levels: string) => {
+    const levelsArray = levels.split(',').map(l => parseInt(l.trim())).filter(l => !isNaN(l));
+    const dungeon = dungeons.find(d => d.id === dungeonId);
+    if (dungeon) {
+      updateDungeon(dungeonId, 'monster_spawn_config', {
+        ...dungeon.monster_spawn_config,
+        miniboss: { levels: levelsArray }
+      });
+    }
+  };
+
+  const updateBossMultiplier = (dungeonId: string, multiplierType: 'boss_hp_multipliers' | 'boss_armor_multipliers' | 'boss_atk_multipliers', bossType: 'boss50' | 'boss100', value: number) => {
+    const dungeon = dungeons.find(d => d.id === dungeonId);
+    if (dungeon) {
+      updateDungeon(dungeonId, multiplierType, {
+        ...dungeon[multiplierType],
+        [bossType]: value
+      });
+    }
   };
 
   const saveDungeon = async (dungeon: DungeonSetting) => {
@@ -86,16 +132,21 @@ export const DungeonSettings = () => {
 
     setSaving(true);
     try {
-      const { data, error } = await supabase.rpc('admin_update_dungeon_setting', {
-        p_id: dungeon.id,
-        p_base_hp: dungeon.base_hp,
-        p_base_armor: dungeon.base_armor,
-        p_base_atk: dungeon.base_atk,
-        p_hp_growth: dungeon.hp_growth || 1.15,
-        p_armor_growth: dungeon.armor_growth || 1.10,
-        p_atk_growth: dungeon.atk_growth || 1.12,
-        p_admin_wallet_address: accountId
-      });
+      const { error } = await supabase
+        .from('dungeon_settings')
+        .update({
+          base_hp: dungeon.base_hp,
+          base_armor: dungeon.base_armor,
+          base_atk: dungeon.base_atk,
+          hp_growth: dungeon.hp_growth || 1.15,
+          armor_growth: dungeon.armor_growth || 1.10,
+          atk_growth: dungeon.atk_growth || 1.12,
+          monster_spawn_config: dungeon.monster_spawn_config as any,
+          boss_hp_multipliers: dungeon.boss_hp_multipliers as any,
+          boss_armor_multipliers: dungeon.boss_armor_multipliers as any,
+          boss_atk_multipliers: dungeon.boss_atk_multipliers as any,
+        })
+        .eq('id', dungeon.id);
 
       if (error) throw error;
 
@@ -242,6 +293,99 @@ export const DungeonSettings = () => {
                   </div>
                 </div>
 
+                {/* Настройки появления монстров */}
+                <div className="space-y-3">
+                  <h4 className="font-semibold text-sm">Настройки появления монстров</h4>
+                  <div className="space-y-2">
+                    <div>
+                      <Label className="text-xs">Уровни минибоссов (через запятую)</Label>
+                      <Input
+                        type="text"
+                        value={dungeon.monster_spawn_config.miniboss.levels.join(', ')}
+                        onChange={(e) => updateMinibossLevels(dungeon.id, e.target.value)}
+                        placeholder="10, 20, 30, 40, 60, 70, 80, 90"
+                      />
+                      <p className="text-[10px] text-muted-foreground mt-1">
+                        На этих уровнях будут появляться минибоссы
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Множители боссов (независимые от базовых характеристик) */}
+                <div className="space-y-3">
+                  <h4 className="font-semibold text-sm">Множители характеристик боссов</h4>
+                  <p className="text-xs text-muted-foreground">
+                    Эти множители применяются к базовым характеристикам монстров для боссов
+                  </p>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-3">
+                      <p className="font-medium text-xs">Босс 50 уровня</p>
+                      <div className="space-y-2">
+                        <div>
+                          <Label className="text-xs">HP множитель</Label>
+                          <Input
+                            type="number"
+                            step="0.1"
+                            value={dungeon.boss_hp_multipliers.boss50}
+                            onChange={(e) => updateBossMultiplier(dungeon.id, 'boss_hp_multipliers', 'boss50', parseFloat(e.target.value) || 2.5)}
+                          />
+                        </div>
+                        <div>
+                          <Label className="text-xs">Armor множитель</Label>
+                          <Input
+                            type="number"
+                            step="0.1"
+                            value={dungeon.boss_armor_multipliers.boss50}
+                            onChange={(e) => updateBossMultiplier(dungeon.id, 'boss_armor_multipliers', 'boss50', parseFloat(e.target.value) || 1.3)}
+                          />
+                        </div>
+                        <div>
+                          <Label className="text-xs">ATK множитель</Label>
+                          <Input
+                            type="number"
+                            step="0.1"
+                            value={dungeon.boss_atk_multipliers.boss50}
+                            onChange={(e) => updateBossMultiplier(dungeon.id, 'boss_atk_multipliers', 'boss50', parseFloat(e.target.value) || 1.1)}
+                          />
+                        </div>
+                      </div>
+                    </div>
+                    <div className="space-y-3">
+                      <p className="font-medium text-xs">Босс 100 уровня</p>
+                      <div className="space-y-2">
+                        <div>
+                          <Label className="text-xs">HP множитель</Label>
+                          <Input
+                            type="number"
+                            step="0.1"
+                            value={dungeon.boss_hp_multipliers.boss100}
+                            onChange={(e) => updateBossMultiplier(dungeon.id, 'boss_hp_multipliers', 'boss100', parseFloat(e.target.value) || 4.0)}
+                          />
+                        </div>
+                        <div>
+                          <Label className="text-xs">Armor множитель</Label>
+                          <Input
+                            type="number"
+                            step="0.1"
+                            value={dungeon.boss_armor_multipliers.boss100}
+                            onChange={(e) => updateBossMultiplier(dungeon.id, 'boss_armor_multipliers', 'boss100', parseFloat(e.target.value) || 1.5)}
+                          />
+                        </div>
+                        <div>
+                          <Label className="text-xs">ATK множитель</Label>
+                          <Input
+                            type="number"
+                            step="0.1"
+                            value={dungeon.boss_atk_multipliers.boss100}
+                            onChange={(e) => updateBossMultiplier(dungeon.id, 'boss_atk_multipliers', 'boss100', parseFloat(e.target.value) || 1.15)}
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
                 {/* Предпросмотр характеристик */}
                 <div className="space-y-3 bg-accent/20 p-4 rounded-lg">
                   <h4 className="font-semibold text-sm">Предпросмотр монстров</h4>
@@ -254,13 +398,13 @@ export const DungeonSettings = () => {
                     </div>
                     <div>
                       <p className="font-medium mb-2">Уровень 50 (Boss):</p>
-                      <p>HP: {Math.floor(dungeon.base_hp * Math.pow(dungeon.hp_growth || 1.15, 4.9) * Math.pow(1.2, dungeon.dungeon_number - 1) * 2.5)}</p>
-                      <p>Armor: {Math.floor(dungeon.base_armor * Math.pow(dungeon.armor_growth || 1.10, 4.9) * Math.pow(1.2, dungeon.dungeon_number - 1) * 1.3)}</p>
-                      <p>ATK: {Math.floor(dungeon.base_atk * Math.pow(dungeon.atk_growth || 1.12, 4.9) * Math.pow(1.2, dungeon.dungeon_number - 1) * 1.1)}</p>
+                      <p>HP: {Math.floor(dungeon.base_hp * Math.pow(dungeon.hp_growth || 1.15, 4.9) * Math.pow(1.2, dungeon.dungeon_number - 1) * dungeon.boss_hp_multipliers.boss50)}</p>
+                      <p>Armor: {Math.floor(dungeon.base_armor * Math.pow(dungeon.armor_growth || 1.10, 4.9) * Math.pow(1.2, dungeon.dungeon_number - 1) * dungeon.boss_armor_multipliers.boss50)}</p>
+                      <p>ATK: {Math.floor(dungeon.base_atk * Math.pow(dungeon.atk_growth || 1.12, 4.9) * Math.pow(1.2, dungeon.dungeon_number - 1) * dungeon.boss_atk_multipliers.boss50)}</p>
                     </div>
                   </div>
                   <p className="text-[10px] text-muted-foreground mt-2">
-                    Типовые множители: Normal (1.0×), Miniboss (HP:1.5× Armor:1.2× ATK:1.0×), Boss50 (HP:2.5× Armor:1.3× ATK:1.1×), Boss100 (HP:4.0× Armor:1.5× ATK:1.15×)
+                    Минибоссы появляются на уровнях: {dungeon.monster_spawn_config.miniboss.levels.join(', ')}
                   </p>
                 </div>
 

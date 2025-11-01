@@ -619,12 +619,16 @@ export type Database = {
           base_armor: number
           base_atk: number
           base_hp: number
+          boss_armor_multipliers: Json | null
+          boss_atk_multipliers: Json | null
+          boss_hp_multipliers: Json | null
           created_at: string | null
           dungeon_name: string
           dungeon_number: number
           dungeon_type: string
           hp_growth: number
           id: string
+          monster_spawn_config: Json | null
           updated_at: string | null
         }
         Insert: {
@@ -633,12 +637,16 @@ export type Database = {
           base_armor?: number
           base_atk?: number
           base_hp?: number
+          boss_armor_multipliers?: Json | null
+          boss_atk_multipliers?: Json | null
+          boss_hp_multipliers?: Json | null
           created_at?: string | null
           dungeon_name: string
           dungeon_number: number
           dungeon_type: string
           hp_growth?: number
           id?: string
+          monster_spawn_config?: Json | null
           updated_at?: string | null
         }
         Update: {
@@ -647,12 +655,16 @@ export type Database = {
           base_armor?: number
           base_atk?: number
           base_hp?: number
+          boss_armor_multipliers?: Json | null
+          boss_atk_multipliers?: Json | null
+          boss_hp_multipliers?: Json | null
           created_at?: string | null
           dungeon_name?: string
           dungeon_number?: number
           dungeon_type?: string
           hp_growth?: number
           id?: string
+          monster_spawn_config?: Json | null
           updated_at?: string | null
         }
         Relationships: []

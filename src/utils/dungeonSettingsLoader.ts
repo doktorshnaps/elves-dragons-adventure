@@ -1,5 +1,17 @@
 import { supabase } from '@/integrations/supabase/client';
 
+export interface MonsterSpawnConfig {
+  normal: { min_level: number; max_level: number };
+  miniboss: { levels: number[] };
+  boss50: { level: number };
+  boss100: { level: number };
+}
+
+export interface BossMultipliers {
+  boss50: number;
+  boss100: number;
+}
+
 export interface DungeonSettings {
   id: string;
   dungeon_type: string;
@@ -11,6 +23,10 @@ export interface DungeonSettings {
   hp_growth: number;
   armor_growth: number;
   atk_growth: number;
+  monster_spawn_config: MonsterSpawnConfig;
+  boss_hp_multipliers: BossMultipliers;
+  boss_armor_multipliers: BossMultipliers;
+  boss_atk_multipliers: BossMultipliers;
 }
 
 let cachedSettings: DungeonSettings[] | null = null;
@@ -31,7 +47,14 @@ export const getDungeonSettings = async (dungeonType: string): Promise<DungeonSe
       return null;
     }
     
-    cachedSettings = data;
+    // Преобразуем Json типы в наши интерфейсы
+    cachedSettings = data?.map(d => ({
+      ...d,
+      monster_spawn_config: d.monster_spawn_config as unknown as MonsterSpawnConfig,
+      boss_hp_multipliers: d.boss_hp_multipliers as unknown as BossMultipliers,
+      boss_armor_multipliers: d.boss_armor_multipliers as unknown as BossMultipliers,
+      boss_atk_multipliers: d.boss_atk_multipliers as unknown as BossMultipliers,
+    })) || null;
     lastFetchTime = now;
   }
   
@@ -70,7 +93,10 @@ export const calculateMonsterStatsFromDB = async (
     hp_growth, 
     armor_growth, 
     atk_growth,
-    dungeon_number 
+    dungeon_number,
+    boss_hp_multipliers,
+    boss_armor_multipliers,
+    boss_atk_multipliers
   } = settings;
 
   // Dungeon factor: 1.2^(D-1)
@@ -89,15 +115,31 @@ export const calculateMonsterStatsFromDB = async (
     attack: Math.floor(base_atk * atkLevelGrowth * dungeonFactor)
   };
 
-  // Типовые множители согласно новым требованиям
-  const typeMultipliers = {
-    normal: { hp: 1.0, armor: 1.0, attack: 1.0 },
-    miniboss: { hp: 1.5, armor: 1.5, attack: 1.5 },
-    boss50: { hp: 3.0, armor: 3.0, attack: 3.0 },
-    boss100: { hp: 5.0, armor: 5.0, attack: 5.0 }
-  };
-
-  const mult = typeMultipliers[monsterType];
+  // Множители по типу монстра - используем настройки из БД для боссов
+  let mult = { hp: 1.0, armor: 1.0, attack: 1.0 };
+  
+  switch (monsterType) {
+    case 'normal':
+      mult = { hp: 1.0, armor: 1.0, attack: 1.0 };
+      break;
+    case 'miniboss':
+      mult = { hp: 1.5, armor: 1.5, attack: 1.5 };
+      break;
+    case 'boss50':
+      mult = {
+        hp: boss_hp_multipliers.boss50,
+        armor: boss_armor_multipliers.boss50,
+        attack: boss_atk_multipliers.boss50
+      };
+      break;
+    case 'boss100':
+      mult = {
+        hp: boss_hp_multipliers.boss100,
+        armor: boss_armor_multipliers.boss100,
+        attack: boss_atk_multipliers.boss100
+      };
+      break;
+  }
 
   return {
     hp: Math.floor(baseStats.hp * mult.hp),
