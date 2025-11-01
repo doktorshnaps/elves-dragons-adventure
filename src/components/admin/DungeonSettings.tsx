@@ -10,6 +10,7 @@ import { Loader2, Save, ChevronDown, ChevronUp } from "lucide-react";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { DungeonItemDrops } from "./DungeonItemDrops";
+import { Checkbox } from "@/components/ui/checkbox";
 
 interface LevelMonsterConfig {
   level: number;
@@ -49,6 +50,13 @@ interface DungeonSetting {
   boss_atk_multipliers: BossMultipliers;
 }
 
+interface Monster {
+  id: string;
+  monster_id: string;
+  monster_name: string;
+  monster_type: string;
+}
+
 export const DungeonSettings = () => {
   const { toast } = useToast();
   const { accountId } = useWalletContext();
@@ -56,10 +64,35 @@ export const DungeonSettings = () => {
   const [saving, setSaving] = useState(false);
   const [dungeons, setDungeons] = useState<DungeonSetting[]>([]);
   const [openDungeons, setOpenDungeons] = useState<Set<string>>(new Set());
+  const [monsters, setMonsters] = useState<Monster[]>([]);
 
   useEffect(() => {
     loadDungeons();
+    loadMonsters();
   }, []);
+
+  const loadMonsters = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('monsters')
+        .select('*')
+        .eq('is_active', true)
+        .order('monster_type', { ascending: true })
+        .order('monster_name', { ascending: true });
+
+      if (error) throw error;
+      if (data) {
+        setMonsters(data);
+      }
+    } catch (error) {
+      console.error('Error loading monsters:', error);
+      toast({
+        variant: "destructive",
+        title: "Ошибка",
+        description: "Не удалось загрузить список монстров",
+      });
+    }
+  };
 
   const loadDungeons = async () => {
     try {
@@ -406,17 +439,35 @@ export const DungeonSettings = () => {
                               max={100}
                             />
                           </div>
-                          <div>
-                            <Label className="text-xs">Монстры (через запятую)</Label>
-                            <Input
-                              type="text"
-                              value={levelConfig.monsters.join(', ')}
-                              onChange={(e) => {
-                                const monsters = e.target.value.split(',').map(m => m.trim()).filter(m => m.length > 0);
-                                updateLevelMonster(dungeon.id, idx, 'monsters', monsters);
-                              }}
-                              placeholder="monster1, monster2"
-                            />
+                          <div className="col-span-2">
+                            <Label className="text-xs">Выберите монстров</Label>
+                            <div className="border rounded-lg p-3 max-h-48 overflow-y-auto space-y-2">
+                              {monsters.length === 0 ? (
+                                <p className="text-xs text-muted-foreground">Загрузка монстров...</p>
+                              ) : (
+                                monsters.map((monster) => (
+                                  <div key={monster.monster_id} className="flex items-center space-x-2">
+                                    <Checkbox
+                                      id={`${dungeon.id}-${idx}-${monster.monster_id}`}
+                                      checked={levelConfig.monsters.includes(monster.monster_id)}
+                                      onCheckedChange={(checked) => {
+                                        const currentMonsters = levelConfig.monsters;
+                                        const newMonsters = checked
+                                          ? [...currentMonsters, monster.monster_id]
+                                          : currentMonsters.filter(m => m !== monster.monster_id);
+                                        updateLevelMonster(dungeon.id, idx, 'monsters', newMonsters);
+                                      }}
+                                    />
+                                    <label
+                                      htmlFor={`${dungeon.id}-${idx}-${monster.monster_id}`}
+                                      className="text-xs font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
+                                    >
+                                      {monster.monster_name} <span className="text-muted-foreground">({monster.monster_type})</span>
+                                    </label>
+                                  </div>
+                                ))
+                              )}
+                            </div>
                           </div>
                         </div>
                         <p className="text-[10px] text-muted-foreground">

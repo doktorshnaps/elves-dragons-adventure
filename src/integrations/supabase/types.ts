@@ -1060,6 +1060,45 @@ export type Database = {
           },
         ]
       }
+      monsters: {
+        Row: {
+          created_at: string
+          created_by_wallet_address: string
+          description: string | null
+          id: string
+          image_url: string | null
+          is_active: boolean
+          monster_id: string
+          monster_name: string
+          monster_type: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by_wallet_address?: string
+          description?: string | null
+          id?: string
+          image_url?: string | null
+          is_active?: boolean
+          monster_id: string
+          monster_name: string
+          monster_type?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by_wallet_address?: string
+          description?: string | null
+          id?: string
+          image_url?: string | null
+          is_active?: boolean
+          monster_id?: string
+          monster_name?: string
+          monster_type?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           created_at: string
