@@ -24,6 +24,9 @@ export interface DungeonSettings {
   armor_growth: number;
   atk_growth: number;
   monster_spawn_config: MonsterSpawnConfig;
+  miniboss_hp_multiplier: number;
+  miniboss_armor_multiplier: number;
+  miniboss_atk_multiplier: number;
   boss_hp_multipliers: BossMultipliers;
   boss_armor_multipliers: BossMultipliers;
   boss_atk_multipliers: BossMultipliers;
@@ -51,6 +54,9 @@ export const getDungeonSettings = async (dungeonType: string): Promise<DungeonSe
     cachedSettings = data?.map(d => ({
       ...d,
       monster_spawn_config: d.monster_spawn_config as unknown as MonsterSpawnConfig,
+      miniboss_hp_multiplier: d.miniboss_hp_multiplier || 1.5,
+      miniboss_armor_multiplier: d.miniboss_armor_multiplier || 1.5,
+      miniboss_atk_multiplier: d.miniboss_atk_multiplier || 1.5,
       boss_hp_multipliers: d.boss_hp_multipliers as unknown as BossMultipliers,
       boss_armor_multipliers: d.boss_armor_multipliers as unknown as BossMultipliers,
       boss_atk_multipliers: d.boss_atk_multipliers as unknown as BossMultipliers,
@@ -94,6 +100,9 @@ export const calculateMonsterStatsFromDB = async (
     armor_growth, 
     atk_growth,
     dungeon_number,
+    miniboss_hp_multiplier,
+    miniboss_armor_multiplier,
+    miniboss_atk_multiplier,
     boss_hp_multipliers,
     boss_armor_multipliers,
     boss_atk_multipliers
@@ -115,7 +124,7 @@ export const calculateMonsterStatsFromDB = async (
     attack: Math.floor(base_atk * atkLevelGrowth * dungeonFactor)
   };
 
-  // Множители по типу монстра - используем настройки из БД для боссов
+  // Множители по типу монстра - используем настройки из БД
   let mult = { hp: 1.0, armor: 1.0, attack: 1.0 };
   
   switch (monsterType) {
@@ -123,7 +132,11 @@ export const calculateMonsterStatsFromDB = async (
       mult = { hp: 1.0, armor: 1.0, attack: 1.0 };
       break;
     case 'miniboss':
-      mult = { hp: 1.5, armor: 1.5, attack: 1.5 };
+      mult = {
+        hp: miniboss_hp_multiplier,
+        armor: miniboss_armor_multiplier,
+        attack: miniboss_atk_multiplier
+      };
       break;
     case 'boss50':
       mult = {

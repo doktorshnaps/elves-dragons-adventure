@@ -628,6 +628,9 @@ export type Database = {
           dungeon_type: string
           hp_growth: number
           id: string
+          miniboss_armor_multiplier: number | null
+          miniboss_atk_multiplier: number | null
+          miniboss_hp_multiplier: number | null
           monster_spawn_config: Json | null
           updated_at: string | null
         }
@@ -646,6 +649,9 @@ export type Database = {
           dungeon_type: string
           hp_growth?: number
           id?: string
+          miniboss_armor_multiplier?: number | null
+          miniboss_atk_multiplier?: number | null
+          miniboss_hp_multiplier?: number | null
           monster_spawn_config?: Json | null
           updated_at?: string | null
         }
@@ -664,6 +670,9 @@ export type Database = {
           dungeon_type?: string
           hp_growth?: number
           id?: string
+          miniboss_armor_multiplier?: number | null
+          miniboss_atk_multiplier?: number | null
+          miniboss_hp_multiplier?: number | null
           monster_spawn_config?: Json | null
           updated_at?: string | null
         }

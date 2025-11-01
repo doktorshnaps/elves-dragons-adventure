@@ -35,6 +35,9 @@ interface DungeonSetting {
   armor_growth: number;
   atk_growth: number;
   monster_spawn_config: MonsterSpawnConfig;
+  miniboss_hp_multiplier: number;
+  miniboss_armor_multiplier: number;
+  miniboss_atk_multiplier: number;
   boss_hp_multipliers: BossMultipliers;
   boss_armor_multipliers: BossMultipliers;
   boss_atk_multipliers: BossMultipliers;
@@ -65,6 +68,9 @@ export const DungeonSettings = () => {
         const dungeonSettings: DungeonSetting[] = data.map(d => ({
           ...d,
           monster_spawn_config: d.monster_spawn_config as unknown as MonsterSpawnConfig,
+          miniboss_hp_multiplier: d.miniboss_hp_multiplier || 1.5,
+          miniboss_armor_multiplier: d.miniboss_armor_multiplier || 1.5,
+          miniboss_atk_multiplier: d.miniboss_atk_multiplier || 1.5,
           boss_hp_multipliers: d.boss_hp_multipliers as unknown as BossMultipliers,
           boss_armor_multipliers: d.boss_armor_multipliers as unknown as BossMultipliers,
           boss_atk_multipliers: d.boss_atk_multipliers as unknown as BossMultipliers,
@@ -142,6 +148,9 @@ export const DungeonSettings = () => {
           armor_growth: dungeon.armor_growth || 1.10,
           atk_growth: dungeon.atk_growth || 1.12,
           monster_spawn_config: dungeon.monster_spawn_config as any,
+          miniboss_hp_multiplier: dungeon.miniboss_hp_multiplier || 1.5,
+          miniboss_armor_multiplier: dungeon.miniboss_armor_multiplier || 1.5,
+          miniboss_atk_multiplier: dungeon.miniboss_atk_multiplier || 1.5,
           boss_hp_multipliers: dungeon.boss_hp_multipliers as any,
           boss_armor_multipliers: dungeon.boss_armor_multipliers as any,
           boss_atk_multipliers: dungeon.boss_atk_multipliers as any,
@@ -308,6 +317,43 @@ export const DungeonSettings = () => {
                       <p className="text-[10px] text-muted-foreground mt-1">
                         На этих уровнях будут появляться минибоссы
                       </p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Множители минибоссов */}
+                <div className="space-y-3">
+                  <h4 className="font-semibold text-sm">Множители характеристик минибоссов</h4>
+                  <p className="text-xs text-muted-foreground">
+                    Эти множители применяются к базовым характеристикам монстров для минибоссов
+                  </p>
+                  <div className="grid grid-cols-3 gap-3">
+                    <div>
+                      <Label className="text-xs">HP множитель</Label>
+                      <Input
+                        type="number"
+                        step="0.1"
+                        value={dungeon.miniboss_hp_multiplier}
+                        onChange={(e) => updateDungeon(dungeon.id, 'miniboss_hp_multiplier', parseFloat(e.target.value) || 1.5)}
+                      />
+                    </div>
+                    <div>
+                      <Label className="text-xs">Armor множитель</Label>
+                      <Input
+                        type="number"
+                        step="0.1"
+                        value={dungeon.miniboss_armor_multiplier}
+                        onChange={(e) => updateDungeon(dungeon.id, 'miniboss_armor_multiplier', parseFloat(e.target.value) || 1.5)}
+                      />
+                    </div>
+                    <div>
+                      <Label className="text-xs">ATK множитель</Label>
+                      <Input
+                        type="number"
+                        step="0.1"
+                        value={dungeon.miniboss_atk_multiplier}
+                        onChange={(e) => updateDungeon(dungeon.id, 'miniboss_atk_multiplier', parseFloat(e.target.value) || 1.5)}
+                      />
                     </div>
                   </div>
                 </div>
