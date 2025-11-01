@@ -17,12 +17,15 @@ import { useDungeonSync } from '@/hooks/useDungeonSync';
 import { useEnergy } from '@/utils/energyManager';
 import { useToast } from '@/hooks/use-toast';
 import { useGameStore } from '@/stores/gameStore';
+import { useLanguage } from '@/hooks/useLanguage';
+import { t } from '@/utils/translations';
 interface TeamBattlePageProps {
   dungeonType: DungeonType;
 }
 export const TeamBattlePage: React.FC<TeamBattlePageProps> = ({
   dungeonType
 }) => {
+  const { language } = useLanguage();
   const navigate = useNavigate();
   const { toast } = useToast();
   const [battleStarted, setBattleStarted] = useState<boolean>(false);
@@ -78,8 +81,8 @@ export const TeamBattlePage: React.FC<TeamBattlePageProps> = ({
     if (currentEnergy.current <= 0) {
       console.warn('❌ Not enough energy to start battle. Current:', currentEnergy.current);
       toast({
-        title: "Недостаточно энергии",
-        description: "Подождите, пока энергия восстановится",
+        title: t(language, 'battlePage.insufficientEnergy'),
+        description: t(language, 'battlePage.waitForEnergy'),
         variant: "destructive"
       });
       return;
@@ -316,11 +319,11 @@ export const TeamBattlePage: React.FC<TeamBattlePageProps> = ({
           <div className="fixed inset-0 bg-black/90 flex items-center justify-center z-[200]">
             <Card variant="menu" className="p-6 max-w-md w-full">
               <CardHeader>
-                <CardTitle className="text-white text-center">Команда пала</CardTitle>
+                <CardTitle className="text-white text-center">{t(language, 'battlePage.teamDefeated')}</CardTitle>
               </CardHeader>
               <CardContent className="text-center space-y-4">
-                <p className="text-white/80">Награда не начисляется.</p>
-                <Button variant="menu" onClick={handleExitAndReset}>Выйти</Button>
+                <p className="text-white/80">{t(language, 'battlePage.noReward')}</p>
+                <Button variant="menu" onClick={handleExitAndReset}>{t(language, 'battlePage.exit')}</Button>
               </CardContent>
             </Card>
           </div>
@@ -332,7 +335,7 @@ export const TeamBattlePage: React.FC<TeamBattlePageProps> = ({
         <div className="fixed inset-0 bg-black/90 flex items-center justify-center z-[200]">
           <Card variant="menu" className="p-6 max-w-md w-full">
             <CardContent className="text-center">
-              <p className="text-white/80">Обработка результатов боя...</p>
+              <p className="text-white/80">{t(language, 'battlePage.processingResults')}</p>
             </CardContent>
           </Card>
         </div>
@@ -357,14 +360,14 @@ export const TeamBattlePage: React.FC<TeamBattlePageProps> = ({
       <div className="fixed inset-0 bg-black/90 flex items-center justify-center p-4 z-[200]">
         <Card variant="menu" className="p-6 max-w-md w-full">
           <CardHeader>
-            <CardTitle className="text-white text-center">Подземелье завершено</CardTitle>
+            <CardTitle className="text-white text-center">{t(language, 'battlePage.dungeonFinished')}</CardTitle>
           </CardHeader>
           <CardContent className="text-center space-y-4">
             <p className="text-white/80">
-              Подземелье было завершено на другом устройстве. Ваш бой больше не активен.
+              {t(language, 'battlePage.finishedOnAnotherDevice')}
             </p>
             <Button variant="menu" onClick={handleExitAndReset}>
-              Закрыть подземелье
+              {t(language, 'battlePage.closeDungeon')}
             </Button>
           </CardContent>
         </Card>
@@ -377,7 +380,7 @@ export const TeamBattlePage: React.FC<TeamBattlePageProps> = ({
         <div className="fixed top-4 left-4 z-10">
           <Button onClick={handleBackToMenu} variant="ghost" size="sm" className="bg-card/50 backdrop-blur-sm border border-border/50">
             <ArrowLeft className="w-4 h-4 mr-2" />
-            Назад
+            {t(language, 'battlePage.back')}
           </Button>
         </div>
         

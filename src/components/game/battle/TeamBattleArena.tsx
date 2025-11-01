@@ -13,6 +13,8 @@ import { TeamHealthBars } from './TeamHealthBars';
 import { InlineDiceDisplay } from './InlineDiceDisplay';
 import { AttackAnimation } from './AttackAnimation';
 import { useDungeonSync } from '@/hooks/useDungeonSync';
+import { useLanguage } from '@/hooks/useLanguage';
+import { t } from '@/utils/translations';
 interface TeamBattleArenaProps {
   playerPairs: TeamPair[];
   opponents: Opponent[];
@@ -35,6 +37,7 @@ export const TeamBattleArena: React.FC<TeamBattleArenaProps> = ({
   level,
   lastRoll
 }) => {
+  const { language } = useLanguage();
   const navigate = useNavigate();
   const { endDungeonSession } = useDungeonSync();
   const {
@@ -271,38 +274,38 @@ export const TeamBattleArena: React.FC<TeamBattleArenaProps> = ({
             <div className="absolute left-4 top-3 flex gap-2">
               <Button variant="menu" size="sm" style={{ boxShadow: '-33px 15px 10px rgba(0, 0, 0, 0.6)' }} onClick={handleMenuReturn}>
                 <ArrowLeft className="w-4 h-4 mr-1" />
-                Меню
+                {t(language, 'battlePage.menu')}
               </Button>
               
               <AlertDialog>
                 <AlertDialogTrigger asChild>
                   <Button variant="destructive" size="sm">
-                    Сдаться
+                    {t(language, 'battlePage.surrender')}
                   </Button>
                 </AlertDialogTrigger>
                 <AlertDialogContent>
                   <AlertDialogHeader>
-                    <AlertDialogTitle>Покинуть подземелье?</AlertDialogTitle>
+                    <AlertDialogTitle>{t(language, 'battlePage.leaveDungeon')}</AlertDialogTitle>
                     <AlertDialogDescription>
-                      Подземелье будет закрыто и весь прогресс будет утерян. При повторном входе вы начнете с первого уровня.
+                      {t(language, 'battlePage.leaveDungeonWarning')}
                     </AlertDialogDescription>
                   </AlertDialogHeader>
                   <AlertDialogFooter>
-                    <AlertDialogCancel>Нет</AlertDialogCancel>
-                    <AlertDialogAction onClick={handleSurrender}>Да</AlertDialogAction>
+                    <AlertDialogCancel>{t(language, 'battlePage.no')}</AlertDialogCancel>
+                    <AlertDialogAction onClick={handleSurrender}>{t(language, 'battlePage.yes')}</AlertDialogAction>
                   </AlertDialogFooter>
                 </AlertDialogContent>
               </AlertDialog>
             </div>
             
             <CardTitle className="text-center text-lg text-white">
-              Командный бой - Уровень {level}
+              {t(language, 'battlePage.teamBattleLevel')} {level}
             </CardTitle>
             
             {/* Account Level and XP Progress */}
             <div className="flex items-center justify-center gap-4 mt-2">
               <div className="text-xs text-white/70">
-                Уровень: {accountLevel}
+                {t(language, 'battlePage.level')} {accountLevel}
               </div>
               <div className="w-40">
                 <Progress value={xpProgress.progress * 100} className="h-1" />
@@ -321,7 +324,7 @@ export const TeamBattleArena: React.FC<TeamBattleArenaProps> = ({
             <CardHeader className="py-2">
               <CardTitle className="flex items-center gap-2 text-white justify-center text-sm">
                 <Shield className="w-4 h-4" />
-                Ваша команда
+                {t(language, 'battlePage.yourTeam')}
               </CardTitle>
             </CardHeader>
             <CardContent className="h-full overflow-auto">
@@ -402,7 +405,7 @@ export const TeamBattleArena: React.FC<TeamBattleArenaProps> = ({
               />
               <div className="text-center space-y-2">
                 <div className="text-sm font-medium text-white">
-                  {isPlayerTurn ? <span className="text-green-400">Ваш ход</span> : <span className="text-red-400">Ход противника</span>}
+                  {isPlayerTurn ? <span className="text-green-400">{t(language, 'battlePage.yourTurn')}</span> : <span className="text-red-400">{t(language, 'battlePage.enemyTurn')}</span>}
                 </div>
                 
                 
@@ -416,7 +419,7 @@ export const TeamBattleArena: React.FC<TeamBattleArenaProps> = ({
                         isRolling={isDiceRolling}
                         diceValue={lastRoll ? (lastRoll.source === 'player' ? lastRoll.attackerRoll : lastRoll.defenderRoll) : null}
                         isAttacker={lastRoll ? lastRoll.source === 'player' : true}
-                        label="Игрок"
+                        label={t(language, 'battlePage.player')}
                         damage={lastRoll && lastRoll.source === 'enemy' ? lastRoll.damage : undefined}
                         isBlocked={lastRoll && lastRoll.source === 'enemy' ? lastRoll.isBlocked : undefined}
                         isCritical={lastRoll && lastRoll.source === 'enemy' ? lastRoll.isCritical : undefined}
@@ -433,7 +436,7 @@ export const TeamBattleArena: React.FC<TeamBattleArenaProps> = ({
                         className="h-7 px-3"
                         style={{ boxShadow: '-33px 15px 10px rgba(0, 0, 0, 0.6)' }}
                       >
-                        Атаковать
+                        {t(language, 'battlePage.attackButton')}
                       </Button>
                     ) : (
                       <div className="h-7 w-[88px]" />
@@ -446,7 +449,7 @@ export const TeamBattleArena: React.FC<TeamBattleArenaProps> = ({
                         isRolling={isDiceRolling}
                         diceValue={lastRoll ? (lastRoll.source === 'player' ? lastRoll.defenderRoll : lastRoll.attackerRoll) : null}
                         isAttacker={lastRoll ? lastRoll.source === 'enemy' : false}
-                        label="Монстр"
+                        label={t(language, 'battlePage.monster')}
                         damage={lastRoll && lastRoll.source === 'player' ? lastRoll.damage : undefined}
                         isBlocked={lastRoll && lastRoll.source === 'player' ? lastRoll.isBlocked : undefined}
                         isCritical={lastRoll && lastRoll.source === 'player' ? lastRoll.isCritical : undefined}
@@ -457,7 +460,7 @@ export const TeamBattleArena: React.FC<TeamBattleArenaProps> = ({
                   {/* Подсказки только в ход игрока */}
                   {isPlayerTurn && !autoBattle && selectedPair && !selectedTarget && (
                     <div className="text-xs text-white/70">
-                      Выберите цель для атаки
+                      {t(language, 'battlePage.selectTarget')}
                     </div>
                   )}
                 </div>
@@ -470,7 +473,7 @@ export const TeamBattleArena: React.FC<TeamBattleArenaProps> = ({
                     className={autoBattle ? "" : ""}
                     style={!autoBattle ? { boxShadow: '-33px 15px 10px rgba(0, 0, 0, 0.6)' } : undefined}
                   >
-                    {autoBattle ? "Стоп авто-бой" : "Авто-бой"}
+                    {autoBattle ? t(language, 'battlePage.stopAutoBattle') : t(language, 'battlePage.autoBattle')}
                   </Button>
                 </div>
               </div>
@@ -482,7 +485,7 @@ export const TeamBattleArena: React.FC<TeamBattleArenaProps> = ({
             <CardHeader className="py-2">
               <CardTitle className="flex items-center gap-2 text-red-400 justify-center text-sm">
                 <Sword className="w-4 h-4" />
-                Враги
+                {t(language, 'battlePage.enemies')}
               </CardTitle>
             </CardHeader>
             <CardContent className="h-full overflow-auto">
@@ -513,7 +516,7 @@ export const TeamBattleArena: React.FC<TeamBattleArenaProps> = ({
                     {opponent.health <= 0 && (
                       <div className="absolute inset-0 bg-black/60 flex items-center justify-center z-30">
                         <div className="text-4xl font-bold text-red-500 drop-shadow-[0_0_10px_rgba(239,68,68,0.8)]">
-                          УБИТ
+                          {t(language, 'battlePage.killed')}
                         </div>
                       </div>
                     )}
