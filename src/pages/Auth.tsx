@@ -8,7 +8,10 @@ import { supabase } from "@/integrations/supabase/client";
 import useTelegram from "@/hooks/useTelegram";
 import { SplashCursor } from "@/components/effects/SplashCursor";
 import { Wallet } from "lucide-react";
+import { useLanguage } from "@/hooks/useLanguage";
+import { t } from "@/utils/translations";
 export const Auth = () => {
+  const { language } = useLanguage();
   const {
     toast
   } = useToast();
@@ -60,15 +63,15 @@ export const Auth = () => {
       if (error) {
         console.log('⚠️ Referral add failed:', error);
         toast({
-          title: "Ошибка реферала",
+          title: t(language, 'auth.referralError'),
           description: error.message,
           variant: "destructive"
         });
       } else {
         console.log('✅ Referral added successfully');
         toast({
-          title: "Реферал добавлен",
-          description: "Вы успешно привязаны к пригласившему игроку"
+          title: t(language, 'auth.referralAdded'),
+          description: t(language, 'auth.referralAddedDesc')
         });
       }
     } catch (error) {
@@ -107,8 +110,8 @@ export const Auth = () => {
       await connectWallet();
     } catch (error) {
       toast({
-        title: "Ошибка",
-        description: "Не удалось подключить кошелек",
+        title: t(language, 'common.error'),
+        description: t(language, 'auth.connectionError'),
         variant: "destructive"
       });
     }
@@ -192,7 +195,7 @@ export const Auth = () => {
             }} transition={{
               delay: 0.4
             }}>
-                ElleonorAI Подключение кошелька
+                {t(language, 'auth.title')}
               </motion.h1>
 
               {/* Subtitle */}
@@ -203,7 +206,7 @@ export const Auth = () => {
             }} transition={{
               delay: 0.5
             }}>
-                Подключите NEAR кошелек для входа в игру
+                {t(language, 'auth.subtitle')}
               </motion.p>
 
               {/* Info box */}
@@ -217,7 +220,7 @@ export const Auth = () => {
               delay: 0.6
             }}>
                 <p className="text-slate-400 text-center text-xs">
-                  Ваш прогресс будет привязан к адресу кошелька NEAR
+                  {t(language, 'auth.progressInfo')}
                 </p>
               </motion.div>
 
@@ -232,7 +235,7 @@ export const Auth = () => {
               delay: 0.7
             }}>
                 <Button onClick={handleConnectWallet} disabled={isConnecting} className="w-full bg-gradient-to-r from-purple-600 via-blue-600 to-pink-600 hover:from-purple-700 hover:via-blue-700 hover:to-pink-700 text-white font-semibold py-6 rounded-xl transition-all duration-300 shadow-lg hover:shadow-xl hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100">
-                  {isConnecting ? "Подключение..." : "Подключить NEAR кошелек"}
+                  {isConnecting ? t(language, 'auth.connecting') : t(language, 'auth.connectButton')}
                 </Button>
               </motion.div>
 
@@ -244,9 +247,9 @@ export const Auth = () => {
             }} transition={{
               delay: 0.8
             }}>
-                Для игры необходим установленный NEAR кошелек.{" "}
+                {t(language, 'auth.walletRequired')}{" "}
                 <a href="https://app.hot-labs.org/link?207883-village-14640" target="_blank" rel="noopener noreferrer" className="text-purple-400 hover:text-purple-300 underline transition-colors">
-                  Создать кошелек
+                  {t(language, 'auth.createWallet')}
                 </a>
               </motion.p>
             </div>

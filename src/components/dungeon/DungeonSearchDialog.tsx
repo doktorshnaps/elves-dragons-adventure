@@ -15,6 +15,8 @@ import { useGameData } from "@/hooks/useGameData";
 import { useDungeonSync } from "@/hooks/useDungeonSync";
 import { ActiveDungeonWarning } from "./ActiveDungeonWarning";
 import { useGameStore } from "@/stores/gameStore";
+import { useLanguage } from "@/hooks/useLanguage";
+import { t } from "@/utils/translations";
 
 interface DungeonSearchDialogProps {
   onClose: () => void;
@@ -40,14 +42,14 @@ const dungeonLevelRequirements = {
 };
 
 const dungeonNames = {
-  spider_nest: "Гнездо Гигантских Пауков",
-  bone_dungeon: "Темница Костяных Демонов",
-  dark_mage: "Лабиринт Темного Мага",
-  forgotten_souls: "Пещеры Забытых Душ",
-  ice_throne: "Трон Ледяного Короля",
-  sea_serpent: "Логово Морского Змея",
-  dragon_lair: "Логово Черного Дракона",
-  pantheon_gods: "Пантеон Богов"
+  spider_nest: t('ru', 'dungeonSearch.spiderNest'),
+  bone_dungeon: t('ru', 'dungeonSearch.boneDungeon'),
+  dark_mage: t('ru', 'dungeonSearch.darkMage'),
+  forgotten_souls: t('ru', 'dungeonSearch.forgottenSouls'),
+  ice_throne: t('ru', 'dungeonSearch.iceThrone'),
+  sea_serpent: t('ru', 'dungeonSearch.seaSerpent'),
+  dragon_lair: t('ru', 'dungeonSearch.dragonLair'),
+  pantheon_gods: t('ru', 'dungeonSearch.pantheonGods')
 };
 
 export const DungeonSearchDialog = ({
@@ -59,6 +61,7 @@ export const DungeonSearchDialog = ({
   isHealthTooLow,
   hasActiveCards
 }: DungeonSearchDialogProps) => {
+  const { language } = useLanguage();
   const navigate = useNavigate();
   const teamBattleState = useGameStore((state) => state.teamBattleState);
   const activeBattleInProgress = useGameStore((state) => state.activeBattleInProgress);
@@ -159,20 +162,20 @@ export const DungeonSearchDialog = ({
 
         <div className="text-center">
           <h2 className="text-2xl font-bold text-white mb-6">
-            {activeDungeon ? 'Активное подземелье' : 'Выбор подземелья'}
+            {activeDungeon ? t(language, 'dungeonSearch.activeTitle') : t(language, 'dungeonSearch.selectTitle')}
           </h2>
           
           <EnergyDisplay energyState={energyState} timeUntilNext={timeUntilNext} />
           
           <div className="mb-4">
-            <p className="text-white">Баланс: {balance} ELL</p>
+            <p className="text-white">{t(language, 'dungeonSearch.balance')} {balance} ELL</p>
           </div>
 
           {hasOtherActiveSessions && (
             <div className="text-sm text-white/80 bg-yellow-500/10 border border-yellow-400/30 rounded-md p-3 mb-4">
-              <p className="mb-2">На другом устройстве уже запущено подземелье. Вход заблокирован.</p>
+              <p className="mb-2">{t(language, 'dungeonSearch.otherDeviceWarning')}</p>
               <Button variant="destructive" className="w-full text-xs sm:text-sm" onClick={async () => { await endDungeonSession(); }}>
-                Завершить подземелье на другом устройстве
+                {t(language, 'dungeonSearch.endOtherSession')}
               </Button>
             </div>
           )}
@@ -207,14 +210,14 @@ export const DungeonSearchDialog = ({
           {activeDungeon && (
             <div className="text-sm text-white/70 mt-4 space-y-2">
               <p>
-                У вас есть активный бой в подземелье. Завершите его или сдайтесь, чтобы войти в другое подземелье.
+                {t(language, 'dungeonSearch.activeBattleWarning')}
               </p>
               <Button
                 variant="destructive"
                 onClick={handleResetActiveBattle}
                 className="border border-red-500/40"
               >
-                Сбросить активный бой
+                {t(language, 'dungeonSearch.resetBattle')}
               </Button>
             </div>
           )}
@@ -225,7 +228,7 @@ export const DungeonSearchDialog = ({
             className="mt-4"
             style={{ boxShadow: '-33px 15px 10px rgba(0, 0, 0, 0.6)' }}
           >
-            Закрыть
+            {t(language, 'dungeonSearch.close')}
           </Button>
 
           <DungeonWarnings

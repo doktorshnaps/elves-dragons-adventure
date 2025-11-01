@@ -10,6 +10,7 @@ import { MonsterCardDisplay } from "./monsters/MonsterCardDisplay";
 import { monsterImagesByName } from "@/constants/monsterImages";
 import { useLanguage } from "@/hooks/useLanguage";
 import { translateMonsterName, translateMonsterDescription, translateMonsterText } from "@/utils/monsterTranslations";
+import { t } from "@/utils/translations";
 
 // Monster descriptions
 const monsterDescriptions: Record<string, string> = {
@@ -80,7 +81,7 @@ const DungeonLevel = memo(({
 
   return <div className="space-y-4">
       <h3 className="text-lg font-semibold text-white border-b border-white/30 pb-2">
-        {translateMonsterText(language, 'Уровень')} {level}
+        {t(language, 'dungeonInfo.level')} {level}
       </h3>
       <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-2 justify-items-center">
         {opponents.map(opponent => <MonsterCard key={opponent.id} name={opponent.translatedName} health={opponent.health} power={opponent.power} isBoss={opponent.isBoss} image={opponent.image} specialAbilities={opponent.specialAbilities} description={opponent.translatedDescription} />)}
@@ -104,7 +105,7 @@ const DungeonDetail = ({
 
       <Card variant="menu" className="shadow-lg">
         <CardHeader>
-          <CardTitle className="text-lg text-white">{translateMonsterText(language, 'Выберите уровень')}</CardTitle>
+          <CardTitle className="text-lg text-white">{t(language, 'dungeonInfo.selectLevel')}</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-5 md:grid-cols-10 gap-2 mb-6">
@@ -133,9 +134,9 @@ export const DungeonInfo = () => {
   }];
   return <div className="space-y-6">
       <div className="text-center">
-        <h2 className="text-2xl font-bold text-white mb-2">{translateMonsterText(language, 'Гайд по подземельям')}</h2>
+        <h2 className="text-2xl font-bold text-white mb-2">{t(language, 'dungeonInfo.title')}</h2>
         <p className="text-white/80">
-          {translateMonsterText(language, 'Изучите монстров, их способности и возможный дроп в каждом подземелье')}
+          {t(language, 'dungeonInfo.subtitle')}
         </p>
       </div>
 

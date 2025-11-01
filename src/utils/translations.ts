@@ -286,11 +286,6 @@ export const translations = {
       mintNFT: 'Mint NFT',
       playerEquipment: 'Снаряжение игрока'
     },
-    // Marketplace
-    marketplace: {
-      backToMenu: 'Вернуться в меню',
-      availableOffers: 'Доступные предложения'
-    },
     // Barracks
     barracks: {
       upgradeHeroes: 'Улучшение героев',
@@ -352,6 +347,134 @@ export const translations = {
       selectDragons: 'Выберите драконов для улучшения',
       noDragonsAvailable: 'Нет доступных драконов для улучшения',
       needTwoDragons: 'Необходимо иметь 2 одинаковых дракона одной фракции для улучшения'
+    },
+    // Auth page
+    auth: {
+      title: 'ElleonorAI Подключение кошелька',
+      subtitle: 'Подключите NEAR кошелек для входа в игру',
+      progressInfo: 'Ваш прогресс будет привязан к адресу кошелька NEAR',
+      connectButton: 'Подключить NEAR кошелек',
+      connecting: 'Подключение...',
+      walletRequired: 'Для игры необходим установленный NEAR кошелек.',
+      createWallet: 'Создать кошелек',
+      referralAdded: 'Реферал добавлен',
+      referralAddedDesc: 'Вы успешно привязаны к пригласившему игроку',
+      referralError: 'Ошибка реферала',
+      connectionError: 'Не удалось подключить кошелек'
+    },
+    // Admin settings
+    admin: {
+      title: 'Настройки игры',
+      subtitle: 'Глубокая настройка параметров героев, драконов и подземелий',
+      backToMenu: 'Назад в меню',
+      checkingAccess: 'Проверка прав доступа...',
+      accessDenied: 'Доступ запрещен',
+      noPermission: 'У вас нет прав для доступа к этой странице',
+      returnToMenu: 'Вернуться в меню',
+      // Tabs
+      cards: 'Карты (Герои и Драконы)',
+      cardImages: 'Изображения карт',
+      dungeons: 'Подземелья',
+      quests: 'Задания',
+      items: 'Предметы',
+      giveaway: 'Выдать предмет',
+      shelter: 'Убежище',
+      cardUpgrades: 'Улучшения карт',
+      crafting: 'Рецепты крафта',
+      management: 'Управление',
+      admins: 'Администраторы'
+    },
+    // Dungeon info
+    dungeonInfo: {
+      title: 'Гайд по подземельям',
+      subtitle: 'Изучите монстров, их способности и возможный дроп в каждом подземелье',
+      selectLevel: 'Выберите уровень',
+      level: 'Уровень'
+    },
+    // Dragon egg
+    dragonEgg: {
+      startIncubation: 'Начать инкубацию',
+      timeUntilHatch: 'До вылупления:',
+      claim: 'Получить',
+      claimed: 'Питомец получен!'
+    },
+    // Dungeon search
+    dungeonSearch: {
+      activeTitle: 'Активное подземелье',
+      selectTitle: 'Выбор подземелья',
+      balance: 'Баланс:',
+      energy: 'Энергия:',
+      nextEnergy: 'Следующая энергия через:',
+      searching: 'Поиск подземелья...',
+      search: 'Искать подземелье',
+      enter: 'Войти в подземелье',
+      returnToDungeon: 'Вернуться в подземелье',
+      close: 'Закрыть',
+      resetBattle: 'Сбросить активный бой',
+      activeBattleWarning: 'У вас есть активный бой в подземелье. Завершите его или сдайтесь, чтобы войти в другое подземелье.',
+      otherDeviceWarning: 'На другом устройстве уже запущено подземелье. Вход заблокирован.',
+      endOtherSession: 'Завершить подземелье на другом устройстве',
+      healthTooLow: 'Здоровье слишком низкое для входа в подземелье',
+      noActiveCards: 'У вас нет активных карт героев или питомцев',
+      selectDungeon: 'Выберите подземелье',
+      // Dungeon names
+      spiderNest: 'Гнездо Гигантских Пауков',
+      boneDungeon: 'Темница Костяных Демонов',
+      darkMage: 'Лабиринт Темного Мага',
+      forgottenSouls: 'Пещеры Забытых Душ',
+      iceThrone: 'Трон Ледяного Короля',
+      seaSerpent: 'Логово Морского Змея',
+      dragonLair: 'Логово Черного Дракона',
+      pantheonGods: 'Пантеон Богов'
+    },
+    // Active dungeon warning
+    activeDungeonWarning: {
+      title: '⚠️ Обнаружено активное подземелье',
+      message: 'У вас уже запущено подземелье на другом устройстве:',
+      level: 'Уровень',
+      lastActivity: 'Последняя активность:',
+      warning: 'Вы не можете проходить подземелье одновременно с нескольких устройств.',
+      cancel: 'Отмена',
+      endAndRestart: 'Завершить старое и начать новое',
+      secondsAgo: 'сек. назад',
+      minutesAgo: 'мин. назад'
+    },
+    // Marketplace
+    marketplace: {
+      backToMenu: 'Вернуться в меню',
+      availableOffers: 'Доступные предложения',
+      connectWallet: 'Подключите кошелек',
+      connectWalletDesc: 'Для продажи NFT подключите NEAR-кошелек',
+      nftListed: 'NFT выставлен на продажу',
+      itemListed: 'Предмет выставлен на продажу',
+      listedFor: 'выставлен за',
+      error: 'Ошибка',
+      failedToList: 'Не удалось создать объявление',
+      listingCancelled: 'Объявление отменено',
+      returnedToInventory: 'возвращен(а) в ваш инвентарь/колоду',
+      failedToCancel: 'Не удалось отменить объявление'
+    },
+    // Shop items
+    shopItem: {
+      price: 'Цена:',
+      buy: 'Купить',
+      dropRates: 'Шансы выпадения:',
+      heroes: 'Герои (50%):',
+      dragons: 'Драконы (50%):',
+      power: 'Сила:',
+      defense: 'Защита:',
+      health: 'Здоровье:',
+      requiredLevel: 'Требуется уровень:'
+    },
+    // Card display
+    cardDisplay: {
+      type: 'Тип:',
+      hero: 'Герой',
+      pet: 'Питомец',
+      attack: 'Атака:',
+      defense: 'Защита:',
+      rarity: 'Редкость:',
+      requiresHero: 'Требуется герой'
     }
   },
   en: {
@@ -642,7 +765,17 @@ export const translations = {
     // Marketplace
     marketplace: {
       backToMenu: 'Back to Menu',
-      availableOffers: 'Available Offers'
+      availableOffers: 'Available Offers',
+      connectWallet: 'Connect Wallet',
+      connectWalletDesc: 'Connect your NEAR wallet to sell NFTs',
+      nftListed: 'NFT listed for sale',
+      itemListed: 'Item listed for sale',
+      listedFor: 'listed for',
+      error: 'Error',
+      failedToList: 'Failed to create listing',
+      listingCancelled: 'Listing cancelled',
+      returnedToInventory: 'returned to your inventory/deck',
+      failedToCancel: 'Failed to cancel listing'
     },
     // Barracks
     barracks: {
@@ -705,6 +838,119 @@ export const translations = {
       selectDragons: 'Select Dragons for Upgrade',
       noDragonsAvailable: 'No dragons available for upgrade',
       needTwoDragons: 'Need 2 identical dragons of the same faction for upgrade'
+    },
+    // Auth page
+    auth: {
+      title: 'ElleonorAI Wallet Connection',
+      subtitle: 'Connect your NEAR wallet to enter the game',
+      progressInfo: 'Your progress will be linked to your NEAR wallet address',
+      connectButton: 'Connect NEAR Wallet',
+      connecting: 'Connecting...',
+      walletRequired: 'An installed NEAR wallet is required to play.',
+      createWallet: 'Create Wallet',
+      referralAdded: 'Referral Added',
+      referralAddedDesc: 'You have been successfully linked to the referring player',
+      referralError: 'Referral Error',
+      connectionError: 'Failed to connect wallet'
+    },
+    // Admin settings
+    admin: {
+      title: 'Game Settings',
+      subtitle: 'Advanced configuration of heroes, dragons and dungeons',
+      backToMenu: 'Back to Menu',
+      checkingAccess: 'Checking access rights...',
+      accessDenied: 'Access Denied',
+      noPermission: 'You do not have permission to access this page',
+      returnToMenu: 'Return to Menu',
+      // Tabs
+      cards: 'Cards (Heroes and Dragons)',
+      cardImages: 'Card Images',
+      dungeons: 'Dungeons',
+      quests: 'Quests',
+      items: 'Items',
+      giveaway: 'Give Item',
+      shelter: 'Shelter',
+      cardUpgrades: 'Card Upgrades',
+      crafting: 'Crafting Recipes',
+      management: 'Management',
+      admins: 'Administrators'
+    },
+    // Dungeon info
+    dungeonInfo: {
+      title: 'Dungeon Guide',
+      subtitle: 'Study monsters, their abilities and possible loot in each dungeon',
+      selectLevel: 'Select Level',
+      level: 'Level'
+    },
+    // Dragon egg
+    dragonEgg: {
+      startIncubation: 'Start Incubation',
+      timeUntilHatch: 'Time until hatching:',
+      claim: 'Claim',
+      claimed: 'Pet claimed!'
+    },
+    // Dungeon search
+    dungeonSearch: {
+      activeTitle: 'Active Dungeon',
+      selectTitle: 'Select Dungeon',
+      balance: 'Balance:',
+      energy: 'Energy:',
+      nextEnergy: 'Next energy in:',
+      searching: 'Searching for dungeon...',
+      search: 'Search Dungeon',
+      enter: 'Enter Dungeon',
+      returnToDungeon: 'Return to Dungeon',
+      close: 'Close',
+      resetBattle: 'Reset Active Battle',
+      activeBattleWarning: 'You have an active battle in the dungeon. Complete it or surrender to enter another dungeon.',
+      otherDeviceWarning: 'A dungeon is already running on another device. Entry blocked.',
+      endOtherSession: 'End dungeon on other device',
+      healthTooLow: 'Health too low to enter dungeon',
+      noActiveCards: 'You have no active hero or pet cards',
+      selectDungeon: 'Select Dungeon',
+      // Dungeon names
+      spiderNest: 'Giant Spider Nest',
+      boneDungeon: 'Bone Demon Prison',
+      darkMage: 'Dark Mage Labyrinth',
+      forgottenSouls: 'Forgotten Souls Caves',
+      iceThrone: 'Ice King Throne',
+      seaSerpent: 'Sea Serpent Lair',
+      dragonLair: 'Black Dragon Lair',
+      pantheonGods: 'Pantheon of Gods'
+    },
+    // Active dungeon warning
+    activeDungeonWarning: {
+      title: '⚠️ Active Dungeon Detected',
+      message: 'You already have a dungeon running on another device:',
+      level: 'Level',
+      lastActivity: 'Last activity:',
+      warning: 'You cannot run dungeons on multiple devices simultaneously.',
+      cancel: 'Cancel',
+      endAndRestart: 'End old and start new',
+      secondsAgo: 'sec. ago',
+      minutesAgo: 'min. ago'
+    },
+    // Shop items
+    shopItem: {
+      price: 'Price:',
+      buy: 'Buy',
+      dropRates: 'Drop Rates:',
+      heroes: 'Heroes (50%):',
+      dragons: 'Dragons (50%):',
+      power: 'Power:',
+      defense: 'Defense:',
+      health: 'Health:',
+      requiredLevel: 'Required Level:'
+    },
+    // Card display
+    cardDisplay: {
+      type: 'Type:',
+      hero: 'Hero',
+      pet: 'Pet',
+      attack: 'Attack:',
+      defense: 'Defense:',
+      rarity: 'Rarity:',
+      requiresHero: 'Requires hero'
     }
   }
 };

@@ -18,8 +18,11 @@ import { CardImageManager } from "@/components/admin/CardImageManager";
 import { ItemTemplateManager } from "@/components/admin/ItemTemplateManager";
 import { ItemGiveawayManager } from "@/components/admin/ItemGiveawayManager";
 import ShelterBuildingSettings from "@/components/admin/ShelterBuildingSettings";
+import { useLanguage } from "@/hooks/useLanguage";
+import { t } from "@/utils/translations";
 
 const AdminSettingsContent = () => {
+  const { language } = useLanguage();
   const navigate = useNavigate();
   const { accountId } = useWalletContext();
   const { isAdmin, loading } = useAdminCheck();
@@ -43,7 +46,7 @@ const AdminSettingsContent = () => {
     return (
       <div className="min-h-screen bg-game-dark flex items-center justify-center p-4">
         <div className="text-center">
-          <p className="text-gray-300">Проверка прав доступа...</p>
+          <p className="text-gray-300">{t(language, 'admin.checkingAccess')}</p>
         </div>
       </div>
     );
@@ -54,10 +57,10 @@ const AdminSettingsContent = () => {
     return (
       <div className="min-h-screen bg-game-dark flex items-center justify-center p-4">
         <div className="text-center">
-          <h1 className="text-2xl font-bold text-red-500 mb-4">Доступ запрещен</h1>
-          <p className="text-gray-300 mb-6">У вас нет прав для доступа к этой странице</p>
+          <h1 className="text-2xl font-bold text-red-500 mb-4">{t(language, 'admin.accessDenied')}</h1>
+          <p className="text-gray-300 mb-6">{t(language, 'admin.noPermission')}</p>
           <Button onClick={() => navigate('/menu')}>
-            Вернуться в меню
+            {t(language, 'admin.returnToMenu')}
           </Button>
         </div>
       </div>
@@ -79,8 +82,8 @@ const AdminSettingsContent = () => {
       <div className="max-w-6xl mx-auto space-y-6 relative z-10">
         <div className="flex items-center justify-between mb-6">
           <div>
-            <h1 className="text-3xl font-bold text-white mb-2">Настройки игры</h1>
-            <p className="text-white/70">Глубокая настройка параметров героев, драконов и подземелий</p>
+            <h1 className="text-3xl font-bold text-white mb-2">{t(language, 'admin.title')}</h1>
+            <p className="text-white/70">{t(language, 'admin.subtitle')}</p>
           </div>
           <Button
             variant="menu"
@@ -89,7 +92,7 @@ const AdminSettingsContent = () => {
             style={{ boxShadow: '-33px 15px 10px rgba(0, 0, 0, 0.6)' }}
           >
             <ArrowLeft className="h-4 w-4" />
-            Назад в меню
+            {t(language, 'admin.backToMenu')}
           </Button>
         </div>
 
@@ -97,19 +100,19 @@ const AdminSettingsContent = () => {
           <TabsList className={`grid w-full ${isSuperAdmin ? 'grid-cols-11' : 'grid-cols-1'} bg-black/50 border-2 border-white backdrop-blur-sm rounded-3xl mb-6`} style={{ boxShadow: '-33px 15px 10px rgba(0, 0, 0, 0.6)' }}>
             {isSuperAdmin && (
               <>
-                <TabsTrigger value="cards" className="text-white data-[state=active]:bg-white/20 rounded-3xl">Карты (Герои и Драконы)</TabsTrigger>
-                <TabsTrigger value="cardImages" className="text-white data-[state=active]:bg-white/20 rounded-3xl">Изображения карт</TabsTrigger>
-                <TabsTrigger value="dungeons" className="text-white data-[state=active]:bg-white/20 rounded-3xl">Подземелья</TabsTrigger>
-                <TabsTrigger value="quests" className="text-white data-[state=active]:bg-white/20 rounded-3xl">Задания</TabsTrigger>
-                <TabsTrigger value="items" className="text-white data-[state=active]:bg-white/20 rounded-3xl">Предметы</TabsTrigger>
-                <TabsTrigger value="giveaway" className="text-white data-[state=active]:bg-white/20 rounded-3xl">Выдать предмет</TabsTrigger>
-                <TabsTrigger value="shelter" className="text-white data-[state=active]:bg-white/20 rounded-3xl">Убежище</TabsTrigger>
-                <TabsTrigger value="card-upgrades" className="text-white data-[state=active]:bg-white/20 rounded-3xl">Улучшения карт</TabsTrigger>
-                <TabsTrigger value="crafting" className="text-white data-[state=active]:bg-white/20 rounded-3xl">Рецепты крафта</TabsTrigger>
+                <TabsTrigger value="cards" className="text-white data-[state=active]:bg-white/20 rounded-3xl">{t(language, 'admin.cards')}</TabsTrigger>
+                <TabsTrigger value="cardImages" className="text-white data-[state=active]:bg-white/20 rounded-3xl">{t(language, 'admin.cardImages')}</TabsTrigger>
+                <TabsTrigger value="dungeons" className="text-white data-[state=active]:bg-white/20 rounded-3xl">{t(language, 'admin.dungeons')}</TabsTrigger>
+                <TabsTrigger value="quests" className="text-white data-[state=active]:bg-white/20 rounded-3xl">{t(language, 'admin.quests')}</TabsTrigger>
+                <TabsTrigger value="items" className="text-white data-[state=active]:bg-white/20 rounded-3xl">{t(language, 'admin.items')}</TabsTrigger>
+                <TabsTrigger value="giveaway" className="text-white data-[state=active]:bg-white/20 rounded-3xl">{t(language, 'admin.giveaway')}</TabsTrigger>
+                <TabsTrigger value="shelter" className="text-white data-[state=active]:bg-white/20 rounded-3xl">{t(language, 'admin.shelter')}</TabsTrigger>
+                <TabsTrigger value="card-upgrades" className="text-white data-[state=active]:bg-white/20 rounded-3xl">{t(language, 'admin.cardUpgrades')}</TabsTrigger>
+                <TabsTrigger value="crafting" className="text-white data-[state=active]:bg-white/20 rounded-3xl">{t(language, 'admin.crafting')}</TabsTrigger>
               </>
             )}
-            <TabsTrigger value="management" className="text-white data-[state=active]:bg-white/20 rounded-3xl">Управление</TabsTrigger>
-            {isSuperAdmin && <TabsTrigger value="admins" className="text-white data-[state=active]:bg-white/20 rounded-3xl">Администраторы</TabsTrigger>}
+            <TabsTrigger value="management" className="text-white data-[state=active]:bg-white/20 rounded-3xl">{t(language, 'admin.management')}</TabsTrigger>
+            {isSuperAdmin && <TabsTrigger value="admins" className="text-white data-[state=active]:bg-white/20 rounded-3xl">{t(language, 'admin.admins')}</TabsTrigger>}
           </TabsList>
 
           {isSuperAdmin && (
