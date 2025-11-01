@@ -44,6 +44,13 @@ export const itemTranslations = {
     "Венец Арахны": "Венец Арахны",
     "Плащ из пепельных нитей": "Плащ из пепельных нитей",
 
+    // Worker names
+    "Архимастер": "Архимастер",
+    "Гранд-мастер": "Гранд-мастер",
+    "Владыка ремесел": "Владыка ремесел",
+    "Архонт мануфактур": "Архонт мануфактур",
+
+
     // Новые предметы
     "Древесные чурки": "Древесные чурки",
     "Остатки магических корней": "Остатки магических корней",
@@ -65,6 +72,7 @@ export const itemTranslations = {
     "scroll": "Свиток", 
     "tool": "Инструмент",
     "gem": "Драгоценный камень",
+    "worker": "Рабочий",
 
     // Rarity
     "common": "Обычный",
@@ -134,35 +142,30 @@ export const itemTranslations = {
     "Мантия из живой тени": "Living Shadow Mantle",
     "Гримуар арахнидных заклинаний": "Arachnid Spells Grimoire",
     
-    // Предметы Арахны
-    "Осколок души Архимага": "Archmage Soul Shard",
-    "Сердце Прародительницы": "Progenitor Heart",
-    "Брюшная железа Арахны": "Arachne Silk Gland",
-    "Яйцо Прародительницы": "Progenitor Egg",
-    "Глаз Примаса": "Primas Eye",
-    "Лапа Арахны": "Arachne Claw",
-    "Венец Арахны": "Arachne Crown",
-    "Плащ из пепельных нитей": "Ashen Threads Cloak",
-
     // Item types
     "weapon": "Weapon",
     "armor": "Armor",
     "accessory": "Accessory",
     "consumable": "Consumables",
-
+    "material": "Material",
+    "scroll": "Scroll",
+    "tool": "Tool",
+    "gem": "Gem",
+    "worker": "Worker",
+    
     // Rarity
     "common": "Common",
     "rare": "Rare",
     "epic": "Epic",
     "legendary": "Legendary",
-
+    
     // Source types
     "monster_drop": "Monster Drop",
     "boss_drop": "Boss Drop",
     "craft": "Craft",
     "crafting": "Craft",
     "quest_reward": "Quest Reward",
-
+    
     // Stats
     "power": "Power",
     "defense": "Defense",
@@ -170,7 +173,7 @@ export const itemTranslations = {
     "heal": "Heal",
     "fire_damage": "Fire Damage",
     "magic_resistance": "Magic Resistance",
-
+    
     // UI text
     "Характеристики:": "Stats:",
     "Детали:": "Details:",
@@ -183,7 +186,14 @@ export const itemTranslations = {
     "Загрузка предметов...": "Loading items...",
     "Все": "All",
     "Любые монстры": "Any monsters",
-    "Неизвестно": "Unknown"
+    "Неизвестно": "Unknown",
+    "Магические": "Magical",
+
+    // Worker names
+    "Архимастер": "Archimaster",
+    "Гранд-мастер": "Grand Master",
+    "Владыка ремесел": "Lord of Crafts",
+    "Архонт мануфактур": "Archon of Manufactories"
   }
 };
 

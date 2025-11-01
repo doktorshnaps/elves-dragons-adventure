@@ -167,7 +167,7 @@ const ItemCard = ({ item }: { item: ItemTemplate }) => {
           return src ? (
             <img 
               src={src}
-              alt={item.name}
+              alt={translateItemName(language, item.name)}
               className="w-full h-full object-cover"
               onError={(e) => { (e.currentTarget as HTMLImageElement).src = '/placeholder.svg'; }}
             />
@@ -245,7 +245,7 @@ const ItemCard = ({ item }: { item: ItemTemplate }) => {
           return src ? (
             <img 
               src={src}
-              alt={item.name}
+              alt={translateItemName(language, item.name)}
               className="w-full h-full object-cover"
               onError={(e) => { (e.currentTarget as HTMLImageElement).src = '/placeholder.svg'; }}
             />
@@ -412,7 +412,7 @@ export const ItemsInfo = () => {
           </TabsTrigger>
           <TabsTrigger value="magical" className="data-[state=active]:bg-white/20 text-white data-[state=active]:text-white rounded-3xl text-xs">
             <Diamond className="w-3 h-3 mr-1" />
-            Магические
+            {translateItemText(language, 'Магические')}
           </TabsTrigger>
         </TabsList>
 
