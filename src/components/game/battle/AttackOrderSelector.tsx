@@ -2,6 +2,8 @@ import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { TeamPair } from '@/types/teamBattle';
+import { useLanguage } from '@/hooks/useLanguage';
+import { t } from '@/utils/translations';
 
 interface AttackOrderSelectorProps {
   playerPairs: TeamPair[];
@@ -16,6 +18,7 @@ export const AttackOrderSelector: React.FC<AttackOrderSelectorProps> = ({
   onOrderChange,
   onStartBattle
 }) => {
+  const { language } = useLanguage();
   const [selectedOrder, setSelectedOrder] = useState<string[]>([]);
 
   const handlePairClick = (pairId: string) => {
@@ -44,10 +47,10 @@ export const AttackOrderSelector: React.FC<AttackOrderSelectorProps> = ({
         <Card variant="menu" className="max-w-2xl w-full" style={{ boxShadow: '-33px 15px 10px rgba(0, 0, 0, 0.6)' }}>
           <CardHeader>
             <CardTitle className="text-center text-2xl text-white">
-              Готовность к бою
+              {t(language, 'attackOrder.readyTitle')}
             </CardTitle>
             <p className="text-center text-gray-300">
-              Ваша команда готова к сражению
+              {t(language, 'attackOrder.readyMessage')}
             </p>
           </CardHeader>
           <CardContent>
@@ -59,7 +62,7 @@ export const AttackOrderSelector: React.FC<AttackOrderSelectorProps> = ({
                 disabled={playerPairs.length === 0}
                 style={{ boxShadow: '-33px 15px 10px rgba(0, 0, 0, 0.6)' }}
               >
-                Начать бой
+                {t(language, 'attackOrder.startBattle')}
               </Button>
             </div>
           </CardContent>
@@ -70,7 +73,7 @@ export const AttackOrderSelector: React.FC<AttackOrderSelectorProps> = ({
       <div className="bg-black/50 border-t-2 border-white p-4 backdrop-blur-sm">
         <div className="max-w-6xl mx-auto">
           <h3 className="text-lg font-bold text-white mb-3 text-center">
-            Выбранная команда ({playerPairs.length}/5)
+            {t(language, 'attackOrder.selectedTeam')} ({playerPairs.length}/5)
           </h3>
           <div className="grid grid-cols-5 gap-4">
             {Array.from({ length: 5 }, (_, index) => {
@@ -79,7 +82,7 @@ export const AttackOrderSelector: React.FC<AttackOrderSelectorProps> = ({
                 <div key={index} className="relative overflow-hidden border-2 border-white rounded-3xl p-3 min-h-[200px] bg-black/30 backdrop-blur-sm" style={{ boxShadow: '-33px 15px 10px rgba(0, 0, 0, 0.6)' }}>
                   {pair ? (
                     <div className="space-y-2">
-                      <div className="text-xs text-white font-medium text-center">Пара {index + 1}</div>
+                      <div className="text-xs text-white font-medium text-center">{t(language, 'attackOrder.pair')} {index + 1}</div>
                       
                       {/* Hero Image */}
                       <div className="flex justify-center">
@@ -99,7 +102,7 @@ export const AttackOrderSelector: React.FC<AttackOrderSelectorProps> = ({
                       </div>
                       
                       <div className="text-center">
-                        <div className="text-xs text-white/70">Герой</div>
+                        <div className="text-xs text-white/70">{t(language, 'attackOrder.hero')}</div>
                         <div className="text-xs font-medium text-white">{pair.hero.name}</div>
                         
                         {pair.dragon && (
@@ -119,7 +122,7 @@ export const AttackOrderSelector: React.FC<AttackOrderSelectorProps> = ({
                                 )}
                               </div>
                             </div>
-                            <div className="text-xs text-white/70 mt-1">Дракон</div>
+                            <div className="text-xs text-white/70 mt-1">{t(language, 'attackOrder.dragon')}</div>
                             <div className="text-xs font-medium text-white">{pair.dragon.name}</div>
                           </>
                         )}
@@ -134,8 +137,8 @@ export const AttackOrderSelector: React.FC<AttackOrderSelectorProps> = ({
                   ) : (
                     <div className="flex items-center justify-center h-full text-gray-300">
                       <div className="text-center">
-                        <div className="text-xs">Пара {index + 1}</div>
-                        <div className="text-xs mt-1">Не выбрана</div>
+                        <div className="text-xs">{t(language, 'attackOrder.pair')} {index + 1}</div>
+                        <div className="text-xs mt-1">{t(language, 'attackOrder.notSelected')}</div>
                       </div>
                     </div>
                   )}

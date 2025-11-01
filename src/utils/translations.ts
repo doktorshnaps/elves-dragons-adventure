@@ -475,6 +475,16 @@ export const translations = {
       defense: 'Защита:',
       rarity: 'Редкость:',
       requiresHero: 'Требуется герой'
+    },
+    attackOrder: {
+      readyTitle: 'Готовность к бою',
+      readyMessage: 'Ваша команда готова к сражению',
+      startBattle: 'Начать бой',
+      selectedTeam: 'Выбранная команда',
+      pair: 'Пара',
+      notSelected: 'Не выбрана',
+      hero: 'Герой',
+      dragon: 'Дракон'
     }
   },
   en: {
@@ -951,6 +961,16 @@ export const translations = {
       defense: 'Defense:',
       rarity: 'Rarity:',
       requiresHero: 'Requires hero'
+    },
+    attackOrder: {
+      readyTitle: 'Ready for Battle',
+      readyMessage: 'Your team is ready for combat',
+      startBattle: 'Start Battle',
+      selectedTeam: 'Selected Team',
+      pair: 'Pair',
+      notSelected: 'Not Selected',
+      hero: 'Hero',
+      dragon: 'Dragon'
     }
   }
 };
