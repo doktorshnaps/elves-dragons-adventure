@@ -11,11 +11,17 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/component
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { DungeonItemDrops } from "./DungeonItemDrops";
 
+interface LevelMonsterConfig {
+  level: number;
+  monsters: string[];
+}
+
 interface MonsterSpawnConfig {
   normal: { min_level: number; max_level: number };
   miniboss: { levels: number[] };
   boss50: { level: number };
   boss100: { level: number };
+  level_monsters?: LevelMonsterConfig[];
 }
 
 interface BossMultipliers {
@@ -112,6 +118,44 @@ export const DungeonSettings = () => {
       updateDungeon(dungeonId, 'monster_spawn_config', {
         ...dungeon.monster_spawn_config,
         miniboss: { levels: levelsArray }
+      });
+    }
+  };
+
+  const addLevelMonsterConfig = (dungeonId: string) => {
+    const dungeon = dungeons.find(d => d.id === dungeonId);
+    if (dungeon) {
+      const levelMonsters = dungeon.monster_spawn_config.level_monsters || [];
+      const newLevel = levelMonsters.length > 0 ? Math.max(...levelMonsters.map(lm => lm.level)) + 1 : 1;
+      updateDungeon(dungeonId, 'monster_spawn_config', {
+        ...dungeon.monster_spawn_config,
+        level_monsters: [...levelMonsters, { level: newLevel, monsters: [] }]
+      });
+    }
+  };
+
+  const updateLevelMonster = (dungeonId: string, levelIndex: number, field: 'level' | 'monsters', value: number | string[]) => {
+    const dungeon = dungeons.find(d => d.id === dungeonId);
+    if (dungeon && dungeon.monster_spawn_config.level_monsters) {
+      const updatedLevelMonsters = [...dungeon.monster_spawn_config.level_monsters];
+      updatedLevelMonsters[levelIndex] = {
+        ...updatedLevelMonsters[levelIndex],
+        [field]: value
+      };
+      updateDungeon(dungeonId, 'monster_spawn_config', {
+        ...dungeon.monster_spawn_config,
+        level_monsters: updatedLevelMonsters
+      });
+    }
+  };
+
+  const removeLevelMonsterConfig = (dungeonId: string, levelIndex: number) => {
+    const dungeon = dungeons.find(d => d.id === dungeonId);
+    if (dungeon && dungeon.monster_spawn_config.level_monsters) {
+      const updatedLevelMonsters = dungeon.monster_spawn_config.level_monsters.filter((_, idx) => idx !== levelIndex);
+      updateDungeon(dungeonId, 'monster_spawn_config', {
+        ...dungeon.monster_spawn_config,
+        level_monsters: updatedLevelMonsters
       });
     }
   };
@@ -318,6 +362,73 @@ export const DungeonSettings = () => {
                         На этих уровнях будут появляться минибоссы
                       </p>
                     </div>
+                  </div>
+                </div>
+
+                {/* Настройка монстров по уровням */}
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <h4 className="font-semibold text-sm">Монстры по уровням подземелья</h4>
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="outline"
+                      onClick={() => addLevelMonsterConfig(dungeon.id)}
+                    >
+                      Добавить уровень
+                    </Button>
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    Настройте, какие монстры появляются на каждом уровне подземелья
+                  </p>
+                  <div className="space-y-3 max-h-96 overflow-y-auto">
+                    {(dungeon.monster_spawn_config.level_monsters || []).map((levelConfig, idx) => (
+                      <div key={idx} className="border rounded-lg p-3 space-y-2">
+                        <div className="flex items-center justify-between">
+                          <Label className="text-xs font-medium">Уровень {levelConfig.level}</Label>
+                          <Button
+                            type="button"
+                            size="sm"
+                            variant="ghost"
+                            onClick={() => removeLevelMonsterConfig(dungeon.id, idx)}
+                          >
+                            Удалить
+                          </Button>
+                        </div>
+                        <div className="grid grid-cols-2 gap-2">
+                          <div>
+                            <Label className="text-xs">Номер уровня</Label>
+                            <Input
+                              type="number"
+                              value={levelConfig.level}
+                              onChange={(e) => updateLevelMonster(dungeon.id, idx, 'level', parseInt(e.target.value) || 1)}
+                              min={1}
+                              max={100}
+                            />
+                          </div>
+                          <div>
+                            <Label className="text-xs">Монстры (через запятую)</Label>
+                            <Input
+                              type="text"
+                              value={levelConfig.monsters.join(', ')}
+                              onChange={(e) => {
+                                const monsters = e.target.value.split(',').map(m => m.trim()).filter(m => m.length > 0);
+                                updateLevelMonster(dungeon.id, idx, 'monsters', monsters);
+                              }}
+                              placeholder="monster1, monster2"
+                            />
+                          </div>
+                        </div>
+                        <p className="text-[10px] text-muted-foreground">
+                          Монстры: {levelConfig.monsters.length > 0 ? levelConfig.monsters.join(', ') : 'не указаны'}
+                        </p>
+                      </div>
+                    ))}
+                    {(!dungeon.monster_spawn_config.level_monsters || dungeon.monster_spawn_config.level_monsters.length === 0) && (
+                      <p className="text-xs text-muted-foreground text-center py-4">
+                        Нет настроенных уровней. Нажмите "Добавить уровень" чтобы начать.
+                      </p>
+                    )}
                   </div>
                 </div>
 
