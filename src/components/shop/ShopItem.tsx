@@ -11,6 +11,7 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { useState, useCallback } from "react";
 import { useLanguage } from "@/hooks/useLanguage";
 import { t } from "@/utils/translations";
+import { getTranslatedCardName } from "@/utils/cardNameTranslations";
 
 interface ShopItemProps {
   item: ShopItemType;
@@ -51,7 +52,7 @@ export const ShopItem = ({ item, balance, onBuy }: ShopItemProps) => {
         )}
         <div className="flex-1 flex flex-col">
           <h3 className={`font-semibold text-game-accent mb-1 ${isMobile ? 'text-xs' : 'text-sm'}`}>
-            {item.name}
+            {getTranslatedCardName(item.name, language)}
           </h3>
           <p className={`text-gray-400 mb-1 flex-grow ${isMobile ? 'text-[10px]' : 'text-xs'}`}>
             {item.description}
@@ -121,7 +122,7 @@ export const ShopItem = ({ item, balance, onBuy }: ShopItemProps) => {
       )}
       <div className="flex-1 flex flex-col">
         <h3 className={`font-semibold text-game-accent mb-1 ${isMobile ? 'text-xs' : 'text-sm'}`}>
-          {item.name}
+          {getTranslatedCardName(item.name, language)}
         </h3>
         <p className={`text-gray-400 mb-1 flex-grow ${isMobile ? 'text-[10px]' : 'text-xs'}`}>
           {item.description}

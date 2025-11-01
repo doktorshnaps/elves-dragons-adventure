@@ -64,6 +64,40 @@ export const cardNameTranslations: Record<string, Record<Language, string>> = {
     en: 'Shaman'
   },
   
+  // Workers - Craft workers
+  'Рабочий': {
+    ru: 'Рабочий',
+    en: 'Worker'
+  },
+  'Архимастер': {
+    ru: 'Архимастер',
+    en: 'Archimaster'
+  },
+  'Гранд-мастер': {
+    ru: 'Гранд-мастер',
+    en: 'Grand Master'
+  },
+  'Владыка ремесел': {
+    ru: 'Владыка ремесел',
+    en: 'Lord of Crafts'
+  },
+  'Архонт мануфактур': {
+    ru: 'Архонт мануфактур',
+    en: 'Archon of Manufactories'
+  },
+  'Мастер': {
+    ru: 'Мастер',
+    en: 'Master'
+  },
+  'Подмастерье': {
+    ru: 'Подмастерье',
+    en: 'Apprentice'
+  },
+  'Ученик': {
+    ru: 'Ученик',
+    en: 'Student'
+  },
+  
   // Dragons - Common dragon names
   'Дракон': {
     ru: 'Дракон',
