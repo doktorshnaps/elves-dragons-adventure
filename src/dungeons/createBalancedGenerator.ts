@@ -65,12 +65,6 @@ export const createBalancedGenerator = (config: DungeonConfig) =>
       rowImage?: string
     ) => {
       console.log(`🔍 Resolving image for monster: id="${rawId}", name="${name}", type="${monsterKind}"`);
-      
-      // 1) Use DB image_url if provided (highest priority for custom monsters)
-      if (rowImage) {
-        console.log(`✅ Using DB image_url: ${rowImage}`);
-        return rowImage;
-      }
 
       const id = (rawId || '').toLowerCase();
       const variants = Array.from(new Set([
@@ -79,7 +73,7 @@ export const createBalancedGenerator = (config: DungeonConfig) =>
         id.replace(/_/g, '-'),
       ]));
 
-      // 2) Exact/normalized ID match
+      // 1) Exact/normalized ID match using bundled assets (preferred)
       for (const v of variants) {
         if (monsterImagesById[v]) {
           console.log(`✅ Found by ID match (${v}): ${monsterImagesById[v]}`);
@@ -87,7 +81,7 @@ export const createBalancedGenerator = (config: DungeonConfig) =>
         }
       }
 
-      // 3) Fuzzy match by substring against known keys
+      // 2) Fuzzy match by substring against known keys
       const keys = Object.keys(monsterImagesById);
       const foundKey = keys.find(k => variants.some(v => v.includes(k) || k.includes(v)));
       if (foundKey) {
@@ -95,10 +89,16 @@ export const createBalancedGenerator = (config: DungeonConfig) =>
         return monsterImagesById[foundKey];
       }
 
-      // 4) Match by display name (from DB)
+      // 3) Match by display name (from DB)
       if (name && monsterImagesByName[name]) {
         console.log(`✅ Found by name match: ${monsterImagesByName[name]}`);
         return monsterImagesByName[name];
+      }
+
+      // 4) Use DB image_url if provided (must be a valid public URL)
+      if (rowImage) {
+        console.log(`ℹ️ Fallback to DB image_url: ${rowImage}`);
+        return rowImage;
       }
 
       // 5) Fallback to config defaults
@@ -132,12 +132,22 @@ export const createBalancedGenerator = (config: DungeonConfig) =>
           const row = rows?.find(r => r.monster_id === m.id);
           const type = row?.monster_type === 'miniboss' ? 'miniboss' : (row?.monster_type === 'boss' ? 'boss50' : 'normal');
           const stats = await calculateMonsterStatsFromDB(config.internalName, level, type as any);
+
+          // Skip unknown IDs without bundled image mapping to avoid generic fallback
+          const norm = (m.id || '').toLowerCase();
+          const idVariants = Array.from(new Set([norm, norm.replace(/-/g, '_'), norm.replace(/_/g, '-')]));
+          const hasBundledImage = idVariants.some(v => !!monsterImagesById[v]);
+          if (!row && !hasBundledImage) {
+            console.warn(`⏭️ Skipping unknown monster without image: ${m.id}`);
+            continue;
+          }
+
           for (let i = 0; i < Math.max(1, m.count); i++) {
             const finalImage = resolveMonsterImage(m.id, row?.monster_name, level, type as any, row?.image_url);
             console.log(`🖼️ Monster image for ${m.id} (${row?.monster_name}): ${finalImage}`);
             opponents.push({
               id: currentId++,
-              name: row?.monster_name || config.monsterNames.monster(level),
+              name: row?.monster_name || m.id,
               power: stats.attack,
               health: stats.hp,
               maxHealth: stats.hp,
