@@ -2,7 +2,7 @@ import { Opponent } from '@/types/battle';
 import { getMonsterData } from '@/utils/monsterDataParser';
 import { calculateMonsterStatsFromDB, getDungeonSettings } from '@/utils/dungeonSettingsLoader';
 import { supabase } from '@/integrations/supabase/client';
-import { monsterImagesById } from '@/constants/monsterImages';
+import { monsterImagesById, monsterImagesByName } from '@/constants/monsterImages';
 
 export interface DungeonConfig {
   internalName: string;
@@ -56,6 +56,44 @@ export const createBalancedGenerator = (config: DungeonConfig) =>
   async (level: number): Promise<Opponent[]> => {
     console.log(`🎮 Creating opponents for ${config.internalName} level ${level}`);
     
+    // Resolves the best image for a monster using multiple strategies
+    const resolveMonsterImage = (
+      rawId?: string,
+      name?: string,
+      lvl?: number,
+      monsterKind: 'normal' | 'miniboss' | 'boss50' | 'boss100' = 'normal',
+      rowImage?: string
+    ) => {
+      const id = (rawId || '').toLowerCase();
+      const variants = Array.from(new Set([
+        id,
+        id.replace(/-/g, '_'),
+        id.replace(/_/g, '-'),
+      ]));
+
+      // 1) Exact/normalized ID match
+      for (const v of variants) {
+        if (monsterImagesById[v]) return monsterImagesById[v];
+      }
+
+      // 2) Fuzzy match by substring against known keys
+      const keys = Object.keys(monsterImagesById);
+      const foundKey = keys.find(k => variants.some(v => v.includes(k) || k.includes(v)));
+      if (foundKey) return monsterImagesById[foundKey];
+
+      // 3) Match by display name (from DB)
+      if (name && monsterImagesByName[name]) return monsterImagesByName[name];
+
+      // 4) Use DB image_url if provided
+      if (rowImage) return rowImage;
+
+      // 5) Fallback to config defaults
+      const typeKey = monsterKind === 'normal' ? 'monster' : (monsterKind === 'miniboss' ? 'miniboss' : 'boss');
+      if (typeKey === 'monster') return config.monsterImages.monster(lvl || level);
+      if (typeKey === 'miniboss') return config.monsterImages.miniboss();
+      return config.monsterImages.boss();
+    };
+
     // 1) Пользовательские монстры из настроек БД
     const settings = await getDungeonSettings(config.internalName);
     const customLevel = settings?.monster_spawn_config?.level_monsters?.find(l => l.level === level && Array.isArray(l.monsters) && l.monsters.length > 0);
@@ -80,7 +118,7 @@ export const createBalancedGenerator = (config: DungeonConfig) =>
           const type = row?.monster_type === 'miniboss' ? 'miniboss' : (row?.monster_type === 'boss' ? 'boss50' : 'normal');
           const stats = await calculateMonsterStatsFromDB(config.internalName, level, type as any);
           for (let i = 0; i < Math.max(1, m.count); i++) {
-            const finalImage = monsterImagesById[m.id] || row?.image_url || config.monsterImages.monster(level);
+            const finalImage = resolveMonsterImage(m.id, row?.monster_name, level, type as any, row?.image_url);
             console.log(`🖼️ Monster image for ${m.id} (${row?.monster_name}): ${finalImage}`);
             opponents.push({
               id: currentId++,
