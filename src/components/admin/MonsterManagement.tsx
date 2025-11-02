@@ -52,6 +52,8 @@ export const MonsterManagement = () => {
   const [monsters, setMonsters] = useState<Monster[]>([]);
   const [editingMonster, setEditingMonster] = useState<Monster | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [selectedImage, setSelectedImage] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState<string>("");
   
   const [monsterForm, setMonsterForm] = useState<MonsterForm>({
     monster_id: "",
@@ -88,6 +90,80 @@ export const MonsterManagement = () => {
     }
   };
 
+  const uploadImage = async (file: File): Promise<string | null> => {
+    try {
+      if (!accountId) {
+        throw new Error('Wallet not connected');
+      }
+
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${Date.now()}_${Math.random().toString(36).substring(7)}.${fileExt}`;
+      const filePath = `${fileName}`;
+
+      const { data: { session } } = await supabase.auth.getSession();
+      const token = session?.access_token || undefined;
+
+      const formData = new FormData();
+      formData.append('image', file);
+      formData.append('filePath', filePath);
+      formData.append('walletAddress', accountId);
+
+      const functionsUrl = "https://oimhwdymghkwxznjarkv.functions.supabase.co/upload-monster-image";
+      const headers: Record<string, string> = {};
+      if (token) headers.Authorization = `Bearer ${token}`;
+      const resp = await fetch(functionsUrl, {
+        method: 'POST',
+        headers,
+        body: formData,
+      });
+
+      if (!resp.ok) {
+        const err = await resp.text();
+        throw new Error(err || 'Upload failed');
+      }
+
+      const json = await resp.json();
+      const { url } = json;
+      return url;
+    } catch (error) {
+      console.error('Error uploading image:', error);
+      toast({
+        title: "Ошибка загрузки",
+        description: "Не удалось загрузить изображение",
+        variant: "destructive",
+      });
+      return null;
+    }
+  };
+
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      if (file.size > 5 * 1024 * 1024) {
+        toast({
+          title: "Ошибка",
+          description: "Размер файла не должен превышать 5MB",
+          variant: "destructive",
+        });
+        return;
+      }
+      if (!file.type.startsWith('image/')) {
+        toast({
+          title: "Ошибка",
+          description: "Выберите файл изображения",
+          variant: "destructive",
+        });
+        return;
+      }
+      setSelectedImage(file);
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setImagePreview(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
   const handleSaveMonster = async () => {
     if (!accountId) {
       toast({
@@ -110,6 +186,18 @@ export const MonsterManagement = () => {
     try {
       setSaving(true);
 
+      // Upload image if selected
+      let imageUrl = monsterForm.image_url;
+      if (selectedImage) {
+        const uploadedUrl = await uploadImage(selectedImage);
+        if (uploadedUrl) {
+          imageUrl = uploadedUrl;
+        } else {
+          setSaving(false);
+          return;
+        }
+      }
+
       if (editingMonster) {
         // Update existing monster
         const { error } = await supabase
@@ -119,7 +207,7 @@ export const MonsterManagement = () => {
             monster_name: monsterForm.monster_name,
             monster_type: monsterForm.monster_type,
             description: monsterForm.description || null,
-            image_url: monsterForm.image_url || null,
+            image_url: imageUrl || null,
             updated_at: new Date().toISOString(),
           })
           .eq("id", editingMonster.id);
@@ -139,7 +227,7 @@ export const MonsterManagement = () => {
             monster_name: monsterForm.monster_name,
             monster_type: monsterForm.monster_type,
             description: monsterForm.description || null,
-            image_url: monsterForm.image_url || null,
+            image_url: imageUrl || null,
             created_by_wallet_address: accountId,
           });
 
@@ -160,6 +248,8 @@ export const MonsterManagement = () => {
         image_url: "",
       });
       setEditingMonster(null);
+      setSelectedImage(null);
+      setImagePreview("");
       setIsDialogOpen(false);
       loadMonsters();
     } catch (error: any) {
@@ -183,6 +273,8 @@ export const MonsterManagement = () => {
       description: monster.description || "",
       image_url: monster.image_url || "",
     });
+    setSelectedImage(null);
+    setImagePreview(monster.image_url || "");
     setIsDialogOpen(true);
   };
 
@@ -286,6 +378,8 @@ export const MonsterManagement = () => {
                 description: "",
                 image_url: "",
               });
+              setSelectedImage(null);
+              setImagePreview("");
             }}>
               <Plus className="h-4 w-4 mr-2" />
               Добавить монстра
@@ -357,7 +451,20 @@ export const MonsterManagement = () => {
               </div>
 
               <div className="space-y-2">
-                <Label>URL изображения</Label>
+                <Label>Загрузить изображение</Label>
+                <Input
+                  type="file"
+                  accept="image/*"
+                  onChange={handleImageChange}
+                  className="cursor-pointer"
+                />
+                <p className="text-xs text-muted-foreground">
+                  Максимальный размер файла: 5MB. Форматы: JPG, PNG, WEBP
+                </p>
+              </div>
+
+              <div className="space-y-2">
+                <Label>Или введите URL изображения</Label>
                 <Input
                   placeholder="https://example.com/monster.png"
                   value={monsterForm.image_url}
@@ -367,12 +474,12 @@ export const MonsterManagement = () => {
                 />
               </div>
 
-              {monsterForm.image_url && (
+              {(imagePreview || monsterForm.image_url) && (
                 <div className="space-y-2">
                   <Label>Предпросмотр</Label>
                   <div className="border rounded-lg p-4 bg-accent/20">
                     <img
-                      src={monsterForm.image_url}
+                      src={imagePreview || monsterForm.image_url}
                       alt="Preview"
                       className="max-h-48 mx-auto rounded"
                       onError={(e) => {
