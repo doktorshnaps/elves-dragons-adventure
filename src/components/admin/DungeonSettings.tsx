@@ -241,14 +241,15 @@ export const DungeonSettings = () => {
   const saveDungeon = async (dungeon: DungeonSetting) => {
     console.log('💾 Saving dungeon:', dungeon.dungeon_name, 'AccountId:', accountId);
     
-    if (!accountId) {
-      toast({
-        variant: "destructive",
-        title: "Ошибка",
-        description: "Необходимо подключить кошелек",
-      });
-      return;
-    }
+    // Разрешаем попытку сохранения без проверки кошелька на клиенте — доступ контролируется RLS в БД
+    // if (!accountId) {
+    //   toast({
+    //     variant: "destructive",
+    //     title: "Ошибка",
+    //     description: "Необходимо подключить кошелек",
+    //   });
+    //   return;
+    // }
 
     setSaving(true);
     try {
