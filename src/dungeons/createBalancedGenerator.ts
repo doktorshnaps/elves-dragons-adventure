@@ -54,9 +54,13 @@ const getWaveConfig = async (dungeonType: string, level: number): Promise<{ mons
 
 export const createBalancedGenerator = (config: DungeonConfig) => 
   async (level: number): Promise<Opponent[]> => {
+    console.log(`🎮 Creating opponents for ${config.internalName} level ${level}`);
+    
     // 1) Пользовательские монстры из настроек БД
     const settings = await getDungeonSettings(config.internalName);
     const customLevel = settings?.monster_spawn_config?.level_monsters?.find(l => l.level === level && Array.isArray(l.monsters) && l.monsters.length > 0);
+    
+    console.log(`📝 Available monster image mappings:`, Object.keys(monsterImagesById));
 
     if (customLevel) {
       // Загружаем данные о монстрах по их id
@@ -76,6 +80,8 @@ export const createBalancedGenerator = (config: DungeonConfig) =>
           const type = row?.monster_type === 'miniboss' ? 'miniboss' : (row?.monster_type === 'boss' ? 'boss50' : 'normal');
           const stats = await calculateMonsterStatsFromDB(config.internalName, level, type as any);
           for (let i = 0; i < Math.max(1, m.count); i++) {
+            const finalImage = monsterImagesById[m.id] || row?.image_url || config.monsterImages.monster(level);
+            console.log(`🖼️ Monster image for ${m.id} (${row?.monster_name}): ${finalImage}`);
             opponents.push({
               id: currentId++,
               name: row?.monster_name || config.monsterNames.monster(level),
@@ -84,7 +90,7 @@ export const createBalancedGenerator = (config: DungeonConfig) =>
               maxHealth: stats.hp,
               armor: stats.armor,
               isBoss: type !== 'normal',
-              image: monsterImagesById[m.id] || row?.image_url || config.monsterImages.monster(level)
+              image: finalImage
             });
           }
         }
