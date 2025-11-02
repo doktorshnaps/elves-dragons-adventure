@@ -340,14 +340,14 @@ export const TeamBattleArena: React.FC<TeamBattleArenaProps> = ({
                         <div className="flex gap-1">
                           {/* Hero Image */}
                           <div className="w-12 h-12 rounded-lg overflow-hidden border border-white/30 bg-white/10 flex-shrink-0">
-                            {pair.hero.image ? <img src={pair.hero.image} alt={pair.hero.name} className="w-full h-full object-cover" /> : <div className="w-full h-full flex items-center justify-center text-white">
+                            {pair.hero.image ? <img src={pair.hero.image} alt={pair.hero.name} className="w-full h-full object-contain" /> : <div className="w-full h-full flex items-center justify-center text-white">
                                 <span className="text-lg">⚔️</span>
                               </div>}
                           </div>
                           
                           {/* Dragon Image */}
                           {pair.dragon && <div className="w-10 h-10 rounded-lg overflow-hidden border border-white/30 bg-white/10 flex-shrink-0">
-                              {pair.dragon.image ? <img src={pair.dragon.image} alt={pair.dragon.name} className="w-full h-full object-cover" /> : <div className="w-full h-full flex items-center justify-center text-white">
+                              {pair.dragon.image ? <img src={pair.dragon.image} alt={pair.dragon.name} className="w-full h-full object-contain" /> : <div className="w-full h-full flex items-center justify-center text-white">
                                   <span className="text-sm">🐲</span>
                                 </div>}
                             </div>}
@@ -508,7 +508,7 @@ export const TeamBattleArena: React.FC<TeamBattleArenaProps> = ({
                     </div>
 
                     {/* Background Image */}
-                    {opponent.image && <div className={`absolute inset-0 bg-cover bg-center bg-no-repeat image-rendering-crisp-edges transition-all ${opponent.health <= 0 ? 'grayscale' : ''}`} style={{
+                    {opponent.image && <div className={`absolute inset-0 bg-contain bg-center bg-no-repeat image-rendering-crisp-edges transition-all ${opponent.health <= 0 ? 'grayscale' : ''}`} style={{
                   backgroundImage: `url(${opponent.image})`,
                   imageRendering: 'crisp-edges'
                 }} />}
