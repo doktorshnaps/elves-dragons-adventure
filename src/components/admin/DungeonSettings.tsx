@@ -13,9 +13,14 @@ import { DungeonItemDrops } from "./DungeonItemDrops";
 import { MonsterManagement } from "./MonsterManagement";
 import { Checkbox } from "@/components/ui/checkbox";
 
+interface MonsterWithCount {
+  id: string;
+  count: number;
+}
+
 interface LevelMonsterConfig {
   level: number;
-  monsters: string[];
+  monsters: MonsterWithCount[];
 }
 
 interface MonsterSpawnConfig {
@@ -105,16 +110,34 @@ export const DungeonSettings = () => {
 
       if (error) throw error;
       if (data) {
-        const dungeonSettings: DungeonSetting[] = data.map(d => ({
-          ...d,
-          monster_spawn_config: d.monster_spawn_config as unknown as MonsterSpawnConfig,
-          miniboss_hp_multiplier: d.miniboss_hp_multiplier || 1.5,
-          miniboss_armor_multiplier: d.miniboss_armor_multiplier || 1.5,
-          miniboss_atk_multiplier: d.miniboss_atk_multiplier || 1.5,
-          boss_hp_multipliers: d.boss_hp_multipliers as unknown as BossMultipliers,
-          boss_armor_multipliers: d.boss_armor_multipliers as unknown as BossMultipliers,
-          boss_atk_multipliers: d.boss_atk_multipliers as unknown as BossMultipliers,
-        }));
+        const dungeonSettings: DungeonSetting[] = data.map(d => {
+          // Преобразуем старый формат (массив строк) в новый (массив объектов)
+          const spawnConfig = d.monster_spawn_config as any;
+          if (spawnConfig?.level_monsters) {
+            spawnConfig.level_monsters = spawnConfig.level_monsters.map((lm: any) => {
+              if (Array.isArray(lm.monsters) && lm.monsters.length > 0 && typeof lm.monsters[0] === 'string') {
+                // Старый формат - массив строк
+                return {
+                  level: lm.level,
+                  monsters: lm.monsters.map((id: string) => ({ id, count: 1 }))
+                };
+              }
+              // Новый формат - массив объектов
+              return lm;
+            });
+          }
+          
+          return {
+            ...d,
+            monster_spawn_config: spawnConfig as unknown as MonsterSpawnConfig,
+            miniboss_hp_multiplier: d.miniboss_hp_multiplier || 1.5,
+            miniboss_armor_multiplier: d.miniboss_armor_multiplier || 1.5,
+            miniboss_atk_multiplier: d.miniboss_atk_multiplier || 1.5,
+            boss_hp_multipliers: d.boss_hp_multipliers as unknown as BossMultipliers,
+            boss_armor_multipliers: d.boss_armor_multipliers as unknown as BossMultipliers,
+            boss_atk_multipliers: d.boss_atk_multipliers as unknown as BossMultipliers,
+          };
+        });
         setDungeons(dungeonSettings);
       }
     } catch (error) {
@@ -168,7 +191,7 @@ export const DungeonSettings = () => {
     }
   };
 
-  const updateLevelMonster = (dungeonId: string, levelIndex: number, field: 'level' | 'monsters', value: number | string[]) => {
+  const updateLevelMonster = (dungeonId: string, levelIndex: number, field: 'level' | 'monsters', value: number | MonsterWithCount[]) => {
     const dungeon = dungeons.find(d => d.id === dungeonId);
     if (dungeon && dungeon.monster_spawn_config.level_monsters) {
       const updatedLevelMonsters = [...dungeon.monster_spawn_config.level_monsters];
@@ -180,6 +203,17 @@ export const DungeonSettings = () => {
         ...dungeon.monster_spawn_config,
         level_monsters: updatedLevelMonsters
       });
+    }
+  };
+
+  const updateMonsterCount = (dungeonId: string, levelIndex: number, monsterId: string, count: number) => {
+    const dungeon = dungeons.find(d => d.id === dungeonId);
+    if (dungeon && dungeon.monster_spawn_config.level_monsters) {
+      const levelMonsters = dungeon.monster_spawn_config.level_monsters[levelIndex];
+      const updatedMonsters = levelMonsters.monsters.map(m => 
+        m.id === monsterId ? { ...m, count } : m
+      );
+      updateLevelMonster(dungeonId, levelIndex, 'monsters', updatedMonsters);
     }
   };
 
@@ -442,38 +476,57 @@ export const DungeonSettings = () => {
                             />
                           </div>
                           <div className="col-span-2">
-                            <Label className="text-xs">Выберите монстров</Label>
+                            <Label className="text-xs">Выберите монстров и укажите количество</Label>
                             <div className="border rounded-lg p-3 max-h-48 overflow-y-auto space-y-2">
                               {monsters.length === 0 ? (
                                 <p className="text-xs text-muted-foreground">Загрузка монстров...</p>
                               ) : (
-                                monsters.map((monster) => (
-                                  <div key={monster.monster_id} className="flex items-center space-x-2">
-                                    <Checkbox
-                                      id={`${dungeon.id}-${idx}-${monster.monster_id}`}
-                                      checked={levelConfig.monsters.includes(monster.monster_id)}
-                                      onCheckedChange={(checked) => {
-                                        const currentMonsters = levelConfig.monsters;
-                                        const newMonsters = checked
-                                          ? [...currentMonsters, monster.monster_id]
-                                          : currentMonsters.filter(m => m !== monster.monster_id);
-                                        updateLevelMonster(dungeon.id, idx, 'monsters', newMonsters);
-                                      }}
-                                    />
-                                    <label
-                                      htmlFor={`${dungeon.id}-${idx}-${monster.monster_id}`}
-                                      className="text-xs font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
-                                    >
-                                      {monster.monster_name} <span className="text-muted-foreground">({monster.monster_type})</span>
-                                    </label>
-                                  </div>
-                                ))
+                                monsters.map((monster) => {
+                                  const monsterData = levelConfig.monsters.find(m => m.id === monster.monster_id);
+                                  const isChecked = !!monsterData;
+                                  
+                                  return (
+                                    <div key={monster.monster_id} className="flex items-center space-x-2">
+                                      <Checkbox
+                                        id={`${dungeon.id}-${idx}-${monster.monster_id}`}
+                                        checked={isChecked}
+                                        onCheckedChange={(checked) => {
+                                          const currentMonsters = levelConfig.monsters;
+                                          const newMonsters = checked
+                                            ? [...currentMonsters, { id: monster.monster_id, count: 1 }]
+                                            : currentMonsters.filter(m => m.id !== monster.monster_id);
+                                          updateLevelMonster(dungeon.id, idx, 'monsters', newMonsters);
+                                        }}
+                                      />
+                                      <label
+                                        htmlFor={`${dungeon.id}-${idx}-${monster.monster_id}`}
+                                        className="text-xs font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer flex-1"
+                                      >
+                                        {monster.monster_name} <span className="text-muted-foreground">({monster.monster_type})</span>
+                                      </label>
+                                      {isChecked && (
+                                        <Input
+                                          type="number"
+                                          min={1}
+                                          value={monsterData.count}
+                                          onChange={(e) => updateMonsterCount(dungeon.id, idx, monster.monster_id, parseInt(e.target.value) || 1)}
+                                          className="w-16 h-7 text-xs"
+                                        />
+                                      )}
+                                    </div>
+                                  );
+                                })
                               )}
                             </div>
                           </div>
                         </div>
                         <p className="text-[10px] text-muted-foreground">
-                          Монстры: {levelConfig.monsters.length > 0 ? levelConfig.monsters.join(', ') : 'не указаны'}
+                          Выбрано монстров: {levelConfig.monsters.length > 0 
+                            ? levelConfig.monsters.map(m => {
+                                const monster = monsters.find(mon => mon.monster_id === m.id);
+                                return `${monster?.monster_name || m.id} (x${m.count})`;
+                              }).join(', ')
+                            : 'не указаны'}
                         </p>
                       </div>
                     ))}
