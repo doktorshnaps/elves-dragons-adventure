@@ -1964,6 +1964,52 @@ export type Database = {
             }
             Returns: boolean
           }
+      admin_update_dungeon_settings: {
+        Args: {
+          p_armor_growth?: number
+          p_atk_growth?: number
+          p_base_armor?: number
+          p_base_atk?: number
+          p_base_hp?: number
+          p_boss_armor_multipliers?: Json
+          p_boss_atk_multipliers?: Json
+          p_boss_hp_multipliers?: Json
+          p_hp_growth?: number
+          p_id: string
+          p_miniboss_armor_multiplier?: number
+          p_miniboss_atk_multiplier?: number
+          p_miniboss_hp_multiplier?: number
+          p_monster_spawn_config?: Json
+          p_wallet_address: string
+        }
+        Returns: {
+          armor_growth: number
+          atk_growth: number
+          base_armor: number
+          base_atk: number
+          base_hp: number
+          boss_armor_multipliers: Json | null
+          boss_atk_multipliers: Json | null
+          boss_hp_multipliers: Json | null
+          created_at: string | null
+          dungeon_name: string
+          dungeon_number: number
+          dungeon_type: string
+          hp_growth: number
+          id: string
+          miniboss_armor_multiplier: number | null
+          miniboss_atk_multiplier: number | null
+          miniboss_hp_multiplier: number | null
+          monster_spawn_config: Json | null
+          updated_at: string | null
+        }
+        SetofOptions: {
+          from: "*"
+          to: "dungeon_settings"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
       admin_update_hero_base_stats: {
         Args: {
           p_admin_wallet_address?: string

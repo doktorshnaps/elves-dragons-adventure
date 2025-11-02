@@ -256,36 +256,35 @@ export const DungeonSettings = () => {
       console.log('📤 Sending update for dungeon:', dungeon.id);
       console.log('📋 monster_spawn_config:', JSON.stringify(dungeon.monster_spawn_config, null, 2));
       
-      const { data: updatedRows, error } = await supabase
-        .from('dungeon_settings')
-        .update({
-          base_hp: dungeon.base_hp,
-          base_armor: dungeon.base_armor,
-          base_atk: dungeon.base_atk,
-          hp_growth: dungeon.hp_growth || 1.15,
-          armor_growth: dungeon.armor_growth || 1.10,
-          atk_growth: dungeon.atk_growth || 1.12,
-          monster_spawn_config: dungeon.monster_spawn_config as any,
-          miniboss_hp_multiplier: dungeon.miniboss_hp_multiplier || 1.5,
-          miniboss_armor_multiplier: dungeon.miniboss_armor_multiplier || 1.5,
-          miniboss_atk_multiplier: dungeon.miniboss_atk_multiplier || 1.5,
-          boss_hp_multipliers: dungeon.boss_hp_multipliers as any,
-          boss_armor_multipliers: dungeon.boss_armor_multipliers as any,
-          boss_atk_multipliers: dungeon.boss_atk_multipliers as any,
-        })
-        .eq('id', dungeon.id)
-        .select('id, monster_spawn_config')
-        .limit(1);
+      const { data, error } = await supabase
+        .rpc('admin_update_dungeon_settings', {
+          p_wallet_address: accountId || '',
+          p_id: dungeon.id,
+          p_base_hp: dungeon.base_hp,
+          p_base_armor: dungeon.base_armor,
+          p_base_atk: dungeon.base_atk,
+          p_hp_growth: dungeon.hp_growth || 1.15,
+          p_armor_growth: dungeon.armor_growth || 1.10,
+          p_atk_growth: dungeon.atk_growth || 1.12,
+          p_monster_spawn_config: dungeon.monster_spawn_config as any,
+          p_miniboss_hp_multiplier: dungeon.miniboss_hp_multiplier || 1.5,
+          p_miniboss_armor_multiplier: dungeon.miniboss_armor_multiplier || 1.5,
+          p_miniboss_atk_multiplier: dungeon.miniboss_atk_multiplier || 1.5,
+          p_boss_hp_multipliers: dungeon.boss_hp_multipliers as any,
+          p_boss_armor_multipliers: dungeon.boss_armor_multipliers as any,
+          p_boss_atk_multipliers: dungeon.boss_atk_multipliers as any,
+        });
 
       if (error) {
-        console.error('❌ Error saving dungeon:', error);
+        console.error('❌ Error saving dungeon via RPC:', error);
         throw error;
       }
 
-      console.log('✅ Dungeon saved successfully');
-      if (updatedRows && updatedRows[0]) {
-        console.log('🔎 DB monster_spawn_config after update:', JSON.stringify(updatedRows[0].monster_spawn_config, null, 2));
+      console.log('✅ Dungeon saved successfully (RPC)');
+      if (data) {
+        console.log('🔎 DB monster_spawn_config after update:', JSON.stringify((data as any).monster_spawn_config, null, 2));
       }
+
       
       toast({
         title: "Успешно",
