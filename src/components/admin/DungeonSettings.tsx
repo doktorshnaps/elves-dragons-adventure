@@ -239,6 +239,8 @@ export const DungeonSettings = () => {
   };
 
   const saveDungeon = async (dungeon: DungeonSetting) => {
+    console.log('💾 Saving dungeon:', dungeon.dungeon_name, 'AccountId:', accountId);
+    
     if (!accountId) {
       toast({
         variant: "destructive",
@@ -250,6 +252,9 @@ export const DungeonSettings = () => {
 
     setSaving(true);
     try {
+      console.log('📤 Sending update for dungeon:', dungeon.id);
+      console.log('📋 monster_spawn_config:', JSON.stringify(dungeon.monster_spawn_config, null, 2));
+      
       const { error } = await supabase
         .from('dungeon_settings')
         .update({
@@ -269,8 +274,13 @@ export const DungeonSettings = () => {
         })
         .eq('id', dungeon.id);
 
-      if (error) throw error;
+      if (error) {
+        console.error('❌ Error saving dungeon:', error);
+        throw error;
+      }
 
+      console.log('✅ Dungeon saved successfully');
+      
       toast({
         title: "Успешно",
         description: `Настройки подземелья "${dungeon.dungeon_name}" сохранены`,
@@ -279,7 +289,7 @@ export const DungeonSettings = () => {
       // Reload dungeons to get fresh data
       await loadDungeons();
     } catch (error) {
-      console.error('Error saving dungeon:', error);
+      console.error('💥 Error saving dungeon:', error);
       toast({
         variant: "destructive",
         title: "Ошибка",
