@@ -2,6 +2,7 @@ import { Opponent } from '@/types/battle';
 import { getMonsterData } from '@/utils/monsterDataParser';
 import { calculateMonsterStatsFromDB, getDungeonSettings } from '@/utils/dungeonSettingsLoader';
 import { supabase } from '@/integrations/supabase/client';
+import { monsterImagesById } from '@/constants/monsterImages';
 
 export interface DungeonConfig {
   internalName: string;
@@ -83,7 +84,7 @@ export const createBalancedGenerator = (config: DungeonConfig) =>
               maxHealth: stats.hp,
               armor: stats.armor,
               isBoss: type !== 'normal',
-              image: row?.image_url || config.monsterImages.monster(level)
+              image: monsterImagesById[m.id] || row?.image_url || config.monsterImages.monster(level)
             });
           }
         }

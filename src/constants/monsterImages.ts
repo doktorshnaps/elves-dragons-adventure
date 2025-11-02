@@ -59,6 +59,28 @@ export const monsterImagesByType: Record<string, string> = {
   "arachne_mother": arachnaProgenitor
 };
 
+// Monster images mapping by monster_id (from database)
+export const monsterImagesById: Record<string, string> = {
+  "spider_skeleton": spiderSkeleton,
+  "spider_jumper": spiderJumper,
+  "spider_weaver": spiderWeaver,
+  "spider_hunter": spiderHunter,
+  "spider_queen_larva": spiderQueenLarva,
+  "spider_corpse_eater": spiderCorpseEater,
+  "spider_guardian": spiderGuardian,
+  "spider_wyvern": spiderWyvern,
+  "shadow_spider_catcher": shadowSpiderCatcher,
+  "ancient_spider": ancientSpiderHermit,
+  "spider_berserker": spiderBerserker,
+  "spider_illusionist": spiderIllusionist,
+  "spider_mother": spiderMotherGuardian,
+  "spider_parasite": spiderParasite,
+  "spider_titan": spiderTitan,
+  "spider_archmage": arachnidArchmage,
+  "arachna_progenitor": arachnaProgenitor,
+  "shadow_spider": shadowSpiderCatcher,
+};
+
 // Array of all images for preloading
 export const allMonsterImages = [
   spiderSkeleton,
