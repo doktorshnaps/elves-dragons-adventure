@@ -256,7 +256,7 @@ export const DungeonSettings = () => {
       console.log('📤 Sending update for dungeon:', dungeon.id);
       console.log('📋 monster_spawn_config:', JSON.stringify(dungeon.monster_spawn_config, null, 2));
       
-      const { error } = await supabase
+      const { data: updatedRows, error } = await supabase
         .from('dungeon_settings')
         .update({
           base_hp: dungeon.base_hp,
@@ -273,7 +273,9 @@ export const DungeonSettings = () => {
           boss_armor_multipliers: dungeon.boss_armor_multipliers as any,
           boss_atk_multipliers: dungeon.boss_atk_multipliers as any,
         })
-        .eq('id', dungeon.id);
+        .eq('id', dungeon.id)
+        .select('id, monster_spawn_config')
+        .limit(1);
 
       if (error) {
         console.error('❌ Error saving dungeon:', error);
@@ -281,6 +283,9 @@ export const DungeonSettings = () => {
       }
 
       console.log('✅ Dungeon saved successfully');
+      if (updatedRows && updatedRows[0]) {
+        console.log('🔎 DB monster_spawn_config after update:', JSON.stringify(updatedRows[0].monster_spawn_config, null, 2));
+      }
       
       toast({
         title: "Успешно",
