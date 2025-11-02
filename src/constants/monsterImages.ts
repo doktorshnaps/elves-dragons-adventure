@@ -35,7 +35,7 @@ export const monsterImagesByName: Record<string, string> = {
   "Паук-паразит": spiderParasite,
   "Паук-титан": spiderTitan,
   "Арахнидный Архимаг": arachnidArchmage,
-  "Арахна, Мать-Прародительница": arachnaProgenitor
+  "Арахна Прародительница": arachnaProgenitor
 };
 
 // Monster images mapping by monster type (English)
