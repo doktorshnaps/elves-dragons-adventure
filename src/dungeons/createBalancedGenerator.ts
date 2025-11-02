@@ -1,6 +1,7 @@
 import { Opponent } from '@/types/battle';
 import { getMonsterData } from '@/utils/monsterDataParser';
 import { calculateMonsterStatsFromDB, getDungeonSettings } from '@/utils/dungeonSettingsLoader';
+import { supabase } from '@/integrations/supabase/client';
 
 export interface DungeonConfig {
   internalName: string;
@@ -52,6 +53,46 @@ const getWaveConfig = async (dungeonType: string, level: number): Promise<{ mons
 
 export const createBalancedGenerator = (config: DungeonConfig) => 
   async (level: number): Promise<Opponent[]> => {
+    // 1) Пользовательские монстры из настроек БД
+    const settings = await getDungeonSettings(config.internalName);
+    const customLevel = settings?.monster_spawn_config?.level_monsters?.find(l => l.level === level && Array.isArray(l.monsters) && l.monsters.length > 0);
+
+    if (customLevel) {
+      // Загружаем данные о монстрах по их id
+      const ids = customLevel.monsters.map(m => m.id);
+      const { data: rows, error } = await supabase
+        .from('monsters')
+        .select('monster_id, monster_name, image_url, monster_type')
+        .in('monster_id', ids);
+
+      if (error) {
+        console.error('❌ Failed to load monsters for custom level:', error);
+      } else {
+        const opponents: Opponent[] = [];
+        let currentId = 1;
+        for (const m of customLevel.monsters) {
+          const row = rows?.find(r => r.monster_id === m.id);
+          const type = row?.monster_type === 'miniboss' ? 'miniboss' : (row?.monster_type === 'boss' ? 'boss50' : 'normal');
+          const stats = await calculateMonsterStatsFromDB(config.internalName, level, type as any);
+          for (let i = 0; i < Math.max(1, m.count); i++) {
+            opponents.push({
+              id: currentId++,
+              name: row?.monster_name || config.monsterNames.monster(level),
+              power: stats.attack,
+              health: stats.hp,
+              maxHealth: stats.hp,
+              armor: stats.armor,
+              isBoss: type !== 'normal',
+              image: row?.image_url || config.monsterImages.monster(level)
+            });
+          }
+        }
+        console.log(`[${config.internalName} Lv${level}] Generated ${opponents.length} opponents (type: custom)`);
+        return opponents;
+      }
+    }
+
+    // 2) Базовая логика волн
     const waveConfig = await getWaveConfig(config.internalName, level);
     
     // Пытаемся получить данные из CSV (для точной настройки)

@@ -1,10 +1,21 @@
 import { supabase } from '@/integrations/supabase/client';
 
+export interface MonsterWithCount {
+  id: string;
+  count: number;
+}
+
+export interface LevelMonsterConfig {
+  level: number;
+  monsters: MonsterWithCount[];
+}
+
 export interface MonsterSpawnConfig {
   normal: { min_level: number; max_level: number };
   miniboss: { levels: number[] };
   boss50: { level: number };
   boss100: { level: number };
+  level_monsters?: LevelMonsterConfig[];
 }
 
 export interface BossMultipliers {
