@@ -64,6 +64,14 @@ export const createBalancedGenerator = (config: DungeonConfig) =>
       monsterKind: 'normal' | 'miniboss' | 'boss50' | 'boss100' = 'normal',
       rowImage?: string
     ) => {
+      console.log(`🔍 Resolving image for monster: id="${rawId}", name="${name}", type="${monsterKind}"`);
+      
+      // 1) Use DB image_url if provided (highest priority for custom monsters)
+      if (rowImage) {
+        console.log(`✅ Using DB image_url: ${rowImage}`);
+        return rowImage;
+      }
+
       const id = (rawId || '').toLowerCase();
       const variants = Array.from(new Set([
         id,
@@ -71,23 +79,30 @@ export const createBalancedGenerator = (config: DungeonConfig) =>
         id.replace(/_/g, '-'),
       ]));
 
-      // 1) Exact/normalized ID match
+      // 2) Exact/normalized ID match
       for (const v of variants) {
-        if (monsterImagesById[v]) return monsterImagesById[v];
+        if (monsterImagesById[v]) {
+          console.log(`✅ Found by ID match (${v}): ${monsterImagesById[v]}`);
+          return monsterImagesById[v];
+        }
       }
 
-      // 2) Fuzzy match by substring against known keys
+      // 3) Fuzzy match by substring against known keys
       const keys = Object.keys(monsterImagesById);
       const foundKey = keys.find(k => variants.some(v => v.includes(k) || k.includes(v)));
-      if (foundKey) return monsterImagesById[foundKey];
+      if (foundKey) {
+        console.log(`✅ Found by fuzzy match (${foundKey}): ${monsterImagesById[foundKey]}`);
+        return monsterImagesById[foundKey];
+      }
 
-      // 3) Match by display name (from DB)
-      if (name && monsterImagesByName[name]) return monsterImagesByName[name];
-
-      // 4) Use DB image_url if provided
-      if (rowImage) return rowImage;
+      // 4) Match by display name (from DB)
+      if (name && monsterImagesByName[name]) {
+        console.log(`✅ Found by name match: ${monsterImagesByName[name]}`);
+        return monsterImagesByName[name];
+      }
 
       // 5) Fallback to config defaults
+      console.warn(`⚠️ No image found for monster "${rawId}" (${name}), using fallback`);
       const typeKey = monsterKind === 'normal' ? 'monster' : (monsterKind === 'miniboss' ? 'miniboss' : 'boss');
       if (typeKey === 'monster') return config.monsterImages.monster(lvl || level);
       if (typeKey === 'miniboss') return config.monsterImages.miniboss();
