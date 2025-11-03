@@ -134,7 +134,7 @@ export const InlineDiceDisplay = ({
           isAttacker 
             ? 'bg-red-500/90 border-red-300 shadow-red-500/50' 
             : 'bg-blue-500/90 border-blue-300 shadow-blue-500/50'
-        } backdrop-blur-sm rounded-lg p-1.5 sm:p-2.5 shadow-xl border sm:border-2 w-14 sm:w-20`}>
+        } backdrop-blur-sm rounded-lg p-1.5 sm:p-2.5 shadow-xl border sm:border-2 w-14 sm:w-20 h-[52px] sm:h-[76px] flex flex-col justify-center`}>
           <div className={`text-[9px] sm:text-xs ${isAttacker ? 'text-red-100' : 'text-blue-100'} mb-0.5 text-center font-medium`}>
             {isAttacker ? '⚔️' : '🛡️'} {label || (isAttacker ? 'Атака' : 'Защита')}
           </div>
