@@ -322,13 +322,7 @@ export const TeamBattleArena: React.FC<TeamBattleArenaProps> = ({
         <div className="flex-1 flex flex-col space-y-2 overflow-hidden">
           {/* Player Team - Upper Part */}
           <Card variant="menu" className="flex-1 min-h-0" style={{ boxShadow: '-33px 15px 10px rgba(0, 0, 0, 0.6)' }}>
-            <CardHeader className="py-2">
-              <CardTitle className="flex items-center gap-2 text-white justify-center text-sm">
-                <Shield className="w-4 h-4" />
-                {t(language, 'battlePage.yourTeam')}
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="h-full overflow-hidden p-2">
+            <CardContent className="h-full overflow-hidden p-1 pt-2">
               <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-1 h-full">
                 {playerPairs.map((pair, index) => (
                   <div key={pair.id} className={`p-1.5 rounded-2xl border-2 transition-all cursor-pointer ${pair.health <= 0 ? 'bg-black/30 border-white/30 opacity-50' : attackingPair === pair.id ? 'bg-red-500/30 border-red-500 animate-pulse scale-105 shadow-lg shadow-red-500/50' : defendingPair === pair.id ? 'bg-blue-500/30 border-blue-500 animate-pulse shadow-lg shadow-blue-500/50' : selectedPair === pair.id ? 'bg-white/20 border-white' : 'bg-black/20 border-white/50 hover:border-white'}`} onClick={() => {
