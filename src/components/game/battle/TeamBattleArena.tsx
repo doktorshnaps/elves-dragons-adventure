@@ -491,7 +491,7 @@ export const TeamBattleArena: React.FC<TeamBattleArenaProps> = ({
             </CardHeader>
             <CardContent className="h-full overflow-auto">
               <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-2">
-                {opponents.map((opponent, index) => <div key={opponent.id} className={`relative rounded-3xl border-2 transition-all overflow-hidden h-28 ${opponent.health <= 0 ? 'border-white/30' : attackedTarget === opponent.id ? 'border-red-500 animate-pulse scale-105 shadow-lg shadow-red-500/50 cursor-pointer' : selectedTarget === opponent.id ? 'border-red-400 bg-red-400/10 cursor-pointer' : 'border-white/50 hover:border-red-400/50 cursor-pointer'}`} onClick={() => {
+                {opponents.map((opponent, index) => <div key={opponent.id} className={`relative rounded-3xl border-2 transition-all overflow-hidden h-64 ${opponent.health <= 0 ? 'border-white/30' : attackedTarget === opponent.id ? 'border-red-500 animate-pulse scale-105 shadow-lg shadow-red-500/50 cursor-pointer' : selectedTarget === opponent.id ? 'border-red-400 bg-red-400/10 cursor-pointer' : 'border-white/50 hover:border-red-400/50 cursor-pointer'}`} onClick={() => {
                 if (opponent.health > 0 && isPlayerTurn) {
                   setSelectedTarget(opponent.id);
                 }
@@ -508,7 +508,7 @@ export const TeamBattleArena: React.FC<TeamBattleArenaProps> = ({
                     </div>
 
                     {/* Background Image */}
-                    {opponent.image && <div className={`absolute inset-0 bg-contain bg-center bg-no-repeat image-rendering-crisp-edges transition-all ${opponent.health <= 0 ? 'grayscale' : ''}`} style={{
+                    {opponent.image && <div className={`absolute inset-0 bg-cover bg-center bg-no-repeat image-rendering-crisp-edges transition-all ${opponent.health <= 0 ? 'grayscale' : ''}`} style={{
                   backgroundImage: `url(${opponent.image})`,
                   imageRendering: 'crisp-edges'
                 }} />}
