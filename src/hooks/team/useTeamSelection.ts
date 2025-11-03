@@ -6,6 +6,7 @@ import { useCardInstances } from '@/hooks/useCardInstances';
 import { TeamPair } from '@/components/game/team/DeckSelection';
 import { useToast } from '@/hooks/use-toast';
 import { checkActiveBattle, clearActiveBattle } from '@/utils/activeBattleChecker';
+import { calculateCardStats } from '@/utils/cardUtils';
 
 export const useTeamSelection = () => {
   const { gameData, updateGameData } = useGameData();
@@ -253,16 +254,18 @@ export const useTeamSelection = () => {
     let totalHealth = 0;
 
     selectedPairs.forEach(pair => {
-      // Add hero stats (use current health from card instances)
-      totalPower += pair.hero.power;
-      totalDefense += pair.hero.defense;
-      totalHealth += pair.hero.currentHealth ?? pair.hero.health;
+      // Calculate hero stats with fallback to calculateCardStats
+      const heroStats = calculateCardStats(pair.hero.name, pair.hero.rarity, pair.hero.type);
+      totalPower += pair.hero.power ?? heroStats.power;
+      totalDefense += pair.hero.defense ?? heroStats.defense;
+      totalHealth += pair.hero.currentHealth ?? pair.hero.health ?? heroStats.health;
 
       // Add dragon stats if present and same faction (use current health from card instances)
       if (pair.dragon && pair.dragon.faction === pair.hero.faction) {
-        totalPower += pair.dragon.power;
-        totalDefense += pair.dragon.defense;
-        totalHealth += pair.dragon.currentHealth ?? pair.dragon.health;
+        const dragonStats = calculateCardStats(pair.dragon.name, pair.dragon.rarity, pair.dragon.type);
+        totalPower += pair.dragon.power ?? dragonStats.power;
+        totalDefense += pair.dragon.defense ?? dragonStats.defense;
+        totalHealth += pair.dragon.currentHealth ?? pair.dragon.health ?? dragonStats.health;
       }
     });
 
