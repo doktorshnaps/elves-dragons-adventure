@@ -271,46 +271,48 @@ export const TeamBattleArena: React.FC<TeamBattleArenaProps> = ({
       <div className="w-full h-full flex flex-col space-y-2">
         {/* Header */}
         <Card variant="menu" style={{ boxShadow: '-33px 15px 10px rgba(0, 0, 0, 0.6)' }}>
-          <CardHeader className="relative py-3">
-            <div className="absolute left-4 top-3 flex gap-2">
-              <Button variant="menu" size="sm" style={{ boxShadow: '-33px 15px 10px rgba(0, 0, 0, 0.6)' }} onClick={handleMenuReturn}>
-                <ArrowLeft className="w-4 h-4 mr-1" />
-                {t(language, 'battlePage.menu')}
-              </Button>
+          <CardHeader className="py-2 sm:py-3">
+            <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-0 sm:relative">
+              <div className="flex gap-1 sm:gap-2 sm:absolute sm:left-0 sm:top-0">
+                <Button variant="menu" size="sm" className="text-[10px] sm:text-sm px-2 py-1 h-auto sm:h-9" style={{ boxShadow: '-33px 15px 10px rgba(0, 0, 0, 0.6)' }} onClick={handleMenuReturn}>
+                  <ArrowLeft className="w-3 h-3 sm:w-4 sm:h-4 mr-0.5 sm:mr-1" />
+                  {t(language, 'battlePage.menu')}
+                </Button>
+                
+                <AlertDialog>
+                  <AlertDialogTrigger asChild>
+                    <Button variant="destructive" size="sm" className="text-[10px] sm:text-sm px-2 py-1 h-auto sm:h-9">
+                      {t(language, 'battlePage.surrender')}
+                    </Button>
+                  </AlertDialogTrigger>
+                  <AlertDialogContent>
+                    <AlertDialogHeader>
+                      <AlertDialogTitle>{t(language, 'battlePage.leaveDungeon')}</AlertDialogTitle>
+                      <AlertDialogDescription>
+                        {t(language, 'battlePage.leaveDungeonWarning')}
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                      <AlertDialogCancel>{t(language, 'battlePage.no')}</AlertDialogCancel>
+                      <AlertDialogAction onClick={handleSurrender}>{t(language, 'battlePage.yes')}</AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
+              </div>
               
-              <AlertDialog>
-                <AlertDialogTrigger asChild>
-                  <Button variant="destructive" size="sm">
-                    {t(language, 'battlePage.surrender')}
-                  </Button>
-                </AlertDialogTrigger>
-                <AlertDialogContent>
-                  <AlertDialogHeader>
-                    <AlertDialogTitle>{t(language, 'battlePage.leaveDungeon')}</AlertDialogTitle>
-                    <AlertDialogDescription>
-                      {t(language, 'battlePage.leaveDungeonWarning')}
-                    </AlertDialogDescription>
-                  </AlertDialogHeader>
-                  <AlertDialogFooter>
-                    <AlertDialogCancel>{t(language, 'battlePage.no')}</AlertDialogCancel>
-                    <AlertDialogAction onClick={handleSurrender}>{t(language, 'battlePage.yes')}</AlertDialogAction>
-                  </AlertDialogFooter>
-                </AlertDialogContent>
-              </AlertDialog>
+              <CardTitle className="text-center text-sm sm:text-lg text-white flex-1">
+                {t(language, 'battlePage.teamBattleLevel')} {level}
+              </CardTitle>
             </div>
             
-            <CardTitle className="text-center text-lg text-white">
-              {t(language, 'battlePage.teamBattleLevel')} {level}
-            </CardTitle>
-            
             {/* Account Level and XP Progress */}
-            <div className="flex items-center justify-center gap-4 mt-2">
-              <div className="text-xs text-white/70">
+            <div className="flex items-center justify-center gap-2 sm:gap-4 mt-2">
+              <div className="text-[10px] sm:text-xs text-white/70">
                 {t(language, 'battlePage.level')} {accountLevel}
               </div>
-              <div className="w-40">
+              <div className="w-32 sm:w-40">
                 <Progress value={xpProgress.progress * 100} className="h-1" />
-                <div className="flex justify-between text-xs text-white/60 mt-1">
+                <div className="flex justify-between text-[9px] sm:text-xs text-white/60 mt-1">
                   <span>{xpProgress.currentLevelXP}</span>
                   <span>{xpProgress.nextLevelXP}</span>
                 </div>
@@ -388,7 +390,7 @@ export const TeamBattleArena: React.FC<TeamBattleArenaProps> = ({
 
           {/* Combat Actions - Center */}
           <Card variant="menu" className="flex-shrink-0" style={{ boxShadow: '-33px 15px 10px rgba(0, 0, 0, 0.6)' }}>
-            <CardContent className="p-2 relative">
+            <CardContent className="p-1 sm:p-2 relative">
               {/* Attack Animation Overlay */}
               <AttackAnimation 
                 isActive={attackAnimation.isActive}
@@ -398,17 +400,17 @@ export const TeamBattleArena: React.FC<TeamBattleArenaProps> = ({
                 defenderPosition={attackAnimation.source === 'player' ? getDicePosition(enemyDiceRef) : getDicePosition(playerDiceRef)}
                 damage={attackAnimation.damage}
               />
-              <div className="text-center space-y-2">
-                <div className="text-sm font-medium text-white">
+              <div className="text-center space-y-1 sm:space-y-2">
+                <div className="text-xs sm:text-sm font-medium text-white">
                   {isPlayerTurn ? <span className="text-green-400">{t(language, 'battlePage.yourTurn')}</span> : <span className="text-red-400">{t(language, 'battlePage.enemyTurn')}</span>}
                 </div>
                 
                 
-                  <div className="space-y-1">
+                  <div className="space-y-0.5 sm:space-y-1">
                   {/* Всегда показываем кубики */}
-                  <div className="flex items-center justify-center gap-4">
+                  <div className="flex items-center justify-center gap-2 sm:gap-4">
                     {/* Left Dice (Игрок) */}
-                    <div ref={playerDiceRef} className="w-20 flex justify-center">
+                    <div ref={playerDiceRef} className="w-14 sm:w-20 flex justify-center">
                       <InlineDiceDisplay
                         key={`dice-left-${diceKey}`}
                         isRolling={isDiceRolling}
@@ -428,17 +430,17 @@ export const TeamBattleArena: React.FC<TeamBattleArenaProps> = ({
                         disabled={!selectedPair || selectedTarget === null || typeof selectedTarget === 'string'} 
                         size="sm" 
                         variant="menu"
-                        className="h-7 px-3"
+                        className="h-6 sm:h-7 px-2 sm:px-3 text-xs sm:text-sm"
                         style={{ boxShadow: '-33px 15px 10px rgba(0, 0, 0, 0.6)' }}
                       >
                         {t(language, 'battlePage.attackButton')}
                       </Button>
                     ) : (
-                      <div className="h-7 w-[88px]" />
+                      <div className="h-6 sm:h-7 w-16 sm:w-[88px]" />
                     )}
 
                     {/* Right Dice (Монстр) */}
-                    <div ref={enemyDiceRef} className="w-20 flex justify-center">
+                    <div ref={enemyDiceRef} className="w-14 sm:w-20 flex justify-center">
                       <InlineDiceDisplay
                         key={`dice-right-${diceKey}`}
                         isRolling={isDiceRolling}
@@ -454,18 +456,18 @@ export const TeamBattleArena: React.FC<TeamBattleArenaProps> = ({
 
                   {/* Подсказки только в ход игрока */}
                   {isPlayerTurn && !autoBattle && selectedPair && !selectedTarget && (
-                    <div className="text-xs text-white/70">
+                    <div className="text-[10px] sm:text-xs text-white/70">
                       {t(language, 'battlePage.selectTarget')}
                     </div>
                   )}
                 </div>
 
-                <div className="flex gap-2 justify-center">
+                <div className="flex gap-1 sm:gap-2 justify-center">
                   <Button 
                     variant={autoBattle ? "destructive" : "menu"} 
                     size="sm" 
                     onClick={handleAutoBattle}
-                    className={autoBattle ? "" : ""}
+                    className={`text-xs sm:text-sm px-2 sm:px-3 py-1 sm:py-2 h-auto ${autoBattle ? "" : ""}`}
                     style={!autoBattle ? { boxShadow: '-33px 15px 10px rgba(0, 0, 0, 0.6)' } : undefined}
                   >
                     {autoBattle ? t(language, 'battlePage.stopAutoBattle') : t(language, 'battlePage.autoBattle')}

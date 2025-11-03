@@ -82,7 +82,7 @@ export const InlineDiceDisplay = ({
   const notificationOnRight = showDamage && isDefender && !isPlayerDice;
 
   return (
-    <div className="relative flex items-center gap-2">
+    <div className="relative flex items-center gap-1 sm:gap-2">
       {/* Damage/Block notification - Left side (player defending) */}
       {notificationOnLeft && (
         <motion.div
@@ -97,20 +97,20 @@ export const InlineDiceDisplay = ({
             duration: isCritical ? 0.5 : 0.3,
             repeat: isCritical ? 2 : 0
           }}
-          className="absolute -left-32 whitespace-nowrap"
+          className="absolute -left-20 sm:-left-32 whitespace-nowrap"
         >
           {isBlocked ? (
-            <div className="bg-blue-500/90 border-2 border-blue-300 rounded-lg px-4 py-2 shadow-lg">
-              <div className="text-2xl font-bold text-white text-center">БЛОК</div>
+            <div className="bg-blue-500/90 border border-blue-300 sm:border-2 rounded-lg px-2 py-1 sm:px-4 sm:py-2 shadow-lg">
+              <div className="text-sm sm:text-2xl font-bold text-white text-center">БЛОК</div>
             </div>
           ) : isCritical ? (
-            <div className="bg-gradient-to-r from-yellow-500 to-orange-500 border-2 border-yellow-300 rounded-lg px-4 py-2 shadow-[0_0_20px_rgba(251,191,36,0.6)] animate-pulse">
-              <div className="text-xs font-bold text-yellow-100 text-center">CRITICAL</div>
-              <div className="text-3xl font-bold text-white text-center">-{damage}</div>
+            <div className="bg-gradient-to-r from-yellow-500 to-orange-500 border border-yellow-300 sm:border-2 rounded-lg px-2 py-1 sm:px-4 sm:py-2 shadow-[0_0_20px_rgba(251,191,36,0.6)] animate-pulse">
+              <div className="text-[9px] sm:text-xs font-bold text-yellow-100 text-center">CRITICAL</div>
+              <div className="text-lg sm:text-3xl font-bold text-white text-center">-{damage}</div>
             </div>
           ) : (
-            <div className="bg-red-500/90 border-2 border-red-300 rounded-lg px-4 py-2 shadow-lg">
-              <div className="text-3xl font-bold text-white text-center">-{damage}</div>
+            <div className="bg-red-500/90 border border-red-300 sm:border-2 rounded-lg px-2 py-1 sm:px-4 sm:py-2 shadow-lg">
+              <div className="text-lg sm:text-3xl font-bold text-white text-center">-{damage}</div>
             </div>
           )}
         </motion.div>
@@ -134,11 +134,11 @@ export const InlineDiceDisplay = ({
           isAttacker 
             ? 'bg-red-500/90 border-red-300 shadow-red-500/50' 
             : 'bg-blue-500/90 border-blue-300 shadow-blue-500/50'
-        } backdrop-blur-sm rounded-lg p-3 shadow-xl border-2`}>
-          <div className={`text-xs ${isAttacker ? 'text-red-100' : 'text-blue-100'} mb-1 text-center font-medium`}>
+        } backdrop-blur-sm rounded-lg p-1.5 sm:p-3 shadow-xl border sm:border-2`}>
+          <div className={`text-[9px] sm:text-xs ${isAttacker ? 'text-red-100' : 'text-blue-100'} mb-0.5 sm:mb-1 text-center font-medium`}>
             {isAttacker ? '⚔️' : '🛡️'} {label || (isAttacker ? 'Атака' : 'Защита')}
           </div>
-          <div className="text-3xl font-bold text-white text-center">
+          <div className="text-xl sm:text-3xl font-bold text-white text-center">
             {isActive ? displayValue : '?'}
           </div>
         </div>
@@ -158,20 +158,20 @@ export const InlineDiceDisplay = ({
             duration: isCritical ? 0.5 : 0.3,
             repeat: isCritical ? 2 : 0
           }}
-          className="absolute -right-32 whitespace-nowrap"
+          className="absolute -right-20 sm:-right-32 whitespace-nowrap"
         >
           {isBlocked ? (
-            <div className="bg-blue-500/90 border-2 border-blue-300 rounded-lg px-4 py-2 shadow-lg">
-              <div className="text-2xl font-bold text-white text-center">БЛОК</div>
+            <div className="bg-blue-500/90 border border-blue-300 sm:border-2 rounded-lg px-2 py-1 sm:px-4 sm:py-2 shadow-lg">
+              <div className="text-sm sm:text-2xl font-bold text-white text-center">БЛОК</div>
             </div>
           ) : isCritical ? (
-            <div className="bg-gradient-to-r from-yellow-500 to-orange-500 border-2 border-yellow-300 rounded-lg px-4 py-2 shadow-[0_0_20px_rgba(251,191,36,0.6)] animate-pulse">
-              <div className="text-xs font-bold text-yellow-100 text-center">CRITICAL</div>
-              <div className="text-3xl font-bold text-white text-center">-{damage}</div>
+            <div className="bg-gradient-to-r from-yellow-500 to-orange-500 border border-yellow-300 sm:border-2 rounded-lg px-2 py-1 sm:px-4 sm:py-2 shadow-[0_0_20px_rgba(251,191,36,0.6)] animate-pulse">
+              <div className="text-[9px] sm:text-xs font-bold text-yellow-100 text-center">CRITICAL</div>
+              <div className="text-lg sm:text-3xl font-bold text-white text-center">-{damage}</div>
             </div>
           ) : (
-            <div className="bg-red-500/90 border-2 border-red-300 rounded-lg px-4 py-2 shadow-lg">
-              <div className="text-3xl font-bold text-white text-center">-{damage}</div>
+            <div className="bg-red-500/90 border border-red-300 sm:border-2 rounded-lg px-2 py-1 sm:px-4 sm:py-2 shadow-lg">
+              <div className="text-lg sm:text-3xl font-bold text-white text-center">-{damage}</div>
             </div>
           )}
         </motion.div>
