@@ -483,15 +483,15 @@ export const TeamBattleArena: React.FC<TeamBattleArenaProps> = ({
                 {t(language, 'battlePage.enemies')}
               </CardTitle>
             </CardHeader>
-            <CardContent className="h-full overflow-auto">
-              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-2">
-                {opponents.map((opponent, index) => <div key={opponent.id} className={`relative rounded-3xl border-2 transition-all overflow-hidden h-64 ${opponent.health <= 0 ? 'border-white/30' : attackedTarget === opponent.id ? 'border-red-500 animate-pulse scale-105 shadow-lg shadow-red-500/50 cursor-pointer' : selectedTarget === opponent.id ? 'border-red-400 bg-red-400/10 cursor-pointer' : 'border-white/50 hover:border-red-400/50 cursor-pointer'}`} onClick={() => {
+            <CardContent className="h-full overflow-y-auto overflow-x-hidden p-0.5 sm:p-1">
+              <div className="grid grid-cols-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-0.5 sm:gap-1">
+                {opponents.map((opponent, index) => <div key={opponent.id} className={`relative rounded-lg sm:rounded-2xl border-2 transition-all overflow-hidden h-32 sm:h-40 md:h-48 ${opponent.health <= 0 ? 'border-white/30' : attackedTarget === opponent.id ? 'border-red-500 animate-pulse scale-105 shadow-lg shadow-red-500/50 cursor-pointer' : selectedTarget === opponent.id ? 'border-red-400 bg-red-400/10 cursor-pointer' : 'border-white/50 hover:border-red-400/50 cursor-pointer'}`} onClick={() => {
                 if (opponent.health > 0 && isPlayerTurn) {
                   setSelectedTarget(opponent.id);
                 }
               }}>
                     {/* Vertical Health Bar - Left Side */}
-                    <div className="absolute left-1 top-2 bottom-2 w-3 bg-black/60 rounded-full flex flex-col justify-end z-20">
+                    <div className="absolute left-0.5 sm:left-1 top-1 sm:top-2 bottom-1 sm:bottom-2 w-2 sm:w-3 bg-black/60 rounded-full flex flex-col justify-end z-20">
                       <div 
                         className="bg-red-500 rounded-full transition-all duration-300"
                         style={{ 
@@ -510,30 +510,30 @@ export const TeamBattleArena: React.FC<TeamBattleArenaProps> = ({
                     {/* Killed overlay */}
                     {opponent.health <= 0 && (
                       <div className="absolute inset-0 bg-black/60 flex items-center justify-center z-30">
-                        <div className="text-4xl font-bold text-red-500 drop-shadow-[0_0_10px_rgba(239,68,68,0.8)]">
+                        <div className="text-xl sm:text-2xl md:text-3xl font-bold text-red-500 drop-shadow-[0_0_10px_rgba(239,68,68,0.8)]">
                           {t(language, 'battlePage.killed')}
                         </div>
                       </div>
                     )}
                     
                     {/* Overlay for stats */}
-                    <div className="relative z-10 p-2 bg-black/20 h-full flex flex-col justify-between">
+                    <div className="relative z-10 p-1 sm:p-1.5 md:p-2 bg-black/20 h-full flex flex-col justify-between">
                       {/* Health and Stats Overlay */}
-                      <div className="text-right ml-4">
-                        <div className="text-red-500 font-bold text-sm drop-shadow-lg">
+                      <div className="text-right ml-3 sm:ml-4">
+                        <div className="text-red-500 font-bold text-[9px] sm:text-[10px] md:text-xs drop-shadow-lg">
                           ❤️ {opponent.health}/{opponent.maxHealth}
                         </div>
-                        <div className="text-red-500 font-bold text-sm drop-shadow-lg">
+                        <div className="text-red-500 font-bold text-[9px] sm:text-[10px] md:text-xs drop-shadow-lg">
                           ⚔️ {opponent.power}
                         </div>
-                        <div className="text-red-500 font-bold text-sm drop-shadow-lg">
+                        <div className="text-red-500 font-bold text-[9px] sm:text-[10px] md:text-xs drop-shadow-lg">
                           🛡️ {opponent.armor ?? 0}
                         </div>
                       </div>
                       
                       {/* Name */}
                       <div className="text-center">
-                        <div className="text-red-500 font-bold text-sm drop-shadow-lg">
+                        <div className="text-red-500 font-bold text-[9px] sm:text-[10px] md:text-xs drop-shadow-lg truncate px-1">
                           {opponent.name}
                         </div>
                       </div>
