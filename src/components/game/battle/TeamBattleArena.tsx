@@ -337,18 +337,18 @@ export const TeamBattleArena: React.FC<TeamBattleArenaProps> = ({
                     }
                   }}>
                       <div className="flex flex-col items-center gap-2">
-                        <div className="flex gap-1">
+                        <div className="flex gap-2">
                           {/* Hero Image */}
-                          <div className="w-12 h-12 rounded-lg overflow-hidden border border-white/30 bg-white/10 flex-shrink-0">
+                          <div className="w-24 h-24 rounded-lg overflow-hidden border border-white/30 bg-white/10 flex-shrink-0">
                             {pair.hero.image ? <img src={pair.hero.image} alt={pair.hero.name} className="w-full h-full object-contain" /> : <div className="w-full h-full flex items-center justify-center text-white">
-                                <span className="text-lg">⚔️</span>
+                                <span className="text-2xl">⚔️</span>
                               </div>}
                           </div>
                           
                           {/* Dragon Image */}
-                          {pair.dragon && <div className="w-10 h-10 rounded-lg overflow-hidden border border-white/30 bg-white/10 flex-shrink-0">
+                          {pair.dragon && <div className="w-20 h-20 rounded-lg overflow-hidden border border-white/30 bg-white/10 flex-shrink-0">
                               {pair.dragon.image ? <img src={pair.dragon.image} alt={pair.dragon.name} className="w-full h-full object-contain" /> : <div className="w-full h-full flex items-center justify-center text-white">
-                                  <span className="text-sm">🐲</span>
+                                  <span className="text-xl">🐲</span>
                                 </div>}
                             </div>}
                         </div>
