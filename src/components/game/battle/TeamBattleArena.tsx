@@ -390,7 +390,7 @@ export const TeamBattleArena: React.FC<TeamBattleArenaProps> = ({
 
           {/* Combat Actions - Center */}
           <Card variant="menu" className="flex-shrink-0" style={{ boxShadow: '-33px 15px 10px rgba(0, 0, 0, 0.6)' }}>
-            <CardContent className="p-1 sm:p-2 relative">
+            <CardContent className="px-0.5 py-1 sm:px-1 sm:py-1.5 relative">
               {/* Attack Animation Overlay */}
               <AttackAnimation 
                 isActive={attackAnimation.isActive}
@@ -400,17 +400,17 @@ export const TeamBattleArena: React.FC<TeamBattleArenaProps> = ({
                 defenderPosition={attackAnimation.source === 'player' ? getDicePosition(enemyDiceRef) : getDicePosition(playerDiceRef)}
                 damage={attackAnimation.damage}
               />
-              <div className="text-center space-y-1 sm:space-y-2">
+              <div className="text-center space-y-0.5 sm:space-y-1">
                 <div className="text-xs sm:text-sm font-medium text-white">
                   {isPlayerTurn ? <span className="text-green-400">{t(language, 'battlePage.yourTurn')}</span> : <span className="text-red-400">{t(language, 'battlePage.enemyTurn')}</span>}
                 </div>
                 
                 
-                  <div className="space-y-0.5 sm:space-y-1">
+                  <div className="space-y-0.5">
                   {/* Всегда показываем кубики */}
-                  <div className="flex items-center justify-center gap-2 sm:gap-4">
+                  <div className="flex items-center justify-center gap-1 sm:gap-2">
                     {/* Left Dice (Игрок) */}
-                    <div ref={playerDiceRef} className="w-14 sm:w-20 flex justify-center">
+                    <div ref={playerDiceRef} className="flex justify-center">
                       <InlineDiceDisplay
                         key={`dice-left-${diceKey}`}
                         isRolling={isDiceRolling}
@@ -430,17 +430,17 @@ export const TeamBattleArena: React.FC<TeamBattleArenaProps> = ({
                         disabled={!selectedPair || selectedTarget === null || typeof selectedTarget === 'string'} 
                         size="sm" 
                         variant="menu"
-                        className="h-6 sm:h-7 px-2 sm:px-3 text-xs sm:text-sm"
+                        className="h-6 sm:h-7 px-2 sm:px-3 text-xs sm:text-sm flex-shrink-0"
                         style={{ boxShadow: '-33px 15px 10px rgba(0, 0, 0, 0.6)' }}
                       >
                         {t(language, 'battlePage.attackButton')}
                       </Button>
                     ) : (
-                      <div className="h-6 sm:h-7 w-16 sm:w-[88px]" />
+                      <div className="h-6 sm:h-7 w-14 sm:w-[88px] flex-shrink-0" />
                     )}
 
                     {/* Right Dice (Монстр) */}
-                    <div ref={enemyDiceRef} className="w-14 sm:w-20 flex justify-center">
+                    <div ref={enemyDiceRef} className="flex justify-center">
                       <InlineDiceDisplay
                         key={`dice-right-${diceKey}`}
                         isRolling={isDiceRolling}
@@ -462,7 +462,7 @@ export const TeamBattleArena: React.FC<TeamBattleArenaProps> = ({
                   )}
                 </div>
 
-                <div className="flex gap-1 sm:gap-2 justify-center">
+                <div className="flex gap-0.5 sm:gap-1 justify-center">
                   <Button 
                     variant={autoBattle ? "destructive" : "menu"} 
                     size="sm" 
