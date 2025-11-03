@@ -328,16 +328,16 @@ export const TeamBattleArena: React.FC<TeamBattleArenaProps> = ({
                 {t(language, 'battlePage.yourTeam')}
               </CardTitle>
             </CardHeader>
-            <CardContent className="h-full overflow-auto">
-              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-2">
+            <CardContent className="h-full overflow-hidden p-2">
+              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-1 h-full">
                 {playerPairs.map((pair, index) => (
-                  <div key={pair.id} className={`p-4 rounded-3xl border-2 transition-all cursor-pointer ${pair.health <= 0 ? 'bg-black/30 border-white/30 opacity-50' : attackingPair === pair.id ? 'bg-red-500/30 border-red-500 animate-pulse scale-105 shadow-lg shadow-red-500/50' : defendingPair === pair.id ? 'bg-blue-500/30 border-blue-500 animate-pulse shadow-lg shadow-blue-500/50' : selectedPair === pair.id ? 'bg-white/20 border-white' : 'bg-black/20 border-white/50 hover:border-white'}`} onClick={() => {
+                  <div key={pair.id} className={`p-1.5 rounded-2xl border-2 transition-all cursor-pointer ${pair.health <= 0 ? 'bg-black/30 border-white/30 opacity-50' : attackingPair === pair.id ? 'bg-red-500/30 border-red-500 animate-pulse scale-105 shadow-lg shadow-red-500/50' : defendingPair === pair.id ? 'bg-blue-500/30 border-blue-500 animate-pulse shadow-lg shadow-blue-500/50' : selectedPair === pair.id ? 'bg-white/20 border-white' : 'bg-black/20 border-white/50 hover:border-white'}`} onClick={() => {
                     if (pair.health > 0 && isPlayerTurn) {
                       setSelectedPair(pair.id);
                     }
                   }}>
-                      <div className="flex flex-col items-center gap-2">
-                        <div className="flex gap-2">
+                      <div className="flex flex-col items-center gap-1">
+                        <div className="flex gap-1">
                           {/* Hero Image */}
                           <div className="w-24 h-24 rounded-lg overflow-hidden border border-white/30 bg-white/10 flex-shrink-0">
                             {pair.hero.image ? <img src={pair.hero.image} alt={pair.hero.name} className="w-full h-full object-contain" /> : <div className="w-full h-full flex items-center justify-center text-white">
@@ -353,35 +353,35 @@ export const TeamBattleArena: React.FC<TeamBattleArenaProps> = ({
                             </div>}
                         </div>
                         
-                        <div className="text-center">
-                          <div className="flex items-center gap-1 justify-center mb-1">
-                            <span className="font-semibold text-xs bg-white/20 text-white px-1 py-0.5 rounded">
+                        <div className="text-center w-full">
+                          <div className="flex items-center gap-1 justify-center">
+                            <span className="font-semibold text-[10px] bg-white/20 text-white px-1 rounded">
                               #{pair.attackOrder}
                             </span>
                           </div>
-                          <span className="font-medium text-sm text-white">{getTranslatedCardName(pair.hero.name, language)}</span>
-                          {pair.dragon && <div className="text-xs text-white/70">
+                          <span className="font-medium text-xs text-white block">{getTranslatedCardName(pair.hero.name, language)}</span>
+                          {pair.dragon && <div className="text-[10px] text-white/70">
                               + {getTranslatedCardName(pair.dragon.name, language)}
                             </div>}
                         </div>
                         
                         {/* Health Bar */}
                         <div className="w-full">
-                          <Progress value={pair.health / pair.maxHealth * 100} className="h-2" />
-                          <div className="text-xs text-center mt-1 text-white">
-                            <Heart className="w-3 h-3 inline mr-1" />
+                          <Progress value={pair.health / pair.maxHealth * 100} className="h-1.5" />
+                          <div className="text-[10px] text-center mt-0.5 text-white">
+                            <Heart className="w-2.5 h-2.5 inline mr-0.5" />
                             {pair.health}/{pair.maxHealth}
                           </div>
                         </div>
 
                         {/* Stats */}
-                        <div className="flex gap-2 text-xs text-white">
+                        <div className="flex gap-1.5 text-[10px] text-white">
                           <span className="flex items-center">
-                            <Sword className="w-3 h-3 mr-1" />
+                            <Sword className="w-2.5 h-2.5 mr-0.5" />
                             {pair.power}
                           </span>
                           <span className="flex items-center">
-                            <Shield className="w-3 h-3 mr-1" />
+                            <Shield className="w-2.5 h-2.5 mr-0.5" />
                             {pair.defense}
                           </span>
                         </div>
