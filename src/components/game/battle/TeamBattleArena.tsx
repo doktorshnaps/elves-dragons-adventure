@@ -476,14 +476,14 @@ export const TeamBattleArena: React.FC<TeamBattleArenaProps> = ({
           </Card>
 
           {/* Enemy Team - Lower Part */}
-          <Card variant="menu" className="flex-1 min-h-0" style={{ boxShadow: '-33px 15px 10px rgba(0, 0, 0, 0.6)' }}>
-            <CardHeader className="py-2">
+          <Card variant="menu" className="flex-1 min-h-0 flex flex-col overflow-hidden" style={{ boxShadow: '-33px 15px 10px rgba(0, 0, 0, 0.6)' }}>
+            <CardHeader className="py-2 flex-shrink-0">
               <CardTitle className="flex items-center gap-2 text-red-400 justify-center text-sm">
                 <Sword className="w-4 h-4" />
                 {t(language, 'battlePage.enemies')}
               </CardTitle>
             </CardHeader>
-            <CardContent className="h-full overflow-y-auto overflow-x-hidden p-0.5 sm:p-1">
+            <CardContent className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden p-0.5 sm:p-1">
               <div className="grid grid-cols-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-0.5 sm:gap-1">
                 {opponents.map((opponent, index) => <div key={opponent.id} className={`relative rounded-lg sm:rounded-2xl border-2 transition-all overflow-hidden h-32 sm:h-40 md:h-48 ${opponent.health <= 0 ? 'border-white/30' : attackedTarget === opponent.id ? 'border-red-500 animate-pulse scale-105 shadow-lg shadow-red-500/50 cursor-pointer' : selectedTarget === opponent.id ? 'border-red-400 bg-red-400/10 cursor-pointer' : 'border-white/50 hover:border-red-400/50 cursor-pointer'}`} onClick={() => {
                 if (opponent.health > 0 && isPlayerTurn) {
