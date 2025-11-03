@@ -322,8 +322,8 @@ export const TeamBattleArena: React.FC<TeamBattleArenaProps> = ({
         <div className="flex-1 flex flex-col space-y-2 overflow-hidden">
           {/* Player Team - Upper Part */}
           <Card variant="menu" className="flex-1 min-h-0" style={{ boxShadow: '-33px 15px 10px rgba(0, 0, 0, 0.6)' }}>
-            <CardContent className="h-full overflow-hidden p-0.5 sm:p-1 pt-1 sm:pt-2">
-              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-0.5 sm:gap-1 h-full">
+            <CardContent className="h-full overflow-y-auto overflow-x-hidden p-0.5 sm:p-1 pt-1 sm:pt-2">
+              <div className="grid grid-cols-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-0.5 sm:gap-1">
                 {playerPairs.map((pair, index) => (
                   <div key={pair.id} className={`p-1 sm:p-1.5 rounded-lg sm:rounded-2xl border-2 transition-all cursor-pointer ${pair.health <= 0 ? 'bg-black/30 border-white/30 opacity-50' : attackingPair === pair.id ? 'bg-red-500/30 border-red-500 animate-pulse scale-105 shadow-lg shadow-red-500/50' : defendingPair === pair.id ? 'bg-blue-500/30 border-blue-500 animate-pulse shadow-lg shadow-blue-500/50' : selectedPair === pair.id ? 'bg-white/20 border-white' : 'bg-black/20 border-white/50 hover:border-white'}`} onClick={() => {
                     if (pair.health > 0 && isPlayerTurn) {
@@ -331,18 +331,18 @@ export const TeamBattleArena: React.FC<TeamBattleArenaProps> = ({
                     }
                   }}>
                       <div className="flex flex-col items-center gap-0.5 sm:gap-1">
-                        <div className="flex gap-0.5 sm:gap-1">
+                        <div className="flex gap-0.5 sm:gap-1 justify-center">
                           {/* Hero Image */}
-                          <div className="w-16 h-16 sm:w-20 sm:h-20 md:w-24 md:h-24 rounded-md sm:rounded-lg overflow-hidden border border-white/30 bg-white/10 flex-shrink-0">
+                          <div className="w-14 h-14 sm:w-16 sm:h-16 md:w-20 md:h-20 lg:w-24 lg:h-24 rounded-md sm:rounded-lg overflow-hidden border border-white/30 bg-white/10 flex-shrink-0">
                             {pair.hero.image ? <img src={pair.hero.image} alt={pair.hero.name} className="w-full h-full object-contain" /> : <div className="w-full h-full flex items-center justify-center text-white">
-                                <span className="text-xl sm:text-2xl">⚔️</span>
+                                <span className="text-lg sm:text-xl md:text-2xl">⚔️</span>
                               </div>}
                           </div>
                           
                           {/* Dragon Image */}
-                          {pair.dragon && <div className="w-14 h-14 sm:w-16 sm:h-16 md:w-20 md:h-20 rounded-md sm:rounded-lg overflow-hidden border border-white/30 bg-white/10 flex-shrink-0">
+                          {pair.dragon && <div className="w-12 h-12 sm:w-14 sm:h-14 md:w-16 md:h-16 lg:w-20 lg:h-20 rounded-md sm:rounded-lg overflow-hidden border border-white/30 bg-white/10 flex-shrink-0">
                               {pair.dragon.image ? <img src={pair.dragon.image} alt={pair.dragon.name} className="w-full h-full object-contain" /> : <div className="w-full h-full flex items-center justify-center text-white">
-                                  <span className="text-lg sm:text-xl">🐲</span>
+                                  <span className="text-base sm:text-lg md:text-xl">🐲</span>
                                 </div>}
                             </div>}
                         </div>
@@ -353,8 +353,8 @@ export const TeamBattleArena: React.FC<TeamBattleArenaProps> = ({
                               #{pair.attackOrder}
                             </span>
                           </div>
-                          <span className="font-medium text-[10px] sm:text-xs text-white block truncate">{getTranslatedCardName(pair.hero.name, language)}</span>
-                          {pair.dragon && <div className="text-[8px] sm:text-[10px] text-white/70 truncate">
+                          <span className="font-medium text-[9px] sm:text-[10px] md:text-xs text-white block truncate px-0.5">{getTranslatedCardName(pair.hero.name, language)}</span>
+                          {pair.dragon && <div className="text-[8px] sm:text-[9px] md:text-[10px] text-white/70 truncate px-0.5">
                               + {getTranslatedCardName(pair.dragon.name, language)}
                             </div>}
                         </div>
@@ -362,14 +362,14 @@ export const TeamBattleArena: React.FC<TeamBattleArenaProps> = ({
                         {/* Health Bar */}
                         <div className="w-full">
                           <Progress value={pair.health / pair.maxHealth * 100} className="h-1 sm:h-1.5" />
-                          <div className="text-[8px] sm:text-[10px] text-center mt-0.5 text-white">
+                          <div className="text-[8px] sm:text-[9px] md:text-[10px] text-center mt-0.5 text-white">
                             <Heart className="w-2 h-2 sm:w-2.5 sm:h-2.5 inline mr-0.5" />
                             {pair.health}/{pair.maxHealth}
                           </div>
                         </div>
 
                         {/* Stats */}
-                        <div className="flex gap-1 sm:gap-1.5 text-[8px] sm:text-[10px] text-white">
+                        <div className="flex gap-1 sm:gap-1.5 text-[8px] sm:text-[9px] md:text-[10px] text-white justify-center">
                           <span className="flex items-center">
                             <Sword className="w-2 h-2 sm:w-2.5 sm:h-2.5 mr-0.5" />
                             {pair.power}
