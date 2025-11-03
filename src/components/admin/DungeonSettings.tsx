@@ -451,103 +451,141 @@ export const DungeonSettings = () => {
 
                 {/* Настройка монстров по уровням */}
                 <div className="space-y-3">
-                  <div className="flex items-center justify-between">
-                    <h4 className="font-semibold text-sm">Монстры по уровням подземелья</h4>
-                    <Button
-                      type="button"
-                      size="sm"
-                      variant="outline"
-                      onClick={() => addLevelMonsterConfig(dungeon.id)}
-                    >
-                      Добавить уровень
-                    </Button>
-                  </div>
+                  <h4 className="font-semibold text-sm">Монстры по уровням подземелья</h4>
                   <p className="text-xs text-muted-foreground">
-                    Настройте, какие монстры появляются на каждом уровне подземелья
+                    Выберите уровень для настройки появления монстров
                   </p>
+                  
+                  {/* Сетка выбора уровней */}
+                  <div className="grid grid-cols-5 md:grid-cols-10 gap-2 mb-4">
+                    {Array.from({ length: 100 }, (_, i) => i + 1).map(level => {
+                      const levelConfig = (dungeon.monster_spawn_config.level_monsters || []).find(lm => lm.level === level);
+                      const isConfigured = !!levelConfig;
+                      const isOpen = openDungeons.has(`${dungeon.id}-level-${level}`);
+                      
+                      return (
+                        <button
+                          key={level}
+                          onClick={() => {
+                            const levelKey = `${dungeon.id}-level-${level}`;
+                            const newOpen = new Set(openDungeons);
+                            if (newOpen.has(levelKey)) {
+                              newOpen.delete(levelKey);
+                            } else {
+                              // Если уровень еще не настроен, создаем конфигурацию
+                              if (!levelConfig) {
+                                const levelMonsters = dungeon.monster_spawn_config.level_monsters || [];
+                                updateDungeon(dungeon.id, 'monster_spawn_config', {
+                                  ...dungeon.monster_spawn_config,
+                                  level_monsters: [...levelMonsters, { level, monsters: [] }]
+                                });
+                              }
+                              newOpen.add(levelKey);
+                            }
+                            setOpenDungeons(newOpen);
+                          }}
+                          className={`p-2 rounded-3xl text-sm font-medium transition-colors relative ${
+                            isOpen 
+                              ? 'bg-white text-black' 
+                              : isConfigured
+                                ? 'bg-primary/70 text-white hover:bg-primary/90'
+                                : 'bg-white/10 text-white hover:bg-white/20'
+                          }`}
+                        >
+                          {level}
+                          {isConfigured && !isOpen && (
+                            <span className="absolute -top-1 -right-1 w-2 h-2 bg-green-500 rounded-full" />
+                          )}
+                        </button>
+                      );
+                    })}
+                  </div>
+
+                  {/* Настройки для выбранных уровней */}
                   <div className="space-y-3 max-h-96 overflow-y-auto">
-                    {(dungeon.monster_spawn_config.level_monsters || []).map((levelConfig, idx) => (
-                      <div key={idx} className="border rounded-lg p-3 space-y-2">
-                        <div className="flex items-center justify-between">
-                          <Label className="text-xs font-medium">Уровень {levelConfig.level}</Label>
-                          <Button
-                            type="button"
-                            size="sm"
-                            variant="ghost"
-                            onClick={() => removeLevelMonsterConfig(dungeon.id, idx)}
-                          >
-                            Удалить
-                          </Button>
-                        </div>
-                        <div className="grid grid-cols-2 gap-2">
-                          <div>
-                            <Label className="text-xs">Номер уровня</Label>
-                            <Input
-                              type="number"
-                              value={levelConfig.level}
-                              onChange={(e) => updateLevelMonster(dungeon.id, idx, 'level', parseInt(e.target.value) || 1)}
-                              min={1}
-                              max={100}
-                            />
-                          </div>
-                          <div className="col-span-2">
-                            <Label className="text-xs">Выберите монстров и укажите количество</Label>
-                            <div className="border rounded-lg p-3 max-h-48 overflow-y-auto space-y-2">
-                              {monsters.length === 0 ? (
-                                <p className="text-xs text-muted-foreground">Загрузка монстров...</p>
-                              ) : (
-                                monsters.map((monster) => {
-                                  const monsterData = levelConfig.monsters.find(m => m.id === monster.monster_id);
-                                  const isChecked = !!monsterData;
-                                  
-                                  return (
-                                    <div key={monster.monster_id} className="flex items-center space-x-2">
-                                      <Checkbox
-                                        id={`${dungeon.id}-${idx}-${monster.monster_id}`}
-                                        checked={isChecked}
-                                        onCheckedChange={(checked) => {
-                                          const currentMonsters = levelConfig.monsters;
-                                          const newMonsters = checked
-                                            ? [...currentMonsters, { id: monster.monster_id, count: 1 }]
-                                            : currentMonsters.filter(m => m.id !== monster.monster_id);
-                                          updateLevelMonster(dungeon.id, idx, 'monsters', newMonsters);
-                                        }}
-                                      />
-                                      <label
-                                        htmlFor={`${dungeon.id}-${idx}-${monster.monster_id}`}
-                                        className="text-xs font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer flex-1"
-                                      >
-                                        {monster.monster_name} <span className="text-muted-foreground">({monster.monster_type})</span>
-                                      </label>
-                                      {isChecked && (
-                                        <Input
-                                          type="number"
-                                          min={1}
-                                          value={monsterData.count}
-                                          onChange={(e) => updateMonsterCount(dungeon.id, idx, monster.monster_id, parseInt(e.target.value) || 1)}
-                                          className="w-16 h-7 text-xs"
-                                        />
-                                      )}
-                                    </div>
-                                  );
-                                })
-                              )}
+                    {(dungeon.monster_spawn_config.level_monsters || [])
+                      .filter(levelConfig => openDungeons.has(`${dungeon.id}-level-${levelConfig.level}`))
+                      .map((levelConfig) => {
+                        const idx = (dungeon.monster_spawn_config.level_monsters || []).findIndex(lm => lm.level === levelConfig.level);
+                        return (
+                          <div key={levelConfig.level} className="border rounded-lg p-3 space-y-2 bg-accent/10">
+                            <div className="flex items-center justify-between">
+                              <Label className="text-sm font-medium">Уровень {levelConfig.level}</Label>
+                              <Button
+                                type="button"
+                                size="sm"
+                                variant="ghost"
+                                onClick={() => {
+                                  removeLevelMonsterConfig(dungeon.id, idx);
+                                  const levelKey = `${dungeon.id}-level-${levelConfig.level}`;
+                                  const newOpen = new Set(openDungeons);
+                                  newOpen.delete(levelKey);
+                                  setOpenDungeons(newOpen);
+                                }}
+                              >
+                                Удалить
+                              </Button>
                             </div>
+                            <div className="space-y-2">
+                              <Label className="text-xs">Выберите монстров и укажите количество</Label>
+                              <div className="border rounded-lg p-3 max-h-48 overflow-y-auto space-y-2 bg-background/50">
+                                {monsters.length === 0 ? (
+                                  <p className="text-xs text-muted-foreground">Загрузка монстров...</p>
+                                ) : (
+                                  monsters.map((monster) => {
+                                    const monsterData = levelConfig.monsters.find(m => m.id === monster.monster_id);
+                                    const isChecked = !!monsterData;
+                                    
+                                    return (
+                                      <div key={monster.monster_id} className="flex items-center space-x-2">
+                                        <Checkbox
+                                          id={`${dungeon.id}-${idx}-${monster.monster_id}`}
+                                          checked={isChecked}
+                                          onCheckedChange={(checked) => {
+                                            const currentMonsters = levelConfig.monsters;
+                                            const newMonsters = checked
+                                              ? [...currentMonsters, { id: monster.monster_id, count: 1 }]
+                                              : currentMonsters.filter(m => m.id !== monster.monster_id);
+                                            updateLevelMonster(dungeon.id, idx, 'monsters', newMonsters);
+                                          }}
+                                        />
+                                        <label
+                                          htmlFor={`${dungeon.id}-${idx}-${monster.monster_id}`}
+                                          className="text-xs font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer flex-1"
+                                        >
+                                          {monster.monster_name} <span className="text-muted-foreground">({monster.monster_type})</span>
+                                        </label>
+                                        {isChecked && (
+                                          <Input
+                                            type="number"
+                                            min={1}
+                                            value={monsterData.count}
+                                            onChange={(e) => updateMonsterCount(dungeon.id, idx, monster.monster_id, parseInt(e.target.value) || 1)}
+                                            className="w-16 h-7 text-xs"
+                                          />
+                                        )}
+                                      </div>
+                                    );
+                                  })
+                                )}
+                              </div>
+                            </div>
+                            <p className="text-[10px] text-muted-foreground">
+                              Выбрано монстров: {levelConfig.monsters.length > 0 
+                                ? levelConfig.monsters.map(m => {
+                                    const monster = monsters.find(mon => mon.monster_id === m.id);
+                                    return `${monster?.monster_name || m.id} (x${m.count})`;
+                                  }).join(', ')
+                                : 'не указаны'}
+                            </p>
                           </div>
-                        </div>
-                        <p className="text-[10px] text-muted-foreground">
-                          Выбрано монстров: {levelConfig.monsters.length > 0 
-                            ? levelConfig.monsters.map(m => {
-                                const monster = monsters.find(mon => mon.monster_id === m.id);
-                                return `${monster?.monster_name || m.id} (x${m.count})`;
-                              }).join(', ')
-                            : 'не указаны'}
-                        </p>
-                      </div>
-                    ))}
-                    {(!dungeon.monster_spawn_config.level_monsters || dungeon.monster_spawn_config.level_monsters.length === 0) && (
+                        );
+                      })}
+                    {(dungeon.monster_spawn_config.level_monsters || []).filter(levelConfig => 
+                      openDungeons.has(`${dungeon.id}-level-${levelConfig.level}`)
+                    ).length === 0 && (
                       <p className="text-xs text-muted-foreground text-center py-4">
-                        Нет настроенных уровней. Нажмите "Добавить уровень" чтобы начать.
+                        Выберите уровень выше для настройки
                       </p>
                     )}
                   </div>
