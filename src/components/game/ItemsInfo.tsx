@@ -3,7 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { HoverCard, HoverCardContent, HoverCardTrigger } from "@/components/ui/hover-card";
+import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
 import { Sword, Shield, Gem, Heart, Hammer, Trophy, Coins, Diamond, Sparkles } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useLanguage } from "@/hooks/useLanguage";
@@ -128,6 +128,7 @@ const resolveItemImage = (item: ItemTemplate): string | null => {
 const ItemCard = ({ item }: { item: ItemTemplate }) => {
   const isMobile = useIsMobile();
   const { language } = useLanguage();
+  const [isOpen, setIsOpen] = useState(false);
 
   const formatStats = (stats: any) => {
     if (!stats) return [];
@@ -318,25 +319,31 @@ const ItemCard = ({ item }: { item: ItemTemplate }) => {
   );
 
   if (isMobile) {
-    return <CardContent />;
+    return (
+      <Dialog open={isOpen} onOpenChange={setIsOpen}>
+        <DialogTrigger asChild>
+          <div className="cursor-pointer">
+            <CardContent />
+          </div>
+        </DialogTrigger>
+        <DialogContent className="p-0 border-0 bg-transparent shadow-none max-w-sm">
+          <ExpandedCardContent />
+        </DialogContent>
+      </Dialog>
+    );
   }
 
   return (
-    <HoverCard openDelay={300} closeDelay={150}>
-      <HoverCardTrigger asChild>
-        <div>
+    <Dialog open={isOpen} onOpenChange={setIsOpen}>
+      <DialogTrigger asChild>
+        <div className="cursor-pointer">
           <CardContent />
         </div>
-      </HoverCardTrigger>
-      <HoverCardContent 
-        side="right" 
-        align="start"
-        className="p-0 border-0 bg-transparent shadow-none z-50"
-        sideOffset={10}
-      >
+      </DialogTrigger>
+      <DialogContent className="p-0 border-0 bg-transparent shadow-none max-w-sm">
         <ExpandedCardContent />
-      </HoverCardContent>
-    </HoverCard>
+      </DialogContent>
+    </Dialog>
   );
 };
 
