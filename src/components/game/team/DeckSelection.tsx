@@ -296,13 +296,13 @@ export const DeckSelection = ({
       </section>
 
       {/* Deck Buttons */}
-      <div className="grid grid-cols-2 gap-2 sm:gap-4 flex-shrink-0">
+      <div className="grid grid-cols-2 gap-2 sm:gap-3 flex-shrink-0">
         <Button 
           onClick={() => setShowHeroDeck(true)} 
-          className="h-20 sm:h-32 flex flex-col items-center justify-center space-y-2 bg-gradient-to-br from-game-surface/90 via-game-surface/70 to-game-surface/90 backdrop-blur-sm border-2 border-game-primary/40 hover:border-game-accent/60 hover:shadow-[0_0_20px_rgba(217,70,239,0.3)] transition-all duration-300 group"
+          className="h-12 sm:h-16 flex flex-col items-center justify-center space-y-1 bg-gradient-to-br from-game-surface/90 via-game-surface/70 to-game-surface/90 backdrop-blur-sm border-2 border-game-primary/40 hover:border-game-accent/60 hover:shadow-[0_0_20px_rgba(217,70,239,0.3)] transition-all duration-300 group"
         >
-          <div className="text-sm sm:text-lg font-bold text-game-primary group-hover:text-game-accent transition-colors">Колода героев</div>
-          <Badge variant="secondary" className="bg-game-primary/20 text-game-primary border-game-primary/30 group-hover:bg-game-accent/20 group-hover:text-game-accent group-hover:border-game-accent/30">{heroes.length} карт</Badge>
+          <div className="text-xs sm:text-sm font-bold text-game-primary group-hover:text-game-accent transition-colors">Колода героев</div>
+          <Badge variant="secondary" className="text-[10px] sm:text-xs bg-game-primary/20 text-game-primary border-game-primary/30 group-hover:bg-game-accent/20 group-hover:text-game-accent group-hover:border-game-accent/30">{heroes.length} карт</Badge>
         </Button>
 
         <Button 
@@ -310,10 +310,10 @@ export const DeckSelection = ({
             setActivePairIndex(null);
             setShowDragonDeck(true);
           }} 
-          className="h-20 sm:h-32 flex flex-col items-center justify-center space-y-2 bg-gradient-to-br from-game-surface/90 via-game-surface/70 to-game-surface/90 backdrop-blur-sm border-2 border-game-primary/40 hover:border-game-accent/60 hover:shadow-[0_0_20px_rgba(217,70,239,0.3)] transition-all duration-300 group"
+          className="h-12 sm:h-16 flex flex-col items-center justify-center space-y-1 bg-gradient-to-br from-game-surface/90 via-game-surface/70 to-game-surface/90 backdrop-blur-sm border-2 border-game-primary/40 hover:border-game-accent/60 hover:shadow-[0_0_20px_rgba(217,70,239,0.3)] transition-all duration-300 group"
         >
-          <div className="text-sm sm:text-lg font-bold text-game-primary group-hover:text-game-accent transition-colors">Колода драконов</div>
-          <Badge variant="secondary" className="bg-game-primary/20 text-game-primary border-game-primary/30 group-hover:bg-game-accent/20 group-hover:text-game-accent group-hover:border-game-accent/30">{dragons.length} карт</Badge>
+          <div className="text-xs sm:text-sm font-bold text-game-primary group-hover:text-game-accent transition-colors">Колода драконов</div>
+          <Badge variant="secondary" className="text-[10px] sm:text-xs bg-game-primary/20 text-game-primary border-game-primary/30 group-hover:bg-game-accent/20 group-hover:text-game-accent group-hover:border-game-accent/30">{dragons.length} карт</Badge>
         </Button>
       </div>
 
