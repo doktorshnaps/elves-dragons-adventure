@@ -61,9 +61,11 @@ export const CardDisplay = ({
                 <span className="truncate">{translateFaction(language, card.faction)}</span>
               </div>}
             
-            <CardStats health={stats.health} power={stats.power} defense={stats.defense} />
+            <div className="shrink-0">
+              <CardStats health={stats.health} power={stats.power} defense={stats.defense} />
+            </div>
             
-            <div className="mt-0.5">
+            <div className="mt-0.5 shrink-0">
               <CardHealthBar currentHealth={card.currentHealth ?? stats.health} maxHealth={stats.health} size="small" />
             </div>
 
