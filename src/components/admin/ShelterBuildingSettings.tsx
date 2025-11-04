@@ -375,11 +375,25 @@ export default function ShelterBuildingSettings() {
 
     try {
       setUploading(true);
+      
+      // Получаем или создаем Supabase сессию для NEAR кошелька
+      let token: string | undefined;
+      
       const session = await supabase.auth.getSession();
-      const token = session.data.session?.access_token;
+      if (session.data.session?.access_token) {
+        token = session.data.session.access_token;
+      } else {
+        // Если нет сессии, пробуем войти анонимно для получения токена
+        const { data, error } = await supabase.auth.signInAnonymously();
+        if (error) {
+          console.error('Auth error:', error);
+          throw new Error('Не удалось получить токен авторизации. Попробуйте перезагрузить страницу.');
+        }
+        token = data.session?.access_token;
+      }
 
       if (!token) {
-        throw new Error('Нет токена авторизации');
+        throw new Error('Не удалось получить токен авторизации');
       }
 
       const formData = new FormData();
