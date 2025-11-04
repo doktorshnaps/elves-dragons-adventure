@@ -47,13 +47,21 @@ export const BuildingGridCard = ({
           <img 
             src={upgrade.backgroundImageUrl} 
             alt={upgrade.name}
-            className="absolute inset-0 w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+            className={`absolute inset-0 w-full h-full object-cover transition-all duration-300 group-hover:scale-105 ${
+              upgrade.level === 0 || (requiresWorkers && !hasWorkers) 
+                ? 'grayscale' 
+                : ''
+            }`}
           />
           {/* Dark overlay for text readability */}
           <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/40 to-black/70" />
         </>
       ) : (
-        <div className="absolute inset-0 bg-gradient-to-br from-muted/40 to-muted/20 flex items-center justify-center text-7xl opacity-30">
+        <div className={`absolute inset-0 bg-gradient-to-br from-muted/40 to-muted/20 flex items-center justify-center text-7xl opacity-30 transition-all duration-300 ${
+          upgrade.level === 0 || (requiresWorkers && !hasWorkers) 
+            ? 'grayscale' 
+            : ''
+        }`}>
           {upgrade.id === 'main_hall' && '🏛️'}
           {upgrade.id === 'storage' && '📦'}
           {upgrade.id === 'workshop' && '⚒️'}
@@ -87,15 +95,19 @@ export const BuildingGridCard = ({
           </Badge>
         </div>
 
-        {/* Level Progress Bar */}
-        {upgrade.level > 0 && upgrade.level < upgrade.maxLevel && (
-          <div className="w-full h-2 bg-black/40 backdrop-blur-sm rounded-full overflow-hidden border border-white/10">
+        {/* Segmented Level Progress Bar - 8 segments */}
+        <div className="w-full flex gap-1">
+          {Array.from({ length: upgrade.maxLevel }).map((_, index) => (
             <div 
-              className="h-full bg-gradient-to-r from-primary to-yellow-400 transition-all duration-500 shadow-[0_0_10px_rgba(251,191,36,0.5)]"
-              style={{ width: `${(upgrade.level / upgrade.maxLevel) * 100}%` }}
-            />
-          </div>
-        )}
+              key={index}
+              className="flex-1 h-2 bg-black/40 backdrop-blur-sm rounded-full overflow-hidden border border-white/10"
+            >
+              {index < upgrade.level && (
+                <div className="w-full h-full bg-gradient-to-r from-primary to-yellow-400 shadow-[0_0_8px_rgba(251,191,36,0.6)] animate-pulse-slow" />
+              )}
+            </div>
+          ))}
+        </div>
 
         {/* Upgrade Progress */}
         {isUpgrading && upgradeProgress && (
