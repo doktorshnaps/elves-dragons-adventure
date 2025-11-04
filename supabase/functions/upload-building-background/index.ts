@@ -59,14 +59,14 @@ Deno.serve(async (req) => {
 
     console.log('📤 Upload request:', { filePath, buildingId, walletAddress });
 
-    // Проверяем права super_admin через RPC
-    const { data: isSuperAdmin, error: adminCheckError } = await supabaseServiceClient
-      .rpc('is_super_admin_wallet', { p_wallet_address: walletAddress });
+    // Проверяем права admin или super_admin через RPC
+    const { data: isAdminOrSuper, error: roleCheckError } = await supabaseServiceClient
+      .rpc('is_admin_or_super_wallet', { p_wallet_address: walletAddress });
 
-    console.log('🔐 Super admin check result:', { isSuperAdmin, error: adminCheckError });
+    console.log('🔐 Admin or Super check result:', { isAdminOrSuper, error: roleCheckError });
 
-    if (adminCheckError || !isSuperAdmin) {
-      throw new Error('Access denied: Only super admin can upload building backgrounds');
+    if (roleCheckError || !isAdminOrSuper) {
+      throw new Error('Access denied: Only admin or super admin can upload building backgrounds');
     }
 
     // Загружаем изображение в storage
