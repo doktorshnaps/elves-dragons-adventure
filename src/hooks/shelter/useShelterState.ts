@@ -27,6 +27,7 @@ export interface NestUpgrade {
   };
   requiredItems: Array<{ item_id: string; quantity: number }>;
   benefit: string;
+  backgroundImageUrl?: string;
 }
 
 export interface CraftRecipe {
@@ -279,7 +280,8 @@ export const useShelterState = () => {
         maxLevel: 8,
         cost: getUpgradeCost(buildingId, currentLevel),
         requiredItems: nextLevelConfig?.required_items || [],
-        benefit
+        benefit,
+        backgroundImageUrl: currentLevelConfig?.background_image_url || nextLevelConfig?.background_image_url
       };
     };
 

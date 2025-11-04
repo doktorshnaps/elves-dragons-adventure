@@ -48,19 +48,29 @@ export const BuildingGridCard = ({
         </div>
       )}
 
-      {/* Building image placeholder */}
+      {/* Building image */}
       <div 
-        className="w-full h-32 bg-gradient-to-br from-muted/40 to-muted/20 border-b border-border mb-3 flex items-center justify-center text-5xl"
+        className="w-full h-32 bg-gradient-to-br from-muted/40 to-muted/20 border-b border-border mb-3 flex items-center justify-center text-5xl relative overflow-hidden"
       >
-        {upgrade.id === 'main_hall' && '🏛️'}
-        {upgrade.id === 'storage' && '📦'}
-        {upgrade.id === 'workshop' && '⚒️'}
-        {upgrade.id === 'sawmill' && '🪵'}
-        {upgrade.id === 'quarry' && '🪨'}
-        {upgrade.id === 'barracks' && '🛡️'}
-        {upgrade.id === 'dragon_lair' && '🐉'}
-        {upgrade.id === 'medical' && '💊'}
-        {!['main_hall', 'storage', 'workshop', 'sawmill', 'quarry', 'barracks', 'dragon_lair', 'medical'].includes(upgrade.id) && '🏗️'}
+        {upgrade.backgroundImageUrl ? (
+          <img 
+            src={upgrade.backgroundImageUrl} 
+            alt={upgrade.name}
+            className="absolute inset-0 w-full h-full object-cover"
+          />
+        ) : (
+          <>
+            {upgrade.id === 'main_hall' && '🏛️'}
+            {upgrade.id === 'storage' && '📦'}
+            {upgrade.id === 'workshop' && '⚒️'}
+            {upgrade.id === 'sawmill' && '🪵'}
+            {upgrade.id === 'quarry' && '🪨'}
+            {upgrade.id === 'barracks' && '🛡️'}
+            {upgrade.id === 'dragon_lair' && '🐉'}
+            {upgrade.id === 'medical' && '💊'}
+            {!['main_hall', 'storage', 'workshop', 'sawmill', 'quarry', 'barracks', 'dragon_lair', 'medical'].includes(upgrade.id) && '🏗️'}
+          </>
+        )}
       </div>
 
       <div className="p-4 space-y-3">

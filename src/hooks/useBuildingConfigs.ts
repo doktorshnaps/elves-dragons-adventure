@@ -19,6 +19,7 @@ interface BuildingConfig {
   storage_capacity: number;
   working_hours: number;
   is_active: boolean;
+  background_image_url?: string;
 }
 
 export const useBuildingConfigs = () => {
