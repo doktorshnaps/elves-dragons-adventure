@@ -48,7 +48,7 @@ export const BuildingGridCard = ({
             src={upgrade.backgroundImageUrl} 
             alt={upgrade.name}
             className={`absolute inset-0 w-full h-full object-cover transition-all duration-300 group-hover:scale-105 ${
-              upgrade.level === 0 || (requiresWorkers && !hasWorkers) 
+              upgrade.level === 0 
                 ? 'grayscale' 
                 : ''
             }`}
@@ -58,7 +58,7 @@ export const BuildingGridCard = ({
         </>
       ) : (
         <div className={`absolute inset-0 bg-gradient-to-br from-muted/40 to-muted/20 flex items-center justify-center text-7xl opacity-30 transition-all duration-300 ${
-          upgrade.level === 0 || (requiresWorkers && !hasWorkers) 
+          upgrade.level === 0 
             ? 'grayscale' 
             : ''
         }`}>
@@ -114,26 +114,13 @@ export const BuildingGridCard = ({
           )}
 
           {/* Workers Status */}
-          {upgrade.id === 'main_hall' ? (
+          {(upgrade.id === 'main_hall' || requiresWorkers) && (
             <div className="flex items-center">
               <span className="font-bold drop-shadow-[0_1px_2px_rgba(0,0,0,0.8)] text-white text-base">
                 👷 {activeWorkersCount}
               </span>
             </div>
-          ) : requiresWorkers ? (
-            <div className={`flex items-center gap-2 text-xs px-2 py-1.5 rounded-lg backdrop-blur-sm border ${
-              hasWorkers 
-                ? 'bg-success/20 text-success border-success/30' 
-                : 'bg-warning/20 text-warning border-warning/30'
-            }`}>
-              <Users className="w-3 h-3 flex-shrink-0" />
-              {hasWorkers ? (
-                <span className="font-medium drop-shadow-[0_1px_2px_rgba(0,0,0,0.8)]">👷 {activeWorkersCount}</span>
-              ) : (
-                <span className="font-medium drop-shadow-[0_1px_2px_rgba(0,0,0,0.8)]">{t(language, 'shelter.needWorkers')}</span>
-              )}
-            </div>
-          ) : null}
+          )}
 
           {/* Max Level Badge */}
           {upgrade.level >= upgrade.maxLevel && (
