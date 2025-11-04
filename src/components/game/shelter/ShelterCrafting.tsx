@@ -71,25 +71,27 @@ export const ShelterCrafting = ({
             className="bg-card/80 backdrop-blur-sm border-primary/20 hover:border-primary/40 transition-all"
           >
             <CardHeader>
-              <div className="flex items-center justify-between mb-3">
-                <div className="flex items-center gap-3">
-                  {itemImage && (
+              <div className="flex flex-col gap-3 mb-3">
+                <div className="flex items-start justify-between gap-2 flex-wrap">
+                  <div className="flex items-center gap-2 min-w-0 flex-1">
+                    <span className={getCategoryColor(recipe.category)}>
+                      {getCategoryIcon(recipe.category)}
+                    </span>
+                    <CardTitle className="text-xl break-words">{recipe.name}</CardTitle>
+                  </div>
+                  <Badge variant="outline" className="capitalize shrink-0">
+                    {recipe.category}
+                  </Badge>
+                </div>
+                {itemImage && (
+                  <div className="flex justify-center">
                     <img 
                       src={itemImage} 
                       alt={recipe.name}
                       className="w-48 h-48 object-contain rounded border border-primary/20"
                     />
-                  )}
-                  <div className="flex items-center gap-2">
-                    <span className={getCategoryColor(recipe.category)}>
-                      {getCategoryIcon(recipe.category)}
-                    </span>
-                    <CardTitle className="text-xl">{recipe.name}</CardTitle>
                   </div>
-                </div>
-                <Badge variant="outline" className="capitalize">
-                  {recipe.category}
-                </Badge>
+                )}
               </div>
               <CardDescription className="text-sm">{recipe.description}</CardDescription>
             </CardHeader>
