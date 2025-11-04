@@ -402,18 +402,22 @@ export default function ShelterBuildingSettings() {
       formData.append('buildingId', selectedBuilding);
       formData.append('walletAddress', accountId);
 
-      const response = await supabase.functions.invoke('upload-building-background', {
-        body: formData,
+      // Отправляем FormData напрямую через fetch (invoke не поддерживает multipart/form-data)
+      const functionUrl = 'https://oimhwdymghkwxznjarkv.supabase.co/functions/v1/upload-building-background';
+      const res = await fetch(functionUrl, {
+        method: 'POST',
         headers: {
           Authorization: `Bearer ${token}`,
         },
+        body: formData,
       });
 
-      if (response.error) {
-        throw new Error(response.error.message || 'Ошибка загрузки');
+      const json = await res.json();
+      if (!res.ok) {
+        throw new Error(json?.error || 'Ошибка загрузки');
       }
 
-      const { url } = response.data;
+      const { url } = json;
       setCurrentBackgroundUrl(url);
       toast.success('Фоновое изображение загружено успешно');
       await loadConfigs();
