@@ -77,7 +77,7 @@ export const ShelterCrafting = ({
                     <img 
                       src={itemImage} 
                       alt={recipe.name}
-                      className="w-12 h-12 object-contain rounded border border-primary/20"
+                      className="w-48 h-48 object-contain rounded border border-primary/20"
                     />
                   )}
                   <div className="flex items-center gap-2">
