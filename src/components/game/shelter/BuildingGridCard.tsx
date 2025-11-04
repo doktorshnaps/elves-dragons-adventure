@@ -126,7 +126,14 @@ export const BuildingGridCard = ({
         )}
 
         {/* Workers Status */}
-        {requiresWorkers && (
+        {upgrade.id === 'main_hall' ? (
+          <div className="flex items-center gap-2 text-xs px-2 py-1.5 rounded-lg backdrop-blur-sm border bg-primary/20 text-primary border-primary/30">
+            <Users className="w-3 h-3 flex-shrink-0" />
+            <span className="font-medium drop-shadow-[0_1px_2px_rgba(0,0,0,0.8)]">
+              👷 {activeWorkersCount} {t(language, 'shelter.activeWorkers') || 'активных'}
+            </span>
+          </div>
+        ) : requiresWorkers ? (
           <div className={`flex items-center gap-2 text-xs px-2 py-1.5 rounded-lg backdrop-blur-sm border ${
             hasWorkers 
               ? 'bg-success/20 text-success border-success/30' 
@@ -139,6 +146,8 @@ export const BuildingGridCard = ({
               <span className="font-medium drop-shadow-[0_1px_2px_rgba(0,0,0,0.8)]">{t(language, 'shelter.needWorkers')}</span>
             )}
           </div>
+        ) : (
+          <div className="h-[28px]" />
         )}
 
         {/* Max Level Badge */}
