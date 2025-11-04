@@ -41,6 +41,7 @@ export interface CraftRecipe {
     materials?: Array<{ item_id: string; quantity: number }>;
   };
   result: string;
+  result_item_id?: number;
   category: "weapon" | "armor" | "potion" | "misc";
   craftingTime?: number;
 }
@@ -344,6 +345,7 @@ export const useShelterState = () => {
           materials: recipe.required_materials || []
         },
         result: resultTemplate?.name || 'Неизвестный предмет',
+        result_item_id: recipe.result_item_id,
         category: (recipe.category as any) || 'misc',
         craftingTime: recipe.crafting_time_hours || 1
       };

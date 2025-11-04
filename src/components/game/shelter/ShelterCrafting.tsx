@@ -6,6 +6,7 @@ import { useLanguage } from "@/hooks/useLanguage";
 import { t } from "@/utils/translations";
 import { Hammer, Clock } from "lucide-react";
 import { useItemTemplates } from "@/hooks/useItemTemplates";
+import { itemImagesByItemId } from "@/constants/itemImages";
 
 interface ShelterCraftingProps {
   recipes: CraftRecipe[];
@@ -41,7 +42,7 @@ export const ShelterCrafting = ({
   inventoryCounts
 }: ShelterCraftingProps) => {
   const { language } = useLanguage();
-  const { getItemName } = useItemTemplates();
+  const { getItemName, getTemplate } = useItemTemplates();
 
   if (workshopLevel === 0) {
     return (
@@ -61,6 +62,8 @@ export const ShelterCrafting = ({
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
       {recipes.map((recipe) => {
         const canCraft = canAffordCraft(recipe);
+        const itemTemplate = getTemplate(recipe.result_item_id.toString());
+        const itemImage = itemTemplate?.image_url || itemImagesByItemId[recipe.result_item_id.toString()];
         
         return (
           <Card 
@@ -68,13 +71,22 @@ export const ShelterCrafting = ({
             className="bg-card/80 backdrop-blur-sm border-primary/20 hover:border-primary/40 transition-all"
           >
             <CardHeader>
-              <div className="flex items-center justify-between">
-                <CardTitle className="text-xl flex items-center gap-2">
-                  <span className={getCategoryColor(recipe.category)}>
-                    {getCategoryIcon(recipe.category)}
-                  </span>
-                  {recipe.name}
-                </CardTitle>
+              <div className="flex items-center justify-between mb-3">
+                <div className="flex items-center gap-3">
+                  {itemImage && (
+                    <img 
+                      src={itemImage} 
+                      alt={recipe.name}
+                      className="w-12 h-12 object-contain rounded border border-primary/20"
+                    />
+                  )}
+                  <div className="flex items-center gap-2">
+                    <span className={getCategoryColor(recipe.category)}>
+                      {getCategoryIcon(recipe.category)}
+                    </span>
+                    <CardTitle className="text-xl">{recipe.name}</CardTitle>
+                  </div>
+                </div>
                 <Badge variant="outline" className="capitalize">
                   {recipe.category}
                 </Badge>
