@@ -115,8 +115,8 @@ export const BuildingGridCard = ({
 
           {/* Workers Status */}
           {upgrade.id === 'main_hall' ? (
-            <div className="flex items-center gap-2 text-xs px-2 py-1.5 rounded-lg backdrop-blur-sm border bg-primary/20 text-primary border-primary/30">
-              <span className="font-medium drop-shadow-[0_1px_2px_rgba(0,0,0,0.8)] text-base">
+            <div className="flex items-center">
+              <span className="font-bold drop-shadow-[0_1px_2px_rgba(0,0,0,0.8)] text-white text-base">
                 👷 {activeWorkersCount}
               </span>
             </div>
