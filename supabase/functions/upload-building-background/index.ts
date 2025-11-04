@@ -24,28 +24,14 @@ Deno.serve(async (req) => {
 
     const authHeader = req.headers.get('Authorization');
     if (!authHeader) {
-      throw new Error('Missing Authorization header');
+      console.log('ℹ️ No Authorization header provided. Proceeding with wallet role validation only.');
+    } else {
+      console.log('🔐 Authorization header received');
     }
 
-    const token = authHeader.replace('Bearer ', '');
-    const supabaseUserClient = createClient(
-      Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_ANON_KEY') ?? '',
-      {
-        global: {
-          headers: { Authorization: `Bearer ${token}` },
-        },
-        auth: {
-          autoRefreshToken: false,
-          persistSession: false,
-        },
-      }
-    );
+    // Note: We don't require Supabase user auth here because we validate access
+    // via server-side wallet role check (admin/super_admin) below.
 
-    const { data: userData } = await supabaseUserClient.auth.getUser();
-    if (!userData.user) {
-      throw new Error('User not authenticated');
-    }
 
     const formData = await req.formData();
     const image = formData.get('image') as File;

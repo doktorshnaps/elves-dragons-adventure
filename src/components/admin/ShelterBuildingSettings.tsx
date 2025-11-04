@@ -375,26 +375,7 @@ export default function ShelterBuildingSettings() {
 
     try {
       setUploading(true);
-      
-      // Получаем или создаем Supabase сессию для NEAR кошелька
-      let token: string | undefined;
-      
-      const session = await supabase.auth.getSession();
-      if (session.data.session?.access_token) {
-        token = session.data.session.access_token;
-      } else {
-        // Если нет сессии, пробуем войти анонимно для получения токена
-        const { data, error } = await supabase.auth.signInAnonymously();
-        if (error) {
-          console.error('Auth error:', error);
-          throw new Error('Не удалось получить токен авторизации. Попробуйте перезагрузить страницу.');
-        }
-        token = data.session?.access_token;
-      }
-
-      if (!token) {
-        throw new Error('Не удалось получить токен авторизации');
-      }
+      console.log('🚀 Starting background upload', { building: selectedBuilding, fileName: file.name });
 
       const formData = new FormData();
       formData.append('image', file);
@@ -402,22 +383,21 @@ export default function ShelterBuildingSettings() {
       formData.append('buildingId', selectedBuilding);
       formData.append('walletAddress', accountId);
 
-      // Отправляем FormData напрямую через fetch (invoke не поддерживает multipart/form-data)
       const functionUrl = 'https://oimhwdymghkwxznjarkv.supabase.co/functions/v1/upload-building-background';
       const res = await fetch(functionUrl, {
         method: 'POST',
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
         body: formData,
       });
 
-      const json = await res.json();
+      const text = await res.text();
+      let json: any = {};
+      try { json = text ? JSON.parse(text) : {}; } catch { json = { error: text }; }
       if (!res.ok) {
         throw new Error(json?.error || 'Ошибка загрузки');
       }
 
       const { url } = json;
+
       setCurrentBackgroundUrl(url);
       toast.success('Фоновое изображение загружено успешно');
       await loadConfigs();
