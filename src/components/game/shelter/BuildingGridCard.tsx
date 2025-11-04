@@ -81,22 +81,70 @@ export const BuildingGridCard = ({
         </div>
       )}
 
-      <div className="relative z-10 p-4 space-y-3 flex flex-col justify-between h-full">
-        {/* Header */}
-        <div className="flex items-center justify-between">
-          <h3 className="font-semibold text-white drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)] group-hover:text-primary transition-colors">
-            {upgrade.name}
-          </h3>
-          <Badge 
-            variant="default" 
-            className="text-xs font-bold bg-primary text-primary-foreground shadow-lg"
-          >
-            Ур. {upgrade.level}
-          </Badge>
+      <div className="relative z-10 p-4 flex flex-col justify-between h-full">
+        {/* Top section */}
+        <div className="space-y-3">
+          {/* Header */}
+          <div className="flex items-center justify-between">
+            <h3 className="font-semibold text-white drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)] group-hover:text-primary transition-colors">
+              {upgrade.name}
+            </h3>
+            <Badge 
+              variant="default" 
+              className="text-xs font-bold bg-primary text-primary-foreground shadow-lg"
+            >
+              Ур. {upgrade.level}
+            </Badge>
+          </div>
+
+          {/* Upgrade Progress */}
+          {isUpgrading && upgradeProgress && (
+            <div className="space-y-2 bg-black/40 backdrop-blur-sm rounded-lg p-2 border border-white/10">
+              <div className="flex items-center justify-between text-xs">
+                <span className="flex items-center gap-1 text-white drop-shadow-[0_1px_2px_rgba(0,0,0,0.8)]">
+                  <Clock className="w-3 h-3 text-primary" />
+                  <span className="font-medium">{t(language, 'shelter.upgrading')}</span>
+                </span>
+                <span className="font-bold text-primary drop-shadow-[0_1px_2px_rgba(0,0,0,0.8)]">
+                  {formatRemainingTime(upgradeProgress.remainingTime)}
+                </span>
+              </div>
+              <Progress value={upgradeProgress.progress} className="h-1.5" />
+            </div>
+          )}
+
+          {/* Workers Status */}
+          {upgrade.id === 'main_hall' ? (
+            <div className="flex items-center gap-2 text-xs px-2 py-1.5 rounded-lg backdrop-blur-sm border bg-primary/20 text-primary border-primary/30">
+              <span className="font-medium drop-shadow-[0_1px_2px_rgba(0,0,0,0.8)] text-base">
+                👷 {activeWorkersCount}
+              </span>
+            </div>
+          ) : requiresWorkers ? (
+            <div className={`flex items-center gap-2 text-xs px-2 py-1.5 rounded-lg backdrop-blur-sm border ${
+              hasWorkers 
+                ? 'bg-success/20 text-success border-success/30' 
+                : 'bg-warning/20 text-warning border-warning/30'
+            }`}>
+              <Users className="w-3 h-3 flex-shrink-0" />
+              {hasWorkers ? (
+                <span className="font-medium drop-shadow-[0_1px_2px_rgba(0,0,0,0.8)]">👷 {activeWorkersCount}</span>
+              ) : (
+                <span className="font-medium drop-shadow-[0_1px_2px_rgba(0,0,0,0.8)]">{t(language, 'shelter.needWorkers')}</span>
+              )}
+            </div>
+          ) : null}
+
+          {/* Max Level Badge */}
+          {upgrade.level >= upgrade.maxLevel && (
+            <Badge variant="default" className="w-full justify-center text-xs bg-gradient-to-r from-primary to-yellow-400 shadow-lg">
+              ⭐ MAX
+            </Badge>
+          )}
         </div>
 
-        {/* Segmented Level Progress Bar - 8 segments */}
-        <div className="w-full flex gap-1">
+        {/* Bottom section - Progress Bar */}
+        <div className="w-full flex gap-1 mt-3">
           {Array.from({ length: upgrade.maxLevel }).map((_, index) => (
             <div 
               key={index}
@@ -108,54 +156,6 @@ export const BuildingGridCard = ({
             </div>
           ))}
         </div>
-
-        {/* Upgrade Progress */}
-        {isUpgrading && upgradeProgress && (
-          <div className="space-y-2 bg-black/40 backdrop-blur-sm rounded-lg p-2 border border-white/10">
-            <div className="flex items-center justify-between text-xs">
-              <span className="flex items-center gap-1 text-white drop-shadow-[0_1px_2px_rgba(0,0,0,0.8)]">
-                <Clock className="w-3 h-3 text-primary" />
-                <span className="font-medium">{t(language, 'shelter.upgrading')}</span>
-              </span>
-              <span className="font-bold text-primary drop-shadow-[0_1px_2px_rgba(0,0,0,0.8)]">
-                {formatRemainingTime(upgradeProgress.remainingTime)}
-              </span>
-            </div>
-            <Progress value={upgradeProgress.progress} className="h-1.5" />
-          </div>
-        )}
-
-        {/* Workers Status */}
-        {upgrade.id === 'main_hall' ? (
-          <div className="flex items-center gap-2 text-xs px-2 py-1.5 rounded-lg backdrop-blur-sm border bg-primary/20 text-primary border-primary/30">
-            <Users className="w-3 h-3 flex-shrink-0" />
-            <span className="font-medium drop-shadow-[0_1px_2px_rgba(0,0,0,0.8)]">
-              👷 {activeWorkersCount} {t(language, 'shelter.activeWorkers') || 'активных'}
-            </span>
-          </div>
-        ) : requiresWorkers ? (
-          <div className={`flex items-center gap-2 text-xs px-2 py-1.5 rounded-lg backdrop-blur-sm border ${
-            hasWorkers 
-              ? 'bg-success/20 text-success border-success/30' 
-              : 'bg-warning/20 text-warning border-warning/30'
-          }`}>
-            <Users className="w-3 h-3 flex-shrink-0" />
-            {hasWorkers ? (
-              <span className="font-medium drop-shadow-[0_1px_2px_rgba(0,0,0,0.8)]">👷 {activeWorkersCount}</span>
-            ) : (
-              <span className="font-medium drop-shadow-[0_1px_2px_rgba(0,0,0,0.8)]">{t(language, 'shelter.needWorkers')}</span>
-            )}
-          </div>
-        ) : (
-          <div className="h-[28px]" />
-        )}
-
-        {/* Max Level Badge */}
-        {upgrade.level >= upgrade.maxLevel && (
-          <Badge variant="default" className="w-full justify-center text-xs bg-gradient-to-r from-primary to-yellow-400 shadow-lg">
-            ⭐ MAX
-          </Badge>
-        )}
       </div>
     </Card>
   );
