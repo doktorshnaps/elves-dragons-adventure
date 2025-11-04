@@ -48,7 +48,7 @@ export const BuildingGridCard = ({
             src={upgrade.backgroundImageUrl} 
             alt={upgrade.name}
             className={`absolute inset-0 w-full h-full object-cover transition-all duration-300 group-hover:scale-105 ${
-              upgrade.level === 0 
+              upgrade.level === 0 || (requiresWorkers && !hasWorkers)
                 ? 'grayscale' 
                 : ''
             }`}
@@ -58,7 +58,7 @@ export const BuildingGridCard = ({
         </>
       ) : (
         <div className={`absolute inset-0 bg-gradient-to-br from-muted/40 to-muted/20 flex items-center justify-center text-7xl opacity-30 transition-all duration-300 ${
-          upgrade.level === 0 
+          upgrade.level === 0 || (requiresWorkers && !hasWorkers)
             ? 'grayscale' 
             : ''
         }`}>
