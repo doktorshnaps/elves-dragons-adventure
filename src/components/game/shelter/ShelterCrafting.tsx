@@ -7,7 +7,6 @@ import { t } from "@/utils/translations";
 import { Hammer, Clock } from "lucide-react";
 import { useItemTemplates } from "@/hooks/useItemTemplates";
 import { itemImagesByItemId } from "@/constants/itemImages";
-import { OptimizedImage } from "@/components/ui/optimized-image";
 
 interface ShelterCraftingProps {
   recipes: CraftRecipe[];
@@ -86,12 +85,10 @@ export const ShelterCrafting = ({
                 </div>
                 {itemImage && (
                   <div className="flex justify-center">
-                    <OptimizedImage 
+                    <img 
                       src={itemImage} 
                       alt={recipe.name}
                       className="w-48 h-48 object-contain rounded border border-primary/20"
-                      width={192}
-                      height={192}
                       loading="lazy"
                     />
                   </div>
