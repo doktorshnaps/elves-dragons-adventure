@@ -338,13 +338,22 @@ export const useShelterState = () => {
     // Преобразуем рецепты из БД в формат CraftRecipe
     return craftingRecipesFromDB.map(recipe => {
       const resultTemplate = getTemplate(String(recipe.result_item_id));
+      
+      // Преобразуем и валидируем required_materials
+      const materials = (recipe.required_materials || [])
+        .filter(mat => mat && (mat.item_id !== undefined && mat.item_id !== null))
+        .map(mat => ({
+          item_id: String(mat.item_id), // Всегда преобразуем в строку
+          quantity: mat.quantity || 1
+        }));
+      
       return {
         id: recipe.id,
         name: recipe.recipe_name,
         description: recipe.description || '',
         requirements: {
           balance: 0, // В БД нет стоимости ELL для крафта, можно добавить позже
-          materials: recipe.required_materials || []
+          materials: materials
         },
         result: resultTemplate?.name || 'Неизвестный предмет',
         result_item_id: recipe.result_item_id,

@@ -125,18 +125,20 @@ export const ShelterCrafting = ({
                     </div>
                   )}
                   {recipe.requirements.materials && recipe.requirements.materials.length > 0 && (
-                    recipe.requirements.materials.map((mat, idx) => {
-                      const playerHas = inventoryCounts[mat.item_id] || 0;
-                      const hasEnough = playerHas >= mat.quantity;
-                      return (
-                        <div key={idx} className="flex items-center gap-2">
-                          <span>📦</span>
-                          <span className={`text-sm ${hasEnough ? '' : 'text-destructive'}`}>
-                            {getItemName(mat.item_id)} ({playerHas}/{mat.quantity})
-                          </span>
-                        </div>
-                      );
-                    })
+                    recipe.requirements.materials
+                      .filter(mat => mat && mat.item_id) // Фильтруем невалидные материалы
+                      .map((mat, idx) => {
+                        const playerHas = inventoryCounts[mat.item_id] || 0;
+                        const hasEnough = playerHas >= mat.quantity;
+                        return (
+                          <div key={idx} className="flex items-center gap-2">
+                            <span>📦</span>
+                            <span className={`text-sm ${hasEnough ? '' : 'text-destructive'}`}>
+                              {getItemName(mat.item_id)} ({playerHas}/{mat.quantity})
+                            </span>
+                          </div>
+                        );
+                      })
                   )}
                 </div>
               </div>
