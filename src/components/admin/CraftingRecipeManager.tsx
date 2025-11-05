@@ -113,15 +113,10 @@ export const CraftingRecipeManager = () => {
     if (!confirm('Вы уверены что хотите удалить этот рецепт?')) return;
 
     try {
-      const walletAddress = localStorage.getItem('accountId');
-      if (!walletAddress) {
-        throw new Error('Wallet not connected');
-      }
-
-      const { error } = await supabase.rpc('admin_delete_crafting_recipe', {
-        p_id: id,
-        p_wallet: walletAddress
-      });
+      const { error } = await supabase
+        .from('crafting_recipes')
+        .delete()
+        .eq('id', id);
 
       if (error) {
         console.error('Delete error:', error);
@@ -137,7 +132,7 @@ export const CraftingRecipeManager = () => {
       console.error('Delete failed:', error);
       toast({
         title: 'Ошибка удаления',
-        description: error.message || 'Недостаточно прав для удаления рецепта',
+        description: error.message || 'Не удалось удалить рецепт',
         variant: 'destructive'
       });
     }
