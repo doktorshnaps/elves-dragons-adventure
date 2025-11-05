@@ -47,27 +47,37 @@ export const CraftingRecipeManager = () => {
 
     setSaving(true);
     try {
-      const { error } = editingId
-        ? await supabase
-            .from('crafting_recipes')
-            .update({
-              recipe_name: formData.recipe_name,
-              result_item_id: formData.result_item_id,
-              result_quantity: formData.result_quantity,
-              required_materials: formData.required_materials,
-              category: formData.category,
-              description: formData.description,
-              crafting_time_hours: formData.crafting_time_hours
-            })
-            .eq('id', editingId)
-        : await supabase
-            .from('crafting_recipes')
-            .insert({
-              ...formData,
-              created_by_wallet_address: 'mr_bruts.tg'
-            });
+      const walletAddress = localStorage.getItem('accountId');
+      if (!walletAddress) {
+        throw new Error('Wallet not connected');
+      }
 
-      if (error) throw error;
+      if (editingId) {
+        // Update existing recipe using RPC
+        const { error } = await supabase.rpc('admin_update_crafting_recipe', {
+          p_recipe_id: editingId,
+          p_wallet_address: walletAddress,
+          p_recipe_name: formData.recipe_name,
+          p_result_item_id: formData.result_item_id,
+          p_result_quantity: formData.result_quantity,
+          p_required_materials: formData.required_materials,
+          p_category: formData.category,
+          p_description: formData.description,
+          p_crafting_time_hours: formData.crafting_time_hours
+        });
+
+        if (error) throw error;
+      } else {
+        // Create new recipe using direct insert
+        const { error } = await supabase
+          .from('crafting_recipes')
+          .insert({
+            ...formData,
+            created_by_wallet_address: walletAddress
+          });
+
+        if (error) throw error;
+      }
 
       toast({
         title: editingId ? 'Рецепт обновлен' : 'Рецепт создан',
@@ -113,10 +123,15 @@ export const CraftingRecipeManager = () => {
     if (!confirm('Вы уверены что хотите удалить этот рецепт?')) return;
 
     try {
-      const { error } = await supabase
-        .from('crafting_recipes')
-        .delete()
-        .eq('id', id);
+      const walletAddress = localStorage.getItem('accountId');
+      if (!walletAddress) {
+        throw new Error('Wallet not connected');
+      }
+
+      const { error } = await supabase.rpc('admin_delete_crafting_recipe', {
+        p_id: id,
+        p_wallet: walletAddress
+      });
 
       if (error) {
         console.error('Delete error:', error);

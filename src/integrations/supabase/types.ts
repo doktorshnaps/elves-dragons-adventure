@@ -1881,6 +1881,20 @@ export type Database = {
         }
         Returns: boolean
       }
+      admin_update_crafting_recipe: {
+        Args: {
+          p_category: string
+          p_crafting_time_hours: number
+          p_description: string
+          p_recipe_id: string
+          p_recipe_name: string
+          p_required_materials: Json
+          p_result_item_id: number
+          p_result_quantity: number
+          p_wallet_address: string
+        }
+        Returns: undefined
+      }
       admin_update_dragon_base_stats: {
         Args: {
           p_admin_wallet_address?: string
