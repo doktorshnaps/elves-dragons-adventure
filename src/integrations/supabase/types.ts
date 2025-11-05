@@ -1748,6 +1748,19 @@ export type Database = {
         Returns: boolean
       }
       admin_insert_building_config: { Args: { p_data: Json }; Returns: string }
+      admin_insert_crafting_recipe: {
+        Args: {
+          p_category: string
+          p_crafting_time_hours: number
+          p_description: string
+          p_recipe_name: string
+          p_required_materials: Json
+          p_result_item_id: number
+          p_result_quantity: number
+          p_wallet_address: string
+        }
+        Returns: string
+      }
       admin_insert_item_template:
         | {
             Args: {

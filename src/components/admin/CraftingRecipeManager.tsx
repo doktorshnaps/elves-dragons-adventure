@@ -70,13 +70,17 @@ export const CraftingRecipeManager = () => {
 
         if (error) throw error;
       } else {
-        // Create new recipe using direct insert
-        const { error } = await supabase
-          .from('crafting_recipes')
-          .insert({
-            ...formData,
-            created_by_wallet_address: walletAddress
-          });
+        // Create new recipe using RPC
+        const { error } = await supabase.rpc('admin_insert_crafting_recipe', {
+          p_wallet_address: walletAddress,
+          p_recipe_name: formData.recipe_name,
+          p_result_item_id: formData.result_item_id,
+          p_result_quantity: formData.result_quantity,
+          p_required_materials: formData.required_materials,
+          p_category: formData.category,
+          p_description: formData.description,
+          p_crafting_time_hours: formData.crafting_time_hours
+        });
 
         if (error) throw error;
       }
