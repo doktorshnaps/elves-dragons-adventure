@@ -6,6 +6,8 @@ import { getMonsterLoot } from '@/utils/monsterLootMapping';
 import { v4 as uuidv4 } from 'uuid';
 import { newItems } from '@/data/newItems';
 import { useAddItemToInstances } from '@/hooks/useAddItemToInstances';
+import { supabase } from '@/integrations/supabase/client';
+import { useWalletContext } from '@/contexts/WalletConnectContext';
 
 export interface MonsterKill {
   level: number;
@@ -32,6 +34,7 @@ export const useDungeonRewards = () => {
   const { gameData, updateGameData } = useGameData();
   const { toast } = useToast();
   const { addItemsToInstances } = useAddItemToInstances();
+  const { accountId } = useWalletContext();
   const isClaimingRef = useRef(false);
   const lastProcessedLevelRef = useRef<number>(-1);
   const isProcessingRef = useRef(false);
@@ -224,6 +227,21 @@ export const useDungeonRewards = () => {
       if (Object.keys(updates).length > 0) {
         await updateGameData(updates);
         console.log('✅ Награда успешно начислена!');
+        
+        // Начисляем реферальные бонусы (6% -> 3% -> 1.5%)
+        if (rewardAmount > 0 && accountId) {
+          try {
+            console.log(`🤝 Обработка реферальных начислений для ${accountId}, сумма: ${rewardAmount}`);
+            await supabase.rpc('process_referral_earnings', {
+              p_earner_wallet_address: accountId,
+              p_amount: rewardAmount
+            });
+            console.log('✅ Реферальные начисления обработаны');
+          } catch (refError) {
+            console.error('❌ Ошибка при обработке реферальных начислений:', refError);
+            // Не блокируем основной процесс если реферальная система не сработала
+          }
+        }
       } else {
         console.warn('⚠️ Нет обновлений для начисления!');
       }
