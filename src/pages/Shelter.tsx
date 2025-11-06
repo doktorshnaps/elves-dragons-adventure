@@ -140,7 +140,7 @@ export const Shelter = () => {
           </TabsList>
 
           {/* Содержимое вкладок */}
-          <TabsContent value="upgrades" className="mt-6">
+          <TabsContent value="upgrades" className="mt-6 animate-fade-in">
             <ShelterUpgrades
               upgrades={nestUpgrades}
               canAffordUpgrade={canAffordUpgrade}
@@ -158,7 +158,7 @@ export const Shelter = () => {
             />
           </TabsContent>
 
-          <TabsContent value="crafting" className="mt-6">
+          <TabsContent value="crafting" className="mt-6 animate-fade-in min-h-[400px]">
             <CraftingTabs
               recipes={craftRecipes}
               canAffordCraft={canAffordCraft}
@@ -169,7 +169,7 @@ export const Shelter = () => {
             />
           </TabsContent>
 
-          <TabsContent value="barracks" className="mt-6">
+          <TabsContent value="barracks" className="mt-6 animate-fade-in">
             {buildingLevels.barracks > 0 ? (
               <Barracks 
                 barracksLevel={buildingLevels.barracks}
@@ -189,7 +189,7 @@ export const Shelter = () => {
             )}
           </TabsContent>
 
-          <TabsContent value="dragonlair" className="mt-6">
+          <TabsContent value="dragonlair" className="mt-6 animate-fade-in">
             {buildingLevels.dragon_lair > 0 ? (
               <DragonLair 
                 lairLevel={buildingLevels.dragon_lair}
@@ -209,7 +209,7 @@ export const Shelter = () => {
             )}
           </TabsContent>
 
-          <TabsContent value="medical" className="mt-6">
+          <TabsContent value="medical" className="mt-6 animate-fade-in min-h-[400px]">
             {buildingLevels.medical > 0 ? (
               <MedicalBayComponent />
             ) : (
@@ -223,7 +223,7 @@ export const Shelter = () => {
             )}
           </TabsContent>
 
-          <TabsContent value="workers" className="mt-6">
+          <TabsContent value="workers" className="mt-6 animate-fade-in">
             <WorkersManagement />
           </TabsContent>
         </Tabs>
