@@ -126,24 +126,22 @@ export const BuildingGridCard = ({
             <div className="space-y-2 bg-black/40 backdrop-blur-sm rounded-lg p-2 border border-white/10">
               {hasWorkers ? (
                 <>
-                  <div className="space-y-0.5">
-                    <div className="flex items-center justify-between text-xs">
-                      <span className="text-white drop-shadow-[0_1px_2px_rgba(0,0,0,0.8)] font-medium">
-                        {t(language, 'shelter.production')}
-                      </span>
-                      <span className="font-bold text-primary drop-shadow-[0_1px_2px_rgba(0,0,0,0.8)]">
-                        {Math.floor(productionData.readyResources)}
-                      </span>
-                    </div>
-                    <Progress value={productionData.productionProgress} className="h-1.5" />
+                  <div className="flex items-center justify-between text-xs">
+                    <span className="text-white drop-shadow-[0_1px_2px_rgba(0,0,0,0.8)] font-medium">
+                      {t(language, 'shelter.production')}
+                    </span>
+                    <span className="font-bold text-primary drop-shadow-[0_1px_2px_rgba(0,0,0,0.8)]">
+                      {Math.floor(productionData.readyResources)}
+                    </span>
                   </div>
+                  <Progress value={productionData.productionProgress} className="h-1.5" />
                   {canCollect && (
                     <button
                       onClick={(e) => {
                         e.stopPropagation();
                         productionData.onCollect();
                       }}
-                      className="w-full py-1.5 px-3 bg-primary hover:bg-primary/90 text-primary-foreground font-semibold rounded-lg text-xs transition-colors mt-2"
+                      className="w-full py-1.5 px-3 bg-primary hover:bg-primary/90 text-primary-foreground font-semibold rounded-lg text-xs transition-colors"
                     >
                       {t(language, 'shelter.collect')}
                     </button>
