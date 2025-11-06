@@ -51,16 +51,7 @@ export const Shelter = () => {
   } = useShelterState();
 
   return (
-    <div 
-      className="min-h-screen bg-cover bg-center bg-no-repeat relative"
-      style={{
-        backgroundImage: 'url("/images/shelter-bg.jpeg")',
-        backgroundSize: 'cover',
-        backgroundPosition: 'center',
-        backgroundRepeat: 'no-repeat'
-      }}
-    >
-      <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" />
+    <div className="min-h-screen relative">
       <div className="container mx-auto p-2 sm:p-4 space-y-6 relative z-10">
         {/* Кнопка возврата и информация - адаптивный layout */}
         <div className="flex flex-col sm:flex-row sm:justify-between items-stretch sm:items-start gap-2 mb-16 sm:mb-6 pt-2">

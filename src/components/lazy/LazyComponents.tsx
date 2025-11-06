@@ -78,7 +78,17 @@ export const LazyQuestPage = createLazyComponent(
 );
 
 export const LazyShelter = createLazyComponent(
-  () => import('@/pages/Shelter').then(module => ({ default: module.Shelter })),
+  () => import('@/pages/Shelter').then(module => {
+    const Shelter = module.Shelter;
+    const GameLayout = require('@/components/layout/GameLayout').GameLayout;
+    return {
+      default: () => (
+        <GameLayout backgroundImage="/images/shelter-bg.jpeg">
+          <Shelter />
+        </GameLayout>
+      )
+    };
+  }),
   { 
     fallback: <div className="p-4">Загрузка убежища...</div>,
     preload: false 
