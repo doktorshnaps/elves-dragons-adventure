@@ -19,13 +19,16 @@ import { useToast } from '@/hooks/use-toast';
 import { useGameStore } from '@/stores/gameStore';
 import { useLanguage } from '@/hooks/useLanguage';
 import { t } from '@/utils/translations';
+import { BattleSpeedProvider } from '@/contexts/BattleSpeedContext';
+import { useBattleSpeed } from '@/contexts/BattleSpeedContext';
 interface TeamBattlePageProps {
   dungeonType: DungeonType;
 }
-export const TeamBattlePage: React.FC<TeamBattlePageProps> = ({
+const TeamBattlePageInner: React.FC<TeamBattlePageProps> = ({
   dungeonType
 }) => {
   const { language } = useLanguage();
+  const { adjustDelay } = useBattleSpeed();
   const navigate = useNavigate();
   const { toast } = useToast();
   const [battleStarted, setBattleStarted] = useState<boolean>(false);
@@ -300,7 +303,7 @@ export const TeamBattlePage: React.FC<TeamBattlePageProps> = ({
     } else {
       // Задержка 1.8с, чтобы успели проиграться бросок кубика, полет оружия и смерть монстра
       setShowingFinishDelay(true);
-      const delayMs = 1800;
+      const delayMs = adjustDelay(1800);
       setTimeout(() => {
         const kills = monstersKilledRef.current;
         console.log('✅ ПОБЕДА - обработка наград (после задержки)', { delayMs, level: battleState.level, kills: kills.length });
@@ -395,4 +398,12 @@ export const TeamBattlePage: React.FC<TeamBattlePageProps> = ({
       <TeamBattleArena playerPairs={battleState.playerPairs} opponents={battleState.opponents} attackOrder={attackOrder} isPlayerTurn={isPlayerTurn} onAttack={executePlayerAttack} onAbilityUse={executeAbilityUse} onEnemyAttack={executeEnemyAttack} level={battleState.level} lastRoll={lastRoll} />
       
     </>;
+};
+
+export const TeamBattlePage: React.FC<TeamBattlePageProps> = (props) => {
+  return (
+    <BattleSpeedProvider>
+      <TeamBattlePageInner {...props} />
+    </BattleSpeedProvider>
+  );
 };

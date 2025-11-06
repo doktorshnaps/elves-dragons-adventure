@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
-import { Sword, Shield, Heart, ArrowLeft, Zap } from 'lucide-react';
+import { Sword, Shield, Heart, ArrowLeft, Zap, FastForward } from 'lucide-react';
 import { TeamPair } from '@/types/teamBattle';
 import { Opponent } from '@/types/battle';
 import { useGameStore } from '@/stores/gameStore';
@@ -16,6 +16,7 @@ import { useDungeonSync } from '@/hooks/useDungeonSync';
 import { useLanguage } from '@/hooks/useLanguage';
 import { t } from '@/utils/translations';
 import { getTranslatedCardName } from '@/utils/cardNameTranslations';
+import { useBattleSpeed } from '@/contexts/BattleSpeedContext';
 interface TeamBattleArenaProps {
   playerPairs: TeamPair[];
   opponents: Opponent[];
@@ -41,6 +42,7 @@ export const TeamBattleArena: React.FC<TeamBattleArenaProps> = ({
   const { language } = useLanguage();
   const navigate = useNavigate();
   const { endDungeonSession } = useDungeonSync();
+  const { speed, setSpeed, adjustDelay } = useBattleSpeed();
   const {
     accountLevel,
     accountExperience
@@ -104,7 +106,7 @@ export const TeamBattleArena: React.FC<TeamBattleArenaProps> = ({
         setSelectedTarget(null);
         setAttackingPair(null);
         setAttackedTarget(null);
-      }, 4500);
+      }, adjustDelay(4500));
     }
   };
   const handleEnemyAttack = useCallback(() => {
@@ -116,7 +118,7 @@ export const TeamBattleArena: React.FC<TeamBattleArenaProps> = ({
     // Сбрасываем UI состояния после полного цикла
     setTimeout(() => {
       setDefendingPair(null);
-    }, 4500);
+    }, adjustDelay(4500));
   }, [alivePairs.length, onEnemyAttack]);
   const getCurrentAttacker = () => {
     const orderedPairs = [...alivePairs].sort((a, b) => a.attackOrder - b.attackOrder);
@@ -161,10 +163,10 @@ export const TeamBattleArena: React.FC<TeamBattleArenaProps> = ({
         // Останавливаем анимацию через 2000мс (длительность всей анимации)
         const stopTimer = setTimeout(() => {
           setAttackAnimation({ isActive: false, type: 'normal', source: 'player', damage: 0 });
-        }, 2000);
+        }, adjustDelay(2000));
 
         return () => clearTimeout(stopTimer);
-      }, 100);
+      }, adjustDelay(100));
 
       return () => clearTimeout(startTimer);
     }
@@ -184,7 +186,7 @@ export const TeamBattleArena: React.FC<TeamBattleArenaProps> = ({
       const stopDiceTimer = setTimeout(() => {
         console.log(`🎲 [UI] Stopping dice animation (${new Date().toISOString()})`);
         setIsDiceRolling(false);
-      }, 1500);
+      }, adjustDelay(1500));
       
       return () => clearTimeout(stopDiceTimer);
     }
@@ -202,7 +204,7 @@ export const TeamBattleArena: React.FC<TeamBattleArenaProps> = ({
           console.log('⚔️ Executing enemy attack');
           handleEnemyAttack();
           enemyAttackTimerRef.current = null;
-        }, 1500);
+        }, adjustDelay(1500));
       }
     } else {
       // Смена хода на игрока — отменяем запланированную атаку, если была
@@ -259,14 +261,14 @@ export const TeamBattleArena: React.FC<TeamBattleArenaProps> = ({
               setAttackingPair(null);
               setAttackedTarget(null);
               setIsAttacking(false);
-            }, 3500); // Ждем завершения анимации и переключения хода
-          }, 200);
+            }, adjustDelay(3500)); // Ждем завершения анимации и переключения хода
+          }, adjustDelay(200));
         }
-      }, 1000); // Задержка 1 секунда для автобоя
+      }, adjustDelay(1000)); // Задержка 1 секунда для автобоя
 
       return () => clearTimeout(timer);
     }
-  }, [autoBattle, isPlayerTurn, isAttacking, alivePairs.length, aliveOpponents.length, alivePairs, aliveOpponents, onAttack]);
+  }, [autoBattle, isPlayerTurn, isAttacking, alivePairs.length, aliveOpponents.length, alivePairs, aliveOpponents, onAttack, adjustDelay]);
   return <div className="h-screen w-screen overflow-hidden p-2 flex flex-col relative">
       <div className="w-full h-full flex flex-col space-y-2">
         {/* Header */}
@@ -277,6 +279,17 @@ export const TeamBattleArena: React.FC<TeamBattleArenaProps> = ({
                 <Button variant="menu" size="sm" className="text-[10px] sm:text-sm px-2 py-1 h-auto sm:h-9" style={{ boxShadow: '-33px 15px 10px rgba(0, 0, 0, 0.6)' }} onClick={handleMenuReturn}>
                   <ArrowLeft className="w-3 h-3 sm:w-4 sm:h-4 mr-0.5 sm:mr-1" />
                   {t(language, 'battlePage.menu')}
+                </Button>
+                
+                <Button 
+                  variant="menu" 
+                  size="sm" 
+                  className="text-[10px] sm:text-sm px-2 py-1 h-auto sm:h-9" 
+                  style={{ boxShadow: '-33px 15px 10px rgba(0, 0, 0, 0.6)' }}
+                  onClick={() => setSpeed(speed === 4 ? 1 : speed === 2 ? 4 : 2)}
+                >
+                  <FastForward className="w-3 h-3 sm:w-4 sm:h-4 mr-0.5 sm:mr-1" />
+                  x{speed}
                 </Button>
                 
                 <AlertDialog>

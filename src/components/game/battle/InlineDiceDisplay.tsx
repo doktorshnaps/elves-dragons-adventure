@@ -1,5 +1,6 @@
 import { motion } from 'framer-motion';
 import { useState, useEffect } from 'react';
+import { useBattleSpeed } from '@/contexts/BattleSpeedContext';
 
 interface InlineDiceDisplayProps {
   isRolling: boolean;
@@ -20,6 +21,7 @@ export const InlineDiceDisplay = ({
   isBlocked,
   isCritical
 }: InlineDiceDisplayProps) => {
+  const { adjustDelay } = useBattleSpeed();
   const [displayValue, setDisplayValue] = useState<number>(1);
   const [isResultVisible, setIsResultVisible] = useState<boolean>(false);
   const [showDamage, setShowDamage] = useState<boolean>(false);
@@ -41,7 +43,7 @@ export const InlineDiceDisplay = ({
       // Останавливаем смену чисел через 1200мс
       stopTimeoutId = window.setTimeout(() => {
         if (intervalId) clearInterval(intervalId);
-      }, 1200);
+      }, adjustDelay(1200));
     } else if (diceValue !== null) {
       // Фиксируем финальный результат и держим его 1200мс
       setDisplayValue(diceValue);
@@ -55,13 +57,13 @@ export const InlineDiceDisplay = ({
           // Скрываем урон/блок через 2000мс (больше времени для критического урона)
           setTimeout(() => {
             setShowDamage(false);
-          }, isCritical ? 2000 : 1500);
-        }, 200);
+          }, adjustDelay(isCritical ? 2000 : 1500));
+        }, adjustDelay(200));
       }
       
       resultTimeoutId = window.setTimeout(() => {
         setIsResultVisible(false);
-      }, 1200);
+      }, adjustDelay(1200));
     }
 
     return () => {
@@ -70,7 +72,7 @@ export const InlineDiceDisplay = ({
       if (resultTimeoutId) clearTimeout(resultTimeoutId);
       if (damageTimeoutId) clearTimeout(damageTimeoutId);
     };
-  }, [isRolling, diceValue, damage, isBlocked, isCritical]);
+  }, [isRolling, diceValue, damage, isBlocked, isCritical, adjustDelay]);
 
   const isActive = isRolling || isResultVisible;
 

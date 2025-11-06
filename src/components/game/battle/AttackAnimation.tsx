@@ -2,6 +2,7 @@ import React, { useEffect, useState, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Sword, Shield, Zap, Sparkles } from 'lucide-react';
 import { useMusic } from '@/hooks/useMusic';
+import { useBattleSpeed } from '@/contexts/BattleSpeedContext';
 import blockSound1 from '@/assets/sounds/blok-mechom.mp3';
 import blockSound2 from '@/assets/sounds/blok-mechom-2.mp3';
 import blockSound3 from '@/assets/sounds/blok-mechom-3.mp3';
@@ -28,6 +29,7 @@ export const AttackAnimation: React.FC<AttackAnimationProps> = ({
   damage = 0
 }) => {
   const { getSoundEffectVolume } = useMusic();
+  const { adjustDelay } = useBattleSpeed();
   const [showImpact, setShowImpact] = useState(false);
   const blockSoundsRef = useRef<HTMLAudioElement[]>([]);
   const attackSoundsRef = useRef<HTMLAudioElement[]>([]);
@@ -70,7 +72,7 @@ export const AttackAnimation: React.FC<AttackAnimationProps> = ({
   useEffect(() => {
     if (isActive) {
       // Для всех типов атак показываем эффект попадания через 500мс (полет меча)
-      const delay = 500;
+      const delay = adjustDelay(500);
       
       const timer = setTimeout(() => {
         setShowImpact(true);
@@ -83,7 +85,7 @@ export const AttackAnimation: React.FC<AttackAnimationProps> = ({
     } else {
       setShowImpact(false);
     }
-  }, [isActive, type]);
+  }, [isActive, type, adjustDelay]);
 
   // Воспроизведение звуков атаки
   useEffect(() => {
@@ -141,7 +143,7 @@ export const AttackAnimation: React.FC<AttackAnimationProps> = ({
               scale: 0
             }}
             transition={{ 
-              duration: 0.5,
+              duration: adjustDelay(500) / 1000,
               ease: 'easeInOut'
             }}
           >
@@ -151,7 +153,7 @@ export const AttackAnimation: React.FC<AttackAnimationProps> = ({
                 scale: type === 'critical' ? [1, 1.3, 1] : 1
               }}
               transition={{
-                duration: 0.5,
+                duration: adjustDelay(500) / 1000,
                 ease: 'linear'
               }}
             >
@@ -179,7 +181,7 @@ export const AttackAnimation: React.FC<AttackAnimationProps> = ({
               opacity: [1, 1, 0.8, 0]
             }}
             transition={{ 
-              duration: type === 'blocked' ? 0.6 : 0.8,
+              duration: adjustDelay(type === 'blocked' ? 600 : 800) / 1000,
               ease: 'easeOut'
             }}
           >
