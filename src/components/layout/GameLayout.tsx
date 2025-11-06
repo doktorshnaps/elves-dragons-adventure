@@ -29,7 +29,8 @@ export const GameLayout = ({
           backgroundImage: `url(${backgroundImage})`,
           backgroundSize: 'cover',
           backgroundPosition: 'center',
-          backgroundRepeat: 'no-repeat'
+          backgroundRepeat: 'no-repeat',
+          backgroundAttachment: 'fixed'
         } : {}}
       >
         {backgroundImage && <div className="absolute inset-0 bg-black/40" />}
