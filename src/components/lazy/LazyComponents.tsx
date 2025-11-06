@@ -78,9 +78,11 @@ export const LazyQuestPage = createLazyComponent(
 );
 
 export const LazyShelter = createLazyComponent(
-  () => import('@/pages/Shelter').then(module => {
-    const Shelter = module.Shelter;
-    const GameLayout = require('@/components/layout/GameLayout').GameLayout;
+  async () => {
+    const [{ Shelter }, { GameLayout }] = await Promise.all([
+      import('@/pages/Shelter'),
+      import('@/components/layout/GameLayout')
+    ]);
     return {
       default: () => (
         <GameLayout backgroundImage="/images/shelter-bg.jpeg">
@@ -88,7 +90,7 @@ export const LazyShelter = createLazyComponent(
         </GameLayout>
       )
     };
-  }),
+  },
   { 
     fallback: <div className="p-4">Загрузка убежища...</div>,
     preload: false 
