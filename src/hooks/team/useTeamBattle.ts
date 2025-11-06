@@ -11,6 +11,7 @@ import { useGameData } from '@/hooks/useGameData';
 import { useCardInstances } from '@/hooks/useCardInstances';
 import { calculateCardStats } from '@/utils/cardUtils';
 import { calculateD6Damage } from '@/utils/battleCalculations';
+import { useBattleSpeed } from '@/contexts/BattleSpeedContext';
 
 export const useTeamBattle = (dungeonType: DungeonType, initialLevel: number = 1) => {
   const { toast } = useToast();
@@ -18,6 +19,7 @@ export const useTeamBattle = (dungeonType: DungeonType, initialLevel: number = 1
   const { accountLevel, accountExperience, addAccountExperience: addAccountExp } = useGameStore();
   const { gameData, updateGameData } = useGameData();
   const { loading: cardInstancesLoading, incrementMonsterKills } = useCardInstances();
+  const { adjustDelay } = useBattleSpeed();
   
   const [battleState, setBattleState] = useState<TeamBattleState>(() => {
     const savedState = localStorage.getItem('teamBattleState');
@@ -54,7 +56,7 @@ export const useTeamBattle = (dungeonType: DungeonType, initialLevel: number = 1
   const DICE_ROLL_MS = 1500; // кубики крутятся
   const ATTACK_ANIMATION_MS = 2000; // анимация атаки
   const TURN_DELAY_MS = 1000; // пауза перед сменой хода
-  const delay = (ms: number) => new Promise<void>((res) => setTimeout(res, ms));
+  const delay = (ms: number) => new Promise<void>((res) => setTimeout(res, adjustDelay(ms)));
 
   // Блокировка повторных вызовов атаки врага (анти-дубль при лагах)
   const enemyAttackLockRef = useRef(false);
@@ -217,7 +219,7 @@ export const useTeamBattle = (dungeonType: DungeonType, initialLevel: number = 1
         newSet.delete(pairId);
         return newSet;
       });
-      setTimeout(() => switchTurn(), TURN_DELAY_MS);
+      setTimeout(() => switchTurn(), adjustDelay(TURN_DELAY_MS));
       return;
     }
 
@@ -292,10 +294,10 @@ export const useTeamBattle = (dungeonType: DungeonType, initialLevel: number = 1
       // Даем UI доиграть смерти и переход
       setTimeout(() => {
         localStorage.setItem('activeBattleInProgress', 'false');
-      }, 1800);
+      }, adjustDelay(1800));
     } else {
       // Смена хода после короткой паузы
-      setTimeout(() => switchTurn(), TURN_DELAY_MS);
+      setTimeout(() => switchTurn(), adjustDelay(TURN_DELAY_MS));
     }
   };
 
@@ -392,14 +394,14 @@ export const useTeamBattle = (dungeonType: DungeonType, initialLevel: number = 1
       setTimeout(() => {
         enemyAttackLockRef.current = false;
         handleGameOver();
-      }, TURN_DELAY_MS);
+      }, adjustDelay(TURN_DELAY_MS));
     } else {
       setTimeout(() => {
         enemyAttackLockRef.current = false;
         switchTurn();
-      }, TURN_DELAY_MS);
+      }, adjustDelay(TURN_DELAY_MS));
     }
-  }, [battleState, gameData, updateGameData, toast]);
+  }, [battleState, gameData, updateGameData, toast, adjustDelay]);
 
   const executeAbilityUse = async (pairId: string, abilityId: string, target: string | number) => {
     try {
@@ -463,12 +465,12 @@ export const useTeamBattle = (dungeonType: DungeonType, initialLevel: number = 1
 
         setTimeout(() => {
           switchTurn();
-        }, 800);
+        }, adjustDelay(800));
       } else {
         console.warn('executeAbilityUse: неподдерживаемая способность', abilityId);
         setTimeout(() => {
           switchTurn();
-        }, 800);
+        }, adjustDelay(800));
       }
     } catch (error) {
       console.error('executeAbilityUse error:', error);
