@@ -128,24 +128,29 @@ export const BuildingGridCard = ({
                 <>
                   <div className="flex items-center justify-between text-xs">
                     <span className="text-white drop-shadow-[0_1px_2px_rgba(0,0,0,0.8)] font-medium">
-                      {t(language, 'shelter.production')}
+                      Добыча
                     </span>
                     <span className="font-bold text-primary drop-shadow-[0_1px_2px_rgba(0,0,0,0.8)]">
                       {Math.floor(productionData.readyResources)}
                     </span>
                   </div>
                   <Progress value={productionData.productionProgress} className="h-1.5" />
-                  {canCollect && (
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      if (canCollect) {
                         productionData.onCollect();
-                      }}
-                      className="w-full py-1.5 px-3 bg-primary hover:bg-primary/90 text-primary-foreground font-semibold rounded-lg text-xs transition-colors"
-                    >
-                      {t(language, 'shelter.collect')}
-                    </button>
-                  )}
+                      }
+                    }}
+                    disabled={!canCollect}
+                    className={`w-full py-1.5 px-3 font-semibold rounded-lg text-xs transition-colors ${
+                      canCollect 
+                        ? 'bg-primary hover:bg-primary/90 text-primary-foreground cursor-pointer' 
+                        : 'bg-muted text-muted-foreground cursor-not-allowed opacity-50'
+                    }`}
+                  >
+                    Собрать
+                  </button>
                 </>
               ) : (
                 <div className="text-xs text-white/70 text-center drop-shadow-[0_1px_2px_rgba(0,0,0,0.8)]">
