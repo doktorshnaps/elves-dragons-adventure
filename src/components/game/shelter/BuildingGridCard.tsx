@@ -36,7 +36,7 @@ export const BuildingGridCard = ({
   const { language } = useLanguage();
   
   const isResourceBuilding = upgrade.id === 'sawmill' || upgrade.id === 'quarry';
-  const canCollect = productionData && productionData.readyResources > 0 && hasWorkers;
+  const canCollect = productionData && productionData.readyResources > 0 && productionData.productionProgress >= 100 && hasWorkers;
 
   return (
     <Card 
