@@ -4,6 +4,7 @@ import { BuildingDetailsPanel } from "./BuildingDetailsPanel";
 import { InventoryPanel } from "./InventoryPanel";
 import { NestUpgrade } from "@/hooks/shelter/useShelterState";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { useResourceProduction } from "@/hooks/useResourceProduction";
 interface ShelterUpgradesProps {
   upgrades: NestUpgrade[];
   canAffordUpgrade: (upgrade: NestUpgrade) => boolean;
@@ -42,6 +43,15 @@ export const ShelterUpgrades = ({
 }: ShelterUpgradesProps) => {
   const [selectedBuilding, setSelectedBuilding] = useState<NestUpgrade | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  
+  const {
+    getWoodReady,
+    getStoneReady,
+    getWoodProductionProgress,
+    getStoneProductionProgress,
+    collectWood,
+    collectStone
+  } = useResourceProduction();
   const handleBuildingClick = (building: NestUpgrade) => {
     setSelectedBuilding(building);
     setIsDialogOpen(true);
@@ -57,7 +67,30 @@ export const ShelterUpgrades = ({
             {upgrades.map(upgrade => {
             const activeWorkers = getActiveWorkersInBuilding(upgrade.id);
             const hasWorkers = hasWorkersInBuilding(upgrade.id);
-            return <BuildingGridCard key={upgrade.id} upgrade={upgrade} isSelected={selectedBuilding?.id === upgrade.id} isUpgrading={isUpgrading(upgrade.id)} upgradeProgress={getUpgradeProgress(upgrade.id)} hasWorkers={hasWorkers} activeWorkersCount={activeWorkers.length} onClick={() => handleBuildingClick(upgrade)} formatRemainingTime={formatRemainingTime} />;
+            
+            // Production data for resource buildings
+            const productionData = upgrade.id === 'sawmill' ? {
+              readyResources: getWoodReady(hasWorkers),
+              productionProgress: getWoodProductionProgress(hasWorkers),
+              onCollect: collectWood
+            } : upgrade.id === 'quarry' ? {
+              readyResources: getStoneReady(hasWorkers),
+              productionProgress: getStoneProductionProgress(hasWorkers),
+              onCollect: collectStone
+            } : undefined;
+            
+            return <BuildingGridCard 
+              key={upgrade.id} 
+              upgrade={upgrade} 
+              isSelected={selectedBuilding?.id === upgrade.id} 
+              isUpgrading={isUpgrading(upgrade.id)} 
+              upgradeProgress={getUpgradeProgress(upgrade.id)} 
+              hasWorkers={hasWorkers} 
+              activeWorkersCount={activeWorkers.length} 
+              onClick={() => handleBuildingClick(upgrade)} 
+              formatRemainingTime={formatRemainingTime}
+              productionData={productionData}
+            />;
           })}
           </div>
         </div>

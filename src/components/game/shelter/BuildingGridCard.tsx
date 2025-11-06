@@ -15,6 +15,11 @@ interface BuildingGridCardProps {
   activeWorkersCount: number;
   onClick: () => void;
   formatRemainingTime: (ms: number) => string;
+  productionData?: {
+    readyResources: number;
+    productionProgress: number;
+    onCollect: () => Promise<void>;
+  };
 }
 
 export const BuildingGridCard = ({
@@ -25,9 +30,13 @@ export const BuildingGridCard = ({
   hasWorkers,
   activeWorkersCount,
   onClick,
-  formatRemainingTime
+  formatRemainingTime,
+  productionData
 }: BuildingGridCardProps) => {
   const { language } = useLanguage();
+  
+  const isResourceBuilding = upgrade.id === 'sawmill' || upgrade.id === 'quarry';
+  const canCollect = productionData && productionData.readyResources > 0 && hasWorkers;
 
   return (
     <Card 
@@ -109,6 +118,40 @@ export const BuildingGridCard = ({
                 </span>
               </div>
               <Progress value={upgradeProgress.progress} className="h-1.5" />
+            </div>
+          )}
+
+          {/* Production Progress for Resource Buildings */}
+          {isResourceBuilding && productionData && upgrade.level > 0 && (
+            <div className="space-y-2 bg-black/40 backdrop-blur-sm rounded-lg p-2 border border-white/10">
+              {hasWorkers ? (
+                <>
+                  <div className="flex items-center justify-between text-xs">
+                    <span className="text-white drop-shadow-[0_1px_2px_rgba(0,0,0,0.8)] font-medium">
+                      {t(language, 'shelter.production')}
+                    </span>
+                    <span className="font-bold text-primary drop-shadow-[0_1px_2px_rgba(0,0,0,0.8)]">
+                      {Math.floor(productionData.readyResources)}
+                    </span>
+                  </div>
+                  <Progress value={productionData.productionProgress} className="h-1.5" />
+                  {canCollect && (
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        productionData.onCollect();
+                      }}
+                      className="w-full py-1.5 px-3 bg-primary hover:bg-primary/90 text-primary-foreground font-semibold rounded-lg text-xs transition-colors"
+                    >
+                      {t(language, 'shelter.collect')}
+                    </button>
+                  )}
+                </>
+              ) : (
+                <div className="text-xs text-white/70 text-center drop-shadow-[0_1px_2px_rgba(0,0,0,0.8)]">
+                  {t(language, 'shelter.assignWorkers')}
+                </div>
+              )}
             </div>
           )}
 
