@@ -9,26 +9,32 @@ supabase.rpc = function(fn: string, args?: any, options?: any) {
   const startTime = performance.now();
   const rpcCall = originalRpc(fn, args, options);
   
-  // Отслеживаем latency после выполнения запроса
-  rpcCall.then(
-    (result) => {
-      const latency = performance.now() - startTime;
-      metricsMonitor.trackDBRequest(`rpc:${fn}`, latency);
-      
-      // Предупреждение если latency > 100ms
-      if (latency > 100) {
-        console.warn(`⚠️ Slow RPC call detected: ${fn} took ${latency.toFixed(2)}ms`);
+  // Оборачиваем then для отслеживания latency
+  const originalThen = rpcCall.then.bind(rpcCall);
+  rpcCall.then = function(onFulfilled?: any, onRejected?: any) {
+    return originalThen(
+      (result: any) => {
+        const latency = performance.now() - startTime;
+        metricsMonitor.trackDBRequest(`rpc:${fn}`, latency);
+        
+        if (latency > 100) {
+          console.warn(`⚠️ Slow RPC call detected: ${fn} took ${latency.toFixed(2)}ms`);
+        }
+        
+        return onFulfilled ? onFulfilled(result) : result;
+      },
+      (error: any) => {
+        const latency = performance.now() - startTime;
+        metricsMonitor.trackDBRequest(`rpc:${fn}`, latency);
+        metricsMonitor.trackRPCCall(`rpc:${fn}`, true);
+        
+        if (onRejected) {
+          return onRejected(error);
+        }
+        throw error;
       }
-      
-      return result;
-    },
-    (error) => {
-      const latency = performance.now() - startTime;
-      metricsMonitor.trackDBRequest(`rpc:${fn}`, latency);
-      metricsMonitor.trackRPCCall(`rpc:${fn}`, true); // Track error
-      throw error;
-    }
-  );
+    );
+  };
   
   return rpcCall;
 } as any;

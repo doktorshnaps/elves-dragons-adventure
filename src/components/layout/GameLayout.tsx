@@ -1,8 +1,9 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { ErrorBoundary } from '@/components/common/ErrorBoundary';
 import { Toaster } from '@/components/ui/toaster';
 import { useAccountSync } from '@/hooks/useAccountSync';
 import { useGameSync } from '@/hooks/useGameSync';
+import { metricsMonitor } from '@/utils/metricsMonitor';
 
 
 interface GameLayoutProps {
@@ -16,6 +17,11 @@ export const GameLayout = ({
   backgroundImage,
   showHeader = true 
 }: GameLayoutProps) => {
+  // Отслеживание рендеров
+  useEffect(() => {
+    metricsMonitor.trackComponentRender('GameLayout');
+  });
+
   // Инициализируем синхронизацию (с guards внутри для проверки готовности wallet)
   useAccountSync();
   useGameSync();
