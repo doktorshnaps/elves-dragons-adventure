@@ -1,125 +1,91 @@
 // Обертка над Supabase клиентом для мониторинга latency
-import { supabase } from './client';
+import { createClient } from '@supabase/supabase-js';
+import type { Database } from './types';
 import { metricsMonitor } from '@/utils/metricsMonitor';
 
-// Обертка для RPC вызовов с отслеживанием latency
-const originalRpc = supabase.rpc.bind(supabase);
+const SUPABASE_URL = "https://oimhwdymghkwxznjarkv.supabase.co";
+const SUPABASE_PUBLISHABLE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9pbWh3ZHltZ2hrd3h6bmphcmt2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTQ1MTMxMjEsImV4cCI6MjA3MDA4OTEyMX0.97FbtgxM3nYtzTQWf8TpKqvxJ7h_pvhpBOd0SYRd05k";
 
-supabase.rpc = function(fn: string, args?: any, options?: any) {
+const baseClient = createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
+  auth: {
+    storage: localStorage,
+    persistSession: true,
+    autoRefreshToken: true,
+  }
+});
+
+// Оборачиваем RPC вызовы
+const originalRpc = baseClient.rpc.bind(baseClient);
+baseClient.rpc = function(fn: string, args?: any, options?: any) {
   const startTime = performance.now();
-  const rpcCall = originalRpc(fn, args, options);
+  const promise = originalRpc(fn, args, options);
   
-  // Оборачиваем then для отслеживания latency
-  const originalThen = rpcCall.then.bind(rpcCall);
-  rpcCall.then = function(onFulfilled?: any, onRejected?: any) {
-    return originalThen(
-      (result: any) => {
-        const latency = performance.now() - startTime;
-        metricsMonitor.trackDBRequest(`rpc:${fn}`, latency);
-        
-        if (latency > 100) {
-          console.warn(`⚠️ Slow RPC call detected: ${fn} took ${latency.toFixed(2)}ms`);
-        }
-        
-        return onFulfilled ? onFulfilled(result) : result;
-      },
-      (error: any) => {
-        const latency = performance.now() - startTime;
-        metricsMonitor.trackDBRequest(`rpc:${fn}`, latency);
-        metricsMonitor.trackRPCCall(`rpc:${fn}`, true);
-        
-        if (onRejected) {
-          return onRejected(error);
-        }
-        throw error;
+  promise.then(
+    (result) => {
+      const latency = performance.now() - startTime;
+      metricsMonitor.trackDBRequest(`rpc:${fn}`, latency);
+      if (latency > 100) {
+        console.warn(`⚠️ Slow RPC: ${fn} (${latency.toFixed(2)}ms)`);
       }
-    );
-  };
+      return result;
+    },
+    (error) => {
+      const latency = performance.now() - startTime;
+      metricsMonitor.trackDBRequest(`rpc:${fn}`, latency);
+      metricsMonitor.trackRPCCall(`rpc:${fn}`, true);
+      throw error;
+    }
+  );
   
-  return rpcCall;
+  return promise;
 } as any;
 
-// Обертка для from() запросов
-const originalFrom = supabase.from.bind(supabase);
-
-supabase.from = function(table: string) {
+// Оборачиваем from() для SELECT/INSERT/UPDATE/DELETE
+const originalFrom = baseClient.from.bind(baseClient);
+baseClient.from = function(table: string) {
   const builder = originalFrom(table);
   
-  // Оборачиваем основные методы запросов
-  const wrapQuery = (method: string, queryBuilder: any) => {
+  // Функция для обертки promise
+  const wrapPromise = (method: string, promise: any) => {
     const startTime = performance.now();
-    return queryBuilder.then(
-      (result: any) => {
-        const latency = performance.now() - startTime;
-        metricsMonitor.trackDBRequest(`${method}:${table}`, latency);
-        
-        if (latency > 100) {
-          console.warn(`⚠️ Slow ${method} query on ${table}: ${latency.toFixed(2)}ms`);
+    
+    const originalThen = promise.then.bind(promise);
+    promise.then = function(onFulfilled?: any, onRejected?: any) {
+      return originalThen(
+        (result: any) => {
+          const latency = performance.now() - startTime;
+          metricsMonitor.trackDBRequest(`${method}:${table}`, latency);
+          if (latency > 100) {
+            console.warn(`⚠️ Slow ${method} on ${table}: ${latency.toFixed(2)}ms`);
+          }
+          return onFulfilled ? onFulfilled(result) : result;
+        },
+        (error: any) => {
+          const latency = performance.now() - startTime;
+          metricsMonitor.trackDBRequest(`${method}:${table}`, latency);
+          metricsMonitor.trackRPCCall(`${method}:${table}`, true);
+          if (onRejected) return onRejected(error);
+          throw error;
         }
-        
-        return result;
-      },
-      (error: any) => {
-        const latency = performance.now() - startTime;
-        metricsMonitor.trackDBRequest(`${method}:${table}`, latency);
-        metricsMonitor.trackRPCCall(`${method}:${table}`, true);
-        throw error;
-      }
-    );
-  };
-
-  // Оборачиваем select, insert, update, delete, upsert
-  const originalSelect = builder.select.bind(builder);
-  builder.select = function(...args: any[]) {
-    const query = originalSelect(...args);
-    const originalThen = query.then;
-    query.then = function(onFulfilled: any, onRejected: any) {
-      return wrapQuery('select', originalThen.call(query, onFulfilled, onRejected));
+      );
     };
-    return query;
+    
+    return promise;
   };
-
-  const originalInsert = builder.insert.bind(builder);
-  builder.insert = function(...args: any[]) {
-    const query = originalInsert(...args);
-    const originalThen = query.then;
-    query.then = function(onFulfilled: any, onRejected: any) {
-      return wrapQuery('insert', originalThen.call(query, onFulfilled, onRejected));
-    };
-    return query;
-  };
-
-  const originalUpdate = builder.update.bind(builder);
-  builder.update = function(...args: any[]) {
-    const query = originalUpdate(...args);
-    const originalThen = query.then;
-    query.then = function(onFulfilled: any, onRejected: any) {
-      return wrapQuery('update', originalThen.call(query, onFulfilled, onRejected));
-    };
-    return query;
-  };
-
-  const originalDelete = builder.delete.bind(builder);
-  builder.delete = function(...args: any[]) {
-    const query = originalDelete(...args);
-    const originalThen = query.then;
-    query.then = function(onFulfilled: any, onRejected: any) {
-      return wrapQuery('delete', originalThen.call(query, onFulfilled, onRejected));
-    };
-    return query;
-  };
-
-  const originalUpsert = builder.upsert.bind(builder);
-  builder.upsert = function(...args: any[]) {
-    const query = originalUpsert(...args);
-    const originalThen = query.then;
-    query.then = function(onFulfilled: any, onRejected: any) {
-      return wrapQuery('upsert', originalThen.call(query, onFulfilled, onRejected));
-    };
-    return query;
-  };
-
+  
+  // Оборачиваем каждый метод
+  const methods = ['select', 'insert', 'update', 'delete', 'upsert'];
+  methods.forEach(method => {
+    const original = (builder as any)[method];
+    if (original) {
+      (builder as any)[method] = function(...args: any[]) {
+        const result = original.apply(builder, args);
+        return wrapPromise(method, result);
+      };
+    }
+  });
+  
   return builder;
 } as any;
 
-export { supabase as monitoredSupabase };
+export { baseClient as monitoredSupabase };
