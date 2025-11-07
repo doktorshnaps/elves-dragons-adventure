@@ -46,13 +46,13 @@ export const useActiveDungeonSessions = () => {
  */
 export const useLatestActiveDungeonSession = () => {
   const { accountId } = useWalletContext();
-  const fiveMinutesAgo = Date.now() - 5 * 60 * 1000;
 
   return useQuery<Omit<ActiveDungeonSession, 'account_id'> | null>({
-    queryKey: ['latestDungeonSession', accountId, fiveMinutesAgo],
+    queryKey: ['latestDungeonSession', accountId], // стабильный ключ
     queryFn: async () => {
       if (!accountId) return null;
 
+      const fiveMinutesAgo = Date.now() - 5 * 60 * 1000; // вычисляем внутри
       const { data, error } = await supabase
         .from('active_dungeon_sessions')
         .select('device_id,dungeon_type,level,last_activity')
@@ -72,5 +72,6 @@ export const useLatestActiveDungeonSession = () => {
     enabled: !!accountId,
     staleTime: 30 * 1000,
     gcTime: 2 * 60 * 1000,
+    refetchOnWindowFocus: false,
   });
 };
