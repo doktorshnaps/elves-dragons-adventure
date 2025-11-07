@@ -22,8 +22,8 @@ export const useMaintenanceStatus = () => {
         message: (data as any)?.message || ''
       };
     },
-    staleTime: 5 * 60 * 1000, // 5 минут - может меняться админом
-    gcTime: 15 * 60 * 1000,
-    refetchInterval: 5 * 60 * 1000, // Автоматически обновлять каждые 5 минут
+    staleTime: 10 * 60 * 1000, // 10 минут - может меняться админом
+    gcTime: 30 * 60 * 1000,
+    refetchInterval: 10 * 60 * 1000, // Автообновление каждые 10 минут
   });
 };

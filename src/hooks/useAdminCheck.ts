@@ -24,8 +24,8 @@ export const useAdminCheck = () => {
       return Boolean(data);
     },
     enabled: isConnected && !!accountId,
-    staleTime: 30 * 60 * 1000, // 30 минут - админ статус меняется редко
-    gcTime: 60 * 60 * 1000, // 1 час
+    staleTime: 60 * 60 * 1000, // 1 час - админ статус меняется очень редко
+    gcTime: 2 * 60 * 60 * 1000, // 2 часа
   });
 
   return { isAdmin, loading };
