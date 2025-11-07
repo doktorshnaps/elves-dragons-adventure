@@ -26,17 +26,37 @@ interface QueryProviderProps {
 
 export const QueryProvider = ({ children }: QueryProviderProps) => {
   useEffect(() => {
-    // Подписываемся на события кэша для отслеживания hits/misses
+    // Отслеживаем реальные fetch операции (cache miss) и использование кэша (cache hit)
+    const fetchingQueries = new Set<string>();
+    
     const unsubscribe = queryClient.getQueryCache().subscribe((event) => {
-      if (event?.type === 'updated') {
-        const query = event.query;
-        // Если данные были получены из кэша (без fetch)
-        if (query.state.dataUpdateCount > 0 && query.state.fetchStatus === 'idle') {
-          metricsMonitor.trackCacheHit();
-        }
-      } else if (event?.type === 'observerResultsUpdated') {
-        // Новый fetch = cache miss
+      if (!event?.query) return;
+      
+      const query = event.query;
+      const queryKey = JSON.stringify(query.queryKey);
+      const fetchStatus = query.state.fetchStatus;
+      
+      // Cache MISS: начался новый fetch
+      if (event.type === 'updated' && fetchStatus === 'fetching' && !fetchingQueries.has(queryKey)) {
+        fetchingQueries.add(queryKey);
         metricsMonitor.trackCacheMiss();
+        console.log('📊 Cache MISS:', query.queryKey);
+      }
+      
+      // Cache HIT: observer получил данные без fetch
+      if (event.type === 'observerAdded') {
+        const hasData = query.state.data !== undefined;
+        const notFetching = fetchStatus !== 'fetching';
+        
+        if (hasData && notFetching) {
+          metricsMonitor.trackCacheHit();
+          console.log('📊 Cache HIT:', query.queryKey);
+        }
+      }
+      
+      // Очищаем tracking когда fetch завершён
+      if (fetchStatus === 'idle' && fetchingQueries.has(queryKey)) {
+        fetchingQueries.delete(queryKey);
       }
     });
 
