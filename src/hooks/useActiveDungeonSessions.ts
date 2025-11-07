@@ -35,9 +35,9 @@ export const useActiveDungeonSessions = () => {
       return data || [];
     },
     enabled: !!accountId,
-    staleTime: 30 * 1000, // 30 секунд - достаточно свежие данные для игры
+    staleTime: 30 * 1000, // 30 секунд
     gcTime: 2 * 60 * 1000, // 2 минуты
-    refetchInterval: 60 * 1000, // Автообновление каждую минуту
+    // Убрал refetchInterval - используем Realtime вместо polling
   });
 };
 
@@ -60,10 +60,9 @@ export const useLatestActiveDungeonSession = () => {
         .gte('last_activity', fiveMinutesAgo)
         .order('last_activity', { ascending: false })
         .limit(1)
-        .single();
+        .maybeSingle();
 
       if (error) {
-        if (error.code === 'PGRST116') return null; // No rows
         console.error('Error fetching latest dungeon session:', error);
         return null;
       }

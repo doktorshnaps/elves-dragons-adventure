@@ -80,7 +80,6 @@ export const useDungeonSync = () => {
         if (!hasThisDevice && localSession) {
           try {
             localStorage.removeItem('activeDungeonSession');
-            // Синхронизируем и боевую часть, чтобы UI на устройстве очистился
             localStorage.removeItem('teamBattleState');
             localStorage.removeItem('activeBattleInProgress');
             localStorage.removeItem('battleState');
@@ -92,7 +91,7 @@ export const useDungeonSync = () => {
     } catch (error) {
       console.error('Error loading active sessions:', error);
     }
-  }, [accountId]);
+  }, [accountId, deviceId, localSession]);
 
   // Отправляем heartbeat для активной сессии
   const sendHeartbeat = useCallback(async () => {
@@ -236,10 +235,11 @@ export const useDungeonSync = () => {
     return true;
   }, [accountId, deviceId, hasOtherActiveSessions]);
 
-  // Загружаем активные сессии при монтировании
+  // Загружаем активные сессии только при монтировании
   useEffect(() => {
     loadActiveSessions();
-  }, [loadActiveSessions]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // Только при монтировании, не при изменении loadActiveSessions
 
   // Подписываемся на изменения в базе данных через Realtime
   useEffect(() => {
@@ -281,8 +281,23 @@ export const useDungeonSync = () => {
             }
           }
           
-          // Перезагружаем все сессии при любом изменении
-          loadActiveSessions();
+          // Обновляем локальное состояние напрямую вместо перезагрузки
+          if (payload.eventType === 'INSERT' || payload.eventType === 'UPDATE') {
+            const newSession = payload.new as any;
+            setActiveSessions(prev => {
+              const filtered = prev.filter(s => s.device_id !== newSession.device_id);
+              return [...filtered, {
+                device_id: newSession.device_id,
+                started_at: newSession.started_at,
+                last_activity: newSession.last_activity,
+                dungeon_type: newSession.dungeon_type,
+                level: newSession.level
+              }];
+            });
+          } else if (payload.eventType === 'DELETE') {
+            const oldSession = payload.old as any;
+            setActiveSessions(prev => prev.filter(s => s.device_id !== oldSession.device_id));
+          }
         }
       )
       .subscribe();
@@ -290,7 +305,7 @@ export const useDungeonSync = () => {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [accountId, deviceId, loadActiveSessions]);
+  }, [accountId]);
 
   // Отправляем heartbeat каждые 10 секунд (чтобы избежать конфликтов с БД)
   useEffect(() => {
