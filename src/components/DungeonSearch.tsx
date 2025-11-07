@@ -1,13 +1,14 @@
 import { useDungeonSearch } from "@/hooks/useDungeonSearch";
 import { DungeonSearchDialog } from "./dungeon/DungeonSearchDialog";
 import { useEffect, useState } from "react";
-import { supabase } from "@/integrations/supabase/client";
 import { useDungeonSync } from "@/hooks/useDungeonSync";
 import { useWalletContext } from "@/contexts/WalletConnectContext";
 import { useNavigate } from "react-router-dom";
 import { dungeonRoutes, DungeonType } from "@/constants/dungeons";
 import { Button } from "./ui/button";
 import { Card } from "./ui/card";
+import { useLatestActiveDungeonSession } from "@/hooks/useActiveDungeonSessions";
+
 // SEO: title and meta for dungeon search
 if (typeof document !== 'undefined') {
   document.title = "Поиск подземелий — активные карты героев и драконов";
@@ -67,62 +68,11 @@ export const DungeonSearch = ({ onClose, balance }: DungeonSearchProps) => {
     };
   }, []);
 
-  // Предварительная проверка активных сессий в БД при открытии экрана
+  // Предварительная проверка активных сессий с кэшированием
   const { deviceId, endDungeonSession } = useDungeonSync();
   const { accountId } = useWalletContext();
   const navigate = useNavigate();
-  const [remoteSession, setRemoteSession] = useState<null | { device_id: string; dungeon_type: string; level: number; last_activity: number }>(null);
-
-  useEffect(() => {
-    const check = async () => {
-      if (!accountId) { setRemoteSession(null); return; }
-      try {
-        const now = Date.now();
-        const TIMEOUT = 30000;
-        const { data, error } = await supabase
-          .from('active_dungeon_sessions')
-          .select('device_id,dungeon_type,level,last_activity')
-          .eq('account_id', accountId)
-          .gte('last_activity', now - TIMEOUT)
-          .order('last_activity', { ascending: false })
-          .limit(1);
-        if (error) throw error;
-        setRemoteSession(data && data.length ? data[0] : null);
-      } catch (e) {
-        console.error('Active dungeon precheck error:', e);
-        setRemoteSession(null);
-      }
-    };
-    check();
-
-    // Подписываемся на изменения в БД для автообновления
-    if (!accountId) return;
-    
-    const channel = supabase
-      .channel(`dungeon_search_monitor:${accountId}`)
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'active_dungeon_sessions',
-          filter: `account_id=eq.${accountId}`
-        },
-        () => {
-          console.log('Session changed, rechecking...');
-          check();
-        }
-      )
-      .subscribe();
-
-    // Периодическая перезагрузка на случай пропуска realtime событий
-    const interval = setInterval(check, 5000);
-
-    return () => {
-      supabase.removeChannel(channel);
-      clearInterval(interval);
-    };
-  }, [accountId]);
+  const { data: remoteSession } = useLatestActiveDungeonSession();
 
   if (remoteSession) {
     const isSameDevice = remoteSession.device_id === deviceId;
@@ -145,7 +95,7 @@ export const DungeonSearch = ({ onClose, balance }: DungeonSearchProps) => {
             <div className="flex gap-3 justify-end">
               <Button
                 variant="destructive"
-                onClick={async () => { await endDungeonSession(); setRemoteSession(null); }}
+                onClick={async () => { await endDungeonSession(); }}
               >
                 Завершить на всех устройствах
               </Button>
