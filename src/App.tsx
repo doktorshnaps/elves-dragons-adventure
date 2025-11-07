@@ -139,7 +139,7 @@ function App() {
                   </Routes>
                 </Suspense>
                 <Toaster />
-                <MetricsPanel />
+                {import.meta.env.DEV && <MetricsPanel />}
               </div>
             </LanguageProvider>
           </MusicProvider>
