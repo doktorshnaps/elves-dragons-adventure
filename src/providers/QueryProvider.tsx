@@ -6,12 +6,15 @@ import { metricsMonitor } from '@/utils/metricsMonitor';
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      staleTime: 5 * 60 * 1000, // 5 минут
-      gcTime: 10 * 60 * 1000, // 10 минут (заменяет cacheTime)
-      retry: 3,
-      retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
+      staleTime: 10 * 60 * 1000, // 10 минут - дольше кэшируем
+      gcTime: 30 * 60 * 1000, // 30 минут
+      retry: 2, // Меньше ретраев = быстрее
+      retryDelay: 1000, // Фиксированная задержка
       refetchOnWindowFocus: false,
-      refetchOnReconnect: true
+      refetchOnReconnect: true,
+      refetchOnMount: false, // Не рефетчить при каждом маунте
+      // Dedupe requests - объединяет одинаковые запросы
+      networkMode: 'online'
     },
     mutations: {
       retry: 2,

@@ -1,43 +1,32 @@
-import { useState, useEffect } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useWalletContext } from '@/contexts/WalletConnectContext';
 
 export const useAdminCheck = () => {
   const { accountId } = useWalletContext();
   const isConnected = !!accountId;
-  const [isAdmin, setIsAdmin] = useState(false);
-  const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    const checkAdminStatus = async () => {
-      if (!isConnected || !accountId) {
-        setIsAdmin(false);
-        setLoading(false);
-        return;
-      }
+  // Используем React Query для кэширования запросов админ статуса
+  const { data: isAdmin = false, isLoading: loading } = useQuery({
+    queryKey: ['adminCheck', accountId],
+    queryFn: async () => {
+      if (!isConnected || !accountId) return false;
 
-      try {
-        // Use RPC to bypass RLS and check role by wallet
-        const { data, error } = await supabase.rpc('is_admin_or_super_wallet', {
-          p_wallet_address: accountId,
-        });
+      const { data, error } = await supabase.rpc('is_admin_or_super_wallet', {
+        p_wallet_address: accountId,
+      });
 
-        if (error) {
-          console.error('Error checking admin status:', error);
-          setIsAdmin(false);
-        } else {
-          setIsAdmin(Boolean(data));
-        }
-      } catch (error) {
+      if (error) {
         console.error('Error checking admin status:', error);
-        setIsAdmin(false);
-      } finally {
-        setLoading(false);
+        return false;
       }
-    };
-
-    checkAdminStatus();
-  }, [accountId, isConnected]);
+      
+      return Boolean(data);
+    },
+    enabled: isConnected && !!accountId,
+    staleTime: 30 * 60 * 1000, // 30 минут - админ статус меняется редко
+    gcTime: 60 * 60 * 1000, // 1 час
+  });
 
   return { isAdmin, loading };
 };

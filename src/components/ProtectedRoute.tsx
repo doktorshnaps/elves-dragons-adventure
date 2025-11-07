@@ -1,11 +1,11 @@
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
 import { useWalletContext } from '@/contexts/WalletConnectContext';
 import { useWhitelist } from '@/hooks/useWhitelist';
 import { useAdminCheck } from '@/hooks/useAdminCheck';
+import { useMaintenanceStatus } from '@/hooks/useMaintenanceStatus';
 import { ComingSoon } from '@/components/ComingSoon';
 import { MaintenanceScreen } from '@/components/MaintenanceScreen';
-import { supabase } from '@/integrations/supabase/client';
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
@@ -16,13 +16,9 @@ export const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
   const isConnected = !!accountId;
   const { isWhitelisted, loading: whitelistLoading } = useWhitelist();
   const { isAdmin, loading: adminLoading } = useAdminCheck();
+  const { data: maintenanceStatus, isLoading: maintenanceLoading } = useMaintenanceStatus();
   const location = useLocation();
   const lsConnected = (typeof window !== 'undefined' && localStorage.getItem('walletConnected') === 'true') || false;
-  const [maintenanceStatus, setMaintenanceStatus] = useState<{
-    is_enabled: boolean;
-    message: string;
-  } | null>(null);
-  const [maintenanceLoading, setMaintenanceLoading] = useState(true);
 
   useEffect(() => {
     if (import.meta.env.DEV) {
@@ -36,29 +32,6 @@ export const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
       });
     }
   }, [isConnected, isConnecting, lsConnected, isWhitelisted, whitelistLoading, location.pathname]);
-
-  useEffect(() => {
-    const checkMaintenanceStatus = async () => {
-      try {
-        const { data, error } = await supabase.rpc('get_maintenance_status');
-        if (error) throw error;
-        
-        setMaintenanceStatus(data ? {
-          is_enabled: (data as any).is_enabled || false,
-          message: (data as any).message || ''
-        } : { is_enabled: false, message: '' });
-      } catch (error) {
-        if (import.meta.env.DEV) {
-          console.error('Error checking maintenance status:', error);
-        }
-        setMaintenanceStatus({ is_enabled: false, message: '' });
-      } finally {
-        setMaintenanceLoading(false);
-      }
-    };
-
-    checkMaintenanceStatus();
-  }, []);
 
   if (isConnecting || whitelistLoading || maintenanceLoading || adminLoading) {
     return (
