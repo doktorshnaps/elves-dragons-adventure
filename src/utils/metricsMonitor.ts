@@ -160,7 +160,20 @@ class MetricsMonitor {
 
   // Get current metrics
   getMetrics(): PerformanceMetrics {
-    return JSON.parse(JSON.stringify(this.metrics));
+    return {
+      dbLatency: { ...this.metrics.dbLatency },
+      localStorage: { ...this.metrics.localStorage },
+      componentRenders: {
+        total: this.metrics.componentRenders.total,
+        components: new Map(this.metrics.componentRenders.components),
+      },
+      rpcCalls: {
+        total: this.metrics.rpcCalls.total,
+        byType: new Map(this.metrics.rpcCalls.byType),
+        errors: this.metrics.rpcCalls.errors,
+      },
+      reactQueryCache: { ...this.metrics.reactQueryCache },
+    };
   }
 
   // Get metrics summary for logging
