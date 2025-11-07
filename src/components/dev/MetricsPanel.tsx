@@ -26,7 +26,7 @@ export const MetricsPanel = () => {
     return (
       <Button
         onClick={() => setIsOpen(true)}
-        className="fixed bottom-4 right-4 z-50 rounded-full w-12 h-12 p-0"
+        className="fixed bottom-4 left-4 z-50 rounded-full w-12 h-12 p-0"
         variant="outline"
         title="Открыть панель метрик (Ctrl+Shift+M)"
       >
@@ -64,7 +64,7 @@ export const MetricsPanel = () => {
     .slice(0, 5);
 
   return (
-    <Card className="fixed bottom-4 right-4 z-50 w-96 max-h-[600px] p-4 shadow-lg">
+    <Card className="fixed bottom-4 left-4 z-50 w-96 max-h-[600px] p-4 shadow-lg">
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-2">
           <Activity className="w-5 h-5" />
