@@ -9,6 +9,7 @@ import { QueryProvider } from './providers/QueryProvider';
 import { useRoutePreloader } from './hooks/useRoutePreloader';
 import { useNFTStatsRecalculation } from './hooks/useNFTStatsRecalculation';
 import { useSecureStorage } from './hooks/useSecureStorage';
+import { MetricsPanel } from './components/dev/MetricsPanel';
 
 // Lazy load page components to reduce initial bundle size
 const Auth = lazy(() => import('./pages/Auth').then(m => ({ default: m.Auth })));
@@ -138,6 +139,7 @@ function App() {
                   </Routes>
                 </Suspense>
                 <Toaster />
+                <MetricsPanel />
               </div>
             </LanguageProvider>
           </MusicProvider>
