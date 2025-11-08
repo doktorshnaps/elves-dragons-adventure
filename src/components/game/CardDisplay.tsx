@@ -41,9 +41,8 @@ export const CardDisplay = ({
     [card.name, card.rarity, card.type]
   );
   return <Card onClick={onClick} className={`mx-auto w-[90px] h-[180px] sm:w-[120px] sm:h-[240px] md:w-[130px] md:h-[260px] lg:w-[140px] lg:h-[280px]
-        p-0.5 bg-black/50 border-2 border-white rounded-3xl backdrop-blur-sm transition-all duration-300 overflow-hidden 
-        ${!isActive && card.type === 'pet' ? 'opacity-50' : ''} ${onClick ? 'cursor-pointer' : ''} ${className}`}
-      style={{ boxShadow: '-33px 15px 10px rgba(0, 0, 0, 0.6)' }}>
+        p-0.5 bg-black/50 border-2 border-white backdrop-blur-sm transition-all duration-300 overflow-hidden 
+        ${!isActive && card.type === 'pet' ? 'opacity-50' : ''} ${onClick ? 'cursor-pointer' : ''} ${className}`}>
       <div className="flex flex-col h-full">
         <div className="w-full h-[75px] sm:h-[100px] md:h-[110px] lg:h-[120px] flex-shrink-0">
           <CardImage image={card.image} name={card.name} card={card} />
