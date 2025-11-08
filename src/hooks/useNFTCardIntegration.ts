@@ -253,63 +253,74 @@ export const useNFTCardIntegration = () => {
         });
       }
       
-      // 🆕 Синхронизация NFT карточек с card_instances
+      // 🆕 Синхронизация NFT карточек с card_instances (BATCH)
       if (gameCards.length > 0) {
-        console.log('🔄 Syncing NFT cards to card_instances...');
+        console.log(`🔄 Syncing ${gameCards.length} NFT cards to card_instances (batched)...`);
         
-        // Создаем/обновляем записи для каждой NFT карточки
-        for (const card of gameCards) {
+        // Подготавливаем все данные для батч-вставки
+        const validCards = gameCards.filter(card => {
           if (!card.nftContractId || !card.nftTokenId) {
-            console.warn('Missing NFT identifiers for card:', card.id, card);
-            continue;
+            console.warn('Missing NFT identifiers for card:', card.id);
+            return false;
           }
-
-          const nftContractId = String(card.nftContractId).trim();
-          const nftTokenId = String(card.nftTokenId).trim();
-          const cardType = card.type === 'pet' ? 'dragon' : 'hero';
-          
-          // Пересчитываем характеристики с актуальными настройками из БД
           const recalculatedStats = calculateCardStats(
             card.name, 
             Number(card.rarity) as any,
             card.type === 'pet' ? 'pet' : 'character'
           );
-          const maxHealth = recalculatedStats.health;
+          return Number.isFinite(recalculatedStats.health);
+        });
 
-          if (!nftContractId || !nftTokenId || !Number.isFinite(maxHealth)) {
-            console.warn('Skipping upsert due to invalid params', { nftContractId, nftTokenId, maxHealth, cardId: card.id });
-            continue;
-          }
+        console.log(`✅ Valid cards for sync: ${validCards.length}/${gameCards.length}`);
+        
+        // Группируем по батчам (10 карт за раз для избежания таймаутов)
+        const BATCH_SIZE = 10;
+        for (let i = 0; i < validCards.length; i += BATCH_SIZE) {
+          const batch = validCards.slice(i, i + BATCH_SIZE);
+          
+          // Параллельные вызовы внутри батча
+          await Promise.allSettled(
+            batch.map(async card => {
+              const nftContractId = String(card.nftContractId).trim();
+              const nftTokenId = String(card.nftTokenId).trim();
+              const cardType = card.type === 'pet' ? 'dragon' : 'hero';
+              
+              const recalculatedStats = calculateCardStats(
+                card.name, 
+                Number(card.rarity) as any,
+                card.type === 'pet' ? 'pet' : 'character'
+              );
+              const maxHealth = recalculatedStats.health;
 
-          // Обновляем card_data с пересчитанными характеристиками
-          const updatedCardData = {
-            ...card,
-            health: maxHealth,
-            power: recalculatedStats.power,
-            defense: recalculatedStats.defense,
-            magic: recalculatedStats.magic
-          };
+              const updatedCardData = {
+                ...card,
+                health: maxHealth,
+                power: recalculatedStats.power,
+                defense: recalculatedStats.defense,
+                magic: recalculatedStats.magic
+              };
 
-          try {
-            console.log('⬆️ Upserting NFT card instance', { accountId, nftContractId, nftTokenId, cardTemplateId: card.id, cardType, maxHealth, recalculatedStats });
-            const { data, error } = await supabase.rpc('upsert_nft_card_instance', {
-              p_wallet_address: accountId,
-              p_nft_contract_id: nftContractId,
-              p_nft_token_id: nftTokenId,
-              p_card_template_id: String(card.id),
-              p_card_type: cardType,
-              p_max_health: maxHealth,
-              p_card_data: updatedCardData as any
-            });
-            
-            if (error) {
-              console.error('Error upserting NFT card instance:', { cardId: card.id, nftContractId, nftTokenId, error });
-            } else {
-              console.log('✅ NFT card instance synced:', card.id, data);
-            }
-          } catch (err) {
-            console.error('Failed to upsert NFT card instance:', { cardId: card.id, nftContractId, nftTokenId, err });
-          }
+              try {
+                const { error } = await supabase.rpc('upsert_nft_card_instance', {
+                  p_wallet_address: accountId,
+                  p_nft_contract_id: nftContractId,
+                  p_nft_token_id: nftTokenId,
+                  p_card_template_id: String(card.id),
+                  p_card_type: cardType,
+                  p_max_health: maxHealth,
+                  p_card_data: updatedCardData as any
+                });
+                
+                if (error) {
+                  console.error('Error upserting NFT card instance:', { cardId: card.id, error });
+                }
+              } catch (err) {
+                console.error('Failed to upsert NFT card instance:', { cardId: card.id, err });
+              }
+            })
+          );
+          
+          console.log(`✅ Synced batch ${Math.floor(i / BATCH_SIZE) + 1}/${Math.ceil(validCards.length / BATCH_SIZE)}`);
         }
         
         // Очистка переданных NFT
