@@ -239,10 +239,11 @@ export const DeckSelection = ({
   return <div className="h-full flex flex-col space-y-3">
       {/* Selected Pairs Display */}
       <section 
-        className="bg-gradient-to-br from-game-surface/90 via-game-surface/70 to-game-surface/90 backdrop-blur-sm p-2 sm:p-4 rounded-xl border-2 border-game-primary/40 shadow-[0_0_20px_rgba(155,135,245,0.15)] flex-shrink-0" 
+        className="bg-black/50 backdrop-blur-sm p-2 sm:p-4 rounded-3xl border-2 border-white flex-shrink-0" 
+        style={{ boxShadow: '-33px 15px 10px rgba(0, 0, 0, 0.6)' }}
         aria-label="Выбранная команда"
       >
-        <h1 className="text-sm sm:text-lg font-bold bg-gradient-to-r from-game-primary via-game-accent to-game-primary bg-clip-text text-transparent mb-2 sm:mb-4 drop-shadow-[0_0_8px_rgba(217,70,239,0.5)]">
+        <h1 className="text-sm sm:text-lg font-bold text-white mb-2 sm:mb-4">
           Выбранная команда ({selectedPairs.length}/5)
         </h1>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-2 sm:gap-4">
@@ -250,12 +251,12 @@ export const DeckSelection = ({
           length: 5
         }, (_, index) => {
           const pair = selectedPairs[index];
-          return <div key={index} className="relative overflow-hidden border-2 border-game-primary/30 rounded-xl p-2 sm:p-3 min-h-[160px] sm:min-h-[200px] bg-gradient-to-b from-game-surface/50 to-game-background/50 hover:border-game-accent/50 transition-all duration-300 hover:shadow-[0_0_15px_rgba(217,70,239,0.3)]">
+          return <div key={index} className="relative overflow-hidden border-2 border-white rounded-3xl p-2 sm:p-3 min-h-[160px] sm:min-h-[200px] bg-black/40 hover:border-white/80 transition-all duration-300">
                 {pair ? <div className="space-y-2">
-                    <div className="text-xs sm:text-sm text-game-primary font-medium">Пара {index + 1}</div>
+                    <div className="text-xs sm:text-sm text-white font-medium">Пара {index + 1}</div>
                     <div className="grid grid-cols-2 gap-2 items-start justify-items-center">
                       <div className="space-y-1">
-                        <div className="text-xs text-game-primary/80 font-medium">Герой</div>
+                        <div className="text-xs text-white/80 font-medium">Герой</div>
                         <CardDisplay card={pair.hero} showSellButton={false} className="w-[60px] h-[120px] sm:w-[80px] sm:h-[160px] md:w-[90px] md:h-[180px] lg:w-[100px] lg:h-[200px]" onClick={e => {
                     e.stopPropagation();
                     setPreviewCard(pair.hero);
@@ -267,7 +268,7 @@ export const DeckSelection = ({
                   }} />
                       </div>
                       <div className="space-y-1">
-                        <div className="text-xs text-game-primary/80 font-medium">Дракон</div>
+                        <div className="text-xs text-white/80 font-medium">Дракон</div>
                         {pair.dragon ? <CardDisplay card={pair.dragon} showSellButton={false} className="w-[60px] h-[120px] sm:w-[80px] sm:h-[160px] md:w-[90px] md:h-[180px] lg:w-[100px] lg:h-[200px]" onClick={e => {
                     e.stopPropagation();
                     setPreviewCard(pair.dragon!);
@@ -276,18 +277,18 @@ export const DeckSelection = ({
                       label: 'Удалить дракона из команды',
                       action: () => onPairRemoveDragon(index)
                     });
-                  }} /> : <button type="button" onClick={() => {
+                   }} /> : <button type="button" onClick={() => {
                     setActivePairIndex(index);
                     setShowDragonDeck(true);
-                  }} className="w-8 h-10 sm:w-12 sm:h-14 border-2 border-dashed border-game-primary/40 rounded-lg flex items-center justify-center text-xs text-game-primary/70 hover:text-game-accent hover:border-game-accent hover:shadow-[0_0_10px_rgba(217,70,239,0.3)] transition-all duration-300">
+                  }} className="w-8 h-10 sm:w-12 sm:h-14 border-2 border-dashed border-white/40 rounded-lg flex items-center justify-center text-xs text-white/70 hover:text-white hover:border-white transition-all duration-300">
                             Выбрать дракона
                           </button>}
                       </div>
                     </div>
-                    <Button size="sm" variant="outline" onClick={() => onPairRemove(index)} className="w-full text-xs border-game-primary/40 text-game-primary hover:border-game-accent hover:text-game-accent hover:bg-game-accent/10">
+                    <Button size="sm" variant="outline" onClick={() => onPairRemove(index)} className="w-full text-xs border-white text-white hover:bg-white hover:text-black">
                       Удалить
                     </Button>
-                  </div> : <div className="h-full flex items-center justify-center text-game-primary/40 text-xs sm:text-sm">
+                  </div> : <div className="h-full flex items-center justify-center text-white/40 text-xs sm:text-sm">
                     Пустой слот
                   </div>}
               </div>;
@@ -299,10 +300,11 @@ export const DeckSelection = ({
       <div className="grid grid-cols-2 gap-2 sm:gap-3 flex-shrink-0">
         <Button 
           onClick={() => setShowHeroDeck(true)} 
-          className="h-12 sm:h-16 flex flex-col items-center justify-center space-y-1 bg-gradient-to-br from-game-surface/90 via-game-surface/70 to-game-surface/90 backdrop-blur-sm border-2 border-game-primary/40 hover:border-game-accent/60 hover:shadow-[0_0_20px_rgba(217,70,239,0.3)] transition-all duration-300 group"
+          className="h-12 sm:h-16 flex flex-col items-center justify-center space-y-1 bg-white text-black backdrop-blur-sm border-2 border-white hover:bg-white/90 transition-all duration-300 group rounded-3xl"
+          style={{ boxShadow: '-33px 15px 10px rgba(0, 0, 0, 0.6)' }}
         >
-          <div className="text-xs sm:text-sm font-bold text-game-primary group-hover:text-game-accent transition-colors">Колода героев</div>
-          <Badge variant="secondary" className="text-[10px] sm:text-xs bg-game-primary/20 text-game-primary border-game-primary/30 group-hover:bg-game-accent/20 group-hover:text-game-accent group-hover:border-game-accent/30">{heroes.length} карт</Badge>
+          <div className="text-xs sm:text-sm font-bold text-black transition-colors">Колода героев</div>
+          <Badge variant="secondary" className="text-[10px] sm:text-xs bg-black/20 text-black border-black/30">{heroes.length} карт</Badge>
         </Button>
 
         <Button 
@@ -310,18 +312,19 @@ export const DeckSelection = ({
             setActivePairIndex(null);
             setShowDragonDeck(true);
           }} 
-          className="h-12 sm:h-16 flex flex-col items-center justify-center space-y-1 bg-gradient-to-br from-game-surface/90 via-game-surface/70 to-game-surface/90 backdrop-blur-sm border-2 border-game-primary/40 hover:border-game-accent/60 hover:shadow-[0_0_20px_rgba(217,70,239,0.3)] transition-all duration-300 group"
+          className="h-12 sm:h-16 flex flex-col items-center justify-center space-y-1 bg-white text-black backdrop-blur-sm border-2 border-white hover:bg-white/90 transition-all duration-300 group rounded-3xl"
+          style={{ boxShadow: '-33px 15px 10px rgba(0, 0, 0, 0.6)' }}
         >
-          <div className="text-xs sm:text-sm font-bold text-game-primary group-hover:text-game-accent transition-colors">Колода драконов</div>
-          <Badge variant="secondary" className="text-[10px] sm:text-xs bg-game-primary/20 text-game-primary border-game-primary/30 group-hover:bg-game-accent/20 group-hover:text-game-accent group-hover:border-game-accent/30">{dragons.length} карт</Badge>
+          <div className="text-xs sm:text-sm font-bold text-black transition-colors">Колода драконов</div>
+          <Badge variant="secondary" className="text-[10px] sm:text-xs bg-black/20 text-black border-black/30">{dragons.length} карт</Badge>
         </Button>
       </div>
 
       {/* Hero Deck Dialog */}
       <Dialog open={showHeroDeck} onOpenChange={setShowHeroDeck}>
-        <DialogContent className="max-w-[95vw] sm:max-w-4xl h-[80vh] bg-gradient-to-br from-game-surface/95 via-game-background/90 to-game-surface/95 backdrop-blur-md border-2 border-game-primary/40 shadow-[0_0_30px_rgba(155,135,245,0.2)] overflow-hidden flex flex-col">
+        <DialogContent className="max-w-[95vw] sm:max-w-4xl h-[80vh] bg-black/50 backdrop-blur-md border-2 border-white overflow-hidden flex flex-col rounded-3xl">
           <DialogHeader className="flex-shrink-0">
-            <DialogTitle className="text-xl font-bold bg-gradient-to-r from-game-primary via-game-accent to-game-primary bg-clip-text text-transparent drop-shadow-[0_0_8px_rgba(217,70,239,0.5)]">Выберите героя</DialogTitle>
+            <DialogTitle className="text-xl font-bold text-white">Выберите героя</DialogTitle>
           </DialogHeader>
           <div className="flex gap-2 px-4 pb-2 flex-shrink-0">
             <Button
@@ -361,7 +364,7 @@ export const DeckSelection = ({
                 } : null);
                 setPreviewDeleteAction(null);
                   }} />
-                  <div className="text-center text-xs text-game-primary font-medium mt-1">
+                  <div className="text-center text-xs text-white font-medium mt-1">
                     {isSelected ? 'Выбран' : teamFull ? 'Просмотр' : ''}
                   </div>
                  </div>;
@@ -376,9 +379,9 @@ export const DeckSelection = ({
       setShowDragonDeck(open);
       if (!open) setActivePairIndex(null);
     }}>
-        <DialogContent className="max-w-[95vw] sm:max-w-4xl h-[80vh] bg-gradient-to-br from-game-surface/95 via-game-background/90 to-game-surface/95 backdrop-blur-md border-2 border-game-primary/40 shadow-[0_0_30px_rgba(155,135,245,0.2)] overflow-hidden flex flex-col">
+        <DialogContent className="max-w-[95vw] sm:max-w-4xl h-[80vh] bg-black/50 backdrop-blur-md border-2 border-white overflow-hidden flex flex-col rounded-3xl">
           <DialogHeader className="flex-shrink-0">
-            <DialogTitle className="text-xl font-bold bg-gradient-to-r from-game-primary via-game-accent to-game-primary bg-clip-text text-transparent drop-shadow-[0_0_8px_rgba(217,70,239,0.5)]">Выберите дракона</DialogTitle>
+            <DialogTitle className="text-xl font-bold text-white">Выберите дракона</DialogTitle>
           </DialogHeader>
           <div className="flex gap-2 px-4 pb-2 flex-shrink-0">
             <Button
@@ -418,12 +421,12 @@ export const DeckSelection = ({
                 } : null);
                 setPreviewDeleteAction(null);
               }} />
-                  <div className="text-center text-xs text-game-primary font-medium mt-1">
+                  <div className="text-center text-xs text-white font-medium mt-1">
                     {isSelected ? 'Выбран' : activePairIndex !== null ? selectedPairs[activePairIndex]?.hero.faction : 'Просмотр'}
                   </div>
                 </div>;
           })}
-             {activePairIndex !== null && getAvailableDragons(selectedPairs[activePairIndex]?.hero.faction, selectedPairs[activePairIndex]?.hero.rarity).length === 0 && <div className="col-span-full text-center text-game-primary/60 text-sm">
+             {activePairIndex !== null && getAvailableDragons(selectedPairs[activePairIndex]?.hero.faction, selectedPairs[activePairIndex]?.hero.rarity).length === 0 && <div className="col-span-full text-center text-white/60 text-sm">
                  Нет доступных драконов для выбранного героя
                </div>}
             </div>
