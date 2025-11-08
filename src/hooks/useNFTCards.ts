@@ -77,7 +77,7 @@ export const useNFTCards = () => {
         body: { 
           wallet_address: walletAddress,
           contract_id: contractId || 'heroesnft.near',
-          additional_contracts: ['doubledog.hot.tg', 'elleonortesr.mintbase1.near']
+          additional_contracts: ['elleonortesr.mintbase1.near']
         }
       });
 

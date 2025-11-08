@@ -125,19 +125,13 @@ export const useNFTCardIntegration = () => {
     }
     setIsLoading(true);
     try {
-      // Синхронизируем NFT с основного контракта (doubledog.hot.tg)
+      // Синхронизируем NFT карты
       let synced: any[] = [];
       let fetched: any[] = [];
       let mintbaseCards: any[] = [];
       
       try {
-        synced = await syncNFTCards(accountId, 'doubledog.hot.tg');
-      } catch (syncError) {
-        console.log('NFT sync failed, using fallback:', syncError);
-      }
-      
-      try {
-        // Получаем обновленные NFT карты из БД (fallback)
+        // Получаем NFT карты из БД
         fetched = await getUserNFTCards(accountId);
       } catch (fetchError) {
         console.log('NFT fetch failed:', fetchError);
