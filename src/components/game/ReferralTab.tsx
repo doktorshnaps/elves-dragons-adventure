@@ -48,11 +48,11 @@ const ReferralTreeView = ({ node, isExpanded, onToggle }: {
 
   const getLevelColor = (level: number) => {
     switch (level) {
-      case 0: return 'text-game-accent border-game-accent bg-game-accent/10';
-      case 1: return 'text-yellow-400 border-yellow-400/50 bg-yellow-400/10';
-      case 2: return 'text-blue-400 border-blue-400/50 bg-blue-400/10';
-      case 3: return 'text-green-400 border-green-400/50 bg-green-400/10';
-      default: return 'text-gray-400 border-gray-400/50 bg-gray-400/10';
+      case 0: return 'text-white border-white bg-white/20';
+      case 1: return 'text-white border-white bg-white/15';
+      case 2: return 'text-white border-white bg-white/15';
+      case 3: return 'text-white border-white bg-white/15';
+      default: return 'text-white border-white bg-white/10';
     }
   };
 
@@ -62,21 +62,21 @@ const ReferralTreeView = ({ node, isExpanded, onToggle }: {
 
   return (
     <div className="space-y-2">
-      <div className={`flex items-center justify-between p-4 rounded-lg border ${getLevelColor(node.level)}`}>
+      <div className={`flex items-center justify-between p-4 rounded-xl border-2 ${getLevelColor(node.level)}`}>
         <div className="flex items-center space-x-3">
           {node.children.length > 0 && (
             <Button
               variant="ghost"
               size="sm"
               onClick={onToggle}
-              className="p-1 h-6 w-6"
+              className="p-1 h-6 w-6 text-white hover:bg-white/20"
             >
               {isExpanded ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
             </Button>
           )}
           <div>
             <div className="flex items-center space-x-2">
-              <span className="font-mono font-medium">
+              <span className="font-mono font-medium text-white">
                 {node.level === 0 ? 'ВЫ' : formatWallet(node.wallet_address)}
               </span>
               {node.level > 0 && (
@@ -89,18 +89,18 @@ const ReferralTreeView = ({ node, isExpanded, onToggle }: {
                 </span>
               )}
             </div>
-            <div className="text-xs opacity-75">
+            <div className="text-xs text-white/70">
               {node.level === 0 ? 'Главный игрок' : `Уровень ${node.level}`}
               {node.joinDate && ` • ${new Date(node.joinDate).toLocaleDateString()}`}
             </div>
           </div>
         </div>
         <div className="text-right">
-          <div className="font-bold">
+          <div className="font-bold text-white">
             {node.children.length} реф.
           </div>
           {node.earnings !== undefined && (
-            <div className="text-sm opacity-75">
+            <div className="text-sm text-white/70">
               {node.earnings} ELL
             </div>
           )}
@@ -108,7 +108,7 @@ const ReferralTreeView = ({ node, isExpanded, onToggle }: {
       </div>
       
       {isExpanded && node.children.length > 0 && (
-        <div className="ml-8 space-y-2 border-l-2 border-game-accent/20 pl-4">
+        <div className="ml-8 space-y-2 border-l-2 border-white/20 pl-4">
           {node.children.map((child) => (
             <ReferralTreeView
               key={child.wallet_address}
@@ -355,10 +355,10 @@ export const ReferralTab = () => {
 
   const getLevelColor = (level: number) => {
     switch (level) {
-      case 1: return 'text-yellow-400';
-      case 2: return 'text-blue-400';
-      case 3: return 'text-green-400';
-      default: return 'text-gray-400';
+      case 1: return 'text-white';
+      case 2: return 'text-white';
+      case 3: return 'text-white';
+      default: return 'text-white/70';
     }
   };
 
@@ -376,29 +376,36 @@ export const ReferralTab = () => {
       {/* Header Stats */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <div 
-          className="bg-game-surface/80 border border-game-accent rounded-lg p-4 cursor-pointer hover:bg-game-surface/90 transition-colors"
+          className="bg-black/50 border-2 border-white rounded-3xl p-6 cursor-pointer hover:bg-black/70 transition-all backdrop-blur-sm"
+          style={{ boxShadow: '-33px 15px 10px rgba(0, 0, 0, 0.6)' }}
           onClick={openReferralTree}
         >
           <div className="flex items-center space-x-2 mb-2">
-            <Users className="h-5 w-5 text-game-accent" />
-            <span className="text-game-accent font-medium">Мои рефералы</span>
+            <Users className="h-5 w-5 text-white" />
+            <span className="text-white font-medium">Мои рефералы</span>
           </div>
           <p className="text-2xl font-bold text-white">{myReferrals.length}</p>
-          <p className="text-xs text-game-accent/70 mt-1">Нажмите для просмотра дерева</p>
+          <p className="text-xs text-white/70 mt-1">Нажмите для просмотра дерева</p>
         </div>
 
-        <div className="bg-game-surface/80 border border-game-accent rounded-lg p-4">
+        <div 
+          className="bg-black/50 border-2 border-white rounded-3xl p-6 backdrop-blur-sm"
+          style={{ boxShadow: '-33px 15px 10px rgba(0, 0, 0, 0.6)' }}
+        >
           <div className="flex items-center space-x-2 mb-2">
-            <TrendingUp className="h-5 w-5 text-game-accent" />
-            <span className="text-game-accent font-medium">Общий доход</span>
+            <TrendingUp className="h-5 w-5 text-white" />
+            <span className="text-white font-medium">Общий доход</span>
           </div>
           <p className="text-2xl font-bold text-white">{totalEarnings} ELL</p>
         </div>
 
-        <div className="bg-game-surface/80 border border-game-accent rounded-lg p-4">
+        <div 
+          className="bg-black/50 border-2 border-white rounded-3xl p-6 backdrop-blur-sm"
+          style={{ boxShadow: '-33px 15px 10px rgba(0, 0, 0, 0.6)' }}
+        >
           <div className="flex items-center space-x-2 mb-2">
-            <Gift className="h-5 w-5 text-game-accent" />
-            <span className="text-game-accent font-medium">Активные уровни</span>
+            <Gift className="h-5 w-5 text-white" />
+            <span className="text-white font-medium">Активные уровни</span>
           </div>
           <p className="text-2xl font-bold text-white">3</p>
         </div>
@@ -406,9 +413,9 @@ export const ReferralTab = () => {
 
       {/* Referral Tree Dialog */}
       <Dialog open={showReferralTree} onOpenChange={setShowReferralTree}>
-        <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto bg-game-surface border-game-accent">
+        <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto bg-black/90 border-2 border-white backdrop-blur-sm">
           <DialogHeader>
-            <DialogTitle className="text-game-accent">Дерево рефералов</DialogTitle>
+            <DialogTitle className="text-white">Дерево рефералов</DialogTitle>
           </DialogHeader>
           <div className="mt-4">
             {referralTree && (
@@ -423,67 +430,73 @@ export const ReferralTab = () => {
       </Dialog>
 
       {/* Referral Link Section */}
-      <div className="bg-game-surface/80 border border-game-accent rounded-lg p-6">
-        <h3 className="text-xl text-game-accent mb-4">Ваша реферальная ссылка</h3>
+      <div 
+        className="bg-black/50 border-2 border-white rounded-3xl p-6 backdrop-blur-sm"
+        style={{ boxShadow: '-33px 15px 10px rgba(0, 0, 0, 0.6)' }}
+      >
+        <h3 className="text-xl text-white font-semibold mb-4">Ваша реферальная ссылка</h3>
         <div className="flex gap-2">
           <Input
             value={referralLink}
             readOnly
-            className="bg-game-surface border-game-accent text-white"
+            className="bg-white/10 border-2 border-white text-white rounded-xl"
           />
           <Button
             onClick={copyReferralLink}
-            variant="outline"
-            className="bg-game-surface border-game-accent text-game-accent hover:bg-game-accent hover:text-game-surface"
+            className="bg-white text-black hover:bg-white/90 border-2 border-black rounded-xl font-semibold"
           >
             <Copy className="h-4 w-4" />
           </Button>
         </div>
-        <p className="text-gray-300 text-sm mt-2">
+        <p className="text-white/80 text-sm mt-2">
           Поделитесь этой ссылкой с друзьями и получайте процент от их заработка в подземельях!
         </p>
       </div>
 
       {/* Player ID Info */}
-      <div className="bg-game-surface/80 border border-game-accent rounded-lg p-6 mb-6">
-        <h3 className="text-xl text-game-accent mb-4">Ваш ID игрока</h3>
+      <div 
+        className="bg-black/50 border-2 border-white rounded-3xl p-6 backdrop-blur-sm"
+        style={{ boxShadow: '-33px 15px 10px rgba(0, 0, 0, 0.6)' }}
+      >
+        <h3 className="text-xl text-white font-semibold mb-4">Ваш ID игрока</h3>
         <div className="flex gap-2">
           <Input
             value={accountId || ''}
             readOnly
-            className="bg-game-surface border-game-accent text-white font-mono text-sm"
+            className="bg-white/10 border-2 border-white text-white font-mono text-sm rounded-xl"
           />
           <Button
             onClick={() => accountId && navigator.clipboard.writeText(accountId)}
-            variant="outline"
-            className="bg-game-surface border-game-accent text-game-accent hover:bg-game-accent hover:text-game-surface"
+            className="bg-white text-black hover:bg-white/90 border-2 border-black rounded-xl font-semibold"
           >
             <Copy className="h-4 w-4" />
           </Button>
         </div>
-        <p className="text-gray-300 text-sm mt-2">
+        <p className="text-white/80 text-sm mt-2">
           Это ваш уникальный ID. Поделитесь им с тем, кто вас пригласил
         </p>
       </div>
 
       {/* Who Referred Me */}
       {whoReferredMe && (
-        <div className="bg-game-surface/80 border border-game-accent rounded-lg p-6 mb-6">
-          <h3 className="text-xl text-game-accent mb-4">Кто меня пригласил</h3>
-          <div className="flex items-center justify-between p-4 bg-game-surface border border-game-accent/30 rounded">
+        <div 
+          className="bg-black/50 border-2 border-white rounded-3xl p-6 backdrop-blur-sm"
+          style={{ boxShadow: '-33px 15px 10px rgba(0, 0, 0, 0.6)' }}
+        >
+          <h3 className="text-xl text-white font-semibold mb-4">Кто меня пригласил</h3>
+          <div className="flex items-center justify-between p-4 bg-white/10 border-2 border-white rounded-xl">
             <div>
               <p className="text-white font-mono text-sm">
                 {whoReferredMe.referrer_wallet_address}
               </p>
-              <p className="text-gray-300 text-xs mt-1">
+              <p className="text-white/80 text-xs mt-1">
                 Дата приглашения: {new Date(whoReferredMe.created_at).toLocaleDateString()}
               </p>
             </div>
             <Button
               onClick={() => navigator.clipboard.writeText(whoReferredMe.referrer_wallet_address)}
-              variant="outline"
               size="sm"
-              className="bg-game-surface border-game-accent text-game-accent hover:bg-game-accent hover:text-game-surface"
+              className="bg-white text-black hover:bg-white/90 border-2 border-black rounded-xl font-semibold"
             >
               <Copy className="h-4 w-4" />
             </Button>
@@ -493,60 +506,69 @@ export const ReferralTab = () => {
 
       {/* Add Referrer - только если еще не указан пригласивший */}
       {!whoReferredMe && (
-        <div className="bg-game-surface/80 border border-game-accent rounded-lg p-6">
-          <h3 className="text-xl text-game-accent mb-4">Указать кто вас пригласил</h3>
+        <div 
+          className="bg-black/50 border-2 border-white rounded-3xl p-6 backdrop-blur-sm"
+          style={{ boxShadow: '-33px 15px 10px rgba(0, 0, 0, 0.6)' }}
+        >
+          <h3 className="text-xl text-white font-semibold mb-4">Указать кто вас пригласил</h3>
           <div className="flex gap-2">
             <Input
               placeholder="Введите ID игрока, который вас пригласил"
               value={referralId}
               onChange={(e) => setReferralId(e.target.value)}
-              className="bg-game-surface border-game-accent text-white"
+              className="bg-white/10 border-2 border-white text-white rounded-xl"
             />
             <Button
               onClick={addReferralManually}
               disabled={loading}
-              className="bg-game-accent text-game-surface hover:bg-game-accent/80 disabled:opacity-50"
+              className="bg-white text-black hover:bg-white/90 border-2 border-black rounded-xl font-semibold disabled:opacity-50"
             >
               {loading ? "Обработка..." : "Указать"}
             </Button>
           </div>
-          <p className="text-gray-300 text-sm mt-2">
+          <p className="text-white/80 text-sm mt-2">
             Если вас пригласили, но вы не перешли по ссылке, укажите ID пригласившего вас игрока
           </p>
         </div>
       )}
 
       {/* Referral Levels Info */}
-      <div className="bg-game-surface/80 border border-game-accent rounded-lg p-6">
-        <h3 className="text-xl text-game-accent mb-4">Система вознаграждений</h3>
+      <div 
+        className="bg-black/50 border-2 border-white rounded-3xl p-6 backdrop-blur-sm"
+        style={{ boxShadow: '-33px 15px 10px rgba(0, 0, 0, 0.6)' }}
+      >
+        <h3 className="text-xl text-white font-semibold mb-4">Система вознаграждений</h3>
         <div className="space-y-3">
-          <div className="flex justify-between items-center p-3 bg-game-surface rounded border border-yellow-400/30">
-            <span className="text-yellow-400 font-medium">1-й уровень (прямые рефералы)</span>
-            <span className="text-yellow-400 font-bold">6%</span>
+          <div className="flex justify-between items-center p-3 bg-white/10 rounded-xl border-2 border-white">
+            <span className="text-white font-medium">1-й уровень (прямые рефералы)</span>
+            <span className="text-white font-bold">6%</span>
           </div>
-          <div className="flex justify-between items-center p-3 bg-game-surface rounded border border-blue-400/30">
-            <span className="text-blue-400 font-medium">2-й уровень (рефералы рефералов)</span>
-            <span className="text-blue-400 font-bold">3%</span>
+          <div className="flex justify-between items-center p-3 bg-white/10 rounded-xl border-2 border-white">
+            <span className="text-white font-medium">2-й уровень (рефералы рефералов)</span>
+            <span className="text-white font-bold">3%</span>
           </div>
-          <div className="flex justify-between items-center p-3 bg-game-surface rounded border border-green-400/30">
-            <span className="text-green-400 font-medium">3-й уровень</span>
-            <span className="text-green-400 font-bold">1.5%</span>
+          <div className="flex justify-between items-center p-3 bg-white/10 rounded-xl border-2 border-white">
+            <span className="text-white font-medium">3-й уровень</span>
+            <span className="text-white font-bold">1.5%</span>
           </div>
         </div>
-        <p className="text-gray-300 text-sm mt-4">
+        <p className="text-white/80 text-sm mt-4">
           Вы получаете процент от ELL, которые ваши рефералы зарабатывают в подземельях
         </p>
       </div>
 
       {/* My Referrals List */}
       {myReferrals.length > 0 && (
-        <div className="bg-game-surface/80 border border-game-accent rounded-lg p-6">
-          <h3 className="text-xl text-game-accent mb-4">Мои рефералы</h3>
+        <div 
+          className="bg-black/50 border-2 border-white rounded-3xl p-6 backdrop-blur-sm"
+          style={{ boxShadow: '-33px 15px 10px rgba(0, 0, 0, 0.6)' }}
+        >
+          <h3 className="text-xl text-white font-semibold mb-4">Мои рефералы</h3>
           <div className="space-y-2">
             {myReferrals.map((referral) => (
               <div
                 key={referral.id}
-                className="flex justify-between items-center p-3 bg-game-surface border border-game-accent/30 rounded"
+                className="flex justify-between items-center p-3 bg-white/10 border-2 border-white rounded-xl"
               >
                 <div className="flex items-center gap-2">
                   <span className="text-white font-mono">
@@ -560,7 +582,7 @@ export const ReferralTab = () => {
                     {referral.isWhitelisted ? 'WL ✓' : 'Без WL'}
                   </span>
                 </div>
-                <span className="text-gray-300 text-sm">
+                <span className="text-white/80 text-sm">
                   {new Date(referral.created_at).toLocaleDateString()}
                 </span>
               </div>
@@ -571,13 +593,16 @@ export const ReferralTab = () => {
 
       {/* Recent Earnings */}
       {myEarnings.length > 0 && (
-        <div className="bg-game-surface/80 border border-game-accent rounded-lg p-6">
-          <h3 className="text-xl text-game-accent mb-4">Последние доходы</h3>
+        <div 
+          className="bg-black/50 border-2 border-white rounded-3xl p-6 backdrop-blur-sm"
+          style={{ boxShadow: '-33px 15px 10px rgba(0, 0, 0, 0.6)' }}
+        >
+          <h3 className="text-xl text-white font-semibold mb-4">Последние доходы</h3>
           <div className="space-y-2">
             {myEarnings.slice(0, 10).map((earning) => (
               <div
                 key={earning.id}
-                className="flex justify-between items-center p-3 bg-game-surface border border-game-accent/30 rounded"
+                className="flex justify-between items-center p-3 bg-white/10 border-2 border-white rounded-xl"
               >
                 <div className="flex items-center space-x-3">
                   <span className={`font-bold ${getLevelColor(earning.level)}`}>
@@ -588,8 +613,8 @@ export const ReferralTab = () => {
                   </span>
                 </div>
                 <div className="text-right">
-                  <span className="text-game-accent font-bold">+{earning.amount} ELL</span>
-                  <div className="text-gray-300 text-xs">
+                  <span className="text-white font-bold">+{earning.amount} ELL</span>
+                  <div className="text-white/80 text-xs">
                     {new Date(earning.created_at).toLocaleDateString()}
                   </div>
                 </div>
