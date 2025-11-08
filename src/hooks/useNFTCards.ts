@@ -119,7 +119,9 @@ export const useNFTCards = () => {
       }
 
       // Convert to game card format using NFT metadata
-      const cards: NFTCard[] = (nftMappings || []).map((mapping: any) => {
+      const cards: NFTCard[] = (nftMappings || [])
+        .filter((mapping: any) => mapping.nft_contract_id !== 'doubledog.hot.tg')
+        .map((mapping: any) => {
         const meta = mapping.nft_metadata || {};
         let extra: any = undefined;
         if (typeof meta?.extra === 'string') {

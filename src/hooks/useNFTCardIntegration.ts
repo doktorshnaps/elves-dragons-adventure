@@ -177,9 +177,13 @@ export const useNFTCardIntegration = () => {
         console.log('Mintbase NFT sync failed:', mintbaseError);
       }
       
-      // Объединяем все источники NFT
-      const allNFTs = [...(synced || []), ...(fetched || []), ...mintbaseCards];
-      console.log(`🔄 NFT Sources: synced=${synced?.length || 0}, fetched=${fetched?.length || 0}, mintbase=${mintbaseCards.length}`);
+      // Объединяем все источники NFT и фильтруем заблокированные контракты
+      const allNFTs = [...(synced || []), ...(fetched || []), ...mintbaseCards]
+        .filter(nft => {
+          const contractId = (nft as any).nft_contract_id || (nft as any).nft_contract || (nft as any).contract_id;
+          return contractId !== 'doubledog.hot.tg';
+        });
+      console.log(`🔄 NFT Sources (after filter): synced=${synced?.length || 0}, fetched=${fetched?.length || 0}, mintbase=${mintbaseCards.length}, total=${allNFTs.length}`);
       
       // Убираем дубликаты по ID и конвертируем в формат игровых карт
       const uniqueNFTs = allNFTs.filter((nft, index, arr) => 
