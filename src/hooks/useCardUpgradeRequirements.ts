@@ -14,6 +14,7 @@ export interface CardUpgradeRequirement {
   cost_stone?: number;
   cost_iron?: number;
   cost_gold?: number;
+  required_defeated_monsters?: number;
   required_items: Array<{
     item_id: string;
     name: string;

@@ -34,6 +34,7 @@ export const CardUpgradeManager = () => {
     cost_stone: 0,
     cost_iron: 0,
     cost_gold: 0,
+    required_defeated_monsters: 0,
     required_items: [] as Array<{ item_id: string; name: string; quantity: number }>
   });
 
@@ -50,6 +51,7 @@ export const CardUpgradeManager = () => {
               cost_stone: formData.cost_stone,
               cost_iron: formData.cost_iron,
               cost_gold: formData.cost_gold,
+              required_defeated_monsters: formData.required_defeated_monsters,
               required_items: formData.required_items
             })
             .eq('id', editingId)
@@ -68,6 +70,7 @@ export const CardUpgradeManager = () => {
               cost_stone: formData.cost_stone,
               cost_iron: formData.cost_iron,
               cost_gold: formData.cost_gold,
+              required_defeated_monsters: formData.required_defeated_monsters,
               required_items: formData.required_items as any,
               created_by_wallet_address: 'mr_bruts.tg',
               is_active: true
@@ -107,6 +110,7 @@ export const CardUpgradeManager = () => {
       cost_stone: req.cost_stone || 0,
       cost_iron: req.cost_iron || 0,
       cost_gold: req.cost_gold || 0,
+      required_defeated_monsters: req.required_defeated_monsters || 0,
       required_items: req.required_items || []
     });
   };
@@ -159,6 +163,7 @@ export const CardUpgradeManager = () => {
       cost_stone: 0,
       cost_iron: 0,
       cost_gold: 0,
+      required_defeated_monsters: 0,
       required_items: []
     });
   };
@@ -351,7 +356,7 @@ export const CardUpgradeManager = () => {
             </div>
           </div>
 
-          <div className="grid grid-cols-3 gap-4">
+          <div className="grid grid-cols-4 gap-4">
             <div>
               <Label>Шанс успеха (%)</Label>
               <Input
@@ -372,6 +377,18 @@ export const CardUpgradeManager = () => {
                 value={formData.cost_ell}
                 onChange={(e) =>
                   setFormData({ ...formData, cost_ell: parseInt(e.target.value) || 0 })
+                }
+                min={0}
+              />
+            </div>
+
+            <div>
+              <Label>Побежденных монстров</Label>
+              <Input
+                type="number"
+                value={formData.required_defeated_monsters}
+                onChange={(e) =>
+                  setFormData({ ...formData, required_defeated_monsters: parseInt(e.target.value) || 0 })
                 }
                 min={0}
               />
@@ -513,7 +530,7 @@ export const CardUpgradeManager = () => {
                     {req.faction && ` (${req.faction})`}
                   </div>
                   <div className="text-sm text-muted-foreground">
-                    Шанс: {req.success_chance}% | ELL: {req.cost_ell} | 🪵 {req.cost_wood} | 🪨{' '}
+                    Шанс: {req.success_chance}% | ELL: {req.cost_ell} | 💀 Монстры: {req.required_defeated_monsters || 0} | 🪵 {req.cost_wood} | 🪨{' '}
                     {req.cost_stone} | ⛏️ {req.cost_iron}
                   </div>
                   {req.required_items && req.required_items.length > 0 && (

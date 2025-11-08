@@ -324,6 +324,7 @@ export type Database = {
           id: string
           is_active: boolean | null
           rarity: string
+          required_defeated_monsters: number
           required_items: Json | null
           success_chance: number
           to_rarity: number
@@ -344,6 +345,7 @@ export type Database = {
           id?: string
           is_active?: boolean | null
           rarity: string
+          required_defeated_monsters?: number
           required_items?: Json | null
           success_chance?: number
           to_rarity: number
@@ -364,6 +366,7 @@ export type Database = {
           id?: string
           is_active?: boolean | null
           rarity?: string
+          required_defeated_monsters?: number
           required_items?: Json | null
           success_chance?: number
           to_rarity?: number
