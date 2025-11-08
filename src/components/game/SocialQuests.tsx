@@ -301,23 +301,23 @@ export const SocialQuests = () => {
 
   if (loading) {
     return (
-      <Card className="p-6 bg-game-surface border-game-accent">
-        <p className="text-center text-gray-400">Загрузка заданий...</p>
-      </Card>
+      <div className="p-6 bg-transparent backdrop-blur-sm rounded-2xl border-2 border-black">
+        <p className="text-center text-black">Загрузка заданий...</p>
+      </div>
     );
   }
 
   if (quests.length === 0) {
     return (
-      <Card className="p-6 bg-game-surface border-game-accent">
-        <p className="text-center text-gray-400">Заданий пока нет</p>
-      </Card>
+      <div className="p-6 bg-transparent backdrop-blur-sm rounded-2xl border-2 border-black">
+        <p className="text-center text-black">Заданий пока нет</p>
+      </div>
     );
   }
 
   return (
-    <Card className="p-6 bg-game-surface border-game-accent">
-      <h2 className="text-xl font-bold text-game-accent mb-4">Поддержка проекта</h2>
+    <div className="p-6 bg-transparent backdrop-blur-sm rounded-2xl border-2 border-black">
+      <h2 className="text-xl font-bold text-black mb-6">Поддержка проекта</h2>
       <div className="space-y-4">
         {quests.map((quest) => {
           const questProgress = progress.get(quest.id);
@@ -326,27 +326,31 @@ export const SocialQuests = () => {
           const isVisited = questProgress?.visited || false;
 
           return (
-            <div key={quest.id} className="bg-game-background rounded-lg p-4 space-y-2">
+            <div 
+              key={quest.id} 
+              className="bg-black/50 border-2 border-white rounded-3xl p-6 backdrop-blur-sm transition-all hover:bg-black/70"
+              style={{ boxShadow: '-33px 15px 10px rgba(0, 0, 0, 0.6)' }}
+            >
               <div className="flex items-start gap-4">
                 {quest.image_url && (
                   <img
                     src={quest.image_url}
                     alt={quest.title}
-                    className="w-48 h-48 rounded object-cover"
+                    className="w-32 h-32 rounded-xl object-cover border-2 border-white"
                   />
                 )}
                 <div className="flex-1">
                   <div className="flex justify-between items-start">
                     <div>
-                      <h4 className="font-medium text-game-primary">{quest.title}</h4>
-                      <p className="text-sm text-gray-400">{quest.description}</p>
+                      <h4 className="font-semibold text-white text-lg">{quest.title}</h4>
+                      <p className="text-sm text-white/80 mt-1">{quest.description}</p>
                     </div>
                     <div className="flex flex-col gap-2 items-end">
                       {!isVisited && !isCompleted && !isClaimed && (
                         <Button
                           onClick={() => handleVisitQuest(quest)}
                           size="sm"
-                          className="bg-game-accent hover:bg-game-accent/90"
+                          className="bg-white text-black hover:bg-white/90 border-2 border-black rounded-xl font-semibold"
                         >
                           Выполнить
                         </Button>
@@ -355,7 +359,7 @@ export const SocialQuests = () => {
                         <Button
                           onClick={() => handleCompleteQuest(quest)}
                           size="sm"
-                          className="bg-game-accent hover:bg-game-accent/90"
+                          className="bg-white text-black hover:bg-white/90 border-2 border-black rounded-xl font-semibold"
                         >
                           Я подписался
                         </Button>
@@ -364,18 +368,18 @@ export const SocialQuests = () => {
                         <Button
                           onClick={() => handleClaimReward(quest)}
                           size="sm"
-                          className="bg-game-accent hover:bg-game-accent/90"
+                          className="bg-white text-black hover:bg-white/90 border-2 border-black rounded-xl font-semibold"
                         >
                           Получить
                         </Button>
                       )}
                       {isClaimed && (
-                        <span className="text-sm text-gray-400">Выполнено</span>
+                        <span className="text-sm text-white font-semibold">✓ Выполнено</span>
                       )}
                     </div>
                   </div>
-                  <Progress value={isClaimed ? 100 : isCompleted ? 50 : 0} className="mt-2" />
-                  <div className="text-sm text-gray-400 mt-1">
+                  <Progress value={isClaimed ? 100 : isCompleted ? 50 : 0} className="mt-3" />
+                  <div className="text-sm text-white/80 mt-2 font-medium">
                     Награда: {quest.reward_coins} ELL
                   </div>
                 </div>
@@ -384,6 +388,6 @@ export const SocialQuests = () => {
           );
         })}
       </div>
-    </Card>
+    </div>
   );
 };
