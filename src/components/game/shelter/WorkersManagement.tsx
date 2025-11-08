@@ -225,17 +225,11 @@ export const WorkersManagement = ({ onSpeedBoostChange }: WorkersManagementProps
   }, [toast, buildings, gameState.actions]);
 
   const assignWorker = async (worker: any) => {
-    console.log('🎯 assignWorker CALLED with worker:', {
-      id: worker.id,
-      name: worker.name,
-      source: worker.source,
-      stats: worker.stats,
-      workDuration: worker.stats?.workDuration,
-      value: worker.value
-    });
+    const workerId = (worker as any).instanceId || worker.id;
+    console.log('🎯 assignWorker START:', { workerId, name: worker.name, source: worker.source });
 
     if (!worker.stats?.workDuration) {
-      console.error('❌ assignWorker EARLY RETURN: no workDuration found!', worker.stats);
+      console.error('❌ No workDuration!');
       toast({
         title: t(language, 'shelter.error'),
         description: 'Рабочий не имеет длительности работы',
@@ -244,10 +238,13 @@ export const WorkersManagement = ({ onSpeedBoostChange }: WorkersManagementProps
       return;
     }
 
+    setAssigningId(workerId);
+    console.log('⏳ Setting assigningId:', workerId);
+
     const newActiveWorker: ActiveWorker = {
       id: `${worker.id}_${Date.now()}`,
       workerId: worker.id,
-      cardInstanceId: (worker as any).instanceId || worker.id,
+      cardInstanceId: workerId,
       name: worker.name,
       speedBoost: worker.value,
       startTime: Date.now(),
@@ -255,104 +252,87 @@ export const WorkersManagement = ({ onSpeedBoostChange }: WorkersManagementProps
       building: selectedBuilding
     };
 
-    const updatedActiveWorkers = [...activeWorkers, newActiveWorker];
-
     try {
-      console.log('🔍 Assigning worker:', {
-        workerId: worker.id,
-        workerName: worker.name,
-        workerSource: worker.source,
-        instanceId: (worker as any).instanceId,
-        templateId: (worker as any).templateId
-      });
-      // Мгновенно обновляем локальное состояние для визуального отклика
-      setAssigningId((worker as any).instanceId || worker.id);
+      // Сразу обновляем UI оптимистично
+      const updatedActiveWorkers = [...activeWorkers, newActiveWorker];
       setActiveWorkers(updatedActiveWorkers);
+      console.log('✅ Optimistic UI update done');
 
-      // Удаляем рабочего из card_instances, если он оттуда
+      // Удаляем из card_instances с таймаутом
       if (worker.source === 'card_instances' && (worker as any).instanceId) {
         const instId = (worker as any).instanceId as string;
-        console.log('🗑️ Deleting worker from card_instances via helper:', instId);
-        let removed = false;
+        console.log('🗑️ Deleting card instance:', instId);
+        
+        const deleteWithTimeout = async (fn: () => Promise<any>, timeout: number) => {
+          return Promise.race([
+            fn(),
+            new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout')), timeout))
+          ]);
+        };
+
         try {
-          const ok = await deleteCardInstance(instId);
-          removed = !!ok;
-          console.log('🔎 deleteCardInstance returned:', ok);
+          await deleteWithTimeout(async () => {
+            const ok = await deleteCardInstance(instId);
+            if (!ok) throw new Error('deleteCardInstance failed');
+            console.log('✅ Card instance deleted');
+          }, 5000);
+          
+          await loadCardInstances();
         } catch (e) {
-          console.warn('⚠️ deleteCardInstance threw:', e);
-        }
-
-        if (!removed) {
-          // Пробуем прямой вызов RPC (SECURITY DEFINER)
+          console.warn('⚠️ Delete failed, trying RPC:', e);
+          
           try {
-            console.log('➡️ Direct RPC remove_card_instance_exact for', instId, 'wallet:', accountId);
-            const { data: exactOk, error: exactErr } = await supabase.rpc('remove_card_instance_exact', {
+            const { error } = await supabase.rpc('remove_card_instance_exact', {
               p_instance_id: instId,
               p_wallet_address: accountId
             });
-            if (exactErr) {
-              console.warn('remove_card_instance_exact error:', exactErr);
-            } else if (exactOk === true) {
-              removed = true;
-            }
-          } catch (e) {
-            console.warn('remove_card_instance_exact threw:', e);
-          }
-        }
-
-        if (!removed) {
-          try {
-            console.log('↩️ Fallback RPC remove_card_instance_by_id for', instId);
-            const { data: byIdOk, error: byIdErr } = await supabase.rpc('remove_card_instance_by_id', {
-              p_instance_id: instId,
-              p_wallet_address: accountId
+            if (error) throw error;
+            console.log('✅ RPC delete success');
+            await loadCardInstances();
+          } catch (rpcError) {
+            console.error('❌ All delete attempts failed:', rpcError);
+            setAssigningId(null);
+            setActiveWorkers(activeWorkers);
+            toast({
+              title: t(language, 'shelter.error'),
+              description: 'Не удалось удалить рабочего из инвентаря',
+              variant: 'destructive'
             });
-            if (byIdErr) {
-              console.warn('remove_card_instance_by_id error:', byIdErr);
-            } else if (byIdOk === true) {
-              removed = true;
-            }
-          } catch (e) {
-            console.warn('remove_card_instance_by_id threw:', e);
+            return;
           }
         }
-
-        if (!removed) {
-          console.error('❌ Failed to delete worker instance after all attempts:', instId);
-          setAssigningId(null);
-          setActiveWorkers(activeWorkers); // откат визуального состояния
-          toast({
-            title: t(language, 'shelter.error'),
-            description: t(language, 'shelter.failedToAssign'),
-            variant: 'destructive'
-          });
-          return; // прерываем назначение
-        }
-
-        await loadCardInstances();
-        console.log('✅ Worker deleted from card_instances:', instId);
       }
 
-      // Теперь обновляем локальное состояние
-      setActiveWorkers(updatedActiveWorkers);
+      // Сохраняем в БД с таймаутом
+      console.log('💾 Saving to DB...');
+      try {
+        await Promise.race([
+          updateActiveWorkersInDB(updatedActiveWorkers),
+          new Promise((_, reject) => setTimeout(() => reject(new Error('DB timeout')), 5000))
+        ]);
+        console.log('✅ Saved to DB');
+      } catch (e) {
+        console.warn('⚠️ DB save timeout, continuing anyway:', e);
+      }
 
-      // Сохраняем активных рабочих через RPC
-      await updateActiveWorkersInDB(updatedActiveWorkers);
+      // Сохраняем локально
       try {
         localStorage.setItem('activeWorkers', JSON.stringify(updatedActiveWorkers));
-      } catch {}
-      window.dispatchEvent(new CustomEvent('activeWorkers:changed', { detail: updatedActiveWorkers }));
+        window.dispatchEvent(new CustomEvent('activeWorkers:changed', { detail: updatedActiveWorkers }));
+      } catch (e) {
+        console.warn('⚠️ localStorage save failed:', e);
+      }
       
-      console.log('✅ Worker assigned and saved:', newActiveWorker);
       setAssigningId(null);
+      console.log('✅ Worker assigned successfully:', newActiveWorker.name);
       
       toast({
         title: t(language, 'shelter.workerAssigned'),
-        description: `${worker.name} ${t(language, 'shelter.workerAssignedDesc')} "${buildings.find(b => b.id === selectedBuilding)?.name}"`,
+        description: `${worker.name} назначен в "${buildings.find(b => b.id === selectedBuilding)?.name}"`,
       });
     } catch (error) {
-      console.error('❌ Failed to save worker assignment:', error);
-      // Откатываем изменения при ошибке
+      console.error('❌ Assignment failed:', error);
+      setAssigningId(null);
       setActiveWorkers(activeWorkers);
       toast({
         title: t(language, 'shelter.error'),
