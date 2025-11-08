@@ -41,8 +41,9 @@ export const CardDisplay = ({
     [card.name, card.rarity, card.type]
   );
   return <Card onClick={onClick} className={`mx-auto w-[90px] h-[180px] sm:w-[120px] sm:h-[240px] md:w-[130px] md:h-[260px] lg:w-[140px] lg:h-[280px]
-        p-0.5 bg-game-background border-game-accent hover:border-game-primary transition-all duration-300 overflow-hidden 
-        ${!isActive && card.type === 'pet' ? 'opacity-50' : ''} ${onClick ? 'cursor-pointer' : ''} ${className}`}>
+        p-0.5 bg-black/50 border-2 border-white rounded-3xl backdrop-blur-sm transition-all duration-300 overflow-hidden 
+        ${!isActive && card.type === 'pet' ? 'opacity-50' : ''} ${onClick ? 'cursor-pointer' : ''} ${className}`}
+      style={{ boxShadow: '-33px 15px 10px rgba(0, 0, 0, 0.6)' }}>
       <div className="flex flex-col h-full">
         <div className="w-full h-[75px] sm:h-[100px] md:h-[110px] lg:h-[120px] flex-shrink-0">
           <CardImage image={card.image} name={card.name} card={card} />
@@ -52,11 +53,11 @@ export const CardDisplay = ({
           <div className="flex flex-col gap-0 overflow-hidden flex-1 min-h-0">
             <CardHeader name={translateCardName(language, card.name)} rarity={card.rarity} />
 
-            <div className={`text-purple-400 leading-none truncate ${isMobile ? 'text-[6px]' : 'text-[10px]'}`}>
+            <div className={`text-white leading-none truncate ${isMobile ? 'text-[6px]' : 'text-[10px]'}`}>
               ({translateCardType(language, card.type === 'character' ? t(language, 'cardDisplay.hero') : t(language, 'cardDisplay.pet'))})
             </div>
 
-            {card.faction && <div className={`flex items-center gap-0.5 leading-none ${isMobile ? 'text-[6px]' : 'text-[10px]'} ${!isActive && card.type === 'pet' ? 'text-red-400' : 'text-purple-400'} overflow-hidden`}>
+            {card.faction && <div className={`flex items-center gap-0.5 leading-none ${isMobile ? 'text-[6px]' : 'text-[10px]'} ${!isActive && card.type === 'pet' ? 'text-red-400' : 'text-white'} overflow-hidden`}>
                 <Sparkles className={`${isMobile ? 'w-1.5 h-1.5' : 'w-2.5 h-2.5'} flex-shrink-0`} />
                 <span className="truncate">{translateFaction(language, card.faction)}</span>
               </div>}
@@ -70,7 +71,7 @@ export const CardDisplay = ({
             </div>
 
             {card.magicResistance && (
-              <div className={`text-purple-400 leading-none truncate ${isMobile ? 'text-[6px]' : 'text-[8px]'} mt-0.5`}>
+              <div className={`text-white leading-none truncate ${isMobile ? 'text-[6px]' : 'text-[8px]'} mt-0.5`}>
                 {card.magicResistance.type}: {card.magicResistance.value}
               </div>
             )}
