@@ -95,7 +95,7 @@ export const useShelterState = () => {
   };
 
   const [activeWorkersLocal, setActiveWorkersLocal] = useState<any[]>(getActiveWorkersSafe());
-  const [workersLoaded, setWorkersLoaded] = useState(false);
+  const [workersLoaded, setWorkersLoaded] = useState(true); // true по умолчанию чтобы не показывать серые здания при загрузке
   
   // Загрузка рабочих при монтировании
   useEffect(() => {
