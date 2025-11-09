@@ -696,6 +696,7 @@ export const useShelterState = () => {
     getUpgradeTime,
     isUpgradeReady,
     balance,
-    inventoryCounts
+    inventoryCounts,
+    gameLoaded: !gameState.loading
   };
 };

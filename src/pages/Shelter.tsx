@@ -48,7 +48,8 @@ export const Shelter = () => {
     getUpgradeTime,
     isUpgradeReady,
     balance,
-    inventoryCounts
+    inventoryCounts,
+    gameLoaded
   } = useShelterState();
 
   return (
@@ -153,6 +154,7 @@ export const Shelter = () => {
               resources={resources}
               inventoryCounts={inventoryCounts}
               workersLoaded={workersLoaded}
+              gameLoaded={gameLoaded}
             />
           </TabsContent>
 

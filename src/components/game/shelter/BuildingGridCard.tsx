@@ -22,6 +22,7 @@ interface BuildingGridCardProps {
     onCollect: () => Promise<void>;
   };
   workersLoaded: boolean;
+  gameLoaded: boolean;
 }
 
 export const BuildingGridCard = ({
@@ -34,7 +35,8 @@ export const BuildingGridCard = ({
   onClick,
   formatRemainingTime,
   productionData,
-  workersLoaded
+  workersLoaded,
+  gameLoaded
 }: BuildingGridCardProps) => {
   const { language } = useLanguage();
   
@@ -45,9 +47,8 @@ export const BuildingGridCard = ({
   const buildingsWithoutWorkers = ['storage', 'main_hall'];
   const requiresWorkers = !buildingsWithoutWorkers.includes(upgrade.id);
   
-  // Серый фильтр применяется ТОЛЬКО после полной загрузки данных о работниках
-  // Пока workersLoaded === false — ничего не делаем серым, чтобы избежать мигания при первом рендере
-  const shouldBeGrayscale = workersLoaded && (
+  // Серый фильтр применяется только когда загружены работники и игровые данные
+  const shouldBeGrayscale = (workersLoaded && gameLoaded) && (
     upgrade.level === 0 || (requiresWorkers && !hasWorkers)
   );
 
