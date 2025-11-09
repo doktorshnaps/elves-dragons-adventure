@@ -7,6 +7,8 @@ import { Clock, Coins } from 'lucide-react';
 import { useResourceProduction } from '@/hooks/useResourceProduction';
 import { getWarehouseWorkingHours } from '@/config/buildings';
 import { useUnifiedGameState } from '@/hooks/useUnifiedGameState';
+import { useLanguage } from '@/hooks/useLanguage';
+import { t } from '@/utils/translations';
 
 interface ResourceBuildingProps {
   type: 'sawmill' | 'quarry';
@@ -23,6 +25,7 @@ export const ResourceBuilding: React.FC<ResourceBuildingProps> = ({
   resourceType,
   hasActiveWorkers
 }) => {
+  const { language } = useLanguage();
   const gameState = useUnifiedGameState();
   const {
     woodProduction,
@@ -63,7 +66,7 @@ export const ResourceBuilding: React.FC<ResourceBuildingProps> = ({
   useEffect(() => {
     const interval = setInterval(() => {
       if (!hasActiveWorkers) {
-        setTimeDisplay('Нет рабочих');
+        setTimeDisplay(t(language, 'shelter.requiresWorkers') || 'Нет рабочих');
         return;
       }
       
@@ -75,22 +78,22 @@ export const ResourceBuilding: React.FC<ResourceBuildingProps> = ({
         const remainingTime = workingHours - timeElapsed;
         
         if (remainingTime <= 0) {
-          setTimeDisplay('Производство остановлено');
+          setTimeDisplay(t(language, 'shelter.productionStopped') || 'Производство остановлено');
         } else {
           const hours = Math.floor(remainingTime);
           const minutes = Math.floor((remainingTime % 1) * 60);
           
           if (hours > 0) {
-            setTimeDisplay(`${hours}ч ${minutes}м до остановки`);
+            setTimeDisplay(`${hours}ч ${minutes}м ${t(language, 'shelter.untilStop') || 'до остановки'}`);
           } else {
-            setTimeDisplay(`${minutes}м до остановки`);
+            setTimeDisplay(`${minutes}м ${t(language, 'shelter.untilStop') || 'до остановки'}`);
           }
         }
       }
     }, 1000);
 
     return () => clearInterval(interval);
-  }, [productionPerHour, workingHours, woodProduction.lastCollectionTime, stoneProduction.lastCollectionTime, isWood, hasActiveWorkers]);
+  }, [productionPerHour, workingHours, woodProduction.lastCollectionTime, stoneProduction.lastCollectionTime, isWood, hasActiveWorkers, language]);
 
   const handleCollect = async () => {
     if (!hasActiveWorkers) {
@@ -118,14 +121,14 @@ export const ResourceBuilding: React.FC<ResourceBuildingProps> = ({
       {/* Информация о производстве без лимитов */}
       <div className="space-y-2">
         <div className="flex items-center justify-between">
-          <span className="text-sm font-medium">Готово к сбору</span>
+          <span className="text-sm font-medium">{t(language, 'shelter.readyToCollect') || 'Готово к сбору'}</span>
           <span className="text-sm text-muted-foreground">
-            {readyResources} {resourceType === 'wood' ? 'дерева' : 'камня'}
+            {readyResources} {t(language, `resources.${resourceType}`) || (resourceType === 'wood' ? 'дерева' : 'камня')}
           </span>
         </div>
         
         <div className="text-xs text-muted-foreground mb-2">
-          Производство: {productionPerHour}/час • Время работы склада: {workingHours}ч
+          {t(language, 'shelter.production') || 'Производство'}: {productionPerHour}/{t(language, 'shelter.perHour') || 'час'} • {t(language, 'shelter.workingHours') || 'Время работы склада'}: {workingHours}ч
         </div>
         
         <Progress value={productionProgress} className="mb-2" />
@@ -135,7 +138,7 @@ export const ResourceBuilding: React.FC<ResourceBuildingProps> = ({
           <div className="text-center py-2">
             <div className="flex items-center justify-center gap-2 text-sm text-orange-600">
               <Clock className="w-4 h-4" />
-              Назначьте рабочих для работы
+              {t(language, 'shelter.assignWorkersToWork') || 'Назначьте рабочих для работы'}
             </div>
           </div>
         ) : readyResources > 0 ? (
@@ -145,13 +148,13 @@ export const ResourceBuilding: React.FC<ResourceBuildingProps> = ({
             variant="default"
           >
             <Coins className="w-4 h-4 mr-2" />
-            Собрать {readyResources} {resourceType === 'wood' ? 'дерева' : 'камня'}
+            {t(language, 'shelter.collect') || 'Собрать'} {readyResources} {t(language, `resources.${resourceType}`) || (resourceType === 'wood' ? 'дерева' : 'камня')}
           </Button>
         ) : (
           <div className="text-center py-2">
             <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground">
               <Clock className="w-4 h-4" />
-              {timeDisplay || 'Производство...'}
+              {timeDisplay || (t(language, 'shelter.producing') || 'Производство...')}
             </div>
           </div>
         )}

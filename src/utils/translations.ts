@@ -121,6 +121,13 @@ export const translations = {
       dragonEgg: 'Яйцо дракона',
       faction: 'Фракция'
     },
+    // Resources
+    resources: {
+      wood: 'Дерево',
+      stone: 'Камень',
+      iron: 'Железо',
+      gold: 'Золото'
+    },
     // Shelter
     shelter: {
       title: 'Убежище',
@@ -142,12 +149,24 @@ export const translations = {
       install: 'Установить',
       create: 'Создать',
       level: 'Уровень',
+      upgradeCost: 'Стоимость улучшения',
       cost: 'Стоимость улучшения:',
       wood: 'Дерево',
       stone: 'Камень',
       iron: 'Железо',
       gold: 'Золото',
       bonus: 'Бонус:',
+      benefit: 'Бонус',
+      selectBuilding: 'Выберите здание',
+      perHour: 'в час',
+      workingHours: 'Время работы склада',
+      readyToCollect: 'Готово к сбору',
+      production: 'Производство',
+      assignWorkersToWork: 'Назначьте рабочих для работы',
+      collect: 'Собрать',
+      producing: 'Производство...',
+      productionStopped: 'Производство остановлено',
+      untilStop: 'до остановки',
       buildingInactive: 'неактивно',
       assignWorkers: 'Назначить рабочих',
       availableHeroes: 'Доступные герои для улучшения',
@@ -644,6 +663,13 @@ export const translations = {
       dragonEgg: 'Dragon Egg',
       faction: 'Faction'
     },
+    // Resources
+    resources: {
+      wood: 'Wood',
+      stone: 'Stone',
+      iron: 'Iron',
+      gold: 'Gold'
+    },
     // Shelter
     shelter: {
       title: 'Shelter',
@@ -665,12 +691,24 @@ export const translations = {
       install: 'Install',
       create: 'Create',
       level: 'Level',
+      upgradeCost: 'Upgrade Cost',
       cost: 'Upgrade cost:',
       wood: 'Wood',
       stone: 'Stone',
       iron: 'Iron',
       gold: 'Gold',
       bonus: 'Bonus:',
+      benefit: 'Benefit',
+      selectBuilding: 'Select a building',
+      perHour: 'per hour',
+      workingHours: 'Storage working hours',
+      readyToCollect: 'Ready to collect',
+      production: 'Production',
+      assignWorkersToWork: 'Assign workers to work',
+      collect: 'Collect',
+      producing: 'Producing...',
+      productionStopped: 'Production stopped',
+      untilStop: 'until stop',
       buildingInactive: 'inactive',
       assignWorkers: 'Assign Workers',
       availableHeroes: 'Available heroes for upgrade',
