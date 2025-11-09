@@ -168,9 +168,7 @@ export const useShelterState = () => {
   // Используем реальные балансы ресурсов из базы данных
   const resources = {
     wood: gameState.wood,
-    stone: gameState.stone,
-    iron: gameState.iron,
-    gold: gameState.gold
+    stone: gameState.stone
   };
 
   // Получаем уровни зданий из gameState с fallback значениями

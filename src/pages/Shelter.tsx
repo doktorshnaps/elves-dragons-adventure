@@ -90,10 +90,6 @@ export const Shelter = () => {
                     <div className="text-[10px] sm:text-xs font-semibold text-white">{resources.stone}</div>
                   </div>
                   <div className="text-center flex-1">
-                    <div className="text-base sm:text-lg">⛏️</div>
-                    <div className="text-[10px] sm:text-xs font-semibold text-white">{resources.iron}</div>
-                  </div>
-                  <div className="text-center flex-1">
                     <div className="text-base sm:text-lg">💰</div>
                     <div className="text-[10px] sm:text-xs font-semibold text-white">{balance} ELL</div>
                   </div>

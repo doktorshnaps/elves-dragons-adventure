@@ -7,7 +7,7 @@ import { useToast } from './use-toast';
  * Группирует множественные обновления ресурсов в один запрос
  */
 export const useResourceCollection = () => {
-  const { actions, wood, stone, iron } = useBatchedGameState();
+  const { actions, wood, stone } = useBatchedGameState();
   const { toast } = useToast();
   
   /**
@@ -35,24 +35,11 @@ export const useResourceCollection = () => {
   }, [stone, actions]);
   
   /**
-   * Собирает железо с батчингом
-   */
-  const collectIron = useCallback(async (amount: number) => {
-    const newAmount = iron + amount;
-    actions.updateIron(newAmount);
-    
-    console.log('⛏️ Iron collected (batched):', { old: iron, new: newAmount, collected: amount });
-    
-    return newAmount;
-  }, [iron, actions]);
-  
-  /**
    * Собирает несколько ресурсов одновременно
    */
   const collectMultiple = useCallback(async (resources: {
     wood?: number;
     stone?: number;
-    iron?: number;
   }) => {
     const updates: any = {};
     
@@ -62,16 +49,13 @@ export const useResourceCollection = () => {
     if (resources.stone) {
       updates.stone = stone + resources.stone;
     }
-    if (resources.iron) {
-      updates.iron = iron + resources.iron;
-    }
     
     actions.updateResources(updates);
     
     console.log('📦 Multiple resources collected (batched):', updates);
     
     return updates;
-  }, [wood, stone, iron, actions]);
+  }, [wood, stone, actions]);
   
   /**
    * Принудительно отправляет все накопленные обновления
@@ -83,11 +67,9 @@ export const useResourceCollection = () => {
   return {
     collectWood,
     collectStone,
-    collectIron,
     collectMultiple,
     flushUpdates,
     currentWood: wood,
-    currentStone: stone,
-    currentIron: iron
+    currentStone: stone
   };
 };

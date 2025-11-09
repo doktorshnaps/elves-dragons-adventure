@@ -8,8 +8,8 @@ import { useState } from 'react';
  * Показывает, как множественные клики группируются в один запрос
  */
 export const ResourceCollector = () => {
-  const { collectWood, collectStone, collectIron, currentWood, currentStone, currentIron } = useResourceCollection();
-  const [clickCount, setClickCount] = useState({ wood: 0, stone: 0, iron: 0 });
+  const { collectWood, collectStone, currentWood, currentStone } = useResourceCollection();
+  const [clickCount, setClickCount] = useState({ wood: 0, stone: 0 });
   
   const handleCollectWood = () => {
     collectWood(10);
@@ -21,18 +21,13 @@ export const ResourceCollector = () => {
     setClickCount(prev => ({ ...prev, stone: prev.stone + 1 }));
   };
   
-  const handleCollectIron = () => {
-    collectIron(2);
-    setClickCount(prev => ({ ...prev, iron: prev.iron + 1 }));
-  };
-  
   return (
     <Card className="w-full max-w-md">
       <CardHeader>
         <CardTitle>Сбор ресурсов (с батчингом)</CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
-        <div className="grid grid-cols-3 gap-4">
+        <div className="grid grid-cols-2 gap-4">
           <div className="text-center">
             <div className="text-2xl mb-2">🪵</div>
             <div className="font-semibold">{currentWood}</div>
@@ -48,15 +43,6 @@ export const ResourceCollector = () => {
             <div className="text-xs text-muted-foreground">Кликов: {clickCount.stone}</div>
             <Button onClick={handleCollectStone} size="sm" className="mt-2 w-full">
               +5
-            </Button>
-          </div>
-          
-          <div className="text-center">
-            <div className="text-2xl mb-2">⛏️</div>
-            <div className="font-semibold">{currentIron}</div>
-            <div className="text-xs text-muted-foreground">Кликов: {clickCount.iron}</div>
-            <Button onClick={handleCollectIron} size="sm" className="mt-2 w-full">
-              +2
             </Button>
           </div>
         </div>

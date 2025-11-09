@@ -173,7 +173,7 @@ class ResourceBatcher {
   /**
    * Обновляет ресурсы с debouncing
    */
-  updateResource(resourceType: 'wood' | 'stone' | 'iron' | 'gold', amount: number) {
+  updateResource(resourceType: 'wood' | 'stone', amount: number) {
     this.resourceUpdates[resourceType] = amount;
     
     if (this.debounceTimeout) {

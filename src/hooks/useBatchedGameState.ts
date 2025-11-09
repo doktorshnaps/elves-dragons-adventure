@@ -64,32 +64,14 @@ export const useBatchedGameState = () => {
     }, []),
     
     /**
-     * Обновляет железо с debouncing
-     */
-    updateIron: useCallback((amount: number) => {
-      resourceBatcher.updateResource('iron', amount);
-    }, []),
-    
-    /**
-     * Обновляет золото с debouncing
-     */
-    updateGold: useCallback((amount: number) => {
-      resourceBatcher.updateResource('gold', amount);
-    }, []),
-    
-    /**
      * Обновляет несколько ресурсов одновременно
      */
     updateResources: useCallback((resources: {
       wood?: number;
       stone?: number;
-      iron?: number;
-      gold?: number;
     }) => {
       if (resources.wood !== undefined) resourceBatcher.updateResource('wood', resources.wood);
       if (resources.stone !== undefined) resourceBatcher.updateResource('stone', resources.stone);
-      if (resources.iron !== undefined) resourceBatcher.updateResource('iron', resources.iron);
-      if (resources.gold !== undefined) resourceBatcher.updateResource('gold', resources.gold);
     }, []),
     
     /**

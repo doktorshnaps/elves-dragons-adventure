@@ -7,8 +7,6 @@ export interface UpgradeRequirement {
     balance?: number;
     wood?: number;
     stone?: number;
-    iron?: number;
-    gold?: number;
   };
   requiredItems: {
     itemId: string;
@@ -38,7 +36,7 @@ export const BARRACKS_UPGRADE_REQUIREMENTS: UpgradeRequirement[] = [
   {
     rarity: 3,
     successChance: 70,
-    costs: { balance: 600, wood: 200, stone: 100, iron: 50 },
+    costs: { balance: 600, wood: 200, stone: 100 },
     requiredItems: [
       { itemId: 'blackCrystals', name: 'Чёрные кристаллы', quantity: 2 },
       { itemId: 'rockStones', name: 'Камни', quantity: 5 }
@@ -47,7 +45,7 @@ export const BARRACKS_UPGRADE_REQUIREMENTS: UpgradeRequirement[] = [
   {
     rarity: 4,
     successChance: 60,
-    costs: { balance: 1200, wood: 300, stone: 200, iron: 100 },
+    costs: { balance: 1200, wood: 300, stone: 200 },
     requiredItems: [
       { itemId: 'magicalRoots', name: 'Магические корни', quantity: 3 },
       { itemId: 'blackCrystals', name: 'Чёрные кристаллы', quantity: 3 }
@@ -56,7 +54,7 @@ export const BARRACKS_UPGRADE_REQUIREMENTS: UpgradeRequirement[] = [
   {
     rarity: 5,
     successChance: 50,
-    costs: { balance: 2500, stone: 400, iron: 200, gold: 50 },
+    costs: { balance: 2500, stone: 400 },
     requiredItems: [
       { itemId: 'illusionManuscript', name: 'Манускрипт иллюзий', quantity: 2 },
       { itemId: 'shimmeringCrystal', name: 'Мерцающий кристалл', quantity: 2 }
@@ -65,7 +63,7 @@ export const BARRACKS_UPGRADE_REQUIREMENTS: UpgradeRequirement[] = [
   {
     rarity: 6,
     successChance: 40,
-    costs: { balance: 5000, iron: 400, gold: 100 },
+    costs: { balance: 5000 },
     requiredItems: [
       { itemId: 'darkMonocle', name: 'Тёмный монокль', quantity: 2 },
       { itemId: 'etherVine', name: 'Эфирная лоза', quantity: 3 }
@@ -74,7 +72,7 @@ export const BARRACKS_UPGRADE_REQUIREMENTS: UpgradeRequirement[] = [
   {
     rarity: 7,
     successChance: 30,
-    costs: { balance: 10000, iron: 800, gold: 200 },
+    costs: { balance: 10000 },
     requiredItems: [
       { itemId: 'lifeCrystal', name: 'Кристалл жизни', quantity: 3 },
       { itemId: 'healingOil', name: 'Целебное масло', quantity: 4 }
@@ -103,7 +101,7 @@ export const DRAGON_LAIR_UPGRADE_REQUIREMENTS: UpgradeRequirement[] = [
   {
     rarity: 3,
     successChance: 65,
-    costs: { balance: 800, wood: 250, stone: 150, iron: 80 },
+    costs: { balance: 800, wood: 250, stone: 150 },
     requiredItems: [
       { itemId: 'blackCrystals', name: 'Чёрные кристаллы', quantity: 3 },
       { itemId: 'magicalRoots', name: 'Магические корни', quantity: 4 }
@@ -112,7 +110,7 @@ export const DRAGON_LAIR_UPGRADE_REQUIREMENTS: UpgradeRequirement[] = [
   {
     rarity: 4,
     successChance: 55,
-    costs: { balance: 1500, wood: 400, stone: 250, iron: 150 },
+    costs: { balance: 1500, wood: 400, stone: 250 },
     requiredItems: [
       { itemId: 'etherVine', name: 'Эфирная лоза', quantity: 2 },
       { itemId: 'blackCrystals', name: 'Чёрные кристаллы', quantity: 4 }
@@ -121,7 +119,7 @@ export const DRAGON_LAIR_UPGRADE_REQUIREMENTS: UpgradeRequirement[] = [
   {
     rarity: 5,
     successChance: 45,
-    costs: { balance: 3000, stone: 500, iron: 300, gold: 80 },
+    costs: { balance: 3000, stone: 500 },
     requiredItems: [
       { itemId: 'shimmeringCrystal', name: 'Мерцающий кристалл', quantity: 3 },
       { itemId: 'healingOil', name: 'Целебное масло', quantity: 3 }
@@ -130,7 +128,7 @@ export const DRAGON_LAIR_UPGRADE_REQUIREMENTS: UpgradeRequirement[] = [
   {
     rarity: 6,
     successChance: 35,
-    costs: { balance: 6000, iron: 500, gold: 150 },
+    costs: { balance: 6000 },
     requiredItems: [
       { itemId: 'lifeCrystal', name: 'Кристалл жизни', quantity: 2 },
       { itemId: 'darkMonocle', name: 'Тёмный монокль', quantity: 3 }
@@ -139,7 +137,7 @@ export const DRAGON_LAIR_UPGRADE_REQUIREMENTS: UpgradeRequirement[] = [
   {
     rarity: 7,
     successChance: 25,
-    costs: { balance: 12000, iron: 1000, gold: 300 },
+    costs: { balance: 12000 },
     requiredItems: [
       { itemId: 'lifeCrystal', name: 'Кристалл жизни', quantity: 4 },
       { itemId: 'dwarvenTongs', name: 'Гномьи щипцы', quantity: 3 }

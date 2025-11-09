@@ -201,12 +201,6 @@ export const DragonLair: React.FC<DragonLairProps> = ({ lairLevel, onUpgradeBuil
     if (requirements.costs.stone && gameData.stone < requirements.costs.stone) {
       missingItems.push(`Камня: ${requirements.costs.stone - gameData.stone}`);
     }
-    if (requirements.costs.iron && gameData.iron < requirements.costs.iron) {
-      missingItems.push(`Железа: ${requirements.costs.iron - gameData.iron}`);
-    }
-    if (requirements.costs.gold && (gameData.gold || 0) < requirements.costs.gold) {
-      missingItems.push(`Золота: ${requirements.costs.gold - (gameData.gold || 0)}`);
-    }
     
     // Check required items
     requirements.requiredItems.forEach(reqItem => {
@@ -288,12 +282,6 @@ export const DragonLair: React.FC<DragonLairProps> = ({ lairLevel, onUpgradeBuil
     }
     if (requirements.costs.stone) {
       resourceUpdates.stone = gameData.stone - requirements.costs.stone;
-    }
-    if (requirements.costs.iron) {
-      resourceUpdates.iron = gameData.iron - requirements.costs.iron;
-    }
-    if (requirements.costs.gold) {
-      resourceUpdates.gold = (gameData.gold || 0) - requirements.costs.gold;
     }
 
     // Remove required items
@@ -619,19 +607,13 @@ export const DragonLair: React.FC<DragonLairProps> = ({ lairLevel, onUpgradeBuil
                                              {requirements.costs.balance}
                                            </Badge>
                                          )}
-                                         {requirements.costs.wood && (
-                                           <Badge variant="outline" className="text-xs">🪵 {requirements.costs.wood}</Badge>
-                                         )}
-                                         {requirements.costs.stone && (
-                                           <Badge variant="outline" className="text-xs">🪨 {requirements.costs.stone}</Badge>
-                                         )}
-                                         {requirements.costs.iron && (
-                                           <Badge variant="outline" className="text-xs">⚙️ {requirements.costs.iron}</Badge>
-                                         )}
-                                         {requirements.costs.gold && (
-                                           <Badge variant="outline" className="text-xs">💰 {requirements.costs.gold}</Badge>
-                                         )}
-                                       </div>
+                                          {requirements.costs.wood && (
+                                            <Badge variant="outline" className="text-xs">🪵 {requirements.costs.wood}</Badge>
+                                          )}
+                                          {requirements.costs.stone && (
+                                            <Badge variant="outline" className="text-xs">🪨 {requirements.costs.stone}</Badge>
+                                          )}
+                                        </div>
                                        
                                        {requirements.requiredItems.length > 0 && (
                                          <div className="flex flex-wrap gap-1 mt-1">

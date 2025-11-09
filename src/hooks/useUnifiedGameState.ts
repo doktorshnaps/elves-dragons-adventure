@@ -34,8 +34,6 @@ const initialGameData: GameData = {
   balance: 0,
   wood: 0,
   stone: 0,
-  iron: 0,
-  gold: 0,
   cards: [],
   initialized: false,
   dragonEggs: [],
@@ -221,7 +219,7 @@ export const useUnifiedGameState = (): UnifiedGameState => {
       await operation();
     },
 
-    updateResources: async (resources: { wood?: number; stone?: number; iron?: number; gold?: number }) => {
+    updateResources: async (resources: { wood?: number; stone?: number }) => {
       const operation = withErrorHandling(async () => {
         const newOptimisticData = { ...optimisticData, ...resources };
         await optimisticUpdate(
@@ -299,8 +297,6 @@ function mapClientToServer(data: Partial<GameData> | GameData) {
   if (d.balance !== undefined) out.balance = d.balance;
   if (d.wood !== undefined) out.wood = d.wood;
   if (d.stone !== undefined) out.stone = d.stone;
-  if (d.iron !== undefined) out.iron = d.iron;
-  if (d.gold !== undefined) out.gold = d.gold;
   if (d.cards !== undefined) out.cards = d.cards;
   if (d.initialized !== undefined) out.initialized = d.initialized;
   // inventory removed (legacy field, use item_instances table)
@@ -445,8 +441,6 @@ async function updateGameDataOnServer(walletAddress: string, updates: Partial<Ga
     p_active_building_upgrades: updates.activeBuildingUpgrades as any,
     p_wood: updates.wood,
     p_stone: updates.stone,
-    p_iron: updates.iron,
-    p_gold: updates.gold,
     p_wood_last_collection_time: updates.woodLastCollectionTime,
     p_stone_last_collection_time: updates.stoneLastCollectionTime,
     p_wood_production_data: updates.woodProductionData as any,

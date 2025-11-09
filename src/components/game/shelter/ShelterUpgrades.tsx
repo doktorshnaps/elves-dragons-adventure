@@ -23,8 +23,6 @@ interface ShelterUpgradesProps {
   resources?: {
     wood: number;
     stone: number;
-    iron: number;
-    gold: number;
   };
   inventoryCounts?: Record<string, number>;
   workersLoaded: boolean;
