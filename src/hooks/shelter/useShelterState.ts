@@ -98,16 +98,31 @@ export const useShelterState = () => {
   };
 
   const [activeWorkersLocal, setActiveWorkersLocal] = useState<any[]>(getActiveWorkersSafe());
+  const [workersLoaded, setWorkersLoaded] = useState(false);
+  
+  // Загрузка рабочих при монтировании
+  useEffect(() => {
+    const workers = getActiveWorkersSafe();
+    setActiveWorkersLocal(workers);
+    // Даём небольшую задержку чтобы убедиться что данные загружены
+    const timeout = setTimeout(() => {
+      setWorkersLoaded(true);
+    }, 100);
+    return () => clearTimeout(timeout);
+  }, []);
   
   // Обновляем локальный список при изменении данных игры
   useEffect(() => {
-    setActiveWorkersLocal(getActiveWorkersSafe());
+    const workers = getActiveWorkersSafe();
+    setActiveWorkersLocal(workers);
+    setWorkersLoaded(true);
   }, [gameState.activeWorkers]);
   
   // Слушаем локальные события об изменении активных рабочих
   useEffect(() => {
     const handler = (e: any) => {
       setActiveWorkersLocal(e.detail || getActiveWorkersSafe());
+      setWorkersLoaded(true);
     };
     window.addEventListener('activeWorkers:changed', handler as EventListener);
     return () => window.removeEventListener('activeWorkers:changed', handler as EventListener);
@@ -676,6 +691,7 @@ export const useShelterState = () => {
     activeTab,
     setActiveTab,
     activeWorkers,
+    workersLoaded,
     resources,
     buildingLevels,
     nestUpgrades,

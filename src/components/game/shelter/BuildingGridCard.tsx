@@ -21,6 +21,7 @@ interface BuildingGridCardProps {
     productionProgress: number;
     onCollect: () => Promise<void>;
   };
+  workersLoaded: boolean;
 }
 
 export const BuildingGridCard = ({
@@ -32,7 +33,8 @@ export const BuildingGridCard = ({
   activeWorkersCount,
   onClick,
   formatRemainingTime,
-  productionData
+  productionData,
+  workersLoaded
 }: BuildingGridCardProps) => {
   const { language } = useLanguage();
   
@@ -45,8 +47,9 @@ export const BuildingGridCard = ({
   
   // Серый фильтр для:
   // 1. Не построенных зданий (level === 0)
-  // 2. Построенных зданий, требующих рабочих, но без них (level > 0 && requiresWorkers && !hasWorkers)
-  const shouldBeGrayscale = upgrade.level === 0 || (upgrade.level > 0 && requiresWorkers && !hasWorkers);
+  // 2. Построенных зданий, требующих рабочих, но без них (level > 0 && requiresWorkers && !hasWorkers && workersLoaded)
+  // ВАЖНО: Не применяем серый фильтр пока данные рабочих не загружены (workersLoaded === false)
+  const shouldBeGrayscale = upgrade.level === 0 || (upgrade.level > 0 && requiresWorkers && !hasWorkers && workersLoaded);
 
   return (
     <Card 

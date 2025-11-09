@@ -39,6 +39,7 @@ export const Shelter = () => {
     handleUpgrade,
     handleCraft,
     activeWorkers,
+    workersLoaded,
     hasWorkersInBuilding,
     getActiveWorkersInBuilding,
     isUpgrading,
@@ -155,6 +156,7 @@ export const Shelter = () => {
               isUpgradeReady={isUpgradeReady}
               resources={resources}
               inventoryCounts={inventoryCounts}
+              workersLoaded={workersLoaded}
             />
           </TabsContent>
 

@@ -27,6 +27,7 @@ interface ShelterUpgradesProps {
     gold: number;
   };
   inventoryCounts?: Record<string, number>;
+  workersLoaded: boolean;
 }
 export const ShelterUpgrades = ({
   upgrades,
@@ -39,7 +40,8 @@ export const ShelterUpgrades = ({
   getActiveWorkersInBuilding,
   isUpgradeReady,
   resources,
-  inventoryCounts
+  inventoryCounts,
+  workersLoaded
 }: ShelterUpgradesProps) => {
   const [selectedBuilding, setSelectedBuilding] = useState<NestUpgrade | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -94,6 +96,7 @@ export const ShelterUpgrades = ({
               onClick={() => handleBuildingClick(upgrade)} 
               formatRemainingTime={formatRemainingTime}
               productionData={productionData}
+              workersLoaded={workersLoaded}
             />;
           })}
           </div>
