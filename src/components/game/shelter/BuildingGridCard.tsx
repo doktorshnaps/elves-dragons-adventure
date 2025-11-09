@@ -45,11 +45,11 @@ export const BuildingGridCard = ({
   const buildingsWithoutWorkers = ['storage', 'main_hall'];
   const requiresWorkers = !buildingsWithoutWorkers.includes(upgrade.id);
   
-  // Серый фильтр для:
-  // 1. Не построенных зданий (level === 0)
-  // 2. Построенных зданий, требующих рабочих, но без них (level > 0 && requiresWorkers && !hasWorkers && workersLoaded)
-  // ВАЖНО: Не применяем серый фильтр пока данные рабочих не загружены (workersLoaded === false)
-  const shouldBeGrayscale = upgrade.level === 0 || (upgrade.level > 0 && requiresWorkers && !hasWorkers && workersLoaded);
+  // Серый фильтр применяется ТОЛЬКО после полной загрузки данных о работниках
+  // Пока workersLoaded === false — ничего не делаем серым, чтобы избежать мигания при первом рендере
+  const shouldBeGrayscale = workersLoaded && (
+    upgrade.level === 0 || (requiresWorkers && !hasWorkers)
+  );
 
   return (
     <Card 
