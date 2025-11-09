@@ -17,6 +17,7 @@ interface BuildingGridCardProps {
   formatRemainingTime: (ms: number) => string;
   productionData?: {
     readyResources: number;
+    maxCapacity: number;
     productionProgress: number;
     onCollect: () => Promise<void>;
   };
@@ -133,10 +134,10 @@ export const BuildingGridCard = ({
                 <>
                   <div className="flex items-center justify-between text-xs">
                     <span className="text-white drop-shadow-[0_1px_2px_rgba(0,0,0,0.8)] font-medium">
-                      Добыча
+                      {t(language, 'shelter.production') || 'Добыча'}
                     </span>
                     <span className="font-bold text-primary drop-shadow-[0_1px_2px_rgba(0,0,0,0.8)]">
-                      {Math.floor(productionData.readyResources)}
+                      {Math.floor(productionData.readyResources)} / {productionData.maxCapacity}
                     </span>
                   </div>
                   <Progress value={productionData.productionProgress} className="h-1.5" />
@@ -154,7 +155,7 @@ export const BuildingGridCard = ({
                         : 'bg-muted text-muted-foreground cursor-not-allowed opacity-50'
                     }`}
                   >
-                    Собрать
+                    {t(language, 'shelter.collect') || 'Собрать'}
                   </button>
                 </>
               ) : (

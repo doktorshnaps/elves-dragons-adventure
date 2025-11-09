@@ -20,6 +20,8 @@ interface UseResourceProductionReturn {
   getTotalStonePerHour: () => number;
   getWoodProductionProgress: (hasWorkers?: boolean) => number;
   getStoneProductionProgress: (hasWorkers?: boolean) => number;
+  getMaxWoodCapacity: () => number;
+  getMaxStoneCapacity: () => number;
 }
 
 export const useResourceProduction = (): UseResourceProductionReturn => {
@@ -185,6 +187,25 @@ export const useResourceProduction = (): UseResourceProductionReturn => {
   }, [getQuarryLevel]);
 
   // Удалено - больше нет лимитов хранения
+  
+  // Функции для получения максимальной вместимости склада
+  const getMaxWoodCapacity = useCallback(() => {
+    const sawmillLevel = getSawmillLevel();
+    if (sawmillLevel === 0) return 0;
+    const woodPerHour = getTotalWoodPerHour();
+    const warehouseLevel = getWarehouseLevel();
+    const workingHours = getWarehouseWorkingHours(warehouseLevel);
+    return Math.floor(woodPerHour * workingHours);
+  }, [getSawmillLevel, getTotalWoodPerHour, getWarehouseLevel]);
+
+  const getMaxStoneCapacity = useCallback(() => {
+    const quarryLevel = getQuarryLevel();
+    if (quarryLevel === 0) return 0;
+    const stonePerHour = getTotalStonePerHour();
+    const warehouseLevel = getWarehouseLevel();
+    const workingHours = getWarehouseWorkingHours(warehouseLevel);
+    return Math.floor(stonePerHour * workingHours);
+  }, [getQuarryLevel, getTotalStonePerHour, getWarehouseLevel]);
 
   // Расчет готовых ресурсов без лимитов хранения
   const getWoodReady = useCallback((hasWorkers?: boolean) => {
@@ -384,6 +405,8 @@ export const useResourceProduction = (): UseResourceProductionReturn => {
     getTotalWoodPerHour,
     getTotalStonePerHour,
     getWoodProductionProgress,
-    getStoneProductionProgress
+    getStoneProductionProgress,
+    getMaxWoodCapacity,
+    getMaxStoneCapacity
   };
 };

@@ -50,7 +50,9 @@ export const ShelterUpgrades = ({
     getWoodProductionProgress,
     getStoneProductionProgress,
     collectWood,
-    collectStone
+    collectStone,
+    getMaxWoodCapacity,
+    getMaxStoneCapacity
   } = useResourceProduction();
   const handleBuildingClick = (building: NestUpgrade) => {
     setSelectedBuilding(building);
@@ -71,10 +73,12 @@ export const ShelterUpgrades = ({
             // Production data for resource buildings
             const productionData = upgrade.id === 'sawmill' ? {
               readyResources: getWoodReady(hasWorkers),
+              maxCapacity: getMaxWoodCapacity(),
               productionProgress: getWoodProductionProgress(hasWorkers),
               onCollect: collectWood
             } : upgrade.id === 'quarry' ? {
               readyResources: getStoneReady(hasWorkers),
+              maxCapacity: getMaxStoneCapacity(),
               productionProgress: getStoneProductionProgress(hasWorkers),
               onCollect: collectStone
             } : undefined;
