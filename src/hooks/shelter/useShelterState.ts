@@ -20,8 +20,6 @@ export interface NestUpgrade {
   cost: {
     wood: number;
     stone: number;
-    iron: number;
-    gold: number;
     balance: number;
     gt: number;
   };
@@ -37,7 +35,6 @@ export interface CraftRecipe {
   requirements: {
     wood?: number;
     stone?: number;
-    iron?: number;
     balance?: number;
     materials?: Array<{ item_id: string; quantity: number }>;
   };
@@ -197,8 +194,6 @@ export const useShelterState = () => {
       return {
         wood: costFromDB.wood || 0,
         stone: costFromDB.stone || 0,
-        iron: costFromDB.iron || 0,
-        gold: costFromDB.gold || 0,
         balance: costFromDB.ell || 0, // ell = игровая валюта (balance)
         gt: costFromDB.gt || 0
       };
@@ -206,24 +201,22 @@ export const useShelterState = () => {
     
     // Fallback на захардкоженные значения (на случай если БД недоступна)
     const baseCosts: Record<string, any> = {
-      main_hall: { wood: 0, stone: 0, iron: 0, balance: 50 },
-      workshop: { wood: 0, stone: 0, iron: 0, balance: 100 },
-      storage: { wood: 0, stone: 0, iron: 0, balance: 100 },
-      sawmill: { wood: 0, stone: 0, iron: 0, balance: 100 },
-      quarry: { wood: 0, stone: 0, iron: 0, balance: 100 },
-      barracks: { wood: 0, stone: 0, iron: 0, balance: 400 },
-      dragon_lair: { wood: 0, stone: 0, iron: 0, balance: 400 },
-      medical: { wood: 0, stone: 0, iron: 0, balance: 50 }
+      main_hall: { wood: 0, stone: 0, balance: 50 },
+      workshop: { wood: 0, stone: 0, balance: 100 },
+      storage: { wood: 0, stone: 0, balance: 100 },
+      sawmill: { wood: 0, stone: 0, balance: 100 },
+      quarry: { wood: 0, stone: 0, balance: 100 },
+      barracks: { wood: 0, stone: 0, balance: 400 },
+      dragon_lair: { wood: 0, stone: 0, balance: 400 },
+      medical: { wood: 0, stone: 0, balance: 50 }
     };
     
-    const baseCost = baseCosts[buildingId] || { wood: 30, stone: 20, iron: 5, balance: 50 };
+    const baseCost = baseCosts[buildingId] || { wood: 30, stone: 20, balance: 50 };
     const multiplier = Math.pow(1.5, currentLevel);
     
     return {
       wood: Math.floor(baseCost.wood * multiplier),
       stone: Math.floor(baseCost.stone * multiplier),
-      iron: Math.floor(baseCost.iron * multiplier),
-      gold: 0,
       balance: Math.floor(baseCost.balance * multiplier),
       gt: 0
     };
@@ -415,11 +408,10 @@ export const useShelterState = () => {
     const levelOk = upgrade.level < upgrade.maxLevel;
     const woodOk = resources.wood >= (upgrade.cost.wood || 0);
     const stoneOk = resources.stone >= (upgrade.cost.stone || 0);
-    const ironOk = resources.iron >= (upgrade.cost.iron || 0);
     const balanceOk = gameState.balance >= (upgrade.cost.balance || 0);
     const mhOk = canUpgradeBuilding(upgrade.id);
 
-    return levelOk && woodOk && stoneOk && ironOk && balanceOk && mhOk && hasRequiredItems;
+    return levelOk && woodOk && stoneOk && balanceOk && mhOk && hasRequiredItems;
   }, [inventoryCounts, resources, gameState.balance, getTemplate, canUpgradeBuilding]);
   
   const canAffordCraft = (recipe: CraftRecipe) => {
@@ -429,7 +421,6 @@ export const useShelterState = () => {
     const basicResourcesCheck = 
       (!recipe.requirements.wood || resources.wood >= recipe.requirements.wood) && 
       (!recipe.requirements.stone || resources.stone >= recipe.requirements.stone) && 
-      (!recipe.requirements.iron || resources.iron >= recipe.requirements.iron) && 
       (!recipe.requirements.balance || gameState.balance >= recipe.requirements.balance);
     
     // Проверка требуемых материалов
@@ -461,8 +452,7 @@ export const useShelterState = () => {
     
     const newResources = {
       wood: resources.wood - upgrade.cost.wood,
-      stone: resources.stone - upgrade.cost.stone,
-      iron: resources.iron - upgrade.cost.iron
+      stone: resources.stone - upgrade.cost.stone
     };
     
     const newBalance = gameState.balance - upgrade.cost.balance;

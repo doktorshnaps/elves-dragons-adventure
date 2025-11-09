@@ -30,8 +30,6 @@ interface BuildingConfig {
   production_per_hour: number;
   cost_wood: number;
   cost_stone: number;
-  cost_iron: number;
-  cost_gold: number;
   cost_ell: number;
   cost_gt: number;
   required_items: Array<{ item_id: number; quantity: number }>;
@@ -176,8 +174,6 @@ export default function ShelterBuildingSettings() {
           production_per_hour: config.production_per_hour || 0,
           cost_wood: config.cost_wood || 0,
           cost_stone: config.cost_stone || 0,
-          cost_iron: config.cost_iron || 0,
-          cost_gold: config.cost_gold || 0,
           cost_ell: config.cost_ell || 0,
           cost_gt: config.cost_gt || 0,
           required_items: config.required_items || [],
@@ -217,8 +213,6 @@ export default function ShelterBuildingSettings() {
           production_per_hour: config.production_per_hour || 0,
           cost_wood: config.cost_wood || 0,
           cost_stone: config.cost_stone || 0,
-          cost_iron: config.cost_iron || 0,
-          cost_gold: config.cost_gold || 0,
           cost_ell: config.cost_ell || 0,
           cost_gt: config.cost_gt || 0,
           required_items: config.required_items || [],
@@ -278,8 +272,6 @@ export default function ShelterBuildingSettings() {
       production_per_hour: 0,
       cost_wood: 0,
       cost_stone: 0,
-      cost_iron: 0,
-      cost_gold: 0,
       cost_ell: 0,
       cost_gt: 0,
       required_items: [],
@@ -509,8 +501,6 @@ export default function ShelterBuildingSettings() {
                     <TableHead className="text-white min-w-[80px]">Добыча/ч</TableHead>
                     <TableHead className="text-white min-w-[80px]">Древесина</TableHead>
                     <TableHead className="text-white min-w-[80px]">Камень</TableHead>
-                    <TableHead className="text-white min-w-[80px]">Железо</TableHead>
-                    <TableHead className="text-white min-w-[80px]">Золото</TableHead>
                     <TableHead className="text-white min-w-[80px]">ELL</TableHead>
                     <TableHead className="text-white min-w-[80px]">GT</TableHead>
                     <TableHead className="text-white min-w-[200px]">Предметы</TableHead>
@@ -561,36 +551,6 @@ export default function ShelterBuildingSettings() {
                           const updated = configs.map(c =>
                             c.id === config.id
                               ? { ...c, cost_stone: parseInt(e.target.value) || 0 }
-                              : c
-                          );
-                          setConfigs(updated);
-                        }}
-                        className="w-24 bg-black/50 border-white/20 text-white"
-                      />
-                    </TableCell>
-                    <TableCell>
-                      <Input
-                        type="number"
-                        value={config.cost_iron}
-                        onChange={(e) => {
-                          const updated = configs.map(c =>
-                            c.id === config.id
-                              ? { ...c, cost_iron: parseInt(e.target.value) || 0 }
-                              : c
-                          );
-                          setConfigs(updated);
-                        }}
-                        className="w-24 bg-black/50 border-white/20 text-white"
-                      />
-                    </TableCell>
-                    <TableCell>
-                      <Input
-                        type="number"
-                        value={config.cost_gold}
-                        onChange={(e) => {
-                          const updated = configs.map(c =>
-                            c.id === config.id
-                              ? { ...c, cost_gold: parseInt(e.target.value) || 0 }
                               : c
                           );
                           setConfigs(updated);
@@ -786,22 +746,6 @@ export default function ShelterBuildingSettings() {
                         type="number"
                         value={editingConfig.cost_stone}
                         onChange={(e) => setEditingConfig({ ...editingConfig, cost_stone: parseInt(e.target.value) || 0 })}
-                        className="w-24 bg-black/50 border-white/20 text-white"
-                      />
-                    </TableCell>
-                    <TableCell>
-                      <Input
-                        type="number"
-                        value={editingConfig.cost_iron}
-                        onChange={(e) => setEditingConfig({ ...editingConfig, cost_iron: parseInt(e.target.value) || 0 })}
-                        className="w-24 bg-black/50 border-white/20 text-white"
-                      />
-                    </TableCell>
-                    <TableCell>
-                      <Input
-                        type="number"
-                        value={editingConfig.cost_gold}
-                        onChange={(e) => setEditingConfig({ ...editingConfig, cost_gold: parseInt(e.target.value) || 0 })}
                         className="w-24 bg-black/50 border-white/20 text-white"
                       />
                     </TableCell>

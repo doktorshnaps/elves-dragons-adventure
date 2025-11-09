@@ -113,12 +113,6 @@ export const ShelterCrafting = ({
                       <span className="text-sm">{recipe.requirements.stone}</span>
                     </div>
                   )}
-                  {recipe.requirements.iron && (
-                    <div className="flex items-center gap-2">
-                      <span>⛏️</span>
-                      <span className="text-sm">{recipe.requirements.iron}</span>
-                    </div>
-                  )}
                   {recipe.requirements.balance && (
                     <div className="flex items-center gap-2">
                       <span>💰</span>

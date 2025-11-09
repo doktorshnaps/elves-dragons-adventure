@@ -9,8 +9,6 @@ interface BuildingConfig {
   production_per_hour: number;
   cost_wood: number;
   cost_stone: number;
-  cost_iron: number;
-  cost_gold: number;
   cost_ell: number;
   cost_gt: number;
   required_items: any;
@@ -93,8 +91,6 @@ export const useBuildingConfigs = () => {
     return {
       wood: config.cost_wood,
       stone: config.cost_stone,
-      iron: config.cost_iron,
-      gold: config.cost_gold,
       ell: config.cost_ell,
       gt: config.cost_gt,
     };

@@ -7,8 +7,6 @@ export interface ResourceBuildingConfig {
   upgradeCosts: {
     wood: number;
     stone: number;
-    iron?: number;
-    gold?: number;
     ell?: number;
     gt?: number;
   };
@@ -114,8 +112,6 @@ export const getSawmillConfig = (level: number): ResourceBuildingConfig | null =
         upgradeCosts: {
           wood: dbConfig.cost_wood,
           stone: dbConfig.cost_stone,
-          iron: dbConfig.cost_iron,
-          gold: dbConfig.cost_gold,
           ell: dbConfig.cost_ell,
           gt: dbConfig.cost_gt,
         }
@@ -136,8 +132,6 @@ export const getQuarryConfig = (level: number): ResourceBuildingConfig | null =>
         upgradeCosts: {
           wood: dbConfig.cost_wood,
           stone: dbConfig.cost_stone,
-          iron: dbConfig.cost_iron,
-          gold: dbConfig.cost_gold,
           ell: dbConfig.cost_ell,
           gt: dbConfig.cost_gt,
         }

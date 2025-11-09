@@ -225,18 +225,6 @@ export const BuildingCard = ({
                   <span className="font-bold text-foreground">{upgrade.cost.stone}</span>
                 </div>
               )}
-              {upgrade.cost.iron > 0 && (
-                <div className="flex items-center gap-2 px-3 py-2 bg-muted/30 rounded-lg border border-border">
-                  <span className="text-lg">⛏️</span>
-                  <span className="font-bold text-foreground">{upgrade.cost.iron}</span>
-                </div>
-              )}
-              {upgrade.cost.gold > 0 && (
-                <div className="flex items-center gap-2 px-3 py-2 bg-muted/30 rounded-lg border border-border">
-                  <span className="text-lg">🪙</span>
-                  <span className="font-bold text-foreground">{upgrade.cost.gold}</span>
-                </div>
-              )}
               {upgrade.cost.balance > 0 && (
                 <div className="flex items-center gap-2 px-3 py-2 bg-primary/15 rounded-lg border-2 border-primary/30">
                   <span className="text-lg">💰</span>

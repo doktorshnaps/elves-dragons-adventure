@@ -120,26 +120,6 @@ export const BuildingDetailsPanel = ({
                     {resources && <span className="text-xs ml-1 opacity-70">({resources.stone})</span>}
                   </span>
                 </div>}
-              {selectedBuilding.cost.iron > 0 && <div className="flex items-center justify-between px-3 py-2 bg-muted/30 rounded-lg border border-border">
-                  <div className="flex items-center gap-2">
-                    <span className="text-lg">⛏️</span>
-                    <span className="text-sm">{t(language, 'resources.iron') || 'Железо'}</span>
-                  </div>
-                  <span className="font-bold">
-                    {selectedBuilding.cost.iron}
-                    {resources && <span className="text-xs ml-1 opacity-70">({resources.iron})</span>}
-                  </span>
-                </div>}
-              {selectedBuilding.cost.gold > 0 && <div className="flex items-center justify-between px-3 py-2 bg-muted/30 rounded-lg border border-border">
-                  <div className="flex items-center gap-2">
-                    <span className="text-lg">🪙</span>
-                    <span className="text-sm">{t(language, 'resources.gold') || 'Золото'}</span>
-                  </div>
-                  <span className="font-bold">
-                    {selectedBuilding.cost.gold}
-                    {resources && <span className="text-xs ml-1 opacity-70">({resources.gold})</span>}
-                  </span>
-                </div>}
               {selectedBuilding.cost.balance > 0 && <div className="flex items-center justify-between px-3 py-2 bg-primary/15 rounded-lg border-2 border-primary/30">
                   <div className="flex items-center gap-2">
                     <span className="text-lg">💰</span>
