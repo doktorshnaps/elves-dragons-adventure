@@ -38,10 +38,14 @@ export const BuildingGridCard = ({
   const isResourceBuilding = upgrade.id === 'sawmill' || upgrade.id === 'quarry';
   const canCollect = productionData && productionData.readyResources > 0 && productionData.productionProgress >= 100 && hasWorkers;
   
-  // Серый фильтр только для:
+  // Здания, которые НЕ требуют рабочих для работы
+  const buildingsWithoutWorkers = ['storage', 'main_hall'];
+  const requiresWorkers = !buildingsWithoutWorkers.includes(upgrade.id);
+  
+  // Серый фильтр для:
   // 1. Не построенных зданий (level === 0)
-  // 2. Построенных производственных зданий БЕЗ рабочих (level > 0 && isResourceBuilding && !hasWorkers)
-  const shouldBeGrayscale = upgrade.level === 0 || (upgrade.level > 0 && isResourceBuilding && !hasWorkers);
+  // 2. Построенных зданий, требующих рабочих, но без них (level > 0 && requiresWorkers && !hasWorkers)
+  const shouldBeGrayscale = upgrade.level === 0 || (upgrade.level > 0 && requiresWorkers && !hasWorkers);
 
   return (
     <Card 
