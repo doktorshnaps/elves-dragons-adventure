@@ -28,48 +28,51 @@ serve(async (req) => {
       });
     }
 
-    // Create client with user's JWT to get their wallet
+    // Create client with user's JWT (may be anon) for contextual auth
     const userSupabase = createClient(supabaseUrl, Deno.env.get('SUPABASE_ANON_KEY')!, {
       global: { headers: { Authorization: authHeader } }
     });
 
-    // Get authenticated user from JWT
-    const { data: { user }, error: authError } = await userSupabase.auth.getUser();
-    
-    if (authError || !user) {
-      return new Response(JSON.stringify({ 
-        error: 'Authentication failed',
-        success: false 
+    // Parse request body to get potential admin wallet fallback
+    const reqBody = req.method === 'POST' ? await req.json().catch(() => ({})) : {};
+    const bodyAdminWallet = reqBody?.adminWallet || reqBody?.wallet_address;
+
+    // Try to resolve wallet from authenticated user first (if any)
+    let resolvedWallet: string | null = null;
+    const { data: authData } = await userSupabase.auth.getUser();
+    const user = authData?.user || null;
+
+    if (user) {
+      const { data: userData } = await userSupabase
+        .from('game_data')
+        .select('wallet_address')
+        .eq('user_id', user.id)
+        .single();
+      resolvedWallet = userData?.wallet_address || null;
+    }
+
+    // Fallback to wallet from request body
+    const adminWallet = (resolvedWallet || bodyAdminWallet || '').toString();
+
+    if (!adminWallet) {
+      return new Response(JSON.stringify({
+        error: 'Missing admin wallet. Provide in body as {"adminWallet": "<wallet>"}',
+        success: false
       }), {
         status: 401,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
 
-    // Get user's wallet address from their game_data using user_id
-    const { data: userData, error: userError } = await userSupabase
-      .from('game_data')
-      .select('wallet_address')
-      .eq('user_id', user.id)
-      .single();
+    // Verify admin via secure RPC
+    const { data: isAdmin, error: roleErr } = await supabase.rpc('is_admin_or_super_wallet', {
+      p_wallet_address: adminWallet
+    });
 
-    if (userError || !userData) {
-      return new Response(JSON.stringify({ 
-        error: 'Failed to get user wallet address',
-        success: false 
-      }), {
-        status: 401,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
-    }
-
-    const adminWallet = userData.wallet_address;
-
-    // Verify admin
-    if (adminWallet !== 'mr_bruts.tg') {
-      return new Response(JSON.stringify({ 
+    if (roleErr || !isAdmin) {
+      return new Response(JSON.stringify({
         error: 'Unauthorized: Only admin can wipe game data',
-        success: false 
+        success: false
       }), {
         status: 403,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -120,7 +123,7 @@ serve(async (req) => {
         initialized: true,
         updated_at: new Date().toISOString()
       })
-      .neq('wallet_address', 'mr_bruts.tg'); // Don't wipe admin data
+      .neq('wallet_address', adminWallet); // Don't wipe admin data
 
     if (gameDataError) {
       console.error('❌ Error wiping game_data:', gameDataError);
@@ -131,7 +134,7 @@ serve(async (req) => {
     const { error: cardInstancesError } = await supabase
       .from('card_instances')
       .delete()
-      .neq('wallet_address', 'mr_bruts.tg');
+      .neq('wallet_address', adminWallet);
 
     if (cardInstancesError) {
       console.error('❌ Error wiping card_instances:', cardInstancesError);
@@ -142,7 +145,7 @@ serve(async (req) => {
     const { error: medicalBayError } = await supabase
       .from('medical_bay')
       .delete()
-      .neq('wallet_address', 'mr_bruts.tg');
+      .neq('wallet_address', adminWallet);
 
     if (medicalBayError) {
       console.error('❌ Error wiping medical_bay:', medicalBayError);
@@ -153,7 +156,7 @@ serve(async (req) => {
     const { error: marketplaceError } = await supabase
       .from('marketplace_listings')
       .delete()
-      .neq('seller_wallet_address', 'mr_bruts.tg');
+      .neq('seller_wallet_address', adminWallet);
 
     if (marketplaceError) {
       console.error('❌ Error wiping marketplace_listings:', marketplaceError);
