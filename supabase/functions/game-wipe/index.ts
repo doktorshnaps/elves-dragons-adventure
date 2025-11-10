@@ -33,11 +33,24 @@ serve(async (req) => {
       global: { headers: { Authorization: authHeader } }
     });
 
-    // Get user's wallet address from their profile/game_data
+    // Get authenticated user from JWT
+    const { data: { user }, error: authError } = await userSupabase.auth.getUser();
+    
+    if (authError || !user) {
+      return new Response(JSON.stringify({ 
+        error: 'Authentication failed',
+        success: false 
+      }), {
+        status: 401,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    // Get user's wallet address from their game_data using user_id
     const { data: userData, error: userError } = await userSupabase
       .from('game_data')
       .select('wallet_address')
-      .limit(1)
+      .eq('user_id', user.id)
       .single();
 
     if (userError || !userData) {
