@@ -192,11 +192,26 @@ serve(async (req) => {
         last_reset_time: new Date().toISOString(),
         next_reset_time: new Date(Date.now() + 8 * 60 * 60 * 1000).toISOString(),
         updated_at: new Date().toISOString()
-      });
+      })
+      .not('id', 'is', null); // WHERE id IS NOT NULL to satisfy PostgREST
 
     if (shopResetError) {
       console.error('❌ Error resetting shop_inventory:', shopResetError);
       throw shopResetError;
+    }
+
+    // Reactivate all quests globally (per-user completions already cleared in game_data)
+    const { error: questsResetError } = await supabase
+      .from('quests')
+      .update({
+        is_active: true,
+        updated_at: new Date().toISOString()
+      })
+      .not('id', 'is', null);
+
+    if (questsResetError) {
+      console.error('❌ Error resetting quests:', questsResetError);
+      throw questsResetError;
     }
 
     // NOTE: Referral data (referrals and referral_earnings) is preserved during wipe
