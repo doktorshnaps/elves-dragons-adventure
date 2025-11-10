@@ -695,6 +695,7 @@ export type Database = {
           building_levels: Json | null
           cards: Json
           created_at: string
+          data_version: number | null
           dragon_eggs: Json | null
           dragon_lair_upgrades: Json
           gold: number
@@ -731,6 +732,7 @@ export type Database = {
           building_levels?: Json | null
           cards?: Json
           created_at?: string
+          data_version?: number | null
           dragon_eggs?: Json | null
           dragon_lair_upgrades?: Json
           gold?: number
@@ -767,6 +769,7 @@ export type Database = {
           building_levels?: Json | null
           cards?: Json
           created_at?: string
+          data_version?: number | null
           dragon_eggs?: Json | null
           dragon_lair_upgrades?: Json
           gold?: number
@@ -2599,40 +2602,77 @@ export type Database = {
         }
         Returns: boolean
       }
-      update_game_data_by_wallet_v2: {
-        Args: {
-          p_account_experience?: number
-          p_account_level?: number
-          p_active_building_upgrades?: Json
-          p_active_workers?: Json
-          p_adventure_current_monster?: Json
-          p_adventure_player_stats?: Json
-          p_balance?: number
-          p_barracks_upgrades?: Json
-          p_battle_state?: Json
-          p_building_levels?: Json
-          p_cards?: Json
-          p_dragon_eggs?: Json
-          p_dragon_lair_upgrades?: Json
-          p_gold?: number
-          p_initialized?: boolean
-          p_iron?: number
-          p_marketplace_listings?: Json
-          p_max_iron?: number
-          p_max_stone?: number
-          p_max_wood?: number
-          p_selected_team?: Json
-          p_social_quests?: Json
-          p_stone?: number
-          p_stone_last_collection_time?: number
-          p_stone_production_data?: Json
-          p_wallet_address: string
-          p_wood?: number
-          p_wood_last_collection_time?: number
-          p_wood_production_data?: Json
-        }
-        Returns: boolean
-      }
+      update_game_data_by_wallet_v2:
+        | {
+            Args: {
+              p_account_experience?: number
+              p_account_level?: number
+              p_active_building_upgrades?: Json
+              p_active_workers?: Json
+              p_adventure_current_monster?: Json
+              p_adventure_player_stats?: Json
+              p_balance?: number
+              p_barracks_upgrades?: Json
+              p_battle_state?: Json
+              p_building_levels?: Json
+              p_cards?: Json
+              p_dragon_eggs?: Json
+              p_dragon_lair_upgrades?: Json
+              p_expected_version?: number
+              p_force?: boolean
+              p_gold?: number
+              p_initialized?: boolean
+              p_iron?: number
+              p_marketplace_listings?: Json
+              p_max_iron?: number
+              p_max_stone?: number
+              p_max_wood?: number
+              p_selected_team?: Json
+              p_social_quests?: Json
+              p_stone?: number
+              p_stone_last_collection_time?: number
+              p_stone_production_data?: Json
+              p_wallet_address: string
+              p_wood?: number
+              p_wood_last_collection_time?: number
+              p_wood_production_data?: Json
+            }
+            Returns: boolean
+          }
+        | {
+            Args: {
+              p_account_experience?: number
+              p_account_level?: number
+              p_active_building_upgrades?: Json
+              p_active_workers?: Json
+              p_adventure_current_monster?: Json
+              p_adventure_player_stats?: Json
+              p_balance?: number
+              p_barracks_upgrades?: Json
+              p_battle_state?: Json
+              p_building_levels?: Json
+              p_cards?: Json
+              p_dragon_eggs?: Json
+              p_dragon_lair_upgrades?: Json
+              p_gold?: number
+              p_initialized?: boolean
+              p_iron?: number
+              p_marketplace_listings?: Json
+              p_max_iron?: number
+              p_max_stone?: number
+              p_max_wood?: number
+              p_selected_team?: Json
+              p_social_quests?: Json
+              p_stone?: number
+              p_stone_last_collection_time?: number
+              p_stone_production_data?: Json
+              p_wallet_address: string
+              p_wood?: number
+              p_wood_last_collection_time?: number
+              p_wood_production_data?: Json
+            }
+            Returns: boolean
+          }
       update_resource_production_state_by_wallet: {
         Args: {
           p_is_producing: boolean

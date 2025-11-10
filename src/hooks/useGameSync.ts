@@ -3,6 +3,7 @@ import { useGameStore } from '@/stores/gameStore';
 import { useGameData } from '@/hooks/useGameData';
 import { useWalletContext } from '@/contexts/WalletConnectContext';
 import { useCardInstanceSync } from '@/hooks/useCardInstanceSync';
+import { setSyncFreeze, clearSyncFreeze } from '@/utils/updateGameDataThrottle';
 
 /**
  * Синхронизирует локальное состояние Zustand с Supabase
@@ -54,8 +55,13 @@ export const useGameSync = () => {
     if (prevAccountIdRef.current && prevAccountIdRef.current !== accountId) {
       console.log('🔄 Wallet changed, clearing all cached data');
       
-      // КРИТИЧНО: блокируем синхронизацию перед очисткой, чтобы не затереть данные в БД
+      // КРИТИЧНО: блокируем синхронизацию перед очисткой (двойная защита)
       preventSyncAfterClearRef.current = true;
+      
+      // Глобальный freeze на 3 секунды для throttler
+      if (accountId) {
+        setSyncFreeze(accountId, 3000);
+      }
       
       gameStore.clearAllData();
       lastSyncedRef.current = null;
@@ -136,6 +142,11 @@ export const useGameSync = () => {
         
         // Разрешаем синхронизацию после успешной загрузки данных
         preventSyncAfterClearRef.current = false;
+        
+        // Снимаем глобальный freeze
+        if (accountId) {
+          clearSyncFreeze(accountId);
+        }
         
         console.log('✅ useGameSync: Data loaded to store');
       } finally {

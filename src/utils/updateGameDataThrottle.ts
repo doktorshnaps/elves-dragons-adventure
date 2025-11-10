@@ -109,9 +109,45 @@ interface QueueState {
 const queues = new Map<string, QueueState>();
 const DEBOUNCE_MS = 600; // enough to collapse bursts
 
+// Global sync freeze to prevent data loss during wallet switch/clear
+const syncFreezeMap = new Map<string, number>(); // wallet -> freeze end timestamp
+const FREEZE_DURATION_MS = 3000; // 3 seconds freeze after clear
+
+export function setSyncFreeze(wallet: string, durationMs: number = FREEZE_DURATION_MS) {
+  const freezeUntil = Date.now() + durationMs;
+  syncFreezeMap.set(wallet, freezeUntil);
+  console.log(`🔒 [throttler] Sync frozen for wallet ${wallet} until ${new Date(freezeUntil).toISOString()}`);
+}
+
+export function clearSyncFreeze(wallet: string) {
+  syncFreezeMap.delete(wallet);
+  console.log(`🔓 [throttler] Sync freeze cleared for wallet ${wallet}`);
+}
+
+function isSyncFrozen(wallet: string): boolean {
+  const freezeUntil = syncFreezeMap.get(wallet);
+  if (!freezeUntil) return false;
+  
+  const now = Date.now();
+  if (now < freezeUntil) {
+    console.log(`❄️ [throttler] Sync frozen for wallet ${wallet} (${Math.round((freezeUntil - now) / 1000)}s remaining)`);
+    return true;
+  }
+  
+  // Auto-cleanup expired freeze
+  syncFreezeMap.delete(wallet);
+  return false;
+}
+
 export async function updateGameDataByWalletThrottled(payload: Record<string, any>): Promise<boolean> {
   const wallet = payload.p_wallet_address as string;
   if (!wallet) throw new Error('p_wallet_address is required');
+
+  // КРИТИЧНО: блокируем запись если активен freeze (защита от race condition при смене кошелька)
+  if (isSyncFrozen(wallet)) {
+    console.warn(`🚫 [throttler] Update blocked by sync freeze for wallet ${wallet}`);
+    return true; // Возвращаем true чтобы не триггерить ошибки в UI
+  }
 
   let q = queues.get(wallet);
   if (!q) {
