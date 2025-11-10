@@ -20,11 +20,16 @@ interface BuildingConfig {
   background_image_url?: string;
 }
 
-export const useBuildingConfigs = () => {
+export const useBuildingConfigs = (autoLoad = true) => {
   const [configs, setConfigs] = useState<Map<string, BuildingConfig[]>>(new Map());
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    if (!autoLoad) {
+      setLoading(false);
+      return;
+    }
+    
     loadConfigs();
 
     // Subscribe to changes
@@ -46,7 +51,7 @@ export const useBuildingConfigs = () => {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, []);
+  }, [autoLoad]);
 
   const loadConfigs = async () => {
     try {

@@ -49,10 +49,10 @@ export const useShelterState = () => {
   const gameState = useBatchedGameState();
   const { toast } = useToast();
   const { startUpgradeAtomic, isUpgrading, getUpgradeProgress, formatRemainingTime, installUpgrade, isUpgradeReady } = useBuildingUpgrades();
-  const { getBuildingConfig, getUpgradeCost: getUpgradeCostFromDB, loading: configsLoading } = useBuildingConfigs();
+  const { getBuildingConfig, getUpgradeCost: getUpgradeCostFromDB, loading: configsLoading } = useBuildingConfigs(true);
   const { getTemplate, getItemName, getTemplateByName } = useItemTemplates();
   const { instances, getCountsByItemId, getInstancesByItemId, removeItemInstancesByIds } = useItemInstances();
-  const { recipes: craftingRecipesFromDB, loading: recipesLoading } = useCraftingRecipes();
+  const { recipes: craftingRecipesFromDB, loading: recipesLoading, reload: reloadRecipes } = useCraftingRecipes(true);
   const { addItemsToInstances } = useAddItemToInstances();
   
   // Мемоизируем счётчики предметов для передачи в компоненты
@@ -697,6 +697,7 @@ export const useShelterState = () => {
     isUpgradeReady,
     balance,
     inventoryCounts,
-    gameLoaded: !gameState.loading
+    gameLoaded: !gameState.loading,
+    reloadRecipes
   };
 };

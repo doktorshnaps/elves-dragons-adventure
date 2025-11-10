@@ -50,7 +50,8 @@ export const Shelter = () => {
     isUpgradeReady,
     balance,
     inventoryCounts,
-    gameLoaded
+    gameLoaded,
+    reloadRecipes
   } = useShelterState();
 
   // Показываем загрузчик пока данные не загружены
@@ -179,6 +180,7 @@ export const Shelter = () => {
               workshopLevel={buildingLevels.workshop}
               inventoryCounts={inventoryCounts}
               activeWorkers={activeWorkers}
+              onRefresh={reloadRecipes}
             />
           </TabsContent>
 

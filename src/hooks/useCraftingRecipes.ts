@@ -16,11 +16,16 @@ export interface CraftingRecipe {
   crafting_time_hours?: number;
 }
 
-export const useCraftingRecipes = () => {
+export const useCraftingRecipes = (autoLoad = true) => {
   const [recipes, setRecipes] = useState<CraftingRecipe[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    if (!autoLoad) {
+      setLoading(false);
+      return;
+    }
+    
     loadRecipes();
 
     // Подписка на изменения
@@ -42,7 +47,7 @@ export const useCraftingRecipes = () => {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, []);
+  }, [autoLoad]);
 
   const loadRecipes = async () => {
     try {
