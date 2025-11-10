@@ -94,7 +94,6 @@ serve(async (req) => {
         max_stone: 0,
         max_iron: 0,
         cards: [],
-        inventory: [],
         dragon_eggs: [],
         selected_team: [],
         battle_state: null,
