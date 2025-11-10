@@ -5,6 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { useUnifiedGameState } from "@/hooks/useUnifiedGameState";
 import { useCardInstances } from "@/hooks/useCardInstances";
+import { useItemOperations } from "@/hooks/useItemOperations";
 import { useToast } from "@/hooks/use-toast";
 import { useLanguage } from "@/hooks/useLanguage";
 import { t } from "@/utils/translations";
@@ -31,6 +32,7 @@ interface WorkersManagementProps {
 export const WorkersManagement = ({ onSpeedBoostChange }: WorkersManagementProps) => {
   const gameState = useUnifiedGameState();
   const { cardInstances, deleteCardInstance, loadCardInstances } = useCardInstances();
+  const { removeItem } = useItemOperations();
   const { language } = useLanguage();
   const { accountId } = useWalletContext();
   
@@ -258,39 +260,18 @@ export const WorkersManagement = ({ onSpeedBoostChange }: WorkersManagementProps
       setActiveWorkers(updatedActiveWorkers);
       console.log('✅ Optimistic UI update done');
 
-      // Удаляем из card_instances с таймаутом
-      if (worker.source === 'card_instances' && (worker as any).instanceId) {
+      // Удаляем рабочего из соответствующей таблицы
+      if ((worker as any).instanceId) {
         const instId = (worker as any).instanceId as string;
-        console.log('🗑️ Deleting card instance:', instId);
         
-        const deleteWithTimeout = async (fn: () => Promise<any>, timeout: number) => {
-          return Promise.race([
-            fn(),
-            new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout')), timeout))
-          ]);
-        };
-
-        try {
-          await deleteWithTimeout(async () => {
-            const ok = await deleteCardInstance(instId);
-            if (!ok) throw new Error('deleteCardInstance failed');
-            console.log('✅ Card instance deleted');
-          }, 5000);
-          
-          await loadCardInstances();
-        } catch (e) {
-          console.warn('⚠️ Delete failed, trying RPC:', e);
-          
+        if (worker.source === 'inventory') {
+          // Рабочий из item_instances
+          console.log('🗑️ Deleting from item_instances:', instId);
           try {
-            const { error } = await supabase.rpc('remove_card_instance_exact', {
-              p_instance_id: instId,
-              p_wallet_address: accountId
-            });
-            if (error) throw error;
-            console.log('✅ RPC delete success');
-            await loadCardInstances();
-          } catch (rpcError) {
-            console.error('❌ All delete attempts failed:', rpcError);
+            await removeItem(instId);
+            console.log('✅ Item instance deleted');
+          } catch (e) {
+            console.error('❌ Failed to delete item instance:', e);
             setAssigningId(null);
             setActiveWorkers(activeWorkers);
             toast({
@@ -299,6 +280,48 @@ export const WorkersManagement = ({ onSpeedBoostChange }: WorkersManagementProps
               variant: 'destructive'
             });
             return;
+          }
+        } else if (worker.source === 'card_instances') {
+          // Рабочий из card_instances
+          console.log('🗑️ Deleting card instance:', instId);
+          
+          const deleteWithTimeout = async (fn: () => Promise<any>, timeout: number) => {
+            return Promise.race([
+              fn(),
+              new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout')), timeout))
+            ]);
+          };
+
+          try {
+            await deleteWithTimeout(async () => {
+              const ok = await deleteCardInstance(instId);
+              if (!ok) throw new Error('deleteCardInstance failed');
+              console.log('✅ Card instance deleted');
+            }, 5000);
+            
+            await loadCardInstances();
+          } catch (e) {
+            console.warn('⚠️ Delete failed, trying RPC:', e);
+            
+            try {
+              const { error } = await supabase.rpc('remove_card_instance_exact', {
+                p_instance_id: instId,
+                p_wallet_address: accountId
+              });
+              if (error) throw error;
+              console.log('✅ RPC delete success');
+              await loadCardInstances();
+            } catch (rpcError) {
+              console.error('❌ All delete attempts failed:', rpcError);
+              setAssigningId(null);
+              setActiveWorkers(activeWorkers);
+              toast({
+                title: t(language, 'shelter.error'),
+                description: 'Не удалось удалить рабочего из инвентаря',
+                variant: 'destructive'
+              });
+              return;
+            }
           }
         }
       }
