@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { resolveMonsterImage } from "@/utils/monsterImageResolver";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -474,12 +475,12 @@ export const MonsterManagement = () => {
                 />
               </div>
 
-              {(imagePreview || monsterForm.image_url) && (
+              {(imagePreview || monsterForm.image_url || editingMonster) && (
                 <div className="space-y-2">
                   <Label>Предпросмотр</Label>
                   <div className="border rounded-lg p-4 bg-accent/20">
                     <img
-                      src={imagePreview || monsterForm.image_url}
+                      src={imagePreview || monsterForm.image_url || (editingMonster ? resolveMonsterImage(editingMonster) : '/placeholder.svg')}
                       alt="Preview"
                       className="max-h-48 mx-auto rounded"
                       onError={(e) => {
@@ -536,18 +537,16 @@ export const MonsterManagement = () => {
               </div>
             </CardHeader>
             <CardContent className="space-y-3">
-              {monster.image_url && (
-                <div className="w-full h-32 rounded-lg overflow-hidden bg-accent/20">
-                  <img
-                    src={monster.image_url}
-                    alt={monster.monster_name}
-                    className="w-full h-full object-contain"
-                    onError={(e) => {
-                      e.currentTarget.src = "/placeholder.svg";
-                    }}
-                  />
-                </div>
-              )}
+              <div className="w-full h-32 rounded-lg overflow-hidden bg-accent/20">
+                <img
+                  src={resolveMonsterImage(monster)}
+                  alt={monster.monster_name}
+                  className="w-full h-full object-contain"
+                  onError={(e) => {
+                    e.currentTarget.src = "/placeholder.svg";
+                  }}
+                />
+              </div>
               
               <div className="space-y-1 text-sm">
                 <p className="text-muted-foreground">
