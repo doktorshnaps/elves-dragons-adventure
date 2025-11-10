@@ -16,6 +16,7 @@ import { t } from "@/utils/translations";
 import { useShelterState } from "@/hooks/shelter/useShelterState";
 import { ShelterUpgrades } from "@/components/game/shelter/ShelterUpgrades";
 import { ShelterCrafting } from "@/components/game/shelter/ShelterCrafting";
+import { Loader2 } from "lucide-react";
 
 export const Shelter = () => {
   const navigate = useNavigate();
@@ -51,6 +52,18 @@ export const Shelter = () => {
     inventoryCounts,
     gameLoaded
   } = useShelterState();
+
+  // Показываем загрузчик пока данные не загружены
+  if (!gameLoaded || !workersLoaded) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center space-y-4">
+          <Loader2 className="w-12 h-12 animate-spin mx-auto text-white" />
+          <p className="text-white text-lg">{t(language, 'common.loading') || 'Загрузка...'}</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen relative">
