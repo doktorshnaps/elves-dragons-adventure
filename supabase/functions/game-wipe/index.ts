@@ -162,8 +162,46 @@ serve(async (req) => {
       throw marketplaceError;
     }
 
+    // Clear item instances (except admin)
+    const { error: itemInstancesError } = await supabase
+      .from('item_instances')
+      .delete()
+      .neq('wallet_address', adminWallet);
+
+    if (itemInstancesError) {
+      console.error('❌ Error wiping item_instances:', itemInstancesError);
+      throw itemInstancesError;
+    }
+
+    // Clear soul donations (except admin)
+    const { error: soulDonationsError } = await supabase
+      .from('soul_donations')
+      .delete()
+      .neq('wallet_address', adminWallet);
+
+    if (soulDonationsError) {
+      console.error('❌ Error wiping soul_donations:', soulDonationsError);
+      throw soulDonationsError;
+    }
+
+    // Reset shop inventory to default quantities
+    const { error: shopResetError } = await supabase
+      .from('shop_inventory')
+      .update({
+        available_quantity: 50,
+        last_reset_time: new Date().toISOString(),
+        next_reset_time: new Date(Date.now() + 8 * 60 * 60 * 1000).toISOString(),
+        updated_at: new Date().toISOString()
+      });
+
+    if (shopResetError) {
+      console.error('❌ Error resetting shop_inventory:', shopResetError);
+      throw shopResetError;
+    }
+
     // NOTE: Referral data (referrals and referral_earnings) is preserved during wipe
     // to maintain the referral tree structure across game resets
+    // NOTE: social_quests in game_data are already reset to [] in the game_data update above
 
     console.log('✅ Game wipe completed successfully');
 
