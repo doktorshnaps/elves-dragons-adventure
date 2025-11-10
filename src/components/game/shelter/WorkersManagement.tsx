@@ -5,7 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { useUnifiedGameState } from "@/hooks/useUnifiedGameState";
 import { useCardInstances } from "@/hooks/useCardInstances";
-import { useItemOperations } from "@/hooks/useItemOperations";
+
 import { useToast } from "@/hooks/use-toast";
 import { useLanguage } from "@/hooks/useLanguage";
 import { t } from "@/utils/translations";
@@ -32,7 +32,6 @@ interface WorkersManagementProps {
 export const WorkersManagement = ({ onSpeedBoostChange }: WorkersManagementProps) => {
   const gameState = useUnifiedGameState();
   const { cardInstances, deleteCardInstance, loadCardInstances } = useCardInstances();
-  const { removeItem } = useItemOperations();
   const { language } = useLanguage();
   const { accountId } = useWalletContext();
   
@@ -83,29 +82,14 @@ export const WorkersManagement = ({ onSpeedBoostChange }: WorkersManagementProps
     { id: "medical", name: t(language, 'shelter.medicalBuilding') }
   ];
 
-  // Получаем рабочих из card_instances, инвентаря и карт
-  const inventoryWorkers = (gameState.inventory || [])
-    .filter((item: any) => item?.type === 'worker')
-    .map((item: any, index: number) => ({
-      id: item.instanceId || item.id || `worker_${index}_${item.name}`,
-      instanceId: item.instanceId || item.id,
-      templateId: item.templateId || undefined,
-      name: item.name || 'Рабочий',
-      description: item.description || '',
-      type: item.type || 'worker',
-      value: item.value || 0,
-      stats: item.stats || {},
-      image: item.image,
-      source: 'inventory'
-    }));
-
-  const cardInstanceWorkers = cardInstances
+  // Получаем рабочих только из card_instances (единственный источник для workers)
+  const availableWorkers = cardInstances
     .filter(instance => 
       instance.card_type === 'workers' ||
       ((instance.card_data as any)?.type === 'worker' || (instance.card_data as any)?.type === 'workers')
     )
     .map(instance => ({
-      id: instance.id, // уникальный id экземпляра
+      id: instance.id,
       instanceId: instance.id,
       templateId: instance.card_template_id,
       name: instance.card_data.name || 'Рабочий',
@@ -114,36 +98,9 @@ export const WorkersManagement = ({ onSpeedBoostChange }: WorkersManagementProps
       value: (instance.card_data as any).value || 0,
       stats: (instance.card_data as any).stats || {},
       image: (instance.card_data as any).image,
-      source: 'card_instances',
       currentHealth: instance.current_health,
       maxHealth: instance.max_health
     }));
-
-  const cardsWorkers = (gameState.cards || [])
-    .filter((card: any) => card?.type === 'worker' || card?.type === 'workers')
-    .map((card: any, index: number) => ({
-      id: card.id,
-      templateId: card.id,
-      name: card.name || 'Рабочий',
-      description: card.description || '',
-      type: 'worker',
-      value: card.value || 0,
-      stats: card.stats || {},
-      image: card.image,
-      source: 'cards',
-      _idx: index
-    }));
-
-  // Объединяем рабочих из всех источников, избегая дублирования только по instanceId
-  const seen = new Set<string>();
-  const availableWorkers = [...cardInstanceWorkers, ...inventoryWorkers, ...cardsWorkers]
-    .filter((worker: any) => {
-      if (worker.instanceId) {
-        if (seen.has(worker.instanceId)) return false;
-        seen.add(worker.instanceId);
-      }
-      return true;
-    });
 
   // Исключаем уже назначенных активных рабочих из списка доступных
   const activeInstanceIds = new Set(activeWorkers.map(w => w.cardInstanceId));
@@ -152,17 +109,11 @@ export const WorkersManagement = ({ onSpeedBoostChange }: WorkersManagementProps
     w.instanceId ? !activeInstanceIds.has(w.instanceId) : !activeWorkerIds.has(w.id)
   );
 
-  console.log('👷 Workers analysis:', {
-    inventoryWorkers: inventoryWorkers.length,
-    cardInstanceWorkers: cardInstanceWorkers.length,
-    availableWorkers: availableWorkers.length,
+  console.log('👷 Workers from card_instances:', {
+    totalWorkers: availableWorkers.length,
     activeWorkers: activeWorkers.length,
     visibleWorkers: visibleWorkers.length,
-    inventoryDetails: inventoryWorkers.map(w => ({ id: w.id, instanceId: w.instanceId, name: w.name, source: w.source })),
-    cardDetails: cardInstanceWorkers.map(w => ({ id: w.id, name: w.name, source: w.source, instanceId: (w as any).instanceId })),
-    activeWorkersDetails: activeWorkers.map(w => ({ workerId: w.workerId, cardInstanceId: w.cardInstanceId, name: w.name })),
-    activeInstanceIdsSet: Array.from(activeInstanceIds),
-    activeWorkerIdsSet: Array.from(activeWorkerIds)
+    workerDetails: availableWorkers.map(w => ({ id: w.id, name: w.name, stats: w.stats }))
   });
 
   // Загружаем активных рабочих только ОДИН РАЗ при монтировании из БД
@@ -260,69 +211,30 @@ export const WorkersManagement = ({ onSpeedBoostChange }: WorkersManagementProps
       setActiveWorkers(updatedActiveWorkers);
       console.log('✅ Optimistic UI update done');
 
-      // Удаляем рабочего из соответствующей таблицы
+      // Удаляем рабочего из card_instances
       if ((worker as any).instanceId) {
         const instId = (worker as any).instanceId as string;
+        console.log('🗑️ Deleting worker from card_instances:', instId);
         
-        if (worker.source === 'inventory') {
-          // Рабочий из item_instances
-          console.log('🗑️ Deleting from item_instances:', instId);
-          try {
-            await removeItem(instId);
-            console.log('✅ Item instance deleted');
-          } catch (e) {
-            console.error('❌ Failed to delete item instance:', e);
-            setAssigningId(null);
-            setActiveWorkers(activeWorkers);
-            toast({
-              title: t(language, 'shelter.error'),
-              description: 'Не удалось удалить рабочего из инвентаря',
-              variant: 'destructive'
-            });
-            return;
-          }
-        } else if (worker.source === 'card_instances') {
-          // Рабочий из card_instances
-          console.log('🗑️ Deleting card instance:', instId);
+        try {
+          const { error } = await supabase.rpc('remove_card_instance_exact', {
+            p_instance_id: instId,
+            p_wallet_address: accountId
+          });
           
-          const deleteWithTimeout = async (fn: () => Promise<any>, timeout: number) => {
-            return Promise.race([
-              fn(),
-              new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout')), timeout))
-            ]);
-          };
-
-          try {
-            await deleteWithTimeout(async () => {
-              const ok = await deleteCardInstance(instId);
-              if (!ok) throw new Error('deleteCardInstance failed');
-              console.log('✅ Card instance deleted');
-            }, 5000);
-            
-            await loadCardInstances();
-          } catch (e) {
-            console.warn('⚠️ Delete failed, trying RPC:', e);
-            
-            try {
-              const { error } = await supabase.rpc('remove_card_instance_exact', {
-                p_instance_id: instId,
-                p_wallet_address: accountId
-              });
-              if (error) throw error;
-              console.log('✅ RPC delete success');
-              await loadCardInstances();
-            } catch (rpcError) {
-              console.error('❌ All delete attempts failed:', rpcError);
-              setAssigningId(null);
-              setActiveWorkers(activeWorkers);
-              toast({
-                title: t(language, 'shelter.error'),
-                description: 'Не удалось удалить рабочего из инвентаря',
-                variant: 'destructive'
-              });
-              return;
-            }
-          }
+          if (error) throw error;
+          console.log('✅ Worker deleted from card_instances');
+          await loadCardInstances();
+        } catch (e) {
+          console.error('❌ Failed to delete worker:', e);
+          setAssigningId(null);
+          setActiveWorkers(activeWorkers);
+          toast({
+            title: t(language, 'shelter.error'),
+            description: 'Не удалось удалить рабочего',
+            variant: 'destructive'
+          });
+          return;
         }
       }
 
