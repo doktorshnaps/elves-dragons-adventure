@@ -15,6 +15,7 @@ export const useGameSync = () => {
   const isApplyingRef = useRef(false);
   const lastSyncedRef = useRef<any>(null);
   const prevAccountIdRef = useRef<string | null>(null);
+  const preventSyncAfterClearRef = useRef(false);
   
   // Всегда вызываем хук, но внутри него будет проверка готовности
   useCardInstanceSync();
@@ -52,6 +53,10 @@ export const useGameSync = () => {
   useEffect(() => {
     if (prevAccountIdRef.current && prevAccountIdRef.current !== accountId) {
       console.log('🔄 Wallet changed, clearing all cached data');
+      
+      // КРИТИЧНО: блокируем синхронизацию перед очисткой, чтобы не затереть данные в БД
+      preventSyncAfterClearRef.current = true;
+      
       gameStore.clearAllData();
       lastSyncedRef.current = null;
       
@@ -118,6 +123,20 @@ export const useGameSync = () => {
           gameStore.setBattleState(gameData.battleState);
         }
         
+        // Сохраняем синхронизированное состояние
+        lastSyncedRef.current = {
+          balance: gameData.balance,
+          cards: gameData.cards,
+          dragonEggs: gameData.dragonEggs,
+          selectedTeam: gameData.selectedTeam,
+          battleState: gameData.battleState,
+          accountLevel: gameData.accountLevel,
+          accountExperience: gameData.accountExperience,
+        };
+        
+        // Разрешаем синхронизацию после успешной загрузки данных
+        preventSyncAfterClearRef.current = false;
+        
         console.log('✅ useGameSync: Data loaded to store');
       } finally {
         setTimeout(() => { isApplyingRef.current = false; }, 0);
@@ -131,6 +150,12 @@ export const useGameSync = () => {
     if (walletLoading || !selector) return;
     if (!isConnected || !accountId || loading) return;
     if (isApplyingRef.current) return;
+    
+    // КРИТИЧНО: блокируем синхронизацию сразу после clearAllData(), чтобы не затереть данные в БД
+    if (preventSyncAfterClearRef.current) {
+      console.log('⏸️ Sync blocked: waiting for data to load after clear');
+      return;
+    }
 
     const state = useGameStore.getState();
     
