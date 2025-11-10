@@ -186,8 +186,15 @@ export async function updateGameDataByWalletThrottled(payload: Record<string, an
 
     // Execute single RPC call
     const exec = async () => {
-      // Build safe args for stable RPC and strip deprecated fields
+    // Build safe args for stable RPC and strip deprecated fields
       const args = buildRpcArgs(toSend);
+      
+      // КРИТИЧНО: Всегда добавляем p_force чтобы PostgREST мог выбрать правильную перегрузку
+      // Это решает PGRST203 (ambiguity) для update_game_data_by_wallet_v2
+      if (!args.p_force) {
+        args.p_force = false;
+      }
+      
       const keys = Object.keys(args).filter(k => k !== 'p_wallet_address');
 
       // If we only have wallet, skip RPC to avoid PostgREST overload ambiguity (PGRST203)
