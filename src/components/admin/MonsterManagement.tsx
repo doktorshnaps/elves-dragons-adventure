@@ -101,8 +101,11 @@ export const MonsterManagement = () => {
       const fileName = `${Date.now()}_${Math.random().toString(36).substring(7)}.${fileExt}`;
       const filePath = `${fileName}`;
 
-      const { data: { session } } = await supabase.auth.getSession();
-      const token = session?.access_token || undefined;
+      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+      
+      if (sessionError || !session?.access_token) {
+        throw new Error('Требуется авторизация. Пожалуйста, переподключите кошелек.');
+      }
 
       const formData = new FormData();
       formData.append('image', file);
@@ -110,11 +113,11 @@ export const MonsterManagement = () => {
       formData.append('walletAddress', accountId);
 
       const functionsUrl = "https://oimhwdymghkwxznjarkv.functions.supabase.co/upload-monster-image";
-      const headers: Record<string, string> = {};
-      if (token) headers.Authorization = `Bearer ${token}`;
       const resp = await fetch(functionsUrl, {
         method: 'POST',
-        headers,
+        headers: {
+          'Authorization': `Bearer ${session.access_token}`,
+        },
         body: formData,
       });
 
@@ -130,7 +133,7 @@ export const MonsterManagement = () => {
       console.error('Error uploading image:', error);
       toast({
         title: "Ошибка загрузки",
-        description: "Не удалось загрузить изображение",
+        description: error instanceof Error ? error.message : "Не удалось загрузить изображение",
         variant: "destructive",
       });
       return null;
