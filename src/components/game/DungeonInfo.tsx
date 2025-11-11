@@ -4,7 +4,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Sword, Shield, Skull, Coins, Heart } from "lucide-react";
-import { dungeonNames, dungeonBackgrounds } from "@/constants/dungeons";
+import { dungeonNames, dungeonBackgrounds, dungeons, DungeonType } from "@/constants/dungeons";
 import { generateDungeonOpponents } from "@/dungeons/dungeonManager";
 import { MonsterCardDisplay } from "./monsters/MonsterCardDisplay";
 import { monsterImagesByName } from "@/constants/monsterImages";
@@ -128,10 +128,10 @@ const DungeonDetail = ({
 export const DungeonInfo = () => {
   const { language } = useLanguage();
   
-  const availableDungeons = [{
-    key: 'spider_nest',
-    name: dungeonNames.spider_nest
-  }];
+  const availableDungeons = dungeons.map((dungeonKey) => ({
+    key: dungeonKey,
+    name: dungeonNames[dungeonKey]
+  }));
   return <div className="space-y-6">
       <div className="text-center">
         <h2 className="text-2xl font-bold text-white mb-2">{t(language, 'dungeonInfo.title')}</h2>
@@ -141,7 +141,7 @@ export const DungeonInfo = () => {
       </div>
 
       <Tabs defaultValue={availableDungeons[0]?.key} className="w-full">
-        <TabsList className="grid w-full grid-cols-1 bg-black/40 border-2 border-white/50 backdrop-blur-sm rounded-3xl">
+        <TabsList className="grid w-full grid-cols-2 md:grid-cols-4 bg-black/40 border-2 border-white/50 backdrop-blur-sm rounded-3xl">
           {availableDungeons.map(dungeon => <TabsTrigger key={dungeon.key} value={dungeon.key} className="data-[state=active]:bg-white/20 text-white data-[state=active]:text-white rounded-3xl">
               {dungeon.name}
             </TabsTrigger>)}
