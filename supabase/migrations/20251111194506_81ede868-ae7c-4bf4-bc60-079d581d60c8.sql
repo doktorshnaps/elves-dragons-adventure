@@ -1,0 +1,133 @@
+-- Вставка новых материалов для 3 подземелья (продолжение)
+INSERT INTO item_templates (
+  item_id,
+  name,
+  type,
+  rarity,
+  description,
+  value,
+  sell_price,
+  image_url,
+  source_type,
+  level_requirement
+) VALUES
+  (
+    'asymmetric_claw',
+    'Асимметричная клешня',
+    'material',
+    'uncommon',
+    'Массивная клешня морского хищника неправильной формы. Прочный материал для крафта.',
+    28,
+    14,
+    '/item-images/asymmetric_claw.jpeg',
+    'dungeon',
+    1
+  ),
+  (
+    'coral_barnacle_growth',
+    'Наросты коралла-обрастателя',
+    'material',
+    'common',
+    'Коралловые образования, покрывающие панцири глубоководных существ.',
+    18,
+    9,
+    '/item-images/coral_barnacle_growth.jpeg',
+    'dungeon',
+    1
+  ),
+  (
+    'petrified_skin_piece',
+    'Кусок окаменевшей кожи',
+    'material',
+    'rare',
+    'Фрагмент затвердевшей кожи древнего морского чудовища. Невероятно прочный.',
+    45,
+    22,
+    '/item-images/petrified_skin_piece.jpeg',
+    'dungeon',
+    1
+  ),
+  (
+    'overgrown_eye_lens',
+    'Заросший хрусталик глаза',
+    'material',
+    'epic',
+    'Магический хрусталик с кристаллическими наростами. Обладает особыми свойствами.',
+    80,
+    40,
+    '/item-images/overgrown_eye_lens.jpeg',
+    'dungeon',
+    1
+  ),
+  (
+    'stone_club_handle',
+    'Рукоять каменной дубины',
+    'material',
+    'uncommon',
+    'Древняя рукоять из окаменевшего дерева с руническими символами.',
+    32,
+    16,
+    '/item-images/stone_club_handle.jpeg',
+    'dungeon',
+    1
+  ),
+  (
+    'silver_sabertooth_scale',
+    'Серебристая чешуя саблезубки',
+    'material',
+    'rare',
+    'Блестящая чешуя хищной рыбы. Отражает свет даже в глубине океана.',
+    50,
+    25,
+    '/item-images/silver_sabertooth_scale.jpeg',
+    'dungeon',
+    1
+  ),
+  (
+    'curved_sabertooth_teeth',
+    'Искривлённые зубы саблезубки',
+    'material',
+    'rare',
+    'Изогнутые клыки глубоководного хищника. Острые как бритва.',
+    55,
+    27,
+    '/item-images/curved_sabertooth_teeth.jpeg',
+    'dungeon',
+    1
+  ),
+  (
+    'bloody_foam_clot',
+    'Сгусток кровавой пены',
+    'material',
+    'uncommon',
+    'Странная субстанция красного цвета. Используется в алхимии.',
+    35,
+    17,
+    '/item-images/bloody_foam_clot.jpeg',
+    'dungeon',
+    1
+  ),
+  (
+    'red_coral_shard',
+    'Осколок красного коралла',
+    'material',
+    'epic',
+    'Фрагмент редкого кроваво-красного коралла. Излучает слабое свечение.',
+    90,
+    45,
+    '/item-images/red_coral_shard.jpeg',
+    'dungeon',
+    1
+  ),
+  (
+    'sharp_limestone_needle',
+    'Острая известковая игла',
+    'material',
+    'common',
+    'Тонкая игла из известняка. Выглядит хрупкой, но на удивление прочная.',
+    22,
+    11,
+    '/item-images/sharp_limestone_needle.jpeg',
+    'dungeon',
+    1
+  );
