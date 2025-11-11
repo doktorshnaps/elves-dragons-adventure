@@ -222,19 +222,26 @@ export const MonsterManagement = () => {
           description: "Монстр обновлен",
         });
       } else {
-        // Insert new monster
-        const { error } = await supabase
-          .from("monsters")
-          .insert({
-            monster_id: monsterForm.monster_id,
-            monster_name: monsterForm.monster_name,
-            monster_type: monsterForm.monster_type,
-            description: monsterForm.description || null,
-            image_url: imageUrl || null,
-            created_by_wallet_address: accountId,
-          });
+        // Insert new monster via Edge Function (no Supabase auth required)
+        const resp = await fetch("https://oimhwdymghkwxznjarkv.functions.supabase.co/admin-upsert-monster", {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            walletAddress: accountId,
+            monster: {
+              monster_id: monsterForm.monster_id,
+              monster_name: monsterForm.monster_name,
+              monster_type: monsterForm.monster_type,
+              description: monsterForm.description || null,
+              image_url: imageUrl || null,
+            },
+          }),
+        });
 
-        if (error) throw error;
+        if (!resp.ok) {
+          const errText = await resp.text();
+          throw new Error(errText || 'Не удалось добавить монстра');
+        }
 
         toast({
           title: "Успешно",

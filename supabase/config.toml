@@ -41,3 +41,6 @@ verify_jwt = false
 
 [functions.upload-monster-image]
 verify_jwt = false
+
+[functions.admin-upsert-monster]
+verify_jwt = false
