@@ -38,3 +38,6 @@ verify_jwt = true
 
 [functions.upload-building-background]
 verify_jwt = false
+
+[functions.upload-monster-image]
+verify_jwt = false

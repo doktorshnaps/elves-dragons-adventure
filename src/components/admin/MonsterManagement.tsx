@@ -101,23 +101,22 @@ export const MonsterManagement = () => {
       const fileName = `${Date.now()}_${Math.random().toString(36).substring(7)}.${fileExt}`;
       const filePath = `${fileName}`;
 
-      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+      const { data: { session } } = await supabase.auth.getSession();
       
-      if (sessionError || !session?.access_token) {
-        throw new Error('Требуется авторизация. Пожалуйста, переподключите кошелек.');
-      }
-
       const formData = new FormData();
       formData.append('image', file);
       formData.append('filePath', filePath);
       formData.append('walletAddress', accountId);
 
+      const headers: Record<string, string> = {};
+      if (session?.access_token) {
+        headers['Authorization'] = `Bearer ${session.access_token}`;
+      }
+
       const functionsUrl = "https://oimhwdymghkwxznjarkv.functions.supabase.co/upload-monster-image";
       const resp = await fetch(functionsUrl, {
         method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${session.access_token}`,
-        },
+        headers,
         body: formData,
       });
 
