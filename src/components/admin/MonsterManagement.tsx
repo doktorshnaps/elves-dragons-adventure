@@ -201,53 +201,34 @@ export const MonsterManagement = () => {
         }
       }
 
-      if (editingMonster) {
-        // Update existing monster
-        const { error } = await supabase
-          .from("monsters")
-          .update({
+      // Use Edge Function for both create and update
+      const operation = editingMonster ? 'update' : 'create';
+      const resp = await fetch("https://oimhwdymghkwxznjarkv.functions.supabase.co/admin-upsert-monster", {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          walletAddress: accountId,
+          operation,
+          monsterId: editingMonster?.id,
+          monster: {
             monster_id: monsterForm.monster_id,
             monster_name: monsterForm.monster_name,
             monster_type: monsterForm.monster_type,
             description: monsterForm.description || null,
             image_url: imageUrl || null,
-            updated_at: new Date().toISOString(),
-          })
-          .eq("id", editingMonster.id);
+          },
+        }),
+      });
 
-        if (error) throw error;
-
-        toast({
-          title: "Успешно",
-          description: "Монстр обновлен",
-        });
-      } else {
-        // Insert new monster via Edge Function (no Supabase auth required)
-        const resp = await fetch("https://oimhwdymghkwxznjarkv.functions.supabase.co/admin-upsert-monster", {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            walletAddress: accountId,
-            monster: {
-              monster_id: monsterForm.monster_id,
-              monster_name: monsterForm.monster_name,
-              monster_type: monsterForm.monster_type,
-              description: monsterForm.description || null,
-              image_url: imageUrl || null,
-            },
-          }),
-        });
-
-        if (!resp.ok) {
-          const errText = await resp.text();
-          throw new Error(errText || 'Не удалось добавить монстра');
-        }
-
-        toast({
-          title: "Успешно",
-          description: "Монстр добавлен",
-        });
+      if (!resp.ok) {
+        const errText = await resp.text();
+        throw new Error(errText || `Не удалось ${editingMonster ? 'обновить' : 'добавить'} монстра`);
       }
+
+      toast({
+        title: "Успешно",
+        description: editingMonster ? "Монстр обновлен" : "Монстр добавлен",
+      });
 
       // Reset form and close dialog
       setMonsterForm({
@@ -294,12 +275,20 @@ export const MonsterManagement = () => {
     if (!confirm("Вы уверены, что хотите удалить этого монстра?")) return;
 
     try {
-      const { error } = await supabase
-        .from("monsters")
-        .delete()
-        .eq("id", monsterId);
+      const resp = await fetch("https://oimhwdymghkwxznjarkv.functions.supabase.co/admin-upsert-monster", {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          walletAddress: accountId,
+          operation: 'delete',
+          monsterId,
+        }),
+      });
 
-      if (error) throw error;
+      if (!resp.ok) {
+        const errText = await resp.text();
+        throw new Error(errText || 'Не удалось удалить монстра');
+      }
 
       toast({
         title: "Успешно",
@@ -318,13 +307,24 @@ export const MonsterManagement = () => {
   };
 
   const handleToggleActive = async (monsterId: string, isActive: boolean) => {
-    try {
-      const { error } = await supabase
-        .from("monsters")
-        .update({ is_active: isActive, updated_at: new Date().toISOString() })
-        .eq("id", monsterId);
+    if (!accountId) return;
 
-      if (error) throw error;
+    try {
+      const resp = await fetch("https://oimhwdymghkwxznjarkv.functions.supabase.co/admin-upsert-monster", {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          walletAddress: accountId,
+          operation: 'toggle_active',
+          monsterId,
+          isActive,
+        }),
+      });
+
+      if (!resp.ok) {
+        const errText = await resp.text();
+        throw new Error(errText || 'Не удалось изменить статус монстра');
+      }
 
       toast({
         title: "Успешно",
