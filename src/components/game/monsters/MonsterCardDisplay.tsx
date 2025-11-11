@@ -10,6 +10,7 @@ interface MonsterCardDisplayProps {
   name: string;
   health: number;
   power: number;
+  armor?: number;
   isBoss?: boolean;
   image?: string;
   specialAbilities?: any[];
@@ -22,6 +23,7 @@ export const MonsterCardDisplay = memo(({
   name,
   health,
   power,
+  armor,
   isBoss,
   image,
   specialAbilities,
@@ -91,14 +93,18 @@ export const MonsterCardDisplay = memo(({
         </div>
       )}
       
-      <div className="grid grid-cols-2 gap-1 text-[10px] sm:text-xs">
+      <div className="grid grid-cols-3 gap-1 text-[10px] sm:text-xs">
         <div className="text-white/80 flex items-center gap-1">
           <Heart className="w-2 h-2 sm:w-3 sm:h-3 text-red-500" />
           {health}
         </div>
         <div className="text-white/80 flex items-center gap-1">
-          <Sword className="w-2 h-2 sm:w-3 sm:h-3" />
+          <Sword className="w-2 h-2 sm:w-3 sm:h-3 text-orange-400" />
           {power}
+        </div>
+        <div className="text-white/80 flex items-center gap-1">
+          <Shield className="w-2 h-2 sm:w-3 sm:h-3 text-blue-400" />
+          {armor || 0}
         </div>
       </div>
     </Card>
@@ -157,14 +163,18 @@ export const MonsterCardDisplay = memo(({
         </div>
       )}
       
-      <div className="grid grid-cols-2 gap-4 text-sm mb-4">
+      <div className="grid grid-cols-3 gap-3 text-sm mb-4">
         <div className="text-white/80 flex items-center gap-2">
           <Heart className="w-4 h-4 text-red-500" />
           <span className="font-medium">{health} HP</span>
         </div>
         <div className="text-white/80 flex items-center gap-2">
-          <Sword className="w-4 h-4" />
+          <Sword className="w-4 h-4 text-orange-400" />
           <span className="font-medium">{power} ATK</span>
+        </div>
+        <div className="text-white/80 flex items-center gap-2">
+          <Shield className="w-4 h-4 text-blue-400" />
+          <span className="font-medium">{armor || 0} DEF</span>
         </div>
       </div>
       
