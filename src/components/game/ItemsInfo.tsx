@@ -161,7 +161,7 @@ const ItemCard = ({ item }: { item: ItemTemplate }) => {
   const stats = formatStats(item.stats);
 
   const CardContent = () => (
-    <Card variant="menu" className="p-2 h-full" style={{ boxShadow: '-33px 15px 10px rgba(0, 0, 0, 0.6)' }}>
+    <Card variant="menu" className="p-2 h-full flex flex-col" style={{ boxShadow: '-33px 15px 10px rgba(0, 0, 0, 0.6)' }}>
       <div className="w-full aspect-[3/4] mb-2 rounded-lg overflow-hidden flex items-center justify-center bg-white/10 border border-white/20">
         {(() => {
           const src = resolveItemImage(item);
@@ -179,61 +179,13 @@ const ItemCard = ({ item }: { item: ItemTemplate }) => {
         </div>
       </div>
       
-      <div className="flex items-center justify-between mb-1">
+      <div className="flex items-center justify-between mt-auto">
         <h3 className="font-semibold text-white text-[10px] sm:text-xs">
           {translateItemName(language, item.name)}
         </h3>
         <Badge className={`text-[8px] px-1 py-0 text-white ${getRarityColor(item.rarity)}`}>
           {translateRarity(language, item.rarity)}
         </Badge>
-      </div>
-      
-      <p className="text-white/70 mb-2 text-[10px] sm:text-xs line-clamp-2">
-        {item.description}
-      </p>
-      
-      {stats.length > 0 && (
-        <div className="mb-2">
-          <div className="text-green-400 text-[8px] sm:text-[10px] mb-1">
-            {translateItemText(language, 'Характеристики:')}
-          </div>
-          <div className="grid grid-cols-2 gap-1 text-[10px] sm:text-xs">
-            {stats.slice(0, 4).map((stat, index) => (
-              <div key={index} className="text-white/80 flex items-center gap-1">
-                <span className="text-green-400">+{stat.value}</span>
-                <span className="text-white/60 text-[8px] sm:text-[10px]">{stat.name}</span>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-      
-      <div className="flex items-center gap-2 text-[8px] sm:text-[10px] text-blue-400 mb-1">
-        {getSourceIcon(item.source_type)}
-        <span>{getSourceLabel(item.source_type, language)}</span>
-      </div>
-      
-      <div className="mt-auto pt-2 border-t border-white/20">
-        <div className="text-white text-[8px] sm:text-[10px] flex items-center gap-1 mb-1">
-          <Coins className="w-2 h-2" />
-          {translateItemText(language, 'Детали:')}
-        </div>
-        <div className="text-[8px] space-y-0.5">
-          <div className="flex justify-between">
-            <span className="text-white/60">{translateItemText(language, 'Уровень')}</span>
-            <span className="text-yellow-400">{item.level_requirement}</span>
-          </div>
-          <div className="flex justify-between">
-            <span className="text-white/60">{translateItemText(language, 'Стоимость')}</span>
-            <span className="text-green-400">{item.value}</span>
-          </div>
-          {item.drop_chance && (
-            <div className="flex justify-between">
-              <span className="text-white/60">{translateItemText(language, 'Шанс')}</span>
-              <span className="text-orange-400">{(item.drop_chance * 100).toFixed(1)}%</span>
-            </div>
-          )}
-        </div>
       </div>
     </Card>
   );
