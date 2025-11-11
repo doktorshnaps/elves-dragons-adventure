@@ -1,0 +1,133 @@
+-- Вставка новых материалов для 3 подземелья (третья партия)
+INSERT INTO item_templates (
+  item_id,
+  name,
+  type,
+  rarity,
+  description,
+  value,
+  sell_price,
+  image_url,
+  source_type,
+  level_requirement
+) VALUES
+  (
+    'dried_gill',
+    'Иссохшая жабра',
+    'material',
+    'uncommon',
+    'Высохшая жабра морского существа. Сохранила странную текстуру.',
+    25,
+    12,
+    '/item-images/dried_gill.jpeg',
+    'dungeon',
+    1
+  ),
+  (
+    'dark_blue_skin_piece',
+    'Кусок тёмно-синей кожи',
+    'material',
+    'rare',
+    'Прочный кусок тёмно-синей кожи с электрическими узорами.',
+    50,
+    25,
+    '/item-images/dark_blue_skin_piece.jpeg',
+    'dungeon',
+    1
+  ),
+  (
+    'torn_cloak_scrap',
+    'Обрывок рваного плаща',
+    'material',
+    'epic',
+    'Рваный кусок древнего плаща. Пропитан морской энергией.',
+    90,
+    45,
+    '/item-images/torn_cloak_scrap.jpeg',
+    'dungeon',
+    1
+  ),
+  (
+    'black_coral_shard',
+    'Осколок чёрного коралла',
+    'material',
+    'legendary',
+    'Осколок редчайшего чёрного коралла. Излучает тёмную магию.',
+    160,
+    80,
+    '/item-images/black_coral_shard.jpeg',
+    'dungeon',
+    1
+  ),
+  (
+    'sharp_fin_spike',
+    'Острый шип плавника',
+    'material',
+    'rare',
+    'Острый как бритва шип из плавника морского хищника.',
+    55,
+    27,
+    '/item-images/sharp_fin_spike.jpeg',
+    'dungeon',
+    1
+  ),
+  (
+    'sucker_spike',
+    'Присоска-шип',
+    'material',
+    'uncommon',
+    'Присоска с острым шипом. Опасное оружие морских глубин.',
+    35,
+    17,
+    '/item-images/sucker_spike.jpeg',
+    'dungeon',
+    1
+  ),
+  (
+    'tough_tentacle_muscle',
+    'Прочный мускул щупальца',
+    'material',
+    'epic',
+    'Невероятно прочный мускул из щупальца морского чудовища.',
+    100,
+    50,
+    '/item-images/tough_tentacle_muscle.jpeg',
+    'dungeon',
+    1
+  ),
+  (
+    'three_eyed_essence',
+    'Трехглазая эссенция',
+    'material',
+    'legendary',
+    'Мистическая эссенция, содержащая силу трёх глаз древнего существа.',
+    180,
+    90,
+    '/item-images/three_eyed_essence.jpeg',
+    'dungeon',
+    1
+  ),
+  (
+    'green_head_scale',
+    'Чешуя зелёной головы',
+    'material',
+    'epic',
+    'Ядовитая чешуя зелёной головы гидры. Покрыта токсичной слизью.',
+    110,
+    55,
+    '/item-images/green_head_scale.jpeg',
+    'dungeon',
+    1
+  ),
+  (
+    'red_head_scale',
+    'Чешуя красной головы',
+    'material',
+    'epic',
+    'Огненная чешуя красной головы гидры. Горячая на ощупь.',
+    115,
+    57,
+    '/item-images/red_head_scale.jpeg',
+    'dungeon',
+    1
+  );
