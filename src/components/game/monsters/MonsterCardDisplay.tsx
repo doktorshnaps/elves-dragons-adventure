@@ -91,7 +91,7 @@ export const MonsterCardDisplay = memo(({
         </div>
       )}
       
-      <div className="grid grid-cols-2 gap-1 text-[10px] sm:text-xs mb-2">
+      <div className="grid grid-cols-2 gap-1 text-[10px] sm:text-xs">
         <div className="text-white/80 flex items-center gap-1">
           <Heart className="w-2 h-2 sm:w-3 sm:h-3 text-red-500" />
           {health}
@@ -99,25 +99,6 @@ export const MonsterCardDisplay = memo(({
         <div className="text-white/80 flex items-center gap-1">
           <Sword className="w-2 h-2 sm:w-3 sm:h-3" />
           {power}
-        </div>
-      </div>
-      
-      <div className="mt-auto pt-2 border-t border-white/20">
-        <div className="text-white text-[8px] sm:text-[10px] flex items-center gap-1 mb-1">
-          <Coins className="w-2 h-2" />
-          Дроп:
-        </div>
-        <div className="text-[8px] space-y-0.5">
-          <div className="flex justify-between">
-            <span className="text-gray-300">Монеты</span>
-            <span className="text-green-400">{formatDropChance(lootTable.coins.chance)}</span>
-          </div>
-          {lootTable.healthPotion && (
-            <div className="flex justify-between">
-              <span className="text-gray-300">Зелье</span>
-              <span className="text-green-400">{formatDropChance(lootTable.healthPotion.chance)}</span>
-            </div>
-          )}
         </div>
       </div>
     </Card>
