@@ -36,6 +36,7 @@ interface MonsterCardProps {
   name: string;
   health: number;
   power: number;
+  armor?: number;
   isBoss?: boolean;
   image?: string;
   specialAbilities?: any[];
@@ -45,12 +46,13 @@ const MonsterCard = ({
   name,
   health,
   power,
+  armor,
   isBoss,
   image,
   specialAbilities,
   description
 }: MonsterCardProps) => {
-  return <MonsterCardDisplay name={name} health={health} power={power} isBoss={isBoss} image={image} specialAbilities={specialAbilities} description={description} />;
+  return <MonsterCardDisplay name={name} health={health} power={power} armor={armor} isBoss={isBoss} image={image} specialAbilities={specialAbilities} description={description} />;
 };
 interface DungeonLevelProps {
   dungeonType: string;
@@ -84,7 +86,7 @@ const DungeonLevel = memo(({
         {t(language, 'dungeonInfo.level')} {level}
       </h3>
       <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-2 justify-items-center">
-        {opponents.map(opponent => <MonsterCard key={opponent.id} name={opponent.translatedName} health={opponent.health} power={opponent.power} isBoss={opponent.isBoss} image={opponent.image} specialAbilities={opponent.specialAbilities} description={opponent.translatedDescription} />)}
+        {opponents.map(opponent => <MonsterCard key={opponent.id} name={opponent.translatedName} health={opponent.health} power={opponent.power} armor={opponent.armor} isBoss={opponent.isBoss} image={opponent.image} specialAbilities={opponent.specialAbilities} description={opponent.translatedDescription} />)}
       </div>
     </div>;
 });
