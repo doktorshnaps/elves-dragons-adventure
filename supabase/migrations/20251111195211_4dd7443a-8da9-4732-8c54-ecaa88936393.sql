@@ -1,0 +1,133 @@
+-- Вставка новых материалов для 3 подземелья (вторая партия)
+INSERT INTO item_templates (
+  item_id,
+  name,
+  type,
+  rarity,
+  description,
+  value,
+  sell_price,
+  image_url,
+  source_type,
+  level_requirement
+) VALUES
+  (
+    'caustic_slime',
+    'Едкая слизь',
+    'material',
+    'uncommon',
+    'Ядовитая субстанция зеленого цвета. Разъедает металл, но полезна в алхимии.',
+    30,
+    15,
+    '/item-images/caustic_slime.jpeg',
+    'dungeon',
+    1
+  ),
+  (
+    'slime_crab_chitin_plate',
+    'Хитиновая пластина слизне краба',
+    'material',
+    'rare',
+    'Прочная хитиновая пластина с остатками слизи. Отличный материал для защитной брони.',
+    60,
+    30,
+    '/item-images/slime_crab_chitin_plate.jpeg',
+    'dungeon',
+    1
+  ),
+  (
+    'claw_core',
+    'Сердцевина клешни',
+    'material',
+    'epic',
+    'Внутренняя часть массивной клешни. Содержит концентрированную силу морского хищника.',
+    95,
+    47,
+    '/item-images/claw_core.jpeg',
+    'dungeon',
+    1
+  ),
+  (
+    'pearlescent_skin_shard',
+    'Перламутровый осколок кожи',
+    'material',
+    'epic',
+    'Переливающийся фрагмент кожи неизвестного существа. Обладает магическими свойствами.',
+    100,
+    50,
+    '/item-images/pearlescent_skin_shard.jpeg',
+    'dungeon',
+    1
+  ),
+  (
+    'black_pearl_amulet',
+    'Амулет из чёрной жемчужины',
+    'material',
+    'legendary',
+    'Мистический амулет с огромной чёрной жемчужиной в центре. Излучает тёмную энергию.',
+    150,
+    75,
+    '/item-images/black_pearl_amulet.jpeg',
+    'dungeon',
+    1
+  ),
+  (
+    'deep_water_vial',
+    'Флакон с водой глубин',
+    'material',
+    'rare',
+    'Запечатанный флакон с водой из глубочайших океанских впадин. Светится изнутри.',
+    55,
+    27,
+    '/item-images/deep_water_vial.jpeg',
+    'dungeon',
+    1
+  ),
+  (
+    'compressed_chitin_plate',
+    'Пластина спрессованного хитина',
+    'material',
+    'rare',
+    'Многослойная хитиновая пластина невероятной прочности.',
+    65,
+    32,
+    '/item-images/compressed_chitin_plate.jpeg',
+    'dungeon',
+    1
+  ),
+  (
+    'armor_core',
+    'Сердцевина брони',
+    'material',
+    'epic',
+    'Магически усиленная сердцевина древней брони. Пульсирует защитной энергией.',
+    110,
+    55,
+    '/item-images/armor_core.jpeg',
+    'dungeon',
+    1
+  ),
+  (
+    'freezing_sea_water_vessel',
+    'Сосуд леденящей морской воды',
+    'material',
+    'legendary',
+    'Сосуд, наполненный водой из замороженных глубин. Излучает холод.',
+    140,
+    70,
+    '/item-images/freezing_sea_water_vessel.jpeg',
+    'dungeon',
+    1
+  ),
+  (
+    'stingray_electric_organ',
+    'Электрогенный орган ската',
+    'material',
+    'epic',
+    'Биологический орган, генерирующий мощные электрические разряды.',
+    105,
+    52,
+    '/item-images/stingray_electric_organ.jpeg',
+    'dungeon',
+    1
+  );
