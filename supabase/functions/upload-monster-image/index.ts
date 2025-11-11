@@ -34,7 +34,7 @@ serve(async (req) => {
     // Check if user is admin
     const { data: isAdmin, error: adminError } = await supabaseClient.rpc(
       "is_admin_or_super_wallet",
-      { wallet_address: walletAddress }
+      { p_wallet_address: walletAddress }
     );
 
     if (adminError || !isAdmin) {
