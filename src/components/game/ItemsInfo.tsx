@@ -161,7 +161,7 @@ const ItemCard = ({ item }: { item: ItemTemplate }) => {
   const stats = formatStats(item.stats);
 
   const CardContent = () => (
-    <Card variant="menu" className="p-2 h-full flex flex-col" style={{ boxShadow: '-33px 15px 10px rgba(0, 0, 0, 0.6)' }}>
+    <Card variant="menu" className="p-2 h-full flex flex-col">
       <div className="w-full aspect-[3/4] mb-2 rounded-lg overflow-hidden flex items-center justify-center bg-white/10 border border-white/20">
         {(() => {
           const src = resolveItemImage(item);
@@ -179,11 +179,11 @@ const ItemCard = ({ item }: { item: ItemTemplate }) => {
         </div>
       </div>
       
-      <div className="flex items-center justify-between mt-auto">
-        <h3 className="font-semibold text-white text-[10px] sm:text-xs">
+      <div className="flex items-start justify-between gap-1 min-h-[2rem]">
+        <h3 className="font-semibold text-white text-[10px] sm:text-xs leading-tight">
           {translateItemName(language, item.name)}
         </h3>
-        <Badge className={`text-[8px] px-1 py-0 text-white ${getRarityColor(item.rarity)}`}>
+        <Badge className={`text-[8px] px-1 py-0 text-white flex-shrink-0 ${getRarityColor(item.rarity)}`}>
           {translateRarity(language, item.rarity)}
         </Badge>
       </div>
@@ -191,7 +191,7 @@ const ItemCard = ({ item }: { item: ItemTemplate }) => {
   );
 
   const ExpandedCardContent = () => (
-    <Card variant="menu" className="p-4 w-80 max-w-sm" style={{ boxShadow: '-33px 15px 10px rgba(0, 0, 0, 0.6)' }}>
+    <Card variant="menu" className="p-4 w-80 max-w-sm">
       <div className="w-full aspect-[3/4] mb-4 rounded-lg overflow-hidden flex items-center justify-center bg-white/10 border border-white/20">
         {(() => {
           const src = resolveItemImage(item);
