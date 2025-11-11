@@ -1,0 +1,133 @@
+-- Вставка новых материалов для 3 подземелья
+INSERT INTO item_templates (
+  item_id,
+  name,
+  type,
+  rarity,
+  description,
+  value,
+  sell_price,
+  image_url,
+  source_type,
+  level_requirement
+) VALUES
+  (
+    'corrupted_gill_tissue',
+    'Испорченная жаберная ткань',
+    'material',
+    'common',
+    'Остатки жаберной ткани морского существа. Используется в алхимии.',
+    10,
+    5,
+    '/item-images/corrupted_gill_tissue.jpeg',
+    'dungeon',
+    1
+  ),
+  (
+    'rusty_harpoon_tip',
+    'Ржавый наконечник гарпуна',
+    'material',
+    'common',
+    'Старый наконечник гарпуна, покрытый ржавчиной и водорослями.',
+    15,
+    7,
+    '/item-images/rusty_harpoon_tip.jpeg',
+    'dungeon',
+    1
+  ),
+  (
+    'wave_sharpened_bone',
+    'Кость, заточенная волнами',
+    'material',
+    'uncommon',
+    'Древняя кость, отполированная морскими волнами до острого края.',
+    25,
+    12,
+    '/item-images/wave_sharpened_bone.jpeg',
+    'dungeon',
+    1
+  ),
+  (
+    'striped_constrictor_scale',
+    'Полосатая чешуя удавника',
+    'material',
+    'uncommon',
+    'Прочная чешуя морского удавника с характерными полосами.',
+    30,
+    15,
+    '/item-images/striped_constrictor_scale.jpeg',
+    'dungeon',
+    1
+  ),
+  (
+    'needle_moray_tooth',
+    'Игольчатый зуб мурены',
+    'material',
+    'rare',
+    'Острый как игла зуб глубоководной мурены. Ценный материал для оружия.',
+    50,
+    25,
+    '/item-images/needle_moray_tooth.jpeg',
+    'dungeon',
+    1
+  ),
+  (
+    'poison_vial',
+    'Баночка с ядом',
+    'material',
+    'rare',
+    'Герметичный флакон с нервно-паралитическим ядом морских существ.',
+    60,
+    30,
+    '/item-images/poison_vial.jpeg',
+    'dungeon',
+    1
+  ),
+  (
+    'jelly_clot',
+    'Желе-сгусток',
+    'material',
+    'uncommon',
+    'Плотный сгусток желеобразной субстанции. Обладает восстанавливающими свойствами.',
+    35,
+    17,
+    '/item-images/jelly_clot.jpeg',
+    'dungeon',
+    1
+  ),
+  (
+    'jellyfish_slime',
+    'Слизь медузоида',
+    'material',
+    'common',
+    'Вязкая слизь, оставленная медузоидом. Светится в темноте.',
+    20,
+    10,
+    '/item-images/jellyfish_slime.jpeg',
+    'dungeon',
+    1
+  ),
+  (
+    'poisonous_tentacle_scrap',
+    'Обрывок ядовитого щупальца',
+    'material',
+    'rare',
+    'Фрагмент щупальца с ядовитыми железами. Опасно при неправильном обращении.',
+    55,
+    27,
+    '/item-images/poisonous_tentacle_scrap.jpeg',
+    'dungeon',
+    1
+  ),
+  (
+    'spiked_crab_shell',
+    'Шипастый панцирь краба',
+    'material',
+    'epic',
+    'Невероятно прочный панцирь гигантского краба, покрытый острыми шипами.',
+    100,
+    50,
+    '/item-images/spiked_crab_shell.jpeg',
+    'dungeon',
+    1
+  );
