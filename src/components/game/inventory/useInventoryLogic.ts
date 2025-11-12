@@ -24,7 +24,9 @@ export const useInventoryLogic = (initialInventory: Item[]) => {
     closeRevealModal,
     showNextCard,
     currentCardIndex,
-    totalCards
+    totalCards,
+    skipAnimations,
+    skipAllAnimations
   } = useCardPackOpening();
   const balance = gameData.balance;
 
@@ -158,6 +160,8 @@ const groupItems = (items: Item[]): GroupedItem[] => {
     showQuantityModal,
     setShowQuantityModal,
     selectedPackItem,
-    handleQuantityConfirm
+    handleQuantityConfirm,
+    skipAnimations,
+    skipAllAnimations
   };
 };

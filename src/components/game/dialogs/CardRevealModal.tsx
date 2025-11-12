@@ -18,6 +18,8 @@ interface CardRevealModalProps {
   onNextCard?: () => void;
   currentIndex?: number;
   totalCards?: number;
+  skipAnimations?: boolean;
+  onSkipAll?: () => void;
 }
 
 export const CardRevealModal = ({ 
@@ -26,17 +28,24 @@ export const CardRevealModal = ({
   revealedCard, 
   onNextCard, 
   currentIndex = 0, 
-  totalCards = 1 
+  totalCards = 1,
+  skipAnimations = false,
+  onSkipAll
 }: CardRevealModalProps) => {
   const [showCard, setShowCard] = useState(false);
   const [showAnimation, setShowAnimation] = useState(false);
 
   useEffect(() => {
     if (revealedCard && isOpen) {
-      setShowCard(false);
-      setShowAnimation(true);
+      if (skipAnimations) {
+        setShowAnimation(false);
+        setShowCard(true);
+      } else {
+        setShowCard(false);
+        setShowAnimation(true);
+      }
     }
-  }, [revealedCard, isOpen]);
+  }, [revealedCard, isOpen, skipAnimations]);
 
   const handleAnimationComplete = () => {
     setShowAnimation(false);
@@ -59,7 +68,12 @@ export const CardRevealModal = ({
 
   // Show animation first
   if (showAnimation) {
-    return <CardPackAnimation winningCard={revealedCard} onAnimationComplete={handleAnimationComplete} />;
+    return <CardPackAnimation 
+      winningCard={revealedCard} 
+      onAnimationComplete={handleAnimationComplete}
+      onSkipAll={onSkipAll}
+      showSkipAll={totalCards > 1}
+    />;
   }
 
   return (

@@ -16,6 +16,7 @@ export const useCardPackOpening = () => {
   const [showRevealModal, setShowRevealModal] = useState(false);
   const [cardQueue, setCardQueue] = useState<CardType[]>([]);
   const [currentCardIndex, setCurrentCardIndex] = useState(0);
+  const [skipAnimations, setSkipAnimations] = useState(false);
 
   // Card pack removal is now handled by item_instances, not inventory
   const removeCardPacksFromInventory = (count: number, referencePack: Item) => {
@@ -107,6 +108,7 @@ export const useCardPackOpening = () => {
     setRevealedCard(null);
     setCardQueue([]);
     setCurrentCardIndex(0);
+    setSkipAnimations(false);
   };
 
   const showNextCard = () => {
@@ -119,6 +121,10 @@ export const useCardPackOpening = () => {
     }
   };
 
+  const skipAllAnimations = () => {
+    setSkipAnimations(true);
+  };
+
   return {
     openCardPack,
     openCardPacks,
@@ -128,6 +134,8 @@ export const useCardPackOpening = () => {
     closeRevealModal,
     showNextCard,
     currentCardIndex,
-    totalCards: cardQueue.length
+    totalCards: cardQueue.length,
+    skipAnimations,
+    skipAllAnimations
   };
 };

@@ -11,9 +11,11 @@ import { calculateCardStats } from "@/utils/cardUtils";
 interface CardPackAnimationProps {
   winningCard: CardType;
   onAnimationComplete: () => void;
+  onSkipAll?: () => void;
+  showSkipAll?: boolean;
 }
 
-export const CardPackAnimation = ({ winningCard, onAnimationComplete }: CardPackAnimationProps) => {
+export const CardPackAnimation = ({ winningCard, onAnimationComplete, onSkipAll, showSkipAll }: CardPackAnimationProps) => {
   const [isAnimating, setIsAnimating] = useState(true);
   const [availableImages, setAvailableImages] = useState<{[key: string]: string}>({});
   const imagesReady = Object.keys(availableImages).length > 0;
@@ -249,15 +251,28 @@ export const CardPackAnimation = ({ winningCard, onAnimationComplete }: CardPack
                   transition={{ duration: animationDuration, ease: "linear" }}
                 />
               </div>
-              <Button
-                onClick={handleSkip}
-                variant="outline"
-                size="sm"
-                className="bg-game-surface/50 border-game-accent text-game-accent hover:bg-game-accent hover:text-game-background transition-colors"
-              >
-                <SkipForward className="w-4 h-4 mr-2" />
-                Пропустить анимацию
-              </Button>
+              <div className="flex gap-2 justify-center">
+                <Button
+                  onClick={handleSkip}
+                  variant="outline"
+                  size="sm"
+                  className="bg-game-surface/50 border-game-accent text-game-accent hover:bg-game-accent hover:text-game-background transition-colors"
+                >
+                  <SkipForward className="w-4 h-4 mr-2" />
+                  Пропустить анимацию
+                </Button>
+                {showSkipAll && onSkipAll && (
+                  <Button
+                    onClick={onSkipAll}
+                    variant="default"
+                    size="sm"
+                    className="bg-game-primary hover:bg-game-primary/80 text-white transition-colors"
+                  >
+                    <SkipForward className="w-4 h-4 mr-2" />
+                    Пропустить все
+                  </Button>
+                )}
+              </div>
             </div>
           ) : null}
         </div>

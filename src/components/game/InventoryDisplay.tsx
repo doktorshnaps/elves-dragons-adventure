@@ -54,7 +54,9 @@ export const InventoryDisplay = ({
     showQuantityModal,
     setShowQuantityModal,
     selectedPackItem,
-    handleQuantityConfirm
+    handleQuantityConfirm,
+    skipAnimations,
+    skipAllAnimations
   } = useInventoryLogic([]);  // inventory больше не используется
 
 // Источник истины: используем ТОЛЬКО item_instances для всех предметов
@@ -221,6 +223,8 @@ console.log('✨ Final inventory to display:', {
         onNextCard={showNextCard}
         currentIndex={currentCardIndex}
         totalCards={totalCards}
+        skipAnimations={skipAnimations}
+        onSkipAll={skipAllAnimations}
       />
       
       <CardPackQuantityModal
