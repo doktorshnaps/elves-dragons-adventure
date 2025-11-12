@@ -200,33 +200,33 @@ function pickClassLevel(): ClassLevel {
   let classLevel: ClassLevel;
   let range: string;
   
-  if (roll <= 80.00) {
+  if (roll <= 16.61) {
     classLevel = 1;
-    range = "0.01-80.00 (80%)";
-  } else if (roll <= 90.00) {
+    range = "0.01-16.61 (16.61%)";
+  } else if (roll <= 31.84) {
     classLevel = 2;
-    range = "80.01-90.00 (20%)";
-  } else if (roll <= 95.00) {
+    range = "16.62-31.84 (15.23%)";
+  } else if (roll <= 45.70) {
     classLevel = 3;
-    range = "90.01-95.00 (15%)";
-  } else if (roll <= 98.00) {
+    range = "31.85-45.70 (13.86%)";
+  } else if (roll <= 58.18) {
     classLevel = 4;
-    range = "95.01-98.00 (10%)";
-  } else if (roll <= 99.00) {
+    range = "45.71-58.18 (12.48%)";
+  } else if (roll <= 69.30) {
     classLevel = 5;
-    range = "98.01-99.00 (5%)";
-  } else if (roll <= 99.70) {
+    range = "58.19-69.30 (11.12%)";
+  } else if (roll <= 79.04) {
     classLevel = 6;
-    range = "99.01-99.70 (3%)";
-  } else if (roll <= 99.90) {
+    range = "69.31-79.04 (9.74%)";
+  } else if (roll <= 87.40) {
     classLevel = 7;
-    range = "99.71-99.90 (2%)";
-  } else if (roll <= 99.99) {
+    range = "79.05-87.40 (8.36%)";
+  } else if (roll <= 94.39) {
     classLevel = 8;
-    range = "99.91-99.99 (1%)";
+    range = "87.41-94.39 (6.99%)";
   } else {
     classLevel = 9;
-    range = "99.991-100.00 (0.5%)";
+    range = "94.40-100.00 (5.61%)";
   }
   
   console.log(`🎲 Class Level Roll: ${roll.toFixed(4)} → Level ${classLevel} (${range})`);
