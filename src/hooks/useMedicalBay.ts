@@ -126,7 +126,7 @@ export const useMedicalBay = () => {
       // Пытаемся найти экземпляр карты
       let { data: instance, error: instErr } = await supabase
         .from('card_instances')
-        .select('id, card_template_id')
+        .select('id, card_template_id, is_in_medical_bay')
         .eq('id', cardInstanceIdOrTemplateId)
         .maybeSingle();
       
@@ -135,7 +135,7 @@ export const useMedicalBay = () => {
         console.log('🏥 Card instance not found by ID, searching by template_id...');
         const { data: instanceByTemplate, error: templateErr } = await supabase
           .from('card_instances')
-          .select('id, card_template_id')
+          .select('id, card_template_id, is_in_medical_bay')
           .eq('card_template_id', cardInstanceIdOrTemplateId)
           .eq('wallet_address', accountId)
           .maybeSingle();
@@ -149,6 +149,36 @@ export const useMedicalBay = () => {
       
       const templateId = instance?.card_template_id as string | undefined;
       const actualInstanceId = instance?.id || cardInstanceIdOrTemplateId;
+      
+      // Защита от дубликатов: если уже в медпункте — выходим
+      if ((instance as any)?.is_in_medical_bay) {
+        console.log('🏥 [GUARD] Card already in medical bay, skipping RPC');
+        toast({ title: "Уже лечится", description: "Эта карта уже находится в медпункте." });
+        setLoading(false);
+        return;
+      }
+
+      // Доп. проверка: ищем активную запись в БД
+      try {
+        const { data: existing, error: existingErr } = await supabase
+          .from('medical_bay')
+          .select('id, is_completed')
+          .eq('wallet_address', accountId)
+          .eq('card_instance_id', actualInstanceId)
+          .eq('is_completed', false)
+          .limit(1);
+
+        if (!existingErr && existing && existing.length > 0) {
+          console.log('🏥 [GUARD] Active medical bay entry already exists, skipping RPC');
+          toast({ title: "Уже лечится", description: "Эта карта уже находится в медпункте." });
+          setLoading(false);
+          return;
+        } else if (existingErr) {
+          console.warn('🏥 [WARN] Could not verify existing entry:', existingErr.message);
+        }
+      } catch (e) {
+        console.warn('🏥 [WARN] Error while verifying existing entry:', e);
+      }
       
       const { data, error } = await supabase.rpc('add_card_to_medical_bay', {
         p_wallet_address: accountId,

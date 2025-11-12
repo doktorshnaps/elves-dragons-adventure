@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
@@ -29,6 +29,7 @@ export const MedicalBayComponent = () => {
   const gameState = useUnifiedGameState();
   const [selectedCard, setSelectedCard] = useState<any>(null);
   const HEAL_RATE = 100;
+  const isStartingRef = useRef(false);
 
   useEffect(() => {
     loadMedicalBayEntries();
@@ -144,9 +145,17 @@ export const MedicalBayComponent = () => {
       return;
     }
 
-    // Защита от повторных вызовов - проверяем, не обрабатывается ли уже запрос
+    // Локальная синхронная защита от дабл-клика
+    if (isStartingRef.current) {
+      console.log('🏥 [WARN] Duplicate press detected (local ref), ignoring');
+      return;
+    }
+    isStartingRef.current = true;
+
+    // Доп. защита — глобальная загрузка
     if (loading) {
       console.log('🏥 [WARN] Already processing, ignoring duplicate call');
+      isStartingRef.current = false;
       return;
     }
     
@@ -162,7 +171,7 @@ export const MedicalBayComponent = () => {
     
     console.log('🏥 Calling placeCardInMedicalBay with ID:', cardInstanceId);
 
-    // Сохраняем выбранную карту для проверки дубликатов
+    // Сохраняем выбранную карту для восстановления при ошибке
     const cardToHeal = selectedCard;
     
     // Очищаем выбор сразу, чтобы предотвратить повторные клики
@@ -181,6 +190,8 @@ export const MedicalBayComponent = () => {
       console.error('🏥 Error starting healing:', error);
       // Восстанавливаем выбор при ошибке
       setSelectedCard(cardToHeal);
+    } finally {
+      isStartingRef.current = false;
     }
   };
 
