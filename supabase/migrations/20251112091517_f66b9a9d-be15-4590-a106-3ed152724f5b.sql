@@ -1,0 +1,133 @@
+-- Добавление новых материалов для подземелий
+INSERT INTO item_templates (
+  item_id,
+  name,
+  type,
+  rarity,
+  description,
+  value,
+  sell_price,
+  image_url,
+  source_type,
+  level_requirement
+) VALUES
+  (
+    'blue_head_scale',
+    'Чешуя синей головы',
+    'material',
+    'epic',
+    'Редкая морозная чешуя с одной из голов гидры. Излучает холод даже после смерти существа.',
+    120,
+    60,
+    '/item-images/blue_head_scale.jpeg',
+    'dungeon',
+    1
+  ),
+  (
+    'tentacle_with_suckers',
+    'Щупальце с присосками',
+    'material',
+    'rare',
+    'Мощное щупальце морского чудовища, покрытое крепкими присосками. Может использоваться в крафте.',
+    85,
+    42,
+    '/item-images/tentacle_with_suckers.jpeg',
+    'dungeon',
+    1
+  ),
+  (
+    'black_energy_essence',
+    'Эссенция чёрной энергии',
+    'material',
+    'legendary',
+    'Концентрированная тёмная магия, заключённая в материальную форму. Невероятно редкий и опасный материал.',
+    200,
+    100,
+    '/item-images/black_energy_essence.jpeg',
+    'dungeon',
+    1
+  ),
+  (
+    'absorbing_darkness_clot',
+    'Сгусток поглощающей тьмы',
+    'material',
+    'legendary',
+    'Живая масса тьмы, которая поглощает свет вокруг себя. Используется в самых мощных магических артефактах.',
+    180,
+    90,
+    '/item-images/absorbing_darkness_clot.jpeg',
+    'dungeon',
+    1
+  ),
+  (
+    'glowing_brain_clot',
+    'Светящийся мозговой комок',
+    'material',
+    'epic',
+    'Странное биолюминесцентное образование из глубин. Пульсирует слабым светом и излучает психическую энергию.',
+    100,
+    50,
+    '/item-images/glowing_brain_clot.jpeg',
+    'dungeon',
+    1
+  ),
+  (
+    'glowing_lure',
+    'Светящаяся приманка',
+    'material',
+    'rare',
+    'Биолюминесцентный орган глубоководного хищника. Испускает завораживающий свет, привлекающий добычу.',
+    75,
+    37,
+    '/item-images/glowing_lure.jpeg',
+    'dungeon',
+    1
+  ),
+  (
+    'sparkling_crystal',
+    'Сверкающий кристалл',
+    'material',
+    'epic',
+    'Прекрасный кристаллический геод с аметистовой сердцевиной. Излучает мягкое магическое сияние.',
+    110,
+    55,
+    '/item-images/sparkling_crystal.jpeg',
+    'dungeon',
+    1
+  ),
+  (
+    'forked_tongue',
+    'Раздвоенный язык',
+    'material',
+    'uncommon',
+    'Длинный раздвоенный язык морского змея. Покрыт ядовитой слизью и сохраняет гибкость даже после смерти.',
+    50,
+    25,
+    '/item-images/forked_tongue.jpeg',
+    'dungeon',
+    1
+  ),
+  (
+    'transparent_bone_skull',
+    'Прозрачный костяной череп',
+    'material',
+    'rare',
+    'Жуткий полупрозрачный череп глубоководной рыбы. Сквозь кость виден сохранившийся мозг.',
+    80,
+    40,
+    '/item-images/transparent_bone_skull.jpeg',
+    'dungeon',
+    1
+  ),
+  (
+    'fin_antenna',
+    'Плавник-антенна',
+    'material',
+    'uncommon',
+    'Острый плавник с сенсорными усиками. Использовался существом для навигации в полной темноте.',
+    45,
+    22,
+    '/item-images/fin_antenna.jpeg',
+    'dungeon',
+    1
+  );
