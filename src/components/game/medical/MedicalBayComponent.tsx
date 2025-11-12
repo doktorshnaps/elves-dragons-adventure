@@ -143,6 +143,12 @@ export const MedicalBayComponent = () => {
       console.log('🏥 [ERROR] No card selected!');
       return;
     }
+
+    // Защита от повторных вызовов - проверяем, не обрабатывается ли уже запрос
+    if (loading) {
+      console.log('🏥 [WARN] Already processing, ignoring duplicate call');
+      return;
+    }
     
     console.log('🏥 Starting healing for card:', selectedCard);
     
@@ -156,6 +162,12 @@ export const MedicalBayComponent = () => {
     
     console.log('🏥 Calling placeCardInMedicalBay with ID:', cardInstanceId);
 
+    // Сохраняем выбранную карту для проверки дубликатов
+    const cardToHeal = selectedCard;
+    
+    // Очищаем выбор сразу, чтобы предотвратить повторные клики
+    setSelectedCard(null);
+
     try {
       await placeCardInMedicalBay(cardInstanceId);
       console.log('🏥 Placed in medical bay, reloading data...');
@@ -165,9 +177,10 @@ export const MedicalBayComponent = () => {
         syncHealthFromInstances(),
       ]);
       console.log('🏥 Data reloaded after placing in medical bay');
-      setSelectedCard(null);
     } catch (error) {
       console.error('🏥 Error starting healing:', error);
+      // Восстанавливаем выбор при ошибке
+      setSelectedCard(cardToHeal);
     }
   };
 
@@ -398,7 +411,12 @@ export const MedicalBayComponent = () => {
                           ? 'hover:scale-105' 
                           : 'opacity-50 cursor-not-allowed'
                     }`}
-                    onClick={() => canStartHealing && handleCardSelect(card)}
+                    onClick={(e) => {
+                      e.stopPropagation(); // Предотвращаем всплытие события
+                      if (canStartHealing && !loading) {
+                        handleCardSelect(card);
+                      }
+                    }}
                   >
                     <div className="relative">
                       <CardDisplay 
