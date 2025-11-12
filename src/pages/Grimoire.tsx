@@ -7,10 +7,14 @@ import { ArrowLeft, Book, Swords, Package } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useLanguage } from "@/hooks/useLanguage";
 import { t } from "@/utils/translations";
+import { useGrimoireImagePreloader } from "@/hooks/useImagePreloader";
 
 const Grimoire = () => {
   const navigate = useNavigate();
   const { language } = useLanguage();
+  
+  // Предзагрузка всех изображений гримуара с высоким приоритетом
+  useGrimoireImagePreloader();
 
   return (
     <div 
