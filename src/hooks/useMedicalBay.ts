@@ -53,8 +53,22 @@ export const useMedicalBay = () => {
         },
       })) || [];
 
-      console.log('🏥 Loaded medical bay entries:', mapped.length, 'entries');
-      setMedicalBayEntries(mapped);
+      // Дедупликация на клиенте по card_instance_id (оставляем самую раннюю запись)
+      const uniqueMap = new Map<string, any>();
+      for (const entry of mapped) {
+        const existing = uniqueMap.get(entry.card_instance_id);
+        if (!existing) {
+          uniqueMap.set(entry.card_instance_id, entry);
+        } else {
+          const existingTime = new Date(existing.placed_at).getTime();
+          const currentTime = new Date(entry.placed_at).getTime();
+          if (currentTime < existingTime) uniqueMap.set(entry.card_instance_id, entry);
+        }
+      }
+      const uniqueEntries = Array.from(uniqueMap.values());
+
+      console.log('🏥 Loaded medical bay entries:', mapped.length, 'entries; unique:', uniqueEntries.length);
+      setMedicalBayEntries(uniqueEntries);
     } catch (error) {
       console.error('Error loading medical bay entries:', error);
       toast({

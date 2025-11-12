@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useState, useRef, useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
@@ -31,6 +31,21 @@ export const MedicalBayComponent = () => {
   const HEAL_RATE = 100;
   const isStartingRef = useRef(false);
 
+  // Уникальные записи медпункта (без дублей по card_instance_id)
+  const uniqueMedicalEntries = useMemo(() => {
+    const map = new Map<string, any>();
+    for (const e of medicalBayEntries) {
+      if (!map.has(e.card_instance_id)) map.set(e.card_instance_id, e);
+      else {
+        const existing = map.get(e.card_instance_id);
+        const existingTime = new Date(existing.placed_at).getTime();
+        const currentTime = new Date(e.placed_at).getTime();
+        if (currentTime < existingTime) map.set(e.card_instance_id, e);
+      }
+    }
+    return Array.from(map.values());
+  }, [medicalBayEntries]);
+
   useEffect(() => {
     loadMedicalBayEntries();
     loadCardInstances();
@@ -59,7 +74,7 @@ export const MedicalBayComponent = () => {
     console.log('🏥 Getting injured cards...');
     
     // Получаем ID карт, которые сейчас в медпункте
-    const cardsInMedicalBay = medicalBayEntries.map(entry => entry.card_instance_id);
+    const cardsInMedicalBay = Array.from(new Set(medicalBayEntries.map(entry => entry.card_instance_id)));
     console.log('🏥 Cards in medical bay:', cardsInMedicalBay);
     
     // Создаем мапу для дедупликации по instanceId
@@ -235,7 +250,7 @@ export const MedicalBayComponent = () => {
               <CardTitle className="text-2xl">Медпункт</CardTitle>
             </div>
             <Badge variant="secondary">
-              Слотов: {medicalBayEntries.length}/3
+              Слотов: {uniqueMedicalEntries.length}/3
             </Badge>
           </div>
           <CardDescription>
@@ -246,7 +261,7 @@ export const MedicalBayComponent = () => {
           <div className="space-y-4">
             <div className="text-sm text-muted-foreground">
               <p>• Скорость лечения: {HEAL_RATE} HP/мин</p>
-              <p>• Активных лечений: {medicalBayEntries.length}/3</p>
+              <p>• Активных лечений: {uniqueMedicalEntries.length}/3</p>
               <p>• Раненых карт: {injuredCards.length}</p>
             </div>
           </div>
@@ -254,7 +269,7 @@ export const MedicalBayComponent = () => {
       </Card>
 
       {/* Active Healing Processes */}
-      {medicalBayEntries.length > 0 && (
+      {uniqueMedicalEntries.length > 0 && (
         <Card className="bg-card/50 backdrop-blur-sm border-green-500/20">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
@@ -264,7 +279,7 @@ export const MedicalBayComponent = () => {
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
-              {medicalBayEntries.map((entry) => {
+              {uniqueMedicalEntries.map((entry) => {
                 const cardData = entry.card_instances?.card_data;
                 const progress = getHealingProgress(entry.placed_at, entry.estimated_completion);
                 const timeRemaining = getEstimatedTimeRemaining(entry.estimated_completion);
