@@ -1,0 +1,133 @@
+-- Добавление 10 новых материалов для подземелий
+INSERT INTO item_templates (
+  item_id,
+  name,
+  type,
+  rarity,
+  description,
+  value,
+  sell_price,
+  image_url,
+  source_type,
+  level_requirement
+) VALUES
+  (
+    'fish_wing_fin',
+    'Плавник рыбы',
+    'material',
+    'rare',
+    'Огромный плавник, похожий на крыло дракона. Перепонки между костями сохранили упругость даже после смерти.',
+    90,
+    45,
+    '/item-images/fish_wing_fin.jpeg',
+    'dungeon',
+    1
+  ),
+  (
+    'pigment_sac',
+    'Пигментный мешочек',
+    'material',
+    'uncommon',
+    'Мешочек с переливающимися пигментами глубоководного моллюска. Используется для создания магических чернил.',
+    55,
+    27,
+    '/item-images/pigment_sac.jpeg',
+    'dungeon',
+    1
+  ),
+  (
+    'sharp_growing_crystal',
+    'Острый растущий кристалл',
+    'material',
+    'epic',
+    'Живой кристалл, который продолжает медленно расти. Его острые грани режут любую броню.',
+    130,
+    65,
+    '/item-images/sharp_growing_crystal.jpeg',
+    'dungeon',
+    1
+  ),
+  (
+    'whispering_coral_shard',
+    'Осколок шепчущего коралла',
+    'material',
+    'rare',
+    'Древний коралл, который шепчет на забытом языке. Некоторые утверждают, что слышат в нем голоса утонувших.',
+    95,
+    47,
+    '/item-images/whispering_coral_shard.jpeg',
+    'dungeon',
+    1
+  ),
+  (
+    'undigested_victim_bone',
+    'Не переваренная кость жертвы',
+    'material',
+    'uncommon',
+    'Массивная кость, извлечённая из желудка морского чудовища. Покрыта желудочным соком.',
+    60,
+    30,
+    '/item-images/undigested_victim_bone.jpeg',
+    'dungeon',
+    1
+  ),
+  (
+    'captain_hook',
+    'Крюк капитана',
+    'material',
+    'rare',
+    'Проклятый крюк затонувшего капитана. Говорят, он сам находит своих жертв в темноте.',
+    85,
+    42,
+    '/item-images/captain_hook.jpeg',
+    'dungeon',
+    1
+  ),
+  (
+    'sea_devil_bone',
+    'Кость морского черта',
+    'material',
+    'rare',
+    'Массивная кость глубоководного хищника. Несмотря на водное происхождение, она легче обычной кости.',
+    80,
+    40,
+    '/item-images/sea_devil_bone.jpeg',
+    'dungeon',
+    1
+  ),
+  (
+    'crystalline_tentacle_root',
+    'Корень кристаллического щупальца',
+    'material',
+    'epic',
+    'Основание щупальца, превращённое в кристалл. Испускает импульсы магической энергии.',
+    115,
+    57,
+    '/item-images/crystalline_tentacle_root.jpeg',
+    'dungeon',
+    1
+  ),
+  (
+    'ghostly_cloak_shred',
+    'Клочок призрачного плаща',
+    'material',
+    'legendary',
+    'Полупрозрачная ткань утонувшего призрака. Проходит сквозь материю, но её можно удержать.',
+    190,
+    95,
+    '/item-images/ghostly_cloak_shred.jpeg',
+    'dungeon',
+    1
+  ),
+  (
+    'primordial_sludge_drop',
+    'Капля первородного ила',
+    'material',
+    'legendary',
+    'Сгусток древнейшей субстанции со дна океана. Содержит в себе искру первозданной жизни.',
+    210,
+    105,
+    '/item-images/primordial_sludge_drop.jpeg',
+    'dungeon',
+    1
+  );
