@@ -75,36 +75,40 @@ const TeamBattlePageInner: React.FC<TeamBattlePageProps> = ({
     lastRoll
   } = useTeamBattle(dungeonType);
   const handleStartBattle = async () => {
-    // Проверяем энергию перед началом боя
-    const { getInitialEnergyState } = await import('@/utils/energyManager');
-    const currentEnergy = getInitialEnergyState();
-    
-    console.log('⚡ Проверка энергии перед боем:', currentEnergy);
-    
-    if (currentEnergy.current <= 0) {
-      console.warn('❌ Not enough energy to start battle. Current:', currentEnergy.current);
-      toast({
-        title: t(language, 'battlePage.insufficientEnergy'),
-        description: t(language, 'battlePage.waitForEnergy'),
-        variant: "destructive"
-      });
-      return;
-    }
-    
-    // Снимаем энергию при начале боя
-    const energyUsed = useEnergy();
-    if (!energyUsed) {
-      console.warn('❌ Failed to use energy');
-      return;
-    }
-    
-    console.log('✅ Энергия использована. Осталось:', currentEnergy.current - 1);
-    
-    // Создаем запись в БД о начале сессии подземелья
-    const started = await startDungeonSession(dungeonType, 1);
-    if (!started) {
-      console.warn('Failed to start dungeon session');
-      return;
+    // Снимаем энергию ТОЛЬКО если это первый уровень (вход в подземелье)
+    if (battleState.level === 1) {
+      const { getInitialEnergyState } = await import('@/utils/energyManager');
+      const currentEnergy = getInitialEnergyState();
+      
+      console.log('⚡ Проверка энергии перед входом в подземелье:', currentEnergy);
+      
+      if (currentEnergy.current <= 0) {
+        console.warn('❌ Not enough energy to start dungeon. Current:', currentEnergy.current);
+        toast({
+          title: t(language, 'battlePage.insufficientEnergy'),
+          description: t(language, 'battlePage.waitForEnergy'),
+          variant: "destructive"
+        });
+        return;
+      }
+      
+      // Снимаем энергию только при первом входе
+      const energyUsed = useEnergy();
+      if (!energyUsed) {
+        console.warn('❌ Failed to use energy');
+        return;
+      }
+      
+      console.log('✅ Энергия использована при входе в подземелье. Осталось:', currentEnergy.current - 1);
+      
+      // Создаем запись в БД о начале сессии подземелья
+      const started = await startDungeonSession(dungeonType, 1);
+      if (!started) {
+        console.warn('Failed to start dungeon session');
+        return;
+      }
+    } else {
+      console.log('⚡ Продолжение боя на уровне', battleState.level, '- энергия не списывается');
     }
     
     startTransition(() => {
