@@ -19,31 +19,31 @@ export const useItemInstances = () => {
   const [instances, setInstances] = useState<ItemInstance[]>([]);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
+  const fetchInstances = useCallback(async () => {
     if (!accountId) {
       setInstances([]);
       setLoading(false);
       return;
     }
 
-    const fetchInstances = async () => {
-      try {
-        setLoading(true);
-        // Используем RPC функцию для обхода RLS
-        const { data, error } = await supabase
-          .rpc('get_item_instances_by_wallet', { p_wallet_address: accountId });
+    try {
+      setLoading(true);
+      // Используем RPC функцию для обхода RLS
+      const { data, error } = await supabase
+        .rpc('get_item_instances_by_wallet', { p_wallet_address: accountId });
 
-        if (error) throw error;
-        console.log('✅ [useItemInstances] Loaded instances:', data?.length || 0);
-        setInstances((data as ItemInstance[]) || []);
-      } catch (e) {
-        console.error('❌ Failed to fetch item_instances:', e);
-        setInstances([]);
-      } finally {
-        setLoading(false);
-      }
-    };
+      if (error) throw error;
+      console.log('✅ [useItemInstances] Loaded instances:', data?.length || 0);
+      setInstances((data as ItemInstance[]) || []);
+    } catch (e) {
+      console.error('❌ Failed to fetch item_instances:', e);
+      setInstances([]);
+    } finally {
+      setLoading(false);
+    }
+  }, [accountId]);
 
+  useEffect(() => {
     fetchInstances();
 
     // Realtime subscription to item_instances for this wallet
@@ -153,6 +153,7 @@ export const useItemInstances = () => {
     addItemInstances,
     removeItemInstancesByIds,
     getCountsByItemId,
-    getInstancesByItemId
+    getInstancesByItemId,
+    refetch: fetchInstances
   };
 };
