@@ -307,11 +307,11 @@ export const DeckSelection = ({
       <div className="grid grid-cols-2 gap-2 sm:gap-3 flex-shrink-0">
         <Button 
           onClick={() => setShowHeroDeck(true)} 
-          className="h-12 sm:h-16 flex flex-col items-center justify-center space-y-1 bg-white text-black backdrop-blur-sm border-2 border-white hover:bg-white/90 transition-all duration-300 group rounded-3xl"
+          className="h-12 sm:h-16 flex flex-col items-center justify-center space-y-1 bg-white text-black backdrop-blur-sm border-2 border-white hover:bg-white/90 transition-all duration-300 group rounded-3xl overflow-hidden px-2"
           style={{ boxShadow: '-33px 15px 10px rgba(0, 0, 0, 0.6)' }}
         >
           <div className="text-xs sm:text-sm font-bold text-black transition-colors">Колода героев</div>
-          <Badge variant="secondary" className="text-[10px] sm:text-xs bg-black/20 text-black border-black/30">{heroes.length} карт</Badge>
+          <Badge variant="secondary" className="text-[10px] sm:text-xs bg-black/20 text-black border-black/30 px-2 whitespace-nowrap">{heroes.length} карт</Badge>
         </Button>
 
         <Button 
@@ -319,11 +319,11 @@ export const DeckSelection = ({
             setActivePairIndex(null);
             setShowDragonDeck(true);
           }} 
-          className="h-12 sm:h-16 flex flex-col items-center justify-center space-y-1 bg-white text-black backdrop-blur-sm border-2 border-white hover:bg-white/90 transition-all duration-300 group rounded-3xl"
+          className="h-12 sm:h-16 flex flex-col items-center justify-center space-y-1 bg-white text-black backdrop-blur-sm border-2 border-white hover:bg-white/90 transition-all duration-300 group rounded-3xl overflow-hidden px-2"
           style={{ boxShadow: '-33px 15px 10px rgba(0, 0, 0, 0.6)' }}
         >
           <div className="text-xs sm:text-sm font-bold text-black transition-colors">Колода драконов</div>
-          <Badge variant="secondary" className="text-[10px] sm:text-xs bg-black/20 text-black border-black/30">{dragons.length} карт</Badge>
+          <Badge variant="secondary" className="text-[10px] sm:text-xs bg-black/20 text-black border-black/30 px-2 whitespace-nowrap">{dragons.length} карт</Badge>
         </Button>
       </div>
 
