@@ -288,9 +288,16 @@ export const DeckSelection = ({
                     <Button size="sm" variant="outline" onClick={() => onPairRemove(index)} className="w-full text-xs border-white text-white hover:bg-white hover:text-black">
                       Удалить
                     </Button>
-                  </div> : <div className="h-full flex items-center justify-center text-white/40 text-xs sm:text-sm">
-                    Пустой слот
-                  </div>}
+                  </div> : <button 
+                    type="button"
+                    onClick={() => setShowHeroDeck(true)}
+                    className="h-full w-full flex items-center justify-center text-white/40 text-xs sm:text-sm hover:text-white hover:bg-white/5 transition-all duration-300 rounded-xl cursor-pointer border-2 border-dashed border-white/20 hover:border-white/50"
+                  >
+                    <div className="flex flex-col items-center gap-2">
+                      <span>Пустой слот</span>
+                      <span className="text-[10px] text-white/60">Нажмите для выбора героя</span>
+                    </div>
+                  </button>}
               </div>;
         })}
         </div>
