@@ -285,7 +285,7 @@ const TeamBattlePageInner: React.FC<TeamBattlePageProps> = ({
     if (!isBattleOver) return;
 
     const isVictory = alivePairs.length > 0;
-    const isFullCompletion = isVictory && battleState.level >= 10;
+    const isFullCompletion = isVictory && battleState.level >= 100;
 
     // Предотвращаем повторную обработку одного и того же уровня
     if (processedLevelRef.current === battleState.level) {
