@@ -61,7 +61,7 @@ export const InventoryDisplay = ({
 
 // Источник истины: используем ТОЛЬКО item_instances для всех предметов
 const { cardInstances } = useCardInstances();
-const { instances: itemInstances } = useItemInstances();
+const { instances: itemInstances, refetch: refetchItemInstances } = useItemInstances();
 
 // Рабочие из card_instances
 const workerItems: Item[] = (cardInstances || [])
@@ -144,7 +144,8 @@ console.log('✨ Final inventory to display:', {
     // Колоды карт открываются всегда (без внешнего обработчика)
     if (groupedItem.type === 'cardPack') {
       const shouldRemove = await handleOpenCardPack(groupedItem.items[0]);
-      // Колоды удаляются из item_instances внутри handleOpenCardPack
+      // Принудительно обновляем список предметов после открытия колоды
+      await refetchItemInstances();
       return shouldRemove;
     }
 
