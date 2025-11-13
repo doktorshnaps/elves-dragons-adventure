@@ -50,6 +50,9 @@ export const CardGrid = ({ type }: CardGridProps) => {
                   src={card.image} 
                   alt={translateCardName(language, card.name)}
                   className="w-full h-full object-cover"
+                  loading="lazy"
+                  decoding="async"
+                  crossOrigin="anonymous"
                 />
               </div>
             )}
