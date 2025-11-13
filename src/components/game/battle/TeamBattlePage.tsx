@@ -356,7 +356,7 @@ const TeamBattlePageInner: React.FC<TeamBattlePageProps> = ({
         onClose={handleClaimAndExit}
         onContinue={handleContinue}
         reward={accumulatedReward ?? pendingReward}
-        canContinue={alivePairs.length > 0 && battleState.level < 10}
+        canContinue={alivePairs.length > 0 && battleState.level < 100}
       />
     );
   }
