@@ -83,6 +83,15 @@ export const WorkersManagement = ({ onSpeedBoostChange }: WorkersManagementProps
     { id: "medical", name: t(language, 'shelter.medicalBuilding') }
   ];
 
+  // Получаем статистику по зданию
+  const getBuildingStats = (buildingId: string) => {
+    const workers = activeWorkers.filter(w => w.building === buildingId);
+    const workingCount = workers.filter(w => w.status === 'working').length;
+    const waitingCount = workers.filter(w => w.status === 'waiting').length;
+    const totalTime = workers.reduce((sum, w) => sum + w.duration, 0);
+    return { workingCount, waitingCount, totalTime };
+  };
+
   // Получаем рабочих только из card_instances (единственный источник для workers)
   const availableWorkers = cardInstances
     .filter(instance => 
@@ -392,17 +401,36 @@ export const WorkersManagement = ({ onSpeedBoostChange }: WorkersManagementProps
             <div>
               <label className="text-sm font-medium mb-2 block">{t(language, 'shelter.building')}</label>
               <div className="grid grid-cols-2 gap-2">
-                {buildings.map(building => (
-                  <Button
-                    key={building.id}
-                    variant={selectedBuilding === building.id ? "default" : "outline"}
-                    size="sm"
-                    onClick={() => setSelectedBuilding(building.id)}
-                    className="justify-start"
-                  >
-                    {building.name}
-                  </Button>
-                ))}
+                {buildings.map(building => {
+                  const stats = getBuildingStats(building.id);
+                  const hasWorkers = stats.workingCount > 0 || stats.waitingCount > 0;
+                  
+                  return (
+                    <Button
+                      key={building.id}
+                      variant={selectedBuilding === building.id ? "default" : "outline"}
+                      size="sm"
+                      onClick={() => setSelectedBuilding(building.id)}
+                      className="justify-between h-auto py-2"
+                    >
+                      <span>{building.name}</span>
+                      {hasWorkers && (
+                        <div className="flex flex-col items-end text-xs ml-2">
+                          <span className="flex items-center gap-1">
+                            <Users className="w-3 h-3" />
+                            {stats.workingCount}
+                            {stats.waitingCount > 0 && (
+                              <span className="text-muted-foreground">+{stats.waitingCount}</span>
+                            )}
+                          </span>
+                          <span className="text-muted-foreground">
+                            {formatTime(stats.totalTime)}
+                          </span>
+                        </div>
+                      )}
+                    </Button>
+                  );
+                })}
               </div>
             </div>
 
