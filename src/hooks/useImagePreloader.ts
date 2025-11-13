@@ -11,28 +11,89 @@ const imageCache: { [key: string]: HTMLImageElement } = {};
 let preloadCompleted = false;
 const preloadPromise: Promise<void> | null = null;
 
-// Функция для предварительной загрузки одного изображения
-const preloadSingleImage = (url: string, priority: 'high' | 'low' = 'low'): Promise<void> => {
-  return new Promise((resolve) => {
-    // Если изображение уже в кэше, сразу возвращаем его
-    if (imageCache[url]) {
-      resolve();
-      return;
-    }
+const CACHE_NAME = 'grimoire-images-v1';
 
+/**
+ * Cache image using Cache API for persistent storage across sessions
+ */
+const cacheImageInBrowser = async (url: string, blob: Blob): Promise<void> => {
+  if (!('caches' in window)) return;
+  
+  try {
+    const cache = await caches.open(CACHE_NAME);
+    const response = new Response(blob, {
+      headers: {
+        'Content-Type': blob.type,
+        'Cache-Control': 'max-age=31536000' // 1 year
+      }
+    });
+    await cache.put(url, response);
+  } catch (error) {
+    console.warn(`⚠️ Failed to cache image: ${url}`, error);
+  }
+};
+
+/**
+ * Get image from Cache API if available
+ */
+const getImageFromCache = async (url: string): Promise<Blob | null> => {
+  if (!('caches' in window)) return null;
+  
+  try {
+    const cache = await caches.open(CACHE_NAME);
+    const response = await cache.match(url);
+    if (response) {
+      return await response.blob();
+    }
+  } catch (error) {
+    console.warn(`⚠️ Failed to retrieve cached image: ${url}`, error);
+  }
+  return null;
+};
+
+// Функция для предварительной загрузки одного изображения
+const preloadSingleImage = async (url: string, priority: 'high' | 'low' = 'low'): Promise<void> => {
+  // Если изображение уже в кэше памяти, сразу возвращаем его
+  if (imageCache[url]) {
+    return Promise.resolve();
+  }
+
+  // Проверяем браузерный кэш
+  const cachedBlob = await getImageFromCache(url);
+  if (cachedBlob) {
+    const img = new Image();
+    img.src = URL.createObjectURL(cachedBlob);
+    imageCache[url] = img;
+    console.log(`📦 Loaded from cache: ${url}`);
+    return Promise.resolve();
+  }
+
+  return new Promise((resolve) => {
     const img = new Image();
     
-    img.onload = () => {
+    img.onload = async () => {
       imageCache[url] = img;
+      
+      // Сохраняем в браузерный кэш для следующих сессий
+      try {
+        const response = await fetch(url);
+        const blob = await response.blob();
+        await cacheImageInBrowser(url, blob);
+        console.log(`✅ Cached: ${url}`);
+      } catch (error) {
+        console.warn(`⚠️ Failed to cache: ${url}`, error);
+      }
+      
       resolve();
     };
     
     img.onerror = () => {
-      console.error(`Failed to load image: ${url}`);
+      console.error(`❌ Failed to load: ${url}`);
       resolve(); // Разрешаем промис даже при ошибке
     };
 
     // Устанавливаем приоритет загрузки
+    img.crossOrigin = 'anonymous';
     if (priority === 'high') {
       img.fetchPriority = 'high';
       img.loading = 'eager';
