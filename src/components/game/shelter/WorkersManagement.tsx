@@ -23,6 +23,7 @@ interface ActiveWorker {
   startTime: number;
   duration: number;
   building: string;
+  status: 'working' | 'waiting';
 }
 
 interface WorkersManagementProps {
@@ -142,15 +143,24 @@ export const WorkersManagement = ({ onSpeedBoostChange }: WorkersManagementProps
     onSpeedBoostChange?.(totalBoost);
   }, [activeWorkers, onSpeedBoostChange]);
 
-  // Проверяем завершенных рабочих каждую секунду
+  // Проверяем завершенных рабочих и обновляем статусы каждую секунду
   useEffect(() => {
     const interval = setInterval(() => {
       const now = Date.now();
       setActiveWorkers(prev => {
-        const finishedWorkers = prev.filter(worker => now >= worker.startTime + worker.duration);
-        const stillWorking = prev.filter(worker => now < worker.startTime + worker.duration);
+        let updated = [...prev];
         
-        // Показываем toast для завершенных рабочих вне setState
+        // Находим завершенных рабочих (только тех, кто работает)
+        const finishedWorkers = updated.filter(
+          worker => worker.status === 'working' && now >= worker.startTime + worker.duration
+        );
+        
+        // Удаляем завершенных рабочих
+        updated = updated.filter(
+          worker => !(worker.status === 'working' && now >= worker.startTime + worker.duration)
+        );
+        
+        // Показываем toast для завершенных рабочих
         finishedWorkers.forEach(worker => {
           setTimeout(() => {
             toast({
@@ -160,17 +170,26 @@ export const WorkersManagement = ({ onSpeedBoostChange }: WorkersManagementProps
           }, 0);
         });
         
+        // Активируем ожидающих рабочих, чье время пришло
+        updated = updated.map(worker => {
+          if (worker.status === 'waiting' && now >= worker.startTime) {
+            console.log('▶️ Starting queued worker:', worker.name);
+            return { ...worker, status: 'working' as const };
+          }
+          return worker;
+        });
+        
         // Обновляем базу данных если список изменился
-        if (stillWorking.length !== prev.length) {
-          updateActiveWorkersInDB(stillWorking);
+        if (updated.length !== prev.length || updated.some((w, i) => w.status !== prev[i]?.status)) {
+          updateActiveWorkersInDB(updated);
           try {
-            localStorage.setItem('activeWorkers', JSON.stringify(stillWorking));
+            localStorage.setItem('activeWorkers', JSON.stringify(updated));
           } catch {}
-          window.dispatchEvent(new CustomEvent('activeWorkers:changed', { detail: stillWorking }));
-          console.log('🔄 Updated active workers after completion:', stillWorking);
+          window.dispatchEvent(new CustomEvent('activeWorkers:changed', { detail: updated }));
+          console.log('🔄 Updated active workers:', updated.length);
         }
         
-        return stillWorking;
+        return updated;
       });
     }, 1000);
 
@@ -194,15 +213,33 @@ export const WorkersManagement = ({ onSpeedBoostChange }: WorkersManagementProps
     setAssigningId(workerId);
     console.log('⏳ Setting assigningId:', workerId);
 
+    // Находим рабочих в этом же здании
+    const workersInSameBuilding = activeWorkers.filter(w => w.building === selectedBuilding);
+    
+    let startTime = Date.now();
+    let status: 'working' | 'waiting' = 'working';
+    
+    // Если есть рабочие в здании, новый идет в очередь
+    if (workersInSameBuilding.length > 0) {
+      // Находим время окончания последнего рабочего в очереди
+      const lastWorkerEndTime = Math.max(
+        ...workersInSameBuilding.map(w => w.startTime + w.duration)
+      );
+      startTime = lastWorkerEndTime;
+      status = 'waiting';
+      console.log('📋 Worker queued after existing workers, will start at:', new Date(startTime));
+    }
+
     const newActiveWorker: ActiveWorker = {
       id: `${worker.id}_${Date.now()}`,
       workerId: worker.id,
       cardInstanceId: workerId,
       name: worker.name,
       speedBoost: worker.value,
-      startTime: Date.now(),
+      startTime,
       duration: worker.stats.workDuration,
-      building: selectedBuilding
+      building: selectedBuilding,
+      status
     };
 
     try {
@@ -296,7 +333,10 @@ export const WorkersManagement = ({ onSpeedBoostChange }: WorkersManagementProps
     return Math.max(0, worker.duration - elapsed);
   };
 
-  const totalSpeedBoost = activeWorkers.reduce((sum, worker) => sum + worker.speedBoost, 0);
+  // Учитываем только работающих рабочих для ускорения
+  const totalSpeedBoost = activeWorkers
+    .filter(w => w.status === 'working')
+    .reduce((sum, worker) => sum + worker.speedBoost, 0);
 
   return (
     <div className="space-y-6">
@@ -447,16 +487,25 @@ export const WorkersManagement = ({ onSpeedBoostChange }: WorkersManagementProps
                 <div key={worker.id} className="p-4 border rounded-lg">
                   <div className="flex items-center justify-between mb-2">
                     <div>
-                      <h4 className="font-medium">{worker.name}</h4>
+                      <div className="flex items-center gap-2">
+                        <h4 className="font-medium">{worker.name}</h4>
+                        {worker.status === 'waiting' && (
+                          <Badge variant="outline" className="text-xs">
+                            В очереди
+                          </Badge>
+                        )}
+                      </div>
                       <p className="text-sm text-muted-foreground">
                         {buildings.find(b => b.id === worker.building)?.name} • +{worker.speedBoost}% {t(language, 'shelter.speedBoost')}
                       </p>
                     </div>
-                    <Badge variant="secondary">
-                      {formatTime(getRemainingTime(worker))}
+                    <Badge variant={worker.status === 'working' ? 'secondary' : 'outline'}>
+                      {worker.status === 'waiting' ? 'Ожидает' : formatTime(getRemainingTime(worker))}
                     </Badge>
                   </div>
-                  <Progress value={getProgress(worker)} className="w-full" />
+                  {worker.status === 'working' && (
+                    <Progress value={getProgress(worker)} className="w-full" />
+                  )}
                 </div>
               ))}
             </div>
