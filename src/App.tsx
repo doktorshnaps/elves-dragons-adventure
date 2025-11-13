@@ -132,6 +132,7 @@ function App() {
                     <Route path="/dungeons/pantheon-gods" element={<Suspense fallback={<PageLoader />}><ProtectedRoute><PantheonOfGodsWithLazyLoading /></ProtectedRoute></Suspense>} />
                     <Route path="/dungeons/dragon-lair" element={<Suspense fallback={<PageLoader />}><ProtectedRoute><BlackDragonLairWithLazyLoading /></ProtectedRoute></Suspense>} />
                     <Route path="/dungeons/forgotten-souls" element={<Suspense fallback={<PageLoader />}><ProtectedRoute><ForgottenSoulsCaveWithLazyLoading /></ProtectedRoute></Suspense>} />
+                    <Route path="/dungeons/ice-throne" element={<Suspense fallback={<PageLoader />}><ProtectedRoute><IcyThroneWithLazyLoading /></ProtectedRoute></Suspense>} />
                     <Route path="/dungeons/icy-throne" element={<Suspense fallback={<PageLoader />}><ProtectedRoute><IcyThroneWithLazyLoading /></ProtectedRoute></Suspense>} />
                     <Route path="/dungeons/dark-mage" element={<Suspense fallback={<PageLoader />}><ProtectedRoute><DarkMageTowerWithLazyLoading /></ProtectedRoute></Suspense>} />
                     <Route path="/dungeons/bone-dungeon" element={<Suspense fallback={<PageLoader />}><ProtectedRoute><BoneDemonDungeonWithLazyLoading /></ProtectedRoute></Suspense>} />
