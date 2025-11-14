@@ -1,12 +1,16 @@
-// Import worker images
-import pylevoyBatrak from "@/assets/workers/pylevoy-batrak.png";
-import ugolnyNosiltschik from "@/assets/workers/ugolny-nosiltschik.png";
-import remeslennik from "@/assets/workers/remeslennik.png";
-import master from "@/assets/workers/master.png";
-import arkhimaster from "@/assets/workers/arkhimaster.png";
-import grandMaster from "@/assets/workers/grand-master.png";
-import vladykaRemesel from "@/assets/workers/vladyka-remesel.png";
-import arkhontManufaktur from "@/assets/workers/arkhont-manufaktur.png";
+// Worker images will be added later - using placeholder for now
+// TODO: Add worker images to src/assets/workers/
+
+// Placeholder image for workers
+const placeholderWorker = "/placeholder.svg";
+const pylevoyBatrak = placeholderWorker;
+const ugolnyNosiltschik = placeholderWorker;
+const remeslennik = placeholderWorker;
+const master = placeholderWorker;
+const arkhimaster = placeholderWorker;
+const grandMaster = placeholderWorker;
+const vladykaRemesel = placeholderWorker;
+const arkhontManufaktur = placeholderWorker;
 
 // Worker images mapping by worker name (Russian)
 export const workerImagesByName: Record<string, string> = {
