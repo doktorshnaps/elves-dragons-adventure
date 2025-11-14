@@ -1,8 +1,10 @@
+import { Item } from "@/types/inventory";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { GroupedItem } from "./types";
 import { Coins } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { OptimizedImage } from "@/components/ui/optimized-image";
 
 interface ItemCardProps {
   item: GroupedItem;
@@ -32,10 +34,13 @@ export const ItemCard = ({
     <Card className="p-4 bg-game-background border-game-accent hover:border-game-primary transition-all duration-300 h-[320px] flex flex-col justify-between">
       {item.image && (
         <div className="w-full aspect-[4/3] mb-2 rounded-lg overflow-hidden">
-          <img 
-            src={item.image} 
+          <OptimizedImage
+            src={item.image}
             alt={item.name}
+            width={200}
+            height={150}
             className="w-full h-full object-cover"
+            progressive={true}
           />
         </div>
       )}

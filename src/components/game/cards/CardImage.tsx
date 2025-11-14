@@ -1,7 +1,7 @@
-import { useEffect, useRef, useState } from "react";
-import { useIsMobile } from "@/hooks/use-mobile";
+import { useEffect, useState } from "react";
 import { Card } from '@/types/cards';
 import { resolveCardImage } from '@/utils/cardImageResolver';
+import { OptimizedImage } from '@/components/ui/optimized-image';
 
 interface CardImageProps {
   image?: string;
@@ -10,9 +10,6 @@ interface CardImageProps {
 }
 
 export const CardImage = ({ image, name, card }: CardImageProps) => {
-  const isMobile = useIsMobile();
-  const imgRef = useRef<HTMLImageElement>(null);
-  const attemptRef = useRef(0);
   const [resolvedImageUrl, setResolvedImageUrl] = useState<string | undefined>(undefined);
 
   // Асинхронно загружаем изображение из БД если передана карта
@@ -53,105 +50,21 @@ export const CardImage = ({ image, name, card }: CardImageProps) => {
     }
   };
 
-  // Построение списка альтернативных IPFS шлюзов для одного и того же ресурса
-  const buildGatewayUrls = (url: string): string[] => {
-    try {
-      const urls = new Set<string>();
-      urls.add(url);
+  if (!image && !resolvedImageUrl) return null;
 
-      const addIpfsVariants = (cid: string, path: string) => {
-        const suffix = path.startsWith('/') ? path : `/${path}`;
-        urls.add(`https://ipfs.io/ipfs/${cid}${suffix}`);
-        urls.add(`https://cloudflare-ipfs.com/ipfs/${cid}${suffix}`);
-        urls.add(`https://dweb.link/ipfs/${cid}${suffix}`);
-        urls.add(`https://nftstorage.link/ipfs/${cid}${suffix}`);
-      };
-
-      const u = new URL(url);
-      const host = u.hostname;
-      const path = u.pathname;
-
-      // 1) Subdomain gateway like <cid>.ipfs.nftstorage.link
-      const subdomainCid = host.match(/^([a-z0-9]{46,})\.ipfs\./i)?.[1];
-      if (subdomainCid) {
-        addIpfsVariants(subdomainCid, path);
-      }
-
-      // 2) Path gateway like /ipfs/<cid>/...
-      const m = path.match(/^\/ipfs\/([a-z0-9]{46,})(\/.*)?/i);
-      if (m) {
-        addIpfsVariants(m[1], m[2] || '');
-      }
-
-      return Array.from(urls);
-    } catch {
-      return [url];
-    }
-  };
-  useEffect(() => {
-    if (!imgRef.current) return;
-
-    const normalizedUrl = normalizeImageUrl(resolvedImageUrl || image);
-    const candidates = buildGatewayUrls(normalizedUrl);
-
-    let isCancelled = false;
-
-    const tryLoad = (index: number) => {
-      if (isCancelled) return;
-      if (index >= candidates.length) {
-        if (imgRef.current) imgRef.current.src = '/placeholder.svg';
-        return;
-      }
-
-      const url = candidates[index];
-      attemptRef.current = index;
-      console.log(`🖼️ Trying image [${index + 1}/${candidates.length}]:`, url);
-
-      const img = new Image();
-      img.crossOrigin = 'anonymous';
-      (img as any).referrerPolicy = 'no-referrer';
-
-      img.onload = () => {
-        if (isCancelled) return;
-        console.log('✅ Image loaded:', url);
-        if (imgRef.current) imgRef.current.src = url;
-      };
-
-      img.onerror = () => {
-        if (isCancelled) return;
-        console.warn('⚠️ Gateway failed, trying next:', url);
-        tryLoad(index + 1);
-      };
-
-      img.src = url;
-      if (img.complete) {
-        if (imgRef.current) imgRef.current.src = url;
-      }
-    };
-
-    tryLoad(0);
-
-    return () => {
-      isCancelled = true;
-    };
-  }, [image, resolvedImageUrl]);
-
-  if (!image) return null;
+  const finalImageUrl = normalizeImageUrl(resolvedImageUrl || image);
 
   return (
     <div className="w-full h-full overflow-hidden rounded-lg">
-      <img 
-        ref={imgRef}
+      <OptimizedImage
+        src={finalImageUrl}
         alt={name}
+        placeholder="/placeholder.svg"
+        width={240}
+        height={320}
         className="w-full h-full object-contain"
-        loading="eager"
-        decoding="async"
-        crossOrigin="anonymous"
-        referrerPolicy="no-referrer"
-        onError={(e) => {
-          console.error('❌ Image element error for:', image);
-          e.currentTarget.src = '/placeholder.svg';
-        }}
+        priority={false}
+        progressive={true}
       />
     </div>
   );
