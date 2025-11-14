@@ -8,6 +8,7 @@ import { DungeonType } from '@/constants/dungeons';
 import { addAccountExperience } from '@/utils/accountLeveling';
 import { useGameStore } from '@/stores/gameStore';
 import { useDungeonSync } from './useDungeonSync';
+import { canGainExperienceInDungeon } from '@/constants/dungeons';
 
 interface BattleState {
   playerStats: any;
@@ -83,12 +84,30 @@ export const useBattleStateNew = (level: number) => {
         balance: gameData.balance + goldReward
       });
       
-      await addAccountExp(expReward);
+      // Проверяем, может ли игрок получить опыт в этом подземелье
+      const canGainExp = battleState.selectedDungeon 
+        ? canGainExperienceInDungeon(battleState.selectedDungeon as DungeonType, accountLevel)
+        : true;
       
-      toast({
-        title: "Враг побежден!",
-        description: `Получено ${goldReward} золота и ${expReward} опыта аккаунта`
-      });
+      if (canGainExp && accountLevel < 100) {
+        await addAccountExp(expReward);
+        
+        toast({
+          title: "Враг побежден!",
+          description: `Получено ${goldReward} золота и ${expReward} опыта аккаунта`
+        });
+      } else if (accountLevel >= 100) {
+        toast({
+          title: "Враг побежден!",
+          description: `Получено ${goldReward} золота. Достигнут максимальный уровень!`
+        });
+      } else {
+        toast({
+          title: "Враг побежден!",
+          description: `Получено ${goldReward} золота. Для получения опыта нужно другое подземелье!`,
+          variant: "default"
+        });
+      }
     }
 
     // Атака противников
