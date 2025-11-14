@@ -43,7 +43,7 @@ export const itemTemplateSchema = z.object({
   
   type: z.string()
     .refine((val) => [
-      'material', 'weapon', 'armor', 'accessory', 'consumable', 'cardPack',
+      'material', 'worker', 'weapon', 'armor', 'accessory', 'consumable', 'cardPack',
       'healthPotion', 'woodChunks', 'magicalRoots', 'rockStones', 'blackCrystals',
       'illusionManuscript', 'darkMonocle', 'etherVine', 'dwarvenTongs',
       'healingOil', 'shimmeringCrystal', 'lifeCrystal'
@@ -52,7 +52,7 @@ export const itemTemplateSchema = z.object({
     }),
   
   rarity: z.string()
-    .refine((val) => ['common', 'uncommon', 'rare', 'epic', 'legendary', 'mythic'].includes(val), {
+    .refine((val) => ['common', 'uncommon', 'rare', 'epic', 'legendary', 'mythic', 'divine'].includes(val), {
       message: "Invalid rarity level"
     }),
   
@@ -63,14 +63,18 @@ export const itemTemplateSchema = z.object({
     .or(z.literal('')),
   
   source_type: z.string()
-    .refine((val) => ['dungeon', 'shop', 'quest', 'craft', 'event'].includes(val), {
+    .refine((val) => ['dungeon', 'shop', 'quest', 'craft', 'event', 'monster_drop', 'boss_drop', 'crafting'].includes(val), {
       message: "Invalid source type"
     }),
   
   image_url: z.string()
     .trim()
     .max(500, "Image URL too long")
-    .refine((val) => !val || val === '' || z.string().url().safeParse(val).success, {
+    .refine((val) => {
+      if (!val || val === '') return true;
+      // Allow full URLs or relative paths starting with /
+      return z.string().url().safeParse(val).success || val.startsWith('/');
+    }, {
       message: "Invalid URL format"
     })
     .optional()
