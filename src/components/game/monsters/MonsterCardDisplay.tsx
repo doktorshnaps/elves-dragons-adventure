@@ -5,6 +5,7 @@ import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
 import { Heart, Sword, Shield, Skull, Coins } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { generateLootTable, formatDropChance } from "@/utils/lootUtils";
+import { OptimizedImage } from "@/components/ui/optimized-image";
 
 interface MonsterCardDisplayProps {
   name: string;
@@ -44,15 +45,14 @@ export const MonsterCardDisplay = memo(({
     >
       {image && (
         <div className="w-full aspect-[3/4] mb-2 rounded-lg overflow-hidden flex items-center justify-center">
-          <img 
-            src={image} 
+          <OptimizedImage
+            src={image}
             alt={name}
+            width={240}
+            height={320}
+            placeholder="/placeholder.svg"
             className="w-full h-full object-cover"
-            loading="eager"
-            decoding="async"
-            onError={(e) => {
-              e.currentTarget.src = '/placeholder.svg';
-            }}
+            progressive={true}
           />
         </div>
       )}
@@ -114,15 +114,14 @@ export const MonsterCardDisplay = memo(({
     <Card variant="menu" className="p-4 w-80 max-w-sm" style={{ boxShadow: '0 15px 10px rgba(0, 0, 0, 0.6)' }}>
       {image && (
         <div className="w-full aspect-[3/4] mb-4 rounded-lg overflow-hidden flex items-center justify-center">
-          <img 
-            src={image} 
+          <OptimizedImage
+            src={image}
             alt={name}
+            width={320}
+            height={427}
+            placeholder="/placeholder.svg"
             className="w-full h-full object-cover"
-            loading="eager"
-            decoding="async"
-            onError={(e) => {
-              e.currentTarget.src = '/placeholder.svg';
-            }}
+            progressive={true}
           />
         </div>
       )}

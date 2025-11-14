@@ -10,6 +10,7 @@ import { getClassDropRates } from "@/utils/cardUtils";
 import { workerImagesByName } from "@/constants/workerImages";
 import { itemImagesByName, itemImagesByItemId } from "@/constants/itemImages";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { OptimizedImage } from "@/components/ui/optimized-image";
 interface InventoryGridProps {
   groupedItems: GroupedItem[];
   readonly: boolean;
@@ -23,7 +24,6 @@ export const InventoryGrid = ({
   onSellItem
 }: InventoryGridProps) => {
   const [openKey, setOpenKey] = useState<string | null>(null);
-  const [imageStates, setImageStates] = useState<Record<string, { loaded: boolean; error: boolean }>>({});
   const {
     language
   } = useLanguage();
@@ -81,37 +81,15 @@ export const InventoryGrid = ({
                 style={{ boxShadow: '0 15px 10px rgba(0, 0, 0, 0.6)' }}
               >
                 <div className="w-full h-32 sm:h-40 mb-2 rounded-lg overflow-hidden flex items-center justify-center bg-gradient-to-br from-black/40 to-black/20 border border-white/10 relative">
-                  {!imageStates[dialogKey]?.loaded && !imageStates[dialogKey]?.error && (
-                    <div className="absolute inset-0 flex items-center justify-center">
-                      <div className="w-8 h-8 border-2 border-white/20 border-t-white/60 rounded-full animate-spin" />
-                    </div>
-                  )}
-                  <img 
-                    src={resolveGroupImage(item)} 
-                    alt={item.name} 
-                    className={`w-full h-full object-contain transition-opacity duration-300 ${
-                      imageStates[dialogKey]?.loaded ? 'opacity-100' : 'opacity-0'
-                    }`}
-                    onLoad={() => {
-                      setImageStates(prev => ({
-                        ...prev,
-                        [dialogKey]: { loaded: true, error: false }
-                      }));
-                    }}
-                    onError={(e) => { 
-                      console.error('Failed to load image for:', item.name, resolveGroupImage(item));
-                      setImageStates(prev => ({
-                        ...prev,
-                        [dialogKey]: { loaded: false, error: true }
-                      }));
-                      (e.currentTarget as HTMLImageElement).src = '/placeholder.svg'; 
-                    }} 
+                  <OptimizedImage
+                    src={resolveGroupImage(item)}
+                    alt={item.name}
+                    width={200}
+                    height={160}
+                    placeholder="/placeholder.svg"
+                    className="w-full h-full object-contain"
+                    progressive={true}
                   />
-                  {imageStates[dialogKey]?.error && (
-                    <div className="absolute inset-0 flex items-center justify-center text-white/40 text-4xl">
-                      📦
-                    </div>
-                  )}
                 </div>
 
                 <div className="flex flex-col">

@@ -12,6 +12,7 @@ import { useState, useCallback } from "react";
 import { useLanguage } from "@/hooks/useLanguage";
 import { t } from "@/utils/translations";
 import { getTranslatedCardName } from "@/utils/cardNameTranslations";
+import { OptimizedImage } from "@/components/ui/optimized-image";
 
 interface ShopItemProps {
   item: ShopItemType;
@@ -43,10 +44,14 @@ export const ShopItem = ({ item, balance, onBuy }: ShopItemProps) => {
       <Card className="p-4 bg-game-background border-game-accent hover:border-game-primary transition-all duration-300 h-[320px] flex flex-col justify-between">
         {item.image && (
           <div className="w-full aspect-[4/3] mb-2 rounded-lg overflow-hidden">
-            <img 
-              src={item.image} 
+            <OptimizedImage
+              src={item.image}
               alt={item.name}
+              width={200}
+              height={150}
+              placeholder="/placeholder.svg"
               className="w-full h-full object-cover"
+              progressive={true}
             />
           </div>
         )}
@@ -113,10 +118,14 @@ export const ShopItem = ({ item, balance, onBuy }: ShopItemProps) => {
     <Card className="p-4 bg-game-background border-game-accent hover:border-game-primary transition-all duration-300 h-[320px] flex flex-col justify-between">
       {item.image && (
         <div className="w-full aspect-[4/3] mb-2 rounded-lg overflow-hidden">
-          <img 
-            src={item.image} 
+          <OptimizedImage
+            src={item.image}
             alt={item.name}
+            width={200}
+            height={150}
+            placeholder="/placeholder.svg"
             className="w-full h-full object-cover"
+            progressive={true}
           />
         </div>
       )}

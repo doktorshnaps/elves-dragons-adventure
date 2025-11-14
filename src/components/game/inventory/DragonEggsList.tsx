@@ -8,6 +8,7 @@ import { Card as UICard } from "@/components/ui/card";
 import { useGameData } from "@/hooks/useGameData";
 import { calculateCardStats } from "@/utils/cardUtils";
 import { useGameStore } from "@/stores/gameStore";
+import { OptimizedImage } from "@/components/ui/optimized-image";
 
 interface DragonEggsListProps {
   eggs: DragonEgg[];
@@ -120,10 +121,14 @@ export const DragonEggsList = ({ eggs }: DragonEggsListProps) => {
               <div 
                 className="relative w-full h-[75px] sm:h-[100px] md:h-[110px] lg:h-[120px] mb-1 rounded-lg overflow-hidden"
               >
-                <img 
-                  src={basePet.image}
+                <OptimizedImage
+                  src={basePet.image || '/placeholder.svg'}
                   alt={egg.petName}
+                  width={140}
+                  height={120}
+                  placeholder="/placeholder.svg"
                   className="w-full h-full object-contain filter brightness-75 saturate-50"
+                  progressive={true}
                 />
               </div>
               <div className="flex flex-col flex-grow">
