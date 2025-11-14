@@ -5,7 +5,7 @@ import { useNavigate } from "react-router-dom";
 import { Button } from "../ui/button";
 import { Card } from "../ui/card";
 import { EnergyDisplay } from "./EnergyDisplay";
-import { dungeonRoutes, DungeonType } from "@/constants/dungeons";
+import { dungeonRoutes, DungeonType, dungeonLevelRanges } from "@/constants/dungeons";
 import { EnergyState, useEnergy } from "@/utils/energyManager";
 import { ActiveDungeonButton } from "./components/ActiveDungeonButton";
 import { DungeonControls } from "./components/DungeonControls";
@@ -194,7 +194,7 @@ export const DungeonSearchDialog = ({
                   onClick={() => handleDungeonSelect(dungeon as DungeonType)}
                   disabled={!canEnter}
                   variant="menu"
-                  className={`w-full ${
+                  className={`w-full flex items-center justify-between ${
                     isActiveDungeon 
                       ? 'bg-green-600 hover:bg-green-700 border-green-500 text-white shadow-lg shadow-green-500/50' 
                       : activeDungeon 
@@ -203,8 +203,13 @@ export const DungeonSearchDialog = ({
                   }`}
                   style={!isActiveDungeon && !activeDungeon ? { boxShadow: '-33px 15px 10px rgba(0, 0, 0, 0.6)' } : undefined}
                 >
-                  {getDungeonName(dungeon as DungeonType, language)}
-                  {isActiveDungeon && <span className="ml-2">⚔️</span>}
+                  <span className="flex items-center gap-2">
+                    {getDungeonName(dungeon as DungeonType, language)}
+                    {isActiveDungeon && <span>⚔️</span>}
+                  </span>
+                  <span className="text-xs opacity-70">
+                    Ур. {dungeonLevelRanges[dungeon as DungeonType].min}-{dungeonLevelRanges[dungeon as DungeonType].max}
+                  </span>
                 </Button>
               );
             })}
