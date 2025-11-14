@@ -75,7 +75,7 @@ const ITEM_TYPES = [
 ];
 
 const RARITIES = ["common", "uncommon", "rare", "epic", "legendary", "mythic", "divine"];
-const SOURCE_TYPES = ["dungeon", "shop", "quest", "craft", "event", "monster_drop", "boss_drop", "crafting"];
+const SOURCE_TYPES = ["dungeon", "shop", "quest", "craft", "event", "monster_drop", "boss_drop", "crafting", "quest_reward"];
 const SLOTS = ["head", "chest", "hands", "legs", "feet", "neck", "ring", "weapon", "offhand"];
 
 export const ItemTemplateManager = () => {
