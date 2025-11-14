@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback, startTransition, useRef } from 'react
 import { TeamPair, TeamBattleState, BattleAction } from '@/types/teamBattle';
 import { useToast } from '@/hooks/use-toast';
 import { generateDungeonOpponents } from '@/dungeons/dungeonManager';
-import { DungeonType } from '@/constants/dungeons';
+import { DungeonType, canGainExperienceInDungeon } from '@/constants/dungeons';
 import { useTeamSelection } from './useTeamSelection';
 import { addAccountExperience, getLevelFromXP } from '@/utils/accountLeveling';
 import { useGameStore } from '@/stores/gameStore';
@@ -283,8 +283,22 @@ export const useTeamBattle = (dungeonType: DungeonType, initialLevel: number = 1
       } catch (e) {
         console.warn('incrementMonsterKills error:', e);
       }
-      await addAccountExp(expReward);
-      toast({ title: "Враг побежден!", description: `Получено ${expReward} опыта аккаунта` });
+      
+      // Проверяем, может ли игрок получить опыт в этом подземелье
+      const canGainExp = canGainExperienceInDungeon(dungeonType, accountLevel);
+      
+      if (canGainExp && accountLevel < 100) {
+        await addAccountExp(expReward);
+        toast({ title: "Враг побежден!", description: `Получено ${expReward} опыта аккаунта` });
+      } else if (accountLevel >= 100) {
+        toast({ title: "Враг побежден!", description: "Достигнут максимальный уровень!" });
+      } else {
+        toast({ 
+          title: "Враг побежден!", 
+          description: "Для получения опыта нужно другое подземелье!",
+          variant: "default"
+        });
+      }
     }
 
     console.log(`✅ [PLAYER] ХОД ЗАВЕРШЕН (${Date.now() - turnStartTime}ms, ${new Date().toISOString()})`);
