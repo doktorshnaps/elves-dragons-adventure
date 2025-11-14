@@ -54,6 +54,7 @@ interface ItemTemplate {
 
 const ITEM_TYPES = [
   "material",
+  "worker",
   "weapon",
   "armor",
   "accessory",
