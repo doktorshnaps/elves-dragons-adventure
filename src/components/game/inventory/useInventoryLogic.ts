@@ -6,7 +6,6 @@ import { useCardPackOpening } from "@/hooks/useCardPackOpening";
 import { GroupedItem } from "./types";
 import { shopItems } from "../../shop/types";
 import { useGameData } from "@/hooks/useGameData";
-import { workerImagesByName } from "@/constants/workerImages";
 import { itemImagesByName } from "@/constants/itemImages";
 
 export const useInventoryLogic = (initialInventory: Item[]) => {
@@ -33,9 +32,9 @@ export const useInventoryLogic = (initialInventory: Item[]) => {
   const getItemImage = (item: Item) => {
     console.log('🖼️ getItemImage called for:', item.name, 'with image:', item.image);
     
-    // Для рабочих сначала проверяем mapping по имени
-    if (item.type === 'worker' && workerImagesByName[item.name]) {
-      return workerImagesByName[item.name];
+    // Use image_url from database if available
+    if (item.image_url) {
+      return item.image_url;
     }
     
     // Проверяем централизованный маппинг изображений предметов
@@ -71,7 +70,8 @@ const groupItems = (items: Item[]): GroupedItem[] => {
           value: item.value,
           count: 1,
           items: [item],
-          image: getItemImage(item)
+          image: getItemImage(item),
+          image_url: item.image_url // Use image_url from database
         });
       }
 

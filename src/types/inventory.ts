@@ -6,6 +6,7 @@ export interface Item {
   sell_price?: number;
   description?: string;
   image?: string;
+  image_url?: string; // URL from database
   petName?: string;
   stats?: {
     power?: number;

@@ -41,7 +41,6 @@ import archmageStaff from "@/assets/items/archmage-staff.png";
 import livingShadowMantle from "@/assets/items/living-shadow-mantle.png";
 import arachnidGrimoire from "@/assets/items/arachnid-grimoire.png";
 
-import { workerImagesByName } from "@/constants/workerImages";
 import { itemImagesByItemId } from "@/constants/itemImages";
 
 interface ItemTemplate {
@@ -108,9 +107,9 @@ const resolveItemImage = (item: ItemTemplate): string | null => {
   const mapped = getItemImage(item.item_id);
   if (mapped) return mapped;
 
-  // 2) Workers images by name
-  if (item.type === 'worker' && workerImagesByName[item.name]) {
-    return workerImagesByName[item.name];
+  // 2) Workers - use image_url from database
+  if (item.type === 'worker' && item.image_url) {
+    return item.image_url;
   }
 
   // 3) Use image_url from DB if it's a web path (not /src/)

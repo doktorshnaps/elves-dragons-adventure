@@ -7,5 +7,6 @@ export interface GroupedItem {
   count: number;
   items: Item[];
   image?: string;
+  image_url?: string; // URL from database
   petName?: string;
 }

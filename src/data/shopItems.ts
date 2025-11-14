@@ -1,5 +1,7 @@
 import { ShopItem } from "@/components/shop/types";
-import { workerImagesById } from '@/constants/workerImages';
+
+// Worker images will be loaded from database via item_templates.image_url
+const placeholderWorker = "/placeholder.svg";
 
 export const shopItems: ShopItem[] = [
   {
@@ -20,7 +22,7 @@ export const shopItems: ShopItem[] = [
     type: "worker",
     value: 10, // процент ускорения
     stats: { workDuration: 7200000 }, // 2 часа в миллисекундах
-    image: workerImagesById[2]
+    image: placeholderWorker // Will be replaced with image_url from database
   },
   {
     id: 3,
@@ -30,7 +32,7 @@ export const shopItems: ShopItem[] = [
     type: "worker",
     value: 20,
     stats: { workDuration: 14400000 }, // 4 часа
-    image: workerImagesById[3]
+    image: placeholderWorker // Will be replaced with image_url from database
   },
   {
     id: 4,
@@ -40,7 +42,7 @@ export const shopItems: ShopItem[] = [
     type: "worker",
     value: 30,
     stats: { workDuration: 21600000 }, // 6 часов
-    image: workerImagesById[4]
+    image: placeholderWorker // Will be replaced with image_url from database
   },
   {
     id: 5,
@@ -50,7 +52,7 @@ export const shopItems: ShopItem[] = [
     type: "worker",
     value: 40,
     stats: { workDuration: 28800000 }, // 8 часов
-    image: workerImagesById[5]
+    image: placeholderWorker // Will be replaced with image_url from database
   },
   {
     id: 6,
@@ -60,7 +62,7 @@ export const shopItems: ShopItem[] = [
     type: "worker",
     value: 50,
     stats: { workDuration: 43200000 }, // 12 часов
-    image: workerImagesById[6]
+    image: placeholderWorker // Will be replaced with image_url from database
   },
   {
     id: 7,
@@ -70,7 +72,7 @@ export const shopItems: ShopItem[] = [
     type: "worker",
     value: 70,
     stats: { workDuration: 64800000 }, // 18 часов
-    image: workerImagesById[7]
+    image: placeholderWorker // Will be replaced with image_url from database
   },
   {
     id: 8,
@@ -80,7 +82,7 @@ export const shopItems: ShopItem[] = [
     type: "worker",
     value: 100,
     stats: { workDuration: 86400000 }, // 24 часа
-    image: workerImagesById[8]
+    image: placeholderWorker // Will be replaced with image_url from database
   },
   {
     id: 9,
@@ -90,6 +92,6 @@ export const shopItems: ShopItem[] = [
     type: "worker",
     value: 150,
     stats: { workDuration: 172800000 }, // 48 часов
-    image: workerImagesById[9]
+    image: placeholderWorker // Will be replaced with image_url from database
   }
 ];

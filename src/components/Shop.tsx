@@ -1,6 +1,5 @@
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { shopItems } from "@/data/shopItems";
 import { useGameData } from "@/hooks/useGameData";
 import { useToast } from "@/hooks/use-toast";
 import { useShopInventory } from "@/hooks/useShopInventory";
@@ -15,6 +14,7 @@ import { ArrowLeft, Clock, Package } from "lucide-react";
 import { useState, useEffect } from "react";
 import { PurchaseEffect } from "./shop/PurchaseEffect";
 import { supabase } from "@/integrations/supabase/client";
+import { useEnrichedShopItems } from "@/hooks/useEnrichedShopItems";
 
 interface ShopProps {
   onClose: () => void;
@@ -32,6 +32,7 @@ export const Shop = ({ onClose }: ShopProps) => {
     getItemQuantity, 
     isItemAvailable 
   } = useShopInventory();
+  const { items: shopItems, loading: shopItemsLoading } = useEnrichedShopItems();
   const { toast } = useToast();
   const [showEffect, setShowEffect] = useState(false);
   const [purchasing, setPurchasing] = useState(false);
@@ -66,7 +67,7 @@ export const Shop = ({ onClose }: ShopProps) => {
   // Use local balance if available, otherwise use gameData balance
   const displayBalance = localBalance !== null ? localBalance : gameData.balance;
 
-  if (gameDataLoading || inventoryLoading) {
+  if (gameDataLoading || inventoryLoading || shopItemsLoading) {
     return <div className="flex justify-center items-center h-64">{t(language, 'shop.loading')}</div>;
   }
 
