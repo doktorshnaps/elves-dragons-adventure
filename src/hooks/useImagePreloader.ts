@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react';
 import { cardDatabase } from '@/data/cardDatabase';
 import { allMonsterImages } from '@/constants/monsterImages';
-import { allWorkerImages } from '@/constants/workerImages';
 import { allItemImages } from '@/constants/itemImages';
 
 // Создаем объект для кэширования загруженных изображений
@@ -121,7 +120,7 @@ export const preloadGrimoireImages = async (): Promise<void> => {
     .map(card => card.image)
     .filter((url): url is string => !!url);
 
-  const allImageUrls = [...cardImageUrls, ...allMonsterImages, ...allWorkerImages, ...allItemImages];
+  const allImageUrls = [...cardImageUrls, ...allMonsterImages, ...allItemImages];
   const uniqueUrls = Array.from(new Set(allImageUrls));
 
   console.log(`🔄 Preloading ${uniqueUrls.length} grimoire images with high priority...`);
@@ -147,8 +146,8 @@ export const useImagePreloader = () => {
         .map(card => card.image)
         .filter((url): url is string => !!url);
 
-      // Объединяем изображения карт, монстров, рабочих и предметов
-      const allImageUrls = [...cardImageUrls, ...allMonsterImages, ...allWorkerImages, ...allItemImages];
+      // Combine card, monster, and item images
+      const allImageUrls = [...cardImageUrls, ...allMonsterImages, ...allItemImages];
 
       // Удаляем дубликаты URL
       const uniqueUrls = Array.from(new Set(allImageUrls));

@@ -7,7 +7,6 @@ import { GroupedItem } from "./types";
 import { useLanguage } from "@/hooks/useLanguage";
 import { t } from "@/utils/translations";
 import { getClassDropRates } from "@/utils/cardUtils";
-import { workerImagesByName } from "@/constants/workerImages";
 import { itemImagesByName, itemImagesByItemId } from "@/constants/itemImages";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { OptimizedImage } from "@/components/ui/optimized-image";
@@ -38,9 +37,9 @@ export const InventoryGrid = ({
     });
 
   const resolveGroupImage = (g: GroupedItem) => {
-    // 1. Special handling for workers (приоритет)
-    if (g.type === 'worker' && workerImagesByName[g.name]) {
-      return workerImagesByName[g.name];
+    // 1. Use image_url from database if available
+    if (g.image_url) {
+      return g.image_url;
     }
     
     // 2. Check centralized item images by name (Russian names)
