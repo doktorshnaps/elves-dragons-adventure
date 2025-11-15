@@ -35,8 +35,8 @@ export const getResponsiveImageSrc = (
   
   const targetWidth = Math.ceil(width * devicePixelRatio);
   
-  // Если это внешний URL или уже содержит параметры размера
-  if (baseSrc.startsWith('http') || baseSrc.includes('?')) {
+  // Если это внешний URL, placeholder или уже содержит параметры размера
+  if (baseSrc.startsWith('http') || baseSrc.includes('?') || baseSrc.includes('placeholder')) {
     return baseSrc;
   }
   

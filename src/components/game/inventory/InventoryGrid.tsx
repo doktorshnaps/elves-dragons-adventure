@@ -9,7 +9,6 @@ import { t } from "@/utils/translations";
 import { getClassDropRates } from "@/utils/cardUtils";
 import { itemImagesByName, itemImagesByItemId } from "@/constants/itemImages";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { OptimizedImage } from "@/components/ui/optimized-image";
 interface InventoryGridProps {
   groupedItems: GroupedItem[];
   readonly: boolean;
@@ -80,14 +79,11 @@ export const InventoryGrid = ({
                 style={{ boxShadow: '0 15px 10px rgba(0, 0, 0, 0.6)' }}
               >
                 <div className="w-full h-32 sm:h-40 mb-2 rounded-lg overflow-hidden flex items-center justify-center bg-gradient-to-br from-black/40 to-black/20 border border-white/10 relative">
-                  <OptimizedImage
+                  <img
                     src={resolveGroupImage(item)}
                     alt={item.name}
-                    width={200}
-                    height={160}
-                    placeholder="/placeholder.svg"
                     className="w-full h-full object-contain"
-                    progressive={true}
+                    loading="lazy"
                   />
                 </div>
 
