@@ -15,7 +15,7 @@ export const QuestPage = () => {
       <div 
         className="absolute inset-0 bg-center bg-no-repeat"
         style={{
-          backgroundImage: 'url("/menu-background.jpg")',
+          backgroundImage: 'url("/menu-background.webp")',
           backgroundSize: '100% 100%',
           backgroundPosition: 'center',
           backgroundRepeat: 'no-repeat',
