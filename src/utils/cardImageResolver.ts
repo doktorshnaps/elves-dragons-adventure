@@ -1,24 +1,25 @@
 import { Card } from '@/types/cards';
 import { supabase } from '@/integrations/supabase/client';
 
-// Temporarily using placeholders until webp files are uploaded
-const recruitRarity1 = "/placeholder.svg";
-const recruitRarity2 = "/placeholder.svg";
-const recruitRarity3 = "/placeholder.svg";
-const recruitRarity4 = "/placeholder.svg";
-const recruitRarity5 = "/placeholder.svg";
-const recruitRarity6 = "/placeholder.svg";
-const recruitRarity7 = "/placeholder.svg";
-const recruitRarity8 = "/placeholder.svg";
+// Карты Рекрута по редкости
+const recruitRarity1 = "/lovable-uploads/27831c0a-e7a0-4ac4-84d9-642b6fa0e31c.webp";
+const recruitRarity2 = "/lovable-uploads/6f418524-f8c0-444e-aac7-dc60d548275a.webp";
+const recruitRarity3 = "/lovable-uploads/2e357adf-59ac-4ebc-8f34-fb77d085801d.webp";
+const recruitRarity4 = "/lovable-uploads/5aa39f4e-18e2-4514-b338-2871069ebde3.webp";
+const recruitRarity5 = "/lovable-uploads/e2726d02-61d0-49f8-88cd-5eb5d7412563.webp";
+const recruitRarity6 = "/lovable-uploads/c9a16f25-86df-4d19-8e29-6e9784d21cc0.webp";
+const recruitRarity7 = "/lovable-uploads/7472b221-f5e0-4f77-8fce-96b9cd408d98.webp";
+const recruitRarity8 = "/lovable-uploads/27f02bff-5707-40b9-a94e-77669bd08bde.webp";
 
-const strategistRarity1 = "/placeholder.svg";
-const strategistRarity2 = "/placeholder.svg";
-const strategistRarity3 = "/placeholder.svg";
-const strategistRarity4 = "/placeholder.svg";
-const strategistRarity5 = "/placeholder.svg";
-const strategistRarity6 = "/placeholder.svg";
-const strategistRarity7 = "/placeholder.svg";
-const strategistRarity8 = "/placeholder.svg";
+// Карты Стратега по редкости
+const strategistRarity1 = "/lovable-uploads/27f02bff-5707-40b9-a94e-77669bd08bde.webp";
+const strategistRarity2 = "/lovable-uploads/6f852396-ab0a-42af-8b0b-a19fad23fe91.webp";
+const strategistRarity3 = "/lovable-uploads/27f02bff-5707-40b9-a94e-77669bd08bde.webp";
+const strategistRarity4 = "/lovable-uploads/6f852396-ab0a-42af-8b0b-a19fad23fe91.webp";
+const strategistRarity5 = "/lovable-uploads/27f02bff-5707-40b9-a94e-77669bd08bde.webp";
+const strategistRarity6 = "/lovable-uploads/6f852396-ab0a-42af-8b0b-a19fad23fe91.webp";
+const strategistRarity7 = "/lovable-uploads/27f02bff-5707-40b9-a94e-77669bd08bde.webp";
+const strategistRarity8 = "/lovable-uploads/6f852396-ab0a-42af-8b0b-a19fad23fe91.webp";
 
 // Маппинг изображений по редкости для героя "Рекрут"
 const recruitRarityImages: Record<number, string> = {
