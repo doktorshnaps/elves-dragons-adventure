@@ -103,14 +103,16 @@ const getItemImage = (itemId: string): string | null => {
 
 // Resolve image for item template with fallbacks
 const resolveItemImage = (item: ItemTemplate): string | null => {
-  // 1) Try imported static map
+  // 1) For workers and materials - prioritize image_url from database
+  if ((item.type === 'worker' || item.type === 'material') && item.image_url) {
+    if (!item.image_url.startsWith('/src/')) {
+      return item.image_url;
+    }
+  }
+
+  // 2) Try imported static map
   const mapped = getItemImage(item.item_id);
   if (mapped) return mapped;
-
-  // 2) Workers - use image_url from database
-  if (item.type === 'worker' && item.image_url) {
-    return item.image_url;
-  }
 
   // 3) Use image_url from DB if it's a web path (not /src/)
   if (item.image_url) {

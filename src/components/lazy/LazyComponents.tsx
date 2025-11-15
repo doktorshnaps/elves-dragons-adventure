@@ -85,7 +85,7 @@ export const LazyShelter = createLazyComponent(
     ]);
     return {
       default: () => (
-        <GameLayout backgroundImage="/images/shelter-bg.jpeg">
+        <GameLayout backgroundImage="/images/shelter-bg.webp">
           <Shelter />
         </GameLayout>
       )
