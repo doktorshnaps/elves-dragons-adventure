@@ -43,7 +43,6 @@ export const CardImageManager = () => {
     }));
 
   const loadCardImages = async () => {
-    setLoading(true);
     try {
       const { data, error } = await supabase
         .from('card_images')
@@ -60,13 +59,16 @@ export const CardImageManager = () => {
         description: "Не удалось загрузить изображения карт",
         variant: "destructive"
       });
-    } finally {
-      setLoading(false);
     }
   };
 
   useEffect(() => {
-    loadCardImages();
+    const fetchImages = async () => {
+      setLoading(true);
+      await loadCardImages();
+      setLoading(false);
+    };
+    fetchImages();
   }, []);
 
   const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -162,6 +164,14 @@ export const CardImageManager = () => {
     }
 
     try {
+      // Удаляем запись из базы данных
+      const { error: dbError } = await supabase
+        .from('card_images')
+        .delete()
+        .eq('id', imageId);
+
+      if (dbError) throw dbError;
+
       // Удаляем файл из Storage
       const filePath = imageUrl.split('/').pop();
       if (filePath) {
@@ -174,27 +184,16 @@ export const CardImageManager = () => {
         }
       }
 
-      // Удаляем запись из базы данных
-      const { error: dbError } = await supabase
-        .from('card_images')
-        .delete()
-        .eq('id', imageId);
-
-      if (dbError) throw dbError;
-
-      // Сбрасываем кэш изображений и обновляем список
+      // Сбрасываем кэш изображений
       invalidateCardImagesCache();
       
-      // Обновляем состояние локально для мгновенного отклика
-      setCardImages(prev => prev.filter(img => img.id !== imageId));
+      // Немедленно обновляем UI
+      setCardImages(prevImages => prevImages.filter(img => img.id !== imageId));
 
       toast({
         title: "Успешно удалено",
         description: "Изображение удалено"
       });
-      
-      // Перезагружаем список для синхронизации
-      await loadCardImages();
     } catch (error) {
       console.error('Error deleting image:', error);
       toast({
@@ -202,6 +201,8 @@ export const CardImageManager = () => {
         description: "Не удалось удалить изображение",
         variant: "destructive"
       });
+      // Перезагружаем список в случае ошибки
+      await loadCardImages();
     }
   };
 
