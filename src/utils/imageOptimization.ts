@@ -16,9 +16,15 @@ export const supportsWebP = (): Promise<boolean> => {
 export const getOptimalImageSrc = (baseSrc: string, isWebPSupported: boolean): string => {
   if (!baseSrc) return baseSrc;
   
-  // Если поддерживается WebP и это не уже WebP
-  if (isWebPSupported && !baseSrc.includes('.webp')) {
-    // Заменяем расширение на .webp
+  // Никогда не переписываем URL для внешних/данных/IPFS/Arweave и для статических ассетов бандла
+  const isExternal = baseSrc.startsWith('http://') || baseSrc.startsWith('https://') || baseSrc.startsWith('ipfs://') || baseSrc.startsWith('ar://') || baseSrc.startsWith('data:');
+  const isBundledAsset = baseSrc.startsWith('/') || baseSrc.includes('/assets/');
+  if (isExternal || isBundledAsset) {
+    return baseSrc;
+  }
+  
+  // Переписываем только для простых локальных путей
+  if (isWebPSupported && /\.(jpg|jpeg|png)$/i.test(baseSrc)) {
     return baseSrc.replace(/\.(jpg|jpeg|png)$/i, '.webp');
   }
   
@@ -35,14 +41,18 @@ export const getResponsiveImageSrc = (
   
   const targetWidth = Math.ceil(width * devicePixelRatio);
   
-  // Если это внешний URL, placeholder или уже содержит параметры размера
-  if (baseSrc.startsWith('http') || baseSrc.includes('?') || baseSrc.includes('placeholder')) {
+  const isExternal = baseSrc.startsWith('http://') || baseSrc.startsWith('https://') || baseSrc.startsWith('ipfs://') || baseSrc.startsWith('ar://') || baseSrc.startsWith('data:');
+  const isBundledAsset = baseSrc.startsWith('/') || baseSrc.includes('/assets/');
+  const isVector = baseSrc.toLowerCase().endsWith('.svg');
+
+  // Не модифицируем внешние URL, статические ассеты бандла, векторные изображения и плейсхолдеры
+  if (isExternal || isBundledAsset || isVector || baseSrc.includes('?') || baseSrc.includes('placeholder')) {
     return baseSrc;
   }
   
-  // Добавляем суффикс размера для локальных изображений
-  const extension = baseSrc.split('.').pop();
-  const nameWithoutExt = baseSrc.replace(`.${extension}`, '');
+  // Добавляем суффикс размера только для простых локальных путей
+  const extension = baseSrc.split('.').pop() || '';
+  const nameWithoutExt = baseSrc.slice(0, -(extension.length + 1));
   
   return `${nameWithoutExt}_${targetWidth}w.${extension}`;
 };
