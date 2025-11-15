@@ -157,31 +157,44 @@ export const CardImageManager = () => {
   };
 
   const handleDelete = async (imageId: string, imageUrl: string) => {
+    if (!confirm('Вы уверены, что хотите удалить это изображение?')) {
+      return;
+    }
+
     try {
       // Удаляем файл из Storage
       const filePath = imageUrl.split('/').pop();
       if (filePath) {
-        await supabase.storage
+        const { error: storageError } = await supabase.storage
           .from('card-images')
           .remove([filePath]);
+        
+        if (storageError) {
+          console.error('Storage deletion error:', storageError);
+        }
       }
 
       // Удаляем запись из базы данных
-      const { error } = await supabase
+      const { error: dbError } = await supabase
         .from('card_images')
         .delete()
         .eq('id', imageId);
 
-      if (error) throw error;
+      if (dbError) throw dbError;
+
+      // Сбрасываем кэш изображений и обновляем список
+      invalidateCardImagesCache();
+      
+      // Обновляем состояние локально для мгновенного отклика
+      setCardImages(prev => prev.filter(img => img.id !== imageId));
 
       toast({
         title: "Успешно удалено",
         description: "Изображение удалено"
       });
-
-      // Сбрасываем кэш изображений
-      invalidateCardImagesCache();
-      loadCardImages();
+      
+      // Перезагружаем список для синхронизации
+      await loadCardImages();
     } catch (error) {
       console.error('Error deleting image:', error);
       toast({
