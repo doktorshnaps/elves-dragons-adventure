@@ -13,17 +13,17 @@ import { SettingsMenu } from "@/components/SettingsMenu";
 import { useBrightness } from "@/hooks/useBrightness";
 import { useState, useEffect } from "react";
 
-// Import icons
-import grimoireIcon from "@/assets/grimoire-icon.png";
-import dungeonIcon from "@/assets/dungeon-icon.png";
-import shopIcon from "@/assets/shop-icon.png";
-import shelterIcon from "@/assets/shelter-icon.png";
-import walletIcon from "@/assets/wallet-icon.png";
-import marketplaceIcon from "@/assets/marketplace-icon.png";
-import moneyIcon from "@/assets/money-icon.png";
-import inventoryIcon from "@/assets/inventory-icon.png";
-import teamIcon from "@/assets/team-icon.png";
-import soulArchiveIcon from "@/assets/soul-archive-icon.png";
+// Import icons - temporarily using placeholder until webp files are uploaded
+const grimoireIcon = "/placeholder.svg";
+const dungeonIcon = "/placeholder.svg";
+const shopIcon = "/placeholder.svg";
+const shelterIcon = "/placeholder.svg";
+const walletIcon = "/placeholder.svg";
+const marketplaceIcon = "/placeholder.svg";
+const moneyIcon = "/placeholder.svg";
+const inventoryIcon = "/placeholder.svg";
+const teamIcon = "/placeholder.svg";
+const soulArchiveIcon = "/placeholder.svg";
 export const Menu = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
