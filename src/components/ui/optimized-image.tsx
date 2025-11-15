@@ -42,27 +42,34 @@ export const OptimizedImage: React.FC<OptimizedImageProps> = ({
     supportsWebP().then(setWebPSupported);
   }, []);
 
-  // Progressive loading
-  useEffect(() => {
-    if (!progressive || !lowQualitySrc) return;
+// Progressive loading
+useEffect(() => {
+  if (!progressive || !lowQualitySrc) {
+    // Если прогрессивная загрузка не используется или не задан lowQualitySrc,
+    // сразу показываем основное изображение
+    setCurrentSrc(src);
+    setIsLoaded(false);
+    setHasError(false);
+    return;
+  }
 
-    const loadProgressive = async () => {
-      try {
-        const result = await progressiveImageLoader.loadProgressive(
-          placeholder || src,
-          lowQualitySrc,
-          src
-        );
-        setCurrentSrc(result.current);
-        setIsLoaded(result.isLoaded);
-      } catch (error) {
-        setHasError(true);
-        console.warn('Progressive image loading failed:', error);
-      }
-    };
+  const loadProgressive = async () => {
+    try {
+      const result = await progressiveImageLoader.loadProgressive(
+        placeholder || src,
+        lowQualitySrc,
+        src
+      );
+      setCurrentSrc(result.current);
+      setIsLoaded(result.isLoaded);
+    } catch (error) {
+      setHasError(true);
+      console.warn('Progressive image loading failed:', error);
+    }
+  };
 
-    loadProgressive();
-  }, [src, lowQualitySrc, placeholder, progressive]);
+  loadProgressive();
+}, [src, lowQualitySrc, placeholder, progressive]);
 
   // Get optimal src
   const optimizedSrc = React.useMemo(() => {
