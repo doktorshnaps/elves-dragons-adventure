@@ -21,10 +21,6 @@ export const CardImage = ({ image, name, card }: CardImageProps) => {
 
   // Нормализация IPFS URL
   const normalizeImageUrl = (url?: string): string => {
-    // Используем resolvedImageUrl если оно загружено из БД
-    if (resolvedImageUrl) {
-      url = resolvedImageUrl;
-    }
     if (!url) return '/placeholder.svg';
     
     try {
@@ -50,9 +46,8 @@ export const CardImage = ({ image, name, card }: CardImageProps) => {
     }
   };
 
-  if (!image && !resolvedImageUrl) return null;
-
-  const finalImageUrl = normalizeImageUrl(resolvedImageUrl || image);
+  // Используем приоритет: resolvedImageUrl -> image из карты -> image prop
+  const finalImageUrl = normalizeImageUrl(resolvedImageUrl || card?.image || image);
 
   return (
     <div className="w-full h-full overflow-hidden rounded-lg">
