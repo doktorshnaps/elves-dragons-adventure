@@ -1,15 +1,17 @@
 import { Item } from "@/types/inventory";
-import woodChunksImg from "@/assets/items/wood-chunks.jpeg";
-import magicalRootsImg from "@/assets/items/magical-roots.jpeg";
-import rockStonesImg from "@/assets/items/rock-stones.jpeg";
-import blackCrystalsImg from "@/assets/items/black-crystals.jpeg";
-import illusionManuscriptImg from "@/assets/items/illusion-manuscript.png";
-import darkMonocleImg from "@/assets/items/dark-monocle.png";
-import etherVineImg from "@/assets/items/ether-vine.png";
-import dwarvenTongsImg from "@/assets/items/dwarven-tongs.png";
-import healingOilImg from "@/assets/items/healing-oil.png";
-import shimmeringCrystalImg from "@/assets/items/shimmering-crystal.png";
-import lifeCrystalImg from "@/assets/items/life-crystal.png";
+
+// Temporarily using placeholders until webp files are uploaded
+const woodChunksImg = "/placeholder.svg";
+const magicalRootsImg = "/placeholder.svg";
+const rockStonesImg = "/placeholder.svg";
+const blackCrystalsImg = "/placeholder.svg";
+const illusionManuscriptImg = "/placeholder.svg";
+const darkMonocleImg = "/placeholder.svg";
+const etherVineImg = "/placeholder.svg";
+const dwarvenTongsImg = "/placeholder.svg";
+const healingOilImg = "/placeholder.svg";
+const shimmeringCrystalImg = "/placeholder.svg";
+const lifeCrystalImg = "/placeholder.svg";
 
 export const newItems: Partial<Item>[] = [
   {

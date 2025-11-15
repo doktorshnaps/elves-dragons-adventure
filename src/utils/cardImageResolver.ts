@@ -1,25 +1,24 @@
 import { Card } from '@/types/cards';
 import { supabase } from '@/integrations/supabase/client';
 
-// Импорты изображений для героя "Рекрут"
-import recruitRarity1 from '@/assets/cards/recruit-rarity-1.png';
-import recruitRarity2 from '@/assets/cards/recruit-rarity-2.png';
-import recruitRarity3 from '@/assets/cards/recruit-rarity-3.png';
-import recruitRarity4 from '@/assets/cards/recruit-rarity-4.png';
-import recruitRarity5 from '@/assets/cards/recruit-rarity-5.png';
-import recruitRarity6 from '@/assets/cards/recruit-rarity-6.png';
-import recruitRarity7 from '@/assets/cards/recruit-rarity-7.png';
-import recruitRarity8 from '@/assets/cards/recruit-rarity-8.png';
+// Temporarily using placeholders until webp files are uploaded
+const recruitRarity1 = "/placeholder.svg";
+const recruitRarity2 = "/placeholder.svg";
+const recruitRarity3 = "/placeholder.svg";
+const recruitRarity4 = "/placeholder.svg";
+const recruitRarity5 = "/placeholder.svg";
+const recruitRarity6 = "/placeholder.svg";
+const recruitRarity7 = "/placeholder.svg";
+const recruitRarity8 = "/placeholder.svg";
 
-// Импорты изображений для героя "Стратег"
-import strategistRarity1 from '@/assets/cards/strategist-rarity-1.png';
-import strategistRarity2 from '@/assets/cards/strategist-rarity-2.png';
-import strategistRarity3 from '@/assets/cards/strategist-rarity-3.png';
-import strategistRarity4 from '@/assets/cards/strategist-rarity-4.png';
-import strategistRarity5 from '@/assets/cards/strategist-rarity-5.png';
-import strategistRarity6 from '@/assets/cards/strategist-rarity-6.png';
-import strategistRarity7 from '@/assets/cards/strategist-rarity-7.png';
-import strategistRarity8 from '@/assets/cards/strategist-rarity-8.png';
+const strategistRarity1 = "/placeholder.svg";
+const strategistRarity2 = "/placeholder.svg";
+const strategistRarity3 = "/placeholder.svg";
+const strategistRarity4 = "/placeholder.svg";
+const strategistRarity5 = "/placeholder.svg";
+const strategistRarity6 = "/placeholder.svg";
+const strategistRarity7 = "/placeholder.svg";
+const strategistRarity8 = "/placeholder.svg";
 
 // Маппинг изображений по редкости для героя "Рекрут"
 const recruitRarityImages: Record<number, string> = {

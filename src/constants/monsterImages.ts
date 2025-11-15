@@ -1,21 +1,21 @@
-// Import monster images
-import spiderSkeleton from "@/assets/monsters/spider-skeleton.png";
-import spiderJumper from "@/assets/monsters/spider-jumper.png";
-import spiderWeaver from "@/assets/monsters/spider-weaver.png";
-import spiderHunter from "@/assets/monsters/spider-hunter.png";
-import spiderQueenLarva from "@/assets/monsters/spider-queen-larva.png";
-import spiderCorpseEater from "@/assets/monsters/spider-corpse-eater.png";
-import spiderGuardian from "@/assets/monsters/spider-guardian.png";
-import spiderWyvern from "@/assets/monsters/spider-wyvern.png";
-import shadowSpiderCatcher from "@/assets/monsters/shadow-spider-catcher.png";
-import ancientSpiderHermit from "@/assets/monsters/ancient-spider-hermit.png";
-import spiderBerserker from "@/assets/monsters/spider-berserker.png";
-import spiderIllusionist from "@/assets/monsters/spider-illusionist.png";
-import spiderMotherGuardian from "@/assets/monsters/spider-mother-guardian.png";
-import spiderParasite from "@/assets/monsters/spider-parasite.png";
-import spiderTitan from "@/assets/monsters/spider-titan.png";
-import arachnidArchmage from "@/assets/monsters/arachnid-archmage.png";
-import arachnaProgenitor from "@/assets/monsters/arachna-progenitor.png";
+// Temporarily using placeholders until webp files are uploaded
+const spiderSkeleton = "/placeholder.svg";
+const spiderJumper = "/placeholder.svg";
+const spiderWeaver = "/placeholder.svg";
+const spiderHunter = "/placeholder.svg";
+const spiderQueenLarva = "/placeholder.svg";
+const spiderCorpseEater = "/placeholder.svg";
+const spiderGuardian = "/placeholder.svg";
+const spiderWyvern = "/placeholder.svg";
+const shadowSpiderCatcher = "/placeholder.svg";
+const ancientSpiderHermit = "/placeholder.svg";
+const spiderBerserker = "/placeholder.svg";
+const spiderIllusionist = "/placeholder.svg";
+const spiderMotherGuardian = "/placeholder.svg";
+const spiderParasite = "/placeholder.svg";
+const spiderTitan = "/placeholder.svg";
+const arachnidArchmage = "/placeholder.svg";
+const arachnaProgenitor = "/placeholder.svg";
 
 // Monster images mapping by monster name (Russian)
 export const monsterImagesByName: Record<string, string> = {
