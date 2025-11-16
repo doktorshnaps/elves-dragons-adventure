@@ -45,15 +45,19 @@ export const MonsterCardDisplay = memo(({
     >
       {image && (
         <div className="w-full aspect-[3/4] mb-2 rounded-lg overflow-hidden flex items-center justify-center">
-          <OptimizedImage
-            src={image}
-            alt={name}
-            width={240}
-            height={320}
-            placeholder="/placeholder.svg"
-            className="w-full h-full object-cover"
-            progressive={true}
-          />
+          {image ? (
+            <OptimizedImage
+              src={image}
+              alt={name}
+              width={240}
+              height={320}
+              placeholder="/placeholder.svg"
+              className="w-full h-full object-cover"
+              progressive={true}
+            />
+          ) : (
+            <img src="/placeholder.svg" alt={name} className="w-full h-full object-cover" />
+          )}
         </div>
       )}
       
@@ -114,6 +118,7 @@ export const MonsterCardDisplay = memo(({
     <Card variant="menu" className="p-4 w-80 max-w-sm" style={{ boxShadow: '0 15px 10px rgba(0, 0, 0, 0.6)' }}>
       {image && (
         <div className="w-full aspect-[3/4] mb-4 rounded-lg overflow-hidden flex items-center justify-center">
+        {image ? (
           <OptimizedImage
             src={image}
             alt={name}
@@ -123,6 +128,9 @@ export const MonsterCardDisplay = memo(({
             className="w-full h-full object-cover"
             progressive={true}
           />
+        ) : (
+          <img src="/placeholder.svg" alt={name} className="w-full h-full object-cover" />
+        )}
         </div>
       )}
       

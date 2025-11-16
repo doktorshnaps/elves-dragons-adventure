@@ -77,8 +77,11 @@ export const createBalancedGenerator = (config: DungeonConfig) =>
       // 1) Exact/normalized ID match using bundled assets (preferred)
       for (const v of variants) {
         if (monsterImagesById[v]) {
-          console.log(`✅ Found by ID match (${v}): ${monsterImagesById[v]}`);
-          return monsterImagesById[v];
+          const candidate = monsterImagesById[v];
+          console.log(`✅ Found by ID match (${v}): ${candidate}`);
+          if (candidate && !candidate.includes('placeholder')) {
+            return candidate;
+          }
         }
       }
 
@@ -86,14 +89,20 @@ export const createBalancedGenerator = (config: DungeonConfig) =>
       const keys = Object.keys(monsterImagesById);
       const foundKey = keys.find(k => variants.some(v => v.includes(k) || k.includes(v)));
       if (foundKey) {
-        console.log(`✅ Found by fuzzy match (${foundKey}): ${monsterImagesById[foundKey]}`);
-        return monsterImagesById[foundKey];
+        const candidate = monsterImagesById[foundKey];
+        console.log(`✅ Found by fuzzy match (${foundKey}): ${candidate}`);
+        if (candidate && !candidate.includes('placeholder')) {
+          return candidate;
+        }
       }
 
       // 3) Match by display name (from DB)
       if (name && monsterImagesByName[name]) {
-        console.log(`✅ Found by name match: ${monsterImagesByName[name]}`);
-        return monsterImagesByName[name];
+        const candidate = monsterImagesByName[name];
+        console.log(`✅ Found by name match: ${candidate}`);
+        if (candidate && !candidate.includes('placeholder')) {
+          return candidate;
+        }
       }
       
       // 4) Try to find monster in DB by name (without level suffix)
