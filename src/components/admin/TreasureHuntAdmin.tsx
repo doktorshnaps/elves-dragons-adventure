@@ -12,6 +12,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
+import { useWalletContext } from "@/contexts/WalletConnectContext";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2, Plus, Trash2, Play, Pause } from "lucide-react";
 
@@ -49,6 +50,7 @@ interface Monster {
 
 export const TreasureHuntAdmin = () => {
   const { toast } = useToast();
+  const { accountId } = useWalletContext();
   const [events, setEvents] = useState<TreasureHuntEvent[]>([]);
   const [itemTemplates, setItemTemplates] = useState<ItemTemplate[]>([]);
   const [monsters, setMonsters] = useState<Monster[]>([]);
@@ -136,6 +138,15 @@ export const TreasureHuntAdmin = () => {
         return;
       }
 
+      if (!accountId) {
+        toast({
+          title: "Ошибка",
+          description: "Кошелёк не подключен",
+          variant: "destructive",
+        });
+        return;
+      }
+
       // Получаем данные предмета
       const selectedItem = itemTemplates.find(item => item.id === parseInt(formData.item_template_id));
       
@@ -151,7 +162,7 @@ export const TreasureHuntAdmin = () => {
           total_quantity: formData.total_quantity,
           max_winners: formData.max_winners,
           reward_amount: formData.reward_amount,
-          created_by_wallet_address: 'admin',
+          created_by_wallet_address: accountId,
         });
 
       if (error) throw error;
