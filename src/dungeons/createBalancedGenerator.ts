@@ -108,19 +108,35 @@ export const createBalancedGenerator = (config: DungeonConfig) =>
       // 4) Try to find monster in DB by name (without level suffix)
       if (name) {
         const nameWithoutLevel = name.replace(/\s*\(Lv\d+\)$/, '').trim();
-        const mappedName = monsterNameMapping[nameWithoutLevel] || nameWithoutLevel;
         
         try {
+          // First try original name
           const { data: dbMonster } = await supabase
             .from('monsters')
             .select('image_url')
-            .eq('monster_name', mappedName)
+            .eq('monster_name', nameWithoutLevel)
             .eq('is_active', true)
             .maybeSingle();
             
           if (dbMonster?.image_url) {
-            console.log(`✅ Found by DB name lookup (${mappedName}): ${dbMonster.image_url}`);
+            console.log(`✅ Found by DB name lookup (${nameWithoutLevel}): ${dbMonster.image_url}`);
             return dbMonster.image_url;
+          }
+          
+          // If not found, try mapped name as fallback
+          const mappedName = monsterNameMapping[nameWithoutLevel];
+          if (mappedName && mappedName !== nameWithoutLevel) {
+            const { data: mappedMonster } = await supabase
+              .from('monsters')
+              .select('image_url')
+              .eq('monster_name', mappedName)
+              .eq('is_active', true)
+              .maybeSingle();
+              
+            if (mappedMonster?.image_url) {
+              console.log(`✅ Found by DB mapped name lookup (${mappedName}): ${mappedMonster.image_url}`);
+              return mappedMonster.image_url;
+            }
           }
         } catch (error) {
           console.error('Failed to lookup monster by name:', error);
