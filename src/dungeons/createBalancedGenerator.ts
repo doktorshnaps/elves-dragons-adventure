@@ -3,6 +3,7 @@ import { getMonsterData } from '@/utils/monsterDataParser';
 import { calculateMonsterStatsFromDB, getDungeonSettings } from '@/utils/dungeonSettingsLoader';
 import { supabase } from '@/integrations/supabase/client';
 import { monsterImagesById, monsterImagesByName } from '@/constants/monsterImages';
+import { monsterNameMapping } from './monsterNameMapping';
 
 export interface DungeonConfig {
   internalName: string;
@@ -57,7 +58,7 @@ export const createBalancedGenerator = (config: DungeonConfig) =>
     console.log(`🎮 Creating opponents for ${config.internalName} level ${level}`);
     
     // Resolves the best image for a monster using multiple strategies
-    const resolveMonsterImage = (
+    const resolveMonsterImage = async (
       rawId?: string,
       name?: string,
       lvl?: number,
@@ -94,14 +95,36 @@ export const createBalancedGenerator = (config: DungeonConfig) =>
         console.log(`✅ Found by name match: ${monsterImagesByName[name]}`);
         return monsterImagesByName[name];
       }
+      
+      // 4) Try to find monster in DB by name (without level suffix)
+      if (name) {
+        const nameWithoutLevel = name.replace(/\s*\(Lv\d+\)$/, '').trim();
+        const mappedName = monsterNameMapping[nameWithoutLevel] || nameWithoutLevel;
+        
+        try {
+          const { data: dbMonster } = await supabase
+            .from('monsters')
+            .select('image_url')
+            .eq('monster_name', mappedName)
+            .eq('is_active', true)
+            .maybeSingle();
+            
+          if (dbMonster?.image_url) {
+            console.log(`✅ Found by DB name lookup (${mappedName}): ${dbMonster.image_url}`);
+            return dbMonster.image_url;
+          }
+        } catch (error) {
+          console.error('Failed to lookup monster by name:', error);
+        }
+      }
 
-      // 4) Use DB image_url if provided (must be a valid public URL)
+      // 5) Use DB image_url if provided (must be a valid public URL)
       if (rowImage) {
         console.log(`ℹ️ Fallback to DB image_url: ${rowImage}`);
         return rowImage;
       }
 
-      // 5) Fallback to config defaults
+      // 6) Fallback to config defaults
       console.warn(`⚠️ No image found for monster "${rawId}" (${name}), using fallback`);
       const typeKey = monsterKind === 'normal' ? 'monster' : (monsterKind === 'miniboss' ? 'miniboss' : 'boss');
       if (typeKey === 'monster') return config.monsterImages.monster(lvl || level);
@@ -143,7 +166,7 @@ export const createBalancedGenerator = (config: DungeonConfig) =>
           }
 
           for (let i = 0; i < Math.max(1, m.count); i++) {
-            const finalImage = resolveMonsterImage(m.id, row?.monster_name, level, type as any, row?.image_url);
+            const finalImage = await resolveMonsterImage(m.id, row?.monster_name, level, type as any, row?.image_url);
             console.log(`🖼️ Monster image for ${m.id} (${row?.monster_name}): ${finalImage}`);
             opponents.push({
               id: currentId++,
@@ -185,15 +208,18 @@ export const createBalancedGenerator = (config: DungeonConfig) =>
         attack: monsterData.attack
       } : bossStats;
       
+      const bossName = config.monsterNames[bossType](level);
+      const bossImage = await resolveMonsterImage(undefined, bossName, level, bossType, undefined);
+      
       opponents.push({
         id: currentId++,
-        name: config.monsterNames[bossType](level),
+        name: bossName,
         power: finalStats.attack,
         health: finalStats.hp,
         maxHealth: finalStats.hp,
         armor: finalStats.armor,
         isBoss: true,
-        image: config.monsterImages.boss()
+        image: bossImage
       });
     } else if (waveConfig.monsterType === 'miniboss_wave') {
       // 9 обычных монстров
@@ -206,15 +232,18 @@ export const createBalancedGenerator = (config: DungeonConfig) =>
           attack: monsterData.attack
         } : normalStats;
         
+        const normalName = config.monsterNames.monster(level);
+        const normalImage = await resolveMonsterImage(undefined, normalName, level, 'normal', undefined);
+        
         opponents.push({
           id: currentId++,
-          name: config.monsterNames.monster(level),
+          name: normalName,
           power: finalStats.attack,
           health: finalStats.hp,
           maxHealth: finalStats.hp,
           armor: finalStats.armor,
           isBoss: false,
-          image: config.monsterImages.monster(level)
+          image: normalImage
         });
       }
       
@@ -229,15 +258,18 @@ export const createBalancedGenerator = (config: DungeonConfig) =>
         attack: minibossData.attack
       } : minibossStats;
       
+      const minibossName = config.monsterNames.miniboss(level);
+      const minibossImage = await resolveMonsterImage(undefined, minibossName, level, 'miniboss', undefined);
+      
       opponents.push({
         id: currentId++,
-        name: config.monsterNames.miniboss(level),
+        name: minibossName,
         power: finalMinibossStats.attack,
         health: finalMinibossStats.hp,
         maxHealth: finalMinibossStats.hp,
         armor: finalMinibossStats.armor,
         isBoss: true,
-        image: config.monsterImages.miniboss()
+        image: minibossImage
       });
     } else {
       // Обычные монстры (от 1 до 9)
@@ -250,15 +282,18 @@ export const createBalancedGenerator = (config: DungeonConfig) =>
           attack: monsterData.attack
         } : normalStats;
         
+        const normalName = config.monsterNames.monster(level);
+        const normalImage = await resolveMonsterImage(undefined, normalName, level, 'normal', undefined);
+        
         opponents.push({
           id: currentId++,
-          name: config.monsterNames.monster(level),
+          name: normalName,
           power: finalStats.attack,
           health: finalStats.hp,
           maxHealth: finalStats.hp,
           armor: finalStats.armor,
           isBoss: false,
-          image: config.monsterImages.monster(level)
+          image: normalImage
         });
       }
     }
