@@ -4,6 +4,7 @@ import { motion } from 'framer-motion';
 import { Monster } from '../types';
 import { useToast } from '@/hooks/use-toast';
 import { HealthBar } from './components/HealthBar';
+import { OptimizedImage } from '@/components/ui/optimized-image';
 
 interface MonsterSpriteProps {
   monster: Monster;
@@ -19,17 +20,6 @@ export const MonsterSprite = ({
   isTargeted 
 }: MonsterSpriteProps) => {
   const { toast } = useToast();
-  
-  const getMonsterEmoji = (type: string) => {
-    switch (type) {
-      case 'boss':
-        return '👿';
-      case 'elite':
-        return '👹';
-      default:
-        return '👾';
-    }
-  };
 
   const handleClick = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -75,13 +65,26 @@ export const MonsterSprite = ({
         </div>
 
         <div 
-          className={`w-12 h-16 ${
-            monster.type === 'boss' ? 'bg-red-600' : 
-            monster.type === 'elite' ? 'bg-purple-600' : 
-            'bg-blue-600'
-          } rounded-lg flex items-center justify-center text-2xl`}
+          className={`w-16 h-20 ${
+            monster.type === 'boss' ? 'ring-2 ring-red-500' : 
+            monster.type === 'elite' ? 'ring-2 ring-purple-500' : 
+            'ring-1 ring-blue-500'
+          } rounded-lg overflow-hidden flex items-center justify-center bg-game-surface`}
         >
-          {getMonsterEmoji(monster.type)}
+          {monster.image ? (
+            <OptimizedImage
+              src={monster.image}
+              alt={monster.name}
+              width={64}
+              height={80}
+              placeholder="/placeholder.svg"
+              className="w-full h-full object-cover"
+            />
+          ) : (
+            <div className="text-2xl">
+              {monster.type === 'boss' ? '👿' : monster.type === 'elite' ? '👹' : '👾'}
+            </div>
+          )}
         </div>
       </div>
     </motion.div>
