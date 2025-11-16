@@ -16,6 +16,7 @@ const Auth = lazy(() => import('./pages/Auth').then(m => ({ default: m.Auth })))
 const Menu = lazy(() => import('./pages/Menu').then(m => ({ default: m.Menu })));
 const AdminSettings = lazy(() => import('./pages/AdminSettings'));
 const SoulArchive = lazy(() => import('./pages/SoulArchive').then(m => ({ default: m.SoulArchive })));
+const Seekers = lazy(() => import('./pages/Seekers').then(m => ({ default: m.Seekers })));
 const ProtectedRoute = lazy(() => import('./components/ProtectedRoute').then(m => ({ default: m.ProtectedRoute })));
 const MusicController = lazy(() => import('./components/MusicController').then(m => ({ default: m.MusicController })));
 
@@ -118,6 +119,7 @@ function App() {
                     <Route path="/menu" element={<Suspense fallback={<PageLoader />}><ProtectedRoute><Menu /></ProtectedRoute></Suspense>} />
                     <Route path="/admin-settings" element={<Suspense fallback={<PageLoader />}><ProtectedRoute><AdminSettings /></ProtectedRoute></Suspense>} />
                     <Route path="/soul-archive" element={<Suspense fallback={<PageLoader />}><ProtectedRoute><SoulArchive /></ProtectedRoute></Suspense>} />
+                    <Route path="/seekers" element={<Suspense fallback={<PageLoader />}><ProtectedRoute><Seekers /></ProtectedRoute></Suspense>} />
                     <Route path="/team" element={<Suspense fallback={<PageLoader />}><ProtectedRoute><TeamStatsWithLazyLoading /></ProtectedRoute></Suspense>} />
                     <Route path="/statistics" element={<Suspense fallback={<PageLoader />}><ProtectedRoute><TeamStatsWithLazyLoading /></ProtectedRoute></Suspense>} />
                     <Route path="/equipment" element={<Suspense fallback={<PageLoader />}><ProtectedRoute><EquipmentWithLazyLoading /></ProtectedRoute></Suspense>} />
