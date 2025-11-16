@@ -10,14 +10,20 @@ interface Monster {
  * Resolves monster image URL prioritizing imported assets over database URLs
  */
 export const resolveMonsterImage = (monster: Monster): string => {
-  // 1. Try to get image by monster_id from imported assets
+  // 1. Try to get image by monster_id from imported assets (ignore placeholders)
   if (monster.monster_id && monsterImagesById[monster.monster_id]) {
-    return monsterImagesById[monster.monster_id];
+    const byId = monsterImagesById[monster.monster_id];
+    if (byId && !byId.includes('placeholder')) {
+      return byId;
+    }
   }
 
-  // 2. Try to get image by monster_name from imported assets
+  // 2. Try to get image by monster_name from imported assets (ignore placeholders)
   if (monster.monster_name && monsterImagesByName[monster.monster_name]) {
-    return monsterImagesByName[monster.monster_name];
+    const byName = monsterImagesByName[monster.monster_name];
+    if (byName && !byName.includes('placeholder')) {
+      return byName;
+    }
   }
 
   // 3. Use database URL if it's a valid external URL (uploaded images)
@@ -25,7 +31,8 @@ export const resolveMonsterImage = (monster: Monster): string => {
     monster.image_url.startsWith('http://') || 
     monster.image_url.startsWith('https://') ||
     monster.image_url.startsWith('ipfs://') ||
-    monster.image_url.startsWith('ar://')
+    monster.image_url.startsWith('ar://') ||
+    monster.image_url.startsWith('data:image')
   )) {
     return normalizeMonsterImageUrl(monster.image_url);
   }
