@@ -1334,13 +1334,17 @@ export type Database = {
         Row: {
           created_at: string | null
           created_by_wallet_address: string
+          drop_chance: number | null
+          dungeon_number: number | null
           ended_at: string | null
           found_quantity: number | null
           id: string
           is_active: boolean | null
           item_image_url: string | null
           item_name: string
+          item_template_id: number | null
           max_winners: number
+          monster_id: string | null
           reward_amount: number
           started_at: string | null
           total_quantity: number
@@ -1349,13 +1353,17 @@ export type Database = {
         Insert: {
           created_at?: string | null
           created_by_wallet_address: string
+          drop_chance?: number | null
+          dungeon_number?: number | null
           ended_at?: string | null
           found_quantity?: number | null
           id?: string
           is_active?: boolean | null
           item_image_url?: string | null
           item_name: string
+          item_template_id?: number | null
           max_winners: number
+          monster_id?: string | null
           reward_amount: number
           started_at?: string | null
           total_quantity: number
@@ -1364,19 +1372,31 @@ export type Database = {
         Update: {
           created_at?: string | null
           created_by_wallet_address?: string
+          drop_chance?: number | null
+          dungeon_number?: number | null
           ended_at?: string | null
           found_quantity?: number | null
           id?: string
           is_active?: boolean | null
           item_image_url?: string | null
           item_name?: string
+          item_template_id?: number | null
           max_winners?: number
+          monster_id?: string | null
           reward_amount?: number
           started_at?: string | null
           total_quantity?: number
           updated_at?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "treasure_hunt_events_item_template_id_fkey"
+            columns: ["item_template_id"]
+            isOneToOne: false
+            referencedRelation: "item_templates"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       treasure_hunt_findings: {
         Row: {
