@@ -4,6 +4,13 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2, Plus, Trash2, Play, Pause } from "lucide-react";
@@ -12,6 +19,10 @@ interface TreasureHuntEvent {
   id: string;
   item_name: string;
   item_image_url: string | null;
+  item_template_id: number | null;
+  monster_id: string | null;
+  drop_chance: number;
+  dungeon_number: number | null;
   total_quantity: number;
   found_quantity: number;
   max_winners: number;
@@ -21,21 +32,77 @@ interface TreasureHuntEvent {
   ended_at: string | null;
 }
 
+interface ItemTemplate {
+  id: number;
+  name: string;
+  type: string;
+  rarity: string;
+  image_url: string | null;
+}
+
+interface Monster {
+  id: string;
+  monster_id: string;
+  monster_name: string;
+  image_url: string | null;
+}
+
 export const TreasureHuntAdmin = () => {
   const { toast } = useToast();
   const [events, setEvents] = useState<TreasureHuntEvent[]>([]);
+  const [itemTemplates, setItemTemplates] = useState<ItemTemplate[]>([]);
+  const [monsters, setMonsters] = useState<Monster[]>([]);
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
-    item_name: "",
-    item_image_url: "",
+    item_template_id: "",
+    monster_id: "",
+    dungeon_number: "1",
+    drop_chance: "1.0",
     total_quantity: 100,
     max_winners: 10,
     reward_amount: 1000,
   });
 
   useEffect(() => {
-    loadEvents();
+    loadData();
   }, []);
+
+  const loadData = async () => {
+    try {
+      setLoading(true);
+      
+      // Загрузка шаблонов предметов
+      const { data: templates, error: templatesError } = await supabase
+        .from('item_templates')
+        .select('id, name, type, rarity, image_url')
+        .order('name');
+
+      if (templatesError) throw templatesError;
+      setItemTemplates(templates || []);
+
+      // Загрузка монстров
+      const { data: monstersData, error: monstersError } = await supabase
+        .from('monsters')
+        .select('*')
+        .eq('is_active', true)
+        .order('monster_name');
+
+      if (monstersError) throw monstersError;
+      setMonsters(monstersData || []);
+
+      // Загрузка событий
+      await loadEvents();
+    } catch (error) {
+      console.error('Error loading data:', error);
+      toast({
+        title: "Ошибка",
+        description: "Не удалось загрузить данные",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const loadEvents = async () => {
     try {
@@ -60,10 +127,30 @@ export const TreasureHuntAdmin = () => {
     try {
       setLoading(true);
       
+      if (!formData.item_template_id) {
+        toast({
+          title: "Ошибка",
+          description: "Выберите предмет",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      // Получаем данные предмета
+      const selectedItem = itemTemplates.find(item => item.id === parseInt(formData.item_template_id));
+      
       const { error } = await supabase
         .from('treasure_hunt_events')
         .insert({
-          ...formData,
+          item_template_id: parseInt(formData.item_template_id),
+          item_name: selectedItem?.name || '',
+          item_image_url: selectedItem?.image_url || null,
+          monster_id: formData.monster_id || null,
+          dungeon_number: formData.dungeon_number ? parseInt(formData.dungeon_number) : null,
+          drop_chance: parseFloat(formData.drop_chance),
+          total_quantity: formData.total_quantity,
+          max_winners: formData.max_winners,
+          reward_amount: formData.reward_amount,
           created_by_wallet_address: 'admin',
         });
 
@@ -75,8 +162,10 @@ export const TreasureHuntAdmin = () => {
       });
 
       setFormData({
-        item_name: "",
-        item_image_url: "",
+        item_template_id: "",
+        monster_id: "",
+        dungeon_number: "1",
+        drop_chance: "1.0",
         total_quantity: 100,
         max_winners: 10,
         reward_amount: 1000,
@@ -167,23 +256,65 @@ export const TreasureHuntAdmin = () => {
         </CardHeader>
         <CardContent className="space-y-4">
           <div>
-            <Label htmlFor="item_name">Название предмета</Label>
-            <Input
-              id="item_name"
-              value={formData.item_name}
-              onChange={(e) => setFormData({ ...formData, item_name: e.target.value })}
-              placeholder="Редкий артефакт"
-            />
+            <Label htmlFor="item_template_id">Предмет</Label>
+            <Select
+              value={formData.item_template_id}
+              onValueChange={(value) => setFormData({ ...formData, item_template_id: value })}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Выберите предмет" />
+              </SelectTrigger>
+              <SelectContent>
+                {itemTemplates.map((item) => (
+                  <SelectItem key={item.id} value={item.id.toString()}>
+                    {item.name} ({item.rarity})
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
 
           <div>
-            <Label htmlFor="item_image_url">URL изображения предмета</Label>
-            <Input
-              id="item_image_url"
-              value={formData.item_image_url}
-              onChange={(e) => setFormData({ ...formData, item_image_url: e.target.value })}
-              placeholder="https://..."
-            />
+            <Label htmlFor="monster_id">Монстр (необязательно)</Label>
+            <Select
+              value={formData.monster_id}
+              onValueChange={(value) => setFormData({ ...formData, monster_id: value })}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Выберите монстра" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="">Любой монстр</SelectItem>
+                {monsters.map((monster) => (
+                  <SelectItem key={monster.id} value={monster.monster_id}>
+                    {monster.monster_name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <Label htmlFor="dungeon_number">Номер подземелья</Label>
+              <Input
+                id="dungeon_number"
+                type="number"
+                value={formData.dungeon_number}
+                onChange={(e) => setFormData({ ...formData, dungeon_number: e.target.value })}
+              />
+            </div>
+
+            <div>
+              <Label htmlFor="drop_chance">Шанс выпадения (%)</Label>
+              <Input
+                id="drop_chance"
+                type="number"
+                step="0.1"
+                value={formData.drop_chance}
+                onChange={(e) => setFormData({ ...formData, drop_chance: e.target.value })}
+              />
+            </div>
           </div>
 
           <div className="grid grid-cols-3 gap-4">
@@ -218,7 +349,7 @@ export const TreasureHuntAdmin = () => {
             </div>
           </div>
 
-          <Button onClick={createEvent} disabled={loading || !formData.item_name}>
+          <Button onClick={createEvent} disabled={loading || !formData.item_template_id}>
             {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Plus className="mr-2 h-4 w-4" />}
             Создать событие
           </Button>
@@ -245,6 +376,9 @@ export const TreasureHuntAdmin = () => {
                           <div>Найдено: {event.found_quantity}</div>
                           <div>Макс. победителей: {event.max_winners}</div>
                           <div>Награда: {event.reward_amount} ELL</div>
+                          {event.monster_id && <div>Монстр: {event.monster_id}</div>}
+                          {event.dungeon_number && <div>Подземелье: #{event.dungeon_number}</div>}
+                          <div>Шанс дропа: {event.drop_chance}%</div>
                         </div>
                         {event.started_at && (
                           <div className="text-xs text-muted-foreground mt-2">

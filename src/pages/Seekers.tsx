@@ -12,6 +12,10 @@ interface TreasureHuntEvent {
   id: string;
   item_name: string;
   item_image_url: string | null;
+  item_template_id: number | null;
+  monster_id: string | null;
+  drop_chance: number;
+  dungeon_number: number | null;
   total_quantity: number;
   found_quantity: number;
   max_winners: number;
@@ -169,8 +173,20 @@ export const Seekers = () => {
                           </div>
                           <div className="flex items-center gap-2 text-white/80">
                             <Clock className="w-4 h-4" />
-                            <span>Активно</span>
+                            <span>Шанс дропа: <strong className="text-white">{activeEvent.drop_chance}%</strong></span>
                           </div>
+                          {activeEvent.monster_id && (
+                            <div className="col-span-2 flex items-center gap-2 text-white/80">
+                              <Trophy className="w-4 h-4" />
+                              <span>Монстр: <strong className="text-white">{activeEvent.monster_id}</strong></span>
+                            </div>
+                          )}
+                          {activeEvent.dungeon_number && (
+                            <div className="col-span-2 flex items-center gap-2 text-white/80">
+                              <Search className="w-4 h-4" />
+                              <span>Подземелье: <strong className="text-white">#{activeEvent.dungeon_number}</strong></span>
+                            </div>
+                          )}
                         </div>
                       </div>
                     </div>
