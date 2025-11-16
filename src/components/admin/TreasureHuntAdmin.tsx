@@ -55,7 +55,7 @@ export const TreasureHuntAdmin = () => {
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
     item_template_id: "",
-    monster_id: "",
+    monster_id: "none",
     dungeon_number: "1",
     drop_chance: "1.0",
     total_quantity: 100,
@@ -145,7 +145,7 @@ export const TreasureHuntAdmin = () => {
           item_template_id: parseInt(formData.item_template_id),
           item_name: selectedItem?.name || '',
           item_image_url: selectedItem?.image_url || null,
-          monster_id: formData.monster_id || null,
+          monster_id: formData.monster_id === "none" ? null : formData.monster_id,
           dungeon_number: formData.dungeon_number ? parseInt(formData.dungeon_number) : null,
           drop_chance: parseFloat(formData.drop_chance),
           total_quantity: formData.total_quantity,
@@ -163,7 +163,7 @@ export const TreasureHuntAdmin = () => {
 
       setFormData({
         item_template_id: "",
-        monster_id: "",
+        monster_id: "none",
         dungeon_number: "1",
         drop_chance: "1.0",
         total_quantity: 100,
@@ -284,7 +284,7 @@ export const TreasureHuntAdmin = () => {
                 <SelectValue placeholder="Выберите монстра" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">Любой монстр</SelectItem>
+                <SelectItem value="none">Любой монстр</SelectItem>
                 {monsters.map((monster) => (
                   <SelectItem key={monster.id} value={monster.monster_id}>
                     {monster.monster_name}
