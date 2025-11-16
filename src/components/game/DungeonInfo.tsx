@@ -69,13 +69,17 @@ const DungeonLevel = memo(({
   React.useEffect(() => {
     const loadOpponents = async () => {
       const baseOpponents = await generateDungeonOpponents(dungeonType as any, level);
-      const enhanced = baseOpponents.map(opponent => ({
-        ...opponent,
-        image: monsterImagesByName[opponent.name] || opponent.image,
-        description: monsterDescriptions[opponent.name],
-        translatedName: translateMonsterName(language, opponent.name),
-        translatedDescription: translateMonsterDescription(language, monsterDescriptions[opponent.name] || '')
-      }));
+      const enhanced = baseOpponents.map(opponent => {
+        const mapped = monsterImagesByName[opponent.name];
+        const useMapped = mapped && !mapped.includes('placeholder');
+        return {
+          ...opponent,
+          image: useMapped ? mapped : opponent.image,
+          description: monsterDescriptions[opponent.name],
+          translatedName: translateMonsterName(language, opponent.name),
+          translatedDescription: translateMonsterDescription(language, monsterDescriptions[opponent.name] || '')
+        };
+      });
       setOpponents(enhanced);
     };
     loadOpponents();
