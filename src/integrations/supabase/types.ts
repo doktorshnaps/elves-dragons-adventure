@@ -1330,6 +1330,95 @@ export type Database = {
         }
         Relationships: []
       }
+      treasure_hunt_events: {
+        Row: {
+          created_at: string | null
+          created_by_wallet_address: string
+          ended_at: string | null
+          found_quantity: number | null
+          id: string
+          is_active: boolean | null
+          item_image_url: string | null
+          item_name: string
+          max_winners: number
+          reward_amount: number
+          started_at: string | null
+          total_quantity: number
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          created_by_wallet_address: string
+          ended_at?: string | null
+          found_quantity?: number | null
+          id?: string
+          is_active?: boolean | null
+          item_image_url?: string | null
+          item_name: string
+          max_winners: number
+          reward_amount: number
+          started_at?: string | null
+          total_quantity: number
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          created_by_wallet_address?: string
+          ended_at?: string | null
+          found_quantity?: number | null
+          id?: string
+          is_active?: boolean | null
+          item_image_url?: string | null
+          item_name?: string
+          max_winners?: number
+          reward_amount?: number
+          started_at?: string | null
+          total_quantity?: number
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      treasure_hunt_findings: {
+        Row: {
+          created_at: string | null
+          event_id: string
+          found_at: string | null
+          found_quantity: number
+          id: string
+          reward_claimed: boolean | null
+          updated_at: string | null
+          wallet_address: string
+        }
+        Insert: {
+          created_at?: string | null
+          event_id: string
+          found_at?: string | null
+          found_quantity: number
+          id?: string
+          reward_claimed?: boolean | null
+          updated_at?: string | null
+          wallet_address: string
+        }
+        Update: {
+          created_at?: string | null
+          event_id?: string
+          found_at?: string | null
+          found_quantity?: number
+          id?: string
+          reward_claimed?: boolean | null
+          updated_at?: string | null
+          wallet_address?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "treasure_hunt_findings_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "treasure_hunt_events"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_nft_cards: {
         Row: {
           card_template_name: string

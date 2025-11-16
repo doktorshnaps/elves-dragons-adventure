@@ -224,6 +224,16 @@ export const Menu = () => {
           variant="outline" 
           className="h-36 bg-black/50 border-2 border-white rounded-3xl text-white hover:bg-black/70 hover:text-white transition-all flex flex-col items-center justify-center gap-3 backdrop-blur-sm"
           style={{ boxShadow: '-33px 15px 10px rgba(0, 0, 0, 0.6)' }}
+          onClick={() => navigate('/seekers')}
+        >
+          <img src={moneyIcon} alt="Seekers" className="w-[23px] h-[23px]" />
+          <span className="text-base font-semibold leading-tight text-center">ИСКАТЕЛИ</span>
+        </Button>
+
+        <Button 
+          variant="outline" 
+          className="h-36 bg-black/50 border-2 border-white rounded-3xl text-white hover:bg-black/70 hover:text-white transition-all flex flex-col items-center justify-center gap-3 backdrop-blur-sm"
+          style={{ boxShadow: '-33px 15px 10px rgba(0, 0, 0, 0.6)' }}
           onClick={handleDisconnectWallet}
         >
           <img src={walletIcon} alt="Disconnect" className="w-[23px] h-[23px]" />
