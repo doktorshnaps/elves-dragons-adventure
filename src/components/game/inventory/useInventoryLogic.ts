@@ -7,6 +7,7 @@ import { GroupedItem } from "./types";
 import { shopItems } from "../../shop/types";
 import { useGameData } from "@/hooks/useGameData";
 import { itemImagesByName } from "@/constants/itemImages";
+import { useItemOperations } from "@/hooks/useItemOperations";
 
 export const useInventoryLogic = (initialInventory: Item[]) => {
   const { toast } = useToast();
@@ -14,6 +15,7 @@ export const useInventoryLogic = (initialInventory: Item[]) => {
   const [showQuantityModal, setShowQuantityModal] = useState(false);
   const [selectedPackItem, setSelectedPackItem] = useState<Item | null>(null);
   const { gameData, updateGameData, loadGameData } = useGameData();
+  const { sellItem } = useItemOperations();
   const { 
     openCardPack,
     openCardPacks,
@@ -95,19 +97,8 @@ const groupItems = (items: Item[]): GroupedItem[] => {
   };
 
   const handleSellItem = async (item: Item) => {
-    // Используем sell_price из item_templates, если он определен
-    const sellPrice = item.sell_price !== undefined ? item.sell_price : Math.floor(getItemPrice(item) * 0.7);
-    const newBalance = balance + sellPrice;
-    
-    // Обновляем только баланс (предмет удаляется через useItemOperations)
-    await updateGameData({
-      balance: newBalance
-    });
-    
-    toast({
-      title: "Предмет продан",
-      description: `${item.name} продан за ${sellPrice} ELL`,
-    });
+    // Используем sellItem из useItemOperations, который правильно удаляет из item_instances и обновляет баланс
+    await sellItem(item);
   };
   const handleOpenCardPack = async (item: Item): Promise<boolean> => {
     console.log('🎫 handleOpenCardPack CALLED', { itemName: item.name, itemType: item.type });
