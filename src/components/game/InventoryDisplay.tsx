@@ -16,6 +16,7 @@ import { cardDatabase } from "@/data/cardDatabase";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useCardInstances } from "@/hooks/useCardInstances";
 import { useItemInstances } from "@/hooks/useItemInstances";
+import { useItemTemplates } from "@/hooks/useItemTemplates";
 
 interface InventoryDisplayProps {
   onUseItem?: (item: Item) => void;
@@ -62,6 +63,7 @@ export const InventoryDisplay = ({
 // Источник истины: используем ТОЛЬКО item_instances для всех предметов
 const { cardInstances } = useCardInstances();
 const { instances: itemInstances, refetch: refetchItemInstances } = useItemInstances();
+const { getTemplate } = useItemTemplates();
 
 // Рабочие из card_instances
 const workerItems: Item[] = (cardInstances || [])
@@ -78,16 +80,23 @@ const workerItems: Item[] = (cardInstances || [])
 
 // ВСЕ предметы из item_instances (включая колоды и материалы)
 const instanceItems: Item[] = (itemInstances || [])
-  .map(inst => ({
-    id: inst.id,
-    name: inst.name || 'Предмет',
-    type: inst.type || 'material',
-    value: 1,
-    description: inst.type === 'cardPack' ? 'Содержит 1 случайную карту' : '',
-    image: inst.type === 'cardPack' 
-      ? '/lovable-uploads/e523dce0-4cda-4d32-b4e2-ecec40b1eb39.png'
-      : undefined
-  } as Item));
+  .map(inst => {
+    // Получаем шаблон предмета из БД по template_id
+    const template = inst.template_id ? getTemplate(String(inst.template_id)) : null;
+    
+    return {
+      id: inst.id,
+      name: inst.name || template?.name || 'Предмет',
+      type: inst.type || template?.type || 'material',
+      value: template?.value || 1,
+      sell_price: template?.sell_price,
+      description: inst.type === 'cardPack' ? 'Содержит 1 случайную карту' : template?.description,
+      image: inst.type === 'cardPack' 
+        ? '/lovable-uploads/e523dce0-4cda-4d32-b4e2-ecec40b1eb39.png'
+        : undefined,
+      image_url: template?.image_url // Подтягиваем image_url из БД
+    } as Item;
+  });
 
 console.log('📦 Inventory Display (только из instances):', {
   workerItems: workerItems.length,
