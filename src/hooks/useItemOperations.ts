@@ -98,6 +98,42 @@ export const useItemOperations = () => {
   }, [instances, removeItemInstancesByIds, gameData.balance, updateGameData, toast]);
 
   /**
+   * Продать несколько предметов по имени
+   */
+  const sellMultipleItems = useCallback(async (name: string, quantity: number, sellPricePerItem: number) => {
+    // Находим нужное количество предметов
+    const itemsToSell = instances
+      .filter(inst => inst.name === name)
+      .slice(0, quantity);
+    
+    if (itemsToSell.length < quantity) {
+      toast({
+        title: 'Недостаточно предметов',
+        description: `Требуется ${quantity}, но найдено только ${itemsToSell.length}`,
+        variant: 'destructive'
+      });
+      return false;
+    }
+
+    const totalPrice = sellPricePerItem * quantity;
+    const newBalance = gameData.balance + totalPrice;
+    
+    // Удаляем все предметы
+    const ids = itemsToSell.map(inst => inst.id);
+    await removeItemInstancesByIds(ids);
+    
+    // Обновляем баланс
+    await updateGameData({ balance: newBalance });
+
+    toast({
+      title: 'Предметы проданы',
+      description: `${name} (x${quantity}) продано за ${totalPrice} ELL`,
+    });
+
+    return true;
+  }, [instances, removeItemInstancesByIds, gameData.balance, updateGameData, toast]);
+
+  /**
    * Использовать предмет (например, зелье)
    */
   const useItem = useCallback(async (item: { id: string; name: string; type: string; value: number }) => {
@@ -124,6 +160,7 @@ export const useItemOperations = () => {
     removeItem,
     removeItemsByName,
     sellItem,
+    sellMultipleItems,
     useItem
   };
 };
