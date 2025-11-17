@@ -25,22 +25,30 @@ export const CardImage = ({ image, name, card }: CardImageProps) => {
     if (!url) return '/placeholder.svg';
     
     try {
+      let normalized = url.trim();
+
       // IPFS URL нормализация
-      if (url.startsWith('ipfs://')) {
-        return url.replace('ipfs://', 'https://ipfs.io/ipfs/');
+      if (normalized.startsWith('ipfs://')) {
+        normalized = normalized.replace('ipfs://', 'https://ipfs.io/ipfs/');
       }
       
       // Если это просто IPFS хэш
-      if (/^[a-zA-Z0-9]{46,}$/.test(url)) {
-        return `https://ipfs.io/ipfs/${url}`;
+      if (/^[a-zA-Z0-9]{46,}$/.test(normalized)) {
+        normalized = `https://ipfs.io/ipfs/${normalized}`;
       }
       
       // Если это URL с ar:// (Arweave)
-      if (url.startsWith('ar://')) {
-        return url.replace('ar://', 'https://arweave.net/');
+      if (normalized.startsWith('ar://')) {
+        normalized = normalized.replace('ar://', 'https://arweave.net/');
+      }
+
+      // Маршрут изображений: переводим удалённые PNG в WEBP (все PNG заменены на WEBP)
+      // Работает и для относительных, и для абсолютных путей, содержащих "/lovable-uploads/"
+      if (normalized.includes('/lovable-uploads/') && /\.png(\?|$)/i.test(normalized)) {
+        normalized = normalized.replace(/\.png(\?|$)/i, '.webp$1');
       }
       
-      return url;
+      return normalized || '/placeholder.svg';
     } catch (error) {
       console.error('Error normalizing image URL:', error);
       return '/placeholder.svg';
