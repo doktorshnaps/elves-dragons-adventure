@@ -528,6 +528,34 @@ export const DungeonSettings = () => {
                             </div>
                             <div className="space-y-2">
                               <Label className="text-xs">Выберите монстров и укажите количество</Label>
+                              
+                              {/* Старые монстры (не найдены в БД) */}
+                              {levelConfig.monsters.some(m => !monsters.find(mon => mon.monster_id === m.id)) && (
+                                <div className="border border-destructive/50 rounded-lg p-3 mb-3 bg-destructive/5">
+                                  <p className="text-xs font-medium text-destructive mb-2">Устаревшие монстры (не найдены в БД):</p>
+                                  <div className="space-y-2">
+                                    {levelConfig.monsters
+                                      .filter(m => !monsters.find(mon => mon.monster_id === m.id))
+                                      .map((oldMonster) => (
+                                        <div key={oldMonster.id} className="flex items-center justify-between bg-background/50 p-2 rounded">
+                                          <span className="text-xs font-medium">{oldMonster.id} (x{oldMonster.count})</span>
+                                          <Button
+                                            variant="ghost"
+                                            size="sm"
+                                            className="h-6 w-6 p-0 text-destructive hover:text-destructive hover:bg-destructive/10"
+                                            onClick={() => {
+                                              const newMonsters = levelConfig.monsters.filter(m => m.id !== oldMonster.id);
+                                              updateLevelMonster(dungeon.id, idx, 'monsters', newMonsters);
+                                            }}
+                                          >
+                                            ×
+                                          </Button>
+                                        </div>
+                                      ))}
+                                  </div>
+                                </div>
+                              )}
+                              
                               <div className="border rounded-lg p-3 max-h-48 overflow-y-auto space-y-2 bg-background/50">
                                 {monsters.length === 0 ? (
                                   <p className="text-xs text-muted-foreground">Загрузка монстров...</p>
