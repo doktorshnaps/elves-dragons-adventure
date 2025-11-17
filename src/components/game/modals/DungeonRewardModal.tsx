@@ -43,7 +43,7 @@ export const DungeonRewardModal: React.FC<DungeonRewardModalProps> = ({
     if (isSubmitting || !onContinue) return;
     onContinue();
   };
-  return <Dialog open={isOpen} onOpenChange={onClose}>
+  return <Dialog open={isOpen} onOpenChange={() => {}}>
       <DialogContent className="max-w-md mx-auto bg-card/95 backdrop-blur-sm border-primary/20">
         <DialogHeader>
           <DialogTitle className="text-center text-2xl flex items-center justify-center gap-2">
