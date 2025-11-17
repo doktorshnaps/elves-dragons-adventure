@@ -38,6 +38,7 @@ export const useDungeonRewards = () => {
   const isClaimingRef = useRef(false);
   const lastProcessedLevelRef = useRef<number>(-1);
   const isProcessingRef = useRef(false);
+  const lastClaimKeyRef = useRef<string | null>(null);
 
   const calculateReward = useCallback((monsters: MonsterKill[]): DungeonReward => {
     console.log('🎯 calculateReward called with monsters:', monsters);
@@ -198,10 +199,24 @@ export const useDungeonRewards = () => {
       });
       return;
     }
+
+    // Создаем детерминированный ключ для этой награды, чтобы предотвратить повторные начисления
+    const itemsKey = (pendingReward.lootedItems || [])
+      .map(it => it.name)
+      .sort()
+      .join('|');
+    const claimKey = `${pendingReward.totalELL}::${itemsKey}`;
+    if (lastClaimKeyRef.current === claimKey) {
+      console.log('⚠️ Попытка повторного начисления той же награды заблокирована по ключу', claimKey);
+      return;
+    }
+    lastClaimKeyRef.current = claimKey;
+
     isClaimingRef.current = true;
 
     console.log(`💎 ============ ЗАБИРАЕМ НАГРАДУ И ВЫХОДИМ ============`);
     console.log(`🎁 Награда к начислению:`, pendingReward);
+    console.log(`🔑 Уникальный ключ награды:`, claimKey);
 
     try {
       const rewardAmount = pendingReward.totalELL || 0;
@@ -303,7 +318,8 @@ export const useDungeonRewards = () => {
     setPendingReward(null);
     lastProcessedLevelRef.current = -1;
     isProcessingRef.current = false;
-    isClaimingRef.current = false; // Сбрасываем флаг при ресете
+    isClaimingRef.current = false;
+    lastClaimKeyRef.current = null; // Сбрасываем ключ для новых сессий
   }, []);
 
   return {
