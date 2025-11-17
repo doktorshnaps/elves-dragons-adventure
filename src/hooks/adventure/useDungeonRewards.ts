@@ -191,7 +191,13 @@ export const useDungeonRewards = () => {
   }, [calculateReward, toast]);
 
   const claimRewardAndExit = useCallback(async () => {
-    if (!pendingReward || isClaimingRef.current) return;
+    if (!pendingReward || isClaimingRef.current) {
+      console.log('⚠️ Повторный вызов claimRewardAndExit заблокирован', { 
+        hasPendingReward: !!pendingReward, 
+        isClaiming: isClaimingRef.current 
+      });
+      return;
+    }
     isClaimingRef.current = true;
 
     console.log(`💎 ============ ЗАБИРАЕМ НАГРАДУ И ВЫХОДИМ ============`);
@@ -257,19 +263,19 @@ export const useDungeonRewards = () => {
         description: `Получено ${rewardAmount} ELL и ${lootedItems.length} предметов`,
       });
 
+      // НЕ сбрасываем флаг isClaimingRef, чтобы предотвратить повторные вызовы
       return true; // Сигнализируем о выходе
     } catch (error) {
       console.error('❌ Ошибка при начислении награды:', error);
+      isClaimingRef.current = false; // Сбрасываем только при ошибке
       toast({
         title: "Ошибка",
         description: "Не удалось начислить награду",
         variant: "destructive"
       });
       return false;
-    } finally {
-      isClaimingRef.current = false;
     }
-  }, [pendingReward, gameData.balance, updateGameData, toast, addItemsToInstances]);
+  }, [pendingReward, gameData.balance, updateGameData, toast, addItemsToInstances, accountId]);
 
   const continueWithRisk = useCallback(() => {
     setAccumulatedReward(prev => {
@@ -297,6 +303,7 @@ export const useDungeonRewards = () => {
     setPendingReward(null);
     lastProcessedLevelRef.current = -1;
     isProcessingRef.current = false;
+    isClaimingRef.current = false; // Сбрасываем флаг при ресете
   }, []);
 
   return {
