@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Card } from '@/types/cards';
-import { resolveCardImage } from '@/utils/cardImageResolver';
+import { resolveCardImage, resolveCardImageSync } from '@/utils/cardImageResolver';
 import { OptimizedImage } from '@/components/ui/optimized-image';
 
 interface CardImageProps {
@@ -10,7 +10,8 @@ interface CardImageProps {
 }
 
 export const CardImage = ({ image, name, card }: CardImageProps) => {
-  const [resolvedImageUrl, setResolvedImageUrl] = useState<string | undefined>(undefined);
+  const initialResolved = card ? resolveCardImageSync(card) || card.image || image : image;
+  const [resolvedImageUrl, setResolvedImageUrl] = useState<string | undefined>(initialResolved);
 
   // Асинхронно загружаем изображение из БД если передана карта
   useEffect(() => {

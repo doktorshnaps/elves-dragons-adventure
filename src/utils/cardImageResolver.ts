@@ -112,29 +112,38 @@ export const getCardImageByRarity = async (card: Card): Promise<string | undefin
   try {
     const dbImages = await loadDatabaseImages();
     
-    // Используем тип карты напрямую, без преобразования
-    const cardType = card.type === 'pet' ? 'pet' : 'character';
-    
-    // Сначала пытаемся найти с фракцией
-    if (card.faction) {
-      const keyWithFaction = `${card.name}|${cardType}|${card.rarity}|${card.faction}`;
-      const dbImageWithFaction = dbImages.get(keyWithFaction);
-      
-      console.log(`🔍 Looking for image with faction: ${keyWithFaction}`, dbImageWithFaction ? '✅ Found' : '❌ Not found');
-      
-      if (dbImageWithFaction) {
-        return dbImageWithFaction;
+    // Пробуем несколько вариантов типа карты для совместимости (hero/character/pet)
+    const normalizedName = (card.name || '').trim();
+    const normalizedFaction = (card.faction || '').trim();
+    const typeStr = String((card as any).type || '');
+    const candidateTypes = Array.from(
+      new Set(
+        [
+          typeStr,
+          typeStr === 'hero' ? 'character' : undefined,
+          typeStr === 'character' ? 'hero' : undefined,
+          typeStr === 'pet' ? 'pet' : undefined,
+        ].filter(Boolean)
+      )
+    ) as string[];
+
+    // Сначала пытаемся найти с фракцией, затем без фракции, перебирая варианты типов
+    for (const t of candidateTypes) {
+      if (normalizedFaction) {
+        const keyWithFaction = `${normalizedName}|${t}|${card.rarity}|${normalizedFaction}`;
+        const dbImageWithFaction = dbImages.get(keyWithFaction);
+        console.log(`🔍 Looking for image with faction: ${keyWithFaction}`, dbImageWithFaction ? '✅ Found' : '❌ Not found');
+        if (dbImageWithFaction) {
+          return dbImageWithFaction;
+        }
       }
-    }
-    
-    // Затем пытаемся найти без фракции (для обратной совместимости)
-    const keyWithoutFaction = `${card.name}|${cardType}|${card.rarity}`;
-    const dbImage = dbImages.get(keyWithoutFaction);
-    
-    console.log(`🔍 Looking for image without faction: ${keyWithoutFaction}`, dbImage ? '✅ Found' : '❌ Not found');
-    
-    if (dbImage) {
-      return dbImage;
+
+      const keyWithoutFaction = `${normalizedName}|${t}|${card.rarity}`;
+      const dbImage = dbImages.get(keyWithoutFaction);
+      console.log(`🔍 Looking for image without faction: ${keyWithoutFaction}`, dbImage ? '✅ Found' : '❌ Not found');
+      if (dbImage) {
+        return dbImage;
+      }
     }
   } catch (error) {
     console.error('Error getting card image from database:', error);
