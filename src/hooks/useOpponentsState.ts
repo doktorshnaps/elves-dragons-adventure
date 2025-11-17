@@ -4,7 +4,7 @@ import { generateOpponents } from '@/utils/opponentGenerator';
 import { rollLoot, generateLootTable } from '@/utils/lootUtils';
 import { useToast } from '@/hooks/use-toast';
 import { Item } from "@/types/inventory";
-import { useAddItemToInstances } from '@/hooks/useAddItemToInstances';
+
 
 export const useOpponentsState = (
   level: number,
