@@ -108,11 +108,7 @@ export const invalidateCardImagesCache = () => {
  * @returns URL изображения или undefined, если специального изображения нет
  */
 export const getCardImageByRarity = async (card: Card): Promise<string | undefined> => {
-  // Если карта уже содержит конкретное изображение (например, из edge-функции), используем его приоритетно
-  if (card.cardClass && card.image) {
-    return card.image;
-  }
-  // Пытаемся загрузить изображение из базы данных
+  // ПРИОРИТЕТ 1: Пытаемся загрузить изображение из базы данных
   try {
     const dbImages = await loadDatabaseImages();
     
@@ -144,18 +140,26 @@ export const getCardImageByRarity = async (card: Card): Promise<string | undefin
     console.error('Error getting card image from database:', error);
   }
 
-  // Проверяем hardcoded изображения для "Рекрут" из Тэлэриона
+  // ПРИОРИТЕТ 2: Проверяем hardcoded изображения для "Рекрут" из Тэлэриона
   if (card.name === "Рекрут" && card.faction === "Тэлэрион" && card.type === "character") {
-    return recruitRarityImages[card.rarity] || card.image;
+    const hardcodedImage = recruitRarityImages[card.rarity];
+    if (hardcodedImage) {
+      console.log(`✅ Using hardcoded Recruit image for rarity ${card.rarity}`);
+      return hardcodedImage;
+    }
   }
   
-  // Проверяем hardcoded изображения для "Стратег" из Тэлэриона
+  // ПРИОРИТЕТ 2: Проверяем hardcoded изображения для "Стратег" из Тэлэриона
   if (card.name === "Стратег" && card.faction === "Тэлэрион" && card.type === "character") {
-    return strategistRarityImages[card.rarity] || card.image;
+    const hardcodedImage = strategistRarityImages[card.rarity];
+    if (hardcodedImage) {
+      console.log(`✅ Using hardcoded Strategist image for rarity ${card.rarity}`);
+      return hardcodedImage;
+    }
   }
   
-  // Для всех остальных карт возвращаем стандартное изображение
-  console.log(`📷 Using standard image for ${card.name}:`, card.image);
+  // ПРИОРИТЕТ 3: Для всех остальных карт возвращаем стандартное изображение из карты
+  console.log(`📷 Using standard image for ${card.name} (rarity ${card.rarity}):`, card.image);
   return card.image;
 };
 
