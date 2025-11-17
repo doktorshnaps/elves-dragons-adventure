@@ -15,7 +15,7 @@ export const useInventoryLogic = (initialInventory: Item[]) => {
   const [showQuantityModal, setShowQuantityModal] = useState(false);
   const [selectedPackItem, setSelectedPackItem] = useState<Item | null>(null);
   const { gameData, updateGameData, loadGameData } = useGameData();
-  const { sellItem } = useItemOperations();
+  const { sellItem, sellMultipleItems } = useItemOperations();
   const { 
     openCardPack,
     openCardPacks,
@@ -96,9 +96,15 @@ const groupItems = (items: Item[]): GroupedItem[] => {
     });
   };
 
-  const handleSellItem = async (item: Item) => {
-    // Используем sellItem из useItemOperations, который правильно удаляет из item_instances и обновляет баланс
-    await sellItem(item);
+  const handleSellItem = async (item: Item, quantity: number = 1) => {
+    if (quantity === 1) {
+      // Продаем один предмет
+      await sellItem(item);
+    } else {
+      // Продаем несколько предметов
+      const sellPrice = item.sell_price !== undefined ? item.sell_price : Math.floor(item.value * 0.7);
+      await sellMultipleItems(item.name, quantity, sellPrice);
+    }
   };
   const handleOpenCardPack = async (item: Item): Promise<boolean> => {
     console.log('🎫 handleOpenCardPack CALLED', { itemName: item.name, itemType: item.type });

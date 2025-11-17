@@ -179,7 +179,7 @@ console.log('✨ Final inventory to display:', {
     }
   };
 
-  const handleGroupedSellItem = async (groupedItem: GroupedItem) => {
+  const handleGroupedSellItem = async (groupedItem: GroupedItem, quantity: number = 1) => {
     // Берем первый предмет из группы
     const existingItem = groupedItem.items[0];
 
@@ -196,7 +196,9 @@ console.log('✨ Final inventory to display:', {
       onSellItem(existingItem);
     } else {
       // handleSellItem работает с item_instances напрямую
-      await handleSellItem(existingItem);
+      await handleSellItem(existingItem, quantity);
+      // Принудительно обновляем список предметов после продажи
+      await refetchItemInstances();
     }
   };
   const filteredInventory = showOnlyPotions 

@@ -9,11 +9,12 @@ import { t } from "@/utils/translations";
 import { getClassDropRates } from "@/utils/cardUtils";
 import { itemImagesByName, itemImagesByItemId } from "@/constants/itemImages";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { SellQuantityModal } from "../dialogs/SellQuantityModal";
 interface InventoryGridProps {
   groupedItems: GroupedItem[];
   readonly: boolean;
   onUseItem: (groupedItem: GroupedItem) => Promise<boolean | void>;
-  onSellItem: (groupedItem: GroupedItem) => void;
+  onSellItem: (groupedItem: GroupedItem, quantity: number) => void;
 }
 export const InventoryGrid = ({
   groupedItems,
@@ -22,6 +23,8 @@ export const InventoryGrid = ({
   onSellItem
 }: InventoryGridProps) => {
   const [openKey, setOpenKey] = useState<string | null>(null);
+  const [sellModalOpen, setSellModalOpen] = useState(false);
+  const [selectedItemForSell, setSelectedItemForSell] = useState<GroupedItem | null>(null);
   const {
     language
   } = useLanguage();
@@ -65,6 +68,19 @@ export const InventoryGrid = ({
     const stillExists = unequippedItems.some(g => keyFor(g) === openKey);
     if (!stillExists) setOpenKey(null);
   }, [unequippedItems, openKey]);
+
+  const handleSellClick = (item: GroupedItem) => {
+    setSelectedItemForSell(item);
+    setSellModalOpen(true);
+  };
+
+  const handleSellConfirm = (quantity: number) => {
+    if (selectedItemForSell) {
+      onSellItem(selectedItemForSell, quantity);
+      setSellModalOpen(false);
+      setOpenKey(null);
+    }
+  };
   if (unequippedItems.length === 0) {
     return <p className="text-gray-300 col-span-full text-center py-4 text-sm">{t(language, 'common.inventoryEmpty')}</p>;
   }
@@ -172,8 +188,8 @@ export const InventoryGrid = ({
                       {t(language, 'items.startIncubation')}
                     </Button>}
                   {item.type !== 'dragon_egg' && (
-                    <Button onClick={() => onSellItem(item)} variant="destructive" className="w-full">
-                      {`Продать за ${(item.items[0]?.sell_price !== undefined ? item.items[0].sell_price : Math.floor(item.value * 0.7))} ELL`}
+                    <Button onClick={() => handleSellClick(item)} variant="destructive" className="w-full">
+                      {item.count > 1 ? 'Продать' : `Продать за ${(item.items[0]?.sell_price !== undefined ? item.items[0].sell_price : Math.floor(item.value * 0.7))} ELL`}
                     </Button>
                   )}
                 </div>}
@@ -181,5 +197,18 @@ export const InventoryGrid = ({
           </DialogContent>
         </Dialog>;
     })}
+    
+    {selectedItemForSell && (
+      <SellQuantityModal
+        isOpen={sellModalOpen}
+        onClose={() => setSellModalOpen(false)}
+        onConfirm={handleSellConfirm}
+        itemName={selectedItemForSell.name}
+        maxQuantity={selectedItemForSell.count}
+        sellPrice={selectedItemForSell.items[0]?.sell_price !== undefined 
+          ? selectedItemForSell.items[0].sell_price 
+          : Math.floor(selectedItemForSell.value * 0.7)}
+      />
+    )}
     </div>;
 };
