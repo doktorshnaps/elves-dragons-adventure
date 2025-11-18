@@ -1273,6 +1273,27 @@ export type Database = {
         }
         Relationships: []
       }
+      reward_claims: {
+        Row: {
+          claim_key: string
+          created_at: string
+          id: string
+          wallet_address: string
+        }
+        Insert: {
+          claim_key: string
+          created_at?: string
+          id?: string
+          wallet_address: string
+        }
+        Update: {
+          claim_key?: string
+          created_at?: string
+          id?: string
+          wallet_address?: string
+        }
+        Relationships: []
+      }
       shop_inventory: {
         Row: {
           available_quantity: number
