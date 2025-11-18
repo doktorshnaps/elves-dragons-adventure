@@ -46,7 +46,7 @@ export const useDungeonRewards = () => {
   const isProcessingRef = useRef(false);
   const lastClaimKeyRef = useRef<string | null>(null);
 
-  const calculateReward = useCallback((monsters: MonsterKill[]): DungeonReward => {
+  const calculateReward = useCallback(async (monsters: MonsterKill[]): Promise<DungeonReward> => {
     console.log('🎯 calculateReward called with monsters:', monsters);
     let level1to3Count = 0;
     let level4to7Count = 0;
@@ -54,7 +54,7 @@ export const useDungeonRewards = () => {
     const lootedItems: Item[] = [];
 
     // Подсчитываем убитых монстров по уровням для подземелья "Гнездо Гигантских Пауков"
-    monsters.forEach(monster => {
+    for (const monster of monsters) {
       console.log('🏹 Processing monster:', monster);
       if (monster.dungeonType === 'spider_nest') {
         if (monster.level >= 1 && monster.level <= 3) {
@@ -70,7 +70,7 @@ export const useDungeonRewards = () => {
           console.log('🎁 Generating loot for monster:', monster.name, 'Level:', monster.level);
           // Определяем номер подземелья на основе dungeonType
           const dungeonNumber = monster.dungeonType === 'spider_nest' ? 1 : undefined;
-          const allLoot = getMonsterLoot(monster.name, dungeonNumber, monster.level);
+          const allLoot = await getMonsterLoot(monster.name, dungeonNumber, monster.level);
           if (allLoot && allLoot.length > 0) {
             console.log(`💰 Generated ${allLoot.length} items from monster:`, allLoot);
             lootedItems.push(...allLoot);
@@ -81,7 +81,7 @@ export const useDungeonRewards = () => {
           console.log('⚠️ Monster has no name:', monster);
         }
       }
-    });
+    }
 
     // Рассчитываем награды согласно условиям
     const level1to3Reward = level1to3Count * 1; // 1 ELL за монстров 1-3 уровня
@@ -145,7 +145,7 @@ export const useDungeonRewards = () => {
       return;
     }
 
-    const levelReward = calculateReward(monsters);
+    const levelReward = await calculateReward(monsters);
     console.log(`💰 Награда за текущий уровень ${currentLevel}:`, levelReward);
     
     // Используем функциональное обновление для правильного чтения текущего значения
