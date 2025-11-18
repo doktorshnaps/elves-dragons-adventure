@@ -110,43 +110,39 @@ export const getMonsterLoot = async (monsterName: string, dungeonNumber?: number
           if (roll <= (activeEvent.drop_chance || 0)) {
             console.log(`🎊 TREASURE HUNT ITEM DROPPED! ${activeEvent.item_name} (${roll.toFixed(2)}% <= ${activeEvent.drop_chance}%)`);
             
-            // Увеличиваем счётчик найденных предметов
+            // Увеличиваем счётчик найденных предметов в событии
             await supabase
               .from('treasure_hunt_events')
               .update({ found_quantity: activeEvent.found_quantity + 1 })
               .eq('id', activeEvent.id);
             
-            // Создаём или обновляем запись о находке игрока
-            const { data: existingFinding } = await supabase
-              .from('treasure_hunt_findings')
-              .select('*')
-              .eq('event_id', activeEvent.id)
-              .eq('wallet_address', walletAddress)
-              .maybeSingle();
+            // Вызываем серверную функцию для регистрации находки
+            // Используем claim_key на основе события и кошелька для идемпотентности
+            const claimKey = `treasure_hunt_${activeEvent.id}_${walletAddress}_${Date.now()}`;
             
-            if (existingFinding) {
-              // Обновляем существующую запись
-              await supabase
-                .from('treasure_hunt_findings')
-                .update({ 
-                  found_quantity: existingFinding.found_quantity + 1,
-                  found_at: new Date().toISOString()
-                })
-                .eq('id', existingFinding.id);
-              
-              console.log(`✅ Updated finding for ${walletAddress}: ${existingFinding.found_quantity + 1} items`);
-            } else {
-              // Создаём новую запись
-              await supabase
-                .from('treasure_hunt_findings')
-                .insert({
-                  event_id: activeEvent.id,
+            try {
+              const { data: claimResult, error: claimError } = await supabase.functions.invoke('claim-item-reward', {
+                body: {
                   wallet_address: walletAddress,
-                  found_quantity: 1,
-                  found_at: new Date().toISOString()
-                });
+                  claim_key: claimKey,
+                  treasure_hunt_event_id: activeEvent.id,
+                  treasure_hunt_quantity: 1,
+                  items: [{
+                    name: activeEvent.item_name,
+                    type: 'material',
+                    template_id: activeEvent.item_template_id,
+                    item_id: null
+                  }]
+                }
+              });
               
-              console.log(`✅ Created new finding for ${walletAddress}: 1 item`);
+              if (claimError) {
+                console.error('❌ Failed to claim treasure hunt reward:', claimError);
+              } else {
+                console.log('✅ Treasure hunt finding registered via edge function:', claimResult);
+              }
+            } catch (err) {
+              console.error('❌ Exception calling claim-item-reward:', err);
             }
             
             // Создаём предмет из события
