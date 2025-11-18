@@ -44,3 +44,6 @@ verify_jwt = false
 
 [functions.admin-upsert-monster]
 verify_jwt = false
+
+[functions.sync-player-cards]
+verify_jwt = false
