@@ -23,59 +23,8 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 
-// Список монстров по подземельям
-const DUNGEON_MONSTERS: Record<number, string[]> = {
-  1: [ // Spider Nest
-    "Паучок-скелет",
-    "Паук-охотник",
-    "Паук-берсерк",
-    "Теневой паук",
-    "Древний паук",
-    "Паук-титан",
-    "Ядовитый паук",
-    "Паук-некромант",
-    "Паук-архимаг",
-    "Легендарный паук",
-    "Гигантский Паук-Страж",
-    "Королева Пауков",
-    "Арахна Прародительница"
-  ],
-  2: [ // Bone Dungeon
-    "Скелет-воин",
-    "Скелет-маг",
-    "Скелет-лучник",
-    "Костяной дракон",
-    "Король скелетов"
-  ],
-  3: [ // Dark Mage Tower
-    "Тёмный маг",
-    "Тёмный архимаг",
-    "Повелитель тьмы"
-  ],
-  4: [ // Forgotten Souls Cave
-    "Забытая душа",
-    "Призрачный дух",
-    "Древняя душа"
-  ],
-  5: [ // Icy Throne
-    "Ледяной воин",
-    "Ледяной маг",
-    "Ледяной король"
-  ],
-  6: [ // Sea Serpent Lair
-    "Морской змей",
-    "Гигантский морской змей",
-    "Повелитель морских змеев"
-  ],
-  7: [ // Pantheon of Gods
-    "Божественный страж",
-    "Младший бог",
-    "Древний бог"
-  ],
-  8: [ // Future dungeon
-    "Неизвестный враг"
-  ]
-};
+// Список монстров будет загружаться из БД
+const DUNGEON_MONSTERS: Record<number, string[]> = {};
 
 interface ItemTemplate {
   id: number;
@@ -106,6 +55,7 @@ export const DungeonItemDrops = () => {
   const [saving, setSaving] = useState(false);
   const [itemTemplates, setItemTemplates] = useState<ItemTemplate[]>([]);
   const [drops, setDrops] = useState<DungeonItemDrop[]>([]);
+  const [allMonsters, setAllMonsters] = useState<Record<number, string[]>>({});
   
   // Форма для нового дропа
   const [newDrop, setNewDrop] = useState({
@@ -124,6 +74,24 @@ export const DungeonItemDrops = () => {
   const loadData = async () => {
     try {
       setLoading(true);
+
+      // Загрузка монстров из БД
+      const { data: monsters, error: monstersError } = await supabase
+        .from("monsters")
+        .select("monster_name")
+        .eq("is_active", true);
+
+      if (monstersError) {
+        console.error("Monsters error:", monstersError);
+      } else if (monsters) {
+        // Группируем монстров по подземельям (пока все в одну группу, можно расширить)
+        const monstersByDungeon: Record<number, string[]> = {
+          1: monsters.map(m => m.monster_name)
+        };
+        setAllMonsters(monstersByDungeon);
+        // Обновляем глобальный объект для использования в других местах
+        Object.assign(DUNGEON_MONSTERS, monstersByDungeon);
+      }
 
       // Загрузка шаблонов предметов
       const { data: templates, error: templatesError } = await supabase
@@ -194,6 +162,25 @@ export const DungeonItemDrops = () => {
     try {
       setSaving(true);
 
+      // Проверка на существующий дроп с такими же параметрами
+      const { data: existingDrop } = await supabase
+        .from("dungeon_item_drops")
+        .select("id")
+        .eq("item_template_id", parseInt(newDrop.item_template_id))
+        .eq("dungeon_number", parseInt(newDrop.dungeon_number))
+        .eq("min_dungeon_level", parseInt(newDrop.min_dungeon_level))
+        .maybeSingle();
+
+      if (existingDrop) {
+        toast({
+          title: "Ошибка",
+          description: "Дроп для этого предмета с такими параметрами уже существует. Измените уровень или выберите другой предмет.",
+          variant: "destructive",
+        });
+        setSaving(false);
+        return;
+      }
+
       // 1. Обновляем базовый шанс дропа в item_templates через admin функцию
       const { error: updateError } = await supabase.rpc("admin_update_item_drop_chance", {
         p_item_id: parseInt(newDrop.item_template_id),
@@ -239,9 +226,16 @@ export const DungeonItemDrops = () => {
       loadData();
     } catch (error: any) {
       console.error("Error adding drop:", error);
+      
+      // Специальная обработка для ошибки дубликата ключа
+      let errorMessage = error.message;
+      if (error.code === "23505") {
+        errorMessage = "Дроп для этого предмета с такими параметрами уже существует. Измените уровень или выберите другой предмет.";
+      }
+      
       toast({
         title: "Ошибка",
-        description: error.message,
+        description: errorMessage,
         variant: "destructive",
       });
     } finally {
@@ -441,7 +435,7 @@ export const DungeonItemDrops = () => {
                   <div className="text-sm text-muted-foreground mb-3">
                     Если не выбрано - предмет может выпасть с любого монстра
                   </div>
-                  {DUNGEON_MONSTERS[parseInt(newDrop.dungeon_number)]?.map((monster) => (
+                  {allMonsters[parseInt(newDrop.dungeon_number)]?.map((monster) => (
                     <div key={monster} className="flex items-center space-x-2">
                       <Checkbox
                         id={`new-${monster}`}
@@ -577,7 +571,7 @@ export const DungeonItemDrops = () => {
                           <div className="text-xs text-muted-foreground mb-2">
                             Пусто = все монстры
                           </div>
-                          {DUNGEON_MONSTERS[drop.dungeon_number]?.map((monster) => (
+                          {allMonsters[drop.dungeon_number]?.map((monster) => (
                             <div key={monster} className="flex items-center space-x-2">
                               <Checkbox
                                 id={`drop-${drop.id}-${monster}`}
