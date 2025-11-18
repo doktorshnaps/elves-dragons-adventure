@@ -64,8 +64,15 @@ serve(async (req) => {
       .single();
 
     if (fetchError) {
-      console.error('❌ Error fetching inventory item');
-      throw fetchError;
+      console.error('❌ Error fetching inventory item:', fetchError);
+      return new Response(JSON.stringify({ 
+        error: 'Unable to fetch item information',
+        code: 'FETCH_ERROR',
+        success: false 
+      }), {
+        status: 500,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
     }
 
     if (!inventoryItem || inventoryItem.available_quantity < quantity) {
@@ -103,8 +110,15 @@ serve(async (req) => {
     }
 
     if (!itemTemplate) {
-      console.error('❌ Error fetching item template');
-      throw new Error('Item template not found');
+      console.error('❌ Error fetching item template:', templateError);
+      return new Response(JSON.stringify({ 
+        error: 'Item information not available',
+        code: 'TEMPLATE_ERROR',
+        success: false 
+      }), {
+        status: 500,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
     }
 
     console.log(`📋 Found item template: ${itemTemplate.name}`);
@@ -120,7 +134,14 @@ serve(async (req) => {
 
     if (updateError) {
       console.error('❌ Error updating inventory:', updateError);
-      throw updateError;
+      return new Response(JSON.stringify({ 
+        error: 'Unable to update inventory',
+        code: 'UPDATE_ERROR',
+        success: false 
+      }), {
+        status: 500,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
     }
 
     console.log(`🔍 Checking item type: "${itemTemplate.type}" for item: ${itemTemplate.name}`);

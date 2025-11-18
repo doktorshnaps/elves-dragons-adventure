@@ -52,7 +52,7 @@ export const handler = async (req: Request): Promise<Response> => {
 
     if (gameErr) {
       console.error("❌ Error fetching game_data:", gameErr);
-      return new Response(JSON.stringify({ error: gameErr.message }), {
+      return new Response(JSON.stringify({ error: "Unable to verify seller", code: "SELLER_ERROR" }), {
         status: 500,
         headers: { "Content-Type": "application/json", ...corsHeaders },
       });
@@ -88,7 +88,7 @@ export const handler = async (req: Request): Promise<Response> => {
 
     if (listingErr) {
       console.error("❌ Error creating listing:", listingErr);
-      return new Response(JSON.stringify({ error: listingErr.message }), {
+      return new Response(JSON.stringify({ error: "Unable to create listing", code: "LISTING_ERROR" }), {
         status: 500,
         headers: { "Content-Type": "application/json", ...corsHeaders },
       });
@@ -106,7 +106,7 @@ export const handler = async (req: Request): Promise<Response> => {
       console.error("❌ Error locking NFT:", lockErr);
       // rollback listing
       await supabase.from("marketplace_listings").delete().eq("id", listing.id);
-      return new Response(JSON.stringify({ error: "Failed to lock NFT" }), {
+      return new Response(JSON.stringify({ error: "Unable to lock item", code: "LOCK_ERROR" }), {
         status: 500,
         headers: { "Content-Type": "application/json", ...corsHeaders },
       });
@@ -120,7 +120,7 @@ export const handler = async (req: Request): Promise<Response> => {
     });
   } catch (e: any) {
     console.error("❌ Unexpected error:", e);
-    return new Response(JSON.stringify({ error: e?.message || "Unknown error" }), {
+    return new Response(JSON.stringify({ error: "Internal server error", code: "SERVER_ERROR" }), {
       status: 500,
       headers: { "Content-Type": "application/json", ...corsHeaders },
     });

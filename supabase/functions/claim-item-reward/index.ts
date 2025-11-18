@@ -1,10 +1,32 @@
 // deno-lint-ignore-file no-explicit-any
 import { createClient } from 'jsr:@supabase/supabase-js@2';
+import { z } from 'https://deno.land/x/zod@v3.22.4/mod.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
+
+// Comprehensive input validation schema
+const ItemInputSchema = z.object({
+  name: z.string().max(100).nullable().optional(),
+  type: z.string().max(50).nullable().optional(),
+  template_id: z.union([z.string(), z.number()]).nullable().optional(),
+  item_id: z.string().max(100).nullable().optional(),
+});
+
+const ClaimBodySchema = z.object({
+  wallet_address: z.string()
+    .min(1, 'wallet_address cannot be empty')
+    .max(64, 'wallet_address too long')
+    .regex(/^[a-zA-Z0-9._-]+$/, 'Invalid wallet address format'),
+  claim_key: z.string()
+    .min(1, 'claim_key cannot be empty')
+    .max(256, 'claim_key too long'),
+  items: z.array(ItemInputSchema).max(100, 'Too many items').optional(),
+  treasure_hunt_event_id: z.string().uuid('Invalid event ID').optional(),
+  treasure_hunt_quantity: z.number().int().min(1).max(10000).optional(),
+});
 
 function json(body: any, init: ResponseInit = {}) {
   return new Response(JSON.stringify(body), {
@@ -44,13 +66,27 @@ Deno.serve(async (req: Request) => {
 
   try {
     const supabase = getSupabaseServiceClient();
-    const body = (await req.json()) as ClaimBody;
-    const { wallet_address, claim_key } = body || ({} as ClaimBody);
-    const items = Array.isArray(body?.items) ? body!.items : [];
-
-    if (!wallet_address || !claim_key) {
-      return json({ error: 'wallet_address and claim_key are required' }, { status: 400 });
+    let body: any;
+    
+    try {
+      body = await req.json();
+    } catch {
+      return json({ error: 'Invalid request format', code: 'INVALID_JSON' }, { status: 400 });
     }
+
+    // Validate input with Zod
+    const validation = ClaimBodySchema.safeParse(body);
+    if (!validation.success) {
+      console.error('[claim-item-reward] validation error:', validation.error.issues);
+      return json({ 
+        error: 'Invalid input data', 
+        code: 'VALIDATION_ERROR',
+        details: validation.error.issues.map(i => i.message)
+      }, { status: 400 });
+    }
+
+    const { wallet_address, claim_key } = validation.data;
+    const items = validation.data.items || [];
 
     // Normalize items: keep only supported fields; default type to material
     const normItems = items.map((it) => ({
@@ -76,12 +112,12 @@ Deno.serve(async (req: Request) => {
         return json({ status: 'skipped', reason: 'duplicate', claim_key });
       }
       console.error('[claim-item-reward] claim row insert error', insertErr);
-      return json({ error: 'failed to register claim', details: insertErr }, { status: 500 });
+      return json({ error: 'Unable to process claim', code: 'CLAIM_ERROR' }, { status: 500 });
     }
 
     // Handle treasure hunt findings if provided
-    const treasure_hunt_event_id = body?.treasure_hunt_event_id;
-    const treasure_hunt_quantity = body?.treasure_hunt_quantity || 1;
+    const treasure_hunt_event_id = validation.data.treasure_hunt_event_id;
+    const treasure_hunt_quantity = validation.data.treasure_hunt_quantity || 1;
     
     if (treasure_hunt_event_id) {
       console.log('[claim-item-reward] processing treasure hunt finding', { event_id: treasure_hunt_event_id, quantity: treasure_hunt_quantity });
