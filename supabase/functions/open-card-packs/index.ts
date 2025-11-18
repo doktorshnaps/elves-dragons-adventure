@@ -455,6 +455,33 @@ Deno.serve(async (req) => {
       throw updateCardsErr;
     }
 
+    console.log('✅ Cards added to game_data.cards');
+
+    // Создаем записи в card_instances для каждой карты
+    console.log(`📝 Creating ${newCards.length} card_instances records...`);
+    
+    const cardInstancesToInsert = newCards.map(card => ({
+      wallet_address: wallet_address,
+      card_template_id: card.id,
+      card_type: card.type,
+      card_data: card,
+      max_health: 100, // Будет пересчитано на клиенте
+      current_health: 100,
+      monster_kills: 0
+    }));
+
+    const { error: insertCardsErr } = await supabase
+      .from('card_instances')
+      .insert(cardInstancesToInsert);
+
+    if (insertCardsErr) {
+      console.error('❌ Error creating card_instances:', insertCardsErr);
+      // Не бросаем ошибку, так как карты уже в game_data
+      console.warn('⚠️ Cards saved to game_data but not to card_instances');
+    } else {
+      console.log('✅ Card instances created successfully');
+    }
+
     console.log('✅ Database updated successfully');
 
     return new Response(
