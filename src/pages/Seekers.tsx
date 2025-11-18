@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -7,6 +7,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useWalletContext } from "@/contexts/WalletConnectContext";
 import { useBrightness } from "@/hooks/useBrightness";
 import { useToast } from "@/hooks/use-toast";
+import { formatTime } from "@/utils/timeUtils";
 
 interface TreasureHuntEvent {
   id: string;
@@ -42,10 +43,59 @@ export const Seekers = () => {
   const [activeEvent, setActiveEvent] = useState<TreasureHuntEvent | null>(null);
   const [findings, setFindings] = useState<Finding[]>([]);
   const [loading, setLoading] = useState(true);
+  const [timeRemaining, setTimeRemaining] = useState<number | null>(null);
 
   useEffect(() => {
     loadActiveEvent();
   }, []);
+
+  const endEvent = useCallback(async () => {
+    if (!activeEvent) return;
+
+    try {
+      const { error } = await supabase
+        .from('treasure_hunt_events')
+        .update({ 
+          is_active: false,
+          ended_at: new Date().toISOString()
+        })
+        .eq('id', activeEvent.id);
+
+      if (error) throw error;
+
+      toast({
+        title: "Событие завершено",
+        description: "Победители зафиксированы в таблице лидеров",
+      });
+
+      setActiveEvent(null);
+    } catch (error) {
+      console.error('Error ending event:', error);
+    }
+  }, [activeEvent, toast]);
+
+  useEffect(() => {
+    if (!activeEvent?.ended_at) return;
+
+    const calculateTimeRemaining = () => {
+      const endTime = new Date(activeEvent.ended_at!).getTime();
+      const now = Date.now();
+      const remaining = endTime - now;
+
+      if (remaining <= 0) {
+        setTimeRemaining(0);
+        endEvent();
+        return;
+      }
+
+      setTimeRemaining(remaining);
+    };
+
+    calculateTimeRemaining();
+    const interval = setInterval(calculateTimeRemaining, 1000);
+
+    return () => clearInterval(interval);
+  }, [activeEvent?.ended_at, endEvent]);
 
   const loadActiveEvent = async () => {
     try {
@@ -158,6 +208,14 @@ export const Seekers = () => {
                         <h3 className="text-xl font-bold text-white mb-2">
                           Найти: {activeEvent.item_name}
                         </h3>
+                        {activeEvent.ended_at && (
+                          <div className="mb-4 p-3 bg-primary/20 rounded-lg border border-primary/30">
+                            <div className="flex items-center gap-2 text-lg font-bold text-white">
+                              <Clock className="w-5 h-5" />
+                              <span>Осталось времени: {timeRemaining !== null ? formatTime(timeRemaining) : '--:--:--'}</span>
+                            </div>
+                          </div>
+                        )}
                         <div className="grid grid-cols-2 gap-4 text-sm">
                           <div className="flex items-center gap-2 text-white/80">
                             <Search className="w-4 h-4" />
