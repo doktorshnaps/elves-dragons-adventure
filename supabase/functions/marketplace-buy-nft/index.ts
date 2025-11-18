@@ -1,4 +1,4 @@
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.74.0';
+import { createClient } from 'jsr:@supabase/supabase-js@2';
 import * as nearAPI from 'https://esm.sh/near-api-js@6.3.0';
 
 const corsHeaders = {
