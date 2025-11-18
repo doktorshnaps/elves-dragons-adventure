@@ -63,12 +63,86 @@ export const monsterLootMapping: Record<string, string[]> = {
 };
 
 // Получить лут от монстра с учётом шансов дропа и настроек подземелий
-export const getMonsterLoot = (monsterName: string, dungeonNumber?: number, currentLevel?: number): Item[] => {
+export const getMonsterLoot = async (monsterName: string, dungeonNumber?: number, currentLevel?: number): Promise<Item[]> => {
   console.log('🎲 Rolling for loot from monster:', monsterName, 'Dungeon:', dungeonNumber, 'Level:', currentLevel);
   
   // Убираем уровень из имени монстра (например, "Паучок-скелет (Lv1)" -> "Паучок-скелет")
   const cleanName = monsterName.replace(/\s*\(Lv\d+\)\s*$/i, '').trim();
   console.log('🧹 Cleaned monster name:', cleanName);
+
+  // Проверяем активное treasure hunt событие
+  if (dungeonNumber !== undefined) {
+    try {
+      const { data: activeEvent, error: eventError } = await supabase
+        .from('treasure_hunt_events')
+        .select('*')
+        .eq('is_active', true)
+        .single();
+
+      if (!eventError && activeEvent) {
+        console.log('🎯 Active treasure hunt event found:', activeEvent);
+        
+        // Проверяем, подходит ли монстр и подземелье
+        const matchesDungeon = !activeEvent.dungeon_number || activeEvent.dungeon_number === dungeonNumber;
+        
+        // Преобразуем monster_id к строчным буквам и ищем совпадение
+        const monsterIdLower = activeEvent.monster_id?.toLowerCase() || '';
+        const cleanNameLower = cleanName.toLowerCase();
+        
+        // Проверяем различные варианты имени монстра
+        const matchesMonster = !activeEvent.monster_id || 
+                              cleanNameLower.includes(monsterIdLower) ||
+                              monsterIdLower.includes(cleanNameLower) ||
+                              cleanNameLower.replace(/\s+/g, '-').includes(monsterIdLower) ||
+                              monsterIdLower.replace(/\s+/g, '-').includes(cleanNameLower.replace(/\s+/g, '-'));
+        
+        console.log('🔍 Monster matching:', {
+          activeEventMonsterId: activeEvent.monster_id,
+          cleanName,
+          matchesDungeon,
+          matchesMonster
+        });
+        
+        if (matchesDungeon && matchesMonster && activeEvent.found_quantity < activeEvent.total_quantity) {
+          console.log('✨ Treasure hunt conditions met! Rolling for special drop...');
+          
+          const roll = Math.random() * 100;
+          if (roll <= (activeEvent.drop_chance || 0)) {
+            console.log(`🎊 TREASURE HUNT ITEM DROPPED! ${activeEvent.item_name} (${roll.toFixed(2)}% <= ${activeEvent.drop_chance}%)`);
+            
+            // Увеличиваем счётчик найденных предметов
+            await supabase
+              .from('treasure_hunt_events')
+              .update({ found_quantity: activeEvent.found_quantity + 1 })
+              .eq('id', activeEvent.id);
+            
+            // Создаём предмет из события
+            const treasureItem: Item = {
+              id: uuidv4(),
+              name: activeEvent.item_name,
+              type: 'material',
+              value: 0,
+              description: `Особый предмет из события "Искатели"`,
+              image: activeEvent.item_image_url || undefined
+            };
+            
+            return [treasureItem];
+          } else {
+            console.log(`❌ Treasure hunt roll failed: ${roll.toFixed(2)}% > ${activeEvent.drop_chance}%`);
+          }
+        } else {
+          console.log('⚠️ Treasure hunt event exists but conditions not met:', {
+            matchesDungeon,
+            matchesMonster,
+            foundQuantity: activeEvent.found_quantity,
+            totalQuantity: activeEvent.total_quantity
+          });
+        }
+      }
+    } catch (error) {
+      console.error('❌ Error checking treasure hunt event:', error);
+    }
+  }
   
   // Используем ВСЕ загруженные шаблоны предметов из базы данных
   if (ALL_ITEM_TEMPLATES.length === 0) {
