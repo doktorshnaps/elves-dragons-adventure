@@ -41,15 +41,34 @@ export const useAddItemToInstances = () => {
     const collapsed = itemsJson.map(i => JSON.stringify(i)).sort();
     const payloadHash = collapsed.join('|');
 
-    // If same payload within short window or while in-flight, skip
+    const IDEMP_TTL_MS = 5000;
     const now = Date.now();
+    const storageKey = `add_items:${accountId}:${payloadHash}`;
+
+    // If same payload while in-flight, skip
     if (isAddingNow && lastPayloadHash === payloadHash) {
-      console.warn('⏭️ Skipping duplicate addItemsToInstances call (in-flight with same payload)');
+      console.warn('⏭️ ADD_ITEMS SKIP (in-flight same payload)', { payloadHash });
       return;
     }
-    if (lastPayloadHash === payloadHash && now - lastCallAt < 2000) {
-      console.warn('⏭️ Skipping duplicate addItemsToInstances call (same payload within 2s)');
+
+    // In-memory short window
+    if (lastPayloadHash === payloadHash && now - lastCallAt < IDEMP_TTL_MS) {
+      console.warn('⏭️ ADD_ITEMS SKIP (memory TTL)', { ttl: IDEMP_TTL_MS, payloadHash });
       return;
+    }
+
+    // Cross-instance/session guard using storage
+    try {
+      if (typeof window !== 'undefined') {
+        const tsRaw = sessionStorage.getItem(storageKey) || localStorage.getItem(storageKey);
+        const ts = tsRaw ? parseInt(tsRaw) : 0;
+        if (ts && now - ts < IDEMP_TTL_MS) {
+          console.warn('⏭️ ADD_ITEMS SKIP (storage TTL)', { ttl: IDEMP_TTL_MS, payloadHash });
+          return;
+        }
+      }
+    } catch (e) {
+      console.debug('ℹ️ Storage not available for idempotency, continuing');
     }
 
     try {
@@ -57,11 +76,15 @@ export const useAddItemToInstances = () => {
       lastPayloadHash = payloadHash;
       lastCallAt = now;
 
-      console.log('📝 Adding items to item_instances via RPC:', itemsJson);
-      console.log('📦 Calling add_item_instances RPC with:', { 
-        wallet: accountId, 
-        items: itemsJson 
-      });
+      // Preemptively set storage guard to block concurrent duplicate calls
+      try {
+        if (typeof window !== 'undefined') {
+          sessionStorage.setItem(storageKey, String(now));
+        }
+      } catch {}
+
+      console.log('📝 ADD_ITEMS START', { count: itemsJson.length, payloadHash });
+      console.log('📦 Calling add_item_instances RPC with:', { wallet: accountId, items: itemsJson });
 
       // Use RPC to bypass RLS
       const { data, error } = await supabase.rpc('add_item_instances', {
@@ -70,7 +93,15 @@ export const useAddItemToInstances = () => {
       });
 
       if (error) throw error;
-      console.log(`✅ Added ${data} items to item_instances via RPC`);
+
+      // Persist success timestamp
+      try {
+        if (typeof window !== 'undefined') {
+          localStorage.setItem(storageKey, String(Date.now()));
+        }
+      } catch {}
+
+      console.log(`✅ ADD_ITEMS DONE: added ${data} items`);
     } catch (e) {
       console.error('❌ Failed to add items to item_instances:', e);
     } finally {

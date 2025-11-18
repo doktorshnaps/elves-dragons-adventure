@@ -9,6 +9,12 @@ import { useAddItemToInstances } from '@/hooks/useAddItemToInstances';
 import { supabase } from '@/integrations/supabase/client';
 import { useWalletContext } from '@/contexts/WalletConnectContext';
 
+// Global idempotency for claim route (survives component remounts)
+let globalClaimLock = false;
+let lastClaimKeyGlobal: string | null = null;
+let lastClaimAtGlobal = 0;
+const CLAIM_TTL_MS = 7000;
+
 export interface MonsterKill {
   level: number;
   dungeonType: string;
@@ -206,11 +212,39 @@ export const useDungeonRewards = () => {
       .sort()
       .join('|');
     const claimKey = `${pendingReward.totalELL}::${itemsKey}`;
+
+    // In-hook quick guard
     if (lastClaimKeyRef.current === claimKey) {
-      console.log('⚠️ Попытка повторного начисления той же награды заблокирована по ключу', claimKey);
+      console.log('⚠️ CLAIM SKIP (hook key already processed)', claimKey);
       return;
     }
+
+    // Global and storage-based idempotency
+    const now = Date.now();
+    if (globalClaimLock && lastClaimKeyGlobal === claimKey && now - lastClaimAtGlobal < CLAIM_TTL_MS) {
+      console.warn('⏭️ CLAIM SKIP (global lock)', { claimKey });
+      return;
+    }
+
+    const storageKey = `claim_reward:${(accountId || 'local')}:${claimKey}`;
+    try {
+      if (typeof window !== 'undefined') {
+        const tsRaw = sessionStorage.getItem(storageKey) || localStorage.getItem(storageKey);
+        const ts = tsRaw ? parseInt(tsRaw) : 0;
+        if (ts && now - ts < CLAIM_TTL_MS) {
+          console.warn('⏭️ CLAIM SKIP (storage TTL)', { claimKey, ttl: CLAIM_TTL_MS });
+          return;
+        }
+        // Preemptively set session guard to block concurrent doubles
+        sessionStorage.setItem(storageKey, String(now));
+      }
+    } catch {}
+
+    // Set locks
     lastClaimKeyRef.current = claimKey;
+    globalClaimLock = true;
+    lastClaimKeyGlobal = claimKey;
+    lastClaimAtGlobal = now;
 
     isClaimingRef.current = true;
 
@@ -248,6 +282,15 @@ export const useDungeonRewards = () => {
       if (Object.keys(updates).length > 0) {
         await updateGameData(updates);
         console.log('✅ Награда успешно начислена!');
+        // Persist claim timestamp to strengthen idempotency across sessions
+        try {
+          if (typeof window !== 'undefined') {
+            const storageKey = `claim_reward:${(accountId || 'local')}:${claimKey}`;
+            localStorage.setItem(storageKey, String(Date.now()));
+          }
+        } catch {}
+        
+        // Начисляем реферальные бонусы (6% -> 3% -> 1.5%)
         
         // Начисляем реферальные бонусы (6% -> 3% -> 1.5%)
         if (rewardAmount > 0 && accountId) {
