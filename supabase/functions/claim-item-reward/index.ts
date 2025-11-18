@@ -122,6 +122,30 @@ Deno.serve(async (req: Request) => {
     if (treasure_hunt_event_id) {
       console.log('[claim-item-reward] processing treasure hunt finding', { event_id: treasure_hunt_event_id, quantity: treasure_hunt_quantity });
       
+      // Check if event is still active and not expired
+      const { data: event, error: eventErr } = await supabase
+        .from('treasure_hunt_events')
+        .select('*')
+        .eq('id', treasure_hunt_event_id)
+        .maybeSingle();
+      
+      if (eventErr || !event) {
+        console.error('[claim-item-reward] event not found', eventErr);
+        return json({ error: 'Event not found', code: 'EVENT_NOT_FOUND' }, { status: 404 });
+      }
+      
+      // Check if event is active
+      if (!event.is_active) {
+        console.log('[claim-item-reward] event is not active');
+        return json({ status: 'skipped', reason: 'event_inactive' });
+      }
+      
+      // Check if event has expired
+      if (event.ended_at && new Date(event.ended_at) <= new Date()) {
+        console.log('[claim-item-reward] event has expired', { ended_at: event.ended_at });
+        return json({ status: 'skipped', reason: 'event_expired' });
+      }
+      
       // Check if finding already exists
       const { data: existingFinding } = await supabase
         .from('treasure_hunt_findings')

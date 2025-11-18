@@ -63,6 +63,9 @@ export const TreasureHuntAdmin = () => {
     total_quantity: 100,
     max_winners: 10,
     reward_amount: 1000,
+    duration_days: 7,
+    duration_hours: 0,
+    duration_minutes: 0,
   });
 
   useEffect(() => {
@@ -150,6 +153,14 @@ export const TreasureHuntAdmin = () => {
       // Получаем данные предмета
       const selectedItem = itemTemplates.find(item => item.id === parseInt(formData.item_template_id));
       
+      // Вычисляем дату окончания события
+      const now = new Date();
+      const durationMs = 
+        (formData.duration_days * 24 * 60 * 60 * 1000) +
+        (formData.duration_hours * 60 * 60 * 1000) +
+        (formData.duration_minutes * 60 * 1000);
+      const endedAt = new Date(now.getTime() + durationMs);
+      
       const { error } = await supabase
         .from('treasure_hunt_events')
         .insert({
@@ -163,6 +174,7 @@ export const TreasureHuntAdmin = () => {
           max_winners: formData.max_winners,
           reward_amount: formData.reward_amount,
           created_by_wallet_address: accountId,
+          ended_at: endedAt.toISOString(),
         });
 
       if (error) throw error;
@@ -180,6 +192,9 @@ export const TreasureHuntAdmin = () => {
         total_quantity: 100,
         max_winners: 10,
         reward_amount: 1000,
+        duration_days: 7,
+        duration_hours: 0,
+        duration_minutes: 0,
       });
 
       await loadEvents();
@@ -357,6 +372,46 @@ export const TreasureHuntAdmin = () => {
                 value={formData.reward_amount}
                 onChange={(e) => setFormData({ ...formData, reward_amount: parseInt(e.target.value) })}
               />
+            </div>
+          </div>
+
+          <div>
+            <Label className="text-base font-semibold">Длительность события</Label>
+            <div className="grid grid-cols-3 gap-4 mt-2">
+              <div>
+                <Label htmlFor="duration_days">Дни</Label>
+                <Input
+                  id="duration_days"
+                  type="number"
+                  min="0"
+                  value={formData.duration_days}
+                  onChange={(e) => setFormData({ ...formData, duration_days: parseInt(e.target.value) || 0 })}
+                />
+              </div>
+
+              <div>
+                <Label htmlFor="duration_hours">Часы</Label>
+                <Input
+                  id="duration_hours"
+                  type="number"
+                  min="0"
+                  max="23"
+                  value={formData.duration_hours}
+                  onChange={(e) => setFormData({ ...formData, duration_hours: parseInt(e.target.value) || 0 })}
+                />
+              </div>
+
+              <div>
+                <Label htmlFor="duration_minutes">Минуты</Label>
+                <Input
+                  id="duration_minutes"
+                  type="number"
+                  min="0"
+                  max="59"
+                  value={formData.duration_minutes}
+                  onChange={(e) => setFormData({ ...formData, duration_minutes: parseInt(e.target.value) || 0 })}
+                />
+              </div>
             </div>
           </div>
 
