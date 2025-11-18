@@ -35,6 +35,8 @@ interface ClaimBody {
   wallet_address: string;
   claim_key: string;
   items?: ItemInput[];
+  treasure_hunt_event_id?: string;
+  treasure_hunt_quantity?: number;
 }
 
 Deno.serve(async (req: Request) => {
@@ -75,6 +77,54 @@ Deno.serve(async (req: Request) => {
       }
       console.error('[claim-item-reward] claim row insert error', insertErr);
       return json({ error: 'failed to register claim', details: insertErr }, { status: 500 });
+    }
+
+    // Handle treasure hunt findings if provided
+    const treasure_hunt_event_id = body?.treasure_hunt_event_id;
+    const treasure_hunt_quantity = body?.treasure_hunt_quantity || 1;
+    
+    if (treasure_hunt_event_id) {
+      console.log('[claim-item-reward] processing treasure hunt finding', { event_id: treasure_hunt_event_id, quantity: treasure_hunt_quantity });
+      
+      // Check if finding already exists
+      const { data: existingFinding } = await supabase
+        .from('treasure_hunt_findings')
+        .select('*')
+        .eq('event_id', treasure_hunt_event_id)
+        .eq('wallet_address', wallet_address)
+        .maybeSingle();
+      
+      if (existingFinding) {
+        // Update existing finding
+        const { error: updateErr } = await supabase
+          .from('treasure_hunt_findings')
+          .update({ 
+            found_quantity: existingFinding.found_quantity + treasure_hunt_quantity,
+            found_at: new Date().toISOString()
+          })
+          .eq('id', existingFinding.id);
+        
+        if (updateErr) {
+          console.error('[claim-item-reward] failed to update treasure hunt finding', updateErr);
+        } else {
+          console.log('[claim-item-reward] treasure hunt finding updated');
+        }
+      } else {
+        // Create new finding
+        const { error: insertFindingErr } = await supabase
+          .from('treasure_hunt_findings')
+          .insert({
+            event_id: treasure_hunt_event_id,
+            wallet_address,
+            found_quantity: treasure_hunt_quantity
+          });
+        
+        if (insertFindingErr) {
+          console.error('[claim-item-reward] failed to insert treasure hunt finding', insertFindingErr);
+        } else {
+          console.log('[claim-item-reward] treasure hunt finding created');
+        }
+      }
     }
 
     // If there are items, call existing RPC to add to item_instances (bypasses RLS)
