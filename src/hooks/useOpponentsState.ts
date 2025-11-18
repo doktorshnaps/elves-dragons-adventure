@@ -12,7 +12,6 @@ export const useOpponentsState = (
   updateInventory: (items: Item[]) => void
 ) => {
   const { toast } = useToast();
-  const { addItemsToInstances } = useAddItemToInstances();
   const [opponents, setOpponents] = useState<Opponent[]>(() => {
     const savedState = localStorage.getItem('battleState');
     if (savedState) {
@@ -37,20 +36,12 @@ export const useOpponentsState = (
   }, [level]);
 
   const handleOpponentDefeat = async (opponent: Opponent) => {
-    // Получаем награду за убийство
-    const { items: droppedItems, coins: droppedCoins } = rollLoot(generateLootTable(opponent.isBoss ?? false));
+    // Получаем награду за убийство (только ELL, предметы начисляются через claim в useDungeonRewards)
+    const { coins: droppedCoins } = rollLoot(generateLootTable(opponent.isBoss ?? false));
     
     // Обновляем баланс только с учетом выпавших ELL
     const currentBalance = Number(localStorage.getItem('gameBalance')) || 0;
     updateBalance(currentBalance + droppedCoins);
-    
-    // Добавляем дроп ТОЛЬКО в item_instances (единственный источник истины)
-    if (droppedItems.length > 0) {
-      await addItemsToInstances(droppedItems.map(it => ({
-        name: it.name,
-        type: it.type
-      })));
-    }
 
     // Проверяем, был ли это последний противник
     const remainingOpponents = opponents.filter(o => o.id !== opponent.id);
