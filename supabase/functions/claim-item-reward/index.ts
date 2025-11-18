@@ -141,9 +141,8 @@ Deno.serve(async (req: Request) => {
           .eq('id', existingFinding.id);
         
         if (updateErr) {
-          console.error('[claim-item-reward] failed to update treasure hunt finding', updateErr);
-        } else {
-          console.log('[claim-item-reward] treasure hunt finding updated');
+          console.error('[claim-item-reward] error updating treasure hunt finding', updateErr);
+          return json({ error: 'Unable to update progress', code: 'UPDATE_ERROR' }, { status: 500 });
         }
       } else {
         // Create new finding
@@ -156,9 +155,8 @@ Deno.serve(async (req: Request) => {
           });
         
         if (insertFindingErr) {
-          console.error('[claim-item-reward] failed to insert treasure hunt finding', insertFindingErr);
-        } else {
-          console.log('[claim-item-reward] treasure hunt finding created');
+          console.error('[claim-item-reward] error inserting treasure hunt finding', insertFindingErr);
+          return json({ error: 'Unable to record finding', code: 'RECORD_ERROR' }, { status: 500 });
         }
       }
     }
@@ -172,7 +170,7 @@ Deno.serve(async (req: Request) => {
       });
       if (error) {
         console.error('[claim-item-reward] add_item_instances RPC error', error);
-        return json({ error: 'failed to add items', details: error }, { status: 500 });
+        return json({ error: 'Unable to process items', code: 'ITEM_ERROR' }, { status: 500 });
       }
       added = Number(data || 0);
     }
@@ -181,6 +179,6 @@ Deno.serve(async (req: Request) => {
     return json({ status: 'ok', added, claim_key });
   } catch (e) {
     console.error('[claim-item-reward] unhandled error', e);
-    return json({ error: 'unhandled', message: String(e?.message || e) }, { status: 500 });
+    return json({ error: 'Internal server error', code: 'SERVER_ERROR' }, { status: 500 });
   }
 });

@@ -272,7 +272,8 @@ if (itemTemplate.type === 'worker') {
   } catch (error) {
     console.error('💥 Error in shop-purchase function:', error);
     return new Response(JSON.stringify({ 
-      error: (error as any)?.message || 'Unknown error',
+      error: 'Purchase failed',
+      code: 'PURCHASE_ERROR',
       success: false 
     }), {
       status: 500,
