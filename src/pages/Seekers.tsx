@@ -81,7 +81,7 @@ export const Seekers = () => {
         .from('treasure_hunt_findings')
         .select('*')
         .eq('event_id', eventId)
-        .order('found_at', { ascending: true });
+        .order('found_quantity', { ascending: false });
 
       if (error) throw error;
       setFindings(data || []);
