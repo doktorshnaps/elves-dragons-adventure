@@ -56,6 +56,7 @@ export const DungeonItemDrops = () => {
   const [itemTemplates, setItemTemplates] = useState<ItemTemplate[]>([]);
   const [drops, setDrops] = useState<DungeonItemDrop[]>([]);
   const [allMonsters, setAllMonsters] = useState<Record<number, string[]>>({});
+  const [treasureHuntEvents, setTreasureHuntEvents] = useState<any[]>([]);
   
   // Форма для нового дропа
   const [newDrop, setNewDrop] = useState({
@@ -101,6 +102,18 @@ export const DungeonItemDrops = () => {
 
       if (templatesError) throw templatesError;
       setItemTemplates(templates || []);
+
+      // Загрузка активных treasure hunt events
+      const { data: eventsData, error: eventsError } = await supabase
+        .from("treasure_hunt_events")
+        .select("*")
+        .eq("is_active", true);
+
+      if (eventsError) {
+        console.error("Error loading treasure hunt events:", eventsError);
+      } else {
+        setTreasureHuntEvents(eventsData || []);
+      }
 
       // Загрузка настроек дропа
       const { data: dropsData, error: dropsError } = await supabase
@@ -682,6 +695,9 @@ export const DungeonItemDrops = () => {
                 // Находим все настройки дропа для этого предмета
                 const itemDrops = drops.filter(d => d.item_template_id === item.id && d.is_active);
                 
+                // Находим активные treasure hunt events для этого предмета
+                const treasureEvents = treasureHuntEvents.filter(e => e.item_template_id === item.id);
+                
                 return (
                   <div
                     key={item.id}
@@ -704,12 +720,12 @@ export const DungeonItemDrops = () => {
                     
                     <div className="col-span-2">
                       <p className="text-sm font-semibold">
-                        {item.drop_chance !== undefined ? `${item.drop_chance}%` : 'Не указан'}
+                        {item.drop_chance !== undefined && item.drop_chance !== null ? `${item.drop_chance}%` : 'null%'}
                       </p>
                     </div>
                     
                     <div className="col-span-4">
-                      {itemDrops.length === 0 ? (
+                      {itemDrops.length === 0 && treasureEvents.length === 0 ? (
                         <p className="text-xs text-muted-foreground">
                           Нет настроек дропа
                         </p>
@@ -721,6 +737,14 @@ export const DungeonItemDrops = () => {
                               Ур. {drop.min_dungeon_level}
                               {drop.max_dungeon_level ? `-${drop.max_dungeon_level}` : '+'},
                               {' '}Шанс: {drop.drop_chance}%
+                            </div>
+                          ))}
+                          {treasureEvents.map((event) => (
+                            <div key={event.id} className="text-xs bg-amber-500/20 border border-amber-500/50 px-2 py-1 rounded">
+                              <span className="font-semibold text-amber-600 dark:text-amber-400">🔍 Искатели:</span>{' '}
+                              Подз. {event.dungeon_number || 'все'},{' '}
+                              Шанс: {event.drop_chance}%,{' '}
+                              Найдено: {event.found_quantity}/{event.total_quantity}
                             </div>
                           ))}
                         </div>
