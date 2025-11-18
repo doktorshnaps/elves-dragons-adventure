@@ -70,7 +70,7 @@ export const useDungeonRewards = () => {
           console.log('🎁 Generating loot for monster:', monster.name, 'Level:', monster.level);
           // Определяем номер подземелья на основе dungeonType
           const dungeonNumber = monster.dungeonType === 'spider_nest' ? 1 : undefined;
-          const allLoot = await getMonsterLoot(monster.name, dungeonNumber, monster.level);
+          const allLoot = await getMonsterLoot(monster.name, dungeonNumber, monster.level, accountId || undefined);
           if (allLoot && allLoot.length > 0) {
             console.log(`💰 Generated ${allLoot.length} items from monster:`, allLoot);
             lootedItems.push(...allLoot);

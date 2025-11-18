@@ -63,7 +63,7 @@ export const monsterLootMapping: Record<string, string[]> = {
 };
 
 // Получить лут от монстра с учётом шансов дропа и настроек подземелий
-export const getMonsterLoot = async (monsterName: string, dungeonNumber?: number, currentLevel?: number): Promise<Item[]> => {
+export const getMonsterLoot = async (monsterName: string, dungeonNumber?: number, currentLevel?: number, walletAddress?: string): Promise<Item[]> => {
   console.log('🎲 Rolling for loot from monster:', monsterName, 'Dungeon:', dungeonNumber, 'Level:', currentLevel);
   
   // Убираем уровень из имени монстра (например, "Паучок-скелет (Lv1)" -> "Паучок-скелет")
@@ -71,7 +71,7 @@ export const getMonsterLoot = async (monsterName: string, dungeonNumber?: number
   console.log('🧹 Cleaned monster name:', cleanName);
 
   // Проверяем активное treasure hunt событие
-  if (dungeonNumber !== undefined) {
+  if (dungeonNumber !== undefined && walletAddress) {
     try {
       const { data: activeEvent, error: eventError } = await supabase
         .from('treasure_hunt_events')
@@ -115,6 +115,39 @@ export const getMonsterLoot = async (monsterName: string, dungeonNumber?: number
               .from('treasure_hunt_events')
               .update({ found_quantity: activeEvent.found_quantity + 1 })
               .eq('id', activeEvent.id);
+            
+            // Создаём или обновляем запись о находке игрока
+            const { data: existingFinding } = await supabase
+              .from('treasure_hunt_findings')
+              .select('*')
+              .eq('event_id', activeEvent.id)
+              .eq('wallet_address', walletAddress)
+              .maybeSingle();
+            
+            if (existingFinding) {
+              // Обновляем существующую запись
+              await supabase
+                .from('treasure_hunt_findings')
+                .update({ 
+                  found_quantity: existingFinding.found_quantity + 1,
+                  found_at: new Date().toISOString()
+                })
+                .eq('id', existingFinding.id);
+              
+              console.log(`✅ Updated finding for ${walletAddress}: ${existingFinding.found_quantity + 1} items`);
+            } else {
+              // Создаём новую запись
+              await supabase
+                .from('treasure_hunt_findings')
+                .insert({
+                  event_id: activeEvent.id,
+                  wallet_address: walletAddress,
+                  found_quantity: 1,
+                  found_at: new Date().toISOString()
+                });
+              
+              console.log(`✅ Created new finding for ${walletAddress}: 1 item`);
+            }
             
             // Создаём предмет из события
             const treasureItem: Item = {
