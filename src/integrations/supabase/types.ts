@@ -2579,13 +2579,21 @@ export type Database = {
         }[]
       }
       has_admin_role: { Args: { p_wallet_address: string }; Returns: boolean }
-      has_role: {
-        Args: {
-          p_role: Database["public"]["Enums"]["app_role"]
-          p_wallet_address: string
-        }
-        Returns: boolean
-      }
+      has_role:
+        | {
+            Args: {
+              p_role: Database["public"]["Enums"]["app_role"]
+              p_wallet_address: string
+            }
+            Returns: boolean
+          }
+        | {
+            Args: {
+              _role: Database["public"]["Enums"]["app_role"]
+              _user_id: string
+            }
+            Returns: boolean
+          }
       increment_card_monster_kills: {
         Args: {
           p_card_template_id: string
