@@ -220,13 +220,20 @@ export const TreasureHuntAdmin = () => {
           .eq('is_active', true);
       }
 
+      // При активации события сохраняем ended_at, при деактивации устанавливаем текущее время
+      const updateData: any = { 
+        is_active: !currentStatus,
+        started_at: !currentStatus ? new Date().toISOString() : null,
+      };
+      
+      // Только при деактивации устанавливаем ended_at на текущее время
+      if (currentStatus) {
+        updateData.ended_at = new Date().toISOString();
+      }
+
       const { error } = await supabase
         .from('treasure_hunt_events')
-        .update({ 
-          is_active: !currentStatus,
-          started_at: !currentStatus ? new Date().toISOString() : null,
-          ended_at: currentStatus ? new Date().toISOString() : null,
-        })
+        .update(updateData)
         .eq('id', eventId);
 
       if (error) throw error;
