@@ -269,13 +269,31 @@ export const useDungeonRewards = () => {
       }
 
       if (lootedItems.length > 0) {
-        // Добавляем предметы ТОЛЬКО в item_instances (единственный источник истины)
-        console.log('📝 Добавляем предметы в item_instances:', lootedItems);
-        await addItemsToInstances(lootedItems.map(it => ({
-          name: it.name,
-          type: it.type
-        })));
-        console.log('✅ Предметы добавлены в item_instances');
+        // Отправляем начисление предметов через edge-функцию с идемпотентностью по claimKey
+        try {
+          const normalized = lootedItems.map(it => ({
+            name: it.name ?? null,
+            type: it.type ?? 'material',
+            template_id: (it as any).template_id ?? null,
+            item_id: (it as any).item_id ?? null,
+          }));
+          console.log('🛰️ Вызов edge claim-item-reward', { count: normalized.length, claimKey });
+          const { data, error } = await supabase.functions.invoke('claim-item-reward', {
+            body: {
+              wallet_address: accountId || 'local',
+              claim_key: claimKey,
+              items: normalized,
+            }
+          });
+          if (error) {
+            console.error('❌ Edge claim-item-reward error', error);
+            throw error;
+          }
+          console.log('✅ Edge claim-item-reward result', data);
+        } catch (edgeErr) {
+          console.error('❌ Ошибка edge claim-item-reward, fallback отменён чтобы избежать дублей:', edgeErr);
+          // Не вызываем локальный addItemsToInstances, чтобы не удвоить предметы
+        }
       }
 
       // Единый вызов updateGameData с обоими обновлениями
