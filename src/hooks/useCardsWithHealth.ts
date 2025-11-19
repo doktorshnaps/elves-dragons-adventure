@@ -22,6 +22,8 @@ export const useCardsWithHealth = () => {
         return {
           ...card,
           currentHealth: instance.current_health,
+          currentDefense: instance.current_defense,
+          maxDefense: instance.max_defense,
           lastHealTime: new Date(instance.last_heal_time).getTime(),
           isInMedicalBay: instance.is_in_medical_bay || false
         };
@@ -40,6 +42,8 @@ export const useCardsWithHealth = () => {
         return instance ? {
           ...pair.hero,
           currentHealth: instance.current_health,
+          currentDefense: instance.current_defense,
+          maxDefense: instance.max_defense,
           lastHealTime: new Date(instance.last_heal_time).getTime(),
           isInMedicalBay: instance.is_in_medical_bay || false
         } : pair.hero;
@@ -49,6 +53,8 @@ export const useCardsWithHealth = () => {
         return instance ? {
           ...pair.dragon,
           currentHealth: instance.current_health,
+          currentDefense: instance.current_defense,
+          maxDefense: instance.max_defense,
           lastHealTime: new Date(instance.last_heal_time).getTime(),
           isInMedicalBay: instance.is_in_medical_bay || false
         } : pair.dragon;

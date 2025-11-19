@@ -20,11 +20,13 @@ export const useCardHealthSync = () => {
 
     const updatedCards = gameData.cards.map((card: Card) => {
       const instance = instancesById.get(card.id);
-      if (instance && instance.current_health !== card.currentHealth) {
+      if (instance && (instance.current_health !== card.currentHealth || instance.current_defense !== card.currentDefense)) {
         hasChanges = true;
         return {
           ...card,
           currentHealth: instance.current_health,
+          currentDefense: instance.current_defense,
+          maxDefense: instance.max_defense,
           lastHealTime: new Date(instance.last_heal_time).getTime()
         };
       }
