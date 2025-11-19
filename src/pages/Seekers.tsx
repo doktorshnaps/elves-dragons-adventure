@@ -68,7 +68,8 @@ export const Seekers = () => {
         description: "Победители зафиксированы в таблице лидеров",
       });
 
-      setActiveEvent(null);
+      // Обновляем локальное состояние события, не очищаем его
+      setActiveEvent(prev => prev ? { ...prev, is_active: false } : null);
     } catch (error) {
       console.error('Error ending event:', error);
     }
@@ -101,10 +102,12 @@ export const Seekers = () => {
     try {
       setLoading(true);
       
+      // Загружаем последнее событие (активное или недавно завершенное)
       const { data: event, error: eventError } = await supabase
         .from('treasure_hunt_events')
         .select('*')
-        .eq('is_active', true)
+        .order('created_at', { ascending: false })
+        .limit(1)
         .maybeSingle();
 
       if (eventError) throw eventError;
@@ -114,10 +117,10 @@ export const Seekers = () => {
         await loadFindings(event.id);
       }
     } catch (error) {
-      console.error('Error loading active event:', error);
+      console.error('Error loading event:', error);
       toast({
         title: "Ошибка",
-        description: "Не удалось загрузить активное событие",
+        description: "Не удалось загрузить событие",
         variant: "destructive",
       });
     } finally {
@@ -186,7 +189,7 @@ export const Seekers = () => {
             ) : !activeEvent ? (
               <div className="text-center py-12">
                 <Trophy className="w-16 h-16 mx-auto mb-4 text-white/50" />
-                <p className="text-xl text-white/70">Сейчас нет активных событий</p>
+                <p className="text-xl text-white/70">Сейчас нет событий</p>
                 <p className="text-sm text-white/50 mt-2">
                   Следите за обновлениями, новые события скоро появятся!
                 </p>
@@ -205,10 +208,18 @@ export const Seekers = () => {
                         />
                       )}
                       <div className="flex-1">
+                        {!activeEvent.is_active && (
+                          <div className="mb-3 p-3 bg-red-500/20 rounded-lg border border-red-500/30">
+                            <div className="flex items-center gap-2 text-lg font-bold text-white">
+                              <Trophy className="w-5 h-5" />
+                              <span>Событие завершено - победители зафиксированы</span>
+                            </div>
+                          </div>
+                        )}
                         <h3 className="text-xl font-bold text-white mb-2">
                           Найти: {activeEvent.item_name}
                         </h3>
-                        {activeEvent.ended_at && (
+                        {activeEvent.ended_at && activeEvent.is_active && (
                           <div className="mb-4 p-3 bg-primary/20 rounded-lg border border-primary/30">
                             <div className="flex items-center gap-2 text-lg font-bold text-white">
                               <Clock className="w-5 h-5" />
