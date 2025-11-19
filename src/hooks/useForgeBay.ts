@@ -136,35 +136,56 @@ export const useForgeBay = () => {
     try {
       setLoading(true);
       
+      // Проверяем auth сессию для отладки
+      const { data: { session } } = await supabase.auth.getSession();
+      console.log('⚒️ [FORGE] Auth session:', session ? 'EXISTS' : 'NULL');
+      console.log('⚒️ [FORGE] Auth user_id:', session?.user?.id);
+      
       console.log('⚒️ [FORGE] Searching for card:', cardInstanceIdOrTemplateId);
       console.log('⚒️ [FORGE] accountId (wallet):', accountId);
       
       // КРИТИЧНО: Добавляем wallet_address фильтр, иначе RLS блокирует
       let { data: instance, error: instErr } = await supabase
         .from('card_instances')
-        .select('id, card_template_id, current_defense, max_defense, is_in_medical_bay')
+        .select('id, card_template_id, current_defense, max_defense, is_in_medical_bay, wallet_address')
         .eq('id', cardInstanceIdOrTemplateId)
         .eq('wallet_address', accountId)
         .maybeSingle();
 
-      console.log('⚒️ [FORGE] Search by id result:', { instance, instErr });
+      console.log('⚒️ [FORGE] Search by id result:', { 
+        instance, 
+        instErr,
+        hasData: !!instance,
+        errorMessage: instErr?.message,
+        errorCode: instErr?.code 
+      });
 
       // Если не найдено по id, ищем по template_id
       if (!instance || instErr) {
         console.log('⚒️ [FORGE] Card instance not found by ID, searching by template_id...');
+        console.log('⚒️ [FORGE] Reason:', instErr ? `Error: ${instErr.message}` : 'No data returned');
+        
         const { data: instanceByTemplate, error: templateErr } = await supabase
           .from('card_instances')
-          .select('id, card_template_id, current_defense, max_defense, is_in_medical_bay')
+          .select('id, card_template_id, current_defense, max_defense, is_in_medical_bay, wallet_address')
           .eq('card_template_id', cardInstanceIdOrTemplateId)
           .eq('wallet_address', accountId)
           .maybeSingle();
         
+        console.log('⚒️ [FORGE] Search by template_id result:', {
+          instanceByTemplate,
+          templateErr,
+          hasData: !!instanceByTemplate
+        });
+        
         if (templateErr) {
-          console.warn('⚒️ Error finding instance by template:', templateErr);
+          console.error('⚒️ Error finding instance by template:', templateErr);
         }
         
         instance = instanceByTemplate;
       }
+      
+      console.log('⚒️ [FORGE] Final instance:', instance);
       
       const actualInstanceId = instance?.id || cardInstanceIdOrTemplateId;
 
@@ -222,7 +243,13 @@ export const useForgeBay = () => {
       }
 
       // Добавляем карту в кузницу
-      console.log('⚒️ Adding card to forge bay:', cardInstanceId);
+      console.log('⚒️ [FORGE] Adding card to forge bay via RPC...');
+      console.log('⚒️ [FORGE] RPC params:', {
+        p_card_instance_id: cardInstanceId,
+        p_repair_hours: 24,
+        p_wallet_address: accountId
+      });
+      
       const { data: entryId, error: addError } = await supabase
         .rpc('add_card_to_forge_bay', {
           p_card_instance_id: cardInstanceId,
@@ -230,7 +257,12 @@ export const useForgeBay = () => {
           p_wallet_address: accountId
         });
 
-      if (addError) throw addError;
+      console.log('⚒️ [FORGE] RPC result:', { entryId, addError });
+      
+      if (addError) {
+        console.error('⚒️ [FORGE] RPC Error:', addError);
+        throw addError;
+      }
 
       console.log('⚒️ Card added to forge bay:', entryId);
       
