@@ -158,44 +158,77 @@ export const WorkersManagement = ({ onSpeedBoostChange }: WorkersManagementProps
       const now = Date.now();
       setActiveWorkers(prev => {
         let updated = [...prev];
+        let hasChanges = false;
         
-        // Находим завершенных рабочих (только тех, кто работает)
-        const finishedWorkers = updated.filter(
-          worker => worker.status === 'working' && now >= worker.startTime + worker.duration
-        );
+        // Находим завершенных рабочих (работающих И с истекшим временем ИЛИ с нулевым оставшимся временем)
+        const finishedWorkers = updated.filter(worker => {
+          if (worker.status !== 'working') return false;
+          
+          const remainingTime = (worker.startTime + worker.duration) - now;
+          const isFinished = remainingTime <= 0;
+          
+          if (isFinished) {
+            console.log('✅ Worker finished:', {
+              name: worker.name,
+              remainingTime,
+              startTime: worker.startTime,
+              duration: worker.duration,
+              now
+            });
+          }
+          
+          return isFinished;
+        });
         
         // Удаляем завершенных рабочих
-        updated = updated.filter(
-          worker => !(worker.status === 'working' && now >= worker.startTime + worker.duration)
-        );
+        if (finishedWorkers.length > 0) {
+          updated = updated.filter(worker => !finishedWorkers.some(fw => fw.id === worker.id));
+          hasChanges = true;
+          
+          console.log('🗑️ Removing finished workers:', {
+            count: finishedWorkers.length,
+            workers: finishedWorkers.map(w => w.name),
+            remainingWorkers: updated.length
+          });
+        }
         
         // Показываем toast для завершенных рабочих
         finishedWorkers.forEach(worker => {
-          setTimeout(() => {
-            toast({
-              title: "Работа завершена",
-              description: `${worker.name} завершил работу в здании "${buildings.find(b => b.id === worker.building)?.name}" и исчез`,
-            });
-          }, 0);
+          toast({
+            title: "Работа завершена",
+            description: `${worker.name} завершил работу в здании "${buildings.find(b => b.id === worker.building)?.name}" и исчез`,
+          });
         });
         
         // Активируем ожидающих рабочих, чье время пришло
-        updated = updated.map(worker => {
+        const activatedWorkers = updated.map(worker => {
           if (worker.status === 'waiting' && now >= worker.startTime) {
             console.log('▶️ Starting queued worker:', worker.name);
+            hasChanges = true;
             return { ...worker, status: 'working' as const };
           }
           return worker;
         });
         
-        // Обновляем базу данных если список изменился
-        if (updated.length !== prev.length || updated.some((w, i) => w.status !== prev[i]?.status)) {
+        if (hasChanges) {
+          updated = activatedWorkers;
+        }
+        
+        // Обновляем базу данных и localStorage если были изменения
+        if (hasChanges || updated.length !== prev.length) {
+          console.log('💾 Saving updated workers:', {
+            previousCount: prev.length,
+            currentCount: updated.length,
+            workers: updated.map(w => ({ name: w.name, status: w.status }))
+          });
+          
           updateActiveWorkersInDB(updated);
           try {
             localStorage.setItem('activeWorkers', JSON.stringify(updated));
-          } catch {}
+          } catch (e) {
+            console.error('Failed to save to localStorage:', e);
+          }
           window.dispatchEvent(new CustomEvent('activeWorkers:changed', { detail: updated }));
-          console.log('🔄 Updated active workers:', updated.length);
         }
         
         return updated;
@@ -203,7 +236,7 @@ export const WorkersManagement = ({ onSpeedBoostChange }: WorkersManagementProps
     }, 1000);
 
     return () => clearInterval(interval);
-  }, [toast, buildings, gameState.actions]);
+  }, [toast, buildings]);
 
   const assignWorker = async (worker: any) => {
     const workerId = (worker as any).instanceId || worker.id;
