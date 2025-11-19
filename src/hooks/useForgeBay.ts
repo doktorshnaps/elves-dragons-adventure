@@ -11,7 +11,7 @@ interface ForgeBayEntry {
   estimated_completion: string;
   repair_rate: number;
   is_completed: boolean;
-  card_data?: {
+  card_instances?: {
     id: string;
     current_defense: number;
     max_defense: number;
@@ -46,7 +46,7 @@ export const useForgeBay = () => {
         estimated_completion: row.estimated_completion,
         repair_rate: row.repair_rate,
         is_completed: row.is_completed,
-        card_data: {
+        card_instances: {
           id: row.ci_id,
           current_defense: row.ci_current_defense,
           max_defense: row.ci_max_defense,
@@ -264,7 +264,7 @@ export const useForgeBay = () => {
       
       // Получаем данные карты перед удалением
       const entry = forgeBayEntries.find(e => e.card_instance_id === cardInstanceId);
-      if (!entry?.card_data) {
+      if (!entry?.card_instances) {
         throw new Error('Card data not found');
       }
 
@@ -274,8 +274,8 @@ export const useForgeBay = () => {
       const hoursElapsed = (currentTime - placedTime) / (1000 * 60 * 60);
       const armorRestored = Math.floor(hoursElapsed * entry.repair_rate);
       const newDefense = Math.min(
-        entry.card_data.current_defense + armorRestored,
-        entry.card_data.max_defense
+        entry.card_instances.current_defense + armorRestored,
+        entry.card_instances.max_defense
       );
 
       // Обновляем броню карты
