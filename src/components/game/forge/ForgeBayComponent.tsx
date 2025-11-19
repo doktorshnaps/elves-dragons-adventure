@@ -70,55 +70,41 @@ export const ForgeBayComponent = ({ forgeLevel }: ForgeBayComponentProps) => {
     const cardsInForgeBay = Array.from(new Set(forgeBayEntries.map(entry => entry.card_instance_id)));
     const uniqueCardsMap = new Map();
     
+    // Добавляем только карты с валидным instance из card_instances
     cardsWithHealth.forEach(card => {
       const instance = cardInstances.find(ci => ci.card_template_id === card.id);
-      const instanceId = instance?.id || card.id;
-      if (!uniqueCardsMap.has(instanceId)) {
-        uniqueCardsMap.set(instanceId, { card, instance });
+      // КРИТИЧНО: Добавляем только если есть реальный instance в БД
+      if (instance?.id && !uniqueCardsMap.has(instance.id)) {
+        uniqueCardsMap.set(instance.id, { card, instance });
       }
     });
     
     selectedTeamWithHealth.forEach(pair => {
       if (pair.hero) {
         const instance = cardInstances.find(ci => ci.card_template_id === pair.hero!.id);
-        const instanceId = instance?.id || pair.hero.id;
-        if (!uniqueCardsMap.has(instanceId)) {
-          uniqueCardsMap.set(instanceId, { card: pair.hero, instance });
+        // КРИТИЧНО: Добавляем только если есть реальный instance в БД
+        if (instance?.id && !uniqueCardsMap.has(instance.id)) {
+          uniqueCardsMap.set(instance.id, { card: pair.hero, instance });
         }
       }
       if (pair.dragon) {
         const instance = cardInstances.find(ci => ci.card_template_id === pair.dragon!.id);
-        const instanceId = instance?.id || pair.dragon.id;
-        if (!uniqueCardsMap.has(instanceId)) {
-          uniqueCardsMap.set(instanceId, { card: pair.dragon, instance });
+        // КРИТИЧНО: Добавляем только если есть реальный instance в БД
+        if (instance?.id && !uniqueCardsMap.has(instance.id)) {
+          uniqueCardsMap.set(instance.id, { card: pair.dragon, instance });
         }
       }
     });
     
     return Array.from(uniqueCardsMap.values())
       .filter(({ card, instance }) => {
-        // Карта должна иметь валидный instance
-        if (!instance || !instance.id) {
-          console.log('⚒️ [FORGE] Skipping card without instance:', card.name || card.id);
-          return false;
-        }
-        
-        const currentDefense = instance.current_defense ?? (card as any).currentDefense ?? (card as any).defense;
-        const maxDefense = instance.max_defense ?? (card as any).maxDefense ?? (card as any).defense;
+        const currentDefense = instance.current_defense ?? (card as any).defense;
+        const maxDefense = instance.max_defense ?? (card as any).defense;
         const instanceId = instance.id;
         
         // Карта должна быть повреждена и не находиться в кузнице
         const isDamaged = currentDefense < maxDefense;
         const notInForge = !cardsInForgeBay.includes(instanceId);
-        
-        console.log('⚒️ [FORGE] Card check:', {
-          name: card.name || card.id,
-          instanceId,
-          currentDefense,
-          maxDefense,
-          isDamaged,
-          notInForge
-        });
         
         return isDamaged && notInForge;
       })
