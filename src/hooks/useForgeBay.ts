@@ -136,14 +136,27 @@ export const useForgeBay = () => {
     try {
       setLoading(true);
       
-      // Ищем экземпляр карты по template_id
-      const { data: instances, error: instanceError } = await supabase
+      // Сначала пытаемся найти по id (если передан instance_id)
+      let { data: instances, error: instanceError } = await supabase
         .from('card_instances')
         .select('id, current_defense, max_defense, is_in_medical_bay')
-        .eq('card_template_id', cardInstanceIdOrTemplateId)
+        .eq('id', cardInstanceIdOrTemplateId)
         .eq('wallet_address', accountId)
-        .limit(1)
-        .single();
+        .maybeSingle();
+
+      // Если не найдено по id, ищем по template_id
+      if (!instances && !instanceError) {
+        const result = await supabase
+          .from('card_instances')
+          .select('id, current_defense, max_defense, is_in_medical_bay')
+          .eq('card_template_id', cardInstanceIdOrTemplateId)
+          .eq('wallet_address', accountId)
+          .limit(1)
+          .maybeSingle();
+        
+        instances = result.data;
+        instanceError = result.error;
+      }
 
       if (instanceError) {
         console.error('⚒️ Error finding card instance:', instanceError);
