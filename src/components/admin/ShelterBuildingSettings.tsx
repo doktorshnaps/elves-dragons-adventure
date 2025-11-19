@@ -58,6 +58,7 @@ const BUILDING_TYPES = [
   { id: 'workshop', name: 'Мастерская' },
   { id: 'medical', name: 'Медицинский пункт' },
   { id: 'dragon_lair', name: 'Драконье логово' },
+  { id: 'forge', name: 'Кузница' },
 ];
 
 export default function ShelterBuildingSettings() {
