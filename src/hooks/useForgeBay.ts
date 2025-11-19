@@ -262,61 +262,26 @@ export const useForgeBay = () => {
     try {
       setLoading(true);
       
-      // Получаем данные карты перед удалением
-      const entry = forgeBayEntries.find(e => e.card_instance_id === cardInstanceId);
-      if (!entry?.card_instances) {
-        throw new Error('Card data not found');
+      console.log('⚒️ [FORGE] Removing card from forge via RPC v2:', cardInstanceId);
+
+      // Используем RPC функцию с SECURITY DEFINER для обхода RLS
+      const { data, error } = await supabase
+        .rpc('remove_card_from_forge_bay_v2', {
+          p_card_instance_id: cardInstanceId,
+          p_wallet_address: accountId
+        });
+
+      if (error) {
+        console.error('⚒️ [FORGE] RPC Error:', error);
+        throw error;
       }
 
-      // Вычисляем восстановленную броню
-      const placedTime = new Date(entry.placed_at).getTime();
-      const currentTime = Date.now();
-      const hoursElapsed = (currentTime - placedTime) / (1000 * 60 * 60);
-      const armorRestored = Math.floor(hoursElapsed * entry.repair_rate);
-      const newDefense = Math.min(
-        entry.card_instances.current_defense + armorRestored,
-        entry.card_instances.max_defense
-      );
-
-      console.log('⚒️ [FORGE] Removing card from forge:', {
-        cardInstanceId,
-        currentDefense: entry.card_instances.current_defense,
-        armorRestored,
-        newDefense
-      });
-
-      // Обновляем броню карты и снимаем флаг is_in_medical_bay
-      const { error: updateError } = await supabase
-        .from('card_instances')
-        .update({ 
-          current_defense: newDefense,
-          is_in_medical_bay: false
-        })
-        .eq('id', cardInstanceId)
-        .eq('wallet_address', accountId);
-
-      if (updateError) {
-        console.error('⚒️ [FORGE] Error updating card defense:', updateError);
-        throw updateError;
-      }
-
-      // Удаляем записи из forge_bay напрямую (без RPC, т.к. auth.uid() = NULL)
-      const { error: deleteError } = await supabase
-        .from('forge_bay')
-        .delete()
-        .eq('card_instance_id', cardInstanceId)
-        .eq('wallet_address', accountId);
-
-      if (deleteError) {
-        console.error('⚒️ [FORGE] Error deleting from forge_bay:', deleteError);
-        throw deleteError;
-      }
-
-      console.log('⚒️ [FORGE] Card successfully removed from forge');
+      const result = data as { success: boolean; armor_restored: number; new_defense: number };
+      console.log('⚒️ [FORGE] Card successfully removed:', result);
 
       toast({
         title: "Карта забрана из кузницы",
-        description: `Броня восстановлена: +${armorRestored}`,
+        description: `Броня восстановлена: +${result.armor_restored}`,
       });
 
       await loadForgeBayEntries();
@@ -324,13 +289,13 @@ export const useForgeBay = () => {
       console.error('Error removing card from forge bay:', error);
       toast({
         title: "Ошибка",
-        description: "Не удалось забрать карту из кузницы",
+        description: error.message || "Не удалось забрать карту из кузницы",
         variant: "destructive"
       });
     } finally {
       setLoading(false);
     }
-  }, [accountId, forgeBayEntries, toast, loadForgeBayEntries]);
+  }, [accountId, toast, loadForgeBayEntries]);
 
   const stopRepairWithoutRecovery = useCallback(async (cardInstanceId: string) => {
     if (!accountId) return;
@@ -338,33 +303,21 @@ export const useForgeBay = () => {
     try {
       setLoading(true);
       
-      console.log('⚒️ [FORGE] Stopping repair without recovery:', cardInstanceId);
+      console.log('⚒️ [FORGE] Stopping repair without recovery via RPC v2:', cardInstanceId);
 
-      // Снимаем флаг is_in_medical_bay без восстановления брони
-      const { error: updateError } = await supabase
-        .from('card_instances')
-        .update({ is_in_medical_bay: false })
-        .eq('id', cardInstanceId)
-        .eq('wallet_address', accountId);
+      // Используем RPC функцию с SECURITY DEFINER для обхода RLS
+      const { data, error } = await supabase
+        .rpc('stop_repair_without_recovery_v2', {
+          p_card_instance_id: cardInstanceId,
+          p_wallet_address: accountId
+        });
 
-      if (updateError) {
-        console.error('⚒️ [FORGE] Error updating card:', updateError);
-        throw updateError;
+      if (error) {
+        console.error('⚒️ [FORGE] RPC Error:', error);
+        throw error;
       }
 
-      // Удаляем записи из forge_bay напрямую
-      const { error: deleteError } = await supabase
-        .from('forge_bay')
-        .delete()
-        .eq('card_instance_id', cardInstanceId)
-        .eq('wallet_address', accountId);
-
-      if (deleteError) {
-        console.error('⚒️ [FORGE] Error deleting from forge_bay:', deleteError);
-        throw deleteError;
-      }
-
-      console.log('⚒️ [FORGE] Repair stopped successfully');
+      console.log('⚒️ [FORGE] Repair stopped successfully:', data);
 
       toast({
         title: "Ремонт остановлен",
@@ -376,7 +329,7 @@ export const useForgeBay = () => {
       console.error('Error stopping repair:', error);
       toast({
         title: "Ошибка",
-        description: "Не удалось остановить ремонт",
+        description: error.message || "Не удалось остановить ремонт",
         variant: "destructive"
       });
     } finally {
