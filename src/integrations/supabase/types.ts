@@ -2469,15 +2469,22 @@ export type Database = {
         }[]
       }
       get_forge_bay_entries: {
-        Args: { p_wallet_address?: string }
+        Args: { p_wallet_address: string }
         Returns: {
-          card_data: Json
           card_instance_id: string
+          ci_card_data: Json
+          ci_current_defense: number
+          ci_current_health: number
+          ci_id: string
+          ci_max_defense: number
+          ci_max_health: number
           estimated_completion: string
           id: string
           is_completed: boolean
           placed_at: string
           repair_rate: number
+          user_id: string
+          wallet_address: string
         }[]
       }
       get_game_data_by_wallet: {
