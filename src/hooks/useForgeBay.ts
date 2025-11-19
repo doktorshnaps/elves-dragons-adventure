@@ -136,58 +136,30 @@ export const useForgeBay = () => {
     try {
       setLoading(true);
       
-      // Проверяем auth сессию для отладки
-      const { data: { session } } = await supabase.auth.getSession();
-      console.log('⚒️ [FORGE] Auth session:', session ? 'EXISTS' : 'NULL');
-      console.log('⚒️ [FORGE] Auth user_id:', session?.user?.id);
-      
       console.log('⚒️ [FORGE] Searching for card:', cardInstanceIdOrTemplateId);
       console.log('⚒️ [FORGE] accountId (wallet):', accountId);
       
-      // КРИТИЧНО: НЕ добавляем wallet_address фильтр на первом запросе!
-      // RLS политика сама проверит через get_current_user_wallet()
-      let { data: instance, error: instErr } = await supabase
-        .from('card_instances')
-        .select('id, card_template_id, current_defense, max_defense, is_in_medical_bay, wallet_address')
-        .eq('id', cardInstanceIdOrTemplateId)
-        .maybeSingle();
-
-      console.log('⚒️ [FORGE] Search by id result:', { 
-        instance, 
-        instErr,
-        hasData: !!instance,
-        errorMessage: instErr?.message,
-        errorCode: instErr?.code 
-      });
-
-      // Если не найдено по id, ищем по template_id
-      if (!instance || instErr) {
-        console.log('⚒️ [FORGE] Card instance not found by ID, searching by template_id...');
-        console.log('⚒️ [FORGE] Reason:', instErr ? `Error: ${instErr.message}` : 'No data returned');
-        
-        const { data: instanceByTemplate, error: templateErr } = await supabase
-          .from('card_instances')
-          .select('id, card_template_id, current_defense, max_defense, is_in_medical_bay, wallet_address')
-          .eq('card_template_id', cardInstanceIdOrTemplateId)
-          .eq('wallet_address', accountId)
-          .maybeSingle();
-        
-        console.log('⚒️ [FORGE] Search by template_id result:', {
-          instanceByTemplate,
-          templateErr,
-          hasData: !!instanceByTemplate
+      // КРИТИЧНО: Используем RPC get_card_instances_by_wallet вместо прямого запроса
+      // т.к. auth.uid() = NULL и RLS блокирует прямые запросы
+      const { data: allInstances, error: rpcError } = await supabase
+        .rpc('get_card_instances_by_wallet', { 
+          p_wallet_address: accountId 
         });
-        
-        if (templateErr) {
-          console.error('⚒️ Error finding instance by template:', templateErr);
-        }
-        
-        instance = instanceByTemplate;
+      
+      if (rpcError) {
+        console.error('⚒️ [FORGE] RPC error:', rpcError);
+        throw rpcError;
       }
       
-      console.log('⚒️ [FORGE] Final instance:', instance);
-      
-      const actualInstanceId = instance?.id || cardInstanceIdOrTemplateId;
+      // Ищем нужную карту среди всех инстансов
+      const instance = (allInstances as any[])?.find(
+        (ci: any) => ci.id === cardInstanceIdOrTemplateId || ci.card_template_id === cardInstanceIdOrTemplateId
+      );
+
+      console.log('⚒️ [FORGE] Found instance via RPC:', { 
+        instance,
+        totalInstances: allInstances?.length
+      });
 
       // Защита от дубликатов: если уже в кузнице — выходим
       if (instance?.is_in_medical_bay) {
