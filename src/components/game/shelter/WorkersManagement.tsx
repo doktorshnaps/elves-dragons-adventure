@@ -135,15 +135,30 @@ export const WorkersManagement = ({ onSpeedBoostChange }: WorkersManagementProps
 
     // Загружаем из БД только при первой загрузке
     if (Array.isArray(gameState.activeWorkers) && gameState.activeWorkers.length > 0) {
-      // ВАЖНО: Фильтруем завершенных рабочих при загрузке
+      // ВАЖНО: Фильтруем завершенных рабочих при загрузке и нормализуем статус
       const now = Date.now();
-      const validWorkers = gameState.activeWorkers.filter((worker: ActiveWorker) => {
-        const isFinished = worker.status === 'working' && now >= (worker.startTime + worker.duration);
-        if (isFinished) {
-          console.log('🚫 Skipping finished worker from DB:', worker.name);
-        }
-        return !isFinished;
-      });
+      const validWorkers = gameState.activeWorkers
+        .map((worker: any) => {
+          // Нормализуем статус, если он пришел как объект
+          let normalizedStatus: 'working' | 'waiting' = 'working';
+          if (typeof worker.status === 'string') {
+            normalizedStatus = worker.status as 'working' | 'waiting';
+          } else if (worker.status && typeof worker.status === 'object') {
+            normalizedStatus = (worker.status.value || 'working') as 'working' | 'waiting';
+          }
+          
+          return {
+            ...worker,
+            status: normalizedStatus
+          } as ActiveWorker;
+        })
+        .filter((worker: ActiveWorker) => {
+          const isFinished = worker.status === 'working' && now >= (worker.startTime + worker.duration);
+          if (isFinished) {
+            console.log('🚫 Skipping finished worker from DB:', worker.name);
+          }
+          return !isFinished;
+        });
       
       console.log('📦 Initial load from DB:', {
         total: gameState.activeWorkers.length,
@@ -180,24 +195,20 @@ export const WorkersManagement = ({ onSpeedBoostChange }: WorkersManagementProps
       const now = Date.now();
       
       setActiveWorkers(prev => {
-        // Детальное логирование для каждого рабочего
-        console.log('🔍 Checking workers:', {
-          totalWorkers: prev.length,
-          now,
-          workers: prev.map(w => {
-            const remaining = (w.startTime + w.duration) - now;
-            return {
-              name: w.name,
-              status: w.status,
-              startTime: w.startTime,
-              duration: w.duration,
-              remaining,
-              shouldRemove: w.status === 'working' && remaining <= 0
-            };
-          })
+        // Нормализуем статус всех рабочих перед проверкой
+        let updated = prev.map(worker => {
+          let normalizedStatus: 'working' | 'waiting' = 'working';
+          if (typeof worker.status === 'string') {
+            normalizedStatus = worker.status as 'working' | 'waiting';
+          } else if (worker.status && typeof worker.status === 'object') {
+            normalizedStatus = ((worker.status as any).value || 'working') as 'working' | 'waiting';
+          }
+          return {
+            ...worker,
+            status: normalizedStatus
+          };
         });
         
-        let updated = [...prev];
         let hasChanges = false;
         
         // Находим всех завершенных рабочих
@@ -208,14 +219,15 @@ export const WorkersManagement = ({ onSpeedBoostChange }: WorkersManagementProps
           const remainingTime = endTime - now;
           const isFinished = remainingTime <= 0;
           
-          console.log('🎯 Checking worker:', {
-            name: worker.name,
-            status: worker.status,
-            endTime,
-            now,
-            remainingTime,
-            isFinished
-          });
+          if (isFinished) {
+            console.log('✅ Worker finished:', {
+              name: worker.name,
+              status: worker.status,
+              endTime: new Date(endTime).toISOString(),
+              now: new Date(now).toISOString(),
+              remainingTime
+            });
+          }
           
           return isFinished;
         });
