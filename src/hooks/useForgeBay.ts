@@ -137,12 +137,14 @@ export const useForgeBay = () => {
       setLoading(true);
       
       console.log('⚒️ [FORGE] Searching for card:', cardInstanceIdOrTemplateId);
+      console.log('⚒️ [FORGE] accountId (wallet):', accountId);
       
-      // Сначала пытаемся найти по id (БЕЗ фильтра wallet_address, как в medical bay)
+      // КРИТИЧНО: Добавляем wallet_address фильтр, иначе RLS блокирует
       let { data: instance, error: instErr } = await supabase
         .from('card_instances')
         .select('id, card_template_id, current_defense, max_defense, is_in_medical_bay')
         .eq('id', cardInstanceIdOrTemplateId)
+        .eq('wallet_address', accountId)
         .maybeSingle();
 
       console.log('⚒️ [FORGE] Search by id result:', { instance, instErr });
