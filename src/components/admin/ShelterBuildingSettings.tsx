@@ -238,6 +238,20 @@ export default function ShelterBuildingSettings() {
         console.log('Insert RPC error:', error);
         
         if (error) throw error;
+        
+        // Если есть загруженное изображение, применяем его к новой записи
+        if (currentBackgroundUrl && insertRpcRes) {
+          console.log('Applying background image to new record:', currentBackgroundUrl);
+          const { error: imgError } = await supabase
+            .from('building_configs')
+            .update({ background_image_url: currentBackgroundUrl })
+            .eq('id', insertRpcRes);
+          
+          if (imgError) {
+            console.error('Error applying background image:', imgError);
+          }
+        }
+        
         toast.success('Уровень добавлен');
       }
 
