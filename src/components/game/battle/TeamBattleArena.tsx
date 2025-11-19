@@ -391,7 +391,7 @@ export const TeamBattleArena: React.FC<TeamBattleArenaProps> = ({
                           </span>
                           <span className="flex items-center">
                             <Shield className="w-2 h-2 sm:w-2.5 sm:h-2.5 mr-0.5" />
-                            {pair.defense}
+                            {pair.currentDefense ?? pair.defense}/{pair.maxDefense ?? pair.defense}
                           </span>
                         </div>
                       </div>
