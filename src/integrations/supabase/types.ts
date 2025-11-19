@@ -1944,7 +1944,10 @@ export type Database = {
         }
         Returns: boolean
       }
-      admin_insert_building_config: { Args: { p_data: Json }; Returns: string }
+      admin_insert_building_config: {
+        Args: { p_data: Json; p_wallet_address?: string }
+        Returns: string
+      }
       admin_insert_crafting_recipe: {
         Args: {
           p_category: string
@@ -2077,7 +2080,7 @@ export type Database = {
         Returns: boolean
       }
       admin_update_building_config: {
-        Args: { p_id: string; p_update: Json }
+        Args: { p_id: string; p_update: Json; p_wallet_address?: string }
         Returns: boolean
       }
       admin_update_class_multiplier: {
