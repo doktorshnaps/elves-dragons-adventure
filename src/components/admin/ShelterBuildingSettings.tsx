@@ -158,10 +158,16 @@ export default function ShelterBuildingSettings() {
   };
 
   const handleSave = async (config: Partial<BuildingConfig>) => {
+    if (!accountId) {
+      toast.error('Необходимо авторизоваться');
+      return;
+    }
+
     try {
       setSaving(true);
       
       console.log('Saving config:', config);
+      console.log('Wallet address:', accountId);
       console.log('Required items:', config.required_items);
       
       if (config.id) {
@@ -184,16 +190,13 @@ export default function ShelterBuildingSettings() {
           working_hours: config.working_hours || 0,
         };
         
-        // Если есть required_buildings, сохраняем их как JSON строку в metadata или notes
-        // (требуется добавить поле в БД или использовать существующее JSON поле)
-        console.log('Saving required_buildings:', config.required_buildings);
-        
         console.log('Update data:', updateData);
         
         const { data: updateRpcRes, error } = await supabase
           .rpc('admin_update_building_config', {
             p_id: config.id,
-            p_update: updateData as any
+            p_update: updateData as any,
+            p_wallet_address: accountId
           });
 
         console.log('Update RPC result:', updateRpcRes);
@@ -221,14 +224,14 @@ export default function ShelterBuildingSettings() {
           upgrade_time_hours: timeInHours,
           storage_capacity: config.storage_capacity || 0,
           working_hours: config.working_hours || 0,
-          created_by_wallet_address: 'admin',
         };
         
         console.log('Insert data:', insertData);
         
         const { data: insertRpcRes, error } = await supabase
           .rpc('admin_insert_building_config', {
-            p_data: insertData as any
+            p_data: insertData as any,
+            p_wallet_address: accountId
           });
 
         console.log('Insert RPC result:', insertRpcRes);
