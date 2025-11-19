@@ -278,22 +278,41 @@ export const useForgeBay = () => {
         entry.card_instances.max_defense
       );
 
-      // Обновляем броню карты
+      console.log('⚒️ [FORGE] Removing card from forge:', {
+        cardInstanceId,
+        currentDefense: entry.card_instances.current_defense,
+        armorRestored,
+        newDefense
+      });
+
+      // Обновляем броню карты и снимаем флаг is_in_medical_bay
       const { error: updateError } = await supabase
         .from('card_instances')
-        .update({ current_defense: newDefense })
-        .eq('id', cardInstanceId);
+        .update({ 
+          current_defense: newDefense,
+          is_in_medical_bay: false
+        })
+        .eq('id', cardInstanceId)
+        .eq('wallet_address', accountId);
 
-      if (updateError) throw updateError;
+      if (updateError) {
+        console.error('⚒️ [FORGE] Error updating card defense:', updateError);
+        throw updateError;
+      }
 
-      // Удаляем из кузницы
-      const { error: removeError } = await supabase
-        .rpc('remove_card_from_forge_bay', {
-          p_card_instance_id: cardInstanceId,
-          p_wallet_address: accountId
-        });
+      // Удаляем записи из forge_bay напрямую (без RPC, т.к. auth.uid() = NULL)
+      const { error: deleteError } = await supabase
+        .from('forge_bay')
+        .delete()
+        .eq('card_instance_id', cardInstanceId)
+        .eq('wallet_address', accountId);
 
-      if (removeError) throw removeError;
+      if (deleteError) {
+        console.error('⚒️ [FORGE] Error deleting from forge_bay:', deleteError);
+        throw deleteError;
+      }
+
+      console.log('⚒️ [FORGE] Card successfully removed from forge');
 
       toast({
         title: "Карта забрана из кузницы",
@@ -318,13 +337,34 @@ export const useForgeBay = () => {
 
     try {
       setLoading(true);
-      const { error } = await supabase
-        .rpc('stop_repair_without_recovery', {
-          p_card_instance_id: cardInstanceId,
-          p_wallet_address: accountId
-        });
+      
+      console.log('⚒️ [FORGE] Stopping repair without recovery:', cardInstanceId);
 
-      if (error) throw error;
+      // Снимаем флаг is_in_medical_bay без восстановления брони
+      const { error: updateError } = await supabase
+        .from('card_instances')
+        .update({ is_in_medical_bay: false })
+        .eq('id', cardInstanceId)
+        .eq('wallet_address', accountId);
+
+      if (updateError) {
+        console.error('⚒️ [FORGE] Error updating card:', updateError);
+        throw updateError;
+      }
+
+      // Удаляем записи из forge_bay напрямую
+      const { error: deleteError } = await supabase
+        .from('forge_bay')
+        .delete()
+        .eq('card_instance_id', cardInstanceId)
+        .eq('wallet_address', accountId);
+
+      if (deleteError) {
+        console.error('⚒️ [FORGE] Error deleting from forge_bay:', deleteError);
+        throw deleteError;
+      }
+
+      console.log('⚒️ [FORGE] Repair stopped successfully');
 
       toast({
         title: "Ремонт остановлен",
