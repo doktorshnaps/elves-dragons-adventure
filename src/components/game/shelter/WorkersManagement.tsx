@@ -80,7 +80,8 @@ export const WorkersManagement = ({ onSpeedBoostChange }: WorkersManagementProps
     { id: "quarry", name: t(language, 'shelter.quarry') },
     { id: "barracks", name: t(language, 'shelter.barracksBuilding') },
     { id: "dragon_lair", name: t(language, 'shelter.dragonLairBuilding') },
-    { id: "medical", name: t(language, 'shelter.medicalBuilding') }
+    { id: "medical", name: t(language, 'shelter.medicalBuilding') },
+    { id: "forge", name: t(language, 'shelter.forgeBuilding') }
   ];
 
   // Получаем статистику по зданию
