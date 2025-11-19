@@ -5,6 +5,8 @@ export interface PlayerStats {
   maxHealth: number;
   power: number;
   defense: number;
+  currentDefense?: number; // Текущая броня команды
+  maxDefense?: number; // Максимальная броня команды
   mana?: number;
   maxMana?: number;
 }

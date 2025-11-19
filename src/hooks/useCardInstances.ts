@@ -13,6 +13,8 @@ export interface CardInstance {
   card_type: 'hero' | 'dragon' | 'workers';
   current_health: number;
   max_health: number;
+  current_defense: number;
+  max_defense: number;
   last_heal_time: string;
   is_in_medical_bay?: boolean;
   medical_bay_start_time?: string;

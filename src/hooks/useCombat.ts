@@ -16,15 +16,22 @@ export const useCombat = (
   const handleOpponentAttack = (opponent: Opponent) => {
     if (!playerStats) return;
 
-    const { blockedDamage, damageToHealth, newDefense } = calculatePlayerDamage(
-      opponent.power,
-      playerStats.defense
-    );
+    const currentDefense = playerStats.currentDefense ?? playerStats.defense;
+    
+    // Броня уменьшается на 1 при любом уроне
+    let newCurrentDefense = currentDefense;
+    let damageToHealth = opponent.power;
+    
+    if (currentDefense > 0) {
+      newCurrentDefense = currentDefense - 1;
+      // Урон все равно идет в здоровье, но броня уменьшается на 1
+    }
 
     const newStats: PlayerStats = {
       ...playerStats,
       health: Math.max(0, playerStats.health - damageToHealth),
-      defense: newDefense
+      currentDefense: newCurrentDefense,
+      maxDefense: playerStats.maxDefense ?? playerStats.defense
     };
     
     setPlayerStats(newStats);

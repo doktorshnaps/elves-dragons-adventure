@@ -11,7 +11,12 @@ export const PlayerStatsSection = ({ playerStats }: PlayerStatsSectionProps) => 
     <div className="space-y-4">
       <h3 className="text-lg font-semibold text-game-accent">Характеристики игрока</h3>
       <HealthBar health={playerStats.health} maxHealth={playerStats.maxHealth} />
-      <CombatStats power={playerStats.power} defense={playerStats.defense} />
+      <CombatStats 
+        power={playerStats.power} 
+        defense={playerStats.defense}
+        currentDefense={playerStats.currentDefense}
+        maxDefense={playerStats.maxDefense}
+      />
     </div>
   );
 };

@@ -47,6 +47,8 @@ export interface Card {
   defense: number;
   health: number;
   currentHealth?: number; // Текущее здоровье карты
+  currentDefense?: number; // Текущая броня карты
+  maxDefense?: number; // Максимальная броня карты
   lastHealTime?: number; // Время последнего лечения
   magic: number;
   rarity: Rarity;
