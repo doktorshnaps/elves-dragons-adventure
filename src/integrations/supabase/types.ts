@@ -2730,10 +2730,28 @@ export type Database = {
         Args: { p_active_workers: Json; p_wallet_address: string }
         Returns: undefined
       }
+      update_card_instance_defense_by_template: {
+        Args: {
+          p_card_template_id: string
+          p_current_defense: number
+          p_wallet_address: string
+        }
+        Returns: boolean
+      }
       update_card_instance_health: {
         Args: {
           p_current_health: number
           p_instance_id: string
+          p_last_heal_time?: string
+          p_wallet_address: string
+        }
+        Returns: boolean
+      }
+      update_card_instance_health_and_defense_by_template: {
+        Args: {
+          p_card_template_id: string
+          p_current_defense: number
+          p_current_health: number
           p_last_heal_time?: string
           p_wallet_address: string
         }
