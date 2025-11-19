@@ -73,7 +73,7 @@ export const DeckSelection = ({
     const uniqueCards = combinedCards.filter((card, index, arr) => arr.findIndex(c => c.id === card.id) === index);
     console.log(`🎮 After dedup: ${uniqueCards.length} unique cards`);
 
-    // Синхронизируем здоровье с card_instances
+    // Синхронизируем здоровье и броню с card_instances
     const instancesMap = new Map(cardInstances.map(ci => [ci.card_template_id, ci]));
     const result = uniqueCards.map(card => {
       const instance = instancesMap.get(card.id);
@@ -81,6 +81,8 @@ export const DeckSelection = ({
         return {
           ...card,
           currentHealth: instance.current_health,
+          currentDefense: instance.current_defense,
+          maxDefense: instance.max_defense,
           lastHealTime: new Date(instance.last_heal_time).getTime()
         };
       }
