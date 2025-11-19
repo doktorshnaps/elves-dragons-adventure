@@ -104,6 +104,19 @@ export const applyDamageToPair = async (
   let newPower = pair.power;
   let newDefense = pair.defense;
   
+  // Recalculate current defense from updated cards
+  const heroCurrentDefense = updatedHero ? (updatedHero.currentDefense ?? updatedHero.defense) : 0;
+  const heroMaxDefense = updatedHero ? (updatedHero.maxDefense ?? updatedHero.defense) : 0;
+  const dragonCurrentDefense = updatedDragon && !isDragonNowDead ? (updatedDragon.currentDefense ?? updatedDragon.defense) : 0;
+  const dragonMaxDefense = updatedDragon && !isDragonNowDead ? (updatedDragon.maxDefense ?? updatedDragon.defense) : 0;
+  
+  const pairCurrentDefense = (updatedDragon && !isDragonNowDead)
+    ? Math.floor((heroCurrentDefense + dragonCurrentDefense) / 2)
+    : heroCurrentDefense;
+  const pairMaxDefense = (updatedDragon && !isDragonNowDead)
+    ? Math.floor((heroMaxDefense + dragonMaxDefense) / 2)
+    : heroMaxDefense;
+  
   if (dragonJustDied && pair.dragon) {
     newPower -= pair.dragon.power;
     newDefense -= pair.dragon.defense;
@@ -115,6 +128,8 @@ export const applyDamageToPair = async (
     dragon: updatedDragon,
     health: newHeroHealth + newDragonHealth,
     power: newPower,
-    defense: newDefense
+    defense: newDefense,
+    currentDefense: pairCurrentDefense,
+    maxDefense: pairMaxDefense
   };
 };

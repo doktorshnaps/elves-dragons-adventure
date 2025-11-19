@@ -6,6 +6,8 @@ export interface TeamPair {
   maxHealth: number;
   power: number;
   defense: number;
+  currentDefense: number;
+  maxDefense: number;
   attackOrder: number;
 }
 

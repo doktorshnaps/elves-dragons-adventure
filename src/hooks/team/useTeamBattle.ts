@@ -18,7 +18,7 @@ export const useTeamBattle = (dungeonType: DungeonType, initialLevel: number = 1
   const { selectedPairs, getSelectedTeamStats } = useTeamSelection();
   const { accountLevel, accountExperience, addAccountExperience: addAccountExp } = useGameStore();
   const { gameData, updateGameData } = useGameData();
-  const { loading: cardInstancesLoading, incrementMonsterKills } = useCardInstances();
+  const { loading: cardInstancesLoading, cardInstances, incrementMonsterKills } = useCardInstances();
   const { adjustDelay } = useBattleSpeed();
   
   const [battleState, setBattleState] = useState<TeamBattleState>(() => {
@@ -97,6 +97,22 @@ export const useTeamBattle = (dungeonType: DungeonType, initialLevel: number = 1
           ? Math.floor((heroArmor + dragonArmor) / 2)
           : heroArmor;
         
+        // Получаем текущую броню из card instances
+        const heroInstance = cardInstances.find(ci => ci.card_template_id === heroFromMap.id);
+        const dragonInstance = dragonFromMap ? cardInstances.find(ci => ci.card_template_id === dragonFromMap.id) : undefined;
+        
+        const heroCurrentDefense = heroInstance?.current_defense ?? heroArmor;
+        const heroMaxDefense = heroInstance?.max_defense ?? heroArmor;
+        const dragonCurrentDefense = dragonAlive && dragonInstance ? (dragonInstance.current_defense ?? dragonArmor) : 0;
+        const dragonMaxDefense = dragonAlive && dragonInstance ? (dragonInstance.max_defense ?? dragonArmor) : 0;
+        
+        const pairCurrentDefense = dragonAlive
+          ? Math.floor((heroCurrentDefense + dragonCurrentDefense) / 2)
+          : heroCurrentDefense;
+        const pairMaxDefense = dragonAlive
+          ? Math.floor((heroMaxDefense + dragonMaxDefense) / 2)
+          : heroMaxDefense;
+        
         return {
           id: `pair-${index}`,
           hero: heroWithCalc,
@@ -105,6 +121,8 @@ export const useTeamBattle = (dungeonType: DungeonType, initialLevel: number = 1
           maxHealth: heroMax + (dragonMax || 0),
           power: (heroWithCalc.power ?? 0) + (dragonAlive ? (dragonWithCalc?.power ?? 0) : 0),
           defense: pairArmor,
+          currentDefense: pairCurrentDefense,
+          maxDefense: pairMaxDefense,
           attackOrder: index + 1,
           mana: totalMana,
           maxMana: totalMana
