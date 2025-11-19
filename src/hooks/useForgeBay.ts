@@ -46,7 +46,14 @@ export const useForgeBay = () => {
         estimated_completion: row.estimated_completion,
         repair_rate: row.repair_rate,
         is_completed: row.is_completed,
-        card_data: row.card_data,
+        card_data: {
+          id: row.ci_id,
+          current_defense: row.ci_current_defense,
+          max_defense: row.ci_max_defense,
+          current_health: row.ci_current_health,
+          max_health: row.ci_max_health,
+          card_data: row.ci_card_data,
+        },
       })) || [];
 
       // Дедупликация на клиенте по card_instance_id
@@ -98,6 +105,22 @@ export const useForgeBay = () => {
       } catch {}
       return [] as any[];
     };
+
+    // Проверяем, есть ли назначенные рабочие в кузницу
+    const activeWorkers = getActiveWorkersSafe();
+    console.log('⚒️ [FORGE BAY] activeWorkers:', activeWorkers);
+    
+    const hasForgeWorkers = activeWorkers.some((worker: any) => worker.building === 'forge');
+    console.log('⚒️ [FORGE BAY] hasForgeWorkers:', hasForgeWorkers);
+
+    if (!hasForgeWorkers) {
+      toast({
+        title: "Нет рабочих",
+        description: "Назначьте рабочих в кузницу перед началом ремонта",
+        variant: "destructive"
+      });
+      return;
+    }
 
     // Проверяем, не в бою ли игрок
     const battleState = (gameData as any)?.battle_state;
