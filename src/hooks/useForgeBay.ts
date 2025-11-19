@@ -99,21 +99,6 @@ export const useForgeBay = () => {
       return [] as any[];
     };
 
-    const activeWorkers = getActiveWorkersSafe();
-    console.log('⚒️ [FORGE BAY] activeWorkers:', activeWorkers);
-    
-    const hasForgeWorkers = activeWorkers.some((worker: any) => worker.building === 'forge');
-    console.log('⚒️ [FORGE BAY] hasForgeWorkers:', hasForgeWorkers);
-
-    if (!hasForgeWorkers) {
-      toast({
-        title: "Нет рабочих",
-        description: "Назначьте рабочих в кузницу перед началом ремонта",
-        variant: "destructive"
-      });
-      return;
-    }
-
     // Проверяем, не в бою ли игрок
     const battleState = (gameData as any)?.battle_state;
     if (battleState && battleState.inBattle) {
