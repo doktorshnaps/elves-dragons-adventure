@@ -2744,6 +2744,10 @@ export type Database = {
         Args: { p_card_instance_id: string; p_wallet_address?: string }
         Returns: boolean
       }
+      remove_card_from_forge_bay_v2: {
+        Args: { p_card_instance_id: string; p_wallet_address: string }
+        Returns: Json
+      }
       remove_card_from_medical_bay:
         | { Args: { p_card_instance_id: string }; Returns: boolean }
         | {
@@ -2792,6 +2796,10 @@ export type Database = {
       stop_repair_without_recovery: {
         Args: { p_card_instance_id: string; p_wallet_address?: string }
         Returns: boolean
+      }
+      stop_repair_without_recovery_v2: {
+        Args: { p_card_instance_id: string; p_wallet_address: string }
+        Returns: Json
       }
       sync_card_instances_from_game_data: {
         Args: { p_wallet_address: string }
