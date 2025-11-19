@@ -186,6 +186,7 @@ export const translations = {
       barracksBuilding: 'Казармы',
       dragonLairBuilding: 'Драконье Логово',
       medicalBuilding: 'Медицинский блок',
+      forgeBuilding: 'Кузница',
       // Building descriptions
       mainHallDesc: 'Увеличивает общую вместимость лагеря',
       workshopDesc: 'Позволяет создавать более качественные предметы',
@@ -728,6 +729,7 @@ export const translations = {
       barracksBuilding: 'Barracks',
       dragonLairBuilding: 'Dragon Lair',
       medicalBuilding: 'Medical Bay',
+      forgeBuilding: 'Forge',
       // Building descriptions
       mainHallDesc: 'Increases overall camp capacity',
       workshopDesc: 'Allows crafting higher quality items',
