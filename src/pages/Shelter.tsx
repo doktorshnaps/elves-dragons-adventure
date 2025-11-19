@@ -245,7 +245,7 @@ export const Shelter = () => {
 
           <TabsContent value="forge" className="mt-6 animate-fade-in min-h-[400px]">
             {buildingLevels.forge > 0 ? (
-              <ForgeBayComponent />
+              <ForgeBayComponent forgeLevel={buildingLevels.forge} />
             ) : (
               <Card variant="menu" style={{ boxShadow: '0 15px 10px rgba(0, 0, 0, 0.6)' }}>
                 <CardContent className="p-8 text-center">
