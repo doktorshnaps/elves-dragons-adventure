@@ -180,7 +180,8 @@ export const useShelterState = () => {
     quarry: 0,
     barracks: 0,
     dragon_lair: 0,
-    medical: 0
+    medical: 0,
+    forge: 0
   };
 
   // Функция для расчета стоимости апгрейда для каждого уровня
@@ -206,7 +207,8 @@ export const useShelterState = () => {
       quarry: { wood: 0, stone: 0, balance: 100 },
       barracks: { wood: 0, stone: 0, balance: 400 },
       dragon_lair: { wood: 0, stone: 0, balance: 400 },
-      medical: { wood: 0, stone: 0, balance: 50 }
+      medical: { wood: 0, stone: 0, balance: 50 },
+      forge: { wood: 0, stone: 0, balance: 50 }
     };
     
     const baseCost = baseCosts[buildingId] || { wood: 30, stone: 20, balance: 50 };
@@ -238,7 +240,8 @@ export const useShelterState = () => {
       quarry: 25,
       barracks: 30,
       dragon_lair: 35,
-      medical: 20
+      medical: 20,
+      forge: 20
     };
     
     return baseTimes[buildingId] || 15;
@@ -299,7 +302,8 @@ export const useShelterState = () => {
     createUpgrade("quarry", 'shelter.quarry', 'shelter.quarryDesc', 'shelter.quarryBenefit'),
     createUpgrade("barracks", 'shelter.barracksBuilding', 'shelter.barracksDesc', 'shelter.barracksBenefit'),
     createUpgrade("dragon_lair", 'shelter.dragonLairBuilding', 'shelter.dragonLairDesc', 'shelter.dragonLairBenefit'),
-    createUpgrade("medical", 'shelter.medicalBuilding', 'shelter.medicalDesc', 'shelter.medicalBenefit')
+    createUpgrade("medical", 'shelter.medicalBuilding', 'shelter.medicalDesc', 'shelter.medicalBenefit'),
+    createUpgrade("forge", 'Кузница', 'Восстановление брони карт', 'Ремонт брони')
   ];
   }, [buildingLevels, language, getBuildingConfig]);
 
