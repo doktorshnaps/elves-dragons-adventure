@@ -48,19 +48,23 @@ export const applyDamageToPair = async (
   try {
     if (wallet && updatedDragon && appliedDragonDamage > 0 && pair.dragon) {
       const newDragonHealth = updatedDragon.currentHealth ?? updatedDragon.health;
-      await supabase.rpc('update_card_instance_health_by_template', {
+      const newDragonDefense = updatedDragon.currentDefense ?? updatedDragon.defense;
+      await supabase.rpc('update_card_instance_health_and_defense_by_template', {
         p_wallet_address: wallet,
         p_card_template_id: pair.dragon.id,
-        p_current_health: newDragonHealth
+        p_current_health: newDragonHealth,
+        p_current_defense: newDragonDefense
       });
     }
 
     if (wallet && updatedHero && appliedHeroDamage > 0 && pair.hero) {
       const newHeroHealth = updatedHero.currentHealth ?? updatedHero.health;
-      await supabase.rpc('update_card_instance_health_by_template', {
+      const newHeroDefense = updatedHero.currentDefense ?? updatedHero.defense;
+      await supabase.rpc('update_card_instance_health_and_defense_by_template', {
         p_wallet_address: wallet,
         p_card_template_id: pair.hero.id,
-        p_current_health: newHeroHealth
+        p_current_health: newHeroHealth,
+        p_current_defense: newHeroDefense
       });
     }
 
