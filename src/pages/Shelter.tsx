@@ -7,6 +7,7 @@ import { useGameStore } from "@/stores/gameStore";
 import { Barracks } from "@/components/game/shelter/Barracks";
 import { DragonLair } from "@/components/game/shelter/DragonLair";
 import { MedicalBayComponent } from "@/components/game/medical/MedicalBayComponent";
+import { ForgeBayComponent } from "@/components/game/forge/ForgeBayComponent";
 import { WorkersManagement } from "@/components/game/shelter/WorkersManagement";
 import { CraftingTabs } from "@/components/game/shelter/CraftingTabs";
 import { useLanguage } from "@/hooks/useLanguage";
@@ -124,7 +125,7 @@ export const Shelter = () => {
 
         {/* Вкладки управления */}
         <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as any)} className="w-full">
-          <TabsList className="grid w-full grid-cols-3 sm:grid-cols-6 gap-1 bg-black/50 border-2 border-white backdrop-blur-sm rounded-3xl p-1" style={{ boxShadow: '0 15px 10px rgba(0, 0, 0, 0.6)' }}>
+          <TabsList className="grid w-full grid-cols-4 sm:grid-cols-7 gap-1 bg-black/50 border-2 border-white backdrop-blur-sm rounded-3xl p-1" style={{ boxShadow: '0 15px 10px rgba(0, 0, 0, 0.6)' }}>
             <TabsTrigger value="upgrades" className="flex items-center justify-center gap-1 sm:gap-2 text-white data-[state=active]:bg-white/20 rounded-2xl text-xs sm:text-sm px-1 sm:px-3">
               <Home className="w-3 h-3 sm:w-4 sm:h-4 flex-shrink-0" />
               <span className="hidden sm:inline">{t(language, 'shelter.upgrades')}</span>
@@ -144,6 +145,10 @@ export const Shelter = () => {
             <TabsTrigger value="medical" className="flex items-center justify-center gap-1 sm:gap-2 text-white data-[state=active]:bg-white/20 rounded-2xl text-xs sm:text-sm px-1 sm:px-3">
               <Heart className="w-3 h-3 sm:w-4 sm:h-4 flex-shrink-0" />
               <span className="hidden sm:inline">{t(language, 'shelter.medical')}</span>
+            </TabsTrigger>
+            <TabsTrigger value="forge" className="flex items-center justify-center gap-1 sm:gap-2 text-white data-[state=active]:bg-white/20 rounded-2xl text-xs sm:text-sm px-1 sm:px-3">
+              <Shield className="w-3 h-3 sm:w-4 sm:h-4 flex-shrink-0" />
+              <span className="hidden sm:inline">Кузница</span>
             </TabsTrigger>
             <TabsTrigger value="workers" className="flex items-center justify-center gap-1 sm:gap-2 text-white data-[state=active]:bg-white/20 rounded-2xl text-xs sm:text-sm px-1 sm:px-3">
               <Users className="w-3 h-3 sm:w-4 sm:h-4 flex-shrink-0" />
@@ -233,6 +238,20 @@ export const Shelter = () => {
                   <Heart className="w-16 h-16 mx-auto mb-4 text-white/50" />
                   <h3 className="text-xl font-semibold mb-2 text-white">{t(language, 'shelter.medicalRequired')}</h3>
                   <p className="text-white/70">{t(language, 'shelter.medicalRequiredDesc')}</p>
+                </CardContent>
+              </Card>
+            )}
+          </TabsContent>
+
+          <TabsContent value="forge" className="mt-6 animate-fade-in min-h-[400px]">
+            {buildingLevels.forge > 0 ? (
+              <ForgeBayComponent />
+            ) : (
+              <Card variant="menu" style={{ boxShadow: '0 15px 10px rgba(0, 0, 0, 0.6)' }}>
+                <CardContent className="p-8 text-center">
+                  <Shield className="w-16 h-16 mx-auto mb-4 text-white/50" />
+                  <h3 className="text-xl font-semibold mb-2 text-white">Требуется Кузница</h3>
+                  <p className="text-white/70">Постройте кузницу для восстановления брони</p>
                 </CardContent>
               </Card>
             )}

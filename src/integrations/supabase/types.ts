@@ -687,6 +687,53 @@ export type Database = {
         }
         Relationships: []
       }
+      forge_bay: {
+        Row: {
+          card_instance_id: string
+          created_at: string
+          estimated_completion: string | null
+          id: string
+          is_completed: boolean
+          placed_at: string
+          repair_rate: number
+          updated_at: string
+          user_id: string
+          wallet_address: string | null
+        }
+        Insert: {
+          card_instance_id: string
+          created_at?: string
+          estimated_completion?: string | null
+          id?: string
+          is_completed?: boolean
+          placed_at?: string
+          repair_rate?: number
+          updated_at?: string
+          user_id: string
+          wallet_address?: string | null
+        }
+        Update: {
+          card_instance_id?: string
+          created_at?: string
+          estimated_completion?: string | null
+          id?: string
+          is_completed?: boolean
+          placed_at?: string
+          repair_rate?: number
+          updated_at?: string
+          user_id?: string
+          wallet_address?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "forge_bay_card_instance_id_fkey"
+            columns: ["card_instance_id"]
+            isOneToOne: false
+            referencedRelation: "card_instances"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       game_data: {
         Row: {
           account_experience: number
@@ -1721,6 +1768,14 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      add_card_to_forge_bay: {
+        Args: {
+          p_card_instance_id: string
+          p_repair_hours?: number
+          p_wallet_address?: string
+        }
+        Returns: string
+      }
       add_card_to_medical_bay: {
         Args: {
           p_card_instance_id: string
@@ -2413,6 +2468,18 @@ export type Database = {
           item_type: string
         }[]
       }
+      get_forge_bay_entries: {
+        Args: { p_wallet_address?: string }
+        Returns: {
+          card_data: Json
+          card_instance_id: string
+          estimated_completion: string
+          id: string
+          is_completed: boolean
+          placed_at: string
+          repair_rate: number
+        }[]
+      }
       get_game_data_by_wallet: {
         Args: { p_wallet_address: string }
         Returns: {
@@ -2656,6 +2723,7 @@ export type Database = {
         Args: { p_card_instance_id: string; p_wallet_address: string }
         Returns: Json
       }
+      process_forge_bay_repair: { Args: never; Returns: undefined }
       process_marketplace_purchase: {
         Args: { listing_id: string }
         Returns: undefined
@@ -2664,6 +2732,10 @@ export type Database = {
       process_referral_earnings: {
         Args: { p_amount: number; p_earner_wallet_address: string }
         Returns: undefined
+      }
+      remove_card_from_forge_bay: {
+        Args: { p_card_instance_id: string; p_wallet_address?: string }
+        Returns: boolean
       }
       remove_card_from_medical_bay:
         | { Args: { p_card_instance_id: string }; Returns: boolean }
@@ -2709,6 +2781,10 @@ export type Database = {
       stop_healing_without_recovery: {
         Args: { p_card_instance_id: string }
         Returns: undefined
+      }
+      stop_repair_without_recovery: {
+        Args: { p_card_instance_id: string; p_wallet_address?: string }
+        Returns: boolean
       }
       sync_card_instances_from_game_data: {
         Args: { p_wallet_address: string }
