@@ -135,13 +135,33 @@ export const WorkersManagement = ({ onSpeedBoostChange }: WorkersManagementProps
 
     // Загружаем из БД только при первой загрузке
     if (Array.isArray(gameState.activeWorkers) && gameState.activeWorkers.length > 0) {
-      console.log('📦 Initial load from DB:', gameState.activeWorkers.length);
-      setActiveWorkers(gameState.activeWorkers);
-      // Синхронизируем localStorage с БД
+      // ВАЖНО: Фильтруем завершенных рабочих при загрузке
+      const now = Date.now();
+      const validWorkers = gameState.activeWorkers.filter((worker: ActiveWorker) => {
+        const isFinished = worker.status === 'working' && now >= (worker.startTime + worker.duration);
+        if (isFinished) {
+          console.log('🚫 Skipping finished worker from DB:', worker.name);
+        }
+        return !isFinished;
+      });
+      
+      console.log('📦 Initial load from DB:', {
+        total: gameState.activeWorkers.length,
+        valid: validWorkers.length,
+        removed: gameState.activeWorkers.length - validWorkers.length
+      });
+      
+      setActiveWorkers(validWorkers);
+      // Синхронизируем localStorage с отфильтрованными данными
       try {
-        localStorage.setItem('activeWorkers', JSON.stringify(gameState.activeWorkers));
+        localStorage.setItem('activeWorkers', JSON.stringify(validWorkers));
       } catch (e) {
         console.warn('Failed to save active workers to localStorage:', e);
+      }
+      
+      // Если были удалены завершенные рабочие, обновляем БД
+      if (validWorkers.length < gameState.activeWorkers.length) {
+        updateActiveWorkersInDB(validWorkers);
       }
     }
   }, []); // Пустой массив зависимостей - загружаем только один раз
@@ -154,54 +174,69 @@ export const WorkersManagement = ({ onSpeedBoostChange }: WorkersManagementProps
 
   // Проверяем завершенных рабочих и обновляем статусы каждую секунду
   useEffect(() => {
+    console.log('⏱️ Worker check interval started');
+    
     const interval = setInterval(() => {
       const now = Date.now();
+      
       setActiveWorkers(prev => {
+        // Детальное логирование для каждого рабочего
+        console.log('🔍 Checking workers:', {
+          totalWorkers: prev.length,
+          now,
+          workers: prev.map(w => {
+            const remaining = (w.startTime + w.duration) - now;
+            return {
+              name: w.name,
+              status: w.status,
+              startTime: w.startTime,
+              duration: w.duration,
+              remaining,
+              shouldRemove: w.status === 'working' && remaining <= 0
+            };
+          })
+        });
+        
         let updated = [...prev];
         let hasChanges = false;
         
-        // Находим завершенных рабочих (работающих И с истекшим временем ИЛИ с нулевым оставшимся временем)
+        // Находим всех завершенных рабочих
         const finishedWorkers = updated.filter(worker => {
           if (worker.status !== 'working') return false;
           
-          const remainingTime = (worker.startTime + worker.duration) - now;
+          const endTime = worker.startTime + worker.duration;
+          const remainingTime = endTime - now;
           const isFinished = remainingTime <= 0;
           
-          if (isFinished) {
-            console.log('✅ Worker finished:', {
-              name: worker.name,
-              remainingTime,
-              startTime: worker.startTime,
-              duration: worker.duration,
-              now
-            });
-          }
+          console.log('🎯 Checking worker:', {
+            name: worker.name,
+            status: worker.status,
+            endTime,
+            now,
+            remainingTime,
+            isFinished
+          });
           
           return isFinished;
         });
         
         // Удаляем завершенных рабочих
         if (finishedWorkers.length > 0) {
+          console.log('🗑️ REMOVING finished workers:', finishedWorkers.map(w => w.name));
           updated = updated.filter(worker => !finishedWorkers.some(fw => fw.id === worker.id));
           hasChanges = true;
           
-          console.log('🗑️ Removing finished workers:', {
-            count: finishedWorkers.length,
-            workers: finishedWorkers.map(w => w.name),
-            remainingWorkers: updated.length
+          // Показываем toast для завершенных рабочих
+          finishedWorkers.forEach(worker => {
+            toast({
+              title: "Работа завершена",
+              description: `${worker.name} завершил работу в здании "${buildings.find(b => b.id === worker.building)?.name}" и исчез`,
+            });
           });
         }
         
-        // Показываем toast для завершенных рабочих
-        finishedWorkers.forEach(worker => {
-          toast({
-            title: "Работа завершена",
-            description: `${worker.name} завершил работу в здании "${buildings.find(b => b.id === worker.building)?.name}" и исчез`,
-          });
-        });
-        
-        // Активируем ожидающих рабочих, чье время пришло
-        const activatedWorkers = updated.map(worker => {
+        // Активируем ожидающих рабочих
+        updated = updated.map(worker => {
           if (worker.status === 'waiting' && now >= worker.startTime) {
             console.log('▶️ Starting queued worker:', worker.name);
             hasChanges = true;
@@ -210,16 +245,12 @@ export const WorkersManagement = ({ onSpeedBoostChange }: WorkersManagementProps
           return worker;
         });
         
-        if (hasChanges) {
-          updated = activatedWorkers;
-        }
-        
-        // Обновляем базу данных и localStorage если были изменения
+        // Сохраняем изменения
         if (hasChanges || updated.length !== prev.length) {
-          console.log('💾 Saving updated workers:', {
-            previousCount: prev.length,
-            currentCount: updated.length,
-            workers: updated.map(w => ({ name: w.name, status: w.status }))
+          console.log('💾 SAVING changes:', {
+            before: prev.length,
+            after: updated.length,
+            removed: prev.length - updated.length
           });
           
           updateActiveWorkersInDB(updated);
@@ -235,8 +266,11 @@ export const WorkersManagement = ({ onSpeedBoostChange }: WorkersManagementProps
       });
     }, 1000);
 
-    return () => clearInterval(interval);
-  }, [toast, buildings]);
+    return () => {
+      console.log('⏱️ Worker check interval stopped');
+      clearInterval(interval);
+    };
+  }, [toast, buildings, updateActiveWorkersInDB]);
 
   const assignWorker = async (worker: any) => {
     const workerId = (worker as any).instanceId || worker.id;
