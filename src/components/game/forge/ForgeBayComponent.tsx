@@ -97,21 +97,40 @@ export const ForgeBayComponent = ({ forgeLevel }: ForgeBayComponentProps) => {
     
     return Array.from(uniqueCardsMap.values())
       .filter(({ card, instance }) => {
-        const currentDefense = instance?.current_defense ?? (card as any).currentDefense ?? (card as any).defense;
-        const maxDefense = instance?.max_defense ?? (card as any).maxDefense ?? (card as any).defense;
-        const instanceId = instance?.id;
+        // Карта должна иметь валидный instance
+        if (!instance || !instance.id) {
+          console.log('⚒️ [FORGE] Skipping card without instance:', card.name || card.id);
+          return false;
+        }
         
-        return Boolean(instanceId) && currentDefense < maxDefense && instanceId && !cardsInForgeBay.includes(instanceId);
+        const currentDefense = instance.current_defense ?? (card as any).currentDefense ?? (card as any).defense;
+        const maxDefense = instance.max_defense ?? (card as any).maxDefense ?? (card as any).defense;
+        const instanceId = instance.id;
+        
+        // Карта должна быть повреждена и не находиться в кузнице
+        const isDamaged = currentDefense < maxDefense;
+        const notInForge = !cardsInForgeBay.includes(instanceId);
+        
+        console.log('⚒️ [FORGE] Card check:', {
+          name: card.name || card.id,
+          instanceId,
+          currentDefense,
+          maxDefense,
+          isDamaged,
+          notInForge
+        });
+        
+        return isDamaged && notInForge;
       })
       .map(({ card, instance }) => {
         const normalizedCard = normalizeCardHealth(card);
         return {
-          id: instance!.id,
+          id: instance.id,
           card_template_id: card.id,
-          current_defense: instance?.current_defense ?? (card as any).defense,
-          max_defense: instance?.max_defense ?? (card as any).defense,
+          current_defense: instance.current_defense ?? (card as any).defense,
+          max_defense: instance.max_defense ?? (card as any).defense,
           card_data: normalizedCard,
-          wallet_address: instance?.wallet_address || ''
+          wallet_address: instance.wallet_address || ''
         };
       });
   };

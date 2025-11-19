@@ -136,19 +136,24 @@ export const useForgeBay = () => {
     try {
       setLoading(true);
       
+      console.log('⚒️ [FORGE] Searching for card:', cardInstanceIdOrTemplateId);
+      
       // Сначала пытаемся найти по id (если передан instance_id)
       let { data: instances, error: instanceError } = await supabase
         .from('card_instances')
-        .select('id, current_defense, max_defense, is_in_medical_bay')
+        .select('id, current_defense, max_defense, is_in_medical_bay, card_template_id')
         .eq('id', cardInstanceIdOrTemplateId)
         .eq('wallet_address', accountId)
         .maybeSingle();
 
+      console.log('⚒️ [FORGE] Search by id result:', { instances, instanceError });
+
       // Если не найдено по id, ищем по template_id
       if (!instances && !instanceError) {
+        console.log('⚒️ [FORGE] Trying to search by template_id');
         const result = await supabase
           .from('card_instances')
-          .select('id, current_defense, max_defense, is_in_medical_bay')
+          .select('id, current_defense, max_defense, is_in_medical_bay, card_template_id')
           .eq('card_template_id', cardInstanceIdOrTemplateId)
           .eq('wallet_address', accountId)
           .limit(1)
@@ -156,34 +161,26 @@ export const useForgeBay = () => {
         
         instances = result.data;
         instanceError = result.error;
+        console.log('⚒️ [FORGE] Search by template_id result:', { instances, instanceError });
       }
 
+      // Проверяем наличие ошибки
       if (instanceError) {
         console.error('⚒️ Error finding card instance:', instanceError);
-        
-        // Если карты нет в card_instances, удаляем из команды
-        const { data: currentData, error: fetchError } = await supabase
-          .from('game_data')
-          .select('selected_team')
-          .eq('wallet_address', accountId)
-          .single();
-
-        if (!fetchError && currentData) {
-          const team = Array.isArray(currentData.selected_team) ? currentData.selected_team : [];
-          const updatedTeam = team.map((pair: any) => ({
-            hero: pair.hero?.id === cardInstanceIdOrTemplateId ? null : pair.hero,
-            dragon: pair.dragon?.id === cardInstanceIdOrTemplateId ? null : pair.dragon,
-          }));
-
-          await supabase
-            .from('game_data')
-            .update({ selected_team: updatedTeam })
-            .eq('wallet_address', accountId);
-        }
-
         toast({
           title: "Ошибка",
-          description: "Карта не найдена в вашей коллекции",
+          description: "Не удалось найти карту в базе данных",
+          variant: "destructive"
+        });
+        return;
+      }
+
+      // Проверяем, что карта найдена
+      if (!instances) {
+        console.error('⚒️ Card instance not found:', cardInstanceIdOrTemplateId);
+        toast({
+          title: "Карта не найдена",
+          description: "Эта карта отсутствует в вашей коллекции",
           variant: "destructive"
         });
         return;
