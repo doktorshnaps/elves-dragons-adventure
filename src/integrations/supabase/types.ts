@@ -248,12 +248,14 @@ export type Database = {
           card_template_id: string
           card_type: string
           created_at: string
+          current_defense: number
           current_health: number
           id: string
           is_in_medical_bay: boolean | null
           is_on_marketplace: boolean | null
           last_heal_time: string | null
           marketplace_listing_id: string | null
+          max_defense: number
           max_health: number
           medical_bay_heal_rate: number | null
           medical_bay_start_time: string | null
@@ -269,12 +271,14 @@ export type Database = {
           card_template_id: string
           card_type: string
           created_at?: string
+          current_defense?: number
           current_health?: number
           id?: string
           is_in_medical_bay?: boolean | null
           is_on_marketplace?: boolean | null
           last_heal_time?: string | null
           marketplace_listing_id?: string | null
+          max_defense?: number
           max_health?: number
           medical_bay_heal_rate?: number | null
           medical_bay_start_time?: string | null
@@ -290,12 +294,14 @@ export type Database = {
           card_template_id?: string
           card_type?: string
           created_at?: string
+          current_defense?: number
           current_health?: number
           id?: string
           is_in_medical_bay?: boolean | null
           is_on_marketplace?: boolean | null
           last_heal_time?: string | null
           marketplace_listing_id?: string | null
+          max_defense?: number
           max_health?: number
           medical_bay_heal_rate?: number | null
           medical_bay_start_time?: string | null
@@ -2371,12 +2377,14 @@ export type Database = {
           card_template_id: string
           card_type: string
           created_at: string
+          current_defense: number
           current_health: number
           id: string
           is_in_medical_bay: boolean | null
           is_on_marketplace: boolean | null
           last_heal_time: string | null
           marketplace_listing_id: string | null
+          max_defense: number
           max_health: number
           medical_bay_heal_rate: number | null
           medical_bay_start_time: string | null

@@ -11,7 +11,10 @@ export const TeamStatsSection = ({ teamStats }: TeamStatsSectionProps) => {
     <div className="space-y-4">
       <h3 className="text-lg font-semibold text-game-accent">Характеристики команды</h3>
       <HealthBar health={teamStats.health} maxHealth={teamStats.maxHealth} />
-      <CombatStats power={teamStats.power} defense={teamStats.defense} />
+      <CombatStats 
+        power={teamStats.power} 
+        defense={teamStats.defense}
+      />
     </div>
   );
 };
