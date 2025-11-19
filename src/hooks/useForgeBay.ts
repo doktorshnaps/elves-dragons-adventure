@@ -138,85 +138,66 @@ export const useForgeBay = () => {
       
       console.log('⚒️ [FORGE] Searching for card:', cardInstanceIdOrTemplateId);
       
-      // Сначала пытаемся найти по id (если передан instance_id)
-      let { data: instances, error: instanceError } = await supabase
+      // Сначала пытаемся найти по id (БЕЗ фильтра wallet_address, как в medical bay)
+      let { data: instance, error: instErr } = await supabase
         .from('card_instances')
-        .select('id, current_defense, max_defense, is_in_medical_bay, card_template_id')
+        .select('id, card_template_id, current_defense, max_defense, is_in_medical_bay')
         .eq('id', cardInstanceIdOrTemplateId)
-        .eq('wallet_address', accountId)
         .maybeSingle();
 
-      console.log('⚒️ [FORGE] Search by id result:', { instances, instanceError });
+      console.log('⚒️ [FORGE] Search by id result:', { instance, instErr });
 
       // Если не найдено по id, ищем по template_id
-      if (!instances && !instanceError) {
-        console.log('⚒️ [FORGE] Trying to search by template_id');
-        const result = await supabase
+      if (!instance || instErr) {
+        console.log('⚒️ [FORGE] Card instance not found by ID, searching by template_id...');
+        const { data: instanceByTemplate, error: templateErr } = await supabase
           .from('card_instances')
-          .select('id, current_defense, max_defense, is_in_medical_bay, card_template_id')
+          .select('id, card_template_id, current_defense, max_defense, is_in_medical_bay')
           .eq('card_template_id', cardInstanceIdOrTemplateId)
           .eq('wallet_address', accountId)
-          .limit(1)
           .maybeSingle();
         
-        instances = result.data;
-        instanceError = result.error;
-        console.log('⚒️ [FORGE] Search by template_id result:', { instances, instanceError });
+        if (templateErr) {
+          console.warn('⚒️ Error finding instance by template:', templateErr);
+        }
+        
+        instance = instanceByTemplate;
       }
+      
+      const actualInstanceId = instance?.id || cardInstanceIdOrTemplateId;
 
-      // Проверяем наличие ошибки
-      if (instanceError) {
-        console.error('⚒️ Error finding card instance:', instanceError);
-        toast({
-          title: "Ошибка",
-          description: "Не удалось найти карту в базе данных",
-          variant: "destructive"
+      // Защита от дубликатов: если уже в кузнице — выходим
+      if (instance?.is_in_medical_bay) {
+        console.log('⚒️ [GUARD] Card already in forge bay, skipping RPC');
+        toast({ 
+          title: "Уже ремонтируется", 
+          description: "Эта карта уже находится в кузнице или медпункте." 
         });
         return;
       }
 
-      // Проверяем, что карта найдена
-      if (!instances) {
+      if (!instance) {
         console.error('⚒️ Card instance not found:', cardInstanceIdOrTemplateId);
         toast({
           title: "Карта не найдена",
-          description: "Эта карта отсутствует в вашей коллекции",
+          description: "Не удалось найти экземпляр карты",
           variant: "destructive"
         });
         return;
       }
 
-      const cardInstanceId = instances.id;
-
-      // Проверяем, не в кузнице ли уже карта
-      if (instances.is_in_medical_bay) {
-        const { data: existingEntry } = await supabase
-          .from('forge_bay')
-          .select('id')
-          .eq('card_instance_id', cardInstanceId)
-          .eq('wallet_address', accountId)
-          .eq('is_completed', false)
-          .maybeSingle();
-
-        if (existingEntry) {
-          toast({
-            title: "Карта уже в кузнице",
-            description: "Эта карта уже находится на ремонте",
-            variant: "destructive"
-          });
-          return;
-        }
-      }
-
-      // Проверяем, нужен ли ремонт
-      if (instances.current_defense >= instances.max_defense) {
+      // Проверяем, есть ли необходимость в ремонте
+      if (instance.current_defense >= instance.max_defense) {
         toast({
-          title: "Ремонт не требуется",
-          description: "Броня этой карты уже максимальна",
+          title: "Броня в порядке",
+          description: "Эта карта не нуждается в ремонте",
           variant: "destructive"
         });
         return;
       }
+
+      const cardInstanceId = instance.id;
+
 
       // Удаляем карту из команды перед началом ремонта
       const { data: currentData, error: fetchError } = await supabase
