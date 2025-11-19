@@ -145,17 +145,10 @@ export const getMonsterLoot = async (monsterName: string, dungeonNumber?: number
               console.error('❌ Exception calling claim-item-reward:', err);
             }
             
-            // Создаём предмет из события
-            const treasureItem: Item = {
-              id: uuidv4(),
-              name: activeEvent.item_name,
-              type: 'material',
-              value: 0,
-              description: `Особый предмет из события "Искатели"`,
-              image: activeEvent.item_image_url || undefined
-            };
-            
-            return [treasureItem];
+            // Edge function уже добавил предмет в БД через claim-item-reward
+            // Возвращаем пустой массив чтобы избежать дублирования в claimRewardAndExit
+            console.log('🎁 Treasure hunt item already added to DB via edge function, returning empty array to prevent duplication');
+            return [];
           } else {
             console.log(`❌ Treasure hunt roll failed: ${roll.toFixed(2)}% > ${activeEvent.drop_chance}%`);
           }
