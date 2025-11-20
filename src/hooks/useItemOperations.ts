@@ -4,6 +4,7 @@ import { useToast } from './use-toast';
 import { Item } from '@/types/inventory';
 import { getItemPrice } from '@/utils/itemUtils';
 import { useGameData } from './useGameData';
+import { useTreasureHuntItems } from './useTreasureHuntItems';
 
 /**
  * Централизованный хук для всех операций с предметами
@@ -13,6 +14,7 @@ export const useItemOperations = () => {
   const { instances, removeItemInstancesByIds, addItemInstances } = useItemInstances();
   const { gameData, updateGameData } = useGameData();
   const { toast } = useToast();
+  const { isQuestItem } = useTreasureHuntItems();
 
   /**
    * Добавить предметы в inventory
@@ -61,7 +63,17 @@ export const useItemOperations = () => {
   /**
    * Продать предмет (удаляет из instances, добавляет баланс)
    */
-  const sellItem = useCallback(async (item: { id: string; name: string; type: string; value?: number; sell_price?: number }) => {
+  const sellItem = useCallback(async (item: { id: string; name: string; type: string; value?: number; sell_price?: number; template_id?: number }) => {
+    // Проверяем, что предмет не квестовый
+    if (isQuestItem(item.template_id)) {
+      toast({
+        title: 'Нельзя продать',
+        description: 'Квестовые предметы не могут быть проданы',
+        variant: 'destructive'
+      });
+      return false;
+    }
+
     // Проверяем, что предмет существует
     const exists = instances.some(inst => inst.id === item.id);
     if (!exists) {
@@ -95,7 +107,7 @@ export const useItemOperations = () => {
     });
 
     return true;
-  }, [instances, removeItemInstancesByIds, gameData.balance, updateGameData, toast]);
+  }, [instances, removeItemInstancesByIds, gameData.balance, updateGameData, toast, isQuestItem]);
 
   /**
    * Продать несколько предметов по имени
@@ -110,6 +122,17 @@ export const useItemOperations = () => {
       toast({
         title: 'Недостаточно предметов',
         description: `Требуется ${quantity}, но найдено только ${itemsToSell.length}`,
+        variant: 'destructive'
+      });
+      return false;
+    }
+
+    // Проверяем, что ни один из предметов не квестовый
+    const hasQuestItem = itemsToSell.some(inst => isQuestItem(inst.template_id));
+    if (hasQuestItem) {
+      toast({
+        title: 'Нельзя продать',
+        description: 'Квестовые предметы не могут быть проданы',
         variant: 'destructive'
       });
       return false;
@@ -131,7 +154,7 @@ export const useItemOperations = () => {
     });
 
     return true;
-  }, [instances, removeItemInstancesByIds, gameData.balance, updateGameData, toast]);
+  }, [instances, removeItemInstancesByIds, gameData.balance, updateGameData, toast, isQuestItem]);
 
   /**
    * Использовать предмет (например, зелье)

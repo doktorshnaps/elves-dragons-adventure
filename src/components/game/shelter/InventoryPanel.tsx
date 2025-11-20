@@ -4,25 +4,32 @@ import { getItemName, resolveItemKey } from "@/utils/itemNames";
 import { useLanguage } from "@/hooks/useLanguage";
 import { t } from "@/utils/translations";
 import { useMemo } from "react";
+import { useTreasureHuntItems } from "@/hooks/useTreasureHuntItems";
+import { Scroll } from "lucide-react";
 
 export const InventoryPanel = () => {
   const { language } = useLanguage();
   const { instances } = useItemInstances();
+  const { isQuestItem } = useTreasureHuntItems();
   
   // Группируем предметы по типу
   const groupedInventory = useMemo(() => {
-    const groups: Record<string, number> = {};
+    const groups: Record<string, { count: number; template_id?: number; isQuest: boolean }> = {};
     instances.forEach(inst => {
       const key = inst.name || inst.type || 'unknown';
-      groups[key] = (groups[key] || 0) + 1;
+      if (!groups[key]) {
+        groups[key] = { count: 0, template_id: inst.template_id, isQuest: isQuestItem(inst.template_id) };
+      }
+      groups[key].count += 1;
     });
-    return Object.entries(groups).map(([name, count]) => ({
+    return Object.entries(groups).map(([name, data]) => ({
       name,
-      count,
+      count: data.count,
+      isQuest: data.isQuest,
       rarity: 'common',
       icon: '📦'
     }));
-  }, [instances]);
+  }, [instances, isQuestItem]);
 
   const getRarityClass = (rarity: string) => {
     switch (rarity.toLowerCase()) {
@@ -68,7 +75,15 @@ export const InventoryPanel = () => {
                 <div className="flex items-center gap-3">
                   <span className="text-2xl">{item.icon}</span>
                   <div>
-                    <p className="font-medium text-sm">{item.name}</p>
+                    <div className="flex items-center gap-2">
+                      <p className="font-medium text-sm">{item.name}</p>
+                      {item.isQuest && (
+                        <div className="bg-purple-600/90 text-white text-xs font-bold px-2 py-0.5 rounded-full flex items-center gap-1">
+                          <Scroll className="w-3 h-3" />
+                          Quest
+                        </div>
+                      )}
+                    </div>
                     <p className="text-xs text-muted-foreground capitalize">{item.rarity}</p>
                   </div>
                 </div>
