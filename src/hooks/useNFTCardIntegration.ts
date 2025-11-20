@@ -99,9 +99,14 @@ export const useNFTCardIntegration = () => {
     }
   };
 
-  // Автоматическая синхронизация при подключении кошелька (только один раз)
+  // Автоматическая синхронизация при подключении кошелька (только один раз с задержкой 3 секунды)
   useEffect(() => {
-    if (isConnected && accountId && !hasSynced && !globalHasSynced) {
+    if (!isConnected || !accountId || hasSynced || globalHasSynced) return;
+    
+    console.log('⏰ Scheduling delayed NFT auto-sync in 3 seconds for:', accountId);
+    
+    // Задержка 3 секунды перед началом синхронизации
+    const timeoutId = setTimeout(() => {
       console.time('⏱️ NFT Auto-sync');
       console.log('🔄 Auto-syncing NFTs for:', accountId);
       performance.mark('nft-sync-start');
@@ -122,71 +127,16 @@ export const useNFTCardIntegration = () => {
           });
         });
       });
-    }
+    }, 3000);
+    
+    return () => clearTimeout(timeoutId);
   }, [isConnected, accountId, hasSynced]);
 
 
-  // Периодическая синхронизация - УВЕЛИЧЕНО до 10 минут для снижения нагрузки
-  useEffect(() => {
-    if (!isConnected || !accountId) return;
-    const interval = setInterval(() => {
-      syncNFTsFromWallet();
-    }, 600000); // каждые 10 минут (было 5 минут)
-    return () => clearInterval(interval);
-  }, [isConnected, accountId]);
+  // Периодическая синхронизация - ОТКЛЮЧЕНА для минимизации нагрузки
+  // Игрок должен вручную синхронизировать NFT через кнопку в меню
 
-  // Проверка потери NFT во время активного подземелья - с debounce
-  useEffect(() => {
-    if (!isConnected || !accountId || nftCards.length === 0) return;
-
-    const checkNFTLoss = () => {
-      // Проверяем наличие активного подземелья
-      const teamBattleState = localStorage.getItem('teamBattleState');
-      const hasActiveBattle = localStorage.getItem('activeBattleInProgress') === 'true';
-      
-      if (!teamBattleState || !hasActiveBattle) return;
-
-      try {
-        const state = JSON.parse(teamBattleState);
-        const selectedTeam = state?.selectedTeam || [];
-        
-        if (selectedTeam.length === 0) return;
-
-        // Собираем ID всех NFT карт в команде
-        const nftIdsInTeam = new Set<string>();
-        selectedTeam.forEach((pair: any) => {
-          if (pair?.hero?.isNFT) nftIdsInTeam.add(pair.hero.id);
-          if (pair?.dragon?.isNFT) nftIdsInTeam.add(pair.dragon.id);
-        });
-
-        if (nftIdsInTeam.size === 0) return;
-
-        // Проверяем, есть ли все NFT карты в текущем списке
-        const currentNftIds = new Set(nftCards.map(c => c.id));
-        const missingNfts = Array.from(nftIdsInTeam).filter(id => !currentNftIds.has(id));
-
-        if (missingNfts.length > 0) {
-          console.warn('⚠️ NFT карты были переданы во время активного подземелья:', missingNfts);
-          
-          // Очищаем активное подземелье
-          localStorage.removeItem('teamBattleState');
-          localStorage.removeItem('activeBattleInProgress');
-          window.dispatchEvent(new CustomEvent('battleReset'));
-          
-          // Показываем модальное окно
-          window.dispatchEvent(new CustomEvent('nftTransferredDuringBattle', {
-            detail: { missingNftIds: missingNfts }
-          }));
-        }
-      } catch (error) {
-        console.error('Error checking NFT loss:', error);
-      }
-    };
-
-    // Проверяем только через 3 секунды после изменения (debounce)
-    const timeoutId = setTimeout(checkNFTLoss, 3000);
-    return () => clearTimeout(timeoutId);
-  }, [nftCards, isConnected, accountId]);
+  // Проверка потери NFT во время активного подземелья - ОТКЛЮЧЕНА для минимизации нагрузки
 
   const syncNFTsFromWallet = async () => {
     if (!accountId) {
