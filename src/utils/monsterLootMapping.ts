@@ -146,9 +146,22 @@ export const getMonsterLoot = async (monsterName: string, dungeonNumber?: number
             }
             
             // Edge function уже добавил предмет в БД через claim-item-reward
-            // Возвращаем пустой массив чтобы избежать дублирования в claimRewardAndExit
-            console.log('🎁 Treasure hunt item already added to DB via edge function, returning empty array to prevent duplication');
-            return [];
+            // Возвращаем предмет для отображения в UI, но он не будет добавлен повторно в БД
+            console.log('🎁 Treasure hunt item already added to DB via edge function, returning item for UI display only');
+            
+            // Получаем полную информацию о предмете из шаблона для корректного отображения
+            const template = ALL_ITEM_TEMPLATES.find(t => t.id === activeEvent.item_template_id);
+            
+            return [{
+              id: uuidv4(),
+              name: activeEvent.item_name,
+              type: 'material' as Item['type'],
+              value: template?.value || 0,
+              sell_price: template?.sell_price,
+              description: template?.description || 'Предмет события "Искатели"',
+              image: activeEvent.item_image_url || template?.image_url || undefined,
+              stats: template?.stats || undefined
+            }];
           } else {
             console.log(`❌ Treasure hunt roll failed: ${roll.toFixed(2)}% > ${activeEvent.drop_chance}%`);
           }
