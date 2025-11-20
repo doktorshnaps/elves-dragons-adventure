@@ -71,6 +71,7 @@ export const DungeonSettings = () => {
   const [dungeons, setDungeons] = useState<DungeonSetting[]>([]);
   const [openDungeons, setOpenDungeons] = useState<Set<string>>(new Set());
   const [monsters, setMonsters] = useState<Monster[]>([]);
+  const [monsterSearchQueries, setMonsterSearchQueries] = useState<Record<string, string>>({});
 
   useEffect(() => {
     loadDungeons();
@@ -527,7 +528,21 @@ export const DungeonSettings = () => {
                               </Button>
                             </div>
                             <div className="space-y-2">
-                              <Label className="text-xs">Выберите монстров и укажите количество</Label>
+                              <div className="flex items-center gap-2 mb-2">
+                                <Label className="text-xs">Выберите монстров и укажите количество</Label>
+                                <Input
+                                  type="text"
+                                  placeholder="Поиск по названию..."
+                                  value={monsterSearchQueries[`${dungeon.id}-${idx}`] || ''}
+                                  onChange={(e) => {
+                                    setMonsterSearchQueries(prev => ({
+                                      ...prev,
+                                      [`${dungeon.id}-${idx}`]: e.target.value
+                                    }));
+                                  }}
+                                  className="h-7 text-xs flex-1"
+                                />
+                              </div>
                               
                               {/* Старые монстры (не найдены в БД) */}
                               {levelConfig.monsters.some(m => !monsters.find(mon => mon.monster_id === m.id)) && (
@@ -560,7 +575,17 @@ export const DungeonSettings = () => {
                                 {monsters.length === 0 ? (
                                   <p className="text-xs text-muted-foreground">Загрузка монстров...</p>
                                 ) : (
-                                  monsters.map((monster) => {
+                                  (() => {
+                                    const searchQuery = (monsterSearchQueries[`${dungeon.id}-${idx}`] || '').toLowerCase();
+                                    const filteredMonsters = searchQuery 
+                                      ? monsters.filter(m => m.monster_name.toLowerCase().includes(searchQuery))
+                                      : monsters;
+                                    
+                                    if (filteredMonsters.length === 0) {
+                                      return <p className="text-xs text-muted-foreground">Монстры не найдены</p>;
+                                    }
+                                    
+                                    return filteredMonsters.map((monster) => {
                                     const monsterData = levelConfig.monsters.find(m => m.id === monster.monster_id);
                                     const isChecked = !!monsterData;
                                     
@@ -594,7 +619,8 @@ export const DungeonSettings = () => {
                                         )}
                                       </div>
                                     );
-                                  })
+                                    });
+                                  })()
                                 )}
                               </div>
                             </div>
