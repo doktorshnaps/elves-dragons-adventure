@@ -269,30 +269,42 @@ export const useDungeonRewards = () => {
       }
 
       if (lootedItems.length > 0) {
-        // Отправляем начисление предметов через edge-функцию с идемпотентностью по claimKey
-        try {
-          const normalized = lootedItems.map(it => ({
-            name: it.name ?? null,
-            type: it.type ?? 'material',
-            template_id: (it as any).template_id ?? null,
-            item_id: (it as any).item_id ?? null,
-          }));
-          console.log('🛰️ Вызов edge claim-item-reward', { count: normalized.length, claimKey });
-          const { data, error } = await supabase.functions.invoke('claim-item-reward', {
-            body: {
-              wallet_address: accountId || 'local',
-              claim_key: claimKey,
-              items: normalized,
+        // Фильтруем предметы, которые уже добавлены в БД (например, из treasure hunt события)
+        const itemsToAdd = lootedItems.filter(it => !(it as any).alreadyInDB);
+        const itemsAlreadyInDB = lootedItems.filter(it => (it as any).alreadyInDB);
+        
+        console.log(`📦 Всего предметов: ${lootedItems.length}, к добавлению: ${itemsToAdd.length}, уже в БД: ${itemsAlreadyInDB.length}`);
+        
+        if (itemsAlreadyInDB.length > 0) {
+          console.log('✅ Предметы уже в БД (пропускаем):', itemsAlreadyInDB.map(it => it.name));
+        }
+        
+        // Отправляем только предметы, которые еще не в БД
+        if (itemsToAdd.length > 0) {
+          try {
+            const normalized = itemsToAdd.map(it => ({
+              name: it.name ?? null,
+              type: it.type ?? 'material',
+              template_id: (it as any).template_id ?? null,
+              item_id: (it as any).item_id ?? null,
+            }));
+            console.log('🛰️ Вызов edge claim-item-reward', { count: normalized.length, claimKey });
+            const { data, error } = await supabase.functions.invoke('claim-item-reward', {
+              body: {
+                wallet_address: accountId || 'local',
+                claim_key: claimKey,
+                items: normalized,
+              }
+            });
+            if (error) {
+              console.error('❌ Edge claim-item-reward error', error);
+              throw error;
             }
-          });
-          if (error) {
-            console.error('❌ Edge claim-item-reward error', error);
-            throw error;
+            console.log('✅ Edge claim-item-reward result', data);
+          } catch (edgeErr) {
+            console.error('❌ Ошибка edge claim-item-reward, fallback отменён чтобы избежать дублей:', edgeErr);
+            // Не вызываем локальный addItemsToInstances, чтобы не удвоить предметы
           }
-          console.log('✅ Edge claim-item-reward result', data);
-        } catch (edgeErr) {
-          console.error('❌ Ошибка edge claim-item-reward, fallback отменён чтобы избежать дублей:', edgeErr);
-          // Не вызываем локальный addItemsToInstances, чтобы не удвоить предметы
         }
       }
 
