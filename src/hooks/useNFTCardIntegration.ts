@@ -259,6 +259,26 @@ export const useNFTCardIntegration = () => {
         });
       console.log(`🔄 NFT Sources (after filter): synced=${synced?.length || 0}, fetched=${fetched?.length || 0}, mintbase=${mintbaseCards.length}, total=${allNFTs.length}`);
       
+      // КРИТИЧНО: Если NFT карт нет вообще, принудительно очищаем localStorage
+      if (allNFTs.length === 0) {
+        console.log('🧹 No NFTs found in DB - force clearing localStorage cache');
+        cleanupLocalNFTs([]); // Передаем пустой массив, чтобы удалить все NFT из кеша
+        setNftCards([]);
+        
+        // Оповещаем систему об обновлении
+        window.dispatchEvent(new CustomEvent('cardsUpdate', { 
+          detail: { cards: [] } 
+        }));
+        window.dispatchEvent(new CustomEvent('cardInstancesUpdate'));
+        
+        setIsLoading(false);
+        toast({
+          title: "NFT синхронизированы",
+          description: "Все NFT карточки обновлены",
+        });
+        return;
+      }
+      
       // Убираем дубликаты по ID и конвертируем в формат игровых карт
       const uniqueNFTs = allNFTs.filter((nft, index, arr) => 
         arr.findIndex(n => n.id === nft.id) === index
