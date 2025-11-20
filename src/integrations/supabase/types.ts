@@ -2432,6 +2432,10 @@ export type Database = {
         Args: { p_wallet_address: string }
         Returns: string
       }
+      force_clear_nft_cards: {
+        Args: { p_contract_id?: string; p_wallet_address: string }
+        Returns: number
+      }
       get_card_instances_by_wallet: {
         Args: { p_wallet_address: string }
         Returns: {
