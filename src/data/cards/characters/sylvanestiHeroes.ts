@@ -23,7 +23,7 @@ export const sylvanestiHeroes: CardInfo[] = [
     image: "/lovable-uploads/8315d200-d3f6-4f47-a192-ae3b8bbe256c.webp"
   },
   {
-    name: "Маг",
+    name: "Чародей",
     type: "character",
     description: "Мудрый эльфийский маг, хранитель древних знаний.",
     faction: "Сильванести",

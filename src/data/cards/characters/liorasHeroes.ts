@@ -23,7 +23,7 @@ export const liorasHeroes: CardInfo[] = [
     image: "/lovable-uploads/7029b0b3-2bcd-49c6-8c97-848605f6adff.webp"
   },
   {
-    name: "Маг",
+    name: "Чародей",
     type: "character",
     description: "Хранитель лесной магии.",
     faction: "Лиорас",

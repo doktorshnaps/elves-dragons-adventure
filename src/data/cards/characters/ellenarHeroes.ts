@@ -23,7 +23,7 @@ export const ellenarHeroes: CardInfo[] = [
     image: "/lovable-uploads/8dd620ce-c00a-4c42-97bf-c10a0aabdef4.webp"
   },
   {
-    name: "Маг",
+    name: "Чародей",
     type: "character",
     description: "Маг светлой магии.",
     faction: "Элленар",
