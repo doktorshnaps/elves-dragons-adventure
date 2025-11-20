@@ -112,7 +112,7 @@ export const getCardImageByRarity = async (card: Card): Promise<string | undefin
   try {
     const dbImages = await loadDatabaseImages();
     
-    // Пробуем несколько вариантов типа карты для совместимости (hero/character/pet)
+    // Пробуем несколько вариантов типа карты для совместимости (hero/character/pet/dragon)
     const normalizedName = (card.name || '').trim();
     const normalizedFaction = (card.faction || '').trim();
     const typeStr = String((card as any).type || '');
@@ -123,6 +123,8 @@ export const getCardImageByRarity = async (card: Card): Promise<string | undefin
           typeStr === 'hero' ? 'character' : undefined,
           typeStr === 'character' ? 'hero' : undefined,
           typeStr === 'pet' ? 'pet' : undefined,
+          typeStr === 'dragon' ? 'dragon' : undefined,
+          typeStr === 'dragon' ? 'pet' : undefined,
         ].filter(Boolean)
       )
     ) as string[];
@@ -173,26 +175,56 @@ export const getCardImageByRarity = async (card: Card): Promise<string | undefin
 };
 
 /**
+ * Нормализует URL изображения карты (IPFS, Arweave, data URLs)
+ */
+const normalizeCardImageUrl = (url: string | undefined): string | undefined => {
+  if (!url) return undefined;
+  
+  try {
+    // IPFS URL normalization
+    if (url.startsWith('ipfs://')) {
+      return url.replace('ipfs://', 'https://ipfs.io/ipfs/');
+    }
+    
+    // If it's just an IPFS hash
+    if (/^Qm[a-zA-Z0-9]{44,}$/.test(url)) {
+      return `https://ipfs.io/ipfs/${url}`;
+    }
+    
+    // Arweave URL
+    if (url.startsWith('ar://')) {
+      return url.replace('ar://', 'https://arweave.net/');
+    }
+    
+    // Data URLs and regular URLs - return as is
+    return url;
+  } catch (error) {
+    console.error('Error normalizing card image URL:', error);
+    return url;
+  }
+};
+
+/**
  * Синхронная версия getCardImageByRarity для обратной совместимости
  * Использует только hardcoded изображения и стандартное изображение карты
  */
 export const getCardImageByRaritySync = (card: Card): string | undefined => {
   // Если карта уже содержит конкретное изображение (например, из edge-функции), используем его приоритетно
   if (card.cardClass && card.image) {
-    return card.image;
+    return normalizeCardImageUrl(card.image);
   }
   // Проверяем hardcoded изображения для "Рекрут" из Тэлэриона
   if (card.name === "Рекрут" && card.faction === "Тэлэрион" && card.type === "character") {
-    return recruitRarityImages[card.rarity] || card.image;
+    return recruitRarityImages[card.rarity] || normalizeCardImageUrl(card.image);
   }
   
   // Проверяем hardcoded изображения для "Стратег" из Тэлэриона
   if (card.name === "Стратег" && card.faction === "Тэлэрион" && card.type === "character") {
-    return strategistRarityImages[card.rarity] || card.image;
+    return strategistRarityImages[card.rarity] || normalizeCardImageUrl(card.image);
   }
   
-  // Для всех остальных карт возвращаем стандартное изображение
-  return card.image;
+  // Для всех остальных карт нормализуем и возвращаем стандартное изображение
+  return normalizeCardImageUrl(card.image);
 };
 
 /**
