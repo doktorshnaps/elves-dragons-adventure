@@ -2424,6 +2424,10 @@ export type Database = {
         Args: { p_wallet_address: string; p_worker_data: Json }
         Returns: string
       }
+      delete_treasure_hunt_items: {
+        Args: { p_template_id: number }
+        Returns: number
+      }
       ensure_game_data_exists: {
         Args: { p_wallet_address: string }
         Returns: string
