@@ -146,7 +146,7 @@ export const getMonsterLoot = async (monsterName: string, dungeonNumber?: number
             }
             
             // Edge function уже добавил предмет в БД через claim-item-reward
-            // Возвращаем предмет для отображения в UI, но он не будет добавлен повторно в БД
+            // Возвращаем предмет для отображения в UI с флагом, что он уже в БД
             console.log('🎁 Treasure hunt item already added to DB via edge function, returning item for UI display only');
             
             // Получаем полную информацию о предмете из шаблона для корректного отображения
@@ -160,8 +160,10 @@ export const getMonsterLoot = async (monsterName: string, dungeonNumber?: number
               sell_price: template?.sell_price,
               description: template?.description || 'Предмет события "Искатели"',
               image: activeEvent.item_image_url || template?.image_url || undefined,
-              stats: template?.stats || undefined
-            }];
+              stats: template?.stats || undefined,
+              // Флаг, что предмет уже добавлен в БД и не нужно добавлять повторно
+              alreadyInDB: true
+            } as any];
           } else {
             console.log(`❌ Treasure hunt roll failed: ${roll.toFixed(2)}% > ${activeEvent.drop_chance}%`);
           }
