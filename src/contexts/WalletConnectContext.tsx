@@ -87,25 +87,29 @@ export function WalletConnectProvider({ children }: { children: React.ReactNode 
         const subscription = sel.store.observable.subscribe(async (nextState) => {
           const active = nextState.accounts?.find((a: AccountState) => a.active);
           const id = active?.accountId || null;
-          setAccountId(id);
           
-          // Store wallet address globally for secure storage access
-          (window as any).__WALLET_ADDRESS__ = id;
-          
-          // Get real NEAR account
-          if (id && nextState.selectedWalletId) {
-            try {
-              const wallet = await sel.wallet(nextState.selectedWalletId);
-              const accounts = await wallet.getAccounts();
-              const nearAccount = accounts?.[0]?.accountId || null;
-              console.log('🔍 Real NEAR account:', nearAccount, 'from wallet accounts:', accounts);
-              setNearAccountId(nearAccount);
-            } catch (e) {
-              console.warn('Failed to get NEAR accounts:', e);
+          // Проверяем, изменился ли accountId перед обновлением
+          if (id !== accountId) {
+            setAccountId(id);
+            
+            // Store wallet address globally for secure storage access
+            (window as any).__WALLET_ADDRESS__ = id;
+            
+            // Get real NEAR account only if accountId changed
+            if (id && nextState.selectedWalletId) {
+              try {
+                const wallet = await sel.wallet(nextState.selectedWalletId);
+                const accounts = await wallet.getAccounts();
+                const nearAccount = accounts?.[0]?.accountId || null;
+                console.log('🔍 Real NEAR account:', nearAccount, 'from wallet accounts:', accounts);
+                setNearAccountId(nearAccount);
+              } catch (e) {
+                console.warn('Failed to get NEAR accounts:', e);
+                setNearAccountId(null);
+              }
+            } else {
               setNearAccountId(null);
             }
-          } else {
-            setNearAccountId(null);
           }
         });
         unsubscribeRef.current = () => subscription.unsubscribe();

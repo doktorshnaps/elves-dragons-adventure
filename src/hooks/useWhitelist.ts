@@ -43,6 +43,8 @@ export const useWhitelist = () => {
   };
 
   useEffect(() => {
+    let cancelled = false;
+    
     const checkWhitelist = async () => {
       if (!isConnected || !accountId) {
         setIsWhitelisted(false);
@@ -55,6 +57,8 @@ export const useWhitelist = () => {
         const { data: isAdmin } = await supabase
           .rpc('is_admin_wallet', { p_wallet_address: accountId });
         
+        if (cancelled) return;
+        
         if (isAdmin) {
           setIsWhitelisted(true);
           setLoading(false);
@@ -65,6 +69,8 @@ export const useWhitelist = () => {
         const { data, error } = await supabase
           .rpc('is_whitelisted', { p_wallet_address: accountId });
 
+        if (cancelled) return;
+
         if (error) {
           if (import.meta.env.DEV) {
             console.error('Error checking whitelist:', error);
@@ -73,30 +79,33 @@ export const useWhitelist = () => {
         } else if (data) {
           setIsWhitelisted(true);
         } else {
-          // Если не в обычном вайт-листе, проверяем NFT
+          // Если не в обычном вайт-листе, проверяем NFT (только один раз)
           const nftWhitelisted = await checkNFTWhitelist();
+          
+          if (cancelled) return;
+          
           setIsWhitelisted(nftWhitelisted);
           
-          if (nftWhitelisted) {
-            // Принудительно перезагружаем статус после добавления
-            setTimeout(async () => {
-              const { data: recheck } = await supabase
-                .rpc('is_whitelisted', { p_wallet_address: accountId });
-              setIsWhitelisted(!!recheck);
-            }, 1000);
-          }
+          // УДАЛЕНО: повторная проверка через setTimeout - это вызывало бесконечные запросы
         }
       } catch (error) {
+        if (cancelled) return;
         if (import.meta.env.DEV) {
           console.error('Error checking whitelist:', error);
         }
         setIsWhitelisted(false);
       } finally {
-        setLoading(false);
+        if (!cancelled) {
+          setLoading(false);
+        }
       }
     };
 
     checkWhitelist();
+    
+    return () => {
+      cancelled = true;
+    };
   }, [accountId, isConnected]);
 
   return { isWhitelisted, loading };

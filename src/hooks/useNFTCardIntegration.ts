@@ -8,6 +8,8 @@ import { calculateCardStats } from '@/utils/cardUtils';
 
 let globalHasSynced = false;
 let syncInFlight = false;
+let lastSyncTime = 0;
+const SYNC_COOLDOWN = 10000; // 10 секунд между синхронизациями
 
 export const useNFTCardIntegration = () => {
   const [nftCards, setNftCards] = useState<CardType[]>([]);
@@ -48,16 +50,16 @@ export const useNFTCardIntegration = () => {
   }, [isConnected, accountId, hasSynced]);
 
 
-  // Периодическая синхронизация - УВЕЛИЧЕНО до 5 минут для снижения нагрузки
+  // Периодическая синхронизация - УВЕЛИЧЕНО до 10 минут для снижения нагрузки
   useEffect(() => {
     if (!isConnected || !accountId) return;
     const interval = setInterval(() => {
       syncNFTsFromWallet();
-    }, 300000); // каждые 5 минут (вместо 60 секунд)
+    }, 600000); // каждые 10 минут (было 5 минут)
     return () => clearInterval(interval);
   }, [isConnected, accountId]);
 
-  // Проверка потери NFT во время активного подземелья
+  // Проверка потери NFT во время активного подземелья - с debounce
   useEffect(() => {
     if (!isConnected || !accountId || nftCards.length === 0) return;
 
@@ -105,8 +107,8 @@ export const useNFTCardIntegration = () => {
       }
     };
 
-    // Проверяем при каждом изменении NFT карт (но не чаще чем раз в минуту)
-    const timeoutId = setTimeout(checkNFTLoss, 1000);
+    // Проверяем только через 3 секунды после изменения (debounce)
+    const timeoutId = setTimeout(checkNFTLoss, 3000);
     return () => clearTimeout(timeoutId);
   }, [nftCards, isConnected, accountId]);
 
@@ -115,11 +117,22 @@ export const useNFTCardIntegration = () => {
       console.log('⚠️ Skipping sync - no accountId');
       return;
     }
+    
+    // Проверяем cooldown - не синхронизируем чаще чем раз в 10 секунд
+    const now = Date.now();
+    if (now - lastSyncTime < SYNC_COOLDOWN) {
+      console.log(`⏳ Skipping sync - cooldown active (${Math.ceil((SYNC_COOLDOWN - (now - lastSyncTime)) / 1000)}s remaining)`);
+      return;
+    }
+    
     if (syncInFlight) {
       console.log('⏳ Skipping sync - another sync is in flight');
       return;
     }
+    
     syncInFlight = true;
+    lastSyncTime = now;
+    
     if (isLoading) {
       console.log('⏳ Instance already loading, but proceeding with global gate');
     }
@@ -271,8 +284,8 @@ export const useNFTCardIntegration = () => {
 
         console.log(`✅ Valid cards for sync: ${validCards.length}/${gameCards.length}`);
         
-        // Группируем по батчам (10 карт за раз для избежания таймаутов)
-        const BATCH_SIZE = 10;
+        // Группируем по батчам (5 карт за раз для снижения нагрузки)
+        const BATCH_SIZE = 5;
         for (let i = 0; i < validCards.length; i += BATCH_SIZE) {
           const batch = validCards.slice(i, i + BATCH_SIZE);
           
@@ -319,6 +332,11 @@ export const useNFTCardIntegration = () => {
           );
           
           console.log(`✅ Synced batch ${Math.floor(i / BATCH_SIZE) + 1}/${Math.ceil(validCards.length / BATCH_SIZE)}`);
+          
+          // Добавляем небольшую задержку между батчами для снижения нагрузки
+          if (i + BATCH_SIZE < validCards.length) {
+            await new Promise(resolve => setTimeout(resolve, 300));
+          }
         }
         
         // Очистка переданных NFT
