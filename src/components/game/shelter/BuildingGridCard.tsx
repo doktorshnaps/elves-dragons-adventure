@@ -116,7 +116,7 @@ export const BuildingGridCard = ({
           </div>
 
           {/* Upgrade Progress */}
-          {isUpgrading && upgradeProgress && (
+          {isUpgrading && upgradeProgress && upgrade.level < upgrade.maxLevel && (
             <div className="space-y-2 bg-black/40 backdrop-blur-sm rounded-lg p-2 border border-white/10">
               <div className="flex items-center justify-between text-xs">
                 <span className="flex items-center gap-1 text-white drop-shadow-[0_1px_2px_rgba(0,0,0,0.8)]">
