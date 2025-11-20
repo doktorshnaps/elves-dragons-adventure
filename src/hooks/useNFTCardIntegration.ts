@@ -102,10 +102,25 @@ export const useNFTCardIntegration = () => {
   // Автоматическая синхронизация при подключении кошелька (только один раз)
   useEffect(() => {
     if (isConnected && accountId && !hasSynced && !globalHasSynced) {
+      console.time('⏱️ NFT Auto-sync');
       console.log('🔄 Auto-syncing NFTs for:', accountId);
+      performance.mark('nft-sync-start');
+      
       // Сначала принудительная очистка, затем синхронизация
       forceCleanupOnConnect().then(() => {
-        syncNFTsFromWallet();
+        performance.mark('nft-cleanup-end');
+        performance.measure('NFT Cleanup', 'nft-sync-start', 'nft-cleanup-end');
+        
+        syncNFTsFromWallet().finally(() => {
+          performance.mark('nft-sync-end');
+          performance.measure('NFT Sync Total', 'nft-sync-start', 'nft-sync-end');
+          console.timeEnd('⏱️ NFT Auto-sync');
+          
+          const measures = performance.getEntriesByType('measure');
+          measures.forEach(measure => {
+            console.log(`📊 ${measure.name}: ${Math.round(measure.duration)}ms`);
+          });
+        });
       });
     }
   }, [isConnected, accountId, hasSynced]);
@@ -182,17 +197,22 @@ export const useNFTCardIntegration = () => {
     // Проверяем cooldown - не синхронизируем чаще чем раз в 10 секунд
     const now = Date.now();
     if (now - lastSyncTime < SYNC_COOLDOWN) {
-      console.log(`⏳ Skipping sync - cooldown active (${Math.ceil((SYNC_COOLDOWN - (now - lastSyncTime)) / 1000)}s remaining)`);
+      console.warn(`⏳ THROTTLED: Skipping sync - cooldown active (${Math.ceil((SYNC_COOLDOWN - (now - lastSyncTime)) / 1000)}s remaining)`);
+      console.trace('Throttled call stack:');
       return;
     }
     
     if (syncInFlight) {
-      console.log('⏳ Skipping sync - another sync is in flight');
+      console.warn('⏳ BLOCKED: Another sync is in flight');
+      console.trace('Blocked call stack:');
       return;
     }
     
+    console.time('⏱️ syncNFTsFromWallet');
+    performance.mark('sync-nfts-start');
     syncInFlight = true;
     lastSyncTime = now;
+    console.log(`🚀 Starting NFT sync at ${new Date().toISOString()}`);
     
     if (isLoading) {
       console.log('⏳ Instance already loading, but proceeding with global gate');
@@ -214,6 +234,8 @@ export const useNFTCardIntegration = () => {
       // Синхронизируем NFT из Mintbase контрактов
       try {
         console.log('🔄 Syncing Mintbase NFTs...');
+        console.time('⏱️ Mintbase Default Contract');
+        performance.mark('mintbase-default-start');
         
         // Sync from default Mintbase contract
         const { data: mintbaseData, error: mintbaseError } = await supabase.functions.invoke(
@@ -222,6 +244,10 @@ export const useNFTCardIntegration = () => {
             body: { wallet_address: accountId }
           }
         );
+        
+        performance.mark('mintbase-default-end');
+        performance.measure('Mintbase Default', 'mintbase-default-start', 'mintbase-default-end');
+        console.timeEnd('⏱️ Mintbase Default Contract');
 
         if (mintbaseError) {
           console.error('Mintbase sync error:', mintbaseError);
@@ -231,6 +257,9 @@ export const useNFTCardIntegration = () => {
         }
 
         // Sync from elleonortesr.mintbase1.near
+        console.time('⏱️ Mintbase Elleonortesr Contract');
+        performance.mark('mintbase-elleonortesr-start');
+        
         const { data: elleonortesr, error: elleonortesrError } = await supabase.functions.invoke(
           'sync-mintbase-nfts',
           {
@@ -240,6 +269,10 @@ export const useNFTCardIntegration = () => {
             }
           }
         );
+        
+        performance.mark('mintbase-elleonortesr-end');
+        performance.measure('Mintbase Elleonortesr', 'mintbase-elleonortesr-start', 'mintbase-elleonortesr-end');
+        console.timeEnd('⏱️ Mintbase Elleonortesr Contract');
 
         if (elleonortesrError) {
           console.error('Elleonortesr Mintbase sync error:', elleonortesrError);
@@ -531,6 +564,18 @@ export const useNFTCardIntegration = () => {
       setIsLoading(false);
       syncInFlight = false;
       if (!globalHasSynced) globalHasSynced = true;
+      
+      performance.mark('sync-nfts-end');
+      performance.measure('Total NFT Sync', 'sync-nfts-start', 'sync-nfts-end');
+      console.timeEnd('⏱️ syncNFTsFromWallet');
+      
+      const measures = performance.getEntriesByType('measure').slice(-5);
+      console.log('📊 NFT Sync Performance:');
+      measures.forEach(measure => {
+        console.log(`  ${measure.name}: ${Math.round(measure.duration)}ms`);
+      });
+      
+      console.log(`✅ Sync completed at ${new Date().toISOString()}, flight flag released`);
     }
   };
 
