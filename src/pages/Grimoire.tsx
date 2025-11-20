@@ -17,14 +17,7 @@ const Grimoire = () => {
   useGrimoireImagePreloader();
 
   return (
-    <div 
-      className="min-h-screen h-screen p-4 bg-cover bg-center bg-no-repeat flex flex-col"
-      style={{
-        backgroundImage: "url('/lovable-uploads/20d88f7a-4f27-4b22-8ebe-e55b87a0c7e3.png')",
-        backgroundColor: 'rgba(0, 0, 0, 0.85)',
-        backgroundBlendMode: 'multiply'
-      }}
-    >
+    <div className="min-h-screen h-screen p-4 bg-game-background flex flex-col">
       <div className="flex items-center gap-4 mb-6">
         <Button 
           variant="menu"

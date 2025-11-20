@@ -142,6 +142,16 @@
   }
 }
 
+/* Background utility classes for game pages */
+.bg-game-background {
+  background-color: hsl(220, 26%, 14%);
+  background-image: url('/lovable-uploads/29ea34c8-ede8-4cab-8ca2-049cdb5108c3.png');
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  background-blend-mode: multiply;
+}
+
 /* Gaming animations */
 @keyframes card-glow {
   0%, 100% {

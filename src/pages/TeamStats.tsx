@@ -11,12 +11,7 @@ import { t } from "@/utils/translations";
 export const TeamStats = () => {
   const navigate = useNavigate();
   const { language } = useLanguage();
-  return <div className="min-h-screen flex flex-col bg-cover bg-center bg-no-repeat relative" style={{
-    backgroundImage: 'url("/lovable-uploads/5c84c1ed-e8af-4eb6-8495-c82bc7d6cd65.png")',
-    backgroundSize: 'cover',
-    backgroundPosition: 'center',
-    backgroundRepeat: 'no-repeat'
-  }}>
+  return <div className="min-h-screen flex flex-col bg-game-background relative">
       <div className="absolute inset-0 bg-black/30" />
       
       <div className="relative z-10 flex flex-col min-h-screen p-2 sm:p-4">

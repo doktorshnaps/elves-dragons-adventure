@@ -18,14 +18,7 @@ export const Equipment = () => {
   };
 
   return (
-    <div 
-      className="h-screen p-4 bg-cover bg-center bg-no-repeat overflow-hidden" 
-      style={{
-        backgroundImage: 'url("/lovable-uploads/29ea34c8-ede8-4cab-8ca2-049cdb5108c3.png")',
-        backgroundColor: 'rgba(0, 0, 0, 0.85)',
-        backgroundBlendMode: 'multiply'
-      }}
-    >
+    <div className="h-screen p-4 bg-game-background overflow-hidden">
       <EquipmentHeader 
         onBack={() => navigate('/menu')}
         onMintNFT={handleMintNFT}
