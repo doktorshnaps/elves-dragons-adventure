@@ -72,12 +72,15 @@ export const useGameData = () => {
 
     // Prevent multiple simultaneous loads for the same wallet
     if (isLoadingRef.current) {
-      console.log('Load already in progress, waiting...');
+      console.warn('⏳ BLOCKED: Load already in progress, waiting...');
+      console.trace('Blocked call stack:');
       // Wait for current load to complete instead of skipping
       await new Promise(resolve => setTimeout(resolve, 100));
       return;
     }
 
+    console.time(`⏱️ Load Game Data (${address})`);
+    performance.mark('game-data-load-start');
     isLoadingRef.current = true;
     setLoading(true);
 
@@ -188,10 +191,19 @@ export const useGameData = () => {
 
       }
     } catch (error) {
-      console.error('Error in loadGameData:', error);
+      console.error('❌ Error in loadGameData:', error);
     } finally {
       isLoadingRef.current = false;
       setLoading(false);
+      
+      performance.mark('game-data-load-end');
+      performance.measure('Game Data Load', 'game-data-load-start', 'game-data-load-end');
+      console.timeEnd(`⏱️ Load Game Data (${address})`);
+      
+      const measure = performance.getEntriesByName('Game Data Load')[0];
+      if (measure) {
+        console.log(`📊 Game Data Load: ${Math.round(measure.duration)}ms`);
+      }
     }
   }, []);
   // Батчирование обновлений, чтобы не спамить RPC

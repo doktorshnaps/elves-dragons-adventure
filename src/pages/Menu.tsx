@@ -47,9 +47,21 @@ export const Menu = () => {
   // Загружаем данные при подключении кошелька
   useEffect(() => {
     if (isConnected && accountId && !gameDataLoading) {
+      console.time('⏱️ Menu Initial Load');
+      performance.mark('menu-load-start');
       console.log('🔄 Loading game data for connected wallet:', accountId);
+      
       loadGameData(accountId).then(() => {
         setInitialLoadComplete(true);
+        performance.mark('menu-load-end');
+        performance.measure('Menu Initial Load', 'menu-load-start', 'menu-load-end');
+        console.timeEnd('⏱️ Menu Initial Load');
+        
+        const measures = performance.getEntriesByType('measure');
+        console.log('📊 Performance Summary:');
+        measures.forEach(measure => {
+          console.log(`  ${measure.name}: ${Math.round(measure.duration)}ms`);
+        });
       });
     }
   }, [isConnected, accountId]);

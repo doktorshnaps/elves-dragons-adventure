@@ -39,6 +39,8 @@ export function WalletConnectProvider({ children }: { children: React.ReactNode 
     let cancelled = false;
 
     async function bootstrap() {
+      console.time('⏱️ Wallet Bootstrap');
+      performance.mark('wallet-bootstrap-start');
       setIsLoading(true);
       setHasError(false);
 
@@ -50,6 +52,9 @@ export function WalletConnectProvider({ children }: { children: React.ReactNode 
         if (cancelled) return;
 
         setSelector(sel);
+        
+        performance.mark('wallet-selector-ready');
+        performance.measure('Wallet Selector Init', 'wallet-bootstrap-start', 'wallet-selector-ready');
 
         // 1) Гидратация активного аккаунта синхронно из store
         try {
@@ -85,11 +90,14 @@ export function WalletConnectProvider({ children }: { children: React.ReactNode 
         } catch {}
         
         const subscription = sel.store.observable.subscribe(async (nextState) => {
+          performance.mark('wallet-state-change-start');
           const active = nextState.accounts?.find((a: AccountState) => a.active);
           const id = active?.accountId || null;
           
           // Проверяем, изменился ли accountId перед обновлением
           if (id !== accountId) {
+            console.log(`🔄 Wallet account changed: ${accountId} -> ${id}`);
+            console.time('⏱️ Wallet Account Update');
             setAccountId(id);
             
             // Store wallet address globally for secure storage access
@@ -98,24 +106,43 @@ export function WalletConnectProvider({ children }: { children: React.ReactNode 
             // Get real NEAR account only if accountId changed
             if (id && nextState.selectedWalletId) {
               try {
+                performance.mark('wallet-get-accounts-start');
                 const wallet = await sel.wallet(nextState.selectedWalletId);
                 const accounts = await wallet.getAccounts();
                 const nearAccount = accounts?.[0]?.accountId || null;
                 console.log('🔍 Real NEAR account:', nearAccount, 'from wallet accounts:', accounts);
                 setNearAccountId(nearAccount);
+                
+                performance.mark('wallet-get-accounts-end');
+                performance.measure('Wallet Get Accounts', 'wallet-get-accounts-start', 'wallet-get-accounts-end');
+                console.timeEnd('⏱️ Wallet Account Update');
               } catch (e) {
                 console.warn('Failed to get NEAR accounts:', e);
                 setNearAccountId(null);
               }
             } else {
               setNearAccountId(null);
+              console.timeEnd('⏱️ Wallet Account Update');
             }
+            
+            performance.mark('wallet-state-change-end');
+            performance.measure('Wallet State Change', 'wallet-state-change-start', 'wallet-state-change-end');
           }
         });
         unsubscribeRef.current = () => subscription.unsubscribe();
 
         setHasError(false);
         setIsLoading(false);
+        
+        performance.mark('wallet-bootstrap-end');
+        performance.measure('Wallet Bootstrap Total', 'wallet-bootstrap-start', 'wallet-bootstrap-end');
+        console.timeEnd('⏱️ Wallet Bootstrap');
+        
+        const measures = performance.getEntriesByType('measure').filter(m => m.name.includes('Wallet'));
+        console.log('📊 Wallet Bootstrap Performance:');
+        measures.forEach(measure => {
+          console.log(`  ${measure.name}: ${Math.round(measure.duration)}ms`);
+        });
       } catch (err) {
         console.error("[wallet] init error:", err);
         if (!cancelled) {
