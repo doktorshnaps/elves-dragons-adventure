@@ -474,7 +474,7 @@ export const useNFTCardIntegration = () => {
         if (cleanupError) {
           console.error('Error cleaning up transferred NFTs:', cleanupError);
         } else {
-          console.log(`🧹 Cleanup completed: ${cleanupCount || 0} transferred NFT cards removed from DB`);
+          console.log(`🧹 Cleanup completed: ${cleanupCount || 0} records removed (card_instances + user_nft_cards + game_data)`);
           
           // КРИТИЧНО: Если были удалены карты, обновляем состояние и оповещаем систему
           if (cleanupCount && cleanupCount > 0) {
@@ -491,8 +491,13 @@ export const useNFTCardIntegration = () => {
               detail: { cards: updatedNftCards } 
             }));
             
-            // Оповещаем об обновлении card_instances, чтобы UI обновился
+            // Оповещаем об обновлении card_instances
             window.dispatchEvent(new CustomEvent('cardInstancesUpdate'));
+            
+            // КРИТИЧНО: Оповещаем об обновлении game_data, чтобы UI перезагрузил карты
+            window.dispatchEvent(new CustomEvent('gameDataUpdated'));
+            
+            console.log('✅ NFT cleanup completed, UI will reload data');
           }
         }
       } catch (cleanupErr) {

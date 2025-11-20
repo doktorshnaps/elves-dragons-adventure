@@ -420,6 +420,21 @@ export const useGameData = () => {
     };
   }, [loadGameData]);
 
+  // Слушаем событие обновления game_data после очистки NFT
+  useEffect(() => {
+    const handleGameDataUpdated = () => {
+      if (currentWallet) {
+        console.log('🔄 Reloading game_data after NFT cleanup');
+        loadGameData(currentWallet);
+      }
+    };
+
+    window.addEventListener('gameDataUpdated', handleGameDataUpdated);
+    return () => {
+      window.removeEventListener('gameDataUpdated', handleGameDataUpdated);
+    };
+  }, [currentWallet, loadGameData]);
+
   // Подписка на изменения в реальном времени для кошелька
   useEffect(() => {
     if (!currentWallet) return;
