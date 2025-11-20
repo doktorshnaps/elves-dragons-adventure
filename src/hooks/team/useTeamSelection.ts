@@ -88,17 +88,31 @@ export const useTeamSelection = () => {
     let changed = false;
     const cleaned: TeamPair[] = baseTeam
       .map(pair => {
-        // Drop dragon if it no longer exists (but keep NFT dragons)
-        if (pair?.dragon && !pair.dragon.isNFT && !validIds.has(pair.dragon.id)) {
+        let updatedPair = { ...pair };
+        
+        // КРИТИЧНО: Удаляем дракона, если его больше нет в validIds (включая NFT)
+        if (pair?.dragon && !validIds.has(pair.dragon.id)) {
+          console.log(`🧹 Removing non-existing dragon from team: ${pair.dragon.name} (isNFT: ${pair.dragon.isNFT})`);
           changed = true;
-          return { ...pair, dragon: undefined };
+          updatedPair = { ...updatedPair, dragon: undefined };
         }
-        return pair;
+        
+        // КРИТИЧНО: Удаляем героя, если его больше нет в validIds (включая NFT)
+        if (pair?.hero && !validIds.has(pair.hero.id)) {
+          console.log(`🧹 Removing non-existing hero from team: ${pair.hero.name} (isNFT: ${pair.hero.isNFT})`);
+          changed = true;
+          updatedPair = { ...updatedPair, hero: undefined };
+        }
+        
+        return updatedPair;
       })
       .filter(pair => {
-        // Keep NFT heroes even if not present in base cards/instances
-        const keep = !!pair?.hero?.id && (pair.hero.isNFT || validIds.has(pair.hero.id));
-        if (!keep) changed = true;
+        // Сохраняем пару только если есть хотя бы герой ИЛИ дракон
+        const keep = !!(pair?.hero || pair?.dragon);
+        if (!keep) {
+          console.log('🧹 Removing empty pair from team');
+          changed = true;
+        }
         return keep;
       });
 
@@ -110,6 +124,21 @@ export const useTeamSelection = () => {
       updateGameData({ selectedTeam: cleaned });
     }
   }, [gameData.selectedTeam, gameData.cards, cardInstances, updateGameData]);
+
+  // Listen for team updates from NFT cleanup
+  useEffect(() => {
+    const handleTeamUpdate = (event: Event) => {
+      const customEvent = event as CustomEvent;
+      const updatedTeam = customEvent.detail?.team;
+      if (updatedTeam) {
+        console.log('🔄 Received teamUpdate event, updating gameData.selectedTeam');
+        updateGameData({ selectedTeam: updatedTeam });
+      }
+    };
+
+    window.addEventListener('teamUpdate', handleTeamUpdate);
+    return () => window.removeEventListener('teamUpdate', handleTeamUpdate);
+  }, [updateGameData]);
 
   // Use the health synchronization hook
   useCardHealthSync();

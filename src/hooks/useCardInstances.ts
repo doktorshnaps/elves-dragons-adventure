@@ -297,6 +297,17 @@ export const useCardInstances = () => {
     loadCardInstances();
   }, [loadCardInstances]);
 
+  // Перезагрузка при очистке NFT
+  useEffect(() => {
+    const handleCardInstancesUpdate = () => {
+      console.log('🔄 Received cardInstancesUpdate event, reloading card instances');
+      loadCardInstances();
+    };
+
+    window.addEventListener('cardInstancesUpdate', handleCardInstancesUpdate);
+    return () => window.removeEventListener('cardInstancesUpdate', handleCardInstancesUpdate);
+  }, [loadCardInstances]);
+
   // Подписка на обновления в реальном времени - ОТКЛЮЧЕНА для снижения нагрузки
   // Используем ручную синхронизацию через loadCardInstances при необходимости
   // useEffect(() => {

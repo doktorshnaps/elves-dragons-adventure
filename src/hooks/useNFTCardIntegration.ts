@@ -23,21 +23,79 @@ export const useNFTCardIntegration = () => {
   // Удаляем устаревшие NFT из локального хранилища и состояния игры
   const cleanupLocalNFTs = (currentNFTIds: string[]) => {
     try {
+      // 1. Очистка gameCards
       const raw = localStorage.getItem('gameCards');
-      if (!raw) return;
-      const parsed = JSON.parse(raw) as CardType[];
-      // Удаляем все NFT, которых нет среди текущих ID
-      const cleaned = parsed.filter(c => !c.isNFT || currentNFTIds.includes(c.id));
-      // Убираем дубликаты по id
-      const unique = cleaned.filter((c, i, arr) => arr.findIndex(x => x.id === c.id) === i);
+      if (raw) {
+        const parsed = JSON.parse(raw) as CardType[];
+        // Удаляем все NFT, которых нет среди текущих ID
+        const cleaned = parsed.filter(c => !c.isNFT || currentNFTIds.includes(c.id));
+        // Убираем дубликаты по id
+        const unique = cleaned.filter((c, i, arr) => arr.findIndex(x => x.id === c.id) === i);
 
-      if (JSON.stringify(parsed) !== JSON.stringify(unique)) {
-        localStorage.setItem('gameCards', JSON.stringify(unique));
-        window.dispatchEvent(new CustomEvent('cardsUpdate', { detail: { cards: unique } } as any));
-        console.log('🧹 Removed stale NFT cards from local storage');
+        if (JSON.stringify(parsed) !== JSON.stringify(unique)) {
+          localStorage.setItem('gameCards', JSON.stringify(unique));
+          window.dispatchEvent(new CustomEvent('cardsUpdate', { detail: { cards: unique } } as any));
+          console.log('🧹 Removed stale NFT cards from gameCards');
+        }
+      }
+      
+      // 2. КРИТИЧНО: Очистка selectedTeam от несуществующих NFT
+      const teamRaw = localStorage.getItem('selectedTeam');
+      if (teamRaw) {
+        try {
+          const selectedTeam = JSON.parse(teamRaw) as any[];
+          const cleanedTeam = selectedTeam.map(pair => {
+            const cleanedPair = { ...pair };
+            
+            // Удаляем героя, если это NFT и его нет в списке
+            if (pair.hero?.isNFT && !currentNFTIds.includes(pair.hero.id)) {
+              console.log(`🧹 Removing transferred NFT hero from team: ${pair.hero.name}`);
+              cleanedPair.hero = undefined;
+            }
+            
+            // Удаляем дракона, если это NFT и его нет в списке
+            if (pair.dragon?.isNFT && !currentNFTIds.includes(pair.dragon.id)) {
+              console.log(`🧹 Removing transferred NFT dragon from team: ${pair.dragon.name}`);
+              cleanedPair.dragon = undefined;
+            }
+            
+            return cleanedPair;
+          }).filter(pair => pair.hero || pair.dragon); // Удаляем пустые пары
+          
+          if (JSON.stringify(selectedTeam) !== JSON.stringify(cleanedTeam)) {
+            localStorage.setItem('selectedTeam', JSON.stringify(cleanedTeam));
+            window.dispatchEvent(new CustomEvent('teamUpdate', { detail: { team: cleanedTeam } } as any));
+            console.log('🧹 Removed stale NFT cards from selectedTeam');
+          }
+        } catch (teamErr) {
+          console.warn('Failed to cleanup selectedTeam:', teamErr);
+        }
       }
     } catch (e) {
       console.warn('Cleanup local NFTs failed:', e);
+    }
+  };
+
+  // Принудительная очистка NFT при подключении кошелька
+  const forceCleanupOnConnect = async () => {
+    if (!accountId) return;
+    
+    try {
+      console.log('🔄 Force cleanup on wallet connect');
+      
+      // Получаем текущие NFT из БД
+      const { data: dbCards } = await supabase.rpc('get_card_instances_by_wallet', {
+        p_wallet_address: accountId
+      });
+      
+      const currentNFTIds = (dbCards || [])
+        .filter((c: any) => c.nft_contract_id && c.nft_token_id)
+        .map((c: any) => c.card_template_id);
+      
+      // Очищаем локальное хранилище
+      cleanupLocalNFTs(currentNFTIds);
+    } catch (err) {
+      console.warn('Force cleanup failed:', err);
     }
   };
 
@@ -45,7 +103,10 @@ export const useNFTCardIntegration = () => {
   useEffect(() => {
     if (isConnected && accountId && !hasSynced && !globalHasSynced) {
       console.log('🔄 Auto-syncing NFTs for:', accountId);
-      syncNFTsFromWallet();
+      // Сначала принудительная очистка, затем синхронизация
+      forceCleanupOnConnect().then(() => {
+        syncNFTsFromWallet();
+      });
     }
   }, [isConnected, accountId, hasSynced]);
 
@@ -367,8 +428,57 @@ export const useNFTCardIntegration = () => {
       }
       
       setNftCards(gameCards);
-      // Синхронизируем локальное хранилище: удаляем несуществующие NFT
+      
+      // КРИТИЧНО: Сначала очищаем локальное хранилище
       cleanupLocalNFTs(gameCards.map(c => c.id));
+      
+      // Затем очищаем БД от переданных NFT
+      const currentTokens = gameCards
+        .filter(c => c.nftContractId && c.nftTokenId)
+        .map(c => ({
+          contract_id: String(c.nftContractId),
+          token_id: String(c.nftTokenId)
+        }));
+      
+      // Вызываем cleanup ВСЕГДА, даже если нет новых карт
+      try {
+        console.log(`🔄 Running NFT cleanup for wallet ${accountId}, current tokens:`, currentTokens.length);
+        const { data: cleanupCount, error: cleanupError } = await supabase.rpc(
+          'cleanup_transferred_nft_cards',
+          {
+            p_wallet_address: accountId,
+            p_current_nft_tokens: currentTokens as any
+          }
+        );
+        
+        if (cleanupError) {
+          console.error('Error cleaning up transferred NFTs:', cleanupError);
+        } else {
+          console.log(`🧹 Cleanup completed: ${cleanupCount || 0} transferred NFT cards removed from DB`);
+          
+          // КРИТИЧНО: Если были удалены карты, обновляем состояние и оповещаем систему
+          if (cleanupCount && cleanupCount > 0) {
+            // Обновляем локальное состояние nftCards, удаляя переданные NFT
+            const validTokenSet = new Set(currentTokens.map(t => `${t.contract_id}_${t.token_id}`));
+            const updatedNftCards = gameCards.filter(c => {
+              if (!c.nftContractId || !c.nftTokenId) return true;
+              return validTokenSet.has(`${c.nftContractId}_${c.nftTokenId}`);
+            });
+            setNftCards(updatedNftCards);
+            
+            // Оповещаем систему об обновлении карт
+            window.dispatchEvent(new CustomEvent('cardsUpdate', { 
+              detail: { cards: updatedNftCards } 
+            }));
+            
+            // Оповещаем об обновлении card_instances, чтобы UI обновился
+            window.dispatchEvent(new CustomEvent('cardInstancesUpdate'));
+          }
+        }
+      } catch (cleanupErr) {
+        console.error('Failed to cleanup transferred NFTs:', cleanupErr);
+      }
+      
       setHasSynced(true);
       
       // Убираем успешные уведомления - синхронизация в фоне
