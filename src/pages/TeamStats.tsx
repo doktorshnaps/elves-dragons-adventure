@@ -11,7 +11,7 @@ import { t } from "@/utils/translations";
 export const TeamStats = () => {
   const navigate = useNavigate();
   const { language } = useLanguage();
-  return <div className="min-h-screen flex flex-col bg-game-background relative">
+  return <div className="min-h-screen flex flex-col bg-team relative">
       <div className="absolute inset-0 bg-black/30" />
       
       <div className="relative z-10 flex flex-col min-h-screen p-2 sm:p-4">

@@ -152,6 +152,33 @@
   background-blend-mode: multiply;
 }
 
+.bg-equipment {
+  background-color: hsl(220, 26%, 14%);
+  background-image: url('/images/equipment-bg.jpeg');
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  background-blend-mode: multiply;
+}
+
+.bg-shop {
+  background-color: hsl(220, 26%, 14%);
+  background-image: url('/images/shop-bg.jpeg');
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  background-blend-mode: multiply;
+}
+
+.bg-team {
+  background-color: hsl(220, 26%, 14%);
+  background-image: url('/images/team-bg.png');
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  background-blend-mode: multiply;
+}
+
 /* Gaming animations */
 @keyframes card-glow {
   0%, 100% {

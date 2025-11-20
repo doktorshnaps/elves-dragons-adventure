@@ -5,7 +5,7 @@ export const ShopPage = () => {
   const navigate = useNavigate();
 
   return (
-    <div className="min-h-screen bg-game-background">
+    <div className="min-h-screen bg-shop">
       <Shop onClose={() => navigate('/menu')} />
     </div>
   );

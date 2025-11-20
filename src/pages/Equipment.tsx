@@ -18,7 +18,7 @@ export const Equipment = () => {
   };
 
   return (
-    <div className="h-screen p-4 bg-game-background overflow-hidden">
+    <div className="h-screen p-4 bg-equipment overflow-hidden">
       <EquipmentHeader 
         onBack={() => navigate('/menu')}
         onMintNFT={handleMintNFT}
