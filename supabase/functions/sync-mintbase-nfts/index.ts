@@ -126,16 +126,22 @@ Deno.serve(async (req) => {
 
     console.log(`✅ Mapped ${nftCards.length} NFTs to cards`);
 
-    // Save to user_nft_cards table
-    if (nftCards.length > 0) {
-      // First, remove old NFT cards from this contract for this wallet
-      await supabase
-        .from('user_nft_cards')
-        .delete()
-        .eq('wallet_address', wallet_address)
-        .eq('nft_contract_id', 'elleonortesr.mintbase1.near');
+    // КРИТИЧНО: ВСЕГДА удаляем старые NFT записи для этого контракта
+    // Это необходимо, даже если новых NFT нет (игрок мог передать все)
+    console.log(`🧹 Cleaning up old NFT records for wallet ${wallet_address} from elleonortesr.mintbase1.near`);
+    const { error: deleteError } = await supabase
+      .from('user_nft_cards')
+      .delete()
+      .eq('wallet_address', wallet_address)
+      .eq('nft_contract_id', 'elleonortesr.mintbase1.near');
+    
+    if (deleteError) {
+      console.error('Error deleting old NFT cards:', deleteError);
+    }
 
-      // Insert new NFT cards
+    // Вставляем новые NFT карты, если они есть
+    if (nftCards.length > 0) {
+      console.log(`📝 Inserting ${nftCards.length} new NFT cards`);
       const { error: insertError } = await supabase
         .from('user_nft_cards')
         .insert(
@@ -151,6 +157,8 @@ Deno.serve(async (req) => {
       if (insertError) {
         console.error('Error inserting NFT cards:', insertError);
       }
+    } else {
+      console.log(`✅ No new NFT cards to insert (all transferred out)`);
     }
 
     return new Response(
