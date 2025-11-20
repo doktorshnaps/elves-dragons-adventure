@@ -10,6 +10,8 @@ import { getClassDropRates } from "@/utils/cardUtils";
 import { itemImagesByName, itemImagesByItemId } from "@/constants/itemImages";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { SellQuantityModal } from "../dialogs/SellQuantityModal";
+import { useTreasureHuntItems } from "@/hooks/useTreasureHuntItems";
+import { Scroll } from "lucide-react";
 interface InventoryGridProps {
   groupedItems: GroupedItem[];
   readonly: boolean;
@@ -29,6 +31,7 @@ export const InventoryGrid = ({
     language
   } = useLanguage();
   const isMobile = useIsMobile();
+  const { isQuestItem } = useTreasureHuntItems();
   const unequippedItems = groupedItems
     .filter(item => !item.items.some(i => i.equipped))
     .sort((a, b) => {
@@ -101,6 +104,12 @@ export const InventoryGrid = ({
                     className="w-full h-full object-contain"
                     loading="lazy"
                   />
+                  {isQuestItem(item.items[0]?.template_id) && (
+                    <div className="absolute top-2 right-2 bg-purple-600/90 text-white text-xs font-bold px-2 py-1 rounded-full flex items-center gap-1">
+                      <Scroll className="w-3 h-3" />
+                      Quest
+                    </div>
+                  )}
                 </div>
 
                 <div className="flex flex-col">
@@ -187,10 +196,18 @@ export const InventoryGrid = ({
                   {item.type === 'dragon_egg' && <Button onClick={() => onUseItem(item)} className="w-full bg-game-accent hover:bg-game-accent/80">
                       {t(language, 'items.startIncubation')}
                     </Button>}
-                  {item.type !== 'dragon_egg' && (
+                  {item.type !== 'dragon_egg' && !isQuestItem(item.items[0]?.template_id) && (
                     <Button onClick={() => handleSellClick(item)} variant="destructive" className="w-full">
                       {item.count > 1 ? 'Продать' : `Продать за ${(item.items[0]?.sell_price !== undefined ? item.items[0].sell_price : Math.floor(item.value * 0.7))} ELL`}
                     </Button>
+                  )}
+                  {isQuestItem(item.items[0]?.template_id) && (
+                    <div className="w-full p-3 bg-purple-600/20 border border-purple-500/30 rounded-lg text-center">
+                      <div className="flex items-center justify-center gap-2 text-white text-sm">
+                        <Scroll className="w-4 h-4" />
+                        <span className="font-medium">Квестовый предмет - не продаётся</span>
+                      </div>
+                    </div>
                   )}
                 </div>}
             </div>

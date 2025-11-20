@@ -255,9 +255,32 @@ export const TreasureHuntAdmin = () => {
   };
 
   const deleteEvent = async (eventId: string) => {
-    if (!confirm('Вы уверены что хотите удалить это событие?')) return;
+    if (!confirm('Вы уверены что хотите удалить это событие? Все предметы этого события будут удалены у игроков.')) return;
 
     try {
+      // Получаем template_id события для удаления предметов
+      const eventToDelete = events.find(e => e.id === eventId);
+      
+      if (eventToDelete?.item_template_id) {
+        // Удаляем все предметы этого события у всех игроков
+        const { error: itemsError } = await supabase
+          .from('item_instances')
+          .delete()
+          .eq('template_id', eventToDelete.item_template_id);
+
+        if (itemsError) {
+          console.error('Error deleting quest items:', itemsError);
+          toast({
+            title: "Предупреждение",
+            description: "Событие удалено, но некоторые предметы могли остаться",
+            variant: "destructive",
+          });
+        } else {
+          console.log(`✅ Deleted all quest items with template_id ${eventToDelete.item_template_id}`);
+        }
+      }
+
+      // Удаляем само событие
       const { error } = await supabase
         .from('treasure_hunt_events')
         .delete()
@@ -267,7 +290,7 @@ export const TreasureHuntAdmin = () => {
 
       toast({
         title: "Успешно",
-        description: "Событие удалено",
+        description: "Событие и связанные предметы удалены",
       });
 
       await loadEvents();
