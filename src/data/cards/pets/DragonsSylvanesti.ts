@@ -1,7 +1,7 @@
 import { CardInfo } from '../types';
 
 export const sylvanestiDragons: CardInfo[] = [
-  { name: "Обычный песчаный дракон", type: "pet", description: "Простой песчаный дракон Сильванести.", faction: "Сильванести", image: "/lovable-uploads/d812fbd1-74f7-4cad-83c1-c009ba0f77b5.webp" },
+  { name: "Ординарный песчаный дракон", type: "pet", description: "Простой песчаный дракон Сильванести.", faction: "Сильванести", image: "/lovable-uploads/d812fbd1-74f7-4cad-83c1-c009ba0f77b5.webp" },
   { name: "Необычный песчаный дракон", type: "pet", description: "Улучшенный песчаный дракон Сильванести.", faction: "Сильванести", image: "/lovable-uploads/a6d08592-67c9-42b0-8625-4713b997376f.webp" },
   { name: "Редкий песчаный дракон", type: "pet", description: "Редкий представитель песчаных драконов.", faction: "Сильванести", image: "/lovable-uploads/0686d153-7d4f-4946-9212-f1ba3ebbca32.webp" },
   { name: "Эпический песчаный дракон", type: "pet", description: "Эпический песчаный дракон невероятной силы.", faction: "Сильванести", image: "/lovable-uploads/bccd3f95-c340-4678-bacf-5a589f379683.webp" },

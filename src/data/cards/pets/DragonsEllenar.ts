@@ -1,7 +1,7 @@
 import { CardInfo } from '../types';
 
 export const ellenarDragons: CardInfo[] = [
-  { name: "Обычный светлый дракон", type: "pet", description: "Простой светлый дракон Элленара.", faction: "Элленар", image: "/lovable-uploads/4e90788f-f14d-4972-b8e1-b89bf85bc890.webp" },
+  { name: "Ординарный светлый дракон", type: "pet", description: "Простой светлый дракон Элленара.", faction: "Элленар", image: "/lovable-uploads/4e90788f-f14d-4972-b8e1-b89bf85bc890.webp" },
   { name: "Необычный светлый дракон", type: "pet", description: "Улучшенный светлый дракон Элленара.", faction: "Элленар", image: "/lovable-uploads/7fb8c699-793a-44b4-a2d3-88f652d02df0.webp" },
   { name: "Редкий светлый дракон", type: "pet", description: "Редкий представитель светлых драконов.", faction: "Элленар", image: "/lovable-uploads/2e6a0e07-5212-42e8-8b87-f121469fcc0e.webp" },
   { name: "Эпический светлый дракон", type: "pet", description: "Эпический светлый дракон невероятной силы.", faction: "Элленар", image: "/lovable-uploads/09258293-d0bc-46b5-a0aa-d606cc9d860a.webp" },

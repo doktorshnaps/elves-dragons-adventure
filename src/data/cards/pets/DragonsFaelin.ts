@@ -1,7 +1,7 @@
 import { CardInfo } from '../types';
 
 export const faelinDragons: CardInfo[] = [
-  { name: "Обычный водный дракон", type: "pet", description: "Простой водный дракон Фаэлина.", faction: "Фаэлин", image: "/lovable-uploads/ad27c2c4-b16c-4acd-804e-3f8e5d3cd854.webp" },
+  { name: "Ординарный водный дракон", type: "pet", description: "Простой водный дракон Фаэлина.", faction: "Фаэлин", image: "/lovable-uploads/ad27c2c4-b16c-4acd-804e-3f8e5d3cd854.webp" },
   { name: "Необычный водный дракон", type: "pet", description: "Улучшенный водный дракон Фаэлина.", faction: "Фаэлин", image: "/lovable-uploads/b460c0ff-11e9-42f3-9513-449548603837.webp" },
   { name: "Редкий водный дракон", type: "pet", description: "Редкий представитель водных драконов.", faction: "Фаэлин", image: "/lovable-uploads/062fe717-3d1f-4352-b4a9-08e0b4d5725c.webp" },
   { name: "Эпический водный дракон", type: "pet", description: "Эпический водный дракон невероятной силы.", faction: "Фаэлин", image: "/lovable-uploads/f97dbde4-585c-4a9d-b47a-32fe1cf9392f.webp" },

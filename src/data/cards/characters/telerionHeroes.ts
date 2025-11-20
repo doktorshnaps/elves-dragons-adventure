@@ -23,7 +23,7 @@ export const telerionHeroes: CardInfo[] = [
     image: "/lovable-uploads/c12f7db9-7813-49e4-ad83-e8f0e436c186.webp"
   },
   {
-    name: "Маг",
+    name: "Чародей",
     type: "character",
     description: "Маг темной магии.",
     faction: "Тэлэрион",

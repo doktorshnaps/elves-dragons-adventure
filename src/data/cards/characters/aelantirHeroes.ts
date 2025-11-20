@@ -23,7 +23,7 @@ export const aelantirHeroes: CardInfo[] = [
     image: "/lovable-uploads/6b92a8a2-f7dd-4f8d-80d6-9c75092bdce0.webp"
   },
   {
-    name: "Маг",
+    name: "Чародей",
     type: "character",
     description: "Маг горной стихии.",
     faction: "Аэлантир",

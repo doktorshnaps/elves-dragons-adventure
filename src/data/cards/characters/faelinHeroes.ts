@@ -23,7 +23,7 @@ export const faelinHeroes: CardInfo[] = [
     image: "/lovable-uploads/4de24dee-aa59-49c8-a22e-77f9172110c0.webp"
   },
   {
-    name: "Маг",
+    name: "Чародей",
     type: "character",
     description: "Хранитель природной магии.",
     faction: "Фаэлин",

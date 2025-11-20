@@ -23,7 +23,7 @@ export const kaledorHeroes: CardInfo[] = [
     image: "/lovable-uploads/2e357adf-59ac-4ebc-8f34-fb77d085801d.webp"
   },
   {
-    name: "Маг",
+    name: "Чародей",
     type: "character",
     description: "Могущественный заклинатель, владеющий тайными искусствами.",
     faction: "Каледор",

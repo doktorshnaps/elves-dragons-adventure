@@ -1,7 +1,7 @@
 import { CardInfo } from '../types';
 
 export const telerionDragons: CardInfo[] = [
-  { name: "Обычный теневой дракон", type: "pet", description: "Простой теневой дракон Тэлэриона.", faction: "Тэлэрион", image: "/lovable-uploads/8a7f1faf-6eb6-4516-9a43-88db6cc83016.webp" },
+  { name: "Ординарный теневой дракон", type: "pet", description: "Простой теневой дракон Тэлэриона.", faction: "Тэлэрион", image: "/lovable-uploads/8a7f1faf-6eb6-4516-9a43-88db6cc83016.webp" },
   { name: "Необычный теневой дракон", type: "pet", description: "Улучшенный теневой дракон Тэлэриона.", faction: "Тэлэрион", image: "/lovable-uploads/755cdb02-5979-4591-9cf1-d9b72af904df.webp" },
   { name: "Редкий теневой дракон", type: "pet", description: "Редкий представитель теневых драконов.", faction: "Тэлэрион", image: "/lovable-uploads/fa290afb-f4ef-445f-b1e1-65ecf8b90bc2.webp" },
   { name: "Эпический теневой дракон", type: "pet", description: "Эпический теневой дракон невероятной силы.", faction: "Тэлэрион", image: "/lovable-uploads/c1ade134-8b22-40f8-a928-a1e07f4f0395.webp" },

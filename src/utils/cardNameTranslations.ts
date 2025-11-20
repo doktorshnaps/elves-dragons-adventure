@@ -7,9 +7,9 @@ export const cardNameTranslations: Record<string, Record<Language, string>> = {
     ru: 'Воин',
     en: 'Warrior'
   },
-  'Маг': {
-    ru: 'Маг',
-    en: 'Mage'
+  'Чародей': {
+    ru: 'Чародей',
+    en: 'Wizard'
   },
   'Лучник': {
     ru: 'Лучник',
