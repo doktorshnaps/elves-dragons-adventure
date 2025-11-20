@@ -259,17 +259,33 @@ export const useNFTCardIntegration = () => {
         });
       console.log(`🔄 NFT Sources (after filter): synced=${synced?.length || 0}, fetched=${fetched?.length || 0}, mintbase=${mintbaseCards.length}, total=${allNFTs.length}`);
       
-      // КРИТИЧНО: Если NFT карт нет вообще, принудительно очищаем localStorage
+      // КРИТИЧНО: Если NFT карт нет вообще, принудительно очищаем localStorage И game_data
       if (allNFTs.length === 0) {
-        console.log('🧹 No NFTs found in DB - force clearing localStorage cache');
+        console.log('🧹 No NFTs found in DB - force clearing localStorage and game_data cache');
         cleanupLocalNFTs([]); // Передаем пустой массив, чтобы удалить все NFT из кеша
         setNftCards([]);
+        
+        // КРИТИЧНО: Также очищаем game_data.cards от NFT через edge function
+        try {
+          const { data: cleanupResult, error: cleanupError } = await supabase.functions.invoke('cleanup-nft-gamedata', {
+            body: { wallet_address: accountId }
+          });
+          
+          if (cleanupError) {
+            console.error('Failed to cleanup game_data NFTs:', cleanupError);
+          } else {
+            console.log('✅ game_data cleanup result:', cleanupResult);
+          }
+        } catch (err) {
+          console.error('Error calling cleanup-nft-gamedata:', err);
+        }
         
         // Оповещаем систему об обновлении
         window.dispatchEvent(new CustomEvent('cardsUpdate', { 
           detail: { cards: [] } 
         }));
         window.dispatchEvent(new CustomEvent('cardInstancesUpdate'));
+        window.dispatchEvent(new CustomEvent('gameDataUpdated'));
         
         setIsLoading(false);
         toast({
