@@ -85,13 +85,11 @@ export const useItemOperations = () => {
       return false;
     }
 
-    // Рассчитываем цену продажи
+    // ИСПРАВЛЕНО: используем sell_price из БД напрямую, а не getItemPrice
+    // getItemPrice возвращает ЦЕНУ ПОКУПКИ (завышенную), а не цену продажи
     const sellPrice = item.sell_price !== undefined 
       ? item.sell_price 
-      : Math.floor(getItemPrice({ 
-          type: item.type as any, 
-          value: item.value || 0 
-        } as Item) * 0.7);
+      : Math.floor((item.value || 0) * 0.7); // Fallback: 70% от значения предмета
 
     const newBalance = gameData.balance + sellPrice;
 
