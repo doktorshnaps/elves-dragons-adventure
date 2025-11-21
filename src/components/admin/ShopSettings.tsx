@@ -7,7 +7,7 @@ import { Switch } from "@/components/ui/switch";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useWalletContext } from "@/contexts/WalletConnectContext";
-import { Loader2, Save, Info } from "lucide-react";
+import { Loader2, Save, Info, RefreshCw } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 
 interface ShopSettings {
@@ -24,6 +24,7 @@ export const ShopSettings = () => {
   const { toast } = useToast();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
   const [settings, setSettings] = useState<ShopSettings | null>(null);
   const [itemsPerRefresh, setItemsPerRefresh] = useState(50);
   const [refreshIntervalHours, setRefreshIntervalHours] = useState(24);
@@ -98,6 +99,41 @@ export const ShopSettings = () => {
       });
     } finally {
       setSaving(false);
+    }
+  };
+
+  const handleManualRefresh = async () => {
+    if (!accountId) {
+      toast({
+        title: "Ошибка",
+        description: "Не удалось определить адрес кошелька",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      setRefreshing(true);
+      const { error } = await supabase.rpc('reset_shop_inventory');
+
+      if (error) throw error;
+
+      toast({
+        title: "Успешно",
+        description: "Магазин обновлен, таймер перезапущен",
+      });
+
+      // Reload settings to show new reset time
+      await loadSettings();
+    } catch (error) {
+      console.error('Error refreshing shop:', error);
+      toast({
+        title: "Ошибка",
+        description: "Не удалось обновить магазин",
+        variant: "destructive",
+      });
+    } finally {
+      setRefreshing(false);
     }
   };
 
@@ -184,7 +220,24 @@ export const ShopSettings = () => {
             )}
           </div>
 
-          <div className="flex justify-end pt-4">
+          <div className="flex justify-between items-center pt-4">
+            <Button 
+              onClick={handleManualRefresh} 
+              disabled={refreshing}
+              variant="outline"
+            >
+              {refreshing ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Обновление...
+                </>
+              ) : (
+                <>
+                  <RefreshCw className="mr-2 h-4 w-4" />
+                  Обновить магазин
+                </>
+              )}
+            </Button>
             <Button onClick={handleSave} disabled={saving}>
               {saving ? (
                 <>
