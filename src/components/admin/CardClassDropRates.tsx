@@ -6,6 +6,7 @@ import { useWalletContext } from '@/contexts/WalletConnectContext';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { Loader2 } from 'lucide-react';
+import { useQueryClient } from '@tanstack/react-query';
 
 interface DropRate {
   id: string;
@@ -18,6 +19,7 @@ interface DropRate {
 
 export const CardClassDropRates = () => {
   const { accountId } = useWalletContext();
+  const queryClient = useQueryClient();
   const [heroRates, setHeroRates] = useState<DropRate[]>([]);
   const [dragonRates, setDragonRates] = useState<DropRate[]>([]);
   const [loading, setLoading] = useState(true);
@@ -83,7 +85,10 @@ export const CardClassDropRates = () => {
 
       if (error) throw error;
 
-      toast.success('Настройки шансов выпадения успешно сохранены');
+      // Инвалидируем кэш React Query чтобы обновить UI
+      await queryClient.invalidateQueries({ queryKey: ['cardDropRates'] });
+      
+      toast.success('Настройки шансов выпадения успешно сохранены и обновлены в UI');
       await loadDropRates();
     } catch (error: any) {
       console.error('Error saving drop rates:', error);
