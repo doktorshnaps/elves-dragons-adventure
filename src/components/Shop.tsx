@@ -120,6 +120,9 @@ export const Shop = ({ onClose }: ShopProps) => {
         });
       }
 
+      // Даем время для записи данных в БД перед обновлением кеша
+      await new Promise(resolve => setTimeout(resolve, 500));
+
       // Invalidate item instances cache to refresh inventory
       queryClient.invalidateQueries({ queryKey: ['itemInstances', accountId] });
       queryClient.invalidateQueries({ queryKey: ['cardInstances', accountId] });
@@ -130,6 +133,8 @@ export const Shop = ({ onClose }: ShopProps) => {
       
       const cardEvent = new CustomEvent('cardInstancesUpdate');
       window.dispatchEvent(cardEvent);
+      
+      console.log('✅ [Shop] Purchase complete, cache invalidated, events dispatched');
 
       setShowEffect(true);
       toast({
