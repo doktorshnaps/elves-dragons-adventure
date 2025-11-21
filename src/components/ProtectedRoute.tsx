@@ -2,7 +2,7 @@ import { useEffect } from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
 import { useWalletContext } from '@/contexts/WalletConnectContext';
 import { useWhitelist } from '@/hooks/useWhitelist';
-import { useAdminCheck } from '@/hooks/useAdminCheck';
+import { useAdmin } from '@/contexts/AdminContext';
 import { useMaintenanceStatus } from '@/hooks/useMaintenanceStatus';
 import { ComingSoon } from '@/components/ComingSoon';
 import { MaintenanceScreen } from '@/components/MaintenanceScreen';
@@ -14,7 +14,7 @@ interface ProtectedRouteProps {
 export const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
   const { accountId, isLoading: isConnecting } = useWalletContext();
   const isConnected = !!accountId;
-  const { isAdmin, loading: adminLoading } = useAdminCheck();
+  const { isAdmin, loading: adminLoading } = useAdmin();
   const { isWhitelisted, loading: whitelistLoading } = useWhitelist({ isAdmin });
   const { data: maintenanceStatus, isLoading: maintenanceLoading } = useMaintenanceStatus();
   const location = useLocation();

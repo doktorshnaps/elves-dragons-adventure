@@ -10,14 +10,14 @@ import { useToast } from '@/hooks/use-toast';
 import { Loader2, Plus, Trash2, Save } from 'lucide-react';
 import { useItemTemplates } from '@/hooks/useItemTemplates';
 import { useCraftingRecipes } from '@/hooks/useCraftingRecipes';
-import { useAdminCheck } from '@/hooks/useAdminCheck';
+import { useAdmin } from '@/contexts/AdminContext';
 import { useWalletContext } from '@/contexts/WalletConnectContext';
 
 export const CraftingRecipeManager = () => {
   const { toast } = useToast();
   const { templates } = useItemTemplates();
   const { recipes, loading: loadingRecipes, reload } = useCraftingRecipes();
-  const { isAdmin } = useAdminCheck();
+  const { isAdmin } = useAdmin();
   const { accountId } = useWalletContext();
   const [saving, setSaving] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);

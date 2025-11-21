@@ -1,7 +1,7 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
 import { useWalletContext } from "@/contexts/WalletConnectContext";
-import { useAdminCheck } from "@/hooks/useAdminCheck";
+import { useAdmin } from "@/contexts/AdminContext";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft } from "lucide-react";
@@ -26,7 +26,7 @@ const AdminSettingsContent = () => {
   const { language } = useLanguage();
   const navigate = useNavigate();
   const { accountId } = useWalletContext();
-  const { isAdmin, loading } = useAdminCheck();
+  const { isAdmin, loading } = useAdmin();
   
   // Check if user has super admin role via server-side verification
   const [isSuperAdmin, setIsSuperAdmin] = React.useState(false);
