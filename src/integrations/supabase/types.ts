@@ -2449,6 +2449,7 @@ export type Database = {
           dragon_lair_upgrades: Json
           gold: number
           initialized: boolean
+          inventory: Json
           iron: number
           marketplace_listings: Json
           selected_team: Json
