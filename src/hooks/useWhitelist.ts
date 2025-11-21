@@ -2,9 +2,14 @@ import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useWalletContext } from '@/contexts/WalletConnectContext';
 
-export const useWhitelist = () => {
+interface UseWhitelistOptions {
+  isAdmin?: boolean;
+}
+
+export const useWhitelist = (options?: UseWhitelistOptions) => {
   const { accountId } = useWalletContext();
   const isConnected = !!accountId;
+  const isAdmin = options?.isAdmin ?? false;
   const [isWhitelisted, setIsWhitelisted] = useState<boolean | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -53,12 +58,7 @@ export const useWhitelist = () => {
       }
 
       try {
-        // Проверяем, является ли пользователь администратором
-        const { data: isAdmin } = await supabase
-          .rpc('is_admin_wallet', { p_wallet_address: accountId });
-        
-        if (cancelled) return;
-        
+        // Если уже известно, что пользователь админ - пропускаем проверки
         if (isAdmin) {
           setIsWhitelisted(true);
           setLoading(false);
@@ -106,7 +106,7 @@ export const useWhitelist = () => {
     return () => {
       cancelled = true;
     };
-  }, [accountId, isConnected]);
+  }, [accountId, isConnected, isAdmin]);
 
   return { isWhitelisted, loading };
 };

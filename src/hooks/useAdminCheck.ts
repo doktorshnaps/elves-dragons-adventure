@@ -24,8 +24,10 @@ export const useAdminCheck = () => {
       return Boolean(data);
     },
     enabled: isConnected && !!accountId,
-    staleTime: 60 * 60 * 1000, // 1 час - админ статус меняется очень редко
-    gcTime: 2 * 60 * 60 * 1000, // 2 часа
+    staleTime: 2 * 60 * 60 * 1000, // 2 часа - админ статус меняется очень редко
+    gcTime: 4 * 60 * 60 * 1000, // 4 часа
+    refetchOnWindowFocus: false, // Не перезапрашивать при фокусе окна
+    refetchOnReconnect: false, // Не перезапрашивать при переподключении
   });
 
   return { isAdmin, loading };

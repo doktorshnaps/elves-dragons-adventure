@@ -14,8 +14,8 @@ interface ProtectedRouteProps {
 export const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
   const { accountId, isLoading: isConnecting } = useWalletContext();
   const isConnected = !!accountId;
-  const { isWhitelisted, loading: whitelistLoading } = useWhitelist();
   const { isAdmin, loading: adminLoading } = useAdminCheck();
+  const { isWhitelisted, loading: whitelistLoading } = useWhitelist({ isAdmin });
   const { data: maintenanceStatus, isLoading: maintenanceLoading } = useMaintenanceStatus();
   const location = useLocation();
   const lsConnected = (typeof window !== 'undefined' && localStorage.getItem('walletConnected') === 'true') || false;
