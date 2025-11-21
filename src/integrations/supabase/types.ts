@@ -2382,6 +2382,13 @@ export type Database = {
         }
         Returns: string
       }
+      admin_wipe_player: {
+        Args: {
+          p_admin_wallet_address: string
+          p_target_wallet_address: string
+        }
+        Returns: boolean
+      }
       atomic_balance_update: {
         Args: { p_price_deduction: number; p_wallet_address: string }
         Returns: Json
