@@ -24,6 +24,7 @@ export interface NestUpgrade {
     gt: number;
   };
   requiredItems: Array<{ item_id: string; quantity: number }>;
+  requiredBuildings?: Array<{ building_id: string; level: number }>;
   benefit: string;
   backgroundImageUrl?: string;
 }
@@ -289,6 +290,7 @@ export const useShelterState = () => {
         maxLevel: 8,
         cost: getUpgradeCost(buildingId, currentLevel),
         requiredItems: nextLevelConfig?.required_items || [],
+        requiredBuildings: nextLevelConfig?.required_buildings || [],
         benefit,
         backgroundImageUrl: currentLevelConfig?.background_image_url || nextLevelConfig?.background_image_url
       };
@@ -407,14 +409,26 @@ export const useShelterState = () => {
       }
     }
     
+    // Проверяем требуемые уровни других зданий
+    let hasRequiredBuildings = true;
+    if (upgrade.requiredBuildings && Array.isArray(upgrade.requiredBuildings)) {
+      for (const req of upgrade.requiredBuildings) {
+        const currentBuildingLevel = buildingLevels[req.building_id as keyof typeof buildingLevels] || 0;
+        if (currentBuildingLevel < req.level) {
+          hasRequiredBuildings = false;
+          break;
+        }
+      }
+    }
+    
     const levelOk = upgrade.level < upgrade.maxLevel;
     const woodOk = resources.wood >= (upgrade.cost.wood || 0);
     const stoneOk = resources.stone >= (upgrade.cost.stone || 0);
     const balanceOk = gameState.balance >= (upgrade.cost.balance || 0);
     const mhOk = canUpgradeBuilding(upgrade.id);
 
-    return levelOk && woodOk && stoneOk && balanceOk && mhOk && hasRequiredItems;
-  }, [inventoryCounts, resources, gameState.balance, getTemplate, canUpgradeBuilding]);
+    return levelOk && woodOk && stoneOk && balanceOk && mhOk && hasRequiredItems && hasRequiredBuildings;
+  }, [inventoryCounts, resources, gameState.balance, buildingLevels, getTemplate, canUpgradeBuilding]);
   
   const canAffordCraft = (recipe: CraftRecipe) => {
     const hasWorkshopWorkers = hasWorkersInBuilding('workshop');

@@ -12,6 +12,7 @@ interface BuildingConfig {
   cost_ell: number;
   cost_gt: number;
   required_items: any;
+  required_buildings: any;
   required_main_hall_level: number;
   upgrade_time_hours: number;
   storage_capacity: number;
