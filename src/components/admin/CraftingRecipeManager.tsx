@@ -22,10 +22,22 @@ export const CraftingRecipeManager = () => {
   const [saving, setSaving] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
 
+  // Поиск по предметам
+  const [itemSearchTerm, setItemSearchTerm] = useState("");
+  const [materialSearchTerm, setMaterialSearchTerm] = useState("");
+
   // Фильтруем только материалы для требований
   const materials = Array.from(templates.values()).filter(t => t.type === 'material');
   // Все предметы для результата
   const allItems = Array.from(templates.values());
+
+  // Фильтруем предметы по поисковому запросу
+  const filteredAllItems = allItems.filter(item =>
+    item.name.toLowerCase().includes(itemSearchTerm.toLowerCase())
+  );
+  const filteredMaterials = materials.filter(mat =>
+    mat.name.toLowerCase().includes(materialSearchTerm.toLowerCase())
+  );
 
   const [formData, setFormData] = useState({
     recipe_name: '',
@@ -256,23 +268,31 @@ export const CraftingRecipeManager = () => {
           <div className="grid grid-cols-3 gap-4">
             <div>
               <Label>Результат крафта</Label>
-              <Select
-                value={String(formData.result_item_id)}
-                onValueChange={(value) =>
-                  setFormData({ ...formData, result_item_id: parseInt(value) })
-                }
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Выберите предмет" />
-                </SelectTrigger>
-                <SelectContent>
-                  {allItems.map((item) => (
-                    <SelectItem key={item.id} value={String(item.id)}>
-                      {item.name} ({item.type})
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <div className="space-y-2">
+                <Input
+                  placeholder="Поиск предмета..."
+                  value={itemSearchTerm}
+                  onChange={(e) => setItemSearchTerm(e.target.value)}
+                  className="h-9"
+                />
+                <Select
+                  value={String(formData.result_item_id)}
+                  onValueChange={(value) =>
+                    setFormData({ ...formData, result_item_id: parseInt(value) })
+                  }
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Выберите предмет" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {filteredAllItems.map((item) => (
+                      <SelectItem key={item.id} value={String(item.id)}>
+                        {item.name} ({item.type})
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
 
             <div>
@@ -309,6 +329,13 @@ export const CraftingRecipeManager = () => {
                 Добавить материал
               </Button>
             </div>
+            
+            <Input
+              placeholder="Поиск материала..."
+              value={materialSearchTerm}
+              onChange={(e) => setMaterialSearchTerm(e.target.value)}
+              className="h-9 mb-2"
+            />
 
             {formData.required_materials.map((material, index) => (
               <div key={index} className="flex gap-2 mb-2">
@@ -320,7 +347,7 @@ export const CraftingRecipeManager = () => {
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    {materials.map((mat) => (
+                    {filteredMaterials.map((mat) => (
                       <SelectItem key={mat.item_id} value={mat.item_id}>
                         {mat.name}
                       </SelectItem>
