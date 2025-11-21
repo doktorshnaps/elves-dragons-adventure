@@ -18,6 +18,7 @@ interface BuildingDetailsPanelProps {
     stone: number;
   };
   inventoryCounts?: Record<string, number>;
+  buildingLevels?: Record<string, number>;
 }
 export const BuildingDetailsPanel = ({
   selectedBuilding,
@@ -27,10 +28,24 @@ export const BuildingDetailsPanel = ({
   isUpgradeReady,
   insideDialog = false,
   resources,
-  inventoryCounts = {}
+  inventoryCounts = {},
+  buildingLevels = {}
 }: BuildingDetailsPanelProps) => {
   const { language } = useLanguage();
   const { getItemName, getTemplate } = useItemTemplates();
+  
+  // Маппинг ID зданий на их названия
+  const buildingNames: Record<string, string> = {
+    'main_hall': t(language, 'shelter.mainHall') || 'Главный зал',
+    'workshop': t(language, 'shelter.workshop') || 'Мастерская',
+    'storage': t(language, 'shelter.storage') || 'Склад',
+    'sawmill': t(language, 'shelter.sawmill') || 'Лесопилка',
+    'quarry': t(language, 'shelter.quarry') || 'Каменоломня',
+    'barracks': t(language, 'shelter.barracksBuilding') || 'Казармы',
+    'dragon_lair': t(language, 'shelter.dragonLairBuilding') || 'Драконье логово',
+    'medical': t(language, 'shelter.medicalBuilding') || 'Медицинский блок',
+    'forge': 'Кузница'
+  };
 
   // Debug: compute disabled state for Upgrade button
   const computedDisabled = !isUpgradeReady && (isUpgrading || !canAfford);
@@ -134,6 +149,39 @@ export const BuildingDetailsPanel = ({
                 </div>}
             </div>
           </div>
+
+          {/* Required Buildings */}
+          {selectedBuilding.requiredBuildings && selectedBuilding.requiredBuildings.length > 0 && (
+            <div className="space-y-2">
+              <h3 className="text-lg font-semibold flex items-center gap-2">
+                <span className="text-xl">🏛️</span>
+                {t(language, 'shelter.requiredBuildings') || 'Требуемые здания'}
+              </h3>
+              <div className="space-y-1">
+                {selectedBuilding.requiredBuildings.map((req, idx) => {
+                  const buildingName = buildingNames[req.building_id] || req.building_id;
+                  const currentLevel = buildingLevels[req.building_id] || 0;
+                  const isSatisfied = currentLevel >= req.level;
+                  
+                  return (
+                    <div 
+                      key={idx} 
+                      className={`flex items-center justify-between px-3 py-2 rounded-lg border ${
+                        isSatisfied 
+                          ? 'border-green-500/50 bg-green-500/10' 
+                          : 'border-red-500/50 bg-red-500/10'
+                      }`}
+                    >
+                      <span className="text-sm font-medium">{buildingName}</span>
+                      <span className={`text-sm font-bold ${isSatisfied ? 'text-green-500' : 'text-red-500'}`}>
+                        {t(language, 'shelter.level')} {req.level} ({currentLevel})
+                      </span>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
 
           {/* Required Items */}
           {normalizedRequiredItems && normalizedRequiredItems.length > 0 && (
