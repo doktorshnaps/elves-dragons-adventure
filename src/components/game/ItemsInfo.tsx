@@ -267,7 +267,7 @@ const ItemCard = ({ item }: { item: ItemTemplate }) => {
           {actualDropChance !== null && (
             <div className="flex justify-between">
               <span className="text-white/60">{translateItemText(language, 'Шанс выпадения')}</span>
-              <span className="text-orange-400 font-medium">{(actualDropChance * 100).toFixed(2)}%</span>
+              <span className="text-orange-400 font-medium">{actualDropChance.toFixed(2)}%</span>
             </div>
           )}
         </div>
