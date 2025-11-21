@@ -49,7 +49,6 @@ export const DeckSelection = ({
     label: string;
     action: () => void;
   } | null>(null);
-  const [localCards, setLocalCards] = useState<CardType[]>(cards);
   const {
     toast
   } = useToast();
@@ -65,13 +64,9 @@ export const DeckSelection = ({
     cardInstances
   } = useCardInstances();
 
-  // Создаем карты с актуальным здоровьем из card_instances
-  const cardsWithHealthSync = useMemo(() => {
+  // Создаем карты с актуальным здоровьем из card_instances - используем напрямую без дополнительного state
+  const localCards = useMemo(() => {
     const combinedCards = [...cards, ...nftCards];
-    
-    if (import.meta.env.DEV) {
-      console.log(`🎮 Combining: ${cards.length} cards + ${nftCards.length} NFT = ${combinedCards.length} total`);
-    }
     
     // Убираем дубликаты по ID
     const uniqueCards = combinedCards.filter((card, index, arr) => arr.findIndex(c => c.id === card.id) === index);
@@ -94,46 +89,27 @@ export const DeckSelection = ({
     
     return result;
   }, [cards, nftCards, cardInstances]);
-
-  // Обновляем локальные карты, исключаем только карты которые действительно в медпункте
-  useEffect(() => {
-    // НЕ фильтруем карты - показываем все доступные карты
-    setLocalCards(cardsWithHealthSync);
-    console.log('🎮 Updated local cards with health sync:', cardsWithHealthSync.length, 'total cards');
-  }, [cardsWithHealthSync]);
   const heroes = useMemo(() => {
-    const filtered = localCards.filter(card => {
-      const isHero = card.type === 'character';
-      if (card.isNFT) {
-        console.log(`🎴 NFT Card filtering: ${card.name} type=${card.type} isHero=${isHero}`);
-      }
-      return isHero;
-    });
+    const filtered = localCards.filter(card => card.type === 'character');
+    
     if (heroSortBy === 'power') {
       return [...filtered].sort((a, b) => b.power - a.power);
     }
     if (heroSortBy === 'rarity') {
       return [...filtered].sort((a, b) => b.rarity - a.rarity);
     }
-    console.log(`✅ Filtered ${filtered.length} heroes (${filtered.filter(h => h.isNFT).length} NFT)`);
     return filtered;
   }, [localCards, heroSortBy]);
 
   const dragons = useMemo(() => {
-    const filtered = localCards.filter(card => {
-      const isDragon = card.type === 'pet';
-      if (card.isNFT) {
-        console.log(`🐉 NFT Card filtering: ${card.name} type=${card.type} isDragon=${isDragon}`);
-      }
-      return isDragon;
-    });
+    const filtered = localCards.filter(card => card.type === 'pet');
+    
     if (dragonSortBy === 'power') {
       return [...filtered].sort((a, b) => b.power - a.power);
     }
     if (dragonSortBy === 'rarity') {
       return [...filtered].sort((a, b) => b.rarity - a.rarity);
     }
-    console.log(`✅ Filtered ${filtered.length} dragons (${filtered.filter(d => d.isNFT).length} NFT)`);
     return filtered;
   }, [localCards, dragonSortBy]);
   const isHeroSelected = (hero: CardType) => {
@@ -164,55 +140,35 @@ export const DeckSelection = ({
   const getAvailableDragons = (heroFaction?: string, heroRarity?: number) => {
     if (!heroFaction) return [];
     
-    console.log(`🔍 Finding dragons for hero: faction=${heroFaction}, rarity=${heroRarity}`);
-    
-    const availableDragons = dragons.filter(dragon => {
+    return dragons.filter(dragon => {
       const sameFaction = dragon.faction === heroFaction;
       const notSelected = !isDragonSelected(dragon);
       const rarityOk = !heroRarity || (dragon.rarity ?? 1) <= heroRarity;
       
-      console.log(`  🐉 Dragon ${dragon.name} (${dragon.id}): faction=${dragon.faction} sameFaction=${sameFaction}, rarity=${dragon.rarity}, rarityOk=${rarityOk}, notSelected=${notSelected}, isNFT=${dragon.isNFT}`);
-      
       return sameFaction && rarityOk && notSelected;
     });
-    
-    console.log(`✅ Found ${availableDragons.length} available dragons`);
-    return availableDragons;
   };
   const handleHeroSelect = (hero: CardType) => {
-    console.log('🎯 DeckSelection handleHeroSelect called for hero:', hero.name);
-    console.log('🎯 selectedPairs.length:', selectedPairs.length);
-    console.log('🎯 Is hero already selected in filtered pairs?', selectedPairs.some(pair => pair.hero.id === hero.id));
-    
-    // Note: We don't check selectedPairs.length here because the real limit check is in handlePairSelect
-    console.log('🎯 Calling onPairSelect from DeckSelection');
     onPairSelect(hero);
     setShowHeroDeck(false);
   };
   const handleDragonSelect = (dragon: CardType) => {
-    console.log(`🐉 handleDragonSelect called: ${dragon.name} (faction: ${dragon.faction}, rarity: ${dragon.rarity}, isNFT: ${dragon.isNFT})`);
-    
     if (activePairIndex !== null) {
       const pair = selectedPairs[activePairIndex];
       if (pair) {
-        console.log(`  👤 Selected hero: ${pair.hero.name} (faction: ${pair.hero.faction}, rarity: ${pair.hero.rarity}, isNFT: ${pair.hero.isNFT})`);
-        
         if (pair.hero.faction !== dragon.faction) {
-          console.log(`  ❌ Faction mismatch: ${pair.hero.faction} !== ${dragon.faction}`);
           toast({
             title: 'Неверная фракция',
             description: 'Дракон должен быть той же фракции, что и герой',
             variant: 'destructive'
           });
         } else if ((pair.hero.rarity ?? 1) < (dragon.rarity ?? 1)) {
-          console.log(`  ❌ Rarity check failed: hero rarity ${pair.hero.rarity ?? 1} < dragon rarity ${dragon.rarity ?? 1}`);
           toast({
             title: 'Недостаточный ранг героя',
             description: 'Герой может управлять драконом своего ранга или ниже',
             variant: 'destructive'
           });
         } else {
-          console.log(`  ✅ Assigning dragon to hero`);
           onPairAssignDragon(activePairIndex, dragon);
         }
       }
@@ -222,7 +178,6 @@ export const DeckSelection = ({
     }
 
     // Fallback: assign to any available hero without a dragon of the same faction
-    console.log(`  🔄 Fallback: finding hero with same faction without dragon`);
     const heroWithSameFaction = selectedPairs.find(pair => 
       pair.hero.faction === dragon.faction && 
       !pair.dragon && 
@@ -231,10 +186,7 @@ export const DeckSelection = ({
     
     if (heroWithSameFaction) {
       const pairIndex = selectedPairs.findIndex(pair => pair === heroWithSameFaction);
-      console.log(`  ✅ Found hero ${heroWithSameFaction.hero.name} at index ${pairIndex}`);
       onPairAssignDragon(pairIndex, dragon);
-    } else {
-      console.log(`  ❌ No suitable hero found for this dragon`);
     }
     setShowDragonDeck(false);
   };
