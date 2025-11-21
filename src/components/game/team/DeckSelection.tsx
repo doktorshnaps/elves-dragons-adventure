@@ -93,10 +93,18 @@ export const DeckSelection = ({
     const filtered = localCards.filter(card => card.type === 'character');
     
     if (heroSortBy === 'power') {
-      return [...filtered].sort((a, b) => b.power - a.power);
+      return [...filtered].sort((a, b) => {
+        const powerA = a.power ?? 0;
+        const powerB = b.power ?? 0;
+        return powerB - powerA; // От большего к меньшему
+      });
     }
     if (heroSortBy === 'rarity') {
-      return [...filtered].sort((a, b) => b.rarity - a.rarity);
+      return [...filtered].sort((a, b) => {
+        const rarityA = a.rarity ?? 1;
+        const rarityB = b.rarity ?? 1;
+        return rarityB - rarityA; // От большего к меньшему
+      });
     }
     return filtered;
   }, [localCards, heroSortBy]);
@@ -105,10 +113,18 @@ export const DeckSelection = ({
     const filtered = localCards.filter(card => card.type === 'pet');
     
     if (dragonSortBy === 'power') {
-      return [...filtered].sort((a, b) => b.power - a.power);
+      return [...filtered].sort((a, b) => {
+        const powerA = a.power ?? 0;
+        const powerB = b.power ?? 0;
+        return powerB - powerA; // От большего к меньшему
+      });
     }
     if (dragonSortBy === 'rarity') {
-      return [...filtered].sort((a, b) => b.rarity - a.rarity);
+      return [...filtered].sort((a, b) => {
+        const rarityA = a.rarity ?? 1;
+        const rarityB = b.rarity ?? 1;
+        return rarityB - rarityA; // От большего к меньшему
+      });
     }
     return filtered;
   }, [localCards, dragonSortBy]);
