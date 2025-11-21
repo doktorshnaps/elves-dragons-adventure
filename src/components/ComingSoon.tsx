@@ -2,12 +2,12 @@ import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { useWalletContext } from '@/contexts/WalletConnectContext';
 import { useToast } from '@/hooks/use-toast';
-import { useBanStatus } from '@/hooks/useBanStatus';
+import { useBanStatusContext } from '@/contexts/BanStatusContext';
 
 export const ComingSoon = () => {
   const { disconnect: disconnectWallet } = useWalletContext();
   const { toast } = useToast();
-  const { isBanned, loading: banLoading } = useBanStatus();
+  const { isBanned, loading: banLoading } = useBanStatusContext();
 
   const handleDisconnect = async () => {
     try {
@@ -50,13 +50,13 @@ export const ComingSoon = () => {
             <div className="w-full max-w-xs sm:max-w-sm md:max-w-md lg:max-w-lg mx-auto h-48 md:h-64 bg-game-surface/20 rounded-lg animate-pulse" />
           ) : isBanned ? (
             <img 
-              src="/blocked-player.png" 
+              src="/blocked-player.webp" 
               alt="Заблокированный игрок"
               className="w-full max-w-xs sm:max-w-sm md:max-w-md lg:max-w-lg mx-auto max-h-[30vh] md:max-h-[40vh] object-contain rounded-lg shadow-2xl"
             />
           ) : (
             <img 
-              src="/coming-soon.png" 
+              src="/coming-soon.webp" 
               alt="Coming Soon"
               className="w-full max-w-xs sm:max-w-sm md:max-w-md mx-auto max-h-[30vh] md:max-h-[40vh] object-contain rounded-lg shadow-2xl"
             />
