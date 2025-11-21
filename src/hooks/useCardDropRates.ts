@@ -61,8 +61,8 @@ export const useCardDropRates = () => {
       
       return { heroes, dragons };
     },
-    staleTime: 5 * 60 * 1000, // 5 минут
+    staleTime: 0, // Всегда получать свежие данные
     gcTime: 10 * 60 * 1000, // 10 минут
-    initialData: defaultDropRates
+    placeholderData: defaultDropRates // Использовать как placeholder, а не initialData
   });
 };
