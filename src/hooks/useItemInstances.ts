@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useWalletContext } from '@/contexts/WalletConnectContext';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
@@ -39,6 +39,17 @@ export const useItemInstances = () => {
   const refetch = useCallback(() => {
     queryClient.invalidateQueries({ queryKey: ['itemInstances', accountId] });
   }, [queryClient, accountId]);
+
+  // Слушаем событие itemInstancesUpdate для обновления кеша
+  useEffect(() => {
+    const handleUpdate = () => {
+      console.log('🔄 [useItemInstances] Received itemInstancesUpdate event, invalidating cache');
+      refetch();
+    };
+
+    window.addEventListener('itemInstancesUpdate', handleUpdate);
+    return () => window.removeEventListener('itemInstancesUpdate', handleUpdate);
+  }, [refetch]);
 
   /**
    * Add N new item instances to DB
