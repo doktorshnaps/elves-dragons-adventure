@@ -66,9 +66,13 @@ export const useCardPackOpening = () => {
 
       console.log(`📦 Received ${newCards.length} cards from edge function`);
 
-      // Обновляем локальные данные из Supabase чтобы исключить рассинхрон
-      // НЕ вызываем loadGameData здесь, так как это вызовет множественные loadCardInstances
-      // Realtime subscription автоматически обновит данные
+      // Инвалидируем кеш item_instances для немедленного обновления UI
+      const event = new CustomEvent('itemInstancesUpdate');
+      window.dispatchEvent(event);
+      
+      // Инвалидируем кеш card_instances для новых карт
+      const cardEvent = new CustomEvent('cardInstancesUpdate');
+      window.dispatchEvent(cardEvent);
 
       // Если получены карты, показываем их по очереди
       if (newCards.length > 0) {
