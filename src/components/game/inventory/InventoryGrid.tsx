@@ -198,7 +198,7 @@ export const InventoryGrid = ({
                     </Button>}
                   {item.type !== 'dragon_egg' && !isQuestItem(item.items[0]?.template_id) && (
                     <Button onClick={() => handleSellClick(item)} variant="destructive" className="w-full">
-                      {item.count > 1 ? 'Продать' : `Продать за ${(item.items[0]?.sell_price !== undefined ? item.items[0].sell_price : Math.floor(item.value * 0.7))} ELL`}
+                      {item.count > 1 ? 'Продать' : `Продать за ${(item.items[0]?.sell_price ?? 1)} ELL`}
                     </Button>
                   )}
                   {isQuestItem(item.items[0]?.template_id) && (
@@ -222,9 +222,7 @@ export const InventoryGrid = ({
         onConfirm={handleSellConfirm}
         itemName={selectedItemForSell.name}
         maxQuantity={selectedItemForSell.count}
-        sellPrice={selectedItemForSell.items[0]?.sell_price !== undefined 
-          ? selectedItemForSell.items[0].sell_price 
-          : Math.floor(selectedItemForSell.value * 0.7)}
+        sellPrice={selectedItemForSell.items[0]?.sell_price ?? 1}
       />
     )}
     </div>;
