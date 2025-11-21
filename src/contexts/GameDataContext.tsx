@@ -63,8 +63,6 @@ export const GameDataProvider = ({ children }: { children: ReactNode }) => {
   const queryClient = useQueryClient();
   const lastUpdateRef = useRef<number>(Date.now());
 
-  console.log('🎮 GameDataProvider rendered for wallet:', accountId);
-
   const { 
     data: gameData = DEFAULT_GAME_DATA, 
     isLoading: loading,
@@ -75,18 +73,13 @@ export const GameDataProvider = ({ children }: { children: ReactNode }) => {
       const address = accountId || localStorage.getItem('walletAccountId');
       
       if (!address) {
-        console.log('⏭️ No wallet address, returning default game data');
         return DEFAULT_GAME_DATA;
       }
 
-      console.time(`⏱️ Load Game Data (${address})`);
-      console.log('🔄 Loading game data from DB for wallet:', address);
-      
       const gameDataArray = await loadGameDataDeduped(address);
 
       if (gameDataArray && gameDataArray.length > 0) {
         const gameRecord = gameDataArray[0];
-        console.log('✅ Game data loaded successfully:', gameRecord);
         
         const rawCards = (gameRecord.cards as unknown as Card[]) || [];
         const normalizedCards = normalizeCardsHealth(rawCards);
@@ -138,13 +131,9 @@ export const GameDataProvider = ({ children }: { children: ReactNode }) => {
           localStorageBatcher.setItem('adventureCurrentMonster', newGameData.adventureCurrentMonster);
         }
         
-        console.timeEnd(`⏱️ Load Game Data (${address})`);
-        
         return newGameData;
       }
 
-      console.log('❌ No game data found');
-      console.timeEnd(`⏱️ Load Game Data (${address})`);
       return DEFAULT_GAME_DATA;
     },
     enabled: !!accountId,

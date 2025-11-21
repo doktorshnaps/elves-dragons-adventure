@@ -34,7 +34,6 @@ export const useCardHealthSync = () => {
     });
 
     if (hasChanges) {
-      console.log('🔄 Syncing card health from card_instances (local UI update only)');
       try {
         localStorage.setItem('gameCards', JSON.stringify(updatedCards));
         
@@ -61,10 +60,12 @@ export const useCardHealthSync = () => {
     return () => window.removeEventListener('cardInstanceHealthUpdate', handleHealthUpdate);
   }, [loadCardInstances]);
 
-  // Load instances on mount to ensure initial sync
+  // Load instances only if needed (on mount and when instances are empty)
   useEffect(() => {
-    loadCardInstances();
-  }, [loadCardInstances]);
+    if (cardInstances.length === 0) {
+      loadCardInstances();
+    }
+  }, []);
 
   // Auto-sync when card instances change
   useEffect(() => {

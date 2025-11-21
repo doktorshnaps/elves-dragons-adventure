@@ -11,6 +11,5 @@ import { useGameDataContext } from '@/contexts/GameDataContext';
  * New code should use useGameDataContext() directly from @/contexts/GameDataContext
  */
 export const useGameData = () => {
-  console.log('⚠️ useGameData wrapper called');
   return useGameDataContext();
 };
