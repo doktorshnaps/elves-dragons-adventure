@@ -5,7 +5,7 @@ import { TeamPair } from '@/types/teamBattle';
 import { useLanguage } from '@/hooks/useLanguage';
 import { t } from '@/utils/translations';
 import { getTranslatedCardName } from '@/utils/cardNameTranslations';
-import { resolveCardImageSync } from '@/utils/cardImageResolver';
+import { CardImage } from '@/components/game/cards/CardImage';
 
 interface AttackOrderSelectorProps {
   playerPairs: TeamPair[];
@@ -89,20 +89,11 @@ export const AttackOrderSelector: React.FC<AttackOrderSelectorProps> = ({
                       {/* Hero Image */}
                       <div className="flex justify-center">
                         <div className="w-16 h-16 rounded-lg overflow-hidden border-2 border-white/30 bg-black/30">
-                          {(() => {
-                            const heroImage = resolveCardImageSync(pair.hero) || pair.hero.image;
-                            return heroImage ? (
-                              <img 
-                                src={heroImage} 
-                                alt={pair.hero.name}
-                                className="w-full h-full object-cover"
-                              />
-                            ) : (
-                              <div className="w-full h-full flex items-center justify-center text-white">
-                                <span className="text-xl">⚔️</span>
-                              </div>
-                            );
-                          })()}
+                          <CardImage 
+                            image={pair.hero.image} 
+                            name={pair.hero.name}
+                            card={pair.hero}
+                          />
                         </div>
                       </div>
                       
@@ -114,20 +105,11 @@ export const AttackOrderSelector: React.FC<AttackOrderSelectorProps> = ({
                           <>
                             <div className="flex justify-center mt-1">
                               <div className="w-12 h-12 rounded-lg overflow-hidden border-2 border-white/30 bg-black/30">
-                                {(() => {
-                                  const dragonImage = resolveCardImageSync(pair.dragon) || pair.dragon.image;
-                                  return dragonImage ? (
-                                    <img 
-                                      src={dragonImage} 
-                                      alt={pair.dragon.name}
-                                      className="w-full h-full object-cover"
-                                    />
-                                  ) : (
-                                    <div className="w-full h-full flex items-center justify-center text-white">
-                                      <span className="text-sm">🐲</span>
-                                    </div>
-                                  );
-                                })()}
+                                <CardImage 
+                                  image={pair.dragon.image} 
+                                  name={pair.dragon.name}
+                                  card={pair.dragon}
+                                />
                               </div>
                             </div>
                             <div className="text-xs text-white/70 mt-1">{t(language, 'attackOrder.dragon')}</div>
