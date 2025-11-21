@@ -469,13 +469,16 @@ export const DungeonItemDrops = () => {
                     placeholder="Поиск монстра..."
                     value={monsterSearchTerm}
                     onChange={(e) => setMonsterSearchTerm(e.target.value)}
+                    onClick={(e) => e.stopPropagation()}
+                    onKeyDown={(e) => e.stopPropagation()}
                     className="h-9 mb-2"
                   />
-                  {allMonsters[parseInt(newDrop.dungeon_number)]
-                    ?.filter((monster) =>
-                      monster.toLowerCase().includes(monsterSearchTerm.toLowerCase())
-                    )
-                    .map((monster) => (
+                  <div className="max-h-[300px] overflow-y-auto pr-2 space-y-2">
+                    {allMonsters[parseInt(newDrop.dungeon_number)]
+                      ?.filter((monster) =>
+                        monster.toLowerCase().includes(monsterSearchTerm.toLowerCase())
+                      )
+                      .map((monster) => (
                     <div key={monster} className="flex items-center space-x-2">
                       <Checkbox
                         id={`new-${monster}`}
@@ -501,7 +504,8 @@ export const DungeonItemDrops = () => {
                         {monster}
                       </label>
                     </div>
-                  ))}
+                      ))}
+                  </div>
                 </div>
               </PopoverContent>
             </Popover>
@@ -615,13 +619,16 @@ export const DungeonItemDrops = () => {
                             placeholder="Поиск монстра..."
                             value={monsterSearchTerm}
                             onChange={(e) => setMonsterSearchTerm(e.target.value)}
+                            onClick={(e) => e.stopPropagation()}
+                            onKeyDown={(e) => e.stopPropagation()}
                             className="h-8 mb-2"
                           />
-                          {allMonsters[drop.dungeon_number]
-                            ?.filter((monster) =>
-                              monster.toLowerCase().includes(monsterSearchTerm.toLowerCase())
-                            )
-                            .map((monster) => (
+                          <div className="max-h-[300px] overflow-y-auto pr-2 space-y-2">
+                            {allMonsters[drop.dungeon_number]
+                              ?.filter((monster) =>
+                                monster.toLowerCase().includes(monsterSearchTerm.toLowerCase())
+                              )
+                              .map((monster) => (
                             <div key={monster} className="flex items-center space-x-2">
                               <Checkbox
                                 id={`drop-${drop.id}-${monster}`}
@@ -650,6 +657,7 @@ export const DungeonItemDrops = () => {
                               </label>
                             </div>
                           ))}
+                          </div>
                         </div>
                       </PopoverContent>
                     </Popover>
