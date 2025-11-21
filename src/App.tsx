@@ -6,6 +6,7 @@ import { LanguageProvider } from './contexts/LanguageContext';
 import { BrightnessProvider } from './contexts/BrightnessContext';
 import { MusicProvider } from './contexts/MusicContext';
 import { QueryProvider } from './providers/QueryProvider';
+import { AdminProvider } from './contexts/AdminContext';
 import { useRoutePreloader } from './hooks/useRoutePreloader';
 import { useNFTStatsRecalculation } from './hooks/useNFTStatsRecalculation';
 import { useSecureStorage } from './hooks/useSecureStorage';
@@ -103,13 +104,14 @@ function App() {
   return (
     <ErrorBoundary>
       <QueryProvider>
-        <BrightnessProvider>
-          <MusicProvider>
-            <LanguageProvider>
-              <div className="overflow-x-hidden max-w-full w-full">
-                <Suspense fallback={<PageLoader />}>
-                  <MusicController />
-                  <Routes>
+        <AdminProvider>
+          <BrightnessProvider>
+            <MusicProvider>
+              <LanguageProvider>
+                <div className="overflow-x-hidden max-w-full w-full">
+                  <Suspense fallback={<PageLoader />}>
+                    <MusicController />
+                    <Routes>
                     <Route path="/" element={
                       localStorage.getItem('walletConnected') === 'true' 
                         ? <Navigate to="/menu" replace /> 
@@ -147,6 +149,7 @@ function App() {
             </LanguageProvider>
           </MusicProvider>
         </BrightnessProvider>
+        </AdminProvider>
       </QueryProvider>
     </ErrorBoundary>
   );
