@@ -32,8 +32,6 @@ export const useInventoryLogic = (initialInventory: Item[]) => {
   const balance = gameData.balance;
 
   const getItemImage = (item: Item) => {
-    console.log('🖼️ getItemImage called for:', item.name, 'with image:', item.image);
-    
     // Use image_url from database if available
     if (item.image_url) {
       return item.image_url;
@@ -41,13 +39,11 @@ export const useInventoryLogic = (initialInventory: Item[]) => {
     
     // Проверяем централизованный маппинг изображений предметов
     if (itemImagesByName[item.name]) {
-      console.log('🖼️ Found image in itemImagesByName for:', item.name);
       return itemImagesByName[item.name];
     }
     
     // Ищем в shopItems по имени
     const shopItem = shopItems.find(shopItem => shopItem.name === item.name);
-    console.log('🖼️ Fallback to shopItem image:', shopItem?.image || 'none');
     return shopItem?.image || '';
   };
 

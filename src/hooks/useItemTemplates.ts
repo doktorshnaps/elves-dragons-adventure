@@ -1,5 +1,6 @@
-import { useEffect, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { useMemo } from "react";
 
 export interface ItemTemplate {
   id: number;
@@ -14,43 +15,35 @@ export interface ItemTemplate {
 }
 
 export const useItemTemplates = () => {
-  const [byItemId, setByItemId] = useState<Map<string, ItemTemplate>>(new Map());
-  const [byNumericId, setByNumericId] = useState<Map<string, ItemTemplate>>(new Map());
-  const [byName, setByName] = useState<Map<string, ItemTemplate>>(new Map());
-  const [loading, setLoading] = useState(true);
+  const { data: templates, isLoading: loading } = useQuery({
+    queryKey: ['itemTemplates'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('item_templates')
+        .select('id, item_id, name, type, rarity, description, value, image_url');
 
-  useEffect(() => {
-    const loadTemplates = async () => {
-      try {
-        const { data, error } = await supabase
-          .from('item_templates')
-          .select('id, item_id, name, type, rarity, description, value, image_url');
+      if (error) throw error;
 
-        if (error) throw error;
+      const itemIdMap = new Map<string, ItemTemplate>();
+      const numericIdMap = new Map<string, ItemTemplate>();
+      const nameMap = new Map<string, ItemTemplate>();
 
-        const itemIdMap = new Map<string, ItemTemplate>();
-        const numericIdMap = new Map<string, ItemTemplate>();
-        const nameMap = new Map<string, ItemTemplate>();
+      data?.forEach((template) => {
+        const t = template as unknown as ItemTemplate;
+        if (t.item_id) itemIdMap.set(String(t.item_id), t);
+        if (typeof t.id !== 'undefined') numericIdMap.set(String(t.id), t);
+        if (t.name) nameMap.set(t.name, t);
+      });
 
-        data?.forEach((template) => {
-          const t = template as unknown as ItemTemplate;
-          if (t.item_id) itemIdMap.set(String(t.item_id), t);
-          if (typeof t.id !== 'undefined') numericIdMap.set(String(t.id), t);
-          if (t.name) nameMap.set(t.name, t);
-        });
+      return { itemIdMap, numericIdMap, nameMap };
+    },
+    staleTime: 1000 * 60 * 5, // 5 minutes
+    gcTime: 1000 * 60 * 10, // 10 minutes
+  });
 
-        setByItemId(itemIdMap);
-        setByNumericId(numericIdMap);
-        setByName(nameMap);
-      } catch (error) {
-        console.error('Error loading item templates:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    loadTemplates();
-  }, []);
+  const byItemId = useMemo(() => templates?.itemIdMap || new Map<string, ItemTemplate>(), [templates]);
+  const byNumericId = useMemo(() => templates?.numericIdMap || new Map<string, ItemTemplate>(), [templates]);
+  const byName = useMemo(() => templates?.nameMap || new Map<string, ItemTemplate>(), [templates]);
 
   const getTemplate = (idOrItemId: string): ItemTemplate | undefined => {
     const key = String(idOrItemId);
@@ -66,8 +59,5 @@ export const useItemTemplates = () => {
     return t?.name || String(idOrItemId);
   };
 
-  // Keep a merged map for compatibility (by item_id keys)
-  const templates = byItemId;
-
-  return { templates, loading, getItemName, getTemplate, getTemplateByName };
+  return { templates: byItemId, loading, getItemName, getTemplate, getTemplateByName };
 };

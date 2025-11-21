@@ -1,6 +1,7 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useWalletContext } from '@/contexts/WalletConnectContext';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 
 export interface ItemInstance {
   id: string;
@@ -16,57 +17,28 @@ export interface ItemInstance {
 
 export const useItemInstances = () => {
   const { accountId } = useWalletContext();
-  const [instances, setInstances] = useState<ItemInstance[]>([]);
-  const [loading, setLoading] = useState(true);
+  const queryClient = useQueryClient();
 
-  const fetchInstances = useCallback(async () => {
-    if (!accountId) {
-      setInstances([]);
-      setLoading(false);
-      return;
-    }
+  // Use React Query for data fetching and caching
+  const { data: instances = [], isLoading: loading } = useQuery({
+    queryKey: ['itemInstances', accountId],
+    queryFn: async () => {
+      if (!accountId) return [];
 
-    try {
-      setLoading(true);
-      // Используем RPC функцию для обхода RLS
       const { data, error } = await supabase
         .rpc('get_item_instances_by_wallet', { p_wallet_address: accountId });
 
       if (error) throw error;
-      console.log('✅ [useItemInstances] Loaded instances:', data?.length || 0);
-      setInstances((data as ItemInstance[]) || []);
-    } catch (e) {
-      console.error('❌ Failed to fetch item_instances:', e);
-      setInstances([]);
-    } finally {
-      setLoading(false);
-    }
-  }, [accountId]);
+      return (data as ItemInstance[]) || [];
+    },
+    enabled: !!accountId,
+    staleTime: 1000 * 60, // 1 minute
+    gcTime: 1000 * 60 * 5, // 5 minutes
+  });
 
-  useEffect(() => {
-    fetchInstances();
-
-    // Realtime subscription to item_instances for this wallet
-    const channel = supabase
-      .channel(`item_instances:${accountId}`)
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'item_instances',
-          filter: `wallet_address=eq.${accountId}`
-        },
-        () => {
-          fetchInstances();
-        }
-      )
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, [accountId]);
+  const refetch = useCallback(() => {
+    queryClient.invalidateQueries({ queryKey: ['itemInstances', accountId] });
+  }, [queryClient, accountId]);
 
   /**
    * Add N new item instances to DB
@@ -88,7 +60,9 @@ export const useItemInstances = () => {
         .insert(rows);
 
       if (error) throw error;
-      console.log('✅ Added', items.length, 'item instances to DB');
+      
+      // Invalidate and refetch
+      refetch();
     } catch (e) {
       console.error('❌ Failed to add item_instances:', e);
     }
@@ -99,12 +73,8 @@ export const useItemInstances = () => {
    */
   const removeItemInstancesByIds = async (ids: string[]) => {
     if (!accountId || ids.length === 0) {
-      console.log('⚠️ [removeItemInstancesByIds] Skipped - no accountId or empty ids array', { accountId, idsLength: ids.length });
       return;
     }
-
-    console.log('🚀 [removeItemInstancesByIds] Starting removal of', ids.length, 'instances for wallet:', accountId);
-    console.log('🚀 [removeItemInstancesByIds] IDs to remove:', ids);
 
     try {
       // Use RPC to bypass RLS (similar to add_item_instances)
@@ -114,14 +84,11 @@ export const useItemInstances = () => {
       });
 
       if (error) {
-        console.error('❌ [removeItemInstancesByIds] Supabase RPC error:', error);
         throw error;
       }
       
-      console.log('✅ [removeItemInstancesByIds] Successfully removed', data, 'item instances from DB via RPC');
-      
-      // Сразу обновляем локальное состояние для быстрого отклика UI
-      setInstances(prev => prev.filter(inst => !ids.includes(inst.id)));
+      // Invalidate and refetch
+      refetch();
     } catch (e) {
       console.error('❌ [removeItemInstancesByIds] Failed to remove item_instances:', e);
       throw e; // Пробрасываем ошибку дальше, чтобы handleUpgrade мог её обработать
@@ -154,6 +121,6 @@ export const useItemInstances = () => {
     removeItemInstancesByIds,
     getCountsByItemId,
     getInstancesByItemId,
-    refetch: fetchInstances
+    refetch
   };
 };

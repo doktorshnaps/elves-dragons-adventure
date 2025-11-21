@@ -99,26 +99,11 @@ const instanceItems: Item[] = (itemInstances || [])
     } as Item;
   });
 
-console.log('📦 Inventory Display (только из instances):', {
-  workerItems: workerItems.length,
-  instanceItems: instanceItems.length,
-  cardInstances: cardInstances?.length || 0,
-  itemInstances: itemInstances?.length || 0
-});
-
 // Объединяем только instance-based предметы
 const allInventoryItems: Item[] = [
   ...workerItems,
   ...instanceItems,
 ];
-
-console.log('✨ Final inventory to display:', {
-  total: allInventoryItems.length,
-  types: allInventoryItems.reduce((acc, i) => {
-    acc[i.type] = (acc[i.type] || 0) + 1;
-    return acc;
-  }, {} as Record<string, number>)
-});
 
 
   const handleUseItem = async (groupedItem: GroupedItem): Promise<boolean | void> => {
