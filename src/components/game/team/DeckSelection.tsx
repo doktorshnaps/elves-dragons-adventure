@@ -85,6 +85,15 @@ export const DeckSelection = ({
     const result = uniqueCards.map(card => {
       const instance = instancesMap.get(card.id);
       
+      // ДЕТАЛЬНОЕ ЛОГИРОВАНИЕ для диагностики
+      if (import.meta.env.DEV && uniqueCards.indexOf(card) === 0) {
+        console.log('🔍 ПЕРВАЯ КАРТА - ДЕТАЛЬНЫЙ АНАЛИЗ:');
+        console.log('  card:', card);
+        console.log('  card.power:', card.power);
+        console.log('  instance:', instance);
+        console.log('  instance?.card_data:', instance?.card_data);
+      }
+      
       // Извлекаем данные из card_data если они там есть
       let cardData = card;
       if (instance?.card_data && typeof instance.card_data === 'object') {
@@ -97,6 +106,11 @@ export const DeckSelection = ({
           magic: data.magic ?? card.magic,
           rarity: data.rarity ?? card.rarity,
         };
+        
+        if (import.meta.env.DEV && uniqueCards.indexOf(card) === 0) {
+          console.log('  📝 Извлечено из card_data - power:', data.power);
+          console.log('  📝 Итоговый cardData.power:', cardData.power);
+        }
       }
       
       if (instance) {
