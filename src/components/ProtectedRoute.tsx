@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
 import { useWalletContext } from '@/contexts/WalletConnectContext';
-import { useWhitelist } from '@/hooks/useWhitelist';
+import { useWhitelistContext } from '@/contexts/WhitelistContext';
 import { useAdmin } from '@/contexts/AdminContext';
 import { useMaintenanceStatus } from '@/hooks/useMaintenanceStatus';
 import { ComingSoon } from '@/components/ComingSoon';
@@ -15,7 +15,7 @@ export const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
   const { accountId, isLoading: isConnecting } = useWalletContext();
   const isConnected = !!accountId;
   const { isAdmin, loading: adminLoading } = useAdmin();
-  const { isWhitelisted, loading: whitelistLoading } = useWhitelist({ isAdmin });
+  const { isWhitelisted, loading: whitelistLoading } = useWhitelistContext();
   const { data: maintenanceStatus, isLoading: maintenanceLoading } = useMaintenanceStatus();
   const location = useLocation();
   const lsConnected = (typeof window !== 'undefined' && localStorage.getItem('walletConnected') === 'true') || false;
