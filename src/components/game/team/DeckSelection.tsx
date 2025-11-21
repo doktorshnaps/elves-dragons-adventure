@@ -84,17 +84,34 @@ export const DeckSelection = ({
     const instancesMap = new Map(cardInstances.map(ci => [ci.card_template_id, ci]));
     const result = uniqueCards.map(card => {
       const instance = instancesMap.get(card.id);
+      
+      // Извлекаем данные из card_data если они там есть
+      let cardData = card;
+      if (instance?.card_data && typeof instance.card_data === 'object') {
+        const data = instance.card_data as any;
+        cardData = {
+          ...card,
+          power: data.power ?? card.power,
+          health: data.health ?? card.health,
+          defense: data.defense ?? card.defense,
+          magic: data.magic ?? card.magic,
+          rarity: data.rarity ?? card.rarity,
+        };
+      }
+      
       if (instance) {
         return {
-          ...card,
+          ...cardData,
           currentHealth: instance.current_health,
           currentDefense: instance.current_defense,
           maxDefense: instance.max_defense,
           lastHealTime: new Date(instance.last_heal_time).getTime()
         };
       }
-      return card;
+      return cardData;
     });
+    
+    console.log('🎴 LocalCards with power:', result.map(c => `${c.name}: power=${c.power}, rarity=${c.rarity}`));
     
     return result;
   }, [cards, nftCards, cardInstances]);
