@@ -49,7 +49,6 @@ export const useGameInitialization = (setCards: (cards: Card[]) => void) => {
             .from('game_data')
             .update({
               cards: [] as any,
-              balance: 0,
               initialized: true
             })
             .eq('wallet_address', accountId);
@@ -59,15 +58,24 @@ export const useGameInitialization = (setCards: (cards: Card[]) => void) => {
             return;
           }
 
+          // Получаем актуальные данные после создания
+          const { data: newGameData } = await supabase
+            .from('game_data')
+            .select('balance')
+            .eq('wallet_address', accountId)
+            .single();
+          
+          const startingBalance = newGameData?.balance || 100;
+          
           // Синхронизируем с Zustand store
           useGameStore.getState().setCards([]);
-          useGameStore.getState().setBalance(0);
+          useGameStore.getState().setBalance(startingBalance);
           
           setCards([]);
           
           // Отправляем событие для обновления баланса
           const balanceEvent = new CustomEvent('balanceUpdate', { 
-            detail: { balance: 0 }
+            detail: { balance: startingBalance }
           });
           window.dispatchEvent(balanceEvent);
           
