@@ -58,6 +58,11 @@ export const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
     return <Navigate to="/auth" replace />;
   }
 
+  // Admin always has access, skip whitelist check
+  if (isAdmin) {
+    return <>{children}</>;
+  }
+
   // Check whitelist access after wallet is connected
   if (isConnected && isWhitelisted === false) {
     return <ComingSoon />;
