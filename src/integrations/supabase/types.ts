@@ -121,6 +121,7 @@ export type Database = {
           is_active: boolean
           level: number
           production_per_hour: number | null
+          required_buildings: Json | null
           required_items: Json | null
           required_main_hall_level: number | null
           storage_capacity: number | null
@@ -144,6 +145,7 @@ export type Database = {
           is_active?: boolean
           level: number
           production_per_hour?: number | null
+          required_buildings?: Json | null
           required_items?: Json | null
           required_main_hall_level?: number | null
           storage_capacity?: number | null
@@ -167,6 +169,7 @@ export type Database = {
           is_active?: boolean
           level?: number
           production_per_hour?: number | null
+          required_buildings?: Json | null
           required_items?: Json | null
           required_main_hall_level?: number | null
           storage_capacity?: number | null
