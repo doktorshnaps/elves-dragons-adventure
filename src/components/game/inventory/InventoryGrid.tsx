@@ -6,7 +6,7 @@ import { Item } from "@/types/inventory";
 import { GroupedItem } from "./types";
 import { useLanguage } from "@/hooks/useLanguage";
 import { t } from "@/utils/translations";
-import { getClassDropRates } from "@/utils/cardUtils";
+import { useCardDropRates } from "@/hooks/useCardDropRates";
 import { itemImagesByName, itemImagesByItemId } from "@/constants/itemImages";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { SellQuantityModal } from "../dialogs/SellQuantityModal";
@@ -27,11 +27,10 @@ export const InventoryGrid = ({
   const [openKey, setOpenKey] = useState<string | null>(null);
   const [sellModalOpen, setSellModalOpen] = useState(false);
   const [selectedItemForSell, setSelectedItemForSell] = useState<GroupedItem | null>(null);
-  const {
-    language
-  } = useLanguage();
+  const { language } = useLanguage();
   const isMobile = useIsMobile();
   const { isQuestItem } = useTreasureHuntItems();
+  const { data: dropRates } = useCardDropRates();
   const unequippedItems = groupedItems
     .filter(item => !item.items.some(i => i.equipped))
     .sort((a, b) => {
@@ -140,7 +139,7 @@ export const InventoryGrid = ({
                     <div className="mb-3">
                       <h6 className="text-xs font-semibold text-yellow-400 mb-1">Герои (50%):</h6>
                       <div className="grid grid-cols-2 gap-1 text-xs">
-                        {Object.values(getClassDropRates().heroes).map((item) => (
+                        {Object.values(dropRates.heroes).map((item) => (
                           <div key={item.name} className="flex justify-between items-center">
                             <span className="text-gray-300 truncate">{item.name}</span>
                             <span className="text-gray-400 text-[10px]">{item.chance}</span>
@@ -152,7 +151,7 @@ export const InventoryGrid = ({
                     <div>
                       <h6 className="text-xs font-semibold text-purple-400 mb-1">Драконы (50%):</h6>
                       <div className="grid grid-cols-2 gap-1 text-xs">
-                        {Object.values(getClassDropRates().dragons).map((item) => (
+                        {Object.values(dropRates.dragons).map((item) => (
                           <div key={item.name} className="flex justify-between items-center">
                             <span className="text-gray-300 truncate">{item.name}</span>
                             <span className="text-gray-400 text-[10px]">{item.chance}</span>

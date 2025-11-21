@@ -10,6 +10,7 @@ import { GameSettings } from "@/components/admin/GameSettings";
 import { DungeonSettings } from "@/components/admin/DungeonSettings";
 import { AdminRoleManager } from "@/components/admin/AdminRoleManager";
 import { CardUpgradeManager } from "@/components/admin/CardUpgradeManager";
+import { CardClassDropRates } from "@/components/admin/CardClassDropRates";
 import { CraftingRecipeManager } from "@/components/admin/CraftingRecipeManager";
 import { QuestManagement } from "@/components/admin/QuestManagement";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
@@ -100,7 +101,7 @@ const AdminSettingsContent = () => {
         </div>
 
         <Tabs defaultValue={isSuperAdmin ? "cards" : "management"} className="w-full">
-          <TabsList className={`grid w-full ${isSuperAdmin ? 'grid-cols-14' : 'grid-cols-1'} bg-black/50 border-2 border-white backdrop-blur-sm rounded-3xl mb-6`} style={{ boxShadow: '-33px 15px 10px rgba(0, 0, 0, 0.6)' }}>
+          <TabsList className={`grid w-full ${isSuperAdmin ? 'grid-cols-15' : 'grid-cols-1'} bg-black/50 border-2 border-white backdrop-blur-sm rounded-3xl mb-6`} style={{ boxShadow: '-33px 15px 10px rgba(0, 0, 0, 0.6)' }}>
             {isSuperAdmin && (
               <>
                 <TabsTrigger value="cards" className="text-white data-[state=active]:bg-white/20 rounded-3xl">{t(language, 'admin.cards')}</TabsTrigger>
@@ -111,6 +112,7 @@ const AdminSettingsContent = () => {
                 <TabsTrigger value="giveaway" className="text-white data-[state=active]:bg-white/20 rounded-3xl">{t(language, 'admin.giveaway')}</TabsTrigger>
                 <TabsTrigger value="shelter" className="text-white data-[state=active]:bg-white/20 rounded-3xl">{t(language, 'admin.shelter')}</TabsTrigger>
                 <TabsTrigger value="card-upgrades" className="text-white data-[state=active]:bg-white/20 rounded-3xl">{t(language, 'admin.cardUpgrades')}</TabsTrigger>
+                <TabsTrigger value="card-drops" className="text-white data-[state=active]:bg-white/20 rounded-3xl">Шансы колод</TabsTrigger>
                 <TabsTrigger value="crafting" className="text-white data-[state=active]:bg-white/20 rounded-3xl">{t(language, 'admin.crafting')}</TabsTrigger>
                 <TabsTrigger value="seekers" className="text-white data-[state=active]:bg-white/20 rounded-3xl">Искатели</TabsTrigger>
                 <TabsTrigger value="shop" className="text-white data-[state=active]:bg-white/20 rounded-3xl">Магазин</TabsTrigger>
@@ -153,6 +155,10 @@ const AdminSettingsContent = () => {
 
               <TabsContent value="card-upgrades" className="space-y-4">
                 <CardUpgradeManager />
+              </TabsContent>
+
+              <TabsContent value="card-drops" className="space-y-4">
+                <CardClassDropRates />
               </TabsContent>
 
               <TabsContent value="crafting" className="space-y-4">
