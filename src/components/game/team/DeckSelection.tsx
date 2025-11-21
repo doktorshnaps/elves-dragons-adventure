@@ -41,6 +41,15 @@ export const DeckSelection = ({
   const [previewCard, setPreviewCard] = useState<CardType | null>(null);
   const [heroSortBy, setHeroSortBy] = useState<'none' | 'power' | 'rarity'>('none');
   const [dragonSortBy, setDragonSortBy] = useState<'none' | 'power' | 'rarity'>('none');
+
+  // Debug: track sort state changes
+  useEffect(() => {
+    console.log('🔄 Hero sort changed to:', heroSortBy);
+  }, [heroSortBy]);
+
+  useEffect(() => {
+    console.log('🔄 Dragon sort changed to:', dragonSortBy);
+  }, [dragonSortBy]);
   const [previewAction, setPreviewAction] = useState<{
     label: string;
     action: () => void;
@@ -90,39 +99,32 @@ export const DeckSelection = ({
     return result;
   }, [cards, nftCards, cardInstances]);
   const heroes = useMemo(() => {
+    console.log('🎯 Heroes useMemo triggered, sortBy:', heroSortBy);
     const filtered = localCards.filter(card => card.type === 'character');
+    console.log('📊 Filtered heroes:', filtered.length);
     
     if (heroSortBy === 'power') {
+      console.log('⚡ Sorting by power...');
       const sorted = [...filtered].sort((a, b) => {
         const powerA = typeof a.power === 'number' ? a.power : 0;
         const powerB = typeof b.power === 'number' ? b.power : 0;
-        
-        if (import.meta.env.DEV) {
-          console.log(`🔍 Sorting heroes by power: ${a.name} (${powerA}) vs ${b.name} (${powerB})`);
-        }
-        
-        return powerB - powerA; // От большего к меньшему
+        return powerB - powerA;
       });
-      
-      if (import.meta.env.DEV) {
-        console.log('✅ Heroes sorted by power:', sorted.map(h => `${h.name}: ${h.power}`));
-      }
-      
+      console.log('✅ Sorted heroes:', sorted.map(h => `${h.name}: ${h.power}`));
       return sorted;
     }
+    
     if (heroSortBy === 'rarity') {
+      console.log('✨ Sorting by rarity...');
       const sorted = [...filtered].sort((a, b) => {
         const rarityA = typeof a.rarity === 'number' ? a.rarity : 1;
         const rarityB = typeof b.rarity === 'number' ? b.rarity : 1;
-        return rarityB - rarityA; // От большего к меньшему
+        return rarityB - rarityA;
       });
       return sorted;
     }
     
-    if (import.meta.env.DEV) {
-      console.log(`📋 Heroes (no sort): ${filtered.length} cards, heroSortBy = ${heroSortBy}`);
-    }
-    
+    console.log('📋 No sorting applied');
     return filtered;
   }, [localCards, heroSortBy]);
 
@@ -326,11 +328,15 @@ export const DeckSelection = ({
             <Button
               size="sm"
               variant={heroSortBy === 'power' ? 'default' : 'outline'}
-              onClick={() => {
-                console.log('🔘 Hero sort button clicked, current:', heroSortBy, '→ setting to: power');
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                console.log('🔘 CLICKED Power button! Current state:', heroSortBy);
                 setHeroSortBy('power');
+                console.log('🔘 Called setHeroSortBy("power")');
               }}
               className="flex items-center gap-2"
+              type="button"
             >
               <Swords className="w-4 h-4" />
               По силе
@@ -339,11 +345,15 @@ export const DeckSelection = ({
             <Button
               size="sm"
               variant={heroSortBy === 'rarity' ? 'default' : 'outline'}
-              onClick={() => {
-                console.log('🔘 Hero sort button clicked, current:', heroSortBy, '→ setting to: rarity');
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                console.log('🔘 CLICKED Rarity button! Current state:', heroSortBy);
                 setHeroSortBy('rarity');
+                console.log('🔘 Called setHeroSortBy("rarity")');
               }}
               className="flex items-center gap-2"
+              type="button"
             >
               <Sparkles className="w-4 h-4" />
               По редкости
@@ -352,11 +362,15 @@ export const DeckSelection = ({
             <Button
               size="sm"
               variant={heroSortBy === 'none' ? 'default' : 'outline'}
-              onClick={() => {
-                console.log('🔘 Hero sort button clicked, current:', heroSortBy, '→ setting to: none');
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                console.log('🔘 CLICKED Reset button! Current state:', heroSortBy);
                 setHeroSortBy('none');
+                console.log('🔘 Called setHeroSortBy("none")');
               }}
               className="flex items-center gap-2"
+              type="button"
             >
               Сбросить
             </Button>
