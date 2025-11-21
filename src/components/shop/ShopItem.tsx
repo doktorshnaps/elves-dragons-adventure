@@ -5,7 +5,8 @@ import {
   HoverCardContent,
   HoverCardTrigger,
 } from "@/components/ui/hover-card";
-import { getRarityLabel, getRarityDropRates } from "@/utils/cardUtils";
+import { getRarityLabel } from "@/utils/cardUtils";
+import { useCardDropRates } from "@/hooks/useCardDropRates";
 import { ShopItem as ShopItemType } from "./types";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useState, useCallback } from "react";
@@ -24,6 +25,7 @@ export const ShopItem = ({ item, balance, onBuy }: ShopItemProps) => {
   const { language } = useLanguage();
   const isMobile = useIsMobile();
   const [showDropRates, setShowDropRates] = useState(false);
+  const { data: dropRates } = useCardDropRates();
   const canAfford = balance >= item.price;
   
   const handleTouchStart = useCallback(() => {
@@ -89,7 +91,7 @@ export const ShopItem = ({ item, balance, onBuy }: ShopItemProps) => {
                 <div className="space-y-1">
                   <div className="mb-2">
                     <p className="text-[10px] text-gray-400 mb-1">{t(language, 'shopItem.heroes')}</p>
-                    {Object.values(getRarityDropRates().heroes).map((item) => (
+                    {Object.values(dropRates.heroes).map((item) => (
                       <div key={item.name} className="flex justify-between text-[10px]">
                         <span className="text-gray-400">{item.name}</span>
                         <span className="text-game-accent">{item.chance}</span>
@@ -98,7 +100,7 @@ export const ShopItem = ({ item, balance, onBuy }: ShopItemProps) => {
                   </div>
                   <div>
                     <p className="text-[10px] text-gray-400 mb-1">{t(language, 'shopItem.dragons')}</p>
-                    {Object.values(getRarityDropRates().dragons).map((item) => (
+                    {Object.values(dropRates.dragons).map((item) => (
                       <div key={item.name} className="flex justify-between text-[10px]">
                         <span className="text-gray-400">{item.name}</span>
                         <span className="text-game-accent">{item.chance}</span>

@@ -179,6 +179,42 @@ export type Database = {
         }
         Relationships: []
       }
+      card_class_drop_rates: {
+        Row: {
+          card_type: string
+          class_key: string
+          class_name: string
+          created_at: string
+          created_by_wallet_address: string
+          display_order: number
+          drop_chance: number
+          id: string
+          updated_at: string
+        }
+        Insert: {
+          card_type: string
+          class_key: string
+          class_name: string
+          created_at?: string
+          created_by_wallet_address: string
+          display_order: number
+          drop_chance: number
+          id?: string
+          updated_at?: string
+        }
+        Update: {
+          card_type?: string
+          class_key?: string
+          class_name?: string
+          created_at?: string
+          created_by_wallet_address?: string
+          display_order?: number
+          drop_chance?: number
+          id?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       card_class_mappings: {
         Row: {
           card_name: string
@@ -2116,6 +2152,10 @@ export type Database = {
         Args: { p_id: string; p_update: Json; p_wallet_address?: string }
         Returns: boolean
       }
+      admin_update_card_class_drop_rates: {
+        Args: { p_admin_wallet_address: string; p_rates: Json }
+        Returns: boolean
+      }
       admin_update_class_multiplier: {
         Args: {
           p_admin_wallet_address?: string
@@ -2485,6 +2525,17 @@ export type Database = {
       force_clear_nft_cards: {
         Args: { p_contract_id?: string; p_wallet_address: string }
         Returns: number
+      }
+      get_card_class_drop_rates: {
+        Args: never
+        Returns: {
+          card_type: string
+          class_key: string
+          class_name: string
+          display_order: number
+          drop_chance: number
+          id: string
+        }[]
       }
       get_card_instances_by_wallet: {
         Args: { p_wallet_address: string }
