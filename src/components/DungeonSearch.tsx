@@ -36,13 +36,12 @@ export const DungeonSearch = ({ onClose, balance }: DungeonSearchProps) => {
 
   const computeHasActiveCards = () => {
     // Проверяем Zustand store - основной источник данных
+    // Команда должна содержать хотя бы одного героя
     if (selectedTeam && selectedTeam.length > 0) {
-      return true;
-    }
-    
-    // Проверяем cards в store
-    if (cards && cards.length > 0) {
-      return true;
+      const hasHero = selectedTeam.some(pair => pair?.hero && pair.hero.id);
+      if (hasHero) {
+        return true;
+      }
     }
     
     // Fallback на localStorage для обратной совместимости
@@ -51,7 +50,10 @@ export const DungeonSearch = ({ onClose, balance }: DungeonSearchProps) => {
       if (gameData) {
         const parsedData = JSON.parse(gameData);
         if (Array.isArray(parsedData.selected_team) && parsedData.selected_team.length > 0) {
-          return true;
+          const hasHero = parsedData.selected_team.some((pair: any) => pair?.hero && pair.hero.id);
+          if (hasHero) {
+            return true;
+          }
         }
       }
     } catch {}
