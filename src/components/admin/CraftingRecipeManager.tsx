@@ -6,6 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2, Plus, Trash2, Save } from 'lucide-react';
 import { useItemTemplates } from '@/hooks/useItemTemplates';
@@ -268,31 +269,41 @@ export const CraftingRecipeManager = () => {
           <div className="grid grid-cols-3 gap-4">
             <div>
               <Label>Результат крафта</Label>
-              <div className="space-y-2">
-                <Input
-                  placeholder="Поиск предмета..."
-                  value={itemSearchTerm}
-                  onChange={(e) => setItemSearchTerm(e.target.value)}
-                  className="h-9"
-                />
-                <Select
-                  value={String(formData.result_item_id)}
-                  onValueChange={(value) =>
-                    setFormData({ ...formData, result_item_id: parseInt(value) })
-                  }
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Выберите предмет" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {filteredAllItems.map((item) => (
-                      <SelectItem key={item.id} value={String(item.id)}>
-                        {item.name} ({item.type})
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button variant="outline" className="w-full justify-start">
+                    {formData.result_item_id === 0
+                      ? "Выберите предмет"
+                      : allItems.find(i => i.id === formData.result_item_id)?.name || "Выберите предмет"}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-80 p-4" align="start">
+                  <div className="space-y-2">
+                    <Input
+                      placeholder="Поиск предмета..."
+                      value={itemSearchTerm}
+                      onChange={(e) => setItemSearchTerm(e.target.value)}
+                      onClick={(e) => e.stopPropagation()}
+                      onKeyDown={(e) => e.stopPropagation()}
+                      className="h-9 mb-2"
+                    />
+                    <div className="max-h-[300px] overflow-y-auto pr-2 space-y-1">
+                      {filteredAllItems.map((item) => (
+                        <div
+                          key={item.id}
+                          className="p-2 hover:bg-accent rounded-md cursor-pointer"
+                          onClick={() => {
+                            setFormData({ ...formData, result_item_id: item.id });
+                            setItemSearchTerm("");
+                          }}
+                        >
+                          {item.name} ({item.type})
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </PopoverContent>
+              </Popover>
             </div>
 
             <div>
@@ -329,31 +340,42 @@ export const CraftingRecipeManager = () => {
                 Добавить материал
               </Button>
             </div>
-            
-            <Input
-              placeholder="Поиск материала..."
-              value={materialSearchTerm}
-              onChange={(e) => setMaterialSearchTerm(e.target.value)}
-              className="h-9 mb-2"
-            />
 
             {formData.required_materials.map((material, index) => (
               <div key={index} className="flex gap-2 mb-2">
-                <Select
-                  value={material.item_id}
-                  onValueChange={(value) => updateMaterial(index, 'item_id', value)}
-                >
-                  <SelectTrigger className="flex-1">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {filteredMaterials.map((mat) => (
-                      <SelectItem key={mat.item_id} value={mat.item_id}>
-                        {mat.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button variant="outline" className="flex-1 justify-start">
+                      {materials.find(m => m.item_id === material.item_id)?.name || "Выберите материал"}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-80 p-4" align="start">
+                    <div className="space-y-2">
+                      <Input
+                        placeholder="Поиск материала..."
+                        value={materialSearchTerm}
+                        onChange={(e) => setMaterialSearchTerm(e.target.value)}
+                        onClick={(e) => e.stopPropagation()}
+                        onKeyDown={(e) => e.stopPropagation()}
+                        className="h-9 mb-2"
+                      />
+                      <div className="max-h-[300px] overflow-y-auto pr-2 space-y-1">
+                        {filteredMaterials.map((mat) => (
+                          <div
+                            key={mat.item_id}
+                            className="p-2 hover:bg-accent rounded-md cursor-pointer"
+                            onClick={() => {
+                              updateMaterial(index, 'item_id', mat.item_id);
+                              setMaterialSearchTerm("");
+                            }}
+                          >
+                            {mat.name}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </PopoverContent>
+                </Popover>
 
                 <Input
                   type="number"
