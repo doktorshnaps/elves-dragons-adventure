@@ -254,7 +254,7 @@ export const getMonsterLoot = async (monsterName: string, dungeonNumber?: number
       // Используем тип из базы данных
       let itemType: Item['type'] = typeMapping[template.type] || 'material';
       
-      const finalItem: Item = {
+      const finalItem: Item & { template_id: number; item_id: string } = {
         id: uuidv4(),
         name: template.name,
         type: itemType,
@@ -263,10 +263,12 @@ export const getMonsterLoot = async (monsterName: string, dungeonNumber?: number
         description: template.description || `Выпадает с: ${cleanName}`,
         image: template.image_url || undefined,
         stats: template.stats || undefined,
-        slot: template.slot || undefined
+        slot: template.slot || undefined,
+        template_id: template.id, // КРИТИЧЕСКИ ВАЖНО для добавления в БД
+        item_id: template.item_id  // КРИТИЧЕСКИ ВАЖНО для добавления в БД
       };
       
-      droppedItems.push(finalItem);
+      droppedItems.push(finalItem as Item);
     } else {
       console.log(`❌ Item NOT dropped: ${template.name} (roll: ${roll.toFixed(2)} > ${effectiveDropChance}% chance)`);
     }
