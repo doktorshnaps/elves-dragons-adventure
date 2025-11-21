@@ -44,27 +44,12 @@ export const Menu = () => {
   const { nearBalance, gtBalance, loading: balancesLoading } = useNearBalances(chainAccountId);
   const [initialLoadComplete, setInitialLoadComplete] = useState(false);
 
-  // Загружаем данные при подключении кошелька
+  // Отслеживаем первую загрузку данных
   useEffect(() => {
     if (isConnected && accountId && !gameDataLoading) {
-      console.time('⏱️ Menu Initial Load');
-      performance.mark('menu-load-start');
-      console.log('🔄 Loading game data for connected wallet:', accountId);
-      
-      loadGameData().then(() => {
-        setInitialLoadComplete(true);
-        performance.mark('menu-load-end');
-        performance.measure('Menu Initial Load', 'menu-load-start', 'menu-load-end');
-        console.timeEnd('⏱️ Menu Initial Load');
-        
-        const measures = performance.getEntriesByType('measure');
-        console.log('📊 Performance Summary:');
-        measures.forEach(measure => {
-          console.log(`  ${measure.name}: ${Math.round(measure.duration)}ms`);
-        });
-      });
+      setInitialLoadComplete(true);
     }
-  }, [isConnected, accountId]);
+  }, [isConnected, accountId, gameDataLoading]);
   
   // Показываем загрузку только при первой загрузке
   if (isConnected && !initialLoadComplete && gameDataLoading) {
@@ -79,7 +64,7 @@ export const Menu = () => {
     navigate('/auth');
   };
 
-  console.log('[Menu] Wallet/Balances:', { accountId, nearAccountId, chainAccountId, isConnected, balancesLoading, nearBalance, gtBalance });
+  
   return <div className="app-shell min-h-screen p-4 bg-center bg-no-repeat relative" style={{ filter: `brightness(${brightness}%)` }}>
       <div 
         className="absolute inset-0 bg-center bg-no-repeat"

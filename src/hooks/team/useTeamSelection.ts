@@ -9,11 +9,9 @@ import { checkActiveBattle, clearActiveBattle } from '@/utils/activeBattleChecke
 import { calculateCardStats } from '@/utils/cardUtils';
 
 export const useTeamSelection = () => {
-  console.log('🔍 useTeamSelection called');
   const { gameData, updateGameData } = useGameData();
   const { cardInstances } = useCardInstances();
   const { toast } = useToast();
-  console.log(`📊 useTeamSelection: gameData.cards=${(gameData.cards || []).length}, cardInstances=${cardInstances.length}`);
 
   // Build cards with health using the SAME gameData instance to avoid desync
   const cardsWithHealth = useMemo(() => {

@@ -14,8 +14,6 @@ export async function loadGameDataDeduped(walletAddress: string): Promise<any[]>
   // Create new loading promise
   const loadingPromise = (async () => {
     try {
-      console.log('🔄 Loading game data (deduped) for wallet:', walletAddress);
-      
       const { data: gameDataArray, error } = await supabase.rpc('get_game_data_by_wallet', {
         p_wallet_address: walletAddress
       });
@@ -25,7 +23,6 @@ export async function loadGameDataDeduped(walletAddress: string): Promise<any[]>
         throw error;
       }
 
-      console.log('✅ Game data loaded successfully (deduped)');
       return gameDataArray || [];
     } finally {
       // Clean up the promise after completion

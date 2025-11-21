@@ -33,8 +33,6 @@ export const useCardInstances = () => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  console.log('🔍 useCardInstances called for wallet:', accountId);
-
   // Загрузка всех экземпляров карт пользователя через React Query
   const { 
     data: cardInstances = [], 
@@ -43,10 +41,7 @@ export const useCardInstances = () => {
   } = useQuery({
     queryKey: ['cardInstances', accountId],
     queryFn: async () => {
-      console.log('📥 Fetching card instances for:', accountId);
-      
       if (!isConnected || !accountId) {
-        console.log('⏭️ Not connected, returning empty array');
         return [];
       }
 
@@ -63,9 +58,7 @@ export const useCardInstances = () => {
         throw error;
       }
 
-      const list = (data || []) as unknown as CardInstance[];
-      console.log(`✅ Loaded ${list.length} card instances`);
-      return list;
+      return (data || []) as unknown as CardInstance[];
     },
     enabled: isConnected && !!accountId && !walletLoading && !!selector,
     staleTime: 30 * 1000, // 30 seconds - cards change during gameplay
