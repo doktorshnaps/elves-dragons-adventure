@@ -39,17 +39,15 @@ export const Shop = ({ onClose }: ShopProps) => {
   const [localBalance, setLocalBalance] = useState<number | null>(null);
   const [cardPackPrice, setCardPackPrice] = useState<number | null>(null);
 
-  // Load game data when shop opens
+  // Load game data and card pack price when shop opens
   useEffect(() => {
-    if (accountId && loadGameData) {
-      console.log('🛒 Shop opened, refreshing game data');
-      loadGameData();
-    }
-  }, [accountId, loadGameData]);
-
-  // Load dynamic price for Card Pack from item_templates
-  useEffect(() => {
-    const fetchCardPackPrice = async () => {
+    const loadShopData = async () => {
+      // Load game data
+      if (accountId && loadGameData) {
+        loadGameData();
+      }
+      
+      // Load card pack price
       try {
         const { data, error } = await supabase
           .from('item_templates')
@@ -62,16 +60,15 @@ export const Shop = ({ onClose }: ShopProps) => {
         console.error('Error loading card pack price:', err);
       }
     };
-    fetchCardPackPrice();
-  }, []);
+    
+    loadShopData();
+  }, [accountId]); // Only depend on accountId, not loadGameData
   // Use local balance if available, otherwise use gameData balance
   const displayBalance = localBalance !== null ? localBalance : gameData.balance;
 
   if (gameDataLoading || inventoryLoading || shopItemsLoading) {
     return <div className="flex justify-center items-center h-64">{t(language, 'shop.loading')}</div>;
   }
-
-  console.log('🛒 Shop render - balance:', displayBalance, 'local:', localBalance, 'gameData:', gameData.balance, 'accountId:', accountId);
 
   const handleBuyItem = async (item: typeof shopItems[0]) => {
     if (!accountId) {
@@ -106,7 +103,6 @@ export const Shop = ({ onClose }: ShopProps) => {
 
     try {
       setPurchasing(true);
-      console.log(`🛒 Purchasing item: ${item.name} for ${item.price} ELL`);
       
       // Instantly update local balance for immediate UI feedback
       const newBalance = displayBalance - item.price;
@@ -114,8 +110,6 @@ export const Shop = ({ onClose }: ShopProps) => {
       
       // Purchase item via edge function
       await purchaseItem(item.id, accountId, 1);
-
-      console.log('✅ Purchase successful');
       
       // Update balance in background without reloading full data
       if (updateGameData) {
