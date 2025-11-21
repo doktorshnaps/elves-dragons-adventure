@@ -175,29 +175,35 @@ export const getCardImageByRarity = async (card: Card): Promise<string | undefin
 };
 
 /**
- * Нормализует URL изображения карты (IPFS, Arweave, data URLs)
+ * Нормализует URL изображения карты (IPFS, Arweave, data URLs, PNG->WEBP)
  */
 const normalizeCardImageUrl = (url: string | undefined): string | undefined => {
   if (!url) return undefined;
   
   try {
+    let normalized = url;
+    
     // IPFS URL normalization
-    if (url.startsWith('ipfs://')) {
-      return url.replace('ipfs://', 'https://ipfs.io/ipfs/');
+    if (normalized.startsWith('ipfs://')) {
+      normalized = normalized.replace('ipfs://', 'https://ipfs.io/ipfs/');
     }
     
     // If it's just an IPFS hash
-    if (/^Qm[a-zA-Z0-9]{44,}$/.test(url)) {
-      return `https://ipfs.io/ipfs/${url}`;
+    if (/^Qm[a-zA-Z0-9]{44,}$/.test(normalized)) {
+      normalized = `https://ipfs.io/ipfs/${normalized}`;
     }
     
     // Arweave URL
-    if (url.startsWith('ar://')) {
-      return url.replace('ar://', 'https://arweave.net/');
+    if (normalized.startsWith('ar://')) {
+      normalized = normalized.replace('ar://', 'https://arweave.net/');
     }
     
-    // Data URLs and regular URLs - return as is
-    return url;
+    // Конвертируем PNG в WEBP для lovable-uploads путей
+    if (normalized.includes('/lovable-uploads/') && /\.png(\?|$)/i.test(normalized)) {
+      normalized = normalized.replace(/\.png(\?|$)/i, '.webp$1');
+    }
+    
+    return normalized;
   } catch (error) {
     console.error('Error normalizing card image URL:', error);
     return url;
@@ -243,5 +249,5 @@ export const resolveCardImage = async (card: Card): Promise<string | undefined> 
  */
 export const resolveCardImageSync = (card: Card): string | undefined => {
   const rarityImage = getCardImageByRaritySync(card);
-  return rarityImage || card.image;
+  return rarityImage || normalizeCardImageUrl(card.image);
 };
