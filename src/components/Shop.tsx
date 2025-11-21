@@ -15,6 +15,7 @@ import { useState, useEffect } from "react";
 import { PurchaseEffect } from "./shop/PurchaseEffect";
 import { supabase } from "@/integrations/supabase/client";
 import { useEnrichedShopItems } from "@/hooks/useEnrichedShopItems";
+import { useQueryClient } from "@tanstack/react-query";
 
 interface ShopProps {
   onClose: () => void;
@@ -24,6 +25,7 @@ export const Shop = ({ onClose }: ShopProps) => {
   const { gameData, loading: gameDataLoading, loadGameData, updateGameData } = useGameData();
   const { accountId } = useWalletContext();
   const { language } = useLanguage();
+  const queryClient = useQueryClient();
   const { 
     inventory, 
     loading: inventoryLoading, 
@@ -117,6 +119,10 @@ export const Shop = ({ onClose }: ShopProps) => {
           console.error('Background balance update failed:', err);
         });
       }
+
+      // Invalidate item instances cache to refresh inventory
+      queryClient.invalidateQueries({ queryKey: ['itemInstances', accountId] });
+      queryClient.invalidateQueries({ queryKey: ['cardInstances', accountId] });
 
       setShowEffect(true);
       toast({
