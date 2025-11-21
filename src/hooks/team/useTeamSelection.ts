@@ -7,6 +7,7 @@ import { TeamPair } from '@/components/game/team/DeckSelection';
 import { useToast } from '@/hooks/use-toast';
 import { checkActiveBattle, clearActiveBattle } from '@/utils/activeBattleChecker';
 import { calculateCardStats } from '@/utils/cardUtils';
+import { useGameStore } from '@/stores/gameStore';
 
 export const useTeamSelection = () => {
   const { gameData, updateGameData } = useGameData();
@@ -180,12 +181,16 @@ export const useTeamSelection = () => {
     
     console.log('🎯 Adding new pair to team. Raw team size will be:', newPairs.length);
     
-    // Save to game data
+    // Save to game data AND update gameStore immediately
     try {
       await updateGameData({
         selectedTeam: newPairs
       });
-      console.log('✅ Successfully added hero to team');
+      
+      // Immediately sync to gameStore for instant UI update
+      const { setSelectedTeam } = useGameStore.getState();
+      setSelectedTeam(newPairs);
+      console.log('✅ Successfully added hero to team and synced to store');
     } catch (error) {
       console.error('❌ Failed to add hero to team:', error);
     }
@@ -217,6 +222,11 @@ export const useTeamSelection = () => {
     await updateGameData({
       selectedTeam: newPairs
     });
+    
+    // Immediately sync to gameStore
+    const { setSelectedTeam } = useGameStore.getState();
+    setSelectedTeam(newPairs);
+    console.log('✅ Pair removed and synced to store');
   };
 
   const handleAssignDragon = async (index: number, dragon: CardType) => {
@@ -246,6 +256,11 @@ export const useTeamSelection = () => {
     await updateGameData({
       selectedTeam: newPairs
     });
+    
+    // Immediately sync to gameStore
+    const { setSelectedTeam } = useGameStore.getState();
+    setSelectedTeam(newPairs);
+    console.log('✅ Dragon assigned and synced to store');
   };
 
   const handleRemoveDragon = async (index: number) => {
@@ -275,6 +290,11 @@ export const useTeamSelection = () => {
     await updateGameData({
       selectedTeam: newPairs
     });
+    
+    // Immediately sync to gameStore
+    const { setSelectedTeam } = useGameStore.getState();
+    setSelectedTeam(newPairs);
+    console.log('✅ Dragon removed and synced to store');
   };
 
   const getSelectedTeamStats = () => {

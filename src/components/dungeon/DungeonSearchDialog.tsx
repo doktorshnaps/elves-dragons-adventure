@@ -64,6 +64,13 @@ export const DungeonSearchDialog = ({
   isHealthTooLow,
   hasActiveCards
 }: DungeonSearchDialogProps) => {
+  console.log('🎯 [DungeonSearchDialog] Received props:', {
+    hasActiveCards,
+    isHealthTooLow,
+    energyState,
+    balance
+  });
+  
   const { language } = useLanguage();
   const navigate = useNavigate();
   const teamBattleState = useGameStore((state) => state.teamBattleState);

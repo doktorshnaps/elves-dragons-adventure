@@ -35,13 +35,25 @@ export const DungeonSearch = ({ onClose, balance }: DungeonSearchProps) => {
   const cards = useGameStore((state) => state.cards);
 
   const computeHasActiveCards = () => {
+    console.log('🔍 [DungeonSearch] Checking active cards...');
+    console.log('🎮 [DungeonSearch] selectedTeam from store:', selectedTeam);
+    console.log('🃏 [DungeonSearch] cards from store:', cards);
+    
     // Проверяем Zustand store - основной источник данных
     // Команда должна содержать хотя бы одного героя
     if (selectedTeam && selectedTeam.length > 0) {
+      console.log('✅ [DungeonSearch] selectedTeam exists, length:', selectedTeam.length);
+      console.log('📋 [DungeonSearch] selectedTeam structure:', JSON.stringify(selectedTeam, null, 2));
+      
       const hasHero = selectedTeam.some(pair => pair?.hero && pair.hero.id);
+      console.log('🦸 [DungeonSearch] Has hero in team:', hasHero);
+      
       if (hasHero) {
+        console.log('✅ [DungeonSearch] RESULT: Active cards found (Zustand)');
         return true;
       }
+    } else {
+      console.log('⚠️ [DungeonSearch] selectedTeam is empty or null in Zustand');
     }
     
     // Fallback на localStorage для обратной совместимости
@@ -49,22 +61,38 @@ export const DungeonSearch = ({ onClose, balance }: DungeonSearchProps) => {
       const gameData = localStorage.getItem('gameData');
       if (gameData) {
         const parsedData = JSON.parse(gameData);
+        console.log('💾 [DungeonSearch] localStorage gameData:', parsedData);
+        
         if (Array.isArray(parsedData.selected_team) && parsedData.selected_team.length > 0) {
+          console.log('📦 [DungeonSearch] localStorage selected_team length:', parsedData.selected_team.length);
+          
           const hasHero = parsedData.selected_team.some((pair: any) => pair?.hero && pair.hero.id);
+          console.log('🦸 [DungeonSearch] Has hero in localStorage team:', hasHero);
+          
           if (hasHero) {
+            console.log('✅ [DungeonSearch] RESULT: Active cards found (localStorage)');
             return true;
           }
         }
       }
-    } catch {}
+    } catch (err) {
+      console.error('❌ [DungeonSearch] Error reading localStorage:', err);
+    }
     
+    console.log('❌ [DungeonSearch] RESULT: No active cards found');
     return false;
   };
 
   const [hasActiveCards, setHasActiveCards] = useState<boolean>(computeHasActiveCards);
 
   useEffect(() => {
-    setHasActiveCards(computeHasActiveCards());
+    console.log('🔄 [DungeonSearch] useEffect triggered - recalculating hasActiveCards');
+    console.log('📊 [DungeonSearch] Current selectedTeam:', selectedTeam);
+    console.log('🎴 [DungeonSearch] Current cards:', cards);
+    
+    const newValue = computeHasActiveCards();
+    console.log('🎯 [DungeonSearch] New hasActiveCards value:', newValue);
+    setHasActiveCards(newValue);
   }, [selectedTeam, cards]);
 
   // Предварительная проверка активных сессий с кэшированием
