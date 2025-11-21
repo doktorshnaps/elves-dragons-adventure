@@ -106,9 +106,12 @@ export const getMonsterLoot = async (monsterName: string, dungeonNumber?: number
         if (matchesDungeon && matchesMonster && activeEvent.found_quantity < activeEvent.total_quantity) {
           console.log('✨ Treasure hunt conditions met! Rolling for special drop...');
           
-          const roll = Math.random() * 100;
-          if (roll <= (activeEvent.drop_chance || 0)) {
-            console.log(`🎊 TREASURE HUNT ITEM DROPPED! ${activeEvent.item_name} (${roll.toFixed(2)}% <= ${activeEvent.drop_chance}%)`);
+          // Генерируем число от 0.01 до 100.00
+          const roll = (Math.floor(Math.random() * 10000) + 1) / 100;
+          const dropChance = activeEvent.drop_chance || 0;
+          
+          if (roll <= dropChance) {
+            console.log(`🎊 TREASURE HUNT ITEM DROPPED! ${activeEvent.item_name} (roll: ${roll.toFixed(2)} <= ${dropChance}%)`);
             
             // Увеличиваем счётчик найденных предметов в событии
             await supabase
@@ -163,9 +166,9 @@ export const getMonsterLoot = async (monsterName: string, dungeonNumber?: number
               stats: template?.stats || undefined,
               // Флаг, что предмет уже добавлен в БД и не нужно добавлять повторно
               alreadyInDB: true
-            } as any];
+          } as any];
           } else {
-            console.log(`❌ Treasure hunt roll failed: ${roll.toFixed(2)}% > ${activeEvent.drop_chance}%`);
+            console.log(`❌ Treasure hunt roll failed: roll ${roll.toFixed(2)} > ${dropChance}% chance`);
           }
         } else {
           console.log('⚠️ Treasure hunt event exists but conditions not met:', {
@@ -229,12 +232,12 @@ export const getMonsterLoot = async (monsterName: string, dungeonNumber?: number
       continue;
     }
     
-    // Генерируем случайное число от 0 до 100
-    const roll = Math.random() * 100;
+    // Генерируем случайное число от 0.01 до 100.00
+    const roll = (Math.floor(Math.random() * 10000) + 1) / 100;
     
-    // Проверяем, выпал ли предмет
+    // Проверяем, выпал ли предмет (если roll от 0.01 до effectiveDropChance, то предмет выпадает)
     if (roll <= effectiveDropChance) {
-      console.log(`✅ Item dropped: ${template.name} (chance: ${effectiveDropChance}%, roll: ${roll.toFixed(2)}%)`);
+      console.log(`✅ Item dropped: ${template.name} (roll: ${roll.toFixed(2)} <= ${effectiveDropChance}% chance)`);
       
       // Маппинг типов из базы данных в типы Item
       const typeMapping: Record<string, Item['type']> = {
@@ -265,7 +268,7 @@ export const getMonsterLoot = async (monsterName: string, dungeonNumber?: number
       
       droppedItems.push(finalItem);
     } else {
-      console.log(`❌ Item NOT dropped: ${template.name} (chance: ${effectiveDropChance}%, roll: ${roll.toFixed(2)}%)`);
+      console.log(`❌ Item NOT dropped: ${template.name} (roll: ${roll.toFixed(2)} > ${effectiveDropChance}% chance)`);
     }
   }
   
