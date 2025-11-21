@@ -67,10 +67,26 @@ export const useCardHealthSync = () => {
     }
   }, []);
 
-  // Auto-sync when card instances change
+  // Auto-sync when card instances change - but only if there are actual changes
   useEffect(() => {
-    syncHealthFromInstances();
-  }, [syncHealthFromInstances]);
+    // Only sync if we have both instances and cards
+    if (cardInstances.length > 0 && gameData.cards.length > 0) {
+      const instancesById = new Map(cardInstances.map(inst => [inst.card_template_id, inst]));
+      
+      // Check if there are actual differences before syncing
+      const hasChanges = gameData.cards.some((card: Card) => {
+        const instance = instancesById.get(card.id);
+        return instance && (
+          instance.current_health !== card.currentHealth || 
+          instance.current_defense !== card.currentDefense
+        );
+      });
+      
+      if (hasChanges) {
+        syncHealthFromInstances();
+      }
+    }
+  }, [cardInstances, gameData.cards]);
 
   return {
     syncHealthFromInstances,
