@@ -1380,6 +1380,36 @@ export type Database = {
         }
         Relationships: []
       }
+      shop_settings: {
+        Row: {
+          created_at: string
+          created_by_wallet_address: string
+          id: string
+          is_open_access: boolean
+          items_per_refresh: number
+          refresh_interval_hours: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by_wallet_address: string
+          id?: string
+          is_open_access?: boolean
+          items_per_refresh?: number
+          refresh_interval_hours?: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by_wallet_address?: string
+          id?: string
+          is_open_access?: boolean
+          items_per_refresh?: number
+          refresh_interval_hours?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       soul_donations: {
         Row: {
           amount: number
@@ -2329,6 +2359,15 @@ export type Database = {
         }
         Returns: boolean
       }
+      admin_update_shop_settings: {
+        Args: {
+          p_admin_wallet_address: string
+          p_is_open_access: boolean
+          p_items_per_refresh: number
+          p_refresh_interval_hours: number
+        }
+        Returns: boolean
+      }
       admin_upsert_quest: {
         Args: {
           p_admin_wallet_address: string
@@ -2652,6 +2691,17 @@ export type Database = {
         Returns: {
           created_at: string
           referrer_wallet_address: string
+        }[]
+      }
+      get_shop_settings: {
+        Args: never
+        Returns: {
+          created_at: string
+          id: string
+          is_open_access: boolean
+          items_per_refresh: number
+          refresh_interval_hours: number
+          updated_at: string
         }[]
       }
       get_soul_donations_stats: {

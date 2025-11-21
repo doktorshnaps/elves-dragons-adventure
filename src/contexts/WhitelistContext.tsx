@@ -24,6 +24,18 @@ export const WhitelistProvider = ({ children }: { children: ReactNode }) => {
       // Admin always has access
       if (isAdmin) return true;
 
+      // Check if open access is enabled
+      const { data: shopSettings, error: settingsError } = await supabase
+        .rpc('get_shop_settings');
+
+      if (!settingsError && shopSettings && shopSettings.length > 0) {
+        const settings = shopSettings[0];
+        if (settings.is_open_access) {
+          // Open access is enabled, grant access to everyone
+          return true;
+        }
+      }
+
       // Check standard whitelist
       const { data, error } = await supabase.rpc('is_whitelisted', {
         p_wallet_address: accountId,
