@@ -93,19 +93,36 @@ export const DeckSelection = ({
     const filtered = localCards.filter(card => card.type === 'character');
     
     if (heroSortBy === 'power') {
-      return [...filtered].sort((a, b) => {
-        const powerA = a.power ?? 0;
-        const powerB = b.power ?? 0;
+      const sorted = [...filtered].sort((a, b) => {
+        const powerA = typeof a.power === 'number' ? a.power : 0;
+        const powerB = typeof b.power === 'number' ? b.power : 0;
+        
+        if (import.meta.env.DEV) {
+          console.log(`🔍 Sorting heroes by power: ${a.name} (${powerA}) vs ${b.name} (${powerB})`);
+        }
+        
         return powerB - powerA; // От большего к меньшему
       });
+      
+      if (import.meta.env.DEV) {
+        console.log('✅ Heroes sorted by power:', sorted.map(h => `${h.name}: ${h.power}`));
+      }
+      
+      return sorted;
     }
     if (heroSortBy === 'rarity') {
-      return [...filtered].sort((a, b) => {
-        const rarityA = a.rarity ?? 1;
-        const rarityB = b.rarity ?? 1;
+      const sorted = [...filtered].sort((a, b) => {
+        const rarityA = typeof a.rarity === 'number' ? a.rarity : 1;
+        const rarityB = typeof b.rarity === 'number' ? b.rarity : 1;
         return rarityB - rarityA; // От большего к меньшему
       });
+      return sorted;
     }
+    
+    if (import.meta.env.DEV) {
+      console.log(`📋 Heroes (no sort): ${filtered.length} cards, heroSortBy = ${heroSortBy}`);
+    }
+    
     return filtered;
   }, [localCards, heroSortBy]);
 
@@ -113,18 +130,20 @@ export const DeckSelection = ({
     const filtered = localCards.filter(card => card.type === 'pet');
     
     if (dragonSortBy === 'power') {
-      return [...filtered].sort((a, b) => {
-        const powerA = a.power ?? 0;
-        const powerB = b.power ?? 0;
+      const sorted = [...filtered].sort((a, b) => {
+        const powerA = typeof a.power === 'number' ? a.power : 0;
+        const powerB = typeof b.power === 'number' ? b.power : 0;
         return powerB - powerA; // От большего к меньшему
       });
+      return sorted;
     }
     if (dragonSortBy === 'rarity') {
-      return [...filtered].sort((a, b) => {
-        const rarityA = a.rarity ?? 1;
-        const rarityB = b.rarity ?? 1;
+      const sorted = [...filtered].sort((a, b) => {
+        const rarityA = typeof a.rarity === 'number' ? a.rarity : 1;
+        const rarityB = typeof b.rarity === 'number' ? b.rarity : 1;
         return rarityB - rarityA; // От большего к меньшему
       });
+      return sorted;
     }
     return filtered;
   }, [localCards, dragonSortBy]);
@@ -307,7 +326,10 @@ export const DeckSelection = ({
             <Button
               size="sm"
               variant={heroSortBy === 'power' ? 'default' : 'outline'}
-              onClick={() => setHeroSortBy(heroSortBy === 'power' ? 'none' : 'power')}
+              onClick={() => {
+                console.log('🔘 Hero sort button clicked, current:', heroSortBy, '→ setting to: power');
+                setHeroSortBy('power');
+              }}
               className="flex items-center gap-2"
             >
               <Swords className="w-4 h-4" />
@@ -317,12 +339,26 @@ export const DeckSelection = ({
             <Button
               size="sm"
               variant={heroSortBy === 'rarity' ? 'default' : 'outline'}
-              onClick={() => setHeroSortBy(heroSortBy === 'rarity' ? 'none' : 'rarity')}
+              onClick={() => {
+                console.log('🔘 Hero sort button clicked, current:', heroSortBy, '→ setting to: rarity');
+                setHeroSortBy('rarity');
+              }}
               className="flex items-center gap-2"
             >
               <Sparkles className="w-4 h-4" />
               По редкости
               {heroSortBy === 'rarity' && <ArrowUpDown className="w-3 h-3" />}
+            </Button>
+            <Button
+              size="sm"
+              variant={heroSortBy === 'none' ? 'default' : 'outline'}
+              onClick={() => {
+                console.log('🔘 Hero sort button clicked, current:', heroSortBy, '→ setting to: none');
+                setHeroSortBy('none');
+              }}
+              className="flex items-center gap-2"
+            >
+              Сбросить
             </Button>
           </div>
           <div className="flex-1 overflow-y-auto overflow-x-hidden px-4 pb-4">
@@ -364,7 +400,10 @@ export const DeckSelection = ({
             <Button
               size="sm"
               variant={dragonSortBy === 'power' ? 'default' : 'outline'}
-              onClick={() => setDragonSortBy(dragonSortBy === 'power' ? 'none' : 'power')}
+              onClick={() => {
+                console.log('🔘 Dragon sort button clicked, current:', dragonSortBy, '→ setting to: power');
+                setDragonSortBy('power');
+              }}
               className="flex items-center gap-2"
             >
               <Swords className="w-4 h-4" />
@@ -374,12 +413,26 @@ export const DeckSelection = ({
             <Button
               size="sm"
               variant={dragonSortBy === 'rarity' ? 'default' : 'outline'}
-              onClick={() => setDragonSortBy(dragonSortBy === 'rarity' ? 'none' : 'rarity')}
+              onClick={() => {
+                console.log('🔘 Dragon sort button clicked, current:', dragonSortBy, '→ setting to: rarity');
+                setDragonSortBy('rarity');
+              }}
               className="flex items-center gap-2"
             >
               <Sparkles className="w-4 h-4" />
               По редкости
               {dragonSortBy === 'rarity' && <ArrowUpDown className="w-3 h-3" />}
+            </Button>
+            <Button
+              size="sm"
+              variant={dragonSortBy === 'none' ? 'default' : 'outline'}
+              onClick={() => {
+                console.log('🔘 Dragon sort button clicked, current:', dragonSortBy, '→ setting to: none');
+                setDragonSortBy('none');
+              }}
+              className="flex items-center gap-2"
+            >
+              Сбросить
             </Button>
           </div>
           <div className="flex-1 overflow-y-auto overflow-x-hidden px-4 pb-4">
