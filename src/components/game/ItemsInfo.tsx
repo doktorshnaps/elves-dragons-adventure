@@ -57,6 +57,8 @@ interface ItemTemplate {
   slot: string;
   level_requirement: number;
   value: number;
+  sell_price?: number;
+  dungeon_drop_settings?: any;
   image_url?: string;
 }
 
@@ -161,6 +163,24 @@ const ItemCard = ({ item }: { item: ItemTemplate }) => {
 
   const stats = formatStats(item.stats);
 
+  // Функция для извлечения максимального шанса дропа из dungeon_drop_settings
+  const getActualDropChance = (): number | null => {
+    if (!item.dungeon_drop_settings || !Array.isArray(item.dungeon_drop_settings)) {
+      return null;
+    }
+    
+    const chances = item.dungeon_drop_settings
+      .filter((setting: any) => setting && typeof setting.drop_chance === 'number')
+      .map((setting: any) => setting.drop_chance);
+    
+    if (chances.length === 0) return null;
+    
+    // Возвращаем максимальный шанс дропа
+    return Math.max(...chances);
+  };
+
+  const actualDropChance = getActualDropChance();
+
   const CardContent = () => (
     <Card variant="menu" className="p-2 h-full flex flex-col">
       <div className="w-full aspect-[3/4] mb-2 rounded-lg overflow-hidden flex items-center justify-center bg-white/10 border border-white/20">
@@ -223,22 +243,6 @@ const ItemCard = ({ item }: { item: ItemTemplate }) => {
         {item.description}
       </p>
       
-      {stats.length > 0 && (
-        <div className="mb-4">
-          <div className="text-green-400 text-sm font-medium mb-2">
-            {translateItemText(language, 'Характеристики:')}
-          </div>
-          <div className="grid grid-cols-2 gap-2">
-            {stats.map((stat, index) => (
-              <div key={index} className="text-white/80 flex items-center gap-2">
-                <span className="text-green-400 font-medium">+{stat.value}</span>
-                <span>{stat.name}</span>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-      
       <div className="pt-3 border-t border-white/20">
         <div className="text-white text-sm flex items-center gap-2 mb-3">
           {getSourceIcon(item.source_type)}
@@ -257,13 +261,13 @@ const ItemCard = ({ item }: { item: ItemTemplate }) => {
             <span className="text-yellow-400 font-medium">{item.level_requirement}</span>
           </div>
           <div className="flex justify-between">
-            <span className="text-white/60">{translateItemText(language, 'Стоимость')}</span>
-            <span className="text-green-400 font-medium">{item.value} {translateItemText(language, 'монет')}</span>
+            <span className="text-white/60">{translateItemText(language, 'Цена продажи')}</span>
+            <span className="text-green-400 font-medium">{item.sell_price || 0} ELL</span>
           </div>
-          {item.drop_chance && (
+          {actualDropChance !== null && (
             <div className="flex justify-between">
               <span className="text-white/60">{translateItemText(language, 'Шанс выпадения')}</span>
-              <span className="text-orange-400 font-medium">{(item.drop_chance * 100).toFixed(1)}%</span>
+              <span className="text-orange-400 font-medium">{(actualDropChance * 100).toFixed(2)}%</span>
             </div>
           )}
         </div>
@@ -309,7 +313,7 @@ export const ItemsInfo = () => {
       try {
         const { data, error } = await supabase
           .from('item_templates')
-          .select('*')
+          .select('*, sell_price, dungeon_drop_settings')
           .order('rarity', { ascending: false })
           .order('level_requirement', { ascending: true });
 
