@@ -124,6 +124,13 @@ export const Shop = ({ onClose }: ShopProps) => {
       queryClient.invalidateQueries({ queryKey: ['itemInstances', accountId] });
       queryClient.invalidateQueries({ queryKey: ['cardInstances', accountId] });
 
+      // Отправляем события для немедленного обновления UI
+      const itemEvent = new CustomEvent('itemInstancesUpdate');
+      window.dispatchEvent(itemEvent);
+      
+      const cardEvent = new CustomEvent('cardInstancesUpdate');
+      window.dispatchEvent(cardEvent);
+
       setShowEffect(true);
       toast({
         title: item.type === 'cardPack' ? t(language, 'shop.cardPackBought') : t(language, 'shop.purchaseSuccess'),
