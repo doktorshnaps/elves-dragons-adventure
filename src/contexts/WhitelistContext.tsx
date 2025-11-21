@@ -13,11 +13,11 @@ const WhitelistContext = createContext<WhitelistContextType | undefined>(undefin
 
 export const WhitelistProvider = ({ children }: { children: ReactNode }) => {
   const { accountId } = useWalletContext();
-  const { isAdmin } = useAdmin();
+  const { isAdmin, loading: adminLoading } = useAdmin();
   const isConnected = !!accountId;
 
   const { data: isWhitelisted = false, isLoading: loading } = useQuery({
-    queryKey: ['whitelistCheck', accountId],
+    queryKey: ['whitelistCheck', accountId, isAdmin],
     queryFn: async () => {
       if (!isConnected || !accountId) return false;
       
@@ -36,7 +36,7 @@ export const WhitelistProvider = ({ children }: { children: ReactNode }) => {
 
       return Boolean(data);
     },
-    enabled: isConnected && !!accountId,
+    enabled: isConnected && !!accountId && !adminLoading,
     staleTime: 2 * 60 * 60 * 1000, // 2 hours - whitelist rarely changes
     gcTime: 4 * 60 * 60 * 1000, // 4 hours
     refetchOnWindowFocus: false,
