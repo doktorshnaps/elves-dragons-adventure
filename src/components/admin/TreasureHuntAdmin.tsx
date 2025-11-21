@@ -55,6 +55,11 @@ export const TreasureHuntAdmin = () => {
   const [itemTemplates, setItemTemplates] = useState<ItemTemplate[]>([]);
   const [monsters, setMonsters] = useState<Monster[]>([]);
   const [loading, setLoading] = useState(false);
+  
+  // Поиск
+  const [itemSearchTerm, setItemSearchTerm] = useState("");
+  const [monsterSearchTerm, setMonsterSearchTerm] = useState("");
+  
   const [formData, setFormData] = useState({
     item_template_id: "",
     monster_id: "none",
@@ -306,6 +311,15 @@ export const TreasureHuntAdmin = () => {
     }
   };
 
+  // Фильтруем предметы и монстров по поисковым запросам
+  const filteredItemTemplates = itemTemplates.filter((item) =>
+    item.name.toLowerCase().includes(itemSearchTerm.toLowerCase())
+  );
+
+  const filteredMonsters = monsters.filter((monster) =>
+    monster.monster_name.toLowerCase().includes(monsterSearchTerm.toLowerCase())
+  );
+
   return (
     <div className="space-y-6">
       <Card>
@@ -315,41 +329,57 @@ export const TreasureHuntAdmin = () => {
         <CardContent className="space-y-4">
           <div>
             <Label htmlFor="item_template_id">Предмет</Label>
-            <Select
-              value={formData.item_template_id}
-              onValueChange={(value) => setFormData({ ...formData, item_template_id: value })}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Выберите предмет" />
-              </SelectTrigger>
-              <SelectContent>
-                {itemTemplates.map((item) => (
-                  <SelectItem key={item.id} value={item.id.toString()}>
-                    {item.name} ({item.rarity})
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <div className="space-y-2">
+              <Input
+                placeholder="Поиск предмета..."
+                value={itemSearchTerm}
+                onChange={(e) => setItemSearchTerm(e.target.value)}
+                className="h-9"
+              />
+              <Select
+                value={formData.item_template_id}
+                onValueChange={(value) => setFormData({ ...formData, item_template_id: value })}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Выберите предмет" />
+                </SelectTrigger>
+                <SelectContent>
+                  {filteredItemTemplates.map((item) => (
+                    <SelectItem key={item.id} value={item.id.toString()}>
+                      {item.name} ({item.rarity})
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
           </div>
 
           <div>
             <Label htmlFor="monster_id">Монстр (необязательно)</Label>
-            <Select
-              value={formData.monster_id}
-              onValueChange={(value) => setFormData({ ...formData, monster_id: value })}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Выберите монстра" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="none">Любой монстр</SelectItem>
-                {monsters.map((monster) => (
-                  <SelectItem key={monster.id} value={monster.monster_id}>
-                    {monster.monster_name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <div className="space-y-2">
+              <Input
+                placeholder="Поиск монстра..."
+                value={monsterSearchTerm}
+                onChange={(e) => setMonsterSearchTerm(e.target.value)}
+                className="h-9"
+              />
+              <Select
+                value={formData.monster_id}
+                onValueChange={(value) => setFormData({ ...formData, monster_id: value })}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Выберите монстра" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">Любой монстр</SelectItem>
+                  {filteredMonsters.map((monster) => (
+                    <SelectItem key={monster.id} value={monster.monster_id}>
+                      {monster.monster_name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
           </div>
 
           <div className="grid grid-cols-2 gap-4">

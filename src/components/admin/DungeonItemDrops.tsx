@@ -58,6 +58,10 @@ export const DungeonItemDrops = () => {
   const [allMonsters, setAllMonsters] = useState<Record<number, string[]>>({});
   const [treasureHuntEvents, setTreasureHuntEvents] = useState<any[]>([]);
   
+  // Поиск
+  const [itemSearchTerm, setItemSearchTerm] = useState("");
+  const [monsterSearchTerm, setMonsterSearchTerm] = useState("");
+  
   // Форма для нового дропа
   const [newDrop, setNewDrop] = useState({
     item_template_id: "",
@@ -338,6 +342,11 @@ export const DungeonItemDrops = () => {
     );
   }
 
+  // Фильтруем предметы по поисковому запросу
+  const filteredItemTemplates = itemTemplates.filter((item) =>
+    item.name.toLowerCase().includes(itemSearchTerm.toLowerCase())
+  );
+
   return (
     <div className="space-y-6">
       <Card>
@@ -351,23 +360,31 @@ export const DungeonItemDrops = () => {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             <div className="space-y-2">
               <Label>Предмет</Label>
-              <Select
-                value={newDrop.item_template_id}
-                onValueChange={(value) =>
-                  setNewDrop({ ...newDrop, item_template_id: value })
-                }
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Выберите предмет" />
-                </SelectTrigger>
-                <SelectContent>
-                  {itemTemplates.map((item) => (
-                    <SelectItem key={item.id} value={item.id.toString()}>
-                      {item.name} ({item.rarity})
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <div className="space-y-2">
+                <Input
+                  placeholder="Поиск предмета..."
+                  value={itemSearchTerm}
+                  onChange={(e) => setItemSearchTerm(e.target.value)}
+                  className="h-9"
+                />
+                <Select
+                  value={newDrop.item_template_id}
+                  onValueChange={(value) =>
+                    setNewDrop({ ...newDrop, item_template_id: value })
+                  }
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Выберите предмет" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {filteredItemTemplates.map((item) => (
+                      <SelectItem key={item.id} value={item.id.toString()}>
+                        {item.name} ({item.rarity})
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
 
             <div className="space-y-2">
@@ -448,7 +465,17 @@ export const DungeonItemDrops = () => {
                   <div className="text-sm text-muted-foreground mb-3">
                     Если не выбрано - предмет может выпасть с любого монстра
                   </div>
-                  {allMonsters[parseInt(newDrop.dungeon_number)]?.map((monster) => (
+                  <Input
+                    placeholder="Поиск монстра..."
+                    value={monsterSearchTerm}
+                    onChange={(e) => setMonsterSearchTerm(e.target.value)}
+                    className="h-9 mb-2"
+                  />
+                  {allMonsters[parseInt(newDrop.dungeon_number)]
+                    ?.filter((monster) =>
+                      monster.toLowerCase().includes(monsterSearchTerm.toLowerCase())
+                    )
+                    .map((monster) => (
                     <div key={monster} className="flex items-center space-x-2">
                       <Checkbox
                         id={`new-${monster}`}
@@ -584,7 +611,17 @@ export const DungeonItemDrops = () => {
                           <div className="text-xs text-muted-foreground mb-2">
                             Пусто = все монстры
                           </div>
-                          {allMonsters[drop.dungeon_number]?.map((monster) => (
+                          <Input
+                            placeholder="Поиск монстра..."
+                            value={monsterSearchTerm}
+                            onChange={(e) => setMonsterSearchTerm(e.target.value)}
+                            className="h-8 mb-2"
+                          />
+                          {allMonsters[drop.dungeon_number]
+                            ?.filter((monster) =>
+                              monster.toLowerCase().includes(monsterSearchTerm.toLowerCase())
+                            )
+                            .map((monster) => (
                             <div key={monster} className="flex items-center space-x-2">
                               <Checkbox
                                 id={`drop-${drop.id}-${monster}`}
@@ -683,6 +720,12 @@ export const DungeonItemDrops = () => {
             </p>
           ) : (
             <div className="space-y-2">
+              <Input
+                placeholder="Поиск предмета..."
+                value={itemSearchTerm}
+                onChange={(e) => setItemSearchTerm(e.target.value)}
+                className="mb-4"
+              />
               <div className="grid grid-cols-12 gap-2 px-4 py-2 bg-muted/50 rounded-lg font-semibold text-sm">
                 <div className="col-span-3">Предмет</div>
                 <div className="col-span-2">Тип</div>
@@ -691,7 +734,7 @@ export const DungeonItemDrops = () => {
                 <div className="col-span-4">Настройки дропа в подземельях</div>
               </div>
               
-              {itemTemplates.map((item) => {
+              {filteredItemTemplates.map((item) => {
                 // Находим все настройки дропа для этого предмета
                 const itemDrops = drops.filter(d => d.item_template_id === item.id && d.is_active);
                 
