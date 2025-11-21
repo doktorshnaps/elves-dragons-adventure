@@ -93,7 +93,26 @@ export const useCardInstanceSync = () => {
         });
 
       const cardsFromInstances = Array.from(instancesByTemplate.values()).map(instance => {
-        const cardData = instance.card_data as Card;
+        const rawCardData = instance.card_data as any;
+        
+        // Извлекаем все характеристики из card_data
+        const cardData: Card = {
+          id: rawCardData.id || instance.card_template_id,
+          name: rawCardData.name || 'Unknown',
+          type: rawCardData.type || 'character',
+          power: rawCardData.power || 0,
+          defense: rawCardData.defense || 0,
+          health: rawCardData.health || 100,
+          magic: rawCardData.magic || 0,
+          rarity: rawCardData.rarity || 1,
+          cardClass: rawCardData.cardClass,
+          faction: rawCardData.faction,
+          image: rawCardData.image,
+          description: rawCardData.description,
+          isNFT: rawCardData.isNFT,
+          nftContractId: rawCardData.nftContractId,
+          nftTokenId: rawCardData.nftTokenId,
+        };
         
         // Проверяем, есть ли эта карта в текущем gameData с более свежими характеристиками
         const existingCard = gameData.cards?.find((c: Card) => c.id === cardData.id);
@@ -110,6 +129,8 @@ export const useCardInstanceSync = () => {
             rarity: existingCard.rarity,
             // Но берем здоровье и статусы из card_instances (источник истины)
             currentHealth: instance.current_health,
+            currentDefense: instance.current_defense,
+            maxDefense: instance.max_defense,
             lastHealTime: new Date(instance.last_heal_time).getTime(),
             isInMedicalBay: instance.is_in_medical_bay || false
           } as Card;
@@ -119,6 +140,8 @@ export const useCardInstanceSync = () => {
         return {
           ...cardData,
           currentHealth: instance.current_health,
+          currentDefense: instance.current_defense,
+          maxDefense: instance.max_defense,
           lastHealTime: new Date(instance.last_heal_time).getTime(),
           isInMedicalBay: instance.is_in_medical_bay || false
         } as Card;

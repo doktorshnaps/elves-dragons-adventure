@@ -85,44 +85,16 @@ export const DeckSelection = ({
     const result = uniqueCards.map(card => {
       const instance = instancesMap.get(card.id);
       
-      // ДЕТАЛЬНОЕ ЛОГИРОВАНИЕ для диагностики
-      if (import.meta.env.DEV && uniqueCards.indexOf(card) === 0) {
-        console.log('🔍 ПЕРВАЯ КАРТА - ДЕТАЛЬНЫЙ АНАЛИЗ:');
-        console.log('  card:', card);
-        console.log('  card.power:', card.power);
-        console.log('  instance:', instance);
-        console.log('  instance?.card_data:', instance?.card_data);
-      }
-      
-      // Извлекаем данные из card_data если они там есть
-      let cardData = card;
-      if (instance?.card_data && typeof instance.card_data === 'object') {
-        const data = instance.card_data as any;
-        cardData = {
-          ...card,
-          power: data.power ?? card.power,
-          health: data.health ?? card.health,
-          defense: data.defense ?? card.defense,
-          magic: data.magic ?? card.magic,
-          rarity: data.rarity ?? card.rarity,
-        };
-        
-        if (import.meta.env.DEV && uniqueCards.indexOf(card) === 0) {
-          console.log('  📝 Извлечено из card_data - power:', data.power);
-          console.log('  📝 Итоговый cardData.power:', cardData.power);
-        }
-      }
-      
       if (instance) {
         return {
-          ...cardData,
+          ...card,
           currentHealth: instance.current_health,
           currentDefense: instance.current_defense,
           maxDefense: instance.max_defense,
           lastHealTime: new Date(instance.last_heal_time).getTime()
         };
       }
-      return cardData;
+      return card;
     });
     
     console.log('🎴 LocalCards with power:', result.map(c => `${c.name}: power=${c.power}, rarity=${c.rarity}`));
