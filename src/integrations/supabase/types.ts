@@ -2091,6 +2091,13 @@ export type Database = {
             }
             Returns: undefined
           }
+      admin_migrate_cards_to_instances: {
+        Args: { p_admin_wallet?: string }
+        Returns: {
+          migrated_cards: number
+          result_wallet: string
+        }[]
+      }
       admin_remove_administrator: {
         Args: { p_admin_wallet_address?: string; p_wallet_address: string }
         Returns: boolean
@@ -2839,6 +2846,13 @@ export type Database = {
       mark_quest_claimed: {
         Args: { p_quest_id: string; p_wallet_address: string }
         Returns: boolean
+      }
+      migrate_cards_to_instances: {
+        Args: never
+        Returns: {
+          migrated_cards: number
+          result_wallet: string
+        }[]
       }
       open_card_packs: {
         Args: {
