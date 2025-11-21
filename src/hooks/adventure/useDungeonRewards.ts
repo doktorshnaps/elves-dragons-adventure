@@ -207,11 +207,25 @@ export const useDungeonRewards = () => {
     }
 
     // Создаем детерминированный ключ для этой награды, чтобы предотвратить повторные начисления
+    // Используем короткий хеш вместо полного списка предметов, чтобы не превысить лимит 256 символов
     const itemsKey = (pendingReward.lootedItems || [])
       .map(it => it.name)
       .sort()
       .join('|');
-    const claimKey = `${pendingReward.totalELL}::${itemsKey}`;
+    
+    // Создаем короткий хеш от списка предметов
+    const hashCode = (str: string) => {
+      let hash = 0;
+      for (let i = 0; i < str.length; i++) {
+        const char = str.charCodeAt(i);
+        hash = ((hash << 5) - hash) + char;
+        hash = hash & hash; // Convert to 32bit integer
+      }
+      return Math.abs(hash).toString(36);
+    };
+    
+    const itemsHash = itemsKey ? hashCode(itemsKey) : 'empty';
+    const claimKey = `dungeon_${accountId || 'local'}_${pendingReward.totalELL}_${itemsHash}_${Date.now()}`;
 
     // In-hook quick guard
     if (lastClaimKeyRef.current === claimKey) {
