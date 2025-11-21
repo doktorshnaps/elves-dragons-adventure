@@ -19,6 +19,7 @@ import { ItemTemplateManager } from "@/components/admin/ItemTemplateManager";
 import { ItemGiveawayManager } from "@/components/admin/ItemGiveawayManager";
 import ShelterBuildingSettings from "@/components/admin/ShelterBuildingSettings";
 import { TreasureHuntAdmin } from "@/components/admin/TreasureHuntAdmin";
+import { ShopSettings } from "@/components/admin/ShopSettings";
 import { useLanguage } from "@/hooks/useLanguage";
 import { t } from "@/utils/translations";
 
@@ -98,7 +99,7 @@ const AdminSettingsContent = () => {
         </div>
 
         <Tabs defaultValue={isSuperAdmin ? "cards" : "management"} className="w-full">
-          <TabsList className={`grid w-full ${isSuperAdmin ? 'grid-cols-12' : 'grid-cols-1'} bg-black/50 border-2 border-white backdrop-blur-sm rounded-3xl mb-6`} style={{ boxShadow: '-33px 15px 10px rgba(0, 0, 0, 0.6)' }}>
+          <TabsList className={`grid w-full ${isSuperAdmin ? 'grid-cols-13' : 'grid-cols-1'} bg-black/50 border-2 border-white backdrop-blur-sm rounded-3xl mb-6`} style={{ boxShadow: '-33px 15px 10px rgba(0, 0, 0, 0.6)' }}>
             {isSuperAdmin && (
               <>
                 <TabsTrigger value="cards" className="text-white data-[state=active]:bg-white/20 rounded-3xl">{t(language, 'admin.cards')}</TabsTrigger>
@@ -111,6 +112,7 @@ const AdminSettingsContent = () => {
                 <TabsTrigger value="card-upgrades" className="text-white data-[state=active]:bg-white/20 rounded-3xl">{t(language, 'admin.cardUpgrades')}</TabsTrigger>
                 <TabsTrigger value="crafting" className="text-white data-[state=active]:bg-white/20 rounded-3xl">{t(language, 'admin.crafting')}</TabsTrigger>
                 <TabsTrigger value="seekers" className="text-white data-[state=active]:bg-white/20 rounded-3xl">Искатели</TabsTrigger>
+                <TabsTrigger value="shop" className="text-white data-[state=active]:bg-white/20 rounded-3xl">Магазин</TabsTrigger>
               </>
             )}
             <TabsTrigger value="management" className="text-white data-[state=active]:bg-white/20 rounded-3xl">{t(language, 'admin.management')}</TabsTrigger>
@@ -157,6 +159,10 @@ const AdminSettingsContent = () => {
 
               <TabsContent value="seekers" className="space-y-4">
                 <TreasureHuntAdmin />
+              </TabsContent>
+
+              <TabsContent value="shop" className="space-y-4">
+                <ShopSettings />
               </TabsContent>
             </>
           )}
