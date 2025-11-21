@@ -9,6 +9,7 @@ import { QueryProvider } from './providers/QueryProvider';
 import { AdminProvider } from './contexts/AdminContext';
 import { WhitelistProvider } from './contexts/WhitelistContext';
 import { BanStatusProvider } from './contexts/BanStatusContext';
+import { GameDataProvider } from './contexts/GameDataContext';
 import { useRoutePreloader } from './hooks/useRoutePreloader';
 import { useNFTStatsRecalculation } from './hooks/useNFTStatsRecalculation';
 import { useSecureStorage } from './hooks/useSecureStorage';
@@ -109,7 +110,8 @@ function App() {
         <AdminProvider>
           <WhitelistProvider>
             <BanStatusProvider>
-              <BrightnessProvider>
+              <GameDataProvider>
+                <BrightnessProvider>
             <MusicProvider>
               <LanguageProvider>
                 <div className="overflow-x-hidden max-w-full w-full">
@@ -153,6 +155,7 @@ function App() {
             </LanguageProvider>
           </MusicProvider>
         </BrightnessProvider>
+              </GameDataProvider>
             </BanStatusProvider>
           </WhitelistProvider>
         </AdminProvider>

@@ -1,9 +1,9 @@
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useCallback, useEffect } from 'react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useWalletContext } from '@/contexts/WalletConnectContext';
 import { useToast } from '@/hooks/use-toast';
 import { Card } from '@/types/cards';
-import { useGameData } from '@/hooks/useGameData';
 
 export interface CardInstance {
   id: string;
@@ -31,57 +31,48 @@ export const useCardInstances = () => {
   const { accountId, selector, isLoading: walletLoading } = useWalletContext();
   const isConnected = !!accountId;
   const { toast } = useToast();
-  const { gameData } = useGameData();
-  const [cardInstances, setCardInstances] = useState<CardInstance[]>([]);
-  const [loading, setLoading] = useState(true);
+  const queryClient = useQueryClient();
 
-  // Защита от одновременных вызовов loadCardInstances
-  const isLoadingInstancesRef = useRef(false);
+  console.log('🔍 useCardInstances called for wallet:', accountId);
 
-  // Загрузка всех экземпляров карт пользователя
-  const loadCardInstances = useCallback(async () => {
-    // Не загружаем пока wallet не готов
-    if (walletLoading || !selector) {
-      console.log('⏭️ Wallet not ready, skipping loadCardInstances');
-      return;
-    }
-    if (!isConnected || !accountId) return;
-    
-    // Предотвращаем одновременные вызовы
-    if (isLoadingInstancesRef.current) {
-      console.log('⏭️ loadCardInstances already in progress, skipping...');
-      return;
-    }
+  // Загрузка всех экземпляров карт пользователя через React Query
+  const { 
+    data: cardInstances = [], 
+    isLoading: loading,
+    refetch: loadCardInstances 
+  } = useQuery({
+    queryKey: ['cardInstances', accountId],
+    queryFn: async () => {
+      console.log('📥 Fetching card instances for:', accountId);
+      
+      if (!isConnected || !accountId) {
+        console.log('⏭️ Not connected, returning empty array');
+        return [];
+      }
 
-    isLoadingInstancesRef.current = true;
-    
-    try {
-      setLoading(true);
       const { data, error } = await supabase
         .rpc('get_card_instances_by_wallet', { p_wallet_address: accountId });
 
-      if (error) throw error;
+      if (error) {
+        console.error('❌ Error loading card instances:', error);
+        toast({
+          title: 'Ошибка загрузки карт',
+          description: 'Не удалось загрузить экземпляры карт',
+          variant: 'destructive'
+        });
+        throw error;
+      }
 
-      let list = (data || []) as unknown as CardInstance[];
-
-      // ⛔️ Отключено авто-восстановление card_instances из game_data
-      // Причина: это восстанавливало удалённые карты из локального кеша/legacy JSON
-      // Теперь card_instances — единственный источник истины, а NFT синхронизируются отдельно через useNFTCardIntegration
-
-
-      setCardInstances(list);
-    } catch (error) {
-      console.error('Error loading card instances:', error);
-      toast({
-        title: 'Ошибка загрузки карт',
-        description: 'Не удалось загрузить экземпляры карт',
-        variant: 'destructive'
-      });
-    } finally {
-      isLoadingInstancesRef.current = false;
-      setLoading(false);
-    }
-  }, [accountId, isConnected, toast, gameData?.cards, gameData?.selectedTeam, selector, walletLoading]);
+      const list = (data || []) as unknown as CardInstance[];
+      console.log(`✅ Loaded ${list.length} card instances`);
+      return list;
+    },
+    enabled: isConnected && !!accountId && !walletLoading && !!selector,
+    staleTime: 30 * 1000, // 30 seconds - cards change during gameplay
+    gcTime: 5 * 60 * 1000, // 5 minutes
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
+  });
 
   // Создание нового экземпляра карты
   const createCardInstance = useCallback(async (card: Card, cardType: 'hero' | 'dragon') => {
@@ -94,8 +85,8 @@ export const useCardInstances = () => {
       });
 
       if (error) throw error;
-      // Перезагружаем список из БД, чтобы избежать расхождений
-      await loadCardInstances();
+      // Invalidate query to trigger refetch
+      queryClient.invalidateQueries({ queryKey: ['cardInstances', accountId] });
       // Возвращаем заглушку с id для совместимости
       return { id: data } as unknown as CardInstance;
     } catch (error) {
@@ -127,7 +118,8 @@ export const useCardInstances = () => {
         throw new Error('Update not applied');
       }
 
-      setCardInstances(prev => 
+      // Update React Query cache
+      queryClient.setQueryData(['cardInstances', accountId], (prev: CardInstance[] = []) => 
         prev.map(instance => 
           instance.id === instanceId 
             ? { 
@@ -155,7 +147,7 @@ export const useCardInstances = () => {
       });
       return false;
     }
-  }, [accountId, isConnected, toast]);
+  }, [accountId, isConnected, toast, queryClient]);
 
   // Применение урона к экземпляру карты
   const applyDamageToInstance = useCallback(async (instanceId: string, damage: number) => {
@@ -208,7 +200,10 @@ export const useCardInstances = () => {
           throw new Error('Delete not applied');
         }
 
-        setCardInstances(prev => prev.filter(ci => ci.id !== instanceId));
+        // Update React Query cache
+        queryClient.setQueryData(['cardInstances', accountId], (prev: CardInstance[] = []) => 
+          prev.filter(ci => ci.id !== instanceId)
+        );
         console.log('✅ deleteCardInstance success:', instanceId);
         return true;
       } catch (error) {
@@ -220,7 +215,7 @@ export const useCardInstances = () => {
       });
       return false;
     }
-  }, [accountId, isConnected, toast, cardInstances]);
+  }, [accountId, isConnected, toast, cardInstances, queryClient]);
 
   // Удаление экземпляра карты по template id (удобно при апгрейде/сжигании)
   const deleteCardInstanceByTemplate = useCallback(async (cardTemplateId: string) => {
@@ -233,7 +228,8 @@ export const useCardInstances = () => {
       });
 
       if (error) throw error;
-      await loadCardInstances();
+      // Invalidate query to trigger refetch
+      queryClient.invalidateQueries({ queryKey: ['cardInstances', accountId] });
       return data === true;
     } catch (error) {
       console.error('Error deleting card instance by template:', error);
@@ -244,7 +240,7 @@ export const useCardInstances = () => {
       });
       return false;
     }
-  }, [accountId, isConnected, toast, loadCardInstances]);
+  }, [accountId, isConnected, toast, queryClient]);
 
   // Инкремент убийств монстров для карты
   const incrementMonsterKills = useCallback(async (cardTemplateId: string, killsToAdd: number = 1) => {
@@ -276,8 +272,8 @@ export const useCardInstances = () => {
 
       console.log('Successfully incremented monster kills for:', cardTemplateId);
 
-      // Обновляем локальное состояние
-      setCardInstances(prev =>
+      // Update React Query cache
+      queryClient.setQueryData(['cardInstances', accountId], (prev: CardInstance[] = []) =>
         prev.map(ci =>
           ci.card_template_id === cardTemplateId
             ? { ...ci, monster_kills: ci.monster_kills + killsToAdd }
@@ -290,23 +286,18 @@ export const useCardInstances = () => {
       console.error('Error incrementing monster kills:', error);
       return false;
     }
-  }, [accountId, isConnected, cardInstances]);
+  }, [accountId, isConnected, cardInstances, queryClient]);
 
-  // Загрузка при инициализации
-  useEffect(() => {
-    loadCardInstances();
-  }, [loadCardInstances]);
-
-  // Перезагрузка при очистке NFT
+  // Event listener for manual reload trigger
   useEffect(() => {
     const handleCardInstancesUpdate = () => {
-      console.log('🔄 Received cardInstancesUpdate event, reloading card instances');
-      loadCardInstances();
+      console.log('🔄 Received cardInstancesUpdate event, invalidating card instances cache');
+      queryClient.invalidateQueries({ queryKey: ['cardInstances', accountId] });
     };
 
     window.addEventListener('cardInstancesUpdate', handleCardInstancesUpdate);
     return () => window.removeEventListener('cardInstancesUpdate', handleCardInstancesUpdate);
-  }, [loadCardInstances]);
+  }, [accountId, queryClient]);
 
   // Подписка на обновления в реальном времени - ОТКЛЮЧЕНА для снижения нагрузки
   // Используем ручную синхронизацию через loadCardInstances при необходимости
@@ -344,6 +335,6 @@ export const useCardInstances = () => {
     deleteCardInstance,
     deleteCardInstanceByTemplate,
     incrementMonsterKills,
-    loadCardInstances
+    loadCardInstances: () => loadCardInstances() // Wrap refetch as function
   };
 };

@@ -42,8 +42,8 @@ export const Shop = ({ onClose }: ShopProps) => {
   // Load game data when shop opens
   useEffect(() => {
     if (accountId && loadGameData) {
-      console.log('🛒 Shop opened, loading game data for:', accountId);
-      loadGameData(accountId);
+      console.log('🛒 Shop opened, refreshing game data');
+      loadGameData();
     }
   }, [accountId, loadGameData]);
 

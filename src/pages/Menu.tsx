@@ -51,7 +51,7 @@ export const Menu = () => {
       performance.mark('menu-load-start');
       console.log('🔄 Loading game data for connected wallet:', accountId);
       
-      loadGameData(accountId).then(() => {
+      loadGameData().then(() => {
         setInitialLoadComplete(true);
         performance.mark('menu-load-end');
         performance.measure('Menu Initial Load', 'menu-load-start', 'menu-load-end');
