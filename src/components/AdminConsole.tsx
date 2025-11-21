@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useWalletContext } from '@/contexts/WalletConnectContext';
-import { useAdminCheck } from '@/hooks/useAdminCheck';
+import { useAdmin } from '@/contexts/AdminContext';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { WhitelistManager } from '@/components/admin/WhitelistManager';
@@ -20,7 +20,7 @@ import { useGameStore } from '@/stores/gameStore';
 
 export const AdminConsole = () => {
   const { accountId } = useWalletContext();
-  const { isAdmin, loading: adminLoading } = useAdminCheck();
+  const { isAdmin, loading: adminLoading } = useAdmin();
   const { toast } = useToast();
   const [command, setCommand] = useState('');
   const [output, setOutput] = useState<string[]>([]);

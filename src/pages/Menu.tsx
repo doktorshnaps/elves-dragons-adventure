@@ -4,7 +4,7 @@ import { Settings } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useGameData } from "@/hooks/useGameData";
 import { useWalletContext } from "@/contexts/WalletConnectContext";
-import { useAdminCheck } from "@/hooks/useAdminCheck";
+import { useAdmin } from "@/contexts/AdminContext";
 import { useNearBalances } from "@/hooks/useNearBalances";
 
 import { useLanguage } from "@/hooks/useLanguage";
@@ -39,7 +39,7 @@ export const Menu = () => {
     disconnect: disconnectWallet
   } = useWalletContext();
   const isConnected = !!accountId;
-  const { isAdmin } = useAdminCheck();
+  const { isAdmin } = useAdmin();
   const chainAccountId = nearAccountId || accountId || localStorage.getItem('nearAccountId') || localStorage.getItem('walletAccountId');
   const { nearBalance, gtBalance, loading: balancesLoading } = useNearBalances(chainAccountId);
   const [initialLoadComplete, setInitialLoadComplete] = useState(false);
