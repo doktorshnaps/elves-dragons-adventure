@@ -115,6 +115,7 @@ export const useGameSync = () => {
           cards: gameData.cards?.length,
           dragonEggs: gameData.dragonEggs?.length,
           selectedTeam: gameData.selectedTeam?.length,
+          selectedTeamData: JSON.stringify(gameData.selectedTeam),
           accountLevel: gameData.accountLevel,
           accountExperience: gameData.accountExperience
         });
@@ -122,7 +123,16 @@ export const useGameSync = () => {
         gameStore.setBalance(gameData.balance);
         gameStore.setCards(gameData.cards);
         gameStore.setDragonEggs(gameData.dragonEggs || []);
-        gameStore.setSelectedTeam(gameData.selectedTeam || []);
+        
+        // КРИТИЧНО: Всегда устанавливаем selectedTeam из БД, даже если он пустой
+        const teamFromDB = gameData.selectedTeam || [];
+        console.log('🔄 useGameSync: Setting selectedTeam from DB:', {
+          length: teamFromDB.length,
+          data: JSON.stringify(teamFromDB),
+          isArray: Array.isArray(teamFromDB)
+        });
+        gameStore.setSelectedTeam(teamFromDB);
+        
         gameStore.setAccountLevel(gameData.accountLevel || 1);
         gameStore.setAccountExperience(gameData.accountExperience || 0);
         

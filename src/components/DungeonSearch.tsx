@@ -37,46 +37,36 @@ export const DungeonSearch = ({ onClose, balance }: DungeonSearchProps) => {
   const computeHasActiveCards = () => {
     console.log('🔍 [DungeonSearch] Checking active cards...');
     console.log('🎮 [DungeonSearch] selectedTeam from store:', selectedTeam);
+    console.log('📊 [DungeonSearch] selectedTeam type:', typeof selectedTeam);
+    console.log('📏 [DungeonSearch] selectedTeam length:', selectedTeam?.length);
     console.log('🃏 [DungeonSearch] cards from store:', cards);
     
     // Проверяем Zustand store - основной источник данных
     // Команда должна содержать хотя бы одного героя
-    if (selectedTeam && selectedTeam.length > 0) {
-      console.log('✅ [DungeonSearch] selectedTeam exists, length:', selectedTeam.length);
+    if (Array.isArray(selectedTeam) && selectedTeam.length > 0) {
+      console.log('✅ [DungeonSearch] selectedTeam is array with length:', selectedTeam.length);
       console.log('📋 [DungeonSearch] selectedTeam structure:', JSON.stringify(selectedTeam, null, 2));
       
-      const hasHero = selectedTeam.some(pair => pair?.hero && pair.hero.id);
+      const hasHero = selectedTeam.some(pair => {
+        const result = pair?.hero && pair.hero.id;
+        console.log('🦸 [DungeonSearch] Checking pair:', { hasHero: result, pair: JSON.stringify(pair) });
+        return result;
+      });
       console.log('🦸 [DungeonSearch] Has hero in team:', hasHero);
       
       if (hasHero) {
         console.log('✅ [DungeonSearch] RESULT: Active cards found (Zustand)');
         return true;
+      } else {
+        console.log('⚠️ [DungeonSearch] Team has items but no heroes found');
       }
     } else {
-      console.log('⚠️ [DungeonSearch] selectedTeam is empty or null in Zustand');
-    }
-    
-    // Fallback на localStorage для обратной совместимости
-    try {
-      const gameData = localStorage.getItem('gameData');
-      if (gameData) {
-        const parsedData = JSON.parse(gameData);
-        console.log('💾 [DungeonSearch] localStorage gameData:', parsedData);
-        
-        if (Array.isArray(parsedData.selected_team) && parsedData.selected_team.length > 0) {
-          console.log('📦 [DungeonSearch] localStorage selected_team length:', parsedData.selected_team.length);
-          
-          const hasHero = parsedData.selected_team.some((pair: any) => pair?.hero && pair.hero.id);
-          console.log('🦸 [DungeonSearch] Has hero in localStorage team:', hasHero);
-          
-          if (hasHero) {
-            console.log('✅ [DungeonSearch] RESULT: Active cards found (localStorage)');
-            return true;
-          }
-        }
-      }
-    } catch (err) {
-      console.error('❌ [DungeonSearch] Error reading localStorage:', err);
+      console.log('⚠️ [DungeonSearch] selectedTeam is empty, null, or not array:', {
+        isArray: Array.isArray(selectedTeam),
+        isNull: selectedTeam === null,
+        isUndefined: selectedTeam === undefined,
+        value: selectedTeam
+      });
     }
     
     console.log('❌ [DungeonSearch] RESULT: No active cards found');
