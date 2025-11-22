@@ -14,6 +14,7 @@ export const useShopInventory = () => {
   const [loading, setLoading] = useState(true);
   const [timeUntilReset, setTimeUntilReset] = useState<number>(0);
   const resettingRef = useRef(false);
+  const nextResetTimeRef = useRef<number>(0);
 
    const fetchInventory = async () => {
     try {
@@ -26,16 +27,14 @@ export const useShopInventory = () => {
 
       setInventory(data || []);
       
-      // Если инвентарь пустой — инициируем сброс и повторную загрузку
-      if (!data || data.length === 0) {
-        await triggerResetAndRefresh();
-        return;
+      // Сохраняем next_reset_time в ref для использования в таймере
+      if (data && data.length > 0) {
+        const nextReset = new Date(data[0].next_reset_time).getTime();
+        nextResetTimeRef.current = nextReset;
+        
+        const now = new Date().getTime();
+        setTimeUntilReset(Math.max(0, nextReset - now));
       }
-      
-      // Вычисляем время до сброса из первого элемента
-      const nextReset = new Date(data[0].next_reset_time).getTime();
-      const now = new Date().getTime();
-      setTimeUntilReset(Math.max(0, nextReset - now));
     } catch (error) {
       console.error('Error fetching shop inventory:', error);
     } finally {
@@ -104,15 +103,19 @@ export const useShopInventory = () => {
   useEffect(() => {
     fetchInventory();
 
-    // Локальный таймер для UI (обновление каждую секунду)
+    // Таймер для UI (пересчитывается на основе nextResetTimeRef каждую секунду)
     const timerInterval = setInterval(() => {
-      setTimeUntilReset(prev => {
-        const newTime = Math.max(0, prev - 1000);
-        if (newTime === 0 && !resettingRef.current) {
+      if (nextResetTimeRef.current > 0) {
+        const now = new Date().getTime();
+        const remaining = Math.max(0, nextResetTimeRef.current - now);
+        
+        setTimeUntilReset(remaining);
+        
+        // Вызываем сброс только когда реальное время превысило next_reset_time
+        if (remaining === 0 && !resettingRef.current) {
           triggerResetAndRefresh();
         }
-        return newTime;
-      });
+      }
     }, 1000);
 
     // Обновление данных из БД раз в 20 минут
