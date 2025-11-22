@@ -460,15 +460,22 @@ Deno.serve(async (req) => {
     // Создаем записи в card_instances для каждой карты
     console.log(`📝 Creating ${newCards.length} card_instances records...`);
     
-    const cardInstancesToInsert = newCards.map(card => ({
-      wallet_address: wallet_address,
-      card_template_id: card.id,
-      card_type: card.type,
-      card_data: card,
-      max_health: 100, // Будет пересчитано на клиенте
-      current_health: 100,
-      monster_kills: 0
-    }));
+    const cardInstancesToInsert = newCards.map(card => {
+      // Вычисляем max_defense на основе карты (defense из card_data или 0 для рабочих)
+      const defense = card.defense || 0;
+      
+      return {
+        wallet_address: wallet_address,
+        card_template_id: card.id,
+        card_type: card.type,
+        card_data: card,
+        max_health: 100, // Будет пересчитано на клиенте
+        current_health: 100,
+        current_defense: defense,
+        max_defense: defense,
+        monster_kills: 0
+      };
+    });
 
     const { error: insertCardsErr } = await supabase
       .from('card_instances')
