@@ -10,11 +10,23 @@ interface TeamCardDisplayProps {
 }
 
 export const TeamCardDisplay = ({ card, onClick, isSelected }: TeamCardDisplayProps) => {
-  // Пересчитываем характеристики с учётом класса и редкости
-  const stats = useMemo(() => 
-    calculateCardStats(card.name, card.rarity, card.type), 
-    [card.name, card.rarity, card.type]
-  );
+  // Используем сохраненные характеристики из card_data, пересчет только как fallback
+  const stats = useMemo(() => {
+    // Если характеристики уже есть в объекте карты, используем их
+    if (card.power !== undefined && card.defense !== undefined && 
+        card.health !== undefined && card.magic !== undefined) {
+      return {
+        power: card.power,
+        defense: card.defense,
+        health: card.health,
+        magic: card.magic
+      };
+    }
+    
+    // Иначе пересчитываем (fallback для старых карт)
+    console.warn(`⚠️ Team card stats not found in card_data for ${card.name}, recalculating...`);
+    return calculateCardStats(card.name, card.rarity, card.type);
+  }, [card.name, card.rarity, card.type, card.power, card.defense, card.health, card.magic]);
   
   return (
     <Card 
