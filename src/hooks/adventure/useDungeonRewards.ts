@@ -8,6 +8,7 @@ import { newItems } from '@/data/newItems';
 import { useAddItemToInstances } from '@/hooks/useAddItemToInstances';
 import { supabase } from '@/integrations/supabase/client';
 import { useWalletContext } from '@/contexts/WalletConnectContext';
+import { useQueryClient } from '@tanstack/react-query';
 
 // Global idempotency for claim route (survives component remounts)
 let globalClaimLock = false;
@@ -41,6 +42,7 @@ export const useDungeonRewards = () => {
   const { toast } = useToast();
   const { addItemsToInstances } = useAddItemToInstances();
   const { accountId } = useWalletContext();
+  const queryClient = useQueryClient();
   const isClaimingRef = useRef(false);
   const lastProcessedLevelRef = useRef<number>(-1);
   const isProcessingRef = useRef(false);
@@ -315,6 +317,18 @@ export const useDungeonRewards = () => {
               throw error;
             }
             console.log('✅ Edge claim-item-reward result', data);
+            
+            // Даем время для записи данных в БД перед обновлением кеша
+            await new Promise(resolve => setTimeout(resolve, 500));
+            
+            // Инвалидируем кеш itemInstances для обновления UI
+            queryClient.invalidateQueries({ queryKey: ['itemInstances', accountId] });
+            
+            // Отправляем событие для немедленного обновления UI
+            const itemEvent = new CustomEvent('itemInstancesUpdate');
+            window.dispatchEvent(itemEvent);
+            
+            console.log('✅ [useDungeonRewards] Cache invalidated, event dispatched');
           } catch (edgeErr) {
             console.error('❌ Ошибка edge claim-item-reward, fallback отменён чтобы избежать дублей:', edgeErr);
             // Не вызываем локальный addItemsToInstances, чтобы не удвоить предметы
