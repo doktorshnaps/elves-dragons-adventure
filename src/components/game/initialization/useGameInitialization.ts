@@ -11,15 +11,22 @@ export const useGameInitialization = (setCards: (cards: Card[]) => void) => {
   const isConnected = !!accountId;
   const hasInitializedRef = useRef(false);
 
+  console.log('🎮 useGameInitialization: accountId=', accountId, 'isConnected=', isConnected, 'hasInitialized=', hasInitializedRef.current);
+
   useEffect(() => {
-    if (!isConnected || !accountId || hasInitializedRef.current) return;
+    console.log('🔄 useGameInitialization effect: accountId=', accountId, 'isConnected=', isConnected, 'hasInitialized=', hasInitializedRef.current);
+    if (!isConnected || !accountId || hasInitializedRef.current) {
+      console.log('⏭️ Skipping initialization:', { isConnected, accountId, hasInitialized: hasInitializedRef.current });
+      return;
+    }
 
     const initializeGame = async () => {
       try {
         hasInitializedRef.current = true;
-        console.log('Initializing game for wallet:', accountId);
+        console.log('🚀 Initializing game for wallet:', accountId);
         
         // Проверяем данные игры в Supabase по кошельку
+        console.log('📊 Checking existing game data for:', accountId);
         const { data: gameData, error } = await supabase
           .from('game_data')
           .select('*')
@@ -27,31 +34,39 @@ export const useGameInitialization = (setCards: (cards: Card[]) => void) => {
           .maybeSingle();
 
         if (error) {
-          console.error('Error fetching game data:', error);
+          console.error('❌ Error fetching game data:', error);
+          toast({
+            title: "Ошибка загрузки",
+            description: "Не удалось проверить данные игрока",
+            variant: "destructive"
+          });
           return;
         }
 
+        console.log('📦 Existing game data:', gameData ? 'Found' : 'Not found');
+
         // Если данных нет, создаем новую запись
         if (!gameData) {
-          console.log('Creating new game data for wallet:', accountId);
+          console.log('✨ Creating new game data for wallet:', accountId);
           
           // Используем RPC функцию для безопасного создания game_data (уже с balance=100)
+          console.log('📞 Calling ensure_game_data_exists RPC...');
           const { data: userId, error: insertError } = await supabase
             .rpc('ensure_game_data_exists', {
               p_wallet_address: accountId
             });
 
           if (insertError) {
-            console.error('Error creating game data:', insertError);
+            console.error('❌ Error creating game data:', insertError);
             toast({
               title: "Ошибка инициализации",
-              description: "Не удалось создать данные игрока",
+              description: `Не удалось создать данные игрока: ${insertError.message}`,
               variant: "destructive"
             });
             return;
           }
 
-          console.log('Game data created, user_id:', userId);
+          console.log('✅ Game data created, user_id:', userId);
 
           // Получаем созданные данные
           const { data: newGameData, error: fetchError } = await supabase
