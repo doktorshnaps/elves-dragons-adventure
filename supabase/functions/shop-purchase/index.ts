@@ -184,6 +184,8 @@ if (itemTemplate.type === 'worker') {
     throw new Error('User not found');
   }
   
+  console.log(`👷 User data found:`, JSON.stringify(userData, null, 2));
+  
   // Для каждого рабочего создаем отдельную запись в card_instances
   for (let i = 0; i < quantity; i++) {
     const workerInstanceId = `worker_${item_id}_${Date.now()}_${Math.random().toString(36).substr(2, 9)}_${i}`;
@@ -200,6 +202,17 @@ if (itemTemplate.type === 'worker') {
       image: itemTemplate.image_url,
       templateId: itemTemplate.item_id
     };
+
+    console.log(`👷 Creating worker ${i+1}/${quantity} with:`, {
+      workerInstanceId,
+      cardData,
+      insertPayload: {
+        user_id: userData.user_id,
+        wallet_address,
+        card_template_id: workerInstanceId,
+        card_type: 'workers'
+      }
+    });
 
     const { data: insertedCard, error: cardInstanceError } = await supabase
       .from('card_instances')
