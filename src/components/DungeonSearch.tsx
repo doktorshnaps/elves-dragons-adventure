@@ -77,7 +77,13 @@ export const DungeonSearch = ({ onClose, balance }: DungeonSearchProps) => {
 
   useEffect(() => {
     console.log('🔄 [DungeonSearch] useEffect triggered - recalculating hasActiveCards');
-    console.log('📊 [DungeonSearch] Current selectedTeam:', selectedTeam);
+    console.log('📊 [DungeonSearch] Current selectedTeam from store:', {
+      selectedTeam,
+      type: typeof selectedTeam,
+      isArray: Array.isArray(selectedTeam),
+      length: selectedTeam?.length,
+      data: JSON.stringify(selectedTeam).substring(0, 300)
+    });
     console.log('🎴 [DungeonSearch] Current cards:', cards);
     
     const newValue = computeHasActiveCards();
