@@ -99,33 +99,39 @@ export const WorkersManagement = ({ onSpeedBoostChange }: WorkersManagementProps
       instance.card_type === 'workers' ||
       ((instance.card_data as any)?.type === 'worker' || (instance.card_data as any)?.type === 'workers')
     )
+    .filter(w => !activeWorkers.find(aw => aw.cardInstanceId === w.id))
     .map(instance => ({
       id: instance.id,
       instanceId: instance.id,
-      templateId: instance.card_template_id,
-      name: instance.card_data.name || 'Рабочий',
-      description: instance.card_data.description || '',
-      type: 'worker',
-      value: (instance.card_data as any).value || 0,
-      stats: (instance.card_data as any).stats || {},
-      image: (instance.card_data as any).image,
-      currentHealth: instance.current_health,
-      maxHealth: instance.max_health
+      name: instance.card_data?.name || 'Unknown Worker',
+      speedBoost: (instance.card_data as any)?.stats?.speedBoost || (instance.card_data as any)?.stats?.workDuration || 10,
+      template_id: instance.card_template_id,
+      card_data: instance.card_data,
+      description: instance.card_data?.description || '',
+      value: (instance.card_data as any)?.value || 0,
+      stats: (instance.card_data as any)?.stats || {}
     }));
 
-  // Исключаем уже назначенных активных рабочих из списка доступных
-  const activeInstanceIds = new Set(activeWorkers.map(w => w.cardInstanceId));
-  const activeWorkerIds = new Set(activeWorkers.map(w => w.workerId));
-  const visibleWorkers = availableWorkers.filter((w: any) =>
-    w.instanceId ? !activeInstanceIds.has(w.instanceId) : !activeWorkerIds.has(w.id)
-  );
-
   console.log('👷 Workers from card_instances:', {
-    totalWorkers: availableWorkers.length,
+    totalWorkers: cardInstances.filter(i => 
+      i.card_type === 'workers' || 
+      ((i.card_data as any)?.type === 'worker' || (i.card_data as any)?.type === 'workers')
+    ).length,
     activeWorkers: activeWorkers.length,
-    visibleWorkers: visibleWorkers.length,
-    workerDetails: availableWorkers.map(w => ({ id: w.id, name: w.name, stats: w.stats }))
+    visibleWorkers: availableWorkers.length,
+    workerDetails: cardInstances
+      .filter(i => i.card_type === 'workers' || ((i.card_data as any)?.type === 'worker'))
+      .map(i => ({
+        id: i.id,
+        card_type: i.card_type,
+        card_data_type: (i.card_data as any)?.type,
+        name: i.card_data?.name,
+        template_id: i.card_template_id
+      }))
   });
+
+  // visibleWorkers - это просто availableWorkers, так как фильтрация уже выполнена
+  const visibleWorkers = availableWorkers;
 
   // Загружаем активных рабочих только ОДИН РАЗ при монтировании из БД
   useEffect(() => {

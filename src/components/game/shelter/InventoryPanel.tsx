@@ -1,35 +1,58 @@
 import { Card } from "@/components/ui/card";
 import { useItemInstances } from "@/hooks/useItemInstances";
+import { useCardInstances } from "@/hooks/useCardInstances";
 import { getItemName, resolveItemKey } from "@/utils/itemNames";
 import { useLanguage } from "@/hooks/useLanguage";
 import { t } from "@/utils/translations";
 import { useMemo } from "react";
 import { useTreasureHuntItems } from "@/hooks/useTreasureHuntItems";
-import { Scroll } from "lucide-react";
+import { Scroll, Users } from "lucide-react";
 
 export const InventoryPanel = () => {
   const { language } = useLanguage();
   const { instances } = useItemInstances();
+  const { cardInstances } = useCardInstances();
   const { isQuestItem } = useTreasureHuntItems();
   
-  // Группируем предметы по типу
+  // Получаем рабочих из card_instances
+  const workers = useMemo(() => {
+    return cardInstances.filter(instance => 
+      instance.card_type === 'workers' ||
+      ((instance.card_data as any)?.type === 'worker' || (instance.card_data as any)?.type === 'workers')
+    );
+  }, [cardInstances]);
+  
+  // Группируем предметы и рабочих
   const groupedInventory = useMemo(() => {
-    const groups: Record<string, { count: number; template_id?: number; isQuest: boolean }> = {};
+    const groups: Record<string, { count: number; template_id?: number; isQuest: boolean; isWorker: boolean }> = {};
+    
+    // Добавляем обычные предметы
     instances.forEach(inst => {
       const key = inst.name || inst.type || 'unknown';
       if (!groups[key]) {
-        groups[key] = { count: 0, template_id: inst.template_id, isQuest: isQuestItem(inst.template_id) };
+        groups[key] = { count: 0, template_id: inst.template_id, isQuest: isQuestItem(inst.template_id), isWorker: false };
       }
       groups[key].count += 1;
     });
+    
+    // Добавляем рабочих
+    workers.forEach(worker => {
+      const workerName = worker.card_data?.name || 'Worker';
+      if (!groups[workerName]) {
+        groups[workerName] = { count: 0, isQuest: false, isWorker: true };
+      }
+      groups[workerName].count += 1;
+    });
+    
     return Object.entries(groups).map(([name, data]) => ({
       name,
       count: data.count,
       isQuest: data.isQuest,
+      isWorker: data.isWorker,
       rarity: 'common',
-      icon: '📦'
+      icon: data.isWorker ? '👷' : '📦'
     }));
-  }, [instances, isQuestItem]);
+  }, [instances, workers, isQuestItem]);
 
   const getRarityClass = (rarity: string) => {
     switch (rarity.toLowerCase()) {
@@ -52,7 +75,7 @@ export const InventoryPanel = () => {
             {t(language, 'inventory.title') || 'Инвентарь'}
           </h2>
           <span className="text-sm text-muted-foreground">
-            {instances.length} {t(language, 'inventory.items') || 'предметов'}
+            {instances.length + workers.length} {t(language, 'inventory.items') || 'предметов'}
           </span>
         </div>
 
@@ -81,6 +104,12 @@ export const InventoryPanel = () => {
                         <div className="bg-purple-600/90 text-white text-xs font-bold px-2 py-0.5 rounded-full flex items-center gap-1">
                           <Scroll className="w-3 h-3" />
                           Quest
+                        </div>
+                      )}
+                      {item.isWorker && (
+                        <div className="bg-blue-600/90 text-white text-xs font-bold px-2 py-0.5 rounded-full flex items-center gap-1">
+                          <Users className="w-3 h-3" />
+                          Worker
                         </div>
                       )}
                     </div>
