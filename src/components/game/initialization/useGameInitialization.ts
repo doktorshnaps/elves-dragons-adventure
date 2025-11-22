@@ -31,9 +31,11 @@ export const useGameInitialization = (setCards: (cards: Card[]) => void) => {
           return;
         }
 
-        // Если данных нет, создаем новую запись без стартовых колод
+        // Если данных нет, создаем новую запись
         if (!gameData) {
-          // Используем RPC функцию для безопасного создания game_data
+          console.log('Creating new game data for wallet:', accountId);
+          
+          // Используем RPC функцию для безопасного создания game_data (уже с balance=100)
           const { data: userId, error: insertError } = await supabase
             .rpc('ensure_game_data_exists', {
               p_wallet_address: accountId
@@ -41,31 +43,35 @@ export const useGameInitialization = (setCards: (cards: Card[]) => void) => {
 
           if (insertError) {
             console.error('Error creating game data:', insertError);
+            toast({
+              title: "Ошибка инициализации",
+              description: "Не удалось создать данные игрока",
+              variant: "destructive"
+            });
             return;
           }
 
-          // После создания записи обновляем её с пустыми начальными данными
-          const { error: updateError } = await supabase
-            .from('game_data')
-            .update({
-              cards: [] as any,
-              initialized: true
-            })
-            .eq('wallet_address', accountId);
+          console.log('Game data created, user_id:', userId);
 
-          if (updateError) {
-            console.error('Error updating game data:', updateError);
-            return;
-          }
-
-          // Получаем актуальные данные после создания
-          const { data: newGameData } = await supabase
+          // Получаем созданные данные
+          const { data: newGameData, error: fetchError } = await supabase
             .from('game_data')
-            .select('balance')
+            .select('balance, cards')
             .eq('wallet_address', accountId)
             .single();
+
+          if (fetchError || !newGameData) {
+            console.error('Error fetching created game data:', fetchError);
+            toast({
+              title: "Ошибка загрузки",
+              description: "Не удалось загрузить данные игрока",
+              variant: "destructive"
+            });
+            return;
+          }
           
-          const startingBalance = newGameData?.balance || 100;
+          console.log('Loaded new game data:', newGameData);
+          const startingBalance = newGameData.balance || 100;
           
           // Синхронизируем с Zustand store
           useGameStore.getState().setCards([]);
