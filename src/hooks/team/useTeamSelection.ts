@@ -163,9 +163,14 @@ export const useTeamSelection = () => {
     
     const currentRawTeam = (gameData.selectedTeam || []) as TeamPair[];
     
-    // Check team size limit against RAW team data (including medical bay)
+    // Check team size limit against RAW team data (including medical bay) - allow up to 5 pairs
     if (currentRawTeam.length >= 5) {
-      console.warn('🚫 Team is full (raw team), cannot add more heroes');
+      console.warn('🚫 Team is full (5/5 pairs), cannot add more heroes');
+      toast({
+        title: "Команда заполнена",
+        description: "Максимум 5 пар героев в команде",
+        variant: "destructive"
+      });
       return;
     }
 
@@ -303,17 +308,17 @@ export const useTeamSelection = () => {
     let totalHealth = 0;
 
     selectedPairs.forEach(pair => {
-      // Calculate hero stats with fallback to calculateCardStats
+      // КРИТИЧНО: всегда используем calculateCardStats для корректных значений силы и защиты
       const heroStats = calculateCardStats(pair.hero.name, pair.hero.rarity, pair.hero.type);
-      totalPower += pair.hero.power ?? heroStats.power;
-      totalDefense += pair.hero.defense ?? heroStats.defense;
+      totalPower += heroStats.power;
+      totalDefense += heroStats.defense;
       totalHealth += pair.hero.currentHealth ?? pair.hero.health ?? heroStats.health;
 
       // Add dragon stats if present and same faction (use current health from card instances)
       if (pair.dragon && pair.dragon.faction === pair.hero.faction) {
         const dragonStats = calculateCardStats(pair.dragon.name, pair.dragon.rarity, pair.dragon.type);
-        totalPower += pair.dragon.power ?? dragonStats.power;
-        totalDefense += pair.dragon.defense ?? dragonStats.defense;
+        totalPower += dragonStats.power;
+        totalDefense += dragonStats.defense;
         totalHealth += pair.dragon.currentHealth ?? pair.dragon.health ?? dragonStats.health;
       }
     });
