@@ -205,10 +205,23 @@ export const BuildingDetailsPanel = ({
 
                   // Используем item_id из шаблона для поиска в item_instances
                   const playerHas = inventoryCounts[templateItemId] || 0;
+                  const isSatisfied = playerHas >= reqQty;
+                  
                   return (
-                    <div key={idx} className="flex items-center justify-between px-3 py-2 rounded-lg border border-border bg-muted/20">
-                      <span className="text-sm font-medium">{displayName}</span>
-                      <span className="text-sm">×{reqQty} ({playerHas})</span>
+                    <div 
+                      key={idx} 
+                      className={`flex items-center justify-between px-3 py-2 rounded-lg border ${
+                        isSatisfied 
+                          ? 'border-green-500/50 bg-green-500/10' 
+                          : 'border-red-500/50 bg-red-500/10'
+                      }`}
+                    >
+                      <span className={`text-sm font-medium ${isSatisfied ? 'text-green-500' : 'text-red-500'}`}>
+                        {displayName}
+                      </span>
+                      <span className={`text-sm font-bold ${isSatisfied ? 'text-green-500' : 'text-red-500'}`}>
+                        ×{reqQty} ({playerHas})
+                      </span>
                     </div>
                   );
                 })}
