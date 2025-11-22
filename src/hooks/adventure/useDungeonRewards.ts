@@ -47,6 +47,7 @@ export const useDungeonRewards = () => {
   const lastProcessedLevelRef = useRef<number>(-1);
   const isProcessingRef = useRef(false);
   const lastClaimKeyRef = useRef<string | null>(null);
+  const isDefeatedRef = useRef(false); // Флаг поражения для блокировки начисления treasure hunt предметов
 
   const calculateReward = useCallback(async (monsters: MonsterKill[]): Promise<DungeonReward> => {
     console.log('🎯 calculateReward called with monsters:', monsters);
@@ -135,6 +136,7 @@ export const useDungeonRewards = () => {
     // Если поражение - сбрасываем все накопленные награды
     if (isDefeat) {
       console.log(`❌ ПОРАЖЕНИЕ! Сброс всех накопленных наград`);
+      isDefeatedRef.current = true; // Устанавливаем флаг поражения
       setAccumulatedReward(null);
       setPendingReward(null);
       lastProcessedLevelRef.current = -1;
@@ -205,6 +207,12 @@ export const useDungeonRewards = () => {
         hasPendingReward: !!pendingReward, 
         isClaiming: isClaimingRef.current 
       });
+      return;
+    }
+
+    // КРИТИЧЕСКАЯ ПРОВЕРКА: Если игрок был побеждён, НЕ начисляем treasure hunt предметы
+    if (isDefeatedRef.current) {
+      console.log('❌ Игрок был побеждён! Отменяем начисление treasure hunt предметов');
       return;
     }
 
@@ -285,9 +293,14 @@ export const useDungeonRewards = () => {
       }
 
       if (lootedItems.length > 0) {
-        // Разделяем предметы treasure hunt и обычные предметы
-        const treasureHuntItems = lootedItems.filter(it => (it as any).isTreasureHunt);
+        // КРИТИЧЕСКАЯ ПРОВЕРКА: Фильтруем treasure hunt предметы, если игрок был побеждён
+        const allTreasureHuntItems = lootedItems.filter(it => (it as any).isTreasureHunt);
+        const treasureHuntItems = isDefeatedRef.current ? [] : allTreasureHuntItems;
         const regularItems = lootedItems.filter(it => !(it as any).isTreasureHunt);
+        
+        if (isDefeatedRef.current && allTreasureHuntItems.length > 0) {
+          console.log(`❌ Игрок был побеждён! Отфильтровано ${allTreasureHuntItems.length} treasure hunt предметов`);
+        }
         
         console.log(`📦 Всего предметов: ${lootedItems.length}, обычных: ${regularItems.length}, treasure hunt: ${treasureHuntItems.length}`);
         
@@ -452,6 +465,7 @@ export const useDungeonRewards = () => {
     lastProcessedLevelRef.current = -1;
     isProcessingRef.current = false;
     isClaimingRef.current = false;
+    isDefeatedRef.current = false; // Сбрасываем флаг поражения
     lastClaimKeyRef.current = null; // Сбрасываем ключ для новых сессий
   }, []);
 
