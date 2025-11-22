@@ -104,8 +104,21 @@ export const useGameSync = () => {
 
   // Загружаем данные из Supabase в локальное состояние при инициализации
   useEffect(() => {
+    console.log('🔍 useGameSync: Effect triggered with:', {
+      loading,
+      isConnected,
+      accountId,
+      hasGameData: !!gameData,
+      gameDataValue: gameData,
+      walletLoading,
+      hasSelector: !!selector
+    });
+    
     // Не загружаем данные пока wallet не готов
-    if (walletLoading || !selector) return;
+    if (walletLoading || !selector) {
+      console.log('⏸️ useGameSync: Waiting for wallet to be ready');
+      return;
+    }
     
     if (!loading && isConnected && accountId && gameData) {
       isApplyingRef.current = true;
