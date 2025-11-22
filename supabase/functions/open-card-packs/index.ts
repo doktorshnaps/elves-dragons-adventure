@@ -344,6 +344,7 @@ function generateCard() {
     faction: selectedCard.faction,
     magicResistance,
     image: selectedCard.image,
+    defense: 0, // Will be calculated based on stats on backend
     // Stats будут рассчитаны на клиенте через calculateCardStats с учетом classLevel
   };
   
@@ -366,16 +367,64 @@ Deno.serve(async (req) => {
       throw new Error('Invalid parameters');
     }
 
-    // Generate cards with detailed logging
+    // Generate cards with detailed logging and calculate defense
     const newCards = [];
+    
+    // Load game settings to calculate defense
+    console.log('📊 Loading game settings for defense calculation...');
+    const [heroBaseRes, dragonBaseRes, rarityRes, classRes, dragonClassRes, mappingsRes] = await Promise.all([
+      supabase.from('hero_base_stats').select('*').limit(1).maybeSingle(),
+      supabase.from('dragon_base_stats').select('*').limit(1).maybeSingle(),
+      supabase.from('rarity_multipliers').select('*'),
+      supabase.from('class_multipliers').select('*'),
+      supabase.from('dragon_class_multipliers').select('*'),
+      supabase.from('card_class_mappings').select('*')
+    ]);
+    
+    const heroBase = heroBaseRes.data || { defense: 25 };
+    const dragonBase = dragonBaseRes.data || { defense: 20 };
+    const rarityMults: Record<number, number> = (rarityRes.data || []).reduce((acc: any, r: any) => {
+      acc[r.rarity] = Number(r.multiplier);
+      return acc;
+    }, { 1: 1.0 });
+    const classMults: Record<string, any> = (classRes.data || []).reduce((acc: any, c: any) => {
+      acc[c.class_name] = { defense_multiplier: Number(c.defense_multiplier) };
+      return acc;
+    }, {});
+    const dragonClassMults: Record<string, any> = (dragonClassRes.data || []).reduce((acc: any, c: any) => {
+      acc[c.class_name] = { defense_multiplier: Number(c.defense_multiplier) };
+      return acc;
+    }, {});
+    
+    // Build name->class mapping
+    const nameToClass: Record<string, string> = {};
+    (mappingsRes.data || []).forEach((m: any) => {
+      nameToClass[`${m.card_type}:${m.card_name}`] = m.class_name;
+    });
+    
     for (let i = 0; i < count; i++) {
       console.log(`\n📦 Generating card ${i + 1}/${count}:`);
       const card = generateCard();
+      
+      // Calculate defense based on card stats
+      const isHero = card.type === 'character';
+      const baseDefense = isHero ? heroBase.defense : dragonBase.defense;
+      const rarityMult = rarityMults[card.rarity] || 1.0;
+      const classKey = `${card.type}:${card.name}`;
+      const className = nameToClass[classKey] || card.cardClass;
+      const classMult = isHero ? classMults[className] : dragonClassMults[className];
+      const defenseMult = classMult?.defense_multiplier || 1.0;
+      
+      const calculatedDefense = Math.floor(baseDefense * rarityMult * defenseMult);
+      card.defense = calculatedDefense;
+      
+      console.log(`🛡️ Calculated defense for ${card.name}: ${calculatedDefense} (base: ${baseDefense}, rarity: ${rarityMult}, class: ${defenseMult})`);
+      
       newCards.push(card);
     }
     
     console.log(`\n✅ Generated ${newCards.length} cards total`);
-    console.log('Summary:', newCards.map(c => `${c.name} 1⭐ ${c.cardClass}`).join(', '));
+    console.log('Summary:', newCards.map(c => `${c.name} 1⭐ ${c.cardClass} (defense: ${c.defense})`).join(', '));
 
     // Persist generated cards without legacy inventory JSON or deprecated RPC
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
