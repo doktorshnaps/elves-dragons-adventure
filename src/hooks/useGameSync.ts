@@ -236,6 +236,12 @@ export const useGameSync = () => {
       const sameAsLastSynced = JSON.stringify(snapshot) === JSON.stringify(lastSyncedRef.current);
 
       if (sameAsServer || sameAsLastSynced) return;
+      
+      // КРИТИЧНО: Защита от затирания команды пустым массивом
+      if (snapshot.selectedTeam?.length === 0 && serverSnapshot.selectedTeam && serverSnapshot.selectedTeam.length > 0) {
+        console.warn('⚠️ Prevented syncing empty selectedTeam over existing team in DB');
+        return;
+      }
 
       // Дебаунс синхронизации
       const timeoutId = setTimeout(async () => {

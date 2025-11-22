@@ -40,37 +40,9 @@ export const useNFTCardIntegration = () => {
       }
       
       // 2. КРИТИЧНО: Очистка selectedTeam от несуществующих NFT
-      const teamRaw = localStorage.getItem('selectedTeam');
-      if (teamRaw) {
-        try {
-          const selectedTeam = JSON.parse(teamRaw) as any[];
-          const cleanedTeam = selectedTeam.map(pair => {
-            const cleanedPair = { ...pair };
-            
-            // Удаляем героя, если это NFT и его нет в списке
-            if (pair.hero?.isNFT && !currentNFTIds.includes(pair.hero.id)) {
-              console.log(`🧹 Removing transferred NFT hero from team: ${pair.hero.name}`);
-              cleanedPair.hero = undefined;
-            }
-            
-            // Удаляем дракона, если это NFT и его нет в списке
-            if (pair.dragon?.isNFT && !currentNFTIds.includes(pair.dragon.id)) {
-              console.log(`🧹 Removing transferred NFT dragon from team: ${pair.dragon.name}`);
-              cleanedPair.dragon = undefined;
-            }
-            
-            return cleanedPair;
-          }).filter(pair => pair.hero || pair.dragon); // Удаляем пустые пары
-          
-          if (JSON.stringify(selectedTeam) !== JSON.stringify(cleanedTeam)) {
-            localStorage.setItem('selectedTeam', JSON.stringify(cleanedTeam));
-            window.dispatchEvent(new CustomEvent('teamUpdate', { detail: { team: cleanedTeam } } as any));
-            console.log('🧹 Removed stale NFT cards from selectedTeam');
-          }
-        } catch (teamErr) {
-          console.warn('Failed to cleanup selectedTeam:', teamErr);
-        }
-      }
+      // ОТКЛЮЧЕНО: эта логика ошибочно удаляет обычные карточки из команды
+      // При выходе из подземелья selectedTeam может быть пустым, и синхронизация затирает команду в БД
+      console.log('⏸️ Team cleanup disabled to prevent data loss');
     } catch (e) {
       console.warn('Cleanup local NFTs failed:', e);
     }
