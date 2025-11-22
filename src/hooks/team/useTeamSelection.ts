@@ -163,9 +163,17 @@ export const useTeamSelection = () => {
     
     const currentRawTeam = (gameData.selectedTeam || []) as TeamPair[];
     
-    // Check team size limit against RAW team data (including medical bay) - allow up to 5 pairs
-    if (currentRawTeam.length >= 5) {
-      console.warn('🚫 Team is full (5/5 pairs), cannot add more heroes');
+    // КРИТИЧНО: Считаем только пары с реальными героями, исключаем пустые пары
+    const pairsWithHeroes = currentRawTeam.filter((pair: any) => pair?.hero?.id);
+    console.log('🔍 Team check:', {
+      rawLength: currentRawTeam.length,
+      withHeroes: pairsWithHeroes.length,
+      rawTeam: currentRawTeam.map((p: any) => ({ hero: p?.hero?.name, hasHero: !!p?.hero }))
+    });
+    
+    // Check team size limit - allow up to 5 pairs WITH heroes
+    if (pairsWithHeroes.length >= 5) {
+      console.warn('🚫 Team is full (5/5 pairs with heroes), cannot add more');
       toast({
         title: "Команда заполнена",
         description: "Максимум 5 пар героев в команде",
@@ -175,9 +183,14 @@ export const useTeamSelection = () => {
     }
 
     // Check if hero is already in team (including medical bay)
-    const isAlreadyInTeam = currentRawTeam.some((pair: any) => pair?.hero?.id === hero.id);
+    const isAlreadyInTeam = pairsWithHeroes.some((pair: any) => pair?.hero?.id === hero.id);
     if (isAlreadyInTeam) {
       console.warn('🚫 Hero already in team:', hero.name);
+      toast({
+        title: "Герой уже в команде",
+        description: `${hero.name} уже добавлен в команду`,
+        variant: "destructive"
+      });
       return;
     }
 
