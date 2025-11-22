@@ -85,7 +85,7 @@ serve(async (req) => {
     const { error: gameDataError } = await supabase
       .from('game_data')
       .update({
-        balance: 0,
+        balance: 100, // Starting 100 ELL for all players after wipe
         wood: 0,
         stone: 0,
         iron: 0,
@@ -109,7 +109,8 @@ serve(async (req) => {
           barracks: 0,
           workshop: 0,
           main_hall: 0,
-          dragon_lair: 0
+          dragon_lair: 0,
+          forge: 0
         },
         barracks_upgrades: [],
         dragon_lair_upgrades: [],
