@@ -1,10 +1,16 @@
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
-import { Clock, Users } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Clock, Users, Zap } from "lucide-react";
 import { NestUpgrade } from "@/hooks/shelter/useShelterState";
 import { useLanguage } from "@/hooks/useLanguage";
 import { t } from "@/utils/translations";
+import { useAdminCheck } from "@/hooks/useAdminCheck";
+import { supabase } from "@/integrations/supabase/client";
+import { useWalletContext } from "@/contexts/WalletConnectContext";
+import { useToast } from "@/hooks/use-toast";
+import { useState } from "react";
 
 interface BuildingGridCardProps {
   upgrade: NestUpgrade;
@@ -23,6 +29,7 @@ interface BuildingGridCardProps {
   };
   workersLoaded: boolean;
   gameLoaded: boolean;
+  onInstantComplete?: () => void;
 }
 
 export const BuildingGridCard = ({
@@ -36,9 +43,14 @@ export const BuildingGridCard = ({
   formatRemainingTime,
   productionData,
   workersLoaded,
-  gameLoaded
+  gameLoaded,
+  onInstantComplete
 }: BuildingGridCardProps) => {
   const { language } = useLanguage();
+  const { isAdmin } = useAdminCheck();
+  const { accountId } = useWalletContext();
+  const { toast } = useToast();
+  const [isCompleting, setIsCompleting] = useState(false);
   
   const isResourceBuilding = upgrade.id === 'sawmill' || upgrade.id === 'quarry';
   const canCollect = productionData && productionData.readyResources > 0 && productionData.productionProgress >= 100 && hasWorkers;
@@ -51,6 +63,44 @@ export const BuildingGridCard = ({
   const shouldBeGrayscale = (workersLoaded && gameLoaded) && (
     upgrade.level === 0 || (requiresWorkers && !hasWorkers)
   );
+
+  const handleInstantComplete = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    
+    if (!accountId || !isAdmin || !isUpgrading) return;
+    
+    setIsCompleting(true);
+    
+    try {
+      const { data, error } = await supabase.functions.invoke('instant-complete-building', {
+        body: {
+          wallet_address: accountId,
+          building_id: upgrade.id
+        }
+      });
+
+      if (error) throw error;
+
+      toast({
+        title: "⚡ Постройка завершена",
+        description: `${upgrade.name} мгновенно улучшен до уровня ${data.new_level}`,
+      });
+
+      // Trigger refresh
+      if (onInstantComplete) {
+        onInstantComplete();
+      }
+    } catch (error: any) {
+      console.error('Failed to instant complete:', error);
+      toast({
+        title: "Ошибка",
+        description: error.message || "Не удалось завершить постройку",
+        variant: "destructive"
+      });
+    } finally {
+      setIsCompleting(false);
+    }
+  };
 
   return (
     <Card 
@@ -128,6 +178,19 @@ export const BuildingGridCard = ({
                 </span>
               </div>
               <Progress value={upgradeProgress.progress} className="h-1.5" />
+              
+              {/* Admin: Instant Complete Button */}
+              {isAdmin && (
+                <Button
+                  onClick={handleInstantComplete}
+                  disabled={isCompleting}
+                  size="sm"
+                  className="w-full h-7 text-xs bg-gradient-to-r from-yellow-500 to-orange-500 hover:from-yellow-600 hover:to-orange-600"
+                >
+                  <Zap className="w-3 h-3 mr-1" />
+                  {isCompleting ? 'Завершение...' : '⚡ Мгновенно завершить'}
+                </Button>
+              )}
             </div>
           )}
 

@@ -47,3 +47,6 @@ verify_jwt = false
 
 [functions.sync-player-cards]
 verify_jwt = false
+
+[functions.instant-complete-building]
+verify_jwt = false
