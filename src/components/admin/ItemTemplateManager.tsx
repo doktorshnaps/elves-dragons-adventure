@@ -268,9 +268,16 @@ export const ItemTemplateManager = () => {
       resetForm();
       setIsDialogOpen(false);
       await loadItems();
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error saving item:", error);
-      toast({ title: "Ошибка", description: "Ошибка при сохранении предмета", variant: "destructive" });
+      const isDuplicate = error?.code === '23505' && error?.message?.includes('item_id');
+      toast({ 
+        title: "Ошибка", 
+        description: isDuplicate 
+          ? `Предмет с ID "${formData.item_id}" уже существует. Используйте другой ID.`
+          : error?.message || "Ошибка при сохранении предмета", 
+        variant: "destructive" 
+      });
     } finally {
       setLoading(false);
     }
