@@ -49,7 +49,7 @@ export const MedicalBayComponent = () => {
   useEffect(() => {
     loadMedicalBayEntries();
     loadCardInstances();
-  }, [loadMedicalBayEntries, loadCardInstances]);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Автоматическая обработка лечения каждую минуту (только если есть рабочие)
   useEffect(() => {
@@ -68,7 +68,7 @@ export const MedicalBayComponent = () => {
     }, 60000); // каждую минуту
 
     return () => clearInterval(interval);
-  }, [processMedicalBayHealing, medicalBayEntries.length]);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const getInjuredCards = () => {
     console.log('🏥 Getting injured cards...');

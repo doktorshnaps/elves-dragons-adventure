@@ -52,7 +52,7 @@ export const ForgeBayComponent = ({ forgeLevel }: ForgeBayComponentProps) => {
   useEffect(() => {
     loadForgeBayEntries();
     loadCardInstances();
-  }, [loadForgeBayEntries, loadCardInstances]);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -64,7 +64,7 @@ export const ForgeBayComponent = ({ forgeLevel }: ForgeBayComponentProps) => {
     }, 60000);
 
     return () => clearInterval(interval);
-  }, [processForgeBayRepair, forgeBayEntries.length, gameState?.activeWorkers]);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const getDamagedCards = () => {
     const cardsInForgeBay = Array.from(new Set(forgeBayEntries.map(entry => entry.card_instance_id)));
