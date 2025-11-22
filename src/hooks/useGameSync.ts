@@ -9,7 +9,8 @@ import { setSyncFreeze, clearSyncFreeze } from '@/utils/updateGameDataThrottle';
  * Синхронизирует локальное состояние Zustand с Supabase
  */
 export const useGameSync = () => {
-  console.log('🚀 useGameSync: Hook initialized');
+  // CRITICAL: This should always log if hook is called
+  console.log('🚀🚀🚀 useGameSync HOOK CALLED 🚀🚀🚀');
   
   const { accountId, selector, isLoading: walletLoading } = useWalletContext();
   const isConnected = !!accountId;
