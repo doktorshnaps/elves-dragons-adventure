@@ -63,9 +63,11 @@ export const itemTemplateSchema = z.object({
     .or(z.literal('')),
   
   source_type: z.string()
-    .refine((val) => ['dungeon', 'shop', 'quest', 'craft', 'event', 'monster_drop', 'boss_drop', 'crafting', 'quest_reward'].includes(val), {
+    .refine((val) => !val || val === '' || ['dungeon', 'shop', 'quest', 'craft', 'event', 'monster_drop', 'boss_drop', 'crafting', 'quest_reward'].includes(val), {
       message: "Invalid source type"
-    }),
+    })
+    .optional()
+    .or(z.literal('')),
   
   image_url: z.string()
     .trim()
