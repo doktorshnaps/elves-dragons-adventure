@@ -111,17 +111,15 @@ export const useShopInventory = () => {
         
         setTimeUntilReset(remaining);
         
-        // Вызываем сброс только когда реальное время превысило next_reset_time
-        if (remaining === 0 && !resettingRef.current) {
-          triggerResetAndRefresh();
-        }
+        // НЕ вызываем автоматический сброс - только отображаем таймер
+        // Сброс должен происходить только вручную через админ-панель или кнопку
       }
     }, 1000);
 
-    // Обновление данных из БД раз в 20 минут
+    // Обновление данных из БД раз в 5 минут (чтобы видеть актуальное состояние)
     const refreshInterval = setInterval(() => {
       fetchInventory();
-    }, 1200000); // 20 минут = 1200000 мс
+    }, 300000); // 5 минут = 300000 мс
 
     return () => {
       clearInterval(timerInterval);
