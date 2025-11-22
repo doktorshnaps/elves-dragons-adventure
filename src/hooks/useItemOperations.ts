@@ -5,6 +5,7 @@ import { Item } from '@/types/inventory';
 import { getItemPrice } from '@/utils/itemUtils';
 import { useGameData } from './useGameData';
 import { useTreasureHuntItems } from './useTreasureHuntItems';
+import { useItemTemplates } from './useItemTemplates';
 
 /**
  * Централизованный хук для всех операций с предметами
@@ -15,6 +16,7 @@ export const useItemOperations = () => {
   const { gameData, updateGameData } = useGameData();
   const { toast } = useToast();
   const { isQuestItem } = useTreasureHuntItems();
+  const { getTemplate } = useItemTemplates();
 
   /**
    * Добавить предметы в inventory
@@ -110,7 +112,7 @@ export const useItemOperations = () => {
   /**
    * Продать несколько предметов по имени
    */
-  const sellMultipleItems = useCallback(async (name: string, quantity: number, sellPricePerItem: number) => {
+  const sellMultipleItems = useCallback(async (name: string, quantity: number) => {
     // Находим нужное количество предметов
     const itemsToSell = instances
       .filter(inst => inst.name === name)
@@ -136,8 +138,29 @@ export const useItemOperations = () => {
       return false;
     }
 
+    // ИСПРАВЛЕНО: Получаем sell_price из item_templates по template_id
+    const firstItem = itemsToSell[0];
+    let sellPricePerItem = 1; // Default fallback
+    
+    if (firstItem.template_id) {
+      const template = getTemplate(String(firstItem.template_id));
+      if (template) {
+        sellPricePerItem = template.sell_price ?? Math.floor((template.value || 0) * 0.7);
+      }
+    }
+    
     const totalPrice = sellPricePerItem * quantity;
     const newBalance = gameData.balance + totalPrice;
+    
+    console.log('💰 Selling items:', {
+      name,
+      quantity,
+      sellPricePerItem,
+      totalPrice,
+      oldBalance: gameData.balance,
+      newBalance,
+      template_id: firstItem.template_id
+    });
     
     // Удаляем все предметы
     const ids = itemsToSell.map(inst => inst.id);
@@ -152,7 +175,7 @@ export const useItemOperations = () => {
     });
 
     return true;
-  }, [instances, removeItemInstancesByIds, gameData.balance, updateGameData, toast, isQuestItem]);
+  }, [instances, removeItemInstancesByIds, gameData.balance, updateGameData, toast, isQuestItem, getTemplate]);
 
   /**
    * Использовать предмет (например, зелье)

@@ -97,9 +97,8 @@ const groupItems = (items: Item[]): GroupedItem[] => {
       // Продаем один предмет
       await sellItem(item);
     } else {
-      // Продаем несколько предметов
-      const sellPrice = item.sell_price !== undefined ? item.sell_price : Math.floor(item.value * 0.7);
-      await sellMultipleItems(item.name, quantity, sellPrice);
+      // Продаем несколько предметов - цена берется из реальных экземпляров внутри sellMultipleItems
+      await sellMultipleItems(item.name, quantity);
     }
   };
   const handleOpenCardPack = async (item: Item): Promise<boolean> => {
