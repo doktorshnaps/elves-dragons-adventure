@@ -195,22 +195,23 @@ export const useGameSync = () => {
     }
   }, [loading, isConnected, accountId, gameData, walletLoading, selector]);
 
-  // Синхронизируем изменения локального состояния с Supabase (без зацикливания)
+  // Синхронизируем изменения локального состояния с Supabase через подписку на store
   useEffect(() => {
     // Не синхронизируем пока wallet не готов
     if (walletLoading || !selector) return;
     if (!isConnected || !accountId || loading) return;
-    if (isApplyingRef.current) return;
     
-    // КРИТИЧНО: блокируем синхронизацию сразу после clearAllData(), чтобы не затереть данные в БД
+    // КРИТИЧНО: блокируем синхронизацию сразу после clearAllData()
     if (preventSyncAfterClearRef.current) {
       console.log('⏸️ Sync blocked: waiting for data to load after clear');
       return;
     }
-
-    const state = useGameStore.getState();
     
-    const syncToSupabase = async () => {
+    // Подписываемся на изменения store через Zustand subscribe
+    const unsubscribe = useGameStore.subscribe((state) => {
+      // Пропускаем если применяем данные из БД
+      if (isApplyingRef.current) return;
+      
       const snapshot = {
         balance: state.balance,
         cards: state.cards,
@@ -236,33 +237,25 @@ export const useGameSync = () => {
 
       if (sameAsServer || sameAsLastSynced) return;
 
-      try {
-        await updateGameData(snapshot);
-        lastSyncedRef.current = snapshot;
-      } catch (e) {
-        console.warn('useGameSync: sync failed', e);
-      }
-    };
+      // Дебаунс синхронизации
+      const timeoutId = setTimeout(async () => {
+        try {
+          console.log('🔄 useGameSync: Syncing to Supabase:', {
+            selectedTeamLength: snapshot.selectedTeam?.length,
+            cardsLength: snapshot.cards?.length
+          });
+          await updateGameData(snapshot);
+          lastSyncedRef.current = snapshot;
+        } catch (e) {
+          console.warn('useGameSync: sync failed', e);
+        }
+      }, 500);
 
-    const timeoutId = setTimeout(syncToSupabase, 500);
-    return () => clearTimeout(timeoutId);
-  }, [
-    isConnected, 
-    accountId, 
-    loading, 
-    gameData, 
-    updateGameData, 
-    walletLoading, 
-    selector,
-    // КРИТИЧНО: подписываемся на изменения store для синхронизации
-    gameStore.balance,
-    gameStore.cards,
-    gameStore.selectedTeam,
-    gameStore.dragonEggs,
-    gameStore.battleState,
-    gameStore.accountLevel,
-    gameStore.accountExperience
-  ]);
+      return () => clearTimeout(timeoutId);
+    });
+
+    return unsubscribe;
+  }, [isConnected, accountId, loading, gameData, updateGameData, walletLoading, selector]);
 
   return { loading };
 };
