@@ -86,14 +86,24 @@ export const useShopInventory = () => {
     return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
   };
 
-  const triggerResetAndRefresh = async () => {
-    if (resettingRef.current) return;
+  const triggerResetAndRefresh = async (force: boolean = false) => {
+    if (resettingRef.current) return { success: false, message: 'Reset already in progress' };
     try {
       resettingRef.current = true;
-      const { error } = await supabase.functions.invoke('shop-reset', { body: {} });
+      const { data, error } = await supabase.functions.invoke('shop-reset', { 
+        body: { force } 
+      });
       if (error) throw error;
+      
+      if (!data?.success) {
+        console.log('Shop reset skipped:', data?.message);
+        return data;
+      }
+      
+      return data;
     } catch (error) {
       console.error('Error triggering shop reset:', error);
+      throw error;
     } finally {
       await fetchInventory();
       resettingRef.current = false;
@@ -134,6 +144,7 @@ export const useShopInventory = () => {
     purchaseItem,
     getItemQuantity,
     isItemAvailable,
-    refreshInventory: fetchInventory
+    refreshInventory: fetchInventory,
+    triggerResetAndRefresh
   };
 };

@@ -114,13 +114,15 @@ export const ShopSettings = () => {
 
     try {
       setRefreshing(true);
-      const { error } = await supabase.rpc('reset_shop_inventory');
+      const { data, error } = await supabase.rpc('reset_shop_inventory', { 
+        p_force: true  // Принудительный сброс независимо от времени
+      });
 
       if (error) throw error;
 
       toast({
         title: "Успешно",
-        description: "Магазин обновлен, таймер перезапущен",
+        description: "Магазин принудительно обновлен, таймер перезапущен",
       });
 
       // Reload settings to show new reset time
