@@ -308,8 +308,8 @@ export const MedicalBayComponent = () => {
                             <span className="font-medium">
                               {cardData?.name || 'Неизвестная карта'}
                             </span>
-                           </div>
-                           <div className="flex items-center gap-2">
+                          </div>
+                          <div className="flex items-center gap-2">
                              {!isReady && (
                                <Button
                                  onClick={async () => {
@@ -369,15 +369,22 @@ export const MedicalBayComponent = () => {
                         </div>
                         
                         <div className="space-y-2">
-                          <div className="flex justify-between text-sm">
-                            <span>Прогресс лечения:</span>
-                            <span>{Math.round(progress)}%</span>
+                          <div className="flex items-center justify-between text-sm">
+                            <span className="text-muted-foreground">Статус:</span>
+                            <Badge variant={isReady ? "default" : "secondary"}>
+                              <Clock className="w-3 h-3 mr-1" />
+                              {timeRemaining}
+                            </Badge>
                           </div>
+                          
+                          <div className="flex items-center justify-between text-sm">
+                            <span className="text-muted-foreground">Здоровье:</span>
+                            <span className="font-medium">
+                              {entry.card_instances?.current_health || 0} / {entry.card_instances?.max_health || 0}
+                            </span>
+                          </div>
+                          
                           {!isReady && <Progress value={progress} className="h-2" />}
-                        </div>
-                        
-                        <div className="text-sm text-muted-foreground mt-2">
-                          Скорость лечения: {HEAL_RATE} HP/мин
                         </div>
                       </div>
                     </div>
