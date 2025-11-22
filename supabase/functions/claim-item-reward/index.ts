@@ -23,7 +23,7 @@ const ClaimBodySchema = z.object({
   claim_key: z.string()
     .min(1, 'claim_key cannot be empty')
     .max(256, 'claim_key too long'),
-  items: z.array(ItemInputSchema).max(100, 'Too many items').optional(),
+  items: z.array(ItemInputSchema).max(1000, 'Too many items').optional(),
   treasure_hunt_event_id: z.string().uuid('Invalid event ID').optional(),
   treasure_hunt_quantity: z.number().int().min(1).max(10000).optional(),
 });
