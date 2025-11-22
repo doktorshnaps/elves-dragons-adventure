@@ -174,6 +174,10 @@ export const Shelter = () => {
               inventoryCounts={inventoryCounts}
               workersLoaded={workersLoaded}
               gameLoaded={gameLoaded}
+              onRefresh={() => {
+                // Force reload game state from database
+                window.location.reload();
+              }}
             />
           </TabsContent>
 
