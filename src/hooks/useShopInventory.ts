@@ -104,26 +104,27 @@ export const useShopInventory = () => {
   useEffect(() => {
     fetchInventory();
 
-    // Обновляем таймер каждую секунду
-    const timerInterval = setInterval(() => {
-      setTimeUntilReset(prev => {
-        const newTime = Math.max(0, prev - 1000);
-        if (newTime === 0) {
-          // Время вышло — вызываем сброс инвентаря и обновление
-          triggerResetAndRefresh();
+    // Обновляем таймер каждую секунду на основе next_reset_time из БД
+    const timerInterval = setInterval(async () => {
+      // Перевычисляем время на основе next_reset_time из inventory
+      if (inventory.length > 0) {
+        const nextReset = new Date(inventory[0].next_reset_time).getTime();
+        const now = new Date().getTime();
+        const remaining = Math.max(0, nextReset - now);
+        
+        setTimeUntilReset(remaining);
+        
+        // Если время вышло, вызываем сброс только один раз
+        if (remaining === 0 && !resettingRef.current) {
+          await triggerResetAndRefresh();
         }
-        return newTime;
-      });
+      }
     }, 1000);
-
-    // Проверяем обновления каждую минуту
-    const refreshInterval = setInterval(fetchInventory, 60000);
 
     return () => {
       clearInterval(timerInterval);
-      clearInterval(refreshInterval);
     };
-  }, []);
+  }, [inventory]);
 
   return {
     inventory,
