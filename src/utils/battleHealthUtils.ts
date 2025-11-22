@@ -110,12 +110,8 @@ export const applyDamageToPair = async (
   const dragonCurrentDefense = updatedDragon && !isDragonNowDead ? (updatedDragon.currentDefense ?? updatedDragon.defense) : 0;
   const dragonMaxDefense = updatedDragon && !isDragonNowDead ? (updatedDragon.maxDefense ?? updatedDragon.defense) : 0;
   
-  const pairCurrentDefense = (updatedDragon && !isDragonNowDead)
-    ? Math.floor((heroCurrentDefense + dragonCurrentDefense) / 2)
-    : heroCurrentDefense;
-  const pairMaxDefense = (updatedDragon && !isDragonNowDead)
-    ? Math.floor((heroMaxDefense + dragonMaxDefense) / 2)
-    : heroMaxDefense;
+  const pairCurrentDefense = heroCurrentDefense + dragonCurrentDefense;
+  const pairMaxDefense = heroMaxDefense + dragonMaxDefense;
   
   if (dragonJustDied && pair.dragon) {
     newPower -= pair.dragon.power;

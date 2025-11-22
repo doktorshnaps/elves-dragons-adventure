@@ -90,12 +90,10 @@ export const useTeamBattle = (dungeonType: DungeonType, initialLevel: number = 1
         const dragonMana = dragonAlive ? (dragonWithCalc?.magic ?? 0) : 0;
         const totalMana = heroMana + dragonMana;
         
-        // Расчет брони по ТЗ: Armor_pair = (Armor_d + Armor_h) / 2
+        // Расчет брони: Armor_pair = Armor_h + Armor_d (суммируется как в выборе команды)
         const heroArmor = heroWithCalc.defense ?? 0;
         const dragonArmor = dragonAlive ? (dragonWithCalc?.defense ?? 0) : 0;
-        const pairArmor = dragonAlive 
-          ? Math.floor((heroArmor + dragonArmor) / 2)
-          : heroArmor;
+        const pairArmor = heroArmor + dragonArmor;
         
         // Получаем текущую броню из card instances
         const heroInstance = cardInstances.find(ci => ci.card_template_id === heroFromMap.id);
@@ -106,12 +104,8 @@ export const useTeamBattle = (dungeonType: DungeonType, initialLevel: number = 1
         const dragonCurrentDefense = dragonAlive && dragonInstance ? (dragonInstance.current_defense ?? dragonArmor) : 0;
         const dragonMaxDefense = dragonAlive && dragonInstance ? (dragonInstance.max_defense ?? dragonArmor) : 0;
         
-        const pairCurrentDefense = dragonAlive
-          ? Math.floor((heroCurrentDefense + dragonCurrentDefense) / 2)
-          : heroCurrentDefense;
-        const pairMaxDefense = dragonAlive
-          ? Math.floor((heroMaxDefense + dragonMaxDefense) / 2)
-          : heroMaxDefense;
+        const pairCurrentDefense = heroCurrentDefense + dragonCurrentDefense;
+        const pairMaxDefense = heroMaxDefense + dragonMaxDefense;
         
         return {
           id: `pair-${index}`,
@@ -172,12 +166,10 @@ export const useTeamBattle = (dungeonType: DungeonType, initialLevel: number = 1
       const dragonMana = dragonAlive ? (dragonWithCalc?.magic ?? 0) : 0;
       const totalMana = heroMana + dragonMana;
 
-      // Расчет брони по ТЗ: Armor_pair = (Armor_d + Armor_h) / 2
+      // Расчет брони: Armor_pair = Armor_h + Armor_d (суммируется)
       const heroArmor = heroWithCalc.defense ?? 0;
       const dragonArmor = dragonAlive ? (dragonWithCalc?.defense ?? 0) : 0;
-      const pairArmor = dragonAlive 
-        ? Math.floor((heroArmor + dragonArmor) / 2)
-        : heroArmor;
+      const pairArmor = heroArmor + dragonArmor;
       
       return {
         ...pair,
