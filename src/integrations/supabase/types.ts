@@ -2915,7 +2915,9 @@ export type Database = {
         Args: { p_instance_ids: string[]; p_wallet_address: string }
         Returns: number
       }
-      reset_shop_inventory: { Args: never; Returns: undefined }
+      reset_shop_inventory:
+        | { Args: never; Returns: undefined }
+        | { Args: { p_force?: boolean }; Returns: Json }
       resolve_version_conflict: {
         Args: {
           p_expected_version: number

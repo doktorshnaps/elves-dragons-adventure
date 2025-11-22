@@ -18,15 +18,35 @@ serve(async (req) => {
     
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    // Always reset inventory (function handles both empty and expired cases)
-    console.log('🔄 Forcing shop inventory reset via RPC');
-    const { error: resetError } = await supabase.rpc('reset_shop_inventory');
+    // Parse request body to check for force flag
+    const body = req.method === 'POST' ? await req.json().catch(() => ({})) : {};
+    const force = body?.force === true;
+
+    // Call RPC with force parameter
+    console.log(`🔄 Shop inventory reset requested (force: ${force})`);
+    const { data: resetResult, error: resetError } = await supabase.rpc('reset_shop_inventory', { 
+      p_force: force 
+    });
+
     if (resetError) {
       console.error('❌ Error resetting shop:', resetError);
       throw resetError;
     }
 
-    // Fetch inventory after reset
+    // Check if reset was actually performed
+    if (!resetResult?.success) {
+      console.log(`⏸️ Shop reset skipped: ${resetResult?.message || 'Unknown reason'}`);
+      return new Response(JSON.stringify({ 
+        success: false,
+        message: resetResult?.message || 'Shop reset time not reached',
+        next_reset_time: resetResult?.next_reset_time,
+        current_time: resetResult?.current_time
+      }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    // Fetch inventory after successful reset
     const { data: inventoryData, error: fetchError } = await supabase
       .from('shop_inventory')
       .select('*')
@@ -37,11 +57,14 @@ serve(async (req) => {
       throw fetchError;
     }
 
-    console.log(`✅ Shop inventory ready: ${inventoryData?.length || 0} items`);
+    console.log(`✅ Shop inventory reset successful: ${inventoryData?.length || 0} items, next reset: ${resetResult.next_reset_time}`);
 
     return new Response(JSON.stringify({ 
-      success: true, 
-      inventory: inventoryData || [] 
+      success: true,
+      message: 'Shop reset successfully',
+      inventory: inventoryData || [],
+      next_reset_time: resetResult.next_reset_time,
+      items_per_refresh: resetResult.items_per_refresh
     }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
