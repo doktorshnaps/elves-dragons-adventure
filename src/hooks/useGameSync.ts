@@ -9,6 +9,8 @@ import { setSyncFreeze, clearSyncFreeze } from '@/utils/updateGameDataThrottle';
  * Синхронизирует локальное состояние Zustand с Supabase
  */
 export const useGameSync = () => {
+  console.log('🚀 useGameSync: Hook initialized');
+  
   const { accountId, selector, isLoading: walletLoading } = useWalletContext();
   const isConnected = !!accountId;
   const { gameData, updateGameData, loading } = useGameData();
@@ -17,6 +19,15 @@ export const useGameSync = () => {
   const lastSyncedRef = useRef<any>(null);
   const prevAccountIdRef = useRef<string | null>(null);
   const preventSyncAfterClearRef = useRef(false);
+  
+  console.log('🚀 useGameSync: State values:', {
+    accountId,
+    isConnected,
+    loading,
+    hasGameData: !!gameData,
+    walletLoading,
+    hasSelector: !!selector
+  });
   
   // Всегда вызываем хук, но внутри него будет проверка готовности
   useCardInstanceSync();
