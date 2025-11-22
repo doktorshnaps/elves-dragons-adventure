@@ -1424,6 +1424,7 @@ export type Database = {
           is_open_access: boolean
           items_per_refresh: number
           refresh_interval_hours: number
+          singleton: boolean
           updated_at: string
         }
         Insert: {
@@ -1433,6 +1434,7 @@ export type Database = {
           is_open_access?: boolean
           items_per_refresh?: number
           refresh_interval_hours?: number
+          singleton?: boolean
           updated_at?: string
         }
         Update: {
@@ -1442,6 +1444,7 @@ export type Database = {
           is_open_access?: boolean
           items_per_refresh?: number
           refresh_interval_hours?: number
+          singleton?: boolean
           updated_at?: string
         }
         Relationships: []
