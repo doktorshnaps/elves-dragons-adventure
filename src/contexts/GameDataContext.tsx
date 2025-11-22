@@ -7,6 +7,7 @@ import { loadGameDataDeduped } from '@/utils/gameDataLoader';
 import { updateGameDataByWalletThrottled } from '@/utils/updateGameDataThrottle';
 import { localStorageBatcher } from '@/utils/localStorageBatcher';
 import { normalizeCardsHealth } from '@/utils/cardHealthNormalizer';
+import { supabase } from '@/integrations/supabase/client';
 
 interface GameData {
   balance: number;
@@ -76,7 +77,43 @@ export const GameDataProvider = ({ children }: { children: ReactNode }) => {
         return DEFAULT_GAME_DATA;
       }
 
-      const gameDataArray = await loadGameDataDeduped(address);
+      console.log('🔍 Loading game data for:', address);
+      let gameDataArray = await loadGameDataDeduped(address);
+
+      // If no data exists, create initial record with 100 ELL
+      if (!gameDataArray || gameDataArray.length === 0) {
+        console.log('✨ No game data found, creating new player with 100 ELL...');
+        try {
+          const { data: userId, error } = await supabase.rpc('ensure_game_data_exists', {
+            p_wallet_address: address
+          });
+
+          if (error) {
+            console.error('❌ Error creating game data:', error);
+            toast({
+              title: "Ошибка создания игрока",
+              description: "Не удалось создать данные. Попробуйте переподключить кошелек.",
+              variant: "destructive"
+            });
+            return DEFAULT_GAME_DATA;
+          }
+
+          console.log('✅ Created new player, user_id:', userId);
+          
+          // Reload data after creation
+          gameDataArray = await loadGameDataDeduped(address);
+          
+          if (gameDataArray && gameDataArray.length > 0) {
+            toast({
+              title: "Добро пожаловать!",
+              description: "Вы получили 100 ELL для начала игры!"
+            });
+          }
+        } catch (error) {
+          console.error('❌ Failed to initialize player:', error);
+          return DEFAULT_GAME_DATA;
+        }
+      }
 
       if (gameDataArray && gameDataArray.length > 0) {
         const gameRecord = gameDataArray[0];
