@@ -223,6 +223,8 @@ if (itemTemplate.type === 'worker') {
         card_type: 'workers',
         current_health: 100,
         max_health: 100,
+        current_defense: 0,
+        max_defense: 0,
         card_data: cardData,
         last_heal_time: new Date().toISOString(),
         is_in_medical_bay: false,
