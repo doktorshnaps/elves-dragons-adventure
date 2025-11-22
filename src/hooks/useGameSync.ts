@@ -246,7 +246,23 @@ export const useGameSync = () => {
 
     const timeoutId = setTimeout(syncToSupabase, 500);
     return () => clearTimeout(timeoutId);
-  }, [isConnected, accountId, loading, gameData, updateGameData, walletLoading, selector]);
+  }, [
+    isConnected, 
+    accountId, 
+    loading, 
+    gameData, 
+    updateGameData, 
+    walletLoading, 
+    selector,
+    // КРИТИЧНО: подписываемся на изменения store для синхронизации
+    gameStore.balance,
+    gameStore.cards,
+    gameStore.selectedTeam,
+    gameStore.dragonEggs,
+    gameStore.battleState,
+    gameStore.accountLevel,
+    gameStore.accountExperience
+  ]);
 
   return { loading };
 };
