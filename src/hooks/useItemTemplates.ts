@@ -20,7 +20,7 @@ export const useItemTemplates = () => {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('item_templates')
-        .select('id, item_id, name, type, rarity, description, value, image_url');
+        .select('id, item_id, name, type, rarity, description, value, image_url, sell_price');
 
       if (error) throw error;
 
