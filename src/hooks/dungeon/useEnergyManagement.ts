@@ -26,8 +26,25 @@ export const useEnergyManagement = () => {
   useEffect(() => {
     const interval = setInterval(() => {
       const newEnergyState = getInitialEnergyState();
-      setEnergyState(newEnergyState);
-      setTimeUntilNext(getTimeUntilNextEnergy());
+      const newTimeUntilNext = getTimeUntilNextEnergy();
+      
+      // Обновляем только если реально изменилось
+      setEnergyState(prev => {
+        if (prev.current !== newEnergyState.current || 
+            prev.max !== newEnergyState.max ||
+            prev.lastUsed !== newEnergyState.lastUsed ||
+            prev.lastRegenerated !== newEnergyState.lastRegenerated) {
+          return newEnergyState;
+        }
+        return prev;
+      });
+      
+      setTimeUntilNext(prev => {
+        if (prev !== newTimeUntilNext) {
+          return newTimeUntilNext;
+        }
+        return prev;
+      });
     }, 1000);
 
     return () => clearInterval(interval);
