@@ -367,6 +367,11 @@ Deno.serve(async (req) => {
       throw new Error('Invalid parameters');
     }
 
+    // Initialize Supabase client at the beginning
+    const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+    const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+    const supabase = createClient(supabaseUrl, supabaseKey);
+
     // Generate cards with detailed logging and calculate defense
     const newCards = [];
     
@@ -425,11 +430,6 @@ Deno.serve(async (req) => {
     
     console.log(`\n✅ Generated ${newCards.length} cards total`);
     console.log('Summary:', newCards.map(c => `${c.name} 1⭐ ${c.cardClass} (defense: ${c.defense})`).join(', '));
-
-    // Persist generated cards without legacy inventory JSON or deprecated RPC
-    const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
-    const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
-    const supabase = createClient(supabaseUrl, supabaseKey);
 
     // 🔥 УДАЛЯЕМ ОТКРЫТЫЕ КОЛОДЫ ИЗ item_instances
     console.log(`\n🗑️ Removing ${count} card pack(s) "${pack_name}" from item_instances...`);
