@@ -254,12 +254,31 @@ export const WorkersManagement = ({ onSpeedBoostChange }: WorkersManagementProps
           });
         }
         
-        // Активируем ожидающих рабочих
+        // Активируем ожидающих рабочих (только если нет активных в том же здании)
         updated = updated.map(worker => {
           if (worker.status === 'waiting' && now >= worker.startTime) {
-            console.log('▶️ Starting queued worker:', worker.name);
-            hasChanges = true;
-            return { ...worker, status: 'working' as const };
+            // Проверяем, нет ли уже работающих рабочих в этом здании
+            const hasActiveWorkerInBuilding = updated.some(
+              w => w.building === worker.building && 
+                   w.status === 'working' && 
+                   w.id !== worker.id &&
+                   (w.startTime + w.duration) > now
+            );
+            
+            if (!hasActiveWorkerInBuilding) {
+              console.log('▶️ Starting queued worker:', {
+                name: worker.name,
+                building: worker.building,
+                scheduledStart: new Date(worker.startTime)
+              });
+              hasChanges = true;
+              return { ...worker, status: 'working' as const };
+            } else {
+              console.log('⏸️ Worker still waiting (another active in building):', {
+                name: worker.name,
+                building: worker.building
+              });
+            }
           }
           return worker;
         });
@@ -308,7 +327,7 @@ export const WorkersManagement = ({ onSpeedBoostChange }: WorkersManagementProps
     setAssigningId(workerId);
     console.log('⏳ Setting assigningId:', workerId);
 
-    // Находим рабочих в этом же здании
+    // Находим рабочих в этом же здании (включая ожидающих)
     const workersInSameBuilding = activeWorkers.filter(w => w.building === selectedBuilding);
     
     let startTime = Date.now();
@@ -316,13 +335,24 @@ export const WorkersManagement = ({ onSpeedBoostChange }: WorkersManagementProps
     
     // Если есть рабочие в здании, новый идет в очередь
     if (workersInSameBuilding.length > 0) {
-      // Находим время окончания последнего рабочего в очереди
+      // Находим максимальное время окончания среди всех рабочих в здании
       const lastWorkerEndTime = Math.max(
         ...workersInSameBuilding.map(w => w.startTime + w.duration)
       );
-      startTime = lastWorkerEndTime;
+      
+      // Новый рабочий начнет работу ПОСЛЕ завершения последнего
+      startTime = Math.max(lastWorkerEndTime, Date.now());
       status = 'waiting';
-      console.log('📋 Worker queued after existing workers, will start at:', new Date(startTime));
+      
+      console.log('📋 Worker queued in building:', {
+        building: selectedBuilding,
+        existingWorkers: workersInSameBuilding.length,
+        lastEndTime: new Date(lastWorkerEndTime),
+        newStartTime: new Date(startTime),
+        queueDelay: Math.round((startTime - Date.now()) / 1000) + 's'
+      });
+    } else {
+      console.log('✨ First worker in building, starting immediately:', selectedBuilding);
     }
 
     const newActiveWorker: ActiveWorker = {
