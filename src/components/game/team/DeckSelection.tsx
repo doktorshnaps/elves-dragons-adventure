@@ -39,8 +39,8 @@ export const DeckSelection = ({
   const [showDragonDeck, setShowDragonDeck] = useState(false);
   const [activePairIndex, setActivePairIndex] = useState<number | null>(null);
   const [previewCard, setPreviewCard] = useState<CardType | null>(null);
-  const [heroSortBy, setHeroSortBy] = useState<'none' | 'power' | 'rarity'>('none');
-  const [dragonSortBy, setDragonSortBy] = useState<'none' | 'power' | 'rarity'>('none');
+  const [heroSortBy, setHeroSortBy] = useState<'none' | 'defense' | 'rarity'>('none');
+  const [dragonSortBy, setDragonSortBy] = useState<'none' | 'defense' | 'rarity'>('none');
 
   // Debug: track sort state changes
   useEffect(() => {
@@ -112,14 +112,14 @@ export const DeckSelection = ({
     const filtered = localCards.filter(card => card.type === 'character');
     console.log('📊 Filtered heroes:', filtered.length);
     
-    if (heroSortBy === 'power') {
-      console.log('⚡ Sorting by power...');
+    if (heroSortBy === 'defense') {
+      console.log('🛡️ Sorting by max defense...');
       const sorted = [...filtered].sort((a, b) => {
-        const powerA = typeof a.power === 'number' ? a.power : 0;
-        const powerB = typeof b.power === 'number' ? b.power : 0;
-        return powerB - powerA;
+        const defenseA = typeof a.maxDefense === 'number' ? a.maxDefense : 0;
+        const defenseB = typeof b.maxDefense === 'number' ? b.maxDefense : 0;
+        return defenseB - defenseA;
       });
-      console.log('✅ Sorted heroes:', sorted.map(h => `${h.name}: ${h.power}`));
+      console.log('✅ Sorted heroes:', sorted.map(h => `${h.name}: ${h.maxDefense}`));
       return sorted;
     }
     
@@ -140,11 +140,11 @@ export const DeckSelection = ({
   const dragons = useMemo(() => {
     const filtered = localCards.filter(card => card.type === 'pet');
     
-    if (dragonSortBy === 'power') {
+    if (dragonSortBy === 'defense') {
       const sorted = [...filtered].sort((a, b) => {
-        const powerA = typeof a.power === 'number' ? a.power : 0;
-        const powerB = typeof b.power === 'number' ? b.power : 0;
-        return powerB - powerA; // От большего к меньшему
+        const defenseA = typeof a.maxDefense === 'number' ? a.maxDefense : 0;
+        const defenseB = typeof b.maxDefense === 'number' ? b.maxDefense : 0;
+        return defenseB - defenseA; // От большего к меньшему
       });
       return sorted;
     }
@@ -336,20 +336,20 @@ export const DeckSelection = ({
           <div className="flex gap-2 px-4 pb-2 flex-shrink-0">
             <Button
               size="sm"
-              variant={heroSortBy === 'power' ? 'default' : 'outline'}
+              variant={heroSortBy === 'defense' ? 'default' : 'outline'}
               onClick={(e) => {
                 e.preventDefault();
                 e.stopPropagation();
-                console.log('🔘 CLICKED Power button! Current state:', heroSortBy);
-                setHeroSortBy('power');
-                console.log('🔘 Called setHeroSortBy("power")');
+                console.log('🔘 CLICKED Defense button! Current state:', heroSortBy);
+                setHeroSortBy('defense');
+                console.log('🔘 Called setHeroSortBy("defense")');
               }}
               className="flex items-center gap-2"
               type="button"
             >
               <Swords className="w-4 h-4" />
-              По силе
-              {heroSortBy === 'power' && <ArrowUpDown className="w-3 h-3" />}
+              По броне
+              {heroSortBy === 'defense' && <ArrowUpDown className="w-3 h-3" />}
             </Button>
             <Button
               size="sm"
@@ -422,16 +422,16 @@ export const DeckSelection = ({
           <div className="flex gap-2 px-4 pb-2 flex-shrink-0">
             <Button
               size="sm"
-              variant={dragonSortBy === 'power' ? 'default' : 'outline'}
+              variant={dragonSortBy === 'defense' ? 'default' : 'outline'}
               onClick={() => {
-                console.log('🔘 Dragon sort button clicked, current:', dragonSortBy, '→ setting to: power');
-                setDragonSortBy('power');
+                console.log('🔘 Dragon sort button clicked, current:', dragonSortBy, '→ setting to: defense');
+                setDragonSortBy('defense');
               }}
               className="flex items-center gap-2"
             >
               <Swords className="w-4 h-4" />
-              По силе
-              {dragonSortBy === 'power' && <ArrowUpDown className="w-3 h-3" />}
+              По броне
+              {dragonSortBy === 'defense' && <ArrowUpDown className="w-3 h-3" />}
             </Button>
             <Button
               size="sm"
