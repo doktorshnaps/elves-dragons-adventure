@@ -276,43 +276,54 @@ export const Seekers = () => {
                     </Card>
                   ) : (
                     <div className="space-y-2">
-                      {findings.map((finding, index) => (
-                        <Card key={finding.id} variant="menu" style={{ boxShadow: '-33px 15px 10px rgba(0, 0, 0, 0.6)' }}>
-                          <CardContent className="p-4">
-                            <div className="flex items-center justify-between">
-                              <div className="flex items-center gap-3 flex-1 min-w-0">
-                                <div className={`text-2xl font-bold w-8 flex-shrink-0 ${
-                                  index === 0 ? 'text-yellow-400' : 
-                                  index === 1 ? 'text-gray-300' : 
-                                  index === 2 ? 'text-amber-600' : 'text-white'
-                                }`}>
-                                  #{index + 1}
-                                </div>
-                                <div className="flex-1 min-w-0">
-                                  <div className="text-sm font-medium truncate text-white">
-                                    {finding.wallet_address}
+                      {findings.map((finding, index) => {
+                        const isWinnerPlace = index < (activeEvent?.max_winners || 0);
+                        
+                        return (
+                          <Card 
+                            key={finding.id} 
+                            variant="menu" 
+                            style={{ boxShadow: '-33px 15px 10px rgba(0, 0, 0, 0.6)' }}
+                            className={isWinnerPlace ? 'border-2 border-yellow-500/50 bg-yellow-500/10' : ''}
+                          >
+                            <CardContent className="p-4">
+                              <div className="flex items-center justify-between">
+                                <div className="flex items-center gap-3 flex-1 min-w-0">
+                                  <div className={`text-2xl font-bold w-8 flex-shrink-0 ${
+                                    index === 0 ? 'text-yellow-400' : 
+                                    index === 1 ? 'text-gray-300' : 
+                                    index === 2 ? 'text-amber-600' : 
+                                    isWinnerPlace ? 'text-yellow-500' : 'text-white'
+                                  }`}>
+                                    #{index + 1}
+                                    {isWinnerPlace && <Trophy className="w-4 h-4 inline ml-1" />}
                                   </div>
-                                  <div className="text-xs text-white/60">
-                                    {new Date(finding.found_at).toLocaleString('ru-RU')}
-                                  </div>
-                                </div>
-                              </div>
-                              <div className="flex items-center gap-3 flex-shrink-0">
-                                <div className="text-right">
-                                  <div className="text-sm font-bold text-white">
-                                    {finding.found_quantity} шт.
-                                  </div>
-                                  {finding.reward_claimed && (
-                                    <div className="text-xs text-green-400">
-                                      ✓ Награда получена
+                                  <div className="flex-1 min-w-0">
+                                    <div className="text-sm font-medium truncate text-white">
+                                      {finding.wallet_address}
                                     </div>
-                                  )}
+                                    <div className="text-xs text-white/60">
+                                      {new Date(finding.found_at).toLocaleString('ru-RU')}
+                                    </div>
+                                  </div>
+                                </div>
+                                <div className="flex items-center gap-3 flex-shrink-0">
+                                  <div className="text-right">
+                                    <div className="text-sm font-bold text-white">
+                                      {finding.found_quantity} шт.
+                                    </div>
+                                    {finding.reward_claimed && (
+                                      <div className="text-xs text-green-400">
+                                        ✓ Награда получена
+                                      </div>
+                                    )}
+                                  </div>
                                 </div>
                               </div>
-                            </div>
-                          </CardContent>
-                        </Card>
-                      ))}
+                            </CardContent>
+                          </Card>
+                        );
+                      })}
                     </div>
                   )}
                 </div>
