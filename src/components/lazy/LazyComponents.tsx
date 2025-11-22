@@ -29,7 +29,19 @@ export const LazyGrimoire = createLazyComponent(
 // Lazy Battle удален - использует устаревшую механику подземелий
 
 export const LazyDungeons = createLazyComponent(
-  () => import('@/pages/Dungeons'),
+  async () => {
+    const [Dungeons, { GameLayout }] = await Promise.all([
+      import('@/pages/Dungeons'),
+      import('@/components/layout/GameLayout')
+    ]);
+    return {
+      default: () => (
+        <GameLayout backgroundImage="/lovable-uploads/0fb6e9e6-c143-470a-87c8-adf54800851d.png">
+          <Dungeons.default />
+        </GameLayout>
+      )
+    };
+  },
   { 
     fallback: <div className="p-4">Загрузка подземелий...</div>,
     preload: false 
