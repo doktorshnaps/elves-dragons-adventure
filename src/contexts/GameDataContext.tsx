@@ -1,4 +1,4 @@
-import React, { createContext, useContext, ReactNode, useState, useCallback, useRef } from 'react';
+import React, { createContext, useContext, ReactNode, useState, useCallback, useRef, useEffect } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useWalletContext } from '@/contexts/WalletConnectContext';
 import { useToast } from '@/hooks/use-toast';
@@ -71,19 +71,24 @@ export const GameDataProvider = ({ children }: { children: ReactNode }) => {
   } = useQuery({
     queryKey: ['gameData', accountId],
     queryFn: async () => {
+      console.log('🎯 [GameDataContext] queryFn called, accountId:', accountId);
       const address = accountId || localStorage.getItem('walletAccountId');
+      console.log('🎯 [GameDataContext] resolved address:', address);
       
       if (!address) {
+        console.log('⚠️ [GameDataContext] No address available, returning default data');
         return DEFAULT_GAME_DATA;
       }
 
       console.log('🔍 Loading game data for:', address);
       let gameDataArray = await loadGameDataDeduped(address);
+      console.log('📦 [GameDataContext] Loaded data array length:', gameDataArray?.length);
 
       // If no data exists, create initial record with 100 ELL
       if (!gameDataArray || gameDataArray.length === 0) {
         console.log('✨ No game data found, creating new player with 100 ELL...');
         try {
+          console.log('🔧 [GameDataContext] Calling ensure_game_data_exists for:', address);
           const { data: userId, error } = await supabase.rpc('ensure_game_data_exists', {
             p_wallet_address: address
           });
@@ -100,8 +105,10 @@ export const GameDataProvider = ({ children }: { children: ReactNode }) => {
 
           console.log('✅ Created new player, user_id:', userId);
           
-          // Reload data after creation
+          // Reload data after creation with small delay to ensure DB propagation
+          await new Promise(resolve => setTimeout(resolve, 500));
           gameDataArray = await loadGameDataDeduped(address);
+          console.log('📦 [GameDataContext] Reloaded data array length:', gameDataArray?.length);
           
           if (gameDataArray && gameDataArray.length > 0) {
             toast({
@@ -178,7 +185,19 @@ export const GameDataProvider = ({ children }: { children: ReactNode }) => {
     gcTime: 60 * 1000, // 1 minute
     refetchOnWindowFocus: false,
     refetchOnReconnect: false,
+    retry: 1,
   });
+
+  // Listen for wallet changes and refetch data
+  useEffect(() => {
+    const handleWalletChange = () => {
+      console.log('🔄 [GameDataContext] Wallet changed, refetching data');
+      refetch();
+    };
+
+    window.addEventListener('wallet-changed', handleWalletChange);
+    return () => window.removeEventListener('wallet-changed', handleWalletChange);
+  }, [refetch]);
 
   const updateGameData = useCallback(async (updates: Partial<GameData>) => {
     const address = accountId || localStorage.getItem('walletAccountId');
