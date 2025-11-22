@@ -115,11 +115,18 @@ export const DeckSelection = ({
     if (heroSortBy === 'defense') {
       console.log('🛡️ Sorting by max defense...');
       const sorted = [...filtered].sort((a, b) => {
-        const defenseA = typeof a.maxDefense === 'number' ? a.maxDefense : 0;
-        const defenseB = typeof b.maxDefense === 'number' ? b.maxDefense : 0;
+        // Используем maxDefense, если доступна, иначе defense из card_data или базовое значение
+        const defenseA = typeof a.maxDefense === 'number' && a.maxDefense > 0 
+          ? a.maxDefense 
+          : (typeof a.defense === 'number' ? a.defense : 0);
+        const defenseB = typeof b.maxDefense === 'number' && b.maxDefense > 0 
+          ? b.maxDefense 
+          : (typeof b.defense === 'number' ? b.defense : 0);
+        
+        console.log(`Comparing: ${a.name} (${defenseA}) vs ${b.name} (${defenseB})`);
         return defenseB - defenseA;
       });
-      console.log('✅ Sorted heroes:', sorted.map(h => `${h.name}: ${h.maxDefense}`));
+      console.log('✅ Sorted heroes:', sorted.slice(0, 10).map(h => `${h.name}: maxDef=${h.maxDefense}, def=${h.defense}`));
       return sorted;
     }
     
@@ -142,8 +149,13 @@ export const DeckSelection = ({
     
     if (dragonSortBy === 'defense') {
       const sorted = [...filtered].sort((a, b) => {
-        const defenseA = typeof a.maxDefense === 'number' ? a.maxDefense : 0;
-        const defenseB = typeof b.maxDefense === 'number' ? b.maxDefense : 0;
+        // Используем maxDefense, если доступна, иначе defense из card_data или базовое значение
+        const defenseA = typeof a.maxDefense === 'number' && a.maxDefense > 0 
+          ? a.maxDefense 
+          : (typeof a.defense === 'number' ? a.defense : 0);
+        const defenseB = typeof b.maxDefense === 'number' && b.maxDefense > 0 
+          ? b.maxDefense 
+          : (typeof b.defense === 'number' ? b.defense : 0);
         return defenseB - defenseA; // От большего к меньшему
       });
       return sorted;
