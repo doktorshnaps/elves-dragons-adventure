@@ -7,6 +7,7 @@ import { motion } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
 import { cardDatabase } from "@/data/cardDatabase";
 import { calculateCardStats } from "@/utils/cardUtils";
+import { resolveCardImageSync } from "@/utils/cardImageResolver";
 
 interface CardPackAnimationProps {
   winningCard: CardType;
@@ -181,7 +182,7 @@ export const CardPackAnimation = ({ winningCard, onAnimationComplete, onSkipAll,
                       {/* Card Image */}
                       <div className="w-full h-16 mb-1 overflow-hidden rounded">
                         <img 
-                          src={card.image ?? availableImages[card.name] ?? '/placeholder.svg'} 
+                          src={resolveCardImageSync(card) ?? availableImages[card.name] ?? '/placeholder.svg'} 
                           alt={card.name}
                           className="w-full h-full object-cover"
                           loading={index <= 15 ? "eager" : "lazy"} // Load first 15 cards eagerly
