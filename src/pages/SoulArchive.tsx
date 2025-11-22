@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { ArrowLeft, Users, UserCheck, UserX, TrendingUp, Award, Clock } from "lucide-react";
+import { ArrowLeft, Users, TrendingUp, Award, Clock } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useWalletContext } from "@/contexts/WalletConnectContext";
 import { useBrightness } from "@/hooks/useBrightness";
@@ -181,12 +181,12 @@ export const SoulArchive = () => {
     }
   };
 
-  const loadReferralDetails = async (wallet: string, wlFilter: boolean | null, isWeekly: boolean = false) => {
+  const loadReferralDetails = async (wallet: string, isWeekly: boolean = false) => {
     try {
-      // Используем новую RPC функцию для получения деталей
+      // Загружаем все рефералы без фильтра по WL
       const { data, error } = await supabase.rpc('get_referral_details', {
         p_referrer_wallet: wallet,
-        p_wl_only: wlFilter
+        p_wl_only: null
       });
 
       if (error) {
@@ -211,7 +211,7 @@ export const SoulArchive = () => {
 
       setReferralDetails(details);
       setSelectedReferrer(wallet);
-      setShowWL(wlFilter);
+      setShowWL(null);
     } catch (error) {
       console.error('Error loading referral details:', error);
       toast({
@@ -235,8 +235,6 @@ export const SoulArchive = () => {
       <div className="space-y-2">
         {stats.map((stat, index) => {
           const referrals = isWeekly ? stat.weekly_referrals : stat.total_referrals;
-          const wlCount = isWeekly ? stat.weekly_wl_referrals : stat.wl_referrals;
-          const noWlCount = isWeekly ? stat.weekly_no_wl_referrals : stat.no_wl_referrals;
 
           return (
             <Card key={stat.wallet_address} variant="menu" style={{ boxShadow: '-33px 15px 10px rgba(0, 0, 0, 0.6)' }}>
@@ -261,20 +259,11 @@ export const SoulArchive = () => {
                     <Button
                       size="sm"
                       variant="outline"
-                      className="text-xs px-3 py-1 h-7 border-green-500 text-green-500 hover:bg-green-500/10 rounded-3xl bg-green-500/5"
-                      onClick={() => loadReferralDetails(stat.wallet_address, true, isWeekly)}
+                      className="text-xs px-3 py-1 h-7 border-primary text-white hover:bg-primary/10 rounded-3xl bg-primary/5"
+                      onClick={() => loadReferralDetails(stat.wallet_address, isWeekly)}
                     >
-                      <UserCheck className="w-3 h-3 mr-1" />
-                      WL: {wlCount}
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      className="text-xs px-3 py-1 h-7 border-orange-500 text-orange-500 hover:bg-orange-500/10 rounded-3xl bg-orange-500/5"
-                      onClick={() => loadReferralDetails(stat.wallet_address, false, isWeekly)}
-                    >
-                      <UserX className="w-3 h-3 mr-1" />
-                      noWL: {noWlCount}
+                      <Users className="w-3 h-3 mr-1" />
+                      Показать всех
                     </Button>
                   </div>
                 </div>
@@ -337,9 +326,6 @@ export const SoulArchive = () => {
                   <div>
                     <div className="text-xs text-white/70">Всего рефералов</div>
                     <div className="text-2xl font-bold text-white">{overallStats.totalReferrals}</div>
-                    <div className="text-xs text-white/60">
-                      WL: {overallStats.totalWLReferrals} | noWL: {overallStats.totalNoWLReferrals}
-                    </div>
                   </div>
                 </div>
               </CardContent>
@@ -368,9 +354,6 @@ export const SoulArchive = () => {
                   <div className="flex-1">
                     <div className="text-xs text-white/70">За эту неделю</div>
                     <div className="text-xl font-bold text-white">{overallStats.weeklyTotalReferrals} рефералов</div>
-                    <div className="text-xs text-white/60">
-                      WL: {overallStats.weeklyWLReferrals} | noWL: {overallStats.weeklyNoWLReferrals}
-                    </div>
                   </div>
                 </div>
               </CardContent>
@@ -441,17 +424,8 @@ export const SoulArchive = () => {
         <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
-              {showWL ? (
-                <>
-                  <UserCheck className="w-5 h-5 text-green-500" />
-                  Рефералы с WL
-                </>
-              ) : (
-                <>
-                  <UserX className="w-5 h-5 text-orange-500" />
-                  Рефералы без WL
-                </>
-              )}
+              <Users className="w-5 h-5 text-primary" />
+              Рефералы игрока {selectedReferrer}
             </DialogTitle>
           </DialogHeader>
           
@@ -473,11 +447,6 @@ export const SoulArchive = () => {
                           {new Date(detail.created_at).toLocaleDateString('ru-RU')}
                         </div>
                       </div>
-                      {detail.has_wl ? (
-                        <UserCheck className="w-4 h-4 text-green-500 flex-shrink-0" />
-                      ) : (
-                        <UserX className="w-4 h-4 text-orange-500 flex-shrink-0" />
-                      )}
                     </div>
                   </CardContent>
                 </Card>
