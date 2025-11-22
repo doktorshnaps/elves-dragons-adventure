@@ -40,11 +40,37 @@ const formatTokenBalance = (
 };
 
 // Timeout helper for RPC calls
-const withTimeout = async <T>(promise: Promise<T>, ms = 12000): Promise<T> => {
+const withTimeout = async <T>(promise: Promise<T>, ms = 30000): Promise<T> => {
   return (await Promise.race([
     promise,
     new Promise<never>((_, reject) => setTimeout(() => reject(new Error('RPC timeout')), ms)),
   ])) as T;
+};
+
+// Multiple NEAR RPC endpoints for fallback
+const NEAR_RPC_ENDPOINTS = [
+  'https://rpc.mainnet.near.org',
+  'https://near-mainnet.api.pagoda.co/rpc/v1/',
+  'https://rpc.mainnet.pagoda.co'
+];
+
+// Try multiple RPC endpoints with fallback
+const createProviderWithFallback = async () => {
+  for (const url of NEAR_RPC_ENDPOINTS) {
+    try {
+      const provider = new providers.JsonRpcProvider({ url });
+      // Test the provider with a quick call
+      await withTimeout(provider.status(), 5000);
+      console.log(`✅ Using NEAR RPC: ${url}`);
+      return provider;
+    } catch (err) {
+      console.warn(`❌ Failed to connect to ${url}:`, err);
+      continue;
+    }
+  }
+  // Fallback to first endpoint if all fail
+  console.warn('⚠️ All RPC endpoints failed, using default');
+  return new providers.JsonRpcProvider({ url: NEAR_RPC_ENDPOINTS[0] });
 };
 
 export const useNearBalances = (accountId: string | null): NearBalances => {
@@ -62,6 +88,20 @@ export const useNearBalances = (accountId: string | null): NearBalances => {
       return;
     }
 
+    // Load cached balances immediately while fetching fresh data
+    try {
+      const cached = JSON.parse(localStorage.getItem('walletBalances') || '{}');
+      if (cached[targetId]) {
+        if (cached[targetId].near) setNearBalance(cached[targetId].near);
+        if (cached[targetId].ft?.['gt-1733.meme-cooking.near']) {
+          setGtBalance(cached[targetId].ft['gt-1733.meme-cooking.near']);
+        }
+        console.log('💾 Loaded cached balances:', cached[targetId]);
+      }
+    } catch (e) {
+      console.warn('Failed to load cached balances:', e);
+    }
+
     const fetchBalances = async () => {
       setLoading(true);
       setError(null);
@@ -69,7 +109,7 @@ export const useNearBalances = (accountId: string | null): NearBalances => {
       try {
         console.log('🔄 Fetching balances for account:', targetId);
 
-        const provider = new providers.JsonRpcProvider({ url: 'https://rpc.mainnet.near.org' });
+        const provider = await createProviderWithFallback();
 
         // NEAR balance via RPC view_account
         try {
@@ -78,7 +118,7 @@ export const useNearBalances = (accountId: string | null): NearBalances => {
             request_type: 'view_account',
             account_id: targetId,
             finality: 'final',
-          }), 12000);
+          }), 30000);
           const totalNear = utils.format.formatNearAmount(view.amount);
           formattedNear = parseFloat(totalNear).toFixed(3);
           console.log('✅ NEAR balance:', formattedNear, '(raw yoctoNEAR:', view.amount, ')');
@@ -90,7 +130,8 @@ export const useNearBalances = (accountId: string | null): NearBalances => {
           } catch {}
         } catch (err) {
           console.warn('Error fetching NEAR balance:', err);
-          setNearBalance('0');
+          // Don't reset to 0 if we have cached value
+          if (nearBalance === '0') setNearBalance('0');
         }
 
         // GT token balance (gt-1733.meme-cooking.near, decimals: 18)
@@ -104,7 +145,7 @@ export const useNearBalances = (accountId: string | null): NearBalances => {
             method_name: 'ft_balance_of',
             args_base64: btoa(args),
             finality: 'final',
-          }), 12000);
+          }), 30000);
 
           // response.result is a Uint8Array/array of bytes → decode to string → JSON.parse
           const decoder = new TextDecoder();
@@ -124,13 +165,13 @@ export const useNearBalances = (accountId: string | null): NearBalances => {
           } catch {}
         } catch (err) {
           console.warn('Error fetching GT balance:', err);
-          setGtBalance('0');
+          // Don't reset to 0 if we have cached value
+          if (gtBalance === '0') setGtBalance('0');
         }
       } catch (err) {
         console.error('Error fetching NEAR balances:', err);
         setError('Ошибка загрузки балансов');
-        setNearBalance('0');
-        setGtBalance('0');
+        // Don't reset cached values on error
       } finally {
         setLoading(false);
       }
