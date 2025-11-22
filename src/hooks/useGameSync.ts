@@ -122,24 +122,7 @@ export const useGameSync = () => {
         gameStore.setBalance(gameData.balance);
         gameStore.setCards(gameData.cards);
         gameStore.setDragonEggs(gameData.dragonEggs || []);
-        
-        // КРИТИЧНО: Не перезаписываем selectedTeam пустым массивом, если локально есть команда
-        const currentTeam = gameStore.selectedTeam;
-        const newTeam = gameData.selectedTeam || [];
-        
-        if (newTeam.length === 0 && currentTeam.length > 0) {
-          console.log('⚠️ useGameSync: Preventing selectedTeam overwrite - keeping local team:', currentTeam.length);
-          // Синхронизируем локальную команду обратно в БД
-          setTimeout(() => {
-            updateGameData({ selectedTeam: currentTeam }).catch(err => 
-              console.error('Failed to sync local team to DB:', err)
-            );
-          }, 500);
-        } else {
-          console.log('✅ useGameSync: Setting selectedTeam from DB:', newTeam.length);
-          gameStore.setSelectedTeam(newTeam);
-        }
-        
+        gameStore.setSelectedTeam(gameData.selectedTeam || []);
         gameStore.setAccountLevel(gameData.accountLevel || 1);
         gameStore.setAccountExperience(gameData.accountExperience || 0);
         
@@ -152,7 +135,7 @@ export const useGameSync = () => {
           balance: gameData.balance,
           cards: gameData.cards,
           dragonEggs: gameData.dragonEggs,
-          selectedTeam: gameData.selectedTeam,
+          selectedTeam: gameData.selectedTeam || [],
           battleState: gameData.battleState,
           accountLevel: gameData.accountLevel,
           accountExperience: gameData.accountExperience,
