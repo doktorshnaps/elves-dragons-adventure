@@ -80,18 +80,24 @@ export const DeckSelection = ({
     // Убираем дубликаты по ID
     const uniqueCards = combinedCards.filter((card, index, arr) => arr.findIndex(c => c.id === card.id) === index);
 
-    // Синхронизируем здоровье и броню с card_instances
+    // Синхронизируем здоровье, броню И характеристики с card_instances
     const instancesMap = new Map(cardInstances.map(ci => [ci.card_template_id, ci]));
     const result = uniqueCards.map(card => {
       const instance = instancesMap.get(card.id);
       
-      if (instance) {
+      if (instance && instance.card_data) {
         return {
           ...card,
+          // Здоровье и броня
           currentHealth: instance.current_health,
           currentDefense: instance.current_defense,
           maxDefense: instance.max_defense,
-          lastHealTime: new Date(instance.last_heal_time).getTime()
+          lastHealTime: new Date(instance.last_heal_time).getTime(),
+          // Характеристики из card_data (приоритет над card)
+          power: (instance.card_data as any).power ?? card.power,
+          defense: (instance.card_data as any).defense ?? card.defense,
+          health: (instance.card_data as any).health ?? card.health,
+          magic: (instance.card_data as any).magic ?? card.magic
         };
       }
       return card;

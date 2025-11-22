@@ -35,11 +35,23 @@ export const CardDisplay = ({
   const isMobile = useIsMobile();
   const { language } = useLanguage();
   
-  // Пересчитываем характеристики с учётом класса и редкости
-  const stats = useMemo(() => 
-    calculateCardStats(card.name, card.rarity, card.type), 
-    [card.name, card.rarity, card.type]
-  );
+  // Используем сохраненные характеристики из card_data, пересчет только как fallback
+  const stats = useMemo(() => {
+    // Если характеристики уже есть в объекте карты, используем их
+    if (card.power !== undefined && card.defense !== undefined && 
+        card.health !== undefined && card.magic !== undefined) {
+      return {
+        power: card.power,
+        defense: card.defense,
+        health: card.health,
+        magic: card.magic
+      };
+    }
+    
+    // Иначе пересчитываем (fallback для старых карт)
+    console.warn(`⚠️ Card stats not found in card_data for ${card.name}, recalculating...`);
+    return calculateCardStats(card.name, card.rarity, card.type);
+  }, [card.name, card.rarity, card.type, card.power, card.defense, card.health, card.magic]);
   return <Card onClick={onClick} className={`mx-auto w-[90px] h-[180px] sm:w-[120px] sm:h-[240px] md:w-[130px] md:h-[260px] lg:w-[140px] lg:h-[280px]
         p-0.5 bg-black/50 border-2 border-white backdrop-blur-sm transition-all duration-300 overflow-hidden 
         ${!isActive && card.type === 'pet' ? 'opacity-50' : ''} ${onClick ? 'cursor-pointer' : ''} ${className}`}>
