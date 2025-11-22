@@ -100,36 +100,57 @@ export const ShelterCrafting = ({
             <CardContent className="space-y-4">
               <div className="space-y-2">
                 <div className="text-sm font-medium">{t(language, 'shelter.requirements')}:</div>
-                <div className="grid grid-cols-2 gap-2">
-                  {recipe.requirements.wood && (
-                    <div className="flex items-center gap-2">
-                      <span>🪵</span>
-                      <span className="text-sm">{recipe.requirements.wood}</span>
+                <div className="space-y-1.5">
+                  {recipe.requirements.wood > 0 && (
+                    <div className="flex items-center justify-between px-2 py-1 bg-muted/30 rounded">
+                      <div className="flex items-center gap-2">
+                        <span>🪵</span>
+                        <span className="text-sm">{t(language, 'resources.wood')}</span>
+                      </div>
+                      <span className="text-sm font-semibold">{recipe.requirements.wood}</span>
                     </div>
                   )}
-                  {recipe.requirements.stone && (
-                    <div className="flex items-center gap-2">
-                      <span>🪨</span>
-                      <span className="text-sm">{recipe.requirements.stone}</span>
+                  {recipe.requirements.stone > 0 && (
+                    <div className="flex items-center justify-between px-2 py-1 bg-muted/30 rounded">
+                      <div className="flex items-center gap-2">
+                        <span>🪨</span>
+                        <span className="text-sm">{t(language, 'resources.stone')}</span>
+                      </div>
+                      <span className="text-sm font-semibold">{recipe.requirements.stone}</span>
                     </div>
                   )}
-                  {recipe.requirements.balance && (
-                    <div className="flex items-center gap-2">
-                      <span>💰</span>
-                      <span className="text-sm">{recipe.requirements.balance} ELL</span>
+                  {recipe.requirements.balance > 0 && (
+                    <div className="flex items-center justify-between px-2 py-1 bg-muted/30 rounded">
+                      <div className="flex items-center gap-2">
+                        <span>💰</span>
+                        <span className="text-sm">ELL</span>
+                      </div>
+                      <span className="text-sm font-semibold">{recipe.requirements.balance}</span>
                     </div>
                   )}
                   {recipe.requirements.materials && recipe.requirements.materials.length > 0 && (
                     recipe.requirements.materials
-                      .filter(mat => mat && mat.item_id) // Фильтруем невалидные материалы
+                      .filter(mat => mat && mat.item_id)
                       .map((mat, idx) => {
                         const playerHas = inventoryCounts[mat.item_id] || 0;
                         const hasEnough = playerHas >= mat.quantity;
                         return (
-                          <div key={idx} className="flex items-center gap-2">
-                            <span>📦</span>
-                            <span className={`text-sm ${hasEnough ? '' : 'text-destructive'}`}>
-                              {getItemName(mat.item_id)} ({playerHas}/{mat.quantity})
+                          <div 
+                            key={idx} 
+                            className={`flex items-center justify-between px-2 py-1 rounded border ${
+                              hasEnough 
+                                ? 'border-green-500/50 bg-green-500/10' 
+                                : 'border-red-500/50 bg-red-500/10'
+                            }`}
+                          >
+                            <div className="flex items-center gap-2 min-w-0 flex-1">
+                              <span>📦</span>
+                              <span className={`text-sm font-medium truncate ${hasEnough ? 'text-green-500' : 'text-red-500'}`}>
+                                {getItemName(mat.item_id)}
+                              </span>
+                            </div>
+                            <span className={`text-sm font-semibold ml-2 ${hasEnough ? 'text-green-500' : 'text-red-500'}`}>
+                              {playerHas}/{mat.quantity}
                             </span>
                           </div>
                         );
