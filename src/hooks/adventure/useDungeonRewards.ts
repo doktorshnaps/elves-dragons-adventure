@@ -285,26 +285,22 @@ export const useDungeonRewards = () => {
       }
 
       if (lootedItems.length > 0) {
-        // Фильтруем предметы, которые уже добавлены в БД (например, из treasure hunt события)
-        const itemsToAdd = lootedItems.filter(it => !(it as any).alreadyInDB);
-        const itemsAlreadyInDB = lootedItems.filter(it => (it as any).alreadyInDB);
+        // Разделяем предметы treasure hunt и обычные предметы
+        const treasureHuntItems = lootedItems.filter(it => (it as any).isTreasureHunt);
+        const regularItems = lootedItems.filter(it => !(it as any).isTreasureHunt);
         
-        console.log(`📦 Всего предметов: ${lootedItems.length}, к добавлению: ${itemsToAdd.length}, уже в БД: ${itemsAlreadyInDB.length}`);
+        console.log(`📦 Всего предметов: ${lootedItems.length}, обычных: ${regularItems.length}, treasure hunt: ${treasureHuntItems.length}`);
         
-        if (itemsAlreadyInDB.length > 0) {
-          console.log('✅ Предметы уже в БД (пропускаем):', itemsAlreadyInDB.map(it => it.name));
-        }
-        
-        // Отправляем только предметы, которые еще не в БД
-        if (itemsToAdd.length > 0) {
+        // Обрабатываем обычные предметы
+        if (regularItems.length > 0) {
           try {
-            const normalized = itemsToAdd.map(it => ({
+            const normalized = regularItems.map(it => ({
               name: it.name ?? null,
               type: it.type ?? 'material',
               template_id: (it as any).template_id ?? null,
               item_id: (it as any).item_id ?? null,
             }));
-            console.log('🛰️ Вызов edge claim-item-reward', { count: normalized.length, claimKey });
+            console.log('🛰️ Вызов edge claim-item-reward для обычных предметов', { count: normalized.length, claimKey });
             const { data, error } = await supabase.functions.invoke('claim-item-reward', {
               body: {
                 wallet_address: accountId || 'local',
@@ -313,27 +309,63 @@ export const useDungeonRewards = () => {
               }
             });
             if (error) {
-              console.error('❌ Edge claim-item-reward error', error);
+              console.error('❌ Edge claim-item-reward error для обычных предметов', error);
               throw error;
             }
-            console.log('✅ Edge claim-item-reward result', data);
-            
-            // Даем время для записи данных в БД перед обновлением кеша
-            await new Promise(resolve => setTimeout(resolve, 500));
-            
-            // Инвалидируем кеш itemInstances для обновления UI
-            queryClient.invalidateQueries({ queryKey: ['itemInstances', accountId] });
-            
-            // Отправляем событие для немедленного обновления UI
-            const itemEvent = new CustomEvent('itemInstancesUpdate');
-            window.dispatchEvent(itemEvent);
-            
-            console.log('✅ [useDungeonRewards] Cache invalidated, event dispatched');
+            console.log('✅ Edge claim-item-reward result для обычных предметов', data);
           } catch (edgeErr) {
-            console.error('❌ Ошибка edge claim-item-reward, fallback отменён чтобы избежать дублей:', edgeErr);
-            // Не вызываем локальный addItemsToInstances, чтобы не удвоить предметы
+            console.error('❌ Ошибка edge claim-item-reward для обычных предметов:', edgeErr);
           }
         }
+        
+        // Обрабатываем treasure hunt предметы ОТДЕЛЬНО
+        if (treasureHuntItems.length > 0) {
+          try {
+            for (const thItem of treasureHuntItems) {
+              const thClaimKey = `treasure_hunt_${(thItem as any).treasureHuntEventId}_${accountId}_${Date.now()}`;
+              
+              console.log('🎯 Вызов edge claim-item-reward для treasure hunt предмета', { 
+                eventId: (thItem as any).treasureHuntEventId, 
+                claimKey: thClaimKey 
+              });
+              
+              const { data: thData, error: thError } = await supabase.functions.invoke('claim-item-reward', {
+                body: {
+                  wallet_address: accountId || 'local',
+                  claim_key: thClaimKey,
+                  treasure_hunt_event_id: (thItem as any).treasureHuntEventId,
+                  treasure_hunt_quantity: 1,
+                  items: [{
+                    name: thItem.name ?? null,
+                    type: thItem.type ?? 'material',
+                    template_id: (thItem as any).template_id ?? null,
+                    item_id: (thItem as any).item_id ?? null,
+                  }]
+                }
+              });
+              
+              if (thError) {
+                console.error('❌ Edge claim-item-reward error для treasure hunt', thError);
+              } else {
+                console.log('✅ Treasure hunt предмет успешно добавлен:', thData);
+              }
+            }
+          } catch (thErr) {
+            console.error('❌ Ошибка edge claim-item-reward для treasure hunt предметов:', thErr);
+          }
+        }
+        
+        // Даем время для записи данных в БД перед обновлением кеша
+        await new Promise(resolve => setTimeout(resolve, 500));
+        
+        // Инвалидируем кеш itemInstances для обновления UI
+        queryClient.invalidateQueries({ queryKey: ['itemInstances', accountId] });
+        
+        // Отправляем событие для немедленного обновления UI
+        const itemEvent = new CustomEvent('itemInstancesUpdate');
+        window.dispatchEvent(itemEvent);
+        
+        console.log('✅ [useDungeonRewards] Cache invalidated, event dispatched');
       }
 
       // Единый вызов updateGameData с обоими обновлениями

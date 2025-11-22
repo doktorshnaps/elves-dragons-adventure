@@ -113,44 +113,9 @@ export const getMonsterLoot = async (monsterName: string, dungeonNumber?: number
           if (roll <= dropChance) {
             console.log(`🎊 TREASURE HUNT ITEM DROPPED! ${activeEvent.item_name} (roll: ${roll.toFixed(2)} <= ${dropChance}%)`);
             
-            // Увеличиваем счётчик найденных предметов в событии
-            await supabase
-              .from('treasure_hunt_events')
-              .update({ found_quantity: activeEvent.found_quantity + 1 })
-              .eq('id', activeEvent.id);
-            
-            // Вызываем серверную функцию для регистрации находки
-            // Используем claim_key на основе события и кошелька для идемпотентности
-            const claimKey = `treasure_hunt_${activeEvent.id}_${walletAddress}_${Date.now()}`;
-            
-            try {
-              const { data: claimResult, error: claimError } = await supabase.functions.invoke('claim-item-reward', {
-                body: {
-                  wallet_address: walletAddress,
-                  claim_key: claimKey,
-                  treasure_hunt_event_id: activeEvent.id,
-                  treasure_hunt_quantity: 1,
-                  items: [{
-                    name: activeEvent.item_name,
-                    type: 'material',
-                    template_id: activeEvent.item_template_id,
-                    item_id: null
-                  }]
-                }
-              });
-              
-              if (claimError) {
-                console.error('❌ Failed to claim treasure hunt reward:', claimError);
-              } else {
-                console.log('✅ Treasure hunt finding registered via edge function:', claimResult);
-              }
-            } catch (err) {
-              console.error('❌ Exception calling claim-item-reward:', err);
-            }
-            
-            // Edge function уже добавил предмет в БД через claim-item-reward
-            // Возвращаем предмет для отображения в UI с флагом, что он уже в БД
-            console.log('🎁 Treasure hunt item already added to DB via edge function, returning item for UI display only');
+            // НЕ добавляем в БД сразу! Предмет будет добавлен только при успешном выходе из подземелья
+            // Возвращаем предмет с флагом treasure_hunt для последующей обработки
+            console.log('🎁 Treasure hunt item will be added to DB only on successful dungeon completion');
             
             // Получаем полную информацию о предмете из шаблона для корректного отображения
             const template = ALL_ITEM_TEMPLATES.find(t => t.id === activeEvent.item_template_id);
@@ -164,8 +129,11 @@ export const getMonsterLoot = async (monsterName: string, dungeonNumber?: number
               description: template?.description || 'Предмет события "Искатели"',
               image: activeEvent.item_image_url || template?.image_url || undefined,
               stats: template?.stats || undefined,
-              // Флаг, что предмет уже добавлен в БД и не нужно добавлять повторно
-              alreadyInDB: true
+              template_id: activeEvent.item_template_id,
+              item_id: template?.item_id || null,
+              // Флаг, что это предмет treasure hunt события
+              isTreasureHunt: true,
+              treasureHuntEventId: activeEvent.id
           } as any];
           } else {
             console.log(`❌ Treasure hunt roll failed: roll ${roll.toFixed(2)} > ${dropChance}% chance`);
