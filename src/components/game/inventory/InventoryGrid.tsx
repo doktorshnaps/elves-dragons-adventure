@@ -11,18 +11,20 @@ import { itemImagesByName, itemImagesByItemId } from "@/constants/itemImages";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { SellQuantityModal } from "../dialogs/SellQuantityModal";
 import { useTreasureHuntItems } from "@/hooks/useTreasureHuntItems";
-import { Scroll } from "lucide-react";
+import { Scroll, Loader2 } from "lucide-react";
 interface InventoryGridProps {
   groupedItems: GroupedItem[];
   readonly: boolean;
   onUseItem: (groupedItem: GroupedItem) => Promise<boolean | void>;
   onSellItem: (groupedItem: GroupedItem, quantity: number) => void;
+  isLoading?: boolean;
 }
 export const InventoryGrid = ({
   groupedItems,
   readonly,
   onUseItem,
-  onSellItem
+  onSellItem,
+  isLoading = false
 }: InventoryGridProps) => {
   const [openKey, setOpenKey] = useState<string | null>(null);
   const [sellModalOpen, setSellModalOpen] = useState(false);
@@ -83,6 +85,15 @@ export const InventoryGrid = ({
       setOpenKey(null);
     }
   };
+  if (isLoading) {
+    return (
+      <div className="flex flex-col items-center justify-center py-8">
+        <Loader2 className="w-8 h-8 animate-spin text-primary mb-2" />
+        <span className="text-sm text-muted-foreground">Синхронизация инвентаря...</span>
+      </div>
+    );
+  }
+
   if (unequippedItems.length === 0) {
     return <p className="text-gray-300 col-span-full text-center py-4 text-sm">{t(language, 'common.inventoryEmpty')}</p>;
   }
