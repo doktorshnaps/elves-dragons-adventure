@@ -3,6 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useWalletContext } from '@/contexts/WalletConnectContext';
 import { useGameData } from './useGameData';
 import { RealtimeChannel, RealtimePostgresChangesPayload } from '@supabase/supabase-js';
+import { useActiveDungeonSessions } from './useActiveDungeonSessions';
 
 interface ActiveDungeonSession {
   device_id: string;
@@ -15,7 +16,11 @@ interface ActiveDungeonSession {
 export const useDungeonSync = () => {
   const { accountId } = useWalletContext();
   const { gameData, updateGameData } = useGameData();
+  
+  // Используем React Query хук вместо прямых запросов к БД
+  const { data: queriedSessions = [] } = useActiveDungeonSessions();
   const [activeSessions, setActiveSessions] = useState<ActiveDungeonSession[]>([]);
+  
   const [deviceId] = useState(() => {
     // Генерируем уникальный ID устройства или берем из localStorage
     let id = localStorage.getItem('device_id');
@@ -25,6 +30,19 @@ export const useDungeonSync = () => {
     }
     return id;
   });
+  
+  // Синхронизируем данные из React Query с локальным состоянием
+  useEffect(() => {
+    if (queriedSessions.length > 0) {
+      setActiveSessions(queriedSessions.map(row => ({
+        device_id: row.device_id,
+        started_at: row.started_at,
+        last_activity: row.last_activity,
+        dungeon_type: row.dungeon_type,
+        level: row.level
+      })));
+    }
+  }, [queriedSessions]);
 
   // Локальное состояние активной сессии подземелья для этого устройства
   const [localSession, setLocalSession] = useState<ActiveDungeonSession | null>(() => {
@@ -51,54 +69,25 @@ export const useDungeonSync = () => {
     return () => window.removeEventListener('storage', onStorage);
   }, []);
 
-  // Загружаем активные сессии только если они еще не загружены
-  // Используем debounce чтобы избежать множественных запросов
-  const loadActiveSessions = useCallback(async () => {
-    if (!accountId) return;
+  // Проверяем локальную сессию против данных из React Query
+  useEffect(() => {
+    if (!accountId || activeSessions.length === 0) return;
     
-    // Проверяем, есть ли уже данные в activeSessions
-    if (activeSessions.length > 0) {
-      console.log('📊 [useDungeonSync] Sessions already loaded, skipping fetch');
-      return;
+    const TIMEOUT = 30000;
+    const now = Date.now();
+    const hasThisDevice = activeSessions.some(r => r.device_id === deviceId && (now - r.last_activity) < TIMEOUT);
+    
+    if (!hasThisDevice && localSession) {
+      try {
+        localStorage.removeItem('activeDungeonSession');
+        localStorage.removeItem('teamBattleState');
+        localStorage.removeItem('activeBattleInProgress');
+        localStorage.removeItem('battleState');
+        setLocalSession(null);
+        try { window.dispatchEvent(new CustomEvent('battleReset')); } catch {}
+      } catch {}
     }
-
-    try {
-      const { data, error } = await supabase
-        .from('active_dungeon_sessions')
-        .select('*')
-        .eq('account_id', accountId);
-
-      if (error) throw error;
-
-      if (data) {
-        const mapped = data.map(row => ({
-          device_id: row.device_id,
-          started_at: row.started_at,
-          last_activity: row.last_activity,
-          dungeon_type: row.dungeon_type,
-          level: row.level
-        }));
-        setActiveSessions(mapped);
-
-        // Если для текущего устройства нет актуальной записи, сбрасываем локальную сессию
-        const TIMEOUT = 30000;
-        const now = Date.now();
-        const hasThisDevice = mapped.some(r => r.device_id === deviceId && (now - r.last_activity) < TIMEOUT);
-        if (!hasThisDevice && localSession) {
-          try {
-            localStorage.removeItem('activeDungeonSession');
-            localStorage.removeItem('teamBattleState');
-            localStorage.removeItem('activeBattleInProgress');
-            localStorage.removeItem('battleState');
-            setLocalSession(null);
-            try { window.dispatchEvent(new CustomEvent('battleReset')); } catch {}
-          } catch {}
-        }
-      }
-    } catch (error) {
-      console.error('Error loading active sessions:', error);
-    }
-  }, [accountId, deviceId, localSession, activeSessions.length]);
+  }, [accountId, deviceId, localSession, activeSessions]);
 
   // Отправляем heartbeat для активной сессии
   const sendHeartbeat = useCallback(async () => {
@@ -242,11 +231,7 @@ export const useDungeonSync = () => {
     return true;
   }, [accountId, deviceId, hasOtherActiveSessions]);
 
-  // Загружаем активные сессии только при монтировании
-  useEffect(() => {
-    loadActiveSessions();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []); // Только при монтировании, не при изменении loadActiveSessions
+  // Загрузка активных сессий теперь происходит через useActiveDungeonSessions
 
   // Подписываемся на изменения в базе данных через Realtime
   useEffect(() => {

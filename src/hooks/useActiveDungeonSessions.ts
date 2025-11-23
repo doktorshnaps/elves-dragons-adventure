@@ -7,6 +7,7 @@ interface ActiveDungeonSession {
   dungeon_type: string;
   level: number;
   last_activity: number;
+  started_at: number;
   account_id: string;
 }
 
@@ -22,6 +23,7 @@ export const useActiveDungeonSessions = () => {
     queryFn: async () => {
       if (!accountId) return [];
 
+      console.log('🔍 [useActiveDungeonSessions] Fetching from DB for:', accountId);
       const { data, error } = await supabase
         .from('active_dungeon_sessions')
         .select('*')
@@ -32,11 +34,12 @@ export const useActiveDungeonSessions = () => {
         return [];
       }
 
+      console.log('✅ [useActiveDungeonSessions] Fetched', data?.length || 0, 'sessions');
       return data || [];
     },
     enabled: !!accountId,
-    staleTime: 5 * 60 * 1000, // 5 минут - агрессивное кеширование для страницы выбора
-    gcTime: 10 * 60 * 1000, // 10 минут
+    staleTime: 10 * 60 * 1000, // 10 минут - максимальное кеширование
+    gcTime: 15 * 60 * 1000, // 15 минут
     refetchOnMount: false,
     refetchOnWindowFocus: false,
   });
@@ -53,10 +56,11 @@ export const useLatestActiveDungeonSession = () => {
     queryFn: async () => {
       if (!accountId) return null;
 
+      console.log('🔍 [useLatestActiveDungeonSession] Fetching from DB for:', accountId);
       const fiveMinutesAgo = Date.now() - 5 * 60 * 1000;
       const { data, error } = await supabase
         .from('active_dungeon_sessions')
-        .select('device_id,dungeon_type,level,last_activity')
+        .select('device_id,dungeon_type,level,last_activity,started_at')
         .eq('account_id', accountId)
         .gte('last_activity', fiveMinutesAgo)
         .order('last_activity', { ascending: false })
@@ -68,11 +72,12 @@ export const useLatestActiveDungeonSession = () => {
         return null;
       }
 
+      console.log('✅ [useLatestActiveDungeonSession] Fetched session:', data ? 'found' : 'none');
       return data;
     },
     enabled: !!accountId,
-    staleTime: 5 * 60 * 1000, // 5 минут - агрессивное кеширование
-    gcTime: 10 * 60 * 1000, // 10 минут
+    staleTime: 10 * 60 * 1000, // 10 минут - максимальное кеширование
+    gcTime: 15 * 60 * 1000, // 15 минут
     refetchOnMount: false,
     refetchOnWindowFocus: false,
   });

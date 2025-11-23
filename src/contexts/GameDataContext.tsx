@@ -181,10 +181,11 @@ export const GameDataProvider = ({ children }: { children: ReactNode }) => {
       return DEFAULT_GAME_DATA;
     },
     enabled: !!accountId,
-    staleTime: 10 * 1000, // 10 seconds
-    gcTime: 60 * 1000, // 1 minute
+    staleTime: 2 * 60 * 1000, // 2 минуты - агрессивное кеширование для статичных данных
+    gcTime: 5 * 60 * 1000, // 5 минут
     refetchOnWindowFocus: false,
     refetchOnReconnect: false,
+    refetchOnMount: false, // Не перезагружать при каждом монтировании
     retry: 1,
   });
 
