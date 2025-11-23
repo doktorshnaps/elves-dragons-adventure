@@ -56,13 +56,18 @@ export const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
   }
 
   if (!isConnected && !lsConnected) {
-    return <Navigate to="/auth" replace />;
+    // Preserve search parameters (including ref) when redirecting to auth
+    const redirectPath = `/auth${location.search}`;
+    console.log('🔀 [ProtectedRoute] Redirecting to auth with search params:', redirectPath);
+    return <Navigate to={redirectPath} replace />;
   }
 
   // Если localStorage показывает подключение, но accountId нет - редирект на auth
   if (lsConnected && !accountId) {
     localStorage.removeItem('walletConnected');
-    return <Navigate to="/auth" replace />;
+    const redirectPath = `/auth${location.search}`;
+    console.log('🔀 [ProtectedRoute] Redirecting to auth (localStorage cleanup) with search params:', redirectPath);
+    return <Navigate to={redirectPath} replace />;
   }
 
   // Admin always has access, skip whitelist check
