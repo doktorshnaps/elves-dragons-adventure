@@ -79,15 +79,6 @@ const ReferralTreeView = ({ node, isExpanded, onToggle }: {
               <span className="font-mono font-medium text-white">
                 {node.level === 0 ? 'ВЫ' : formatWallet(node.wallet_address)}
               </span>
-              {node.level > 0 && (
-                <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                  node.isWhitelisted 
-                    ? 'bg-green-500/20 text-green-400 border border-green-500/30' 
-                    : 'bg-red-500/20 text-red-400 border border-red-500/30'
-                }`}>
-                  {node.isWhitelisted ? 'WL ✓' : 'Без WL'}
-                </span>
-              )}
             </div>
             <div className="text-xs text-white/70">
               {node.level === 0 ? 'Главный игрок' : `Уровень ${node.level}`}
