@@ -1,5 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import { useEffect } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 
 export interface ShopDataComplete {
   shop_inventory: Array<{
@@ -83,6 +85,8 @@ export interface ShopDataComplete {
  * @returns Shop data with loading/error states
  */
 export const useShopDataComplete = (walletAddress: string | null) => {
+  const queryClient = useQueryClient();
+  
   const { data, isLoading, error, refetch } = useQuery({
     queryKey: ['shopDataComplete', walletAddress],
     queryFn: async (): Promise<ShopDataComplete | null> => {
@@ -128,6 +132,36 @@ export const useShopDataComplete = (walletAddress: string | null) => {
     retry: 3,
     retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 10000),
   });
+
+  // Real-time subscription for item_instances changes
+  useEffect(() => {
+    if (!walletAddress) return;
+
+    console.log('🔄 [useShopDataComplete] Setting up Real-time subscription for item_instances');
+
+    const channel = supabase
+      .channel('item-instances-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'item_instances',
+          filter: `wallet_address=eq.${walletAddress}`
+        },
+        (payload) => {
+          console.log('🔔 [useShopDataComplete] item_instances changed:', payload);
+          queryClient.invalidateQueries({ queryKey: ['shopDataComplete', walletAddress] });
+          queryClient.invalidateQueries({ queryKey: ['itemInstances', walletAddress] });
+        }
+      )
+      .subscribe();
+
+    return () => {
+      console.log('🔄 [useShopDataComplete] Cleaning up Real-time subscription');
+      supabase.removeChannel(channel);
+    };
+  }, [walletAddress, queryClient]);
 
   return {
     shopData: data,
