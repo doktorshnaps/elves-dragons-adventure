@@ -759,7 +759,7 @@ export const DungeonSettings = () => {
                 {/* Предпросмотр характеристик */}
                 <div className="space-y-3 bg-accent/20 p-4 rounded-lg">
                   <h4 className="font-semibold text-sm">Предпросмотр монстров</h4>
-                  <div className="grid grid-cols-2 gap-4 text-xs">
+                  <div className="grid grid-cols-3 gap-4 text-xs">
                     <div>
                       <p className="font-medium mb-2">Уровень 1 (Normal):</p>
                       <p>HP: {Math.floor(dungeon.base_hp * Math.pow(1.2, dungeon.dungeon_number - 1))}</p>
@@ -771,6 +771,12 @@ export const DungeonSettings = () => {
                       <p>HP: {Math.floor(dungeon.base_hp * Math.pow(dungeon.hp_growth || 1.15, 4.9) * Math.pow(1.2, dungeon.dungeon_number - 1) * dungeon.boss_hp_multipliers.boss50)}</p>
                       <p>Armor: {Math.floor(dungeon.base_armor * Math.pow(dungeon.armor_growth || 1.10, 4.9) * Math.pow(1.2, dungeon.dungeon_number - 1) * dungeon.boss_armor_multipliers.boss50)}</p>
                       <p>ATK: {Math.floor(dungeon.base_atk * Math.pow(dungeon.atk_growth || 1.12, 4.9) * Math.pow(1.2, dungeon.dungeon_number - 1) * dungeon.boss_atk_multipliers.boss50)}</p>
+                    </div>
+                    <div>
+                      <p className="font-medium mb-2">Уровень 100 (Boss):</p>
+                      <p>HP: {Math.floor(dungeon.base_hp * Math.pow(dungeon.hp_growth || 1.15, 9.9) * Math.pow(1.2, dungeon.dungeon_number - 1) * dungeon.boss_hp_multipliers.boss100)}</p>
+                      <p>Armor: {Math.floor(dungeon.base_armor * Math.pow(dungeon.armor_growth || 1.10, 9.9) * Math.pow(1.2, dungeon.dungeon_number - 1) * dungeon.boss_armor_multipliers.boss100)}</p>
+                      <p>ATK: {Math.floor(dungeon.base_atk * Math.pow(dungeon.atk_growth || 1.12, 9.9) * Math.pow(1.2, dungeon.dungeon_number - 1) * dungeon.boss_atk_multipliers.boss100)}</p>
                     </div>
                   </div>
                   <p className="text-[10px] text-muted-foreground mt-2">
