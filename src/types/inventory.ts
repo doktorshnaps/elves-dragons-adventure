@@ -7,6 +7,7 @@ export interface Item {
   description?: string;
   image?: string;
   image_url?: string; // URL from database
+  item_id?: string; // Item ID for mapping to itemImagesByItemId
   template_id?: number; // Template ID for treasure hunt items
   petName?: string;
   stats?: {

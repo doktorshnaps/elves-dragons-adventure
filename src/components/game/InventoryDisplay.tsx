@@ -86,7 +86,7 @@ const instanceItems: Item[] = (itemInstances || [])
     // Получаем шаблон предмета из БД по template_id
     const template = inst.template_id ? getTemplate(String(inst.template_id)) : null;
     
-    return {
+    const item = {
       id: inst.id,
       name: inst.name || template?.name || 'Предмет',
       type: inst.type || template?.type || 'material',
@@ -97,8 +97,21 @@ const instanceItems: Item[] = (itemInstances || [])
         ? '/lovable-uploads/e523dce0-4cda-4d32-b4e2-ecec40b1eb39.png'
         : template?.image_url, // ИСПРАВЛЕНО: используем image_url из template для обычных предметов
       image_url: template?.image_url,
+      item_id: inst.item_id || template?.item_id, // Добавляем item_id для маппинга изображений
       template_id: inst.template_id
     } as Item;
+    
+    console.log('🔍 [InventoryDisplay] Creating item:', {
+      name: item.name,
+      type: item.type,
+      image_url: item.image_url,
+      item_id: item.item_id,
+      template_id: item.template_id,
+      inst_item_id: inst.item_id,
+      template_image_url: template?.image_url
+    });
+    
+    return item;
   });
 
 // Объединяем только instance-based предметы
