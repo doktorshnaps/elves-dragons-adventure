@@ -5,6 +5,7 @@ import { GroupedItem } from "./types";
 import { Coins } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { OptimizedImage } from "@/components/ui/optimized-image";
+import { useState } from "react";
 
 interface ItemCardProps {
   item: GroupedItem;
@@ -26,6 +27,7 @@ export const ItemCard = ({
   showUseButton = true
 }: ItemCardProps) => {
   const isMobile = useIsMobile();
+  const [imageError, setImageError] = useState(false);
   
   // Все предметы можно продавать (проверка через item_instances)
   const canSell = !readonly;
@@ -33,15 +35,22 @@ export const ItemCard = ({
   return (
     <Card className="p-4 bg-game-background border-game-accent hover:border-game-primary transition-all duration-300 h-[320px] flex flex-col justify-between">
       {item.image && (
-        <div className="w-full aspect-[4/3] mb-2 rounded-lg overflow-hidden">
-          <OptimizedImage
-            src={item.image}
-            alt={item.name}
-            width={200}
-            height={150}
-            className="w-full h-full object-cover"
-            progressive={true}
-          />
+        <div className="w-full aspect-[4/3] mb-2 rounded-lg overflow-hidden bg-muted/20">
+          {!imageError ? (
+            <OptimizedImage
+              src={item.image}
+              alt={item.name}
+              width={200}
+              height={150}
+              className="w-full h-full object-cover"
+              progressive={true}
+              onError={() => setImageError(true)}
+            />
+          ) : (
+            <div className="w-full h-full flex items-center justify-center text-muted-foreground text-xs">
+              Изображение недоступно
+            </div>
+          )}
         </div>
       )}
       <div className="flex-1 flex flex-col">

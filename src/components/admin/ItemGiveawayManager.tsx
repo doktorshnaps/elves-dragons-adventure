@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useWalletContext } from "@/contexts/WalletConnectContext";
+import { useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -25,6 +26,7 @@ interface ItemTemplate {
 export const ItemGiveawayManager = () => {
   const { toast } = useToast();
   const { accountId } = useWalletContext();
+  const queryClient = useQueryClient();
   const [items, setItems] = useState<ItemTemplate[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
@@ -95,9 +97,12 @@ export const ItemGiveawayManager = () => {
 
       if (error) throw error;
 
+      // Инвалидация кеша инвентаря для получателя
+      await queryClient.invalidateQueries({ queryKey: ['itemInstances', walletAddress.trim()] });
+      
       toast({
-        title: "Успешно!",
-        description: `Выдано ${quantity}x ${selectedItem.name} игроку ${walletAddress}`,
+        title: "Предметы выданы!",
+        description: `Игрок ${walletAddress} получил ${quantity}x ${selectedItem.name}`,
       });
 
       // Сброс формы

@@ -17,6 +17,7 @@ interface OptimizedImageProps extends Omit<React.ImgHTMLAttributes<HTMLImageElem
   priority?: boolean;
   progressive?: boolean;
   responsive?: boolean;
+  onError?: () => void;
 }
 
 export const OptimizedImage: React.FC<OptimizedImageProps> = ({
@@ -30,6 +31,7 @@ export const OptimizedImage: React.FC<OptimizedImageProps> = ({
   progressive = false,
   responsive = true,
   className,
+  onError: onErrorCallback,
   ...props
 }) => {
   const [currentSrc, setCurrentSrc] = useState(placeholder || src);
@@ -99,6 +101,10 @@ useEffect(() => {
     setHasError(true);
     if (placeholder && currentSrc !== placeholder) {
       setCurrentSrc(placeholder);
+    }
+    // Call external onError callback if provided
+    if (onErrorCallback) {
+      onErrorCallback();
     }
   };
 
