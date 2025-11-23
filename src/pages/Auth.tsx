@@ -49,15 +49,17 @@ export const Auth = () => {
       localStorage.setItem('pendingReferrer', refParam);
       setReferrerId(refParam);
       console.log('🔗 Referral link detected and saved:', refParam);
-    } else {
-      // Check if we have a pending referrer from previous redirect
-      const savedReferrer = localStorage.getItem('pendingReferrer');
-      if (savedReferrer && !referralProcessedRef.current) {
-        setReferrerId(savedReferrer);
-        console.log('🔗 Restored referral from localStorage:', savedReferrer);
-      }
     }
   }, [searchParams]);
+
+  // Restore referrer from localStorage on mount (independent of URL params)
+  useEffect(() => {
+    const savedReferrer = localStorage.getItem('pendingReferrer');
+    if (savedReferrer && !referralProcessedRef.current && !referrerId) {
+      setReferrerId(savedReferrer);
+      console.log('🔗 Restored referral from localStorage on mount:', savedReferrer);
+    }
+  }, []); // Run once on mount
 
   // Memoized referral handler to prevent double calls
   const handleReferral = useCallback(async () => {
@@ -116,21 +118,42 @@ export const Auth = () => {
     if (isConnected && accountId) {
       console.log('✅ Wallet connected:', accountId);
 
-      // Process referral if present
-      if (referrerId && !referralProcessedRef.current) {
-        console.log('🔗 Processing referral before redirect...', {
+      // Wait a moment for referrerId to be restored from localStorage
+      const processConnection = async () => {
+        // Check localStorage one more time to ensure referrerId is set
+        const savedReferrer = localStorage.getItem('pendingReferrer');
+        const finalReferrerId = referrerId || savedReferrer;
+
+        console.log('🔍 Processing connection:', {
           accountId,
           referrerId,
+          savedReferrer,
+          finalReferrerId,
           alreadyProcessed: referralProcessedRef.current
         });
-        handleReferral().then(() => {
+
+        if (finalReferrerId && !referralProcessedRef.current) {
+          // Update state if we found referrer in localStorage but state wasn't updated yet
+          if (!referrerId && savedReferrer) {
+            setReferrerId(savedReferrer);
+          }
+
+          console.log('🔗 Processing referral before redirect...', {
+            accountId,
+            referrerId: finalReferrerId,
+            alreadyProcessed: referralProcessedRef.current
+          });
+          
+          await handleReferral();
           console.log('✅ Referral processed, redirecting to menu');
-          navigate("/menu", { replace: true });
-        });
-      } else {
-        console.log('✅ No referral to process, redirecting to menu');
+        } else {
+          console.log('✅ No referral to process, redirecting to menu');
+        }
+        
         navigate("/menu", { replace: true });
-      }
+      };
+
+      processConnection();
     }
   }, [isConnected, accountId, referrerId, handleReferral, navigate]);
   const handleConnectWallet = async () => {
