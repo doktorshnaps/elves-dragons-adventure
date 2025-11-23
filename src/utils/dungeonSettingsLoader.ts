@@ -47,6 +47,12 @@ let cachedSettings: DungeonSettings[] | null = null;
 let lastFetchTime = 0;
 const CACHE_DURATION = 5000; // 5 секунд — быстрее подхватываем изменения из БД
 
+// Функция для принудительного сброса кеша
+export const clearDungeonSettingsCache = () => {
+  cachedSettings = null;
+  lastFetchTime = 0;
+};
+
 export const getDungeonSettings = async (dungeonType: string): Promise<DungeonSettings | null> => {
   const now = Date.now();
   
