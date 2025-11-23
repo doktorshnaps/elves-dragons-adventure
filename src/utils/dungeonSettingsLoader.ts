@@ -1,4 +1,4 @@
-import { supabase } from '@/integrations/supabase/client';
+import { getDungeonSettingsByType } from './staticDataCache';
 
 export interface MonsterWithCount {
   id: string;
@@ -43,55 +43,28 @@ export interface DungeonSettings {
   boss_atk_multipliers: BossMultipliers;
 }
 
-let cachedSettings: DungeonSettings[] | null = null;
-let lastFetchTime = 0;
-const CACHE_DURATION = 2000; // 2 секунды — быстрее реагируем на изменения
-
-// Функция для принудительного сброса кеша
-export const clearDungeonSettingsCache = () => {
-  console.log('🔄 Clearing dungeon settings cache');
-  cachedSettings = null;
-  lastFetchTime = 0;
-};
-
-export const getDungeonSettings = async (dungeonType: string): Promise<DungeonSettings | null> => {
-  const now = Date.now();
+/**
+ * Получить настройки подземелья из кеша React Query (без запроса к БД)
+ */
+export const getDungeonSettings = (dungeonType: string): DungeonSettings | null => {
+  const settings = getDungeonSettingsByType(dungeonType);
   
-  // Загружаем настройки из БД если кеш устарел
-  if (!cachedSettings || now - lastFetchTime > CACHE_DURATION) {
-    console.log('📥 Loading dungeon settings from DB (cache expired or empty)');
-    const { data, error } = await supabase
-      .from('dungeon_settings')
-      .select('*');
-    
-    if (error) {
-      console.error('Error loading dungeon settings:', error);
-      return null;
-    }
-    
-    // Преобразуем Json типы в наши интерфейсы
-    cachedSettings = data?.map(d => ({
-      ...d,
-      monster_spawn_config: d.monster_spawn_config as unknown as MonsterSpawnConfig,
-      miniboss_hp_multiplier: d.miniboss_hp_multiplier || 1.5,
-      miniboss_armor_multiplier: d.miniboss_armor_multiplier || 1.5,
-      miniboss_atk_multiplier: d.miniboss_atk_multiplier || 1.5,
-      boss_hp_multipliers: d.boss_hp_multipliers as unknown as BossMultipliers,
-      boss_armor_multipliers: d.boss_armor_multipliers as unknown as BossMultipliers,
-      boss_atk_multipliers: d.boss_atk_multipliers as unknown as BossMultipliers,
-    })) || null;
-    lastFetchTime = now;
-    console.log('✅ Dungeon settings loaded and cached');
+  if (!settings) {
+    console.warn(`⚠️ No settings found in cache for ${dungeonType}`);
+    return null;
   }
   
-  const settings = cachedSettings?.find(s => s.dungeon_type === dungeonType) || null;
-  if (settings) {
-    console.log(`📊 Using settings for ${dungeonType}:`, {
-      base_hp: settings.base_hp,
-      boss100_hp_mult: settings.boss_hp_multipliers.boss100
-    });
-  }
-  return settings;
+  // Преобразуем типы
+  return {
+    ...settings,
+    monster_spawn_config: settings.monster_spawn_config as unknown as MonsterSpawnConfig,
+    miniboss_hp_multiplier: settings.miniboss_hp_multiplier || 1.5,
+    miniboss_armor_multiplier: settings.miniboss_armor_multiplier || 1.5,
+    miniboss_atk_multiplier: settings.miniboss_atk_multiplier || 1.5,
+    boss_hp_multipliers: settings.boss_hp_multipliers as unknown as BossMultipliers,
+    boss_armor_multipliers: settings.boss_armor_multipliers as unknown as BossMultipliers,
+    boss_atk_multipliers: settings.boss_atk_multipliers as unknown as BossMultipliers,
+  };
 };
 
 
@@ -107,12 +80,12 @@ export interface MonsterStats {
  * Armor(D,L) = baseArmor × armorGrowth^((L-1)/10) × dungeonFactor(D)
  * ATK(D,L) = baseATK × atkGrowth^((L-1)/10) × dungeonFactor(D)
  */
-export const calculateMonsterStatsFromDB = async (
+export const calculateMonsterStatsFromDB = (
   dungeonType: string,
   level: number,
   monsterType: 'normal' | 'miniboss' | 'boss50' | 'boss100'
-): Promise<MonsterStats> => {
-  const settings = await getDungeonSettings(dungeonType);
+): MonsterStats => {
+  const settings = getDungeonSettings(dungeonType);
   
   if (!settings) {
     console.warn(`No settings found for ${dungeonType}, using defaults`);

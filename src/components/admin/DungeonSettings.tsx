@@ -12,7 +12,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { DungeonItemDrops } from "./DungeonItemDrops";
 import { MonsterManagement } from "./MonsterManagement";
 import { Checkbox } from "@/components/ui/checkbox";
-import { clearDungeonSettingsCache } from "@/utils/dungeonSettingsLoader";
+import { useQueryClient } from "@tanstack/react-query";
 
 interface MonsterWithCount {
   id: string;
@@ -67,6 +67,7 @@ interface Monster {
 export const DungeonSettings = () => {
   const { toast } = useToast();
   const { accountId } = useWalletContext();
+  const queryClient = useQueryClient();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [dungeons, setDungeons] = useState<DungeonSetting[]>([]);
@@ -287,8 +288,8 @@ export const DungeonSettings = () => {
         console.log('🔎 DB monster_spawn_config after update:', JSON.stringify((data as any).monster_spawn_config, null, 2));
       }
 
-      // Сбрасываем кеш настроек подземелий для гримуара
-      clearDungeonSettingsCache();
+      // Инвалидируем кеш статических данных для перезагрузки
+      await queryClient.invalidateQueries({ queryKey: ['staticGameData', 'v2'] });
       
       toast({
         title: "Успешно",

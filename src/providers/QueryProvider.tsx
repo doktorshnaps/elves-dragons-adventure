@@ -2,6 +2,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
 import { ReactNode, useEffect } from 'react';
 import { metricsMonitor } from '@/utils/metricsMonitor';
+import { setGlobalQueryClient } from '@/utils/staticDataCache';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -29,6 +30,9 @@ interface QueryProviderProps {
 
 export const QueryProvider = ({ children }: QueryProviderProps) => {
   useEffect(() => {
+    // Устанавливаем глобальный QueryClient для синхронного доступа
+    setGlobalQueryClient(queryClient);
+    
     // Отслеживаем реальные fetch операции (cache miss) и использование кэша (cache hit)
     const fetchingQueries = new Set<string>();
     

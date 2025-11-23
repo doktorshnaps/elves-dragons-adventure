@@ -1,7 +1,7 @@
 import { Opponent } from '@/types/battle';
 import { getMonsterData } from '@/utils/monsterDataParser';
 import { calculateMonsterStatsFromDB, getDungeonSettings } from '@/utils/dungeonSettingsLoader';
-import { supabase } from '@/integrations/supabase/client';
+import { getMonsterByName } from '@/utils/staticDataCache';
 import { monsterImagesById, monsterImagesByName } from '@/constants/monsterImages';
 import { monsterNameMapping } from './monsterNameMapping';
 
@@ -20,9 +20,9 @@ export interface DungeonConfig {
   };
 }
 
-// Определяем тип монстра и количество - теперь с учетом настроек из БД
-const getWaveConfig = async (dungeonType: string, level: number): Promise<{ monsterType: string; count: number }> => {
-  const settings = await getDungeonSettings(dungeonType);
+// Определяем тип монстра и количество - теперь с учетом настроек из кеша
+const getWaveConfig = (dungeonType: string, level: number): { monsterType: string; count: number } => {
+  const settings = getDungeonSettings(dungeonType);
   
   if (!settings) {
     // Fallback к дефолтной логике, если настройки не загружены
@@ -58,7 +58,7 @@ export const createBalancedGenerator = (config: DungeonConfig) =>
     console.log(`🎮 Creating opponents for ${config.internalName} level ${level}`);
     
     // Resolves the best image for a monster using multiple strategies
-    const resolveMonsterImage = async (
+    const resolveMonsterImage = (
       rawId?: string,
       name?: string,
       lvl?: number,
@@ -105,41 +105,27 @@ export const createBalancedGenerator = (config: DungeonConfig) =>
         }
       }
       
-      // 4) Try to find monster in DB by name (without level suffix)
+      // 4) Try to find monster in cached DB data by name (without level suffix)
       if (name) {
         const nameWithoutLevel = name.replace(/\s*\(Lv\d+\)$/, '').trim();
         
-        try {
-          // First try original name
-          const { data: dbMonster } = await supabase
-            .from('monsters')
-            .select('image_url')
-            .eq('monster_name', nameWithoutLevel)
-            .eq('is_active', true)
-            .maybeSingle();
-            
+        // First try original name from cache
+        let dbMonster = getMonsterByName(nameWithoutLevel);
+        
+        if (dbMonster?.image_url) {
+          console.log(`✅ Found by DB cache name lookup (${nameWithoutLevel}): ${dbMonster.image_url}`);
+          return dbMonster.image_url;
+        }
+        
+        // If not found, try mapped name as fallback
+        const mappedName = monsterNameMapping[nameWithoutLevel];
+        if (mappedName && mappedName !== nameWithoutLevel) {
+          dbMonster = getMonsterByName(mappedName);
+          
           if (dbMonster?.image_url) {
-            console.log(`✅ Found by DB name lookup (${nameWithoutLevel}): ${dbMonster.image_url}`);
+            console.log(`✅ Found by DB cache mapped name lookup (${mappedName}): ${dbMonster.image_url}`);
             return dbMonster.image_url;
           }
-          
-          // If not found, try mapped name as fallback
-          const mappedName = monsterNameMapping[nameWithoutLevel];
-          if (mappedName && mappedName !== nameWithoutLevel) {
-            const { data: mappedMonster } = await supabase
-              .from('monsters')
-              .select('image_url')
-              .eq('monster_name', mappedName)
-              .eq('is_active', true)
-              .maybeSingle();
-              
-            if (mappedMonster?.image_url) {
-              console.log(`✅ Found by DB mapped name lookup (${mappedName}): ${mappedMonster.image_url}`);
-              return mappedMonster.image_url;
-            }
-          }
-        } catch (error) {
-          console.error('Failed to lookup monster by name:', error);
         }
       }
 
@@ -157,61 +143,52 @@ export const createBalancedGenerator = (config: DungeonConfig) =>
       return config.monsterImages.boss();
     };
 
-    // 1) Пользовательские монстры из настроек БД
-    const settings = await getDungeonSettings(config.internalName);
+    // 1) Пользовательские монстры из настроек кеша
+    const settings = getDungeonSettings(config.internalName);
     const customLevel = settings?.monster_spawn_config?.level_monsters?.find(l => l.level === level && Array.isArray(l.monsters) && l.monsters.length > 0);
     
     console.log(`📝 Available monster image mappings:`, Object.keys(monsterImagesById));
 
     if (customLevel) {
-      // Загружаем данные о монстрах по их id
-      const ids = customLevel.monsters.map(m => m.id);
-      const { data: rows, error } = await supabase
-        .from('monsters')
-        .select('monster_id, monster_name, image_url, monster_type')
-        .in('monster_id', ids);
+      // Получаем данные о монстрах из кеша вместо запроса к БД
+      const opponents: Opponent[] = [];
+      let currentId = 1;
+      
+      for (const m of customLevel.monsters) {
+        const row = getMonsterByName(m.id) || { monster_id: m.id, monster_name: m.id, image_url: null, monster_type: 'normal' };
+        const type = row?.monster_type === 'miniboss' ? 'miniboss' : (row?.monster_type === 'boss' ? 'boss50' : 'normal');
+        const stats = calculateMonsterStatsFromDB(config.internalName, level, type as any);
 
-      if (error) {
-        console.error('❌ Failed to load monsters for custom level:', error);
-      } else {
-        const opponents: Opponent[] = [];
-        let currentId = 1;
-        for (const m of customLevel.monsters) {
-          const row = rows?.find(r => r.monster_id === m.id);
-          const type = row?.monster_type === 'miniboss' ? 'miniboss' : (row?.monster_type === 'boss' ? 'boss50' : 'normal');
-          const stats = await calculateMonsterStatsFromDB(config.internalName, level, type as any);
-
-          // Skip unknown IDs without bundled image mapping to avoid generic fallback
-          const norm = (m.id || '').toLowerCase();
-          const idVariants = Array.from(new Set([norm, norm.replace(/-/g, '_'), norm.replace(/_/g, '-')]));
-          const hasBundledImage = idVariants.some(v => !!monsterImagesById[v]);
-          if (!row && !hasBundledImage) {
-            console.warn(`⏭️ Skipping unknown monster without image: ${m.id}`);
-            continue;
-          }
-
-          for (let i = 0; i < Math.max(1, m.count); i++) {
-            const finalImage = await resolveMonsterImage(m.id, row?.monster_name, level, type as any, row?.image_url);
-            console.log(`🖼️ Monster image for ${m.id} (${row?.monster_name}): ${finalImage}`);
-            opponents.push({
-              id: currentId++,
-              name: row?.monster_name || m.id,
-              power: stats.attack,
-              health: stats.hp,
-              maxHealth: stats.hp,
-              armor: stats.armor,
-              isBoss: type !== 'normal',
-              image: finalImage
-            });
-          }
+        // Skip unknown IDs without bundled image mapping to avoid generic fallback
+        const norm = (m.id || '').toLowerCase();
+        const idVariants = Array.from(new Set([norm, norm.replace(/-/g, '_'), norm.replace(/_/g, '-')]));
+        const hasBundledImage = idVariants.some(v => !!monsterImagesById[v]);
+        if (!getMonsterByName(m.id) && !hasBundledImage) {
+          console.warn(`⏭️ Skipping unknown monster without image: ${m.id}`);
+          continue;
         }
-        console.log(`[${config.internalName} Lv${level}] Generated ${opponents.length} opponents (type: custom)`);
-        return opponents;
+
+        for (let i = 0; i < Math.max(1, m.count); i++) {
+          const finalImage = resolveMonsterImage(m.id, row?.monster_name, level, type as any, row?.image_url || undefined);
+          console.log(`🖼️ Monster image for ${m.id} (${row?.monster_name}): ${finalImage}`);
+          opponents.push({
+            id: currentId++,
+            name: row?.monster_name || m.id,
+            power: stats.attack,
+            health: stats.hp,
+            maxHealth: stats.hp,
+            armor: stats.armor,
+            isBoss: type !== 'normal',
+            image: finalImage
+          });
+        }
       }
+      console.log(`[${config.internalName} Lv${level}] Generated ${opponents.length} opponents (type: custom)`);
+      return opponents;
     }
 
     // 2) Базовая логика волн
-    const waveConfig = await getWaveConfig(config.internalName, level);
+    const waveConfig = getWaveConfig(config.internalName, level);
     
     // Пытаемся получить данные из CSV (для точной настройки)
     const monsterData = await getMonsterData(config.internalName, level);
@@ -223,8 +200,8 @@ export const createBalancedGenerator = (config: DungeonConfig) =>
       // Босс (один)
       const bossType = waveConfig.monsterType === 'boss50' ? 'boss50' : 'boss100';
       
-      // Используем формулу S_mob для расчета статов из БД
-      const bossStats = await calculateMonsterStatsFromDB(config.internalName, level, bossType);
+      // Используем формулу S_mob для расчета статов из кеша
+      const bossStats = calculateMonsterStatsFromDB(config.internalName, level, bossType);
       
       // Если есть CSV данные, используем их как приоритет (для точной балансировки)
       const finalStats = monsterData ? {
@@ -234,7 +211,7 @@ export const createBalancedGenerator = (config: DungeonConfig) =>
       } : bossStats;
       
       const bossName = config.monsterNames[bossType](level);
-      const bossImage = await resolveMonsterImage(undefined, bossName, level, bossType, undefined);
+      const bossImage = resolveMonsterImage(undefined, bossName, level, bossType, undefined);
       
       opponents.push({
         id: currentId++,
@@ -248,7 +225,7 @@ export const createBalancedGenerator = (config: DungeonConfig) =>
       });
     } else if (waveConfig.monsterType === 'miniboss_wave') {
       // 9 обычных монстров
-      const normalStats = await calculateMonsterStatsFromDB(config.internalName, level, 'normal');
+      const normalStats = calculateMonsterStatsFromDB(config.internalName, level, 'normal');
       
       for (let i = 0; i < 9; i++) {
         const finalStats = monsterData ? {
@@ -258,7 +235,7 @@ export const createBalancedGenerator = (config: DungeonConfig) =>
         } : normalStats;
         
         const normalName = config.monsterNames.monster(level);
-        const normalImage = await resolveMonsterImage(undefined, normalName, level, 'normal', undefined);
+        const normalImage = resolveMonsterImage(undefined, normalName, level, 'normal', undefined);
         
         opponents.push({
           id: currentId++,
@@ -273,7 +250,7 @@ export const createBalancedGenerator = (config: DungeonConfig) =>
       }
       
       // + 1 минибосс
-      const minibossStats = await calculateMonsterStatsFromDB(config.internalName, level, 'miniboss');
+      const minibossStats = calculateMonsterStatsFromDB(config.internalName, level, 'miniboss');
       const minibossData = await getMonsterData(config.internalName, level);
       
       // Множители для минибосса уже применены в calculateMonsterStatsFromDB
@@ -284,7 +261,7 @@ export const createBalancedGenerator = (config: DungeonConfig) =>
       } : minibossStats;
       
       const minibossName = config.monsterNames.miniboss(level);
-      const minibossImage = await resolveMonsterImage(undefined, minibossName, level, 'miniboss', undefined);
+      const minibossImage = resolveMonsterImage(undefined, minibossName, level, 'miniboss', undefined);
       
       opponents.push({
         id: currentId++,
@@ -298,7 +275,7 @@ export const createBalancedGenerator = (config: DungeonConfig) =>
       });
     } else {
       // Обычные монстры (от 1 до 9)
-      const normalStats = await calculateMonsterStatsFromDB(config.internalName, level, 'normal');
+      const normalStats = calculateMonsterStatsFromDB(config.internalName, level, 'normal');
       
       for (let i = 0; i < waveConfig.count; i++) {
         const finalStats = monsterData ? {
@@ -308,7 +285,7 @@ export const createBalancedGenerator = (config: DungeonConfig) =>
         } : normalStats;
         
         const normalName = config.monsterNames.monster(level);
-        const normalImage = await resolveMonsterImage(undefined, normalName, level, 'normal', undefined);
+        const normalImage = resolveMonsterImage(undefined, normalName, level, 'normal', undefined);
         
         opponents.push({
           id: currentId++,
