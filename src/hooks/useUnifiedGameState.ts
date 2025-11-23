@@ -14,8 +14,8 @@ import { gameCache } from '@/utils/cacheStrategy';
 import { updateGameDataByWalletThrottled } from '@/utils/updateGameDataThrottle';
 
 const GAME_DATA_KEY = 'gameData';
-const STALE_TIME = 5 * 60 * 1000; // 5 минут
-const CACHE_TIME = 10 * 60 * 1000; // 10 минут
+const STALE_TIME = 10 * 60 * 1000; // 10 минут - увеличено для снижения повторных запросов
+const CACHE_TIME = 30 * 60 * 1000; // 30 минут
 
 const ensuredWallets = new Set<string>();
 const ensureOnce = async (wallet: string) => {
@@ -108,6 +108,9 @@ export const useUnifiedGameState = (): UnifiedGameState => {
     enabled: true,
     staleTime: STALE_TIME,
     gcTime: CACHE_TIME,
+    refetchOnMount: false,  // Не перезапрашивать при каждом mount компонента
+    refetchOnWindowFocus: false,  // Не перезапрашивать при фокусе окна
+    refetchOnReconnect: true,  // Перезапрашивать только при восстановлении соединения
     retry: 3,
     retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000)
   });

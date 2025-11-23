@@ -181,8 +181,8 @@ export const GameDataProvider = ({ children }: { children: ReactNode }) => {
       return DEFAULT_GAME_DATA;
     },
     enabled: !!accountId,
-    staleTime: 2 * 60 * 1000, // 2 минуты - агрессивное кеширование для статичных данных
-    gcTime: 5 * 60 * 1000, // 5 минут
+    staleTime: 10 * 60 * 1000, // 10 минут - синхронизировано с useUnifiedGameState
+    gcTime: 30 * 60 * 1000, // 30 минут - синхронизировано с useUnifiedGameState
     refetchOnWindowFocus: false,
     refetchOnReconnect: false,
     refetchOnMount: false, // Не перезагружать при каждом монтировании
