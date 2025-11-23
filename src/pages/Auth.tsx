@@ -118,7 +118,11 @@ export const Auth = () => {
 
       // Process referral if present
       if (referrerId && !referralProcessedRef.current) {
-        console.log('🔗 Processing referral before redirect...');
+        console.log('🔗 Processing referral before redirect...', {
+          accountId,
+          referrerId,
+          alreadyProcessed: referralProcessedRef.current
+        });
         handleReferral().then(() => {
           console.log('✅ Referral processed, redirecting to menu');
           navigate("/menu", { replace: true });
