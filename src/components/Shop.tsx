@@ -81,19 +81,23 @@ export const Shop = ({ onClose }: ShopProps) => {
       // Purchase item via edge function
       await purchaseItem(item.id, accountId, 1);
       
-      // Wait for DB update
-      await new Promise(resolve => setTimeout(resolve, 500));
+      console.log('✅ [Shop] Purchase complete, invalidating caches...');
 
       // Invalidate all shop-related caches
-      queryClient.invalidateQueries({ queryKey: ['shopDataComplete', accountId] });
-      queryClient.invalidateQueries({ queryKey: ['itemInstances', accountId] });
-      queryClient.invalidateQueries({ queryKey: ['cardInstances', accountId] });
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ['shopDataComplete', accountId] }),
+        queryClient.invalidateQueries({ queryKey: ['itemInstances', accountId] }),
+        queryClient.invalidateQueries({ queryKey: ['cardInstances', accountId] })
+      ]);
+
+      // Force immediate refetch of shop data
+      await refetchShopData();
 
       // Dispatch events for immediate UI updates
       window.dispatchEvent(new CustomEvent('itemInstancesUpdate'));
       window.dispatchEvent(new CustomEvent('cardInstancesUpdate'));
       
-      console.log('✅ [Shop] Purchase complete, cache invalidated');
+      console.log('✅ [Shop] Cache invalidated and refetched');
 
       setShowEffect(true);
       toast({

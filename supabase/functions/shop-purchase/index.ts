@@ -256,16 +256,17 @@ if (itemTemplate.type === 'worker') {
         });
       }
 
-      const { error: instancesError } = await supabase
+      const { data: insertedItems, error: instancesError } = await supabase
         .from('item_instances')
-        .insert(itemRows);
+        .insert(itemRows)
+        .select('id');
 
       if (instancesError) {
         console.error(`❌ Error adding items to item_instances:`, instancesError);
         throw instancesError;
       }
 
-      console.log(`✅ Added ${quantity} items to item_instances`);
+      console.log(`✅ Added ${quantity} items to item_instances:`, insertedItems);
 
       // Legacy JSON inventory update removed. Items are persisted in item_instances only.
       // This avoids referencing deprecated game_data.inventory column.
@@ -279,7 +280,8 @@ if (itemTemplate.type === 'worker') {
       success: true,
       remaining_quantity: inventoryItem.available_quantity - quantity,
       item_type: itemTemplate.type,
-      quantity_purchased: quantity
+      quantity_purchased: quantity,
+      item_name: itemTemplate.name
     }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
