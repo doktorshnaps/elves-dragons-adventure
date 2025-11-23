@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 import { motion } from "framer-motion";
 import { useToast } from "@/hooks/use-toast";
 import { useWalletContext } from "@/contexts/WalletConnectContext";
@@ -29,6 +29,8 @@ export const Auth = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const [referrerId, setReferrerId] = useState<string | null>(null);
+  const referralProcessedRef = useRef(false);
+
   // Initialize Telegram Web App
   useEffect(() => {
     if (isTelegram && tgWebApp) {
@@ -46,65 +48,73 @@ export const Auth = () => {
       console.log('🔗 Referral link detected:', refParam);
     }
   }, [searchParams]);
-  const handleReferral = async () => {
-    if (!accountId || !referrerId) return;
+
+  // Memoized referral handler to prevent double calls
+  const handleReferral = useCallback(async () => {
+    if (!accountId || !referrerId || referralProcessedRef.current) {
+      console.log('⏭️ Skipping referral processing:', {
+        accountId: !!accountId,
+        referrerId: !!referrerId,
+        alreadyProcessed: referralProcessedRef.current
+      });
+      return;
+    }
+
+    // Mark as processed immediately to prevent race conditions
+    referralProcessedRef.current = true;
+
     try {
-      console.log('🔗 Adding referral:', {
+      console.log('🔗 Processing referral:', {
         referrerId,
         referred: accountId
       });
-      const {
-        data,
-        error
-      } = await supabase.rpc('add_referral', {
+
+      const { data, error } = await supabase.rpc('add_referral', {
         p_referrer_wallet_address: referrerId,
         p_referred_wallet_address: accountId
       });
+
       if (error) {
-        console.log('⚠️ Referral add failed:', error);
+        console.error('❌ Referral add failed:', error);
         toast({
           title: t(language, 'auth.referralError'),
           description: error.message,
           variant: "destructive"
         });
+        // Reset flag on error so user can retry
+        referralProcessedRef.current = false;
       } else {
-        console.log('✅ Referral added successfully');
+        console.log('✅ Referral added successfully:', data);
         toast({
           title: t(language, 'auth.referralAdded'),
           description: t(language, 'auth.referralAddedDesc')
         });
       }
     } catch (error) {
-      console.log('⚠️ Referral add error:', error);
+      console.error('❌ Referral processing error:', error);
+      // Reset flag on error so user can retry
+      referralProcessedRef.current = false;
     }
-  };
+  }, [accountId, referrerId, toast, language]);
 
-  // Handle referral when wallet connects or account ID becomes available
-  useEffect(() => {
-    if (isConnected && accountId && referrerId) {
-      handleReferral();
-    }
-  }, [isConnected, accountId, referrerId]);
-
-  // Redirect if already connected
+  // Single effect for handling connection and referral
   useEffect(() => {
     if (isConnected && accountId) {
-      // If we have a referral to process, do it first
-      if (referrerId) {
+      console.log('✅ Wallet connected:', accountId);
+
+      // Process referral if present
+      if (referrerId && !referralProcessedRef.current) {
+        console.log('🔗 Processing referral before redirect...');
         handleReferral().then(() => {
           console.log('✅ Referral processed, redirecting to menu');
-          navigate("/menu", {
-            replace: true
-          });
+          navigate("/menu", { replace: true });
         });
       } else {
-        console.log('✅ Already connected, redirecting to menu');
-        navigate("/menu", {
-          replace: true
-        });
+        console.log('✅ No referral to process, redirecting to menu');
+        navigate("/menu", { replace: true });
       }
     }
-  }, [isConnected, accountId, referrerId]);
+  }, [isConnected, accountId, referrerId, handleReferral, navigate]);
   const handleConnectWallet = async () => {
     try {
       await connectWallet();
