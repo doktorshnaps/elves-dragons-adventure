@@ -17,24 +17,37 @@ export const AdminProvider = ({ children }: { children: ReactNode }) => {
   const { data: isAdmin = false, isLoading: loading } = useQuery({
     queryKey: ['adminCheck', accountId],
     queryFn: async () => {
-      if (!isConnected || !accountId) return false;
-
-      const { data, error } = await supabase.rpc('is_admin_or_super_wallet', {
-        p_wallet_address: accountId,
-      });
-
-      if (error) {
-        console.error('Error checking admin status:', error);
+      console.log('🔍 [AdminContext] Checking admin status for:', accountId);
+      if (!isConnected || !accountId) {
+        console.log('⚠️ [AdminContext] No accountId, returning false');
         return false;
       }
-      
-      return Boolean(data);
+
+      try {
+        const { data, error } = await supabase.rpc('is_admin_or_super_wallet', {
+          p_wallet_address: accountId,
+        });
+
+        if (error) {
+          console.error('❌ [AdminContext] Error checking admin status:', error);
+          return false;
+        }
+        
+        const result = Boolean(data);
+        console.log('✅ [AdminContext] Admin check result:', result);
+        return result;
+      } catch (err) {
+        console.error('❌ [AdminContext] Exception checking admin status:', err);
+        return false;
+      }
     },
     enabled: isConnected && !!accountId,
     staleTime: 2 * 60 * 60 * 1000,
     gcTime: 4 * 60 * 60 * 1000,
     refetchOnWindowFocus: false,
     refetchOnReconnect: false,
+    retry: 2,
+    retryDelay: 1000,
   });
 
   return (

@@ -39,17 +39,31 @@ export function WalletConnectProvider({ children }: { children: React.ReactNode 
     let cancelled = false;
 
     async function bootstrap() {
+      console.log('🚀 [WalletContext] Starting wallet bootstrap...');
       console.time('⏱️ Wallet Bootstrap');
       performance.mark('wallet-bootstrap-start');
       setIsLoading(true);
       setHasError(false);
 
       try {
-        const sel = await initSelector({
-          miniApp: !!tgWebApp,
-          telegramInitData: tgWebApp?.initData || "",
+        console.log('📡 [WalletContext] Initializing wallet selector...');
+        
+        // Add 10 second timeout for wallet selector initialization
+        const timeoutPromise = new Promise((_, reject) => {
+          setTimeout(() => reject(new Error('Wallet selector initialization timeout')), 10000);
         });
+        
+        const sel = await Promise.race([
+          initSelector({
+            miniApp: !!tgWebApp,
+            telegramInitData: tgWebApp?.initData || "",
+          }),
+          timeoutPromise
+        ]) as any;
+        
         if (cancelled) return;
+        
+        console.log('✅ [WalletContext] Wallet selector initialized');
 
         setSelector(sel);
         
@@ -144,10 +158,12 @@ export function WalletConnectProvider({ children }: { children: React.ReactNode 
           console.log(`  ${measure.name}: ${Math.round(measure.duration)}ms`);
         });
       } catch (err) {
-        console.error("[wallet] init error:", err);
+        console.error("❌ [WalletContext] Initialization error:", err);
         if (!cancelled) {
           setHasError(true);
           setIsLoading(false);
+          // Still allow app to continue without wallet
+          console.log('⚠️ [WalletContext] Continuing without wallet initialization');
         }
       }
     }
