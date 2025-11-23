@@ -1,20 +1,15 @@
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { useGameData } from "@/hooks/useGameData";
 import { useToast } from "@/hooks/use-toast";
 import { useShopRealtime } from "@/hooks/useShopRealtime";
+import { useShopDataComplete } from "@/hooks/useShopDataComplete";
 import { useWalletContext } from "@/contexts/WalletConnectContext";
 import { useLanguage } from "@/hooks/useLanguage";
 import { t } from "@/utils/translations";
 import { translateShopItemName, translateShopItemDescription } from "@/utils/shopTranslations";
-import { v4 as uuidv4 } from 'uuid';
-import { generateCard } from "@/utils/cardUtils";
-import { Item } from "@/types/inventory";
 import { ArrowLeft, Clock, Package } from "lucide-react";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { PurchaseEffect } from "./shop/PurchaseEffect";
-import { supabase } from "@/integrations/supabase/client";
-import { useEnrichedShopItems } from "@/hooks/useEnrichedShopItems";
 import { useQueryClient } from "@tanstack/react-query";
 
 interface ShopProps {
@@ -22,57 +17,35 @@ interface ShopProps {
 }
 
 export const Shop = ({ onClose }: ShopProps) => {
-  const { gameData, loading: gameDataLoading, loadGameData, updateGameData } = useGameData();
   const { accountId } = useWalletContext();
   const { language } = useLanguage();
   const queryClient = useQueryClient();
+  
+  // Phase 4: Single RPC call for all shop data
+  const { shopData, isLoading: shopDataLoading, refetch: refetchShopData } = useShopDataComplete(accountId);
+  
+  // Real-time updates for shop inventory
   const { 
-    inventory, 
-    loading: inventoryLoading, 
     timeUntilReset, 
     purchaseItem, 
     getItemQuantity, 
     isItemAvailable 
   } = useShopRealtime();
-  const { items: shopItems, loading: shopItemsLoading } = useEnrichedShopItems();
+  
   const { toast } = useToast();
   const [showEffect, setShowEffect] = useState(false);
   const [purchasing, setPurchasing] = useState(false);
-  const [localBalance, setLocalBalance] = useState<number | null>(null);
-  const [cardPackPrice, setCardPackPrice] = useState<number | null>(null);
 
-  // Load game data and card pack price when shop opens
-  useEffect(() => {
-    const loadShopData = async () => {
-      // Load game data
-      if (accountId && loadGameData) {
-        loadGameData();
-      }
-      
-      // Load card pack price
-      try {
-        const { data, error } = await supabase
-          .from('item_templates')
-          .select('value')
-          .eq('item_id', 'card_pack')
-          .single();
-        if (error) throw error;
-        setCardPackPrice((data as any)?.value ?? null);
-      } catch (err) {
-        console.error('Error loading card pack price:', err);
-      }
-    };
-    
-    loadShopData();
-  }, [accountId]); // Only depend on accountId, not loadGameData
-  // Use local balance if available, otherwise use gameData balance
-  const displayBalance = localBalance !== null ? localBalance : gameData.balance;
+  // Extract data from single shop data response
+  const displayBalance = shopData?.user_balance ?? 0;
+  const shopInventory = shopData?.shop_inventory ?? [];
+  const cardPackPrice = shopData?.item_templates?.find(t => t.item_id === 'card_pack')?.value ?? null;
 
-  if (gameDataLoading || inventoryLoading || shopItemsLoading) {
+  if (shopDataLoading) {
     return <div className="flex justify-center items-center h-64">{t(language, 'shop.loading')}</div>;
   }
 
-  const handleBuyItem = async (item: typeof shopItems[0]) => {
+  const handleBuyItem = async (item: { id: number; name: string; price: number; type?: string; image?: string }) => {
     if (!accountId) {
       toast({
         title: t(language, 'shop.error'),
@@ -91,7 +64,6 @@ export const Shop = ({ onClose }: ShopProps) => {
       return;
     }
 
-    // Check if user has enough balance before purchase
     if (displayBalance < item.price) {
       toast({
         title: t(language, 'shop.insufficientFunds'),
@@ -106,35 +78,22 @@ export const Shop = ({ onClose }: ShopProps) => {
     try {
       setPurchasing(true);
       
-      // Instantly update local balance for immediate UI feedback
-      const newBalance = displayBalance - item.price;
-      setLocalBalance(newBalance);
-      
       // Purchase item via edge function
       await purchaseItem(item.id, accountId, 1);
       
-      // Update balance in background without reloading full data
-      if (updateGameData) {
-        updateGameData({ balance: newBalance }).catch(err => {
-          console.error('Background balance update failed:', err);
-        });
-      }
-
-      // Даем время для записи данных в БД перед обновлением кеша
+      // Wait for DB update
       await new Promise(resolve => setTimeout(resolve, 500));
 
-      // Invalidate item instances cache to refresh inventory
+      // Invalidate all shop-related caches
+      queryClient.invalidateQueries({ queryKey: ['shopDataComplete', accountId] });
       queryClient.invalidateQueries({ queryKey: ['itemInstances', accountId] });
       queryClient.invalidateQueries({ queryKey: ['cardInstances', accountId] });
 
-      // Отправляем события для немедленного обновления UI
-      const itemEvent = new CustomEvent('itemInstancesUpdate');
-      window.dispatchEvent(itemEvent);
+      // Dispatch events for immediate UI updates
+      window.dispatchEvent(new CustomEvent('itemInstancesUpdate'));
+      window.dispatchEvent(new CustomEvent('cardInstancesUpdate'));
       
-      const cardEvent = new CustomEvent('cardInstancesUpdate');
-      window.dispatchEvent(cardEvent);
-      
-      console.log('✅ [Shop] Purchase complete, cache invalidated, events dispatched');
+      console.log('✅ [Shop] Purchase complete, cache invalidated');
 
       setShowEffect(true);
       toast({
@@ -143,8 +102,6 @@ export const Shop = ({ onClose }: ShopProps) => {
       });
     } catch (error) {
       console.error('Purchase error:', error);
-      // Revert local balance on error
-      setLocalBalance(null);
       toast({
         title: t(language, 'shop.purchaseError'),
         description: t(language, 'shop.purchaseErrorDescription'),
@@ -184,8 +141,19 @@ return (
       
       <div className="bg-black/50 border-2 border-white rounded-3xl backdrop-blur-sm p-4 h-[calc(100vh-140px)] overflow-y-auto" style={{ boxShadow: '0 15px 10px rgba(0, 0, 0, 0.6)' }}>
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-          {shopItems.map((item) => {
-            const displayItem = item.type === 'cardPack' && cardPackPrice !== null ? { ...item, price: cardPackPrice } : item;
+          {shopInventory.map((inventoryItem) => {
+            const template = inventoryItem.item_template;
+            const displayItem = {
+              id: inventoryItem.item_id,
+              name: template.name,
+              price: template.type === 'cardPack' && cardPackPrice !== null ? cardPackPrice : template.value,
+              type: template.type,
+              image: template.image_url,
+              description: template.description,
+              stats: template.stats,
+              requiredLevel: template.level_requirement
+            };
+            
             const quantity = getItemQuantity(displayItem.id);
             const available = isItemAvailable(displayItem.id);
             const canAfford = displayBalance >= displayItem.price;
