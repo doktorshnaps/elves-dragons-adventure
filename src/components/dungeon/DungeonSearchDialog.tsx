@@ -212,7 +212,12 @@ export const DungeonSearchDialog = ({
                 >
                   <span className="flex items-center gap-2">
                     {getDungeonName(dungeon as DungeonType, language)}
-                    {isActiveDungeon && <span>⚔️</span>}
+                    {isActiveDungeon && (
+                      <span className="flex items-center gap-1 text-xs font-bold bg-green-400/20 px-2 py-0.5 rounded-full">
+                        <span>⚔️</span>
+                        <span>{t(language, 'dungeonSearch.active')}</span>
+                      </span>
+                    )}
                   </span>
                   <span className="text-xs opacity-70">
                     Ур. {dungeonLevelRanges[dungeon as DungeonType].min}-{dungeonLevelRanges[dungeon as DungeonType].max}
