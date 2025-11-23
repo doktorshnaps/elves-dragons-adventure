@@ -1,5 +1,5 @@
-import { useEffect, useState } from 'react';
-import { supabase } from '@/integrations/supabase/client';
+import { useMemo } from 'react';
+import { useStaticGameDataContext } from '@/contexts/StaticGameDataContext';
 
 export interface CraftingRecipe {
   id: string;
@@ -17,59 +17,25 @@ export interface CraftingRecipe {
 }
 
 export const useCraftingRecipes = (autoLoad = true) => {
-  const [recipes, setRecipes] = useState<CraftingRecipe[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { data: staticData, isLoading } = useStaticGameDataContext();
 
-  useEffect(() => {
-    if (!autoLoad) {
-      setLoading(false);
-      return;
+  const recipes = useMemo(() => {
+    if (!autoLoad || !staticData?.crafting_recipes) {
+      return [];
     }
-    
-    loadRecipes();
+    return staticData.crafting_recipes as unknown as CraftingRecipe[];
+  }, [staticData?.crafting_recipes, autoLoad]);
 
-    // Подписка на изменения
-    const channel = supabase
-      .channel('crafting_recipes_changes')
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'crafting_recipes'
-        },
-        () => {
-          loadRecipes();
-        }
-      )
-      .subscribe();
+  const loading = autoLoad ? isLoading : false;
 
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, [autoLoad]);
-
-  const loadRecipes = async () => {
-    try {
-      const { data, error } = await supabase
-        .from('crafting_recipes')
-        .select('*')
-        .eq('is_active', true)
-        .order('category', { ascending: true })
-        .order('recipe_name', { ascending: true });
-
-      if (error) throw error;
-      setRecipes((data || []) as unknown as CraftingRecipe[]);
-    } catch (error) {
-      console.error('Error loading crafting recipes:', error);
-    } finally {
-      setLoading(false);
-    }
+  const reload = async () => {
+    // Реализация reload больше не нужна, так как данные берутся из кеша
+    console.log('Crafting recipes reload is no longer needed with static data cache');
   };
 
   return {
     recipes,
     loading,
-    reload: loadRecipes
+    reload
   };
 };

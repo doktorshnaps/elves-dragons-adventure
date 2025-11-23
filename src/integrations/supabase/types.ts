@@ -2794,6 +2794,7 @@ export type Database = {
           wallet_address: string
         }[]
       }
+      get_static_game_data: { Args: never; Returns: Json }
       get_user_quest_progress: {
         Args: { p_wallet_address: string }
         Returns: {
