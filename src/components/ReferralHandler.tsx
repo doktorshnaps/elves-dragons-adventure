@@ -11,11 +11,22 @@ export const ReferralHandler = () => {
 
   useEffect(() => {
     const refParam = searchParams.get('ref');
+    const existingRef = localStorage.getItem('pendingReferrer');
+    
+    console.log('🔗 [ReferralHandler] Mounted:', {
+      refParam,
+      existingRef,
+      allParams: Object.fromEntries(searchParams.entries()),
+      href: window.location.href
+    });
+    
     if (refParam) {
       localStorage.setItem('pendingReferrer', refParam);
-      console.log('🔗 Global: Referral link detected and saved:', refParam);
+      console.log('✅ [ReferralHandler] Saved ref to localStorage:', refParam);
+    } else {
+      console.log('⚠️ [ReferralHandler] No ref parameter found');
     }
   }, [searchParams]);
 
-  return null; // This component doesn't render anything
+  return null;
 };
