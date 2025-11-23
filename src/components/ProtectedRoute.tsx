@@ -21,19 +21,26 @@ export const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
   const lsConnected = (typeof window !== 'undefined' && localStorage.getItem('walletConnected') === 'true') || false;
 
   useEffect(() => {
-    if (import.meta.env.DEV) {
-      console.log('🛡️ ProtectedRoute check:', { 
-        isConnected, 
-        isConnecting, 
-        lsConnected, 
-        isWhitelisted, 
-        whitelistLoading, 
-        path: location.pathname 
-      });
-    }
-  }, [isConnected, isConnecting, lsConnected, isWhitelisted, whitelistLoading, location.pathname]);
+    console.log('🛡️ [ProtectedRoute] Status check:', { 
+      isConnected, 
+      isConnecting, 
+      lsConnected, 
+      isAdmin,
+      adminLoading,
+      isWhitelisted, 
+      whitelistLoading,
+      maintenanceLoading,
+      path: location.pathname 
+    });
+  }, [isConnected, isConnecting, lsConnected, isAdmin, adminLoading, isWhitelisted, whitelistLoading, maintenanceLoading, location.pathname]);
 
   if (isConnecting || whitelistLoading || maintenanceLoading || adminLoading) {
+    console.log('⏳ [ProtectedRoute] Waiting for:', {
+      isConnecting,
+      whitelistLoading,
+      maintenanceLoading,
+      adminLoading
+    });
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-purple-900 to-black">
         <div className="text-white text-xl">Загрузка...</div>
