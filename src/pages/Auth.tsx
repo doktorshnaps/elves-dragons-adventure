@@ -1,9 +1,10 @@
-import { useEffect } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 import { motion } from "framer-motion";
 import { useToast } from "@/hooks/use-toast";
 import { useWalletContext } from "@/contexts/WalletConnectContext";
-import { Navigate, useNavigate } from "react-router-dom";
+import { Navigate, useNavigate, useSearchParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
+import { supabase } from "@/integrations/supabase/client";
 import useTelegram from "@/hooks/useTelegram";
 import { SplashCursor } from "@/components/effects/SplashCursor";
 import { Wallet } from "lucide-react";
@@ -11,21 +12,19 @@ import { useLanguage } from "@/hooks/useLanguage";
 import { t } from "@/utils/translations";
 export const Auth = () => {
   const { language } = useLanguage();
-  const {
-    toast
-  } = useToast();
+  const { toast } = useToast();
   const {
     accountId,
     isLoading: isConnecting,
     connect
   } = useWalletContext();
-  const {
-    isTelegram,
-    tgWebApp
-  } = useTelegram();
+  const { isTelegram, tgWebApp } = useTelegram();
   const isConnected = !!accountId;
   const connectWallet = connect;
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const [referrerId, setReferrerId] = useState<string | null>(null);
+  const referralProcessedRef = useRef(false);
 
   // Initialize Telegram Web App
   useEffect(() => {
@@ -36,13 +35,94 @@ export const Auth = () => {
     }
   }, [isTelegram, tgWebApp]);
 
-  // Redirect to menu when wallet connects (referral handled by useAccountSync)
+  // ALWAYS check localStorage for pending referrer on mount
+  useEffect(() => {
+    const savedReferrer = localStorage.getItem('pendingReferrer');
+    const urlReferrer = searchParams.get('ref');
+    
+    console.log('🔍 Auth mounted - checking referrers:', {
+      savedReferrer,
+      urlReferrer,
+      alreadyProcessed: referralProcessedRef.current
+    });
+
+    if (urlReferrer) {
+      localStorage.setItem('pendingReferrer', urlReferrer);
+      setReferrerId(urlReferrer);
+      console.log('🔗 Saved referrer from URL:', urlReferrer);
+    } else if (savedReferrer && !referralProcessedRef.current) {
+      setReferrerId(savedReferrer);
+      console.log('🔗 Restored referrer from localStorage:', savedReferrer);
+    }
+  }, [searchParams]);
+
+  // Process referral when wallet connects
+  const handleReferral = useCallback(async (walletAddress: string, referrerAddress: string) => {
+    if (referralProcessedRef.current) {
+      console.log('⏭️ Referral already processed');
+      return;
+    }
+
+    referralProcessedRef.current = true;
+    console.log('🔗 Processing referral:', {
+      referrer: referrerAddress,
+      referred: walletAddress
+    });
+
+    try {
+      const { data, error } = await supabase.rpc('add_referral', {
+        p_referrer_wallet_address: referrerAddress,
+        p_referred_wallet_address: walletAddress
+      });
+
+      if (error) {
+        console.error('❌ Referral error:', error);
+        toast({
+          title: t(language, 'auth.referralError'),
+          description: error.message,
+          variant: "destructive"
+        });
+        referralProcessedRef.current = false;
+      } else {
+        console.log('✅ Referral added successfully:', data);
+        localStorage.removeItem('pendingReferrer');
+        toast({
+          title: t(language, 'auth.referralAdded'),
+          description: t(language, 'auth.referralAddedDesc')
+        });
+      }
+    } catch (error) {
+      console.error('❌ Referral processing error:', error);
+      referralProcessedRef.current = false;
+    }
+  }, [toast, language]);
+
+  // Handle wallet connection
   useEffect(() => {
     if (isConnected && accountId) {
-      console.log('✅ Wallet connected, redirecting to menu');
-      navigate("/menu", { replace: true });
+      console.log('✅ Wallet connected:', accountId);
+      
+      // Check for pending referrer one more time
+      const finalReferrer = referrerId || localStorage.getItem('pendingReferrer');
+      
+      console.log('🔍 Connection check:', {
+        accountId,
+        referrerId,
+        finalReferrer,
+        alreadyProcessed: referralProcessedRef.current
+      });
+
+      if (finalReferrer && !referralProcessedRef.current) {
+        console.log('🔗 Processing referral before redirect...');
+        handleReferral(accountId, finalReferrer).then(() => {
+          navigate("/menu", { replace: true });
+        });
+      } else {
+        console.log('✅ No referral to process, redirecting...');
+        navigate("/menu", { replace: true });
+      }
     }
-  }, [isConnected, accountId, navigate]);
+  }, [isConnected, accountId, referrerId, handleReferral, navigate]);
   const handleConnectWallet = async () => {
     try {
       await connectWallet();
