@@ -1,6 +1,5 @@
-import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
 import { useMemo } from "react";
+import { useStaticGameDataContext } from '@/contexts/StaticGameDataContext';
 
 export interface ItemTemplate {
   id: number;
@@ -15,33 +14,26 @@ export interface ItemTemplate {
 }
 
 export const useItemTemplates = () => {
-  const { data: templates, isLoading: loading } = useQuery({
-    queryKey: ['itemTemplates'],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('item_templates')
-        .select('id, item_id, name, type, rarity, description, value, image_url, sell_price');
+  const { data: staticData, isLoading: loading } = useStaticGameDataContext();
 
-      if (error) throw error;
+  const templates = useMemo(() => {
+    if (!staticData?.item_templates) {
+      return { itemIdMap: new Map<string, ItemTemplate>(), numericIdMap: new Map<string, ItemTemplate>(), nameMap: new Map<string, ItemTemplate>() };
+    }
 
-      const itemIdMap = new Map<string, ItemTemplate>();
-      const numericIdMap = new Map<string, ItemTemplate>();
-      const nameMap = new Map<string, ItemTemplate>();
+    const itemIdMap = new Map<string, ItemTemplate>();
+    const numericIdMap = new Map<string, ItemTemplate>();
+    const nameMap = new Map<string, ItemTemplate>();
 
-      data?.forEach((template) => {
-        const t = template as unknown as ItemTemplate;
-        if (t.item_id) itemIdMap.set(String(t.item_id), t);
-        if (typeof t.id !== 'undefined') numericIdMap.set(String(t.id), t);
-        if (t.name) nameMap.set(t.name, t);
-      });
+    staticData.item_templates.forEach((template: any) => {
+      const t = template as ItemTemplate;
+      if (t.item_id) itemIdMap.set(String(t.item_id), t);
+      if (typeof t.id !== 'undefined') numericIdMap.set(String(t.id), t);
+      if (t.name) nameMap.set(t.name, t);
+    });
 
-      return { itemIdMap, numericIdMap, nameMap };
-    },
-    staleTime: Infinity, // Шаблоны предметов редко меняются, кешируем навсегда до перезагрузки страницы
-    gcTime: 1000 * 60 * 60, // 1 час в памяти
-    refetchOnMount: false, // Не перезапрашивать при монтировании
-    refetchOnWindowFocus: false, // Не перезапрашивать при фокусе окна
-  });
+    return { itemIdMap, numericIdMap, nameMap };
+  }, [staticData?.item_templates]);
 
   const byItemId = useMemo(() => templates?.itemIdMap || new Map<string, ItemTemplate>(), [templates]);
   const byNumericId = useMemo(() => templates?.numericIdMap || new Map<string, ItemTemplate>(), [templates]);

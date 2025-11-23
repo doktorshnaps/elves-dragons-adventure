@@ -1,5 +1,5 @@
-import { useEffect, useState } from 'react';
-import { supabase } from '@/integrations/supabase/client';
+import { useMemo } from 'react';
+import { useStaticGameDataContext } from '@/contexts/StaticGameDataContext';
 
 export interface CardUpgradeRequirement {
   id: string;
@@ -24,49 +24,20 @@ export interface CardUpgradeRequirement {
 }
 
 export const useCardUpgradeRequirements = () => {
-  const [requirements, setRequirements] = useState<CardUpgradeRequirement[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { data: staticData, isLoading } = useStaticGameDataContext();
 
-  useEffect(() => {
-    loadRequirements();
-
-    // Подписка на изменения
-    const channel = supabase
-      .channel('card_upgrade_requirements_changes')
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'card_upgrade_requirements'
-        },
-        () => {
-          loadRequirements();
-        }
-      )
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, []);
-
-  const loadRequirements = async () => {
-    try {
-      const { data, error } = await supabase
-        .from('card_upgrade_requirements')
-        .select('*')
-        .eq('is_active', true)
-        .order('card_type', { ascending: true })
-        .order('from_rarity', { ascending: true });
-
-      if (error) throw error;
-      setRequirements((data || []) as unknown as CardUpgradeRequirement[]);
-    } catch (error) {
-      console.error('Error loading card upgrade requirements:', error);
-    } finally {
-      setLoading(false);
+  const requirements = useMemo(() => {
+    if (!staticData?.card_upgrade_requirements) {
+      return [];
     }
+    return staticData.card_upgrade_requirements as unknown as CardUpgradeRequirement[];
+  }, [staticData?.card_upgrade_requirements]);
+
+  const loading = isLoading;
+
+  const reload = async () => {
+    // Реализация reload больше не нужна, так как данные берутся из кеша
+    console.log('Card upgrade requirements reload is no longer needed with static data cache');
   };
 
   const getRequirement = (
@@ -89,6 +60,6 @@ export const useCardUpgradeRequirements = () => {
     requirements,
     loading,
     getRequirement,
-    reload: loadRequirements
+    reload
   };
 };

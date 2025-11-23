@@ -10,6 +10,7 @@ import { AdminProvider } from './contexts/AdminContext';
 import { WhitelistProvider } from './contexts/WhitelistContext';
 import { BanStatusProvider } from './contexts/BanStatusContext';
 import { GameDataProvider } from './contexts/GameDataContext';
+import { StaticGameDataProvider } from './contexts/StaticGameDataContext';
 import { useRoutePreloader } from './hooks/useRoutePreloader';
 import { useNFTStatsRecalculation } from './hooks/useNFTStatsRecalculation';
 import { useSecureStorage } from './hooks/useSecureStorage';
@@ -107,10 +108,11 @@ function App() {
   return (
     <ErrorBoundary>
       <QueryProvider>
-        <AdminProvider>
-          <WhitelistProvider>
-            <BanStatusProvider>
-              <GameDataProvider>
+        <StaticGameDataProvider>
+          <AdminProvider>
+            <WhitelistProvider>
+              <BanStatusProvider>
+                <GameDataProvider>
                 <BrightnessProvider>
             <MusicProvider>
               <LanguageProvider>
@@ -155,10 +157,11 @@ function App() {
             </LanguageProvider>
           </MusicProvider>
         </BrightnessProvider>
-              </GameDataProvider>
-            </BanStatusProvider>
-          </WhitelistProvider>
-        </AdminProvider>
+                </GameDataProvider>
+              </BanStatusProvider>
+            </WhitelistProvider>
+          </AdminProvider>
+        </StaticGameDataProvider>
       </QueryProvider>
     </ErrorBoundary>
   );

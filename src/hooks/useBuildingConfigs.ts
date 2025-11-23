@@ -1,5 +1,5 @@
-import { useState, useEffect } from 'react';
-import { supabase } from '@/integrations/supabase/client';
+import { useMemo } from 'react';
+import { useStaticGameDataContext } from '@/contexts/StaticGameDataContext';
 
 interface BuildingConfig {
   id: string;
@@ -22,62 +22,24 @@ interface BuildingConfig {
 }
 
 export const useBuildingConfigs = (autoLoad = true) => {
-  const [configs, setConfigs] = useState<Map<string, BuildingConfig[]>>(new Map());
-  const [loading, setLoading] = useState(true);
+  const { data: staticData, isLoading } = useStaticGameDataContext();
 
-  useEffect(() => {
-    if (!autoLoad) {
-      setLoading(false);
-      return;
+  const configs = useMemo(() => {
+    if (!autoLoad || !staticData?.building_configs) {
+      return new Map<string, BuildingConfig[]>();
     }
-    
-    loadConfigs();
 
-    // Subscribe to changes
-    const channel = supabase
-      .channel('building_configs_changes')
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'building_configs',
-        },
-        () => {
-          loadConfigs();
-        }
-      )
-      .subscribe();
+    // Group by building_id
+    const grouped = new Map<string, BuildingConfig[]>();
+    staticData.building_configs.forEach((config: any) => {
+      const existing = grouped.get(config.building_id) || [];
+      grouped.set(config.building_id, [...existing, config as BuildingConfig]);
+    });
 
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, [autoLoad]);
+    return grouped;
+  }, [staticData?.building_configs, autoLoad]);
 
-  const loadConfigs = async () => {
-    try {
-      const { data, error } = await supabase
-        .from('building_configs')
-        .select('*')
-        .eq('is_active', true)
-        .order('level', { ascending: true });
-
-      if (error) throw error;
-
-      // Group by building_id
-      const grouped = new Map<string, BuildingConfig[]>();
-      data?.forEach(config => {
-        const existing = grouped.get(config.building_id) || [];
-        grouped.set(config.building_id, [...existing, config as BuildingConfig]);
-      });
-
-      setConfigs(grouped);
-    } catch (error) {
-      console.error('Error loading building configs:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
+  const loading = autoLoad ? isLoading : false;
 
   const getBuildingConfig = (buildingId: string, level: number): BuildingConfig | null => {
     const buildingConfigs = configs.get(buildingId);

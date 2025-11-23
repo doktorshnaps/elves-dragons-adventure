@@ -1,5 +1,5 @@
-import { useQuery } from '@tanstack/react-query';
-import { supabase } from '@/integrations/supabase/client';
+import { useMemo } from 'react';
+import { useStaticGameDataContext } from '@/contexts/StaticGameDataContext';
 
 interface DropRate {
   name: string;
@@ -37,32 +37,27 @@ const defaultDropRates: DropRates = {
 };
 
 export const useCardDropRates = () => {
-  return useQuery({
-    queryKey: ['cardDropRates'],
-    queryFn: async () => {
-      const { data, error } = await supabase.rpc('get_card_class_drop_rates');
-      
-      if (error || !data) {
-        console.error('Failed to load drop rates from DB, using defaults:', error);
-        return defaultDropRates;
+  const { data: staticData, isLoading, error } = useStaticGameDataContext();
+
+  const data = useMemo(() => {
+    if (!staticData?.card_drop_rates) {
+      return defaultDropRates;
+    }
+
+    const heroes: Record<string, DropRate> = {};
+    const dragons: Record<string, DropRate> = {};
+
+    staticData.card_drop_rates.forEach((rate: any) => {
+      const entry = { name: rate.class_name, chance: `${rate.drop_chance}%` };
+      if (rate.card_type === 'hero') {
+        heroes[rate.class_key] = entry;
+      } else if (rate.card_type === 'dragon') {
+        dragons[rate.class_key] = entry;
       }
-      
-      const heroes: Record<string, DropRate> = {};
-      const dragons: Record<string, DropRate> = {};
-      
-      data.forEach((rate: any) => {
-        const entry = { name: rate.class_name, chance: `${rate.drop_chance}%` };
-        if (rate.card_type === 'hero') {
-          heroes[rate.class_key] = entry;
-        } else if (rate.card_type === 'dragon') {
-          dragons[rate.class_key] = entry;
-        }
-      });
-      
-      return { heroes, dragons };
-    },
-    staleTime: 0, // Всегда получать свежие данные
-    gcTime: 10 * 60 * 1000, // 10 минут
-    placeholderData: defaultDropRates // Использовать как placeholder, а не initialData
-  });
+    });
+
+    return { heroes, dragons };
+  }, [staticData?.card_drop_rates]);
+
+  return { data, isLoading, error };
 };
