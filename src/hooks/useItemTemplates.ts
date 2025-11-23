@@ -14,9 +14,15 @@ export interface ItemTemplate {
 }
 
 export const useItemTemplates = () => {
-  const { data: staticData, isLoading: loading } = useStaticGameDataContext();
+  const contextData = useStaticGameDataContext();
+  const staticData = contextData?.data;
+  const loading = contextData?.isLoading ?? true;
 
-  console.log('📚 [useItemTemplates] Static data:', {
+  console.log('📚 [useItemTemplates] Context data:', {
+    hasContext: !!contextData,
+    isLoading: contextData?.isLoading,
+    isError: contextData?.isError,
+    hasData: !!contextData?.data,
     hasStaticData: !!staticData,
     hasItemTemplates: !!staticData?.item_templates,
     itemTemplatesCount: staticData?.item_templates?.length,

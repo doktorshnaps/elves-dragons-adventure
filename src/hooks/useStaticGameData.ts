@@ -10,8 +10,8 @@ export interface StaticGameData {
 }
 
 export const useStaticGameData = () => {
-  return useQuery({
-    queryKey: ['staticGameData'],
+  const queryResult = useQuery({
+    queryKey: ['staticGameData', 'v2'], // Изменили ключ для принудительной перезагрузки после миграции
     queryFn: async () => {
       console.log('🔄 [StaticGameData] Loading ALL static game data in single request...');
       const startTime = performance.now();
@@ -25,7 +25,7 @@ export const useStaticGameData = () => {
         }
         
         if (!data || typeof data !== 'object') {
-          console.error('❌ [StaticGameData] Invalid data format');
+          console.error('❌ [StaticGameData] Invalid data format:', data);
           throw new Error('Invalid data format from get_static_game_data');
         }
         
@@ -38,6 +38,7 @@ export const useStaticGameData = () => {
           item_templates: staticData.item_templates?.length || 0,
           card_drop_rates: staticData.card_drop_rates?.length || 0,
           card_upgrade_requirements: staticData.card_upgrade_requirements?.length || 0,
+          firstTemplate: staticData.item_templates?.[0]
         });
         
         return staticData;
@@ -48,10 +49,20 @@ export const useStaticGameData = () => {
     },
     staleTime: 1000 * 60 * 60, // 1 час - данные редко меняются
     gcTime: 1000 * 60 * 120, // 2 часа в памяти
-    refetchOnMount: false,
+    refetchOnMount: true, // Включаем перезагрузку при монтировании для первой загрузки
     refetchOnWindowFocus: false,
     refetchOnReconnect: false,
     retry: 3,
     retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 5000),
   });
+
+  console.log('🔍 [useStaticGameData] Query state:', {
+    isLoading: queryResult.isLoading,
+    isError: queryResult.isError,
+    error: queryResult.error,
+    hasData: !!queryResult.data,
+    data: queryResult.data
+  });
+
+  return queryResult;
 };
