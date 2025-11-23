@@ -24,29 +24,17 @@ import { ShopSettings } from "@/components/admin/ShopSettings";
 import { PlayerManagement } from "@/components/admin/PlayerManagement";
 import { useLanguage } from "@/hooks/useLanguage";
 import { t } from "@/utils/translations";
+import { useSuperAdminCheck } from "@/hooks/useSuperAdminCheck";
 
 const AdminSettingsContent = () => {
   const { language } = useLanguage();
   const navigate = useNavigate();
   const { accountId } = useWalletContext();
   const { isAdmin, loading } = useAdmin();
-  
-  // Check if user has super admin role via server-side verification
-  const [isSuperAdmin, setIsSuperAdmin] = React.useState(false);
-  
-  React.useEffect(() => {
-    const checkSuperAdmin = async () => {
-      if (!accountId) return;
-      const { data } = await supabase.rpc('is_super_admin_wallet', { 
-        p_wallet_address: accountId 
-      });
-      setIsSuperAdmin(Boolean(data));
-    };
-    checkSuperAdmin();
-  }, [accountId]);
+  const { isSuperAdmin, loading: superAdminLoading } = useSuperAdminCheck();
 
   // Show loading while checking admin status
-  if (loading) {
+  if (loading || superAdminLoading) {
     return (
       <div className="min-h-screen bg-game-dark flex items-center justify-center p-4">
         <div className="text-center">
