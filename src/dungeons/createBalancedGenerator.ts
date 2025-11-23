@@ -1,7 +1,7 @@
 import { Opponent } from '@/types/battle';
 import { getMonsterData } from '@/utils/monsterDataParser';
 import { calculateMonsterStatsFromDB, getDungeonSettings } from '@/utils/dungeonSettingsLoader';
-import { getMonsterByName } from '@/utils/staticDataCache';
+import { getMonsterById, getMonsterByName } from '@/utils/staticDataCache';
 import { monsterImagesById, monsterImagesByName } from '@/constants/monsterImages';
 import { monsterNameMapping } from './monsterNameMapping';
 
@@ -155,7 +155,7 @@ export const createBalancedGenerator = (config: DungeonConfig) =>
       let currentId = 1;
       
       for (const m of customLevel.monsters) {
-        const row = getMonsterByName(m.id) || { monster_id: m.id, monster_name: m.id, image_url: null, monster_type: 'normal' };
+        const row = getMonsterById(m.id) || { monster_id: m.id, monster_name: m.id, image_url: null, monster_type: 'normal' };
         const type = row?.monster_type === 'miniboss' ? 'miniboss' : (row?.monster_type === 'boss' ? 'boss50' : 'normal');
         const stats = calculateMonsterStatsFromDB(config.internalName, level, type as any);
 
@@ -163,7 +163,7 @@ export const createBalancedGenerator = (config: DungeonConfig) =>
         const norm = (m.id || '').toLowerCase();
         const idVariants = Array.from(new Set([norm, norm.replace(/-/g, '_'), norm.replace(/_/g, '-')]));
         const hasBundledImage = idVariants.some(v => !!monsterImagesById[v]);
-        if (!getMonsterByName(m.id) && !hasBundledImage) {
+        if (!getMonsterById(m.id) && !hasBundledImage) {
           console.warn(`⏭️ Skipping unknown monster without image: ${m.id}`);
           continue;
         }
