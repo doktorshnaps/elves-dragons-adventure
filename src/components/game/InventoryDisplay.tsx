@@ -61,9 +61,11 @@ export const InventoryDisplay = ({
   } = useInventoryLogic([]);  // inventory больше не используется
 
 // Источник истины: используем ТОЛЬКО item_instances для всех предметов
-const { cardInstances } = useCardInstances();
-const { instances: itemInstances, refetch: refetchItemInstances } = useItemInstances();
+const { cardInstances, loading: cardInstancesLoading } = useCardInstances();
+const { instances: itemInstances, refetch: refetchItemInstances, loading: itemInstancesLoading } = useItemInstances();
 const { getTemplate } = useItemTemplates();
+
+const isInventoryLoading = cardInstancesLoading || itemInstancesLoading;
 
 // Рабочие из card_instances
 const workerItems: Item[] = (cardInstances || [])
@@ -210,6 +212,7 @@ const allInventoryItems: Item[] = [
             readonly={readonly}
             onUseItem={handleUseItem}
             onSellItem={handleGroupedSellItem}
+            isLoading={isInventoryLoading}
           />
         </div>
       </div>

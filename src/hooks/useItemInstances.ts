@@ -19,26 +19,66 @@ export const useItemInstances = () => {
   const { accountId } = useWalletContext();
   const queryClient = useQueryClient();
 
-  // Use React Query for data fetching and caching
-  const { data: instances = [], isLoading: loading } = useQuery({
+  // Use React Query for data fetching and caching with reduced cache time
+  const { data: instances = [], isLoading: loading, refetch: refetchQuery } = useQuery({
     queryKey: ['itemInstances', accountId],
     queryFn: async () => {
       if (!accountId) return [];
 
+      console.log('🔄 [useItemInstances] Fetching item instances for:', accountId);
+
       const { data, error } = await supabase
         .rpc('get_item_instances_by_wallet', { p_wallet_address: accountId });
 
-      if (error) throw error;
+      if (error) {
+        console.error('❌ [useItemInstances] Error fetching items:', error);
+        throw error;
+      }
+      
+      console.log('✅ [useItemInstances] Loaded', data?.length || 0, 'items');
       return (data as ItemInstance[]) || [];
     },
     enabled: !!accountId,
-    staleTime: 1000 * 60, // 1 minute
+    staleTime: 1000 * 60 * 2, // 2 minutes - reduced for faster sync
     gcTime: 1000 * 60 * 5, // 5 minutes
+    refetchOnWindowFocus: false,
   });
 
-  const refetch = useCallback(() => {
+  const refetch = useCallback(async () => {
+    console.log('🔄 [useItemInstances] Manual refetch requested');
     queryClient.invalidateQueries({ queryKey: ['itemInstances', accountId] });
-  }, [queryClient, accountId]);
+    return await refetchQuery();
+  }, [queryClient, accountId, refetchQuery]);
+
+  // Real-time subscription for INSERT events in item_instances
+  useEffect(() => {
+    if (!accountId) return;
+
+    console.log('🔄 [useItemInstances] Setting up Real-time subscription for item_instances');
+
+    const channel = supabase
+      .channel('item-instances-realtime')
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'item_instances',
+          filter: `wallet_address=eq.${accountId}`
+        },
+        (payload) => {
+          console.log('🔔 [useItemInstances] New item inserted:', payload.new);
+          queryClient.invalidateQueries({ queryKey: ['itemInstances', accountId] });
+          queryClient.invalidateQueries({ queryKey: ['shopDataComplete', accountId] });
+        }
+      )
+      .subscribe();
+
+    return () => {
+      console.log('🔄 [useItemInstances] Cleaning up Real-time subscription');
+      supabase.removeChannel(channel);
+    };
+  }, [accountId, queryClient]);
 
   // Слушаем событие itemInstancesUpdate для обновления кеша
   useEffect(() => {

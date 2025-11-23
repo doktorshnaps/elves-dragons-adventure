@@ -83,21 +83,32 @@ export const Shop = ({ onClose }: ShopProps) => {
       
       console.log('✅ [Shop] Purchase complete, invalidating caches...');
 
-      // Invalidate all shop-related caches
+      // Invalidate all shop-related caches in parallel
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: ['shopDataComplete', accountId] }),
         queryClient.invalidateQueries({ queryKey: ['itemInstances', accountId] }),
         queryClient.invalidateQueries({ queryKey: ['cardInstances', accountId] })
       ]);
 
-      // Force immediate refetch of shop data
-      await refetchShopData();
+      console.log('🔄 [Shop] Starting refetch of shop and inventory data...');
+
+      // Force immediate refetch and wait for completion
+      const [shopRefetch, itemsRefetch] = await Promise.allSettled([
+        refetchShopData(),
+        queryClient.refetchQueries({ queryKey: ['itemInstances', accountId] })
+      ]);
+
+      // Check if refetch failed
+      if (shopRefetch.status === 'rejected' || itemsRefetch.status === 'rejected') {
+        console.error('❌ [Shop] Refetch failed:', { shopRefetch, itemsRefetch });
+        throw new Error('Failed to sync inventory');
+      }
 
       // Dispatch events for immediate UI updates
       window.dispatchEvent(new CustomEvent('itemInstancesUpdate'));
       window.dispatchEvent(new CustomEvent('cardInstancesUpdate'));
       
-      console.log('✅ [Shop] Cache invalidated and refetched');
+      console.log('✅ [Shop] Cache invalidated and refetched successfully');
 
       setShowEffect(true);
       toast({
@@ -105,10 +116,21 @@ export const Shop = ({ onClose }: ShopProps) => {
         description: item.type === 'cardPack' ? t(language, 'shop.cardPackDescription') : `${t(language, 'shop.boughtItem')} ${translateShopItemName(language, item.name)}`,
       });
     } catch (error) {
-      console.error('Purchase error:', error);
+      console.error('❌ [Shop] Purchase error:', error);
+      
+      // Try to recover by forcing a refetch
+      try {
+        await Promise.all([
+          queryClient.refetchQueries({ queryKey: ['shopDataComplete', accountId] }),
+          queryClient.refetchQueries({ queryKey: ['itemInstances', accountId] })
+        ]);
+      } catch (refetchError) {
+        console.error('❌ [Shop] Recovery refetch failed:', refetchError);
+      }
+      
       toast({
         title: t(language, 'shop.purchaseError'),
-        description: t(language, 'shop.purchaseErrorDescription'),
+        description: error instanceof Error ? error.message : t(language, 'shop.purchaseErrorDescription'),
         variant: 'destructive',
       });
     } finally {
