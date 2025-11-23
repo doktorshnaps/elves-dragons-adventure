@@ -12,6 +12,7 @@ import { GameData, UnifiedGameState } from '@/types/gameState';
 import { useToast } from './use-toast';
 import { gameCache } from '@/utils/cacheStrategy';
 import { updateGameDataByWalletThrottled } from '@/utils/updateGameDataThrottle';
+import { useGameDataContext } from '@/contexts/GameDataContext';
 
 const GAME_DATA_KEY = 'gameData';
 const STALE_TIME = 10 * 60 * 1000; // 10 минут - увеличено для снижения повторных запросов
@@ -68,52 +69,13 @@ export const useUnifiedGameState = (): UnifiedGameState => {
   const { updateWithVersionCheck, getRecordVersion } = useVersioning();
   const { withErrorHandling, retryOperation } = useErrorHandling();
 
-  // Основной запрос данных игры
-  const {
-    data: gameData = initialGameData,
-    isLoading,
-    error
-  } = useQuery({
-    queryKey: [GAME_DATA_KEY, accountId],
-    queryFn: async () => {
-      if (!accountId) {
-        const cached = localStorage.getItem('gameData');
-        const cachedActiveWorkers = localStorage.getItem('activeWorkers');
-        const baseData = cached ? JSON.parse(cached) : initialGameData;
-        
-        // Объединяем кэшированные activeWorkers с основными данными
-        if (cachedActiveWorkers) {
-          try {
-            baseData.activeWorkers = JSON.parse(cachedActiveWorkers);
-            console.log('🔄 Loaded activeWorkers from localStorage:', baseData.activeWorkers.length);
-          } catch (e) {
-            console.warn('Failed to parse cached activeWorkers:', e);
-          }
-        }
-        
-        return baseData;
-      }
-      
-      const serverData = await loadGameDataFromServer(accountId);
-      
-      // Сохраняем activeWorkers в localStorage для синхронизации между страницами
-      if (serverData.activeWorkers && serverData.activeWorkers.length > 0) {
-        localStorage.setItem('activeWorkers', JSON.stringify(serverData.activeWorkers));
-        console.log('🔄 Saved activeWorkers to localStorage from server:', serverData.activeWorkers.length);
-      }
-      
-      return serverData;
-    },
-    initialData: initialGameData,
-    enabled: true,
-    staleTime: STALE_TIME,
-    gcTime: CACHE_TIME,
-    refetchOnMount: false,  // Не перезапрашивать при каждом mount компонента
-    refetchOnWindowFocus: false,  // Не перезапрашивать при фокусе окна
-    refetchOnReconnect: true,  // Перезапрашивать только при восстановлении соединения
-    retry: 3,
-    retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000)
-  });
+  // КРИТИЧНО: Используем GameDataContext вместо прямого запроса
+  // Это предотвращает дублирование запросов get_game_data_by_wallet_full
+  const gameDataContext = useGameDataContext();
+  
+  const gameData = gameDataContext.gameData || initialGameData;
+  const isLoading = gameDataContext.loading;
+  const error = null; // Error handling through context
 
   // Оптимистичные обновления
   const {
@@ -137,13 +99,11 @@ export const useUnifiedGameState = (): UnifiedGameState => {
     }) => {
       if (!accountId) throw new Error('No wallet connected');
       
-      // Если передан recordId и версия, используем версионированное обновление
-      if (recordId && currentVersion !== undefined) {
-        return await updateWithVersionCheck('game_data', recordId, updates, currentVersion);
-      }
+      // Используем updateGameData из контекста
+      await gameDataContext.updateGameData(updates);
       
-      // Иначе обычное обновление
-      return await updateGameDataOnServer(accountId, updates);
+      // Возвращаем обновленные данные
+      return { ...gameDataContext.gameData, ...updates };
     },
     onSuccess: (updatedData) => {
       console.log('✅ Data updated successfully:', { 
