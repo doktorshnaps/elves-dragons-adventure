@@ -2793,6 +2793,10 @@ export type Database = {
           referrer_wallet_address: string
         }[]
       }
+      get_shop_data_complete: {
+        Args: { p_wallet_address: string }
+        Returns: Json
+      }
       get_shop_settings: {
         Args: never
         Returns: {
