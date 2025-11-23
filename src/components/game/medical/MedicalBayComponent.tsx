@@ -6,12 +6,11 @@ import { Badge } from '@/components/ui/badge';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Clock, Heart, Plus, Activity, ArrowRight, X } from 'lucide-react';
 import { useMedicalBay } from '@/hooks/useMedicalBay';
-import { useCardInstances } from '@/hooks/useCardInstances';
 import { useCardHealthSync } from '@/hooks/useCardHealthSync';
 import { useCardsWithHealth } from '@/hooks/useCardsWithHealth';
-import { useUnifiedGameState } from '@/hooks/useUnifiedGameState';
 import { useBatchCardUpdate } from '@/hooks/useBatchCardUpdate';
 import { useWalletContext } from '@/contexts/WalletConnectContext';
+import { useShelterData } from '@/contexts/ShelterDataContext';
 import { CardDisplay } from '../CardDisplay';
 import { normalizeCardHealth } from '@/utils/cardHealthNormalizer';
 
@@ -26,10 +25,9 @@ export const MedicalBayComponent = () => {
     processMedicalBayHealing
   } = useMedicalBay();
 
-  const { cardInstances, loadCardInstances } = useCardInstances();
+  const { gameState, cardInstances, loadCardInstances } = useShelterData();
   const { syncHealthFromInstances } = useCardHealthSync();
   const { cardsWithHealth, selectedTeamWithHealth } = useCardsWithHealth();
-  const gameState = useUnifiedGameState();
   const { accountId } = useWalletContext();
   const { updateMultiple, isUpdating } = useBatchCardUpdate(accountId);
   const [selectedCard, setSelectedCard] = useState<any>(null);
