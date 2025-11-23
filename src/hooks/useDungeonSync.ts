@@ -73,7 +73,7 @@ export const useDungeonSync = () => {
   useEffect(() => {
     if (!accountId || activeSessions.length === 0) return;
     
-    const TIMEOUT = 30000;
+    const TIMEOUT = 300000; // 5 минут для совместимости с проверкой в TeamBattlePage
     const now = Date.now();
     const hasThisDevice = activeSessions.some(r => r.device_id === deviceId && (now - r.last_activity) < TIMEOUT);
     
@@ -123,7 +123,7 @@ export const useDungeonSync = () => {
   // Проверяем есть ли активные сессии с других устройств
   const hasOtherActiveSessions = useCallback(() => {
     const now = Date.now();
-    const TIMEOUT = 30000; // 30 секунд без активности = сессия неактивна (синхронизировано с БД)
+    const TIMEOUT = 300000; // 5 минут без активности = сессия неактивна
 
     return activeSessions.some(
       session => 
@@ -176,7 +176,7 @@ export const useDungeonSync = () => {
     // Серверная проверка для избежания гонки
     try {
       const now = Date.now();
-      const TIMEOUT = 30000; // 30 секунд
+      const TIMEOUT = 300000; // 5 минут
       const { data: existing, error: existingError } = await supabase
         .from('active_dungeon_sessions')
         .select('device_id,last_activity')
@@ -313,7 +313,7 @@ export const useDungeonSync = () => {
   useEffect(() => {
     const interval = setInterval(() => {
       const now = Date.now();
-      const TIMEOUT = 30000; // держим 30с окно, чтобы совпадало с триггером БД
+      const TIMEOUT = 300000; // 5 минут
 
       setActiveSessions(prev => 
         prev.filter(session => (now - session.last_activity) < TIMEOUT)

@@ -181,7 +181,7 @@ const TeamBattlePageInner: React.FC<TeamBattlePageProps> = ({
     const checkSession = async () => {
       try {
         const now = Date.now();
-        const TIMEOUT = 120000; // Увеличено до 120с: heartbeat фактически ~60с и может троттлиться, даем запас
+        const TIMEOUT = 300000; // 5 минут - даем запас для троттлинга heartbeat в фоновых вкладках
         const { data, error } = await supabase
           .from('active_dungeon_sessions')
           .select('device_id')
@@ -379,6 +379,34 @@ const TeamBattlePageInner: React.FC<TeamBattlePageProps> = ({
     );
   }
 
+  // Функция восстановления сессии при сетевом сбое
+  const handleRestoreSession = async () => {
+    const restored = await startDungeonSession(dungeonType, battleState.level);
+    if (restored) {
+      console.log('✅ Сессия восстановлена, продолжаем бой');
+      setSessionTerminated(false);
+      // Отправляем heartbeat сразу
+      await supabase
+        .from('active_dungeon_sessions')
+        .upsert({
+          account_id: accountId,
+          device_id: deviceId,
+          dungeon_type: dungeonType,
+          level: battleState.level,
+          started_at: Date.now(),
+          last_activity: Date.now()
+        }, {
+          onConflict: 'account_id,device_id'
+        });
+    } else {
+      toast({
+        title: t(language, 'battlePage.restoreFailed'),
+        description: t(language, 'battlePage.anotherDeviceActive'),
+        variant: "destructive"
+      });
+    }
+  };
+
   // Блокирующее окно при удалении сессии на другом устройстве
   if (sessionTerminated) {
     return (
@@ -389,11 +417,16 @@ const TeamBattlePageInner: React.FC<TeamBattlePageProps> = ({
           </CardHeader>
           <CardContent className="text-center space-y-4">
             <p className="text-white/80">
-              {t(language, 'battlePage.finishedOnAnotherDevice')}
+              {t(language, 'battlePage.sessionLost')}
             </p>
-            <Button variant="menu" onClick={handleExitAndReset}>
-              {t(language, 'battlePage.closeDungeon')}
-            </Button>
+            <div className="flex gap-2 justify-center">
+              <Button variant="menu" onClick={handleRestoreSession}>
+                {t(language, 'battlePage.restoreBattle')}
+              </Button>
+              <Button variant="outline" onClick={handleExitAndReset}>
+                {t(language, 'battlePage.exit')}
+              </Button>
+            </div>
           </CardContent>
         </Card>
       </div>
