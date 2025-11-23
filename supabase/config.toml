@@ -50,3 +50,6 @@ verify_jwt = false
 
 [functions.instant-complete-building]
 verify_jwt = false
+
+[functions.claim-battle-rewards]
+verify_jwt = false
