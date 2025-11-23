@@ -18,7 +18,6 @@ import { useShelterState } from "@/hooks/shelter/useShelterState";
 import { ShelterUpgrades } from "@/components/game/shelter/ShelterUpgrades";
 import { ShelterCrafting } from "@/components/game/shelter/ShelterCrafting";
 import { Loader2 } from "lucide-react";
-import { ShelterDataProvider } from "@/contexts/ShelterDataContext";
 
 export const Shelter = () => {
   const navigate = useNavigate();
@@ -69,9 +68,8 @@ export const Shelter = () => {
   }
 
   return (
-    <ShelterDataProvider>
-      <div className="min-h-screen relative">
-        <div className="container mx-auto p-2 sm:p-4 space-y-6 relative z-10">
+    <div className="min-h-screen relative">
+      <div className="container mx-auto p-2 sm:p-4 space-y-6 relative z-10">
         {/* Кнопка возврата и информация - адаптивный layout */}
         <div className="flex flex-col sm:flex-row sm:justify-between items-stretch sm:items-start gap-2 mb-16 sm:mb-6 pt-2">
           {/* Кнопка возврата */}
@@ -269,6 +267,5 @@ export const Shelter = () => {
         </Tabs>
       </div>
     </div>
-    </ShelterDataProvider>
   );
 };
