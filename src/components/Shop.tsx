@@ -93,14 +93,15 @@ export const Shop = ({ onClose }: ShopProps) => {
       console.log('🔄 [Shop] Starting refetch of shop and inventory data...');
 
       // Force immediate refetch and wait for completion
-      const [shopRefetch, itemsRefetch] = await Promise.allSettled([
+      const [shopRefetch, itemsRefetch, cardsRefetch] = await Promise.allSettled([
         refetchShopData(),
-        queryClient.refetchQueries({ queryKey: ['itemInstances', accountId] })
+        queryClient.refetchQueries({ queryKey: ['itemInstances', accountId] }),
+        queryClient.refetchQueries({ queryKey: ['cardInstances', accountId] })
       ]);
 
       // Check if refetch failed
-      if (shopRefetch.status === 'rejected' || itemsRefetch.status === 'rejected') {
-        console.error('❌ [Shop] Refetch failed:', { shopRefetch, itemsRefetch });
+      if (shopRefetch.status === 'rejected' || itemsRefetch.status === 'rejected' || cardsRefetch.status === 'rejected') {
+        console.error('❌ [Shop] Refetch failed:', { shopRefetch, itemsRefetch, cardsRefetch });
         throw new Error('Failed to sync inventory');
       }
 
