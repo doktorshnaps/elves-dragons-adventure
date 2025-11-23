@@ -45,6 +45,7 @@ export const useCardInstances = () => {
         return [];
       }
 
+      console.log('🃏 [useCardInstances] Fetching from DB for:', accountId);
       const { data, error } = await supabase
         .rpc('get_card_instances_by_wallet', { p_wallet_address: accountId });
 
@@ -58,11 +59,13 @@ export const useCardInstances = () => {
         throw error;
       }
 
+      console.log('✅ [useCardInstances] Loaded', data?.length || 0, 'card instances');
       return (data || []) as unknown as CardInstance[];
     },
     enabled: isConnected && !!accountId && !walletLoading && !!selector,
-    staleTime: 30 * 1000, // 30 seconds - cards change during gameplay
-    gcTime: 5 * 60 * 1000, // 5 minutes
+    staleTime: 5 * 60 * 1000, // 5 минут - агрессивное кеширование
+    gcTime: 10 * 60 * 1000, // 10 минут
+    refetchOnMount: false, // НЕ перезагружать при каждом монтировании
     refetchOnWindowFocus: false,
     refetchOnReconnect: false,
   });

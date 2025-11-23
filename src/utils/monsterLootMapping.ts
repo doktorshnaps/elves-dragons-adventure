@@ -3,27 +3,22 @@ import { v4 as uuidv4 } from 'uuid';
 import { supabase } from "@/integrations/supabase/client";
 
 // Все предметы из базы данных (кроме рабочих и колод карт) для дропа
-// Будут загружены динамически из item_templates
+// DEPRECATED: используем setItemTemplatesCache вместо прямой загрузки
 let ALL_ITEM_TEMPLATES: any[] = [];
+let templatesLoaded = false;
 
-// Функция для предзагрузки всех предметов из базы данных
-export const preloadItemTemplates = async () => {
-  try {
-    const { data, error } = await supabase
-      .from('item_templates')
-      .select('*')
-      .not('type', 'in', '("worker","cardPack")');
-    
-    if (error) {
-      console.error('❌ Error loading item templates:', error);
-      return;
-    }
-    
-    ALL_ITEM_TEMPLATES = data || [];
-    console.log(`✅ Loaded ${ALL_ITEM_TEMPLATES.length} item templates for loot`);
-  } catch (error) {
-    console.error('❌ Error in preloadItemTemplates:', error);
+// Установить кеш предметов из StaticGameDataContext
+export const setItemTemplatesCache = (templates: any[]) => {
+  if (!templatesLoaded || ALL_ITEM_TEMPLATES.length === 0) {
+    ALL_ITEM_TEMPLATES = templates.filter(t => t.type !== 'worker' && t.type !== 'cardPack');
+    templatesLoaded = true;
+    console.log(`✅ Set item templates cache: ${ALL_ITEM_TEMPLATES.length} templates`);
   }
+};
+
+// DEPRECATED: используйте setItemTemplatesCache вместо этого
+export const preloadItemTemplates = async () => {
+  console.log('⚠️ preloadItemTemplates is deprecated - use setItemTemplatesCache');
 };
 
 // Все item_id предметов, которые могут дропать (заполняется динамически)

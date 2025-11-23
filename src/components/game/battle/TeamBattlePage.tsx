@@ -1,4 +1,4 @@
-import React, { useState, startTransition, useEffect, useRef } from 'react';
+import React, { useState, startTransition, useEffect, useRef, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -10,7 +10,7 @@ import { TeamBattleArena } from './TeamBattleArena';
 import { DungeonType } from '@/constants/dungeons';
 import { DungeonRewardModal } from '@/components/game/modals/DungeonRewardModal';
 import { useDungeonRewards } from '@/hooks/adventure/useDungeonRewards';
-import { preloadItemTemplates } from '@/utils/monsterLootMapping';
+import { setItemTemplatesCache } from '@/utils/monsterLootMapping';
 import { supabase } from '@/integrations/supabase/client';
 import { useWalletContext } from '@/contexts/WalletConnectContext';
 import { useDungeonSync } from '@/hooks/useDungeonSync';
@@ -21,9 +21,12 @@ import { useLanguage } from '@/hooks/useLanguage';
 import { t } from '@/utils/translations';
 import { BattleSpeedProvider } from '@/contexts/BattleSpeedContext';
 import { useBattleSpeed } from '@/contexts/BattleSpeedContext';
+import { useItemTemplates } from '@/hooks/useItemTemplates';
+
 interface TeamBattlePageProps {
   dungeonType: DungeonType;
 }
+
 const TeamBattlePageInner: React.FC<TeamBattlePageProps> = ({
   dungeonType
 }) => {
@@ -46,10 +49,18 @@ const TeamBattlePageInner: React.FC<TeamBattlePageProps> = ({
   // Sync health from database on component mount
   useCardHealthSync();
   
-  // Preload item templates for loot generation
+  // Инициализация кеша item templates из StaticGameData (ОДИН РАЗ)
+  const { templates: itemTemplatesMap } = useItemTemplates();
+  const itemTemplatesInitialized = useRef(false);
+  
   useEffect(() => {
-    preloadItemTemplates();
-  }, []);
+    if (!itemTemplatesInitialized.current && itemTemplatesMap.size > 0) {
+      const templatesArray = Array.from(itemTemplatesMap.values());
+      setItemTemplatesCache(templatesArray);
+      itemTemplatesInitialized.current = true;
+      console.log('✅ Item templates cache initialized from StaticGameData');
+    }
+  }, [itemTemplatesMap]);
   
   const { 
     pendingReward, 
