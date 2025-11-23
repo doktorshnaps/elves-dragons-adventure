@@ -11,6 +11,7 @@ import { WhitelistProvider } from './contexts/WhitelistContext';
 import { BanStatusProvider } from './contexts/BanStatusContext';
 import { GameDataProvider } from './contexts/GameDataContext';
 import { StaticGameDataProvider } from './contexts/StaticGameDataContext';
+import { ReferralHandler } from './components/ReferralHandler';
 import { useRoutePreloader } from './hooks/useRoutePreloader';
 import { useNFTStatsRecalculation } from './hooks/useNFTStatsRecalculation';
 import { useSecureStorage } from './hooks/useSecureStorage';
@@ -122,6 +123,7 @@ function App() {
               <LanguageProvider>
                 <div className="overflow-x-hidden max-w-full w-full">
                   <Suspense fallback={<PageLoader />}>
+                    <ReferralHandler />
                     <MusicController />
                     <Routes>
                     <Route path="/" element={
