@@ -7,6 +7,8 @@ import { Badge } from '@/components/ui/badge';
 import { Ban, Unlock, UserX, RefreshCw } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { useBannedUsersData } from '@/hooks/useBannedUsersData';
+import { useQueryClient } from '@tanstack/react-query';
 
 interface BannedUser {
   id: string;
@@ -18,34 +20,13 @@ interface BannedUser {
 }
 
 export const BannedUsersManager = () => {
-  const [bannedUsers, setBannedUsers] = useState<BannedUser[]>([]);
   const [newAddress, setNewAddress] = useState('');
   const [banReason, setBanReason] = useState('');
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
-
-  const loadBannedUsers = async () => {
-    try {
-      const { data, error } = await supabase
-        .from('banned_users')
-        .select('*')
-        .order('banned_at', { ascending: false });
-
-      if (error) throw error;
-      setBannedUsers(data || []);
-    } catch (error) {
-      console.error('Error loading banned users:', error);
-      toast({
-        title: 'Ошибка',
-        description: 'Не удалось загрузить список заблокированных пользователей',
-        variant: 'destructive',
-      });
-    }
-  };
-
-  useEffect(() => {
-    loadBannedUsers();
-  }, []);
+  const queryClient = useQueryClient();
+  
+  const { data: bannedUsers = [], isLoading: usersLoading, refetch } = useBannedUsersData();
 
   const banUser = async () => {
     if (!newAddress.trim()) {
@@ -73,7 +54,7 @@ export const BannedUsersManager = () => {
 
       setNewAddress('');
       setBanReason('');
-      loadBannedUsers();
+      queryClient.invalidateQueries({ queryKey: ['bannedUsers'] });
     } catch (error) {
       console.error('Error banning user:', error);
       toast({
@@ -100,7 +81,7 @@ export const BannedUsersManager = () => {
         description: 'Пользователь разблокирован',
       });
 
-      loadBannedUsers();
+      queryClient.invalidateQueries({ queryKey: ['bannedUsers'] });
     } catch (error) {
       console.error('Error unbanning user:', error);
       toast({
@@ -158,7 +139,7 @@ export const BannedUsersManager = () => {
               Заблокированные пользователи ({activeBans.length})
             </h3>
             <Button
-              onClick={loadBannedUsers}
+              onClick={() => refetch()}
               variant="outline"
               size="sm"
               className="border-game-border text-game-text"

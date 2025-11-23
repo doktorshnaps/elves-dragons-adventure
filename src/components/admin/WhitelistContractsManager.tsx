@@ -6,6 +6,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { Trash2, Plus, ToggleLeft, ToggleRight } from 'lucide-react';
+import { useWhitelistContractsData } from '@/hooks/useWhitelistContractsData';
+import { useQueryClient } from '@tanstack/react-query';
 
 interface WhitelistContract {
   id: string;
@@ -17,7 +19,6 @@ interface WhitelistContract {
 }
 
 export const WhitelistContractsManager = () => {
-  const [contracts, setContracts] = useState<WhitelistContract[]>([]);
   const [loading, setLoading] = useState(false);
   const [validating, setValidating] = useState(false);
   const [newContract, setNewContract] = useState({
@@ -26,32 +27,9 @@ export const WhitelistContractsManager = () => {
     description: ''
   });
   const { toast } = useToast();
-
-  const loadContracts = async () => {
-    setLoading(true);
-    try {
-      const { data, error } = await supabase
-        .from('whitelist_contracts')
-        .select('*')
-        .order('created_at', { ascending: false });
-
-      if (error) throw error;
-      setContracts(data || []);
-    } catch (error: any) {
-      console.error('Error loading contracts:', error);
-      toast({
-        title: "Ошибка",
-        description: "Не удалось загрузить контракты",
-        variant: "destructive",
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    loadContracts();
-  }, []);
+  const queryClient = useQueryClient();
+  
+  const { data: contracts = [], isLoading: contractsLoading } = useWhitelistContractsData();
 
   const addContract = async () => {
     if (!newContract.address.trim()) {
@@ -95,7 +73,7 @@ export const WhitelistContractsManager = () => {
       });
 
       setNewContract({ address: '', name: '', description: '' });
-      loadContracts();
+      queryClient.invalidateQueries({ queryKey: ['whitelistContracts'] });
     } catch (error: any) {
       console.error('Error adding contract:', error);
       toast({
@@ -120,7 +98,7 @@ export const WhitelistContractsManager = () => {
         description: `Контракт ${!currentStatus ? 'активирован' : 'деактивирован'}`,
       });
 
-      loadContracts();
+      queryClient.invalidateQueries({ queryKey: ['whitelistContracts'] });
     } catch (error: any) {
       console.error('Error toggling contract status:', error);
       toast({
@@ -147,7 +125,7 @@ export const WhitelistContractsManager = () => {
         description: "Контракт удален",
       });
 
-      loadContracts();
+      queryClient.invalidateQueries({ queryKey: ['whitelistContracts'] });
     } catch (error: any) {
       console.error('Error deleting contract:', error);
       toast({
@@ -190,7 +168,7 @@ export const WhitelistContractsManager = () => {
       });
 
       // Refresh contracts list after validation
-      await loadContracts();
+      await queryClient.invalidateQueries({ queryKey: ['whitelistContracts'] });
     } catch (error: any) {
       loadingToast.dismiss();
       console.error('Error validating NFT whitelists:', error);
@@ -246,7 +224,7 @@ export const WhitelistContractsManager = () => {
         });
 
         console.log('✅ Auto-added Mintbase contract');
-        loadContracts();
+        queryClient.invalidateQueries({ queryKey: ['whitelistContracts'] });
       } catch (error: any) {
         // Ignore errors - contract might already exist
         console.log('Mintbase contract check:', error.message);

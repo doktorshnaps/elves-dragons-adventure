@@ -8,6 +8,8 @@ import { Trash2, Plus, Users } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { useWalletContext } from '@/contexts/WalletConnectContext';
+import { useWhitelistData } from '@/hooks/useWhitelistData';
+import { useQueryClient } from '@tanstack/react-query';
 interface WhitelistEntry {
   id: string;
   wallet_address: string;
@@ -18,36 +20,14 @@ interface WhitelistEntry {
 }
 
 export const WhitelistManager = () => {
-  const [entries, setEntries] = useState<WhitelistEntry[]>([]);
   const [newAddress, setNewAddress] = useState('');
   const [newNotes, setNewNotes] = useState('');
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
   const { accountId } = useWalletContext();
-
-  const loadWhitelist = async () => {
-    try {
-      const { data, error } = await supabase
-        .from('whitelist')
-        .select('*')
-        .eq('is_active', true)
-        .order('added_at', { ascending: false });
-
-      if (error) throw error;
-      setEntries(data || []);
-    } catch (error) {
-      console.error('Error loading whitelist:', error);
-      toast({
-        title: 'Ошибка',
-        description: 'Не удалось загрузить вайт-лист',
-        variant: 'destructive',
-      });
-    }
-  };
-
-  useEffect(() => {
-    loadWhitelist();
-  }, []);
+  const queryClient = useQueryClient();
+  
+  const { data: entries = [], isLoading: entriesLoading, refetch } = useWhitelistData();
 
   const addToWhitelist = async () => {
     if (!newAddress.trim()) {
@@ -76,7 +56,7 @@ export const WhitelistManager = () => {
 
       setNewAddress('');
       setNewNotes('');
-      loadWhitelist();
+      queryClient.invalidateQueries({ queryKey: ['whitelist'] });
     } catch (error) {
       console.error('Error adding to whitelist:', error);
       toast({
@@ -103,7 +83,7 @@ export const WhitelistManager = () => {
         description: 'Адрес удален из вайт-листа',
       });
 
-      loadWhitelist();
+      queryClient.invalidateQueries({ queryKey: ['whitelist'] });
     } catch (error) {
       console.error('Error removing from whitelist:', error);
       toast({
@@ -119,7 +99,7 @@ export const WhitelistManager = () => {
   const handleRefresh = async () => {
     setLoading(true);
     try {
-      await loadWhitelist();
+      await refetch();
       toast({
         title: 'Успех',
         description: 'Список вайт-листа обновлен',
