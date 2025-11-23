@@ -60,11 +60,10 @@ export const useCardHealthSync = () => {
     return () => window.removeEventListener('cardInstanceHealthUpdate', handleHealthUpdate);
   }, [loadCardInstances]);
 
-  // Load instances only if needed (on mount and when instances are empty)
+  // Load instances only once on mount - removed redundant check
   useEffect(() => {
-    if (cardInstances.length === 0) {
-      loadCardInstances();
-    }
+    // Instances will be loaded automatically by React Query
+    // No need for manual load here
   }, []);
 
   // Auto-sync when card instances change - but only if there are actual changes
