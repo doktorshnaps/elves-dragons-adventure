@@ -422,6 +422,7 @@ export const translations = {
     dungeonSearch: {
       activeTitle: 'Активное подземелье',
       selectTitle: 'Выбор подземелья',
+      active: 'Активно',
       balance: 'Баланс:',
       energy: 'Энергия:',
       nextEnergy: 'Следующая энергия через:',
@@ -984,6 +985,7 @@ export const translations = {
     dungeonSearch: {
       activeTitle: 'Active Dungeon',
       selectTitle: 'Select Dungeon',
+      active: 'Active',
       balance: 'Balance:',
       energy: 'Energy:',
       nextEnergy: 'Next energy in:',
