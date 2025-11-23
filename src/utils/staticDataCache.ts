@@ -50,11 +50,17 @@ export const getDungeonSettingsFromCache = () => {
 };
 
 /**
- * Найти монстра по ID
+ * Найти монстра по ID (с нормализацией дефисов/подчеркиваний)
  */
 export const getMonsterById = (monsterId: string) => {
   const monsters = getMonstersFromCache();
-  return monsters.find(m => m.monster_id === monsterId);
+  const normalized = monsterId.toLowerCase();
+  const variants = [normalized, normalized.replace(/-/g, '_'), normalized.replace(/_/g, '-')];
+  
+  return monsters.find(m => {
+    const id = m.monster_id?.toLowerCase();
+    return variants.some(v => v === id);
+  });
 };
 
 /**
