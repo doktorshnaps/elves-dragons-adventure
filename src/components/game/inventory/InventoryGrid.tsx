@@ -41,8 +41,8 @@ export const InventoryGrid = ({
     });
 
   const resolveGroupImage = (g: GroupedItem) => {
-    // 1. For workers and materials - prioritize image_url from database
-    if ((g.type === 'worker' || g.type === 'material') && g.image_url) {
+    // 1. Prioritize image_url from database for ALL item types
+    if (g.image_url) {
       return g.image_url;
     }
     
