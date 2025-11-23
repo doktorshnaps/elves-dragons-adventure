@@ -2439,6 +2439,17 @@ export type Database = {
         }
         Returns: boolean
       }
+      apply_battle_rewards: {
+        Args: {
+          p_card_health_updates: Json
+          p_card_kills: Json
+          p_ell_reward: number
+          p_experience_reward: number
+          p_items: Json
+          p_wallet_address: string
+        }
+        Returns: Json
+      }
       atomic_balance_update: {
         Args: { p_price_deduction: number; p_wallet_address: string }
         Returns: Json
