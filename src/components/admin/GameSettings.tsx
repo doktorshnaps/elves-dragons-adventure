@@ -10,6 +10,14 @@ import { useWalletContext } from "@/contexts/WalletConnectContext";
 import { Loader2, Save } from "lucide-react";
 import { refreshGameSettings } from "@/utils/cardUtils";
 import { RecalculateNFTStatsButton } from "./RecalculateNFTStatsButton";
+import { useQueryClient } from '@tanstack/react-query';
+import { 
+  useHeroBaseStats, 
+  useDragonBaseStats, 
+  useRarityMultipliers, 
+  useClassMultipliers, 
+  useDragonClassMultipliers 
+} from '@/hooks/useGameStatsData';
 
 interface HeroBaseStats {
   id: string;
@@ -45,49 +53,45 @@ interface ClassMultiplier {
 export const GameSettings = () => {
   const { toast } = useToast();
   const { accountId } = useWalletContext();
-  const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const queryClient = useQueryClient();
 
-  // State for all settings
+  // Use cached queries
+  const { data: heroBaseStatsData, isLoading: heroLoading } = useHeroBaseStats();
+  const { data: dragonBaseStatsData, isLoading: dragonLoading } = useDragonBaseStats();
+  const { data: rarityMultipliersData = [], isLoading: rarityLoading } = useRarityMultipliers();
+  const { data: classMultipliersData = [], isLoading: classLoading } = useClassMultipliers();
+  const { data: dragonClassMultipliersData = [], isLoading: dragonClassLoading } = useDragonClassMultipliers();
+
+  // Local state for editing
   const [heroBaseStats, setHeroBaseStats] = useState<HeroBaseStats | null>(null);
   const [dragonBaseStats, setDragonBaseStats] = useState<DragonBaseStats | null>(null);
   const [rarityMultipliers, setRarityMultipliers] = useState<RarityMultiplier[]>([]);
   const [classMultipliers, setClassMultipliers] = useState<ClassMultiplier[]>([]);
   const [dragonClassMultipliers, setDragonClassMultipliers] = useState<ClassMultiplier[]>([]);
 
+  const loading = heroLoading || dragonLoading || rarityLoading || classLoading || dragonClassLoading;
+
+  // Sync cached data to local state when it loads
   useEffect(() => {
-    loadSettings();
-  }, []);
+    if (heroBaseStatsData) setHeroBaseStats(heroBaseStatsData);
+  }, [heroBaseStatsData]);
 
-  const loadSettings = async () => {
-    try {
-      setLoading(true);
+  useEffect(() => {
+    if (dragonBaseStatsData) setDragonBaseStats(dragonBaseStatsData);
+  }, [dragonBaseStatsData]);
 
-      // Load all settings
-      const [heroRes, dragonRes, rarityRes, classRes, dragonClassRes] = await Promise.all([
-        supabase.from('hero_base_stats').select('*').limit(1).single(),
-        supabase.from('dragon_base_stats').select('*').limit(1).single(),
-        supabase.from('rarity_multipliers').select('*').order('rarity'),
-        supabase.from('class_multipliers').select('*').order('class_name'),
-        supabase.from('dragon_class_multipliers').select('*').order('class_name'),
-      ]);
+  useEffect(() => {
+    if (rarityMultipliersData.length > 0) setRarityMultipliers(rarityMultipliersData);
+  }, [rarityMultipliersData]);
 
-      if (heroRes.data) setHeroBaseStats(heroRes.data);
-      if (dragonRes.data) setDragonBaseStats(dragonRes.data);
-      if (rarityRes.data) setRarityMultipliers(rarityRes.data);
-      if (classRes.data) setClassMultipliers(classRes.data);
-      if (dragonClassRes.data) setDragonClassMultipliers(dragonClassRes.data);
-    } catch (error) {
-      console.error('Error loading settings:', error);
-      toast({
-        variant: "destructive",
-        title: "Ошибка",
-        description: "Не удалось загрузить настройки",
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
+  useEffect(() => {
+    if (classMultipliersData.length > 0) setClassMultipliers(classMultipliersData);
+  }, [classMultipliersData]);
+
+  useEffect(() => {
+    if (dragonClassMultipliersData.length > 0) setDragonClassMultipliers(dragonClassMultipliersData);
+  }, [dragonClassMultipliersData]);
 
   const saveHeroBaseStats = async () => {
     if (!heroBaseStats) return;
@@ -116,8 +120,8 @@ export const GameSettings = () => {
       // Обновляем кеш настроек
       await refreshGameSettings();
       
-      // Reload settings to ensure sync
-      await loadSettings();
+      // Invalidate cache to reload
+      queryClient.invalidateQueries({ queryKey: ['heroBaseStats'] });
     } catch (error: any) {
       console.error('Error saving hero stats:', error);
       toast({
@@ -157,8 +161,8 @@ export const GameSettings = () => {
       // Обновляем кеш настроек
       await refreshGameSettings();
       
-      // Reload settings to ensure sync
-      await loadSettings();
+      // Invalidate cache to reload
+      queryClient.invalidateQueries({ queryKey: ['dragonBaseStats'] });
     } catch (error: any) {
       console.error('Error saving dragon stats:', error);
       toast({
@@ -199,8 +203,8 @@ export const GameSettings = () => {
       // Обновляем кеш настроек
       await refreshGameSettings();
       
-      // Reload settings to ensure sync
-      await loadSettings();
+      // Invalidate cache to reload
+      queryClient.invalidateQueries({ queryKey: ['rarityMultipliers'] });
     } catch (error: any) {
       console.error('Error saving rarity multipliers:', error);
       toast({
@@ -244,8 +248,8 @@ export const GameSettings = () => {
       // Обновляем кеш настроек
       await refreshGameSettings();
       
-      // Reload settings to ensure sync
-      await loadSettings();
+      // Invalidate cache to reload
+      queryClient.invalidateQueries({ queryKey: ['classMultipliers'] });
     } catch (error: any) {
       console.error('Error saving class multipliers:', error);
       toast({
@@ -289,8 +293,8 @@ export const GameSettings = () => {
       // Обновляем кеш настроек
       await refreshGameSettings();
       
-      // Reload settings to ensure sync
-      await loadSettings();
+      // Invalidate cache to reload
+      queryClient.invalidateQueries({ queryKey: ['dragonClassMultipliers'] });
     } catch (error: any) {
       console.error('Error saving dragon class multipliers:', error);
       toast({
