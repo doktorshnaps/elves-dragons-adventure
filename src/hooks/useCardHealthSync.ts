@@ -2,14 +2,16 @@ import { useEffect, useCallback } from 'react';
 import { useCardInstances } from './useCardInstances';
 import { useGameData } from './useGameData';
 import { Card } from '@/types/cards';
+import { useGameStore } from '@/stores/gameStore';
 
 /**
  * Hook to sync card health from card_instances to game data
  * Ensures health is always accurate from database
  */
-export const useCardHealthSync = () => {
+export const useCardHealthSync = (skipDuringBattle: boolean = false) => {
   const { cardInstances, loadCardInstances } = useCardInstances();
   const { gameData } = useGameData();
+  const { activeBattleInProgress } = useGameStore();
 
   // Sync health from card_instances to cards in gameData
   const syncHealthFromInstances = useCallback(async () => {
@@ -50,15 +52,20 @@ export const useCardHealthSync = () => {
     }
   }, [cardInstances, gameData.cards]);
 
-  // Listen for card health updates and sync
+  // Listen for card health updates and sync (SKIP during battle)
   useEffect(() => {
+    if (skipDuringBattle && activeBattleInProgress) {
+      console.log('⏸️ [useCardHealthSync] Skipping sync during active battle');
+      return;
+    }
+
     const handleHealthUpdate = () => {
       loadCardInstances();
     };
 
     window.addEventListener('cardInstanceHealthUpdate', handleHealthUpdate);
     return () => window.removeEventListener('cardInstanceHealthUpdate', handleHealthUpdate);
-  }, [loadCardInstances]);
+  }, [loadCardInstances, skipDuringBattle, activeBattleInProgress]);
 
   // Load instances only once on mount - removed redundant check
   useEffect(() => {
@@ -66,8 +73,13 @@ export const useCardHealthSync = () => {
     // No need for manual load here
   }, []);
 
-  // Auto-sync when card instances change - but only if there are actual changes
+  // Auto-sync when card instances change - but SKIP during battle
   useEffect(() => {
+    if (skipDuringBattle && activeBattleInProgress) {
+      console.log('⏸️ [useCardHealthSync] Skipping auto-sync during active battle');
+      return;
+    }
+
     // Only sync if we have both instances and cards
     if (cardInstances.length > 0 && gameData.cards.length > 0) {
       const instancesById = new Map(cardInstances.map(inst => [inst.card_template_id, inst]));
@@ -85,7 +97,7 @@ export const useCardHealthSync = () => {
         syncHealthFromInstances();
       }
     }
-  }, [cardInstances, gameData.cards]);
+  }, [cardInstances, gameData.cards, skipDuringBattle, activeBattleInProgress]);
 
   return {
     syncHealthFromInstances,

@@ -46,10 +46,10 @@ const TeamBattlePageInner: React.FC<TeamBattlePageProps> = ({
   const [sessionTerminated, setSessionTerminated] = useState(false);
   const [showingFinishDelay, setShowingFinishDelay] = useState(false);
   
-  // Sync health from database on component mount
-  useCardHealthSync();
+  // Sync health from database ONLY when NOT in battle (prevents DB spam)
+  useCardHealthSync(true); // true = skip during battle
   
-  // Инициализация кеша item templates из StaticGameData (ОДИН РАЗ)
+  // Инициализация кеша item templates и treasure hunt из StaticGameData (ОДИН РАЗ)
   const { templates: itemTemplatesMap } = useItemTemplates();
   const itemTemplatesInitialized = useRef(false);
   
@@ -57,8 +57,15 @@ const TeamBattlePageInner: React.FC<TeamBattlePageProps> = ({
     if (!itemTemplatesInitialized.current && itemTemplatesMap.size > 0) {
       const templatesArray = Array.from(itemTemplatesMap.values());
       setItemTemplatesCache(templatesArray);
+      
+      // Также загружаем treasure hunt событие ОДИН РАЗ при инициализации боя
+      (async () => {
+        const { loadActiveTreasureHunt } = await import('@/utils/monsterLootMapping');
+        await loadActiveTreasureHunt();
+      })();
+      
       itemTemplatesInitialized.current = true;
-      console.log('✅ Item templates cache initialized from StaticGameData');
+      console.log('✅ Item templates and treasure hunt cache initialized from StaticGameData');
     }
   }, [itemTemplatesMap]);
   
@@ -218,8 +225,8 @@ const TeamBattlePageInner: React.FC<TeamBattlePageProps> = ({
       )
       .subscribe();
 
-    // Периодическая проверка на случай пропуска realtime-события
-    const interval = setInterval(checkSession, 5000);
+    // Периодическая проверка на случай пропуска realtime-события (увеличено до 30с для снижения нагрузки)
+    const interval = setInterval(checkSession, 30000);
 
     return () => {
       supabase.removeChannel(channel);
