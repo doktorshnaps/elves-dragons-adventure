@@ -3,12 +3,15 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
+import { Checkbox } from '@/components/ui/checkbox';
 import { Clock, Shield, Plus, Activity, ArrowRight, X } from 'lucide-react';
 import { useForgeBay } from '@/hooks/useForgeBay';
 import { useCardInstances } from '@/hooks/useCardInstances';
 import { useCardHealthSync } from '@/hooks/useCardHealthSync';
 import { useCardsWithHealth } from '@/hooks/useCardsWithHealth';
 import { useUnifiedGameState } from '@/hooks/useUnifiedGameState';
+import { useBatchCardUpdate } from '@/hooks/useBatchCardUpdate';
+import { useWalletContext } from '@/contexts/WalletConnectContext';
 import { CardDisplay } from '../CardDisplay';
 import { normalizeCardHealth } from '@/utils/cardHealthNormalizer';
 
@@ -31,7 +34,10 @@ export const ForgeBayComponent = ({ forgeLevel }: ForgeBayComponentProps) => {
   const { syncHealthFromInstances } = useCardHealthSync();
   const { cardsWithHealth, selectedTeamWithHealth } = useCardsWithHealth();
   const gameState = useUnifiedGameState();
+  const { accountId } = useWalletContext();
+  const { updateMultiple, isUpdating } = useBatchCardUpdate(accountId);
   const [selectedCard, setSelectedCard] = useState<any>(null);
+  const [selectedCards, setSelectedCards] = useState<string[]>([]);
   const REPAIR_RATE = 1;
   const isStartingRef = useRef(false);
 
@@ -128,6 +134,32 @@ export const ForgeBayComponent = ({ forgeLevel }: ForgeBayComponentProps) => {
 
   const handleCardSelect = (card: any) => {
     setSelectedCard(selectedCard?.id === card.id ? null : card);
+  };
+
+  // Batch repair
+  const handleBatchRepair = async () => {
+    if (selectedCards.length === 0) return;
+
+    const updates = selectedCards.map(cardId => {
+      const card = damagedCards.find((c: any) => c.id === cardId);
+      return {
+        card_instance_id: cardId,
+        current_health: undefined,
+        current_defense: card?.max_defense,
+        monster_kills: undefined
+      };
+    });
+
+    const result = await updateMultiple(updates);
+    
+    if (result?.success) {
+      setSelectedCards([]);
+      await Promise.all([
+        loadCardInstances(),
+        loadForgeBayEntries(),
+        syncHealthFromInstances()
+      ]);
+    }
   };
 
   const handleStartRepair = async () => {
@@ -303,21 +335,46 @@ export const ForgeBayComponent = ({ forgeLevel }: ForgeBayComponentProps) => {
               Поврежденные карты ({damagedCards.length})
             </CardTitle>
             <CardDescription>
-              {canStartRepair ? "Выберите карту для восстановления брони" : "Нет доступных слотов для ремонта"}
+              {canStartRepair ? "Выберите карты для восстановления брони" : "Нет доступных слотов для ремонта"}
             </CardDescription>
           </CardHeader>
           <CardContent>
+            {/* Batch Repair Button */}
+            {selectedCards.length > 0 && (
+              <Button 
+                onClick={handleBatchRepair}
+                disabled={isUpdating}
+                className="w-full mb-4"
+              >
+                <Shield className="w-4 h-4 mr-2" />
+                Отремонтировать все ({selectedCards.length})
+              </Button>
+            )}
+
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               {damagedCards.map((card: any) => (
                 <div
                   key={card.id}
-                  className={`cursor-pointer transition-all ${
-                    selectedCard?.id === card.id
+                  className={`relative cursor-pointer transition-all ${
+                    selectedCards.includes(card.id)
+                      ? 'ring-2 ring-green-500'
+                      : selectedCard?.id === card.id
                       ? 'ring-2 ring-orange-500 ring-offset-2 ring-offset-background'
                       : 'hover:ring-2 hover:ring-muted ring-offset-2 ring-offset-background'
                   }`}
-                  onClick={() => canStartRepair && handleCardSelect(card)}
+                  onClick={() => {
+                    if (selectedCards.includes(card.id)) {
+                      setSelectedCards(prev => prev.filter(id => id !== card.id));
+                    } else {
+                      setSelectedCards(prev => [...prev, card.id]);
+                    }
+                  }}
                 >
+                  <Checkbox 
+                    checked={selectedCards.includes(card.id)}
+                    className="absolute top-2 right-2 z-10 bg-background"
+                    onClick={(e) => e.stopPropagation()}
+                  />
                   <CardDisplay card={card.card_data} showSellButton={false} />
                   <div className="mt-2 text-center">
                     <Badge variant="secondary" className="text-xs">

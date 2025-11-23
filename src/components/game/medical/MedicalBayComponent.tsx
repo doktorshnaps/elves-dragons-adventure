@@ -3,12 +3,15 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
+import { Checkbox } from '@/components/ui/checkbox';
 import { Clock, Heart, Plus, Activity, ArrowRight, X } from 'lucide-react';
 import { useMedicalBay } from '@/hooks/useMedicalBay';
 import { useCardInstances } from '@/hooks/useCardInstances';
 import { useCardHealthSync } from '@/hooks/useCardHealthSync';
 import { useCardsWithHealth } from '@/hooks/useCardsWithHealth';
 import { useUnifiedGameState } from '@/hooks/useUnifiedGameState';
+import { useBatchCardUpdate } from '@/hooks/useBatchCardUpdate';
+import { useWalletContext } from '@/contexts/WalletConnectContext';
 import { CardDisplay } from '../CardDisplay';
 import { normalizeCardHealth } from '@/utils/cardHealthNormalizer';
 
@@ -27,7 +30,10 @@ export const MedicalBayComponent = () => {
   const { syncHealthFromInstances } = useCardHealthSync();
   const { cardsWithHealth, selectedTeamWithHealth } = useCardsWithHealth();
   const gameState = useUnifiedGameState();
+  const { accountId } = useWalletContext();
+  const { updateMultiple, isUpdating } = useBatchCardUpdate(accountId);
   const [selectedCard, setSelectedCard] = useState<any>(null);
+  const [selectedCards, setSelectedCards] = useState<string[]>([]);
   const HEAL_RATE = 100;
   const isStartingRef = useRef(false);
 
@@ -148,6 +154,32 @@ export const MedicalBayComponent = () => {
 
   const handleCardSelect = (card: any) => {
     setSelectedCard(selectedCard?.id === card.id ? null : card);
+  };
+
+  // Batch healing
+  const handleBatchHeal = async () => {
+    if (selectedCards.length === 0) return;
+
+    const updates = selectedCards.map(cardId => {
+      const card = injuredCards.find((c: any) => c.id === cardId);
+      return {
+        card_instance_id: cardId,
+        current_health: card?.max_health,
+        current_defense: undefined,
+        monster_kills: undefined
+      };
+    });
+
+    const result = await updateMultiple(updates);
+    
+    if (result?.success) {
+      setSelectedCards([]);
+      await Promise.all([
+        loadCardInstances(),
+        loadMedicalBayEntries(),
+        syncHealthFromInstances()
+      ]);
+    }
   };
 
   const handleStartHealing = async () => {
@@ -416,12 +448,24 @@ export const MedicalBayComponent = () => {
           </div>
           <CardDescription>
             {canStartHealing 
-              ? "Выберите поврежденную карту для отправки в медпункт"
+              ? "Выберите карты для лечения (кликом или множественный выбор)"
               : "Нет свободных слотов в медпункте"
             }
           </CardDescription>
         </CardHeader>
         <CardContent>
+          {/* Batch Heal Button */}
+          {selectedCards.length > 0 && (
+            <Button 
+              onClick={handleBatchHeal}
+              disabled={isUpdating}
+              className="w-full mb-4 bg-green-600 hover:bg-green-700"
+            >
+              <Heart className="w-4 h-4 mr-2" />
+              Вылечить всех ({selectedCards.length})
+            </Button>
+          )}
+
           {injuredCards.length === 0 ? (
             <div className="text-center text-muted-foreground py-8">
               <Heart className="h-12 w-12 mx-auto mb-4 opacity-50" />
@@ -432,40 +476,53 @@ export const MedicalBayComponent = () => {
               {injuredCards.map((card) => {
                 const healthPercentage = (card.current_health / card.max_health) * 100;
                 const cardData = card.card_data;
+                const isSelectedForBatch = selectedCards.includes(card.id);
                 const isSelected = selectedCard?.id === card.id;
 
                 return (
                   <div 
                     key={card.id} 
-                    className={`cursor-pointer transition-all duration-200 ${
-                      isSelected 
+                    className={`relative cursor-pointer transition-all duration-200 ${
+                      isSelectedForBatch
+                        ? 'ring-2 ring-green-500 scale-105'
+                        : isSelected 
                         ? 'ring-2 ring-red-500 scale-105' 
                         : canStartHealing 
                           ? 'hover:scale-105' 
                           : 'opacity-50 cursor-not-allowed'
                     }`}
                     onClick={(e) => {
-                      e.stopPropagation(); // Предотвращаем всплытие события
+                      e.stopPropagation();
                       if (canStartHealing && !loading) {
-                        handleCardSelect(card);
+                        // Toggle batch selection
+                        if (isSelectedForBatch) {
+                          setSelectedCards(prev => prev.filter(id => id !== card.id));
+                        } else {
+                          setSelectedCards(prev => [...prev, card.id]);
+                        }
                       }
                     }}
                   >
+                    <Checkbox 
+                      checked={isSelectedForBatch}
+                      className="absolute top-2 right-2 z-10 bg-background"
+                      onClick={(e) => e.stopPropagation()}
+                    />
                     <div className="relative">
                       <CardDisplay 
                         card={{
                           ...cardData,
-                          currentHealth: card.current_health, // Use actual health from card_instances
-                          health: card.max_health // Use max health from card_instances  
+                          currentHealth: card.current_health,
+                          health: card.max_health
                         }}
                         showSellButton={false}
                         className="w-full"
                       />
                       
                       {/* Selection Indicator */}
-                      {isSelected && (
-                        <div className="absolute top-2 right-2">
-                          <div className="w-6 h-6 bg-red-500 rounded-full flex items-center justify-center">
+                      {(isSelected || isSelectedForBatch) && (
+                        <div className="absolute top-2 left-2">
+                          <div className={`w-6 h-6 ${isSelectedForBatch ? 'bg-green-500' : 'bg-red-500'} rounded-full flex items-center justify-center`}>
                             <Plus className="w-3 h-3 text-white" />
                           </div>
                         </div>
