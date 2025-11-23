@@ -2,7 +2,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { useGameData } from "@/hooks/useGameData";
 import { useToast } from "@/hooks/use-toast";
-import { useShopInventory } from "@/hooks/useShopInventory";
+import { useShopRealtime } from "@/hooks/useShopRealtime";
 import { useWalletContext } from "@/contexts/WalletConnectContext";
 import { useLanguage } from "@/hooks/useLanguage";
 import { t } from "@/utils/translations";
@@ -33,7 +33,7 @@ export const Shop = ({ onClose }: ShopProps) => {
     purchaseItem, 
     getItemQuantity, 
     isItemAvailable 
-  } = useShopInventory();
+  } = useShopRealtime();
   const { items: shopItems, loading: shopItemsLoading } = useEnrichedShopItems();
   const { toast } = useToast();
   const [showEffect, setShowEffect] = useState(false);
