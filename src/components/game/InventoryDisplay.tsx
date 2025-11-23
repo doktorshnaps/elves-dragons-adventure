@@ -93,9 +93,9 @@ const instanceItems: Item[] = (itemInstances || [])
       description: inst.type === 'cardPack' ? 'Содержит 1 случайную карту' : template?.description,
       image: inst.type === 'cardPack' 
         ? '/lovable-uploads/e523dce0-4cda-4d32-b4e2-ecec40b1eb39.png'
-        : undefined,
-      image_url: template?.image_url, // Подтягиваем image_url из БД
-      template_id: inst.template_id // Добавляем template_id для определения квестовых предметов
+        : template?.image_url, // ИСПРАВЛЕНО: используем image_url из template для обычных предметов
+      image_url: template?.image_url,
+      template_id: inst.template_id
     } as Item;
   });
 
