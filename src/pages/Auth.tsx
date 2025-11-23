@@ -1,10 +1,9 @@
-import { useEffect, useState, useCallback, useRef } from "react";
+import { useEffect } from "react";
 import { motion } from "framer-motion";
 import { useToast } from "@/hooks/use-toast";
 import { useWalletContext } from "@/contexts/WalletConnectContext";
-import { Navigate, useNavigate, useSearchParams } from "react-router-dom";
+import { Navigate, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { supabase } from "@/integrations/supabase/client";
 import useTelegram from "@/hooks/useTelegram";
 import { SplashCursor } from "@/components/effects/SplashCursor";
 import { Wallet } from "lucide-react";
@@ -27,9 +26,6 @@ export const Auth = () => {
   const isConnected = !!accountId;
   const connectWallet = connect;
   const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
-  const [referrerId, setReferrerId] = useState<string | null>(null);
-  const referralProcessedRef = useRef(false);
 
   // Initialize Telegram Web App
   useEffect(() => {
@@ -40,122 +36,13 @@ export const Auth = () => {
     }
   }, [isTelegram, tgWebApp]);
 
-  // Get referrer ID from URL params and persist to localStorage
-  useEffect(() => {
-    const refParam = searchParams.get('ref');
-    
-    if (refParam) {
-      // Save to localStorage to survive wallet redirects
-      localStorage.setItem('pendingReferrer', refParam);
-      setReferrerId(refParam);
-      console.log('🔗 Referral link detected and saved:', refParam);
-    }
-  }, [searchParams]);
-
-  // Restore referrer from localStorage on mount (independent of URL params)
-  useEffect(() => {
-    const savedReferrer = localStorage.getItem('pendingReferrer');
-    if (savedReferrer && !referralProcessedRef.current && !referrerId) {
-      setReferrerId(savedReferrer);
-      console.log('🔗 Restored referral from localStorage on mount:', savedReferrer);
-    }
-  }, []); // Run once on mount
-
-  // Memoized referral handler to prevent double calls
-  const handleReferral = useCallback(async () => {
-    if (!accountId || !referrerId || referralProcessedRef.current) {
-      console.log('⏭️ Skipping referral processing:', {
-        accountId: !!accountId,
-        referrerId: !!referrerId,
-        alreadyProcessed: referralProcessedRef.current
-      });
-      return;
-    }
-
-    // Mark as processed immediately to prevent race conditions
-    referralProcessedRef.current = true;
-
-    try {
-      console.log('🔗 Processing referral:', {
-        referrerId,
-        referred: accountId
-      });
-
-      const { data, error } = await supabase.rpc('add_referral', {
-        p_referrer_wallet_address: referrerId,
-        p_referred_wallet_address: accountId
-      });
-
-      if (error) {
-        console.error('❌ Referral add failed:', error);
-        toast({
-          title: t(language, 'auth.referralError'),
-          description: error.message,
-          variant: "destructive"
-        });
-        // Reset flag on error so user can retry
-        referralProcessedRef.current = false;
-      } else {
-        console.log('✅ Referral added successfully:', data);
-        
-        // Clear localStorage after successful processing
-        localStorage.removeItem('pendingReferrer');
-        
-        toast({
-          title: t(language, 'auth.referralAdded'),
-          description: t(language, 'auth.referralAddedDesc')
-        });
-      }
-    } catch (error) {
-      console.error('❌ Referral processing error:', error);
-      // Reset flag on error so user can retry
-      referralProcessedRef.current = false;
-    }
-  }, [accountId, referrerId, toast, language]);
-
-  // Single effect for handling connection and referral
+  // Redirect to menu when wallet connects (referral handled by useAccountSync)
   useEffect(() => {
     if (isConnected && accountId) {
-      console.log('✅ Wallet connected:', accountId);
-
-      // Wait a moment for referrerId to be restored from localStorage
-      const processConnection = async () => {
-        // Check localStorage one more time to ensure referrerId is set
-        const savedReferrer = localStorage.getItem('pendingReferrer');
-        const finalReferrerId = referrerId || savedReferrer;
-
-        console.log('🔍 Processing connection:', {
-          accountId,
-          referrerId,
-          savedReferrer,
-          finalReferrerId,
-          alreadyProcessed: referralProcessedRef.current
-        });
-
-        if (finalReferrerId && !referralProcessedRef.current) {
-          // Update state if we found referrer in localStorage but state wasn't updated yet
-          if (!referrerId && savedReferrer) {
-            setReferrerId(savedReferrer);
-          }
-
-          console.log('🔗 Processing referral before redirect...', {
-            accountId,
-            referrerId: finalReferrerId,
-            alreadyProcessed: referralProcessedRef.current
-          });
-          
-          await handleReferral();
-          console.log('✅ Referral processed, redirecting to menu');
-        } else {
-          console.log('✅ No referral to process, redirecting to menu');
-        }
-        
-        navigate("/menu", { replace: true });
-      };
-
-      processConnection();
+      console.log('✅ Wallet connected, redirecting to menu');
+      navigate("/menu", { replace: true });
     }
-  }, [isConnected, accountId, referrerId, handleReferral, navigate]);
+  }, [isConnected, accountId, navigate]);
   const handleConnectWallet = async () => {
     try {
       await connectWallet();
