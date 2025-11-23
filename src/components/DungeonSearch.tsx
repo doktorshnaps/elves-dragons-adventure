@@ -42,31 +42,43 @@ export const DungeonSearch = ({ onClose, balance }: DungeonSearchProps) => {
     console.log('🃏 [DungeonSearch] cards from store:', cards);
     
     // Проверяем Zustand store - основной источник данных
-    // Команда должна содержать хотя бы одного героя
-    if (Array.isArray(selectedTeam) && selectedTeam.length > 0) {
-      console.log('✅ [DungeonSearch] selectedTeam is array with length:', selectedTeam.length);
-      console.log('📋 [DungeonSearch] selectedTeam structure:', JSON.stringify(selectedTeam, null, 2));
-      
-      const hasHero = selectedTeam.some(pair => {
-        const result = pair?.hero && pair.hero.id;
-        console.log('🦸 [DungeonSearch] Checking pair:', { hasHero: result, pair: JSON.stringify(pair) });
-        return result;
-      });
-      console.log('🦸 [DungeonSearch] Has hero in team:', hasHero);
-      
-      if (hasHero) {
-        console.log('✅ [DungeonSearch] RESULT: Active cards found (Zustand)');
-        return true;
-      } else {
-        console.log('⚠️ [DungeonSearch] Team has items but no heroes found');
+    if (!Array.isArray(selectedTeam) || selectedTeam.length === 0) {
+      console.log('⚠️ [DungeonSearch] selectedTeam is empty, null, or not array');
+      return false;
+    }
+    
+    console.log('✅ [DungeonSearch] selectedTeam is array with length:', selectedTeam.length);
+    console.log('📋 [DungeonSearch] selectedTeam structure:', JSON.stringify(selectedTeam, null, 2));
+    
+    // Проверяем разные возможные структуры данных
+    const hasHero = selectedTeam.some(item => {
+      // Защита от null/undefined
+      if (!item) {
+        console.log('⚠️ [DungeonSearch] Found null/undefined item in team');
+        return false;
       }
-    } else {
-      console.log('⚠️ [DungeonSearch] selectedTeam is empty, null, or not array:', {
-        isArray: Array.isArray(selectedTeam),
-        isNull: selectedTeam === null,
-        isUndefined: selectedTeam === undefined,
-        value: selectedTeam
-      });
+      
+      // Вариант 1: структура pair.hero (новая структура)
+      if (item.hero && item.hero.id) {
+        console.log('✅ [DungeonSearch] Found hero in pair structure:', item.hero.name);
+        return true;
+      }
+      
+      // Вариант 2: прямая карта (старая структура)
+      if (item.id && item.type && (item.type === 'character' || item.type === 'pet')) {
+        console.log('✅ [DungeonSearch] Found card directly:', item.name);
+        return true;
+      }
+      
+      console.log('⚠️ [DungeonSearch] Item has unknown structure:', JSON.stringify(item).substring(0, 100));
+      return false;
+    });
+    
+    console.log('🦸 [DungeonSearch] Has hero in team:', hasHero);
+    
+    if (hasHero) {
+      console.log('✅ [DungeonSearch] RESULT: Active cards found');
+      return true;
     }
     
     console.log('❌ [DungeonSearch] RESULT: No active cards found');
