@@ -43,8 +43,18 @@ export const InventoryGrid = ({
     });
 
   const resolveGroupImage = (g: GroupedItem) => {
+    console.log('🖼️ [resolveGroupImage]', {
+      name: g.name,
+      type: g.type,
+      image_url: g.image_url,
+      image: g.image,
+      firstItem: g.items[0],
+      item_id: g.items[0] ? (g.items[0] as any).item_id : undefined
+    });
+
     // 1. Prioritize image_url from database for ALL item types
     if (g.image_url && g.image_url !== '/placeholder.svg') {
+      console.log('✅ Using g.image_url:', g.image_url);
       return g.image_url;
     }
     
@@ -53,22 +63,26 @@ export const InventoryGrid = ({
     if (firstItem && 'item_id' in firstItem) {
       const itemId = (firstItem as any).item_id;
       if (itemId && itemImagesByItemId[itemId] && itemImagesByItemId[itemId] !== '/placeholder.svg') {
+        console.log('✅ Using itemImagesByItemId[' + itemId + ']:', itemImagesByItemId[itemId]);
         return itemImagesByItemId[itemId];
       }
     }
     
     // 3. Check centralized item images by name (Russian names)
     if (g.name && itemImagesByName[g.name] && itemImagesByName[g.name] !== '/placeholder.svg') {
+      console.log('✅ Using itemImagesByName[' + g.name + ']:', itemImagesByName[g.name]);
       return itemImagesByName[g.name];
     }
     
     // 4. Try to get image from grouped item data (from DB or shop)
     const itemImage = g.image || g.items[0]?.image;
     if (itemImage && itemImage !== '/placeholder.svg') {
+      console.log('✅ Using itemImage:', itemImage);
       return itemImage;
     }
     
     // 5. Fallback to placeholder
+    console.log('⚠️ Falling back to placeholder');
     return '/placeholder.svg';
   };
 

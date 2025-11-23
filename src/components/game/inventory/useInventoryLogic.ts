@@ -62,7 +62,7 @@ const groupItems = (items: Item[]): GroupedItem[] => {
         existingGroup.count += 1;
         existingGroup.items.push(item);
       } else {
-        acc.push({
+        const newGroup = {
           name: item.name,
           type: item.type,
           value: item.value,
@@ -70,7 +70,15 @@ const groupItems = (items: Item[]): GroupedItem[] => {
           items: [item],
           image: getItemImage(item),
           image_url: item.image_url // Use image_url from database
+        };
+        console.log('📦 [groupItems] Creating new group:', {
+          name: newGroup.name,
+          type: newGroup.type,
+          image_url: newGroup.image_url,
+          image: newGroup.image,
+          item_id: (item as any).item_id
         });
+        acc.push(newGroup);
       }
 
       return acc;
