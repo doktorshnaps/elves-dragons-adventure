@@ -14,6 +14,8 @@ import { StaticGameDataProvider } from './contexts/StaticGameDataContext';
 import { useRoutePreloader } from './hooks/useRoutePreloader';
 import { useNFTStatsRecalculation } from './hooks/useNFTStatsRecalculation';
 import { useSecureStorage } from './hooks/useSecureStorage';
+import { useAccountSync } from './hooks/useAccountSync';
+import { useGameSync } from './hooks/useGameSync';
 import { MetricsPanel } from './components/dev/MetricsPanel';
 
 // Lazy load page components to reduce initial bundle size
@@ -53,6 +55,8 @@ function App() {
     useRoutePreloader();
     useNFTStatsRecalculation();
     useSecureStorage();
+    useAccountSync(); // Один раз на уровне App
+    useGameSync(); // Один раз на уровне App
   } catch (error) {
     console.error('❌ Error in App hooks:', error);
   }

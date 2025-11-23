@@ -6,11 +6,12 @@ import { Badge } from '@/components/ui/badge';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Clock, Shield, Plus, Activity, ArrowRight, X } from 'lucide-react';
 import { useForgeBay } from '@/hooks/useForgeBay';
+import { useCardInstances } from '@/hooks/useCardInstances';
 import { useCardHealthSync } from '@/hooks/useCardHealthSync';
 import { useCardsWithHealth } from '@/hooks/useCardsWithHealth';
+import { useUnifiedGameState } from '@/hooks/useUnifiedGameState';
 import { useBatchCardUpdate } from '@/hooks/useBatchCardUpdate';
 import { useWalletContext } from '@/contexts/WalletConnectContext';
-import { useShelterData } from '@/contexts/ShelterDataContext';
 import { CardDisplay } from '../CardDisplay';
 import { normalizeCardHealth } from '@/utils/cardHealthNormalizer';
 
@@ -29,9 +30,10 @@ export const ForgeBayComponent = ({ forgeLevel }: ForgeBayComponentProps) => {
     processForgeBayRepair
   } = useForgeBay();
 
-  const { gameState, cardInstances, loadCardInstances } = useShelterData();
+  const { cardInstances, loadCardInstances } = useCardInstances();
   const { syncHealthFromInstances } = useCardHealthSync();
   const { cardsWithHealth, selectedTeamWithHealth } = useCardsWithHealth();
+  const gameState = useUnifiedGameState();
   const { accountId } = useWalletContext();
   const { updateMultiple, isUpdating } = useBatchCardUpdate(accountId);
   const [selectedCard, setSelectedCard] = useState<any>(null);
