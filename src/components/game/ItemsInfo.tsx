@@ -1,5 +1,4 @@
-import { useState, useEffect } from "react";
-import { supabase } from "@/integrations/supabase/client";
+import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -8,6 +7,7 @@ import { Sword, Shield, Gem, Heart, Hammer, Trophy, Coins, Diamond, Sparkles } f
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useLanguage } from "@/hooks/useLanguage";
 import { translateItemName, translateItemType, translateRarity, translateSourceType, translateStat, translateItemText } from "@/utils/itemTranslations";
+import { useItemTemplates, type ItemTemplate } from "@/hooks/useItemTemplates";
 
 // Temporarily using placeholders until webp files are uploaded
 const spiderSilk = "/placeholder.svg";
@@ -42,25 +42,6 @@ const livingShadowMantle = "/placeholder.svg";
 const arachnidGrimoire = "/placeholder.svg";
 
 import { itemImagesByItemId } from "@/constants/itemImages";
-
-interface ItemTemplate {
-  id: number;
-  item_id: string;
-  name: string;
-  type: string;
-  rarity: string;
-  description: string;
-  stats: any;
-  source_type: string;
-  source_details: any;
-  drop_chance: number;
-  slot: string;
-  level_requirement: number;
-  value: number;
-  sell_price?: number;
-  dungeon_drop_settings?: any;
-  image_url?: string;
-}
 
 const getRarityColor = (rarity: string) => {
   switch (rarity) {
@@ -305,35 +286,19 @@ const ItemCard = ({ item }: { item: ItemTemplate }) => {
 };
 
 export const ItemsInfo = () => {
-  const [items, setItems] = useState<ItemTemplate[]>([]);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    const fetchItems = async () => {
-      try {
-        const { data, error } = await supabase
-          .from('item_templates')
-          .select('*, sell_price, dungeon_drop_settings')
-          .order('rarity', { ascending: false })
-          .order('level_requirement', { ascending: true });
-
-        if (error) {
-          console.error('Error fetching items:', error);
-          return;
-        }
-
-        setItems(data || []);
-      } catch (error) {
-        console.error('Error:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchItems();
-  }, []);
-
+  const { templates, loading } = useItemTemplates();
   const { language } = useLanguage();
+  
+  // Преобразуем Map в массив и сортируем
+  const items = Array.from(templates.values()).sort((a, b) => {
+    // Сортируем по редкости (в обратном порядке) и уровню требований
+    const rarityOrder = { legendary: 4, epic: 3, rare: 2, common: 1 };
+    const aRarity = rarityOrder[a.rarity as keyof typeof rarityOrder] || 0;
+    const bRarity = rarityOrder[b.rarity as keyof typeof rarityOrder] || 0;
+    
+    if (aRarity !== bRarity) return bRarity - aRarity;
+    return (a.level_requirement || 0) - (b.level_requirement || 0);
+  });
 
   if (loading) {
     return (

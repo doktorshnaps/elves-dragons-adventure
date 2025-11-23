@@ -11,6 +11,13 @@ export interface ItemTemplate {
   value?: number;
   image_url?: string;
   sell_price?: number;
+  stats?: any;
+  source_type?: string;
+  source_details?: any;
+  drop_chance?: number;
+  slot?: string;
+  level_requirement?: number;
+  dungeon_drop_settings?: any;
 }
 
 export const useItemTemplates = () => {
