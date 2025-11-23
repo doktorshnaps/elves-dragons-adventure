@@ -65,6 +65,7 @@ const DungeonLevel = memo(({
   const { language } = useLanguage();
   
   const [opponents, setOpponents] = React.useState<any[]>([]);
+  const [loadKey, setLoadKey] = React.useState(0);
 
   React.useEffect(() => {
     const loadOpponents = async () => {
@@ -83,7 +84,7 @@ const DungeonLevel = memo(({
       setOpponents(enhanced);
     };
     loadOpponents();
-  }, [dungeonType, level, language]);
+  }, [dungeonType, level, language, loadKey]);
 
   return <div className="space-y-4">
       <h3 className="text-lg font-semibold text-white border-b border-white/30 pb-2">

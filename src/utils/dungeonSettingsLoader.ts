@@ -45,10 +45,11 @@ export interface DungeonSettings {
 
 let cachedSettings: DungeonSettings[] | null = null;
 let lastFetchTime = 0;
-const CACHE_DURATION = 5000; // 5 секунд — быстрее подхватываем изменения из БД
+const CACHE_DURATION = 2000; // 2 секунды — быстрее реагируем на изменения
 
 // Функция для принудительного сброса кеша
 export const clearDungeonSettingsCache = () => {
+  console.log('🔄 Clearing dungeon settings cache');
   cachedSettings = null;
   lastFetchTime = 0;
 };
@@ -58,6 +59,7 @@ export const getDungeonSettings = async (dungeonType: string): Promise<DungeonSe
   
   // Загружаем настройки из БД если кеш устарел
   if (!cachedSettings || now - lastFetchTime > CACHE_DURATION) {
+    console.log('📥 Loading dungeon settings from DB (cache expired or empty)');
     const { data, error } = await supabase
       .from('dungeon_settings')
       .select('*');
@@ -79,9 +81,17 @@ export const getDungeonSettings = async (dungeonType: string): Promise<DungeonSe
       boss_atk_multipliers: d.boss_atk_multipliers as unknown as BossMultipliers,
     })) || null;
     lastFetchTime = now;
+    console.log('✅ Dungeon settings loaded and cached');
   }
   
-  return cachedSettings?.find(s => s.dungeon_type === dungeonType) || null;
+  const settings = cachedSettings?.find(s => s.dungeon_type === dungeonType) || null;
+  if (settings) {
+    console.log(`📊 Using settings for ${dungeonType}:`, {
+      base_hp: settings.base_hp,
+      boss100_hp_mult: settings.boss_hp_multipliers.boss100
+    });
+  }
+  return settings;
 };
 
 
