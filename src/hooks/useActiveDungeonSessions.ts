@@ -35,9 +35,10 @@ export const useActiveDungeonSessions = () => {
       return data || [];
     },
     enabled: !!accountId,
-    staleTime: 30 * 1000, // 30 секунд
-    gcTime: 2 * 60 * 1000, // 2 минуты
-    // Убрал refetchInterval - используем Realtime вместо polling
+    staleTime: 5 * 60 * 1000, // 5 минут - агрессивное кеширование для страницы выбора
+    gcTime: 10 * 60 * 1000, // 10 минут
+    refetchOnMount: false,
+    refetchOnWindowFocus: false,
   });
 };
 
@@ -48,11 +49,11 @@ export const useLatestActiveDungeonSession = () => {
   const { accountId } = useWalletContext();
 
   return useQuery<Omit<ActiveDungeonSession, 'account_id'> | null>({
-    queryKey: ['latestDungeonSession', accountId], // стабильный ключ
+    queryKey: ['latestDungeonSession', accountId],
     queryFn: async () => {
       if (!accountId) return null;
 
-      const fiveMinutesAgo = Date.now() - 5 * 60 * 1000; // вычисляем внутри
+      const fiveMinutesAgo = Date.now() - 5 * 60 * 1000;
       const { data, error } = await supabase
         .from('active_dungeon_sessions')
         .select('device_id,dungeon_type,level,last_activity')
@@ -70,8 +71,9 @@ export const useLatestActiveDungeonSession = () => {
       return data;
     },
     enabled: !!accountId,
-    staleTime: 30 * 1000,
-    gcTime: 2 * 60 * 1000,
+    staleTime: 5 * 60 * 1000, // 5 минут - агрессивное кеширование
+    gcTime: 10 * 60 * 1000, // 10 минут
+    refetchOnMount: false,
     refetchOnWindowFocus: false,
   });
 };
