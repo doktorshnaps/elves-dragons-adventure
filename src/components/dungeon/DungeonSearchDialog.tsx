@@ -85,13 +85,43 @@ export const DungeonSearchDialog = ({
   const [pendingDungeon, setPendingDungeon] = useState<DungeonType | null>(null);
 
   React.useEffect(() => {
-    // Check for team battle state from Zustand store
-    if (teamBattleState && activeBattleInProgress) {
-      if (teamBattleState?.selectedDungeon) {
-        setActiveDungeon(teamBattleState.selectedDungeon);
-      }
+    // 1. Проверяем состояние из Zustand store
+    if (teamBattleState?.selectedDungeon) {
+      setActiveDungeon(teamBattleState.selectedDungeon);
+      return;
     }
-  }, [teamBattleState, activeBattleInProgress]);
+    
+    // 2. Проверяем localStorage на случай, если пользователь вышел из боя
+    try {
+      const storedState = localStorage.getItem('teamBattleState');
+      if (storedState) {
+        const parsed = JSON.parse(storedState);
+        if (parsed?.selectedDungeon) {
+          setActiveDungeon(parsed.selectedDungeon);
+          return;
+        }
+      }
+    } catch (e) {
+      console.error('Error parsing teamBattleState from localStorage:', e);
+    }
+    
+    // 3. Проверяем активную сессию из БД через localStorage (синхронизируется через useDungeonSync)
+    try {
+      const localSession = localStorage.getItem('activeDungeonSession');
+      if (localSession) {
+        const parsed = JSON.parse(localSession);
+        if (parsed?.dungeon_type) {
+          setActiveDungeon(parsed.dungeon_type);
+          return;
+        }
+      }
+    } catch (e) {
+      console.error('Error parsing activeDungeonSession from localStorage:', e);
+    }
+    
+    // Если ничего не найдено, сбрасываем
+    setActiveDungeon(null);
+  }, [teamBattleState]);
 
   const handleResetActiveBattle = async () => {
     // Clear battle state from Zustand store
