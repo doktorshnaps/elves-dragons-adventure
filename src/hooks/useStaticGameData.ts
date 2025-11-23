@@ -7,6 +7,8 @@ export interface StaticGameData {
   item_templates: any[];
   card_drop_rates: any[];
   card_upgrade_requirements: any[];
+  monsters: any[];
+  dungeon_settings: any[];
 }
 
 export const useStaticGameData = () => {
@@ -38,6 +40,8 @@ export const useStaticGameData = () => {
           item_templates: staticData.item_templates?.length || 0,
           card_drop_rates: staticData.card_drop_rates?.length || 0,
           card_upgrade_requirements: staticData.card_upgrade_requirements?.length || 0,
+          monsters: staticData.monsters?.length || 0,
+          dungeon_settings: staticData.dungeon_settings?.length || 0,
           firstTemplate: staticData.item_templates?.[0]
         });
         
