@@ -37,8 +37,10 @@ export const useItemTemplates = () => {
 
       return { itemIdMap, numericIdMap, nameMap };
     },
-    staleTime: 1000 * 60 * 5, // 5 minutes
-    gcTime: 1000 * 60 * 10, // 10 minutes
+    staleTime: Infinity, // Шаблоны предметов редко меняются, кешируем навсегда до перезагрузки страницы
+    gcTime: 1000 * 60 * 60, // 1 час в памяти
+    refetchOnMount: false, // Не перезапрашивать при монтировании
+    refetchOnWindowFocus: false, // Не перезапрашивать при фокусе окна
   });
 
   const byItemId = useMemo(() => templates?.itemIdMap || new Map<string, ItemTemplate>(), [templates]);
