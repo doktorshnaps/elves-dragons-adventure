@@ -16,8 +16,16 @@ export interface ItemTemplate {
 export const useItemTemplates = () => {
   const { data: staticData, isLoading: loading } = useStaticGameDataContext();
 
+  console.log('📚 [useItemTemplates] Static data:', {
+    hasStaticData: !!staticData,
+    hasItemTemplates: !!staticData?.item_templates,
+    itemTemplatesCount: staticData?.item_templates?.length,
+    firstTemplate: staticData?.item_templates?.[0]
+  });
+
   const templates = useMemo(() => {
     if (!staticData?.item_templates) {
+      console.warn('⚠️ [useItemTemplates] No item_templates in static data');
       return { itemIdMap: new Map<string, ItemTemplate>(), numericIdMap: new Map<string, ItemTemplate>(), nameMap: new Map<string, ItemTemplate>() };
     }
 
@@ -32,6 +40,13 @@ export const useItemTemplates = () => {
       if (t.name) nameMap.set(t.name, t);
     });
 
+    console.log('✅ [useItemTemplates] Templates loaded:', {
+      itemIdMapSize: itemIdMap.size,
+      numericIdMapSize: numericIdMap.size,
+      nameMapSize: nameMap.size,
+      sampleTemplate: itemIdMap.get('spider_silk')
+    });
+
     return { itemIdMap, numericIdMap, nameMap };
   }, [staticData?.item_templates]);
 
@@ -41,7 +56,17 @@ export const useItemTemplates = () => {
 
   const getTemplate = (idOrItemId: string): ItemTemplate | undefined => {
     const key = String(idOrItemId);
-    return byItemId.get(key) || byNumericId.get(key) || byItemId.get(key.toLowerCase());
+    const result = byItemId.get(key) || byNumericId.get(key) || byItemId.get(key.toLowerCase());
+    
+    console.log('🔍 [getTemplate] Looking for:', {
+      idOrItemId,
+      key,
+      foundInItemId: !!byItemId.get(key),
+      foundInNumericId: !!byNumericId.get(key),
+      result: result ? { id: result.id, name: result.name, image_url: result.image_url } : null
+    });
+    
+    return result;
   };
 
   const getTemplateByName = (name: string): ItemTemplate | undefined => {
