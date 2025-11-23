@@ -155,8 +155,7 @@ const TeamBattlePageInner: React.FC<TeamBattlePageProps> = ({
     startTransition(() => {
       handleLevelComplete();
       setMonstersKilled([]); // Сбрасываем список убитых монстров для нового уровня
-      localStorage.removeItem('activeBattleInProgress');
-      setBattleStarted(false);
+      // battleStarted остается true - бой продолжается на следующем уровне
     });
   };
 
