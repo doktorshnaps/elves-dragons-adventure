@@ -40,12 +40,22 @@ export const Auth = () => {
     }
   }, [isTelegram, tgWebApp]);
 
-  // Get referrer ID from URL params
+  // Get referrer ID from URL params and persist to localStorage
   useEffect(() => {
     const refParam = searchParams.get('ref');
+    
     if (refParam) {
+      // Save to localStorage to survive wallet redirects
+      localStorage.setItem('pendingReferrer', refParam);
       setReferrerId(refParam);
-      console.log('🔗 Referral link detected:', refParam);
+      console.log('🔗 Referral link detected and saved:', refParam);
+    } else {
+      // Check if we have a pending referrer from previous redirect
+      const savedReferrer = localStorage.getItem('pendingReferrer');
+      if (savedReferrer && !referralProcessedRef.current) {
+        setReferrerId(savedReferrer);
+        console.log('🔗 Restored referral from localStorage:', savedReferrer);
+      }
     }
   }, [searchParams]);
 
@@ -85,6 +95,10 @@ export const Auth = () => {
         referralProcessedRef.current = false;
       } else {
         console.log('✅ Referral added successfully:', data);
+        
+        // Clear localStorage after successful processing
+        localStorage.removeItem('pendingReferrer');
+        
         toast({
           title: t(language, 'auth.referralAdded'),
           description: t(language, 'auth.referralAddedDesc')
