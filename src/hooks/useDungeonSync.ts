@@ -51,9 +51,16 @@ export const useDungeonSync = () => {
     return () => window.removeEventListener('storage', onStorage);
   }, []);
 
-  // Загружаем активные сессии из базы данных при монтировании
+  // Загружаем активные сессии только если они еще не загружены
+  // Используем debounce чтобы избежать множественных запросов
   const loadActiveSessions = useCallback(async () => {
     if (!accountId) return;
+    
+    // Проверяем, есть ли уже данные в activeSessions
+    if (activeSessions.length > 0) {
+      console.log('📊 [useDungeonSync] Sessions already loaded, skipping fetch');
+      return;
+    }
 
     try {
       const { data, error } = await supabase
@@ -91,7 +98,7 @@ export const useDungeonSync = () => {
     } catch (error) {
       console.error('Error loading active sessions:', error);
     }
-  }, [accountId, deviceId, localSession]);
+  }, [accountId, deviceId, localSession, activeSessions.length]);
 
   // Отправляем heartbeat для активной сессии
   const sendHeartbeat = useCallback(async () => {
