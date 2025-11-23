@@ -1,12 +1,17 @@
+import { useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { CraftRecipe } from "@/hooks/shelter/useShelterState";
 import { useLanguage } from "@/hooks/useLanguage";
 import { t } from "@/utils/translations";
 import { Hammer, Clock } from "lucide-react";
 import { useItemTemplates } from "@/hooks/useItemTemplates";
 import { itemImagesByItemId } from "@/constants/itemImages";
+import { useBatchCrafting } from "@/hooks/useBatchCrafting";
+import { useWalletContext } from "@/contexts/WalletConnectContext";
 
 interface ShelterCraftingProps {
   recipes: CraftRecipe[];
@@ -14,6 +19,11 @@ interface ShelterCraftingProps {
   handleCraft: (recipe: CraftRecipe) => void;
   workshopLevel: number;
   inventoryCounts: Record<string, number>;
+  gameState?: {
+    wood: number;
+    stone: number;
+    balance: number;
+  };
 }
 
 const getCategoryIcon = (category: string) => {
@@ -39,10 +49,76 @@ export const ShelterCrafting = ({
   canAffordCraft,
   handleCraft,
   workshopLevel,
-  inventoryCounts
+  inventoryCounts,
+  gameState
 }: ShelterCraftingProps) => {
   const { language } = useLanguage();
   const { getItemName, getTemplate } = useItemTemplates();
+  const { accountId } = useWalletContext();
+  const { craftMultiple, isCrafting } = useBatchCrafting(accountId);
+  const [craftQuantities, setCraftQuantities] = useState<Record<string, number>>({});
+
+  // Валидация ресурсов для batch крафта
+  const validateResources = (recipe: CraftRecipe, quantity: number) => {
+    if (!gameState) return false;
+    
+    if (recipe.requirements.wood * quantity > gameState.wood) return false;
+    if (recipe.requirements.stone * quantity > gameState.stone) return false;
+    if (recipe.requirements.balance * quantity > gameState.balance) return false;
+    
+    for (const mat of recipe.requirements.materials || []) {
+      const available = inventoryCounts[mat.item_id] || 0;
+      if (available < mat.quantity * quantity) return false;
+    }
+    
+    return true;
+  };
+
+  // Batch крафт
+  const handleBatchCraft = async (recipe: CraftRecipe) => {
+    const quantity = craftQuantities[recipe.id] || 1;
+    
+    if (!validateResources(recipe, quantity)) {
+      return;
+    }
+
+    const batchRecipe = {
+      recipe_id: recipe.id,
+      quantity: quantity,
+      materials: (recipe.requirements.materials || []).map(mat => ({
+        template_id: parseInt(mat.item_id),
+        quantity: mat.quantity * quantity
+      }))
+    };
+
+    const result = await craftMultiple([batchRecipe]);
+    
+    if (result?.success) {
+      setCraftQuantities({ ...craftQuantities, [recipe.id]: 1 });
+    }
+  };
+
+  // Создать всё
+  const handleCraftAll = async () => {
+    const availableRecipes = recipes
+      .filter(recipe => {
+        const quantity = craftQuantities[recipe.id] || 1;
+        return validateResources(recipe, quantity);
+      })
+      .map(recipe => ({
+        recipe_id: recipe.id,
+        quantity: craftQuantities[recipe.id] || 1,
+        materials: (recipe.requirements.materials || []).map(mat => ({
+          template_id: parseInt(mat.item_id),
+          quantity: mat.quantity * (craftQuantities[recipe.id] || 1)
+        }))
+      }));
+
+    if (availableRecipes.length > 0) {
+      await craftMultiple(availableRecipes);
+      setCraftQuantities({});
+    }
+  };
 
   if (workshopLevel === 0) {
     return (
@@ -58,9 +134,28 @@ export const ShelterCrafting = ({
     );
   }
 
+  const availableToCraft = recipes.filter(recipe => {
+    const quantity = craftQuantities[recipe.id] || 1;
+    return validateResources(recipe, quantity);
+  });
+
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-      {recipes.map((recipe) => {
+    <div className="space-y-4">
+      {/* Batch Craft Button */}
+      {recipes.length > 0 && availableToCraft.length > 0 && (
+        <Button 
+          onClick={handleCraftAll} 
+          disabled={isCrafting}
+          variant="secondary"
+          className="w-full"
+        >
+          <Hammer className="w-4 h-4 mr-2" />
+          Создать всё ({availableToCraft.length})
+        </Button>
+      )}
+
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        {recipes.map((recipe) => {
         const canCraft = canAffordCraft(recipe);
         const itemTemplate = getTemplate(recipe.result_item_id.toString());
         const itemImage = itemTemplate?.image_url || itemImagesByItemId[recipe.result_item_id.toString()];
@@ -170,19 +265,41 @@ export const ShelterCrafting = ({
                 <strong>{t(language, 'shelter.result')}:</strong> {recipe.result}
               </div>
 
+              {/* Batch Quantity Input */}
+              <div className="flex items-center gap-2">
+                <Label className="text-sm">Количество:</Label>
+                <Input 
+                  type="number" 
+                  min="1" 
+                  max="99"
+                  value={craftQuantities[recipe.id] || 1}
+                  onChange={(e) => setCraftQuantities({
+                    ...craftQuantities,
+                    [recipe.id]: Math.max(1, Math.min(99, parseInt(e.target.value) || 1))
+                  })}
+                  className="w-20"
+                  disabled={isCrafting}
+                />
+              </div>
+
+              {/* Batch Craft Button */}
               <Button
                 className="w-full"
-                onClick={() => handleCraft(recipe)}
-                disabled={!canCraft}
-                variant={canCraft ? "default" : "secondary"}
+                onClick={() => handleBatchCraft(recipe)}
+                disabled={!validateResources(recipe, craftQuantities[recipe.id] || 1) || isCrafting}
+                variant={validateResources(recipe, craftQuantities[recipe.id] || 1) ? "default" : "secondary"}
               >
                 <Hammer className="w-4 h-4 mr-2" />
-                {t(language, 'shelter.craft')}
+                {craftQuantities[recipe.id] > 1 
+                  ? `Создать x${craftQuantities[recipe.id]}`
+                  : t(language, 'shelter.craft')
+                }
               </Button>
             </CardContent>
           </Card>
         );
       })}
+      </div>
     </div>
   );
 };
