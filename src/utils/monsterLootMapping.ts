@@ -7,6 +7,50 @@ import { supabase } from "@/integrations/supabase/client";
 let ALL_ITEM_TEMPLATES: any[] = [];
 let templatesLoaded = false;
 
+// Кеш активного treasure hunt события для оптимизации
+let ACTIVE_TREASURE_HUNT_CACHE: any = null;
+let treasureHuntCacheTime = 0;
+const TREASURE_HUNT_CACHE_TTL = 5 * 60 * 1000; // 5 минут
+
+// Загрузка активного treasure hunt события с кешированием
+export const loadActiveTreasureHunt = async (): Promise<any> => {
+  const now = Date.now();
+  
+  // Возвращаем закешированное событие, если оно свежее
+  if (ACTIVE_TREASURE_HUNT_CACHE && (now - treasureHuntCacheTime) < TREASURE_HUNT_CACHE_TTL) {
+    console.log('✅ Using cached treasure hunt event');
+    return ACTIVE_TREASURE_HUNT_CACHE;
+  }
+  
+  try {
+    const { data: activeEvent, error: eventError } = await supabase
+      .from('treasure_hunt_events')
+      .select('*')
+      .eq('is_active', true)
+      .single();
+    
+    if (!eventError && activeEvent) {
+      ACTIVE_TREASURE_HUNT_CACHE = activeEvent;
+      treasureHuntCacheTime = now;
+      console.log('✅ Treasure hunt event loaded and cached:', activeEvent.item_name);
+      return activeEvent;
+    }
+  } catch (error) {
+    console.log('ℹ️ No active treasure hunt event');
+  }
+  
+  ACTIVE_TREASURE_HUNT_CACHE = null;
+  treasureHuntCacheTime = now;
+  return null;
+};
+
+// Очистка кеша treasure hunt (вызывать при изменении событий в админке)
+export const clearTreasureHuntCache = () => {
+  ACTIVE_TREASURE_HUNT_CACHE = null;
+  treasureHuntCacheTime = 0;
+  console.log('🗑️ Treasure hunt cache cleared');
+};
+
 // Установить кеш предметов из StaticGameDataContext
 export const setItemTemplatesCache = (templates: any[]) => {
   if (!templatesLoaded || ALL_ITEM_TEMPLATES.length === 0) {
@@ -65,16 +109,12 @@ export const getMonsterLoot = async (monsterName: string, dungeonNumber?: number
   const cleanName = monsterName.replace(/\s*\(Lv\d+\)\s*$/i, '').trim();
   console.log('🧹 Cleaned monster name:', cleanName);
 
-  // Проверяем активное treasure hunt событие
+  // Проверяем активное treasure hunt событие (с кешированием)
   if (dungeonNumber !== undefined && walletAddress) {
     try {
-      const { data: activeEvent, error: eventError } = await supabase
-        .from('treasure_hunt_events')
-        .select('*')
-        .eq('is_active', true)
-        .single();
+      const activeEvent = await loadActiveTreasureHunt();
 
-      if (!eventError && activeEvent) {
+      if (activeEvent) {
         console.log('🎯 Active treasure hunt event found:', activeEvent);
         
         // Проверяем, подходит ли монстр и подземелье
