@@ -3,8 +3,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
-import { useUnifiedGameState } from "@/hooks/useUnifiedGameState";
-import { useCardInstances } from "@/hooks/useCardInstances";
+import { useShelterData } from "@/contexts/ShelterDataContext";
 
 import { useToast } from "@/hooks/use-toast";
 import { useLanguage } from "@/hooks/useLanguage";
@@ -31,8 +30,7 @@ interface WorkersManagementProps {
 }
 
 export const WorkersManagement = ({ onSpeedBoostChange }: WorkersManagementProps) => {
-  const gameState = useUnifiedGameState();
-  const { cardInstances, deleteCardInstance, loadCardInstances } = useCardInstances();
+  const { gameState, cardInstances, deleteCardInstance, loadCardInstances } = useShelterData();
   const { language } = useLanguage();
   const { accountId } = useWalletContext();
   

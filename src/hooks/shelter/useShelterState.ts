@@ -1,5 +1,4 @@
 import { useState, useEffect, useMemo, useCallback } from 'react';
-import { useBatchedGameState } from '@/hooks/useBatchedGameState';
 import { useLanguage } from '@/hooks/useLanguage';
 import { t } from '@/utils/translations';
 import { useToast } from '@/hooks/use-toast';
@@ -11,6 +10,7 @@ import { useGameStore } from '@/stores/gameStore';
 import { resolveItemKey } from '@/utils/itemNames';
 import { useCraftingRecipes } from '@/hooks/useCraftingRecipes';
 import { useAddItemToInstances } from '@/hooks/useAddItemToInstances';
+import { useShelterData } from '@/contexts/ShelterDataContext';
 export interface NestUpgrade {
   id: string;
   name: string;
@@ -47,7 +47,7 @@ export interface CraftRecipe {
 
 export const useShelterState = () => {
   const { language } = useLanguage();
-  const gameState = useBatchedGameState();
+  const { gameState } = useShelterData();
   const { toast } = useToast();
   const { startUpgradeAtomic, isUpgrading, getUpgradeProgress, formatRemainingTime, installUpgrade, isUpgradeReady } = useBuildingUpgrades();
   const { getBuildingConfig, getUpgradeCost: getUpgradeCostFromDB, loading: configsLoading } = useBuildingConfigs(true);
