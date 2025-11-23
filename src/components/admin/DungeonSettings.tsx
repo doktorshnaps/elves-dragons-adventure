@@ -12,6 +12,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { DungeonItemDrops } from "./DungeonItemDrops";
 import { MonsterManagement } from "./MonsterManagement";
 import { Checkbox } from "@/components/ui/checkbox";
+import { clearDungeonSettingsCache } from "@/utils/dungeonSettingsLoader";
 
 interface MonsterWithCount {
   id: string;
@@ -286,6 +287,8 @@ export const DungeonSettings = () => {
         console.log('🔎 DB monster_spawn_config after update:', JSON.stringify((data as any).monster_spawn_config, null, 2));
       }
 
+      // Сбрасываем кеш настроек подземелий для гримуара
+      clearDungeonSettingsCache();
       
       toast({
         title: "Успешно",
