@@ -51,7 +51,7 @@ export const useItemInstances = () => {
   }, [queryClient, accountId, refetchQuery]);
 
   // Real-time subscription for INSERT events in item_instances
-  // This is the ONLY Real-time subscription for item_instances to avoid duplicate queries
+  // Mark as stale without automatic refetch (optimistic updates handle the UI)
   useEffect(() => {
     if (!accountId) return;
 
@@ -68,9 +68,12 @@ export const useItemInstances = () => {
           filter: `wallet_address=eq.${accountId}`
         },
         (payload) => {
-          console.log('🔔 [useItemInstances] New item inserted:', payload.new);
-          // Only invalidate itemInstances - shopDataComplete will use cached data
-          queryClient.invalidateQueries({ queryKey: ['itemInstances', accountId] });
+          console.log('🔔 [useItemInstances] New item inserted via Real-time:', payload.new);
+          // Mark as stale without triggering refetch (optimistic updates already applied)
+          queryClient.invalidateQueries({ 
+            queryKey: ['itemInstances', accountId],
+            refetchType: 'none' // Don't auto-refetch, let background sync handle it
+          });
         }
       )
       .subscribe();
