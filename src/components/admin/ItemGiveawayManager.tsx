@@ -78,6 +78,9 @@ export const ItemGiveawayManager = () => {
       return;
     }
 
+    // Защита от повторных вызовов
+    if (isGiving) return;
+
     try {
       setIsGiving(true);
 
