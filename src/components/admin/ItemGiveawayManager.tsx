@@ -83,6 +83,7 @@ export const ItemGiveawayManager = () => {
 
     try {
       setIsGiving(true);
+      console.log('🎁 [Admin] Giving items - quantity:', quantity, 'item:', selectedItem.name, 'to:', walletAddress.trim());
 
       // Подготовка предметов для RPC
       const itemsToAdd = Array.from({ length: quantity }, () => ({
@@ -99,9 +100,10 @@ export const ItemGiveawayManager = () => {
       });
 
       if (error) throw error;
+      console.log('✅ [Admin] RPC add_item_instances completed, returned:', data);
 
-      // Инвалидация кеша инвентаря для получателя
-      await queryClient.invalidateQueries({ queryKey: ['itemInstances', walletAddress.trim()] });
+      // НЕ инвалидируем кеш вручную - Real-time подписка сделает это автоматически
+      // Это предотвращает дублирование из-за двойной инвалидации
       
       toast({
         title: "Предметы выданы!",
@@ -114,7 +116,7 @@ export const ItemGiveawayManager = () => {
       setSelectedItem(null);
       setIsDialogOpen(false);
     } catch (error: any) {
-      console.error('Error giving item:', error);
+      console.error('❌ [Admin] Error giving item:', error);
       toast({
         title: "Ошибка выдачи",
         description: error.message || "Не удалось выдать предмет",

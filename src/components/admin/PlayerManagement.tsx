@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useWalletContext } from '@/contexts/WalletConnectContext';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { useQueryClient } from '@tanstack/react-query';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -21,6 +22,7 @@ import {
 export const PlayerManagement = () => {
   const { accountId } = useWalletContext();
   const { toast } = useToast();
+  const queryClient = useQueryClient();
   
   // Wipe player state
   const [wipeWallet, setWipeWallet] = useState('');
@@ -95,6 +97,8 @@ export const PlayerManagement = () => {
 
     setIsAddingBalance(true);
     try {
+      console.log('💰 [Admin] Adding balance - amount:', amount, 'to:', balanceWallet.trim());
+
       const { data, error } = await supabase.rpc('admin_add_balance', {
         p_target_wallet_address: balanceWallet.trim(),
         p_amount: amount,
@@ -102,6 +106,11 @@ export const PlayerManagement = () => {
       });
 
       if (error) throw error;
+      console.log('✅ [Admin] RPC admin_add_balance completed, returned:', data);
+
+      // Инвалидируем кеш game_data для получателя, чтобы баланс обновился
+      queryClient.invalidateQueries({ queryKey: ['gameData', balanceWallet.trim()] });
+      console.log('🔄 [Admin] Invalidated gameData cache for:', balanceWallet.trim());
 
       toast({
         title: "Успешно",
@@ -111,7 +120,7 @@ export const PlayerManagement = () => {
       setBalanceWallet('');
       setBalanceAmount('');
     } catch (error: any) {
-      console.error('Error adding balance:', error);
+      console.error('❌ [Admin] Error adding balance:', error);
       toast({
         title: "Ошибка",
         description: error.message || "Не удалось начислить ELL",
