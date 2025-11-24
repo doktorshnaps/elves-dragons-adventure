@@ -321,6 +321,12 @@ export const WorkersManagement = ({ onSpeedBoostChange }: WorkersManagementProps
     const workerId = (worker as any).instanceId || worker.id;
     console.log('🎯 assignWorker START:', { workerId, name: worker.name, source: worker.source });
 
+    // Защита от двойного клика
+    if (assigningId === workerId) {
+      console.log('⚠️ Already assigning this worker, skipping');
+      return;
+    }
+
     if (!worker.stats?.workDuration) {
       console.error('❌ No workDuration!');
       toast({
@@ -375,47 +381,30 @@ export const WorkersManagement = ({ onSpeedBoostChange }: WorkersManagementProps
     };
 
     try {
-      // Сразу обновляем UI оптимистично
-      const updatedActiveWorkers = [...activeWorkers, newActiveWorker];
-      setActiveWorkers(updatedActiveWorkers);
-      console.log('✅ Optimistic UI update done');
-
       // Атомарно назначаем рабочего (удаление из card_instances + добавление в active_workers)
       if ((worker as any).instanceId) {
         const instId = (worker as any).instanceId as string;
         console.log('🎯 Assigning worker atomically:', instId);
         
-        try {
-          const { data, error } = await supabase.rpc('assign_worker_to_building', {
-            p_wallet_address: accountId,
-            p_card_instance_id: instId,
-            p_active_worker: newActiveWorker as any
-          });
-          
-          if (error) throw error;
-          console.log('✅ Worker assigned atomically:', data);
-          
-          // Инвалидируем кеш card_instances для обновления списка
-          queryClient.invalidateQueries({ queryKey: ['cardInstances', accountId] });
-        } catch (e) {
-          console.error('❌ Failed to assign worker:', e);
-          setAssigningId(null);
-          setActiveWorkers(activeWorkers);
-          toast({
-            title: t(language, 'shelter.error'),
-            description: 'Не удалось назначить рабочего',
-            variant: 'destructive'
-          });
-          return;
+        const { data, error } = await supabase.rpc('assign_worker_to_building', {
+          p_wallet_address: accountId,
+          p_card_instance_id: instId,
+          p_active_worker: newActiveWorker as any
+        });
+        
+        if (error) throw error;
+        console.log('✅ Worker assigned atomically:', data);
+        
+        // Используем данные из RPC ответа для обновления состояния
+        if (data && typeof data === 'object' && 'active_workers' in data) {
+          const workers = (data as any).active_workers as ActiveWorker[];
+          setActiveWorkers(workers);
+          localStorage.setItem('activeWorkers', JSON.stringify(workers));
+          window.dispatchEvent(new CustomEvent('activeWorkers:changed', { detail: workers }));
         }
-      }
-
-      // Сохраняем локально
-      try {
-        localStorage.setItem('activeWorkers', JSON.stringify(updatedActiveWorkers));
-        window.dispatchEvent(new CustomEvent('activeWorkers:changed', { detail: updatedActiveWorkers }));
-      } catch (e) {
-        console.warn('⚠️ localStorage save failed:', e);
+        
+        // Инвалидируем кеш card_instances для обновления списка
+        queryClient.invalidateQueries({ queryKey: ['cardInstances', accountId] });
       }
       
       setAssigningId(null);
@@ -428,7 +417,6 @@ export const WorkersManagement = ({ onSpeedBoostChange }: WorkersManagementProps
     } catch (error) {
       console.error('❌ Assignment failed:', error);
       setAssigningId(null);
-      setActiveWorkers(activeWorkers);
       toast({
         title: t(language, 'shelter.error'),
         description: t(language, 'shelter.failedToAssign'),
