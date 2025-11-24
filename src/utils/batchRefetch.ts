@@ -4,8 +4,7 @@ import { QueryClient } from '@tanstack/react-query';
 /**
  * BATCH REFETCH OPTIMIZATION
  * 
- * Instead of 3 separate invalidate+refetch cycles (9 queries total),
- * we make 1 single batch request to fetch all data at once.
+ * Fetches only shop and card data - item_instances syncs via Real-time subscription.
  * 
  * Before: 
  * - invalidate itemInstances → refetch (2 queries)
@@ -14,43 +13,39 @@ import { QueryClient } from '@tanstack/react-query';
  * Total: 6 queries
  * 
  * After:
- * - 1 batch fetch of all 3 datasets
- * - Update all caches with setQueryData
- * Total: 1 query
+ * - 2 parallel fetches (cards + shop)
+ * - item_instances updated by Real-time subscription
+ * Total: 2 queries
  * 
- * Reduction: -83% queries
+ * Reduction: -67% queries
  */
 
 export interface BatchRefetchResult {
-  itemInstances: any[];
   cardInstances: any[];
   shopData: any;
 }
 
 /**
- * Fetch all shop-related data in one batch request
+ * Fetch shop and card data (item_instances handled by Real-time)
  */
 export const batchRefetchShopData = async (
   walletAddress: string,
   queryClient: QueryClient
 ): Promise<BatchRefetchResult> => {
-  console.log('🔄 [batchRefetch] Starting batch refetch for:', walletAddress);
+  console.log('🔄 [batchRefetch] Starting batch refetch (item_instances via Real-time)');
 
   try {
-    // Execute all 3 RPC calls in parallel
-    const [itemsResponse, cardsResponse, shopResponse] = await Promise.all([
-      supabase.rpc('get_item_instances_by_wallet', { p_wallet_address: walletAddress }),
+    // Execute 2 RPC calls in parallel (item_instances syncs via Real-time subscription)
+    const [cardsResponse, shopResponse] = await Promise.all([
       supabase.rpc('get_card_instances_by_wallet', { p_wallet_address: walletAddress }),
       supabase.rpc('get_shop_data_complete' as any, { p_wallet_address: walletAddress })
     ]);
 
     // Check for errors
-    if (itemsResponse.error) throw itemsResponse.error;
     if (cardsResponse.error) throw cardsResponse.error;
     if (shopResponse.error) throw shopResponse.error;
 
     const result = {
-      itemInstances: itemsResponse.data || [],
       cardInstances: cardsResponse.data || [],
       shopData: typeof shopResponse.data === 'string' 
         ? JSON.parse(shopResponse.data) 
@@ -58,17 +53,15 @@ export const batchRefetchShopData = async (
     };
 
     console.log('✅ [batchRefetch] Batch fetch complete:', {
-      items: result.itemInstances.length,
       cards: result.cardInstances.length,
       balance: result.shopData?.user_balance
     });
 
-    // Update all query caches simultaneously (no additional network requests)
-    queryClient.setQueryData(['itemInstances', walletAddress], result.itemInstances);
+    // Update query caches (no additional network requests)
     queryClient.setQueryData(['cardInstances', walletAddress], result.cardInstances);
     queryClient.setQueryData(['shopDataComplete', walletAddress], result.shopData);
 
-    console.log('✅ [batchRefetch] All caches updated successfully');
+    console.log('✅ [batchRefetch] Caches updated (item_instances syncing via Real-time)');
 
     return result;
   } catch (error) {

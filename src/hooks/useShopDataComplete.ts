@@ -133,26 +133,25 @@ export const useShopDataComplete = (walletAddress: string | null) => {
     retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 10000),
   });
 
-  // Real-time subscription for item_instances changes
+  // Real-time subscription for shop_inventory changes only
+  // Note: item_instances Real-time handled by ItemInstancesProvider to avoid duplicates
   useEffect(() => {
     if (!walletAddress) return;
 
-    console.log('🔄 [useShopDataComplete] Setting up Real-time subscription for item_instances');
+    console.log('🔄 [useShopDataComplete] Setting up Real-time subscription for shop_inventory');
 
     const channel = supabase
-      .channel('item-instances-changes')
+      .channel('shop-inventory-changes')
       .on(
         'postgres_changes',
         {
           event: '*',
           schema: 'public',
-          table: 'item_instances',
-          filter: `wallet_address=eq.${walletAddress}`
+          table: 'shop_inventory'
         },
         (payload) => {
-          console.log('🔔 [useShopDataComplete] item_instances changed:', payload);
+          console.log('🔔 [useShopDataComplete] shop_inventory changed:', payload);
           queryClient.invalidateQueries({ queryKey: ['shopDataComplete', walletAddress] });
-          queryClient.invalidateQueries({ queryKey: ['itemInstances', walletAddress] });
         }
       )
       .subscribe();
