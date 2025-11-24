@@ -124,20 +124,34 @@ export const DungeonSearchDialog = ({
   }, [teamBattleState]);
 
   const handleResetActiveBattle = async () => {
-    // Clear battle state from Zustand store
+    // КРИТИЧНО: Блокируем синхронизацию перед сбросом
+    localStorage.setItem('blockBattleSync', 'true');
+    
+    // 1. Очищаем все источники состояния боя СИНХРОННО
+    localStorage.removeItem('teamBattleState');
+    localStorage.removeItem('activeBattleInProgress');
+    localStorage.removeItem('battleState'); // legacy
+    localStorage.removeItem('activeDungeonSession');
+    
+    // 2. Очищаем Zustand store
     clearTeamBattleState();
+    useGameStore.setState({ activeBattleInProgress: false, battleState: null });
     
-    try { await updateGameData({ battleState: null }); } catch {}
+    // 3. Очищаем game_data в БД
+    try { 
+      await updateGameData({ battleState: null }); 
+    } catch (e) {
+      console.warn('Failed to clear battleState from game_data:', e);
+    }
     
-    // Завершаем сессию подземелья в БД
+    // 4. Завершаем сессию подземелья в БД
     await endDungeonSession();
     
+    // 5. Сбрасываем локальный state
     setActiveDungeon(null);
     
-    // Перезагружаем данные после короткой задержки
-    setTimeout(() => {
-      window.location.reload();
-    }, 300);
+    // 6. Перезагружаем страницу БЕЗ задержки
+    window.location.reload();
   };
   const handleDungeonSelect = async (dungeonType: DungeonType) => {
     // Блокируем выбор, если на другом устройстве есть активная сессия

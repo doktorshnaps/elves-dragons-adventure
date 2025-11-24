@@ -52,8 +52,15 @@ export const useCardHealthSync = (skipDuringBattle: boolean = false) => {
     }
   }, [cardInstances, gameData.cards]);
 
-  // Listen for card health updates and sync (SKIP during battle)
+  // Listen for card health updates and sync (SKIP during battle OR if blocked)
   useEffect(() => {
+    // КРИТИЧНО: Блокируем синхронизацию если идет сброс боя
+    const isBlockedSync = localStorage.getItem('blockBattleSync') === 'true';
+    if (isBlockedSync) {
+      console.log('🚫 [useCardHealthSync] Event listener blocked by battle reset');
+      return;
+    }
+    
     if (skipDuringBattle && activeBattleInProgress) {
       console.log('⏸️ [useCardHealthSync] Skipping sync during active battle');
       return;
@@ -73,8 +80,15 @@ export const useCardHealthSync = (skipDuringBattle: boolean = false) => {
     // No need for manual load here
   }, []);
 
-  // Auto-sync when card instances change - but SKIP during battle
+  // Auto-sync when card instances change - but SKIP during battle OR if battle sync is blocked
   useEffect(() => {
+    // КРИТИЧНО: Блокируем синхронизацию если идет сброс боя
+    const isBlockedSync = localStorage.getItem('blockBattleSync') === 'true';
+    if (isBlockedSync) {
+      console.log('🚫 [useCardHealthSync] Sync blocked by battle reset');
+      return;
+    }
+    
     if (skipDuringBattle && activeBattleInProgress) {
       console.log('⏸️ [useCardHealthSync] Skipping auto-sync during active battle');
       return;
