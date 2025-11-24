@@ -81,11 +81,11 @@ export const BuildingGridCard = ({
 
       if (error) throw error;
 
-      console.log('✅ [instant-complete] Building upgraded:', {
-        buildingId: upgrade.id,
-        newLevel: data.new_level,
-        responseData: data
-      });
+      console.log('✅✅✅ [instant-complete] ========== BUILDING UPGRADED ==========');
+      console.log('✅ [instant-complete] buildingId:', upgrade.id);
+      console.log('✅ [instant-complete] newLevel:', data.new_level);
+      console.log('✅ [instant-complete] responseData:', data);
+      console.log('✅ [instant-complete] timestamp:', new Date().toISOString());
 
       toast({
         title: "⚡ Постройка завершена",
@@ -93,10 +93,15 @@ export const BuildingGridCard = ({
       });
 
       // Trigger refresh with small delay to ensure DB write completes
+      console.log('⏳ [instant-complete] Waiting 500ms for DB write...');
       await new Promise(resolve => setTimeout(resolve, 500));
       
       if (onInstantComplete) {
-        onInstantComplete();
+        console.log('🔄🔄🔄 [instant-complete] Calling onInstantComplete()...');
+        await onInstantComplete();
+        console.log('✅ [instant-complete] onInstantComplete() completed');
+      } else {
+        console.warn('⚠️ [instant-complete] onInstantComplete is not defined!');
       }
     } catch (error: any) {
       console.error('Failed to instant complete:', error);

@@ -87,7 +87,9 @@ export const GameDataProvider = ({ children }: { children: ReactNode }) => {
   } = useQuery({
     queryKey: ['gameData', accountId],
     queryFn: async () => {
-      console.log('🎯 [GameDataContext] queryFn called, accountId:', accountId);
+      console.log('🎯🎯🎯 [GameDataContext] ========== QUERY FUNCTION CALLED ==========');
+      console.log('🎯 [GameDataContext] accountId:', accountId);
+      console.log('🎯 [GameDataContext] timestamp:', new Date().toISOString());
       const address = accountId || localStorage.getItem('walletAccountId');
       console.log('🎯 [GameDataContext] resolved address:', address);
       
@@ -312,14 +314,21 @@ export const GameDataProvider = ({ children }: { children: ReactNode }) => {
   }, [accountId, queryClient, toast]);
 
   const loadGameDataManual = useCallback(async (walletAddress?: string) => {
-    console.log('🔄 [GameDataContext] Manual game data reload triggered for wallet:', walletAddress || accountId);
+    console.log('🔄🔄🔄 [GameDataContext] ========== MANUAL RELOAD TRIGGERED ==========');
+    console.log('🔄 [GameDataContext] walletAddress:', walletAddress);
+    console.log('🔄 [GameDataContext] accountId:', accountId);
+    console.log('🔄 [GameDataContext] timestamp:', new Date().toISOString());
+    
     // КРИТИЧНО: Используем cancelRefetch: true чтобы принудительно перезагрузить данные
     // игнорируя staleTime кеш
+    console.log('🔄 [GameDataContext] Calling refetch with cancelRefetch: true...');
     const result = await refetch({ cancelRefetch: true });
-    console.log('✅ [GameDataContext] Refetch completed:', {
-      isSuccess: result.isSuccess,
-      buildingLevels: result.data?.buildingLevels
-    });
+    
+    console.log('✅✅✅ [GameDataContext] ========== REFETCH COMPLETED ==========');
+    console.log('✅ [GameDataContext] isSuccess:', result.isSuccess);
+    console.log('✅ [GameDataContext] isError:', result.isError);
+    console.log('✅ [GameDataContext] buildingLevels:', result.data?.buildingLevels);
+    console.log('✅ [GameDataContext] timestamp:', new Date().toISOString());
   }, [refetch, accountId]);
 
   return (
