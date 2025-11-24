@@ -510,8 +510,21 @@ Deno.serve(async (req) => {
     console.log(`📝 Creating ${newCards.length} card_instances records...`);
     
     const cardInstancesToInsert = newCards.map(card => {
-      // Вычисляем max_defense на основе карты (defense из card_data или 0 для рабочих)
+      // Вычисляем max_defense на основе карты
       const defense = card.defense || 0;
+      
+      // Вычисляем max_health с учетом мультипликаторов
+      const isHero = card.type === 'character';
+      const baseHealth = isHero ? heroBase.health : dragonBase.health;
+      const rarityMult = rarityMults[card.rarity] || 1.0;
+      const classKey = `${card.type}:${card.name}`;
+      const className = nameToClass[classKey] || card.cardClass;
+      const classMult = isHero ? classMults[className] : dragonClassMults[className];
+      const healthMult = classMult?.health_multiplier || 1.0;
+      
+      const calculatedHealth = Math.floor(baseHealth * rarityMult * healthMult);
+      
+      console.log(`💚 Calculated health for ${card.name}: ${calculatedHealth} (base: ${baseHealth}, rarity: ${rarityMult}, class: ${healthMult})`);
       
       // Маппинг типов для соответствия DB constraint: character→hero, pet→dragon
       const mappedType = card.type === 'character' ? 'hero' : 
@@ -523,8 +536,8 @@ Deno.serve(async (req) => {
         card_template_id: card.id,
         card_type: mappedType,
         card_data: card,
-        max_health: 100, // Будет пересчитано на клиенте
-        current_health: 100,
+        max_health: calculatedHealth,
+        current_health: calculatedHealth,
         current_defense: defense,
         max_defense: defense,
         monster_kills: 0
