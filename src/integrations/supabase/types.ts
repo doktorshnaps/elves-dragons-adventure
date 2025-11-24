@@ -2439,29 +2439,17 @@ export type Database = {
         }
         Returns: boolean
       }
-      apply_battle_rewards:
-        | {
-            Args: {
-              p_card_health_updates: Json
-              p_card_kills: Json
-              p_ell_reward: number
-              p_experience_reward: number
-              p_items: Json
-              p_wallet_address: string
-            }
-            Returns: Json
-          }
-        | {
-            Args: {
-              p_card_health_updates?: Json
-              p_card_kills?: Json
-              p_ell_reward?: number
-              p_experience_reward?: number
-              p_items?: Json
-              p_wallet_address: string
-            }
-            Returns: Json
-          }
+      apply_battle_rewards: {
+        Args: {
+          p_card_health_updates?: Json
+          p_card_kills?: Json
+          p_ell_reward?: number
+          p_experience_reward?: number
+          p_items?: Json
+          p_wallet_address: string
+        }
+        Returns: Json
+      }
       assign_worker_to_building: {
         Args: {
           p_active_worker: Json
