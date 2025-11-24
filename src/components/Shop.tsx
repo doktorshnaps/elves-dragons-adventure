@@ -98,23 +98,21 @@ export const Shop = ({ onClose }: ShopProps) => {
         };
       });
 
-      // Добавляем новый предмет в кеш itemInstances
-      if (item.type !== 'cardPack') {
-        const template = shopData?.item_templates?.find(t => t.id === item.id);
-        queryClient.setQueryData(['itemInstances', accountId], (oldItems: any[] = []) => [
-          ...oldItems,
-          {
-            id: `temp-${Date.now()}`, // Временный ID до синхронизации
-            wallet_address: accountId,
-            template_id: item.id,
-            item_id: template?.item_id,
-            name: template?.name,
-            type: template?.type,
-            created_at: new Date().toISOString(),
-            updated_at: new Date().toISOString()
-          }
-        ]);
-      }
+      // Добавляем новый предмет в кеш itemInstances (включая колоды карт)
+      const template = shopData?.item_templates?.find(t => t.id === item.id);
+      queryClient.setQueryData(['itemInstances', accountId], (oldItems: any[] = []) => [
+        ...oldItems,
+        {
+          id: `temp-${Date.now()}`, // Временный ID до синхронизации
+          wallet_address: accountId,
+          template_id: item.id,
+          item_id: template?.item_id,
+          name: template?.name,
+          type: template?.type,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        }
+      ]);
 
       // Real-time subscription will handle automatic sync, no manual events needed
       console.log('✅ [Shop] Optimistic update applied successfully');
