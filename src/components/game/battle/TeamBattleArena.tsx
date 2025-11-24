@@ -391,13 +391,33 @@ export const TeamBattleArena: React.FC<TeamBattleArenaProps> = ({
                             </div>}
                         </div>
                         
-                        {/* Health Bar */}
-                        <div className="w-full">
-                          <Progress value={pair.health / pair.maxHealth * 100} className="h-1 sm:h-1.5" />
-                          <div className="text-[8px] sm:text-[9px] md:text-[10px] text-center mt-0.5 text-white">
-                            <Heart className="w-2 h-2 sm:w-2.5 sm:h-2.5 inline mr-0.5" />
-                            {pair.health}/{pair.maxHealth}
+                        {/* Health Bars - Разделены для героя и питомца */}
+                        <div className="w-full space-y-0.5">
+                          {/* Hero Health Bar */}
+                          <div className="w-full">
+                            <Progress 
+                              value={(pair.hero.currentHealth ?? pair.hero.health) / pair.hero.health * 100} 
+                              className="h-1 sm:h-1.5" 
+                            />
+                            <div className="text-[8px] sm:text-[9px] md:text-[10px] text-center mt-0.5 text-white">
+                              <Heart className="w-2 h-2 sm:w-2.5 sm:h-2.5 inline mr-0.5" />
+                              {pair.hero.currentHealth ?? pair.hero.health}/{pair.hero.health}
+                            </div>
                           </div>
+                          
+                          {/* Dragon Health Bar - показывается только если есть дракон */}
+                          {pair.dragon && (
+                            <div className="w-full">
+                              <Progress 
+                                value={(pair.dragon.currentHealth ?? pair.dragon.health) / pair.dragon.health * 100} 
+                                className="h-1 sm:h-1.5" 
+                              />
+                              <div className="text-[8px] sm:text-[9px] md:text-[10px] text-center mt-0.5 text-white/80">
+                                <Heart className="w-2 h-2 sm:w-2.5 sm:h-2.5 inline mr-0.5" />
+                                {pair.dragon.currentHealth ?? pair.dragon.health}/{pair.dragon.health}
+                              </div>
+                            </div>
+                          )}
                         </div>
 
                         {/* Stats */}
