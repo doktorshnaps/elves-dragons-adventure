@@ -287,22 +287,30 @@ export const useDungeonRewards = () => {
       
       // КРИТИЧНО: Сохраняем здоровье и броню карт через claim-battle-rewards
       if (cardHealthUpdates && cardHealthUpdates.length > 0) {
-        console.log('💔 Отправка обновлений здоровья карт в claim-battle-rewards:', cardHealthUpdates);
+        console.log('💔 [useDungeonRewards] ========== ОТПРАВКА В EDGE FUNCTION ==========');
+        console.log('💔 [useDungeonRewards] Количество card_health_updates:', cardHealthUpdates.length);
+        console.log('💔 [useDungeonRewards] Структура card_health_updates:', JSON.stringify(cardHealthUpdates, null, 2));
+        
+        const edgeFunctionPayload = {
+          wallet_address: accountId || 'local',
+          claim_key: claimKey,
+          ell_earned: rewardAmount,
+          items: lootedItems.map(it => ({
+            template_id: (it as any).template_id,
+            item_id: (it as any).item_id,
+            name: it.name,
+            type: it.type
+          })),
+          card_kills: [], // Не используется в текущей реализации
+          card_health_updates: cardHealthUpdates
+        };
+        
+        console.log('📤 [useDungeonRewards] ПОЛНАЯ СТРУКТУРА payload для claim-battle-rewards:');
+        console.log(JSON.stringify(edgeFunctionPayload, null, 2));
+        
         try {
           const { data: battleData, error: battleError } = await supabase.functions.invoke('claim-battle-rewards', {
-            body: {
-              wallet_address: accountId || 'local',
-              claim_key: claimKey,
-              ell_earned: rewardAmount,
-              items: lootedItems.map(it => ({
-                template_id: (it as any).template_id,
-                item_id: (it as any).item_id,
-                name: it.name,
-                type: it.type
-              })),
-              card_kills: [], // Не используется в текущей реализации
-              card_health_updates: cardHealthUpdates
-            }
+            body: edgeFunctionPayload
           });
           
           if (battleError) {
