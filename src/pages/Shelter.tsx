@@ -18,10 +18,16 @@ import { useShelterState } from "@/hooks/shelter/useShelterState";
 import { ShelterUpgrades } from "@/components/game/shelter/ShelterUpgrades";
 import { ShelterCrafting } from "@/components/game/shelter/ShelterCrafting";
 import { Loader2 } from "lucide-react";
+import { useGameDataContext } from "@/contexts/GameDataContext";
+import { useQueryClient } from "@tanstack/react-query";
+import { useWalletContext } from "@/contexts/WalletConnectContext";
 
 export const Shelter = () => {
   const navigate = useNavigate();
   const { language } = useLanguage();
+  const { accountId } = useWalletContext();
+  const { loadGameData } = useGameDataContext();
+  const queryClient = useQueryClient();
   
   // Удаляем дубликаты из инвентаря
   useInventoryDedupe();
@@ -174,9 +180,20 @@ export const Shelter = () => {
               inventoryCounts={inventoryCounts}
               workersLoaded={workersLoaded}
               gameLoaded={gameLoaded}
-              onRefresh={() => {
-                // Force reload game state from database
-                window.location.reload();
+              onRefresh={async () => {
+                console.log('🔄 Refreshing game data after instant complete');
+                
+                // Инвалидируем все связанные кеши
+                await Promise.all([
+                  queryClient.invalidateQueries({ queryKey: ['gameData', accountId] }),
+                  queryClient.invalidateQueries({ queryKey: ['buildingConfigs'] }),
+                  queryClient.invalidateQueries({ queryKey: ['activeBuildingUpgrades'] })
+                ]);
+                
+                // Принудительно перезагружаем данные из БД
+                await loadGameData();
+                
+                console.log('✅ Game data refreshed successfully');
               }}
             />
           </TabsContent>
