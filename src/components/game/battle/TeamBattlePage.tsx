@@ -180,6 +180,23 @@ const TeamBattlePageInner: React.FC<TeamBattlePageProps> = ({
     console.log('🚨 cardInstances:', cardInstances);
     console.log('🚨 cardInstances.length:', cardInstances?.length);
     
+    // Детальное логирование всех ID в cardInstances
+    console.log('🔎 [DEBUG] Все ID в cardInstances:');
+    cardInstances?.forEach(ci => {
+      console.log('  - id:', ci.id, '| card_template_id:', ci.card_template_id, '| type:', ci.card_type);
+    });
+    
+    // Детальное логирование всех ID в playerPairs
+    console.log('🔎 [DEBUG] Все ID в playerPairs:');
+    battleState.playerPairs.forEach((pair, idx) => {
+      console.log(`  Pair ${idx}:`, {
+        heroId: pair.hero?.id,
+        heroName: pair.hero?.name,
+        dragonId: pair.dragon?.id,
+        dragonName: pair.dragon?.name
+      });
+    });
+    
     // Собираем текущее здоровье и броню карт из battleState.playerPairs
     const cardHealthUpdates = battleState.playerPairs.flatMap(pair => {
       const updates = [];
