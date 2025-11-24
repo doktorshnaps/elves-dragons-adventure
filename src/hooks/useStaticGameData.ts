@@ -53,7 +53,7 @@ export const useStaticGameData = () => {
     },
     staleTime: 1000 * 60 * 60, // 1 час - данные редко меняются
     gcTime: 1000 * 60 * 120, // 2 часа в памяти
-    refetchOnMount: true, // Включаем перезагрузку при монтировании для первой загрузки
+    refetchOnMount: false, // ОТКЛЮЧЕНО - статические данные не нужно рефетчить при каждом монтировании
     refetchOnWindowFocus: false,
     refetchOnReconnect: false,
     retry: 3,

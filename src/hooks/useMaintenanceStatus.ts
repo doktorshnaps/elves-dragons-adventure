@@ -32,7 +32,8 @@ export const useMaintenanceStatus = () => {
     },
     staleTime: 15 * 60 * 1000, // 15 минут - может меняться админом
     gcTime: 30 * 60 * 1000,
-    refetchInterval: 15 * 60 * 1000, // Автообновление каждые 15 минут
+    refetchInterval: false, // ОТКЛЮЧЕНО автообновление для снижения нагрузки
+    refetchOnMount: false, // ОТКЛЮЧЕНО - используем только кеш
     refetchOnWindowFocus: false, // Не перезапрашивать при фокусе окна
     retry: 2,
     retryDelay: 1000,

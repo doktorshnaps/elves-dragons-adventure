@@ -4,6 +4,7 @@ import { useStaticGameData } from '@/hooks/useStaticGameData';
 const StaticGameDataContext = createContext<ReturnType<typeof useStaticGameData> | null>(null);
 
 export const StaticGameDataProvider = ({ children }: { children: ReactNode }) => {
+  console.log('🔄 [StaticGameDataProvider] Mounting provider (should only mount ONCE)');
   const staticData = useStaticGameData();
   
   return (
