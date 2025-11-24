@@ -299,11 +299,11 @@ export const useDungeonSync = () => {
     };
   }, [accountId]);
 
-  // Отправляем heartbeat каждые 10 секунд (чтобы избежать конфликтов с БД)
+  // Отправляем heartbeat каждые 60 секунд (оптимизация для снижения нагрузки во время боя)
   useEffect(() => {
     if (!localSession) return;
 
-    const interval = setInterval(sendHeartbeat, 10000);
+    const interval = setInterval(sendHeartbeat, 60000); // Увеличено с 10s до 60s
     sendHeartbeat(); // Отправляем сразу
 
     return () => clearInterval(interval);

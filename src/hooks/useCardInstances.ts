@@ -297,8 +297,16 @@ export const useCardInstances = () => {
 
   // КРИТИЧНО: Подписка на обновления в реальном времени для автоматической синхронизации
   // Особенно важно для рабочих, выдаваемых через админ-панель
+  // НО ОТКЛЮЧАЕМ ВО ВРЕМЯ БОЕВ для снижения нагрузки
   useEffect(() => {
     if (!isConnected || !accountId) return;
+
+    // Проверяем, идет ли бой
+    const { activeBattleInProgress } = require('@/stores/gameStore').useGameStore.getState();
+    if (activeBattleInProgress) {
+      console.log('⏸️ [useCardInstances] Skipping Real-time subscription during active battle');
+      return;
+    }
 
     console.log('🔔 [useCardInstances] Setting up Real-time subscription for:', accountId);
 
