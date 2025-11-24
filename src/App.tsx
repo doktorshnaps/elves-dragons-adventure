@@ -123,50 +123,50 @@ function App() {
                   <CardInstancesProvider>
                     <ItemInstancesProvider>
                       <BrightnessProvider>
-            <MusicProvider>
-              <LanguageProvider>
-                <div className="overflow-x-hidden max-w-full w-full">
-                  <Suspense fallback={<PageLoader />}>
-                    <ReferralHandler />
-                    <MusicController />
-                    <Routes>
-                    <Route path="/" element={
-                      localStorage.getItem('walletConnected') === 'true' 
-                        ? <Navigate to="/menu" replace /> 
-                        : <Navigate to="/auth" replace />
-                    } />
-                    <Route path="/auth" element={<Suspense fallback={<PageLoader />}><Auth /></Suspense>} />
-                    <Route path="/menu" element={<Suspense fallback={<PageLoader />}><ProtectedRoute><Menu /></ProtectedRoute></Suspense>} />
-                    <Route path="/admin-settings" element={<Suspense fallback={<PageLoader />}><ProtectedRoute><AdminSettings /></ProtectedRoute></Suspense>} />
-                    <Route path="/soul-archive" element={<Suspense fallback={<PageLoader />}><ProtectedRoute><SoulArchive /></ProtectedRoute></Suspense>} />
-                    <Route path="/seekers" element={<Suspense fallback={<PageLoader />}><ProtectedRoute><Seekers /></ProtectedRoute></Suspense>} />
-                    <Route path="/team" element={<Suspense fallback={<PageLoader />}><ProtectedRoute><TeamStatsWithLazyLoading /></ProtectedRoute></Suspense>} />
-                    <Route path="/statistics" element={<Suspense fallback={<PageLoader />}><ProtectedRoute><TeamStatsWithLazyLoading /></ProtectedRoute></Suspense>} />
-                    <Route path="/equipment" element={<Suspense fallback={<PageLoader />}><ProtectedRoute><EquipmentWithLazyLoading /></ProtectedRoute></Suspense>} />
-                    <Route path="/grimoire" element={<Suspense fallback={<PageLoader />}><ProtectedRoute><GrimoireWithLazyLoading /></ProtectedRoute></Suspense>} />
-                    <Route path="/dungeons" element={<Suspense fallback={<PageLoader />}><ProtectedRoute><DungeonsWithLazyLoading /></ProtectedRoute></Suspense>} />
-                    <Route path="/adventure" element={<Suspense fallback={<PageLoader />}><ProtectedRoute><AdventuresPageWithLazyLoading /></ProtectedRoute></Suspense>} />
-                    <Route path="/marketplace" element={<Suspense fallback={<PageLoader />}><ProtectedRoute><MarketplaceWithLazyLoading /></ProtectedRoute></Suspense>} />
-                    <Route path="/shop" element={<Suspense fallback={<PageLoader />}><ProtectedRoute><ShopPageWithLazyLoading /></ProtectedRoute></Suspense>} />
-                    <Route path="/quest" element={<Suspense fallback={<PageLoader />}><ProtectedRoute><QuestPageWithLazyLoading /></ProtectedRoute></Suspense>} />
-                    <Route path="/shelter" element={<Suspense fallback={<PageLoader />}><ProtectedRoute><ShelterWithLazyLoading /></ProtectedRoute></Suspense>} />
-                    <Route path="/dungeons/spider-nest" element={<Suspense fallback={<PageLoader />}><ProtectedRoute><SpiderNestWithLazyLoading /></ProtectedRoute></Suspense>} />
-                    <Route path="/dungeons/pantheon-gods" element={<Suspense fallback={<PageLoader />}><ProtectedRoute><PantheonOfGodsWithLazyLoading /></ProtectedRoute></Suspense>} />
-                    <Route path="/dungeons/dragon-lair" element={<Suspense fallback={<PageLoader />}><ProtectedRoute><BlackDragonLairWithLazyLoading /></ProtectedRoute></Suspense>} />
-                    <Route path="/dungeons/forgotten-souls" element={<Suspense fallback={<PageLoader />}><ProtectedRoute><ForgottenSoulsCaveWithLazyLoading /></ProtectedRoute></Suspense>} />
-                    <Route path="/dungeons/ice-throne" element={<Suspense fallback={<PageLoader />}><ProtectedRoute><IcyThroneWithLazyLoading /></ProtectedRoute></Suspense>} />
-                    <Route path="/dungeons/icy-throne" element={<Suspense fallback={<PageLoader />}><ProtectedRoute><IcyThroneWithLazyLoading /></ProtectedRoute></Suspense>} />
-                    <Route path="/dungeons/dark-mage" element={<Suspense fallback={<PageLoader />}><ProtectedRoute><DarkMageTowerWithLazyLoading /></ProtectedRoute></Suspense>} />
-                    <Route path="/dungeons/bone-dungeon" element={<Suspense fallback={<PageLoader />}><ProtectedRoute><BoneDemonDungeonWithLazyLoading /></ProtectedRoute></Suspense>} />
-                    <Route path="/dungeons/sea-serpent" element={<Suspense fallback={<PageLoader />}><ProtectedRoute><SeaSerpentLairWithLazyLoading /></ProtectedRoute></Suspense>} />
-                  </Routes>
-                </Suspense>
-                <Toaster />
-                {import.meta.env.DEV && <MetricsPanel />}
-              </div>
-            </LanguageProvider>
-          </MusicProvider>
-        </BrightnessProvider>
+                        <MusicProvider>
+                          <LanguageProvider>
+                            <div className="overflow-x-hidden max-w-full w-full">
+                              <Suspense fallback={<PageLoader />}>
+                                <ReferralHandler />
+                                <MusicController />
+                                <Routes>
+                                  <Route path="/" element={
+                                    localStorage.getItem('walletConnected') === 'true' 
+                                      ? <Navigate to="/menu" replace /> 
+                                      : <Navigate to="/auth" replace />
+                                  } />
+                                  <Route path="/auth" element={<Suspense fallback={<PageLoader />}><Auth /></Suspense>} />
+                                  <Route path="/menu" element={<Suspense fallback={<PageLoader />}><ProtectedRoute><Menu /></ProtectedRoute></Suspense>} />
+                                  <Route path="/admin-settings" element={<Suspense fallback={<PageLoader />}><ProtectedRoute><AdminSettings /></ProtectedRoute></Suspense>} />
+                                  <Route path="/soul-archive" element={<Suspense fallback={<PageLoader />}><ProtectedRoute><SoulArchive /></ProtectedRoute></Suspense>} />
+                                  <Route path="/seekers" element={<Suspense fallback={<PageLoader />}><ProtectedRoute><Seekers /></ProtectedRoute></Suspense>} />
+                                  <Route path="/team" element={<Suspense fallback={<PageLoader />}><ProtectedRoute><TeamStatsWithLazyLoading /></ProtectedRoute></Suspense>} />
+                                  <Route path="/statistics" element={<Suspense fallback={<PageLoader />}><ProtectedRoute><TeamStatsWithLazyLoading /></ProtectedRoute></Suspense>} />
+                                  <Route path="/equipment" element={<Suspense fallback={<PageLoader />}><ProtectedRoute><EquipmentWithLazyLoading /></ProtectedRoute></Suspense>} />
+                                  <Route path="/grimoire" element={<Suspense fallback={<PageLoader />}><ProtectedRoute><GrimoireWithLazyLoading /></ProtectedRoute></Suspense>} />
+                                  <Route path="/dungeons" element={<Suspense fallback={<PageLoader />}><ProtectedRoute><DungeonsWithLazyLoading /></ProtectedRoute></Suspense>} />
+                                  <Route path="/adventure" element={<Suspense fallback={<PageLoader />}><ProtectedRoute><AdventuresPageWithLazyLoading /></ProtectedRoute></Suspense>} />
+                                  <Route path="/marketplace" element={<Suspense fallback={<PageLoader />}><ProtectedRoute><MarketplaceWithLazyLoading /></ProtectedRoute></Suspense>} />
+                                  <Route path="/shop" element={<Suspense fallback={<PageLoader />}><ProtectedRoute><ShopPageWithLazyLoading /></ProtectedRoute></Suspense>} />
+                                  <Route path="/quest" element={<Suspense fallback={<PageLoader />}><ProtectedRoute><QuestPageWithLazyLoading /></ProtectedRoute></Suspense>} />
+                                  <Route path="/shelter" element={<Suspense fallback={<PageLoader />}><ProtectedRoute><ShelterWithLazyLoading /></ProtectedRoute></Suspense>} />
+                                  <Route path="/dungeons/spider-nest" element={<Suspense fallback={<PageLoader />}><ProtectedRoute><SpiderNestWithLazyLoading /></ProtectedRoute></Suspense>} />
+                                  <Route path="/dungeons/pantheon-gods" element={<Suspense fallback={<PageLoader />}><ProtectedRoute><PantheonOfGodsWithLazyLoading /></ProtectedRoute></Suspense>} />
+                                  <Route path="/dungeons/dragon-lair" element={<Suspense fallback={<PageLoader />}><ProtectedRoute><BlackDragonLairWithLazyLoading /></ProtectedRoute></Suspense>} />
+                                  <Route path="/dungeons/forgotten-souls" element={<Suspense fallback={<PageLoader />}><ProtectedRoute><ForgottenSoulsCaveWithLazyLoading /></ProtectedRoute></Suspense>} />
+                                  <Route path="/dungeons/ice-throne" element={<Suspense fallback={<PageLoader />}><ProtectedRoute><IcyThroneWithLazyLoading /></ProtectedRoute></Suspense>} />
+                                  <Route path="/dungeons/icy-throne" element={<Suspense fallback={<PageLoader />}><ProtectedRoute><IcyThroneWithLazyLoading /></ProtectedRoute></Suspense>} />
+                                  <Route path="/dungeons/dark-mage" element={<Suspense fallback={<PageLoader />}><ProtectedRoute><DarkMageTowerWithLazyLoading /></ProtectedRoute></Suspense>} />
+                                  <Route path="/dungeons/bone-dungeon" element={<Suspense fallback={<PageLoader />}><ProtectedRoute><BoneDemonDungeonWithLazyLoading /></ProtectedRoute></Suspense>} />
+                                  <Route path="/dungeons/sea-serpent" element={<Suspense fallback={<PageLoader />}><ProtectedRoute><SeaSerpentLairWithLazyLoading /></ProtectedRoute></Suspense>} />
+                                </Routes>
+                              </Suspense>
+                              <Toaster />
+                              {import.meta.env.DEV && <MetricsPanel />}
+                            </div>
+                          </LanguageProvider>
+                        </MusicProvider>
+                      </BrightnessProvider>
                     </ItemInstancesProvider>
                   </CardInstancesProvider>
                 </GameDataProvider>
