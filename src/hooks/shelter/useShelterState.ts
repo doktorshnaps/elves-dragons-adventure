@@ -424,11 +424,12 @@ export const useShelterState = () => {
     const levelOk = upgrade.level < upgrade.maxLevel;
     const woodOk = resources.wood >= (upgrade.cost.wood || 0);
     const stoneOk = resources.stone >= (upgrade.cost.stone || 0);
-    const balanceOk = gameState.balance >= (upgrade.cost.balance || 0);
+    // ИСПРАВЛЕНО: используем локальное состояние balance вместо gameState.balance
+    const balanceOk = balance >= (upgrade.cost.balance || 0);
     const mhOk = canUpgradeBuilding(upgrade.id);
 
     return levelOk && woodOk && stoneOk && balanceOk && mhOk && hasRequiredItems && hasRequiredBuildings;
-  }, [inventoryCounts, resources, gameState.balance, buildingLevels, getTemplate, canUpgradeBuilding]);
+  }, [inventoryCounts, resources, balance, buildingLevels, getTemplate, canUpgradeBuilding]);
   
   const canAffordCraft = (recipe: CraftRecipe) => {
     const hasWorkshopWorkers = hasWorkersInBuilding('workshop');
