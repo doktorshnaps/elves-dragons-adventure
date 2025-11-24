@@ -201,7 +201,7 @@ export const useDungeonRewards = () => {
     isProcessingRef.current = false;
   }, [calculateReward, toast]);
 
-  const claimRewardAndExit = useCallback(async (cardHealthUpdates: Array<{ card_template_id: string; current_health: number; current_defense: number }> = []) => {
+  const claimRewardAndExit = useCallback(async (cardHealthUpdates: Array<{ card_instance_id: string; current_health: number; current_defense: number }> = []) => {
     if (!pendingReward || isClaimingRef.current) {
       console.log('⚠️ Повторный вызов claimRewardAndExit заблокирован', { 
         hasPendingReward: !!pendingReward, 
@@ -209,6 +209,8 @@ export const useDungeonRewards = () => {
       });
       return false;
     }
+    
+    console.log('💔 [claimRewardAndExit] Получены обновления здоровья карт:', cardHealthUpdates);
 
     // КРИТИЧЕСКАЯ ПРОВЕРКА: Если игрок был побеждён, НЕ начисляем treasure hunt предметы
     if (isDefeatedRef.current) {
@@ -282,6 +284,38 @@ export const useDungeonRewards = () => {
       
       console.log(`💰 Начисляем ${rewardAmount} ELL`);
       console.log(`🎒 Начисляем ${lootedItems.length} предметов в item_instances`);
+      
+      // КРИТИЧНО: Сохраняем здоровье и броню карт через claim-battle-rewards
+      if (cardHealthUpdates && cardHealthUpdates.length > 0) {
+        console.log('💔 Отправка обновлений здоровья карт в claim-battle-rewards:', cardHealthUpdates);
+        try {
+          const { data: battleData, error: battleError } = await supabase.functions.invoke('claim-battle-rewards', {
+            body: {
+              wallet_address: accountId || 'local',
+              claim_key: claimKey,
+              ell_earned: rewardAmount,
+              items: lootedItems.map(it => ({
+                template_id: (it as any).template_id,
+                item_id: (it as any).item_id,
+                name: it.name,
+                type: it.type
+              })),
+              card_kills: [], // Не используется в текущей реализации
+              card_health_updates: cardHealthUpdates
+            }
+          });
+          
+          if (battleError) {
+            console.error('❌ Ошибка claim-battle-rewards:', battleError);
+          } else {
+            console.log('✅ Здоровье и броня карт успешно обновлены:', battleData);
+          }
+        } catch (battleErr) {
+          console.error('❌ Критическая ошибка при обновлении здоровья карт:', battleErr);
+        }
+      } else {
+        console.warn('⚠️ Обновления здоровья карт не предоставлены!');
+      }
       
       // Объединяем обновления баланса в один вызов
       const updates: any = {};
