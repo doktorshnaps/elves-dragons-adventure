@@ -5,6 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { useUnifiedGameState } from "@/hooks/useUnifiedGameState";
 import { useCardInstances } from "@/hooks/useCardInstances";
+import { useQueryClient } from '@tanstack/react-query';
 
 import { useToast } from "@/hooks/use-toast";
 import { useLanguage } from "@/hooks/useLanguage";
@@ -35,6 +36,7 @@ export const WorkersManagement = ({ onSpeedBoostChange }: WorkersManagementProps
   const { cardInstances, deleteCardInstance, loadCardInstances } = useCardInstances();
   const { language } = useLanguage();
   const { accountId } = useWalletContext();
+  const queryClient = useQueryClient();
   
   const { toast } = useToast();
   const [activeWorkers, setActiveWorkers] = useState<ActiveWorker[]>([]);
@@ -139,6 +141,11 @@ export const WorkersManagement = ({ onSpeedBoostChange }: WorkersManagementProps
       gameStateActiveWorkers: gameState.activeWorkers?.length ?? 0,
       isArray: Array.isArray(gameState.activeWorkers)
     });
+
+    // КРИТИЧНО: Инвалидируем кеш card instances при монтировании
+    // чтобы получить свежие данные, особенно если админ выдал рабочих
+    console.log('🔄 Invalidating cardInstances cache to get fresh data');
+    queryClient.invalidateQueries({ queryKey: ['cardInstances', accountId] });
 
     // Загружаем из БД только при первой загрузке
     if (Array.isArray(gameState.activeWorkers) && gameState.activeWorkers.length > 0) {
@@ -552,7 +559,25 @@ export const WorkersManagement = ({ onSpeedBoostChange }: WorkersManagementProps
 
             {/* Доступные рабочие */}
             <div>
-              <label className="text-sm font-medium mb-2 block">{t(language, 'shelter.availableWorkers')}</label>
+              <div className="flex items-center justify-between mb-2">
+                <label className="text-sm font-medium">{t(language, 'shelter.availableWorkers')}</label>
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                  onClick={async () => {
+                    console.log('🔄 Manual refresh of card instances requested');
+                    await loadCardInstances();
+                    toast({
+                      title: "Обновлено",
+                      description: "Список рабочих обновлен"
+                    });
+                  }}
+                  className="h-7 px-2"
+                >
+                  <Zap className="w-3 h-3 mr-1" />
+                  Обновить
+                </Button>
+              </div>
               {visibleWorkers.length === 0 ? (
                 <div className="text-center py-8 text-muted-foreground">
                   <Users className="w-12 h-12 mx-auto mb-2 opacity-50" />
