@@ -181,25 +181,30 @@ export const Shelter = () => {
               workersLoaded={workersLoaded}
               gameLoaded={gameLoaded}
               onRefresh={async () => {
-                console.log('🔄 [Shelter] Refreshing game data after instant complete');
+                console.log('🔄🔄🔄 [Shelter] ========== REFRESH TRIGGERED ==========');
+                console.log('🔄 [Shelter] accountId:', accountId);
+                console.log('🔄 [Shelter] timestamp:', new Date().toISOString());
                 
                 // КРИТИЧНО: Сначала инвалидируем ВСЕ связанные кеши
                 // Это заставит React Query считать данные устаревшими
+                console.log('🔄 [Shelter] Invalidating query caches...');
                 queryClient.invalidateQueries({ queryKey: ['gameData', accountId] });
                 queryClient.invalidateQueries({ queryKey: ['buildingConfigs'] });
                 queryClient.invalidateQueries({ queryKey: ['activeBuildingUpgrades'] });
+                console.log('✅ [Shelter] Caches invalidated');
                 
                 // Небольшая задержка чтобы инвалидация применилась
                 await new Promise(resolve => setTimeout(resolve, 100));
                 
                 // Принудительно перезагружаем данные из БД с игнорированием кеша
-                console.log('📥 [Shelter] Force refetching game data from database...');
+                console.log('📥📥📥 [Shelter] Calling loadGameData()...');
                 await loadGameData();
+                console.log('✅ [Shelter] loadGameData() completed');
                 
                 // Дополнительная задержка для реактивного обновления
                 await new Promise(resolve => setTimeout(resolve, 200));
                 
-                console.log('✅ [Shelter] Game data refreshed successfully');
+                console.log('✅✅✅ [Shelter] ========== REFRESH COMPLETED ==========');
               }}
             />
           </TabsContent>
