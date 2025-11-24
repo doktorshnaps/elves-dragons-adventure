@@ -181,7 +181,7 @@ const TeamBattlePageInner: React.FC<TeamBattlePageProps> = ({
           updates.push({
             card_instance_id: heroInstance.id, // Используем уникальный ID карты
             current_health: pair.hero.currentHealth ?? pair.hero.health,
-            current_defense: pair.currentDefense
+            current_defense: pair.hero.currentDefense ?? pair.hero.defense // ИСПРАВЛЕНО: берем индивидуальную броню героя
           });
         }
       }
@@ -193,7 +193,7 @@ const TeamBattlePageInner: React.FC<TeamBattlePageProps> = ({
           updates.push({
             card_instance_id: dragonInstance.id, // Используем уникальный ID карты
             current_health: pair.dragon.currentHealth ?? pair.dragon.health,
-            current_defense: pair.dragon.currentDefense ?? 0
+            current_defense: pair.dragon.currentDefense ?? pair.dragon.defense // ИСПРАВЛЕНО: добавлен fallback
           });
         }
       }
