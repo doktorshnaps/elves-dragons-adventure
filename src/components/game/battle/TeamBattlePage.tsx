@@ -170,6 +170,11 @@ const TeamBattlePageInner: React.FC<TeamBattlePageProps> = ({
   };
 
   const handleClaimAndExit = async () => {
+    console.log('🚨 [handleClaimAndExit] ФУНКЦИЯ ВЫЗВАНА!');
+    console.log('🚨 battleState.playerPairs:', battleState.playerPairs);
+    console.log('🚨 cardInstances:', cardInstances);
+    console.log('🚨 cardInstances.length:', cardInstances?.length);
+    
     // Собираем текущее здоровье и броню карт из battleState.playerPairs
     const cardHealthUpdates = battleState.playerPairs.flatMap(pair => {
       const updates = [];
