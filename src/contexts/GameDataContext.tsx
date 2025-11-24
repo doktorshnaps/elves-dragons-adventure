@@ -59,7 +59,19 @@ const DEFAULT_GAME_DATA: GameData = {
   wood: 0,
   stone: 0,
   iron: 0,
-  gold: 0
+  gold: 0,
+  buildingLevels: {
+    main_hall: 0,
+    workshop: 0,
+    storage: 0,
+    sawmill: 0,
+    quarry: 0,
+    barracks: 0,
+    dragon_lair: 0,
+    medical: 0,
+    forge: 0
+  },
+  activeBuildingUpgrades: []
 };
 
 export const GameDataProvider = ({ children }: { children: ReactNode }) => {
@@ -167,7 +179,19 @@ export const GameDataProvider = ({ children }: { children: ReactNode }) => {
           wood: gameRecord.wood || 0,
           stone: gameRecord.stone || 0,
           iron: gameRecord.iron || 0,
-          gold: gameRecord.gold || 0
+          gold: gameRecord.gold || 0,
+          buildingLevels: (gameRecord.building_levels as any) || {
+            main_hall: 0,
+            workshop: 0,
+            storage: 0,
+            sawmill: 0,
+            quarry: 0,
+            barracks: 0,
+            dragon_lair: 0,
+            medical: 0,
+            forge: 0
+          },
+          activeBuildingUpgrades: (gameRecord.active_building_upgrades as any[]) || []
         };
         
         // Sync to localStorage via batcher
