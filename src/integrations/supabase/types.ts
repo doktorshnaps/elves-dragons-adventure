@@ -2462,6 +2462,14 @@ export type Database = {
             }
             Returns: Json
           }
+      assign_worker_to_building: {
+        Args: {
+          p_active_worker: Json
+          p_card_instance_id: string
+          p_wallet_address: string
+        }
+        Returns: Json
+      }
       atomic_balance_update: {
         Args: { p_price_deduction: number; p_wallet_address: string }
         Returns: Json
