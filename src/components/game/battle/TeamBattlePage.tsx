@@ -22,6 +22,7 @@ import { t } from '@/utils/translations';
 import { BattleSpeedProvider } from '@/contexts/BattleSpeedContext';
 import { useBattleSpeed } from '@/contexts/BattleSpeedContext';
 import { useItemTemplates } from '@/hooks/useItemTemplates';
+import { useQueryClient } from '@tanstack/react-query';
 
 interface TeamBattlePageProps {
   dungeonType: DungeonType;
@@ -34,6 +35,7 @@ const TeamBattlePageInner: React.FC<TeamBattlePageProps> = ({
   const { adjustDelay } = useBattleSpeed();
   const navigate = useNavigate();
   const { toast } = useToast();
+  const queryClient = useQueryClient();
   const [battleStarted, setBattleStarted] = useState<boolean>(false);
   const [monstersKilled, setMonstersKilled] = useState<Array<{level: number, dungeonType: string, name?: string}>>([]);
   const monstersKilledRef = useRef<Array<{level: number, dungeonType: string, name?: string}>>([]);
@@ -138,6 +140,11 @@ const TeamBattlePageInner: React.FC<TeamBattlePageProps> = ({
   const handleExitAndReset = async () => {
     // Завершаем сессию подземелья в БД
     await endDungeonSession();
+    
+    // КРИТИЧНО: Инвалидируем и перезагружаем gameData ДО навигации
+    // чтобы selectedTeam был актуальным на странице /dungeons
+    await queryClient.invalidateQueries({ queryKey: ['gameData', accountId] });
+    await queryClient.refetchQueries({ queryKey: ['gameData', accountId] });
     
     startTransition(() => {
       useGameStore.getState().setActiveBattleInProgress(false);
