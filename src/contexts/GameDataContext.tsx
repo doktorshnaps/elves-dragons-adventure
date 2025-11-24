@@ -55,7 +55,11 @@ const DEFAULT_GAME_DATA: GameData = {
   selectedTeam: [],
   barracksUpgrades: [],
   dragonLairUpgrades: [],
-  activeWorkers: []
+  activeWorkers: [],
+  wood: 0,
+  stone: 0,
+  iron: 0,
+  gold: 0
 };
 
 export const GameDataProvider = ({ children }: { children: ReactNode }) => {
@@ -159,7 +163,11 @@ export const GameDataProvider = ({ children }: { children: ReactNode }) => {
           dragonLairUpgrades: (gameRecord.dragon_lair_upgrades as any[]) || [],
           accountLevel: gameRecord.account_level ?? 1,
           accountExperience: gameRecord.account_experience ?? 0,
-          activeWorkers: (gameRecord.active_workers as any[]) || []
+          activeWorkers: (gameRecord.active_workers as any[]) || [],
+          wood: gameRecord.wood || 0,
+          stone: gameRecord.stone || 0,
+          iron: gameRecord.iron || 0,
+          gold: gameRecord.gold || 0
         };
         
         // Sync to localStorage via batcher
