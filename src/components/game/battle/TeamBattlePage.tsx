@@ -177,25 +177,25 @@ const TeamBattlePageInner: React.FC<TeamBattlePageProps> = ({
       // Героя всегда добавляем
       if (pair.hero) {
         const heroInstance = cardInstances.find(ci => ci.card_template_id === pair.hero.id);
-        const heroCurrentDefense = heroInstance?.current_defense ?? pair.currentDefense;
-        
-        updates.push({
-          card_template_id: pair.hero.id,
-          current_health: pair.hero.currentHealth ?? pair.hero.health,
-          current_defense: heroCurrentDefense
-        });
+        if (heroInstance) {
+          updates.push({
+            card_instance_id: heroInstance.id, // Используем уникальный ID карты
+            current_health: pair.hero.currentHealth ?? pair.hero.health,
+            current_defense: pair.currentDefense
+          });
+        }
       }
       
       // Дракона добавляем если есть
       if (pair.dragon) {
         const dragonInstance = cardInstances.find(ci => ci.card_template_id === pair.dragon.id);
-        const dragonCurrentDefense = dragonInstance?.current_defense ?? 0;
-        
-        updates.push({
-          card_template_id: pair.dragon.id,
-          current_health: pair.dragon.currentHealth ?? pair.dragon.health,
-          current_defense: dragonCurrentDefense
-        });
+        if (dragonInstance) {
+          updates.push({
+            card_instance_id: dragonInstance.id, // Используем уникальный ID карты
+            current_health: pair.dragon.currentHealth ?? pair.dragon.health,
+            current_defense: pair.dragon.currentDefense ?? 0
+          });
+        }
       }
       
       return updates;
