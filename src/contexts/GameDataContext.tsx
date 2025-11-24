@@ -196,9 +196,24 @@ export const GameDataProvider = ({ children }: { children: ReactNode }) => {
       refetch();
     };
 
+    const handleForceRefetch = (e: CustomEvent) => {
+      console.log('🔄 [GameDataContext] Force refetch requested for wallet:', e.detail?.wallet);
+      if (!e.detail?.wallet || !accountId) return;
+      
+      // Проверяем, что это наш кошелек (с учетом регистра)
+      if (e.detail.wallet.toLowerCase().trim() === accountId.toLowerCase().trim()) {
+        console.log('✅ [GameDataContext] Refetching game data after admin update');
+        refetch();
+      }
+    };
+
     window.addEventListener('wallet-changed', handleWalletChange);
-    return () => window.removeEventListener('wallet-changed', handleWalletChange);
-  }, [refetch]);
+    window.addEventListener('gameData:forceRefetch', handleForceRefetch as EventListener);
+    return () => {
+      window.removeEventListener('wallet-changed', handleWalletChange);
+      window.removeEventListener('gameData:forceRefetch', handleForceRefetch as EventListener);
+    };
+  }, [refetch, accountId]);
 
   const updateGameData = useCallback(async (updates: Partial<GameData>) => {
     const address = accountId || localStorage.getItem('walletAccountId');

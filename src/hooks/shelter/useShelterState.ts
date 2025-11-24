@@ -424,9 +424,30 @@ export const useShelterState = () => {
     const levelOk = upgrade.level < upgrade.maxLevel;
     const woodOk = resources.wood >= (upgrade.cost.wood || 0);
     const stoneOk = resources.stone >= (upgrade.cost.stone || 0);
-    // ИСПРАВЛЕНО: используем локальное состояние balance вместо gameState.balance
     const balanceOk = balance >= (upgrade.cost.balance || 0);
     const mhOk = canUpgradeBuilding(upgrade.id);
+
+    // ДЕТАЛЬНОЕ ЛОГИРОВАНИЕ для отладки
+    console.log('🔍 [canAffordUpgrade]', {
+      buildingId: upgrade.id,
+      checks: {
+        levelOk,
+        woodOk: `${resources.wood} >= ${upgrade.cost.wood || 0} = ${woodOk}`,
+        stoneOk: `${resources.stone} >= ${upgrade.cost.stone || 0} = ${stoneOk}`,
+        balanceOk: `${balance} >= ${upgrade.cost.balance || 0} = ${balanceOk}`,
+        mhOk,
+        hasRequiredItems,
+        hasRequiredBuildings
+      },
+      state: {
+        localBalance: balance,
+        gameStateBalance: gameState.balance,
+        resourcesWood: resources.wood,
+        resourcesStone: resources.stone
+      },
+      cost: upgrade.cost,
+      result: levelOk && woodOk && stoneOk && balanceOk && mhOk && hasRequiredItems && hasRequiredBuildings
+    });
 
     return levelOk && woodOk && stoneOk && balanceOk && mhOk && hasRequiredItems && hasRequiredBuildings;
   }, [inventoryCounts, resources, balance, buildingLevels, getTemplate, canUpgradeBuilding]);

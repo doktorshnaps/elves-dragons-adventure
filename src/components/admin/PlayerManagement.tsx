@@ -108,9 +108,27 @@ export const PlayerManagement = () => {
       if (error) throw error;
       console.log('✅ [Admin] RPC admin_add_balance completed, returned:', data);
 
-      // Инвалидируем кеш game_data для получателя, чтобы баланс обновился
-      queryClient.invalidateQueries({ queryKey: ['gameData', balanceWallet.trim()] });
+      // ИСПРАВЛЕНО: Принудительно обновляем кэш игровых данных
+      await Promise.all([
+        queryClient.invalidateQueries({ 
+          queryKey: ['gameData', balanceWallet.trim()],
+          refetchType: 'active'
+        }),
+        // Также инвалидируем без второго параметра на случай, если ключ не совпадает
+        queryClient.invalidateQueries({
+          predicate: (query) => 
+            query.queryKey[0] === 'gameData' && 
+            typeof query.queryKey[1] === 'string' &&
+            query.queryKey[1].toLowerCase().trim() === balanceWallet.toLowerCase().trim()
+        })
+      ]);
+      
       console.log('🔄 [Admin] Invalidated gameData cache for:', balanceWallet.trim());
+      
+      // Триггерим событие для принудительного обновления
+      window.dispatchEvent(new CustomEvent('gameData:forceRefetch', { 
+        detail: { wallet: balanceWallet.trim() } 
+      }));
 
       toast({
         title: "Успешно",
