@@ -206,7 +206,49 @@ export const useDungeonRewards = () => {
     dungeonType: string,
     currentLevel: number
   ) => {
-    if (!pendingReward || isClaimingRef.current) {
+    // Если нет награды (поражение) - сохраняем только здоровье карт и выходим
+    if (!pendingReward) {
+      console.log('💔 [claimRewardAndExit] Поражение - сохранение только здоровья карт');
+      
+      if (cardHealthUpdates && cardHealthUpdates.length > 0) {
+        const healthClaimKey = `dungeon_${accountId || 'local'}_health_${Date.now()}`;
+        
+        try {
+          const { data: claimData, error: claimError } = await supabase.functions.invoke('claim-battle-rewards', {
+            body: {
+              wallet_address: accountId || 'local',
+              claim_key: healthClaimKey,
+              dungeon_type: dungeonType,
+              level: currentLevel,
+              ell_reward: 0,
+              experience_reward: 0,
+              items: [],
+              card_kills: [],
+              card_health_updates: cardHealthUpdates
+            }
+          });
+          
+          if (claimError) {
+            console.error('❌ Ошибка сохранения здоровья карт:', claimError);
+            toast({
+              title: "⚠️ Предупреждение",
+              description: "Не удалось сохранить состояние карт",
+              variant: "destructive"
+            });
+          } else {
+            console.log('✅ Здоровье и броня карт сохранены после поражения:', claimData);
+            // Инвалидируем кеш card_instances
+            queryClient.invalidateQueries({ queryKey: ['cardInstances', accountId] });
+          }
+        } catch (healthErr) {
+          console.error('❌ Критическая ошибка при сохранении здоровья:', healthErr);
+        }
+      }
+      
+      return true; // Возвращаем true чтобы UI продолжил выход
+    }
+    
+    if (isClaimingRef.current) {
       console.log('⚠️ Повторный вызов claimRewardAndExit заблокирован', { 
         hasPendingReward: !!pendingReward, 
         isClaiming: isClaimingRef.current 
@@ -435,37 +477,8 @@ export const useDungeonRewards = () => {
         await updateGameData(updates);
         console.log('✅ Награда успешно начислена!');
         
-        // КРИТИЧНО: Отправляем повреждения карт через claim-battle-rewards
-        if (cardHealthUpdates.length > 0) {
-          console.log(`💔 Отправка повреждений ${cardHealthUpdates.length} карт через claim-battle-rewards`);
-          
-          try {
-            const { data: claimData, error: claimError } = await supabase.functions.invoke('claim-battle-rewards', {
-              body: {
-                wallet_address: accountId || 'local',
-                claim_key: claimKey + '_health',
-                dungeon_type: dungeonType,
-                level: currentLevel,
-                ell_reward: 0, // ELL уже начислен выше
-                experience_reward: 0,
-                items: [],
-                card_kills: [],
-                card_health_updates: cardHealthUpdates
-              }
-            });
-            
-            if (claimError) {
-              console.error('❌ Ошибка сохранения повреждений карт:', claimError);
-            } else {
-              console.log('✅ Повреждения карт успешно сохранены:', claimData);
-              
-              // Инвалидируем кеш card_instances для обновления здоровья
-              queryClient.invalidateQueries({ queryKey: ['cardInstances', accountId] });
-            }
-          } catch (healthErr) {
-            console.error('❌ Исключение при сохранении повреждений:', healthErr);
-          }
-        }
+        // Инвалидируем кеш card_instances для обновления здоровья
+        queryClient.invalidateQueries({ queryKey: ['cardInstances', accountId] });
         
         // Persist claim timestamp to strengthen idempotency across sessions
         try {
