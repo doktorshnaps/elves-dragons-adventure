@@ -178,6 +178,16 @@ const TeamBattlePageInner: React.FC<TeamBattlePageProps> = ({
       if (pair.hero) {
         const heroInstance = cardInstances.find(ci => ci.card_template_id === pair.hero.id);
         if (heroInstance) {
+          console.log('💔 [HERO] Данные для сохранения:', {
+            name: pair.hero.name,
+            template_id: pair.hero.id,
+            instance_id: heroInstance.id,
+            current_health_from_pair: pair.hero.currentHealth,
+            fallback_health: pair.hero.health,
+            current_defense_from_pair: pair.hero.currentDefense,
+            fallback_defense: pair.hero.defense
+          });
+          
           updates.push({
             card_instance_id: heroInstance.id, // Используем уникальный ID карты
             current_health: pair.hero.currentHealth ?? pair.hero.health,
@@ -190,6 +200,16 @@ const TeamBattlePageInner: React.FC<TeamBattlePageProps> = ({
       if (pair.dragon) {
         const dragonInstance = cardInstances.find(ci => ci.card_template_id === pair.dragon.id);
         if (dragonInstance) {
+          console.log('💔 [DRAGON] Данные для сохранения:', {
+            name: pair.dragon.name,
+            template_id: pair.dragon.id,
+            instance_id: dragonInstance.id,
+            current_health_from_pair: pair.dragon.currentHealth,
+            fallback_health: pair.dragon.health,
+            current_defense_from_pair: pair.dragon.currentDefense,
+            fallback_defense: pair.dragon.defense
+          });
+          
           updates.push({
             card_instance_id: dragonInstance.id, // Используем уникальный ID карты
             current_health: pair.dragon.currentHealth ?? pair.dragon.health,

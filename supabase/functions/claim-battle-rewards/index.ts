@@ -32,7 +32,7 @@ const ClaimBodySchema = z.object({
   items: z.array(ItemSchema),
   card_kills: z.array(CardKillSchema),
   card_health_updates: z.array(z.object({
-    card_template_id: z.string(),
+    card_instance_id: z.string(), // ИСПРАВЛЕНО: используем card_instance_id вместо card_template_id
     current_health: z.number().min(0),
     current_defense: z.number().min(0)
   }))
