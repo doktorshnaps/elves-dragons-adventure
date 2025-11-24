@@ -2645,12 +2645,14 @@ export type Database = {
         Returns: {
           account_experience: number
           account_level: number
+          active_building_upgrades: Json
           active_workers: Json
           adventure_current_monster: Json
           adventure_player_stats: Json
           balance: number
           barracks_upgrades: Json
           battle_state: Json
+          building_levels: Json
           cards: Json
           dragon_eggs: Json
           dragon_lair_upgrades: Json
