@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ArrowLeft } from 'lucide-react';
 import { useTeamBattle } from '@/hooks/team/useTeamBattle';
 import { useCardHealthSync } from '@/hooks/useCardHealthSync';
+import { useCardInstanceMigration } from '@/hooks/useCardInstanceMigration';
 import { AttackOrderSelector } from './AttackOrderSelector';
 import { TeamBattleArena } from './TeamBattleArena';
 import { DungeonType } from '@/constants/dungeons';
@@ -51,6 +52,9 @@ const TeamBattlePageInner: React.FC<TeamBattlePageProps> = ({
   
   // Sync health from database ONLY when NOT in battle (prevents DB spam)
   useCardHealthSync(true); // true = skip during battle
+  
+  // Автоматическая миграция карт из game_data.cards в card_instances
+  useCardInstanceMigration();
   
   // Инициализация кеша item templates и treasure hunt из StaticGameData (ТОЛЬКО ОДИН РАЗ при монтировании)
   const { templates: itemTemplatesMap } = useItemTemplates();
