@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useUnifiedGameState } from './useUnifiedGameState';
+import { useGameDataContext } from '@/contexts/GameDataContext';
 import { useToast } from './use-toast';
 
 interface UpgradeProgress {
@@ -12,15 +13,18 @@ interface UpgradeProgress {
 
 export const useBuildingUpgrades = () => {
   const gameState = useUnifiedGameState();
+  const { gameData } = useGameDataContext();
   const { toast } = useToast();
   const [activeUpgrades, setActiveUpgrades] = useState<UpgradeProgress[]>([]);
 
-  // Загружаем активные улучшения из gameState при инициализации
+  // Загружаем активные улучшения из GameDataContext (приоритет) или gameState (fallback)
   useEffect(() => {
-    if (gameState.activeBuildingUpgrades && Array.isArray(gameState.activeBuildingUpgrades)) {
-      setActiveUpgrades(gameState.activeBuildingUpgrades);
+    const upgrades = gameData.activeBuildingUpgrades || gameState.activeBuildingUpgrades;
+    if (upgrades && Array.isArray(upgrades)) {
+      console.log('🔄 [useBuildingUpgrades] Loading active upgrades:', upgrades);
+      setActiveUpgrades(upgrades);
     }
-  }, [gameState.activeBuildingUpgrades]);
+  }, [gameData.activeBuildingUpgrades, gameState.activeBuildingUpgrades]);
 
   // Убираем авто-синхронизацию, сохраняем только по явным действиям (start/ready/install)
   // это предотвращает сетевой спам RPC вызовами
@@ -126,7 +130,8 @@ export const useBuildingUpgrades = () => {
       return;
     }
 
-    const currentBuildingLevels = gameState.buildingLevels || {};
+    // Используем buildingLevels из gameData с приоритетом
+    const currentBuildingLevels = gameData.buildingLevels || gameState.buildingLevels || {};
     const newBuildingLevels = { ...currentBuildingLevels, [buildingId]: upgrade.targetLevel };
     const remaining = activeUpgrades.filter(u => u.buildingId !== buildingId);
 

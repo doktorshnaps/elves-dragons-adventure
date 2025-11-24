@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useBatchedGameState } from '@/hooks/useBatchedGameState';
+import { useGameDataContext } from '@/contexts/GameDataContext';
 import { useLanguage } from '@/hooks/useLanguage';
 import { t } from '@/utils/translations';
 import { useToast } from '@/hooks/use-toast';
@@ -48,6 +49,7 @@ export interface CraftRecipe {
 export const useShelterState = () => {
   const { language } = useLanguage();
   const gameState = useBatchedGameState();
+  const { gameData } = useGameDataContext();
   const { toast } = useToast();
   const { startUpgradeAtomic, isUpgrading, getUpgradeProgress, formatRemainingTime, installUpgrade, isUpgradeReady } = useBuildingUpgrades();
   const { getBuildingConfig, getUpgradeCost: getUpgradeCostFromDB, loading: configsLoading } = useBuildingConfigs(true);
@@ -61,11 +63,15 @@ export const useShelterState = () => {
     return getCountsByItemId();
   }, [getCountsByItemId]);
   const [activeTab, setActiveTab] = useState<"upgrades" | "crafting" | "barracks" | "dragonlair" | "medical" | "workers">("upgrades");
-  const [balance, setBalance] = useState(gameState.balance);
-  // Синхронизируем баланс с gameState
+  
+  // Используем balance из GameDataContext с приоритетом
+  const [balance, setBalance] = useState(gameData.balance ?? gameState.balance ?? 0);
+  
+  // Синхронизируем баланс с gameData (приоритет) и gameState (fallback)
   useEffect(() => {
-    setBalance(gameState.balance);
-  }, [gameState.balance]);
+    const newBalance = gameData.balance ?? gameState.balance ?? 0;
+    setBalance(newBalance);
+  }, [gameData.balance, gameState.balance]);
   
   // inventory теперь управляется через item_instances
   const { instances: effectiveInventory } = useItemInstances();
@@ -166,14 +172,14 @@ export const useShelterState = () => {
     return resolveItemKey(String(item?.name ?? ''));
   };
 
-  // Используем реальные балансы ресурсов из базы данных
+  // Используем реальные балансы ресурсов из GameDataContext (приоритет) или gameState (fallback)
   const resources = {
-    wood: gameState.wood,
-    stone: gameState.stone
+    wood: gameData.wood ?? gameState.wood ?? 0,
+    stone: gameData.stone ?? gameState.stone ?? 0
   };
 
-  // Получаем уровни зданий из gameState с fallback значениями
-  const buildingLevels = gameState.buildingLevels || {
+  // Получаем уровни зданий из GameDataContext (приоритет) или gameState (fallback)
+  const buildingLevels = gameData.buildingLevels || gameState.buildingLevels || {
     main_hall: 0,
     workshop: 0,
     storage: 0,
@@ -480,20 +486,49 @@ export const useShelterState = () => {
   };
 
   const handleUpgrade = async (upgrade: NestUpgrade) => {
+    console.log('🏗️ [handleUpgrade] Starting upgrade process:', {
+      buildingId: upgrade.id,
+      buildingName: upgrade.name,
+      currentLevel: upgrade.level,
+      targetLevel: upgrade.level + 1,
+      isUpgradeReady: isUpgradeReady(upgrade.id),
+      isUpgrading: isUpgrading(upgrade.id),
+      canAfford: canAffordUpgrade(upgrade)
+    });
+    
     // Если улучшение готово к установке, устанавливаем его
     if (isUpgradeReady(upgrade.id)) {
+      console.log('✅ [handleUpgrade] Upgrade is ready, installing:', upgrade.id);
       installUpgrade(upgrade.id);
       return;
     }
 
-    if (!canAffordUpgrade(upgrade) || isUpgrading(upgrade.id)) return;
+    if (!canAffordUpgrade(upgrade) || isUpgrading(upgrade.id)) {
+      console.log('❌ [handleUpgrade] Cannot upgrade:', {
+        canAfford: canAffordUpgrade(upgrade),
+        isUpgrading: isUpgrading(upgrade.id)
+      });
+      return;
+    }
     
     const newResources = {
       wood: resources.wood - upgrade.cost.wood,
       stone: resources.stone - upgrade.cost.stone
     };
     
-    const newBalance = gameState.balance - upgrade.cost.balance;
+    const newBalance = (gameData.balance ?? gameState.balance ?? 0) - upgrade.cost.balance;
+    
+    console.log('💰 [handleUpgrade] Resource changes:', {
+      oldWood: resources.wood,
+      newWood: newResources.wood,
+      oldStone: resources.stone,
+      newStone: newResources.stone,
+      oldBalance: gameData.balance ?? gameState.balance,
+      newBalance,
+      costWood: upgrade.cost.wood,
+      costStone: upgrade.cost.stone,
+      costBalance: upgrade.cost.balance
+    });
     
     // Удаляем требуемые предметы из item_instances (по UUID)
     if (upgrade.requiredItems && (Array.isArray(upgrade.requiredItems) || typeof upgrade.requiredItems === 'object')) {
@@ -557,6 +592,13 @@ export const useShelterState = () => {
     
     try {
       const upgradeTime = getUpgradeTime(upgrade.id);
+      console.log('🚀 [handleUpgrade] Starting upgrade atomic:', {
+        buildingId: upgrade.id,
+        upgradeTime,
+        targetLevel: upgrade.level + 1,
+        resourcePatch: { ...newResources, balance: newBalance }
+      });
+      
       await startUpgradeAtomic(
         upgrade.id,
         upgradeTime,
@@ -564,8 +606,15 @@ export const useShelterState = () => {
         { ...newResources, balance: newBalance }
         // inventory removed: use item_instances table instead
       );
+      
+      console.log('✅ [handleUpgrade] Upgrade started successfully');
     } catch (e) {
-      console.error('❌ Failed to start upgrade atomically', e);
+      console.error('❌ [handleUpgrade] Failed to start upgrade atomically:', e);
+      toast({
+        title: "Ошибка улучшения",
+        description: "Не удалось начать улучшение",
+        variant: "destructive"
+      });
       return;
     }
 

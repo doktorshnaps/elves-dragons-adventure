@@ -81,12 +81,20 @@ export const BuildingGridCard = ({
 
       if (error) throw error;
 
+      console.log('✅ [instant-complete] Building upgraded:', {
+        buildingId: upgrade.id,
+        newLevel: data.new_level,
+        responseData: data
+      });
+
       toast({
         title: "⚡ Постройка завершена",
         description: `${upgrade.name} мгновенно улучшен до уровня ${data.new_level}`,
       });
 
-      // Trigger refresh
+      // Trigger refresh with small delay to ensure DB write completes
+      await new Promise(resolve => setTimeout(resolve, 500));
+      
       if (onInstantComplete) {
         onInstantComplete();
       }

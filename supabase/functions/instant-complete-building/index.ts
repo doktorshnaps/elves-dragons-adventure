@@ -84,12 +84,19 @@ Deno.serve(async (req) => {
     const upgrade = upgrades[upgradeIndex];
     console.log('🔨 Found upgrade:', upgrade);
 
-    // 4. Complete the upgrade instantly
-    const newLevel = (buildingLevels[building_id] || 0) + 1;
+    // 4. Complete the upgrade instantly using targetLevel from upgrade
+    const targetLevel = upgrade.targetLevel || ((buildingLevels[building_id] || 0) + 1);
     const updatedBuildingLevels = {
       ...buildingLevels,
-      [building_id]: newLevel
+      [building_id]: targetLevel
     };
+
+    console.log('⚡ Completing upgrade:', {
+      building_id,
+      currentLevel: buildingLevels[building_id] || 0,
+      targetLevel,
+      upgradeObject: upgrade
+    });
 
     // Remove the upgrade from active_building_upgrades
     const updatedUpgrades = upgrades.filter((_: any, i: number) => i !== upgradeIndex);
@@ -114,15 +121,16 @@ Deno.serve(async (req) => {
 
     console.log('✅ Building upgrade completed instantly:', {
       building_id,
-      new_level: newLevel
+      new_level: targetLevel,
+      updated_levels: updatedBuildingLevels
     });
 
     return new Response(
       JSON.stringify({
         success: true,
         building_id,
-        new_level: newLevel,
-        message: `${building_id} instantly upgraded to level ${newLevel}`
+        new_level: targetLevel,
+        message: `${building_id} instantly upgraded to level ${targetLevel}`
       }),
       { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
