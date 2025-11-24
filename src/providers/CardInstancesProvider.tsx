@@ -16,6 +16,7 @@ interface CardInstancesContextType {
 const CardInstancesContext = createContext<CardInstancesContextType | undefined>(undefined);
 
 export const CardInstancesProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
+  console.log('🔄 [CardInstancesProvider] Initializing centralized card instances provider');
   const cardInstancesData = useCardInstances();
 
   return (

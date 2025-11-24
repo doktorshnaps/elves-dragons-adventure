@@ -14,6 +14,7 @@ interface ItemInstancesContextType {
 const ItemInstancesContext = createContext<ItemInstancesContextType | undefined>(undefined);
 
 export const ItemInstancesProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
+  console.log('🔄 [ItemInstancesProvider] Initializing centralized item instances provider');
   const itemInstancesData = useItemInstances();
 
   return (

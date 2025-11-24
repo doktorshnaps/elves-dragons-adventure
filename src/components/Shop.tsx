@@ -79,52 +79,66 @@ export const Shop = ({ onClose }: ShopProps) => {
       setPurchasing(true);
       
       // Purchase item via edge function
-      await purchaseItem(item.id, accountId, 1);
+      const purchaseResult = await purchaseItem(item.id, accountId, 1);
       
-      console.log('✅ [Shop] Purchase complete, invalidating caches...');
+      console.log('✅ [Shop] Purchase complete, using optimistic update...');
 
-      // Invalidate all shop-related caches in parallel
-      await Promise.all([
-        queryClient.invalidateQueries({ queryKey: ['shopDataComplete', accountId] }),
-        queryClient.invalidateQueries({ queryKey: ['itemInstances', accountId] }),
-        queryClient.invalidateQueries({ queryKey: ['cardInstances', accountId] })
-      ]);
+      // ОПТИМИСТИЧНОЕ ОБНОВЛЕНИЕ: обновляем кеш напрямую без refetch
+      // Обновляем баланс
+      queryClient.setQueryData(['shopDataComplete', accountId], (oldData: any) => {
+        if (!oldData) return oldData;
+        return {
+          ...oldData,
+          user_balance: oldData.user_balance - item.price,
+          shop_inventory: oldData.shop_inventory.map((inv: any) =>
+            inv.item_id === item.id
+              ? { ...inv, available_quantity: inv.available_quantity - 1 }
+              : inv
+          )
+        };
+      });
 
-      console.log('🔄 [Shop] Starting refetch of shop and inventory data...');
-
-      // Force immediate refetch and wait for completion
-      const [shopRefetch, itemsRefetch, cardsRefetch] = await Promise.allSettled([
-        refetchShopData(),
-        queryClient.refetchQueries({ queryKey: ['itemInstances', accountId] }),
-        queryClient.refetchQueries({ queryKey: ['cardInstances', accountId] })
-      ]);
-
-      // Check if refetch failed
-      if (shopRefetch.status === 'rejected' || itemsRefetch.status === 'rejected' || cardsRefetch.status === 'rejected') {
-        console.error('❌ [Shop] Refetch failed:', { shopRefetch, itemsRefetch, cardsRefetch });
-        throw new Error('Failed to sync inventory');
+      // Добавляем новый предмет в кеш itemInstances
+      if (item.type !== 'cardPack') {
+        const template = shopData?.item_templates?.find(t => t.id === item.id);
+        queryClient.setQueryData(['itemInstances', accountId], (oldItems: any[] = []) => [
+          ...oldItems,
+          {
+            id: `temp-${Date.now()}`, // Временный ID до синхронизации
+            wallet_address: accountId,
+            template_id: item.id,
+            item_id: template?.item_id,
+            name: template?.name,
+            type: template?.type,
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString()
+          }
+        ]);
       }
 
       // Dispatch events for immediate UI updates
       window.dispatchEvent(new CustomEvent('itemInstancesUpdate'));
       window.dispatchEvent(new CustomEvent('cardInstancesUpdate'));
       
-      console.log('✅ [Shop] Cache invalidated and refetched successfully');
+      console.log('✅ [Shop] Optimistic update applied successfully');
 
       setShowEffect(true);
       toast({
         title: item.type === 'cardPack' ? t(language, 'shop.cardPackBought') : t(language, 'shop.purchaseSuccess'),
         description: item.type === 'cardPack' ? t(language, 'shop.cardPackDescription') : `${t(language, 'shop.boughtItem')} ${translateShopItemName(language, item.name)}`,
       });
+
+      // Фоновая синхронизация (не блокирует UI)
+      setTimeout(() => {
+        refetchShopData();
+      }, 1000);
+
     } catch (error) {
       console.error('❌ [Shop] Purchase error:', error);
       
-      // Try to recover by forcing a refetch
+      // При ошибке откатываем оптимистичное обновление через refetch
       try {
-        await Promise.all([
-          queryClient.refetchQueries({ queryKey: ['shopDataComplete', accountId] }),
-          queryClient.refetchQueries({ queryKey: ['itemInstances', accountId] })
-        ]);
+        await refetchShopData();
       } catch (refetchError) {
         console.error('❌ [Shop] Recovery refetch failed:', refetchError);
       }
