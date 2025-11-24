@@ -8,7 +8,7 @@ import { dungeonRoutes, DungeonType } from "@/constants/dungeons";
 import { Button } from "./ui/button";
 import { Card } from "./ui/card";
 import { useLatestActiveDungeonSession } from "@/hooks/useActiveDungeonSessions";
-import { useGameStore } from "@/stores/gameStore";
+import { useGameData } from "@/hooks/useGameData";
 
 // SEO: title and meta for dungeon search
 if (typeof document !== 'undefined') {
@@ -31,17 +31,18 @@ export const DungeonSearch = ({ onClose, balance }: DungeonSearchProps) => {
     isHealthTooLow,
   } = useDungeonSearch(balance);
 
-  const selectedTeam = useGameStore((state) => state.selectedTeam);
-  const cards = useGameStore((state) => state.cards);
+  // КРИТИЧНО: Читаем selectedTeam напрямую из gameData (БД), а не из Zustand store
+  // Это гарантирует, что данные будут актуальны даже после перезагрузки страницы
+  const { gameData } = useGameData();
+  const selectedTeam = gameData.selectedTeam || [];
 
   const computeHasActiveCards = () => {
     console.log('🔍 [DungeonSearch] Checking active cards...');
-    console.log('🎮 [DungeonSearch] selectedTeam from store:', selectedTeam);
+    console.log('🎮 [DungeonSearch] selectedTeam from gameData:', selectedTeam);
     console.log('📊 [DungeonSearch] selectedTeam type:', typeof selectedTeam);
     console.log('📏 [DungeonSearch] selectedTeam length:', selectedTeam?.length);
-    console.log('🃏 [DungeonSearch] cards from store:', cards);
     
-    // Проверяем Zustand store - основной источник данных
+    // Проверяем selectedTeam из gameData
     if (!Array.isArray(selectedTeam) || selectedTeam.length === 0) {
       console.log('⚠️ [DungeonSearch] selectedTeam is empty, null, or not array');
       return false;
@@ -89,19 +90,18 @@ export const DungeonSearch = ({ onClose, balance }: DungeonSearchProps) => {
 
   useEffect(() => {
     console.log('🔄 [DungeonSearch] useEffect triggered - recalculating hasActiveCards');
-    console.log('📊 [DungeonSearch] Current selectedTeam from store:', {
+    console.log('📊 [DungeonSearch] Current selectedTeam from gameData:', {
       selectedTeam,
       type: typeof selectedTeam,
       isArray: Array.isArray(selectedTeam),
       length: selectedTeam?.length,
       data: JSON.stringify(selectedTeam).substring(0, 300)
     });
-    console.log('🎴 [DungeonSearch] Current cards:', cards);
     
     const newValue = computeHasActiveCards();
     console.log('🎯 [DungeonSearch] New hasActiveCards value:', newValue);
     setHasActiveCards(newValue);
-  }, [selectedTeam, cards]);
+  }, [selectedTeam, gameData]);
 
   // Предварительная проверка активных сессий с кэшированием
   const { deviceId, endDungeonSession } = useDungeonSync();
