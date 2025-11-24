@@ -170,6 +170,11 @@ const TeamBattlePageInner: React.FC<TeamBattlePageProps> = ({
   };
 
   const handleClaimAndExit = async () => {
+    toast({
+      title: "🚨 Сохранение прогресса",
+      description: "Начинаем сохранение здоровья и брони карт...",
+    });
+    
     console.log('🚨 [handleClaimAndExit] ФУНКЦИЯ ВЫЗВАНА!');
     console.log('🚨 battleState.playerPairs:', battleState.playerPairs);
     console.log('🚨 cardInstances:', cardInstances);
@@ -228,9 +233,34 @@ const TeamBattlePageInner: React.FC<TeamBattlePageProps> = ({
     
     console.log('💔 [TeamBattlePage] Собраны повреждения карт для сохранения:', cardHealthUpdates);
     
+    if (cardHealthUpdates.length === 0) {
+      toast({
+        title: "⚠️ Ошибка",
+        description: "Не удалось собрать данные о повреждениях карт!",
+        variant: "destructive"
+      });
+      console.error('❌ cardHealthUpdates пустой! Проверьте cardInstances');
+      return;
+    }
+    
+    toast({
+      title: "📤 Отправка данных",
+      description: `Сохраняем ${cardHealthUpdates.length} карт...`,
+    });
+    
     const success = await claimRewardAndExit(cardHealthUpdates);
     if (success) {
+      toast({
+        title: "✅ Успешно",
+        description: "Здоровье и броня карт сохранены!",
+      });
       handleExitAndReset();
+    } else {
+      toast({
+        title: "❌ Ошибка",
+        description: "Не удалось сохранить состояние карт",
+        variant: "destructive"
+      });
     }
   };
 
