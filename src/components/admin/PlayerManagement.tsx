@@ -90,6 +90,9 @@ export const PlayerManagement = () => {
       return;
     }
 
+    // Защита от повторных вызовов
+    if (isAddingBalance) return;
+
     setIsAddingBalance(true);
     try {
       const { data, error } = await supabase.rpc('admin_add_balance', {
