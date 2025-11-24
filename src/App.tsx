@@ -12,6 +12,7 @@ import { BanStatusProvider } from './contexts/BanStatusContext';
 import { GameDataProvider } from './contexts/GameDataContext';
 import { StaticGameDataProvider } from './contexts/StaticGameDataContext';
 import { CardInstancesProvider } from './providers/CardInstancesProvider';
+import { ItemInstancesProvider } from './providers/ItemInstancesProvider';
 import { ReferralHandler } from './components/ReferralHandler';
 import { useRoutePreloader } from './hooks/useRoutePreloader';
 import { useNFTStatsRecalculation } from './hooks/useNFTStatsRecalculation';
@@ -120,7 +121,8 @@ function App() {
               <BanStatusProvider>
                 <GameDataProvider>
                   <CardInstancesProvider>
-                    <BrightnessProvider>
+                    <ItemInstancesProvider>
+                      <BrightnessProvider>
             <MusicProvider>
               <LanguageProvider>
                 <div className="overflow-x-hidden max-w-full w-full">
@@ -165,6 +167,7 @@ function App() {
             </LanguageProvider>
           </MusicProvider>
         </BrightnessProvider>
+                    </ItemInstancesProvider>
                   </CardInstancesProvider>
                 </GameDataProvider>
               </BanStatusProvider>
