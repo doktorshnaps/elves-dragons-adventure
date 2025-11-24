@@ -116,10 +116,7 @@ export const Shop = ({ onClose }: ShopProps) => {
         ]);
       }
 
-      // Dispatch events for immediate UI updates
-      window.dispatchEvent(new CustomEvent('itemInstancesUpdate'));
-      window.dispatchEvent(new CustomEvent('cardInstancesUpdate'));
-      
+      // Real-time subscription will handle automatic sync, no manual events needed
       console.log('✅ [Shop] Optimistic update applied successfully');
 
       setShowEffect(true);
