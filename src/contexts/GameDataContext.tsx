@@ -290,9 +290,14 @@ export const GameDataProvider = ({ children }: { children: ReactNode }) => {
   }, [accountId, queryClient, toast]);
 
   const loadGameDataManual = useCallback(async (walletAddress?: string) => {
-    console.log('🔄 Manual game data reload triggered for wallet:', walletAddress || accountId);
-    // Note: walletAddress parameter is ignored for now, using accountId from context
-    await refetch();
+    console.log('🔄 [GameDataContext] Manual game data reload triggered for wallet:', walletAddress || accountId);
+    // КРИТИЧНО: Используем cancelRefetch: true чтобы принудительно перезагрузить данные
+    // игнорируя staleTime кеш
+    const result = await refetch({ cancelRefetch: true });
+    console.log('✅ [GameDataContext] Refetch completed:', {
+      isSuccess: result.isSuccess,
+      buildingLevels: result.data?.buildingLevels
+    });
   }, [refetch, accountId]);
 
   return (
