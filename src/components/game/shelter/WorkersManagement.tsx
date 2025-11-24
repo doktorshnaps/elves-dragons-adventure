@@ -380,43 +380,34 @@ export const WorkersManagement = ({ onSpeedBoostChange }: WorkersManagementProps
       setActiveWorkers(updatedActiveWorkers);
       console.log('✅ Optimistic UI update done');
 
-      // Удаляем рабочего из card_instances
+      // Атомарно назначаем рабочего (удаление из card_instances + добавление в active_workers)
       if ((worker as any).instanceId) {
         const instId = (worker as any).instanceId as string;
-        console.log('🗑️ Deleting worker from card_instances:', instId);
+        console.log('🎯 Assigning worker atomically:', instId);
         
         try {
-          const { error } = await supabase.rpc('remove_card_instance_exact', {
-            p_instance_id: instId,
-            p_wallet_address: accountId
+          const { data, error } = await supabase.rpc('assign_worker_to_building', {
+            p_wallet_address: accountId,
+            p_card_instance_id: instId,
+            p_active_worker: newActiveWorker as any
           });
           
           if (error) throw error;
-          console.log('✅ Worker deleted from card_instances');
-          await loadCardInstances();
+          console.log('✅ Worker assigned atomically:', data);
+          
+          // Инвалидируем кеш card_instances для обновления списка
+          queryClient.invalidateQueries({ queryKey: ['cardInstances', accountId] });
         } catch (e) {
-          console.error('❌ Failed to delete worker:', e);
+          console.error('❌ Failed to assign worker:', e);
           setAssigningId(null);
           setActiveWorkers(activeWorkers);
           toast({
             title: t(language, 'shelter.error'),
-            description: 'Не удалось удалить рабочего',
+            description: 'Не удалось назначить рабочего',
             variant: 'destructive'
           });
           return;
         }
-      }
-
-      // Сохраняем в БД с таймаутом
-      console.log('💾 Saving to DB...');
-      try {
-        await Promise.race([
-          updateActiveWorkersInDB(updatedActiveWorkers),
-          new Promise((_, reject) => setTimeout(() => reject(new Error('DB timeout')), 5000))
-        ]);
-        console.log('✅ Saved to DB');
-      } catch (e) {
-        console.warn('⚠️ DB save timeout, continuing anyway:', e);
       }
 
       // Сохраняем локально
