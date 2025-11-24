@@ -90,8 +90,14 @@ Deno.serve(async (req) => {
       ell: data.ell_reward,
       exp: data.experience_reward,
       items: data.items.length,
-      card_kills: data.card_kills.length
+      card_kills: data.card_kills.length,
+      card_health_updates: data.card_health_updates.length
     });
+    
+    // Детальное логирование обновлений здоровья карт
+    if (data.card_health_updates.length > 0) {
+      console.log('💔 [claim-battle-rewards] Card health updates:', JSON.stringify(data.card_health_updates, null, 2));
+    }
 
     // Проверка идемпотентности через reward_claims
     const { data: existingClaim, error: claimCheckError } = await supabase
