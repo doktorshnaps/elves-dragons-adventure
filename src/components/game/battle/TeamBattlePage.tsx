@@ -23,6 +23,7 @@ import { BattleSpeedProvider } from '@/contexts/BattleSpeedContext';
 import { useBattleSpeed } from '@/contexts/BattleSpeedContext';
 import { useItemTemplates } from '@/hooks/useItemTemplates';
 import { useQueryClient } from '@tanstack/react-query';
+import { useCardInstances } from '@/hooks/useCardInstances';
 
 interface TeamBattlePageProps {
   dungeonType: DungeonType;
@@ -81,7 +82,7 @@ const TeamBattlePageInner: React.FC<TeamBattlePageProps> = ({
     resetRewards 
   } = useDungeonRewards();
   
-  const {
+  const { 
     battleState,
     attackOrder,
     updateAttackOrder,
@@ -95,6 +96,7 @@ const TeamBattlePageInner: React.FC<TeamBattlePageProps> = ({
     aliveOpponents,
     lastRoll
   } = useTeamBattle(dungeonType);
+  const { cardInstances } = useCardInstances();
   const handleStartBattle = async () => {
     // Снимаем энергию ТОЛЬКО если это первый уровень (вход в подземелье)
     if (battleState.level === 1) {
@@ -168,7 +170,40 @@ const TeamBattlePageInner: React.FC<TeamBattlePageProps> = ({
   };
 
   const handleClaimAndExit = async () => {
-    const success = await claimRewardAndExit();
+    // Собираем текущее здоровье и броню карт из battleState.playerPairs
+    const cardHealthUpdates = battleState.playerPairs.flatMap(pair => {
+      const updates = [];
+      
+      // Героя всегда добавляем
+      if (pair.hero) {
+        const heroInstance = cardInstances.find(ci => ci.card_template_id === pair.hero.id);
+        const heroCurrentDefense = heroInstance?.current_defense ?? pair.currentDefense;
+        
+        updates.push({
+          card_template_id: pair.hero.id,
+          current_health: pair.hero.currentHealth ?? pair.hero.health,
+          current_defense: heroCurrentDefense
+        });
+      }
+      
+      // Дракона добавляем если есть
+      if (pair.dragon) {
+        const dragonInstance = cardInstances.find(ci => ci.card_template_id === pair.dragon.id);
+        const dragonCurrentDefense = dragonInstance?.current_defense ?? 0;
+        
+        updates.push({
+          card_template_id: pair.dragon.id,
+          current_health: pair.dragon.currentHealth ?? pair.dragon.health,
+          current_defense: dragonCurrentDefense
+        });
+      }
+      
+      return updates;
+    });
+    
+    console.log('💔 [TeamBattlePage] Собраны повреждения карт для сохранения:', cardHealthUpdates);
+    
+    const success = await claimRewardAndExit(cardHealthUpdates);
     if (success) {
       handleExitAndReset();
     }

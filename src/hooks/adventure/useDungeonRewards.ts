@@ -201,19 +201,19 @@ export const useDungeonRewards = () => {
     isProcessingRef.current = false;
   }, [calculateReward, toast]);
 
-  const claimRewardAndExit = useCallback(async () => {
+  const claimRewardAndExit = useCallback(async (cardHealthUpdates: Array<{ card_template_id: string; current_health: number; current_defense: number }> = []) => {
     if (!pendingReward || isClaimingRef.current) {
       console.log('⚠️ Повторный вызов claimRewardAndExit заблокирован', { 
         hasPendingReward: !!pendingReward, 
         isClaiming: isClaimingRef.current 
       });
-      return;
+      return false;
     }
 
     // КРИТИЧЕСКАЯ ПРОВЕРКА: Если игрок был побеждён, НЕ начисляем treasure hunt предметы
     if (isDefeatedRef.current) {
       console.log('❌ Игрок был побеждён! Отменяем начисление treasure hunt предметов');
-      return;
+      return false;
     }
 
     // Создаем детерминированный ключ для этой награды, чтобы предотвратить повторные начисления
@@ -385,6 +385,39 @@ export const useDungeonRewards = () => {
       if (Object.keys(updates).length > 0) {
         await updateGameData(updates);
         console.log('✅ Награда успешно начислена!');
+        
+        // КРИТИЧНО: Отправляем повреждения карт через claim-battle-rewards
+        if (cardHealthUpdates.length > 0) {
+          console.log(`💔 Отправка повреждений ${cardHealthUpdates.length} карт через claim-battle-rewards`);
+          
+          try {
+            const { data: claimData, error: claimError } = await supabase.functions.invoke('claim-battle-rewards', {
+              body: {
+                wallet_address: accountId || 'local',
+                claim_key: claimKey + '_health',
+                dungeon_type: 'spider_nest', // Временно hardcode, нужно передать через параметр
+                level: 1, // Временно hardcode
+                ell_reward: 0, // ELL уже начислен выше
+                experience_reward: 0,
+                items: [],
+                card_kills: [],
+                card_health_updates: cardHealthUpdates
+              }
+            });
+            
+            if (claimError) {
+              console.error('❌ Ошибка сохранения повреждений карт:', claimError);
+            } else {
+              console.log('✅ Повреждения карт успешно сохранены:', claimData);
+              
+              // Инвалидируем кеш card_instances для обновления здоровья
+              queryClient.invalidateQueries({ queryKey: ['cardInstances', accountId] });
+            }
+          } catch (healthErr) {
+            console.error('❌ Исключение при сохранении повреждений:', healthErr);
+          }
+        }
+        
         // Persist claim timestamp to strengthen idempotency across sessions
         try {
           if (typeof window !== 'undefined') {
@@ -436,7 +469,7 @@ export const useDungeonRewards = () => {
       });
       return false;
     }
-  }, [pendingReward, gameData.balance, updateGameData, toast, addItemsToInstances, accountId]);
+  }, [pendingReward, gameData.balance, updateGameData, toast, addItemsToInstances, accountId, queryClient]);
 
   const continueWithRisk = useCallback(() => {
     setAccumulatedReward(prev => {
