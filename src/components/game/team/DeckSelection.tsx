@@ -80,27 +80,40 @@ export const DeckSelection = ({
     // Убираем дубликаты по ID
     const uniqueCards = combinedCards.filter((card, index, arr) => arr.findIndex(c => c.id === card.id) === index);
 
-    // Синхронизируем здоровье, броню И характеристики с card_instances
-    const instancesMap = new Map(cardInstances.map(ci => [ci.card_template_id, ci]));
-    const result = uniqueCards.map(card => {
-      const instance = instancesMap.get(card.id);
+    // ИСПРАВЛЕНО: Находим ВСЕ экземпляры каждого типа карты для корректного отображения индивидуального здоровья/брони
+    const result = uniqueCards.flatMap(card => {
+      // Найти ВСЕ экземпляры карты этого типа
+      const instances = cardInstances.filter(ci => ci.card_template_id === card.id);
       
-      if (instance && instance.card_data) {
-        return {
+      // Если нет экземпляров - вернуть оригинальную карту
+      if (instances.length === 0) {
+        return [card];
+      }
+      
+      // Создать отдельную карту для каждого экземпляра с индивидуальным здоровьем/броней
+      return instances.map((instance, idx) => {
+        const uniqueCard = {
           ...card,
-          // Здоровье и броня
+          // Уникальный ID для каждого экземпляра
+          id: instance.id, // Используем instance.id вместо template_id
+          instanceId: instance.id, // Добавляем instanceId для отслеживания
+          templateId: card.id, // Сохраняем оригинальный template_id
+          // Здоровье и броня из конкретного экземпляра
           currentHealth: instance.current_health,
           currentDefense: instance.current_defense,
           maxDefense: instance.max_defense,
           lastHealTime: new Date(instance.last_heal_time).getTime(),
-          // Характеристики из card_data (приоритет над card)
-          power: (instance.card_data as any).power ?? card.power,
-          defense: (instance.card_data as any).defense ?? card.defense,
-          health: (instance.card_data as any).health ?? card.health,
-          magic: (instance.card_data as any).magic ?? card.magic
+      
+          // Характеристики из card_data (приоритет над instance.card_data)
+          power: (instance.card_data as any)?.power ?? card.power,
+          defense: (instance.card_data as any)?.defense ?? card.defense,
+          health: (instance.card_data as any)?.health ?? card.health,
+          magic: (instance.card_data as any)?.magic ?? card.magic,
+          monster_kills: instance.monster_kills
         };
-      }
-      return card;
+        
+        return uniqueCard;
+      });
     });
     
     console.log('🎴 LocalCards with power:', result.map(c => `${c.name}: power=${c.power}, rarity=${c.rarity}`));
@@ -109,8 +122,11 @@ export const DeckSelection = ({
   }, [cards, nftCards, cardInstances]);
   const heroes = useMemo(() => {
     console.log('🎯 Heroes useMemo triggered, sortBy:', heroSortBy);
-    const filtered = localCards.filter(card => card.type === 'character');
-    console.log('📊 Filtered heroes:', filtered.length);
+    // ФИЛЬТРУЕМ мертвые карты (currentHealth <= 0) из списка доступных героев
+    const filtered = localCards.filter(card => 
+      card.type === 'character' && (card.currentHealth ?? card.health) > 0
+    );
+    console.log('📊 Filtered heroes (alive only):', filtered.length);
     
     if (heroSortBy === 'defense') {
       console.log('🛡️ Sorting by max defense...');
@@ -145,7 +161,10 @@ export const DeckSelection = ({
   }, [localCards, heroSortBy]);
 
   const dragons = useMemo(() => {
-    const filtered = localCards.filter(card => card.type === 'pet');
+    // ФИЛЬТРУЕМ мертвые карты (currentHealth <= 0) из списка доступных драконов
+    const filtered = localCards.filter(card => 
+      card.type === 'pet' && (card.currentHealth ?? card.health) > 0
+    );
     
     if (dragonSortBy === 'defense') {
       const sorted = [...filtered].sort((a, b) => {
