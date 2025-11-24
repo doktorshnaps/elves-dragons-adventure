@@ -4,6 +4,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useWalletContext } from '@/contexts/WalletConnectContext';
 import { useToast } from '@/hooks/use-toast';
 import { Card } from '@/types/cards';
+import { useGameStore } from '@/stores/gameStore';
 
 export interface CardInstance {
   id: string;
@@ -302,7 +303,7 @@ export const useCardInstances = () => {
     if (!isConnected || !accountId) return;
 
     // Проверяем, идет ли бой
-    const { activeBattleInProgress } = require('@/stores/gameStore').useGameStore.getState();
+    const activeBattleInProgress = useGameStore.getState().activeBattleInProgress;
     if (activeBattleInProgress) {
       console.log('⏸️ [useCardInstances] Skipping Real-time subscription during active battle');
       return;
