@@ -186,7 +186,14 @@ const TeamBattlePageInner: React.FC<TeamBattlePageProps> = ({
       
       // Героя всегда добавляем
       if (pair.hero) {
-        const heroInstance = cardInstances.find(ci => ci.card_template_id === pair.hero.id);
+        console.log('🔍 Ищем героя:', { id: pair.hero.id, name: pair.hero.name });
+        
+        // Пробуем найти по instance_id, затем по template_id
+        let heroInstance = cardInstances.find(ci => ci.id === pair.hero.id);
+        if (!heroInstance) {
+          heroInstance = cardInstances.find(ci => ci.card_template_id === pair.hero.id);
+        }
+        
         if (heroInstance) {
           console.log('💔 [HERO] Данные для сохранения:', {
             name: pair.hero.name,
@@ -203,12 +210,21 @@ const TeamBattlePageInner: React.FC<TeamBattlePageProps> = ({
             current_health: pair.hero.currentHealth ?? pair.hero.health,
             current_defense: pair.hero.currentDefense ?? pair.hero.defense // ИСПРАВЛЕНО: берем индивидуальную броню героя
           });
+        } else {
+          console.error('❌ Не найден hero instance для:', pair.hero.name, pair.hero.id);
         }
       }
       
       // Дракона добавляем если есть
       if (pair.dragon) {
-        const dragonInstance = cardInstances.find(ci => ci.card_template_id === pair.dragon.id);
+        console.log('🔍 Ищем дракона:', { id: pair.dragon.id, name: pair.dragon.name });
+        
+        // Пробуем найти по instance_id, затем по template_id
+        let dragonInstance = cardInstances.find(ci => ci.id === pair.dragon.id);
+        if (!dragonInstance) {
+          dragonInstance = cardInstances.find(ci => ci.card_template_id === pair.dragon.id);
+        }
+        
         if (dragonInstance) {
           console.log('💔 [DRAGON] Данные для сохранения:', {
             name: pair.dragon.name,
@@ -225,6 +241,8 @@ const TeamBattlePageInner: React.FC<TeamBattlePageProps> = ({
             current_health: pair.dragon.currentHealth ?? pair.dragon.health,
             current_defense: pair.dragon.currentDefense ?? pair.dragon.defense // ИСПРАВЛЕНО: добавлен fallback
           });
+        } else {
+          console.error('❌ Не найден dragon instance для:', pair.dragon.name, pair.dragon.id);
         }
       }
       
