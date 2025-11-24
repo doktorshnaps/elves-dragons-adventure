@@ -295,32 +295,48 @@ export const useCardInstances = () => {
     return () => window.removeEventListener('cardInstancesUpdate', handleCardInstancesUpdate);
   }, [accountId, queryClient]);
 
-  // Подписка на обновления в реальном времени - ОТКЛЮЧЕНА для снижения нагрузки
-  // Используем ручную синхронизацию через loadCardInstances при необходимости
-  // useEffect(() => {
-  //   if (!isConnected || !accountId) return;
+  // КРИТИЧНО: Подписка на обновления в реальном времени для автоматической синхронизации
+  // Особенно важно для рабочих, выдаваемых через админ-панель
+  useEffect(() => {
+    if (!isConnected || !accountId) return;
 
-  //   const channel = supabase
-  //     .channel('card_instances_changes')
-  //     .on(
-  //       'postgres_changes',
-  //       {
-  //         event: '*',
-  //         schema: 'public',
-  //         table: 'card_instances',
-  //         filter: `wallet_address=eq.${accountId}`
-  //       },
-  //       (payload) => {
-  //         console.log('Card instances realtime update:', payload);
-  //         loadCardInstances();
-  //       }
-  //     )
-  //     .subscribe();
+    console.log('🔔 [useCardInstances] Setting up Real-time subscription for:', accountId);
 
-  //   return () => {
-  //     supabase.removeChannel(channel);
-  //   };
-  // }, [accountId, isConnected, loadCardInstances]);
+    const channel = supabase
+      .channel('card_instances_changes')
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'card_instances',
+          filter: `wallet_address=eq.${accountId}`
+        },
+        (payload) => {
+          console.log('📥 [useCardInstances] New card instance added via Real-time:', payload);
+          queryClient.invalidateQueries({ queryKey: ['cardInstances', accountId] });
+        }
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: 'DELETE',
+          schema: 'public',
+          table: 'card_instances',
+          filter: `wallet_address=eq.${accountId}`
+        },
+        (payload) => {
+          console.log('🗑️ [useCardInstances] Card instance deleted via Real-time:', payload);
+          queryClient.invalidateQueries({ queryKey: ['cardInstances', accountId] });
+        }
+      )
+      .subscribe();
+
+    return () => {
+      console.log('🔕 [useCardInstances] Cleaning up Real-time subscription');
+      supabase.removeChannel(channel);
+    };
+  }, [accountId, isConnected, queryClient]);
 
   return {
     cardInstances,
