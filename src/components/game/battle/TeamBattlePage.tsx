@@ -507,7 +507,7 @@ const TeamBattlePageInner: React.FC<TeamBattlePageProps> = ({
               </CardHeader>
               <CardContent className="text-center space-y-4">
                 <p className="text-white/80">{t(language, 'battlePage.noReward')}</p>
-                <Button variant="menu" onClick={handleExitAndReset}>{t(language, 'battlePage.exit')}</Button>
+                <Button variant="menu" onClick={handleClaimAndExit}>{t(language, 'battlePage.exit')}</Button>
               </CardContent>
             </Card>
           </div>
