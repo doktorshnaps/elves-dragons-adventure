@@ -175,26 +175,37 @@ const TeamBattlePageInner: React.FC<TeamBattlePageProps> = ({
       description: "Начинаем сохранение здоровья и брони карт...",
     });
     
-    console.log('🚨 [handleClaimAndExit] ФУНКЦИЯ ВЫЗВАНА!');
-    console.log('🚨 battleState.playerPairs:', battleState.playerPairs);
-    console.log('🚨 cardInstances:', cardInstances);
-    console.log('🚨 cardInstances.length:', cardInstances?.length);
+    console.log('🚨 [handleClaimAndExit] ========== ФУНКЦИЯ ВЫЗВАНА ==========');
+    console.log('🚨 [handleClaimAndExit] battleState.playerPairs.length:', battleState.playerPairs.length);
+    console.log('🚨 [handleClaimAndExit] cardInstances.length:', cardInstances?.length || 0);
     
     // Детальное логирование всех ID в cardInstances
-    console.log('🔎 [DEBUG] Все ID в cardInstances:');
-    cardInstances?.forEach(ci => {
-      console.log('  - id:', ci.id, '| card_template_id:', ci.card_template_id, '| type:', ci.card_type);
-    });
+    console.log('🔎 [DEBUG] ========== ВСЕ CARD INSTANCES В ПАМЯТИ ==========');
+    if (cardInstances && cardInstances.length > 0) {
+      cardInstances.forEach((ci, idx) => {
+        console.log(`  [${idx}] instance_id: "${ci.id}"`);
+        console.log(`       template_id: "${ci.card_template_id}"`);
+        console.log(`       card_type: "${ci.card_type}"`);
+        console.log(`       name: "${ci.card_data?.name || 'Unknown'}"`);
+      });
+    } else {
+      console.error('❌ cardInstances пустой или undefined!');
+    }
     
     // Детальное логирование всех ID в playerPairs
-    console.log('🔎 [DEBUG] Все ID в playerPairs:');
+    console.log('🔎 [DEBUG] ========== ВСЕ КАРТЫ В BATTLE STATE ==========');
     battleState.playerPairs.forEach((pair, idx) => {
-      console.log(`  Pair ${idx}:`, {
-        heroId: pair.hero?.id,
-        heroName: pair.hero?.name,
-        dragonId: pair.dragon?.id,
-        dragonName: pair.dragon?.name
-      });
+      console.log(`  Pair ${idx}:`);
+      if (pair.hero) {
+        console.log(`    HERO - id: "${pair.hero.id}", name: "${pair.hero.name}"`);
+        console.log(`           currentHealth: ${pair.hero.currentHealth}, health: ${pair.hero.health}`);
+        console.log(`           currentDefense: ${pair.hero.currentDefense}, defense: ${pair.hero.defense}`);
+      }
+      if (pair.dragon) {
+        console.log(`    DRAGON - id: "${pair.dragon.id}", name: "${pair.dragon.name}"`);
+        console.log(`             currentHealth: ${pair.dragon.currentHealth}, health: ${pair.dragon.health}`);
+        console.log(`             currentDefense: ${pair.dragon.currentDefense}, defense: ${pair.dragon.defense}`);
+      }
     });
     
     // Собираем текущее здоровье и броню карт из battleState.playerPairs
@@ -266,7 +277,15 @@ const TeamBattlePageInner: React.FC<TeamBattlePageProps> = ({
       return updates;
     });
     
-    console.log('💔 [TeamBattlePage] Собраны повреждения карт для сохранения:', cardHealthUpdates);
+    console.log('💔 [TeamBattlePage] ========== ИТОГОВЫЙ РЕЗУЛЬТАТ ==========');
+    console.log('💔 [TeamBattlePage] Собрано card_health_updates:', cardHealthUpdates.length);
+    console.log('💔 [TeamBattlePage] Детальная структура card_health_updates:');
+    cardHealthUpdates.forEach((update, idx) => {
+      console.log(`  [${idx}] card_instance_id: "${update.card_instance_id}"`);
+      console.log(`      current_health: ${update.current_health}`);
+      console.log(`      current_defense: ${update.current_defense}`);
+    });
+    console.log('💔 [TeamBattlePage] JSON структура для отправки:', JSON.stringify(cardHealthUpdates, null, 2));
     
     // КРИТИЧЕСКОЕ ИСПРАВЛЕНИЕ: если нет card_instances для сохранения, 
     // все равно продолжаем claim наград (ELL, предметы, опыт)
