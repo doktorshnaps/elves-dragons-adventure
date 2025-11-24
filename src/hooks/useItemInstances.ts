@@ -84,16 +84,7 @@ export const useItemInstances = () => {
     };
   }, [accountId, queryClient]);
 
-  // Слушаем событие itemInstancesUpdate для обновления кеша
-  useEffect(() => {
-    const handleUpdate = () => {
-      console.log('🔄 [useItemInstances] Received itemInstancesUpdate event, invalidating cache');
-      refetch();
-    };
-
-    window.addEventListener('itemInstancesUpdate', handleUpdate);
-    return () => window.removeEventListener('itemInstancesUpdate', handleUpdate);
-  }, [refetch]);
+  // Window events removed - Real-time subscription handles all updates
 
   /**
    * Add N new item instances to DB
