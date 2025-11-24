@@ -513,10 +513,15 @@ Deno.serve(async (req) => {
       // Вычисляем max_defense на основе карты (defense из card_data или 0 для рабочих)
       const defense = card.defense || 0;
       
+      // Маппинг типов для соответствия DB constraint: character→hero, pet→dragon
+      const mappedType = card.type === 'character' ? 'hero' : 
+                         card.type === 'pet' ? 'dragon' : 
+                         card.type;
+      
       return {
         wallet_address: wallet_address,
         card_template_id: card.id,
-        card_type: card.type,
+        card_type: mappedType,
         card_data: card,
         max_health: 100, // Будет пересчитано на клиенте
         current_health: 100,
