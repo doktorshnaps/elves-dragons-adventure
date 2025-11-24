@@ -201,7 +201,11 @@ export const useDungeonRewards = () => {
     isProcessingRef.current = false;
   }, [calculateReward, toast]);
 
-  const claimRewardAndExit = useCallback(async (cardHealthUpdates: Array<{ card_instance_id: string; current_health: number; current_defense: number }> = []) => {
+  const claimRewardAndExit = useCallback(async (
+    cardHealthUpdates: Array<{ card_instance_id: string; current_health: number; current_defense: number }> = [],
+    dungeonType: string,
+    currentLevel: number
+  ) => {
     if (!pendingReward || isClaimingRef.current) {
       console.log('⚠️ Повторный вызов claimRewardAndExit заблокирован', { 
         hasPendingReward: !!pendingReward, 
@@ -294,14 +298,17 @@ export const useDungeonRewards = () => {
         const edgeFunctionPayload = {
           wallet_address: accountId || 'local',
           claim_key: claimKey,
-          ell_earned: rewardAmount,
+          dungeon_type: dungeonType,
+          level: currentLevel,
+          ell_reward: rewardAmount,
+          experience_reward: 0,
           items: lootedItems.map(it => ({
             template_id: (it as any).template_id,
             item_id: (it as any).item_id,
             name: it.name,
             type: it.type
           })),
-          card_kills: [], // Не используется в текущей реализации
+          card_kills: [],
           card_health_updates: cardHealthUpdates
         };
         
@@ -437,8 +444,8 @@ export const useDungeonRewards = () => {
               body: {
                 wallet_address: accountId || 'local',
                 claim_key: claimKey + '_health',
-                dungeon_type: 'spider_nest', // Временно hardcode, нужно передать через параметр
-                level: 1, // Временно hardcode
+                dungeon_type: dungeonType,
+                level: currentLevel,
                 ell_reward: 0, // ELL уже начислен выше
                 experience_reward: 0,
                 items: [],
