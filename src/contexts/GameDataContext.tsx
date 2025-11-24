@@ -180,17 +180,39 @@ export const GameDataProvider = ({ children }: { children: ReactNode }) => {
           stone: gameRecord.stone || 0,
           iron: gameRecord.iron || 0,
           gold: gameRecord.gold || 0,
-          buildingLevels: (gameRecord.building_levels as any) || {
-            main_hall: 0,
-            workshop: 0,
-            storage: 0,
-            sawmill: 0,
-            quarry: 0,
-            barracks: 0,
-            dragon_lair: 0,
-            medical: 0,
-            forge: 0
-          },
+          buildingLevels: (() => {
+            const levels = gameRecord.building_levels as any;
+            console.log('🏗️ [GameDataContext] Parsing building_levels:', levels);
+            
+            // Если levels валидный объект с данными, возвращаем его
+            if (levels && typeof levels === 'object' && Object.keys(levels).length > 0) {
+              return {
+                main_hall: levels.main_hall ?? 0,
+                workshop: levels.workshop ?? 0,
+                storage: levels.storage ?? 0,
+                sawmill: levels.sawmill ?? 0,
+                quarry: levels.quarry ?? 0,
+                barracks: levels.barracks ?? 0,
+                dragon_lair: levels.dragon_lair ?? 0,
+                medical: levels.medical ?? 0,
+                forge: levels.forge ?? 0
+              };
+            }
+            
+            // Fallback на дефолтные значения
+            console.warn('⚠️ [GameDataContext] Building levels empty or invalid, using defaults');
+            return {
+              main_hall: 0,
+              workshop: 0,
+              storage: 0,
+              sawmill: 0,
+              quarry: 0,
+              barracks: 0,
+              dragon_lair: 0,
+              medical: 0,
+              forge: 0
+            };
+          })(),
           activeBuildingUpgrades: (gameRecord.active_building_upgrades as any[]) || []
         };
         

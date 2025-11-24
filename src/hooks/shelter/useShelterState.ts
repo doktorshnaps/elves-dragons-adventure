@@ -178,18 +178,43 @@ export const useShelterState = () => {
     stone: gameData.stone ?? gameState.stone ?? 0
   };
 
-  // Получаем уровни зданий из GameDataContext (приоритет) или gameState (fallback)
-  const buildingLevels = gameData.buildingLevels || gameState.buildingLevels || {
-    main_hall: 0,
-    workshop: 0,
-    storage: 0,
-    sawmill: 0,
-    quarry: 0,
-    barracks: 0,
-    dragon_lair: 0,
-    medical: 0,
-    forge: 0
-  };
+  // КРИТИЧНО: Мемоизируем buildingLevels с правильными зависимостями для реактивности
+  const buildingLevels = useMemo(() => {
+    console.log('🏗️ [useShelterState] Building levels update:', {
+      fromGameData: gameData.buildingLevels,
+      fromGameState: gameState.buildingLevels
+    });
+    
+    const levels = gameData.buildingLevels || gameState.buildingLevels;
+    
+    // Если уровни есть, возвращаем их с заполнением пропущенных зданий
+    if (levels && typeof levels === 'object') {
+      return {
+        main_hall: levels.main_hall ?? 0,
+        workshop: levels.workshop ?? 0,
+        storage: levels.storage ?? 0,
+        sawmill: levels.sawmill ?? 0,
+        quarry: levels.quarry ?? 0,
+        barracks: levels.barracks ?? 0,
+        dragon_lair: levels.dragon_lair ?? 0,
+        medical: levels.medical ?? 0,
+        forge: levels.forge ?? 0
+      };
+    }
+    
+    // Fallback на дефолтные значения
+    return {
+      main_hall: 0,
+      workshop: 0,
+      storage: 0,
+      sawmill: 0,
+      quarry: 0,
+      barracks: 0,
+      dragon_lair: 0,
+      medical: 0,
+      forge: 0
+    };
+  }, [gameData.buildingLevels, gameState.buildingLevels]);
 
   // Функция для расчета стоимости апгрейда для каждого уровня
   const getUpgradeCost = (buildingId: string, currentLevel: number) => {
@@ -267,8 +292,12 @@ export const useShelterState = () => {
   };
 
   const nestUpgrades: NestUpgrade[] = useMemo(() => {
+    console.log('🔨 [useShelterState] Recalculating nestUpgrades with buildingLevels:', buildingLevels);
+    
     const createUpgrade = (buildingId: string, nameKey: string, descKey: string, benefitKey: string): NestUpgrade => {
       const currentLevel = buildingLevels[buildingId as keyof typeof buildingLevels] || 0;
+      console.log(`  - ${buildingId}: level ${currentLevel}`);
+      
       const nextLevelConfig = getBuildingConfig(buildingId, currentLevel + 1);
       const currentLevelConfig = getBuildingConfig(buildingId, currentLevel);
       
