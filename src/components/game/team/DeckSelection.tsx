@@ -80,30 +80,40 @@ export const DeckSelection = ({
     // Убираем дубликаты по ID
     const uniqueCards = combinedCards.filter((card, index, arr) => arr.findIndex(c => c.id === card.id) === index);
 
-    // Синхронизируем здоровье и броню из card_instances по template_id
-    // Используем Map для быстрого поиска instance
-    const instancesMap = new Map(cardInstances.map(ci => [ci.card_template_id, ci]));
+    // КРИТИЧЕСКОЕ ИСПРАВЛЕНИЕ: Создаем отдельную карту для КАЖДОГО экземпляра
+    // Группируем instances по card_template_id для обработки множественных экземпляров
+    const instancesByTemplate = new Map<string, typeof cardInstances>();
+    cardInstances.forEach(ci => {
+      const existing = instancesByTemplate.get(ci.card_template_id) || [];
+      instancesByTemplate.set(ci.card_template_id, [...existing, ci]);
+    });
     
-    const result = uniqueCards.map(card => {
-      const instance = instancesMap.get(card.id);
+    const result = uniqueCards.flatMap(card => {
+      const instances = instancesByTemplate.get(card.id);
       
-      if (instance && instance.card_data) {
-        return {
-          ...card,
-          // Здоровье и броня из instance
-          currentHealth: instance.current_health,
-          currentDefense: instance.current_defense,
-          maxDefense: instance.max_defense,
-          lastHealTime: new Date(instance.last_heal_time).getTime(),
-          // Характеристики из card_data (приоритет над card)
-          power: (instance.card_data as any)?.power ?? card.power,
-          defense: (instance.card_data as any)?.defense ?? card.defense,
-          health: (instance.card_data as any)?.health ?? card.health,
-          magic: (instance.card_data as any)?.magic ?? card.magic,
-          monster_kills: instance.monster_kills
-        };
+      // Если нет экземпляров в БД - вернуть оригинальную карту
+      if (!instances || instances.length === 0) {
+        return [card];
       }
-      return card;
+      
+      // Создаем отдельную карту для КАЖДОГО экземпляра с уникальным instance.id
+      return instances.map(instance => ({
+        ...card,
+        id: instance.id, // Используем instance.id как уникальный ID карты
+        instanceId: instance.id,
+        templateId: card.id, // Сохраняем template_id для обратной совместимости
+        // Здоровье и броня из конкретного экземпляра
+        currentHealth: instance.current_health,
+        currentDefense: instance.current_defense,
+        maxDefense: instance.max_defense,
+        lastHealTime: new Date(instance.last_heal_time).getTime(),
+        // Характеристики из card_data экземпляра
+        power: (instance.card_data as any)?.power ?? card.power,
+        defense: (instance.card_data as any)?.defense ?? card.defense,
+        health: (instance.card_data as any)?.health ?? card.health,
+        magic: (instance.card_data as any)?.magic ?? card.magic,
+        monster_kills: instance.monster_kills
+      }));
     });
     
     console.log('🎴 LocalCards with power:', result.map(c => `${c.name}: power=${c.power}, rarity=${c.rarity}`));
