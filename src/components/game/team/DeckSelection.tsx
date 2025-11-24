@@ -80,40 +80,30 @@ export const DeckSelection = ({
     // Убираем дубликаты по ID
     const uniqueCards = combinedCards.filter((card, index, arr) => arr.findIndex(c => c.id === card.id) === index);
 
-    // ИСПРАВЛЕНО: Находим ВСЕ экземпляры каждого типа карты для корректного отображения индивидуального здоровья/брони
-    const result = uniqueCards.flatMap(card => {
-      // Найти ВСЕ экземпляры карты этого типа
-      const instances = cardInstances.filter(ci => ci.card_template_id === card.id);
+    // Синхронизируем здоровье и броню из card_instances по template_id
+    // Используем Map для быстрого поиска instance
+    const instancesMap = new Map(cardInstances.map(ci => [ci.card_template_id, ci]));
+    
+    const result = uniqueCards.map(card => {
+      const instance = instancesMap.get(card.id);
       
-      // Если нет экземпляров - вернуть оригинальную карту
-      if (instances.length === 0) {
-        return [card];
-      }
-      
-      // Создать отдельную карту для каждого экземпляра с индивидуальным здоровьем/броней
-      return instances.map((instance, idx) => {
-        const uniqueCard = {
+      if (instance && instance.card_data) {
+        return {
           ...card,
-          // Уникальный ID для каждого экземпляра
-          id: instance.id, // Используем instance.id вместо template_id
-          instanceId: instance.id, // Добавляем instanceId для отслеживания
-          templateId: card.id, // Сохраняем оригинальный template_id
-          // Здоровье и броня из конкретного экземпляра
+          // Здоровье и броня из instance
           currentHealth: instance.current_health,
           currentDefense: instance.current_defense,
           maxDefense: instance.max_defense,
           lastHealTime: new Date(instance.last_heal_time).getTime(),
-      
-          // Характеристики из card_data (приоритет над instance.card_data)
+          // Характеристики из card_data (приоритет над card)
           power: (instance.card_data as any)?.power ?? card.power,
           defense: (instance.card_data as any)?.defense ?? card.defense,
           health: (instance.card_data as any)?.health ?? card.health,
           magic: (instance.card_data as any)?.magic ?? card.magic,
           monster_kills: instance.monster_kills
         };
-        
-        return uniqueCard;
-      });
+      }
+      return card;
     });
     
     console.log('🎴 LocalCards with power:', result.map(c => `${c.name}: power=${c.power}, rarity=${c.rarity}`));
