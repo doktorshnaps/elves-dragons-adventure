@@ -10,7 +10,7 @@ import { TeamBattleArena } from './TeamBattleArena';
 import { DungeonType } from '@/constants/dungeons';
 import { DungeonRewardModal } from '@/components/game/modals/DungeonRewardModal';
 import { useDungeonRewards } from '@/hooks/adventure/useDungeonRewards';
-import { setItemTemplatesCache } from '@/utils/monsterLootMapping';
+import { setItemTemplatesCache, loadActiveTreasureHunt } from '@/utils/monsterLootMapping';
 import { supabase } from '@/integrations/supabase/client';
 import { useWalletContext } from '@/contexts/WalletConnectContext';
 import { useDungeonSync } from '@/hooks/useDungeonSync';
@@ -49,25 +49,26 @@ const TeamBattlePageInner: React.FC<TeamBattlePageProps> = ({
   // Sync health from database ONLY when NOT in battle (prevents DB spam)
   useCardHealthSync(true); // true = skip during battle
   
-  // Инициализация кеша item templates и treasure hunt из StaticGameData (ОДИН РАЗ)
+  // Инициализация кеша item templates и treasure hunt из StaticGameData (ТОЛЬКО ОДИН РАЗ при монтировании)
   const { templates: itemTemplatesMap } = useItemTemplates();
   const itemTemplatesInitialized = useRef(false);
   
   useEffect(() => {
-    if (!itemTemplatesInitialized.current && itemTemplatesMap.size > 0) {
+    // Выполняем только один раз при монтировании компонента
+    if (itemTemplatesInitialized.current) return;
+    
+    if (itemTemplatesMap.size > 0) {
       const templatesArray = Array.from(itemTemplatesMap.values());
       setItemTemplatesCache(templatesArray);
       
-      // Также загружаем treasure hunt событие ОДИН РАЗ при инициализации боя
-      (async () => {
-        const { loadActiveTreasureHunt } = await import('@/utils/monsterLootMapping');
-        await loadActiveTreasureHunt();
-      })();
+      // Загружаем treasure hunt событие ОДИН РАЗ при инициализации
+      loadActiveTreasureHunt().then(() => {
+        console.log('✅ Item templates and treasure hunt cache initialized');
+      });
       
       itemTemplatesInitialized.current = true;
-      console.log('✅ Item templates and treasure hunt cache initialized from StaticGameData');
     }
-  }, [itemTemplatesMap]);
+  }, []); // Пустой массив зависимостей - только при монтировании
   
   const { 
     pendingReward, 
@@ -203,7 +204,7 @@ const TeamBattlePageInner: React.FC<TeamBattlePageProps> = ({
     // Проверяем сразу
     checkSession();
 
-    // Подписываемся на изменения в БД
+    // Подписываемся на изменения в БД (Real-time подписка более эффективна чем polling)
     const channel = supabase
       .channel(`battle_session_monitor:${accountId}`)
       .on(
@@ -224,12 +225,11 @@ const TeamBattlePageInner: React.FC<TeamBattlePageProps> = ({
       )
       .subscribe();
 
-    // Периодическая проверка на случай пропуска realtime-события (увеличено до 30с для снижения нагрузки)
-    const interval = setInterval(checkSession, 30000);
+    // Убираем периодическую проверку - полагаемся только на Real-time подписку
+    // Это снижает нагрузку с 16 запросов select:active_dungeon_sessions до 0
 
     return () => {
       supabase.removeChannel(channel);
-      clearInterval(interval);
     };
   }, [accountId, deviceId, battleStarted]);
 

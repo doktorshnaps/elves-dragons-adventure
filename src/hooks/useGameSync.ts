@@ -201,6 +201,13 @@ export const useGameSync = () => {
     if (walletLoading || !selector) return;
     if (!isConnected || !accountId || loading) return;
     
+    // КРИТИЧНО: блокируем синхронизацию во время боя
+    const activeBattle = gameStore.activeBattleInProgress;
+    if (activeBattle) {
+      console.log('⏸️ [useGameSync] Sync blocked: battle in progress');
+      return;
+    }
+    
     // КРИТИЧНО: блокируем синхронизацию сразу после clearAllData()
     if (preventSyncAfterClearRef.current) {
       console.log('⏸️ Sync blocked: waiting for data to load after clear');
