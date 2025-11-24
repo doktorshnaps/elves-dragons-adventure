@@ -2896,13 +2896,15 @@ export type Database = {
         Args: { p_quest_id: string; p_wallet_address: string }
         Returns: boolean
       }
-      migrate_cards_to_instances: {
-        Args: never
-        Returns: {
-          migrated_cards: number
-          result_wallet: string
-        }[]
-      }
+      migrate_cards_to_instances:
+        | {
+            Args: never
+            Returns: {
+              migrated_cards: number
+              result_wallet: string
+            }[]
+          }
+        | { Args: { p_wallet_address: string }; Returns: Json }
       open_card_packs: {
         Args: {
           p_count: number

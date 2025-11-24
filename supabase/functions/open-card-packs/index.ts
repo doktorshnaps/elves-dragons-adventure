@@ -532,8 +532,11 @@ Deno.serve(async (req) => {
 
     if (insertCardsErr) {
       console.error('❌ Error creating card_instances:', insertCardsErr);
+      console.error('❌ Full error details:', JSON.stringify(insertCardsErr, null, 2));
+      console.error('❌ Attempted to insert:', JSON.stringify(cardInstancesToInsert, null, 2));
       // Не бросаем ошибку, так как карты уже в game_data
       console.warn('⚠️ Cards saved to game_data but not to card_instances');
+      console.warn('⚠️ This will cause health/defense not to save after battles!');
     } else {
       console.log('✅ Card instances created successfully');
     }

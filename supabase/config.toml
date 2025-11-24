@@ -53,3 +53,6 @@ verify_jwt = false
 
 [functions.claim-battle-rewards]
 verify_jwt = false
+
+[functions.migrate-cards-to-instances]
+verify_jwt = false
