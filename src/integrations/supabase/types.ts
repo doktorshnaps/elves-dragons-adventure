@@ -2916,6 +2916,16 @@ export type Database = {
         Args: { p_amount: number; p_earner_wallet_address: string }
         Returns: undefined
       }
+      recalculate_card_stats: {
+        Args: never
+        Returns: {
+          card_instance_id: string
+          new_defense: number
+          new_health: number
+          old_defense: number
+          old_health: number
+        }[]
+      }
       remove_card_from_forge_bay: {
         Args: { p_card_instance_id: string; p_wallet_address?: string }
         Returns: boolean
