@@ -197,16 +197,16 @@ export const getCardImageByRarity = async (card: Card): Promise<string | undefin
 };
 
 /**
- * Синхронная версия getCardImageByRarity для обратной совместимости
- * Использует card.image как приоритетный источник
+ * Синхронная версия - использует только card.image без обращения к БД
+ * ПРИОРИТЕТ: card.image из card_instances (это правильное изображение из гримуара)
  */
 export const getCardImageByRaritySync = (card: Card): string | undefined => {
-  // Используем card.image если есть (там уже правильное изображение)
+  // КРИТИЧНО: card.image содержит корректный путь из cardDatabase
+  // Это относительный путь типа /lovable-uploads/xxx.webp
   if (card.image) {
     return normalizeCardImageUrl(card.image);
   }
   
-  // Fallback: placeholder
   return '/placeholder.svg';
 };
 
@@ -222,9 +222,9 @@ export const resolveCardImage = async (card: Card): Promise<string | undefined> 
 };
 
 /**
- * Синхронная версия resolveCardImage для обратной совместимости
+ * Синхронная версия - просто возвращает card.image (как в гримуаре и в бою)
  */
 export const resolveCardImageSync = (card: Card): string | undefined => {
-  const rarityImage = getCardImageByRaritySync(card);
-  return rarityImage || normalizeCardImageUrl(card.image);
+  // Используем card.image напрямую - это корректный путь из cardDatabase
+  return normalizeCardImageUrl(card.image) || '/placeholder.svg';
 };
