@@ -399,7 +399,7 @@ export const getClassDropRates = async () => {
         recruit: { name: 'Рекрут', chance: '16.61%' },
         guard: { name: 'Страж', chance: '15.23%' },
         veteran: { name: 'Ветеран', chance: '13.86%' },
-        wizard: { name: 'Маг', chance: '12.48%' },
+        wizard: { name: 'Чародей', chance: '12.48%' },
         healer: { name: 'Мастер Целитель', chance: '11.12%' },
         defender: { name: 'Защитник', chance: '9.74%' },
         veteran_defender: { name: 'Ветеран Защитник', chance: '8.36%' },
