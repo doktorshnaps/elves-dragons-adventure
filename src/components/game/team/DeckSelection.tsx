@@ -284,27 +284,34 @@ export const DeckSelection = ({
   };
   
   // КРИТИЧЕСКОЕ ИСПРАВЛЕНИЕ: Синхронизируем selectedPairs с актуальными данными из localCards
+  // УЧИТЫВАЕМ ФРАКЦИЮ при поиске карточки!
   const syncedSelectedPairs = useMemo(() => {
     return selectedPairs.map(pair => {
-      // Находим актуальные данные героя по instanceId или id
+      // Находим актуальные данные героя по instanceId/id + faction (для различения одноименных карт разных фракций)
       const updatedHero = localCards.find(c => 
-        c.id === pair.hero.id || 
-        (c as any).instanceId === pair.hero.id || 
-        c.id === (pair.hero as any).instanceId
+        (c.id === pair.hero.id || 
+         (c as any).instanceId === pair.hero.id || 
+         c.id === (pair.hero as any).instanceId) &&
+        c.faction === pair.hero.faction
       );
       
-      // Находим актуальные данные дракона (если есть)
+      // Находим актуальные данные дракона (если есть) - также с учетом фракции
       const updatedDragon = pair.dragon ? localCards.find(c => 
-        c.id === pair.dragon!.id || 
-        (c as any).instanceId === pair.dragon!.id || 
-        c.id === (pair.dragon as any).instanceId
+        (c.id === pair.dragon!.id || 
+         (c as any).instanceId === pair.dragon!.id || 
+         c.id === (pair.dragon as any).instanceId) &&
+        c.faction === pair.dragon!.faction
       ) : undefined;
       
       // Логирование для отладки
-      if (updatedHero?.name?.includes('Рекрут') && pair.hero.name?.includes('Рекрут')) {
-        console.log(`🔄 Syncing Recruit in team:`, {
-          original: { id: pair.hero.id, currentHealth: pair.hero.currentHealth },
-          updated: { id: updatedHero.id, currentHealth: updatedHero.currentHealth }
+      if (pair.hero.name?.includes('Рекрут')) {
+        console.log(`🔄 Syncing ${pair.hero.name} (${pair.hero.faction}) in team:`, {
+          originalId: pair.hero.id,
+          originalHealth: pair.hero.currentHealth,
+          foundMatch: !!updatedHero,
+          updatedId: updatedHero?.id,
+          updatedHealth: updatedHero?.currentHealth,
+          updatedFaction: updatedHero?.faction
         });
       }
       
