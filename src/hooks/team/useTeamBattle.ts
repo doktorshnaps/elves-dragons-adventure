@@ -163,6 +163,10 @@ export const useTeamBattle = (dungeonType: DungeonType, initialLevel: number = 1
       (async () => {
         const opponents = await generateDungeonOpponents(dungeonType, initialLevel);
         
+        // Устанавливаем флаг активного боя при инициализации
+        localStorage.setItem('activeBattleInProgress', 'true');
+        console.log('🎬 [INIT] Starting battle, setting activeBattleInProgress=true');
+        
         startTransition(() => {
           setBattleState(prev => ({
             ...prev,
@@ -385,10 +389,9 @@ export const useTeamBattle = (dungeonType: DungeonType, initialLevel: number = 1
 
     // Проверяем завершение уровня
     if (battleState.opponents.filter(o => o.health > 0).length === 1 && newTargetHealth === 0) {
-      // Даем UI доиграть смерти и переход
-      setTimeout(() => {
-        localStorage.setItem('activeBattleInProgress', 'false');
-      }, adjustDelay(1800));
+      // НЕ сбрасываем activeBattleInProgress - бой продолжается на следующем уровне
+      // Флаг будет сброшен только при полном выходе из подземелья
+      console.log('🏁 [PLAYER] Уровень завершен, сохраняем activeBattleInProgress=true для следующего уровня');
     } else {
       // Смена хода после короткой паузы
       setTimeout(() => switchTurn(), adjustDelay(TURN_DELAY_MS));
@@ -614,6 +617,10 @@ export const useTeamBattle = (dungeonType: DungeonType, initialLevel: number = 1
 
     // Очищаем lastRoll при переходе на следующий уровень
     setLastRoll(null);
+
+    // КРИТИЧНО: Сохраняем флаг activeBattleInProgress для предотвращения ре-синхронизации при переходе между уровнями
+    localStorage.setItem('activeBattleInProgress', 'true');
+    console.log('🔄 [LEVEL COMPLETE] Переход на уровень', nextLevel, 'сохраняем activeBattleInProgress=true');
 
     setBattleState(prev => ({
       ...prev,
