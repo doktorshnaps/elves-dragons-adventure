@@ -7,9 +7,11 @@ import { CardDisplay } from "../CardDisplay";
 import { CardPreviewModal } from "../cards/CardPreviewModal";
 import { NFTTransferModal } from "./NFTTransferModal";
 import { useToast } from "@/hooks/use-toast";
-import { useCardInstances } from "@/hooks/useCardInstances";
+import { useCardInstancesContext } from "@/providers/CardInstancesProvider";
 import { useNFTCardIntegration } from "@/hooks/useNFTCardIntegration";
 import { ArrowUpDown, Sparkles, Swords } from "lucide-react";
+
+console.log('📋 [DeckSelection] Component loaded - will use centralized CardInstancesContext');
 interface DeckSelectionProps {
   cards: CardType[];
   selectedPairs: TeamPair[];
@@ -68,10 +70,16 @@ export const DeckSelection = ({
     isLoading: nftLoading
   } = useNFTCardIntegration();
 
-  // Получаем актуальные card instances для отображения здоровья
+  // КРИТИЧНО: Получаем данные ТОЛЬКО из централизованного провайдера
   const {
     cardInstances
-  } = useCardInstances();
+  } = useCardInstancesContext();
+  
+  console.log('🎴 [DeckSelection] Loaded from CardInstancesContext:', {
+    totalInstances: cardInstances.length,
+    heroes: cardInstances.filter(ci => ci.card_type === 'hero').length,
+    dragons: cardInstances.filter(ci => ci.card_type === 'dragon').length
+  });
 
   // Создаем карты НАПРЯМУЮ из card_instances - каждый instance = уникальная карта
   const localCards = useMemo(() => {

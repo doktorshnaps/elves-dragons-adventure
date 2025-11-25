@@ -96,7 +96,16 @@ Deno.serve(async (req) => {
     
     // Детальное логирование обновлений здоровья карт
     if (data.card_health_updates.length > 0) {
-      console.log('💔 [claim-battle-rewards] Card health updates:', JSON.stringify(data.card_health_updates, null, 2));
+      console.log('💔 [claim-battle-rewards] Card health updates received:', {
+        totalUpdates: data.card_health_updates.length,
+        updates: data.card_health_updates.map(u => ({
+          instanceId: u.card_instance_id.substring(0, 8),
+          health: u.current_health,
+          defense: u.current_defense
+        }))
+      });
+    } else {
+      console.warn('⚠️ [claim-battle-rewards] No card health updates received!');
     }
 
     // Проверка идемпотентности через reward_claims
@@ -133,6 +142,15 @@ Deno.serve(async (req) => {
     console.log('✅ [claim-battle-rewards] Idempotency record created');
 
     // Вызываем RPC функцию для атомарного применения всех наград
+    console.log('🎯 [claim-battle-rewards] Calling apply_battle_rewards RPC with:', {
+      wallet: data.wallet_address,
+      ell: data.ell_reward,
+      exp: data.experience_reward,
+      itemsCount: data.items.length,
+      cardKillsCount: data.card_kills.length,
+      healthUpdatesCount: data.card_health_updates.length
+    });
+    
     const { data: rpcResult, error: rpcError } = await supabase.rpc('apply_battle_rewards', {
       p_wallet_address: data.wallet_address,
       p_ell_reward: data.ell_reward,
@@ -143,11 +161,16 @@ Deno.serve(async (req) => {
     });
 
     if (rpcError) {
-      console.error('❌ [claim-battle-rewards] RPC error:', rpcError);
+      console.error('❌ [claim-battle-rewards] RPC apply_battle_rewards error:', {
+        code: rpcError.code,
+        message: rpcError.message,
+        details: rpcError.details,
+        hint: rpcError.hint
+      });
       return json({ error: 'Failed to apply battle rewards' }, 500);
     }
 
-    console.log('✅ [claim-battle-rewards] Rewards applied successfully:', rpcResult);
+    console.log('✅ [claim-battle-rewards] RPC apply_battle_rewards successful:', rpcResult);
 
     return json({
       success: true,
