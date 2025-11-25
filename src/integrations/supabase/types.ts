@@ -2101,6 +2101,15 @@ export type Database = {
           result_wallet: string
         }[]
       }
+      admin_recalculate_all_card_stats: {
+        Args: { p_admin_wallet_address?: string }
+        Returns: {
+          dragons_updated: number
+          heroes_updated: number
+          total_updated: number
+          workers_skipped: number
+        }[]
+      }
       admin_remove_administrator: {
         Args: { p_admin_wallet_address?: string; p_wallet_address: string }
         Returns: boolean
@@ -2915,6 +2924,15 @@ export type Database = {
       process_referral_earnings: {
         Args: { p_amount: number; p_earner_wallet_address: string }
         Returns: undefined
+      }
+      recalculate_all_card_stats: {
+        Args: never
+        Returns: {
+          dragons_updated: number
+          heroes_updated: number
+          total_updated: number
+          workers_skipped: number
+        }[]
       }
       recalculate_card_stats: {
         Args: never
