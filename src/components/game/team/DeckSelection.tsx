@@ -73,53 +73,34 @@ export const DeckSelection = ({
     cardInstances
   } = useCardInstances();
 
-  // Создаем карты с актуальным здоровьем из card_instances - используем напрямую без дополнительного state
+  // Создаем карты НАПРЯМУЮ из card_instances - каждый instance = уникальная карта
   const localCards = useMemo(() => {
-    const combinedCards = [...cards, ...nftCards];
-    
-    // Убираем дубликаты по ID
-    const uniqueCards = combinedCards.filter((card, index, arr) => arr.findIndex(c => c.id === card.id) === index);
-
-    // КРИТИЧЕСКОЕ ИСПРАВЛЕНИЕ: Создаем отдельную карту для КАЖДОГО экземпляра
-    // Группируем instances по card_template_id для обработки множественных экземпляров
-    const instancesByTemplate = new Map<string, typeof cardInstances>();
-    cardInstances.forEach(ci => {
-      const existing = instancesByTemplate.get(ci.card_template_id) || [];
-      instancesByTemplate.set(ci.card_template_id, [...existing, ci]);
-    });
-    
-    const result = uniqueCards.flatMap(card => {
-      const instances = instancesByTemplate.get(card.id);
-      
-      // Если нет экземпляров в БД - вернуть оригинальную карту
-      if (!instances || instances.length === 0) {
-        return [card];
-      }
-      
-      // Создаем отдельную карту для КАЖДОГО экземпляра с уникальным instance.id
-      return instances.map(instance => ({
-        ...card,
-        id: instance.id, // Используем instance.id как уникальный ID карты
+    // Карты из cardInstances (каждый instance - отдельная карта с уникальным id)
+    const instanceCards = cardInstances
+      .filter(ci => ci.card_type === 'hero' || ci.card_type === 'dragon')
+      .map(instance => ({
+        // Используем instance.id как уникальный ID карты
+        id: instance.id,
         instanceId: instance.id,
-        templateId: card.id, // Сохраняем template_id для обратной совместимости
-        // Здоровье и броня из конкретного экземпляра
+        templateId: instance.card_template_id,
+        // Данные карты из card_data
+        ...(instance.card_data as any),
+        // Актуальное здоровье и броня из instance
         currentHealth: instance.current_health,
         currentDefense: instance.current_defense,
         maxDefense: instance.max_defense,
         lastHealTime: new Date(instance.last_heal_time).getTime(),
-        // Характеристики из card_data экземпляра
-        power: (instance.card_data as any)?.power ?? card.power,
-        defense: (instance.card_data as any)?.defense ?? card.defense,
-        health: (instance.card_data as any)?.health ?? card.health,
-        magic: (instance.card_data as any)?.magic ?? card.magic,
         monster_kills: instance.monster_kills
       }));
-    });
     
-    console.log('🎴 LocalCards with power:', result.map(c => `${c.name}: power=${c.power}, rarity=${c.rarity}`));
+    // Добавляем NFT карты (если есть)
+    const result = [...instanceCards, ...nftCards];
+    
+    console.log(`🎴 Created ${result.length} cards from ${cardInstances.length} instances`);
+    console.log('📋 Cards:', result.map(c => `${c.name} (${c.id.substring(0,8)}...): HP=${c.currentHealth}/${c.health}, Def=${c.currentDefense}/${c.maxDefense}`).join(', '));
     
     return result;
-  }, [cards, nftCards, cardInstances]);
+  }, [cardInstances, nftCards]);
   const heroes = useMemo(() => {
     console.log('🎯 Heroes useMemo triggered, sortBy:', heroSortBy);
     // ФИЛЬТРУЕМ мертвые карты (currentHealth <= 0) из списка доступных героев
