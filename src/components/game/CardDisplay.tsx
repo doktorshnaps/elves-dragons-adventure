@@ -85,7 +85,13 @@ export const CardDisplay = ({
               </div>}
             
             <div className="shrink-0">
-              <CardStats health={stats.health} power={stats.power} defense={card.currentDefense !== undefined ? card.currentDefense : stats.defense} />
+              <CardStats 
+                health={stats.health} 
+                power={stats.power} 
+                defense={stats.defense}
+                currentDefense={card.currentDefense}
+                maxDefense={card.maxDefense !== undefined ? card.maxDefense : stats.defense}
+              />
             </div>
             
             <div className="mt-0.5 shrink-0">
