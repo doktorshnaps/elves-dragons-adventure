@@ -276,12 +276,12 @@ export const useForgeBay = () => {
         throw error;
       }
 
-      const result = data as { success: boolean; armor_restored: number; new_defense: number };
+      const result = data as { success: boolean; current_defense: number };
       console.log('⚒️ [FORGE] Card successfully removed:', result);
 
       toast({
         title: "Карта забрана из кузницы",
-        description: `Броня восстановлена: +${result.armor_restored}`,
+        description: "Броня восстановлена",
       });
 
       await loadForgeBayEntries();
