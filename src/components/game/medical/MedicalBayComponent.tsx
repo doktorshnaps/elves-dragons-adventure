@@ -203,13 +203,7 @@ export const MedicalBayComponent = () => {
 
     try {
       await placeCardInMedicalBay(cardInstanceId);
-      console.log('🏥 Placed in medical bay, reloading data...');
-      await Promise.all([
-        loadCardInstances(),
-        loadMedicalBayEntries(),
-        syncHealthFromInstances(),
-      ]);
-      console.log('🏥 Data reloaded after placing in medical bay');
+      // Данные обновятся автоматически через Real-time подписки
     } catch (error) {
       console.error('🏥 Error starting healing:', error);
       // Восстанавливаем выбор при ошибке
@@ -326,12 +320,8 @@ export const MedicalBayComponent = () => {
                                    try {
                                      await stopHealingWithoutRecovery(entry.card_instance_id);
                                      console.log('🏥 Healing stopped successfully, syncing data...');
-                                     await Promise.all([
-                                       loadCardInstances(),
-                                       loadMedicalBayEntries(),
-                                       syncHealthFromInstances()
-                                     ]);
-                                     console.log('🏥 Data reloaded and synced successfully');
+                                      // Данные обновятся автоматически через Real-time подписки
+                                      console.log('🏥 Healing stopped, waiting for Real-time sync');
                                    } catch (error) {
                                      console.error('🏥 Error stopping healing:', error);
                                    }
@@ -352,12 +342,8 @@ export const MedicalBayComponent = () => {
                                     try {
                                       await removeCardFromMedicalBay(entry.card_instance_id);
                                       console.log('🏥 Card removed successfully, syncing health data...');
-                                      await Promise.all([
-                                        loadCardInstances(),
-                                        loadMedicalBayEntries(),
-                                        syncHealthFromInstances() // Синхронизируем здоровье из БД
-                                      ]);
-                                      console.log('🏥 Data reloaded and synced successfully');
+                                       // Данные обновятся автоматически через Real-time подписки
+                                       console.log('🏥 Card removed, waiting for Real-time sync');
                                    } catch (error) {
                                      console.error('🏥 Error removing card:', error);
                                    }
