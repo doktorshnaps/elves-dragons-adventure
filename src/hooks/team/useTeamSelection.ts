@@ -207,10 +207,30 @@ export const useTeamSelection = () => {
       return;
     }
 
-    const newPair: TeamPair = { hero, dragon };
+    // КРИТИЧНО: Сохраняем карточку с явным instanceId для правильной идентификации
+    const heroToSave = {
+      ...hero,
+      instanceId: (hero as any).instanceId || hero.id
+    };
+    
+    const dragonToSave = dragon ? {
+      ...dragon,
+      instanceId: (dragon as any).instanceId || dragon.id
+    } : undefined;
+
+    const newPair: TeamPair = { 
+      hero: heroToSave, 
+      dragon: dragonToSave 
+    };
     const newPairs = [...currentRawTeam, newPair];
     
-    console.log('🎯 Adding new pair to team. Raw team size will be:', newPairs.length);
+    console.log('🎯 Adding new pair to team:', {
+      heroName: heroToSave.name,
+      heroFaction: heroToSave.faction,
+      heroId: heroToSave.id,
+      heroInstanceId: heroToSave.instanceId,
+      newPairsLength: newPairs.length
+    });
     
     // Save to game data AND update gameStore immediately
     try {
@@ -280,9 +300,23 @@ export const useTeamSelection = () => {
     const realIndex = baseTeam.findIndex(pair => pair?.hero?.id === filteredIndex.hero.id);
     if (realIndex === -1) return;
     
+    // КРИТИЧНО: Сохраняем дракона с явным instanceId
+    const dragonToSave = {
+      ...dragon,
+      instanceId: (dragon as any).instanceId || dragon.id
+    };
+    
     const newPairs = baseTeam.map((pair, i) =>
-      i === realIndex ? { ...pair, dragon } : pair
+      i === realIndex ? { ...pair, dragon: dragonToSave } : pair
     );
+    
+    console.log('🐉 Assigning dragon to hero:', {
+      heroName: filteredIndex.hero.name,
+      dragonName: dragonToSave.name,
+      dragonFaction: dragonToSave.faction,
+      dragonId: dragonToSave.id,
+      dragonInstanceId: dragonToSave.instanceId
+    });
     
     await updateGameData({
       selectedTeam: newPairs
