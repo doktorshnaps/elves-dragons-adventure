@@ -78,26 +78,42 @@ export const DeckSelection = ({
     // Карты из cardInstances (каждый instance - отдельная карта с уникальным id)
     const instanceCards = cardInstances
       .filter(ci => ci.card_type === 'hero' || ci.card_type === 'dragon')
-      .map(instance => ({
-        // Используем instance.id как уникальный ID карты
-        id: instance.id,
-        instanceId: instance.id,
-        templateId: instance.card_template_id,
-        // Данные карты из card_data
-        ...(instance.card_data as any),
-        // Актуальное здоровье и броня из instance
-        currentHealth: instance.current_health,
-        currentDefense: instance.current_defense,
-        maxDefense: instance.max_defense,
-        lastHealTime: new Date(instance.last_heal_time).getTime(),
-        monster_kills: instance.monster_kills
-      }));
+      .map(instance => {
+        const card = {
+          // Используем instance.id как уникальный ID карты
+          id: instance.id,
+          instanceId: instance.id,
+          templateId: instance.card_template_id,
+          // Данные карты из card_data
+          ...(instance.card_data as any),
+          // Актуальное здоровье и броня из instance (КРИТИЧНО: не использовать ?? оператор!)
+          currentHealth: instance.current_health,
+          currentDefense: instance.current_defense,
+          maxDefense: instance.max_defense,
+          lastHealTime: new Date(instance.last_heal_time).getTime(),
+          monster_kills: instance.monster_kills
+        };
+        
+        // Детальное логирование для отладки
+        if (card.name?.includes('Рекрут')) {
+          console.log(`🔍 Recruit card created:`, {
+            id: card.id,
+            name: card.name,
+            currentHealth: card.currentHealth,
+            maxHealth: card.health,
+            currentDefense: card.currentDefense,
+            maxDefense: card.maxDefense,
+            isDead: card.currentHealth === 0
+          });
+        }
+        
+        return card;
+      });
     
     // Добавляем NFT карты (если есть)
     const result = [...instanceCards, ...nftCards];
     
-    console.log(`🎴 Created ${result.length} cards from ${cardInstances.length} instances`);
-    console.log('📋 Cards:', result.map(c => `${c.name} (${c.id.substring(0,8)}...): HP=${c.currentHealth}/${c.health}, Def=${c.currentDefense}/${c.maxDefense}`).join(', '));
+    console.log(`🎴 DeckSelection: Created ${result.length} cards from ${cardInstances.length} instances`);
     
     return result;
   }, [cardInstances, nftCards]);

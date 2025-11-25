@@ -74,11 +74,15 @@ export const CardDisplay = ({
               </div>}
             
             <div className="shrink-0">
-              <CardStats health={stats.health} power={stats.power} defense={card.currentDefense ?? stats.defense} />
+              <CardStats health={stats.health} power={stats.power} defense={card.currentDefense !== undefined ? card.currentDefense : stats.defense} />
             </div>
             
             <div className="mt-0.5 shrink-0">
-              <CardHealthBar currentHealth={card.currentHealth ?? stats.health} maxHealth={stats.health} size="small" />
+              <CardHealthBar 
+                currentHealth={card.currentHealth !== undefined ? card.currentHealth : stats.health} 
+                maxHealth={stats.health} 
+                size="small" 
+              />
             </div>
 
             {card.magicResistance && (
