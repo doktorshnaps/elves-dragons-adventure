@@ -56,3 +56,9 @@ verify_jwt = false
 
 [functions.migrate-cards-to-instances]
 verify_jwt = false
+
+[functions.batch-upload-card-images]
+verify_jwt = false
+
+[functions.upload-card-image]
+verify_jwt = false
