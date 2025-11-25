@@ -99,64 +99,6 @@ export const invalidateCardImagesCache = () => {
 };
 
 /**
- * Получает URL изображения для карты на основе её редкости
- * Приоритет:
- * 1. Изображение из базы данных (с фракцией)
- * 2. Специальные hardcoded изображения (Рекрут, Стратег)
- * 3. Стандартное изображение карты
- * @param card - карта, для которой нужно получить изображение
- * @returns URL изображения или undefined, если специального изображения нет
- */
-export const getCardImageByRarity = async (card: Card): Promise<string | undefined> => {
-  // ПРИОРИТЕТ 1: Пытаемся загрузить изображение из базы данных
-  try {
-    const dbImages = await loadDatabaseImages();
-    
-    // Пробуем несколько вариантов типа карты для совместимости (hero/character/pet/dragon)
-    const normalizedName = (card.name || '').trim();
-    const normalizedFaction = (card.faction || '').trim();
-    const typeStr = String((card as any).type || '');
-    const candidateTypes = Array.from(
-      new Set(
-        [
-          typeStr,
-          typeStr === 'hero' ? 'character' : undefined,
-          typeStr === 'character' ? 'hero' : undefined,
-          typeStr === 'pet' ? 'pet' : undefined,
-          typeStr === 'dragon' ? 'dragon' : undefined,
-          typeStr === 'dragon' ? 'pet' : undefined,
-        ].filter(Boolean)
-      )
-    ) as string[];
-
-    // Сначала пытаемся найти с фракцией, затем без фракции, перебирая варианты типов (БЕЗ rarity)
-    for (const t of candidateTypes) {
-      if (normalizedFaction) {
-        const keyWithFaction = `${normalizedName}|${t}|${normalizedFaction}`;
-        const dbImageWithFaction = dbImages.get(keyWithFaction);
-        console.log(`🔍 Looking for image with faction: ${keyWithFaction}`, dbImageWithFaction ? '✅ Found' : '❌ Not found');
-        if (dbImageWithFaction) {
-          return dbImageWithFaction;
-        }
-      }
-
-      const keyWithoutFaction = `${normalizedName}|${t}`;
-      const dbImage = dbImages.get(keyWithoutFaction);
-      console.log(`🔍 Looking for image without faction: ${keyWithoutFaction}`, dbImage ? '✅ Found' : '❌ Not found');
-      if (dbImage) {
-        return dbImage;
-      }
-    }
-  } catch (error) {
-    console.error('Error getting card image from database:', error);
-  }
-
-  // Для всех остальных карт возвращаем стандартное изображение из карты
-  console.log(`📷 Using standard image for ${card.name} (rarity ${card.rarity}):`, card.image);
-  return card.image;
-};
-
-/**
  * Нормализует URL изображения карты (IPFS, Arweave, data URLs, PNG->WEBP, Supabase Storage)
  */
 const normalizeCardImageUrl = (url: string | undefined): string | undefined => {
@@ -198,9 +140,70 @@ const normalizeCardImageUrl = (url: string | undefined): string | undefined => {
   }
 };
 
+
+/**
+ * Получает URL изображения для карты на основе её редкости
+ * Приоритет:
+ * 1. Изображение из базы данных (с фракцией)
+ * 2. Специальные hardcoded изображения (Рекрут, Стратег)
+ * 3. Стандартное изображение карты
+ * @param card - карта, для которой нужно получить изображение
+ * @returns URL изображения или undefined, если специального изображения нет
+ */
+export const getCardImageByRarity = async (card: Card): Promise<string | undefined> => {
+  // ПРИОРИТЕТ 1: Пытаемся загрузить изображение из базы данных
+  try {
+    const dbImages = await loadDatabaseImages();
+    
+    // Пробуем несколько вариантов типа карты для совместимости (hero/character/pet/dragon)
+    const normalizedName = (card.name || '').trim();
+    const normalizedFaction = (card.faction || '').trim();
+    const typeStr = String((card as any).type || '');
+    const candidateTypes = Array.from(
+      new Set(
+        [
+          typeStr,
+          typeStr === 'hero' ? 'character' : undefined,
+          typeStr === 'character' ? 'hero' : undefined,
+          typeStr === 'pet' ? 'pet' : undefined,
+          typeStr === 'dragon' ? 'dragon' : undefined,
+          typeStr === 'dragon' ? 'pet' : undefined,
+        ].filter(Boolean)
+      )
+    ) as string[];
+
+    // Сначала пытаемся найти с фракцией, затем без фракции, перебирая варианты типов (БЕЗ rarity)
+    for (const t of candidateTypes) {
+      if (normalizedFaction) {
+        const keyWithFaction = `${normalizedName}|${t}|${normalizedFaction}`;
+        const dbImageWithFaction = dbImages.get(keyWithFaction);
+        console.log(`🔍 Looking for image with faction: ${keyWithFaction}`, dbImageWithFaction ? '✅ Found' : '❌ Not found');
+        if (dbImageWithFaction) {
+          // Нормализуем URL перед возвратом
+          return normalizeCardImageUrl(dbImageWithFaction);
+        }
+      }
+
+      const keyWithoutFaction = `${normalizedName}|${t}`;
+      const dbImage = dbImages.get(keyWithoutFaction);
+      console.log(`🔍 Looking for image without faction: ${keyWithoutFaction}`, dbImage ? '✅ Found' : '❌ Not found');
+      if (dbImage) {
+        // Нормализуем URL перед возвратом
+        return normalizeCardImageUrl(dbImage);
+      }
+    }
+  } catch (error) {
+    console.error('Error getting card image from database:', error);
+  }
+
+  // Для всех остальных карт возвращаем стандартное изображение из карты
+  console.log(`📷 Using standard image for ${card.name} (rarity ${card.rarity}):`, card.image);
+  return normalizeCardImageUrl(card.image);
+};
+
 /**
  * Синхронная версия getCardImageByRarity для обратной совместимости
- * КРИТИЧНО: приоритет card.image (где уже должно быть правильное изображение с учетом фракции)
+ * Использует card.image как приоритетный источник
  */
 export const getCardImageByRaritySync = (card: Card): string | undefined => {
   // Используем card.image если есть (там уже правильное изображение)
