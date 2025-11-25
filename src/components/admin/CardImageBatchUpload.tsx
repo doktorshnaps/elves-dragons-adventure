@@ -4,8 +4,9 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { Upload, FileJson, Download } from "lucide-react";
+import { Upload, FileJson, Download, Sparkles } from "lucide-react";
 import { useWalletContext } from "@/contexts/WalletConnectContext";
+import { cardDatabase } from "@/data/cardDatabase";
 
 interface CardImageMapping {
   uuid: string;
@@ -47,6 +48,54 @@ export const CardImageBatchUpload = () => {
     linkElement.setAttribute('href', dataUri);
     linkElement.setAttribute('download', exportFileDefaultName);
     linkElement.click();
+  };
+
+  const handleAutoImport = async () => {
+    if (!accountId) {
+      toast({
+        title: "Ошибка",
+        description: "Подключите кошелек",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    setIsUploading(true);
+
+    try {
+      const { data, error } = await supabase.functions.invoke('auto-import-grimoire-cards', {
+        body: {
+          cards: cardDatabase,
+          walletAddress: accountId
+        }
+      });
+
+      if (error) throw error;
+
+      toast({
+        title: "✅ Автоматический импорт завершен",
+        description: data.message,
+      });
+
+      if (data.results.errors.length > 0) {
+        console.error('Import errors:', data.results.errors);
+        toast({
+          title: "⚠️ Некоторые карты не импортированы",
+          description: `Ошибок: ${data.results.errors.length}`,
+          variant: "destructive"
+        });
+      }
+
+    } catch (error: any) {
+      console.error('Auto-import error:', error);
+      toast({
+        title: "Ошибка автоматического импорта",
+        description: error.message,
+        variant: "destructive"
+      });
+    } finally {
+      setIsUploading(false);
+    }
   };
 
   const handleUpload = async () => {
@@ -105,21 +154,41 @@ export const CardImageBatchUpload = () => {
 
   return (
     <Card className="p-6 space-y-4">
-      <div className="flex items-center justify-between">
-        <div>
-          <h3 className="text-lg font-semibold">Массовая загрузка изображений карт</h3>
-          <p className="text-sm text-muted-foreground mt-1">
-            Загрузите JSON с соответствиями UUID → Карта/Фракция/Редкость
+      <div className="space-y-4">
+        <div className="flex items-center justify-between">
+          <div>
+            <h3 className="text-lg font-semibold">Массовая загрузка изображений карт</h3>
+            <p className="text-sm text-muted-foreground mt-1">
+              Загрузите JSON с соответствиями UUID → Карта/Фракция/Редкость
+            </p>
+          </div>
+          <div className="flex gap-2">
+            <Button
+              onClick={handleAutoImport}
+              disabled={isUploading}
+              variant="default"
+              size="sm"
+            >
+              <Sparkles className="w-4 h-4 mr-2" />
+              Автоимпорт из Гримуара
+            </Button>
+            <Button
+              onClick={handleDownloadTemplate}
+              variant="outline"
+              size="sm"
+            >
+              <Download className="w-4 h-4 mr-2" />
+              Шаблон
+            </Button>
+          </div>
+        </div>
+        
+        <div className="bg-primary/10 p-4 rounded-lg border border-primary/20">
+          <p className="text-sm font-semibold mb-2">✨ Рекомендуется: Автоматический импорт</p>
+          <p className="text-xs text-muted-foreground">
+            Нажмите "Автоимпорт из Гримуара" для автоматической загрузки всех карт с корректными изображениями из базы данных гримуара.
           </p>
         </div>
-        <Button
-          onClick={handleDownloadTemplate}
-          variant="outline"
-          size="sm"
-        >
-          <Download className="w-4 h-4 mr-2" />
-          Шаблон
-        </Button>
       </div>
 
       <div className="space-y-2">
