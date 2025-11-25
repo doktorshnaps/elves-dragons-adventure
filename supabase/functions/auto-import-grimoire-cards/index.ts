@@ -54,30 +54,6 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Маппинг названий на редкость
-    const rarityMap: { [key: string]: number } = {
-      // Герои
-      'Рекрут': 1,
-      'Страж': 2,
-      'Ветеран': 3,
-      'Чародей': 4,
-      'Мастер Целитель': 5,
-      'Защитник': 6,
-      'Ветеран Защитник': 7,
-      'Стратег': 8,
-      'Верховный Стратег': 9,
-      // Драконы (по ключевым словам)
-      'Ординарный': 1,
-      'Необычный': 2,
-      'Редкий': 3,
-      'Эпический': 4,
-      'Легендарный': 5,
-      'Мифический': 6,
-      'Этернал': 7,
-      'Империал': 8,
-      'Титан': 9
-    };
-
     const results = {
       success: 0,
       skipped: 0,
@@ -86,14 +62,8 @@ Deno.serve(async (req) => {
 
     for (const card of cards as CardData[]) {
       try {
-        // Определяем редкость
-        let rarity = 1;
-        for (const [keyword, rarityValue] of Object.entries(rarityMap)) {
-          if (card.name.includes(keyword)) {
-            rarity = rarityValue;
-            break;
-          }
-        }
+        // Всем картам назначаем редкость 1
+        const rarity = 1;
 
         // Преобразуем тип
         const cardType = card.type === 'character' ? 'hero' : card.type === 'pet' ? 'dragon' : card.type;
