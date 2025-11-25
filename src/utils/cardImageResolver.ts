@@ -151,25 +151,7 @@ export const getCardImageByRarity = async (card: Card): Promise<string | undefin
     console.error('Error getting card image from database:', error);
   }
 
-  // ПРИОРИТЕТ 2: Проверяем hardcoded изображения для "Рекрут" из Тэлэриона
-  if (card.name === "Рекрут" && card.faction === "Тэлэрион" && card.type === "character") {
-    const hardcodedImage = recruitRarityImages[card.rarity];
-    if (hardcodedImage) {
-      console.log(`✅ Using hardcoded Recruit image for rarity ${card.rarity}`);
-      return hardcodedImage;
-    }
-  }
-  
-  // ПРИОРИТЕТ 2: Проверяем hardcoded изображения для "Стратег" из Тэлэриона
-  if (card.name === "Стратег" && card.faction === "Тэлэрион" && card.type === "character") {
-    const hardcodedImage = strategistRarityImages[card.rarity];
-    if (hardcodedImage) {
-      console.log(`✅ Using hardcoded Strategist image for rarity ${card.rarity}`);
-      return hardcodedImage;
-    }
-  }
-  
-  // ПРИОРИТЕТ 3: Для всех остальных карт возвращаем стандартное изображение из карты
+  // Для всех остальных карт возвращаем стандартное изображение из карты
   console.log(`📷 Using standard image for ${card.name} (rarity ${card.rarity}):`, card.image);
   return card.image;
 };
@@ -215,19 +197,9 @@ const normalizeCardImageUrl = (url: string | undefined): string | undefined => {
  * КРИТИЧНО: приоритет card.image (где уже должно быть правильное изображение с учетом фракции)
  */
 export const getCardImageByRaritySync = (card: Card): string | undefined => {
-  // ПРИОРИТЕТ 1: Используем card.image если есть (там уже правильное изображение)
+  // Используем card.image если есть (там уже правильное изображение)
   if (card.image) {
     return normalizeCardImageUrl(card.image);
-  }
-  
-  // ПРИОРИТЕТ 2: Hardcoded изображения для "Рекрут" из Тэлэриона (fallback)
-  if (card.name === "Рекрут" && card.faction === "Тэлэрион" && card.type === "character") {
-    return recruitRarityImages[card.rarity];
-  }
-  
-  // ПРИОРИТЕТ 3: Hardcoded изображения для "Стратег" из Тэлэриона (fallback)
-  if (card.name === "Стратег" && card.faction === "Тэлэрион" && card.type === "character") {
-    return strategistRarityImages[card.rarity];
   }
   
   // Fallback: placeholder
