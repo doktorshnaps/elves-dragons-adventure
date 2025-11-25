@@ -2,16 +2,15 @@ import { useEffect, useMemo } from 'react';
 import { Card as CardType } from "@/types/cards";
 import { useGameData } from '@/hooks/useGameData';
 import { useCardHealthSync } from '@/hooks/useCardHealthSync';
-import { useCardInstances } from '@/hooks/useCardInstances';
+import { useCardInstancesContext } from '@/providers/CardInstancesProvider';
 import { TeamPair } from '@/components/game/team/DeckSelection';
 import { useToast } from '@/hooks/use-toast';
 import { checkActiveBattle, clearActiveBattle } from '@/utils/activeBattleChecker';
-import { calculateCardStats } from '@/utils/cardUtils';
 import { useGameStore } from '@/stores/gameStore';
 
 export const useTeamSelection = () => {
   const { gameData, updateGameData } = useGameData();
-  const { cardInstances } = useCardInstances();
+  const { cardInstances } = useCardInstancesContext();
   const { toast } = useToast();
 
   // Build cards with health using the SAME gameData instance to avoid desync
@@ -363,25 +362,40 @@ export const useTeamSelection = () => {
   };
 
   const getSelectedTeamStats = () => {
+    console.log('📊 [useTeamSelection] Calculating team stats from card_instances context');
     let totalPower = 0;
     let totalDefense = 0;
     let totalHealth = 0;
 
     selectedPairs.forEach(pair => {
-      // КРИТИЧНО: всегда используем calculateCardStats для корректных значений силы и защиты
-      const heroStats = calculateCardStats(pair.hero.name, pair.hero.rarity, pair.hero.type);
-      totalPower += heroStats.power;
-      totalDefense += heroStats.defense;
-      totalHealth += pair.hero.currentHealth ?? pair.hero.health ?? heroStats.health;
+      // КРИТИЧНО: используем характеристики напрямую из card_instances (уже синхронизированы выше)
+      const heroInstance = cardInstances.find(ci => ci.card_template_id === pair.hero.id);
+      const heroPower = heroInstance ? (heroInstance.card_data as any).power : pair.hero.power;
+      const heroDefense = heroInstance ? heroInstance.current_defense : (pair.hero.currentDefense ?? pair.hero.defense);
+      const heroHealth = heroInstance ? heroInstance.current_health : (pair.hero.currentHealth ?? pair.hero.health);
+      
+      console.log(`  Hero "${pair.hero.name}":`, { power: heroPower, defense: heroDefense, health: heroHealth });
+      
+      totalPower += heroPower ?? 0;
+      totalDefense += heroDefense ?? 0;
+      totalHealth += heroHealth ?? 0;
 
-      // Add dragon stats if present and same faction (use current health from card instances)
+      // Add dragon stats if present and same faction
       if (pair.dragon && pair.dragon.faction === pair.hero.faction) {
-        const dragonStats = calculateCardStats(pair.dragon.name, pair.dragon.rarity, pair.dragon.type);
-        totalPower += dragonStats.power;
-        totalDefense += dragonStats.defense;
-        totalHealth += pair.dragon.currentHealth ?? pair.dragon.health ?? dragonStats.health;
+        const dragonInstance = cardInstances.find(ci => ci.card_template_id === pair.dragon!.id);
+        const dragonPower = dragonInstance ? (dragonInstance.card_data as any).power : pair.dragon.power;
+        const dragonDefense = dragonInstance ? dragonInstance.current_defense : (pair.dragon.currentDefense ?? pair.dragon.defense);
+        const dragonHealth = dragonInstance ? dragonInstance.current_health : (pair.dragon.currentHealth ?? pair.dragon.health);
+        
+        console.log(`  Dragon "${pair.dragon.name}":`, { power: dragonPower, defense: dragonDefense, health: dragonHealth });
+        
+        totalPower += dragonPower ?? 0;
+        totalDefense += dragonDefense ?? 0;
+        totalHealth += dragonHealth ?? 0;
       }
     });
+
+    console.log('📊 [useTeamSelection] Total stats:', { power: totalPower, defense: totalDefense, health: totalHealth });
 
     return {
       power: totalPower,
