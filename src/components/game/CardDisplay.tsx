@@ -35,6 +35,17 @@ export const CardDisplay = ({
   const isMobile = useIsMobile();
   const { language } = useLanguage();
   
+  // ДЕТАЛЬНОЕ ЛОГИРОВАНИЕ для отладки здоровья Рекрутов
+  if (card.name?.includes('Рекрут')) {
+    console.log(`💊 [CardDisplay] Rendering ${card.name}:`, {
+      id: typeof card.id === 'string' ? card.id.substring(0, 8) : card.id,
+      currentHealth: card.currentHealth,
+      health: card.health,
+      currentDefense: card.currentDefense,
+      defense: card.defense
+    });
+  }
+  
   // Используем сохраненные характеристики из card_data, пересчет только как fallback
   const stats = useMemo(() => {
     // Если характеристики уже есть в объекте карты, используем их

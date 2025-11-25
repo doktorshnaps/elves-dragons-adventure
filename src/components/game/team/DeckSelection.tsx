@@ -115,6 +115,16 @@ export const DeckSelection = ({
     
     console.log(`🎴 DeckSelection: Created ${result.length} cards from ${cardInstances.length} instances`);
     
+    // Детальное логирование для Рекрутов
+    const recruits = result.filter(c => c.name?.includes('Рекрут'));
+    console.log(`🔍 РЕКРУТЫ (всего ${recruits.length}):`, recruits.map(r => ({
+      id: r.id.substring(0, 8),
+      name: r.name,
+      currentHealth: r.currentHealth,
+      health: r.health,
+      isDead: r.currentHealth === 0
+    })));
+    
     return result;
   }, [cardInstances, nftCards]);
   const heroes = useMemo(() => {
@@ -124,6 +134,14 @@ export const DeckSelection = ({
       card.type === 'character' && (card.currentHealth ?? card.health) > 0
     );
     console.log('📊 Filtered heroes (alive only):', filtered.length);
+    
+    // Детальное логирование отфильтрованных Рекрутов
+    const filteredRecruits = filtered.filter(h => h.name?.includes('Рекрут'));
+    console.log(`✅ Живые РЕКРУТЫ (${filteredRecruits.length}):`, filteredRecruits.map(r => ({
+      id: r.id.substring(0, 8),
+      currentHealth: r.currentHealth,
+      health: r.health
+    })));
     
     if (heroSortBy === 'defense') {
       console.log('🛡️ Sorting by max defense...');
@@ -264,21 +282,54 @@ export const DeckSelection = ({
     }
     setShowDragonDeck(false);
   };
+  
+  // КРИТИЧЕСКОЕ ИСПРАВЛЕНИЕ: Синхронизируем selectedPairs с актуальными данными из localCards
+  const syncedSelectedPairs = useMemo(() => {
+    return selectedPairs.map(pair => {
+      // Находим актуальные данные героя по instanceId или id
+      const updatedHero = localCards.find(c => 
+        c.id === pair.hero.id || 
+        (c as any).instanceId === pair.hero.id || 
+        c.id === (pair.hero as any).instanceId
+      );
+      
+      // Находим актуальные данные дракона (если есть)
+      const updatedDragon = pair.dragon ? localCards.find(c => 
+        c.id === pair.dragon!.id || 
+        (c as any).instanceId === pair.dragon!.id || 
+        c.id === (pair.dragon as any).instanceId
+      ) : undefined;
+      
+      // Логирование для отладки
+      if (updatedHero?.name?.includes('Рекрут') && pair.hero.name?.includes('Рекрут')) {
+        console.log(`🔄 Syncing Recruit in team:`, {
+          original: { id: pair.hero.id, currentHealth: pair.hero.currentHealth },
+          updated: { id: updatedHero.id, currentHealth: updatedHero.currentHealth }
+        });
+      }
+      
+      return {
+        hero: updatedHero || pair.hero, // Используем обновленные данные или оригинал
+        dragon: updatedDragon || pair.dragon
+      };
+    });
+  }, [selectedPairs, localCards]);
+  
   return <div className="h-full flex flex-col space-y-3">
       {/* Selected Pairs Display */}
-      <section 
+      <section
         className="bg-black/50 backdrop-blur-sm p-2 sm:p-4 rounded-3xl border-2 border-white flex-shrink-0" 
         style={{ boxShadow: '-33px 15px 10px rgba(0, 0, 0, 0.6)' }}
         aria-label="Выбранная команда"
       >
         <h1 className="text-sm sm:text-lg font-bold text-white mb-2 sm:mb-4">
-          Выбранная команда ({selectedPairs.length}/5)
+          Выбранная команда ({syncedSelectedPairs.length}/5)
         </h1>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-2 sm:gap-4">
           {Array.from({
           length: 5
         }, (_, index) => {
-          const pair = selectedPairs[index];
+          const pair = syncedSelectedPairs[index];
           return <div key={index} className="relative overflow-hidden border-2 border-white rounded-3xl p-2 sm:p-3 min-h-[160px] sm:min-h-[200px] bg-black/40 hover:border-white/80 transition-all duration-300">
                 {pair ? <div className="space-y-2">
                     <div className="text-xs sm:text-sm text-white font-medium">Пара {index + 1}</div>
