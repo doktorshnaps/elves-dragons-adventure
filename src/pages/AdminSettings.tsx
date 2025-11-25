@@ -16,6 +16,7 @@ import { QuestManagement } from "@/components/admin/QuestManagement";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { AdminConsoleWithWhitelist } from "@/components/AdminConsole";
 import { CardImageManager } from "@/components/admin/CardImageManager";
+import { CardImageBatchUpload } from "@/components/admin/CardImageBatchUpload";
 import { ItemTemplateManager } from "@/components/admin/ItemTemplateManager";
 import { ItemGiveawayManager } from "@/components/admin/ItemGiveawayManager";
 import ShelterBuildingSettings from "@/components/admin/ShelterBuildingSettings";
@@ -118,6 +119,7 @@ const AdminSettingsContent = () => {
               </TabsContent>
 
               <TabsContent value="cardImages" className="space-y-4">
+                <CardImageBatchUpload />
                 <CardImageManager />
               </TabsContent>
 
