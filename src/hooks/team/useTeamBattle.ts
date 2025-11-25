@@ -161,6 +161,14 @@ export const useTeamBattle = (dungeonType: DungeonType, initialLevel: number = 1
       });
 
       (async () => {
+        // Предзагружаем treasure hunt событие в кеш ДО начала боя (оптимизация Phase 2A)
+        const { loadActiveTreasureHunt } = await import('@/utils/monsterLootMapping');
+        loadActiveTreasureHunt().then(() => {
+          console.log('🎁 [INIT] Treasure hunt cache preloaded before battle');
+        }).catch(() => {
+          console.log('ℹ️ [INIT] No active treasure hunt event');
+        });
+        
         const opponents = await generateDungeonOpponents(dungeonType, initialLevel);
         
         // Устанавливаем флаг активного боя при инициализации
@@ -355,18 +363,10 @@ export const useTeamBattle = (dungeonType: DungeonType, initialLevel: number = 1
     // Награды/опыт если цель убита
     if (newTargetHealth <= 0) {
       const expReward = (accountLevel * 5) + 45 + (target.isBoss ? 150 : 0);
-      try {
-        if (attackingPair.hero?.id) {
-          const okHero = await incrementMonsterKills(attackingPair.hero.id, 1);
-          console.log('🔢 incrementMonsterKills hero', attackingPair.hero.id, okHero);
-        }
-        if (attackingPair.dragon?.id) {
-          const okDragon = await incrementMonsterKills(attackingPair.dragon.id, 1);
-          console.log('🔢 incrementMonsterKills dragon', attackingPair.dragon.id, okDragon);
-        }
-      } catch (e) {
-        console.warn('incrementMonsterKills error:', e);
-      }
+      
+      // ⚠️ ОПТИМИЗАЦИЯ PHASE 2A: НЕ отправляем запросы в БД во время боя!
+      // Счетчики убийств будут обновлены один раз через claim-battle-rewards при выходе из подземелья
+      console.log('💀 [BATTLE] Monster killed, kills will be synced on dungeon exit via claim-battle-rewards');
       
       // Проверяем, может ли игрок получить опыт в этом подземелье
       const canGainExp = canGainExperienceInDungeon(dungeonType, accountLevel);
