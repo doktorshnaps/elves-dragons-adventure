@@ -14,11 +14,7 @@ import { StaticGameDataProvider } from './contexts/StaticGameDataContext';
 import { CardInstancesProvider } from './providers/CardInstancesProvider';
 import { ItemInstancesProvider } from './providers/ItemInstancesProvider';
 import { ReferralHandler } from './components/ReferralHandler';
-import { useRoutePreloader } from './hooks/useRoutePreloader';
-import { useNFTStatsRecalculation } from './hooks/useNFTStatsRecalculation';
-import { useSecureStorage } from './hooks/useSecureStorage';
-import { useAccountSync } from './hooks/useAccountSync';
-import { useGameSync } from './hooks/useGameSync';
+import { AppInitializer } from './components/AppInitializer';
 import { MetricsPanel } from './components/dev/MetricsPanel';
 
 // Lazy load page components to reduce initial bundle size
@@ -53,65 +49,6 @@ const SeaSerpentLairWithLazyLoading = lazy(() => import('./components/lazy/LazyC
 const PageLoader = () => <div style={{ minHeight: '100vh' }} />;
 
 function App() {
-  // Запускаем только легковесные хуки на уровне App
-  try {
-    useRoutePreloader();
-    useNFTStatsRecalculation();
-    useSecureStorage();
-    useAccountSync(); // Один раз на уровне App
-    useGameSync(); // Один раз на уровне App
-  } catch (error) {
-    console.error('❌ Error in App hooks:', error);
-  }
-  
-  // Performance optimizations on app start
-  React.useEffect(() => {
-    // Add preconnect hints to reduce network latency
-    const addPreconnectLink = (href: string, crossorigin?: boolean) => {
-      const link = document.createElement('link');
-      link.rel = 'preconnect';
-      link.href = href;
-      if (crossorigin) link.crossOrigin = 'anonymous';
-      document.head.appendChild(link);
-    };
-
-    // Preconnect to critical origins
-    addPreconnectLink('https://oimhwdymghkwxznjarkv.supabase.co');
-    addPreconnectLink('https://fonts.googleapis.com');
-    addPreconnectLink('https://fonts.gstatic.com', true);
-
-    // Defer non-critical operations to idle time to improve First Input Delay
-    const scheduleIdleTask = (task: () => void) => {
-      if ('requestIdleCallback' in window) {
-        requestIdleCallback(task, { timeout: 2000 });
-      } else {
-        setTimeout(task, 1);
-      }
-    };
-
-    try {
-      // Register service worker and preload libs in idle time
-      scheduleIdleTask(() => {
-        // Temporarily disable Service Worker on production to avoid stale vendor bundles
-        // import('./utils/cacheStrategy').then(({ registerGameServiceWorker }) => {
-        //   registerGameServiceWorker().catch(error => {
-        //     console.error('❌ Error registering service worker:', error);
-        //   });
-        // });
-        
-        import('./utils/bundleOptimizations').then(({ preloadCriticalLibs }) => {
-          try {
-            preloadCriticalLibs();
-          } catch (error) {
-            console.error('❌ Error preloading libs:', error);
-          }
-        });
-      });
-    } catch (error) {
-      console.error('❌ Error in app initialization:', error);
-    }
-  }, []);
-  
   return (
     <ErrorBoundary>
       <QueryProvider>
@@ -125,6 +62,7 @@ function App() {
                       <BrightnessProvider>
                         <MusicProvider>
                           <LanguageProvider>
+                            <AppInitializer />
                             <div className="overflow-x-hidden max-w-full w-full">
                               <Suspense fallback={<PageLoader />}>
                                 <ReferralHandler />
