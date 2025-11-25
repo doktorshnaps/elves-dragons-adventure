@@ -322,7 +322,31 @@ export const useCardInstances = () => {
           filter: `wallet_address=eq.${accountId}`
         },
         (payload) => {
-          console.log('📥 [useCardInstances] New card instance added via Real-time:', payload);
+          console.log('📥 [useCardInstances] INSERT via Real-time:', {
+            id: (payload.new as any)?.id?.substring(0, 8),
+            cardType: (payload.new as any)?.card_type,
+            health: (payload.new as any)?.current_health,
+            defense: (payload.new as any)?.current_defense
+          });
+          queryClient.invalidateQueries({ queryKey: ['cardInstances', accountId] });
+        }
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'card_instances',
+          filter: `wallet_address=eq.${accountId}`
+        },
+        (payload) => {
+          console.log('🔄 [useCardInstances] UPDATE via Real-time:', {
+            id: (payload.new as any)?.id?.substring(0, 8),
+            oldHealth: (payload.old as any)?.current_health,
+            newHealth: (payload.new as any)?.current_health,
+            oldDefense: (payload.old as any)?.current_defense,
+            newDefense: (payload.new as any)?.current_defense
+          });
           queryClient.invalidateQueries({ queryKey: ['cardInstances', accountId] });
         }
       )
@@ -335,11 +359,15 @@ export const useCardInstances = () => {
           filter: `wallet_address=eq.${accountId}`
         },
         (payload) => {
-          console.log('🗑️ [useCardInstances] Card instance deleted via Real-time:', payload);
+          console.log('🗑️ [useCardInstances] DELETE via Real-time:', {
+            id: (payload.old as any)?.id?.substring(0, 8)
+          });
           queryClient.invalidateQueries({ queryKey: ['cardInstances', accountId] });
         }
       )
-      .subscribe();
+      .subscribe((status) => {
+        console.log('📡 [useCardInstances] Real-time subscription status:', status);
+      });
 
     return () => {
       console.log('🔕 [useCardInstances] Cleaning up Real-time subscription');

@@ -6,8 +6,10 @@ import { Badge } from '@/components/ui/badge';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Clock, Shield, Plus, Activity, ArrowRight, X } from 'lucide-react';
 import { useForgeBay } from '@/hooks/useForgeBay';
-import { useCardInstances } from '@/hooks/useCardInstances';
+import { useCardInstancesContext } from '@/providers/CardInstancesProvider';
 import { useCardHealthSync } from '@/hooks/useCardHealthSync';
+
+console.log('⚒️ [ForgeBayComponent] Loaded - using centralized CardInstancesContext');
 import { useCardsWithHealth } from '@/hooks/useCardsWithHealth';
 import { useUnifiedGameState } from '@/hooks/useUnifiedGameState';
 import { useBatchCardUpdate } from '@/hooks/useBatchCardUpdate';
@@ -30,8 +32,14 @@ export const ForgeBayComponent = ({ forgeLevel }: ForgeBayComponentProps) => {
     processForgeBayRepair
   } = useForgeBay();
 
-  const { cardInstances, loadCardInstances } = useCardInstances();
+  // КРИТИЧНО: Получаем данные ТОЛЬКО из провайдера
+  const { cardInstances, loadCardInstances } = useCardInstancesContext();
   const { syncHealthFromInstances } = useCardHealthSync();
+  
+  console.log('⚒️ [ForgeBayComponent] CardInstances from context:', {
+    total: cardInstances.length,
+    withDamage: cardInstances.filter(ci => ci.current_defense < ci.max_defense).length
+  });
   const { cardsWithHealth, selectedTeamWithHealth } = useCardsWithHealth();
   const gameState = useUnifiedGameState();
   const { accountId } = useWalletContext();
@@ -136,12 +144,19 @@ export const ForgeBayComponent = ({ forgeLevel }: ForgeBayComponentProps) => {
     setSelectedCard(selectedCard?.id === card.id ? null : card);
   };
 
-  // Batch repair
+  // Batch repair - массовое восстановление брони через batch_update_card_stats
   const handleBatchRepair = async () => {
     if (selectedCards.length === 0) return;
 
+    console.log('⚒️ [handleBatchRepair] Starting batch repair for:', selectedCards.length, 'cards');
+    
     const updates = selectedCards.map(cardId => {
       const card = damagedCards.find((c: any) => c.id === cardId);
+      console.log('⚒️ [handleBatchRepair] Repairing card:', {
+        id: cardId.substring(0, 8),
+        currentDefense: card?.current_defense,
+        maxDefense: card?.max_defense
+      });
       return {
         card_instance_id: cardId,
         current_health: undefined,
@@ -153,12 +168,16 @@ export const ForgeBayComponent = ({ forgeLevel }: ForgeBayComponentProps) => {
     const result = await updateMultiple(updates);
     
     if (result?.success) {
+      console.log('✅ [handleBatchRepair] Batch repair successful, reloading data...');
       setSelectedCards([]);
       await Promise.all([
         loadCardInstances(),
         loadForgeBayEntries(),
         syncHealthFromInstances()
       ]);
+      console.log('✅ [handleBatchRepair] Data reloaded after batch repair');
+    } else {
+      console.error('❌ [handleBatchRepair] Batch repair failed');
     }
   };
 

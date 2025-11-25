@@ -64,7 +64,13 @@ export const useBatchCardUpdate = (walletAddress: string | null) => {
     try {
       console.log('📊 [useBatchCardUpdate] Starting batch update:', {
         wallet: walletAddress,
-        updates: updates.length
+        updates: updates.length,
+        updateDetails: updates.map(u => ({
+          id: u.card_instance_id.substring(0, 8),
+          health: u.current_health,
+          defense: u.current_defense,
+          kills: u.monster_kills
+        }))
       });
 
       const { data, error } = await supabase.rpc('batch_update_card_stats', {
@@ -73,15 +79,22 @@ export const useBatchCardUpdate = (walletAddress: string | null) => {
       });
 
       if (error) {
-        console.error('❌ [useBatchCardUpdate] RPC error:', error);
+        console.error('❌ [useBatchCardUpdate] RPC batch_update_card_stats error:', error);
         throw error;
       }
 
-      console.log('✅ [useBatchCardUpdate] Batch update successful:', data);
+      console.log('✅ [useBatchCardUpdate] RPC batch_update_card_stats successful:', {
+        result: data,
+        cardsUpdated: (data as any)?.cards_updated || 0
+      });
 
-      // Инвалидируем кеш карт для обновления UI
-      await queryClient.invalidateQueries({ queryKey: ['cardInstances', walletAddress] });
-      await queryClient.invalidateQueries({ queryKey: ['gameData', walletAddress] });
+      // КРИТИЧНО: Инвалидируем кеш для синхронизации UI с БД
+      console.log('🔄 [useBatchCardUpdate] Invalidating caches for:', walletAddress);
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ['cardInstances', walletAddress] }),
+        queryClient.invalidateQueries({ queryKey: ['gameData', walletAddress] })
+      ]);
+      console.log('✅ [useBatchCardUpdate] Caches invalidated successfully');
 
       const result = data as unknown as BatchUpdateResult;
 

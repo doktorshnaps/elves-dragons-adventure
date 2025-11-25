@@ -6,8 +6,10 @@ import { Badge } from '@/components/ui/badge';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Clock, Heart, Plus, Activity, ArrowRight, X } from 'lucide-react';
 import { useMedicalBay } from '@/hooks/useMedicalBay';
-import { useCardInstances } from '@/hooks/useCardInstances';
+import { useCardInstancesContext } from '@/providers/CardInstancesProvider';
 import { useCardHealthSync } from '@/hooks/useCardHealthSync';
+
+console.log('🏥 [MedicalBayComponent] Loaded - using centralized CardInstancesContext');
 import { useCardsWithHealth } from '@/hooks/useCardsWithHealth';
 import { useUnifiedGameState } from '@/hooks/useUnifiedGameState';
 import { useBatchCardUpdate } from '@/hooks/useBatchCardUpdate';
@@ -26,8 +28,15 @@ export const MedicalBayComponent = () => {
     processMedicalBayHealing
   } = useMedicalBay();
 
-  const { cardInstances, loadCardInstances } = useCardInstances();
+  // КРИТИЧНО: Получаем данные ТОЛЬКО из провайдера
+  const { cardInstances, loadCardInstances } = useCardInstancesContext();
   const { syncHealthFromInstances } = useCardHealthSync();
+  
+  console.log('🏥 [MedicalBayComponent] CardInstances from context:', {
+    total: cardInstances.length,
+    heroes: cardInstances.filter(ci => ci.card_type === 'hero').length,
+    dragons: cardInstances.filter(ci => ci.card_type === 'dragon').length
+  });
   const { cardsWithHealth, selectedTeamWithHealth } = useCardsWithHealth();
   const gameState = useUnifiedGameState();
   const { accountId } = useWalletContext();
@@ -156,12 +165,19 @@ export const MedicalBayComponent = () => {
     setSelectedCard(selectedCard?.id === card.id ? null : card);
   };
 
-  // Batch healing
+  // Batch healing - массовое лечение через batch_update_card_stats
   const handleBatchHeal = async () => {
     if (selectedCards.length === 0) return;
 
+    console.log('🏥 [handleBatchHeal] Starting batch heal for:', selectedCards.length, 'cards');
+    
     const updates = selectedCards.map(cardId => {
       const card = injuredCards.find((c: any) => c.id === cardId);
+      console.log('🏥 [handleBatchHeal] Healing card:', {
+        id: cardId.substring(0, 8),
+        currentHealth: card?.current_health,
+        maxHealth: card?.max_health
+      });
       return {
         card_instance_id: cardId,
         current_health: card?.max_health,
@@ -173,12 +189,16 @@ export const MedicalBayComponent = () => {
     const result = await updateMultiple(updates);
     
     if (result?.success) {
+      console.log('✅ [handleBatchHeal] Batch healing successful, reloading data...');
       setSelectedCards([]);
       await Promise.all([
         loadCardInstances(),
         loadMedicalBayEntries(),
         syncHealthFromInstances()
       ]);
+      console.log('✅ [handleBatchHeal] Data reloaded after batch healing');
+    } else {
+      console.error('❌ [handleBatchHeal] Batch healing failed');
     }
   };
 
