@@ -99,19 +99,14 @@ export const invalidateCardImagesCache = () => {
 };
 
 /**
- * Нормализует URL изображения карты (IPFS, Arweave, data URLs, PNG->WEBP, Supabase Storage)
+ * Нормализует URL изображения карты (IPFS, Arweave, data URLs, PNG->WEBP)
+ * НЕ ТРОГАЕТ полные Supabase Storage URLs - они должны работать как есть
  */
 const normalizeCardImageUrl = (url: string | undefined): string | undefined => {
   if (!url) return undefined;
   
   try {
     let normalized = url;
-    
-    // Конвертируем полные Supabase Storage URLs в относительные пути
-    const supabaseStoragePattern = /https:\/\/[^\/]+\.supabase\.co\/storage\/v1\/object\/public\/lovable-uploads\//;
-    if (supabaseStoragePattern.test(normalized)) {
-      normalized = normalized.replace(supabaseStoragePattern, '/lovable-uploads/');
-    }
     
     // IPFS URL normalization
     if (normalized.startsWith('ipfs://')) {
@@ -128,8 +123,8 @@ const normalizeCardImageUrl = (url: string | undefined): string | undefined => {
       normalized = normalized.replace('ar://', 'https://arweave.net/');
     }
     
-    // Конвертируем PNG в WEBP для lovable-uploads путей
-    if (normalized.includes('/lovable-uploads/') && /\.png(\?|$)/i.test(normalized)) {
+    // Конвертируем PNG в WEBP ТОЛЬКО для относительных путей
+    if (normalized.startsWith('/lovable-uploads/') && /\.png(\?|$)/i.test(normalized)) {
       normalized = normalized.replace(/\.png(\?|$)/i, '.webp$1');
     }
     
