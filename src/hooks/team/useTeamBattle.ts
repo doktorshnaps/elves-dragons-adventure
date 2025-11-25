@@ -178,9 +178,17 @@ export const useTeamBattle = (dungeonType: DungeonType, initialLevel: number = 1
   }, [selectedPairs, dungeonType, initialLevel, gameData.cards, cardInstancesLoading, cardInstances]);
 
   // Re-sync stats from card_instances when they change
+  // КРИТИЧНО: НЕ синхронизировать во время активного боя, чтобы не перезаписать локальный урон
   useEffect(() => {
     if (battleState.playerPairs.length === 0) return;
     if (cardInstancesLoading) return;
+    
+    // Проверяем, идет ли активный бой
+    const activeBattle = localStorage.getItem('activeBattleInProgress') === 'true';
+    if (activeBattle && battleState.opponents.length > 0) {
+      console.log('⏸️ [useTeamBattle] Skipping re-sync during active battle to preserve local damage state');
+      return;
+    }
     
     console.log('🔄 [useTeamBattle] Re-syncing battle pairs with card_instances');
 
