@@ -212,25 +212,26 @@ const normalizeCardImageUrl = (url: string | undefined): string | undefined => {
 
 /**
  * Синхронная версия getCardImageByRarity для обратной совместимости
- * Использует только hardcoded изображения и стандартное изображение карты
+ * КРИТИЧНО: приоритет card.image (где уже должно быть правильное изображение с учетом фракции)
  */
 export const getCardImageByRaritySync = (card: Card): string | undefined => {
-  // Если карта уже содержит конкретное изображение (например, из edge-функции), используем его приоритетно
-  if (card.cardClass && card.image) {
+  // ПРИОРИТЕТ 1: Используем card.image если есть (там уже правильное изображение)
+  if (card.image) {
     return normalizeCardImageUrl(card.image);
   }
-  // Проверяем hardcoded изображения для "Рекрут" из Тэлэриона
+  
+  // ПРИОРИТЕТ 2: Hardcoded изображения для "Рекрут" из Тэлэриона (fallback)
   if (card.name === "Рекрут" && card.faction === "Тэлэрион" && card.type === "character") {
-    return recruitRarityImages[card.rarity] || normalizeCardImageUrl(card.image);
+    return recruitRarityImages[card.rarity];
   }
   
-  // Проверяем hardcoded изображения для "Стратег" из Тэлэриона
+  // ПРИОРИТЕТ 3: Hardcoded изображения для "Стратег" из Тэлэриона (fallback)
   if (card.name === "Стратег" && card.faction === "Тэлэрион" && card.type === "character") {
-    return strategistRarityImages[card.rarity] || normalizeCardImageUrl(card.image);
+    return strategistRarityImages[card.rarity];
   }
   
-  // Для всех остальных карт нормализуем и возвращаем стандартное изображение
-  return normalizeCardImageUrl(card.image);
+  // Fallback: placeholder
+  return '/placeholder.svg';
 };
 
 /**
