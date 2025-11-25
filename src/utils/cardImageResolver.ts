@@ -72,10 +72,10 @@ const loadDatabaseImages = async (): Promise<Map<string, string>> => {
 
       const cache = new Map<string, string>();
       data?.forEach(img => {
-        // Используем faction в ключе, если она указана
+        // Используем faction в ключе, если она указана (но БЕЗ rarity)
         const key = img.faction 
-          ? `${img.card_name}|${img.card_type}|${img.rarity}|${img.faction}`
-          : `${img.card_name}|${img.card_type}|${img.rarity}`;
+          ? `${img.card_name}|${img.card_type}|${img.faction}`
+          : `${img.card_name}|${img.card_type}`;
         cache.set(key, img.image_url);
       });
 
@@ -129,10 +129,10 @@ export const getCardImageByRarity = async (card: Card): Promise<string | undefin
       )
     ) as string[];
 
-    // Сначала пытаемся найти с фракцией, затем без фракции, перебирая варианты типов
+    // Сначала пытаемся найти с фракцией, затем без фракции, перебирая варианты типов (БЕЗ rarity)
     for (const t of candidateTypes) {
       if (normalizedFaction) {
-        const keyWithFaction = `${normalizedName}|${t}|${card.rarity}|${normalizedFaction}`;
+        const keyWithFaction = `${normalizedName}|${t}|${normalizedFaction}`;
         const dbImageWithFaction = dbImages.get(keyWithFaction);
         console.log(`🔍 Looking for image with faction: ${keyWithFaction}`, dbImageWithFaction ? '✅ Found' : '❌ Not found');
         if (dbImageWithFaction) {
@@ -140,7 +140,7 @@ export const getCardImageByRarity = async (card: Card): Promise<string | undefin
         }
       }
 
-      const keyWithoutFaction = `${normalizedName}|${t}|${card.rarity}`;
+      const keyWithoutFaction = `${normalizedName}|${t}`;
       const dbImage = dbImages.get(keyWithoutFaction);
       console.log(`🔍 Looking for image without faction: ${keyWithoutFaction}`, dbImage ? '✅ Found' : '❌ Not found');
       if (dbImage) {

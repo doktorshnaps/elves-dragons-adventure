@@ -72,6 +72,10 @@ export const CardImageBatchUpload = () => {
 
       if (error) throw error;
 
+      // Инвалидируем кэш изображений после импорта
+      const { invalidateCardImagesCache } = await import('@/utils/cardImageResolver');
+      invalidateCardImagesCache();
+
       toast({
         title: "✅ Автоматический импорт завершен",
         description: data.message,
