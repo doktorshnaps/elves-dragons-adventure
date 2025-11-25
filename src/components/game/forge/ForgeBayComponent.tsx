@@ -152,7 +152,7 @@ export const ForgeBayComponent = ({ forgeLevel }: ForgeBayComponentProps) => {
 
     try {
       await placeCardInForgeBay(cardInstanceId);
-      await Promise.all([loadCardInstances(), loadForgeBayEntries(), syncHealthFromInstances()]);
+      // Данные обновятся автоматически через Real-time подписки
     } catch (error) {
       console.error('⚒️ Error starting repair:', error);
       setSelectedCard(cardToRepair);
@@ -247,7 +247,7 @@ export const ForgeBayComponent = ({ forgeLevel }: ForgeBayComponentProps) => {
                               <Button
                                 onClick={async () => {
                                   await stopRepairWithoutRecovery(entry.card_instance_id);
-                                  await Promise.all([loadCardInstances(), loadForgeBayEntries(), syncHealthFromInstances()]);
+                                  // Данные обновятся автоматически через Real-time подписки
                                 }}
                                 variant="ghost"
                                 size="sm"
@@ -261,7 +261,7 @@ export const ForgeBayComponent = ({ forgeLevel }: ForgeBayComponentProps) => {
                               <Button
                                 onClick={async () => {
                                   await removeCardFromForgeBay(entry.card_instance_id);
-                                  await Promise.all([loadCardInstances(), loadForgeBayEntries(), syncHealthFromInstances()]);
+                                  // Данные обновятся автоматически через Real-time подписки
                                 }}
                                 variant="outline"
                                 size="sm"

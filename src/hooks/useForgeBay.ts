@@ -243,7 +243,7 @@ export const useForgeBay = () => {
         description: "Ремонт брони начался",
       });
 
-      await loadForgeBayEntries();
+      // Данные обновятся автоматически через Real-time подписки
     } catch (error: any) {
       console.error('⚒️ Error placing card in forge bay:', error);
       toast({
@@ -284,7 +284,7 @@ export const useForgeBay = () => {
         description: "Броня восстановлена",
       });
 
-      await loadForgeBayEntries();
+      // Данные обновятся автоматически через Real-time подписки
     } catch (error: any) {
       console.error('Error removing card from forge bay:', error);
       toast({
@@ -324,7 +324,7 @@ export const useForgeBay = () => {
         description: "Карта удалена из кузницы без восстановления брони",
       });
 
-      await loadForgeBayEntries();
+      // Данные обновятся автоматически через Real-time подписки
     } catch (error: any) {
       console.error('Error stopping repair:', error);
       toast({
@@ -341,7 +341,7 @@ export const useForgeBay = () => {
     try {
       const { error } = await supabase.rpc('process_forge_bay_repair');
       if (error) throw error;
-      await loadForgeBayEntries();
+      // Данные обновятся автоматически через Real-time подписки
     } catch (error) {
       console.error('Error processing forge bay repair:', error);
     }

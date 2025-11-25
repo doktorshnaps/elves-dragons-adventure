@@ -229,8 +229,7 @@ export const useMedicalBay = () => {
         description: "Карта помещена в медпункт и удалена из команды",
       });
 
-      // Перезагружаем данные
-      await loadMedicalBayEntries();
+      // Данные обновятся автоматически через Real-time подписки
       
       return data;
     } catch (error: any) {
@@ -265,8 +264,7 @@ export const useMedicalBay = () => {
         description: 'Карта забрана из медпункта',
       });
 
-      // Reload entries to reflect changes
-      await loadMedicalBayEntries();
+      // Данные обновятся автоматически через Real-time подписки
     } catch (error: any) {
       console.error('Error removing card from medical bay:', error);
       toast({
@@ -298,8 +296,7 @@ export const useMedicalBay = () => {
         description: "Карта извлечена из медпункта без восстановления здоровья",
       });
 
-      // Перезагружаем данные
-      await loadMedicalBayEntries();
+      // Данные обновятся автоматически через Real-time подписки
       
     } catch (error) {
       console.error('Error stopping healing:', error);
@@ -319,9 +316,8 @@ export const useMedicalBay = () => {
       const { error } = await supabase.rpc('process_medical_bay_healing');
       if (error) throw error;
       
-      console.log('🏥 Medical bay healing processed, reloading entries...');
-      // Перезагружаем данные после обработки лечения
-      await loadMedicalBayEntries();
+      console.log('🏥 Medical bay healing processed');
+      // Данные обновятся автоматически через Real-time подписки
     } catch (error) {
       console.error('🏥 Error processing medical bay healing:', error);
     }
