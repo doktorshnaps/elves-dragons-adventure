@@ -46,7 +46,7 @@ const BoneDemonDungeonWithLazyLoading = lazy(() => import('./components/lazy/Laz
 const SeaSerpentLairWithLazyLoading = lazy(() => import('./components/lazy/LazyComponents').then(m => ({ default: m.SeaSerpentLairWithLazyLoading })));
 
 // Simple loading fallback
-const PageLoader = () => <div style={{ minHeight: '100vh' }} />;
+const PageLoader = () => <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }} />;
 
 function App() {
   return (
