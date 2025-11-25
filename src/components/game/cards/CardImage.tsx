@@ -26,11 +26,17 @@ export const CardImage = ({
     }
   }, [card]);
 
-  // Нормализация IPFS URL
+  // Нормализация URL (IPFS, Arweave, Supabase Storage, PNG->WEBP)
   const normalizeImageUrl = (url?: string): string => {
     if (!url) return '/placeholder.svg';
     try {
       let normalized = url.trim();
+
+      // Конвертируем полные Supabase Storage URLs в относительные пути
+      const supabaseStoragePattern = /https:\/\/[^\/]+\.supabase\.co\/storage\/v1\/object\/public\/lovable-uploads\//;
+      if (supabaseStoragePattern.test(normalized)) {
+        normalized = normalized.replace(supabaseStoragePattern, '/lovable-uploads/');
+      }
 
       // IPFS URL нормализация
       if (normalized.startsWith('ipfs://')) {
