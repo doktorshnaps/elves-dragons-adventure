@@ -252,13 +252,8 @@ export const useMedicalBay = () => {
       setLoading(true);
       console.log('🏥 Removing card from medical bay:', cardInstanceId);
 
-      // First, ensure healing is applied in DB for ready entries
-      const { error: healErr } = await supabase.rpc('process_medical_bay_healing');
-      if (healErr) {
-        console.warn('🏥 process_medical_bay_healing warning:', healErr.message);
-      }
-
-      // Then remove the specific card from medical bay
+      // Remove the specific card from medical bay
+      // ВАЖНО: Здоровье должно быть уже восстановлено через process_medical_bay_healing() по таймеру
       const { error } = await supabase.rpc('remove_card_from_medical_bay', {
         p_card_instance_id: cardInstanceId
       });
@@ -267,7 +262,7 @@ export const useMedicalBay = () => {
 
       toast({
         title: 'Успешно',
-        description: 'Карта извлечена из медпункта. Здоровье восстановлено.',
+        description: 'Карта забрана из медпункта',
       });
 
       // Reload entries to reflect changes
