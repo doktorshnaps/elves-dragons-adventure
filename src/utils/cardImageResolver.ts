@@ -157,13 +157,19 @@ export const getCardImageByRarity = async (card: Card): Promise<string | undefin
 };
 
 /**
- * Нормализует URL изображения карты (IPFS, Arweave, data URLs, PNG->WEBP)
+ * Нормализует URL изображения карты (IPFS, Arweave, data URLs, PNG->WEBP, Supabase Storage)
  */
 const normalizeCardImageUrl = (url: string | undefined): string | undefined => {
   if (!url) return undefined;
   
   try {
     let normalized = url;
+    
+    // Конвертируем полные Supabase Storage URLs в относительные пути
+    const supabaseStoragePattern = /https:\/\/[^\/]+\.supabase\.co\/storage\/v1\/object\/public\/lovable-uploads\//;
+    if (supabaseStoragePattern.test(normalized)) {
+      normalized = normalized.replace(supabaseStoragePattern, '/lovable-uploads/');
+    }
     
     // IPFS URL normalization
     if (normalized.startsWith('ipfs://')) {
