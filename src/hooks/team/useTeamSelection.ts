@@ -17,9 +17,11 @@ export const useTeamSelection = () => {
   // Build cards with health using the SAME gameData instance to avoid desync
   const cardsWithHealth = useMemo(() => {
     const cards = (gameData.cards || []) as CardType[];
-    const instancesMap = new Map(cardInstances.map(ci => [ci.card_template_id, ci]));
+    // КРИТИЧНО: используем instance.id (UUID) для точного совпадения карточек
+    const instancesMap = new Map(cardInstances.map(ci => [ci.id, ci]));
     return cards.map(card => {
-      const instance = instancesMap.get(card.id);
+      // Ищем по instanceId или card.id
+      const instance = instancesMap.get((card as any).instanceId || card.id);
       if (instance) {
         return {
           ...card,
@@ -35,10 +37,21 @@ export const useTeamSelection = () => {
   // Build selected team with health using the SAME gameData instance
   const selectedTeamWithHealth = useMemo(() => {
     const selectedTeam = (gameData.selectedTeam || []) as any[];
-    const instancesMap = new Map(cardInstances.map(ci => [ci.card_template_id, ci]));
+    // КРИТИЧНО: используем instance.id (UUID) для точного совпадения карточек с учетом фракции
+    const instancesMap = new Map(cardInstances.map(ci => [ci.id, ci]));
     return selectedTeam.map((pair: any) => ({
       hero: pair.hero ? (() => {
-        const instance = instancesMap.get(pair.hero.id);
+        // Ищем по instanceId или hero.id
+        const instance = instancesMap.get(pair.hero.instanceId || pair.hero.id);
+        console.log(`🔍 [useTeamSelection] Looking for hero instance:`, {
+          heroName: pair.hero.name,
+          heroFaction: pair.hero.faction,
+          heroId: pair.hero.id,
+          heroInstanceId: pair.hero.instanceId,
+          foundInstance: !!instance,
+          instanceId: instance?.id,
+          instanceFaction: instance ? (instance.card_data as any).faction : null
+        });
         return instance ? {
           ...pair.hero,
           currentHealth: instance.current_health,
@@ -47,7 +60,7 @@ export const useTeamSelection = () => {
         } : pair.hero;
       })() : undefined,
       dragon: pair.dragon ? (() => {
-        const instance = instancesMap.get(pair.dragon.id);
+        const instance = instancesMap.get(pair.dragon.instanceId || pair.dragon.id);
         return instance ? {
           ...pair.dragon,
           currentHealth: instance.current_health,
