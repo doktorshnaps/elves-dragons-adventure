@@ -249,19 +249,27 @@ export const useMedicalBay = () => {
 
     try {
       setLoading(true);
-      console.log('🏥 Removing card from medical bay:', cardInstanceId);
+      
+      console.log('🏥 [MEDICAL BAY] Removing card from medical bay via RPC v2:', cardInstanceId);
 
-      // Remove the specific card from medical bay
-      // ВАЖНО: Здоровье должно быть уже восстановлено через process_medical_bay_healing() по таймеру
-      const { error } = await supabase.rpc('remove_card_from_medical_bay', {
-        p_card_instance_id: cardInstanceId
-      });
+      // Используем RPC функцию с SECURITY DEFINER для обхода RLS
+      const { data, error } = await supabase
+        .rpc('remove_card_from_medical_bay_v2', {
+          p_card_instance_id: cardInstanceId,
+          p_wallet_address: accountId
+        });
 
-      if (error) throw error;
+      if (error) {
+        console.error('🏥 [MEDICAL BAY] RPC Error:', error);
+        throw error;
+      }
+
+      const result = data as { success: boolean; current_health: number };
+      console.log('🏥 [MEDICAL BAY] Card successfully removed:', result);
 
       toast({
-        title: 'Успешно',
-        description: 'Карта забрана из медпункта',
+        title: 'Карта забрана из медпункта',
+        description: 'Здоровье восстановлено',
       });
 
       // Данные обновятся автоматически через Real-time подписки
@@ -275,30 +283,36 @@ export const useMedicalBay = () => {
     } finally {
       setLoading(false);
     }
-  }, [accountId, toast, loadMedicalBayEntries]);
+  }, [accountId, toast]);
 
   const stopHealingWithoutRecovery = useCallback(async (cardInstanceId: string) => {
     if (!accountId) return;
 
     try {
       setLoading(true);
-      console.log('🏥 Stopping healing without recovery:', cardInstanceId);
       
-      // Используем RPC функцию для безопасного удаления из медпункта
-      const { error } = await supabase.rpc('stop_healing_without_recovery', {
-        p_card_instance_id: cardInstanceId
+      console.log('🏥 [MEDICAL BAY] Stopping healing without recovery via RPC v2:', cardInstanceId);
+      
+      // Используем RPC функцию с SECURITY DEFINER для обхода RLS
+      const { data, error } = await supabase.rpc('stop_healing_without_recovery_v2', {
+        p_card_instance_id: cardInstanceId,
+        p_wallet_address: accountId
       });
 
-      if (error) throw error;
+      if (error) {
+        console.error('🏥 [MEDICAL BAY] RPC Error:', error);
+        throw error;
+      }
+
+      console.log('🏥 [MEDICAL BAY] Healing stopped successfully:', data);
 
       toast({
         title: "Лечение остановлено",
-        description: "Карта извлечена из медпункта без восстановления здоровья",
+        description: "Карта удалена из медпункта без восстановления здоровья",
       });
 
       // Данные обновятся автоматически через Real-time подписки
-      
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error stopping healing:', error);
       toast({
         title: "Ошибка",
@@ -308,7 +322,7 @@ export const useMedicalBay = () => {
     } finally {
       setLoading(false);
     }
-  }, [accountId, toast, loadMedicalBayEntries]);
+  }, [accountId, toast]);
 
   const processMedicalBayHealing = useCallback(async () => {
     try {

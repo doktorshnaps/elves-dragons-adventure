@@ -2945,6 +2945,10 @@ export type Database = {
             Args: { p_card_instance_id: string; p_wallet_address: string }
             Returns: Json
           }
+      remove_card_from_medical_bay_v2: {
+        Args: { p_card_instance_id: string; p_wallet_address: string }
+        Returns: Json
+      }
       remove_card_instance_by_id:
         | {
             Args: { p_instance_id: string; p_wallet_address: string }
@@ -2985,6 +2989,10 @@ export type Database = {
       stop_healing_without_recovery: {
         Args: { p_card_instance_id: string }
         Returns: undefined
+      }
+      stop_healing_without_recovery_v2: {
+        Args: { p_card_instance_id: string; p_wallet_address: string }
+        Returns: Json
       }
       stop_repair_without_recovery: {
         Args: { p_card_instance_id: string; p_wallet_address?: string }
