@@ -1,6 +1,5 @@
 import { Card, CardContent } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
-import { calculateCardStats } from "@/utils/cardUtils";
 import { useMemo } from "react";
 
 interface TeamCardDisplayProps {
@@ -12,21 +11,19 @@ interface TeamCardDisplayProps {
 export const TeamCardDisplay = ({ card, onClick, isSelected }: TeamCardDisplayProps) => {
   // Используем сохраненные характеристики из card_data, пересчет только как fallback
   const stats = useMemo(() => {
-    // Если характеристики уже есть в объекте карты, используем их
-    if (card.power !== undefined && card.defense !== undefined && 
-        card.health !== undefined && card.magic !== undefined) {
-      return {
-        power: card.power,
-        defense: card.defense,
-        health: card.health,
-        magic: card.magic
-      };
+    // КРИТИЧНО: характеристики ВСЕГДА должны быть в объекте карты из card_instances
+    if (card.power === undefined || card.defense === undefined || 
+        card.health === undefined || card.magic === undefined) {
+      console.error(`❌ [TeamCardDisplay] Card stats missing for ${card.name}! This should never happen - card data must come from card_instances context.`);
     }
     
-    // Иначе пересчитываем (fallback для старых карт)
-    console.warn(`⚠️ Team card stats not found in card_data for ${card.name}, recalculating...`);
-    return calculateCardStats(card.name, card.rarity, card.type);
-  }, [card.name, card.rarity, card.type, card.power, card.defense, card.health, card.magic]);
+    return {
+      power: card.power ?? 0,
+      defense: card.defense ?? 0,
+      health: card.health ?? 0,
+      magic: card.magic ?? 0
+    };
+  }, [card.power, card.defense, card.health, card.magic, card.name]);
   
   return (
     <Card 
