@@ -56,26 +56,24 @@ const TeamBattlePageInner: React.FC<TeamBattlePageProps> = ({
   // Автоматическая миграция карт из game_data.cards в card_instances
   useCardInstanceMigration();
   
-  // Инициализация кеша item templates и treasure hunt из StaticGameData (ТОЛЬКО ОДИН РАЗ при монтировании)
+  // Инициализация кеша item templates и treasure hunt из StaticGameData
   const { templates: itemTemplatesMap } = useItemTemplates();
-  const itemTemplatesInitialized = useRef(false);
   
   useEffect(() => {
-    // Выполняем только один раз при монтировании компонента
-    if (itemTemplatesInitialized.current) return;
-    
+    // Предзагрузка кеша при наличии templates (выполняется один раз или при обновлении templates)
     if (itemTemplatesMap.size > 0) {
       const templatesArray = Array.from(itemTemplatesMap.values());
       setItemTemplatesCache(templatesArray);
       
-      // Загружаем treasure hunt событие ОДИН РАЗ при инициализации
+      // ⚠️ ОПТИМИЗАЦИЯ PHASE 2A: Загружаем treasure hunt событие в кеш ОДИН РАЗ перед боем
+      // чтобы избежать запросов к БД во время активного сражения
       loadActiveTreasureHunt().then(() => {
-        console.log('✅ Item templates and treasure hunt cache initialized');
+        console.log('✅ [INIT] Item templates and treasure hunt cache preloaded');
+      }).catch(() => {
+        console.log('ℹ️ [INIT] No active treasure hunt event to cache');
       });
-      
-      itemTemplatesInitialized.current = true;
     }
-  }, []); // Пустой массив зависимостей - только при монтировании
+  }, [itemTemplatesMap.size]); // Зависимость от размера карты, чтобы перезагрузить при обновлении
   
   const { 
     pendingReward, 

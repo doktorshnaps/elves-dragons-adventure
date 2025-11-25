@@ -10,7 +10,7 @@ let templatesLoaded = false;
 // Кеш активного treasure hunt события для оптимизации
 let ACTIVE_TREASURE_HUNT_CACHE: any = null;
 let treasureHuntCacheTime = 0;
-const TREASURE_HUNT_CACHE_TTL = 5 * 60 * 1000; // 5 минут
+const TREASURE_HUNT_CACHE_TTL = 60 * 60 * 1000; // 1 час (увеличен для минимизации запросов во время боя)
 
 // Загрузка активного treasure hunt события с кешированием
 export const loadActiveTreasureHunt = async (): Promise<any> => {
@@ -18,10 +18,17 @@ export const loadActiveTreasureHunt = async (): Promise<any> => {
   
   // Возвращаем закешированное событие, если оно свежее
   if (ACTIVE_TREASURE_HUNT_CACHE && (now - treasureHuntCacheTime) < TREASURE_HUNT_CACHE_TTL) {
-    console.log('✅ Using cached treasure hunt event');
+    console.log('✅ [CACHE] Using cached treasure hunt event (age: ' + Math.round((now - treasureHuntCacheTime) / 1000) + 's)');
     return ACTIVE_TREASURE_HUNT_CACHE;
   }
   
+  // ⚠️ ОПТИМИЗАЦИЯ: Если кеш пустой, но недавно проверялся (в последние 5 минут), не делаем повторный запрос
+  if (!ACTIVE_TREASURE_HUNT_CACHE && treasureHuntCacheTime > 0 && (now - treasureHuntCacheTime) < 5 * 60 * 1000) {
+    console.log('✅ [CACHE] No active event (checked ' + Math.round((now - treasureHuntCacheTime) / 1000) + 's ago)');
+    return null;
+  }
+  
+  console.log('🔄 [DB] Loading treasure hunt event from database...');
   try {
     const { data: activeEvent, error: eventError } = await supabase
       .from('treasure_hunt_events')
@@ -32,11 +39,11 @@ export const loadActiveTreasureHunt = async (): Promise<any> => {
     if (!eventError && activeEvent) {
       ACTIVE_TREASURE_HUNT_CACHE = activeEvent;
       treasureHuntCacheTime = now;
-      console.log('✅ Treasure hunt event loaded and cached:', activeEvent.item_name);
+      console.log('✅ [DB] Treasure hunt event loaded and cached:', activeEvent.item_name);
       return activeEvent;
     }
   } catch (error) {
-    console.log('ℹ️ No active treasure hunt event');
+    console.log('ℹ️ [DB] No active treasure hunt event');
   }
   
   ACTIVE_TREASURE_HUNT_CACHE = null;
