@@ -99,6 +99,7 @@ export const DeckSelection = ({
           console.log(`🔍 Recruit card created:`, {
             id: card.id,
             name: card.name,
+            faction: card.faction,
             currentHealth: card.currentHealth,
             maxHealth: card.health,
             currentDefense: card.currentDefense,
@@ -305,13 +306,19 @@ export const DeckSelection = ({
       
       // Логирование для отладки
       if (pair.hero.name?.includes('Рекрут')) {
-        console.log(`🔄 Syncing ${pair.hero.name} (${pair.hero.faction}) in team:`, {
+        console.log(`🔄 Syncing ${pair.hero.name} (faction: ${pair.hero.faction}) in team:`, {
           originalId: pair.hero.id,
+          originalFaction: pair.hero.faction,
           originalHealth: pair.hero.currentHealth,
+          availableCards: localCards.filter(c => c.name?.includes('Рекрут')).map(c => ({
+            id: c.id,
+            faction: c.faction,
+            health: c.currentHealth
+          })),
           foundMatch: !!updatedHero,
           updatedId: updatedHero?.id,
-          updatedHealth: updatedHero?.currentHealth,
-          updatedFaction: updatedHero?.faction
+          updatedFaction: updatedHero?.faction,
+          updatedHealth: updatedHero?.currentHealth
         });
       }
       
