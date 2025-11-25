@@ -18,7 +18,11 @@ export const CardImage = ({
   // Асинхронно загружаем изображение из БД если передана карта
   useEffect(() => {
     if (card) {
-      resolveCardImage(card).then(setResolvedImageUrl);
+      console.log(`🖼️ [CardImage] Resolving image for ${card.name} (faction: ${card.faction})`);
+      resolveCardImage(card).then(url => {
+        console.log(`✅ [CardImage] Resolved image for ${card.name}: ${url?.substring(0, 50)}...`);
+        setResolvedImageUrl(url);
+      });
     }
   }, [card]);
 
