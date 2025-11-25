@@ -26,17 +26,12 @@ export const CardImage = ({
     }
   }, [card]);
 
-  // Нормализация URL (IPFS, Arweave, Supabase Storage, PNG->WEBP)
+  // Нормализация URL (IPFS, Arweave, PNG->WEBP)
+  // НЕ ТРОГАЕТ полные Supabase Storage URLs - они должны работать как есть
   const normalizeImageUrl = (url?: string): string => {
     if (!url) return '/placeholder.svg';
     try {
       let normalized = url.trim();
-
-      // Конвертируем полные Supabase Storage URLs в относительные пути
-      const supabaseStoragePattern = /https:\/\/[^\/]+\.supabase\.co\/storage\/v1\/object\/public\/lovable-uploads\//;
-      if (supabaseStoragePattern.test(normalized)) {
-        normalized = normalized.replace(supabaseStoragePattern, '/lovable-uploads/');
-      }
 
       // IPFS URL нормализация
       if (normalized.startsWith('ipfs://')) {
@@ -53,9 +48,8 @@ export const CardImage = ({
         normalized = normalized.replace('ar://', 'https://arweave.net/');
       }
 
-      // Маршрут изображений: переводим удалённые PNG в WEBP (все PNG заменены на WEBP)
-      // Работает и для относительных, и для абсолютных путей, содержащих "/lovable-uploads/"
-      if (normalized.includes('/lovable-uploads/') && /\.png(\?|$)/i.test(normalized)) {
+      // Конвертируем PNG в WEBP ТОЛЬКО для относительных путей
+      if (normalized.startsWith('/lovable-uploads/') && /\.png(\?|$)/i.test(normalized)) {
         normalized = normalized.replace(/\.png(\?|$)/i, '.webp$1');
       }
       return normalized || '/placeholder.svg';
