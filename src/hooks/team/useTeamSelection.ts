@@ -378,10 +378,19 @@ export const useTeamSelection = () => {
       selectedTeam: gameData.selectedTeam,
       newPairs: newPairs,
       isSameReference: gameData.selectedTeam === baseTeam,
-      pairs: (gameData.selectedTeam || []).map((p: any, i: number) => ({
+      gameDataPairs: (gameData.selectedTeam || []).map((p: any, i: number) => ({
         index: i,
         heroName: p?.hero?.name,
-        dragonName: p?.dragon?.name || 'NONE'
+        heroFaction: p?.hero?.faction,
+        dragonName: p?.dragon?.name || 'NONE',
+        dragonFaction: p?.dragon?.faction || 'N/A'
+      })),
+      newPairsDetails: newPairs.map((p: any, i: number) => ({
+        index: i,
+        heroName: p?.hero?.name,
+        heroFaction: p?.hero?.faction,
+        dragonName: p?.dragon?.name || 'NONE',
+        dragonFaction: p?.dragon?.faction || 'N/A'
       }))
     });
   };
