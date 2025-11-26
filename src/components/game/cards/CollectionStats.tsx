@@ -1,9 +1,10 @@
+import { useState } from "react";
 import { Card } from "@/components/ui/card";
-import { useCardInstancesContext } from "@/providers/CardInstancesProvider";
-import { cardDatabase } from "@/data/cardDatabase";
 import { useLanguage } from "@/hooks/useLanguage";
 import { t } from "@/utils/translations";
-import { BookOpen, Users, PawPrint } from "lucide-react";
+import { BookOpen, Users, PawPrint, TrendingUp } from "lucide-react";
+import { useGlobalCardStats } from "@/hooks/useGlobalCardStats";
+import { CardStatsModal } from "./CardStatsModal";
 
 interface CollectionStatsProps {
   type: 'character' | 'pet';
@@ -11,72 +12,71 @@ interface CollectionStatsProps {
 
 export const CollectionStats = ({ type }: CollectionStatsProps) => {
   const { language } = useLanguage();
-  const { cardInstances } = useCardInstancesContext();
+  const { data: globalStats = [], isLoading } = useGlobalCardStats(type);
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
-  // Получаем все уникальные карты из базы данных по типу
-  const allCards = cardDatabase.filter(card => card.type === type);
-  const totalCards = allCards.length;
-
-  // Получаем уникальные имена карт, которые есть у игрока
-  const playerCards = cardInstances.filter(instance => {
-    const cardData = instance.card_data as any;
-    return cardData?.type === type;
-  });
-
-  // Создаем Set уникальных имен карт
-  const uniqueCardNames = new Set(
-    playerCards.map(instance => {
-      const cardData = instance.card_data as any;
-      return cardData?.name || '';
-    }).filter(name => name !== '')
-  );
-
-  const foundCards = uniqueCardNames.size;
-  const percentage = totalCards > 0 ? Math.round((foundCards / totalCards) * 100) : 0;
+  // Подсчитываем общее количество найденных карт
+  const totalFound = globalStats.reduce((sum, stat) => sum + stat.total_found, 0);
+  const uniqueCards = globalStats.length;
 
   return (
-    <Card variant="menu" className="p-4 mb-4">
-      <div className="flex items-center gap-3">
-        <div className="w-12 h-12 rounded-full bg-primary/20 flex items-center justify-center">
-          {type === 'character' ? (
-            <Users className="w-6 h-6 text-primary" />
-          ) : (
-            <PawPrint className="w-6 h-6 text-primary" />
-          )}
-        </div>
-        
-        <div className="flex-1">
-          <div className="flex items-center gap-2 mb-1">
-            <BookOpen className="w-4 h-4 text-white/60" />
-            <span className="text-sm text-white/60">
-              {type === 'character' 
-                ? t(language, 'grimoire.heroesCollection')
-                : t(language, 'grimoire.petsCollection')
-              }
-            </span>
+    <>
+      <Card 
+        variant="menu" 
+        className="p-4 mb-4 cursor-pointer hover:bg-white/5 transition-colors"
+        onClick={() => setIsModalOpen(true)}
+      >
+        <div className="flex items-center gap-3">
+          <div className="w-12 h-12 rounded-full bg-primary/20 flex items-center justify-center">
+            {type === 'character' ? (
+              <Users className="w-6 h-6 text-primary" />
+            ) : (
+              <PawPrint className="w-6 h-6 text-primary" />
+            )}
           </div>
           
-          <div className="flex items-baseline gap-2">
-            <span className="text-2xl font-bold text-white">
-              {foundCards}
-            </span>
-            <span className="text-lg text-white/60">
-              / {totalCards}
-            </span>
-            <span className="text-sm text-primary ml-auto">
-              {percentage}%
-            </span>
-          </div>
-          
-          {/* Progress bar */}
-          <div className="mt-2 w-full bg-white/10 rounded-full h-2 overflow-hidden">
-            <div 
-              className="h-full bg-gradient-to-r from-primary to-primary/60 transition-all duration-500"
-              style={{ width: `${percentage}%` }}
-            />
+          <div className="flex-1">
+            <div className="flex items-center gap-2 mb-1">
+              <BookOpen className="w-4 h-4 text-white/60" />
+              <span className="text-sm text-white/60">
+                {type === 'character' 
+                  ? t(language, 'grimoire.heroesGlobalStats')
+                  : t(language, 'grimoire.petsGlobalStats')
+                }
+              </span>
+              <TrendingUp className="w-3 h-3 text-primary ml-auto" />
+            </div>
+            
+            {isLoading ? (
+              <div className="text-white/60 text-sm">
+                {t(language, 'common.loading')}...
+              </div>
+            ) : (
+              <>
+                <div className="flex items-baseline gap-2">
+                  <span className="text-2xl font-bold text-white">
+                    {totalFound}
+                  </span>
+                  <span className="text-sm text-white/60">
+                    {t(language, 'grimoire.totalFound')}
+                  </span>
+                </div>
+                
+                <div className="mt-1 text-xs text-white/50">
+                  {uniqueCards} {t(language, 'grimoire.uniqueVariants')}
+                </div>
+              </>
+            )}
           </div>
         </div>
-      </div>
-    </Card>
+      </Card>
+
+      <CardStatsModal
+        type={type}
+        stats={globalStats}
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+      />
+    </>
   );
 };

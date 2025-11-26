@@ -257,7 +257,17 @@ export const translations = {
       pets: 'Питомцы',
       heroesCollection: 'Коллекция героев',
       petsCollection: 'Коллекция питомцев',
-      itemsCollection: 'Коллекция предметов'
+      itemsCollection: 'Коллекция предметов',
+      heroesGlobalStats: 'Глобальная статистика героев',
+      petsGlobalStats: 'Глобальная статистика питомцев',
+      itemsGlobalStats: 'Глобальная статистика предметов',
+      totalFound: 'найдено',
+      uniqueVariants: 'уникальных вариантов',
+      heroesRating: 'Рейтинг героев',
+      petsRating: 'Рейтинг питомцев',
+      itemsRating: 'Рейтинг предметов',
+      found: 'найдено',
+      noDataYet: 'Пока нет данных'
     },
     // Dungeons
     dungeons: {
@@ -808,7 +818,17 @@ export const translations = {
       pets: 'Pets',
       heroesCollection: 'Heroes Collection',
       petsCollection: 'Pets Collection',
-      itemsCollection: 'Items Collection'
+      itemsCollection: 'Items Collection',
+      heroesGlobalStats: 'Global Heroes Statistics',
+      petsGlobalStats: 'Global Pets Statistics',
+      itemsGlobalStats: 'Global Items Statistics',
+      totalFound: 'found',
+      uniqueVariants: 'unique variants',
+      heroesRating: 'Heroes Rating',
+      petsRating: 'Pets Rating',
+      itemsRating: 'Items Rating',
+      found: 'found',
+      noDataYet: 'No data yet'
     },
     // Dungeons
     dungeons: {
