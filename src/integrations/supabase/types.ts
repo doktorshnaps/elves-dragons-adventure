@@ -2541,7 +2541,14 @@ export type Database = {
         Args: { p_quest_id: string; p_wallet_address: string }
         Returns: Json
       }
-      cleanup_old_dungeon_sessions: { Args: never; Returns: undefined }
+      cleanup_dungeon_sessions_by_age: {
+        Args: { p_hours_threshold?: number }
+        Returns: {
+          cutoff_time: string
+          deleted_count: number
+        }[]
+      }
+      cleanup_old_dungeon_sessions: { Args: never; Returns: number }
       cleanup_old_rate_limits: { Args: never; Returns: undefined }
       cleanup_phantom_item_instances: { Args: never; Returns: undefined }
       cleanup_stuck_medical_bay_flags: {
