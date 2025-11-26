@@ -10,6 +10,7 @@ import { useWalletContext } from "@/contexts/WalletConnectContext";
 import { Loader2, Save } from "lucide-react";
 import { refreshGameSettings } from "@/utils/cardUtils";
 import { RecalculateNFTStatsButton } from "./RecalculateNFTStatsButton";
+import { RecalculateAllCardsButton } from "./RecalculateAllCardsButton";
 import { useQueryClient } from '@tanstack/react-query';
 import { 
   useHeroBaseStats, 
@@ -317,8 +318,9 @@ export const GameSettings = () => {
 
   return (
     <div className="space-y-6">
-      <div className="mb-4">
+      <div className="mb-4 flex gap-2">
         <RecalculateNFTStatsButton />
+        <RecalculateAllCardsButton />
       </div>
 
       <Tabs defaultValue="heroes" className="w-full">
