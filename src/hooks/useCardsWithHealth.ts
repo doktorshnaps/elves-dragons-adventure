@@ -13,8 +13,24 @@ export const useCardsWithHealth = () => {
   const cardsWithHealth = useMemo(() => {
     const cards = gameData.cards || [];
     
-    // Создаем мапу экземпляров для быстрого поиска
-    const instancesMap = new Map(cardInstances.map(ci => [ci.card_template_id, ci]));
+    // Группируем instances по template_id и берем самый новый для каждой карты
+    const instancesByTemplateId = cardInstances.reduce((acc, ci) => {
+      if (!acc[ci.card_template_id]) {
+        acc[ci.card_template_id] = [];
+      }
+      acc[ci.card_template_id].push(ci);
+      return acc;
+    }, {} as Record<string, typeof cardInstances>);
+    
+    // Для каждого template_id сортируем по created_at и берем самый новый
+    const instancesMap = new Map(
+      Object.entries(instancesByTemplateId).map(([templateId, instances]) => {
+        const newest = instances.sort((a, b) => 
+          new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+        )[0];
+        return [templateId, newest];
+      })
+    );
     
     return cards.map(card => {
       const instance = instancesMap.get(card.id);
@@ -40,7 +56,25 @@ export const useCardsWithHealth = () => {
 
   const selectedTeamWithHealth = useMemo(() => {
     const selectedTeam = gameData.selectedTeam || [];
-    const instancesMap = new Map(cardInstances.map(ci => [ci.card_template_id, ci]));
+    
+    // Группируем instances по template_id и берем самый новый для каждой карты
+    const instancesByTemplateId = cardInstances.reduce((acc, ci) => {
+      if (!acc[ci.card_template_id]) {
+        acc[ci.card_template_id] = [];
+      }
+      acc[ci.card_template_id].push(ci);
+      return acc;
+    }, {} as Record<string, typeof cardInstances>);
+    
+    // Для каждого template_id сортируем по created_at и берем самый новый
+    const instancesMap = new Map(
+      Object.entries(instancesByTemplateId).map(([templateId, instances]) => {
+        const newest = instances.sort((a, b) => 
+          new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+        )[0];
+        return [templateId, newest];
+      })
+    );
     
     return selectedTeam.map((pair: any) => ({
       hero: pair.hero ? (() => {
