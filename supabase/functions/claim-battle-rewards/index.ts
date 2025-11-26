@@ -6,30 +6,23 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-// Схема для валидации данных предмета
-const ItemSchema = z.object({
-  template_id: z.number(),
-  item_id: z.string(),
-  name: z.string(),
-  type: z.string(),
-  quantity: z.number().default(1)
+// Схема для данных убитых монстров
+const KilledMonsterSchema = z.object({
+  monster_name: z.string(),
+  level: z.number().min(1)
 });
 
-// Схема для валидации данных убийства карточками
-const CardKillSchema = z.object({
-  card_template_id: z.string(),
-  kills: z.number().min(1)
-});
-
-// 🔒 КРИТИЧЕСКОЕ ИЗМЕНЕНИЕ: wallet_address УБРАН, берётся из сессии БД!
+// 🔒 КРИТИЧЕСКОЕ ИЗМЕНЕНИЕ: Клиент отправляет только минимум данных,
+// сервер рассчитывает все награды сам
 const ClaimBodySchema = z.object({
-  claim_key: z.string().uuid(), // Только claim_key - wallet берём из сессии!
+  claim_key: z.string().uuid(),
   dungeon_type: z.string(),
   level: z.number().min(1),
-  ell_reward: z.number().min(0),
-  experience_reward: z.number().min(0),
-  items: z.array(ItemSchema),
-  card_kills: z.array(CardKillSchema),
+  killed_monsters: z.array(KilledMonsterSchema), // Список убитых монстров для расчета дропа
+  card_kills: z.array(z.object({
+    card_template_id: z.string(),
+    kills: z.number().min(1)
+  })),
   card_health_updates: z.array(z.object({
     card_instance_id: z.string(),
     current_health: z.number().min(0),
@@ -54,6 +47,161 @@ const getSupabaseServiceClient = () => {
   return createClient(supabaseUrl, supabaseServiceKey);
 };
 
+// Расчет наград на основе dungeon_settings
+async function calculateRewards(
+  supabase: any,
+  dungeonType: string,
+  level: number,
+  dungeonNumber: number,
+  killedMonsters: Array<{ monster_name: string; level: number }>
+) {
+  console.log('💰 [calculateRewards] Starting calculation', { dungeonType, level, monstersKilled: killedMonsters.length });
+
+  // Получаем настройки подземелья
+  const { data: dungeonSettings, error: settingsError } = await supabase
+    .from('dungeon_settings')
+    .select('*')
+    .eq('dungeon_number', dungeonNumber)
+    .single();
+
+  if (settingsError || !dungeonSettings) {
+    console.error('❌ Dungeon settings not found', settingsError);
+    throw new Error('Dungeon settings not found');
+  }
+
+  console.log('✅ Dungeon settings loaded:', dungeonSettings.dungeon_name);
+
+  // Рассчитываем базовые награды (ELL и опыт) на основе уровня
+  const monstersKilledCount = killedMonsters.length;
+  
+  // Формула наград (можно настроить):
+  // ELL = базовая сумма за монстра * количество убитых * множитель уровня
+  // EXP = базовая сумма за монстра * количество убитых * множитель уровня
+  const ellPerMonster = 10 + (level * 2); // Растет с уровнем
+  const expPerMonster = 15 + (level * 3); // Растет с уровнем
+  
+  const ell_reward = Math.floor(ellPerMonster * monstersKilledCount);
+  const experience_reward = Math.floor(expPerMonster * monstersKilledCount);
+
+  console.log('💎 Base rewards calculated:', { ell_reward, experience_reward, monstersKilled: monstersKilledCount });
+
+  // Рассчитываем дроп предметов на основе dungeon_item_drops
+  const items: any[] = [];
+  
+  // Получаем все возможные дропы для этого подземелья и уровня
+  const { data: itemDrops, error: dropsError } = await supabase
+    .from('dungeon_item_drops')
+    .select(`
+      *,
+      item_templates:item_template_id (*)
+    `)
+    .eq('dungeon_number', dungeonNumber)
+    .eq('is_active', true)
+    .lte('min_dungeon_level', level)
+    .or(`max_dungeon_level.is.null,max_dungeon_level.gte.${level}`);
+
+  if (dropsError) {
+    console.error('❌ Error loading item drops', dropsError);
+  } else if (itemDrops && itemDrops.length > 0) {
+    console.log(`🎁 Found ${itemDrops.length} possible item drops for dungeon ${dungeonNumber}, level ${level}`);
+
+    // Для каждого убитого монстра проверяем дроп предметов
+    for (const monster of killedMonsters) {
+      const cleanMonsterName = monster.monster_name.replace(/\s*\(Lv\d+\)\s*$/i, '').trim();
+      
+      for (const dropConfig of itemDrops) {
+        // Проверяем, может ли этот монстр дропать этот предмет
+        const allowedMonsters = dropConfig.allowed_monsters || [];
+        const canDrop = allowedMonsters.length === 0 || allowedMonsters.includes(cleanMonsterName);
+        
+        if (!canDrop) continue;
+
+        // Генерируем число от 0.01 до 100.00
+        const roll = (Math.floor(Math.random() * 10000) + 1) / 100;
+        const dropChance = dropConfig.drop_chance || 0;
+
+        if (roll <= dropChance) {
+          const template = dropConfig.item_templates;
+          if (template) {
+            console.log(`✅ Item dropped: ${template.name} from ${cleanMonsterName} (roll: ${roll.toFixed(2)} <= ${dropChance}%)`);
+            
+            items.push({
+              template_id: template.id,
+              item_id: template.item_id,
+              name: template.name,
+              type: template.type,
+              quantity: 1
+            });
+          }
+        } else {
+          console.log(`❌ No drop: ${dropConfig.item_templates?.name} (roll: ${roll.toFixed(2)} > ${dropChance}%)`);
+        }
+      }
+    }
+  }
+
+  // Проверяем активное treasure hunt событие
+  const { data: treasureEvent } = await supabase
+    .from('treasure_hunt_events')
+    .select('*')
+    .eq('is_active', true)
+    .or(`dungeon_number.is.null,dungeon_number.eq.${dungeonNumber}`)
+    .maybeSingle();
+
+  if (treasureEvent) {
+    console.log('🎯 Active treasure hunt event found:', treasureEvent.item_name);
+    
+    // Проверяем, не истек ли срок события
+    if (!treasureEvent.ended_at || new Date(treasureEvent.ended_at) > new Date()) {
+      // Для каждого убитого монстра проверяем дроп treasure hunt предмета
+      for (const monster of killedMonsters) {
+        const cleanMonsterName = monster.monster_name.replace(/\s*\(Lv\d+\)\s*$/i, '').trim();
+        const monsterIdLower = treasureEvent.monster_id?.toLowerCase() || '';
+        const cleanNameLower = cleanMonsterName.toLowerCase();
+        
+        const matchesMonster = !treasureEvent.monster_id || 
+                              cleanNameLower.includes(monsterIdLower) ||
+                              monsterIdLower.includes(cleanNameLower);
+        
+        if (matchesMonster && treasureEvent.found_quantity < treasureEvent.total_quantity) {
+          const roll = (Math.floor(Math.random() * 10000) + 1) / 100;
+          const dropChance = treasureEvent.drop_chance || 0;
+          
+          if (roll <= dropChance) {
+            console.log(`🎊 TREASURE HUNT ITEM DROPPED! ${treasureEvent.item_name}`);
+            
+            const { data: template } = await supabase
+              .from('item_templates')
+              .select('*')
+              .eq('id', treasureEvent.item_template_id)
+              .single();
+            
+            if (template) {
+              items.push({
+                template_id: template.id,
+                item_id: template.item_id,
+                name: template.name,
+                type: template.type,
+                quantity: 1,
+                isTreasureHunt: true,
+                treasureHuntEventId: treasureEvent.id
+              });
+            }
+          }
+        }
+      }
+    }
+  }
+
+  console.log(`🎉 Total items calculated: ${items.length}`);
+
+  return {
+    ell_reward,
+    experience_reward,
+    items
+  };
+}
+
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
@@ -63,18 +211,17 @@ Deno.serve(async (req) => {
     const body = await req.json();
     console.log('📦 [claim-battle-rewards] Received request with claim_key:', body.claim_key?.substring(0, 8));
 
-    // Валидация с подробными ошибками
     const parseResult = ClaimBodySchema.safeParse(body);
     if (!parseResult.success) {
-      console.error('❌ [claim-battle-rewards] Validation error:', parseResult.error.errors);
+      console.error('❌ Validation error:', parseResult.error.errors);
       return json({ error: 'Invalid request' }, 400);
     }
 
     const claimBody: ClaimBody = parseResult.data;
     const supabase = getSupabaseServiceClient();
 
-    // 🔒 КРИТИЧЕСКАЯ ПРОВЕРКА: Извлекаем wallet из сессии БД, НЕ из запроса!
-    console.log('🔍 [claim-battle-rewards] Looking up session by claim_key:', claimBody.claim_key);
+    // 🔒 КРИТИЧЕСКАЯ ПРОВЕРКА: Извлекаем wallet из сессии БД
+    console.log('🔍 Looking up session by claim_key:', claimBody.claim_key);
     
     const { data: session, error: sessionError } = await supabase
       .from('active_dungeon_sessions')
@@ -83,24 +230,22 @@ Deno.serve(async (req) => {
       .single();
 
     if (sessionError || !session) {
-      console.error('❌ [claim-battle-rewards] Invalid or expired claim key:', sessionError);
+      console.error('❌ Invalid or expired claim key:', sessionError);
       
-      // Логируем подозрительную активность
       await supabase.from('security_audit_log').insert({
         event_type: 'invalid_claim_key',
         claim_key: claimBody.claim_key,
         details: { error: 'Session not found or expired', dungeon_type: claimBody.dungeon_type }
-      }).then(null, () => {}); // Игнорируем ошибки логирования
+      }).then(null, () => {});
       
       return json({ error: 'Invalid or expired claim key' }, 403);
     }
 
-    // Wallet address берём из сессии, НЕ из запроса!
     const wallet_address = session.account_id;
 
     // Проверяем соответствие dungeon_type
     if (session.dungeon_type !== claimBody.dungeon_type) {
-      console.error('❌ [claim-battle-rewards] Dungeon type mismatch:', {
+      console.error('❌ Dungeon type mismatch:', {
         expected: session.dungeon_type,
         received: claimBody.dungeon_type
       });
@@ -115,34 +260,21 @@ Deno.serve(async (req) => {
       return json({ error: 'Dungeon type mismatch' }, 403);
     }
 
-    console.log('✅ [claim-battle-rewards] Session validated:', {
-      wallet: wallet_address,
+    console.log('✅ Session validated:', {
+      wallet: wallet_address.substring(0, 10),
       dungeon: session.dungeon_type,
       level: session.level
     });
 
-    console.log('🔐 [claim-battle-rewards] Processing claim for wallet:', wallet_address.substring(0, 10), {
-      ell: claimBody.ell_reward,
-      exp: claimBody.experience_reward,
-      items: claimBody.items.length,
-      card_kills: claimBody.card_kills.length,
-      card_health_updates: claimBody.card_health_updates.length
-    });
-
-    // Проверка идемпотентности через reward_claims
-    const { data: existingClaim, error: claimCheckError } = await supabase
+    // Проверка идемпотентности
+    const { data: existingClaim } = await supabase
       .from('reward_claims')
       .select('id')
       .eq('claim_key', claimBody.claim_key)
       .maybeSingle();
 
-    if (claimCheckError) {
-      console.error('❌ [claim-battle-rewards] Error checking claim:', claimCheckError);
-      return json({ error: 'Database error' }, 500);
-    }
-
     if (existingClaim) {
-      console.log('⚠️ [claim-battle-rewards] Claim already processed:', claimBody.claim_key);
+      console.log('⚠️ Claim already processed:', claimBody.claim_key);
       
       await supabase.from('security_audit_log').insert({
         event_type: 'duplicate_claim_attempt',
@@ -154,61 +286,124 @@ Deno.serve(async (req) => {
       return json({ success: true, message: 'Reward already claimed', duplicate: true });
     }
 
-    // Вставляем запись в reward_claims для идемпотентности
+    // Вставляем запись в reward_claims
     const { error: insertClaimError } = await supabase
       .from('reward_claims')
       .insert({
-        wallet_address: wallet_address, // Из сессии!
+        wallet_address,
         claim_key: claimBody.claim_key
       });
 
     if (insertClaimError) {
-      console.error('❌ [claim-battle-rewards] Error inserting claim:', insertClaimError);
+      console.error('❌ Error inserting claim:', insertClaimError);
       return json({ error: 'Failed to record claim' }, 500);
     }
 
-    console.log('✅ [claim-battle-rewards] Idempotency record created');
+    console.log('✅ Idempotency record created');
+
+    // 🎯 СЕРВЕРНЫЙ РАСЧЕТ НАГРАД
+    // Определяем dungeon_number по типу
+    const dungeonTypeMap: Record<string, number> = {
+      'spider_nest': 1,
+      'forgotten_souls': 2,
+      'bone_dungeon': 3,
+      'dark_mage': 4,
+      'sea_serpent': 5,
+      'ice_throne': 6,
+      'dragon_lair': 7,
+      'pantheon_gods': 8
+    };
+
+    const dungeonNumber = dungeonTypeMap[claimBody.dungeon_type] || 1;
+
+    console.log('🎲 Calculating rewards on server side...');
+    const { ell_reward, experience_reward, items } = await calculateRewards(
+      supabase,
+      claimBody.dungeon_type,
+      claimBody.level,
+      dungeonNumber,
+      claimBody.killed_monsters
+    );
+
+    console.log('💎 Server-calculated rewards:', {
+      ell_reward,
+      experience_reward,
+      items: items.length
+    });
 
     // Вызываем RPC функцию для атомарного применения всех наград
-    console.log('🎯 [claim-battle-rewards] Calling apply_battle_rewards RPC');
+    console.log('🎯 Calling apply_battle_rewards RPC');
     
     const { data: rpcResult, error: rpcError } = await supabase.rpc('apply_battle_rewards', {
-      p_wallet_address: wallet_address, // Из сессии!
-      p_ell_reward: claimBody.ell_reward,
-      p_experience_reward: claimBody.experience_reward,
-      p_items: claimBody.items,
+      p_wallet_address: wallet_address,
+      p_ell_reward: ell_reward,
+      p_experience_reward: experience_reward,
+      p_items: items,
       p_card_kills: claimBody.card_kills,
       p_card_health_updates: claimBody.card_health_updates
     });
 
     if (rpcError) {
-      console.error('❌ [claim-battle-rewards] RPC error:', rpcError);
+      console.error('❌ RPC error:', rpcError);
       return json({ error: 'Failed to apply battle rewards' }, 500);
     }
 
+    // Обновляем treasure hunt findings для дропнутых предметов события
+    for (const item of items) {
+      if (item.isTreasureHunt && item.treasureHuntEventId) {
+        const { data: existingFinding } = await supabase
+          .from('treasure_hunt_findings')
+          .select('*')
+          .eq('event_id', item.treasureHuntEventId)
+          .eq('wallet_address', wallet_address)
+          .maybeSingle();
+        
+        if (existingFinding) {
+          await supabase
+            .from('treasure_hunt_findings')
+            .update({ 
+              found_quantity: existingFinding.found_quantity + 1,
+              found_at: new Date().toISOString()
+            })
+            .eq('id', existingFinding.id);
+        } else {
+          await supabase
+            .from('treasure_hunt_findings')
+            .insert({
+              event_id: item.treasureHuntEventId,
+              wallet_address,
+              found_quantity: 1
+            });
+        }
+      }
+    }
+
     // Удаляем сессию после успешного клейма
-    const { error: deleteError } = await supabase
+    await supabase
       .from('active_dungeon_sessions')
       .delete()
       .eq('claim_key', claimBody.claim_key);
 
-    if (deleteError) {
-      console.warn('⚠️ [claim-battle-rewards] Failed to delete session:', deleteError);
-    }
-
-    console.log('✅ [claim-battle-rewards] Rewards applied successfully:', {
+    console.log('✅ Rewards applied successfully:', {
       wallet: wallet_address.substring(0, 10),
-      results: rpcResult,
+      ell: ell_reward,
+      exp: experience_reward,
+      items: items.length
     });
 
     return json({
       success: true,
       message: 'Battle rewards claimed successfully',
-      results: rpcResult
+      results: rpcResult,
+      rewards: {
+        ell_reward,
+        experience_reward,
+        items: items.length
+      }
     });
 
   } catch (error) {
-    console.error('❌ [claim-battle-rewards] Unexpected error:', error);
+    console.error('❌ Unexpected error:', error);
     return json({ error: 'Internal server error' }, 500);
   }
 });

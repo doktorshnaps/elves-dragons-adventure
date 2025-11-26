@@ -47,15 +47,14 @@ export const useBattleRewards = (accountId: string | null) => {
         cardKills: stats.cardKills.length
       });
 
-      // 🔒 Вызываем Edge Function БЕЗ wallet_address - он извлекается из сессии!
+      // 🔒 КРИТИЧЕСКОЕ ИЗМЕНЕНИЕ: Отправляем только минимум данных
+      // Сервер сам рассчитает награды (ELL, опыт, предметы) на основе killed_monsters
       const { data, error } = await supabase.functions.invoke('claim-battle-rewards', {
         body: {
-          claim_key: claimKey, // Только claim_key!
+          claim_key: claimKey,
           dungeon_type: dungeonType,
           level,
-          ell_reward: stats.ellEarned,
-          experience_reward: stats.experienceGained,
-          items: stats.lootedItems,
+          killed_monsters: stats.killedMonsters, // Список убитых монстров для server-side расчета
           card_kills: stats.cardKills,
           card_health_updates: cardHealthUpdates
         }
