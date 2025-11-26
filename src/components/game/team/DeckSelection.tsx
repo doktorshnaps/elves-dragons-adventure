@@ -286,7 +286,7 @@ export const DeckSelection = ({
   };
   
   // КРИТИЧЕСКОЕ ИСПРАВЛЕНИЕ: Синхронизируем selectedPairs с актуальными данными из localCards
-  // Используем UUID для точного сопоставления
+  // Используем UUID для точного сопоставления и ЯВНО передаем instanceId
   const syncedSelectedPairs = useMemo(() => {
     return selectedPairs.map(pair => {
       // Находим актуальные данные героя по UUID (после миграции все ID - это UUID)
@@ -307,9 +307,22 @@ export const DeckSelection = ({
         });
       }
       
+      // КРИТИЧНО: ЯВНО добавляем instanceId к каждой карте для корректного поиска в useTeamBattle
       return {
-        hero: updatedHero || pair.hero, // Используем обновленные данные или оригинал
-        dragon: updatedDragon || pair.dragon
+        hero: updatedHero ? {
+          ...updatedHero,
+          instanceId: updatedHero.id // UUID из card_instances
+        } : {
+          ...pair.hero,
+          instanceId: (pair.hero as any).instanceId || pair.hero.id
+        },
+        dragon: updatedDragon ? {
+          ...updatedDragon,
+          instanceId: updatedDragon.id // UUID из card_instances
+        } : pair.dragon ? {
+          ...pair.dragon,
+          instanceId: (pair.dragon as any).instanceId || pair.dragon.id
+        } : undefined
       };
     });
   }, [selectedPairs, localCards]);
