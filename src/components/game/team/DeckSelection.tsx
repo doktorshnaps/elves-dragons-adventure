@@ -295,7 +295,20 @@ export const DeckSelection = ({
   // КРИТИЧЕСКОЕ ИСПРАВЛЕНИЕ: Синхронизируем selectedPairs с актуальными данными из localCards
   // УЧИТЫВАЕМ ФРАКЦИЮ при поиске карточки!
   const syncedSelectedPairs = useMemo(() => {
-    console.log(`🔍 [DeckSelection] Syncing ${selectedPairs.length} pairs with ${localCards.length} local cards`);
+    console.log(`🔍 [DeckSelection] syncedSelectedPairs recalculating:`, {
+      selectedPairsLength: selectedPairs.length,
+      localCardsLength: localCards.length,
+      selectedPairsWithDragons: selectedPairs.filter(p => p.dragon).length,
+      pairsDetails: selectedPairs.map((p, i) => ({
+        pairIndex: i,
+        heroName: p.hero?.name,
+        heroFaction: p.hero?.faction,
+        dragonName: p.dragon?.name,
+        dragonFaction: p.dragon?.faction,
+        dragonId: p.dragon?.id,
+        dragonInstanceId: (p.dragon as any)?.instanceId
+      }))
+    });
     
     return selectedPairs.map((pair, pairIndex) => {
       // Находим актуальные данные героя по instanceId/id + faction (для различения одноименных карт разных фракций)
