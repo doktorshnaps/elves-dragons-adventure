@@ -47,15 +47,14 @@ export const useBattleRewards = (accountId: string | null) => {
         cardKills: stats.cardKills.length
       });
 
-      // 🔒 Вызываем Edge Function БЕЗ wallet_address - он извлекается из сессии!
+      // 🔒 НОВОЕ: Передаём только факты убийств, награды рассчитываются на сервере!
       const { data, error } = await supabase.functions.invoke('claim-battle-rewards', {
         body: {
           claim_key: claimKey, // Только claim_key!
           dungeon_type: dungeonType,
           level,
-          ell_reward: stats.ellEarned,
-          experience_reward: stats.experienceGained,
-          items: stats.lootedItems,
+          monsters_killed: stats.monstersKilled, // 🎯 SERVER-SIDE CALCULATION
+          items: stats.lootedItems, // Сервер валидирует через dungeon_item_drops
           card_kills: stats.cardKills,
           card_health_updates: cardHealthUpdates
         }
@@ -83,9 +82,13 @@ export const useBattleRewards = (accountId: string | null) => {
       // Очищаем claim_key после успешного клейма
       localStorage.removeItem('currentClaimKey');
 
+      // 🎯 Показываем server-calculated награды из ответа
+      const serverRewards = data?.server_calculated;
       toast({
         title: "🎉 Награды получены!",
-        description: `+${stats.ellEarned} ELL, +${stats.experienceGained} опыта, ${stats.lootedItems.length} предметов`
+        description: serverRewards 
+          ? `+${serverRewards.ell_reward} ELL, +${serverRewards.experience_reward} опыта, ${serverRewards.items_validated} предметов`
+          : `Убито монстров: ${stats.monstersKilled}, предметов: ${stats.lootedItems.length}`
       });
 
       return { success: true, data };
