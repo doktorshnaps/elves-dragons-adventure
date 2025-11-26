@@ -16,6 +16,8 @@ export interface CardInstance {
   max_health: number;
   current_defense: number;
   max_defense: number;
+  max_power: number;
+  max_magic: number;
   last_heal_time: string;
   is_in_medical_bay?: boolean;
   medical_bay_start_time?: string;
