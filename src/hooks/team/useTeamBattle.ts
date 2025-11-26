@@ -83,10 +83,10 @@ export const useTeamBattle = (dungeonType: DungeonType, initialLevel: number = 1
         
         // Hero data from card_instances
         const heroData = heroInstance?.card_data as any;
-        const heroPower = heroData?.power ?? pair.hero.power ?? 0;
+        const heroPower = heroInstance?.max_power ?? pair.hero.power ?? 0;
         const heroDefense = heroInstance?.max_defense ?? pair.hero.defense ?? 0;
         const heroHealth = heroInstance?.max_health ?? pair.hero.health ?? 0;
-        const heroMagic = heroData?.magic ?? pair.hero.magic ?? 0;
+        const heroMagic = heroInstance?.max_magic ?? pair.hero.magic ?? 0;
         const heroCurrent = heroInstance?.current_health ?? pair.hero.currentHealth ?? heroHealth;
         const heroCurrentDefense = heroInstance?.current_defense ?? heroDefense;
         const heroMaxDefense = heroInstance?.max_defense ?? heroDefense;
@@ -103,10 +103,10 @@ export const useTeamBattle = (dungeonType: DungeonType, initialLevel: number = 1
         
         // Dragon data from card_instances (if exists)
         const dragonData = dragonInstance?.card_data as any;
-        const dragonPower = dragonData?.power ?? pair.dragon?.power ?? 0;
+        const dragonPower = dragonInstance?.max_power ?? pair.dragon?.power ?? 0;
         const dragonDefense = dragonInstance?.max_defense ?? pair.dragon?.defense ?? 0;
         const dragonHealth = dragonInstance?.max_health ?? pair.dragon?.health ?? 0;
-        const dragonMagic = dragonData?.magic ?? pair.dragon?.magic ?? 0;
+        const dragonMagic = dragonInstance?.max_magic ?? pair.dragon?.magic ?? 0;
         const dragonCurrent = dragonInstance?.current_health ?? pair.dragon?.currentHealth ?? dragonHealth;
         const dragonCurrentDefense = dragonInstance?.current_defense ?? dragonDefense;
         const dragonMaxDefense = dragonInstance?.max_defense ?? dragonDefense;
@@ -217,20 +217,20 @@ export const useTeamBattle = (dungeonType: DungeonType, initialLevel: number = 1
       
       // Hero data
       const heroData = heroInstance?.card_data as any;
-      const heroPower = heroData?.power ?? pair.hero.power ?? 0;
+      const heroPower = heroInstance?.max_power ?? pair.hero.power ?? 0;
       const heroDefense = heroInstance?.max_defense ?? pair.hero.defense ?? 0;
       const heroHealth = heroInstance?.max_health ?? pair.hero.health ?? 0;
-      const heroMagic = heroData?.magic ?? pair.hero.magic ?? 0;
+      const heroMagic = heroInstance?.max_magic ?? pair.hero.magic ?? 0;
       const heroCurrent = heroInstance?.current_health ?? pair.hero.currentHealth ?? heroHealth;
       const heroCurrentDefense = heroInstance?.current_defense ?? heroDefense;
       const heroMaxDefense = heroInstance?.max_defense ?? heroDefense;
       
       // Dragon data
       const dragonData = dragonInstance?.card_data as any;
-      const dragonPower = dragonData?.power ?? pair.dragon?.power ?? 0;
+      const dragonPower = dragonInstance?.max_power ?? pair.dragon?.power ?? 0;
       const dragonDefense = dragonInstance?.max_defense ?? pair.dragon?.defense ?? 0;
       const dragonHealth = dragonInstance?.max_health ?? pair.dragon?.health ?? 0;
-      const dragonMagic = dragonData?.magic ?? pair.dragon?.magic ?? 0;
+      const dragonMagic = dragonInstance?.max_magic ?? pair.dragon?.magic ?? 0;
       const dragonCurrent = dragonInstance?.current_health ?? pair.dragon?.currentHealth ?? dragonHealth;
       const dragonCurrentDefense = dragonInstance?.current_defense ?? dragonDefense;
       const dragonMaxDefense = dragonInstance?.max_defense ?? dragonDefense;

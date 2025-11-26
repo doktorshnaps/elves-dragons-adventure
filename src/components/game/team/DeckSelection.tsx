@@ -102,11 +102,11 @@ export const DeckSelection = ({
           rarity: cardData.rarity,
           image: cardData.image,
           
-          // Характеристики из card_data
-          power: cardData.power,
-          defense: cardData.defense,
-          health: cardData.health,
-          magic: cardData.magic,
+          // ✅ Характеристики из столбцов таблицы (источник правды!)
+          power: instance.max_power,
+          defense: instance.max_defense,
+          health: instance.max_health,
+          magic: instance.max_magic,
           
           // ✅ Актуальное здоровье и броня из instance (источник правды!)
           currentHealth: instance.current_health,

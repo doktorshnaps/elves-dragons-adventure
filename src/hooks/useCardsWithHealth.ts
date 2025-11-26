@@ -35,11 +35,11 @@ export const useCardsWithHealth = () => {
           rarity: cardData.rarity,
           image: cardData.image,
           
-          // Характеристики из card_data (источник правды!)
-          power: cardData.power,
-          defense: cardData.defense,
-          health: cardData.health,
-          magic: cardData.magic,
+          // Характеристики из столбцов таблицы (источник правды!)
+          power: instance.max_power,
+          defense: instance.max_defense,
+          health: instance.max_health,
+          magic: instance.max_magic,
           
           // Текущее здоровье и броня из instance
           currentHealth: instance.current_health,
@@ -80,11 +80,11 @@ export const useCardsWithHealth = () => {
             rarity: cardData.rarity,
             image: cardData.image,
             
-            // Характеристики из card_data
-            power: cardData.power,
-            defense: cardData.defense,
-            health: cardData.health,
-            magic: cardData.magic,
+            // Характеристики из столбцов таблицы
+            power: instance.max_power,
+            defense: instance.max_defense,
+            health: instance.max_health,
+            magic: instance.max_magic,
             
             // Текущее здоровье и броня
             currentHealth: instance.current_health,
@@ -117,11 +117,11 @@ export const useCardsWithHealth = () => {
             rarity: cardData.rarity,
             image: cardData.image,
             
-            // Характеристики
-            power: cardData.power,
-            defense: cardData.defense,
-            health: cardData.health,
-            magic: cardData.magic,
+            // Характеристики из столбцов таблицы
+            power: instance.max_power,
+            defense: instance.max_defense,
+            health: instance.max_health,
+            magic: instance.max_magic,
             
             // Текущее здоровье и броня
             currentHealth: instance.current_health,

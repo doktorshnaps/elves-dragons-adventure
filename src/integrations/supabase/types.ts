@@ -296,6 +296,8 @@ export type Database = {
           marketplace_listing_id: string | null
           max_defense: number
           max_health: number
+          max_magic: number
+          max_power: number
           medical_bay_heal_rate: number | null
           medical_bay_start_time: string | null
           monster_kills: number
@@ -319,6 +321,8 @@ export type Database = {
           marketplace_listing_id?: string | null
           max_defense?: number
           max_health?: number
+          max_magic?: number
+          max_power?: number
           medical_bay_heal_rate?: number | null
           medical_bay_start_time?: string | null
           monster_kills?: number
@@ -342,6 +346,8 @@ export type Database = {
           marketplace_listing_id?: string | null
           max_defense?: number
           max_health?: number
+          max_magic?: number
+          max_power?: number
           medical_bay_heal_rate?: number | null
           medical_bay_start_time?: string | null
           monster_kills?: number
@@ -2594,6 +2600,8 @@ export type Database = {
           marketplace_listing_id: string | null
           max_defense: number
           max_health: number
+          max_magic: number
+          max_power: number
           medical_bay_heal_rate: number | null
           medical_bay_start_time: string | null
           monster_kills: number
