@@ -305,7 +305,7 @@ const TeamBattlePageInner: React.FC<TeamBattlePageProps> = ({
     }
     
     // Продолжаем claim даже если cardHealthUpdates пустой - награды все равно нужно начислить
-    const success = await claimRewardAndExit(cardHealthUpdates, dungeonType, battleState.level);
+    const success = await claimRewardAndExit(getCurrentClaimKey(), cardHealthUpdates, dungeonType, battleState.level);
     if (success) {
       toast({
         title: "✅ Успешно",
