@@ -208,15 +208,43 @@ export const useDungeonRewards = () => {
     dungeonType: string,
     currentLevel: number
   ) => {
-    // Если нет claim_key (поражение или ошибка) - сохраняем только здоровье карт без наград
-    if (!claimKey) {
-      console.log('💔 [claimRewardAndExit] Нет claim_key - пропуск начисления наград');
-      return true;
-    }
-
-    // Если нет награды (поражение) - сохраняем только здоровье карт и выходим
-    if (!pendingReward) {
-      console.log('💔 [claimRewardAndExit] Поражение - награды не начисляются');
+    // КРИТИЧНО: Если нет claim_key или награды (поражение), все равно сохраняем здоровье карт!
+    const shouldSkipRewards = !claimKey || !pendingReward;
+    
+    if (shouldSkipRewards) {
+      console.log('💔 [claimRewardAndExit] Поражение/ошибка - сохраняем ТОЛЬКО здоровье карт, без наград');
+      
+      // Сохраняем здоровье карт через batch update даже без claim наград
+      if (cardHealthUpdates.length > 0 && accountId) {
+        try {
+          console.log('🩹 [claimRewardAndExit] Batch update здоровья карт при поражении:', cardHealthUpdates.length);
+          
+          const { error: batchError } = await supabase.rpc('batch_update_card_stats', {
+            p_wallet_address: accountId,
+            p_card_updates: cardHealthUpdates
+          });
+          
+          if (batchError) {
+            console.error('❌ Ошибка batch update при поражении:', batchError);
+            toast({
+              title: "Ошибка",
+              description: "Не удалось сохранить состояние карт",
+              variant: "destructive"
+            });
+            return false;
+          }
+          
+          console.log('✅ Здоровье карт сохранено после поражения');
+          
+          // Инвалидируем кеш карт для обновления UI
+          await queryClient.invalidateQueries({ queryKey: ['cardInstances', accountId] });
+          
+        } catch (err) {
+          console.error('❌ Критическая ошибка batch update:', err);
+          return false;
+        }
+      }
+      
       return true;
     }
     

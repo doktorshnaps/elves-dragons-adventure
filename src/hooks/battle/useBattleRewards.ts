@@ -15,7 +15,7 @@ export const useBattleRewards = (accountId: string | null) => {
     level: number,
     stats: BattleStats,
     cardHealthUpdates: Array<{
-      card_template_id: string;
+      card_instance_id: string; // ИСПРАВЛЕНО: было card_template_id
       current_health: number;
       current_defense: number;
     }>
