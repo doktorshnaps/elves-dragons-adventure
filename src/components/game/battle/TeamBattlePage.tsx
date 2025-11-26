@@ -142,7 +142,17 @@ const TeamBattlePageInner: React.FC<TeamBattlePageProps> = ({
     });
   };
   const handleExitAndReset = async () => {
-    // Завершаем сессию подземелья в БД
+    // КРИТИЧНО: Сначала устанавливаем флаги завершения, ПОТОМ удаляем сессию
+    // Это предотвращает ложное срабатывание Real-time подписки
+    startTransition(() => {
+      useGameStore.getState().setActiveBattleInProgress(false);
+      localStorage.removeItem('activeBattleInProgress');
+    });
+    
+    // Небольшая задержка для синхронизации состояния перед удалением сессии
+    await new Promise(resolve => setTimeout(resolve, 100));
+    
+    // Теперь безопасно завершаем сессию подземелья в БД
     await endDungeonSession();
     
     // КРИТИЧНО: Инвалидируем и перезагружаем gameData ДО навигации
@@ -151,7 +161,6 @@ const TeamBattlePageInner: React.FC<TeamBattlePageProps> = ({
     await queryClient.refetchQueries({ queryKey: ['gameData', accountId] });
     
     startTransition(() => {
-      useGameStore.getState().setActiveBattleInProgress(false);
       resetBattle();
       resetRewards();
       navigate('/dungeons');
@@ -214,62 +223,38 @@ const TeamBattlePageInner: React.FC<TeamBattlePageProps> = ({
     const cardHealthUpdates = battleState.playerPairs.flatMap(pair => {
       const updates = [];
       
-      // Героя всегда добавляем
+      // Героя всегда добавляем - используем instanceId напрямую
       if (pair.hero) {
-        console.log('🔍 Ищем героя:', { id: pair.hero.id, name: pair.hero.name });
+        const heroInstanceId = pair.hero.instanceId || pair.hero.id;
+        console.log('💔 [HERO] Сохранение:', {
+          name: pair.hero.name,
+          instance_id: heroInstanceId,
+          current_health: pair.hero.currentHealth,
+          current_defense: pair.hero.currentDefense
+        });
         
-        // КРИТИЧНО: Ищем героя по UUID (instanceId или id)
-        const heroLookupId = pair.hero.instanceId || pair.hero.id;
-        let heroInstance = cardInstances.find(ci => ci.id === heroLookupId);
-        
-        if (heroInstance) {
-          console.log('💔 [HERO] Данные для сохранения:', {
-            name: pair.hero.name,
-            template_id: pair.hero.id,
-            instance_id: heroInstance.id,
-            current_health_from_pair: pair.hero.currentHealth,
-            fallback_health: pair.hero.health,
-            current_defense_from_pair: pair.hero.currentDefense,
-            fallback_defense: pair.hero.defense
-          });
-          
-          updates.push({
-            card_instance_id: heroInstance.id, // Используем уникальный ID карты
-            current_health: pair.hero.currentHealth ?? pair.hero.health,
-            current_defense: pair.hero.currentDefense ?? pair.hero.defense // ИСПРАВЛЕНО: берем индивидуальную броню героя
-          });
-        } else {
-          console.error('❌ Не найден hero instance для:', pair.hero.name, pair.hero.id);
-        }
+        updates.push({
+          card_instance_id: heroInstanceId,
+          current_health: pair.hero.currentHealth ?? pair.hero.health,
+          current_defense: pair.hero.currentDefense ?? pair.hero.defense
+        });
       }
       
       // Дракона добавляем если есть
       if (pair.dragon) {
-        console.log('🔍 Ищем дракона:', { id: pair.dragon.id, name: pair.dragon.name });
+        const dragonInstanceId = pair.dragon.instanceId || pair.dragon.id;
+        console.log('💔 [DRAGON] Сохранение:', {
+          name: pair.dragon.name,
+          instance_id: dragonInstanceId,
+          current_health: pair.dragon.currentHealth,
+          current_defense: pair.dragon.currentDefense
+        });
         
-        // КРИТИЧНО: Ищем дракона по UUID (instanceId или id)
-        const dragonLookupId = pair.dragon.instanceId || pair.dragon.id;
-        let dragonInstance = cardInstances.find(ci => ci.id === dragonLookupId);
-        
-        if (dragonInstance) {
-          console.log('💔 [DRAGON] Данные для сохранения:', {
-            name: pair.dragon.name,
-            template_id: pair.dragon.id,
-            instance_id: dragonInstance.id,
-            current_health_from_pair: pair.dragon.currentHealth,
-            fallback_health: pair.dragon.health,
-            current_defense_from_pair: pair.dragon.currentDefense,
-            fallback_defense: pair.dragon.defense
-          });
-          
-          updates.push({
-            card_instance_id: dragonInstance.id, // Используем уникальный ID карты
-            current_health: pair.dragon.currentHealth ?? pair.dragon.health,
-            current_defense: pair.dragon.currentDefense ?? pair.dragon.defense // ИСПРАВЛЕНО: добавлен fallback
-          });
-        } else {
-          console.error('❌ Не найден dragon instance для:', pair.dragon.name, pair.dragon.id);
-        }
+        updates.push({
+          card_instance_id: dragonInstanceId,
+          current_health: pair.dragon.currentHealth ?? pair.dragon.health,
+          current_defense: pair.dragon.currentDefense ?? pair.dragon.defense
+        });
       }
       
       return updates;
@@ -329,11 +314,17 @@ const TeamBattlePageInner: React.FC<TeamBattlePageProps> = ({
   // Мониторинг активной сессии в БД: если удалена на другом устройстве — блокируем
   useEffect(() => {
     // Следим ТОЛЬКО когда бой активен на этом устройстве
-    const isActiveLocal = battleStarted || useGameStore.getState().activeBattleInProgress;
+    const isActiveLocal = battleStarted && useGameStore.getState().activeBattleInProgress;
     if (!accountId || !deviceId || !isActiveLocal) return;
 
     const checkSession = async () => {
       try {
+        // КРИТИЧНО: Не проверяем сессию если бой завершен
+        const stillActiveLocal = battleStarted && useGameStore.getState().activeBattleInProgress;
+        if (!stillActiveLocal) {
+          return; // Бой завершен нормально
+        }
+        
         const now = Date.now();
         const TIMEOUT = 300000; // 5 минут - даем запас для троттлинга heartbeat в фоновых вкладках
         const { data, error } = await supabase
@@ -345,9 +336,9 @@ const TeamBattlePageInner: React.FC<TeamBattlePageProps> = ({
           .limit(1);
 
         if (error) throw error;
-        // Если записи нет — считаем, что сессию завершили удаленно (только если локально бой активен)
-        const stillActiveLocal = battleStarted || useGameStore.getState().activeBattleInProgress;
-        if ((!data || data.length === 0) && stillActiveLocal) {
+        // Если записи нет — считаем, что сессию завершили удаленно
+        const stillActiveAfterCheck = battleStarted && useGameStore.getState().activeBattleInProgress;
+        if ((!data || data.length === 0) && stillActiveAfterCheck) {
           setSessionTerminated(true);
         }
       } catch (e) {
@@ -373,9 +364,10 @@ const TeamBattlePageInner: React.FC<TeamBattlePageProps> = ({
           filter: `account_id=eq.${accountId}`
         },
         () => {
-          const stillActiveLocal = battleStarted || localStorage.getItem('activeBattleInProgress') === 'true';
+          // Не показываем если бой завершен
+          const stillActiveLocal = battleStarted && useGameStore.getState().activeBattleInProgress;
           if (stillActiveLocal) {
-            console.log('Session deleted remotely, blocking battle');
+            console.log('Session deleted remotely');
             setSessionTerminated(true);
           }
         }

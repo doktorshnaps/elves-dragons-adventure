@@ -133,6 +133,8 @@ export const useTeamBattle = (dungeonType: DungeonType, initialLevel: number = 1
           id: `pair-${index}`,
           hero: {
             ...pair.hero,
+            id: heroInstance?.id || pair.hero.id, // КРИТИЧНО: используем instance UUID
+            instanceId: heroInstance?.id, // Сохраняем instance UUID для дальнейшего поиска
             power: heroPower,
             defense: heroDefense,
             health: heroHealth,
@@ -143,6 +145,8 @@ export const useTeamBattle = (dungeonType: DungeonType, initialLevel: number = 1
           },
           dragon: pair.dragon ? {
             ...pair.dragon,
+            id: dragonInstance?.id || pair.dragon.id, // КРИТИЧНО: используем instance UUID
+            instanceId: dragonInstance?.id, // Сохраняем instance UUID для дальнейшего поиска
             power: dragonPower,
             defense: dragonDefense,
             health: dragonHealth,

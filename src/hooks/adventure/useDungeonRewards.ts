@@ -208,6 +208,11 @@ export const useDungeonRewards = () => {
     dungeonType: string,
     currentLevel: number
   ) => {
+    console.log('🚨 [claimRewardAndExit] ========== ФУНКЦИЯ ВЫЗВАНА ==========');
+    console.log('🚨 claim_key:', claimKey?.substring(0, 8));
+    console.log('🚨 pendingReward:', pendingReward);
+    console.log('🚨 cardHealthUpdates.length:', cardHealthUpdates.length);
+    
     // КРИТИЧНО: Если нет claim_key или награды (поражение), все равно сохраняем здоровье карт!
     const shouldSkipRewards = !claimKey || !pendingReward;
     
