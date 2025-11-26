@@ -331,6 +331,12 @@ export const useTeamSelection = () => {
     const filteredIndex = selectedPairs[index];
     if (!filteredIndex?.hero?.id) return;
     
+    console.log('🐉 [handleAssignDragon] BEFORE update:', {
+      gameDataSelectedTeam: gameData.selectedTeam,
+      baseTeamLength: baseTeam.length,
+      baseTeamWithDragons: baseTeam.filter(p => p.dragon).length
+    });
+    
     // Find the real index in the base team
     const realIndex = baseTeam.findIndex(pair => pair?.hero?.id === filteredIndex.hero.id);
     if (realIndex === -1) return;
@@ -366,6 +372,11 @@ export const useTeamSelection = () => {
     console.log('✅ Dragon assigned and synced to store:', {
       gameDataSelectedTeamLength: (gameData.selectedTeam || []).length,
       gameDataTeamWithDragons: (gameData.selectedTeam || []).filter((p: any) => p.dragon).length
+    });
+    
+    console.log('🔍 [handleAssignDragon] AFTER update - checking gameData.selectedTeam reference:', {
+      gameDataSelectedTeamRef: gameData.selectedTeam,
+      isSameReference: gameData.selectedTeam === baseTeam
     });
   };
 
