@@ -1,6 +1,5 @@
 import { useState, useCallback } from 'react';
 import { useToast } from './use-toast';
-import { useQueryClient } from '@tanstack/react-query';
 import { 
   batchOperationsService,
   CraftingRecipe,
@@ -14,6 +13,7 @@ import {
   BatchPurchaseResult,
   BatchUpgradeResult
 } from '@/services/BatchOperationsService';
+import { invalidateSelective } from '@/utils/selectiveInvalidation';
 
 /**
  * useBatchOperations - React Hook для централизованного доступа к batch операциям
@@ -27,21 +27,19 @@ import {
 export const useBatchOperations = (walletAddress: string | null) => {
   const [isProcessing, setIsProcessing] = useState(false);
   const { toast } = useToast();
-  const queryClient = useQueryClient();
 
   /**
-   * Invalidate all related caches after any operation
+   * Selective invalidation вместо полной инвалидации
    */
   const invalidateCaches = useCallback(async () => {
     if (!walletAddress) return;
 
-    await Promise.all([
-      queryClient.invalidateQueries({ queryKey: ['itemInstances', walletAddress] }),
-      queryClient.invalidateQueries({ queryKey: ['cardInstances', walletAddress] }),
-      queryClient.invalidateQueries({ queryKey: ['gameData', walletAddress] }),
-      queryClient.invalidateQueries({ queryKey: ['shopDataComplete', walletAddress] })
-    ]);
-  }, [walletAddress, queryClient]);
+    // Селективная инвалидация только измененных данных
+    await invalidateSelective(walletAddress, {
+      itemInstances: true,
+      balance: true,
+    });
+  }, [walletAddress]);
 
   /**
    * Craft multiple items
