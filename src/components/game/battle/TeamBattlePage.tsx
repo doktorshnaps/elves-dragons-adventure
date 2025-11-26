@@ -223,38 +223,58 @@ const TeamBattlePageInner: React.FC<TeamBattlePageProps> = ({
     const cardHealthUpdates = battleState.playerPairs.flatMap(pair => {
       const updates = [];
       
-      // Героя всегда добавляем - используем instanceId напрямую
+      // Героя всегда добавляем - КРИТИЧНО: используем ТОЛЬКО instanceId (UUID из БД)
       if (pair.hero) {
-        const heroInstanceId = pair.hero.instanceId || pair.hero.id;
-        console.log('💔 [HERO] Сохранение:', {
-          name: pair.hero.name,
-          instance_id: heroInstanceId,
-          current_health: pair.hero.currentHealth,
-          current_defense: pair.hero.currentDefense
-        });
+        const heroInstanceId = pair.hero.instanceId;
         
-        updates.push({
-          card_instance_id: heroInstanceId,
-          current_health: pair.hero.currentHealth ?? pair.hero.health,
-          current_defense: pair.hero.currentDefense ?? pair.hero.defense
-        });
+        if (!heroInstanceId) {
+          console.error('❌ [CRITICAL] Hero instanceId отсутствует!', {
+            heroName: pair.hero.name,
+            heroId: pair.hero.id,
+            pair: pair
+          });
+          // НЕ добавляем героя в updates если нет instanceId!
+        } else {
+          console.log('💚 [HERO] Добавляем в updates:', {
+            name: pair.hero.name,
+            instance_id: heroInstanceId,
+            current_health: Math.floor(pair.health), // ИСПРАВЛЕНО: используем pair.health для героя
+            current_defense: pair.currentDefense
+          });
+          
+          updates.push({
+            card_instance_id: heroInstanceId, // ТОЛЬКО UUID из БД!
+            current_health: Math.floor(pair.health), // Здоровье пары (включает героя)
+            current_defense: pair.currentDefense || 0 // Броня пары
+          });
+        }
       }
       
       // Дракона добавляем если есть
       if (pair.dragon) {
-        const dragonInstanceId = pair.dragon.instanceId || pair.dragon.id;
-        console.log('💔 [DRAGON] Сохранение:', {
-          name: pair.dragon.name,
-          instance_id: dragonInstanceId,
-          current_health: pair.dragon.currentHealth,
-          current_defense: pair.dragon.currentDefense
-        });
+        const dragonInstanceId = pair.dragon.instanceId;
         
-        updates.push({
-          card_instance_id: dragonInstanceId,
-          current_health: pair.dragon.currentHealth ?? pair.dragon.health,
-          current_defense: pair.dragon.currentDefense ?? pair.dragon.defense
-        });
+        if (!dragonInstanceId) {
+          console.error('❌ [CRITICAL] Dragon instanceId отсутствует!', {
+            dragonName: pair.dragon.name,
+            dragonId: pair.dragon.id,
+            pair: pair
+          });
+          // НЕ добавляем дракона в updates если нет instanceId!
+        } else {
+          console.log('🐉 [DRAGON] Добавляем в updates:', {
+            name: pair.dragon.name,
+            instance_id: dragonInstanceId,
+            current_health: pair.dragon.currentHealth,
+            current_defense: pair.dragon.currentDefense
+          });
+          
+          updates.push({
+            card_instance_id: dragonInstanceId, // ТОЛЬКО UUID из БД!
+            current_health: pair.dragon.currentHealth || 0,
+            current_defense: pair.dragon.currentDefense || 0
+          });
+        }
       }
       
       return updates;
