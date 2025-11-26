@@ -295,7 +295,9 @@ export const DeckSelection = ({
   // КРИТИЧЕСКОЕ ИСПРАВЛЕНИЕ: Синхронизируем selectedPairs с актуальными данными из localCards
   // УЧИТЫВАЕМ ФРАКЦИЮ при поиске карточки!
   const syncedSelectedPairs = useMemo(() => {
-    return selectedPairs.map(pair => {
+    console.log(`🔍 [DeckSelection] Syncing ${selectedPairs.length} pairs with ${localCards.length} local cards`);
+    
+    return selectedPairs.map((pair, pairIndex) => {
       // Находим актуальные данные героя по instanceId/id + faction (для различения одноименных карт разных фракций)
       const updatedHero = localCards.find(c => 
         (c.id === pair.hero.id || 
@@ -314,19 +316,26 @@ export const DeckSelection = ({
       
       // КРИТИЧНО: Детальное логирование для отладки проблем с выбором дракона
       if (pair.dragon) {
-        console.log(`🐉 [DeckSelection] Syncing dragon "${pair.dragon.name}":`, {
+        const dragonName = pair.dragon.name;
+        const allDragonsInLocalCards = localCards.filter(c => c.type === 'pet');
+        const matchingNameDragons = allDragonsInLocalCards.filter(d => 
+          d.name?.includes(dragonName.split(' ')[0])
+        );
+        
+        console.log(`🐉 [DeckSelection] Pair ${pairIndex}: Syncing dragon "${dragonName}":`, {
           dragonId: pair.dragon.id,
           dragonInstanceId: (pair.dragon as any).instanceId,
           dragonFaction: pair.dragon.faction,
           foundInLocalCards: !!updatedDragon,
-          availableDragons: localCards.filter(c => 
-            c.type === 'pet' && 
-            c.name?.includes(pair.dragon!.name.split(' ')[0])
-          ).map(d => ({
+          totalDragonsInLocalCards: allDragonsInLocalCards.length,
+          matchingNameDragons: matchingNameDragons.length,
+          allDragonsInfo: allDragonsInLocalCards.map(d => ({
             id: d.id,
             instanceId: (d as any).instanceId,
             name: d.name,
-            faction: d.faction
+            faction: d.faction,
+            matchesId: d.id === pair.dragon!.id || (d as any).instanceId === pair.dragon!.id || d.id === (pair.dragon as any).instanceId,
+            matchesFaction: d.faction === pair.dragon!.faction
           }))
         });
       }
