@@ -25,9 +25,14 @@ export const useBattleRewards = (accountId: string | null) => {
       return { success: false, error: 'Claim already in progress' };
     }
 
-    if (!accountId) {
-      console.error('❌ No account ID provided');
-      return { success: false, error: 'No account ID' };
+    if (!claimKey) {
+      console.error('❌ No claim key provided');
+      toast({
+        title: "Ошибка",
+        description: "Отсутствует ключ для получения наград",
+        variant: "destructive"
+      });
+      return { success: false, error: 'No claim key' };
     }
 
     isClaimingRef.current = true;
@@ -42,11 +47,10 @@ export const useBattleRewards = (accountId: string | null) => {
         cardKills: stats.cardKills.length
       });
 
-      // Вызываем Edge Function для атомарного начисления всех наград
+      // 🔒 Вызываем Edge Function БЕЗ wallet_address - он извлекается из сессии!
       const { data, error } = await supabase.functions.invoke('claim-battle-rewards', {
         body: {
-          wallet_address: accountId,
-          claim_key: claimKey,
+          claim_key: claimKey, // Только claim_key!
           dungeon_type: dungeonType,
           level,
           ell_reward: stats.ellEarned,
@@ -76,6 +80,9 @@ export const useBattleRewards = (accountId: string | null) => {
         queryClient.invalidateQueries({ queryKey: ['itemInstances', accountId] })
       ]);
 
+      // Очищаем claim_key после успешного клейма
+      localStorage.removeItem('currentClaimKey');
+
       toast({
         title: "🎉 Награды получены!",
         description: `+${stats.ellEarned} ELL, +${stats.experienceGained} опыта, ${stats.lootedItems.length} предметов`
@@ -94,7 +101,7 @@ export const useBattleRewards = (accountId: string | null) => {
     } finally {
       isClaimingRef.current = false;
     }
-  }, [accountId, toast, queryClient]);
+  }, [toast, queryClient]);
 
   return { claimBattleRewards };
 };

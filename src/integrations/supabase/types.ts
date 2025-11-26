@@ -17,6 +17,7 @@ export type Database = {
       active_dungeon_sessions: {
         Row: {
           account_id: string
+          claim_key: string | null
           created_at: string
           device_id: string
           dungeon_type: string
@@ -28,6 +29,7 @@ export type Database = {
         }
         Insert: {
           account_id: string
+          claim_key?: string | null
           created_at?: string
           device_id: string
           dungeon_type: string
@@ -39,6 +41,7 @@ export type Database = {
         }
         Update: {
           account_id?: string
+          claim_key?: string | null
           created_at?: string
           device_id?: string
           dungeon_type?: string
@@ -1389,6 +1392,36 @@ export type Database = {
           created_at?: string
           id?: string
           wallet_address?: string
+        }
+        Relationships: []
+      }
+      security_audit_log: {
+        Row: {
+          claim_key: string | null
+          created_at: string | null
+          details: Json | null
+          event_type: string
+          id: string
+          ip_address: string | null
+          wallet_address: string | null
+        }
+        Insert: {
+          claim_key?: string | null
+          created_at?: string | null
+          details?: Json | null
+          event_type: string
+          id?: string
+          ip_address?: string | null
+          wallet_address?: string | null
+        }
+        Update: {
+          claim_key?: string | null
+          created_at?: string | null
+          details?: Json | null
+          event_type?: string
+          id?: string
+          ip_address?: string | null
+          wallet_address?: string | null
         }
         Relationships: []
       }

@@ -46,7 +46,7 @@ const TeamBattlePageInner: React.FC<TeamBattlePageProps> = ({
   const processedLevelRef = React.useRef<number | null>(null);
   
   const { accountId } = useWalletContext();
-  const { deviceId, startDungeonSession, endDungeonSession } = useDungeonSync();
+  const { deviceId, startDungeonSession, endDungeonSession, getCurrentClaimKey } = useDungeonSync();
   const [sessionTerminated, setSessionTerminated] = useState(false);
   const [showingFinishDelay, setShowingFinishDelay] = useState(false);
   
