@@ -296,7 +296,12 @@ export const MedicalBayComponent = () => {
                         <div className="flex-shrink-0">
                           <div className="text-xs text-muted-foreground mb-1">Лечится:</div>
                           <CardDisplay 
-                            card={cardData}
+                            card={{
+                              ...cardData,
+                              currentHealth: entry.card_instances?.current_health,
+                              currentDefense: entry.card_instances?.current_defense,
+                              maxDefense: entry.card_instances?.max_defense
+                            }}
                             showSellButton={false}
                             className="w-16 h-24 text-xs"
                           />
