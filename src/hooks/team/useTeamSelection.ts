@@ -136,9 +136,10 @@ export const useTeamSelection = () => {
     const baseTeam = (gameData.selectedTeam || []) as TeamPair[];
     if (!baseTeam || baseTeam.length === 0) return;
 
+    // Build set of valid card IDs from card_instances (use UUID as primary identifier)
     const validIds = new Set<string>([
-      ...cardInstances.map(ci => ci.card_template_id),
-      ...((gameData.cards || []) as CardType[]).map(c => c.id)
+      ...cardInstances.map(ci => ci.id), // UUID from card_instances table
+      ...cardInstances.map(ci => ci.card_template_id) // template_id for backwards compatibility
     ]);
 
     let changed = false;
