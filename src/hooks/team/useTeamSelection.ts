@@ -374,9 +374,15 @@ export const useTeamSelection = () => {
       gameDataTeamWithDragons: (gameData.selectedTeam || []).filter((p: any) => p.dragon).length
     });
     
-    console.log('🔍 [handleAssignDragon] AFTER update - checking gameData.selectedTeam reference:', {
-      gameDataSelectedTeamRef: gameData.selectedTeam,
-      isSameReference: gameData.selectedTeam === baseTeam
+    console.log('🔍 [handleAssignDragon] AFTER update - gameData.selectedTeam content:', {
+      selectedTeam: gameData.selectedTeam,
+      newPairs: newPairs,
+      isSameReference: gameData.selectedTeam === baseTeam,
+      pairs: (gameData.selectedTeam || []).map((p: any, i: number) => ({
+        index: i,
+        heroName: p?.hero?.name,
+        dragonName: p?.dragon?.name || 'NONE'
+      }))
     });
   };
 
