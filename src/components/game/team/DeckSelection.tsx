@@ -342,10 +342,12 @@ export const DeckSelection = ({
           d.name?.includes(dragonName.split(' ')[0])
         );
         
-        console.log(`🐉 [DeckSelection] Pair ${pairIndex}: Syncing dragon "${dragonName}":`, {
-          dragonId: pair.dragon.id,
-          dragonInstanceId: (pair.dragon as any).instanceId,
-          dragonFaction: pair.dragon.faction,
+        console.log(`🐉 [DeckSelection] Pair ${pairIndex}: Trying to sync dragon "${dragonName}":`, {
+          lookupCriteria: {
+            dragonId: pair.dragon.id,
+            dragonInstanceId: (pair.dragon as any).instanceId,
+            dragonFaction: pair.dragon.faction
+          },
           foundInLocalCards: !!updatedDragon,
           totalDragonsInLocalCards: allDragonsInLocalCards.length,
           matchingNameDragons: matchingNameDragons.length,
@@ -354,10 +356,28 @@ export const DeckSelection = ({
             instanceId: (d as any).instanceId,
             name: d.name,
             faction: d.faction,
-            matchesId: d.id === pair.dragon!.id || (d as any).instanceId === pair.dragon!.id || d.id === (pair.dragon as any).instanceId,
-            matchesFaction: d.faction === pair.dragon!.faction
+            matchesById: d.id === pair.dragon!.id,
+            matchesByInstanceIdToDragonId: (d as any).instanceId === pair.dragon!.id,
+            matchesByIdToDragonInstanceId: d.id === (pair.dragon as any).instanceId,
+            matchesFaction: d.faction === pair.dragon!.faction,
+            passesAllCriteria: (
+              (d.id === pair.dragon!.id || 
+               (d as any).instanceId === pair.dragon!.id || 
+               d.id === (pair.dragon as any).instanceId) &&
+              d.faction === pair.dragon!.faction
+            )
           }))
         });
+        
+        if (!updatedDragon) {
+          console.warn(`❌ [DeckSelection] Dragon "${dragonName}" NOT FOUND in localCards despite being in selectedTeam! Will use stale data.`);
+        } else {
+          console.log(`✅ [DeckSelection] Dragon "${dragonName}" FOUND and synced:`, {
+            updatedDragonId: updatedDragon.id,
+            updatedDragonInstanceId: (updatedDragon as any).instanceId,
+            updatedDragonFaction: updatedDragon.faction
+          });
+        }
       }
       
       // Логирование для отладки
