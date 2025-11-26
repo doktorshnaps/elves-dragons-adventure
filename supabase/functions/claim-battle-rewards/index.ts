@@ -21,14 +21,18 @@ const CardKillSchema = z.object({
   kills: z.number().min(1)
 });
 
-// 🔒 КРИТИЧЕСКОЕ ИЗМЕНЕНИЕ: wallet_address УБРАН, берётся из сессии БД!
+// 🔒 НОВОЕ: Клиент больше НЕ передаёт награды - они рассчитываются на сервере!
 const ClaimBodySchema = z.object({
   claim_key: z.string().uuid(), // Только claim_key - wallet берём из сессии!
   dungeon_type: z.string(),
   level: z.number().min(1),
-  ell_reward: z.number().min(0),
-  experience_reward: z.number().min(0),
-  items: z.array(ItemSchema),
+  
+  // 🎯 Server-side calculation: клиент передаёт только факты убийств
+  monsters_killed: z.number().min(0), // Количество убитых монстров
+  
+  // Предметы теперь ОПЦИОНАЛЬНЫ - клиент может передать, сервер валидирует
+  items: z.array(ItemSchema).optional(),
+  
   card_kills: z.array(CardKillSchema),
   card_health_updates: z.array(z.object({
     card_instance_id: z.string(),
@@ -52,6 +56,126 @@ const getSupabaseServiceClient = () => {
     throw new Error('Missing Supabase environment variables');
   }
   return createClient(supabaseUrl, supabaseServiceKey);
+};
+
+// 🎯 Server-side reward calculation
+const calculateRewards = async (
+  supabase: any,
+  dungeonType: string,
+  level: number,
+  monstersKilled: number
+) => {
+  console.log('🧮 [calculateRewards] Starting server-side calculation:', {
+    dungeonType,
+    level,
+    monstersKilled
+  });
+
+  // Получаем настройки подземелья из БД
+  const { data: dungeonSettings, error: settingsError } = await supabase
+    .from('dungeon_settings')
+    .select('*')
+    .eq('dungeon_type', dungeonType)
+    .single();
+
+  if (settingsError || !dungeonSettings) {
+    console.error('❌ [calculateRewards] Dungeon settings not found:', settingsError);
+    // Используем дефолтные значения, если настройки не найдены
+    return {
+      ell_reward: Math.floor(monstersKilled * 5 * (1 + level * 0.1)),
+      experience_reward: Math.floor(monstersKilled * 10 * (1 + level * 0.15))
+    };
+  }
+
+  // 🎯 Формула расчёта наград:
+  // Базовые награды зависят от уровня подземелья и количества убитых монстров
+  // ELL = monstersKilled * (5 + level * 0.5)
+  // EXP = monstersKilled * (10 + level * 1.0)
+  
+  const baseEllPerMonster = 5;
+  const baseExpPerMonster = 10;
+  const ellLevelBonus = level * 0.5;
+  const expLevelBonus = level * 1.0;
+
+  const ellPerMonster = baseEllPerMonster + ellLevelBonus;
+  const expPerMonster = baseExpPerMonster + expLevelBonus;
+
+  const ell_reward = Math.floor(monstersKilled * ellPerMonster);
+  const experience_reward = Math.floor(monstersKilled * expPerMonster);
+
+  console.log('✅ [calculateRewards] Server-calculated rewards:', {
+    ell_reward,
+    experience_reward,
+    ellPerMonster,
+    expPerMonster
+  });
+
+  return { ell_reward, experience_reward };
+};
+
+// 🎯 Server-side item validation
+const validateItems = async (
+  supabase: any,
+  items: any[],
+  dungeonType: string,
+  level: number
+): Promise<any[]> => {
+  if (!items || items.length === 0) {
+    return [];
+  }
+
+  console.log('🔍 [validateItems] Validating', items.length, 'items for dungeon:', dungeonType, 'level:', level);
+
+  // Получаем dungeon_number из dungeon_settings
+  const { data: dungeonSettings } = await supabase
+    .from('dungeon_settings')
+    .select('dungeon_number')
+    .eq('dungeon_type', dungeonType)
+    .single();
+
+  if (!dungeonSettings) {
+    console.warn('⚠️ [validateItems] Dungeon settings not found, rejecting all items');
+    return [];
+  }
+
+  const dungeonNumber = dungeonSettings.dungeon_number;
+
+  // Проверяем каждый предмет через dungeon_item_drops
+  const validatedItems = [];
+  
+  for (const item of items) {
+    const { data: dropSettings } = await supabase
+      .from('dungeon_item_drops')
+      .select('*')
+      .eq('item_template_id', item.template_id)
+      .eq('dungeon_number', dungeonNumber)
+      .eq('is_active', true)
+      .lte('min_dungeon_level', level)
+      .or(`max_dungeon_level.is.null,max_dungeon_level.gte.${level}`)
+      .maybeSingle();
+
+    if (dropSettings) {
+      console.log('✅ [validateItems] Item validated:', item.name, 'drop_chance:', dropSettings.drop_chance);
+      validatedItems.push(item);
+    } else {
+      console.warn('⚠️ [validateItems] Item rejected (not in drop table):', item.name, 'template_id:', item.template_id);
+      
+      // Логируем подозрительную активность - предмет не должен был выпасть
+      await supabase.from('security_audit_log').insert({
+        event_type: 'invalid_item_drop',
+        details: { 
+          item_name: item.name,
+          template_id: item.template_id,
+          dungeon_type: dungeonType,
+          level,
+          reason: 'Item not found in dungeon_item_drops table'
+        }
+      }).then(null, () => {});
+    }
+  }
+
+  console.log('✅ [validateItems] Validated items:', validatedItems.length, '/', items.length);
+  return validatedItems;
 };
 
 Deno.serve(async (req) => {
@@ -116,15 +240,35 @@ Deno.serve(async (req) => {
     }
 
     console.log('✅ [claim-battle-rewards] Session validated:', {
-      wallet: wallet_address,
+      wallet: wallet_address.substring(0, 10),
       dungeon: session.dungeon_type,
       level: session.level
     });
 
+    // 🎯 SERVER-SIDE REWARD CALCULATION
+    const calculatedRewards = await calculateRewards(
+      supabase,
+      claimBody.dungeon_type,
+      claimBody.level,
+      claimBody.monsters_killed
+    );
+
+    console.log('💰 [claim-battle-rewards] Server-calculated rewards:', calculatedRewards);
+
+    // 🎯 SERVER-SIDE ITEM VALIDATION
+    const validatedItems = await validateItems(
+      supabase,
+      claimBody.items || [],
+      claimBody.dungeon_type,
+      claimBody.level
+    );
+
     console.log('🔐 [claim-battle-rewards] Processing claim for wallet:', wallet_address.substring(0, 10), {
-      ell: claimBody.ell_reward,
-      exp: claimBody.experience_reward,
-      items: claimBody.items.length,
+      ell: calculatedRewards.ell_reward,
+      exp: calculatedRewards.experience_reward,
+      monsters_killed: claimBody.monsters_killed,
+      validated_items: validatedItems.length,
+      rejected_items: (claimBody.items?.length || 0) - validatedItems.length,
       card_kills: claimBody.card_kills.length,
       card_health_updates: claimBody.card_health_updates.length
     });
@@ -174,9 +318,9 @@ Deno.serve(async (req) => {
     
     const { data: rpcResult, error: rpcError } = await supabase.rpc('apply_battle_rewards', {
       p_wallet_address: wallet_address, // Из сессии!
-      p_ell_reward: claimBody.ell_reward,
-      p_experience_reward: claimBody.experience_reward,
-      p_items: claimBody.items,
+      p_ell_reward: calculatedRewards.ell_reward, // SERVER-CALCULATED!
+      p_experience_reward: calculatedRewards.experience_reward, // SERVER-CALCULATED!
+      p_items: validatedItems, // SERVER-VALIDATED!
       p_card_kills: claimBody.card_kills,
       p_card_health_updates: claimBody.card_health_updates
     });
@@ -199,12 +343,22 @@ Deno.serve(async (req) => {
     console.log('✅ [claim-battle-rewards] Rewards applied successfully:', {
       wallet: wallet_address.substring(0, 10),
       results: rpcResult,
+      server_calculated: {
+        ell: calculatedRewards.ell_reward,
+        exp: calculatedRewards.experience_reward
+      }
     });
 
     return json({
       success: true,
       message: 'Battle rewards claimed successfully',
-      results: rpcResult
+      results: rpcResult,
+      server_calculated: {
+        ell_reward: calculatedRewards.ell_reward,
+        experience_reward: calculatedRewards.experience_reward,
+        items_validated: validatedItems.length,
+        items_rejected: (claimBody.items?.length || 0) - validatedItems.length
+      }
     });
 
   } catch (error) {
