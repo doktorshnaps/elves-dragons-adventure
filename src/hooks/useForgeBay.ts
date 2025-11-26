@@ -3,6 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { useWalletContext } from '@/contexts/WalletConnectContext';
 import { useGameData } from '@/hooks/useGameData';
+import { useQueryClient } from '@tanstack/react-query';
 
 interface ForgeBayEntry {
   id: string;
@@ -27,6 +28,7 @@ export const useForgeBay = () => {
   const { toast } = useToast();
   const { accountId } = useWalletContext();
   const { gameData } = useGameData();
+  const queryClient = useQueryClient();
 
   const loadForgeBayEntries = useCallback(async () => {
     if (!accountId) return;
@@ -276,12 +278,18 @@ export const useForgeBay = () => {
         throw error;
       }
 
-      const result = data as { success: boolean; current_defense: number };
+      const result = data as { success: boolean; current_defense: number; was_completed: boolean };
       console.log('⚒️ [FORGE] Card successfully removed:', result);
+
+      // ✅ Явно инвалидируем кэш cardInstances для немедленного обновления UI
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ['cardInstances', accountId] }),
+        queryClient.refetchQueries({ queryKey: ['cardInstances', accountId] })
+      ]);
 
       toast({
         title: "Карта забрана из кузницы",
-        description: "Броня восстановлена",
+        description: result.was_completed ? "Броня восстановлена" : "Ремонт отменен",
       });
 
       // Данные обновятся автоматически через Real-time подписки

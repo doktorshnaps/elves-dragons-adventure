@@ -4,6 +4,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useWalletContext } from '@/contexts/WalletConnectContext';
 import { useGameData } from '@/hooks/useGameData';
 import { useGameStore } from '@/stores/gameStore';
+import { useQueryClient } from '@tanstack/react-query';
 
 interface MedicalBayEntry {
   id: string;
@@ -26,6 +27,7 @@ export const useMedicalBay = () => {
   const { toast } = useToast();
   const { accountId } = useWalletContext();
   const { gameData, updateGameData } = useGameData();
+  const queryClient = useQueryClient();
 
   const loadMedicalBayEntries = useCallback(async () => {
     if (!accountId) return;
@@ -264,12 +266,18 @@ export const useMedicalBay = () => {
         throw error;
       }
 
-      const result = data as { success: boolean; current_health: number };
+      const result = data as { success: boolean; current_health: number; was_completed: boolean };
       console.log('🏥 [MEDICAL BAY] Card successfully removed:', result);
+
+      // ✅ Явно инвалидируем кэш cardInstances для немедленного обновления UI
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ['cardInstances', accountId] }),
+        queryClient.refetchQueries({ queryKey: ['cardInstances', accountId] })
+      ]);
 
       toast({
         title: 'Карта забрана из медпункта',
-        description: 'Здоровье восстановлено',
+        description: result.was_completed ? 'Здоровье восстановлено' : 'Лечение отменено',
       });
 
       // Данные обновятся автоматически через Real-time подписки
