@@ -84,17 +84,29 @@ export const Shop = ({ onClose }: ShopProps) => {
       console.log('✅ [Shop] Purchase complete, using optimistic update...');
 
       // ОПТИМИСТИЧНОЕ ОБНОВЛЕНИЕ: обновляем кеш напрямую без refetch
-      // Обновляем баланс
+      const newBalance = displayBalance - item.price;
+      
+      // 1. Обновляем shopDataComplete
       queryClient.setQueryData(['shopDataComplete', accountId], (oldData: any) => {
         if (!oldData) return oldData;
         return {
           ...oldData,
-          user_balance: oldData.user_balance - item.price,
+          user_balance: newBalance,
           shop_inventory: oldData.shop_inventory.map((inv: any) =>
             inv.item_id === item.id
               ? { ...inv, available_quantity: inv.available_quantity - 1 }
               : inv
           )
+        };
+      });
+
+      // 2. Обновляем gameData для синхронизации с меню и инвентарем
+      queryClient.setQueryData(['gameData', accountId], (oldData: any) => {
+        if (!oldData) return oldData;
+        console.log('🔄 [Shop] Updating gameData balance:', { old: oldData.balance, new: newBalance });
+        return {
+          ...oldData,
+          balance: newBalance
         };
       });
 

@@ -245,6 +245,35 @@ export const GameDataProvider = ({ children }: { children: ReactNode }) => {
     retry: 1,
   });
 
+  // Real-time subscription for game_data changes
+  useEffect(() => {
+    if (!accountId) return;
+
+    console.log('🔔 [GameDataContext] Setting up Real-time subscription for game_data');
+
+    const channel = supabase
+      .channel('game-data-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'game_data',
+          filter: `wallet_address=eq.${accountId}`
+        },
+        (payload) => {
+          console.log('🔔 [GameDataContext] game_data updated:', payload);
+          queryClient.invalidateQueries({ queryKey: ['gameData', accountId] });
+        }
+      )
+      .subscribe();
+
+    return () => {
+      console.log('🔄 [GameDataContext] Cleaning up Real-time subscription');
+      supabase.removeChannel(channel);
+    };
+  }, [accountId, queryClient]);
+
   // Listen for wallet changes and refetch data
   useEffect(() => {
     const handleWalletChange = () => {
