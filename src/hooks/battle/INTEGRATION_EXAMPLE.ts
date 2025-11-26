@@ -131,7 +131,7 @@ export const useOptimizedTeamBattle = (dungeonType: string, initialLevel: number
     // Подготавливаем обновления здоровья всех карточек
     const cardHealthUpdates = battleState.playerPairs.flatMap(pair => {
       const updates = [{
-        card_template_id: pair.hero.id,
+        card_instance_id: pair.hero.id, // ИСПРАВЛЕНО: было card_template_id
         current_health: Math.floor(pair.health), // Здоровье героя
         current_defense: pair.currentDefense || 0
       }];
@@ -139,7 +139,7 @@ export const useOptimizedTeamBattle = (dungeonType: string, initialLevel: number
       // Если есть дракон, добавляем и его
       if (pair.dragon) {
         updates.push({
-          card_template_id: pair.dragon.id,
+          card_instance_id: pair.dragon.id, // ИСПРАВЛЕНО: было card_template_id
           current_health: pair.dragon.currentHealth || 0,
           current_defense: pair.dragon.currentDefense || 0
         });
