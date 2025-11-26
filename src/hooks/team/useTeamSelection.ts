@@ -74,6 +74,18 @@ export const useTeamSelection = () => {
       ? (selectedTeamWithHealth as TeamPair[])
       : ((gameData.selectedTeam ?? []) as TeamPair[]);
 
+    console.log('🔄 [useTeamSelection] selectedPairs recalculating:', {
+      sourceLength: source.length,
+      sourceDragons: source.filter(p => p.dragon).length,
+      usingSelectedTeamWithHealth: selectedTeamWithHealth.length > 0,
+      sourceDetails: source.map((p, i) => ({
+        index: i,
+        heroName: p.hero?.name,
+        dragonName: p.dragon?.name,
+        dragonFaction: p.dragon?.faction
+      }))
+    });
+
     // Exclude pairs where hero is in medical bay and drop dragons that are in medical bay
     const filtered: TeamPair[] = source
       .filter(pair => !!pair?.hero)
@@ -84,6 +96,11 @@ export const useTeamSelection = () => {
         }
         return pair;
       });
+
+    console.log('✅ [useTeamSelection] selectedPairs filtered:', {
+      filteredLength: filtered.length,
+      filteredDragons: filtered.filter(p => p.dragon).length
+    });
 
     return filtered;
   }, [selectedTeamWithHealth, gameData.selectedTeam]);
@@ -314,7 +331,9 @@ export const useTeamSelection = () => {
       dragonName: dragonToSave.name,
       dragonFaction: dragonToSave.faction,
       dragonId: dragonToSave.id,
-      dragonInstanceId: dragonToSave.instanceId
+      dragonInstanceId: dragonToSave.instanceId,
+      newPairsLength: newPairs.length,
+      newPairsWithDragons: newPairs.filter(p => p.dragon).length
     });
     
     await updateGameData({
@@ -324,7 +343,11 @@ export const useTeamSelection = () => {
     // Immediately sync to gameStore
     const { setSelectedTeam } = useGameStore.getState();
     setSelectedTeam(newPairs);
-    console.log('✅ Dragon assigned and synced to store');
+    
+    console.log('✅ Dragon assigned and synced to store:', {
+      gameDataSelectedTeamLength: (gameData.selectedTeam || []).length,
+      gameDataTeamWithDragons: (gameData.selectedTeam || []).filter((p: any) => p.dragon).length
+    });
   };
 
   const handleRemoveDragon = async (index: number) => {
