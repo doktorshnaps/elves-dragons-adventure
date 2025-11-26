@@ -10,106 +10,128 @@ export const useCardsWithHealth = () => {
   const { gameData } = useGameData();
   const { cardInstances } = useCardInstances();
 
+  // КРИТИЧНО: Строим карты НАПРЯМУЮ из card_instances по UUID
+  // Не используем gameData.cards как источник - это старые кэшированные данные
   const cardsWithHealth = useMemo(() => {
-    const cards = gameData.cards || [];
+    // Создаем Map по UUID для быстрого доступа
+    const instancesById = new Map(cardInstances.map(ci => [ci.id, ci]));
     
-    // Группируем instances по template_id и берем самый новый для каждой карты
-    const instancesByTemplateId = cardInstances.reduce((acc, ci) => {
-      if (!acc[ci.card_template_id]) {
-        acc[ci.card_template_id] = [];
-      }
-      acc[ci.card_template_id].push(ci);
-      return acc;
-    }, {} as Record<string, typeof cardInstances>);
-    
-    // Для каждого template_id сортируем по created_at и берем самый новый
-    const instancesMap = new Map(
-      Object.entries(instancesByTemplateId).map(([templateId, instances]) => {
-        const newest = instances.sort((a, b) => 
-          new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
-        )[0];
-        return [templateId, newest];
-      })
-    );
-    
-    return cards.map(card => {
-      const instance = instancesMap.get(card.id);
-      if (instance && instance.card_data) {
+    // Строим карты из card_instances - каждый instance = уникальная карта
+    return cardInstances
+      .filter(ci => ci.card_type === 'hero' || ci.card_type === 'dragon')
+      .map(instance => {
+        const cardData = instance.card_data as any;
+        
         return {
-          ...card,
-          // Здоровье и броня
+          // UUID как основной ID
+          id: instance.id,
+          instanceId: instance.id,
+          templateId: instance.card_template_id,
+          
+          // Данные из card_data
+          name: cardData.name,
+          type: cardData.type,
+          faction: cardData.faction,
+          rarity: cardData.rarity,
+          image: cardData.image,
+          
+          // Характеристики из card_data (источник правды!)
+          power: cardData.power,
+          defense: cardData.defense,
+          health: cardData.health,
+          magic: cardData.magic,
+          
+          // Текущее здоровье и броня из instance
           currentHealth: instance.current_health,
           currentDefense: instance.current_defense,
           maxDefense: instance.max_defense,
           lastHealTime: new Date(instance.last_heal_time).getTime(),
-          isInMedicalBay: instance.is_in_medical_bay || false,
-          // Характеристики из card_data (приоритет над card)
-          power: (instance.card_data as any).power ?? card.power,
-          defense: (instance.card_data as any).defense ?? card.defense,
-          health: (instance.card_data as any).health ?? card.health,
-          magic: (instance.card_data as any).magic ?? card.magic
+          monster_kills: instance.monster_kills,
+          isInMedicalBay: instance.is_in_medical_bay || false
         };
-      }
-      return card;
-    });
-  }, [gameData.cards, cardInstances]);
+      });
+  }, [cardInstances]);
 
+  // КРИТИЧНО: selectedTeam с данными напрямую из card_instances по UUID
   const selectedTeamWithHealth = useMemo(() => {
     const selectedTeam = gameData.selectedTeam || [];
     
-    // Группируем instances по template_id и берем самый новый для каждой карты
-    const instancesByTemplateId = cardInstances.reduce((acc, ci) => {
-      if (!acc[ci.card_template_id]) {
-        acc[ci.card_template_id] = [];
-      }
-      acc[ci.card_template_id].push(ci);
-      return acc;
-    }, {} as Record<string, typeof cardInstances>);
-    
-    // Для каждого template_id сортируем по created_at и берем самый новый
-    const instancesMap = new Map(
-      Object.entries(instancesByTemplateId).map(([templateId, instances]) => {
-        const newest = instances.sort((a, b) => 
-          new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
-        )[0];
-        return [templateId, newest];
-      })
-    );
+    // Map по UUID для быстрого доступа
+    const instancesById = new Map(cardInstances.map(ci => [ci.id, ci]));
     
     return selectedTeam.map((pair: any) => ({
       hero: pair.hero ? (() => {
-        const instance = instancesMap.get(pair.hero.id);
-        return instance && instance.card_data ? {
-          ...pair.hero,
-          // Здоровье и броня
-          currentHealth: instance.current_health,
-          currentDefense: instance.current_defense,
-          maxDefense: instance.max_defense,
-          lastHealTime: new Date(instance.last_heal_time).getTime(),
-          isInMedicalBay: instance.is_in_medical_bay || false,
-          // Характеристики из card_data
-          power: (instance.card_data as any).power ?? pair.hero.power,
-          defense: (instance.card_data as any).defense ?? pair.hero.defense,
-          health: (instance.card_data as any).health ?? pair.hero.health,
-          magic: (instance.card_data as any).magic ?? pair.hero.magic
-        } : pair.hero;
+        // Ищем instance по UUID (id или instanceId)
+        const heroId = pair.hero.instanceId || pair.hero.id;
+        const instance = instancesById.get(heroId);
+        
+        if (instance && instance.card_data) {
+          const cardData = instance.card_data as any;
+          return {
+            // UUID как основной ID
+            id: instance.id,
+            instanceId: instance.id,
+            templateId: instance.card_template_id,
+            
+            // Данные из card_data
+            name: cardData.name,
+            type: cardData.type,
+            faction: cardData.faction,
+            rarity: cardData.rarity,
+            image: cardData.image,
+            
+            // Характеристики из card_data
+            power: cardData.power,
+            defense: cardData.defense,
+            health: cardData.health,
+            magic: cardData.magic,
+            
+            // Текущее здоровье и броня
+            currentHealth: instance.current_health,
+            currentDefense: instance.current_defense,
+            maxDefense: instance.max_defense,
+            lastHealTime: new Date(instance.last_heal_time).getTime(),
+            isInMedicalBay: instance.is_in_medical_bay || false
+          };
+        }
+        return pair.hero;
       })() : undefined,
+      
       dragon: pair.dragon ? (() => {
-        const instance = instancesMap.get(pair.dragon.id);
-        return instance && instance.card_data ? {
-          ...pair.dragon,
-          // Здоровье и броня
-          currentHealth: instance.current_health,
-          currentDefense: instance.current_defense,
-          maxDefense: instance.max_defense,
-          lastHealTime: new Date(instance.last_heal_time).getTime(),
-          isInMedicalBay: instance.is_in_medical_bay || false,
-          // Характеристики из card_data
-          power: (instance.card_data as any).power ?? pair.dragon.power,
-          defense: (instance.card_data as any).defense ?? pair.dragon.defense,
-          health: (instance.card_data as any).health ?? pair.dragon.health,
-          magic: (instance.card_data as any).magic ?? pair.dragon.magic
-        } : pair.dragon;
+        // Ищем instance по UUID
+        const dragonId = pair.dragon.instanceId || pair.dragon.id;
+        const instance = instancesById.get(dragonId);
+        
+        if (instance && instance.card_data) {
+          const cardData = instance.card_data as any;
+          return {
+            // UUID как основной ID
+            id: instance.id,
+            instanceId: instance.id,
+            templateId: instance.card_template_id,
+            
+            // Данные из card_data
+            name: cardData.name,
+            type: cardData.type,
+            faction: cardData.faction,
+            rarity: cardData.rarity,
+            image: cardData.image,
+            
+            // Характеристики
+            power: cardData.power,
+            defense: cardData.defense,
+            health: cardData.health,
+            magic: cardData.magic,
+            
+            // Текущее здоровье и броня
+            currentHealth: instance.current_health,
+            currentDefense: instance.current_defense,
+            maxDefense: instance.max_defense,
+            lastHealTime: new Date(instance.last_heal_time).getTime(),
+            isInMedicalBay: instance.is_in_medical_bay || false
+          };
+        }
+        return pair.dragon;
       })() : undefined
     }));
   }, [gameData.selectedTeam, cardInstances]);

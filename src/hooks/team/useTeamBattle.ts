@@ -70,9 +70,12 @@ export const useTeamBattle = (dungeonType: DungeonType, initialLevel: number = 1
       const teamPairs: TeamPair[] = selectedPairs.map((pair, index) => {
         console.log(`🎯 [useTeamBattle] Building pair ${index} from card_instances context`);
         
-        // КРИТИЧНО: берем характеристики ТОЛЬКО из card_instances
-        const heroInstance = cardInstances.find(ci => ci.card_template_id === pair.hero.id);
-        const dragonInstance = pair.dragon ? cardInstances.find(ci => ci.card_template_id === pair.dragon.id) : undefined;
+        // КРИТИЧНО: берем характеристики из card_instances по UUID
+        const heroLookupId = pair.hero.instanceId || pair.hero.id;
+        const heroInstance = cardInstances.find(ci => ci.id === heroLookupId);
+        
+        const dragonLookupId = pair.dragon?.instanceId || pair.dragon?.id;
+        const dragonInstance = pair.dragon ? cardInstances.find(ci => ci.id === dragonLookupId) : undefined;
         
         if (!heroInstance) {
           console.error(`❌ Hero instance not found for ${pair.hero.name} (id: ${pair.hero.id})`);
@@ -205,9 +208,12 @@ export const useTeamBattle = (dungeonType: DungeonType, initialLevel: number = 1
     console.log('🔄 [useTeamBattle] Re-syncing battle pairs with card_instances');
 
     const resyncedPairs = battleState.playerPairs.map((pair, index) => {
-      // КРИТИЧНО: берем характеристики из card_instances
-      const heroInstance = cardInstances.find(ci => ci.card_template_id === pair.hero.id);
-      const dragonInstance = pair.dragon ? cardInstances.find(ci => ci.card_template_id === pair.dragon.id) : undefined;
+      // КРИТИЧНО: берем характеристики из card_instances по UUID
+      const heroLookupId = pair.hero.instanceId || pair.hero.id;
+      const heroInstance = cardInstances.find(ci => ci.id === heroLookupId);
+      
+      const dragonLookupId = pair.dragon?.instanceId || pair.dragon?.id;
+      const dragonInstance = pair.dragon ? cardInstances.find(ci => ci.id === dragonLookupId) : undefined;
       
       // Hero data
       const heroData = heroInstance?.card_data as any;

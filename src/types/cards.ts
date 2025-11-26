@@ -41,6 +41,7 @@ export interface MagicResistance {
 
 export interface Card {
   id: string;
+  instanceId?: string; // UUID из card_instances таблицы (для точной идентификации)
   name: string;
   type: CardType;
   power: number;

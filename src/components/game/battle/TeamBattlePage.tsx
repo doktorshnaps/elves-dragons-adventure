@@ -218,11 +218,9 @@ const TeamBattlePageInner: React.FC<TeamBattlePageProps> = ({
       if (pair.hero) {
         console.log('🔍 Ищем героя:', { id: pair.hero.id, name: pair.hero.name });
         
-        // Пробуем найти по instance_id, затем по template_id
-        let heroInstance = cardInstances.find(ci => ci.id === pair.hero.id);
-        if (!heroInstance) {
-          heroInstance = cardInstances.find(ci => ci.card_template_id === pair.hero.id);
-        }
+        // КРИТИЧНО: Ищем героя по UUID (instanceId или id)
+        const heroLookupId = pair.hero.instanceId || pair.hero.id;
+        let heroInstance = cardInstances.find(ci => ci.id === heroLookupId);
         
         if (heroInstance) {
           console.log('💔 [HERO] Данные для сохранения:', {
@@ -249,11 +247,9 @@ const TeamBattlePageInner: React.FC<TeamBattlePageProps> = ({
       if (pair.dragon) {
         console.log('🔍 Ищем дракона:', { id: pair.dragon.id, name: pair.dragon.name });
         
-        // Пробуем найти по instance_id, затем по template_id
-        let dragonInstance = cardInstances.find(ci => ci.id === pair.dragon.id);
-        if (!dragonInstance) {
-          dragonInstance = cardInstances.find(ci => ci.card_template_id === pair.dragon.id);
-        }
+        // КРИТИЧНО: Ищем дракона по UUID (instanceId или id)
+        const dragonLookupId = pair.dragon.instanceId || pair.dragon.id;
+        let dragonInstance = cardInstances.find(ci => ci.id === dragonLookupId);
         
         if (dragonInstance) {
           console.log('💔 [DRAGON] Данные для сохранения:', {

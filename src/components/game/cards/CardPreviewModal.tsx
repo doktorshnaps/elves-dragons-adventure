@@ -26,8 +26,9 @@ export const CardPreviewModal = ({ card, open, onClose, actionLabel, onAction, d
     [card?.name, card?.rarity, card?.type]
   );
 
-  // Найти экземпляр карты для получения статистики убийств
-  const cardInstance = card ? cardInstances.find(ci => ci.card_template_id === card.id) : undefined;
+  // КРИТИЧНО: Найти экземпляр карты по UUID (instanceId или id)
+  const cardLookupId = card?.instanceId || card?.id;
+  const cardInstance = card ? cardInstances.find(ci => ci.id === cardLookupId) : undefined;
   const monsterKills = cardInstance?.monster_kills || 0;
 
   // Только после всех хуков проверяем условия
