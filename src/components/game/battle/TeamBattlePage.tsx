@@ -147,6 +147,8 @@ const TeamBattlePageInner: React.FC<TeamBattlePageProps> = ({
     startTransition(() => {
       useGameStore.getState().setActiveBattleInProgress(false);
       localStorage.removeItem('activeBattleInProgress');
+      // 🔒 Удаляем флаг "сессия только что создана" при выходе
+      localStorage.removeItem('sessionJustCreated');
     });
     
     // Небольшая задержка для синхронизации состояния перед удалением сессии
@@ -343,6 +345,23 @@ const TeamBattlePageInner: React.FC<TeamBattlePageProps> = ({
         const stillActiveLocal = battleStarted && useGameStore.getState().activeBattleInProgress;
         if (!stillActiveLocal) {
           return; // Бой завершен нормально
+        }
+
+        // 🔒 КРИТИЧНО: Проверяем флаг "сессия только что создана"
+        // Race condition: SELECT может вернуть 0 сессий до репликации данных
+        const sessionJustCreatedStr = localStorage.getItem('sessionJustCreated');
+        if (sessionJustCreatedStr) {
+          const createdTime = parseInt(sessionJustCreatedStr, 10);
+          const timeSinceCreation = Date.now() - createdTime;
+          
+          // Не показываем модалку в течение 3 секунд после создания сессии
+          if (timeSinceCreation < 3000) {
+            console.log('⏳ Session just created, skipping check for', 3000 - timeSinceCreation, 'ms');
+            return;
+          }
+          
+          // Очищаем флаг после 3 секунд
+          localStorage.removeItem('sessionJustCreated');
         }
         
         const now = Date.now();

@@ -218,6 +218,10 @@ export const useDungeonSync = () => {
       await queryClient.invalidateQueries({ queryKey: ['activeDungeonSessions', accountId] });
       console.log('🔄 [useDungeonSync] Invalidated activeDungeonSessions cache');
 
+      // 🔒 КРИТИЧНО: Устанавливаем флаг "сессия только что создана" для предотвращения ложного срабатывания проверки
+      // Race condition: SELECT может вернуть 0 сессий до того, как данные реплицировались
+      localStorage.setItem('sessionJustCreated', Date.now().toString());
+
       return true;
     } catch (err) {
       console.error('❌ [useDungeonSync] Unexpected error:', err);
