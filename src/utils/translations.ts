@@ -254,7 +254,10 @@ export const translations = {
       dungeons: 'Подземелья',
       items: 'Предметы',
       heroes: 'Герои',
-      pets: 'Питомцы'
+      pets: 'Питомцы',
+      heroesCollection: 'Коллекция героев',
+      petsCollection: 'Коллекция питомцев',
+      itemsCollection: 'Коллекция предметов'
     },
     // Dungeons
     dungeons: {
@@ -802,7 +805,10 @@ export const translations = {
       dungeons: 'Dungeons',
       items: 'Items',
       heroes: 'Heroes',
-      pets: 'Pets'
+      pets: 'Pets',
+      heroesCollection: 'Heroes Collection',
+      petsCollection: 'Pets Collection',
+      itemsCollection: 'Items Collection'
     },
     // Dungeons
     dungeons: {

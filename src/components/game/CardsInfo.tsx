@@ -3,6 +3,7 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { useLanguage } from "@/hooks/useLanguage";
 import { t } from "@/utils/translations";
 import { CardGrid } from "./cards/CardGrid";
+import { CollectionStats } from "./cards/CollectionStats";
 
 export const CardsInfo = () => {
   const isMobile = useIsMobile();
@@ -20,10 +21,12 @@ export const CardsInfo = () => {
       </TabsList>
       
       <TabsContent value="heroes">
+        <CollectionStats type="character" />
         <CardGrid type="character" />
       </TabsContent>
       
       <TabsContent value="pets">
+        <CollectionStats type="pet" />
         <CardGrid type="pet" />
       </TabsContent>
     </Tabs>
