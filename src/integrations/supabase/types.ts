@@ -2511,6 +2511,13 @@ export type Database = {
       cleanup_old_dungeon_sessions: { Args: never; Returns: undefined }
       cleanup_old_rate_limits: { Args: never; Returns: undefined }
       cleanup_phantom_item_instances: { Args: never; Returns: undefined }
+      cleanup_stuck_medical_bay_flags: {
+        Args: never
+        Returns: {
+          card_names: string[]
+          cleaned_count: number
+        }[]
+      }
       cleanup_transferred_nft_cards: {
         Args: { p_current_nft_tokens: Json; p_wallet_address: string }
         Returns: number

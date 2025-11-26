@@ -51,6 +51,7 @@ export interface Card {
   currentDefense?: number; // Текущая броня карты
   maxDefense?: number; // Максимальная броня карты
   lastHealTime?: number; // Время последнего лечения
+  isInMedicalBay?: boolean; // Флаг, что карта в медпункте или кузнице
   magic: number;
   rarity: Rarity;
   cardClass?: CardClass; // Класс карты (определяется при открытии)
