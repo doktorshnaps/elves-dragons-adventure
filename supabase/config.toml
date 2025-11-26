@@ -1,5 +1,8 @@
 project_id = "oimhwdymghkwxznjarkv"
 
+[functions.start-dungeon-session]
+verify_jwt = false
+
 [functions.sync-nft-cards]
 verify_jwt = true
 

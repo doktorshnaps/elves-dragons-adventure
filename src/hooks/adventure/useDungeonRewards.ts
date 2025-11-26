@@ -201,62 +201,31 @@ export const useDungeonRewards = () => {
     isProcessingRef.current = false;
   }, [calculateReward, toast]);
 
+  // 🔒 КРИТИЧЕСКОЕ ИЗМЕНЕНИЕ: claimKey приходит из useDungeonSync, не генерируется локально!
   const claimRewardAndExit = useCallback(async (
+    claimKey: string | null, // Получаем из useDungeonSync.getCurrentClaimKey()
     cardHealthUpdates: Array<{ card_instance_id: string; current_health: number; current_defense: number }> = [],
     dungeonType: string,
     currentLevel: number
   ) => {
+    // Если нет claim_key (поражение или ошибка) - сохраняем только здоровье карт без наград
+    if (!claimKey) {
+      console.log('💔 [claimRewardAndExit] Нет claim_key - пропуск начисления наград');
+      return true;
+    }
+
     // Если нет награды (поражение) - сохраняем только здоровье карт и выходим
     if (!pendingReward) {
-      console.log('💔 [claimRewardAndExit] Поражение - сохранение только здоровья карт');
-      
-      if (cardHealthUpdates && cardHealthUpdates.length > 0) {
-        const healthClaimKey = `dungeon_${accountId || 'local'}_health_${Date.now()}`;
-        
-        try {
-          const { data: claimData, error: claimError } = await supabase.functions.invoke('claim-battle-rewards', {
-            body: {
-              wallet_address: accountId || 'local',
-              claim_key: healthClaimKey,
-              dungeon_type: dungeonType,
-              level: currentLevel,
-              ell_reward: 0,
-              experience_reward: 0,
-              items: [],
-              card_kills: [],
-              card_health_updates: cardHealthUpdates
-            }
-          });
-          
-          if (claimError) {
-            console.error('❌ Ошибка сохранения здоровья карт:', claimError);
-            toast({
-              title: "⚠️ Предупреждение",
-              description: "Не удалось сохранить состояние карт",
-              variant: "destructive"
-            });
-          } else {
-            console.log('✅ Здоровье и броня карт сохранены после поражения:', claimData);
-            // Инвалидируем кеш card_instances
-            queryClient.invalidateQueries({ queryKey: ['cardInstances', accountId] });
-          }
-        } catch (healthErr) {
-          console.error('❌ Критическая ошибка при сохранении здоровья:', healthErr);
-        }
-      }
-      
-      return true; // Возвращаем true чтобы UI продолжил выход
+      console.log('💔 [claimRewardAndExit] Поражение - награды не начисляются');
+      return true;
     }
     
     if (isClaimingRef.current) {
-      console.log('⚠️ Повторный вызов claimRewardAndExit заблокирован', { 
-        hasPendingReward: !!pendingReward, 
-        isClaiming: isClaimingRef.current 
-      });
+      console.log('⚠️ Повторный вызов claimRewardAndExit заблокирован');
       return false;
     }
     
-    console.log('💔 [claimRewardAndExit] Получены обновления здоровья карт:', cardHealthUpdates);
+    console.log('💔 [claimRewardAndExit] Получены обновления здоровья карт:', cardHealthUpdates.length);
 
     // КРИТИЧЕСКАЯ ПРОВЕРКА: Если игрок был побеждён, НЕ начисляем treasure hunt предметы
     if (isDefeatedRef.current) {
@@ -264,48 +233,21 @@ export const useDungeonRewards = () => {
       return false;
     }
 
-    // Создаем детерминированный ключ для этой награды, чтобы предотвратить повторные начисления
-    // Используем короткий хеш вместо полного списка предметов, чтобы не превысить лимит 256 символов
-    const itemsKey = (pendingReward.lootedItems || [])
-      .map(it => it.name)
-      .sort()
-      .join('|');
-    
-    // Создаем короткий хеш от списка предметов
-    const hashCode = (str: string) => {
-      let hash = 0;
-      for (let i = 0; i < str.length; i++) {
-        const char = str.charCodeAt(i);
-        hash = ((hash << 5) - hash) + char;
-        hash = hash & hash; // Convert to 32bit integer
-      }
-      return Math.abs(hash).toString(36);
-    };
-    
-    const itemsHash = itemsKey ? hashCode(itemsKey) : 'empty';
-    const claimKey = `dungeon_${accountId || 'local'}_${pendingReward.totalELL}_${itemsHash}_${Date.now()}`;
-
-    // In-hook quick guard
-    if (lastClaimKeyRef.current === claimKey) {
-      console.log('⚠️ CLAIM SKIP (hook key already processed)', claimKey);
-      return;
-    }
-
     // Global and storage-based idempotency
     const now = Date.now();
     if (globalClaimLock && lastClaimKeyGlobal === claimKey && now - lastClaimAtGlobal < CLAIM_TTL_MS) {
       console.warn('⏭️ CLAIM SKIP (global lock)', { claimKey });
-      return;
+      return false;
     }
 
-    const storageKey = `claim_reward:${(accountId || 'local')}:${claimKey}`;
+    const storageKey = `claim_reward:${accountId || 'local'}:${claimKey}`;
     try {
       if (typeof window !== 'undefined') {
         const tsRaw = sessionStorage.getItem(storageKey) || localStorage.getItem(storageKey);
         const ts = tsRaw ? parseInt(tsRaw) : 0;
         if (ts && now - ts < CLAIM_TTL_MS) {
           console.warn('⏭️ CLAIM SKIP (storage TTL)', { claimKey, ttl: CLAIM_TTL_MS });
-          return;
+          return false;
         }
         // Preemptively set session guard to block concurrent doubles
         sessionStorage.setItem(storageKey, String(now));
@@ -322,7 +264,7 @@ export const useDungeonRewards = () => {
 
     console.log(`💎 ============ ЗАБИРАЕМ НАГРАДУ И ВЫХОДИМ ============`);
     console.log(`🎁 Награда к начислению:`, pendingReward);
-    console.log(`🔑 Уникальный ключ награды:`, claimKey);
+    console.log(`🔑 Используем claim_key из сервера:`, claimKey);
 
     try {
       const rewardAmount = pendingReward.totalELL || 0;
@@ -331,237 +273,107 @@ export const useDungeonRewards = () => {
       console.log(`💰 Начисляем ${rewardAmount} ELL`);
       console.log(`🎒 Начисляем ${lootedItems.length} предметов в item_instances`);
       
-      // КРИТИЧНО: Сохраняем здоровье и броню карт через claim-battle-rewards
-      if (cardHealthUpdates && cardHealthUpdates.length > 0) {
-        console.log('💔 [useDungeonRewards] ========== ОТПРАВКА В EDGE FUNCTION ==========');
-        console.log('💔 [useDungeonRewards] Количество card_health_updates:', cardHealthUpdates.length);
-        console.log('💔 [useDungeonRewards] Структура card_health_updates:', JSON.stringify(cardHealthUpdates, null, 2));
+      // 🔒 КРИТИЧНО: Отправляем только claim_key, НЕ wallet_address!
+      console.log('💔 [useDungeonRewards] ========== ОТПРАВКА В EDGE FUNCTION ==========');
+      console.log('💔 [useDungeonRewards] claim_key:', claimKey.substring(0, 8));
+      console.log('💔 [useDungeonRewards] card_health_updates:', cardHealthUpdates.length);
+      
+      const edgeFunctionPayload = {
+        claim_key: claimKey, // Только claim_key!
+        dungeon_type: dungeonType,
+        level: currentLevel,
+        ell_reward: rewardAmount,
+        experience_reward: 0,
+        items: lootedItems.map(it => ({
+          template_id: (it as any).template_id,
+          item_id: (it as any).item_id,
+          name: it.name,
+          type: it.type
+        })),
+        card_kills: [],
+        card_health_updates: cardHealthUpdates
+      };
+      
+      console.log('📤 [useDungeonRewards] ПОЛНАЯ СТРУКТУРА payload для claim-battle-rewards:');
+      console.log(JSON.stringify(edgeFunctionPayload, null, 2));
+      
+      try {
+        const { data: battleData, error: battleError } = await supabase.functions.invoke('claim-battle-rewards', {
+          body: edgeFunctionPayload
+        });
         
-        const edgeFunctionPayload = {
-          wallet_address: accountId || 'local',
-          claim_key: claimKey,
-          dungeon_type: dungeonType,
-          level: currentLevel,
-          ell_reward: rewardAmount,
-          experience_reward: 0,
-          items: lootedItems.map(it => ({
-            template_id: (it as any).template_id,
-            item_id: (it as any).item_id,
-            name: it.name,
-            type: it.type
-          })),
-          card_kills: [],
-          card_health_updates: cardHealthUpdates
-        };
-        
-        console.log('📤 [useDungeonRewards] ПОЛНАЯ СТРУКТУРА payload для claim-battle-rewards:');
-        console.log(JSON.stringify(edgeFunctionPayload, null, 2));
-        
-        try {
-          const { data: battleData, error: battleError } = await supabase.functions.invoke('claim-battle-rewards', {
-            body: edgeFunctionPayload
+        if (battleError) {
+          console.error('❌ Ошибка claim-battle-rewards:', battleError);
+          toast({
+            title: "Ошибка",
+            description: "Не удалось начислить награды",
+            variant: "destructive"
           });
-          
-          if (battleError) {
-            console.error('❌ Ошибка claim-battle-rewards:', battleError);
-          } else {
-            console.log('✅ Здоровье и броня карт успешно обновлены:', battleData);
-          }
-        } catch (battleErr) {
-          console.error('❌ Критическая ошибка при обновлении здоровья карт:', battleErr);
+          return false;
         }
-      } else {
-        console.warn('⚠️ Обновления здоровья карт не предоставлены!');
+        
+        console.log('✅ Награды успешно начислены:', battleData);
+        
+        // Очищаем claim_key после успешного клейма
+        localStorage.removeItem('currentClaimKey');
+        
+        // Инвалидируем кеши для обновления UI
+        await Promise.all([
+          queryClient.invalidateQueries({ queryKey: ['gameData', accountId] }),
+          queryClient.invalidateQueries({ queryKey: ['cardInstances', accountId] }),
+          queryClient.invalidateQueries({ queryKey: ['itemInstances', accountId] })
+        ]);
+        
+        toast({
+          title: "🎉 Награды получены!",
+          description: `+${rewardAmount} ELL, ${lootedItems.length} предметов`
+        });
+        
+      } catch (battleErr) {
+        console.error('❌ Критическая ошибка при начислении наград:', battleErr);
+        toast({
+          title: "Ошибка",
+          description: "Произошла ошибка при начислении наград",
+          variant: "destructive"
+        });
+        return false;
       }
       
-      // Объединяем обновления баланса в один вызов
-      const updates: any = {};
-      
-      if (rewardAmount > 0) {
-        const currentBalance = gameData.balance || 0;
-        updates.balance = currentBalance + rewardAmount;
-        console.log(`💰 Новый баланс: ${updates.balance} ELL (было: ${currentBalance})`);
-      }
-
-      if (lootedItems.length > 0) {
-        // КРИТИЧЕСКАЯ ПРОВЕРКА: Фильтруем treasure hunt предметы, если игрок был побеждён
-        const allTreasureHuntItems = lootedItems.filter(it => (it as any).isTreasureHunt);
-        const treasureHuntItems = isDefeatedRef.current ? [] : allTreasureHuntItems;
-        const regularItems = lootedItems.filter(it => !(it as any).isTreasureHunt);
-        
-        if (isDefeatedRef.current && allTreasureHuntItems.length > 0) {
-          console.log(`❌ Игрок был побеждён! Отфильтровано ${allTreasureHuntItems.length} treasure hunt предметов`);
-        }
-        
-        console.log(`📦 Всего предметов: ${lootedItems.length}, обычных: ${regularItems.length}, treasure hunt: ${treasureHuntItems.length}`);
-        
-        // Обрабатываем обычные предметы
-        if (regularItems.length > 0) {
-          try {
-            const normalized = regularItems.map(it => ({
-              name: it.name ?? null,
-              type: it.type ?? 'material',
-              template_id: (it as any).template_id ?? null,
-              item_id: (it as any).item_id ?? null,
-            }));
-            console.log('🛰️ Вызов edge claim-item-reward для обычных предметов', { count: normalized.length, claimKey });
-            const { data, error } = await supabase.functions.invoke('claim-item-reward', {
-              body: {
-                wallet_address: accountId || 'local',
-                claim_key: claimKey,
-                items: normalized,
-              }
-            });
-            if (error) {
-              console.error('❌ Edge claim-item-reward error для обычных предметов', error);
-              throw error;
-            }
-            console.log('✅ Edge claim-item-reward result для обычных предметов', data);
-          } catch (edgeErr) {
-            console.error('❌ Ошибка edge claim-item-reward для обычных предметов:', edgeErr);
-          }
-        }
-        
-        // Обрабатываем treasure hunt предметы ОТДЕЛЬНО
-        if (treasureHuntItems.length > 0) {
-          try {
-            for (const thItem of treasureHuntItems) {
-              const thClaimKey = `treasure_hunt_${(thItem as any).treasureHuntEventId}_${accountId}_${Date.now()}`;
-              
-              console.log('🎯 Вызов edge claim-item-reward для treasure hunt предмета', { 
-                eventId: (thItem as any).treasureHuntEventId, 
-                claimKey: thClaimKey 
-              });
-              
-              const { data: thData, error: thError } = await supabase.functions.invoke('claim-item-reward', {
-                body: {
-                  wallet_address: accountId || 'local',
-                  claim_key: thClaimKey,
-                  treasure_hunt_event_id: (thItem as any).treasureHuntEventId,
-                  treasure_hunt_quantity: 1,
-                  items: [{
-                    name: thItem.name ?? null,
-                    type: thItem.type ?? 'material',
-                    template_id: (thItem as any).template_id ?? null,
-                    item_id: (thItem as any).item_id ?? null,
-                  }]
-                }
-              });
-              
-              if (thError) {
-                console.error('❌ Edge claim-item-reward error для treasure hunt', thError);
-              } else {
-                console.log('✅ Treasure hunt предмет успешно добавлен:', thData);
-              }
-            }
-          } catch (thErr) {
-            console.error('❌ Ошибка edge claim-item-reward для treasure hunt предметов:', thErr);
-          }
-        }
-        
-        // Даем время для записи данных в БД перед обновлением кеша
-        await new Promise(resolve => setTimeout(resolve, 500));
-        
-        // Инвалидируем кеш itemInstances для обновления UI
-        queryClient.invalidateQueries({ queryKey: ['itemInstances', accountId] });
-        
-        // Отправляем событие для немедленного обновления UI
-        const itemEvent = new CustomEvent('itemInstancesUpdate');
-        window.dispatchEvent(itemEvent);
-        
-        console.log('✅ [useDungeonRewards] Cache invalidated, event dispatched');
-      }
-
-      // Единый вызов updateGameData с обоими обновлениями
-      if (Object.keys(updates).length > 0) {
-        await updateGameData(updates);
-        console.log('✅ Награда успешно начислена!');
-        
-        // Инвалидируем кеш card_instances для обновления здоровья
-        queryClient.invalidateQueries({ queryKey: ['cardInstances', accountId] });
-        
-        // Persist claim timestamp to strengthen idempotency across sessions
-        try {
-          if (typeof window !== 'undefined') {
-            const storageKey = `claim_reward:${(accountId || 'local')}:${claimKey}`;
-            localStorage.setItem(storageKey, String(Date.now()));
-          }
-        } catch {}
-        
-        // Начисляем реферальные бонусы (6% -> 3% -> 1.5%)
-        
-        // Начисляем реферальные бонусы (6% -> 3% -> 1.5%)
-        if (rewardAmount > 0 && accountId) {
-          try {
-            console.log(`🤝 Обработка реферальных начислений для ${accountId}, сумма: ${rewardAmount}`);
-            await supabase.rpc('process_referral_earnings', {
-              p_earner_wallet_address: accountId,
-              p_amount: rewardAmount
-            });
-            console.log('✅ Реферальные начисления обработаны');
-          } catch (refError) {
-            console.error('❌ Ошибка при обработке реферальных начислений:', refError);
-            // Не блокируем основной процесс если реферальная система не сработала
-          }
-        }
-      } else {
-        console.warn('⚠️ Нет обновлений для начисления!');
-      }
-
-      // Сбрасываем все состояния
+      // Сброс локальных состояний после успешного начисления
       setPendingReward(null);
       setAccumulatedReward(null);
+      lastProcessedLevelRef.current = -1;
+      isDefeatedRef.current = false;
       
-      console.log(`💎 =====================================================\n`);
+      console.log(`✅ ============ НАГРАДЫ НАЧИСЛЕНЫ И ВЫХОД ВЫПОЛНЕН ============`);
+      return true;
       
-      toast({
-        title: "Награда получена!",
-        description: `Получено ${rewardAmount} ELL и ${lootedItems.length} предметов`,
-      });
-
-      // НЕ сбрасываем флаг isClaimingRef, чтобы предотвратить повторные вызовы
-      return true; // Сигнализируем о выходе
     } catch (error) {
-      console.error('❌ Ошибка при начислении награды:', error);
-      isClaimingRef.current = false; // Сбрасываем только при ошибке
+      console.error('❌ Критическая ошибка в claimRewardAndExit:', error);
       toast({
         title: "Ошибка",
-        description: "Не удалось начислить награду",
+        description: "Не удалось начислить награды",
         variant: "destructive"
       });
       return false;
+    } finally {
+      isClaimingRef.current = false;
     }
-  }, [pendingReward, gameData.balance, updateGameData, toast, addItemsToInstances, accountId, queryClient]);
+  }, [pendingReward, accountId, queryClient, toast]);
 
   const continueWithRisk = useCallback(() => {
-    setAccumulatedReward(prev => {
-      console.log(`🎲 ============ ИГРОК ВЫБРАЛ ПРОДОЛЖИТЬ ============`);
-      console.log(`💰 Сохраняем накопленную награду:`, prev);
-      console.log(`⚠️ При поражении вся награда будет потеряна!`);
-      console.log(`🎲 ================================================\n`);
-      return prev; // Возвращаем то же значение, просто для логирования
-    });
-    
-    // Закрываем модальное окно, но сохраняем накопленную награду
-    setPendingReward(null);
-    isProcessingRef.current = false; // Разрешаем обработку следующего уровня
-    // НЕ сбрасываем lastProcessedLevelRef - пусть он отслеживает последний обработанный уровень
-    
-    toast({
-      title: "Продолжаем!",
-      description: "Будьте осторожны - при поражении вся награда будет потеряна",
-      variant: "default"
-    });
-  }, [toast]);
+    console.log('🎲 Игрок решил продолжить с риском потерять награду');
+    // Награда остается в pending и будет начислена позже
+    setPendingReward(null); // Сброс pending награды, но accumulated остается
+  }, []);
 
   const resetRewards = useCallback(() => {
-    setAccumulatedReward(null);
+    console.log('🔄 Сброс всех наград');
     setPendingReward(null);
+    setAccumulatedReward(null);
     lastProcessedLevelRef.current = -1;
-    isProcessingRef.current = false;
     isClaimingRef.current = false;
-    isDefeatedRef.current = false; // Сбрасываем флаг поражения
-    lastClaimKeyRef.current = null; // Сбрасываем ключ для новых сессий
+    isDefeatedRef.current = false;
   }, []);
 
   return {
@@ -570,7 +382,6 @@ export const useDungeonRewards = () => {
     processDungeonCompletion,
     claimRewardAndExit,
     continueWithRisk,
-    resetRewards,
-    calculateReward
+    resetRewards
   };
 };

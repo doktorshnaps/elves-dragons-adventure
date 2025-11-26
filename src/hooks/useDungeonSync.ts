@@ -2,8 +2,9 @@ import { useEffect, useState, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useWalletContext } from '@/contexts/WalletConnectContext';
 import { useGameData } from './useGameData';
-import { RealtimeChannel, RealtimePostgresChangesPayload } from '@supabase/supabase-js';
+import { RealtimePostgresChangesPayload } from '@supabase/supabase-js';
 import { useActiveDungeonSessions } from './useActiveDungeonSessions';
+import { useToast } from './use-toast';
 
 interface ActiveDungeonSession {
   device_id: string;
@@ -16,10 +17,14 @@ interface ActiveDungeonSession {
 export const useDungeonSync = () => {
   const { accountId } = useWalletContext();
   const { gameData, updateGameData } = useGameData();
+  const { toast } = useToast();
   
   // Используем React Query хук вместо прямых запросов к БД
   const { data: queriedSessions = [] } = useActiveDungeonSessions();
   const [activeSessions, setActiveSessions] = useState<ActiveDungeonSession[]>([]);
+  const [currentClaimKey, setCurrentClaimKey] = useState<string | null>(() => {
+    return localStorage.getItem('currentClaimKey');
+  });
   
   const [deviceId] = useState(() => {
     // Генерируем уникальный ID устройства или берем из localStorage
@@ -83,7 +88,9 @@ export const useDungeonSync = () => {
         localStorage.removeItem('teamBattleState');
         localStorage.removeItem('activeBattleInProgress');
         localStorage.removeItem('battleState');
+        localStorage.removeItem('currentClaimKey');
         setLocalSession(null);
+        setCurrentClaimKey(null);
         try { window.dispatchEvent(new CustomEvent('battleReset')); } catch {}
       } catch {}
     }
@@ -144,7 +151,9 @@ export const useDungeonSync = () => {
     // Чистим локальную сессию и выключаем heartbeat в ЭТОМ табе
     try {
       localStorage.removeItem('activeDungeonSession');
+      localStorage.removeItem('currentClaimKey');
       setLocalSession(null);
+      setCurrentClaimKey(null);
     } catch {}
 
     // Удаляем из базы данных все активные сессии для кошелька
@@ -164,7 +173,7 @@ export const useDungeonSync = () => {
     } catch {}
   }, [accountId, updateGameData]);
 
-  // Начинаем новое подземелье и уведомляем другие устройства
+  // 🔒 Начинаем новое подземелье через Edge Function для серверной генерации claim_key
   const startDungeonSession = useCallback(async (dungeonType: string, level: number) => {
     if (!accountId) return false;
 
@@ -173,65 +182,66 @@ export const useDungeonSync = () => {
       return false; // Блокируем начало нового подземелья
     }
 
-    // Серверная проверка для избежания гонки
     try {
-      const now = Date.now();
-      const TIMEOUT = 300000; // 5 минут
-      const { data: existing, error: existingError } = await supabase
-        .from('active_dungeon_sessions')
-        .select('device_id,last_activity')
-        .eq('account_id', accountId)
-        .gte('last_activity', now - TIMEOUT)
-        .limit(1);
+      console.log('🎮 [useDungeonSync] Starting dungeon session via Edge Function:', {
+        accountId,
+        dungeonType,
+        level,
+        deviceId
+      });
 
-      if (existingError) throw existingError;
-      if (existing && existing.length > 0 && existing[0].device_id !== deviceId) {
-        return false;
-      }
-    } catch (e) {
-      console.error('Error during preflight session check:', e);
-      return false;
-    }
-
-    const session: ActiveDungeonSession = {
-      device_id: deviceId,
-      started_at: Date.now(),
-      last_activity: Date.now(),
-      dungeon_type: dungeonType,
-      level: level
-    };
-
-    // Сохраняем локально, чтобы слать heartbeat даже вне боя/экрана подземелья
-    
-
-    // Сохраняем в базе данных
-    try {
-      await supabase
-        .from('active_dungeon_sessions')
-        .upsert({
-          account_id: accountId,
-          device_id: deviceId,
+      // 🔒 Вызываем новую Edge Function для серверной генерации claim_key
+      const { data, error } = await supabase.functions.invoke('start-dungeon-session', {
+        body: {
+          wallet_address: accountId,
           dungeon_type: dungeonType,
           level: level,
-          started_at: session.started_at,
-          last_activity: session.last_activity
-        }, {
-          onConflict: 'account_id,device_id'
+          device_id: deviceId
+        }
+      });
+
+      if (error) {
+        console.error('❌ [useDungeonSync] Error starting session:', error);
+        toast({
+          title: "Ошибка",
+          description: "Не удалось начать сессию подземелья",
+          variant: "destructive"
         });
-    } catch (error) {
-      console.error('Error starting dungeon session:', error);
+        return false;
+      }
+
+      if (!data?.claim_key) {
+        console.error('❌ [useDungeonSync] No claim_key received from server');
+        return false;
+      }
+
+      // Сохраняем claim_key для последующего клейма наград
+      const claimKey = data.claim_key;
+      setCurrentClaimKey(claimKey);
+      localStorage.setItem('currentClaimKey', claimKey);
+      console.log('✅ [useDungeonSync] Session started, claim_key saved:', claimKey.substring(0, 8));
+
+      // Создаём локальную сессию
+      const session: ActiveDungeonSession = {
+        device_id: deviceId,
+        started_at: Date.now(),
+        last_activity: Date.now(),
+        dungeon_type: dungeonType,
+        level: level
+      };
+
+      // Сохраняем локально для heartbeat
+      try {
+        localStorage.setItem('activeDungeonSession', JSON.stringify(session));
+        setLocalSession(session);
+      } catch {}
+
+      return true;
+    } catch (err) {
+      console.error('❌ [useDungeonSync] Unexpected error:', err);
       return false;
     }
-    // После успешной записи в БД сохраняем локально, чтобы слать heartbeat
-    try {
-      localStorage.setItem('activeDungeonSession', JSON.stringify(session));
-      setLocalSession(session);
-    } catch {}
-
-    return true;
-  }, [accountId, deviceId, hasOtherActiveSessions]);
-
-  // Загрузка активных сессий теперь происходит через useActiveDungeonSessions
+  }, [accountId, deviceId, hasOtherActiveSessions, toast]);
 
   // Подписываемся на изменения в базе данных через Realtime
   useEffect(() => {
@@ -258,7 +268,9 @@ export const useDungeonSync = () => {
               localStorage.removeItem('teamBattleState');
               localStorage.removeItem('activeBattleInProgress');
               localStorage.removeItem('battleState');
+              localStorage.removeItem('currentClaimKey');
               setLocalSession(null);
+              setCurrentClaimKey(null);
               try { window.dispatchEvent(new CustomEvent('battleReset')); } catch {}
             } catch {}
 
@@ -328,6 +340,7 @@ export const useDungeonSync = () => {
     activeSessions: activeSessions.filter(s => s.device_id !== deviceId),
     startDungeonSession,
     endDungeonSession,
-    deviceId
+    deviceId,
+    getCurrentClaimKey: () => currentClaimKey || localStorage.getItem('currentClaimKey')
   };
 };

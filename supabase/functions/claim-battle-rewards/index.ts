@@ -21,10 +21,9 @@ const CardKillSchema = z.object({
   kills: z.number().min(1)
 });
 
-// Основная схема тела запроса
+// 🔒 КРИТИЧЕСКОЕ ИЗМЕНЕНИЕ: wallet_address УБРАН, берётся из сессии БД!
 const ClaimBodySchema = z.object({
-  wallet_address: z.string().min(1),
-  claim_key: z.string().min(1),
+  claim_key: z.string().uuid(), // Только claim_key - wallet берём из сессии!
   dungeon_type: z.string(),
   level: z.number().min(1),
   ell_reward: z.number().min(0),
@@ -32,7 +31,7 @@ const ClaimBodySchema = z.object({
   items: z.array(ItemSchema),
   card_kills: z.array(CardKillSchema),
   card_health_updates: z.array(z.object({
-    card_instance_id: z.string(), // ИСПРАВЛЕНО: используем card_instance_id вместо card_template_id
+    card_instance_id: z.string(),
     current_health: z.number().min(0),
     current_defense: z.number().min(0)
   }))
@@ -62,67 +61,96 @@ Deno.serve(async (req) => {
 
   try {
     const body = await req.json();
-    console.log('📦 [claim-battle-rewards] Received request:', {
-      wallet: body.wallet_address,
-      claim_key: body.claim_key,
-      level: body.level
-    });
+    console.log('📦 [claim-battle-rewards] Received request with claim_key:', body.claim_key?.substring(0, 8));
 
     // Валидация с подробными ошибками
     const parseResult = ClaimBodySchema.safeParse(body);
     if (!parseResult.success) {
       console.error('❌ [claim-battle-rewards] Validation error:', parseResult.error.errors);
-      return json(
-        { 
-          error: 'Invalid request body',
-          details: parseResult.error.errors.map(e => `${e.path.join('.')}: ${e.message}`)
-        },
-        400
-      );
+      return json({ error: 'Invalid request' }, 400);
     }
 
-    const data: ClaimBody = parseResult.data;
+    const claimBody: ClaimBody = parseResult.data;
     const supabase = getSupabaseServiceClient();
 
-    console.log('🔐 [claim-battle-rewards] Processing claim:', {
-      wallet: data.wallet_address,
-      claim_key: data.claim_key,
-      ell: data.ell_reward,
-      exp: data.experience_reward,
-      items: data.items.length,
-      card_kills: data.card_kills.length,
-      card_health_updates: data.card_health_updates.length
-    });
+    // 🔒 КРИТИЧЕСКАЯ ПРОВЕРКА: Извлекаем wallet из сессии БД, НЕ из запроса!
+    console.log('🔍 [claim-battle-rewards] Looking up session by claim_key:', claimBody.claim_key);
     
-    // Детальное логирование обновлений здоровья карт
-    if (data.card_health_updates.length > 0) {
-      console.log('💔 [claim-battle-rewards] Card health updates received:', {
-        totalUpdates: data.card_health_updates.length,
-        updates: data.card_health_updates.map(u => ({
-          instanceId: u.card_instance_id.substring(0, 8),
-          health: u.current_health,
-          defense: u.current_defense
-        }))
-      });
-    } else {
-      console.warn('⚠️ [claim-battle-rewards] No card health updates received!');
+    const { data: session, error: sessionError } = await supabase
+      .from('active_dungeon_sessions')
+      .select('account_id, dungeon_type, level')
+      .eq('claim_key', claimBody.claim_key)
+      .single();
+
+    if (sessionError || !session) {
+      console.error('❌ [claim-battle-rewards] Invalid or expired claim key:', sessionError);
+      
+      // Логируем подозрительную активность
+      await supabase.from('security_audit_log').insert({
+        event_type: 'invalid_claim_key',
+        claim_key: claimBody.claim_key,
+        details: { error: 'Session not found or expired', dungeon_type: claimBody.dungeon_type }
+      }).then(null, () => {}); // Игнорируем ошибки логирования
+      
+      return json({ error: 'Invalid or expired claim key' }, 403);
     }
+
+    // Wallet address берём из сессии, НЕ из запроса!
+    const wallet_address = session.account_id;
+
+    // Проверяем соответствие dungeon_type
+    if (session.dungeon_type !== claimBody.dungeon_type) {
+      console.error('❌ [claim-battle-rewards] Dungeon type mismatch:', {
+        expected: session.dungeon_type,
+        received: claimBody.dungeon_type
+      });
+      
+      await supabase.from('security_audit_log').insert({
+        event_type: 'dungeon_type_mismatch',
+        wallet_address,
+        claim_key: claimBody.claim_key,
+        details: { expected: session.dungeon_type, received: claimBody.dungeon_type }
+      }).then(null, () => {});
+      
+      return json({ error: 'Dungeon type mismatch' }, 403);
+    }
+
+    console.log('✅ [claim-battle-rewards] Session validated:', {
+      wallet: wallet_address,
+      dungeon: session.dungeon_type,
+      level: session.level
+    });
+
+    console.log('🔐 [claim-battle-rewards] Processing claim for wallet:', wallet_address.substring(0, 10), {
+      ell: claimBody.ell_reward,
+      exp: claimBody.experience_reward,
+      items: claimBody.items.length,
+      card_kills: claimBody.card_kills.length,
+      card_health_updates: claimBody.card_health_updates.length
+    });
 
     // Проверка идемпотентности через reward_claims
     const { data: existingClaim, error: claimCheckError } = await supabase
       .from('reward_claims')
       .select('id')
-      .eq('claim_key', data.claim_key)
-      .eq('wallet_address', data.wallet_address)
+      .eq('claim_key', claimBody.claim_key)
       .maybeSingle();
 
     if (claimCheckError) {
       console.error('❌ [claim-battle-rewards] Error checking claim:', claimCheckError);
-      return json({ error: 'Database error during claim check' }, 500);
+      return json({ error: 'Database error' }, 500);
     }
 
     if (existingClaim) {
-      console.log('⚠️ [claim-battle-rewards] Claim already processed:', data.claim_key);
+      console.log('⚠️ [claim-battle-rewards] Claim already processed:', claimBody.claim_key);
+      
+      await supabase.from('security_audit_log').insert({
+        event_type: 'duplicate_claim_attempt',
+        wallet_address,
+        claim_key: claimBody.claim_key,
+        details: { message: 'Attempted to claim already processed rewards' }
+      }).then(null, () => {});
+      
       return json({ success: true, message: 'Reward already claimed', duplicate: true });
     }
 
@@ -130,47 +158,48 @@ Deno.serve(async (req) => {
     const { error: insertClaimError } = await supabase
       .from('reward_claims')
       .insert({
-        wallet_address: data.wallet_address,
-        claim_key: data.claim_key
+        wallet_address: wallet_address, // Из сессии!
+        claim_key: claimBody.claim_key
       });
 
     if (insertClaimError) {
       console.error('❌ [claim-battle-rewards] Error inserting claim:', insertClaimError);
-      return json({ error: 'Database error during claim insertion' }, 500);
+      return json({ error: 'Failed to record claim' }, 500);
     }
 
     console.log('✅ [claim-battle-rewards] Idempotency record created');
 
     // Вызываем RPC функцию для атомарного применения всех наград
-    console.log('🎯 [claim-battle-rewards] Calling apply_battle_rewards RPC with:', {
-      wallet: data.wallet_address,
-      ell: data.ell_reward,
-      exp: data.experience_reward,
-      itemsCount: data.items.length,
-      cardKillsCount: data.card_kills.length,
-      healthUpdatesCount: data.card_health_updates.length
-    });
+    console.log('🎯 [claim-battle-rewards] Calling apply_battle_rewards RPC');
     
     const { data: rpcResult, error: rpcError } = await supabase.rpc('apply_battle_rewards', {
-      p_wallet_address: data.wallet_address,
-      p_ell_reward: data.ell_reward,
-      p_experience_reward: data.experience_reward,
-      p_items: data.items,
-      p_card_kills: data.card_kills,
-      p_card_health_updates: data.card_health_updates
+      p_wallet_address: wallet_address, // Из сессии!
+      p_ell_reward: claimBody.ell_reward,
+      p_experience_reward: claimBody.experience_reward,
+      p_items: claimBody.items,
+      p_card_kills: claimBody.card_kills,
+      p_card_health_updates: claimBody.card_health_updates
     });
 
     if (rpcError) {
-      console.error('❌ [claim-battle-rewards] RPC apply_battle_rewards error:', {
-        code: rpcError.code,
-        message: rpcError.message,
-        details: rpcError.details,
-        hint: rpcError.hint
-      });
+      console.error('❌ [claim-battle-rewards] RPC error:', rpcError);
       return json({ error: 'Failed to apply battle rewards' }, 500);
     }
 
-    console.log('✅ [claim-battle-rewards] RPC apply_battle_rewards successful:', rpcResult);
+    // Удаляем сессию после успешного клейма
+    const { error: deleteError } = await supabase
+      .from('active_dungeon_sessions')
+      .delete()
+      .eq('claim_key', claimBody.claim_key);
+
+    if (deleteError) {
+      console.warn('⚠️ [claim-battle-rewards] Failed to delete session:', deleteError);
+    }
+
+    console.log('✅ [claim-battle-rewards] Rewards applied successfully:', {
+      wallet: wallet_address.substring(0, 10),
+      results: rpcResult,
+    });
 
     return json({
       success: true,
@@ -180,12 +209,6 @@ Deno.serve(async (req) => {
 
   } catch (error) {
     console.error('❌ [claim-battle-rewards] Unexpected error:', error);
-    return json(
-      { 
-        error: 'Internal server error',
-        message: error instanceof Error ? error.message : 'Unknown error'
-      },
-      500
-    );
+    return json({ error: 'Internal server error' }, 500);
   }
 });
