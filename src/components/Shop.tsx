@@ -11,6 +11,7 @@ import { ArrowLeft, Clock, Package } from "lucide-react";
 import { useState } from "react";
 import { PurchaseEffect } from "./shop/PurchaseEffect";
 import { useQueryClient } from "@tanstack/react-query";
+import { invalidationPresets } from "@/utils/selectiveInvalidation";
 
 interface ShopProps {
   onClose: () => void;
@@ -126,7 +127,9 @@ export const Shop = ({ onClose }: ShopProps) => {
         }
       ]);
 
-      // Real-time subscription will handle automatic sync, no manual events needed
+      // Селективная инвалидация вместо полной
+      await invalidationPresets.afterShopPurchase(accountId);
+      
       console.log('✅ [Shop] Optimistic update applied successfully');
 
       setShowEffect(true);
@@ -134,11 +137,6 @@ export const Shop = ({ onClose }: ShopProps) => {
         title: item.type === 'cardPack' ? t(language, 'shop.cardPackBought') : t(language, 'shop.purchaseSuccess'),
         description: item.type === 'cardPack' ? t(language, 'shop.cardPackDescription') : `${t(language, 'shop.boughtItem')} ${translateShopItemName(language, item.name)}`,
       });
-
-      // Фоновая синхронизация (не блокирует UI)
-      setTimeout(() => {
-        refetchShopData();
-      }, 1000);
 
     } catch (error) {
       console.error('❌ [Shop] Purchase error:', error);

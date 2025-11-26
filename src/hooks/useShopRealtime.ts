@@ -45,8 +45,9 @@ export const useShopRealtime = () => {
 
   const purchaseItem = async (itemId: number, walletAddress: string, quantity: number = 1) => {
     try {
+      // JWT верификация в edge function автоматически получит wallet_address
       const { data, error } = await supabase.functions.invoke('shop-purchase', {
-        body: { item_id: itemId, wallet_address: walletAddress, quantity }
+        body: { item_id: itemId, quantity }
       });
 
       if (error) throw error;
