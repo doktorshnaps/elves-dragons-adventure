@@ -36,20 +36,25 @@ export const useTeamSelection = () => {
   // Build selected team with health using the SAME gameData instance
   const selectedTeamWithHealth = useMemo(() => {
     const selectedTeam = (gameData.selectedTeam || []) as any[];
+    
+    console.log('🔄 [useTeamSelection] selectedTeamWithHealth recalculating:', {
+      selectedTeamLength: selectedTeam.length,
+      selectedTeamWithDragons: selectedTeam.filter((p: any) => p.dragon).length,
+      cardInstancesLength: cardInstances.length
+    });
+    
     // КРИТИЧНО: используем instance.id (UUID) для точного совпадения карточек с учетом фракции
     const instancesMap = new Map(cardInstances.map(ci => [ci.id, ci]));
-    return selectedTeam.map((pair: any) => ({
+    const result = selectedTeam.map((pair: any, pairIndex: number) => ({
       hero: pair.hero ? (() => {
         // Ищем по instanceId или hero.id
         const instance = instancesMap.get(pair.hero.instanceId || pair.hero.id);
-        console.log(`🔍 [useTeamSelection] Looking for hero instance:`, {
+        console.log(`   Pair ${pairIndex} Hero:`, {
           heroName: pair.hero.name,
           heroFaction: pair.hero.faction,
           heroId: pair.hero.id,
           heroInstanceId: pair.hero.instanceId,
-          foundInstance: !!instance,
-          instanceId: instance?.id,
-          instanceFaction: instance ? (instance.card_data as any).faction : null
+          foundInstance: !!instance
         });
         return instance ? {
           ...pair.hero,
@@ -60,6 +65,13 @@ export const useTeamSelection = () => {
       })() : undefined,
       dragon: pair.dragon ? (() => {
         const instance = instancesMap.get(pair.dragon.instanceId || pair.dragon.id);
+        console.log(`   Pair ${pairIndex} Dragon:`, {
+          dragonName: pair.dragon.name,
+          dragonFaction: pair.dragon.faction,
+          dragonId: pair.dragon.id,
+          dragonInstanceId: pair.dragon.instanceId,
+          foundInstance: !!instance
+        });
         return instance ? {
           ...pair.dragon,
           currentHealth: instance.current_health,
@@ -68,6 +80,13 @@ export const useTeamSelection = () => {
         } : pair.dragon;
       })() : undefined
     })) as TeamPair[];
+    
+    console.log('✅ [useTeamSelection] selectedTeamWithHealth result:', {
+      length: result.length,
+      withDragons: result.filter(p => p.dragon).length
+    });
+    
+    return result;
   }, [gameData.selectedTeam, cardInstances]);
   const selectedPairs: TeamPair[] = useMemo(() => {
     const source: TeamPair[] = selectedTeamWithHealth.length > 0
