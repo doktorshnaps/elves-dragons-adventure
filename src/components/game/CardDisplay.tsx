@@ -86,7 +86,7 @@ export const CardDisplay = ({
             
             <div className="shrink-0">
               <CardStats 
-                health={stats.health} 
+                health={card.currentHealth !== undefined ? card.currentHealth : stats.health}
                 power={stats.power} 
                 defense={stats.defense}
                 currentDefense={card.currentDefense}
