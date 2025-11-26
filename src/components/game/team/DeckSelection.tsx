@@ -312,6 +312,25 @@ export const DeckSelection = ({
         c.faction === pair.dragon!.faction
       ) : undefined;
       
+      // КРИТИЧНО: Детальное логирование для отладки проблем с выбором дракона
+      if (pair.dragon) {
+        console.log(`🐉 [DeckSelection] Syncing dragon "${pair.dragon.name}":`, {
+          dragonId: pair.dragon.id,
+          dragonInstanceId: (pair.dragon as any).instanceId,
+          dragonFaction: pair.dragon.faction,
+          foundInLocalCards: !!updatedDragon,
+          availableDragons: localCards.filter(c => 
+            c.type === 'pet' && 
+            c.name?.includes(pair.dragon!.name.split(' ')[0])
+          ).map(d => ({
+            id: d.id,
+            instanceId: (d as any).instanceId,
+            name: d.name,
+            faction: d.faction
+          }))
+        });
+      }
+      
       // Логирование для отладки
       if (pair.hero.name?.includes('Рекрут')) {
         console.log(`🔄 Syncing ${pair.hero.name} (faction: ${pair.hero.faction}) in team:`, {
