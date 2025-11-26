@@ -5,6 +5,7 @@ import { useGameData } from './useGameData';
 import { RealtimePostgresChangesPayload } from '@supabase/supabase-js';
 import { useActiveDungeonSessions } from './useActiveDungeonSessions';
 import { useToast } from './use-toast';
+import { useQueryClient } from '@tanstack/react-query';
 
 interface ActiveDungeonSession {
   device_id: string;
@@ -18,6 +19,7 @@ export const useDungeonSync = () => {
   const { accountId } = useWalletContext();
   const { gameData, updateGameData } = useGameData();
   const { toast } = useToast();
+  const queryClient = useQueryClient();
   
   // Используем React Query хук вместо прямых запросов к БД
   const { data: queriedSessions = [] } = useActiveDungeonSessions();
@@ -212,12 +214,16 @@ export const useDungeonSync = () => {
         setLocalSession(session);
       } catch {}
 
+      // КРИТИЧНО: Инвалидируем кэш активных сессий, чтобы компоненты получили свежие данные
+      await queryClient.invalidateQueries({ queryKey: ['activeDungeonSessions', accountId] });
+      console.log('🔄 [useDungeonSync] Invalidated activeDungeonSessions cache');
+
       return true;
     } catch (err) {
       console.error('❌ [useDungeonSync] Unexpected error:', err);
       return false;
     }
-  }, [accountId, deviceId, hasOtherActiveSessions, toast]);
+  }, [accountId, deviceId, hasOtherActiveSessions, toast, queryClient]);
 
   // Подписываемся на изменения в базе данных через Realtime
   useEffect(() => {
