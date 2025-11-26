@@ -295,7 +295,29 @@ export const DeckSelection = ({
   // КРИТИЧЕСКОЕ ИСПРАВЛЕНИЕ: Синхронизируем selectedPairs с актуальными данными из localCards
   // УЧИТЫВАЕМ ФРАКЦИЮ при поиске карточки!
   const syncedSelectedPairs = useMemo(() => {
-    return selectedPairs.map(pair => {
+    const pairsDetails = selectedPairs.map((p, i) => ({
+      pairIndex: i,
+      heroName: p.hero?.name,
+      heroFaction: p.hero?.faction,
+      dragonName: p.dragon?.name,
+      dragonFaction: p.dragon?.faction,
+      dragonId: p.dragon?.id,
+      dragonInstanceId: (p.dragon as any)?.instanceId
+    }));
+    
+    console.log(`🔍 [DeckSelection] syncedSelectedPairs recalculating:`, {
+      selectedPairsLength: selectedPairs.length,
+      localCardsLength: localCards.length,
+      selectedPairsWithDragons: selectedPairs.filter(p => p.dragon).length,
+      pairsDetails
+    });
+    
+    // Вывод каждого pair отдельно для детального анализа
+    pairsDetails.forEach(detail => {
+      console.log(`   Pair ${detail.pairIndex}: Hero "${detail.heroName}" (${detail.heroFaction}), Dragon: ${detail.dragonName ? `"${detail.dragonName}" (${detail.dragonFaction})` : 'NONE'}`);
+    });
+    
+    return selectedPairs.map((pair, pairIndex) => {
       // Находим актуальные данные героя по instanceId/id + faction (для различения одноименных карт разных фракций)
       const updatedHero = localCards.find(c => 
         (c.id === pair.hero.id || 
@@ -311,6 +333,52 @@ export const DeckSelection = ({
          c.id === (pair.dragon as any).instanceId) &&
         c.faction === pair.dragon!.faction
       ) : undefined;
+      
+      // КРИТИЧНО: Детальное логирование для отладки проблем с выбором дракона
+      if (pair.dragon) {
+        const dragonName = pair.dragon.name;
+        const allDragonsInLocalCards = localCards.filter(c => c.type === 'pet');
+        const matchingNameDragons = allDragonsInLocalCards.filter(d => 
+          d.name?.includes(dragonName.split(' ')[0])
+        );
+        
+        console.log(`🐉 [DeckSelection] Pair ${pairIndex}: Trying to sync dragon "${dragonName}":`, {
+          lookupCriteria: {
+            dragonId: pair.dragon.id,
+            dragonInstanceId: (pair.dragon as any).instanceId,
+            dragonFaction: pair.dragon.faction
+          },
+          foundInLocalCards: !!updatedDragon,
+          totalDragonsInLocalCards: allDragonsInLocalCards.length,
+          matchingNameDragons: matchingNameDragons.length,
+          allDragonsInfo: allDragonsInLocalCards.map(d => ({
+            id: d.id,
+            instanceId: (d as any).instanceId,
+            name: d.name,
+            faction: d.faction,
+            matchesById: d.id === pair.dragon!.id,
+            matchesByInstanceIdToDragonId: (d as any).instanceId === pair.dragon!.id,
+            matchesByIdToDragonInstanceId: d.id === (pair.dragon as any).instanceId,
+            matchesFaction: d.faction === pair.dragon!.faction,
+            passesAllCriteria: (
+              (d.id === pair.dragon!.id || 
+               (d as any).instanceId === pair.dragon!.id || 
+               d.id === (pair.dragon as any).instanceId) &&
+              d.faction === pair.dragon!.faction
+            )
+          }))
+        });
+        
+        if (!updatedDragon) {
+          console.warn(`❌ [DeckSelection] Dragon "${dragonName}" NOT FOUND in localCards despite being in selectedTeam! Will use stale data.`);
+        } else {
+          console.log(`✅ [DeckSelection] Dragon "${dragonName}" FOUND and synced:`, {
+            updatedDragonId: updatedDragon.id,
+            updatedDragonInstanceId: (updatedDragon as any).instanceId,
+            updatedDragonFaction: updatedDragon.faction
+          });
+        }
+      }
       
       // Логирование для отладки
       if (pair.hero.name?.includes('Рекрут')) {

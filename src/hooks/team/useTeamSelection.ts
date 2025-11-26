@@ -36,20 +36,25 @@ export const useTeamSelection = () => {
   // Build selected team with health using the SAME gameData instance
   const selectedTeamWithHealth = useMemo(() => {
     const selectedTeam = (gameData.selectedTeam || []) as any[];
+    
+    console.log('🔄 [useTeamSelection] selectedTeamWithHealth recalculating:', {
+      selectedTeamLength: selectedTeam.length,
+      selectedTeamWithDragons: selectedTeam.filter((p: any) => p.dragon).length,
+      cardInstancesLength: cardInstances.length
+    });
+    
     // КРИТИЧНО: используем instance.id (UUID) для точного совпадения карточек с учетом фракции
     const instancesMap = new Map(cardInstances.map(ci => [ci.id, ci]));
-    return selectedTeam.map((pair: any) => ({
+    const result = selectedTeam.map((pair: any, pairIndex: number) => ({
       hero: pair.hero ? (() => {
         // Ищем по instanceId или hero.id
         const instance = instancesMap.get(pair.hero.instanceId || pair.hero.id);
-        console.log(`🔍 [useTeamSelection] Looking for hero instance:`, {
+        console.log(`   Pair ${pairIndex} Hero:`, {
           heroName: pair.hero.name,
           heroFaction: pair.hero.faction,
           heroId: pair.hero.id,
           heroInstanceId: pair.hero.instanceId,
-          foundInstance: !!instance,
-          instanceId: instance?.id,
-          instanceFaction: instance ? (instance.card_data as any).faction : null
+          foundInstance: !!instance
         });
         return instance ? {
           ...pair.hero,
@@ -60,6 +65,13 @@ export const useTeamSelection = () => {
       })() : undefined,
       dragon: pair.dragon ? (() => {
         const instance = instancesMap.get(pair.dragon.instanceId || pair.dragon.id);
+        console.log(`   Pair ${pairIndex} Dragon:`, {
+          dragonName: pair.dragon.name,
+          dragonFaction: pair.dragon.faction,
+          dragonId: pair.dragon.id,
+          dragonInstanceId: pair.dragon.instanceId,
+          foundInstance: !!instance
+        });
         return instance ? {
           ...pair.dragon,
           currentHealth: instance.current_health,
@@ -68,11 +80,30 @@ export const useTeamSelection = () => {
         } : pair.dragon;
       })() : undefined
     })) as TeamPair[];
+    
+    console.log('✅ [useTeamSelection] selectedTeamWithHealth result:', {
+      length: result.length,
+      withDragons: result.filter(p => p.dragon).length
+    });
+    
+    return result;
   }, [gameData.selectedTeam, cardInstances]);
   const selectedPairs: TeamPair[] = useMemo(() => {
     const source: TeamPair[] = selectedTeamWithHealth.length > 0
       ? (selectedTeamWithHealth as TeamPair[])
       : ((gameData.selectedTeam ?? []) as TeamPair[]);
+
+    console.log('🔄 [useTeamSelection] selectedPairs recalculating:', {
+      sourceLength: source.length,
+      sourceDragons: source.filter(p => p.dragon).length,
+      usingSelectedTeamWithHealth: selectedTeamWithHealth.length > 0,
+      sourceDetails: source.map((p, i) => ({
+        index: i,
+        heroName: p.hero?.name,
+        dragonName: p.dragon?.name,
+        dragonFaction: p.dragon?.faction
+      }))
+    });
 
     // Exclude pairs where hero is in medical bay and drop dragons that are in medical bay
     const filtered: TeamPair[] = source
@@ -85,7 +116,28 @@ export const useTeamSelection = () => {
         return pair;
       });
 
-    return filtered;
+    // КРИТИЧНО: Удаляем дубликаты драконов - каждый дракон может быть назначен только одному герою
+    // Оставляем дракона только в первой паре, где он встречается
+    const seenDragonIds = new Set<string>();
+    const deduplicatedFiltered = filtered.map(pair => {
+      if (pair.dragon) {
+        const dragonId = pair.dragon.id;
+        if (seenDragonIds.has(dragonId)) {
+          console.warn(`🔄 [useTeamSelection] Removing duplicate dragon "${pair.dragon.name}" from pair with hero "${pair.hero?.name}"`);
+          return { ...pair, dragon: undefined };
+        }
+        seenDragonIds.add(dragonId);
+      }
+      return pair;
+    });
+
+    console.log('✅ [useTeamSelection] selectedPairs filtered:', {
+      filteredLength: deduplicatedFiltered.length,
+      filteredDragons: deduplicatedFiltered.filter(p => p.dragon).length,
+      removedDuplicates: filtered.filter(p => p.dragon).length - deduplicatedFiltered.filter(p => p.dragon).length
+    });
+
+    return deduplicatedFiltered;
   }, [selectedTeamWithHealth, gameData.selectedTeam]);
 
   // Cleanup: remove non-existing cards from selected team in DB
@@ -295,6 +347,12 @@ export const useTeamSelection = () => {
     const filteredIndex = selectedPairs[index];
     if (!filteredIndex?.hero?.id) return;
     
+    console.log('🐉 [handleAssignDragon] BEFORE update:', {
+      gameDataSelectedTeam: gameData.selectedTeam,
+      baseTeamLength: baseTeam.length,
+      baseTeamWithDragons: baseTeam.filter(p => p.dragon).length
+    });
+    
     // Find the real index in the base team
     const realIndex = baseTeam.findIndex(pair => pair?.hero?.id === filteredIndex.hero.id);
     if (realIndex === -1) return;
@@ -314,7 +372,9 @@ export const useTeamSelection = () => {
       dragonName: dragonToSave.name,
       dragonFaction: dragonToSave.faction,
       dragonId: dragonToSave.id,
-      dragonInstanceId: dragonToSave.instanceId
+      dragonInstanceId: dragonToSave.instanceId,
+      newPairsLength: newPairs.length,
+      newPairsWithDragons: newPairs.filter(p => p.dragon).length
     });
     
     await updateGameData({
@@ -324,7 +384,31 @@ export const useTeamSelection = () => {
     // Immediately sync to gameStore
     const { setSelectedTeam } = useGameStore.getState();
     setSelectedTeam(newPairs);
-    console.log('✅ Dragon assigned and synced to store');
+    
+    console.log('✅ Dragon assigned and synced to store:', {
+      gameDataSelectedTeamLength: (gameData.selectedTeam || []).length,
+      gameDataTeamWithDragons: (gameData.selectedTeam || []).filter((p: any) => p.dragon).length
+    });
+    
+    console.log('🔍 [handleAssignDragon] AFTER update - gameData.selectedTeam content:', {
+      selectedTeam: gameData.selectedTeam,
+      newPairs: newPairs,
+      isSameReference: gameData.selectedTeam === baseTeam,
+      gameDataPairs: (gameData.selectedTeam || []).map((p: any, i: number) => ({
+        index: i,
+        heroName: p?.hero?.name,
+        heroFaction: p?.hero?.faction,
+        dragonName: p?.dragon?.name || 'NONE',
+        dragonFaction: p?.dragon?.faction || 'N/A'
+      })),
+      newPairsDetails: newPairs.map((p: any, i: number) => ({
+        index: i,
+        heroName: p?.hero?.name,
+        heroFaction: p?.hero?.faction,
+        dragonName: p?.dragon?.name || 'NONE',
+        dragonFaction: p?.dragon?.faction || 'N/A'
+      }))
+    });
   };
 
   const handleRemoveDragon = async (index: number) => {
