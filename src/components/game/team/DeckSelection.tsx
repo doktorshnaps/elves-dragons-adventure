@@ -295,19 +295,26 @@ export const DeckSelection = ({
   // КРИТИЧЕСКОЕ ИСПРАВЛЕНИЕ: Синхронизируем selectedPairs с актуальными данными из localCards
   // УЧИТЫВАЕМ ФРАКЦИЮ при поиске карточки!
   const syncedSelectedPairs = useMemo(() => {
+    const pairsDetails = selectedPairs.map((p, i) => ({
+      pairIndex: i,
+      heroName: p.hero?.name,
+      heroFaction: p.hero?.faction,
+      dragonName: p.dragon?.name,
+      dragonFaction: p.dragon?.faction,
+      dragonId: p.dragon?.id,
+      dragonInstanceId: (p.dragon as any)?.instanceId
+    }));
+    
     console.log(`🔍 [DeckSelection] syncedSelectedPairs recalculating:`, {
       selectedPairsLength: selectedPairs.length,
       localCardsLength: localCards.length,
       selectedPairsWithDragons: selectedPairs.filter(p => p.dragon).length,
-      pairsDetails: selectedPairs.map((p, i) => ({
-        pairIndex: i,
-        heroName: p.hero?.name,
-        heroFaction: p.hero?.faction,
-        dragonName: p.dragon?.name,
-        dragonFaction: p.dragon?.faction,
-        dragonId: p.dragon?.id,
-        dragonInstanceId: (p.dragon as any)?.instanceId
-      }))
+      pairsDetails
+    });
+    
+    // Вывод каждого pair отдельно для детального анализа
+    pairsDetails.forEach(detail => {
+      console.log(`   Pair ${detail.pairIndex}: Hero "${detail.heroName}" (${detail.heroFaction}), Dragon: ${detail.dragonName ? `"${detail.dragonName}" (${detail.dragonFaction})` : 'NONE'}`);
     });
     
     return selectedPairs.map((pair, pairIndex) => {
