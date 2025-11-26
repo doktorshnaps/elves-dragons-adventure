@@ -8,6 +8,7 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { useLanguage } from "@/hooks/useLanguage";
 import { translateItemName, translateItemType, translateRarity, translateSourceType, translateStat, translateItemText } from "@/utils/itemTranslations";
 import { useItemTemplates, type ItemTemplate } from "@/hooks/useItemTemplates";
+import { ItemCollectionStats } from "./items/ItemCollectionStats";
 
 // Temporarily using placeholders until webp files are uploaded
 const spiderSilk = "/placeholder.svg";
@@ -318,6 +319,7 @@ export const ItemsInfo = () => {
 
   return (
     <div className="h-full">
+      <ItemCollectionStats />
       <Tabs defaultValue="all" className="h-full">
         <TabsList className="grid w-full grid-cols-6 bg-black/40 border-2 border-white/50 backdrop-blur-sm rounded-3xl mb-4">
           <TabsTrigger value="all" className="data-[state=active]:bg-white/20 text-white data-[state=active]:text-white rounded-3xl text-xs">
