@@ -16,18 +16,44 @@ export const useTeamSelection = () => {
   // Build cards with health using the SAME gameData instance to avoid desync
   const cardsWithHealth = useMemo(() => {
     const cards = (gameData.cards || []) as CardType[];
-    // КРИТИЧНО: используем instance.id (UUID) для точного совпадения карточек
-    const instancesMap = new Map(cardInstances.map(ci => [ci.id, ci]));
+    
+    // КРИТИЧНО: Создаем два способа поиска - по UUID (instance.id) и по template_id
+    const instancesByUUID = new Map(cardInstances.map(ci => [ci.id, ci]));
+    
     return cards.map(card => {
-      // Ищем по instanceId или card.id
-      const instance = instancesMap.get((card as any).instanceId || card.id);
-      if (instance) {
+      // Сначала пытаемся найти по UUID (если карта уже синхронизирована)
+      let instance = instancesByUUID.get((card as any).instanceId || card.id);
+      
+      // Если не нашли по UUID, ищем по template_id + faction
+      if (!instance) {
+        const candidateInstances = cardInstances.filter(ci => 
+          ci.card_template_id === card.id && 
+          (ci.card_data as any).faction === card.faction
+        );
+        
+        if (candidateInstances.length > 0) {
+          // Берем первый подходящий instance
+          instance = candidateInstances[0];
+        }
+      }
+      
+      if (instance && instance.card_data) {
         return {
           ...card,
+          id: instance.id, // ✅ Обязательно обновляем id на UUID
+          instanceId: instance.id, // ✅ Сохраняем instanceId
+          // Здоровье и броня
           currentHealth: instance.current_health,
+          currentDefense: instance.current_defense,
+          maxDefense: instance.max_defense,
           lastHealTime: new Date(instance.last_heal_time).getTime(),
-          isInMedicalBay: instance.is_in_medical_bay || false
-        } as CardType;
+          isInMedicalBay: instance.is_in_medical_bay || false,
+          // Характеристики из card_data (приоритет над card)
+          power: (instance.card_data as any).power ?? card.power,
+          defense: (instance.card_data as any).defense ?? card.defense,
+          health: (instance.card_data as any).health ?? card.health,
+          magic: (instance.card_data as any).magic ?? card.magic
+        };
       }
       return card;
     });
@@ -38,31 +64,48 @@ export const useTeamSelection = () => {
     const selectedTeam = (gameData.selectedTeam || []) as any[];
     // КРИТИЧНО: используем instance.id (UUID) для точного совпадения карточек с учетом фракции
     const instancesMap = new Map(cardInstances.map(ci => [ci.id, ci]));
+    
     return selectedTeam.map((pair: any) => ({
       hero: pair.hero ? (() => {
-        // Ищем по instanceId или hero.id
-        const instance = instancesMap.get(pair.hero.instanceId || pair.hero.id);
+        // ИСПРАВЛЕНИЕ: приоритет instanceId, затем id
+        const heroLookupId = pair.hero.instanceId || pair.hero.id;
+        const instance = instancesMap.get(heroLookupId);
+        
         console.log(`🔍 [useTeamSelection] Looking for hero instance:`, {
           heroName: pair.hero.name,
           heroFaction: pair.hero.faction,
           heroId: pair.hero.id,
           heroInstanceId: pair.hero.instanceId,
+          lookupId: heroLookupId,
           foundInstance: !!instance,
           instanceId: instance?.id,
-          instanceFaction: instance ? (instance.card_data as any).faction : null
+          instanceFaction: instance ? (instance.card_data as any).faction : null,
+          instanceHealth: instance?.current_health,
+          instanceDefense: instance?.current_defense
         });
+        
         return instance ? {
           ...pair.hero,
+          id: instance.id, // ✅ Обязательно обновляем id на UUID
+          instanceId: instance.id, // ✅ Сохраняем instanceId
           currentHealth: instance.current_health,
+          currentDefense: instance.current_defense,
+          maxDefense: instance.max_defense,
           lastHealTime: new Date(instance.last_heal_time).getTime(),
           isInMedicalBay: instance.is_in_medical_bay || false
         } : pair.hero;
       })() : undefined,
       dragon: pair.dragon ? (() => {
-        const instance = instancesMap.get(pair.dragon.instanceId || pair.dragon.id);
+        const dragonLookupId = pair.dragon.instanceId || pair.dragon.id;
+        const instance = instancesMap.get(dragonLookupId);
+        
         return instance ? {
           ...pair.dragon,
+          id: instance.id, // ✅ Обязательно обновляем id на UUID
+          instanceId: instance.id, // ✅ Сохраняем instanceId
           currentHealth: instance.current_health,
+          currentDefense: instance.current_defense,
+          maxDefense: instance.max_defense,
           lastHealTime: new Date(instance.last_heal_time).getTime(),
           isInMedicalBay: instance.is_in_medical_bay || false
         } : pair.dragon;
@@ -368,13 +411,24 @@ export const useTeamSelection = () => {
     let totalHealth = 0;
 
     selectedPairs.forEach(pair => {
-      // КРИТИЧНО: используем характеристики напрямую из card_instances (уже синхронизированы выше)
-      const heroInstance = cardInstances.find(ci => ci.card_template_id === pair.hero.id);
+      // КРИТИЧНО: используем UUID (instance.id), а НЕ card_template_id для точного сопоставления
+      const heroInstanceId = (pair.hero as any).instanceId || pair.hero.id;
+      const heroInstance = cardInstances.find(ci => ci.id === heroInstanceId);
+      
+      if (!heroInstance) {
+        console.warn(`⚠️ Hero instance not found for ${pair.hero.name} (id: ${heroInstanceId})`);
+      }
+      
       const heroPower = heroInstance ? (heroInstance.card_data as any).power : pair.hero.power;
       const heroDefense = heroInstance ? heroInstance.current_defense : (pair.hero.currentDefense ?? pair.hero.defense);
       const heroHealth = heroInstance ? heroInstance.current_health : (pair.hero.currentHealth ?? pair.hero.health);
       
-      console.log(`  Hero "${pair.hero.name}":`, { power: heroPower, defense: heroDefense, health: heroHealth });
+      console.log(`  Hero "${pair.hero.name}" (${heroInstanceId?.substring(0, 8)}):`, { 
+        power: heroPower, 
+        defense: heroDefense, 
+        health: heroHealth,
+        foundInstance: !!heroInstance 
+      });
       
       totalPower += heroPower ?? 0;
       totalDefense += heroDefense ?? 0;
@@ -382,12 +436,23 @@ export const useTeamSelection = () => {
 
       // Add dragon stats if present and same faction
       if (pair.dragon && pair.dragon.faction === pair.hero.faction) {
-        const dragonInstance = cardInstances.find(ci => ci.card_template_id === pair.dragon!.id);
+        const dragonInstanceId = (pair.dragon as any).instanceId || pair.dragon.id;
+        const dragonInstance = cardInstances.find(ci => ci.id === dragonInstanceId);
+        
+        if (!dragonInstance) {
+          console.warn(`⚠️ Dragon instance not found for ${pair.dragon.name} (id: ${dragonInstanceId})`);
+        }
+        
         const dragonPower = dragonInstance ? (dragonInstance.card_data as any).power : pair.dragon.power;
         const dragonDefense = dragonInstance ? dragonInstance.current_defense : (pair.dragon.currentDefense ?? pair.dragon.defense);
         const dragonHealth = dragonInstance ? dragonInstance.current_health : (pair.dragon.currentHealth ?? pair.dragon.health);
         
-        console.log(`  Dragon "${pair.dragon.name}":`, { power: dragonPower, defense: dragonDefense, health: dragonHealth });
+        console.log(`  Dragon "${pair.dragon.name}" (${dragonInstanceId?.substring(0, 8)}):`, { 
+          power: dragonPower, 
+          defense: dragonDefense, 
+          health: dragonHealth,
+          foundInstance: !!dragonInstance 
+        });
         
         totalPower += dragonPower ?? 0;
         totalDefense += dragonDefense ?? 0;
