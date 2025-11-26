@@ -2915,6 +2915,7 @@ export type Database = {
             }[]
           }
         | { Args: { p_wallet_address: string }; Returns: Json }
+      migrate_game_data_card_ids_to_uuid: { Args: never; Returns: undefined }
       open_card_packs: {
         Args: {
           p_count: number

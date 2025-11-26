@@ -83,56 +83,45 @@ export const DeckSelection = ({
 
   // Создаем карты НАПРЯМУЮ из card_instances - каждый instance = уникальная карта
   const localCards = useMemo(() => {
-    // Карты из cardInstances (каждый instance - отдельная карта с уникальным id)
+    // Карты из cardInstances (каждый instance - отдельная карта с уникальным UUID)
     const instanceCards = cardInstances
       .filter(ci => ci.card_type === 'hero' || ci.card_type === 'dragon')
       .map(instance => {
-        const card = {
-          // Используем instance.id как уникальный ID карты
+        const cardData = instance.card_data as any;
+        
+        return {
+          // ✅ КРИТИЧНО: UUID как основной ID
           id: instance.id,
           instanceId: instance.id,
           templateId: instance.card_template_id,
+          
           // Данные карты из card_data
-          ...(instance.card_data as any),
-          // Актуальное здоровье и броня из instance (КРИТИЧНО: не использовать ?? оператор!)
+          name: cardData.name,
+          type: cardData.type,
+          faction: cardData.faction,
+          rarity: cardData.rarity,
+          image: cardData.image,
+          
+          // Характеристики из card_data
+          power: cardData.power,
+          defense: cardData.defense,
+          health: cardData.health,
+          magic: cardData.magic,
+          
+          // ✅ Актуальное здоровье и броня из instance (источник правды!)
           currentHealth: instance.current_health,
           currentDefense: instance.current_defense,
           maxDefense: instance.max_defense,
           lastHealTime: new Date(instance.last_heal_time).getTime(),
-          monster_kills: instance.monster_kills
+          monster_kills: instance.monster_kills,
+          isInMedicalBay: instance.is_in_medical_bay || false
         };
-        
-        // Детальное логирование для отладки
-        if (card.name?.includes('Рекрут')) {
-          console.log(`🔍 Recruit card created:`, {
-            id: card.id,
-            name: card.name,
-            faction: card.faction,
-            currentHealth: card.currentHealth,
-            maxHealth: card.health,
-            currentDefense: card.currentDefense,
-            maxDefense: card.maxDefense,
-            isDead: card.currentHealth === 0
-          });
-        }
-        
-        return card;
       });
     
     // Добавляем NFT карты (если есть)
     const result = [...instanceCards, ...nftCards];
     
-    console.log(`🎴 DeckSelection: Created ${result.length} cards from ${cardInstances.length} instances`);
-    
-    // Детальное логирование для Рекрутов
-    const recruits = result.filter(c => c.name?.includes('Рекрут'));
-    console.log(`🔍 РЕКРУТЫ (всего ${recruits.length}):`, recruits.map(r => ({
-      id: r.id.substring(0, 8),
-      name: r.name,
-      currentHealth: r.currentHealth,
-      health: r.health,
-      isDead: r.currentHealth === 0
-    })));
+    console.log(`🎴 [DeckSelection] Created ${result.length} cards from ${cardInstances.length} instances`);
     
     return result;
   }, [cardInstances, nftCards]);
@@ -293,40 +282,24 @@ export const DeckSelection = ({
   };
   
   // КРИТИЧЕСКОЕ ИСПРАВЛЕНИЕ: Синхронизируем selectedPairs с актуальными данными из localCards
-  // УЧИТЫВАЕМ ФРАКЦИЮ при поиске карточки!
+  // Используем UUID для точного сопоставления
   const syncedSelectedPairs = useMemo(() => {
     return selectedPairs.map(pair => {
-      // Находим актуальные данные героя по instanceId/id + faction (для различения одноименных карт разных фракций)
-      const updatedHero = localCards.find(c => 
-        (c.id === pair.hero.id || 
-         (c as any).instanceId === pair.hero.id || 
-         c.id === (pair.hero as any).instanceId) &&
-        c.faction === pair.hero.faction
-      );
+      // Находим актуальные данные героя по UUID (после миграции все ID - это UUID)
+      const heroId = (pair.hero as any).instanceId || pair.hero.id;
+      const updatedHero = localCards.find(c => c.id === heroId || (c as any).instanceId === heroId);
       
-      // Находим актуальные данные дракона (если есть) - также с учетом фракции
-      const updatedDragon = pair.dragon ? localCards.find(c => 
-        (c.id === pair.dragon!.id || 
-         (c as any).instanceId === pair.dragon!.id || 
-         c.id === (pair.dragon as any).instanceId) &&
-        c.faction === pair.dragon!.faction
-      ) : undefined;
+      // Находим актуальные данные дракона (если есть)
+      const dragonId = pair.dragon ? ((pair.dragon as any).instanceId || pair.dragon.id) : null;
+      const updatedDragon = dragonId ? localCards.find(c => c.id === dragonId || (c as any).instanceId === dragonId) : undefined;
       
-      // Логирование для отладки
-      if (pair.hero.name?.includes('Рекрут')) {
-        console.log(`🔄 Syncing ${pair.hero.name} (faction: ${pair.hero.faction}) in team:`, {
-          originalId: pair.hero.id,
-          originalFaction: pair.hero.faction,
-          originalHealth: pair.hero.currentHealth,
-          availableCards: localCards.filter(c => c.name?.includes('Рекрут')).map(c => ({
-            id: c.id,
-            faction: c.faction,
-            health: c.currentHealth
-          })),
-          foundMatch: !!updatedHero,
-          updatedId: updatedHero?.id,
-          updatedFaction: updatedHero?.faction,
-          updatedHealth: updatedHero?.currentHealth
+      // Детальное логирование для отладки
+      if (!updatedHero) {
+        console.warn(`⚠️ [DeckSelection] Hero not found in localCards:`, {
+          heroName: pair.hero.name,
+          heroId: pair.hero.id,
+          heroInstanceId: (pair.hero as any).instanceId,
+          searchedId: heroId
         });
       }
       
