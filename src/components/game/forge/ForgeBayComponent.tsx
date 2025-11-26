@@ -78,28 +78,32 @@ export const ForgeBayComponent = ({ forgeLevel }: ForgeBayComponentProps) => {
     const cardsInForgeBay = Array.from(new Set(forgeBayEntries.map(entry => entry.card_instance_id)));
     const uniqueCardsMap = new Map();
     
-    // Добавляем только карты с валидным instance из card_instances
-    cardsWithHealth.forEach(card => {
-      const instance = cardInstances.find(ci => ci.card_template_id === card.id);
-      // КРИТИЧНО: Добавляем только если есть реальный instance в БД
-      if (instance?.id && !uniqueCardsMap.has(instance.id)) {
-        uniqueCardsMap.set(instance.id, { card, instance });
-      }
-    });
-    
-    selectedTeamWithHealth.forEach(pair => {
-      if (pair.hero) {
-        const instance = cardInstances.find(ci => ci.card_template_id === pair.hero!.id);
-        // КРИТИЧНО: Добавляем только если есть реальный instance в БД
-        if (instance?.id && !uniqueCardsMap.has(instance.id)) {
-          uniqueCardsMap.set(instance.id, { card: pair.hero, instance });
-        }
-      }
-      if (pair.dragon) {
-        const instance = cardInstances.find(ci => ci.card_template_id === pair.dragon!.id);
-        // КРИТИЧНО: Добавляем только если есть реальный instance в БД
-        if (instance?.id && !uniqueCardsMap.has(instance.id)) {
-          uniqueCardsMap.set(instance.id, { card: pair.dragon, instance });
+    // КРИТИЧНО: Получаем карты НАПРЯМУЮ из cardInstances (источник правды!)
+    // Не используем cardsWithHealth или selectedTeamWithHealth - они могут содержать старые данные
+    cardInstances.forEach(instance => {
+      // Только герои и драконы
+      if (instance.card_type === 'hero' || instance.card_type === 'dragon') {
+        const instanceId = instance.id;
+        if (!uniqueCardsMap.has(instanceId)) {
+          // Строим card объект из instance.card_data
+          const cardData = instance.card_data as any;
+          const card = {
+            id: instance.id,
+            instanceId: instance.id,
+            name: cardData.name,
+            type: cardData.type,
+            faction: cardData.faction,
+            rarity: cardData.rarity,
+            image: cardData.image,
+            power: cardData.power,
+            defense: cardData.defense,
+            health: cardData.health,
+            magic: cardData.magic,
+            currentHealth: instance.current_health,
+            currentDefense: instance.current_defense,
+            maxDefense: instance.max_defense
+          };
+          uniqueCardsMap.set(instanceId, { card, instance });
         }
       }
     });
