@@ -96,36 +96,8 @@ export const useDungeonSync = () => {
     }
   }, [accountId, deviceId, localSession, activeSessions]);
 
-  // Отправляем heartbeat для активной сессии
-  const sendHeartbeat = useCallback(async () => {
-    if (!accountId || !localSession) return;
-
-    const session: ActiveDungeonSession = {
-      ...localSession,
-      last_activity: Date.now(),
-    };
-
-    try {
-      // Обновляем в базе данных
-      await supabase
-        .from('active_dungeon_sessions')
-        .upsert({
-          account_id: accountId,
-          device_id: deviceId,
-          dungeon_type: session.dungeon_type,
-          level: session.level,
-          started_at: session.started_at,
-          last_activity: session.last_activity
-        }, {
-          onConflict: 'account_id,device_id'
-        });
-    } catch (error: any) {
-      // Игнорируем ошибку о существующей активной сессии - это нормально при частых heartbeat
-      if (!error?.message?.includes('Active dungeon session already exists')) {
-        console.error('Error sending heartbeat:', error);
-      }
-    }
-  }, [accountId, deviceId, localSession]);
+  // ❌ REMOVED: Heartbeat через клиент (блокируется RLS)
+  // Сессия создается и обновляется только через Edge Functions
 
   // Проверяем есть ли активные сессии с других устройств
   const hasOtherActiveSessions = useCallback(() => {
@@ -156,15 +128,19 @@ export const useDungeonSync = () => {
       setCurrentClaimKey(null);
     } catch {}
 
-    // Удаляем из базы данных все активные сессии для кошелька
+    // Удаляем сессию через Edge Function (RLS блокирует прямые удаления)
     try {
-      const { error } = await supabase
-        .from('active_dungeon_sessions')
-        .delete()
-        .eq('account_id', targetAccountId);
-      if (error) throw error;
+      const { error } = await supabase.functions.invoke('end-dungeon-session', {
+        body: { 
+          wallet_address: targetAccountId,
+          device_id: deviceId 
+        }
+      });
+      if (error) {
+        console.error('Error ending dungeon session:', error);
+      }
     } catch (error) {
-      console.error('Error ending dungeon session:', error);
+      console.error('Error calling end-dungeon-session:', error);
     }
 
     // Чистим состояние боя в БД (на всякий случай)
@@ -274,15 +250,7 @@ export const useDungeonSync = () => {
               try { window.dispatchEvent(new CustomEvent('battleReset')); } catch {}
             } catch {}
 
-            // Повторно удалим на сервере (на случай гонки с heartbeat), операция идемпотентна
-            try {
-              await supabase
-                .from('active_dungeon_sessions')
-                .delete()
-                .eq('account_id', accountId);
-            } catch (e) {
-              console.warn('Retry delete after DELETE event failed:', e);
-            }
+            // Сессия уже удалена - повторное удаление не требуется
           }
           
           // Обновляем локальное состояние напрямую вместо перезагрузки
@@ -311,15 +279,7 @@ export const useDungeonSync = () => {
     };
   }, [accountId]);
 
-  // Отправляем heartbeat каждые 60 секунд (оптимизация для снижения нагрузки во время боя)
-  useEffect(() => {
-    if (!localSession) return;
-
-    const interval = setInterval(sendHeartbeat, 60000); // Увеличено с 10s до 60s
-    sendHeartbeat(); // Отправляем сразу
-
-    return () => clearInterval(interval);
-  }, [localSession, sendHeartbeat]);
+  // ❌ REMOVED: Heartbeat disabled (RLS blocks client-side updates)
 
   // Очищаем устаревшие сессии
   useEffect(() => {
