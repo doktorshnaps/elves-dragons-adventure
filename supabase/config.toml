@@ -3,6 +3,9 @@ project_id = "oimhwdymghkwxznjarkv"
 [functions.start-dungeon-session]
 verify_jwt = false
 
+[functions.end-dungeon-session]
+verify_jwt = false
+
 [functions.admin-recalculate-card-stats]
 verify_jwt = false
 
