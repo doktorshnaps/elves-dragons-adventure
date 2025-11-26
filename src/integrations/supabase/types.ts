@@ -2701,6 +2701,24 @@ export type Database = {
           wood_production_data: Json
         }[]
       }
+      get_global_card_stats: {
+        Args: { p_card_type: string }
+        Returns: {
+          card_faction: string
+          card_name: string
+          rarity: number
+          total_found: number
+        }[]
+      }
+      get_global_item_stats: {
+        Args: never
+        Returns: {
+          item_name: string
+          item_type: string
+          template_id: number
+          total_found: number
+        }[]
+      }
       get_item_instances_by_wallet: {
         Args: { p_wallet_address: string }
         Returns: {
