@@ -127,9 +127,11 @@ export const DeckSelection = ({
   }, [cardInstances, nftCards]);
   const heroes = useMemo(() => {
     console.log('🎯 Heroes useMemo triggered, sortBy:', heroSortBy);
-    // ФИЛЬТРУЕМ мертвые карты (currentHealth <= 0) из списка доступных героев
+    // ФИЛЬТРУЕМ мертвые карты (currentHealth <= 0) и карты в медпункте/кузнице
     const filtered = localCards.filter(card => 
-      card.type === 'character' && (card.currentHealth ?? card.health) > 0
+      card.type === 'character' && 
+      (card.currentHealth ?? card.health) > 0 &&
+      !card.isInMedicalBay
     );
     console.log('📊 Filtered heroes (alive only):', filtered.length);
     
@@ -174,9 +176,11 @@ export const DeckSelection = ({
   }, [localCards, heroSortBy]);
 
   const dragons = useMemo(() => {
-    // ФИЛЬТРУЕМ мертвые карты (currentHealth <= 0) из списка доступных драконов
+    // ФИЛЬТРУЕМ мертвые карты (currentHealth <= 0) и карты в медпункте/кузнице
     const filtered = localCards.filter(card => 
-      card.type === 'pet' && (card.currentHealth ?? card.health) > 0
+      card.type === 'pet' && 
+      (card.currentHealth ?? card.health) > 0 &&
+      !card.isInMedicalBay
     );
     
     if (dragonSortBy === 'defense') {
