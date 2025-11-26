@@ -1,4 +1,4 @@
-import React, { useState, startTransition, useEffect, useRef, useMemo } from 'react';
+import React, { useState, startTransition, useEffect, useRef, useMemo, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -182,15 +182,11 @@ const TeamBattlePageInner: React.FC<TeamBattlePageProps> = ({
     });
   };
 
-  const handleClaimAndExit = async () => {
-    toast({
-      title: "🚨 Сохранение прогресса",
-      description: "Начинаем сохранение здоровья и брони карт...",
-    });
-    
-    console.log('🚨 [handleClaimAndExit] ========== ФУНКЦИЯ ВЫЗВАНА ==========');
-    console.log('🚨 [handleClaimAndExit] battleState.playerPairs.length:', battleState.playerPairs.length);
-    console.log('🚨 [handleClaimAndExit] cardInstances.length:', cardInstances?.length || 0);
+  // Общая функция для сбора обновлений здоровья/брони карт
+  const collectCardHealthUpdates = useCallback(() => {
+    console.log('🚨 [collectCardHealthUpdates] ========== ФУНКЦИЯ ВЫЗВАНА ==========');
+    console.log('🚨 [collectCardHealthUpdates] battleState.playerPairs.length:', battleState.playerPairs.length);
+    console.log('🚨 [collectCardHealthUpdates] cardInstances.length:', cardInstances?.length || 0);
     
     // Детальное логирование всех ID в cardInstances
     console.log('🔎 [DEBUG] ========== ВСЕ CARD INSTANCES В ПАМЯТИ ==========');
@@ -282,15 +278,26 @@ const TeamBattlePageInner: React.FC<TeamBattlePageProps> = ({
       return updates;
     });
     
-    console.log('💔 [TeamBattlePage] ========== ИТОГОВЫЙ РЕЗУЛЬТАТ ==========');
-    console.log('💔 [TeamBattlePage] Собрано card_health_updates:', cardHealthUpdates.length);
-    console.log('💔 [TeamBattlePage] Детальная структура card_health_updates:');
+    console.log('💔 [collectCardHealthUpdates] ========== ИТОГОВЫЙ РЕЗУЛЬТАТ ==========');
+    console.log('💔 [collectCardHealthUpdates] Собрано card_health_updates:', cardHealthUpdates.length);
+    console.log('💔 [collectCardHealthUpdates] Детальная структура card_health_updates:');
     cardHealthUpdates.forEach((update, idx) => {
       console.log(`  [${idx}] card_instance_id: "${update.card_instance_id}"`);
       console.log(`      current_health: ${update.current_health}`);
       console.log(`      current_defense: ${update.current_defense}`);
     });
-    console.log('💔 [TeamBattlePage] JSON структура для отправки:', JSON.stringify(cardHealthUpdates, null, 2));
+    console.log('💔 [collectCardHealthUpdates] JSON структура для отправки:', JSON.stringify(cardHealthUpdates, null, 2));
+    
+    return cardHealthUpdates;
+  }, [battleState.playerPairs, cardInstances]);
+
+  const handleClaimAndExit = async () => {
+    toast({
+      title: "🚨 Сохранение прогресса",
+      description: "Начинаем сохранение здоровья и брони карт...",
+    });
+    
+    const cardHealthUpdates = collectCardHealthUpdates();
     
     // КРИТИЧЕСКОЕ ИСПРАВЛЕНИЕ: если нет card_instances для сохранения, 
     // все равно продолжаем claim наград (ELL, предметы, опыт)
@@ -327,6 +334,47 @@ const TeamBattlePageInner: React.FC<TeamBattlePageProps> = ({
       });
     }
   };
+
+  // Функция для сдачи - сохраняет здоровье карт БЕЗ наград
+  const handleSurrenderWithSave = useCallback(async () => {
+    toast({
+      title: "🏳️ Сдача",
+      description: "Сохраняем текущее состояние карт...",
+    });
+    
+    const cardHealthUpdates = collectCardHealthUpdates();
+    
+    if (cardHealthUpdates.length === 0) {
+      console.warn('⚠️ Нет card_instances для обновления здоровья при сдаче.');
+      toast({
+        title: "⚠️ Внимание",
+        description: "Не удалось найти карты для сохранения состояния.",
+        variant: "default"
+      });
+      // Все равно выходим
+      handleExitAndReset();
+      return;
+    }
+    
+    // Вызываем claimRewardAndExit с флагом skip rewards (передаем null для claim_key)
+    // Это сохранит только здоровье карт, без начисления наград
+    const success = await claimRewardAndExit(null, cardHealthUpdates, dungeonType, battleState.level);
+    
+    if (success) {
+      toast({
+        title: "✅ Состояние сохранено",
+        description: "Здоровье и броня карт сохранены при сдаче.",
+      });
+    } else {
+      toast({
+        title: "⚠️ Ошибка сохранения",
+        description: "Не удалось сохранить состояние карт, но выход выполнен.",
+        variant: "destructive"
+      });
+    }
+    
+    handleExitAndReset();
+  }, [collectCardHealthUpdates, claimRewardAndExit, dungeonType, battleState.level, handleExitAndReset]);
 
   const handleContinue = () => {
     continueWithRisk(); // Сохраняет накопленные награды в accumulatedReward
@@ -638,7 +686,18 @@ const TeamBattlePageInner: React.FC<TeamBattlePageProps> = ({
         
       </div>
       
-      <TeamBattleArena playerPairs={battleState.playerPairs} opponents={battleState.opponents} attackOrder={attackOrder} isPlayerTurn={isPlayerTurn} onAttack={executePlayerAttack} onAbilityUse={executeAbilityUse} onEnemyAttack={executeEnemyAttack} level={battleState.level} lastRoll={lastRoll} />
+      <TeamBattleArena 
+        playerPairs={battleState.playerPairs} 
+        opponents={battleState.opponents} 
+        attackOrder={attackOrder} 
+        isPlayerTurn={isPlayerTurn} 
+        onAttack={executePlayerAttack} 
+        onAbilityUse={executeAbilityUse} 
+        onEnemyAttack={executeEnemyAttack} 
+        level={battleState.level} 
+        lastRoll={lastRoll}
+        onSurrenderWithSave={handleSurrenderWithSave}
+      />
       
     </>;
 };

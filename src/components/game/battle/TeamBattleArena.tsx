@@ -28,6 +28,7 @@ interface TeamBattleArenaProps {
   onEnemyAttack: () => void;
   level: number;
   lastRoll?: { attackerRoll: number; defenderRoll: number; source: 'player' | 'enemy'; damage: number; isBlocked: boolean; isCritical?: boolean; level: number } | null;
+  onSurrenderWithSave?: () => Promise<void>;
 }
 export const TeamBattleArena: React.FC<TeamBattleArenaProps> = ({
   playerPairs,
@@ -38,7 +39,8 @@ export const TeamBattleArena: React.FC<TeamBattleArenaProps> = ({
   onAbilityUse,
   onEnemyAttack,
   level,
-  lastRoll
+  lastRoll,
+  onSurrenderWithSave
 }) => {
   const { language } = useLanguage();
   const navigate = useNavigate();
@@ -222,14 +224,20 @@ export const TeamBattleArena: React.FC<TeamBattleArenaProps> = ({
     navigate('/menu');
   };
   const handleSurrender = async () => {
-    // Завершаем сессию в БД
-    await endDungeonSession();
-    
-    // Сброс состояния подземелья
-    localStorage.removeItem('battleState');
-    localStorage.removeItem('teamBattleState');
-    localStorage.removeItem('activeBattleInProgress');
-    navigate('/dungeons');
+    // КРИТИЧНО: Сначала сохраняем состояние карт (здоровье/броню) перед выходом
+    if (onSurrenderWithSave) {
+      console.log('🏳️ [handleSurrender] Вызываем onSurrenderWithSave для сохранения здоровья карт');
+      await onSurrenderWithSave();
+    } else {
+      console.warn('⚠️ [handleSurrender] onSurrenderWithSave не передан, состояние карт НЕ будет сохранено!');
+      
+      // Fallback: старая логика без сохранения состояния
+      await endDungeonSession();
+      localStorage.removeItem('battleState');
+      localStorage.removeItem('teamBattleState');
+      localStorage.removeItem('activeBattleInProgress');
+      navigate('/dungeons');
+    }
   };
   const handleAutoBattle = () => {
     if (autoBattle) {
