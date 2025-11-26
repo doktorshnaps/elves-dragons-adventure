@@ -116,12 +116,28 @@ export const useTeamSelection = () => {
         return pair;
       });
 
-    console.log('✅ [useTeamSelection] selectedPairs filtered:', {
-      filteredLength: filtered.length,
-      filteredDragons: filtered.filter(p => p.dragon).length
+    // КРИТИЧНО: Удаляем дубликаты драконов - каждый дракон может быть назначен только одному герою
+    // Оставляем дракона только в первой паре, где он встречается
+    const seenDragonIds = new Set<string>();
+    const deduplicatedFiltered = filtered.map(pair => {
+      if (pair.dragon) {
+        const dragonId = pair.dragon.id;
+        if (seenDragonIds.has(dragonId)) {
+          console.warn(`🔄 [useTeamSelection] Removing duplicate dragon "${pair.dragon.name}" from pair with hero "${pair.hero?.name}"`);
+          return { ...pair, dragon: undefined };
+        }
+        seenDragonIds.add(dragonId);
+      }
+      return pair;
     });
 
-    return filtered;
+    console.log('✅ [useTeamSelection] selectedPairs filtered:', {
+      filteredLength: deduplicatedFiltered.length,
+      filteredDragons: deduplicatedFiltered.filter(p => p.dragon).length,
+      removedDuplicates: filtered.filter(p => p.dragon).length - deduplicatedFiltered.filter(p => p.dragon).length
+    });
+
+    return deduplicatedFiltered;
   }, [selectedTeamWithHealth, gameData.selectedTeam]);
 
   // Cleanup: remove non-existing cards from selected team in DB
