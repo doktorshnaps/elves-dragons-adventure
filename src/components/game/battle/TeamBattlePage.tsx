@@ -355,8 +355,11 @@ const TeamBattlePageInner: React.FC<TeamBattlePageProps> = ({
       }
     };
 
-    // Проверяем сразу
-    checkSession();
+    // КРИТИЧНО: Задержка 500ms перед первой проверкой, чтобы дать время БД записать новую сессию
+    // Это предотвращает ложное срабатывание при только что созданной сессии
+    const initialCheckTimer = setTimeout(() => {
+      checkSession();
+    }, 500);
 
     // Подписываемся на изменения в БД (Real-time подписка более эффективна чем polling)
     const channel = supabase
@@ -383,6 +386,7 @@ const TeamBattlePageInner: React.FC<TeamBattlePageProps> = ({
     // Это снижает нагрузку с 16 запросов select:active_dungeon_sessions до 0
 
     return () => {
+      clearTimeout(initialCheckTimer);
       supabase.removeChannel(channel);
     };
   }, [accountId, deviceId, battleStarted]);
