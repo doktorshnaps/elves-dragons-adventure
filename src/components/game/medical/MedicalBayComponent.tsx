@@ -89,29 +89,32 @@ export const MedicalBayComponent = () => {
     // Создаем мапу для дедупликации по instanceId
     const uniqueCardsMap = new Map();
     
-    // Добавляем карты из cardsWithHealth
-    cardsWithHealth.forEach(card => {
-      const instance = cardInstances.find(ci => ci.card_template_id === card.id);
-      const instanceId = instance?.id || card.id;
-      if (!uniqueCardsMap.has(instanceId)) {
-        uniqueCardsMap.set(instanceId, { card, instance });
-      }
-    });
-    
-    // Добавляем карты из команды (только если еще нет)
-    selectedTeamWithHealth.forEach(pair => {
-      if (pair.hero) {
-        const instance = cardInstances.find(ci => ci.card_template_id === pair.hero.id);
-        const instanceId = instance?.id || pair.hero.id;
+    // КРИТИЧНО: Получаем карты НАПРЯМУЮ из cardInstances (источник правды!)
+    // Не используем cardsWithHealth или selectedTeamWithHealth - они могут содержать старые данные
+    cardInstances.forEach(instance => {
+      // Только герои и драконы
+      if (instance.card_type === 'hero' || instance.card_type === 'dragon') {
+        const instanceId = instance.id;
         if (!uniqueCardsMap.has(instanceId)) {
-          uniqueCardsMap.set(instanceId, { card: pair.hero, instance });
-        }
-      }
-      if (pair.dragon) {
-        const instance = cardInstances.find(ci => ci.card_template_id === pair.dragon.id);
-        const instanceId = instance?.id || pair.dragon.id;
-        if (!uniqueCardsMap.has(instanceId)) {
-          uniqueCardsMap.set(instanceId, { card: pair.dragon, instance });
+          // Строим card объект из instance.card_data
+          const cardData = instance.card_data as any;
+          const card = {
+            id: instance.id,
+            instanceId: instance.id,
+            name: cardData.name,
+            type: cardData.type,
+            faction: cardData.faction,
+            rarity: cardData.rarity,
+            image: cardData.image,
+            power: cardData.power,
+            defense: cardData.defense,
+            health: cardData.health,
+            magic: cardData.magic,
+            currentHealth: instance.current_health,
+            currentDefense: instance.current_defense,
+            maxDefense: instance.max_defense
+          };
+          uniqueCardsMap.set(instanceId, { card, instance });
         }
       }
     });
