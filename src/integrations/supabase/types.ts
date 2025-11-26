@@ -2658,6 +2658,10 @@ export type Database = {
           isSetofReturn: true
         }
       }
+      get_card_instances_by_wallet_optimized: {
+        Args: { p_wallet_address: string }
+        Returns: Json
+      }
       get_current_user_wallet: { Args: never; Returns: string }
       get_dungeon_item_drops: {
         Args: { p_dungeon_level: number; p_dungeon_number: number }
