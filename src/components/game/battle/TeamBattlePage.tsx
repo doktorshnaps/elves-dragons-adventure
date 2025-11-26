@@ -319,7 +319,13 @@ const TeamBattlePageInner: React.FC<TeamBattlePageProps> = ({
     }
     
     // Продолжаем claim даже если cardHealthUpdates пустой - награды все равно нужно начислить
-    const success = await claimRewardAndExit(getCurrentClaimKey(), cardHealthUpdates, dungeonType, battleState.level);
+    const success = await claimRewardAndExit(
+      getCurrentClaimKey(), 
+      cardHealthUpdates, 
+      dungeonType, 
+      battleState.level,
+      monstersKilled // Передаем список убитых монстров для server-side расчета
+    );
     if (success) {
       toast({
         title: "✅ Успешно",
@@ -358,7 +364,7 @@ const TeamBattlePageInner: React.FC<TeamBattlePageProps> = ({
     
     // Вызываем claimRewardAndExit с флагом skip rewards (передаем null для claim_key)
     // Это сохранит только здоровье карт, без начисления наград
-    const success = await claimRewardAndExit(null, cardHealthUpdates, dungeonType, battleState.level);
+    const success = await claimRewardAndExit(null, cardHealthUpdates, dungeonType, battleState.level, []);
     
     if (success) {
       toast({

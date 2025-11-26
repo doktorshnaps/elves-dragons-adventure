@@ -19,6 +19,10 @@ export interface BattleStats {
     card_template_id: string;
     kills: number;
   }>;
+  killedMonsters: Array<{
+    monster_name: string;
+    level: number;
+  }>;
 }
 
 export interface LocalBattleState {
@@ -34,15 +38,16 @@ export const useBattleState = (dungeonType: string) => {
     playerPairs: [],
     opponents: [],
     currentLevel: 1,
-    stats: {
-      monstersKilled: 0,
-      damageDealt: 0,
-      damageTaken: 0,
-      experienceGained: 0,
-      ellEarned: 0,
-      lootedItems: [],
-      cardKills: []
-    },
+      stats: {
+        monstersKilled: 0,
+        damageDealt: 0,
+        damageTaken: 0,
+        experienceGained: 0,
+        ellEarned: 0,
+        lootedItems: [],
+        cardKills: [],
+        killedMonsters: []
+      },
     isInBattle: false
   });
 
@@ -55,15 +60,16 @@ export const useBattleState = (dungeonType: string) => {
       playerPairs: pairs,
       opponents,
       currentLevel: level,
-      stats: {
-        monstersKilled: 0,
-        damageDealt: 0,
-        damageTaken: 0,
-        experienceGained: 0,
-        ellEarned: 0,
-        lootedItems: [],
-        cardKills: []
-      },
+    stats: {
+      monstersKilled: 0,
+      damageDealt: 0,
+      damageTaken: 0,
+      experienceGained: 0,
+      ellEarned: 0,
+      lootedItems: [],
+      cardKills: [],
+      killedMonsters: []
+    },
       isInBattle: true
     });
   }, []);
@@ -113,7 +119,9 @@ export const useBattleState = (dungeonType: string) => {
     cardTemplateId: string,
     experience: number,
     ellReward: number,
-    loot: Array<{ template_id: number; item_id: string; name: string; type: string; quantity: number }>
+    loot: Array<{ template_id: number; item_id: string; name: string; type: string; quantity: number }>,
+    monsterName?: string,
+    monsterLevel?: number
   ) => {
     setBattleState(prev => {
       const existingKill = prev.stats.cardKills.find(k => k.card_template_id === cardTemplateId);
@@ -125,6 +133,11 @@ export const useBattleState = (dungeonType: string) => {
           )
         : [...prev.stats.cardKills, { card_template_id: cardTemplateId, kills: 1 }];
 
+      // Добавляем информацию об убитом монстре для server-side расчета
+      const killedMonsterEntry = monsterName && monsterLevel 
+        ? { monster_name: monsterName, level: monsterLevel }
+        : null;
+
       return {
         ...prev,
         stats: {
@@ -133,7 +146,10 @@ export const useBattleState = (dungeonType: string) => {
           experienceGained: prev.stats.experienceGained + experience,
           ellEarned: prev.stats.ellEarned + ellReward,
           lootedItems: [...prev.stats.lootedItems, ...loot],
-          cardKills: updatedCardKills
+          cardKills: updatedCardKills,
+          killedMonsters: killedMonsterEntry 
+            ? [...prev.stats.killedMonsters, killedMonsterEntry]
+            : prev.stats.killedMonsters
         }
       };
     });

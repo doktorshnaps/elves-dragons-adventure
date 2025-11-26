@@ -136,7 +136,7 @@ export const useDungeonRewards = () => {
     // Если поражение - сбрасываем все накопленные награды
     if (isDefeat) {
       console.log(`❌ ПОРАЖЕНИЕ! Сброс всех накопленных наград`);
-      isDefeatedRef.current = true; // Устанавливаем флаг поражения
+      isDefeatedRef.current = true;
       setAccumulatedReward(null);
       setPendingReward(null);
       lastProcessedLevelRef.current = -1;
@@ -149,64 +149,41 @@ export const useDungeonRewards = () => {
       return;
     }
 
-    const levelReward = await calculateReward(monsters);
-    console.log(`💰 Награда за текущий уровень ${currentLevel}:`, levelReward);
+    // 🔒 КРИТИЧЕСКОЕ ИЗМЕНЕНИЕ: Больше не рассчитываем награды на клиенте
+    // Просто сохраняем список убитых монстров для отправки на сервер при claim
+    console.log(`💰 Сохранение информации об убитых монстрах для server-side расчета`);
     
-    // Используем функциональное обновление для правильного чтения текущего значения
-    setAccumulatedReward(prevAccumulated => {
-      console.log(`📊 Предыдущая накопленная награда:`, prevAccumulated);
-      
-      // Суммируем с накопленной наградой
-      const totalAccumulated: DungeonReward = prevAccumulated ? {
-        totalELL: prevAccumulated.totalELL + levelReward.totalELL,
-        monstersKilled: prevAccumulated.monstersKilled + levelReward.monstersKilled,
-        completionBonus: 0,
-        breakdown: {
-          level1to3: {
-            count: prevAccumulated.breakdown.level1to3.count + levelReward.breakdown.level1to3.count,
-            reward: prevAccumulated.breakdown.level1to3.reward + levelReward.breakdown.level1to3.reward
-          },
-          level4to7: {
-            count: prevAccumulated.breakdown.level4to7.count + levelReward.breakdown.level4to7.count,
-            reward: prevAccumulated.breakdown.level4to7.reward + levelReward.breakdown.level4to7.reward
-          },
-          level8to10: {
-            count: prevAccumulated.breakdown.level8to10.count + levelReward.breakdown.level8to10.count,
-            reward: prevAccumulated.breakdown.level8to10.reward + levelReward.breakdown.level8to10.reward
-          }
-        },
-        isFullCompletion: false,
-        lootedItems: [...(prevAccumulated.lootedItems || []), ...(levelReward.lootedItems || [])]
-      } : levelReward;
+    // Создаем "фиктивную" награду для UI, чтобы показать пользователю прогресс
+    // Реальные награды будут рассчитаны сервером
+    const displayReward: DungeonReward = {
+      totalELL: 0, // Будет рассчитано сервером
+      monstersKilled: monsters.length,
+      completionBonus: 0,
+      breakdown: {
+        level1to3: { count: 0, reward: 0 },
+        level4to7: { count: 0, reward: 0 },
+        level8to10: { count: 0, reward: 0 }
+      },
+      isFullCompletion: isFullCompletion,
+      lootedItems: [] // Будет рассчитано сервером
+    };
 
-      totalAccumulated.isFullCompletion = isFullCompletion;
+    console.log(`✅ ИТОГОВАЯ информация для уровня ${currentLevel}:`, displayReward);
+    console.log(`📈 Всего монстров убито: ${displayReward.monstersKilled}`);
+    console.log(`🏁 ============================================================\n`);
 
-      // Если полное завершение подземелья (дошли до 10 уровня), добавляем бонус
-      if (isFullCompletion) {
-        totalAccumulated.completionBonus = Math.floor(totalAccumulated.totalELL * 0.5);
-        totalAccumulated.totalELL += totalAccumulated.completionBonus;
-        console.log(`🎉 ПОЛНОЕ ЗАВЕРШЕНИЕ! Бонус +50%: ${totalAccumulated.completionBonus} ELL`);
-      }
-
-      console.log(`✅ ИТОГОВАЯ накопленная награда ПОСЛЕ обработки уровня ${currentLevel}:`, totalAccumulated);
-      console.log(`📈 Всего ELL накоплено: ${totalAccumulated.totalELL}`);
-      console.log(`📈 Всего монстров убито: ${totalAccumulated.monstersKilled}`);
-      console.log(`📈 Всего предметов: ${totalAccumulated.lootedItems.length}`);
-      console.log(`🏁 ============================================================\n`);
-
-      setPendingReward(totalAccumulated);
-      return totalAccumulated;
-    });
+    setPendingReward(displayReward);
+    setAccumulatedReward(displayReward);
     
     isProcessingRef.current = false;
-  }, [calculateReward, toast]);
+  }, [toast]);
 
-  // 🔒 КРИТИЧЕСКОЕ ИЗМЕНЕНИЕ: claimKey приходит из useDungeonSync, не генерируется локально!
   const claimRewardAndExit = useCallback(async (
-    claimKey: string | null, // Получаем из useDungeonSync.getCurrentClaimKey()
+    claimKey: string | null,
     cardHealthUpdates: Array<{ card_instance_id: string; current_health: number; current_defense: number }> = [],
     dungeonType: string,
-    currentLevel: number
+    currentLevel: number,
+    monsters: MonsterKill[] = [] // Добавлен параметр для killed_monsters
   ) => {
     console.log('🚨 [claimRewardAndExit] ========== ФУНКЦИЯ ВЫЗВАНА ==========');
     console.log('🚨 claim_key:', claimKey?.substring(0, 8));
@@ -306,23 +283,23 @@ export const useDungeonRewards = () => {
       console.log(`💰 Начисляем ${rewardAmount} ELL`);
       console.log(`🎒 Начисляем ${lootedItems.length} предметов в item_instances`);
       
-      // 🔒 КРИТИЧНО: Отправляем только claim_key, НЕ wallet_address!
+      // 🔒 КРИТИЧЕСКОЕ ИЗМЕНЕНИЕ: Отправляем только минимум данных
+      // Сервер сам рассчитает награды на основе killed_monsters
+      const killed_monsters = monsters.map(m => ({
+        monster_name: m.name,
+        level: m.level
+      }));
+
       console.log('💔 [useDungeonRewards] ========== ОТПРАВКА В EDGE FUNCTION ==========');
       console.log('💔 [useDungeonRewards] claim_key:', claimKey.substring(0, 8));
+      console.log('💔 [useDungeonRewards] killed_monsters:', killed_monsters.length);
       console.log('💔 [useDungeonRewards] card_health_updates:', cardHealthUpdates.length);
       
       const edgeFunctionPayload = {
-        claim_key: claimKey, // Только claim_key!
+        claim_key: claimKey,
         dungeon_type: dungeonType,
         level: currentLevel,
-        ell_reward: rewardAmount,
-        experience_reward: 0,
-        items: lootedItems.map(it => ({
-          template_id: (it as any).template_id,
-          item_id: (it as any).item_id,
-          name: it.name,
-          type: it.type
-        })),
+        killed_monsters, // Список убитых монстров для server-side расчета
         card_kills: [],
         card_health_updates: cardHealthUpdates
       };
@@ -347,6 +324,11 @@ export const useDungeonRewards = () => {
         
         console.log('✅ Награды успешно начислены:', battleData);
         
+        // Получаем реальные награды с сервера для отображения toast
+        const serverRewards = battleData?.rewards || {};
+        const actualEllReward = serverRewards.ell_reward || 0;
+        const actualItemsCount = serverRewards.items || 0;
+        
         // Очищаем claim_key после успешного клейма
         localStorage.removeItem('currentClaimKey');
         
@@ -359,7 +341,7 @@ export const useDungeonRewards = () => {
         
         toast({
           title: "🎉 Награды получены!",
-          description: `+${rewardAmount} ELL, ${lootedItems.length} предметов`
+          description: `+${actualEllReward} ELL, ${actualItemsCount} предметов`
         });
         
       } catch (battleErr) {
