@@ -231,7 +231,11 @@ export const useMedicalBay = () => {
         description: "Карта помещена в медпункт и удалена из команды",
       });
 
-      // Данные обновятся автоматически через Real-time подписки
+      // Обновляем список записей медпункта
+      await loadMedicalBayEntries();
+      
+      // Инвалидируем кэш cardInstances для обновления UI
+      await queryClient.invalidateQueries({ queryKey: ['cardInstances', accountId] });
       
       return data;
     } catch (error: any) {
@@ -244,7 +248,7 @@ export const useMedicalBay = () => {
     } finally {
       setLoading(false);
     }
-  }, [accountId, toast, loadMedicalBayEntries, gameData.selectedTeam, updateGameData]);
+  }, [accountId, toast, loadMedicalBayEntries, gameData.selectedTeam, updateGameData, queryClient]);
 
   const removeCardFromMedicalBay = useCallback(async (cardInstanceId: string) => {
     if (!accountId) return;
@@ -280,7 +284,8 @@ export const useMedicalBay = () => {
         description: result.was_completed ? 'Здоровье восстановлено' : 'Лечение отменено',
       });
 
-      // Данные обновятся автоматически через Real-time подписки
+      // Обновляем список записей медпункта
+      await loadMedicalBayEntries();
     } catch (error: any) {
       console.error('Error removing card from medical bay:', error);
       toast({
@@ -291,7 +296,7 @@ export const useMedicalBay = () => {
     } finally {
       setLoading(false);
     }
-  }, [accountId, toast]);
+  }, [accountId, toast, loadMedicalBayEntries, queryClient]);
 
   const stopHealingWithoutRecovery = useCallback(async (cardInstanceId: string) => {
     if (!accountId) return;
@@ -319,7 +324,11 @@ export const useMedicalBay = () => {
         description: "Карта удалена из медпункта без восстановления здоровья",
       });
 
-      // Данные обновятся автоматически через Real-time подписки
+      // Обновляем список записей медпункта
+      await loadMedicalBayEntries();
+      
+      // Инвалидируем кэш cardInstances
+      await queryClient.invalidateQueries({ queryKey: ['cardInstances', accountId] });
     } catch (error: any) {
       console.error('Error stopping healing:', error);
       toast({
@@ -330,7 +339,7 @@ export const useMedicalBay = () => {
     } finally {
       setLoading(false);
     }
-  }, [accountId, toast]);
+  }, [accountId, toast, loadMedicalBayEntries, queryClient]);
 
   const processMedicalBayHealing = useCallback(async () => {
     try {

@@ -245,7 +245,11 @@ export const useForgeBay = () => {
         description: "Ремонт брони начался",
       });
 
-      // Данные обновятся автоматически через Real-time подписки
+      // Обновляем список записей кузницы
+      await loadForgeBayEntries();
+      
+      // Инвалидируем кэш cardInstances для обновления UI
+      await queryClient.invalidateQueries({ queryKey: ['cardInstances', accountId] });
     } catch (error: any) {
       console.error('⚒️ Error placing card in forge bay:', error);
       toast({
@@ -256,7 +260,7 @@ export const useForgeBay = () => {
     } finally {
       setLoading(false);
     }
-  }, [accountId, gameData, toast, loadForgeBayEntries]);
+  }, [accountId, gameData, toast, loadForgeBayEntries, queryClient]);
 
   const removeCardFromForgeBay = useCallback(async (cardInstanceId: string) => {
     if (!accountId) return;
@@ -292,7 +296,8 @@ export const useForgeBay = () => {
         description: result.was_completed ? "Броня восстановлена" : "Ремонт отменен",
       });
 
-      // Данные обновятся автоматически через Real-time подписки
+      // Обновляем список записей кузницы
+      await loadForgeBayEntries();
     } catch (error: any) {
       console.error('Error removing card from forge bay:', error);
       toast({
@@ -303,7 +308,7 @@ export const useForgeBay = () => {
     } finally {
       setLoading(false);
     }
-  }, [accountId, toast, loadForgeBayEntries]);
+  }, [accountId, toast, loadForgeBayEntries, queryClient]);
 
   const stopRepairWithoutRecovery = useCallback(async (cardInstanceId: string) => {
     if (!accountId) return;
@@ -332,7 +337,11 @@ export const useForgeBay = () => {
         description: "Карта удалена из кузницы без восстановления брони",
       });
 
-      // Данные обновятся автоматически через Real-time подписки
+      // Обновляем список записей кузницы
+      await loadForgeBayEntries();
+      
+      // Инвалидируем кэш cardInstances
+      await queryClient.invalidateQueries({ queryKey: ['cardInstances', accountId] });
     } catch (error: any) {
       console.error('Error stopping repair:', error);
       toast({
@@ -343,7 +352,7 @@ export const useForgeBay = () => {
     } finally {
       setLoading(false);
     }
-  }, [accountId, toast, loadForgeBayEntries]);
+  }, [accountId, toast, loadForgeBayEntries, queryClient]);
 
   const processForgeBayRepair = useCallback(async () => {
     try {
