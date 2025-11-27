@@ -57,7 +57,7 @@ export const DungeonRewardModal: React.FC<DungeonRewardModalProps> = ({
           <Card className="border-primary/20 bg-background/50">
             <CardContent className="p-4 text-center space-y-2">
               <div className="text-xs text-muted-foreground">
-                Накопленная награда
+                Награда за прохождение
               </div>
               <div className="flex items-center justify-center gap-2">
                 <Coins className="w-8 h-8 text-yellow-500" />
@@ -165,8 +165,8 @@ export const DungeonRewardModal: React.FC<DungeonRewardModalProps> = ({
           })()}
 
           {canContinue ? <div className="space-y-3">
-              <div className="p-3 border border-yellow-500/30 text-sm text-yellow-200 bg-red-900 rounded-sm">
-                ⚠️ При смерти команды или сдаче вся накопленная награда будет потеряна!
+              <div className="p-3 border border-blue-500/30 text-sm text-blue-200 bg-blue-900/30 rounded-sm">
+                ℹ️ Все награды будут начислены после нажатия кнопки "Забрать и выйти"
               </div>
               
               <div className="grid grid-cols-2 gap-3">
