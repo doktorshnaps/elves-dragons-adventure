@@ -47,6 +47,12 @@ export const useBattleRewards = (accountId: string | null) => {
         cardKills: stats.cardKills.length
       });
 
+      console.log('📞 [useBattleRewards] Calling claimBattleRewardsUtil with data:', {
+        wallet_address: accountId,
+        claim_key: claimKey,
+        items_count: stats.lootedItems.length
+      });
+
       // 🔒 SECURITY: Use utility function with challenge/nonce flow
       const result = await claimBattleRewardsUtil({
         wallet_address: accountId!,
@@ -65,6 +71,8 @@ export const useBattleRewards = (accountId: string | null) => {
         card_kills: stats.cardKills,
         card_health_updates: cardHealthUpdates
       });
+
+      console.log('📬 [useBattleRewards] Received result from utility:', result);
 
       if (!result.success) {
         console.error('❌ [useBattleRewards] Claim failed:', result.message);

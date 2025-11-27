@@ -60,17 +60,22 @@ export const claimBattleRewards = async (
     card_updates: battleReward.card_health_updates.length
   });
 
+  // Import Supabase client at the top
+  const { supabase } = await import('@/integrations/supabase/client');
+
   // Step 1: Request challenge/nonce from server
   console.log('🔐 [claimBattleRewards] Requesting claim challenge...');
   
   try {
     // Use Supabase client to invoke edge function
-    const { data: challengeData, error: challengeError } = await (await import('@/integrations/supabase/client')).supabase.functions.invoke('get-claim-challenge', {
+    const { data: challengeData, error: challengeError } = await supabase.functions.invoke('get-claim-challenge', {
       body: {
         wallet_address: battleReward.wallet_address,
         session_id: battleReward.claim_key
       }
     });
+
+    console.log('🔍 [claimBattleRewards] Challenge response:', { challengeData, challengeError });
 
     if (challengeError) {
       console.error('❌ [claimBattleRewards] Challenge request failed:', challengeError);
@@ -92,13 +97,17 @@ export const claimBattleRewards = async (
     // Step 2: Claim rewards with nonce
     for (let attempt = 1; attempt <= maxRetries; attempt++) {
       try {
+        console.log(`🔄 [claimBattleRewards] Attempt ${attempt} to claim with nonce`);
+        
         // Use Supabase client to invoke edge function
-        const { data: result, error: claimError } = await (await import('@/integrations/supabase/client')).supabase.functions.invoke('claim-battle-rewards', {
+        const { data: result, error: claimError } = await supabase.functions.invoke('claim-battle-rewards', {
           body: {
             ...battleReward,
             nonce: nonce
           }
         });
+
+        console.log('🔍 [claimBattleRewards] Claim response:', { result, claimError });
 
         if (claimError) {
           console.error(`❌ [claimBattleRewards] Attempt ${attempt} failed:`, claimError);
