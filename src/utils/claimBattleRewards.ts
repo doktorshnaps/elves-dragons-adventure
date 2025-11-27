@@ -14,6 +14,10 @@ interface BattleReward {
     type: string;
     quantity?: number;
   }>;
+  killed_monsters: Array<{
+    monster_name: string;
+    level: number;
+  }>;
   card_kills: Array<{
     card_template_id: string;
     kills: number;
@@ -56,6 +60,7 @@ export const claimBattleRewards = async (
     ell: battleReward.ell_reward,
     exp: battleReward.experience_reward,
     items: battleReward.items.length,
+    killed_monsters: battleReward.killed_monsters.length,
     card_kills: battleReward.card_kills.length,
     card_updates: battleReward.card_health_updates.length
   });
