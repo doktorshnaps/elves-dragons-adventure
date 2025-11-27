@@ -56,24 +56,9 @@ export const DungeonRewardModal: React.FC<DungeonRewardModalProps> = ({
           {/* Общая награда */}
           <Card className="border-primary/20 bg-background/50">
             <CardContent className="p-4 text-center space-y-2">
-              <div className="text-xs text-muted-foreground">
-                Награда за прохождение
-              </div>
-              <div className="flex items-center justify-center gap-2">
-                <Coins className="w-8 h-8 text-yellow-500" />
-                <span className="text-3xl font-bold text-primary">
-                  {reward.totalELL}
-                </span>
-                <span className="text-lg text-muted-foreground">ELL</span>
-              </div>
               <div className="text-sm text-muted-foreground">
                 Убито монстров: <span className="font-bold text-foreground">{reward.monstersKilled}</span>
               </div>
-              {reward.lootedItems && reward.lootedItems.length > 0 && (
-                <div className="text-sm text-muted-foreground">
-                  Предметов добыто: <span className="font-bold text-foreground">{reward.lootedItems.length}</span>
-                </div>
-              )}
               {reward.isFullCompletion && <Badge variant="secondary" className="bg-yellow-500/20 text-yellow-300">
                   Полное завершение подземелья!
                 </Badge>}
