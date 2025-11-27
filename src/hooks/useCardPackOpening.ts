@@ -5,11 +5,13 @@ import { useGameData } from '@/hooks/useGameData';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { useWalletContext } from '@/contexts/WalletConnectContext';
+import { useQueryClient } from '@tanstack/react-query';
 
 export const useCardPackOpening = () => {
   const { gameData, loadGameData } = useGameData();
   const { toast } = useToast();
   const { accountId } = useWalletContext();
+  const queryClient = useQueryClient();
   const [isOpening, setIsOpening] = useState(false);
   const [revealedCard, setRevealedCard] = useState<CardType | null>(null);
   const [showRevealModal, setShowRevealModal] = useState(false);
@@ -66,13 +68,13 @@ export const useCardPackOpening = () => {
 
       console.log(`📦 Received ${newCards.length} cards from edge function`);
 
-      // Инвалидируем кеш item_instances для немедленного обновления UI
-      const event = new CustomEvent('itemInstancesUpdate');
-      window.dispatchEvent(event);
+      // КРИТИЧНО: Инвалидируем кеш React Query для немедленного обновления UI
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ['itemInstances', accountId] }),
+        queryClient.invalidateQueries({ queryKey: ['cardInstances', accountId] })
+      ]);
       
-      // Инвалидируем кеш card_instances для новых карт
-      const cardEvent = new CustomEvent('cardInstancesUpdate');
-      window.dispatchEvent(cardEvent);
+      console.log('✅ Cache invalidated for itemInstances and cardInstances');
 
       // Если получены карты, показываем их по очереди
       if (newCards.length > 0) {
