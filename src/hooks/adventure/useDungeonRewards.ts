@@ -9,6 +9,7 @@ import { useAddItemToInstances } from '@/hooks/useAddItemToInstances';
 import { supabase } from '@/integrations/supabase/client';
 import { useWalletContext } from '@/contexts/WalletConnectContext';
 import { useQueryClient } from '@tanstack/react-query';
+import { claimBattleRewards as claimBattleRewardsUtil } from '@/utils/claimBattleRewards';
 
 // Global idempotency for claim route (survives component remounts)
 let globalClaimLock = false;
@@ -308,26 +309,35 @@ export const useDungeonRewards = () => {
       console.log(JSON.stringify(edgeFunctionPayload, null, 2));
       
       try {
-        const { data: battleData, error: battleError } = await supabase.functions.invoke('claim-battle-rewards', {
-          body: edgeFunctionPayload
+        // 🔒 SECURITY: Use utility function with challenge/nonce flow
+        const result = await claimBattleRewardsUtil({
+          wallet_address: accountId!,
+          claim_key: claimKey,
+          dungeon_type: dungeonType,
+          level: currentLevel,
+          ell_reward: 0, // Server will calculate
+          experience_reward: 0, // Server will calculate
+          items: [], // Server will calculate from killed_monsters
+          card_kills: [],
+          card_health_updates: cardHealthUpdates
         });
         
-        if (battleError) {
-          console.error('❌ Ошибка claim-battle-rewards:', battleError);
+        if (!result.success) {
+          console.error('❌ Ошибка claim-battle-rewards:', result.message);
           toast({
             title: "Ошибка",
-            description: "Не удалось начислить награды",
+            description: result.message || "Не удалось начислить награды",
             variant: "destructive"
           });
           return false;
         }
         
-        console.log('✅ Награды успешно начислены:', battleData);
+        console.log('✅ Награды успешно начислены:', result.data);
         
         // Получаем реальные награды с сервера для отображения toast
-        const serverRewards = battleData?.rewards || {};
+        const serverRewards = result.data || {};
         const actualEllReward = serverRewards.ell_reward || 0;
-        const actualItemsCount = serverRewards.items || 0;
+        const actualItemsCount = serverRewards.items?.length || 0;
         
         // Очищаем claim_key после успешного клейма
         localStorage.removeItem('currentClaimKey');
