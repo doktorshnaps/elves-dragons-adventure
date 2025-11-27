@@ -68,6 +68,7 @@ export const useBattleRewards = (accountId: string | null) => {
           type: item.type,
           quantity: item.quantity
         })),
+        killed_monsters: stats.killedMonsters || [], // Pass killed monsters for server-side validation
         card_kills: stats.cardKills,
         card_health_updates: cardHealthUpdates
       });

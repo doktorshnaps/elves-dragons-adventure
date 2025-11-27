@@ -318,6 +318,7 @@ export const useDungeonRewards = () => {
           ell_reward: 0, // Server will calculate
           experience_reward: 0, // Server will calculate
           items: [], // Server will calculate from killed_monsters
+          killed_monsters, // Pass killed monsters for server-side calculation
           card_kills: [],
           card_health_updates: cardHealthUpdates
         });
