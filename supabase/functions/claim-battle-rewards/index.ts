@@ -14,8 +14,10 @@ const KilledMonsterSchema = z.object({
 
 // 🔒 КРИТИЧЕСКОЕ ИЗМЕНЕНИЕ: Клиент отправляет только минимум данных,
 // сервер рассчитывает все награды сам
+// ENHANCED SECURITY: Добавлен nonce для challenge-response pattern
 const ClaimBodySchema = z.object({
   claim_key: z.string().uuid(),
+  nonce: z.string().min(1), // Nonce для валидации
   dungeon_type: z.string(),
   level: z.number().min(1),
   killed_monsters: z.array(KilledMonsterSchema), // Список убитых монстров для расчета дропа
@@ -220,8 +222,90 @@ Deno.serve(async (req) => {
     const claimBody: ClaimBody = parseResult.data;
     const supabase = getSupabaseServiceClient();
 
-    // 🔒 КРИТИЧЕСКАЯ ПРОВЕРКА: Извлекаем wallet из сессии БД
-    console.log('🔍 Looking up session by claim_key:', claimBody.claim_key);
+    // ============ SECURITY LAYER 1: NONCE VALIDATION ============
+    console.log('🔐 [claim-battle-rewards] Validating nonce...');
+    
+    const { data: nonceData, error: nonceError } = await supabase
+      .from('claim_nonces')
+      .select('*')
+      .eq('nonce', claimBody.nonce)
+      .single();
+
+    if (nonceError || !nonceData) {
+      console.error('❌ [claim-battle-rewards] Invalid nonce:', nonceError);
+      await supabase
+        .from('security_audit_log')
+        .insert({
+          event_type: 'INVALID_NONCE',
+          wallet_address: null,
+          claim_key: claimBody.claim_key,
+          details: { nonce: claimBody.nonce, error: 'Nonce not found' }
+        });
+      return json({ error: 'Invalid nonce' }, 401);
+    }
+
+    // Check if nonce already used
+    if (nonceData.used_at) {
+      console.error('❌ [claim-battle-rewards] Nonce already used');
+      await supabase
+        .from('security_audit_log')
+        .insert({
+          event_type: 'INVALID_NONCE',
+          wallet_address: nonceData.wallet_address,
+          claim_key: claimBody.claim_key,
+          details: { nonce: claimBody.nonce, error: 'Nonce already used' }
+        });
+      return json({ error: 'Nonce already used' }, 401);
+    }
+
+    // Check if nonce expired (5 minutes)
+    const nonceAge = Date.now() - new Date(nonceData.created_at).getTime();
+    if (nonceAge > 5 * 60 * 1000) {
+      console.error('❌ [claim-battle-rewards] Nonce expired');
+      await supabase
+        .from('claim_nonces')
+        .delete()
+        .eq('nonce', claimBody.nonce);
+      
+      await supabase
+        .from('security_audit_log')
+        .insert({
+          event_type: 'INVALID_NONCE',
+          wallet_address: nonceData.wallet_address,
+          claim_key: claimBody.claim_key,
+          details: { nonce: claimBody.nonce, error: 'Nonce expired', age_ms: nonceAge }
+        });
+      return json({ error: 'Nonce expired' }, 401);
+    }
+
+    console.log('✅ [claim-battle-rewards] Nonce validated');
+
+    // ============ SECURITY LAYER 2: RATE LIMITING ============
+    console.log('⏱️ [claim-battle-rewards] Checking rate limit...');
+    
+    const { data: rateLimitOk } = await supabase
+      .rpc('check_claim_rate_limit', {
+        p_wallet_address: nonceData.wallet_address,
+        p_max_claims_per_minute: 10
+      });
+
+    if (!rateLimitOk) {
+      console.error('❌ [claim-battle-rewards] Rate limit exceeded');
+      await supabase
+        .from('security_audit_log')
+        .insert({
+          event_type: 'RATE_LIMITED',
+          wallet_address: nonceData.wallet_address,
+          claim_key: claimBody.claim_key,
+          details: { message: 'Too many claim attempts' }
+        });
+      return json({ error: 'Too many claim attempts, please wait' }, 429);
+    }
+
+    console.log('✅ [claim-battle-rewards] Rate limit check passed');
+
+    // ============ SECURITY LAYER 3: SESSION VALIDATION ============
+    console.log('🔍 [claim-battle-rewards] Looking up session by claim_key:', claimBody.claim_key);
     
     const { data: session, error: sessionError } = await supabase
       .from('active_dungeon_sessions')
@@ -233,7 +317,8 @@ Deno.serve(async (req) => {
       console.error('❌ Invalid or expired claim key:', sessionError);
       
       await supabase.from('security_audit_log').insert({
-        event_type: 'invalid_claim_key',
+        event_type: 'INVALID_SESSION',
+        wallet_address: nonceData.wallet_address,
         claim_key: claimBody.claim_key,
         details: { error: 'Session not found or expired', dungeon_type: claimBody.dungeon_type }
       }).then(null, () => {});
@@ -243,6 +328,34 @@ Deno.serve(async (req) => {
 
     const wallet_address = session.account_id;
 
+    // Verify nonce wallet matches session wallet
+    if (nonceData.wallet_address !== wallet_address) {
+      console.error('❌ Wallet mismatch:', { nonce_wallet: nonceData.wallet_address, session_wallet: wallet_address });
+      await supabase
+        .from('security_audit_log')
+        .insert({
+          event_type: 'INVALID_SESSION',
+          wallet_address: nonceData.wallet_address,
+          claim_key: claimBody.claim_key,
+          details: { error: 'Wallet address mismatch' }
+        });
+      return json({ error: 'Invalid session' }, 401);
+    }
+
+    // Verify nonce session_id matches claim_key
+    if (nonceData.session_id !== claimBody.claim_key) {
+      console.error('❌ Session ID mismatch');
+      await supabase
+        .from('security_audit_log')
+        .insert({
+          event_type: 'INVALID_NONCE',
+          wallet_address: wallet_address,
+          claim_key: claimBody.claim_key,
+          details: { error: 'Nonce does not belong to this session' }
+        });
+      return json({ error: 'Invalid nonce for session' }, 401);
+    }
+
     // Проверяем соответствие dungeon_type
     if (session.dungeon_type !== claimBody.dungeon_type) {
       console.error('❌ Dungeon type mismatch:', {
@@ -251,7 +364,7 @@ Deno.serve(async (req) => {
       });
       
       await supabase.from('security_audit_log').insert({
-        event_type: 'dungeon_type_mismatch',
+        event_type: 'DUNGEON_TYPE_MISMATCH',
         wallet_address,
         claim_key: claimBody.claim_key,
         details: { expected: session.dungeon_type, received: claimBody.dungeon_type }
@@ -277,7 +390,7 @@ Deno.serve(async (req) => {
       console.log('⚠️ Claim already processed:', claimBody.claim_key);
       
       await supabase.from('security_audit_log').insert({
-        event_type: 'duplicate_claim_attempt',
+        event_type: 'ALREADY_CLAIMED',
         wallet_address,
         claim_key: claimBody.claim_key,
         details: { message: 'Attempted to claim already processed rewards' }
@@ -378,6 +491,12 @@ Deno.serve(async (req) => {
       }
     }
 
+    // Mark nonce as used
+    await supabase
+      .from('claim_nonces')
+      .update({ used_at: new Date().toISOString() })
+      .eq('nonce', claimBody.nonce);
+
     // Удаляем сессию после успешного клейма
     await supabase
       .from('active_dungeon_sessions')
@@ -390,6 +509,22 @@ Deno.serve(async (req) => {
       exp: experience_reward,
       items: items.length
     });
+
+    // Log successful claim
+    await supabase
+      .from('security_audit_log')
+      .insert({
+        event_type: 'CLAIM_SUCCESS',
+        wallet_address: wallet_address,
+        claim_key: claimBody.claim_key,
+        details: {
+          ell_reward,
+          experience_reward,
+          items_count: items.length,
+          level: claimBody.level,
+          dungeon_type: claimBody.dungeon_type
+        }
+      });
 
     return json({
       success: true,
@@ -404,6 +539,25 @@ Deno.serve(async (req) => {
 
   } catch (error) {
     console.error('❌ Unexpected error:', error);
+    
+    // Log critical error
+    try {
+      const supabase = getSupabaseServiceClient();
+      await supabase
+        .from('security_audit_log')
+        .insert({
+          event_type: 'CRITICAL_ERROR',
+          claim_key: null,
+          details: { 
+            error: error.message, 
+            stack: error.stack,
+            name: error.name 
+          }
+        });
+    } catch (logError) {
+      console.error('Failed to log error:', logError);
+    }
+    
     return json({ error: 'Internal server error' }, 500);
   }
 });
