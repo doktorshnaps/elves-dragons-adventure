@@ -10,6 +10,7 @@ import { AttackOrderSelector } from './AttackOrderSelector';
 import { TeamBattleArena } from './TeamBattleArena';
 import { DungeonType } from '@/constants/dungeons';
 import { DungeonRewardModal } from '@/components/game/modals/DungeonRewardModal';
+import { ClaimRewardsResultModal } from '@/components/game/modals/ClaimRewardsResultModal';
 import { useDungeonRewards } from '@/hooks/adventure/useDungeonRewards';
 import { setItemTemplatesCache, loadActiveTreasureHunt } from '@/utils/monsterLootMapping';
 import { supabase } from '@/integrations/supabase/client';
@@ -39,6 +40,17 @@ const TeamBattlePageInner: React.FC<TeamBattlePageProps> = ({
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [battleStarted, setBattleStarted] = useState<boolean>(false);
+  const [claimResultModal, setClaimResultModal] = useState<{
+    isOpen: boolean;
+    rewards: {
+      ell_reward: number;
+      experience_reward: number;
+      items: Array<{ name: string; type: string; quantity?: number }>;
+    } | null;
+  }>({
+    isOpen: false,
+    rewards: null
+  });
   
   // КРИТИЧНО: Восстанавливаем список убитых монстров из localStorage при инициализации
   const [monstersKilled, setMonstersKilled] = useState<Array<{level: number, dungeonType: string, name?: string}>>(() => {
@@ -335,19 +347,24 @@ const TeamBattlePageInner: React.FC<TeamBattlePageProps> = ({
     }
     
     // Продолжаем claim даже если cardHealthUpdates пустой - награды все равно нужно начислить
-    const success = await claimRewardAndExit(
+    const result = await claimRewardAndExit(
       getCurrentClaimKey(), 
       cardHealthUpdates, 
       dungeonType, 
       battleState.level,
       monstersKilled // Передаем список убитых монстров для server-side расчета
     );
-    if (success) {
-      toast({
-        title: "✅ Успешно",
-        description: "Здоровье и броня карт сохранены!",
-      });
-      handleExitAndReset();
+    
+    if (result && typeof result === 'object' && 'success' in result && result.success) {
+      // Показываем модалку с результатами наград если есть данные
+      if ('rewards' in result && result.rewards && (result.rewards.ell_reward > 0 || result.rewards.experience_reward > 0 || result.rewards.items.length > 0)) {
+        setClaimResultModal({
+          isOpen: true,
+          rewards: result.rewards
+        });
+      } else {
+        handleExitAndReset();
+      }
     } else {
       toast({
         title: "❌ Ошибка",
@@ -381,9 +398,9 @@ const TeamBattlePageInner: React.FC<TeamBattlePageProps> = ({
     
     // Вызываем claimRewardAndExit с флагом skip rewards (передаем null для claim_key)
     // Это сохранит только здоровье карт, без начисления наград
-    const success = await claimRewardAndExit(null, cardHealthUpdates, dungeonType, battleState.level, []);
+    const result = await claimRewardAndExit(null, cardHealthUpdates, dungeonType, battleState.level, []);
     
-    if (success) {
+    if (result && result.success) {
       toast({
         title: "✅ Состояние сохранено",
         description: "Здоровье и броня карт сохранены при сдаче.",
@@ -640,13 +657,24 @@ const TeamBattlePageInner: React.FC<TeamBattlePageProps> = ({
 
     // Показываем только модальное окно с наградой, убираем промежуточный экран победы/поражения
     return (
-      <DungeonRewardModal
-        isOpen={!!pendingReward}
-        onClose={handleClaimAndExit}
-        onContinue={handleContinue}
-        reward={accumulatedReward ?? pendingReward}
-        canContinue={alivePairs.length > 0 && battleState.level < 100}
-      />
+      <>
+        <DungeonRewardModal
+          isOpen={!!pendingReward}
+          onClose={handleClaimAndExit}
+          onContinue={handleContinue}
+          reward={accumulatedReward ?? pendingReward}
+          canContinue={alivePairs.length > 0 && battleState.level < 100}
+        />
+        
+        <ClaimRewardsResultModal
+          isOpen={claimResultModal.isOpen}
+          onClose={() => {
+            setClaimResultModal({ isOpen: false, rewards: null });
+            handleExitAndReset();
+          }}
+          rewards={claimResultModal.rewards || { ell_reward: 0, experience_reward: 0, items: [] }}
+        />
+      </>
     );
   }
 

@@ -214,7 +214,7 @@ export const useDungeonRewards = () => {
               description: "Не удалось сохранить состояние карт",
               variant: "destructive"
             });
-            return false;
+            return { success: false };
           }
           
           console.log('✅ Здоровье карт сохранено после поражения');
@@ -224,11 +224,11 @@ export const useDungeonRewards = () => {
           
         } catch (err) {
           console.error('❌ Критическая ошибка batch update:', err);
-          return false;
+          return { success: false };
         }
       }
       
-      return true;
+      return { success: true, rewards: { ell_reward: 0, experience_reward: 0, items: [] } };
     }
     
     if (isClaimingRef.current) {
@@ -350,10 +350,15 @@ export const useDungeonRewards = () => {
           queryClient.invalidateQueries({ queryKey: ['itemInstances', accountId] })
         ]);
         
-        toast({
-          title: "🎉 Награды получены!",
-          description: `+${actualEllReward} ELL, ${actualItemsCount} предметов`
-        });
+        // Возвращаем данные наград для отображения в модальном окне
+        return { 
+          success: true, 
+          rewards: {
+            ell_reward: actualEllReward,
+            experience_reward: serverRewards.experience_reward || 0,
+            items: serverRewards.items || []
+          }
+        };
         
       } catch (battleErr) {
         console.error('❌ Критическая ошибка при начислении наград:', battleErr);
@@ -362,7 +367,7 @@ export const useDungeonRewards = () => {
           description: "Произошла ошибка при начислении наград",
           variant: "destructive"
         });
-        return false;
+        return { success: false };
       }
       
       // Сброс локальных состояний после успешного начисления
@@ -372,7 +377,7 @@ export const useDungeonRewards = () => {
       isDefeatedRef.current = false;
       
       console.log(`✅ ============ НАГРАДЫ НАЧИСЛЕНЫ И ВЫХОД ВЫПОЛНЕН ============`);
-      return true;
+      return { success: true, rewards: { ell_reward: 0, experience_reward: 0, items: [] } };
       
     } catch (error) {
       console.error('❌ Критическая ошибка в claimRewardAndExit:', error);
@@ -381,7 +386,7 @@ export const useDungeonRewards = () => {
         description: "Не удалось начислить награды",
         variant: "destructive"
       });
-      return false;
+      return { success: false };
     } finally {
       isClaimingRef.current = false;
     }
