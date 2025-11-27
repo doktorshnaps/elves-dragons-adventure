@@ -64,26 +64,24 @@ export const claimBattleRewards = async (
   console.log('🔐 [claimBattleRewards] Requesting claim challenge...');
   
   try {
-    const challengeResponse = await fetch(
-      `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/get-claim-challenge`,
-      {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'apikey': import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
-        },
-        body: JSON.stringify({
-          wallet_address: battleReward.wallet_address,
-          session_id: battleReward.claim_key
-        }),
+    // Use Supabase client to invoke edge function
+    const { data: challengeData, error: challengeError } = await (await import('@/integrations/supabase/client')).supabase.functions.invoke('get-claim-challenge', {
+      body: {
+        wallet_address: battleReward.wallet_address,
+        session_id: battleReward.claim_key
       }
-    );
+    });
 
-    if (!challengeResponse.ok) {
-      throw new Error(`Failed to get challenge: HTTP ${challengeResponse.status}`);
+    if (challengeError) {
+      console.error('❌ [claimBattleRewards] Challenge request failed:', challengeError);
+      throw new Error(`Failed to get challenge: ${challengeError.message}`);
     }
 
-    const challengeData = await challengeResponse.json();
+    if (!challengeData?.challenge?.nonce) {
+      console.error('❌ [claimBattleRewards] Invalid challenge response:', challengeData);
+      throw new Error('Invalid challenge response: missing nonce');
+    }
+
     const nonce = challengeData.challenge.nonce;
 
     console.log('✅ [claimBattleRewards] Challenge received:', {
@@ -94,27 +92,22 @@ export const claimBattleRewards = async (
     // Step 2: Claim rewards with nonce
     for (let attempt = 1; attempt <= maxRetries; attempt++) {
       try {
-        const response = await fetch(
-          `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/claim-battle-rewards`,
-          {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              'apikey': import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
-            },
-            body: JSON.stringify({
-              ...battleReward,
-              nonce: nonce
-            }),
+        // Use Supabase client to invoke edge function
+        const { data: result, error: claimError } = await (await import('@/integrations/supabase/client')).supabase.functions.invoke('claim-battle-rewards', {
+          body: {
+            ...battleReward,
+            nonce: nonce
           }
-        );
+        });
 
-        if (!response.ok) {
-          const errorData = await response.json().catch(() => ({}));
-          throw new Error(errorData.error || `HTTP ${response.status}`);
+        if (claimError) {
+          console.error(`❌ [claimBattleRewards] Attempt ${attempt} failed:`, claimError);
+          throw new Error(claimError.message || 'Failed to claim rewards');
         }
 
-        const result = await response.json();
+        if (!result) {
+          throw new Error('Empty response from claim endpoint');
+        }
 
         console.log('✅ [claimBattleRewards] Rewards claimed successfully:', result);
 
