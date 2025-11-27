@@ -39,7 +39,21 @@ const TeamBattlePageInner: React.FC<TeamBattlePageProps> = ({
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [battleStarted, setBattleStarted] = useState<boolean>(false);
-  const [monstersKilled, setMonstersKilled] = useState<Array<{level: number, dungeonType: string, name?: string}>>([]);
+  
+  // КРИТИЧНО: Восстанавливаем список убитых монстров из localStorage при инициализации
+  const [monstersKilled, setMonstersKilled] = useState<Array<{level: number, dungeonType: string, name?: string}>>(() => {
+    try {
+      const saved = localStorage.getItem('monstersKilled');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        console.log('✅ Восстановлено убитых монстров из localStorage:', parsed.length);
+        return parsed;
+      }
+    } catch (error) {
+      console.error('❌ Ошибка восстановления monstersKilled:', error);
+    }
+    return [];
+  });
   const monstersKilledRef = useRef<Array<{level: number, dungeonType: string, name?: string}>>([]);
   const prevAliveOpponentsRef = React.useRef<number>(0);
   const prevOpponentsRef = React.useRef<Array<{id: number, name: string, health: number}>>([]);
@@ -149,6 +163,8 @@ const TeamBattlePageInner: React.FC<TeamBattlePageProps> = ({
       localStorage.removeItem('activeBattleInProgress');
       // 🔒 Удаляем флаг "сессия только что создана" при выходе
       localStorage.removeItem('sessionJustCreated');
+      // 🧹 Очищаем список убитых монстров при выходе из подземелья
+      localStorage.removeItem('monstersKilled');
     });
     
     // Небольшая задержка для синхронизации состояния перед удалением сессии
@@ -177,7 +193,7 @@ const TeamBattlePageInner: React.FC<TeamBattlePageProps> = ({
   const handleNextLevel = () => {
     startTransition(() => {
       handleLevelComplete();
-      setMonstersKilled([]); // Сбрасываем список убитых монстров для нового уровня
+      // НЕ ОЧИЩАЕМ monstersKilled - накапливаем убийства через все уровни подземелья!
       // battleStarted остается true - бой продолжается на следующем уровне
     });
   };
@@ -357,7 +373,8 @@ const TeamBattlePageInner: React.FC<TeamBattlePageProps> = ({
         description: "Не удалось найти карты для сохранения состояния.",
         variant: "default"
       });
-      // Все равно выходим
+      // Все равно выходим и очищаем monstersKilled
+      localStorage.removeItem('monstersKilled');
       handleExitAndReset();
       return;
     }
@@ -379,6 +396,8 @@ const TeamBattlePageInner: React.FC<TeamBattlePageProps> = ({
       });
     }
     
+    // Очищаем список убитых монстров при сдаче
+    localStorage.removeItem('monstersKilled');
     handleExitAndReset();
   }, [collectCardHealthUpdates, claimRewardAndExit, dungeonType, battleState.level, handleExitAndReset]);
 
@@ -531,9 +550,19 @@ const TeamBattlePageInner: React.FC<TeamBattlePageProps> = ({
     prevAliveOpponentsRef.current = aliveOpponents.length;
   }, [aliveOpponents, battleState.level, dungeonType, battleStarted]);
 
-  // Синхронизируем ref с актуальными убийствами, чтобы избежать гонок состояний
+  // Синхронизируем ref с актуальными убийствами и сохраняем в localStorage
   useEffect(() => {
     monstersKilledRef.current = monstersKilled;
+    
+    // КРИТИЧНО: Сохраняем список убитых монстров в localStorage при каждом обновлении
+    if (monstersKilled.length > 0) {
+      try {
+        localStorage.setItem('monstersKilled', JSON.stringify(monstersKilled));
+        console.log('💾 Сохранено убитых монстров в localStorage:', monstersKilled.length);
+      } catch (error) {
+        console.error('❌ Ошибка сохранения monstersKilled:', error);
+      }
+    }
   }, [monstersKilled]);
 
   // Check if battle is over
