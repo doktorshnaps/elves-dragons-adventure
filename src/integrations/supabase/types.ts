@@ -428,6 +428,60 @@ export type Database = {
         }
         Relationships: []
       }
+      claim_nonces: {
+        Row: {
+          created_at: string
+          expires_at: string
+          id: string
+          nonce: string
+          session_id: string
+          used_at: string | null
+          wallet_address: string
+        }
+        Insert: {
+          created_at?: string
+          expires_at?: string
+          id?: string
+          nonce: string
+          session_id: string
+          used_at?: string | null
+          wallet_address: string
+        }
+        Update: {
+          created_at?: string
+          expires_at?: string
+          id?: string
+          nonce?: string
+          session_id?: string
+          used_at?: string | null
+          wallet_address?: string
+        }
+        Relationships: []
+      }
+      claim_rate_limits: {
+        Row: {
+          claim_count: number
+          id: string
+          last_claim_at: string
+          wallet_address: string
+          window_start: string
+        }
+        Insert: {
+          claim_count?: number
+          id?: string
+          last_claim_at?: string
+          wallet_address: string
+          window_start?: string
+        }
+        Update: {
+          claim_count?: number
+          id?: string
+          last_claim_at?: string
+          wallet_address?: string
+          window_start?: string
+        }
+        Relationships: []
+      }
       class_multipliers: {
         Row: {
           class_name: string
@@ -2537,6 +2591,10 @@ export type Database = {
         Args: { p_nft_contracts: string[]; p_wallet_address: string }
         Returns: boolean
       }
+      check_claim_rate_limit: {
+        Args: { p_max_claims_per_minute?: number; p_wallet_address: string }
+        Returns: boolean
+      }
       claim_quest_and_reward: {
         Args: { p_quest_id: string; p_wallet_address: string }
         Returns: Json
@@ -2548,6 +2606,7 @@ export type Database = {
           deleted_count: number
         }[]
       }
+      cleanup_expired_nonces: { Args: never; Returns: undefined }
       cleanup_old_dungeon_sessions: { Args: never; Returns: number }
       cleanup_old_rate_limits: { Args: never; Returns: undefined }
       cleanup_phantom_item_instances: { Args: never; Returns: undefined }
@@ -2619,6 +2678,10 @@ export type Database = {
       force_clear_nft_cards: {
         Args: { p_contract_id?: string; p_wallet_address: string }
         Returns: number
+      }
+      generate_claim_nonce: {
+        Args: { p_session_id: string; p_wallet_address: string }
+        Returns: Json
       }
       get_card_class_drop_rates: {
         Args: never

@@ -38,6 +38,11 @@ interface ClaimResult {
  * который атомарно применяет их через RPC apply_battle_rewards.
  * 
  * Идемпотентность обеспечивается через claim_key и таблицу reward_claims.
+ * 
+ * ENHANCED SECURITY:
+ * - Запрашивает nonce перед claim (challenge-response pattern)
+ * - Отправляет nonce вместе с claim запросом для валидации
+ * - Edge Function проверяет: nonce validity, rate limiting, session expiry
  */
 export const claimBattleRewards = async (
   battleReward: BattleReward
@@ -55,56 +60,99 @@ export const claimBattleRewards = async (
     card_updates: battleReward.card_health_updates.length
   });
 
-  for (let attempt = 1; attempt <= maxRetries; attempt++) {
-    try {
-      const response = await fetch(
-        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/claim-battle-rewards`,
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'apikey': import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
-          },
-          body: JSON.stringify(battleReward),
-        }
-      );
-
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.error || `HTTP ${response.status}`);
+  // Step 1: Request challenge/nonce from server
+  console.log('🔐 [claimBattleRewards] Requesting claim challenge...');
+  
+  try {
+    const challengeResponse = await fetch(
+      `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/get-claim-challenge`,
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'apikey': import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
+        },
+        body: JSON.stringify({
+          wallet_address: battleReward.wallet_address,
+          session_id: battleReward.claim_key
+        }),
       }
+    );
 
-      const result = await response.json();
+    if (!challengeResponse.ok) {
+      throw new Error(`Failed to get challenge: HTTP ${challengeResponse.status}`);
+    }
 
-      console.log('✅ [claimBattleRewards] Rewards claimed successfully:', result);
+    const challengeData = await challengeResponse.json();
+    const nonce = challengeData.challenge.nonce;
 
-      return {
-        success: true,
-        message: result.message || 'Награды успешно начислены',
-        data: result.results
-      };
+    console.log('✅ [claimBattleRewards] Challenge received:', {
+      nonce: nonce.substring(0, 16) + '...',
+      expires_at: challengeData.challenge.expires_at
+    });
 
-    } catch (error) {
-      console.error(`❌ [claimBattleRewards] Attempt ${attempt} failed:`, error);
+    // Step 2: Claim rewards with nonce
+    for (let attempt = 1; attempt <= maxRetries; attempt++) {
+      try {
+        const response = await fetch(
+          `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/claim-battle-rewards`,
+          {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'apikey': import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
+            },
+            body: JSON.stringify({
+              ...battleReward,
+              nonce: nonce
+            }),
+          }
+        );
 
-      if (attempt < maxRetries) {
-        const delay = retryDelays[attempt - 1];
-        console.log(`⏳ [claimBattleRewards] Retrying in ${delay}ms...`);
-        await new Promise(resolve => setTimeout(resolve, delay));
-      } else {
-        console.error('❌ [claimBattleRewards] All retry attempts exhausted');
+        if (!response.ok) {
+          const errorData = await response.json().catch(() => ({}));
+          throw new Error(errorData.error || `HTTP ${response.status}`);
+        }
+
+        const result = await response.json();
+
+        console.log('✅ [claimBattleRewards] Rewards claimed successfully:', result);
+
         return {
-          success: false,
-          message: error instanceof Error ? error.message : 'Не удалось начислить награды'
+          success: true,
+          message: result.message || 'Награды успешно начислены',
+          data: result.results
         };
+
+      } catch (error) {
+        console.error(`❌ [claimBattleRewards] Attempt ${attempt} failed:`, error);
+
+        if (attempt < maxRetries) {
+          const delay = retryDelays[attempt - 1];
+          console.log(`⏳ [claimBattleRewards] Retrying in ${delay}ms...`);
+          await new Promise(resolve => setTimeout(resolve, delay));
+        } else {
+          console.error('❌ [claimBattleRewards] All retry attempts exhausted');
+          return {
+            success: false,
+            message: error instanceof Error ? error.message : 'Не удалось начислить награды'
+          };
+        }
       }
     }
-  }
 
-  return {
-    success: false,
-    message: 'Не удалось начислить награды после нескольких попыток'
-  };
+    return {
+      success: false,
+      message: 'Не удалось начислить награды после нескольких попыток'
+    };
+
+  } catch (challengeError) {
+    console.error('❌ [claimBattleRewards] Failed to get challenge:', challengeError);
+    return {
+      success: false,
+      message: challengeError instanceof Error ? challengeError.message : 'Не удалось получить challenge'
+    };
+  }
 };
 
 /**
