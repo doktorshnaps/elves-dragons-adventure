@@ -38,7 +38,7 @@ Deno.serve(async (req) => {
     const { data: session, error: sessionError } = await supabase
       .from('active_dungeon_sessions')
       .select('*')
-      .eq('id', session_id)
+      .eq('claim_key', session_id)
       .eq('account_id', wallet_address)
       .single();
 
