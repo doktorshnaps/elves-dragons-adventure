@@ -19,7 +19,7 @@ interface BattleReward {
     kills: number;
   }>;
   card_health_updates: Array<{
-    card_template_id: string;
+    card_instance_id: string;
     current_health: number;
     current_defense: number;
   }>;

@@ -1,8 +1,8 @@
 import { useCallback, useRef } from 'react';
-import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { useQueryClient } from '@tanstack/react-query';
 import { BattleStats } from './useBattleState';
+import { claimBattleRewards as claimBattleRewardsUtil } from '@/utils/claimBattleRewards';
 
 export const useBattleRewards = (accountId: string | null) => {
   const { toast } = useToast();
@@ -47,30 +47,37 @@ export const useBattleRewards = (accountId: string | null) => {
         cardKills: stats.cardKills.length
       });
 
-      // 🔒 КРИТИЧЕСКОЕ ИЗМЕНЕНИЕ: Отправляем только минимум данных
-      // Сервер сам рассчитает награды (ELL, опыт, предметы) на основе killed_monsters
-      const { data, error } = await supabase.functions.invoke('claim-battle-rewards', {
-        body: {
-          claim_key: claimKey,
-          dungeon_type: dungeonType,
-          level,
-          killed_monsters: stats.killedMonsters, // Список убитых монстров для server-side расчета
-          card_kills: stats.cardKills,
-          card_health_updates: cardHealthUpdates
-        }
+      // 🔒 SECURITY: Use utility function with challenge/nonce flow
+      const result = await claimBattleRewardsUtil({
+        wallet_address: accountId!,
+        claim_key: claimKey,
+        dungeon_type: dungeonType,
+        level,
+        ell_reward: stats.ellEarned,
+        experience_reward: stats.experienceGained,
+        items: stats.lootedItems.map(item => ({
+          template_id: item.template_id,
+          item_id: item.item_id,
+          name: item.name,
+          type: item.type,
+          quantity: item.quantity
+        })),
+        card_kills: stats.cardKills,
+        card_health_updates: cardHealthUpdates
       });
 
-      if (error) {
-        console.error('❌ [useBattleRewards] Edge Function error:', error);
+      if (!result.success) {
+        console.error('❌ [useBattleRewards] Claim failed:', result.message);
         toast({
           title: "Ошибка начисления наград",
-          description: "Не удалось начислить награды за бой",
+          description: result.message || "Не удалось начислить награды за бой",
           variant: "destructive"
         });
-        return { success: false, error: error.message };
+        return { success: false, error: result.message };
       }
 
-      console.log('✅ [useBattleRewards] Rewards claimed successfully:', data);
+      console.log('✅ [useBattleRewards] Rewards claimed successfully:', result.data);
+      const data = result.data;
 
       // Инвалидируем кеши для обновления UI
       await Promise.all([
