@@ -13,67 +13,23 @@ serve(async (req) => {
   }
 
   try {
-    // Extract JWT token from Authorization header
-    const authHeader = req.headers.get('Authorization');
-    if (!authHeader) {
-      return new Response(JSON.stringify({ 
-        error: 'Missing authorization header',
-        success: false 
-      }), {
-        status: 401,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
-    }
-
-    const token = authHeader.replace('Bearer ', '');
-    
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
-    const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY')!;
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
-    
-    // Create client with user's JWT for authentication
-    const supabaseAuth = createClient(supabaseUrl, supabaseAnonKey, {
-      global: { headers: { Authorization: authHeader } }
-    });
-    
-    // Verify JWT and get user
-    const { data: { user }, error: authError } = await supabaseAuth.auth.getUser(token);
-    
-    if (authError || !user) {
-      console.error('❌ Auth error:', authError);
-      return new Response(JSON.stringify({ 
-        error: 'Invalid or expired token',
-        success: false 
-      }), {
-        status: 401,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
-    }
-
-    // Get wallet_address from user metadata or game_data
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
-    
-    const { data: gameData, error: gameDataError } = await supabase
-      .from('game_data')
-      .select('wallet_address')
-      .eq('user_id', user.id)
-      .single();
-    
-    if (gameDataError || !gameData?.wallet_address) {
-      console.error('❌ Error fetching wallet address:', gameDataError);
-      return new Response(JSON.stringify({ 
-        error: 'User wallet not found',
-        success: false 
-      }), {
-        status: 404,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
-    }
-
-    const wallet_address = gameData.wallet_address;
 
     // Parse request body
-    const { item_id, quantity = 1 } = await req.json();
+    const { item_id, quantity = 1, wallet_address } = await req.json();
+
+    // Validate wallet_address
+    if (!wallet_address) {
+      return new Response(JSON.stringify({ 
+        error: 'Missing wallet_address',
+        success: false 
+      }), {
+        status: 400,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
 
     // Validate item_id
     if (!item_id) {
