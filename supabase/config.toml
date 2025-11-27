@@ -16,7 +16,7 @@ verify_jwt = true
 verify_jwt = true
 
 [functions.shop-purchase]
-verify_jwt = true
+verify_jwt = false
 
 [functions.sync-mintbase-nfts]
 verify_jwt = true
