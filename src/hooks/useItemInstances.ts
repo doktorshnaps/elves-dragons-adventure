@@ -50,8 +50,7 @@ export const useItemInstances = () => {
     return await refetchQuery();
   }, [queryClient, accountId, refetchQuery]);
 
-  // Real-time subscription for INSERT events in item_instances
-  // Mark as stale without automatic refetch (optimistic updates handle the UI)
+  // Real-time subscription for INSERT/DELETE/UPDATE events in item_instances
   useEffect(() => {
     if (!accountId) return;
 
@@ -62,17 +61,16 @@ export const useItemInstances = () => {
       .on(
         'postgres_changes',
         {
-          event: 'INSERT',
+          event: '*', // Listen to all events (INSERT, UPDATE, DELETE)
           schema: 'public',
           table: 'item_instances',
           filter: `wallet_address=eq.${accountId}`
         },
         (payload) => {
-          console.log('🔔 [useItemInstances] New item inserted via Real-time:', payload.new);
-          // Mark as stale without triggering refetch (optimistic updates already applied)
+          console.log('🔔 [useItemInstances] Item change detected via Real-time:', payload.eventType, payload);
+          // Invalidate and refetch immediately for DELETE/UPDATE
           queryClient.invalidateQueries({ 
-            queryKey: ['itemInstances', accountId],
-            refetchType: 'none' // Don't auto-refetch, let background sync handle it
+            queryKey: ['itemInstances', accountId]
           });
         }
       )
