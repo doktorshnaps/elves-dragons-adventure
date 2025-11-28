@@ -124,11 +124,12 @@ export const claimBattleRewards = async (
         }
 
         console.log('✅ [claimBattleRewards] Rewards claimed successfully:', result);
+        console.log('🎁 [claimBattleRewards] Возвращаем награды из result.rewards:', result.rewards);
 
         return {
           success: true,
           message: result.message || 'Награды успешно начислены',
-          data: result.results
+          data: result.rewards // ✅ ИСПРАВЛЕНИЕ: result.rewards содержит {ell_reward, experience_reward, items}
         };
 
       } catch (error) {
