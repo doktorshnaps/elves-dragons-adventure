@@ -70,7 +70,10 @@ const TeamBattlePageInner: React.FC<TeamBattlePageProps> = ({
   const prevAliveOpponentsRef = React.useRef<number>(0);
   const prevOpponentsRef = React.useRef<Array<{id: number, name: string, health: number}>>([]);
   const processedLevelRef = React.useRef<number | null>(null);
-  const isClaimingRewardRef = React.useRef<boolean>(false);
+  
+  // ✅ КРИТИЧНО: Используем state вместо ref, чтобы изменение вызывало ре-рендер
+  // Это исправляет зависание на "Обработка результатов боя..."
+  const [isClaiming, setIsClaiming] = useState<boolean>(false);
   
   const { accountId } = useWalletContext();
   const { deviceId, startDungeonSession, endDungeonSession, getCurrentClaimKey } = useDungeonSync();
@@ -322,26 +325,24 @@ const TeamBattlePageInner: React.FC<TeamBattlePageProps> = ({
 
   const handleClaimAndExit = async () => {
     // Предотвращаем двойной вызов
-    if (isClaimingRewardRef.current) {
+    if (isClaiming) {
       console.log('⏳ Уже идет процесс начисления наград, пропускаем повторный вызов');
       return;
     }
     
-    isClaimingRewardRef.current = true;
+    setIsClaiming(true);
     console.log('💰 ============ НАЧАЛО handleClaimAndExit ============');
     
     // 🔒 Таймаут безопасности: если процесс завис на >15 секунд, сбрасываем и показываем ошибку
     const safetyTimeout = setTimeout(() => {
-      if (isClaimingRewardRef.current) {
-        console.error('⏰ КРИТИЧЕСКАЯ ОШИБКА: Процесс claim завис на >15 секунд, принудительный сброс');
-        isClaimingRewardRef.current = false;
-        toast({
-          title: "⏰ Таймаут",
-          description: "Процесс обработки наград завис. Попробуйте переподключиться.",
-          variant: "destructive"
-        });
-        handleExitAndReset();
-      }
+      console.error('⏰ КРИТИЧЕСКАЯ ОШИБКА: Процесс claim завис на >15 секунд, принудительный сброс');
+      setIsClaiming(false);
+      toast({
+        title: "⏰ Таймаут",
+        description: "Процесс обработки наград завис. Попробуйте переподключиться.",
+        variant: "destructive"
+      });
+      handleExitAndReset();
     }, 15000); // 15 секунд таймаут
     
     toast({
@@ -386,28 +387,24 @@ const TeamBattlePageInner: React.FC<TeamBattlePageProps> = ({
         // Показываем модалку с результатами наград всегда, если есть объект rewards
         if ('rewards' in result && result.rewards) {
           console.log('🎉 Показываем модалку с наградами:', result.rewards);
-          console.log('🔒 КРИТИЧНО: Сбрасываем флаг claiming и немедленно открываем модалку');
+          console.log('🔒 КРИТИЧНО: Сбрасываем флаг claiming и открываем модалку');
           
-          // ✅ РЕШЕНИЕ: Сбрасываем флаг и НЕМЕДЛЕННО в том же микротаске устанавливаем модалку
-          // Это гарантирует, что при следующем рендере isClaimingRewardRef уже false
-          isClaimingRewardRef.current = false;
+          // ✅ РЕШЕНИЕ: Сбрасываем state флаг - это вызовет ре-рендер и уберет "Обработка..."
+          setIsClaiming(false);
           
-          // Используем немедленный state update, чтобы React ре-рендерил компонент
-          // и убрал "Обработка результатов боя..." перед показом финальной модалки
-          startTransition(() => {
-            setClaimResultModal({
-              isOpen: true,
-              rewards: result.rewards
-            });
+          // Открываем финальную модалку с наградами
+          setClaimResultModal({
+            isOpen: true,
+            rewards: result.rewards
           });
         } else {
           console.warn('⚠️ Нет объекта rewards в результате, выходим без модалки');
-          isClaimingRewardRef.current = false;
+          setIsClaiming(false);
           handleExitAndReset();
         }
       } else {
         console.error('❌ Ошибка при начислении наград:', result);
-        isClaimingRewardRef.current = false;
+        setIsClaiming(false);
         toast({
           title: "❌ Ошибка",
           description: "Не удалось сохранить состояние карт",
@@ -417,7 +414,7 @@ const TeamBattlePageInner: React.FC<TeamBattlePageProps> = ({
       }
     } catch (error) {
       console.error('❌ Критическая ошибка handleClaimAndExit:', error);
-      isClaimingRewardRef.current = false;
+      setIsClaiming(false);
       toast({
         title: "❌ Критическая ошибка",
         description: "Произошла ошибка при обработке наград",
@@ -681,7 +678,7 @@ const TeamBattlePageInner: React.FC<TeamBattlePageProps> = ({
   
   if (isBattleOver && battleStarted && !showingFinishDelay) {
     // Если модальное окно еще не готово
-    if (!pendingReward && !isClaimingRewardRef.current) {
+    if (!pendingReward && !isClaiming) {
       // При полном поражении награды нет — показываем экран поражения с выходом
       if (alivePairs.length === 0) {
         return (
@@ -712,7 +709,7 @@ const TeamBattlePageInner: React.FC<TeamBattlePageProps> = ({
     }
     
     // Если идет процесс обработки наград, показываем индикатор
-    if (isClaimingRewardRef.current && !claimResultModal.isOpen) {
+    if (isClaiming && !claimResultModal.isOpen) {
       return (
         <div className="fixed inset-0 bg-black/90 flex items-center justify-center z-[200]">
           <Card variant="menu" className="p-6 max-w-md w-full">
@@ -728,7 +725,7 @@ const TeamBattlePageInner: React.FC<TeamBattlePageProps> = ({
     return (
       <>
         <DungeonRewardModal
-          isOpen={!!pendingReward && !isClaimingRewardRef.current && !claimResultModal.isOpen}
+          isOpen={!!pendingReward && !isClaiming && !claimResultModal.isOpen}
           onClose={handleClaimAndExit}
           onContinue={handleContinue}
           reward={accumulatedReward ?? pendingReward}
