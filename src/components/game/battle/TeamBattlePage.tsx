@@ -356,13 +356,15 @@ const TeamBattlePageInner: React.FC<TeamBattlePageProps> = ({
     );
     
     if (result && typeof result === 'object' && 'success' in result && result.success) {
-      // Показываем модалку с результатами наград если есть данные
-      if ('rewards' in result && result.rewards && (result.rewards.ell_reward > 0 || result.rewards.experience_reward > 0 || result.rewards.items.length > 0)) {
+      // Показываем модалку с результатами наград всегда, если есть объект rewards
+      if ('rewards' in result && result.rewards) {
+        console.log('🎉 Показываем модалку с наградами:', result.rewards);
         setClaimResultModal({
           isOpen: true,
           rewards: result.rewards
         });
       } else {
+        console.warn('⚠️ Нет объекта rewards в результате, выходим без модалки');
         handleExitAndReset();
       }
     } else {
@@ -762,7 +764,20 @@ const TeamBattlePageInner: React.FC<TeamBattlePageProps> = ({
         onSurrenderWithSave={handleSurrenderWithSave}
       />
       
+      {/* Модалка с результатами наград после клейма */}
+      {claimResultModal.isOpen && claimResultModal.rewards && (
+        <ClaimRewardsResultModal
+          isOpen={claimResultModal.isOpen}
+          onClose={() => {
+            setClaimResultModal({ isOpen: false, rewards: null });
+            handleExitAndReset();
+          }}
+          rewards={claimResultModal.rewards}
+        />
+      )}
+      
     </>;
+
 };
 
 export const TeamBattlePage: React.FC<TeamBattlePageProps> = (props) => {

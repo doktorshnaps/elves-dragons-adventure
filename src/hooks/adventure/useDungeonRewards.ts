@@ -350,6 +350,14 @@ export const useDungeonRewards = () => {
           queryClient.invalidateQueries({ queryKey: ['itemInstances', accountId] })
         ]);
         
+        // Сброс локальных состояний после успешного начисления
+        setPendingReward(null);
+        setAccumulatedReward(null);
+        lastProcessedLevelRef.current = -1;
+        isDefeatedRef.current = false;
+        
+        console.log(`✅ ============ НАГРАДЫ НАЧИСЛЕНЫ И ВЫХОД ВЫПОЛНЕН ============`);
+        
         // Возвращаем данные наград для отображения в модальном окне
         return { 
           success: true, 
@@ -369,15 +377,6 @@ export const useDungeonRewards = () => {
         });
         return { success: false };
       }
-      
-      // Сброс локальных состояний после успешного начисления
-      setPendingReward(null);
-      setAccumulatedReward(null);
-      lastProcessedLevelRef.current = -1;
-      isDefeatedRef.current = false;
-      
-      console.log(`✅ ============ НАГРАДЫ НАЧИСЛЕНЫ И ВЫХОД ВЫПОЛНЕН ============`);
-      return { success: true, rewards: { ell_reward: 0, experience_reward: 0, items: [] } };
       
     } catch (error) {
       console.error('❌ Критическая ошибка в claimRewardAndExit:', error);
