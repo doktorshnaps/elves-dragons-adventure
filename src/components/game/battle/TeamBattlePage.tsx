@@ -70,6 +70,7 @@ const TeamBattlePageInner: React.FC<TeamBattlePageProps> = ({
   const prevAliveOpponentsRef = React.useRef<number>(0);
   const prevOpponentsRef = React.useRef<Array<{id: number, name: string, health: number}>>([]);
   const processedLevelRef = React.useRef<number | null>(null);
+  const isClaimingRewardRef = React.useRef<boolean>(false);
   
   const { accountId } = useWalletContext();
   const { deviceId, startDungeonSession, endDungeonSession, getCurrentClaimKey } = useDungeonSync();
@@ -320,6 +321,14 @@ const TeamBattlePageInner: React.FC<TeamBattlePageProps> = ({
   }, [battleState.playerPairs, cardInstances]);
 
   const handleClaimAndExit = async () => {
+    // Предотвращаем двойной вызов
+    if (isClaimingRewardRef.current) {
+      console.log('⏳ Уже идет процесс начисления наград, пропускаем повторный вызов');
+      return;
+    }
+    
+    isClaimingRewardRef.current = true;
+    
     toast({
       title: "🚨 Сохранение прогресса",
       description: "Начинаем сохранение здоровья и брони карт...",
@@ -354,6 +363,8 @@ const TeamBattlePageInner: React.FC<TeamBattlePageProps> = ({
       battleState.level,
       monstersKilled // Передаем список убитых монстров для server-side расчета
     );
+    
+    isClaimingRewardRef.current = false;
     
     if (result && typeof result === 'object' && 'success' in result && result.success) {
       // Показываем модалку с результатами наград всегда, если есть объект rewards
@@ -627,7 +638,7 @@ const TeamBattlePageInner: React.FC<TeamBattlePageProps> = ({
   
   if (isBattleOver && battleStarted && !showingFinishDelay) {
     // Если модальное окно еще не готово
-    if (!pendingReward) {
+    if (!pendingReward && !isClaimingRewardRef.current) {
       // При полном поражении награды нет — показываем экран поражения с выходом
       if (alivePairs.length === 0) {
         return (
@@ -656,12 +667,25 @@ const TeamBattlePageInner: React.FC<TeamBattlePageProps> = ({
         </div>
       );
     }
+    
+    // Если идет процесс обработки наград, показываем индикатор
+    if (isClaimingRewardRef.current && !claimResultModal.isOpen) {
+      return (
+        <div className="fixed inset-0 bg-black/90 flex items-center justify-center z-[200]">
+          <Card variant="menu" className="p-6 max-w-md w-full">
+            <CardContent className="text-center">
+              <p className="text-white/80">{t(language, 'battlePage.processingResults')}</p>
+            </CardContent>
+          </Card>
+        </div>
+      );
+    }
 
     // Показываем только модальное окно с наградой, убираем промежуточный экран победы/поражения
     return (
       <>
         <DungeonRewardModal
-          isOpen={!!pendingReward}
+          isOpen={!!pendingReward && !isClaimingRewardRef.current}
           onClose={handleClaimAndExit}
           onContinue={handleContinue}
           reward={accumulatedReward ?? pendingReward}
