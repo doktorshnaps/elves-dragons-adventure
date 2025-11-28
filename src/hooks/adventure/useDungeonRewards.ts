@@ -330,7 +330,7 @@ export const useDungeonRewards = () => {
             description: result.message || "Не удалось начислить награды",
             variant: "destructive"
           });
-          return false;
+          return { success: false, rewards: { ell_reward: 0, experience_reward: 0, items: [] } };
         }
         
         console.log('✅ Награды успешно начислены:', result.data);
@@ -382,7 +382,7 @@ export const useDungeonRewards = () => {
           description: "Произошла ошибка при начислении наград",
           variant: "destructive"
         });
-        return { success: false };
+        return { success: false, rewards: { ell_reward: 0, experience_reward: 0, items: [] } };
       }
       
     } catch (error) {
@@ -392,7 +392,7 @@ export const useDungeonRewards = () => {
         description: "Не удалось начислить награды",
         variant: "destructive"
       });
-      return { success: false };
+      return { success: false, rewards: { ell_reward: 0, experience_reward: 0, items: [] } };
     } finally {
       isClaimingRef.current = false;
     }
