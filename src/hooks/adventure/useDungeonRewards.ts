@@ -357,13 +357,17 @@ export const useDungeonRewards = () => {
           queryClient.invalidateQueries({ queryKey: ['itemInstances', accountId] })
         ]);
         
-        // Сброс локальных состояний после успешного начисления
-        setPendingReward(null);
-        setAccumulatedReward(null);
+        // ✅ КРИТИЧНО: НЕ сбрасываем pendingReward здесь!
+        // Родительский компонент сам сбросит после закрытия ClaimRewardsResultModal
+        // Иначе возникает race condition: pendingReward=null ДО открытия модалки
+        // setPendingReward(null);
+        // setAccumulatedReward(null);
+        
         lastProcessedLevelRef.current = -1;
         isDefeatedRef.current = false;
         
         console.log(`✅ ============ НАГРАДЫ НАЧИСЛЕНЫ И ВЫХОД ВЫПОЛНЕН ============`);
+        console.log(`✅ ВНИМАНИЕ: pendingReward НЕ сброшен, будет сброшен родителем после закрытия модалки`);
         
         // Возвращаем данные наград для отображения в модальном окне
         return { 

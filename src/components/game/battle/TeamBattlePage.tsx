@@ -778,6 +778,11 @@ const TeamBattlePageInner: React.FC<TeamBattlePageProps> = ({
           onClose={() => {
             console.log('🚪 [RENDER] Закрываем ClaimRewardsResultModal');
             setClaimResultModal({ isOpen: false, rewards: null });
+            
+            // ✅ КРИТИЧНО: Сбрасываем pendingReward ТОЛЬКО при закрытии финальной модалки
+            console.log('🔄 [RENDER] Сбрасываем pendingReward через resetRewards');
+            resetRewards();
+            
             handleExitAndReset();
           }}
           rewards={claimResultModal.rewards || { ell_reward: 0, experience_reward: 0, items: [] }}
