@@ -386,11 +386,11 @@ const TeamBattlePageInner: React.FC<TeamBattlePageProps> = ({
         // Показываем модалку с результатами наград всегда, если есть объект rewards
         if ('rewards' in result && result.rewards) {
           console.log('🎉 Показываем модалку с наградами:', result.rewards);
-          console.log('🔒 Закрываем DungeonRewardModal и открываем ClaimRewardsResultModal');
+          console.log('🔒 Сбрасываем флаг claiming ДО показа модалки');
           
-          // ✅ КРИТИЧНО: Сначала очищаем pendingReward чтобы DungeonRewardModal закрылась
-          // Вызываем resetRewards из useDungeonRewards для гарантированной очистки
-          // (это уже должно быть сделано внутри claimRewardAndExit, но делаем дополнительную очистку)
+          // ✅ КРИТИЧНО: Сбрасываем флаг СРАЗУ, чтобы "Обработка..." не показывалась
+          // одновременно с ClaimRewardsResultModal
+          isClaimingRewardRef.current = false;
           
           setClaimResultModal({
             isOpen: true,
@@ -398,10 +398,12 @@ const TeamBattlePageInner: React.FC<TeamBattlePageProps> = ({
           });
         } else {
           console.warn('⚠️ Нет объекта rewards в результате, выходим без модалки');
+          isClaimingRewardRef.current = false;
           handleExitAndReset();
         }
       } else {
         console.error('❌ Ошибка при начислении наград:', result);
+        isClaimingRewardRef.current = false;
         toast({
           title: "❌ Ошибка",
           description: "Не удалось сохранить состояние карт",
@@ -411,6 +413,7 @@ const TeamBattlePageInner: React.FC<TeamBattlePageProps> = ({
       }
     } catch (error) {
       console.error('❌ Критическая ошибка handleClaimAndExit:', error);
+      isClaimingRewardRef.current = false;
       toast({
         title: "❌ Критическая ошибка",
         description: "Произошла ошибка при обработке наград",
@@ -418,9 +421,8 @@ const TeamBattlePageInner: React.FC<TeamBattlePageProps> = ({
       });
       handleExitAndReset();
     } finally {
-      // ✅ КРИТИЧНО: Очищаем таймаут и сбрасываем флаг
+      // ✅ Очищаем таймаут (флаг уже сброшен выше)
       clearTimeout(safetyTimeout);
-      isClaimingRewardRef.current = false;
     }
   };
 
