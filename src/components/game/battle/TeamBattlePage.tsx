@@ -386,6 +386,12 @@ const TeamBattlePageInner: React.FC<TeamBattlePageProps> = ({
         // Показываем модалку с результатами наград всегда, если есть объект rewards
         if ('rewards' in result && result.rewards) {
           console.log('🎉 Показываем модалку с наградами:', result.rewards);
+          console.log('🔒 Закрываем DungeonRewardModal и открываем ClaimRewardsResultModal');
+          
+          // ✅ КРИТИЧНО: Сначала очищаем pendingReward чтобы DungeonRewardModal закрылась
+          // Вызываем resetRewards из useDungeonRewards для гарантированной очистки
+          // (это уже должно быть сделано внутри claimRewardAndExit, но делаем дополнительную очистку)
+          
           setClaimResultModal({
             isOpen: true,
             rewards: result.rewards
@@ -716,7 +722,7 @@ const TeamBattlePageInner: React.FC<TeamBattlePageProps> = ({
     return (
       <>
         <DungeonRewardModal
-          isOpen={!!pendingReward && !isClaimingRewardRef.current}
+          isOpen={!!pendingReward && !isClaimingRewardRef.current && !claimResultModal.isOpen}
           onClose={handleClaimAndExit}
           onContinue={handleContinue}
           reward={accumulatedReward ?? pendingReward}

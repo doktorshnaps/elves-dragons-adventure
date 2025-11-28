@@ -23,6 +23,15 @@ export const ClaimRewardsResultModal: React.FC<ClaimRewardsResultModalProps> = (
   onClose,
   rewards
 }) => {
+  // ✅ Логирование открытия модалки
+  React.useEffect(() => {
+    if (isOpen) {
+      console.log('🎊 ============ МОДАЛЬНОЕ ОКНО РЕЗУЛЬТАТОВ CLAIM ОТКРЫТО ============');
+      console.log('🎊 Rewards:', JSON.stringify(rewards, null, 2));
+      console.log('🎊 =======================================================\n');
+    }
+  }, [isOpen, rewards]);
+
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-md mx-auto bg-card/95 backdrop-blur-sm border-primary/20">
