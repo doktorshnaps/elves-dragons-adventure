@@ -338,7 +338,14 @@ export const useDungeonRewards = () => {
         // Получаем реальные награды с сервера для отображения toast
         const serverRewards = result.data || {};
         const actualEllReward = serverRewards.ell_reward || 0;
-        const actualItemsCount = serverRewards.items?.length || 0;
+        const actualExperienceReward = serverRewards.experience_reward || 0;
+        const actualItems = Array.isArray(serverRewards.items) ? serverRewards.items : [];
+        
+        console.log('📊 Обработанные награды для модалки:', {
+          ell_reward: actualEllReward,
+          experience_reward: actualExperienceReward,
+          items: actualItems
+        });
         
         // Очищаем claim_key после успешного клейма
         localStorage.removeItem('currentClaimKey');
@@ -363,8 +370,8 @@ export const useDungeonRewards = () => {
           success: true, 
           rewards: {
             ell_reward: actualEllReward,
-            experience_reward: serverRewards.experience_reward || 0,
-            items: serverRewards.items || []
+            experience_reward: actualExperienceReward,
+            items: actualItems
           }
         };
         

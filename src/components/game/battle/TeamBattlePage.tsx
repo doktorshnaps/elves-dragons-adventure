@@ -328,6 +328,7 @@ const TeamBattlePageInner: React.FC<TeamBattlePageProps> = ({
     }
     
     isClaimingRewardRef.current = true;
+    console.log('💰 ============ НАЧАЛО handleClaimAndExit ============');
     
     toast({
       title: "🚨 Сохранение прогресса",
@@ -364,6 +365,8 @@ const TeamBattlePageInner: React.FC<TeamBattlePageProps> = ({
       monstersKilled // Передаем список убитых монстров для server-side расчета
     );
     
+    console.log('🎁 Результат claimRewardAndExit:', result);
+    
     isClaimingRewardRef.current = false;
     
     if (result && typeof result === 'object' && 'success' in result && result.success) {
@@ -379,11 +382,13 @@ const TeamBattlePageInner: React.FC<TeamBattlePageProps> = ({
         handleExitAndReset();
       }
     } else {
+      console.error('❌ Ошибка при начислении наград:', result);
       toast({
         title: "❌ Ошибка",
         description: "Не удалось сохранить состояние карт",
         variant: "destructive"
       });
+      handleExitAndReset();
     }
   };
 
