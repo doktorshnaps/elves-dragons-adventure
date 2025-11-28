@@ -324,6 +324,11 @@ const TeamBattlePageInner: React.FC<TeamBattlePageProps> = ({
   }, [battleState.playerPairs, cardInstances]);
 
   const handleClaimAndExit = async () => {
+    console.log('💰 ============ ВЫЗОВ handleClaimAndExit ============');
+    console.log('💰 Текущее состояние isClaiming:', isClaiming);
+    console.log('💰 Monsters killed:', monstersKilled.length);
+    console.log('💰 ===================================================');
+    
     // Предотвращаем двойной вызов
     if (isClaiming) {
       console.log('⏳ Уже идет процесс начисления наград, пропускаем повторный вызов');
@@ -331,6 +336,7 @@ const TeamBattlePageInner: React.FC<TeamBattlePageProps> = ({
     }
     
     setIsClaiming(true);
+    console.log('✅ isClaiming установлен в true, показываем "Обработка результатов боя..."');
     console.log('💰 ============ НАЧАЛО handleClaimAndExit ============');
     
     // 🔒 Таймаут безопасности: если процесс завис на >15 секунд, сбрасываем и показываем ошибку
@@ -381,29 +387,45 @@ const TeamBattlePageInner: React.FC<TeamBattlePageProps> = ({
         monstersKilled // Передаем список убитых монстров для server-side расчета
       );
       
-      console.log('🎁 Результат claimRewardAndExit:', result);
+      console.log('🎁 ========== РЕЗУЛЬТАТ claimRewardAndExit ==========');
+      console.log('🎁 Тип результата:', typeof result);
+      console.log('🎁 Полный объект результата:', JSON.stringify(result, null, 2));
+      console.log('🎁 result.success:', result && typeof result === 'object' ? result.success : 'N/A');
+      console.log('🎁 result.rewards:', result && typeof result === 'object' && 'rewards' in result ? result.rewards : 'N/A');
+      console.log('🎁 ===================================================');
       
       if (result && typeof result === 'object' && 'success' in result && result.success) {
+        console.log('✅ Результат успешный, проверяем наличие rewards...');
         // Показываем модалку с результатами наград всегда, если есть объект rewards
         if ('rewards' in result && result.rewards) {
-          console.log('🎉 Показываем модалку с наградами:', result.rewards);
-          console.log('🔒 КРИТИЧНО: Сбрасываем флаг claiming и открываем модалку');
+          console.log('🎉 НАЙДЕНЫ НАГРАДЫ! Показываем модалку с наградами:', result.rewards);
+          console.log('🔒 КРИТИЧНО: Сбрасываем флаг isClaiming и открываем модалку');
           
           // ✅ РЕШЕНИЕ: Сбрасываем state флаг - это вызовет ре-рендер и уберет "Обработка..."
           setIsClaiming(false);
+          console.log('✅ isClaiming сброшен в false');
           
           // Открываем финальную модалку с наградами
           setClaimResultModal({
             isOpen: true,
             rewards: result.rewards
           });
+          console.log('✅ ClaimResultModal установлена с isOpen: true');
         } else {
           console.warn('⚠️ Нет объекта rewards в результате, выходим без модалки');
+          console.warn('⚠️ result:', result);
           setIsClaiming(false);
           handleExitAndReset();
         }
       } else {
-        console.error('❌ Ошибка при начислении наград:', result);
+        console.error('❌ Ошибка при начислении наград или некорректный результат');
+        console.error('❌ result:', result);
+        console.error('❌ Условия проверки:');
+        console.error('   - result существует:', !!result);
+        console.error('   - result это объект:', typeof result === 'object');
+        console.error('   - result.success существует:', result && typeof result === 'object' && 'success' in result);
+        console.error('   - result.success === true:', result && typeof result === 'object' && 'success' in result ? result.success : false);
+        
         setIsClaiming(false);
         toast({
           title: "❌ Ошибка",
@@ -677,10 +699,22 @@ const TeamBattlePageInner: React.FC<TeamBattlePageProps> = ({
   }, [isBattleOver, battleStarted, alivePairs.length, battleState.level, processDungeonCompletion]);
   
   if (isBattleOver && battleStarted && !showingFinishDelay) {
+    console.log('🎬 [RENDER] isBattleOver detected:', {
+      isBattleOver,
+      battleStarted,
+      showingFinishDelay,
+      pendingReward: !!pendingReward,
+      isClaiming,
+      claimResultModalOpen: claimResultModal.isOpen,
+      alivePairs: alivePairs.length
+    });
+    
     // Если модальное окно еще не готово
     if (!pendingReward && !isClaiming) {
+      console.log('🔍 [RENDER] Нет pending reward и не идет claiming');
       // При полном поражении награды нет — показываем экран поражения с выходом
       if (alivePairs.length === 0) {
+        console.log('💀 [RENDER] Показываем экран полного поражения');
         return (
           <div className="fixed inset-0 bg-black/90 flex items-center justify-center z-[200]">
             <Card variant="menu" className="p-6 max-w-md w-full">
@@ -710,6 +744,7 @@ const TeamBattlePageInner: React.FC<TeamBattlePageProps> = ({
     
     // Если идет процесс обработки наград, показываем индикатор
     if (isClaiming && !claimResultModal.isOpen) {
+      console.log('⏳ [RENDER] Показываем "Обработка результатов боя..." (isClaiming=true, claimResultModal.isOpen=false)');
       return (
         <div className="fixed inset-0 bg-black/90 flex items-center justify-center z-[200]">
           <Card variant="menu" className="p-6 max-w-md w-full">
@@ -722,6 +757,12 @@ const TeamBattlePageInner: React.FC<TeamBattlePageProps> = ({
     }
 
     // Показываем только модальное окно с наградой, убираем промежуточный экран победы/поражения
+    console.log('🎁 [RENDER] Проверка модальных окон:', {
+      pendingRewardExists: !!pendingReward,
+      isClaiming,
+      claimResultModalOpen: claimResultModal.isOpen
+    });
+    
     return (
       <>
         <DungeonRewardModal
@@ -735,6 +776,7 @@ const TeamBattlePageInner: React.FC<TeamBattlePageProps> = ({
         <ClaimRewardsResultModal
           isOpen={claimResultModal.isOpen}
           onClose={() => {
+            console.log('🚪 [RENDER] Закрываем ClaimRewardsResultModal');
             setClaimResultModal({ isOpen: false, rewards: null });
             handleExitAndReset();
           }}
