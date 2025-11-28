@@ -330,6 +330,20 @@ const TeamBattlePageInner: React.FC<TeamBattlePageProps> = ({
     isClaimingRewardRef.current = true;
     console.log('💰 ============ НАЧАЛО handleClaimAndExit ============');
     
+    // 🔒 Таймаут безопасности: если процесс завис на >15 секунд, сбрасываем и показываем ошибку
+    const safetyTimeout = setTimeout(() => {
+      if (isClaimingRewardRef.current) {
+        console.error('⏰ КРИТИЧЕСКАЯ ОШИБКА: Процесс claim завис на >15 секунд, принудительный сброс');
+        isClaimingRewardRef.current = false;
+        toast({
+          title: "⏰ Таймаут",
+          description: "Процесс обработки наград завис. Попробуйте переподключиться.",
+          variant: "destructive"
+        });
+        handleExitAndReset();
+      }
+    }, 15000); // 15 секунд таймаут
+    
     toast({
       title: "🚨 Сохранение прогресса",
       description: "Начинаем сохранение здоровья и брони карт...",
@@ -357,38 +371,50 @@ const TeamBattlePageInner: React.FC<TeamBattlePageProps> = ({
     }
     
     // Продолжаем claim даже если cardHealthUpdates пустой - награды все равно нужно начислить
-    const result = await claimRewardAndExit(
-      getCurrentClaimKey(), 
-      cardHealthUpdates, 
-      dungeonType, 
-      battleState.level,
-      monstersKilled // Передаем список убитых монстров для server-side расчета
-    );
-    
-    console.log('🎁 Результат claimRewardAndExit:', result);
-    
-    isClaimingRewardRef.current = false;
-    
-    if (result && typeof result === 'object' && 'success' in result && result.success) {
-      // Показываем модалку с результатами наград всегда, если есть объект rewards
-      if ('rewards' in result && result.rewards) {
-        console.log('🎉 Показываем модалку с наградами:', result.rewards);
-        setClaimResultModal({
-          isOpen: true,
-          rewards: result.rewards
-        });
+    try {
+      const result = await claimRewardAndExit(
+        getCurrentClaimKey(), 
+        cardHealthUpdates, 
+        dungeonType, 
+        battleState.level,
+        monstersKilled // Передаем список убитых монстров для server-side расчета
+      );
+      
+      console.log('🎁 Результат claimRewardAndExit:', result);
+      
+      if (result && typeof result === 'object' && 'success' in result && result.success) {
+        // Показываем модалку с результатами наград всегда, если есть объект rewards
+        if ('rewards' in result && result.rewards) {
+          console.log('🎉 Показываем модалку с наградами:', result.rewards);
+          setClaimResultModal({
+            isOpen: true,
+            rewards: result.rewards
+          });
+        } else {
+          console.warn('⚠️ Нет объекта rewards в результате, выходим без модалки');
+          handleExitAndReset();
+        }
       } else {
-        console.warn('⚠️ Нет объекта rewards в результате, выходим без модалки');
+        console.error('❌ Ошибка при начислении наград:', result);
+        toast({
+          title: "❌ Ошибка",
+          description: "Не удалось сохранить состояние карт",
+          variant: "destructive"
+        });
         handleExitAndReset();
       }
-    } else {
-      console.error('❌ Ошибка при начислении наград:', result);
+    } catch (error) {
+      console.error('❌ Критическая ошибка handleClaimAndExit:', error);
       toast({
-        title: "❌ Ошибка",
-        description: "Не удалось сохранить состояние карт",
+        title: "❌ Критическая ошибка",
+        description: "Произошла ошибка при обработке наград",
         variant: "destructive"
       });
       handleExitAndReset();
+    } finally {
+      // ✅ КРИТИЧНО: Очищаем таймаут и сбрасываем флаг
+      clearTimeout(safetyTimeout);
+      isClaimingRewardRef.current = false;
     }
   };
 

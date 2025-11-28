@@ -233,7 +233,7 @@ export const useDungeonRewards = () => {
     
     if (isClaimingRef.current) {
       console.log('⚠️ Повторный вызов claimRewardAndExit заблокирован');
-      return false;
+      return { success: false, rewards: { ell_reward: 0, experience_reward: 0, items: [] } };
     }
     
     console.log('💔 [claimRewardAndExit] Получены обновления здоровья карт:', cardHealthUpdates.length);
@@ -241,14 +241,14 @@ export const useDungeonRewards = () => {
     // КРИТИЧЕСКАЯ ПРОВЕРКА: Если игрок был побеждён, НЕ начисляем treasure hunt предметы
     if (isDefeatedRef.current) {
       console.log('❌ Игрок был побеждён! Отменяем начисление treasure hunt предметов');
-      return false;
+      return { success: false, rewards: { ell_reward: 0, experience_reward: 0, items: [] } };
     }
 
     // Global and storage-based idempotency
     const now = Date.now();
     if (globalClaimLock && lastClaimKeyGlobal === claimKey && now - lastClaimAtGlobal < CLAIM_TTL_MS) {
       console.warn('⏭️ CLAIM SKIP (global lock)', { claimKey });
-      return false;
+      return { success: false, rewards: { ell_reward: 0, experience_reward: 0, items: [] } };
     }
 
     const storageKey = `claim_reward:${accountId || 'local'}:${claimKey}`;
@@ -258,7 +258,7 @@ export const useDungeonRewards = () => {
         const ts = tsRaw ? parseInt(tsRaw) : 0;
         if (ts && now - ts < CLAIM_TTL_MS) {
           console.warn('⏭️ CLAIM SKIP (storage TTL)', { claimKey, ttl: CLAIM_TTL_MS });
-          return false;
+          return { success: false, rewards: { ell_reward: 0, experience_reward: 0, items: [] } };
         }
         // Preemptively set session guard to block concurrent doubles
         sessionStorage.setItem(storageKey, String(now));
