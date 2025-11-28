@@ -533,7 +533,7 @@ Deno.serve(async (req) => {
       rewards: {
         ell_reward,
         experience_reward,
-        items: items.length
+        items: items // ✅ Возвращаем массив предметов, а не количество
       }
     });
 
