@@ -93,9 +93,9 @@ export const ClaimRewardsResultModal: React.FC<ClaimRewardsResultModalProps> = (
                       className="flex items-center justify-between p-2 bg-background/50 rounded border border-border/50"
                     >
                       <div className="text-sm font-medium">{item.name}</div>
-                      {item.quantity && item.quantity > 1 && (
-                        <div className="text-xs text-primary font-bold">x{item.quantity}</div>
-                      )}
+                      <div className="text-xs text-primary font-bold">
+                        x{item.quantity || 1}
+                      </div>
                     </div>
                   ))}
                 </div>
