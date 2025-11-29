@@ -12,13 +12,15 @@ interface DungeonRewardModalProps {
   onContinue?: () => void;
   reward: DungeonReward;
   canContinue?: boolean;
+  currentLevel?: number;
 }
 export const DungeonRewardModal: React.FC<DungeonRewardModalProps> = ({
   isOpen,
   onClose,
   onContinue,
   reward,
-  canContinue = false
+  canContinue = false,
+  currentLevel = 1
 }) => {
   const [isSubmitting, setIsSubmitting] = React.useState(false);
 
@@ -48,7 +50,7 @@ export const DungeonRewardModal: React.FC<DungeonRewardModalProps> = ({
         <DialogHeader>
           <DialogTitle className="text-center text-2xl flex items-center justify-center gap-2">
             <Trophy className="w-6 h-6 text-yellow-500" />
-            Награда за подземелье
+            Пройден уровень {currentLevel}
           </DialogTitle>
         </DialogHeader>
         
