@@ -311,11 +311,6 @@ export const useTeamBattle = (dungeonType: DungeonType, initialLevel: number = 1
 
     // Проверяем, не пропускает ли атакующий ход
     if (skippedAttackerIds.has(pairId)) {
-      toast({
-        title: "Пропуск хода",
-        description: `${attackingPair.hero.name} пропускает ход из-за критической блокировки врага`,
-        variant: "destructive"
-      });
       setSkippedAttackerIds(prev => {
         const newSet = new Set(prev);
         newSet.delete(pairId);
@@ -340,8 +335,9 @@ export const useTeamBattle = (dungeonType: DungeonType, initialLevel: number = 1
       damage: appliedDamage,
       isBlocked,
       isCritical: damageResult.isAttackerCrit && appliedDamage > 0,
-      level: battleState.level
-    });
+      level: battleState.level,
+      targetOpponentId: targetId
+    } as any);
 
     // Toast уведомления убраны - урон отображается визуально на карточках
 
@@ -366,8 +362,6 @@ export const useTeamBattle = (dungeonType: DungeonType, initialLevel: number = 1
 
     // Награды/опыт если цель убита
     if (newTargetHealth <= 0) {
-      const expReward = (accountLevel * 5) + 45 + (target.isBoss ? 150 : 0);
-      
       // ⚠️ ОПТИМИЗАЦИЯ PHASE 2A: НЕ отправляем запросы в БД во время боя!
       // Счетчики убийств будут обновлены один раз через claim-battle-rewards при выходе из подземелья
       console.log('💀 [BATTLE] Monster killed, kills will be synced on dungeon exit via claim-battle-rewards');
@@ -376,16 +370,8 @@ export const useTeamBattle = (dungeonType: DungeonType, initialLevel: number = 1
       const canGainExp = canGainExperienceInDungeon(dungeonType, accountLevel);
       
       if (canGainExp && accountLevel < 100) {
+        const expReward = (accountLevel * 5) + 45 + (target.isBoss ? 150 : 0);
         await addAccountExp(expReward);
-        toast({ title: "Враг побежден!", description: `Получено ${expReward} опыта аккаунта` });
-      } else if (accountLevel >= 100) {
-        toast({ title: "Враг побежден!", description: "Достигнут максимальный уровень!" });
-      } else {
-        toast({ 
-          title: "Враг побежден!", 
-          description: "Для получения опыта нужно другое подземелье!",
-          variant: "default"
-        });
       }
     }
 

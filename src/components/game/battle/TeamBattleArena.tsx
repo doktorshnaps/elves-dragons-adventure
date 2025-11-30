@@ -64,8 +64,9 @@ export const TeamBattleArena: React.FC<TeamBattleArenaProps> = ({
   const [isPlayerAttacking, setIsPlayerAttacking] = useState(true);
   const [diceKey, setDiceKey] = useState(0);
   
-  // Damage indicators for each pair
+  // Damage indicators for each pair and enemy
   const [pairDamages, setPairDamages] = useState<Map<string, { damage: number; isCritical?: boolean; isBlocked?: boolean; key: number }>>(new Map());
+  const [enemyDamages, setEnemyDamages] = useState<Map<number, { damage: number; isCritical?: boolean; isBlocked?: boolean; key: number }>>(new Map());
   
   // Attack animation state
   const [attackAnimation, setAttackAnimation] = useState<{
@@ -203,7 +204,24 @@ export const TeamBattleArena: React.FC<TeamBattleArenaProps> = ({
             });
             return newMap;
           });
-        }, adjustDelay(1500)); // Показываем урон после остановки кубиков
+        }, adjustDelay(1500));
+      }
+      
+      // Если атака игрока, показываем урон на конкретном монстре после задержки
+      if (lastRoll.source === 'player' && lastRoll.damage >= 0 && (lastRoll as any).targetOpponentId) {
+        setTimeout(() => {
+          const targetOpponentId = (lastRoll as any).targetOpponentId;
+          setEnemyDamages(prev => {
+            const newMap = new Map(prev);
+            newMap.set(targetOpponentId, {
+              damage: lastRoll.damage,
+              isCritical: lastRoll.isCritical,
+              isBlocked: lastRoll.isBlocked,
+              key: Date.now()
+            });
+            return newMap;
+          });
+        }, adjustDelay(1500));
       }
       
       // Останавливаем кубики через 1500ms (синхронно с RESULT_DISPLAY_MS из useTeamBattle)
@@ -587,11 +605,31 @@ export const TeamBattleArena: React.FC<TeamBattleArenaProps> = ({
             </CardHeader>
             <CardContent className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden p-0.5 sm:p-1">
               <div className="grid grid-cols-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-0.5 sm:gap-1">
-                {opponents.map((opponent, index) => <div key={opponent.id} className={`relative rounded-lg sm:rounded-2xl border-2 transition-all overflow-hidden h-32 sm:h-40 md:h-48 ${opponent.health <= 0 ? 'border-white/30' : attackedTarget === opponent.id ? 'border-red-500 animate-pulse scale-105 shadow-lg shadow-red-500/50 cursor-pointer' : selectedTarget === opponent.id ? 'border-red-400 bg-red-400/10 cursor-pointer' : 'border-white/50 hover:border-red-400/50 cursor-pointer'}`} onClick={() => {
+                {opponents.map((opponent, index) => {
+                  const enemyDamage = enemyDamages.get(opponent.id);
+                  
+                  return <div key={opponent.id} className={`relative rounded-lg sm:rounded-2xl border-2 transition-all overflow-hidden h-32 sm:h-40 md:h-48 ${opponent.health <= 0 ? 'border-white/30' : attackedTarget === opponent.id ? 'border-red-500 animate-pulse scale-105 shadow-lg shadow-red-500/50 cursor-pointer' : selectedTarget === opponent.id ? 'border-red-400 bg-red-400/10 cursor-pointer' : 'border-white/50 hover:border-red-400/50 cursor-pointer'}`} onClick={() => {
                 if (opponent.health > 0 && isPlayerTurn) {
                   setSelectedTarget(opponent.id);
                 }
               }}>
+                    {/* Damage Indicator */}
+                    {enemyDamage && (
+                      <DamageIndicator
+                        key={enemyDamage.key}
+                        damage={enemyDamage.damage}
+                        isCritical={enemyDamage.isCritical}
+                        isBlocked={enemyDamage.isBlocked}
+                        onComplete={() => {
+                          setEnemyDamages(prev => {
+                            const newMap = new Map(prev);
+                            newMap.delete(opponent.id);
+                            return newMap;
+                          });
+                        }}
+                      />
+                    )}
+                    
                     {/* Vertical Health Bar - Left Side */}
                     <div className="absolute left-0.5 sm:left-1 top-1 sm:top-2 bottom-1 sm:bottom-2 w-2 sm:w-3 bg-black/60 rounded-full flex flex-col justify-end z-20">
                       <div 
@@ -640,7 +678,8 @@ export const TeamBattleArena: React.FC<TeamBattleArenaProps> = ({
                         </div>
                       </div>
                     </div>
-                  </div>)}
+                  </div>;
+                })}
               </div>
             </CardContent>
           </Card>
