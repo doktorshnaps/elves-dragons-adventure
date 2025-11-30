@@ -6,26 +6,25 @@ import { useLanguage } from '@/hooks/useLanguage';
 import { t } from '@/utils/translations';
 import { getTranslatedCardName } from '@/utils/cardNameTranslations';
 import { CardImage } from '@/components/game/cards/CardImage';
-
 interface AttackOrderSelectorProps {
   playerPairs: TeamPair[];
   attackOrder: string[];
   onOrderChange: (newOrder: string[]) => void;
   onStartBattle: () => void;
 }
-
 export const AttackOrderSelector: React.FC<AttackOrderSelectorProps> = ({
   playerPairs,
   attackOrder,
   onOrderChange,
   onStartBattle
 }) => {
-  const { language } = useLanguage();
+  const {
+    language
+  } = useLanguage();
   const [selectedOrder, setSelectedOrder] = useState<string[]>([]);
-
   const handlePairClick = (pairId: string) => {
     let newOrder = [...selectedOrder];
-    
+
     // Если пара уже выбрана, убираем её из порядка
     if (newOrder.includes(pairId)) {
       newOrder = newOrder.filter(id => id !== pairId);
@@ -33,20 +32,18 @@ export const AttackOrderSelector: React.FC<AttackOrderSelectorProps> = ({
       // Добавляем пару в конец порядка
       newOrder.push(pairId);
     }
-    
     setSelectedOrder(newOrder);
     onOrderChange(newOrder);
   };
-
   const getPairOrder = (pairId: string): number => {
     const index = selectedOrder.indexOf(pairId);
     return index === -1 ? 0 : index + 1;
   };
-
-  return (
-    <div className="min-h-screen flex flex-col justify-end">
-      <div className="flex-1 flex items-center justify-center p-2 sm:p-4">
-        <Card variant="menu" className="max-w-2xl w-full" style={{ boxShadow: '-33px 15px 10px rgba(0, 0, 0, 0.6)' }}>
+  return <div className="min-h-screen flex flex-col justify-end">
+      <div className="flex-1 flex items-center justify-center p-2 sm:p-4 my-[107px] mx-[3px] px-0 py-0 pr-0 pb-0 mb-0">
+        <Card variant="menu" className="max-w-2xl w-full" style={{
+        boxShadow: '-33px 15px 10px rgba(0, 0, 0, 0.6)'
+      }}>
           <CardHeader className="pb-2 sm:pb-6">
             <CardTitle className="text-center text-lg sm:text-2xl text-white">
               {t(language, 'attackOrder.readyTitle')}
@@ -57,13 +54,9 @@ export const AttackOrderSelector: React.FC<AttackOrderSelectorProps> = ({
           </CardHeader>
           <CardContent className="pt-0 sm:pt-6">
             <div className="flex justify-center">
-              <Button 
-                onClick={onStartBattle}
-                variant="menu"
-                className="px-6 py-2 sm:px-8 sm:py-3 text-base sm:text-lg"
-                disabled={playerPairs.length === 0}
-                style={{ boxShadow: '-33px 15px 10px rgba(0, 0, 0, 0.6)' }}
-              >
+              <Button onClick={onStartBattle} variant="menu" className="px-6 py-2 sm:px-8 sm:py-3 text-base sm:text-lg" disabled={playerPairs.length === 0} style={{
+              boxShadow: '-33px 15px 10px rgba(0, 0, 0, 0.6)'
+            }}>
                 {t(language, 'attackOrder.startBattle')}
               </Button>
             </div>
@@ -78,12 +71,14 @@ export const AttackOrderSelector: React.FC<AttackOrderSelectorProps> = ({
             {t(language, 'attackOrder.selectedTeam')} ({playerPairs.length}/5)
           </h3>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-1.5 sm:gap-2">
-            {Array.from({ length: 5 }, (_, index) => {
-              const pair = playerPairs[index];
-              return (
-                <div key={index} className="relative overflow-hidden border border-white rounded-xl p-1.5 sm:p-2 bg-black/30 backdrop-blur-sm" style={{ boxShadow: '-20px 10px 8px rgba(0, 0, 0, 0.6)' }}>
-                  {pair ? (
-                    <>
+            {Array.from({
+            length: 5
+          }, (_, index) => {
+            const pair = playerPairs[index];
+            return <div key={index} className="relative overflow-hidden border border-white rounded-xl p-1.5 sm:p-2 bg-black/30 backdrop-blur-sm" style={{
+              boxShadow: '-20px 10px 8px rgba(0, 0, 0, 0.6)'
+            }}>
+                  {pair ? <>
                       {/* Mobile horizontal layout */}
                       <div className="block sm:hidden">
                         <div className="text-[10px] text-white font-medium text-center mb-0.5">{t(language, 'attackOrder.pair')} {index + 1}</div>
@@ -91,11 +86,7 @@ export const AttackOrderSelector: React.FC<AttackOrderSelectorProps> = ({
                           {/* Hero section */}
                           <div className="flex-1 flex gap-1">
                             <div className="w-10 h-10 flex-shrink-0 rounded-md overflow-hidden border border-white/30 bg-black/30">
-                              <CardImage 
-                                image={pair.hero.image} 
-                                name={pair.hero.name}
-                                card={pair.hero}
-                              />
+                              <CardImage image={pair.hero.image} name={pair.hero.name} card={pair.hero} />
                             </div>
                             <div className="flex-1 min-w-0">
                               <div className="text-[9px] text-white/70">{t(language, 'attackOrder.hero')}</div>
@@ -104,21 +95,15 @@ export const AttackOrderSelector: React.FC<AttackOrderSelectorProps> = ({
                           </div>
                           
                           {/* Dragon section */}
-                          {pair.dragon && (
-                            <div className="flex-1 flex gap-1">
+                          {pair.dragon && <div className="flex-1 flex gap-1">
                               <div className="w-10 h-10 flex-shrink-0 rounded-md overflow-hidden border border-white/30 bg-black/30">
-                                <CardImage 
-                                  image={pair.dragon.image} 
-                                  name={pair.dragon.name}
-                                  card={pair.dragon}
-                                />
+                                <CardImage image={pair.dragon.image} name={pair.dragon.name} card={pair.dragon} />
                               </div>
                               <div className="flex-1 min-w-0">
                                 <div className="text-[9px] text-white/70">{t(language, 'attackOrder.dragon')}</div>
                                 <div className="text-[10px] font-medium text-white truncate">{getTranslatedCardName(pair.dragon.name, language)}</div>
                               </div>
-                            </div>
-                          )}
+                            </div>}
                         </div>
                         
                         {/* Stats horizontal */}
@@ -136,11 +121,7 @@ export const AttackOrderSelector: React.FC<AttackOrderSelectorProps> = ({
                         {/* Hero Image */}
                         <div className="flex justify-center">
                           <div className="w-16 h-16 rounded-lg overflow-hidden border-2 border-white/30 bg-black/30">
-                            <CardImage 
-                              image={pair.hero.image} 
-                              name={pair.hero.name}
-                              card={pair.hero}
-                            />
+                            <CardImage image={pair.hero.image} name={pair.hero.name} card={pair.hero} />
                           </div>
                         </div>
                         
@@ -148,21 +129,15 @@ export const AttackOrderSelector: React.FC<AttackOrderSelectorProps> = ({
                           <div className="text-xs text-white/70">{t(language, 'attackOrder.hero')}</div>
                           <div className="text-xs font-medium text-white">{getTranslatedCardName(pair.hero.name, language)}</div>
                           
-                          {pair.dragon && (
-                            <>
+                          {pair.dragon && <>
                               <div className="flex justify-center mt-1">
                                 <div className="w-12 h-12 rounded-lg overflow-hidden border-2 border-white/30 bg-black/30">
-                                  <CardImage 
-                                    image={pair.dragon.image} 
-                                    name={pair.dragon.name}
-                                    card={pair.dragon}
-                                  />
+                                  <CardImage image={pair.dragon.image} name={pair.dragon.name} card={pair.dragon} />
                                 </div>
                               </div>
                               <div className="text-xs text-white/70 mt-1">{t(language, 'attackOrder.dragon')}</div>
                               <div className="text-xs font-medium text-white">{getTranslatedCardName(pair.dragon.name, language)}</div>
-                            </>
-                          )}
+                            </>}
                           
                           <div className="text-xs text-gray-300 mt-2 space-y-1">
                             <div>💪 {pair.power}</div>
@@ -171,21 +146,16 @@ export const AttackOrderSelector: React.FC<AttackOrderSelectorProps> = ({
                           </div>
                         </div>
                       </div>
-                    </>
-                  ) : (
-                    <div className="flex items-center justify-center min-h-[50px] sm:min-h-[200px] text-gray-300">
+                    </> : <div className="flex items-center justify-center min-h-[50px] sm:min-h-[200px] text-gray-300">
                       <div className="text-center">
                         <div className="text-[10px]">{t(language, 'attackOrder.pair')} {index + 1}</div>
                         <div className="text-[10px] mt-0.5">{t(language, 'attackOrder.notSelected')}</div>
                       </div>
-                    </div>
-                  )}
-                </div>
-              );
-            })}
+                    </div>}
+                </div>;
+          })}
           </div>
         </div>
       </div>
-    </div>
-  );
+    </div>;
 };
