@@ -711,7 +711,7 @@ const TeamBattlePageInner: React.FC<TeamBattlePageProps> = ({
     });
     
     // Если модальное окно еще не готово
-    if (!pendingReward && !isClaiming) {
+    if (!pendingReward && !isClaiming && !claimResultModal.isOpen) {
       console.log('🔍 [RENDER] Нет pending reward и не идет claiming');
       // При полном поражении награды нет — показываем экран поражения с выходом
       if (alivePairs.length === 0) {
@@ -783,10 +783,7 @@ const TeamBattlePageInner: React.FC<TeamBattlePageProps> = ({
             console.log('🚪 [RENDER] Закрываем ClaimRewardsResultModal');
             setClaimResultModal({ isOpen: false, rewards: null });
             
-            // ✅ КРИТИЧНО: Сбрасываем pendingReward ТОЛЬКО при закрытии финальной модалки
-            console.log('🔄 [RENDER] Сбрасываем pendingReward через resetRewards');
-            resetRewards();
-            
+            // handleExitAndReset уже содержит resetRewards(), не дублируем
             handleExitAndReset();
           }}
           rewards={claimResultModal.rewards || { ell_reward: 0, experience_reward: 0, items: [] }}
