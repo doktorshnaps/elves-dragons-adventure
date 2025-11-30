@@ -31,14 +31,14 @@ interface DungeonSearchDialogProps {
 }
 
 const dungeonLevelRequirements = {
-  spider_nest: 0,
-  bone_dungeon: 10,
+  spider_nest: 1,
+  bone_dungeon: 15,
   dark_mage: 30,
-  forgotten_souls: 50,
-  ice_throne: 70,
-  sea_serpent: 90,
-  dragon_lair: 100,
-  pantheon_gods: 120
+  forgotten_souls: 40,
+  ice_throne: 50,
+  sea_serpent: 65,
+  dragon_lair: 80,
+  pantheon_gods: 90
 };
 
 const getDungeonName = (dungeon: DungeonType, lang: string) => {
@@ -76,6 +76,7 @@ export const DungeonSearchDialog = ({
   const teamBattleState = useGameStore((state) => state.teamBattleState);
   const activeBattleInProgress = useGameStore((state) => state.activeBattleInProgress);
   const clearTeamBattleState = useGameStore((state) => state.clearTeamBattleState);
+  const accountLevel = useGameStore((state) => state.accountLevel);
   
   const [activeDungeon, setActiveDungeon] = React.useState<string | null>(null);
   const { playerStats } = usePlayerState();
@@ -188,13 +189,14 @@ export const DungeonSearchDialog = ({
     }
 
     const basicRequirements = !isHealthTooLow && hasActiveCards && energyState.current > 0;
+    const levelRequirement = accountLevel >= requiredLevel;
     
     // If there's an active dungeon, only allow access to that specific dungeon
     if (activeDungeon) {
       return activeDungeon === dungeonType;
     }
     
-    return basicRequirements;
+    return basicRequirements && levelRequirement;
   };
 
   return (
@@ -250,9 +252,11 @@ export const DungeonSearchDialog = ({
                       ? 'bg-green-600 hover:bg-green-700 border-green-500 text-white shadow-lg shadow-green-500/50' 
                       : activeDungeon 
                         ? 'bg-black/30 border-white/30 text-white/50 cursor-not-allowed opacity-50'
-                        : ''
+                        : !canEnter
+                          ? 'bg-black/30 border-white/30 text-white/50 cursor-not-allowed opacity-50'
+                          : ''
                   }`}
-                  style={!isActiveDungeon && !activeDungeon ? { boxShadow: '-33px 15px 10px rgba(0, 0, 0, 0.6)' } : undefined}
+                  style={!isActiveDungeon && !activeDungeon && canEnter ? { boxShadow: '-33px 15px 10px rgba(0, 0, 0, 0.6)' } : undefined}
                 >
                   <span className="flex items-center gap-2">
                     {getDungeonName(dungeon as DungeonType, language)}
@@ -260,6 +264,11 @@ export const DungeonSearchDialog = ({
                       <span className="flex items-center gap-1 text-xs font-bold bg-green-400/20 px-2 py-0.5 rounded-full">
                         <span>⚔️</span>
                         <span>{t(language, 'dungeonSearch.active')}</span>
+                      </span>
+                    )}
+                    {!canEnter && !isActiveDungeon && (
+                      <span className="text-xs opacity-70">
+                        (Требуется {requiredLevel} ур.)
                       </span>
                     )}
                   </span>

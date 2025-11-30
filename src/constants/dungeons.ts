@@ -48,8 +48,8 @@ export type DungeonType = keyof typeof dungeonNames;
 export const dungeonLevelRanges = {
   spider_nest: { min: 1, max: 15 },
   bone_dungeon: { min: 15, max: 30 },
-  dark_mage: { min: 30, max: 35 },
-  forgotten_souls: { min: 35, max: 50 },
+  dark_mage: { min: 30, max: 40 },
+  forgotten_souls: { min: 40, max: 50 },
   ice_throne: { min: 50, max: 65 },
   sea_serpent: { min: 65, max: 80 },
   dragon_lair: { min: 80, max: 90 },
