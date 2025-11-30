@@ -76,14 +76,24 @@ async function calculateRewards(
   // Рассчитываем базовые награды (ELL и опыт) на основе уровня
   const monstersKilledCount = killedMonsters.length;
   
-  // Формула наград (можно настроить):
+  // Формула наград:
   // ELL = базовая сумма за монстра * количество убитых * множитель уровня
-  // EXP = базовая сумма за монстра * количество убитых * множитель уровня
   const ellPerMonster = 10 + (level * 2); // Растет с уровнем
-  const expPerMonster = 15 + (level * 3); // Растет с уровнем
-  
   const ell_reward = Math.floor(ellPerMonster * monstersKilledCount);
-  const experience_reward = Math.floor(expPerMonster * monstersKilledCount);
+  
+  // EXP = фиксированная сумма в зависимости от типа монстра
+  // 50 exp за обычного монстра, 100 exp за мини-босса, 200 exp за босса
+  let experience_reward = 0;
+  for (const monster of killedMonsters) {
+    const monsterNameLower = monster.monster_name.toLowerCase();
+    if (monsterNameLower.includes('boss') && !monsterNameLower.includes('mini')) {
+      experience_reward += 200; // Босс
+    } else if (monsterNameLower.includes('mini') || monsterNameLower.includes('мини')) {
+      experience_reward += 100; // Мини-босс
+    } else {
+      experience_reward += 50; // Обычный монстр
+    }
+  }
 
   console.log('💎 Base rewards calculated:', { ell_reward, experience_reward, monstersKilled: monstersKilledCount });
 

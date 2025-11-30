@@ -65,7 +65,8 @@ export const AdventuresTab = () => {
       }
       
       // Добавляем опыт аккаунта за убийство монстра
-      const accountExpReward = (accountLevel * 5) + 45 + (monster.isBoss ? 150 : 0);
+      // 50 exp за обычного монстра, 200 exp за босса
+      const accountExpReward = monster.isBoss ? 200 : 50;
       const experienceResult = addAccountExperience(accountExperience, accountExpReward);
       
       addAccountExp(accountExpReward);
