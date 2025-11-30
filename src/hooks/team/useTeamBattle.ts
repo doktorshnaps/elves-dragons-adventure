@@ -450,8 +450,9 @@ export const useTeamBattle = (dungeonType: DungeonType, initialLevel: number = 1
       damage: appliedDamage,
       isBlocked,
       isCritical: damageResult.isAttackerCrit && appliedDamage > 0,
-      level: battleState.level
-    });
+      level: battleState.level,
+      targetPairId: targetPair.id
+    } as any);
 
     // Крит-блокировка врага: отметим пропуск следующего хода
     if (damageResult.skipNextTurn) {

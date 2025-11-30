@@ -189,23 +189,20 @@ export const TeamBattleArena: React.FC<TeamBattleArenaProps> = ({
       setIsDiceRolling(true);
       setDiceKey(prev => prev + 1);
       
-      // Если атака врага, показываем урон на случайной паре после задержки
-      if (lastRoll.source === 'enemy' && lastRoll.damage >= 0) {
+      // Если атака врага, показываем урон на конкретной паре после задержки
+      if (lastRoll.source === 'enemy' && lastRoll.damage >= 0 && (lastRoll as any).targetPairId) {
         setTimeout(() => {
-          // Находим случайную живую пару для отображения урона
-          const targetPair = alivePairs[Math.floor(Math.random() * alivePairs.length)];
-          if (targetPair) {
-            setPairDamages(prev => {
-              const newMap = new Map(prev);
-              newMap.set(targetPair.id, {
-                damage: lastRoll.damage,
-                isCritical: lastRoll.isCritical,
-                isBlocked: lastRoll.isBlocked,
-                key: Date.now()
-              });
-              return newMap;
+          const targetPairId = (lastRoll as any).targetPairId;
+          setPairDamages(prev => {
+            const newMap = new Map(prev);
+            newMap.set(targetPairId, {
+              damage: lastRoll.damage,
+              isCritical: lastRoll.isCritical,
+              isBlocked: lastRoll.isBlocked,
+              key: Date.now()
             });
-          }
+            return newMap;
+          });
         }, adjustDelay(1500)); // Показываем урон после остановки кубиков
       }
       
@@ -217,7 +214,7 @@ export const TeamBattleArena: React.FC<TeamBattleArenaProps> = ({
       
       return () => clearTimeout(stopDiceTimer);
     }
-  }, [lastRoll, level, alivePairs, adjustDelay]);
+  }, [lastRoll, level, adjustDelay]);
 
   // Таймер хода врага — гарантирует единичное срабатывание даже при лагах сети
   const enemyAttackTimerRef = React.useRef<number | null>(null);
