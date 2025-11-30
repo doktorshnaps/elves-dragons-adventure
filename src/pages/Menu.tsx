@@ -80,29 +80,29 @@ export const Menu = () => {
       <div className="pointer-events-none absolute inset-0 bg-black/30 mx-0 my-0 py-0 px-0" />
       
       {/* Balance and Wallet Display */}
-      <div className="relative z-10 max-w-4xl mx-auto flex flex-wrap justify-center items-center gap-4 mb-4">
-        <div className="bg-transparent backdrop-blur-sm px-6 py-3 rounded-2xl border-2 border-black shadow-lg">
-          <div className="flex items-center gap-2">
-            <img src={walletIcon} alt="Balance" className="w-[23px] h-[23px]" />
-            <span className="text-black font-semibold">{t(language, 'menu.balance')} {gameData.balance} {t(language, 'game.currency')}</span>
+      <div className="relative z-10 max-w-4xl mx-auto flex flex-wrap justify-center items-center gap-2 sm:gap-4 mb-4">
+        <div className="bg-transparent backdrop-blur-sm px-3 py-2 sm:px-6 sm:py-3 rounded-2xl border-2 border-black shadow-lg">
+          <div className="flex items-center gap-1.5 sm:gap-2">
+            <img src={walletIcon} alt="Balance" className="w-[18px] h-[18px] sm:w-[23px] sm:h-[23px]" />
+            <span className="text-black font-semibold text-xs sm:text-base">{gameData.balance} {t(language, 'game.currency')}</span>
           </div>
         </div>
 
         {chainAccountId && (
           <>
-            <div className="bg-transparent backdrop-blur-sm px-6 py-3 rounded-2xl border-2 border-black shadow-lg">
-              <div className="flex items-center gap-2">
-                <img src={walletIcon} alt="NEAR" className="w-[23px] h-[23px]" />
-                <span className="text-black font-semibold">
+            <div className="bg-transparent backdrop-blur-sm px-3 py-2 sm:px-6 sm:py-3 rounded-2xl border-2 border-black shadow-lg">
+              <div className="flex items-center gap-1.5 sm:gap-2">
+                <img src={walletIcon} alt="NEAR" className="w-[18px] h-[18px] sm:w-[23px] sm:h-[23px]" />
+                <span className="text-black font-semibold text-xs sm:text-base">
                   {balancesLoading ? '...' : `${nearBalance} NEAR`}
                 </span>
               </div>
             </div>
 
-            <div className="bg-transparent backdrop-blur-sm px-6 py-3 rounded-2xl border-2 border-black shadow-lg">
-              <div className="flex items-center gap-2">
-                <img src={walletIcon} alt="GT" className="w-[23px] h-[23px]" />
-                <span className="text-black font-semibold">
+            <div className="bg-transparent backdrop-blur-sm px-3 py-2 sm:px-6 sm:py-3 rounded-2xl border-2 border-black shadow-lg">
+              <div className="flex items-center gap-1.5 sm:gap-2">
+                <img src={walletIcon} alt="GT" className="w-[18px] h-[18px] sm:w-[23px] sm:h-[23px]" />
+                <span className="text-black font-semibold text-xs sm:text-base">
                   {balancesLoading ? '...' : `${gtBalance} GT`}
                 </span>
               </div>
@@ -110,16 +110,16 @@ export const Menu = () => {
           </>
         )}
         
-        <div className="bg-transparent backdrop-blur-sm px-6 py-3 rounded-2xl border-2 border-black shadow-lg">
-          <div className="flex items-center gap-2">
-            <img src={walletIcon} alt="Wallet" className="w-[23px] h-[23px]" />
-            {isConnected ? <div className="flex items-center gap-2">
-                <span className="text-green-500 text-sm">●</span>
-                <span className="text-black font-medium text-sm">
-                  {accountId ? `${accountId.slice(0, 8)}...${accountId.slice(-4)}` : t(language, 'menu.connected')}
+        <div className="bg-transparent backdrop-blur-sm px-3 py-2 sm:px-6 sm:py-3 rounded-2xl border-2 border-black shadow-lg">
+          <div className="flex items-center gap-1.5 sm:gap-2">
+            <img src={walletIcon} alt="Wallet" className="w-[18px] h-[18px] sm:w-[23px] sm:h-[23px]" />
+            {isConnected ? <div className="flex items-center gap-1.5 sm:gap-2">
+                <span className="text-green-500 text-xs sm:text-sm">●</span>
+                <span className="text-black font-medium text-[10px] sm:text-sm">
+                  {accountId ? `${accountId.slice(0, 6)}...${accountId.slice(-3)}` : t(language, 'menu.connected')}
                 </span>
                 
-              </div> : <Button size="sm" variant="outline" onClick={connectWallet} disabled={isConnecting} className="text-xs px-3 py-1 h-6 border-black text-black hover:bg-gray-50/80 bg-transparent rounded-xl">
+              </div> : <Button size="sm" variant="outline" onClick={connectWallet} disabled={isConnecting} className="text-[10px] sm:text-xs px-2 sm:px-3 py-1 h-5 sm:h-6 border-black text-black hover:bg-gray-50/80 bg-transparent rounded-xl">
                 {isConnecting ? t(language, 'menu.connecting') : t(language, 'menu.connectWallet')}
               </Button>}
           </div>
@@ -225,16 +225,6 @@ export const Menu = () => {
         >
           <img src={moneyIcon} alt="Seekers" className="w-[23px] h-[23px]" />
           <span className="text-base font-semibold leading-tight text-center">ИСКАТЕЛИ</span>
-        </Button>
-
-        <Button 
-          variant="outline" 
-          className="h-36 bg-black/50 border-2 border-white rounded-3xl text-white hover:bg-black/70 hover:text-white transition-all flex flex-col items-center justify-center gap-3 backdrop-blur-sm"
-          style={{ boxShadow: '-33px 15px 10px rgba(0, 0, 0, 0.6)' }}
-          onClick={handleDisconnectWallet}
-        >
-          <img src={walletIcon} alt="Disconnect" className="w-[23px] h-[23px]" />
-          <span className="text-base font-semibold leading-tight text-center">{t(language, 'menu.disconnectWallet').toUpperCase().replace(' ', '\n')}</span>
         </Button>
       </div>
 
