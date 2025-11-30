@@ -83,17 +83,9 @@ export const Menu = () => {
       <SettingsMenu />
       <div className="pointer-events-none absolute inset-0 bg-black/30 mx-0 my-0 py-0 px-0" />
       
-      {/* Balance and Wallet Display */}
-      <div className="relative z-10 max-w-4xl mx-auto flex flex-wrap justify-center items-center gap-2 sm:gap-4 mb-4">
-        <div className="bg-transparent backdrop-blur-sm px-3 py-2 sm:px-6 sm:py-3 rounded-2xl border-2 border-black shadow-lg">
-          <div className="flex items-center gap-1.5 sm:gap-2">
-            <img src={walletIcon} alt="Balance" className="w-[18px] h-[18px] sm:w-[23px] sm:h-[23px]" />
-            <span className="text-black font-semibold text-xs sm:text-base">{gameData.balance} {t(language, 'game.currency')}</span>
-          </div>
-        </div>
-
-        {/* Account Level Display */}
-        <div className="bg-transparent backdrop-blur-sm px-3 py-2 sm:px-6 sm:py-3 rounded-2xl border-2 border-black shadow-lg">
+      {/* Account Level Display - Top Left */}
+      <div className="absolute top-4 left-4 z-10">
+        <div className="bg-transparent backdrop-blur-sm px-3 py-2 sm:px-4 sm:py-2.5 rounded-2xl border-2 border-black shadow-lg">
           <div className="flex flex-col gap-0.5">
             <div className="flex items-center gap-1.5 sm:gap-2">
               <span className="text-black font-bold text-xs sm:text-base">Уровень {accountLevel}</span>
@@ -101,6 +93,16 @@ export const Menu = () => {
             <div className="flex items-center gap-1 text-[10px] sm:text-xs text-black/80">
               <span>{xpProgress.currentLevelXP} / {xpProgress.nextLevelXP} exp</span>
             </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Balance and Wallet Display */}
+      <div className="relative z-10 max-w-4xl mx-auto flex flex-wrap justify-center items-center gap-2 sm:gap-4 mb-4">
+        <div className="bg-transparent backdrop-blur-sm px-3 py-2 sm:px-6 sm:py-3 rounded-2xl border-2 border-black shadow-lg">
+          <div className="flex items-center gap-1.5 sm:gap-2">
+            <img src={walletIcon} alt="Balance" className="w-[18px] h-[18px] sm:w-[23px] sm:h-[23px]" />
+            <span className="text-black font-semibold text-xs sm:text-base">{gameData.balance} {t(language, 'game.currency')}</span>
           </div>
         </div>
 
