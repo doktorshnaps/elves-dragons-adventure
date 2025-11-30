@@ -72,25 +72,25 @@ export const AttackOrderSelector: React.FC<AttackOrderSelectorProps> = ({
       </div>
       
       {/* Team Selection Panel at Bottom */}
-      <div className="bg-black/50 border-t-2 border-white p-4 backdrop-blur-sm">
+      <div className="bg-black/50 border-t-2 border-white p-2 sm:p-4 backdrop-blur-sm">
         <div className="max-w-6xl mx-auto">
-          <h3 className="text-lg font-bold text-white mb-3 text-center">
+          <h3 className="text-sm sm:text-lg font-bold text-white mb-2 text-center">
             {t(language, 'attackOrder.selectedTeam')} ({playerPairs.length}/5)
           </h3>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-2">
             {Array.from({ length: 5 }, (_, index) => {
               const pair = playerPairs[index];
               return (
-                <div key={index} className="relative overflow-hidden border-2 border-white rounded-3xl p-3 bg-black/30 backdrop-blur-sm" style={{ boxShadow: '-33px 15px 10px rgba(0, 0, 0, 0.6)' }}>
+                <div key={index} className="relative overflow-hidden border-2 border-white rounded-2xl p-2 bg-black/30 backdrop-blur-sm" style={{ boxShadow: '-33px 15px 10px rgba(0, 0, 0, 0.6)' }}>
                   {pair ? (
                     <>
                       {/* Mobile horizontal layout */}
                       <div className="block sm:hidden">
-                        <div className="text-xs text-white font-medium text-center mb-2">{t(language, 'attackOrder.pair')} {index + 1}</div>
-                        <div className="flex gap-3">
+                        <div className="text-xs text-white font-medium text-center mb-1">{t(language, 'attackOrder.pair')} {index + 1}</div>
+                        <div className="flex gap-2">
                           {/* Hero section */}
-                          <div className="flex-1 flex gap-2">
-                            <div className="w-14 h-14 flex-shrink-0 rounded-lg overflow-hidden border-2 border-white/30 bg-black/30">
+                          <div className="flex-1 flex gap-1.5">
+                            <div className="w-12 h-12 flex-shrink-0 rounded-lg overflow-hidden border-2 border-white/30 bg-black/30">
                               <CardImage 
                                 image={pair.hero.image} 
                                 name={pair.hero.name}
@@ -105,8 +105,8 @@ export const AttackOrderSelector: React.FC<AttackOrderSelectorProps> = ({
                           
                           {/* Dragon section */}
                           {pair.dragon && (
-                            <div className="flex-1 flex gap-2">
-                              <div className="w-14 h-14 flex-shrink-0 rounded-lg overflow-hidden border-2 border-white/30 bg-black/30">
+                            <div className="flex-1 flex gap-1.5">
+                              <div className="w-12 h-12 flex-shrink-0 rounded-lg overflow-hidden border-2 border-white/30 bg-black/30">
                                 <CardImage 
                                   image={pair.dragon.image} 
                                   name={pair.dragon.name}
@@ -122,7 +122,7 @@ export const AttackOrderSelector: React.FC<AttackOrderSelectorProps> = ({
                         </div>
                         
                         {/* Stats horizontal */}
-                        <div className="flex justify-around text-xs text-gray-300 mt-2 pt-2 border-t border-white/20">
+                        <div className="flex justify-around text-xs text-gray-300 mt-1.5 pt-1.5 border-t border-white/20">
                           <div>💪 {pair.power}</div>
                           <div>🛡️ {pair.defense}</div>
                           <div>❤️ {pair.health}</div>
@@ -173,10 +173,10 @@ export const AttackOrderSelector: React.FC<AttackOrderSelectorProps> = ({
                       </div>
                     </>
                   ) : (
-                    <div className="flex items-center justify-center min-h-[80px] sm:min-h-[200px] text-gray-300">
+                    <div className="flex items-center justify-center min-h-[60px] sm:min-h-[200px] text-gray-300">
                       <div className="text-center">
                         <div className="text-xs">{t(language, 'attackOrder.pair')} {index + 1}</div>
-                        <div className="text-xs mt-1">{t(language, 'attackOrder.notSelected')}</div>
+                        <div className="text-xs mt-0.5">{t(language, 'attackOrder.notSelected')}</div>
                       </div>
                     </div>
                   )}
