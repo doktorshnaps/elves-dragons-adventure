@@ -77,55 +77,103 @@ export const AttackOrderSelector: React.FC<AttackOrderSelectorProps> = ({
           <h3 className="text-lg font-bold text-white mb-3 text-center">
             {t(language, 'attackOrder.selectedTeam')} ({playerPairs.length}/5)
           </h3>
-          <div className="grid grid-cols-5 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
             {Array.from({ length: 5 }, (_, index) => {
               const pair = playerPairs[index];
               return (
-                <div key={index} className="relative overflow-hidden border-2 border-white rounded-3xl p-3 min-h-[200px] bg-black/30 backdrop-blur-sm" style={{ boxShadow: '-33px 15px 10px rgba(0, 0, 0, 0.6)' }}>
+                <div key={index} className="relative overflow-hidden border-2 border-white rounded-3xl p-3 bg-black/30 backdrop-blur-sm" style={{ boxShadow: '-33px 15px 10px rgba(0, 0, 0, 0.6)' }}>
                   {pair ? (
-                    <div className="space-y-2">
-                      <div className="text-xs text-white font-medium text-center">{t(language, 'attackOrder.pair')} {index + 1}</div>
-                      
-                      {/* Hero Image */}
-                      <div className="flex justify-center">
-                        <div className="w-16 h-16 rounded-lg overflow-hidden border-2 border-white/30 bg-black/30">
-                          <CardImage 
-                            image={pair.hero.image} 
-                            name={pair.hero.name}
-                            card={pair.hero}
-                          />
-                        </div>
-                      </div>
-                      
-                      <div className="text-center">
-                        <div className="text-xs text-white/70">{t(language, 'attackOrder.hero')}</div>
-                        <div className="text-xs font-medium text-white">{getTranslatedCardName(pair.hero.name, language)}</div>
-                        
-                        {pair.dragon && (
-                          <>
-                            <div className="flex justify-center mt-1">
-                              <div className="w-12 h-12 rounded-lg overflow-hidden border-2 border-white/30 bg-black/30">
+                    <>
+                      {/* Mobile horizontal layout */}
+                      <div className="block sm:hidden">
+                        <div className="text-xs text-white font-medium text-center mb-2">{t(language, 'attackOrder.pair')} {index + 1}</div>
+                        <div className="flex gap-3">
+                          {/* Hero section */}
+                          <div className="flex-1 flex gap-2">
+                            <div className="w-14 h-14 flex-shrink-0 rounded-lg overflow-hidden border-2 border-white/30 bg-black/30">
+                              <CardImage 
+                                image={pair.hero.image} 
+                                name={pair.hero.name}
+                                card={pair.hero}
+                              />
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <div className="text-xs text-white/70">{t(language, 'attackOrder.hero')}</div>
+                              <div className="text-xs font-medium text-white truncate">{getTranslatedCardName(pair.hero.name, language)}</div>
+                            </div>
+                          </div>
+                          
+                          {/* Dragon section */}
+                          {pair.dragon && (
+                            <div className="flex-1 flex gap-2">
+                              <div className="w-14 h-14 flex-shrink-0 rounded-lg overflow-hidden border-2 border-white/30 bg-black/30">
                                 <CardImage 
                                   image={pair.dragon.image} 
                                   name={pair.dragon.name}
                                   card={pair.dragon}
                                 />
                               </div>
+                              <div className="flex-1 min-w-0">
+                                <div className="text-xs text-white/70">{t(language, 'attackOrder.dragon')}</div>
+                                <div className="text-xs font-medium text-white truncate">{getTranslatedCardName(pair.dragon.name, language)}</div>
+                              </div>
                             </div>
-                            <div className="text-xs text-white/70 mt-1">{t(language, 'attackOrder.dragon')}</div>
-                            <div className="text-xs font-medium text-white">{getTranslatedCardName(pair.dragon.name, language)}</div>
-                          </>
-                        )}
+                          )}
+                        </div>
                         
-                        <div className="text-xs text-gray-300 mt-2 space-y-1">
+                        {/* Stats horizontal */}
+                        <div className="flex justify-around text-xs text-gray-300 mt-2 pt-2 border-t border-white/20">
                           <div>💪 {pair.power}</div>
                           <div>🛡️ {pair.defense}</div>
                           <div>❤️ {pair.health}</div>
                         </div>
                       </div>
-                    </div>
+
+                      {/* Desktop vertical layout */}
+                      <div className="hidden sm:block space-y-2">
+                        <div className="text-xs text-white font-medium text-center">{t(language, 'attackOrder.pair')} {index + 1}</div>
+                        
+                        {/* Hero Image */}
+                        <div className="flex justify-center">
+                          <div className="w-16 h-16 rounded-lg overflow-hidden border-2 border-white/30 bg-black/30">
+                            <CardImage 
+                              image={pair.hero.image} 
+                              name={pair.hero.name}
+                              card={pair.hero}
+                            />
+                          </div>
+                        </div>
+                        
+                        <div className="text-center">
+                          <div className="text-xs text-white/70">{t(language, 'attackOrder.hero')}</div>
+                          <div className="text-xs font-medium text-white">{getTranslatedCardName(pair.hero.name, language)}</div>
+                          
+                          {pair.dragon && (
+                            <>
+                              <div className="flex justify-center mt-1">
+                                <div className="w-12 h-12 rounded-lg overflow-hidden border-2 border-white/30 bg-black/30">
+                                  <CardImage 
+                                    image={pair.dragon.image} 
+                                    name={pair.dragon.name}
+                                    card={pair.dragon}
+                                  />
+                                </div>
+                              </div>
+                              <div className="text-xs text-white/70 mt-1">{t(language, 'attackOrder.dragon')}</div>
+                              <div className="text-xs font-medium text-white">{getTranslatedCardName(pair.dragon.name, language)}</div>
+                            </>
+                          )}
+                          
+                          <div className="text-xs text-gray-300 mt-2 space-y-1">
+                            <div>💪 {pair.power}</div>
+                            <div>🛡️ {pair.defense}</div>
+                            <div>❤️ {pair.health}</div>
+                          </div>
+                        </div>
+                      </div>
+                    </>
                   ) : (
-                    <div className="flex items-center justify-center h-full text-gray-300">
+                    <div className="flex items-center justify-center min-h-[80px] sm:min-h-[200px] text-gray-300">
                       <div className="text-center">
                         <div className="text-xs">{t(language, 'attackOrder.pair')} {index + 1}</div>
                         <div className="text-xs mt-1">{t(language, 'attackOrder.notSelected')}</div>
