@@ -372,79 +372,51 @@ Deno.serve(async (req) => {
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseKey);
 
-    // Generate cards with detailed logging and calculate defense
+    // Generate cards with detailed logging
     const newCards = [];
     
-    // Load game settings to calculate defense AND health
-    console.log('📊 Loading game settings for stats calculation...');
-    const [heroBaseRes, dragonBaseRes, rarityRes, classRes, dragonClassRes, mappingsRes] = await Promise.all([
-      supabase.from('hero_base_stats').select('health, defense, power, magic').limit(1).maybeSingle(),
-      supabase.from('dragon_base_stats').select('health, defense, power, magic').limit(1).maybeSingle(),
-      supabase.from('rarity_multipliers').select('*'),
-      supabase.from('class_multipliers').select('*'),
-      supabase.from('dragon_class_multipliers').select('*'),
-      supabase.from('card_class_mappings').select('*')
-    ]);
+    // Load card templates for stats lookup
+    console.log('📊 Loading card templates...');
+    const { data: cardTemplates, error: templatesErr } = await supabase
+      .from('card_templates')
+      .select('card_name, card_type, faction, rarity, power, defense, health, magic');
     
+    if (templatesErr) {
+      console.error('❌ Error loading card templates:', templatesErr);
+      throw templatesErr;
+    }
     
-    const heroBase = heroBaseRes.data || { health: 100, defense: 25 };
-    const dragonBase = dragonBaseRes.data || { health: 80, defense: 20 };
-    const rarityMults: Record<number, number> = (rarityRes.data || []).reduce((acc: any, r: any) => {
-      acc[r.rarity] = Number(r.multiplier);
-      return acc;
-    }, { 1: 1.0 });
+    console.log(`✅ Loaded ${cardTemplates?.length || 0} card templates`);
     
-    // ✅ ИСПРАВЛЕНИЕ: Извлекаем ВСЕ мультипликаторы (health, defense, power, magic)
-    const classMults: Record<string, any> = (classRes.data || []).reduce((acc: any, c: any) => {
-      acc[c.class_name] = { 
-        health_multiplier: Number(c.health_multiplier),
-        defense_multiplier: Number(c.defense_multiplier),
-        power_multiplier: Number(c.power_multiplier),
-        magic_multiplier: Number(c.magic_multiplier)
-      };
-      return acc;
-    }, {});
-    const dragonClassMults: Record<string, any> = (dragonClassRes.data || []).reduce((acc: any, c: any) => {
-      acc[c.class_name] = { 
-        health_multiplier: Number(c.health_multiplier),
-        defense_multiplier: Number(c.defense_multiplier),
-        power_multiplier: Number(c.power_multiplier),
-        magic_multiplier: Number(c.magic_multiplier)
-      };
-      return acc;
-    }, {});
-    
-    console.log('✅ Game stats loaded:', { 
-      hero: heroBase, 
-      dragon: dragonBase,
-      rarityMultipliers: rarityMults,
-      classMultipliersCount: Object.keys(classMults).length,
-      dragonClassMultipliersCount: Object.keys(dragonClassMults).length
-    });
-    
-    // Build name->class mapping
-    const nameToClass: Record<string, string> = {};
-    (mappingsRes.data || []).forEach((m: any) => {
-      nameToClass[`${m.card_type}:${m.card_name}`] = m.class_name;
+    // Build lookup map for fast access: "type:name:faction:rarity" -> template
+    const templateMap: Record<string, any> = {};
+    (cardTemplates || []).forEach((t: any) => {
+      const key = `${t.card_type}:${t.card_name}:${t.faction}:${t.rarity}`;
+      templateMap[key] = t;
     });
     
     for (let i = 0; i < count; i++) {
       console.log(`\n📦 Generating card ${i + 1}/${count}:`);
       const card = generateCard();
       
-      // Calculate defense based on card stats
-      const isHero = card.type === 'character';
-      const baseDefense = isHero ? heroBase.defense : dragonBase.defense;
-      const rarityMult = rarityMults[card.rarity] || 1.0;
-      const classKey = `${card.type}:${card.name}`;
-      const className = nameToClass[classKey] || card.cardClass;
-      const classMult = isHero ? classMults[className] : dragonClassMults[className];
-      const defenseMult = classMult?.defense_multiplier || 1.0;
+      // Map card type for template lookup
+      const mappedType = card.type === 'character' ? 'hero' : 
+                         card.type === 'pet' ? 'dragon' : 
+                         card.type;
       
-      const calculatedDefense = Math.floor(baseDefense * rarityMult * defenseMult);
-      card.defense = calculatedDefense;
+      // Look up stats from card_templates
+      const templateKey = `${mappedType}:${card.name}:${card.faction}:${card.rarity}`;
+      const template = templateMap[templateKey];
       
-      console.log(`🛡️ Calculated defense for ${card.name}: ${calculatedDefense} (base: ${baseDefense}, rarity: ${rarityMult}, class: ${defenseMult})`);
+      if (template) {
+        card.power = template.power;
+        card.defense = template.defense;
+        card.health = template.health;
+        card.magic = template.magic;
+        console.log(`✅ Found template for ${card.name}: power=${template.power}, defense=${template.defense}, health=${template.health}, magic=${template.magic}`);
+      } else {
+        console.warn(`⚠️ Template not found for ${templateKey}, card will have default stats`);
+      }
       
       newCards.push(card);
     }
@@ -531,36 +503,30 @@ Deno.serve(async (req) => {
     console.log(`📝 Creating ${newCards.length} card_instances records...`);
     
     const cardInstancesToInsert = newCards.map(card => {
-      // ✅ Вычисляем max_defense с мультипликаторами (уже рассчитано в generateCard)
-      const calculatedDefense = card.defense || 0;
-      
-      // ✅ Вычисляем max_health с учетом ВСЕХ мультипликаторов
-      const isHero = card.type === 'character';
-      const baseHealth = isHero ? heroBase.health : dragonBase.health;
-      const rarityMult = rarityMults[card.rarity] || 1.0;
-      const classKey = `${card.type}:${card.name}`;
-      const className = nameToClass[classKey] || card.cardClass;
-      const classMult = isHero ? classMults[className] : dragonClassMults[className];
-      const healthMult = classMult?.health_multiplier || 1.0;
-      
-      const calculatedHealth = Math.floor(baseHealth * rarityMult * healthMult);
-      
-      console.log(`💚 Card "${card.name}": health=${calculatedHealth} (base:${baseHealth} × rarity:${rarityMult} × class:${healthMult}), defense=${calculatedDefense}`);
-      
-      // Маппинг типов для соответствия DB constraint: character→hero, pet→dragon
+      // Map type for DB constraint: character→hero, pet→dragon
       const mappedType = card.type === 'character' ? 'hero' : 
                          card.type === 'pet' ? 'dragon' : 
                          card.type;
+      
+      // Use stats from card object (already loaded from card_templates)
+      const maxHealth = card.health || 100;
+      const maxDefense = card.defense || 0;
+      const maxPower = card.power || 0;
+      const maxMagic = card.magic || 0;
+      
+      console.log(`💚 Card "${card.name}": health=${maxHealth}, defense=${maxDefense}, power=${maxPower}, magic=${maxMagic}`);
       
       return {
         wallet_address: wallet_address,
         card_template_id: card.id,
         card_type: mappedType,
         card_data: card,
-        max_health: calculatedHealth,
-        current_health: calculatedHealth,  // ← ПОЛНОЕ здоровье при создании
-        current_defense: calculatedDefense,  // ← ПОЛНАЯ броня при создании
-        max_defense: calculatedDefense,
+        max_health: maxHealth,
+        current_health: maxHealth,
+        current_defense: maxDefense,
+        max_defense: maxDefense,
+        max_power: maxPower,
+        max_magic: maxMagic,
         monster_kills: 0
       };
     });
