@@ -128,7 +128,7 @@ const TeamBattlePageInner: React.FC<TeamBattlePageProps> = ({
     alivePairs,
     aliveOpponents,
     lastRoll
-  } = useTeamBattle(dungeonType);
+  } = useTeamBattle(dungeonType, 1, battleStarted);
   const { cardInstances } = useCardInstances();
   const handleStartBattle = async () => {
     // Снимаем энергию ТОЛЬКО если это первый уровень (вход в подземелье)
