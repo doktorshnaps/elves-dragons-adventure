@@ -184,6 +184,35 @@ const TeamBattlePageInner: React.FC<TeamBattlePageProps> = ({
       localStorage.removeItem('monstersKilled');
     });
     
+    // 💀 КРИТИЧНО: Удаляем мертвых героев из команды перед выходом
+    const gameStore = useGameStore.getState();
+    const currentTeam = gameStore.selectedTeam || [];
+    
+    if (currentTeam.length > 0 && cardInstances && cardInstances.length > 0) {
+      console.log('🔍 Проверка команды на мертвых героев перед выходом...');
+      
+      const updatedTeam = currentTeam.filter((pair: any) => {
+        const heroId = pair.hero?.instanceId || pair.hero?.id;
+        const dragonId = pair.dragon?.instanceId || pair.dragon?.id;
+        
+        // Находим актуальные данные героя
+        const heroInstance = cardInstances.find(ci => ci.id === heroId);
+        const isHeroDead = heroInstance && heroInstance.current_health <= 0;
+        
+        if (isHeroDead) {
+          console.log(`💀 Удаляем мертвого героя из команды: ${pair.hero?.name || 'Unknown'} (health: ${heroInstance?.current_health})`);
+          return false;
+        }
+        
+        return true;
+      });
+      
+      if (updatedTeam.length !== currentTeam.length) {
+        console.log(`✅ Команда обновлена: ${currentTeam.length} → ${updatedTeam.length} пар`);
+        gameStore.setSelectedTeam(updatedTeam);
+      }
+    }
+    
     // Небольшая задержка для синхронизации состояния перед удалением сессии
     await new Promise(resolve => setTimeout(resolve, 100));
     

@@ -127,13 +127,12 @@ export const DeckSelection = ({
   }, [cardInstances, nftCards]);
   const heroes = useMemo(() => {
     console.log('🎯 Heroes useMemo triggered, sortBy:', heroSortBy);
-    // ФИЛЬТРУЕМ мертвые карты (currentHealth <= 0) и карты в медпункте/кузнице
+    // ПОКАЗЫВАЕМ все карты, включая мертвые, но исключаем карты в медпункте/кузнице
     const filtered = localCards.filter(card => 
       card.type === 'character' && 
-      (card.currentHealth ?? card.health) > 0 &&
       !card.isInMedicalBay
     );
-    console.log('📊 Filtered heroes (alive only):', filtered.length);
+    console.log('📊 Filtered heroes (including dead):', filtered.length);
     
     // Детальное логирование отфильтрованных Рекрутов
     const filteredRecruits = filtered.filter(h => h.name?.includes('Рекрут'));
@@ -176,10 +175,9 @@ export const DeckSelection = ({
   }, [localCards, heroSortBy]);
 
   const dragons = useMemo(() => {
-    // ФИЛЬТРУЕМ мертвые карты (currentHealth <= 0) и карты в медпункте/кузнице
+    // ПОКАЗЫВАЕМ все карты, включая мертвые, но исключаем карты в медпункте/кузнице
     const filtered = localCards.filter(card => 
       card.type === 'pet' && 
-      (card.currentHealth ?? card.health) > 0 &&
       !card.isInMedicalBay
     );
     
@@ -243,10 +241,32 @@ export const DeckSelection = ({
     });
   };
   const handleHeroSelect = (hero: CardType) => {
+    // Блокируем выбор мертвых героев
+    const isDead = (hero.currentHealth ?? hero.health) <= 0;
+    if (isDead) {
+      toast({
+        title: 'Невозможно выбрать героя',
+        description: 'Этот герой погиб. Восстановите его в Медпункте.',
+        variant: 'destructive'
+      });
+      return;
+    }
+    
     onPairSelect(hero);
     setShowHeroDeck(false);
   };
   const handleDragonSelect = (dragon: CardType) => {
+    // Блокируем выбор мертвых драконов
+    const isDead = (dragon.currentHealth ?? dragon.health) <= 0;
+    if (isDead) {
+      toast({
+        title: 'Невозможно выбрать дракона',
+        description: 'Этот дракон погиб. Восстановите его в Медпункте.',
+        variant: 'destructive'
+      });
+      return;
+    }
+    
     if (activePairIndex !== null) {
       const pair = selectedPairs[activePairIndex];
       if (pair) {
@@ -479,9 +499,10 @@ export const DeckSelection = ({
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3 justify-items-center w-full">
             {heroes.map(hero => {
             const isSelected = isHeroSelected(hero);
+            const isDead = (hero.currentHealth ?? hero.health) <= 0;
             const teamFull = selectedPairs.length >= 5;
-            const canSelect = !isSelected && !teamFull;
-            return <div key={hero.id} className={`cursor-pointer transition-all ${isSelected ? 'opacity-50' : 'hover:scale-105'}`} onClick={() => canSelect && handleHeroSelect(hero)}>
+            const canSelect = !isSelected && !teamFull && !isDead;
+            return <div key={hero.id} className={`relative cursor-pointer transition-all ${isSelected ? 'opacity-50' : isDead ? 'opacity-60' : 'hover:scale-105'}`} onClick={() => canSelect && handleHeroSelect(hero)}>
                   <CardDisplay card={hero} showSellButton={false} onClick={e => {
                 e.stopPropagation();
                 setPreviewCard(hero);
@@ -491,8 +512,13 @@ export const DeckSelection = ({
                 } : null);
                 setPreviewDeleteAction(null);
                   }} />
+                  {isDead && (
+                    <div className="absolute inset-0 flex items-center justify-center bg-black/60 rounded-lg pointer-events-none">
+                      <span className="text-red-500 font-bold text-lg sm:text-xl">Мертв</span>
+                    </div>
+                  )}
                   <div className="text-center text-xs text-white font-medium mt-1">
-                    {isSelected ? 'Выбран' : teamFull ? 'Просмотр' : ''}
+                    {isDead ? 'Мертв' : isSelected ? 'Выбран' : teamFull ? 'Просмотр' : ''}
                   </div>
                  </div>;
           })}
@@ -553,20 +579,26 @@ export const DeckSelection = ({
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3 justify-items-center w-full">
             {(activePairIndex !== null ? getAvailableDragons(selectedPairs[activePairIndex]?.hero.faction, selectedPairs[activePairIndex]?.hero.rarity) : dragons).map(dragon => {
             const isSelected = isDragonSelected(dragon);
-            const canAssign = activePairIndex !== null ? !!selectedPairs[activePairIndex] && !selectedPairs[activePairIndex]?.dragon && selectedPairs[activePairIndex]?.hero.faction === dragon.faction && (selectedPairs[activePairIndex]?.hero.rarity ?? 0) >= dragon.rarity && !isSelected : false;
-            return <div key={dragon.id} className={`cursor-pointer transition-all ${activePairIndex !== null ? !canAssign ? 'opacity-50 pointer-events-none' : 'hover:scale-105' : 'hover:scale-105'}`} onClick={() => canAssign && handleDragonSelect(dragon)}>
+            const isDead = (dragon.currentHealth ?? dragon.health) <= 0;
+            const canAssign = activePairIndex !== null ? !!selectedPairs[activePairIndex] && !selectedPairs[activePairIndex]?.dragon && selectedPairs[activePairIndex]?.hero.faction === dragon.faction && (selectedPairs[activePairIndex]?.hero.rarity ?? 0) >= dragon.rarity && !isSelected && !isDead : false;
+            return <div key={dragon.id} className={`relative cursor-pointer transition-all ${activePairIndex !== null ? !canAssign ? 'opacity-50 pointer-events-none' : 'hover:scale-105' : isDead ? 'opacity-60' : 'hover:scale-105'}`} onClick={() => canAssign && handleDragonSelect(dragon)}>
                   <CardDisplay card={dragon} showSellButton={false} onClick={e => {
                 e.stopPropagation();
                 setPreviewCard(dragon);
-                const canAssignHere = activePairIndex !== null && !!selectedPairs[activePairIndex] && !selectedPairs[activePairIndex]?.dragon && selectedPairs[activePairIndex]?.hero.faction === dragon.faction && (selectedPairs[activePairIndex]?.hero.rarity ?? 0) >= dragon.rarity && !isSelected;
+                const canAssignHere = activePairIndex !== null && !!selectedPairs[activePairIndex] && !selectedPairs[activePairIndex]?.dragon && selectedPairs[activePairIndex]?.hero.faction === dragon.faction && (selectedPairs[activePairIndex]?.hero.rarity ?? 0) >= dragon.rarity && !isSelected && !isDead;
                 setPreviewAction(canAssignHere ? {
                   label: 'Назначить дракона',
                   action: () => handleDragonSelect(dragon)
                 } : null);
                 setPreviewDeleteAction(null);
               }} />
+                  {isDead && (
+                    <div className="absolute inset-0 flex items-center justify-center bg-black/60 rounded-lg pointer-events-none">
+                      <span className="text-red-500 font-bold text-lg sm:text-xl">Мертв</span>
+                    </div>
+                  )}
                   <div className="text-center text-xs text-white font-medium mt-1">
-                    {isSelected ? 'Выбран' : activePairIndex !== null ? selectedPairs[activePairIndex]?.hero.faction : 'Просмотр'}
+                    {isDead ? 'Мертв' : isSelected ? 'Выбран' : activePairIndex !== null ? selectedPairs[activePairIndex]?.hero.faction : 'Просмотр'}
                   </div>
                 </div>;
           })}
