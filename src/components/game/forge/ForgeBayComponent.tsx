@@ -317,58 +317,75 @@ export const ForgeBayComponent = ({ forgeLevel }: ForgeBayComponentProps) => {
       )}
 
       {damagedCards.length > 0 ? (
-        <Card className="bg-card/50 backdrop-blur-sm border-muted/20">
+        <Card className="bg-card/50 backdrop-blur-sm border-orange-500/20">
           <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Shield className="w-5 h-5 text-orange-500" />
-              Поврежденные карты ({damagedCards.length})
-            </CardTitle>
+            <div className="flex items-center justify-between">
+              <CardTitle className="flex items-center gap-2">
+                <Plus className="w-5 h-5" />
+                Отправить на ремонт
+              </CardTitle>
+              {selectedCard && (
+                <Button 
+                  onClick={handleStartRepair}
+                  disabled={loading || !canStartRepair}
+                  className="bg-orange-600 hover:bg-orange-700"
+                >
+                  Начать ремонт
+                </Button>
+              )}
+            </div>
             <CardDescription>
-              {canStartRepair ? "Выберите карты для восстановления брони" : "Нет доступных слотов для ремонта"}
+              {canStartRepair ? "Выберите карту для ремонта" : "Нет доступных слотов для ремонта"}
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              {damagedCards.map((card: any) => (
-                <div
-                  key={card.id}
-                  className={`relative cursor-pointer transition-all ${
-                    selectedCard?.id === card.id
-                      ? 'ring-2 ring-orange-500 ring-offset-2 ring-offset-background'
-                      : 'hover:ring-2 hover:ring-muted ring-offset-2 ring-offset-background'
-                  }`}
-                  onClick={() => handleCardSelect(card)}
-                >
-                  <CardDisplay card={card.card_data} showSellButton={false} />
-                  <div className="mt-2 text-center">
-                    <Badge variant="secondary" className="text-xs">
-                      <Shield className="w-3 h-3 mr-1" />
-                      {card.current_defense}/{card.max_defense}
-                    </Badge>
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-4">
+              {damagedCards.map((card: any) => {
+                const defensePercentage = (card.current_defense / card.max_defense) * 100;
+                const cardData = card.card_data;
+                const isSelected = selectedCard?.id === card.id;
+
+                return (
+                  <div
+                    key={card.id}
+                    className={`relative cursor-pointer transition-all duration-200 ${
+                      isSelected
+                        ? 'ring-2 ring-orange-500 scale-105'
+                        : canStartRepair
+                          ? 'hover:scale-105'
+                          : 'opacity-50 cursor-not-allowed'
+                    }`}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      if (canStartRepair && !loading) {
+                        handleCardSelect(card);
+                      }
+                    }}
+                  >
+                    <div className="relative">
+                      <CardDisplay
+                        card={{
+                          ...cardData,
+                          currentDefense: card.current_defense,
+                          maxDefense: card.max_defense
+                        }}
+                        showSellButton={false}
+                        className="w-full"
+                      />
+                      
+                      {/* Selection Indicator */}
+                      {isSelected && (
+                        <div className="absolute top-2 left-2">
+                          <div className="w-6 h-6 bg-orange-500 rounded-full flex items-center justify-center">
+                            <Plus className="w-3 h-3 text-white" />
+                          </div>
+                        </div>
+                      )}
+                    </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
-            
-            {selectedCard && canStartRepair && (
-              <div className="mt-4 p-4 border border-orange-500/20 rounded-lg bg-orange-500/5">
-                <div className="flex items-center justify-between mb-2">
-                  <div>
-                    <p className="font-medium">{selectedCard.card_data.name}</p>
-                    <p className="text-sm text-muted-foreground">
-                      Броня: {selectedCard.current_defense}/{selectedCard.max_defense}
-                    </p>
-                  </div>
-                  <Button onClick={handleStartRepair} disabled={loading || !canStartRepair} className="gap-2">
-                    <Plus className="w-4 h-4" />
-                    Начать ремонт
-                  </Button>
-                </div>
-                <p className="text-xs text-muted-foreground">
-                  Восстановление: ~{selectedCard.max_defense - selectedCard.current_defense} мин.
-                </p>
-              </div>
-            )}
           </CardContent>
         </Card>
       ) : (
@@ -376,6 +393,75 @@ export const ForgeBayComponent = ({ forgeLevel }: ForgeBayComponentProps) => {
           <CardContent className="p-8 text-center">
             <Shield className="w-12 h-12 mx-auto mb-2 opacity-50" />
             <p className="text-muted-foreground">Нет карт, требующих ремонта брони</p>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Selected Card Preview */}
+      {selectedCard && (
+        <Card className="bg-card/50 backdrop-blur-sm border-orange-500/20">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <ArrowRight className="w-5 h-5 text-orange-500" />
+              Предпросмотр ремонта
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="flex items-start gap-4">
+              {/* Current State */}
+              <div className="flex-shrink-0">
+                <div className="text-xs text-muted-foreground mb-2">Текущее состояние:</div>
+                <CardDisplay 
+                  card={selectedCard.card_data}
+                  showSellButton={false}
+                  className="w-24 h-32 text-xs"
+                />
+                <div className="mt-2 text-xs text-center">
+                  <div className="bg-orange-500/20 rounded px-2 py-1">
+                    Броня: {selectedCard.current_defense}/{selectedCard.max_defense}
+                  </div>
+                </div>
+              </div>
+              
+              {/* Arrow */}
+              <div className="flex-shrink-0 flex items-center mt-8">
+                <ArrowRight className="w-5 h-5 text-muted-foreground" />
+              </div>
+              
+              {/* After Repair */}
+              <div className="flex-shrink-0">
+                <div className="text-xs text-muted-foreground mb-2">После ремонта:</div>
+                <CardDisplay 
+                  card={selectedCard.card_data}
+                  showSellButton={false}
+                  className="w-24 h-32 text-xs"
+                />
+                <div className="mt-2 text-xs text-center">
+                  <div className="bg-green-500/20 rounded px-2 py-1">
+                    Броня: {selectedCard.max_defense}/{selectedCard.max_defense}
+                  </div>
+                </div>
+              </div>
+              
+              {/* Repair Info */}
+              <div className="flex-1 ml-4">
+                <h4 className="font-medium mb-2">{selectedCard.card_data?.name}</h4>
+                <div className="space-y-2 text-sm">
+                  <div className="flex justify-between">
+                    <span>Нужно восстановить:</span>
+                    <span className="text-orange-500">{selectedCard.max_defense - selectedCard.current_defense} брони</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>Время ремонта:</span>
+                    <span>{selectedCard.max_defense - selectedCard.current_defense} мин</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>Скорость:</span>
+                    <span>{REPAIR_RATE} броня/мин</span>
+                  </div>
+                </div>
+              </div>
+            </div>
           </CardContent>
         </Card>
       )}
