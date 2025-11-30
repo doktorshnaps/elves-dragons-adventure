@@ -7,6 +7,7 @@ import { WhitelistManager } from '@/components/admin/WhitelistManager';
 import { BannedUsersManager } from '@/components/admin/BannedUsersManager';
 import { WhitelistContractsManager } from '@/components/admin/WhitelistContractsManager';
 import { NFTWhitelistValidator } from '@/components/admin/NFTWhitelistValidator';
+import { CardTemplatesManager } from '@/components/admin/CardTemplatesManager';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -969,10 +970,11 @@ export const AdminConsoleWithWhitelist = () => {
   return (
     <div className="space-y-6">
       <AdminConsole />
-          <WhitelistManager />
-          <BannedUsersManager />
-          <WhitelistContractsManager />
-          <NFTWhitelistValidator />
+      <CardTemplatesManager />
+      <WhitelistManager />
+      <BannedUsersManager />
+      <WhitelistContractsManager />
+      <NFTWhitelistValidator />
     </div>
   );
 };

@@ -362,6 +362,48 @@ export type Database = {
         }
         Relationships: []
       }
+      card_templates: {
+        Row: {
+          card_name: string
+          card_type: string
+          created_at: string | null
+          defense: number
+          faction: string | null
+          health: number
+          id: string
+          magic: number
+          power: number
+          rarity: number
+          updated_at: string | null
+        }
+        Insert: {
+          card_name: string
+          card_type: string
+          created_at?: string | null
+          defense?: number
+          faction?: string | null
+          health?: number
+          id?: string
+          magic?: number
+          power?: number
+          rarity: number
+          updated_at?: string | null
+        }
+        Update: {
+          card_name?: string
+          card_type?: string
+          created_at?: string | null
+          defense?: number
+          faction?: string | null
+          health?: number
+          id?: string
+          magic?: number
+          power?: number
+          rarity?: number
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       card_upgrade_requirements: {
         Row: {
           card_class: string | null
@@ -2732,6 +2774,10 @@ export type Database = {
         Args: { p_wallet_address: string }
         Returns: Json
       }
+      get_card_stats_from_template: {
+        Args: { p_card_name: string; p_card_type: string; p_rarity: number }
+        Returns: Json
+      }
       get_current_user_wallet: { Args: never; Returns: string }
       get_dungeon_item_drops: {
         Args: { p_dungeon_level: number; p_dungeon_number: number }
@@ -3051,6 +3097,7 @@ export type Database = {
         Args: { p_card_instance_id: string; p_wallet_address: string }
         Returns: Json
       }
+      populate_card_templates: { Args: never; Returns: number }
       process_forge_bay_repair: { Args: never; Returns: undefined }
       process_marketplace_purchase: {
         Args: { listing_id: string }
@@ -3060,6 +3107,10 @@ export type Database = {
       process_referral_earnings: {
         Args: { p_amount: number; p_earner_wallet_address: string }
         Returns: undefined
+      }
+      recalculate_all_card_instances_from_templates: {
+        Args: never
+        Returns: number
       }
       recalculate_all_card_stats: { Args: never; Returns: Json }
       recalculate_card_stats: {
