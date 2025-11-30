@@ -6,6 +6,8 @@ import { useGameData } from "@/hooks/useGameData";
 import { useWalletContext } from "@/contexts/WalletConnectContext";
 import { useAdmin } from "@/contexts/AdminContext";
 import { useNearBalances } from "@/hooks/useNearBalances";
+import { useGameStore } from "@/stores/gameStore";
+import { getXPProgress } from "@/utils/accountLeveling";
 
 import { useLanguage } from "@/hooks/useLanguage";
 import { t } from "@/utils/translations";
@@ -42,6 +44,8 @@ export const Menu = () => {
   const { isAdmin } = useAdmin();
   const chainAccountId = nearAccountId || accountId || localStorage.getItem('nearAccountId') || localStorage.getItem('walletAccountId');
   const { nearBalance, gtBalance, loading: balancesLoading } = useNearBalances(chainAccountId);
+  const { accountLevel, accountExperience } = useGameStore();
+  const xpProgress = getXPProgress(accountExperience);
   const [initialLoadComplete, setInitialLoadComplete] = useState(false);
 
   // Отслеживаем первую загрузку данных
@@ -85,6 +89,18 @@ export const Menu = () => {
           <div className="flex items-center gap-1.5 sm:gap-2">
             <img src={walletIcon} alt="Balance" className="w-[18px] h-[18px] sm:w-[23px] sm:h-[23px]" />
             <span className="text-black font-semibold text-xs sm:text-base">{gameData.balance} {t(language, 'game.currency')}</span>
+          </div>
+        </div>
+
+        {/* Account Level Display */}
+        <div className="bg-transparent backdrop-blur-sm px-3 py-2 sm:px-6 sm:py-3 rounded-2xl border-2 border-black shadow-lg">
+          <div className="flex flex-col gap-0.5">
+            <div className="flex items-center gap-1.5 sm:gap-2">
+              <span className="text-black font-bold text-xs sm:text-base">Уровень {accountLevel}</span>
+            </div>
+            <div className="flex items-center gap-1 text-[10px] sm:text-xs text-black/80">
+              <span>{xpProgress.currentLevelXP} / {xpProgress.nextLevelXP} exp</span>
+            </div>
           </div>
         </div>
 
