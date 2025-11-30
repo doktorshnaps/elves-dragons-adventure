@@ -4,7 +4,7 @@
 
 // Константы для расчета опыта
 const RACE_CLASS_MODIFIER = 1.0; // Для упрощения
-const XP_60 = 130200; // Опыт для 60 уровня
+const XP_60 = 1302000; // Опыт для 60 уровня (130200 * 10)
 const LOGARITHM_MULTIPLIER = 250000;
 
 /**
@@ -14,13 +14,13 @@ export const calculateRequiredXP = (level: number): number => {
   if (level <= 1) return 0;
   
   if (level <= 60) {
-    // Формула для уровней 1–60: XP_required = (8 × Level² + 40 × Level) × Race_Class_Modifier
+    // Формула для уровней 1–60: XP_required = (8 × Level² + 40 × Level) × Race_Class_Modifier × 10
     const baseXP = (8 * Math.pow(level - 1, 2) + 40 * (level - 1)) * RACE_CLASS_MODIFIER;
-    // Применяем округление как в Blizzard
-    return Math.round(baseXP * 8.33); // Коэффициент для приближения к примерам
+    // Применяем округление и умножаем на 10 для увеличения сложности
+    return Math.round(baseXP * 8.33 * 10);
   } else {
-    // Формула для уровней 60–100: XP_required = XP_60 + (250,000 × ln(Level - 59))
-    return Math.round(XP_60 + (LOGARITHM_MULTIPLIER * Math.log(level - 59)));
+    // Формула для уровней 60–100: XP_required = XP_60 + (250,000 × ln(Level - 59)) × 10
+    return Math.round((XP_60 + (LOGARITHM_MULTIPLIER * Math.log(level - 59))) * 10);
   }
 };
 
