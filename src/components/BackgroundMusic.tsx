@@ -16,7 +16,6 @@ export const BackgroundMusic = () => {
       ref={audioRef}
       src="/audio/background-music.mp3"
       loop
-      autoPlay={isPlaying}
       preload="auto"
       style={{ display: 'none' }}
     />

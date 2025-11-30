@@ -34,14 +34,31 @@ export const MusicProvider = ({ children }: { children: ReactNode }) => {
 
   useEffect(() => {
     localStorage.setItem('game-music-playing', isPlaying.toString());
-    if (audioRef.current) {
+    
+    const audio = audioRef.current;
+    if (!audio) return;
+
+    // Проверяем, что аудио загружено достаточно для воспроизведения
+    const handlePlayPause = () => {
       if (isPlaying) {
-        audioRef.current.play().catch(err => console.log('Audio play failed:', err));
+        // Устанавливаем громкость перед воспроизведением
+        audio.volume = Math.pow(volume / 100, 2);
+        audio.play().catch(err => console.log('Audio play failed:', err));
       } else {
-        audioRef.current.pause();
+        audio.pause();
+        audio.currentTime = 0; // Сбрасываем позицию при остановке
       }
+    };
+
+    // Если аудио уже загружено, сразу управляем воспроизведением
+    if (audio.readyState >= 2) {
+      handlePlayPause();
+    } else {
+      // Если еще не загружено, ждем события canplay
+      audio.addEventListener('canplay', handlePlayPause, { once: true });
+      return () => audio.removeEventListener('canplay', handlePlayPause);
     }
-  }, [isPlaying]);
+  }, [isPlaying, volume]);
 
   const getSoundEffectVolume = () => {
     return Math.pow(volume / 100, 2);
