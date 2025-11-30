@@ -344,7 +344,7 @@ export const getStatsForRarity = (rarity: Rarity, cardType: CardType = 'characte
   };
 };
 
-// Новая функция для расчета характеристик карты с КЭШИРОВАНИЕМ
+// Новая функция для расчета характеристик карты с использованием card_templates
 export const calculateCardStats = (cardName: string, rarity: Rarity, cardType: CardType = 'character') => {
   // Создаем ключ кэша
   const cacheKey = `${cardName}_${rarity}_${cardType}`;
@@ -356,20 +356,14 @@ export const calculateCardStats = (cardName: string, rarity: Rarity, cardType: C
     return cached;
   }
   
+  // Используем легаси-расчет (мультипликаторы)
+  // Получение из card_templates будет происходить через хук useCardTemplates
   const classMultiplier = getClassMultiplier(cardName, cardType);
   const rarityMultiplier = gameSettingsCache.rarityMultipliers[rarity] || FALLBACK_RARITY_MULTIPLIERS[rarity] || 1.0;
   
   const baseStats = cardType === 'pet' 
     ? (gameSettingsCache.dragonBaseStats || FALLBACK_PET_STATS)
     : (gameSettingsCache.heroBaseStats || FALLBACK_HERO_STATS);
-  
-  console.log(`🔢 calculateCardStats for "${cardName}" (${cardType}, rarity ${rarity}):`, {
-    baseStats,
-    rarityMultiplier,
-    classMultiplier,
-    availableHeroClasses: Object.keys(gameSettingsCache.classMultipliers || {}),
-    availableDragonClasses: Object.keys(gameSettingsCache.dragonClassMultipliers || {})
-  });
   
   const result = {
     power: Math.floor(baseStats.power * rarityMultiplier * classMultiplier.power_multiplier),
@@ -378,7 +372,7 @@ export const calculateCardStats = (cardName: string, rarity: Rarity, cardType: C
     magic: Math.floor(baseStats.magic * rarityMultiplier * classMultiplier.magic_multiplier)
   };
   
-  console.log(`✅ Final stats for "${cardName}":`, result);
+  console.log(`✅ Calculated stats for "${cardName}":`, result);
   
   // Сохраняем в кэш
   statsCache.set(cacheKey, result);
