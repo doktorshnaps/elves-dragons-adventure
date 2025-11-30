@@ -83,63 +83,61 @@ export const Menu = () => {
       <SettingsMenu />
       <div className="pointer-events-none absolute inset-0 bg-black/30 mx-0 my-0 py-0 px-0" />
       
-      {/* Account Level Display - Top Left */}
-      <div className="absolute top-4 left-4 z-10">
-        <div className="bg-transparent backdrop-blur-sm px-3 py-2 sm:px-4 sm:py-2.5 rounded-2xl border-2 border-black shadow-lg">
-          <div className="flex flex-col gap-0.5">
-            <div className="flex items-center gap-1.5 sm:gap-2">
+      {/* Top Info Bar - Level and Balances */}
+      <div className="relative z-10 w-full px-2 sm:px-4 mb-4 mt-2">
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          {/* Account Level Display - Left */}
+          <div className="bg-transparent backdrop-blur-sm px-3 py-2 sm:px-4 sm:py-2.5 rounded-2xl border-2 border-black shadow-lg">
+            <div className="flex flex-col gap-0.5">
               <span className="text-black font-bold text-xs sm:text-base">Уровень {accountLevel}</span>
-            </div>
-            <div className="flex items-center gap-1 text-[10px] sm:text-xs text-black/80">
-              <span>{xpProgress.currentLevelXP} / {xpProgress.nextLevelXP} exp</span>
+              <span className="text-[10px] sm:text-xs text-black/80">{xpProgress.currentLevelXP} / {xpProgress.nextLevelXP} exp</span>
             </div>
           </div>
-        </div>
-      </div>
 
-      {/* Balance and Wallet Display */}
-      <div className="relative z-10 max-w-4xl mx-auto flex flex-wrap justify-center items-center gap-2 sm:gap-4 mb-4">
-        <div className="bg-transparent backdrop-blur-sm px-3 py-2 sm:px-6 sm:py-3 rounded-2xl border-2 border-black shadow-lg">
-          <div className="flex items-center gap-1.5 sm:gap-2">
-            <img src={walletIcon} alt="Balance" className="w-[18px] h-[18px] sm:w-[23px] sm:h-[23px]" />
-            <span className="text-black font-semibold text-xs sm:text-base">{gameData.balance} {t(language, 'game.currency')}</span>
-          </div>
-        </div>
-
-        {chainAccountId && (
-          <>
-            <div className="bg-transparent backdrop-blur-sm px-3 py-2 sm:px-6 sm:py-3 rounded-2xl border-2 border-black shadow-lg">
+          {/* Balance and Wallet Display - Right */}
+          <div className="flex flex-wrap items-center gap-2">
+            <div className="bg-transparent backdrop-blur-sm px-3 py-2 sm:px-4 sm:py-2.5 rounded-2xl border-2 border-black shadow-lg">
               <div className="flex items-center gap-1.5 sm:gap-2">
-                <img src={walletIcon} alt="NEAR" className="w-[18px] h-[18px] sm:w-[23px] sm:h-[23px]" />
-                <span className="text-black font-semibold text-xs sm:text-base">
-                  {balancesLoading ? '...' : `${nearBalance} NEAR`}
-                </span>
+                <img src={walletIcon} alt="Balance" className="w-[16px] h-[16px] sm:w-[20px] sm:h-[20px]" />
+                <span className="text-black font-semibold text-xs sm:text-sm">{gameData.balance} {t(language, 'game.currency')}</span>
               </div>
             </div>
 
-            <div className="bg-transparent backdrop-blur-sm px-3 py-2 sm:px-6 sm:py-3 rounded-2xl border-2 border-black shadow-lg">
+            {chainAccountId && (
+              <>
+                <div className="bg-transparent backdrop-blur-sm px-3 py-2 sm:px-4 sm:py-2.5 rounded-2xl border-2 border-black shadow-lg">
+                  <div className="flex items-center gap-1.5 sm:gap-2">
+                    <img src={walletIcon} alt="NEAR" className="w-[16px] h-[16px] sm:w-[20px] sm:h-[20px]" />
+                    <span className="text-black font-semibold text-xs sm:text-sm">
+                      {balancesLoading ? '...' : `${nearBalance} NEAR`}
+                    </span>
+                  </div>
+                </div>
+
+                <div className="bg-transparent backdrop-blur-sm px-3 py-2 sm:px-4 sm:py-2.5 rounded-2xl border-2 border-black shadow-lg">
+                  <div className="flex items-center gap-1.5 sm:gap-2">
+                    <img src={walletIcon} alt="GT" className="w-[16px] h-[16px] sm:w-[20px] sm:h-[20px]" />
+                    <span className="text-black font-semibold text-xs sm:text-sm">
+                      {balancesLoading ? '...' : `${gtBalance} GT`}
+                    </span>
+                  </div>
+                </div>
+              </>
+            )}
+            
+            <div className="bg-transparent backdrop-blur-sm px-3 py-2 sm:px-4 sm:py-2.5 rounded-2xl border-2 border-black shadow-lg">
               <div className="flex items-center gap-1.5 sm:gap-2">
-                <img src={walletIcon} alt="GT" className="w-[18px] h-[18px] sm:w-[23px] sm:h-[23px]" />
-                <span className="text-black font-semibold text-xs sm:text-base">
-                  {balancesLoading ? '...' : `${gtBalance} GT`}
-                </span>
+                <img src={walletIcon} alt="Wallet" className="w-[16px] h-[16px] sm:w-[20px] sm:h-[20px]" />
+                {isConnected ? <div className="flex items-center gap-1.5 sm:gap-2">
+                    <span className="text-green-500 text-xs sm:text-sm">●</span>
+                    <span className="text-black font-medium text-[10px] sm:text-xs">
+                      {accountId ? `${accountId.slice(0, 6)}...${accountId.slice(-3)}` : t(language, 'menu.connected')}
+                    </span>
+                  </div> : <Button size="sm" variant="outline" onClick={connectWallet} disabled={isConnecting} className="text-[10px] sm:text-xs px-2 sm:px-3 py-1 h-5 sm:h-6 border-black text-black hover:bg-gray-50/80 bg-transparent rounded-xl">
+                    {isConnecting ? t(language, 'menu.connecting') : t(language, 'menu.connectWallet')}
+                  </Button>}
               </div>
             </div>
-          </>
-        )}
-        
-        <div className="bg-transparent backdrop-blur-sm px-3 py-2 sm:px-6 sm:py-3 rounded-2xl border-2 border-black shadow-lg">
-          <div className="flex items-center gap-1.5 sm:gap-2">
-            <img src={walletIcon} alt="Wallet" className="w-[18px] h-[18px] sm:w-[23px] sm:h-[23px]" />
-            {isConnected ? <div className="flex items-center gap-1.5 sm:gap-2">
-                <span className="text-green-500 text-xs sm:text-sm">●</span>
-                <span className="text-black font-medium text-[10px] sm:text-sm">
-                  {accountId ? `${accountId.slice(0, 6)}...${accountId.slice(-3)}` : t(language, 'menu.connected')}
-                </span>
-                
-              </div> : <Button size="sm" variant="outline" onClick={connectWallet} disabled={isConnecting} className="text-[10px] sm:text-xs px-2 sm:px-3 py-1 h-5 sm:h-6 border-black text-black hover:bg-gray-50/80 bg-transparent rounded-xl">
-                {isConnecting ? t(language, 'menu.connecting') : t(language, 'menu.connectWallet')}
-              </Button>}
           </div>
         </div>
       </div>
