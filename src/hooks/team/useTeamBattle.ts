@@ -12,7 +12,7 @@ import { useCardInstancesContext } from '@/providers/CardInstancesProvider';
 import { calculateD6Damage } from '@/utils/battleCalculations';
 import { useBattleSpeed } from '@/contexts/BattleSpeedContext';
 
-export const useTeamBattle = (dungeonType: DungeonType, initialLevel: number = 1) => {
+export const useTeamBattle = (dungeonType: DungeonType, initialLevel: number = 1, battleStarted: boolean = false) => {
   const { toast } = useToast();
   const { selectedPairs, getSelectedTeamStats } = useTeamSelection();
   const { accountLevel, accountExperience, addAccountExperience: addAccountExp } = useGameStore();
@@ -282,10 +282,11 @@ export const useTeamBattle = (dungeonType: DungeonType, initialLevel: number = 1
 
   // Save battle state
   useEffect(() => {
-    if (battleState.playerPairs.length > 0) {
+    // Сохраняем состояние боя ТОЛЬКО если бой реально начался
+    if (battleState.playerPairs.length > 0 && battleStarted) {
       localStorage.setItem('teamBattleState', JSON.stringify(battleState));
     }
-  }, [battleState]);
+  }, [battleState, battleStarted]);
 
   const updateAttackOrder = (newOrder: string[]) => {
     setAttackOrder(newOrder);
