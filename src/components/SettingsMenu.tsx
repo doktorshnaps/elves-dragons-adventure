@@ -1,9 +1,12 @@
 import { Button } from "@/components/ui/button";
-import { Globe, Sun, Menu, Volume2, VolumeX } from "lucide-react";
+import { Globe, Sun, Menu, Volume2, VolumeX, LogOut } from "lucide-react";
 import { useLanguage } from "@/hooks/useLanguage";
 import { useBrightness } from "@/hooks/useBrightness";
 import { useMusic } from "@/hooks/useMusic";
 import { Slider } from "@/components/ui/slider";
+import { useWalletContext } from "@/contexts/WalletConnectContext";
+import { useNavigate } from "react-router-dom";
+import { t } from "@/utils/translations";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -17,6 +20,13 @@ export const SettingsMenu = () => {
   const { language, toggleLanguage } = useLanguage();
   const { brightness, setBrightness, backgroundBrightness, setBackgroundBrightness } = useBrightness();
   const { volume, setVolume, isPlaying, setIsPlaying } = useMusic();
+  const { disconnect: disconnectWallet } = useWalletContext();
+  const navigate = useNavigate();
+
+  const handleDisconnectWallet = async () => {
+    await disconnectWallet();
+    navigate('/auth');
+  };
 
   return (
     <DropdownMenu>
@@ -109,7 +119,7 @@ export const SettingsMenu = () => {
         </button>
 
         <div 
-          className="bg-black/30 border-2 border-white rounded-2xl p-4"
+          className="bg-black/30 border-2 border-white rounded-2xl p-4 mb-3"
           style={{ boxShadow: '-10px 10px 8px rgba(0, 0, 0, 0.4)' }}
         >
           <div className="flex items-center justify-center mb-3">
@@ -127,6 +137,17 @@ export const SettingsMenu = () => {
             className="cursor-pointer"
           />
         </div>
+
+        <button
+          onClick={handleDisconnectWallet}
+          className="w-full bg-red-600/80 border-2 border-white rounded-2xl p-2.5 hover:bg-red-700/80 transition-all flex items-center justify-center gap-2"
+          style={{ boxShadow: '-10px 10px 8px rgba(0, 0, 0, 0.4)' }}
+        >
+          <LogOut className="w-4 h-4 text-white" />
+          <span className="text-white font-semibold text-sm">
+            {t(language, 'menu.disconnectWallet')}
+          </span>
+        </button>
       </DropdownMenuContent>
     </DropdownMenu>
   );
