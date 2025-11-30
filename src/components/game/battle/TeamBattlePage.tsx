@@ -26,6 +26,7 @@ import { useBattleSpeed } from '@/contexts/BattleSpeedContext';
 import { useItemTemplates } from '@/hooks/useItemTemplates';
 import { useQueryClient } from '@tanstack/react-query';
 import { useCardInstances } from '@/hooks/useCardInstances';
+import { LoadingSpinner } from '@/components/common/LoadingSpinner';
 
 interface TeamBattlePageProps {
   dungeonType: DungeonType;
@@ -734,7 +735,8 @@ const TeamBattlePageInner: React.FC<TeamBattlePageProps> = ({
       return (
         <div className="fixed inset-0 bg-black/90 flex items-center justify-center z-[200]">
           <Card variant="menu" className="p-6 max-w-md w-full">
-            <CardContent className="text-center">
+            <CardContent className="text-center space-y-4">
+              <LoadingSpinner size="lg" />
               <p className="text-white/80">{t(language, 'battlePage.processingResults')}</p>
             </CardContent>
           </Card>
@@ -748,7 +750,8 @@ const TeamBattlePageInner: React.FC<TeamBattlePageProps> = ({
       return (
         <div className="fixed inset-0 bg-black/90 flex items-center justify-center z-[200]">
           <Card variant="menu" className="p-6 max-w-md w-full">
-            <CardContent className="text-center">
+            <CardContent className="text-center space-y-4">
+              <LoadingSpinner size="lg" />
               <p className="text-white/80">{t(language, 'battlePage.processingResults')}</p>
             </CardContent>
           </Card>
