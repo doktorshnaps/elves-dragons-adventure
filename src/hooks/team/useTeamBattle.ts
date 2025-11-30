@@ -343,13 +343,7 @@ export const useTeamBattle = (dungeonType: DungeonType, initialLevel: number = 1
       level: battleState.level
     });
 
-    const critText = damageResult.isAttackerCrit ? " 🎯 КРИТ!" : "";
-    const defCritText = damageResult.isDefenderCrit ? " 🛡️ БЛОК!" : "";
-    const skipText = damageResult.skipNextTurn ? " (пропуск хода)" : "";
-    toast({
-      title: `Атака!${critText}${skipText}`,
-      description: `${attackingPair.hero.name} бросил ${damageResult.attackerRoll}, враг ${damageResult.defenderRoll}. Потенциальный урон: ${appliedDamage}${defCritText}`,
-    });
+    // Toast уведомления убраны - урон отображается визуально на карточках
 
     // Ждем: показ результата + анимация атаки
     console.log(`💥 [PLAYER] НАЧАЛО АНИМАЦИИ АТАКИ (${Date.now() - turnStartTime}ms, ${new Date().toISOString()})`);
@@ -468,14 +462,7 @@ export const useTeamBattle = (dungeonType: DungeonType, initialLevel: number = 1
       });
     }
 
-    const critText = damageResult.isAttackerCrit ? " 🎯 КРИТ!" : "";
-    const defCritText = damageResult.isDefenderCrit ? " 🛡️ БЛОК!" : "";
-    const skipText = damageResult.skipNextTurn ? " (враг пропустит ход)" : "";
-    toast({
-      title: `Враг атакует!${critText}${skipText}`,
-      description: `${currentEnemy.name} бросил ${damageResult.attackerRoll}, пара ${damageResult.defenderRoll}. Потенциальный урон: ${appliedDamage}${defCritText}`,
-      variant: "destructive"
-    });
+    // Toast уведомления убраны - урон отображается визуально на карточках
 
     // Ждем: показ результата + анимация атаки
     console.log(`💥 [ENEMY] НАЧАЛО АНИМАЦИИ АТАКИ (${Date.now() - turnStartTime}ms, ${new Date().toISOString()})`);

@@ -12,6 +12,7 @@ import { useNavigate } from 'react-router-dom';
 import { TeamHealthBars } from './TeamHealthBars';
 import { InlineDiceDisplay } from './InlineDiceDisplay';
 import { AttackAnimation } from './AttackAnimation';
+import { DamageIndicator } from './DamageIndicator';
 import { useDungeonSync } from '@/hooks/useDungeonSync';
 import { useLanguage } from '@/hooks/useLanguage';
 import { t } from '@/utils/translations';
@@ -62,6 +63,9 @@ export const TeamBattleArena: React.FC<TeamBattleArenaProps> = ({
   const [isDiceRolling, setIsDiceRolling] = useState(false);
   const [isPlayerAttacking, setIsPlayerAttacking] = useState(true);
   const [diceKey, setDiceKey] = useState(0);
+  
+  // Damage indicators for each pair
+  const [pairDamages, setPairDamages] = useState<Map<string, { damage: number; isCritical?: boolean; isBlocked?: boolean; key: number }>>(new Map());
   
   // Attack animation state
   const [attackAnimation, setAttackAnimation] = useState<{
@@ -185,6 +189,26 @@ export const TeamBattleArena: React.FC<TeamBattleArenaProps> = ({
       setIsDiceRolling(true);
       setDiceKey(prev => prev + 1);
       
+      // Если атака врага, показываем урон на случайной паре после задержки
+      if (lastRoll.source === 'enemy' && lastRoll.damage >= 0) {
+        setTimeout(() => {
+          // Находим случайную живую пару для отображения урона
+          const targetPair = alivePairs[Math.floor(Math.random() * alivePairs.length)];
+          if (targetPair) {
+            setPairDamages(prev => {
+              const newMap = new Map(prev);
+              newMap.set(targetPair.id, {
+                damage: lastRoll.damage,
+                isCritical: lastRoll.isCritical,
+                isBlocked: lastRoll.isBlocked,
+                key: Date.now()
+              });
+              return newMap;
+            });
+          }
+        }, adjustDelay(1500)); // Показываем урон после остановки кубиков
+      }
+      
       // Останавливаем кубики через 1500ms (синхронно с RESULT_DISPLAY_MS из useTeamBattle)
       const stopDiceTimer = setTimeout(() => {
         console.log(`🎲 [UI] Stopping dice animation (${new Date().toISOString()})`);
@@ -193,7 +217,7 @@ export const TeamBattleArena: React.FC<TeamBattleArenaProps> = ({
       
       return () => clearTimeout(stopDiceTimer);
     }
-  }, [lastRoll, level]);
+  }, [lastRoll, level, alivePairs, adjustDelay]);
 
   // Таймер хода врага — гарантирует единичное срабатывание даже при лагах сети
   const enemyAttackTimerRef = React.useRef<number | null>(null);
@@ -348,12 +372,32 @@ export const TeamBattleArena: React.FC<TeamBattleArenaProps> = ({
           <Card variant="menu" className="flex-1 min-h-0" style={{ boxShadow: '-33px 15px 10px rgba(0, 0, 0, 0.6)' }}>
             <CardContent className="h-full overflow-y-auto overflow-x-hidden p-0.5 sm:p-1 pt-1 sm:pt-2">
               <div className="grid grid-cols-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-0.5 sm:gap-1">
-                {playerPairs.map((pair, index) => (
-                  <div key={pair.id} className={`p-1 sm:p-1.5 rounded-lg sm:rounded-2xl border-2 transition-all cursor-pointer ${pair.health <= 0 ? 'bg-black/30 border-white/30 opacity-50' : attackingPair === pair.id ? 'bg-red-500/30 border-red-500 animate-pulse scale-105 shadow-lg shadow-red-500/50' : defendingPair === pair.id ? 'bg-blue-500/30 border-blue-500 animate-pulse shadow-lg shadow-blue-500/50' : selectedPair === pair.id ? 'bg-white/20 border-white' : 'bg-black/20 border-white/50 hover:border-white'}`} onClick={() => {
-                    if (pair.health > 0 && isPlayerTurn) {
-                      setSelectedPair(pair.id);
-                    }
-                  }}>
+                {playerPairs.map((pair, index) => {
+                  const pairDamage = pairDamages.get(pair.id);
+                  
+                  return (
+                    <div key={pair.id} className={`relative p-1 sm:p-1.5 rounded-lg sm:rounded-2xl border-2 transition-all cursor-pointer ${pair.health <= 0 ? 'bg-black/30 border-white/30 opacity-50' : attackingPair === pair.id ? 'bg-red-500/30 border-red-500 animate-pulse scale-105 shadow-lg shadow-red-500/50' : defendingPair === pair.id ? 'bg-blue-500/30 border-blue-500 animate-pulse shadow-lg shadow-blue-500/50' : selectedPair === pair.id ? 'bg-white/20 border-white' : 'bg-black/20 border-white/50 hover:border-white'}`} onClick={() => {
+                      if (pair.health > 0 && isPlayerTurn) {
+                        setSelectedPair(pair.id);
+                      }
+                    }}>
+                      {/* Damage Indicator */}
+                      {pairDamage && (
+                        <DamageIndicator
+                          key={pairDamage.key}
+                          damage={pairDamage.damage}
+                          isCritical={pairDamage.isCritical}
+                          isBlocked={pairDamage.isBlocked}
+                          onComplete={() => {
+                            setPairDamages(prev => {
+                              const newMap = new Map(prev);
+                              newMap.delete(pair.id);
+                              return newMap;
+                            });
+                          }}
+                        />
+                      )}
+                      
                       <div className="flex flex-col items-center gap-0.5 sm:gap-1">
                         <div className="flex gap-0.5 sm:gap-1 justify-center">
                           {/* Hero Image */}
@@ -441,7 +485,8 @@ export const TeamBattleArena: React.FC<TeamBattleArenaProps> = ({
                         </div>
                       </div>
                     </div>
-                ))}
+                  );
+                })}
               </div>
             </CardContent>
           </Card>
