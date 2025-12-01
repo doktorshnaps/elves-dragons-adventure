@@ -2907,9 +2907,13 @@ export type Database = {
         Returns: {
           card_instance_id: string
           ci_card_data: Json
+          ci_current_defense: number
           ci_current_health: number
           ci_id: string
+          ci_max_defense: number
           ci_max_health: number
+          ci_max_magic: number
+          ci_max_power: number
           estimated_completion: string
           heal_rate: number
           id: string
