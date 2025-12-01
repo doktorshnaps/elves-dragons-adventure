@@ -296,15 +296,15 @@ function getMagicResistanceByFaction(faction: string): number | undefined {
   return resistances[faction];
 }
 
-async function generateCard(supabase: any) {
+async function generateCard(supabase: any, heroDropRates: DropRate[], dragonDropRates: DropRate[]) {
   // Step 1: Determine card type (50% hero / 50% dragon)
   const typeRoll = Math.random() * 100;
   const cardType = typeRoll < 50 ? 'character' : 'pet';
   const mappedType = cardType === 'character' ? 'hero' : 'dragon';
   console.log(`🎲 Type Roll: ${typeRoll.toFixed(2)} → ${cardType === 'character' ? 'Герой' : 'Дракон'} (${mappedType})`);
   
-  // Step 2: Load drop rates for selected card type
-  const dropRates = await loadClassDropRates(supabase, mappedType);
+  // Step 2: Use pre-loaded drop rates for selected card type
+  const dropRates = mappedType === 'hero' ? heroDropRates : dragonDropRates;
   
   // Step 3: Pick class level using weighted random based on database drop rates
   const { classLevel, className } = pickClassLevelWeighted(dropRates);
@@ -410,6 +410,12 @@ Deno.serve(async (req) => {
     
     console.log(`✅ Loaded ${cardTemplates?.length || 0} card templates`);
     
+    // Load drop rates ONCE before generating cards
+    console.log('🎲 Loading drop rates for heroes and dragons...');
+    const heroDropRates = await loadClassDropRates(supabase, 'hero');
+    const dragonDropRates = await loadClassDropRates(supabase, 'dragon');
+    console.log(`✅ Drop rates loaded: ${heroDropRates.length} hero classes, ${dragonDropRates.length} dragon classes`);
+    
     // Build lookup map for fast access: "type:name:faction:rarity" -> template
     const templateMap: Record<string, any> = {};
     (cardTemplates || []).forEach((t: any) => {
@@ -419,7 +425,7 @@ Deno.serve(async (req) => {
     
     for (let i = 0; i < count; i++) {
       console.log(`\n📦 Generating card ${i + 1}/${count}:`);
-      const card = await generateCard(supabase);
+      const card = await generateCard(supabase, heroDropRates, dragonDropRates);
       
       // Map card type for template lookup
       const mappedType = card.type === 'character' ? 'hero' : 
