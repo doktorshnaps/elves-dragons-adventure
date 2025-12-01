@@ -11,7 +11,7 @@ import { Card as CardType, Faction } from '@/types/cards';
 import { upgradeCard } from '@/utils/cardUtils';
 import { CardDisplay } from '../CardDisplay';
 import { useItemInstances } from '@/hooks/useItemInstances';
-import { initializeCardHealth } from '@/utils/cardHealthUtils';
+import { useCardInstancesContext } from '@/providers/CardInstancesProvider';
 import { Shield, Swords, Clock, Star, ArrowRight, Coins, Sparkles, AlertCircle, BookOpen } from 'lucide-react';
 import { getUpgradeRequirement, rollUpgradeSuccess } from '@/utils/upgradeRequirements';
 import { useCardUpgradeRequirements } from '@/hooks/useCardUpgradeRequirements';
@@ -59,8 +59,34 @@ export const Barracks: React.FC<BarracksProps> = ({ barracksLevel, onUpgradeBuil
   // Мемоизируем подсчет предметов
   const itemCounts = useMemo(() => getCountsByItemId(), [getCountsByItemId]);
 
-  // Initialize cards without passive regeneration
-  const initializedCards = (gameData.cards as CardType[] || []).map(initializeCardHealth);
+  // КРИТИЧНО: Получаем карты ТОЛЬКО из CardInstancesContext (единственный источник правды!)
+  const { cardInstances } = useCardInstancesContext();
+  
+  // Преобразуем card_instances в формат Card для отображения
+  const initializedCards = useMemo(() => {
+    return cardInstances
+      .filter(ci => ci.card_type === 'hero')
+      .map(ci => {
+        const cardData = ci.card_data as any;
+        return {
+          id: ci.id,
+          instanceId: ci.id,
+          name: cardData.name,
+          type: cardData.type || 'character',
+          faction: cardData.faction,
+          rarity: cardData.rarity,
+          image: cardData.image,
+          // КРИТИЧНО: Используем характеристики из card_instances, НЕ из card_data JSON
+          power: ci.max_power,
+          defense: ci.max_defense,
+          health: ci.max_health,
+          magic: ci.max_magic,
+          currentHealth: ci.current_health,
+          currentDefense: ci.current_defense,
+          maxDefense: ci.max_defense
+        } as CardType;
+      });
+  }, [cardInstances]);
 
   // Get active upgrades from Supabase data
   const activeUpgrades = (gameData.barracksUpgrades || []) as BarracksUpgrade[];

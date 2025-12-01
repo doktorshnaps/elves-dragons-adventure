@@ -10,7 +10,7 @@ import { t } from '@/utils/translations';
 import { Card as CardType } from '@/types/cards';
 import { CardDisplay } from '../CardDisplay';
 import { useItemInstances } from '@/hooks/useItemInstances';
-import { initializeCardHealth } from '@/utils/cardHealthUtils';
+import { useCardInstancesContext } from '@/providers/CardInstancesProvider';
 import { Flame, Clock, Star, ArrowRight, Coins, Sparkles, AlertCircle, BookOpen } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -69,8 +69,34 @@ export const DragonLair: React.FC<DragonLairProps> = ({ lairLevel, onUpgradeBuil
 
   const factions = ['Каледор', 'Сильванести', 'Фаэлин', 'Элленар', 'Тэлэрион', 'Аэлантир', 'Лиорас'];
 
-  // Initialize cards without passive regeneration
-  const initializedCards = (gameData.cards as CardType[] || []).map(initializeCardHealth);
+  // КРИТИЧНО: Получаем карты ТОЛЬКО из CardInstancesContext (единственный источник правды!)
+  const { cardInstances } = useCardInstancesContext();
+  
+  // Преобразуем card_instances в формат Card для отображения
+  const initializedCards = useMemo(() => {
+    return cardInstances
+      .filter(ci => ci.card_type === 'dragon')
+      .map(ci => {
+        const cardData = ci.card_data as any;
+        return {
+          id: ci.id,
+          instanceId: ci.id,
+          name: cardData.name,
+          type: cardData.type || 'pet',
+          faction: cardData.faction,
+          rarity: cardData.rarity,
+          image: cardData.image,
+          // КРИТИЧНО: Используем характеристики из card_instances, НЕ из card_data JSON
+          power: ci.max_power,
+          defense: ci.max_defense,
+          health: ci.max_health,
+          magic: ci.max_magic,
+          currentHealth: ci.current_health,
+          currentDefense: ci.current_defense,
+          maxDefense: ci.max_defense
+        } as CardType;
+      });
+  }, [cardInstances]);
 
   // Get active upgrades from Supabase data
   const activeUpgrades = (gameData.dragonLairUpgrades || []) as DragonUpgrade[];
