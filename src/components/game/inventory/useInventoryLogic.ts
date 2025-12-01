@@ -48,8 +48,13 @@ export const useInventoryLogic = (initialInventory: Item[]) => {
   };
 
 const groupItems = (items: Item[]): GroupedItem[] => {
+    console.log('🔧 [groupItems] Input items:', items.length);
+    
     // Фильтруем null и undefined значения перед группировкой
     const validItems = items.filter(item => item != null && typeof item === 'object');
+    
+    console.log('🔧 [groupItems] Valid items after filter:', validItems.length);
+    
     const grouped = validItems.reduce<GroupedItem[]>((acc, item) => {
       // Группируем предметы по имени и статусу экипировки (если есть)
       const existingGroup = acc.find(
@@ -83,6 +88,9 @@ const groupItems = (items: Item[]): GroupedItem[] => {
 
       return acc;
     }, []);
+
+    console.log('🔧 [groupItems] Grouped items:', grouped.length, 'groups');
+    console.log('🔧 [groupItems] CardPacks group:', grouped.find(g => g.type === 'cardPack'));
 
     // Сортируем: колоды карт всегда на первом месте, остальные по убыванию количества
     return grouped.sort((a, b) => {
