@@ -810,9 +810,12 @@ const TeamBattlePageInner: React.FC<TeamBattlePageProps> = ({
           isOpen={claimResultModal.isOpen}
           onClose={() => {
             console.log('🚪 [RENDER] Закрываем ClaimRewardsResultModal');
+            
+            // КРИТИЧНО: Сбрасываем pendingReward ДО закрытия модалки
+            // чтобы предотвратить повторное открытие DungeonRewardModal
+            resetRewards();
             setClaimResultModal({ isOpen: false, rewards: null });
             
-            // handleExitAndReset уже содержит resetRewards(), не дублируем
             handleExitAndReset();
           }}
           rewards={claimResultModal.rewards || { ell_reward: 0, experience_reward: 0, items: [] }}
