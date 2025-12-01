@@ -73,19 +73,20 @@ async function calculateRewards(
 
   console.log('✅ Dungeon settings loaded:', dungeonSettings.dungeon_name);
 
-  // Рассчитываем базовые награды (ELL и опыт) на основе уровня
-  const monstersKilledCount = killedMonsters.length;
-  
-  // Формула наград:
-  // ELL = базовая сумма за монстра * количество убитых * множитель уровня
-  const ellPerMonster = 10 + (level * 2); // Растет с уровнем
-  const ell_reward = Math.floor(ellPerMonster * monstersKilledCount);
-  
-  // EXP = фиксированная сумма в зависимости от типа монстра
-  // 50 exp за обычного монстра, 100 exp за мини-босса, 200 exp за босса
+  // Рассчитываем базовые награды (ELL и опыт) на основе уровня КАЖДОГО монстра
+  let ell_reward = 0;
   let experience_reward = 0;
+  
   for (const monster of killedMonsters) {
+    const monsterLevel = monster.level;
     const monsterNameLower = monster.monster_name.toLowerCase();
+    
+    // ELL рассчитывается по уровню конкретного монстра
+    // Формула: 10 + (уровень_монстра * 2)
+    const ellForThisMonster = 10 + (monsterLevel * 2);
+    ell_reward += ellForThisMonster;
+    
+    // EXP = фиксированная сумма в зависимости от типа монстра
     if (monsterNameLower.includes('boss') && !monsterNameLower.includes('mini')) {
       experience_reward += 200; // Босс
     } else if (monsterNameLower.includes('mini') || monsterNameLower.includes('мини')) {
@@ -94,8 +95,10 @@ async function calculateRewards(
       experience_reward += 50; // Обычный монстр
     }
   }
+  
+  ell_reward = Math.floor(ell_reward);
 
-  console.log('💎 Base rewards calculated:', { ell_reward, experience_reward, monstersKilled: monstersKilledCount });
+  console.log('💎 Base rewards calculated:', { ell_reward, experience_reward, monstersKilled: killedMonsters.length });
 
   // Рассчитываем дроп предметов на основе dungeon_item_drops
   const items: any[] = [];
