@@ -81,6 +81,11 @@ const workerItems: Item[] = (cardInstances || [])
   } as Item));
 
 // ВСЕ предметы из item_instances (включая колоды и материалы)
+console.log('📊 [InventoryDisplay] itemInstances loaded:', {
+  total: itemInstances?.length || 0,
+  cardPacks: itemInstances?.filter(i => i.type === 'cardPack').length || 0
+});
+
 const instanceItems: Item[] = (itemInstances || [])
   .map(inst => {
     // Получаем шаблон предмета из БД по template_id
@@ -119,6 +124,13 @@ const allInventoryItems: Item[] = [
   ...workerItems,
   ...instanceItems,
 ];
+
+console.log('📦 [InventoryDisplay] allInventoryItems created:', {
+  total: allInventoryItems.length,
+  cardPacks: allInventoryItems.filter(i => i.type === 'cardPack').length,
+  workers: workerItems.length,
+  instanceItems: instanceItems.length
+});
 
 
   const handleUseItem = async (groupedItem: GroupedItem): Promise<boolean | void> => {

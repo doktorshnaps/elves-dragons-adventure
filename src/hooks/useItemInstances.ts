@@ -35,7 +35,17 @@ export const useItemInstances = () => {
         throw error;
       }
       
-      console.log('✅ [useItemInstances] Loaded', data?.length || 0, 'items');
+      const totalItems = data?.length || 0;
+      const cardPacks = data?.filter(item => item.type === 'cardPack').length || 0;
+      const materials = data?.filter(item => item.type === 'material').length || 0;
+      
+      console.log('✅ [useItemInstances] Loaded', totalItems, 'items:', {
+        total: totalItems,
+        cardPacks,
+        materials,
+        other: totalItems - cardPacks - materials
+      });
+      
       return (data as ItemInstance[]) || [];
     },
     enabled: !!accountId,
