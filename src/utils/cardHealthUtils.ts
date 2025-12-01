@@ -38,11 +38,9 @@ export const applyDamageToCard = (card: Card, damage: number): Card => {
     maxDefense: card.maxDefense ?? card.defense
   };
 
-  // Dispatch event to synchronize health and defense across all components
-  const event = new CustomEvent('cardHealthChanged', { 
-    detail: { card: updatedCard, damage }
-  });
-  window.dispatchEvent(event);
+  // NOTE: Event dispatching removed to prevent duplicate events
+  // Events are dispatched from applyDamageToPair in battleHealthUtils.ts
+  // This prevents double-dispatch that was causing health/armor increases
 
   return updatedCard;
 };
