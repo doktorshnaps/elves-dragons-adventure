@@ -3123,6 +3123,7 @@ export type Database = {
           old_health: number
         }[]
       }
+      recalculate_card_templates: { Args: never; Returns: number }
       remove_card_from_forge_bay: {
         Args: { p_card_instance_id: string; p_wallet_address?: string }
         Returns: boolean

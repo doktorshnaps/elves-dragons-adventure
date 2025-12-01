@@ -11,6 +11,7 @@ import { Loader2, Save } from "lucide-react";
 import { refreshGameSettings } from "@/utils/cardUtils";
 import { RecalculateNFTStatsButton } from "./RecalculateNFTStatsButton";
 import { RecalculateAllCardsButton } from "./RecalculateAllCardsButton";
+import { RecalculateCardTemplatesButton } from "./RecalculateCardTemplatesButton";
 import { useQueryClient } from '@tanstack/react-query';
 import { 
   useHeroBaseStats, 
@@ -113,9 +114,18 @@ export const GameSettings = () => {
       }
 
       console.log('Save successful (RPC):', data);
+      
+      // Пересчитываем все card_templates с новыми базовыми характеристиками
+      const { data: recalcData, error: recalcError } = await supabase.rpc('recalculate_card_templates');
+      if (recalcError) {
+        console.error('Error recalculating card templates:', recalcError);
+      } else {
+        console.log('Recalculated card templates:', recalcData);
+      }
+      
       toast({
         title: "Успешно",
-        description: "Базовые параметры героев сохранены",
+        description: `Базовые параметры героев сохранены. Обновлено шаблонов: ${recalcData || 0}`,
       });
       
       // Обновляем кеш настроек
@@ -123,6 +133,7 @@ export const GameSettings = () => {
       
       // Invalidate cache to reload
       queryClient.invalidateQueries({ queryKey: ['heroBaseStats'] });
+      queryClient.invalidateQueries({ queryKey: ['cardTemplates'] });
     } catch (error: any) {
       console.error('Error saving hero stats:', error);
       toast({
@@ -154,9 +165,18 @@ export const GameSettings = () => {
       }
 
       console.log('Save successful (RPC):', data);
+      
+      // Пересчитываем все card_templates с новыми базовыми характеристиками
+      const { data: recalcData, error: recalcError } = await supabase.rpc('recalculate_card_templates');
+      if (recalcError) {
+        console.error('Error recalculating card templates:', recalcError);
+      } else {
+        console.log('Recalculated card templates:', recalcData);
+      }
+      
       toast({
         title: "Успешно",
-        description: "Базовые параметры драконов сохранены",
+        description: `Базовые параметры драконов сохранены. Обновлено шаблонов: ${recalcData || 0}`,
       });
       
       // Обновляем кеш настроек
@@ -164,6 +184,7 @@ export const GameSettings = () => {
       
       // Invalidate cache to reload
       queryClient.invalidateQueries({ queryKey: ['dragonBaseStats'] });
+      queryClient.invalidateQueries({ queryKey: ['cardTemplates'] });
     } catch (error: any) {
       console.error('Error saving dragon stats:', error);
       toast({
@@ -196,9 +217,18 @@ export const GameSettings = () => {
       }
 
       console.log('All rarity multipliers saved successfully');
+      
+      // Пересчитываем все card_templates с новыми мультипликаторами
+      const { data: recalcData, error: recalcError } = await supabase.rpc('recalculate_card_templates');
+      if (recalcError) {
+        console.error('Error recalculating card templates:', recalcError);
+      } else {
+        console.log('Recalculated card templates:', recalcData);
+      }
+      
       toast({
         title: "Успешно",
-        description: "Множители редкости сохранены",
+        description: `Множители редкости сохранены. Обновлено шаблонов: ${recalcData || 0}`,
       });
       
       // Обновляем кеш настроек
@@ -206,6 +236,7 @@ export const GameSettings = () => {
       
       // Invalidate cache to reload
       queryClient.invalidateQueries({ queryKey: ['rarityMultipliers'] });
+      queryClient.invalidateQueries({ queryKey: ['cardTemplates'] });
     } catch (error: any) {
       console.error('Error saving rarity multipliers:', error);
       toast({
@@ -241,9 +272,18 @@ export const GameSettings = () => {
       }
 
       console.log('All class multipliers saved successfully');
+      
+      // Пересчитываем все card_templates с новыми мультипликаторами
+      const { data: recalcData, error: recalcError } = await supabase.rpc('recalculate_card_templates');
+      if (recalcError) {
+        console.error('Error recalculating card templates:', recalcError);
+      } else {
+        console.log('Recalculated card templates:', recalcData);
+      }
+      
       toast({
         title: "Успешно",
-        description: "Множители классов героев сохранены",
+        description: `Множители классов героев сохранены. Обновлено шаблонов: ${recalcData || 0}`,
       });
       
       // Обновляем кеш настроек
@@ -251,6 +291,7 @@ export const GameSettings = () => {
       
       // Invalidate cache to reload
       queryClient.invalidateQueries({ queryKey: ['classMultipliers'] });
+      queryClient.invalidateQueries({ queryKey: ['cardTemplates'] });
     } catch (error: any) {
       console.error('Error saving class multipliers:', error);
       toast({
@@ -286,9 +327,18 @@ export const GameSettings = () => {
       }
 
       console.log('All dragon class multipliers saved successfully');
+      
+      // Пересчитываем все card_templates с новыми мультипликаторами
+      const { data: recalcData, error: recalcError } = await supabase.rpc('recalculate_card_templates');
+      if (recalcError) {
+        console.error('Error recalculating card templates:', recalcError);
+      } else {
+        console.log('Recalculated card templates:', recalcData);
+      }
+      
       toast({
         title: "Успешно",
-        description: "Множители классов драконов сохранены",
+        description: `Множители классов драконов сохранены. Обновлено шаблонов: ${recalcData || 0}`,
       });
       
       // Обновляем кеш настроек
@@ -296,6 +346,7 @@ export const GameSettings = () => {
       
       // Invalidate cache to reload
       queryClient.invalidateQueries({ queryKey: ['dragonClassMultipliers'] });
+      queryClient.invalidateQueries({ queryKey: ['cardTemplates'] });
     } catch (error: any) {
       console.error('Error saving dragon class multipliers:', error);
       toast({
@@ -321,6 +372,7 @@ export const GameSettings = () => {
       <div className="mb-4 flex gap-2">
         <RecalculateNFTStatsButton />
         <RecalculateAllCardsButton />
+        <RecalculateCardTemplatesButton />
       </div>
 
       <Tabs defaultValue="heroes" className="w-full">
