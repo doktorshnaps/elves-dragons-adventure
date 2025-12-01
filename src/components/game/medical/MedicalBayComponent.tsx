@@ -294,16 +294,22 @@ export const MedicalBayComponent = () => {
                 return (
                   <div key={entry.id} className="p-4 border border-green-500/20 rounded-lg">
                     <div className="flex items-start gap-4 mb-4">
-                      {/* Card Preview */}
+                      {/* Card Preview - КРИТИЧНО: используем данные из card_instances */}
                       {cardData && (
                         <div className="flex-shrink-0">
                           <div className="text-xs text-muted-foreground mb-1">Лечится:</div>
                           <CardDisplay 
                             card={{
                               ...cardData,
-                              currentHealth: entry.card_instances?.current_health,
-                              currentDefense: entry.card_instances?.current_defense,
-                              maxDefense: entry.card_instances?.max_defense
+                              // КРИТИЧНО: Используем health напрямую из card_instances, НЕ из card_data JSON
+                              health: entry.card_instances?.max_health ?? cardData.health,
+                              currentHealth: entry.card_instances?.current_health ?? cardData.currentHealth,
+                              currentDefense: entry.card_instances?.current_defense ?? cardData.currentDefense,
+                              maxDefense: entry.card_instances?.max_defense ?? cardData.maxDefense,
+                              // Также переопределяем базовые характеристики из card_instances
+                              power: entry.card_instances?.max_power ?? cardData.power,
+                              defense: entry.card_instances?.max_defense ?? cardData.defense,
+                              magic: entry.card_instances?.max_magic ?? cardData.magic
                             }}
                             showSellButton={false}
                             className="w-16 h-24 text-xs"
@@ -458,8 +464,14 @@ export const MedicalBayComponent = () => {
                       <CardDisplay 
                         card={{
                           ...cardData,
+                          // КРИТИЧНО: Переопределяем ВСЕ характеристики из card_instances
+                          health: card.max_health,
                           currentHealth: card.current_health,
-                          health: card.max_health
+                          currentDefense: cardData.currentDefense,
+                          maxDefense: cardData.maxDefense,
+                          power: cardData.power,
+                          defense: cardData.defense,
+                          magic: cardData.magic
                         }}
                         showSellButton={false}
                         className="w-full"
