@@ -1,7 +1,7 @@
 import { CardInfo } from '../types';
 
 export const liorasDragons: CardInfo[] = [
-  { name: "Ординарный лесной дракон", type: "pet", description: "Простой лесной дракон Лиораса.", faction: "Лиорас", image: "/lovable-uploads/d081d1db-aab3-4a95-b5a3-569454011d36.webp" },
+  { name: "Обычный лесной дракон", type: "pet", description: "Простой лесной дракон Лиораса.", faction: "Лиорас", image: "/lovable-uploads/d081d1db-aab3-4a95-b5a3-569454011d36.webp" },
   { name: "Необычный лесной дракон", type: "pet", description: "Улучшенный лесной дракон Лиораса.", faction: "Лиорас", image: "/lovable-uploads/7d753ea0-0d79-490a-aea7-bfa1c207c1af.webp" },
   { name: "Редкий лесной дракон", type: "pet", description: "Редкий представитель лесных драконов.", faction: "Лиорас", image: "/lovable-uploads/65dc676f-631e-4c33-ab62-54640607c321.webp" },
   { name: "Эпический лесной дракон", type: "pet", description: "Эпический лесной дракон невероятной силы.", faction: "Лиорас", image: "/lovable-uploads/ee5368e1-44c7-43d4-be3b-b8114fe275d8.webp" },

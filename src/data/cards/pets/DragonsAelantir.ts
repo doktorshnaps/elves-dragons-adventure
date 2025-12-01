@@ -1,7 +1,7 @@
 import { CardInfo } from '../types';
 
 export const aelantirDragons: CardInfo[] = [
-  { name: "Ординарный земной дракон", type: "pet", description: "Простой земной дракон Аэлантира.", faction: "Аэлантир", image: "/lovable-uploads/c7fb83f7-8fd4-460f-a46e-afdcda1ebf5f.webp" },
+  { name: "Обычный земной дракон", type: "pet", description: "Простой земной дракон Аэлантира.", faction: "Аэлантир", image: "/lovable-uploads/c7fb83f7-8fd4-460f-a46e-afdcda1ebf5f.webp" },
   { name: "Необычный земной дракон", type: "pet", description: "Улучшенный земной дракон Аэлантира.", faction: "Аэлантир", image: "/lovable-uploads/a67b0362-c82a-4564-99e8-8776f6bf6591.webp" },
   { name: "Редкий земной дракон", type: "pet", description: "Редкий представитель земных драконов.", faction: "Аэлантир", image: "/lovable-uploads/83540e14-d8ed-424d-9244-694381bdbddf.webp" },
   { name: "Эпический земной дракон", type: "pet", description: "Эпический земной дракон невероятной силы.", faction: "Аэлантир", image: "/lovable-uploads/36e1d451-fecc-4db6-ae8b-42c341c78f27.webp" },
