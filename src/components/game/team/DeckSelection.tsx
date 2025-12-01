@@ -75,11 +75,13 @@ export const DeckSelection = ({
     cardInstances
   } = useCardInstancesContext();
   
-  console.log('🎴 [DeckSelection] Loaded from CardInstancesContext:', {
-    totalInstances: cardInstances.length,
-    heroes: cardInstances.filter(ci => ci.card_type === 'hero').length,
-    dragons: cardInstances.filter(ci => ci.card_type === 'dragon').length
-  });
+  if (import.meta.env.DEV) {
+    console.log('🎴 [DeckSelection] Loaded from CardInstancesContext:', {
+      totalInstances: cardInstances.length,
+      heroes: cardInstances.filter(ci => ci.card_type === 'hero').length,
+      dragons: cardInstances.filter(ci => ci.card_type === 'dragon').length
+    });
+  }
 
   // Создаем карты НАПРЯМУЮ из card_instances - каждый instance = уникальная карта
   const localCards = useMemo(() => {
@@ -307,6 +309,7 @@ export const DeckSelection = ({
   
   // КРИТИЧЕСКОЕ ИСПРАВЛЕНИЕ: Синхронизируем selectedPairs с актуальными данными из localCards
   // Используем UUID для точного сопоставления и ЯВНО передаем instanceId
+  // ОПТИМИЗАЦИЯ: мемоизируем только по длине массивов для снижения ре-рендеров
   const syncedSelectedPairs = useMemo(() => {
     return selectedPairs.map(pair => {
       // Находим актуальные данные героя по UUID (после миграции все ID - это UUID)
@@ -316,16 +319,6 @@ export const DeckSelection = ({
       // Находим актуальные данные дракона (если есть)
       const dragonId = pair.dragon ? ((pair.dragon as any).instanceId || pair.dragon.id) : null;
       const updatedDragon = dragonId ? localCards.find(c => c.id === dragonId || (c as any).instanceId === dragonId) : undefined;
-      
-      // Детальное логирование для отладки
-      if (!updatedHero) {
-        console.warn(`⚠️ [DeckSelection] Hero not found in localCards:`, {
-          heroName: pair.hero.name,
-          heroId: pair.hero.id,
-          heroInstanceId: (pair.hero as any).instanceId,
-          searchedId: heroId
-        });
-      }
       
       // КРИТИЧНО: ЯВНО добавляем instanceId к каждой карте для корректного поиска в useTeamBattle
       return {
@@ -345,7 +338,7 @@ export const DeckSelection = ({
         } : undefined
       };
     });
-  }, [selectedPairs, localCards]);
+  }, [selectedPairs.length, localCards.length]);
   
   return <div className="h-full flex flex-col space-y-3">
       {/* Selected Pairs Display */}
