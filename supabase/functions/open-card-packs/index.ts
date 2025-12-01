@@ -193,45 +193,62 @@ type DragonClass =
   | 'Империал'
   | 'Титан';
 
-// Function to pick a random class level based on weighted probabilities
-function pickClassLevel(): ClassLevel {
-  const roll = Math.random() * 100;
+// Interface for drop rate data from database
+interface DropRate {
+  class_key: string;
+  class_name: string;
+  drop_chance: number;
+  display_order: number;
+}
+
+// Load class drop rates from database for specific card type
+async function loadClassDropRates(supabase: any, cardType: 'hero' | 'dragon'): Promise<DropRate[]> {
+  const { data, error } = await supabase
+    .from('card_class_drop_rates')
+    .select('class_key, class_name, drop_chance, display_order')
+    .eq('card_type', cardType)
+    .order('display_order', { ascending: true });
   
-  let classLevel: ClassLevel;
-  let range: string;
-  
-  if (roll <= 16.61) {
-    classLevel = 1;
-    range = "0.01-16.61 (16.61%)";
-  } else if (roll <= 31.84) {
-    classLevel = 2;
-    range = "16.62-31.84 (15.23%)";
-  } else if (roll <= 45.70) {
-    classLevel = 3;
-    range = "31.85-45.70 (13.86%)";
-  } else if (roll <= 58.18) {
-    classLevel = 4;
-    range = "45.71-58.18 (12.48%)";
-  } else if (roll <= 69.30) {
-    classLevel = 5;
-    range = "58.19-69.30 (11.12%)";
-  } else if (roll <= 79.04) {
-    classLevel = 6;
-    range = "69.31-79.04 (9.74%)";
-  } else if (roll <= 87.40) {
-    classLevel = 7;
-    range = "79.05-87.40 (8.36%)";
-  } else if (roll <= 94.39) {
-    classLevel = 8;
-    range = "87.41-94.39 (6.99%)";
-  } else {
-    classLevel = 9;
-    range = "94.40-100.00 (5.61%)";
+  if (error) {
+    console.error(`❌ Error loading drop rates for ${cardType}:`, error);
+    throw error;
   }
   
-  console.log(`🎲 Class Level Roll: ${roll.toFixed(4)} → Level ${classLevel} (${range})`);
+  // Validate that total drop chance equals 100%
+  const totalChance = (data || []).reduce((sum, rate) => sum + rate.drop_chance, 0);
+  if (Math.abs(totalChance - 100) > 0.01) {
+    console.warn(`⚠️ Total drop chance for ${cardType} is ${totalChance}%, not 100%!`);
+  }
   
-  return classLevel;
+  console.log(`✅ Loaded ${data?.length || 0} drop rates for ${cardType}, total chance: ${totalChance}%`);
+  return data || [];
+}
+
+// Function to pick a random class level based on weighted probabilities from database
+function pickClassLevelWeighted(dropRates: DropRate[]): { classLevel: ClassLevel; className: string } {
+  const roll = Math.random() * 100;
+  
+  let cumulativeChance = 0;
+  for (let i = 0; i < dropRates.length; i++) {
+    const rate = dropRates[i];
+    cumulativeChance += rate.drop_chance;
+    
+    if (roll <= cumulativeChance) {
+      const classLevel = (i + 1) as ClassLevel;
+      const rangeStart = (cumulativeChance - rate.drop_chance).toFixed(2);
+      const rangeEnd = cumulativeChance.toFixed(2);
+      
+      console.log(`🎲 Class Level Roll: ${roll.toFixed(4)} → Level ${classLevel} (${rangeStart}-${rangeEnd}, ${rate.drop_chance}%) → ${rate.class_name}`);
+      
+      return { classLevel, className: rate.class_name };
+    }
+  }
+  
+  // Fallback to last level if something goes wrong
+  const lastRate = dropRates[dropRates.length - 1];
+  const lastLevel = dropRates.length as ClassLevel;
+  console.warn(`⚠️ Roll ${roll.toFixed(4)} exceeded cumulative chance, falling back to level ${lastLevel}`);
+  return { classLevel: lastLevel, className: lastRate.class_name };
 }
 
 // Convert class level to actual class name based on card type
@@ -279,15 +296,20 @@ function getMagicResistanceByFaction(faction: string): number | undefined {
   return resistances[faction];
 }
 
-function generateCard() {
-  const typeRoll = Math.floor(Math.random() * 2) + 1;
-  const cardType = typeRoll === 1 ? 'character' : 'pet';
-  console.log(`🎲 Type Roll: ${typeRoll} → ${cardType === 'character' ? 'Герой' : 'Дракон'}`);
+async function generateCard(supabase: any) {
+  // Step 1: Determine card type (50% hero / 50% dragon)
+  const typeRoll = Math.random() * 100;
+  const cardType = typeRoll < 50 ? 'character' : 'pet';
+  const mappedType = cardType === 'character' ? 'hero' : 'dragon';
+  console.log(`🎲 Type Roll: ${typeRoll.toFixed(2)} → ${cardType === 'character' ? 'Герой' : 'Дракон'} (${mappedType})`);
   
-  // Pick class level (instead of rarity)
-  const classLevel = pickClassLevel();
+  // Step 2: Load drop rates for selected card type
+  const dropRates = await loadClassDropRates(supabase, mappedType);
+  
+  // Step 3: Pick class level using weighted random based on database drop rates
+  const { classLevel, className } = pickClassLevelWeighted(dropRates);
   const cardClass = getCardClass(classLevel, cardType);
-  console.log(`🎖️ Card Class: ${cardClass} (level ${classLevel})`);
+  console.log(`🎖️ Card Class: ${cardClass} (level ${classLevel}) from DB: ${className}`);
   
   // Determine available factions for this type + class
   const availableFactions = Array.from(
@@ -397,7 +419,7 @@ Deno.serve(async (req) => {
     
     for (let i = 0; i < count; i++) {
       console.log(`\n📦 Generating card ${i + 1}/${count}:`);
-      const card = generateCard();
+      const card = await generateCard(supabase);
       
       // Map card type for template lookup
       const mappedType = card.type === 'character' ? 'hero' : 
