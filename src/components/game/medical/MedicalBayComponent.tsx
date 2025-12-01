@@ -142,10 +142,14 @@ export const MedicalBayComponent = () => {
         return {
           id: instance!.id, // гарантирован реально существующий экземпляр
           card_template_id: card.id,
-          current_health: instance?.current_health ?? card.currentHealth ?? normalizedCard.currentHealth ?? normalizedCard.health,
-          max_health: normalizedCard.health, // Правильное максимальное здоровье из нормализации
-          card_data: normalizedCard, // Используем нормализованную карту
-          wallet_address: instance?.wallet_address || ''
+          current_health: instance.current_health,
+          max_health: instance.max_health,
+          current_defense: instance.current_defense,
+          max_defense: instance.max_defense,
+          max_power: instance.max_power,
+          max_magic: instance.max_magic,
+          card_data: normalizedCard, // Используем нормализованную карту только для метаданных (имя, изображение, фракция)
+          wallet_address: instance.wallet_address
         };
       });
     
@@ -464,14 +468,14 @@ export const MedicalBayComponent = () => {
                       <CardDisplay 
                         card={{
                           ...cardData,
-                          // КРИТИЧНО: Переопределяем ВСЕ характеристики из card_instances
+                          // КРИТИЧНО: Используем ВСЕ характеристики из card_instances (из card объекта, НЕ из JSON)
                           health: card.max_health,
                           currentHealth: card.current_health,
-                          currentDefense: cardData.currentDefense,
-                          maxDefense: cardData.maxDefense,
-                          power: cardData.power,
-                          defense: cardData.defense,
-                          magic: cardData.magic
+                          currentDefense: card.current_defense,
+                          maxDefense: card.max_defense,
+                          power: card.max_power,
+                          defense: card.max_defense,
+                          magic: card.max_magic
                         }}
                         showSellButton={false}
                         className="w-full"

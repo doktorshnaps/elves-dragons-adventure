@@ -125,10 +125,14 @@ export const ForgeBayComponent = ({ forgeLevel }: ForgeBayComponentProps) => {
         return {
           id: instance.id,
           card_template_id: card.id,
-          current_defense: instance.current_defense ?? (card as any).defense,
-          max_defense: instance.max_defense ?? (card as any).defense,
+          current_health: instance.current_health,
+          max_health: instance.max_health,
+          current_defense: instance.current_defense,
+          max_defense: instance.max_defense,
+          max_power: instance.max_power,
+          max_magic: instance.max_magic,
           card_data: normalizedCard,
-          wallet_address: instance.wallet_address || ''
+          wallet_address: instance.wallet_address
         };
       });
   };
@@ -371,14 +375,14 @@ export const ForgeBayComponent = ({ forgeLevel }: ForgeBayComponentProps) => {
                       <CardDisplay
                         card={{
                           ...cardData,
-                          // КРИТИЧНО: Используем ВСЕ характеристики из card_instances
+                          // КРИТИЧНО: Используем ВСЕ характеристики из card_instances (из card объекта, НЕ из JSON)
                           health: card.max_health,
                           currentHealth: card.current_health,
                           currentDefense: card.current_defense,
                           maxDefense: card.max_defense,
-                          power: cardData.power,
-                          defense: cardData.defense,
-                          magic: cardData.magic
+                          power: card.max_power,
+                          defense: card.max_defense,
+                          magic: card.max_magic
                         }}
                         showSellButton={false}
                         className="w-full"
