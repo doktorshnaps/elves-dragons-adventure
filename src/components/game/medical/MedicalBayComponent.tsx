@@ -12,7 +12,6 @@ console.log('🏥 [MedicalBayComponent] Loaded - using centralized CardInstances
 import { useCardsWithHealth } from '@/hooks/useCardsWithHealth';
 import { useUnifiedGameState } from '@/hooks/useUnifiedGameState';
 import { CardDisplay } from '../CardDisplay';
-import { normalizeCardHealth } from '@/utils/cardHealthNormalizer';
 
 export const MedicalBayComponent = () => {
   const {
@@ -122,10 +121,9 @@ export const MedicalBayComponent = () => {
     // Фильтруем поврежденные карты
     const injuredCards = Array.from(uniqueCardsMap.values())
       .filter(({ card, instance }) => {
-        // Используем normalizeCardHealth для получения правильного max_health
-        const normalizedCard = normalizeCardHealth(card);
-        const currentHealth = instance?.current_health ?? card.currentHealth ?? normalizedCard.currentHealth ?? normalizedCard.health;
-        const maxHealth = normalizedCard.health; // Правильное максимальное здоровье
+        // НЕ используем normalizeCardHealth - используем данные напрямую из instance
+        const currentHealth = instance?.current_health ?? 0;
+        const maxHealth = instance?.max_health ?? 0;
         const isInMedicalBay = instance?.is_in_medical_bay || (card as any).isInMedicalBay;
         const instanceId = instance?.id;
         
@@ -137,10 +135,10 @@ export const MedicalBayComponent = () => {
         return hasRealInstance && isInjured && notInMedicalBay;
       })
       .map(({ card, instance }) => {
-        // Используем normalizeCardHealth для правильного max_health
-        const normalizedCard = normalizeCardHealth(card);
+        // НЕ используем normalizeCardHealth - оно пересчитывает характеристики!
+        // Используем card_data только для метаданных (имя, изображение, фракция)
         return {
-          id: instance!.id, // гарантирован реально существующий экземпляр
+          id: instance!.id,
           card_template_id: card.id,
           current_health: instance.current_health,
           max_health: instance.max_health,
@@ -148,7 +146,7 @@ export const MedicalBayComponent = () => {
           max_defense: instance.max_defense,
           max_power: instance.max_power,
           max_magic: instance.max_magic,
-          card_data: normalizedCard, // Используем нормализованную карту только для метаданных (имя, изображение, фракция)
+          card_data: card, // Используем card_data только для метаданных
           wallet_address: instance.wallet_address
         };
       });

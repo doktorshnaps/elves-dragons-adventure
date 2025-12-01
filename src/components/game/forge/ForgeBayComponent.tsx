@@ -12,7 +12,6 @@ console.log('⚒️ [ForgeBayComponent] Loaded - using centralized CardInstances
 import { useCardsWithHealth } from '@/hooks/useCardsWithHealth';
 import { useUnifiedGameState } from '@/hooks/useUnifiedGameState';
 import { CardDisplay } from '../CardDisplay';
-import { normalizeCardHealth } from '@/utils/cardHealthNormalizer';
 
 interface ForgeBayComponentProps {
   forgeLevel: number;
@@ -121,7 +120,8 @@ export const ForgeBayComponent = ({ forgeLevel }: ForgeBayComponentProps) => {
         return isDamaged && notInForge;
       })
       .map(({ card, instance }) => {
-        const normalizedCard = normalizeCardHealth(card);
+        // НЕ используем normalizeCardHealth - оно пересчитывает характеристики!
+        // Используем card_data только для метаданных (имя, изображение, фракция)
         return {
           id: instance.id,
           card_template_id: card.id,
@@ -131,7 +131,7 @@ export const ForgeBayComponent = ({ forgeLevel }: ForgeBayComponentProps) => {
           max_defense: instance.max_defense,
           max_power: instance.max_power,
           max_magic: instance.max_magic,
-          card_data: normalizedCard,
+          card_data: card, // Используем card_data только для метаданных
           wallet_address: instance.wallet_address
         };
       });
