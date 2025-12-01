@@ -51,6 +51,10 @@ export const useMedicalBay = () => {
           id: row.ci_id,
           current_health: row.ci_current_health,
           max_health: row.ci_max_health,
+          current_defense: row.ci_current_defense,
+          max_defense: row.ci_max_defense,
+          max_power: row.ci_max_power,
+          max_magic: row.ci_max_magic,
           card_data: row.ci_card_data,
         },
       })) || [];
