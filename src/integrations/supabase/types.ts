@@ -2799,6 +2799,8 @@ export type Database = {
           ci_id: string
           ci_max_defense: number
           ci_max_health: number
+          ci_max_magic: number
+          ci_max_power: number
           estimated_completion: string
           id: string
           is_completed: boolean

@@ -239,9 +239,14 @@ export const ForgeBayComponent = ({ forgeLevel }: ForgeBayComponentProps) => {
                           <CardDisplay 
                             card={{
                               ...cardData,
-                              currentHealth: entry.card_instances?.current_health,
-                              currentDefense: entry.card_instances?.current_defense,
-                              maxDefense: entry.card_instances?.max_defense
+                              // КРИТИЧНО: Используем ВСЕ характеристики из card_instances
+                              health: entry.card_instances?.max_health ?? cardData.health,
+                              currentHealth: entry.card_instances?.current_health ?? cardData.currentHealth,
+                              currentDefense: entry.card_instances?.current_defense ?? cardData.currentDefense,
+                              maxDefense: entry.card_instances?.max_defense ?? cardData.maxDefense,
+                              power: entry.card_instances?.max_power ?? cardData.power,
+                              defense: entry.card_instances?.max_defense ?? cardData.defense,
+                              magic: entry.card_instances?.max_magic ?? cardData.magic
                             }} 
                             showSellButton={false} 
                             className="w-16 h-24 text-xs" 
@@ -366,8 +371,14 @@ export const ForgeBayComponent = ({ forgeLevel }: ForgeBayComponentProps) => {
                       <CardDisplay
                         card={{
                           ...cardData,
+                          // КРИТИЧНО: Используем ВСЕ характеристики из card_instances
+                          health: card.max_health,
+                          currentHealth: card.current_health,
                           currentDefense: card.current_defense,
-                          maxDefense: card.max_defense
+                          maxDefense: card.max_defense,
+                          power: cardData.power,
+                          defense: cardData.defense,
+                          magic: cardData.magic
                         }}
                         showSellButton={false}
                         className="w-full"

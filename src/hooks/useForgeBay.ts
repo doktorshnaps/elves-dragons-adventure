@@ -18,6 +18,8 @@ interface ForgeBayEntry {
     max_defense: number;
     current_health: number;
     max_health: number;
+    max_power: number;
+    max_magic: number;
     card_data: any;
   };
 }
@@ -54,6 +56,8 @@ export const useForgeBay = () => {
           max_defense: row.ci_max_defense,
           current_health: row.ci_current_health,
           max_health: row.ci_max_health,
+          max_power: row.ci_max_power,
+          max_magic: row.ci_max_magic,
           card_data: row.ci_card_data,
         },
       })) || [];
