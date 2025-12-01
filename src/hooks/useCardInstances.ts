@@ -48,7 +48,9 @@ export const useCardInstances = () => {
         return [];
       }
 
-      console.log('🃏 [useCardInstances] Fetching from DB for:', accountId);
+      if (import.meta.env.DEV) {
+        console.log('🃏 [useCardInstances] Fetching from DB for:', accountId);
+      }
       const { data, error } = await supabase
         .rpc('get_card_instances_by_wallet', { p_wallet_address: accountId });
 
@@ -62,7 +64,9 @@ export const useCardInstances = () => {
         throw error;
       }
 
-      console.log('✅ [useCardInstances] Loaded', data?.length || 0, 'card instances');
+      if (import.meta.env.DEV) {
+        console.log('✅ [useCardInstances] Loaded', data?.length || 0, 'card instances');
+      }
       return (data || []) as unknown as CardInstance[];
     },
     enabled: isConnected && !!accountId && !walletLoading && !!selector,
@@ -71,6 +75,8 @@ export const useCardInstances = () => {
     refetchOnMount: false, // НЕ перезагружать при каждом монтировании
     refetchOnWindowFocus: false,
     refetchOnReconnect: false,
+    // КРИТИЧНО: дедупликация одновременных запросов
+    networkMode: 'offlineFirst',
   });
 
   // Создание нового экземпляра карты
@@ -311,7 +317,9 @@ export const useCardInstances = () => {
       return;
     }
 
-    console.log('🔔 [useCardInstances] Setting up Real-time subscription for:', accountId);
+    if (import.meta.env.DEV) {
+      console.log('🔔 [useCardInstances] Setting up Real-time subscription for:', accountId);
+    }
 
     const channel = supabase
       .channel('card_instances_changes')
@@ -324,12 +332,12 @@ export const useCardInstances = () => {
           filter: `wallet_address=eq.${accountId}`
         },
         (payload) => {
-          console.log('📥 [useCardInstances] INSERT via Real-time:', {
-            id: (payload.new as any)?.id?.substring(0, 8),
-            cardType: (payload.new as any)?.card_type,
-            health: (payload.new as any)?.current_health,
-            defense: (payload.new as any)?.current_defense
-          });
+          if (import.meta.env.DEV) {
+            console.log('📥 [useCardInstances] INSERT via Real-time:', {
+              id: (payload.new as any)?.id?.substring(0, 8),
+              cardType: (payload.new as any)?.card_type
+            });
+          }
           queryClient.invalidateQueries({ queryKey: ['cardInstances', accountId] });
         }
       )
@@ -342,13 +350,11 @@ export const useCardInstances = () => {
           filter: `wallet_address=eq.${accountId}`
         },
         (payload) => {
-          console.log('🔄 [useCardInstances] UPDATE via Real-time:', {
-            id: (payload.new as any)?.id?.substring(0, 8),
-            oldHealth: (payload.old as any)?.current_health,
-            newHealth: (payload.new as any)?.current_health,
-            oldDefense: (payload.old as any)?.current_defense,
-            newDefense: (payload.new as any)?.current_defense
-          });
+          if (import.meta.env.DEV) {
+            console.log('🔄 [useCardInstances] UPDATE via Real-time:', {
+              id: (payload.new as any)?.id?.substring(0, 8)
+            });
+          }
           queryClient.invalidateQueries({ queryKey: ['cardInstances', accountId] });
         }
       )
@@ -361,15 +367,15 @@ export const useCardInstances = () => {
           filter: `wallet_address=eq.${accountId}`
         },
         (payload) => {
-          console.log('🗑️ [useCardInstances] DELETE via Real-time:', {
-            id: (payload.old as any)?.id?.substring(0, 8)
-          });
+          if (import.meta.env.DEV) {
+            console.log('🗑️ [useCardInstances] DELETE via Real-time:', {
+              id: (payload.old as any)?.id?.substring(0, 8)
+            });
+          }
           queryClient.invalidateQueries({ queryKey: ['cardInstances', accountId] });
         }
       )
-      .subscribe((status) => {
-        console.log('📡 [useCardInstances] Real-time subscription status:', status);
-      });
+      .subscribe();
 
     return () => {
       console.log('🔕 [useCardInstances] Cleaning up Real-time subscription');
