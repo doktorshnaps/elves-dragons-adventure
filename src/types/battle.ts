@@ -32,6 +32,7 @@ export interface Opponent {
   maxHealth: number;
   armor?: number; // Броня монстра из CSV
   isBoss?: boolean;
+  isMiniboss?: boolean; // Для мини-боссов
   image?: string;
   statusEffects?: StatusEffect[];
   specialAbilities?: SpecialAbility[];

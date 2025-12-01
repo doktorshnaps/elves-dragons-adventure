@@ -13,6 +13,7 @@ interface MonsterCardDisplayProps {
   power: number;
   armor?: number;
   isBoss?: boolean;
+  isMiniboss?: boolean;
   image?: string;
   specialAbilities?: any[];
   description?: string;
@@ -26,6 +27,7 @@ export const MonsterCardDisplay = memo(({
   power,
   armor,
   isBoss,
+  isMiniboss,
   image,
   specialAbilities,
   description,
@@ -68,6 +70,11 @@ export const MonsterCardDisplay = memo(({
         {isBoss && (
           <Badge variant="destructive" className="text-[8px] px-1 py-0 bg-orange-600 border-orange-400">
             Босс
+          </Badge>
+        )}
+        {isMiniboss && !isBoss && (
+          <Badge variant="destructive" className="text-[8px] px-1 py-0 bg-yellow-600 border-yellow-400">
+            Мини-босс
           </Badge>
         )}
       </div>
