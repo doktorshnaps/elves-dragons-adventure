@@ -7,9 +7,9 @@ export const useMonsterGeneration = (baseLevel: number) => {
     const rewardMultiplier = 1 + (baseLevel - 1) * 0.7;
 
     const monsterTypes: Array<{ type: 'normal' | 'elite' | 'boss', chance: number, expReward: number }> = [
-      { type: 'normal', chance: 0.7, expReward: 30 },
-      { type: 'elite', chance: 0.25, expReward: 60 },
-      { type: 'boss', chance: 0.05, expReward: 100 }
+      { type: 'normal', chance: 0.7, expReward: 50 },
+      { type: 'elite', chance: 0.25, expReward: 100 },
+      { type: 'boss', chance: 0.05, expReward: 200 }
     ];
 
     const roll = Math.random();
