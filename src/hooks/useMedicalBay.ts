@@ -17,6 +17,10 @@ interface MedicalBayEntry {
     id: string;
     current_health: number;
     max_health: number;
+    current_defense: number;
+    max_defense: number;
+    max_power: number;
+    max_magic: number;
     card_data: any;
   };
 }
