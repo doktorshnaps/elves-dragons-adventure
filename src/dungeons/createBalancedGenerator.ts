@@ -270,7 +270,8 @@ export const createBalancedGenerator = (config: DungeonConfig) =>
         health: finalMinibossStats.hp,
         maxHealth: finalMinibossStats.hp,
         armor: finalMinibossStats.armor,
-        isBoss: true,
+        isBoss: false,
+        isMiniboss: true,
         image: minibossImage
       });
     } else {
