@@ -2,7 +2,7 @@ import { CardInfo } from '../types';
 
 export const kaledorDragons: CardInfo[] = [
   {
-    name: "Ординарный ледяной дракон",
+    name: "Обычный ледяной дракон",
     type: "pet",
     description: "Простой ледяной дракон Каледора.",
     faction: "Каледор",
