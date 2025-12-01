@@ -811,9 +811,9 @@ const TeamBattlePageInner: React.FC<TeamBattlePageProps> = ({
           onClose={() => {
             console.log('🚪 [RENDER] Закрываем ClaimRewardsResultModal');
             
-            // КРИТИЧНО: Сбрасываем pendingReward ДО закрытия модалки
-            // чтобы предотвратить повторное открытие DungeonRewardModal
-            resetRewards();
+            // КРИТИЧНО: Сбрасываем все флаги перед закрытием
+            setIsClaiming(false); // Убираем экран "Обработка результатов боя..."
+            resetRewards(); // Сбрасываем pendingReward
             setClaimResultModal({ isOpen: false, rewards: null });
             
             handleExitAndReset();
