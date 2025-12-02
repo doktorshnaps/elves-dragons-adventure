@@ -60,7 +60,7 @@ export const applyDamageToPair = async (
     window.dispatchEvent(dragonEvent);
   }
 
-  // Recalculate pair health and stats
+  // КРИТИЧНО: Пересчитываем здоровье пары И обновляем индивидуальные значения героя/дракона
   const newHeroHealth = updatedHero ? (updatedHero.currentHealth ?? updatedHero.health) : 0;
   const newDragonHealth = updatedDragon ? (updatedDragon.currentHealth ?? updatedDragon.health) : 0;
   
@@ -86,10 +86,22 @@ export const applyDamageToPair = async (
     newDefense -= pair.dragon.defense;
   }
   
+  // КРИТИЧНО: Обновляем индивидуальные currentHealth для героя и дракона
+  // чтобы они отображались корректно в UI (не путать с pair.health - суммарным)
+  const updatedHeroWithHealth = updatedHero ? {
+    ...updatedHero,
+    currentHealth: newHeroHealth
+  } : updatedHero;
+  
+  const updatedDragonWithHealth = updatedDragon ? {
+    ...updatedDragon,
+    currentHealth: newDragonHealth
+  } : updatedDragon;
+  
   return {
     ...pair,
-    hero: updatedHero,
-    dragon: updatedDragon,
+    hero: updatedHeroWithHealth,
+    dragon: updatedDragonWithHealth,
     health: newHeroHealth + newDragonHealth,
     power: newPower,
     defense: newDefense,
