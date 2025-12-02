@@ -166,13 +166,17 @@ export const DungeonRewardModal: React.FC<DungeonRewardModalProps> = ({
               
               <div className="space-y-2 max-h-[200px] overflow-y-auto pr-2">
                 {teamPairs.map((pair, index) => {
-                  // КРИТИЧНО: В боевой системе pair.health - это СУММАРНОЕ здоровье пары (герой + дракон)
-                  // Показываем общее здоровье пары, а не пытаемся разделить на отдельные карты
-                  const pairHealth = pair.health || 0;
-                  const pairMaxHealth = pair.maxHealth || 1;
-                  const pairHealthPercent = pairMaxHealth > 0 ? (pairHealth / pairMaxHealth) * 100 : 0;
+                  // Показываем индивидуальное здоровье героя и дракона
+                  const heroHealth = pair.hero?.currentHealth || 0;
+                  const heroMaxHealth = pair.hero?.health || 1;
+                  const dragonHealth = pair.dragon?.currentHealth || 0;
+                  const dragonMaxHealth = pair.dragon?.health || 0;
                   
-                  const isDead = pairHealth <= 0;
+                  const totalHealth = heroHealth + dragonHealth;
+                  const totalMaxHealth = heroMaxHealth + dragonMaxHealth;
+                  const pairHealthPercent = totalMaxHealth > 0 ? (totalHealth / totalMaxHealth) * 100 : 0;
+                  
+                  const isDead = totalHealth <= 0;
                   
                   return (
                     <div 
@@ -198,7 +202,7 @@ export const DungeonRewardModal: React.FC<DungeonRewardModalProps> = ({
                                 pairHealthPercent <= 50 ? 'text-yellow-400' : 
                                 'text-green-400'
                               }`}>
-                                {Math.floor(pairHealth)}/{pairMaxHealth}
+                                {Math.floor(totalHealth)}/{totalMaxHealth}
                               </span>
                             </div>
                             <Progress 
