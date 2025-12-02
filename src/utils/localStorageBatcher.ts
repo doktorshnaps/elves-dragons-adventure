@@ -54,8 +54,6 @@ class LocalStorageBatcher {
     this.isProcessing = true;
 
     try {
-      console.log(`📦 Processing ${this.pendingUpdates.size} localStorage updates`);
-      
       // Выполняем все операции за один проход
       this.pendingUpdates.forEach((value, key) => {
         try {
