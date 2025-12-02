@@ -4,8 +4,11 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Coins, Trophy, Sword, Package } from 'lucide-react';
+import { Coins, Trophy, Sword, Package, Heart } from 'lucide-react';
 import { DungeonReward } from '@/hooks/adventure/useDungeonRewards';
+import { TeamPair } from '@/types/teamBattle';
+import { Progress } from '@/components/ui/progress';
+
 interface DungeonRewardModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -13,6 +16,7 @@ interface DungeonRewardModalProps {
   reward: DungeonReward;
   canContinue?: boolean;
   currentLevel?: number;
+  teamPairs?: TeamPair[];
 }
 export const DungeonRewardModal: React.FC<DungeonRewardModalProps> = ({
   isOpen,
@@ -20,7 +24,8 @@ export const DungeonRewardModal: React.FC<DungeonRewardModalProps> = ({
   onContinue,
   reward,
   canContinue = false,
-  currentLevel = 1
+  currentLevel = 1,
+  teamPairs = []
 }) => {
   const [isSubmitting, setIsSubmitting] = React.useState(false);
 
@@ -150,6 +155,90 @@ export const DungeonRewardModal: React.FC<DungeonRewardModalProps> = ({
               </div>
             </div>;
           })()}
+
+          {/* Состояние команды */}
+          {teamPairs.length > 0 && (
+            <div className="space-y-2">
+              <h3 className="text-sm font-medium text-muted-foreground flex items-center gap-2">
+                <Heart className="w-4 h-4" />
+                Состояние команды:
+              </h3>
+              
+              <div className="space-y-2 max-h-[200px] overflow-y-auto pr-2">
+                {teamPairs.map((pair, index) => {
+                  const heroHealth = pair.hero?.currentHealth || 0;
+                  const heroMaxHealth = pair.hero?.health || 1;
+                  const heroHealthPercent = (heroHealth / heroMaxHealth) * 100;
+                  
+                  const dragonHealth = pair.dragon?.currentHealth || 0;
+                  const dragonMaxHealth = pair.dragon?.health || 1;
+                  const dragonHealthPercent = pair.dragon ? (dragonHealth / dragonMaxHealth) * 100 : 0;
+                  
+                  const isDead = heroHealth <= 0;
+                  
+                  return (
+                    <div 
+                      key={pair.id || index}
+                      className={`p-3 rounded border ${
+                        isDead 
+                          ? 'bg-red-950/20 border-red-500/30' 
+                          : 'bg-background/50 border-border/50'
+                      }`}
+                    >
+                      <div className="space-y-2">
+                        {/* Герой */}
+                        <div className="flex items-center gap-2">
+                          <div className="flex-1">
+                            <div className="flex items-center justify-between mb-1">
+                              <span className={`text-xs font-medium ${isDead ? 'text-red-400' : 'text-foreground'}`}>
+                                {pair.hero?.name || `Пара ${index + 1}`}
+                                {isDead && <span className="ml-2 text-red-500 font-bold">✝</span>}
+                              </span>
+                              <span className={`text-xs ${
+                                heroHealthPercent <= 20 ? 'text-red-400' : 
+                                heroHealthPercent <= 50 ? 'text-yellow-400' : 
+                                'text-green-400'
+                              }`}>
+                                {Math.floor(heroHealth)}/{heroMaxHealth}
+                              </span>
+                            </div>
+                            <Progress 
+                              value={heroHealthPercent} 
+                              className="h-1.5"
+                            />
+                          </div>
+                        </div>
+                        
+                        {/* Дракон */}
+                        {pair.dragon && (
+                          <div className="flex items-center gap-2">
+                            <div className="flex-1">
+                              <div className="flex items-center justify-between mb-1">
+                                <span className="text-xs font-medium text-foreground/80">
+                                  {pair.dragon.name}
+                                </span>
+                                <span className={`text-xs ${
+                                  dragonHealthPercent <= 20 ? 'text-red-400' : 
+                                  dragonHealthPercent <= 50 ? 'text-yellow-400' : 
+                                  'text-green-400'
+                                }`}>
+                                  {Math.floor(dragonHealth)}/{dragonMaxHealth}
+                                </span>
+                              </div>
+                              <Progress 
+                                value={dragonHealthPercent} 
+                                className="h-1.5"
+                              />
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
 
           {canContinue ? <div className="space-y-3">
               <div className="p-3 border border-blue-500/30 text-sm text-blue-200 bg-blue-900/30 rounded-sm">

@@ -804,6 +804,7 @@ const TeamBattlePageInner: React.FC<TeamBattlePageProps> = ({
           reward={accumulatedReward ?? pendingReward}
           canContinue={alivePairs.length > 0 && battleState.level < 100}
           currentLevel={battleState.level}
+          teamPairs={battleState.playerPairs}
         />
         
         <ClaimRewardsResultModal
