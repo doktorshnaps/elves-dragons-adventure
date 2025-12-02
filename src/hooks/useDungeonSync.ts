@@ -114,7 +114,7 @@ export const useDungeonSync = () => {
   }, [activeSessions, deviceId]);
 
   // Завершаем подземелье на текущем устройстве (и для аккаунта в целом)
-  const endDungeonSession = useCallback(async () => {
+  const endDungeonSession = useCallback(async (endAllDevices: boolean = true) => {
     // Пытаемся определить аккаунт даже если контекст ещё не инициализировался
     const targetAccountId = accountId || localStorage.getItem('walletAddress');
     if (!targetAccountId) {
@@ -132,12 +132,16 @@ export const useDungeonSync = () => {
 
     // Удаляем сессию через Edge Function (RLS блокирует прямые удаления)
     try {
-      const { error } = await supabase.functions.invoke('end-dungeon-session', {
-        body: { 
-          wallet_address: targetAccountId,
-          device_id: deviceId 
-        }
-      });
+      const body: { wallet_address: string; device_id?: string } = { 
+        wallet_address: targetAccountId
+      };
+      
+      // Если endAllDevices = false, удаляем только текущее устройство
+      if (!endAllDevices) {
+        body.device_id = deviceId;
+      }
+      
+      const { error } = await supabase.functions.invoke('end-dungeon-session', { body });
       if (error) {
         console.error('Error ending dungeon session:', error);
       }
@@ -149,7 +153,7 @@ export const useDungeonSync = () => {
     try {
       await updateGameData({ battleState: null });
     } catch {}
-  }, [accountId, updateGameData]);
+  }, [accountId, deviceId, updateGameData]);
 
   // 🔒 Начинаем новое подземелье через Edge Function для серверной генерации claim_key
   const startDungeonSession = useCallback(async (dungeonType: string, level: number) => {
@@ -305,9 +309,18 @@ export const useDungeonSync = () => {
     return () => clearInterval(interval);
   }, []);
 
+  // Проверяем есть ли ЛЮБАЯ активная сессия (включая текущее устройство)
+  const hasAnyActiveSession = useCallback(() => {
+    const now = Date.now();
+    const TIMEOUT = 300000; // 5 минут без активности = сессия неактивна
+    return activeSessions.some(session => (now - session.last_activity) < TIMEOUT);
+  }, [activeSessions]);
+
   return {
     hasOtherActiveSessions: hasOtherActiveSessions(),
+    hasAnyActiveSession: hasAnyActiveSession(),
     activeSessions: activeSessions.filter(s => s.device_id !== deviceId),
+    allActiveSessions: activeSessions, // Все сессии включая текущее устройство
     startDungeonSession,
     endDungeonSession,
     deviceId,

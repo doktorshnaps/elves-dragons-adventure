@@ -81,7 +81,7 @@ export const DungeonSearchDialog = ({
   const [activeDungeon, setActiveDungeon] = React.useState<string | null>(null);
   const { playerStats } = usePlayerState();
   const { updateGameData } = useGameData();
-  const { hasOtherActiveSessions, activeSessions, startDungeonSession, endDungeonSession } = useDungeonSync();
+  const { hasOtherActiveSessions, hasAnyActiveSession, allActiveSessions, activeSessions, startDungeonSession, endDungeonSession } = useDungeonSync();
   const [showActiveWarning, setShowActiveWarning] = useState(false);
   const [pendingDungeon, setPendingDungeon] = useState<DungeonType | null>(null);
 
@@ -227,11 +227,29 @@ export const DungeonSearchDialog = ({
             <p className="text-white">{t(language, 'dungeonSearch.balance')} {balance} ELL</p>
           </div>
 
-          {hasOtherActiveSessions && (
-            <div className="text-sm text-white/80 bg-yellow-500/10 border border-yellow-400/30 rounded-md p-3 mb-4">
-              <p className="mb-2">{t(language, 'dungeonSearch.otherDeviceWarning')}</p>
-              <Button variant="destructive" className="w-full text-xs sm:text-sm" onClick={async () => { await endDungeonSession(); }}>
-                {t(language, 'dungeonSearch.endOtherSession')}
+          {hasAnyActiveSession && allActiveSessions.length > 0 && (
+            <div className="bg-red-900/40 border-2 border-red-500/60 rounded-lg p-4 mb-4 space-y-3">
+              <div className="flex items-center gap-2 text-red-400 font-bold text-lg">
+                <span>⚠️</span>
+                <span>{t(language, 'dungeonSearch.unfinishedDungeonTitle')}</span>
+              </div>
+              <p className="text-white/90 text-sm">
+                {t(language, 'dungeonSearch.unfinishedDungeonMessage')}
+              </p>
+              <div className="bg-white/10 p-2 rounded border border-white/20 text-sm">
+                <div className="text-purple-300 font-semibold">
+                  {getDungeonName(allActiveSessions[0]?.dungeon_type as DungeonType, language)} - Ур. {allActiveSessions[0]?.level}
+                </div>
+              </div>
+              <Button 
+                variant="destructive" 
+                className="w-full font-bold" 
+                onClick={async () => { 
+                  await endDungeonSession(); 
+                  setActiveDungeon(null);
+                }}
+              >
+                {t(language, 'dungeonSearch.resetActiveDungeon')}
               </Button>
             </div>
           )}
