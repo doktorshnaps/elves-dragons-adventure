@@ -474,7 +474,9 @@ export const translations = {
       cancel: 'Отмена',
       endAndRestart: 'Завершить старое и начать новое',
       secondsAgo: 'сек. назад',
-      minutesAgo: 'мин. назад'
+      minutesAgo: 'мин. назад',
+      sessionReset: 'Сессия сброшена',
+      canStartNew: 'Теперь вы можете начать новое подземелье'
     },
     // Marketplace
     marketplace: {
@@ -1053,7 +1055,9 @@ export const translations = {
       cancel: 'Cancel',
       endAndRestart: 'End old and start new',
       secondsAgo: 'sec. ago',
-      minutesAgo: 'min. ago'
+      minutesAgo: 'min. ago',
+      sessionReset: 'Session Reset',
+      canStartNew: 'You can now start a new dungeon'
     },
     // Shop items
     shopItem: {
