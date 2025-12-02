@@ -74,11 +74,31 @@ const DEFAULT_GAME_DATA: GameData = {
   activeBuildingUpgrades: []
 };
 
+// Cleanup obsolete large localStorage keys (one-time)
+const cleanupObsoleteLocalStorage = () => {
+  const obsoleteKeys = [
+    'gameCards', 'marketplaceListings', 'socialQuests', 
+    'adventurePlayerStats', 'adventureCurrentMonster'
+  ];
+  obsoleteKeys.forEach(key => {
+    try {
+      localStorage.removeItem(key);
+    } catch (e) {
+      // Ignore cleanup errors
+    }
+  });
+};
+
 export const GameDataProvider = ({ children }: { children: ReactNode }) => {
   const { accountId } = useWalletContext();
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const lastUpdateRef = useRef<number>(Date.now());
+
+  // One-time cleanup of obsolete localStorage keys
+  useEffect(() => {
+    cleanupObsoleteLocalStorage();
+  }, []);
 
   const { 
     data: gameData = DEFAULT_GAME_DATA, 
@@ -218,18 +238,11 @@ export const GameDataProvider = ({ children }: { children: ReactNode }) => {
           activeBuildingUpgrades: (gameRecord.active_building_upgrades as any[]) || []
         };
         
-        // Sync to localStorage via batcher
-        localStorageBatcher.setItem('gameCards', newGameData.cards);
+        // OPTIMIZATION: Removed localStorage sync for large objects (cards, marketplaceListings, etc.)
+        // These are already cached in React Query - no need to duplicate in localStorage
+        // Only store minimal essential data
         localStorageBatcher.setItem('gameBalance', newGameData.balance.toString());
         localStorageBatcher.setItem('gameInitialized', newGameData.initialized.toString());
-        localStorageBatcher.setItem('marketplaceListings', newGameData.marketplaceListings);
-        localStorageBatcher.setItem('socialQuests', newGameData.socialQuests);
-        if (newGameData.adventurePlayerStats) {
-          localStorageBatcher.setItem('adventurePlayerStats', newGameData.adventurePlayerStats);
-        }
-        if (newGameData.adventureCurrentMonster) {
-          localStorageBatcher.setItem('adventureCurrentMonster', newGameData.adventureCurrentMonster);
-        }
         
         return newGameData;
       }
@@ -322,9 +335,8 @@ export const GameDataProvider = ({ children }: { children: ReactNode }) => {
         ...updates as any
       });
       
-      // Sync to localStorage
+      // Sync only essential small data to localStorage
       Object.entries(updates).forEach(([key, value]) => {
-        if (key === 'cards') localStorageBatcher.setItem('gameCards', value);
         if (key === 'balance') localStorageBatcher.setItem('gameBalance', value.toString());
         if (key === 'initialized') localStorageBatcher.setItem('gameInitialized', value.toString());
       });
