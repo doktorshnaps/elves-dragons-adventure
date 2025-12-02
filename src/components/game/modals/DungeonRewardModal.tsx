@@ -166,15 +166,30 @@ export const DungeonRewardModal: React.FC<DungeonRewardModalProps> = ({
               
               <div className="space-y-2 max-h-[200px] overflow-y-auto pr-2">
                 {teamPairs.map((pair, index) => {
+                  // КРИТИЧНО: pair.health - это СУММА текущего здоровья героя+дракона
+                  // pair.maxHealth - это СУММА максимального здоровья героя+дракона
+                  // Нужно показывать индивидуальное здоровье каждой карты
+                  
                   const heroHealth = pair.hero?.currentHealth || 0;
                   const heroMaxHealth = pair.hero?.health || 1;
-                  const heroHealthPercent = (heroHealth / heroMaxHealth) * 100;
+                  const heroHealthPercent = heroMaxHealth > 0 ? (heroHealth / heroMaxHealth) * 100 : 0;
                   
                   const dragonHealth = pair.dragon?.currentHealth || 0;
                   const dragonMaxHealth = pair.dragon?.health || 1;
-                  const dragonHealthPercent = pair.dragon ? (dragonHealth / dragonMaxHealth) * 100 : 0;
+                  const dragonHealthPercent = dragonMaxHealth > 0 && pair.dragon ? (dragonHealth / dragonMaxHealth) * 100 : 0;
                   
                   const isDead = heroHealth <= 0;
+                  
+                  console.log(`🩺 [Reward Modal] Pair ${index}:`, {
+                    heroName: pair.hero?.name,
+                    heroHealth,
+                    heroMaxHealth,
+                    dragonName: pair.dragon?.name,
+                    dragonHealth,
+                    dragonMaxHealth,
+                    pairHealth: pair.health,
+                    pairMaxHealth: pair.maxHealth
+                  });
                   
                   return (
                     <div 
