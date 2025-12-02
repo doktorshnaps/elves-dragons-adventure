@@ -166,6 +166,18 @@ export const DungeonRewardModal: React.FC<DungeonRewardModalProps> = ({
               
               <div className="space-y-2 max-h-[200px] overflow-y-auto pr-2">
                 {teamPairs.map((pair, index) => {
+                  // КРИТИЧНО: Детальные логи для диагностики
+                  console.log(`🔍 [Reward Modal] Pair ${index} RAW DATA:`, {
+                    'pair.health': pair.health,
+                    'pair.maxHealth': pair.maxHealth,
+                    'pair.hero.currentHealth': pair.hero?.currentHealth,
+                    'pair.hero.health': pair.hero?.health,
+                    'pair.dragon?.currentHealth': pair.dragon?.currentHealth,
+                    'pair.dragon?.health': pair.dragon?.health,
+                    'pair.currentDefense': pair.currentDefense,
+                    'pair.maxDefense': pair.maxDefense
+                  });
+                  
                   // Показываем индивидуальное здоровье героя и дракона
                   const heroHealth = pair.hero?.currentHealth || 0;
                   const heroMaxHealth = pair.hero?.health || 1;
