@@ -131,7 +131,7 @@ export const useTeamSelection = () => {
     return filtered;
   }, [selectedTeamWithHealth, gameData.selectedTeam]);
 
-  // Cleanup: remove non-existing cards from selected team in DB
+  // Cleanup: remove non-existing cards AND dead cards (health = 0) from selected team in DB
   useEffect(() => {
     const baseTeam = (gameData.selectedTeam || []) as TeamPair[];
     if (!baseTeam || baseTeam.length === 0) return;
@@ -141,6 +141,9 @@ export const useTeamSelection = () => {
       ...cardInstances.map(ci => ci.id), // UUID from card_instances table
       ...cardInstances.map(ci => ci.card_template_id) // template_id for backwards compatibility
     ]);
+    
+    // Build map for checking health status
+    const instanceHealthMap = new Map(cardInstances.map(ci => [ci.id, ci.current_health]));
 
     let changed = false;
     const cleaned: TeamPair[] = baseTeam
@@ -154,11 +157,33 @@ export const useTeamSelection = () => {
           updatedPair = { ...updatedPair, dragon: undefined };
         }
         
+        // КРИТИЧНО: Удаляем мёртвого дракона (здоровье = 0)
+        if (pair?.dragon) {
+          const dragonInstanceId = (pair.dragon as any).instanceId || pair.dragon.id;
+          const dragonHealth = instanceHealthMap.get(dragonInstanceId);
+          if (dragonHealth !== undefined && dragonHealth <= 0) {
+            console.log(`💀 Removing dead dragon from team: ${pair.dragon.name} (health: ${dragonHealth})`);
+            changed = true;
+            updatedPair = { ...updatedPair, dragon: undefined };
+          }
+        }
+        
         // КРИТИЧНО: Удаляем героя, если его больше нет в validIds (включая NFT)
         if (pair?.hero && !validIds.has(pair.hero.id)) {
           console.log(`🧹 Removing non-existing hero from team: ${pair.hero.name} (isNFT: ${pair.hero.isNFT})`);
           changed = true;
           updatedPair = { ...updatedPair, hero: undefined };
+        }
+        
+        // КРИТИЧНО: Удаляем мёртвого героя (здоровье = 0)
+        if (pair?.hero) {
+          const heroInstanceId = (pair.hero as any).instanceId || pair.hero.id;
+          const heroHealth = instanceHealthMap.get(heroInstanceId);
+          if (heroHealth !== undefined && heroHealth <= 0) {
+            console.log(`💀 Removing dead hero from team: ${pair.hero.name} (health: ${heroHealth})`);
+            changed = true;
+            updatedPair = { ...updatedPair, hero: undefined };
+          }
         }
         
         return updatedPair;
@@ -174,7 +199,7 @@ export const useTeamSelection = () => {
       });
 
     if (changed) {
-      console.warn('🧹 Cleaning selectedTeam: removing non-existing cards', {
+      console.warn('🧹 Cleaning selectedTeam: removing non-existing/dead cards', {
         before: baseTeam.length,
         after: cleaned.length
       });
