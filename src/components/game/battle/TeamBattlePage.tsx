@@ -27,6 +27,7 @@ import { useItemTemplates } from '@/hooks/useItemTemplates';
 import { useQueryClient } from '@tanstack/react-query';
 import { useCardInstances } from '@/hooks/useCardInstances';
 import { LoadingSpinner } from '@/components/common/LoadingSpinner';
+import { ActiveDungeonWarning } from '@/components/dungeon/ActiveDungeonWarning';
 
 interface TeamBattlePageProps {
   dungeonType: DungeonType;
@@ -52,6 +53,12 @@ const TeamBattlePageInner: React.FC<TeamBattlePageProps> = ({
     isOpen: false,
     rewards: null
   });
+  
+  // Состояние для предупреждения об активной сессии
+  const [activeSessionWarning, setActiveSessionWarning] = useState<{
+    isOpen: boolean;
+    sessions: Array<{ device_id: string; dungeon_type: string; level: number; last_activity: number }>;
+  }>({ isOpen: false, sessions: [] });
   
   // КРИТИЧНО: Восстанавливаем список убитых монстров из localStorage при инициализации
   const [monstersKilled, setMonstersKilled] = useState<Array<{level: number, dungeonType: string, name?: string}>>(() => {
@@ -130,7 +137,9 @@ const TeamBattlePageInner: React.FC<TeamBattlePageProps> = ({
     lastRoll
   } = useTeamBattle(dungeonType, 1, battleStarted);
   const { cardInstances } = useCardInstances();
-  const handleStartBattle = async () => {
+  
+  // Функция для фактического начала боя (после проверок)
+  const proceedWithBattleStart = async () => {
     // Снимаем энергию ТОЛЬКО если это первый уровень (вход в подземелье)
     if (battleState.level === 1) {
       const { getInitialEnergyState } = await import('@/utils/energyManager');
@@ -170,6 +179,55 @@ const TeamBattlePageInner: React.FC<TeamBattlePageProps> = ({
     startTransition(() => {
       useGameStore.getState().setActiveBattleInProgress(true);
       setBattleStarted(true);
+    });
+  };
+  
+  const handleStartBattle = async () => {
+    // Только на первом уровне проверяем активные сессии в БД
+    if (battleState.level === 1 && accountId) {
+      console.log('🔍 Проверка активных сессий в БД перед началом боя...');
+      
+      try {
+        const TIMEOUT = 300000; // 5 минут
+        const now = Date.now();
+        
+        const { data: sessions, error } = await supabase
+          .from('active_dungeon_sessions')
+          .select('device_id, dungeon_type, level, last_activity')
+          .eq('account_id', accountId)
+          .gte('last_activity', now - TIMEOUT);
+        
+        if (error) {
+          console.error('❌ Ошибка проверки активных сессий:', error);
+        } else if (sessions && sessions.length > 0) {
+          console.log('⚠️ Найдены активные сессии:', sessions);
+          // Показываем предупреждение
+          setActiveSessionWarning({ isOpen: true, sessions });
+          return;
+        }
+        
+        console.log('✅ Активных сессий не найдено, продолжаем...');
+      } catch (err) {
+        console.error('❌ Ошибка при проверке сессий:', err);
+      }
+    }
+    
+    await proceedWithBattleStart();
+  };
+  
+  // Обработчик сброса активной сессии
+  const handleResetActiveSession = async () => {
+    setActiveSessionWarning({ isOpen: false, sessions: [] });
+    
+    console.log('🛑 Сброс активной сессии...');
+    await endDungeonSession(true); // true = сбросить все устройства
+    
+    // Инвалидируем кеш сессий
+    queryClient.invalidateQueries({ queryKey: ['activeDungeonSessions', accountId] });
+    
+    toast({
+      title: t(language, 'activeDungeonWarning.sessionReset'),
+      description: t(language, 'activeDungeonWarning.canStartNew'),
     });
   };
   const handleExitAndReset = async () => {
@@ -889,6 +947,15 @@ const TeamBattlePageInner: React.FC<TeamBattlePageProps> = ({
         </div>
         
         <AttackOrderSelector playerPairs={battleState.playerPairs} attackOrder={attackOrder} onOrderChange={updateAttackOrder} onStartBattle={handleStartBattle} />
+        
+        {/* Диалог предупреждения об активной сессии */}
+        <ActiveDungeonWarning
+          open={activeSessionWarning.isOpen}
+          onContinue={() => setActiveSessionWarning({ isOpen: false, sessions: [] })}
+          onEndAndRestart={handleResetActiveSession}
+          onCancel={() => setActiveSessionWarning({ isOpen: false, sessions: [] })}
+          activeSessions={activeSessionWarning.sessions}
+        />
       </>;
   }
   return <>
