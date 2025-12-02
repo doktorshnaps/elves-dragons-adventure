@@ -362,6 +362,113 @@ export const useMedicalBay = () => {
     }
   }, [loadMedicalBayEntries]);
 
+  // Воскрешение мёртвой карточки (100 ELL, 1 час, 50% здоровья)
+  const resurrectCard = useCallback(async (cardInstanceId: string) => {
+    if (!accountId) return null;
+
+    try {
+      setLoading(true);
+      console.log('🏥 [RESURRECTION] Starting resurrection for card:', cardInstanceId);
+
+      const { data, error } = await supabase.rpc('resurrect_card_in_medical_bay', {
+        p_card_instance_id: cardInstanceId,
+        p_wallet_address: accountId
+      });
+
+      if (error) throw error;
+
+      const result = data as { success: boolean; error?: string; new_balance?: number };
+      
+      if (!result.success) {
+        toast({
+          title: "Ошибка воскрешения",
+          description: result.error || "Не удалось начать воскрешение",
+          variant: "destructive"
+        });
+        return null;
+      }
+
+      toast({
+        title: "Воскрешение начато",
+        description: "Карточка будет воскрешена через 1 час (стоимость: 100 ELL)",
+      });
+
+      // Обновляем баланс в gameData
+      if (result.new_balance !== undefined) {
+        await updateGameData({ balance: result.new_balance });
+      }
+
+      // Обновляем данные
+      await loadMedicalBayEntries();
+      await queryClient.invalidateQueries({ queryKey: ['cardInstances', accountId] });
+      await queryClient.invalidateQueries({ queryKey: ['gameData', accountId] });
+
+      return result;
+    } catch (error: any) {
+      console.error('🏥 [RESURRECTION] Error:', error);
+      toast({
+        title: "Ошибка",
+        description: error.message || "Не удалось начать воскрешение",
+        variant: "destructive"
+      });
+      return null;
+    } finally {
+      setLoading(false);
+    }
+  }, [accountId, toast, loadMedicalBayEntries, queryClient, updateGameData]);
+
+  // Завершение воскрешения (забрать карточку с 50% здоровья)
+  const completeResurrection = useCallback(async (cardInstanceId: string) => {
+    if (!accountId) return null;
+
+    try {
+      setLoading(true);
+      console.log('🏥 [RESURRECTION] Completing resurrection for card:', cardInstanceId);
+
+      const { data, error } = await supabase.rpc('complete_resurrection', {
+        p_card_instance_id: cardInstanceId,
+        p_wallet_address: accountId
+      });
+
+      if (error) throw error;
+
+      const result = data as { success: boolean; error?: string; new_health?: number; max_health?: number };
+      
+      if (!result.success) {
+        toast({
+          title: "Ошибка",
+          description: result.error || "Не удалось завершить воскрешение",
+          variant: "destructive"
+        });
+        return null;
+      }
+
+      toast({
+        title: "Карточка воскрешена!",
+        description: `Здоровье восстановлено до ${result.new_health}/${result.max_health} (50%)`,
+      });
+
+      // Обновляем данные
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ['cardInstances', accountId] }),
+        queryClient.refetchQueries({ queryKey: ['cardInstances', accountId] })
+      ]);
+      await loadMedicalBayEntries();
+
+      return result;
+    } catch (error: any) {
+      console.error('🏥 [RESURRECTION] Error completing:', error);
+      toast({
+        title: "Ошибка",
+        description: error.message || "Не удалось завершить воскрешение",
+        variant: "destructive"
+      });
+      return null;
+    } finally {
+      setLoading(false);
+    }
+  }, [accountId, toast, loadMedicalBayEntries, queryClient]);
+
   return {
     medicalBayEntries,
     loading,
@@ -369,6 +476,8 @@ export const useMedicalBay = () => {
     placeCardInMedicalBay,
     removeCardFromMedicalBay,
     stopHealingWithoutRecovery,
-    processMedicalBayHealing
+    processMedicalBayHealing,
+    resurrectCard,
+    completeResurrection
   };
 };

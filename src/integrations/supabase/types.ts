@@ -2663,6 +2663,10 @@ export type Database = {
         Args: { p_current_nft_tokens: Json; p_wallet_address: string }
         Returns: number
       }
+      complete_resurrection: {
+        Args: { p_card_instance_id: string; p_wallet_address: string }
+        Returns: Json
+      }
       complete_user_quest: {
         Args: { p_quest_id: string; p_wallet_address: string }
         Returns: boolean
@@ -3173,6 +3177,10 @@ export type Database = {
           p_record_id: string
           p_table_name: string
         }
+        Returns: Json
+      }
+      resurrect_card_in_medical_bay: {
+        Args: { p_card_instance_id: string; p_wallet_address: string }
         Returns: Json
       }
       revoke_whitelist_if_no_nft: {
