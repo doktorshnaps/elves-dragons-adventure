@@ -180,11 +180,6 @@ export const useShelterState = () => {
 
   // КРИТИЧНО: Мемоизируем buildingLevels с правильными зависимостями для реактивности
   const buildingLevels = useMemo(() => {
-    console.log('🏗️ [useShelterState] Building levels update:', {
-      fromGameData: gameData.buildingLevels,
-      fromGameState: gameState.buildingLevels
-    });
-    
     const levels = gameData.buildingLevels || gameState.buildingLevels;
     
     // Если уровни есть, возвращаем их с заполнением пропущенных зданий
@@ -292,11 +287,8 @@ export const useShelterState = () => {
   };
 
   const nestUpgrades: NestUpgrade[] = useMemo(() => {
-    console.log('🔨 [useShelterState] Recalculating nestUpgrades with buildingLevels:', buildingLevels);
-    
     const createUpgrade = (buildingId: string, nameKey: string, descKey: string, benefitKey: string): NestUpgrade => {
       const currentLevel = buildingLevels[buildingId as keyof typeof buildingLevels] || 0;
-      console.log(`  - ${buildingId}: level ${currentLevel}`);
       
       const nextLevelConfig = getBuildingConfig(buildingId, currentLevel + 1);
       const currentLevelConfig = getBuildingConfig(buildingId, currentLevel);
