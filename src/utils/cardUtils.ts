@@ -351,9 +351,7 @@ export const calculateCardStats = (cardName: string, rarity: Rarity, cardType: C
   
   // Проверяем кэш
   if (statsCache.has(cacheKey)) {
-    const cached = statsCache.get(cacheKey)!;
-    console.log(`♻️ Using cached stats for "${cardName}" (${cardType}):`, cached);
-    return cached;
+    return statsCache.get(cacheKey)!;
   }
   
   // Используем легаси-расчет (мультипликаторы)
@@ -372,7 +370,7 @@ export const calculateCardStats = (cardName: string, rarity: Rarity, cardType: C
     magic: Math.floor(baseStats.magic * rarityMultiplier * classMultiplier.magic_multiplier)
   };
   
-  console.log(`✅ Calculated stats for "${cardName}":`, result);
+  
   
   // Сохраняем в кэш
   statsCache.set(cacheKey, result);
