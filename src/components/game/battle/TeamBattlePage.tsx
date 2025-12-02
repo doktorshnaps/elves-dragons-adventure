@@ -298,14 +298,14 @@ const TeamBattlePageInner: React.FC<TeamBattlePageProps> = ({
           console.log('💚 [HERO] Добавляем в updates:', {
             name: pair.hero.name,
             instance_id: heroInstanceId,
-            current_health: Math.floor(pair.health), // ИСПРАВЛЕНО: используем pair.health для героя
-            current_defense: pair.currentDefense
+            current_health: Math.floor(pair.hero.currentHealth || 0),
+            current_defense: pair.hero.currentDefense || 0
           });
           
           updates.push({
-            card_instance_id: heroInstanceId, // ТОЛЬКО UUID из БД!
-            current_health: Math.floor(pair.health), // Здоровье пары (включает героя)
-            current_defense: pair.currentDefense || 0 // Броня пары
+            card_instance_id: heroInstanceId,
+            current_health: Math.floor(pair.hero.currentHealth || 0),
+            current_defense: pair.hero.currentDefense || 0
           });
         }
       }
