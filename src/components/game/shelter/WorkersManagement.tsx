@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -42,10 +42,14 @@ export const WorkersManagement = ({ onSpeedBoostChange }: WorkersManagementProps
   const [activeWorkers, setActiveWorkers] = useState<ActiveWorker[]>([]);
   const [selectedBuilding, setSelectedBuilding] = useState<string>("main_hall");
   const [assigningId, setAssigningId] = useState<string | null>(null);
+  
+  // Стабильная ссылка на accountId для useCallback
+  const accountIdRef = useRef(accountId);
+  accountIdRef.current = accountId;
 
-  const updateActiveWorkersInDB = async (workers: ActiveWorker[]) => {
-    // Получаем wallet из контекста кошелька
-    const walletAddress = accountId;
+  // КРИТИЧНО: Мемоизируем функцию чтобы избежать пересоздания интервала
+  const updateActiveWorkersInDB = useCallback(async (workers: ActiveWorker[]) => {
+    const walletAddress = accountIdRef.current;
     
     if (!walletAddress) {
       console.warn('⚠️ No wallet connected: skip DB update for active workers');
@@ -72,9 +76,10 @@ export const WorkersManagement = ({ onSpeedBoostChange }: WorkersManagementProps
     } catch (error) {
       console.error('❌ Error updating active workers in DB:', error);
     }
-  };
+  }, []);
   
-  const buildings = [
+  // КРИТИЧНО: Мемоизируем buildings чтобы избежать пересоздания
+  const buildings = useMemo(() => [
     { id: "main_hall", name: t(language, 'shelter.mainHall') },
     { id: "workshop", name: t(language, 'shelter.workshop') },
     { id: "storage", name: t(language, 'shelter.storage') },
@@ -84,7 +89,7 @@ export const WorkersManagement = ({ onSpeedBoostChange }: WorkersManagementProps
     { id: "dragon_lair", name: t(language, 'shelter.dragonLairBuilding') },
     { id: "medical", name: t(language, 'shelter.medicalBuilding') },
     { id: "forge", name: t(language, 'shelter.forgeBuilding') }
-  ];
+  ], [language]);
 
   // Получаем статистику по зданию
   const getBuildingStats = (buildingId: string) => {
@@ -201,6 +206,12 @@ export const WorkersManagement = ({ onSpeedBoostChange }: WorkersManagementProps
     onSpeedBoostChange?.(totalBoost);
   }, [activeWorkers, onSpeedBoostChange]);
 
+  // Стабильные ссылки для использования в интервале
+  const toastRef = useRef(toast);
+  const buildingsRef = useRef(buildings);
+  toastRef.current = toast;
+  buildingsRef.current = buildings;
+
   // Проверяем завершенных рабочих и обновляем статусы каждую секунду
   useEffect(() => {
     console.log('⏱️ Worker check interval started');
@@ -254,9 +265,9 @@ export const WorkersManagement = ({ onSpeedBoostChange }: WorkersManagementProps
           
           // Показываем toast для завершенных рабочих
           finishedWorkers.forEach(worker => {
-            toast({
+            toastRef.current({
               title: "Работа завершена",
-              description: `${worker.name} завершил работу в здании "${buildings.find(b => b.id === worker.building)?.name}" и исчез`,
+              description: `${worker.name} завершил работу в здании "${buildingsRef.current.find(b => b.id === worker.building)?.name}" и исчез`,
             });
           });
         }
@@ -315,7 +326,7 @@ export const WorkersManagement = ({ onSpeedBoostChange }: WorkersManagementProps
       console.log('⏱️ Worker check interval stopped');
       clearInterval(interval);
     };
-  }, [toast, buildings, updateActiveWorkersInDB]);
+  }, [updateActiveWorkersInDB]); // Убрали toast и buildings из зависимостей
 
   const assignWorker = async (worker: any) => {
     const workerId = (worker as any).instanceId || worker.id;
