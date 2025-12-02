@@ -166,30 +166,13 @@ export const DungeonRewardModal: React.FC<DungeonRewardModalProps> = ({
               
               <div className="space-y-2 max-h-[200px] overflow-y-auto pr-2">
                 {teamPairs.map((pair, index) => {
-                  // КРИТИЧНО: pair.health - это СУММА текущего здоровья героя+дракона
-                  // pair.maxHealth - это СУММА максимального здоровья героя+дракона
-                  // Нужно показывать индивидуальное здоровье каждой карты
+                  // КРИТИЧНО: В боевой системе pair.health - это СУММАРНОЕ здоровье пары (герой + дракон)
+                  // Показываем общее здоровье пары, а не пытаемся разделить на отдельные карты
+                  const pairHealth = pair.health || 0;
+                  const pairMaxHealth = pair.maxHealth || 1;
+                  const pairHealthPercent = pairMaxHealth > 0 ? (pairHealth / pairMaxHealth) * 100 : 0;
                   
-                  const heroHealth = pair.hero?.currentHealth || 0;
-                  const heroMaxHealth = pair.hero?.health || 1;
-                  const heroHealthPercent = heroMaxHealth > 0 ? (heroHealth / heroMaxHealth) * 100 : 0;
-                  
-                  const dragonHealth = pair.dragon?.currentHealth || 0;
-                  const dragonMaxHealth = pair.dragon?.health || 1;
-                  const dragonHealthPercent = dragonMaxHealth > 0 && pair.dragon ? (dragonHealth / dragonMaxHealth) * 100 : 0;
-                  
-                  const isDead = heroHealth <= 0;
-                  
-                  console.log(`🩺 [Reward Modal] Pair ${index}:`, {
-                    heroName: pair.hero?.name,
-                    heroHealth,
-                    heroMaxHealth,
-                    dragonName: pair.dragon?.name,
-                    dragonHealth,
-                    dragonMaxHealth,
-                    pairHealth: pair.health,
-                    pairMaxHealth: pair.maxHealth
-                  });
+                  const isDead = pairHealth <= 0;
                   
                   return (
                     <div 
@@ -201,52 +184,29 @@ export const DungeonRewardModal: React.FC<DungeonRewardModalProps> = ({
                       }`}
                     >
                       <div className="space-y-2">
-                        {/* Герой */}
+                        {/* Общее здоровье пары */}
                         <div className="flex items-center gap-2">
                           <div className="flex-1">
                             <div className="flex items-center justify-between mb-1">
                               <span className={`text-xs font-medium ${isDead ? 'text-red-400' : 'text-foreground'}`}>
                                 {pair.hero?.name || `Пара ${index + 1}`}
+                                {pair.dragon && <span className="text-foreground/60 ml-1">+ {pair.dragon.name}</span>}
                                 {isDead && <span className="ml-2 text-red-500 font-bold">✝</span>}
                               </span>
-                              <span className={`text-xs ${
-                                heroHealthPercent <= 20 ? 'text-red-400' : 
-                                heroHealthPercent <= 50 ? 'text-yellow-400' : 
+                              <span className={`text-xs font-bold ${
+                                pairHealthPercent <= 20 ? 'text-red-400' : 
+                                pairHealthPercent <= 50 ? 'text-yellow-400' : 
                                 'text-green-400'
                               }`}>
-                                {Math.floor(heroHealth)}/{heroMaxHealth}
+                                {Math.floor(pairHealth)}/{pairMaxHealth}
                               </span>
                             </div>
                             <Progress 
-                              value={heroHealthPercent} 
-                              className="h-1.5"
+                              value={pairHealthPercent} 
+                              className="h-2"
                             />
                           </div>
                         </div>
-                        
-                        {/* Дракон */}
-                        {pair.dragon && (
-                          <div className="flex items-center gap-2">
-                            <div className="flex-1">
-                              <div className="flex items-center justify-between mb-1">
-                                <span className="text-xs font-medium text-foreground/80">
-                                  {pair.dragon.name}
-                                </span>
-                                <span className={`text-xs ${
-                                  dragonHealthPercent <= 20 ? 'text-red-400' : 
-                                  dragonHealthPercent <= 50 ? 'text-yellow-400' : 
-                                  'text-green-400'
-                                }`}>
-                                  {Math.floor(dragonHealth)}/{dragonMaxHealth}
-                                </span>
-                              </div>
-                              <Progress 
-                                value={dragonHealthPercent} 
-                                className="h-1.5"
-                              />
-                            </div>
-                          </div>
-                        )}
                       </div>
                     </div>
                   );
