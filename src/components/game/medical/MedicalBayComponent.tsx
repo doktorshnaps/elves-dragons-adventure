@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
-import { Clock, Heart, Plus, Activity, ArrowRight, X } from 'lucide-react';
+import { Clock, Heart, Plus, Activity, ArrowRight, X, Skull, Sparkles } from 'lucide-react';
 import { useMedicalBay } from '@/hooks/useMedicalBay';
 import { useCardInstancesContext } from '@/providers/CardInstancesProvider';
 import { useCardHealthSync } from '@/hooks/useCardHealthSync';
@@ -13,6 +13,8 @@ import { useCardsWithHealth } from '@/hooks/useCardsWithHealth';
 import { useUnifiedGameState } from '@/hooks/useUnifiedGameState';
 import { CardDisplay } from '../CardDisplay';
 
+const RESURRECTION_COST = 100; // Стоимость воскрешения в ELL
+
 export const MedicalBayComponent = () => {
   const {
     medicalBayEntries,
@@ -21,7 +23,9 @@ export const MedicalBayComponent = () => {
     placeCardInMedicalBay,
     removeCardFromMedicalBay,
     stopHealingWithoutRecovery,
-    processMedicalBayHealing
+    processMedicalBayHealing,
+    resurrectCard,
+    completeResurrection
   } = useMedicalBay();
 
   // КРИТИЧНО: Получаем данные ТОЛЬКО из провайдера
@@ -36,6 +40,7 @@ export const MedicalBayComponent = () => {
   const { cardsWithHealth, selectedTeamWithHealth } = useCardsWithHealth();
   const gameState = useUnifiedGameState();
   const [selectedCard, setSelectedCard] = useState<any>(null);
+  const [selectedDeadCard, setSelectedDeadCard] = useState<any>(null);
   const HEAL_RATE = 100;
   const isStartingRef = useRef(false);
 
@@ -53,6 +58,12 @@ export const MedicalBayComponent = () => {
     }
     return Array.from(map.values());
   }, [medicalBayEntries]);
+
+  // Разделяем записи на лечение и воскрешение
+  const healingEntries = useMemo(() => 
+    uniqueMedicalEntries.filter(e => e.heal_rate > 0), [uniqueMedicalEntries]);
+  const resurrectionEntries = useMemo(() => 
+    uniqueMedicalEntries.filter(e => e.heal_rate === 0), [uniqueMedicalEntries]);
 
   useEffect(() => {
     loadMedicalBayEntries();
@@ -78,24 +89,18 @@ export const MedicalBayComponent = () => {
     return () => clearInterval(interval);
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
+  // Получаем раненые карты (здоровье > 0, но < max)
   const getInjuredCards = () => {
     console.log('🏥 Getting injured cards...');
     
-    // Получаем ID карт, которые сейчас в медпункте
     const cardsInMedicalBay = Array.from(new Set(medicalBayEntries.map(entry => entry.card_instance_id)));
-    console.log('🏥 Cards in medical bay:', cardsInMedicalBay);
     
-    // Создаем мапу для дедупликации по instanceId
     const uniqueCardsMap = new Map();
     
-    // КРИТИЧНО: Получаем карты НАПРЯМУЮ из cardInstances (источник правды!)
-    // Не используем cardsWithHealth или selectedTeamWithHealth - они могут содержать старые данные
     cardInstances.forEach(instance => {
-      // Только герои и драконы
       if (instance.card_type === 'hero' || instance.card_type === 'dragon') {
         const instanceId = instance.id;
         if (!uniqueCardsMap.has(instanceId)) {
-          // Строим card объект из instance.card_data
           const cardData = instance.card_data as any;
           const card = {
             id: instance.id,
@@ -118,50 +123,113 @@ export const MedicalBayComponent = () => {
       }
     });
     
-    // Фильтруем поврежденные карты
+    // Фильтруем: здоровье > 0 И здоровье < max (раненые, но не мёртвые)
     const injuredCards = Array.from(uniqueCardsMap.values())
       .filter(({ card, instance }) => {
-        // НЕ используем normalizeCardHealth - используем данные напрямую из instance
         const currentHealth = instance?.current_health ?? 0;
         const maxHealth = instance?.max_health ?? 0;
         const isInMedicalBay = instance?.is_in_medical_bay || (card as any).isInMedicalBay;
         const instanceId = instance?.id;
         
-        // Дополнительно: лечим ТОЛЬКО реальные экземпляры (исключаем виртуальные карты без instanceId)
         const hasRealInstance = Boolean(instanceId);
-        const isInjured = currentHealth < maxHealth;
+        const isInjured = currentHealth > 0 && currentHealth < maxHealth; // > 0 означает НЕ мёртвая
         const notInMedicalBay = !isInMedicalBay && instanceId && !cardsInMedicalBay.includes(instanceId);
         
         return hasRealInstance && isInjured && notInMedicalBay;
       })
-      .map(({ card, instance }) => {
-        // НЕ используем normalizeCardHealth - оно пересчитывает характеристики!
-        // Используем card_data только для метаданных (имя, изображение, фракция)
-        return {
-          id: instance!.id,
-          card_template_id: card.id,
-          current_health: instance.current_health,
-          max_health: instance.max_health,
-          current_defense: instance.current_defense,
-          max_defense: instance.max_defense,
-          max_power: instance.max_power,
-          max_magic: instance.max_magic,
-          card_data: card, // Используем card_data только для метаданных
-          wallet_address: instance.wallet_address
-        };
-      });
+      .map(({ card, instance }) => ({
+        id: instance!.id,
+        card_template_id: card.id,
+        current_health: instance.current_health,
+        max_health: instance.max_health,
+        current_defense: instance.current_defense,
+        max_defense: instance.max_defense,
+        max_power: instance.max_power,
+        max_magic: instance.max_magic,
+        card_data: card,
+        wallet_address: instance.wallet_address
+      }));
     
     console.log('🏥 Found injured cards:', injuredCards.length);
     return injuredCards;
   };
 
+  // Получаем мёртвые карты (здоровье = 0)
+  const getDeadCards = () => {
+    console.log('🏥 Getting dead cards...');
+    
+    const cardsInMedicalBay = Array.from(new Set(medicalBayEntries.map(entry => entry.card_instance_id)));
+    
+    const uniqueCardsMap = new Map();
+    
+    cardInstances.forEach(instance => {
+      if (instance.card_type === 'hero' || instance.card_type === 'dragon') {
+        const instanceId = instance.id;
+        if (!uniqueCardsMap.has(instanceId)) {
+          const cardData = instance.card_data as any;
+          const card = {
+            id: instance.id,
+            instanceId: instance.id,
+            name: cardData.name,
+            type: cardData.type,
+            faction: cardData.faction,
+            rarity: cardData.rarity,
+            image: cardData.image,
+            power: instance.max_power,
+            defense: instance.max_defense,
+            health: instance.max_health,
+            magic: instance.max_magic,
+            currentHealth: instance.current_health,
+            currentDefense: instance.current_defense,
+            maxDefense: instance.max_defense
+          };
+          uniqueCardsMap.set(instanceId, { card, instance });
+        }
+      }
+    });
+    
+    // Фильтруем: здоровье = 0 (мёртвые)
+    const deadCards = Array.from(uniqueCardsMap.values())
+      .filter(({ card, instance }) => {
+        const currentHealth = instance?.current_health ?? 0;
+        const isInMedicalBay = instance?.is_in_medical_bay || (card as any).isInMedicalBay;
+        const instanceId = instance?.id;
+        
+        const hasRealInstance = Boolean(instanceId);
+        const isDead = currentHealth === 0;
+        const notInMedicalBay = !isInMedicalBay && instanceId && !cardsInMedicalBay.includes(instanceId);
+        
+        return hasRealInstance && isDead && notInMedicalBay;
+      })
+      .map(({ card, instance }) => ({
+        id: instance!.id,
+        card_template_id: card.id,
+        current_health: instance.current_health,
+        max_health: instance.max_health,
+        current_defense: instance.current_defense,
+        max_defense: instance.max_defense,
+        max_power: instance.max_power,
+        max_magic: instance.max_magic,
+        card_data: card,
+        wallet_address: instance.wallet_address
+      }));
+    
+    console.log('🏥 Found dead cards:', deadCards.length);
+    return deadCards;
+  };
+
   const getAvailableSlots = () => {
-    // Максимум 3 слота в медпункте
     return 3 - medicalBayEntries.length;
   };
 
   const handleCardSelect = (card: any) => {
     setSelectedCard(selectedCard?.id === card.id ? null : card);
+    setSelectedDeadCard(null); // Сбрасываем выбор мёртвой карты
+  };
+
+  const handleDeadCardSelect = (card: any) => {
+    setSelectedDeadCard(selectedDeadCard?.id === card.id ? null : card);
+    setSelectedCard(null); // Сбрасываем выбор раненой карты
   };
 
   const handleStartHealing = async () => {
@@ -174,14 +242,12 @@ export const MedicalBayComponent = () => {
       return;
     }
 
-    // Локальная синхронная защита от дабл-клика
     if (isStartingRef.current) {
       console.log('🏥 [WARN] Duplicate press detected (local ref), ignoring');
       return;
     }
     isStartingRef.current = true;
 
-    // Доп. защита — глобальная загрузка
     if (loading) {
       console.log('🏥 [WARN] Already processing, ignoring duplicate call');
       isStartingRef.current = false;
@@ -190,29 +256,48 @@ export const MedicalBayComponent = () => {
     
     console.log('🏥 Starting healing for card:', selectedCard);
     
-    // Если это виртуальная карта (нет реального экземпляра), создаем экземпляр
     let cardInstanceId = selectedCard.id as string;
     if (String(selectedCard.id).startsWith('virtual-')) {
       console.log('🏥 Creating instance for virtual card:', selectedCard.card_template_id);
-      // Используем card_template_id для создания экземпляра
       cardInstanceId = selectedCard.card_template_id;
     }
     
     console.log('🏥 Calling placeCardInMedicalBay with ID:', cardInstanceId);
 
-    // Сохраняем выбранную карту для восстановления при ошибке
     const cardToHeal = selectedCard;
     
-    // Очищаем выбор сразу, чтобы предотвратить повторные клики
     setSelectedCard(null);
 
     try {
       await placeCardInMedicalBay(cardInstanceId);
-      // Данные обновятся автоматически через Real-time подписки
     } catch (error) {
       console.error('🏥 Error starting healing:', error);
-      // Восстанавливаем выбор при ошибке
       setSelectedCard(cardToHeal);
+    } finally {
+      isStartingRef.current = false;
+    }
+  };
+
+  // Начать воскрешение мёртвой карты
+  const handleStartResurrection = async () => {
+    if (!selectedDeadCard) return;
+    
+    if (isStartingRef.current) return;
+    isStartingRef.current = true;
+
+    if (loading) {
+      isStartingRef.current = false;
+      return;
+    }
+
+    const cardToResurrect = selectedDeadCard;
+    setSelectedDeadCard(null);
+
+    try {
+      await resurrectCard(cardToResurrect.id);
+    } catch (error) {
+      console.error('🏥 Error starting resurrection:', error);
+      setSelectedDeadCard(cardToResurrect);
     } finally {
       isStartingRef.current = false;
     }
@@ -245,7 +330,10 @@ export const MedicalBayComponent = () => {
   };
 
   const injuredCards = getInjuredCards();
+  const deadCards = getDeadCards();
   const canStartHealing = getAvailableSlots() > 0;
+  const playerBalance = gameState?.balance ?? 0;
+  const canAffordResurrection = playerBalance >= RESURRECTION_COST;
 
   return (
     <div className="space-y-6">
@@ -269,15 +357,18 @@ export const MedicalBayComponent = () => {
           <div className="space-y-4">
             <div className="text-sm text-muted-foreground">
               <p>• Скорость лечения: {HEAL_RATE} HP/мин</p>
-              <p>• Активных лечений: {uniqueMedicalEntries.length}/3</p>
+              <p>• Активных лечений: {healingEntries.length}/3</p>
               <p>• Раненых карт: {injuredCards.length}</p>
+              <p className="text-purple-400">• Мёртвых карт: {deadCards.length}</p>
+              <p className="text-purple-400">• Воскрешений в процессе: {resurrectionEntries.length}</p>
+              <p className="text-purple-400">• Стоимость воскрешения: {RESURRECTION_COST} ELL</p>
             </div>
           </div>
         </CardContent>
       </Card>
 
       {/* Active Healing Processes */}
-      {uniqueMedicalEntries.length > 0 && (
+      {healingEntries.length > 0 && (
         <Card className="bg-card/50 backdrop-blur-sm border-green-500/20">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
@@ -287,7 +378,7 @@ export const MedicalBayComponent = () => {
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
-              {uniqueMedicalEntries.map((entry) => {
+              {healingEntries.map((entry) => {
                 const cardData = entry.card_instances?.card_data;
                 const progress = getHealingProgress(entry.placed_at, entry.estimated_completion);
                 const timeRemaining = getEstimatedTimeRemaining(entry.estimated_completion);
@@ -296,19 +387,16 @@ export const MedicalBayComponent = () => {
                 return (
                   <div key={entry.id} className="p-4 border border-green-500/20 rounded-lg">
                     <div className="flex items-start gap-4 mb-4">
-                      {/* Card Preview - КРИТИЧНО: используем данные из card_instances */}
                       {cardData && (
                         <div className="flex-shrink-0">
                           <div className="text-xs text-muted-foreground mb-1">Лечится:</div>
                           <CardDisplay 
                             card={{
                               ...cardData,
-                              // КРИТИЧНО: Используем health напрямую из card_instances, НЕ из card_data JSON
                               health: entry.card_instances?.max_health ?? cardData.health,
                               currentHealth: entry.card_instances?.current_health ?? cardData.currentHealth,
                               currentDefense: entry.card_instances?.current_defense ?? cardData.currentDefense,
                               maxDefense: entry.card_instances?.max_defense ?? cardData.maxDefense,
-                              // Также переопределяем базовые характеристики из card_instances
                               power: entry.card_instances?.max_power ?? cardData.power,
                               defense: entry.card_instances?.max_defense ?? cardData.defense,
                               magic: entry.card_instances?.max_magic ?? cardData.magic
@@ -319,7 +407,6 @@ export const MedicalBayComponent = () => {
                         </div>
                       )}
                       
-                      {/* Healing Progress Info */}
                       <div className="flex-1">
                         <div className="flex items-center justify-between mb-2">
                           <div className="flex items-center gap-2">
@@ -332,12 +419,8 @@ export const MedicalBayComponent = () => {
                              {!isReady && (
                                <Button
                                  onClick={async () => {
-                                   console.log('🏥 Stopping healing without recovery:', entry.card_instance_id);
                                    try {
                                      await stopHealingWithoutRecovery(entry.card_instance_id);
-                                     console.log('🏥 Healing stopped successfully, syncing data...');
-                                      // Данные обновятся автоматически через Real-time подписки
-                                      console.log('🏥 Healing stopped, waiting for Real-time sync');
                                    } catch (error) {
                                      console.error('🏥 Error stopping healing:', error);
                                    }
@@ -354,12 +437,8 @@ export const MedicalBayComponent = () => {
                              {isReady ? (
                                <Button 
                                  onClick={async () => {
-                                   console.log('🏥 Removing card from medical bay:', entry.card_instance_id);
-                                    try {
-                                      await removeCardFromMedicalBay(entry.card_instance_id);
-                                      console.log('🏥 Card removed successfully, syncing health data...');
-                                       // Данные обновятся автоматически через Real-time подписки
-                                       console.log('🏥 Card removed, waiting for Real-time sync');
+                                   try {
+                                     await removeCardFromMedicalBay(entry.card_instance_id);
                                    } catch (error) {
                                      console.error('🏥 Error removing card:', error);
                                    }
@@ -407,6 +486,114 @@ export const MedicalBayComponent = () => {
         </Card>
       )}
 
+      {/* Active Resurrection Processes */}
+      {resurrectionEntries.length > 0 && (
+        <Card className="bg-card/50 backdrop-blur-sm border-purple-500/20">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Sparkles className="w-5 h-5 text-purple-500" />
+              Воскрешение в процессе
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              {resurrectionEntries.map((entry) => {
+                const cardData = entry.card_instances?.card_data;
+                const progress = getHealingProgress(entry.placed_at, entry.estimated_completion);
+                const timeRemaining = getEstimatedTimeRemaining(entry.estimated_completion);
+                const isReady = timeRemaining === "Готово";
+                const targetHealth = Math.floor((entry.card_instances?.max_health || 100) / 2);
+
+                return (
+                  <div key={entry.id} className="p-4 border border-purple-500/20 rounded-lg">
+                    <div className="flex items-start gap-4 mb-4">
+                      {cardData && (
+                        <div className="flex-shrink-0 relative">
+                          <div className="text-xs text-purple-400 mb-1">Воскрешается:</div>
+                          <div className="relative">
+                            <CardDisplay 
+                              card={{
+                                ...cardData,
+                                health: entry.card_instances?.max_health ?? cardData.health,
+                                currentHealth: 0,
+                                currentDefense: entry.card_instances?.current_defense ?? 0,
+                                maxDefense: entry.card_instances?.max_defense ?? cardData.maxDefense,
+                                power: entry.card_instances?.max_power ?? cardData.power,
+                                defense: entry.card_instances?.max_defense ?? cardData.defense,
+                                magic: entry.card_instances?.max_magic ?? cardData.magic
+                              }}
+                              showSellButton={false}
+                              className="w-16 h-24 text-xs opacity-60"
+                            />
+                            <div className="absolute inset-0 flex items-center justify-center">
+                              <Skull className="w-6 h-6 text-purple-500 animate-pulse" />
+                            </div>
+                          </div>
+                        </div>
+                      )}
+                      
+                      <div className="flex-1">
+                        <div className="flex items-center justify-between mb-2">
+                          <div className="flex items-center gap-2">
+                            <Sparkles className="w-4 h-4 text-purple-500" />
+                            <span className="font-medium">
+                              {cardData?.name || 'Неизвестная карта'}
+                            </span>
+                          </div>
+                          <div className="flex items-center gap-2">
+                             {isReady ? (
+                               <Button 
+                                 onClick={async () => {
+                                   try {
+                                     await completeResurrection(entry.card_instance_id);
+                                   } catch (error) {
+                                     console.error('🏥 Error completing resurrection:', error);
+                                   }
+                                 }}
+                                 size="sm"
+                                 disabled={loading}
+                                 className="bg-purple-600 hover:bg-purple-700"
+                               >
+                                 <Sparkles className="w-3 h-3 mr-1" />
+                                 Забрать
+                               </Button>
+                             ) : (
+                               <div className="flex items-center gap-1 text-sm text-purple-400">
+                                 <Clock className="w-4 h-4" />
+                                 {timeRemaining}
+                               </div>
+                            )}
+                          </div>
+                        </div>
+                        
+                        <div className="space-y-2">
+                          <div className="flex items-center justify-between text-sm">
+                            <span className="text-muted-foreground">Статус:</span>
+                            <Badge variant={isReady ? "default" : "secondary"} className="bg-purple-500/20 text-purple-400">
+                              <Clock className="w-3 h-3 mr-1" />
+                              {timeRemaining}
+                            </Badge>
+                          </div>
+                          
+                          <div className="flex items-center justify-between text-sm">
+                            <span className="text-muted-foreground">Здоровье после:</span>
+                            <span className="font-medium text-purple-400">
+                              {targetHealth} / {entry.card_instances?.max_health || 0} (50%)
+                            </span>
+                          </div>
+                          
+                          {!isReady && <Progress value={progress} className="h-2 [&>div]:bg-purple-500" />}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       {/* Card Selection for Healing */}
       <Card className="bg-card/50 backdrop-blur-sm border-red-500/20">
         <CardHeader>
@@ -427,7 +614,7 @@ export const MedicalBayComponent = () => {
           </div>
           <CardDescription>
             {canStartHealing 
-              ? "Выберите карту для лечения"
+              ? "Выберите раненую карту для лечения (мёртвые карты нельзя лечить)"
               : "Нет свободных слотов в медпункте"
             }
           </CardDescription>
@@ -436,12 +623,11 @@ export const MedicalBayComponent = () => {
           {injuredCards.length === 0 ? (
             <div className="text-center text-muted-foreground py-8">
               <Heart className="h-12 w-12 mx-auto mb-4 opacity-50" />
-              <p>Все карты здоровы!</p>
+              <p>Нет раненых карт для лечения</p>
             </div>
           ) : (
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-4">
               {injuredCards.map((card) => {
-                const healthPercentage = (card.current_health / card.max_health) * 100;
                 const cardData = card.card_data;
                 const isSelected = selectedCard?.id === card.id;
 
@@ -466,7 +652,6 @@ export const MedicalBayComponent = () => {
                       <CardDisplay 
                         card={{
                           ...cardData,
-                          // КРИТИЧНО: Используем ВСЕ характеристики из card_instances (из card объекта, НЕ из JSON)
                           health: card.max_health,
                           currentHealth: card.current_health,
                           currentDefense: card.current_defense,
@@ -479,7 +664,6 @@ export const MedicalBayComponent = () => {
                         className="w-full"
                       />
                       
-                      {/* Selection Indicator */}
                       {isSelected && (
                         <div className="absolute top-2 left-2">
                           <div className="w-6 h-6 bg-red-500 rounded-full flex items-center justify-center">
@@ -496,7 +680,102 @@ export const MedicalBayComponent = () => {
         </CardContent>
       </Card>
 
-      {/* Selected Card Preview */}
+      {/* Dead Cards Selection for Resurrection */}
+      <Card className="bg-card/50 backdrop-blur-sm border-purple-500/20">
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <CardTitle className="flex items-center gap-2">
+              <Skull className="w-5 h-5 text-purple-500" />
+              Воскрешение мёртвых карт
+            </CardTitle>
+            {selectedDeadCard && (
+              <Button 
+                onClick={handleStartResurrection}
+                disabled={loading || !canStartHealing || !canAffordResurrection}
+                className="bg-purple-600 hover:bg-purple-700"
+              >
+                <Sparkles className="w-4 h-4 mr-2" />
+                Воскресить ({RESURRECTION_COST} ELL)
+              </Button>
+            )}
+          </div>
+          <CardDescription>
+            {!canAffordResurrection 
+              ? `Недостаточно ELL (нужно ${RESURRECTION_COST}, у вас ${playerBalance})`
+              : canStartHealing 
+                ? "Выберите мёртвую карту для воскрешения (50% здоровья, 1 час)"
+                : "Нет свободных слотов в медпункте"
+            }
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          {deadCards.length === 0 ? (
+            <div className="text-center text-muted-foreground py-8">
+              <Sparkles className="h-12 w-12 mx-auto mb-4 opacity-50 text-purple-400" />
+              <p>Нет мёртвых карт</p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-4">
+              {deadCards.map((card) => {
+                const cardData = card.card_data;
+                const isSelected = selectedDeadCard?.id === card.id;
+                const canSelect = canStartHealing && canAffordResurrection && !loading;
+
+                return (
+                  <div 
+                    key={card.id} 
+                    className={`relative cursor-pointer transition-all duration-200 ${
+                      isSelected 
+                        ? 'ring-2 ring-purple-500 scale-105' 
+                        : canSelect 
+                          ? 'hover:scale-105' 
+                          : 'opacity-50 cursor-not-allowed'
+                    }`}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      if (canSelect) {
+                        handleDeadCardSelect(card);
+                      }
+                    }}
+                  >
+                    <div className="relative">
+                      <CardDisplay 
+                        card={{
+                          ...cardData,
+                          health: card.max_health,
+                          currentHealth: 0,
+                          currentDefense: card.current_defense,
+                          maxDefense: card.max_defense,
+                          power: card.max_power,
+                          defense: card.max_defense,
+                          magic: card.max_magic
+                        }}
+                        showSellButton={false}
+                        className="w-full opacity-60"
+                      />
+                      
+                      {/* Dead overlay */}
+                      <div className="absolute inset-0 flex items-center justify-center bg-black/30 rounded">
+                        <span className="text-purple-400 font-bold text-sm">Мёртв</span>
+                      </div>
+                      
+                      {isSelected && (
+                        <div className="absolute top-2 left-2">
+                          <div className="w-6 h-6 bg-purple-500 rounded-full flex items-center justify-center">
+                            <Sparkles className="w-3 h-3 text-white" />
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Selected Card Preview - Healing */}
       {selectedCard && (
         <Card className="bg-card/50 backdrop-blur-sm border-red-500/20">
           <CardHeader>
@@ -507,7 +786,6 @@ export const MedicalBayComponent = () => {
           </CardHeader>
           <CardContent>
             <div className="flex items-start gap-4">
-              {/* Current State */}
               <div className="flex-shrink-0">
                 <div className="text-xs text-muted-foreground mb-2">Текущее состояние:</div>
                 <CardDisplay 
@@ -522,12 +800,10 @@ export const MedicalBayComponent = () => {
                 </div>
               </div>
               
-              {/* Arrow */}
               <div className="flex-shrink-0 flex items-center mt-8">
                 <ArrowRight className="w-5 h-5 text-muted-foreground" />
               </div>
               
-              {/* After Healing */}
               <div className="flex-shrink-0">
                 <div className="text-xs text-muted-foreground mb-2">После лечения:</div>
                 <CardDisplay 
@@ -542,7 +818,6 @@ export const MedicalBayComponent = () => {
                 </div>
               </div>
               
-              {/* Healing Info */}
               <div className="flex-1 ml-4">
                 <h4 className="font-medium mb-2">{selectedCard.card_data?.name}</h4>
                 <div className="space-y-2 text-sm">
@@ -557,6 +832,82 @@ export const MedicalBayComponent = () => {
                   <div className="flex justify-between">
                     <span>Скорость:</span>
                     <span>{HEAL_RATE} HP/мин</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Selected Dead Card Preview - Resurrection */}
+      {selectedDeadCard && (
+        <Card className="bg-card/50 backdrop-blur-sm border-purple-500/20">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Sparkles className="w-5 h-5 text-purple-500" />
+              Предпросмотр воскрешения
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="flex items-start gap-4">
+              <div className="flex-shrink-0">
+                <div className="text-xs text-purple-400 mb-2">Текущее состояние:</div>
+                <div className="relative">
+                  <CardDisplay 
+                    card={selectedDeadCard.card_data}
+                    showSellButton={false}
+                    className="w-24 h-32 text-xs opacity-60"
+                  />
+                  <div className="absolute inset-0 flex items-center justify-center">
+                    <Skull className="w-8 h-8 text-purple-500" />
+                  </div>
+                </div>
+                <div className="mt-2 text-xs text-center">
+                  <div className="bg-purple-500/20 rounded px-2 py-1 text-purple-400">
+                    HP: 0/{selectedDeadCard.max_health}
+                  </div>
+                </div>
+              </div>
+              
+              <div className="flex-shrink-0 flex items-center mt-8">
+                <ArrowRight className="w-5 h-5 text-purple-400" />
+              </div>
+              
+              <div className="flex-shrink-0">
+                <div className="text-xs text-purple-400 mb-2">После воскрешения:</div>
+                <CardDisplay 
+                  card={selectedDeadCard.card_data}
+                  showSellButton={false}
+                  className="w-24 h-32 text-xs"
+                />
+                <div className="mt-2 text-xs text-center">
+                  <div className="bg-purple-500/20 rounded px-2 py-1 text-purple-400">
+                    HP: {Math.floor(selectedDeadCard.max_health / 2)}/{selectedDeadCard.max_health} (50%)
+                  </div>
+                </div>
+              </div>
+              
+              <div className="flex-1 ml-4">
+                <h4 className="font-medium mb-2 text-purple-300">{selectedDeadCard.card_data?.name}</h4>
+                <div className="space-y-2 text-sm">
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Здоровье после:</span>
+                    <span className="text-purple-400">{Math.floor(selectedDeadCard.max_health / 2)} HP (50%)</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Время воскрешения:</span>
+                    <span className="text-purple-400">1 час</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Стоимость:</span>
+                    <span className="text-yellow-400">{RESURRECTION_COST} ELL</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Ваш баланс:</span>
+                    <span className={canAffordResurrection ? "text-green-400" : "text-red-400"}>
+                      {playerBalance} ELL
+                    </span>
                   </div>
                 </div>
               </div>
