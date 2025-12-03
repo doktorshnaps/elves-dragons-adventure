@@ -128,7 +128,7 @@ export const ReferralTab = () => {
   const { handleError, handleSuccess } = useErrorHandler();
   const { accountId } = useWalletContext();
 
-  const referralLink = `https://elleonorairpg.lovable.app/auth?ref=${accountId}`;
+  const referralLink = `https://elleonorai.xyz/auth?ref=${accountId}`;
 
   useEffect(() => {
     if (accountId) {
