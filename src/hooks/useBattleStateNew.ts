@@ -76,38 +76,15 @@ export const useBattleStateNew = (level: number) => {
     if (newEnemyHealth <= 0) {
       updatedOpponents = updatedOpponents.filter(o => o.id !== enemyId);
       
-      // Награда за убийство и опыт аккаунта
-      const goldReward = 50;
-      const expReward = (accountLevel * 5) + 45 + (enemy.isBoss ? 150 : 0);
+      // ⚠️ ОПТИМИЗАЦИЯ: НЕ начисляем награды/опыт здесь!
+      // Всё будет начислено через claim-battle-rewards при выходе из подземелья
+      // Фиксированные значения опыта: 50 (обычный), 100 (мини-босс), 200 (босс)
+      console.log('💀 [BATTLE] Monster killed, rewards will be synced on dungeon exit via claim-battle-rewards');
       
-      await updateGameData({ 
-        balance: gameData.balance + goldReward
+      toast({
+        title: "Враг побежден!",
+        description: `Награды будут начислены при выходе из подземелья`
       });
-      
-      // Проверяем, может ли игрок получить опыт в этом подземелье
-      const canGainExp = battleState.selectedDungeon 
-        ? canGainExperienceInDungeon(battleState.selectedDungeon as DungeonType, accountLevel)
-        : true;
-      
-      if (canGainExp && accountLevel < 100) {
-        await addAccountExp(expReward);
-        
-        toast({
-          title: "Враг побежден!",
-          description: `Получено ${goldReward} золота и ${expReward} опыта аккаунта`
-        });
-      } else if (accountLevel >= 100) {
-        toast({
-          title: "Враг побежден!",
-          description: `Получено ${goldReward} золота. Достигнут максимальный уровень!`
-        });
-      } else {
-        toast({
-          title: "Враг побежден!",
-          description: `Получено ${goldReward} золота. Для получения опыта нужно другое подземелье!`,
-          variant: "default"
-        });
-      }
     }
 
     // Атака противников
