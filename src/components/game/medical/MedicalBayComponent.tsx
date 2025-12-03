@@ -634,9 +634,10 @@ export const MedicalBayComponent = () => {
               {injuredCards.map((card) => {
                 const cardData = card.card_data;
                 const isSelected = selectedCard?.id === card.id;
-                // Проверяем, находится ли карта в кузнице
+                // Проверяем, находится ли карта в кузнице или медпункте
                 const isInForgeBay = forgeBayEntries.some(entry => entry.card_instance_id === card.id);
-                const isBusy = isInForgeBay;
+                const isInMedicalBay = uniqueMedicalEntries.some(entry => entry.card_instance_id === card.id);
+                const isBusy = isInForgeBay || isInMedicalBay;
 
                 return (
                   <div 
@@ -674,7 +675,15 @@ export const MedicalBayComponent = () => {
                       />
                       
                       {/* Busy Indicator - показываем метку занятости */}
-                      {isBusy && (
+                      {isInMedicalBay && (
+                        <div className="absolute inset-0 bg-black/50 rounded-lg flex items-center justify-center">
+                          <div className="bg-red-600 text-white text-xs font-bold px-2 py-1 rounded flex items-center gap-1">
+                            <Heart className="w-3 h-3" />
+                            Лечится
+                          </div>
+                        </div>
+                      )}
+                      {isInForgeBay && !isInMedicalBay && (
                         <div className="absolute inset-0 bg-black/50 rounded-lg flex items-center justify-center">
                           <div className="bg-orange-600 text-white text-xs font-bold px-2 py-1 rounded">
                             Ремонтируется
