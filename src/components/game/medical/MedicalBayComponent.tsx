@@ -5,6 +5,7 @@ import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
 import { Clock, Heart, Plus, Activity, ArrowRight, X, Skull, Sparkles } from 'lucide-react';
 import { useMedicalBay } from '@/hooks/useMedicalBay';
+import { useForgeBay } from '@/hooks/useForgeBay';
 import { useCardInstancesContext } from '@/providers/CardInstancesProvider';
 import { useCardHealthSync } from '@/hooks/useCardHealthSync';
 
@@ -27,6 +28,9 @@ export const MedicalBayComponent = () => {
     resurrectCard,
     completeResurrection
   } = useMedicalBay();
+
+  // Получаем записи кузницы для проверки занятых карт
+  const { forgeBayEntries } = useForgeBay();
 
   // КРИТИЧНО: Получаем данные ТОЛЬКО из провайдера
   const { cardInstances, loadCardInstances } = useCardInstancesContext();
@@ -630,20 +634,25 @@ export const MedicalBayComponent = () => {
               {injuredCards.map((card) => {
                 const cardData = card.card_data;
                 const isSelected = selectedCard?.id === card.id;
+                // Проверяем, находится ли карта в кузнице
+                const isInForgeBay = forgeBayEntries.some(entry => entry.card_instance_id === card.id);
+                const isBusy = isInForgeBay;
 
                 return (
                   <div 
                     key={card.id} 
-                    className={`relative cursor-pointer transition-all duration-200 ${
-                      isSelected 
-                        ? 'ring-2 ring-red-500 scale-105' 
-                        : canStartHealing 
-                          ? 'hover:scale-105' 
-                          : 'opacity-50 cursor-not-allowed'
+                    className={`relative transition-all duration-200 ${
+                      isBusy
+                        ? 'opacity-60 cursor-not-allowed'
+                        : isSelected 
+                          ? 'ring-2 ring-red-500 scale-105 cursor-pointer' 
+                          : canStartHealing 
+                            ? 'hover:scale-105 cursor-pointer' 
+                            : 'opacity-50 cursor-not-allowed'
                     }`}
                     onClick={(e) => {
                       e.stopPropagation();
-                      if (canStartHealing && !loading) {
+                      if (!isBusy && canStartHealing && !loading) {
                         handleCardSelect(card);
                       }
                     }}
@@ -664,7 +673,16 @@ export const MedicalBayComponent = () => {
                         className="w-full"
                       />
                       
-                      {isSelected && (
+                      {/* Busy Indicator - показываем метку занятости */}
+                      {isBusy && (
+                        <div className="absolute inset-0 bg-black/50 rounded-lg flex items-center justify-center">
+                          <div className="bg-orange-600 text-white text-xs font-bold px-2 py-1 rounded">
+                            Ремонтируется
+                          </div>
+                        </div>
+                      )}
+                      
+                      {!isBusy && isSelected && (
                         <div className="absolute top-2 left-2">
                           <div className="w-6 h-6 bg-red-500 rounded-full flex items-center justify-center">
                             <Plus className="w-3 h-3 text-white" />
@@ -719,17 +737,22 @@ export const MedicalBayComponent = () => {
               {deadCards.map((card) => {
                 const cardData = card.card_data;
                 const isSelected = selectedDeadCard?.id === card.id;
-                const canSelect = canStartHealing && canAffordResurrection && !loading;
+                // Проверяем, находится ли карта в кузнице
+                const isInForgeBay = forgeBayEntries.some(entry => entry.card_instance_id === card.id);
+                const isBusy = isInForgeBay;
+                const canSelect = !isBusy && canStartHealing && canAffordResurrection && !loading;
 
                 return (
                   <div 
                     key={card.id} 
-                    className={`relative cursor-pointer transition-all duration-200 ${
-                      isSelected 
-                        ? 'ring-2 ring-purple-500 scale-105' 
-                        : canSelect 
-                          ? 'hover:scale-105' 
-                          : 'opacity-50 cursor-not-allowed'
+                    className={`relative transition-all duration-200 ${
+                      isBusy
+                        ? 'opacity-60 cursor-not-allowed'
+                        : isSelected 
+                          ? 'ring-2 ring-purple-500 scale-105 cursor-pointer' 
+                          : canSelect 
+                            ? 'hover:scale-105 cursor-pointer' 
+                            : 'opacity-50 cursor-not-allowed'
                     }`}
                     onClick={(e) => {
                       e.stopPropagation();
@@ -754,12 +777,21 @@ export const MedicalBayComponent = () => {
                         className="w-full opacity-60"
                       />
                       
-                      {/* Dead overlay */}
-                      <div className="absolute inset-0 flex items-center justify-center bg-black/30 rounded">
-                        <span className="text-purple-400 font-bold text-sm">Мёртв</span>
-                      </div>
+                      {/* Busy Indicator - показываем метку занятости */}
+                      {isBusy ? (
+                        <div className="absolute inset-0 bg-black/50 rounded-lg flex items-center justify-center">
+                          <div className="bg-orange-600 text-white text-xs font-bold px-2 py-1 rounded">
+                            Ремонтируется
+                          </div>
+                        </div>
+                      ) : (
+                        /* Dead overlay */
+                        <div className="absolute inset-0 flex items-center justify-center bg-black/30 rounded">
+                          <span className="text-purple-400 font-bold text-sm">Мёртв</span>
+                        </div>
+                      )}
                       
-                      {isSelected && (
+                      {!isBusy && isSelected && (
                         <div className="absolute top-2 left-2">
                           <div className="w-6 h-6 bg-purple-500 rounded-full flex items-center justify-center">
                             <Sparkles className="w-3 h-3 text-white" />
