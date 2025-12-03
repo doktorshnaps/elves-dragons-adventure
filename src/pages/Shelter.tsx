@@ -218,6 +218,11 @@ export const Shelter = () => {
               inventoryCounts={inventoryCounts}
               activeWorkers={activeWorkers}
               onRefresh={reloadRecipes}
+              gameState={{
+                wood: resources.wood,
+                stone: resources.stone,
+                balance: balance
+              }}
             />
           </TabsContent>
 
