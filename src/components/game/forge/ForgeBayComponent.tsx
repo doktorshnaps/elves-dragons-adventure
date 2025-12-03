@@ -5,6 +5,7 @@ import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
 import { Clock, Shield, Plus, Activity, ArrowRight, X } from 'lucide-react';
 import { useForgeBay } from '@/hooks/useForgeBay';
+import { useMedicalBay } from '@/hooks/useMedicalBay';
 import { useCardInstancesContext } from '@/providers/CardInstancesProvider';
 import { useCardHealthSync } from '@/hooks/useCardHealthSync';
 
@@ -27,6 +28,9 @@ export const ForgeBayComponent = ({ forgeLevel }: ForgeBayComponentProps) => {
     stopRepairWithoutRecovery,
     processForgeBayRepair
   } = useForgeBay();
+
+  // Получаем записи медпункта для проверки занятых карт
+  const { medicalBayEntries } = useMedicalBay();
 
   // КРИТИЧНО: Получаем данные ТОЛЬКО из провайдера
   const { cardInstances, loadCardInstances } = useCardInstancesContext();
@@ -353,20 +357,25 @@ export const ForgeBayComponent = ({ forgeLevel }: ForgeBayComponentProps) => {
                 const defensePercentage = (card.current_defense / card.max_defense) * 100;
                 const cardData = card.card_data;
                 const isSelected = selectedCard?.id === card.id;
+                // Проверяем, находится ли карта в медпункте
+                const isInMedicalBay = medicalBayEntries.some(entry => entry.card_instance_id === card.id);
+                const isBusy = isInMedicalBay;
 
                 return (
                   <div
                     key={card.id}
-                    className={`relative cursor-pointer transition-all duration-200 ${
-                      isSelected
-                        ? 'ring-2 ring-orange-500 scale-105'
-                        : canStartRepair
-                          ? 'hover:scale-105'
-                          : 'opacity-50 cursor-not-allowed'
+                    className={`relative transition-all duration-200 ${
+                      isBusy
+                        ? 'opacity-60 cursor-not-allowed'
+                        : isSelected
+                          ? 'ring-2 ring-orange-500 scale-105 cursor-pointer'
+                          : canStartRepair
+                            ? 'hover:scale-105 cursor-pointer'
+                            : 'opacity-50 cursor-not-allowed'
                     }`}
                     onClick={(e) => {
                       e.stopPropagation();
-                      if (canStartRepair && !loading) {
+                      if (!isBusy && canStartRepair && !loading) {
                         handleCardSelect(card);
                       }
                     }}
@@ -388,8 +397,17 @@ export const ForgeBayComponent = ({ forgeLevel }: ForgeBayComponentProps) => {
                         className="w-full"
                       />
                       
+                      {/* Busy Indicator - показываем метку занятости */}
+                      {isBusy && (
+                        <div className="absolute inset-0 bg-black/50 rounded-lg flex items-center justify-center">
+                          <div className="bg-red-600 text-white text-xs font-bold px-2 py-1 rounded">
+                            Лечится
+                          </div>
+                        </div>
+                      )}
+                      
                       {/* Selection Indicator */}
-                      {isSelected && (
+                      {!isBusy && isSelected && (
                         <div className="absolute top-2 left-2">
                           <div className="w-6 h-6 bg-orange-500 rounded-full flex items-center justify-center">
                             <Plus className="w-3 h-3 text-white" />
