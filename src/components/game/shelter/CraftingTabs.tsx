@@ -14,6 +14,11 @@ interface CraftingTabsProps {
   inventoryCounts: Record<string, number>;
   activeWorkers: any[];
   onRefresh?: () => void;
+  gameState?: {
+    wood: number;
+    stone: number;
+    balance: number;
+  };
 }
 
 export const CraftingTabs = ({
@@ -23,7 +28,8 @@ export const CraftingTabs = ({
   workshopLevel,
   inventoryCounts,
   activeWorkers,
-  onRefresh
+  onRefresh,
+  gameState
 }: CraftingTabsProps) => {
   const [craftingSubTab, setCraftingSubTab] = useState<"recipes" | "active">("recipes");
 
@@ -60,6 +66,7 @@ export const CraftingTabs = ({
             handleCraft={handleCraft}
             workshopLevel={workshopLevel}
             inventoryCounts={inventoryCounts}
+            gameState={gameState}
           />
         </TabsContent>
 
