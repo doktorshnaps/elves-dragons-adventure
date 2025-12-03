@@ -364,16 +364,9 @@ export const useTeamBattle = (dungeonType: DungeonType, initialLevel: number = 1
     // Награды/опыт если цель убита
     if (newTargetHealth <= 0) {
       // ⚠️ ОПТИМИЗАЦИЯ PHASE 2A: НЕ отправляем запросы в БД во время боя!
-      // Счетчики убийств будут обновлены один раз через claim-battle-rewards при выходе из подземелья
-      console.log('💀 [BATTLE] Monster killed, kills will be synced on dungeon exit via claim-battle-rewards');
-      
-      // Проверяем, может ли игрок получить опыт в этом подземелье
-      const canGainExp = canGainExperienceInDungeon(dungeonType, accountLevel);
-      
-      if (canGainExp && accountLevel < 100) {
-        const expReward = (accountLevel * 5) + 45 + (target.isBoss ? 150 : 0);
-        await addAccountExp(expReward);
-      }
+      // Опыт и награды будут начислены один раз через claim-battle-rewards при выходе из подземелья
+      // Фиксированные значения опыта: 50 (обычный), 100 (мини-босс), 200 (босс)
+      console.log('💀 [BATTLE] Monster killed, rewards will be synced on dungeon exit via claim-battle-rewards');
     }
 
     console.log(`✅ [PLAYER] ХОД ЗАВЕРШЕН (${Date.now() - turnStartTime}ms, ${new Date().toISOString()})`);
