@@ -82,13 +82,10 @@ export const ShelterCrafting = ({
       return;
     }
 
+    // RPC функция сама берёт materials из crafting_recipes
     const batchRecipe = {
       recipe_id: recipe.id,
-      quantity: quantity,
-      materials: (recipe.requirements.materials || []).map(mat => ({
-        template_id: parseInt(mat.item_id),
-        quantity: mat.quantity * quantity
-      }))
+      quantity: quantity
     };
 
     const result = await craftMultiple([batchRecipe]);
@@ -107,11 +104,7 @@ export const ShelterCrafting = ({
       })
       .map(recipe => ({
         recipe_id: recipe.id,
-        quantity: craftQuantities[recipe.id] || 1,
-        materials: (recipe.requirements.materials || []).map(mat => ({
-          template_id: parseInt(mat.item_id),
-          quantity: mat.quantity * (craftQuantities[recipe.id] || 1)
-        }))
+        quantity: craftQuantities[recipe.id] || 1
       }));
 
     if (availableRecipes.length > 0) {
