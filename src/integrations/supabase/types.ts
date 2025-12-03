@@ -2663,6 +2663,10 @@ export type Database = {
         Args: { p_current_nft_tokens: Json; p_wallet_address: string }
         Returns: number
       }
+      complete_crafting_task: {
+        Args: { p_craft_id: string; p_wallet_address: string }
+        Returns: Json
+      }
       complete_resurrection: {
         Args: { p_card_instance_id: string; p_wallet_address: string }
         Returns: Json
