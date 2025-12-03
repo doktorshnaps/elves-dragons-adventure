@@ -6,16 +6,13 @@ import { useQueryClient } from '@tanstack/react-query';
 interface CraftingRecipe {
   recipe_id: string;
   quantity: number;
-  materials: Array<{
-    template_id: number;
-    quantity: number;
-  }>;
 }
 
 interface BatchCraftResult {
   success: boolean;
   total_crafted: number;
   recipes_processed: number;
+  message?: string;
 }
 
 /**
@@ -76,9 +73,13 @@ export const useBatchCrafting = (walletAddress: string | null) => {
 
       console.log('✅ [useBatchCrafting] Batch craft successful:', data);
 
-      // Инвалидируем кеш инвентаря для обновления UI
-      await queryClient.invalidateQueries({ queryKey: ['itemInstances', walletAddress] });
-      await queryClient.invalidateQueries({ queryKey: ['gameData', walletAddress] });
+      // Инвалидируем кеш для обновления UI (active_workers и инвентарь)
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ['itemInstances', walletAddress] }),
+        queryClient.invalidateQueries({ queryKey: ['gameData', walletAddress] }),
+        queryClient.invalidateQueries({ queryKey: ['gameDataByWallet'] }),
+        queryClient.invalidateQueries({ queryKey: ['unifiedGameData'] })
+      ]);
 
       const result = data as unknown as BatchCraftResult;
 
