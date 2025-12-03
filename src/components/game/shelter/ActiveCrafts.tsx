@@ -1,11 +1,16 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
-import { Clock, Package } from "lucide-react";
+import { Clock, Package, CheckCircle } from "lucide-react";
 import { useItemTemplates } from "@/hooks/useItemTemplates";
 import { formatTime } from "@/utils/timeUtils";
 import { useLanguage } from "@/hooks/useLanguage";
 import { t } from "@/utils/translations";
 import { useEffect, useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import { useWalletContext } from "@/contexts/WalletConnectContext";
+import { useQueryClient } from "@tanstack/react-query";
+import { useToast } from "@/hooks/use-toast";
 
 interface ActiveCraft {
   id: string;
@@ -24,7 +29,11 @@ interface ActiveCraftsProps {
 export const ActiveCrafts = ({ activeWorkers }: ActiveCraftsProps) => {
   const { language } = useLanguage();
   const { getItemName, getTemplate } = useItemTemplates();
+  const { accountId } = useWalletContext();
+  const queryClient = useQueryClient();
+  const { toast } = useToast();
   const [currentTime, setCurrentTime] = useState(Date.now());
+  const [collectingId, setCollectingId] = useState<string | null>(null);
 
   // Обновление времени каждую секунду
   useEffect(() => {
@@ -38,6 +47,69 @@ export const ActiveCrafts = ({ activeWorkers }: ActiveCraftsProps) => {
   const activeCrafts = activeWorkers.filter(
     (worker) => worker.task === 'crafting' && worker.building === 'workshop'
   ) as ActiveCraft[];
+
+  // Функция для сбора готового крафта
+  const handleCollect = async (craft: ActiveCraft) => {
+    if (!accountId) return;
+    
+    setCollectingId(craft.id);
+    
+    try {
+      console.log('📦 [ActiveCrafts] Collecting craft:', craft.id);
+      
+      const { data, error } = await supabase.rpc('complete_crafting_task', {
+        p_wallet_address: accountId,
+        p_craft_id: craft.id
+      });
+
+      if (error) {
+        console.error('❌ [ActiveCrafts] Error collecting craft:', error);
+        toast({
+          title: 'Ошибка',
+          description: error.message || 'Не удалось забрать предмет',
+          variant: 'destructive'
+        });
+        return;
+      }
+
+      const result = data as { success: boolean; item_name?: string; quantity?: number; error?: string };
+
+      if (!result.success) {
+        toast({
+          title: 'Ошибка',
+          description: result.error || 'Не удалось забрать предмет',
+          variant: 'destructive'
+        });
+        return;
+      }
+
+      console.log('✅ [ActiveCrafts] Craft collected:', result);
+
+      // Инвалидируем кэш для обновления UI
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ['itemInstances', accountId] }),
+        queryClient.invalidateQueries({ queryKey: ['item_instances'] }),
+        queryClient.invalidateQueries({ queryKey: ['gameData', accountId] }),
+        queryClient.invalidateQueries({ queryKey: ['gameDataByWallet'] }),
+        queryClient.invalidateQueries({ queryKey: ['unifiedGameData'] })
+      ]);
+
+      toast({
+        title: 'Предмет получен!',
+        description: `${result.item_name} x${result.quantity} добавлен в инвентарь`
+      });
+
+    } catch (error) {
+      console.error('❌ [ActiveCrafts] Error:', error);
+      toast({
+        title: 'Ошибка',
+        description: 'Произошла ошибка при получении предмета',
+        variant: 'destructive'
+      });
+    } finally {
+      setCollectingId(null);
+    }
+  };
 
   if (activeCrafts.length === 0) {
     return (
@@ -72,6 +144,7 @@ export const ActiveCrafts = ({ activeWorkers }: ActiveCraftsProps) => {
           const remaining = Math.max(0, craft.duration - elapsed);
           const isComplete = progress >= 100;
           const template = getTemplate(String(craft.resultItemId));
+          const isCollecting = collectingId === craft.id;
 
           return (
             <div
@@ -105,6 +178,20 @@ export const ActiveCrafts = ({ activeWorkers }: ActiveCraftsProps) => {
                 </div>
                 <span>{Math.round(progress)}%</span>
               </div>
+
+              {/* Кнопка "Забрать" для готовых крафтов */}
+              {isComplete && (
+                <Button
+                  variant="default"
+                  size="sm"
+                  className="w-full mt-2 bg-green-600 hover:bg-green-700"
+                  onClick={() => handleCollect(craft)}
+                  disabled={isCollecting}
+                >
+                  <CheckCircle className="w-4 h-4 mr-2" />
+                  {isCollecting ? 'Забираем...' : 'Забрать'}
+                </Button>
+              )}
             </div>
           );
         })}
