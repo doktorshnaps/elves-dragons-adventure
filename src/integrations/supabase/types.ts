@@ -1975,14 +1975,23 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      add_card_to_forge_bay: {
-        Args: {
-          p_card_instance_id: string
-          p_repair_hours?: number
-          p_wallet_address?: string
-        }
-        Returns: string
-      }
+      add_card_to_forge_bay:
+        | {
+            Args: {
+              p_card_instance_id: string
+              p_repair_hours?: number
+              p_wallet_address?: string
+            }
+            Returns: string
+          }
+        | {
+            Args: {
+              p_card_instance_id: string
+              p_repair_hours?: number
+              p_wallet_address?: string
+            }
+            Returns: string
+          }
       add_card_to_medical_bay: {
         Args: {
           p_card_instance_id: string
