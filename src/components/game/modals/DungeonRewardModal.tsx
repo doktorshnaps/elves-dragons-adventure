@@ -165,17 +165,16 @@ export const DungeonRewardModal: React.FC<DungeonRewardModalProps> = ({
               </h3>
               <div className="space-y-2 max-h-[200px] overflow-y-auto pr-2">
                 {teamPairs.map((pair, index) => {
-                  // Показываем индивидуальное здоровье героя и дракона
-                  const heroHealth = pair.hero?.currentHealth || 0;
-                  const heroMaxHealth = pair.hero?.health || 1;
-                  const dragonHealth = pair.dragon?.currentHealth || 0;
-                  const dragonMaxHealth = pair.dragon?.health || 0;
-                  
-                  const totalHealth = heroHealth + dragonHealth;
-                  const totalMaxHealth = heroMaxHealth + dragonMaxHealth;
+                  // Используем агрегированные значения из TeamPair
+                  const totalHealth = pair.health || 0;
+                  const totalMaxHealth = pair.maxHealth || 1;
                   const pairHealthPercent = totalMaxHealth > 0 ? (totalHealth / totalMaxHealth) * 100 : 0;
                   
                   const isDead = totalHealth <= 0;
+                  
+                  // Получаем имена из hero и dragon объектов
+                  const heroName = pair.hero?.name || pair.hero?.card_name || `Пара ${index + 1}`;
+                  const dragonName = pair.dragon?.name || pair.dragon?.card_name;
                   
                   return (
                     <div 
@@ -192,8 +191,8 @@ export const DungeonRewardModal: React.FC<DungeonRewardModalProps> = ({
                           <div className="flex-1">
                             <div className="flex items-center justify-between mb-1">
                               <span className={`text-xs font-medium ${isDead ? 'text-red-400' : 'text-foreground'}`}>
-                                {pair.hero?.name || `Пара ${index + 1}`}
-                                {pair.dragon && <span className="text-foreground/60 ml-1">+ {pair.dragon.name}</span>}
+                                {heroName}
+                                {dragonName && <span className="text-foreground/60 ml-1">+ {dragonName}</span>}
                                 {isDead && <span className="ml-2 text-red-500 font-bold">✝</span>}
                               </span>
                               <span className={`text-xs font-bold ${
@@ -201,7 +200,7 @@ export const DungeonRewardModal: React.FC<DungeonRewardModalProps> = ({
                                 pairHealthPercent <= 50 ? 'text-yellow-400' : 
                                 'text-green-400'
                               }`}>
-                                {Math.floor(totalHealth)}/{totalMaxHealth}
+                                {Math.floor(totalHealth)}/{Math.floor(totalMaxHealth)}
                               </span>
                             </div>
                             <Progress 
