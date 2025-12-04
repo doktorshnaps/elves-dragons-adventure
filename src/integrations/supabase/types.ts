@@ -2582,8 +2582,8 @@ export type Database = {
         Args: {
           p_card_health_updates?: Json
           p_card_kills?: Json
-          p_ell_reward?: number
-          p_experience_reward?: number
+          p_ell_reward: number
+          p_experience_reward: number
           p_items?: Json
           p_wallet_address: string
         }
