@@ -1,15 +1,22 @@
 import { useCallback } from 'react';
 import { useGameData } from '@/hooks/useGameData';
-import { useCardInstanceSync } from '@/hooks/useCardInstanceSync';
-import { Card } from '@/types/cards';
+import { useCardInstances } from '@/hooks/useCardInstances';
 
 /**
  * Synchronize dungeon/adventure damage with team cards health.
  * Distributes incoming damage across selected team pairs: dragon first, then hero, pair by pair.
  */
 export const useTeamDamageSync = () => {
-  const { gameData, updateGameData } = useGameData();
-  const { applyDamageToCard } = useCardInstanceSync();
+  const { gameData } = useGameData();
+  const { cardInstances, updateCardHealth } = useCardInstances();
+
+  const applyDamageToCard = useCallback(async (cardId: string, damage: number) => {
+    const instance = cardInstances.find(ci => ci.card_template_id === cardId || ci.id === cardId);
+    if (instance) {
+      const newHealth = Math.max(0, instance.current_health - damage);
+      await updateCardHealth(instance.id, newHealth);
+    }
+  }, [cardInstances, updateCardHealth]);
 
   const applyDamageToTeam = useCallback(async (damage: number) => {
     if (!damage || damage <= 0) return;

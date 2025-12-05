@@ -1,7 +1,6 @@
 import { DeckSelection } from "./team/DeckSelection";
 import { useTeamSelection } from "@/hooks/team/useTeamSelection";
 import { ActiveBattleWarning } from "./team/ActiveBattleWarning";
-import { useCardStatsMigration } from "@/hooks/useCardStatsMigration";
 
 // SEO: Team management page
 if (typeof document !== 'undefined') {
@@ -20,9 +19,6 @@ export const TeamCards = () => {
     handleRemoveDragon,
     getSelectedTeamStats
   } = useTeamSelection();
-
-  // Автоматическая миграция характеристик карт
-  useCardStatsMigration();
 
   return (
     <div className="flex flex-col space-y-3">
