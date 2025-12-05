@@ -64,9 +64,6 @@ export const useTeamBattle = (dungeonType: DungeonType, initialLevel: number = 1
   useEffect(() => {
     if (cardInstancesLoading) return; // Wait until card instances are loaded to get accurate health
     if (selectedPairs.length > 0 && battleState.playerPairs.length === 0) {
-      const cardsArr = (gameData.cards as any[]) || [];
-      const byId = new Map(cardsArr.map((c: any) => [c.id, c]));
-
       const teamPairs: TeamPair[] = selectedPairs.map((pair, index) => {
         console.log(`🎯 [useTeamBattle] Building pair ${index} from card_instances context`);
         
@@ -194,7 +191,7 @@ export const useTeamBattle = (dungeonType: DungeonType, initialLevel: number = 1
         setAttackOrder(teamPairs.map(pair => pair.id));
       })();
     }
-  }, [selectedPairs, dungeonType, initialLevel, gameData.cards, cardInstancesLoading, cardInstances]);
+  }, [selectedPairs, dungeonType, initialLevel, cardInstancesLoading, cardInstances]);
 
   // Re-sync stats from card_instances when they change
   // КРИТИЧНО: НЕ синхронизировать во время активного боя, чтобы не перезаписать локальный урон

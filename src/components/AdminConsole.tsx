@@ -542,15 +542,8 @@ export const AdminConsole = () => {
       
       // Обновляем локальные данные игрока если это текущий пользователь
       if (accountId === 'mr_bruts.tg') {
-        // Запускаем событие обновления карт для синхронизации
-        const updateEvent = new CustomEvent('cardsUpdate', {
-        detail: { cards: [] } // Пустой массив заставит перезагрузить данные
-        });
-        window.dispatchEvent(updateEvent);
-        
-        // Используем Zustand store для обновления карт
-        const currentCards = useGameStore.getState().cards;
-        useGameStore.getState().setCards([...currentCards, cardData]);
+        // Запускаем событие обновления card_instances для синхронизации
+        window.dispatchEvent(new CustomEvent('cardInstancesUpdate'));
       }
     }
   };
