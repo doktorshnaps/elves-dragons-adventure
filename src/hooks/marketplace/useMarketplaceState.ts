@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+import { useQueryClient } from '@tanstack/react-query';
 import { useToast } from '@/hooks/use-toast';
 import { useBalanceState } from '@/hooks/useBalanceState';
 import { useGameData } from '@/hooks/useGameData';
@@ -14,6 +15,7 @@ export const useMarketplaceState = () => {
   const { balance } = useBalanceState();
   const { toast } = useToast();
   const { loadGameData, updateGameData } = useGameData();
+  const queryClient = useQueryClient();
 
   // Load listings from database
   useEffect(() => {
@@ -103,17 +105,11 @@ export const useMarketplaceState = () => {
       const newBalance = (gd as any).balance;
       if (typeof newBalance === 'number') {
         localStorage.setItem('gameBalance', String(newBalance));
-        window.dispatchEvent(new CustomEvent('balanceUpdate', { 
-          detail: { balance: newBalance } 
-        }));
       }
 
-      // inventory обновляется через item_instances real-time subscription
-      // Не отправляем событие inventoryUpdate из localStorage
-      
-      window.dispatchEvent(new CustomEvent('cardsUpdate', {
-        detail: { cards: gd.cards || [] } 
-      }));
+      // Invalidate React Query caches instead of dispatching events
+      queryClient.invalidateQueries({ queryKey: ['gameData'] });
+      queryClient.invalidateQueries({ queryKey: ['cardInstances'] });
 
       await loadGameData();
     }

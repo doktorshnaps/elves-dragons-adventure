@@ -1,4 +1,5 @@
 import { supabase } from '@/integrations/supabase/client';
+import { useQueryClient } from '@tanstack/react-query';
 import { MarketplaceListing } from '@/components/game/marketplace/types';
 import { useItemInstances } from '@/hooks/useItemInstances';
 
@@ -8,6 +9,7 @@ import { useItemInstances } from '@/hooks/useItemInstances';
  */
 export const useMarketplaceOperations = () => {
   const { addItemInstances } = useItemInstances();
+  const queryClient = useQueryClient();
 
   /**
    * Create a new marketplace listing
@@ -119,9 +121,9 @@ export const useMarketplaceOperations = () => {
         const patched = [...cards, listing.item as any];
         await updateGameData({ cards: patched });
         localStorage.setItem('gameCards', JSON.stringify(patched));
-        window.dispatchEvent(new CustomEvent('cardsUpdate', { 
-          detail: { cards: patched } 
-        }));
+        // Invalidate React Query caches
+        queryClient.invalidateQueries({ queryKey: ['cardInstances'] });
+        queryClient.invalidateQueries({ queryKey: ['gameData'] });
       }
     } else {
       // Для предметов - добавляем в item_instances, если еще нет

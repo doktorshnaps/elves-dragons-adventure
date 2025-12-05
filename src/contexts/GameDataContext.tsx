@@ -287,13 +287,8 @@ export const GameDataProvider = ({ children }: { children: ReactNode }) => {
     };
   }, [accountId, queryClient]);
 
-  // Listen for wallet changes and refetch data
+  // Listen for admin force refetch commands
   useEffect(() => {
-    const handleWalletChange = () => {
-      console.log('🔄 [GameDataContext] Wallet changed, refetching data');
-      refetch();
-    };
-
     const handleForceRefetch = (e: CustomEvent) => {
       console.log('🔄 [GameDataContext] Force refetch requested for wallet:', e.detail?.wallet);
       if (!e.detail?.wallet || !accountId) return;
@@ -305,10 +300,8 @@ export const GameDataProvider = ({ children }: { children: ReactNode }) => {
       }
     };
 
-    window.addEventListener('wallet-changed', handleWalletChange);
     window.addEventListener('gameData:forceRefetch', handleForceRefetch as EventListener);
     return () => {
-      window.removeEventListener('wallet-changed', handleWalletChange);
       window.removeEventListener('gameData:forceRefetch', handleForceRefetch as EventListener);
     };
   }, [refetch, accountId]);
