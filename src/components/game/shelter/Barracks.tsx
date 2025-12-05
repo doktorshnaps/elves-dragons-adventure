@@ -11,7 +11,7 @@ import { Card as CardType, Faction } from '@/types/cards';
 import { upgradeCard } from '@/utils/cardUtils';
 import { CardDisplay } from '../CardDisplay';
 import { useItemInstances } from '@/hooks/useItemInstances';
-import { useCardInstancesContext } from '@/providers/CardInstancesProvider';
+import { useCards } from '@/hooks/useCards';
 import { Shield, Swords, Clock, Star, ArrowRight, Coins, Sparkles, AlertCircle, BookOpen } from 'lucide-react';
 import { getUpgradeRequirement, rollUpgradeSuccess } from '@/utils/upgradeRequirements';
 import { useCardUpgradeRequirements } from '@/hooks/useCardUpgradeRequirements';
@@ -59,34 +59,8 @@ export const Barracks: React.FC<BarracksProps> = ({ barracksLevel, onUpgradeBuil
   // Мемоизируем подсчет предметов
   const itemCounts = useMemo(() => getCountsByItemId(), [getCountsByItemId]);
 
-  // КРИТИЧНО: Получаем карты ТОЛЬКО из CardInstancesContext (единственный источник правды!)
-  const { cardInstances } = useCardInstancesContext();
-  
-  // Преобразуем card_instances в формат Card для отображения
-  const initializedCards = useMemo(() => {
-    return cardInstances
-      .filter(ci => ci.card_type === 'hero')
-      .map(ci => {
-        const cardData = ci.card_data as any;
-        return {
-          id: ci.id,
-          instanceId: ci.id,
-          name: cardData.name,
-          type: cardData.type || 'character',
-          faction: cardData.faction,
-          rarity: cardData.rarity,
-          image: cardData.image,
-          // КРИТИЧНО: Используем характеристики из card_instances, НЕ из card_data JSON
-          power: ci.max_power,
-          defense: ci.max_defense,
-          health: ci.max_health,
-          magic: ci.max_magic,
-          currentHealth: ci.current_health,
-          currentDefense: ci.current_defense,
-          maxDefense: ci.max_defense
-        } as CardType;
-      });
-  }, [cardInstances]);
+  // КРИТИЧНО: Получаем карты ТОЛЬКО из useCards() (единственный источник правды!)
+  const { heroes: initializedCards } = useCards();
 
   // Get active upgrades from Supabase data
   const activeUpgrades = (gameData.barracksUpgrades || []) as BarracksUpgrade[];
@@ -100,8 +74,7 @@ export const Barracks: React.FC<BarracksProps> = ({ barracksLevel, onUpgradeBuil
   }, []);
 
   const completeUpgrade = async (upgrade: BarracksUpgrade) => {
-    const currentCards = (gameData.cards as CardType[]) || [];
-    let sourceHero = (upgrade as any).baseCard || currentCards.find(c => c.id === upgrade.heroId);
+    let sourceHero = (upgrade as any).baseCard || initializedCards.find(c => c.id === upgrade.heroId || c.instanceId === upgrade.heroId);
 
     // Fallback for legacy upgrades without snapshot
     if (!sourceHero) {
@@ -129,7 +102,7 @@ export const Barracks: React.FC<BarracksProps> = ({ barracksLevel, onUpgradeBuil
     };
 
     // Remove old hero (if exists) and add upgraded one
-    const newCards = currentCards.filter(c => c.id !== upgrade.heroId).concat(upgradedHero);
+    const newCards = initializedCards.filter(c => c.id !== upgrade.heroId && c.instanceId !== upgrade.heroId).concat(upgradedHero);
 
     // Remove completed upgrade from Supabase
     const updatedUpgrades = activeUpgrades.filter(u => u.id !== upgrade.id);
@@ -152,10 +125,9 @@ export const Barracks: React.FC<BarracksProps> = ({ barracksLevel, onUpgradeBuil
   };
 
   const getAvailableHeroes = (): CardType[] => {
-    const currentCards = gameData.cards as CardType[] || [];
-    return currentCards.filter(card => 
+    return initializedCards.filter(card => 
       card.type === 'character' && 
-      !activeUpgrades.some(upgrade => upgrade.heroId === card.id)
+      !activeUpgrades.some(upgrade => upgrade.heroId === card.id || upgrade.heroId === card.instanceId)
     );
   };
 
@@ -335,9 +307,8 @@ export const Barracks: React.FC<BarracksProps> = ({ barracksLevel, onUpgradeBuil
       };
 
       // Remove both heroes and add upgraded one
-      const currentCards = gameData.cards as CardType[] || [];
-      const newCards = currentCards
-        .filter(c => c.id !== hero1.id && c.id !== hero2.id)
+      const newCards = initializedCards
+        .filter(c => c.id !== hero1.id && c.id !== hero2.id && c.instanceId !== hero1.instanceId && c.instanceId !== hero2.instanceId)
         .concat(upgradedHero);
 
       await updateGameData({
