@@ -2,14 +2,13 @@ import { useEffect, useRef } from 'react';
 import { useGameStore } from '@/stores/gameStore';
 import { useGameData } from '@/hooks/useGameData';
 import { useWalletContext } from '@/contexts/WalletConnectContext';
-import { useCardInstanceSync } from '@/hooks/useCardInstanceSync';
 import { setSyncFreeze, clearSyncFreeze } from '@/utils/updateGameDataThrottle';
 
 /**
  * Синхронизирует локальное состояние Zustand с Supabase
+ * РЕФАКТОРИНГ: cards теперь НЕ синхронизируются - используйте card_instances
  */
 export const useGameSync = () => {
-  // CRITICAL: This should always log if hook is called
   console.log('🚀🚀🚀 useGameSync HOOK CALLED 🚀🚀🚀');
   
   const { accountId, selector, isLoading: walletLoading } = useWalletContext();
@@ -29,9 +28,6 @@ export const useGameSync = () => {
     walletLoading,
     hasSelector: !!selector
   });
-  
-  // Всегда вызываем хук, но внутри него будет проверка готовности
-  useCardInstanceSync();
 
   // Очищаем старые данные из localStorage при монтировании
   useEffect(() => {
@@ -137,30 +133,23 @@ export const useGameSync = () => {
       try {
         console.log('🔄 useGameSync: Loading data from Supabase:', {
           balance: gameData.balance,
-          cards: gameData.cards?.length,
           dragonEggs: gameData.dragonEggs?.length,
           selectedTeam: gameData.selectedTeam?.length,
-          selectedTeamRaw: gameData.selectedTeam,
-          selectedTeamType: typeof gameData.selectedTeam,
-          selectedTeamIsArray: Array.isArray(gameData.selectedTeam),
           accountLevel: gameData.accountLevel,
           accountExperience: gameData.accountExperience
         });
         
         gameStore.setBalance(gameData.balance);
-        gameStore.setCards(gameData.cards);
+        // РЕФАКТОРИНГ: cards больше НЕ синхронизируем - используйте useCards() и card_instances
         gameStore.setDragonEggs(gameData.dragonEggs || []);
         
         // КРИТИЧНО: Всегда устанавливаем selectedTeam из БД
         const teamFromDB = gameData.selectedTeam || [];
         console.log('🔄 useGameSync: Setting selectedTeam from DB:', {
           length: teamFromDB.length,
-          data: JSON.stringify(teamFromDB).substring(0, 200),
           isArray: Array.isArray(teamFromDB),
-          firstItem: teamFromDB[0] ? JSON.stringify(teamFromDB[0]).substring(0, 100) : 'no items'
         });
         gameStore.setSelectedTeam(teamFromDB);
-        console.log('✅ useGameSync: Team set in store, new selectedTeam:', gameStore.selectedTeam?.length);
         
         gameStore.setAccountLevel(gameData.accountLevel || 1);
         gameStore.setAccountExperience(gameData.accountExperience || 0);
@@ -169,10 +158,9 @@ export const useGameSync = () => {
           gameStore.setBattleState(gameData.battleState);
         }
         
-        // Сохраняем синхронизированное состояние
+        // Сохраняем синхронизированное состояние (без cards)
         lastSyncedRef.current = {
           balance: gameData.balance,
-          cards: gameData.cards,
           dragonEggs: gameData.dragonEggs,
           selectedTeam: gameData.selectedTeam || [],
           battleState: gameData.battleState,
@@ -196,6 +184,7 @@ export const useGameSync = () => {
   }, [loading, isConnected, accountId, gameData, walletLoading, selector]);
 
   // Синхронизируем изменения локального состояния с Supabase через подписку на store
+  // РЕФАКТОРИНГ: cards исключены из синхронизации - используйте card_instances напрямую
   useEffect(() => {
     // Не синхронизируем пока wallet не готов
     if (walletLoading || !selector) return;
@@ -219,9 +208,9 @@ export const useGameSync = () => {
       // Пропускаем если применяем данные из БД
       if (isApplyingRef.current) return;
       
+      // РЕФАКТОРИНГ: cards убраны из синхронизации
       const snapshot = {
         balance: state.balance,
-        cards: state.cards,
         dragonEggs: state.dragonEggs,
         selectedTeam: state.selectedTeam,
         battleState: state.battleState,
@@ -231,7 +220,6 @@ export const useGameSync = () => {
 
       const serverSnapshot = {
         balance: gameData?.balance,
-        cards: gameData?.cards,
         dragonEggs: gameData?.dragonEggs,
         selectedTeam: gameData?.selectedTeam,
         battleState: gameData?.battleState,
@@ -255,7 +243,6 @@ export const useGameSync = () => {
         try {
           console.log('🔄 useGameSync: Syncing to Supabase:', {
             selectedTeamLength: snapshot.selectedTeam?.length,
-            cardsLength: snapshot.cards?.length
           });
           await updateGameData(snapshot);
           lastSyncedRef.current = snapshot;

@@ -7,7 +7,6 @@ import { Clock, Shield, Plus, Activity, ArrowRight, X } from 'lucide-react';
 import { useForgeBay } from '@/hooks/useForgeBay';
 import { useMedicalBay } from '@/hooks/useMedicalBay';
 import { useCardInstancesContext } from '@/providers/CardInstancesProvider';
-import { useCardHealthSync } from '@/hooks/useCardHealthSync';
 
 console.log('⚒️ [ForgeBayComponent] Loaded - using centralized CardInstancesContext');
 import { useCardsWithHealth } from '@/hooks/useCardsWithHealth';
@@ -34,7 +33,6 @@ export const ForgeBayComponent = ({ forgeLevel }: ForgeBayComponentProps) => {
 
   // КРИТИЧНО: Получаем данные ТОЛЬКО из провайдера
   const { cardInstances, loadCardInstances } = useCardInstancesContext();
-  const { syncHealthFromInstances } = useCardHealthSync();
   
   console.log('⚒️ [ForgeBayComponent] CardInstances from context:', {
     total: cardInstances.length,

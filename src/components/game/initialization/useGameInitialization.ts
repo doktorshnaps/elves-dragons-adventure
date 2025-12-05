@@ -1,11 +1,15 @@
 import { useEffect, useRef } from "react";
 import { useToast } from "@/hooks/use-toast";
-import { Card } from "@/types/cards";
 import { supabase } from "@/integrations/supabase/client";
 import { useWalletContext } from "@/contexts/WalletConnectContext";
 import { useGameStore } from "@/stores/gameStore";
 
-export const useGameInitialization = (setCards: (cards: Card[]) => void) => {
+/**
+ * РЕФАКТОРИНГ: Убрана зависимость от setCards
+ * Карты теперь загружаются из card_instances через useCards()
+ * Этот хук только инициализирует game_data для нового игрока
+ */
+export const useGameInitialization = () => {
   const { toast } = useToast();
   const { accountId } = useWalletContext();
   const isConnected = !!accountId;
@@ -29,7 +33,7 @@ export const useGameInitialization = (setCards: (cards: Card[]) => void) => {
         console.log('📊 Checking existing game data for:', accountId);
         const { data: gameData, error } = await supabase
           .from('game_data')
-          .select('*')
+          .select('balance')
           .eq('wallet_address', accountId)
           .maybeSingle();
 
@@ -71,7 +75,7 @@ export const useGameInitialization = (setCards: (cards: Card[]) => void) => {
           // Получаем созданные данные
           const { data: newGameData, error: fetchError } = await supabase
             .from('game_data')
-            .select('balance, cards')
+            .select('balance')
             .eq('wallet_address', accountId)
             .single();
 
@@ -88,11 +92,8 @@ export const useGameInitialization = (setCards: (cards: Card[]) => void) => {
           console.log('Loaded new game data:', newGameData);
           const startingBalance = newGameData.balance || 100;
           
-          // Синхронизируем с Zustand store
-          useGameStore.getState().setCards([]);
+          // Синхронизируем баланс с Zustand store
           useGameStore.getState().setBalance(startingBalance);
-          
-          setCards([]);
           
           // Отправляем событие для обновления баланса
           const balanceEvent = new CustomEvent('balanceUpdate', { 
@@ -105,10 +106,8 @@ export const useGameInitialization = (setCards: (cards: Card[]) => void) => {
             description: "Начните зарабатывать ресурсы и получать карты!",
           });
         } else {
-          // Загружаем существующие данные
-          const cards = Array.isArray(gameData.cards) ? gameData.cards as unknown as Card[] : [];
-          setCards(cards);
-          useGameStore.getState().setCards(cards);
+          // Загружаем существующий баланс
+          // РЕФАКТОРИНГ: cards больше не синхронизируем - используйте useCards() и card_instances
           useGameStore.getState().setBalance(gameData.balance);
           
           // Отправляем событие для обновления баланса
@@ -128,7 +127,7 @@ export const useGameInitialization = (setCards: (cards: Card[]) => void) => {
     return () => {
       hasInitializedRef.current = false;
     };
-  }, [accountId, isConnected, setCards, toast]);
+  }, [accountId, isConnected, toast]);
 
   return {};
 };

@@ -4,7 +4,6 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ArrowLeft } from 'lucide-react';
 import { useTeamBattle } from '@/hooks/team/useTeamBattle';
-import { useCardHealthSync } from '@/hooks/useCardHealthSync';
 import { useCardInstanceMigration } from '@/hooks/useCardInstanceMigration';
 import { AttackOrderSelector } from './AttackOrderSelector';
 import { TeamBattleArena } from './TeamBattleArena';
@@ -87,9 +86,6 @@ const TeamBattlePageInner: React.FC<TeamBattlePageProps> = ({
   const { deviceId, startDungeonSession, endDungeonSession, getCurrentClaimKey } = useDungeonSync();
   const [sessionTerminated, setSessionTerminated] = useState(false);
   const [showingFinishDelay, setShowingFinishDelay] = useState(false);
-  
-  // Sync health from database ONLY when NOT in battle (prevents DB spam)
-  useCardHealthSync(true); // true = skip during battle
   
   // Автоматическая миграция карт из game_data.cards в card_instances
   useCardInstanceMigration();

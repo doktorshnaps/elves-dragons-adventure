@@ -8,7 +8,7 @@ import { TeamDialog } from "./game/dialogs/TeamDialog";
 import { Shop } from "./Shop";
 import { DungeonSearch } from "./DungeonSearch";
 import { TeamStatsModal } from "./game/TeamStatsModal";
-import { useGameStore } from "@/stores/gameStore";
+import { useCards } from "@/hooks/useCards";
 
 export const GameInterface = () => {
   const [showShop, setShowShop] = useState(false);
@@ -18,9 +18,8 @@ export const GameInterface = () => {
   const [showEquipment, setShowEquipment] = useState(false);
   const [showTeam, setShowTeam] = useState(false);
   const { balance, updateBalance } = useBalanceState();
-  // Use Zustand store instead of localStorage
-  const cards = useGameStore(state => state.cards);
-  const hasCards = cards.length > 0;
+  // РЕФАКТОРИНГ: используем useCards() вместо gameStore.cards
+  const { cards, hasCards } = useCards();
 
   const getTeamStats = () => {
     return calculateTeamStats(cards);
