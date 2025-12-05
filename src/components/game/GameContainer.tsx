@@ -11,6 +11,7 @@ import { useImagePreloader } from "@/hooks/useImagePreloader";
 import { GameSkeleton } from "./loading/GameSkeleton";
 import { useGameInitialization } from "./initialization/useGameInitialization";
 import { useGameStore } from "@/stores/gameStore";
+import { useCards } from "@/hooks/useCards";
 
 const calculateTeamStats = (cards: Card[]) => {
   const power = cards.reduce((sum, c) => sum + (c.power || 0), 0);
@@ -33,12 +34,14 @@ export const GameContainer = () => {
   const [showDungeonSearch, setShowDungeonSearch] = useState(false);
   const [showShop, setShowShop] = useState(false);
   const [hasActiveDungeon, setHasActiveDungeon] = useState(false);
-  const cards = useGameStore(state => state.cards);
-  const setCards = useGameStore(state => state.setCards);
+  
+  // РЕФАКТОРИНГ: используем useCards() вместо gameStore.cards
+  const { cards } = useCards();
 
   const imagesLoaded = useImagePreloader();
 
-  useGameInitialization(setCards);
+  // РЕФАКТОРИНГ: useGameInitialization больше не требует setCards
+  useGameInitialization();
 
   useEffect(() => {
     return () => {

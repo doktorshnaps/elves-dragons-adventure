@@ -1,7 +1,6 @@
 import { useEffect, useMemo } from 'react';
 import { Card as CardType } from "@/types/cards";
 import { useGameData } from '@/hooks/useGameData';
-import { useCardHealthSync } from '@/hooks/useCardHealthSync';
 import { useCardInstancesContext } from '@/providers/CardInstancesProvider';
 import { TeamPair } from '@/components/game/team/DeckSelection';
 import { useToast } from '@/hooks/use-toast';
@@ -221,9 +220,6 @@ export const useTeamSelection = () => {
     window.addEventListener('teamUpdate', handleTeamUpdate);
     return () => window.removeEventListener('teamUpdate', handleTeamUpdate);
   }, [updateGameData]);
-
-  // Use the health synchronization hook
-  useCardHealthSync();
 
   const handlePairSelect = async (hero: CardType, dragon?: CardType) => {
     console.log('🎯 handlePairSelect called with hero:', hero.name);

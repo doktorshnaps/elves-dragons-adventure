@@ -7,7 +7,6 @@ import { Clock, Heart, Plus, Activity, ArrowRight, X, Skull, Sparkles } from 'lu
 import { useMedicalBay } from '@/hooks/useMedicalBay';
 import { useForgeBay } from '@/hooks/useForgeBay';
 import { useCardInstancesContext } from '@/providers/CardInstancesProvider';
-import { useCardHealthSync } from '@/hooks/useCardHealthSync';
 
 console.log('🏥 [MedicalBayComponent] Loaded - using centralized CardInstancesContext');
 import { useCardsWithHealth } from '@/hooks/useCardsWithHealth';
@@ -34,7 +33,6 @@ export const MedicalBayComponent = () => {
 
   // КРИТИЧНО: Получаем данные ТОЛЬКО из провайдера
   const { cardInstances, loadCardInstances } = useCardInstancesContext();
-  const { syncHealthFromInstances } = useCardHealthSync();
   
   console.log('🏥 [MedicalBayComponent] CardInstances from context:', {
     total: cardInstances.length,
