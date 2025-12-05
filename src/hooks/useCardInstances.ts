@@ -117,7 +117,7 @@ export const useCardInstances = () => {
         throw new Error('Update not applied');
       }
 
-      // Update React Query cache
+      // Update React Query cache - единственный источник обновления
       queryClient.setQueryData(['cardInstances', accountId], (prev: CardInstance[] = []) => 
         prev.map(instance => 
           instance.id === instanceId 
@@ -129,12 +129,6 @@ export const useCardInstances = () => {
             : instance
         )
       );
-
-      // Dispatch event for real-time sync
-      const event = new CustomEvent('cardInstanceHealthUpdate', {
-        detail: { instanceId, currentHealth, lastHealTime }
-      });
-      window.dispatchEvent(event);
 
       return true;
     } catch (error) {

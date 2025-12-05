@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -46,6 +47,7 @@ export const DragonLair: React.FC<DragonLairProps> = ({ lairLevel, onUpgradeBuil
   const { toast } = useToast();
   const { gameData, updateGameData } = useGameData();
   const { language } = useLanguage();
+  const queryClient = useQueryClient();
   const [currentTime, setCurrentTime] = useState(Date.now());
   const { instances: itemInstances, getCountsByItemId, removeItemInstancesByIds } = useItemInstances();
   const [upgradeDialogOpen, setUpgradeDialogOpen] = useState(false);
@@ -127,11 +129,8 @@ export const DragonLair: React.FC<DragonLairProps> = ({ lairLevel, onUpgradeBuil
       description: `${sourceDragon.name} улучшен до ${upgrade.toRarity} ранга!`,
     });
 
-    // Dispatch event to update cards in other components
-    const cardsEvent = new CustomEvent('cardsUpdate', {
-      detail: { cards: newCards }
-    });
-    window.dispatchEvent(cardsEvent);
+    // Invalidate React Query caches instead of dispatching events
+    queryClient.invalidateQueries({ queryKey: ['cardInstances'] });
   };
 
   const getAvailableDragons = (): CardType[] => {
@@ -322,11 +321,8 @@ export const DragonLair: React.FC<DragonLairProps> = ({ lairLevel, onUpgradeBuil
         description: `${dragon1.name} улучшен до ${dragon1.rarity + 1} ранга!`,
       });
 
-      // Dispatch event to update cards
-      const cardsEvent = new CustomEvent('cardsUpdate', {
-        detail: { cards: newCards }
-      });
-      window.dispatchEvent(cardsEvent);
+      // Invalidate React Query caches
+      queryClient.invalidateQueries({ queryKey: ['cardInstances'] });
     } else {
       // Failure: dragons stay, but resources are consumed
       await updateGameData(resourceUpdates);

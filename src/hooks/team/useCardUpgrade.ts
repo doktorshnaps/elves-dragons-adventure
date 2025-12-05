@@ -1,4 +1,5 @@
 import { Card as CardType } from "@/types/cards";
+import { useQueryClient } from '@tanstack/react-query';
 import { useToast } from '@/hooks/use-toast';
 import { upgradeCard } from '@/utils/cardUtils';
 import { useDragonEggs } from '@/contexts/DragonEggContext';
@@ -14,6 +15,7 @@ export const useCardUpgrade = (
   const { toast } = useToast();
   const { addEgg } = useDragonEggs();
   const { gameData, updateGameData } = useGameData();
+  const queryClient = useQueryClient();
 
   const handleUpgrade = async () => {
     if (selectedCards.length !== 2) {
@@ -64,11 +66,8 @@ export const useCardUpgrade = (
     await updateGameData({ cards: newCards });
     localStorage.setItem('gameCards', JSON.stringify(newCards));
 
-    // Отправляем событие обновления карт
-    const cardsEvent = new CustomEvent('cardsUpdate', { 
-      detail: { cards: newCards }
-    });
-    window.dispatchEvent(cardsEvent);
+    // Invalidate React Query caches
+    queryClient.invalidateQueries({ queryKey: ['cardInstances'] });
 
     // Очищаем выбранные карты
     setSelectedCards([]);

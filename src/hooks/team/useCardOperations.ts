@@ -1,4 +1,5 @@
 import { Card } from "@/types/cards";
+import { useQueryClient } from '@tanstack/react-query';
 import { useToast } from '@/hooks/use-toast';
 import { getCardPrice, upgradeCard } from '@/utils/cardUtils';
 import { useGameData } from '@/hooks/useGameData';
@@ -16,6 +17,7 @@ import {
 export const useCardOperations = () => {
   const { toast } = useToast();
   const { gameData, updateGameData } = useGameData();
+  const queryClient = useQueryClient();
 
   /**
    * Sell card with optimized removal
@@ -91,10 +93,8 @@ export const useCardOperations = () => {
     // Update database
     await updateGameData({ cards: newCards });
 
-    // Dispatch update event
-    window.dispatchEvent(new CustomEvent('cardsUpdate', {
-      detail: { cards: newCards }
-    }));
+    // Invalidate React Query caches
+    queryClient.invalidateQueries({ queryKey: ['cardInstances'] });
 
     toast({
       title: "Карта улучшена!",
