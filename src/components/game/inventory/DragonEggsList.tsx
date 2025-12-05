@@ -5,10 +5,11 @@ import { DragonEgg, useDragonEggs } from "@/contexts/DragonEggContext";
 import { Card, Rarity, Faction } from "@/types/cards";
 import { cardDatabase } from "@/data/cardDatabase";
 import { Card as UICard } from "@/components/ui/card";
-import { useGameData } from "@/hooks/useGameData";
 import { calculateCardStats } from "@/utils/cardUtils";
-import { useGameStore } from "@/stores/gameStore";
+import { useCardInstancesContext } from "@/providers/CardInstancesProvider";
 import { OptimizedImage } from "@/components/ui/optimized-image";
+import { useQueryClient } from '@tanstack/react-query';
+import { useWalletContext } from '@/contexts/WalletConnectContext';
 
 interface DragonEggsListProps {
   eggs: DragonEgg[];
@@ -17,7 +18,9 @@ interface DragonEggsListProps {
 export const DragonEggsList = ({ eggs }: DragonEggsListProps) => {
   const { toast } = useToast();
   const { removeEgg, startIncubation } = useDragonEggs();
-  const { gameData, updateGameData } = useGameData();
+  const { createCardInstance } = useCardInstancesContext();
+  const queryClient = useQueryClient();
+  const { accountId } = useWalletContext();
 
   // Слушаем событие начала инкубации
   React.useEffect(() => {
@@ -66,38 +69,27 @@ export const DragonEggsList = ({ eggs }: DragonEggsListProps) => {
       image: basePet.image
     };
 
-    // Получаем текущие карты из gameData
-    const currentCards = gameData.cards || [];
-
-    // Добавляем нового питомца
-    const updatedCards = [...currentCards, newPet];
+    // Создаем card_instance напрямую через провайдер
+    const result = await createCardInstance(newPet, 'dragon');
     
-    // Яйца НЕ хранятся в inventory - они управляются через DragonEggContext
-    // Сохраняем только обновленные карты в Supabase
-    await updateGameData({ 
-      cards: updatedCards
-    });
-    
-    // Обновляем store вместо localStorage
-    useGameStore.getState().setCards(updatedCards);
+    if (result) {
+      // Удаляем яйцо из контекста
+      await removeEgg(egg.id);
+      
+      // Обновляем список карт через invalidation
+      queryClient.invalidateQueries({ queryKey: ['cardInstances', accountId] });
 
-    // Удаляем яйцо из контекста
-    await removeEgg(egg.id);
-
-    // Отправляем событие обновления карт
-    const cardsEvent = new CustomEvent('cardsUpdate', { 
-      detail: { cards: updatedCards }
-    });
-    window.dispatchEvent(cardsEvent);
-
-    // Отправляем событие обновления яиц
-    const eggsEvent = new CustomEvent('eggsUpdate');
-    window.dispatchEvent(eggsEvent);
-
-    toast({
-      title: 'Питомец получен!',
-      description: `${egg.petName} (${egg.rarity}★) добавлен в вашу коллекцию`,
-    });
+      toast({
+        title: 'Питомец получен!',
+        description: `${egg.petName} (${egg.rarity}★) добавлен в вашу коллекцию`,
+      });
+    } else {
+      toast({
+        title: 'Ошибка',
+        description: 'Не удалось создать питомца',
+        variant: 'destructive'
+      });
+    }
   };
 
   if (eggs.length === 0) return null;
@@ -135,7 +127,7 @@ export const DragonEggsList = ({ eggs }: DragonEggsListProps) => {
                 <div className="text-[7px] sm:text-[10px] md:text-[11px] font-medium text-game-accent mb-1">
                   {egg.petName}
                 </div>
-<div className="text-[6px] sm:text-[8px] md:text-[10px] text-gray-400">
+                <div className="text-[6px] sm:text-[8px] md:text-[10px] text-gray-400">
                   Редкость: {egg.rarity}
                 </div>
                 <DragonEggTimer

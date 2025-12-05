@@ -2,7 +2,7 @@ import { useState, useCallback, useEffect } from 'react';
 import { calculateTeamStats } from '@/utils/cardUtils';
 import { useToast } from '@/hooks/use-toast';
 import { useGameData } from '@/hooks/useGameData';
-import { useCardInstances } from '@/hooks/useCardInstances';
+import { useCards } from '@/hooks/useCards';
 import { Card } from '@/types/cards';
 
 interface PlayerStats {
@@ -22,7 +22,7 @@ interface PlayerStats {
 export const usePlayerStats = (initialLevel = 1) => {
   const { toast } = useToast();
   const { gameData, updateGameData } = useGameData();
-  const { cardInstances } = useCardInstances();
+  const { cards } = useCards();
   
   const calculateEquipmentBonuses = useCallback(() => {
     // Equipment bonuses now handled through item_instances, not gameData.inventory
@@ -30,49 +30,41 @@ export const usePlayerStats = (initialLevel = 1) => {
   }, []);
 
   const calculateBaseStats = useCallback((level: number) => {
-    const teamStats = calculateTeamStats(gameData.cards);
+    const teamStats = calculateTeamStats(cards);
 
     return {
       power: teamStats.power + (level - 1),
       defense: teamStats.defense + (level - 1),
       health: teamStats.health + (level - 1) * 10
     };
-  }, [gameData.cards]);
+  }, [cards]);
 
-  // Calculate current and max team health based on selected team and card_instances
+  // Calculate current and max team health based on selected team and cards
   const getTeamHealthSums = useCallback(() => {
-    const cards = (gameData.cards as Card[]) || [];
     const selected = (gameData.selectedTeam as any[]) || [];
     const byId = new Map<string, Card>(cards.map((c) => [c.id, c]));
-    
-    // Create map of card instances for quick lookup of current health
-    const instancesById = new Map(cardInstances.map(inst => [inst.card_template_id, inst]));
+    const byInstanceId = new Map<string, Card>(cards.map((c) => [c.instanceId || c.id, c]));
 
     let currentSum = 0;
     let maxSum = 0;
 
     selected.forEach((pair) => {
-      const heroFromMap = byId.get(pair?.hero?.id) || pair?.hero;
+      const heroFromMap = byId.get(pair?.hero?.id) || byInstanceId.get(pair?.hero?.instanceId) || pair?.hero;
       if (heroFromMap) {
         const heroMax = heroFromMap.health || pair.hero?.health || 0;
-        // Use actual health from card_instances if available, otherwise fallback to card data
-        const heroInstance = instancesById.get(heroFromMap.id);
-        const heroCur = heroInstance ? heroInstance.current_health : (heroFromMap.currentHealth ?? heroMax);
+        const heroCur = heroFromMap.currentHealth ?? heroMax;
         maxSum += heroMax;
         currentSum += Math.max(0, Math.min(heroCur, heroMax));
       }
 
       const dragon = pair?.dragon;
       if (dragon) {
-        const dragonFromMap = byId.get(dragon.id) || dragon;
-        // Dragon contributes only if same faction and allowed by rarity, like calculateTeamStats
+        const dragonFromMap = byId.get(dragon.id) || byInstanceId.get(dragon.instanceId) || dragon;
         const sameFaction = pair?.hero?.faction && dragonFromMap?.faction && pair.hero.faction === dragonFromMap.faction;
         const rarityOk = (pair?.hero?.rarity ?? 0) >= (dragonFromMap?.rarity ?? 0);
         if (sameFaction && rarityOk) {
           const dMax = dragonFromMap.health || dragon.health || 0;
-          // Use actual health from card_instances if available
-          const dragonInstance = instancesById.get(dragonFromMap.id);
-          const dCur = dragonInstance ? dragonInstance.current_health : (dragonFromMap.currentHealth ?? dMax);
+          const dCur = dragonFromMap.currentHealth ?? dMax;
           maxSum += dMax;
           currentSum += Math.max(0, Math.min(dCur, dMax));
         }
@@ -80,40 +72,34 @@ export const usePlayerStats = (initialLevel = 1) => {
     });
 
     return { currentSum, maxSum };
-  }, [gameData.cards, gameData.selectedTeam, cardInstances]);
+  }, [cards, gameData.selectedTeam]);
 
-  // Calculate current and max team defense based on selected team and card_instances
+  // Calculate current and max team defense based on selected team and cards
   const getTeamDefenseSums = useCallback(() => {
-    const cards = (gameData.cards as Card[]) || [];
     const selected = (gameData.selectedTeam as any[]) || [];
     const byId = new Map<string, Card>(cards.map((c) => [c.id, c]));
-    
-    // Create map of card instances for quick lookup of current defense
-    const instancesById = new Map(cardInstances.map(inst => [inst.card_template_id, inst]));
+    const byInstanceId = new Map<string, Card>(cards.map((c) => [c.instanceId || c.id, c]));
 
     let currentSum = 0;
     let maxSum = 0;
 
     selected.forEach((pair) => {
-      const heroFromMap = byId.get(pair?.hero?.id) || pair?.hero;
+      const heroFromMap = byId.get(pair?.hero?.id) || byInstanceId.get(pair?.hero?.instanceId) || pair?.hero;
       if (heroFromMap) {
         const heroMaxDef = heroFromMap.defense || pair.hero?.defense || 0;
-        // Use actual defense from card_instances if available
-        const heroInstance = instancesById.get(heroFromMap.id);
-        const heroCurDef = heroInstance ? heroInstance.current_defense : (heroFromMap.currentDefense ?? heroMaxDef);
+        const heroCurDef = heroFromMap.currentDefense ?? heroMaxDef;
         maxSum += heroMaxDef;
         currentSum += Math.max(0, Math.min(heroCurDef, heroMaxDef));
       }
 
       const dragon = pair?.dragon;
       if (dragon) {
-        const dragonFromMap = byId.get(dragon.id) || dragon;
+        const dragonFromMap = byId.get(dragon.id) || byInstanceId.get(dragon.instanceId) || dragon;
         const sameFaction = pair?.hero?.faction && dragonFromMap?.faction && pair.hero.faction === dragonFromMap.faction;
         const rarityOk = (pair?.hero?.rarity ?? 0) >= (dragonFromMap?.rarity ?? 0);
         if (sameFaction && rarityOk) {
           const dMaxDef = dragonFromMap.defense || dragon.defense || 0;
-          const dragonInstance = instancesById.get(dragonFromMap.id);
-          const dCurDef = dragonInstance ? dragonInstance.current_defense : (dragonFromMap.currentDefense ?? dMaxDef);
+          const dCurDef = dragonFromMap.currentDefense ?? dMaxDef;
           maxSum += dMaxDef;
           currentSum += Math.max(0, Math.min(dCurDef, dMaxDef));
         }
@@ -121,7 +107,7 @@ export const usePlayerStats = (initialLevel = 1) => {
     });
 
     return { currentSum, maxSum };
-  }, [gameData.cards, gameData.selectedTeam, cardInstances]);
+  }, [cards, gameData.selectedTeam]);
 
   const [stats, setStats] = useState<PlayerStats>(() => {
     if (gameData.adventurePlayerStats) {
@@ -197,7 +183,7 @@ export const usePlayerStats = (initialLevel = 1) => {
     return () => window.removeEventListener('inventoryUpdate', handleInventoryUpdate);
   }, [stats.level, calculateBaseStats, calculateEquipmentBonuses, updateStats, getTeamDefenseSums]);
 
-  // Re-sync current health and defense from card_instances when instances or team selection change
+  // Re-sync current health and defense from cards when cards or team selection change
   useEffect(() => {
     const equipmentBonuses = calculateEquipmentBonuses();
     const { currentSum } = getTeamHealthSums();
@@ -208,7 +194,7 @@ export const usePlayerStats = (initialLevel = 1) => {
       currentDefense: currentDefSum,
       maxDefense: maxDefSum
     }));
-  }, [calculateEquipmentBonuses, getTeamHealthSums, getTeamDefenseSums, updateStats, cardInstances, gameData.selectedTeam]);
+  }, [calculateEquipmentBonuses, getTeamHealthSums, getTeamDefenseSums, updateStats, cards, gameData.selectedTeam]);
 
   const addExperience = useCallback((amount: number) => {
     updateStats(prev => {

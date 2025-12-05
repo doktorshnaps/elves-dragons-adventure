@@ -10,7 +10,7 @@ import { t } from '@/utils/translations';
 import { Card as CardType } from '@/types/cards';
 import { CardDisplay } from '../CardDisplay';
 import { useItemInstances } from '@/hooks/useItemInstances';
-import { useCardInstancesContext } from '@/providers/CardInstancesProvider';
+import { useCards } from '@/hooks/useCards';
 import { Flame, Clock, Star, ArrowRight, Coins, Sparkles, AlertCircle, BookOpen } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -69,34 +69,8 @@ export const DragonLair: React.FC<DragonLairProps> = ({ lairLevel, onUpgradeBuil
 
   const factions = ['Каледор', 'Сильванести', 'Фаэлин', 'Элленар', 'Тэлэрион', 'Аэлантир', 'Лиорас'];
 
-  // КРИТИЧНО: Получаем карты ТОЛЬКО из CardInstancesContext (единственный источник правды!)
-  const { cardInstances } = useCardInstancesContext();
-  
-  // Преобразуем card_instances в формат Card для отображения
-  const initializedCards = useMemo(() => {
-    return cardInstances
-      .filter(ci => ci.card_type === 'dragon')
-      .map(ci => {
-        const cardData = ci.card_data as any;
-        return {
-          id: ci.id,
-          instanceId: ci.id,
-          name: cardData.name,
-          type: cardData.type || 'pet',
-          faction: cardData.faction,
-          rarity: cardData.rarity,
-          image: cardData.image,
-          // КРИТИЧНО: Используем характеристики из card_instances, НЕ из card_data JSON
-          power: ci.max_power,
-          defense: ci.max_defense,
-          health: ci.max_health,
-          magic: ci.max_magic,
-          currentHealth: ci.current_health,
-          currentDefense: ci.current_defense,
-          maxDefense: ci.max_defense
-        } as CardType;
-      });
-  }, [cardInstances]);
+  // КРИТИЧНО: Получаем карты ТОЛЬКО из useCards() (единственный источник правды!)
+  const { dragons: initializedCards } = useCards();
 
   // Get active upgrades from Supabase data
   const activeUpgrades = (gameData.dragonLairUpgrades || []) as DragonUpgrade[];
@@ -110,8 +84,7 @@ export const DragonLair: React.FC<DragonLairProps> = ({ lairLevel, onUpgradeBuil
   }, []);
 
   const claimUpgrade = async (upgrade: DragonUpgrade) => {
-    const currentCards = (gameData.cards as CardType[]) || [];
-    let sourceDragon = (upgrade as any).baseCard || currentCards.find(c => c.id === upgrade.dragonId);
+    let sourceDragon = (upgrade as any).baseCard || initializedCards.find(c => c.id === upgrade.dragonId || c.instanceId === upgrade.dragonId);
 
     // Fallback for legacy upgrades without snapshot
     if (!sourceDragon) {
@@ -139,7 +112,7 @@ export const DragonLair: React.FC<DragonLairProps> = ({ lairLevel, onUpgradeBuil
     };
 
     // Remove old dragon (if exists) and add upgraded one
-    const newCards = currentCards.filter(c => c.id !== upgrade.dragonId).concat(upgradedDragon);
+    const newCards = initializedCards.filter(c => c.id !== upgrade.dragonId && c.instanceId !== upgrade.dragonId).concat(upgradedDragon);
 
     // Remove completed upgrade from Supabase
     const updatedUpgrades = activeUpgrades.filter(u => u.id !== upgrade.id);
@@ -162,10 +135,9 @@ export const DragonLair: React.FC<DragonLairProps> = ({ lairLevel, onUpgradeBuil
   };
 
   const getAvailableDragons = (): CardType[] => {
-    const currentCards = gameData.cards as CardType[] || [];
-    return currentCards.filter(card => 
+    return initializedCards.filter(card => 
       card.type === 'pet' && 
-      !activeUpgrades.some(upgrade => upgrade.dragonId === card.id)
+      !activeUpgrades.some(upgrade => upgrade.dragonId === card.id || upgrade.dragonId === card.instanceId)
     );
   };
 
@@ -336,9 +308,8 @@ export const DragonLair: React.FC<DragonLairProps> = ({ lairLevel, onUpgradeBuil
       };
 
       // Remove both dragons and add upgraded one
-      const currentCards = gameData.cards as CardType[] || [];
-      const newCards = currentCards
-        .filter(c => c.id !== dragon1.id && c.id !== dragon2.id)
+      const newCards = initializedCards
+        .filter(c => c.id !== dragon1.id && c.id !== dragon2.id && c.instanceId !== dragon1.instanceId && c.instanceId !== dragon2.instanceId)
         .concat(upgradedDragon);
 
       await updateGameData({

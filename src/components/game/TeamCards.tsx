@@ -12,7 +12,7 @@ if (typeof document !== 'undefined') {
 
 export const TeamCards = () => {
   const {
-    cards,
+    cardsWithHealth: cards,
     selectedPairs,
     handlePairSelect,
     handlePairRemove,
