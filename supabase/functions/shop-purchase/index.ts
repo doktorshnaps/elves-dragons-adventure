@@ -17,13 +17,15 @@ serve(async (req) => {
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    // Parse request body
-    const { item_id, quantity = 1, wallet_address } = await req.json();
+    // Parse request body - now we only accept session_token
+    const { session_token } = await req.json();
 
-    // Validate wallet_address
-    if (!wallet_address) {
+    // Validate session_token
+    if (!session_token) {
+      console.error('❌ Missing session_token');
       return new Response(JSON.stringify({ 
-        error: 'Missing wallet_address',
+        error: 'Missing session_token. Create a session first.',
+        code: 'SESSION_REQUIRED',
         success: false 
       }), {
         status: 400,
@@ -31,28 +33,46 @@ serve(async (req) => {
       });
     }
 
-    // Validate item_id
-    if (!item_id) {
+    console.log(`🔐 Validating shop session: ${session_token.substring(0, 8)}...`);
+
+    // Validate session and get wallet_address, item_id, quantity from database
+    const { data: sessionData, error: sessionError } = await supabase
+      .rpc('validate_shop_session', { p_session_token: session_token });
+
+    if (sessionError) {
+      console.error('❌ Session validation error:', sessionError);
       return new Response(JSON.stringify({ 
-        error: 'Missing item_id',
+        error: 'Session validation failed',
+        code: 'SESSION_ERROR',
         success: false 
       }), {
-        status: 400,
+        status: 500,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
 
-    // Validate quantity - must be positive integer between 1 and 100
-    if (!Number.isInteger(quantity) || quantity < 1 || quantity > 100) {
+    // Check if session is valid
+    const session = sessionData?.[0];
+    if (!session || !session.is_valid) {
+      console.error('❌ Invalid session:', session?.error_message || 'Unknown error');
       return new Response(JSON.stringify({ 
-        error: 'Invalid quantity: must be integer between 1 and 100',
+        error: session?.error_message || 'Invalid session',
+        code: 'INVALID_SESSION',
         success: false 
       }), {
-        status: 400,
+        status: 401,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
 
+    // Extract verified data from session
+    const wallet_address = session.wallet_address;
+    const item_id = session.item_id;
+    const quantity = session.quantity;
+
+    console.log(`✅ Session validated for wallet: ${wallet_address}, item: ${item_id}, qty: ${quantity}`);
+
+    // Rest of purchase logic with verified wallet_address from database
     console.log(`🛒 Processing purchase: item ${item_id} (qty: ${quantity})`);
 
     // Получаем информацию о товаре
@@ -266,11 +286,6 @@ if (itemTemplate.type === 'worker') {
       }
 
       console.log(`✅ Added ${quantity} items to item_instances:`, insertedItems);
-
-      // Legacy JSON inventory update removed. Items are persisted in item_instances only.
-      // This avoids referencing deprecated game_data.inventory column.
-      // If needed, a migration can backfill from item_instances.
-
     }
 
     console.log(`✅ Purchase successful: item ${item_id}, remaining: ${inventoryItem.available_quantity - quantity}`);

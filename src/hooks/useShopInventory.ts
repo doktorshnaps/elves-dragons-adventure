@@ -42,14 +42,38 @@ export const useShopInventory = () => {
     }
   };
 
+  /**
+   * Secure two-step purchase:
+   * 1. Create a session token (server validates wallet exists and has balance)
+   * 2. Execute purchase using session token (server extracts wallet from DB, not request)
+   */
   const purchaseItem = async (itemId: number, walletAddress: string, quantity: number = 1) => {
     try {
+      // Step 1: Create a secure shop session
+      console.log('[useShopInventory] Creating shop session...');
+      const { data: sessionData, error: sessionError } = await supabase.functions.invoke('create-shop-session', {
+        body: { 
+          wallet_address: walletAddress, 
+          item_id: itemId, 
+          quantity 
+        }
+      });
+
+      if (sessionError) throw sessionError;
+      if (!sessionData.success) throw new Error(sessionData.error);
+
+      const sessionToken = sessionData.session_token;
+      console.log('[useShopInventory] Session created, executing purchase...');
+
+      // Step 2: Execute purchase using session token (wallet comes from DB, not request)
       const { data, error } = await supabase.functions.invoke('shop-purchase', {
-        body: { item_id: itemId, wallet_address: walletAddress, quantity }
+        body: { session_token: sessionToken }
       });
 
       if (error) throw error;
       if (!data.success) throw new Error(data.error);
+
+      console.log('[useShopInventory] Purchase successful:', data);
 
       // Обновляем локальное состояние
       setInventory(prev => 
@@ -62,7 +86,7 @@ export const useShopInventory = () => {
 
       return data;
     } catch (error) {
-      console.error('Error purchasing item:', error);
+      console.error('[useShopInventory] Error purchasing item:', error);
       throw error;
     }
   };
