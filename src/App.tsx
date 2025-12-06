@@ -13,6 +13,7 @@ import { GameDataProvider } from './contexts/GameDataContext';
 import { StaticGameDataProvider } from './contexts/StaticGameDataContext';
 import { CardInstancesProvider } from './providers/CardInstancesProvider';
 import { ItemInstancesProvider } from './providers/ItemInstancesProvider';
+import { GameEventsProvider } from './contexts/GameEventsContext';
 import { ReferralHandler } from './components/ReferralHandler';
 import { AppInitializer } from './components/AppInitializer';
 import { MetricsPanel } from './components/dev/MetricsPanel';
@@ -58,9 +59,10 @@ function App() {
                 <GameDataProvider>
                   <CardInstancesProvider>
                     <ItemInstancesProvider>
-                      <BrightnessProvider>
-                        <MusicProvider>
-                          <LanguageProvider>
+                      <GameEventsProvider>
+                        <BrightnessProvider>
+                          <MusicProvider>
+                            <LanguageProvider>
                             <AppInitializer />
                             <div className="overflow-x-hidden max-w-full w-full">
                               <Suspense fallback={<PageLoader />}>
@@ -100,9 +102,10 @@ function App() {
                               <Toaster />
                               {import.meta.env.DEV && <MetricsPanel />}
                             </div>
-                          </LanguageProvider>
-                        </MusicProvider>
-                      </BrightnessProvider>
+                            </LanguageProvider>
+                          </MusicProvider>
+                        </BrightnessProvider>
+                      </GameEventsProvider>
                     </ItemInstancesProvider>
                   </CardInstancesProvider>
                 </GameDataProvider>
