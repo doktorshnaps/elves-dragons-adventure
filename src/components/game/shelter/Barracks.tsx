@@ -13,6 +13,7 @@ import { CardDisplay } from '../CardDisplay';
 import { useItemInstances } from '@/hooks/useItemInstances';
 import { useCards } from '@/hooks/useCards';
 import { Shield, Swords, Clock, Star, ArrowRight, Coins, Sparkles, AlertCircle, BookOpen } from 'lucide-react';
+import { useQueryClient } from '@tanstack/react-query';
 import { getUpgradeRequirement, rollUpgradeSuccess } from '@/utils/upgradeRequirements';
 import { useCardUpgradeRequirements } from '@/hooks/useCardUpgradeRequirements';
 import {
@@ -47,6 +48,7 @@ export const Barracks: React.FC<BarracksProps> = ({ barracksLevel, onUpgradeBuil
   const { toast } = useToast();
   const { gameData, updateGameData } = useGameData();
   const { language } = useLanguage();
+  const queryClient = useQueryClient();
   const [selectedHeroes, setSelectedHeroes] = useState<CardType[]>([]);
   const [currentTime, setCurrentTime] = useState(Date.now());
   const { instances: itemInstances, getCountsByItemId, removeItemInstancesByIds, getInstancesByItemId } = useItemInstances();
@@ -117,11 +119,8 @@ export const Barracks: React.FC<BarracksProps> = ({ barracksLevel, onUpgradeBuil
       description: `${sourceHero.name} улучшен до ${upgrade.toRarity} ранга!`,
     });
 
-    // Dispatch event to update cards in other components
-    const cardsEvent = new CustomEvent('cardsUpdate', {
-      detail: { cards: newCards }
-    });
-    window.dispatchEvent(cardsEvent);
+    // Invalidate card instances cache to refresh UI
+    await queryClient.invalidateQueries({ queryKey: ['cardInstances'] });
   };
 
   const getAvailableHeroes = (): CardType[] => {
@@ -321,11 +320,8 @@ export const Barracks: React.FC<BarracksProps> = ({ barracksLevel, onUpgradeBuil
         description: `${hero1.name} улучшен до ${hero1.rarity + 1} ранга!`,
       });
 
-      // Dispatch event to update cards
-      const cardsEvent = new CustomEvent('cardsUpdate', {
-        detail: { cards: newCards }
-      });
-      window.dispatchEvent(cardsEvent);
+      // Invalidate card instances cache to refresh UI
+      await queryClient.invalidateQueries({ queryKey: ['cardInstances'] });
     } else {
       // Failure: heroes stay, but resources are consumed
       await updateGameData(resourceUpdates);

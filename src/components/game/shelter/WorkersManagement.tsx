@@ -315,7 +315,8 @@ export const WorkersManagement = ({ onSpeedBoostChange }: WorkersManagementProps
           } catch (e) {
             console.error('Failed to save to localStorage:', e);
           }
-          window.dispatchEvent(new CustomEvent('activeWorkers:changed', { detail: updated }));
+          // Invalidate workers cache instead of window event
+          queryClient.invalidateQueries({ queryKey: ['gameData'] });
         }
         
         return updated;
@@ -411,7 +412,7 @@ export const WorkersManagement = ({ onSpeedBoostChange }: WorkersManagementProps
           const workers = (data as any).active_workers as ActiveWorker[];
           setActiveWorkers(workers);
           localStorage.setItem('activeWorkers', JSON.stringify(workers));
-          window.dispatchEvent(new CustomEvent('activeWorkers:changed', { detail: workers }));
+          // Cache already invalidated below via queryClient
         }
         
         // Инвалидируем кеш card_instances для обновления списка

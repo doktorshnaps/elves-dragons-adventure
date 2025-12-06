@@ -8,6 +8,7 @@ import { useBuildingUpgrades } from '@/hooks/useBuildingUpgrades';
 import { useBuildingConfigs } from '@/hooks/useBuildingConfigs';
 import { useItemTemplates } from '@/hooks/useItemTemplates';
 import { useItemInstances } from '@/hooks/useItemInstances';
+import { useQueryClient } from '@tanstack/react-query';
 import { useGameStore } from '@/stores/gameStore';
 import { resolveItemKey } from '@/utils/itemNames';
 import { useCraftingRecipes } from '@/hooks/useCraftingRecipes';
@@ -51,6 +52,7 @@ export const useShelterState = () => {
   const gameState = useBatchedGameState();
   const { gameData } = useGameDataContext();
   const { toast } = useToast();
+  const queryClient = useQueryClient();
   const { startUpgradeAtomic, isUpgrading, getUpgradeProgress, formatRemainingTime, installUpgrade, isUpgradeReady } = useBuildingUpgrades();
   const { getBuildingConfig, getUpgradeCost: getUpgradeCostFromDB, loading: configsLoading } = useBuildingConfigs(true);
   const { getTemplate, getItemName, getTemplateByName } = useItemTemplates();
@@ -75,17 +77,8 @@ export const useShelterState = () => {
   
   // inventory теперь управляется через item_instances
   const { instances: effectiveInventory } = useItemInstances();
-  // Подписка на события обновления баланса
-  useEffect(() => {
-    const handleBalanceUpdate = (e: any) => {
-      if (e.detail?.balance !== undefined) {
-        setBalance(e.detail.balance);
-      }
-    };
-    
-    window.addEventListener('balanceUpdate', handleBalanceUpdate as EventListener);
-    return () => window.removeEventListener('balanceUpdate', handleBalanceUpdate as EventListener);
-  }, []);
+  // OPTIMIZATION: Removed balanceUpdate event listener
+  // Balance is now synced via gameData from GameDataContext with Real-time subscription
   
   // Получаем активных рабочих: сначала из gameState, при пустом значении — из localStorage
   const getActiveWorkersSafe = () => {
@@ -122,15 +115,8 @@ export const useShelterState = () => {
     setWorkersLoaded(true);
   }, [gameState.activeWorkers]);
   
-  // Слушаем локальные события об изменении активных рабочих
-  useEffect(() => {
-    const handler = (e: any) => {
-      setActiveWorkersLocal(e.detail || getActiveWorkersSafe());
-      setWorkersLoaded(true);
-    };
-    window.addEventListener('activeWorkers:changed', handler as EventListener);
-    return () => window.removeEventListener('activeWorkers:changed', handler as EventListener);
-  }, []);
+  // OPTIMIZATION: Removed activeWorkers:changed event listener
+  // Workers are now synced via gameState.activeWorkers from useBatchedGameState
   
   const activeWorkers = activeWorkersLocal;
 
@@ -703,7 +689,7 @@ export const useShelterState = () => {
     // Сохраняем в localStorage для быстрой синхронизации
     try {
       localStorage.setItem('activeWorkers', JSON.stringify(updatedWorkers));
-      window.dispatchEvent(new CustomEvent('activeWorkers:changed', { detail: updatedWorkers }));
+      // Cache invalidated via gameState.actions.batchUpdate below
     } catch (e) {
       console.error('Failed to save crafting worker to localStorage', e);
     }
@@ -766,7 +752,7 @@ export const useShelterState = () => {
         // Сохраняем в localStorage
         try {
           localStorage.setItem('activeWorkers', JSON.stringify(updatedWorkers));
-          window.dispatchEvent(new CustomEvent('activeWorkers:changed', { detail: updatedWorkers }));
+          // Cache invalidated via gameState.actions.batchUpdate below
         } catch (e) {
           console.error('Failed to update localStorage', e);
         }

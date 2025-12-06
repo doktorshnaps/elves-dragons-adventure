@@ -124,11 +124,6 @@ export const PlayerManagement = () => {
       ]);
       
       console.log('🔄 [Admin] Invalidated gameData cache for:', balanceWallet.trim());
-      
-      // Триггерим событие для принудительного обновления
-      window.dispatchEvent(new CustomEvent('gameData:forceRefetch', { 
-        detail: { wallet: balanceWallet.trim() } 
-      }));
 
       toast({
         title: "Успешно",
