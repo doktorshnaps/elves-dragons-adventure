@@ -13,8 +13,8 @@ export type GameEventType =
   | 'startIncubation'
   | 'activeWorkers:changed'
   | 'cardInstanceHealthUpdate'
-  | 'wallet-changed'
-  | 'wallet-disconnected';
+  | 'walletChanged'
+  | 'walletDisconnected';
 
 export interface GameEventPayload {
   balance?: number;
