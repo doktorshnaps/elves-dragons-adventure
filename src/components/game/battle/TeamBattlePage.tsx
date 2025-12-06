@@ -74,6 +74,8 @@ const TeamBattlePageInner: React.FC<TeamBattlePageProps> = ({
   const { deviceId, startDungeonSession, endDungeonSession, getCurrentClaimKey } = useDungeonSync();
   const [sessionTerminated, setSessionTerminated] = useState(false);
   const [showingFinishDelay, setShowingFinishDelay] = useState(false);
+  // Время создания сессии - используется чтобы не проверять сессию сразу после её создания
+  const sessionCreatedAtRef = useRef<number>(0);
   
   // Инициализация кеша item templates и treasure hunt из StaticGameData
   const { templates: itemTemplatesMap } = useItemTemplates();
@@ -153,6 +155,9 @@ const TeamBattlePageInner: React.FC<TeamBattlePageProps> = ({
         console.warn('Failed to start dungeon session');
         return;
       }
+      // ✅ КРИТИЧНО: Запоминаем время создания сессии
+      sessionCreatedAtRef.current = Date.now();
+      console.log('📝 Session created at:', sessionCreatedAtRef.current);
     } else {
       console.log('⚡ Продолжение боя на уровне', battleState.level, '- энергия не списывается');
     }
@@ -592,7 +597,13 @@ const TeamBattlePageInner: React.FC<TeamBattlePageProps> = ({
           return; // Бой завершен нормально
         }
 
-        // Просто продолжаем проверку - sessionJustCreated больше не используется
+        // ✅ КРИТИЧНО: Пропускаем проверку если сессия создана менее 10 секунд назад
+        // Это даёт время БД записать сессию и индексировать её
+        const timeSinceCreation = Date.now() - sessionCreatedAtRef.current;
+        if (sessionCreatedAtRef.current > 0 && timeSinceCreation < 10000) {
+          console.log('⏳ Пропускаем проверку сессии - создана', Math.round(timeSinceCreation / 1000), 'сек назад');
+          return;
+        }
         
         const now = Date.now();
         const TIMEOUT = 300000; // 5 минут - даем запас для троттлинга heartbeat в фоновых вкладках
@@ -608,6 +619,7 @@ const TeamBattlePageInner: React.FC<TeamBattlePageProps> = ({
         // Если записи нет — считаем, что сессию завершили удаленно
         const stillActiveAfterCheck = battleStarted && useGameStore.getState().activeBattleInProgress;
         if ((!data || data.length === 0) && stillActiveAfterCheck) {
+          console.warn('⚠️ Сессия не найдена в БД, показываем диалог завершения');
           setSessionTerminated(true);
         }
       } catch (e) {
