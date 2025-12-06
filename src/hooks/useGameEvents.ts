@@ -34,11 +34,11 @@ export const useGameEvents = () => {
     },
     
     emitWalletChanged: (walletAddress: string) => {
-      events.emit('wallet-changed', { walletAddress });
+      events.emit('walletChanged', { walletAddress });
     },
     
     emitWalletDisconnected: () => {
-      events.emit('wallet-disconnected');
+      events.emit('walletDisconnected');
     },
   };
 };

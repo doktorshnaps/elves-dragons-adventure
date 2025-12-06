@@ -4,6 +4,7 @@ import { formatTime } from "@/utils/timeUtils";
 import { Rarity } from "@/types/cards";
 import { useLanguage } from "@/hooks/useLanguage";
 import { t } from "@/utils/translations";
+import { useGameEvents } from "@/contexts/GameEventsContext";
 
 interface DragonEggTimerProps {
   petName: string;
@@ -19,6 +20,7 @@ export const DragonEggTimer = ({
   onHatch 
 }: DragonEggTimerProps) => {
   const { language } = useLanguage();
+  const { emit } = useGameEvents();
   const {
     isStarted,
     isHatched,
@@ -38,11 +40,8 @@ export const DragonEggTimer = ({
     return (
       <Button 
         onClick={() => {
-          // Эмитируем событие для начала инкубации через контекст
-          const event = new CustomEvent('startIncubation', { 
-            detail: { petName, rarity }
-          });
-          window.dispatchEvent(event);
+          // Используем GameEventsContext вместо window.dispatchEvent
+          emit('startIncubation', { petName, rarity });
         }}
         className="mt-1 text-[8px] sm:text-[10px] md:text-[12px] px-2 py-1 rounded bg-game-primary/80 hover:bg-game-primary text-white hover-scale"
       >

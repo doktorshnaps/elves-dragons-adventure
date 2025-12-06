@@ -1,6 +1,7 @@
 /**
  * Utility to check for active battles and dungeons
  */
+import { useQueryClient } from '@tanstack/react-query';
 
 export interface ActiveBattleInfo {
   hasActiveBattle: boolean;
@@ -49,7 +50,10 @@ export const checkActiveBattle = (): ActiveBattleInfo => {
   };
 };
 
-export const clearActiveBattle = async (updateGameData?: (data: any) => Promise<void>) => {
+export const clearActiveBattle = async (
+  updateGameData?: (data: any) => Promise<void>,
+  queryClient?: ReturnType<typeof useQueryClient>
+) => {
   try {
     // Clear localStorage
     localStorage.removeItem('teamBattleState');
@@ -61,8 +65,11 @@ export const clearActiveBattle = async (updateGameData?: (data: any) => Promise<
       await updateGameData({ battleState: null });
     }
     
-    // Notify components
-    window.dispatchEvent(new CustomEvent('battleReset'));
+    // Инвалидируем кэш вместо window.dispatchEvent
+    if (queryClient) {
+      queryClient.invalidateQueries({ queryKey: ['gameData'] });
+      queryClient.invalidateQueries({ queryKey: ['cardInstances'] });
+    }
     
     console.log('✅ Active battle cleared');
     return true;

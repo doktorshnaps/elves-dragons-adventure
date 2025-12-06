@@ -2,11 +2,13 @@ import { useEffect, useState } from "react";
 import { Item } from "@/types/inventory";
 import { useToast } from "@/hooks/use-toast";
 import { useGameStore } from "@/stores/gameStore";
+import { useQueryClient } from "@tanstack/react-query";
 
 export const EquipmentGrid = () => {
   const inventory = useGameStore((state) => state.inventory);
   const equipItem = useGameStore((state) => state.equipItem);
   const unequipItem = useGameStore((state) => state.unequipItem);
+  const queryClient = useQueryClient();
   
   const [equippedItems, setEquippedItems] = useState<Item[]>([]);
   const [totalStats, setTotalStats] = useState({
@@ -47,13 +49,8 @@ export const EquipmentGrid = () => {
       description: `${item.name} был экипирован`
     });
 
-    // Отправляем события об изменении экипировки
-    const inventoryEvent = new CustomEvent('inventoryUpdate', {
-      detail: { inventory }
-    });
-    window.dispatchEvent(inventoryEvent);
-    const equipmentEvent = new CustomEvent('equipmentChange');
-    window.dispatchEvent(equipmentEvent);
+    // Инвалидируем кэш вместо window.dispatchEvent
+    queryClient.invalidateQueries({ queryKey: ['itemInstances'] });
     setSelectedSlot(null);
   };
 
@@ -65,13 +62,8 @@ export const EquipmentGrid = () => {
       description: `${item.name} был снят`
     });
 
-    // Отправляем события об изменении экипировки
-    const inventoryEvent = new CustomEvent('inventoryUpdate', {
-      detail: { inventory }
-    });
-    window.dispatchEvent(inventoryEvent);
-    const equipmentEvent = new CustomEvent('equipmentChange');
-    window.dispatchEvent(equipmentEvent);
+    // Инвалидируем кэш вместо window.dispatchEvent
+    queryClient.invalidateQueries({ queryKey: ['itemInstances'] });
   };
 
   const handleSlotClick = (slot: string, equippedItem?: Item) => {

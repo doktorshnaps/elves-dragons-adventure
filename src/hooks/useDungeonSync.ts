@@ -6,6 +6,7 @@ import { RealtimePostgresChangesPayload } from '@supabase/supabase-js';
 import { useActiveDungeonSessions } from './useActiveDungeonSessions';
 import { useToast } from './use-toast';
 import { useQueryClient } from '@tanstack/react-query';
+import { useGameEvents } from '@/contexts/GameEventsContext';
 
 interface ActiveDungeonSession {
   device_id: string;
@@ -20,6 +21,7 @@ export const useDungeonSync = () => {
   const { gameData, updateGameData } = useGameData();
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const { emit } = useGameEvents();
   
   // Используем React Query хук вместо прямых запросов к БД
   const { data: queriedSessions = [] } = useActiveDungeonSessions();
@@ -93,10 +95,11 @@ export const useDungeonSync = () => {
         localStorage.removeItem('currentClaimKey');
         setLocalSession(null);
         setCurrentClaimKey(null);
-        try { window.dispatchEvent(new CustomEvent('battleReset')); } catch {}
+        // Используем GameEventsContext вместо window.dispatchEvent
+        emit('battleReset');
       } catch {}
     }
-  }, [accountId, deviceId, localSession, activeSessions]);
+  }, [accountId, deviceId, localSession, activeSessions, emit]);
 
   // ❌ REMOVED: Heartbeat через клиент (блокируется RLS)
   // Сессия создается и обновляется только через Edge Functions
@@ -261,7 +264,8 @@ export const useDungeonSync = () => {
               localStorage.removeItem('currentClaimKey');
               setLocalSession(null);
               setCurrentClaimKey(null);
-              try { window.dispatchEvent(new CustomEvent('battleReset')); } catch {}
+              // Используем GameEventsContext вместо window.dispatchEvent
+              emit('battleReset');
             } catch {}
 
             // Сессия уже удалена - повторное удаление не требуется
@@ -291,7 +295,7 @@ export const useDungeonSync = () => {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [accountId]);
+  }, [accountId, emit]);
 
   // ❌ REMOVED: Heartbeat disabled (RLS blocks client-side updates)
 

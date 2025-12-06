@@ -3,6 +3,7 @@ import React, { createContext, useContext, useEffect, useRef, useState } from "r
 import type { WalletSelector, AccountState } from "@near-wallet-selector/core";
 import useTelegram from "@/hooks/useTelegram";
 import { initSelector } from "@/utils/selector";
+import { useQueryClient } from "@tanstack/react-query";
 
 interface WalletContextType {
   selector: WalletSelector | null;
@@ -31,6 +32,14 @@ export function WalletConnectProvider({ children }: { children: React.ReactNode 
   const [nearAccountId, setNearAccountId] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [hasError, setHasError] = useState(false);
+  const queryClientRef = useRef<ReturnType<typeof useQueryClient> | null>(null);
+
+  // Get queryClient inside provider (after QueryClientProvider is available)
+  try {
+    queryClientRef.current = useQueryClient();
+  } catch {
+    // QueryClient not available yet
+  }
 
   const unsubscribeRef = useRef<(() => void) | null>(null);
 
@@ -117,6 +126,13 @@ export function WalletConnectProvider({ children }: { children: React.ReactNode 
             // Store wallet address globally for secure storage access
             (window as any).__WALLET_ADDRESS__ = id;
             
+            // Инвалидируем кэш при смене кошелька
+            if (queryClientRef.current) {
+              queryClientRef.current.invalidateQueries({ queryKey: ['gameData'] });
+              queryClientRef.current.invalidateQueries({ queryKey: ['cardInstances'] });
+              queryClientRef.current.invalidateQueries({ queryKey: ['itemInstances'] });
+            }
+            
             // Get real NEAR account only if accountId changed
             if (id && nextState.selectedWalletId) {
               try {
@@ -176,7 +192,7 @@ export function WalletConnectProvider({ children }: { children: React.ReactNode 
     };
   }, [tgWebApp]);
 
-  // Синхронизация статуса подключения и оповещение приложения
+  // Синхронизация статуса подключения
   useEffect(() => {
     try {
       if (accountId) {
@@ -186,8 +202,6 @@ export function WalletConnectProvider({ children }: { children: React.ReactNode 
         if (nearAccountId) {
           localStorage.setItem('nearAccountId', nearAccountId);
         }
-        // Уведомляем систему о смене кошелька, чтобы подтянуть данные из БД
-        window.dispatchEvent(new CustomEvent('wallet-changed', { detail: { walletAddress: accountId, nearAccountId } }));
       } else {
         localStorage.removeItem('walletConnected');
         localStorage.removeItem('walletAccountId');
@@ -271,8 +285,10 @@ export function WalletConnectProvider({ children }: { children: React.ReactNode 
         }
       });
       
-      // Отправляем событие для очистки store
-      window.dispatchEvent(new CustomEvent('wallet-disconnected'));
+      // Очищаем весь кэш React Query вместо window.dispatchEvent
+      if (queryClientRef.current) {
+        queryClientRef.current.clear();
+      }
       
       console.log('✅ Wallet disconnected and all game data cleared');
     } catch (e) {

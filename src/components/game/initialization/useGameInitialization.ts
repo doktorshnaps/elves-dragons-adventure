@@ -3,6 +3,7 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useWalletContext } from "@/contexts/WalletConnectContext";
 import { useGameStore } from "@/stores/gameStore";
+import { useQueryClient } from "@tanstack/react-query";
 
 /**
  * РЕФАКТОРИНГ: Убрана зависимость от setCards
@@ -14,6 +15,7 @@ export const useGameInitialization = () => {
   const { accountId } = useWalletContext();
   const isConnected = !!accountId;
   const hasInitializedRef = useRef(false);
+  const queryClient = useQueryClient();
 
   console.log('🎮 useGameInitialization: accountId=', accountId, 'isConnected=', isConnected, 'hasInitialized=', hasInitializedRef.current);
 
@@ -95,11 +97,8 @@ export const useGameInitialization = () => {
           // Синхронизируем баланс с Zustand store
           useGameStore.getState().setBalance(startingBalance);
           
-          // Отправляем событие для обновления баланса
-          const balanceEvent = new CustomEvent('balanceUpdate', { 
-            detail: { balance: startingBalance }
-          });
-          window.dispatchEvent(balanceEvent);
+          // Инвалидируем кэш React Query вместо window.dispatchEvent
+          queryClient.invalidateQueries({ queryKey: ['gameData'] });
           
           toast({
             title: "Добро пожаловать в игру!",
@@ -110,11 +109,8 @@ export const useGameInitialization = () => {
           // РЕФАКТОРИНГ: cards больше не синхронизируем - используйте useCards() и card_instances
           useGameStore.getState().setBalance(gameData.balance);
           
-          // Отправляем событие для обновления баланса
-          const balanceEvent = new CustomEvent('balanceUpdate', { 
-            detail: { balance: gameData.balance }
-          });
-          window.dispatchEvent(balanceEvent);
+          // Инвалидируем кэш React Query вместо window.dispatchEvent
+          queryClient.invalidateQueries({ queryKey: ['gameData'] });
         }
       } catch (error) {
         console.error('Error in game initialization:', error);
@@ -127,7 +123,7 @@ export const useGameInitialization = () => {
     return () => {
       hasInitializedRef.current = false;
     };
-  }, [accountId, isConnected, toast]);
+  }, [accountId, isConnected, toast, queryClient]);
 
   return {};
 };

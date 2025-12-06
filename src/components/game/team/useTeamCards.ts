@@ -4,12 +4,14 @@ import { useToast } from "@/hooks/use-toast";
 import { getCardPrice, upgradeCard } from "@/utils/cardUtils";
 import { useDragonEggs } from "@/contexts/DragonEggContext";
 import { useGameData } from "@/hooks/useGameData";
+import { useQueryClient } from "@tanstack/react-query";
 import { Item } from "@/types/inventory";
 
 export const useTeamCards = () => {
   const { toast } = useToast();
   const { addEgg } = useDragonEggs();
   const { gameData, updateGameData } = useGameData();
+  const queryClient = useQueryClient();
   const [cards, setCards] = useState<CardType[]>(() => {
     const savedCards = localStorage.getItem('gameCards');
     return savedCards ? JSON.parse(savedCards) : [];
@@ -17,10 +19,6 @@ export const useTeamCards = () => {
   const [selectedCards, setSelectedCards] = useState<CardType[]>([]);
 
   useEffect(() => {
-    const handleCardsUpdate = (e: CustomEvent<{ cards: CardType[] }>) => {
-      setCards(e.detail.cards);
-    };
-
     const handleStorageChange = () => {
       const savedCards = localStorage.getItem('gameCards');
       if (savedCards) {
@@ -28,13 +26,11 @@ export const useTeamCards = () => {
       }
     };
 
-    window.addEventListener('cardsUpdate', handleCardsUpdate as EventListener);
     window.addEventListener('storage', handleStorageChange);
 
     const interval = setInterval(handleStorageChange, 500);
 
     return () => {
-      window.removeEventListener('cardsUpdate', handleCardsUpdate as EventListener);
       window.removeEventListener('storage', handleStorageChange);
       clearInterval(interval);
     };
@@ -54,15 +50,9 @@ export const useTeamCards = () => {
     const newBalance = currentBalance + price;
     localStorage.setItem('gameBalance', newBalance.toString());
 
-    const cardsEvent = new CustomEvent('cardsUpdate', { 
-      detail: { cards: newCards }
-    });
-    window.dispatchEvent(cardsEvent);
-
-    const balanceEvent = new CustomEvent('balanceUpdate', { 
-      detail: { balance: newBalance }
-    });
-    window.dispatchEvent(balanceEvent);
+    // Используем React Query invalidation вместо window.dispatchEvent
+    queryClient.invalidateQueries({ queryKey: ['cardInstances'] });
+    queryClient.invalidateQueries({ queryKey: ['gameData'] });
 
     toast({
       title: "Карта продана",
@@ -123,7 +113,7 @@ export const useTeamCards = () => {
       const eggId = Date.now().toString();
       const createdAt = new Date().toISOString();
 
-addEgg({
+      addEgg({
         id: eggId,
         petName: upgradedCard.name,
         rarity: upgradedCard.rarity,
@@ -146,16 +136,13 @@ addEgg({
       });
     }
 
-// Обновляем состояние, Supabase и localStorage
+    // Обновляем состояние, Supabase и localStorage
     setCards(newCards);
     await updateGameData({ cards: newCards });
     localStorage.setItem('gameCards', JSON.stringify(newCards));
 
-    // Отправляем событие обновления карт
-    const cardsEvent = new CustomEvent('cardsUpdate', { 
-      detail: { cards: newCards }
-    });
-    window.dispatchEvent(cardsEvent);
+    // Используем React Query invalidation вместо window.dispatchEvent
+    queryClient.invalidateQueries({ queryKey: ['cardInstances'] });
 
     // Очищаем выбранные карты
     setSelectedCards([]);
