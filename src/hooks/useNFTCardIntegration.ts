@@ -5,6 +5,7 @@ import { Card as CardType } from '@/types/cards';
 import { useToast } from './use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { calculateCardStats } from '@/utils/cardUtils';
+import { useQueryClient } from '@tanstack/react-query';
 
 let globalHasSynced = false;
 let syncInFlight = false;
@@ -19,6 +20,7 @@ export const useNFTCardIntegration = () => {
   const isConnected = !!accountId;
   const { getUserNFTCards, syncNFTCards } = useNFTCards();
   const { toast } = useToast();
+  const queryClient = useQueryClient();
 
   // Удаляем устаревшие NFT из локального хранилища и состояния игры
   const cleanupLocalNFTs = (currentNFTIds: string[]) => {
@@ -34,7 +36,8 @@ export const useNFTCardIntegration = () => {
 
         if (JSON.stringify(parsed) !== JSON.stringify(unique)) {
           localStorage.setItem('gameCards', JSON.stringify(unique));
-          window.dispatchEvent(new CustomEvent('cardsUpdate', { detail: { cards: unique } } as any));
+          // Invalidate cache instead of window event
+          queryClient.invalidateQueries({ queryKey: ['cardInstances'] });
           console.log('🧹 Removed stale NFT cards from gameCards');
         }
       }
@@ -235,12 +238,11 @@ export const useNFTCardIntegration = () => {
           console.error('Error calling cleanup-nft-gamedata:', err);
         }
         
-        // Оповещаем систему об обновлении
-        window.dispatchEvent(new CustomEvent('cardsUpdate', { 
-          detail: { cards: [] } 
-        }));
-        window.dispatchEvent(new CustomEvent('cardInstancesUpdate'));
-        window.dispatchEvent(new CustomEvent('gameDataUpdated'));
+        // Invalidate caches instead of window events
+        await Promise.all([
+          queryClient.invalidateQueries({ queryKey: ['cardInstances'] }),
+          queryClient.invalidateQueries({ queryKey: ['gameData'] })
+        ]);
         
         setIsLoading(false);
         toast({
@@ -457,16 +459,11 @@ export const useNFTCardIntegration = () => {
             });
             setNftCards(updatedNftCards);
             
-            // Оповещаем систему об обновлении карт
-            window.dispatchEvent(new CustomEvent('cardsUpdate', { 
-              detail: { cards: updatedNftCards } 
-            }));
-            
-            // Оповещаем об обновлении card_instances
-            window.dispatchEvent(new CustomEvent('cardInstancesUpdate'));
-            
-            // КРИТИЧНО: Оповещаем об обновлении game_data, чтобы UI перезагрузил карты
-            window.dispatchEvent(new CustomEvent('gameDataUpdated'));
+            // Invalidate caches instead of window events
+            await Promise.all([
+              queryClient.invalidateQueries({ queryKey: ['cardInstances'] }),
+              queryClient.invalidateQueries({ queryKey: ['gameData'] })
+            ]);
             
             console.log('✅ NFT cleanup completed, UI will reload data');
           }

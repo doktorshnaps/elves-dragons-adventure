@@ -44,21 +44,8 @@ export const applyDamageToPair = async (
   console.log('⚡ [BATTLE] Local damage applied, DB sync deferred until battle end');
 
   
-  // Dispatch health sync events for immediate UI updates
-  if (updatedHero) {
-    const heroEvent = new CustomEvent('cardHealthChanged', { 
-      detail: { card: updatedHero, damage: remainingDamage }
-    });
-    window.dispatchEvent(heroEvent);
-  }
-  
-  if (updatedDragon) {
-    const dragonDamage = Math.min(damage, (pair.dragon?.currentHealth ?? pair.dragon?.health ?? 0));
-    const dragonEvent = new CustomEvent('cardHealthChanged', { 
-      detail: { card: updatedDragon, damage: dragonDamage }
-    });
-    window.dispatchEvent(dragonEvent);
-  }
+  // OPTIMIZATION: Removed cardHealthChanged events - battle uses local state
+  // UI updates happen through React state in battle components, not window events
 
   // КРИТИЧНО: Пересчитываем здоровье пары И обновляем индивидуальные значения героя/дракона
   const newHeroHealth = updatedHero ? (updatedHero.currentHealth ?? updatedHero.health) : 0;

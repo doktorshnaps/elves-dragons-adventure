@@ -3,6 +3,7 @@ import { useWalletContext } from '@/contexts/WalletConnectContext';
 import { useAdmin } from '@/contexts/AdminContext';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { useQueryClient } from '@tanstack/react-query';
 import { WhitelistManager } from '@/components/admin/WhitelistManager';
 import { BannedUsersManager } from '@/components/admin/BannedUsersManager';
 import { WhitelistContractsManager } from '@/components/admin/WhitelistContractsManager';
@@ -23,6 +24,7 @@ export const AdminConsole = () => {
   const { accountId } = useWalletContext();
   const { isAdmin, loading: adminLoading } = useAdmin();
   const { toast } = useToast();
+  const queryClient = useQueryClient();
   const [command, setCommand] = useState('');
   const [output, setOutput] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
@@ -542,8 +544,8 @@ export const AdminConsole = () => {
       
       // Обновляем локальные данные игрока если это текущий пользователь
       if (accountId === 'mr_bruts.tg') {
-        // Запускаем событие обновления card_instances для синхронизации
-        window.dispatchEvent(new CustomEvent('cardInstancesUpdate'));
+        // Invalidate card instances cache to sync
+        queryClient.invalidateQueries({ queryKey: ['cardInstances'] });
       }
     }
   };
