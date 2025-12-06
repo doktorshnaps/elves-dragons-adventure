@@ -180,7 +180,16 @@ const TeamBattlePageInner: React.FC<TeamBattlePageProps> = ({
         
         if (error) {
           console.error('❌ Ошибка проверки активных сессий:', error);
-        } else if (sessions && sessions.length > 0) {
+          // При сетевой ошибке показываем сообщение и НЕ продолжаем
+          toast({
+            title: t(language, 'errors.networkError') || 'Ошибка сети',
+            description: t(language, 'errors.tryAgain') || 'Проверьте соединение и попробуйте снова',
+            variant: 'destructive',
+          });
+          return;
+        }
+        
+        if (sessions && sessions.length > 0) {
           console.log('⚠️ Найдены активные сессии:', sessions);
           // Показываем предупреждение
           setActiveSessionWarning({ isOpen: true, sessions });
@@ -190,6 +199,13 @@ const TeamBattlePageInner: React.FC<TeamBattlePageProps> = ({
         console.log('✅ Активных сессий не найдено, продолжаем...');
       } catch (err) {
         console.error('❌ Ошибка при проверке сессий:', err);
+        // При catch также не продолжаем
+        toast({
+          title: t(language, 'errors.networkError') || 'Ошибка сети',
+          description: t(language, 'errors.tryAgain') || 'Проверьте соединение и попробуйте снова',
+          variant: 'destructive',
+        });
+        return;
       }
     }
     
