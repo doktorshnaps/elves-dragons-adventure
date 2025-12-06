@@ -20,7 +20,7 @@ import dungeonIcon from "@/assets/dungeon-icon.webp";
 import shopIcon from "@/assets/shop-icon.webp";
 import shelterIcon from "@/assets/shelter-icon.webp";
 import walletIcon from "@/assets/wallet-icon.webp";
-import marketplaceIcon from "@/assets/marketplace-icon.webp";
+
 import moneyIcon from "@/assets/money-icon.webp";
 import inventoryIcon from "@/assets/inventory-icon.webp";
 import teamIcon from "@/assets/team-icon.webp";
@@ -168,12 +168,6 @@ export const Menu = () => {
           <span className="text-base font-semibold leading-tight text-center">{t(language, 'menu.magicShop').toUpperCase().replace(' ', '\n')}</span>
         </Button>
 
-        <Button variant="outline" className="h-36 bg-black/50 border-2 border-white rounded-3xl text-white hover:bg-black/70 hover:text-white transition-all flex flex-col items-center justify-center gap-3 backdrop-blur-sm" style={{
-        boxShadow: '-33px 15px 10px rgba(0, 0, 0, 0.6)'
-      }} onClick={() => navigate('/marketplace')}>
-          <img src={marketplaceIcon} alt="Marketplace" className="w-[23px] h-[23px]" />
-          <span className="text-base font-semibold leading-tight text-center">{t(language, 'menu.tradingPlatform').toUpperCase().replace(' ', '\n')}</span>
-        </Button>
 
         <Button variant="outline" className="h-36 bg-black/50 border-2 border-white rounded-3xl text-white hover:bg-black/70 hover:text-white transition-all flex flex-col items-center justify-center gap-3 backdrop-blur-sm" style={{
         boxShadow: '-33px 15px 10px rgba(0, 0, 0, 0.6)'
