@@ -78,30 +78,44 @@ export const ClaimRewardsResultModal: React.FC<ClaimRewardsResultModalProps> = (
           )}
 
           {/* Предметы */}
-          {rewards.items && rewards.items.length > 0 && (
-            <Card className="border-primary/20 bg-background/50">
-              <CardContent className="p-4 space-y-3">
-                <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
-                  <Package className="w-4 h-4" />
-                  Полученные предметы:
-                </div>
-                
-                <div className="space-y-2 max-h-[200px] overflow-y-auto pr-2 scrollbar-thin scrollbar-thumb-primary/20 scrollbar-track-transparent">
-                  {rewards.items.map((item, index) => (
-                    <div 
-                      key={index} 
-                      className="flex items-center justify-between p-2 bg-background/50 rounded border border-border/50"
-                    >
-                      <div className="text-sm font-medium">{item.name}</div>
-                      <div className="text-xs text-primary font-bold">
-                        x{item.quantity || 1}
+          {rewards.items && rewards.items.length > 0 && (() => {
+            // ✅ Группируем одинаковые предметы по имени
+            const groupedItems = rewards.items.reduce((acc, item) => {
+              const key = item.name;
+              if (!acc[key]) {
+                acc[key] = { ...item, quantity: 0 };
+              }
+              acc[key].quantity! += (item.quantity || 1);
+              return acc;
+            }, {} as Record<string, typeof rewards.items[0]>);
+            
+            const itemsList = Object.values(groupedItems);
+            
+            return (
+              <Card className="border-primary/20 bg-background/50">
+                <CardContent className="p-4 space-y-3">
+                  <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
+                    <Package className="w-4 h-4" />
+                    Полученные предметы:
+                  </div>
+                  
+                  <div className="space-y-2 max-h-[200px] overflow-y-auto pr-2 scrollbar-thin scrollbar-thumb-primary/20 scrollbar-track-transparent">
+                    {itemsList.map((item, index) => (
+                      <div 
+                        key={index} 
+                        className="flex items-center justify-between p-2 bg-background/50 rounded border border-border/50"
+                      >
+                        <div className="text-sm font-medium">{item.name}</div>
+                        <div className="text-xs text-primary font-bold">
+                          x{item.quantity}
+                        </div>
                       </div>
-                    </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-          )}
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+            );
+          })()}
 
           {/* Кнопка закрытия */}
           <Button 
