@@ -20,24 +20,9 @@ export const useTeamBattle = (dungeonType: DungeonType, initialLevel: number = 1
   const { loading: cardInstancesLoading, cardInstances, incrementMonsterKills } = useCardInstancesContext();
   const { adjustDelay } = useBattleSpeed();
   
+  // Battle state хранится ТОЛЬКО в React state, не в localStorage
+  // Это предотвращает рассинхронизацию и утечки данных между сессиями
   const [battleState, setBattleState] = useState<TeamBattleState>(() => {
-    const savedState = localStorage.getItem('teamBattleState');
-    if (savedState) {
-      try {
-        const parsed = JSON.parse(savedState) as Partial<TeamBattleState>;
-        return {
-          playerPairs: Array.isArray(parsed.playerPairs) ? parsed.playerPairs : [],
-          opponents: Array.isArray(parsed.opponents) ? parsed.opponents : [],
-          currentTurn: parsed.currentTurn === 'enemy' || parsed.currentTurn === 'player' ? parsed.currentTurn : 'player',
-          currentAttacker: typeof parsed.currentAttacker === 'number' ? parsed.currentAttacker : 0,
-          level: typeof parsed.level === 'number' ? parsed.level : initialLevel,
-          selectedDungeon: parsed.selectedDungeon ?? dungeonType
-        };
-      } catch {
-        localStorage.removeItem('teamBattleState');
-      }
-    }
-    
     return {
       playerPairs: [],
       opponents: [],
@@ -175,8 +160,8 @@ export const useTeamBattle = (dungeonType: DungeonType, initialLevel: number = 1
         
         const opponents = await generateDungeonOpponents(dungeonType, initialLevel);
         
-        // Устанавливаем флаг активного боя при инициализации
-        localStorage.setItem('activeBattleInProgress', 'true');
+        // Устанавливаем флаг активного боя через Zustand (без localStorage)
+        useGameStore.getState().setActiveBattleInProgress(true);
         console.log('🎬 [INIT] Starting battle, setting activeBattleInProgress=true');
         
         startTransition(() => {
@@ -199,8 +184,8 @@ export const useTeamBattle = (dungeonType: DungeonType, initialLevel: number = 1
     if (battleState.playerPairs.length === 0) return;
     if (cardInstancesLoading) return;
     
-    // Проверяем, идет ли активный бой
-    const activeBattle = localStorage.getItem('activeBattleInProgress') === 'true';
+    // Проверяем, идет ли активный бой через Zustand
+    const activeBattle = useGameStore.getState().activeBattleInProgress;
     if (activeBattle && battleState.opponents.length > 0) {
       console.log('⏸️ [useTeamBattle] Skipping re-sync during active battle to preserve local damage state');
       return;
@@ -277,13 +262,8 @@ export const useTeamBattle = (dungeonType: DungeonType, initialLevel: number = 1
     setBattleState(prev => ({ ...prev, playerPairs: resyncedPairs }));
   }, [cardInstances, cardInstancesLoading]);
 
-  // Save battle state
-  useEffect(() => {
-    // Сохраняем состояние боя ТОЛЬКО если бой реально начался
-    if (battleState.playerPairs.length > 0 && battleStarted) {
-      localStorage.setItem('teamBattleState', JSON.stringify(battleState));
-    }
-  }, [battleState, battleStarted]);
+  // Удалена синхронизация с localStorage - battleState хранится только в React state
+  // Это предотвращает блокировку UI и рассинхронизацию с БД
 
   const updateAttackOrder = (newOrder: string[]) => {
     setAttackOrder(newOrder);

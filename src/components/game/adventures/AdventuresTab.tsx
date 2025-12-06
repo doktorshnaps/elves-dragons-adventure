@@ -25,14 +25,9 @@ export const AdventuresTab = () => {
   const { accountLevel, accountExperience, addAccountExperience: addAccountExp, inventory, removeItem } = useGameStore();
   const { incrementMonsterKills } = useCardInstances();
 
-  const [currentMonster, setCurrentMonster] = useState<Monster | null>(() => {
-    const savedMonster = localStorage.getItem('adventureCurrentMonster');
-    return savedMonster ? JSON.parse(savedMonster) : null;
-  });
-
-  useEffect(() => {
-    localStorage.setItem('adventureCurrentMonster', JSON.stringify(currentMonster));
-  }, [currentMonster]);
+  // Adventure монстр - чисто локальное состояние, не нужно сохранять в localStorage
+  // При перезагрузке страницы просто генерируется новый монстр
+  const [currentMonster, setCurrentMonster] = useState<Monster | null>(null);
 
   const startAdventure = () => {
     if (playerStats.health <= 0) return;
