@@ -5,15 +5,15 @@ import debounce from 'lodash.debounce';
 
 /**
  * Hook для автоматической синхронизации Zustand с Supabase
- * Оптимизирован для снижения нагрузки на БД - обновляет только измененные поля
+ * РЕФАКТОРИНГ: cards удалены из gameStore - карты синхронизируются через card_instances
  */
 export const useZustandSupabaseSync = (walletAddress: string | null) => {
   const isSyncingRef = useRef(false);
   const lastStateRef = useRef<any>(null);
 
+  // РЕФАКТОРИНГ: cards удалены - используем только card_instances
   const state = useGameStore((state) => ({
     balance: state.balance,
-    cards: state.cards,
     inventory: state.inventory,
     dragonEggs: state.dragonEggs,
     selectedTeam: state.selectedTeam,
@@ -35,9 +35,8 @@ export const useZustandSupabaseSync = (walletAddress: string | null) => {
         let hasChanges = false;
 
         if (!lastStateRef.current) {
-          // Первая синхронизация - обновляем все
+          // Первая синхронизация - обновляем все (без cards)
           updates.balance = currentState.balance;
-          updates.cards = currentState.cards as any || [];
           updates.inventory = currentState.inventory as any || [];
           updates.dragon_eggs = currentState.dragonEggs as any || [];
           updates.selected_team = currentState.selectedTeam as any || [];
@@ -50,10 +49,7 @@ export const useZustandSupabaseSync = (walletAddress: string | null) => {
             updates.balance = currentState.balance;
             hasChanges = true;
           }
-          if (JSON.stringify(currentState.cards) !== JSON.stringify(lastStateRef.current.cards)) {
-            updates.cards = currentState.cards as any || [];
-            hasChanges = true;
-          }
+          // РЕФАКТОРИНГ: cards синхронизация удалена - используем card_instances
           if (JSON.stringify(currentState.inventory) !== JSON.stringify(lastStateRef.current.inventory)) {
             updates.inventory = currentState.inventory as any || [];
             hasChanges = true;

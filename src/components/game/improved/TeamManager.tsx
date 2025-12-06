@@ -14,7 +14,7 @@ interface TeamPair {
 }
 
 export const TeamManager = () => {
-  const { selectedTeam, setSelectedTeam, getTeamStats } = useGameStore();
+  const { selectedTeam, setSelectedTeam } = useGameStore();
   const { cardsWithHealth, selectedTeamWithHealth } = useCardsWithHealth();
   const [showHeroSelection, setShowHeroSelection] = useState(false);
   const [showDragonSelection, setShowDragonSelection] = useState(false);

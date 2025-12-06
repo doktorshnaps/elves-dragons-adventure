@@ -1,15 +1,12 @@
 import { create } from 'zustand';
-import { persist } from 'zustand/middleware';
-import { Card } from '@/types/cards';
 import { Item } from '@/types/inventory';
 import { DragonEgg } from '@/contexts/DragonEggContext';
 import { supabase } from '@/integrations/supabase/client';
-import { secureSetItem, secureGetItem, clearCriticalData, validateCriticalData } from '@/utils/secureStorage';
 
 interface GameState {
   // Core game data
   balance: number;
-  cards: Card[];
+  /** @deprecated Используйте useCards() вместо этого - cards удалены из store */
   inventory: Item[];
   dragonEggs: DragonEgg[];
   selectedTeam: any[];
@@ -35,9 +32,6 @@ interface GameState {
   unequipItem: (itemId: string) => void;
   setBalance: (balance: number) => void;
   addBalance: (amount: number) => void;
-  setCards: (cards: Card[]) => void;
-  addCard: (card: Card) => void;
-  removeCard: (cardId: string) => void;
   setInventory: (inventory: Item[]) => void;
   addItem: (item: Item) => void;
   removeItem: (itemId: string) => void;
@@ -55,25 +49,11 @@ interface GameState {
   initializeAccountData: (walletAddress: string) => Promise<void>;
   setAccountData: (level: number, experience: number) => void;
   clearAllData: () => void;
-  
-  // Computed values
-  getTeamStats: () => { power: number; defense: number; health: number; maxHealth: number };
 }
-
-// Helper to get wallet address from window context
-const getWalletAddress = (): string | null => {
-  try {
-    // This will be set by WalletConnectContext
-    return (window as any).__WALLET_ADDRESS__ || null;
-  } catch {
-    return null;
-  }
-};
 
 export const useGameStore = create<GameState>()((set, get) => ({
   // Initial state - все данные приходят из Supabase через useGameSync
   balance: 0,
-  cards: [],
   inventory: [],
   dragonEggs: [],
   selectedTeam: [],
@@ -87,12 +67,6 @@ export const useGameStore = create<GameState>()((set, get) => ({
   // Actions
   setBalance: (balance) => set({ balance }),
   addBalance: (amount) => set((state) => ({ balance: state.balance + amount })),
-  
-  setCards: (cards) => set({ cards }),
-  addCard: (card) => set((state) => ({ cards: [...state.cards, card] })),
-  removeCard: (cardId) => set((state) => ({ 
-    cards: state.cards.filter(c => c.id !== cardId) 
-  })),
   
   setInventory: (inventory) => set({ inventory }),
   addItem: (item) => set((state) => ({ inventory: [...state.inventory, item] })),
@@ -153,7 +127,6 @@ export const useGameStore = create<GameState>()((set, get) => ({
     const newExperience = state.accountExperience + amount;
     const experienceForNextLevel = state.accountLevel * 100;
     
-    // Убраны дублирующиеся UPDATE - синхронизация происходит через useZustandSupabaseSync
     if (newExperience >= experienceForNextLevel) {
       const newLevel = state.accountLevel + 1;
       const remainingExperience = newExperience - experienceForNextLevel;
@@ -187,7 +160,6 @@ export const useGameStore = create<GameState>()((set, get) => ({
   clearAllData: () => {
     set({
       balance: 0,
-      cards: [],
       inventory: [],
       dragonEggs: [],
       selectedTeam: [],
@@ -199,29 +171,4 @@ export const useGameStore = create<GameState>()((set, get) => ({
       equippedItems: [],
     });
   },
-  
-  getTeamStats: () => {
-    const state = get();
-    const team = state.selectedTeam || [];
-    
-    let totalPower = 0;
-    let totalDefense = 0;
-    let totalHealth = 0;
-    
-    team.forEach((member: any) => {
-      const card = state.cards.find((c: Card) => c.id === member.id);
-      if (card) {
-        totalPower += card.power || 0;
-        totalDefense += card.defense || 0;
-        totalHealth += card.currentHealth || card.health || 0;
-      }
-    });
-    
-    return {
-      power: totalPower,
-      defense: totalDefense,
-      health: totalHealth,
-      maxHealth: totalHealth
-    };
-  }
 }));

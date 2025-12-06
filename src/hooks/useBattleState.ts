@@ -14,7 +14,8 @@ import { useGameStore } from '@/stores/gameStore';
 export const useBattleState = (initialLevel: number = 1) => {
   const { toast } = useToast();
   const initialState = useInitialBattleState(initialLevel);
-  const { cards, selectedTeam } = useGameStore();
+  // РЕФАКТОРИНГ: cards удалены из gameStore, используем только selectedTeam
+  const { selectedTeam } = useGameStore();
   
   // Получаем карты из выбранной команды
   const teamCards = selectedTeam.map(pair => pair.hero).filter(Boolean);
