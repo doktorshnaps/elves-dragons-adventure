@@ -1485,6 +1485,39 @@ export type Database = {
         }
         Relationships: []
       }
+      shop_sessions: {
+        Row: {
+          created_at: string
+          expires_at: string
+          id: string
+          item_id: number
+          quantity: number
+          session_token: string
+          used_at: string | null
+          wallet_address: string
+        }
+        Insert: {
+          created_at?: string
+          expires_at?: string
+          id?: string
+          item_id: number
+          quantity?: number
+          session_token: string
+          used_at?: string | null
+          wallet_address: string
+        }
+        Update: {
+          created_at?: string
+          expires_at?: string
+          id?: string
+          item_id?: number
+          quantity?: number
+          session_token?: string
+          used_at?: string | null
+          wallet_address?: string
+        }
+        Relationships: []
+      }
       shop_settings: {
         Row: {
           created_at: string
@@ -2647,6 +2680,14 @@ export type Database = {
         Args: { p_item_id: string; p_listing_type: string; p_price: number }
         Returns: string
       }
+      create_shop_session: {
+        Args: {
+          p_item_id: number
+          p_quantity?: number
+          p_wallet_address: string
+        }
+        Returns: string
+      }
       create_worker_card_instance: {
         Args: { p_wallet_address: string; p_worker_data: Json }
         Returns: string
@@ -3283,6 +3324,16 @@ export type Database = {
           p_wallet_address: string
         }
         Returns: string
+      }
+      validate_shop_session: {
+        Args: { p_session_token: string }
+        Returns: {
+          error_message: string
+          is_valid: boolean
+          item_id: number
+          quantity: number
+          wallet_address: string
+        }[]
       }
     }
     Enums: {

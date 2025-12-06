@@ -18,6 +18,9 @@ verify_jwt = true
 [functions.shop-purchase]
 verify_jwt = false
 
+[functions.create-shop-session]
+verify_jwt = false
+
 [functions.get-claim-challenge]
 verify_jwt = false
 

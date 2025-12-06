@@ -43,15 +43,38 @@ export const useShopRealtime = () => {
     }
   };
 
+  /**
+   * Secure two-step purchase:
+   * 1. Create a session token (server validates wallet exists and has balance)
+   * 2. Execute purchase using session token (server extracts wallet from DB, not request)
+   */
   const purchaseItem = async (itemId: number, walletAddress: string, quantity: number = 1) => {
     try {
-      // Send wallet_address in body for NEAR wallet users
+      // Step 1: Create a secure shop session
+      console.log('[useShopRealtime] Creating shop session...');
+      const { data: sessionData, error: sessionError } = await supabase.functions.invoke('create-shop-session', {
+        body: { 
+          wallet_address: walletAddress, 
+          item_id: itemId, 
+          quantity 
+        }
+      });
+
+      if (sessionError) throw sessionError;
+      if (!sessionData.success) throw new Error(sessionData.error);
+
+      const sessionToken = sessionData.session_token;
+      console.log('[useShopRealtime] Session created, executing purchase...');
+
+      // Step 2: Execute purchase using session token (wallet comes from DB, not request)
       const { data, error } = await supabase.functions.invoke('shop-purchase', {
-        body: { item_id: itemId, quantity, wallet_address: walletAddress }
+        body: { session_token: sessionToken }
       });
 
       if (error) throw error;
       if (!data.success) throw new Error(data.error);
+
+      console.log('[useShopRealtime] Purchase successful:', data);
 
       // Real-time subscription will handle inventory update automatically
       return data;
