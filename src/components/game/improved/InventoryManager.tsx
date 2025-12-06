@@ -8,6 +8,9 @@ import { Item } from '@/types/inventory';
 import { Package, Heart, Sparkles } from 'lucide-react';
 import { generateCard } from '@/utils/cardUtils';
 import { Badge } from '@/components/ui/badge';
+import { useQueryClient } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
+import { useWalletContext } from '@/contexts/WalletConnectContext';
 
 interface GroupedItem {
   name: string;
@@ -18,9 +21,11 @@ interface GroupedItem {
 }
 
 export const InventoryManager = () => {
-  const { inventory, removeItem, addCard } = useGameStore();
+  const { inventory, removeItem } = useGameStore();
   const { handleError, handleSuccess } = useErrorHandler();
   const [selectedItem, setSelectedItem] = useState<GroupedItem | null>(null);
+  const queryClient = useQueryClient();
+  const { accountId } = useWalletContext();
 
   const groupItems = (items: Item[]): GroupedItem[] => {
     const groups = new Map<string, GroupedItem>();
@@ -51,10 +56,25 @@ export const InventoryManager = () => {
       const item = groupedItem.items[0];
       
       if (item.type === 'cardPack') {
-        // Открываем колоду карт
+        // Открываем колоду карт - создаем карту в card_instances через RPC
         const newCard = generateCard(Math.random() > 0.5 ? 'character' : 'pet');
-        addCard(newCard);
+        
+        if (accountId) {
+          // Добавляем карту через card_instances
+          const { error } = await supabase.rpc('create_card_instance_by_wallet', {
+            p_wallet_address: accountId,
+            p_card: newCard as any
+          });
+          
+          if (error) {
+            console.error('Error adding card:', error);
+            handleError({ message: 'Ошибка при открытии колоды' });
+            return;
+          }
+        }
+        
         removeItem(item.id);
+        queryClient.invalidateQueries({ queryKey: ['cardInstances'] });
         
         handleSuccess(
           'Колода открыта!',

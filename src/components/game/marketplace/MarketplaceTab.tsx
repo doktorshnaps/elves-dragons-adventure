@@ -9,16 +9,17 @@ import { useNavigate } from "react-router-dom";
 import { getItemDisplayInfo } from "./utils";
 import { ListingDialog } from "./ListingDialog";
 import { useGameStore } from "@/stores/gameStore";
+import { useQueryClient } from "@tanstack/react-query";
 
 export const MarketplaceTab = () => {
   const { toast } = useToast();
+  const queryClient = useQueryClient();
   const [showListingDialog, setShowListingDialog] = useState(false);
   const { gameData, updateGameData } = useGameData();
-  // Use Zustand store instead of localStorage
+  // РЕФАКТОРИНГ: cards удалены из gameStore, используем React Query invalidation
   const balance = useGameStore(state => state.balance);
   const inventory = useGameStore(state => state.inventory);
-  const cards = useGameStore(state => state.cards);
-  const { addItem, addCard, setBalance } = useGameStore();
+  const { addItem, setBalance } = useGameStore();
   const navigate = useNavigate();
   const [listings, setListings] = useState<MarketplaceListing[]>(() => {
     const saved = localStorage.getItem('marketplaceListings');
@@ -41,11 +42,12 @@ export const MarketplaceTab = () => {
     setListings(newListings);
     localStorage.setItem('marketplaceListings', JSON.stringify(newListings));
 
-    // Use Zustand store instead of localStorage
+    // РЕФАКТОРИНГ: invalidate caches вместо прямого добавления в store
     if (listing.type === 'item') {
       addItem(listing.item as any);
     } else {
-      addCard(listing.item as any);
+      // Для карт - invalidate cardInstances cache
+      queryClient.invalidateQueries({ queryKey: ['cardInstances'] });
     }
 
     toast({
@@ -75,7 +77,8 @@ export const MarketplaceTab = () => {
     if (listing.type === 'item') {
       addItem({ ...listing.item, id: Date.now().toString() } as any);
     } else {
-      addCard({ ...listing.item, id: Date.now().toString() } as any);
+      // РЕФАКТОРИНГ: invalidate cardInstances вместо addCard
+      queryClient.invalidateQueries({ queryKey: ['cardInstances'] });
     }
 
     toast({
