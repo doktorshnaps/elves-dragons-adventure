@@ -52,7 +52,6 @@ interface GameState {
   setAccountLevel: (level: number) => void;
   setAccountExperience: (experience: number) => void;
   addAccountExperience: (amount: number) => Promise<void>;
-  syncAccountData: (walletAddress: string) => Promise<void>;
   initializeAccountData: (walletAddress: string) => Promise<void>;
   setAccountData: (level: number, experience: number) => void;
   clearAllData: () => void;
@@ -166,11 +165,6 @@ export const useGameStore = create<GameState>()((set, get) => ({
     } else {
       set({ accountExperience: newExperience });
     }
-  },
-  
-  // Deprecated - синхронизация теперь автоматическая через useZustandSupabaseSync
-  syncAccountData: async (walletAddress: string) => {
-    console.warn('syncAccountData is deprecated - sync happens automatically via useZustandSupabaseSync');
   },
   
   initializeAccountData: async (walletAddress: string) => {
