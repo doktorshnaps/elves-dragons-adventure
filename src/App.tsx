@@ -32,7 +32,6 @@ const TeamStatsWithLazyLoading = lazy(() => import('./components/lazy/LazyCompon
 const GrimoireWithLazyLoading = lazy(() => import('./components/lazy/LazyComponents').then(m => ({ default: m.GrimoireWithLazyLoading })));
 const DungeonsWithLazyLoading = lazy(() => import('./components/lazy/LazyComponents').then(m => ({ default: m.DungeonsWithLazyLoading })));
 const AdventuresPageWithLazyLoading = lazy(() => import('./components/lazy/LazyComponents').then(m => ({ default: m.AdventuresPageWithLazyLoading })));
-const MarketplaceWithLazyLoading = lazy(() => import('./components/lazy/LazyComponents').then(m => ({ default: m.MarketplaceWithLazyLoading })));
 const ShopPageWithLazyLoading = lazy(() => import('./components/lazy/LazyComponents').then(m => ({ default: m.ShopPageWithLazyLoading })));
 const QuestPageWithLazyLoading = lazy(() => import('./components/lazy/LazyComponents').then(m => ({ default: m.QuestPageWithLazyLoading })));
 const ShelterWithLazyLoading = lazy(() => import('./components/lazy/LazyComponents').then(m => ({ default: m.ShelterWithLazyLoading })));
@@ -84,7 +83,6 @@ function App() {
                                   <Route path="/grimoire" element={<Suspense fallback={<PageLoader />}><ProtectedRoute><GrimoireWithLazyLoading /></ProtectedRoute></Suspense>} />
                                   <Route path="/dungeons" element={<Suspense fallback={<PageLoader />}><ProtectedRoute><DungeonsWithLazyLoading /></ProtectedRoute></Suspense>} />
                                   <Route path="/adventure" element={<Suspense fallback={<PageLoader />}><ProtectedRoute><AdventuresPageWithLazyLoading /></ProtectedRoute></Suspense>} />
-                                  <Route path="/marketplace" element={<Suspense fallback={<PageLoader />}><ProtectedRoute><MarketplaceWithLazyLoading /></ProtectedRoute></Suspense>} />
                                   <Route path="/shop" element={<Suspense fallback={<PageLoader />}><ProtectedRoute><ShopPageWithLazyLoading /></ProtectedRoute></Suspense>} />
                                   <Route path="/quest" element={<Suspense fallback={<PageLoader />}><ProtectedRoute><QuestPageWithLazyLoading /></ProtectedRoute></Suspense>} />
                                   <Route path="/shelter" element={<Suspense fallback={<PageLoader />}><ProtectedRoute><ShelterWithLazyLoading /></ProtectedRoute></Suspense>} />

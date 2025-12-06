@@ -56,14 +56,6 @@ export const LazyAdventuresPage = createLazyComponent(
   }
 );
 
-export const LazyMarketplace = createLazyComponent(
-  () => import('@/pages/Marketplace'),
-  { 
-    fallback: <div className="p-4">Загрузка торговой площадки...</div>,
-    preload: false 
-  }
-);
-
 export const LazyShopPage = createLazyComponent(
   () => import('@/pages/ShopPage').then(module => ({ default: module.ShopPage })),
   { 
@@ -207,7 +199,6 @@ export const GrimoireWithLazyLoading = withLazyLoading(LazyGrimoire);
 // BattleWithLazyLoading удален - использует устаревшую механику
 export const DungeonsWithLazyLoading = withLazyLoading(LazyDungeons);
 export const AdventuresPageWithLazyLoading = withLazyLoading(LazyAdventuresPage);
-export const MarketplaceWithLazyLoading = withLazyLoading(LazyMarketplace);
 export const ShopPageWithLazyLoading = withLazyLoading(LazyShopPage);
 export const QuestPageWithLazyLoading = withLazyLoading(LazyQuestPage);
 export const ShelterWithLazyLoading = withLazyLoading(LazyShelter);
