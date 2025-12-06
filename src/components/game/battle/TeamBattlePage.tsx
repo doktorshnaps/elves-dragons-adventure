@@ -58,20 +58,9 @@ const TeamBattlePageInner: React.FC<TeamBattlePageProps> = ({
     sessions: Array<{ device_id: string; dungeon_type: string; level: number; last_activity: number }>;
   }>({ isOpen: false, sessions: [] });
   
-  // КРИТИЧНО: Восстанавливаем список убитых монстров из localStorage при инициализации
-  const [monstersKilled, setMonstersKilled] = useState<Array<{level: number, dungeonType: string, name?: string}>>(() => {
-    try {
-      const saved = localStorage.getItem('monstersKilled');
-      if (saved) {
-        const parsed = JSON.parse(saved);
-        console.log('✅ Восстановлено убитых монстров из localStorage:', parsed.length);
-        return parsed;
-      }
-    } catch (error) {
-      console.error('❌ Ошибка восстановления monstersKilled:', error);
-    }
-    return [];
-  });
+  // Список убитых монстров - хранится в React state, не в localStorage
+  // При перезагрузке страницы список сбрасывается (это нормальное поведение)
+  const [monstersKilled, setMonstersKilled] = useState<Array<{level: number, dungeonType: string, name?: string}>>([]);
   const monstersKilledRef = useRef<Array<{level: number, dungeonType: string, name?: string}>>([]);
   const prevAliveOpponentsRef = React.useRef<number>(0);
   const prevOpponentsRef = React.useRef<Array<{id: number, name: string, health: number}>>([]);
@@ -224,14 +213,11 @@ const TeamBattlePageInner: React.FC<TeamBattlePageProps> = ({
   };
   const handleExitAndReset = async () => {
     // КРИТИЧНО: Сначала устанавливаем флаги завершения, ПОТОМ удаляем сессию
-    // Это предотвращает ложное срабатывание Real-time подписки
+    // Флаги теперь управляются только через Zustand
     startTransition(() => {
       useGameStore.getState().setActiveBattleInProgress(false);
-      localStorage.removeItem('activeBattleInProgress');
-      // 🔒 Удаляем флаг "сессия только что создана" при выходе
-      localStorage.removeItem('sessionJustCreated');
-      // 🧹 Очищаем список убитых монстров при выходе из подземелья
-      localStorage.removeItem('monstersKilled');
+      // Сбрасываем monstersKilled в state (не localStorage)
+      setMonstersKilled([]);
     });
     
     // 💀 КРИТИЧНО: Удаляем мертвых героев из команды перед выходом
@@ -545,8 +531,7 @@ const TeamBattlePageInner: React.FC<TeamBattlePageProps> = ({
         description: "Не удалось найти карты для сохранения состояния.",
         variant: "default"
       });
-      // Все равно выходим и очищаем monstersKilled
-      localStorage.removeItem('monstersKilled');
+      // Все равно выходим (monstersKilled сбросится в handleExitAndReset)
       handleExitAndReset();
       return;
     }
@@ -568,8 +553,7 @@ const TeamBattlePageInner: React.FC<TeamBattlePageProps> = ({
       });
     }
     
-    // Очищаем список убитых монстров при сдаче
-    localStorage.removeItem('monstersKilled');
+    // monstersKilled сбросится в handleExitAndReset
     handleExitAndReset();
   }, [collectCardHealthUpdates, claimRewardAndExit, dungeonType, battleState.level, handleExitAndReset]);
 
@@ -592,22 +576,7 @@ const TeamBattlePageInner: React.FC<TeamBattlePageProps> = ({
           return; // Бой завершен нормально
         }
 
-        // 🔒 КРИТИЧНО: Проверяем флаг "сессия только что создана"
-        // Race condition: SELECT может вернуть 0 сессий до репликации данных
-        const sessionJustCreatedStr = localStorage.getItem('sessionJustCreated');
-        if (sessionJustCreatedStr) {
-          const createdTime = parseInt(sessionJustCreatedStr, 10);
-          const timeSinceCreation = Date.now() - createdTime;
-          
-          // Не показываем модалку в течение 3 секунд после создания сессии
-          if (timeSinceCreation < 3000) {
-            console.log('⏳ Session just created, skipping check for', 3000 - timeSinceCreation, 'ms');
-            return;
-          }
-          
-          // Очищаем флаг после 3 секунд
-          localStorage.removeItem('sessionJustCreated');
-        }
+        // Просто продолжаем проверку - sessionJustCreated больше не используется
         
         const now = Date.now();
         const TIMEOUT = 300000; // 5 минут - даем запас для троттлинга heartbeat в фоновых вкладках
@@ -722,19 +691,9 @@ const TeamBattlePageInner: React.FC<TeamBattlePageProps> = ({
     prevAliveOpponentsRef.current = aliveOpponents.length;
   }, [aliveOpponents, battleState.level, dungeonType, battleStarted]);
 
-  // Синхронизируем ref с актуальными убийствами и сохраняем в localStorage
+  // Синхронизируем ref с актуальными убийствами (без localStorage)
   useEffect(() => {
     monstersKilledRef.current = monstersKilled;
-    
-    // КРИТИЧНО: Сохраняем список убитых монстров в localStorage при каждом обновлении
-    if (monstersKilled.length > 0) {
-      try {
-        localStorage.setItem('monstersKilled', JSON.stringify(monstersKilled));
-        console.log('💾 Сохранено убитых монстров в localStorage:', monstersKilled.length);
-      } catch (error) {
-        console.error('❌ Ошибка сохранения monstersKilled:', error);
-      }
-    }
   }, [monstersKilled]);
 
   // Check if battle is over
@@ -761,9 +720,8 @@ const TeamBattlePageInner: React.FC<TeamBattlePageProps> = ({
     if (!isVictory) {
       const kills = monstersKilledRef.current;
       console.log('💀 ПОРАЖЕНИЕ - очистка состояния боя');
-      localStorage.removeItem('teamBattleState');
-      localStorage.removeItem('activeBattleInProgress');
-      localStorage.removeItem('battleState'); // legacy
+      // Флаги управляются через Zustand, не localStorage
+      useGameStore.getState().setActiveBattleInProgress(false);
       processDungeonCompletion(kills, battleState.level, isFullCompletion, true); // isDefeat = true
     } else {
       // Задержка 1.8с, чтобы успели проиграться бросок кубика, полет оружия и смерть монстра

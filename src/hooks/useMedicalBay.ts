@@ -87,22 +87,8 @@ export const useMedicalBay = () => {
       return;
     }
 
-    // Проверяем, есть ли назначенные рабочие в медпункт (state или localStorage)
-    const getActiveWorkersSafe = () => {
-      const fromState = Array.isArray((gameData as any)?.activeWorkers) ? (gameData as any).activeWorkers : [];
-      if (fromState.length > 0) return fromState;
-      try {
-        const cached = localStorage.getItem('activeWorkers');
-        if (cached) {
-          const parsed = JSON.parse(cached);
-          if (Array.isArray(parsed)) return parsed;
-        }
-      } catch {}
-      return [] as any[];
-    };
-
-    const workers = getActiveWorkersSafe();
-    // Учитываем длительность задания рабочего
+    // Проверяем, есть ли назначенные рабочие в медпункт (только из gameData)
+    const workers = Array.isArray((gameData as any)?.activeWorkers) ? (gameData as any).activeWorkers : [];
     const now = Date.now();
     const hasWorkersInMedical = workers.some((w: any) => w.building === 'medical' && (w.startTime + w.duration) > now);
     console.log('🏥 [CHECK] hasWorkersInMedical:', hasWorkersInMedical, { workers });
@@ -113,11 +99,10 @@ export const useMedicalBay = () => {
         title: "Лечение начато",
         description: "Рабочие не назначены — лечение будет идти по таймеру.",
       });
-      // Продолжаем без возврата
     }
 
-    // Проверяем, есть ли активное подземелье
-    const isActiveBattle = localStorage.getItem('activeBattleInProgress') === 'true';
+    // Проверяем, есть ли активное подземелье через Zustand store
+    const isActiveBattle = useGameStore.getState().activeBattleInProgress;
     console.log('🏥 [CHECK] isActiveBattle:', isActiveBattle);
     
     if (isActiveBattle) {
@@ -126,7 +111,6 @@ export const useMedicalBay = () => {
         title: "Внимание",
         description: "Идёт бой. Лечение будет начато, карта будет исключена из команды.",
       });
-      // Продолжаем без возврата
     }
 
     try {

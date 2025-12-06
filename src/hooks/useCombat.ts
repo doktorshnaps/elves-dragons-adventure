@@ -36,14 +36,7 @@ export const useCombat = (
     
     setPlayerStats(newStats);
     
-    // Убрано системное уведомление во время боя
-
-    const battleState = localStorage.getItem('battleState');
-    if (battleState) {
-      const state = JSON.parse(battleState);
-      state.playerStats = newStats;
-      localStorage.setItem('battleState', JSON.stringify(state));
-    }
+    // battleState управляется через React state, не localStorage
   };
 
   const attackEnemy = (enemyId: number) => {
@@ -74,12 +67,7 @@ export const useCombat = (
       handleOpponentAttack(randomOpponent);
     }
 
-    const battleState = localStorage.getItem('battleState');
-    if (battleState) {
-      const state = JSON.parse(battleState);
-      state.opponents = newOpponents;
-      localStorage.setItem('battleState', JSON.stringify(state));
-    }
+    // battleState управляется через React state, не localStorage
   };
 
   return {

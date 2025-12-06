@@ -1,22 +1,19 @@
 import { calculateTeamStats } from '@/utils/cardUtils';
 
+/**
+ * Инициализация начального состояния боя
+ * ВАЖНО: battleState больше НЕ сохраняется в localStorage
+ * Он управляется через React state в useTeamBattle
+ */
 export const useInitialBattleState = (initialLevel: number = 1) => {
-  const savedState = localStorage.getItem('battleState');
-  
-  if (savedState) {
-    return JSON.parse(savedState);
-  }
-  
-  const savedCards = localStorage.getItem('gameCards');
-  const cards = savedCards ? JSON.parse(savedCards) : [];
-  const teamStats = calculateTeamStats(cards);
-  
+  // Возвращаем пустое начальное состояние
+  // Реальные данные загружаются из card_instances через useTeamBattle
   return {
     playerStats: {
-      health: teamStats.health,
-      maxHealth: teamStats.maxHealth,
-      power: teamStats.power,
-      defense: teamStats.defense
+      health: 0,
+      maxHealth: 0,
+      power: 0,
+      defense: 0
     },
     currentDungeonLevel: initialLevel,
     selectedDungeon: null
