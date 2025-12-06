@@ -294,9 +294,7 @@ export type Database = {
           current_health: number
           id: string
           is_in_medical_bay: boolean | null
-          is_on_marketplace: boolean | null
           last_heal_time: string | null
-          marketplace_listing_id: string | null
           max_defense: number
           max_health: number
           max_magic: number
@@ -319,9 +317,7 @@ export type Database = {
           current_health?: number
           id?: string
           is_in_medical_bay?: boolean | null
-          is_on_marketplace?: boolean | null
           last_heal_time?: string | null
-          marketplace_listing_id?: string | null
           max_defense?: number
           max_health?: number
           max_magic?: number
@@ -344,9 +340,7 @@ export type Database = {
           current_health?: number
           id?: string
           is_in_medical_bay?: boolean | null
-          is_on_marketplace?: boolean | null
           last_heal_time?: string | null
-          marketplace_listing_id?: string | null
           max_defense?: number
           max_health?: number
           max_magic?: number
@@ -1153,66 +1147,6 @@ export type Database = {
           is_enabled?: boolean
           message?: string | null
           updated_at?: string
-        }
-        Relationships: []
-      }
-      marketplace_listings: {
-        Row: {
-          buyer_id: string | null
-          buyer_wallet_address: string | null
-          created_at: string
-          id: string
-          is_nft_listing: boolean | null
-          item: Json
-          nft_contract_id: string | null
-          nft_token_id: string | null
-          payment_token_contract: string | null
-          price: number
-          seller_id: string
-          seller_wallet_address: string | null
-          sold_at: string | null
-          status: string
-          type: string
-          updated_at: string
-          version: number | null
-        }
-        Insert: {
-          buyer_id?: string | null
-          buyer_wallet_address?: string | null
-          created_at?: string
-          id?: string
-          is_nft_listing?: boolean | null
-          item: Json
-          nft_contract_id?: string | null
-          nft_token_id?: string | null
-          payment_token_contract?: string | null
-          price: number
-          seller_id: string
-          seller_wallet_address?: string | null
-          sold_at?: string | null
-          status?: string
-          type: string
-          updated_at?: string
-          version?: number | null
-        }
-        Update: {
-          buyer_id?: string | null
-          buyer_wallet_address?: string | null
-          created_at?: string
-          id?: string
-          is_nft_listing?: boolean | null
-          item?: Json
-          nft_contract_id?: string | null
-          nft_token_id?: string | null
-          payment_token_contract?: string | null
-          price?: number
-          seller_id?: string
-          seller_wallet_address?: string | null
-          sold_at?: string | null
-          status?: string
-          type?: string
-          updated_at?: string
-          version?: number | null
         }
         Relationships: []
       }
@@ -2755,9 +2689,7 @@ export type Database = {
           current_health: number
           id: string
           is_in_medical_bay: boolean | null
-          is_on_marketplace: boolean | null
           last_heal_time: string | null
-          marketplace_listing_id: string | null
           max_defense: number
           max_health: number
           max_magic: number
