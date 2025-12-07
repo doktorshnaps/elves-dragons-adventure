@@ -1865,6 +1865,36 @@ export type Database = {
         }
         Relationships: []
       }
+      whitelist_contracts: {
+        Row: {
+          contract_id: string
+          contract_name: string
+          created_at: string
+          created_by_wallet_address: string
+          id: string
+          is_active: boolean
+          updated_at: string
+        }
+        Insert: {
+          contract_id: string
+          contract_name: string
+          created_at?: string
+          created_by_wallet_address: string
+          id?: string
+          is_active?: boolean
+          updated_at?: string
+        }
+        Update: {
+          contract_id?: string
+          contract_name?: string
+          created_at?: string
+          created_by_wallet_address?: string
+          id?: string
+          is_active?: boolean
+          updated_at?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
@@ -1946,6 +1976,14 @@ export type Database = {
           p_admin_wallet_address?: string
           p_notes?: string
           p_wallet_address: string
+        }
+        Returns: boolean
+      }
+      admin_add_whitelist_contract: {
+        Args: {
+          p_admin_wallet_address: string
+          p_contract_id: string
+          p_contract_name: string
         }
         Returns: boolean
       }

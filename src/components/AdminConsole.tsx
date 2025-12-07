@@ -5,6 +5,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { useQueryClient } from '@tanstack/react-query';
 import { BannedUsersManager } from '@/components/admin/BannedUsersManager';
+import { NFTContractsManager } from '@/components/admin/NFTContractsManager';
 import { CardTemplatesManager } from '@/components/admin/CardTemplatesManager';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -964,6 +965,7 @@ export const AdminConsoleWithWhitelist = () => {
       <AdminConsole />
       <CardTemplatesManager />
       <BannedUsersManager />
+      <NFTContractsManager />
     </div>
   );
 };
