@@ -98,29 +98,33 @@ serve(async (req) => {
       }
     }
 
-    // Priority 3: Verify via wallet_identities (for connected wallets)
+    // Priority 3: Verify via wallet_identities or game_data (for connected NEAR wallets)
     if (!wallet_address) {
-      // Check if client sent wallet_address in body (legacy support with extra validation)
       const legacyBody = body as { wallet_address?: string };
       if (legacyBody.wallet_address) {
-        // Verify this wallet exists and has recent activity
+        // First try: Check wallet_identities table
         const { data: identity, error: identityError } = await supabase
           .from('wallet_identities')
-          .select('wallet_address, updated_at')
+          .select('wallet_address')
           .eq('wallet_address', legacyBody.wallet_address)
           .single();
 
         if (!identityError && identity) {
-          // Check for recent activity (within last 24 hours) as additional validation
-          const lastActivity = new Date(identity.updated_at).getTime();
-          const now = Date.now();
-          const twentyFourHours = 24 * 60 * 60 * 1000;
-          
-          if (now - lastActivity < twentyFourHours) {
-            wallet_address = identity.wallet_address;
-            console.log('✅ Wallet verified via wallet_identities with recent activity');
+          wallet_address = identity.wallet_address;
+          console.log('✅ Wallet verified via wallet_identities');
+        } else {
+          // Fallback: Verify wallet exists in game_data (proves it's a registered player)
+          const { data: gameDataCheck, error: gameDataError } = await supabase
+            .from('game_data')
+            .select('wallet_address')
+            .eq('wallet_address', legacyBody.wallet_address)
+            .single();
+
+          if (!gameDataError && gameDataCheck) {
+            wallet_address = gameDataCheck.wallet_address;
+            console.log('✅ Wallet verified via game_data registration');
           } else {
-            console.warn('⚠️ Wallet identity found but no recent activity');
+            console.warn('⚠️ Wallet not found in identities or game_data');
           }
         }
       }
