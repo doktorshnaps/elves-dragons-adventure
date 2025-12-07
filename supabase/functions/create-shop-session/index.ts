@@ -1,16 +1,22 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "jsr:@supabase/supabase-js@2";
+import { z } from "https://deno.land/x/zod@v3.22.4/mod.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-interface CreateSessionRequest {
-  wallet_address: string;
-  item_id: number;
-  quantity?: number;
-}
+// 🔒 Input validation schema
+const CreateSessionSchema = z.object({
+  wallet_address: z.string().min(1).max(100),
+  item_id: z.number().int().min(1),
+  quantity: z.number().int().min(1).max(100).default(1)
+});
+
+// Rate limiting configuration
+const RATE_LIMIT_WINDOW_MS = 60000; // 1 minute
+const RATE_LIMIT_MAX_REQUESTS = 10; // Max 10 session requests per minute per wallet
 
 serve(async (req) => {
   // Handle CORS preflight requests
@@ -23,12 +29,13 @@ serve(async (req) => {
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    const { wallet_address, item_id, quantity = 1 }: CreateSessionRequest = await req.json();
-
-    // Validate inputs
-    if (!wallet_address || typeof wallet_address !== 'string' || wallet_address.trim().length === 0) {
+    // 🔒 Parse and validate input
+    let body: unknown;
+    try {
+      body = await req.json();
+    } catch {
       return new Response(JSON.stringify({ 
-        error: 'Invalid wallet_address',
+        error: 'Invalid request body',
         success: false 
       }), {
         status: 400,
@@ -36,9 +43,11 @@ serve(async (req) => {
       });
     }
 
-    if (!item_id || typeof item_id !== 'number' || item_id < 1) {
+    const parseResult = CreateSessionSchema.safeParse(body);
+    if (!parseResult.success) {
+      console.error('❌ Validation error:', parseResult.error.flatten());
       return new Response(JSON.stringify({ 
-        error: 'Invalid item_id',
+        error: 'Invalid request parameters',
         success: false 
       }), {
         status: 400,
@@ -46,19 +55,42 @@ serve(async (req) => {
       });
     }
 
-    if (!Number.isInteger(quantity) || quantity < 1 || quantity > 100) {
-      return new Response(JSON.stringify({ 
-        error: 'Invalid quantity: must be integer between 1 and 100',
-        success: false 
-      }), {
-        status: 400,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
-    }
+    const { wallet_address, item_id, quantity } = parseResult.data;
 
     console.log(`🛒 Creating shop session for wallet: ${wallet_address}, item: ${item_id}, qty: ${quantity}`);
 
-    // Verify wallet exists in game_data
+    // 🔒 SECURITY: Check rate limiting for this wallet
+    const windowStart = new Date(Date.now() - RATE_LIMIT_WINDOW_MS).toISOString();
+    const { count: recentRequests, error: countError } = await supabase
+      .from('shop_sessions')
+      .select('id', { count: 'exact', head: true })
+      .eq('wallet_address', wallet_address)
+      .gte('created_at', windowStart);
+
+    if (countError) {
+      console.error('❌ Rate limit check error:', countError);
+      // Continue without rate limiting if check fails
+    } else if (recentRequests !== null && recentRequests >= RATE_LIMIT_MAX_REQUESTS) {
+      console.warn(`🚫 Rate limit exceeded for wallet: ${wallet_address}`);
+      
+      // Log security event
+      await supabase.from('security_audit_log').insert({
+        event_type: 'SHOP_SESSION_RATE_LIMITED',
+        wallet_address,
+        details: { item_id, quantity, recent_requests: recentRequests }
+      });
+
+      return new Response(JSON.stringify({ 
+        error: 'Too many requests. Please wait a moment.',
+        code: 'RATE_LIMITED',
+        success: false 
+      }), {
+        status: 429,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    // Verify wallet exists in game_data (proves the wallet is a registered player)
     const { data: gameData, error: gameError } = await supabase
       .from('game_data')
       .select('user_id, balance')
@@ -67,6 +99,14 @@ serve(async (req) => {
 
     if (gameError || !gameData) {
       console.error('❌ Wallet not found:', gameError);
+      
+      // 🔒 Log suspicious attempt to create session for non-existent wallet
+      await supabase.from('security_audit_log').insert({
+        event_type: 'SHOP_SESSION_INVALID_WALLET',
+        wallet_address,
+        details: { item_id, quantity, error: 'Wallet not registered' }
+      });
+
       return new Response(JSON.stringify({ 
         error: 'Wallet not found in game',
         success: false 
