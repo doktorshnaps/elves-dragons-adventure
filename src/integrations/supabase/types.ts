@@ -1865,78 +1865,6 @@ export type Database = {
         }
         Relationships: []
       }
-      whitelist: {
-        Row: {
-          added_at: string
-          added_by_wallet_address: string
-          created_at: string
-          id: string
-          is_active: boolean
-          nft_contract_used: string | null
-          notes: string | null
-          updated_at: string
-          wallet_address: string
-          whitelist_source: string | null
-        }
-        Insert: {
-          added_at?: string
-          added_by_wallet_address: string
-          created_at?: string
-          id?: string
-          is_active?: boolean
-          nft_contract_used?: string | null
-          notes?: string | null
-          updated_at?: string
-          wallet_address: string
-          whitelist_source?: string | null
-        }
-        Update: {
-          added_at?: string
-          added_by_wallet_address?: string
-          created_at?: string
-          id?: string
-          is_active?: boolean
-          nft_contract_used?: string | null
-          notes?: string | null
-          updated_at?: string
-          wallet_address?: string
-          whitelist_source?: string | null
-        }
-        Relationships: []
-      }
-      whitelist_contracts: {
-        Row: {
-          added_by_wallet_address: string
-          contract_address: string
-          contract_name: string | null
-          created_at: string
-          description: string | null
-          id: string
-          is_active: boolean
-          updated_at: string
-        }
-        Insert: {
-          added_by_wallet_address: string
-          contract_address: string
-          contract_name?: string | null
-          created_at?: string
-          description?: string | null
-          id?: string
-          is_active?: boolean
-          updated_at?: string
-        }
-        Update: {
-          added_by_wallet_address?: string
-          contract_address?: string
-          contract_name?: string | null
-          created_at?: string
-          description?: string | null
-          id?: string
-          is_active?: boolean
-          updated_at?: string
-        }
-        Relationships: []
-      }
     }
     Views: {
       [_ in never]: never
@@ -2013,28 +1941,13 @@ export type Database = {
             }
             Returns: undefined
           }
-      admin_add_to_whitelist:
-        | {
-            Args: { p_notes?: string; p_wallet_address: string }
-            Returns: boolean
-          }
-        | {
-            Args: {
-              p_admin_wallet_address?: string
-              p_notes?: string
-              p_wallet_address: string
-            }
-            Returns: boolean
-          }
-      admin_add_whitelist_contract: {
+      admin_add_to_whitelist: {
         Args: {
-          p_admin_wallet_address: string
-          p_contract_address: string
-          p_contract_name: string
-          p_description: string
-          p_is_active?: boolean
+          p_admin_wallet_address?: string
+          p_notes?: string
+          p_wallet_address: string
         }
-        Returns: string
+        Returns: boolean
       }
       admin_ban_user: {
         Args: {
@@ -2211,12 +2124,6 @@ export type Database = {
         Args: { p_admin_wallet_address?: string; p_wallet_address: string }
         Returns: boolean
       }
-      admin_remove_from_whitelist:
-        | { Args: { p_wallet_address: string }; Returns: boolean }
-        | {
-            Args: { p_admin_wallet_address?: string; p_wallet_address: string }
-            Returns: boolean
-          }
       admin_remove_player_card: {
         Args: {
           p_admin_wallet_address: string
@@ -2231,10 +2138,6 @@ export type Database = {
           p_item_id: string
           p_user_id: string
         }
-        Returns: boolean
-      }
-      admin_restore_nft_whitelist: {
-        Args: { p_admin_wallet_address?: string; p_wallet_address: string }
         Returns: boolean
       }
       admin_set_player_balance: {
@@ -2595,10 +2498,6 @@ export type Database = {
       cancel_marketplace_listing: {
         Args: { p_listing_id: string }
         Returns: undefined
-      }
-      check_and_add_to_whitelist_by_nft: {
-        Args: { p_nft_contracts: string[]; p_wallet_address: string }
-        Returns: boolean
       }
       check_claim_rate_limit: {
         Args: { p_max_claims_per_minute?: number; p_wallet_address: string }
@@ -3056,7 +2955,6 @@ export type Database = {
         Returns: boolean
       }
       is_user_banned: { Args: { p_wallet_address: string }; Returns: boolean }
-      is_whitelisted: { Args: { p_wallet_address: string }; Returns: boolean }
       mark_quest_claimed: {
         Args: { p_quest_id: string; p_wallet_address: string }
         Returns: boolean
@@ -3159,10 +3057,6 @@ export type Database = {
       resurrect_card_in_medical_bay: {
         Args: { p_card_instance_id: string; p_wallet_address: string }
         Returns: Json
-      }
-      revoke_whitelist_if_no_nft: {
-        Args: { p_nft_contracts: string[]; p_wallet_address: string }
-        Returns: boolean
       }
       stop_healing_without_recovery_v2: {
         Args: { p_card_instance_id: string; p_wallet_address: string }
