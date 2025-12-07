@@ -4,10 +4,7 @@ import { useAdmin } from '@/contexts/AdminContext';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { useQueryClient } from '@tanstack/react-query';
-import { WhitelistManager } from '@/components/admin/WhitelistManager';
 import { BannedUsersManager } from '@/components/admin/BannedUsersManager';
-import { WhitelistContractsManager } from '@/components/admin/WhitelistContractsManager';
-import { NFTWhitelistValidator } from '@/components/admin/NFTWhitelistValidator';
 import { CardTemplatesManager } from '@/components/admin/CardTemplatesManager';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -966,10 +963,7 @@ export const AdminConsoleWithWhitelist = () => {
     <div className="space-y-6">
       <AdminConsole />
       <CardTemplatesManager />
-      <WhitelistManager />
       <BannedUsersManager />
-      <WhitelistContractsManager />
-      <NFTWhitelistValidator />
     </div>
   );
 };

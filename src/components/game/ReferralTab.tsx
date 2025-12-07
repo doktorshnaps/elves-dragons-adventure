@@ -152,17 +152,11 @@ export const ReferralTab = () => {
 
       if (referralsError) throw referralsError;
       
-      // Check whitelist status for each referral
-      const referralsWithWhitelistStatus = await Promise.all(
-        (myReferrals || []).map(async (referral) => {
-          const { data: isWhitelisted } = await supabase
-            .rpc('is_whitelisted', { p_wallet_address: referral.referred_wallet_address });
-          return {
-            ...referral,
-            isWhitelisted: !!isWhitelisted
-          };
-        })
-      );
+      // Game is now open access - all users are considered whitelisted
+      const referralsWithWhitelistStatus = (myReferrals || []).map((referral) => ({
+        ...referral,
+        isWhitelisted: true
+      }));
       
       // Check if I was referred by someone  
       const { data: whoReferredMeData, error: referredError } = await supabase
@@ -211,18 +205,15 @@ export const ReferralTab = () => {
         if (directReferrals && directReferrals.length > 0) {
           // Параллельная загрузка данных для всех рефералов этого уровня
           const childNodesPromises = directReferrals.map(async (referral) => {
-            // Параллельно запрашиваем whitelist статус и доходы
-            const [whitelistResult, earningsResult] = await Promise.all([
-              supabase.rpc('is_whitelisted', { p_wallet_address: referral.referred_wallet_address }),
-              supabase.rpc('get_referral_earnings_by_referrer', { p_wallet_address: referral.referred_wallet_address })
-            ]);
+            // Game is open access - all users considered whitelisted
+            const earningsResult = await supabase.rpc('get_referral_earnings_by_referrer', { p_wallet_address: referral.referred_wallet_address });
 
             const childNode: ReferralTreeNode = {
               wallet_address: referral.referred_wallet_address,
               level: node.level + 1,
               children: [],
               joinDate: referral.created_at,
-              isWhitelisted: !!whitelistResult.data
+              isWhitelisted: true
             };
 
             childNode.earnings = earningsResult.data?.reduce((sum, earning) => sum + earning.amount, 0) || 0;
