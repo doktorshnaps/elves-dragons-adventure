@@ -7,16 +7,49 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-// 🔒 Input validation schema
+// 🔒 Input validation schema - wallet_address extracted from active dungeon session or JWT
 const CreateSessionSchema = z.object({
-  wallet_address: z.string().min(1).max(100),
   item_id: z.number().int().min(1),
-  quantity: z.number().int().min(1).max(100).default(1)
+  quantity: z.number().int().min(1).max(100).default(1),
+  // Optional: session_id from active dungeon session for wallet verification
+  session_id: z.string().uuid().optional()
 });
 
 // Rate limiting configuration
 const RATE_LIMIT_WINDOW_MS = 60000; // 1 minute
 const RATE_LIMIT_MAX_REQUESTS = 10; // Max 10 session requests per minute per wallet
+
+const json = (data: unknown, status = 200) =>
+  new Response(JSON.stringify(data), {
+    status,
+    headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+  });
+
+// Extract wallet from JWT Authorization header
+function extractWalletFromAuth(req: Request, supabase: any): Promise<string | null> {
+  return new Promise(async (resolve) => {
+    const authHeader = req.headers.get('authorization');
+    if (!authHeader?.startsWith('Bearer ')) {
+      resolve(null);
+      return;
+    }
+
+    const token = authHeader.replace('Bearer ', '');
+    try {
+      const { data: { user }, error } = await supabase.auth.getUser(token);
+      if (error || !user) {
+        resolve(null);
+        return;
+      }
+      // Get wallet from user metadata or identity
+      const wallet = user.user_metadata?.wallet_address || 
+                     user.identities?.[0]?.identity_data?.wallet_address;
+      resolve(wallet || null);
+    } catch {
+      resolve(null);
+    }
+  });
+}
 
 serve(async (req) => {
   // Handle CORS preflight requests
@@ -34,30 +67,82 @@ serve(async (req) => {
     try {
       body = await req.json();
     } catch {
-      return new Response(JSON.stringify({ 
-        error: 'Invalid request body',
-        success: false 
-      }), {
-        status: 400,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
+      return json({ error: 'Invalid request body', success: false }, 400);
     }
 
     const parseResult = CreateSessionSchema.safeParse(body);
     if (!parseResult.success) {
       console.error('❌ Validation error:', parseResult.error.flatten());
-      return new Response(JSON.stringify({ 
-        error: 'Invalid request parameters',
-        success: false 
-      }), {
-        status: 400,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
+      return json({ error: 'Invalid request parameters', success: false }, 400);
     }
 
-    const { wallet_address, item_id, quantity } = parseResult.data;
+    const { item_id, quantity, session_id } = parseResult.data;
+    let wallet_address: string | null = null;
 
-    console.log(`🛒 Creating shop session for wallet: ${wallet_address}, item: ${item_id}, qty: ${quantity}`);
+    // ============ SECURITY: WALLET VERIFICATION ============
+    // Priority 1: Extract from JWT token (most secure)
+    wallet_address = await extractWalletFromAuth(req, supabase);
+
+    // Priority 2: Verify via active dungeon session (for NEAR wallet users)
+    if (!wallet_address && session_id) {
+      console.log('🔐 Attempting wallet verification via session_id');
+      const { data: session, error: sessionError } = await supabase
+        .from('active_dungeon_sessions')
+        .select('account_id')
+        .eq('id', session_id)
+        .single();
+
+      if (!sessionError && session?.account_id) {
+        wallet_address = session.account_id;
+        console.log('✅ Wallet verified via active session');
+      }
+    }
+
+    // Priority 3: Verify via wallet_identities (for connected wallets)
+    if (!wallet_address) {
+      // Check if client sent wallet_address in body (legacy support with extra validation)
+      const legacyBody = body as { wallet_address?: string };
+      if (legacyBody.wallet_address) {
+        // Verify this wallet exists and has recent activity
+        const { data: identity, error: identityError } = await supabase
+          .from('wallet_identities')
+          .select('wallet_address, updated_at')
+          .eq('wallet_address', legacyBody.wallet_address)
+          .single();
+
+        if (!identityError && identity) {
+          // Check for recent activity (within last 24 hours) as additional validation
+          const lastActivity = new Date(identity.updated_at).getTime();
+          const now = Date.now();
+          const twentyFourHours = 24 * 60 * 60 * 1000;
+          
+          if (now - lastActivity < twentyFourHours) {
+            wallet_address = identity.wallet_address;
+            console.log('✅ Wallet verified via wallet_identities with recent activity');
+          } else {
+            console.warn('⚠️ Wallet identity found but no recent activity');
+          }
+        }
+      }
+    }
+
+    // 🔒 FINAL CHECK: Must have verified wallet
+    if (!wallet_address) {
+      console.error('❌ Could not verify wallet ownership');
+      await supabase.from('security_audit_log').insert({
+        event_type: 'SHOP_SESSION_UNVERIFIED_WALLET',
+        wallet_address: (body as { wallet_address?: string }).wallet_address || null,
+        details: { item_id, quantity, error: 'Could not verify wallet ownership' }
+      });
+
+      return json({ 
+        error: 'Could not verify wallet ownership. Please reconnect your wallet.',
+        code: 'WALLET_VERIFICATION_FAILED',
+        success: false 
+      }, 401);
+    }
+
+    console.log(`🛒 Creating shop session for verified wallet: ${wallet_address.substring(0, 10)}..., item: ${item_id}, qty: ${quantity}`);
 
     // 🔒 SECURITY: Check rate limiting for this wallet
     const windowStart = new Date(Date.now() - RATE_LIMIT_WINDOW_MS).toISOString();
@@ -69,25 +154,20 @@ serve(async (req) => {
 
     if (countError) {
       console.error('❌ Rate limit check error:', countError);
-      // Continue without rate limiting if check fails
     } else if (recentRequests !== null && recentRequests >= RATE_LIMIT_MAX_REQUESTS) {
       console.warn(`🚫 Rate limit exceeded for wallet: ${wallet_address}`);
       
-      // Log security event
       await supabase.from('security_audit_log').insert({
         event_type: 'SHOP_SESSION_RATE_LIMITED',
         wallet_address,
         details: { item_id, quantity, recent_requests: recentRequests }
       });
 
-      return new Response(JSON.stringify({ 
+      return json({ 
         error: 'Too many requests. Please wait a moment.',
         code: 'RATE_LIMITED',
         success: false 
-      }), {
-        status: 429,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
+      }, 429);
     }
 
     // Verify wallet exists in game_data (proves the wallet is a registered player)
@@ -98,22 +178,15 @@ serve(async (req) => {
       .single();
 
     if (gameError || !gameData) {
-      console.error('❌ Wallet not found:', gameError);
+      console.error('❌ Wallet not found in game_data:', gameError);
       
-      // 🔒 Log suspicious attempt to create session for non-existent wallet
       await supabase.from('security_audit_log').insert({
         event_type: 'SHOP_SESSION_INVALID_WALLET',
         wallet_address,
-        details: { item_id, quantity, error: 'Wallet not registered' }
+        details: { item_id, quantity, error: 'Wallet not registered in game' }
       });
 
-      return new Response(JSON.stringify({ 
-        error: 'Wallet not found in game',
-        success: false 
-      }), {
-        status: 404,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
+      return json({ error: 'Wallet not found in game', success: false }, 404);
     }
 
     // Verify item exists and is in stock
@@ -125,23 +198,11 @@ serve(async (req) => {
 
     if (invError || !inventoryItem) {
       console.error('❌ Item not found:', invError);
-      return new Response(JSON.stringify({ 
-        error: 'Item not found in shop',
-        success: false 
-      }), {
-        status: 404,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
+      return json({ error: 'Item not found in shop', success: false }, 404);
     }
 
     if (inventoryItem.available_quantity < quantity) {
-      return new Response(JSON.stringify({ 
-        error: 'Item out of stock or insufficient quantity',
-        success: false 
-      }), {
-        status: 400,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
+      return json({ error: 'Item out of stock or insufficient quantity', success: false }, 400);
     }
 
     // Get item price for balance check
@@ -153,25 +214,13 @@ serve(async (req) => {
 
     if (templateError || !itemTemplate) {
       console.error('❌ Item template not found:', templateError);
-      return new Response(JSON.stringify({ 
-        error: 'Item information not available',
-        success: false 
-      }), {
-        status: 404,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
+      return json({ error: 'Item information not available', success: false }, 404);
     }
 
     // Check if user has enough balance
-    const totalCost = itemTemplate.value * quantity;
+    const totalCost = (itemTemplate.value || 0) * quantity;
     if (gameData.balance < totalCost) {
-      return new Response(JSON.stringify({ 
-        error: 'Insufficient balance',
-        success: false 
-      }), {
-        status: 400,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
+      return json({ error: 'Insufficient balance', success: false }, 400);
     }
 
     // Create session using RPC function
@@ -184,33 +233,19 @@ serve(async (req) => {
 
     if (sessionError) {
       console.error('❌ Error creating shop session:', sessionError);
-      return new Response(JSON.stringify({ 
-        error: 'Failed to create session',
-        success: false 
-      }), {
-        status: 500,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
+      return json({ error: 'Failed to create session', success: false }, 500);
     }
 
     console.log(`✅ Shop session created: ${sessionToken.substring(0, 8)}...`);
 
-    return new Response(JSON.stringify({ 
+    return json({ 
       success: true,
       session_token: sessionToken,
       expires_in_seconds: 300 // 5 minutes
-    }), {
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
 
   } catch (error) {
     console.error('💥 Error in create-shop-session function:', error);
-    return new Response(JSON.stringify({ 
-      error: 'Failed to create shop session',
-      success: false 
-    }), {
-      status: 500,
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-    });
+    return json({ error: 'Failed to create shop session', success: false }, 500);
   }
 });
