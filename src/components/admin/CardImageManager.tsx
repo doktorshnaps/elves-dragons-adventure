@@ -20,6 +20,29 @@ interface CardImage {
   faction?: string;
 }
 
+// Нормализует URL из Supabase Storage в локальный путь
+const normalizeImageUrl = (url: string): string => {
+  if (!url) return '/placeholder.svg';
+  
+  // Если URL указывает на Supabase Storage lovable-uploads, конвертируем в локальный путь
+  const supabaseStoragePattern = /https:\/\/[^/]+\.supabase\.co\/storage\/v1\/object\/public\/lovable-uploads\/([^/?]+)/;
+  const match = url.match(supabaseStoragePattern);
+  
+  if (match) {
+    const fileId = match[1];
+    // Проверяем, есть ли уже расширение
+    const hasExtension = /\.(webp|png|jpg|jpeg|gif)$/i.test(fileId);
+    return hasExtension ? `/lovable-uploads/${fileId}` : `/lovable-uploads/${fileId}.webp`;
+  }
+  
+  // Если уже локальный путь, возвращаем как есть
+  if (url.startsWith('/lovable-uploads/')) {
+    return url;
+  }
+  
+  return url;
+};
+
 export const CardImageManager = () => {
   const { accountId: walletAddress } = useWalletContext();
   const { toast } = useToast();
@@ -333,7 +356,7 @@ export const CardImageManager = () => {
           {cardImages.map(image => (
             <Card key={image.id} className="p-4">
               <img 
-                src={image.image_url} 
+                src={normalizeImageUrl(image.image_url)} 
                 alt={`${image.card_name} - ${image.rarity}`}
                 className="w-full h-48 object-cover rounded-lg mb-2"
                 onError={(e) => {
