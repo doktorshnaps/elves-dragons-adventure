@@ -8,21 +8,12 @@ import { useWalletContext } from "@/contexts/WalletConnectContext";
 import { useToast } from "@/hooks/use-toast";
 import { useGameData } from "@/hooks/useGameData";
 import { useItemInstances } from "@/hooks/useItemInstances";
-import { useAdmin } from "@/contexts/AdminContext";
-
-// Маскировка адреса кошелька: s6aek3r.tg -> s6******3r.tg
-const maskWalletAddress = (address: string): string => {
-  if (!address || address.length <= 6) return address;
-  const start = address.slice(0, 2);
-  const end = address.slice(-5);
-  return `${start}******${end}`;
-};
 
 interface DonationStats {
   wallet_address: string;
   total_donated: number;
   donation_count: number;
-  last_donation_at: string;
+  last_donation: string;
   rank: number;
 }
 
@@ -37,7 +28,6 @@ export const SoulAltarTab = () => {
   const { toast } = useToast();
   const { gameData, updateGameData } = useGameData();
   const { instances: itemInstances, removeItemInstancesByIds } = useItemInstances();
-  const { isAdmin } = useAdmin();
   
   const [leaderboard, setLeaderboard] = useState<DonationStats[]>([]);
   const [myStats, setMyStats] = useState<DonationStats | null>(null);
@@ -58,8 +48,8 @@ export const SoulAltarTab = () => {
     try {
       setLoading(true);
       
-      // Загрузить топ доноров
-      const { data, error } = await supabase.rpc('get_soul_donations_stats');
+      // Загрузить топ доноров через новую RPC функцию с маскировкой на уровне БД
+      const { data, error } = await supabase.rpc('get_soul_donations_leaderboard', { p_limit: 50 });
 
       if (error) {
         console.error('Error loading donation stats:', error);
@@ -69,9 +59,9 @@ export const SoulAltarTab = () => {
       const stats = (data || []) as DonationStats[];
       setLeaderboard(stats.slice(0, 10)); // Топ 10
 
-      // Найти статистику текущего пользователя
+      // Найти статистику текущего пользователя (свой адрес всегда возвращается полностью)
       if (accountId) {
-        const userStats = stats.find(s => s.wallet_address === accountId);
+        const userStats = stats.find(s => s.wallet_address === accountId || s.wallet_address.includes(accountId.slice(-5)));
         setMyStats(userStats || null);
       }
     } catch (error) {
@@ -252,7 +242,7 @@ export const SoulAltarTab = () => {
               <div className="text-right">
                 <div className="text-xs text-white/70 mb-1">Последнее</div>
                 <div className="text-sm text-white">
-                  {new Date(myStats.last_donation_at).toLocaleDateString('ru-RU')}
+                  {new Date(myStats.last_donation).toLocaleDateString('ru-RU')}
                 </div>
               </div>
             </div>
@@ -288,11 +278,7 @@ export const SoulAltarTab = () => {
                       {getRankIcon(stat.rank)}
                       <div className="flex-1 min-w-0">
                         <div className="text-sm font-medium truncate text-white flex items-center gap-2">
-                          {stat.wallet_address === accountId 
-                            ? stat.wallet_address 
-                            : isAdmin 
-                              ? stat.wallet_address 
-                              : maskWalletAddress(stat.wallet_address)}
+                          {stat.wallet_address}
                           {stat.wallet_address === accountId && (
                             <span className="text-xs text-purple-400">(Вы)</span>
                           )}
@@ -301,7 +287,7 @@ export const SoulAltarTab = () => {
                           <Flame className="w-3 h-3" />
                           <span>{stat.donation_count} пожертвований</span>
                           <Clock className="w-3 h-3 ml-2" />
-                          <span>{new Date(stat.last_donation_at).toLocaleDateString('ru-RU')}</span>
+                          <span>{new Date(stat.last_donation).toLocaleDateString('ru-RU')}</span>
                         </div>
                       </div>
                     </div>

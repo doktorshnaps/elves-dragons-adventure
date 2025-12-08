@@ -2920,6 +2920,16 @@ export type Database = {
           updated_at: string
         }[]
       }
+      get_soul_donations_leaderboard: {
+        Args: { p_limit?: number }
+        Returns: {
+          donation_count: number
+          last_donation: string
+          rank: number
+          total_donated: number
+          wallet_address: string
+        }[]
+      }
       get_soul_donations_stats: {
         Args: never
         Returns: {
