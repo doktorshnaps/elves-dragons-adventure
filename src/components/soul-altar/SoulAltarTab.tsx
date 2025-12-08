@@ -8,6 +8,15 @@ import { useWalletContext } from "@/contexts/WalletConnectContext";
 import { useToast } from "@/hooks/use-toast";
 import { useGameData } from "@/hooks/useGameData";
 import { useItemInstances } from "@/hooks/useItemInstances";
+import { useAdmin } from "@/contexts/AdminContext";
+
+// Маскировка адреса кошелька: s6aek3r.tg -> s6******3r.tg
+const maskWalletAddress = (address: string): string => {
+  if (!address || address.length <= 6) return address;
+  const start = address.slice(0, 2);
+  const end = address.slice(-5);
+  return `${start}******${end}`;
+};
 
 interface DonationStats {
   wallet_address: string;
@@ -28,6 +37,7 @@ export const SoulAltarTab = () => {
   const { toast } = useToast();
   const { gameData, updateGameData } = useGameData();
   const { instances: itemInstances, removeItemInstancesByIds } = useItemInstances();
+  const { isAdmin } = useAdmin();
   
   const [leaderboard, setLeaderboard] = useState<DonationStats[]>([]);
   const [myStats, setMyStats] = useState<DonationStats | null>(null);
@@ -278,7 +288,11 @@ export const SoulAltarTab = () => {
                       {getRankIcon(stat.rank)}
                       <div className="flex-1 min-w-0">
                         <div className="text-sm font-medium truncate text-white flex items-center gap-2">
-                          {stat.wallet_address}
+                          {stat.wallet_address === accountId 
+                            ? stat.wallet_address 
+                            : isAdmin 
+                              ? stat.wallet_address 
+                              : maskWalletAddress(stat.wallet_address)}
                           {stat.wallet_address === accountId && (
                             <span className="text-xs text-purple-400">(Вы)</span>
                           )}
