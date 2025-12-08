@@ -42,7 +42,7 @@ export const CardImageManager = () => {
       displayName: `${card.name} (${card.faction})`
     }));
 
-  const loadCardImages = async () => {
+  const loadCardImages = async (retryCount = 0) => {
     try {
       const { data, error } = await supabase
         .from('card_images')
@@ -50,13 +50,21 @@ export const CardImageManager = () => {
         .order('card_name', { ascending: true })
         .order('rarity', { ascending: true });
 
-      if (error) throw error;
+      if (error) {
+        // Retry on network errors
+        if (retryCount < 2 && (error.message?.includes('fetch') || error.code === 'PGRST301')) {
+          console.log(`Retrying loadCardImages (attempt ${retryCount + 1})...`);
+          await new Promise(resolve => setTimeout(resolve, 1000));
+          return loadCardImages(retryCount + 1);
+        }
+        throw error;
+      }
       setCardImages((data as CardImage[]) || []);
     } catch (error) {
       console.error('Error loading card images:', error);
       toast({
         title: "Ошибка загрузки",
-        description: "Не удалось загрузить изображения карт",
+        description: "Не удалось загрузить изображения карт. Попробуйте обновить страницу.",
         variant: "destructive"
       });
     }
