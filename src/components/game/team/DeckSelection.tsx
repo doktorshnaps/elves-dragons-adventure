@@ -400,26 +400,8 @@ export const DeckSelection = ({
               По броне
               {heroSortBy === 'defense' && <ArrowUpDown className="w-3 h-3" />}
             </Button>
-            <Button size="sm" variant={heroSortBy === 'rarity' ? 'default' : 'outline'} onClick={e => {
-            e.preventDefault();
-            e.stopPropagation();
-            console.log('🔘 CLICKED Rarity button! Current state:', heroSortBy);
-            setHeroSortBy('rarity');
-            console.log('🔘 Called setHeroSortBy("rarity")');
-          }} className="flex items-center gap-2" type="button">
-              <Sparkles className="w-4 h-4" />
-              По редкости
-              {heroSortBy === 'rarity' && <ArrowUpDown className="w-3 h-3" />}
-            </Button>
-            <Button size="sm" variant={heroSortBy === 'none' ? 'default' : 'outline'} onClick={e => {
-            e.preventDefault();
-            e.stopPropagation();
-            console.log('🔘 CLICKED Reset button! Current state:', heroSortBy);
-            setHeroSortBy('none');
-            console.log('🔘 Called setHeroSortBy("none")');
-          }} className="flex items-center gap-2" type="button">
-              Сбросить
-            </Button>
+            
+            
           </div>
           <div className="flex-1 overflow-y-auto overflow-x-hidden px-4 pb-4">
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3 justify-items-center w-full">
