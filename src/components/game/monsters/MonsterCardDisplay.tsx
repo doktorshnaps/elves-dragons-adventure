@@ -202,12 +202,6 @@ export const MonsterCardDisplay = memo(({
             <span className="text-gray-300">Монеты</span>
             <span className="text-green-400 font-medium">{formatDropChance(lootTable.coins.chance)}</span>
           </div>
-          {lootTable.healthPotion && (
-            <div className="flex justify-between">
-              <span className="text-gray-300">Зелье здоровья</span>
-              <span className="text-green-400 font-medium">{formatDropChance(lootTable.healthPotion.chance)}</span>
-            </div>
-          )}
         </div>
       </div>
     </Card>
