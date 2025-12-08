@@ -23,6 +23,7 @@ import ShelterBuildingSettings from "@/components/admin/ShelterBuildingSettings"
 import { TreasureHuntAdmin } from "@/components/admin/TreasureHuntAdmin";
 import { ShopSettings } from "@/components/admin/ShopSettings";
 import { PlayerManagement } from "@/components/admin/PlayerManagement";
+import { GameMetrics } from "@/components/admin/GameMetrics";
 import { useLanguage } from "@/hooks/useLanguage";
 import { t } from "@/utils/translations";
 import { useSuperAdminCheck } from "@/hooks/useSuperAdminCheck";
@@ -89,10 +90,11 @@ const AdminSettingsContent = () => {
           </Button>
         </div>
 
-        <Tabs defaultValue={isSuperAdmin ? "cards" : "management"} className="w-full">
-          <TabsList className={`grid w-full ${isSuperAdmin ? 'grid-cols-15' : 'grid-cols-1'} bg-black/50 border-2 border-white backdrop-blur-sm rounded-3xl mb-6`} style={{ boxShadow: '-33px 15px 10px rgba(0, 0, 0, 0.6)' }}>
+        <Tabs defaultValue={isSuperAdmin ? "metrics" : "management"} className="w-full">
+          <TabsList className={`grid w-full ${isSuperAdmin ? 'grid-cols-16' : 'grid-cols-1'} bg-black/50 border-2 border-white backdrop-blur-sm rounded-3xl mb-6`} style={{ boxShadow: '-33px 15px 10px rgba(0, 0, 0, 0.6)' }}>
             {isSuperAdmin && (
               <>
+                <TabsTrigger value="metrics" className="text-white data-[state=active]:bg-white/20 rounded-3xl">📊 Метрики</TabsTrigger>
                 <TabsTrigger value="cards" className="text-white data-[state=active]:bg-white/20 rounded-3xl">{t(language, 'admin.cards')}</TabsTrigger>
                 <TabsTrigger value="cardImages" className="text-white data-[state=active]:bg-white/20 rounded-3xl">{t(language, 'admin.cardImages')}</TabsTrigger>
                 <TabsTrigger value="dungeons" className="text-white data-[state=active]:bg-white/20 rounded-3xl">{t(language, 'admin.dungeons')}</TabsTrigger>
@@ -114,6 +116,10 @@ const AdminSettingsContent = () => {
 
           {isSuperAdmin && (
             <>
+              <TabsContent value="metrics" className="space-y-4">
+                <GameMetrics />
+              </TabsContent>
+
               <TabsContent value="cards" className="space-y-4">
                 <GameSettings />
               </TabsContent>

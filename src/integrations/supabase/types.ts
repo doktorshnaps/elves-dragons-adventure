@@ -2789,6 +2789,10 @@ export type Database = {
           wood_production_data: Json
         }[]
       }
+      get_game_metrics: {
+        Args: { p_admin_wallet_address: string }
+        Returns: Json
+      }
       get_global_card_stats: {
         Args: { p_card_type: string }
         Returns: {
