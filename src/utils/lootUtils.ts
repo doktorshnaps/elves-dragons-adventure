@@ -6,9 +6,6 @@ export interface LootTable {
     min: number;
     max: number;
   };
-  healthPotion?: {
-    chance: number;
-  };
 }
 
 export const generateLootTable = (isBoss: boolean): LootTable => {
@@ -18,9 +15,6 @@ export const generateLootTable = (isBoss: boolean): LootTable => {
         chance: 1,
         min: 50,
         max: 100
-      },
-      healthPotion: {
-        chance: 0.3
       }
     };
   }
@@ -30,9 +24,6 @@ export const generateLootTable = (isBoss: boolean): LootTable => {
       chance: 0.7,
       min: 10,
       max: 30
-    },
-    healthPotion: {
-      chance: 0.1
     }
   };
 };
@@ -47,17 +38,6 @@ export const rollLoot = (lootTable: LootTable): { items: Item[], coins: number }
   const coins = Math.random() < lootTable.coins.chance
     ? Math.floor(Math.random() * (lootTable.coins.max - lootTable.coins.min + 1)) + lootTable.coins.min
     : 0;
-
-  // Roll for health potion
-  if (lootTable.healthPotion && Math.random() < lootTable.healthPotion.chance) {
-    items.push({
-      id: `health_potion_${Date.now()}`,
-      name: "Зелье здоровья",
-      type: "healthPotion",
-      value: 20,
-      description: "Восстанавливает 50 здоровья"
-    });
-  }
   
   return { items, coins };
 };
