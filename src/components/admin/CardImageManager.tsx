@@ -328,6 +328,11 @@ export const CardImageManager = () => {
                 src={image.image_url} 
                 alt={`${image.card_name} - ${image.rarity}`}
                 className="w-full h-48 object-cover rounded-lg mb-2"
+                onError={(e) => {
+                  const target = e.target as HTMLImageElement;
+                  target.onerror = null;
+                  target.src = '/placeholder.svg';
+                }}
               />
               <div className="space-y-1">
                 <p className="font-semibold">{image.card_name}</p>
