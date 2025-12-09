@@ -2959,15 +2959,15 @@ export type Database = {
       has_role:
         | {
             Args: {
-              p_role: Database["public"]["Enums"]["app_role"]
-              p_wallet_address: string
+              _role: Database["public"]["Enums"]["app_role"]
+              _user_id: string
             }
             Returns: boolean
           }
         | {
             Args: {
-              _role: Database["public"]["Enums"]["app_role"]
-              _user_id: string
+              p_role: Database["public"]["Enums"]["app_role"]
+              p_wallet_address: string
             }
             Returns: boolean
           }
@@ -3194,8 +3194,6 @@ export type Database = {
               p_cards?: Json
               p_dragon_eggs?: Json
               p_dragon_lair_upgrades?: Json
-              p_expected_version?: number
-              p_force?: boolean
               p_gold?: number
               p_initialized?: boolean
               p_iron?: number
@@ -3230,6 +3228,8 @@ export type Database = {
               p_cards?: Json
               p_dragon_eggs?: Json
               p_dragon_lair_upgrades?: Json
+              p_expected_version?: number
+              p_force?: boolean
               p_gold?: number
               p_initialized?: boolean
               p_iron?: number
