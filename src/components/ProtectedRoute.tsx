@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
 import { useWalletContext } from '@/contexts/WalletConnectContext';
 import { useWhitelistContext } from '@/contexts/WhitelistContext';
@@ -34,7 +34,23 @@ export const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
     });
   }, [isConnected, isConnecting, lsConnected, isAdmin, adminLoading, isWhitelisted, whitelistLoading, maintenanceLoading, location.pathname]);
 
-  if (isConnecting || whitelistLoading || maintenanceLoading || adminLoading) {
+  // Добавляем таймаут для предотвращения бесконечной загрузки
+  const [timedOut, setTimedOut] = useState(false);
+  
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (isConnecting || whitelistLoading || maintenanceLoading || adminLoading) {
+        console.warn('⚠️ [ProtectedRoute] Loading timeout, forcing render');
+        setTimedOut(true);
+      }
+    }, 5000); // 5 секунд таймаут
+    
+    return () => clearTimeout(timer);
+  }, []);
+
+  const isStillLoading = !timedOut && (isConnecting || whitelistLoading || maintenanceLoading || adminLoading);
+
+  if (isStillLoading) {
     console.log('⏳ [ProtectedRoute] Waiting for:', {
       isConnecting,
       whitelistLoading,
