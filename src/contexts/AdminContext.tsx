@@ -11,14 +11,14 @@ interface AdminContextType {
 const AdminContext = createContext<AdminContextType | undefined>(undefined);
 
 export const AdminProvider = ({ children }: { children: ReactNode }) => {
-  const { accountId } = useWalletContext();
+  const { accountId, isLoading: walletLoading } = useWalletContext();
   const isConnected = !!accountId;
 
-  const { data: isAdmin = false, isLoading: loading } = useQuery({
+  const { data: isAdmin = false, isLoading: queryLoading } = useQuery({
     queryKey: ['adminCheck', accountId],
     queryFn: async () => {
       console.log('🔍 [AdminContext] Checking admin status for:', accountId);
-      if (!isConnected || !accountId) {
+      if (!accountId) {
         console.log('⚠️ [AdminContext] No accountId, returning false');
         return false;
       }
@@ -46,9 +46,12 @@ export const AdminProvider = ({ children }: { children: ReactNode }) => {
     gcTime: 4 * 60 * 60 * 1000,
     refetchOnWindowFocus: false,
     refetchOnReconnect: false,
-    retry: 2,
-    retryDelay: 1000,
+    retry: 1,
+    retryDelay: 500,
   });
+
+  // Если кошелек еще грузится - ждем, иначе если нет accountId - loading = false
+  const loading = walletLoading || (isConnected && queryLoading);
 
   return (
     <AdminContext.Provider value={{ isAdmin, loading }}>

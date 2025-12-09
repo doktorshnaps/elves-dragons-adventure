@@ -30,12 +30,12 @@ export const useMaintenanceStatus = () => {
         return { is_enabled: false, message: '' };
       }
     },
-    staleTime: 15 * 60 * 1000, // 15 минут - может меняться админом
+    staleTime: 15 * 60 * 1000, // 15 минут
     gcTime: 30 * 60 * 1000,
-    refetchInterval: false, // ОТКЛЮЧЕНО автообновление для снижения нагрузки
-    refetchOnMount: false, // ОТКЛЮЧЕНО - используем только кеш
-    refetchOnWindowFocus: false, // Не перезапрашивать при фокусе окна
-    retry: 2,
-    retryDelay: 1000,
+    refetchInterval: false,
+    refetchOnMount: true, // ИСПРАВЛЕНО: разрешаем первую загрузку
+    refetchOnWindowFocus: false,
+    retry: 1, // Уменьшено для быстрого fallback
+    retryDelay: 500,
   });
 };
