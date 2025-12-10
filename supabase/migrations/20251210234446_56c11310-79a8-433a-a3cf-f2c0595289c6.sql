@@ -1,0 +1,1 @@
+UPDATE public.dungeon_settings SET dungeon_element = 'fire' WHERE dungeon_type = 'dragon_lair';
