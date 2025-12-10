@@ -770,6 +770,7 @@ export type Database = {
           boss_atk_multipliers: Json | null
           boss_hp_multipliers: Json | null
           created_at: string | null
+          dungeon_element: string | null
           dungeon_name: string
           dungeon_number: number
           dungeon_type: string
@@ -791,6 +792,7 @@ export type Database = {
           boss_atk_multipliers?: Json | null
           boss_hp_multipliers?: Json | null
           created_at?: string | null
+          dungeon_element?: string | null
           dungeon_name: string
           dungeon_number: number
           dungeon_type: string
@@ -812,6 +814,7 @@ export type Database = {
           boss_atk_multipliers?: Json | null
           boss_hp_multipliers?: Json | null
           created_at?: string | null
+          dungeon_element?: string | null
           dungeon_name?: string
           dungeon_number?: number
           dungeon_type?: string
@@ -822,6 +825,45 @@ export type Database = {
           miniboss_hp_multiplier?: number | null
           monster_spawn_config?: Json | null
           updated_at?: string | null
+        }
+        Relationships: []
+      }
+      faction_elements: {
+        Row: {
+          created_at: string
+          damage_bonus: number
+          damage_penalty: number
+          element_emoji: string
+          element_type: string
+          faction_name: string
+          id: string
+          strong_against: string
+          updated_at: string
+          weak_against: string
+        }
+        Insert: {
+          created_at?: string
+          damage_bonus?: number
+          damage_penalty?: number
+          element_emoji: string
+          element_type: string
+          faction_name: string
+          id?: string
+          strong_against: string
+          updated_at?: string
+          weak_against: string
+        }
+        Update: {
+          created_at?: string
+          damage_bonus?: number
+          damage_penalty?: number
+          element_emoji?: string
+          element_type?: string
+          faction_name?: string
+          id?: string
+          strong_against?: string
+          updated_at?: string
+          weak_against?: string
         }
         Relationships: []
       }
@@ -2349,6 +2391,7 @@ export type Database = {
           boss_atk_multipliers: Json | null
           boss_hp_multipliers: Json | null
           created_at: string | null
+          dungeon_element: string | null
           dungeon_name: string
           dungeon_number: number
           dungeon_type: string
@@ -2532,6 +2575,10 @@ export type Database = {
       batch_update_card_stats: {
         Args: { p_card_updates: Json; p_wallet_address: string }
         Returns: Json
+      }
+      calculate_element_damage_modifier: {
+        Args: { p_attacker_faction: string; p_defender_element: string }
+        Returns: number
       }
       cancel_marketplace_listing: {
         Args: { p_listing_id: string }
