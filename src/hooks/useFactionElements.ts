@@ -1,46 +1,84 @@
-import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
+import { useMemo } from "react";
+import { useStaticGameDataContext } from '@/contexts/StaticGameDataContext';
+import { FactionElement } from './useStaticGameData';
 
-export interface FactionElement {
-  id: string;
-  faction_name: string;
-  element_type: string;
-  element_emoji: string;
-  strong_against: string;
-  weak_against: string;
-  damage_bonus: number;
-  damage_penalty: number;
-}
+export type { FactionElement };
 
 export const useFactionElements = () => {
-  return useQuery({
-    queryKey: ['factionElements'],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('faction_elements')
-        .select('*');
-      
-      if (error) throw error;
-      return data as FactionElement[];
-    },
-    staleTime: 1000 * 60 * 60, // 1 hour cache
-    gcTime: 1000 * 60 * 60 * 2, // 2 hours
-  });
+  const contextData = useStaticGameDataContext();
+  const staticData = contextData?.data;
+  const loading = contextData?.isLoading ?? true;
+
+  const factionElements = useMemo(() => {
+    if (!staticData?.faction_elements) {
+      return { byFaction: new Map<string, FactionElement>(), byElement: new Map<string, FactionElement>(), all: [] };
+    }
+
+    const byFaction = new Map<string, FactionElement>();
+    const byElement = new Map<string, FactionElement>();
+    const all = staticData.faction_elements as FactionElement[];
+
+    all.forEach((fe: FactionElement) => {
+      if (fe.faction_name) byFaction.set(fe.faction_name, fe);
+      if (fe.element_type) byElement.set(fe.element_type, fe);
+    });
+
+    console.log('✅ [useFactionElements] Elements loaded:', {
+      byFactionSize: byFaction.size,
+      byElementSize: byElement.size,
+      totalCount: all.length
+    });
+
+    return { byFaction, byElement, all };
+  }, [staticData?.faction_elements]);
+
+  const getFactionElement = (factionName: string): FactionElement | undefined => {
+    return factionElements.byFaction.get(factionName);
+  };
+
+  const getElementByType = (elementType: string): FactionElement | undefined => {
+    return factionElements.byElement.get(elementType);
+  };
+
+  return { 
+    factionElements: factionElements.all, 
+    byFaction: factionElements.byFaction,
+    byElement: factionElements.byElement,
+    loading, 
+    getFactionElement, 
+    getElementByType 
+  };
 };
+
+export interface ElementalModifierResult {
+  modifier: number;
+  type: 'bonus' | 'penalty' | 'neutral';
+  attackerEmoji: string;
+  defenderEmoji: string;
+  message: string;
+}
 
 export const calculateElementalDamageModifier = (
   factionElements: FactionElement[],
   attackerFaction: string | undefined,
   defenderElement: string
-): { modifier: number; type: 'bonus' | 'penalty' | 'neutral'; emoji: string } => {
+): ElementalModifierResult => {
+  const neutral: ElementalModifierResult = { 
+    modifier: 1.0, 
+    type: 'neutral', 
+    attackerEmoji: '', 
+    defenderEmoji: getElementEmoji(defenderElement),
+    message: '' 
+  };
+
   if (!attackerFaction || defenderElement === 'neutral' || !factionElements.length) {
-    return { modifier: 1.0, type: 'neutral', emoji: '' };
+    return neutral;
   }
 
   const factionElement = factionElements.find(fe => fe.faction_name === attackerFaction);
   
   if (!factionElement) {
-    return { modifier: 1.0, type: 'neutral', emoji: '' };
+    return neutral;
   }
 
   // Strong against - bonus damage
@@ -48,7 +86,9 @@ export const calculateElementalDamageModifier = (
     return { 
       modifier: 1.0 + Number(factionElement.damage_bonus), 
       type: 'bonus',
-      emoji: factionElement.element_emoji
+      attackerEmoji: factionElement.element_emoji,
+      defenderEmoji: getElementEmoji(defenderElement),
+      message: `${factionElement.element_emoji} ${getElementName(factionElement.element_type)} силен против ${getElementEmoji(defenderElement)} ${getElementName(defenderElement)}! +${Math.round(Number(factionElement.damage_bonus) * 100)}% урона`
     };
   }
   
@@ -57,11 +97,19 @@ export const calculateElementalDamageModifier = (
     return { 
       modifier: 1.0 - Number(factionElement.damage_penalty), 
       type: 'penalty',
-      emoji: factionElement.element_emoji
+      attackerEmoji: factionElement.element_emoji,
+      defenderEmoji: getElementEmoji(defenderElement),
+      message: `${factionElement.element_emoji} ${getElementName(factionElement.element_type)} слаб против ${getElementEmoji(defenderElement)} ${getElementName(defenderElement)}! -${Math.round(Number(factionElement.damage_penalty) * 100)}% урона`
     };
   }
 
-  return { modifier: 1.0, type: 'neutral', emoji: factionElement.element_emoji };
+  return { 
+    modifier: 1.0, 
+    type: 'neutral', 
+    attackerEmoji: factionElement.element_emoji,
+    defenderEmoji: getElementEmoji(defenderElement),
+    message: ''
+  };
 };
 
 export const getElementEmoji = (element: string): string => {
@@ -90,4 +138,25 @@ export const getElementName = (element: string): string => {
     neutral: 'Нейтральная'
   };
   return elementNames[element] || 'Неизвестная';
+};
+
+// Get team's elemental composition for display
+export const getTeamElementInfo = (
+  factionElements: FactionElement[],
+  teamFactions: string[]
+): { elements: string[]; emojis: string[] } => {
+  const elements: string[] = [];
+  const emojis: string[] = [];
+  
+  const uniqueFactions = [...new Set(teamFactions)];
+  
+  uniqueFactions.forEach(faction => {
+    const fe = factionElements.find(f => f.faction_name === faction);
+    if (fe) {
+      elements.push(fe.element_type);
+      emojis.push(fe.element_emoji);
+    }
+  });
+  
+  return { elements, emojis };
 };
