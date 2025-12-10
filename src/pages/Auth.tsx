@@ -10,9 +10,12 @@ import { SplashCursor } from "@/components/effects/SplashCursor";
 import { Wallet } from "lucide-react";
 import { useLanguage } from "@/hooks/useLanguage";
 import { t } from "@/utils/translations";
-import { usePageTitle } from "@/hooks/usePageTitle";
+import { usePageMeta } from "@/hooks/usePageTitle";
 export const Auth = () => {
-  usePageTitle('Войти в ElleonorAI | Подключи NEAR кошелек');
+  usePageMeta({ 
+    title: 'Войти в ElleonorAI', 
+    description: 'Войди в ElleonorAI через NEAR кошелек. Твой прогресс сохраняется в блокчейне. Нет паролей, полная безопасность твоих NFT.' 
+  });
   const { language } = useLanguage();
   const { toast } = useToast();
   const {

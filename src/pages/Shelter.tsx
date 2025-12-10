@@ -21,10 +21,13 @@ import { Loader2 } from "lucide-react";
 import { useGameDataContext } from "@/contexts/GameDataContext";
 import { useQueryClient } from "@tanstack/react-query";
 import { useWalletContext } from "@/contexts/WalletConnectContext";
-import { usePageTitle } from "@/hooks/usePageTitle";
+import { usePageMeta } from "@/hooks/usePageTitle";
 
 export const Shelter = () => {
-  usePageTitle('Убежище - Улучшай свою базу');
+  usePageMeta({ 
+    title: 'Убежище', 
+    description: 'Развивай свою базу: улучшай здания, создавай предметы, лечи героев и ремонтируй броню. Стань сильнее!' 
+  });
   const navigate = useNavigate();
   const { language } = useLanguage();
   const { accountId } = useWalletContext();

@@ -7,10 +7,13 @@ import { TeamStats as TeamStatsComponent } from "@/components/game/TeamStats";
 import { DragonEggProvider } from "@/contexts/DragonEggContext";
 import { useLanguage } from "@/hooks/useLanguage";
 import { t } from "@/utils/translations";
-import { usePageTitle } from "@/hooks/usePageTitle";
+import { usePageMeta } from "@/hooks/usePageTitle";
 
 export const TeamStats = () => {
-  usePageTitle('Команда - Выбери героев и драконов');
+  usePageMeta({ 
+    title: 'Команда', 
+    description: 'Собери непобедимую команду из героев и драконов. Комбинируй способности для максимального урона в подземельях.' 
+  });
   const navigate = useNavigate();
   const { language } = useLanguage();
   return <div className="min-h-screen flex flex-col bg-team relative">

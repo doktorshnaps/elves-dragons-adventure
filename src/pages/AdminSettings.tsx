@@ -18,7 +18,7 @@ import { AdminConsoleWithWhitelist } from "@/components/AdminConsole";
 import { CardImageManager } from "@/components/admin/CardImageManager";
 import { CardImageBatchUpload } from "@/components/admin/CardImageBatchUpload";
 import { ItemTemplateManager } from "@/components/admin/ItemTemplateManager";
-import { usePageTitle } from "@/hooks/usePageTitle";
+import { usePageMeta } from "@/hooks/usePageTitle";
 import { ItemGiveawayManager } from "@/components/admin/ItemGiveawayManager";
 import ShelterBuildingSettings from "@/components/admin/ShelterBuildingSettings";
 import { TreasureHuntAdmin } from "@/components/admin/TreasureHuntAdmin";
@@ -30,7 +30,7 @@ import { t } from "@/utils/translations";
 import { useSuperAdminCheck } from "@/hooks/useSuperAdminCheck";
 
 const AdminSettingsContent = () => {
-  usePageTitle('Админ панель');
+  usePageMeta({ title: 'Админ панель', description: 'Панель управления игрой ElleonorAI для администраторов.' });
   const { language } = useLanguage();
   const navigate = useNavigate();
   const { accountId } = useWalletContext();
