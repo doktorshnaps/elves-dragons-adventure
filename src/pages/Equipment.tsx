@@ -4,8 +4,10 @@ import { useEquipmentState } from "@/hooks/equipment/useEquipmentState";
 import { useInventoryDedupe } from "@/hooks/useInventoryDedupe";
 import { EquipmentHeader } from "@/components/game/equipment/EquipmentHeader";
 import { EquipmentTabs } from "@/components/game/equipment/EquipmentTabs";
+import { usePageTitle } from "@/hooks/usePageTitle";
 
 export const Equipment = () => {
+  usePageTitle('Инвентарь - Твоя коллекция карт');
   const navigate = useNavigate();
   const { toggleEquipItem } = useEquipmentState();
   

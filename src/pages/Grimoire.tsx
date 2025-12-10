@@ -8,8 +8,10 @@ import { useNavigate } from "react-router-dom";
 import { useLanguage } from "@/hooks/useLanguage";
 import { t } from "@/utils/translations";
 import { useGrimoireImagePreloader } from "@/hooks/useImagePreloader";
+import { usePageTitle } from "@/hooks/usePageTitle";
 
 const Grimoire = () => {
+  usePageTitle('Гримуар - Энциклопедия карт и предметов');
   const navigate = useNavigate();
   const { language } = useLanguage();
   

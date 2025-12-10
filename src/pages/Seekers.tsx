@@ -8,6 +8,7 @@ import { useWalletContext } from "@/contexts/WalletConnectContext";
 import { useBrightness } from "@/hooks/useBrightness";
 import { useToast } from "@/hooks/use-toast";
 import { formatTime } from "@/utils/timeUtils";
+import { usePageTitle } from "@/hooks/usePageTitle";
 
 interface TreasureHuntEvent {
   id: string;
@@ -35,6 +36,7 @@ interface Finding {
 }
 
 export const Seekers = () => {
+  usePageTitle('Искатели - События и награды');
   const navigate = useNavigate();
   const { accountId } = useWalletContext();
   const { brightness, backgroundBrightness } = useBrightness();

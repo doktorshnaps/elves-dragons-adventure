@@ -1,8 +1,10 @@
 
 import { useNavigate } from "react-router-dom";
 import { AdventuresTab } from "@/components/game/adventures/AdventuresTab";
+import { usePageTitle } from "@/hooks/usePageTitle";
 
 export const AdventuresPage = () => {
+  usePageTitle('Приключения');
   const navigate = useNavigate();
 
   return (

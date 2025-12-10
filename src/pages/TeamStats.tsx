@@ -7,8 +7,10 @@ import { TeamStats as TeamStatsComponent } from "@/components/game/TeamStats";
 import { DragonEggProvider } from "@/contexts/DragonEggContext";
 import { useLanguage } from "@/hooks/useLanguage";
 import { t } from "@/utils/translations";
+import { usePageTitle } from "@/hooks/usePageTitle";
 
 export const TeamStats = () => {
+  usePageTitle('Команда - Выбери героев и драконов');
   const navigate = useNavigate();
   const { language } = useLanguage();
   return <div className="min-h-screen flex flex-col bg-team relative">
