@@ -21,8 +21,10 @@ import { Loader2 } from "lucide-react";
 import { useGameDataContext } from "@/contexts/GameDataContext";
 import { useQueryClient } from "@tanstack/react-query";
 import { useWalletContext } from "@/contexts/WalletConnectContext";
+import { usePageTitle } from "@/hooks/usePageTitle";
 
 export const Shelter = () => {
+  usePageTitle('Убежище - Улучшай свою базу');
   const navigate = useNavigate();
   const { language } = useLanguage();
   const { accountId } = useWalletContext();

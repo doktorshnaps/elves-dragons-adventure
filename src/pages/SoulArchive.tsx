@@ -10,6 +10,7 @@ import { useWalletContext } from "@/contexts/WalletConnectContext";
 import { useBrightness } from "@/hooks/useBrightness";
 import { useToast } from "@/hooks/use-toast";
 import { SoulAltarTab } from "@/components/soul-altar/SoulAltarTab";
+import { usePageTitle } from "@/hooks/usePageTitle";
 
 interface ReferralStats {
   wallet_address: string;
@@ -42,6 +43,7 @@ interface OverallStats {
 }
 
 export const SoulArchive = () => {
+  usePageTitle('Soul Archive - Статистика игроков');
   const navigate = useNavigate();
   const { accountId } = useWalletContext();
   const { brightness, backgroundBrightness } = useBrightness();

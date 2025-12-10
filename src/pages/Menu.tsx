@@ -13,6 +13,7 @@ import { t } from "@/utils/translations";
 import { SettingsMenu } from "@/components/SettingsMenu";
 import { useBrightness } from "@/hooks/useBrightness";
 import { useState, useEffect } from "react";
+import { usePageTitle } from "@/hooks/usePageTitle";
 
 // Import icons from assets
 import grimoireIcon from "@/assets/grimoire-icon.webp";
@@ -26,6 +27,7 @@ import inventoryIcon from "@/assets/inventory-icon.webp";
 import teamIcon from "@/assets/team-icon.webp";
 import soulArchiveIcon from "@/assets/soul-archive-icon.webp";
 export const Menu = () => {
+  usePageTitle('Главное меню');
   const navigate = useNavigate();
   const {
     toast

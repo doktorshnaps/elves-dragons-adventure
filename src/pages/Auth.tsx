@@ -10,7 +10,9 @@ import { SplashCursor } from "@/components/effects/SplashCursor";
 import { Wallet } from "lucide-react";
 import { useLanguage } from "@/hooks/useLanguage";
 import { t } from "@/utils/translations";
+import { usePageTitle } from "@/hooks/usePageTitle";
 export const Auth = () => {
+  usePageTitle('Войти в ElleonorAI | Подключи NEAR кошелек');
   const { language } = useLanguage();
   const { toast } = useToast();
   const {

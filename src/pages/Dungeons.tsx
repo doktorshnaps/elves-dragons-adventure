@@ -1,10 +1,12 @@
 import { DungeonSearch } from "@/components/DungeonSearch";
 import { useNavigate } from "react-router-dom";
 import { useBalanceState } from "@/hooks/useBalanceState";
+import { usePageTitle } from "@/hooks/usePageTitle";
 
 const Dungeons = () => {
   const navigate = useNavigate();
   const { balance, updateBalance } = useBalanceState();
+  usePageTitle('Подземелья - Сражайся и зарабатывай');
 
   return (
     <div className="p-4">
