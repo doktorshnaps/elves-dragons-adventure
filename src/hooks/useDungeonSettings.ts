@@ -6,6 +6,7 @@ export interface DungeonSettings {
   dungeon_number: number;
   dungeon_name: string;
   dungeon_type: string;
+  dungeon_element: string;
   base_hp: number;
   base_armor: number;
   base_atk: number;

@@ -1,6 +1,17 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 
+export interface FactionElement {
+  id: string;
+  faction_name: string;
+  element_type: string;
+  element_emoji: string;
+  strong_against: string;
+  weak_against: string;
+  damage_bonus: number;
+  damage_penalty: number;
+}
+
 export interface StaticGameData {
   building_configs: any[];
   crafting_recipes: any[];
@@ -9,6 +20,7 @@ export interface StaticGameData {
   card_upgrade_requirements: any[];
   monsters: any[];
   dungeon_settings: any[];
+  faction_elements: FactionElement[];
 }
 
 export const useStaticGameData = () => {
@@ -42,6 +54,7 @@ export const useStaticGameData = () => {
           card_upgrade_requirements: staticData.card_upgrade_requirements?.length || 0,
           monsters: staticData.monsters?.length || 0,
           dungeon_settings: staticData.dungeon_settings?.length || 0,
+          faction_elements: staticData.faction_elements?.length || 0,
           firstTemplate: staticData.item_templates?.[0]
         });
         
