@@ -8,10 +8,13 @@ import { useNavigate } from "react-router-dom";
 import { useLanguage } from "@/hooks/useLanguage";
 import { t } from "@/utils/translations";
 import { useGrimoireImagePreloader } from "@/hooks/useImagePreloader";
-import { usePageTitle } from "@/hooks/usePageTitle";
+import { usePageMeta } from "@/hooks/usePageTitle";
 
 const Grimoire = () => {
-  usePageTitle('Гримуар - Энциклопедия карт и предметов');
+  usePageMeta({ 
+    title: 'Гримуар', 
+    description: 'Энциклопедия всех карт, предметов и подземелий игры. Изучай характеристики героев, драконов и монстров.' 
+  });
   const navigate = useNavigate();
   const { language } = useLanguage();
   

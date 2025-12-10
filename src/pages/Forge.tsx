@@ -1,10 +1,13 @@
 import React from 'react';
 import { ForgeBayComponent } from '@/components/game/forge/ForgeBayComponent';
 import { useShelterState } from '@/hooks/shelter/useShelterState';
-import { usePageTitle } from '@/hooks/usePageTitle';
+import { usePageMeta } from '@/hooks/usePageTitle';
 
 export const Forge = () => {
-  usePageTitle('Кузница - Ремонт брони');
+  usePageMeta({ 
+    title: 'Кузница', 
+    description: 'Ремонтируй броню героев и драконов в кузнице. Восстанавливай защиту для следующих сражений!' 
+  });
   const { buildingLevels } = useShelterState();
   
   return (

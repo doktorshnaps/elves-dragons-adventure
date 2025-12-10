@@ -13,7 +13,7 @@ import { t } from "@/utils/translations";
 import { SettingsMenu } from "@/components/SettingsMenu";
 import { useBrightness } from "@/hooks/useBrightness";
 import { useState, useEffect } from "react";
-import { usePageTitle } from "@/hooks/usePageTitle";
+import { usePageMeta } from "@/hooks/usePageTitle";
 
 // Import icons from assets
 import grimoireIcon from "@/assets/grimoire-icon.webp";
@@ -27,7 +27,10 @@ import inventoryIcon from "@/assets/inventory-icon.webp";
 import teamIcon from "@/assets/team-icon.webp";
 import soulArchiveIcon from "@/assets/soul-archive-icon.webp";
 export const Menu = () => {
-  usePageTitle('Главное меню');
+  usePageMeta({ 
+    title: 'Главное меню', 
+    description: 'Эпическая фэнтези карточная игра с NFT на NEAR. Собирай героев и драконов, побеждай в подземельях, зарабатывай криптовалюту.' 
+  });
   const navigate = useNavigate();
   const {
     toast

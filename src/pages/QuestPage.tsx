@@ -5,10 +5,13 @@ import { ReferralTab } from "@/components/game/ReferralTab";
 import { SocialQuests } from "@/components/game/SocialQuests";
 import { useLanguage } from "@/hooks/useLanguage";
 import { t } from "@/utils/translations";
-import { usePageTitle } from "@/hooks/usePageTitle";
+import { usePageMeta } from "@/hooks/usePageTitle";
 
 export const QuestPage = () => {
-  usePageTitle('Задания и рефералы');
+  usePageMeta({ 
+    title: 'Задания', 
+    description: 'Выполняй задания и зарабатывай награды. Приглашай друзей по реферальной программе и получай бонусы!' 
+  });
   const navigate = useNavigate();
   const { language } = useLanguage();
 

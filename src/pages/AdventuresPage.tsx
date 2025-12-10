@@ -1,10 +1,13 @@
 
 import { useNavigate } from "react-router-dom";
 import { AdventuresTab } from "@/components/game/adventures/AdventuresTab";
-import { usePageTitle } from "@/hooks/usePageTitle";
+import { usePageMeta } from "@/hooks/usePageTitle";
 
 export const AdventuresPage = () => {
-  usePageTitle('Приключения');
+  usePageMeta({ 
+    title: 'Приключения', 
+    description: 'Отправляйся в бесконечные приключения и сражайся с монстрами. Прокачивай героев и получай награды!' 
+  });
   const navigate = useNavigate();
 
   return (
