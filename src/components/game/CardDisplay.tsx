@@ -12,6 +12,7 @@ import { CardActions } from "./cards/CardActions";
 import { calculateCardStats } from "@/utils/cardUtils";
 import { useMemo } from "react";
 import { t } from "@/utils/translations";
+import { useFactionElements } from "@/hooks/useFactionElements";
 interface CardDisplayProps {
   card: CardType;
   showSellButton?: boolean;
@@ -34,6 +35,14 @@ export const CardDisplay = ({
 }: CardDisplayProps) => {
   const isMobile = useIsMobile();
   const { language } = useLanguage();
+  const { getFactionElement } = useFactionElements();
+  
+  // Get element emoji for faction
+  const elementEmoji = useMemo(() => {
+    if (!card.faction) return undefined;
+    const factionElement = getFactionElement(card.faction);
+    return factionElement?.element_emoji;
+  }, [card.faction, getFactionElement]);
   
   // ДЕТАЛЬНОЕ ЛОГИРОВАНИЕ для отладки здоровья Рекрутов
   if (card.name?.includes('Рекрут')) {
@@ -73,7 +82,7 @@ export const CardDisplay = ({
         
         <div className="flex flex-col flex-grow justify-between gap-0 p-0.5 h-[105px] sm:h-[140px] md:h-[150px] lg:h-[160px] min-h-0 overflow-hidden">
           <div className="flex flex-col gap-0 overflow-hidden flex-1 min-h-0">
-            <CardHeader name={translateCardName(language, card.name)} rarity={card.rarity} />
+            <CardHeader name={translateCardName(language, card.name)} rarity={card.rarity} elementEmoji={elementEmoji} />
 
             <div className={`text-white leading-none truncate ${isMobile ? 'text-[6px]' : 'text-[10px]'}`}>
               ({translateCardType(language, card.type === 'character' ? t(language, 'cardDisplay.hero') : t(language, 'cardDisplay.pet'))})
