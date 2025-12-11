@@ -60,8 +60,17 @@ export const useShopRealtime = () => {
         }
       });
 
-      if (sessionError) throw sessionError;
-      if (!sessionData.success) throw new Error(sessionData.error);
+      if (sessionError) {
+        console.error('[useShopRealtime] Session error:', sessionError);
+        throw new Error('Ошибка создания сессии покупки. Попробуйте позже.');
+      }
+      if (!sessionData?.success) {
+        const errorCode = sessionData?.code;
+        if (errorCode === 'RATE_LIMITED') {
+          throw new Error('Слишком много запросов. Подождите немного.');
+        }
+        throw new Error(sessionData?.error || 'Не удалось создать сессию покупки');
+      }
 
       const sessionToken = sessionData.session_token;
       console.log('[useShopRealtime] Session created, executing purchase...');
@@ -71,8 +80,13 @@ export const useShopRealtime = () => {
         body: { session_token: sessionToken }
       });
 
-      if (error) throw error;
-      if (!data.success) throw new Error(data.error);
+      if (error) {
+        console.error('[useShopRealtime] Purchase error:', error);
+        throw new Error('Ошибка при покупке. Попробуйте позже.');
+      }
+      if (!data?.success) {
+        throw new Error(data?.error || 'Покупка не удалась');
+      }
 
       console.log('[useShopRealtime] Purchase successful:', data);
 
