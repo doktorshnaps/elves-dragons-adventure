@@ -3296,6 +3296,14 @@ export type Database = {
             }
             Returns: boolean
           }
+        | {
+            Args: {
+              p_force?: boolean
+              p_updates: Json
+              p_wallet_address: string
+            }
+            Returns: Json
+          }
       update_resource_production_state_by_wallet: {
         Args: {
           p_is_producing: boolean
