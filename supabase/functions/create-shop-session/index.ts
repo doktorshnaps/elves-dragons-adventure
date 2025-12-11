@@ -17,7 +17,7 @@ const CreateSessionSchema = z.object({
 
 // Rate limiting configuration
 const RATE_LIMIT_WINDOW_MS = 60000; // 1 minute
-const RATE_LIMIT_MAX_REQUESTS = 10; // Max 10 session requests per minute per wallet
+const RATE_LIMIT_MAX_REQUESTS = 30; // Max 30 session requests per minute per wallet
 
 const json = (data: unknown, status = 200) =>
   new Response(JSON.stringify(data), {

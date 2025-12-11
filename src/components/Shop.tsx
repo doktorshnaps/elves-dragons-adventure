@@ -36,6 +36,7 @@ export const Shop = ({ onClose }: ShopProps) => {
   const { toast } = useToast();
   const [showEffect, setShowEffect] = useState(false);
   const [purchasing, setPurchasing] = useState(false);
+  const [lastPurchaseTime, setLastPurchaseTime] = useState(0);
 
   // Extract data from single shop data response
   const displayBalance = shopData?.user_balance ?? 0;
@@ -75,6 +76,18 @@ export const Shop = ({ onClose }: ShopProps) => {
     }
 
     if (purchasing) return;
+    
+    // Debounce: prevent rapid clicks (2 second cooldown)
+    const now = Date.now();
+    if (now - lastPurchaseTime < 2000) {
+      toast({
+        title: t(language, 'shop.error'),
+        description: 'Подождите немного перед следующей покупкой',
+        variant: "destructive",
+      });
+      return;
+    }
+    setLastPurchaseTime(now);
 
     try {
       setPurchasing(true);
