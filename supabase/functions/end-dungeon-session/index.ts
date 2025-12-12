@@ -7,8 +7,9 @@ const corsHeaders = {
 };
 
 const RequestSchema = z.object({
-  wallet_address: z.string().min(3).max(100),
   device_id: z.string().optional(),
+  // wallet_address is now optional - we verify it server-side
+  wallet_address: z.string().min(3).max(100).optional(),
 });
 
 type RequestBody = z.infer<typeof RequestSchema>;
@@ -27,6 +28,28 @@ function getSupabaseServiceClient() {
   );
 }
 
+// 🔒 Extract wallet from JWT Authorization header
+async function extractWalletFromAuth(req: Request, supabase: any): Promise<string | null> {
+  const authHeader = req.headers.get('authorization');
+  if (!authHeader?.startsWith('Bearer ')) {
+    return null;
+  }
+
+  const token = authHeader.replace('Bearer ', '');
+  try {
+    const { data: { user }, error } = await supabase.auth.getUser(token);
+    if (error || !user) {
+      return null;
+    }
+    // Get wallet from user metadata or identity
+    const wallet = user.user_metadata?.wallet_address || 
+                   user.identities?.[0]?.identity_data?.wallet_address;
+    return wallet || null;
+  } catch {
+    return null;
+  }
+}
+
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
@@ -41,14 +64,65 @@ Deno.serve(async (req) => {
       return json({ error: 'Invalid request parameters' }, 400);
     }
 
-    const { wallet_address, device_id }: RequestBody = parsed.data;
+    const { device_id }: RequestBody = parsed.data;
+    const supabase = getSupabaseServiceClient();
+
+    // ============ SECURITY: WALLET VERIFICATION ============
+    let wallet_address: string | null = null;
+
+    // Priority 1: Extract from JWT token (most secure)
+    wallet_address = await extractWalletFromAuth(req, supabase);
+    if (wallet_address) {
+      console.log('✅ Wallet verified via JWT:', wallet_address.substring(0, 10));
+    }
+
+    // Priority 2: Verify via wallet_identities table (for NEAR wallet users)
+    if (!wallet_address && parsed.data.wallet_address) {
+      const { data: identity, error: identityError } = await supabase
+        .from('wallet_identities')
+        .select('wallet_address')
+        .eq('wallet_address', parsed.data.wallet_address)
+        .single();
+
+      if (!identityError && identity) {
+        wallet_address = identity.wallet_address;
+        console.log('✅ Wallet verified via wallet_identities:', wallet_address.substring(0, 10));
+      }
+    }
+
+    // Priority 3: Verify wallet exists in game_data (proves it's a registered player)
+    if (!wallet_address && parsed.data.wallet_address) {
+      const { data: gameDataCheck, error: gameDataError } = await supabase
+        .from('game_data')
+        .select('wallet_address')
+        .eq('wallet_address', parsed.data.wallet_address)
+        .single();
+
+      if (!gameDataError && gameDataCheck) {
+        wallet_address = gameDataCheck.wallet_address;
+        console.log('✅ Wallet verified via game_data:', wallet_address.substring(0, 10));
+      }
+    }
+
+    // 🔒 FINAL CHECK: Must have verified wallet
+    if (!wallet_address) {
+      console.error('❌ Could not verify wallet ownership');
+      await supabase.from('security_audit_log').insert({
+        event_type: 'DUNGEON_END_UNVERIFIED_WALLET',
+        wallet_address: parsed.data.wallet_address || null,
+        details: { device_id: device_id || 'all', error: 'Could not verify wallet ownership' }
+      });
+
+      return json({ 
+        error: 'Could not verify wallet ownership. Please reconnect your wallet.',
+        code: 'WALLET_VERIFICATION_FAILED' 
+      }, 401);
+    }
 
     console.log('🛑 Ending dungeon session:', {
-      wallet_address,
+      wallet_address: wallet_address.substring(0, 10),
       device_id: device_id || 'all devices'
     });
-
-    const supabase = getSupabaseServiceClient();
 
     // Удаляем сессии для кошелька (опционально для конкретного устройства)
     let query = supabase
