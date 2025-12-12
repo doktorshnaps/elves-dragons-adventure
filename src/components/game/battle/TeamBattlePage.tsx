@@ -237,6 +237,8 @@ const TeamBattlePageInner: React.FC<TeamBattlePageProps> = ({
     // Флаги теперь управляются только через Zustand
     startTransition(() => {
       useGameStore.getState().setActiveBattleInProgress(false);
+      // ✅ КРИТИЧНО: Очищаем сохраненное состояние боя при полном выходе
+      useGameStore.getState().clearTeamBattleState();
       // Сбрасываем monstersKilled в state (не localStorage)
       setMonstersKilled([]);
     });
@@ -289,7 +291,17 @@ const TeamBattlePageInner: React.FC<TeamBattlePageProps> = ({
   };
   const handleBackToMenu = () => {
     startTransition(() => {
-      // Preserve current battle progress and team; just navigate back
+      // ✅ КРИТИЧНО: Сохраняем текущий уровень и состояние боя в Zustand перед выходом
+      // чтобы при возвращении бой продолжился с того же уровня
+      const currentBattleState = {
+        level: battleState.level,
+        dungeonType: dungeonType,
+        playerPairs: battleState.playerPairs,
+        monstersKilled: monstersKilledRef.current
+      };
+      useGameStore.getState().setTeamBattleState(currentBattleState);
+      console.log('📝 [handleBackToMenu] Saved battle state to Zustand, level:', battleState.level);
+      
       navigate('/dungeons');
     });
   };
