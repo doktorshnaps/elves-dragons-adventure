@@ -12,7 +12,6 @@
   },
   "dependencies": {
     "@hookform/resolvers": "^3.9.0",
-    "@hot-labs/kit": "^1.0.53",
     "@hot-labs/near-connect": "^0.4.2",
     "@near-wallet-selector/core": "^9.5.4",
     "@near-wallet-selector/here-wallet": "^9.5.4",

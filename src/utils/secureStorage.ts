@@ -23,10 +23,7 @@ async function generateSignature(data: string, walletAddress: string): Promise<s
   // Используем crypto.subtle для более надежной подписи
   if (window.crypto && window.crypto.subtle) {
     try {
-      // Create a proper ArrayBuffer copy for crypto.subtle.digest
-      const buffer = new ArrayBuffer(dataBuffer.length);
-      new Uint8Array(buffer).set(dataBuffer);
-      const hashBuffer = await window.crypto.subtle.digest('SHA-256', buffer);
+      const hashBuffer = await window.crypto.subtle.digest('SHA-256', dataBuffer);
       const hashArray = Array.from(new Uint8Array(hashBuffer));
       return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
     } catch (e) {
