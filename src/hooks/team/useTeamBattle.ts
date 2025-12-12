@@ -23,12 +23,19 @@ export const useTeamBattle = (dungeonType: DungeonType, initialLevel: number = 1
   // Battle state хранится ТОЛЬКО в React state, не в localStorage
   // Это предотвращает рассинхронизацию и утечки данных между сессиями
   const [battleState, setBattleState] = useState<TeamBattleState>(() => {
+    // ✅ КРИТИЧНО: Проверяем сохраненное состояние в Zustand для восстановления уровня
+    const savedBattleState = useGameStore.getState().teamBattleState;
+    const savedLevel = savedBattleState?.dungeonType === dungeonType ? savedBattleState.level : initialLevel;
+    
+    console.log('🎮 [useTeamBattle] Initializing battle state, level:', savedLevel, 
+      'saved:', savedBattleState?.level, 'initial:', initialLevel);
+    
     return {
       playerPairs: [],
       opponents: [],
       currentTurn: 'player',
       currentAttacker: 0,
-      level: initialLevel,
+      level: savedLevel,
       selectedDungeon: dungeonType
     };
   });
@@ -158,7 +165,11 @@ export const useTeamBattle = (dungeonType: DungeonType, initialLevel: number = 1
           console.log('ℹ️ [INIT] No active treasure hunt event');
         });
         
-        const opponents = await generateDungeonOpponents(dungeonType, initialLevel);
+        // ✅ КРИТИЧНО: Используем текущий уровень из состояния (может быть восстановлен из Zustand)
+        // вместо initialLevel который всегда = 1
+        const currentLevel = battleState.level;
+        console.log('🎮 [INIT] Generating opponents for level:', currentLevel);
+        const opponents = await generateDungeonOpponents(dungeonType, currentLevel);
         
         // Устанавливаем флаг активного боя через Zustand (без localStorage)
         useGameStore.getState().setActiveBattleInProgress(true);
