@@ -17,13 +17,13 @@ interface SecureData<T> {
  */
 async function generateSignature(data: string, walletAddress: string): Promise<string> {
   const message = `${data}:${walletAddress}`;
+  const encoder = new TextEncoder();
+  const dataBuffer = encoder.encode(message);
   
   // Используем crypto.subtle для более надежной подписи
-  if (typeof crypto !== 'undefined' && crypto.subtle) {
+  if (window.crypto && window.crypto.subtle) {
     try {
-      const encoder = new TextEncoder();
-      const msgBuffer = new Uint8Array(encoder.encode(message)).buffer as ArrayBuffer;
-      const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
+      const hashBuffer = await window.crypto.subtle.digest('SHA-256', dataBuffer);
       const hashArray = Array.from(new Uint8Array(hashBuffer));
       return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
     } catch (e) {
