@@ -1,5 +1,5 @@
 import React from 'react';
-const technicalWorkImage = '/placeholder.svg';
+import technicalWorkImage from '@/assets/maintenance-image.png';
 import { Button } from '@/components/ui/button';
 import { useWalletContext } from '@/contexts/WalletConnectContext';
 
