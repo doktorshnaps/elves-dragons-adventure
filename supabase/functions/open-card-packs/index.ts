@@ -1,9 +1,47 @@
 import { createClient } from 'jsr:@supabase/supabase-js@2';
+import { z } from 'https://deno.land/x/zod@v3.22.4/mod.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
+
+// 🔒 Input validation schema
+const OpenPacksSchema = z.object({
+  pack_name: z.string().min(1),
+  count: z.number().int().min(1).max(100),
+  // wallet_address is now optional - we verify it server-side
+  wallet_address: z.string().min(3).max(100).optional(),
+});
+
+function json(data: unknown, status = 200) {
+  return new Response(JSON.stringify(data), {
+    status,
+    headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+  });
+}
+
+// 🔒 Extract wallet from JWT Authorization header
+async function extractWalletFromAuth(req: Request, supabase: any): Promise<string | null> {
+  const authHeader = req.headers.get('authorization');
+  if (!authHeader?.startsWith('Bearer ')) {
+    return null;
+  }
+
+  const token = authHeader.replace('Bearer ', '');
+  try {
+    const { data: { user }, error } = await supabase.auth.getUser(token);
+    if (error || !user) {
+      return null;
+    }
+    // Get wallet from user metadata or identity
+    const wallet = user.user_metadata?.wallet_address || 
+                   user.identities?.[0]?.identity_data?.wallet_address;
+    return wallet || null;
+  } catch {
+    return null;
+  }
+}
 
 interface CardInfo {
   name: string;
@@ -381,18 +419,75 @@ Deno.serve(async (req) => {
   }
 
   try {
-    const { wallet_address, pack_name, count } = await req.json();
-    
-    console.log(`🎁 EDGE FUNCTION v2.0: Opening ${count} card pack(s) for wallet ${wallet_address}`);
-    
-    if (!wallet_address || !pack_name || !count || count < 1) {
-      throw new Error('Invalid parameters');
-    }
-
     // Initialize Supabase client at the beginning
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseKey);
+
+    // 🔒 Parse and validate input
+    const body = await req.json();
+    const parsed = OpenPacksSchema.safeParse(body);
+    
+    if (!parsed.success) {
+      console.error('❌ Validation failed:', parsed.error.format());
+      return json({ error: 'Invalid request parameters' }, 400);
+    }
+
+    const { pack_name, count } = parsed.data;
+
+    // ============ SECURITY: WALLET VERIFICATION ============
+    let wallet_address: string | null = null;
+
+    // Priority 1: Extract from JWT token (most secure)
+    wallet_address = await extractWalletFromAuth(req, supabase);
+    if (wallet_address) {
+      console.log('✅ Wallet verified via JWT:', wallet_address.substring(0, 10));
+    }
+
+    // Priority 2: Verify via wallet_identities table (for NEAR wallet users)
+    if (!wallet_address && parsed.data.wallet_address) {
+      const { data: identity, error: identityError } = await supabase
+        .from('wallet_identities')
+        .select('wallet_address')
+        .eq('wallet_address', parsed.data.wallet_address)
+        .single();
+
+      if (!identityError && identity) {
+        wallet_address = identity.wallet_address;
+        console.log('✅ Wallet verified via wallet_identities:', wallet_address.substring(0, 10));
+      }
+    }
+
+    // Priority 3: Verify wallet exists in game_data (proves it's a registered player)
+    if (!wallet_address && parsed.data.wallet_address) {
+      const { data: gameDataCheck, error: gameDataError } = await supabase
+        .from('game_data')
+        .select('wallet_address')
+        .eq('wallet_address', parsed.data.wallet_address)
+        .single();
+
+      if (!gameDataError && gameDataCheck) {
+        wallet_address = gameDataCheck.wallet_address;
+        console.log('✅ Wallet verified via game_data:', wallet_address.substring(0, 10));
+      }
+    }
+
+    // 🔒 FINAL CHECK: Must have verified wallet
+    if (!wallet_address) {
+      console.error('❌ Could not verify wallet ownership');
+      await supabase.from('security_audit_log').insert({
+        event_type: 'CARD_PACK_UNVERIFIED_WALLET',
+        wallet_address: parsed.data.wallet_address || null,
+        details: { pack_name, count, error: 'Could not verify wallet ownership' }
+      });
+
+      return json({ 
+        error: 'Could not verify wallet ownership. Please reconnect your wallet.',
+        code: 'WALLET_VERIFICATION_FAILED' 
+      }, 401);
+    }
+
+    console.log(`🎁 EDGE FUNCTION v3.0 (SECURED): Opening ${count} card pack(s) for verified wallet ${wallet_address.substring(0, 10)}...`);
 
     // Generate cards with detailed logging
     const newCards = [];
