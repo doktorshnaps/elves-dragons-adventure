@@ -44,6 +44,7 @@ const IcyThroneWithLazyLoading = lazy(() => import('./components/lazy/LazyCompon
 const DarkMageTowerWithLazyLoading = lazy(() => import('./components/lazy/LazyComponents').then(m => ({ default: m.DarkMageTowerWithLazyLoading })));
 const BoneDemonDungeonWithLazyLoading = lazy(() => import('./components/lazy/LazyComponents').then(m => ({ default: m.BoneDemonDungeonWithLazyLoading })));
 const SeaSerpentLairWithLazyLoading = lazy(() => import('./components/lazy/LazyComponents').then(m => ({ default: m.SeaSerpentLairWithLazyLoading })));
+const Wibe3TestPanel = lazy(() => import('./components/wibe3/Wibe3TestPanel'));
 
 // Simple loading fallback
 const PageLoader = () => <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }} />;
@@ -97,6 +98,7 @@ function App() {
                                   <Route path="/dungeons/dark-mage" element={<Suspense fallback={<PageLoader />}><ProtectedRoute><DarkMageTowerWithLazyLoading /></ProtectedRoute></Suspense>} />
                                   <Route path="/dungeons/bone-dungeon" element={<Suspense fallback={<PageLoader />}><ProtectedRoute><BoneDemonDungeonWithLazyLoading /></ProtectedRoute></Suspense>} />
                                   <Route path="/dungeons/sea-serpent" element={<Suspense fallback={<PageLoader />}><ProtectedRoute><SeaSerpentLairWithLazyLoading /></ProtectedRoute></Suspense>} />
+                                  <Route path="/wibe3-test" element={<Suspense fallback={<PageLoader />}><ProtectedRoute><Wibe3TestPanel /></ProtectedRoute></Suspense>} />
                                 </Routes>
                               </Suspense>
                               <Toaster />
