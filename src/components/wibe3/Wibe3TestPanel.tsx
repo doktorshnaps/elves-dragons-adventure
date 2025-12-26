@@ -130,26 +130,29 @@ const Wibe3TestPanel: React.FC = () => {
     
     setActionLoading('transfer');
     try {
+      const wallet = wibe3.priorityWallet;
+      if (!wallet) {
+        throw new Error('Сначала подключите кошелёк');
+      }
+      
       const amount = parseFloat(transferAmount);
       
-      // Request token first (opens UI for deposit if needed)
-      const { wallet, amount: requestedAmount } = await wibe3.requestToken(
-        transferToken,
-        amount
-      );
-      
-      // Execute transfer using intents
-      const txHash = await wallet.intents
+      // Use intentsBuilder for transfers
+      // OmniToken values: USDC, USDT, NEAR
+      const txHash = await wibe3.intentsBuilder(wallet)
         .transfer({
-          amount: requestedAmount,
-          token: transferToken,
+          amount: amount,
+          token: transferToken as any, // OmniToken enum
           recipient: transferRecipient,
           msg: JSON.stringify({ 
             type: 'game_payment',
             timestamp: Date.now() 
           }),
         })
-        .execute();
+        .depositAndExecute({
+          title: `Перевод ${amount} ${transferToken}`,
+          message: `Отправка на ${transferRecipient}`,
+        });
       
       console.log('Transfer completed:', txHash);
       
@@ -182,8 +185,8 @@ const Wibe3TestPanel: React.FC = () => {
       
       // NFT mint via authCall
       const mintMsg = {
-        msg: wallet.tradingAddress || wallet.address,
-        token_owner_id: wallet.tradingAddress || wallet.address,
+        msg: wallet.omniAddress || wallet.address,
+        token_owner_id: wallet.omniAddress || wallet.address,
         token_id: `nft_${Date.now()}`,
         token_metadata: {
           title: 'Test NFT',
@@ -192,14 +195,17 @@ const Wibe3TestPanel: React.FC = () => {
         },
       };
       
-      const txHash = await wallet.intents
+      const txHash = await wibe3.intentsBuilder(wallet)
         .authCall({
           contractId: nftContractId,
           msg: JSON.stringify(mintMsg),
           attachNear: BigInt(1e23), // 0.1 NEAR for storage
           tgas: 50,
         })
-        .execute();
+        .depositAndExecute({
+          title: 'Минт NFT',
+          message: `Создание NFT в ${nftContractId}`,
+        });
       
       console.log('NFT minted:', txHash);
       
@@ -237,7 +243,7 @@ const Wibe3TestPanel: React.FC = () => {
         msg: '',
       };
       
-      const txHash = await wallet.intents
+      const txHash = await wibe3.intentsBuilder(wallet)
         .authCall({
           contractId: nftContractId,
           msg: JSON.stringify({
@@ -247,7 +253,10 @@ const Wibe3TestPanel: React.FC = () => {
           attachNear: BigInt(1), // 1 yoctoNEAR for security
           tgas: 30,
         })
-        .execute();
+        .depositAndExecute({
+          title: 'Отправка NFT',
+          message: `${nftContractId}:${nftTokenId} → ${nftRecipient}`,
+        });
       
       console.log('NFT sent:', txHash);
       
