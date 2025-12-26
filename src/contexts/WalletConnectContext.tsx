@@ -3,6 +3,7 @@ import React, { createContext, useContext, useEffect, useRef, useState } from "r
 import type { WalletSelector, AccountState } from "@near-wallet-selector/core";
 import useTelegram from "@/hooks/useTelegram";
 import { initSelector } from "@/utils/selector";
+import { initWibe3, getWibe3 } from "@/lib/wibe3";
 import { useQueryClient } from "@tanstack/react-query";
 
 interface WalletContextType {
@@ -13,6 +14,11 @@ interface WalletContextType {
   hasError: boolean;
   connect: () => Promise<void>;
   disconnect: () => Promise<void>;
+  // New: HotConnector multichain support
+  wibe3: any | null;
+  evmAddress: string | null;
+  solanaAddress: string | null;
+  tonAddress: string | null;
 }
 
 const WalletContext = createContext<WalletContextType>({
@@ -23,6 +29,10 @@ const WalletContext = createContext<WalletContextType>({
   hasError: false,
   connect: async () => {},
   disconnect: async () => {},
+  wibe3: null,
+  evmAddress: null,
+  solanaAddress: null,
+  tonAddress: null,
 });
 
 export function WalletConnectProvider({ children }: { children: React.ReactNode }) {
@@ -32,6 +42,10 @@ export function WalletConnectProvider({ children }: { children: React.ReactNode 
   const [nearAccountId, setNearAccountId] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [hasError, setHasError] = useState(false);
+  const [wibe3, setWibe3] = useState<any>(null);
+  const [evmAddress, setEvmAddress] = useState<string | null>(null);
+  const [solanaAddress, setSolanaAddress] = useState<string | null>(null);
+  const [tonAddress, setTonAddress] = useState<string | null>(null);
   const queryClientRef = useRef<ReturnType<typeof useQueryClient> | null>(null);
 
   // Get queryClient inside provider (after QueryClientProvider is available)
@@ -173,6 +187,37 @@ export function WalletConnectProvider({ children }: { children: React.ReactNode 
         measures.forEach(measure => {
           console.log(`  ${measure.name}: ${Math.round(measure.duration)}ms`);
         });
+
+        // Initialize HotConnector (wibe3) in parallel - non-blocking
+        try {
+          console.log('🔗 [WalletContext] Initializing HotConnector (wibe3)...');
+          const connector = await initWibe3();
+          if (!cancelled && connector) {
+            setWibe3(connector);
+            console.log('✅ [WalletContext] HotConnector initialized');
+            
+            // Subscribe to wallet changes from HotConnector
+            if (connector.near?.address) {
+              console.log('🔍 [WalletContext] NEAR from HotConnector:', connector.near.address);
+            }
+            if (connector.evm?.address) {
+              setEvmAddress(connector.evm.address);
+              console.log('🔍 [WalletContext] EVM address:', connector.evm.address);
+            }
+            if (connector.solana?.address) {
+              setSolanaAddress(connector.solana.address);
+              console.log('🔍 [WalletContext] Solana address:', connector.solana.address);
+            }
+            if (connector.ton?.address) {
+              setTonAddress(connector.ton.address);
+              console.log('🔍 [WalletContext] TON address:', connector.ton.address);
+            }
+          }
+        } catch (wibe3Err) {
+          console.warn('⚠️ [WalletContext] HotConnector init failed (non-critical):', wibe3Err);
+          // Continue without HotConnector - NEAR wallet still works
+        }
+
       } catch (err) {
         console.error("❌ [WalletContext] Initialization error:", err);
         if (!cancelled) {
@@ -306,6 +351,10 @@ export function WalletConnectProvider({ children }: { children: React.ReactNode 
         hasError,
         connect,
         disconnect,
+        wibe3,
+        evmAddress,
+        solanaAddress,
+        tonAddress,
       }}
     >
       {children}
