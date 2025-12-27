@@ -125,34 +125,33 @@ const Wibe3TestPanel: React.FC = () => {
   };
 
   // 2. Сделать перевод (Omni Chain / Intents)
+  // По документации: сначала requestToken, потом wallet.intents.transfer().execute()
   const handleTransfer = async () => {
     if (!wibe3) return;
     
     setActionLoading('transfer');
     try {
-      const wallet = wibe3.priorityWallet;
-      if (!wallet) {
-        throw new Error('Сначала подключите кошелёк');
-      }
-      
       const amount = parseFloat(transferAmount);
       
-      // Use intentsBuilder for transfers
-      // OmniToken values: USDC, USDT, NEAR
-      const txHash = await wibe3.intentsBuilder(wallet)
+      // ВАЖНО: requestToken открывает UI для депозита если нужно
+      // и возвращает { wallet, amount } для использования в intents
+      const { wallet, amount: requestedAmount } = await wibe3.requestToken(
+        transferToken, // OmniToken: 'USDC', 'USDT', 'NEAR'
+        amount
+      );
+      
+      // Теперь используем wallet.intents для перевода
+      const txHash = await wallet.intents
         .transfer({
-          amount: amount,
-          token: transferToken as any, // OmniToken enum
+          amount: requestedAmount,
+          token: transferToken,
           recipient: transferRecipient,
           msg: JSON.stringify({ 
             type: 'game_payment',
             timestamp: Date.now() 
           }),
         })
-        .depositAndExecute({
-          title: `Перевод ${amount} ${transferToken}`,
-          message: `Отправка на ${transferRecipient}`,
-        });
+        .execute();
       
       console.log('Transfer completed:', txHash);
       
