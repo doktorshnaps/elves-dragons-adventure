@@ -1,7 +1,7 @@
 // Тестовая панель для HotConnector (wibe3)
 // Позволяет протестировать основные функции: подключение, переводы, NFT
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -10,13 +10,14 @@ import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
 import { initWibe3 } from '@/lib/wibe3';
 import { Wallet, Send, Image, LogOut, RefreshCw, Coins } from 'lucide-react';
+import { OmniToken } from '@hot-labs/kit';
 
-// OmniToken constants
-const OmniToken = {
-  USDC: 'USDC',
-  USDT: 'USDT',
-  NEAR: 'NEAR',
-};
+// Token options for UI
+const tokenOptions = [
+  { key: 'USDC', token: OmniToken.USDC, label: 'USDC' },
+  { key: 'USDT', token: OmniToken.USDT, label: 'USDT' },
+  { key: 'NEAR', token: OmniToken.NEAR, label: 'NEAR' },
+];
 
 const Wibe3TestPanel: React.FC = () => {
   const { toast } = useToast();
@@ -125,25 +126,24 @@ const Wibe3TestPanel: React.FC = () => {
   };
 
   // 2. Сделать перевод (Omni Chain / Intents)
-  // По документации: сначала requestToken, потом wallet.intents.transfer().execute()
+  // Используем intentsBuilder().transfer().depositAndExecute()
   const handleTransfer = async () => {
     if (!wibe3) return;
     
     setActionLoading('transfer');
     try {
+      const wallet = wibe3.priorityWallet;
+      if (!wallet) {
+        throw new Error('Сначала подключите кошелёк');
+      }
+      
       const amount = parseFloat(transferAmount);
       
-      // ВАЖНО: requestToken открывает UI для депозита если нужно
-      // и возвращает { wallet, amount } для использования в intents
-      const { wallet, amount: requestedAmount } = await wibe3.requestToken(
-        transferToken, // OmniToken: 'USDC', 'USDT', 'NEAR'
-        amount
-      );
-      
-      // Теперь используем wallet.intents для перевода
-      const txHash = await wallet.intents
+      // Используем intentsBuilder для создания transfer intent
+      // depositAndExecute откроет UI для депозита если нужно
+      const txHash = await wibe3.intentsBuilder(wallet)
         .transfer({
-          amount: requestedAmount,
+          amount: amount,
           token: transferToken,
           recipient: transferRecipient,
           msg: JSON.stringify({ 
@@ -151,13 +151,16 @@ const Wibe3TestPanel: React.FC = () => {
             timestamp: Date.now() 
           }),
         })
-        .execute();
+        .depositAndExecute({
+          title: `Перевод ${amount}`,
+          message: `Отправка на ${transferRecipient}`,
+        });
       
       console.log('Transfer completed:', txHash);
       
       toast({
         title: 'Перевод выполнен',
-        description: `${amount} ${transferToken} отправлено на ${transferRecipient}`,
+        description: `Транзакция: ${txHash}`,
       });
     } catch (error: any) {
       console.error('Transfer error:', error);
@@ -423,14 +426,14 @@ const Wibe3TestPanel: React.FC = () => {
             </div>
             
             <div className="flex gap-2">
-              {Object.values(OmniToken).map((token) => (
+              {tokenOptions.map((opt) => (
                 <Button
-                  key={token}
-                  variant={transferToken === token ? 'default' : 'outline'}
+                  key={opt.key}
+                  variant={transferToken === opt.token ? 'default' : 'outline'}
                   size="sm"
-                  onClick={() => setTransferToken(token)}
+                  onClick={() => setTransferToken(opt.token)}
                 >
-                  {token}
+                  {opt.label}
                 </Button>
               ))}
             </div>
@@ -445,7 +448,7 @@ const Wibe3TestPanel: React.FC = () => {
               ) : (
                 <Coins className="w-4 h-4 mr-2" />
               )}
-              Отправить {transferAmount} {transferToken}
+              Отправить {transferAmount} {tokenOptions.find(t => t.token === transferToken)?.label || 'токенов'}
             </Button>
           </CardContent>
         </Card>
