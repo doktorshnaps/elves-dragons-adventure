@@ -146,9 +146,11 @@ const Wibe3TestPanel: React.FC = () => {
           amount: amount,
           token: transferToken,
           recipient: transferRecipient,
-          msg: JSON.stringify({ 
+          // ВАЖНО: msg приводит к ft_transfer_call и требует, чтобы получатель был контрактом.
+          // Для обычного аккаунта используем memo.
+          memo: JSON.stringify({
             type: 'game_payment',
-            timestamp: Date.now() 
+            timestamp: Date.now(),
           }),
         })
         .depositAndExecute({
