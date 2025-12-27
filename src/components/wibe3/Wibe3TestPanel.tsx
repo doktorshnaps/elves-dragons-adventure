@@ -177,6 +177,7 @@ const Wibe3TestPanel: React.FC = () => {
   };
 
   // 3. Минт NFT (authCall intent)
+  // ВАЖНО: token_owner_id должен быть "intents.near" для работы через Omni Chain
   const handleMintNFT = async () => {
     if (!wibe3) return;
     
@@ -187,11 +188,14 @@ const Wibe3TestPanel: React.FC = () => {
         throw new Error('Подключите кошелёк');
       }
       
-      // NFT mint via authCall
+      const tradingAddress = wallet.omniAddress || wallet.address;
+      const tokenId = `nft_${Date.now()}`;
+      
+      // NFT mint message по формату из документации
       const mintMsg = {
-        msg: wallet.omniAddress || wallet.address,
-        token_owner_id: wallet.omniAddress || wallet.address,
-        token_id: `nft_${Date.now()}`,
+        msg: tradingAddress, // trading address для получения NFT
+        token_owner_id: 'intents.near', // ВАЖНО: владелец - intents.near
+        token_id: tokenId,
         token_metadata: {
           title: 'Test NFT',
           description: 'NFT minted via HotConnector',
@@ -199,11 +203,17 @@ const Wibe3TestPanel: React.FC = () => {
         },
       };
       
+      // Расчёт депозита на основе размера метаданных
+      const metadataSize = JSON.stringify(mintMsg.token_metadata).length;
+      const storageDeposit = BigInt((metadataSize * 8) / 100_000) * BigInt(10 ** 24);
+      // Минимум 0.1 NEAR для безопасности
+      const deposit = storageDeposit > BigInt(1e23) ? storageDeposit : BigInt(1e23);
+      
       const txHash = await wibe3.intentsBuilder(wallet)
         .authCall({
           contractId: nftContractId,
           msg: JSON.stringify(mintMsg),
-          attachNear: BigInt(1e23), // 0.1 NEAR for storage
+          attachNear: deposit,
           tgas: 50,
         })
         .depositAndExecute({
@@ -215,7 +225,7 @@ const Wibe3TestPanel: React.FC = () => {
       
       toast({
         title: 'NFT создан',
-        description: `Token ID: ${mintMsg.token_id}`,
+        description: `Token ID: ${tokenId}`,
       });
     } catch (error: any) {
       console.error('Mint error:', error);
