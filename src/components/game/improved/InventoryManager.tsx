@@ -11,6 +11,7 @@ import { Badge } from '@/components/ui/badge';
 import { useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useWalletContext } from '@/contexts/WalletConnectContext';
+import { useItemInstances } from '@/hooks/useItemInstances';
 
 interface GroupedItem {
   name: string;
@@ -20,8 +21,12 @@ interface GroupedItem {
   image?: string;
 }
 
+/**
+ * РЕФАКТОРИНГ: Компонент использует useItemInstances() вместо gameStore.inventory
+ * Данные инвентаря теперь берутся из item_instances через React Query
+ */
 export const InventoryManager = () => {
-  const { inventory, removeItem } = useGameStore();
+  const { instances: inventory, removeItemInstancesByIds } = useItemInstances();
   const { handleError, handleSuccess } = useErrorHandler();
   const [selectedItem, setSelectedItem] = useState<GroupedItem | null>(null);
   const queryClient = useQueryClient();
@@ -73,7 +78,7 @@ export const InventoryManager = () => {
           }
         }
         
-        removeItem(item.id);
+        await removeItemInstancesByIds([item.id]);
         queryClient.invalidateQueries({ queryKey: ['cardInstances'] });
         
         handleSuccess(
@@ -89,13 +94,13 @@ export const InventoryManager = () => {
     }
   };
 
-  const sellItem = (groupedItem: GroupedItem) => {
+  const sellItem = async (groupedItem: GroupedItem) => {
     try {
       const item = groupedItem.items[0];
       // Используем sell_price из item_templates, если он определен
       const sellPrice = item.sell_price !== undefined ? item.sell_price : Math.floor(item.value * 0.7);
       
-      removeItem(item.id);
+      await removeItemInstancesByIds([item.id]);
       useGameStore.getState().addBalance(sellPrice);
       
       handleSuccess(
@@ -107,7 +112,17 @@ export const InventoryManager = () => {
     }
   };
 
-  const groupedItems = groupItems(inventory);
+  // Преобразуем instances в Item[] для groupItems
+  const inventoryItems: Item[] = inventory.map(inst => ({
+    id: inst.id,
+    name: inst.name || 'Unknown',
+    type: (inst.type as Item['type']) || 'material',
+    value: 0,
+    image: undefined,
+    sell_price: undefined,
+  }));
+
+  const groupedItems = groupItems(inventoryItems);
 
   const getItemIcon = (type: Item['type']) => {
     switch (type) {
@@ -122,7 +137,7 @@ export const InventoryManager = () => {
       <div className="flex items-center gap-2 mb-4">
         <Package className="w-5 h-5 text-game-accent" />
         <h3 className="text-xl font-bold text-game-accent">Инвентарь</h3>
-        <Badge variant="secondary">{inventory.length} предметов</Badge>
+        <Badge variant="secondary">{inventoryItems.length} предметов</Badge>
       </div>
 
       {groupedItems.length === 0 ? (

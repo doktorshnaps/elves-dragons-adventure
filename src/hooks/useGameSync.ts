@@ -6,7 +6,11 @@ import { setSyncFreeze, clearSyncFreeze } from '@/utils/updateGameDataThrottle';
 
 /**
  * Синхронизирует локальное состояние Zustand с Supabase
- * РЕФАКТОРИНГ: cards теперь НЕ синхронизируются - используйте card_instances
+ * 
+ * РЕФАКТОРИНГ: 
+ * - cards → используйте useCards() и card_instances
+ * - dragonEggs → используйте useDragonEggs() из DragonEggContext  
+ * - inventory → используйте useItemInstances()
  */
 export const useGameSync = () => {
   console.log('🚀🚀🚀 useGameSync HOOK CALLED 🚀🚀🚀');
@@ -31,7 +35,6 @@ export const useGameSync = () => {
 
   // Очищаем старые данные из localStorage при монтировании
   useEffect(() => {
-    // Удаляем старый persist store и все старые ключи
     const oldKeys = [
       'game-storage',
       'gameCards',
@@ -63,10 +66,8 @@ export const useGameSync = () => {
     if (prevAccountIdRef.current && prevAccountIdRef.current !== accountId) {
       console.log('🔄 Wallet changed, clearing all cached data');
       
-      // КРИТИЧНО: блокируем синхронизацию перед очисткой (двойная защита)
       preventSyncAfterClearRef.current = true;
       
-      // Глобальный freeze на 3 секунды для throttler
       if (accountId) {
         setSyncFreeze(accountId, 3000);
       }
@@ -122,7 +123,6 @@ export const useGameSync = () => {
       hasSelector: !!selector
     });
     
-    // Не загружаем данные пока wallet не готов
     if (walletLoading || !selector) {
       console.log('⏸️ useGameSync: Waiting for wallet to be ready');
       return;
@@ -133,15 +133,12 @@ export const useGameSync = () => {
       try {
         console.log('🔄 useGameSync: Loading data from Supabase:', {
           balance: gameData.balance,
-          dragonEggs: gameData.dragonEggs?.length,
           selectedTeam: gameData.selectedTeam?.length,
           accountLevel: gameData.accountLevel,
           accountExperience: gameData.accountExperience
         });
         
         gameStore.setBalance(gameData.balance);
-        // РЕФАКТОРИНГ: cards больше НЕ синхронизируем - используйте useCards() и card_instances
-        gameStore.setDragonEggs(gameData.dragonEggs || []);
         
         // КРИТИЧНО: Всегда устанавливаем selectedTeam из БД
         const teamFromDB = gameData.selectedTeam || [];
@@ -158,20 +155,17 @@ export const useGameSync = () => {
           gameStore.setBattleState(gameData.battleState);
         }
         
-        // Сохраняем синхронизированное состояние (без cards)
+        // Сохраняем синхронизированное состояние
         lastSyncedRef.current = {
           balance: gameData.balance,
-          dragonEggs: gameData.dragonEggs,
           selectedTeam: gameData.selectedTeam || [],
           battleState: gameData.battleState,
           accountLevel: gameData.accountLevel,
           accountExperience: gameData.accountExperience,
         };
         
-        // Разрешаем синхронизацию после успешной загрузки данных
         preventSyncAfterClearRef.current = false;
         
-        // Снимаем глобальный freeze
         if (accountId) {
           clearSyncFreeze(accountId);
         }
@@ -184,34 +178,27 @@ export const useGameSync = () => {
   }, [loading, isConnected, accountId, gameData, walletLoading, selector]);
 
   // Синхронизируем изменения локального состояния с Supabase через подписку на store
-  // РЕФАКТОРИНГ: cards исключены из синхронизации - используйте card_instances напрямую
   useEffect(() => {
-    // Не синхронизируем пока wallet не готов
     if (walletLoading || !selector) return;
     if (!isConnected || !accountId || loading) return;
     
-    // КРИТИЧНО: блокируем синхронизацию во время боя
     const activeBattle = gameStore.activeBattleInProgress;
     if (activeBattle) {
       console.log('⏸️ [useGameSync] Sync blocked: battle in progress');
       return;
     }
     
-    // КРИТИЧНО: блокируем синхронизацию сразу после clearAllData()
     if (preventSyncAfterClearRef.current) {
       console.log('⏸️ Sync blocked: waiting for data to load after clear');
       return;
     }
     
-    // Подписываемся на изменения store через Zustand subscribe
     const unsubscribe = useGameStore.subscribe((state) => {
-      // Пропускаем если применяем данные из БД
       if (isApplyingRef.current) return;
       
-      // РЕФАКТОРИНГ: cards убраны из синхронизации
+      // Синхронизируем только UI-состояние (без серверных данных)
       const snapshot = {
         balance: state.balance,
-        dragonEggs: state.dragonEggs,
         selectedTeam: state.selectedTeam,
         battleState: state.battleState,
         accountLevel: state.accountLevel,
@@ -220,7 +207,6 @@ export const useGameSync = () => {
 
       const serverSnapshot = {
         balance: gameData?.balance,
-        dragonEggs: gameData?.dragonEggs,
         selectedTeam: gameData?.selectedTeam,
         battleState: gameData?.battleState,
         accountLevel: gameData?.accountLevel,
@@ -232,13 +218,12 @@ export const useGameSync = () => {
 
       if (sameAsServer || sameAsLastSynced) return;
       
-      // КРИТИЧНО: Защита от затирания команды пустым массивом
+      // Защита от затирания команды пустым массивом
       if (snapshot.selectedTeam?.length === 0 && serverSnapshot.selectedTeam && serverSnapshot.selectedTeam.length > 0) {
         console.warn('⚠️ Prevented syncing empty selectedTeam over existing team in DB');
         return;
       }
 
-      // Дебаунс синхронизации
       const timeoutId = setTimeout(async () => {
         try {
           console.log('🔄 useGameSync: Syncing to Supabase:', {

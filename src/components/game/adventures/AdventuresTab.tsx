@@ -1,6 +1,6 @@
 
 import { useNavigate } from "react-router-dom";
-import { useState, useEffect } from 'react'; // Add this import
+import { useState, useEffect } from 'react';
 import { useToast } from "@/hooks/use-toast";
 import { useGameData } from "@/hooks/useGameData";
 import { AdventureLayout } from "./components/AdventureLayout";
@@ -14,6 +14,7 @@ import { usePlayerStats } from "./game/hooks/usePlayerStats";
 import { addAccountExperience } from '@/utils/accountLeveling';
 import { useGameStore } from '@/stores/gameStore';
 import { useCardInstances } from '@/hooks/useCardInstances';
+import { useItemInstances } from '@/hooks/useItemInstances';
 
 export const AdventuresTab = () => {
   const navigate = useNavigate();
@@ -22,8 +23,9 @@ export const AdventuresTab = () => {
   const balance = gameData.balance;
   const { generateMonster } = useMonsterGeneration(1);
   const { stats: playerStats, updateStats: setPlayerStats, addExperience } = usePlayerStats();
-  const { accountLevel, accountExperience, addAccountExperience: addAccountExp, inventory, removeItem } = useGameStore();
+  const { accountLevel, accountExperience, addAccountExperience: addAccountExp } = useGameStore();
   const { incrementMonsterKills } = useCardInstances();
+  const { removeItemInstancesByIds, getInstancesByItemId } = useItemInstances();
 
   // Adventure монстр - чисто локальное состояние, не нужно сохранять в localStorage
   // При перезагрузке страницы просто генерируется новый монстр
@@ -110,7 +112,7 @@ export const AdventuresTab = () => {
     setPlayerStats(prev => ({ ...prev, health: newPlayerHealth }));
   };
 
-  const handleUseItem = (item: Item) => {
+  const handleUseItem = async (item: Item) => {
     if (item.type === "healthPotion") {
       const newHealth = Math.min(playerStats.maxHealth, playerStats.health + item.value);
       setPlayerStats(prev => ({
@@ -123,15 +125,14 @@ export const AdventuresTab = () => {
         description: `Восстановлено ${item.value} здоровья`
       });
 
-      // Use Zustand store instead of localStorage
-      removeItem(item.id);
+      // Удаляем предмет из item_instances
+      await removeItemInstancesByIds([item.id]);
     }
   };
 
   const handleSellItem = async (item: Item) => {
-    // Use Zustand store instead of localStorage - server validates balance
     await updateGameData({ balance: balance + 10 });
-    removeItem(item.id);
+    await removeItemInstancesByIds([item.id]);
     
     toast({
       title: "Предмет продан",
@@ -171,4 +172,3 @@ export const AdventuresTab = () => {
     </AdventureLayout>
   );
 };
-

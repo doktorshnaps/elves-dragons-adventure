@@ -1,13 +1,19 @@
 import { useEffect, useState } from "react";
 import { Item } from "@/types/inventory";
 import { useToast } from "@/hooks/use-toast";
-import { useGameStore } from "@/stores/gameStore";
 import { useQueryClient } from "@tanstack/react-query";
+import { useItemInstances } from "@/hooks/useItemInstances";
 
+/**
+ * РЕФАКТОРИНГ: Компонент использует useItemInstances() вместо gameStore.inventory
+ * Экипировка теперь хранится как флаг в item_instances или отдельной таблице
+ * 
+ * TODO: Для полной функциональности экипировки нужно добавить:
+ * - Поле equipped в item_instances или отдельную таблицу equipped_items
+ * - RPC функции для equip/unequip
+ */
 export const EquipmentGrid = () => {
-  const inventory = useGameStore((state) => state.inventory);
-  const equipItem = useGameStore((state) => state.equipItem);
-  const unequipItem = useGameStore((state) => state.unequipItem);
+  const { instances } = useItemInstances();
   const queryClient = useQueryClient();
   
   const [equippedItems, setEquippedItems] = useState<Item[]>([]);
@@ -19,6 +25,17 @@ export const EquipmentGrid = () => {
   const [selectedSlot, setSelectedSlot] = useState<string | null>(null);
   const [availableItems, setAvailableItems] = useState<Item[]>([]);
   const { toast } = useToast();
+
+  // Преобразуем instances в Item[]
+  const inventory: Item[] = instances.map(inst => ({
+    id: inst.id,
+    name: inst.name || 'Unknown',
+    type: (inst.type as Item['type']) || 'material',
+    value: 0,
+    slot: undefined, // TODO: добавить slot в item_instances
+    equipped: false, // TODO: добавить equipped в item_instances
+    stats: undefined,
+  }));
 
   useEffect(() => {
     const equipped = inventory.filter((item: Item) => item.equipped);
@@ -37,32 +54,28 @@ export const EquipmentGrid = () => {
       health: 0
     });
     setTotalStats(stats);
-  }, [inventory]);
+  }, [instances]);
 
-  const handleEquipItem = (item: Item) => {
+  const handleEquipItem = async (item: Item) => {
     if (!selectedSlot) return;
     
-    equipItem(item, selectedSlot);
-    
+    // TODO: Реализовать через RPC когда будет поле equipped в БД
     toast({
-      title: "Предмет экипирован",
-      description: `${item.name} был экипирован`
+      title: "В разработке",
+      description: "Экипировка предметов скоро будет доступна"
     });
 
-    // Инвалидируем кэш вместо window.dispatchEvent
     queryClient.invalidateQueries({ queryKey: ['itemInstances'] });
     setSelectedSlot(null);
   };
 
-  const handleUnequipItem = (item: Item) => {
-    unequipItem(item.id);
-    
+  const handleUnequipItem = async (item: Item) => {
+    // TODO: Реализовать через RPC когда будет поле equipped в БД
     toast({
-      title: "Предмет снят",
-      description: `${item.name} был снят`
+      title: "В разработке",
+      description: "Снятие предметов скоро будет доступно"
     });
 
-    // Инвалидируем кэш вместо window.dispatchEvent
     queryClient.invalidateQueries({ queryKey: ['itemInstances'] });
   };
 

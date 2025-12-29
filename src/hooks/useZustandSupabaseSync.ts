@@ -5,23 +5,25 @@ import debounce from 'lodash.debounce';
 
 /**
  * Hook для автоматической синхронизации Zustand с Supabase
- * РЕФАКТОРИНГ: cards удалены из gameStore - карты синхронизируются через card_instances
+ * 
+ * РЕФАКТОРИНГ: Удалены серверные данные из синхронизации:
+ * - cards → используйте card_instances
+ * - inventory → используйте item_instances через useItemInstances()
+ * - dragonEggs → используйте gameData.dragonEggs через DragonEggContext
  */
 export const useZustandSupabaseSync = (walletAddress: string | null) => {
   const isSyncingRef = useRef(false);
   const lastStateRef = useRef<any>(null);
 
-  // РЕФАКТОРИНГ: cards удалены - используем только card_instances
+  // Синхронизируем только UI-состояние
   const state = useGameStore((state) => ({
     balance: state.balance,
-    inventory: state.inventory,
-    dragonEggs: state.dragonEggs,
     selectedTeam: state.selectedTeam,
     accountLevel: state.accountLevel,
     accountExperience: state.accountExperience,
   }));
 
-  // Debounced sync function - увеличен debounce до 2000ms для снижения нагрузки
+  // Debounced sync function
   const syncToSupabase = useRef(
     debounce(
       async (currentState: typeof state, wallet: string) => {
@@ -30,15 +32,12 @@ export const useZustandSupabaseSync = (walletAddress: string | null) => {
           return;
         }
 
-        // Определяем только измененные поля
         const updates: any = { updated_at: new Date().toISOString() };
         let hasChanges = false;
 
         if (!lastStateRef.current) {
-          // Первая синхронизация - обновляем все (без cards)
+          // Первая синхронизация
           updates.balance = currentState.balance;
-          updates.inventory = currentState.inventory as any || [];
-          updates.dragon_eggs = currentState.dragonEggs as any || [];
           updates.selected_team = currentState.selectedTeam as any || [];
           updates.account_level = currentState.accountLevel || 1;
           updates.account_experience = currentState.accountExperience || 0;
@@ -47,15 +46,6 @@ export const useZustandSupabaseSync = (walletAddress: string | null) => {
           // Обновляем только измененные поля
           if (currentState.balance !== lastStateRef.current.balance) {
             updates.balance = currentState.balance;
-            hasChanges = true;
-          }
-          // РЕФАКТОРИНГ: cards синхронизация удалена - используем card_instances
-          if (JSON.stringify(currentState.inventory) !== JSON.stringify(lastStateRef.current.inventory)) {
-            updates.inventory = currentState.inventory as any || [];
-            hasChanges = true;
-          }
-          if (JSON.stringify(currentState.dragonEggs) !== JSON.stringify(lastStateRef.current.dragonEggs)) {
-            updates.dragon_eggs = currentState.dragonEggs as any || [];
             hasChanges = true;
           }
           if (JSON.stringify(currentState.selectedTeam) !== JSON.stringify(lastStateRef.current.selectedTeam)) {
@@ -102,11 +92,8 @@ export const useZustandSupabaseSync = (walletAddress: string | null) => {
     )
   ).current;
 
-  // Sync to Supabase when state changes (БЕЗ localStorage - данные только в Supabase)
   useEffect(() => {
     if (!walletAddress) return;
-
-    // Sync to Supabase
     syncToSupabase(state, walletAddress);
   }, [state, walletAddress, syncToSupabase]);
 
