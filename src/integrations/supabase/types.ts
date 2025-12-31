@@ -2739,6 +2739,42 @@ export type Database = {
         Args: { p_wallet_address: string }
         Returns: Json
       }
+      get_card_instances_by_wallet_paginated: {
+        Args: { p_limit?: number; p_offset?: number; p_wallet_address: string }
+        Returns: {
+          card_data: Json
+          card_template_id: string
+          card_type: string
+          created_at: string
+          current_defense: number
+          current_health: number
+          id: string
+          is_in_medical_bay: boolean | null
+          last_heal_time: string | null
+          max_defense: number
+          max_health: number
+          max_magic: number
+          max_power: number
+          medical_bay_heal_rate: number | null
+          medical_bay_start_time: string | null
+          monster_kills: number
+          nft_contract_id: string | null
+          nft_token_id: string | null
+          updated_at: string
+          user_id: string | null
+          wallet_address: string
+        }[]
+        SetofOptions: {
+          from: "*"
+          to: "card_instances"
+          isOneToOne: false
+          isSetofReturn: true
+        }
+      }
+      get_card_instances_count: {
+        Args: { p_wallet_address: string }
+        Returns: number
+      }
       get_card_stats_from_template: {
         Args: { p_card_name: string; p_card_type: string; p_rarity: number }
         Returns: Json
