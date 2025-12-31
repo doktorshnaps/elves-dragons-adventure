@@ -49,9 +49,10 @@ export const useItemInstances = () => {
       return (data as ItemInstance[]) || [];
     },
     enabled: !!accountId,
-    staleTime: 1000 * 60 * 2, // 2 minutes - reduced for faster sync
-    gcTime: 1000 * 60 * 5, // 5 minutes
+    staleTime: 30 * 60 * 1000, // 30 минут - агрессивное кеширование (было 2 мин)
+    gcTime: 60 * 60 * 1000, // 60 минут (было 5 мин)
     refetchOnWindowFocus: false,
+    refetchOnMount: false, // НЕ перезагружать при каждом монтировании
   });
 
   const refetch = useCallback(async () => {

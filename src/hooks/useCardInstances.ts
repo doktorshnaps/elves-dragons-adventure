@@ -66,8 +66,8 @@ export const useCardInstances = () => {
       return (data || []) as unknown as CardInstance[];
     },
     enabled: isConnected && !!accountId && !walletLoading && !!selector,
-    staleTime: 5 * 60 * 1000, // 5 минут - агрессивное кеширование
-    gcTime: 10 * 60 * 1000, // 10 минут
+    staleTime: 30 * 60 * 1000, // 30 минут - агрессивное кеширование (было 5 мин)
+    gcTime: 60 * 60 * 1000, // 60 минут (было 10 мин)
     refetchOnMount: false, // НЕ перезагружать при каждом монтировании
     refetchOnWindowFocus: false,
     refetchOnReconnect: false,
