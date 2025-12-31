@@ -186,12 +186,8 @@ export const WorkersManagement = ({ onSpeedBoostChange }: WorkersManagementProps
       });
       
       setActiveWorkers(validWorkers);
-      // Синхронизируем localStorage с отфильтрованными данными
-      try {
-        localStorage.setItem('activeWorkers', JSON.stringify(validWorkers));
-      } catch (e) {
-        console.warn('Failed to save active workers to localStorage:', e);
-      }
+      // OPTIMIZATION: Убрали localStorage.setItem - данные только в БД и React Query
+      
       
       // Если были удалены завершенные рабочие, обновляем БД
       if (validWorkers.length < gameState.activeWorkers.length) {
@@ -310,11 +306,7 @@ export const WorkersManagement = ({ onSpeedBoostChange }: WorkersManagementProps
           });
           
           updateActiveWorkersInDB(updated);
-          try {
-            localStorage.setItem('activeWorkers', JSON.stringify(updated));
-          } catch (e) {
-            console.error('Failed to save to localStorage:', e);
-          }
+          // OPTIMIZATION: Убрали localStorage - данные только в БД
           // Invalidate workers cache instead of window event
           queryClient.invalidateQueries({ queryKey: ['gameData'] });
         }
@@ -411,8 +403,7 @@ export const WorkersManagement = ({ onSpeedBoostChange }: WorkersManagementProps
         if (data && typeof data === 'object' && 'active_workers' in data) {
           const workers = (data as any).active_workers as ActiveWorker[];
           setActiveWorkers(workers);
-          localStorage.setItem('activeWorkers', JSON.stringify(workers));
-          // Cache already invalidated below via queryClient
+          // OPTIMIZATION: Убрали localStorage - данные только в БД
         }
         
         // Инвалидируем кеш card_instances для обновления списка

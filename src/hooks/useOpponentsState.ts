@@ -4,43 +4,35 @@ import { generateOpponents } from '@/utils/opponentGenerator';
 import { rollLoot, generateLootTable } from '@/utils/lootUtils';
 import { useToast } from '@/hooks/use-toast';
 import { Item } from "@/types/inventory";
+import { useGameStore } from '@/stores/gameStore';
 
-
+/**
+ * РЕФАКТОРИНГ: Убрано чтение gameBalance из localStorage
+ * Теперь баланс берётся из Zustand store (синхронизирован с Supabase)
+ */
 export const useOpponentsState = (
   level: number,
   updateBalance: (newBalance: number) => void,
   updateInventory: (items: Item[]) => void
 ) => {
   const { toast } = useToast();
+  const currentBalance = useGameStore((state) => state.balance);
+  
   const [opponents, setOpponents] = useState<Opponent[]>(() => {
-    const savedState = localStorage.getItem('battleState');
-    if (savedState) {
-      const parsed = JSON.parse(savedState);
-      if (parsed.opponents && parsed.opponents.length > 0) {
-        return parsed.opponents;
-      }
-    }
+    // Проверяем только в памяти через Zustand, не localStorage
     return generateOpponents(level);
   });
 
   useEffect(() => {
-    const savedState = localStorage.getItem('battleState');
-    if (savedState) {
-      const parsed = JSON.parse(savedState);
-      if (!parsed.opponents || parsed.opponents.length === 0) {
-        setOpponents(generateOpponents(level));
-      }
-    } else {
-      setOpponents(generateOpponents(level));
-    }
+    // Генерируем новых противников при смене уровня
+    setOpponents(generateOpponents(level));
   }, [level]);
 
   const handleOpponentDefeat = async (opponent: Opponent) => {
     // Получаем награду за убийство (только ELL, предметы начисляются через claim в useDungeonRewards)
     const { coins: droppedCoins } = rollLoot(generateLootTable(opponent.isBoss ?? false));
     
-    // Обновляем баланс только с учетом выпавших ELL
-    const currentBalance = Number(localStorage.getItem('gameBalance')) || 0;
+    // Обновляем баланс используя текущий баланс из store
     updateBalance(currentBalance + droppedCoins);
 
     // Проверяем, был ли это последний противник
@@ -48,8 +40,8 @@ export const useOpponentsState = (
     if (remainingOpponents.length === 0) {
       // Если это был последний противник, начисляем награду за прохождение уровня
       const completionReward = opponent.isBoss ? 100 : 50;
-      const newBalance = Number(localStorage.getItem('gameBalance')) || 0;
-      updateBalance(newBalance + completionReward);
+      // Используем обновлённый баланс (currentBalance + droppedCoins)
+      updateBalance(currentBalance + droppedCoins + completionReward);
       
       toast({
         title: "Уровень пройден!",
