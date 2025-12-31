@@ -78,7 +78,11 @@ const DEFAULT_GAME_DATA: GameData = {
 const cleanupObsoleteLocalStorage = () => {
   const obsoleteKeys = [
     'gameCards', 'marketplaceListings', 'socialQuests', 
-    'adventurePlayerStats', 'adventureCurrentMonster'
+    'adventurePlayerStats', 'adventureCurrentMonster',
+    'gameBalance', 'gameInitialized', 'gameInventory', 'gameDragonEggs',
+    'game-storage', 'gameSelectedTeam', 'game_balance', 'game_cards',
+    'game_inventory', 'game_dragonEggs', 'game_selectedTeam',
+    'game_accountLevel', 'game_accountExperience'
   ];
   obsoleteKeys.forEach(key => {
     try {
@@ -238,11 +242,9 @@ export const GameDataProvider = ({ children }: { children: ReactNode }) => {
           activeBuildingUpgrades: (gameRecord.active_building_upgrades as any[]) || []
         };
         
-        // OPTIMIZATION: Removed localStorage sync for large objects (cards, marketplaceListings, etc.)
-        // These are already cached in React Query - no need to duplicate in localStorage
-        // Only store minimal essential data
-        localStorageBatcher.setItem('gameBalance', newGameData.balance.toString());
-        localStorageBatcher.setItem('gameInitialized', newGameData.initialized.toString());
+        // OPTIMIZATION: Полностью убрали localStorage sync - данные только в React Query и Supabase
+        // Это устраняет security warning "Invalid localStorage data: gameBalance"
+        
         
         return newGameData;
       }
@@ -250,8 +252,8 @@ export const GameDataProvider = ({ children }: { children: ReactNode }) => {
       return DEFAULT_GAME_DATA;
     },
     enabled: !!accountId,
-    staleTime: 10 * 60 * 1000, // 10 минут - синхронизировано с useUnifiedGameState
-    gcTime: 30 * 60 * 1000, // 30 минут - синхронизировано с useUnifiedGameState
+    staleTime: 30 * 60 * 1000, // 30 минут - агрессивное кеширование (было 10 мин)
+    gcTime: 60 * 60 * 1000, // 60 минут (было 30 мин)
     refetchOnWindowFocus: false,
     refetchOnReconnect: false,
     refetchOnMount: false, // Не перезагружать при каждом монтировании
@@ -328,11 +330,8 @@ export const GameDataProvider = ({ children }: { children: ReactNode }) => {
         ...updates as any
       });
       
-      // Sync only essential small data to localStorage
-      Object.entries(updates).forEach(([key, value]) => {
-        if (key === 'balance') localStorageBatcher.setItem('gameBalance', value.toString());
-        if (key === 'initialized') localStorageBatcher.setItem('gameInitialized', value.toString());
-      });
+      // OPTIMIZATION: Убрали localStorage sync - данные только в React Query и Supabase
+      
       
       lastUpdateRef.current = Date.now();
     } catch (error) {
