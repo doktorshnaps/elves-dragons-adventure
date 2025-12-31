@@ -61,10 +61,9 @@ export const useCardUpgrade = (
       });
     }
 
-// Обновляем состояние, Supabase и localStorage
+// Обновляем состояние и Supabase (localStorage убран - данные только в React Query)
     setCards(newCards);
     await updateGameData({ cards: newCards });
-    localStorage.setItem('gameCards', JSON.stringify(newCards));
 
     // Invalidate React Query caches
     queryClient.invalidateQueries({ queryKey: ['cardInstances'] });

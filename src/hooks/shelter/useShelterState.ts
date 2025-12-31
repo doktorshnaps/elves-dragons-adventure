@@ -80,18 +80,11 @@ export const useShelterState = () => {
   // OPTIMIZATION: Removed balanceUpdate event listener
   // Balance is now synced via gameData from GameDataContext with Real-time subscription
   
-  // Получаем активных рабочих: сначала из gameState, при пустом значении — из localStorage
+  // Получаем активных рабочих только из gameState (синхронизированного с Supabase)
+  // OPTIMIZATION: Убрали localStorage fallback - единственный источник: gameState
   const getActiveWorkersSafe = () => {
     const fromState = Array.isArray(gameState.activeWorkers) ? gameState.activeWorkers : [];
-    if (fromState.length > 0) return fromState;
-    try {
-      const cached = localStorage.getItem('activeWorkers');
-      if (cached) {
-        const parsed = JSON.parse(cached);
-        if (Array.isArray(parsed)) return parsed;
-      }
-    } catch {}
-    return [] as any[];
+    return fromState;
   };
 
   const [activeWorkersLocal, setActiveWorkersLocal] = useState<any[]>(getActiveWorkersSafe());

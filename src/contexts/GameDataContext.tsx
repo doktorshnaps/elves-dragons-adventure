@@ -82,7 +82,10 @@ const cleanupObsoleteLocalStorage = () => {
     'gameBalance', 'gameInitialized', 'gameInventory', 'gameDragonEggs',
     'game-storage', 'gameSelectedTeam', 'game_balance', 'game_cards',
     'game_inventory', 'game_dragonEggs', 'game_selectedTeam',
-    'game_accountLevel', 'game_accountExperience'
+    'game_accountLevel', 'game_accountExperience',
+    // Добавлены новые устаревшие ключи после рефакторинга
+    'activeWorkers', 'battleState', 'teamBattleState', 'activeBattleInProgress',
+    'adventurePlayerStats', 'legacyBattleState'
   ];
   obsoleteKeys.forEach(key => {
     try {
