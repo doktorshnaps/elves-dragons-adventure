@@ -18,16 +18,14 @@ import { ReferralHandler } from './components/ReferralHandler';
 import { AppInitializer } from './components/AppInitializer';
 import { MetricsPanel } from './components/dev/MetricsPanel';
 
-// IMPORTANT: keep core routes non-lazy to avoid blank screen if code-splitting fails
-import { Auth } from './pages/Auth';
-import { Menu } from './pages/Menu';
-import { ProtectedRoute } from './components/ProtectedRoute';
-import { MusicController } from './components/MusicController';
-
-// Lazy load heavier/secondary pages
+// Lazy load page components to reduce initial bundle size
+const Auth = lazy(() => import('./pages/Auth').then(m => ({ default: m.Auth })));
+const Menu = lazy(() => import('./pages/Menu').then(m => ({ default: m.Menu })));
 const AdminSettings = lazy(() => import('./pages/AdminSettings'));
 const SoulArchive = lazy(() => import('./pages/SoulArchive').then(m => ({ default: m.SoulArchive })));
 const Seekers = lazy(() => import('./pages/Seekers').then(m => ({ default: m.Seekers })));
+const ProtectedRoute = lazy(() => import('./components/ProtectedRoute').then(m => ({ default: m.ProtectedRoute })));
+const MusicController = lazy(() => import('./components/MusicController').then(m => ({ default: m.MusicController })));
 
 // Lazy load route-specific components
 const EquipmentWithLazyLoading = lazy(() => import('./components/lazy/LazyComponents').then(m => ({ default: m.EquipmentWithLazyLoading })));
@@ -48,15 +46,8 @@ const BoneDemonDungeonWithLazyLoading = lazy(() => import('./components/lazy/Laz
 const SeaSerpentLairWithLazyLoading = lazy(() => import('./components/lazy/LazyComponents').then(m => ({ default: m.SeaSerpentLairWithLazyLoading })));
 const Wibe3TestPanel = lazy(() => import('./components/wibe3/Wibe3TestPanel'));
 
-const PageLoader = () => (
-  <div className="min-h-screen flex items-center justify-center">
-    <div className="flex items-center gap-3">
-      <div className="h-5 w-5 animate-spin rounded-full border-2 border-primary border-t-transparent" />
-      <span className="text-foreground">Загрузка…</span>
-    </div>
-  </div>
-);
-
+// Simple loading fallback
+const PageLoader = () => <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }} />;
 
 function App() {
   return (
