@@ -1,5 +1,5 @@
 import { Button } from "@/components/ui/button";
-import { Globe, Sun, Menu, Volume2, VolumeX, LogOut } from "lucide-react";
+import { Globe, Sun, Menu, Volume2, VolumeX, LogOut, BookOpen } from "lucide-react";
 import { useLanguage } from "@/hooks/useLanguage";
 import { useBrightness } from "@/hooks/useBrightness";
 import { useMusic } from "@/hooks/useMusic";
@@ -57,6 +57,17 @@ export const SettingsMenu = () => {
           <Globe className="w-4 h-4 text-white" />
           <span className="text-white font-medium text-sm">
             {language === 'ru' ? 'Русский' : 'English'}
+          </span>
+        </button>
+
+        <button
+          onClick={() => navigate('/tutorial')}
+          className="w-full bg-black/30 border-2 border-white rounded-2xl p-2 mb-2 hover:bg-black/40 transition-all flex items-center justify-center gap-1.5"
+          style={{ boxShadow: '-10px 10px 8px rgba(0, 0, 0, 0.4)' }}
+        >
+          <BookOpen className="w-4 h-4 text-white" />
+          <span className="text-white font-medium text-sm">
+            {language === 'ru' ? 'Обучение' : 'Tutorial'}
           </span>
         </button>
 
