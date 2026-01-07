@@ -233,54 +233,100 @@ export const Tutorial = () => {
       titleEn: 'Dungeons',
       contentRu: (
         <div className="space-y-4">
-          <h4 className="font-bold text-yellow-400">Типы подземелий:</h4>
+          <h4 className="font-bold text-yellow-400">Подземелья и их стихии:</h4>
           <ul className="list-disc list-inside space-y-3 ml-2">
-            <li><strong>Паучье Гнездо:</strong> Начальное подземелье, пауки (🕷️ Яд) — <span className="text-green-400">лучше: Огненные 🔥</span>, <span className="text-red-400">хуже: Водные 🌊</span></li>
-            <li><strong>Логово Чёрного Дракона:</strong> Драконы и огненные враги (🔥 Огонь) — <span className="text-green-400">лучше: Водные 🌊</span>, <span className="text-red-400">хуже: Ледяные ❄️</span></li>
-            <li><strong>Пещера Забытых Душ:</strong> Нежить и призраки (💀 Тьма) — <span className="text-green-400">лучше: Светлые ✨</span>, <span className="text-red-400">хуже: Костяные 🦴</span></li>
-            <li><strong>Ледяной Трон:</strong> Ледяные существа (❄️ Лёд) — <span className="text-green-400">лучше: Огненные 🔥</span>, <span className="text-red-400">хуже: Молниевые ⚡</span></li>
-            <li><strong>Башня Тёмного Мага:</strong> Маги и элементали (⚡ Молния) — <span className="text-green-400">лучше: Ледяные ❄️</span>, <span className="text-red-400">хуже: Водные 🌊</span></li>
-            <li><strong>Подземелье Костяного Демона:</strong> Демоны (🦴 Кость) — <span className="text-green-400">лучше: Тёмные 💀</span>, <span className="text-red-400">хуже: Светлые ✨</span></li>
-            <li><strong>Логово Морского Змея:</strong> Водные существа (🌊 Вода) — <span className="text-green-400">лучше: Молниевые ⚡</span>, <span className="text-red-400">хуже: Огненные 🔥</span></li>
-            <li><strong>Пантеон Богов:</strong> Высшие существа (✨ Свет) — <span className="text-green-400">лучше: Костяные 🦴</span>, <span className="text-red-400">хуже: Тёмные 💀</span></li>
+            <li><strong>Паучье гнездо:</strong> Природа 🌿 — <span className="text-green-400">лучше: Сильванести (Огонь 🔥)</span>, <span className="text-red-400">хуже: Азлантир (Земля 🪨)</span></li>
+            <li><strong>Костяное подземелье:</strong> Земля 🪨 — <span className="text-green-400">лучше: Лиорас (Природа 🌿)</span>, <span className="text-red-400">хуже: Каледор (Лёд ❄️)</span></li>
+            <li><strong>Тёмный маг:</strong> Тьма 💀 — <span className="text-green-400">лучше: Элленар (Свет ✨)</span>, <span className="text-red-400">хуже: Лиорас (Природа 🌿)</span></li>
+            <li><strong>Забытые души:</strong> Тьма 💀 — <span className="text-green-400">лучше: Элленар (Свет ✨)</span>, <span className="text-red-400">хуже: Лиорас (Природа 🌿)</span></li>
+            <li><strong>Ледяной трон:</strong> Лёд ❄️ — <span className="text-green-400">лучше: Азлантир (Земля 🪨)</span>, <span className="text-red-400">хуже: Фаэлин (Вода 💧)</span></li>
+            <li><strong>Морской змей:</strong> Вода 💧 — <span className="text-green-400">лучше: Каледор (Лёд ❄️)</span>, <span className="text-red-400">хуже: Сильванести (Огонь 🔥)</span></li>
+            <li><strong>Логово дракона:</strong> Огонь 🔥 — <span className="text-green-400">лучше: Фаэлин (Вода 💧)</span>, <span className="text-red-400">хуже: Тэларион (Тьма 💀)</span></li>
+            <li><strong>Пантеон богов:</strong> Свет ✨ — <span className="text-green-400">лучше: Тэларион (Тьма 💀)</span>, <span className="text-red-400">хуже: Элленар (Свет ✨)</span></li>
           </ul>
+
+          <h4 className="font-bold text-yellow-400 mt-4">Фракции и стихии:</h4>
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm border border-white/20 rounded">
+              <thead>
+                <tr className="bg-white/10">
+                  <th className="px-3 py-2 text-left">Фракция</th>
+                  <th className="px-3 py-2 text-left">Стихия</th>
+                  <th className="px-3 py-2 text-left text-green-400">Силён против</th>
+                  <th className="px-3 py-2 text-left text-red-400">Слаб против</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-white/10">
+                <tr><td className="px-3 py-2">Каледор</td><td className="px-3 py-2">Лёд ❄️</td><td className="px-3 py-2">Вода 💧</td><td className="px-3 py-2">Земля 🪨</td></tr>
+                <tr><td className="px-3 py-2">Сильванести</td><td className="px-3 py-2">Огонь 🔥</td><td className="px-3 py-2">Природа 🌿</td><td className="px-3 py-2">Вода 💧</td></tr>
+                <tr><td className="px-3 py-2">Фаэлин</td><td className="px-3 py-2">Вода 💧</td><td className="px-3 py-2">Огонь 🔥</td><td className="px-3 py-2">Лёд ❄️</td></tr>
+                <tr><td className="px-3 py-2">Элленар</td><td className="px-3 py-2">Свет ✨</td><td className="px-3 py-2">Тьма 💀</td><td className="px-3 py-2">Земля 🪨</td></tr>
+                <tr><td className="px-3 py-2">Тэларион</td><td className="px-3 py-2">Тьма 💀</td><td className="px-3 py-2">Свет ✨</td><td className="px-3 py-2">Огонь 🔥</td></tr>
+                <tr><td className="px-3 py-2">Азлантир</td><td className="px-3 py-2">Земля 🪨</td><td className="px-3 py-2">Лёд ❄️</td><td className="px-3 py-2">Природа 🌿</td></tr>
+                <tr><td className="px-3 py-2">Лиорас</td><td className="px-3 py-2">Природа 🌿</td><td className="px-3 py-2">Земля 🪨</td><td className="px-3 py-2">Тьма 💀</td></tr>
+              </tbody>
+            </table>
+          </div>
           
-          <h4 className="font-bold text-yellow-400">Структура подземелья:</h4>
+          <h4 className="font-bold text-yellow-400 mt-4">Структура подземелья:</h4>
           <ul className="list-disc list-inside space-y-2 ml-2">
             <li>Каждое подземелье имеет бесконечные уровни</li>
             <li>Сложность растёт с каждым уровнем</li>
-            <li>Каждые 5 уровней - мини-босс</li>
-            <li>Каждые 10 уровней - главный босс</li>
+            <li>Каждые <strong>10 уровней</strong> — мини-босс</li>
+            <li>На <strong>50 и 100 уровнях</strong> — главные боссы</li>
           </ul>
           
-          <h4 className="font-bold text-yellow-400">Сохранение прогресса:</h4>
-          <p>Ваш прогресс в подземелье сохраняется автоматически. Вы можете покинуть подземелье и вернуться позже.</p>
+          <h4 className="font-bold text-yellow-400 mt-4">⚠️ Важно о прогрессе:</h4>
+          <p className="text-red-300">Прогресс в подземелье <strong>НЕ сохраняется</strong>. Если вы покинете подземелье, вам придётся начать сначала!</p>
         </div>
       ),
       contentEn: (
         <div className="space-y-4">
-          <h4 className="font-bold text-yellow-400">Dungeon Types:</h4>
-          <ul className="list-disc list-inside space-y-2 ml-2">
-            <li><strong>Spider Nest:</strong> Starting dungeon, spiders (🕷️ Poison)</li>
-            <li><strong>Black Dragon Lair:</strong> Dragons and fire enemies (🔥 Fire)</li>
-            <li><strong>Forgotten Souls Cave:</strong> Undead and ghosts (💀 Dark)</li>
-            <li><strong>Icy Throne:</strong> Ice creatures (❄️ Ice)</li>
-            <li><strong>Dark Mage Tower:</strong> Mages and elementals (⚡ Lightning)</li>
-            <li><strong>Bone Demon Dungeon:</strong> Demons (🦴 Bone)</li>
-            <li><strong>Sea Serpent Lair:</strong> Water creatures (🌊 Water)</li>
-            <li><strong>Pantheon of Gods:</strong> Divine beings (✨ Light)</li>
+          <h4 className="font-bold text-yellow-400">Dungeons and Elements:</h4>
+          <ul className="list-disc list-inside space-y-3 ml-2">
+            <li><strong>Spider Nest:</strong> Nature 🌿 — <span className="text-green-400">best: Silvanesti (Fire 🔥)</span>, <span className="text-red-400">worst: Azlantir (Earth 🪨)</span></li>
+            <li><strong>Bone Dungeon:</strong> Earth 🪨 — <span className="text-green-400">best: Lioras (Nature 🌿)</span>, <span className="text-red-400">worst: Kaledor (Ice ❄️)</span></li>
+            <li><strong>Dark Mage:</strong> Dark 💀 — <span className="text-green-400">best: Ellenar (Light ✨)</span>, <span className="text-red-400">worst: Lioras (Nature 🌿)</span></li>
+            <li><strong>Forgotten Souls:</strong> Dark 💀 — <span className="text-green-400">best: Ellenar (Light ✨)</span>, <span className="text-red-400">worst: Lioras (Nature 🌿)</span></li>
+            <li><strong>Icy Throne:</strong> Ice ❄️ — <span className="text-green-400">best: Azlantir (Earth 🪨)</span>, <span className="text-red-400">worst: Faelin (Water 💧)</span></li>
+            <li><strong>Sea Serpent:</strong> Water 💧 — <span className="text-green-400">best: Kaledor (Ice ❄️)</span>, <span className="text-red-400">worst: Silvanesti (Fire 🔥)</span></li>
+            <li><strong>Dragon Lair:</strong> Fire 🔥 — <span className="text-green-400">best: Faelin (Water 💧)</span>, <span className="text-red-400">worst: Telarion (Dark 💀)</span></li>
+            <li><strong>Pantheon of Gods:</strong> Light ✨ — <span className="text-green-400">best: Telarion (Dark 💀)</span>, <span className="text-red-400">worst: Ellenar (Light ✨)</span></li>
           </ul>
+
+          <h4 className="font-bold text-yellow-400 mt-4">Factions and Elements:</h4>
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm border border-white/20 rounded">
+              <thead>
+                <tr className="bg-white/10">
+                  <th className="px-3 py-2 text-left">Faction</th>
+                  <th className="px-3 py-2 text-left">Element</th>
+                  <th className="px-3 py-2 text-left text-green-400">Strong vs</th>
+                  <th className="px-3 py-2 text-left text-red-400">Weak vs</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-white/10">
+                <tr><td className="px-3 py-2">Kaledor</td><td className="px-3 py-2">Ice ❄️</td><td className="px-3 py-2">Water 💧</td><td className="px-3 py-2">Earth 🪨</td></tr>
+                <tr><td className="px-3 py-2">Silvanesti</td><td className="px-3 py-2">Fire 🔥</td><td className="px-3 py-2">Nature 🌿</td><td className="px-3 py-2">Water 💧</td></tr>
+                <tr><td className="px-3 py-2">Faelin</td><td className="px-3 py-2">Water 💧</td><td className="px-3 py-2">Fire 🔥</td><td className="px-3 py-2">Ice ❄️</td></tr>
+                <tr><td className="px-3 py-2">Ellenar</td><td className="px-3 py-2">Light ✨</td><td className="px-3 py-2">Dark 💀</td><td className="px-3 py-2">Earth 🪨</td></tr>
+                <tr><td className="px-3 py-2">Telarion</td><td className="px-3 py-2">Dark 💀</td><td className="px-3 py-2">Light ✨</td><td className="px-3 py-2">Fire 🔥</td></tr>
+                <tr><td className="px-3 py-2">Azlantir</td><td className="px-3 py-2">Earth 🪨</td><td className="px-3 py-2">Ice ❄️</td><td className="px-3 py-2">Nature 🌿</td></tr>
+                <tr><td className="px-3 py-2">Lioras</td><td className="px-3 py-2">Nature 🌿</td><td className="px-3 py-2">Earth 🪨</td><td className="px-3 py-2">Dark 💀</td></tr>
+              </tbody>
+            </table>
+          </div>
           
-          <h4 className="font-bold text-yellow-400">Dungeon Structure:</h4>
+          <h4 className="font-bold text-yellow-400 mt-4">Dungeon Structure:</h4>
           <ul className="list-disc list-inside space-y-2 ml-2">
             <li>Each dungeon has infinite levels</li>
             <li>Difficulty increases with each level</li>
-            <li>Every 5 levels - mini-boss</li>
-            <li>Every 10 levels - main boss</li>
+            <li>Every <strong>10 levels</strong> — mini-boss</li>
+            <li>At <strong>levels 50 and 100</strong> — main bosses</li>
           </ul>
           
-          <h4 className="font-bold text-yellow-400">Progress Saving:</h4>
-          <p>Your dungeon progress is saved automatically. You can leave and return later.</p>
+          <h4 className="font-bold text-yellow-400 mt-4">⚠️ Important about Progress:</h4>
+          <p className="text-red-300">Dungeon progress is <strong>NOT saved</strong>. If you leave the dungeon, you will have to start over!</p>
         </div>
       )
     },
