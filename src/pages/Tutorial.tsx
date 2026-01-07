@@ -151,43 +151,68 @@ export const Tutorial = () => {
           <h4 className="font-bold text-yellow-400">Типы карт:</h4>
           <ul className="list-disc list-inside space-y-2 ml-2">
             <li>
-              <strong>Герои:</strong> Основные боевые единицы с разными классами
+              <strong>Герои:</strong> Основные боевые единицы. Каждый герой имеет класс и редкость, определяющие его силу.
             </li>
             <li>
-              <strong>Драконы:</strong> Мощные питомцы, усиливающие команду
+              <strong>Драконы:</strong> Мощные питомцы с собственной системой классов.
             </li>
           </ul>
 
           <h4 className="font-bold text-yellow-400">Редкость (1-8 звёзд):</h4>
-          <ul className="list-disc list-inside space-y-2 ml-2">
-            <li>⭐ Обычная - базовые характеристики (x1.0)</li>
-            <li>⭐⭐ Необычная - небольшой бонус (x1.6)</li>
-            <li>⭐⭐⭐ Редкая - средний бонус (x2.4)</li>
-            <li>⭐⭐⭐⭐ Эпическая - значительный бонус (x3.4)</li>
-            <li>⭐⭐⭐⭐⭐ Легендарная - высокий бонус (x4.8)</li>
-            <li>⭐⭐⭐⭐⭐⭐ Мифическая - очень высокий бонус (x6.9)</li>
-            <li>⭐⭐⭐⭐⭐⭐⭐ Божественная - мощнейший бонус (x10.0)</li>
-            <li>⭐⭐⭐⭐⭐⭐⭐⭐ Трансцендентная - максимальный бонус (x14.5)</li>
+          <p className="text-sm text-gray-300 mb-2">Редкость определяет базовый множитель характеристик карты:</p>
+          <ul className="list-disc list-inside space-y-1 ml-2 text-sm">
+            <li>⭐ 1 звезда (x1.0)</li>
+            <li>⭐⭐ 2 звезды (x1.6)</li>
+            <li>⭐⭐⭐ 3 звезды (x2.4)</li>
+            <li>⭐⭐⭐⭐ 4 звезды (x3.4)</li>
+            <li>⭐⭐⭐⭐⭐ 5 звёзд (x4.8)</li>
+            <li>⭐⭐⭐⭐⭐⭐ 6 звёзд (x6.9)</li>
+            <li>⭐⭐⭐⭐⭐⭐⭐ 7 звёзд (x10.0)</li>
+            <li>⭐⭐⭐⭐⭐⭐⭐⭐ 8 звёзд (x8.0)</li>
           </ul>
 
-          <h4 className="font-bold text-yellow-400">Характеристики:</h4>
-          <ul className="list-disc list-inside space-y-2 ml-2">
-            <li>
-              <strong>Здоровье (HP):</strong> Количество урона, которое может выдержать карта
-            </li>
-            <li>
-              <strong>Сила:</strong> Физический урон в бою
-            </li>
-            <li>
-              <strong>Защита:</strong> Снижает получаемый урон
-            </li>
-            <li>
-              <strong>Магия:</strong> Магический урон и эффекты
-            </li>
+          <h4 className="font-bold text-yellow-400 mt-4">Классы героев:</h4>
+          <p className="text-sm text-gray-300 mb-2">Класс даёт дополнительный множитель ко всем характеристикам:</p>
+          <ul className="list-disc list-inside space-y-1 ml-2 text-sm">
+            <li><strong>Рекрут</strong> (x1.0) — начальный класс</li>
+            <li><strong>Страж</strong> (x1.2)</li>
+            <li><strong>Ветеран</strong> (x1.5)</li>
+            <li><strong>Чародей</strong> (x1.8)</li>
+            <li><strong>Мастер Целитель</strong> (x2.0)</li>
+            <li><strong>Защитник</strong> (x2.3)</li>
+            <li><strong>Ветеран Защитник</strong> (x2.6)</li>
+            <li><strong>Стратег</strong> (x3.0)</li>
+            <li><strong>Верховный Стратег</strong> (x3.5)</li>
           </ul>
 
-          <h4 className="font-bold text-yellow-400">Фракции и стихии:</h4>
-          <p>
+          <h4 className="font-bold text-yellow-400 mt-4">Классы драконов:</h4>
+          <ul className="list-disc list-inside space-y-1 ml-2 text-sm">
+            <li><strong>Обычный</strong> (x1.0)</li>
+            <li><strong>Необычный</strong> (x1.2)</li>
+            <li><strong>Редкий</strong> (x1.5)</li>
+            <li><strong>Эпический</strong> (x1.8)</li>
+            <li><strong>Легендарный</strong> (x2.1)</li>
+            <li><strong>Мифический</strong> (x2.5)</li>
+            <li><strong>Этернал</strong> (x3.0)</li>
+            <li><strong>Империал</strong> (x3.6)</li>
+            <li><strong>Титан</strong> (x4.2)</li>
+          </ul>
+
+          <h4 className="font-bold text-yellow-400 mt-4">Расчёт характеристик:</h4>
+          <p className="text-sm text-gray-300">
+            Итоговые характеристики = Базовые × Множитель редкости × Множитель класса
+          </p>
+
+          <h4 className="font-bold text-yellow-400 mt-4">Характеристики:</h4>
+          <ul className="list-disc list-inside space-y-1 ml-2 text-sm">
+            <li><strong>Здоровье (HP):</strong> Количество урона, которое может выдержать карта</li>
+            <li><strong>Сила:</strong> Физический урон в бою</li>
+            <li><strong>Защита:</strong> Снижает получаемый урон</li>
+            <li><strong>Магия:</strong> Магический урон и эффекты</li>
+          </ul>
+
+          <h4 className="font-bold text-yellow-400 mt-4">Фракции и стихии:</h4>
+          <p className="text-sm text-gray-300">
             Каждая карта принадлежит к определённой фракции. Стихии взаимодействуют по принципу камень-ножницы-бумага,
             давая бонусы или штрафы к урону.
           </p>
@@ -198,43 +223,68 @@ export const Tutorial = () => {
           <h4 className="font-bold text-yellow-400">Card Types:</h4>
           <ul className="list-disc list-inside space-y-2 ml-2">
             <li>
-              <strong>Heroes:</strong> Main combat units with different classes
+              <strong>Heroes:</strong> Main combat units. Each hero has a class and rarity that determine their power.
             </li>
             <li>
-              <strong>Dragons:</strong> Powerful pets that boost your team
+              <strong>Dragons:</strong> Powerful pets with their own class system.
             </li>
           </ul>
 
           <h4 className="font-bold text-yellow-400">Rarity (1-8 stars):</h4>
-          <ul className="list-disc list-inside space-y-2 ml-2">
-            <li>⭐ Common - basic stats (x1.0)</li>
-            <li>⭐⭐ Uncommon - small bonus (x1.6)</li>
-            <li>⭐⭐⭐ Rare - medium bonus (x2.4)</li>
-            <li>⭐⭐⭐⭐ Epic - significant bonus (x3.4)</li>
-            <li>⭐⭐⭐⭐⭐ Legendary - high bonus (x4.8)</li>
-            <li>⭐⭐⭐⭐⭐⭐ Mythic - very high bonus (x6.9)</li>
-            <li>⭐⭐⭐⭐⭐⭐⭐ Divine - powerful bonus (x10.0)</li>
-            <li>⭐⭐⭐⭐⭐⭐⭐⭐ Transcendent - maximum bonus (x14.5)</li>
+          <p className="text-sm text-gray-300 mb-2">Rarity determines the base stat multiplier:</p>
+          <ul className="list-disc list-inside space-y-1 ml-2 text-sm">
+            <li>⭐ 1 star (x1.0)</li>
+            <li>⭐⭐ 2 stars (x1.6)</li>
+            <li>⭐⭐⭐ 3 stars (x2.4)</li>
+            <li>⭐⭐⭐⭐ 4 stars (x3.4)</li>
+            <li>⭐⭐⭐⭐⭐ 5 stars (x4.8)</li>
+            <li>⭐⭐⭐⭐⭐⭐ 6 stars (x6.9)</li>
+            <li>⭐⭐⭐⭐⭐⭐⭐ 7 stars (x10.0)</li>
+            <li>⭐⭐⭐⭐⭐⭐⭐⭐ 8 stars (x8.0)</li>
           </ul>
 
-          <h4 className="font-bold text-yellow-400">Stats:</h4>
-          <ul className="list-disc list-inside space-y-2 ml-2">
-            <li>
-              <strong>Health (HP):</strong> Amount of damage the card can take
-            </li>
-            <li>
-              <strong>Power:</strong> Physical damage in combat
-            </li>
-            <li>
-              <strong>Defense:</strong> Reduces incoming damage
-            </li>
-            <li>
-              <strong>Magic:</strong> Magical damage and effects
-            </li>
+          <h4 className="font-bold text-yellow-400 mt-4">Hero Classes:</h4>
+          <p className="text-sm text-gray-300 mb-2">Class provides an additional multiplier to all stats:</p>
+          <ul className="list-disc list-inside space-y-1 ml-2 text-sm">
+            <li><strong>Recruit</strong> (x1.0) — starting class</li>
+            <li><strong>Guardian</strong> (x1.2)</li>
+            <li><strong>Veteran</strong> (x1.5)</li>
+            <li><strong>Sorcerer</strong> (x1.8)</li>
+            <li><strong>Master Healer</strong> (x2.0)</li>
+            <li><strong>Defender</strong> (x2.3)</li>
+            <li><strong>Veteran Defender</strong> (x2.6)</li>
+            <li><strong>Strategist</strong> (x3.0)</li>
+            <li><strong>Supreme Strategist</strong> (x3.5)</li>
           </ul>
 
-          <h4 className="font-bold text-yellow-400">Factions and Elements:</h4>
-          <p>
+          <h4 className="font-bold text-yellow-400 mt-4">Dragon Classes:</h4>
+          <ul className="list-disc list-inside space-y-1 ml-2 text-sm">
+            <li><strong>Common</strong> (x1.0)</li>
+            <li><strong>Uncommon</strong> (x1.2)</li>
+            <li><strong>Rare</strong> (x1.5)</li>
+            <li><strong>Epic</strong> (x1.8)</li>
+            <li><strong>Legendary</strong> (x2.1)</li>
+            <li><strong>Mythic</strong> (x2.5)</li>
+            <li><strong>Eternal</strong> (x3.0)</li>
+            <li><strong>Imperial</strong> (x3.6)</li>
+            <li><strong>Titan</strong> (x4.2)</li>
+          </ul>
+
+          <h4 className="font-bold text-yellow-400 mt-4">Stat Calculation:</h4>
+          <p className="text-sm text-gray-300">
+            Final Stats = Base × Rarity Multiplier × Class Multiplier
+          </p>
+
+          <h4 className="font-bold text-yellow-400 mt-4">Stats:</h4>
+          <ul className="list-disc list-inside space-y-1 ml-2 text-sm">
+            <li><strong>Health (HP):</strong> Amount of damage the card can take</li>
+            <li><strong>Power:</strong> Physical damage in combat</li>
+            <li><strong>Defense:</strong> Reduces incoming damage</li>
+            <li><strong>Magic:</strong> Magical damage and effects</li>
+          </ul>
+
+          <h4 className="font-bold text-yellow-400 mt-4">Factions and Elements:</h4>
+          <p className="text-sm text-gray-300">
             Each card belongs to a specific faction. Elements interact in a rock-paper-scissors manner, giving damage
             bonuses or penalties.
           </p>
