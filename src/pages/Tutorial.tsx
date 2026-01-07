@@ -158,14 +158,16 @@ export const Tutorial = () => {
             </li>
           </ul>
 
-          <h4 className="font-bold text-yellow-400">Редкость (1-6 звёзд):</h4>
+          <h4 className="font-bold text-yellow-400">Редкость (1-8 звёзд):</h4>
           <ul className="list-disc list-inside space-y-2 ml-2">
-            <li>⭐ Обычная - базовые характеристики</li>
-            <li>⭐⭐ Необычная - небольшой бонус</li>
-            <li>⭐⭐⭐ Редкая - средний бонус</li>
-            <li>⭐⭐⭐⭐ Эпическая - значительный бонус</li>
-            <li>⭐⭐⭐⭐⭐ Легендарная - высокий бонус</li>
-            <li>⭐⭐⭐⭐⭐⭐ Мифическая - максимальный бонус</li>
+            <li>⭐ Обычная - базовые характеристики (x1.0)</li>
+            <li>⭐⭐ Необычная - небольшой бонус (x1.6)</li>
+            <li>⭐⭐⭐ Редкая - средний бонус (x2.4)</li>
+            <li>⭐⭐⭐⭐ Эпическая - значительный бонус (x3.4)</li>
+            <li>⭐⭐⭐⭐⭐ Легендарная - высокий бонус (x4.8)</li>
+            <li>⭐⭐⭐⭐⭐⭐ Мифическая - очень высокий бонус (x6.9)</li>
+            <li>⭐⭐⭐⭐⭐⭐⭐ Божественная - мощнейший бонус (x10.0)</li>
+            <li>⭐⭐⭐⭐⭐⭐⭐⭐ Трансцендентная - максимальный бонус (x14.5)</li>
           </ul>
 
           <h4 className="font-bold text-yellow-400">Характеристики:</h4>
@@ -203,14 +205,16 @@ export const Tutorial = () => {
             </li>
           </ul>
 
-          <h4 className="font-bold text-yellow-400">Rarity (1-6 stars):</h4>
+          <h4 className="font-bold text-yellow-400">Rarity (1-8 stars):</h4>
           <ul className="list-disc list-inside space-y-2 ml-2">
-            <li>⭐ Common - basic stats</li>
-            <li>⭐⭐ Uncommon - small bonus</li>
-            <li>⭐⭐⭐ Rare - medium bonus</li>
-            <li>⭐⭐⭐⭐ Epic - significant bonus</li>
-            <li>⭐⭐⭐⭐⭐ Legendary - high bonus</li>
-            <li>⭐⭐⭐⭐⭐⭐ Mythic - maximum bonus</li>
+            <li>⭐ Common - basic stats (x1.0)</li>
+            <li>⭐⭐ Uncommon - small bonus (x1.6)</li>
+            <li>⭐⭐⭐ Rare - medium bonus (x2.4)</li>
+            <li>⭐⭐⭐⭐ Epic - significant bonus (x3.4)</li>
+            <li>⭐⭐⭐⭐⭐ Legendary - high bonus (x4.8)</li>
+            <li>⭐⭐⭐⭐⭐⭐ Mythic - very high bonus (x6.9)</li>
+            <li>⭐⭐⭐⭐⭐⭐⭐ Divine - powerful bonus (x10.0)</li>
+            <li>⭐⭐⭐⭐⭐⭐⭐⭐ Transcendent - maximum bonus (x14.5)</li>
           </ul>
 
           <h4 className="font-bold text-yellow-400">Stats:</h4>
