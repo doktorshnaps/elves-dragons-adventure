@@ -86,16 +86,16 @@ export const Tutorial = () => {
             </li>
           </ul>
 
-          <h4 className="font-bold text-yellow-400">Валюты:</h4>
+          <h4 className="font-bold text-yellow-400">Ресурсы:</h4>
           <ul className="list-disc list-inside space-y-2 ml-2">
             <li>
               <strong>ELL:</strong> Основная игровая валюта
             </li>
             <li>
-              <strong>Дерево, Камень, Железо:</strong> Ресурсы для строительства
+              <strong>Дерево, Камень:</strong> Ресурсы для строительства и крафта
             </li>
             <li>
-              <strong>NEAR:</strong> Криптовалюта для NFT операций
+              <strong>Предметы:</strong> Выпадают из монстров и создаются через крафт
             </li>
           </ul>
         </div>
@@ -126,16 +126,16 @@ export const Tutorial = () => {
             </li>
           </ul>
 
-          <h4 className="font-bold text-yellow-400">Currencies:</h4>
+          <h4 className="font-bold text-yellow-400">Resources:</h4>
           <ul className="list-disc list-inside space-y-2 ml-2">
             <li>
               <strong>ELL:</strong> Main game currency
             </li>
             <li>
-              <strong>Wood, Stone, Iron:</strong> Building resources
+              <strong>Wood, Stone:</strong> Resources for building and crafting
             </li>
             <li>
-              <strong>NEAR:</strong> Cryptocurrency for NFT operations
+              <strong>Items:</strong> Drop from monsters and created through crafting
             </li>
           </ul>
         </div>
@@ -1041,7 +1041,7 @@ export const Tutorial = () => {
               <div className="flex items-center gap-2 mb-1">
                 <span className="text-yellow-400 font-bold">💰 ELL</span>
               </div>
-              <p className="text-sm">Основная валюта. Используется для покупок в магазине.</p>
+              <p className="text-sm">Основная валюта. Используется для покупок в магазине и улучшений.</p>
               <p className="text-xs text-white/60 mt-1">Получение: подземелья, квесты</p>
             </div>
 
@@ -1049,32 +1049,24 @@ export const Tutorial = () => {
               <div className="flex items-center gap-2 mb-1">
                 <span className="text-amber-600 font-bold">🪵 Дерево</span>
               </div>
-              <p className="text-sm">Базовый строительный ресурс.</p>
-              <p className="text-xs text-white/60 mt-1">Получение: Лесопилка, подземелья</p>
+              <p className="text-sm">Базовый ресурс для строительства и крафта.</p>
+              <p className="text-xs text-white/60 mt-1">Получение: Лесопилка</p>
             </div>
 
             <div className="bg-white/10 rounded-lg p-3">
               <div className="flex items-center gap-2 mb-1">
                 <span className="text-gray-400 font-bold">🪨 Камень</span>
               </div>
-              <p className="text-sm">Ресурс для укреплений и зданий.</p>
-              <p className="text-xs text-white/60 mt-1">Получение: Каменоломня, подземелья</p>
+              <p className="text-sm">Ресурс для укреплений, зданий и крафта.</p>
+              <p className="text-xs text-white/60 mt-1">Получение: Каменоломня</p>
             </div>
 
             <div className="bg-white/10 rounded-lg p-3">
               <div className="flex items-center gap-2 mb-1">
-                <span className="text-slate-400 font-bold">⚙️ Железо</span>
+                <span className="text-purple-400 font-bold">📦 Предметы</span>
               </div>
-              <p className="text-sm">Продвинутый ресурс для оружия и брони.</p>
-              <p className="text-xs text-white/60 mt-1">Получение: подземелья, крафт</p>
-            </div>
-
-            <div className="bg-white/10 rounded-lg p-3">
-              <div className="flex items-center gap-2 mb-1">
-                <span className="text-yellow-500 font-bold">🪙 Золото</span>
-              </div>
-              <p className="text-sm">Редкий ресурс для улучшений высокого уровня.</p>
-              <p className="text-xs text-white/60 mt-1">Получение: боссы, особые события</p>
+              <p className="text-sm">Различные материалы и расходники для крафта и улучшений.</p>
+              <p className="text-xs text-white/60 mt-1">Получение: выпадают из монстров в подземельях, создаются через крафт</p>
             </div>
           </div>
         </div>
@@ -1088,7 +1080,7 @@ export const Tutorial = () => {
               <div className="flex items-center gap-2 mb-1">
                 <span className="text-yellow-400 font-bold">💰 ELL</span>
               </div>
-              <p className="text-sm">Main currency. Used for shop purchases.</p>
+              <p className="text-sm">Main currency. Used for shop purchases and upgrades.</p>
               <p className="text-xs text-white/60 mt-1">Obtained: dungeons, quests</p>
             </div>
 
@@ -1096,32 +1088,24 @@ export const Tutorial = () => {
               <div className="flex items-center gap-2 mb-1">
                 <span className="text-amber-600 font-bold">🪵 Wood</span>
               </div>
-              <p className="text-sm">Basic building resource.</p>
-              <p className="text-xs text-white/60 mt-1">Obtained: Sawmill, dungeons</p>
+              <p className="text-sm">Basic resource for building and crafting.</p>
+              <p className="text-xs text-white/60 mt-1">Obtained: Sawmill</p>
             </div>
 
             <div className="bg-white/10 rounded-lg p-3">
               <div className="flex items-center gap-2 mb-1">
                 <span className="text-gray-400 font-bold">🪨 Stone</span>
               </div>
-              <p className="text-sm">Resource for fortifications and buildings.</p>
-              <p className="text-xs text-white/60 mt-1">Obtained: Quarry, dungeons</p>
+              <p className="text-sm">Resource for fortifications, buildings and crafting.</p>
+              <p className="text-xs text-white/60 mt-1">Obtained: Quarry</p>
             </div>
 
             <div className="bg-white/10 rounded-lg p-3">
               <div className="flex items-center gap-2 mb-1">
-                <span className="text-slate-400 font-bold">⚙️ Iron</span>
+                <span className="text-purple-400 font-bold">📦 Items</span>
               </div>
-              <p className="text-sm">Advanced resource for weapons and armor.</p>
-              <p className="text-xs text-white/60 mt-1">Obtained: dungeons, crafting</p>
-            </div>
-
-            <div className="bg-white/10 rounded-lg p-3">
-              <div className="flex items-center gap-2 mb-1">
-                <span className="text-yellow-500 font-bold">🪙 Gold</span>
-              </div>
-              <p className="text-sm">Rare resource for high-level upgrades.</p>
-              <p className="text-xs text-white/60 mt-1">Obtained: bosses, special events</p>
+              <p className="text-sm">Various materials and consumables for crafting and upgrades.</p>
+              <p className="text-xs text-white/60 mt-1">Obtained: drop from monsters in dungeons, created through crafting</p>
             </div>
           </div>
         </div>
