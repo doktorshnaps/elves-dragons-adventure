@@ -1,3 +1,7 @@
+// Item images - importing actual images
+import elleonorBoxImg from "@/assets/items/elleonor-box.jpeg";
+import mgtTokenImg from "@/assets/items/mgt-token.webp";
+
 // Temporarily using placeholders until webp files are uploaded
 const spiderSilk = "/placeholder.svg";
 const spiderPoison = "/placeholder.svg";
@@ -51,6 +55,8 @@ const lifeCrystalImg = "/placeholder.svg";
 
 // Map by item_id (for ItemsInfo component)
 export const itemImagesByItemId: Record<string, string> = {
+  elleonor_box: elleonorBoxImg,
+  mgt_token: mgtTokenImg,
   spider_silk: spiderSilk,
   spider_poison_small: spiderPoison,
   spider_fang: spiderFang,
@@ -104,6 +110,9 @@ export const itemImagesByItemId: Record<string, string> = {
 
 // Map by item name (Russian) for inventory component
 export const itemImagesByName: Record<string, string> = {
+  'Elleonor Box': elleonorBoxImg,
+  'Сундук Эллеонор': elleonorBoxImg,
+  'mGT Token': mgtTokenImg,
   'Паутина паука': spiderSilk,
   'Яд паука': spiderPoison,
   'Клык паука': spiderFang,

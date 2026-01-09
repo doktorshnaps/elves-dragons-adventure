@@ -939,6 +939,7 @@ export type Database = {
           max_iron: number | null
           max_stone: number | null
           max_wood: number | null
+          mgt_balance: number | null
           selected_team: Json | null
           social_quests: Json | null
           stone: number
@@ -976,6 +977,7 @@ export type Database = {
           max_iron?: number | null
           max_stone?: number | null
           max_wood?: number | null
+          mgt_balance?: number | null
           selected_team?: Json | null
           social_quests?: Json | null
           stone?: number
@@ -1013,6 +1015,7 @@ export type Database = {
           max_iron?: number | null
           max_stone?: number | null
           max_wood?: number | null
+          mgt_balance?: number | null
           selected_team?: Json | null
           social_quests?: Json | null
           stone?: number
@@ -1238,6 +1241,36 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      mgt_claims: {
+        Row: {
+          amount: number
+          claim_type: string
+          created_at: string
+          id: string
+          source_item_id: string | null
+          user_id: string | null
+          wallet_address: string
+        }
+        Insert: {
+          amount: number
+          claim_type?: string
+          created_at?: string
+          id?: string
+          source_item_id?: string | null
+          user_id?: string | null
+          wallet_address: string
+        }
+        Update: {
+          amount?: number
+          claim_type?: string
+          created_at?: string
+          id?: string
+          source_item_id?: string | null
+          user_id?: string | null
+          wallet_address?: string
+        }
+        Relationships: []
       }
       monsters: {
         Row: {
