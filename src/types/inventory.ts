@@ -1,7 +1,7 @@
 export interface Item {
   id: string;
   name: string;
-  type: "cardPack" | "healthPotion" | "defensePotion" | "dragon_egg" | "weapon" | "armor" | "accessory" | "worker" | "material" | "woodChunks" | "magicalRoots" | "rockStones" | "blackCrystals" | "illusionManuscript" | "darkMonocle" | "etherVine" | "dwarvenTongs" | "healingOil" | "shimmeringCrystal" | "lifeCrystal";
+  type: "cardPack" | "healthPotion" | "defensePotion" | "dragon_egg" | "weapon" | "armor" | "accessory" | "worker" | "material" | "woodChunks" | "magicalRoots" | "rockStones" | "blackCrystals" | "illusionManuscript" | "darkMonocle" | "etherVine" | "dwarvenTongs" | "healingOil" | "shimmeringCrystal" | "lifeCrystal" | "consumable";
   value: number;
   sell_price?: number;
   description?: string;

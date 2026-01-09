@@ -7,6 +7,7 @@ import { DragonEggsList } from "./inventory/DragonEggsList";
 import { InventoryGrid } from "./inventory/InventoryGrid";
 import { CardRevealModal } from "./dialogs/CardRevealModal";
 import { CardPackQuantityModal } from "./dialogs/CardPackQuantityModal";
+import { ElleonorBoxAnimation } from "./dialogs/ElleonorBoxAnimation";
 import { useGameData } from "@/hooks/useGameData";
 import { useToast } from "@/hooks/use-toast";
 import { useLanguage } from "@/hooks/useLanguage";
@@ -17,6 +18,7 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { useCardInstances } from "@/hooks/useCardInstances";
 import { useItemInstances } from "@/hooks/useItemInstances";
 import { useItemTemplates } from "@/hooks/useItemTemplates";
+import { useElleonorBoxOpening } from "@/hooks/useElleonorBoxOpening";
 
 interface InventoryDisplayProps {
   onUseItem?: (item: Item) => void;
@@ -59,6 +61,17 @@ export const InventoryDisplay = ({
     skipAnimations,
     skipAllAnimations
   } = useInventoryLogic([]);  // inventory больше не используется
+
+  // Elleonor Box opening hook
+  const {
+    isOpening: isOpeningBox,
+    showAnimation: showBoxAnimation,
+    currentReward,
+    openElleonorBox,
+    handleAnimationComplete: handleBoxAnimationComplete,
+    handleSkipAll: handleBoxSkipAll,
+    showSkipAll: showBoxSkipAll,
+  } = useElleonorBoxOpening();
 
 // Источник истины: используем ТОЛЬКО item_instances для всех предметов
 const { cardInstances, loading: cardInstancesLoading } = useCardInstances();
@@ -171,6 +184,18 @@ console.log('📦 [InventoryDisplay] allInventoryItems created:', {
       return shouldRemove;
     }
 
+    // Elleonor Box (consumable) - открываем для получения mGT токенов
+    if (groupedItem.type === 'consumable') {
+      const boxItem = groupedItem.items[0];
+      await openElleonorBox({
+        id: boxItem.id,
+        name: boxItem.name,
+        template_id: boxItem.template_id,
+      });
+      await refetchItemInstances();
+      return true;
+    }
+
     // Остальные предметы — через внешний обработчик, если он передан
     if (onUseItem) {
       const itemToUse = groupedItem.items[0];
@@ -260,6 +285,15 @@ console.log('📦 [InventoryDisplay] allInventoryItems created:', {
         item={selectedPackItem}
         availableCount={selectedPackItem ? itemInstances.filter(i => i.type === 'cardPack' && i.name === selectedPackItem.name).length : 0}
       />
+
+      {showBoxAnimation && (
+        <ElleonorBoxAnimation
+          winningAmount={currentReward}
+          onAnimationComplete={handleBoxAnimationComplete}
+          onSkipAll={handleBoxSkipAll}
+          showSkipAll={showBoxSkipAll}
+        />
+      )}
     </div>
   );
 };

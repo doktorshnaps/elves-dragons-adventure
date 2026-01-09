@@ -156,6 +156,7 @@ export const InventoryGrid = ({
                     {item.type === 'armor' && 'Броня'}
                     {item.type === 'healthPotion' && `Восстанавливает ${item.value} HP`}
                     {item.type === 'dragon_egg' && 'Яйцо дракона'}
+                    {item.type === 'consumable' && 'Открываемый предмет'}
                   </p>
                 </div>
               </Card>
@@ -221,6 +222,11 @@ export const InventoryGrid = ({
                   {item.type === 'cardPack' && <DialogClose asChild>
                       <Button onClick={() => onUseItem(item)} className="w-full bg-game-primary hover:bg-game-primary/80">
                         {t(language, 'items.openPack')}
+                      </Button>
+                    </DialogClose>}
+                  {item.type === 'consumable' && <DialogClose asChild>
+                      <Button onClick={() => onUseItem(item)} className="w-full bg-gradient-to-r from-yellow-500 to-amber-600 hover:from-yellow-600 hover:to-amber-700 text-white font-bold">
+                        Открыть
                       </Button>
                     </DialogClose>}
                   {item.type === 'healthPotion' && <Button onClick={() => onUseItem(item)} variant="outline" className="w-full">
