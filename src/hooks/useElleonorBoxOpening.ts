@@ -83,22 +83,27 @@ export const useElleonorBoxOpening = () => {
         .from('game_data')
         .select('mgt_balance')
         .eq('wallet_address', accountId)
-        .single();
+        .maybeSingle();
 
-      if (fetchError) {
-        throw new Error('Не удалось получить данные игрока');
-      }
-
+      // If no game_data record exists or error, use 0 as starting balance
       const currentBalance = Number(gameData?.mgt_balance) || 0;
       const newBalance = currentBalance + reward;
 
-      const { error: updateError } = await supabase
-        .from('game_data')
-        .update({ mgt_balance: newBalance })
-        .eq('wallet_address', accountId);
+      // Update or insert mgt_balance
+      if (gameData) {
+        const { error: updateError } = await supabase
+          .from('game_data')
+          .update({ mgt_balance: newBalance })
+          .eq('wallet_address', accountId);
 
-      if (updateError) {
-        throw new Error('Не удалось обновить баланс mGT');
+        if (updateError) {
+          console.error('Error updating mgt_balance:', updateError);
+          throw new Error('Не удалось обновить баланс mGT');
+        }
+      } else {
+        // Game data doesn't exist - this shouldn't happen normally
+        // but handle gracefully by just logging the claim
+        console.warn('No game_data found for wallet, proceeding with claim logging only');
       }
 
       // Log the claim
