@@ -61,38 +61,36 @@ export const MgtExchangeAdmin = () => {
     enabled: !!accountId,
   });
 
-  // Fetch mGT claims for selected wallet
+  // Fetch mGT claims for selected wallet using RPC
   const { data: playerClaims, isLoading: claimsLoading } = useQuery({
-    queryKey: ['adminPlayerMgtClaims', selectedRequest?.wallet_address],
+    queryKey: ['adminPlayerMgtClaims', selectedRequest?.wallet_address, accountId],
     queryFn: async () => {
-      if (!selectedRequest?.wallet_address) return [];
-      const { data, error } = await supabase
-        .from('mgt_claims')
-        .select('*')
-        .eq('wallet_address', selectedRequest.wallet_address)
-        .order('created_at', { ascending: false });
+      if (!selectedRequest?.wallet_address || !accountId) return [];
+      const { data, error } = await supabase.rpc('admin_get_player_mgt_claims', {
+        p_admin_wallet_address: accountId,
+        p_player_wallet_address: selectedRequest.wallet_address
+      });
       
       if (error) throw error;
       return (data || []) as MgtClaim[];
     },
-    enabled: !!selectedRequest?.wallet_address,
+    enabled: !!selectedRequest?.wallet_address && !!accountId,
   });
 
-  // Fetch player's current mGT balance
+  // Fetch player's current mGT balance using RPC
   const { data: playerBalance } = useQuery({
-    queryKey: ['adminPlayerMgtBalance', selectedRequest?.wallet_address],
+    queryKey: ['adminPlayerMgtBalance', selectedRequest?.wallet_address, accountId],
     queryFn: async () => {
-      if (!selectedRequest?.wallet_address) return 0;
-      const { data, error } = await supabase
-        .from('game_data')
-        .select('mgt_balance')
-        .eq('wallet_address', selectedRequest.wallet_address)
-        .single();
+      if (!selectedRequest?.wallet_address || !accountId) return 0;
+      const { data, error } = await supabase.rpc('admin_get_player_mgt_balance', {
+        p_admin_wallet_address: accountId,
+        p_player_wallet_address: selectedRequest.wallet_address
+      });
       
       if (error) return 0;
-      return Number(data?.mgt_balance) || 0;
+      return Number(data) || 0;
     },
-    enabled: !!selectedRequest?.wallet_address,
+    enabled: !!selectedRequest?.wallet_address && !!accountId,
   });
 
   const handleApprove = async () => {

@@ -2170,6 +2170,27 @@ export type Database = {
         Args: { p_admin_wallet_address: string; p_user_id: string }
         Returns: Json
       }
+      admin_get_player_mgt_balance: {
+        Args: {
+          p_admin_wallet_address: string
+          p_player_wallet_address: string
+        }
+        Returns: number
+      }
+      admin_get_player_mgt_claims: {
+        Args: {
+          p_admin_wallet_address: string
+          p_player_wallet_address: string
+        }
+        Returns: {
+          amount: number
+          claim_type: string
+          created_at: string
+          id: string
+          source_item_id: string
+          wallet_address: string
+        }[]
+      }
       admin_get_user_info: {
         Args: { p_admin_wallet_address: string; p_user_id: string }
         Returns: Json
