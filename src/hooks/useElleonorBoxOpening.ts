@@ -68,28 +68,45 @@ export const useElleonorBoxOpening = () => {
       const reward = calculateReward();
       setCurrentReward(reward);
       
-      // Remove box from inventory
-      const { error: removeError } = await supabase
+      // First verify the box exists and get owner data
+      const { data: boxData, error: boxCheckError } = await supabase
         .from('item_instances')
-        .delete()
-        .eq('id', boxItem.id);
+        .select('id, wallet_address')
+        .eq('id', boxItem.id)
+        .single();
 
-      if (removeError) {
-        throw new Error('Не удалось открыть сундук');
+      if (boxCheckError || !boxData) {
+        throw new Error('Сундук не найден в инвентаре');
       }
 
-      // Add mGT tokens to balance
-      const { data: gameData, error: fetchError } = await supabase
+      // Verify the box belongs to this player
+      if (boxData.wallet_address !== accountId) {
+        throw new Error('Этот сундук принадлежит другому игроку');
+      }
+
+      // Get current mGT balance
+      const { data: gameData } = await supabase
         .from('game_data')
         .select('mgt_balance')
         .eq('wallet_address', accountId)
         .maybeSingle();
 
-      // If no game_data record exists or error, use 0 as starting balance
       const currentBalance = Number(gameData?.mgt_balance) || 0;
       const newBalance = currentBalance + reward;
 
-      // Update or insert mgt_balance
+      // Remove box from inventory FIRST
+      const { error: removeError } = await supabase
+        .from('item_instances')
+        .delete()
+        .eq('id', boxItem.id)
+        .eq('wallet_address', accountId);
+
+      if (removeError) {
+        console.error('Error removing box:', removeError);
+        throw new Error('Не удалось удалить сундук из инвентаря');
+      }
+
+      // Update mgt_balance if game_data exists
       if (gameData) {
         const { error: updateError } = await supabase
           .from('game_data')
@@ -98,12 +115,8 @@ export const useElleonorBoxOpening = () => {
 
         if (updateError) {
           console.error('Error updating mgt_balance:', updateError);
-          throw new Error('Не удалось обновить баланс mGT');
+          // Don't throw - the box was already deleted, just log
         }
-      } else {
-        // Game data doesn't exist - this shouldn't happen normally
-        // but handle gracefully by just logging the claim
-        console.warn('No game_data found for wallet, proceeding with claim logging only');
       }
 
       // Log the claim
@@ -116,8 +129,9 @@ export const useElleonorBoxOpening = () => {
           source_item_id: boxItem.id,
         });
 
-      // Invalidate queries to refresh data
-      queryClient.invalidateQueries({ queryKey: ['itemInstances'] });
+      // Force immediate refetch of item instances
+      await queryClient.invalidateQueries({ queryKey: ['itemInstances'] });
+      await queryClient.refetchQueries({ queryKey: ['itemInstances'] });
       queryClient.invalidateQueries({ queryKey: ['gameData'] });
 
       // Show animation
