@@ -113,21 +113,11 @@ const instanceItems: Item[] = (itemInstances || [])
       description: inst.type === 'cardPack' ? 'Содержит 1 случайную карту' : template?.description,
       image: inst.type === 'cardPack' 
         ? '/lovable-uploads/e523dce0-4cda-4d32-b4e2-ecec40b1eb39.png'
-        : template?.image_url, // ИСПРАВЛЕНО: используем image_url из template для обычных предметов
+        : template?.image_url,
       image_url: template?.image_url,
-      item_id: inst.item_id || template?.item_id, // Добавляем item_id для маппинга изображений
+      item_id: inst.item_id || template?.item_id, // item_id для маппинга изображений
       template_id: inst.template_id
     } as Item;
-    
-    console.log('🔍 [InventoryDisplay] Creating item:', {
-      name: item.name,
-      type: item.type,
-      image_url: item.image_url,
-      item_id: item.item_id,
-      template_id: item.template_id,
-      inst_item_id: inst.item_id,
-      template_image_url: template?.image_url
-    });
     
     return item;
   });
