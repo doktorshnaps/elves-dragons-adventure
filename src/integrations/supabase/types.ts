@@ -2144,6 +2144,24 @@ export type Database = {
           wallet_address: string
         }[]
       }
+      admin_get_mgt_exchange_requests: {
+        Args: {
+          p_admin_wallet_address: string
+          p_search?: string
+          p_status?: string
+        }
+        Returns: {
+          admin_notes: string
+          amount: number
+          created_at: string
+          id: string
+          processed_at: string
+          processed_by: string
+          status: string
+          updated_at: string
+          wallet_address: string
+        }[]
+      }
       admin_get_player_cards: {
         Args: { p_admin_wallet_address: string; p_user_id: string }
         Returns: Json
@@ -2264,6 +2282,15 @@ export type Database = {
           migrated_cards: number
           result_wallet: string
         }[]
+      }
+      admin_process_mgt_exchange_request: {
+        Args: {
+          p_action: string
+          p_admin_notes?: string
+          p_admin_wallet_address: string
+          p_request_id: string
+        }
+        Returns: boolean
       }
       admin_recalculate_all_card_stats: {
         Args: { p_admin_wallet_address?: string }
