@@ -3275,6 +3275,10 @@ export type Database = {
         Args: { p_card_instance_id: string; p_wallet_address: string }
         Returns: Json
       }
+      submit_mgt_exchange_request: {
+        Args: { p_amount: number; p_wallet_address: string }
+        Returns: string
+      }
       sync_card_instances_from_game_data: {
         Args: { p_wallet_address: string }
         Returns: number
