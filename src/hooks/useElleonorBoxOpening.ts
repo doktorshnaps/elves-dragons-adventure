@@ -4,19 +4,6 @@ import { useWalletContext } from '@/contexts/WalletConnectContext';
 import { useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 
-// Possible reward amounts with their weights
-const REWARD_CONFIG = [
-  { amount: 1, weight: 35 },
-  { amount: 5, weight: 25 },
-  { amount: 10, weight: 15 },
-  { amount: 15, weight: 10 },
-  { amount: 20, weight: 7 },
-  { amount: 50, weight: 4 },
-  { amount: 100, weight: 2.5 },
-  { amount: 1000, weight: 1 },
-  { amount: 6666, weight: 0.5 },
-];
-
 interface ElleonorBoxItem {
   id: string;
   name: string;
@@ -35,22 +22,7 @@ export const useElleonorBoxOpening = () => {
   const { accountId } = useWalletContext();
   const queryClient = useQueryClient();
 
-  // Calculate reward based on weighted random
-  const calculateReward = useCallback((): number => {
-    const totalWeight = REWARD_CONFIG.reduce((sum, r) => sum + r.weight, 0);
-    let random = Math.random() * totalWeight;
-    
-    for (const reward of REWARD_CONFIG) {
-      random -= reward.weight;
-      if (random <= 0) {
-        return reward.amount;
-      }
-    }
-    
-    return REWARD_CONFIG[0].amount; // Fallback to lowest amount
-  }, []);
-
-  // Open a single Elleonor Box
+  // Open Elleonor Box via edge function (same pattern as card packs)
   const openElleonorBox = useCallback(async (boxItem: ElleonorBoxItem): Promise<number | null> => {
     if (!accountId) {
       toast({
@@ -61,78 +33,44 @@ export const useElleonorBoxOpening = () => {
       return null;
     }
 
+    if (isOpening) {
+      console.log('Already opening a box, skipping...');
+      return null;
+    }
+
     try {
       setIsOpening(true);
       
-      // Calculate reward
-      const reward = calculateReward();
+      console.log(`📦 Opening Elleonor Box via edge function for ${accountId}...`);
+      
+      // Call edge function (handles deletion and rewards server-side)
+      const { data, error } = await supabase.functions.invoke('open-elleonor-box', {
+        body: {
+          wallet_address: accountId,
+          box_instance_id: boxItem.id,
+          count: 1
+        }
+      });
+      
+      if (error) {
+        console.error('Edge function error:', error);
+        throw new Error(error.message || 'Не удалось открыть сундук');
+      }
+
+      if (!data.success) {
+        throw new Error(data.error || 'Не удалось открыть сундук');
+      }
+
+      const reward = data.rewards[0] || 0;
       setCurrentReward(reward);
       
-      // First verify the box exists and get owner data
-      const { data: boxData, error: boxCheckError } = await supabase
-        .from('item_instances')
-        .select('id, wallet_address')
-        .eq('id', boxItem.id)
-        .single();
+      console.log(`✅ Box opened! Reward: ${reward} mGT`);
 
-      if (boxCheckError || !boxData) {
-        throw new Error('Сундук не найден в инвентаре');
-      }
-
-      // Verify the box belongs to this player
-      if (boxData.wallet_address !== accountId) {
-        throw new Error('Этот сундук принадлежит другому игроку');
-      }
-
-      // Get current mGT balance
-      const { data: gameData } = await supabase
-        .from('game_data')
-        .select('mgt_balance')
-        .eq('wallet_address', accountId)
-        .maybeSingle();
-
-      const currentBalance = Number(gameData?.mgt_balance) || 0;
-      const newBalance = currentBalance + reward;
-
-      // Remove box from inventory FIRST
-      const { error: removeError } = await supabase
-        .from('item_instances')
-        .delete()
-        .eq('id', boxItem.id)
-        .eq('wallet_address', accountId);
-
-      if (removeError) {
-        console.error('Error removing box:', removeError);
-        throw new Error('Не удалось удалить сундук из инвентаря');
-      }
-
-      // Update mgt_balance if game_data exists
-      if (gameData) {
-        const { error: updateError } = await supabase
-          .from('game_data')
-          .update({ mgt_balance: newBalance })
-          .eq('wallet_address', accountId);
-
-        if (updateError) {
-          console.error('Error updating mgt_balance:', updateError);
-          // Don't throw - the box was already deleted, just log
-        }
-      }
-
-      // Log the claim
-      await supabase
-        .from('mgt_claims')
-        .insert({
-          wallet_address: accountId,
-          amount: reward,
-          claim_type: 'box_opening',
-          source_item_id: boxItem.id,
-        });
-
-      // Force immediate refetch of item instances
-      await queryClient.invalidateQueries({ queryKey: ['itemInstances'] });
-      await queryClient.refetchQueries({ queryKey: ['itemInstances'] });
-      queryClient.invalidateQueries({ queryKey: ['gameData'] });
+      // Invalidate queries to refresh data
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ['itemInstances'] }),
+        queryClient.invalidateQueries({ queryKey: ['gameData'] })
+      ]);
 
       // Show animation
       if (!skipAnimations) {
@@ -142,6 +80,7 @@ export const useElleonorBoxOpening = () => {
           title: "Elleonor Box открыт!",
           description: `Вы получили ${reward.toLocaleString()} mGT токенов`,
         });
+        setIsOpening(false);
       }
 
       return reward;
@@ -152,13 +91,10 @@ export const useElleonorBoxOpening = () => {
         description: error instanceof Error ? error.message : "Не удалось открыть сундук",
         variant: "destructive",
       });
+      setIsOpening(false);
       return null;
-    } finally {
-      if (skipAnimations) {
-        setIsOpening(false);
-      }
     }
-  }, [accountId, calculateReward, queryClient, toast, skipAnimations]);
+  }, [accountId, queryClient, toast, skipAnimations, isOpening]);
 
   // Open multiple boxes
   const openMultipleBoxes = useCallback(async (boxes: ElleonorBoxItem[]) => {
@@ -198,13 +134,26 @@ export const useElleonorBoxOpening = () => {
     setSkipAnimations(true);
     setShowAnimation(false);
     
-    // Open remaining boxes without animation
-    let totalReward = currentReward;
-    
-    for (let i = currentBoxIndex + 1; i < boxQueue.length; i++) {
-      const reward = await openElleonorBox(boxQueue[i]);
-      if (reward) {
-        totalReward += reward;
+    // Open remaining boxes without animation via edge function
+    if (boxQueue.length > currentBoxIndex + 1) {
+      const remainingCount = boxQueue.length - currentBoxIndex - 1;
+      
+      try {
+        const { data, error } = await supabase.functions.invoke('open-elleonor-box', {
+          body: {
+            wallet_address: accountId,
+            count: remainingCount
+          }
+        });
+
+        if (!error && data.success) {
+          toast({
+            title: "Все сундуки открыты!",
+            description: `Получено ${(currentReward + data.totalReward).toLocaleString()} mGT токенов`,
+          });
+        }
+      } catch (e) {
+        console.error('Error opening remaining boxes:', e);
       }
     }
     
@@ -213,13 +162,10 @@ export const useElleonorBoxOpening = () => {
     setIsOpening(false);
     setSkipAnimations(false);
     
-    if (boxQueue.length > 1) {
-      toast({
-        title: "Все сундуки открыты!",
-        description: `Получено ${totalReward.toLocaleString()} mGT токенов`,
-      });
-    }
-  }, [currentBoxIndex, boxQueue, currentReward, openElleonorBox, toast]);
+    // Refresh data
+    queryClient.invalidateQueries({ queryKey: ['itemInstances'] });
+    queryClient.invalidateQueries({ queryKey: ['gameData'] });
+  }, [currentBoxIndex, boxQueue, currentReward, accountId, queryClient, toast]);
 
   return {
     isOpening,
