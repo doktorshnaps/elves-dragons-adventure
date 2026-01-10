@@ -25,6 +25,7 @@ import { TreasureHuntAdmin } from "@/components/admin/TreasureHuntAdmin";
 import { ShopSettings } from "@/components/admin/ShopSettings";
 import { PlayerManagement } from "@/components/admin/PlayerManagement";
 import { GameMetrics } from "@/components/admin/GameMetrics";
+import { MgtExchangeAdmin } from "@/components/admin/MgtExchangeAdmin";
 import { useLanguage } from "@/hooks/useLanguage";
 import { t } from "@/utils/translations";
 import { useSuperAdminCheck } from "@/hooks/useSuperAdminCheck";
@@ -110,6 +111,7 @@ const AdminSettingsContent = () => {
                 <TabsTrigger value="seekers" className="text-white data-[state=active]:bg-white/20 rounded-3xl">Искатели</TabsTrigger>
                 <TabsTrigger value="shop" className="text-white data-[state=active]:bg-white/20 rounded-3xl">Магазин</TabsTrigger>
                 <TabsTrigger value="players" className="text-white data-[state=active]:bg-white/20 rounded-3xl">Игроки</TabsTrigger>
+                <TabsTrigger value="mgt-exchange" className="text-white data-[state=active]:bg-white/20 rounded-3xl">💰 mGT</TabsTrigger>
               </>
             )}
             <TabsTrigger value="management" className="text-white data-[state=active]:bg-white/20 rounded-3xl">{t(language, 'admin.management')}</TabsTrigger>
@@ -173,6 +175,10 @@ const AdminSettingsContent = () => {
 
               <TabsContent value="players" className="space-y-4">
                 <PlayerManagement />
+              </TabsContent>
+
+              <TabsContent value="mgt-exchange" className="space-y-4">
+                <MgtExchangeAdmin />
               </TabsContent>
             </>
           )}
