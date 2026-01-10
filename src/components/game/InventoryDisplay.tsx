@@ -44,6 +44,7 @@ export const InventoryDisplay = ({
   // Источник истины: используем ТОЛЬКО item_instances для всех предметов
   const {
     balance,
+    mgtBalance,
     groupItems,
     handleSellItem,
     handleOpenCardPack,
@@ -245,7 +246,7 @@ console.log('📦 [InventoryDisplay] allInventoryItems created:', {
     >
       <div className={`p-4 overflow-y-auto ${isMobile ? 'max-h-[calc(100vh-300px)]' : 'max-h-[calc(100vh-200px)]'}`}>
         <div className="space-y-4">
-          <InventoryHeader balance={balance} />
+          <InventoryHeader balance={balance} mgtBalance={mgtBalance} />
           {!showOnlyPotions && <DragonEggsList eggs={eggs} />}
           <InventoryGrid
             groupedItems={groupItems(filteredInventory)}

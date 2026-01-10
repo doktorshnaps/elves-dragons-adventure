@@ -30,6 +30,7 @@ export const useInventoryLogic = (initialInventory: Item[]) => {
     skipAllAnimations
   } = useCardPackOpening();
   const balance = gameData.balance;
+  const mgtBalance = gameData.mgtBalance || 0;
 
   const getItemImage = (item: Item) => {
     // Use image_url from database if available
@@ -155,6 +156,7 @@ const groupItems = (items: Item[]): GroupedItem[] => {
     selectedItems,
     setSelectedItems,
     balance,
+    mgtBalance,
     groupItems,
     handleSellItem,
     handleOpenCardPack,

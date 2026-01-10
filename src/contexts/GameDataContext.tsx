@@ -11,6 +11,7 @@ import { supabase } from '@/integrations/supabase/client';
 
 interface GameData {
   balance: number;
+  mgtBalance: number;
   cards: Card[];
   initialized: boolean;
   marketplaceListings?: any[];
@@ -44,6 +45,7 @@ const GameDataContext = createContext<GameDataContextType | undefined>(undefined
 
 const DEFAULT_GAME_DATA: GameData = {
   balance: 0,
+  mgtBalance: 0,
   cards: [],
   initialized: false,
   marketplaceListings: [],
@@ -191,6 +193,7 @@ export const GameDataProvider = ({ children }: { children: ReactNode }) => {
         
         const newGameData: GameData = {
           balance: gameRecord.balance || 0,
+          mgtBalance: (gameRecord as any).mgt_balance || 0,
           cards: normalizedCards,
           initialized: gameRecord.initialized || false,
           marketplaceListings: (gameRecord.marketplace_listings as any[]) || [],
