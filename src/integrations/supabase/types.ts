@@ -2864,6 +2864,7 @@ export type Database = {
           initialized: boolean
           iron: number
           marketplace_listings: Json
+          mgt_balance: number
           selected_team: Json
           social_quests: Json
           stone: number
