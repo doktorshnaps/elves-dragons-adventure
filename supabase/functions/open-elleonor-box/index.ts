@@ -107,21 +107,31 @@ serve(async (req) => {
         });
     }
 
-    // Update mGT balance
-    const { data: gameData } = await supabaseAdmin
+    // Get current mGT balance AFTER processing all boxes
+    const { data: gameData, error: gameDataError } = await supabaseAdmin
       .from('game_data')
       .select('mgt_balance')
       .eq('wallet_address', wallet_address)
       .maybeSingle();
 
+    if (gameDataError) {
+      console.error('Error fetching game_data:', gameDataError);
+    }
+
     const currentBalance = Number(gameData?.mgt_balance) || 0;
     const newBalance = currentBalance + totalReward;
 
+    console.log(`💰 Updating mGT balance: ${currentBalance} + ${totalReward} = ${newBalance}`);
+
     if (gameData) {
-      await supabaseAdmin
+      const { error: updateError } = await supabaseAdmin
         .from('game_data')
         .update({ mgt_balance: newBalance })
         .eq('wallet_address', wallet_address);
+      
+      if (updateError) {
+        console.error('Error updating mgt_balance:', updateError);
+      }
     }
 
     console.log(`✅ Opened ${boxesToOpen.length} boxes, total reward: ${totalReward} mGT`);
