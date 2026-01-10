@@ -43,23 +43,22 @@ export const MgtExchangeAdmin = () => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  // Fetch all exchange requests
+  // Fetch all exchange requests using RPC
   const { data: requests, isLoading: requestsLoading, refetch: refetchRequests } = useQuery({
-    queryKey: ['adminMgtExchangeRequests', statusFilter],
+    queryKey: ['adminMgtExchangeRequests', statusFilter, accountId],
     queryFn: async () => {
-      let query = supabase
-        .from('mgt_exchange_requests')
-        .select('*')
-        .order('created_at', { ascending: false });
+      if (!accountId) return [];
       
-      if (statusFilter !== 'all') {
-        query = query.eq('status', statusFilter);
-      }
+      const { data, error } = await supabase.rpc('admin_get_mgt_exchange_requests', {
+        p_admin_wallet_address: accountId,
+        p_status: statusFilter === 'all' ? null : statusFilter,
+        p_search: null
+      });
       
-      const { data, error } = await query;
       if (error) throw error;
       return (data || []) as ExchangeRequest[];
     },
+    enabled: !!accountId,
   });
 
   // Fetch mGT claims for selected wallet
@@ -101,47 +100,14 @@ export const MgtExchangeAdmin = () => {
     
     setIsProcessing(true);
     try {
-      // First deduct mGT from player
-      const { data: gameData, error: fetchError } = await supabase
-        .from('game_data')
-        .select('mgt_balance')
-        .eq('wallet_address', selectedRequest.wallet_address)
-        .single();
+      const { error } = await supabase.rpc('admin_process_mgt_exchange_request', {
+        p_admin_wallet_address: accountId,
+        p_request_id: selectedRequest.id,
+        p_action: 'approve',
+        p_admin_notes: adminNotes || null
+      });
 
-      if (fetchError) throw fetchError;
-
-      const currentBalance = Number(gameData?.mgt_balance) || 0;
-      const newBalance = currentBalance - selectedRequest.amount;
-
-      if (newBalance < 0) {
-        toast({
-          title: "Ошибка",
-          description: "У игрока недостаточно mGT",
-          variant: "destructive",
-        });
-        return;
-      }
-
-      // Update player's mGT balance
-      const { error: updateError } = await supabase
-        .from('game_data')
-        .update({ mgt_balance: newBalance })
-        .eq('wallet_address', selectedRequest.wallet_address);
-
-      if (updateError) throw updateError;
-
-      // Update request status
-      const { error: requestError } = await supabase
-        .from('mgt_exchange_requests')
-        .update({
-          status: 'approved',
-          admin_notes: adminNotes || null,
-          processed_by: accountId,
-          processed_at: new Date().toISOString(),
-        })
-        .eq('id', selectedRequest.id);
-
-      if (requestError) throw requestError;
+      if (error) throw error;
 
       toast({
         title: "Заявка одобрена",
@@ -151,11 +117,11 @@ export const MgtExchangeAdmin = () => {
       queryClient.invalidateQueries({ queryKey: ['adminMgtExchangeRequests'] });
       setSelectedRequest(null);
       setAdminNotes("");
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error approving request:', error);
       toast({
         title: "Ошибка",
-        description: "Не удалось одобрить заявку",
+        description: error.message || "Не удалось одобрить заявку",
         variant: "destructive",
       });
     } finally {
@@ -168,15 +134,12 @@ export const MgtExchangeAdmin = () => {
     
     setIsProcessing(true);
     try {
-      const { error } = await supabase
-        .from('mgt_exchange_requests')
-        .update({
-          status: 'rejected',
-          admin_notes: adminNotes || null,
-          processed_by: accountId,
-          processed_at: new Date().toISOString(),
-        })
-        .eq('id', selectedRequest.id);
+      const { error } = await supabase.rpc('admin_process_mgt_exchange_request', {
+        p_admin_wallet_address: accountId,
+        p_request_id: selectedRequest.id,
+        p_action: 'reject',
+        p_admin_notes: adminNotes || null
+      });
 
       if (error) throw error;
 
@@ -188,11 +151,11 @@ export const MgtExchangeAdmin = () => {
       queryClient.invalidateQueries({ queryKey: ['adminMgtExchangeRequests'] });
       setSelectedRequest(null);
       setAdminNotes("");
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error rejecting request:', error);
       toast({
         title: "Ошибка",
-        description: "Не удалось отклонить заявку",
+        description: error.message || "Не удалось отклонить заявку",
         variant: "destructive",
       });
     } finally {
