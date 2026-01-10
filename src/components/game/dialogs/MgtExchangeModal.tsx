@@ -87,12 +87,10 @@ export const MgtExchangeModal = ({ isOpen, onClose, currentBalance }: MgtExchang
     setIsSubmitting(true);
 
     try {
-      const { error } = await supabase
-        .from('mgt_exchange_requests')
-        .insert({
-          wallet_address: accountId,
-          amount: numAmount,
-        });
+      const { data, error } = await supabase.rpc('submit_mgt_exchange_request', {
+        p_wallet_address: accountId,
+        p_amount: numAmount,
+      });
 
       if (error) throw error;
 
