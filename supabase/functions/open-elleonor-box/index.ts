@@ -6,17 +6,17 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-// Possible reward amounts with their weights
+// Possible reward amounts with their weights (total = 100%)
 const REWARD_CONFIG = [
-  { amount: 1, weight: 35 },
-  { amount: 5, weight: 25 },
-  { amount: 10, weight: 15 },
-  { amount: 15, weight: 10 },
-  { amount: 20, weight: 7 },
-  { amount: 50, weight: 4 },
-  { amount: 100, weight: 2.5 },
-  { amount: 1000, weight: 1 },
-  { amount: 6666, weight: 0.5 },
+  { amount: 1, weight: 70 },
+  { amount: 5, weight: 20 },
+  { amount: 10, weight: 6 },
+  { amount: 15, weight: 2 },
+  { amount: 20, weight: 1 },
+  { amount: 50, weight: 0.5 },
+  { amount: 100, weight: 0.3 },
+  { amount: 1000, weight: 0.15 },
+  { amount: 6666, weight: 0.05 },
 ];
 
 // Calculate reward based on weighted random
