@@ -3255,16 +3255,16 @@ export type Database = {
           description_en: string
           description_ru: string
           icon: string
-          id: string
           is_claimed: boolean
           is_completed: boolean
+          progress_id: string
           quest_key: string
-          quest_template_id: string
           quest_type: string
           reset_at: string
           reward_amount: number
           reward_type: string
           target_value: number
+          template_id: string
           title_en: string
           title_ru: string
         }[]
