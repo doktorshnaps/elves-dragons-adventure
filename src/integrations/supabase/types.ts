@@ -604,6 +604,60 @@ export type Database = {
           },
         ]
       }
+      daily_quest_templates: {
+        Row: {
+          created_at: string
+          description_en: string
+          description_ru: string
+          display_order: number
+          icon: string | null
+          id: string
+          is_active: boolean
+          quest_key: string
+          quest_type: string
+          reward_amount: number
+          reward_type: string
+          target_value: number
+          title_en: string
+          title_ru: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description_en: string
+          description_ru: string
+          display_order?: number
+          icon?: string | null
+          id?: string
+          is_active?: boolean
+          quest_key: string
+          quest_type: string
+          reward_amount?: number
+          reward_type?: string
+          target_value?: number
+          title_en: string
+          title_ru: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description_en?: string
+          description_ru?: string
+          display_order?: number
+          icon?: string | null
+          id?: string
+          is_active?: boolean
+          quest_key?: string
+          quest_type?: string
+          reward_amount?: number
+          reward_type?: string
+          target_value?: number
+          title_en?: string
+          title_ru?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       data_changes: {
         Row: {
           change_type: string
@@ -1798,6 +1852,50 @@ export type Database = {
           },
         ]
       }
+      user_daily_quest_progress: {
+        Row: {
+          created_at: string
+          current_value: number
+          id: string
+          is_claimed: boolean
+          is_completed: boolean
+          quest_template_id: string
+          reset_at: string
+          updated_at: string
+          wallet_address: string
+        }
+        Insert: {
+          created_at?: string
+          current_value?: number
+          id?: string
+          is_claimed?: boolean
+          is_completed?: boolean
+          quest_template_id: string
+          reset_at: string
+          updated_at?: string
+          wallet_address: string
+        }
+        Update: {
+          created_at?: string
+          current_value?: number
+          id?: string
+          is_claimed?: boolean
+          is_completed?: boolean
+          quest_template_id?: string
+          reset_at?: string
+          updated_at?: string
+          wallet_address?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_daily_quest_progress_quest_template_id_fkey"
+            columns: ["quest_template_id"]
+            isOneToOne: false
+            referencedRelation: "daily_quest_templates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_nft_cards: {
         Row: {
           card_template_name: string
@@ -2705,6 +2803,10 @@ export type Database = {
         Args: { p_max_claims_per_minute?: number; p_wallet_address: string }
         Returns: boolean
       }
+      claim_daily_quest_reward: {
+        Args: { p_progress_id: string; p_wallet_address: string }
+        Returns: Json
+      }
       claim_quest_and_reward: {
         Args: { p_quest_id: string; p_wallet_address: string }
         Returns: Json
@@ -3146,6 +3248,27 @@ export type Database = {
         }[]
       }
       get_static_game_data: { Args: never; Returns: Json }
+      get_user_daily_quests: {
+        Args: { p_wallet_address: string }
+        Returns: {
+          current_value: number
+          description_en: string
+          description_ru: string
+          icon: string
+          id: string
+          is_claimed: boolean
+          is_completed: boolean
+          quest_key: string
+          quest_template_id: string
+          quest_type: string
+          reset_at: string
+          reward_amount: number
+          reward_type: string
+          target_value: number
+          title_en: string
+          title_ru: string
+        }[]
+      }
       get_user_quest_progress: {
         Args: { p_wallet_address: string }
         Returns: {
@@ -3379,6 +3502,14 @@ export type Database = {
           p_card_template_id: string
           p_current_health: number
           p_last_heal_time?: string
+          p_wallet_address: string
+        }
+        Returns: boolean
+      }
+      update_daily_quest_progress: {
+        Args: {
+          p_increment?: number
+          p_quest_key: string
           p_wallet_address: string
         }
         Returns: boolean
