@@ -9,8 +9,8 @@ import { useLanguage } from "@/hooks/useLanguage";
 import { Clock, Calendar, Gift, CheckCircle2 } from "lucide-react";
 
 interface DailyQuest {
-  id: string;
-  quest_template_id: string;
+  progress_id: string;
+  template_id: string;
   quest_type: string;
   quest_key: string;
   title_ru: string;
@@ -67,12 +67,12 @@ export const DailyQuests = () => {
   const handleClaimReward = async (quest: DailyQuest) => {
     if (!accountId || !quest.is_completed || quest.is_claimed) return;
 
-    setClaiming(quest.id);
+    setClaiming(quest.progress_id);
 
     try {
       const { data, error } = await supabase.rpc('claim_daily_quest_reward', {
         p_wallet_address: accountId,
-        p_progress_id: quest.id
+        p_progress_id: quest.progress_id
       });
 
       if (error) throw error;
@@ -81,7 +81,7 @@ export const DailyQuests = () => {
 
       // Update local state
       setQuests(prev => prev.map(q => 
-        q.id === quest.id ? { ...q, is_claimed: true } : q
+        q.progress_id === quest.progress_id ? { ...q, is_claimed: true } : q
       ));
 
       // Update game data
@@ -177,7 +177,7 @@ export const DailyQuests = () => {
           <div className="space-y-4">
             {dailyQuests.map((quest) => (
               <QuestCard
-                key={quest.id}
+                key={quest.progress_id}
                 quest={quest}
                 language={language}
                 claiming={claiming}
@@ -207,7 +207,7 @@ export const DailyQuests = () => {
           <div className="space-y-4">
             {weeklyQuests.map((quest) => (
               <QuestCard
-                key={quest.id}
+                key={quest.progress_id}
                 quest={quest}
                 language={language}
                 claiming={claiming}
@@ -285,12 +285,12 @@ const QuestCard = ({
               ) : quest.is_completed ? (
                 <Button
                   onClick={() => onClaim(quest)}
-                  disabled={claiming === quest.id}
+                  disabled={claiming === quest.progress_id}
                   size="sm"
                   className="bg-green-500 text-white hover:bg-green-600 border-2 border-green-400 rounded-xl font-semibold"
                 >
                   <Gift className="w-4 h-4 mr-1" />
-                  {claiming === quest.id 
+                  {claiming === quest.progress_id 
                     ? (language === 'ru' ? '...' : '...') 
                     : (language === 'ru' ? 'Забрать' : 'Claim')}
                 </Button>
