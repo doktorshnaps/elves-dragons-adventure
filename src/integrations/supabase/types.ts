@@ -2799,6 +2799,15 @@ export type Database = {
         Args: { p_listing_id: string }
         Returns: undefined
       }
+      check_api_rate_limit: {
+        Args: {
+          p_endpoint: string
+          p_identifier: string
+          p_max_requests?: number
+          p_window_seconds?: number
+        }
+        Returns: boolean
+      }
       check_claim_rate_limit: {
         Args: { p_max_claims_per_minute?: number; p_wallet_address: string }
         Returns: boolean

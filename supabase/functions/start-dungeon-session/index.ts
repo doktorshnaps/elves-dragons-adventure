@@ -52,6 +52,10 @@ async function extractWalletFromAuth(req: Request, supabase: any): Promise<strin
   }
 }
 
+// Rate limiting configuration
+const RATE_LIMIT_WINDOW_SECONDS = 60;
+const RATE_LIMIT_MAX_REQUESTS = 15; // Max 15 dungeon starts per minute
+
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
@@ -68,6 +72,29 @@ Deno.serve(async (req) => {
 
     const { dungeon_type, level, device_id }: RequestBody = parsed.data;
     const supabase = getSupabaseServiceClient();
+    
+    // Get client IP for additional rate limiting
+    const clientIP = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || 
+                     req.headers.get('cf-connecting-ip') || 
+                     'unknown';
+
+    // 🔒 SECURITY: Check rate limiting by IP first (before wallet verification)
+    const { data: ipRateLimitOk } = await supabase.rpc('check_api_rate_limit', {
+      p_identifier: clientIP,
+      p_endpoint: 'start-dungeon-session-ip',
+      p_window_seconds: RATE_LIMIT_WINDOW_SECONDS,
+      p_max_requests: RATE_LIMIT_MAX_REQUESTS * 2 // More lenient for IP
+    });
+
+    if (!ipRateLimitOk) {
+      console.warn(`🚫 IP rate limit exceeded: ${clientIP}`);
+      await supabase.from('security_audit_log').insert({
+        event_type: 'DUNGEON_IP_RATE_LIMITED',
+        ip_address: clientIP,
+        details: { dungeon_type, level }
+      });
+      return json({ error: 'Too many requests. Please wait a moment.' }, 429);
+    }
 
     // ============ SECURITY: WALLET VERIFICATION ============
     let wallet_address: string | null = null;
@@ -119,6 +146,24 @@ Deno.serve(async (req) => {
         error: 'Could not verify wallet ownership. Please reconnect your wallet.',
         code: 'WALLET_VERIFICATION_FAILED' 
       }, 401);
+    }
+
+    // 🔒 SECURITY: Check rate limiting by wallet
+    const { data: walletRateLimitOk } = await supabase.rpc('check_api_rate_limit', {
+      p_identifier: wallet_address,
+      p_endpoint: 'start-dungeon-session',
+      p_window_seconds: RATE_LIMIT_WINDOW_SECONDS,
+      p_max_requests: RATE_LIMIT_MAX_REQUESTS
+    });
+
+    if (!walletRateLimitOk) {
+      console.warn(`🚫 Wallet rate limit exceeded: ${wallet_address}`);
+      await supabase.from('security_audit_log').insert({
+        event_type: 'DUNGEON_WALLET_RATE_LIMITED',
+        wallet_address,
+        details: { dungeon_type, level }
+      });
+      return json({ error: 'Too many requests. Please wait a moment.' }, 429);
     }
 
     console.log('🎮 Starting dungeon session:', {

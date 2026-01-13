@@ -1,10 +1,22 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { z } from "https://deno.land/x/zod@v3.22.4/mod.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
+
+// 🔒 Input validation schema
+const OpenBoxSchema = z.object({
+  wallet_address: z.string().min(3).max(100),
+  box_instance_id: z.string().optional(),
+  count: z.number().int().min(1).max(10).default(1),
+});
+
+// Rate limiting configuration
+const RATE_LIMIT_WINDOW_SECONDS = 60;
+const RATE_LIMIT_MAX_REQUESTS = 10; // Max 10 box openings per minute
 
 // Possible reward amounts with their weights (total = 100%)
 const REWARD_CONFIG = [
@@ -34,6 +46,12 @@ function calculateReward(): number {
   return REWARD_CONFIG[0].amount;
 }
 
+const json = (data: unknown, status = 200) =>
+  new Response(JSON.stringify(data), {
+    status,
+    headers: { ...corsHeaders, "Content-Type": "application/json" },
+  });
+
 serve(async (req) => {
   // Handle CORS preflight requests
   if (req.method === "OPTIONS") {
@@ -41,13 +59,22 @@ serve(async (req) => {
   }
 
   try {
-    const { wallet_address, box_instance_id, count = 1 } = await req.json();
-    
-    console.log(`📦 Opening Elleonor Box for wallet: ${wallet_address}, box_id: ${box_instance_id}, count: ${count}`);
-
-    if (!wallet_address) {
-      throw new Error("wallet_address is required");
+    // 🔒 Parse and validate input
+    let body: unknown;
+    try {
+      body = await req.json();
+    } catch {
+      return json({ success: false, error: "Invalid request body" }, 400);
     }
+
+    const parseResult = OpenBoxSchema.safeParse(body);
+    if (!parseResult.success) {
+      console.error("❌ Validation error:", parseResult.error.flatten());
+      return json({ success: false, error: "Invalid request parameters" }, 400);
+    }
+
+    const { wallet_address, count } = parseResult.data;
+    console.log(`📦 Opening Elleonor Box for wallet: ${wallet_address}, count: ${count}`);
 
     // Create Supabase client with service role for bypassing RLS
     const supabaseAdmin = createClient(
@@ -55,6 +82,44 @@ serve(async (req) => {
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "",
       { auth: { persistSession: false } }
     );
+
+    // 🔒 SECURITY: Verify wallet exists in game_data (proves ownership)
+    const { data: gameDataCheck, error: verifyError } = await supabaseAdmin
+      .from('game_data')
+      .select('wallet_address')
+      .eq('wallet_address', wallet_address)
+      .single();
+
+    if (verifyError || !gameDataCheck) {
+      console.error('❌ Wallet verification failed:', verifyError);
+      await supabaseAdmin.from('security_audit_log').insert({
+        event_type: 'BOX_OPEN_UNVERIFIED_WALLET',
+        wallet_address,
+        details: { count, error: 'Wallet not registered' }
+      });
+      return json({ success: false, error: 'Wallet not verified' }, 401);
+    }
+
+    // 🔒 SECURITY: Check rate limiting
+    const { data: rateLimitOk } = await supabaseAdmin.rpc('check_api_rate_limit', {
+      p_identifier: wallet_address,
+      p_endpoint: 'open-elleonor-box',
+      p_window_seconds: RATE_LIMIT_WINDOW_SECONDS,
+      p_max_requests: RATE_LIMIT_MAX_REQUESTS
+    });
+
+    if (!rateLimitOk) {
+      console.warn(`🚫 Rate limit exceeded for wallet: ${wallet_address}`);
+      await supabaseAdmin.from('security_audit_log').insert({
+        event_type: 'BOX_OPEN_RATE_LIMITED',
+        wallet_address,
+        details: { count }
+      });
+      return json({ 
+        success: false, 
+        error: 'Too many requests. Please wait a moment.' 
+      }, 429);
+    }
 
     // Find consumable boxes for this wallet
     const { data: boxes, error: fetchError } = await supabaseAdmin
@@ -66,11 +131,11 @@ serve(async (req) => {
 
     if (fetchError) {
       console.error('Error fetching boxes:', fetchError);
-      throw new Error('Не удалось найти сундуки в инвентаре');
+      return json({ success: false, error: 'Не удалось найти сундуки в инвентаре' }, 500);
     }
 
     if (!boxes || boxes.length === 0) {
-      throw new Error('У вас нет сундуков Эллеонор');
+      return json({ success: false, error: 'У вас нет сундуков Эллеонор' }, 400);
     }
 
     const boxesToOpen = boxes.slice(0, count);
@@ -136,30 +201,18 @@ serve(async (req) => {
 
     console.log(`✅ Opened ${boxesToOpen.length} boxes, total reward: ${totalReward} mGT`);
 
-    return new Response(
-      JSON.stringify({
-        success: true,
-        boxesOpened: boxesToOpen.length,
-        rewards,
-        totalReward,
-        newBalance,
-      }),
-      {
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-        status: 200,
-      }
-    );
+    return json({
+      success: true,
+      boxesOpened: boxesToOpen.length,
+      rewards,
+      totalReward,
+      newBalance,
+    });
   } catch (error) {
     console.error("Error opening Elleonor Box:", error);
-    return new Response(
-      JSON.stringify({
-        success: false,
-        error: error.message || "Failed to open Elleonor Box",
-      }),
-      {
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-        status: 400,
-      }
-    );
+    return json({
+      success: false,
+      error: error.message || "Failed to open Elleonor Box",
+    }, 400);
   }
 });
