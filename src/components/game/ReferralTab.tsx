@@ -2,12 +2,15 @@ import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { useToast } from "@/hooks/use-toast";
 import { useErrorHandler } from "@/hooks/useErrorHandler";
 import { supabase } from "@/integrations/supabase/client";
 import { useWalletContext } from "@/contexts/WalletConnectContext";
-import { Copy, Users, TrendingUp, Gift, ChevronDown, ChevronRight } from "lucide-react";
+import { Copy, Users, TrendingUp, Gift, ChevronDown, ChevronRight, Link, Award, Info } from "lucide-react";
 import { ReferralLeaderboard } from "./ReferralLeaderboard";
+
 interface Referral {
   id: string;
   referred_wallet_address: string;
@@ -57,13 +60,13 @@ const ReferralTreeView = ({ node, isExpanded, onToggle }: {
   };
 
   const formatWallet = (wallet: string) => {
-    return `${wallet.slice(0, 8)}...${wallet.slice(-8)}`;
+    return `${wallet.slice(0, 6)}...${wallet.slice(-4)}`;
   };
 
   return (
     <div className="space-y-2">
-      <div className={`flex items-center justify-between p-4 rounded-xl border-2 ${getLevelColor(node.level)}`}>
-        <div className="flex items-center space-x-3">
+      <div className={`flex items-center justify-between p-3 rounded-xl border ${getLevelColor(node.level)}`}>
+        <div className="flex items-center space-x-2">
           {node.children.length > 0 && (
             <Button
               variant="ghost"
@@ -75,31 +78,24 @@ const ReferralTreeView = ({ node, isExpanded, onToggle }: {
             </Button>
           )}
           <div>
-            <div className="flex items-center space-x-2">
-              <span className="font-mono font-medium text-white">
-                {node.level === 0 ? 'ВЫ' : formatWallet(node.wallet_address)}
-              </span>
-            </div>
-            <div className="text-xs text-white/70">
-              {node.level === 0 ? 'Главный игрок' : `Уровень ${node.level}`}
-              {node.joinDate && ` • ${new Date(node.joinDate).toLocaleDateString()}`}
+            <span className="font-mono text-sm text-white">
+              {node.level === 0 ? 'ВЫ' : formatWallet(node.wallet_address)}
+            </span>
+            <div className="text-xs text-white/60">
+              {node.level === 0 ? 'Главный' : `Ур. ${node.level}`}
             </div>
           </div>
         </div>
-        <div className="text-right">
-          <div className="font-bold text-white">
-            {node.children.length} реф.
-          </div>
-          {node.earnings !== undefined && (
-            <div className="text-sm text-white/70">
-              {node.earnings} ELL
-            </div>
+        <div className="text-right text-sm">
+          <div className="font-bold text-white">{node.children.length} реф.</div>
+          {node.earnings !== undefined && node.earnings > 0 && (
+            <div className="text-xs text-white/70">{node.earnings} ELL</div>
           )}
         </div>
       </div>
       
       {isExpanded && node.children.length > 0 && (
-        <div className="ml-8 space-y-2 border-l-2 border-white/20 pl-4">
+        <div className="ml-6 space-y-1 border-l border-white/20 pl-3">
           {node.children.map((child) => (
             <ReferralTreeView
               key={child.wallet_address}
@@ -124,6 +120,7 @@ export const ReferralTab = () => {
   const [referralTree, setReferralTree] = useState<ReferralTreeNode | null>(null);
   const [treeExpanded, setTreeExpanded] = useState(true);
   const [whoReferredMe, setWhoReferredMe] = useState<{referrer_wallet_address: string, created_at: string} | null>(null);
+  const [showRewardInfo, setShowRewardInfo] = useState(false);
   const { toast } = useToast();
   const { handleError, handleSuccess } = useErrorHandler();
   const { accountId } = useWalletContext();
@@ -142,41 +139,28 @@ export const ReferralTab = () => {
     try {
       setLoading(true);
 
-      console.log('Fetching referral data for wallet:', accountId);
-
-      // Use RPC functions to bypass RLS (they have SECURITY DEFINER)
       const { data: myReferrals, error: referralsError } = await supabase
         .rpc('get_referrals_by_referrer', { p_wallet_address: accountId });
 
-      console.log('Referrals RPC result:', { myReferrals, referralsError });
-
       if (referralsError) throw referralsError;
       
-      // Game is now open access - all users are considered whitelisted
       const referralsWithWhitelistStatus = (myReferrals || []).map((referral) => ({
         ...referral,
         isWhitelisted: true
       }));
       
-      // Check if I was referred by someone  
-      const { data: whoReferredMeData, error: referredError } = await supabase
+      const { data: whoReferredMeData } = await supabase
         .rpc('get_referrer_for_wallet', { p_wallet_address: accountId });
-
-      console.log('Who referred me RPC result:', { whoReferredMeData, referredError });
 
       setMyReferrals(referralsWithWhitelistStatus);
       setWhoReferredMe(whoReferredMeData?.[0] || null);
 
-      // Fetch my earnings using RPC
       const { data: earnings, error: earningsError } = await supabase
         .rpc('get_referral_earnings_by_referrer', { p_wallet_address: accountId });
-
-      console.log('Earnings RPC result:', { earnings, earningsError });
 
       if (earningsError) throw earningsError;
       setMyEarnings(earnings || []);
 
-      // Calculate total earnings
       const total = earnings?.reduce((sum, earning) => sum + earning.amount, 0) || 0;
       setTotalEarnings(total);
 
@@ -203,9 +187,7 @@ export const ReferralTab = () => {
           .rpc('get_referrals_by_referrer', { p_wallet_address: node.wallet_address });
 
         if (directReferrals && directReferrals.length > 0) {
-          // Параллельная загрузка данных для всех рефералов этого уровня
           const childNodesPromises = directReferrals.map(async (referral) => {
-            // Game is open access - all users considered whitelisted
             const earningsResult = await supabase.rpc('get_referral_earnings_by_referrer', { p_wallet_address: referral.referred_wallet_address });
 
             const childNode: ReferralTreeNode = {
@@ -221,11 +203,9 @@ export const ReferralTab = () => {
             return childNode;
           });
 
-          // Ждем завершения всех параллельных запросов
           const childNodes = await Promise.all(childNodesPromises);
           node.children = childNodes;
 
-          // Рекурсивно строим следующий уровень для всех детей параллельно
           await Promise.all(
             childNodes.map(childNode => buildLevel(childNode, maxLevel))
           );
@@ -257,43 +237,35 @@ export const ReferralTab = () => {
   const copyReferralLink = async () => {
     try {
       await navigator.clipboard.writeText(referralLink);
-      handleSuccess('Реферальная ссылка скопирована!');
+      handleSuccess('Ссылка скопирована!');
     } catch (error) {
-      handleError(error, 'Ошибка копирования ссылки');
+      handleError(error, 'Ошибка копирования');
+    }
+  };
+
+  const copyPlayerId = async () => {
+    if (!accountId) return;
+    try {
+      await navigator.clipboard.writeText(accountId);
+      handleSuccess('ID скопирован!');
+    } catch (error) {
+      handleError(error, 'Ошибка копирования');
     }
   };
 
   const addReferralManually = async () => {
     if (!referralId.trim()) {
-      toast({
-        title: "Ошибка",
-        description: "Введите ID игрока, который вас пригласил",
-        variant: "destructive"
-      });
+      toast({ title: "Ошибка", description: "Введите ID игрока", variant: "destructive" });
       return;
     }
 
-    if (!accountId) {
-      toast({
-        title: "Ошибка", 
-        description: "Кошелек не подключен",
-        variant: "destructive"
-      });
-      return;
-    }
-
-    if (referralId.trim() === accountId) {
-      toast({
-        title: "Ошибка",
-        description: "Нельзя указать себя как пригласившего",
-        variant: "destructive"
-      });
+    if (!accountId || referralId.trim() === accountId) {
+      toast({ title: "Ошибка", description: "Нельзя указать себя", variant: "destructive" });
       return;
     }
 
     try {
       setLoading(true);
-
       const { data, error } = await supabase
         .rpc('add_referral', {
           p_referrer_wallet_address: referralId.trim(),
@@ -302,45 +274,28 @@ export const ReferralTab = () => {
 
       if (error) throw error;
 
-      // Проверяем результат из базы данных
       if (data && typeof data === 'object' && 'success' in data) {
         const result = data as { success: boolean; message?: string; code?: string };
         if (result.success) {
-          handleSuccess(String(result.message) || 'Пригласивший игрок успешно указан!');
+          handleSuccess('Пригласивший указан!');
           setReferralId('');
           fetchReferralData();
         } else {
-          // Показываем понятное сообщение об ошибке
-          const errorMessage = result.code === 'already_referred' 
-            ? 'У вас уже есть пригласивший игрок'
-            : (String(result.message) || 'Не удалось добавить реферала');
-          
           toast({
-            title: "Внимание",
-            description: errorMessage,
+            title: "Ошибка",
+            description: result.code === 'already_referred' ? 'У вас уже есть реферер' : String(result.message),
             variant: "destructive"
           });
         }
       } else {
-        handleSuccess('Пригласивший игрок успешно указан!');
+        handleSuccess('Пригласивший указан!');
         setReferralId('');
         fetchReferralData();
       }
-
     } catch (error: any) {
-      console.error('Referral error:', error);
-      handleError(error, 'Ошибка указания пригласившего игрока');
+      handleError(error, 'Ошибка');
     } finally {
       setLoading(false);
-    }
-  };
-
-  const getLevelColor = (level: number) => {
-    switch (level) {
-      case 1: return 'text-white';
-      case 2: return 'text-white';
-      case 3: return 'text-white';
-      default: return 'text-white/70';
     }
   };
 
@@ -354,52 +309,201 @@ export const ReferralTab = () => {
   };
 
   return (
-    <div className="space-y-6">
-      {/* Header Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+    <div className="space-y-4">
+      {/* Компактная статистика */}
+      <div className="grid grid-cols-3 gap-2">
         <div 
-          className="bg-black/50 border-2 border-white rounded-3xl p-6 cursor-pointer hover:bg-black/70 transition-all backdrop-blur-sm"
-          style={{ boxShadow: '-33px 15px 10px rgba(0, 0, 0, 0.6)' }}
+          className="bg-black/50 border border-white/50 rounded-2xl p-3 cursor-pointer hover:bg-black/70 transition-all backdrop-blur-sm"
           onClick={openReferralTree}
         >
-          <div className="flex items-center space-x-2 mb-2">
-            <Users className="h-5 w-5 text-white" />
-            <span className="text-white font-medium">Мои рефералы</span>
+          <div className="flex items-center gap-2 mb-1">
+            <Users className="h-4 w-4 text-white/80" />
+            <span className="text-xs text-white/70">Рефералы</span>
           </div>
-          <p className="text-2xl font-bold text-white">{myReferrals.length}</p>
-          <p className="text-xs text-white/70 mt-1">Нажмите для просмотра дерева</p>
+          <p className="text-xl font-bold text-white">{myReferrals.length}</p>
+        </div>
+
+        <div className="bg-black/50 border border-white/50 rounded-2xl p-3 backdrop-blur-sm">
+          <div className="flex items-center gap-2 mb-1">
+            <TrendingUp className="h-4 w-4 text-green-400" />
+            <span className="text-xs text-white/70">Доход</span>
+          </div>
+          <p className="text-xl font-bold text-white">{totalEarnings}</p>
         </div>
 
         <div 
-          className="bg-black/50 border-2 border-white rounded-3xl p-6 backdrop-blur-sm"
-          style={{ boxShadow: '-33px 15px 10px rgba(0, 0, 0, 0.6)' }}
+          className="bg-black/50 border border-white/50 rounded-2xl p-3 backdrop-blur-sm cursor-pointer hover:bg-black/70"
+          onClick={() => setShowRewardInfo(true)}
         >
-          <div className="flex items-center space-x-2 mb-2">
-            <TrendingUp className="h-5 w-5 text-white" />
-            <span className="text-white font-medium">Общий доход</span>
+          <div className="flex items-center gap-2 mb-1">
+            <Gift className="h-4 w-4 text-yellow-400" />
+            <span className="text-xs text-white/70">Уровни</span>
           </div>
-          <p className="text-2xl font-bold text-white">{totalEarnings} ELL</p>
-        </div>
-
-        <div 
-          className="bg-black/50 border-2 border-white rounded-3xl p-6 backdrop-blur-sm"
-          style={{ boxShadow: '-33px 15px 10px rgba(0, 0, 0, 0.6)' }}
-        >
-          <div className="flex items-center space-x-2 mb-2">
-            <Gift className="h-5 w-5 text-white" />
-            <span className="text-white font-medium">Активные уровни</span>
-          </div>
-          <p className="text-2xl font-bold text-white">3</p>
+          <p className="text-xl font-bold text-white">3</p>
         </div>
       </div>
 
-      {/* Referral Tree Dialog */}
+      {/* Tabs для разделения контента */}
+      <Tabs defaultValue="invite" className="w-full">
+        <TabsList className="grid w-full grid-cols-3 bg-black/50 border border-white/50 backdrop-blur-sm rounded-2xl h-10">
+          <TabsTrigger value="invite" className="text-white text-xs data-[state=active]:bg-white/20 rounded-xl">
+            <Link className="w-3 h-3 mr-1" />
+            Пригласить
+          </TabsTrigger>
+          <TabsTrigger value="my" className="text-white text-xs data-[state=active]:bg-white/20 rounded-xl">
+            <Users className="w-3 h-3 mr-1" />
+            Мои
+          </TabsTrigger>
+          <TabsTrigger value="leaderboard" className="text-white text-xs data-[state=active]:bg-white/20 rounded-xl">
+            <Award className="w-3 h-3 mr-1" />
+            Рейтинг
+          </TabsTrigger>
+        </TabsList>
+
+        {/* Вкладка приглашений */}
+        <TabsContent value="invite" className="mt-4 space-y-3">
+          {/* Реферальная ссылка */}
+          <div className="bg-black/50 border border-white/50 rounded-2xl p-4 backdrop-blur-sm">
+            <div className="flex items-center gap-2 mb-2">
+              <Link className="h-4 w-4 text-white" />
+              <span className="text-sm text-white font-medium">Реферальная ссылка</span>
+            </div>
+            <div className="flex gap-2">
+              <Input
+                value={referralLink}
+                readOnly
+                className="bg-white/10 border-white/30 text-white text-xs rounded-xl h-9"
+              />
+              <Button onClick={copyReferralLink} size="sm" className="bg-white text-black hover:bg-white/90 rounded-xl h-9 px-3">
+                <Copy className="h-3 w-3" />
+              </Button>
+            </div>
+          </div>
+
+          {/* ID игрока */}
+          <div className="bg-black/50 border border-white/50 rounded-2xl p-4 backdrop-blur-sm">
+            <div className="flex items-center gap-2 mb-2">
+              <Users className="h-4 w-4 text-white" />
+              <span className="text-sm text-white font-medium">Ваш ID</span>
+            </div>
+            <div className="flex gap-2">
+              <Input
+                value={accountId || ''}
+                readOnly
+                className="bg-white/10 border-white/30 text-white font-mono text-xs rounded-xl h-9"
+              />
+              <Button onClick={copyPlayerId} size="sm" className="bg-white text-black hover:bg-white/90 rounded-xl h-9 px-3">
+                <Copy className="h-3 w-3" />
+              </Button>
+            </div>
+          </div>
+
+          {/* Кто пригласил / Указать реферера */}
+          {whoReferredMe ? (
+            <div className="bg-black/50 border border-green-500/50 rounded-2xl p-4 backdrop-blur-sm">
+              <div className="flex items-center gap-2 mb-2">
+                <Gift className="h-4 w-4 text-green-400" />
+                <span className="text-sm text-white font-medium">Вас пригласил</span>
+              </div>
+              <div className="flex items-center justify-between p-2 bg-white/10 rounded-xl">
+                <span className="text-xs text-white font-mono truncate">
+                  {whoReferredMe.referrer_wallet_address.slice(0, 10)}...{whoReferredMe.referrer_wallet_address.slice(-6)}
+                </span>
+                <span className="text-xs text-white/60">
+                  {new Date(whoReferredMe.created_at).toLocaleDateString()}
+                </span>
+              </div>
+            </div>
+          ) : (
+            <div className="bg-black/50 border border-yellow-500/50 rounded-2xl p-4 backdrop-blur-sm">
+              <div className="flex items-center gap-2 mb-2">
+                <Gift className="h-4 w-4 text-yellow-400" />
+                <span className="text-sm text-white font-medium">Указать реферера</span>
+              </div>
+              <div className="flex gap-2">
+                <Input
+                  placeholder="ID пригласившего"
+                  value={referralId}
+                  onChange={(e) => setReferralId(e.target.value)}
+                  className="bg-white/10 border-white/30 text-white text-xs rounded-xl h-9"
+                />
+                <Button onClick={addReferralManually} disabled={loading} size="sm" className="bg-yellow-500 text-black hover:bg-yellow-400 rounded-xl h-9 px-4">
+                  {loading ? "..." : "OK"}
+                </Button>
+              </div>
+            </div>
+          )}
+        </TabsContent>
+
+        {/* Вкладка моих рефералов */}
+        <TabsContent value="my" className="mt-4 space-y-3">
+          {/* Список рефералов */}
+          {myReferrals.length > 0 ? (
+            <div className="bg-black/50 border border-white/50 rounded-2xl p-4 backdrop-blur-sm">
+              <div className="flex items-center justify-between mb-3">
+                <span className="text-sm text-white font-medium">Мои рефералы ({myReferrals.length})</span>
+                <Button onClick={openReferralTree} size="sm" variant="ghost" className="text-xs text-white/70 h-7">
+                  Дерево →
+                </Button>
+              </div>
+              <div className="space-y-2 max-h-48 overflow-y-auto">
+                {myReferrals.slice(0, 10).map((referral) => (
+                  <div key={referral.id} className="flex justify-between items-center p-2 bg-white/10 rounded-xl">
+                    <span className="text-xs text-white font-mono">
+                      {referral.referred_wallet_address.slice(0, 8)}...{referral.referred_wallet_address.slice(-6)}
+                    </span>
+                    <span className="text-xs text-white/60">
+                      {new Date(referral.created_at).toLocaleDateString()}
+                    </span>
+                  </div>
+                ))}
+                {myReferrals.length > 10 && (
+                  <p className="text-xs text-center text-white/50">...и ещё {myReferrals.length - 10}</p>
+                )}
+              </div>
+            </div>
+          ) : (
+            <div className="bg-black/50 border border-white/30 rounded-2xl p-6 backdrop-blur-sm text-center">
+              <Users className="h-8 w-8 text-white/30 mx-auto mb-2" />
+              <p className="text-sm text-white/60">У вас пока нет рефералов</p>
+              <p className="text-xs text-white/40 mt-1">Поделитесь ссылкой с друзьями</p>
+            </div>
+          )}
+
+          {/* Последние доходы */}
+          {myEarnings.length > 0 && (
+            <div className="bg-black/50 border border-white/50 rounded-2xl p-4 backdrop-blur-sm">
+              <span className="text-sm text-white font-medium mb-3 block">Последние доходы</span>
+              <div className="space-y-2 max-h-36 overflow-y-auto">
+                {myEarnings.slice(0, 5).map((earning) => (
+                  <div key={earning.id} className="flex justify-between items-center p-2 bg-white/10 rounded-xl">
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs font-bold text-green-400">{getLevelPercentage(earning.level)}</span>
+                      <span className="text-xs text-white/70 font-mono">
+                        {earning.referred_wallet_address.slice(0, 6)}...
+                      </span>
+                    </div>
+                    <span className="text-xs font-bold text-white">+{earning.amount} ELL</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </TabsContent>
+
+        {/* Вкладка рейтинга */}
+        <TabsContent value="leaderboard" className="mt-4">
+          <ReferralLeaderboard />
+        </TabsContent>
+      </Tabs>
+
+      {/* Dialogs */}
       <Dialog open={showReferralTree} onOpenChange={setShowReferralTree}>
-        <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto bg-black/90 border-2 border-white backdrop-blur-sm">
+        <DialogContent className="max-w-lg max-h-[70vh] overflow-y-auto bg-black/95 border border-white/50 backdrop-blur-sm">
           <DialogHeader>
-            <DialogTitle className="text-white">Дерево рефералов</DialogTitle>
+            <DialogTitle className="text-white text-lg">Дерево рефералов</DialogTitle>
           </DialogHeader>
-          <div className="mt-4">
+          <div className="mt-2">
             {referralTree && (
               <ReferralTreeView
                 node={referralTree}
@@ -411,203 +515,33 @@ export const ReferralTab = () => {
         </DialogContent>
       </Dialog>
 
-      {/* Referral Link Section */}
-      <div 
-        className="bg-black/50 border-2 border-white rounded-3xl p-6 backdrop-blur-sm"
-        style={{ boxShadow: '-33px 15px 10px rgba(0, 0, 0, 0.6)' }}
-      >
-        <h3 className="text-xl text-white font-semibold mb-4">Ваша реферальная ссылка</h3>
-        <div className="flex gap-2">
-          <Input
-            value={referralLink}
-            readOnly
-            className="bg-white/10 border-2 border-white text-white rounded-xl"
-          />
-          <Button
-            onClick={copyReferralLink}
-            className="bg-white text-black hover:bg-white/90 border-2 border-black rounded-xl font-semibold"
-          >
-            <Copy className="h-4 w-4" />
-          </Button>
-        </div>
-        <p className="text-white/80 text-sm mt-2">
-          Поделитесь этой ссылкой с друзьями и получайте процент от их заработка в подземельях!
-        </p>
-      </div>
-
-      {/* Player ID Info */}
-      <div 
-        className="bg-black/50 border-2 border-white rounded-3xl p-6 backdrop-blur-sm"
-        style={{ boxShadow: '-33px 15px 10px rgba(0, 0, 0, 0.6)' }}
-      >
-        <h3 className="text-xl text-white font-semibold mb-4">Ваш ID игрока</h3>
-        <div className="flex gap-2">
-          <Input
-            value={accountId || ''}
-            readOnly
-            className="bg-white/10 border-2 border-white text-white font-mono text-sm rounded-xl"
-          />
-          <Button
-            onClick={() => accountId && navigator.clipboard.writeText(accountId)}
-            className="bg-white text-black hover:bg-white/90 border-2 border-black rounded-xl font-semibold"
-          >
-            <Copy className="h-4 w-4" />
-          </Button>
-        </div>
-        <p className="text-white/80 text-sm mt-2">
-          Это ваш уникальный ID. Поделитесь им с тем, кто вас пригласил
-        </p>
-      </div>
-
-      {/* Who Referred Me */}
-      {whoReferredMe && (
-        <div 
-          className="bg-black/50 border-2 border-white rounded-3xl p-6 backdrop-blur-sm"
-          style={{ boxShadow: '-33px 15px 10px rgba(0, 0, 0, 0.6)' }}
-        >
-          <h3 className="text-xl text-white font-semibold mb-4">Кто меня пригласил</h3>
-          <div className="flex items-center justify-between p-4 bg-white/10 border-2 border-white rounded-xl">
-            <div>
-              <p className="text-white font-mono text-sm">
-                {whoReferredMe.referrer_wallet_address}
-              </p>
-              <p className="text-white/80 text-xs mt-1">
-                Дата приглашения: {new Date(whoReferredMe.created_at).toLocaleDateString()}
-              </p>
+      <Dialog open={showRewardInfo} onOpenChange={setShowRewardInfo}>
+        <DialogContent className="max-w-sm bg-black/95 border border-white/50 backdrop-blur-sm">
+          <DialogHeader>
+            <DialogTitle className="text-white text-lg flex items-center gap-2">
+              <Gift className="h-5 w-5 text-yellow-400" />
+              Система наград
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-2 mt-2">
+            <div className="flex justify-between p-3 bg-white/10 rounded-xl">
+              <span className="text-sm text-white">1 уровень</span>
+              <span className="text-sm font-bold text-green-400">6%</span>
             </div>
-            <Button
-              onClick={() => navigator.clipboard.writeText(whoReferredMe.referrer_wallet_address)}
-              size="sm"
-              className="bg-white text-black hover:bg-white/90 border-2 border-black rounded-xl font-semibold"
-            >
-              <Copy className="h-4 w-4" />
-            </Button>
+            <div className="flex justify-between p-3 bg-white/10 rounded-xl">
+              <span className="text-sm text-white">2 уровень</span>
+              <span className="text-sm font-bold text-green-400">3%</span>
+            </div>
+            <div className="flex justify-between p-3 bg-white/10 rounded-xl">
+              <span className="text-sm text-white">3 уровень</span>
+              <span className="text-sm font-bold text-green-400">1.5%</span>
+            </div>
+            <p className="text-xs text-white/60 mt-3">
+              Вы получаете процент от ELL, заработанных вашими рефералами в подземельях
+            </p>
           </div>
-        </div>
-      )}
-
-      {/* Add Referrer - только если еще не указан пригласивший */}
-      {!whoReferredMe && (
-        <div 
-          className="bg-black/50 border-2 border-white rounded-3xl p-6 backdrop-blur-sm"
-          style={{ boxShadow: '-33px 15px 10px rgba(0, 0, 0, 0.6)' }}
-        >
-          <h3 className="text-xl text-white font-semibold mb-4">Указать кто вас пригласил</h3>
-          <div className="flex gap-2">
-            <Input
-              placeholder="Введите ID игрока, который вас пригласил"
-              value={referralId}
-              onChange={(e) => setReferralId(e.target.value)}
-              className="bg-white/10 border-2 border-white text-white rounded-xl"
-            />
-            <Button
-              onClick={addReferralManually}
-              disabled={loading}
-              className="bg-white text-black hover:bg-white/90 border-2 border-black rounded-xl font-semibold disabled:opacity-50"
-            >
-              {loading ? "Обработка..." : "Указать"}
-            </Button>
-          </div>
-          <p className="text-white/80 text-sm mt-2">
-            Если вас пригласили, но вы не перешли по ссылке, укажите ID пригласившего вас игрока
-          </p>
-        </div>
-      )}
-
-      {/* Referral Levels Info */}
-      <div 
-        className="bg-black/50 border-2 border-white rounded-3xl p-6 backdrop-blur-sm"
-        style={{ boxShadow: '-33px 15px 10px rgba(0, 0, 0, 0.6)' }}
-      >
-        <h3 className="text-xl text-white font-semibold mb-4">Система вознаграждений</h3>
-        <div className="space-y-3">
-          <div className="flex justify-between items-center p-3 bg-white/10 rounded-xl border-2 border-white">
-            <span className="text-white font-medium">1-й уровень (прямые рефералы)</span>
-            <span className="text-white font-bold">6%</span>
-          </div>
-          <div className="flex justify-between items-center p-3 bg-white/10 rounded-xl border-2 border-white">
-            <span className="text-white font-medium">2-й уровень (рефералы рефералов)</span>
-            <span className="text-white font-bold">3%</span>
-          </div>
-          <div className="flex justify-between items-center p-3 bg-white/10 rounded-xl border-2 border-white">
-            <span className="text-white font-medium">3-й уровень</span>
-            <span className="text-white font-bold">1.5%</span>
-          </div>
-        </div>
-        <p className="text-white/80 text-sm mt-4">
-          Вы получаете процент от ELL, которые ваши рефералы зарабатывают в подземельях
-        </p>
-      </div>
-
-      {/* My Referrals List */}
-      {myReferrals.length > 0 && (
-        <div 
-          className="bg-black/50 border-2 border-white rounded-3xl p-6 backdrop-blur-sm"
-          style={{ boxShadow: '-33px 15px 10px rgba(0, 0, 0, 0.6)' }}
-        >
-          <h3 className="text-xl text-white font-semibold mb-4">Мои рефералы</h3>
-          <div className="space-y-2">
-            {myReferrals.map((referral) => (
-              <div
-                key={referral.id}
-                className="flex justify-between items-center p-3 bg-white/10 border-2 border-white rounded-xl"
-              >
-                <div className="flex items-center gap-2">
-                  <span className="text-white font-mono">
-                    {referral.referred_wallet_address.slice(0, 8)}...{referral.referred_wallet_address.slice(-8)}
-                  </span>
-                  <span className={`px-2 py-1 text-xs rounded border font-medium ${
-                    referral.isWhitelisted 
-                      ? 'bg-green-500/20 text-green-400 border-green-500/30' 
-                      : 'bg-red-500/20 text-red-400 border-red-500/30'
-                  }`}>
-                    {referral.isWhitelisted ? 'WL ✓' : 'Без WL'}
-                  </span>
-                </div>
-                <span className="text-white/80 text-sm">
-                  {new Date(referral.created_at).toLocaleDateString()}
-                </span>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* Recent Earnings */}
-      {myEarnings.length > 0 && (
-        <div 
-          className="bg-black/50 border-2 border-white rounded-3xl p-6 backdrop-blur-sm"
-          style={{ boxShadow: '-33px 15px 10px rgba(0, 0, 0, 0.6)' }}
-        >
-          <h3 className="text-xl text-white font-semibold mb-4">Последние доходы</h3>
-          <div className="space-y-2">
-            {myEarnings.slice(0, 10).map((earning) => (
-              <div
-                key={earning.id}
-                className="flex justify-between items-center p-3 bg-white/10 border-2 border-white rounded-xl"
-              >
-                <div className="flex items-center space-x-3">
-                  <span className={`font-bold ${getLevelColor(earning.level)}`}>
-                    {getLevelPercentage(earning.level)}
-                  </span>
-                  <span className="text-white font-mono text-sm">
-                    {earning.referred_wallet_address.slice(0, 6)}...{earning.referred_wallet_address.slice(-6)}
-                  </span>
-                </div>
-                <div className="text-right">
-                  <span className="text-white font-bold">+{earning.amount} ELL</span>
-                  <div className="text-white/80 text-xs">
-                    {new Date(earning.created_at).toLocaleDateString()}
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* Рейтинг рефералов и статистика */}
-      <ReferralLeaderboard />
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
