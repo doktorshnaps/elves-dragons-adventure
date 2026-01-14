@@ -7,7 +7,7 @@ import { useErrorHandler } from "@/hooks/useErrorHandler";
 import { supabase } from "@/integrations/supabase/client";
 import { useWalletContext } from "@/contexts/WalletConnectContext";
 import { Copy, Users, TrendingUp, Gift, ChevronDown, ChevronRight } from "lucide-react";
-
+import { ReferralLeaderboard } from "./ReferralLeaderboard";
 interface Referral {
   id: string;
   referred_wallet_address: string;
@@ -605,6 +605,9 @@ export const ReferralTab = () => {
           </div>
         </div>
       )}
+
+      {/* Рейтинг рефералов и статистика */}
+      <ReferralLeaderboard />
     </div>
   );
 };
