@@ -40,6 +40,18 @@ export const CraftingRecipeManager = () => {
     mat.name.toLowerCase().includes(materialSearchTerm.toLowerCase())
   );
 
+  const BUILDING_TYPES = [
+    { id: 'sawmill', name: 'Лесопилка' },
+    { id: 'quarry', name: 'Каменоломня' },
+    { id: 'storage', name: 'Склад' },
+    { id: 'main_hall', name: 'Главный зал' },
+    { id: 'barracks', name: 'Казармы' },
+    { id: 'workshop', name: 'Мастерская' },
+    { id: 'medical', name: 'Медицинский пункт' },
+    { id: 'dragon_lair', name: 'Драконье логово' },
+    { id: 'forge', name: 'Кузница' },
+  ];
+
   const [formData, setFormData] = useState({
     recipe_name: '',
     result_item_id: 0,
@@ -47,7 +59,9 @@ export const CraftingRecipeManager = () => {
     required_materials: [] as Array<{ item_id: string; quantity: number }>,
     category: 'general',
     description: '',
-    crafting_time_hours: 1
+    crafting_time_hours: 1,
+    required_building_id: '' as string,
+    required_building_level: 0
   });
 
   const handleSave = async () => {
@@ -75,10 +89,12 @@ export const CraftingRecipeManager = () => {
           p_recipe_name: formData.recipe_name,
           p_result_item_id: formData.result_item_id,
           p_result_quantity: formData.result_quantity,
-          p_required_materials: formData.required_materials,
+          p_required_materials: formData.required_materials as any,
           p_category: formData.category,
           p_description: formData.description,
-          p_crafting_time_hours: formData.crafting_time_hours
+          p_crafting_time_hours: formData.crafting_time_hours,
+          p_required_building_id: formData.required_building_id || null,
+          p_required_building_level: formData.required_building_level
         });
 
         if (error) throw error;
@@ -93,7 +109,6 @@ export const CraftingRecipeManager = () => {
         const isUpdate = !!existingRecipe;
 
         // Create new recipe using RPC (with ON CONFLICT DO UPDATE)
-        // Parameter order must match the DB function signature exactly
         const { error } = await supabase.rpc('admin_insert_crafting_recipe', {
           p_wallet_address: walletAddress,
           p_recipe_name: formData.recipe_name,
@@ -102,7 +117,9 @@ export const CraftingRecipeManager = () => {
           p_required_materials: formData.required_materials as any,
           p_category: formData.category,
           p_description: formData.description,
-          p_crafting_time_hours: formData.crafting_time_hours
+          p_crafting_time_hours: formData.crafting_time_hours,
+          p_required_building_id: formData.required_building_id || null,
+          p_required_building_level: formData.required_building_level
         });
 
         if (error) throw error;
@@ -143,7 +160,9 @@ export const CraftingRecipeManager = () => {
       required_materials: recipe.required_materials || [],
       category: recipe.category || 'general',
       description: recipe.description || '',
-      crafting_time_hours: recipe.crafting_time_hours || 1
+      crafting_time_hours: recipe.crafting_time_hours || 1,
+      required_building_id: recipe.required_building_id || '',
+      required_building_level: recipe.required_building_level || 0
     });
   };
 
@@ -199,7 +218,9 @@ export const CraftingRecipeManager = () => {
       required_materials: [],
       category: 'general',
       description: '',
-      crafting_time_hours: 1
+      crafting_time_hours: 1,
+      required_building_id: '',
+      required_building_level: 0
     });
   };
 
@@ -350,6 +371,46 @@ export const CraftingRecipeManager = () => {
             </div>
           </div>
 
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <Label>Требуемое здание (опционально)</Label>
+              <Select
+                value={formData.required_building_id || 'none'}
+                onValueChange={(value) => setFormData({ 
+                  ...formData, 
+                  required_building_id: value === 'none' ? '' : value,
+                  required_building_level: value === 'none' ? 0 : formData.required_building_level || 1
+                })}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Выберите здание" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">Не требуется</SelectItem>
+                  {BUILDING_TYPES.map((building) => (
+                    <SelectItem key={building.id} value={building.id}>
+                      {building.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div>
+              <Label>Мин. уровень здания</Label>
+              <Input
+                type="number"
+                value={formData.required_building_level}
+                onChange={(e) =>
+                  setFormData({ ...formData, required_building_level: parseInt(e.target.value) || 0 })
+                }
+                min={0}
+                max={10}
+                disabled={!formData.required_building_id}
+              />
+            </div>
+          </div>
+
           <div>
             <div className="flex justify-between items-center mb-2">
               <Label>Требуемые материалы</Label>
@@ -456,6 +517,11 @@ export const CraftingRecipeManager = () => {
                     <div className="text-sm text-muted-foreground">
                       Время крафта: {recipe.crafting_time_hours || 1} ч
                     </div>
+                    {recipe.required_building_id && (
+                      <div className="text-sm text-muted-foreground">
+                        🏛️ Требуется: {BUILDING_TYPES.find(b => b.id === recipe.required_building_id)?.name || recipe.required_building_id} ур. {recipe.required_building_level || 1}
+                      </div>
+                    )}
                     {recipe.required_materials && recipe.required_materials.length > 0 && (
                       <div className="text-sm">
                         Материалы:{' '}

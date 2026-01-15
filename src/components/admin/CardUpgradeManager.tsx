@@ -22,6 +22,18 @@ export const CardUpgradeManager = () => {
   // Фильтруем только материалы
   const materials = Array.from(templates.values()).filter(t => t.type === 'material');
 
+  const BUILDING_TYPES = [
+    { id: 'sawmill', name: 'Лесопилка' },
+    { id: 'quarry', name: 'Каменоломня' },
+    { id: 'storage', name: 'Склад' },
+    { id: 'main_hall', name: 'Главный зал' },
+    { id: 'barracks', name: 'Казармы' },
+    { id: 'workshop', name: 'Мастерская' },
+    { id: 'medical', name: 'Медицинский пункт' },
+    { id: 'dragon_lair', name: 'Драконье логово' },
+    { id: 'forge', name: 'Кузница' },
+  ];
+
   const [formData, setFormData] = useState({
     card_type: 'hero' as 'hero' | 'dragon',
     card_class: 'all' as string,
@@ -35,7 +47,9 @@ export const CardUpgradeManager = () => {
     cost_iron: 0,
     cost_gold: 0,
     required_defeated_monsters: 0,
-    required_items: [] as Array<{ item_id: string; name: string; quantity: number }>
+    required_items: [] as Array<{ item_id: string; name: string; quantity: number }>,
+    required_building_id: '' as string,
+    required_building_level: 0
   });
 
   const handleSave = async () => {
@@ -52,7 +66,9 @@ export const CardUpgradeManager = () => {
               cost_iron: formData.cost_iron,
               cost_gold: formData.cost_gold,
               required_defeated_monsters: formData.required_defeated_monsters,
-              required_items: formData.required_items
+              required_items: formData.required_items,
+              required_building_id: formData.required_building_id || null,
+              required_building_level: formData.required_building_level
             })
             .eq('id', editingId)
         : await supabase
@@ -72,6 +88,8 @@ export const CardUpgradeManager = () => {
               cost_gold: formData.cost_gold,
               required_defeated_monsters: formData.required_defeated_monsters,
               required_items: formData.required_items as any,
+              required_building_id: formData.required_building_id || null,
+              required_building_level: formData.required_building_level,
               created_by_wallet_address: 'mr_bruts.tg',
               is_active: true
             }]);
@@ -111,7 +129,9 @@ export const CardUpgradeManager = () => {
       cost_iron: req.cost_iron || 0,
       cost_gold: req.cost_gold || 0,
       required_defeated_monsters: req.required_defeated_monsters || 0,
-      required_items: req.required_items || []
+      required_items: req.required_items || [],
+      required_building_id: req.required_building_id || '',
+      required_building_level: req.required_building_level || 0
     });
   };
 
@@ -164,7 +184,9 @@ export const CardUpgradeManager = () => {
       cost_iron: 0,
       cost_gold: 0,
       required_defeated_monsters: 0,
-      required_items: []
+      required_items: [],
+      required_building_id: '',
+      required_building_level: 0
     });
   };
 
@@ -445,6 +467,46 @@ export const CardUpgradeManager = () => {
             </div>
           </div>
 
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <Label>Требуемое здание (опционально)</Label>
+              <Select
+                value={formData.required_building_id || 'none'}
+                onValueChange={(value) => setFormData({ 
+                  ...formData, 
+                  required_building_id: value === 'none' ? '' : value,
+                  required_building_level: value === 'none' ? 0 : formData.required_building_level || 1
+                })}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Выберите здание" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">Не требуется</SelectItem>
+                  {BUILDING_TYPES.map((building) => (
+                    <SelectItem key={building.id} value={building.id}>
+                      {building.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div>
+              <Label>Мин. уровень здания</Label>
+              <Input
+                type="number"
+                value={formData.required_building_level}
+                onChange={(e) =>
+                  setFormData({ ...formData, required_building_level: parseInt(e.target.value) || 0 })
+                }
+                min={0}
+                max={10}
+                disabled={!formData.required_building_id}
+              />
+            </div>
+          </div>
+
           <div>
             <div className="flex justify-between items-center mb-2">
               <Label>Требуемые предметы</Label>
@@ -533,6 +595,11 @@ export const CardUpgradeManager = () => {
                     Шанс: {req.success_chance}% | ELL: {req.cost_ell} | 💀 Монстры: {req.required_defeated_monsters || 0} | 🪵 {req.cost_wood} | 🪨{' '}
                     {req.cost_stone} | ⛏️ {req.cost_iron}
                   </div>
+                  {req.required_building_id && (
+                    <div className="text-sm text-muted-foreground">
+                      🏛️ Требуется: {BUILDING_TYPES.find(b => b.id === req.required_building_id)?.name || req.required_building_id} ур. {req.required_building_level || 1}
+                    </div>
+                  )}
                   {req.required_items && req.required_items.length > 0 && (
                     <div className="text-sm">
                       Предметы:{' '}
