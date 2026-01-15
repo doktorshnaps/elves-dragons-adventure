@@ -2393,7 +2393,32 @@ export type Database = {
               p_value: number
               p_wallet_address: string
             }
-            Returns: undefined
+            Returns: {
+              created_at: string
+              description: string | null
+              drop_chance: number | null
+              dungeon_drop_settings: Json | null
+              id: number
+              image_url: string | null
+              item_id: string
+              level_requirement: number | null
+              name: string
+              rarity: string
+              sell_price: number | null
+              slot: string | null
+              source_details: Json | null
+              source_type: string
+              stats: Json | null
+              type: string
+              updated_at: string
+              value: number | null
+            }
+            SetofOptions: {
+              from: "*"
+              to: "item_templates"
+              isOneToOne: true
+              isSetofReturn: false
+            }
           }
       admin_migrate_cards_to_instances: {
         Args: { p_admin_wallet?: string }
