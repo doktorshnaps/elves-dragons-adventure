@@ -238,7 +238,16 @@ export const ItemTemplateManager = () => {
         console.log('Item updated successfully, new data:', data);
         toast({ title: "Успех", description: "Предмет успешно обновлен" });
       } else {
-        // Insert new item using security definer function
+        // Check if item_id already exists to determine if it's an update
+        const { data: existingItem } = await supabase
+          .from("item_templates")
+          .select("id")
+          .eq("item_id", formData.item_id)
+          .maybeSingle();
+        
+        const isUpdate = !!existingItem;
+        
+        // Insert new item using security definer function (with ON CONFLICT DO UPDATE)
         console.log('Inserting item with value:', formData.value);
         
         const { data, error } = await supabase.rpc('admin_insert_item_template', {
@@ -261,8 +270,11 @@ export const ItemTemplateManager = () => {
           console.error('Insert error:', error);
           throw error;
         }
-        console.log('Item inserted successfully, new data:', data);
-        toast({ title: "Успех", description: "Предмет успешно добавлен" });
+        console.log('Item inserted/updated successfully, new data:', data);
+        toast({ 
+          title: "Успех", 
+          description: isUpdate ? "Предмет успешно обновлён" : "Предмет успешно добавлен" 
+        });
       }
 
       resetForm();
