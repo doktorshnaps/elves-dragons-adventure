@@ -505,7 +505,7 @@ export const WorkersManagement = ({ onSpeedBoostChange }: WorkersManagementProps
             {/* Выбор здания */}
             <div>
               <label className="text-sm font-medium mb-2 block">{t(language, 'shelter.building')}</label>
-              <div className="grid grid-cols-2 gap-2">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                 {buildings.map(building => {
                   const stats = getBuildingStats(building.id);
                   const hasWorkers = stats.workingCount > 0 || stats.waitingCount > 0;
@@ -516,11 +516,11 @@ export const WorkersManagement = ({ onSpeedBoostChange }: WorkersManagementProps
                       variant={selectedBuilding === building.id ? "default" : "outline"}
                       size="sm"
                       onClick={() => setSelectedBuilding(building.id)}
-                      className="justify-between h-auto py-2"
+                      className="justify-between h-auto py-2 min-w-0"
                     >
-                      <span>{building.name}</span>
+                      <span className="truncate flex-1 text-left">{building.name}</span>
                       {hasWorkers && (
-                        <div className="flex flex-col items-end text-xs ml-2">
+                        <div className="flex flex-col items-end text-xs ml-2 flex-shrink-0">
                           <span className="flex items-center gap-1">
                             <Users className="w-3 h-3" />
                             {stats.workingCount}
@@ -528,7 +528,7 @@ export const WorkersManagement = ({ onSpeedBoostChange }: WorkersManagementProps
                               <span className="text-muted-foreground">+{stats.waitingCount}</span>
                             )}
                           </span>
-                          <span className="text-muted-foreground">
+                          <span className="text-muted-foreground whitespace-nowrap">
                             {formatTime(stats.totalTime)}
                           </span>
                         </div>
@@ -635,22 +635,22 @@ export const WorkersManagement = ({ onSpeedBoostChange }: WorkersManagementProps
           <CardContent>
             <div className="space-y-4">
               {activeWorkers.map(worker => (
-                <div key={worker.id} className="p-4 border rounded-lg">
-                  <div className="flex items-center justify-between mb-2">
-                    <div>
-                      <div className="flex items-center gap-2">
-                        <h4 className="font-medium">{worker.name}</h4>
+                <div key={worker.id} className="p-3 sm:p-4 border rounded-lg overflow-hidden">
+                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-2">
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <h4 className="font-medium truncate">{worker.name}</h4>
                         {worker.status === 'waiting' && (
-                          <Badge variant="outline" className="text-xs">
+                          <Badge variant="outline" className="text-xs flex-shrink-0">
                             В очереди
                           </Badge>
                         )}
                       </div>
-                      <p className="text-sm text-muted-foreground">
+                      <p className="text-sm text-muted-foreground truncate">
                         {buildings.find(b => b.id === worker.building)?.name} • +{worker.speedBoost}% {t(language, 'shelter.speedBoost')}
                       </p>
                     </div>
-                    <Badge variant={worker.status === 'working' ? 'secondary' : 'outline'}>
+                    <Badge variant={worker.status === 'working' ? 'secondary' : 'outline'} className="flex-shrink-0 whitespace-nowrap self-start sm:self-center">
                       {worker.status === 'waiting' ? 'Ожидает' : formatTime(getRemainingTime(worker))}
                     </Badge>
                   </div>
