@@ -2178,7 +2178,7 @@ export type Database = {
               p_max_dungeon_level: number
               p_min_dungeon_level: number
             }
-            Returns: undefined
+            Returns: string
           }
       admin_add_to_whitelist: {
         Args: {

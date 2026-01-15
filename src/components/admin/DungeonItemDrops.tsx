@@ -179,7 +179,7 @@ export const DungeonItemDrops = () => {
     try {
       setSaving(true);
 
-      // Проверка на существующий дроп с такими же параметрами
+      // Проверяем, существует ли уже запись (для правильного сообщения)
       const { data: existingDrop } = await supabase
         .from("dungeon_item_drops")
         .select("id")
@@ -188,15 +188,7 @@ export const DungeonItemDrops = () => {
         .eq("min_dungeon_level", parseInt(newDrop.min_dungeon_level))
         .maybeSingle();
 
-      if (existingDrop) {
-        toast({
-          title: "Ошибка",
-          description: "Дроп для этого предмета с такими параметрами уже существует. Измените уровень или выберите другой предмет.",
-          variant: "destructive",
-        });
-        setSaving(false);
-        return;
-      }
+      const isUpdate = !!existingDrop;
 
       // 1. Обновляем базовый шанс дропа в item_templates через admin функцию
       const { error: updateError } = await supabase.rpc("admin_update_item_drop_chance", {
@@ -227,7 +219,9 @@ export const DungeonItemDrops = () => {
 
       toast({
         title: "Успешно",
-        description: "Настройка дропа добавлена и базовый шанс обновлен",
+        description: isUpdate 
+          ? "Настройка дропа обновлена" 
+          : "Настройка дропа добавлена",
       });
 
       // Сброс формы
@@ -243,16 +237,9 @@ export const DungeonItemDrops = () => {
       loadData();
     } catch (error: any) {
       console.error("Error adding drop:", error);
-      
-      // Специальная обработка для ошибки дубликата ключа
-      let errorMessage = error.message;
-      if (error.code === "23505") {
-        errorMessage = "Дроп для этого предмета с такими параметрами уже существует. Измените уровень или выберите другой предмет.";
-      }
-      
       toast({
         title: "Ошибка",
-        description: errorMessage,
+        description: error.message,
         variant: "destructive",
       });
     } finally {
