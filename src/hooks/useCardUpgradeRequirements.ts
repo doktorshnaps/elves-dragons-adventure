@@ -21,6 +21,8 @@ export interface CardUpgradeRequirement {
     quantity: number;
   }>;
   is_active: boolean;
+  required_building_id?: string;
+  required_building_level?: number;
 }
 
 export const useCardUpgradeRequirements = () => {

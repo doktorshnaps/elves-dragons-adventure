@@ -14,6 +14,8 @@ export interface CraftingRecipe {
   description?: string;
   is_active: boolean;
   crafting_time_hours?: number;
+  required_building_id?: string;
+  required_building_level?: number;
 }
 
 export const useCraftingRecipes = (autoLoad = true) => {

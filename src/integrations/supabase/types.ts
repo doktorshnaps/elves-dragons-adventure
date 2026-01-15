@@ -414,6 +414,8 @@ export type Database = {
           id: string
           is_active: boolean | null
           rarity: string
+          required_building_id: string | null
+          required_building_level: number | null
           required_defeated_monsters: number
           required_items: Json | null
           success_chance: number
@@ -435,6 +437,8 @@ export type Database = {
           id?: string
           is_active?: boolean | null
           rarity: string
+          required_building_id?: string | null
+          required_building_level?: number | null
           required_defeated_monsters?: number
           required_items?: Json | null
           success_chance?: number
@@ -456,6 +460,8 @@ export type Database = {
           id?: string
           is_active?: boolean | null
           rarity?: string
+          required_building_id?: string | null
+          required_building_level?: number | null
           required_defeated_monsters?: number
           required_items?: Json | null
           success_chance?: number
@@ -561,6 +567,8 @@ export type Database = {
           id: string
           is_active: boolean | null
           recipe_name: string
+          required_building_id: string | null
+          required_building_level: number | null
           required_materials: Json
           result_item_id: number
           result_quantity: number
@@ -575,6 +583,8 @@ export type Database = {
           id?: string
           is_active?: boolean | null
           recipe_name: string
+          required_building_id?: string | null
+          required_building_level?: number | null
           required_materials?: Json
           result_item_id: number
           result_quantity?: number
@@ -589,6 +599,8 @@ export type Database = {
           id?: string
           is_active?: boolean | null
           recipe_name?: string
+          required_building_id?: string | null
+          required_building_level?: number | null
           required_materials?: Json
           result_item_id?: number
           result_quantity?: number
@@ -2331,6 +2343,8 @@ export type Database = {
           p_crafting_time_hours: number
           p_description: string
           p_recipe_name: string
+          p_required_building_id?: string
+          p_required_building_level?: number
           p_required_materials: Json
           p_result_item_id: number
           p_result_quantity: number
@@ -2517,6 +2531,8 @@ export type Database = {
           p_description: string
           p_recipe_id: string
           p_recipe_name: string
+          p_required_building_id?: string
+          p_required_building_level?: number
           p_required_materials: Json
           p_result_item_id: number
           p_result_quantity: number
