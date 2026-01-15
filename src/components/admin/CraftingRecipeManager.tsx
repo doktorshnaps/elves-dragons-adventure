@@ -83,7 +83,16 @@ export const CraftingRecipeManager = () => {
 
         if (error) throw error;
       } else {
-        // Create new recipe using RPC
+        // Check if recipe_name already exists to determine if it's an update
+        const { data: existingRecipe } = await supabase
+          .from("crafting_recipes")
+          .select("id")
+          .eq("recipe_name", formData.recipe_name)
+          .maybeSingle();
+
+        const isUpdate = !!existingRecipe;
+
+        // Create new recipe using RPC (with ON CONFLICT DO UPDATE)
         const { error } = await supabase.rpc('admin_insert_crafting_recipe', {
           p_wallet_address: walletAddress,
           p_recipe_name: formData.recipe_name,
@@ -96,10 +105,18 @@ export const CraftingRecipeManager = () => {
         });
 
         if (error) throw error;
+
+        toast({
+          title: isUpdate ? 'Рецепт обновлен' : 'Рецепт создан',
+          description: 'Изменения успешно сохранены'
+        });
+        resetForm();
+        reload();
+        return;
       }
 
       toast({
-        title: editingId ? 'Рецепт обновлен' : 'Рецепт создан',
+        title: 'Рецепт обновлен',
         description: 'Изменения успешно сохранены'
       });
 
