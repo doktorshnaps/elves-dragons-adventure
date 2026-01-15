@@ -2228,6 +2228,10 @@ export type Database = {
         Args: { p_admin_wallet_address?: string; p_drop_id: string }
         Returns: boolean
       }
+      admin_delete_item_template: {
+        Args: { p_item_id: number; p_wallet_address: string }
+        Returns: boolean
+      }
       admin_delete_quest: {
         Args: { p_admin_wallet_address: string; p_id: string }
         Returns: boolean
