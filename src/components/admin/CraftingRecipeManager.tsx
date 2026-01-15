@@ -93,12 +93,13 @@ export const CraftingRecipeManager = () => {
         const isUpdate = !!existingRecipe;
 
         // Create new recipe using RPC (with ON CONFLICT DO UPDATE)
+        // Parameter order must match the DB function signature exactly
         const { error } = await supabase.rpc('admin_insert_crafting_recipe', {
           p_wallet_address: walletAddress,
           p_recipe_name: formData.recipe_name,
           p_result_item_id: formData.result_item_id,
           p_result_quantity: formData.result_quantity,
-          p_required_materials: formData.required_materials,
+          p_required_materials: formData.required_materials as any,
           p_category: formData.category,
           p_description: formData.description,
           p_crafting_time_hours: formData.crafting_time_hours
