@@ -11,6 +11,7 @@ import { monsterImagesByName } from "@/constants/monsterImages";
 import { useLanguage } from "@/hooks/useLanguage";
 import { translateMonsterName, translateMonsterDescription, translateMonsterText } from "@/utils/monsterTranslations";
 import { t } from "@/utils/translations";
+import { getDungeonNumber } from "@/utils/monsterPowerIndex";
 
 // Monster descriptions
 const monsterDescriptions: Record<string, string> = {
@@ -38,9 +39,13 @@ interface MonsterCardProps {
   power: number;
   armor?: number;
   isBoss?: boolean;
+  isMiniboss?: boolean;
   image?: string;
   specialAbilities?: any[];
   description?: string;
+  dungeonNumber?: number;
+  level?: number;
+  originalName?: string;
 }
 const MonsterCard = ({
   name,
@@ -48,11 +53,28 @@ const MonsterCard = ({
   power,
   armor,
   isBoss,
+  isMiniboss,
   image,
   specialAbilities,
-  description
+  description,
+  dungeonNumber,
+  level,
+  originalName
 }: MonsterCardProps) => {
-  return <MonsterCardDisplay name={name} health={health} power={power} armor={armor} isBoss={isBoss} image={image} specialAbilities={specialAbilities} description={description} />;
+  return <MonsterCardDisplay 
+    name={name} 
+    health={health} 
+    power={power} 
+    armor={armor} 
+    isBoss={isBoss}
+    isMiniboss={isMiniboss}
+    image={image} 
+    specialAbilities={specialAbilities} 
+    description={description}
+    dungeonNumber={dungeonNumber}
+    level={level}
+    originalName={originalName}
+  />;
 };
 interface DungeonLevelProps {
   dungeonType: string;
@@ -66,6 +88,9 @@ const DungeonLevel = memo(({
   
   const [opponents, setOpponents] = React.useState<any[]>([]);
   const [loadKey, setLoadKey] = React.useState(0);
+  
+  // Get dungeon number for drop lookups
+  const dungeonNumber = getDungeonNumber(dungeonType);
 
   React.useEffect(() => {
     const loadOpponents = async () => {
@@ -78,7 +103,8 @@ const DungeonLevel = memo(({
           image: useMapped ? mapped : opponent.image,
           description: monsterDescriptions[opponent.name],
           translatedName: translateMonsterName(language, opponent.name),
-          translatedDescription: translateMonsterDescription(language, monsterDescriptions[opponent.name] || '')
+          translatedDescription: translateMonsterDescription(language, monsterDescriptions[opponent.name] || ''),
+          originalName: opponent.name // Keep original name for drop matching
         };
       });
       setOpponents(enhanced);
@@ -91,7 +117,23 @@ const DungeonLevel = memo(({
         {t(language, 'dungeonInfo.level')} {level}
       </h3>
       <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-2 justify-items-center">
-        {opponents.map(opponent => <MonsterCard key={opponent.id} name={opponent.translatedName} health={opponent.health} power={opponent.power} armor={opponent.armor} isBoss={opponent.isBoss} image={opponent.image} specialAbilities={opponent.specialAbilities} description={opponent.translatedDescription} />)}
+        {opponents.map(opponent => (
+          <MonsterCard 
+            key={opponent.id} 
+            name={opponent.translatedName} 
+            health={opponent.health} 
+            power={opponent.power} 
+            armor={opponent.armor} 
+            isBoss={opponent.isBoss}
+            isMiniboss={opponent.isMiniboss}
+            image={opponent.image} 
+            specialAbilities={opponent.specialAbilities} 
+            description={opponent.translatedDescription}
+            dungeonNumber={dungeonNumber}
+            level={level}
+            originalName={opponent.originalName}
+          />
+        ))}
       </div>
     </div>;
 });
