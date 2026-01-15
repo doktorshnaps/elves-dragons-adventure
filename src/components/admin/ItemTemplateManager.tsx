@@ -318,14 +318,14 @@ export const ItemTemplateManager = () => {
   };
 
   const handleDelete = async (id: number) => {
-    if (!confirm("Вы уверены, что хотите удалить этот предмет?")) return;
+    if (!confirm("Вы уверены, что хотите удалить этот предмет? Также будут удалены связанные настройки дропа.")) return;
 
     try {
       setLoading(true);
-      const { error } = await supabase
-        .from("item_templates")
-        .delete()
-        .eq("id", id);
+      const { data, error } = await supabase.rpc('admin_delete_item_template', {
+        p_wallet_address: accountId,
+        p_item_id: id
+      });
 
       if (error) throw error;
       toast({ title: "Успех", description: "Предмет успешно удален" });
