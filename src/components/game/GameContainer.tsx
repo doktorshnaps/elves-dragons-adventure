@@ -43,16 +43,9 @@ export const GameContainer = () => {
   // РЕФАКТОРИНГ: useGameInitialization больше не требует setCards
   useGameInitialization();
 
-  useEffect(() => {
-    return () => {
-      useGameStore.getState().clearBattleState();
-      useGameStore.getState().setActiveBattleInProgress(false);
-      toast({
-        title: "Игра закрыта",
-        description: "Подземелье автоматически завершено",
-      });
-    };
-  }, [toast]);
+  // УДАЛЕНО: Очистка battleState при размонтировании GameContainer
+  // Это вызывало баг: при выходе в меню и возврате бой начинался с 1-го уровня
+  // Очистка теперь происходит только при явном завершении боя (сдаться/победа)
 
   if (!imagesLoaded) {
     return <GameSkeleton />;
