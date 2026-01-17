@@ -84,6 +84,7 @@ export const CraftingRecipeManager = () => {
       if (editingId) {
         // Update existing recipe using RPC
         const { error } = await supabase.rpc('admin_update_crafting_recipe', {
+          p_wallet_address: walletAddress,
           p_recipe_id: editingId,
           p_recipe_name: formData.recipe_name,
           p_result_item_id: formData.result_item_id,
@@ -183,7 +184,8 @@ export const CraftingRecipeManager = () => {
       }
 
       const { error } = await supabase.rpc('admin_delete_crafting_recipe', {
-        p_id: id
+        p_id: id,
+        p_wallet: walletAddress
       });
 
       if (error) {

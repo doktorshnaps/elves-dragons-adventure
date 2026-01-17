@@ -37,6 +37,7 @@ export const useWhitelistContractsData = () => {
       walletAddress: string;
     }) => {
       const { data, error } = await supabase.rpc('admin_add_whitelist_contract', {
+        p_admin_wallet_address: walletAddress,
         p_contract_id: contractId,
         p_contract_name: contractName,
       });
