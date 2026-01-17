@@ -215,6 +215,7 @@ export const ItemTemplateManager = () => {
         console.log('Updating item with value:', formData.value);
         
         const { data, error } = await supabase.rpc('admin_update_item_template', {
+          p_wallet_address: accountId || '',
           p_id: editingItem.id,
           p_item_id: formData.item_id,
           p_name: formData.name,
@@ -250,6 +251,7 @@ export const ItemTemplateManager = () => {
         console.log('Inserting item with value:', formData.value);
         
         const { data, error } = await supabase.rpc('admin_insert_item_template', {
+          p_wallet_address: accountId || '',
           p_item_id: formData.item_id,
           p_name: formData.name,
           p_type: formData.type,

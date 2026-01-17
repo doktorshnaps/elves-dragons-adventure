@@ -47,6 +47,7 @@ export const PlayerManagement = () => {
     setIsWiping(true);
     try {
       const { data, error } = await supabase.rpc('admin_wipe_player', {
+        p_admin_wallet_address: accountId || '',
         p_target_wallet_address: wipeWallet.trim(),
       });
 

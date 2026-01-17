@@ -117,6 +117,7 @@ export const QuestManagement = () => {
       }
 
       const { data, error } = await supabase.rpc('admin_upsert_quest', {
+        p_admin_wallet_address: accountId || '',
         p_id: editingQuest?.id || null,
         p_title: formData.title,
         p_description: formData.description,
@@ -164,6 +165,7 @@ export const QuestManagement = () => {
 
     try {
       const { error } = await supabase.rpc('admin_delete_quest', {
+        p_admin_wallet_address: accountId || '',
         p_id: id,
       });
 

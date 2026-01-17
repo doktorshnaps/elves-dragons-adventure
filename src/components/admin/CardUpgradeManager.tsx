@@ -145,7 +145,8 @@ export const CardUpgradeManager = () => {
       }
 
       const { error } = await supabase.rpc('admin_delete_card_upgrade_requirement', {
-        p_id: id
+        p_id: id,
+        p_wallet: walletAddress
       });
 
       if (error) {
