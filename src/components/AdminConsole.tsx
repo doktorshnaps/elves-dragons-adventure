@@ -162,8 +162,7 @@ export const AdminConsole = () => {
 
     const { error } = await supabase.rpc('admin_add_balance_by_id', {
       p_target_user_id: userId,
-      p_amount: amount,
-      p_admin_wallet_address: accountId
+      p_amount: amount
     });
 
     if (error) {
@@ -198,8 +197,7 @@ export const AdminConsole = () => {
 
     const { error } = await supabase.rpc('admin_ban_user_by_id', {
       p_target_user_id: userId,
-      p_reason: reason,
-      p_admin_wallet_address: accountId
+      p_reason: reason
     });
 
     if (error) {

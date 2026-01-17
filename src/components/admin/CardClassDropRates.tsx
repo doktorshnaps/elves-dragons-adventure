@@ -79,7 +79,6 @@ export const CardClassDropRates = () => {
       }));
 
       const { error } = await supabase.rpc('admin_update_card_class_drop_rates', {
-        p_admin_wallet_address: accountId,
         p_rates: allRates
       });
 
