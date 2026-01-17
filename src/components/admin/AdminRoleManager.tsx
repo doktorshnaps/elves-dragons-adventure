@@ -59,7 +59,6 @@ export const AdminRoleManager = () => {
     try {
       const { error } = await supabase.rpc('admin_add_administrator', {
         p_wallet_address: newAdminAddress.trim(),
-        p_admin_wallet_address: accountId,
       });
 
       if (error) throw error;
@@ -97,7 +96,6 @@ export const AdminRoleManager = () => {
     try {
       const { error } = await supabase.rpc('admin_remove_administrator', {
         p_wallet_address: walletAddress,
-        p_admin_wallet_address: accountId,
       });
 
       if (error) throw error;

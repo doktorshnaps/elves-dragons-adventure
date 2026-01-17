@@ -2152,22 +2152,32 @@ export type Database = {
         Args: { p_admin_wallet_address?: string; p_wallet_address: string }
         Returns: boolean
       }
-      admin_add_balance: {
-        Args: {
-          p_admin_wallet_address: string
-          p_amount: number
-          p_target_wallet_address: string
-        }
-        Returns: boolean
-      }
-      admin_add_balance_by_id: {
-        Args: {
-          p_admin_wallet_address: string
-          p_amount: number
-          p_target_user_id: string
-        }
-        Returns: boolean
-      }
+      admin_add_balance:
+        | {
+            Args: { p_amount: number; p_target_wallet_address: string }
+            Returns: boolean
+          }
+        | {
+            Args: {
+              p_admin_wallet_address: string
+              p_amount: number
+              p_target_wallet_address: string
+            }
+            Returns: boolean
+          }
+      admin_add_balance_by_id:
+        | {
+            Args: { p_amount: number; p_target_user_id: string }
+            Returns: boolean
+          }
+        | {
+            Args: {
+              p_admin_wallet_address: string
+              p_amount: number
+              p_target_user_id: string
+            }
+            Returns: boolean
+          }
       admin_add_dungeon_item_drop:
         | {
             Args: {
@@ -2183,6 +2193,17 @@ export type Database = {
         | {
             Args: {
               p_admin_wallet_address: string
+              p_allowed_monsters?: string[]
+              p_drop_chance: number
+              p_dungeon_number: number
+              p_item_template_id: number
+              p_max_dungeon_level: number
+              p_min_dungeon_level: number
+            }
+            Returns: string
+          }
+        | {
+            Args: {
               p_allowed_monsters?: string[]
               p_drop_chance: number
               p_dungeon_number: number
@@ -2208,22 +2229,32 @@ export type Database = {
         }
         Returns: boolean
       }
-      admin_ban_user: {
-        Args: {
-          p_admin_wallet_address?: string
-          p_reason: string
-          p_target_wallet_address: string
-        }
-        Returns: boolean
-      }
-      admin_ban_user_by_id: {
-        Args: {
-          p_admin_wallet_address: string
-          p_reason: string
-          p_target_user_id: string
-        }
-        Returns: boolean
-      }
+      admin_ban_user:
+        | {
+            Args: { p_reason: string; p_target_wallet_address: string }
+            Returns: boolean
+          }
+        | {
+            Args: {
+              p_admin_wallet_address?: string
+              p_reason: string
+              p_target_wallet_address: string
+            }
+            Returns: boolean
+          }
+      admin_ban_user_by_id:
+        | {
+            Args: { p_reason: string; p_target_user_id: string }
+            Returns: boolean
+          }
+        | {
+            Args: {
+              p_admin_wallet_address: string
+              p_reason: string
+              p_target_user_id: string
+            }
+            Returns: boolean
+          }
       admin_clear_user_card_instances: {
         Args: { p_admin_wallet_address?: string; p_wallet_address: string }
         Returns: boolean
@@ -2240,16 +2271,40 @@ export type Database = {
         Args: { p_admin_wallet_address?: string; p_drop_id: string }
         Returns: boolean
       }
-      admin_delete_item_template: {
-        Args: { p_item_id: number; p_wallet_address: string }
-        Returns: boolean
-      }
+      admin_delete_item_template:
+        | { Args: { p_item_id: number }; Returns: boolean }
+        | {
+            Args: { p_item_id: number; p_wallet_address: string }
+            Returns: boolean
+          }
       admin_delete_quest: {
         Args: { p_admin_wallet_address: string; p_id: string }
         Returns: boolean
       }
-      admin_find_user_by_wallet: {
-        Args: { p_admin_wallet_address: string; p_wallet_address: string }
+      admin_find_user_by_wallet:
+        | {
+            Args: { p_wallet_address: string }
+            Returns: {
+              account_level: number
+              balance: number
+              created_at: string
+              is_banned: boolean
+              user_id: string
+              wallet_address: string
+            }[]
+          }
+        | {
+            Args: { p_admin_wallet_address: string; p_wallet_address: string }
+            Returns: {
+              account_level: number
+              balance: number
+              created_at: string
+              user_id: string
+              wallet_address: string
+            }[]
+          }
+      admin_get_all_players: {
+        Args: never
         Returns: {
           account_level: number
           balance: number
@@ -2276,14 +2331,18 @@ export type Database = {
           wallet_address: string
         }[]
       }
-      admin_get_player_cards: {
-        Args: { p_admin_wallet_address: string; p_user_id: string }
-        Returns: Json
-      }
-      admin_get_player_inventory: {
-        Args: { p_admin_wallet_address: string; p_user_id: string }
-        Returns: Json
-      }
+      admin_get_player_cards:
+        | { Args: { p_target_wallet_address: string }; Returns: Json }
+        | {
+            Args: { p_admin_wallet_address: string; p_user_id: string }
+            Returns: Json
+          }
+      admin_get_player_inventory:
+        | { Args: { p_target_wallet_address: string }; Returns: Json }
+        | {
+            Args: { p_admin_wallet_address: string; p_user_id: string }
+            Returns: Json
+          }
       admin_get_player_mgt_balance: {
         Args: {
           p_admin_wallet_address: string
@@ -2305,53 +2364,87 @@ export type Database = {
           wallet_address: string
         }[]
       }
-      admin_get_user_info: {
-        Args: { p_admin_wallet_address: string; p_user_id: string }
-        Returns: Json
-      }
-      admin_give_items_to_player: {
-        Args: {
-          p_admin_wallet_address: string
-          p_items: Json
-          p_target_wallet_address: string
-        }
-        Returns: boolean
-      }
-      admin_give_player_card: {
-        Args: {
-          p_admin_wallet_address: string
-          p_card_data: Json
-          p_user_id: string
-        }
-        Returns: boolean
-      }
-      admin_give_player_item: {
-        Args: {
-          p_admin_wallet_address: string
-          p_item_data: Json
-          p_user_id: string
-        }
-        Returns: boolean
-      }
+      admin_get_user_info:
+        | { Args: { p_user_id: string }; Returns: Json }
+        | {
+            Args: { p_admin_wallet_address: string; p_user_id: string }
+            Returns: Json
+          }
+      admin_give_items_to_player:
+        | {
+            Args: {
+              p_admin_wallet_address: string
+              p_items: Json
+              p_target_wallet_address: string
+            }
+            Returns: boolean
+          }
+        | {
+            Args: { p_items: Json; p_target_wallet_address: string }
+            Returns: boolean
+          }
+      admin_give_player_card:
+        | {
+            Args: {
+              p_card_data: Json
+              p_card_template_id: string
+              p_target_wallet_address: string
+            }
+            Returns: string
+          }
+        | {
+            Args: {
+              p_admin_wallet_address: string
+              p_card_data: Json
+              p_user_id: string
+            }
+            Returns: boolean
+          }
+      admin_give_player_item:
+        | {
+            Args: { p_target_wallet_address: string; p_template_id: number }
+            Returns: string
+          }
+        | {
+            Args: {
+              p_admin_wallet_address: string
+              p_item_data: Json
+              p_user_id: string
+            }
+            Returns: boolean
+          }
       admin_insert_building_config: {
         Args: { p_data: Json; p_wallet_address?: string }
         Returns: string
       }
-      admin_insert_crafting_recipe: {
-        Args: {
-          p_category: string
-          p_crafting_time_hours: number
-          p_description: string
-          p_recipe_name: string
-          p_required_building_id?: string
-          p_required_building_level?: number
-          p_required_materials: Json
-          p_result_item_id: number
-          p_result_quantity: number
-          p_wallet_address: string
-        }
-        Returns: string
-      }
+      admin_insert_crafting_recipe:
+        | {
+            Args: {
+              p_category: string
+              p_crafting_time_hours: number
+              p_description: string
+              p_recipe_name: string
+              p_required_materials: Json
+              p_result_item_id: number
+              p_result_quantity: number
+            }
+            Returns: string
+          }
+        | {
+            Args: {
+              p_category: string
+              p_crafting_time_hours: number
+              p_description: string
+              p_recipe_name: string
+              p_required_building_id?: string
+              p_required_building_level?: number
+              p_required_materials: Json
+              p_result_item_id: number
+              p_result_quantity: number
+              p_wallet_address: string
+            }
+            Returns: string
+          }
       admin_insert_item_template:
         | {
             Args: {
@@ -2454,38 +2547,46 @@ export type Database = {
         }
         Returns: boolean
       }
-      admin_recalculate_all_card_stats: {
-        Args: { p_admin_wallet_address?: string }
-        Returns: Json
-      }
+      admin_recalculate_all_card_stats:
+        | { Args: never; Returns: Json }
+        | { Args: { p_admin_wallet_address?: string }; Returns: Json }
       admin_remove_administrator: {
         Args: { p_admin_wallet_address?: string; p_wallet_address: string }
         Returns: boolean
       }
-      admin_remove_player_card: {
-        Args: {
-          p_admin_wallet_address: string
-          p_card_id: string
-          p_user_id: string
-        }
-        Returns: boolean
-      }
-      admin_remove_player_item: {
-        Args: {
-          p_admin_wallet_address: string
-          p_item_id: string
-          p_user_id: string
-        }
-        Returns: boolean
-      }
-      admin_set_player_balance: {
-        Args: {
-          p_admin_wallet_address: string
-          p_balance: number
-          p_user_id: string
-        }
-        Returns: boolean
-      }
+      admin_remove_player_card:
+        | { Args: { p_card_instance_id: string }; Returns: boolean }
+        | {
+            Args: {
+              p_admin_wallet_address: string
+              p_card_id: string
+              p_user_id: string
+            }
+            Returns: boolean
+          }
+      admin_remove_player_item:
+        | { Args: { p_item_instance_id: string }; Returns: boolean }
+        | {
+            Args: {
+              p_admin_wallet_address: string
+              p_item_id: string
+              p_user_id: string
+            }
+            Returns: boolean
+          }
+      admin_set_player_balance:
+        | {
+            Args: { p_new_balance: number; p_target_wallet_address: string }
+            Returns: boolean
+          }
+        | {
+            Args: {
+              p_admin_wallet_address: string
+              p_balance: number
+              p_user_id: string
+            }
+            Returns: boolean
+          }
       admin_toggle_maintenance_mode: {
         Args: {
           p_admin_wallet_address?: string
@@ -2494,17 +2595,21 @@ export type Database = {
         }
         Returns: boolean
       }
-      admin_unban_user: {
-        Args: {
-          p_admin_wallet_address?: string
-          p_target_wallet_address: string
-        }
-        Returns: boolean
-      }
-      admin_unban_user_by_id: {
-        Args: { p_admin_wallet_address: string; p_target_user_id: string }
-        Returns: boolean
-      }
+      admin_unban_user:
+        | { Args: { p_target_wallet_address: string }; Returns: boolean }
+        | {
+            Args: {
+              p_admin_wallet_address?: string
+              p_target_wallet_address: string
+            }
+            Returns: boolean
+          }
+      admin_unban_user_by_id:
+        | { Args: { p_target_user_id: string }; Returns: boolean }
+        | {
+            Args: { p_admin_wallet_address: string; p_target_user_id: string }
+            Returns: boolean
+          }
       admin_update_building_config: {
         Args: { p_id: string; p_update: Json; p_wallet_address?: string }
         Returns: boolean
@@ -2857,6 +2962,7 @@ export type Database = {
         Args: { p_max_claims_per_minute?: number; p_wallet_address: string }
         Returns: boolean
       }
+      check_is_current_user_admin: { Args: never; Returns: boolean }
       claim_daily_quest_reward: {
         Args: { p_progress_id: string; p_wallet_address: string }
         Returns: Json
@@ -3565,6 +3671,18 @@ export type Database = {
           p_increment?: number
           p_quest_key: string
           p_wallet_address: string
+        }
+        Returns: boolean
+      }
+      update_dungeon_settings: {
+        Args: {
+          p_armor_growth: number
+          p_atk_growth: number
+          p_base_armor: number
+          p_base_atk: number
+          p_base_hp: number
+          p_dungeon_number: number
+          p_hp_growth: number
         }
         Returns: boolean
       }

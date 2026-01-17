@@ -194,7 +194,6 @@ export const DungeonItemDrops = () => {
       const { error: updateError } = await supabase.rpc("admin_update_item_drop_chance", {
         p_item_id: parseInt(newDrop.item_template_id),
         p_drop_chance: parseFloat(newDrop.drop_chance),
-        p_admin_wallet_address: accountId,
       });
 
       if (updateError) {
@@ -211,7 +210,6 @@ export const DungeonItemDrops = () => {
         p_min_dungeon_level: parseInt(newDrop.min_dungeon_level),
         p_max_dungeon_level: newDrop.max_dungeon_level ? parseInt(newDrop.max_dungeon_level) : null,
         p_drop_chance: parseFloat(newDrop.drop_chance),
-        p_admin_wallet_address: accountId,
         p_allowed_monsters: newDrop.allowed_monsters.length > 0 ? newDrop.allowed_monsters : null,
       });
 
@@ -255,7 +253,6 @@ export const DungeonItemDrops = () => {
       const { error: updateTemplateError } = await supabase.rpc("admin_update_item_drop_chance", {
         p_item_id: drop.item_template_id,
         p_drop_chance: drop.drop_chance,
-        p_admin_wallet_address: accountId,
       });
 
       if (updateTemplateError) {
@@ -272,7 +269,6 @@ export const DungeonItemDrops = () => {
         p_max_dungeon_level: drop.max_dungeon_level,
         p_drop_chance: drop.drop_chance,
         p_is_active: drop.is_active,
-        p_admin_wallet_address: accountId,
         p_allowed_monsters: drop.allowed_monsters && drop.allowed_monsters.length > 0 ? drop.allowed_monsters : null,
       });
 
@@ -300,7 +296,6 @@ export const DungeonItemDrops = () => {
     try {
       const { error } = await supabase.rpc("admin_delete_dungeon_item_drop" as any, {
         p_drop_id: dropId,
-        p_admin_wallet_address: accountId,
       });
 
       if (error) throw error;
