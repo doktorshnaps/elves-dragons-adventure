@@ -16,7 +16,7 @@ import { Flame, Clock, Star, ArrowRight, Coins, Sparkles, AlertCircle, BookOpen 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useCardUpgradeRequirements } from '@/hooks/useCardUpgradeRequirements';
-import { getUpgradeRequirement, rollUpgradeSuccess } from '@/utils/upgradeRequirements';
+import { rollUpgradeSuccess } from '@/utils/upgradeRequirements';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -205,26 +205,32 @@ export const DragonLair: React.FC<DragonLairProps> = ({ lairLevel, onUpgradeBuil
     if (dragons.length < 2) return { canUpgrade: false, missingItems: ['Недостаточно драконов'] };
     
     const dragon = dragons[0];
-    const requirements = getUpgradeRequirement(dragon.rarity, 'dragonLair');
+    const recipe = findRecipeForDragon(dragon);
     
-    if (!requirements) return { canUpgrade: false, missingItems: ['Нет данных об улучшении'] };
+    if (!recipe) return { canUpgrade: false, missingItems: ['Нет рецепта для этого дракона'] };
     
     const missingItems: string[] = [];
     
-    // Check resources
-    if (requirements.costs.balance && gameData.balance < requirements.costs.balance) {
-      missingItems.push(`Монет: ${requirements.costs.balance - gameData.balance}`);
+    // Check resources from DB recipe
+    if (recipe.cost_ell && gameData.balance < recipe.cost_ell) {
+      missingItems.push(`Монет: ${recipe.cost_ell - gameData.balance}`);
     }
-    if (requirements.costs.wood && gameData.wood < requirements.costs.wood) {
-      missingItems.push(`Дерева: ${requirements.costs.wood - gameData.wood}`);
+    if (recipe.cost_wood && gameData.wood < recipe.cost_wood) {
+      missingItems.push(`Дерева: ${recipe.cost_wood - gameData.wood}`);
     }
-    if (requirements.costs.stone && gameData.stone < requirements.costs.stone) {
-      missingItems.push(`Камня: ${requirements.costs.stone - gameData.stone}`);
+    if (recipe.cost_stone && gameData.stone < recipe.cost_stone) {
+      missingItems.push(`Камня: ${recipe.cost_stone - gameData.stone}`);
+    }
+    if (recipe.cost_iron && gameData.iron < recipe.cost_iron) {
+      missingItems.push(`Железа: ${recipe.cost_iron - gameData.iron}`);
+    }
+    if (recipe.cost_gold && gameData.gold < recipe.cost_gold) {
+      missingItems.push(`Золота: ${recipe.cost_gold - gameData.gold}`);
     }
     
-    // Check required items
-    requirements.requiredItems.forEach(reqItem => {
-      const available = itemCounts[reqItem.itemId] || 0;
+    // Check required items from DB recipe
+    recipe.required_items?.forEach(reqItem => {
+      const available = itemCounts[reqItem.item_id] || 0;
       if (available < reqItem.quantity) {
         missingItems.push(`${reqItem.name}: ${reqItem.quantity - available}`);
       }
@@ -284,31 +290,44 @@ export const DragonLair: React.FC<DragonLairProps> = ({ lairLevel, onUpgradeBuil
 
     const dragon1 = dragons[0];
     const dragon2 = dragons[1];
-    const requirements = getUpgradeRequirement(dragon1.rarity, 'dragonLair');
+    const recipe = findRecipeForDragon(dragon1);
     
-    if (!requirements) return;
+    if (!recipe) {
+      toast({
+        title: 'Ошибка',
+        description: 'Рецепт улучшения для этого дракона не найден',
+        variant: 'destructive'
+      });
+      return;
+    }
 
     // Roll for success
-    const isSuccess = rollUpgradeSuccess(requirements.successChance);
+    const isSuccess = Math.random() * 100 < recipe.success_chance;
 
     // Remove resources and items regardless of success
     const resourceUpdates: any = {};
     
-    if (requirements.costs.balance) {
-      resourceUpdates.balance = gameData.balance - requirements.costs.balance;
+    if (recipe.cost_ell) {
+      resourceUpdates.balance = gameData.balance - recipe.cost_ell;
     }
-    if (requirements.costs.wood) {
-      resourceUpdates.wood = gameData.wood - requirements.costs.wood;
+    if (recipe.cost_wood) {
+      resourceUpdates.wood = gameData.wood - recipe.cost_wood;
     }
-    if (requirements.costs.stone) {
-      resourceUpdates.stone = gameData.stone - requirements.costs.stone;
+    if (recipe.cost_stone) {
+      resourceUpdates.stone = gameData.stone - recipe.cost_stone;
+    }
+    if (recipe.cost_iron) {
+      resourceUpdates.iron = gameData.iron - recipe.cost_iron;
+    }
+    if (recipe.cost_gold) {
+      resourceUpdates.gold = gameData.gold - recipe.cost_gold;
     }
 
     // Remove required items
     const itemsToRemove: string[] = [];
-    requirements.requiredItems.forEach(reqItem => {
+    recipe.required_items?.forEach(reqItem => {
       const availableInstances = itemInstances.filter(inst => 
-        (inst.item_id === reqItem.itemId || inst.name === reqItem.name)
+        (inst.item_id === reqItem.item_id || inst.name === reqItem.name)
       ).slice(0, reqItem.quantity);
       itemsToRemove.push(...availableInstances.map(inst => inst.id));
     });
@@ -557,7 +576,7 @@ export const DragonLair: React.FC<DragonLairProps> = ({ lairLevel, onUpgradeBuil
                         magic: Math.floor(dragon.magic * 1.8)
                       };
                       
-                      const requirements = getUpgradeRequirement(dragon.rarity, 'dragonLair');
+                      const recipe = findRecipeForDragon(dragon);
                       const { canUpgrade, missingItems } = checkUpgradeRequirements(dragons);
                       
                       return (
@@ -607,38 +626,44 @@ export const DragonLair: React.FC<DragonLairProps> = ({ lairLevel, onUpgradeBuil
                                    </p>
                                  </div>
                                  
-                                 {requirements && (
+                                 {recipe && (
                                    <div className="space-y-2">
                                      <div className="flex items-center gap-2">
                                        <Sparkles className="w-3 h-3 text-yellow-500" />
-                                       <span className="text-xs font-medium">Шанс успеха: {requirements.successChance}%</span>
+                                       <span className="text-xs font-medium">Шанс успеха: {recipe.success_chance}%</span>
                                      </div>
                                      
                                      <div className="space-y-1">
                                        <div className="text-xs font-medium">Требования:</div>
                                        <div className="flex flex-wrap gap-1">
-                                         {requirements.costs.balance && (
+                                         {recipe.cost_ell > 0 && (
                                            <Badge variant="outline" className="text-xs">
                                              <Coins className="w-3 h-3 mr-1" />
-                                             {requirements.costs.balance}
+                                             {recipe.cost_ell}
                                            </Badge>
                                          )}
-                                          {requirements.costs.wood && (
-                                            <Badge variant="outline" className="text-xs">🪵 {requirements.costs.wood}</Badge>
+                                          {recipe.cost_wood && recipe.cost_wood > 0 && (
+                                            <Badge variant="outline" className="text-xs">🪵 {recipe.cost_wood}</Badge>
                                           )}
-                                          {requirements.costs.stone && (
-                                            <Badge variant="outline" className="text-xs">🪨 {requirements.costs.stone}</Badge>
+                                          {recipe.cost_stone && recipe.cost_stone > 0 && (
+                                            <Badge variant="outline" className="text-xs">🪨 {recipe.cost_stone}</Badge>
+                                          )}
+                                          {recipe.cost_iron && recipe.cost_iron > 0 && (
+                                            <Badge variant="outline" className="text-xs">⚙️ {recipe.cost_iron}</Badge>
+                                          )}
+                                          {recipe.cost_gold && recipe.cost_gold > 0 && (
+                                            <Badge variant="outline" className="text-xs">💰 {recipe.cost_gold}</Badge>
                                           )}
                                         </div>
                                        
-                                       {requirements.requiredItems.length > 0 && (
+                                       {recipe.required_items && recipe.required_items.length > 0 && (
                                          <div className="flex flex-wrap gap-1 mt-1">
-                                           {requirements.requiredItems.map(item => {
-                                             const available = itemCounts[item.itemId] || 0;
+                                           {recipe.required_items.map(item => {
+                                             const available = itemCounts[item.item_id] || 0;
                                              const hasEnough = available >= item.quantity;
                                              return (
                                                <Badge 
-                                                 key={item.itemId} 
+                                                 key={item.item_id} 
                                                  variant={hasEnough ? "secondary" : "destructive"}
                                                  className="text-xs"
                                                >
@@ -789,16 +814,16 @@ export const DragonLair: React.FC<DragonLairProps> = ({ lairLevel, onUpgradeBuil
             <AlertDialogDescription className="space-y-3">
               {pendingUpgradeDragons.length > 0 && (() => {
                 const dragon = pendingUpgradeDragons[0];
-                const requirements = getUpgradeRequirement(dragon.rarity, 'dragonLair');
+                const recipe = findRecipeForDragon(dragon);
                 
-                return requirements ? (
+                return recipe ? (
                   <>
                     <p>
                       Вы хотите улучшить <strong>{dragon.name}</strong> с {dragon.rarity} до {dragon.rarity + 1} ранга.
                     </p>
                     <div className="p-3 bg-yellow-500/10 border border-yellow-500/20 rounded-lg">
                       <p className="font-medium text-yellow-600 dark:text-yellow-400 mb-2">
-                        ⚠️ Шанс успеха: {requirements.successChance}%
+                        ⚠️ Шанс успеха: {recipe.success_chance}%
                       </p>
                       <p className="text-xs">
                         <strong>При успехе:</strong> Драконы объединятся в улучшенного дракона {dragon.rarity + 1} ранга.
@@ -808,10 +833,14 @@ export const DragonLair: React.FC<DragonLairProps> = ({ lairLevel, onUpgradeBuil
                       </p>
                     </div>
                     <p className="text-sm">
-                      Будет потрачено: {Object.entries(requirements.costs).filter(([_, v]) => v).map(([key, value]) => 
-                        `${key === 'balance' ? 'Монеты' : key === 'wood' ? 'Дерево' : key === 'stone' ? 'Камень' : key === 'iron' ? 'Железо' : 'Золото'}: ${value}`
-                      ).join(', ')}
-                      {requirements.requiredItems.length > 0 && `, ${requirements.requiredItems.map(i => `${i.name} x${i.quantity}`).join(', ')}`}
+                      Будет потрачено: {[
+                        recipe.cost_ell > 0 && `Монеты: ${recipe.cost_ell}`,
+                        recipe.cost_wood && recipe.cost_wood > 0 && `Дерево: ${recipe.cost_wood}`,
+                        recipe.cost_stone && recipe.cost_stone > 0 && `Камень: ${recipe.cost_stone}`,
+                        recipe.cost_iron && recipe.cost_iron > 0 && `Железо: ${recipe.cost_iron}`,
+                        recipe.cost_gold && recipe.cost_gold > 0 && `Золото: ${recipe.cost_gold}`
+                      ].filter(Boolean).join(', ')}
+                      {recipe.required_items && recipe.required_items.length > 0 && `, ${recipe.required_items.map(i => `${i.name} x${i.quantity}`).join(', ')}`}
                     </p>
                   </>
                 ) : null;
