@@ -421,6 +421,7 @@ export type Database = {
           success_chance: number
           to_rarity: number
           updated_at: string | null
+          upgrade_time_hours: number | null
         }
         Insert: {
           card_class?: string | null
@@ -444,6 +445,7 @@ export type Database = {
           success_chance?: number
           to_rarity: number
           updated_at?: string | null
+          upgrade_time_hours?: number | null
         }
         Update: {
           card_class?: string | null
@@ -467,6 +469,7 @@ export type Database = {
           success_chance?: number
           to_rarity?: number
           updated_at?: string | null
+          upgrade_time_hours?: number | null
         }
         Relationships: []
       }
