@@ -639,7 +639,7 @@ export const CardUpgradeManager = () => {
                   </div>
                   <div className="text-sm text-muted-foreground">
                     Шанс: {req.success_chance}% | ELL: {req.cost_ell} | 💀 Монстры: {req.required_defeated_monsters || 0} | 🪵 {req.cost_wood} | 🪨{' '}
-                    {req.cost_stone} | ⛏️ {req.cost_iron}
+                    {req.cost_stone} | ⛏️ {req.cost_iron}{req.upgrade_time_hours ? ` | ⏱️ ${req.upgrade_time_hours}ч` : ''}
                   </div>
                   {req.required_building_id && (
                     <div className="text-sm text-muted-foreground">
