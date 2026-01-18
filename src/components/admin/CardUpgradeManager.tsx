@@ -541,6 +541,19 @@ export const CardUpgradeManager = () => {
           </div>
 
           <div>
+            <Label>Время улучшения (часы)</Label>
+            <Input
+              type="number"
+              value={formData.upgrade_time_hours}
+              onChange={(e) =>
+                setFormData({ ...formData, upgrade_time_hours: parseFloat(e.target.value) || 0 })
+              }
+              min={0}
+              step={0.5}
+            />
+          </div>
+
+          <div>
             <div className="flex justify-between items-center mb-2">
               <Label>Требуемые предметы</Label>
               <Button onClick={addRequiredItem} size="sm" variant="outline">
