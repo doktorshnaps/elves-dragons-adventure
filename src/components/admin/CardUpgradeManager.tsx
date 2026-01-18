@@ -53,46 +53,59 @@ export const CardUpgradeManager = () => {
   });
 
   const handleSave = async () => {
+    if (!accountId) {
+      toast({
+        title: 'Ошибка',
+        description: 'Кошелек не подключен',
+        variant: 'destructive'
+      });
+      return;
+    }
+
     setSaving(true);
     try {
-      const { error } = editingId
-        ? await supabase
-            .from('card_upgrade_requirements')
-            .update({
-              success_chance: formData.success_chance,
-              cost_ell: formData.cost_ell,
-              cost_wood: formData.cost_wood,
-              cost_stone: formData.cost_stone,
-              cost_iron: formData.cost_iron,
-              cost_gold: formData.cost_gold,
-              required_defeated_monsters: formData.required_defeated_monsters,
-              required_items: formData.required_items,
-              required_building_id: formData.required_building_id || null,
-              required_building_level: formData.required_building_level
-            })
-            .eq('id', editingId)
-        : await supabase
-            .from('card_upgrade_requirements')
-            .insert([{
-              card_type: formData.card_type,
-              card_class: formData.card_class === 'all' ? null : formData.card_class,
-              faction: formData.faction === 'all' ? null : formData.faction,
-              rarity: String(formData.from_rarity),
-              from_rarity: formData.from_rarity,
-              to_rarity: formData.to_rarity,
-              success_chance: formData.success_chance,
-              cost_ell: formData.cost_ell,
-              cost_wood: formData.cost_wood,
-              cost_stone: formData.cost_stone,
-              cost_iron: formData.cost_iron,
-              cost_gold: formData.cost_gold,
-              required_defeated_monsters: formData.required_defeated_monsters,
-              required_items: formData.required_items as any,
-              required_building_id: formData.required_building_id || null,
-              required_building_level: formData.required_building_level,
-              created_by_wallet_address: 'mr_bruts.tg',
-              is_active: true
-            }]);
+      let error;
+      
+      if (editingId) {
+        // Use RPC for update
+        const result = await supabase.rpc('admin_update_card_upgrade_requirement', {
+          p_wallet_address: accountId,
+          p_id: editingId,
+          p_success_chance: formData.success_chance,
+          p_cost_ell: formData.cost_ell,
+          p_cost_wood: formData.cost_wood,
+          p_cost_stone: formData.cost_stone,
+          p_cost_iron: formData.cost_iron,
+          p_cost_gold: formData.cost_gold,
+          p_required_defeated_monsters: formData.required_defeated_monsters,
+          p_required_items: formData.required_items,
+          p_required_building_id: formData.required_building_id || null,
+          p_required_building_level: formData.required_building_level
+        });
+        error = result.error;
+      } else {
+        // Use RPC for insert
+        const result = await supabase.rpc('admin_create_card_upgrade_requirement', {
+          p_wallet_address: accountId,
+          p_card_type: formData.card_type,
+          p_rarity: String(formData.from_rarity),
+          p_from_rarity: formData.from_rarity,
+          p_to_rarity: formData.to_rarity,
+          p_card_class: formData.card_class === 'all' ? null : formData.card_class,
+          p_faction: formData.faction === 'all' ? null : formData.faction,
+          p_success_chance: formData.success_chance,
+          p_cost_ell: formData.cost_ell,
+          p_cost_wood: formData.cost_wood,
+          p_cost_stone: formData.cost_stone,
+          p_cost_iron: formData.cost_iron,
+          p_cost_gold: formData.cost_gold,
+          p_required_defeated_monsters: formData.required_defeated_monsters,
+          p_required_items: formData.required_items,
+          p_required_building_id: formData.required_building_id || null,
+          p_required_building_level: formData.required_building_level
+        });
+        error = result.error;
+      }
 
       if (error) throw error;
 
