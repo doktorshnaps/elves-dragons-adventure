@@ -52,6 +52,21 @@ export const CardUpgradeManager = () => {
     required_building_level: 0
   });
 
+  // Map numeric rarity to text for database constraint
+  const rarityToText = (rarity: number): string => {
+    const rarityMap: { [key: number]: string } = {
+      1: 'common',
+      2: 'uncommon',
+      3: 'rare',
+      4: 'epic',
+      5: 'legendary',
+      6: 'mythic',
+      7: 'mythic',
+      8: 'mythic'
+    };
+    return rarityMap[rarity] || 'common';
+  };
+
   const handleSave = async () => {
     if (!accountId) {
       toast({
@@ -88,7 +103,7 @@ export const CardUpgradeManager = () => {
         const result = await supabase.rpc('admin_create_card_upgrade_requirement', {
           p_wallet_address: accountId,
           p_card_type: formData.card_type,
-          p_rarity: String(formData.from_rarity),
+          p_rarity: rarityToText(formData.from_rarity),
           p_from_rarity: formData.from_rarity,
           p_to_rarity: formData.to_rarity,
           p_card_class: formData.card_class === 'all' ? null : formData.card_class,
