@@ -2262,28 +2262,52 @@ export type Database = {
         Args: { p_admin_wallet_address?: string; p_wallet_address: string }
         Returns: boolean
       }
-      admin_create_card_upgrade_requirement: {
-        Args: {
-          p_card_class?: string
-          p_card_type: string
-          p_cost_ell?: number
-          p_cost_gold?: number
-          p_cost_iron?: number
-          p_cost_stone?: number
-          p_cost_wood?: number
-          p_faction?: string
-          p_from_rarity: number
-          p_rarity: string
-          p_required_building_id?: string
-          p_required_building_level?: number
-          p_required_defeated_monsters?: number
-          p_required_items?: Json
-          p_success_chance?: number
-          p_to_rarity: number
-          p_wallet_address: string
-        }
-        Returns: string
-      }
+      admin_create_card_upgrade_requirement:
+        | {
+            Args: {
+              p_card_class?: string
+              p_card_type: string
+              p_cost_ell?: number
+              p_cost_gold?: number
+              p_cost_iron?: number
+              p_cost_stone?: number
+              p_cost_wood?: number
+              p_faction?: string
+              p_from_rarity: number
+              p_rarity: string
+              p_required_building_id?: string
+              p_required_building_level?: number
+              p_required_defeated_monsters?: number
+              p_required_items?: Json
+              p_success_chance?: number
+              p_to_rarity: number
+              p_wallet_address: string
+            }
+            Returns: string
+          }
+        | {
+            Args: {
+              p_card_class?: string
+              p_card_type: string
+              p_cost_ell?: number
+              p_cost_gold?: number
+              p_cost_iron?: number
+              p_cost_stone?: number
+              p_cost_wood?: number
+              p_faction?: string
+              p_from_rarity: number
+              p_rarity: string
+              p_required_building_id?: string
+              p_required_building_level?: number
+              p_required_defeated_monsters?: number
+              p_required_items?: Json
+              p_success_chance?: number
+              p_to_rarity: number
+              p_upgrade_time_hours?: number
+              p_wallet_address: string
+            }
+            Returns: string
+          }
       admin_delete_card_upgrade_requirement: {
         Args: { p_id: string; p_wallet: string }
         Returns: undefined
@@ -2643,23 +2667,42 @@ export type Database = {
         Args: { p_admin_wallet_address: string; p_rates: Json }
         Returns: boolean
       }
-      admin_update_card_upgrade_requirement: {
-        Args: {
-          p_cost_ell?: number
-          p_cost_gold?: number
-          p_cost_iron?: number
-          p_cost_stone?: number
-          p_cost_wood?: number
-          p_id: string
-          p_required_building_id?: string
-          p_required_building_level?: number
-          p_required_defeated_monsters?: number
-          p_required_items?: Json
-          p_success_chance?: number
-          p_wallet_address: string
-        }
-        Returns: boolean
-      }
+      admin_update_card_upgrade_requirement:
+        | {
+            Args: {
+              p_cost_ell?: number
+              p_cost_gold?: number
+              p_cost_iron?: number
+              p_cost_stone?: number
+              p_cost_wood?: number
+              p_id: string
+              p_required_building_id?: string
+              p_required_building_level?: number
+              p_required_defeated_monsters?: number
+              p_required_items?: Json
+              p_success_chance?: number
+              p_upgrade_time_hours?: number
+              p_wallet_address: string
+            }
+            Returns: boolean
+          }
+        | {
+            Args: {
+              p_cost_ell?: number
+              p_cost_gold?: number
+              p_cost_iron?: number
+              p_cost_stone?: number
+              p_cost_wood?: number
+              p_id: string
+              p_required_building_id?: string
+              p_required_building_level?: number
+              p_required_defeated_monsters?: number
+              p_required_items?: Json
+              p_success_chance?: number
+              p_wallet_address: string
+            }
+            Returns: boolean
+          }
       admin_update_class_multiplier: {
         Args: {
           p_admin_wallet_address?: string
