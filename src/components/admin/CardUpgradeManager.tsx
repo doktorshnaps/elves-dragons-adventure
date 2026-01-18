@@ -49,7 +49,8 @@ export const CardUpgradeManager = () => {
     required_defeated_monsters: 0,
     required_items: [] as Array<{ item_id: string; name: string; quantity: number }>,
     required_building_id: '' as string,
-    required_building_level: 0
+    required_building_level: 0,
+    upgrade_time_hours: 0
   });
 
   // Map numeric rarity to text for database constraint
@@ -95,7 +96,8 @@ export const CardUpgradeManager = () => {
           p_required_defeated_monsters: formData.required_defeated_monsters,
           p_required_items: formData.required_items,
           p_required_building_id: formData.required_building_id || null,
-          p_required_building_level: formData.required_building_level
+          p_required_building_level: formData.required_building_level,
+          p_upgrade_time_hours: formData.upgrade_time_hours
         });
         error = result.error;
       } else {
@@ -117,7 +119,8 @@ export const CardUpgradeManager = () => {
           p_required_defeated_monsters: formData.required_defeated_monsters,
           p_required_items: formData.required_items,
           p_required_building_id: formData.required_building_id || null,
-          p_required_building_level: formData.required_building_level
+          p_required_building_level: formData.required_building_level,
+          p_upgrade_time_hours: formData.upgrade_time_hours
         });
         error = result.error;
       }
@@ -159,7 +162,8 @@ export const CardUpgradeManager = () => {
       required_defeated_monsters: req.required_defeated_monsters || 0,
       required_items: req.required_items || [],
       required_building_id: req.required_building_id || '',
-      required_building_level: req.required_building_level || 0
+      required_building_level: req.required_building_level || 0,
+      upgrade_time_hours: req.upgrade_time_hours || 0
     });
   };
 
@@ -214,7 +218,8 @@ export const CardUpgradeManager = () => {
       required_defeated_monsters: 0,
       required_items: [],
       required_building_id: '',
-      required_building_level: 0
+      required_building_level: 0,
+      upgrade_time_hours: 0
     });
   };
 
