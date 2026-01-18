@@ -2681,7 +2681,6 @@ export type Database = {
               p_required_defeated_monsters?: number
               p_required_items?: Json
               p_success_chance?: number
-              p_upgrade_time_hours?: number
               p_wallet_address: string
             }
             Returns: boolean
@@ -2699,6 +2698,7 @@ export type Database = {
               p_required_defeated_monsters?: number
               p_required_items?: Json
               p_success_chance?: number
+              p_upgrade_time_hours?: number
               p_wallet_address: string
             }
             Returns: boolean
