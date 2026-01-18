@@ -130,6 +130,24 @@ export const Barracks: React.FC<BarracksProps> = ({ barracksLevel, onUpgradeBuil
     );
   };
 
+  // Find matching recipe for a hero
+  const findRecipeForHero = (hero: CardType) => {
+    return allRequirements.find(req => {
+      if (req.card_type !== 'hero' || req.from_rarity !== hero.rarity || !req.is_active) {
+        return false;
+      }
+      // If recipe has specific faction, it must match
+      if (req.faction && req.faction !== hero.faction) {
+        return false;
+      }
+      // If recipe has specific class, it must match
+      if (req.card_class && req.card_class !== hero.cardClass) {
+        return false;
+      }
+      return true;
+    });
+  };
+
   const getUpgradeableHeroes = (): { [key: string]: CardType[] } => {
     const heroes = getAvailableHeroes();
     const grouped: { [key: string]: CardType[] } = {};
@@ -143,20 +161,16 @@ export const Barracks: React.FC<BarracksProps> = ({ barracksLevel, onUpgradeBuil
     });
 
     // Filter groups that have at least 2 heroes, can be upgraded at current barracks level,
-    // AND have a corresponding upgrade recipe in the database
+    // AND have a corresponding upgrade recipe in the database (matching faction and class)
     const filtered: { [key: string]: CardType[] } = {};
     Object.entries(grouped).forEach(([key, heroList]) => {
       const hero = heroList[0];
       const canUpgradeRarity = hero.rarity <= barracksLevel && hero.rarity < 8;
       
-      // Check if there's an active upgrade recipe for this hero type and rarity
-      const hasRecipe = allRequirements.some(req => 
-        req.card_type === 'hero' && 
-        req.from_rarity === hero.rarity && 
-        req.is_active
-      );
+      // Check if there's an active upgrade recipe for this specific hero (considering faction/class)
+      const recipe = findRecipeForHero(hero);
       
-      if (heroList.length >= 2 && canUpgradeRarity && hasRecipe) {
+      if (heroList.length >= 2 && canUpgradeRarity && recipe) {
         filtered[key] = heroList;
       }
     });

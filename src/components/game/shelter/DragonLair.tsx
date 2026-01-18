@@ -140,6 +140,24 @@ export const DragonLair: React.FC<DragonLairProps> = ({ lairLevel, onUpgradeBuil
     );
   };
 
+  // Find matching recipe for a dragon
+  const findRecipeForDragon = (dragon: CardType) => {
+    return allRequirements.find(req => {
+      if (req.card_type !== 'dragon' || req.from_rarity !== dragon.rarity || !req.is_active) {
+        return false;
+      }
+      // If recipe has specific faction, it must match
+      if (req.faction && req.faction !== dragon.faction) {
+        return false;
+      }
+      // If recipe has specific class, it must match
+      if (req.card_class && req.card_class !== dragon.cardClass) {
+        return false;
+      }
+      return true;
+    });
+  };
+
   const getUpgradeableDragons = (): { [key: string]: CardType[] } => {
     const dragons = getAvailableDragons();
     const grouped: { [key: string]: CardType[] } = {};
@@ -153,20 +171,16 @@ export const DragonLair: React.FC<DragonLairProps> = ({ lairLevel, onUpgradeBuil
     });
 
     // Filter groups that have at least 2 dragons, can be upgraded at current lair level,
-    // AND have a corresponding upgrade recipe in the database
+    // AND have a corresponding upgrade recipe in the database (matching faction and class)
     const filtered: { [key: string]: CardType[] } = {};
     Object.entries(grouped).forEach(([key, dragonList]) => {
       const dragon = dragonList[0];
       const canUpgradeRarity = dragon.rarity <= lairLevel && dragon.rarity < 8;
       
-      // Check if there's an active upgrade recipe for this dragon type and rarity
-      const hasRecipe = allRequirements.some(req => 
-        req.card_type === 'dragon' && 
-        req.from_rarity === dragon.rarity && 
-        req.is_active
-      );
+      // Check if there's an active upgrade recipe for this specific dragon (considering faction/class)
+      const recipe = findRecipeForDragon(dragon);
       
-      if (dragonList.length >= 2 && canUpgradeRarity && hasRecipe) {
+      if (dragonList.length >= 2 && canUpgradeRarity && recipe) {
         filtered[key] = dragonList;
       }
     });
