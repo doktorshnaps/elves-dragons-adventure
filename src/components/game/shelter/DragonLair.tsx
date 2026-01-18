@@ -152,12 +152,21 @@ export const DragonLair: React.FC<DragonLairProps> = ({ lairLevel, onUpgradeBuil
       grouped[key].push(dragon);
     });
 
-    // Filter groups that have at least 2 dragons and can be upgraded at current lair level
+    // Filter groups that have at least 2 dragons, can be upgraded at current lair level,
+    // AND have a corresponding upgrade recipe in the database
     const filtered: { [key: string]: CardType[] } = {};
     Object.entries(grouped).forEach(([key, dragonList]) => {
       const dragon = dragonList[0];
       const canUpgradeRarity = dragon.rarity <= lairLevel && dragon.rarity < 8;
-      if (dragonList.length >= 2 && canUpgradeRarity) {
+      
+      // Check if there's an active upgrade recipe for this dragon type and rarity
+      const hasRecipe = allRequirements.some(req => 
+        req.card_type === 'dragon' && 
+        req.from_rarity === dragon.rarity && 
+        req.is_active
+      );
+      
+      if (dragonList.length >= 2 && canUpgradeRarity && hasRecipe) {
         filtered[key] = dragonList;
       }
     });

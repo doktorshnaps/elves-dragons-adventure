@@ -142,12 +142,21 @@ export const Barracks: React.FC<BarracksProps> = ({ barracksLevel, onUpgradeBuil
       grouped[key].push(hero);
     });
 
-    // Filter groups that have at least 2 heroes and can be upgraded at current barracks level
+    // Filter groups that have at least 2 heroes, can be upgraded at current barracks level,
+    // AND have a corresponding upgrade recipe in the database
     const filtered: { [key: string]: CardType[] } = {};
     Object.entries(grouped).forEach(([key, heroList]) => {
       const hero = heroList[0];
       const canUpgradeRarity = hero.rarity <= barracksLevel && hero.rarity < 8;
-      if (heroList.length >= 2 && canUpgradeRarity) {
+      
+      // Check if there's an active upgrade recipe for this hero type and rarity
+      const hasRecipe = allRequirements.some(req => 
+        req.card_type === 'hero' && 
+        req.from_rarity === hero.rarity && 
+        req.is_active
+      );
+      
+      if (heroList.length >= 2 && canUpgradeRarity && hasRecipe) {
         filtered[key] = heroList;
       }
     });
