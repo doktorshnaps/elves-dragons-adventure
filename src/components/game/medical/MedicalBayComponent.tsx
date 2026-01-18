@@ -472,7 +472,10 @@ export const MedicalBayComponent = () => {
                           <div className="flex items-center justify-between text-sm">
                             <span className="text-muted-foreground">Здоровье:</span>
                             <span className="font-medium">
-                              {entry.card_instances?.current_health || 0} / {entry.card_instances?.max_health || 0}
+                              {isReady 
+                                ? `${entry.card_instances?.max_health || 0} / ${entry.card_instances?.max_health || 0}`
+                                : `${entry.card_instances?.current_health || 0} / ${entry.card_instances?.max_health || 0}`
+                              }
                             </span>
                           </div>
                           

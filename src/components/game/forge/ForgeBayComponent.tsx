@@ -311,7 +311,10 @@ export const ForgeBayComponent = ({ forgeLevel }: ForgeBayComponentProps) => {
                           <div className="flex items-center justify-between text-sm">
                             <span className="text-muted-foreground">Броня:</span>
                             <span className="font-medium">
-                              {entry.card_instances?.current_defense || 0} / {entry.card_instances?.max_defense || 0}
+                              {isReady 
+                                ? `${entry.card_instances?.max_defense || 0} / ${entry.card_instances?.max_defense || 0}`
+                                : `${entry.card_instances?.current_defense || 0} / ${entry.card_instances?.max_defense || 0}`
+                              }
                             </span>
                           </div>
                           
