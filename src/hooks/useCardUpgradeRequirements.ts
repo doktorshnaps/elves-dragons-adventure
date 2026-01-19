@@ -1,5 +1,6 @@
-import { useMemo } from 'react';
+import { useMemo, useCallback } from 'react';
 import { useStaticGameDataContext } from '@/contexts/StaticGameDataContext';
+import { useQueryClient } from '@tanstack/react-query';
 
 export interface CardUpgradeRequirement {
   id: string;
@@ -28,6 +29,7 @@ export interface CardUpgradeRequirement {
 
 export const useCardUpgradeRequirements = () => {
   const { data: staticData, isLoading } = useStaticGameDataContext();
+  const queryClient = useQueryClient();
 
   const requirements = useMemo(() => {
     if (!staticData?.card_upgrade_requirements) {
@@ -38,10 +40,11 @@ export const useCardUpgradeRequirements = () => {
 
   const loading = isLoading;
 
-  const reload = async () => {
-    // Реализация reload больше не нужна, так как данные берутся из кеша
-    console.log('Card upgrade requirements reload is no longer needed with static data cache');
-  };
+  // Реальный reload через invalidation React Query cache
+  const reload = useCallback(async () => {
+    console.log('🔄 [CardUpgradeRequirements] Invalidating static game data cache...');
+    await queryClient.invalidateQueries({ queryKey: ['staticGameData'] });
+  }, [queryClient]);
 
   const getRequirement = (
     cardType: 'hero' | 'dragon', 
