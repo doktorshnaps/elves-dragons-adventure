@@ -125,7 +125,29 @@ export const CardUpgradeManager = () => {
         error = result.error;
       }
 
-      if (error) throw error;
+      if (error) {
+        // Обработка ошибки дубликата - найти существующий рецепт и открыть для редактирования
+        if (error.message?.includes('duplicate key') || error.code === '23505') {
+          const existingRecipe = requirements.find(req => 
+            req.card_type === formData.card_type &&
+            (req.card_class || null) === (formData.card_class === 'all' ? null : formData.card_class) &&
+            (req.faction || null) === (formData.faction === 'all' ? null : formData.faction) &&
+            req.from_rarity === formData.from_rarity &&
+            req.to_rarity === formData.to_rarity
+          );
+          
+          if (existingRecipe) {
+            handleEdit(existingRecipe);
+            toast({
+              title: 'Рецепт уже существует',
+              description: 'Открыт существующий рецепт для редактирования',
+            });
+            setSaving(false);
+            return;
+          }
+        }
+        throw error;
+      }
 
       toast({
         title: editingId ? 'Требование обновлено' : 'Требование создано',
@@ -133,7 +155,7 @@ export const CardUpgradeManager = () => {
       });
 
       resetForm();
-      reload();
+      await reload();
     } catch (error: any) {
       toast({
         title: 'Ошибка',

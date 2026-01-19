@@ -12,7 +12,7 @@ import { upgradeCard } from '@/utils/cardUtils';
 import { CardDisplay } from '../CardDisplay';
 import { useItemInstances } from '@/hooks/useItemInstances';
 import { useCards } from '@/hooks/useCards';
-import { Shield, Swords, Clock, Star, ArrowRight, Coins, Sparkles, AlertCircle, BookOpen } from 'lucide-react';
+import { Shield, Swords, Clock, Star, ArrowRight, Coins, Sparkles, AlertCircle, BookOpen, Skull } from 'lucide-react';
 import { useQueryClient } from '@tanstack/react-query';
 import { rollUpgradeSuccess } from '@/utils/upgradeRequirements';
 import { useCardUpgradeRequirements } from '@/hooks/useCardUpgradeRequirements';
@@ -524,6 +524,18 @@ export const Barracks: React.FC<BarracksProps> = ({ barracksLevel, onUpgradeBuil
                             <Sparkles className="w-3 h-3 text-yellow-500" />
                             <span className="text-sm">Шанс успеха: {req.success_chance}%</span>
                           </div>
+                          {req.upgrade_time_hours && req.upgrade_time_hours > 0 && (
+                            <div className="flex items-center gap-2">
+                              <Clock className="w-3 h-3 text-blue-400" />
+                              <span className="text-sm">Время: {req.upgrade_time_hours}ч</span>
+                            </div>
+                          )}
+                          {req.required_defeated_monsters && req.required_defeated_monsters > 0 && (
+                            <div className="flex items-center gap-2">
+                              <Skull className="w-3 h-3 text-red-400" />
+                              <span className="text-sm">Убитых монстров: {req.required_defeated_monsters}</span>
+                            </div>
+                          )}
                         </div>
                         
                         <div className="space-y-2">
