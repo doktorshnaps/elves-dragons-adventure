@@ -669,6 +669,20 @@ export const Barracks: React.FC<BarracksProps> = ({ barracksLevel, onUpgradeBuil
                                        <span className="text-xs font-medium">Шанс успеха: {recipe.success_chance}%</span>
                                      </div>
                                      
+                                     {recipe.upgrade_time_hours && recipe.upgrade_time_hours > 0 && (
+                                       <div className="flex items-center gap-2">
+                                         <Clock className="w-3 h-3 text-blue-400" />
+                                         <span className="text-xs font-medium">Время: {recipe.upgrade_time_hours}ч</span>
+                                       </div>
+                                     )}
+                                     
+                                     {recipe.required_defeated_monsters && recipe.required_defeated_monsters > 0 && (
+                                       <div className="flex items-center gap-2">
+                                         <Skull className="w-3 h-3 text-red-400" />
+                                         <span className="text-xs font-medium">Убитых монстров: {recipe.required_defeated_monsters}</span>
+                                       </div>
+                                     )}
+                                     
                                      <div className="space-y-1">
                                        <div className="text-xs font-medium">Требования:</div>
                                        <div className="flex flex-wrap gap-1">
@@ -678,19 +692,19 @@ export const Barracks: React.FC<BarracksProps> = ({ barracksLevel, onUpgradeBuil
                                              {recipe.cost_ell}
                                            </Badge>
                                          )}
-                                          {recipe.cost_wood && recipe.cost_wood > 0 && (
-                                            <Badge variant="outline" className="text-xs">🪵 {recipe.cost_wood}</Badge>
-                                          )}
-                                          {recipe.cost_stone && recipe.cost_stone > 0 && (
-                                            <Badge variant="outline" className="text-xs">🪨 {recipe.cost_stone}</Badge>
-                                          )}
-                                          {recipe.cost_iron && recipe.cost_iron > 0 && (
-                                            <Badge variant="outline" className="text-xs">⚙️ {recipe.cost_iron}</Badge>
-                                          )}
-                                          {recipe.cost_gold && recipe.cost_gold > 0 && (
-                                            <Badge variant="outline" className="text-xs">💰 {recipe.cost_gold}</Badge>
-                                          )}
-                                        </div>
+                                         {recipe.cost_wood && recipe.cost_wood > 0 && (
+                                           <Badge variant="outline" className="text-xs">🪵 {recipe.cost_wood}</Badge>
+                                         )}
+                                         {recipe.cost_stone && recipe.cost_stone > 0 && (
+                                           <Badge variant="outline" className="text-xs">🪨 {recipe.cost_stone}</Badge>
+                                         )}
+                                         {recipe.cost_iron && recipe.cost_iron > 0 && (
+                                           <Badge variant="outline" className="text-xs">⚙️ {recipe.cost_iron}</Badge>
+                                         )}
+                                         {recipe.cost_gold && recipe.cost_gold > 0 && (
+                                           <Badge variant="outline" className="text-xs">💰 {recipe.cost_gold}</Badge>
+                                         )}
+                                       </div>
                                        
                                        {recipe.required_items && recipe.required_items.length > 0 && (
                                          <div className="flex flex-wrap gap-1 mt-1">
