@@ -3052,6 +3052,10 @@ export type Database = {
         Args: { p_progress_id: string; p_wallet_address: string }
         Returns: Json
       }
+      claim_hero_upgrade: {
+        Args: { p_upgrade_id: string; p_wallet_address: string }
+        Returns: Json
+      }
       claim_quest_and_reward: {
         Args: { p_quest_id: string; p_wallet_address: string }
         Returns: Json
@@ -3677,6 +3681,25 @@ export type Database = {
       }
       resurrect_card_in_medical_bay: {
         Args: { p_card_instance_id: string; p_wallet_address: string }
+        Returns: Json
+      }
+      start_hero_upgrade: {
+        Args: {
+          p_base_card: Json
+          p_card_instance_id_1: string
+          p_card_instance_id_2: string
+          p_cost_ell?: number
+          p_cost_gold?: number
+          p_cost_iron?: number
+          p_cost_stone?: number
+          p_cost_wood?: number
+          p_end_time: number
+          p_from_rarity: number
+          p_item_instance_ids?: string[]
+          p_to_rarity: number
+          p_upgrade_id: string
+          p_wallet_address: string
+        }
         Returns: Json
       }
       stop_healing_without_recovery_v2: {

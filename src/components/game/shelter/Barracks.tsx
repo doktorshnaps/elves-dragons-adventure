@@ -16,6 +16,8 @@ import { Shield, Swords, Clock, Star, ArrowRight, Coins, Sparkles, AlertCircle, 
 import { useQueryClient } from '@tanstack/react-query';
 import { rollUpgradeSuccess } from '@/utils/upgradeRequirements';
 import { useCardUpgradeRequirements } from '@/hooks/useCardUpgradeRequirements';
+import { supabase } from '@/integrations/supabase/client';
+import { useWalletContext } from '@/contexts/WalletConnectContext';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -47,6 +49,7 @@ interface BarracksProps {
 export const Barracks: React.FC<BarracksProps> = ({ barracksLevel, onUpgradeBuilding }) => {
   const { toast } = useToast();
   const { gameData, updateGameData } = useGameData();
+  const { accountId } = useWalletContext();
   const { language } = useLanguage();
   const queryClient = useQueryClient();
   const [selectedHeroes, setSelectedHeroes] = useState<CardType[]>([]);
@@ -76,51 +79,52 @@ export const Barracks: React.FC<BarracksProps> = ({ barracksLevel, onUpgradeBuil
   }, []);
 
   const completeUpgrade = async (upgrade: BarracksUpgrade) => {
-    let sourceHero = (upgrade as any).baseCard || initializedCards.find(c => c.id === upgrade.heroId || c.instanceId === upgrade.heroId);
-
-    // Fallback for legacy upgrades without snapshot
-    if (!sourceHero) {
-      sourceHero = {
-        id: upgrade.heroId,
-        name: 'Неизвестный герой',
-        type: 'character',
-        power: 100,
-        defense: 100,
-        health: 100,
-        magic: 100,
-        rarity: upgrade.fromRarity as any,
-      } as CardType;
+    if (!accountId) {
+      toast({
+        title: 'Ошибка',
+        description: 'Кошелек не подключен',
+        variant: 'destructive'
+      });
+      return;
     }
 
-    // Create upgraded hero from the source snapshot
-    const upgradedHero: CardType = {
-      ...sourceHero,
-      id: Date.now().toString() + Math.random().toString(36).substr(2, 9),
-      rarity: upgrade.toRarity as any,
-      power: Math.floor(sourceHero.power * Math.pow(1.8, upgrade.toRarity - (sourceHero.rarity as number))),
-      defense: Math.floor(sourceHero.defense * Math.pow(1.8, upgrade.toRarity - (sourceHero.rarity as number))),
-      health: Math.floor(sourceHero.health * Math.pow(1.8, upgrade.toRarity - (sourceHero.rarity as number))),
-      magic: Math.floor(sourceHero.magic * Math.pow(1.8, upgrade.toRarity - (sourceHero.rarity as number)))
-    };
+    try {
+      const { data, error } = await supabase.rpc('claim_hero_upgrade', {
+        p_wallet_address: accountId,
+        p_upgrade_id: upgrade.id
+      });
 
-    // Remove old hero (if exists) and add upgraded one
-    const newCards = initializedCards.filter(c => c.id !== upgrade.heroId && c.instanceId !== upgrade.heroId).concat(upgradedHero);
+      if (error) throw error;
 
-    // Remove completed upgrade from Supabase
-    const updatedUpgrades = activeUpgrades.filter(u => u.id !== upgrade.id);
+      const result = data as { success?: boolean; card_name?: string; new_rarity?: number; error?: string } | null;
 
-    await updateGameData({
-      cards: newCards,
-      barracksUpgrades: updatedUpgrades
-    });
+      if (result?.success) {
+        toast({
+          title: '✨ Улучшение завершено!',
+          description: `${result.card_name} улучшен до ${result.new_rarity} ранга!`,
+        });
 
-    toast({
-      title: 'Улучшение завершено!',
-      description: `${sourceHero.name} улучшен до ${upgrade.toRarity} ранга!`,
-    });
-
-    // Invalidate card instances cache to refresh UI
-    await queryClient.invalidateQueries({ queryKey: ['cardInstances'] });
+        // Invalidate caches to refresh UI
+        await Promise.all([
+          queryClient.invalidateQueries({ queryKey: ['cardInstances'] }),
+          queryClient.invalidateQueries({ queryKey: ['gameData'] }),
+          queryClient.invalidateQueries({ queryKey: ['gameDataByWallet'] })
+        ]);
+      } else {
+        toast({
+          title: 'Ошибка',
+          description: result?.error || 'Не удалось забрать улучшенного героя',
+          variant: 'destructive'
+        });
+      }
+    } catch (error: any) {
+      console.error('Error claiming hero upgrade:', error);
+      toast({
+        title: 'Ошибка',
+        description: error.message || 'Не удалось забрать улучшенного героя',
+        variant: 'destructive'
+      });
+    }
   };
 
   const getAvailableHeroes = (): CardType[] => {
@@ -278,6 +282,15 @@ export const Barracks: React.FC<BarracksProps> = ({ barracksLevel, onUpgradeBuil
     const heroes = pendingUpgradeHeroes;
     if (heroes.length < 2) return;
 
+    if (!accountId) {
+      toast({
+        title: 'Ошибка',
+        description: 'Кошелек не подключен',
+        variant: 'destructive'
+      });
+      return;
+    }
+
     const hero1 = heroes[0];
     const hero2 = heroes[1];
     
@@ -293,75 +306,142 @@ export const Barracks: React.FC<BarracksProps> = ({ barracksLevel, onUpgradeBuil
       return;
     }
 
-    // Roll for success
+    // Check instanceId for both heroes
+    if (!hero1.instanceId || !hero2.instanceId) {
+      toast({
+        title: 'Ошибка',
+        description: 'Не удалось определить ID карточек',
+        variant: 'destructive'
+      });
+      return;
+    }
+
+    // Roll for success FIRST (before any changes)
     const isSuccess = Math.random() * 100 < recipe.success_chance;
 
-    // Remove resources and items regardless of success
-    const resourceUpdates: any = {};
-    
-    if (recipe.cost_ell) {
-      resourceUpdates.balance = gameData.balance - recipe.cost_ell;
-    }
-    if (recipe.cost_wood) {
-      resourceUpdates.wood = gameData.wood - recipe.cost_wood;
-    }
-    if (recipe.cost_stone) {
-      resourceUpdates.stone = gameData.stone - recipe.cost_stone;
-    }
-    if (recipe.cost_iron) {
-      resourceUpdates.iron = gameData.iron - recipe.cost_iron;
-    }
-    if (recipe.cost_gold) {
-      resourceUpdates.gold = gameData.gold - recipe.cost_gold;
+    if (!isSuccess) {
+      // Failure: only consume resources and items, keep cards
+      const resourceUpdates: any = {};
+      
+      if (recipe.cost_ell) {
+        resourceUpdates.balance = gameData.balance - recipe.cost_ell;
+      }
+      if (recipe.cost_wood) {
+        resourceUpdates.wood = gameData.wood - recipe.cost_wood;
+      }
+      if (recipe.cost_stone) {
+        resourceUpdates.stone = gameData.stone - recipe.cost_stone;
+      }
+      if (recipe.cost_iron) {
+        resourceUpdates.iron = gameData.iron - recipe.cost_iron;
+      }
+      if (recipe.cost_gold) {
+        resourceUpdates.gold = gameData.gold - recipe.cost_gold;
+      }
+
+      // Remove items
+      const itemsToRemove: string[] = [];
+      recipe.required_items?.forEach((reqItem) => {
+        const instances = getInstancesByItemId(reqItem.item_id);
+        itemsToRemove.push(...instances.slice(0, reqItem.quantity).map(i => i.id));
+      });
+
+      if (itemsToRemove.length > 0) {
+        await removeItemInstancesByIds(itemsToRemove);
+      }
+
+      if (Object.keys(resourceUpdates).length > 0) {
+        await updateGameData(resourceUpdates);
+      }
+
+      toast({
+        title: '❌ Улучшение не удалось',
+        description: `Попытка улучшения провалилась. Герои остались, но ресурсы потрачены.`,
+        variant: 'destructive'
+      });
+
+      setUpgradeDialogOpen(false);
+      setPendingUpgradeHeroes([]);
+      return;
     }
 
-    // Удаляем требуемые предметы из item_instances
+    // Success: start upgrade with timer via RPC
+    const upgradeId = `upgrade_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    const upgradeTimeMs = (recipe.upgrade_time_hours || 0) * 60 * 60 * 1000;
+    const endTime = Date.now() + upgradeTimeMs;
+
+    // Collect item instance IDs to remove
     const itemsToRemove: string[] = [];
     recipe.required_items?.forEach((reqItem) => {
       const instances = getInstancesByItemId(reqItem.item_id);
       itemsToRemove.push(...instances.slice(0, reqItem.quantity).map(i => i.id));
     });
 
-    if (itemsToRemove.length > 0) {
-      await removeItemInstancesByIds(itemsToRemove);
-    }
+    // Create base card snapshot for later upgrade
+    const baseCard = {
+      id: hero1.id,
+      name: hero1.name,
+      type: hero1.type,
+      power: hero1.power,
+      defense: hero1.defense,
+      health: hero1.health,
+      magic: hero1.magic,
+      rarity: hero1.rarity,
+      faction: hero1.faction,
+      cardClass: hero1.cardClass,
+      image: hero1.image,
+      description: hero1.description
+    };
 
-    if (isSuccess) {
-      // Success: create upgraded hero immediately
-      const upgradedHero: CardType = {
-        ...hero1,
-        id: Date.now().toString() + Math.random().toString(36).substr(2, 9),
-        rarity: (hero1.rarity + 1) as any,
-        power: Math.floor(hero1.power * 1.8),
-        defense: Math.floor(hero1.defense * 1.8),
-        health: Math.floor(hero1.health * 1.8),
-        magic: Math.floor(hero1.magic * 1.8)
-      };
-
-      // Remove both heroes and add upgraded one
-      const newCards = initializedCards
-        .filter(c => c.id !== hero1.id && c.id !== hero2.id && c.instanceId !== hero1.instanceId && c.instanceId !== hero2.instanceId)
-        .concat(upgradedHero);
-
-      await updateGameData({
-        ...resourceUpdates,
-        cards: newCards
+    try {
+      const { data, error } = await supabase.rpc('start_hero_upgrade', {
+        p_wallet_address: accountId,
+        p_card_instance_id_1: hero1.instanceId,
+        p_card_instance_id_2: hero2.instanceId,
+        p_upgrade_id: upgradeId,
+        p_from_rarity: hero1.rarity as number,
+        p_to_rarity: (hero1.rarity as number) + 1,
+        p_end_time: endTime,
+        p_base_card: baseCard,
+        p_cost_ell: recipe.cost_ell || 0,
+        p_cost_wood: recipe.cost_wood || 0,
+        p_cost_stone: recipe.cost_stone || 0,
+        p_cost_iron: recipe.cost_iron || 0,
+        p_cost_gold: recipe.cost_gold || 0,
+        p_item_instance_ids: itemsToRemove
       });
 
-      toast({
-        title: '✨ Улучшение успешно!',
-        description: `${hero1.name} улучшен до ${hero1.rarity + 1} ранга!`,
-      });
+      if (error) throw error;
 
-      // Invalidate card instances cache to refresh UI
-      await queryClient.invalidateQueries({ queryKey: ['cardInstances'] });
-    } else {
-      // Failure: heroes stay, but resources are consumed
-      await updateGameData(resourceUpdates);
+      const result = data as { success?: boolean; error?: string; upgrade_id?: string } | null;
 
+      if (result?.success) {
+        toast({
+          title: '✨ Улучшение запущено!',
+          description: upgradeTimeMs > 0 
+            ? `${hero1.name} будет улучшен через ${recipe.upgrade_time_hours}ч. Заберите героя когда таймер закончится.`
+            : `${hero1.name} улучшается. Заберите героя во вкладке "Активные".`,
+        });
+
+        // Invalidate caches to refresh UI
+        await Promise.all([
+          queryClient.invalidateQueries({ queryKey: ['cardInstances'] }),
+          queryClient.invalidateQueries({ queryKey: ['gameData'] }),
+          queryClient.invalidateQueries({ queryKey: ['gameDataByWallet'] }),
+          queryClient.invalidateQueries({ queryKey: ['itemInstances'] })
+        ]);
+      } else {
+        toast({
+          title: 'Ошибка',
+          description: result?.error || 'Не удалось начать улучшение',
+          variant: 'destructive'
+        });
+      }
+    } catch (error: any) {
+      console.error('Error starting hero upgrade:', error);
       toast({
-        title: '❌ Улучшение не удалось',
-        description: `Попытка улучшения провалилась. Герои остались, но ресурсы потрачены.`,
+        title: 'Ошибка',
+        description: error.message || 'Не удалось начать улучшение',
         variant: 'destructive'
       });
     }
@@ -876,12 +956,21 @@ export const Barracks: React.FC<BarracksProps> = ({ barracksLevel, onUpgradeBuil
                         ⚠️ Шанс успеха: {recipe.success_chance}%
                       </p>
                       <p className="text-xs">
-                        <strong>При успехе:</strong> Герои объединятся в улучшенного героя {hero.rarity + 1} ранга.
+                        <strong>При успехе:</strong> Герои и ресурсы будут потрачены, улучшенный герой появится 
+                        {recipe.upgrade_time_hours && recipe.upgrade_time_hours > 0 
+                          ? ` через ${recipe.upgrade_time_hours}ч. Заберите его во вкладке "Активные".`
+                          : ' сразу во вкладке "Активные".'}
                       </p>
                       <p className="text-xs mt-1">
                         <strong>При неудаче:</strong> Герои останутся, но все ресурсы и предметы будут потрачены.
                       </p>
                     </div>
+                    {recipe.upgrade_time_hours && recipe.upgrade_time_hours > 0 && (
+                      <div className="flex items-center gap-2 text-sm text-blue-500">
+                        <Clock className="w-4 h-4" />
+                        <span>Время улучшения: {recipe.upgrade_time_hours}ч</span>
+                      </div>
+                    )}
                     <p className="text-sm">
                       Будет потрачено: {[
                         recipe.cost_ell > 0 && `Монеты: ${recipe.cost_ell}`,
