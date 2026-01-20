@@ -2,13 +2,20 @@ import { useToast } from '@/hooks/use-toast';
 import { generateDungeonOpponents } from '@/dungeons/dungeonManager';
 import { calculateTeamStats } from '@/utils/cardUtils';
 import { DungeonType } from '@/constants/dungeons';
+import { useGameStore } from '@/stores/gameStore';
 
+/**
+ * РЕФАКТОРИНГ: Убрана запись в localStorage
+ * Состояние боя сохраняется только в Zustand
+ */
 export const useBattleStateInitializer = () => {
   const { toast } = useToast();
+  const setBattleState = useGameStore((state) => state.setBattleState);
 
   const initializeBattleState = async (selectedDungeon: DungeonType, balance: number) => {
-    const savedCards = localStorage.getItem('gameCards');
-    const cards = savedCards ? JSON.parse(savedCards) : [];
+    // Получаем карты из Zustand selectedTeam
+    const selectedTeam = useGameStore.getState().selectedTeam || [];
+    const cards = selectedTeam.map((pair: any) => pair.hero).filter(Boolean);
     const teamStats = calculateTeamStats(cards);
 
     const opponents = await generateDungeonOpponents(selectedDungeon, 1);
@@ -27,7 +34,9 @@ export const useBattleStateInitializer = () => {
       selectedDungeon
     };
 
-    localStorage.setItem('battleState', JSON.stringify(battleState));
+    // Сохраняем только в Zustand (не в localStorage)
+    setBattleState(battleState);
+    
     return battleState;
   };
 

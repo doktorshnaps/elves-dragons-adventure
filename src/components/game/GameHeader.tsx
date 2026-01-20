@@ -8,6 +8,7 @@ import { TeamStatsModal } from "./TeamStatsModal";
 import { useToast } from "@/hooks/use-toast";
 import { useLanguage } from "@/hooks/useLanguage";
 import { t } from "@/utils/translations";
+import { useGameStore } from "@/stores/gameStore";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -34,20 +35,13 @@ export const GameHeader = ({
   const navigate = useNavigate();
   const { language } = useLanguage();
   const [showStats, setShowStats] = useState(false);
-  const [hasActiveBattle, setHasActiveBattle] = useState(false);
   const { toast } = useToast();
-
-  useEffect(() => {
-    const battleState = localStorage.getItem('battleState');
-    if (battleState) {
-      const state = JSON.parse(battleState);
-      if (state.playerStats.health > 0) {
-        setHasActiveBattle(true);
-      }
-    } else {
-      setHasActiveBattle(false);
-    }
-  }, []);
+  
+  // Получаем состояние боя из Zustand вместо localStorage
+  const battleState = useGameStore((state) => state.battleState);
+  const activeBattleInProgress = useGameStore((state) => state.activeBattleInProgress);
+  
+  const hasActiveBattle = activeBattleInProgress && battleState?.playerStats?.health > 0;
 
   const handleCloseStats = () => {
     setShowStats(false);

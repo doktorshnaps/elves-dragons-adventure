@@ -2,6 +2,7 @@ import React, { Component, ErrorInfo, ReactNode } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { AlertTriangle } from 'lucide-react';
+import { useGameStore } from '@/stores/gameStore';
 
 interface Props {
   children: ReactNode;
@@ -12,6 +13,13 @@ interface State {
   hasError: boolean;
   error?: Error;
 }
+
+// Функция для сброса боя через Zustand (вызывается из class component)
+const clearBattleFromZustand = () => {
+  const { clearTeamBattleState, clearBattleState } = useGameStore.getState();
+  clearTeamBattleState();
+  clearBattleState();
+};
 
 export class ErrorBoundary extends Component<Props, State> {
   constructor(props: Props) {
@@ -34,8 +42,8 @@ export class ErrorBoundary extends Component<Props, State> {
       }
 
       return (
-        <div className="min-h-screen flex items-center justify-center p-4 bg-game-background">
-          <Card className="p-6 bg-game-surface border-game-accent max-w-md w-full">
+        <div className="min-h-screen flex items-center justify-center bg-game-background p-4">
+          <Card className="max-w-md w-full p-6 bg-game-surface border-game-accent">
             <div className="text-center space-y-4">
               <AlertTriangle className="w-12 h-12 text-red-500 mx-auto" />
               <h2 className="text-xl font-bold text-game-accent">Что-то пошло не так</h2>
@@ -46,11 +54,8 @@ export class ErrorBoundary extends Component<Props, State> {
                 <Button 
                   variant="outline"
                   onClick={() => {
-                    try {
-                      localStorage.removeItem('teamBattleState');
-                      localStorage.removeItem('activeBattleInProgress');
-                      localStorage.removeItem('battleState');
-                    } catch {}
+                    // Очищаем состояние боя через Zustand
+                    clearBattleFromZustand();
                   }}
                 >
                   Сбросить бой

@@ -2,32 +2,33 @@ import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
 import { PlayerStats } from '@/types/battle';
+import { useGameStore } from '@/stores/gameStore';
 
+/**
+ * РЕФАКТОРИНГ: Убрано чтение из localStorage
+ * Состояние боя проверяется через playerStats пропс и Zustand
+ */
 export const usePlayerHealthCheck = (playerStats: PlayerStats | null) => {
   const navigate = useNavigate();
   const { toast } = useToast();
+  const clearBattleState = useGameStore((state) => state.clearBattleState);
 
   useEffect(() => {
-    const checkBattleState = () => {
-      const currentState = localStorage.getItem('battleState');
-      if (!currentState) return;
-
-      const state = JSON.parse(currentState);
-      if (state.playerStats?.health <= 0) {
-        toast({
-          title: "Поражение!",
-          description: "Ваш герой пал в бою.",
-          variant: "destructive",
-          duration: 2000
-        });
-        
-        localStorage.removeItem('battleState');
-        setTimeout(() => {
-          navigate('/menu');
-        }, 2000);
-      }
-    };
-
-    checkBattleState();
-  }, [playerStats?.health, navigate, toast]);
+    // Проверяем здоровье напрямую через пропс
+    if (playerStats && playerStats.health <= 0) {
+      toast({
+        title: "Поражение!",
+        description: "Ваш герой пал в бою.",
+        variant: "destructive",
+        duration: 2000
+      });
+      
+      // Очищаем состояние боя в Zustand
+      clearBattleState();
+      
+      setTimeout(() => {
+        navigate('/menu');
+      }, 2000);
+    }
+  }, [playerStats?.health, navigate, toast, clearBattleState]);
 };

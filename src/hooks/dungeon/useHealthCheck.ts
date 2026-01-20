@@ -1,35 +1,25 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useGameStore } from "@/stores/gameStore";
 
+interface PlayerHealth {
+  current: number;
+  max: number;
+}
+
+/**
+ * РЕФАКТОРИНГ: Убрано чтение из localStorage
+ * Состояние здоровья берётся из Zustand battleState
+ */
 export const useHealthCheck = () => {
+  const battleState = useGameStore((state) => state.battleState);
+  
   const [playerHealth, setPlayerHealth] = useState<PlayerHealth>(() => {
-    const savedState = localStorage.getItem('battleState');
-    if (savedState) {
-      try {
-        const state = JSON.parse(savedState);
-        if (state && state.playerStats) {
-          return {
-            current: state.playerStats.health,
-            max: state.playerStats.maxHealth
-          };
-        }
-      } catch (e) {
-        console.error('Error parsing battleState:', e);
-      }
-    }
-    
-    // Default values if no valid state exists
-    const savedCards = localStorage.getItem('gameCards');
-    if (savedCards) {
-      try {
-        const cards = JSON.parse(savedCards);
-        const totalHealth = cards.reduce((sum: number, card: any) => sum + (card.health || 0), 0);
-        return {
-          current: totalHealth,
-          max: totalHealth
-        };
-      } catch (e) {
-        console.error('Error parsing gameCards:', e);
-      }
+    // Получаем начальное значение из Zustand
+    if (battleState?.playerStats) {
+      return {
+        current: battleState.playerStats.health || 100,
+        max: battleState.playerStats.maxHealth || 100
+      };
     }
     
     // Fallback default values
@@ -39,6 +29,16 @@ export const useHealthCheck = () => {
     };
   });
 
+  // Обновляем при изменении battleState в Zustand
+  useEffect(() => {
+    if (battleState?.playerStats) {
+      setPlayerHealth({
+        current: battleState.playerStats.health || 100,
+        max: battleState.playerStats.maxHealth || 100
+      });
+    }
+  }, [battleState]);
+
   const isHealthTooLow = playerHealth.current < playerHealth.max * 0.2;
 
   return {
@@ -46,8 +46,3 @@ export const useHealthCheck = () => {
     isHealthTooLow
   };
 };
-
-interface PlayerHealth {
-  current: number;
-  max: number;
-}
