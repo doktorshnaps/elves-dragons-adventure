@@ -3,37 +3,23 @@ import { supabase } from '@/integrations/supabase/client';
 import { useWalletContext } from '@/contexts/WalletConnectContext';
 
 interface RealTimeSyncOptions {
-  onGameDataChange?: (payload: any) => void;
+  // РЕФАКТОРИНГ: Удалены дублирующиеся подписки
+  // onGameDataChange - используется в GameDataContext.tsx
+  // onCardInstanceChange - используется в useCardInstances.ts  
+  // onShopInventoryChange - используется в useShopRealtime.ts
   onMarketplaceChange?: (payload: any) => void;
-  onShopInventoryChange?: (payload: any) => void;
-  onCardInstanceChange?: (payload: any) => void;
 }
 
 export const useRealTimeSync = (options: RealTimeSyncOptions) => {
   const { accountId } = useWalletContext();
 
-  const setupGameDataChannel = useCallback(() => {
-    if (!accountId || !options.onGameDataChange) return null;
-
-    const channel = supabase
-      .channel('game-data-changes')
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'game_data',
-          filter: `wallet_address=eq.${accountId}`
-        },
-        (payload) => {
-          console.log('Real-time game data change:', payload);
-          options.onGameDataChange?.(payload);
-        }
-      )
-      .subscribe();
-
-    return channel;
-  }, [accountId, options.onGameDataChange]);
+  // РЕФАКТОРИНГ Phase 5.1: Удалены дублирующиеся подписки
+  // game_data: подписка есть в GameDataContext.tsx
+  // card_instances: подписка есть в useCardInstances.ts
+  // shop_inventory: подписка есть в useShopRealtime.ts
+  // 
+  // Этот хук теперь используется только для централизованного управления
+  // подписками на таблицы, которые НЕ имеют собственных провайдеров
 
   const setupMarketplaceChannel = useCallback(() => {
     if (!options.onMarketplaceChange) return null;
@@ -57,57 +43,9 @@ export const useRealTimeSync = (options: RealTimeSyncOptions) => {
     return channel;
   }, [options.onMarketplaceChange]);
 
-  const setupShopInventoryChannel = useCallback(() => {
-    if (!options.onShopInventoryChange) return null;
-
-    const channel = supabase
-      .channel('shop-inventory-changes')
-      .on(
-        'postgres_changes',
-        {
-          event: 'UPDATE',
-          schema: 'public',
-          table: 'shop_inventory'
-        },
-        (payload) => {
-          console.log('Real-time shop inventory change:', payload);
-          options.onShopInventoryChange?.(payload);
-        }
-      )
-      .subscribe();
-
-    return channel;
-  }, [options.onShopInventoryChange]);
-
-  const setupCardInstanceChannel = useCallback(() => {
-    if (!accountId || !options.onCardInstanceChange) return null;
-
-    const channel = supabase
-      .channel('card-instance-changes')
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'card_instances',
-          filter: `wallet_address=eq.${accountId}`
-        },
-        (payload) => {
-          console.log('Real-time card instance change:', payload);
-          options.onCardInstanceChange?.(payload);
-        }
-      )
-      .subscribe();
-
-    return channel;
-  }, [accountId, options.onCardInstanceChange]);
-
   useEffect(() => {
     const channels = [
-      setupGameDataChannel(),
-      setupMarketplaceChannel(),
-      setupShopInventoryChannel(),
-      setupCardInstanceChannel()
+      setupMarketplaceChannel()
     ].filter(Boolean);
 
     return () => {
@@ -117,11 +55,10 @@ export const useRealTimeSync = (options: RealTimeSyncOptions) => {
         }
       });
     };
-  }, [setupGameDataChannel, setupMarketplaceChannel, setupShopInventoryChannel, setupCardInstanceChannel]);
+  }, [setupMarketplaceChannel]);
 
   // Функция для принудительной синхронизации
   const forceSync = useCallback(async () => {
-    // Эта функция будет реализована в основном хуке
     console.log('Force sync requested');
   }, []);
 

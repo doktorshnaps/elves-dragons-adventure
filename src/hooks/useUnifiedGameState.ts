@@ -144,26 +144,11 @@ export const useUnifiedGameState = (): UnifiedGameState => {
   //   });
   // }, [updateMutation, retryOperation]);
 
-  // Real-time синхронизация
+  // Real-time синхронизация (только marketplace - остальные подписки в своих провайдерах)
   const { forceSync } = useRealTimeSync({
-    onGameDataChange: (payload) => {
-      if (payload.eventType === 'UPDATE' && payload.new) {
-        const newData = transformServerData(payload.new);
-        queryClient.setQueryData([GAME_DATA_KEY, accountId], newData);
-        updateData(newData);
-      }
-    },
     onMarketplaceChange: () => {
       // Инвалидируем кэш маркетплейса
       queryClient.invalidateQueries({ queryKey: ['marketplace'] });
-    },
-    onShopInventoryChange: () => {
-      // Инвалидируем кэш магазина
-      queryClient.invalidateQueries({ queryKey: ['shopInventory'] });
-    },
-    onCardInstanceChange: () => {
-      // Инвалидируем кэш экземпляров карт
-      queryClient.invalidateQueries({ queryKey: ['cardInstances'] });
     }
   });
 

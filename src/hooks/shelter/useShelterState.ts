@@ -679,15 +679,7 @@ export const useShelterState = () => {
 
     const updatedWorkers = [...activeWorkers, newWorker];
     
-    // Сохраняем в localStorage для быстрой синхронизации
-    try {
-      localStorage.setItem('activeWorkers', JSON.stringify(updatedWorkers));
-      // Cache invalidated via gameState.actions.batchUpdate below
-    } catch (e) {
-      console.error('Failed to save crafting worker to localStorage', e);
-    }
-
-    // КРИТИЧНО: Сохраняем в базу данных через gameState
+    // КРИТИЧНО: Сохраняем ТОЛЬКО в базу данных через gameState (без localStorage)
     try {
       await gameState.actions.batchUpdate({ activeWorkers: updatedWorkers });
       console.log('✅ Crafting worker saved to database');
@@ -742,15 +734,7 @@ export const useShelterState = () => {
           w => !(w.task === 'crafting' && w.building === 'workshop' && now >= w.startTime + w.duration)
         );
         
-        // Сохраняем в localStorage
-        try {
-          localStorage.setItem('activeWorkers', JSON.stringify(updatedWorkers));
-          // Cache invalidated via gameState.actions.batchUpdate below
-        } catch (e) {
-          console.error('Failed to update localStorage', e);
-        }
-        
-        // КРИТИЧНО: Обновляем в базе данных
+        // КРИТИЧНО: Обновляем ТОЛЬКО в базе данных (без localStorage)
         try {
           await gameState.actions.batchUpdate({ activeWorkers: updatedWorkers });
           console.log('✅ Completed crafts removed from database');

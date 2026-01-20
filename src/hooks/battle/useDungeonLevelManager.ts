@@ -3,6 +3,7 @@ import { useToast } from '@/hooks/use-toast';
 import { PlayerStats } from '@/types/battle';
 import { generateDungeonOpponents } from '@/dungeons/dungeonManager';
 import { DungeonType } from '@/constants/dungeons';
+import { useGameStore } from '@/stores/gameStore';
 
 export const useDungeonLevelManager = (
   playerStats: PlayerStats | null,
@@ -42,7 +43,8 @@ export const useDungeonLevelManager = (
       currentDungeonLevel: nextLevel,
       selectedDungeon
     };
-    localStorage.setItem('battleState', JSON.stringify(battleState));
+    // Сохраняем состояние боя только в Zustand (не в localStorage)
+    useGameStore.getState().setBattleState(battleState);
     
     toast({
       title: "Переход на следующий уровень",
