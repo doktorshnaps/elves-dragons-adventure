@@ -86,27 +86,13 @@ export const DungeonSearchDialog = ({
   const [pendingDungeon, setPendingDungeon] = useState<DungeonType | null>(null);
 
   React.useEffect(() => {
-    // 1. Проверяем состояние из Zustand store
+    // 1. Проверяем состояние из Zustand store (единственный источник истины)
     if (teamBattleState?.selectedDungeon) {
       setActiveDungeon(teamBattleState.selectedDungeon);
       return;
     }
     
-    // 2. Проверяем localStorage на случай, если пользователь вышел из боя
-    try {
-      const storedState = localStorage.getItem('teamBattleState');
-      if (storedState) {
-        const parsed = JSON.parse(storedState);
-        if (parsed?.selectedDungeon) {
-          setActiveDungeon(parsed.selectedDungeon);
-          return;
-        }
-      }
-    } catch (e) {
-      console.error('Error parsing teamBattleState from localStorage:', e);
-    }
-    
-    // 3. Проверяем активную сессию из БД через localStorage (синхронизируется через useDungeonSync)
+    // 2. Проверяем активную сессию из БД через localStorage (синхронизируется через useDungeonSync)
     try {
       const localSession = localStorage.getItem('activeDungeonSession');
       if (localSession) {

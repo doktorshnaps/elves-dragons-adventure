@@ -604,9 +604,9 @@ export const useTeamBattle = (dungeonType: DungeonType, initialLevel: number = 1
       variant: "destructive"
     });
 
-    // Clear all timeouts and reset battle state immediately
-    localStorage.removeItem('teamBattleState');
-    localStorage.removeItem('activeBattleInProgress');
+    // Clear battle state in Zustand (not localStorage)
+    const { clearTeamBattleState } = useGameStore.getState();
+    clearTeamBattleState();
     
     startTransition(() => {
       setBattleState(prev => ({
@@ -618,8 +618,9 @@ export const useTeamBattle = (dungeonType: DungeonType, initialLevel: number = 1
   };
 
   const resetBattle = () => {
-    localStorage.removeItem('teamBattleState');
-    localStorage.removeItem('activeBattleInProgress');
+    // Clear battle state in Zustand (not localStorage)
+    const { clearTeamBattleState } = useGameStore.getState();
+    clearTeamBattleState();
     startTransition(() => {
       setBattleState(prev => ({
         ...prev,

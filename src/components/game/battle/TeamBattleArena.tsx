@@ -272,9 +272,7 @@ export const TeamBattleArena: React.FC<TeamBattleArenaProps> = ({
       
       // Fallback: старая логика без сохранения состояния
       await endDungeonSession();
-      localStorage.removeItem('battleState');
-      localStorage.removeItem('teamBattleState');
-      localStorage.removeItem('activeBattleInProgress');
+      // Очищаем состояние через Zustand (не localStorage)
       navigate('/dungeons');
     }
   };

@@ -7,6 +7,7 @@ import { useActiveDungeonSessions } from './useActiveDungeonSessions';
 import { useToast } from './use-toast';
 import { useQueryClient } from '@tanstack/react-query';
 import { useGameEvents } from '@/contexts/GameEventsContext';
+import { useGameStore } from '@/stores/gameStore';
 
 interface ActiveDungeonSession {
   device_id: string;
@@ -89,10 +90,11 @@ export const useDungeonSync = () => {
     if (!hasThisDevice && localSession) {
       try {
         localStorage.removeItem('activeDungeonSession');
-        localStorage.removeItem('teamBattleState');
-        localStorage.removeItem('activeBattleInProgress');
-        localStorage.removeItem('battleState');
         localStorage.removeItem('currentClaimKey');
+        // Очищаем Zustand вместо localStorage для battle state
+        const { clearTeamBattleState, clearBattleState } = useGameStore.getState();
+        clearTeamBattleState();
+        clearBattleState();
         setLocalSession(null);
         setCurrentClaimKey(null);
         // Используем GameEventsContext вместо window.dispatchEvent
@@ -258,10 +260,11 @@ export const useDungeonSync = () => {
             console.log('🛑 Session DELETE detected for account, forcing local stop & cleanup');
             try {
               localStorage.removeItem('activeDungeonSession');
-              localStorage.removeItem('teamBattleState');
-              localStorage.removeItem('activeBattleInProgress');
-              localStorage.removeItem('battleState');
               localStorage.removeItem('currentClaimKey');
+              // Очищаем Zustand вместо localStorage для battle state
+              const { clearTeamBattleState, clearBattleState } = useGameStore.getState();
+              clearTeamBattleState();
+              clearBattleState();
               setLocalSession(null);
               setCurrentClaimKey(null);
               // Используем GameEventsContext вместо window.dispatchEvent
