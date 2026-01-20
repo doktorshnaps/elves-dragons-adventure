@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { checkActiveBattle, clearActiveBattle, ActiveBattleInfo } from '@/utils/activeBattleChecker';
 import { useToast } from '@/hooks/use-toast';
 import { useGameData } from '@/hooks/useGameData';
+import { useGameEvent } from '@/contexts/GameEventsContext';
 
 interface ActiveBattleWarningProps {
   onBattleCleared?: () => void;
@@ -22,22 +23,19 @@ export const ActiveBattleWarning: React.FC<ActiveBattleWarningProps> = ({ onBatt
     };
 
     checkBattle();
-
-    // Listen for battle reset events
-    const handleBattleReset = () => {
-      setActiveBattleInfo(null);
-      onBattleCleared?.();
-    };
-
-    window.addEventListener('battleReset', handleBattleReset);
     
     // Check periodically in case battle state changes
     const interval = setInterval(checkBattle, 5000);
 
     return () => {
-      window.removeEventListener('battleReset', handleBattleReset);
       clearInterval(interval);
     };
+  }, []);
+
+  // Listen for battle reset events via GameEventsContext
+  useGameEvent('battleReset', () => {
+    setActiveBattleInfo(null);
+    onBattleCleared?.();
   }, [onBattleCleared]);
 
   const handleClearBattle = async () => {

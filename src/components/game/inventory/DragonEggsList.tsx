@@ -10,6 +10,7 @@ import { useCardInstancesContext } from "@/providers/CardInstancesProvider";
 import { OptimizedImage } from "@/components/ui/optimized-image";
 import { useQueryClient } from '@tanstack/react-query';
 import { useWalletContext } from '@/contexts/WalletConnectContext';
+import { useGameEvent } from '@/contexts/GameEventsContext';
 
 interface DragonEggsListProps {
   eggs: DragonEgg[];
@@ -22,22 +23,19 @@ export const DragonEggsList = ({ eggs }: DragonEggsListProps) => {
   const queryClient = useQueryClient();
   const { accountId } = useWalletContext();
 
-  // Слушаем событие начала инкубации
-  React.useEffect(() => {
-    const handleStartIncubation = (event: CustomEvent) => {
-      const { petName } = event.detail;
-      const egg = eggs.find(e => e.petName === petName && !e.incubationStarted);
-      if (egg) {
-        startIncubation(egg.id);
-        toast({ 
-          title: 'Инкубация начата', 
-          description: `${egg.petName} (${egg.rarity}★)` 
-        });
-      }
-    };
-
-    window.addEventListener('startIncubation', handleStartIncubation as EventListener);
-    return () => window.removeEventListener('startIncubation', handleStartIncubation as EventListener);
+  // Слушаем событие начала инкубации через GameEventsContext
+  useGameEvent('startIncubation', (payload) => {
+    const { petName } = payload || {};
+    if (!petName) return;
+    
+    const egg = eggs.find(e => e.petName === petName && !e.incubationStarted);
+    if (egg) {
+      startIncubation(egg.id);
+      toast({ 
+        title: 'Инкубация начата', 
+        description: `${egg.petName} (${egg.rarity}★)` 
+      });
+    }
   }, [eggs, startIncubation, toast]);
 
   const handleHatch = async (egg: DragonEgg) => {

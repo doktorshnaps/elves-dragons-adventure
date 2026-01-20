@@ -5,6 +5,7 @@ import { useWalletContext } from '@/contexts/WalletConnectContext';
 import { useToast } from '@/hooks/use-toast';
 import { Card } from '@/types/cards';
 import { useGameStore } from '@/stores/gameStore';
+import { useGameEvent } from '@/contexts/GameEventsContext';
 
 export interface CardInstance {
   id: string;
@@ -281,15 +282,10 @@ export const useCardInstances = () => {
     }
   }, [accountId, isConnected, cardInstances, queryClient]);
 
-  // Event listener for manual reload trigger
-  useEffect(() => {
-    const handleCardInstancesUpdate = () => {
-      console.log('🔄 Received cardInstancesUpdate event, invalidating card instances cache');
-      queryClient.invalidateQueries({ queryKey: ['cardInstances', accountId] });
-    };
-
-    window.addEventListener('cardInstancesUpdate', handleCardInstancesUpdate);
-    return () => window.removeEventListener('cardInstancesUpdate', handleCardInstancesUpdate);
+  // Event listener for manual reload trigger via GameEventsContext
+  useGameEvent('cardInstancesUpdate', () => {
+    console.log('🔄 Received cardInstancesUpdate event, invalidating card instances cache');
+    queryClient.invalidateQueries({ queryKey: ['cardInstances', accountId] });
   }, [accountId, queryClient]);
 
   // КРИТИЧНО: Подписка на обновления в реальном времени для автоматической синхронизации
