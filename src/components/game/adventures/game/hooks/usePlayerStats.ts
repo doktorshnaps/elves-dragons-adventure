@@ -4,6 +4,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useGameData } from '@/hooks/useGameData';
 import { useCards } from '@/hooks/useCards';
 import { Card } from '@/types/cards';
+import { useGameEvent } from '@/contexts/GameEventsContext';
 
 interface PlayerStats {
   health: number;
@@ -179,9 +180,22 @@ export const usePlayerStats = (initialLevel = 1) => {
       }));
     };
 
-    window.addEventListener('inventoryUpdate', handleInventoryUpdate);
-    return () => window.removeEventListener('inventoryUpdate', handleInventoryUpdate);
-  }, [stats.level, calculateBaseStats, calculateEquipmentBonuses, updateStats, getTeamDefenseSums]);
+  // Re-sync stats on inventory update via GameEventsContext
+  useGameEvent('inventoryUpdate', () => {
+    const equipmentBonuses = calculateEquipmentBonuses();
+    const baseStats = calculateBaseStats();
+    const { currentSum: currentDefSum, maxSum: maxDefSum } = getTeamDefenseSums();
+    
+    updateStats(prev => ({
+      ...prev,
+      power: baseStats.power + equipmentBonuses.power,
+      defense: baseStats.defense + equipmentBonuses.defense,
+      currentDefense: currentDefSum,
+      maxDefense: maxDefSum,
+      maxHealth: baseStats.health + equipmentBonuses.health,
+      health: Math.min(prev.health, baseStats.health + equipmentBonuses.health)
+    }));
+  }, [calculateBaseStats, calculateEquipmentBonuses, updateStats, getTeamDefenseSums]);
 
   // Re-sync current health and defense from cards when cards or team selection change
   useEffect(() => {

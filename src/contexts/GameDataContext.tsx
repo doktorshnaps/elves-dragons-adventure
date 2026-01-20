@@ -8,6 +8,7 @@ import { updateGameDataByWalletThrottled } from '@/utils/updateGameDataThrottle'
 import { localStorageBatcher } from '@/utils/localStorageBatcher';
 import { normalizeCardsHealth } from '@/utils/cardHealthNormalizer';
 import { supabase } from '@/integrations/supabase/client';
+import { useGameEvent } from '@/contexts/GameEventsContext';
 
 interface GameData {
   balance: number;
@@ -295,23 +296,16 @@ export const GameDataProvider = ({ children }: { children: ReactNode }) => {
     };
   }, [accountId, queryClient]);
 
-  // Listen for admin force refetch commands
-  useEffect(() => {
-    const handleForceRefetch = (e: CustomEvent) => {
-      console.log('🔄 [GameDataContext] Force refetch requested for wallet:', e.detail?.wallet);
-      if (!e.detail?.wallet || !accountId) return;
-      
-      // Проверяем, что это наш кошелек (с учетом регистра)
-      if (e.detail.wallet.toLowerCase().trim() === accountId.toLowerCase().trim()) {
-        console.log('✅ [GameDataContext] Refetching game data after admin update');
-        refetch();
-      }
-    };
-
-    window.addEventListener('gameData:forceRefetch', handleForceRefetch as EventListener);
-    return () => {
-      window.removeEventListener('gameData:forceRefetch', handleForceRefetch as EventListener);
-    };
+  // Listen for admin force refetch commands via GameEventsContext
+  useGameEvent('gameDataForceRefetch', (payload) => {
+    console.log('🔄 [GameDataContext] Force refetch requested for wallet:', payload?.wallet);
+    if (!payload?.wallet || !accountId) return;
+    
+    // Проверяем, что это наш кошелек (с учетом регистра)
+    if (payload.wallet.toLowerCase().trim() === accountId.toLowerCase().trim()) {
+      console.log('✅ [GameDataContext] Refetching game data after admin update');
+      refetch();
+    }
   }, [refetch, accountId]);
 
   const updateGameData = useCallback(async (updates: Partial<GameData>) => {

@@ -3,6 +3,7 @@ import { Item } from '@/types/inventory';
 import { useItemInstances } from '@/hooks/useItemInstances';
 import { useToast } from '@/hooks/use-toast';
 import { canEquipItem, getEquipmentSlot } from '@/utils/itemUtils';
+import { useGameEvent } from '@/contexts/GameEventsContext';
 
 /**
  * Hook for managing equipment state and operations (работает с item_instances)
@@ -96,17 +97,10 @@ export const useEquipmentState = () => {
     return inventory.filter(item => item.slot === slot);
   }, [inventory]);
 
-  /**
-   * Sync equipment changes across tabs (через item_instances)
-   */
-  useEffect(() => {
-    const handleEquipmentChange = () => {
-      // Синхронизация происходит через item_instances real-time subscription
-      // Не используем localStorage для инвентаря
-    };
-
-    window.addEventListener('equipmentChange', handleEquipmentChange);
-    return () => window.removeEventListener('equipmentChange', handleEquipmentChange);
+  // Sync equipment changes via GameEventsContext (no-op since item_instances handles it)
+  useGameEvent('equipmentChange', () => {
+    // Синхронизация происходит через item_instances real-time subscription
+    // Не используем localStorage для инвентаря
   }, []);
 
   return {

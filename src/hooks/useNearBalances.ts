@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import * as nearAPI from 'near-api-js';
+import { useGameEvent } from '@/contexts/GameEventsContext';
 
 const { providers, utils } = nearAPI;
 
@@ -180,23 +181,16 @@ export const useNearBalances = (accountId: string | null): NearBalances => {
     fetchBalances();
   }, [accountId, refreshNonce]);
 
-  // Refresh balances on wallet events
-  useEffect(() => {
-    const onWalletChanged = (e: any) => {
-      console.log('🔄 Wallet changed event received for NEAR balances:', e.detail);
-      setRefreshNonce((n) => n + 1);
-    };
-    const onWalletDisconnected = () => {
-      setNearBalance('0');
-      setGtBalance('0');
-    };
-    window.addEventListener('wallet-changed', onWalletChanged as any);
-    window.addEventListener('wallet-disconnected', onWalletDisconnected as any);
-    return () => {
-      window.removeEventListener('wallet-changed', onWalletChanged as any);
-      window.removeEventListener('wallet-disconnected', onWalletDisconnected as any);
-    };
-  }, [accountId]);
+  // Refresh balances on wallet events via GameEventsContext
+  useGameEvent('walletChanged', (payload) => {
+    console.log('🔄 Wallet changed event received for NEAR balances:', payload);
+    setRefreshNonce((n) => n + 1);
+  }, []);
+
+  useGameEvent('walletDisconnected', () => {
+    setNearBalance('0');
+    setGtBalance('0');
+  }, []);
 
   return { nearBalance, gtBalance, loading, error };
 };

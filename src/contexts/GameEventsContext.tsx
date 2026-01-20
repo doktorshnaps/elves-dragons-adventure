@@ -13,8 +13,12 @@ export type GameEventType =
   | 'startIncubation'
   | 'activeWorkers:changed'
   | 'cardInstanceHealthUpdate'
+  | 'cardInstancesUpdate'
   | 'walletChanged'
-  | 'walletDisconnected';
+  | 'walletDisconnected'
+  | 'teamUpdate'
+  | 'gameDataForceRefetch'
+  | 'nftTransferredDuringBattle';
 
 export interface GameEventPayload {
   balance?: number;
@@ -23,6 +27,10 @@ export interface GameEventPayload {
   equipment?: any;
   walletAddress?: string;
   activeWorkers?: any[];
+  team?: any[];
+  wallet?: string;
+  petName?: string;
+  missingNftIds?: string[];
   [key: string]: any;
 }
 

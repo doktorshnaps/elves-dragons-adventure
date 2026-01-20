@@ -6,6 +6,7 @@ import { TeamPair } from '@/components/game/team/DeckSelection';
 import { useToast } from '@/hooks/use-toast';
 import { checkActiveBattle, clearActiveBattle } from '@/utils/activeBattleChecker';
 import { useGameStore } from '@/stores/gameStore';
+import { useGameEvent } from '@/contexts/GameEventsContext';
 
 export const useTeamSelection = () => {
   const { gameData, updateGameData } = useGameData();
@@ -160,19 +161,13 @@ export const useTeamSelection = () => {
     }
   }, [gameData.selectedTeam, cards, updateGameData]);
 
-  // Listen for team updates from NFT cleanup
-  useEffect(() => {
-    const handleTeamUpdate = (event: Event) => {
-      const customEvent = event as CustomEvent;
-      const updatedTeam = customEvent.detail?.team;
-      if (updatedTeam) {
-        console.log('🔄 Received teamUpdate event, updating gameData.selectedTeam');
-        updateGameData({ selectedTeam: updatedTeam });
-      }
-    };
-
-    window.addEventListener('teamUpdate', handleTeamUpdate);
-    return () => window.removeEventListener('teamUpdate', handleTeamUpdate);
+  // Listen for team updates from NFT cleanup via GameEventsContext
+  useGameEvent('teamUpdate', (payload) => {
+    const updatedTeam = payload?.team;
+    if (updatedTeam) {
+      console.log('🔄 Received teamUpdate event, updating gameData.selectedTeam');
+      updateGameData({ selectedTeam: updatedTeam });
+    }
   }, [updateGameData]);
 
   const handlePairSelect = async (hero: CardType, dragon?: CardType) => {

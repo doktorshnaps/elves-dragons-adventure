@@ -9,22 +9,16 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { AlertTriangle } from "lucide-react";
+import { useGameEvent } from '@/contexts/GameEventsContext';
 
 export const NFTTransferModal = () => {
   const [open, setOpen] = useState(false);
   const [missingNftIds, setMissingNftIds] = useState<string[]>([]);
 
-  useEffect(() => {
-    const handleNFTTransferred = (event: CustomEvent) => {
-      setMissingNftIds(event.detail.missingNftIds || []);
-      setOpen(true);
-    };
-
-    window.addEventListener('nftTransferredDuringBattle', handleNFTTransferred as EventListener);
-
-    return () => {
-      window.removeEventListener('nftTransferredDuringBattle', handleNFTTransferred as EventListener);
-    };
+  // Используем GameEventsContext вместо window.addEventListener
+  useGameEvent('nftTransferredDuringBattle', (payload) => {
+    setMissingNftIds(payload?.missingNftIds || []);
+    setOpen(true);
   }, []);
 
   const handleClose = () => {

@@ -3,71 +3,63 @@ import { useCardInstancesContext } from '@/providers/CardInstancesProvider';
 import { Card, CardType } from '@/types/cards';
 
 /**
- * НОВЫЙ ЕДИНЫЙ ИСТОЧНИК ПРАВДЫ ДЛЯ КАРТ
+ * ЕДИНЫЙ ИСТОЧНИК ПРАВДЫ ДЛЯ КАРТ
  * 
  * Все карты берутся ТОЛЬКО из card_instances таблицы.
  * НЕ используйте gameData.cards или gameStore.cards - они deprecated.
  * 
+ * КРИТИЧЕСКОЕ ИСПРАВЛЕНИЕ: Убрана группировка по card_template_id,
+ * которая приводила к потере дубликатов карт.
+ * Теперь каждый card_instance отображается как отдельная карта.
+ * 
  * Usage:
- * const { cards, getCardById, getHeroes, getDragons, loading } = useCards();
+ * const { cards, getCardById, heroes, dragons, loading } = useCards();
  */
 export const useCards = () => {
   const { cardInstances, loading } = useCardInstancesContext();
 
-  // Преобразуем card_instances в Card[] для совместимости с существующим кодом
+  // Преобразуем ВСЕ card_instances в Card[] без группировки
+  // Каждый instance - это отдельная карта с уникальным instanceId
   const cards = useMemo((): Card[] => {
     if (!cardInstances?.length) return [];
 
-    // Группируем по card_template_id и берем самый свежий экземпляр
-    const instancesByTemplate = new Map();
-    
-    cardInstances
+    return cardInstances
       .filter(instance => {
-        // Исключаем рабочих
+        // Исключаем только рабочих
         const cardType = instance.card_type;
         const dataType = (instance.card_data as any)?.type as CardType;
         const isWorker = cardType === 'workers' || (cardType as string) === 'worker' || dataType === 'workers';
         return !isWorker;
       })
-      .forEach(instance => {
-        const templateId = instance.card_template_id;
-        const existing = instancesByTemplate.get(templateId);
+      .map(instance => {
+        const rawCardData = instance.card_data as any;
         
-        // Если дубликат, берем тот, что создан позже
-        if (!existing || new Date(instance.created_at) > new Date(existing.created_at)) {
-          instancesByTemplate.set(templateId, instance);
-        }
+        return {
+          id: rawCardData.id || instance.card_template_id,
+          instanceId: instance.id, // UUID из card_instances - КРИТИЧНО для уникальной идентификации
+          name: rawCardData.name || 'Unknown',
+          type: rawCardData.type || 'character',
+          power: instance.max_power || rawCardData.power || 0,
+          defense: instance.max_defense || rawCardData.defense || 0,
+          health: instance.max_health || rawCardData.health || 100,
+          magic: instance.max_magic || rawCardData.magic || 0,
+          rarity: rawCardData.rarity || 1,
+          cardClass: rawCardData.cardClass,
+          faction: rawCardData.faction,
+          image: rawCardData.image,
+          description: rawCardData.description,
+          isNFT: rawCardData.isNFT,
+          nftContractId: rawCardData.nftContractId,
+          nftTokenId: rawCardData.nftTokenId,
+          // Актуальные значения из card_instances (источник правды)
+          currentHealth: instance.current_health,
+          currentDefense: instance.current_defense,
+          maxDefense: instance.max_defense,
+          lastHealTime: instance.last_heal_time ? new Date(instance.last_heal_time).getTime() : undefined,
+          isInMedicalBay: instance.is_in_medical_bay || false,
+          monsterKills: instance.monster_kills || 0,
+        } as Card;
       });
-
-    return Array.from(instancesByTemplate.values()).map(instance => {
-      const rawCardData = instance.card_data as any;
-      
-      return {
-        id: rawCardData.id || instance.card_template_id,
-        instanceId: instance.id, // UUID из card_instances - КРИТИЧНО для уникальной идентификации
-        name: rawCardData.name || 'Unknown',
-        type: rawCardData.type || 'character',
-        power: instance.max_power || rawCardData.power || 0,
-        defense: instance.max_defense || rawCardData.defense || 0,
-        health: instance.max_health || rawCardData.health || 100,
-        magic: instance.max_magic || rawCardData.magic || 0,
-        rarity: rawCardData.rarity || 1,
-        cardClass: rawCardData.cardClass,
-        faction: rawCardData.faction,
-        image: rawCardData.image,
-        description: rawCardData.description,
-        isNFT: rawCardData.isNFT,
-        nftContractId: rawCardData.nftContractId,
-        nftTokenId: rawCardData.nftTokenId,
-        // Актуальные значения из card_instances (источник правды)
-        currentHealth: instance.current_health,
-        currentDefense: instance.current_defense,
-        maxDefense: instance.max_defense,
-        lastHealTime: instance.last_heal_time ? new Date(instance.last_heal_time).getTime() : undefined,
-        isInMedicalBay: instance.is_in_medical_bay || false,
-        monsterKills: instance.monster_kills || 0,
-      } as Card;
-    });
   }, [cardInstances]);
 
   // Получить карту по ID (template_id или instance_id)
@@ -77,7 +69,7 @@ export const useCards = () => {
     };
   }, [cards]);
 
-  // Получить карту по instance UUID
+  // Получить карту по instance UUID (приоритетный метод)
   const getCardByInstanceId = useMemo(() => {
     return (instanceId: string): Card | undefined => {
       return cards.find(c => c.instanceId === instanceId);
