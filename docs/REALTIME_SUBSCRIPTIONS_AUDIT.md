@@ -6,14 +6,12 @@ Last updated: 2026-01-20
 
 ## Subscription Coverage
 
-### ✅ Tables with Real-time Subscriptions
+### ✅ Tables with Real-time Subscriptions (Consolidated)
 
 | Table | Hook/Component | Events | Filter | Cache Invalidation |
 |-------|---------------|--------|--------|-------------------|
-| `game_data` | `GameDataContext.tsx` | UPDATE | `wallet_address=eq.X` | `gameData` |
-| `game_data` | `useRealTimeSync.ts` | * | `wallet_address=eq.X` | callback |
+| `game_data` | `GameDataContext.tsx` | UPDATE | `wallet_address=eq.X` | React Query setQueryData |
 | `card_instances` | `useCardInstances.ts` | INSERT, UPDATE, DELETE | `wallet_address=eq.X` | `cardInstances` |
-| `card_instances` | `useRealTimeSync.ts` | * | `wallet_address=eq.X` | callback |
 | `item_instances` | `useItemInstances.ts` | * | `wallet_address=eq.X` | `itemInstances` |
 | `shop_inventory` | `useShopDataComplete.ts` | * | none (global) | `shopDataComplete` |
 | `shop_inventory` | `useShopRealtime.ts` | UPDATE | none (global) | local state |
@@ -21,79 +19,66 @@ Last updated: 2026-01-20
 | `active_dungeon_sessions` | `TeamBattlePage.tsx` | DELETE | `account_id=eq.X` | session terminated flag |
 | `marketplace_listings` | `useRealTimeSync.ts` | * | none (global) | callback |
 | `user_quest_progress` | `SocialQuests.tsx` | * | `wallet_address=eq.X` | refetch quests |
-| `hero_base_stats` | `useGameSettings.ts`, `useNFTStatsRecalculation.ts` | UPDATE | none | reload settings |
-| `dragon_base_stats` | `useGameSettings.ts`, `useNFTStatsRecalculation.ts` | UPDATE | none | reload settings |
-| `rarity_multipliers` | `useGameSettings.ts`, `useNFTStatsRecalculation.ts` | UPDATE | none | reload settings |
-| `class_multipliers` | `useGameSettings.ts`, `useNFTStatsRecalculation.ts` | UPDATE | none | reload settings |
+| `hero_base_stats` | `useGameSettings.ts` | UPDATE | none | reload settings |
+| `dragon_base_stats` | `useGameSettings.ts` | UPDATE | none | reload settings |
+| `rarity_multipliers` | `useGameSettings.ts` | UPDATE | none | reload settings |
+| `class_multipliers` | `useGameSettings.ts` | UPDATE | none | reload settings |
 | `dragon_class_multipliers` | `useGameSettings.ts` | UPDATE | none | reload settings |
-
-### ✅ Recently Added Subscriptions
-
-| Table | Hook/Component | Events | Filter | Cache Invalidation |
-|-------|---------------|--------|--------|-------------------|
 | `medical_bay` | `useMedicalBay.ts` | * | `wallet_address=eq.X` | `medicalBay`, `cardInstances` |
 | `forge_bay` | `useForgeBay.ts` | * | `wallet_address=eq.X` | `forgeBay`, `cardInstances` |
 
-### ⚠️ Tables Without Real-time (Potential Gaps)
+### ✅ Duplicate Subscriptions REMOVED (Phase 5.1)
 
-| Table | Used By | Recommended Action |
-|-------|---------|-------------------|
-| `crafting_sessions` | crafting hooks | Add subscription for craft completion |
-| `building_upgrades` | shelter hooks | Add subscription for upgrade completion |
-| `profiles` | profile hooks | Low priority - rarely changes |
+The following subscriptions were removed from `useRealTimeSync.ts` to prevent duplication:
+- `game_data` → now only in `GameDataContext.tsx`
+- `card_instances` → now only in `useCardInstances.ts`
+- `shop_inventory` → now only in `useShopRealtime.ts`
+
+### ⚠️ Tables Without Real-time (Potential Improvements)
+
+| Table | Recommended Action |
+|-------|-------------------|
+| `crafting_sessions` | Add subscription for craft completion |
+| `profiles` | Low priority - rarely changes |
 
 ## Channel Naming Conventions
 
-Current naming is inconsistent:
-- `game-data-changes` ✅
-- `card_instances_changes` ⚠️ (underscore vs hyphen)
-- `item-instances-realtime` ⚠️ (different suffix)
-- `shop-inventory-changes` ✅
-
-**Recommendation**: Standardize to `{table-name}-changes` pattern.
-
-## Duplicate Subscriptions
-
-Some tables have multiple subscriptions:
-1. `game_data`: GameDataContext + useRealTimeSync
-2. `card_instances`: useCardInstances + useRealTimeSync
-3. `shop_inventory`: useShopDataComplete + useShopRealtime
-
-**Impact**: Duplicate websocket connections, redundant cache invalidations.
-
-**Recommendation**: Consolidate into single provider-based subscription per table.
-
-## Cleanup Verification
-
-All subscriptions properly cleanup via:
-```typescript
-return () => {
-  supabase.removeChannel(channel);
-};
-```
-
-## Performance Considerations
-
-1. **Filter usage**: Most user-specific tables correctly use `wallet_address` filter
-2. **Event specificity**: Some use `*` when specific events would reduce traffic
-3. **Debouncing**: No debouncing on rapid changes - consider for high-frequency tables
+| Current | Standardized | Status |
+|---------|-------------|--------|
+| `game-data-changes` | `game-data-changes` | ✅ |
+| `card-instances-changes` | `card-instances-changes` | ✅ |
+| `item-instances-realtime` | `item-instances-changes` | ⚠️ TODO |
+| `shop-inventory-changes` | `shop-inventory-changes` | ✅ |
+| `marketplace-changes` | `marketplace-changes` | ✅ |
+| `medical-bay-changes` | `medical-bay-changes` | ✅ |
+| `forge-bay-changes` | `forge-bay-changes` | ✅ |
 
 ## Integration with invalidationPresets
 
-Real-time subscriptions should use `invalidationPresets` for consistent cache management:
+All Real-time subscriptions should use centralized invalidation presets:
 
 ```typescript
-// Before (direct invalidation)
-queryClient.invalidateQueries({ queryKey: ['cardInstances', accountId] });
-
-// After (using presets)
 import { invalidateByPreset } from '@/utils/invalidationPresets';
-await invalidateByPreset(queryClient, accountId, 'afterBattle');
+
+// In Real-time callback
+const channel = supabase
+  .channel('medical-bay-changes')
+  .on('postgres_changes', { ... }, async (payload) => {
+    await invalidateByPreset(queryClient, accountId, 'afterMedicalBay');
+  })
+  .subscribe();
 ```
+
+## Completed Tasks Checklist
+
+- [x] Remove duplicate subscriptions from `useRealTimeSync.ts`
+- [x] Add Real-time subscription to `useMedicalBay.ts`
+- [x] Add Real-time subscription to `useForgeBay.ts`
+- [x] Update `RealTimeSyncOptions` interface
+- [x] Update `useUnifiedGameState.ts` to work with new API
 
 ## Next Steps
 
-1. [ ] Add missing subscriptions for medical_bay, forge_bay
-2. [ ] Consolidate duplicate subscriptions
-3. [ ] Standardize channel naming
-4. [ ] Integrate invalidationPresets in all subscription handlers
+1. Standardize channel name in `useItemInstances.ts` (`item-instances-realtime` → `item-instances-changes`)
+2. Add subscription for `crafting_sessions` if real-time craft updates are needed
+3. Integrate `invalidationPresets` in all Real-time handlers

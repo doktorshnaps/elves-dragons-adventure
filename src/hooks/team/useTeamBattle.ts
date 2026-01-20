@@ -584,9 +584,9 @@ export const useTeamBattle = (dungeonType: DungeonType, initialLevel: number = 1
     // Очищаем lastRoll при переходе на следующий уровень
     setLastRoll(null);
 
-    // КРИТИЧНО: Сохраняем флаг activeBattleInProgress для предотвращения ре-синхронизации при переходе между уровнями
-    localStorage.setItem('activeBattleInProgress', 'true');
-    console.log('🔄 [LEVEL COMPLETE] Переход на уровень', nextLevel, 'сохраняем activeBattleInProgress=true');
+    // КРИТИЧНО: Сохраняем флаг activeBattleInProgress через Zustand (не localStorage)
+    useGameStore.getState().setActiveBattleInProgress(true);
+    console.log('🔄 [LEVEL COMPLETE] Переход на уровень', nextLevel, 'сохраняем activeBattleInProgress=true (Zustand)');
 
     setBattleState(prev => ({
       ...prev,

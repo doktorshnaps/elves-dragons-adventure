@@ -258,8 +258,8 @@ export const TeamBattleArena: React.FC<TeamBattleArenaProps> = ({
     // Без cleanup: повторные ререндеры не должны сбрасывать таймер на enemy-ходу
   }, [isPlayerTurn, handleEnemyAttack]);
   const handleMenuReturn = () => {
-    // Mark that we're in an active battle for auto-resume
-    localStorage.setItem('activeBattleInProgress', 'true');
+    // Mark that we're in an active battle for auto-resume (Zustand, not localStorage)
+    useGameStore.getState().setActiveBattleInProgress(true);
     navigate('/menu');
   };
   const handleSurrender = async () => {
