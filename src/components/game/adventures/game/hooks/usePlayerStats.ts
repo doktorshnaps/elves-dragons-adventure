@@ -163,27 +163,10 @@ export const usePlayerStats = (initialLevel = 1) => {
     });
   }, [updateGameData]);
 
-  useEffect(() => {
-    const handleInventoryUpdate = () => {
-      const equipmentBonuses = calculateEquipmentBonuses();
-      const baseStats = calculateBaseStats(stats.level);
-      const { currentSum: currentDefSum, maxSum: maxDefSum } = getTeamDefenseSums();
-      
-      updateStats(prev => ({
-        ...prev,
-        power: baseStats.power + equipmentBonuses.power,
-        defense: baseStats.defense + equipmentBonuses.defense,
-        currentDefense: currentDefSum,
-        maxDefense: maxDefSum,
-        maxHealth: baseStats.health + equipmentBonuses.health,
-        health: Math.min(prev.health, baseStats.health + equipmentBonuses.health)
-      }));
-    };
-
   // Re-sync stats on inventory update via GameEventsContext
   useGameEvent('inventoryUpdate', () => {
     const equipmentBonuses = calculateEquipmentBonuses();
-    const baseStats = calculateBaseStats();
+    const baseStats = calculateBaseStats(stats.level);
     const { currentSum: currentDefSum, maxSum: maxDefSum } = getTeamDefenseSums();
     
     updateStats(prev => ({
@@ -195,7 +178,7 @@ export const usePlayerStats = (initialLevel = 1) => {
       maxHealth: baseStats.health + equipmentBonuses.health,
       health: Math.min(prev.health, baseStats.health + equipmentBonuses.health)
     }));
-  }, [calculateBaseStats, calculateEquipmentBonuses, updateStats, getTeamDefenseSums]);
+  }, [stats.level, calculateBaseStats, calculateEquipmentBonuses, updateStats, getTeamDefenseSums]);
 
   // Re-sync current health and defense from cards when cards or team selection change
   useEffect(() => {

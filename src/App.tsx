@@ -54,14 +54,14 @@ function App() {
   return (
     <ErrorBoundary>
       <QueryProvider>
-        <StaticGameDataProvider>
-          <AdminProvider>
-            <WhitelistProvider>
-              <BanStatusProvider>
-                <GameDataProvider>
-                  <CardInstancesProvider>
-                    <ItemInstancesProvider>
-                      <GameEventsProvider>
+        <GameEventsProvider>
+          <StaticGameDataProvider>
+            <AdminProvider>
+              <WhitelistProvider>
+                <BanStatusProvider>
+                  <GameDataProvider>
+                    <CardInstancesProvider>
+                      <ItemInstancesProvider>
                         <BrightnessProvider>
                           <MusicProvider>
                             <LanguageProvider>
@@ -109,14 +109,14 @@ function App() {
                             </LanguageProvider>
                           </MusicProvider>
                         </BrightnessProvider>
-                      </GameEventsProvider>
-                    </ItemInstancesProvider>
-                  </CardInstancesProvider>
-                </GameDataProvider>
-              </BanStatusProvider>
-            </WhitelistProvider>
-          </AdminProvider>
-        </StaticGameDataProvider>
+                      </ItemInstancesProvider>
+                    </CardInstancesProvider>
+                  </GameDataProvider>
+                </BanStatusProvider>
+              </WhitelistProvider>
+            </AdminProvider>
+          </StaticGameDataProvider>
+        </GameEventsProvider>
       </QueryProvider>
     </ErrorBoundary>
   );
