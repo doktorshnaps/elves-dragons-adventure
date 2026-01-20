@@ -1,10 +1,11 @@
-import { useState, useCallback } from 'react';
+import { useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { useWalletContext } from '@/contexts/WalletConnectContext';
 import { useGameData } from '@/hooks/useGameData';
 import { useGameStore } from '@/stores/gameStore';
-import { useQueryClient } from '@tanstack/react-query';
+import { useQueryClient, useQuery } from '@tanstack/react-query';
+import { queryKeys } from '@/config/reactQuery';
 
 interface MedicalBayEntry {
   id: string;
@@ -26,18 +27,21 @@ interface MedicalBayEntry {
 }
 
 export const useMedicalBay = () => {
-  const [medicalBayEntries, setMedicalBayEntries] = useState<MedicalBayEntry[]>([]);
-  const [loading, setLoading] = useState(false);
   const { toast } = useToast();
   const { accountId } = useWalletContext();
   const { gameData, updateGameData } = useGameData();
   const queryClient = useQueryClient();
 
-  const loadMedicalBayEntries = useCallback(async () => {
-    if (!accountId) return;
-
-    try {
-      setLoading(true);
+  // React Query для данных медпункта
+  const { 
+    data: medicalBayEntries = [], 
+    isLoading: loading,
+    refetch 
+  } = useQuery({
+    queryKey: queryKeys.medicalBay(accountId || ''),
+    queryFn: async () => {
+      if (!accountId) return [];
+      
       console.log('🏥 Loading medical bay entries for:', accountId);
       const { data, error } = await supabase
         .rpc('get_medical_bay_entries', { p_wallet_address: accountId });
@@ -64,23 +68,54 @@ export const useMedicalBay = () => {
       })) || [];
 
       console.log('🏥 Loaded medical bay entries:', entries.length);
-      setMedicalBayEntries(entries);
-    } catch (error) {
-      console.error('Error loading medical bay entries:', error);
-      toast({
-        title: "Ошибка",
-        description: "Не удалось загрузить данные медпункта",
-        variant: "destructive"
+      return entries as MedicalBayEntry[];
+    },
+    enabled: !!accountId,
+    staleTime: 2 * 60 * 1000, // 2 минуты
+    gcTime: 10 * 60 * 1000,
+    refetchOnWindowFocus: false,
+  });
+
+  // Real-time подписка на medical_bay
+  useEffect(() => {
+    if (!accountId) return;
+
+    console.log('🏥 [Real-time] Setting up medical_bay subscription for:', accountId);
+    
+    const channel = supabase
+      .channel('medical-bay-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'medical_bay',
+          filter: `wallet_address=eq.${accountId}`
+        },
+        (payload) => {
+          console.log('🏥 [Real-time] medical_bay changed:', payload.eventType);
+          // Инвалидируем кэш для обновления данных
+          queryClient.invalidateQueries({ queryKey: queryKeys.medicalBay(accountId) });
+          // Также обновляем cardInstances т.к. is_in_medical_bay меняется
+          queryClient.invalidateQueries({ queryKey: ['cardInstances', accountId] });
+        }
+      )
+      .subscribe((status) => {
+        console.log('🏥 [Real-time] Subscription status:', status);
       });
-    } finally {
-      setLoading(false);
-    }
-  }, [accountId, toast]);
+
+    return () => {
+      console.log('🏥 [Real-time] Removing medical_bay subscription');
+      supabase.removeChannel(channel);
+    };
+  }, [accountId, queryClient]);
+
+  const loadMedicalBayEntries = useCallback(async () => {
+    await refetch();
+  }, [refetch]);
 
   const placeCardInMedicalBay = useCallback(async (cardInstanceIdOrTemplateId: string) => {
     console.log('🏥 [MEDICAL BAY] placeCardInMedicalBay called with:', cardInstanceIdOrTemplateId);
-    console.log('🏥 [MEDICAL BAY] accountId:', accountId);
-    console.log('🏥 [MEDICAL BAY] gameData.activeWorkers:', gameData?.activeWorkers);
     
     if (!accountId) {
       console.log('🏥 [ERROR] No accountId!');
@@ -91,10 +126,8 @@ export const useMedicalBay = () => {
     const workers = Array.isArray((gameData as any)?.activeWorkers) ? (gameData as any).activeWorkers : [];
     const now = Date.now();
     const hasWorkersInMedical = workers.some((w: any) => w.building === 'medical' && (w.startTime + w.duration) > now);
-    console.log('🏥 [CHECK] hasWorkersInMedical:', hasWorkersInMedical, { workers });
     
     if (!hasWorkersInMedical) {
-      console.log('🏥 [WARN] No workers in medical bay — proceeding with timer-based healing');
       toast({
         title: "Лечение начато",
         description: "Рабочие не назначены — лечение будет идти по таймеру.",
@@ -103,10 +136,8 @@ export const useMedicalBay = () => {
 
     // Проверяем, есть ли активное подземелье через Zustand store
     const isActiveBattle = useGameStore.getState().activeBattleInProgress;
-    console.log('🏥 [CHECK] isActiveBattle:', isActiveBattle);
     
     if (isActiveBattle) {
-      console.log('🏥 [WARN] Active battle flag detected — proceeding with caution');
       toast({
         title: "Внимание",
         description: "Идёт бой. Лечение будет начато, карта будет исключена из команды.",
@@ -114,9 +145,6 @@ export const useMedicalBay = () => {
     }
 
     try {
-      setLoading(true);
-      console.log('🏥 [MEDICAL BAY] Placing card in medical bay:', cardInstanceIdOrTemplateId);
-
       // Пытаемся найти экземпляр карты
       let { data: instance, error: instErr } = await supabase
         .from('card_instances')
@@ -126,52 +154,37 @@ export const useMedicalBay = () => {
       
       // Если не найден по ID, ищем по template_id
       if (!instance || instErr) {
-        console.log('🏥 Card instance not found by ID, searching by template_id...');
-        const { data: instanceByTemplate, error: templateErr } = await supabase
+        const { data: instanceByTemplate } = await supabase
           .from('card_instances')
           .select('id, card_template_id, is_in_medical_bay')
           .eq('card_template_id', cardInstanceIdOrTemplateId)
           .eq('wallet_address', accountId)
           .maybeSingle();
           
-        if (templateErr) {
-          console.warn('🏥 Error finding instance by template:', templateErr);
-        }
-        
         instance = instanceByTemplate;
       }
       
       const templateId = instance?.card_template_id as string | undefined;
       const actualInstanceId = instance?.id || cardInstanceIdOrTemplateId;
       
-      // Защита от дубликатов: если уже в медпункте — выходим
+      // Защита от дубликатов
       if ((instance as any)?.is_in_medical_bay) {
-        console.log('🏥 [GUARD] Card already in medical bay, skipping RPC');
         toast({ title: "Уже лечится", description: "Эта карта уже находится в медпункте." });
-        setLoading(false);
         return;
       }
 
-      // Доп. проверка: ищем активную запись в БД
-      try {
-        const { data: existing, error: existingErr } = await supabase
-          .from('medical_bay')
-          .select('id, is_completed')
-          .eq('wallet_address', accountId)
-          .eq('card_instance_id', actualInstanceId)
-          .eq('is_completed', false)
-          .limit(1);
+      // Проверка активной записи в БД
+      const { data: existing } = await supabase
+        .from('medical_bay')
+        .select('id')
+        .eq('wallet_address', accountId)
+        .eq('card_instance_id', actualInstanceId)
+        .eq('is_completed', false)
+        .limit(1);
 
-        if (!existingErr && existing && existing.length > 0) {
-          console.log('🏥 [GUARD] Active medical bay entry already exists, skipping RPC');
-          toast({ title: "Уже лечится", description: "Эта карта уже находится в медпункте." });
-          setLoading(false);
-          return;
-        } else if (existingErr) {
-          console.warn('🏥 [WARN] Could not verify existing entry:', existingErr.message);
-        }
-      } catch (e) {
-        console.warn('🏥 [WARN] Error while verifying existing entry:', e);
+      if (existing && existing.length > 0) {
+        toast({ title: "Уже лечится", description: "Эта карта уже находится в медпункте." });
+        return;
       }
       
       const { data, error } = await supabase.rpc('add_card_to_medical_bay', {
@@ -180,27 +193,20 @@ export const useMedicalBay = () => {
       });
 
       if (error) throw error;
-      console.log('🏥 Card placed successfully, medical bay ID:', data);
 
-      // Удаляем карту из команды (и из стора), если она там была
+      // Удаляем карту из команды
       if (templateId && gameData.selectedTeam) {
         const updatedTeam = (gameData.selectedTeam as any[])
           .map((pair: any) => {
-            if (pair.hero?.id === templateId) return null; // если герой - удаляем всю пару
-            if (pair.dragon?.id === templateId) return { ...pair, dragon: undefined }; // если дракон - убираем только дракона
+            if (pair.hero?.id === templateId) return null;
+            if (pair.dragon?.id === templateId) return { ...pair, dragon: undefined };
             return pair;
           })
           .filter(Boolean) as any[];
         
         if (updatedTeam.length !== gameData.selectedTeam.length) {
-          console.log('🏥 Removing card from team as it was placed in medical bay');
           await updateGameData({ selectedTeam: updatedTeam });
-          try {
-            const { setSelectedTeam } = useGameStore.getState();
-            setSelectedTeam(updatedTeam);
-          } catch (e) {
-            console.warn('🏥 Could not update local store selectedTeam:', e);
-          }
+          useGameStore.getState().setSelectedTeam(updatedTeam);
         }
       }
 
@@ -209,12 +215,7 @@ export const useMedicalBay = () => {
         description: "Карта помещена в медпункт и удалена из команды",
       });
 
-      // Обновляем список записей медпункта
-      await loadMedicalBayEntries();
-      
-      // Инвалидируем кэш cardInstances для обновления UI
-      await queryClient.invalidateQueries({ queryKey: ['cardInstances', accountId] });
-      
+      // Кэш обновится автоматически через Real-time
       return data;
     } catch (error: any) {
       console.error('Error placing card in medical bay:', error);
@@ -223,47 +224,29 @@ export const useMedicalBay = () => {
         description: error.message || "Не удалось поместить карту в медпункт",
         variant: "destructive"
       });
-    } finally {
-      setLoading(false);
     }
-  }, [accountId, toast, loadMedicalBayEntries, gameData.selectedTeam, updateGameData, queryClient]);
+  }, [accountId, toast, gameData.selectedTeam, updateGameData, gameData]);
 
   const removeCardFromMedicalBay = useCallback(async (cardInstanceId: string) => {
     if (!accountId) return;
 
     try {
-      setLoading(true);
-      
-      console.log('🏥 [MEDICAL BAY] Removing card from medical bay via RPC v2:', cardInstanceId);
-
-      // Используем RPC функцию с SECURITY DEFINER для обхода RLS
       const { data, error } = await supabase
         .rpc('remove_card_from_medical_bay_v2', {
           p_card_instance_id: cardInstanceId,
           p_wallet_address: accountId
         });
 
-      if (error) {
-        console.error('🏥 [MEDICAL BAY] RPC Error:', error);
-        throw error;
-      }
+      if (error) throw error;
 
       const result = data as { success: boolean; current_health: number; was_completed: boolean };
-      console.log('🏥 [MEDICAL BAY] Card successfully removed:', result);
-
-      // ✅ Явно инвалидируем кэш cardInstances для немедленного обновления UI
-      await Promise.all([
-        queryClient.invalidateQueries({ queryKey: ['cardInstances', accountId] }),
-        queryClient.refetchQueries({ queryKey: ['cardInstances', accountId] })
-      ]);
 
       toast({
         title: 'Карта забрана из медпункта',
         description: result.was_completed ? 'Здоровье восстановлено' : 'Лечение отменено',
       });
 
-      // Обновляем список записей медпункта
-      await loadMedicalBayEntries();
+      // Кэш обновится автоматически через Real-time
     } catch (error: any) {
       console.error('Error removing card from medical bay:', error);
       toast({
@@ -271,42 +254,26 @@ export const useMedicalBay = () => {
         description: error.message || 'Не удалось извлечь карту из медпункта',
         variant: 'destructive'
       });
-    } finally {
-      setLoading(false);
     }
-  }, [accountId, toast, loadMedicalBayEntries, queryClient]);
+  }, [accountId, toast]);
 
   const stopHealingWithoutRecovery = useCallback(async (cardInstanceId: string) => {
     if (!accountId) return;
 
     try {
-      setLoading(true);
-      
-      console.log('🏥 [MEDICAL BAY] Stopping healing without recovery via RPC v2:', cardInstanceId);
-      
-      // Используем RPC функцию с SECURITY DEFINER для обхода RLS
-      const { data, error } = await supabase.rpc('stop_healing_without_recovery_v2', {
+      const { error } = await supabase.rpc('stop_healing_without_recovery_v2', {
         p_card_instance_id: cardInstanceId,
         p_wallet_address: accountId
       });
 
-      if (error) {
-        console.error('🏥 [MEDICAL BAY] RPC Error:', error);
-        throw error;
-      }
-
-      console.log('🏥 [MEDICAL BAY] Healing stopped successfully:', data);
+      if (error) throw error;
 
       toast({
         title: "Лечение остановлено",
         description: "Карта удалена из медпункта без восстановления здоровья",
       });
 
-      // Обновляем список записей медпункта
-      await loadMedicalBayEntries();
-      
-      // Инвалидируем кэш cardInstances
-      await queryClient.invalidateQueries({ queryKey: ['cardInstances', accountId] });
+      // Кэш обновится автоматически через Real-time
     } catch (error: any) {
       console.error('Error stopping healing:', error);
       toast({
@@ -314,32 +281,23 @@ export const useMedicalBay = () => {
         description: error.message || "Не удалось остановить лечение",
         variant: "destructive"
       });
-    } finally {
-      setLoading(false);
     }
-  }, [accountId, toast, loadMedicalBayEntries, queryClient]);
+  }, [accountId, toast]);
 
   const processMedicalBayHealing = useCallback(async () => {
     try {
-      console.log('🏥 Processing medical bay healing...');
       const { error } = await supabase.rpc('process_medical_bay_healing');
       if (error) throw error;
-      
-      console.log('🏥 Medical bay healing processed');
       // Данные обновятся автоматически через Real-time подписки
     } catch (error) {
       console.error('🏥 Error processing medical bay healing:', error);
     }
-  }, [loadMedicalBayEntries]);
+  }, []);
 
-  // Воскрешение мёртвой карточки (100 ELL, 1 час, 50% здоровья)
   const resurrectCard = useCallback(async (cardInstanceId: string) => {
     if (!accountId) return null;
 
     try {
-      setLoading(true);
-      console.log('🏥 [RESURRECTION] Starting resurrection for card:', cardInstanceId);
-
       const { data, error } = await supabase.rpc('resurrect_card_in_medical_bay', {
         p_card_instance_id: cardInstanceId,
         p_wallet_address: accountId
@@ -363,16 +321,11 @@ export const useMedicalBay = () => {
         description: "Карточка будет воскрешена через 1 час (стоимость: 100 ELL)",
       });
 
-      // Обновляем баланс в gameData
       if (result.new_balance !== undefined) {
         await updateGameData({ balance: result.new_balance });
       }
 
-      // Обновляем данные
-      await loadMedicalBayEntries();
-      await queryClient.invalidateQueries({ queryKey: ['cardInstances', accountId] });
-      await queryClient.invalidateQueries({ queryKey: ['gameData', accountId] });
-
+      // Кэш обновится автоматически через Real-time
       return result;
     } catch (error: any) {
       console.error('🏥 [RESURRECTION] Error:', error);
@@ -382,19 +335,13 @@ export const useMedicalBay = () => {
         variant: "destructive"
       });
       return null;
-    } finally {
-      setLoading(false);
     }
-  }, [accountId, toast, loadMedicalBayEntries, queryClient, updateGameData]);
+  }, [accountId, toast, updateGameData]);
 
-  // Завершение воскрешения (забрать карточку с 50% здоровья)
   const completeResurrection = useCallback(async (cardInstanceId: string) => {
     if (!accountId) return null;
 
     try {
-      setLoading(true);
-      console.log('🏥 [RESURRECTION] Completing resurrection for card:', cardInstanceId);
-
       const { data, error } = await supabase.rpc('complete_resurrection', {
         p_card_instance_id: cardInstanceId,
         p_wallet_address: accountId
@@ -418,13 +365,7 @@ export const useMedicalBay = () => {
         description: `Здоровье восстановлено до ${result.new_health}/${result.max_health} (50%)`,
       });
 
-      // Обновляем данные
-      await Promise.all([
-        queryClient.invalidateQueries({ queryKey: ['cardInstances', accountId] }),
-        queryClient.refetchQueries({ queryKey: ['cardInstances', accountId] })
-      ]);
-      await loadMedicalBayEntries();
-
+      // Кэш обновится автоматически через Real-time
       return result;
     } catch (error: any) {
       console.error('🏥 [RESURRECTION] Error completing:', error);
@@ -434,10 +375,8 @@ export const useMedicalBay = () => {
         variant: "destructive"
       });
       return null;
-    } finally {
-      setLoading(false);
     }
-  }, [accountId, toast, loadMedicalBayEntries, queryClient]);
+  }, [accountId, toast]);
 
   return {
     medicalBayEntries,

@@ -1,9 +1,10 @@
-import { useState, useCallback } from 'react';
+import { useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { useWalletContext } from '@/contexts/WalletConnectContext';
 import { useGameData } from '@/hooks/useGameData';
-import { useQueryClient } from '@tanstack/react-query';
+import { useQueryClient, useQuery } from '@tanstack/react-query';
+import { queryKeys } from '@/config/reactQuery';
 
 interface ForgeBayEntry {
   id: string;
@@ -25,18 +26,21 @@ interface ForgeBayEntry {
 }
 
 export const useForgeBay = () => {
-  const [forgeBayEntries, setForgeBayEntries] = useState<ForgeBayEntry[]>([]);
-  const [loading, setLoading] = useState(false);
   const { toast } = useToast();
   const { accountId } = useWalletContext();
   const { gameData } = useGameData();
   const queryClient = useQueryClient();
 
-  const loadForgeBayEntries = useCallback(async () => {
-    if (!accountId) return;
-
-    try {
-      setLoading(true);
+  // React Query для данных кузницы
+  const { 
+    data: forgeBayEntries = [], 
+    isLoading: loading,
+    refetch 
+  } = useQuery({
+    queryKey: queryKeys.forgeBay(accountId || ''),
+    queryFn: async () => {
+      if (!accountId) return [];
+      
       console.log('⚒️ Loading forge bay entries for:', accountId);
       const { data, error } = await supabase
         .rpc('get_forge_bay_entries', { p_wallet_address: accountId });
@@ -63,18 +67,51 @@ export const useForgeBay = () => {
       })) || [];
 
       console.log('⚒️ Loaded forge bay entries:', entries.length);
-      setForgeBayEntries(entries);
-    } catch (error) {
-      console.error('Error loading forge bay entries:', error);
-      toast({
-        title: "Ошибка",
-        description: "Не удалось загрузить данные кузницы",
-        variant: "destructive"
+      return entries as ForgeBayEntry[];
+    },
+    enabled: !!accountId,
+    staleTime: 2 * 60 * 1000, // 2 минуты
+    gcTime: 10 * 60 * 1000,
+    refetchOnWindowFocus: false,
+  });
+
+  // Real-time подписка на forge_bay
+  useEffect(() => {
+    if (!accountId) return;
+
+    console.log('⚒️ [Real-time] Setting up forge_bay subscription for:', accountId);
+    
+    const channel = supabase
+      .channel('forge-bay-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'forge_bay',
+          filter: `wallet_address=eq.${accountId}`
+        },
+        (payload) => {
+          console.log('⚒️ [Real-time] forge_bay changed:', payload.eventType);
+          // Инвалидируем кэш для обновления данных
+          queryClient.invalidateQueries({ queryKey: queryKeys.forgeBay(accountId) });
+          // Также обновляем cardInstances т.к. статус карты меняется
+          queryClient.invalidateQueries({ queryKey: ['cardInstances', accountId] });
+        }
+      )
+      .subscribe((status) => {
+        console.log('⚒️ [Real-time] Subscription status:', status);
       });
-    } finally {
-      setLoading(false);
-    }
-  }, [accountId, toast]);
+
+    return () => {
+      console.log('⚒️ [Real-time] Removing forge_bay subscription');
+      supabase.removeChannel(channel);
+    };
+  }, [accountId, queryClient]);
+
+  const loadForgeBayEntries = useCallback(async () => {
+    await refetch();
+  }, [refetch]);
 
   const placeCardInForgeBay = useCallback(async (cardInstanceIdOrTemplateId: string) => {
     console.log('⚒️ [FORGE BAY] placeCardInForgeBay called with:', cardInstanceIdOrTemplateId);
@@ -84,26 +121,12 @@ export const useForgeBay = () => {
       return;
     }
 
-    // Проверяем, есть ли назначенные рабочие в кузницу
-    const getActiveWorkersSafe = () => {
-      const fromState = Array.isArray((gameData as any)?.activeWorkers) ? (gameData as any).activeWorkers : [];
-      if (fromState.length > 0) return fromState;
-      try {
-        const cached = localStorage.getItem('activeWorkers');
-        if (cached) {
-          const parsed = JSON.parse(cached);
-          if (Array.isArray(parsed)) return parsed;
-        }
-      } catch {}
-      return [] as any[];
-    };
-
-    // Проверяем, есть ли назначенные рабочие в кузницу
-    const activeWorkers = getActiveWorkersSafe();
-    console.log('⚒️ [FORGE BAY] activeWorkers:', activeWorkers);
+    // Проверяем рабочих только из gameData (без localStorage)
+    const activeWorkers = Array.isArray((gameData as any)?.activeWorkers) 
+      ? (gameData as any).activeWorkers 
+      : [];
     
     const hasForgeWorkers = activeWorkers.some((worker: any) => worker.building === 'forge');
-    console.log('⚒️ [FORGE BAY] hasForgeWorkers:', hasForgeWorkers);
 
     if (!hasForgeWorkers) {
       toast({
@@ -114,7 +137,7 @@ export const useForgeBay = () => {
       return;
     }
 
-    // Проверяем, не в бою ли игрок
+    // Проверяем состояние боя
     const battleState = (gameData as any)?.battle_state;
     if (battleState && battleState.inBattle) {
       toast({
@@ -126,36 +149,20 @@ export const useForgeBay = () => {
     }
 
     try {
-      setLoading(true);
-      
-      console.log('⚒️ [FORGE] Searching for card:', cardInstanceIdOrTemplateId);
-      console.log('⚒️ [FORGE] accountId (wallet):', accountId);
-      
-      // КРИТИЧНО: Используем RPC get_card_instances_by_wallet вместо прямого запроса
-      // т.к. auth.uid() = NULL и RLS блокирует прямые запросы
+      // Используем RPC для получения карт (обход RLS)
       const { data: allInstances, error: rpcError } = await supabase
         .rpc('get_card_instances_by_wallet', { 
           p_wallet_address: accountId 
         });
       
-      if (rpcError) {
-        console.error('⚒️ [FORGE] RPC error:', rpcError);
-        throw rpcError;
-      }
+      if (rpcError) throw rpcError;
       
-      // Ищем нужную карту среди всех инстансов
       const instance = (allInstances as any[])?.find(
         (ci: any) => ci.id === cardInstanceIdOrTemplateId || ci.card_template_id === cardInstanceIdOrTemplateId
       );
 
-      console.log('⚒️ [FORGE] Found instance via RPC:', { 
-        instance,
-        totalInstances: allInstances?.length
-      });
-
-      // Защита от дубликатов: если уже в кузнице — выходим
+      // Защита от дубликатов
       if (instance?.is_in_medical_bay) {
-        console.log('⚒️ [GUARD] Card already in forge bay, skipping RPC');
         toast({ 
           title: "Уже ремонтируется", 
           description: "Эта карта уже находится в кузнице или медпункте." 
@@ -164,7 +171,6 @@ export const useForgeBay = () => {
       }
 
       if (!instance) {
-        console.error('⚒️ Card instance not found:', cardInstanceIdOrTemplateId);
         toast({
           title: "Карта не найдена",
           description: "Не удалось найти экземпляр карты",
@@ -173,7 +179,7 @@ export const useForgeBay = () => {
         return;
       }
 
-      // Проверяем, есть ли необходимость в ремонте
+      // Проверяем необходимость ремонта
       if (instance.current_defense >= instance.max_defense) {
         toast({
           title: "Броня в порядке",
@@ -185,8 +191,7 @@ export const useForgeBay = () => {
 
       const cardInstanceId = instance.id;
 
-
-      // Удаляем карту из команды перед началом ремонта
+      // Удаляем карту из команды
       const { data: currentData, error: fetchError } = await supabase
         .from('game_data')
         .select('selected_team')
@@ -207,39 +212,22 @@ export const useForgeBay = () => {
       }
 
       // Добавляем карту в кузницу
-      console.log('⚒️ [FORGE] Adding card to forge bay via RPC...');
-      console.log('⚒️ [FORGE] RPC params:', {
-        p_card_instance_id: cardInstanceId,
-        p_repair_hours: 24,
-        p_wallet_address: accountId
-      });
-      
       const { data: entryId, error: addError } = await supabase
         .rpc('add_card_to_forge_bay', {
           p_card_instance_id: cardInstanceId,
           p_repair_hours: 24,
           p_wallet_address: accountId
         });
-
-      console.log('⚒️ [FORGE] RPC result:', { entryId, addError });
       
-      if (addError) {
-        console.error('⚒️ [FORGE] RPC Error:', addError);
-        throw addError;
-      }
-
-      console.log('⚒️ Card added to forge bay:', entryId);
+      if (addError) throw addError;
       
       toast({
         title: "Карта отправлена в кузницу",
         description: "Ремонт брони начался",
       });
 
-      // Обновляем список записей кузницы
-      await loadForgeBayEntries();
-      
-      // Инвалидируем кэш cardInstances для обновления UI
-      await queryClient.invalidateQueries({ queryKey: ['cardInstances', accountId] });
+      // Кэш обновится автоматически через Real-time
+      return entryId;
     } catch (error: any) {
       console.error('⚒️ Error placing card in forge bay:', error);
       toast({
@@ -247,47 +235,29 @@ export const useForgeBay = () => {
         description: error.message || "Не удалось отправить карту в кузницу",
         variant: "destructive"
       });
-    } finally {
-      setLoading(false);
     }
-  }, [accountId, gameData, toast, loadForgeBayEntries, queryClient]);
+  }, [accountId, gameData, toast]);
 
   const removeCardFromForgeBay = useCallback(async (cardInstanceId: string) => {
     if (!accountId) return;
 
     try {
-      setLoading(true);
-      
-      console.log('⚒️ [FORGE] Removing card from forge via RPC v2:', cardInstanceId);
-
-      // Используем RPC функцию с SECURITY DEFINER для обхода RLS
       const { data, error } = await supabase
         .rpc('remove_card_from_forge_bay_v2', {
           p_card_instance_id: cardInstanceId,
           p_wallet_address: accountId
         });
 
-      if (error) {
-        console.error('⚒️ [FORGE] RPC Error:', error);
-        throw error;
-      }
+      if (error) throw error;
 
       const result = data as { success: boolean; current_defense: number; was_completed: boolean };
-      console.log('⚒️ [FORGE] Card successfully removed:', result);
-
-      // ✅ Явно инвалидируем кэш cardInstances для немедленного обновления UI
-      await Promise.all([
-        queryClient.invalidateQueries({ queryKey: ['cardInstances', accountId] }),
-        queryClient.refetchQueries({ queryKey: ['cardInstances', accountId] })
-      ]);
 
       toast({
         title: "Карта забрана из кузницы",
         description: result.was_completed ? "Броня восстановлена" : "Ремонт отменен",
       });
 
-      // Обновляем список записей кузницы
-      await loadForgeBayEntries();
+      // Кэш обновится автоматически через Real-time
     } catch (error: any) {
       console.error('Error removing card from forge bay:', error);
       toast({
@@ -295,43 +265,27 @@ export const useForgeBay = () => {
         description: error.message || "Не удалось забрать карту из кузницы",
         variant: "destructive"
       });
-    } finally {
-      setLoading(false);
     }
-  }, [accountId, toast, loadForgeBayEntries, queryClient]);
+  }, [accountId, toast]);
 
   const stopRepairWithoutRecovery = useCallback(async (cardInstanceId: string) => {
     if (!accountId) return;
 
     try {
-      setLoading(true);
-      
-      console.log('⚒️ [FORGE] Stopping repair without recovery via RPC v2:', cardInstanceId);
-
-      // Используем RPC функцию с SECURITY DEFINER для обхода RLS
-      const { data, error } = await supabase
+      const { error } = await supabase
         .rpc('stop_repair_without_recovery_v2', {
           p_card_instance_id: cardInstanceId,
           p_wallet_address: accountId
         });
 
-      if (error) {
-        console.error('⚒️ [FORGE] RPC Error:', error);
-        throw error;
-      }
-
-      console.log('⚒️ [FORGE] Repair stopped successfully:', data);
+      if (error) throw error;
 
       toast({
         title: "Ремонт остановлен",
         description: "Карта удалена из кузницы без восстановления брони",
       });
 
-      // Обновляем список записей кузницы
-      await loadForgeBayEntries();
-      
-      // Инвалидируем кэш cardInstances
-      await queryClient.invalidateQueries({ queryKey: ['cardInstances', accountId] });
+      // Кэш обновится автоматически через Real-time
     } catch (error: any) {
       console.error('Error stopping repair:', error);
       toast({
@@ -339,10 +293,8 @@ export const useForgeBay = () => {
         description: error.message || "Не удалось остановить ремонт",
         variant: "destructive"
       });
-    } finally {
-      setLoading(false);
     }
-  }, [accountId, toast, loadForgeBayEntries, queryClient]);
+  }, [accountId, toast]);
 
   const processForgeBayRepair = useCallback(async () => {
     try {
@@ -352,7 +304,7 @@ export const useForgeBay = () => {
     } catch (error) {
       console.error('Error processing forge bay repair:', error);
     }
-  }, [loadForgeBayEntries]);
+  }, []);
 
   return {
     forgeBayEntries,

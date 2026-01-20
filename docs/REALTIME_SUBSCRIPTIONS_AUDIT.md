@@ -27,12 +27,17 @@ Last updated: 2026-01-20
 | `class_multipliers` | `useGameSettings.ts`, `useNFTStatsRecalculation.ts` | UPDATE | none | reload settings |
 | `dragon_class_multipliers` | `useGameSettings.ts` | UPDATE | none | reload settings |
 
+### ✅ Recently Added Subscriptions
+
+| Table | Hook/Component | Events | Filter | Cache Invalidation |
+|-------|---------------|--------|--------|-------------------|
+| `medical_bay` | `useMedicalBay.ts` | * | `wallet_address=eq.X` | `medicalBay`, `cardInstances` |
+| `forge_bay` | `useForgeBay.ts` | * | `wallet_address=eq.X` | `forgeBay`, `cardInstances` |
+
 ### ⚠️ Tables Without Real-time (Potential Gaps)
 
 | Table | Used By | Recommended Action |
 |-------|---------|-------------------|
-| `medical_bay` | `useMedicalBay.ts` | Add subscription for heal completion |
-| `forge_bay` | `useForgeBay.ts` | Add subscription for repair completion |
 | `crafting_sessions` | crafting hooks | Add subscription for craft completion |
 | `building_upgrades` | shelter hooks | Add subscription for upgrade completion |
 | `profiles` | profile hooks | Low priority - rarely changes |
