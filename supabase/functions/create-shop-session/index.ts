@@ -25,30 +25,36 @@ const json = (data: unknown, status = 200) =>
     headers: { ...corsHeaders, 'Content-Type': 'application/json' },
   });
 
-// Extract wallet from JWT Authorization header
-function extractWalletFromAuth(req: Request, supabase: any): Promise<string | null> {
-  return new Promise(async (resolve) => {
-    const authHeader = req.headers.get('authorization');
-    if (!authHeader?.startsWith('Bearer ')) {
-      resolve(null);
-      return;
-    }
+// Extract wallet from JWT Authorization header (only for Supabase Auth users)
+// NOTE: This project uses NEAR wallet authentication, so this will typically return null
+// We keep it for future compatibility but skip the auth.getUser call to avoid 403 logs
+async function extractWalletFromAuth(req: Request, supabase: any): Promise<string | null> {
+  const authHeader = req.headers.get('authorization');
+  if (!authHeader?.startsWith('Bearer ')) {
+    return null;
+  }
 
-    const token = authHeader.replace('Bearer ', '');
-    try {
-      const { data: { user }, error } = await supabase.auth.getUser(token);
-      if (error || !user) {
-        resolve(null);
-        return;
-      }
-      // Get wallet from user metadata or identity
-      const wallet = user.user_metadata?.wallet_address || 
-                     user.identities?.[0]?.identity_data?.wallet_address;
-      resolve(wallet || null);
-    } catch {
-      resolve(null);
+  const token = authHeader.replace('Bearer ', '');
+  
+  // Skip Supabase Auth check for NEAR wallet tokens to avoid "missing sub claim" errors
+  // NEAR wallet tokens don't have the JWT structure expected by Supabase Auth
+  if (token.includes('.tg') || token.length < 100) {
+    // This looks like a NEAR wallet address or short token, not a Supabase JWT
+    return null;
+  }
+
+  try {
+    const { data: { user }, error } = await supabase.auth.getUser(token);
+    if (error || !user) {
+      return null;
     }
-  });
+    // Get wallet from user metadata or identity
+    const wallet = user.user_metadata?.wallet_address || 
+                   user.identities?.[0]?.identity_data?.wallet_address;
+    return wallet || null;
+  } catch {
+    return null;
+  }
 }
 
 serve(async (req) => {

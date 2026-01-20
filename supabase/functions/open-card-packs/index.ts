@@ -21,7 +21,9 @@ function json(data: unknown, status = 200) {
   });
 }
 
-// 🔒 Extract wallet from JWT Authorization header
+// 🔒 Extract wallet from JWT Authorization header (only for Supabase Auth users)
+// NOTE: This project uses NEAR wallet authentication, so this will typically return null
+// We skip the auth.getUser call for NEAR tokens to avoid "missing sub claim" 403 errors
 async function extractWalletFromAuth(req: Request, supabase: any): Promise<string | null> {
   const authHeader = req.headers.get('authorization');
   if (!authHeader?.startsWith('Bearer ')) {
@@ -29,12 +31,17 @@ async function extractWalletFromAuth(req: Request, supabase: any): Promise<strin
   }
 
   const token = authHeader.replace('Bearer ', '');
+  
+  // Skip Supabase Auth check for NEAR wallet tokens
+  if (token.includes('.tg') || token.includes('.near') || token.length < 100) {
+    return null;
+  }
+
   try {
     const { data: { user }, error } = await supabase.auth.getUser(token);
     if (error || !user) {
       return null;
     }
-    // Get wallet from user metadata or identity
     const wallet = user.user_metadata?.wallet_address || 
                    user.identities?.[0]?.identity_data?.wallet_address;
     return wallet || null;
