@@ -2155,67 +2155,25 @@ export type Database = {
         Args: { p_admin_wallet_address?: string; p_wallet_address: string }
         Returns: boolean
       }
-      admin_add_balance:
-        | {
-            Args: { p_amount: number; p_target_wallet_address: string }
-            Returns: boolean
-          }
-        | {
-            Args: {
-              p_admin_wallet_address: string
-              p_amount: number
-              p_target_wallet_address: string
-            }
-            Returns: boolean
-          }
-      admin_add_balance_by_id:
-        | {
-            Args: { p_amount: number; p_target_user_id: string }
-            Returns: boolean
-          }
-        | {
-            Args: {
-              p_admin_wallet_address: string
-              p_amount: number
-              p_target_user_id: string
-            }
-            Returns: boolean
-          }
-      admin_add_dungeon_item_drop:
-        | {
-            Args: {
-              p_admin_wallet_address?: string
-              p_drop_chance: number
-              p_dungeon_number: number
-              p_item_template_id: number
-              p_max_dungeon_level: number
-              p_min_dungeon_level: number
-            }
-            Returns: string
-          }
-        | {
-            Args: {
-              p_admin_wallet_address: string
-              p_allowed_monsters?: string[]
-              p_drop_chance: number
-              p_dungeon_number: number
-              p_item_template_id: number
-              p_max_dungeon_level: number
-              p_min_dungeon_level: number
-            }
-            Returns: string
-          }
-        | {
-            Args: {
-              p_allowed_monsters?: string[]
-              p_drop_chance: number
-              p_dungeon_number: number
-              p_item_template_id: number
-              p_max_dungeon_level: number
-              p_min_dungeon_level: number
-            }
-            Returns: string
-          }
+      admin_add_balance: {
+        Args: { p_amount: number; p_target_wallet_address: string }
+        Returns: boolean
+      }
+      admin_add_balance_by_id: {
+        Args: { p_amount: number; p_target_user_id: string }
+        Returns: boolean
+      }
+      admin_add_dungeon_item_drop: {
+        Args: {
+          p_allowed_monsters?: string[]
+          p_drop_chance: number
+          p_dungeon_number: number
+          p_item_template_id: number
+          p_max_dungeon_level: number
+          p_min_dungeon_level: number
+        }
+        Returns: string
+      }
       admin_add_to_whitelist: {
         Args: {
           p_admin_wallet_address?: string
@@ -2232,82 +2190,41 @@ export type Database = {
         }
         Returns: boolean
       }
-      admin_ban_user:
-        | {
-            Args: { p_reason: string; p_target_wallet_address: string }
-            Returns: boolean
-          }
-        | {
-            Args: {
-              p_admin_wallet_address?: string
-              p_reason: string
-              p_target_wallet_address: string
-            }
-            Returns: boolean
-          }
-      admin_ban_user_by_id:
-        | {
-            Args: { p_reason: string; p_target_user_id: string }
-            Returns: boolean
-          }
-        | {
-            Args: {
-              p_admin_wallet_address: string
-              p_reason: string
-              p_target_user_id: string
-            }
-            Returns: boolean
-          }
+      admin_ban_user: {
+        Args: { p_reason: string; p_target_wallet_address: string }
+        Returns: boolean
+      }
+      admin_ban_user_by_id: {
+        Args: { p_reason: string; p_target_user_id: string }
+        Returns: boolean
+      }
       admin_clear_user_card_instances: {
         Args: { p_admin_wallet_address?: string; p_wallet_address: string }
         Returns: boolean
       }
-      admin_create_card_upgrade_requirement:
-        | {
-            Args: {
-              p_card_class?: string
-              p_card_type: string
-              p_cost_ell?: number
-              p_cost_gold?: number
-              p_cost_iron?: number
-              p_cost_stone?: number
-              p_cost_wood?: number
-              p_faction?: string
-              p_from_rarity: number
-              p_rarity: string
-              p_required_building_id?: string
-              p_required_building_level?: number
-              p_required_defeated_monsters?: number
-              p_required_items?: Json
-              p_success_chance?: number
-              p_to_rarity: number
-              p_wallet_address: string
-            }
-            Returns: string
-          }
-        | {
-            Args: {
-              p_card_class?: string
-              p_card_type: string
-              p_cost_ell?: number
-              p_cost_gold?: number
-              p_cost_iron?: number
-              p_cost_stone?: number
-              p_cost_wood?: number
-              p_faction?: string
-              p_from_rarity: number
-              p_rarity: string
-              p_required_building_id?: string
-              p_required_building_level?: number
-              p_required_defeated_monsters?: number
-              p_required_items?: Json
-              p_success_chance?: number
-              p_to_rarity: number
-              p_upgrade_time_hours?: number
-              p_wallet_address: string
-            }
-            Returns: string
-          }
+      admin_create_card_upgrade_requirement: {
+        Args: {
+          p_card_class?: string
+          p_card_type: string
+          p_cost_ell?: number
+          p_cost_gold?: number
+          p_cost_iron?: number
+          p_cost_stone?: number
+          p_cost_wood?: number
+          p_faction?: string
+          p_from_rarity: number
+          p_rarity: string
+          p_required_building_id?: string
+          p_required_building_level?: number
+          p_required_defeated_monsters?: number
+          p_required_items?: Json
+          p_success_chance?: number
+          p_to_rarity: number
+          p_upgrade_time_hours?: number
+          p_wallet_address: string
+        }
+        Returns: string
+      }
       admin_delete_card_upgrade_requirement: {
         Args: { p_id: string; p_wallet: string }
         Returns: undefined
@@ -2320,38 +2237,25 @@ export type Database = {
         Args: { p_admin_wallet_address?: string; p_drop_id: string }
         Returns: boolean
       }
-      admin_delete_item_template:
-        | { Args: { p_item_id: number }; Returns: boolean }
-        | {
-            Args: { p_item_id: number; p_wallet_address: string }
-            Returns: boolean
-          }
+      admin_delete_item_template: {
+        Args: { p_item_id: number }
+        Returns: boolean
+      }
       admin_delete_quest: {
         Args: { p_admin_wallet_address: string; p_id: string }
         Returns: boolean
       }
-      admin_find_user_by_wallet:
-        | {
-            Args: { p_wallet_address: string }
-            Returns: {
-              account_level: number
-              balance: number
-              created_at: string
-              is_banned: boolean
-              user_id: string
-              wallet_address: string
-            }[]
-          }
-        | {
-            Args: { p_admin_wallet_address: string; p_wallet_address: string }
-            Returns: {
-              account_level: number
-              balance: number
-              created_at: string
-              user_id: string
-              wallet_address: string
-            }[]
-          }
+      admin_find_user_by_wallet: {
+        Args: { p_wallet_address: string }
+        Returns: {
+          account_level: number
+          balance: number
+          created_at: string
+          is_banned: boolean
+          user_id: string
+          wallet_address: string
+        }[]
+      }
       admin_get_all_players: {
         Args: never
         Returns: {
@@ -2380,18 +2284,14 @@ export type Database = {
           wallet_address: string
         }[]
       }
-      admin_get_player_cards:
-        | { Args: { p_target_wallet_address: string }; Returns: Json }
-        | {
-            Args: { p_admin_wallet_address: string; p_user_id: string }
-            Returns: Json
-          }
-      admin_get_player_inventory:
-        | { Args: { p_target_wallet_address: string }; Returns: Json }
-        | {
-            Args: { p_admin_wallet_address: string; p_user_id: string }
-            Returns: Json
-          }
+      admin_get_player_cards: {
+        Args: { p_target_wallet_address: string }
+        Returns: Json
+      }
+      admin_get_player_inventory: {
+        Args: { p_target_wallet_address: string }
+        Returns: Json
+      }
       admin_get_player_mgt_balance: {
         Args: {
           p_admin_wallet_address: string
@@ -2413,55 +2313,23 @@ export type Database = {
           wallet_address: string
         }[]
       }
-      admin_get_user_info:
-        | { Args: { p_user_id: string }; Returns: Json }
-        | {
-            Args: { p_admin_wallet_address: string; p_user_id: string }
-            Returns: Json
-          }
-      admin_give_items_to_player:
-        | {
-            Args: {
-              p_admin_wallet_address: string
-              p_items: Json
-              p_target_wallet_address: string
-            }
-            Returns: boolean
-          }
-        | {
-            Args: { p_items: Json; p_target_wallet_address: string }
-            Returns: boolean
-          }
-      admin_give_player_card:
-        | {
-            Args: {
-              p_card_data: Json
-              p_card_template_id: string
-              p_target_wallet_address: string
-            }
-            Returns: string
-          }
-        | {
-            Args: {
-              p_admin_wallet_address: string
-              p_card_data: Json
-              p_user_id: string
-            }
-            Returns: boolean
-          }
-      admin_give_player_item:
-        | {
-            Args: { p_target_wallet_address: string; p_template_id: number }
-            Returns: string
-          }
-        | {
-            Args: {
-              p_admin_wallet_address: string
-              p_item_data: Json
-              p_user_id: string
-            }
-            Returns: boolean
-          }
+      admin_get_user_info: { Args: { p_user_id: string }; Returns: Json }
+      admin_give_items_to_player: {
+        Args: { p_items: Json; p_target_wallet_address: string }
+        Returns: boolean
+      }
+      admin_give_player_card: {
+        Args: {
+          p_card_data: Json
+          p_card_template_id: string
+          p_target_wallet_address: string
+        }
+        Returns: string
+      }
+      admin_give_player_item: {
+        Args: { p_target_wallet_address: string; p_template_id: number }
+        Returns: string
+      }
       admin_insert_building_config: {
         Args: { p_data: Json; p_wallet_address?: string }
         Returns: string
@@ -2596,46 +2464,23 @@ export type Database = {
         }
         Returns: boolean
       }
-      admin_recalculate_all_card_stats:
-        | { Args: never; Returns: Json }
-        | { Args: { p_admin_wallet_address?: string }; Returns: Json }
+      admin_recalculate_all_card_stats: { Args: never; Returns: Json }
       admin_remove_administrator: {
         Args: { p_admin_wallet_address?: string; p_wallet_address: string }
         Returns: boolean
       }
-      admin_remove_player_card:
-        | { Args: { p_card_instance_id: string }; Returns: boolean }
-        | {
-            Args: {
-              p_admin_wallet_address: string
-              p_card_id: string
-              p_user_id: string
-            }
-            Returns: boolean
-          }
-      admin_remove_player_item:
-        | { Args: { p_item_instance_id: string }; Returns: boolean }
-        | {
-            Args: {
-              p_admin_wallet_address: string
-              p_item_id: string
-              p_user_id: string
-            }
-            Returns: boolean
-          }
-      admin_set_player_balance:
-        | {
-            Args: { p_new_balance: number; p_target_wallet_address: string }
-            Returns: boolean
-          }
-        | {
-            Args: {
-              p_admin_wallet_address: string
-              p_balance: number
-              p_user_id: string
-            }
-            Returns: boolean
-          }
+      admin_remove_player_card: {
+        Args: { p_card_instance_id: string }
+        Returns: boolean
+      }
+      admin_remove_player_item: {
+        Args: { p_item_instance_id: string }
+        Returns: boolean
+      }
+      admin_set_player_balance: {
+        Args: { p_new_balance: number; p_target_wallet_address: string }
+        Returns: boolean
+      }
       admin_toggle_maintenance_mode: {
         Args: {
           p_admin_wallet_address?: string
@@ -2644,21 +2489,14 @@ export type Database = {
         }
         Returns: boolean
       }
-      admin_unban_user:
-        | { Args: { p_target_wallet_address: string }; Returns: boolean }
-        | {
-            Args: {
-              p_admin_wallet_address?: string
-              p_target_wallet_address: string
-            }
-            Returns: boolean
-          }
-      admin_unban_user_by_id:
-        | { Args: { p_target_user_id: string }; Returns: boolean }
-        | {
-            Args: { p_admin_wallet_address: string; p_target_user_id: string }
-            Returns: boolean
-          }
+      admin_unban_user: {
+        Args: { p_target_wallet_address: string }
+        Returns: boolean
+      }
+      admin_unban_user_by_id: {
+        Args: { p_target_user_id: string }
+        Returns: boolean
+      }
       admin_update_building_config: {
         Args: { p_id: string; p_update: Json; p_wallet_address?: string }
         Returns: boolean
@@ -3794,85 +3632,10 @@ export type Database = {
         }
         Returns: boolean
       }
-      update_game_data_by_wallet_v2:
-        | {
-            Args: {
-              p_account_experience?: number
-              p_account_level?: number
-              p_active_building_upgrades?: Json
-              p_active_workers?: Json
-              p_adventure_current_monster?: Json
-              p_adventure_player_stats?: Json
-              p_balance?: number
-              p_barracks_upgrades?: Json
-              p_battle_state?: Json
-              p_building_levels?: Json
-              p_cards?: Json
-              p_dragon_eggs?: Json
-              p_dragon_lair_upgrades?: Json
-              p_gold?: number
-              p_initialized?: boolean
-              p_iron?: number
-              p_marketplace_listings?: Json
-              p_max_iron?: number
-              p_max_stone?: number
-              p_max_wood?: number
-              p_selected_team?: Json
-              p_social_quests?: Json
-              p_stone?: number
-              p_stone_last_collection_time?: number
-              p_stone_production_data?: Json
-              p_wallet_address: string
-              p_wood?: number
-              p_wood_last_collection_time?: number
-              p_wood_production_data?: Json
-            }
-            Returns: boolean
-          }
-        | {
-            Args: {
-              p_account_experience?: number
-              p_account_level?: number
-              p_active_building_upgrades?: Json
-              p_active_workers?: Json
-              p_adventure_current_monster?: Json
-              p_adventure_player_stats?: Json
-              p_balance?: number
-              p_barracks_upgrades?: Json
-              p_battle_state?: Json
-              p_building_levels?: Json
-              p_cards?: Json
-              p_dragon_eggs?: Json
-              p_dragon_lair_upgrades?: Json
-              p_expected_version?: number
-              p_force?: boolean
-              p_gold?: number
-              p_initialized?: boolean
-              p_iron?: number
-              p_marketplace_listings?: Json
-              p_max_iron?: number
-              p_max_stone?: number
-              p_max_wood?: number
-              p_selected_team?: Json
-              p_social_quests?: Json
-              p_stone?: number
-              p_stone_last_collection_time?: number
-              p_stone_production_data?: Json
-              p_wallet_address: string
-              p_wood?: number
-              p_wood_last_collection_time?: number
-              p_wood_production_data?: Json
-            }
-            Returns: boolean
-          }
-        | {
-            Args: {
-              p_force?: boolean
-              p_updates: Json
-              p_wallet_address: string
-            }
-            Returns: Json
-          }
+      update_game_data_by_wallet_v2: {
+        Args: { p_force?: boolean; p_updates: Json; p_wallet_address: string }
+        Returns: Json
+      }
       update_resource_production_state_by_wallet: {
         Args: {
           p_is_producing: boolean
