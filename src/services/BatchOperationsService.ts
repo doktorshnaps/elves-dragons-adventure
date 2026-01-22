@@ -187,10 +187,10 @@ class BatchOperationsService {
         if (removeError) throw removeError;
       }
 
-      // Update balance
+      // Update balance using p_updates JSONB parameter
       const { error: balanceError } = await supabase.rpc('update_game_data_by_wallet_v2', {
         p_wallet_address: walletAddress,
-        p_balance: total_earnings
+        p_updates: { balance_add: total_earnings }
       });
 
       if (balanceError) throw balanceError;
@@ -250,10 +250,10 @@ class BatchOperationsService {
 
       if (addError) throw addError;
 
-      // Deduct balance
+      // Deduct balance using p_updates JSONB parameter
       const { error: balanceError } = await supabase.rpc('update_game_data_by_wallet_v2', {
         p_wallet_address: walletAddress,
-        p_balance: -total_cost
+        p_updates: { balance_add: -total_cost }
       });
 
       if (balanceError) throw balanceError;

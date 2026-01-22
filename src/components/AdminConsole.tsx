@@ -231,8 +231,7 @@ export const AdminConsole = () => {
     }
 
     const { error } = await supabase.rpc('admin_unban_user_by_id', {
-      p_target_user_id: userId,
-      p_admin_wallet_address: accountId
+      p_target_user_id: userId
     });
 
     if (error) {
@@ -262,8 +261,7 @@ export const AdminConsole = () => {
     }
 
     const { data, error } = await supabase.rpc('admin_get_user_info', {
-      p_user_id: userId,
-      p_admin_wallet_address: accountId
+      p_user_id: userId
     });
 
     if (error) {
@@ -290,8 +288,7 @@ export const AdminConsole = () => {
     const walletAddress = parts[1];
 
     const { data, error } = await supabase.rpc('admin_find_user_by_wallet', {
-      p_wallet_address: walletAddress,
-      p_admin_wallet_address: accountId
+      p_wallet_address: walletAddress
     });
 
     if (error) {
@@ -323,9 +320,20 @@ export const AdminConsole = () => {
       return;
     }
 
+    // First, get wallet address from user_id
+    const { data: userData } = await supabase
+      .from('game_data')
+      .select('wallet_address')
+      .eq('user_id', userId)
+      .single();
+    
+    if (!userData?.wallet_address) {
+      addOutput('Ошибка: пользователь не найден');
+      return;
+    }
+
     const { data, error } = await supabase.rpc('admin_get_player_cards', {
-      p_user_id: userId,
-      p_admin_wallet_address: accountId
+      p_target_wallet_address: userData.wallet_address
     });
 
     if (error) {
@@ -377,9 +385,20 @@ export const AdminConsole = () => {
       return;
     }
 
+    // First, get wallet address from user_id
+    const { data: userData } = await supabase
+      .from('game_data')
+      .select('wallet_address')
+      .eq('user_id', userId)
+      .single();
+    
+    if (!userData?.wallet_address) {
+      addOutput('Ошибка: пользователь не найден');
+      return;
+    }
+
     const { data, error } = await supabase.rpc('admin_get_player_inventory', {
-      p_user_id: userId,
-      p_admin_wallet_address: accountId
+      p_target_wallet_address: userData.wallet_address
     });
 
     if (error) {
@@ -428,10 +447,21 @@ export const AdminConsole = () => {
       return;
     }
 
+    // First, get wallet address from user_id
+    const { data: userData } = await supabase
+      .from('game_data')
+      .select('wallet_address')
+      .eq('user_id', userId)
+      .single();
+    
+    if (!userData?.wallet_address) {
+      addOutput('Ошибка: пользователь не найден');
+      return;
+    }
+
     const { error } = await supabase.rpc('admin_set_player_balance', {
-      p_user_id: userId,
-      p_balance: amount,
-      p_admin_wallet_address: accountId
+      p_target_wallet_address: userData.wallet_address,
+      p_new_balance: amount
     });
 
     if (error) {
@@ -471,8 +501,7 @@ export const AdminConsole = () => {
     } else {
       const { data: userData, error: userError } = await supabase
         .rpc('admin_find_user_by_wallet', {
-          p_wallet_address: target,
-          p_admin_wallet_address: accountId
+          p_wallet_address: target
         });
 
       if (userError || !userData || userData.length === 0) {
@@ -521,10 +550,22 @@ export const AdminConsole = () => {
       description: dbCard.description
     };
 
+    // Get wallet address for the user
+    const { data: targetUserData } = await supabase
+      .from('game_data')
+      .select('wallet_address')
+      .eq('user_id', userId)
+      .single();
+    
+    if (!targetUserData?.wallet_address) {
+      addOutput('Ошибка: пользователь не найден');
+      return;
+    }
+
     const { error } = await supabase.rpc('admin_give_player_card', {
-      p_user_id: userId,
-      p_card_data: cardData,
-      p_admin_wallet_address: accountId
+      p_target_wallet_address: targetUserData.wallet_address,
+      p_card_template_id: dbCard.name,
+      p_card_data: cardData
     });
 
     if (error) {
@@ -572,10 +613,34 @@ export const AdminConsole = () => {
       image: '/placeholder.svg'
     };
 
+    // Get wallet address for the user
+    const { data: targetUserData } = await supabase
+      .from('game_data')
+      .select('wallet_address')
+      .eq('user_id', userId)
+      .single();
+    
+    if (!targetUserData?.wallet_address) {
+      addOutput('Ошибка: пользователь не найден');
+      return;
+    }
+
+    // Find template by name
+    const { data: templateData } = await supabase
+      .from('item_templates')
+      .select('id')
+      .ilike('name', `%${itemName}%`)
+      .limit(1)
+      .single();
+    
+    if (!templateData?.id) {
+      addOutput(`Ошибка: предмет "${itemName}" не найден в шаблонах`);
+      return;
+    }
+
     const { error } = await supabase.rpc('admin_give_player_item', {
-      p_user_id: userId,
-      p_item_data: itemData,
-      p_admin_wallet_address: accountId
+      p_target_wallet_address: targetUserData.wallet_address,
+      p_template_id: templateData.id
     });
 
     if (error) {
@@ -614,9 +679,7 @@ export const AdminConsole = () => {
     }
 
     const { error } = await supabase.rpc('admin_remove_player_card', {
-      p_user_id: userId,
-      p_card_id: cardId,
-      p_admin_wallet_address: accountId
+      p_card_instance_id: cardId
     });
 
     if (error) {
@@ -647,9 +710,7 @@ export const AdminConsole = () => {
     }
 
     const { error } = await supabase.rpc('admin_remove_player_item', {
-      p_user_id: userId,
-      p_item_id: itemId,
-      p_admin_wallet_address: accountId
+      p_item_instance_id: itemId
     });
 
     if (error) {
