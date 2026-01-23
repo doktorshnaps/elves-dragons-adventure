@@ -1416,6 +1416,36 @@ export type Database = {
         }
         Relationships: []
       }
+      player_teams: {
+        Row: {
+          created_at: string
+          id: string
+          team_data: Json
+          team_type: string
+          tier: number | null
+          updated_at: string
+          wallet_address: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          team_data?: Json
+          team_type: string
+          tier?: number | null
+          updated_at?: string
+          wallet_address: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          team_data?: Json
+          team_type?: string
+          tier?: number | null
+          updated_at?: string
+          wallet_address?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           created_at: string
@@ -3412,6 +3442,14 @@ export type Database = {
         }[]
       }
       get_active_pvp_season: { Args: never; Returns: string }
+      get_all_player_teams: {
+        Args: { p_wallet_address: string }
+        Returns: {
+          team_data: Json
+          team_type: string
+          tier: number
+        }[]
+      }
       get_card_class_drop_rates: {
         Args: never
         Returns: {
@@ -3675,6 +3713,10 @@ export type Database = {
           max_health: number
           monster_kills: number
         }[]
+      }
+      get_or_create_player_team: {
+        Args: { p_team_type: string; p_tier?: number; p_wallet_address: string }
+        Returns: Json
       }
       get_or_create_pvp_rating: {
         Args: { p_wallet_address: string }
@@ -4105,6 +4147,15 @@ export type Database = {
       update_game_data_by_wallet_v2: {
         Args: { p_force?: boolean; p_updates: Json; p_wallet_address: string }
         Returns: Json
+      }
+      update_player_team: {
+        Args: {
+          p_team_data?: Json
+          p_team_type: string
+          p_tier?: number
+          p_wallet_address: string
+        }
+        Returns: boolean
       }
       update_resource_production_state_by_wallet: {
         Args: {
