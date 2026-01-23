@@ -229,9 +229,8 @@ export const usePvP = (walletAddress: string | null) => {
 
     if (!error) {
       toast({ title: "Поиск отменен", description: "Вступительный взнос возвращен" });
-      refetchGameData();
     }
-  }, [walletAddress, queueStatus.queueId, toast, refetchGameData]);
+  }, [walletAddress, queueStatus.queueId, toast]);
 
   // Submit move
   const submitMove = useCallback(async (
@@ -245,13 +244,16 @@ export const usePvP = (walletAddress: string | null) => {
 
     setLoading(true);
 
+    const supabaseUrl = 'https://oimhwdymghkwxznjarkv.supabase.co';
+    const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9pbWh3ZHltZ2hrd3h6bmphcmt2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTQ1MTMxMjEsImV4cCI6MjA3MDA4OTEyMX0.97FbtgxM3nYtzTQWf8TpKqvxJ7h_pvhpBOd0SYRd05k';
+
     const response = await fetch(
-      `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/pvp-submit-move`,
+      `${supabaseUrl}/functions/v1/pvp-submit-move`,
       {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
+          'Authorization': `Bearer ${supabaseKey}`,
           'x-wallet-address': walletAddress
         },
         body: JSON.stringify({
@@ -285,20 +287,22 @@ export const usePvP = (walletAddress: string | null) => {
           ? `Вы получили ${result.reward || 0} ELL` 
           : "Удачи в следующем бою!"
       });
-      refetchGameData();
       loadRating();
     }
 
     return result;
-  }, [walletAddress, toast, refetchGameData, loadRating]);
+  }, [walletAddress, toast, loadRating]);
 
   // Get match status
   const getMatchStatus = useCallback(async (matchId: string) => {
+    const supabaseUrl = 'https://oimhwdymghkwxznjarkv.supabase.co';
+    const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9pbWh3ZHltZ2hrd3h6bmphcmt2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTQ1MTMxMjEsImV4cCI6MjA3MDA4OTEyMX0.97FbtgxM3nYtzTQWf8TpKqvxJ7h_pvhpBOd0SYRd05k';
+    
     const response = await fetch(
-      `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/pvp-match-status?match_id=${matchId}`,
+      `${supabaseUrl}/functions/v1/pvp-match-status?match_id=${matchId}`,
       {
         headers: {
-          'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
+          'Authorization': `Bearer ${supabaseKey}`,
           'x-wallet-address': walletAddress || ''
         }
       }
