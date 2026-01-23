@@ -96,6 +96,44 @@ export const usePvP = (walletAddress: string | null) => {
     }
   }, [walletAddress]);
 
+  // Check if already in queue and restore state
+  const checkExistingQueue = useCallback(async () => {
+    if (!walletAddress) return;
+
+    const { data, error } = await supabase
+      .from('pvp_queue')
+      .select('*')
+      .eq('wallet_address', walletAddress)
+      .eq('status', 'searching')
+      .gt('expires_at', new Date().toISOString())
+      .maybeSingle();
+
+    if (!error && data) {
+      // Restore queue state
+      const joinedAt = new Date(data.joined_at).getTime();
+      const now = Date.now();
+      const elapsedSeconds = Math.floor((now - joinedAt) / 1000);
+
+      setQueueStatus({
+        isSearching: true,
+        queueId: data.id,
+        searchTime: elapsedSeconds,
+        status: 'searching'
+      });
+
+      // Start timer
+      searchTimerRef.current = setInterval(() => {
+        setQueueStatus(prev => ({
+          ...prev,
+          searchTime: prev.searchTime + 1
+        }));
+      }, 1000);
+
+      // Start matchmaking polling
+      startMatchmaking(data.id);
+    }
+  }, [walletAddress]);
+
   // Load active matches
   const loadActiveMatches = useCallback(async () => {
     if (!walletAddress) return;
@@ -156,6 +194,14 @@ export const usePvP = (walletAddress: string | null) => {
     }
 
     const result = data as any;
+    
+    // Handle "Already in queue" - restore queue state
+    if (result?.error === 'Already in queue') {
+      toast({ title: "Вы уже в очереди", description: "Поиск противника продолжается..." });
+      await checkExistingQueue();
+      return true;
+    }
+    
     if (result?.queue_id) {
       setQueueStatus({
         isSearching: true,
@@ -180,7 +226,7 @@ export const usePvP = (walletAddress: string | null) => {
     }
 
     return false;
-  }, [walletAddress, toast]);
+  }, [walletAddress, toast, checkExistingQueue]);
 
   // Start matchmaking process
   const startMatchmaking = useCallback((queueId: string) => {
@@ -351,10 +397,11 @@ export const usePvP = (walletAddress: string | null) => {
     if (walletAddress) {
       loadRating();
       loadActiveMatches();
+      checkExistingQueue(); // Check if already in queue on mount
     }
     
     return () => clearIntervals();
-  }, [walletAddress, loadRating, loadActiveMatches]);
+  }, [walletAddress, loadRating, loadActiveMatches, checkExistingQueue]);
 
   // Subscribe to match updates
   useEffect(() => {
