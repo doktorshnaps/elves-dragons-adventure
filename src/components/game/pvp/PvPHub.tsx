@@ -1,16 +1,15 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { 
   Swords, Trophy, Users, Clock, Coins, 
-  ArrowLeft, Search, X, Loader2, Star
+  ArrowLeft, Search, X, Loader2, Star, AlertTriangle
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { usePvP } from '@/hooks/usePvP';
 import { useWalletContext } from '@/contexts/WalletConnectContext';
-import { useTeamSelection } from '@/hooks/team/useTeamSelection';
+import { usePlayerTeams, TeamPair } from '@/hooks/usePlayerTeams';
 
 const TIER_COLORS: Record<string, string> = {
   bronze: 'bg-amber-700 text-white',
@@ -46,8 +45,31 @@ const RARITY_TIERS = [
 export const PvPHub: React.FC = () => {
   const navigate = useNavigate();
   const { accountId: walletAddress } = useWalletContext();
-  const { selectedPairs, getSelectedTeamStats } = useTeamSelection();
   const [selectedRarityTier, setSelectedRarityTier] = useState(1);
+  
+  // Get PvP team for selected tier from player_teams
+  const { getPvPTeam, loading: teamsLoading, switchTeam } = usePlayerTeams();
+  
+  // Get the team for the currently selected PvP tier
+  const selectedPairs = useMemo(() => {
+    return getPvPTeam(selectedRarityTier);
+  }, [getPvPTeam, selectedRarityTier]);
+  
+  // Calculate team stats from the tier-specific team
+  const teamStats = useMemo(() => {
+    let power = 0, defense = 0, health = 0;
+    selectedPairs.forEach((pair: TeamPair) => {
+      power += pair.hero?.power || 0;
+      defense += pair.hero?.currentDefense || pair.hero?.defense || 0;
+      health += pair.hero?.currentHealth || pair.hero?.health || 0;
+      if (pair.dragon) {
+        power += pair.dragon.power || 0;
+        defense += pair.dragon.currentDefense || pair.dragon.defense || 0;
+        health += pair.dragon.currentHealth || pair.dragon.health || 0;
+      }
+    });
+    return { power, defense, health };
+  }, [selectedPairs]);
   
   const {
     rating,
@@ -62,24 +84,25 @@ export const PvPHub: React.FC = () => {
   const entryFee = 100; // ELL
   const hasEnoughBalance = balance >= entryFee;
   const hasTeam = selectedPairs.length > 0;
-  const teamStats = getSelectedTeamStats();
 
   const handleJoinQueue = async () => {
     if (!hasTeam) {
+      // Switch to the PvP team for this tier before navigating
+      switchTeam('pvp', selectedRarityTier);
       navigate('/team');
       return;
     }
 
-    // Create team snapshot
-    const teamSnapshot = selectedPairs.map((pair, index) => ({
+    // Create team snapshot from tier-specific team
+    const teamSnapshot = selectedPairs.map((pair: TeamPair) => ({
       hero: {
-        name: pair.hero.name,
-        power: pair.hero.power,
-        defense: pair.hero.defense,
-        health: pair.hero.health,
-        currentHealth: pair.hero.currentHealth || pair.hero.health,
-        currentDefense: pair.hero.currentDefense || pair.hero.defense,
-        faction: pair.hero.faction
+        name: pair.hero?.name,
+        power: pair.hero?.power,
+        defense: pair.hero?.defense,
+        health: pair.hero?.health,
+        currentHealth: pair.hero?.currentHealth || pair.hero?.health,
+        currentDefense: pair.hero?.currentDefense || pair.hero?.defense,
+        faction: pair.hero?.faction
       },
       dragon: pair.dragon ? {
         name: pair.dragon.name,
@@ -90,11 +113,11 @@ export const PvPHub: React.FC = () => {
         currentDefense: pair.dragon.currentDefense || pair.dragon.defense,
         faction: pair.dragon.faction
       } : null,
-      totalPower: (pair.hero.power || 0) + (pair.dragon?.power || 0),
-      totalDefense: (pair.hero.defense || 0) + (pair.dragon?.defense || 0),
-      totalHealth: (pair.hero.health || 0) + (pair.dragon?.health || 0),
-      currentHealth: (pair.hero.currentHealth || pair.hero.health) + (pair.dragon?.currentHealth || pair.dragon?.health || 0),
-      currentDefense: (pair.hero.currentDefense || pair.hero.defense) + (pair.dragon?.currentDefense || pair.dragon?.defense || 0)
+      totalPower: (pair.hero?.power || 0) + (pair.dragon?.power || 0),
+      totalDefense: (pair.hero?.defense || 0) + (pair.dragon?.defense || 0),
+      totalHealth: (pair.hero?.health || 0) + (pair.dragon?.health || 0),
+      currentHealth: (pair.hero?.currentHealth || pair.hero?.health) + (pair.dragon?.currentHealth || pair.dragon?.health || 0),
+      currentDefense: (pair.hero?.currentDefense || pair.hero?.defense) + (pair.dragon?.currentDefense || pair.dragon?.defense || 0)
     }));
 
     await joinQueue(selectedRarityTier, teamSnapshot);
