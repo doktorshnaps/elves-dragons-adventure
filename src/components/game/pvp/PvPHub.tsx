@@ -1,10 +1,11 @@
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Switch } from '@/components/ui/switch';
 import { 
-  Swords, Trophy, Users, Clock, Coins, 
-  ArrowLeft, Search, X, Loader2, Star, AlertTriangle
+  Swords, Trophy, Clock, Coins, 
+  ArrowLeft, Search, X, Loader2, Star, Bot
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { usePvP } from '@/hooks/usePvP';
@@ -42,20 +43,20 @@ const RARITY_TIERS = [
   { tier: 8, name: 'Трансцендентные', color: 'bg-gradient-to-r from-purple-500 to-pink-500' }
 ];
 
+const BOT_FALLBACK_SECONDS = 30;
+
 export const PvPHub: React.FC = () => {
   const navigate = useNavigate();
   const { accountId: walletAddress } = useWalletContext();
   const [selectedRarityTier, setSelectedRarityTier] = useState(1);
+  const [togglingBot, setTogglingBot] = useState(false);
   
-  // Get PvP team for selected tier from player_teams
   const { getPvPTeam, loading: teamsLoading, switchTeam } = usePlayerTeams();
   
-  // Get the team for the currently selected PvP tier
   const selectedPairs = useMemo(() => {
     return getPvPTeam(selectedRarityTier);
   }, [getPvPTeam, selectedRarityTier]);
   
-  // Calculate team stats from the tier-specific team
   const teamStats = useMemo(() => {
     let power = 0, defense = 0, health = 0;
     selectedPairs.forEach((pair: TeamPair) => {
@@ -70,31 +71,10 @@ export const PvPHub: React.FC = () => {
     });
     return { power, defense, health };
   }, [selectedPairs]);
-  
-  const {
-    rating,
-    activeMatches,
-    queueStatus,
-    loading,
-    balance,
-    joinQueue,
-    leaveQueue
-  } = usePvP(walletAddress);
 
-  const entryFee = 100; // ELL
-  const hasEnoughBalance = balance >= entryFee;
-  const hasTeam = selectedPairs.length > 0;
-
-  const handleJoinQueue = async () => {
-    if (!hasTeam) {
-      // Switch to the PvP team for this tier before navigating
-      switchTeam('pvp', selectedRarityTier);
-      navigate('/team');
-      return;
-    }
-
-    // Create team snapshot from tier-specific team
-    const teamSnapshot = selectedPairs.map((pair: TeamPair) => ({
+  // Create team snapshot for bot
+  const createTeamSnapshot = useMemo(() => {
+    return selectedPairs.map((pair: TeamPair) => ({
       hero: {
         name: pair.hero?.name,
         power: pair.hero?.power,
@@ -119,8 +99,43 @@ export const PvPHub: React.FC = () => {
       currentHealth: (pair.hero?.currentHealth || pair.hero?.health) + (pair.dragon?.currentHealth || pair.dragon?.health || 0),
       currentDefense: (pair.hero?.currentDefense || pair.hero?.defense) + (pair.dragon?.currentDefense || pair.dragon?.defense || 0)
     }));
+  }, [selectedPairs]);
+  
+  const {
+    rating,
+    activeMatches,
+    queueStatus,
+    loading,
+    balance,
+    joinQueue,
+    leaveQueue,
+    toggleBotTeam,
+    isBotEnabledForTier
+  } = usePvP(walletAddress);
 
-    await joinQueue(selectedRarityTier, teamSnapshot);
+  const entryFee = 100;
+  const hasEnoughBalance = balance >= entryFee;
+  const hasTeam = selectedPairs.length > 0;
+  const isBotEnabled = isBotEnabledForTier(selectedRarityTier);
+
+  const handleJoinQueue = async () => {
+    if (!hasTeam) {
+      switchTeam('pvp', selectedRarityTier);
+      navigate('/team');
+      return;
+    }
+
+    await joinQueue(selectedRarityTier, createTeamSnapshot);
+  };
+
+  const handleToggleBot = async () => {
+    if (!hasTeam) {
+      return;
+    }
+    
+    setTogglingBot(true);
+    await toggleBotTeam(selectedRarityTier, createTeamSnapshot, !isBotEnabled);
+    setTogglingBot(false);
   };
 
   const formatSearchTime = (seconds: number) => {
@@ -128,6 +143,8 @@ export const PvPHub: React.FC = () => {
     const secs = seconds % 60;
     return `${mins}:${secs.toString().padStart(2, '0')}`;
   };
+
+  const secondsUntilBot = Math.max(0, BOT_FALLBACK_SECONDS - queueStatus.searchTime);
 
   return (
     <div className="min-h-screen bg-background p-4">
@@ -203,7 +220,8 @@ export const PvPHub: React.FC = () => {
                   className="w-full justify-between"
                   onClick={() => navigate(`/pvp/battle/${match.id}`)}
                 >
-                  <span>
+                  <span className="flex items-center gap-2">
+                    {match.is_bot_match && <Bot className="w-4 h-4 text-muted-foreground" />}
                     vs {match.player1_wallet === walletAddress 
                       ? match.player2_wallet.slice(0, 10) 
                       : match.player1_wallet.slice(0, 10)}...
@@ -230,6 +248,20 @@ export const PvPHub: React.FC = () => {
                   <Clock className="w-4 h-4" />
                   <span>{formatSearchTime(queueStatus.searchTime)}</span>
                 </div>
+                
+                {/* Bot fallback countdown */}
+                {secondsUntilBot > 0 ? (
+                  <div className="text-sm text-muted-foreground">
+                    <Bot className="w-4 h-4 inline mr-1" />
+                    Бот-противник через {secondsUntilBot} сек
+                  </div>
+                ) : (
+                  <div className="text-sm text-yellow-500">
+                    <Bot className="w-4 h-4 inline mr-1" />
+                    Ищем бота...
+                  </div>
+                )}
+                
                 <Button variant="destructive" onClick={leaveQueue}>
                   <X className="w-4 h-4 mr-2" />
                   Отменить поиск
@@ -282,6 +314,33 @@ export const PvPHub: React.FC = () => {
                   </div>
                 )}
 
+                {/* Bot Toggle */}
+                <div className="p-3 bg-muted/30 rounded-lg">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <Bot className="w-4 h-4 text-muted-foreground" />
+                      <div>
+                        <div className="text-sm font-medium">Бот-режим</div>
+                        <div className="text-xs text-muted-foreground">
+                          Разрешить использовать мою команду как бота
+                        </div>
+                      </div>
+                    </div>
+                    <Switch 
+                      checked={isBotEnabled}
+                      onCheckedChange={handleToggleBot}
+                      disabled={!hasTeam || togglingBot}
+                    />
+                  </div>
+                  {isBotEnabled && (
+                    <div className="mt-2 text-xs text-muted-foreground">
+                      ✓ Ваша команда может биться с игроками пока вы офлайн.
+                      <br />
+                      Рейтинг бота не меняется при победах/поражениях.
+                    </div>
+                  )}
+                </div>
+
                 {/* Entry Fee */}
                 <div className="flex items-center justify-between p-3 bg-muted/30 rounded-lg">
                   <span className="text-sm">Вступительный взнос:</span>
@@ -312,9 +371,23 @@ export const PvPHub: React.FC = () => {
 
                 <p className="text-xs text-center text-muted-foreground">
                   Победитель получает {entryFee * 2 - 10} ELL (90% пула)
+                  <br />
+                  <span className="text-yellow-600">⚡ После 30 сек поиска — матч с ботом</span>
                 </p>
               </div>
             )}
+          </CardContent>
+        </Card>
+
+        {/* Bot rating explanation */}
+        <Card className="bg-card/50 backdrop-blur border-muted">
+          <CardContent className="pt-4">
+            <div className="text-xs text-muted-foreground space-y-1">
+              <div className="font-medium text-foreground mb-2">📊 Рейтинг в матчах с ботами:</div>
+              <div>• Вы победили бота → <span className="text-green-500">+Elo</span></div>
+              <div>• Вы проиграли боту → <span className="text-red-500">-Elo</span></div>
+              <div>• Ваш бот победил/проиграл → <span className="text-muted-foreground">рейтинг не меняется</span></div>
+            </div>
           </CardContent>
         </Card>
 

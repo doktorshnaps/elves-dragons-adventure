@@ -3454,6 +3454,14 @@ export type Database = {
         Args: { p_wallet_address: string }
         Returns: string
       }
+      find_bot_opponent: {
+        Args: {
+          p_player_elo: number
+          p_rarity_tier: number
+          p_wallet_address: string
+        }
+        Returns: Json
+      }
       find_pvp_match: { Args: { p_wallet_address: string }; Returns: Json }
       force_clear_nft_cards: {
         Args: { p_contract_id?: string; p_wallet_address: string }
@@ -3481,6 +3489,14 @@ export type Database = {
           team_data: Json
           team_type: string
           tier: number
+        }[]
+      }
+      get_bot_team_status: {
+        Args: { p_wallet_address: string }
+        Returns: {
+          is_active: boolean
+          rarity_tier: number
+          updated_at: string
         }[]
       }
       get_card_class_drop_rates: {
@@ -4066,6 +4082,18 @@ export type Database = {
         Args: { p_card_instance_id: string; p_wallet_address: string }
         Returns: Json
       }
+      start_bot_match: {
+        Args: {
+          p_bot_elo: number
+          p_bot_owner_wallet: string
+          p_bot_team_snapshot: Json
+          p_player_elo: number
+          p_player_team_snapshot: Json
+          p_player_wallet: string
+          p_rarity_tier: number
+        }
+        Returns: Json
+      }
       start_hero_upgrade: {
         Args: {
           p_base_card: Json
@@ -4116,6 +4144,16 @@ export type Database = {
           p_wallet_address: string
         }
         Returns: boolean
+      }
+      toggle_bot_team_availability: {
+        Args: {
+          p_elo: number
+          p_is_active: boolean
+          p_rarity_tier: number
+          p_team_snapshot: Json
+          p_wallet_address: string
+        }
+        Returns: Json
       }
       update_active_workers_by_wallet: {
         Args: { p_active_workers: Json; p_wallet_address: string }

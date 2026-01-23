@@ -48,6 +48,7 @@ export interface PvPMatch {
   time_remaining?: number;
   is_your_turn?: boolean;
   opponent_wallet?: string;
+  is_bot_match?: boolean;
 }
 
 export interface PvPRating {
@@ -65,7 +66,16 @@ export interface QueueStatus {
   queueId?: string;
   searchTime: number;
   status: 'idle' | 'searching' | 'matched' | 'error';
+  rarityTier?: number;
+  teamSnapshot?: any;
 }
+
+export interface BotTeamStatus {
+  rarity_tier: number;
+  is_active: boolean;
+}
+
+const BOT_FALLBACK_TIMEOUT = 30; // seconds before falling back to bot
 
 export const usePvP = (walletAddress: string | null) => {
   const { toast } = useToast();
@@ -79,9 +89,23 @@ export const usePvP = (walletAddress: string | null) => {
     status: 'idle'
   });
   const [loading, setLoading] = useState(false);
+  const [botTeamStatus, setBotTeamStatus] = useState<BotTeamStatus[]>([]);
   
   const searchTimerRef = useRef<NodeJS.Timeout | null>(null);
   const matchmakingRef = useRef<NodeJS.Timeout | null>(null);
+  const botFallbackTriggeredRef = useRef(false);
+
+  // Clear intervals helper
+  const clearIntervals = useCallback(() => {
+    if (searchTimerRef.current) {
+      clearInterval(searchTimerRef.current);
+      searchTimerRef.current = null;
+    }
+    if (matchmakingRef.current) {
+      clearInterval(matchmakingRef.current);
+      matchmakingRef.current = null;
+    }
+  }, []);
 
   // Load player rating
   const loadRating = useCallback(async () => {
@@ -96,43 +120,61 @@ export const usePvP = (walletAddress: string | null) => {
     }
   }, [walletAddress]);
 
-  // Check if already in queue and restore state
-  const checkExistingQueue = useCallback(async () => {
+  // Load bot team status
+  const loadBotTeamStatus = useCallback(async () => {
     if (!walletAddress) return;
-
-    const { data, error } = await supabase
-      .from('pvp_queue')
-      .select('*')
-      .eq('wallet_address', walletAddress)
-      .eq('status', 'searching')
-      .gt('expires_at', new Date().toISOString())
-      .maybeSingle();
-
+    
+    const { data, error } = await supabase.rpc('get_bot_team_status', {
+      p_wallet_address: walletAddress
+    });
+    
     if (!error && data) {
-      // Restore queue state
-      const joinedAt = new Date(data.joined_at).getTime();
-      const now = Date.now();
-      const elapsedSeconds = Math.floor((now - joinedAt) / 1000);
-
-      setQueueStatus({
-        isSearching: true,
-        queueId: data.id,
-        searchTime: elapsedSeconds,
-        status: 'searching'
-      });
-
-      // Start timer
-      searchTimerRef.current = setInterval(() => {
-        setQueueStatus(prev => ({
-          ...prev,
-          searchTime: prev.searchTime + 1
-        }));
-      }, 1000);
-
-      // Start matchmaking polling
-      startMatchmaking(data.id);
+      setBotTeamStatus(data as BotTeamStatus[]);
     }
   }, [walletAddress]);
+
+  // Toggle bot team availability
+  const toggleBotTeam = useCallback(async (
+    rarityTier: number, 
+    teamSnapshot: any, 
+    isActive: boolean
+  ) => {
+    if (!walletAddress || !rating) {
+      toast({ title: "Ошибка", description: "Кошелек не подключен", variant: "destructive" });
+      return false;
+    }
+
+    const { data, error } = await supabase.rpc('toggle_bot_team_availability', {
+      p_wallet_address: walletAddress,
+      p_rarity_tier: rarityTier,
+      p_team_snapshot: teamSnapshot,
+      p_elo: rating.elo,
+      p_is_active: isActive
+    });
+
+    if (error) {
+      toast({ 
+        title: "Ошибка", 
+        description: "Не удалось обновить настройки бота",
+        variant: "destructive" 
+      });
+      return false;
+    }
+
+    await loadBotTeamStatus();
+    toast({ 
+      title: isActive ? "Бот активирован" : "Бот деактивирован", 
+      description: isActive 
+        ? "Ваша команда может использоваться как противник для других игроков" 
+        : "Ваша команда больше не используется как бот"
+    });
+    return true;
+  }, [walletAddress, rating, toast, loadBotTeamStatus]);
+
+  // Check if bot is enabled for a specific tier
+  const isBotEnabledForTier = useCallback((tier: number): boolean => {
+    return botTeamStatus.some(s => s.rarity_tier === tier && s.is_active);
+  }, [botTeamStatus]);
 
   // Load active matches
   const loadActiveMatches = useCallback(async () => {
@@ -143,7 +185,6 @@ export const usePvP = (walletAddress: string | null) => {
     });
     
     if (!error && data) {
-      // Map the RPC response to our interface
       const matches = (data as any[]).map(m => ({
         id: m.match_id,
         status: 'active' as const,
@@ -157,11 +198,173 @@ export const usePvP = (walletAddress: string | null) => {
         entry_fee: 100,
         time_remaining: m.time_remaining,
         is_your_turn: m.is_your_turn,
-        opponent_wallet: m.opponent_wallet
+        opponent_wallet: m.opponent_wallet,
+        is_bot_match: m.is_bot_match || false
       }));
       setActiveMatches(matches);
     }
   }, [walletAddress]);
+
+  // Try to start bot match
+  const tryBotMatch = useCallback(async (rarityTier: number, teamSnapshot: any) => {
+    if (!walletAddress || !rating) return false;
+    
+    // Find bot opponent
+    const { data: botData, error: botError } = await supabase.rpc('find_bot_opponent', {
+      p_wallet_address: walletAddress,
+      p_rarity_tier: rarityTier,
+      p_player_elo: rating.elo
+    });
+    
+    const botResult = botData as any;
+    if (botError || !botResult?.found) {
+      toast({ 
+        title: "Нет противников", 
+        description: "Не найдено ни игроков, ни ботов. Попробуйте позже.",
+        variant: "destructive" 
+      });
+      clearIntervals();
+      setQueueStatus({
+        isSearching: false,
+        searchTime: 0,
+        status: 'idle'
+      });
+      return false;
+    }
+    
+    // Leave real queue first
+    await supabase.rpc('leave_pvp_queue', {
+      p_wallet_address: walletAddress
+    });
+    
+    // Start bot match
+    const { data: matchData, error: matchError } = await supabase.rpc('start_bot_match', {
+      p_player_wallet: walletAddress,
+      p_rarity_tier: rarityTier,
+      p_player_team_snapshot: teamSnapshot,
+      p_bot_owner_wallet: botResult.bot_owner_wallet,
+      p_bot_team_snapshot: botResult.team_snapshot,
+      p_player_elo: rating.elo,
+      p_bot_elo: botResult.elo
+    });
+    
+    const matchResult = matchData as any;
+    if (matchError || matchResult?.error) {
+      toast({ 
+        title: "Ошибка", 
+        description: matchResult?.error || "Не удалось создать матч с ботом",
+        variant: "destructive" 
+      });
+      return false;
+    }
+    
+    clearIntervals();
+    setQueueStatus({
+      isSearching: false,
+      searchTime: 0,
+      status: 'matched'
+    });
+    
+    toast({ 
+      title: "🤖 Бот-противник найден!", 
+      description: "Матч против команды офлайн игрока" 
+    });
+    
+    loadActiveMatches();
+    return true;
+  }, [walletAddress, rating, toast, loadActiveMatches, clearIntervals]);
+
+  // Start matchmaking process
+  const startMatchmaking = useCallback((queueId: string, rarityTier?: number, teamSnapshot?: any) => {
+    botFallbackTriggeredRef.current = false;
+    
+    matchmakingRef.current = setInterval(async () => {
+      if (!walletAddress) return;
+      
+      // Get current search time from state
+      let currentSearchTime = 0;
+      setQueueStatus(prev => {
+        currentSearchTime = prev.searchTime;
+        return prev;
+      });
+      
+      // Check if we should try bot fallback
+      if (currentSearchTime >= BOT_FALLBACK_TIMEOUT && !botFallbackTriggeredRef.current) {
+        botFallbackTriggeredRef.current = true;
+        
+        // Try bot match
+        const tier = rarityTier ?? 1;
+        const snapshot = teamSnapshot;
+        
+        if (snapshot) {
+          tryBotMatch(tier, snapshot);
+          return;
+        }
+      }
+      
+      const { data } = await supabase.rpc('find_pvp_match', {
+        p_wallet_address: walletAddress
+      });
+
+      const result = data as any;
+      if (result?.match_id) {
+        // Match found!
+        clearIntervals();
+        setQueueStatus({
+          isSearching: false,
+          searchTime: 0,
+          status: 'matched'
+        });
+        
+        toast({ 
+          title: "Противник найден!", 
+          description: "Матч начинается..." 
+        });
+        
+        loadActiveMatches();
+      }
+    }, 3000);
+  }, [walletAddress, loadActiveMatches, toast, tryBotMatch, clearIntervals]);
+
+  // Check if already in queue and restore state
+  const checkExistingQueue = useCallback(async () => {
+    if (!walletAddress) return;
+
+    const { data, error } = await supabase
+      .from('pvp_queue')
+      .select('*')
+      .eq('wallet_address', walletAddress)
+      .eq('status', 'searching')
+      .gt('expires_at', new Date().toISOString())
+      .maybeSingle();
+
+    if (!error && data) {
+      const joinedAt = new Date(data.joined_at).getTime();
+      const now = Date.now();
+      const elapsedSeconds = Math.floor((now - joinedAt) / 1000);
+      
+      const teamSnapshot = data.team_snapshot;
+      const rarityTier = data.rarity_tier;
+
+      setQueueStatus({
+        isSearching: true,
+        queueId: data.id,
+        searchTime: elapsedSeconds,
+        status: 'searching',
+        rarityTier,
+        teamSnapshot
+      });
+
+      searchTimerRef.current = setInterval(() => {
+        setQueueStatus(prev => ({
+          ...prev,
+          searchTime: prev.searchTime + 1
+        }));
+      }, 1000);
+
+      startMatchmaking(data.id, rarityTier, teamSnapshot);
+    }
+  }, [walletAddress, startMatchmaking]);
 
   // Join matchmaking queue
   const joinQueue = useCallback(async (rarityTier: number, teamSnapshot: any) => {
@@ -195,7 +398,6 @@ export const usePvP = (walletAddress: string | null) => {
 
     const result = data as any;
     
-    // Handle "Already in queue" - restore queue state
     if (result?.error === 'Already in queue') {
       toast({ title: "Вы уже в очереди", description: "Поиск противника продолжается..." });
       await checkExistingQueue();
@@ -207,10 +409,11 @@ export const usePvP = (walletAddress: string | null) => {
         isSearching: true,
         queueId: result.queue_id,
         searchTime: 0,
-        status: 'searching'
+        status: 'searching',
+        rarityTier,
+        teamSnapshot
       });
 
-      // Start search timer
       searchTimerRef.current = setInterval(() => {
         setQueueStatus(prev => ({
           ...prev,
@@ -218,45 +421,17 @@ export const usePvP = (walletAddress: string | null) => {
         }));
       }, 1000);
 
-      // Start matchmaking polling
-      startMatchmaking(result.queue_id);
+      startMatchmaking(result.queue_id, rarityTier, teamSnapshot);
       
-      toast({ title: "Поиск матча", description: "Ищем достойного противника..." });
+      toast({ 
+        title: "Поиск матча", 
+        description: "Ищем игрока... (бот через 30 сек)" 
+      });
       return true;
     }
 
     return false;
-  }, [walletAddress, toast, checkExistingQueue]);
-
-  // Start matchmaking process
-  const startMatchmaking = useCallback((queueId: string) => {
-    matchmakingRef.current = setInterval(async () => {
-      if (!walletAddress) return;
-      
-      const { data, error } = await supabase.rpc('find_pvp_match', {
-        p_wallet_address: walletAddress
-      });
-
-      const result = data as any;
-      if (result?.match_id) {
-        // Match found!
-        clearIntervals();
-        setQueueStatus({
-          isSearching: false,
-          searchTime: 0,
-          status: 'matched'
-        });
-        
-        toast({ 
-          title: "Противник найден!", 
-          description: "Матч начинается..." 
-        });
-        
-        // Reload matches
-        loadActiveMatches();
-      }
-    }, 3000); // Poll every 3 seconds
-  }, [walletAddress, loadActiveMatches, toast]);
+  }, [walletAddress, toast, checkExistingQueue, startMatchmaking]);
 
   // Leave queue
   const leaveQueue = useCallback(async () => {
@@ -276,7 +451,7 @@ export const usePvP = (walletAddress: string | null) => {
     if (!error) {
       toast({ title: "Поиск отменен", description: "Вступительный взнос возвращен" });
     }
-  }, [walletAddress, queueStatus.queueId, toast]);
+  }, [walletAddress, queueStatus.queueId, toast, clearIntervals]);
 
   // Submit move
   const submitMove = useCallback(async (
@@ -380,28 +555,17 @@ export const usePvP = (walletAddress: string | null) => {
     return error ? [] : (data || []);
   }, [walletAddress]);
 
-  // Clear intervals helper
-  const clearIntervals = () => {
-    if (searchTimerRef.current) {
-      clearInterval(searchTimerRef.current);
-      searchTimerRef.current = null;
-    }
-    if (matchmakingRef.current) {
-      clearInterval(matchmakingRef.current);
-      matchmakingRef.current = null;
-    }
-  };
-
   // Initialize
   useEffect(() => {
     if (walletAddress) {
       loadRating();
       loadActiveMatches();
-      checkExistingQueue(); // Check if already in queue on mount
+      loadBotTeamStatus();
+      checkExistingQueue();
     }
     
     return () => clearIntervals();
-  }, [walletAddress, loadRating, loadActiveMatches, checkExistingQueue]);
+  }, [walletAddress, loadRating, loadActiveMatches, loadBotTeamStatus, checkExistingQueue, clearIntervals]);
 
   // Subscribe to match updates
   useEffect(() => {
@@ -442,6 +606,7 @@ export const usePvP = (walletAddress: string | null) => {
     queueStatus,
     loading,
     balance: gameData?.balance || 0,
+    botTeamStatus,
     
     // Actions
     joinQueue,
@@ -450,9 +615,12 @@ export const usePvP = (walletAddress: string | null) => {
     getMatchStatus,
     getLeaderboard,
     getMatchHistory,
+    toggleBotTeam,
+    isBotEnabledForTier,
     
     // Refresh
     refreshRating: loadRating,
-    refreshMatches: loadActiveMatches
+    refreshMatches: loadActiveMatches,
+    refreshBotStatus: loadBotTeamStatus
   };
 };
