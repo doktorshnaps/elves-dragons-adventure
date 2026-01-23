@@ -4041,6 +4041,10 @@ export type Database = {
         Args: { p_card_instance_id: string; p_wallet_address: string }
         Returns: Json
       }
+      remove_card_from_medical_bay: {
+        Args: { p_card_instance_id: string; p_wallet_address: string }
+        Returns: Json
+      }
       remove_card_from_medical_bay_v2: {
         Args: { p_card_instance_id: string; p_wallet_address: string }
         Returns: Json
