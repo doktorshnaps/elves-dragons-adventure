@@ -171,9 +171,11 @@ export const usePvP = (walletAddress: string | null) => {
     return true;
   }, [walletAddress, rating, toast, loadBotTeamStatus]);
 
-  // Check if bot is enabled for a specific tier
+  // Check if bot is enabled for a specific tier (default: true if no record exists)
   const isBotEnabledForTier = useCallback((tier: number): boolean => {
-    return botTeamStatus.some(s => s.rarity_tier === tier && s.is_active);
+    const status = botTeamStatus.find(s => s.rarity_tier === tier);
+    // Default to true if no record exists yet
+    return status ? status.is_active : true;
   }, [botTeamStatus]);
 
   // Load active matches
@@ -374,6 +376,20 @@ export const usePvP = (walletAddress: string | null) => {
     }
 
     setLoading(true);
+    
+    // Auto-save bot team if not yet saved (default enabled)
+    const existingBotStatus = botTeamStatus.find(s => s.rarity_tier === rarityTier);
+    if (!existingBotStatus && rating) {
+      // Silently enable bot for this tier
+      await supabase.rpc('toggle_bot_team_availability', {
+        p_wallet_address: walletAddress,
+        p_rarity_tier: rarityTier,
+        p_team_snapshot: teamSnapshot,
+        p_elo: rating.elo,
+        p_is_active: true
+      });
+      loadBotTeamStatus();
+    }
     
     const { data, error } = await supabase.rpc('join_pvp_queue', {
       p_wallet_address: walletAddress,
