@@ -1473,6 +1473,39 @@ export type Database = {
         }
         Relationships: []
       }
+      pvp_bot_teams: {
+        Row: {
+          created_at: string | null
+          elo: number
+          id: string
+          is_active: boolean | null
+          rarity_tier: number
+          team_snapshot: Json
+          updated_at: string | null
+          wallet_address: string
+        }
+        Insert: {
+          created_at?: string | null
+          elo?: number
+          id?: string
+          is_active?: boolean | null
+          rarity_tier: number
+          team_snapshot: Json
+          updated_at?: string | null
+          wallet_address: string
+        }
+        Update: {
+          created_at?: string | null
+          elo?: number
+          id?: string
+          is_active?: boolean | null
+          rarity_tier?: number
+          team_snapshot?: Json
+          updated_at?: string | null
+          wallet_address?: string
+        }
+        Relationships: []
+      }
       pvp_decks: {
         Row: {
           created_at: string
