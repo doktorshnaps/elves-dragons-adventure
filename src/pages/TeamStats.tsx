@@ -2,8 +2,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { ArrowLeft } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { TeamCards } from "@/components/game/TeamCards";
-import { TeamStats as TeamStatsComponent } from "@/components/game/TeamStats";
+import { MultiTeamCards } from "@/components/game/team/MultiTeamCards";
 import { DragonEggProvider } from "@/contexts/DragonEggContext";
 import { useLanguage } from "@/hooks/useLanguage";
 import { t } from "@/utils/translations";
@@ -33,7 +32,7 @@ export const TeamStats = () => {
             {/* Карты команды */}
             <Card variant="menu" className="p-2 sm:p-4" style={{ boxShadow: '-33px 15px 10px rgba(0, 0, 0, 0.6)' }}>
               <h2 className="text-lg sm:text-xl font-bold text-white mb-2 sm:mb-4">{t(language, 'team.management')}</h2>
-              <TeamCards />
+              <MultiTeamCards />
             </Card>
           </div>
         </DragonEggProvider>
