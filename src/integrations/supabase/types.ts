@@ -3265,6 +3265,10 @@ export type Database = {
         Args: { p_attacker_faction: string; p_defender_element: string }
         Returns: number
       }
+      calculate_elo_change: {
+        Args: { p_k_factor?: number; p_loser_elo: number; p_winner_elo: number }
+        Returns: number
+      }
       cancel_marketplace_listing: {
         Args: { p_listing_id: string }
         Returns: undefined
@@ -3387,6 +3391,7 @@ export type Database = {
         Args: { p_wallet_address: string }
         Returns: string
       }
+      find_pvp_match: { Args: { p_wallet_address: string }; Returns: Json }
       force_clear_nft_cards: {
         Args: { p_contract_id?: string; p_wallet_address: string }
         Returns: number
@@ -3395,6 +3400,18 @@ export type Database = {
         Args: { p_session_id: string; p_wallet_address: string }
         Returns: Json
       }
+      get_active_pvp_matches: {
+        Args: { p_wallet_address: string }
+        Returns: {
+          is_your_turn: boolean
+          match_id: string
+          opponent_wallet: string
+          rarity_tier: number
+          started_at: string
+          time_remaining: number
+        }[]
+      }
+      get_active_pvp_season: { Args: never; Returns: string }
       get_card_class_drop_rates: {
         Args: never
         Returns: {
@@ -3493,6 +3510,7 @@ export type Database = {
           item_type: string
         }[]
       }
+      get_elo_tier: { Args: { p_elo: number }; Returns: string }
       get_forge_bay_entries: {
         Args: { p_wallet_address: string }
         Returns: {
@@ -3658,9 +3676,54 @@ export type Database = {
           monster_kills: number
         }[]
       }
+      get_or_create_pvp_rating: {
+        Args: { p_wallet_address: string }
+        Returns: {
+          best_win_streak: number
+          elo: number
+          id: string
+          losses: number
+          matches_played: number
+          season_id: string
+          tier: string
+          wallet_address: string
+          win_streak: number
+          wins: number
+        }[]
+      }
       get_or_create_wallet_identity: {
         Args: { p_wallet_address: string }
         Returns: string
+      }
+      get_pvp_leaderboard: {
+        Args: { p_limit?: number; p_offset?: number; p_tier_filter?: string }
+        Returns: {
+          best_win_streak: number
+          elo: number
+          losses: number
+          rank: number
+          tier: string
+          wallet_address: string
+          win_rate: number
+          win_streak: number
+          wins: number
+        }[]
+      }
+      get_pvp_match: {
+        Args: { p_match_id: string; p_wallet_address: string }
+        Returns: Json
+      }
+      get_pvp_match_history: {
+        Args: { p_limit?: number; p_offset?: number; p_wallet_address: string }
+        Returns: {
+          elo_change: number
+          finished_at: string
+          is_winner: boolean
+          match_id: string
+          opponent_elo: number
+          opponent_wallet: string
+          rarity_tier: number
+        }[]
       }
       get_referral_details: {
         Args: { p_referrer_wallet: string; p_wl_only?: boolean }
@@ -3815,6 +3878,16 @@ export type Database = {
         Returns: boolean
       }
       is_user_banned: { Args: { p_wallet_address: string }; Returns: boolean }
+      join_pvp_queue: {
+        Args: {
+          p_match_type: string
+          p_rarity_tier: number
+          p_team_snapshot: Json
+          p_wallet_address: string
+        }
+        Returns: Json
+      }
+      leave_pvp_queue: { Args: { p_wallet_address: string }; Returns: Json }
       mark_quest_claimed: {
         Args: { p_quest_id: string; p_wallet_address: string }
         Returns: boolean
