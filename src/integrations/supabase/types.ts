@@ -1443,6 +1443,403 @@ export type Database = {
         }
         Relationships: []
       }
+      pvp_decks: {
+        Row: {
+          created_at: string
+          deck_name: string
+          dragon_1_instance_id: string | null
+          dragon_2_instance_id: string | null
+          hero_1_instance_id: string | null
+          hero_2_instance_id: string | null
+          id: string
+          is_active: boolean
+          rarity_tier: number
+          updated_at: string
+          wallet_address: string
+        }
+        Insert: {
+          created_at?: string
+          deck_name?: string
+          dragon_1_instance_id?: string | null
+          dragon_2_instance_id?: string | null
+          hero_1_instance_id?: string | null
+          hero_2_instance_id?: string | null
+          id?: string
+          is_active?: boolean
+          rarity_tier: number
+          updated_at?: string
+          wallet_address: string
+        }
+        Update: {
+          created_at?: string
+          deck_name?: string
+          dragon_1_instance_id?: string | null
+          dragon_2_instance_id?: string | null
+          hero_1_instance_id?: string | null
+          hero_2_instance_id?: string | null
+          id?: string
+          is_active?: boolean
+          rarity_tier?: number
+          updated_at?: string
+          wallet_address?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pvp_decks_dragon_1_instance_id_fkey"
+            columns: ["dragon_1_instance_id"]
+            isOneToOne: false
+            referencedRelation: "card_instances"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "pvp_decks_dragon_2_instance_id_fkey"
+            columns: ["dragon_2_instance_id"]
+            isOneToOne: false
+            referencedRelation: "card_instances"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "pvp_decks_hero_1_instance_id_fkey"
+            columns: ["hero_1_instance_id"]
+            isOneToOne: false
+            referencedRelation: "card_instances"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "pvp_decks_hero_2_instance_id_fkey"
+            columns: ["hero_2_instance_id"]
+            isOneToOne: false
+            referencedRelation: "card_instances"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      pvp_matches: {
+        Row: {
+          battle_log: Json | null
+          battle_state: Json
+          created_at: string
+          current_turn_wallet: string | null
+          elo_change: number | null
+          entry_fee: number
+          finished_at: string | null
+          id: string
+          loser_wallet: string | null
+          match_type: string
+          player1_elo_before: number
+          player1_team_snapshot: Json
+          player1_wallet: string
+          player2_elo_before: number
+          player2_team_snapshot: Json
+          player2_wallet: string
+          rarity_tier: number
+          season_id: string | null
+          started_at: string | null
+          status: string
+          turn_started_at: string | null
+          turn_timeout_seconds: number
+          updated_at: string
+          winner_reward: number | null
+          winner_wallet: string | null
+        }
+        Insert: {
+          battle_log?: Json | null
+          battle_state?: Json
+          created_at?: string
+          current_turn_wallet?: string | null
+          elo_change?: number | null
+          entry_fee?: number
+          finished_at?: string | null
+          id?: string
+          loser_wallet?: string | null
+          match_type?: string
+          player1_elo_before: number
+          player1_team_snapshot: Json
+          player1_wallet: string
+          player2_elo_before: number
+          player2_team_snapshot: Json
+          player2_wallet: string
+          rarity_tier: number
+          season_id?: string | null
+          started_at?: string | null
+          status?: string
+          turn_started_at?: string | null
+          turn_timeout_seconds?: number
+          updated_at?: string
+          winner_reward?: number | null
+          winner_wallet?: string | null
+        }
+        Update: {
+          battle_log?: Json | null
+          battle_state?: Json
+          created_at?: string
+          current_turn_wallet?: string | null
+          elo_change?: number | null
+          entry_fee?: number
+          finished_at?: string | null
+          id?: string
+          loser_wallet?: string | null
+          match_type?: string
+          player1_elo_before?: number
+          player1_team_snapshot?: Json
+          player1_wallet?: string
+          player2_elo_before?: number
+          player2_team_snapshot?: Json
+          player2_wallet?: string
+          rarity_tier?: number
+          season_id?: string | null
+          started_at?: string | null
+          status?: string
+          turn_started_at?: string | null
+          turn_timeout_seconds?: number
+          updated_at?: string
+          winner_reward?: number | null
+          winner_wallet?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pvp_matches_season_id_fkey"
+            columns: ["season_id"]
+            isOneToOne: false
+            referencedRelation: "pvp_seasons"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      pvp_moves: {
+        Row: {
+          ability_id: string | null
+          action_type: string
+          attacker_pair_index: number | null
+          created_at: string
+          damage_dealt: number | null
+          dice_roll_attacker: number | null
+          dice_roll_defender: number | null
+          id: string
+          is_blocked: boolean | null
+          is_critical: boolean | null
+          match_id: string
+          player_wallet: string
+          result_state: Json
+          target_pair_index: number | null
+          turn_number: number
+        }
+        Insert: {
+          ability_id?: string | null
+          action_type: string
+          attacker_pair_index?: number | null
+          created_at?: string
+          damage_dealt?: number | null
+          dice_roll_attacker?: number | null
+          dice_roll_defender?: number | null
+          id?: string
+          is_blocked?: boolean | null
+          is_critical?: boolean | null
+          match_id: string
+          player_wallet: string
+          result_state: Json
+          target_pair_index?: number | null
+          turn_number: number
+        }
+        Update: {
+          ability_id?: string | null
+          action_type?: string
+          attacker_pair_index?: number | null
+          created_at?: string
+          damage_dealt?: number | null
+          dice_roll_attacker?: number | null
+          dice_roll_defender?: number | null
+          id?: string
+          is_blocked?: boolean | null
+          is_critical?: boolean | null
+          match_id?: string
+          player_wallet?: string
+          result_state?: Json
+          target_pair_index?: number | null
+          turn_number?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pvp_moves_match_id_fkey"
+            columns: ["match_id"]
+            isOneToOne: false
+            referencedRelation: "pvp_matches"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      pvp_queue: {
+        Row: {
+          created_at: string
+          current_elo: number
+          expires_at: string
+          id: string
+          joined_at: string
+          match_id: string | null
+          match_type: string
+          matched_with_wallet: string | null
+          rarity_tier: number
+          status: string
+          team_snapshot: Json
+          wallet_address: string
+        }
+        Insert: {
+          created_at?: string
+          current_elo?: number
+          expires_at?: string
+          id?: string
+          joined_at?: string
+          match_id?: string | null
+          match_type?: string
+          matched_with_wallet?: string | null
+          rarity_tier: number
+          status?: string
+          team_snapshot: Json
+          wallet_address: string
+        }
+        Update: {
+          created_at?: string
+          current_elo?: number
+          expires_at?: string
+          id?: string
+          joined_at?: string
+          match_id?: string | null
+          match_type?: string
+          matched_with_wallet?: string | null
+          rarity_tier?: number
+          status?: string
+          team_snapshot?: Json
+          wallet_address?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pvp_queue_match_id_fkey"
+            columns: ["match_id"]
+            isOneToOne: false
+            referencedRelation: "pvp_matches"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      pvp_ratings: {
+        Row: {
+          best_win_streak: number
+          created_at: string
+          elo: number
+          id: string
+          losses: number
+          matches_played: number
+          season_id: string | null
+          tier: string
+          updated_at: string
+          wallet_address: string
+          win_streak: number
+          wins: number
+        }
+        Insert: {
+          best_win_streak?: number
+          created_at?: string
+          elo?: number
+          id?: string
+          losses?: number
+          matches_played?: number
+          season_id?: string | null
+          tier?: string
+          updated_at?: string
+          wallet_address: string
+          win_streak?: number
+          wins?: number
+        }
+        Update: {
+          best_win_streak?: number
+          created_at?: string
+          elo?: number
+          id?: string
+          losses?: number
+          matches_played?: number
+          season_id?: string | null
+          tier?: string
+          updated_at?: string
+          wallet_address?: string
+          win_streak?: number
+          wins?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pvp_ratings_season_id_fkey"
+            columns: ["season_id"]
+            isOneToOne: false
+            referencedRelation: "pvp_seasons"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      pvp_seasons: {
+        Row: {
+          created_at: string
+          ends_at: string
+          id: string
+          is_active: boolean
+          name: string
+          rewards_config: Json
+          season_number: number
+          starts_at: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          ends_at: string
+          id?: string
+          is_active?: boolean
+          name: string
+          rewards_config?: Json
+          season_number: number
+          starts_at: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          ends_at?: string
+          id?: string
+          is_active?: boolean
+          name?: string
+          rewards_config?: Json
+          season_number?: number
+          starts_at?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      pvp_settings: {
+        Row: {
+          created_at: string
+          created_by_wallet_address: string
+          description: string | null
+          id: string
+          setting_key: string
+          setting_value: Json
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by_wallet_address: string
+          description?: string | null
+          id?: string
+          setting_key: string
+          setting_value?: Json
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by_wallet_address?: string
+          description?: string | null
+          id?: string
+          setting_key?: string
+          setting_value?: Json
+          updated_at?: string
+        }
+        Relationships: []
+      }
       quests: {
         Row: {
           created_at: string
