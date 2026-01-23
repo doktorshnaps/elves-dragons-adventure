@@ -47,6 +47,10 @@ const BoneDemonDungeonWithLazyLoading = lazy(() => import('./components/lazy/Laz
 const SeaSerpentLairWithLazyLoading = lazy(() => import('./components/lazy/LazyComponents').then(m => ({ default: m.SeaSerpentLairWithLazyLoading })));
 const Wibe3TestPanel = lazy(() => import('./components/wibe3/Wibe3TestPanel'));
 
+// PvP pages
+const PvP = lazy(() => import('./pages/PvP').then(m => ({ default: m.PvP })));
+const PvPBattlePage = lazy(() => import('./pages/PvPBattlePage').then(m => ({ default: m.PvPBattlePage })));
+
 // Simple loading fallback
 const PageLoader = () => <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }} />;
 
@@ -101,6 +105,8 @@ function App() {
                                   <Route path="/dungeons/bone-dungeon" element={<Suspense fallback={<PageLoader />}><ProtectedRoute><BoneDemonDungeonWithLazyLoading /></ProtectedRoute></Suspense>} />
                                   <Route path="/dungeons/sea-serpent" element={<Suspense fallback={<PageLoader />}><ProtectedRoute><SeaSerpentLairWithLazyLoading /></ProtectedRoute></Suspense>} />
                                   <Route path="/wibe3-test" element={<Suspense fallback={<PageLoader />}><ProtectedRoute><Wibe3TestPanel /></ProtectedRoute></Suspense>} />
+                                  <Route path="/pvp" element={<Suspense fallback={<PageLoader />}><ProtectedRoute><PvP /></ProtectedRoute></Suspense>} />
+                                  <Route path="/pvp/battle/:matchId" element={<Suspense fallback={<PageLoader />}><ProtectedRoute><PvPBattlePage /></ProtectedRoute></Suspense>} />
                                 </Routes>
                               </Suspense>
                               <Toaster />
