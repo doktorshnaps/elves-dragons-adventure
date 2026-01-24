@@ -106,7 +106,12 @@ export const normalizeCardImageUrl = (url: string | undefined): string | undefin
   if (!url) return undefined;
   
   try {
-    let normalized = url;
+    let normalized = url.trim();
+
+    // Data URLs should be used as-is
+    if (normalized.startsWith('data:')) {
+      return normalized;
+    }
     
     // IPFS URL normalization
     if (normalized.startsWith('ipfs://')) {
@@ -123,10 +128,20 @@ export const normalizeCardImageUrl = (url: string | undefined): string | undefin
       normalized = normalized.replace('ar://', 'https://arweave.net/');
     }
 
+    // Convert local lovable-uploads paths to a public Supabase Storage URL.
+    // This is required because `/lovable-uploads/...` is not a real route on the app domain.
+    const supabaseUrl = (import.meta as any).env?.VITE_SUPABASE_URL || 'https://oimhwdymghkwxznjarkv.supabase.co';
+    if (normalized.startsWith('lovable-uploads/')) {
+      normalized = `/${normalized}`;
+    }
+    if (normalized.startsWith('/lovable-uploads/')) {
+      normalized = `${supabaseUrl}/storage/v1/object/public${normalized}`;
+    }
+
     // Конвертируем PNG -> WEBP для lovable-uploads (и для относительных путей,
     // и для полных Supabase Storage URL), т.к. PNG ассеты больше не используются.
     if (
-      (normalized.startsWith('/lovable-uploads/') || normalized.includes('/lovable-uploads/')) &&
+      normalized.includes('/lovable-uploads/') &&
       /\.png(\?|$)/i.test(normalized)
     ) {
       normalized = normalized.replace(/\.png(\?|$)/i, '.webp$1');
