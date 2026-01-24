@@ -4,14 +4,18 @@ import { useGameData } from '@/hooks/useGameData';
 import { useCards } from '@/hooks/useCards';
 import { TeamPair } from '@/components/game/team/DeckSelection';
 import { useToast } from '@/hooks/use-toast';
-import { checkActiveBattle, clearActiveBattle } from '@/utils/activeBattleChecker';
+import { checkActiveBattle } from '@/utils/activeBattleChecker';
 import { useGameStore } from '@/stores/gameStore';
 import { useGameEvent } from '@/contexts/GameEventsContext';
+import { usePlayerTeams } from '@/hooks/usePlayerTeams';
 
 export const useTeamSelection = () => {
-  const { gameData, updateGameData } = useGameData();
-  const { cards, loading, getCardById, getCardByInstanceId } = useCards();
+  const { gameData } = useGameData();
+  const { cards, loading: cardsLoading } = useCards();
   const { toast } = useToast();
+  
+  // ✅ КРИТИЧНО: Используем player_teams как единственный источник правды для команды подземелья
+  const { dungeonTeam, updateTeam, loading: teamsLoading } = usePlayerTeams();
 
   // Cards from useCards() already contain health data from card_instances
   const cardsWithHealth = useMemo(() => cards, [cards]);
@@ -31,11 +35,13 @@ export const useTeamSelection = () => {
     return { byId, byInstanceId };
   }, [cards]);
 
+  // ✅ КРИТИЧНО: Теперь используем dungeonTeam из player_teams вместо game_data.selected_team
   // Build selected team with health from useCards()
   const selectedTeamWithHealth = useMemo(() => {
-    const selectedTeam = (gameData.selectedTeam || []) as any[];
+    // Приоритет: dungeonTeam из player_teams (новая система)
+    const teamSource = dungeonTeam.length > 0 ? dungeonTeam : (gameData.selectedTeam || []) as any[];
     
-    return selectedTeam.map((pair: any) => ({
+    return teamSource.map((pair: any) => ({
       hero: pair.hero ? (() => {
         const heroLookupId = pair.hero.instanceId || pair.hero.id;
         const card = cardsMap.byInstanceId.get(heroLookupId) || cardsMap.byId.get(heroLookupId);
@@ -59,12 +65,12 @@ export const useTeamSelection = () => {
         } : pair.dragon;
       })() : undefined
     })) as TeamPair[];
-  }, [gameData.selectedTeam, cardsMap]);
+  }, [dungeonTeam, gameData.selectedTeam, cardsMap]);
 
   const selectedPairs: TeamPair[] = useMemo(() => {
     const source: TeamPair[] = selectedTeamWithHealth.length > 0
       ? (selectedTeamWithHealth as TeamPair[])
-      : ((gameData.selectedTeam ?? []) as TeamPair[]);
+      : [];
 
     // Exclude pairs where hero is in medical bay and drop dragons that are in medical bay
     const filtered: TeamPair[] = source
@@ -78,11 +84,12 @@ export const useTeamSelection = () => {
       });
 
     return filtered;
-  }, [selectedTeamWithHealth, gameData.selectedTeam]);
+  }, [selectedTeamWithHealth]);
 
-  // Cleanup: remove non-existing cards AND dead cards (health = 0) from selected team in DB
+  // Cleanup: remove non-existing cards AND dead cards (health = 0) from selected team in player_teams
   useEffect(() => {
-    const baseTeam = (gameData.selectedTeam || []) as TeamPair[];
+    // ✅ Используем dungeonTeam из player_teams как источник правды
+    const baseTeam = dungeonTeam as TeamPair[];
     if (!baseTeam || baseTeam.length === 0) return;
 
     // Build set of valid card IDs from cards (use UUID as primary identifier)
@@ -153,22 +160,24 @@ export const useTeamSelection = () => {
       });
 
     if (changed) {
-      console.warn('🧹 Cleaning selectedTeam: removing non-existing/dead cards', {
+      console.warn('🧹 Cleaning dungeonTeam: removing non-existing/dead cards', {
         before: baseTeam.length,
         after: cleaned.length
       });
-      updateGameData({ selectedTeam: cleaned });
+      // ✅ Обновляем player_teams вместо game_data
+      updateTeam('dungeon', null, cleaned);
     }
-  }, [gameData.selectedTeam, cards, updateGameData]);
+  }, [dungeonTeam, cards, updateTeam]);
 
   // Listen for team updates from NFT cleanup via GameEventsContext
   useGameEvent('teamUpdate', (payload) => {
     const updatedTeam = payload?.team;
     if (updatedTeam) {
-      console.log('🔄 Received teamUpdate event, updating gameData.selectedTeam');
-      updateGameData({ selectedTeam: updatedTeam });
+      console.log('🔄 Received teamUpdate event, updating dungeonTeam in player_teams');
+      // ✅ Обновляем player_teams вместо game_data
+      updateTeam('dungeon', null, updatedTeam);
     }
-  }, [updateGameData]);
+  }, [updateTeam]);
 
   const handlePairSelect = async (hero: CardType, dragon?: CardType) => {
     console.log('🎯 handlePairSelect called with hero:', hero.name);
@@ -184,7 +193,8 @@ export const useTeamSelection = () => {
       return;
     }
     
-    const currentRawTeam = (gameData.selectedTeam || []) as TeamPair[];
+    // ✅ Используем dungeonTeam как источник правды
+    const currentRawTeam = dungeonTeam as TeamPair[];
     const pairsWithHeroes = currentRawTeam.filter((pair: any) => pair?.hero?.id);
     
     // Check team size limit
@@ -227,13 +237,12 @@ export const useTeamSelection = () => {
     const newPairs = [...currentRawTeam, newPair];
     
     try {
-      await updateGameData({
-        selectedTeam: newPairs
-      });
+      // ✅ Обновляем player_teams вместо game_data
+      await updateTeam('dungeon', null, newPairs);
       
       const { setSelectedTeam } = useGameStore.getState();
       setSelectedTeam(newPairs);
-      console.log('✅ Successfully added hero to team');
+      console.log('✅ Successfully added hero to dungeon team');
     } catch (error) {
       console.error('❌ Failed to add hero to team:', error);
     }
@@ -254,12 +263,12 @@ export const useTeamSelection = () => {
     if (!pair?.hero?.id) return;
     const heroId = pair.hero.id;
 
-    const baseTeam = (gameData.selectedTeam ?? []) as TeamPair[];
+    // ✅ Используем dungeonTeam как источник правды
+    const baseTeam = dungeonTeam as TeamPair[];
     const newPairs = baseTeam.filter(p => p?.hero?.id !== heroId);
 
-    await updateGameData({
-      selectedTeam: newPairs
-    });
+    // ✅ Обновляем player_teams вместо game_data
+    await updateTeam('dungeon', null, newPairs);
     
     const { setSelectedTeam } = useGameStore.getState();
     setSelectedTeam(newPairs);
@@ -276,7 +285,8 @@ export const useTeamSelection = () => {
       return;
     }
 
-    const baseTeam = (gameData.selectedTeam || []) as TeamPair[];
+    // ✅ Используем dungeonTeam как источник правды
+    const baseTeam = dungeonTeam as TeamPair[];
     const filteredIndex = selectedPairs[index];
     if (!filteredIndex?.hero?.id) return;
     
@@ -292,9 +302,8 @@ export const useTeamSelection = () => {
       i === realIndex ? { ...pair, dragon: dragonToSave } : pair
     );
     
-    await updateGameData({
-      selectedTeam: newPairs
-    });
+    // ✅ Обновляем player_teams вместо game_data
+    await updateTeam('dungeon', null, newPairs);
     
     const { setSelectedTeam } = useGameStore.getState();
     setSelectedTeam(newPairs);
@@ -311,7 +320,8 @@ export const useTeamSelection = () => {
       return;
     }
 
-    const baseTeam = (gameData.selectedTeam || []) as TeamPair[];
+    // ✅ Используем dungeonTeam как источник правды
+    const baseTeam = dungeonTeam as TeamPair[];
     const filteredIndex = selectedPairs[index];
     if (!filteredIndex?.hero?.id) return;
     
@@ -322,9 +332,8 @@ export const useTeamSelection = () => {
       i === realIndex ? { ...pair, dragon: undefined } : pair
     );
     
-    await updateGameData({
-      selectedTeam: newPairs
-    });
+    // ✅ Обновляем player_teams вместо game_data
+    await updateTeam('dungeon', null, newPairs);
     
     const { setSelectedTeam } = useGameStore.getState();
     setSelectedTeam(newPairs);
@@ -396,6 +405,6 @@ export const useTeamSelection = () => {
     handleAssignDragon,
     handleRemoveDragon,
     getSelectedTeamStats,
-    loading
+    loading: cardsLoading || teamsLoading
   };
 };
