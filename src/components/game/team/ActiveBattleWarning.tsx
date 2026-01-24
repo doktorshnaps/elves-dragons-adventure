@@ -6,6 +6,8 @@ import { checkActiveBattle, clearActiveBattle, ActiveBattleInfo } from '@/utils/
 import { useToast } from '@/hooks/use-toast';
 import { useGameData } from '@/hooks/useGameData';
 import { useGameEvent } from '@/contexts/GameEventsContext';
+import { useWalletContext } from '@/contexts/WalletConnectContext';
+import { useQueryClient } from '@tanstack/react-query';
 
 interface ActiveBattleWarningProps {
   onBattleCleared?: () => void;
@@ -13,8 +15,11 @@ interface ActiveBattleWarningProps {
 
 export const ActiveBattleWarning: React.FC<ActiveBattleWarningProps> = ({ onBattleCleared }) => {
   const [activeBattleInfo, setActiveBattleInfo] = React.useState<ActiveBattleInfo | null>(null);
+  const [isClearing, setIsClearing] = React.useState(false);
   const { toast } = useToast();
   const { updateGameData } = useGameData();
+  const { accountId } = useWalletContext();
+  const queryClient = useQueryClient();
 
   React.useEffect(() => {
     const checkBattle = () => {
@@ -34,13 +39,18 @@ export const ActiveBattleWarning: React.FC<ActiveBattleWarningProps> = ({ onBatt
 
   // Listen for battle reset events via GameEventsContext
   useGameEvent('battleReset', () => {
+    console.log('🔄 [ActiveBattleWarning] Received battleReset event');
     setActiveBattleInfo(null);
     onBattleCleared?.();
   }, [onBattleCleared]);
 
   const handleClearBattle = async () => {
+    if (isClearing) return;
+    setIsClearing(true);
+    
     try {
-      const cleared = await clearActiveBattle(updateGameData);
+      // ✅ Атомарный сброс с передачей всех необходимых параметров
+      const cleared = await clearActiveBattle(updateGameData, queryClient, accountId);
       if (cleared) {
         toast({
           title: "Бой сброшен",
@@ -62,6 +72,8 @@ export const ActiveBattleWarning: React.FC<ActiveBattleWarningProps> = ({ onBatt
         description: "Произошла ошибка при сбросе боя",
         variant: "destructive"
       });
+    } finally {
+      setIsClearing(false);
     }
   };
 
@@ -88,10 +100,11 @@ export const ActiveBattleWarning: React.FC<ActiveBattleWarningProps> = ({ onBatt
                 size="sm"
                 variant="destructive"
                 onClick={handleClearBattle}
+                disabled={isClearing}
                 className="bg-amber-600 hover:bg-amber-700 text-white"
               >
                 <X className="h-4 w-4 mr-1" />
-                Сбросить бой
+                {isClearing ? 'Сброс...' : 'Сбросить бой'}
               </Button>
             </div>
           </div>

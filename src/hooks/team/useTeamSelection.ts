@@ -35,11 +35,11 @@ export const useTeamSelection = () => {
     return { byId, byInstanceId };
   }, [cards]);
 
-  // ✅ КРИТИЧНО: Теперь используем dungeonTeam из player_teams вместо game_data.selected_team
-  // Build selected team with health from useCards()
+  // ✅ КРИТИЧНО: Теперь используем ТОЛЬКО dungeonTeam из player_teams
+  // game_data.selected_team больше НЕ используется для подземелий
   const selectedTeamWithHealth = useMemo(() => {
-    // Приоритет: dungeonTeam из player_teams (новая система)
-    const teamSource = dungeonTeam.length > 0 ? dungeonTeam : (gameData.selectedTeam || []) as any[];
+    // Только dungeonTeam из player_teams - никаких fallback на game_data!
+    const teamSource = dungeonTeam as any[];
     
     return teamSource.map((pair: any) => ({
       hero: pair.hero ? (() => {

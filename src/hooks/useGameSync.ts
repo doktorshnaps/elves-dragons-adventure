@@ -140,13 +140,9 @@ export const useGameSync = () => {
         
         gameStore.setBalance(gameData.balance);
         
-        // КРИТИЧНО: Всегда устанавливаем selectedTeam из БД
-        const teamFromDB = gameData.selectedTeam || [];
-        console.log('🔄 useGameSync: Setting selectedTeam from DB:', {
-          length: teamFromDB.length,
-          isArray: Array.isArray(teamFromDB),
-        });
-        gameStore.setSelectedTeam(teamFromDB);
+        // ❌ УДАЛЕНО: selectedTeam теперь управляется через player_teams, не game_data
+        // Команда для подземелья загружается через usePlayerTeams hook
+        // gameStore.setSelectedTeam(teamFromDB); - убрано, чтобы не перезаписывать player_teams
         
         gameStore.setAccountLevel(gameData.accountLevel || 1);
         gameStore.setAccountExperience(gameData.accountExperience || 0);

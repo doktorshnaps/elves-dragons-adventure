@@ -17,6 +17,9 @@ import { ActiveDungeonWarning } from "./ActiveDungeonWarning";
 import { useGameStore } from "@/stores/gameStore";
 import { useLanguage } from "@/hooks/useLanguage";
 import { t } from "@/utils/translations";
+import { clearActiveBattle } from "@/utils/activeBattleChecker";
+import { useWalletContext } from "@/contexts/WalletConnectContext";
+import { useQueryClient } from "@tanstack/react-query";
 
 interface DungeonSearchDialogProps {
   onClose: () => void;
@@ -74,16 +77,17 @@ export const DungeonSearchDialog = ({
   const { language } = useLanguage();
   const navigate = useNavigate();
   const teamBattleState = useGameStore((state) => state.teamBattleState);
-  const activeBattleInProgress = useGameStore((state) => state.activeBattleInProgress);
-  const clearTeamBattleState = useGameStore((state) => state.clearTeamBattleState);
   const accountLevel = useGameStore((state) => state.accountLevel);
   
   const [activeDungeon, setActiveDungeon] = React.useState<string | null>(null);
   const { playerStats } = usePlayerState();
   const { updateGameData } = useGameData();
   const { hasOtherActiveSessions, hasAnyActiveSession, allActiveSessions, activeSessions, startDungeonSession, endDungeonSession } = useDungeonSync();
+  const { accountId } = useWalletContext();
+  const queryClient = useQueryClient();
   const [showActiveWarning, setShowActiveWarning] = useState(false);
   const [pendingDungeon, setPendingDungeon] = useState<DungeonType | null>(null);
+  const [isResetting, setIsResetting] = useState(false);
 
   React.useEffect(() => {
     // 1. Проверяем состояние из Zustand store (единственный источник истины)
@@ -111,35 +115,28 @@ export const DungeonSearchDialog = ({
   }, [teamBattleState]);
 
   const handleResetActiveBattle = async () => {
-    // КРИТИЧНО: Блокируем синхронизацию перед сбросом
-    localStorage.setItem('blockBattleSync', 'true');
+    if (isResetting) return;
+    setIsResetting(true);
     
-    // 1. Очищаем все источники состояния боя СИНХРОННО
-    localStorage.removeItem('teamBattleState');
-    localStorage.removeItem('activeBattleInProgress');
-    localStorage.removeItem('battleState'); // legacy
-    localStorage.removeItem('activeDungeonSession');
-    
-    // 2. Очищаем Zustand store
-    clearTeamBattleState();
-    useGameStore.setState({ activeBattleInProgress: false, battleState: null });
-    
-    // 3. Очищаем game_data в БД
-    try { 
-      await updateGameData({ battleState: null }); 
+    try {
+      // ✅ Используем атомарный сброс через централизованную функцию
+      const cleared = await clearActiveBattle(updateGameData, queryClient, accountId);
+      
+      if (cleared) {
+        // Сбрасываем локальный state
+        setActiveDungeon(null);
+        // Небольшая задержка для завершения real-time событий
+        await new Promise(r => setTimeout(r, 200));
+      }
+      
+      // Перезагружаем страницу для полной очистки состояния
+      window.location.reload();
     } catch (e) {
-      console.warn('Failed to clear battleState from game_data:', e);
+      console.error('Error resetting battle:', e);
+      window.location.reload();
     }
-    
-    // 4. Завершаем сессию подземелья в БД
-    await endDungeonSession();
-    
-    // 5. Сбрасываем локальный state
-    setActiveDungeon(null);
-    
-    // 6. Перезагружаем страницу БЕЗ задержки
-    window.location.reload();
   };
+  
   const handleDungeonSelect = async (dungeonType: DungeonType) => {
     // Блокируем выбор, если на другом устройстве есть активная сессия
     if (hasOtherActiveSessions) {
