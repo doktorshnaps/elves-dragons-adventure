@@ -404,7 +404,7 @@ export const usePvP = (walletAddress: string | null) => {
       console.error('Failed to join queue:', error);
       toast({ 
         title: "Ошибка очереди", 
-        description: error.message.includes('недостаточно') 
+        description: error.message.includes('недостаточно') || error.message.includes('ELL')
           ? "Недостаточно ELL для входа в PvP" 
           : "Не удалось присоединиться к очереди",
         variant: "destructive" 
@@ -414,22 +414,45 @@ export const usePvP = (walletAddress: string | null) => {
 
     const result = data as any;
     
-    if (result?.error === 'Already in queue') {
-      toast({ title: "Вы уже в очереди", description: "Поиск противника продолжается..." });
-      await checkExistingQueue();
-      return true;
+    // Handle error response from RPC
+    if (result?.error) {
+      if (result.error === 'Already in queue') {
+        toast({ title: "Вы уже в очереди", description: "Поиск противника продолжается..." });
+        await checkExistingQueue();
+        return true;
+      }
+      
+      // Handle balance error
+      if (result.error.includes('ELL') || result.error.includes('недостаточен')) {
+        toast({ 
+          title: "Недостаточно ELL", 
+          description: "Для входа в PvP необходимо 100 ELL",
+          variant: "destructive" 
+        });
+        return false;
+      }
+      
+      toast({ 
+        title: "Ошибка очереди", 
+        description: result.error,
+        variant: "destructive" 
+      });
+      return false;
     }
     
-    if (result?.queue_id) {
+    if (result?.queue_id || result?.success) {
+      const queueId = result.queue_id;
+      
       setQueueStatus({
         isSearching: true,
-        queueId: result.queue_id,
+        queueId: queueId,
         searchTime: 0,
         status: 'searching',
         rarityTier,
         teamSnapshot
       });
 
+      // Start the search timer
       searchTimerRef.current = setInterval(() => {
         setQueueStatus(prev => ({
           ...prev,
@@ -437,7 +460,7 @@ export const usePvP = (walletAddress: string | null) => {
         }));
       }, 1000);
 
-      startMatchmaking(result.queue_id, rarityTier, teamSnapshot);
+      startMatchmaking(queueId, rarityTier, teamSnapshot);
       
       toast({ 
         title: "Поиск матча", 
@@ -446,6 +469,12 @@ export const usePvP = (walletAddress: string | null) => {
       return true;
     }
 
+    console.error('Unexpected join queue response:', result);
+    toast({ 
+      title: "Ошибка", 
+      description: "Неожиданный ответ сервера",
+      variant: "destructive" 
+    });
     return false;
   }, [walletAddress, toast, checkExistingQueue, startMatchmaking]);
 
