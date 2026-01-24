@@ -68,6 +68,7 @@ export interface QueueStatus {
   status: 'idle' | 'searching' | 'matched' | 'error';
   rarityTier?: number;
   teamSnapshot?: any;
+  matchedMatchId?: string; // ID of the matched match for auto-navigation
 }
 
 export interface BotTeamStatus {
@@ -94,6 +95,8 @@ export const usePvP = (walletAddress: string | null) => {
   const searchTimerRef = useRef<NodeJS.Timeout | null>(null);
   const matchmakingRef = useRef<NodeJS.Timeout | null>(null);
   const botFallbackTriggeredRef = useRef(false);
+  // Lock to prevent duplicate bot match creation
+  const botMatchInProgressRef = useRef(false);
   // Track if initial load has happened to prevent duplicate fetches
   const initialLoadDoneRef = useRef(false);
   // Reliable search time counter (not affected by React state batching)
@@ -109,9 +112,10 @@ export const usePvP = (walletAddress: string | null) => {
       clearInterval(matchmakingRef.current);
       matchmakingRef.current = null;
     }
-    // Reset counter
+    // Reset counters and flags
     searchTimeCounterRef.current = 0;
     botFallbackTriggeredRef.current = false;
+    botMatchInProgressRef.current = false;
   }, []);
 
   // Load player rating
@@ -215,89 +219,110 @@ export const usePvP = (walletAddress: string | null) => {
   }, [walletAddress]);
 
   // Try to start bot match - uses rating from state or fetches fresh ELO
-  const tryBotMatch = useCallback(async (rarityTier: number, teamSnapshot: any) => {
-    if (!walletAddress) {
-      console.log('[PvP] tryBotMatch: No wallet address');
-      return false;
+  // Returns matchId on success, null on failure
+  const tryBotMatch = useCallback(async (rarityTier: number, teamSnapshot: any): Promise<string | null> => {
+    // Prevent duplicate bot match creation
+    if (botMatchInProgressRef.current) {
+      console.log('[PvP] tryBotMatch: Already in progress, skipping');
+      return null;
     }
     
-    // Get player ELO - use rating from state or default to 1000
-    const playerElo = rating?.elo ?? 1000;
-    console.log('[PvP] tryBotMatch: Starting with ELO:', playerElo);
+    if (!walletAddress) {
+      console.log('[PvP] tryBotMatch: No wallet address');
+      return null;
+    }
     
-    // Find bot opponent
-    const { data: botData, error: botError } = await supabase.rpc('find_bot_opponent', {
-      p_wallet_address: walletAddress,
-      p_rarity_tier: rarityTier,
-      p_player_elo: playerElo
-    });
+    // Set lock
+    botMatchInProgressRef.current = true;
+    console.log('[PvP] tryBotMatch: Lock acquired');
     
-    console.log('[PvP] tryBotMatch: find_bot_opponent result:', { botData, botError });
-    
-    const botResult = botData as any;
-    if (botError || !botResult?.found) {
-      console.log('[PvP] tryBotMatch: No bot found');
-      toast({ 
-        title: "Нет противников", 
-        description: "Не найдено ни игроков, ни ботов. Попробуйте позже.",
-        variant: "destructive" 
+    try {
+      // Get player ELO - use rating from state or default to 1000
+      const playerElo = rating?.elo ?? 1000;
+      console.log('[PvP] tryBotMatch: Starting with ELO:', playerElo);
+      
+      // Find bot opponent
+      const { data: botData, error: botError } = await supabase.rpc('find_bot_opponent', {
+        p_wallet_address: walletAddress,
+        p_rarity_tier: rarityTier,
+        p_player_elo: playerElo
       });
+      
+      console.log('[PvP] tryBotMatch: find_bot_opponent result:', { botData, botError });
+      
+      const botResult = botData as any;
+      if (botError || !botResult?.found) {
+        console.log('[PvP] tryBotMatch: No bot found');
+        toast({ 
+          title: "Нет противников", 
+          description: "Не найдено ни игроков, ни ботов. Попробуйте позже.",
+          variant: "destructive" 
+        });
+        clearIntervals();
+        setQueueStatus({
+          isSearching: false,
+          searchTime: 0,
+          status: 'idle'
+        });
+        return null;
+      }
+      
+      console.log('[PvP] tryBotMatch: Bot found:', botResult.bot_owner_wallet);
+      
+      // Leave real queue first (this also refunds the entry fee)
+      await supabase.rpc('leave_pvp_queue', {
+        p_wallet_address: walletAddress
+      });
+      
+      // Start bot match
+      const { data: matchData, error: matchError } = await supabase.rpc('start_bot_match', {
+        p_player_wallet: walletAddress,
+        p_rarity_tier: rarityTier,
+        p_player_team_snapshot: teamSnapshot,
+        p_bot_owner_wallet: botResult.bot_owner_wallet,
+        p_bot_team_snapshot: botResult.team_snapshot,
+        p_player_elo: playerElo,
+        p_bot_elo: botResult.elo
+      });
+      
+      console.log('[PvP] tryBotMatch: start_bot_match result:', { matchData, matchError });
+      
+      const matchResult = matchData as any;
+      if (matchError || matchResult?.error) {
+        console.log('[PvP] tryBotMatch: Failed to start bot match:', matchError || matchResult?.error);
+        toast({ 
+          title: "Ошибка", 
+          description: matchResult?.error || matchError?.message || "Не удалось создать матч с ботом",
+          variant: "destructive" 
+        });
+        return null;
+      }
+      
+      const matchId = matchResult.match_id;
+      console.log('[PvP] tryBotMatch: SUCCESS! Match ID:', matchId);
+      
       clearIntervals();
       setQueueStatus({
         isSearching: false,
         searchTime: 0,
-        status: 'idle'
+        status: 'matched',
+        matchedMatchId: matchId // Store for auto-navigation
       });
-      return false;
-    }
-    
-    console.log('[PvP] tryBotMatch: Bot found:', botResult.bot_owner_wallet);
-    
-    // Leave real queue first (this also refunds the entry fee)
-    await supabase.rpc('leave_pvp_queue', {
-      p_wallet_address: walletAddress
-    });
-    
-    // Start bot match
-    const { data: matchData, error: matchError } = await supabase.rpc('start_bot_match', {
-      p_player_wallet: walletAddress,
-      p_rarity_tier: rarityTier,
-      p_player_team_snapshot: teamSnapshot,
-      p_bot_owner_wallet: botResult.bot_owner_wallet,
-      p_bot_team_snapshot: botResult.team_snapshot,
-      p_player_elo: playerElo,
-      p_bot_elo: botResult.elo
-    });
-    
-    console.log('[PvP] tryBotMatch: start_bot_match result:', { matchData, matchError });
-    
-    const matchResult = matchData as any;
-    if (matchError || matchResult?.error) {
-      console.log('[PvP] tryBotMatch: Failed to start bot match:', matchError || matchResult?.error);
+      
       toast({ 
-        title: "Ошибка", 
-        description: matchResult?.error || matchError?.message || "Не удалось создать матч с ботом",
-        variant: "destructive" 
+        title: "🤖 Бот-противник найден!", 
+        description: "Матч против команды офлайн игрока" 
       });
-      return false;
+      
+      loadActiveMatches();
+      return matchId;
+    } finally {
+      // Release lock after a small delay to prevent rapid re-triggering
+      setTimeout(() => {
+        botMatchInProgressRef.current = false;
+        console.log('[PvP] tryBotMatch: Lock released');
+      }, 1000);
     }
-    
-    console.log('[PvP] tryBotMatch: SUCCESS! Match ID:', matchResult.match_id);
-    
-    clearIntervals();
-    setQueueStatus({
-      isSearching: false,
-      searchTime: 0,
-      status: 'matched'
-    });
-    
-    toast({ 
-      title: "🤖 Бот-противник найден!", 
-      description: "Матч против команды офлайн игрока" 
-    });
-    
-    loadActiveMatches();
-    return true;
   }, [walletAddress, rating, toast, loadActiveMatches, clearIntervals]);
 
   // Start matchmaking process
@@ -327,12 +352,12 @@ export const usePvP = (walletAddress: string | null) => {
         const snapshot = teamSnapshot;
         
         if (snapshot) {
-          const botMatchStarted = await tryBotMatch(tier, snapshot);
-          if (botMatchStarted) {
+          const matchId = await tryBotMatch(tier, snapshot);
+          if (matchId) {
             return; // Bot match started, intervals cleared in tryBotMatch
           } else {
-            // Bot match failed, reset flag to retry on next tick
-            console.log('[PvP] Bot match failed, will retry');
+            // Bot match failed or already in progress, reset flag to retry on next tick
+            console.log('[PvP] Bot match failed or in progress, will retry');
             botFallbackTriggeredRef.current = false;
           }
         }
@@ -353,7 +378,8 @@ export const usePvP = (walletAddress: string | null) => {
         setQueueStatus({
           isSearching: false,
           searchTime: 0,
-          status: 'matched'
+          status: 'matched',
+          matchedMatchId: result.match_id // Store for auto-navigation
         });
         
         toast({ 
