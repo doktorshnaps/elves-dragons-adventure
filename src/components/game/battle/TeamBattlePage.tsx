@@ -645,58 +645,32 @@ const TeamBattlePageInner: React.FC<TeamBattlePageProps> = ({
     handleNextLevel(); // Очистит monstersKilled и перейдет на следующий уровень
   };
 
-  // Мониторинг активной сессии в БД: если удалена на другом устройстве — блокируем
+  // ✅ Keep-alive: обновляем last_activity через Edge Function, чтобы сессия не считалась «просроченной»
   useEffect(() => {
-    // Следим ТОЛЬКО когда бой активен на этом устройстве
     const isActiveLocal = battleStarted && useGameStore.getState().activeBattleInProgress;
     if (!accountId || !deviceId || !isActiveLocal) return;
 
-    const checkSession = async () => {
-      try {
-        // КРИТИЧНО: Не проверяем сессию если бой завершен
-        const stillActiveLocal = battleStarted && useGameStore.getState().activeBattleInProgress;
-        if (!stillActiveLocal) {
-          return; // Бой завершен нормально
-        }
+    // Сразу «пингуем» сессию при возврате на страницу
+    updateDungeonLevel(battleState.level).catch(() => {});
 
-        // ✅ КРИТИЧНО: Пропускаем проверку если сессия создана менее 10 секунд назад
-        // Это даёт время БД записать сессию и индексировать её
-        const timeSinceCreation = Date.now() - sessionCreatedAtRef.current;
-        if (sessionCreatedAtRef.current > 0 && timeSinceCreation < 10000) {
-          console.log('⏳ Пропускаем проверку сессии - создана', Math.round(timeSinceCreation / 1000), 'сек назад');
-          return;
-        }
-        
-        const now = Date.now();
-        const TIMEOUT = 300000; // 5 минут - даем запас для троттлинга heartbeat в фоновых вкладках
-        const { data, error } = await supabase
-          .from('active_dungeon_sessions')
-          .select('device_id')
-          .eq('account_id', accountId)
-          .eq('device_id', deviceId)
-          .gte('last_activity', now - TIMEOUT)
-          .limit(1);
+    // Далее — раз в минуту, чтобы last_activity всегда был свежим
+    const interval = window.setInterval(() => {
+      const stillActiveLocal = battleStarted && useGameStore.getState().activeBattleInProgress;
+      if (!stillActiveLocal) return;
+      updateDungeonLevel(battleState.level).catch(() => {});
+    }, 60_000);
 
-        if (error) throw error;
-        // Если записи нет — считаем, что сессию завершили удаленно
-        const stillActiveAfterCheck = battleStarted && useGameStore.getState().activeBattleInProgress;
-        if ((!data || data.length === 0) && stillActiveAfterCheck) {
-          console.warn('⚠️ Сессия не найдена в БД, показываем диалог завершения');
-          setSessionTerminated(true);
-        }
-      } catch (e) {
-        console.error('Session check error:', e);
-      }
+    return () => {
+      clearInterval(interval);
     };
+  }, [accountId, deviceId, battleStarted, battleState.level, updateDungeonLevel]);
 
-    // КРИТИЧНО: Задержка 3 секунды перед первой проверкой, чтобы дать время БД записать новую сессию
-    // Это предотвращает ложное срабатывание при только что созданной сессии
-    // (Edge Function + upsert + индексация занимает до 1-2 секунд при нагрузке)
-    const initialCheckTimer = setTimeout(() => {
-      checkSession();
-    }, 3000);
+  // Мониторинг активной сессии: показываем «сессия потеряна» только если запись удалена (realtime DELETE)
+  // Важно: прямой SELECT по active_dungeon_sessions может возвращать пусто из-за RLS и даёт ложные срабатывания.
+  useEffect(() => {
+    const isActiveLocal = battleStarted && useGameStore.getState().activeBattleInProgress;
+    if (!accountId || !isActiveLocal) return;
 
-    // Подписываемся на изменения в БД (Real-time подписка более эффективна чем polling)
     const channel = supabase
       .channel(`battle_session_monitor:${accountId}`)
       .on(
@@ -708,7 +682,6 @@ const TeamBattlePageInner: React.FC<TeamBattlePageProps> = ({
           filter: `account_id=eq.${accountId}`
         },
         () => {
-          // Не показываем если бой завершен
           const stillActiveLocal = battleStarted && useGameStore.getState().activeBattleInProgress;
           if (stillActiveLocal) {
             console.log('Session deleted remotely');
@@ -718,14 +691,10 @@ const TeamBattlePageInner: React.FC<TeamBattlePageProps> = ({
       )
       .subscribe();
 
-    // Убираем периодическую проверку - полагаемся только на Real-time подписку
-    // Это снижает нагрузку с 16 запросов select:active_dungeon_sessions до 0
-
     return () => {
-      clearTimeout(initialCheckTimer);
       supabase.removeChannel(channel);
     };
-  }, [accountId, deviceId, battleStarted]);
+  }, [accountId, battleStarted]);
 
   // Автоматически активируем бой при загрузке, если есть активное подземелье
   useEffect(() => {
