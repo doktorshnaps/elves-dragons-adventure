@@ -96,6 +96,8 @@ export const usePvP = (walletAddress: string | null) => {
   const botFallbackTriggeredRef = useRef(false);
   // Track if initial load has happened to prevent duplicate fetches
   const initialLoadDoneRef = useRef(false);
+  // Reliable search time counter (not affected by React state batching)
+  const searchTimeCounterRef = useRef(0);
 
   // Clear intervals helper
   const clearIntervals = useCallback(() => {
@@ -107,6 +109,9 @@ export const usePvP = (walletAddress: string | null) => {
       clearInterval(matchmakingRef.current);
       matchmakingRef.current = null;
     }
+    // Reset counter
+    searchTimeCounterRef.current = 0;
+    botFallbackTriggeredRef.current = false;
   }, []);
 
   // Load player rating
@@ -280,32 +285,44 @@ export const usePvP = (walletAddress: string | null) => {
 
   // Start matchmaking process
   const startMatchmaking = useCallback((queueId: string, rarityTier?: number, teamSnapshot?: any) => {
+    // Prevent duplicate intervals
+    if (matchmakingRef.current) {
+      console.log('[PvP] Matchmaking already running, skipping');
+      return;
+    }
+    
     botFallbackTriggeredRef.current = false;
+    console.log('[PvP] Starting matchmaking for tier:', rarityTier);
     
     matchmakingRef.current = setInterval(async () => {
       if (!walletAddress) return;
       
-      // Get current search time from state
-      let currentSearchTime = 0;
-      setQueueStatus(prev => {
-        currentSearchTime = prev.searchTime;
-        return prev;
-      });
+      // Use ref for reliable time reading (not affected by state batching)
+      const currentSearchTime = searchTimeCounterRef.current;
+      console.log('[PvP] Matchmaking tick, searchTime:', currentSearchTime, 'botTriggered:', botFallbackTriggeredRef.current);
       
-      // Check if we should try bot fallback
+      // Check if we should try bot fallback (after 30 seconds)
       if (currentSearchTime >= BOT_FALLBACK_TIMEOUT && !botFallbackTriggeredRef.current) {
         botFallbackTriggeredRef.current = true;
+        console.log('[PvP] Bot fallback triggered at', currentSearchTime, 'seconds');
         
-        // Try bot match
         const tier = rarityTier ?? 1;
         const snapshot = teamSnapshot;
         
         if (snapshot) {
-          tryBotMatch(tier, snapshot);
-          return;
+          const botMatchStarted = await tryBotMatch(tier, snapshot);
+          if (botMatchStarted) {
+            return; // Bot match started, intervals cleared in tryBotMatch
+          } else {
+            // Bot match failed, reset flag to retry on next tick
+            console.log('[PvP] Bot match failed, will retry');
+            botFallbackTriggeredRef.current = false;
+          }
         }
+        return;
       }
       
+      // Try to find real opponent
       const { data } = await supabase.rpc('find_pvp_match', {
         p_wallet_address: walletAddress
       });
@@ -313,7 +330,9 @@ export const usePvP = (walletAddress: string | null) => {
       const result = data as any;
       if (result?.match_id) {
         // Match found!
+        console.log('[PvP] Real opponent found! Match:', result.match_id);
         clearIntervals();
+        searchTimeCounterRef.current = 0;
         setQueueStatus({
           isSearching: false,
           searchTime: 0,
@@ -350,6 +369,9 @@ export const usePvP = (walletAddress: string | null) => {
       const teamSnapshot = data.team_snapshot;
       const rarityTier = data.rarity_tier;
 
+      // Initialize ref counter with elapsed time
+      searchTimeCounterRef.current = elapsedSeconds;
+      
       setQueueStatus({
         isSearching: true,
         queueId: data.id,
@@ -359,10 +381,16 @@ export const usePvP = (walletAddress: string | null) => {
         teamSnapshot
       });
 
+      // Clear any existing timer before creating new one
+      if (searchTimerRef.current) {
+        clearInterval(searchTimerRef.current);
+      }
+      
       searchTimerRef.current = setInterval(() => {
+        searchTimeCounterRef.current += 1;
         setQueueStatus(prev => ({
           ...prev,
-          searchTime: prev.searchTime + 1
+          searchTime: searchTimeCounterRef.current
         }));
       }, 1000);
 
@@ -448,6 +476,9 @@ export const usePvP = (walletAddress: string | null) => {
     if (result?.queue_id || result?.success) {
       const queueId = result.queue_id;
       
+      // Reset ref counter
+      searchTimeCounterRef.current = 0;
+      
       setQueueStatus({
         isSearching: true,
         queueId: queueId,
@@ -457,11 +488,17 @@ export const usePvP = (walletAddress: string | null) => {
         teamSnapshot
       });
 
-      // Start the search timer
+      // Clear any existing timer before creating new one
+      if (searchTimerRef.current) {
+        clearInterval(searchTimerRef.current);
+      }
+      
+      // Start the search timer - updates both ref and state
       searchTimerRef.current = setInterval(() => {
+        searchTimeCounterRef.current += 1;
         setQueueStatus(prev => ({
           ...prev,
-          searchTime: prev.searchTime + 1
+          searchTime: searchTimeCounterRef.current
         }));
       }, 1000);
 
