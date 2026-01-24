@@ -53,8 +53,10 @@ export const useTeamBattle = (dungeonType: DungeonType, initialLevel: number = 1
   const enemyAttackLockRef = useRef(false);
 
   // Initialize battle with team pairs
+  // КРИТИЧНО: Инициализация происходит только ПОСЛЕ нажатия "Начать бой" (battleStarted=true)
   useEffect(() => {
     if (cardInstancesLoading) return; // Wait until card instances are loaded to get accurate health
+    if (!battleStarted) return; // ✅ НЕ инициализируем бой до нажатия кнопки "Начать бой"
     if (selectedPairs.length > 0 && battleState.playerPairs.length === 0) {
       const teamPairs: TeamPair[] = selectedPairs.map((pair, index) => {
         console.log(`🎯 [useTeamBattle] Building pair ${index} from card_instances context`);
@@ -187,7 +189,7 @@ export const useTeamBattle = (dungeonType: DungeonType, initialLevel: number = 1
         setAttackOrder(teamPairs.map(pair => pair.id));
       })();
     }
-  }, [selectedPairs, dungeonType, initialLevel, cardInstancesLoading, cardInstances]);
+  }, [selectedPairs, dungeonType, initialLevel, cardInstancesLoading, cardInstances, battleStarted]);
 
   // Re-sync stats from card_instances when they change
   // КРИТИЧНО: НЕ синхронизировать во время активного боя, чтобы не перезаписать локальный урон
