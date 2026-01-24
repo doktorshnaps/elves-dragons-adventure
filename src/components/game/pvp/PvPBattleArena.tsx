@@ -7,7 +7,7 @@ import { Sword, Shield, Heart, ArrowLeft, Flag, Clock, Bot, RefreshCw } from 'lu
 import { useNavigate } from 'react-router-dom';
 import { InlineDiceDisplay } from '../battle/InlineDiceDisplay';
 import { DamageIndicator } from '../battle/DamageIndicator';
-import { resolveCardImageSync } from '@/utils/cardImageResolver';
+
 import { PvPPair } from '@/hooks/usePvP';
 
 interface PvPBattleArenaProps {
@@ -31,6 +31,24 @@ interface PvPBattleArenaProps {
   onAttack: (attackerIndex: number, targetIndex: number) => Promise<void>;
   onSurrender: () => Promise<void>;
 }
+
+// Normalize image URL: convert relative paths to full Supabase Storage URLs
+const normalizeImageUrl = (url?: string): string | undefined => {
+  if (!url) return undefined;
+  
+  // Already a full URL - return as-is
+  if (url.startsWith('http://') || url.startsWith('https://')) {
+    return url;
+  }
+  
+  // Relative path like /lovable-uploads/... -> full Supabase Storage URL
+  if (url.startsWith('/lovable-uploads/')) {
+    const supabaseUrl = 'https://oimhwdymghkwxznjarkv.supabase.co';
+    return `${supabaseUrl}/storage/v1/object/public${url}`;
+  }
+  
+  return url;
+};
 
 export const PvPBattleArena: React.FC<PvPBattleArenaProps> = ({
   myPairs,
@@ -169,10 +187,10 @@ export const PvPBattleArena: React.FC<PvPBattleArenaProps> = ({
             {/* Hero Image */}
             <div className="w-14 h-14 sm:w-16 sm:h-16 md:w-20 md:h-20 lg:w-24 lg:h-24 rounded-md sm:rounded-lg overflow-hidden border border-white/30 bg-white/10 flex-shrink-0">
               {(() => {
-                // IMPORTANT: resolveCardImageSync normalizes /lovable-uploads/*.png -> .webp
-                const heroImage = resolveCardImageSync(pair.hero as any);
-                const heroFallbackPng = heroImage?.replace(/\.webp(\?|$)/i, '.png$1');
-                return heroImage && heroImage !== '/placeholder.svg' ? (
+                // Get image from pair.hero.image (stored in snapshot) and normalize URL
+                const rawImage = pair.hero.image;
+                const heroImage = normalizeImageUrl(rawImage);
+                return heroImage ? (
                   <img
                     src={heroImage}
                     alt={pair.hero.name}
@@ -180,14 +198,18 @@ export const PvPBattleArena: React.FC<PvPBattleArenaProps> = ({
                     loading="lazy"
                     onError={(e) => {
                       const img = e.currentTarget as HTMLImageElement;
-                      // Try png fallback once (some legacy assets may still exist as png)
-                      if (heroFallbackPng && img.src !== heroFallbackPng && !img.dataset.fallbackTried) {
+                      if (!img.dataset.fallbackTried) {
                         img.dataset.fallbackTried = '1';
-                        img.src = heroFallbackPng;
-                        return;
+                        img.style.display = 'none';
+                        // Show emoji fallback
+                        const parent = img.parentElement;
+                        if (parent && !parent.querySelector('.fallback-icon')) {
+                          const fallback = document.createElement('div');
+                          fallback.className = 'fallback-icon w-full h-full flex items-center justify-center text-white';
+                          fallback.innerHTML = '<span class="text-lg sm:text-xl md:text-2xl">⚔️</span>';
+                          parent.appendChild(fallback);
+                        }
                       }
-                      // Final fallback
-                      img.src = '/placeholder.svg';
                     }}
                   />
                 ) : (
@@ -202,9 +224,9 @@ export const PvPBattleArena: React.FC<PvPBattleArenaProps> = ({
             {pair.dragon && (
               <div className="w-12 h-12 sm:w-14 sm:h-14 md:w-16 md:h-16 lg:w-20 lg:h-20 rounded-md sm:rounded-lg overflow-hidden border border-white/30 bg-white/10 flex-shrink-0">
                 {(() => {
-                  const dragonImage = resolveCardImageSync(pair.dragon as any);
-                  const dragonFallbackPng = dragonImage?.replace(/\.webp(\?|$)/i, '.png$1');
-                  return dragonImage && dragonImage !== '/placeholder.svg' ? (
+                  const rawDragonImage = pair.dragon!.image;
+                  const dragonImage = normalizeImageUrl(rawDragonImage);
+                  return dragonImage ? (
                     <img
                       src={dragonImage}
                       alt={pair.dragon!.name}
@@ -212,12 +234,17 @@ export const PvPBattleArena: React.FC<PvPBattleArenaProps> = ({
                       loading="lazy"
                       onError={(e) => {
                         const img = e.currentTarget as HTMLImageElement;
-                        if (dragonFallbackPng && img.src !== dragonFallbackPng && !img.dataset.fallbackTried) {
+                        if (!img.dataset.fallbackTried) {
                           img.dataset.fallbackTried = '1';
-                          img.src = dragonFallbackPng;
-                          return;
+                          img.style.display = 'none';
+                          const parent = img.parentElement;
+                          if (parent && !parent.querySelector('.fallback-icon')) {
+                            const fallback = document.createElement('div');
+                            fallback.className = 'fallback-icon w-full h-full flex items-center justify-center text-white';
+                            fallback.innerHTML = '<span class="text-base sm:text-lg md:text-xl">🐲</span>';
+                            parent.appendChild(fallback);
+                          }
                         }
-                        img.src = '/placeholder.svg';
                       }}
                     />
                   ) : (
