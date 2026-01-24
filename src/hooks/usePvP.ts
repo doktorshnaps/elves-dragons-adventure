@@ -214,19 +214,29 @@ export const usePvP = (walletAddress: string | null) => {
     }
   }, [walletAddress]);
 
-  // Try to start bot match
+  // Try to start bot match - uses rating from state or fetches fresh ELO
   const tryBotMatch = useCallback(async (rarityTier: number, teamSnapshot: any) => {
-    if (!walletAddress || !rating) return false;
+    if (!walletAddress) {
+      console.log('[PvP] tryBotMatch: No wallet address');
+      return false;
+    }
+    
+    // Get player ELO - use rating from state or default to 1000
+    const playerElo = rating?.elo ?? 1000;
+    console.log('[PvP] tryBotMatch: Starting with ELO:', playerElo);
     
     // Find bot opponent
     const { data: botData, error: botError } = await supabase.rpc('find_bot_opponent', {
       p_wallet_address: walletAddress,
       p_rarity_tier: rarityTier,
-      p_player_elo: rating.elo
+      p_player_elo: playerElo
     });
+    
+    console.log('[PvP] tryBotMatch: find_bot_opponent result:', { botData, botError });
     
     const botResult = botData as any;
     if (botError || !botResult?.found) {
+      console.log('[PvP] tryBotMatch: No bot found');
       toast({ 
         title: "Нет противников", 
         description: "Не найдено ни игроков, ни ботов. Попробуйте позже.",
@@ -241,7 +251,9 @@ export const usePvP = (walletAddress: string | null) => {
       return false;
     }
     
-    // Leave real queue first
+    console.log('[PvP] tryBotMatch: Bot found:', botResult.bot_owner_wallet);
+    
+    // Leave real queue first (this also refunds the entry fee)
     await supabase.rpc('leave_pvp_queue', {
       p_wallet_address: walletAddress
     });
@@ -253,19 +265,24 @@ export const usePvP = (walletAddress: string | null) => {
       p_player_team_snapshot: teamSnapshot,
       p_bot_owner_wallet: botResult.bot_owner_wallet,
       p_bot_team_snapshot: botResult.team_snapshot,
-      p_player_elo: rating.elo,
+      p_player_elo: playerElo,
       p_bot_elo: botResult.elo
     });
     
+    console.log('[PvP] tryBotMatch: start_bot_match result:', { matchData, matchError });
+    
     const matchResult = matchData as any;
     if (matchError || matchResult?.error) {
+      console.log('[PvP] tryBotMatch: Failed to start bot match:', matchError || matchResult?.error);
       toast({ 
         title: "Ошибка", 
-        description: matchResult?.error || "Не удалось создать матч с ботом",
+        description: matchResult?.error || matchError?.message || "Не удалось создать матч с ботом",
         variant: "destructive" 
       });
       return false;
     }
+    
+    console.log('[PvP] tryBotMatch: SUCCESS! Match ID:', matchResult.match_id);
     
     clearIntervals();
     setQueueStatus({
@@ -449,12 +466,6 @@ export const usePvP = (walletAddress: string | null) => {
     
     // Handle error response from RPC
     if (result?.error) {
-      if (result.error === 'Already in queue') {
-        toast({ title: "Вы уже в очереди", description: "Поиск противника продолжается..." });
-        await checkExistingQueue();
-        return true;
-      }
-      
       // Handle balance error
       if (result.error.includes('ELL') || result.error.includes('недостаточен')) {
         toast({ 
@@ -475,6 +486,14 @@ export const usePvP = (walletAddress: string | null) => {
     
     if (result?.queue_id || result?.success) {
       const queueId = result.queue_id;
+      const isAlreadyInQueue = result.already_in_queue === true;
+      
+      // If already in queue, just restore the UI state without restarting timers
+      if (isAlreadyInQueue && matchmakingRef.current) {
+        console.log('[PvP] Already in queue and matchmaking running, skipping restart');
+        toast({ title: "Вы уже в очереди", description: "Поиск противника продолжается..." });
+        return true;
+      }
       
       // Reset ref counter
       searchTimeCounterRef.current = 0;
@@ -505,7 +524,7 @@ export const usePvP = (walletAddress: string | null) => {
       startMatchmaking(queueId, rarityTier, teamSnapshot);
       
       toast({ 
-        title: "Поиск матча", 
+        title: isAlreadyInQueue ? "Поиск восстановлен" : "Поиск матча", 
         description: "Ищем игрока... (бот через 30 сек)" 
       });
       return true;
