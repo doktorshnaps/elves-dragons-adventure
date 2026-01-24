@@ -57,22 +57,27 @@ export const PvPHub: React.FC = () => {
     return getPvPTeam(selectedRarityTier);
   }, [getPvPTeam, selectedRarityTier]);
   
+  // ✅ PvP использует МАКСИМАЛЬНЫЕ характеристики (полное здоровье/броня)
+  // Реальные current_health/current_defense не затрагиваются - они сохраняют урон из подземелья
   const teamStats = useMemo(() => {
     let power = 0, defense = 0, health = 0;
     selectedPairs.forEach((pair: TeamPair) => {
       power += pair.hero?.power || 0;
-      defense += pair.hero?.currentDefense || pair.hero?.defense || 0;
-      health += pair.hero?.currentHealth || pair.hero?.health || 0;
+      // В PvP всегда показываем максимальные характеристики
+      defense += pair.hero?.defense || 0;
+      health += pair.hero?.health || 0;
       if (pair.dragon) {
         power += pair.dragon.power || 0;
-        defense += pair.dragon.currentDefense || pair.dragon.defense || 0;
-        health += pair.dragon.currentHealth || pair.dragon.health || 0;
+        defense += pair.dragon.defense || 0;
+        health += pair.dragon.health || 0;
       }
     });
     return { power, defense, health };
   }, [selectedPairs]);
 
-  // Create team snapshot for bot
+  // ✅ Снапшот для PvP боя - ВСЕГДА с полными характеристиками
+  // currentHealth = health, currentDefense = defense
+  // Это виртуальное состояние для боя, реальные данные карточек не меняются
   const createTeamSnapshot = useMemo(() => {
     return selectedPairs.map((pair: TeamPair) => ({
       hero: {
@@ -80,8 +85,9 @@ export const PvPHub: React.FC = () => {
         power: pair.hero?.power,
         defense: pair.hero?.defense,
         health: pair.hero?.health,
-        currentHealth: pair.hero?.currentHealth || pair.hero?.health,
-        currentDefense: pair.hero?.currentDefense || pair.hero?.defense,
+        // ✅ PvP всегда начинает с полным здоровьем и бронёй
+        currentHealth: pair.hero?.health,
+        currentDefense: pair.hero?.defense,
         faction: pair.hero?.faction
       },
       dragon: pair.dragon ? {
@@ -89,15 +95,17 @@ export const PvPHub: React.FC = () => {
         power: pair.dragon.power,
         defense: pair.dragon.defense,
         health: pair.dragon.health,
-        currentHealth: pair.dragon.currentHealth || pair.dragon.health,
-        currentDefense: pair.dragon.currentDefense || pair.dragon.defense,
+        // ✅ PvP всегда начинает с полным здоровьем и бронёй
+        currentHealth: pair.dragon.health,
+        currentDefense: pair.dragon.defense,
         faction: pair.dragon.faction
       } : null,
       totalPower: (pair.hero?.power || 0) + (pair.dragon?.power || 0),
       totalDefense: (pair.hero?.defense || 0) + (pair.dragon?.defense || 0),
       totalHealth: (pair.hero?.health || 0) + (pair.dragon?.health || 0),
-      currentHealth: (pair.hero?.currentHealth || pair.hero?.health) + (pair.dragon?.currentHealth || pair.dragon?.health || 0),
-      currentDefense: (pair.hero?.currentDefense || pair.hero?.defense) + (pair.dragon?.currentDefense || pair.dragon?.defense || 0)
+      // ✅ Итоговые характеристики пары - тоже максимальные
+      currentHealth: (pair.hero?.health || 0) + (pair.dragon?.health || 0),
+      currentDefense: (pair.hero?.defense || 0) + (pair.dragon?.defense || 0)
     }));
   }, [selectedPairs]);
   
