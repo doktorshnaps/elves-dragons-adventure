@@ -7,8 +7,9 @@ import { usePvP, PvPPair } from '@/hooks/usePvP';
 import { useWalletContext } from '@/contexts/WalletConnectContext';
 import { useToast } from '@/hooks/use-toast';
 import { PvPBattleArena } from './PvPBattleArena';
+import { BattleSpeedProvider } from '@/contexts/BattleSpeedContext';
 
-export const PvPBattle: React.FC = () => {
+const PvPBattleContent: React.FC = () => {
   const { matchId } = useParams<{ matchId: string }>();
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -190,5 +191,14 @@ export const PvPBattle: React.FC = () => {
         onSurrender={handleSurrender}
       />
     </div>
+  );
+};
+
+// Wrapper component with BattleSpeedProvider
+export const PvPBattle: React.FC = () => {
+  return (
+    <BattleSpeedProvider>
+      <PvPBattleContent />
+    </BattleSpeedProvider>
   );
 };
