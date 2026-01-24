@@ -12,6 +12,7 @@ export interface PvPPair {
     currentHealth: number;
     currentDefense: number;
     faction?: string;
+    image?: string;
   };
   dragon?: {
     name: string;
@@ -21,6 +22,7 @@ export interface PvPPair {
     currentHealth: number;
     currentDefense: number;
     faction?: string;
+    image?: string;
   };
   totalPower: number;
   totalDefense: number;
@@ -220,21 +222,27 @@ export const usePvP = (walletAddress: string | null) => {
 
   // Try to start bot match - uses rating from state or fetches fresh ELO
   // Returns matchId on success, null on failure
+  // Uses double-checking lock pattern to prevent race conditions
   const tryBotMatch = useCallback(async (rarityTier: number, teamSnapshot: any): Promise<string | null> => {
-    // Prevent duplicate bot match creation
+    // First check - fast path without lock
     if (botMatchInProgressRef.current) {
-      console.log('[PvP] tryBotMatch: Already in progress, skipping');
+      console.log('[PvP] tryBotMatch: Already in progress (fast check), skipping');
       return null;
     }
+    
+    // Set lock immediately
+    botMatchInProgressRef.current = true;
+    console.log('[PvP] tryBotMatch: Lock acquired');
+    
+    // Second check after acquiring lock to prevent race condition
+    // between setting the lock and processing
+    await new Promise(resolve => setTimeout(resolve, 50)); // Small delay to let other calls see the lock
     
     if (!walletAddress) {
       console.log('[PvP] tryBotMatch: No wallet address');
+      botMatchInProgressRef.current = false;
       return null;
     }
-    
-    // Set lock
-    botMatchInProgressRef.current = true;
-    console.log('[PvP] tryBotMatch: Lock acquired');
     
     try {
       // Get player ELO - use rating from state or default to 1000

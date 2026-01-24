@@ -169,13 +169,9 @@ export const PvPBattleArena: React.FC<PvPBattleArenaProps> = ({
             {/* Hero Image */}
             <div className="w-14 h-14 sm:w-16 sm:h-16 md:w-20 md:h-20 lg:w-24 lg:h-24 rounded-md sm:rounded-lg overflow-hidden border border-white/30 bg-white/10 flex-shrink-0">
               {(() => {
-                // Create a minimal Card-like object for image resolution
-                const heroForImage = {
-                  name: pair.hero.name,
-                  faction: pair.hero.faction
-                };
-                const heroImage = resolveCardImageSync(heroForImage as any);
-                return heroImage ? (
+                // Use image from pair.hero directly (stored in team snapshot)
+                const heroImage = pair.hero.image || resolveCardImageSync(pair.hero as any);
+                return heroImage && heroImage !== '/placeholder.svg' ? (
                   <img src={heroImage} alt={pair.hero.name} className="w-full h-full object-contain" />
                 ) : (
                   <div className="w-full h-full flex items-center justify-center text-white">
@@ -189,12 +185,9 @@ export const PvPBattleArena: React.FC<PvPBattleArenaProps> = ({
             {pair.dragon && (
               <div className="w-12 h-12 sm:w-14 sm:h-14 md:w-16 md:h-16 lg:w-20 lg:h-20 rounded-md sm:rounded-lg overflow-hidden border border-white/30 bg-white/10 flex-shrink-0">
                 {(() => {
-                  const dragonForImage = {
-                    name: pair.dragon!.name,
-                    faction: pair.dragon!.faction
-                  };
-                  const dragonImage = resolveCardImageSync(dragonForImage as any);
-                  return dragonImage ? (
+                  // Use image from pair.dragon directly (stored in team snapshot)
+                  const dragonImage = pair.dragon!.image || resolveCardImageSync(pair.dragon as any);
+                  return dragonImage && dragonImage !== '/placeholder.svg' ? (
                     <img src={dragonImage} alt={pair.dragon!.name} className="w-full h-full object-contain" />
                   ) : (
                     <div className="w-full h-full flex items-center justify-center text-white">
