@@ -309,22 +309,40 @@ const TeamBattlePageInner: React.FC<TeamBattlePageProps> = ({
       navigate('/dungeons');
     });
   };
-  const handleBackToMenu = () => {
+  // ✅ Общий хендлер для сохранения состояния боя при выходе в меню
+  const handleSaveBattleStateAndNavigate = useCallback((targetRoute: string = '/dungeons') => {
     startTransition(() => {
-      // ✅ КРИТИЧНО: Сохраняем текущий уровень и состояние боя в Zustand перед выходом
-      // чтобы при возвращении бой продолжился с того же уровня
+      // ✅ КРИТИЧНО: Сохраняем ПОЛНОЕ состояние боя в Zustand перед выходом
+      // включая opponents, currentTurn, currentAttacker чтобы резюмировать бой
       const currentBattleState = {
         level: battleState.level,
         dungeonType: dungeonType,
         playerPairs: battleState.playerPairs,
+        opponents: battleState.opponents, // ✅ Сохраняем противников!
+        currentTurn: battleState.currentTurn,
+        currentAttacker: battleState.currentAttacker,
         monstersKilled: monstersKilledRef.current
       };
       useGameStore.getState().setTeamBattleState(currentBattleState);
-      console.log('📝 [handleBackToMenu] Saved battle state to Zustand, level:', battleState.level);
+      useGameStore.getState().setActiveBattleInProgress(true);
+      console.log('📝 [handleSaveBattleState] Saved FULL battle state to Zustand:', {
+        level: battleState.level,
+        opponentsCount: battleState.opponents.length,
+        playerPairsCount: battleState.playerPairs.length
+      });
       
-      navigate('/dungeons');
+      navigate(targetRoute);
     });
+  }, [battleState, dungeonType, navigate]);
+  
+  const handleBackToMenu = () => {
+    handleSaveBattleStateAndNavigate('/dungeons');
   };
+  
+  // ✅ Callback для TeamBattleArena — сохраняет состояние и переходит в /menu
+  const handleArenaMenuReturn = useCallback(() => {
+    handleSaveBattleStateAndNavigate('/menu');
+  }, [handleSaveBattleStateAndNavigate]);
   const handleNextLevel = () => {
     startTransition(() => {
       handleLevelComplete();
@@ -985,6 +1003,9 @@ const TeamBattlePageInner: React.FC<TeamBattlePageProps> = ({
         level={battleState.level} 
         lastRoll={lastRoll}
         onSurrenderWithSave={handleSurrenderWithSave}
+        onMenuReturn={handleArenaMenuReturn}
+        dungeonType={dungeonType}
+        monstersKilledRef={monstersKilledRef}
       />
       
       {/* Модалка с результатами наград после клейма */}

@@ -23,24 +23,48 @@ export const useTeamBattle = (dungeonType: DungeonType, initialLevel: number = 1
   // Battle state хранится ТОЛЬКО в React state, не в localStorage
   // Это предотвращает рассинхронизацию и утечки данных между сессиями
   const [battleState, setBattleState] = useState<TeamBattleState>(() => {
-    // ✅ КРИТИЧНО: Проверяем сохраненное состояние в Zustand для восстановления уровня
+    // ✅ КРИТИЧНО: Проверяем сохраненное состояние в Zustand для восстановления ПОЛНОГО состояния боя
     const savedBattleState = useGameStore.getState().teamBattleState;
-    const savedLevel = savedBattleState?.dungeonType === dungeonType ? savedBattleState.level : initialLevel;
+    const isMatchingDungeon = savedBattleState?.dungeonType === dungeonType;
     
-    console.log('🎮 [useTeamBattle] Initializing battle state, level:', savedLevel, 
-      'saved:', savedBattleState?.level, 'initial:', initialLevel);
+    if (isMatchingDungeon && savedBattleState) {
+      console.log('🔄 [useTeamBattle] Restoring FULL battle state from Zustand:', {
+        level: savedBattleState.level,
+        opponentsCount: savedBattleState.opponents?.length || 0,
+        playerPairsCount: savedBattleState.playerPairs?.length || 0,
+        currentTurn: savedBattleState.currentTurn
+      });
+      
+      return {
+        playerPairs: savedBattleState.playerPairs || [],
+        opponents: savedBattleState.opponents || [],
+        currentTurn: savedBattleState.currentTurn || 'player',
+        currentAttacker: savedBattleState.currentAttacker || 0,
+        level: savedBattleState.level || initialLevel,
+        selectedDungeon: dungeonType
+      };
+    }
+    
+    console.log('🎮 [useTeamBattle] Initializing fresh battle state, level:', initialLevel);
     
     return {
       playerPairs: [],
       opponents: [],
       currentTurn: 'player',
       currentAttacker: 0,
-      level: savedLevel,
+      level: initialLevel,
       selectedDungeon: dungeonType
     };
   });
 
-  const [attackOrder, setAttackOrder] = useState<string[]>([]);
+  // ✅ Инициализируем attackOrder из восстановленного состояния если есть playerPairs
+  const [attackOrder, setAttackOrder] = useState<string[]>(() => {
+    const savedBattleState = useGameStore.getState().teamBattleState;
+    if (savedBattleState?.dungeonType === dungeonType && savedBattleState?.playerPairs?.length > 0) {
+      return savedBattleState.playerPairs.map((pair: any) => pair.id);
+    }
+    return [];
+  });
   const [lastRoll, setLastRoll] = useState<{ attackerRoll: number; defenderRoll: number; source: 'player' | 'enemy'; damage: number; isBlocked: boolean; isCritical?: boolean; level: number } | null>(null);
 
   // Тайминги последовательности боя (синхронизированы с UI анимациями)
