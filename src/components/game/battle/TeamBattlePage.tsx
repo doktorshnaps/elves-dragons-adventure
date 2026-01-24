@@ -298,10 +298,22 @@ const TeamBattlePageInner: React.FC<TeamBattlePageProps> = ({
     // Теперь безопасно завершаем сессию подземелья в БД
     await endDungeonSession();
     
-    // КРИТИЧНО: Инвалидируем и перезагружаем gameData ДО навигации
-    // чтобы selectedTeam был актуальным на странице /dungeons
-    await queryClient.invalidateQueries({ queryKey: ['gameData', accountId] });
-    await queryClient.refetchQueries({ queryKey: ['gameData', accountId] });
+    // ✅ КРИТИЧНО: Очищаем localStorage, чтобы /dungeons не показывал устаревшие данные
+    try {
+      localStorage.removeItem('activeDungeonSession');
+      localStorage.removeItem('currentClaimKey');
+      localStorage.removeItem('teamBattleState');
+      console.log('✅ [handleExitAndReset] localStorage очищен');
+    } catch (e) {
+      console.warn('⚠️ [handleExitAndReset] Failed to clear localStorage:', e);
+    }
+    
+    // КРИТИЧНО: Инвалидируем ВСЕ связанные кэши ДО навигации
+    await Promise.all([
+      queryClient.invalidateQueries({ queryKey: ['gameData', accountId] }),
+      queryClient.invalidateQueries({ queryKey: ['activeDungeonSessions', accountId] }),
+      queryClient.invalidateQueries({ queryKey: ['cardInstances'] }),
+    ]);
     
     startTransition(() => {
       resetBattle();

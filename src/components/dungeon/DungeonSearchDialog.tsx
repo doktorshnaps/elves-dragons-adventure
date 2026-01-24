@@ -90,29 +90,22 @@ export const DungeonSearchDialog = ({
   const [isResetting, setIsResetting] = useState(false);
 
   React.useEffect(() => {
-    // 1. Проверяем состояние из Zustand store (единственный источник истины)
+    // ✅ Используем данные из useDungeonSync (React Query) как источник истины
+    // allActiveSessions содержит актуальные сессии из БД
+    if (allActiveSessions && allActiveSessions.length > 0) {
+      setActiveDungeon(allActiveSessions[0].dungeon_type);
+      return;
+    }
+    
+    // Fallback: проверяем Zustand (для локального состояния боя)
     if (teamBattleState?.selectedDungeon) {
       setActiveDungeon(teamBattleState.selectedDungeon);
       return;
     }
     
-    // 2. Проверяем активную сессию из БД через localStorage (синхронизируется через useDungeonSync)
-    try {
-      const localSession = localStorage.getItem('activeDungeonSession');
-      if (localSession) {
-        const parsed = JSON.parse(localSession);
-        if (parsed?.dungeon_type) {
-          setActiveDungeon(parsed.dungeon_type);
-          return;
-        }
-      }
-    } catch (e) {
-      console.error('Error parsing activeDungeonSession from localStorage:', e);
-    }
-    
     // Если ничего не найдено, сбрасываем
     setActiveDungeon(null);
-  }, [teamBattleState]);
+  }, [teamBattleState, allActiveSessions]);
 
   const handleResetActiveBattle = async () => {
     if (isResetting) return;
