@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -125,6 +125,14 @@ export const PvPHub: React.FC = () => {
   const hasEnoughBalance = balance >= entryFee;
   const hasTeam = selectedPairs.length > 0;
   const isBotEnabled = isBotEnabledForTier(selectedRarityTier);
+
+  // Auto-navigate to battle when match is found
+  useEffect(() => {
+    if (queueStatus.status === 'matched' && queueStatus.matchedMatchId) {
+      console.log('[PvPHub] Auto-navigating to match:', queueStatus.matchedMatchId);
+      navigate(`/pvp/battle/${queueStatus.matchedMatchId}`);
+    }
+  }, [queueStatus.status, queueStatus.matchedMatchId, navigate]);
 
   const handleJoinQueue = async () => {
     if (!hasTeam) {
