@@ -30,6 +30,9 @@ interface TeamBattleArenaProps {
   level: number;
   lastRoll?: { attackerRoll: number; defenderRoll: number; source: 'player' | 'enemy'; damage: number; isBlocked: boolean; isCritical?: boolean; level: number } | null;
   onSurrenderWithSave?: () => Promise<void>;
+  onMenuReturn?: () => void; // ✅ Новый callback для сохранения состояния
+  dungeonType?: string; // ✅ Для сохранения в Zustand
+  monstersKilledRef?: React.MutableRefObject<Array<{level: number, dungeonType: string, name?: string}>>; // ✅ Для сохранения убитых монстров
 }
 export const TeamBattleArena: React.FC<TeamBattleArenaProps> = ({
   playerPairs,
@@ -41,7 +44,10 @@ export const TeamBattleArena: React.FC<TeamBattleArenaProps> = ({
   onEnemyAttack,
   level,
   lastRoll,
-  onSurrenderWithSave
+  onSurrenderWithSave,
+  onMenuReturn, // ✅ Новый prop
+  dungeonType,
+  monstersKilledRef
 }) => {
   const { language } = useLanguage();
   const navigate = useNavigate();
@@ -258,9 +264,14 @@ export const TeamBattleArena: React.FC<TeamBattleArenaProps> = ({
     // Без cleanup: повторные ререндеры не должны сбрасывать таймер на enemy-ходу
   }, [isPlayerTurn, handleEnemyAttack]);
   const handleMenuReturn = () => {
-    // Mark that we're in an active battle for auto-resume (Zustand, not localStorage)
-    useGameStore.getState().setActiveBattleInProgress(true);
-    navigate('/menu');
+    // ✅ КРИТИЧНО: Сохраняем ПОЛНОЕ состояние боя в Zustand перед выходом
+    if (onMenuReturn) {
+      onMenuReturn();
+    } else {
+      // Fallback: только флаг (старое поведение)
+      useGameStore.getState().setActiveBattleInProgress(true);
+      navigate('/menu');
+    }
   };
   const handleSurrender = async () => {
     // КРИТИЧНО: Сначала сохраняем состояние карт (здоровье/броню) перед выходом
