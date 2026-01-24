@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useEffect } from 'react';
+import React, { useMemo, useState, useCallback, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
@@ -7,9 +7,110 @@ import { Sword, Shield, Heart, ArrowLeft, Flag, Clock, Bot, RefreshCw } from 'lu
 import { useNavigate } from 'react-router-dom';
 import { InlineDiceDisplay } from '../battle/InlineDiceDisplay';
 import { DamageIndicator } from '../battle/DamageIndicator';
-import { normalizeCardImageUrl } from '@/utils/cardImageResolver';
+import { OptimizedImage } from '@/components/ui/optimized-image';
+import { getCardImageByRarity, normalizeCardImageUrl } from '@/utils/cardImageResolver';
 
 import { PvPPair } from '@/hooks/usePvP';
+
+type PvPUnit = {
+  name: string;
+  faction?: string;
+  image?: string;
+};
+
+const toLocalLovableUploads = (url: string): string | null => {
+  // Convert Supabase public storage URL -> local public asset path
+  // e.g. https://.../storage/v1/object/public/lovable-uploads/<file> -> /lovable-uploads/<file>
+  const marker = '/storage/v1/object/public/lovable-uploads/';
+  const idx = url.indexOf(marker);
+  if (idx === -1) return null;
+  const tail = url.slice(idx + marker.length).replace(/^\/+/, '');
+  if (!tail) return null;
+  return `/lovable-uploads/${tail}`;
+};
+
+const PvPUnitImage: React.FC<{
+  unit: PvPUnit;
+  unitType: 'hero' | 'dragon';
+  alt: string;
+  width: number;
+  height: number;
+  className?: string;
+}> = ({ unit, unitType, alt, width, height, className }) => {
+  const placeholder = '/placeholder.svg';
+
+  const [src, setSrc] = useState<string>(() => normalizeCardImageUrl(unit.image) || '');
+
+  // If snapshot has no image (common for old bot snapshots), resolve from card_images.
+  useEffect(() => {
+    let cancelled = false;
+
+    const resolve = async () => {
+      const direct = normalizeCardImageUrl(unit.image);
+      if (direct) {
+        if (!cancelled) setSrc(direct);
+        return;
+      }
+
+      try {
+        const resolved = await getCardImageByRarity(
+          {
+            name: unit.name,
+            faction: unit.faction,
+            // getCardImageByRarity uses (card as any).type
+            type: unitType,
+            rarity: 1,
+            image: undefined,
+          } as any
+        );
+        if (!cancelled) setSrc(resolved || '');
+      } catch {
+        if (!cancelled) setSrc('');
+      }
+    };
+
+    resolve();
+    return () => {
+      cancelled = true;
+    };
+  }, [unit.image, unit.name, unit.faction, unitType]);
+
+  const candidates = useMemo(() => {
+    const first = src || '';
+    const localFallback = first ? toLocalLovableUploads(first) : null;
+    return {
+      first,
+      localFallback,
+    };
+  }, [src]);
+
+  const handleError = () => {
+    setSrc(prev => {
+      // 1) If Supabase URL fails, try local public copy
+      const local = prev ? toLocalLovableUploads(prev) : null;
+      if (local && local !== prev) return local;
+      // 2) Last resort: placeholder
+      return placeholder;
+    });
+  };
+
+  // If we already computed a local fallback, prefer it only after an error.
+  const finalSrc = candidates.first || placeholder;
+
+  return (
+    <OptimizedImage
+      src={finalSrc}
+      alt={alt}
+      width={width}
+      height={height}
+      placeholder={placeholder}
+      priority={false}
+      progressive={false}
+      className={className}
+      onError={handleError}
+    />
+  );
+};
 
 interface PvPBattleArenaProps {
   myPairs: PvPPair[];
@@ -169,31 +270,27 @@ export const PvPBattleArena: React.FC<PvPBattleArenaProps> = ({
           <div className="flex gap-0.5 sm:gap-1 justify-center">
             {/* Hero Image - using same normalization as dungeons */}
             <div className="w-14 h-14 sm:w-16 sm:h-16 md:w-20 md:h-20 lg:w-24 lg:h-24 rounded-md sm:rounded-lg overflow-hidden border border-white/30 bg-white/10 flex-shrink-0">
-              {(() => {
-                const heroImage = normalizeCardImageUrl(pair.hero.image) || '/placeholder.svg';
-                return heroImage ? (
-                  <img src={heroImage} alt={pair.hero.name} className="w-full h-full object-contain" />
-                ) : (
-                  <div className="w-full h-full flex items-center justify-center text-white">
-                    <span className="text-lg sm:text-xl md:text-2xl">⚔️</span>
-                  </div>
-                );
-              })()}
+              <PvPUnitImage
+                unit={pair.hero}
+                unitType="hero"
+                alt={pair.hero.name}
+                width={96}
+                height={96}
+                className="w-full h-full object-contain"
+              />
             </div>
 
             {/* Dragon Image - using same normalization as dungeons */}
             {pair.dragon && (
               <div className="w-12 h-12 sm:w-14 sm:h-14 md:w-16 md:h-16 lg:w-20 lg:h-20 rounded-md sm:rounded-lg overflow-hidden border border-white/30 bg-white/10 flex-shrink-0">
-                {(() => {
-                  const dragonImage = normalizeCardImageUrl(pair.dragon.image) || '/placeholder.svg';
-                  return dragonImage ? (
-                    <img src={dragonImage} alt={pair.dragon.name} className="w-full h-full object-contain" />
-                  ) : (
-                    <div className="w-full h-full flex items-center justify-center text-white">
-                      <span className="text-base sm:text-lg md:text-xl">🐲</span>
-                    </div>
-                  );
-                })()}
+                <PvPUnitImage
+                  unit={pair.dragon}
+                  unitType="dragon"
+                  alt={pair.dragon.name}
+                  width={80}
+                  height={80}
+                  className="w-full h-full object-contain"
+                />
               </div>
             )}
           </div>
