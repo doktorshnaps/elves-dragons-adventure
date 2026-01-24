@@ -39,7 +39,13 @@ const TeamBattlePageInner: React.FC<TeamBattlePageProps> = ({
   const navigate = useNavigate();
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const [battleStarted, setBattleStarted] = useState<boolean>(false);
+  // ✅ КРИТИЧНО: Восстанавливаем battleStarted из Zustand, если есть активная сессия
+  const [battleStarted, setBattleStarted] = useState<boolean>(() => {
+    const savedState = useGameStore.getState().teamBattleState;
+    const isRestoredSession = savedState?.dungeonType === dungeonType && savedState?.level > 0;
+    console.log('🔄 [TeamBattlePage] Restoring battleStarted:', isRestoredSession, 'from saved level:', savedState?.level);
+    return isRestoredSession;
+  });
   const [claimResultModal, setClaimResultModal] = useState<{
     isOpen: boolean;
     rewards: {
@@ -58,10 +64,24 @@ const TeamBattlePageInner: React.FC<TeamBattlePageProps> = ({
     sessions: Array<{ device_id: string; dungeon_type: string; level: number; last_activity: number }>;
   }>({ isOpen: false, sessions: [] });
   
-  // Список убитых монстров - хранится в React state, не в localStorage
-  // При перезагрузке страницы список сбрасывается (это нормальное поведение)
-  const [monstersKilled, setMonstersKilled] = useState<Array<{level: number, dungeonType: string, name?: string}>>([]);
-  const monstersKilledRef = useRef<Array<{level: number, dungeonType: string, name?: string}>>([]);
+  // ✅ КРИТИЧНО: Восстанавливаем monstersKilled из Zustand при возврате в подземелье
+  const [monstersKilled, setMonstersKilled] = useState<Array<{level: number, dungeonType: string, name?: string}>>(() => {
+    const savedState = useGameStore.getState().teamBattleState;
+    if (savedState?.dungeonType === dungeonType && savedState?.monstersKilled) {
+      console.log('🔄 [TeamBattlePage] Restoring monstersKilled:', savedState.monstersKilled.length);
+      return savedState.monstersKilled;
+    }
+    return [];
+  });
+  // ✅ Ref инициализируем напрямую из сохранённого состояния
+  const savedMonstersKilled = (() => {
+    const savedState = useGameStore.getState().teamBattleState;
+    if (savedState?.dungeonType === dungeonType && savedState?.monstersKilled) {
+      return savedState.monstersKilled;
+    }
+    return [];
+  })();
+  const monstersKilledRef = useRef<Array<{level: number, dungeonType: string, name?: string}>>(savedMonstersKilled);
   const prevAliveOpponentsRef = React.useRef<number>(0);
   const prevOpponentsRef = React.useRef<Array<{id: number, name: string, health: number}>>([]);
   const processedLevelRef = React.useRef<number | null>(null);
