@@ -391,6 +391,8 @@ export const usePvP = (walletAddress: string | null) => {
       loadBotTeamStatus();
     }
     
+    console.log('[PvP] Calling join_pvp_queue with:', { walletAddress, rarityTier, teamSnapshot: teamSnapshot?.length });
+    
     const { data, error } = await supabase.rpc('join_pvp_queue', {
       p_wallet_address: walletAddress,
       p_rarity_tier: rarityTier,
@@ -398,15 +400,16 @@ export const usePvP = (walletAddress: string | null) => {
       p_match_type: 'ranked'
     });
 
+    console.log('[PvP] join_pvp_queue response:', { data, error });
     setLoading(false);
 
     if (error) {
-      console.error('Failed to join queue:', error);
+      console.error('[PvP] RPC error:', error);
       toast({ 
         title: "Ошибка очереди", 
         description: error.message.includes('недостаточно') || error.message.includes('ELL')
           ? "Недостаточно ELL для входа в PvP" 
-          : "Не удалось присоединиться к очереди",
+          : `Не удалось присоединиться к очереди: ${error.message}`,
         variant: "destructive" 
       });
       return false;
