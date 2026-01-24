@@ -238,6 +238,48 @@ export const useDungeonSync = () => {
     }
   }, [accountId, deviceId, hasOtherActiveSessions, toast, queryClient]);
 
+  // 🔄 Обновляем уровень и last_activity через Edge Function (RLS блокирует прямые обновления)
+  const updateDungeonLevel = useCallback(async (level: number) => {
+    if (!accountId) return false;
+
+    try {
+      console.log('🔄 [useDungeonSync] Updating dungeon level via Edge Function:', {
+        accountId: accountId.substring(0, 10),
+        level,
+        deviceId: deviceId.substring(0, 20)
+      });
+
+      const { data, error } = await supabase.functions.invoke('update-dungeon-session', {
+        body: {
+          wallet_address: accountId,
+          device_id: deviceId,
+          level
+        }
+      });
+
+      if (error) {
+        console.error('❌ [useDungeonSync] Error updating session level:', error);
+        return false;
+      }
+
+      console.log('✅ [useDungeonSync] Session level updated:', data);
+
+      // Обновляем локальную сессию
+      if (localSession) {
+        const updatedSession = { ...localSession, level, last_activity: Date.now() };
+        try {
+          localStorage.setItem('activeDungeonSession', JSON.stringify(updatedSession));
+          setLocalSession(updatedSession);
+        } catch {}
+      }
+
+      return true;
+    } catch (err) {
+      console.error('❌ [useDungeonSync] Unexpected error updating level:', err);
+      return false;
+    }
+  }, [accountId, deviceId, localSession]);
+
   // Подписываемся на изменения в базе данных через Realtime
   useEffect(() => {
     if (!accountId) return;
@@ -330,6 +372,7 @@ export const useDungeonSync = () => {
     allActiveSessions: activeSessions, // Все сессии включая текущее устройство
     startDungeonSession,
     endDungeonSession,
+    updateDungeonLevel, // ✅ Новая функция для обновления уровня
     deviceId,
     getCurrentClaimKey: () => currentClaimKey || localStorage.getItem('currentClaimKey')
   };
