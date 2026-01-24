@@ -36,18 +36,15 @@ Deno.serve(async (req) => {
 
     const supabase = getSupabaseServiceClient();
 
-    // Get match data
+    // Get match data (without strict FK joins that fail for bot matches)
     const { data: match, error: matchError } = await supabase
       .from('pvp_matches')
-      .select(`
-        *,
-        player1_rating:pvp_ratings!pvp_matches_player1_wallet_fkey(elo, tier, wins, losses),
-        player2_rating:pvp_ratings!pvp_matches_player2_wallet_fkey(elo, tier, wins, losses)
-      `)
+      .select('*')
       .eq('id', matchId)
       .single();
 
     if (matchError || !match) {
+      console.error('❌ [PvP Status] Match lookup error:', matchError, 'matchId:', matchId);
       return json({ error: 'Match not found' }, 404);
     }
 
