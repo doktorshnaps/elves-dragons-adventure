@@ -91,7 +91,7 @@ const TeamBattlePageInner: React.FC<TeamBattlePageProps> = ({
   const [isClaiming, setIsClaiming] = useState<boolean>(false);
   
   const { accountId } = useWalletContext();
-  const { deviceId, startDungeonSession, endDungeonSession, getCurrentClaimKey } = useDungeonSync();
+  const { deviceId, startDungeonSession, endDungeonSession, updateDungeonLevel, getCurrentClaimKey } = useDungeonSync();
   const [sessionTerminated, setSessionTerminated] = useState(false);
   const [showingFinishDelay, setShowingFinishDelay] = useState(false);
   // Время создания сессии - используется чтобы не проверять сессию сразу после её создания
@@ -343,7 +343,19 @@ const TeamBattlePageInner: React.FC<TeamBattlePageProps> = ({
   const handleArenaMenuReturn = useCallback(() => {
     handleSaveBattleStateAndNavigate('/menu');
   }, [handleSaveBattleStateAndNavigate]);
-  const handleNextLevel = () => {
+  const handleNextLevel = async () => {
+    // ✅ КРИТИЧНО: Сначала обновляем уровень в БД, потом локально
+    const nextLevel = battleState.level + 1;
+    
+    // Обновляем сессию в БД (асинхронно, не блокируем UI)
+    updateDungeonLevel(nextLevel).then(success => {
+      if (success) {
+        console.log('✅ [handleNextLevel] Level synced to DB:', nextLevel);
+      } else {
+        console.warn('⚠️ [handleNextLevel] Failed to sync level to DB, continuing anyway');
+      }
+    });
+    
     startTransition(() => {
       handleLevelComplete();
       // НЕ ОЧИЩАЕМ monstersKilled - накапливаем убийства через все уровни подземелья!
@@ -914,23 +926,14 @@ const TeamBattlePageInner: React.FC<TeamBattlePageProps> = ({
 
   // Функция восстановления сессии при сетевом сбое
   const handleRestoreSession = async () => {
+    // ✅ ИСПРАВЛЕНО: startDungeonSession уже обновляет запись в БД через Edge Function
+    // Убран клиентский upsert, который блокировался RLS
     const restored = await startDungeonSession(dungeonType, battleState.level);
     if (restored) {
-      console.log('✅ Сессия восстановлена, продолжаем бой');
+      console.log('✅ Сессия восстановлена, продолжаем бой на уровне', battleState.level);
       setSessionTerminated(false);
-      // Отправляем heartbeat сразу
-      await supabase
-        .from('active_dungeon_sessions')
-        .upsert({
-          account_id: accountId,
-          device_id: deviceId,
-          dungeon_type: dungeonType,
-          level: battleState.level,
-          started_at: Date.now(),
-          last_activity: Date.now()
-        }, {
-          onConflict: 'account_id,device_id'
-        });
+      // ✅ Запоминаем время создания сессии для проверки
+      sessionCreatedAtRef.current = Date.now();
     } else {
       toast({
         title: t(language, 'battlePage.restoreFailed'),
