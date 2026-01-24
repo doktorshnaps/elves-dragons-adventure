@@ -3969,25 +3969,15 @@ export type Database = {
         Returns: boolean
       }
       is_user_banned: { Args: { p_wallet_address: string }; Returns: boolean }
-      join_pvp_queue:
-        | {
-            Args: {
-              p_match_type: string
-              p_rarity_tier: number
-              p_team_snapshot: Json
-              p_wallet_address: string
-            }
-            Returns: Json
-          }
-        | {
-            Args: {
-              p_match_type?: string
-              p_rarity_tier: number
-              p_team_snapshot: Json
-              p_wallet_address: string
-            }
-            Returns: Json
-          }
+      join_pvp_queue: {
+        Args: {
+          p_match_type?: string
+          p_rarity_tier: number
+          p_team_snapshot: Json
+          p_wallet_address: string
+        }
+        Returns: Json
+      }
       leave_pvp_queue: { Args: { p_wallet_address: string }; Returns: Json }
       mark_quest_claimed: {
         Args: { p_quest_id: string; p_wallet_address: string }

@@ -94,6 +94,8 @@ export const usePvP = (walletAddress: string | null) => {
   const searchTimerRef = useRef<NodeJS.Timeout | null>(null);
   const matchmakingRef = useRef<NodeJS.Timeout | null>(null);
   const botFallbackTriggeredRef = useRef(false);
+  // Track if initial load has happened to prevent duplicate fetches
+  const initialLoadDoneRef = useRef(false);
 
   // Clear intervals helper
   const clearIntervals = useCallback(() => {
@@ -603,17 +605,32 @@ export const usePvP = (walletAddress: string | null) => {
     return error ? [] : (data || []);
   }, [walletAddress]);
 
-  // Initialize
+  // Initialize - run ONCE when walletAddress changes, not on every callback change
   useEffect(() => {
-    if (walletAddress) {
-      loadRating();
-      loadActiveMatches();
-      loadBotTeamStatus();
-      checkExistingQueue();
+    // Prevent duplicate initial loads
+    if (!walletAddress) {
+      initialLoadDoneRef.current = false;
+      return;
     }
     
-    return () => clearIntervals();
-  }, [walletAddress, loadRating, loadActiveMatches, loadBotTeamStatus, checkExistingQueue, clearIntervals]);
+    if (initialLoadDoneRef.current) {
+      return;
+    }
+    
+    initialLoadDoneRef.current = true;
+    
+    // Load all data in parallel once
+    loadRating();
+    loadActiveMatches();
+    loadBotTeamStatus();
+    checkExistingQueue();
+    
+    return () => {
+      clearIntervals();
+      initialLoadDoneRef.current = false;
+    };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [walletAddress]);
 
   // Subscribe to match updates
   useEffect(() => {
