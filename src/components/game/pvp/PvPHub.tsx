@@ -11,6 +11,7 @@ import { useNavigate } from 'react-router-dom';
 import { usePvP } from '@/hooks/usePvP';
 import { useWalletContext } from '@/contexts/WalletConnectContext';
 import { usePlayerTeams, TeamPair } from '@/hooks/usePlayerTeams';
+import { normalizeCardImageUrl } from '@/utils/cardImageResolver';
 
 const TIER_COLORS: Record<string, string> = {
   bronze: 'bg-amber-700 text-white',
@@ -76,14 +77,11 @@ export const PvPHub: React.FC = () => {
   }, [selectedPairs]);
 
   const normalizeSnapshotImage = (url?: string) => {
-    if (!url) return undefined;
-    // В PvP снапшоте сохраняем СРАЗУ публичный URL, чтобы он работал везде (preview/published)
-    // и не зависел от роутинга приложения.
-    const supabaseUrl = (import.meta as any).env?.VITE_SUPABASE_URL || 'https://oimhwdymghkwxznjarkv.supabase.co';
-    if (url.startsWith('/lovable-uploads/')) {
-      return `${supabaseUrl}/storage/v1/object/public${url}`;
-    }
-    return url;
+    // Сохраняем в снапшот УЖЕ нормализованный URL (как в подземелье):
+    // - /lovable-uploads -> Supabase Storage public URL
+    // - png -> webp
+    // - ipfs/arweave normalizations
+    return normalizeCardImageUrl(url);
   };
 
   // ✅ Снапшот для PvP боя - ВСЕГДА с полными характеристиками
