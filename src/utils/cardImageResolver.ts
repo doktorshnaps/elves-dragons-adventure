@@ -122,9 +122,13 @@ export const normalizeCardImageUrl = (url: string | undefined): string | undefin
     if (normalized.startsWith('ar://')) {
       normalized = normalized.replace('ar://', 'https://arweave.net/');
     }
-    
-    // Конвертируем PNG в WEBP ТОЛЬКО для относительных путей
-    if (normalized.startsWith('/lovable-uploads/') && /\.png(\?|$)/i.test(normalized)) {
+
+    // Конвертируем PNG -> WEBP для lovable-uploads (и для относительных путей,
+    // и для полных Supabase Storage URL), т.к. PNG ассеты больше не используются.
+    if (
+      (normalized.startsWith('/lovable-uploads/') || normalized.includes('/lovable-uploads/')) &&
+      /\.png(\?|$)/i.test(normalized)
+    ) {
       normalized = normalized.replace(/\.png(\?|$)/i, '.webp$1');
     }
     
