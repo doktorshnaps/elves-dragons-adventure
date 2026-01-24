@@ -52,144 +52,162 @@ export const useTeamBattle = (dungeonType: DungeonType, initialLevel: number = 1
   // Блокировка повторных вызовов атаки врага (анти-дубль при лагах)
   const enemyAttackLockRef = useRef(false);
 
-  // Initialize battle with team pairs
-  // КРИТИЧНО: Инициализация происходит только ПОСЛЕ нажатия "Начать бой" (battleStarted=true)
+  // ============================================
+  // ЭТАП 1: Подготовка команды для ОТОБРАЖЕНИЯ (до боя)
+  // Заполняем playerPairs сразу при загрузке страницы, чтобы UI показывал команду
+  // ============================================
   useEffect(() => {
-    if (cardInstancesLoading) return; // Wait until card instances are loaded to get accurate health
-    if (!battleStarted) return; // ✅ НЕ инициализируем бой до нажатия кнопки "Начать бой"
-    if (selectedPairs.length > 0 && battleState.playerPairs.length === 0) {
-      const teamPairs: TeamPair[] = selectedPairs.map((pair, index) => {
-        console.log(`🎯 [useTeamBattle] Building pair ${index} from card_instances context`);
-        
-        // КРИТИЧНО: берем характеристики из card_instances по UUID
-        const heroLookupId = pair.hero.instanceId || pair.hero.id;
-        const heroInstance = cardInstances.find(ci => ci.id === heroLookupId);
-        
-        const dragonLookupId = pair.dragon?.instanceId || pair.dragon?.id;
-        const dragonInstance = pair.dragon ? cardInstances.find(ci => ci.id === dragonLookupId) : undefined;
-        
-        if (!heroInstance) {
-          console.error(`❌ Hero instance not found for ${pair.hero.name} (id: ${pair.hero.id})`);
-        }
-        
-        // Hero data from card_instances
-        const heroData = heroInstance?.card_data as any;
-        const heroPower = heroInstance?.max_power ?? pair.hero.power ?? 0;
-        const heroDefense = heroInstance?.max_defense ?? pair.hero.defense ?? 0;
-        const heroHealth = heroInstance?.max_health ?? pair.hero.health ?? 0;
-        const heroMagic = heroInstance?.max_magic ?? pair.hero.magic ?? 0;
-        const heroCurrent = heroInstance?.current_health ?? pair.hero.currentHealth ?? heroHealth;
-        const heroCurrentDefense = heroInstance?.current_defense ?? heroDefense;
-        const heroMaxDefense = heroInstance?.max_defense ?? heroDefense;
-        
-        console.log(`  Hero "${pair.hero.name}":`, { 
-          power: heroPower, 
-          defense: heroDefense, 
-          currentDefense: heroCurrentDefense,
-          maxDefense: heroMaxDefense,
-          health: heroHealth, 
-          currentHealth: heroCurrent,
-          magic: heroMagic 
-        });
-        
-        // Dragon data from card_instances (if exists)
-        const dragonData = dragonInstance?.card_data as any;
-        const dragonPower = dragonInstance?.max_power ?? pair.dragon?.power ?? 0;
-        const dragonDefense = dragonInstance?.max_defense ?? pair.dragon?.defense ?? 0;
-        const dragonHealth = dragonInstance?.max_health ?? pair.dragon?.health ?? 0;
-        const dragonMagic = dragonInstance?.max_magic ?? pair.dragon?.magic ?? 0;
-        const dragonCurrent = dragonInstance?.current_health ?? pair.dragon?.currentHealth ?? dragonHealth;
-        const dragonCurrentDefense = dragonInstance?.current_defense ?? dragonDefense;
-        const dragonMaxDefense = dragonInstance?.max_defense ?? dragonDefense;
-        const dragonAlive = !!pair.dragon && (dragonCurrent > 0);
-        
-        if (pair.dragon) {
-          console.log(`  Dragon "${pair.dragon.name}":`, { 
-            power: dragonPower, 
-            defense: dragonDefense,
-            currentDefense: dragonCurrentDefense,
-            maxDefense: dragonMaxDefense,
-            health: dragonHealth, 
-            currentHealth: dragonCurrent,
-            magic: dragonMagic,
-            alive: dragonAlive
-          });
-        }
-        
-        const totalMana = heroMagic + (dragonAlive ? dragonMagic : 0);
-        const pairCurrentDefense = heroCurrentDefense + (dragonAlive ? dragonCurrentDefense : 0);
-        const pairMaxDefense = heroMaxDefense + (dragonAlive ? dragonMaxDefense : 0);
-        
-        return {
-          id: `pair-${index}`,
-          hero: {
-            ...pair.hero,
-            id: heroInstance?.id || pair.hero.id, // КРИТИЧНО: используем instance UUID
-            instanceId: heroInstance?.id, // Сохраняем instance UUID для дальнейшего поиска
-            power: heroPower,
-            defense: heroDefense,
-            health: heroHealth,
-            magic: heroMagic,
-            currentHealth: heroCurrent,
-            currentDefense: heroCurrentDefense,
-            maxDefense: heroMaxDefense
-          },
-          dragon: pair.dragon ? {
-            ...pair.dragon,
-            id: dragonInstance?.id || pair.dragon.id, // КРИТИЧНО: используем instance UUID
-            instanceId: dragonInstance?.id, // Сохраняем instance UUID для дальнейшего поиска
-            power: dragonPower,
-            defense: dragonDefense,
-            health: dragonHealth,
-            magic: dragonMagic,
-            currentHealth: dragonCurrent,
-            currentDefense: dragonCurrentDefense,
-            maxDefense: dragonMaxDefense
-          } : undefined,
-          health: heroCurrent + (dragonAlive ? dragonCurrent : 0),
-          maxHealth: heroHealth + (dragonAlive ? dragonHealth : 0),
-          power: heroPower + (dragonAlive ? dragonPower : 0),
-          defense: heroDefense + (dragonAlive ? dragonDefense : 0),
-          currentDefense: pairCurrentDefense,
-          maxDefense: pairMaxDefense,
-          attackOrder: index + 1,
-          mana: totalMana,
-          maxMana: totalMana
-        };
+    if (cardInstancesLoading) return;
+    if (selectedPairs.length === 0) return;
+    if (battleState.playerPairs.length > 0) return; // Уже инициализировано
+    
+    const teamPairs: TeamPair[] = selectedPairs.map((pair, index) => {
+      console.log(`🎯 [useTeamBattle] Building pair ${index} from card_instances context`);
+      
+      // КРИТИЧНО: берем характеристики из card_instances по UUID
+      const heroLookupId = pair.hero.instanceId || pair.hero.id;
+      const heroInstance = cardInstances.find(ci => ci.id === heroLookupId);
+      
+      const dragonLookupId = pair.dragon?.instanceId || pair.dragon?.id;
+      const dragonInstance = pair.dragon ? cardInstances.find(ci => ci.id === dragonLookupId) : undefined;
+      
+      if (!heroInstance) {
+        console.error(`❌ Hero instance not found for ${pair.hero.name} (id: ${pair.hero.id})`);
+      }
+      
+      // Hero data from card_instances
+      const heroData = heroInstance?.card_data as any;
+      const heroPower = heroInstance?.max_power ?? pair.hero.power ?? 0;
+      const heroDefense = heroInstance?.max_defense ?? pair.hero.defense ?? 0;
+      const heroHealth = heroInstance?.max_health ?? pair.hero.health ?? 0;
+      const heroMagic = heroInstance?.max_magic ?? pair.hero.magic ?? 0;
+      const heroCurrent = heroInstance?.current_health ?? pair.hero.currentHealth ?? heroHealth;
+      const heroCurrentDefense = heroInstance?.current_defense ?? heroDefense;
+      const heroMaxDefense = heroInstance?.max_defense ?? heroDefense;
+      
+      console.log(`  Hero "${pair.hero.name}":`, { 
+        power: heroPower, 
+        defense: heroDefense, 
+        currentDefense: heroCurrentDefense,
+        maxDefense: heroMaxDefense,
+        health: heroHealth, 
+        currentHealth: heroCurrent,
+        magic: heroMagic 
       });
+      
+      // Dragon data from card_instances (if exists)
+      const dragonData = dragonInstance?.card_data as any;
+      const dragonPower = dragonInstance?.max_power ?? pair.dragon?.power ?? 0;
+      const dragonDefense = dragonInstance?.max_defense ?? pair.dragon?.defense ?? 0;
+      const dragonHealth = dragonInstance?.max_health ?? pair.dragon?.health ?? 0;
+      const dragonMagic = dragonInstance?.max_magic ?? pair.dragon?.magic ?? 0;
+      const dragonCurrent = dragonInstance?.current_health ?? pair.dragon?.currentHealth ?? dragonHealth;
+      const dragonCurrentDefense = dragonInstance?.current_defense ?? dragonDefense;
+      const dragonMaxDefense = dragonInstance?.max_defense ?? dragonDefense;
+      const dragonAlive = !!pair.dragon && (dragonCurrent > 0);
+      
+      if (pair.dragon) {
+        console.log(`  Dragon "${pair.dragon.name}":`, { 
+          power: dragonPower, 
+          defense: dragonDefense,
+          currentDefense: dragonCurrentDefense,
+          maxDefense: dragonMaxDefense,
+          health: dragonHealth, 
+          currentHealth: dragonCurrent,
+          magic: dragonMagic,
+          alive: dragonAlive
+        });
+      }
+      
+      const totalMana = heroMagic + (dragonAlive ? dragonMagic : 0);
+      const pairCurrentDefense = heroCurrentDefense + (dragonAlive ? dragonCurrentDefense : 0);
+      const pairMaxDefense = heroMaxDefense + (dragonAlive ? dragonMaxDefense : 0);
+      
+      return {
+        id: `pair-${index}`,
+        hero: {
+          ...pair.hero,
+          id: heroInstance?.id || pair.hero.id,
+          instanceId: heroInstance?.id,
+          power: heroPower,
+          defense: heroDefense,
+          health: heroHealth,
+          magic: heroMagic,
+          currentHealth: heroCurrent,
+          currentDefense: heroCurrentDefense,
+          maxDefense: heroMaxDefense
+        },
+        dragon: pair.dragon ? {
+          ...pair.dragon,
+          id: dragonInstance?.id || pair.dragon.id,
+          instanceId: dragonInstance?.id,
+          power: dragonPower,
+          defense: dragonDefense,
+          health: dragonHealth,
+          magic: dragonMagic,
+          currentHealth: dragonCurrent,
+          currentDefense: dragonCurrentDefense,
+          maxDefense: dragonMaxDefense
+        } : undefined,
+        health: heroCurrent + (dragonAlive ? dragonCurrent : 0),
+        maxHealth: heroHealth + (dragonAlive ? dragonHealth : 0),
+        power: heroPower + (dragonAlive ? dragonPower : 0),
+        defense: heroDefense + (dragonAlive ? dragonDefense : 0),
+        currentDefense: pairCurrentDefense,
+        maxDefense: pairMaxDefense,
+        attackOrder: index + 1,
+        mana: totalMana,
+        maxMana: totalMana
+      };
+    });
 
-      (async () => {
-        // Предзагружаем treasure hunt событие в кеш ДО начала боя (оптимизация Phase 2A)
-        const { loadActiveTreasureHunt } = await import('@/utils/monsterLootMapping');
-        loadActiveTreasureHunt().then(() => {
-          console.log('🎁 [INIT] Treasure hunt cache preloaded before battle');
-        }).catch(() => {
-          console.log('ℹ️ [INIT] No active treasure hunt event');
-        });
-        
-        // ✅ КРИТИЧНО: Используем текущий уровень из состояния (может быть восстановлен из Zustand)
-        // вместо initialLevel который всегда = 1
-        const currentLevel = battleState.level;
-        console.log('🎮 [INIT] Generating opponents for level:', currentLevel);
-        const opponents = await generateDungeonOpponents(dungeonType, currentLevel);
-        
-        // Устанавливаем флаг активного боя через Zustand (без localStorage)
-        useGameStore.getState().setActiveBattleInProgress(true);
-        console.log('🎬 [INIT] Starting battle, setting activeBattleInProgress=true');
-        
-        startTransition(() => {
-          setBattleState(prev => ({
-            ...prev,
-            playerPairs: teamPairs,
-            opponents,
-            selectedDungeon: dungeonType
-          }));
-        });
-        
-        setAttackOrder(teamPairs.map(pair => pair.id));
-      })();
-    }
-  }, [selectedPairs, dungeonType, initialLevel, cardInstancesLoading, cardInstances, battleStarted]);
+    // Устанавливаем команду для отображения (БЕЗ генерации противников)
+    console.log('👁️ [useTeamBattle] Setting playerPairs for display (pre-battle):', teamPairs.length);
+    startTransition(() => {
+      setBattleState(prev => ({
+        ...prev,
+        playerPairs: teamPairs,
+        selectedDungeon: dungeonType
+      }));
+    });
+    setAttackOrder(teamPairs.map(pair => pair.id));
+  }, [selectedPairs, cardInstancesLoading, cardInstances, dungeonType]);
+
+  // ============================================
+  // ЭТАП 2: Инициализация БОЯ (только после нажатия "Начать бой")
+  // Генерируем противников и устанавливаем activeBattleInProgress
+  // ============================================
+  useEffect(() => {
+    if (!battleStarted) return; // ✅ Ждём нажатия кнопки "Начать бой"
+    if (battleState.playerPairs.length === 0) return; // Команда ещё не готова
+    if (battleState.opponents.length > 0) return; // Противники уже сгенерированы
+
+    (async () => {
+      // Предзагружаем treasure hunt событие в кеш ДО начала боя (оптимизация Phase 2A)
+      const { loadActiveTreasureHunt } = await import('@/utils/monsterLootMapping');
+      loadActiveTreasureHunt().then(() => {
+        console.log('🎁 [INIT] Treasure hunt cache preloaded before battle');
+      }).catch(() => {
+        console.log('ℹ️ [INIT] No active treasure hunt event');
+      });
+      
+      // ✅ КРИТИЧНО: Используем текущий уровень из состояния
+      const currentLevel = battleState.level;
+      console.log('🎮 [INIT] Generating opponents for level:', currentLevel);
+      const opponents = await generateDungeonOpponents(dungeonType, currentLevel);
+      
+      // ✅ Устанавливаем флаг активного боя ТОЛЬКО здесь (после нажатия кнопки)
+      useGameStore.getState().setActiveBattleInProgress(true);
+      console.log('🎬 [INIT] Starting battle, setting activeBattleInProgress=true');
+      
+      startTransition(() => {
+        setBattleState(prev => ({
+          ...prev,
+          opponents
+        }));
+      });
+    })();
+  }, [battleStarted, battleState.playerPairs.length, battleState.opponents.length, battleState.level, dungeonType]);
 
   // Re-sync stats from card_instances when they change
   // КРИТИЧНО: НЕ синхронизировать во время активного боя, чтобы не перезаписать локальный урон
