@@ -102,7 +102,7 @@ export const invalidateCardImagesCache = () => {
  * Нормализует URL изображения карты (IPFS, Arweave, data URLs, PNG->WEBP)
  * НЕ ТРОГАЕТ полные Supabase Storage URLs - они должны работать как есть
  */
-const normalizeCardImageUrl = (url: string | undefined): string | undefined => {
+export const normalizeCardImageUrl = (url: string | undefined): string | undefined => {
   if (!url) return undefined;
   
   try {
