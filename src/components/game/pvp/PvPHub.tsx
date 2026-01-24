@@ -78,6 +78,7 @@ export const PvPHub: React.FC = () => {
   // ✅ Снапшот для PvP боя - ВСЕГДА с полными характеристиками
   // currentHealth = health, currentDefense = defense
   // Это виртуальное состояние для боя, реальные данные карточек не меняются
+  // ✅ Также включаем image для корректного отображения карточек в бою
   const createTeamSnapshot = useMemo(() => {
     return selectedPairs.map((pair: TeamPair) => ({
       hero: {
@@ -88,7 +89,9 @@ export const PvPHub: React.FC = () => {
         // ✅ PvP всегда начинает с полным здоровьем и бронёй
         currentHealth: pair.hero?.health,
         currentDefense: pair.hero?.defense,
-        faction: pair.hero?.faction
+        faction: pair.hero?.faction,
+        // ✅ Включаем изображение для отображения в бою
+        image: pair.hero?.image
       },
       dragon: pair.dragon ? {
         name: pair.dragon.name,
@@ -98,7 +101,9 @@ export const PvPHub: React.FC = () => {
         // ✅ PvP всегда начинает с полным здоровьем и бронёй
         currentHealth: pair.dragon.health,
         currentDefense: pair.dragon.defense,
-        faction: pair.dragon.faction
+        faction: pair.dragon.faction,
+        // ✅ Включаем изображение для отображения в бою
+        image: pair.dragon.image
       } : null,
       totalPower: (pair.hero?.power || 0) + (pair.dragon?.power || 0),
       totalDefense: (pair.hero?.defense || 0) + (pair.dragon?.defense || 0),

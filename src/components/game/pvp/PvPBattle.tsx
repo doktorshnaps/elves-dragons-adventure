@@ -109,7 +109,8 @@ const PvPBattleContent: React.FC = () => {
         health: pair.hero?.health || 100,
         currentHealth: pair.hero?.currentHealth ?? pair.hero?.health ?? 100,
         currentDefense: pair.hero?.currentDefense ?? pair.hero?.defense ?? 0,
-        faction: pair.hero?.faction
+        faction: pair.hero?.faction,
+        image: pair.hero?.image
       },
       dragon: pair.dragon ? {
         name: pair.dragon.name || 'Дракон',
@@ -118,7 +119,8 @@ const PvPBattleContent: React.FC = () => {
         health: pair.dragon.health || 50,
         currentHealth: pair.dragon.currentHealth ?? pair.dragon.health ?? 50,
         currentDefense: pair.dragon.currentDefense ?? pair.dragon.defense ?? 0,
-        faction: pair.dragon.faction
+        faction: pair.dragon.faction,
+        image: pair.dragon.image
       } : undefined,
       totalPower: (pair.hero?.power || 0) + (pair.dragon?.power || 0),
       totalDefense: (pair.hero?.currentDefense ?? pair.hero?.defense ?? 0) + (pair.dragon?.currentDefense ?? pair.dragon?.defense ?? 0),
