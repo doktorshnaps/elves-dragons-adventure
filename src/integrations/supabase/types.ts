@@ -1581,12 +1581,14 @@ export type Database = {
         Row: {
           battle_log: Json | null
           battle_state: Json
+          bot_owner_wallet: string | null
           created_at: string
           current_turn_wallet: string | null
           elo_change: number | null
           entry_fee: number
           finished_at: string | null
           id: string
+          is_bot_match: boolean | null
           loser_wallet: string | null
           match_type: string
           player1_elo_before: number
@@ -1608,12 +1610,14 @@ export type Database = {
         Insert: {
           battle_log?: Json | null
           battle_state?: Json
+          bot_owner_wallet?: string | null
           created_at?: string
           current_turn_wallet?: string | null
           elo_change?: number | null
           entry_fee?: number
           finished_at?: string | null
           id?: string
+          is_bot_match?: boolean | null
           loser_wallet?: string | null
           match_type?: string
           player1_elo_before: number
@@ -1635,12 +1639,14 @@ export type Database = {
         Update: {
           battle_log?: Json | null
           battle_state?: Json
+          bot_owner_wallet?: string | null
           created_at?: string
           current_turn_wallet?: string | null
           elo_change?: number | null
           entry_fee?: number
           finished_at?: string | null
           id?: string
+          is_bot_match?: boolean | null
           loser_wallet?: string | null
           match_type?: string
           player1_elo_before?: number
