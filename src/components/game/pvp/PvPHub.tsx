@@ -75,6 +75,17 @@ export const PvPHub: React.FC = () => {
     return { power, defense, health };
   }, [selectedPairs]);
 
+  const normalizeSnapshotImage = (url?: string) => {
+    if (!url) return undefined;
+    // В PvP снапшоте сохраняем СРАЗУ публичный URL, чтобы он работал везде (preview/published)
+    // и не зависел от роутинга приложения.
+    const supabaseUrl = (import.meta as any).env?.VITE_SUPABASE_URL || 'https://oimhwdymghkwxznjarkv.supabase.co';
+    if (url.startsWith('/lovable-uploads/')) {
+      return `${supabaseUrl}/storage/v1/object/public${url}`;
+    }
+    return url;
+  };
+
   // ✅ Снапшот для PvP боя - ВСЕГДА с полными характеристиками
   // currentHealth = health, currentDefense = defense
   // Это виртуальное состояние для боя, реальные данные карточек не меняются
@@ -91,7 +102,7 @@ export const PvPHub: React.FC = () => {
         currentDefense: pair.hero?.defense,
         faction: pair.hero?.faction,
         // ✅ Включаем изображение для отображения в бою
-        image: pair.hero?.image
+        image: normalizeSnapshotImage(pair.hero?.image)
       },
       dragon: pair.dragon ? {
         name: pair.dragon.name,
@@ -103,7 +114,7 @@ export const PvPHub: React.FC = () => {
         currentDefense: pair.dragon.defense,
         faction: pair.dragon.faction,
         // ✅ Включаем изображение для отображения в бою
-        image: pair.dragon.image
+        image: normalizeSnapshotImage(pair.dragon.image)
       } : null,
       totalPower: (pair.hero?.power || 0) + (pair.dragon?.power || 0),
       totalDefense: (pair.hero?.defense || 0) + (pair.dragon?.defense || 0),
