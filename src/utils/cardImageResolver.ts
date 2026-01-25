@@ -49,6 +49,22 @@ const strategistRarityImages: Record<number, string> = {
 let dbImagesCache: Map<string, string> | null = null;
 let cacheLoadPromise: Promise<void> | null = null;
 
+// Подписчики на готовность/обновление кэша (чтобы UI мог перерисоваться,
+// когда загрузились card_images)
+let cacheVersion = 0;
+const cacheListeners = new Set<() => void>();
+
+const notifyCacheListeners = () => {
+  cacheVersion += 1;
+  cacheListeners.forEach((l) => {
+    try {
+      l();
+    } catch {
+      // ignore
+    }
+  });
+};
+
 /**
  * Загружает изображения карт из базы данных
  */
@@ -72,17 +88,34 @@ const loadDatabaseImages = async (): Promise<Map<string, string>> => {
 
       const cache = new Map<string, string>();
       data?.forEach(img => {
-        // Используем faction в ключе, если она указана (но БЕЗ rarity)
-        const key = img.faction 
-          ? `${img.card_name}|${img.card_type}|${img.faction}`
-          : `${img.card_name}|${img.card_type}`;
-        cache.set(key, img.image_url);
+        // Храним варианты ключей:
+        // 1) name|type|rarity|faction
+        // 2) name|type|rarity
+        // 3) name|type|faction
+        // 4) name|type
+        // чтобы корректно поддерживать и точный матчинг, и fallback.
+        const name = String(img.card_name || '').trim();
+        const type = String(img.card_type || '').trim();
+        const faction = String(img.faction || '').trim();
+        const rarity = Number(img.rarity || 0);
+
+        if (!name || !type || !img.image_url) return;
+
+        if (rarity > 0) {
+          if (faction) cache.set(`${name}|${type}|${rarity}|${faction}`, img.image_url);
+          cache.set(`${name}|${type}|${rarity}`, img.image_url);
+        }
+
+        if (faction) cache.set(`${name}|${type}|${faction}`, img.image_url);
+        cache.set(`${name}|${type}`, img.image_url);
       });
 
       dbImagesCache = cache;
+      notifyCacheListeners();
     } catch (error) {
       console.error('Error loading card images from database:', error);
       dbImagesCache = new Map();
+      notifyCacheListeners();
     }
   })();
 
@@ -96,6 +129,19 @@ const loadDatabaseImages = async (): Promise<Map<string, string>> => {
 export const invalidateCardImagesCache = () => {
   dbImagesCache = null;
   cacheLoadPromise = null;
+  notifyCacheListeners();
+};
+
+export const subscribeCardImagesCache = (listener: () => void) => {
+  cacheListeners.add(listener);
+  return () => cacheListeners.delete(listener);
+};
+
+export const getCardImagesCacheVersion = () => cacheVersion;
+
+export const preloadCardImagesCache = () => {
+  // Запускаем загрузку, но не блокируем поток
+  void loadDatabaseImages();
 };
 
 /**
@@ -128,15 +174,9 @@ export const normalizeCardImageUrl = (url: string | undefined): string | undefin
       normalized = normalized.replace('ar://', 'https://arweave.net/');
     }
 
-    // Convert local lovable-uploads paths to a public Supabase Storage URL.
-    // This is required because `/lovable-uploads/...` is not a real route on the app domain.
-    const supabaseUrl = (import.meta as any).env?.VITE_SUPABASE_URL || 'https://oimhwdymghkwxznjarkv.supabase.co';
-    if (normalized.startsWith('lovable-uploads/')) {
-      normalized = `/${normalized}`;
-    }
-    if (normalized.startsWith('/lovable-uploads/')) {
-      normalized = `${supabaseUrl}/storage/v1/object/public${normalized}`;
-    }
+    // В Lovable путь `/lovable-uploads/...` является валидным публичным URL внутри приложения.
+    // Поэтому НЕ конвертируем его в Supabase Storage URL (это ломает отображение).
+    if (normalized.startsWith('lovable-uploads/')) normalized = `/${normalized}`;
 
     // Конвертируем PNG -> WEBP для lovable-uploads (и для относительных путей,
     // и для полных Supabase Storage URL), т.к. PNG ассеты больше не используются.
@@ -168,10 +208,11 @@ export const getCardImageByRarity = async (card: Card): Promise<string | undefin
   // ПРИОРИТЕТ 1: Пытаемся загрузить изображение из базы данных
   try {
     const dbImages = await loadDatabaseImages();
-    
+
     // Пробуем несколько вариантов типа карты для совместимости (hero/character/pet/dragon)
     const normalizedName = (card.name || '').trim();
     const normalizedFaction = (card.faction || '').trim();
+    const rarity = Number((card as any).rarity ?? (card as any).rarity ?? 0);
     const typeStr = String((card as any).type || '');
     const candidateTypes = Array.from(
       new Set(
@@ -179,32 +220,45 @@ export const getCardImageByRarity = async (card: Card): Promise<string | undefin
           typeStr,
           typeStr === 'hero' ? 'character' : undefined,
           typeStr === 'character' ? 'hero' : undefined,
-          typeStr === 'pet' ? 'pet' : undefined,
-          typeStr === 'dragon' ? 'dragon' : undefined,
+          // важно: pet <-> dragon в обе стороны
           typeStr === 'dragon' ? 'pet' : undefined,
+          typeStr === 'pet' ? 'dragon' : undefined,
         ].filter(Boolean)
       )
     ) as string[];
 
-    // Сначала пытаемся найти с фракцией, затем без фракции, перебирая варианты типов (БЕЗ rarity)
+    const devLog = (import.meta as any).env?.DEV;
+
     for (const t of candidateTypes) {
-      if (normalizedFaction) {
-        const keyWithFaction = `${normalizedName}|${t}|${normalizedFaction}`;
-        const dbImageWithFaction = dbImages.get(keyWithFaction);
-        console.log(`🔍 Looking for image with faction: ${keyWithFaction}`, dbImageWithFaction ? '✅ Found' : '❌ Not found');
-        if (dbImageWithFaction) {
-          // Нормализуем URL перед возвратом
-          return normalizeCardImageUrl(dbImageWithFaction);
-        }
+      // 1) rarity + faction
+      if (rarity > 0 && normalizedFaction) {
+        const key = `${normalizedName}|${t}|${rarity}|${normalizedFaction}`;
+        const img = dbImages.get(key);
+        if (devLog) console.log(`🔍 card_images key: ${key}`, img ? '✅' : '❌');
+        if (img) return normalizeCardImageUrl(img);
       }
 
-      const keyWithoutFaction = `${normalizedName}|${t}`;
-      const dbImage = dbImages.get(keyWithoutFaction);
-      console.log(`🔍 Looking for image without faction: ${keyWithoutFaction}`, dbImage ? '✅ Found' : '❌ Not found');
-      if (dbImage) {
-        // Нормализуем URL перед возвратом
-        return normalizeCardImageUrl(dbImage);
+      // 2) rarity only
+      if (rarity > 0) {
+        const key = `${normalizedName}|${t}|${rarity}`;
+        const img = dbImages.get(key);
+        if (devLog) console.log(`🔍 card_images key: ${key}`, img ? '✅' : '❌');
+        if (img) return normalizeCardImageUrl(img);
       }
+
+      // 3) faction only
+      if (normalizedFaction) {
+        const key = `${normalizedName}|${t}|${normalizedFaction}`;
+        const img = dbImages.get(key);
+        if (devLog) console.log(`🔍 card_images key: ${key}`, img ? '✅' : '❌');
+        if (img) return normalizeCardImageUrl(img);
+      }
+
+      // 4) base
+      const key = `${normalizedName}|${t}`;
+      const img = dbImages.get(key);
+      if (devLog) console.log(`🔍 card_images key: ${key}`, img ? '✅' : '❌');
+      if (img) return normalizeCardImageUrl(img);
     }
   } catch (error) {
     console.error('Error getting card image from database:', error);
