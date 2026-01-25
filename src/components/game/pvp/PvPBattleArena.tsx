@@ -1,4 +1,4 @@
-import React, { useMemo, useState, useCallback, useEffect } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
@@ -8,7 +8,7 @@ import { useNavigate } from 'react-router-dom';
 import { InlineDiceDisplay } from '../battle/InlineDiceDisplay';
 import { DamageIndicator } from '../battle/DamageIndicator';
 import { OptimizedImage } from '@/components/ui/optimized-image';
-import { getCardImageByRarity, normalizeCardImageUrl } from '@/utils/cardImageResolver';
+import { useCardImage } from '@/hooks/useCardImage';
 
 import { PvPPair } from '@/hooks/usePvP';
 
@@ -16,19 +16,13 @@ type PvPUnit = {
   name: string;
   faction?: string;
   image?: string;
+  rarity?: number;
 };
 
-const toLocalLovableUploads = (url: string): string | null => {
-  // Convert Supabase public storage URL -> local public asset path
-  // e.g. https://.../storage/v1/object/public/lovable-uploads/<file> -> /lovable-uploads/<file>
-  const marker = '/storage/v1/object/public/lovable-uploads/';
-  const idx = url.indexOf(marker);
-  if (idx === -1) return null;
-  const tail = url.slice(idx + marker.length).replace(/^\/+/, '');
-  if (!tail) return null;
-  return `/lovable-uploads/${tail}`;
-};
-
+/**
+ * Компонент для отображения изображения карты в PvP-бое.
+ * Использует единый хук useCardImage, который резолвит изображения из card_images.
+ */
 const PvPUnitImage: React.FC<{
   unit: PvPUnit;
   unitType: 'hero' | 'dragon';
@@ -37,80 +31,29 @@ const PvPUnitImage: React.FC<{
   height: number;
   className?: string;
 }> = ({ unit, unitType, alt, width, height, className }) => {
-  const placeholder = '/placeholder.svg';
-
-  const [src, setSrc] = useState<string>(() => normalizeCardImageUrl(unit.image) || '');
-
-  // If snapshot has no image (common for old bot snapshots), resolve from card_images.
-  useEffect(() => {
-    let cancelled = false;
-
-    const resolve = async () => {
-      const direct = normalizeCardImageUrl(unit.image);
-      if (direct) {
-        if (!cancelled) setSrc(direct);
-        return;
-      }
-
-      try {
-        const resolved = await getCardImageByRarity(
-          {
-            name: unit.name,
-            faction: unit.faction,
-            // getCardImageByRarity uses (card as any).type
-            type: unitType,
-            rarity: 1,
-            image: undefined,
-          } as any
-        );
-        if (!cancelled) setSrc(resolved || '');
-      } catch {
-        if (!cancelled) setSrc('');
-      }
-    };
-
-    resolve();
-    return () => {
-      cancelled = true;
-    };
-  }, [unit.image, unit.name, unit.faction, unitType]);
-
-  const candidates = useMemo(() => {
-    const first = src || '';
-    const localFallback = first ? toLocalLovableUploads(first) : null;
-    return {
-      first,
-      localFallback,
-    };
-  }, [src]);
-
-  const handleError = () => {
-    setSrc(prev => {
-      // 1) If Supabase URL fails, try local public copy
-      const local = prev ? toLocalLovableUploads(prev) : null;
-      if (local && local !== prev) return local;
-      // 2) Last resort: placeholder
-      return placeholder;
-    });
-  };
-
-  // If we already computed a local fallback, prefer it only after an error.
-  const finalSrc = candidates.first || placeholder;
+  // Используем единый хук, который резолвит изображение из card_images
+  const src = useCardImage({
+    name: unit.name,
+    type: unitType === 'hero' ? 'character' : 'pet',
+    rarity: unit.rarity ?? 1,
+    faction: unit.faction,
+    image: unit.image,
+  });
 
   return (
     <OptimizedImage
-      src={finalSrc}
+      src={src}
       alt={alt}
       width={width}
       height={height}
-      placeholder={placeholder}
+      placeholder="/placeholder.svg"
       priority={false}
       progressive={false}
       className={className}
-      onError={handleError}
     />
   );
 };
+
 
 interface PvPBattleArenaProps {
   myPairs: PvPPair[];
