@@ -1,5 +1,5 @@
 import { Card } from '@/types/cards';
-import { useCardImage } from '@/hooks/useCardImage';
+import { resolveCardImageSync } from '@/utils/cardImageResolver';
 import { OptimizedImage } from '@/components/ui/optimized-image';
 
 interface CardImageProps {
@@ -8,32 +8,28 @@ interface CardImageProps {
   card?: Card;
 }
 
-export const CardImage = ({ image, name, card }: CardImageProps) => {
-  // Единый источник изображений из card_images с подпиской на кэш
-  const finalImageUrl = useCardImage(
-    card
-      ? {
-          name: card.name,
-          type: (card as any).type,
-          rarity: card.rarity,
-          faction: card.faction,
-          image: card.image || image,
-        }
-      : { name, image }
-  );
+export const CardImage = ({
+  image,
+  name,
+  card
+}: CardImageProps) => {
+  // УПРОЩЕННАЯ ЛОГИКА: используем тот же подход что и в бою
+  // Синхронное разрешение изображения без асинхронной загрузки из БД
+  const resolvedImageUrl = card ? (resolveCardImageSync(card) || card.image || image) : image;
 
-  return (
-    <div className="w-full h-full overflow-hidden rounded-lg">
-      <OptimizedImage
-        src={finalImageUrl}
-        alt={name}
-        placeholder="/placeholder.svg"
-        width={240}
-        height={320}
-        priority={false}
-        progressive={true}
-        className="w-full h-full object-cover border-none"
+  // Используем приоритет: resolvedImageUrl (из card.image)
+  const finalImageUrl = resolvedImageUrl || '/placeholder.svg';
+  
+  return <div className="w-full h-full overflow-hidden rounded-lg">
+      <OptimizedImage 
+        src={finalImageUrl} 
+        alt={name} 
+        placeholder="/placeholder.svg" 
+        width={240} 
+        height={320} 
+        priority={false} 
+        progressive={true} 
+        className="w-full h-full object-cover border-none" 
       />
-    </div>
-  );
+    </div>;
 };

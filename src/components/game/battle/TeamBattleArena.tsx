@@ -13,12 +13,12 @@ import { TeamHealthBars } from './TeamHealthBars';
 import { InlineDiceDisplay } from './InlineDiceDisplay';
 import { AttackAnimation } from './AttackAnimation';
 import { DamageIndicator } from './DamageIndicator';
-import { BattleUnitImage } from './BattleUnitImage';
 import { useDungeonSync } from '@/hooks/useDungeonSync';
 import { useLanguage } from '@/hooks/useLanguage';
 import { t } from '@/utils/translations';
 import { getTranslatedCardName } from '@/utils/cardNameTranslations';
 import { useBattleSpeed } from '@/contexts/BattleSpeedContext';
+import { resolveCardImageSync } from '@/utils/cardImageResolver';
 interface TeamBattleArenaProps {
   playerPairs: TeamPair[];
   opponents: Opponent[];
@@ -426,23 +426,31 @@ export const TeamBattleArena: React.FC<TeamBattleArenaProps> = ({
                         <div className="flex gap-0.5 sm:gap-1 justify-center">
                           {/* Hero Image */}
                           <div className="w-14 h-14 sm:w-16 sm:h-16 md:w-20 md:h-20 lg:w-24 lg:h-24 rounded-md sm:rounded-lg overflow-hidden border border-white/30 bg-white/10 flex-shrink-0">
-                            <BattleUnitImage
-                              unit={pair.hero}
-                              unitType="hero"
-                              alt={pair.hero.name}
-                              className="w-full h-full object-contain"
-                            />
+                            {(() => {
+                              const heroImage = resolveCardImageSync(pair.hero) || pair.hero.image;
+                              return heroImage ? (
+                                <img src={heroImage} alt={pair.hero.name} className="w-full h-full object-contain" />
+                              ) : (
+                                <div className="w-full h-full flex items-center justify-center text-white">
+                                  <span className="text-lg sm:text-xl md:text-2xl">⚔️</span>
+                                </div>
+                              );
+                            })()}
                           </div>
                           
                           {/* Dragon Image */}
                           {pair.dragon && (
                             <div className="w-12 h-12 sm:w-14 sm:h-14 md:w-16 md:h-16 lg:w-20 lg:h-20 rounded-md sm:rounded-lg overflow-hidden border border-white/30 bg-white/10 flex-shrink-0">
-                              <BattleUnitImage
-                                unit={pair.dragon}
-                                unitType="dragon"
-                                alt={pair.dragon.name}
-                                className="w-full h-full object-contain"
-                              />
+                              {(() => {
+                                const dragonImage = resolveCardImageSync(pair.dragon) || pair.dragon.image;
+                                return dragonImage ? (
+                                  <img src={dragonImage} alt={pair.dragon.name} className="w-full h-full object-contain" />
+                                ) : (
+                                  <div className="w-full h-full flex items-center justify-center text-white">
+                                    <span className="text-base sm:text-lg md:text-xl">🐲</span>
+                                  </div>
+                                );
+                              })()}
                             </div>
                           )}
                         </div>

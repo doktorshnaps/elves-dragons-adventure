@@ -13,7 +13,6 @@ export interface PvPPair {
     currentDefense: number;
     faction?: string;
     image?: string;
-    rarity?: number;
   };
   dragon?: {
     name: string;
@@ -24,7 +23,6 @@ export interface PvPPair {
     currentDefense: number;
     faction?: string;
     image?: string;
-    rarity?: number;
   };
   totalPower: number;
   totalDefense: number;

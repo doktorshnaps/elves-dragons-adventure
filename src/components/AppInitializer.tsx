@@ -4,7 +4,6 @@ import { useNFTStatsRecalculation } from '@/hooks/useNFTStatsRecalculation';
 import { useSecureStorage } from '@/hooks/useSecureStorage';
 import { useAccountSync } from '@/hooks/useAccountSync';
 import { useGameSync } from '@/hooks/useGameSync';
-import { preloadCardImagesCache } from '@/hooks/useCardImage';
 
 /**
  * AppInitializer - компонент для инициализации хуков внутри провайдеров
@@ -48,11 +47,6 @@ export const AppInitializer = () => {
     };
 
     try {
-      // ✅ Запускаем предзагрузку card_images (idle time)
-      scheduleIdleTask(() => {
-        preloadCardImagesCache();
-      });
-
       // Register service worker and preload libs in idle time
       scheduleIdleTask(() => {
         import('../utils/bundleOptimizations').then(({ preloadCriticalLibs }) => {
