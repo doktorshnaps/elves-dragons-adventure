@@ -99,6 +99,8 @@ export const PvPHub: React.FC = () => {
         currentHealth: pair.hero?.health,
         currentDefense: pair.hero?.defense,
         faction: pair.hero?.faction,
+        // ✅ Включаем rarity для корректного резолва изображений из card_images
+        rarity: pair.hero?.rarity ?? 1,
         // ✅ Включаем изображение для отображения в бою
         image: normalizeSnapshotImage(pair.hero?.image)
       },
@@ -111,6 +113,8 @@ export const PvPHub: React.FC = () => {
         currentHealth: pair.dragon.health,
         currentDefense: pair.dragon.defense,
         faction: pair.dragon.faction,
+        // ✅ Включаем rarity для корректного резолва изображений из card_images
+        rarity: pair.dragon.rarity ?? 1,
         // ✅ Включаем изображение для отображения в бою
         image: normalizeSnapshotImage(pair.dragon.image)
       } : null,
