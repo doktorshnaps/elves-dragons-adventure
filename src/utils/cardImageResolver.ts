@@ -159,6 +159,22 @@ export const normalizeCardImageUrl = (url: string | undefined): string | undefin
       return normalized;
     }
     
+    // Конвертируем Supabase Storage URL → локальный путь
+    // https://xxx.supabase.co/storage/v1/object/public/lovable-uploads/file
+    // → /lovable-uploads/file.webp
+    const supabaseStorageMarker = '/storage/v1/object/public/lovable-uploads/';
+    if (normalized.includes(supabaseStorageMarker)) {
+      const idx = normalized.indexOf(supabaseStorageMarker);
+      let fileId = normalized.slice(idx + supabaseStorageMarker.length);
+      // Убираем возможные query params
+      fileId = fileId.split('?')[0];
+      // Добавляем .webp если нет расширения
+      if (!fileId.includes('.')) {
+        fileId = `${fileId}.webp`;
+      }
+      normalized = `/lovable-uploads/${fileId}`;
+    }
+    
     // IPFS URL normalization
     if (normalized.startsWith('ipfs://')) {
       normalized = normalized.replace('ipfs://', 'https://ipfs.io/ipfs/');
