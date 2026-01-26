@@ -302,7 +302,7 @@ export const PvPBattleArena: React.FC<PvPBattleArenaProps> = ({
                 <PvPUnitImage
                   unit={{
                     ...pair.dragon,
-                    rarity: pair.hero.rarity, // Если есть в снапшоте
+                    rarity: pair.dragon.rarity, // Если есть в снапшоте
                   }}
                   unitType="dragon"
                   alt={pair.dragon.name}
