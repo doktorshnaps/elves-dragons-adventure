@@ -2598,23 +2598,14 @@ export type Database = {
         }
         Returns: string
       }
-      add_card_to_medical_bay:
-        | {
-            Args: {
-              p_card_instance_id: string
-              p_heal_hours?: number
-              p_wallet_address?: string
-            }
-            Returns: string
-          }
-        | {
-            Args: {
-              p_card_instance_id: string
-              p_healing_hours?: number
-              p_wallet_address: string
-            }
-            Returns: string
-          }
+      add_card_to_medical_bay: {
+        Args: {
+          p_card_instance_id: string
+          p_heal_hours?: number
+          p_wallet_address?: string
+        }
+        Returns: string
+      }
       add_item_instances: {
         Args: { p_items: Json; p_wallet_address: string }
         Returns: number
