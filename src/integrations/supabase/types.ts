@@ -2598,14 +2598,23 @@ export type Database = {
         }
         Returns: string
       }
-      add_card_to_medical_bay: {
-        Args: {
-          p_card_instance_id: string
-          p_healing_hours?: number
-          p_wallet_address: string
-        }
-        Returns: string
-      }
+      add_card_to_medical_bay:
+        | {
+            Args: {
+              p_card_instance_id: string
+              p_heal_hours?: number
+              p_wallet_address?: string
+            }
+            Returns: string
+          }
+        | {
+            Args: {
+              p_card_instance_id: string
+              p_healing_hours?: number
+              p_wallet_address: string
+            }
+            Returns: string
+          }
       add_item_instances: {
         Args: { p_items: Json; p_wallet_address: string }
         Returns: number
@@ -3368,6 +3377,7 @@ export type Database = {
         Args: { p_quest_id: string; p_wallet_address: string }
         Returns: Json
       }
+      cleanup_completed_bay_entries: { Args: never; Returns: undefined }
       cleanup_dungeon_sessions_by_age: {
         Args: { p_hours_threshold?: number }
         Returns: {
@@ -4013,12 +4023,12 @@ export type Database = {
         Returns: Json
       }
       populate_card_templates: { Args: never; Returns: number }
-      process_forge_bay_repair: { Args: never; Returns: undefined }
+      process_forge_bay_repair: { Args: never; Returns: number }
       process_marketplace_purchase: {
         Args: { listing_id: string }
         Returns: undefined
       }
-      process_medical_bay_healing: { Args: never; Returns: undefined }
+      process_medical_bay_healing: { Args: never; Returns: number }
       process_referral_earnings: {
         Args: { p_amount: number; p_earner_wallet_address: string }
         Returns: undefined
