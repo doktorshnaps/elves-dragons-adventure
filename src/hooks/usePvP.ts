@@ -349,6 +349,12 @@ export const usePvP = (walletAddress: string | null) => {
     matchmakingRef.current = setInterval(async () => {
       if (!walletAddress) return;
       
+      // ❗ Skip if bot match already in progress (prevent duplicate calls)
+      if (botMatchInProgressRef.current) {
+        console.log('[PvP] Matchmaking tick skipped - bot match in progress');
+        return;
+      }
+      
       // Use ref for reliable time reading (not affected by state batching)
       const currentSearchTime = searchTimeCounterRef.current;
       console.log('[PvP] Matchmaking tick, searchTime:', currentSearchTime, 'botTriggered:', botFallbackTriggeredRef.current);
@@ -364,12 +370,17 @@ export const usePvP = (walletAddress: string | null) => {
         if (snapshot) {
           const matchId = await tryBotMatch(tier, snapshot);
           if (matchId) {
-            return; // Bot match started, intervals cleared in tryBotMatch
-          } else {
-            // Bot match failed or already in progress, reset flag to retry on next tick
-            console.log('[PvP] Bot match failed or in progress, will retry');
-            botFallbackTriggeredRef.current = false;
+            // ❗ IMPORTANT: Clear interval IMMEDIATELY after successful bot match
+            // to prevent any further ticks from creating duplicate matches
+            if (matchmakingRef.current) {
+              clearInterval(matchmakingRef.current);
+              matchmakingRef.current = null;
+            }
+            return;
           }
+          // ❗ Do NOT reset botFallbackTriggeredRef here!
+          // The lock (botMatchInProgressRef) handles retry prevention
+          console.log('[PvP] Bot match returned null (in progress or failed)');
         }
         return;
       }
