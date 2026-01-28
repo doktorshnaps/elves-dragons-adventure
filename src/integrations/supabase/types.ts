@@ -977,7 +977,7 @@ export type Database = {
           {
             foreignKeyName: "forge_bay_card_instance_id_fkey"
             columns: ["card_instance_id"]
-            isOneToOne: true
+            isOneToOne: false
             referencedRelation: "card_instances"
             referencedColumns: ["id"]
           },
@@ -1305,7 +1305,7 @@ export type Database = {
           {
             foreignKeyName: "medical_bay_card_instance_id_fkey"
             columns: ["card_instance_id"]
-            isOneToOne: true
+            isOneToOne: false
             referencedRelation: "card_instances"
             referencedColumns: ["id"]
           },
