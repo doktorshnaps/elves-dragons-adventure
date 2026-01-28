@@ -215,7 +215,6 @@ export const useForgeBay = () => {
       const { data: entryId, error: addError } = await supabase
         .rpc('add_card_to_forge_bay', {
           p_card_instance_id: cardInstanceId,
-          p_repair_hours: 24,
           p_wallet_address: accountId
         });
       
