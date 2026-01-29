@@ -662,10 +662,12 @@ export const usePvP = (walletAddress: string | null) => {
           : "Удачи в следующем бою!"
       });
       loadRating();
+      // ❗ Refresh active matches list after surrender/completion
+      loadActiveMatches();
     }
 
     return result;
-  }, [walletAddress, toast, loadRating]);
+  }, [walletAddress, toast, loadRating, loadActiveMatches]);
 
   // Get match status
   const getMatchStatus = useCallback(async (matchId: string) => {
