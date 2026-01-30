@@ -23,37 +23,69 @@ const getSupabaseServiceClient = () => {
 // D6 dice roll
 const rollD6 = (): number => Math.floor(Math.random() * 6) + 1;
 
-// Calculate damage based on dice rolls and power
-const calculateDamage = (
-  attackerRoll: number,
-  defenderRoll: number,
+// New D6 damage system (only attacker rolls):
+// 1 - Critical miss, opponent counterattacks
+// 2 - Miss (0 damage)
+// 3 - Weak hit (50% damage)
+// 4 - Normal hit (100% damage)
+// 5 - Strong hit (150% damage)
+// 6 - Critical hit (200% damage)
+const calculateDamageByRoll = (
+  roll: number,
   attackerPower: number,
   defenderDefense: number
-): { damage: number; isBlocked: boolean; isCritical: boolean } => {
-  // Critical hit on 6
-  const isCritical = attackerRoll === 6;
-  // Block on 6 (defender)
-  const isBlocked = defenderRoll === 6;
-  
-  if (isBlocked) {
-    return { damage: 0, isBlocked: true, isCritical: false };
+): { damage: number; damagePercent: number; isCounterAttack: boolean; isCritical: boolean; isMiss: boolean; description: string } => {
+  let damagePercent = 0;
+  let isCounterAttack = false;
+  let isCritical = false;
+  let isMiss = false;
+  let description = '';
+
+  switch (roll) {
+    case 1:
+      damagePercent = 0;
+      isCounterAttack = true;
+      isMiss = true;
+      description = 'Критический промах! Противник контратакует';
+      break;
+    case 2:
+      damagePercent = 0;
+      isMiss = true;
+      description = 'Промах!';
+      break;
+    case 3:
+      damagePercent = 50;
+      description = 'Слабый удар (50% урона)';
+      break;
+    case 4:
+      damagePercent = 100;
+      description = 'Нормальный удар (100% урона)';
+      break;
+    case 5:
+      damagePercent = 150;
+      description = 'Сильный удар (150% урона)';
+      break;
+    case 6:
+      damagePercent = 200;
+      isCritical = true;
+      description = 'Критический удар! (200% урона)';
+      break;
   }
+
+  // Calculate base damage: attackerPower - defenderDefense, minimum 1
+  const baseDamage = Math.max(1, attackerPower - defenderDefense);
   
-  // Base damage calculation: attacker power * roll modifier
-  let rollModifier = 0.5 + (attackerRoll / 6) * 0.5; // 0.5 - 1.0 based on roll
-  
-  if (isCritical) {
-    rollModifier = 1.5; // 50% bonus for critical
-  }
-  
-  // Calculate raw damage
-  let damage = Math.floor(attackerPower * rollModifier);
-  
-  // Apply defense reduction (defense reduces damage by percentage)
-  const defenseReduction = Math.min(defenderDefense * 0.5, damage * 0.5); // Max 50% reduction
-  damage = Math.max(1, Math.floor(damage - defenseReduction)); // Minimum 1 damage
-  
-  return { damage, isBlocked: false, isCritical };
+  // Apply percentage
+  const damage = isMiss ? 0 : Math.floor(baseDamage * (damagePercent / 100));
+
+  return { 
+    damage, 
+    damagePercent,
+    isCounterAttack, 
+    isCritical, 
+    isMiss,
+    description
+  };
 };
 
 // Apply damage to a pair (hero first, then dragon)
@@ -216,28 +248,50 @@ Deno.serve(async (req) => {
       return json({ error: 'Target is already dead' }, 400);
     }
 
-    // Roll dice
+    // Roll dice (only attacker rolls now)
     const attackerRoll = rollD6();
-    const defenderRoll = rollD6();
 
-    // Calculate damage
+    // Calculate damage using new D6 system
     const attackerTotalPower = attackerPair.totalPower || 
       (attackerPair.hero?.power || 0) + (attackerPair.dragon?.power || 0);
     const defenderTotalDefense = targetPair.currentDefense || 0;
 
-    const { damage, isBlocked, isCritical } = calculateDamage(
+    const attackResult = calculateDamageByRoll(
       attackerRoll, 
-      defenderRoll, 
       attackerTotalPower, 
       defenderTotalDefense
     );
 
     // Apply damage to target
-    const updatedTargetPair = applyDamageToPair(targetPair, damage);
+    let updatedOpponentPairs = [...opponentPairs];
+    let updatedPlayerPairs = [...playerPairs];
     
-    // Update opponent pairs
-    const updatedOpponentPairs = [...opponentPairs];
-    updatedOpponentPairs[target_pair_index] = updatedTargetPair;
+    if (attackResult.damage > 0) {
+      const updatedTargetPair = applyDamageToPair(targetPair, attackResult.damage);
+      updatedOpponentPairs[target_pair_index] = updatedTargetPair;
+    }
+
+    // Handle counterattack on roll 1
+    let counterAttackDamage = 0;
+    if (attackResult.isCounterAttack) {
+      // Target counterattacks the attacker
+      const counterRoll = rollD6();
+      const targetTotalPower = targetPair.totalPower || 
+        (targetPair.hero?.power || 0) + (targetPair.dragon?.power || 0);
+      const attackerTotalDefense = attackerPair.currentDefense || 0;
+      
+      const counterResult = calculateDamageByRoll(
+        counterRoll,
+        targetTotalPower,
+        attackerTotalDefense
+      );
+      
+      if (counterResult.damage > 0) {
+        const updatedAttackerPair = applyDamageToPair(attackerPair, counterResult.damage);
+        updatedPlayerPairs[attacker_pair_index] = updatedAttackerPair;
+        counterAttackDamage = counterResult.damage;
+      }
+    }
 
     // Update battle state
     const newTurnNumber = (battleState.turn_number || 1) + 1;
@@ -248,24 +302,30 @@ Deno.serve(async (req) => {
         action_type: 'attack',
         attacker_pair_index,
         target_pair_index,
-        dice_roll_attacker: attackerRoll,
-        dice_roll_defender: defenderRoll,
-        damage_dealt: damage,
-        is_blocked: isBlocked,
-        is_critical: isCritical,
+        dice_roll: attackerRoll,
+        damage_dealt: attackResult.damage,
+        damage_percent: attackResult.damagePercent,
+        is_miss: attackResult.isMiss,
+        is_critical: attackResult.isCritical,
+        is_counter_attack: attackResult.isCounterAttack,
+        counter_attack_damage: counterAttackDamage,
+        description: attackResult.description,
         timestamp: new Date().toISOString()
       }
     };
 
-    // Update the correct pairs array
+    // Update the pairs arrays
     if (isPlayer1) {
+      newBattleState.player1_pairs = updatedPlayerPairs;
       newBattleState.player2_pairs = updatedOpponentPairs;
     } else {
       newBattleState.player1_pairs = updatedOpponentPairs;
+      newBattleState.player2_pairs = updatedPlayerPairs;
     }
 
     // Check for victory
     const opponentDefeated = isTeamDefeated(updatedOpponentPairs);
+    const playerDefeated = isTeamDefeated(updatedPlayerPairs);
 
     if (opponentDefeated) {
       // Match completed - attacker wins
@@ -312,10 +372,10 @@ Deno.serve(async (req) => {
         attacker_pair_index,
         target_pair_index,
         dice_roll_attacker: attackerRoll,
-        dice_roll_defender: defenderRoll,
-        damage_dealt: damage,
-        is_blocked: isBlocked,
-        is_critical: isCritical,
+        dice_roll_defender: null,
+        damage_dealt: attackResult.damage,
+        is_blocked: false,
+        is_critical: attackResult.isCritical,
         result_state: newBattleState
       });
 
@@ -326,11 +386,81 @@ Deno.serve(async (req) => {
         loser: loserWallet,
         elo_change: eloChange,
         reward: reward,
+        dice_roll: attackerRoll,
+        damage_dealt: attackResult.damage,
+        damage_percent: attackResult.damagePercent,
+        is_miss: attackResult.isMiss,
+        is_critical: attackResult.isCritical,
+        is_counter_attack: attackResult.isCounterAttack,
+        counter_attack_damage: counterAttackDamage,
+        description: attackResult.description
+      });
+    }
+
+    if (playerDefeated) {
+      // Attacker lost due to counterattack
+      const winnerWallet = isPlayer1 ? match.player2_wallet : match.player1_wallet;
+      const loserWallet = playerWallet;
+      
+      const eloChange = 25;
+      const reward = match.entry_fee * 2 * 0.9;
+
+      await supabase
+        .from('pvp_matches')
+        .update({
+          status: 'completed',
+          winner_wallet: winnerWallet,
+          loser_wallet: loserWallet,
+          elo_change: eloChange,
+          winner_reward: reward,
+          finished_at: new Date().toISOString(),
+          battle_state: newBattleState
+        })
+        .eq('id', match_id);
+
+      await supabase.rpc('update_pvp_elo', {
+        p_winner_wallet: winnerWallet,
+        p_loser_wallet: loserWallet,
+        p_elo_change: eloChange
+      });
+
+      if (!winnerWallet.startsWith('BOT_')) {
+        await supabase.rpc('add_ell_balance', {
+          p_wallet_address: winnerWallet,
+          p_amount: reward
+        });
+      }
+
+      await supabase.from('pvp_moves').insert({
+        match_id,
+        player_wallet: playerWallet,
+        turn_number: newTurnNumber - 1,
+        action_type: 'attack',
+        attacker_pair_index,
+        target_pair_index,
         dice_roll_attacker: attackerRoll,
-        dice_roll_defender: defenderRoll,
-        damage_dealt: damage,
-        is_blocked: isBlocked,
-        is_critical: isCritical
+        dice_roll_defender: null,
+        damage_dealt: attackResult.damage,
+        is_blocked: false,
+        is_critical: attackResult.isCritical,
+        result_state: newBattleState
+      });
+
+      return json({
+        success: true,
+        match_status: 'completed',
+        winner: winnerWallet,
+        loser: loserWallet,
+        elo_change: eloChange,
+        reward: 0,
+        dice_roll: attackerRoll,
+        damage_dealt: attackResult.damage,
+        damage_percent: attackResult.damagePercent,
+        is_miss: attackResult.isMiss,
+        is_critical: attackResult.isCritical,
+        is_counter_attack: attackResult.isCounterAttack,
+        counter_attack_damage: counterAttackDamage,
+        description: attackResult.description
       });
     }
 
@@ -355,10 +485,10 @@ Deno.serve(async (req) => {
       attacker_pair_index,
       target_pair_index,
       dice_roll_attacker: attackerRoll,
-      dice_roll_defender: defenderRoll,
-      damage_dealt: damage,
-      is_blocked: isBlocked,
-      is_critical: isCritical,
+      dice_roll_defender: null,
+      damage_dealt: attackResult.damage,
+      is_blocked: false,
+      is_critical: attackResult.isCritical,
       result_state: newBattleState
     });
 
@@ -375,23 +505,42 @@ Deno.serve(async (req) => {
         const botAttackerPair = botPairs[aliveBotPairIndex];
         const botTargetPair = humanPairs[aliveHumanPairIndex];
 
+        // Bot rolls dice
         const botAttackerRoll = rollD6();
-        const botDefenderRoll = rollD6();
 
         const botAttackerPower = botAttackerPair.totalPower || 
           (botAttackerPair.hero?.power || 0) + (botAttackerPair.dragon?.power || 0);
         const botDefenderDefense = botTargetPair.currentDefense || 0;
 
-        const botResult = calculateDamage(
+        const botResult = calculateDamageByRoll(
           botAttackerRoll, 
-          botDefenderRoll, 
           botAttackerPower, 
           botDefenderDefense
         );
 
-        const updatedHumanPair = applyDamageToPair(botTargetPair, botResult.damage);
-        const updatedHumanPairs = [...humanPairs];
-        updatedHumanPairs[aliveHumanPairIndex] = updatedHumanPair;
+        let updatedHumanPairs = [...humanPairs];
+        let updatedBotPairs = [...botPairs];
+        
+        if (botResult.damage > 0) {
+          const updatedHumanPair = applyDamageToPair(botTargetPair, botResult.damage);
+          updatedHumanPairs[aliveHumanPairIndex] = updatedHumanPair;
+        }
+
+        // Handle bot counterattack (if bot rolled 1)
+        let botCounterDamage = 0;
+        if (botResult.isCounterAttack) {
+          const counterRoll = rollD6();
+          const targetPower = botTargetPair.totalPower || 
+            (botTargetPair.hero?.power || 0) + (botTargetPair.dragon?.power || 0);
+          const botDefense = botAttackerPair.currentDefense || 0;
+          
+          const counterResult = calculateDamageByRoll(counterRoll, targetPower, botDefense);
+          if (counterResult.damage > 0) {
+            const updatedBotPair = applyDamageToPair(botAttackerPair, counterResult.damage);
+            updatedBotPairs[aliveBotPairIndex] = updatedBotPair;
+            botCounterDamage = counterResult.damage;
+          }
+        }
 
         const botBattleState = {
           ...newBattleState,
@@ -400,23 +549,29 @@ Deno.serve(async (req) => {
             action_type: 'attack',
             attacker_pair_index: aliveBotPairIndex,
             target_pair_index: aliveHumanPairIndex,
-            dice_roll_attacker: botAttackerRoll,
-            dice_roll_defender: botDefenderRoll,
+            dice_roll: botAttackerRoll,
             damage_dealt: botResult.damage,
-            is_blocked: botResult.isBlocked,
+            damage_percent: botResult.damagePercent,
+            is_miss: botResult.isMiss,
             is_critical: botResult.isCritical,
+            is_counter_attack: botResult.isCounterAttack,
+            counter_attack_damage: botCounterDamage,
+            description: botResult.description,
             timestamp: new Date().toISOString()
           }
         };
 
         if (isPlayer1) {
           botBattleState.player1_pairs = updatedHumanPairs;
+          botBattleState.player2_pairs = updatedBotPairs;
         } else {
+          botBattleState.player1_pairs = updatedBotPairs;
           botBattleState.player2_pairs = updatedHumanPairs;
         }
 
         // Check if human is defeated
         const humanDefeated = isTeamDefeated(updatedHumanPairs);
+        const botDefeated = isTeamDefeated(updatedBotPairs);
 
         if (humanDefeated) {
           // Bot wins
@@ -441,6 +596,34 @@ Deno.serve(async (req) => {
             p_loser_wallet: playerWallet,
             p_elo_change: eloChange
           });
+        } else if (botDefeated) {
+          // Human wins due to counterattack
+          const eloChange = 25;
+          const reward = match.entry_fee * 2 * 0.9;
+
+          await supabase
+            .from('pvp_matches')
+            .update({
+              status: 'completed',
+              winner_wallet: playerWallet,
+              loser_wallet: nextTurnWallet,
+              elo_change: eloChange,
+              winner_reward: reward,
+              finished_at: new Date().toISOString(),
+              battle_state: botBattleState
+            })
+            .eq('id', match_id);
+
+          await supabase.rpc('update_pvp_elo', {
+            p_winner_wallet: playerWallet,
+            p_loser_wallet: 'SKIP_BOT',
+            p_elo_change: eloChange
+          });
+
+          await supabase.rpc('add_ell_balance', {
+            p_wallet_address: playerWallet,
+            p_amount: reward
+          });
         } else {
           // Match continues - back to human's turn
           await supabase
@@ -462,9 +645,9 @@ Deno.serve(async (req) => {
           attacker_pair_index: aliveBotPairIndex,
           target_pair_index: aliveHumanPairIndex,
           dice_roll_attacker: botAttackerRoll,
-          dice_roll_defender: botDefenderRoll,
+          dice_roll_defender: null,
           damage_dealt: botResult.damage,
-          is_blocked: botResult.isBlocked,
+          is_blocked: false,
           is_critical: botResult.isCritical,
           result_state: botBattleState
         });
@@ -474,11 +657,14 @@ Deno.serve(async (req) => {
     return json({
       success: true,
       match_status: 'active',
-      dice_roll_attacker: attackerRoll,
-      dice_roll_defender: defenderRoll,
-      damage_dealt: damage,
-      is_blocked: isBlocked,
-      is_critical: isCritical,
+      dice_roll: attackerRoll,
+      damage_dealt: attackResult.damage,
+      damage_percent: attackResult.damagePercent,
+      is_miss: attackResult.isMiss,
+      is_critical: attackResult.isCritical,
+      is_counter_attack: attackResult.isCounterAttack,
+      counter_attack_damage: counterAttackDamage,
+      description: attackResult.description,
       next_turn: nextTurnWallet
     });
 
