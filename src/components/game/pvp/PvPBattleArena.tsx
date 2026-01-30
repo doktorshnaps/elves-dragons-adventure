@@ -13,7 +13,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { Sword, Shield, Heart, ArrowLeft, Flag, Clock, Bot, RefreshCw } from "lucide-react";
+import { Sword, Shield, Heart, ArrowLeft, Flag, Clock, Bot, RefreshCw, Dices } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { InlineDiceDisplay } from "../battle/InlineDiceDisplay";
 import { DamageIndicator } from "../battle/DamageIndicator";
@@ -26,12 +26,10 @@ type PvPUnit = {
   name: string;
   faction?: string;
   image?: string;
-  rarity?: number; // Добавить
+  rarity?: number;
 };
 
 const toLocalLovableUploads = (url: string): string | null => {
-  // Convert Supabase public storage URL -> local public asset path
-  // e.g. https://.../storage/v1/object/public/lovable-uploads/<file> -> /lovable-uploads/<file>
   const marker = "/storage/v1/object/public/lovable-uploads/";
   const idx = url.indexOf(marker);
   if (idx === -1) return null;
@@ -52,7 +50,6 @@ const PvPUnitImage: React.FC<{
 
   const [src, setSrc] = useState<string>(() => normalizeCardImageUrl(unit.image) || "");
 
-  // If snapshot has no image (common for old bot snapshots), resolve from card_images.
   useEffect(() => {
     let cancelled = false;
 
@@ -67,9 +64,8 @@ const PvPUnitImage: React.FC<{
         const resolved = await getCardImageByRarity({
           name: unit.name,
           faction: unit.faction,
-          // getCardImageByRarity uses (card as any).type
           type: unitType,
-          rarity: unit.rarity || 1, // Использовать реальную rarity из снапшота
+          rarity: unit.rarity || 1,
           image: undefined,
         } as any);
         if (!cancelled) setSrc(resolved || "");
@@ -95,15 +91,12 @@ const PvPUnitImage: React.FC<{
 
   const handleError = () => {
     setSrc((prev) => {
-      // 1) If Supabase URL fails, try local public copy
       const local = prev ? toLocalLovableUploads(prev) : null;
       if (local && local !== prev) return local;
-      // 2) Last resort: placeholder
       return placeholder;
     });
   };
 
-  // If we already computed a local fallback, prefer it only after an error.
   const finalSrc = candidates.first || placeholder;
 
   return (
@@ -121,6 +114,26 @@ const PvPUnitImage: React.FC<{
   );
 };
 
+// D6 roll result description
+const getDiceResultDescription = (roll: number): { text: string; color: string } => {
+  switch (roll) {
+    case 1:
+      return { text: "Критический промах! Контратака!", color: "text-red-500" };
+    case 2:
+      return { text: "Промах!", color: "text-orange-400" };
+    case 3:
+      return { text: "Слабый удар (50%)", color: "text-yellow-400" };
+    case 4:
+      return { text: "Нормальный удар (100%)", color: "text-green-400" };
+    case 5:
+      return { text: "Сильный удар (150%)", color: "text-blue-400" };
+    case 6:
+      return { text: "Критический удар! (200%)", color: "text-purple-400" };
+    default:
+      return { text: "", color: "text-white" };
+  }
+};
+
 interface PvPBattleArenaProps {
   myPairs: PvPPair[];
   opponentPairs: PvPPair[];
@@ -133,11 +146,20 @@ interface PvPBattleArenaProps {
   isPolling: boolean;
   lastRoll?: {
     attackerRoll: number;
-    defenderRoll: number;
+    defenderRoll?: number;
     source: "player" | "opponent";
     damage: number;
-    isBlocked: boolean;
+    isBlocked?: boolean;
     isCritical?: boolean;
+    isMiss?: boolean;
+    isCounterAttack?: boolean;
+    counterAttackDamage?: number;
+    description?: string;
+  } | null;
+  initiative?: {
+    player1_roll: number;
+    player2_roll: number;
+    first_turn: "player1" | "player2";
   } | null;
   onAttack: (attackerIndex: number, targetIndex: number) => Promise<void>;
   onSurrender: () => Promise<void>;
@@ -154,6 +176,7 @@ export const PvPBattleArena: React.FC<PvPBattleArenaProps> = ({
   isLoading,
   isPolling,
   lastRoll,
+  initiative,
   onAttack,
   onSurrender,
 }) => {
@@ -162,6 +185,7 @@ export const PvPBattleArena: React.FC<PvPBattleArenaProps> = ({
   const [selectedTarget, setSelectedTarget] = useState<number | null>(null);
   const [isDiceRolling, setIsDiceRolling] = useState(false);
   const [diceKey, setDiceKey] = useState(0);
+  const [showInitiative, setShowInitiative] = useState(turnNumber === 1 && !!initiative);
 
   // Damage indicators
   const [myDamages, setMyDamages] = useState<
@@ -170,6 +194,14 @@ export const PvPBattleArena: React.FC<PvPBattleArenaProps> = ({
   const [opponentDamages, setOpponentDamages] = useState<
     Map<number, { damage: number; isCritical?: boolean; isBlocked?: boolean; key: number }>
   >(new Map());
+
+  // Hide initiative after 3 seconds
+  useEffect(() => {
+    if (showInitiative) {
+      const timer = setTimeout(() => setShowInitiative(false), 4000);
+      return () => clearTimeout(timer);
+    }
+  }, [showInitiative]);
 
   // Handle dice roll animation when lastRoll changes
   useEffect(() => {
@@ -183,29 +215,45 @@ export const PvPBattleArena: React.FC<PvPBattleArenaProps> = ({
         // Show damage indicator
         if (lastRoll.source === "player") {
           // Player attacked opponent
-          setOpponentDamages((prev) => {
-            const newMap = new Map(prev);
-            // Add damage to a random opponent pair for now
-            newMap.set(0, {
-              damage: lastRoll.damage,
-              isCritical: lastRoll.isCritical,
-              isBlocked: lastRoll.isBlocked,
-              key: Date.now(),
+          if (lastRoll.damage > 0) {
+            setOpponentDamages((prev) => {
+              const newMap = new Map(prev);
+              newMap.set(0, {
+                damage: lastRoll.damage,
+                isCritical: lastRoll.isCritical,
+                isBlocked: lastRoll.isMiss,
+                key: Date.now(),
+              });
+              return newMap;
             });
-            return newMap;
-          });
+          }
+          // Handle counterattack damage to player
+          if (lastRoll.isCounterAttack && lastRoll.counterAttackDamage && lastRoll.counterAttackDamage > 0) {
+            setMyDamages((prev) => {
+              const newMap = new Map(prev);
+              newMap.set(0, {
+                damage: lastRoll.counterAttackDamage!,
+                isCritical: false,
+                isBlocked: false,
+                key: Date.now() + 1,
+              });
+              return newMap;
+            });
+          }
         } else {
           // Opponent attacked player
-          setMyDamages((prev) => {
-            const newMap = new Map(prev);
-            newMap.set(0, {
-              damage: lastRoll.damage,
-              isCritical: lastRoll.isCritical,
-              isBlocked: lastRoll.isBlocked,
-              key: Date.now(),
+          if (lastRoll.damage > 0) {
+            setMyDamages((prev) => {
+              const newMap = new Map(prev);
+              newMap.set(0, {
+                damage: lastRoll.damage,
+                isCritical: lastRoll.isCritical,
+                isBlocked: lastRoll.isMiss,
+                key: Date.now(),
+              });
+              return newMap;
             });
-            return newMap;
-          });
+          }
         }
       }, 1500);
 
@@ -221,7 +269,7 @@ export const PvPBattleArena: React.FC<PvPBattleArenaProps> = ({
     setSelectedTarget(null);
   }, [selectedPair, selectedTarget, onAttack]);
 
-  // Render a pair card (hero + dragon)
+  // Render a pair card
   const renderPairCard = (
     pair: PvPPair,
     index: number,
@@ -281,12 +329,12 @@ export const PvPBattleArena: React.FC<PvPBattleArenaProps> = ({
         <div className="flex flex-col items-center gap-0.5 sm:gap-1">
           {/* Card Images */}
           <div className="flex gap-0.5 sm:gap-1 justify-center">
-            {/* Hero Image - using same normalization as dungeons */}
+            {/* Hero Image */}
             <div className="w-14 h-14 sm:w-16 sm:h-16 md:w-20 md:h-20 lg:w-24 lg:h-24 rounded-md sm:rounded-lg overflow-hidden border border-white/30 bg-white/10 flex-shrink-0">
               <PvPUnitImage
                 unit={{
                   ...pair.hero,
-                  rarity: pair.hero.rarity, // Если есть в снапшоте
+                  rarity: pair.hero.rarity,
                 }}
                 unitType="hero"
                 alt={pair.hero.name}
@@ -296,13 +344,13 @@ export const PvPBattleArena: React.FC<PvPBattleArenaProps> = ({
               />
             </div>
 
-            {/* Dragon Image - using same normalization as dungeons */}
+            {/* Dragon Image */}
             {pair.dragon && (
               <div className="w-12 h-12 sm:w-14 sm:h-14 md:w-16 md:h-16 lg:w-20 lg:h-20 rounded-md sm:rounded-lg overflow-hidden border border-white/30 bg-white/10 flex-shrink-0">
                 <PvPUnitImage
                   unit={{
                     ...pair.dragon,
-                    rarity: pair.dragon.rarity, // Если есть в снапшоте
+                    rarity: pair.dragon.rarity,
                   }}
                   unitType="dragon"
                   alt={pair.dragon.name}
@@ -366,8 +414,54 @@ export const PvPBattleArena: React.FC<PvPBattleArenaProps> = ({
     );
   };
 
+  // Initiative overlay
+  const renderInitiativeOverlay = () => {
+    if (!showInitiative || !initiative) return null;
+    
+    const iWonInitiative = initiative.first_turn === "player1";
+    
+    return (
+      <div className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center">
+        <Card variant="menu" className="max-w-md mx-4">
+          <CardHeader>
+            <CardTitle className="text-center text-white flex items-center justify-center gap-2">
+              <Dices className="w-6 h-6" />
+              Бросок на инициативу
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="flex items-center justify-around">
+              <div className="text-center">
+                <div className="text-white/70 text-sm mb-2">Вы</div>
+                <div className="w-16 h-16 bg-gradient-to-br from-green-500 to-green-700 rounded-lg flex items-center justify-center text-3xl font-bold text-white shadow-lg">
+                  {initiative.player1_roll}
+                </div>
+              </div>
+              <div className="text-2xl text-white/50">VS</div>
+              <div className="text-center">
+                <div className="text-white/70 text-sm mb-2">Противник</div>
+                <div className="w-16 h-16 bg-gradient-to-br from-red-500 to-red-700 rounded-lg flex items-center justify-center text-3xl font-bold text-white shadow-lg">
+                  {initiative.player2_roll}
+                </div>
+              </div>
+            </div>
+            <div className={`text-center text-lg font-bold ${iWonInitiative ? "text-green-400" : "text-red-400"}`}>
+              {iWonInitiative ? "Вы атакуете первым!" : "Противник атакует первым!"}
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  };
+
+  // Get roll result info for display
+  const rollResultInfo = lastRoll ? getDiceResultDescription(lastRoll.attackerRoll) : null;
+
   return (
     <div className="w-full h-full flex flex-col space-y-2 p-2">
+      {/* Initiative Overlay */}
+      {renderInitiativeOverlay()}
+
       {/* Header */}
       <Card variant="menu" style={{ boxShadow: "-33px 15px 10px rgba(0, 0, 0, 0.6)" }}>
         <CardHeader className="py-2 sm:py-3">
@@ -453,17 +547,15 @@ export const PvPBattleArena: React.FC<PvPBattleArenaProps> = ({
         <Card variant="menu" className="flex-shrink-0" style={{ boxShadow: "-33px 15px 10px rgba(0, 0, 0, 0.6)" }}>
           <CardContent className="py-2 sm:py-3">
             <div className="flex flex-col items-center gap-2">
-              {/* Dice Display */}
+              {/* Single Dice Display (only attacker rolls now) */}
               <div className="flex items-center justify-center gap-4 w-full">
-                {/* Player Dice */}
+                {/* Attacker Dice */}
                 <InlineDiceDisplay
-                  key={`dice-left-${diceKey}`}
+                  key={`dice-${diceKey}`}
                   isRolling={isDiceRolling}
-                  diceValue={
-                    lastRoll ? (lastRoll.source === "player" ? lastRoll.attackerRoll : lastRoll.defenderRoll) : null
-                  }
-                  isAttacker={lastRoll ? lastRoll.source === "player" : true}
-                  label="Игрок"
+                  diceValue={lastRoll?.attackerRoll ?? null}
+                  isAttacker={true}
+                  label={lastRoll?.source === "player" ? "Ваш бросок" : "Бросок противника"}
                 />
 
                 {/* Attack Button */}
@@ -482,18 +574,20 @@ export const PvPBattleArena: React.FC<PvPBattleArenaProps> = ({
                 ) : (
                   <div className="h-8 sm:h-10 flex items-center text-white/70 text-sm">Ожидание хода...</div>
                 )}
-
-                {/* Opponent Dice */}
-                <InlineDiceDisplay
-                  key={`dice-right-${diceKey}`}
-                  isRolling={isDiceRolling}
-                  diceValue={
-                    lastRoll ? (lastRoll.source === "player" ? lastRoll.defenderRoll : lastRoll.attackerRoll) : null
-                  }
-                  isAttacker={lastRoll ? lastRoll.source === "opponent" : false}
-                  label="Противник"
-                />
               </div>
+
+              {/* Roll Result Description */}
+              {lastRoll && rollResultInfo && (
+                <div className={`text-sm font-medium ${rollResultInfo.color}`}>
+                  {rollResultInfo.text}
+                  {lastRoll.damage > 0 && ` → ${lastRoll.damage} урона`}
+                  {lastRoll.isCounterAttack && lastRoll.counterAttackDamage && lastRoll.counterAttackDamage > 0 && (
+                    <span className="text-red-400 ml-2">
+                      (Контратака: {lastRoll.counterAttackDamage} урона вам!)
+                    </span>
+                  )}
+                </div>
+              )}
 
               {/* Selection hints */}
               {isMyTurn && selectedPair === null && (
@@ -502,6 +596,16 @@ export const PvPBattleArena: React.FC<PvPBattleArenaProps> = ({
               {isMyTurn && selectedPair !== null && selectedTarget === null && (
                 <div className="text-[10px] sm:text-xs text-white/70">Выберите цель для атаки</div>
               )}
+
+              {/* D6 Legend */}
+              <div className="text-[8px] sm:text-[10px] text-white/50 flex flex-wrap justify-center gap-x-2 gap-y-0.5">
+                <span className="text-red-400">1:Контратака</span>
+                <span className="text-orange-400">2:Промах</span>
+                <span className="text-yellow-400">3:50%</span>
+                <span className="text-green-400">4:100%</span>
+                <span className="text-blue-400">5:150%</span>
+                <span className="text-purple-400">6:200%</span>
+              </div>
             </div>
           </CardContent>
         </Card>

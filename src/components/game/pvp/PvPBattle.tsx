@@ -21,11 +21,15 @@ const PvPBattleContent: React.FC = () => {
   const [isPolling, setIsPolling] = useState(false);
   const [lastRoll, setLastRoll] = useState<{
     attackerRoll: number;
-    defenderRoll: number;
+    defenderRoll?: number;
     source: 'player' | 'opponent';
     damage: number;
-    isBlocked: boolean;
+    isBlocked?: boolean;
     isCritical?: boolean;
+    isMiss?: boolean;
+    isCounterAttack?: boolean;
+    counterAttackDamage?: number;
+    description?: string;
   } | null>(null);
 
   // Load match data
@@ -68,15 +72,17 @@ const PvPBattleContent: React.FC = () => {
     const result = await submitMove(matchId, 'attack', attackerIndex, targetIndex);
     
     if (result?.success) {
-      // Show dice roll animation with result data
-      if (result.dice_roll_attacker && result.dice_roll_defender) {
+      // Show dice roll animation with result data (new D6 system - only attacker rolls)
+      if (result.dice_roll !== undefined) {
         setLastRoll({
-          attackerRoll: result.dice_roll_attacker,
-          defenderRoll: result.dice_roll_defender,
+          attackerRoll: result.dice_roll,
           source: 'player',
           damage: result.damage_dealt || 0,
-          isBlocked: result.is_blocked || false,
-          isCritical: result.is_critical || false
+          isCritical: result.is_critical || false,
+          isMiss: result.is_miss || false,
+          isCounterAttack: result.is_counter_attack || false,
+          counterAttackDamage: result.counter_attack_damage || 0,
+          description: result.description || ''
         });
       }
       
@@ -175,6 +181,9 @@ const PvPBattleContent: React.FC = () => {
   const myPairs = convertToPvPPairs(amIPlayer1 ? matchData.player1?.pairs : matchData.player2?.pairs);
   const opponentPairs = convertToPvPPairs(amIPlayer1 ? matchData.player2?.pairs : matchData.player1?.pairs);
   const opponentWallet = amIPlayer1 ? matchData.player2?.wallet : matchData.player1?.wallet;
+  
+  // Get initiative info from battle state
+  const initiative = matchData.last_action?.initiative || matchData.initiative || null;
 
   return (
     <div className="min-h-screen bg-background">
@@ -189,6 +198,7 @@ const PvPBattleContent: React.FC = () => {
         isLoading={loading}
         isPolling={isPolling}
         lastRoll={lastRoll}
+        initiative={initiative}
         onAttack={handleAttack}
         onSurrender={handleSurrender}
       />
