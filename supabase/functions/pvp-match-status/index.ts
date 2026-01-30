@@ -90,6 +90,7 @@ Deno.serve(async (req) => {
       },
       
       last_action: match.battle_state?.last_action || null,
+      initiative: match.battle_state?.initiative || null,
       recent_moves: recentMoves || [],
       
       winner: match.winner_wallet,
