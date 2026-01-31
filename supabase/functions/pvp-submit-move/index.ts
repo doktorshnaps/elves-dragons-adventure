@@ -112,11 +112,13 @@ const applyDamageToPair = (pair: any, damage: number): any => {
   return updatedPair;
 };
 
-// Check if a team is defeated
+// Check if a team is defeated (pair is alive if hero OR dragon has health)
 const isTeamDefeated = (pairs: any[]): boolean => {
-  return pairs.every(pair => 
-    pair.hero.currentHealth <= 0 && (!pair.dragon || pair.dragon.currentHealth <= 0)
-  );
+  return pairs.every(pair => {
+    const heroAlive = pair.hero && pair.hero.currentHealth > 0;
+    const dragonAlive = pair.dragon && pair.dragon.currentHealth > 0;
+    return !heroAlive && !dragonAlive;
+  });
 };
 
 Deno.serve(async (req) => {
@@ -238,13 +240,17 @@ Deno.serve(async (req) => {
     const attackerPair = playerPairs[attacker_pair_index];
     const targetPair = opponentPairs[target_pair_index];
 
-    // Check attacker is alive
-    if (attackerPair.hero.currentHealth <= 0) {
+    // Check attacker is alive (pair is alive if hero OR dragon has health)
+    const attackerAlive = attackerPair.hero.currentHealth > 0 || 
+      (attackerPair.dragon && attackerPair.dragon.currentHealth > 0);
+    if (!attackerAlive) {
       return json({ error: 'Attacker is dead' }, 400);
     }
 
-    // Check target is alive
-    if (targetPair.hero.currentHealth <= 0) {
+    // Check target is alive (pair is alive if hero OR dragon has health)
+    const targetAlive = targetPair.hero.currentHealth > 0 || 
+      (targetPair.dragon && targetPair.dragon.currentHealth > 0);
+    if (!targetAlive) {
       return json({ error: 'Target is already dead' }, 400);
     }
 
