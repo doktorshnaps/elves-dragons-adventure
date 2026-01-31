@@ -88,26 +88,28 @@ const calculateDamageByRoll = (
   };
 };
 
-// Apply damage to a pair (hero first, then dragon)
+// Apply damage to a pair (hero HP first, then dragon HP)
+// Defense is already factored into damage calculation formula (attackerPower - defenderDefense)
+// So here we just reduce HP directly
 const applyDamageToPair = (pair: any, damage: number): any => {
   const updatedPair = JSON.parse(JSON.stringify(pair));
   let remainingDamage = damage;
   
-  // Apply to hero defense first
-  if (updatedPair.hero.currentDefense > 0) {
-    const defenseAbsorbed = Math.min(updatedPair.hero.currentDefense, remainingDamage);
-    updatedPair.hero.currentDefense -= defenseAbsorbed;
-    remainingDamage -= defenseAbsorbed;
+  // Apply damage to hero HP first (defense already calculated in damage formula)
+  if (updatedPair.hero && updatedPair.hero.currentHealth > 0) {
+    const heroAbsorbed = Math.min(updatedPair.hero.currentHealth, remainingDamage);
+    updatedPair.hero.currentHealth = Math.max(0, updatedPair.hero.currentHealth - heroAbsorbed);
+    remainingDamage -= heroAbsorbed;
   }
   
-  // Apply to hero health
-  if (remainingDamage > 0) {
-    updatedPair.hero.currentHealth = Math.max(0, updatedPair.hero.currentHealth - remainingDamage);
+  // If hero is dead and damage remains, apply to dragon HP
+  if (remainingDamage > 0 && updatedPair.dragon && updatedPair.dragon.currentHealth > 0) {
+    updatedPair.dragon.currentHealth = Math.max(0, updatedPair.dragon.currentHealth - remainingDamage);
   }
   
-  // Update totals
-  updatedPair.currentDefense = (updatedPair.hero?.currentDefense || 0) + (updatedPair.dragon?.currentDefense || 0);
+  // Update pair totals
   updatedPair.currentHealth = (updatedPair.hero?.currentHealth || 0) + (updatedPair.dragon?.currentHealth || 0);
+  // Defense doesn't change during combat (it's used for damage calculation, not absorption)
   
   return updatedPair;
 };
