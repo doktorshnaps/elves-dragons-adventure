@@ -353,7 +353,11 @@ export const DeckSelection = ({
                     <Button size="sm" variant="outline" onClick={() => onPairRemove(index)} className="w-full text-xs border-white text-white hover:bg-white hover:text-black">
                       Удалить
                     </Button>
-                  </div> : <button type="button" onClick={() => setShowHeroDeck(true)} className="h-full w-full flex items-center justify-center text-white/40 text-xs sm:text-sm hover:text-white hover:bg-white/5 transition-all duration-300 rounded-xl cursor-pointer border-2 border-dashed border-white/20 hover:border-white/50">
+                  </div> : <button type="button" onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    setShowHeroDeck(true);
+                  }} className="h-full w-full flex items-center justify-center text-white/40 text-xs sm:text-sm hover:text-white hover:bg-white/5 transition-all duration-300 rounded-xl cursor-pointer border-2 border-dashed border-white/20 hover:border-white/50">
                     <div className="flex flex-col items-center gap-2">
                       <span>Пустой слот</span>
                       <span className="text-[10px] text-white/60">Нажмите для выбора героя</span>
@@ -412,8 +416,9 @@ export const DeckSelection = ({
               const isDead = (hero.currentHealth ?? hero.health) <= 0;
               const teamFull = selectedPairs.length >= 5;
               const canSelect = !isSelected && !teamFull && !isDead;
-              return <div key={hero.id} className={`relative cursor-pointer transition-all ${isSelected ? 'opacity-50' : isDead ? 'opacity-60' : 'hover:scale-105'}`} onClick={() => canSelect && handleHeroSelect(hero)}>
+              return <div key={hero.id} className={`relative cursor-pointer transition-all ${isSelected ? 'opacity-50' : isDead ? 'opacity-60' : 'hover:scale-105'}`} onClick={(e) => { e.preventDefault(); e.stopPropagation(); canSelect && handleHeroSelect(hero); }}>
                   <CardDisplay card={hero} showSellButton={false} onClick={e => {
+                  e.preventDefault();
                   e.stopPropagation();
                   setPreviewCard(hero);
                   setPreviewAction(canSelect ? {
