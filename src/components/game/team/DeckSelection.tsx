@@ -345,7 +345,7 @@ export const DeckSelection = ({
                     e.stopPropagation();
                     setActivePairIndex(index);
                     setShowDragonDeck(true);
-                  }} className="w-8 h-10 sm:w-12 sm:h-14 border-2 border-dashed border-white/40 rounded-lg flex items-center justify-center text-xs text-white/70 hover:text-white hover:border-white transition-all duration-300">
+                  }} className="w-8 h-10 sm:w-12 sm:h-14 border-2 border-dashed border-white/40 rounded-lg flex items-center justify-center text-xs text-white/70 hover:text-white hover:border-white transition-all duration-300" style={{ touchAction: 'manipulation' }}>
                             Выбрать дракона
                           </button>}
                       </div>
@@ -357,7 +357,7 @@ export const DeckSelection = ({
                     e.preventDefault();
                     e.stopPropagation();
                     setShowHeroDeck(true);
-                  }} className="h-full w-full flex items-center justify-center text-white/40 text-xs sm:text-sm hover:text-white hover:bg-white/5 transition-all duration-300 rounded-xl cursor-pointer border-2 border-dashed border-white/20 hover:border-white/50">
+                  }} className="h-full w-full flex items-center justify-center text-white/40 text-xs sm:text-sm hover:text-white hover:bg-white/5 transition-all duration-300 rounded-xl cursor-pointer border-2 border-dashed border-white/20 hover:border-white/50" style={{ touchAction: 'manipulation' }}>
                     <div className="flex flex-col items-center gap-2">
                       <span>Пустой слот</span>
                       <span className="text-[10px] text-white/60">Нажмите для выбора героя</span>
@@ -416,7 +416,7 @@ export const DeckSelection = ({
               const isDead = (hero.currentHealth ?? hero.health) <= 0;
               const teamFull = selectedPairs.length >= 5;
               const canSelect = !isSelected && !teamFull && !isDead;
-              return <div key={hero.id} className={`relative cursor-pointer transition-all ${isSelected ? 'opacity-50' : isDead ? 'opacity-60' : 'hover:scale-105'}`} onClick={(e) => { e.preventDefault(); e.stopPropagation(); canSelect && handleHeroSelect(hero); }}>
+              return <div key={hero.id} className={`relative cursor-pointer transition-all ${isSelected ? 'opacity-50' : isDead ? 'opacity-60' : 'hover:scale-105'}`} style={{ touchAction: 'manipulation' }} onClick={(e) => { e.preventDefault(); e.stopPropagation(); canSelect && handleHeroSelect(hero); }}>
                   <CardDisplay card={hero} showSellButton={false} onClick={e => {
                   e.preventDefault();
                   e.stopPropagation();
@@ -469,7 +469,7 @@ export const DeckSelection = ({
               const isSelected = isDragonSelected(dragon);
               const isDead = (dragon.currentHealth ?? dragon.health) <= 0;
               const canAssign = activePairIndex !== null ? !!selectedPairs[activePairIndex] && !selectedPairs[activePairIndex]?.dragon && selectedPairs[activePairIndex]?.hero.faction === dragon.faction && (selectedPairs[activePairIndex]?.hero.rarity ?? 0) >= dragon.rarity && !isSelected && !isDead : false;
-              return <div key={dragon.id} className={`relative cursor-pointer transition-all ${activePairIndex !== null ? !canAssign ? 'opacity-50 pointer-events-none' : 'hover:scale-105' : isDead ? 'opacity-60' : 'hover:scale-105'}`} onClick={(e) => { e.preventDefault(); e.stopPropagation(); canAssign && handleDragonSelect(dragon); }}>
+              return <div key={dragon.id} className={`relative cursor-pointer transition-all ${activePairIndex !== null ? !canAssign ? 'opacity-50 pointer-events-none' : 'hover:scale-105' : isDead ? 'opacity-60' : 'hover:scale-105'}`} style={{ touchAction: 'manipulation' }} onClick={(e) => { e.preventDefault(); e.stopPropagation(); canAssign && handleDragonSelect(dragon); }}>
                   <CardDisplay card={dragon} showSellButton={false} onClick={e => {
                   e.preventDefault();
                   e.stopPropagation();
