@@ -340,7 +340,9 @@ export const DeckSelection = ({
                       label: 'Удалить дракона из команды',
                       action: () => onPairRemoveDragon(index)
                     });
-                  }} /> : <button type="button" onClick={() => {
+                  }} /> : <button type="button" onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
                     setActivePairIndex(index);
                     setShowDragonDeck(true);
                   }} className="w-8 h-10 sm:w-12 sm:h-14 border-2 border-dashed border-white/40 rounded-lg flex items-center justify-center text-xs text-white/70 hover:text-white hover:border-white transition-all duration-300">
@@ -443,10 +445,12 @@ export const DeckSelection = ({
             <DialogTitle className="text-xl font-bold text-white">Выберите дракона</DialogTitle>
           </DialogHeader>
           <div className="flex gap-2 px-4 pb-2 flex-shrink-0">
-            <Button size="sm" variant={dragonSortBy === 'defense' ? 'default' : 'outline'} onClick={() => {
+            <Button size="sm" variant={dragonSortBy === 'defense' ? 'default' : 'outline'} onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
             console.log('🔘 Dragon sort button clicked, current:', dragonSortBy, '→ setting to: defense');
             setDragonSortBy('defense');
-          }} className="flex items-center gap-2">
+          }} className="flex items-center gap-2" type="button">
               <Swords className="w-4 h-4" />
               По броне
               {dragonSortBy === 'defense' && <ArrowUpDown className="w-3 h-3" />}
@@ -460,8 +464,9 @@ export const DeckSelection = ({
               const isSelected = isDragonSelected(dragon);
               const isDead = (dragon.currentHealth ?? dragon.health) <= 0;
               const canAssign = activePairIndex !== null ? !!selectedPairs[activePairIndex] && !selectedPairs[activePairIndex]?.dragon && selectedPairs[activePairIndex]?.hero.faction === dragon.faction && (selectedPairs[activePairIndex]?.hero.rarity ?? 0) >= dragon.rarity && !isSelected && !isDead : false;
-              return <div key={dragon.id} className={`relative cursor-pointer transition-all ${activePairIndex !== null ? !canAssign ? 'opacity-50 pointer-events-none' : 'hover:scale-105' : isDead ? 'opacity-60' : 'hover:scale-105'}`} onClick={() => canAssign && handleDragonSelect(dragon)}>
+              return <div key={dragon.id} className={`relative cursor-pointer transition-all ${activePairIndex !== null ? !canAssign ? 'opacity-50 pointer-events-none' : 'hover:scale-105' : isDead ? 'opacity-60' : 'hover:scale-105'}`} onClick={(e) => { e.preventDefault(); e.stopPropagation(); canAssign && handleDragonSelect(dragon); }}>
                   <CardDisplay card={dragon} showSellButton={false} onClick={e => {
+                  e.preventDefault();
                   e.stopPropagation();
                   setPreviewCard(dragon);
                   const canAssignHere = activePairIndex !== null && !!selectedPairs[activePairIndex] && !selectedPairs[activePairIndex]?.dragon && selectedPairs[activePairIndex]?.hero.faction === dragon.faction && (selectedPairs[activePairIndex]?.hero.rarity ?? 0) >= dragon.rarity && !isSelected && !isDead;
