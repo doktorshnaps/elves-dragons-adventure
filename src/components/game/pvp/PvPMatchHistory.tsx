@@ -40,14 +40,16 @@ export const PvPMatchHistory: React.FC<PvPMatchHistoryProps> = ({ walletAddress 
     
     setLoading(true);
 
+    // Use proper filter syntax for OR condition
     const { data, error } = await supabase
       .from("pvp_matches")
       .select("id, player1_wallet, player2_wallet, winner_wallet, loser_wallet, elo_change, player1_elo_before, player2_elo_before, finished_at, is_bot_match, rarity_tier")
       .eq("status", "completed")
-      .or(`player1_wallet.eq.${walletAddress},player2_wallet.eq.${walletAddress}`)
+      .or(`player1_wallet.eq."${walletAddress}",player2_wallet.eq."${walletAddress}"`)
       .order("finished_at", { ascending: false })
       .limit(20);
 
+    console.log("[PvP History] Query result:", { walletAddress, data, error });
     if (!error && data) {
       setMatches(data);
     }
