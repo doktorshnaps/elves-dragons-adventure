@@ -3,9 +3,12 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
-import { Swords, Trophy, Clock, Coins, ArrowLeft, Search, X, Loader2, Star, Bot } from "lucide-react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Swords, Trophy, Clock, Coins, ArrowLeft, Search, X, Loader2, Star, Bot, History } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { usePvP } from "@/hooks/usePvP";
+import { PvPLeaderboard } from "./PvPLeaderboard";
+import { PvPMatchHistory } from "./PvPMatchHistory";
 import { useWalletContext } from "@/contexts/WalletConnectContext";
 import { usePlayerTeams, TeamPair } from "@/hooks/usePlayerTeams";
 import { normalizeCardImageUrl } from "@/utils/cardImageResolver";
@@ -409,10 +412,27 @@ export const PvPHub: React.FC = () => {
           </CardContent>
         </Card>
 
-        {/* Footer note */}
-        <p className="text-xs text-center text-muted-foreground">
-          Таблица лидеров и история матчей скоро будут доступны
-        </p>
+        {/* Leaderboard & Match History Tabs */}
+        <Tabs defaultValue="leaderboard" className="w-full">
+          <TabsList className="w-full grid grid-cols-2">
+            <TabsTrigger value="leaderboard" className="flex items-center gap-2">
+              <Trophy className="w-4 h-4" />
+              <span className="hidden sm:inline">Лидеры</span>
+            </TabsTrigger>
+            <TabsTrigger value="history" className="flex items-center gap-2">
+              <History className="w-4 h-4" />
+              <span className="hidden sm:inline">История</span>
+            </TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="leaderboard" className="mt-4">
+            <PvPLeaderboard currentWallet={walletAddress} />
+          </TabsContent>
+
+          <TabsContent value="history" className="mt-4">
+            <PvPMatchHistory walletAddress={walletAddress} />
+          </TabsContent>
+        </Tabs>
       </div>
     </div>
   );
