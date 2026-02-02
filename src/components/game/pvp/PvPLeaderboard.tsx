@@ -25,7 +25,18 @@ const TIER_NAMES: Record<string, string> = {
   legend: "Легенда",
 };
 
-const TIERS_ORDER = ["legend", "master", "diamond", "platinum", "gold", "silver", "bronze"];
+const TIER_RANGES: Record<string, string> = {
+  bronze: "0-1199",
+  silver: "1200-1399",
+  gold: "1400-1599",
+  platinum: "1600-1799",
+  diamond: "1800-1999",
+  master: "2000-2199",
+  legend: "2200+",
+};
+
+// От слабых к сильным (слева направо)
+const TIERS_ORDER = ["bronze", "silver", "gold", "platinum", "diamond", "master", "legend"];
 
 interface LeaderboardEntry {
   wallet_address: string;
@@ -42,7 +53,7 @@ interface PvPLeaderboardProps {
 }
 
 export const PvPLeaderboard: React.FC<PvPLeaderboardProps> = ({ currentWallet }) => {
-  const [selectedTier, setSelectedTier] = useState<string>("all");
+  const [selectedTier, setSelectedTier] = useState<string>("bronze");
   const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -53,18 +64,13 @@ export const PvPLeaderboard: React.FC<PvPLeaderboardProps> = ({ currentWallet })
   const loadLeaderboard = async () => {
     setLoading(true);
     
-    let query = supabase
+    const { data, error } = await supabase
       .from("pvp_ratings")
       .select("wallet_address, elo, tier, wins, losses, win_streak, matches_played")
+      .eq("tier", selectedTier)
       .gt("matches_played", 0)
       .order("elo", { ascending: false })
       .limit(50);
-
-    if (selectedTier !== "all") {
-      query = query.eq("tier", selectedTier);
-    }
-
-    const { data, error } = await query;
 
     if (!error && data) {
       setLeaderboard(data);
@@ -101,16 +107,16 @@ export const PvPLeaderboard: React.FC<PvPLeaderboardProps> = ({ currentWallet })
         </CardTitle>
       </CardHeader>
       <CardContent>
-        <Tabs defaultValue="all" onValueChange={setSelectedTier}>
+        <Tabs defaultValue="bronze" onValueChange={setSelectedTier}>
           <TabsList className="w-full flex flex-wrap h-auto gap-1 mb-4">
-            <TabsTrigger value="all" className="text-xs">Все</TabsTrigger>
             {TIERS_ORDER.map((tier) => (
               <TabsTrigger
                 key={tier}
                 value={tier}
-                className="text-xs"
+                className="text-[10px] sm:text-xs flex flex-col items-center gap-0 py-1.5 px-2"
               >
-                {TIER_NAMES[tier]}
+                <span>{TIER_NAMES[tier]}</span>
+                <span className="text-[8px] sm:text-[10px] opacity-70">{TIER_RANGES[tier]}</span>
               </TabsTrigger>
             ))}
           </TabsList>
