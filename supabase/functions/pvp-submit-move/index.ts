@@ -168,18 +168,20 @@ Deno.serve(async (req) => {
       return json({ error: 'Match is not active' }, 400);
     }
 
-    // Validate it's the player's turn
-    if (match.current_turn_wallet !== playerWallet) {
-      return json({ error: 'Not your turn' }, 400);
-    }
-
     // Determine player and opponent
     const isPlayer1 = playerWallet === match.player1_wallet;
+    const isPlayer2 = playerWallet === match.player2_wallet;
+    
+    // Validate player is in this match
+    if (!isPlayer1 && !isPlayer2) {
+      return json({ error: 'You are not in this match' }, 400);
+    }
+    
     const battleState = match.battle_state || {};
     const playerPairs = isPlayer1 ? battleState.player1_pairs : battleState.player2_pairs;
     const opponentPairs = isPlayer1 ? battleState.player2_pairs : battleState.player1_pairs;
 
-    // Handle surrender
+    // Handle surrender - allowed regardless of whose turn it is
     if (action_type === 'surrender') {
       const winnerWallet = isPlayer1 ? match.player2_wallet : match.player1_wallet;
       const loserWallet = playerWallet;
@@ -486,6 +488,11 @@ Deno.serve(async (req) => {
         description: botResult.description,
         next_turn: humanWallet
       });
+    }
+
+    // For attack action, validate it's the player's turn
+    if (match.current_turn_wallet !== playerWallet) {
+      return json({ error: 'Not your turn' }, 400);
     }
 
     // Validate attack indices
