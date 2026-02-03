@@ -145,7 +145,7 @@ Deno.serve(async (req) => {
       return json({ error: 'match_id and wallet_address are required' }, 400);
     }
 
-    if (!['attack', 'ability', 'surrender'].includes(action_type)) {
+    if (!['attack', 'ability', 'surrender', 'trigger_bot_turn'].includes(action_type)) {
       return json({ error: 'Invalid action_type' }, 400);
     }
 
@@ -223,6 +223,268 @@ Deno.serve(async (req) => {
         elo_change: eloChange,
         reward: reward,
         action_type: 'surrender'
+      });
+    }
+
+    // Handle trigger_bot_turn - execute bot's move when it's bot's turn
+    if (action_type === 'trigger_bot_turn') {
+      // Validate this is a bot match and it's the bot's turn
+      if (!match.is_bot_match) {
+        return json({ error: 'Not a bot match' }, 400);
+      }
+      
+      const botWallet = match.player1_wallet.startsWith('BOT_') ? match.player1_wallet : match.player2_wallet;
+      if (match.current_turn_wallet !== botWallet) {
+        return json({ error: 'Not bot turn' }, 400);
+      }
+      
+      const isBot1 = match.player1_wallet.startsWith('BOT_');
+      const botPairs = isBot1 ? battleState.player1_pairs : battleState.player2_pairs;
+      const humanPairs = isBot1 ? battleState.player2_pairs : battleState.player1_pairs;
+      const humanWallet = isBot1 ? match.player2_wallet : match.player1_wallet;
+      
+      // Find first alive bot pair and first alive human pair
+      const aliveBotPairIndex = botPairs.findIndex((p: any) => 
+        (p.hero && p.hero.currentHealth > 0) || (p.dragon && p.dragon.currentHealth > 0)
+      );
+      const aliveHumanPairIndex = humanPairs.findIndex((p: any) => 
+        (p.hero && p.hero.currentHealth > 0) || (p.dragon && p.dragon.currentHealth > 0)
+      );
+      
+      if (aliveBotPairIndex < 0 || aliveHumanPairIndex < 0) {
+        return json({ error: 'No valid targets' }, 400);
+      }
+      
+      const botAttackerPair = botPairs[aliveBotPairIndex];
+      const botTargetPair = humanPairs[aliveHumanPairIndex];
+      
+      // Bot rolls dice
+      const botAttackerRoll = rollD6();
+      
+      const botAttackerPower = botAttackerPair.totalPower || 
+        (botAttackerPair.hero?.power || 0) + (botAttackerPair.dragon?.power || 0);
+      const botDefenderDefense = botTargetPair.currentDefense || 0;
+      
+      const botResult = calculateDamageByRoll(
+        botAttackerRoll, 
+        botAttackerPower, 
+        botDefenderDefense
+      );
+      
+      let updatedHumanPairs = [...humanPairs];
+      let updatedBotPairs = [...botPairs];
+      
+      if (botResult.damage > 0) {
+        const updatedHumanPair = applyDamageToPair(botTargetPair, botResult.damage);
+        updatedHumanPairs[aliveHumanPairIndex] = updatedHumanPair;
+      }
+      
+      // Handle bot counterattack (if bot rolled 1)
+      let botCounterDamage = 0;
+      if (botResult.isCounterAttack) {
+        const counterRoll = rollD6();
+        const targetPower = botTargetPair.totalPower || 
+          (botTargetPair.hero?.power || 0) + (botTargetPair.dragon?.power || 0);
+        const botDefense = botAttackerPair.currentDefense || 0;
+        
+        const counterResult = calculateDamageByRoll(counterRoll, targetPower, botDefense);
+        if (counterResult.damage > 0) {
+          const updatedBotPair = applyDamageToPair(botAttackerPair, counterResult.damage);
+          updatedBotPairs[aliveBotPairIndex] = updatedBotPair;
+          botCounterDamage = counterResult.damage;
+        }
+      }
+      
+      const newTurnNumber = (battleState.turn_number || 1) + 1;
+      const botBattleState = {
+        ...battleState,
+        turn_number: newTurnNumber,
+        last_action: {
+          action_type: 'attack',
+          attacker_pair_index: aliveBotPairIndex,
+          target_pair_index: aliveHumanPairIndex,
+          dice_roll: botAttackerRoll,
+          damage_dealt: botResult.damage,
+          damage_percent: botResult.damagePercent,
+          is_miss: botResult.isMiss,
+          is_critical: botResult.isCritical,
+          is_counter_attack: botResult.isCounterAttack,
+          counter_attack_damage: botCounterDamage,
+          description: botResult.description,
+          timestamp: new Date().toISOString()
+        }
+      };
+      
+      if (isBot1) {
+        botBattleState.player1_pairs = updatedBotPairs;
+        botBattleState.player2_pairs = updatedHumanPairs;
+      } else {
+        botBattleState.player1_pairs = updatedHumanPairs;
+        botBattleState.player2_pairs = updatedBotPairs;
+      }
+      
+      // Check if human is defeated
+      const humanDefeated = isTeamDefeated(updatedHumanPairs);
+      const botDefeated = isTeamDefeated(updatedBotPairs);
+      
+      if (humanDefeated) {
+        // Bot wins
+        const eloChange = 25;
+        
+        await supabase
+          .from('pvp_matches')
+          .update({
+            status: 'completed',
+            winner_wallet: botWallet,
+            loser_wallet: humanWallet,
+            elo_change: eloChange,
+            winner_reward: 0,
+            finished_at: new Date().toISOString(),
+            battle_state: botBattleState
+          })
+          .eq('id', match_id);
+        
+        // Update Elo - only for human player
+        await supabase.rpc('update_pvp_elo', {
+          p_winner_wallet: 'SKIP_BOT',
+          p_loser_wallet: humanWallet,
+          p_elo_change: eloChange
+        });
+        
+        // Record move
+        await supabase.from('pvp_moves').insert({
+          match_id,
+          player_wallet: botWallet,
+          turn_number: newTurnNumber - 1,
+          action_type: 'attack',
+          attacker_pair_index: aliveBotPairIndex,
+          target_pair_index: aliveHumanPairIndex,
+          dice_roll_attacker: botAttackerRoll,
+          dice_roll_defender: null,
+          damage_dealt: botResult.damage,
+          is_blocked: false,
+          is_critical: botResult.isCritical,
+          result_state: botBattleState
+        });
+        
+        return json({
+          success: true,
+          match_status: 'completed',
+          winner: botWallet,
+          loser: humanWallet,
+          elo_change: eloChange,
+          dice_roll: botAttackerRoll,
+          damage_dealt: botResult.damage,
+          damage_percent: botResult.damagePercent,
+          is_miss: botResult.isMiss,
+          is_critical: botResult.isCritical,
+          is_counter_attack: botResult.isCounterAttack,
+          counter_attack_damage: botCounterDamage,
+          description: botResult.description
+        });
+      }
+      
+      if (botDefeated) {
+        // Human wins due to counterattack
+        const eloChange = 25;
+        const reward = match.entry_fee * 2 * 0.9;
+        
+        await supabase
+          .from('pvp_matches')
+          .update({
+            status: 'completed',
+            winner_wallet: humanWallet,
+            loser_wallet: botWallet,
+            elo_change: eloChange,
+            winner_reward: reward,
+            finished_at: new Date().toISOString(),
+            battle_state: botBattleState
+          })
+          .eq('id', match_id);
+        
+        await supabase.rpc('update_pvp_elo', {
+          p_winner_wallet: humanWallet,
+          p_loser_wallet: 'SKIP_BOT',
+          p_elo_change: eloChange
+        });
+        
+        await supabase.rpc('add_ell_balance', {
+          p_wallet_address: humanWallet,
+          p_amount: reward
+        });
+        
+        // Record move
+        await supabase.from('pvp_moves').insert({
+          match_id,
+          player_wallet: botWallet,
+          turn_number: newTurnNumber - 1,
+          action_type: 'attack',
+          attacker_pair_index: aliveBotPairIndex,
+          target_pair_index: aliveHumanPairIndex,
+          dice_roll_attacker: botAttackerRoll,
+          dice_roll_defender: null,
+          damage_dealt: botResult.damage,
+          is_blocked: false,
+          is_critical: botResult.isCritical,
+          result_state: botBattleState
+        });
+        
+        return json({
+          success: true,
+          match_status: 'completed',
+          winner: humanWallet,
+          loser: botWallet,
+          elo_change: eloChange,
+          reward: reward,
+          dice_roll: botAttackerRoll,
+          damage_dealt: botResult.damage,
+          damage_percent: botResult.damagePercent,
+          is_miss: botResult.isMiss,
+          is_critical: botResult.isCritical,
+          is_counter_attack: botResult.isCounterAttack,
+          counter_attack_damage: botCounterDamage,
+          description: botResult.description
+        });
+      }
+      
+      // Match continues - switch to human's turn
+      await supabase
+        .from('pvp_matches')
+        .update({
+          current_turn_wallet: humanWallet,
+          turn_started_at: new Date().toISOString(),
+          battle_state: botBattleState
+        })
+        .eq('id', match_id);
+      
+      // Record bot move
+      await supabase.from('pvp_moves').insert({
+        match_id,
+        player_wallet: botWallet,
+        turn_number: newTurnNumber - 1,
+        action_type: 'attack',
+        attacker_pair_index: aliveBotPairIndex,
+        target_pair_index: aliveHumanPairIndex,
+        dice_roll_attacker: botAttackerRoll,
+        dice_roll_defender: null,
+        damage_dealt: botResult.damage,
+        is_blocked: false,
+        is_critical: botResult.isCritical,
+        result_state: botBattleState
+      });
+      
+      return json({
+        success: true,
+        match_status: 'active',
+        dice_roll: botAttackerRoll,
+        damage_dealt: botResult.damage,
+        damage_percent: botResult.damagePercent,
+        is_miss: botResult.isMiss,
+        is_critical: botResult.isCritical,
+        is_counter_attack: botResult.isCounterAttack,
+        counter_attack_damage: botCounterDamage,
+        description: botResult.description,
+        next_turn: humanWallet
       });
     }
 

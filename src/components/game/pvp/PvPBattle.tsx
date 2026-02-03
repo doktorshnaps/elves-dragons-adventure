@@ -47,10 +47,56 @@ const PvPBattleContent: React.FC = () => {
     loadMatch();
   }, [loadMatch]);
 
-  // Polling for updates when not my turn
+  // Trigger bot turn if it's bot match and bot goes first
+  const triggerBotTurnIfNeeded = useCallback(async (data: any) => {
+    if (!matchId || !data) return;
+    
+    // Check if it's a bot match, not my turn, and match is active
+    const isBotMatch = data.player2?.wallet?.startsWith('BOT_') || data.player1?.wallet?.startsWith('BOT_');
+    const isActive = data.status === 'active';
+    const isNotMyTurn = !data.is_my_turn;
+    
+    if (isBotMatch && isActive && isNotMyTurn) {
+      console.log('[PvP] Triggering bot turn...');
+      const result = await submitMove(matchId, 'trigger_bot_turn');
+      
+      if (result?.success) {
+        // Show bot's dice roll animation
+        if (result.dice_roll !== undefined) {
+          setLastRoll({
+            attackerRoll: result.dice_roll,
+            source: 'opponent',
+            damage: result.damage_dealt || 0,
+            isCritical: result.is_critical || false,
+            isMiss: result.is_miss || false,
+            isCounterAttack: result.is_counter_attack || false,
+            counterAttackDamage: result.counter_attack_damage || 0,
+            description: result.description || ''
+          });
+        }
+        
+        // Reload match after animation
+        setTimeout(async () => {
+          const newData = await getMatchStatus(matchId);
+          if (newData) {
+            setMatchData(newData);
+          }
+        }, 2000);
+      }
+    }
+  }, [matchId, submitMove, getMatchStatus]);
+
+  // Polling for updates when not my turn (for real player matches only)
   useEffect(() => {
     if (!matchData || matchData.is_my_turn || matchData.status === 'completed') {
       setIsPolling(false);
+      return;
+    }
+    
+    // For bot matches, trigger bot turn instead of polling
+    const isBotMatch = matchData.player2?.wallet?.startsWith('BOT_') || matchData.player1?.wallet?.startsWith('BOT_');
+    if (isBotMatch) {
+      triggerBotTurnIfNeeded(matchData);
       return;
     }
 
@@ -63,7 +109,7 @@ const PvPBattleContent: React.FC = () => {
       clearInterval(interval);
       setIsPolling(false);
     };
-  }, [matchData?.is_my_turn, matchData?.status, loadMatch]);
+  }, [matchData?.is_my_turn, matchData?.status, loadMatch, triggerBotTurnIfNeeded]);
 
   // Handle attack
   const handleAttack = async (attackerIndex: number, targetIndex: number) => {
