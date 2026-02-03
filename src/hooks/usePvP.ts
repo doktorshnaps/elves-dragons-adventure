@@ -606,10 +606,10 @@ export const usePvP = (walletAddress: string | null) => {
     }
   }, [walletAddress, queueStatus.queueId, toast, clearIntervals]);
 
-  // Submit move
+  // Submit move (player or surrender)
   const submitMove = useCallback(async (
     matchId: string,
-    actionType: 'attack' | 'ability' | 'surrender',
+    actionType: 'attack' | 'ability' | 'surrender' | 'trigger_bot_turn',
     attackerPairIndex?: number,
     targetPairIndex?: number,
     abilityId?: string
