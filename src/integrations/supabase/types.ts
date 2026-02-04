@@ -4231,6 +4231,14 @@ export type Database = {
         }
         Returns: boolean
       }
+      update_pvp_elo: {
+        Args: {
+          p_elo_change: number
+          p_loser_wallet: string
+          p_winner_wallet: string
+        }
+        Returns: undefined
+      }
       update_resource_production_state_by_wallet: {
         Args: {
           p_is_producing: boolean
