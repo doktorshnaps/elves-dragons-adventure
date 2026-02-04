@@ -88,23 +88,23 @@ const calculateDamageByRoll = (
   };
 };
 
-// Apply damage to a pair (hero HP first, then dragon HP)
+// Apply damage to a pair (dragon/pet HP first, then hero HP)
 // Defense is already factored into damage calculation formula (attackerPower - defenderDefense)
 // So here we just reduce HP directly
 const applyDamageToPair = (pair: any, damage: number): any => {
   const updatedPair = JSON.parse(JSON.stringify(pair));
   let remainingDamage = damage;
   
-  // Apply damage to hero HP first (defense already calculated in damage formula)
-  if (updatedPair.hero && updatedPair.hero.currentHealth > 0) {
-    const heroAbsorbed = Math.min(updatedPair.hero.currentHealth, remainingDamage);
-    updatedPair.hero.currentHealth = Math.max(0, updatedPair.hero.currentHealth - heroAbsorbed);
-    remainingDamage -= heroAbsorbed;
+  // Apply damage to dragon/pet HP first (defense already calculated in damage formula)
+  if (updatedPair.dragon && updatedPair.dragon.currentHealth > 0) {
+    const dragonAbsorbed = Math.min(updatedPair.dragon.currentHealth, remainingDamage);
+    updatedPair.dragon.currentHealth = Math.max(0, updatedPair.dragon.currentHealth - dragonAbsorbed);
+    remainingDamage -= dragonAbsorbed;
   }
   
-  // If hero is dead and damage remains, apply to dragon HP
-  if (remainingDamage > 0 && updatedPair.dragon && updatedPair.dragon.currentHealth > 0) {
-    updatedPair.dragon.currentHealth = Math.max(0, updatedPair.dragon.currentHealth - remainingDamage);
+  // If dragon is dead and damage remains, apply to hero HP
+  if (remainingDamage > 0 && updatedPair.hero && updatedPair.hero.currentHealth > 0) {
+    updatedPair.hero.currentHealth = Math.max(0, updatedPair.hero.currentHealth - remainingDamage);
   }
   
   // Update pair totals
@@ -769,14 +769,18 @@ Deno.serve(async (req) => {
       result_state: newBattleState
     });
 
-    // For bot matches, process bot's turn automatically
+    // For bot matches, process bot's turn automatically and synchronously
     if (match.is_bot_match && nextTurnWallet.startsWith('BOT_')) {
-      // Simple bot AI: attack a random alive target with first alive pair
+      // Simple bot AI: attack first alive target with first alive pair
       const botPairs = isPlayer1 ? newBattleState.player2_pairs : newBattleState.player1_pairs;
       const humanPairs = isPlayer1 ? newBattleState.player1_pairs : newBattleState.player2_pairs;
       
-      const aliveBotPairIndex = botPairs.findIndex((p: any) => p.hero.currentHealth > 0);
-      const aliveHumanPairIndex = humanPairs.findIndex((p: any) => p.hero.currentHealth > 0);
+      // Check if pair is alive (hero OR dragon has health)
+      const isPairAlive = (p: any) => 
+        (p.hero && p.hero.currentHealth > 0) || (p.dragon && p.dragon.currentHealth > 0);
+      
+      const aliveBotPairIndex = botPairs.findIndex(isPairAlive);
+      const aliveHumanPairIndex = humanPairs.findIndex(isPairAlive);
 
       if (aliveBotPairIndex >= 0 && aliveHumanPairIndex >= 0) {
         const botAttackerPair = botPairs[aliveBotPairIndex];
@@ -927,6 +931,39 @@ Deno.serve(async (req) => {
           is_blocked: false,
           is_critical: botResult.isCritical,
           result_state: botBattleState
+        });
+
+        // Return response including bot's move data for animation
+        return json({
+          success: true,
+          match_status: humanDefeated ? 'completed' : (botDefeated ? 'completed' : 'active'),
+          // Player's attack data
+          dice_roll: attackerRoll,
+          damage_dealt: attackResult.damage,
+          damage_percent: attackResult.damagePercent,
+          is_miss: attackResult.isMiss,
+          is_critical: attackResult.isCritical,
+          is_counter_attack: attackResult.isCounterAttack,
+          counter_attack_damage: counterAttackDamage,
+          description: attackResult.description,
+          // Bot's attack data for animation
+          bot_turn: {
+            dice_roll: botAttackerRoll,
+            damage_dealt: botResult.damage,
+            damage_percent: botResult.damagePercent,
+            is_miss: botResult.isMiss,
+            is_critical: botResult.isCritical,
+            is_counter_attack: botResult.isCounterAttack,
+            counter_attack_damage: botCounterDamage,
+            description: botResult.description,
+            attacker_pair_index: aliveBotPairIndex,
+            target_pair_index: aliveHumanPairIndex
+          },
+          next_turn: humanDefeated ? null : (botDefeated ? null : playerWallet),
+          winner: humanDefeated ? nextTurnWallet : (botDefeated ? playerWallet : null),
+          loser: humanDefeated ? playerWallet : (botDefeated ? nextTurnWallet : null),
+          elo_change: (humanDefeated || botDefeated) ? 25 : null,
+          reward: botDefeated ? (match.entry_fee * 2 * 0.9) : null
         });
       }
     }

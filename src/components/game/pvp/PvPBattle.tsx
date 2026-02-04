@@ -118,7 +118,7 @@ const PvPBattleContent: React.FC = () => {
     const result = await submitMove(matchId, 'attack', attackerIndex, targetIndex);
     
     if (result?.success) {
-      // Show dice roll animation with result data (new D6 system - only attacker rolls)
+      // Show player's dice roll animation
       if (result.dice_roll !== undefined) {
         setLastRoll({
           attackerRoll: result.dice_roll,
@@ -132,10 +132,31 @@ const PvPBattleContent: React.FC = () => {
         });
       }
       
-      // Reload match after animation
-      setTimeout(() => {
-        loadMatch();
-      }, 2000);
+      // If bot made a move, show bot's dice roll after player's animation
+      if (result.bot_turn) {
+        setTimeout(() => {
+          setLastRoll({
+            attackerRoll: result.bot_turn.dice_roll,
+            source: 'opponent',
+            damage: result.bot_turn.damage_dealt || 0,
+            isCritical: result.bot_turn.is_critical || false,
+            isMiss: result.bot_turn.is_miss || false,
+            isCounterAttack: result.bot_turn.is_counter_attack || false,
+            counterAttackDamage: result.bot_turn.counter_attack_damage || 0,
+            description: result.bot_turn.description || ''
+          });
+          
+          // Reload match after bot's animation
+          setTimeout(() => {
+            loadMatch();
+          }, 2000);
+        }, 2500); // Wait for player's animation to finish
+      } else {
+        // No bot turn, just reload after player's animation
+        setTimeout(() => {
+          loadMatch();
+        }, 2000);
+      }
     }
   };
 
