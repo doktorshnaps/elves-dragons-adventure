@@ -1,4 +1,4 @@
-import React, { useMemo, useState, useCallback, useEffect } from "react";
+import React, { useMemo, useState, useCallback, useEffect, useRef } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
@@ -17,8 +17,10 @@ import { Sword, Shield, Heart, ArrowLeft, Flag, Clock, Bot, RefreshCw, Dices } f
 import { useNavigate } from "react-router-dom";
 import { InlineDiceDisplay } from "../battle/InlineDiceDisplay";
 import { DamageIndicator } from "../battle/DamageIndicator";
+import { AttackAnimation } from "../battle/AttackAnimation";
 import { OptimizedImage } from "@/components/ui/optimized-image";
 import { getCardImageByRarity, normalizeCardImageUrl } from "@/utils/cardImageResolver";
+import { useBattleSpeed } from "@/contexts/BattleSpeedContext";
 
 import { PvPPair } from "@/hooks/usePvP";
 
@@ -181,6 +183,7 @@ export const PvPBattleArena: React.FC<PvPBattleArenaProps> = ({
   onSurrender,
 }) => {
   const navigate = useNavigate();
+  const { adjustDelay } = useBattleSpeed();
   const [selectedPair, setSelectedPair] = useState<number | null>(null);
   const [selectedTarget, setSelectedTarget] = useState<number | null>(null);
   const [isDiceRolling, setIsDiceRolling] = useState(false);
@@ -188,6 +191,23 @@ export const PvPBattleArena: React.FC<PvPBattleArenaProps> = ({
   const [showInitiative, setShowInitiative] = useState(turnNumber === 1 && !!initiative);
   const [lastAttackerIndex, setLastAttackerIndex] = useState<number | null>(null);
   const [lastTargetIndex, setLastTargetIndex] = useState<number | null>(null);
+  
+  // Highlighting states for attacking/defending pairs
+  const [attackingPairIndex, setAttackingPairIndex] = useState<number | null>(null);
+  const [defendingPairIndex, setDefendingPairIndex] = useState<number | null>(null);
+  const [attackingTeam, setAttackingTeam] = useState<"my" | "opponent" | null>(null);
+  
+  // Attack animation state
+  const [attackAnimation, setAttackAnimation] = useState<{
+    isActive: boolean;
+    type: 'normal' | 'critical' | 'blocked';
+    source: 'player' | 'enemy';
+    damage: number;
+  }>({ isActive: false, type: 'normal', source: 'player', damage: 0 });
+  
+  // Refs for dice positions (for attack animation trajectory)
+  const playerDiceRef = useRef<HTMLDivElement>(null);
+  const opponentDiceRef = useRef<HTMLDivElement>(null);
 
   // Damage indicators
   const [myDamages, setMyDamages] = useState<
@@ -210,9 +230,45 @@ export const PvPBattleArena: React.FC<PvPBattleArenaProps> = ({
     if (lastRoll) {
       setDiceKey((prev) => prev + 1);
       setIsDiceRolling(true);
+      
+      // Set highlighting for attacking/defending pairs
+      if (lastRoll.source === "player") {
+        const attackerIdx = lastAttackerIndex ?? 0;
+        const targetIdx = lastTargetIndex ?? 0;
+        setAttackingPairIndex(attackerIdx);
+        setDefendingPairIndex(targetIdx);
+        setAttackingTeam("my");
+      } else {
+        // Opponent attacking - find first alive pair as target
+        const targetIdx = myPairs.findIndex(p => p.currentHealth > 0);
+        const opponentAttackerIdx = opponentPairs.findIndex(p => p.currentHealth > 0);
+        setAttackingPairIndex(opponentAttackerIdx >= 0 ? opponentAttackerIdx : 0);
+        setDefendingPairIndex(targetIdx >= 0 ? targetIdx : 0);
+        setAttackingTeam("opponent");
+      }
+      
+      // Determine animation type based on roll result
+      const animationType: 'normal' | 'critical' | 'blocked' = 
+        lastRoll.isMiss ? 'blocked' : lastRoll.isCritical ? 'critical' : 'normal';
+      
+      // Start attack animation
+      setAttackAnimation({
+        isActive: true,
+        type: animationType,
+        source: lastRoll.source === "player" ? 'player' : 'enemy',
+        damage: lastRoll.damage
+      });
 
       const stopTimer = setTimeout(() => {
         setIsDiceRolling(false);
+        
+        // Stop attack animation
+        setAttackAnimation({ isActive: false, type: 'normal', source: 'player', damage: 0 });
+        
+        // Clear highlighting
+        setAttackingPairIndex(null);
+        setDefendingPairIndex(null);
+        setAttackingTeam(null);
 
         // Show damage indicator on correct card
         if (lastRoll.source === "player") {
@@ -260,11 +316,11 @@ export const PvPBattleArena: React.FC<PvPBattleArenaProps> = ({
             });
           }
         }
-      }, 1500);
+      }, adjustDelay(2000));
 
       return () => clearTimeout(stopTimer);
     }
-  }, [lastRoll]);
+  }, [lastRoll, adjustDelay, lastAttackerIndex, lastTargetIndex, myPairs, opponentPairs]);
 
   const handleAttack = useCallback(async () => {
     if (selectedPair === null || selectedTarget === null) return;
@@ -288,6 +344,14 @@ export const PvPBattleArena: React.FC<PvPBattleArenaProps> = ({
     const isSelected = isMyTeam ? selectedPair === index : selectedTarget === index;
     const isDead = pair.currentHealth <= 0;
     const healthPercent = pair.totalHealth > 0 ? (pair.currentHealth / pair.totalHealth) * 100 : 0;
+    
+    // Highlight attacking pair (red) or defending pair (blue)
+    const isAttacking = isMyTeam 
+      ? (attackingTeam === "my" && attackingPairIndex === index)
+      : (attackingTeam === "opponent" && attackingPairIndex === index);
+    const isDefending = isMyTeam 
+      ? (attackingTeam === "opponent" && defendingPairIndex === index)
+      : (attackingTeam === "my" && defendingPairIndex === index);
 
     return (
       <div
@@ -295,11 +359,15 @@ export const PvPBattleArena: React.FC<PvPBattleArenaProps> = ({
         className={`relative p-1 sm:p-1.5 rounded-lg sm:rounded-2xl border-2 transition-all cursor-pointer ${
           isDead
             ? "bg-black/30 border-white/30 opacity-50"
-            : isSelected
-              ? isMyTeam
-                ? "bg-white/20 border-white"
-                : "bg-red-400/20 border-red-400"
-              : "bg-black/20 border-white/50 hover:border-white"
+            : isAttacking
+              ? "bg-red-500/30 border-red-500 animate-pulse scale-105 shadow-lg shadow-red-500/50"
+              : isDefending
+                ? "bg-blue-500/30 border-blue-500 animate-pulse shadow-lg shadow-blue-500/50"
+                : isSelected
+                  ? isMyTeam
+                    ? "bg-white/20 border-white"
+                    : "bg-red-400/20 border-red-400"
+                  : "bg-black/20 border-white/50 hover:border-white"
         }`}
         onClick={() => {
           if (isDead || !isMyTurn) return;
@@ -553,19 +621,37 @@ export const PvPBattleArena: React.FC<PvPBattleArenaProps> = ({
         </Card>
 
         {/* Action Panel */}
-        <Card variant="menu" className="flex-shrink-0" style={{ boxShadow: "-33px 15px 10px rgba(0, 0, 0, 0.6)" }}>
-          <CardContent className="py-2 sm:py-3">
+        <Card variant="menu" className="flex-shrink-0 relative" style={{ boxShadow: "-33px 15px 10px rgba(0, 0, 0, 0.6)" }}>
+          <CardContent className="py-2 sm:py-3 relative">
+            {/* Attack Animation Overlay */}
+            <AttackAnimation 
+              isActive={attackAnimation.isActive}
+              type={attackAnimation.type}
+              source={attackAnimation.source}
+              attackerPosition={attackAnimation.source === 'player' 
+                ? { x: playerDiceRef.current?.offsetLeft ?? 50, y: playerDiceRef.current?.offsetTop ?? 20 }
+                : { x: opponentDiceRef.current?.offsetLeft ?? 200, y: opponentDiceRef.current?.offsetTop ?? 20 }
+              }
+              defenderPosition={attackAnimation.source === 'player'
+                ? { x: opponentDiceRef.current?.offsetLeft ?? 200, y: opponentDiceRef.current?.offsetTop ?? 20 }
+                : { x: playerDiceRef.current?.offsetLeft ?? 50, y: playerDiceRef.current?.offsetTop ?? 20 }
+              }
+              damage={attackAnimation.damage}
+            />
+            
             <div className="flex flex-col items-center gap-2">
               {/* Single Dice Display (only attacker rolls now) */}
               <div className="flex items-center justify-center gap-4 w-full">
-                {/* Attacker Dice */}
-                <InlineDiceDisplay
-                  key={`dice-${diceKey}`}
-                  isRolling={isDiceRolling}
-                  diceValue={lastRoll?.attackerRoll ?? null}
-                  isAttacker={true}
-                  label={isMyTurn ? "Ваш бросок" : (lastRoll?.source === "opponent" ? "Бросок противника" : "Ожидание...")}
-                />
+                {/* Player Dice with ref */}
+                <div ref={playerDiceRef}>
+                  <InlineDiceDisplay
+                    key={`dice-${diceKey}`}
+                    isRolling={isDiceRolling}
+                    diceValue={lastRoll?.attackerRoll ?? null}
+                    isAttacker={true}
+                    label={isMyTurn ? "Ваш бросок" : (lastRoll?.source === "opponent" ? "Бросок противника" : "Ожидание...")}
+                  />
+                </div>
 
                 {/* Attack Button */}
                 {isMyTurn ? (
@@ -581,7 +667,7 @@ export const PvPBattleArena: React.FC<PvPBattleArenaProps> = ({
                     Атаковать
                   </Button>
                 ) : (
-                  <div className="h-8 sm:h-10 flex items-center text-white/70 text-sm">Ожидание хода...</div>
+                  <div ref={opponentDiceRef} className="h-8 sm:h-10 flex items-center text-white/70 text-sm">Ожидание хода...</div>
                 )}
               </div>
 
