@@ -72,11 +72,12 @@ const calculateDamageByRoll = (
       break;
   }
 
-  // Calculate base damage: attackerPower - defenderDefense, minimum 1
-  const baseDamage = Math.max(1, attackerPower - defenderDefense);
+  // New calculation order: power * dice modifier FIRST, then subtract defense
+  // Step 1: Apply dice percentage to attacker's power
+  const modifiedPower = Math.floor(attackerPower * (damagePercent / 100));
   
-  // Apply percentage
-  const damage = isMiss ? 0 : Math.floor(baseDamage * (damagePercent / 100));
+  // Step 2: Subtract defender's defense to get final damage (minimum 1 if not a miss)
+  const damage = isMiss ? 0 : Math.max(1, modifiedPower - defenderDefense);
 
   return { 
     damage, 
