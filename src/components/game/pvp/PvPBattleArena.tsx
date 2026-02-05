@@ -205,9 +205,14 @@ export const PvPBattleArena: React.FC<PvPBattleArenaProps> = ({
     damage: number;
   }>({ isActive: false, type: 'normal', source: 'player', damage: 0 });
   
-  // Refs for dice positions (for attack animation trajectory)
-  const playerDiceRef = useRef<HTMLDivElement>(null);
-  const opponentDiceRef = useRef<HTMLDivElement>(null);
+  // Refs for card positions (for attack animation trajectory)
+  const myPairRefs = useRef<Map<number, HTMLDivElement>>(new Map());
+  const opponentPairRefs = useRef<Map<number, HTMLDivElement>>(new Map());
+  const battleContainerRef = useRef<HTMLDivElement>(null);
+  
+  // Animation positions
+  const [attackerPos, setAttackerPos] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
+  const [defenderPos, setDefenderPos] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
 
   // Damage indicators
   const [myDamages, setMyDamages] = useState<
@@ -225,6 +230,25 @@ export const PvPBattleArena: React.FC<PvPBattleArenaProps> = ({
     }
   }, [showInitiative]);
 
+  // Helper function to get card position relative to battle container
+  const getCardPosition = useCallback((isMyTeam: boolean, pairIndex: number): { x: number; y: number } => {
+    const refs = isMyTeam ? myPairRefs : opponentPairRefs;
+    const cardEl = refs.current.get(pairIndex);
+    const containerEl = battleContainerRef.current;
+    
+    if (!cardEl || !containerEl) {
+      return { x: 100, y: isMyTeam ? 100 : 400 };
+    }
+    
+    const cardRect = cardEl.getBoundingClientRect();
+    const containerRect = containerEl.getBoundingClientRect();
+    
+    return {
+      x: cardRect.left - containerRect.left + cardRect.width / 2,
+      y: cardRect.top - containerRect.top + cardRect.height / 2
+    };
+  }, []);
+
   // Handle dice roll animation when lastRoll changes
   useEffect(() => {
     if (lastRoll) {
@@ -232,20 +256,37 @@ export const PvPBattleArena: React.FC<PvPBattleArenaProps> = ({
       setIsDiceRolling(true);
       
       // Set highlighting for attacking/defending pairs
+      let attackerIdx: number;
+      let targetIdx: number;
+      let isPlayerAttacking: boolean;
+      
       if (lastRoll.source === "player") {
-        const attackerIdx = lastAttackerIndex ?? 0;
-        const targetIdx = lastTargetIndex ?? 0;
+        attackerIdx = lastAttackerIndex ?? 0;
+        targetIdx = lastTargetIndex ?? 0;
         setAttackingPairIndex(attackerIdx);
         setDefendingPairIndex(targetIdx);
         setAttackingTeam("my");
+        isPlayerAttacking = true;
       } else {
         // Opponent attacking - find first alive pair as target
-        const targetIdx = myPairs.findIndex(p => p.currentHealth > 0);
-        const opponentAttackerIdx = opponentPairs.findIndex(p => p.currentHealth > 0);
-        setAttackingPairIndex(opponentAttackerIdx >= 0 ? opponentAttackerIdx : 0);
+        targetIdx = myPairs.findIndex(p => p.currentHealth > 0);
+        attackerIdx = opponentPairs.findIndex(p => p.currentHealth > 0);
+        setAttackingPairIndex(attackerIdx >= 0 ? attackerIdx : 0);
         setDefendingPairIndex(targetIdx >= 0 ? targetIdx : 0);
         setAttackingTeam("opponent");
+        isPlayerAttacking = false;
       }
+      
+      // Calculate positions for animation after a short delay to allow refs to update
+      requestAnimationFrame(() => {
+        if (isPlayerAttacking) {
+          setAttackerPos(getCardPosition(true, attackerIdx));
+          setDefenderPos(getCardPosition(false, targetIdx));
+        } else {
+          setAttackerPos(getCardPosition(false, attackerIdx >= 0 ? attackerIdx : 0));
+          setDefenderPos(getCardPosition(true, targetIdx >= 0 ? targetIdx : 0));
+        }
+      });
       
       // Determine animation type based on roll result
       const animationType: 'normal' | 'critical' | 'blocked' = 
@@ -356,6 +397,15 @@ export const PvPBattleArena: React.FC<PvPBattleArenaProps> = ({
     return (
       <div
         key={index}
+        ref={(el) => {
+          if (el) {
+            if (isMyTeam) {
+              myPairRefs.current.set(index, el);
+            } else {
+              opponentPairRefs.current.set(index, el);
+            }
+          }
+        }}
         className={`relative p-1 sm:p-1.5 rounded-lg sm:rounded-2xl border-2 transition-all cursor-pointer ${
           isDead
             ? "bg-black/30 border-white/30 opacity-50"
@@ -535,7 +585,17 @@ export const PvPBattleArena: React.FC<PvPBattleArenaProps> = ({
   const rollResultInfo = lastRoll ? getDiceResultDescription(lastRoll.attackerRoll) : null;
 
   return (
-    <div className="w-full h-full flex flex-col space-y-2 p-2">
+    <div ref={battleContainerRef} className="w-full h-full flex flex-col space-y-2 p-2 relative">
+      {/* Attack Animation Overlay - positioned over entire battle area */}
+      <AttackAnimation 
+        isActive={attackAnimation.isActive}
+        type={attackAnimation.type}
+        source={attackAnimation.source}
+        attackerPosition={attackerPos}
+        defenderPosition={defenderPos}
+        damage={attackAnimation.damage}
+      />
+      
       {/* Initiative Overlay */}
       {renderInitiativeOverlay()}
 
@@ -621,37 +681,18 @@ export const PvPBattleArena: React.FC<PvPBattleArenaProps> = ({
         </Card>
 
         {/* Action Panel */}
-        <Card variant="menu" className="flex-shrink-0 relative" style={{ boxShadow: "-33px 15px 10px rgba(0, 0, 0, 0.6)" }}>
-          <CardContent className="py-2 sm:py-3 relative">
-            {/* Attack Animation Overlay */}
-            <AttackAnimation 
-              isActive={attackAnimation.isActive}
-              type={attackAnimation.type}
-              source={attackAnimation.source}
-              attackerPosition={attackAnimation.source === 'player' 
-                ? { x: playerDiceRef.current?.offsetLeft ?? 50, y: playerDiceRef.current?.offsetTop ?? 20 }
-                : { x: opponentDiceRef.current?.offsetLeft ?? 200, y: opponentDiceRef.current?.offsetTop ?? 20 }
-              }
-              defenderPosition={attackAnimation.source === 'player'
-                ? { x: opponentDiceRef.current?.offsetLeft ?? 200, y: opponentDiceRef.current?.offsetTop ?? 20 }
-                : { x: playerDiceRef.current?.offsetLeft ?? 50, y: playerDiceRef.current?.offsetTop ?? 20 }
-              }
-              damage={attackAnimation.damage}
-            />
-            
+        <Card variant="menu" className="flex-shrink-0" style={{ boxShadow: "-33px 15px 10px rgba(0, 0, 0, 0.6)" }}>
+          <CardContent className="py-2 sm:py-3">
             <div className="flex flex-col items-center gap-2">
               {/* Single Dice Display (only attacker rolls now) */}
               <div className="flex items-center justify-center gap-4 w-full">
-                {/* Player Dice with ref */}
-                <div ref={playerDiceRef}>
-                  <InlineDiceDisplay
-                    key={`dice-${diceKey}`}
-                    isRolling={isDiceRolling}
-                    diceValue={lastRoll?.attackerRoll ?? null}
-                    isAttacker={true}
-                    label={isMyTurn ? "Ваш бросок" : (lastRoll?.source === "opponent" ? "Бросок противника" : "Ожидание...")}
-                  />
-                </div>
+                <InlineDiceDisplay
+                  key={`dice-${diceKey}`}
+                  isRolling={isDiceRolling}
+                  diceValue={lastRoll?.attackerRoll ?? null}
+                  isAttacker={true}
+                  label={isMyTurn ? "Ваш бросок" : (lastRoll?.source === "opponent" ? "Бросок противника" : "Ожидание...")}
+                />
 
                 {/* Attack Button */}
                 {isMyTurn ? (
@@ -667,7 +708,7 @@ export const PvPBattleArena: React.FC<PvPBattleArenaProps> = ({
                     Атаковать
                   </Button>
                 ) : (
-                  <div ref={opponentDiceRef} className="h-8 sm:h-10 flex items-center text-white/70 text-sm">Ожидание хода...</div>
+                  <div className="h-8 sm:h-10 flex items-center text-white/70 text-sm">Ожидание хода...</div>
                 )}
               </div>
 
