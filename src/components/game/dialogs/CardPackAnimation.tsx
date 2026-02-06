@@ -139,10 +139,10 @@ export const CardPackAnimation = ({ winningCard, onAnimationComplete, onSkipAll,
   };
 
   return (
-    <div className="fixed inset-0 bg-black/90 z-50 flex items-center justify-center">
-      <div className="w-full max-w-6xl mx-4">
+    <div className="fixed inset-0 bg-black/90 z-50 flex flex-col items-center justify-center">
+      <div className="w-full max-w-6xl mx-4 flex flex-col items-center justify-center">
         {/* Animation container */}
-        <div className="relative h-80 overflow-hidden rounded-lg bg-game-surface border-2 border-game-accent">
+        <div className="relative h-80 w-full overflow-hidden rounded-lg bg-game-surface border-2 border-game-accent">
           {/* Indicator line */}
           <div className="absolute top-0 bottom-0 left-1/2 w-1 bg-red-500 z-10 transform -translate-x-0.5">
             <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-0 h-0 border-l-8 border-r-8 border-t-8 border-l-transparent border-r-transparent border-t-red-500"></div>
