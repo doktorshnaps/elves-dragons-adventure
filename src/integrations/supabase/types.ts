@@ -2598,6 +2598,10 @@ export type Database = {
         Args: { p_card_instance_id: string; p_wallet_address?: string }
         Returns: string
       }
+      add_ell_balance: {
+        Args: { p_amount: number; p_wallet_address: string }
+        Returns: undefined
+      }
       add_item_instances: {
         Args: { p_items: Json; p_wallet_address: string }
         Returns: number
