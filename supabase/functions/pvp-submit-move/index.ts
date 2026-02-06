@@ -124,6 +124,23 @@ const isTeamDefeated = (pairs: any[]): boolean => {
   });
 };
 
+// Helper: call update_pvp_elo RPC and return the calculated elo_change
+const updateEloAndGetChange = async (
+  supabase: any,
+  winnerWallet: string,
+  loserWallet: string
+): Promise<number> => {
+  const { data, error } = await supabase.rpc('update_pvp_elo', {
+    p_winner_wallet: winnerWallet,
+    p_loser_wallet: loserWallet,
+  });
+  if (error) {
+    console.error('❌ [PvP] Error updating Elo:', error);
+    return 16; // fallback
+  }
+  return data ?? 16;
+};
+
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
@@ -187,9 +204,11 @@ Deno.serve(async (req) => {
       const winnerWallet = isPlayer1 ? match.player2_wallet : match.player1_wallet;
       const loserWallet = playerWallet;
       
-      const eloChange = 25;
       const reward = match.entry_fee * 2 * 0.9; // 10% fee
       
+      // Update Elo ratings (dynamic calculation in DB)
+      const eloChange = await updateEloAndGetChange(supabase, winnerWallet, loserWallet);
+
       // Update match as completed
       await supabase
         .from('pvp_matches')
@@ -202,13 +221,6 @@ Deno.serve(async (req) => {
           finished_at: new Date().toISOString()
         })
         .eq('id', match_id);
-
-      // Update Elo ratings
-      await supabase.rpc('update_pvp_elo', {
-        p_winner_wallet: winnerWallet,
-        p_loser_wallet: loserWallet,
-        p_elo_change: eloChange
-      });
 
       // Credit winner reward
       if (!winnerWallet.startsWith('BOT_')) {
@@ -331,8 +343,8 @@ Deno.serve(async (req) => {
       const botDefeated = isTeamDefeated(updatedBotPairs);
       
       if (humanDefeated) {
-        // Bot wins
-        const eloChange = 25;
+        // Bot wins — dynamic Elo
+        const eloChange = await updateEloAndGetChange(supabase, 'SKIP_BOT', humanWallet);
         
         await supabase
           .from('pvp_matches')
@@ -346,13 +358,6 @@ Deno.serve(async (req) => {
             battle_state: botBattleState
           })
           .eq('id', match_id);
-        
-        // Update Elo - only for human player
-        await supabase.rpc('update_pvp_elo', {
-          p_winner_wallet: 'SKIP_BOT',
-          p_loser_wallet: humanWallet,
-          p_elo_change: eloChange
-        });
         
         // Record move
         await supabase.from('pvp_moves').insert({
@@ -388,8 +393,8 @@ Deno.serve(async (req) => {
       }
       
       if (botDefeated) {
-        // Human wins due to counterattack
-        const eloChange = 25;
+        // Human wins due to counterattack — dynamic Elo
+        const eloChange = await updateEloAndGetChange(supabase, humanWallet, 'SKIP_BOT');
         const reward = match.entry_fee * 2 * 0.9;
         
         await supabase
@@ -404,12 +409,6 @@ Deno.serve(async (req) => {
             battle_state: botBattleState
           })
           .eq('id', match_id);
-        
-        await supabase.rpc('update_pvp_elo', {
-          p_winner_wallet: humanWallet,
-          p_loser_wallet: 'SKIP_BOT',
-          p_elo_change: eloChange
-        });
         
         await supabase.rpc('add_ell_balance', {
           p_wallet_address: humanWallet,
@@ -610,8 +609,10 @@ Deno.serve(async (req) => {
       const winnerWallet = playerWallet;
       const loserWallet = isPlayer1 ? match.player2_wallet : match.player1_wallet;
       
-      const eloChange = 25;
       const reward = match.entry_fee * 2 * 0.9; // 10% fee
+
+      // Dynamic Elo
+      const eloChange = await updateEloAndGetChange(supabase, winnerWallet, loserWallet);
 
       await supabase
         .from('pvp_matches')
@@ -625,13 +626,6 @@ Deno.serve(async (req) => {
           battle_state: newBattleState
         })
         .eq('id', match_id);
-
-      // Update Elo ratings
-      await supabase.rpc('update_pvp_elo', {
-        p_winner_wallet: winnerWallet,
-        p_loser_wallet: loserWallet,
-        p_elo_change: eloChange
-      });
 
       // Credit winner reward (skip bots)
       if (!winnerWallet.startsWith('BOT_')) {
@@ -680,8 +674,10 @@ Deno.serve(async (req) => {
       const winnerWallet = isPlayer1 ? match.player2_wallet : match.player1_wallet;
       const loserWallet = playerWallet;
       
-      const eloChange = 25;
       const reward = match.entry_fee * 2 * 0.9;
+
+      // Dynamic Elo
+      const eloChange = await updateEloAndGetChange(supabase, winnerWallet, loserWallet);
 
       await supabase
         .from('pvp_matches')
@@ -695,12 +691,6 @@ Deno.serve(async (req) => {
           battle_state: newBattleState
         })
         .eq('id', match_id);
-
-      await supabase.rpc('update_pvp_elo', {
-        p_winner_wallet: winnerWallet,
-        p_loser_wallet: loserWallet,
-        p_elo_change: eloChange
-      });
 
       if (!winnerWallet.startsWith('BOT_')) {
         await supabase.rpc('add_ell_balance', {
@@ -856,8 +846,8 @@ Deno.serve(async (req) => {
         const botDefeated = isTeamDefeated(updatedBotPairs);
 
         if (humanDefeated) {
-          // Bot wins
-          const eloChange = 25;
+          // Bot wins — dynamic Elo
+          const eloChange = await updateEloAndGetChange(supabase, 'SKIP_BOT', playerWallet);
 
           await supabase
             .from('pvp_matches')
@@ -871,16 +861,9 @@ Deno.serve(async (req) => {
               battle_state: botBattleState
             })
             .eq('id', match_id);
-
-          // Update Elo - only for human player
-          await supabase.rpc('update_pvp_elo', {
-            p_winner_wallet: 'SKIP_BOT', // Don't update bot's rating
-            p_loser_wallet: playerWallet,
-            p_elo_change: eloChange
-          });
         } else if (botDefeated) {
-          // Human wins due to counterattack
-          const eloChange = 25;
+          // Human wins due to counterattack — dynamic Elo
+          const eloChange = await updateEloAndGetChange(supabase, playerWallet, 'SKIP_BOT');
           const reward = match.entry_fee * 2 * 0.9;
 
           await supabase
@@ -895,12 +878,6 @@ Deno.serve(async (req) => {
               battle_state: botBattleState
             })
             .eq('id', match_id);
-
-          await supabase.rpc('update_pvp_elo', {
-            p_winner_wallet: playerWallet,
-            p_loser_wallet: 'SKIP_BOT',
-            p_elo_change: eloChange
-          });
 
           await supabase.rpc('add_ell_balance', {
             p_wallet_address: playerWallet,
@@ -934,10 +911,24 @@ Deno.serve(async (req) => {
           result_state: botBattleState
         });
 
+        // Get elo_change for response (need to read from match if completed)
+        const humanDefeatedFinal = isTeamDefeated(updatedHumanPairs);
+        const botDefeatedFinal = isTeamDefeated(updatedBotPairs);
+        let responseEloChange: number | null = null;
+        if (humanDefeatedFinal || botDefeatedFinal) {
+          // Re-read match to get the elo_change that was saved
+          const { data: updatedMatch } = await supabase
+            .from('pvp_matches')
+            .select('elo_change')
+            .eq('id', match_id)
+            .single();
+          responseEloChange = updatedMatch?.elo_change ?? null;
+        }
+
         // Return response including bot's move data for animation
         return json({
           success: true,
-          match_status: humanDefeated ? 'completed' : (botDefeated ? 'completed' : 'active'),
+          match_status: humanDefeatedFinal ? 'completed' : (botDefeatedFinal ? 'completed' : 'active'),
           // Player's attack data
           dice_roll: attackerRoll,
           damage_dealt: attackResult.damage,
@@ -960,11 +951,11 @@ Deno.serve(async (req) => {
             attacker_pair_index: aliveBotPairIndex,
             target_pair_index: aliveHumanPairIndex
           },
-          next_turn: humanDefeated ? null : (botDefeated ? null : playerWallet),
-          winner: humanDefeated ? nextTurnWallet : (botDefeated ? playerWallet : null),
-          loser: humanDefeated ? playerWallet : (botDefeated ? nextTurnWallet : null),
-          elo_change: (humanDefeated || botDefeated) ? 25 : null,
-          reward: botDefeated ? (match.entry_fee * 2 * 0.9) : null
+          next_turn: humanDefeatedFinal ? null : (botDefeatedFinal ? null : playerWallet),
+          winner: humanDefeatedFinal ? nextTurnWallet : (botDefeatedFinal ? playerWallet : null),
+          loser: humanDefeatedFinal ? playerWallet : (botDefeatedFinal ? nextTurnWallet : null),
+          elo_change: responseEloChange,
+          reward: botDefeatedFinal ? (match.entry_fee * 2 * 0.9) : null
         });
       }
     }

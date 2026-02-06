@@ -20,37 +20,27 @@ const getSupabaseServiceClient = () => {
   return createClient(supabaseUrl, supabaseServiceKey);
 };
 
-function getTierFromElo(elo: number): string {
-  if (elo >= 2200) return 'legend';
-  if (elo >= 2000) return 'master';
-  if (elo >= 1800) return 'diamond';
-  if (elo >= 1600) return 'platinum';
-  if (elo >= 1400) return 'gold';
-  if (elo >= 1200) return 'silver';
-  return 'bronze';
-}
-
 async function finalizeMatchByTimeout(
   supabase: any,
   match: any,
   winnerId: string
 ) {
   const loserId = winnerId === match.player1_wallet ? match.player2_wallet : match.player1_wallet;
-  const winnerElo = winnerId === match.player1_wallet ? match.player1_elo_before : match.player2_elo_before;
-  const loserElo = winnerId === match.player1_wallet ? match.player2_elo_before : match.player1_elo_before;
+  const reward = match.entry_fee * 2 - 10;
 
-  // Calculate ELO change
-  const { data: eloSettings } = await supabase
-    .from('pvp_settings')
-    .select('setting_value')
-    .eq('setting_key', 'elo_change')
-    .single();
-  
-  const kFactor = eloSettings?.setting_value?.win || 24;
-  const expectedWin = 1.0 / (1.0 + Math.pow(10, (loserElo - winnerElo) / 400.0));
-  const eloChange = Math.max(1, Math.min(kFactor, Math.round(kFactor * (1.0 - expectedWin))));
+  // Dynamic Elo — delegated entirely to DB function
+  const { data: eloChange, error: eloError } = await supabase.rpc('update_pvp_elo', {
+    p_winner_wallet: winnerId,
+    p_loser_wallet: loserId,
+  });
 
-  console.log(`🏆 [PvP Timeout] ${winnerId.substring(0, 10)} wins by timeout (+${eloChange} ELO)`);
+  if (eloError) {
+    console.error('Error updating Elo:', eloError);
+  }
+
+  const finalEloChange = eloChange ?? 16;
+
+  console.log(`🏆 [PvP Timeout] ${winnerId.substring(0, 10)} wins by timeout (+${finalEloChange} ELO)`);
 
   // Update match
   await supabase
@@ -59,55 +49,21 @@ async function finalizeMatchByTimeout(
       status: 'completed',
       winner_wallet: winnerId,
       loser_wallet: loserId,
-      elo_change: eloChange,
-      winner_reward: match.entry_fee * 2 - 10,
+      elo_change: finalEloChange,
+      winner_reward: reward,
       finished_at: new Date().toISOString(),
     })
     .eq('id', match.id);
 
-  // Update winner rating
-  const newWinnerElo = winnerElo + eloChange;
-  const { error: winnerError } = await supabase
-    .from('pvp_ratings')
-    .update({
-      elo: newWinnerElo,
-      tier: getTierFromElo(newWinnerElo),
-      wins: supabase.sql`wins + 1`,
-      win_streak: supabase.sql`win_streak + 1`,
-      matches_played: supabase.sql`matches_played + 1`,
-    })
-    .eq('wallet_address', winnerId)
-    .eq('season_id', match.season_id);
-
-  if (winnerError) {
-    console.error('Error updating winner rating:', winnerError);
-  }
-
-  // Update loser rating  
-  const newLoserElo = Math.max(0, loserElo - eloChange);
-  const { error: loserError } = await supabase
-    .from('pvp_ratings')
-    .update({
-      elo: newLoserElo,
-      tier: getTierFromElo(newLoserElo),
-      losses: supabase.sql`losses + 1`,
-      win_streak: 0,
-      matches_played: supabase.sql`matches_played + 1`,
-    })
-    .eq('wallet_address', loserId)
-    .eq('season_id', match.season_id);
-
-  if (loserError) {
-    console.error('Error updating loser rating:', loserError);
-  }
-
   // Award winner
-  await supabase.rpc('update_game_data_by_wallet_v2', {
-    p_wallet_address: winnerId,
-    p_updates: { balance_add: match.entry_fee * 2 - 10 },
-  });
+  if (!winnerId.startsWith('BOT_')) {
+    await supabase.rpc('add_ell_balance', {
+      p_wallet_address: winnerId,
+      p_amount: reward,
+    });
+  }
 
-  return { winnerId, loserId, eloChange };
+  return { winnerId, loserId, eloChange: finalEloChange };
 }
 
 Deno.serve(async (req) => {
