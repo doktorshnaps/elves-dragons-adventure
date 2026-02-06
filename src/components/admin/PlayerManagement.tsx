@@ -102,6 +102,7 @@ export const PlayerManagement = () => {
       const { data, error } = await supabase.rpc('admin_add_balance', {
         p_target_wallet_address: balanceWallet.trim(),
         p_amount: amount,
+        p_admin_wallet_address: accountId || '',
       });
 
       if (error) throw error;

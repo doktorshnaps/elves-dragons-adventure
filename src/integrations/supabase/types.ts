@@ -2613,10 +2613,19 @@ export type Database = {
         Args: { p_admin_wallet_address?: string; p_wallet_address: string }
         Returns: boolean
       }
-      admin_add_balance: {
-        Args: { p_amount: number; p_target_wallet_address: string }
-        Returns: boolean
-      }
+      admin_add_balance:
+        | {
+            Args: { p_amount: number; p_target_wallet_address: string }
+            Returns: boolean
+          }
+        | {
+            Args: {
+              p_admin_wallet_address?: string
+              p_amount: number
+              p_target_wallet_address: string
+            }
+            Returns: boolean
+          }
       admin_add_balance_by_id: {
         Args: { p_amount: number; p_target_user_id: string }
         Returns: boolean
@@ -2631,6 +2640,14 @@ export type Database = {
           p_min_dungeon_level: number
         }
         Returns: string
+      }
+      admin_add_mgt_balance: {
+        Args: {
+          p_admin_wallet_address?: string
+          p_amount: number
+          p_target_wallet_address: string
+        }
+        Returns: boolean
       }
       admin_add_to_whitelist: {
         Args: {
