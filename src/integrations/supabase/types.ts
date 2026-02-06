@@ -2626,10 +2626,19 @@ export type Database = {
             }
             Returns: boolean
           }
-      admin_add_balance_by_id: {
-        Args: { p_amount: number; p_target_user_id: string }
-        Returns: boolean
-      }
+      admin_add_balance_by_id:
+        | {
+            Args: {
+              p_admin_wallet_address?: string
+              p_amount: number
+              p_target_user_id: string
+            }
+            Returns: boolean
+          }
+        | {
+            Args: { p_amount: number; p_target_user_id: string }
+            Returns: boolean
+          }
       admin_add_dungeon_item_drop: {
         Args: {
           p_allowed_monsters?: string[]
