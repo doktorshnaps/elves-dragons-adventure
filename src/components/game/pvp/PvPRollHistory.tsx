@@ -44,88 +44,52 @@ const getDiceLabel = (roll: number): string => {
 
 const RollEntry: React.FC<{ entry: RollHistoryEntry; index: number }> = ({ entry, index }) => {
   const isPlayer = entry.source === "player";
-  const borderColor = isPlayer ? "border-green-500/40" : "border-red-500/40";
+  const borderColor = isPlayer ? "border-green-500/30" : "border-red-500/30";
   const bgColor = isPlayer ? "bg-green-500/5" : "bg-red-500/5";
   const iconColor = isPlayer ? "text-green-400" : "text-red-400";
 
   return (
-    <div className={`rounded-lg border ${borderColor} ${bgColor} p-2 space-y-1.5 text-[10px] sm:text-xs`}>
-      {/* Header: who attacked */}
+    <div className={`rounded border ${borderColor} ${bgColor} px-1.5 py-1 text-[9px] sm:text-[10px] leading-tight`}>
+      {/* Header row: who + dice + label */}
       <div className="flex items-center justify-between gap-1">
-        <div className="flex items-center gap-1">
-          {isPlayer ? (
-            <User className={`w-3 h-3 ${iconColor}`} />
-          ) : (
-            <Bot className={`w-3 h-3 ${iconColor}`} />
-          )}
-          <span className={`font-semibold ${iconColor}`}>
-            {isPlayer ? "Вы" : "Противник"}
-          </span>
+        <div className="flex items-center gap-0.5">
+          {isPlayer ? <User className={`w-2.5 h-2.5 ${iconColor}`} /> : <Bot className={`w-2.5 h-2.5 ${iconColor}`} />}
+          <span className={`font-semibold ${iconColor}`}>{isPlayer ? "Вы" : "Прот."}</span>
         </div>
-        <div className="flex items-center gap-1">
-          <Dices className={`w-3 h-3 ${getDiceColor(entry.diceRoll)}`} />
-          <span className={`font-bold text-sm ${getDiceColor(entry.diceRoll)}`}>
-            {entry.diceRoll}
-          </span>
+        <span className={`font-medium ${getDiceColor(entry.diceRoll)}`}>{getDiceLabel(entry.diceRoll)}</span>
+        <div className="flex items-center gap-0.5">
+          <Dices className={`w-2.5 h-2.5 ${getDiceColor(entry.diceRoll)}`} />
+          <span className={`font-bold text-xs ${getDiceColor(entry.diceRoll)}`}>{entry.diceRoll}</span>
         </div>
       </div>
 
-      {/* Dice result label */}
-      <div className={`text-center font-medium ${getDiceColor(entry.diceRoll)}`}>
-        {getDiceLabel(entry.diceRoll)}
-      </div>
-
-      {/* Damage calculation breakdown */}
+      {/* Damage breakdown — compact single-line rows */}
       {!entry.isMiss ? (
-        <div className="space-y-0.5 text-white/80 font-mono">
-          {/* Line 1: Power × Multiplier */}
+        <div className="mt-0.5 font-mono text-white/80 space-y-px">
           <div className="flex items-center justify-between">
-            <span className="flex items-center gap-0.5">
-              <Sword className="w-2.5 h-2.5 text-yellow-400" />
-              Сила
-            </span>
-            <span>{entry.attackerPower} × {entry.dicePercent}%</span>
+            <span className="flex items-center gap-0.5"><Sword className="w-2 h-2 text-yellow-400" />Сила</span>
+            <span>{entry.attackerPower}×{entry.dicePercent}% = <span className="text-yellow-300">{entry.modifiedPower}</span></span>
           </div>
-          {/* Line 2: Modified power */}
           <div className="flex items-center justify-between">
-            <span className="text-white/60">= Урон</span>
-            <span className="text-yellow-300">{entry.modifiedPower}</span>
-          </div>
-          {/* Line 3: Minus defense */}
-          <div className="flex items-center justify-between">
-            <span className="flex items-center gap-0.5">
-              <Shield className="w-2.5 h-2.5 text-blue-400" />
-              Броня
-            </span>
+            <span className="flex items-center gap-0.5"><Shield className="w-2 h-2 text-blue-400" />Бр.</span>
             <span className="text-blue-300">−{entry.defenderDefense}</span>
           </div>
-          {/* Line 4: Net damage */}
-          <div className="flex items-center justify-between border-t border-white/10 pt-0.5 mt-0.5">
-            <span className="font-semibold text-white">Чистый урон</span>
-            <span className={`font-bold ${entry.isCritical ? "text-purple-400" : "text-red-400"}`}>
-              {entry.netDamage}
-            </span>
+          <div className="flex items-center justify-between border-t border-white/10 pt-px">
+            <span className="font-semibold text-white">Итого</span>
+            <span className={`font-bold ${entry.isCritical ? "text-purple-400" : "text-red-400"}`}>{entry.netDamage}</span>
           </div>
         </div>
       ) : (
-        <div className="text-center text-white/50 italic">
-          Урон: 0
-        </div>
+        <div className="text-center text-white/50 italic mt-0.5">Урон: 0</div>
       )}
 
-      {/* Counterattack info */}
+      {/* Counterattack */}
       {entry.isCounterAttack && (
-        <div className="border-t border-white/10 pt-1 mt-1">
-          <div className="text-red-400 text-center font-medium">
-            ⚔️ Контратака: {entry.counterAttackDamage ?? 0} урона
-          </div>
-        </div>
+        <div className="text-red-400 text-center font-medium mt-0.5 text-[9px]">⚔️ Контр: {entry.counterAttackDamage ?? 0}</div>
       )}
 
       {/* Target info */}
-      <div className="text-white/40 text-center truncate">
-        {entry.attackerName} → {entry.targetName}
-      </div>
+      <div className="text-white/30 text-center truncate mt-0.5">{entry.attackerName} → {entry.targetName}</div>
     </div>
   );
 };
