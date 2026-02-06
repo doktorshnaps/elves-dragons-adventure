@@ -21,6 +21,7 @@ import { AttackAnimation } from "../battle/AttackAnimation";
 import { OptimizedImage } from "@/components/ui/optimized-image";
 import { getCardImageByRarity, normalizeCardImageUrl } from "@/utils/cardImageResolver";
 import { useBattleSpeed } from "@/contexts/BattleSpeedContext";
+import { PvPRollHistory, RollHistoryEntry } from "./PvPRollHistory";
 
 import { PvPPair } from "@/hooks/usePvP";
 
@@ -214,7 +215,8 @@ export const PvPBattleArena: React.FC<PvPBattleArenaProps> = ({
   const [attackerPos, setAttackerPos] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
   const [defenderPos, setDefenderPos] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
 
-  // Damage indicators
+  // Roll history (last 2 entries)
+  const [rollHistory, setRollHistory] = useState<RollHistoryEntry[]>([]);
   const [myDamages, setMyDamages] = useState<
     Map<number, { damage: number; isCritical?: boolean; isBlocked?: boolean; key: number }>
   >(new Map());
@@ -249,6 +251,19 @@ export const PvPBattleArena: React.FC<PvPBattleArenaProps> = ({
     };
   }, []);
 
+  // Helper: get dice percent from roll
+  const getDicePercent = (roll: number): number => {
+    switch (roll) {
+      case 1: return 0;
+      case 2: return 0;
+      case 3: return 50;
+      case 4: return 100;
+      case 5: return 150;
+      case 6: return 200;
+      default: return 0;
+    }
+  };
+
   // Handle dice roll animation when lastRoll changes
   useEffect(() => {
     if (lastRoll) {
@@ -276,6 +291,53 @@ export const PvPBattleArena: React.FC<PvPBattleArenaProps> = ({
         setAttackingTeam("opponent");
         isPlayerAttacking = false;
       }
+
+      // Build roll history entry
+      const dicePercent = getDicePercent(lastRoll.attackerRoll);
+      let aPower = 0;
+      let dDefense = 0;
+      let attackerName = "";
+      let targetName = "";
+
+      if (isPlayerAttacking) {
+        const aPair = myPairs[attackerIdx];
+        const tPair = opponentPairs[targetIdx];
+        aPower = aPair?.totalPower ?? 0;
+        dDefense = tPair?.currentDefense ?? 0;
+        attackerName = aPair?.hero?.name ?? "Вы";
+        targetName = tPair?.hero?.name ?? "Противник";
+      } else {
+        const aIdx = attackerIdx >= 0 ? attackerIdx : 0;
+        const tIdx = targetIdx >= 0 ? targetIdx : 0;
+        const aPair = opponentPairs[aIdx];
+        const tPair = myPairs[tIdx];
+        aPower = aPair?.totalPower ?? 0;
+        dDefense = tPair?.currentDefense ?? 0;
+        attackerName = aPair?.hero?.name ?? "Противник";
+        targetName = tPair?.hero?.name ?? "Вы";
+      }
+
+      const modifiedPower = Math.floor(aPower * (dicePercent / 100));
+      const netDamage = lastRoll.isMiss ? 0 : Math.max(1, modifiedPower - dDefense);
+
+      const historyEntry: RollHistoryEntry = {
+        id: Date.now(),
+        source: lastRoll.source,
+        diceRoll: lastRoll.attackerRoll,
+        dicePercent,
+        attackerPower: aPower,
+        defenderDefense: dDefense,
+        modifiedPower,
+        netDamage: lastRoll.damage || netDamage,
+        isMiss: !!lastRoll.isMiss,
+        isCritical: !!lastRoll.isCritical,
+        isCounterAttack: !!lastRoll.isCounterAttack,
+        counterAttackDamage: lastRoll.counterAttackDamage,
+        attackerName,
+        targetName,
+      };
+
+      setRollHistory(prev => [historyEntry, ...prev].slice(0, 2));
       
       // Calculate positions for animation after a short delay to allow refs to update
       requestAnimationFrame(() => {
@@ -680,68 +742,78 @@ export const PvPBattleArena: React.FC<PvPBattleArenaProps> = ({
           </CardContent>
         </Card>
 
-        {/* Action Panel */}
+        {/* Action Panel with Roll History */}
         <Card variant="menu" className="flex-shrink-0" style={{ boxShadow: "-33px 15px 10px rgba(0, 0, 0, 0.6)" }}>
           <CardContent className="py-2 sm:py-3">
-            <div className="flex flex-col items-center gap-2">
-              {/* Single Dice Display (only attacker rolls now) */}
-              <div className="flex items-center justify-center gap-4 w-full">
-                <InlineDiceDisplay
-                  key={`dice-${diceKey}`}
-                  isRolling={isDiceRolling}
-                  diceValue={lastRoll?.attackerRoll ?? null}
-                  isAttacker={true}
-                  label={isMyTurn ? "Ваш бросок" : (lastRoll?.source === "opponent" ? "Бросок противника" : "Ожидание...")}
-                />
+            <div className="flex gap-3">
+              {/* Left: Dice + Controls */}
+              <div className="flex-1 flex flex-col items-center gap-2 min-w-0">
+                {/* Single Dice Display (only attacker rolls now) */}
+                <div className="flex items-center justify-center gap-4 w-full">
+                  <InlineDiceDisplay
+                    key={`dice-${diceKey}`}
+                    isRolling={isDiceRolling}
+                    diceValue={lastRoll?.attackerRoll ?? null}
+                    isAttacker={true}
+                    label={isMyTurn ? "Ваш бросок" : (lastRoll?.source === "opponent" ? "Бросок противника" : "Ожидание...")}
+                  />
 
-                {/* Attack Button */}
-                {isMyTurn ? (
-                  <Button
-                    onClick={handleAttack}
-                    disabled={selectedPair === null || selectedTarget === null || isLoading}
-                    size="sm"
-                    variant="menu"
-                    className="h-8 sm:h-10 px-4 sm:px-6 text-sm sm:text-base"
-                    style={{ boxShadow: "-33px 15px 10px rgba(0, 0, 0, 0.6)" }}
-                  >
-                    <Sword className="w-4 h-4 mr-2" />
-                    Атаковать
-                  </Button>
-                ) : (
-                  <div className="h-8 sm:h-10 flex items-center text-white/70 text-sm">Ожидание хода...</div>
-                )}
-              </div>
-
-              {/* Roll Result Description */}
-              {lastRoll && rollResultInfo && (
-                <div className={`text-sm font-medium ${rollResultInfo.color}`}>
-                  {rollResultInfo.text}
-                  {lastRoll.damage > 0 && ` → ${lastRoll.damage} урона`}
-                  {lastRoll.isCounterAttack && lastRoll.counterAttackDamage && lastRoll.counterAttackDamage > 0 && (
-                    <span className="text-red-400 ml-2">
-                      (Контратака: {lastRoll.counterAttackDamage} урона вам!)
-                    </span>
+                  {/* Attack Button */}
+                  {isMyTurn ? (
+                    <Button
+                      onClick={handleAttack}
+                      disabled={selectedPair === null || selectedTarget === null || isLoading}
+                      size="sm"
+                      variant="menu"
+                      className="h-8 sm:h-10 px-4 sm:px-6 text-sm sm:text-base"
+                      style={{ boxShadow: "-33px 15px 10px rgba(0, 0, 0, 0.6)" }}
+                    >
+                      <Sword className="w-4 h-4 mr-2" />
+                      Атаковать
+                    </Button>
+                  ) : (
+                    <div className="h-8 sm:h-10 flex items-center text-white/70 text-sm">Ожидание хода...</div>
                   )}
                 </div>
-              )}
 
-              {/* Selection hints */}
-              {isMyTurn && selectedPair === null && (
-                <div className="text-[10px] sm:text-xs text-white/70">Выберите пару для атаки</div>
-              )}
-              {isMyTurn && selectedPair !== null && selectedTarget === null && (
-                <div className="text-[10px] sm:text-xs text-white/70">Выберите цель для атаки</div>
-              )}
+                {/* Roll Result Description */}
+                {lastRoll && rollResultInfo && (
+                  <div className={`text-sm font-medium ${rollResultInfo.color}`}>
+                    {rollResultInfo.text}
+                    {lastRoll.damage > 0 && ` → ${lastRoll.damage} урона`}
+                    {lastRoll.isCounterAttack && lastRoll.counterAttackDamage && lastRoll.counterAttackDamage > 0 && (
+                      <span className="text-red-400 ml-2">
+                        (Контратака: {lastRoll.counterAttackDamage} урона вам!)
+                      </span>
+                    )}
+                  </div>
+                )}
 
-              {/* D6 Legend */}
-              <div className="text-[8px] sm:text-[10px] text-white/50 flex flex-wrap justify-center gap-x-2 gap-y-0.5">
-                <span className="text-red-400">1:Контратака</span>
-                <span className="text-orange-400">2:Промах</span>
-                <span className="text-yellow-400">3:50%</span>
-                <span className="text-green-400">4:100%</span>
-                <span className="text-blue-400">5:150%</span>
-                <span className="text-purple-400">6:200%</span>
+                {/* Selection hints */}
+                {isMyTurn && selectedPair === null && (
+                  <div className="text-[10px] sm:text-xs text-white/70">Выберите пару для атаки</div>
+                )}
+                {isMyTurn && selectedPair !== null && selectedTarget === null && (
+                  <div className="text-[10px] sm:text-xs text-white/70">Выберите цель для атаки</div>
+                )}
+
+                {/* D6 Legend */}
+                <div className="text-[8px] sm:text-[10px] text-white/50 flex flex-wrap justify-center gap-x-2 gap-y-0.5">
+                  <span className="text-red-400">1:Контратака</span>
+                  <span className="text-orange-400">2:Промах</span>
+                  <span className="text-yellow-400">3:50%</span>
+                  <span className="text-green-400">4:100%</span>
+                  <span className="text-blue-400">5:150%</span>
+                  <span className="text-purple-400">6:200%</span>
+                </div>
               </div>
+
+              {/* Right: Roll History */}
+              {rollHistory.length > 0 && (
+                <div className="w-44 sm:w-52 flex-shrink-0 border-l border-white/10 pl-3">
+                  <PvPRollHistory history={rollHistory} />
+                </div>
+              )}
             </div>
           </CardContent>
         </Card>
