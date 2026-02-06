@@ -39,6 +39,8 @@ const PvPBattleContent: React.FC = () => {
     const data = await getMatchStatus(matchId);
     if (data) {
       setMatchData(data);
+      // Clear last roll to prevent animation replay when pairs update
+      setLastRoll(null);
     }
   }, [matchId, getMatchStatus]);
 
