@@ -810,7 +810,7 @@ export const PvPBattleArena: React.FC<PvPBattleArenaProps> = ({
 
               {/* Right: Roll History */}
               {rollHistory.length > 0 && (
-                <div className="w-44 sm:w-52 flex-shrink-0 border-l border-white/10 pl-3">
+                <div className="flex-1 min-w-0 border-l border-white/10 pl-3">
                   <PvPRollHistory history={rollHistory} />
                 </div>
               )}
