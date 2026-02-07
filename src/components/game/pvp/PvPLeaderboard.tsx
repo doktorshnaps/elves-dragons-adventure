@@ -57,7 +57,7 @@ interface PvPLeaderboardProps {
 }
 
 export const PvPLeaderboard: React.FC<PvPLeaderboardProps> = ({ currentWallet, rarityTier }) => {
-  const [matches, setMatches] = useState<any[]>([]);
+  const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState("live");
   const { isAdmin } = useAdmin();
@@ -83,15 +83,16 @@ export const PvPLeaderboard: React.FC<PvPLeaderboardProps> = ({ currentWallet, r
   const loadLeaderboard = async () => {
     setLoading(true);
     const { data, error } = await supabase
-      .from("pvp_matches")
-      .select("player1_wallet, player2_wallet, winner_wallet, loser_wallet")
-      .eq("status", "completed")
-      .eq("rarity_tier", rarityTier)
-      .order("finished_at", { ascending: false })
-      .limit(500);
+      .rpc('get_pvp_league_stats', {
+        p_rarity_tier: rarityTier,
+        p_limit: 50
+      });
 
     if (!error && data) {
-      setMatches(data);
+      const parsed: LeaderboardEntry[] = Array.isArray(data) ? data : (typeof data === 'string' ? JSON.parse(data) : []);
+      setLeaderboard(parsed);
+    } else {
+      setLeaderboard([]);
     }
     setLoading(false);
   };
@@ -104,43 +105,7 @@ export const PvPLeaderboard: React.FC<PvPLeaderboardProps> = ({ currentWallet, r
     setSeasonLoading(false);
   }, [fetchSeasonLeaderboard]);
 
-  // Compute leaderboard from match data
-  const leaderboard = useMemo(() => {
-    const stats: Record<string, { wins: number; losses: number }> = {};
-
-    matches.forEach((match) => {
-      const { player1_wallet, player2_wallet, winner_wallet } = match;
-      
-      if (!player1_wallet.startsWith("BOT_")) {
-        if (!stats[player1_wallet]) stats[player1_wallet] = { wins: 0, losses: 0 };
-        if (winner_wallet === player1_wallet) {
-          stats[player1_wallet].wins++;
-        } else if (winner_wallet) {
-          stats[player1_wallet].losses++;
-        }
-      }
-
-      if (!player2_wallet.startsWith("BOT_")) {
-        if (!stats[player2_wallet]) stats[player2_wallet] = { wins: 0, losses: 0 };
-        if (winner_wallet === player2_wallet) {
-          stats[player2_wallet].wins++;
-        } else if (winner_wallet) {
-          stats[player2_wallet].losses++;
-        }
-      }
-    });
-
-    const entries: LeaderboardEntry[] = Object.entries(stats).map(([wallet, s]) => ({
-      wallet_address: wallet,
-      wins: s.wins,
-      losses: s.losses,
-      matches_played: s.wins + s.losses,
-      win_rate: s.wins + s.losses > 0 ? Math.round((s.wins / (s.wins + s.losses)) * 100) : 0,
-    }));
-
-    entries.sort((a, b) => b.wins - a.wins || b.win_rate - a.win_rate);
-    return entries.slice(0, 50);
-  }, [matches]);
+  // leaderboard is now loaded directly from RPC (pre-aggregated)
 
   // Fetch display names for all wallets in leaderboards
   const allWallets = useMemo(() => {
