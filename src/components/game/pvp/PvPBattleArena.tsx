@@ -266,13 +266,31 @@ export const PvPBattleArena: React.FC<PvPBattleArenaProps> = ({
 
   // Track processed rolls to prevent duplicates from dependency changes
   const lastProcessedRollRef = useRef<typeof lastRoll>(null);
+  const stopTimerRef = useRef<number | null>(null);
+
+  // Snapshot mutable pair data into refs so the effect doesn't re-fire on array identity changes
+  const myPairsRef = useRef(myPairs);
+  myPairsRef.current = myPairs;
+  const opponentPairsRef = useRef(opponentPairs);
+  opponentPairsRef.current = opponentPairs;
 
   // Handle dice roll animation when lastRoll changes
   useEffect(() => {
     if (lastRoll && lastRoll !== lastProcessedRollRef.current) {
       lastProcessedRollRef.current = lastRoll;
+
+      // Clear any previous animation timer
+      if (stopTimerRef.current) {
+        clearTimeout(stopTimerRef.current);
+        stopTimerRef.current = null;
+      }
+
       setDiceKey((prev) => prev + 1);
       setIsDiceRolling(true);
+      
+      // Read pairs from refs to avoid dependency on array identity
+      const currentMyPairs = myPairsRef.current;
+      const currentOpponentPairs = opponentPairsRef.current;
       
       // Set highlighting for attacking/defending pairs
       let attackerIdx: number;
@@ -288,8 +306,8 @@ export const PvPBattleArena: React.FC<PvPBattleArenaProps> = ({
         isPlayerAttacking = true;
       } else {
         // Opponent attacking - find first alive pair as target
-        targetIdx = myPairs.findIndex(p => p.currentHealth > 0);
-        attackerIdx = opponentPairs.findIndex(p => p.currentHealth > 0);
+        targetIdx = currentMyPairs.findIndex(p => p.currentHealth > 0);
+        attackerIdx = currentOpponentPairs.findIndex(p => p.currentHealth > 0);
         setAttackingPairIndex(attackerIdx >= 0 ? attackerIdx : 0);
         setDefendingPairIndex(targetIdx >= 0 ? targetIdx : 0);
         setAttackingTeam("opponent");
@@ -304,8 +322,8 @@ export const PvPBattleArena: React.FC<PvPBattleArenaProps> = ({
       let targetName = "";
 
       if (isPlayerAttacking) {
-        const aPair = myPairs[attackerIdx];
-        const tPair = opponentPairs[targetIdx];
+        const aPair = currentMyPairs[attackerIdx];
+        const tPair = currentOpponentPairs[targetIdx];
         aPower = aPair?.totalPower ?? 0;
         dDefense = tPair?.currentDefense ?? 0;
         attackerName = aPair?.hero?.name ?? "Вы";
@@ -313,8 +331,8 @@ export const PvPBattleArena: React.FC<PvPBattleArenaProps> = ({
       } else {
         const aIdx = attackerIdx >= 0 ? attackerIdx : 0;
         const tIdx = targetIdx >= 0 ? targetIdx : 0;
-        const aPair = opponentPairs[aIdx];
-        const tPair = myPairs[tIdx];
+        const aPair = currentOpponentPairs[aIdx];
+        const tPair = currentMyPairs[tIdx];
         aPower = aPair?.totalPower ?? 0;
         dDefense = tPair?.currentDefense ?? 0;
         attackerName = aPair?.hero?.name ?? "Противник";
@@ -366,7 +384,18 @@ export const PvPBattleArena: React.FC<PvPBattleArenaProps> = ({
         damage: lastRoll.damage
       });
 
-      const stopTimer = setTimeout(() => {
+      // Capture lastRoll values for the timeout closure
+      const rollSource = lastRoll.source;
+      const rollDamage = lastRoll.damage;
+      const rollIsCritical = lastRoll.isCritical;
+      const rollIsMiss = lastRoll.isMiss;
+      const rollIsCounterAttack = lastRoll.isCounterAttack;
+      const rollCounterAttackDamage = lastRoll.counterAttackDamage;
+      const savedLastAttackerIndex = lastAttackerIndex;
+      const savedLastTargetIndex = lastTargetIndex;
+
+      stopTimerRef.current = window.setTimeout(() => {
+        stopTimerRef.current = null;
         setIsDiceRolling(false);
         
         // Stop attack animation
@@ -378,28 +407,26 @@ export const PvPBattleArena: React.FC<PvPBattleArenaProps> = ({
         setAttackingTeam(null);
 
         // Show damage indicator on correct card
-        if (lastRoll.source === "player") {
-          // Player attacked opponent - show damage on target card
-          const targetIdx = lastTargetIndex ?? 0;
-          if (lastRoll.damage > 0 || lastRoll.isMiss) {
+        if (rollSource === "player") {
+          const tIdx = savedLastTargetIndex ?? 0;
+          if (rollDamage > 0 || rollIsMiss) {
             setOpponentDamages((prev) => {
               const newMap = new Map(prev);
-              newMap.set(targetIdx, {
-                damage: lastRoll.damage,
-                isCritical: lastRoll.isCritical,
-                isBlocked: lastRoll.isMiss,
+              newMap.set(tIdx, {
+                damage: rollDamage,
+                isCritical: rollIsCritical,
+                isBlocked: rollIsMiss,
                 key: Date.now(),
               });
               return newMap;
             });
           }
-          // Handle counterattack damage to player - show on attacker card
-          if (lastRoll.isCounterAttack && lastRoll.counterAttackDamage && lastRoll.counterAttackDamage > 0) {
-            const attackerIdx = lastAttackerIndex ?? 0;
+          if (rollIsCounterAttack && rollCounterAttackDamage && rollCounterAttackDamage > 0) {
+            const aIdx = savedLastAttackerIndex ?? 0;
             setMyDamages((prev) => {
               const newMap = new Map(prev);
-              newMap.set(attackerIdx, {
-                damage: lastRoll.counterAttackDamage!,
+              newMap.set(aIdx, {
+                damage: rollCounterAttackDamage!,
                 isCritical: false,
                 isBlocked: false,
                 key: Date.now() + 1,
@@ -408,15 +435,14 @@ export const PvPBattleArena: React.FC<PvPBattleArenaProps> = ({
             });
           }
         } else {
-          // Opponent attacked player - find first alive pair as target
-          const targetIdx = myPairs.findIndex(p => p.currentHealth > 0);
-          if (lastRoll.damage > 0 || lastRoll.isMiss) {
+          const tIdx = myPairsRef.current.findIndex(p => p.currentHealth > 0);
+          if (rollDamage > 0 || rollIsMiss) {
             setMyDamages((prev) => {
               const newMap = new Map(prev);
-              newMap.set(targetIdx >= 0 ? targetIdx : 0, {
-                damage: lastRoll.damage,
-                isCritical: lastRoll.isCritical,
-                isBlocked: lastRoll.isMiss,
+              newMap.set(tIdx >= 0 ? tIdx : 0, {
+                damage: rollDamage,
+                isCritical: rollIsCritical,
+                isBlocked: rollIsMiss,
                 key: Date.now(),
               });
               return newMap;
@@ -424,10 +450,8 @@ export const PvPBattleArena: React.FC<PvPBattleArenaProps> = ({
           }
         }
       }, adjustDelay(2000));
-
-      return () => clearTimeout(stopTimer);
     }
-  }, [lastRoll, adjustDelay, lastAttackerIndex, lastTargetIndex, myPairs, opponentPairs]);
+  }, [lastRoll, adjustDelay, lastAttackerIndex, lastTargetIndex]);
 
   const handleAttack = useCallback(async () => {
     if (selectedPair === null || selectedTarget === null) return;
