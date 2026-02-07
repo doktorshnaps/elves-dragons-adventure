@@ -31,10 +31,9 @@ export const ClanCustomization = ({
     file: File,
     type: 'emblem' | 'background'
   ): Promise<string | null> => {
-    const ext = file.name.split('.').pop()?.toLowerCase() || 'png';
-    const allowedExts = ['png', 'jpg', 'jpeg', 'webp', 'gif'];
-    if (!allowedExts.includes(ext)) {
-      toast({ title: 'Ошибка', description: 'Допустимые форматы: PNG, JPG, WEBP, GIF', variant: 'destructive' });
+    const ext = file.name.split('.').pop()?.toLowerCase() || 'webp';
+    if (ext !== 'webp') {
+      toast({ title: 'Ошибка', description: 'Допустимый формат: только WEBP', variant: 'destructive' });
       return null;
     }
     if (file.size > 2 * 1024 * 1024) {
@@ -148,7 +147,7 @@ export const ClanCustomization = ({
           <input
             ref={emblemRef}
             type="file"
-            accept="image/png,image/jpeg,image/webp,image/gif"
+            accept="image/webp"
             className="hidden"
             onChange={handleEmblemUpload}
           />
@@ -183,7 +182,7 @@ export const ClanCustomization = ({
           <input
             ref={bgRef}
             type="file"
-            accept="image/png,image/jpeg,image/webp,image/gif"
+            accept="image/webp"
             className="hidden"
             onChange={handleBgUpload}
           />
@@ -191,7 +190,7 @@ export const ClanCustomization = ({
       </div>
 
       <p className="text-[10px] text-white/30 mt-2">
-        Макс. 2 МБ. Форматы: PNG, JPG, WEBP, GIF. Доступно главе и заместителю.
+        Макс. 2 МБ. Формат: только WEBP. Доступно главе и заместителю.
       </p>
     </div>
   );
