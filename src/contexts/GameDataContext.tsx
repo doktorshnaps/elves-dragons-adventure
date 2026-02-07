@@ -229,7 +229,8 @@ export const GameDataProvider = ({ children }: { children: ReactNode }) => {
                 barracks: levels.barracks ?? 0,
                 dragon_lair: levels.dragon_lair ?? 0,
                 medical: levels.medical ?? 0,
-                forge: levels.forge ?? 0
+                forge: levels.forge ?? 0,
+                clan_hall: levels.clan_hall ?? 0
               };
             }
             
@@ -244,7 +245,8 @@ export const GameDataProvider = ({ children }: { children: ReactNode }) => {
               barracks: 0,
               dragon_lair: 0,
               medical: 0,
-              forge: 0
+              forge: 0,
+              clan_hall: 0
             };
           })(),
           activeBuildingUpgrades: (gameRecord.active_building_upgrades as any[]) || []
