@@ -104,7 +104,7 @@ export const PvPRollHistory: React.FC<PvPRollHistoryProps> = ({ history }) => {
   return (
     <div className="flex flex-col gap-1.5 w-full">
       <div className="text-[9px] sm:text-sm text-white/50 text-center font-medium uppercase tracking-wider">
-        Последние броски
+        Последний бросок
       </div>
       {history.map((entry, idx) => (
         <RollEntry key={entry.id} entry={entry} index={idx} />

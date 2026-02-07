@@ -311,7 +311,7 @@ const PvPBattleContent: React.FC = () => {
   const initiative = matchData.last_action?.initiative || matchData.initiative || null;
 
   return (
-    <div className="h-screen bg-background flex flex-col overflow-hidden">
+    <div className="h-screen bg-background flex flex-col overflow-y-auto overflow-x-hidden">
       <PvPBattleArena
         myPairs={myPairs}
         opponentPairs={opponentPairs}
