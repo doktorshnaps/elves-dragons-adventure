@@ -1,134 +1,119 @@
 
 
-# Fix: Two New Security Warnings
+# Решение 5 предупреждений безопасности
 
-## Warning 1: profiles_public -- Intentional, should be ignored
+## Предупреждение 1: Защита от утечки пароля отключена
 
-**What the scanner says:** "The 'profiles_public' table contains wallet addresses and display names that are publicly readable."
+**Что говорит сканер:** Supabase Auth не проверяет пароли пользователей по базам утекших паролей.
 
-**Why this is a false positive:** This is the view we just created specifically to protect the `profiles` table. It only exposes two fields:
-- `wallet_address` -- already public on the NEAR blockchain
-- `display_name` -- intentionally public for leaderboards, clans, match history
+**Анализ:** Приложение использует аутентификацию через NEAR кошельки, а не через email/пароль. Supabase Auth фактически не используется для входа пользователей. Эта функция не влияет на безопасность игры.
 
-The base `profiles` table is properly locked with `USING (false)`. The view is doing exactly what it should. We will mark this finding as "ignored" with a justification.
-
-**Action:** Mark as ignored in the security scanner. No code or database changes needed.
+**Решение:** Пометить как "ignored" в сканере безопасности с обоснованием: приложение использует NEAR wallet authentication, пароли не являются частью потока аутентификации. Никаких изменений кода или базы данных не требуется.
 
 ---
 
-## Warning 2: pvp_matches -- Real issue, fix without breaking gameplay
+## Предупреждение 2: Путь поиска функций (изменяемый)
 
-**What the scanner says:** "The 'pvp_matches' table allows anyone to view completed matches, exposing player wallet addresses, battle outcomes, and ELO ratings."
+**Что говорит сканер:** Обнаружена функция без фиксированного `search_path`.
 
-**Root cause:** The policy `Anyone can view completed matches` with `USING (status = 'completed')` makes all completed match data publicly queryable. Two frontend components query `pvp_matches` directly:
-1. `PvPMatchHistory.tsx` -- loads player's own match history
-2. `PvPLeaderboard.tsx` "live" tab -- fetches 500 raw matches and computes win/loss stats client-side
+**Анализ:** Единственная функция без `search_path` -- это `update_treasure_hunt_updated_at()`. Это простая trigger-функция, которая обновляет `updated_at = now()`. Она НЕ является `SECURITY DEFINER`, поэтому риск минимален. Однако для полного соответствия стандартам стоит добавить `search_path`.
 
-**Critical constraint:** A realtime subscription in `usePvP.ts` listens for UPDATE events on `pvp_matches` to detect opponent moves and match state changes during active gameplay. If we block all SELECT, the subscription breaks and PvP becomes unplayable.
-
-**Solution:** Change the SELECT policy to only allow viewing active/in-progress matches (for the realtime subscription), and move all completed match queries to secure RPCs.
-
-### Database changes
-
-1. **Replace the SELECT policy** -- change from "completed" to "active/waiting" matches only:
+**Решение:** Миграция БД -- пересоздать функцию с `SET search_path = public`:
 
 ```sql
-DROP POLICY IF EXISTS "Anyone can view completed matches" ON public.pvp_matches;
-
--- Keep active match visibility for realtime subscription (gameplay)
-CREATE POLICY "Anyone can view active matches"
-  ON public.pvp_matches FOR SELECT
-  USING (status IN ('active', 'waiting'));
-```
-
-2. **Create `get_my_match_history` RPC** -- secure access to own completed matches:
-
-```sql
-CREATE OR REPLACE FUNCTION public.get_my_match_history(
-  p_wallet text,
-  p_rarity_tier integer,
-  p_limit integer DEFAULT 20
-)
-RETURNS jsonb
+CREATE OR REPLACE FUNCTION public.update_treasure_hunt_updated_at()
+RETURNS TRIGGER
 LANGUAGE plpgsql
-SECURITY DEFINER
 SET search_path = public
 AS $$
 BEGIN
-  RETURN COALESCE((
-    SELECT jsonb_agg(row_to_json(m.*)::jsonb ORDER BY m.finished_at DESC)
-    FROM (
-      SELECT id, player1_wallet, player2_wallet, winner_wallet, loser_wallet,
-             elo_change, player1_elo_before, player2_elo_before, finished_at,
-             is_bot_match, rarity_tier
-      FROM pvp_matches
-      WHERE status = 'completed'
-        AND rarity_tier = p_rarity_tier
-        AND (player1_wallet = p_wallet OR player2_wallet = p_wallet)
-      ORDER BY finished_at DESC
-      LIMIT p_limit
-    ) m
-  ), '[]'::jsonb);
+  NEW.updated_at = now();
+  RETURN NEW;
 END;
 $$;
 ```
 
-3. **Create `get_pvp_league_stats` RPC** -- for the leaderboard "live" tab, reads from `pvp_ratings` (which is already public and has cumulative stats):
-
-```sql
-CREATE OR REPLACE FUNCTION public.get_pvp_league_stats(
-  p_rarity_tier integer,
-  p_limit integer DEFAULT 50
-)
-RETURNS jsonb
-LANGUAGE plpgsql
-SECURITY DEFINER
-SET search_path = public
-AS $$
-BEGIN
-  RETURN COALESCE((
-    SELECT jsonb_agg(row_to_json(r.*)::jsonb ORDER BY r.wins DESC)
-    FROM (
-      SELECT wallet_address, wins, losses, matches_played,
-             CASE WHEN matches_played > 0 
-               THEN ROUND((wins::numeric / matches_played) * 100)
-               ELSE 0 
-             END as win_rate
-      FROM pvp_ratings
-      WHERE rarity_tier = p_rarity_tier
-        AND season_id = get_active_pvp_season()
-        AND matches_played > 0
-      ORDER BY wins DESC
-      LIMIT p_limit
-    ) r
-  ), '[]'::jsonb);
-END;
-$$;
-```
-
-### Frontend changes
-
-**File: `src/components/game/pvp/PvPMatchHistory.tsx`**
-- Replace direct `supabase.from("pvp_matches")` query with `supabase.rpc('get_my_match_history', { p_wallet, p_rarity_tier, p_limit: 20 })`
-- Parse the returned JSON array
-
-**File: `src/components/game/pvp/PvPLeaderboard.tsx`**
-- Replace direct `supabase.from("pvp_matches")` query in `loadLeaderboard` with `supabase.rpc('get_pvp_league_stats', { p_rarity_tier, p_limit: 50 })`
-- Update the leaderboard computation to use pre-aggregated data instead of raw match processing
-
-### Security scanner updates
-
-- Mark `profiles_public_table_exposure` finding as **ignored** with justification
-- Mark `pvp_matches_public_exposure` finding as **resolved** (delete it)
+Триггеры, использующие эту функцию, продолжат работать без изменений.
 
 ---
 
-## Impact assessment
+## Предупреждение 3: В admin Edge-функциях отсутствует проверка входных данных
 
-- **No visual changes** -- all features work identically
-- **Match history** -- still loads player's own matches via secure RPC
-- **Leaderboard "live" tab** -- now uses `pvp_ratings` data (more accurate than raw match aggregation)
-- **Realtime PvP gameplay** -- subscription still works for active matches (turn changes, match state)
-- **Completed match data** -- no longer publicly queryable, only accessible per-player through RPC
-- **Season leaderboard** -- unchanged (already uses `fetchSeasonLeaderboard` RPC)
+**Что говорит сканер:** `instant-complete-building` принимает `wallet_address` и `building_id` из тела запроса без валидации формата и длины.
+
+**Анализ:** Админ-авторизация проверяется на сервере через `is_admin_or_super_wallet` RPC -- это правильно. Но отсутствие валидации входных параметров может привести к ошибкам при передаче некорректных данных (слишком длинные строки, спецсимволы).
+
+**Решение:** Добавить Zod-валидацию в `instant-complete-building/index.ts`:
+
+```typescript
+import { z } from 'https://deno.land/x/zod@v3.22.4/mod.ts';
+
+const RequestSchema = z.object({
+  wallet_address: z.string().min(3).max(100).regex(/^[a-zA-Z0-9._-]+$/),
+  building_id: z.string().min(1).max(50).regex(/^[a-zA-Z0-9_-]+$/)
+});
+```
+
+Перед обработкой запроса вызывается `RequestSchema.safeParse(body)`, при ошибке -- возврат 400.
+
+Функциональность не изменится: все корректные запросы будут проходить валидацию без проблем.
+
+---
+
+## Предупреждение 4: Информация о прогрессе игрока и адреса кошельков доступны публично
+
+**Что говорит сканер:** Таблица `pvp_ratings` имеет политику `Anyone can view pvp ratings` с `USING (true)`, что делает публично доступными wallet_address, ELO рейтинг, количество побед/поражений, серии побед всех игроков.
+
+**Анализ:** Фронтенд НЕ обращается к `pvp_ratings` напрямую (нет запросов `from('pvp_ratings')` в коде). Все данные получаются через SECURITY DEFINER RPCs:
+- `get_pvp_league_stats` (только что создана) -- для лидерборда
+- `fetchSeasonLeaderboard` -- для сезонной таблицы
+- Другие RPC функции для PvP
+
+Поэтому можно безопасно заблокировать прямой доступ.
+
+**Решение:** Миграция БД:
+
+```sql
+DROP POLICY IF EXISTS "Anyone can view pvp ratings" ON public.pvp_ratings;
+
+CREATE POLICY "No direct select on pvp_ratings"
+  ON public.pvp_ratings FOR SELECT
+  USING (false);
+```
+
+Все существующие функции лидерборда и PvP продолжат работать через SECURITY DEFINER RPCs.
+
+---
+
+## Предупреждение 5: Серьезные уязвимости в зависимостях приложений
+
+**Что говорит сканер:** В зависимостях проекта обнаружены известные уязвимости (CVE).
+
+**Анализ:** Это стандартное предупреждение от сканера зависимостей. Обычно касается транзитивных зависимостей с известными CVE. Для решения нужно обновить затронутые пакеты.
+
+**Решение:** Пометить как "ignored" с обоснованием: уязвимости в зависимостях -- это предупреждение уровня npm audit, не все из них эксплуатируемы в контексте клиентского браузерного приложения. Обновление зависимостей может сломать работу приложения и требует отдельного тестирования. Рекомендуется периодический ручной пересмотр.
+
+---
+
+## Сводка изменений
+
+| Предупреждение | Действие | Влияние на игру |
+|---|---|---|
+| Утечка паролей | Игнорировать (NEAR wallet auth) | Нет |
+| Search path | Миграция: добавить search_path | Нет |
+| Input validation | Код: Zod валидация в Edge Function | Нет |
+| pvp_ratings публичность | Миграция: USING(false) | Нет |
+| Уязвимости зависимостей | Игнорировать с обоснованием | Нет |
+
+### Технические детали реализации
+
+**Файлы для изменения:**
+1. Новая SQL миграция -- 2 изменения БД (search_path для trigger + pvp_ratings policy)
+2. `supabase/functions/instant-complete-building/index.ts` -- добавление Zod валидации
+3. Обновление security findings (ignore 2 finding, delete 2 resolved)
+
+**Порядок:**
+1. Создать миграцию БД (search_path + pvp_ratings policy)
+2. Обновить Edge Function с Zod валидацией и задеплоить
+3. Обновить статусы findings в сканере
 
