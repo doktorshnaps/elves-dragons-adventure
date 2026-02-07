@@ -1,149 +1,130 @@
 
-# Add League Rewards to PvP Seasons
+# Система Кланов -- Этап 1: Фундамент
 
-## Context
+## Обзор
 
-Currently, season rewards are only configured by **Elo tiers** (Bronze through Legend, based on player rating). The user wants to also support **league rewards** -- based on which of the 8 rarity leagues (1-8) a player participates in. Admins should be able to configure both independently.
+Игрок строит здание "Клановый Зал" в Убежище. После постройки на странице `/menu` появляется новая кнопка "Клан", ведущая на страницу `/clan` со всей функциональностью кланов (создание, вступление, управление участниками, лидерборд).
 
-## Current State
+## Что будет реализовано
 
-- `pvp_seasons.rewards_config` (JSONB) stores Elo tier rewards only:
-  ```text
-  { "bronze": { "min_elo": 0, "max_elo": 1199, "ell_reward": 500 }, ... }
-  ```
-- `pvp_ratings` has no league/rarity info -- just per-season Elo data
-- `pvp_matches` has `rarity_tier` (integer 1-8) for every match
-- Admin UI shows only tier rewards editing
+**Здание "Клановый Зал" в Убежище:**
+- Новый тип здания `clan_hall` в системе зданий (building_configs, buildingLevels)
+- Отображается в сетке зданий Убежища наравне с казармами, кузницей и т.д.
+- Требует постройки (уровень 1) для доступа к функционалу кланов
+- Уровни 1-8 с возможностью развития (бонусы на будущие этапы)
 
-## Proposed Solution
+**Страница Клана (`/clan`):**
+- Создание клана (название, описание, политика вступления)
+- Просмотр информации о своём клане (участники, роли, уровень)
+- Система ролей: Глава, Заместитель (макс 2), Офицер, Участник
+- Заявки на вступление (подача / одобрение / отклонение)
+- Выход из клана / исключение участников
+- Передача лидерства
+- Глобальный лидерборд кланов (по суммарному Elo участников)
 
-Add a second rewards dimension: **league rewards**. A player receives BOTH:
-1. **Tier reward** -- based on their final Elo (existing logic)
-2. **League reward** -- based on the highest rarity league they played in during the season (derived from `pvp_matches.rarity_tier`)
-
----
-
-## Changes Overview
-
-### 1. Database Migration
-
-**New column** on `pvp_seasons`:
-- `league_rewards_config jsonb DEFAULT '{}'` -- stores per-league rewards
-
-Structure:
-```text
-{
-  "1": { "name": "Обычные",         "ell_reward": 0 },
-  "2": { "name": "Необычные",       "ell_reward": 100 },
-  "3": { "name": "Редкие",          "ell_reward": 300 },
-  "4": { "name": "Эпические",       "ell_reward": 500 },
-  "5": { "name": "Легендарные",     "ell_reward": 1000 },
-  "6": { "name": "Мифические",      "ell_reward": 2000 },
-  "7": { "name": "Божественные",    "ell_reward": 5000 },
-  "8": { "name": "Трансцендентные", "ell_reward": 10000 }
-}
-```
-
-**Updated RPCs:**
-
-- `admin_create_pvp_season` -- accept `p_league_rewards_config jsonb` parameter
-- `admin_update_pvp_season` -- accept `p_league_rewards_config jsonb` parameter
-- `admin_distribute_season_rewards` -- after distributing tier rewards, also look up each player's highest `rarity_tier` from `pvp_matches` in the season and add the corresponding league reward
-- `get_pvp_season_leaderboard` -- no change needed (league info can be displayed client-side)
-
-### 2. Admin Panel (`PvPSeasonAdmin.tsx`)
-
-Split the rewards display into two sections:
-
-**Section A: "Награды по тирам" (existing)**
-- Same as now -- Elo tier rewards (Bronze through Legend)
-- Editable ELL amounts per tier
-
-**Section B: "Награды по лигам" (new)**
-- 8 rows, one per rarity league
-- Each row shows: league number, league name (e.g., "Обычные ★1"), editable ELL reward
-- Same editing flow as tier rewards (edit/save buttons)
-
-Both sections appear in:
-- Current Season card (view + edit mode)
-- Create New Season form (configuration)
-
-### 3. Hook (`usePvPSeason.ts`)
-
-- Update `PvPSeason` interface to include `league_rewards_config`
-- Add `getPlayerLeagueReward(league: number)` function to look up the league reward for a given league number from the active season config
-
-### 4. PvP Hub (`PvPHub.tsx`)
-
-Update the season banner to show both rewards:
-- Tier reward: existing display (e.g., "5000 ELL" based on Elo)
-- League reward: show the reward for the currently selected rarity tier (e.g., "Лига 4: +500 ELL")
-
-### 5. Leaderboard (`PvPLeaderboard.tsx`)
-
-In the season tab, show the combined reward (tier + league) for each player. Since we don't have per-player league data in the leaderboard RPC response, the tier reward column already works; the league reward can be shown as a general info banner at the top of the season tab.
+**Кнопка в меню:**
+- Появляется только если `buildingLevels.clan_hall >= 1`
+- Стиль аналогичен остальным кнопкам меню
 
 ---
 
-## Technical Details
+## Технические детали
 
-### Database Migration SQL
+### 1. База данных -- Новые таблицы
 
-1. Add column:
-   ```text
-   ALTER TABLE public.pvp_seasons
-   ADD COLUMN IF NOT EXISTS league_rewards_config jsonb DEFAULT '{}'::jsonb;
-   ```
-
-2. Update `admin_create_pvp_season`:
-   - Add parameter `p_league_rewards_config jsonb DEFAULT '{}'::jsonb`
-   - Store it in the INSERT
-
-3. Update `admin_update_pvp_season`:
-   - Add parameter `p_league_rewards_config jsonb DEFAULT NULL`
-   - Include in the UPDATE SET clause with COALESCE
-
-4. Update `admin_distribute_season_rewards`:
-   - After finding the tier reward for a player, also query:
-     ```text
-     SELECT MAX(rarity_tier) FROM pvp_matches
-     WHERE season_id = p_season_id
-       AND (player1_wallet = v_player.wallet_address OR player2_wallet = v_player.wallet_address)
-       AND status = 'completed'
-     ```
-   - Look up that max league in `league_rewards_config` and add to the player's reward
-   - Track `total_league_ell_distributed` in the return JSON
-
-### Files to Create/Edit
-
-| File | Action |
-|------|--------|
-| Migration SQL | Create -- new column + updated RPCs |
-| `src/hooks/usePvPSeason.ts` | Edit -- add `league_rewards_config` to types, add `getPlayerLeagueReward` |
-| `src/components/admin/PvPSeasonAdmin.tsx` | Edit -- add league rewards section to current season card and create form |
-| `src/components/game/pvp/PvPHub.tsx` | Edit -- show league reward in season banner |
-| `src/components/game/pvp/PvPLeaderboard.tsx` | Edit -- show league reward info in season tab |
-| `src/integrations/supabase/types.ts` | Edit -- update types for new column and RPC params |
-
-### Default League Rewards Config
-
-Used when creating a new season if admin doesn't customize:
 ```text
-League 1 (Обычные):         0 ELL
-League 2 (Необычные):       100 ELL
-League 3 (Редкие):          300 ELL
-League 4 (Эпические):       500 ELL
-League 5 (Легендарные):     1000 ELL
-League 6 (Мифические):      2000 ELL
-League 7 (Божественные):    5000 ELL
-League 8 (Трансцендентные): 10000 ELL
+clans
+  id            uuid PK default gen_random_uuid()
+  name          text UNIQUE NOT NULL (3-20 символов)
+  description   text (макс 200 символов)
+  emblem        text default 'shield' -- ключ иконки
+  leader_wallet text NOT NULL
+  level         int default 1
+  experience    int default 0
+  treasury_ell  int default 0
+  max_members   int default 20
+  join_policy   text default 'approval' -- 'open' | 'approval' | 'invite_only'
+  created_at    timestamptz default now()
+
+clan_members
+  id             uuid PK default gen_random_uuid()
+  clan_id        uuid FK -> clans ON DELETE CASCADE
+  wallet_address text NOT NULL
+  role           text NOT NULL default 'member' -- 'leader' | 'deputy' | 'officer' | 'member'
+  joined_at      timestamptz default now()
+  contributed_ell int default 0
+  UNIQUE(clan_id, wallet_address)
+
+clan_join_requests
+  id             uuid PK default gen_random_uuid()
+  clan_id        uuid FK -> clans ON DELETE CASCADE
+  wallet_address text NOT NULL
+  status         text default 'pending' -- 'pending' | 'accepted' | 'rejected'
+  message        text -- опциональное сообщение от заявителя
+  created_at     timestamptz default now()
+  reviewed_by    text -- кошелёк того, кто рассмотрел
+  reviewed_at    timestamptz
 ```
 
-### Reward Distribution Logic (Updated)
+**RLS-политики:**
+- `clans`: SELECT для всех аутентифицированных (лидерборд), INSERT/UPDATE/DELETE через RPC
+- `clan_members`: SELECT для всех аутентифицированных, INSERT/UPDATE/DELETE через RPC
+- `clan_join_requests`: SELECT для участников клана + своих заявок, INSERT/UPDATE/DELETE через RPC
 
-For each player in the ended season:
-1. Find tier reward from `rewards_config` (by Elo range) -- existing
-2. Find highest league played from `pvp_matches` -- new
-3. Find league reward from `league_rewards_config` (by highest league) -- new
-4. Total reward = tier_reward + league_reward
-5. Call `add_ell_balance` with total
+### 2. RPC-функции (SECURITY DEFINER)
+
+- `create_clan(p_wallet, p_name, p_description, p_join_policy)` -- создание клана, автор становится лидером
+- `join_clan(p_wallet, p_clan_id, p_message)` -- заявка на вступление (или авто-вступление для open)
+- `review_join_request(p_wallet, p_request_id, p_accept)` -- одобрение/отклонение заявки (только leader/deputy/officer)
+- `leave_clan(p_wallet)` -- выход из клана (лидер не может выйти, пока не передаст лидерство)
+- `kick_member(p_wallet, p_target_wallet)` -- исключение (leader/deputy могут кикнуть officer/member)
+- `change_member_role(p_wallet, p_target_wallet, p_new_role)` -- смена роли
+- `transfer_leadership(p_wallet, p_target_wallet)` -- передача лидерства
+- `get_clan_leaderboard()` -- топ кланов по суммарному Elo участников
+- `get_my_clan(p_wallet)` -- информация о клане игрока с участниками
+- `disband_clan(p_wallet)` -- расформировать клан (только лидер)
+
+### 3. Здание "Клановый Зал" -- Интеграция
+
+**Файлы, которые будут изменены:**
+
+- `src/utils/jsonbValidation.ts` -- добавить `clan_hall: z.number().default(0)` в BuildingLevelsSchema
+- `src/contexts/GameDataContext.tsx` -- добавить `clan_hall: 0` в DEFAULT_GAME_DATA.buildingLevels
+- `src/hooks/shelter/useShelterState.ts` -- добавить `clan_hall` в buildingLevels memo и в nestUpgrades массив
+- `src/components/admin/ShelterBuildingSettings.tsx` -- добавить `{ id: 'clan_hall', name: 'Клановый зал' }` в BUILDING_TYPES
+- `building_configs` таблица -- добавить конфигурацию уровня 1 для `clan_hall` (стоимость постройки)
+
+### 4. Новые файлы
+
+```text
+src/pages/Clan.tsx                          -- Главная страница клана
+src/components/game/clan/ClanOverview.tsx    -- Обзор своего клана (участники, роли)
+src/components/game/clan/ClanCreate.tsx      -- Форма создания клана
+src/components/game/clan/ClanSearch.tsx      -- Поиск и список кланов для вступления
+src/components/game/clan/ClanLeaderboard.tsx -- Рейтинг кланов
+src/components/game/clan/ClanRequests.tsx    -- Управление заявками (для officer+)
+src/components/game/clan/ClanMembers.tsx     -- Список участников с действиями
+src/hooks/useClan.ts                        -- Хук для работы с кланами (RPC вызовы)
+```
+
+### 5. Маршрутизация и меню
+
+- `src/App.tsx` -- добавить маршрут `/clan` с lazy loading и ProtectedRoute
+- `src/components/lazy/LazyComponents.tsx` -- добавить LazyClan компонент
+- `src/pages/Menu.tsx` -- добавить кнопку "Клан" (условно по `buildingLevels.clan_hall >= 1`)
+
+### 6. Страница Убежища
+
+- `src/pages/Shelter.tsx` -- не требует новой вкладки; здание `clan_hall` появится в сетке зданий на вкладке "Улучшения" автоматически, т.к. оно будет добавлено в `nestUpgrades`
+
+---
+
+## Порядок реализации
+
+1. Миграция БД: таблицы `clans`, `clan_members`, `clan_join_requests` + RLS + RPC
+2. Конфигурация здания: `clan_hall` в `building_configs`, обновление schema/defaults
+3. Интеграция здания в Убежище (jsonbValidation, useShelterState, GameDataContext, ShelterBuildingSettings)
+4. Хук `useClan.ts` для работы с RPC
+5. Компоненты страницы клана (ClanCreate, ClanOverview, ClanMembers, ClanRequests, ClanSearch, ClanLeaderboard)
+6. Страница `Clan.tsx` с табами
+7. Lazy loading, маршрутизация, кнопка в меню
