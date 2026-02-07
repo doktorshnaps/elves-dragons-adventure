@@ -1,119 +1,63 @@
 
 
-# Решение 5 предупреждений безопасности
+# Fix: Mouse wheel scrolling on PvP page
 
-## Предупреждение 1: Защита от утечки пароля отключена
+## Root Cause
 
-**Что говорит сканер:** Supabase Auth не проверяет пароли пользователей по базам утекших паролей.
+The Grimoire page and PvP page use fundamentally different scrolling architectures:
 
-**Анализ:** Приложение использует аутентификацию через NEAR кошельки, а не через email/пароль. Supabase Auth фактически не используется для входа пользователей. Эта функция не влияет на безопасность игры.
+**Grimoire (works):**
+- Uses `h-screen` to constrain the page to viewport height
+- Has `flex flex-col` on the root container
+- Inner content div uses `flex-1 overflow-y-auto`, creating an **explicit scroll container**
 
-**Решение:** Пометить как "ignored" в сканере безопасности с обоснованием: приложение использует NEAR wallet authentication, пароли не являются частью потока аутентификации. Никаких изменений кода или базы данных не требуется.
+**PvP (broken):**
+- Uses `min-h-screen` without height constraint
+- Content grows beyond the viewport
+- Relies on body-level scrolling, but global CSS (`overflow-x: hidden` on body, `#root`, and the App wrapper) causes browsers to compute `overflow-y: auto` on those elements too (per CSS spec), creating **conflicting scroll containers** that trap wheel events
 
----
+## Solution
 
-## Предупреждение 2: Путь поиска функций (изменяемый)
+Refactor `PvPHub.tsx` to match the Grimoire's scroll pattern: constrain the page to viewport height and provide an explicit `overflow-y-auto` scroll container.
 
-**Что говорит сканер:** Обнаружена функция без фиксированного `search_path`.
+### Changes to `src/components/game/pvp/PvPHub.tsx`
 
-**Анализ:** Единственная функция без `search_path` -- это `update_treasure_hunt_updated_at()`. Это простая trigger-функция, которая обновляет `updated_at = now()`. Она НЕ является `SECURITY DEFINER`, поэтому риск минимален. Однако для полного соответствия стандартам стоит добавить `search_path`.
-
-**Решение:** Миграция БД -- пересоздать функцию с `SET search_path = public`:
-
-```sql
-CREATE OR REPLACE FUNCTION public.update_treasure_hunt_updated_at()
-RETURNS TRIGGER
-LANGUAGE plpgsql
-SET search_path = public
-AS $$
-BEGIN
-  NEW.updated_at = now();
-  RETURN NEW;
-END;
-$$;
+**Before (line 187-189):**
+```text
+<div className="min-h-screen bg-pvp p-4 relative">
+  <div className="absolute inset-0 bg-black/50 pointer-events-none" />
+  <div className="max-w-4xl mx-auto space-y-4 relative z-10">
 ```
 
-Триггеры, использующие эту функцию, продолжат работать без изменений.
-
----
-
-## Предупреждение 3: В admin Edge-функциях отсутствует проверка входных данных
-
-**Что говорит сканер:** `instant-complete-building` принимает `wallet_address` и `building_id` из тела запроса без валидации формата и длины.
-
-**Анализ:** Админ-авторизация проверяется на сервере через `is_admin_or_super_wallet` RPC -- это правильно. Но отсутствие валидации входных параметров может привести к ошибкам при передаче некорректных данных (слишком длинные строки, спецсимволы).
-
-**Решение:** Добавить Zod-валидацию в `instant-complete-building/index.ts`:
-
-```typescript
-import { z } from 'https://deno.land/x/zod@v3.22.4/mod.ts';
-
-const RequestSchema = z.object({
-  wallet_address: z.string().min(3).max(100).regex(/^[a-zA-Z0-9._-]+$/),
-  building_id: z.string().min(1).max(50).regex(/^[a-zA-Z0-9_-]+$/)
-});
+**After:**
+```text
+<div className="h-screen bg-pvp relative flex flex-col">
+  <div className="absolute inset-0 bg-black/50 pointer-events-none" />
+  <div className="flex-1 overflow-y-auto relative z-10 p-4">
+    <div className="max-w-4xl mx-auto space-y-4">
 ```
 
-Перед обработкой запроса вызывается `RequestSchema.safeParse(body)`, при ошибке -- возврат 400.
+And the corresponding closing tags need adjustment (closing `</div>` added before the Dialog).
 
-Функциональность не изменится: все корректные запросы будут проходить валидацию без проблем.
+**What changes:**
+1. Root div: `min-h-screen p-4` becomes `h-screen flex flex-col` (constrain to viewport, enable flex layout)
+2. New scroll wrapper: `flex-1 overflow-y-auto relative z-10 p-4` (explicit scrollable area fills remaining space)
+3. Inner content div: loses `relative z-10` (moved to parent scroll wrapper)
 
----
+**What stays the same:**
+- Background overlay with `pointer-events-none`
+- All content, cards, components, dialogs
+- Team dialog remains outside the scroll area (renders at portal level anyway)
 
-## Предупреждение 4: Информация о прогрессе игрока и адреса кошельков доступны публично
+### Why this works
 
-**Что говорит сканер:** Таблица `pvp_ratings` имеет политику `Anyone can view pvp ratings` с `USING (true)`, что делает публично доступными wallet_address, ELO рейтинг, количество побед/поражений, серии побед всех игроков.
+The `overflow-y-auto` on a `flex-1` container creates a clear scroll target for the browser. Wheel events land on the scroll container and are properly handled, rather than getting lost in the chain of implicit scroll containers created by `overflow-x: hidden` on parent elements.
 
-**Анализ:** Фронтенд НЕ обращается к `pvp_ratings` напрямую (нет запросов `from('pvp_ratings')` в коде). Все данные получаются через SECURITY DEFINER RPCs:
-- `get_pvp_league_stats` (только что создана) -- для лидерборда
-- `fetchSeasonLeaderboard` -- для сезонной таблицы
-- Другие RPC функции для PvP
+### No impact on functionality
 
-Поэтому можно безопасно заблокировать прямой доступ.
-
-**Решение:** Миграция БД:
-
-```sql
-DROP POLICY IF EXISTS "Anyone can view pvp ratings" ON public.pvp_ratings;
-
-CREATE POLICY "No direct select on pvp_ratings"
-  ON public.pvp_ratings FOR SELECT
-  USING (false);
-```
-
-Все существующие функции лидерборда и PvP продолжат работать через SECURITY DEFINER RPCs.
-
----
-
-## Предупреждение 5: Серьезные уязвимости в зависимостях приложений
-
-**Что говорит сканер:** В зависимостях проекта обнаружены известные уязвимости (CVE).
-
-**Анализ:** Это стандартное предупреждение от сканера зависимостей. Обычно касается транзитивных зависимостей с известными CVE. Для решения нужно обновить затронутые пакеты.
-
-**Решение:** Пометить как "ignored" с обоснованием: уязвимости в зависимостях -- это предупреждение уровня npm audit, не все из них эксплуатируемы в контексте клиентского браузерного приложения. Обновление зависимостей может сломать работу приложения и требует отдельного тестирования. Рекомендуется периодический ручной пересмотр.
-
----
-
-## Сводка изменений
-
-| Предупреждение | Действие | Влияние на игру |
-|---|---|---|
-| Утечка паролей | Игнорировать (NEAR wallet auth) | Нет |
-| Search path | Миграция: добавить search_path | Нет |
-| Input validation | Код: Zod валидация в Edge Function | Нет |
-| pvp_ratings публичность | Миграция: USING(false) | Нет |
-| Уязвимости зависимостей | Игнорировать с обоснованием | Нет |
-
-### Технические детали реализации
-
-**Файлы для изменения:**
-1. Новая SQL миграция -- 2 изменения БД (search_path для trigger + pvp_ratings policy)
-2. `supabase/functions/instant-complete-building/index.ts` -- добавление Zod валидации
-3. Обновление security findings (ignore 2 finding, delete 2 resolved)
-
-**Порядок:**
-1. Создать миграцию БД (search_path + pvp_ratings policy)
-2. Обновить Edge Function с Zod валидацией и задеплоить
-3. Обновить статусы findings в сканере
+- All PvP content renders identically
+- Internal scroll areas (leaderboard `max-h-[400px]`, match history `ScrollArea`) continue working
+- Dialog overlays are unaffected (they use portals)
+- Background image with `background-attachment: fixed` continues working
+- The `pointer-events-none` overlay behavior is preserved
 
