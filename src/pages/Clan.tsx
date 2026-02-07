@@ -59,7 +59,7 @@ export const ClanPage = () => {
         backgroundAttachment: 'fixed',
       } : {}}
     >
-      {backgroundImage && <div className="absolute inset-0 bg-black/50 pointer-events-none" />}
+      {backgroundImage && <div className="absolute inset-0 bg-black/25 pointer-events-none" />}
       <div className="max-w-2xl mx-auto relative z-10">
         {/* Header */}
         <div className="flex items-center gap-3 mb-4">
