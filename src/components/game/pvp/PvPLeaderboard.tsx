@@ -71,9 +71,9 @@ export const PvPLeaderboard: React.FC<PvPLeaderboardProps> = ({ currentWallet, r
   // Load season leaderboard when switching to season tab
   useEffect(() => {
     if (activeTab === "season" && activeSeason) {
-      loadSeasonLeaderboard(activeSeason);
+      loadSeasonLeaderboard(activeSeason, rarityTier);
     }
-  }, [activeTab, activeSeason]);
+  }, [activeTab, activeSeason, rarityTier]);
 
   const loadLeaderboard = async () => {
     setLoading(true);
@@ -91,10 +91,10 @@ export const PvPLeaderboard: React.FC<PvPLeaderboardProps> = ({ currentWallet, r
     setLoading(false);
   };
 
-  const loadSeasonLeaderboard = useCallback(async (season: PvPSeason) => {
+  const loadSeasonLeaderboard = useCallback(async (season: PvPSeason, tier?: number) => {
     setSelectedSeason(season);
     setSeasonLoading(true);
-    const data = await fetchSeasonLeaderboard(season.id, 50);
+    const data = await fetchSeasonLeaderboard(season.id, 50, tier);
     setSeasonLeaderboard(data);
     setSeasonLoading(false);
   }, [fetchSeasonLeaderboard]);
@@ -243,7 +243,7 @@ export const PvPLeaderboard: React.FC<PvPLeaderboardProps> = ({ currentWallet, r
                     variant={selectedSeason?.id === activeSeason.id ? "default" : "outline"}
                     size="sm"
                     className="text-[10px] h-6 px-2"
-                    onClick={() => loadSeasonLeaderboard(activeSeason)}
+                    onClick={() => loadSeasonLeaderboard(activeSeason, rarityTier)}
                   >
                     Текущий
                   </Button>
@@ -254,7 +254,7 @@ export const PvPLeaderboard: React.FC<PvPLeaderboardProps> = ({ currentWallet, r
                     variant={selectedSeason?.id === s.id ? "default" : "outline"}
                     size="sm"
                     className="text-[10px] h-6 px-2"
-                    onClick={() => loadSeasonLeaderboard(s)}
+                    onClick={() => loadSeasonLeaderboard(s, rarityTier)}
                   >
                     #{s.season_number}
                   </Button>

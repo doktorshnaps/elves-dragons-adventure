@@ -30,10 +30,11 @@ async function finalizeMatchByTimeout(
   const loserId = winnerId === match.player1_wallet ? match.player2_wallet : match.player1_wallet;
   const reward = match.entry_fee * 2 - 10;
 
-  // Dynamic Elo — delegated entirely to DB function
+  // Dynamic Elo — delegated entirely to DB function (per-league rating)
   const { data: eloChange, error: eloError } = await supabase.rpc('update_pvp_elo', {
     p_winner_wallet: winnerId,
     p_loser_wallet: loserId,
+    p_rarity_tier: match.rarity_tier ?? 1,
   });
 
   if (eloError) {

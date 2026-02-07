@@ -48,6 +48,7 @@ export interface SeasonLeaderboardEntry {
   matches_played: number;
   win_streak: number;
   best_win_streak: number;
+  rarity_tier?: number;
 }
 
 export function usePvPSeason() {
@@ -131,11 +132,15 @@ export function usePvPSeason() {
     return () => clearInterval(interval);
   }, [activeSeason]);
 
-  const fetchSeasonLeaderboard = useCallback(async (seasonId: string, limit = 50): Promise<SeasonLeaderboardEntry[]> => {
-    const { data, error } = await supabase.rpc("get_pvp_season_leaderboard", {
+  const fetchSeasonLeaderboard = useCallback(async (seasonId: string, limit = 50, rarityTier?: number): Promise<SeasonLeaderboardEntry[]> => {
+    const params: any = {
       p_season_id: seasonId,
       p_limit: limit,
-    });
+    };
+    if (rarityTier !== undefined) {
+      params.p_rarity_tier = rarityTier;
+    }
+    const { data, error } = await supabase.rpc("get_pvp_season_leaderboard", params);
 
     if (error) {
       console.error("Error fetching season leaderboard:", error);
