@@ -1,6 +1,7 @@
 import { motion } from 'framer-motion';
 import { useState, useEffect } from 'react';
 import { useBattleSpeed } from '@/contexts/BattleSpeedContext';
+import { getDiceDescription, getDicePercentage } from '@/utils/diceFormula';
 
 interface InlineDiceDisplayProps {
   isRolling: boolean;
@@ -16,7 +17,8 @@ export const InlineDiceDisplay = ({
   isRolling,
   diceValue,
   isAttacker,
-  label
+  label,
+  damage
 }: InlineDiceDisplayProps) => {
   const { adjustDelay } = useBattleSpeed();
   const [displayValue, setDisplayValue] = useState<number>(1);
@@ -77,13 +79,19 @@ export const InlineDiceDisplay = ({
           isAttacker 
             ? 'bg-red-500/90 border-red-300 shadow-red-500/50' 
             : 'bg-blue-500/90 border-blue-300 shadow-blue-500/50'
-        } backdrop-blur-sm rounded-lg p-1.5 sm:p-2.5 shadow-xl border sm:border-2 w-14 sm:w-20 h-[52px] sm:h-[76px] flex flex-col justify-center`}>
+        } backdrop-blur-sm rounded-lg p-1.5 sm:p-2.5 shadow-xl border sm:border-2 w-14 sm:w-20 h-[68px] sm:h-[92px] flex flex-col justify-center`}>
           <div className={`text-[9px] sm:text-xs ${isAttacker ? 'text-red-100' : 'text-blue-100'} mb-0.5 text-center font-medium`}>
             {isAttacker ? '⚔️' : '🛡️'} {label || (isAttacker ? 'Атака' : 'Защита')}
           </div>
           <div className="text-xl sm:text-3xl font-bold text-white text-center">
             {isActive ? displayValue : '?'}
           </div>
+          {/* Показываем процент урона после остановки кубика */}
+          {isResultVisible && diceValue !== null && (
+            <div className={`text-[8px] sm:text-[10px] font-semibold text-center mt-0.5 ${getDiceDescription(diceValue).color}`}>
+              {getDicePercentage(diceValue)}%{damage !== undefined && damage > 0 ? ` (${damage})` : ''}
+            </div>
+          )}
         </div>
       </motion.div>
     </div>
