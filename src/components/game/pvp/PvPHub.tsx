@@ -217,15 +217,28 @@ export const PvPHub: React.FC = () => {
               {rating && (() => {
                 const reward = getPlayerTierReward(rating.elo);
                 const leagueReward = getPlayerLeagueReward(selectedRarityTier);
+                const tierBonusRewards = reward ? (activeSeason?.rewards_config?.[reward.tierName] as any)?.bonus_rewards : [];
+                const leagueBonusRewards = leagueReward ? (activeSeason?.league_rewards_config?.[String(selectedRarityTier)] as any)?.bonus_rewards : [];
+                const allBonusRewards = [...(tierBonusRewards || []), ...(leagueBonusRewards || [])];
                 return (
-                  <div className="mt-1 text-xs text-muted-foreground">
-                    {reward && (
-                      <span>Тир: <span className="text-yellow-500 font-medium">{reward.ellReward} ELL</span></span>
+                  <div className="mt-1 space-y-0.5">
+                    <div className="text-xs text-muted-foreground">
+                      {reward && (
+                        <span>Тир: <span className="text-yellow-500 font-medium">{reward.ellReward} ELL</span></span>
+                      )}
+                      {leagueReward && leagueReward.ellReward > 0 && (
+                        <span className="ml-2">Лига ★{selectedRarityTier}: <span className="text-yellow-500 font-medium">+{leagueReward.ellReward} ELL</span></span>
+                      )}
+                    </div>
+                    {allBonusRewards.length > 0 && (
+                      <div className="flex flex-wrap gap-1">
+                        {allBonusRewards.map((br: any, i: number) => (
+                          <span key={i} className="text-[10px] bg-muted/50 px-1.5 py-0.5 rounded text-muted-foreground">
+                            +{br.name}{br.quantity > 1 ? ` ×${br.quantity}` : ""}
+                          </span>
+                        ))}
+                      </div>
                     )}
-                    {leagueReward && leagueReward.ellReward > 0 && (
-                      <span className="ml-2">Лига ★{selectedRarityTier}: <span className="text-yellow-500 font-medium">+{leagueReward.ellReward} ELL</span></span>
-                    )}
-                    {reward?.bonusCard && <span className="ml-1">(+карта)</span>}
                   </div>
                 );
               })()}

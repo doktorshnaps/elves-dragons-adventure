@@ -10,6 +10,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useWalletContext } from "@/contexts/WalletConnectContext";
 import { usePvPSeason, PvPSeason, SeasonLeaderboardEntry } from "@/hooks/usePvPSeason";
 import { toast } from "sonner";
+import { BonusRewardEditor, BonusRewardDisplay, BonusReward } from "./BonusRewardEditor";
 
 const TIER_LABELS: Record<string, string> = {
   bronze: "Бронза",
@@ -268,29 +269,39 @@ export const PvPSeasonAdmin: React.FC = () => {
 
                 <div className="grid gap-2">
                   {Object.entries(editingRewards ? editRewards : (activeSeason.rewards_config as typeof DEFAULT_REWARDS_CONFIG)).map(([tierKey, rawConfig]) => {
-                    const config = rawConfig as { icon?: string; min_elo: number; max_elo: number; ell_reward: number; bonus_card?: string | boolean; title?: boolean };
+                    const config = rawConfig as any;
                     return (
-                      <div key={tierKey} className="flex items-center gap-3 p-2 bg-white/5 rounded-lg">
-                        <div className="w-20 text-sm text-white/80">
-                          {config.icon || "•"} {TIER_LABELS[tierKey] || tierKey}
-                        </div>
-                        <div className="text-xs text-white/50 w-24">
-                          {config.min_elo}-{config.max_elo === 99999 ? "∞" : config.max_elo}
+                      <div key={tierKey} className="p-2 bg-white/5 rounded-lg space-y-1">
+                        <div className="flex items-center gap-3">
+                          <div className="w-20 text-sm text-white/80">
+                            {config.icon || "•"} {TIER_LABELS[tierKey] || tierKey}
+                          </div>
+                          <div className="text-xs text-white/50 w-24">
+                            {config.min_elo}-{config.max_elo === 99999 ? "∞" : config.max_elo}
+                          </div>
+                          {editingRewards ? (
+                            <Input
+                              type="number"
+                              value={config.ell_reward}
+                              onChange={e => updateRewardValue(tierKey, "ell_reward", parseInt(e.target.value) || 0)}
+                              className="w-24 h-7 text-xs"
+                            />
+                          ) : (
+                            <div className="text-yellow-400 text-sm font-medium">{config.ell_reward} ELL</div>
+                          )}
                         </div>
                         {editingRewards ? (
-                          <Input
-                            type="number"
-                            value={config.ell_reward}
-                            onChange={e => updateRewardValue(tierKey, "ell_reward", parseInt(e.target.value) || 0)}
-                            className="w-24 h-7 text-xs"
+                          <BonusRewardEditor
+                            rewards={config.bonus_rewards || []}
+                            onChange={(rewards) => {
+                              setEditRewards(prev => ({
+                                ...prev,
+                                [tierKey]: { ...prev[tierKey as keyof typeof prev], bonus_rewards: rewards },
+                              }));
+                            }}
                           />
                         ) : (
-                          <div className="text-yellow-400 text-sm font-medium">{config.ell_reward} ELL</div>
-                        )}
-                        {config.bonus_card && (
-                          <Badge variant="outline" className="text-[10px]">
-                            +карта {typeof config.bonus_card === "string" ? config.bonus_card : ""}
-                          </Badge>
+                          <BonusRewardDisplay rewards={config.bonus_rewards} />
                         )}
                       </div>
                     );
@@ -324,23 +335,41 @@ export const PvPSeasonAdmin: React.FC = () => {
                     (activeSeason.league_rewards_config && Object.keys(activeSeason.league_rewards_config).length > 0)
                       ? activeSeason.league_rewards_config as typeof DEFAULT_LEAGUE_REWARDS_CONFIG
                       : DEFAULT_LEAGUE_REWARDS_CONFIG
-                  )).map(([leagueKey, config]) => (
-                    <div key={leagueKey} className="flex items-center gap-3 p-2 bg-white/5 rounded-lg">
-                      <div className="w-28 text-sm text-white/80">
-                        ★{leagueKey} {LEAGUE_NAMES[leagueKey] || config.name}
+                  )).map(([leagueKey, config]) => {
+                    const leagueConfig = config as any;
+                    return (
+                      <div key={leagueKey} className="p-2 bg-white/5 rounded-lg space-y-1">
+                        <div className="flex items-center gap-3">
+                          <div className="w-28 text-sm text-white/80">
+                            ★{leagueKey} {LEAGUE_NAMES[leagueKey] || leagueConfig.name}
+                          </div>
+                          {editingLeagueRewards ? (
+                            <Input
+                              type="number"
+                              value={leagueConfig.ell_reward}
+                              onChange={e => updateLeagueRewardValue(leagueKey, parseInt(e.target.value) || 0)}
+                              className="w-24 h-7 text-xs"
+                            />
+                          ) : (
+                            <div className="text-yellow-400 text-sm font-medium">{leagueConfig.ell_reward} ELL</div>
+                          )}
+                        </div>
+                        {editingLeagueRewards ? (
+                          <BonusRewardEditor
+                            rewards={leagueConfig.bonus_rewards || []}
+                            onChange={(rewards) => {
+                              setEditLeagueRewards(prev => ({
+                                ...prev,
+                                [leagueKey]: { ...prev[leagueKey], bonus_rewards: rewards },
+                              }));
+                            }}
+                          />
+                        ) : (
+                          <BonusRewardDisplay rewards={leagueConfig.bonus_rewards} />
+                        )}
                       </div>
-                      {editingLeagueRewards ? (
-                        <Input
-                          type="number"
-                          value={config.ell_reward}
-                          onChange={e => updateLeagueRewardValue(leagueKey, parseInt(e.target.value) || 0)}
-                          className="w-24 h-7 text-xs"
-                        />
-                      ) : (
-                        <div className="text-yellow-400 text-sm font-medium">{config.ell_reward} ELL</div>
-                      )}
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
 
                 {editingLeagueRewards && (
@@ -417,44 +446,66 @@ export const PvPSeasonAdmin: React.FC = () => {
             <Label className="text-white/70 text-xs mb-2 block">Награды по тирам (ELL)</Label>
             <div className="grid gap-2">
               {Object.entries(rewardsConfig).map(([tierKey, config]) => (
-                <div key={tierKey} className="flex items-center gap-3 p-2 bg-white/5 rounded-lg">
-                  <div className="w-20 text-sm text-white/80">{config.icon} {TIER_LABELS[tierKey]}</div>
-                  <div className="text-xs text-white/50 w-24">{config.min_elo}-{config.max_elo === 99999 ? "∞" : config.max_elo}</div>
-                  <Input
-                    type="number"
-                    value={config.ell_reward}
-                    onChange={e => {
+                <div key={tierKey} className="p-2 bg-white/5 rounded-lg space-y-1">
+                  <div className="flex items-center gap-3">
+                    <div className="w-20 text-sm text-white/80">{config.icon} {TIER_LABELS[tierKey]}</div>
+                    <div className="text-xs text-white/50 w-24">{config.min_elo}-{config.max_elo === 99999 ? "∞" : config.max_elo}</div>
+                    <Input
+                      type="number"
+                      value={config.ell_reward}
+                      onChange={e => {
+                        setRewardsConfig(prev => ({
+                          ...prev,
+                          [tierKey]: { ...prev[tierKey as keyof typeof prev], ell_reward: parseInt(e.target.value) || 0 },
+                        }));
+                      }}
+                      className="w-24 h-7 text-xs"
+                    />
+                    <span className="text-xs text-white/50">ELL</span>
+                  </div>
+                  <BonusRewardEditor
+                    rewards={(config as any).bonus_rewards || []}
+                    onChange={(rewards) => {
                       setRewardsConfig(prev => ({
                         ...prev,
-                        [tierKey]: { ...prev[tierKey as keyof typeof prev], ell_reward: parseInt(e.target.value) || 0 },
+                        [tierKey]: { ...prev[tierKey as keyof typeof prev], bonus_rewards: rewards },
                       }));
                     }}
-                    className="w-24 h-7 text-xs"
                   />
-                  <span className="text-xs text-white/50">ELL</span>
                 </div>
               ))}
             </div>
           </div>
 
           <div>
-            <Label className="text-white/70 text-xs mb-2 block">Награды по лигам (ELL)</Label>
+            <Label className="text-white/70 text-xs mb-2 block">Награды по лигам</Label>
             <div className="grid gap-2">
               {Object.entries(leagueRewardsConfig).map(([leagueKey, config]) => (
-                <div key={leagueKey} className="flex items-center gap-3 p-2 bg-white/5 rounded-lg">
-                  <div className="w-28 text-sm text-white/80">★{leagueKey} {LEAGUE_NAMES[leagueKey]}</div>
-                  <Input
-                    type="number"
-                    value={config.ell_reward}
-                    onChange={e => {
+                <div key={leagueKey} className="p-2 bg-white/5 rounded-lg space-y-1">
+                  <div className="flex items-center gap-3">
+                    <div className="w-28 text-sm text-white/80">★{leagueKey} {LEAGUE_NAMES[leagueKey]}</div>
+                    <Input
+                      type="number"
+                      value={config.ell_reward}
+                      onChange={e => {
+                        setLeagueRewardsConfig(prev => ({
+                          ...prev,
+                          [leagueKey]: { ...prev[leagueKey], ell_reward: parseInt(e.target.value) || 0 },
+                        }));
+                      }}
+                      className="w-24 h-7 text-xs"
+                    />
+                    <span className="text-xs text-white/50">ELL</span>
+                  </div>
+                  <BonusRewardEditor
+                    rewards={(config as any).bonus_rewards || []}
+                    onChange={(rewards) => {
                       setLeagueRewardsConfig(prev => ({
                         ...prev,
-                        [leagueKey]: { ...prev[leagueKey], ell_reward: parseInt(e.target.value) || 0 },
+                        [leagueKey]: { ...prev[leagueKey], bonus_rewards: rewards },
                       }));
                     }}
-                    className="w-24 h-7 text-xs"
                   />
-                  <span className="text-xs text-white/50">ELL</span>
                 </div>
               ))}
             </div>
