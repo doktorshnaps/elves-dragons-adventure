@@ -102,6 +102,11 @@ export const SettingsMenu = () => {
                 }}
                 autoFocus
               />
+              <p className="text-[9px] text-yellow-400/70 leading-tight">
+                ⚠️ {language === 'ru' 
+                  ? 'Оскорбительные имена запрещены. Нарушение — блокировка аккаунта.' 
+                  : 'Offensive names are prohibited. Violation may result in account ban.'}
+              </p>
               <div className="flex items-center justify-between">
                 <span className="text-[10px] text-white/40">{nameInput.length}/20</span>
                 <div className="flex gap-1">
