@@ -3870,6 +3870,7 @@ export type Database = {
         Returns: Json
       }
       get_clan_leaderboard: { Args: never; Returns: Json }
+      get_clan_profile: { Args: { p_clan_id: string }; Returns: Json }
       get_clan_requests: { Args: { p_wallet: string }; Returns: Json }
       get_current_user_wallet: { Args: never; Returns: string }
       get_display_names: { Args: { p_wallets: string[] }; Returns: Json }
