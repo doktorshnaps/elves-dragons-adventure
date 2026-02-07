@@ -575,7 +575,7 @@ export const AdminConsole = () => {
       addOutput(`Ошибка выдачи карты: ${error.message}`);
     } else {
       addOutput(`✅ Карта "${cardData.name}" выдана игроку ${displayTarget}`);
-      addOutput(`Тип: ${cardData.type === 'character' ? 'Герой' : 'Дракон'} | Фракция: ${cardData.faction} | Редкость: ${cardData.rarity}`);
+      addOutput(`Тип: ${cardData.type === 'hero' ? 'Герой' : 'Дракон'} | Фракция: ${cardData.faction} | Редкость: ${cardData.rarity}`);
       addOutput(`Сила: ${cardData.power} | Защита: ${cardData.defense} | Здоровье: ${cardData.health} | Магия: ${cardData.magic}`);
       toast({
         title: "Карта выдана",
