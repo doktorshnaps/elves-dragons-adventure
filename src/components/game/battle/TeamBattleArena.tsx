@@ -110,11 +110,13 @@ export const TeamBattleArena: React.FC<TeamBattleArenaProps> = ({
   const alivePairs = playerPairs.filter(pair => pair.health > 0);
   const aliveOpponents = opponents.filter(opp => opp.health > 0);
   const handleAttack = () => {
+    if (isAttacking) return; // Block repeated clicks
     if (selectedPair && selectedTarget !== null && typeof selectedTarget === 'number') {
       const pairId = selectedPair;
       const targetId = selectedTarget;
       
       console.log('🎬 [UI] handleAttack: starting player attack flow');
+      setIsAttacking(true); // Lock immediately
       
       // Просто вызываем атаку, все таймиги управляются из useTeamBattle
       onAttack(pairId, targetId);
@@ -125,6 +127,7 @@ export const TeamBattleArena: React.FC<TeamBattleArenaProps> = ({
         setSelectedTarget(null);
         setAttackingPair(null);
         setAttackedTarget(null);
+        setIsAttacking(false); // Unlock after cycle
       }, adjustDelay(4500));
     }
   };
@@ -633,7 +636,7 @@ export const TeamBattleArena: React.FC<TeamBattleArenaProps> = ({
                     {isPlayerTurn && !autoBattle ? (
                       <Button 
                         onClick={handleAttack} 
-                        disabled={!selectedPair || selectedTarget === null || typeof selectedTarget === 'string'} 
+                        disabled={isAttacking || !selectedPair || selectedTarget === null || typeof selectedTarget === 'string'} 
                         size="sm" 
                         variant="menu"
                         className="h-5 sm:h-6 px-1.5 sm:px-2 text-[10px] sm:text-xs flex-shrink-0"
