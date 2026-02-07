@@ -80,8 +80,12 @@ export const ClanSearch = ({ onSearch, onJoin, hasClan }: ClanSearchProps) => {
             <div key={clan.id} className="bg-black/40 backdrop-blur-sm border border-white/10 rounded-xl p-4">
               <div className="flex items-start justify-between">
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-lg bg-amber-600/30 border border-amber-500/50 flex items-center justify-center">
-                    <Shield className="w-5 h-5 text-amber-400" />
+                  <div className="w-10 h-10 rounded-lg bg-amber-600/30 border border-amber-500/50 flex items-center justify-center overflow-hidden">
+                    {clan.emblem?.startsWith('http') ? (
+                      <img src={clan.emblem} alt="" className="w-full h-full object-cover" />
+                    ) : (
+                      <Shield className="w-5 h-5 text-amber-400" />
+                    )}
                   </div>
                   <div>
                     <div className="font-bold text-white">{clan.name}</div>
