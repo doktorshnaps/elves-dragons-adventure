@@ -420,28 +420,25 @@ export const usePvP = (walletAddress: string | null, currentRarityTier: number =
   const checkExistingQueue = useCallback(async () => {
     if (!walletAddress) return;
 
-    const { data, error } = await supabase
-      .from('pvp_queue')
-      .select('*')
-      .eq('wallet_address', walletAddress)
-      .eq('status', 'searching')
-      .gt('expires_at', new Date().toISOString())
-      .maybeSingle();
+    const { data, error } = await supabase.rpc('get_my_queue_entry', {
+      p_wallet: walletAddress
+    });
 
-    if (!error && data) {
-      const joinedAt = new Date(data.joined_at).getTime();
+    const entry = data as any;
+    if (!error && entry) {
+      const joinedAt = new Date(entry.joined_at).getTime();
       const now = Date.now();
       const elapsedSeconds = Math.floor((now - joinedAt) / 1000);
       
-      const teamSnapshot = data.team_snapshot;
-      const rarityTier = data.rarity_tier;
+      const teamSnapshot = entry.team_snapshot;
+      const rarityTier = entry.rarity_tier;
 
       // Initialize ref counter with elapsed time
       searchTimeCounterRef.current = elapsedSeconds;
       
       setQueueStatus({
         isSearching: true,
-        queueId: data.id,
+        queueId: entry.id,
         searchTime: elapsedSeconds,
         status: 'searching',
         rarityTier,
@@ -461,7 +458,7 @@ export const usePvP = (walletAddress: string | null, currentRarityTier: number =
         }));
       }, 1000);
 
-      startMatchmaking(data.id, rarityTier, teamSnapshot);
+      startMatchmaking(entry.id, rarityTier, teamSnapshot);
     }
   }, [walletAddress, startMatchmaking]);
 

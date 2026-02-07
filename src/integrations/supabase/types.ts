@@ -2723,7 +2723,21 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      profiles_public: {
+        Row: {
+          display_name: string | null
+          wallet_address: string | null
+        }
+        Insert: {
+          display_name?: string | null
+          wallet_address?: string | null
+        }
+        Update: {
+          display_name?: string | null
+          wallet_address?: string | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       add_card_to_forge_bay: {
@@ -4009,6 +4023,7 @@ export type Database = {
         }[]
       }
       get_my_clan: { Args: { p_wallet: string }; Returns: Json }
+      get_my_queue_entry: { Args: { p_wallet: string }; Returns: Json }
       get_nft_card_instances_by_wallet: {
         Args: { p_wallet_address: string }
         Returns: {

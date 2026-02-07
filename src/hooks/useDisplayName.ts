@@ -15,11 +15,11 @@ export const useDisplayName = () => {
     queryFn: async () => {
       if (!accountId) return null;
       const { data } = await supabase
-        .from('profiles')
+        .from('profiles_public' as any)
         .select('display_name')
         .eq('wallet_address', accountId)
         .maybeSingle();
-      return data?.display_name || null;
+      return (data as any)?.display_name || null;
     },
     enabled: !!accountId,
     staleTime: 5 * 60 * 1000,
