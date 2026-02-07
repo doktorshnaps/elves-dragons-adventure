@@ -715,7 +715,7 @@ export const PvPBattleArena: React.FC<PvPBattleArenaProps> = ({
   const rollResultInfo = lastRoll ? getDiceResultDescription(lastRoll.attackerRoll) : null;
 
   return (
-    <div ref={battleContainerRef} className="w-full h-full flex flex-col space-y-1 sm:space-y-2 p-1 sm:p-2 relative overflow-y-auto overflow-x-hidden">
+    <div ref={battleContainerRef} className="w-full flex flex-col space-y-1 sm:space-y-2 p-1 sm:p-2 relative">
       {/* Attack Animation Overlay - positioned over entire battle area */}
       <AttackAnimation 
         isActive={attackAnimation.isActive}
@@ -822,7 +822,7 @@ export const PvPBattleArena: React.FC<PvPBattleArenaProps> = ({
         </CardHeader>
       </Card>
 
-      <div className="flex-1 flex flex-col space-y-1 sm:space-y-2 min-h-0">
+      <div className="flex flex-col space-y-1 sm:space-y-2">
         {/* My Team - Upper Part */}
         <Card variant="menu" className="flex-shrink-0" style={{ boxShadow: "-33px 15px 10px rgba(0, 0, 0, 0.6)" }}>
           <CardContent className="overflow-x-hidden p-0.5 sm:p-1 pt-1 sm:pt-2">
