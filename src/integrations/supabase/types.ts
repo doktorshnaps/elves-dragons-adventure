@@ -605,6 +605,7 @@ export type Database = {
       }
       clans: {
         Row: {
+          background_image: string | null
           created_at: string | null
           description: string | null
           emblem: string | null
@@ -619,6 +620,7 @@ export type Database = {
           updated_at: string | null
         }
         Insert: {
+          background_image?: string | null
           created_at?: string | null
           description?: string | null
           emblem?: string | null
@@ -633,6 +635,7 @@ export type Database = {
           updated_at?: string | null
         }
         Update: {
+          background_image?: string | null
           created_at?: string | null
           description?: string | null
           emblem?: string | null
@@ -4530,6 +4533,14 @@ export type Database = {
           p_wallet_address: string
         }
         Returns: boolean
+      }
+      update_clan_customization: {
+        Args: {
+          p_background_image?: string
+          p_emblem?: string
+          p_wallet: string
+        }
+        Returns: Json
       }
       update_daily_quest_progress: {
         Args: {
