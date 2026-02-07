@@ -597,6 +597,7 @@ export const TeamBattleArena: React.FC<TeamBattleArenaProps> = ({
                     {autoBattle ? t(language, 'battlePage.stopAutoBattle') : t(language, 'battlePage.autoBattle')}
                   </Button>
                 </div>
+                </div>
               </div>
             </CardContent>
           </Card>
