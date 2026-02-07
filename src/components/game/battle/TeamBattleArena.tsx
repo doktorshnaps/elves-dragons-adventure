@@ -576,12 +576,14 @@ export const TeamBattleArena: React.FC<TeamBattleArenaProps> = ({
                     )}
                   </div>
 
-                  {/* Подсказки только в ход игрока */}
-                  {isPlayerTurn && !autoBattle && selectedPair && !selectedTarget && (
-                    <div className="text-[10px] sm:text-xs text-white/70">
-                      {t(language, 'battlePage.selectTarget')}
-                    </div>
-                  )}
+                {/* D6 Legend */}
+                <div className="text-[7px] sm:text-[10px] text-white/50 flex flex-wrap justify-center gap-x-1.5 gap-y-0">
+                  <span className="text-red-400">1:Контратака</span>
+                  <span className="text-orange-400">2:Промах</span>
+                  <span className="text-yellow-400">3:50%</span>
+                  <span className="text-green-400">4:100%</span>
+                  <span className="text-blue-400">5:150%</span>
+                  <span className="text-purple-400">6:200%</span>
                 </div>
 
                 <div className="flex gap-0.5 sm:gap-1 justify-center">
