@@ -45,14 +45,22 @@ export async function initSelector({
       console.warn('⚠️ Telegram auto-open observer failed:', e);
     }
     
-    // Безопасный перехват window.open
+    // Безопасный перехват window.open с защитой от рекурсии
     try {
       const originalOpen = window.open;
+      let isIntercepting = false;
       window.open = function (url: any, target?: any, features?: any) {
+        // ✅ FIX: Re-entry guard to prevent window.open -> tg.openLink -> window.open infinite loop
+        if (isIntercepting) return originalOpen.call(window, url, target, features);
         if (typeof url === 'string' && (isProviderUrl(url) || isTelegramDeepLink(url))) {
           console.log('🔗 Telegram redirect intercepted (window.open):', url);
           const redirectUrl = isTelegramDeepLink(url) ? url : withTelegramParam(url);
-          tg.openLink(redirectUrl);
+          isIntercepting = true;
+          try {
+            tg.openLink(redirectUrl);
+          } finally {
+            isIntercepting = false;
+          }
           return null;
         }
         return originalOpen.call(window, url, target, features);
