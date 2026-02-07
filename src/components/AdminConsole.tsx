@@ -162,7 +162,8 @@ export const AdminConsole = () => {
 
     const { error } = await supabase.rpc('admin_add_balance_by_id', {
       p_target_user_id: userId,
-      p_amount: amount
+      p_amount: amount,
+      p_admin_wallet_address: accountId
     });
 
     if (error) {
@@ -197,7 +198,8 @@ export const AdminConsole = () => {
 
     const { error } = await supabase.rpc('admin_ban_user_by_id', {
       p_target_user_id: userId,
-      p_reason: reason
+      p_reason: reason,
+      p_admin_wallet_address: accountId
     });
 
     if (error) {
@@ -231,7 +233,8 @@ export const AdminConsole = () => {
     }
 
     const { error } = await supabase.rpc('admin_unban_user_by_id', {
-      p_target_user_id: userId
+      p_target_user_id: userId,
+      p_admin_wallet_address: accountId
     });
 
     if (error) {
@@ -261,7 +264,8 @@ export const AdminConsole = () => {
     }
 
     const { data, error } = await supabase.rpc('admin_get_user_info', {
-      p_user_id: userId
+      p_user_id: userId,
+      p_admin_wallet_address: accountId
     });
 
     if (error) {
@@ -288,7 +292,8 @@ export const AdminConsole = () => {
     const walletAddress = parts[1];
 
     const { data, error } = await supabase.rpc('admin_find_user_by_wallet', {
-      p_wallet_address: walletAddress
+      p_wallet_address: walletAddress,
+      p_admin_wallet_address: accountId
     });
 
     if (error) {
@@ -333,7 +338,8 @@ export const AdminConsole = () => {
     }
 
     const { data, error } = await supabase.rpc('admin_get_player_cards', {
-      p_target_wallet_address: userData.wallet_address
+      p_target_wallet_address: userData.wallet_address,
+      p_admin_wallet_address: accountId
     });
 
     if (error) {
@@ -398,7 +404,8 @@ export const AdminConsole = () => {
     }
 
     const { data, error } = await supabase.rpc('admin_get_player_inventory', {
-      p_target_wallet_address: userData.wallet_address
+      p_target_wallet_address: userData.wallet_address,
+      p_admin_wallet_address: accountId
     });
 
     if (error) {
@@ -461,7 +468,8 @@ export const AdminConsole = () => {
 
     const { error } = await supabase.rpc('admin_set_player_balance', {
       p_target_wallet_address: userData.wallet_address,
-      p_new_balance: amount
+      p_new_balance: amount,
+      p_admin_wallet_address: accountId
     });
 
     if (error) {
@@ -501,7 +509,8 @@ export const AdminConsole = () => {
     } else {
       const { data: userData, error: userError } = await supabase
         .rpc('admin_find_user_by_wallet', {
-          p_wallet_address: target
+          p_wallet_address: target,
+          p_admin_wallet_address: accountId
         });
 
       if (userError || !userData || userData.length === 0) {
@@ -565,7 +574,8 @@ export const AdminConsole = () => {
     const { error } = await supabase.rpc('admin_give_player_card', {
       p_target_wallet_address: targetUserData.wallet_address,
       p_card_template_id: dbCard.name,
-      p_card_data: cardData
+      p_card_data: cardData,
+      p_admin_wallet_address: accountId
     });
 
     if (error) {
@@ -640,7 +650,8 @@ export const AdminConsole = () => {
 
     const { error } = await supabase.rpc('admin_give_player_item', {
       p_target_wallet_address: targetUserData.wallet_address,
-      p_template_id: templateData.id
+      p_template_id: templateData.id,
+      p_admin_wallet_address: accountId
     });
 
     if (error) {
@@ -679,7 +690,8 @@ export const AdminConsole = () => {
     }
 
     const { error } = await supabase.rpc('admin_remove_player_card', {
-      p_card_instance_id: cardId
+      p_card_instance_id: cardId,
+      p_admin_wallet_address: accountId
     });
 
     if (error) {
@@ -710,7 +722,8 @@ export const AdminConsole = () => {
     }
 
     const { error } = await supabase.rpc('admin_remove_player_item', {
-      p_item_instance_id: itemId
+      p_item_instance_id: itemId,
+      p_admin_wallet_address: accountId
     });
 
     if (error) {
