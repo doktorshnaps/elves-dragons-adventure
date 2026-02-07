@@ -19,6 +19,7 @@ interface CardTemplate {
   card_name: string;
   card_type: string;
   rarity: number;
+  faction: string | null;
 }
 
 interface ItemTemplate {
@@ -77,7 +78,7 @@ export const BonusRewardEditor: React.FC<BonusRewardEditorProps> = ({ rewards, o
   const loadTemplates = async () => {
     setLoading(true);
     const [cardsRes, itemsRes] = await Promise.all([
-      supabase.from("card_templates").select("id, card_name, card_type, rarity").order("card_type").order("rarity").order("card_name"),
+      supabase.from("card_templates").select("id, card_name, card_type, rarity, faction").order("card_type").order("rarity").order("card_name"),
       supabase.from("item_templates").select("id, item_id, name, type, rarity").order("name"),
     ]);
     if (cardsRes.data) setCardTemplates(cardsRes.data);
@@ -200,7 +201,7 @@ export const BonusRewardEditor: React.FC<BonusRewardEditorProps> = ({ rewards, o
               ) : (
                 filteredCards.slice(0, 30).map(card => (
                   <SelectItem key={card.id} value={card.id} className="text-xs">
-                    {card.card_name} {RARITY_LABELS[card.rarity]}
+                    {card.card_name} {card.faction ? `[${card.faction}]` : ''} {RARITY_LABELS[card.rarity]}
                   </SelectItem>
                 ))
               )}
