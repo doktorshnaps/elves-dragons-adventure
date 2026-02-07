@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { useWalletContext } from '@/contexts/WalletConnectContext';
 import { useAdmin } from '@/contexts/AdminContext';
 import { supabase } from '@/integrations/supabase/client';
@@ -26,6 +26,7 @@ export const AdminConsole = () => {
   const [command, setCommand] = useState('');
   const [output, setOutput] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
+  const executingRef = useRef(false); // Guard against double execution
   const [maintenanceEnabled, setMaintenanceEnabled] = useState(false);
   const [maintenanceMessage, setMaintenanceMessage] = useState('');
 
@@ -89,6 +90,9 @@ export const AdminConsole = () => {
 
   const executeCommand = async () => {
     if (!command.trim()) return;
+    // Prevent double execution using ref (synchronous guard)
+    if (executingRef.current) return;
+    executingRef.current = true;
 
     setLoading(true);
     addOutput(`> ${command}`);
@@ -156,6 +160,7 @@ export const AdminConsole = () => {
       addOutput(`Ошибка: ${error.message}`);
     } finally {
       setLoading(false);
+      executingRef.current = false;
       setCommand('');
     }
   };
@@ -582,10 +587,11 @@ export const AdminConsole = () => {
         description: `Карта "${cardData.name}" выдана игроку`
       });
       
-      // Обновляем локальные данные игрока если это текущий пользователь
-      if (accountId === 'mr_bruts.tg') {
-        // Invalidate card instances cache to sync
-        queryClient.invalidateQueries({ queryKey: ['cardInstances'] });
+      // Invalidate card instances cache for the target wallet
+      queryClient.invalidateQueries({ queryKey: ['cardInstances', walletAddress] });
+      // Also invalidate for current user if they are the target
+      if (accountId && accountId !== walletAddress) {
+        queryClient.invalidateQueries({ queryKey: ['cardInstances', accountId] });
       }
     }
   };
