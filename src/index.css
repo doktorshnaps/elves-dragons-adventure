@@ -181,6 +181,15 @@
   background-blend-mode: multiply;
 }
 
+.bg-pvp {
+  background-color: hsl(220, 26%, 14%);
+  background-image: url('/images/pvp-arena-bg.webp');
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  background-attachment: fixed;
+}
+
 /* Gaming animations */
 @keyframes card-glow {
   0%, 100% {
