@@ -10,6 +10,7 @@ export interface ClanInfo {
   description: string | null;
   emblem: string;
   background_image: string | null;
+  header_background: string | null;
   level: number;
   experience: number;
   treasury_ell: number;

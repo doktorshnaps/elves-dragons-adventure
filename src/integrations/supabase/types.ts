@@ -610,6 +610,7 @@ export type Database = {
           description: string | null
           emblem: string | null
           experience: number | null
+          header_background: string | null
           id: string
           join_policy: string | null
           leader_wallet: string
@@ -625,6 +626,7 @@ export type Database = {
           description?: string | null
           emblem?: string | null
           experience?: number | null
+          header_background?: string | null
           id?: string
           join_policy?: string | null
           leader_wallet: string
@@ -640,6 +642,7 @@ export type Database = {
           description?: string | null
           emblem?: string | null
           experience?: number | null
+          header_background?: string | null
           id?: string
           join_policy?: string | null
           leader_wallet?: string
@@ -4534,14 +4537,24 @@ export type Database = {
         }
         Returns: boolean
       }
-      update_clan_customization: {
-        Args: {
-          p_background_image?: string
-          p_emblem?: string
-          p_wallet: string
-        }
-        Returns: Json
-      }
+      update_clan_customization:
+        | {
+            Args: {
+              p_background_image?: string
+              p_emblem?: string
+              p_wallet: string
+            }
+            Returns: Json
+          }
+        | {
+            Args: {
+              p_background_image?: string
+              p_emblem?: string
+              p_header_background?: string
+              p_wallet: string
+            }
+            Returns: Json
+          }
       update_daily_quest_progress: {
         Args: {
           p_increment?: number
