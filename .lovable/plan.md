@@ -1,138 +1,149 @@
 
+# Add League Rewards to PvP Seasons
 
-# PvP Seasons System
+## Context
 
-## What Already Exists
+Currently, season rewards are only configured by **Elo tiers** (Bronze through Legend, based on player rating). The user wants to also support **league rewards** -- based on which of the 8 rarity leagues (1-8) a player participates in. Admins should be able to configure both independently.
 
-The database already has strong foundations:
-- `pvp_seasons` table with `season_number`, `name`, `starts_at`, `ends_at`, `is_active`, `rewards_config` (JSONB with tier-based ELL/card rewards)
-- `pvp_ratings` table linked to seasons via `season_id`
-- `pvp_matches` table linked to seasons via `season_id`
-- Active Season 1 running ("Сезон 1: Начало") until April 23, 2026
-- `get_active_pvp_season()` function used throughout ELO calculations
+## Current State
 
-What's **missing**: admin management UI, season end-of-season leaderboard with rewards, and reward distribution logic.
+- `pvp_seasons.rewards_config` (JSONB) stores Elo tier rewards only:
+  ```text
+  { "bronze": { "min_elo": 0, "max_elo": 1199, "ell_reward": 500 }, ... }
+  ```
+- `pvp_ratings` has no league/rarity info -- just per-season Elo data
+- `pvp_matches` has `rarity_tier` (integer 1-8) for every match
+- Admin UI shows only tier rewards editing
+
+## Proposed Solution
+
+Add a second rewards dimension: **league rewards**. A player receives BOTH:
+1. **Tier reward** -- based on their final Elo (existing logic)
+2. **League reward** -- based on the highest rarity league they played in during the season (derived from `pvp_matches.rarity_tier`)
 
 ---
 
-## Plan Overview
+## Changes Overview
 
-### Part 1: Database -- Admin RPC Functions
+### 1. Database Migration
 
-Create a migration with 3 new RPC functions:
+**New column** on `pvp_seasons`:
+- `league_rewards_config jsonb DEFAULT '{}'` -- stores per-league rewards
 
-**`admin_create_pvp_season`** -- Create a new season with parameters:
-- `p_admin_wallet_address` (verified via `is_admin_or_super_wallet`)
-- `p_name` (season name, e.g. "Season 2: Dragons")
-- `p_duration_days` (how many days the season lasts)
-- `p_rewards_config` (JSONB with rewards per Elo tier)
-- Auto-increments `season_number`, sets `starts_at` = now, `ends_at` = now + duration
-- Deactivates any currently active season first
+Structure:
+```text
+{
+  "1": { "name": "Обычные",         "ell_reward": 0 },
+  "2": { "name": "Необычные",       "ell_reward": 100 },
+  "3": { "name": "Редкие",          "ell_reward": 300 },
+  "4": { "name": "Эпические",       "ell_reward": 500 },
+  "5": { "name": "Легендарные",     "ell_reward": 1000 },
+  "6": { "name": "Мифические",      "ell_reward": 2000 },
+  "7": { "name": "Божественные",    "ell_reward": 5000 },
+  "8": { "name": "Трансцендентные", "ell_reward": 10000 }
+}
+```
 
-**`admin_update_pvp_season`** -- Edit an existing season:
-- Update name, end date, rewards_config
-- Only allows edits while season is still active
+**Updated RPCs:**
 
-**`admin_end_pvp_season`** -- End season early and prepare results:
-- Sets `is_active = false`, `ends_at = now()`
-- Returns the season ID for reward distribution
+- `admin_create_pvp_season` -- accept `p_league_rewards_config jsonb` parameter
+- `admin_update_pvp_season` -- accept `p_league_rewards_config jsonb` parameter
+- `admin_distribute_season_rewards` -- after distributing tier rewards, also look up each player's highest `rarity_tier` from `pvp_matches` in the season and add the corresponding league reward
+- `get_pvp_season_leaderboard` -- no change needed (league info can be displayed client-side)
 
-**`get_pvp_season_leaderboard`** -- Get season results with rewards:
-- Accepts `p_season_id` (UUID)
-- Returns top players from `pvp_ratings` for that season, joined with the rewards_config to show what each tier earns
-- Includes: rank, wallet, elo, tier, wins, losses, win_rate, reward_ell, reward_bonus
+### 2. Admin Panel (`PvPSeasonAdmin.tsx`)
 
-**`admin_distribute_season_rewards`** -- Actually give out rewards:
-- Takes `p_admin_wallet_address` and `p_season_id`
-- Iterates through all players in that season's `pvp_ratings`
-- Based on each player's final `tier`, adds ELL via `add_ell_balance`
-- Marks the season as "rewards_distributed" (new boolean column) to prevent double distribution
+Split the rewards display into two sections:
 
-### Part 2: Schema Changes
+**Section A: "Награды по тирам" (existing)**
+- Same as now -- Elo tier rewards (Bronze through Legend)
+- Editable ELL amounts per tier
 
-Add one column to `pvp_seasons`:
-- `rewards_distributed boolean DEFAULT false` -- prevents double reward payout
+**Section B: "Награды по лигам" (new)**
+- 8 rows, one per rarity league
+- Each row shows: league number, league name (e.g., "Обычные ★1"), editable ELL reward
+- Same editing flow as tier rewards (edit/save buttons)
 
-### Part 3: Admin Panel Component
+Both sections appear in:
+- Current Season card (view + edit mode)
+- Create New Season form (configuration)
 
-Create `src/components/admin/PvPSeasonAdmin.tsx`:
+### 3. Hook (`usePvPSeason.ts`)
 
-- **Current Season Card**: Shows active season name, number, start/end dates, time remaining countdown
-- **Rewards Configuration**: Editable table/form showing each Elo tier (Bronze through Legend) with:
-  - Tier name and Elo range
-  - ELL reward amount (editable input)
-  - Bonus card rarity (select dropdown)
-  - Special title flag (checkbox for Legend tier)
-- **Create New Season**: Form with name, duration (days/hours), rewards config
-- **End Season Button**: Ends current season early with confirmation dialog
-- **Season History**: List of past seasons with their results
-- **Distribute Rewards Button**: For ended seasons, triggers reward distribution with progress indicator
+- Update `PvPSeason` interface to include `league_rewards_config`
+- Add `getPlayerLeagueReward(league: number)` function to look up the league reward for a given league number from the active season config
 
-### Part 4: Admin Panel Integration
+### 4. PvP Hub (`PvPHub.tsx`)
 
-Update `src/pages/AdminSettings.tsx`:
-- Add new "PvP Сезоны" tab trigger
-- Add `TabsContent` with `PvPSeasonAdmin` component
-- Add import for the new component
+Update the season banner to show both rewards:
+- Tier reward: existing display (e.g., "5000 ELL" based on Elo)
+- League reward: show the reward for the currently selected rarity tier (e.g., "Лига 4: +500 ELL")
 
-### Part 5: PvP Hub -- Season Info Display
+### 5. Leaderboard (`PvPLeaderboard.tsx`)
 
-Update `src/components/game/pvp/PvPHub.tsx`:
-- Add a **Season Banner** card at the top showing:
-  - Current season name and number
-  - Time remaining (countdown)
-  - Current tier rewards preview (what player earns at their current Elo tier)
-- Fetch active season data on mount via Supabase query
-
-### Part 6: Season Leaderboard in PvP Hub
-
-Update `src/components/game/pvp/PvPLeaderboard.tsx`:
-- Add a **"Season Results"** tab alongside the existing leaderboard
-- When a season has ended, show:
-  - Final rankings with positions
-  - Each player's tier and corresponding reward
-  - Highlight "Rewards distributed" or "Awaiting rewards" status
-- For the current season: show the live leaderboard with reward preview per tier
-
-### Part 7: Hook for Season Data
-
-Create `src/hooks/usePvPSeason.ts`:
-- Fetches active season info
-- Fetches season leaderboard for ended seasons
-- Provides countdown timer for season end
-- Caches via React Query with appropriate stale times
+In the season tab, show the combined reward (tier + league) for each player. Since we don't have per-player league data in the leaderboard RPC response, the tier reward column already works; the league reward can be shown as a general info banner at the top of the season tab.
 
 ---
 
 ## Technical Details
 
-### Rewards Config Structure (existing format, kept as-is)
+### Database Migration SQL
 
+1. Add column:
+   ```text
+   ALTER TABLE public.pvp_seasons
+   ADD COLUMN IF NOT EXISTS league_rewards_config jsonb DEFAULT '{}'::jsonb;
+   ```
+
+2. Update `admin_create_pvp_season`:
+   - Add parameter `p_league_rewards_config jsonb DEFAULT '{}'::jsonb`
+   - Store it in the INSERT
+
+3. Update `admin_update_pvp_season`:
+   - Add parameter `p_league_rewards_config jsonb DEFAULT NULL`
+   - Include in the UPDATE SET clause with COALESCE
+
+4. Update `admin_distribute_season_rewards`:
+   - After finding the tier reward for a player, also query:
+     ```text
+     SELECT MAX(rarity_tier) FROM pvp_matches
+     WHERE season_id = p_season_id
+       AND (player1_wallet = v_player.wallet_address OR player2_wallet = v_player.wallet_address)
+       AND status = 'completed'
+     ```
+   - Look up that max league in `league_rewards_config` and add to the player's reward
+   - Track `total_league_ell_distributed` in the return JSON
+
+### Files to Create/Edit
+
+| File | Action |
+|------|--------|
+| Migration SQL | Create -- new column + updated RPCs |
+| `src/hooks/usePvPSeason.ts` | Edit -- add `league_rewards_config` to types, add `getPlayerLeagueReward` |
+| `src/components/admin/PvPSeasonAdmin.tsx` | Edit -- add league rewards section to current season card and create form |
+| `src/components/game/pvp/PvPHub.tsx` | Edit -- show league reward in season banner |
+| `src/components/game/pvp/PvPLeaderboard.tsx` | Edit -- show league reward info in season tab |
+| `src/integrations/supabase/types.ts` | Edit -- update types for new column and RPC params |
+
+### Default League Rewards Config
+
+Used when creating a new season if admin doesn't customize:
 ```text
-{
-  "bronze":   { "icon": "...", "min_elo": 0,    "max_elo": 1199, "ell_reward": 500 },
-  "silver":   { "icon": "...", "min_elo": 1200, "max_elo": 1399, "ell_reward": 1500 },
-  "gold":     { "icon": "...", "min_elo": 1400, "max_elo": 1599, "ell_reward": 3000 },
-  "platinum": { "icon": "...", "min_elo": 1600, "max_elo": 1799, "ell_reward": 5000, "bonus_card": true },
-  "diamond":  { "icon": "...", "min_elo": 1800, "max_elo": 1999, "ell_reward": 10000, "bonus_card": "rare" },
-  "master":   { "icon": "...", "min_elo": 2000, "max_elo": 2199, "ell_reward": 20000, "bonus_card": "epic" },
-  "legend":   { "icon": "...", "min_elo": 2200, "max_elo": 99999, "ell_reward": 50000, "bonus_card": "legendary", "title": true }
-}
+League 1 (Обычные):         0 ELL
+League 2 (Необычные):       100 ELL
+League 3 (Редкие):          300 ELL
+League 4 (Эпические):       500 ELL
+League 5 (Легендарные):     1000 ELL
+League 6 (Мифические):      2000 ELL
+League 7 (Божественные):    5000 ELL
+League 8 (Трансцендентные): 10000 ELL
 ```
 
-### Files to Create
-- `src/components/admin/PvPSeasonAdmin.tsx` -- Admin season management component
-- `src/hooks/usePvPSeason.ts` -- Season data hook
-- Migration SQL file -- RPC functions + schema change
+### Reward Distribution Logic (Updated)
 
-### Files to Edit
-- `src/pages/AdminSettings.tsx` -- Add PvP Seasons tab
-- `src/components/game/pvp/PvPHub.tsx` -- Add season banner
-- `src/components/game/pvp/PvPLeaderboard.tsx` -- Add season results view
-- `src/integrations/supabase/types.ts` -- Update types for new column and RPCs
-
-### Key Design Decisions
-- Rewards are **not auto-distributed** at season end -- admin clicks a button to review and confirm, preventing accidents
-- Each season stores its own `rewards_config`, so historical seasons preserve what rewards were offered
-- The leaderboard for ended seasons queries `pvp_ratings` by `season_id`, showing the frozen final standings
-- Season banner in PvP Hub uses the existing `pvp_seasons` table data, no new tables needed
+For each player in the ended season:
+1. Find tier reward from `rewards_config` (by Elo range) -- existing
+2. Find highest league played from `pvp_matches` -- new
+3. Find league reward from `league_rewards_config` (by highest league) -- new
+4. Total reward = tier_reward + league_reward
+5. Call `add_ell_balance` with total
