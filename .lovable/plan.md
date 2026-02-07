@@ -1,115 +1,51 @@
 
 
-# Dynamic Elo (K-Factor by Rating Difference)
+# Auto-Select Cards in PvP
 
-## Problem
+## Current Behavior
+Each turn the player must:
+1. Click on one of their own pairs (attacker)
+2. Click on one of the opponent's pairs (target)
+3. Click "Атаковать"
 
-Currently the PvP system uses a flat +/-25 Elo change for every match, regardless of the skill gap between players. This creates unfair ranking:
+This means 3 clicks per turn, which can get tedious across many turns.
 
-- A Bronze player (1000 Elo) beating a Legend (2200 Elo) gains the same 25 points as beating another Bronze
-- A Legend losing to a Bronze loses only 25 points -- no real penalty for the upset
+## Proposed Solution
+Add a toggle "Автовыбор" in the action panel of the PvP battle. When enabled:
+- The system automatically selects the **first alive pair** as the attacker
+- The system automatically selects the **first alive opponent pair** as the target
+- The player only clicks "Атаковать"
 
-Standard competitive games use the **Expected Win Probability** formula to scale rewards based on the upset factor.
+The player can still manually override any selection by clicking a different card while auto-select is active. After the attack resolves and a new turn begins, auto-select re-applies.
 
-## How Dynamic Elo Works
+## How Auto-Select Picks Cards
 
-The standard Elo formula:
+| Role | Logic |
+|------|-------|
+| Attacker (my pair) | First pair with `currentHealth > 0` (by index) |
+| Target (opponent pair) | First pair with `currentHealth > 0` (by index) |
 
-```text
-Expected Win = 1 / (1 + 10^((OpponentElo - YourElo) / 400))
+This mirrors the bot's own targeting logic (first alive pair), keeping it simple and predictable.
 
-Winner gains: K * (1 - ExpectedWin)
-Loser loses:  K * ExpectedWin
-```
+## UI Changes
 
-Real-world examples with K=32:
+A toggle switch or button will appear next to the "Атаковать" button:
+- Label: "Автовыбор"
+- Visual: a small Switch component (from Radix UI, already installed)
+- When enabled, pairs are pre-selected with their usual highlight colors
+- The state persists throughout the match (saved in component state)
 
-```text
-Same skill (1500 vs 1500):
-  Expected = 0.50 -> Winner: +16, Loser: -16
+## Technical Details
 
-Upset (1200 beats 1800):
-  Expected = 0.09 -> Winner: +29, Loser: -29
+**File: `src/components/game/pvp/PvPBattleArena.tsx`**
 
-Stomp (1800 beats 1200):
-  Expected = 0.91 -> Winner: +3,  Loser: -3
-```
+1. Add a `useState<boolean>` for `autoSelect`, defaulting to `false`
+2. Add a `useEffect` that triggers when `isMyTurn` becomes `true` and `autoSelect` is on:
+   - Find the first alive pair in `myPairs` -> set as `selectedPair`
+   - Find the first alive pair in `opponentPairs` -> set as `selectedTarget`
+3. Also re-apply auto-select after `handleAttack` completes and the next turn data arrives (the existing `handleAttack` already resets `selectedPair`/`selectedTarget` to `null`, and the effect above will re-fill them when new turn data loads)
+4. Add a `Switch` + label in the action panel row, next to the attack button
+5. Manual card clicks still work and override auto-selection while toggle is on
 
-Additionally, K-factor itself can scale by tier to stabilize high-rank progression:
-
-```text
-Bronze-Gold (0-1599):    K = 32  (fast climbing)
-Platinum-Diamond (1600-1999): K = 24  (moderate)
-Master-Legend (2000+):   K = 16  (stable at top)
-```
-
-## Solution: Centralize in Database Function
-
-Instead of calculating Elo in Edge Functions, the DB function `update_pvp_elo` will read both players' ratings, compute the dynamic change, and return the result.
-
-```text
-BEFORE:
-  Edge Function -> hardcode eloChange=25 -> call update_pvp_elo(winner, loser, 25)
-
-AFTER:
-  Edge Function -> call update_pvp_elo(winner, loser) -> get back calculated change
-```
-
-## Changes
-
-### 1. Database Migration: Rewrite `update_pvp_elo`
-
-Replace the current function with a new version that:
-
-- Removes the `p_elo_change` parameter (no longer needed)
-- Reads current Elo of both players from `pvp_ratings`
-- Selects K-factor based on the player's tier bracket (32 / 24 / 16)
-- Calculates expected win probability using the standard formula
-- Applies asymmetric changes (winner and loser can gain/lose different amounts due to different K-factors)
-- Returns the calculated `elo_change` (average of winner gain and loser loss for match record)
-- Keeps bot/SKIP_BOT exclusion logic intact
-- For bot matches, uses a fixed K=32 with 1000 as assumed bot Elo
-
-### 2. Edge Function: `pvp-submit-move`
-
-Update all ~8 places where `eloChange = 25` is hardcoded:
-
-- Remove the hardcoded `const eloChange = 25;` lines
-- Call the updated `update_pvp_elo` RPC (without `p_elo_change` parameter)
-- Capture the returned `elo_change` value from the RPC result
-- Use the dynamic value when updating the `pvp_matches` record and in the API response
-
-Affected code paths (all inside `pvp-submit-move/index.ts`):
-- Line 190: surrender (PvP)
-- Line 335: bot wins (trigger_bot_turn)
-- Line 392: human wins via counterattack (trigger_bot_turn)
-- Line 613: attacker wins (normal PvP)
-- Line 683: attacker loses via counterattack (normal PvP)
-- Line 860: bot wins (inline bot turn)
-- Line 883: human wins via counterattack (inline bot turn)
-- Line 966: elo_change in response
-
-### 3. Edge Function: `pvp-process-timeout`
-
-Remove the duplicated inline Elo calculation and rating update logic (lines 42-108). Instead:
-
-- Call `update_pvp_elo` RPC like `pvp-submit-move` does
-- Use the returned `elo_change` for match record
-- Remove the manual `pvp_ratings` UPDATE queries (winner and loser)
-- Keep only the match status update and winner reward credit
-
-### 4. Update TypeScript Types
-
-Update `src/integrations/supabase/types.ts` to reflect the new function signature:
-- Remove `p_elo_change` from `update_pvp_elo` Args
-- Add return type for the calculated elo change
-
-## Summary of Files to Modify
-
-| File | Change |
-|------|--------|
-| New migration SQL | Rewrite `update_pvp_elo` with dynamic calculation and return value |
-| `supabase/functions/pvp-submit-move/index.ts` | Remove hardcoded 25, use RPC return value (~8 locations) |
-| `supabase/functions/pvp-process-timeout/index.ts` | Remove inline Elo logic, delegate to `update_pvp_elo` |
-| `src/integrations/supabase/types.ts` | Update function signature |
+**No backend changes required** -- this is purely a frontend UX improvement.
 
