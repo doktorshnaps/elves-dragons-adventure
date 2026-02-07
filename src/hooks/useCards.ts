@@ -1,6 +1,7 @@
 import { useMemo } from 'react';
 import { useCardInstancesContext } from '@/providers/CardInstancesProvider';
 import { Card, CardType } from '@/types/cards';
+import { normalizeCardType } from '@/utils/cardTypeNormalization';
 
 /**
  * ЕДИНЫЙ ИСТОЧНИК ПРАВДЫ ДЛЯ КАРТ
@@ -34,9 +35,8 @@ export const useCards = () => {
       .map(instance => {
         const rawCardData = instance.card_data as any;
         
-        // Normalize DB types (hero/dragon) to app types (character/pet)
         const rawType = rawCardData.type || instance.card_type || 'character';
-        const normalizedType = rawType === 'hero' ? 'character' : rawType === 'dragon' ? 'pet' : rawType;
+        const normalizedType = normalizeCardType(rawType);
         
         return {
           id: rawCardData.id || instance.card_template_id,

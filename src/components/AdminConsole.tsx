@@ -14,6 +14,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Terminal, DollarSign, Ban, UserCheck, Trash2 } from 'lucide-react';
 import { cardDatabase } from '@/data/cardDatabase';
 import { calculateCardStats } from '@/utils/cardUtils';
+import { toDbCardType } from '@/utils/cardTypeNormalization';
 import { adminCommandBalanceSchema, adminCommandBanSchema, uuidSchema, formatValidationErrors } from '@/utils/validationSchemas';
 import { z } from 'zod';
 import { useGameStore } from '@/stores/gameStore';
@@ -552,7 +553,7 @@ export const AdminConsole = () => {
     const stats = calculateCardStats(dbCard.name, rarityAsNumber, dbCard.type);
     
     // Map cardDatabase types to card_instances DB types
-    const dbCardType = dbCard.type === 'character' ? 'hero' : dbCard.type === 'pet' ? 'dragon' : dbCard.type;
+    const dbCardType = toDbCardType(dbCard.type);
     
     const cardData = {
       id: `admin-${Date.now()}-${Math.random()}`,

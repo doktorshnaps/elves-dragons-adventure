@@ -82,6 +82,9 @@ export const DeckSelection = ({
     // Карты из cardInstances (каждый instance - отдельная карта с уникальным UUID)
     const instanceCards = cardInstances.filter(ci => ci.card_type === 'hero' || ci.card_type === 'dragon').map(instance => {
       const cardData = instance.card_data as any;
+      // Normalize DB types (hero/dragon) to app types (character/pet)
+      const rawType = cardData.type || instance.card_type || 'character';
+      const normalizedType = rawType === 'hero' ? 'character' : rawType === 'dragon' ? 'pet' : rawType;
       return {
         // ✅ КРИТИЧНО: UUID как основной ID
         id: instance.id,
@@ -89,7 +92,7 @@ export const DeckSelection = ({
         templateId: instance.card_template_id,
         // Данные карты из card_data
         name: cardData.name,
-        type: cardData.type,
+        type: normalizedType,
         faction: cardData.faction,
         rarity: cardData.rarity,
         image: cardData.image,

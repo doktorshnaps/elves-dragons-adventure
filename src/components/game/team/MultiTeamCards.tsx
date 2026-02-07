@@ -27,12 +27,15 @@ export const MultiTeamCards: React.FC = () => {
       .filter(ci => ci.card_type === 'hero' || ci.card_type === 'dragon')
       .map(instance => {
         const cardData = instance.card_data as any;
+        // Normalize DB types (hero/dragon) to app types (character/pet)
+        const rawType = cardData.type || instance.card_type || 'character';
+        const normalizedType = rawType === 'hero' ? 'character' : rawType === 'dragon' ? 'pet' : rawType;
         return {
           id: instance.id,
           instanceId: instance.id,
           templateId: instance.card_template_id,
           name: cardData.name,
-          type: cardData.type,
+          type: normalizedType,
           faction: cardData.faction,
           rarity: cardData.rarity,
           image: cardData.image,

@@ -88,11 +88,13 @@ export const ForgeBayComponent = ({ forgeLevel }: ForgeBayComponentProps) => {
         if (!uniqueCardsMap.has(instanceId)) {
           // Строим card объект из instance.card_data
           const cardData = instance.card_data as any;
+          const rawType = cardData.type || instance.card_type || 'character';
+          const normalizedType = rawType === 'hero' ? 'character' : rawType === 'dragon' ? 'pet' : rawType;
           const card = {
             id: instance.id,
             instanceId: instance.id,
             name: cardData.name,
-            type: cardData.type,
+            type: normalizedType,
             faction: cardData.faction,
             rarity: cardData.rarity,
             image: cardData.image,
