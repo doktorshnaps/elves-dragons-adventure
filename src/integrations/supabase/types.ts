@@ -1798,6 +1798,7 @@ export type Database = {
           id: string
           losses: number
           matches_played: number
+          rarity_tier: number
           season_id: string | null
           tier: string
           updated_at: string
@@ -1812,6 +1813,7 @@ export type Database = {
           id?: string
           losses?: number
           matches_played?: number
+          rarity_tier?: number
           season_id?: string | null
           tier?: string
           updated_at?: string
@@ -1826,6 +1828,7 @@ export type Database = {
           id?: string
           losses?: number
           matches_played?: number
+          rarity_tier?: number
           season_id?: string | null
           tier?: string
           updated_at?: string
@@ -3900,21 +3903,38 @@ export type Database = {
         Args: { p_team_type: string; p_tier?: number; p_wallet_address: string }
         Returns: Json
       }
-      get_or_create_pvp_rating: {
-        Args: { p_wallet_address: string }
-        Returns: {
-          best_win_streak: number
-          elo: number
-          id: string
-          losses: number
-          matches_played: number
-          season_id: string
-          tier: string
-          wallet_address: string
-          win_streak: number
-          wins: number
-        }[]
-      }
+      get_or_create_pvp_rating:
+        | {
+            Args: { p_wallet_address: string }
+            Returns: {
+              best_win_streak: number
+              elo: number
+              id: string
+              losses: number
+              matches_played: number
+              season_id: string
+              tier: string
+              wallet_address: string
+              win_streak: number
+              wins: number
+            }[]
+          }
+        | {
+            Args: { p_rarity_tier?: number; p_wallet_address: string }
+            Returns: {
+              best_win_streak: number
+              elo: number
+              id: string
+              losses: number
+              matches_played: number
+              rarity_tier: number
+              season_id: string
+              tier: string
+              wallet_address: string
+              win_streak: number
+              wins: number
+            }[]
+          }
       get_or_create_wallet_identity: {
         Args: { p_wallet_address: string }
         Returns: string
@@ -3949,20 +3969,40 @@ export type Database = {
           rarity_tier: number
         }[]
       }
-      get_pvp_season_leaderboard: {
-        Args: { p_limit?: number; p_season_id: string }
-        Returns: {
-          best_win_streak: number
-          elo: number
-          losses: number
-          matches_played: number
-          rank: number
-          tier: string
-          wallet_address: string
-          win_streak: number
-          wins: number
-        }[]
-      }
+      get_pvp_season_leaderboard:
+        | {
+            Args: { p_limit?: number; p_season_id: string }
+            Returns: {
+              best_win_streak: number
+              elo: number
+              losses: number
+              matches_played: number
+              rank: number
+              tier: string
+              wallet_address: string
+              win_streak: number
+              wins: number
+            }[]
+          }
+        | {
+            Args: {
+              p_limit?: number
+              p_rarity_tier?: number
+              p_season_id: string
+            }
+            Returns: {
+              best_win_streak: number
+              elo: number
+              losses: number
+              matches_played: number
+              rank: number
+              rarity_tier: number
+              tier: string
+              wallet_address: string
+              win_streak: number
+              wins: number
+            }[]
+          }
       get_referral_details: {
         Args: { p_referrer_wallet: string; p_wl_only?: boolean }
         Returns: {
@@ -4379,19 +4419,14 @@ export type Database = {
         }
         Returns: boolean
       }
-      update_pvp_elo:
-        | {
-            Args: { p_loser_wallet: string; p_winner_wallet: string }
-            Returns: number
-          }
-        | {
-            Args: {
-              p_elo_change: number
-              p_loser_wallet: string
-              p_winner_wallet: string
-            }
-            Returns: undefined
-          }
+      update_pvp_elo: {
+        Args: {
+          p_loser_wallet: string
+          p_rarity_tier?: number
+          p_winner_wallet: string
+        }
+        Returns: number
+      }
       update_resource_production_state_by_wallet: {
         Args: {
           p_is_producing: boolean

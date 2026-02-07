@@ -140,7 +140,7 @@ export const PvPHub: React.FC = () => {
     leaveQueue,
     toggleBotTeam,
     isBotEnabledForTier,
-  } = usePvP(walletAddress);
+  } = usePvP(walletAddress, selectedRarityTier);
 
   const entryFee = 100;
   const hasEnoughBalance = balance >= entryFee;

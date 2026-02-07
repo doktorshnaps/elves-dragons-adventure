@@ -63,6 +63,7 @@ export interface PvPRating {
   win_streak: number;
   best_win_streak: number;
   matches_played: number;
+  rarity_tier?: number;
 }
 
 export interface QueueStatus {
@@ -82,7 +83,7 @@ export interface BotTeamStatus {
 
 const BOT_FALLBACK_TIMEOUT = 30; // seconds before falling back to bot
 
-export const usePvP = (walletAddress: string | null) => {
+export const usePvP = (walletAddress: string | null, currentRarityTier: number = 1) => {
   const { toast } = useToast();
   const { gameData } = useGameDataContext();
   
@@ -122,18 +123,20 @@ export const usePvP = (walletAddress: string | null) => {
     botMatchInProgressRef.current = false;
   }, []);
 
-  // Load player rating
-  const loadRating = useCallback(async () => {
+  // Load player rating for the current rarity tier
+  const loadRating = useCallback(async (tierOverride?: number) => {
     if (!walletAddress) return;
+    const tier = tierOverride ?? currentRarityTier;
     
     const { data, error } = await supabase.rpc('get_or_create_pvp_rating', {
-      p_wallet_address: walletAddress
+      p_wallet_address: walletAddress,
+      p_rarity_tier: tier,
     });
     
     if (!error && data && Array.isArray(data) && data.length > 0) {
       setRating(data[0] as PvPRating);
     }
-  }, [walletAddress]);
+  }, [walletAddress, currentRarityTier]);
 
   // Load bot team status
   const loadBotTeamStatus = useCallback(async () => {
@@ -781,6 +784,14 @@ export const usePvP = (walletAddress: string | null) => {
     };
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [walletAddress]);
+
+  // Reload rating when rarity tier changes
+  useEffect(() => {
+    if (walletAddress && initialLoadDoneRef.current) {
+      loadRating();
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentRarityTier]);
 
   // Subscribe to match updates
   useEffect(() => {

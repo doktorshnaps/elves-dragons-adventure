@@ -128,11 +128,13 @@ const isTeamDefeated = (pairs: any[]): boolean => {
 const updateEloAndGetChange = async (
   supabase: any,
   winnerWallet: string,
-  loserWallet: string
+  loserWallet: string,
+  rarityTier: number = 1
 ): Promise<number> => {
   const { data, error } = await supabase.rpc('update_pvp_elo', {
     p_winner_wallet: winnerWallet,
     p_loser_wallet: loserWallet,
+    p_rarity_tier: rarityTier,
   });
   if (error) {
     console.error('❌ [PvP] Error updating Elo:', error);
@@ -207,7 +209,7 @@ Deno.serve(async (req) => {
       const reward = match.entry_fee * 2 * 0.9; // 10% fee
       
       // Update Elo ratings (dynamic calculation in DB)
-      const eloChange = await updateEloAndGetChange(supabase, winnerWallet, loserWallet);
+      const eloChange = await updateEloAndGetChange(supabase, winnerWallet, loserWallet, match.rarity_tier ?? 1);
 
       // Update match as completed
       await supabase
@@ -344,7 +346,7 @@ Deno.serve(async (req) => {
       
       if (humanDefeated) {
         // Bot wins — dynamic Elo
-        const eloChange = await updateEloAndGetChange(supabase, 'SKIP_BOT', humanWallet);
+        const eloChange = await updateEloAndGetChange(supabase, 'SKIP_BOT', humanWallet, match.rarity_tier ?? 1);
         
         await supabase
           .from('pvp_matches')
@@ -394,7 +396,7 @@ Deno.serve(async (req) => {
       
       if (botDefeated) {
         // Human wins due to counterattack — dynamic Elo
-        const eloChange = await updateEloAndGetChange(supabase, humanWallet, 'SKIP_BOT');
+        const eloChange = await updateEloAndGetChange(supabase, humanWallet, 'SKIP_BOT', match.rarity_tier ?? 1);
         const reward = match.entry_fee * 2 * 0.9;
         
         await supabase
@@ -612,7 +614,7 @@ Deno.serve(async (req) => {
       const reward = match.entry_fee * 2 * 0.9; // 10% fee
 
       // Dynamic Elo
-      const eloChange = await updateEloAndGetChange(supabase, winnerWallet, loserWallet);
+      const eloChange = await updateEloAndGetChange(supabase, winnerWallet, loserWallet, match.rarity_tier ?? 1);
 
       await supabase
         .from('pvp_matches')
@@ -677,7 +679,7 @@ Deno.serve(async (req) => {
       const reward = match.entry_fee * 2 * 0.9;
 
       // Dynamic Elo
-      const eloChange = await updateEloAndGetChange(supabase, winnerWallet, loserWallet);
+      const eloChange = await updateEloAndGetChange(supabase, winnerWallet, loserWallet, match.rarity_tier ?? 1);
 
       await supabase
         .from('pvp_matches')
@@ -847,7 +849,7 @@ Deno.serve(async (req) => {
 
         if (humanDefeated) {
           // Bot wins — dynamic Elo
-          const eloChange = await updateEloAndGetChange(supabase, 'SKIP_BOT', playerWallet);
+          const eloChange = await updateEloAndGetChange(supabase, 'SKIP_BOT', playerWallet, match.rarity_tier ?? 1);
 
           await supabase
             .from('pvp_matches')
@@ -863,7 +865,7 @@ Deno.serve(async (req) => {
             .eq('id', match_id);
         } else if (botDefeated) {
           // Human wins due to counterattack — dynamic Elo
-          const eloChange = await updateEloAndGetChange(supabase, playerWallet, 'SKIP_BOT');
+          const eloChange = await updateEloAndGetChange(supabase, playerWallet, 'SKIP_BOT', match.rarity_tier ?? 1);
           const reward = match.entry_fee * 2 * 0.9;
 
           await supabase
