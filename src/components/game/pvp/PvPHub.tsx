@@ -4,7 +4,8 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Swords, Trophy, Clock, Coins, ArrowLeft, Search, X, Loader2, Star, Bot, History } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Swords, Trophy, Clock, Coins, ArrowLeft, Search, X, Loader2, Star, Bot, History, Eye } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { usePvP } from "@/hooks/usePvP";
 import { PvPLeaderboard } from "./PvPLeaderboard";
@@ -34,14 +35,14 @@ const TIER_NAMES: Record<string, string> = {
 };
 
 const RARITY_TIERS = [
-  { tier: 1, name: "Обычные", color: "bg-gray-500" },
-  { tier: 2, name: "Необычные", color: "bg-green-500" },
-  { tier: 3, name: "Редкие", color: "bg-blue-500" },
-  { tier: 4, name: "Эпические", color: "bg-purple-500" },
-  { tier: 5, name: "Легендарные", color: "bg-orange-500" },
-  { tier: 6, name: "Мифические", color: "bg-red-500" },
-  { tier: 7, name: "Божественные", color: "bg-pink-500" },
-  { tier: 8, name: "Трансцендентные", color: "bg-gradient-to-r from-purple-500 to-pink-500" },
+  { tier: 1, name: "Обычные", range: "1" },
+  { tier: 2, name: "Необычные", range: "1-2" },
+  { tier: 3, name: "Редкие", range: "1-3" },
+  { tier: 4, name: "Эпические", range: "1-4" },
+  { tier: 5, name: "Легендарные", range: "1-5" },
+  { tier: 6, name: "Мифические", range: "1-6" },
+  { tier: 7, name: "Божественные", range: "1-7" },
+  { tier: 8, name: "Трансцендентные", range: "1-8" },
 ];
 
 const BOT_FALLBACK_SECONDS = 30;
@@ -51,6 +52,7 @@ export const PvPHub: React.FC = () => {
   const { accountId: walletAddress } = useWalletContext();
   const [selectedRarityTier, setSelectedRarityTier] = useState(1);
   const [togglingBot, setTogglingBot] = useState(false);
+  const [showTeamDialog, setShowTeamDialog] = useState(false);
 
   const { getPvPTeam, loading: teamsLoading, switchTeam } = usePlayerTeams();
 
@@ -306,15 +308,16 @@ export const PvPHub: React.FC = () => {
                 <div>
                   <div className="text-sm font-medium mb-2">Выберите лигу редкости:</div>
                   <div className="grid grid-cols-4 gap-2">
-                    {RARITY_TIERS.map(({ tier, name, color }) => (
+                    {RARITY_TIERS.map(({ tier, name, range }) => (
                       <Button
                         key={tier}
                         variant={selectedRarityTier === tier ? "default" : "outline"}
                         size="sm"
                         onClick={() => setSelectedRarityTier(tier)}
-                        className={selectedRarityTier === tier ? color : ""}
+                        className="flex flex-col gap-0 h-auto py-1.5"
                       >
-                        {name}
+                        <span className="text-xs leading-tight">{name}</span>
+                        <span className="text-[10px] opacity-70 leading-tight">★ {range}</span>
                       </Button>
                     ))}
                   </div>
@@ -323,7 +326,13 @@ export const PvPHub: React.FC = () => {
                 {/* Team Info */}
                 {hasTeam ? (
                   <div className="p-3 bg-muted/50 rounded-lg">
-                    <div className="text-sm font-medium mb-2">Ваша команда:</div>
+                    <div className="flex items-center justify-between mb-2">
+                      <div className="text-sm font-medium">Ваша команда:</div>
+                      <Button variant="ghost" size="sm" className="h-7 text-xs gap-1" onClick={() => setShowTeamDialog(true)}>
+                        <Eye className="w-3 h-3" />
+                        Посмотреть
+                      </Button>
+                    </div>
                     <div className="grid grid-cols-3 gap-2 text-center text-sm">
                       <div>
                         <Swords className="w-4 h-4 mx-auto text-red-500" />
@@ -437,6 +446,66 @@ export const PvPHub: React.FC = () => {
           </TabsContent>
         </Tabs>
       </div>
+
+      {/* Team Preview Dialog */}
+      <Dialog open={showTeamDialog} onOpenChange={setShowTeamDialog}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Команда — Лига {selectedRarityTier}</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3">
+            {selectedPairs.length === 0 ? (
+              <p className="text-sm text-muted-foreground text-center py-4">Команда не собрана</p>
+            ) : (
+              selectedPairs.map((pair: TeamPair, idx: number) => (
+                <div key={idx} className="flex items-center gap-3 p-3 bg-muted/50 rounded-lg">
+                  <div className="flex items-center gap-2 flex-1 min-w-0">
+                    {pair.hero?.image ? (
+                      <img
+                        src={normalizeCardImageUrl(pair.hero.image)}
+                        alt={pair.hero.name}
+                        className="w-10 h-10 rounded object-cover border border-border"
+                        onError={(e) => { (e.target as HTMLImageElement).src = '/placeholder.svg'; }}
+                      />
+                    ) : (
+                      <div className="w-10 h-10 rounded bg-muted flex items-center justify-center text-xs">?</div>
+                    )}
+                    <div className="min-w-0">
+                      <div className="text-sm font-medium truncate">{pair.hero?.name || 'Герой'}</div>
+                      <div className="text-xs text-muted-foreground">
+                        ⚔{pair.hero?.power || 0} 🛡{pair.hero?.defense || 0} ❤{pair.hero?.health || 0}
+                      </div>
+                    </div>
+                  </div>
+                  {pair.dragon && (
+                    <div className="flex items-center gap-2 flex-1 min-w-0">
+                      {pair.dragon.image ? (
+                        <img
+                          src={normalizeCardImageUrl(pair.dragon.image)}
+                          alt={pair.dragon.name}
+                          className="w-10 h-10 rounded object-cover border border-border"
+                          onError={(e) => { (e.target as HTMLImageElement).src = '/placeholder.svg'; }}
+                        />
+                      ) : (
+                        <div className="w-10 h-10 rounded bg-muted flex items-center justify-center text-xs">🐉</div>
+                      )}
+                      <div className="min-w-0">
+                        <div className="text-sm font-medium truncate">{pair.dragon.name}</div>
+                        <div className="text-xs text-muted-foreground">
+                          ⚔{pair.dragon.power || 0} 🛡{pair.dragon.defense || 0} ❤{pair.dragon.health || 0}
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              ))
+            )}
+            <Button variant="outline" className="w-full" onClick={() => { setShowTeamDialog(false); switchTeam("pvp", selectedRarityTier); navigate("/team"); }}>
+              Изменить команду
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
