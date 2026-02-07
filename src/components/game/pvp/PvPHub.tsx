@@ -388,6 +388,8 @@ export const PvPHub: React.FC = () => {
                   Победитель получает {entryFee * 2 - 10} ELL (90% пула)
                   <br />
                   <span className="text-yellow-600">⚡ После 30 сек поиска — матч с ботом</span>
+                  <br />
+                  <span className="opacity-70">Лига {selectedRarityTier}: допускаются карты редкости {selectedRarityTier} и ниже</span>
                 </p>
               </div>
             )}
@@ -426,11 +428,11 @@ export const PvPHub: React.FC = () => {
           </TabsList>
 
           <TabsContent value="leaderboard" className="mt-4">
-            <PvPLeaderboard currentWallet={walletAddress} />
+            <PvPLeaderboard currentWallet={walletAddress} rarityTier={selectedRarityTier} />
           </TabsContent>
 
           <TabsContent value="history" className="mt-4">
-            <PvPMatchHistory walletAddress={walletAddress} />
+            <PvPMatchHistory walletAddress={walletAddress} rarityTier={selectedRarityTier} />
           </TabsContent>
         </Tabs>
       </div>

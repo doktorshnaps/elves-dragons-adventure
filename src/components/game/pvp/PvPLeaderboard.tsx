@@ -1,82 +1,110 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Trophy, Medal, Crown, Star } from "lucide-react";
 import { supabase } from "@/integrations/supabase";
 
-const TIER_COLORS: Record<string, string> = {
-  bronze: "bg-amber-700 text-white",
-  silver: "bg-gray-400 text-black",
-  gold: "bg-yellow-500 text-black",
-  platinum: "bg-cyan-400 text-black",
-  diamond: "bg-blue-400 text-white",
-  master: "bg-purple-600 text-white",
-  legend: "bg-gradient-to-r from-amber-500 to-red-500 text-white",
+const RARITY_NAMES: Record<number, string> = {
+  1: "Обычные",
+  2: "Необычные",
+  3: "Редкие",
+  4: "Эпические",
+  5: "Легендарные",
+  6: "Мифические",
+  7: "Божественные",
+  8: "Трансцендентные"
 };
 
-const TIER_NAMES: Record<string, string> = {
-  bronze: "Бронза",
-  silver: "Серебро",
-  gold: "Золото",
-  platinum: "Платина",
-  diamond: "Алмаз",
-  master: "Мастер",
-  legend: "Легенда",
+const RARITY_COLORS: Record<number, string> = {
+  1: "bg-gray-500",
+  2: "bg-green-500",
+  3: "bg-blue-500",
+  4: "bg-purple-500",
+  5: "bg-orange-500",
+  6: "bg-red-500",
+  7: "bg-pink-500",
+  8: "bg-gradient-to-r from-purple-500 to-pink-500"
 };
-
-const TIER_RANGES: Record<string, string> = {
-  bronze: "0-1199",
-  silver: "1200-1399",
-  gold: "1400-1599",
-  platinum: "1600-1799",
-  diamond: "1800-1999",
-  master: "2000-2199",
-  legend: "2200+",
-};
-
-// От слабых к сильным (слева направо)
-const TIERS_ORDER = ["bronze", "silver", "gold", "platinum", "diamond", "master", "legend"];
 
 interface LeaderboardEntry {
   wallet_address: string;
-  elo: number;
-  tier: string;
   wins: number;
   losses: number;
-  win_streak: number;
   matches_played: number;
+  win_rate: number;
 }
 
 interface PvPLeaderboardProps {
   currentWallet?: string | null;
+  rarityTier: number;
 }
 
-export const PvPLeaderboard: React.FC<PvPLeaderboardProps> = ({ currentWallet }) => {
-  const [selectedTier, setSelectedTier] = useState<string>("bronze");
-  const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
+export const PvPLeaderboard: React.FC<PvPLeaderboardProps> = ({ currentWallet, rarityTier }) => {
+  const [matches, setMatches] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     loadLeaderboard();
-  }, [selectedTier]);
+  }, [rarityTier]);
 
   const loadLeaderboard = async () => {
     setLoading(true);
     
+    // Fetch completed matches for this rarity tier
     const { data, error } = await supabase
-      .from("pvp_ratings")
-      .select("wallet_address, elo, tier, wins, losses, win_streak, matches_played")
-      .eq("tier", selectedTier)
-      .gt("matches_played", 0)
-      .order("elo", { ascending: false })
-      .limit(50);
+      .from("pvp_matches")
+      .select("player1_wallet, player2_wallet, winner_wallet, loser_wallet")
+      .eq("status", "completed")
+      .eq("rarity_tier", rarityTier)
+      .order("finished_at", { ascending: false })
+      .limit(500);
 
     if (!error && data) {
-      setLeaderboard(data);
+      setMatches(data);
     }
     setLoading(false);
   };
+
+  // Compute leaderboard from match data
+  const leaderboard = useMemo(() => {
+    const stats: Record<string, { wins: number; losses: number }> = {};
+
+    matches.forEach((match) => {
+      const { player1_wallet, player2_wallet, winner_wallet } = match;
+      
+      // Skip BOT wallets from leaderboard
+      if (!player1_wallet.startsWith("BOT_")) {
+        if (!stats[player1_wallet]) stats[player1_wallet] = { wins: 0, losses: 0 };
+        if (winner_wallet === player1_wallet) {
+          stats[player1_wallet].wins++;
+        } else if (winner_wallet) {
+          stats[player1_wallet].losses++;
+        }
+      }
+
+      if (!player2_wallet.startsWith("BOT_")) {
+        if (!stats[player2_wallet]) stats[player2_wallet] = { wins: 0, losses: 0 };
+        if (winner_wallet === player2_wallet) {
+          stats[player2_wallet].wins++;
+        } else if (winner_wallet) {
+          stats[player2_wallet].losses++;
+        }
+      }
+    });
+
+    const entries: LeaderboardEntry[] = Object.entries(stats).map(([wallet, s]) => ({
+      wallet_address: wallet,
+      wins: s.wins,
+      losses: s.losses,
+      matches_played: s.wins + s.losses,
+      win_rate: s.wins + s.losses > 0 ? Math.round((s.wins / (s.wins + s.losses)) * 100) : 0,
+    }));
+
+    // Sort by wins, then by win_rate
+    entries.sort((a, b) => b.wins - a.wins || b.win_rate - a.win_rate);
+
+    return entries.slice(0, 50);
+  }, [matches]);
 
   const getRankIcon = (index: number) => {
     if (index === 0) return <Crown className="w-5 h-5 text-yellow-500" />;
@@ -86,16 +114,7 @@ export const PvPLeaderboard: React.FC<PvPLeaderboardProps> = ({ currentWallet })
   };
 
   const formatWallet = (wallet: string) => {
-    if (wallet.startsWith("BOT_")) {
-      return `🤖 ${wallet.slice(4, 14)}...`;
-    }
     return `${wallet.slice(0, 8)}...${wallet.slice(-4)}`;
-  };
-
-  const getWinRate = (wins: number, losses: number) => {
-    const total = wins + losses;
-    if (total === 0) return 0;
-    return Math.round((wins / total) * 100);
   };
 
   return (
@@ -104,83 +123,60 @@ export const PvPLeaderboard: React.FC<PvPLeaderboardProps> = ({ currentWallet })
         <CardTitle className="flex items-center gap-2 text-lg">
           <Trophy className="w-5 h-5 text-yellow-500" />
           Таблица лидеров
+          <Badge className={`${RARITY_COLORS[rarityTier]} text-[10px] px-1.5`}>
+            {RARITY_NAMES[rarityTier]}
+          </Badge>
         </CardTitle>
       </CardHeader>
       <CardContent>
-        <Tabs defaultValue="bronze" onValueChange={setSelectedTier}>
-          <TabsList className="w-full flex flex-wrap h-auto gap-1 mb-4">
-            {TIERS_ORDER.map((tier) => (
-              <TabsTrigger
-                key={tier}
-                value={tier}
-                className="text-[10px] sm:text-xs flex flex-col items-center gap-0 py-1.5 px-2"
-              >
-                <span>{TIER_NAMES[tier]}</span>
-                <span className="text-[8px] sm:text-[10px] opacity-70">{TIER_RANGES[tier]}</span>
-              </TabsTrigger>
-            ))}
-          </TabsList>
-
-          <TabsContent value={selectedTier} className="mt-0">
-            {loading ? (
-              <div className="flex items-center justify-center py-8">
-                <div className="animate-spin w-6 h-6 border-2 border-primary border-t-transparent rounded-full" />
-              </div>
-            ) : leaderboard.length === 0 ? (
-              <div className="text-center py-8 text-muted-foreground">
-                Нет игроков в этой лиге
-              </div>
-            ) : (
-              <div className="space-y-2 max-h-[400px] overflow-y-auto">
-                {leaderboard.map((entry, index) => {
-                  const isCurrentPlayer = entry.wallet_address === currentWallet;
-                  return (
-                    <div
-                      key={entry.wallet_address}
-                      className={`flex items-center gap-3 p-2 rounded-lg transition-colors ${
-                        isCurrentPlayer
-                          ? "bg-primary/20 border border-primary/50"
-                          : "bg-muted/30 hover:bg-muted/50"
-                      }`}
-                    >
-                      <div className="flex-shrink-0 w-8 flex justify-center">
-                        {getRankIcon(index)}
-                      </div>
-                      
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2">
-                          <span className={`text-sm font-medium truncate ${isCurrentPlayer ? "text-primary" : ""}`}>
-                            {formatWallet(entry.wallet_address)}
-                            {isCurrentPlayer && " (Вы)"}
-                          </span>
-                          <Badge className={`${TIER_COLORS[entry.tier]} text-[10px] px-1.5 py-0`}>
-                            {TIER_NAMES[entry.tier]}
-                          </Badge>
-                        </div>
-                        <div className="flex items-center gap-3 text-xs text-muted-foreground">
-                          <span className="text-green-500">{entry.wins}W</span>
-                          <span className="text-red-500">{entry.losses}L</span>
-                          <span>{getWinRate(entry.wins, entry.losses)}%</span>
-                          {entry.win_streak > 2 && (
-                            <span className="flex items-center gap-0.5 text-yellow-500">
-                              <Star className="w-3 h-3" />
-                              {entry.win_streak}
-                            </span>
-                          )}
-                        </div>
-                      </div>
-
-                      <div className="text-right">
-                        <div className="text-lg font-bold">{entry.elo}</div>
-                        <div className="text-[10px] text-muted-foreground">ELO</div>
-                      </div>
+        {loading ? (
+          <div className="flex items-center justify-center py-8">
+            <div className="animate-spin w-6 h-6 border-2 border-primary border-t-transparent rounded-full" />
+          </div>
+        ) : leaderboard.length === 0 ? (
+          <div className="text-center py-8 text-muted-foreground">
+            Нет игроков в лиге «{RARITY_NAMES[rarityTier]}»
+          </div>
+        ) : (
+          <div className="space-y-2 max-h-[400px] overflow-y-auto">
+            {leaderboard.map((entry, index) => {
+              const isCurrentPlayer = entry.wallet_address === currentWallet;
+              return (
+                <div
+                  key={entry.wallet_address}
+                  className={`flex items-center gap-3 p-2 rounded-lg transition-colors ${
+                    isCurrentPlayer
+                      ? "bg-primary/20 border border-primary/50"
+                      : "bg-muted/30 hover:bg-muted/50"
+                  }`}
+                >
+                  <div className="flex-shrink-0 w-8 flex justify-center">
+                    {getRankIcon(index)}
+                  </div>
+                  
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2">
+                      <span className={`text-sm font-medium truncate ${isCurrentPlayer ? "text-primary" : ""}`}>
+                        {formatWallet(entry.wallet_address)}
+                        {isCurrentPlayer && " (Вы)"}
+                      </span>
                     </div>
-                  );
-                })}
-              </div>
-            )}
-          </TabsContent>
-        </Tabs>
+                    <div className="flex items-center gap-3 text-xs text-muted-foreground">
+                      <span className="text-green-500">{entry.wins}W</span>
+                      <span className="text-red-500">{entry.losses}L</span>
+                      <span>{entry.win_rate}%</span>
+                    </div>
+                  </div>
+
+                  <div className="text-right">
+                    <div className="text-lg font-bold">{entry.matches_played}</div>
+                    <div className="text-[10px] text-muted-foreground">матчей</div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
       </CardContent>
     </Card>
   );
