@@ -46,9 +46,21 @@ export const ClanPage = () => {
 
   const showRequests = myRole && ['leader', 'deputy', 'officer'].includes(myRole);
 
+  const backgroundImage = myClan?.background_image || null;
+
   return (
-    <div className="min-h-screen bg-game-background p-4 pb-20">
-      <div className="max-w-2xl mx-auto">
+    <div
+      className="min-h-screen bg-game-background p-4 pb-20 relative"
+      style={backgroundImage ? {
+        backgroundImage: `url(${backgroundImage})`,
+        backgroundSize: 'cover',
+        backgroundPosition: 'center',
+        backgroundRepeat: 'no-repeat',
+        backgroundAttachment: 'fixed',
+      } : {}}
+    >
+      {backgroundImage && <div className="absolute inset-0 bg-black/50 pointer-events-none" />}
+      <div className="max-w-2xl mx-auto relative z-10">
         {/* Header */}
         <div className="flex items-center gap-3 mb-4">
           <Button variant="ghost" size="sm" onClick={() => navigate('/menu')} className="text-white p-2">
