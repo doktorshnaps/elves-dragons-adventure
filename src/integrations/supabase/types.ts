@@ -1849,6 +1849,7 @@ export type Database = {
           ends_at: string
           id: string
           is_active: boolean
+          league_rewards_config: Json | null
           name: string
           rewards_config: Json
           rewards_distributed: boolean | null
@@ -1861,6 +1862,7 @@ export type Database = {
           ends_at: string
           id?: string
           is_active?: boolean
+          league_rewards_config?: Json | null
           name: string
           rewards_config?: Json
           rewards_distributed?: boolean | null
@@ -1873,6 +1875,7 @@ export type Database = {
           ends_at?: string
           id?: string
           is_active?: boolean
+          league_rewards_config?: Json | null
           name?: string
           rewards_config?: Json
           rewards_distributed?: boolean | null
@@ -2725,15 +2728,26 @@ export type Database = {
         }
         Returns: string
       }
-      admin_create_pvp_season: {
-        Args: {
-          p_admin_wallet_address: string
-          p_duration_days: number
-          p_name: string
-          p_rewards_config?: Json
-        }
-        Returns: string
-      }
+      admin_create_pvp_season:
+        | {
+            Args: {
+              p_admin_wallet_address: string
+              p_duration_days?: number
+              p_league_rewards_config?: Json
+              p_name: string
+              p_rewards_config?: Json
+            }
+            Returns: Json
+          }
+        | {
+            Args: {
+              p_admin_wallet_address: string
+              p_duration_days: number
+              p_name: string
+              p_rewards_config?: Json
+            }
+            Returns: string
+          }
       admin_delete_card_upgrade_requirement: {
         Args: { p_id: string; p_wallet: string }
         Returns: undefined
@@ -3335,16 +3349,28 @@ export type Database = {
             }
             Returns: undefined
           }
-      admin_update_pvp_season: {
-        Args: {
-          p_admin_wallet_address: string
-          p_ends_at?: string
-          p_name?: string
-          p_rewards_config?: Json
-          p_season_id: string
-        }
-        Returns: undefined
-      }
+      admin_update_pvp_season:
+        | {
+            Args: {
+              p_admin_wallet_address: string
+              p_ends_at?: string
+              p_name?: string
+              p_rewards_config?: Json
+              p_season_id: string
+            }
+            Returns: undefined
+          }
+        | {
+            Args: {
+              p_admin_wallet_address: string
+              p_ends_at?: string
+              p_league_rewards_config?: Json
+              p_name?: string
+              p_rewards_config?: Json
+              p_season_id: string
+            }
+            Returns: Json
+          }
       admin_update_rarity_multiplier: {
         Args: {
           p_admin_wallet_address?: string

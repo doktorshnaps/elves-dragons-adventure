@@ -283,6 +283,22 @@ export const PvPLeaderboard: React.FC<PvPLeaderboardProps> = ({ currentWallet, r
                     )}
                   </div>
                 </div>
+                {/* League rewards info banner */}
+                {selectedSeason.league_rewards_config && Object.keys(selectedSeason.league_rewards_config).length > 0 && (
+                  <div className="mt-2 pt-2 border-t border-muted/50">
+                    <div className="text-[10px] text-muted-foreground mb-1">Награды по лигам:</div>
+                    <div className="flex flex-wrap gap-1">
+                      {Object.entries(selectedSeason.league_rewards_config).map(([key, val]) => {
+                        const config = val as { name: string; ell_reward: number };
+                        return config.ell_reward > 0 ? (
+                          <Badge key={key} variant="outline" className="text-[9px] px-1 py-0">
+                            ★{key}: {config.ell_reward}
+                          </Badge>
+                        ) : null;
+                      })}
+                    </div>
+                  </div>
+                )}
               </div>
             )}
 
